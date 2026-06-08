@@ -1,0 +1,12 @@
+id: u_value
+name: U-value Calculator
+version: 0.1.0
+status: draft
+category: Design & Envelope
+route: /en/tools/u-value
+description: Calculate the thermal transmittance of multi-layer building components.
+method: Simplified steady-state layer method.
+limitations:
+  - Thermal bridges are not included.
+  - Moisture behaviour is not assessed.
+  - This is a preliminary educational calculation.
