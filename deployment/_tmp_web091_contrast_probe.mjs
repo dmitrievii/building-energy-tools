@@ -15,26 +15,14 @@ for (let i = 0; i < count; i += 1) {
   const el = loc.nth(i);
   const data = await el.evaluate((node) => {
     const style = getComputedStyle(node);
-    const ancestors = [];
-    let current = node;
-    for (let depth = 0; current && depth < 6; depth += 1, current = current.parentElement) {
-      ancestors.push({
-        depth,
-        tag: current.tagName,
-        className: current.className,
-        testid: current.getAttribute('data-testid'),
-        role: current.getAttribute('role'),
-        ariaLabel: current.getAttribute('aria-label'),
-      });
-    }
+    const instructions = node.closest('[data-testid="stFileUploaderDropzoneInstructions"]');
+    const parent = node.parentElement;
     return {
       text: node.textContent?.trim() ?? '',
       color: style.color,
-      backgroundColor: style.backgroundColor,
-      fontSize: style.fontSize,
-      fontWeight: style.fontWeight,
-      ancestors,
-      parentOuterHTML: node.parentElement?.outerHTML.slice(0, 3500) ?? '',
+      parentColor: parent ? getComputedStyle(parent).color : null,
+      instructionColor: instructions ? getComputedStyle(instructions).color : null,
+      instructionHTML: instructions?.outerHTML.slice(0, 5000) ?? '',
     };
   });
   console.log(`NODE_${i}=${JSON.stringify(data)}`);
