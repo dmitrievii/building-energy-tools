@@ -111,12 +111,19 @@ class DownloadResult:
 
 @dataclass(frozen=True)
 class CatalogBuildReport:
-    """Summary of a Climate.OneBuilding catalog build operation."""
+    """Summary of a Climate.OneBuilding catalog build operation.
+
+    ``failed_catalog_count`` counts logical catalogs for which no published
+    representation could be parsed. ``source_file_failure_count`` counts raw
+    XLSX/KML failures even when another representation recovered the catalog.
+    """
 
     station_count: int
     xlsx_catalog_count: int
     kml_catalog_count: int
     failed_catalog_count: int
+    source_file_failure_count: int
+    recovered_source_file_failure_count: int
     cache_path: Path
 
 
@@ -380,11 +387,18 @@ def build_onebuilding_station_catalog(
     frames: list[pd.DataFrame] = []
     xlsx_ok = 0
     kml_ok = 0
-    failed = 0
+    source_file_failures = 0
+    successful_logical_catalogs: set[str] = set()
+    failed_files_by_logical_catalog: dict[str, list[str]] = {}
+
+    def logical_catalog_key(url: str) -> str:
+        path = urlparse(url).path
+        return path.rsplit(".", 1)[0].lower()
 
     for index, item in enumerate(catalog_links, start=1):
         url = item["url"]
         kind = item["kind"]
+        logical_key = logical_catalog_key(url)
         report(f"Reading {index}/{len(catalog_links)}: {Path(urlparse(url).path).name}")
         try:
             response = _http_get(url, timeout_s=timeout_s)
@@ -394,11 +408,34 @@ def build_onebuilding_station_catalog(
             else:
                 frame = _catalog_from_kml(response.content, source_url=url, source_label=item["label"])
                 kml_ok += 1
-            if not frame.empty:
-                frames.append(frame)
-        except Exception:
-            failed += 1
-            continue
+            if frame.empty:
+                raise ValueError("parsed catalog contains zero usable station records")
+            frames.append(frame)
+            successful_logical_catalogs.add(logical_key)
+        except Exception as exc:
+            source_file_failures += 1
+            failed_files_by_logical_catalog.setdefault(logical_key, []).append(url)
+            report(
+                f"FAILED source representation: {url} [{kind}] "
+                f"{type(exc).__name__}: {exc}"
+            )
+
+    uncovered_logical_catalogs = {
+        key: urls
+        for key, urls in failed_files_by_logical_catalog.items()
+        if key not in successful_logical_catalogs
+    }
+    failed_logical_catalog_count = len(uncovered_logical_catalogs)
+    unrecovered_source_failures = sum(len(urls) for urls in uncovered_logical_catalogs.values())
+    recovered_source_failures = source_file_failures - unrecovered_source_failures
+
+    for key, urls in sorted(uncovered_logical_catalogs.items()):
+        report(f"UNRECOVERED logical catalog: {key} | failed representations: {len(urls)}")
+    if recovered_source_failures:
+        report(
+            f"Recovered {recovered_source_failures} failed source representation(s) "
+            "through another published representation of the same logical catalog."
+        )
 
     if frames:
         catalog = pd.concat(frames, ignore_index=True)
@@ -411,7 +448,9 @@ def build_onebuilding_station_catalog(
         station_count=len(catalog),
         xlsx_catalog_count=xlsx_ok,
         kml_catalog_count=kml_ok,
-        failed_catalog_count=failed,
+        failed_catalog_count=failed_logical_catalog_count,
+        source_file_failure_count=source_file_failures,
+        recovered_source_file_failure_count=recovered_source_failures,
         cache_path=cache_path,
     )
 

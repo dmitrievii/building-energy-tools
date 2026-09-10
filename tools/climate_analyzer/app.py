@@ -601,7 +601,6 @@ def station_catalog_fast_selectable_map(
         region = _map_text(row.get("region", ""))
         dataset = _map_text(row.get("dataset", ""))
         climate_count = int(row.get("climate_count", 1))
-        selected_flag = 1 if group_id == str(selected_group_id) else 0
         data.append([
             float(row["latitude"]),
             float(row["longitude"]),
@@ -611,19 +610,17 @@ def station_catalog_fast_selectable_map(
             region,
             dataset,
             climate_count,
-            selected_flag,
         ])
 
     callback = """
     function (row) {
-        var color = row[8] === 1 ? '#7c3aed' : '#7c3aed';
-        var radius = row[8] === 1 ? 8 : 6;
+        var color = '#7c3aed';
         var marker = L.circleMarker(new L.LatLng(row[0], row[1]), {
-            radius: radius,
+            radius: 6,
             color: color,
             fillColor: color,
             fillOpacity: 0.86,
-            weight: row[8] === 1 ? 2 : 1
+            weight: 1
         });
         var label = 'station_group_id=' + row[2] + ' | ' + row[3] + ' — ' + row[4];
         marker.bindTooltip(label, {sticky: true});
@@ -838,17 +835,17 @@ def render_climate_file_source() -> None:
         st.warning("No grouped station records are available for the current filters.")
         return
 
-    # Initialize map view only once. After that, always preserve the user's
-    # current zoom and center, especially after clicking another station.
+    # Leaflet/browser owns ordinary pan and zoom state. Do not return center,
+    # zoom or bounds to Streamlit: those values change continuously and used to
+    # trigger Python reruns that could race with a freshly rendered Leaflet view.
+    # A reset is explicit and remounts only the map component via a view epoch.
     default_center = [float(station_groups_all["latitude"].mean()), float(station_groups_all["longitude"].mean())]
-    center = st.session_state.get("station_map_center", default_center)
-    zoom = int(st.session_state.get("station_map_zoom", 2))
-    bounds = st.session_state.get("station_map_bounds")
+    initial_zoom = 2 if len(station_groups_all) > 25 else 6
+    if "station_map_view_epoch" not in st.session_state:
+        st.session_state["station_map_view_epoch"] = 0
 
     if st.button("Reset map view to filtered stations"):
-        st.session_state["station_map_center"] = default_center
-        st.session_state["station_map_zoom"] = 2 if len(station_groups_all) > 25 else 6
-        st.session_state.pop("station_map_bounds", None)
+        st.session_state["station_map_view_epoch"] = int(st.session_state.get("station_map_view_epoch", 0)) + 1
         st.rerun()
 
     with st.expander("Advanced map settings", expanded=False):
@@ -898,23 +895,23 @@ def render_climate_file_source() -> None:
         st.caption(
             f"Clustered overview is active. At zoom {int(st.session_state.get('station_detail_zoom_threshold', 8))} "
             "or closer, the same map reveals clickable violet station bubbles. "
-            "The map no longer switches between separate Streamlit components while zooming."
+            "Pan and zoom stay in the browser and do not trigger a Streamlit rerun; only station selection or an explicit reset returns control to the app."
         )
         map_state = st_folium(
             station_catalog_fast_selectable_map(
                 station_groups_for_map,
                 selected_group_id=selected_group_id,
-                center=center,
-                zoom=zoom,
+                center=[20.0, 0.0],
+                zoom=2,
                 detail_zoom_threshold=int(st.session_state.get("station_detail_zoom_threshold", 8)),
             ),
             height=620,
             use_container_width=True,
-            returned_objects=["last_object_clicked_tooltip", "center", "zoom", "bounds"],
-            key="climate_onebuilding_selectable_cluster_map",
+            returned_objects=["last_object_clicked_tooltip"],
+            center=tuple(default_center),
+            zoom=initial_zoom,
+            key=f"climate_onebuilding_selectable_cluster_map_{int(st.session_state.get('station_map_view_epoch', 0))}",
         )
-
-    update_station_map_view_state(map_state)
 
     clicked_group = None
     if isinstance(map_state, dict):
