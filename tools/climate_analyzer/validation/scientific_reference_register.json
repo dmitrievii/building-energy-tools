@@ -43,6 +43,7 @@
       "mean_humidity_ratio_g_kg": 6.5,
       "mean_wind_m_s": 2.8008540956189845,
       "natural_ventilation_hours": 1822,
+      "night_flushing_hours": 301,
       "shading_hours": 461,
       "comfort_hours": 1612,
       "economizer_hours": 5857,
