@@ -85,7 +85,7 @@ class PublicationContractTests(unittest.TestCase):
         self.assertIn("§ 165(3) TKG 2021", checklist)
         self.assertIn("An application-level consent banner", checklist)
         self.assertIn("STREAMLIT_COMMUNITY_CLOUD_PUBLICATION_PRIVACY_GATE", privacy)
-        self.assertIn("An in-app consent banner would not by itself close", privacy)
+        self.assertIn("an in-app consent banner would not by itself close", privacy.lower())
 
     def test_accessibility_status_does_not_claim_full_conformance(self) -> None:
         accessibility = (REPO_ROOT / "website" / "content" / "accessibility.md").read_text(encoding="utf-8")
