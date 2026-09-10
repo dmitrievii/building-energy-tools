@@ -1,0 +1,11 @@
+streamlit>=1.40
+streamlit-folium>=0.20
+folium>=0.16
+pandas>=2.2
+numpy>=1.26
+plotly>=5.22
+psychrolib>=2.5
+pvlib>=0.10
+requests>=2.31
+beautifulsoup4>=4.12
+openpyxl>=3.1
