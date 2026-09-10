@@ -14,14 +14,19 @@ import hashlib
 import json
 from pathlib import Path
 import shutil
+import sys
 
-from epw_climate_analyzer.climate_sources import (
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from epw_climate_analyzer.climate_sources import (  # noqa: E402
     ONEBUILDING_REGION_OPTIONS,
     build_onebuilding_station_catalog,
 )
 
 
-ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CATALOG = ROOT / "epw_climate_analyzer" / "data" / "station_catalog.csv"
 DEFAULT_MANIFEST = ROOT / "epw_climate_analyzer" / "data" / "station_catalog.meta.json"
 
