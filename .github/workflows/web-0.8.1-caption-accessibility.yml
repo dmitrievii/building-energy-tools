@@ -1,0 +1,58 @@
+name: WEB-0.8.1 Caption Accessibility Remediation
+
+on:
+  push:
+    branches:
+      - web-0.8.1-live-deployment-audit
+    paths:
+      - '.github/workflows/web-0.8.1-caption-accessibility.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  remediate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: web-0.8.1-live-deployment-audit
+
+      - name: Promote essential landing captions to normal contrast text
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('tools/climate_analyzer/app.py')
+          text = path.read_text(encoding='utf-8')
+
+          release = 'st.caption(APP_RELEASE_LABEL)'
+          count = text.count(release)
+          if count != 2:
+              raise SystemExit(f'Expected 2 release captions, found {count}')
+          text = text.replace(release, 'st.write(APP_RELEASE_LABEL)')
+
+          old = '''    st.caption(\n        "Start with an EPW weather file from your computer or select a climate from the reviewed "\n        "Climate.OneBuilding station catalog. No building model is required."\n    )\n'''
+          new = '''    st.write(\n        "Start with an EPW weather file from your computer or select a climate from the reviewed "\n        "Climate.OneBuilding station catalog. No building model is required."\n    )\n'''
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected one landing guidance caption, found {text.count(old)}')
+          text = text.replace(old, new)
+
+          path.write_text(text, encoding='utf-8')
+          PY
+          python -m compileall -q tools/climate_analyzer/app.py
+
+      - name: Remove one-time workflow
+        run: git rm .github/workflows/web-0.8.1-caption-accessibility.yml
+
+      - name: Commit remediation
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tools/climate_analyzer/app.py
+          git diff --cached --check
+          git commit -m 'WEB-0.8.1: improve landing text contrast'
+          git push origin HEAD:web-0.8.1-live-deployment-audit
