@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 import ast
+import os
+import subprocess
+import sys
+import textwrap
 import unittest
 from pathlib import Path
 
@@ -64,6 +68,53 @@ class StartupDependencyContractTests(unittest.TestCase):
         self.assertIn("if include_solar and not _SOLAR_DEPENDENCIES_LOADED:", self.source)
         self.assertIn("if include_comparison and not _COMPARISON_DEPENDENCIES_LOADED:", self.source)
         self.assertIn('include_comparison=(page == "Compare Climates")', self.source)
+
+    def test_lazy_dependency_gates_resolve_full_runtime_symbol_sets(self) -> None:
+        code = textwrap.dedent(
+            f"""
+            import importlib.util
+            from pathlib import Path
+
+            app_path = Path({str(APP_PATH)!r})
+            spec = importlib.util.spec_from_file_location("climate_analyzer_lazy_gate_test", app_path)
+            module = importlib.util.module_from_spec(spec)
+            assert spec.loader is not None
+            spec.loader.exec_module(module)
+
+            module._ensure_map_dependencies()
+            assert module._MAP_DEPENDENCIES_LOADED
+            for name in (
+                "pd", "folium", "FastMarkerCluster", "MarkerCluster", "st_folium",
+                "download_station_epw", "filter_station_catalog", "load_production_station_catalog",
+            ):
+                assert hasattr(module, name), name
+
+            module._ensure_analysis_dependencies(include_solar=True, include_comparison=True)
+            assert module._ANALYSIS_DEPENDENCIES_LOADED
+            assert module._SOLAR_DEPENDENCIES_LOADED
+            assert module._COMPARISON_DEPENDENCIES_LOADED
+            for name in (
+                "parse_epw", "add_degree_metrics", "add_psychrometric_properties",
+                "heatmap_chart", "wind_rose_chart", "add_solar_position",
+                "ClimateDataset", "psychrometric_comparison_chart", "px",
+            ):
+                assert hasattr(module, name), name
+            print("LAZY_DEPENDENCY_RUNTIME_GATE=PASS")
+            """
+        )
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(TOOL_ROOT) + os.pathsep + env.get("PYTHONPATH", "")
+        result = subprocess.run(
+            [sys.executable, "-c", code],
+            cwd=TOOL_ROOT,
+            env=env,
+            text=True,
+            capture_output=True,
+            timeout=120,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr + "\n" + result.stdout)
+        self.assertIn("LAZY_DEPENDENCY_RUNTIME_GATE=PASS", result.stdout)
 
 
 if __name__ == "__main__":
