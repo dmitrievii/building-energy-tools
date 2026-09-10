@@ -18,41 +18,34 @@ jobs:
     env:
       TARGET: https://building-climate-analyzer.streamlit.app
     steps:
-      - name: Probe root and Streamlit health
+      - name: Bootstrap public session and probe health
         shell: bash
         run: |
-          set -u
+          set -euo pipefail
 
-          echo '--- ROOT FIRST RESPONSE (NO FOLLOW) ---'
-          curl --silent --show-error --max-time 30 \
-            --output /tmp/root-first.html --dump-header /tmp/root-first.headers \
-            --write-out 'http_code=%{http_code}\ntime_total=%{time_total}\nsize_download=%{size_download}\nremote_ip=%{remote_ip}\n' \
-            "$TARGET/" || true
-          grep -Ei '^(HTTP/|location:|set-cookie:|content-type:|content-length:|cache-control:|strict-transport-security:|server:)' /tmp/root-first.headers || true
-          echo "body_bytes=$(wc -c </tmp/root-first.html 2>/dev/null || echo 0)"
-          head -c 500 /tmp/root-first.html 2>/dev/null || true
-          echo
-
-          echo '--- ROOT FOLLOW WITH COOKIE JAR (MAX 12) ---'
-          curl --silent --show-error --location --max-redirs 12 --max-time 30 \
+          echo '--- PUBLIC SESSION BOOTSTRAP ---'
+          root_metrics=$(curl --silent --show-error --location --max-redirs 12 --max-time 30 \
             --cookie-jar /tmp/cookies.txt --cookie /tmp/cookies.txt \
-            --output /tmp/root-follow.html --dump-header /tmp/root-follow.headers \
+            --output /tmp/root.html --dump-header /tmp/root.headers \
             --write-out 'http_code=%{http_code}\ntime_total=%{time_total}\nsize_download=%{size_download}\nurl_effective=%{url_effective}\nredirects=%{num_redirects}\nremote_ip=%{remote_ip}\n' \
-            "$TARGET/" || true
-          grep -Ei '^(HTTP/|location:|set-cookie:|content-type:|content-length:|cache-control:|strict-transport-security:|server:)' /tmp/root-follow.headers | tail -n 80 || true
-          echo "cookie_names=$(awk '!/^#/ && NF>=7 {print $6}' /tmp/cookies.txt 2>/dev/null | sort -u | paste -sd, -)"
-          echo
+            "$TARGET/")
+          printf '%s\n' "$root_metrics"
+          root_code=$(printf '%s\n' "$root_metrics" | awk -F= '$1=="http_code" {print $2}')
+          root_url=$(printf '%s\n' "$root_metrics" | awk -F= '$1=="url_effective" {print substr($0, index($0,"=")+1)}')
+          echo "cookie_names=$(awk '!/^#/ && NF>=7 {print $6}' /tmp/cookies.txt | sort -u | paste -sd, -)"
+          test "$root_code" = "200"
+          test "$root_url" = "$TARGET/"
 
-          echo '--- HEALTH (INDEPENDENT, NO ROOT DEPENDENCY) ---'
-          health_code=$(curl --silent --show-error --location --max-redirs 5 --max-time 30 \
+          echo '--- SESSION-AWARE HEALTH ---'
+          health_metrics=$(curl --silent --show-error --location --max-redirs 5 --max-time 30 \
+            --cookie-jar /tmp/cookies.txt --cookie /tmp/cookies.txt \
             --output /tmp/health.txt --dump-header /tmp/health.headers \
-            --write-out '%{http_code}' \
-            "$TARGET/_stcore/health" || true)
-          echo "http_code=$health_code"
-          grep -Ei '^(HTTP/|location:|set-cookie:|content-type:|content-length:|cache-control:|strict-transport-security:|server:)' /tmp/health.headers || true
-          printf 'health_body='; cat /tmp/health.txt 2>/dev/null || true; echo
+            --write-out 'http_code=%{http_code}\ntime_total=%{time_total}\nsize_download=%{size_download}\nurl_effective=%{url_effective}\nredirects=%{num_redirects}\nremote_ip=%{remote_ip}\n' \
+            "$TARGET/_stcore/health")
+          printf '%s\n' "$health_metrics"
+          health_code=$(printf '%s\n' "$health_metrics" | awk -F= '$1=="http_code" {print $2}')
+          printf 'health_body='; cat /tmp/health.txt; echo
+          test "$health_code" = "200"
+          grep -qi 'ok' /tmp/health.txt
 
-          if [ "$health_code" != "200" ] || ! grep -qi 'ok' /tmp/health.txt 2>/dev/null; then
-            echo 'Health endpoint is not healthy.' >&2
-            exit 1
-          fi
+          echo 'LIVE_HTTP_SMOKE=PASS'
