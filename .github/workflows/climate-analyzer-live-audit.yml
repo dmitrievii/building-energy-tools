@@ -1,12 +1,6 @@
 name: Climate Analyzer Live Browser Audit
 
 on:
-  push:
-    branches:
-      - web-0.8.1-live-deployment-audit
-    paths:
-      - '.github/workflows/climate-analyzer-live-audit.yml'
-      - 'deployment/live_browser_audit.mjs'
   workflow_dispatch:
 
 permissions:
