@@ -12,7 +12,7 @@ This is an engineering release gate, not legal advice. A publicly reachable Stre
 - [ ] Confirm whether the final publication facts qualify as a `kleine Website` under Austrian MedienG § 25 or require the broader disclosure set.
 - [ ] Approve the public `Wohnort/Sitz` disclosure required for the applicable MedienG website category.
 - [ ] Determine whether the actual project model falls within the ECG definition of a `Dienst der Informationsgesellschaft`; the project is currently free and carries no project-added advertising, so ECG § 5 must not be assumed solely from the fact that a website exists.
-- [ ] If ECG § 5 applies to the final facts, approve the geographic establishment address and a public electronic contact address required by that regime.
+- [ ] If ECG § 5 applies to the final facts, approve the **geographic address** of establishment and a public electronic contact address required by that regime.
 - [ ] Produce and publish the final deployment-specific Offenlegung / legal notice after the previous items are resolved.
 
 **Do not substitute the TU Graz postal address for the project owner's address unless that use has a valid basis and has been approved.**
