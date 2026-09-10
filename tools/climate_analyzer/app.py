@@ -125,8 +125,11 @@ from epw_climate_analyzer.statistics import (
 )
 from epw_climate_analyzer.ui_contract import (
     APP_BROWSER_TITLE,
+    APP_ENGINEERING_DISCLAIMER,
+    APP_INDEPENDENCE_NOTICE,
     APP_INTRO,
     APP_NAME,
+    APP_RELEASE_LABEL,
     APP_TAGLINE,
     NAVIGATION_KEY,
     NAVIGATION_PAGES,
@@ -676,6 +679,10 @@ def render_climate_file_source() -> None:
     st.title(APP_NAME)
     st.markdown(f"#### {APP_TAGLINE}")
     st.write(APP_INTRO)
+    st.caption(APP_RELEASE_LABEL)
+    with st.expander("About this beta", expanded=False):
+        st.write(APP_ENGINEERING_DISCLAIMER)
+        st.caption(APP_INDEPENDENCE_NOTICE)
     st.caption(
         "Start with an EPW weather file from your computer or select a climate from the reviewed "
         "Climate.OneBuilding station catalog. No building model is required."
@@ -2273,6 +2280,7 @@ def main() -> None:
     """Run the Streamlit Climate Analyzer application."""
     st.sidebar.caption("Building Energy Tools")
     st.sidebar.title(APP_NAME)
+    st.sidebar.caption(APP_RELEASE_LABEL)
     apply_queued_navigation(st.session_state)
     active_file = get_active_climate_file()
 
