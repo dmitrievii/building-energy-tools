@@ -1,0 +1,17 @@
+{
+  "stage": "WEB-0.8",
+  "target": "Streamlit Community Cloud",
+  "repository": "dmitrievii/building-energy-tools",
+  "branch": "main",
+  "entrypoint": "tools/climate_analyzer/app.py",
+  "python_version": "3.12",
+  "dependency_file": "tools/climate_analyzer/requirements.txt",
+  "streamlit_config": ".streamlit/config.toml",
+  "custom_subdomain_candidates": [
+    "building-climate-analyzer",
+    "climate-analyzer"
+  ],
+  "public_release_allowed": false,
+  "publication_status_required_for_public_release": "PUBLICATION_CLEARED",
+  "current_publication_status": "BETA_CANDIDATE_NOT_YET_PUBLICATION_CLEARED"
+}
