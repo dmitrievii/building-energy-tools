@@ -41,6 +41,7 @@ class StationCatalogManifest:
     provider_citation: str
     epw_files_bundled: bool
     distribution_note: str
+    build_evidence: dict[str, object] | None
 
 
 def _sha256_file(path: Path) -> str:
@@ -58,6 +59,7 @@ def load_station_catalog_manifest(path: str | Path | None = None) -> StationCata
 
     provider = payload.get("provider") or {}
     policy = payload.get("distribution_policy") or {}
+    build_evidence = payload.get("build_evidence")
     required = {
         "schema_version",
         "catalog_version",
@@ -75,6 +77,8 @@ def load_station_catalog_manifest(path: str | Path | None = None) -> StationCata
     sha = str(payload["csv_sha256"]).strip().lower()
     if len(sha) != 64 or any(character not in "0123456789abcdef" for character in sha):
         raise ValueError("Station catalog manifest contains an invalid csv_sha256 value.")
+    if build_evidence is not None and not isinstance(build_evidence, dict):
+        raise ValueError("Station catalog manifest build_evidence must be an object when present.")
 
     return StationCatalogManifest(
         schema_version=str(payload["schema_version"]),
@@ -92,6 +96,7 @@ def load_station_catalog_manifest(path: str | Path | None = None) -> StationCata
         provider_citation=str(provider.get("citation", "")),
         epw_files_bundled=bool(policy.get("epw_files_bundled", False)),
         distribution_note=str(policy.get("note", "")),
+        build_evidence=dict(build_evidence) if isinstance(build_evidence, dict) else None,
     )
 
 
