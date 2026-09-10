@@ -15,20 +15,26 @@ for (let i = 0; i < count; i += 1) {
   const el = loc.nth(i);
   const data = await el.evaluate((node) => {
     const style = getComputedStyle(node);
-    const parentStyle = node.parentElement ? getComputedStyle(node.parentElement) : null;
+    const ancestors = [];
+    let current = node;
+    for (let depth = 0; current && depth < 6; depth += 1, current = current.parentElement) {
+      ancestors.push({
+        depth,
+        tag: current.tagName,
+        className: current.className,
+        testid: current.getAttribute('data-testid'),
+        role: current.getAttribute('role'),
+        ariaLabel: current.getAttribute('aria-label'),
+      });
+    }
     return {
       text: node.textContent?.trim() ?? '',
-      tag: node.tagName,
-      className: node.className,
       color: style.color,
       backgroundColor: style.backgroundColor,
       fontSize: style.fontSize,
       fontWeight: style.fontWeight,
-      opacity: style.opacity,
-      parentTag: node.parentElement?.tagName ?? null,
-      parentClass: node.parentElement?.className ?? null,
-      parentBackgroundColor: parentStyle?.backgroundColor ?? null,
-      outerHTML: node.outerHTML.slice(0, 1200),
+      ancestors,
+      parentOuterHTML: node.parentElement?.outerHTML.slice(0, 3500) ?? '',
     };
   });
   console.log(`NODE_${i}=${JSON.stringify(data)}`);
