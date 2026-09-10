@@ -698,9 +698,15 @@ def render_climate_file_source() -> None:
             st.rerun()
 
     st.divider()
-    local_tab, map_tab = st.tabs(["Upload EPW", "Find climate"])
+    source_mode = st.radio(
+        "Climate source",
+        ["Upload EPW", "Find climate"],
+        horizontal=True,
+        label_visibility="collapsed",
+        key="climate_source_mode",
+    )
 
-    with local_tab:
+    if source_mode == "Upload EPW":
         st.subheader("Upload an EPW weather file")
         st.write("Use an EnergyPlus Weather (EPW) file that you already have. The file is processed for the current session.")
         local_file = st.file_uploader("Choose EPW file", type=["epw"], key="local_epw_upload")
@@ -709,217 +715,217 @@ def render_climate_file_source() -> None:
             if st.button("Analyze this EPW", type="primary"):
                 set_active_climate_file(local_file.name, local_file.getvalue(), "Local upload | user-provided EPW | transient session")
                 st.rerun()
+        return
 
-    with map_tab:
-        st.subheader("Find a climate from Climate.OneBuilding")
+    st.subheader("Find a climate from Climate.OneBuilding")
+    st.caption(
+        "Search or zoom to a station, choose one of its available climate datasets, then load the EPW for analysis."
+    )
+    try:
+        catalog = cached_station_catalog()
+    except Exception as exc:
+        st.error(f"The versioned station catalog failed integrity/provenance validation: {exc}")
+        return
+    st.caption(catalog_runtime_summary(catalog))
+    if catalog.empty:
+        st.error("The versioned station catalog is empty. A reviewed catalog update is required before online station selection can be used.")
+        return
+
+    col_filter1, col_filter2, col_filter3 = st.columns([2, 1, 1])
+    search_text = col_filter1.text_input("Search station, country, region, dataset or ID", value="")
+    countries = sorted([value for value in catalog["country"].dropna().unique().tolist() if str(value).strip()])
+    datasets = sorted([value for value in catalog["dataset"].dropna().unique().tolist() if str(value).strip()])
+    selected_countries = col_filter2.multiselect("Countries", countries, default=[])
+    selected_datasets = col_filter3.multiselect("Datasets", datasets, default=[])
+    filtered_catalog = filter_station_catalog(
+        catalog,
+        search_text=search_text,
+        countries=selected_countries if selected_countries else None,
+        datasets=selected_datasets if selected_datasets else None,
+    )
+
+    st.caption(f"Visible catalog records after filters: {len(filtered_catalog):,} of {len(catalog):,}")
+    if filtered_catalog.empty:
+        st.warning("No stations match the current filters.")
+        return
+
+    station_groups_all = grouped_station_catalog(filtered_catalog)
+    if station_groups_all.empty:
+        st.warning("No grouped station records are available for the current filters.")
+        return
+
+    # Initialize map view only once. After that, always preserve the user's
+    # current zoom and center, especially after clicking another station.
+    default_center = [float(station_groups_all["latitude"].mean()), float(station_groups_all["longitude"].mean())]
+    center = st.session_state.get("station_map_center", default_center)
+    zoom = int(st.session_state.get("station_map_zoom", 2))
+    bounds = st.session_state.get("station_map_bounds")
+
+    if st.button("Reset map view to filtered stations"):
+        st.session_state["station_map_center"] = default_center
+        st.session_state["station_map_zoom"] = 2 if len(station_groups_all) > 25 else 6
+        st.session_state.pop("station_map_bounds", None)
+        st.rerun()
+
+    with st.expander("Advanced map settings", expanded=False):
+        detail_zoom_threshold = st.slider(
+            "Show individual stations from zoom level",
+            min_value=5,
+            max_value=12,
+            value=int(st.session_state.get("station_detail_zoom_threshold", 8)),
+            help=(
+                "The clustered overview remains visible at lower zoom levels. "
+                "At this zoom level or closer, Leaflet disables clustering and shows "
+                "clickable violet station bubbles. This is handled inside one stable map, "
+                "not by switching between two Streamlit map components."
+            ),
+        )
+        st.session_state["station_detail_zoom_threshold"] = detail_zoom_threshold
+        selectable_limit = st.slider(
+            "Maximum station groups rendered on map",
+            min_value=1000,
+            max_value=50000,
+            value=int(st.session_state.get("station_selectable_cluster_limit", 20000)),
+            step=1000,
+            help=(
+                "The map renders one browser-side clustered marker per physical station group. "
+                "If the filtered catalog is larger than this limit, refine the country, dataset, or search filters."
+            ),
+        )
+        st.session_state["station_selectable_cluster_limit"] = selectable_limit
+
+    selected_group_id = st.session_state.get("selected_station_group_id")
+    group_ids = set(station_groups_all["station_group_id"].astype(str))
+    if selected_group_id not in group_ids:
+        selected_group_id = str(station_groups_all.iloc[0]["station_group_id"])
+        st.session_state["selected_station_group_id"] = selected_group_id
+
+    station_groups_for_map = station_groups_all
+    if len(station_groups_for_map) > int(st.session_state.get("station_selectable_cluster_limit", 20000)):
+        st.warning(
+            f"The current filter returns {len(station_groups_for_map):,} physical station groups. "
+            "This is too many for a responsive selectable browser map. Refine the country, dataset, or search filters. "
+            "The table selector on the right remains available for filtered results."
+        )
+        station_groups_for_map = station_groups_for_map.head(0)
+
+    left, right = st.columns([2, 1])
+    with left:
         st.caption(
-            "Search or zoom to a station, choose one of its available climate datasets, then load the EPW for analysis."
+            f"Clustered overview is active. At zoom {int(st.session_state.get('station_detail_zoom_threshold', 8))} "
+            "or closer, the same map reveals clickable violet station bubbles. "
+            "The map no longer switches between separate Streamlit components while zooming."
         )
-        try:
-            catalog = cached_station_catalog()
-        except Exception as exc:
-            st.error(f"The versioned station catalog failed integrity/provenance validation: {exc}")
-            return
-        st.caption(catalog_runtime_summary(catalog))
-        if catalog.empty:
-            st.error("The versioned station catalog is empty. A reviewed catalog update is required before online station selection can be used.")
-            return
-
-        col_filter1, col_filter2, col_filter3 = st.columns([2, 1, 1])
-        search_text = col_filter1.text_input("Search station, country, region, dataset or ID", value="")
-        countries = sorted([value for value in catalog["country"].dropna().unique().tolist() if str(value).strip()])
-        datasets = sorted([value for value in catalog["dataset"].dropna().unique().tolist() if str(value).strip()])
-        selected_countries = col_filter2.multiselect("Countries", countries, default=[])
-        selected_datasets = col_filter3.multiselect("Datasets", datasets, default=[])
-        filtered_catalog = filter_station_catalog(
-            catalog,
-            search_text=search_text,
-            countries=selected_countries if selected_countries else None,
-            datasets=selected_datasets if selected_datasets else None,
+        map_state = st_folium(
+            station_catalog_fast_selectable_map(
+                station_groups_for_map,
+                selected_group_id=selected_group_id,
+                center=center,
+                zoom=zoom,
+                detail_zoom_threshold=int(st.session_state.get("station_detail_zoom_threshold", 8)),
+            ),
+            height=620,
+            use_container_width=True,
+            returned_objects=["last_object_clicked_tooltip", "center", "zoom", "bounds"],
+            key="climate_onebuilding_selectable_cluster_map",
         )
 
-        st.caption(f"Visible catalog records after filters: {len(filtered_catalog):,} of {len(catalog):,}")
-        if filtered_catalog.empty:
-            st.warning("No stations match the current filters.")
-            return
+    update_station_map_view_state(map_state)
 
-        station_groups_all = grouped_station_catalog(filtered_catalog)
-        if station_groups_all.empty:
-            st.warning("No grouped station records are available for the current filters.")
-            return
+    clicked_group = None
+    if isinstance(map_state, dict):
+        clicked_group = station_group_from_tooltip(station_groups_all, map_state.get("last_object_clicked_tooltip"))
+    if clicked_group is not None:
+        selected_group_id = str(clicked_group["station_group_id"])
+        st.session_state["selected_station_group_id"] = selected_group_id
 
-        # Initialize map view only once. After that, always preserve the user's
-        # current zoom and center, especially after clicking another station.
-        default_center = [float(station_groups_all["latitude"].mean()), float(station_groups_all["longitude"].mean())]
-        center = st.session_state.get("station_map_center", default_center)
-        zoom = int(st.session_state.get("station_map_zoom", 2))
-        bounds = st.session_state.get("station_map_bounds")
+    selected_group_matches = station_groups_all[station_groups_all["station_group_id"].astype(str) == str(selected_group_id)]
+    selected_group = selected_group_matches.iloc[0] if not selected_group_matches.empty else station_groups_all.iloc[0]
+    selected_climates = catalog_rows_for_station_group(filtered_catalog, str(selected_group["station_group_id"]))
+    if selected_climates.empty:
+        selected_climates = filtered_catalog.head(1).copy()
 
-        if st.button("Reset map view to filtered stations"):
-            st.session_state["station_map_center"] = default_center
-            st.session_state["station_map_zoom"] = 2 if len(station_groups_all) > 25 else 6
-            st.session_state.pop("station_map_bounds", None)
-            st.rerun()
+    with right:
+        st.markdown("#### Selected station")
+        st.dataframe(
+            pd.DataFrame(
+                {
+                    "Field": ["Name", "Country", "Region", "Datasets", "Latitude", "Longitude", "Elevation", "Available climates"],
+                    "Value": [
+                        selected_group.get("name", ""),
+                        selected_group.get("country", ""),
+                        selected_group.get("region", ""),
+                        selected_group.get("dataset", ""),
+                        f"{float(selected_group['latitude']):.5f}",
+                        f"{float(selected_group['longitude']):.5f}",
+                        f"{float(selected_group.get('elevation_m', 0)):.0f} m" if pd.notna(selected_group.get("elevation_m", None)) else "",
+                        int(selected_group.get("climate_count", len(selected_climates))),
+                    ],
+                }
+            ),
+            hide_index=True,
+            use_container_width=True,
+        )
 
-        with st.expander("Advanced map settings", expanded=False):
-            detail_zoom_threshold = st.slider(
-                "Show individual stations from zoom level",
-                min_value=5,
-                max_value=12,
-                value=int(st.session_state.get("station_detail_zoom_threshold", 8)),
-                help=(
-                    "The clustered overview remains visible at lower zoom levels. "
-                    "At this zoom level or closer, Leaflet disables clustering and shows "
-                    "clickable violet station bubbles. This is handled inside one stable map, "
-                    "not by switching between two Streamlit map components."
-                ),
+        st.markdown("#### Available climates at this station")
+        climate_labels = [climate_option_label(row) for _, row in selected_climates.iterrows()]
+        if not climate_labels:
+            st.warning("No downloadable climates were found for this station.")
+            selected = filtered_catalog.iloc[0]
+        else:
+            climate_index = st.selectbox(
+                "Choose climate file",
+                list(range(len(climate_labels))),
+                format_func=lambda i: climate_labels[i],
+                key=f"station_climate_choice_{selected_group['station_group_id']}",
             )
-            st.session_state["station_detail_zoom_threshold"] = detail_zoom_threshold
-            selectable_limit = st.slider(
-                "Maximum station groups rendered on map",
-                min_value=1000,
-                max_value=50000,
-                value=int(st.session_state.get("station_selectable_cluster_limit", 20000)),
-                step=1000,
-                help=(
-                    "The map renders one browser-side clustered marker per physical station group. "
-                    "If the filtered catalog is larger than this limit, refine the country, dataset, or search filters."
-                ),
-            )
-            st.session_state["station_selectable_cluster_limit"] = selectable_limit
+            selected = selected_climates.iloc[int(climate_index)]
 
-        selected_group_id = st.session_state.get("selected_station_group_id")
-        group_ids = set(station_groups_all["station_group_id"].astype(str))
-        if selected_group_id not in group_ids:
-            selected_group_id = str(station_groups_all.iloc[0]["station_group_id"])
-            st.session_state["selected_station_group_id"] = selected_group_id
+        st.dataframe(
+            pd.DataFrame(
+                {
+                    "Field": ["Station ID", "Dataset", "Source", "Region", "Catalog version", "Catalog snapshot", "Download URL"],
+                    "Value": [
+                        selected.get("station_id", ""),
+                        selected.get("dataset", ""),
+                        selected.get("source", ""),
+                        selected.get("region", ""),
+                        selected.get("catalog_version", ""),
+                        selected.get("catalog_source_snapshot_date", ""),
+                        selected.get("download_url", ""),
+                    ],
+                }
+            ),
+            hide_index=True,
+            use_container_width=True,
+        )
 
-        station_groups_for_map = station_groups_all
-        if len(station_groups_for_map) > int(st.session_state.get("station_selectable_cluster_limit", 20000)):
-            st.warning(
-                f"The current filter returns {len(station_groups_for_map):,} physical station groups. "
-                "This is too many for a responsive selectable browser map. Refine the country, dataset, or search filters. "
-                "The table selector on the right remains available for filtered results."
-            )
-            station_groups_for_map = station_groups_for_map.head(0)
-
-        left, right = st.columns([2, 1])
-        with left:
-            st.caption(
-                f"Clustered overview is active. At zoom {int(st.session_state.get('station_detail_zoom_threshold', 8))} "
-                "or closer, the same map reveals clickable violet station bubbles. "
-                "The map no longer switches between separate Streamlit components while zooming."
-            )
-            map_state = st_folium(
-                station_catalog_fast_selectable_map(
-                    station_groups_for_map,
-                    selected_group_id=selected_group_id,
-                    center=center,
-                    zoom=zoom,
-                    detail_zoom_threshold=int(st.session_state.get("station_detail_zoom_threshold", 8)),
-                ),
-                height=620,
-                use_container_width=True,
-                returned_objects=["last_object_clicked_tooltip", "center", "zoom", "bounds"],
-                key="climate_onebuilding_selectable_cluster_map",
-            )
-
-        update_station_map_view_state(map_state)
-
-        clicked_group = None
-        if isinstance(map_state, dict):
-            clicked_group = station_group_from_tooltip(station_groups_all, map_state.get("last_object_clicked_tooltip"))
-        if clicked_group is not None:
-            selected_group_id = str(clicked_group["station_group_id"])
-            st.session_state["selected_station_group_id"] = selected_group_id
-
-        selected_group_matches = station_groups_all[station_groups_all["station_group_id"].astype(str) == str(selected_group_id)]
-        selected_group = selected_group_matches.iloc[0] if not selected_group_matches.empty else station_groups_all.iloc[0]
-        selected_climates = catalog_rows_for_station_group(filtered_catalog, str(selected_group["station_group_id"]))
-        if selected_climates.empty:
-            selected_climates = filtered_catalog.head(1).copy()
-
-        with right:
-            st.markdown("#### Selected station")
-            st.dataframe(
-                pd.DataFrame(
-                    {
-                        "Field": ["Name", "Country", "Region", "Datasets", "Latitude", "Longitude", "Elevation", "Available climates"],
-                        "Value": [
-                            selected_group.get("name", ""),
-                            selected_group.get("country", ""),
-                            selected_group.get("region", ""),
-                            selected_group.get("dataset", ""),
-                            f"{float(selected_group['latitude']):.5f}",
-                            f"{float(selected_group['longitude']):.5f}",
-                            f"{float(selected_group.get('elevation_m', 0)):.0f} m" if pd.notna(selected_group.get("elevation_m", None)) else "",
-                            int(selected_group.get("climate_count", len(selected_climates))),
-                        ],
-                    }
-                ),
-                hide_index=True,
-                use_container_width=True,
-            )
-
-            st.markdown("#### Available climates at this station")
-            climate_labels = [climate_option_label(row) for _, row in selected_climates.iterrows()]
-            if not climate_labels:
-                st.warning("No downloadable climates were found for this station.")
-                selected = filtered_catalog.iloc[0]
-            else:
-                climate_index = st.selectbox(
-                    "Choose climate file",
-                    list(range(len(climate_labels))),
-                    format_func=lambda i: climate_labels[i],
-                    key=f"station_climate_choice_{selected_group['station_group_id']}",
+        if st.button("Select and download this climate EPW", type="primary"):
+            try:
+                with st.spinner("Downloading and extracting EPW file..."):
+                    result = download_station_epw(selected)
+                source_text = station_provenance_text(
+                    selected,
+                    final_download_url=result.source_url,
+                    archive_name=result.extracted_from,
                 )
-                selected = selected_climates.iloc[int(climate_index)]
+                set_active_climate_file(result.file_name, result.payload, source_text)
+                st.rerun()
+            except Exception as exc:
+                st.error(f"Station download failed: {exc}")
 
-            st.dataframe(
-                pd.DataFrame(
-                    {
-                        "Field": ["Station ID", "Dataset", "Source", "Region", "Catalog version", "Catalog snapshot", "Download URL"],
-                        "Value": [
-                            selected.get("station_id", ""),
-                            selected.get("dataset", ""),
-                            selected.get("source", ""),
-                            selected.get("region", ""),
-                            selected.get("catalog_version", ""),
-                            selected.get("catalog_source_snapshot_date", ""),
-                            selected.get("download_url", ""),
-                        ],
-                    }
-                ),
-                hide_index=True,
-                use_container_width=True,
-            )
-
-            if st.button("Select and download this climate EPW", type="primary"):
-                try:
-                    with st.spinner("Downloading and extracting EPW file..."):
-                        result = download_station_epw(selected)
-                    source_text = station_provenance_text(
-                        selected,
-                        final_download_url=result.source_url,
-                        archive_name=result.extracted_from,
-                    )
-                    set_active_climate_file(result.file_name, result.payload, source_text)
-                    st.rerun()
-                except Exception as exc:
-                    st.error(f"Station download failed: {exc}")
-
-            st.markdown("#### Manual station selection")
-            station_group_options = station_group_options_from_catalog(filtered_catalog, limit=10000)
-            if station_group_options:
-                selected_label = st.selectbox("Search-result station groups", list(station_group_options.keys()))
-                if st.button("Use station group from list"):
-                    st.session_state["selected_station_group_id"] = station_group_options[selected_label]
-                    st.rerun()
-        st.info(
-            "Source note: the public app reads a reviewed, versioned station catalog bundled with this release. "
-            "Catalog crawling and refresh are maintenance operations outside user sessions. Selected EPW files are "
-            "downloaded on demand from Climate.OneBuilding and are not bundled with this repository."
-        )
+        st.markdown("#### Manual station selection")
+        station_group_options = station_group_options_from_catalog(filtered_catalog, limit=10000)
+        if station_group_options:
+            selected_label = st.selectbox("Search-result station groups", list(station_group_options.keys()))
+            if st.button("Use station group from list"):
+                st.session_state["selected_station_group_id"] = station_group_options[selected_label]
+                st.rerun()
+    st.info(
+        "Source note: the public app reads a reviewed, versioned station catalog bundled with this release. "
+        "Catalog crawling and refresh are maintenance operations outside user sessions. Selected EPW files are "
+        "downloaded on demand from Climate.OneBuilding and are not bundled with this repository."
+    )
 
 def render_interpretation(text: str) -> None:
     """Render an automatic interpretation block below a chart."""
