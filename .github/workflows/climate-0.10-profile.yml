@@ -1,0 +1,58 @@
+name: CLIMATE-0.10 global catalog profile
+
+on:
+  push:
+    branches:
+      - climate-0.10-global-catalog-stable-map
+    paths:
+      - '.github/workflows/climate-0.10-profile.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  profile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Profile global catalog cardinality
+        run: |
+          python - <<'PY'
+          import csv, json, os, time
+          from pathlib import Path
+          p = Path('tools/climate_analyzer/epw_climate_analyzer/data/station_catalog.csv')
+          started = time.perf_counter()
+          groups = {}
+          countries = set()
+          datasets = set()
+          rows = 0
+          with p.open(encoding='utf-8', newline='') as f:
+              for row in csv.DictReader(f):
+                  rows += 1
+                  name = row.get('name','').strip()
+                  country = row.get('country','').strip()
+                  countries.add(country)
+                  datasets.add(row.get('dataset','').strip())
+                  try:
+                      lat = round(float(row['latitude']), 4)
+                      lon = round(float(row['longitude']), 4)
+                  except Exception:
+                      continue
+                  key = (country.lower(), name.lower(), lat, lon)
+                  if key not in groups:
+                      groups[key] = [lat, lon, name, country, row.get('region',''), row.get('dataset',''), 1]
+                  else:
+                      groups[key][6] += 1
+          data = list(groups.values())
+          payload_bytes = len(json.dumps(data, ensure_ascii=False, separators=(',',':')).encode('utf-8'))
+          elapsed = time.perf_counter() - started
+          print(f'CATALOG_ROWS={rows}')
+          print(f'PHYSICAL_STATION_GROUPS={len(groups)}')
+          print(f'COUNTRIES_NONEMPTY={len([x for x in countries if x])}')
+          print(f'DATASETS_NONEMPTY={len([x for x in datasets if x])}')
+          print(f'CSV_BYTES={p.stat().st_size}')
+          print(f'APPROX_CLUSTER_DATA_BYTES={payload_bytes}')
+          print(f'PROFILE_SECONDS={elapsed:.3f}')
+          print(f'DEFAULT_20000_LIMIT_SUFFICIENT={len(groups) <= 20000}')
+          PY
