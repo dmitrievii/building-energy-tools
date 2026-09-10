@@ -1,0 +1,41 @@
+name: WEB-0.3 apply hardening patch
+
+on:
+  push:
+    branches:
+      - web-0.3-runtime-security-hardening
+    paths:
+      - '.web03-ready'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout hardening branch
+        uses: actions/checkout@v4
+        with:
+          ref: web-0.3-runtime-security-hardening
+          fetch-depth: 0
+
+      - name: Apply parser and network hardening
+        shell: bash
+        run: |
+          set -euo pipefail
+          git apply --check .web03.patch
+          git apply .web03.patch
+          python -m compileall -q tools/climate_analyzer/epw_climate_analyzer
+
+      - name: Remove staging files and commit hardened sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .web03.patch .web03-ready .github/workflows/web03-apply.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'WEB-0.3: harden EPW parser and climate downloads'
+          git push origin HEAD:web-0.3-runtime-security-hardening
