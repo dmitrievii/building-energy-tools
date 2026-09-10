@@ -1,11 +1,15 @@
 """Public product copy and navigation contract for Climate Analyzer.
 
-Keeping user-facing navigation labels outside ``app.py`` makes the product
-structure testable without importing Streamlit and separates stable public
-terminology from internal page identifiers used by calculation routing.
+Keeping user-facing navigation labels and state transitions outside ``app.py``
+makes the product structure testable without importing Streamlit and separates
+stable public terminology from internal page identifiers used by calculation
+routing.
 """
 
 from __future__ import annotations
+
+from collections.abc import MutableMapping
+from typing import Any
 
 
 PUBLIC_UX_STAGE = "WEB-0.6"
@@ -16,6 +20,10 @@ APP_INTRO = (
     "Explore EPW weather data for temperature, moisture, solar radiation, wind, "
     "passive-design potential and early HVAC decision support."
 )
+
+NAVIGATION_KEY = "climate_analyzer_navigation"
+PENDING_NAVIGATION_KEY = "_climate_analyzer_pending_navigation"
+RESET_NAVIGATION_KEY = "_climate_analyzer_reset_navigation"
 
 NAVIGATION_PAGES = (
     "Climate File Source",
@@ -49,3 +57,30 @@ NAVIGATION_LABELS = {
 def navigation_label(page: str) -> str:
     """Return the public label for an internal page identifier."""
     return NAVIGATION_LABELS.get(page, page)
+
+
+def queue_navigation(state: MutableMapping[str, Any], page: str) -> None:
+    """Request navigation for the next render cycle without mutating a live widget key."""
+    if page not in NAVIGATION_PAGES:
+        raise ValueError(f"Unknown Climate Analyzer page: {page}")
+    state[PENDING_NAVIGATION_KEY] = page
+    state.pop(RESET_NAVIGATION_KEY, None)
+
+
+def queue_navigation_reset(state: MutableMapping[str, Any]) -> None:
+    """Request removal of the navigation widget state on the next render cycle."""
+    state[RESET_NAVIGATION_KEY] = True
+    state.pop(PENDING_NAVIGATION_KEY, None)
+
+
+def apply_queued_navigation(state: MutableMapping[str, Any]) -> None:
+    """Apply queued navigation before the Streamlit navigation widget is instantiated."""
+    reset = bool(state.pop(RESET_NAVIGATION_KEY, False))
+    pending = state.pop(PENDING_NAVIGATION_KEY, None)
+    if reset:
+        state.pop(NAVIGATION_KEY, None)
+        return
+    if pending is not None:
+        if pending not in NAVIGATION_PAGES:
+            raise ValueError(f"Unknown queued Climate Analyzer page: {pending}")
+        state[NAVIGATION_KEY] = pending
