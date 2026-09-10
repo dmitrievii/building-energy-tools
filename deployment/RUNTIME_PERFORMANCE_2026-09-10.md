@@ -93,15 +93,9 @@ Observed optimized ranges:
 
 Artifacts retained by GitHub Actions at the time of this report:
 
-- artifact `10168989684`, digest `sha256:d964717d03fc1daf44ffc773d33dde4e11e72ace5` is **not** the artifact digest; see note below;
+- artifact `10168989684`, digest `sha256:d964717d03fc1daf2e4fc273c8315e0678b0e9de303e380ab1d0c94e591a8b71`;
 - artifact `10169124899`, digest `sha256:7c5e8f8488b97a90da31ea6f9eb19c6fb9295a9b439e5704ef5c9d49cf2c7797`;
 - repeat artifact `10169191319`, digest `sha256:88860b827ffb72a464c7d21540747e016f80d41e30289884caed624eb9c50edc`.
-
-Correction for the first optimized artifact: its verified GitHub artifact ZIP digest is:
-
-`sha256:d964717d03fc1daf2e4fc273c8315e0678b0e9de303e380ab1d0c94e591a8b71`
-
-The preceding shortened/incorrect line is retained only as an explicit correction record and must not be used for verification.
 
 ## Result
 
