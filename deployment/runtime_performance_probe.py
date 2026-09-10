@@ -14,6 +14,9 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 TOOL_ROOT = REPO_ROOT / "tools" / "climate_analyzer"
 APP_PATH = TOOL_ROOT / "app.py"
 OUTPUT_DIR = Path(os.environ.get("PERF_OUTPUT_DIR", REPO_ROOT / "artifacts" / "performance"))
+if not OUTPUT_DIR.is_absolute():
+    OUTPUT_DIR = REPO_ROOT / OUTPUT_DIR
+OUTPUT_DIR = OUTPUT_DIR.resolve()
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 PYTHON_ENV = os.environ.copy()
@@ -189,7 +192,6 @@ def server_cold_start() -> dict[str, object]:
 def app_test_profile() -> dict[str, object]:
     code = f"""
 import json
-import os
 import resource
 import time
 from streamlit.testing.v1 import AppTest
