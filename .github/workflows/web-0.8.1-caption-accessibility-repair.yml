@@ -1,0 +1,68 @@
+name: WEB-0.8.1 Caption Accessibility Repair
+
+on:
+  push:
+    branches:
+      - web-0.8.1-live-deployment-audit
+    paths:
+      - '.github/workflows/web-0.8.1-caption-accessibility-repair.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  remediate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: web-0.8.1-live-deployment-audit
+
+      - name: Promote essential landing captions to normal contrast text
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('tools/climate_analyzer/app.py')
+          text = path.read_text(encoding='utf-8')
+
+          release = 'st.caption(APP_RELEASE_LABEL)'
+          count = text.count(release)
+          if count != 1:
+              raise SystemExit(f'Expected exactly 1 release caption, found {count}')
+          text = text.replace(release, 'st.write(APP_RELEASE_LABEL)', 1)
+
+          guidance_text = (
+              '"Start with an EPW weather file from your computer or select a climate from the reviewed "\n'
+              '        "Climate.OneBuilding station catalog. No building model is required."'
+          )
+          guidance_caption = 'st.caption(\n        ' + guidance_text + '\n    )'
+          guidance_write = 'st.write(\n        ' + guidance_text + '\n    )'
+          count = text.count(guidance_caption)
+          if count != 1:
+              raise SystemExit(f'Expected exactly 1 landing guidance caption, found {count}')
+          text = text.replace(guidance_caption, guidance_write, 1)
+
+          if 'st.caption(APP_RELEASE_LABEL)' in text:
+              raise SystemExit('Release caption remains after transform')
+          path.write_text(text, encoding='utf-8')
+          PY
+          python -m compileall -q tools/climate_analyzer/app.py
+
+      - name: Remove one-time workflows
+        shell: bash
+        run: |
+          git rm -f .github/workflows/web-0.8.1-caption-accessibility.yml
+          git rm -f .github/workflows/web-0.8.1-caption-accessibility-repair.yml
+
+      - name: Commit remediation
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tools/climate_analyzer/app.py
+          git diff --cached --check
+          git commit -m 'WEB-0.8.1: improve landing text contrast'
+          git push origin HEAD:web-0.8.1-live-deployment-audit
