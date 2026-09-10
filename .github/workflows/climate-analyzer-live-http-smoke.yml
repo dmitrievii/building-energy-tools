@@ -21,19 +21,38 @@ jobs:
       - name: Probe root and Streamlit health
         shell: bash
         run: |
-          set -euo pipefail
-          echo '--- ROOT ---'
-          curl --silent --show-error --location --max-time 30 \
-            --output /tmp/root.html --dump-header /tmp/root.headers \
+          set -u
+
+          echo '--- ROOT FIRST RESPONSE (NO FOLLOW) ---'
+          curl --silent --show-error --max-time 30 \
+            --output /tmp/root-first.html --dump-header /tmp/root-first.headers \
             --write-out 'http_code=%{http_code}\ntime_total=%{time_total}\nsize_download=%{size_download}\nremote_ip=%{remote_ip}\n' \
-            "$TARGET/"
-          grep -Ei '^(HTTP/|content-type:|content-length:|cache-control:|strict-transport-security:|server:)' /tmp/root.headers || true
-          echo "body_bytes=$(wc -c </tmp/root.html)"
-          echo '--- HEALTH ---'
-          curl --silent --show-error --location --max-time 30 \
+            "$TARGET/" || true
+          grep -Ei '^(HTTP/|location:|set-cookie:|content-type:|content-length:|cache-control:|strict-transport-security:|server:)' /tmp/root-first.headers || true
+          echo "body_bytes=$(wc -c </tmp/root-first.html 2>/dev/null || echo 0)"
+          head -c 500 /tmp/root-first.html 2>/dev/null || true
+          echo
+
+          echo '--- ROOT FOLLOW WITH COOKIE JAR (MAX 12) ---'
+          curl --silent --show-error --location --max-redirs 12 --max-time 30 \
+            --cookie-jar /tmp/cookies.txt --cookie /tmp/cookies.txt \
+            --output /tmp/root-follow.html --dump-header /tmp/root-follow.headers \
+            --write-out 'http_code=%{http_code}\ntime_total=%{time_total}\nsize_download=%{size_download}\nurl_effective=%{url_effective}\nredirects=%{num_redirects}\nremote_ip=%{remote_ip}\n' \
+            "$TARGET/" || true
+          grep -Ei '^(HTTP/|location:|set-cookie:|content-type:|content-length:|cache-control:|strict-transport-security:|server:)' /tmp/root-follow.headers | tail -n 80 || true
+          echo "cookie_names=$(awk '!/^#/ && NF>=7 {print $6}' /tmp/cookies.txt 2>/dev/null | sort -u | paste -sd, -)"
+          echo
+
+          echo '--- HEALTH (INDEPENDENT, NO ROOT DEPENDENCY) ---'
+          health_code=$(curl --silent --show-error --location --max-redirs 5 --max-time 30 \
             --output /tmp/health.txt --dump-header /tmp/health.headers \
-            --write-out 'http_code=%{http_code}\ntime_total=%{time_total}\nsize_download=%{size_download}\nremote_ip=%{remote_ip}\n' \
-            "$TARGET/_stcore/health"
-          grep -Ei '^(HTTP/|content-type:|content-length:|cache-control:|strict-transport-security:|server:)' /tmp/health.headers || true
-          printf 'health_body='; cat /tmp/health.txt; echo
-          grep -qi 'ok' /tmp/health.txt
+            --write-out '%{http_code}' \
+            "$TARGET/_stcore/health" || true)
+          echo "http_code=$health_code"
+          grep -Ei '^(HTTP/|location:|set-cookie:|content-type:|content-length:|cache-control:|strict-transport-security:|server:)' /tmp/health.headers || true
+          printf 'health_body='; cat /tmp/health.txt 2>/dev/null || true; echo
+
+          if [ "$health_code" != "200" ] || ! grep -qi 'ok' /tmp/health.txt 2>/dev/null; then
+            echo 'Health endpoint is not healthy.' >&2
+            exit 1
+          fi
