@@ -13,71 +13,139 @@ await fs.mkdir(OUT_DIR, { recursive: true });
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const nowIso = () => new Date().toISOString();
 
-async function timedFetch(url) {
+async function firstHttpResponse(url) {
   const started = performance.now();
   try {
-    const response = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(120_000) });
-    const text = await response.text();
+    const response = await fetch(url, {
+      redirect: 'manual',
+      signal: AbortSignal.timeout(30_000),
+    });
     return {
-      ok: response.ok,
       status: response.status,
-      final_url: response.url,
       elapsed_ms: Math.round(performance.now() - started),
-      body_preview: text.slice(0, 500),
-      headers: Object.fromEntries(
-        ['content-type', 'content-length', 'server', 'cache-control', 'strict-transport-security']
-          .map((name) => [name, response.headers.get(name)])
-          .filter(([, value]) => value !== null),
-      ),
+      location: response.headers.get('location'),
+      server: response.headers.get('server'),
+      content_type: response.headers.get('content-type'),
     };
   } catch (error) {
     return {
-      ok: false,
       status: null,
-      final_url: url,
       elapsed_ms: Math.round(performance.now() - started),
       error: String(error),
     };
   }
 }
 
-async function collectStorage(page) {
-  return page.evaluate(() => ({
+async function bodyText(frame) {
+  try {
+    return await frame.locator('body').innerText({ timeout: 2_000 });
+  } catch {
+    return '';
+  }
+}
+
+async function waitForFrameContaining(page, text, timeoutMs = 60_000) {
+  const started = performance.now();
+  while (performance.now() - started < timeoutMs) {
+    for (const frame of page.frames()) {
+      const textContent = await bodyText(frame);
+      if (textContent.includes(text)) {
+        return {
+          frame,
+          detected_ms: Math.round(performance.now() - started),
+          text_preview: textContent.slice(0, 2_000),
+        };
+      }
+    }
+    await sleep(500);
+  }
+  return null;
+}
+
+async function collectStorage(frame) {
+  return frame.evaluate(() => ({
     local_storage_keys: Object.keys(localStorage).sort(),
     session_storage_keys: Object.keys(sessionStorage).sort(),
   }));
 }
 
-async function collectFrameAttribution(page) {
-  const frameResults = [];
+async function collectAttribution(page) {
+  const results = [];
   for (const frame of page.frames()) {
     try {
-      const text = (await frame.locator('body').innerText({ timeout: 5_000 })).slice(0, 20_000);
+      const text = (await bodyText(frame)).slice(0, 20_000);
       const links = await frame.locator('a').evaluateAll((nodes) => nodes.map((node) => ({
         text: (node.textContent || '').trim(),
         href: node.href || '',
       })));
-      frameResults.push({
+      results.push({
         url: frame.url(),
         has_openstreetmap_text: /OpenStreetMap/i.test(text),
         osm_links: links.filter((item) => /openstreetmap\.org/i.test(item.href) || /OpenStreetMap/i.test(item.text)),
       });
     } catch (error) {
-      frameResults.push({ url: frame.url(), error: String(error) });
+      results.push({ url: frame.url(), error: String(error) });
     }
   }
-  return frameResults;
+  return results;
+}
+
+async function runAxe(frame) {
+  try {
+    await frame.addScriptTag({ content: axe.source });
+    const raw = await frame.evaluate(async () => window.axe.run(document, {
+      runOnly: {
+        type: 'tag',
+        values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'],
+      },
+    }));
+    return {
+      violations: raw.violations.map((v) => ({
+        id: v.id,
+        impact: v.impact,
+        description: v.description,
+        help: v.help,
+        help_url: v.helpUrl,
+        nodes: v.nodes.length,
+        targets: v.nodes.slice(0, 8).map((n) => n.target),
+      })),
+      incomplete: raw.incomplete.map((v) => ({
+        id: v.id,
+        impact: v.impact,
+        nodes: v.nodes.length,
+      })),
+      passes: raw.passes.map((v) => v.id),
+    };
+  } catch (error) {
+    return { error: String(error), violations: [], incomplete: [], passes: [] };
+  }
+}
+
+function domainSet(urls) {
+  return [...new Set([...urls].map((url) => {
+    try {
+      return new URL(url).hostname;
+    } catch {
+      return null;
+    }
+  }).filter(Boolean))].sort();
 }
 
 async function runViewportAudit(browser, name, viewport) {
   const context = await browser.newContext({ viewport });
   const page = await context.newPage();
   const requestUrls = new Set();
+  const responseErrors = [];
   const failedRequests = [];
   const consoleMessages = [];
   const pageErrors = [];
 
   page.on('request', (request) => requestUrls.add(request.url()));
+  page.on('response', (response) => {
+    if (response.status() >= 400) {
+      responseErrors.push({ status: response.status(), url: response.url() });
+    }
+  });
   page.on('requestfailed', (request) => failedRequests.push({
     url: request.url(),
     error: request.failure()?.errorText || 'unknown',
@@ -91,25 +159,32 @@ async function runViewportAudit(browser, name, viewport) {
 
   const started = performance.now();
   let navigationError = null;
+  let navigationStatus = null;
   try {
-    await page.goto(TARGET_URL, { waitUntil: 'domcontentloaded', timeout: 120_000 });
+    const response = await page.goto(TARGET_URL, {
+      waitUntil: 'domcontentloaded',
+      timeout: 60_000,
+    });
+    navigationStatus = response?.status() ?? null;
   } catch (error) {
     navigationError = String(error);
   }
 
-  let appVisible = false;
-  try {
-    await page.getByText('Climate Analyzer', { exact: false }).first().waitFor({ state: 'visible', timeout: 120_000 });
-    appVisible = true;
-  } catch {
-    appVisible = false;
-  }
-  await sleep(4_000);
-
+  const appHit = await waitForFrameContaining(page, 'Climate Analyzer', 60_000);
+  const appVisible = Boolean(appHit);
+  const appFrame = appHit?.frame || page.mainFrame();
+  const appDetectedMs = appHit?.detected_ms ?? null;
   const initialLoadMs = Math.round(performance.now() - started);
+
+  await sleep(2_000);
+  const initialRequestDomains = domainSet(requestUrls);
+  const initialOsmRequested = initialRequestDomains.includes('tile.openstreetmap.org');
+
+  const appText = await bodyText(appFrame);
+  const pageText = await bodyText(page.mainFrame());
   const title = await page.title().catch(() => '');
-  const bodyText = await page.locator('body').innerText().catch(() => '');
-  const headings = await page.locator('h1,h2,h3').allInnerTexts().catch(() => []);
+  const headings = await appFrame.locator('h1,h2,h3').allInnerTexts().catch(() => []);
+  const frameUrls = page.frames().map((frame) => frame.url());
   const viewportMetrics = await page.evaluate(() => ({
     client_width: document.documentElement.clientWidth,
     scroll_width: document.documentElement.scrollWidth,
@@ -118,78 +193,74 @@ async function runViewportAudit(browser, name, viewport) {
     horizontal_overflow_px: Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth),
   })).catch(() => null);
 
-  const throttleVisible = /Your app has been throttled/i.test(bodyText);
-  const resourceLimitVisible = /resource limits|gone over its resource limits/i.test(bodyText);
-
-  let axeResults = { violations: [], incomplete: [], passes: [] };
-  try {
-    await page.addScriptTag({ content: axe.source });
-    const raw = await page.evaluate(async () => axe.run(document, {
-      runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] },
-    }));
-    axeResults = {
-      violations: raw.violations.map((v) => ({
-        id: v.id,
-        impact: v.impact,
-        description: v.description,
-        help: v.help,
-        help_url: v.helpUrl,
-        nodes: v.nodes.length,
-        targets: v.nodes.slice(0, 8).map((n) => n.target),
-      })),
-      incomplete: raw.incomplete.map((v) => ({ id: v.id, impact: v.impact, nodes: v.nodes.length })),
-      passes: raw.passes.map((v) => v.id),
-    };
-  } catch (error) {
-    axeResults = { error: String(error), violations: [], incomplete: [], passes: [] };
-  }
-
+  const throttleVisible = /Your app has been throttled/i.test(`${pageText}\n${appText}`);
+  const resourceLimitVisible = /resource limits|gone over its resource limits/i.test(`${pageText}\n${appText}`);
+  const accessibility = await runAxe(appFrame);
   const cookies = await context.cookies().catch(() => []);
-  const storage = await collectStorage(page).catch(() => ({ local_storage_keys: [], session_storage_keys: [] }));
+  const storage = await collectStorage(page.mainFrame()).catch(() => ({
+    local_storage_keys: [],
+    session_storage_keys: [],
+  }));
 
-  await page.screenshot({ path: path.join(OUT_DIR, `${name}-landing.png`), fullPage: true }).catch(() => {});
+  await page.screenshot({
+    path: path.join(OUT_DIR, `${name}-landing.png`),
+    fullPage: true,
+  }).catch(() => {});
 
-  let findClimate = {
+  const findClimate = {
     attempted: false,
     clicked: false,
     openstreetmap_visible: false,
     frame_attribution: [],
   };
-  try {
-    const findClimateLocator = page.getByText('Find climate', { exact: true }).first();
-    if (await findClimateLocator.count()) {
-      findClimate.attempted = true;
-      await findClimateLocator.click({ timeout: 20_000 });
-      findClimate.clicked = true;
-      await sleep(8_000);
-      const afterText = await page.locator('body').innerText();
-      findClimate.openstreetmap_visible = /OpenStreetMap/i.test(afterText);
-      findClimate.frame_attribution = await collectFrameAttribution(page);
-      await page.screenshot({ path: path.join(OUT_DIR, `${name}-find-climate.png`), fullPage: true }).catch(() => {});
+  if (appVisible) {
+    try {
+      let locator = appFrame.getByRole('tab', { name: 'Find climate', exact: true });
+      if (!(await locator.count())) {
+        locator = appFrame.getByText('Find climate', { exact: true }).first();
+      }
+      if (await locator.count()) {
+        findClimate.attempted = true;
+        await locator.click({ timeout: 15_000 });
+        findClimate.clicked = true;
+        await sleep(5_000);
+        findClimate.frame_attribution = await collectAttribution(page);
+        findClimate.openstreetmap_visible = findClimate.frame_attribution.some((item) =>
+          item.has_openstreetmap_text || (item.osm_links || []).length > 0
+        );
+        await page.screenshot({
+          path: path.join(OUT_DIR, `${name}-find-climate.png`),
+          fullPage: true,
+        }).catch(() => {});
+      }
+    } catch (error) {
+      findClimate.error = String(error);
     }
-  } catch (error) {
-    findClimate.error = String(error);
   }
 
-  const domains = [...new Set([...requestUrls].map((url) => {
-    try { return new URL(url).hostname; } catch { return null; }
-  }).filter(Boolean))].sort();
-
+  const allDomains = domainSet(requestUrls);
   const result = {
     name,
     viewport,
+    navigation_status: navigationStatus,
     navigation_error: navigationError,
     app_visible: appVisible,
-    initial_load_ms: initialLoadMs,
+    app_frame_url: appFrame.url(),
+    app_detected_ms: appDetectedMs,
+    total_initial_audit_ms: initialLoadMs,
     title,
     headings,
+    frame_urls: frameUrls,
     throttle_visible: throttleVisible,
     resource_limit_visible: resourceLimitVisible,
     viewport_metrics: viewportMetrics,
     console_messages: consoleMessages.slice(0, 100),
     page_errors: pageErrors.slice(0, 100),
     failed_requests: failedRequests.slice(0, 100),
-    network_domains: domains,
+    http_error_responses: responseErrors.slice(0, 150),
+    initial_network_domains: initialRequestDomains,
+    initial_osm_requested_before_find_climate: initialOsmRequested,
+    network_domains_after_find_climate: allDomains,
     cookies: cookies.map((cookie) => ({
       name: cookie.name,
       domain: cookie.domain,
@@ -200,7 +271,7 @@ async function runViewportAudit(browser, name, viewport) {
       expires: cookie.expires,
     })),
     storage,
-    accessibility: axeResults,
+    accessibility,
     find_climate: findClimate,
   };
 
@@ -208,15 +279,11 @@ async function runViewportAudit(browser, name, viewport) {
   return result;
 }
 
-const healthUrl = new URL('/_stcore/health', TARGET_URL).toString();
 const report = {
-  schema: 'building-energy-tools-live-audit-v1',
+  schema: 'building-energy-tools-live-audit-v2',
   target_url: TARGET_URL,
   audited_at_utc: nowIso(),
-  http: {
-    root: await timedFetch(TARGET_URL),
-    health: await timedFetch(healthUrl),
-  },
+  first_http_response: await firstHttpResponse(TARGET_URL),
   browser: null,
 };
 
@@ -237,15 +304,31 @@ try {
   if (browser) await browser.close();
 }
 
-await fs.writeFile(path.join(OUT_DIR, 'live-audit.json'), JSON.stringify(report, null, 2));
+await fs.writeFile(
+  path.join(OUT_DIR, 'live-audit.json'),
+  JSON.stringify(report, null, 2),
+);
 
-const views = report.browser && !report.browser.error ? [report.browser.desktop, report.browser.mobile] : [];
+const views = report.browser && !report.browser.error
+  ? [report.browser.desktop, report.browser.mobile]
+  : [];
 const critical = [];
-if (!report.http.health.ok) critical.push('Health endpoint did not return a successful response.');
-if (!report.http.root.ok) critical.push('Root URL did not return a successful response.');
+const findings = [];
 for (const view of views) {
   if (!view.app_visible) critical.push(`${view.name}: Climate Analyzer UI was not detected.`);
   if (view.page_errors.length) critical.push(`${view.name}: ${view.page_errors.length} uncaught page error(s).`);
+  if (view.viewport_metrics?.horizontal_overflow_px > 0) {
+    findings.push(`${view.name}: horizontal overflow ${view.viewport_metrics.horizontal_overflow_px}px.`);
+  }
+  if (view.initial_osm_requested_before_find_climate) {
+    findings.push(`${view.name}: OpenStreetMap tiles were requested before the user selected Find climate.`);
+  }
+  if (view.find_climate.clicked && !view.find_climate.openstreetmap_visible) {
+    critical.push(`${view.name}: OpenStreetMap attribution was not detected after opening Find climate.`);
+  }
+  if ((view.accessibility.violations || []).length) {
+    findings.push(`${view.name}: ${view.accessibility.violations.length} axe WCAG A/AA violation group(s) in the detected app frame.`);
+  }
 }
 
 const md = [
@@ -253,8 +336,7 @@ const md = [
   '',
   `- Target: ${TARGET_URL}`,
   `- Audited at: ${report.audited_at_utc}`,
-  `- Root HTTP: ${report.http.root.status ?? 'ERROR'} (${report.http.root.elapsed_ms} ms)`,
-  `- Health HTTP: ${report.http.health.status ?? 'ERROR'} (${report.http.health.elapsed_ms} ms)`,
+  `- First unauthenticated HTTP response: ${report.first_http_response.status ?? 'ERROR'} (${report.first_http_response.elapsed_ms} ms)`,
   '',
   '## Browser summary',
   '',
@@ -262,23 +344,29 @@ const md = [
     `### ${view.name}`,
     '',
     `- Viewport: ${view.viewport.width} × ${view.viewport.height}`,
+    `- Navigation HTTP: ${view.navigation_status ?? 'n/a'}`,
     `- UI detected: ${view.app_visible}`,
-    `- Initial load: ${view.initial_load_ms} ms`,
-    `- Throttle banner detected: ${view.throttle_visible}`,
+    `- App frame: ${view.app_frame_url}`,
+    `- Time to detected app text: ${view.app_detected_ms ?? 'n/a'} ms`,
+    `- Throttle banner detected for anonymous viewer: ${view.throttle_visible}`,
     `- Horizontal overflow: ${view.viewport_metrics?.horizontal_overflow_px ?? 'n/a'} px`,
-    `- Console warnings/errors: ${view.console_messages.length}`,
     `- Uncaught page errors: ${view.page_errors.length}`,
-    `- Failed requests: ${view.failed_requests.length}`,
-    `- Cookies: ${view.cookies.length}`,
+    `- HTTP 4xx/5xx responses observed: ${view.http_error_responses.length}`,
+    `- Cookies observed: ${view.cookies.length}`,
     `- localStorage keys: ${view.storage.local_storage_keys.length}`,
-    `- sessionStorage keys: ${view.storage.session_storage_keys.length}`,
-    `- Axe WCAG A/AA violations: ${view.accessibility.violations?.length ?? 'n/a'}`,
+    `- Axe WCAG A/AA violation groups in app frame: ${view.accessibility.violations?.length ?? 'n/a'}`,
+    `- OSM requested before Find climate: ${view.initial_osm_requested_before_find_climate}`,
     `- Find climate clicked: ${view.find_climate.clicked}`,
+    `- OSM attribution detected after Find climate: ${view.find_climate.openstreetmap_visible}`,
     '',
   ]),
   '## Critical findings',
   '',
   ...(critical.length ? critical.map((item) => `- ${item}`) : ['- None detected by the automated critical gate.']),
+  '',
+  '## Non-critical findings',
+  '',
+  ...(findings.length ? findings.map((item) => `- ${item}`) : ['- None recorded.']),
   '',
   '> Automated browser audit is evidence, not full manual accessibility or legal/privacy clearance.',
   '',
@@ -288,6 +376,6 @@ await fs.writeFile(path.join(OUT_DIR, 'LIVE_AUDIT.md'), md);
 console.log(md);
 console.log(`Audit JSON: ${path.join(OUT_DIR, 'live-audit.json')}`);
 
-if (!report.http.health.ok || !report.http.root.ok || report.browser?.error) {
+if (critical.length || report.browser?.error) {
   process.exitCode = 1;
 }
