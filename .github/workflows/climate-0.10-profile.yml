@@ -16,24 +16,25 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Profile global catalog cardinality
+      - name: Profile global catalog cardinality and metadata
         run: |
           python - <<'PY'
-          import csv, json, os, time
+          import csv, json, time
+          from collections import Counter
           from pathlib import Path
           p = Path('tools/climate_analyzer/epw_climate_analyzer/data/station_catalog.csv')
           started = time.perf_counter()
           groups = {}
-          countries = set()
-          datasets = set()
+          countries = Counter()
+          datasets = Counter()
           rows = 0
           with p.open(encoding='utf-8', newline='') as f:
               for row in csv.DictReader(f):
                   rows += 1
                   name = row.get('name','').strip()
                   country = row.get('country','').strip()
-                  countries.add(country)
-                  datasets.add(row.get('dataset','').strip())
+                  countries[country] += 1
+                  datasets[row.get('dataset','').strip()] += 1
                   try:
                       lat = round(float(row['latitude']), 4)
                       lon = round(float(row['longitude']), 4)
@@ -55,4 +56,11 @@ jobs:
           print(f'APPROX_CLUSTER_DATA_BYTES={payload_bytes}')
           print(f'PROFILE_SECONDS={elapsed:.3f}')
           print(f'DEFAULT_20000_LIMIT_SUFFICIENT={len(groups) <= 20000}')
+          print('TOP_COUNTRY_VALUES:')
+          for value, count in countries.most_common(60):
+              print(repr(value), count)
+          weird = [(value, count) for value, count in countries.items() if value and (len(value) > 40 or value.startswith('http') or '/' in value or '\\' in value)]
+          print(f'WEIRD_COUNTRY_VALUES={len(weird)}')
+          for value, count in sorted(weird, key=lambda x: (-x[1], x[0]))[:40]:
+              print('WEIRD', repr(value), count)
           PY
