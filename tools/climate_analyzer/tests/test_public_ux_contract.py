@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
 
 from epw_climate_analyzer.ui_contract import (
     APP_BROWSER_TITLE,
@@ -16,6 +17,9 @@ from epw_climate_analyzer.ui_contract import (
     queue_navigation,
     queue_navigation_reset,
 )
+
+
+TOOL_ROOT = Path(__file__).resolve().parents[1]
 
 
 class PublicUxContractTests(unittest.TestCase):
@@ -58,6 +62,23 @@ class PublicUxContractTests(unittest.TestCase):
     def test_unknown_navigation_target_is_rejected(self) -> None:
         with self.assertRaises(ValueError):
             queue_navigation({}, "Unknown page")
+
+    def test_climate_source_map_is_lazy_rendered(self) -> None:
+        source = (TOOL_ROOT / "app.py").read_text(encoding="utf-8")
+        self.assertNotIn('st.tabs(["Upload EPW", "Find climate"])', source)
+        self.assertIn('source_mode = st.radio(', source)
+        self.assertIn('if source_mode == "Upload EPW":', source)
+        upload_branch = source.split('if source_mode == "Upload EPW":', 1)[1].split('st.subheader("Find a climate")', 1)[0]
+        self.assertIn("return", upload_branch)
+
+    def test_essential_landing_copy_does_not_use_low_contrast_caption(self) -> None:
+        source = (TOOL_ROOT / "app.py").read_text(encoding="utf-8")
+        self.assertNotIn("st.caption(APP_RELEASE_LABEL)", source)
+        self.assertIn("st.write(APP_RELEASE_LABEL)", source)
+        self.assertNotIn(
+            'st.caption(\n        "Start with an EPW weather file from your computer or select a climate from the reviewed "',
+            source,
+        )
 
 
 if __name__ == "__main__":
