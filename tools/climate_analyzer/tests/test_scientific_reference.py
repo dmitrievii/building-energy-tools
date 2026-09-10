@@ -93,8 +93,10 @@ class PsychrometricReferenceTests(unittest.TestCase):
 
     def test_psychrolib_documented_dew_point_anchor(self) -> None:
         # PsychroLib's published example: 25 C / 80 % RH -> 21.309397163661785 C.
+        # Cross-language/runtime floating-point differences are accepted only
+        # within the registered WEB-0.4 absolute reference tolerance of 1e-8 C.
         actual = psychrolib.GetTDewPointFromRelHum(25.0, 0.80)
-        self.assertAlmostEqual(actual, 21.309397163661785, places=10)
+        self.assertAlmostEqual(actual, 21.309397163661785, delta=1e-8)
 
 
 class SolarReferenceTests(unittest.TestCase):
