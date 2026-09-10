@@ -1,5 +1,6 @@
 name: CLIMATE-0.10 one-shot remediation
 
+# Retry 3: upstream catalog failures are now logged with URL and exception.
 on:
   push:
     branches:
@@ -71,6 +72,7 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add tools/climate_analyzer/app.py \
+                  tools/climate_analyzer/epw_climate_analyzer/climate_sources.py \
                   tools/climate_analyzer/epw_climate_analyzer/data/station_catalog.csv \
                   tools/climate_analyzer/epw_climate_analyzer/data/station_catalog.meta.json \
                   tools/climate_analyzer/scripts/update_station_catalog.py \
