@@ -1,14 +1,6 @@
 name: WEB-0.9 Runtime Performance Profile
 
 on:
-  push:
-    branches:
-      - web-0.9-runtime-performance
-    paths:
-      - '.github/workflows/web-0.9-performance-profile.yml'
-      - 'deployment/runtime_performance_probe.py'
-      - 'tools/climate_analyzer/**'
-      - '.streamlit/config.toml'
   workflow_dispatch:
 
 permissions:
