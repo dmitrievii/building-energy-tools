@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy · Building Energy Tools</title>
+  <meta name="description" content="Privacy information and current publication status for Building Energy Tools.">
+  <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header"><div class="header-inner"><a class="brand" href="../">Building Energy Tools</a><nav class="site-nav" aria-label="Primary navigation"><a href="../">Home</a><a href="../tools/">Tools</a><a href="../teaching/">Teaching</a><a href="../research/">Research</a><a href="../documentation/">Documentation</a><a href="../about/">About</a></nav></div></header>
+<main id="main">
+  <p class="eyebrow">Publication information</p><h1 class="page-title">Privacy</h1>
+  <div class="prose">
+    <div class="notice"><strong>Draft status:</strong> the publication/privacy gate is not yet cleared for public promotion. This SITE-0.1 page summarizes the current technical facts and is not presented as a completed legal privacy notice.</div>
+    <h2>Static website</h2><p>The SITE-0.1 website is designed as plain HTML and CSS with no project-added analytics, advertising, external fonts or third-party runtime assets. The final hosting provider has not yet been selected or audited, so hosting logs and provider-side processing are not yet described here as final facts.</p>
+    <h2>Climate Analyzer</h2><p>Climate Analyzer is hosted separately on Streamlit Community Cloud. EPW files uploaded to the tool are sent to the application backend for analysis. The Building Energy Tools application does not intentionally persist those uploads in a project database.</p>
+    <p>Live deployment audits have observed provider-controlled session and analytics behavior in the Community Cloud wrapper. The project therefore does not claim that the current Streamlit deployment is privacy-cleared for Austrian/EU public promotion.</p>
+    <h2>OpenStreetMap</h2><p>The climate-station map is initialized only after a user explicitly selects <em>Find climate</em>. At that point, map tiles and supporting resources may be requested from third-party infrastructure. OpenStreetMap attribution is displayed in the map interface.</p>
+    <h2>Current blocker</h2><p>Final controller/disclosure contact information and the legal-basis/consent assessment for provider-controlled analytics and storage remain open. The maintained engineering draft is available in the project repository.</p>
+    <p><a href="https://github.com/dmitrievii/building-energy-tools/blob/main/website/content/privacy.md">Read the maintained privacy draft on GitHub</a></p>
+  </div>
+</main>
+<footer class="site-footer"><div class="footer-inner"><div class="footer-copy"><strong>Building Energy Tools</strong><br>Privacy information remains fail-closed until the publication checklist is resolved.</div><nav class="footer-links" aria-label="Footer navigation"><a href="./" aria-current="page">Privacy</a><a href="../accessibility/">Accessibility</a><a href="../legal/">Legal / disclosure</a><a href="../about/">About</a></nav></div></footer>
+</body></html>

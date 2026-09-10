@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Accessibility · Building Energy Tools</title>
+  <meta name="description" content="Accessibility status and known limitations for Building Energy Tools.">
+  <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header"><div class="header-inner"><a class="brand" href="../">Building Energy Tools</a><nav class="site-nav" aria-label="Primary navigation"><a href="../">Home</a><a href="../tools/">Tools</a><a href="../teaching/">Teaching</a><a href="../research/">Research</a><a href="../documentation/">Documentation</a><a href="../about/">About</a></nav></div></header>
+<main id="main">
+  <p class="eyebrow">Accessibility status</p><h1 class="page-title">Accessibility</h1>
+  <div class="prose">
+    <p class="lead">Accessibility is treated as an engineering quality gate, not as an unverified compliance label.</p>
+    <h2>Static website foundation</h2><p>SITE-0.1 uses semantic HTML, visible keyboard focus, a skip link, responsive layouts, system fonts, no essential animation and no JavaScript dependency for navigation.</p>
+    <h2>Climate Analyzer audit</h2><p>Automated desktop and mobile browser audits reported no horizontal overflow and no uncaught page errors. The application-owned file-uploader contrast issue found during the first live audit was corrected and verified in production.</p>
+    <h2>Retained limitations</h2><p>Two automated axe findings remain attributable to Streamlit-generated framework/platform markup. A manual keyboard, focus-order and 200% zoom review is still required before any claim of completed accessibility review.</p>
+    <div class="notice"><strong>No conformance claim:</strong> this status page is not a formal declaration of WCAG conformance.</div>
+    <p><a href="https://github.com/dmitrievii/building-energy-tools/blob/main/website/content/accessibility.md">Read the maintained accessibility evidence on GitHub</a></p>
+  </div>
+</main>
+<footer class="site-footer"><div class="footer-inner"><div class="footer-copy"><strong>Building Energy Tools</strong><br>Accessibility findings are recorded with retained limitations.</div><nav class="footer-links" aria-label="Footer navigation"><a href="../privacy/">Privacy</a><a href="./" aria-current="page">Accessibility</a><a href="../legal/">Legal / disclosure</a><a href="../about/">About</a></nav></div></footer>
+</body></html>

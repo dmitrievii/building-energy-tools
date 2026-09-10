@@ -1,0 +1,35 @@
+{
+  "stage": "SITE-0.1",
+  "site_name": "Building Energy Tools",
+  "site_type": "static-html-css",
+  "site_root": "website/site",
+  "language": "en",
+  "build_required": false,
+  "javascript_required": false,
+  "runtime_dependencies": [],
+  "external_runtime_assets": [],
+  "publication_status": "BETA_CANDIDATE_NOT_YET_PUBLICATION_CLEARED",
+  "sections": [
+    "Home",
+    "Tools",
+    "Teaching",
+    "Research",
+    "Documentation",
+    "About"
+  ],
+  "support_pages": [
+    "Privacy",
+    "Accessibility",
+    "Legal / disclosure"
+  ],
+  "interactive_tools": [
+    {
+      "name": "Climate Analyzer",
+      "url": "https://building-climate-analyzer.streamlit.app/",
+      "hosting": "Streamlit Community Cloud",
+      "status": "0.1.0-beta.1"
+    }
+  ],
+  "hosting_target": "UNRESOLVED_FREE_STATIC_HOST",
+  "notes": "SITE-0.1 defines the portable static website foundation. Hosting-specific privacy/network behavior must be audited after deployment."
+}
