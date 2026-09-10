@@ -1,0 +1,56 @@
+name: Deploy Building Energy Tools to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'website/site/**'
+      - 'website/scripts/check_static_site.py'
+      - 'website/tests/**'
+      - '.github/workflows/pages-deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate static site contract
+        run: python website/scripts/check_static_site.py
+
+      - name: Run website regression tests
+        run: python -m unittest discover -s website/tests -p 'test_*.py' -v
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload website/site artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: website/site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
