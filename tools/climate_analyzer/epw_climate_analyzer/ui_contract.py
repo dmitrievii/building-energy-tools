@@ -8,6 +8,7 @@ terminology from internal page identifiers used by calculation routing.
 from __future__ import annotations
 
 
+PUBLIC_UX_STAGE = "WEB-0.6"
 APP_NAME = "Climate Analyzer"
 APP_BROWSER_TITLE = "Climate Analyzer | Building Energy Tools"
 APP_TAGLINE = "Climate analysis for building design and building performance"
