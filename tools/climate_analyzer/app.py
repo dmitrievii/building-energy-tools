@@ -123,6 +123,18 @@ from epw_climate_analyzer.statistics import (
     monthly_climate_summary,
     seasonal_climate_summary,
 )
+from epw_climate_analyzer.ui_contract import (
+    APP_BROWSER_TITLE,
+    APP_INTRO,
+    APP_NAME,
+    APP_TAGLINE,
+    NAVIGATION_KEY,
+    NAVIGATION_PAGES,
+    apply_queued_navigation,
+    navigation_label,
+    queue_navigation,
+    queue_navigation_reset,
+)
 
 
 VARIABLES = {
@@ -193,7 +205,7 @@ MONTHS = {
 }
 
 
-st.set_page_config(page_title="EPW Climate Analyzer", layout="wide", page_icon="🌦️")
+st.set_page_config(page_title=APP_BROWSER_TITLE, layout="wide", page_icon="🌦️")
 
 
 @st.cache_data(show_spinner=True)
@@ -253,8 +265,9 @@ def page_derivation_flags(page: str) -> tuple[bool, bool]:
 
 
 def set_active_climate_file(name: str, payload: bytes, source: str) -> None:
-    """Store the selected EPW payload in Streamlit session state."""
+    """Store the selected EPW payload and open the summary view."""
     st.session_state["active_climate_file"] = ClimateFilePayload(name=name, payload=payload, source=source)
+    queue_navigation(st.session_state, "Overview")
 
 
 def get_active_climate_file() -> ClimateFilePayload | None:
@@ -264,8 +277,9 @@ def get_active_climate_file() -> ClimateFilePayload | None:
 
 
 def clear_active_climate_file() -> None:
-    """Remove the currently selected climate file from session state."""
+    """Remove the currently selected climate file and reset navigation."""
     st.session_state.pop("active_climate_file", None)
+    queue_navigation_reset(st.session_state)
 
 
 
@@ -658,38 +672,41 @@ def filter_groups_to_bounds(
     return station_groups[mask].copy()
 
 def render_climate_file_source() -> None:
-    """Render the first page for local EPW upload and Climate.OneBuilding selection."""
-    st.header("Climate file source")
-    st.write(
-        "Select a local EPW file or choose an online weather station from the "
-        "Climate.OneBuilding catalog. The selected EPW becomes the active climate "
-        "file for all charts and analysis layers."
+    """Render the product entry page for local or catalog climate selection."""
+    st.title(APP_NAME)
+    st.markdown(f"#### {APP_TAGLINE}")
+    st.write(APP_INTRO)
+    st.caption(
+        "Start with an EPW weather file from your computer or select a climate from the reviewed "
+        "Climate.OneBuilding station catalog. No building model is required."
     )
 
     active = get_active_climate_file()
     if active is not None:
-        st.success(f"Active climate file: {active.name}")
-        st.caption(f"Source: {active.source}")
-        if st.button("Clear active climate file"):
+        st.success(f"Current climate: {active.name}")
+        with st.expander("Data source details", expanded=False):
+            st.caption(active.source)
+        if st.button("Choose a different climate"):
             clear_active_climate_file()
             st.rerun()
 
-    local_tab, map_tab = st.tabs(["Local EPW upload", "Climate.OneBuilding station map"])
+    st.divider()
+    local_tab, map_tab = st.tabs(["Upload EPW", "Find climate"])
 
     with local_tab:
-        st.subheader("Load a local EPW file")
-        local_file = st.file_uploader("Upload local EPW file", type=["epw"], key="local_epw_upload")
+        st.subheader("Upload an EPW weather file")
+        st.write("Use an EnergyPlus Weather (EPW) file that you already have. The file is processed for the current session.")
+        local_file = st.file_uploader("Choose EPW file", type=["epw"], key="local_epw_upload")
         if local_file is not None:
             st.write(f"Selected file: `{local_file.name}`")
-            if st.button("Use uploaded EPW file", type="primary"):
+            if st.button("Analyze this EPW", type="primary"):
                 set_active_climate_file(local_file.name, local_file.getvalue(), "Local upload | user-provided EPW | transient session")
                 st.rerun()
 
     with map_tab:
-        st.subheader("Select a Climate.OneBuilding weather station")
+        st.subheader("Find a climate from Climate.OneBuilding")
         st.caption(
-            "The map uses clustered markers: at low zoom levels it displays station counts; "
-            "after zooming in, individual stations appear as purple points."
+            "Search or zoom to a station, choose one of its available climate datasets, then load the EPW for analysis."
         )
         try:
             catalog = cached_station_catalog()
@@ -737,9 +754,9 @@ def render_climate_file_source() -> None:
             st.session_state.pop("station_map_bounds", None)
             st.rerun()
 
-        with st.expander("Map performance settings", expanded=False):
+        with st.expander("Advanced map settings", expanded=False):
             detail_zoom_threshold = st.slider(
-                "Detailed marker zoom threshold",
+                "Show individual stations from zoom level",
                 min_value=5,
                 max_value=12,
                 value=int(st.session_state.get("station_detail_zoom_threshold", 8)),
@@ -752,7 +769,7 @@ def render_climate_file_source() -> None:
             )
             st.session_state["station_detail_zoom_threshold"] = detail_zoom_threshold
             selectable_limit = st.slider(
-                "Maximum station groups in selectable clustered map",
+                "Maximum station groups rendered on map",
                 min_value=1000,
                 max_value=50000,
                 value=int(st.session_state.get("station_selectable_cluster_limit", 20000)),
@@ -2253,43 +2270,53 @@ def render_data_quality(epw, df: pd.DataFrame, issues: list[object]) -> None:
 
 
 def main() -> None:
-    """Run the Streamlit EPW Climate Analyzer application."""
-    st.sidebar.title("EPW Climate Analyzer")
-
-    pressure_mode = st.sidebar.selectbox(
-        "Psychrometric pressure mode",
-        [
-            "Normal pressure: 101325 Pa",
-            "EPW station pressure with fallback median",
-            "Altitude-derived standard atmosphere pressure",
-            "Custom constant pressure",
-        ],
-        index=0,
-    )
-    custom_pressure = None
-    if pressure_mode == "Custom constant pressure":
-        custom_pressure = st.sidebar.number_input("Custom pressure [Pa]", min_value=30000.0, max_value=120000.0, value=101325.0, step=100.0)
-
-    st.sidebar.markdown("### Navigation")
-    pages = [
-        "Climate File Source",
-        "Overview",
-        "Temperature",
-        "Humidity and Psychrometrics",
-        "Solar and Radiation",
-        "Wind and Ventilation",
-        "Sky and Daylight",
-        "Natural Ventilation",
-        "HVAC and Passive Design",
-        "Compare Climates",
-        "Data Quality",
-    ]
-    page = st.sidebar.radio("Page", pages)
+    """Run the Streamlit Climate Analyzer application."""
+    st.sidebar.caption("Building Energy Tools")
+    st.sidebar.title(APP_NAME)
+    apply_queued_navigation(st.session_state)
     active_file = get_active_climate_file()
 
-    if active_file is None or page == "Climate File Source":
+    if active_file is None:
+        st.sidebar.info("Choose a climate file to start the analysis.")
         render_climate_file_source()
         return
+
+    if NAVIGATION_KEY not in st.session_state or st.session_state[NAVIGATION_KEY] not in NAVIGATION_PAGES:
+        st.session_state[NAVIGATION_KEY] = "Overview"
+
+    st.sidebar.markdown("### Explore")
+    page = st.sidebar.radio(
+        "Analysis section",
+        NAVIGATION_PAGES,
+        format_func=navigation_label,
+        key=NAVIGATION_KEY,
+        label_visibility="collapsed",
+    )
+
+    if page == "Climate File Source":
+        render_climate_file_source()
+        return
+
+    with st.sidebar.expander("Advanced calculation settings", expanded=False):
+        pressure_mode = st.selectbox(
+            "Psychrometric pressure mode",
+            [
+                "Normal pressure: 101325 Pa",
+                "EPW station pressure with fallback median",
+                "Altitude-derived standard atmosphere pressure",
+                "Custom constant pressure",
+            ],
+            index=0,
+        )
+        custom_pressure = None
+        if pressure_mode == "Custom constant pressure":
+            custom_pressure = st.number_input(
+                "Custom pressure [Pa]",
+                min_value=30000.0,
+                max_value=120000.0,
+                value=101325.0,
+                step=100.0,
+            )
 
     include_psychrometrics, include_solar = page_derivation_flags(page)
     payload = active_file.payload
@@ -2317,12 +2344,13 @@ def main() -> None:
         st.warning("The current filters remove all data. Adjust the month or hour filter.")
         return
 
-    st.sidebar.markdown("### Current file")
-    st.sidebar.write(f"File: `{epw.name}`")
-    st.sidebar.caption(active_file.source)
-    st.sidebar.write(f"Location: {epw.location.city}, {epw.location.country}")
-    st.sidebar.write(f"Active pressure: {active_pressure:,.0f} Pa")
-    st.sidebar.write(f"Rows after filter: {len(filtered_df):,}")
+    st.sidebar.markdown("### Current climate")
+    st.sidebar.write(f"**{epw.location.city}, {epw.location.country}**")
+    st.sidebar.caption(epw.name)
+    st.sidebar.write(f"Rows in current view: {len(filtered_df):,}")
+    with st.sidebar.expander("Data provenance", expanded=False):
+        st.caption(active_file.source)
+        st.caption(f"Calculation pressure: {active_pressure:,.0f} Pa")
 
     if page == "Overview":
         render_overview(epw, filtered_df, full_df, issues)

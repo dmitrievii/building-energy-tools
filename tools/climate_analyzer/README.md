@@ -1,134 +1,106 @@
-# EPW Climate Analyzer
+# Climate Analyzer
 
-Local browser application for interactive EPW climate analysis for architecture and HVAC decision support.
+Climate analysis for building design and building performance.
 
-## Main features
+Climate Analyzer is an interactive Streamlit application for exploring EnergyPlus Weather (EPW) files. It is intended for building-physics, architectural and early HVAC/passive-design analysis.
 
-- Local EPW upload.
-- Climate.OneBuilding station catalog builder.
-- OpenStreetMap station-selection page with clustered station markers.
-- Purple station points at close zoom levels and cluster counts at low zoom levels.
-- One-click station selection and automatic EPW ZIP download/extraction.
-- Cached global station catalog stored in the user profile folder.
-- Hourly, daily, weekly, monthly and seasonal aggregation.
-- Temperature, humidity, psychrometric, solar, wind, sky/daylight, natural-ventilation, HVAC/passive-design and data-quality dashboards.
-- Automatic interpretation below the main charts.
+## Start
 
-## Run on Windows
+The public workflow has two entry points:
 
-Double-click:
+1. **Upload EPW** — analyze a user-provided EPW file for the current session.
+2. **Find climate** — select a station from the reviewed Climate.OneBuilding catalog and download the selected EPW on demand from the provider.
 
-```bat
-run_app.bat
-```
+After a climate is selected, the application opens the Overview automatically.
 
-The launcher creates a local virtual environment, installs dependencies and starts Streamlit.
+## Analysis sections
 
-Default local address:
+- Overview
+- Temperature
+- Moisture and psychrometrics
+- Solar radiation
+- Wind
+- Sky and daylight
+- Natural ventilation
+- Passive strategies and HVAC
+- Multi-climate comparison
+- Data quality and EPW metadata
 
-```text
-http://localhost:8501
-```
+The application supports hourly, daily, weekly, monthly and seasonal views where relevant, plus duration curves, heat maps, psychrometric diagrams, wind roses, solar-orientation analysis and climate-comparison views.
 
-## Climate-file source page
+## Climate data and provenance
 
-The first page is `Climate File Source`.
-
-It supports two workflows:
-
-1. `Local EPW upload` — choose an EPW file from your computer.
-2. `Climate.OneBuilding station map` — build or load the Climate.OneBuilding station catalog, select a station on the clustered OSM map and download its EPW archive.
-
-Direct manual URL input has intentionally been removed from the user interface.
-
-## Climate.OneBuilding catalog workflow
-
-Climate.OneBuilding publishes public WMO-region pages with KML map files and XLSX station spreadsheets. This app reads those catalogs, extracts station coordinates and ZIP/EPW download URLs, and stores a normalized CSV cache locally.
-
-Default cache path:
-
-```text
-%USERPROFILE%\.epw_climate_analyzer\onebuilding_station_catalog.csv
-```
-
-Use the `Build / refresh Climate.OneBuilding station catalog` button on the first page to rebuild the cache.
-
-## Map behavior
-
-- At low zoom levels, nearby station markers are clustered and displayed as count bubbles.
-- After zooming in, individual stations appear as purple points.
-- Click a purple station point to load its metadata in the right panel.
-- Click `Select and download this station EPW` to make it the active climate file for all analysis pages.
-
-## Bundled fallback catalog
-
-A small fallback CSV is still included so the app can open before the global online catalog has been built:
+The public application does not rebuild upstream station catalogs during user sessions. It reads a reviewed, versioned catalog snapshot from:
 
 ```text
 epw_climate_analyzer/data/station_catalog.csv
+epw_climate_analyzer/data/station_catalog.meta.json
 ```
 
-The global online cache is preferred whenever it exists.
+The catalog CSV is verified against its manifest SHA-256 and record count before use. The current bootstrap snapshot is intentionally limited to Austria and selected nearby Central European stations; it is not presented as global coverage.
 
-## Notes
+Climate.OneBuilding EPW files are **not bundled in this repository**. A selected file is downloaded from the provider on demand. Local uploads and provider downloads are processed through the input/download security boundaries before parsing.
 
-- Online catalog building and EPW download require an internet connection on the local machine.
-- The first global catalog build may take time because multiple regional KML/XLSX catalogs are read.
-- The app uses SI units internally.
+See [DATA_SOURCES.md](DATA_SOURCES.md) for the provenance and catalog-maintenance model.
 
-## Calculated EPW Statistics
+## Scientific validation
 
-The `Overview` page includes a `Calculated EPW statistics` section. It uses only the active EPW hourly data table and EPW-derived columns. It does not parse companion package files. The statistics include:
+Scientific behavior is protected by reference-point and deterministic annual regression tests. Current validation covers, among other things:
 
-- dataset coverage and missing-value diagnostics;
-- temperature percentiles, extremes, daily amplitude, frost hours and tropical-night proxy;
-- humidity, humidity ratio, wet-bulb temperature, dew point and moist-air enthalpy indicators;
-- annual GHI/DNI/DHI, diffuse share, peak GHI, daylight availability and high-solar hours;
-- wind-speed percentiles, calm/strong-wind hours and dominant wind-direction sector;
-- sky-cover, precipitation and snow indicators from EPW fields;
-- HDD18, CDD26 and default passive/HVAC decision indicators;
-- monthly, seasonal and extreme-day summary tables with CSV export.
+- psychrometric calculations against independent ASHRAE/PsychroLib-equivalent equations;
+- solar plane-of-array reference cases;
+- fractional EPW UTC-offset handling;
+- EPW hour and typical-year semantics;
+- degree-hour indicators;
+- natural-ventilation and night-flushing logic;
+- an 8,760-hour deterministic annual climate fingerprint;
+- monthly/annual radiation conservation and passive-strategy results.
 
-## Multi-climate comparison
+See `validation/SCIENTIFIC_VALIDATION.md` and `validation/scientific_reference_register.json`.
 
-The application includes a `Compare Climates` page for comparing two or more EPW files. The comparison mode uses only EPW hourly data and EPW-derived variables. It does not parse companion files such as CLM, WEA, PVSyst, DDY, RAIN or STAT.
+## Security boundaries
 
-Supported comparison workflows:
+Public inputs are bounded and validated before processing. Climate.OneBuilding downloads are restricted to HTTPS on the approved provider host, redirect targets are revalidated, transfer sizes are bounded, and ZIP members are read without filesystem extraction.
 
-- Add the currently active climate to the comparison basket.
-- Add multiple local EPW files.
-- Add Climate.OneBuilding stations from the cached station catalog.
-- Rename and remove comparison climates.
-- Select one reference climate.
-- Use automatic, overlay, small-multiple, ranked-summary and difference-to-reference display modes.
+See [SECURITY.md](SECURITY.md).
 
-Implemented comparison chart groups:
+## Local development
 
-- Summary metrics and ranked indicators.
-- Monthly temperature profiles, temperature duration curves, monthly boxplots, temperature heatmaps, temperature-difference heatmaps, HDD/CDD comparison, heating/cooling season timelines and extreme-temperature rankings.
-- Humidity-ratio profiles, humidity-ratio duration curves, outdoor-air enthalpy duration curves, psychrometric T-d/i-d density comparisons and latent-load rankings.
-- Monthly GHI/DNI/DHI comparisons, radiation duration curves, sun-path comparisons, façade-radiation comparison, tilt-sensitivity comparison, orientation-tilt heatmaps and solar/shading rankings.
-- Wind-speed profiles, wind-speed duration curves, small-multiple wind roses and wind rankings.
-- Natural-ventilation monthly hours, natural-ventilation heatmaps, difference heatmaps, night-flushing monthly hours and ventilation/comfort rankings.
-- Passive/HVAC stacked strategy bars, passive-strategy calendars and HVAC indicator rankings.
-- Generic difference-to-reference charts for temperature, humidity, enthalpy, radiation, wind and relative humidity.
-- Data-quality comparison matrices.
+Use Python 3.12.
 
-Every chart is followed by an automatic interpretation based on the selected climates and the current comparison filters.
+```bash
+cd tools/climate_analyzer
+python -m venv .venv
+```
 
-## Update: performance and chart audit fixes
+Activate the environment, then install the pinned direct dependency baseline:
 
-This version keeps the existing UI structure and visual style, but adds the following fixes:
+```bash
+python -m pip install -r requirements.txt
+```
 
-- Faster Windows startup: dependencies are installed only on first launch unless `.venv\.deps_installed` is removed.
-- Streamlit toolbar is forced to viewer mode to avoid accidental developer-cache shortcuts while copying text.
-- Climate.OneBuilding catalog refresh can be limited to selected WMO regions; Europe is the default.
-- The station map renders a capped number of markers and asks the user to filter before showing very large catalogs.
-- All Plotly charts are rendered with unique Streamlit keys to avoid duplicate element ID errors.
-- Generic variable charts now use a separate `Chart type` and `Aggregation` control. Heat maps have their own day/week/month aggregation selector.
-- Aggregated profiles use readable period labels and unified hover so min, central and max values are visible together.
-- Plot axes now use physical lower/upper limits where appropriate while retaining Plotly zooming.
-- Heat maps use period on the x-axis and hour of day on the y-axis.
-- Temperature heat maps use a blue-green-red colour model with the green band tied to heating/cooling thresholds.
-- Solar/radiation heat maps use a violet-orange-yellow colour model and generic radiation profiles show mean intensity; energy sums remain in the dedicated solar component charts.
-- Psychrometric charts now use grey dashed RH/grid layers, month-coloured climate points, explicit axis-limit controls and a tile-occupancy mode based on 1 °C × 5 %RH bins.
+Run the application:
+
+```bash
+streamlit run app.py
+```
+
+Run the validation suite:
+
+```bash
+python -m unittest discover -s tests -p 'test_*.py' -v
+```
+
+## Catalog maintenance
+
+Catalog crawling is a maintenance task, not a public UI function. A candidate can be generated locally with:
+
+```bash
+python scripts/update_station_catalog.py --regions Europe
+```
+
+or via the manually triggered GitHub workflow **Build Climate Catalog Candidate**. The workflow creates a review artifact and does not modify `main` automatically.
+
+## Project status
+
+`WEB-0.6` is the current public-UX candidate for the Climate Analyzer public-beta preparation. Calculation outputs should be interpreted together with the documented assumptions, source provenance and validation scope.
