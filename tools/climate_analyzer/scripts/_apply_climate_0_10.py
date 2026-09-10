@@ -3,7 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 import re
 
-APP = Path(__file__).resolve().parents[1] / "app.py"
+ROOT = Path(__file__).resolve().parents[1]
+APP = ROOT / "app.py"
+CLIMATE_SOURCES = ROOT / "epw_climate_analyzer" / "climate_sources.py"
+
 text = APP.read_text(encoding="utf-8")
 original = text
 
@@ -136,4 +139,24 @@ text = text.replace(old, new, 1)
 
 assert text != original
 APP.write_text(text, encoding="utf-8")
-print("CLIMATE-0.10 map patch applied")
+
+# 5) Make catalog-build failures auditable instead of swallowing four upstream
+# exceptions into one aggregate count.
+source = CLIMATE_SOURCES.read_text(encoding="utf-8")
+old = '''        except Exception:
+            failed += 1
+            continue
+'''
+new = '''        except Exception as exc:
+            failed += 1
+            report(
+                f"FAILED catalog: {url} [{kind}] "
+                f"{type(exc).__name__}: {exc}"
+            )
+            continue
+'''
+assert source.count(old) == 1, f"catalog failure handler count={source.count(old)}"
+source = source.replace(old, new, 1)
+CLIMATE_SOURCES.write_text(source, encoding="utf-8")
+
+print("CLIMATE-0.10 map patch + catalog diagnostics applied")
