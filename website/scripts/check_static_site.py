@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 from html.parser import HTMLParser
 from pathlib import Path
@@ -102,16 +103,17 @@ def validate_site() -> list[str]:
     except Exception as exc:
         return [f"manifest unreadable: {exc}"]
 
-    if manifest.get("stage") != "SITE-0.1":
-        errors.append("manifest stage must be SITE-0.1")
+    stage = manifest.get("stage")
+    if not isinstance(stage, str) or re.fullmatch(r"SITE-\d+\.\d+", stage) is None:
+        errors.append("manifest stage must use SITE-x.y format")
     if manifest.get("build_required") is not False:
-        errors.append("SITE-0.1 must not require a build step")
+        errors.append("static website must not require a build step")
     if manifest.get("javascript_required") is not False:
-        errors.append("SITE-0.1 must not require JavaScript")
+        errors.append("static website must not require JavaScript")
     if manifest.get("runtime_dependencies") != []:
-        errors.append("SITE-0.1 runtime_dependencies must remain empty")
+        errors.append("static website runtime_dependencies must remain empty")
     if manifest.get("external_runtime_assets") != []:
-        errors.append("SITE-0.1 external_runtime_assets must remain empty")
+        errors.append("static website external_runtime_assets must remain empty")
     if manifest.get("publication_status") != "BETA_CANDIDATE_NOT_YET_PUBLICATION_CLEARED":
         errors.append("publication status changed without publication-gate closure")
 
@@ -138,7 +140,7 @@ def validate_site() -> list[str]:
         if not parser.primary_nav:
             errors.append(f"{relative}: missing primary navigation")
         if parser.script_count:
-            errors.append(f"{relative}: JavaScript is not allowed in SITE-0.1")
+            errors.append(f"{relative}: JavaScript is not allowed by the static-site contract")
 
         for asset in parser.asset_urls:
             if _is_external(asset):

@@ -28,6 +28,20 @@ class StaticSiteContractTests(unittest.TestCase):
         )
         self.assertEqual(len(EXPECTED_PAGES), 9)
 
+    def test_site_0_2_manifest_is_bound_to_browser_audit_evidence(self) -> None:
+        manifest = json.loads((SITE_ROOT / "site-manifest.json").read_text(encoding="utf-8"))
+        self.assertEqual(manifest["stage"], "SITE-0.2")
+        browser_audit = manifest["browser_audit"]
+        self.assertEqual(browser_audit["stage"], "SITE-0.2")
+        self.assertEqual(browser_audit["status"], "PASS")
+        self.assertEqual(browser_audit["desktop_viewport"], "1440x1000")
+        self.assertEqual(browser_audit["tablet_viewport"], "820x1180")
+        self.assertEqual(browser_audit["mobile_viewport"], "390x844")
+        self.assertEqual(browser_audit["compact_layout_breakpoint_px"], 800)
+        evidence = REPO_ROOT / browser_audit["evidence"]
+        self.assertTrue(evidence.is_file(), evidence)
+        self.assertIn("8442a23111c72af5abfce78b28b853c16c3c09ec8c60ec48db0068c76ca3e54d", evidence.read_text(encoding="utf-8"))
+
     def test_static_layer_has_no_runtime_dependency_or_javascript_contract(self) -> None:
         manifest = json.loads((SITE_ROOT / "site-manifest.json").read_text(encoding="utf-8"))
         self.assertFalse(manifest["build_required"])
@@ -36,6 +50,11 @@ class StaticSiteContractTests(unittest.TestCase):
         self.assertEqual(manifest["external_runtime_assets"], [])
         for page in SITE_ROOT.rglob("*.html"):
             self.assertNotIn("<script", page.read_text(encoding="utf-8").lower(), page)
+
+    def test_local_favicon_exists(self) -> None:
+        favicon = SITE_ROOT / "favicon.ico"
+        self.assertTrue(favicon.is_file())
+        self.assertGreater(favicon.stat().st_size, 100)
 
     def test_climate_analyzer_is_integrated_as_separate_runtime(self) -> None:
         climate_url = "https://building-climate-analyzer.streamlit.app/"

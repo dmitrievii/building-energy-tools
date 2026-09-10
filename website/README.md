@@ -2,9 +2,9 @@
 
 Public website layer for **Building Energy Tools**.
 
-## SITE-0.1 foundation
+## Static website foundation
 
-The first real website implementation lives in:
+The website implementation lives in:
 
 ```text
 website/site/
@@ -15,7 +15,7 @@ It is deliberately plain static HTML/CSS:
 - no Node/React/Next.js build;
 - no JavaScript requirement;
 - no external fonts, CDN assets or project-added analytics;
-- portable to any ordinary free static host;
+- portable to an ordinary free static host;
 - Climate Analyzer remains a separate Streamlit application.
 
 Current information architecture:
@@ -40,7 +40,9 @@ The static-layer machine-readable contract is:
 website/site/site-manifest.json
 ```
 
-Validation is performed by:
+## Validation layers
+
+Structural/static validation:
 
 ```text
 python website/scripts/check_static_site.py
@@ -53,7 +55,24 @@ GitHub Actions workflow:
 .github/workflows/website-ci.yml
 ```
 
-The CI checks required pages, semantic page basics, internal links, allowed external-link hosts, absence of external runtime assets, zero-JavaScript contract and a local HTTP route smoke test.
+The static CI checks required pages, semantic page basics, internal links, allowed external-link hosts, absence of external runtime assets, zero-JavaScript contract and a local HTTP route smoke test.
+
+SITE-0.2 adds a second, browser-level layer:
+
+```text
+website/scripts/browser_audit.mjs
+.github/workflows/website-browser-audit.yml
+```
+
+It renders every public route in headless Chromium at desktop, tablet and mobile viewports, captures full-page screenshots, checks horizontal overflow/navigation collisions/browser errors/external requests, runs axe WCAG A/AA rules, and verifies the initial keyboard focus path. A separate 720 px layout stress view approximates the layout pressure associated with 200% zoom; it is not a substitute for the remaining manual real-browser zoom review.
+
+Durable SITE-0.2 evidence is recorded in:
+
+```text
+website/audits/SITE_0_2_BROWSER_AUDIT_2026-09-10.md
+```
+
+The responsive compact-layout breakpoint is 800 px after screenshot review showed that the original 880 px breakpoint collapsed an 820 px tablet viewport unnecessarily early.
 
 ## Interactive tool integration
 
@@ -75,7 +94,7 @@ Maintained source material remains under `website/content/` and `docs/`:
 - `docs/PUBLICATION_POLICY.md`
 - `website/PUBLICATION_CHECKLIST.md`
 
-The rendered SITE-0.1 privacy/legal pages intentionally retain the fail-closed publication state and do not invent owner address/contact data.
+The rendered privacy/legal pages intentionally retain the fail-closed publication state and do not invent owner address/contact data.
 
 ## Publication status
 
@@ -83,4 +102,4 @@ The rendered SITE-0.1 privacy/legal pages intentionally retain the fail-closed p
 BETA_CANDIDATE_NOT_YET_PUBLICATION_CLEARED
 ```
 
-SITE-0.1 is a website foundation and preview candidate, not a declaration that the complete Building Energy Tools publication gate is closed. Hosting-specific privacy/network behavior must be audited after an actual static deployment is selected.
+SITE-0.2 closes the automated source-level visual/responsive browser audit for the declared viewport matrix. It does not declare the complete Building Energy Tools publication gate closed. Hosting-specific privacy/network behavior still requires audit after an actual static deployment is selected, and the manual keyboard/focus/real-browser-200%-zoom publication check remains separate.

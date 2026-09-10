@@ -1,5 +1,5 @@
 {
-  "stage": "SITE-0.1",
+  "stage": "SITE-0.2",
   "site_name": "Building Energy Tools",
   "site_type": "static-html-css",
   "site_root": "website/site",
@@ -30,6 +30,15 @@
       "status": "0.1.0-beta.1"
     }
   ],
+  "browser_audit": {
+    "stage": "SITE-0.2",
+    "status": "PASS",
+    "evidence": "website/audits/SITE_0_2_BROWSER_AUDIT_2026-09-10.md",
+    "desktop_viewport": "1440x1000",
+    "tablet_viewport": "820x1180",
+    "mobile_viewport": "390x844",
+    "compact_layout_breakpoint_px": 800
+  },
   "hosting_target": "UNRESOLVED_FREE_STATIC_HOST",
-  "notes": "SITE-0.1 defines the portable static website foundation. Hosting-specific privacy/network behavior must be audited after deployment."
+  "notes": "SITE-0.2 retains the portable zero-build website foundation and adds reproducible source-level Chromium visual/responsive evidence. Hosting-specific privacy/network behavior must still be audited after deployment."
 }
