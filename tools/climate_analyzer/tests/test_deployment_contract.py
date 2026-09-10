@@ -38,6 +38,7 @@ class DeploymentContractTests(unittest.TestCase):
         self.assertTrue(config["server"]["headless"])
         self.assertEqual(config["server"]["maxUploadSize"], 10)
         self.assertEqual(config["server"]["maxMessageSize"], 50)
+        self.assertEqual(config["client"]["toolbarMode"], "viewer")
         self.assertFalse(config["browser"]["gatherUsageStats"])
 
     def test_public_release_remains_fail_closed(self) -> None:
