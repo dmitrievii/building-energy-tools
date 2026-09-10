@@ -68,6 +68,7 @@ function simpleAxeViolations(results) {
 
 async function auditRoute(browser, viewport, routeName, routePath) {
   const page = await browser.newPage();
+  await page.setCacheEnabled(false);
   await page.setViewport(viewport);
   const externalRequests = new Set();
   const failedRequests = [];
@@ -165,6 +166,7 @@ async function auditRoute(browser, viewport, routeName, routePath) {
 
 async function auditKeyboard(browser, viewport) {
   const page = await browser.newPage();
+  await page.setCacheEnabled(false);
   await page.setViewport(viewport);
   await page.goto(`${baseUrl}/`, { waitUntil: 'networkidle0', timeout: 30000 });
   const sequence = [];
@@ -212,7 +214,8 @@ try {
 const routeFailures = [];
 for (const item of report.routes) {
   const failures = [];
-  if (item.status !== 200) failures.push(`HTTP ${item.status}`);
+  const statusOk = item.status !== null && ((item.status >= 200 && item.status < 300) || item.status === 304);
+  if (!statusOk) failures.push(`HTTP ${item.status}`);
   if (item.layout.h1Count !== 1) failures.push(`h1Count=${item.layout.h1Count}`);
   if (item.layout.mainCount !== 1) failures.push(`mainCount=${item.layout.mainCount}`);
   if (item.layout.overflowX > 1) failures.push(`overflowX=${item.layout.overflowX}`);
