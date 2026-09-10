@@ -1,6 +1,6 @@
 name: CLIMATE-0.10 one-shot remediation
 
-# Retry 3: upstream catalog failures are now logged with URL and exception.
+# Retry 4: redundant XLSX/KML representations are evaluated per logical catalog.
 on:
   push:
     branches:
@@ -31,13 +31,12 @@ jobs:
       - name: Install production dependencies
         run: python -m pip install -r tools/climate_analyzer/requirements.txt
 
-      - name: Apply stable map-state remediation
+      - name: Apply stable map and logical catalog remediation
         run: python tools/climate_analyzer/scripts/_apply_climate_0_10.py
 
       - name: Build complete Climate.OneBuilding catalog
         working-directory: tools/climate_analyzer
-        run: |
-          python scripts/update_station_catalog.py --regions all
+        run: python scripts/update_station_catalog.py --regions all
 
       - name: Validate generated global catalog
         working-directory: tools/climate_analyzer
@@ -46,12 +45,15 @@ jobs:
           from epw_climate_analyzer.catalog_runtime import load_production_station_catalog, load_station_catalog_manifest
           manifest = load_station_catalog_manifest()
           catalog = load_production_station_catalog()
+          evidence = manifest.build_evidence or {}
           assert manifest.catalog_kind == 'generated_provider_snapshot'
           assert manifest.station_count == len(catalog)
           assert len(catalog) > 10000, f'global catalog unexpectedly small: {len(catalog)}'
-          assert manifest.build_evidence is not None
-          assert manifest.build_evidence.get('failed_catalogs') == 0
+          assert evidence.get('failed_catalogs') == 0, evidence
+          assert evidence.get('source_file_failures', 0) == evidence.get('recovered_source_file_failures', -1), evidence
           print(f'GLOBAL CATALOG PASS: {len(catalog):,} records')
+          print(f'REGIONS: {evidence.get("regions")}')
+          print(f'RAW SOURCE FAILURES RECOVERED: {evidence.get("recovered_source_file_failures", 0)}')
           print(f'VERSION: {manifest.catalog_version}')
           print(f'SHA256: {manifest.csv_sha256}')
           PY
@@ -73,6 +75,7 @@ jobs:
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add tools/climate_analyzer/app.py \
                   tools/climate_analyzer/epw_climate_analyzer/climate_sources.py \
+                  tools/climate_analyzer/epw_climate_analyzer/catalog_runtime.py \
                   tools/climate_analyzer/epw_climate_analyzer/data/station_catalog.csv \
                   tools/climate_analyzer/epw_climate_analyzer/data/station_catalog.meta.json \
                   tools/climate_analyzer/scripts/update_station_catalog.py \
