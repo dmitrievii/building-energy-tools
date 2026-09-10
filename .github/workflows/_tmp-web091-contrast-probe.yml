@@ -1,0 +1,23 @@
+name: WEB-0.9.1 Contrast Probe
+
+on:
+  push:
+    branches:
+      - web-0.9.1-accessibility-closure
+    paths:
+      - '.github/workflows/_tmp-web091-contrast-probe.yml'
+      - 'deployment/_tmp_web091_contrast_probe.mjs'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install probe dependency
+        run: npm install --no-save playwright-core@1.55.0
+      - name: Probe production contrast target
+        run: node deployment/_tmp_web091_contrast_probe.mjs
