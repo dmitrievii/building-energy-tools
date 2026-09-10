@@ -1,0 +1,7 @@
+[server]
+headless = true
+maxUploadSize = 10
+maxMessageSize = 50
+
+[browser]
+gatherUsageStats = false
