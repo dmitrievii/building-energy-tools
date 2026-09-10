@@ -1,0 +1,39 @@
+name: Climate Analyzer Live HTTP Smoke
+
+on:
+  push:
+    branches:
+      - web-0.8.1-live-deployment-audit
+    paths:
+      - '.github/workflows/climate-analyzer-live-http-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  http-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    env:
+      TARGET: https://building-climate-analyzer.streamlit.app
+    steps:
+      - name: Probe root and Streamlit health
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '--- ROOT ---'
+          curl --silent --show-error --location --max-time 30 \
+            --output /tmp/root.html --dump-header /tmp/root.headers \
+            --write-out 'http_code=%{http_code}\ntime_total=%{time_total}\nsize_download=%{size_download}\nremote_ip=%{remote_ip}\n' \
+            "$TARGET/"
+          grep -Ei '^(HTTP/|content-type:|content-length:|cache-control:|strict-transport-security:|server:)' /tmp/root.headers || true
+          echo "body_bytes=$(wc -c </tmp/root.html)"
+          echo '--- HEALTH ---'
+          curl --silent --show-error --location --max-time 30 \
+            --output /tmp/health.txt --dump-header /tmp/health.headers \
+            --write-out 'http_code=%{http_code}\ntime_total=%{time_total}\nsize_download=%{size_download}\nremote_ip=%{remote_ip}\n' \
+            "$TARGET/_stcore/health"
+          grep -Ei '^(HTTP/|content-type:|content-length:|cache-control:|strict-transport-security:|server:)' /tmp/health.headers || true
+          printf 'health_body='; cat /tmp/health.txt; echo
+          grep -qi 'ok' /tmp/health.txt
