@@ -1,0 +1,391 @@
+--- a/tools/climate_analyzer/epw_climate_analyzer/epw_parser.py
++++ b/tools/climate_analyzer/epw_climate_analyzer/epw_parser.py
+@@ -21,6 +21,7 @@
+ 
+ from dataclasses import dataclass
+ from datetime import date
++import math
+ from io import StringIO
+ from pathlib import Path
+ from typing import BinaryIO, TextIO
+@@ -94,6 +95,14 @@
+ # to change later if a fixed reference year is preferred.
+ DEFAULT_TYPICAL_YEAR = date.today().year
+ 
++# Public-upload guardrails. These limits are intentionally structural rather
++# than scientific: valid annual EPW files are far below 10 MiB, and the record
++# ceiling leaves room for leap-year files while preventing unbounded parsing.
++MAX_EPW_BYTES = 10 * 1024 * 1024
++MAX_EPW_RECORDS = 9000
++MIN_EPW_RECORDS = 24
++MAX_EPW_LINE_LENGTH = 4096
++
+ 
+ @dataclass(frozen=True)
+ class EpwLocation:
+@@ -130,17 +139,77 @@
+     severity: str
+ 
+ 
++def _decode_epw_bytes(raw: bytes, name: str) -> str:
++    """Decode bounded EPW bytes without accepting embedded NUL characters."""
++    if len(raw) > MAX_EPW_BYTES:
++        raise ValueError(
++            f"The EPW file '{name}' exceeds the {MAX_EPW_BYTES // (1024 * 1024)} MiB upload limit."
++        )
++    if b"\x00" in raw:
++        raise ValueError(f"The EPW file '{name}' contains NUL bytes and is not valid text input.")
++    return raw.decode("utf-8-sig", errors="replace")
++
++
+ def _read_text(file: str | Path | BinaryIO | TextIO) -> tuple[str, str]:
+-    """Read uploaded or path-based EPW content and return text plus a name."""
++    """Read uploaded or path-based EPW content and return bounded text plus a name."""
+     if isinstance(file, (str, Path)):
+         path = Path(file)
+-        return path.read_text(encoding="utf-8", errors="replace"), path.name
++        raw = path.read_bytes()
++        return _decode_epw_bytes(raw, path.name), path.name
+ 
+-    name = getattr(file, "name", "uploaded.epw")
++    name = str(getattr(file, "name", "uploaded.epw"))
+     raw = file.read()
+     if isinstance(raw, bytes):
+-        return raw.decode("utf-8", errors="replace"), name
+-    return str(raw), name
++        return _decode_epw_bytes(raw, name), name
++
++    text = str(raw)
++    if "\x00" in text:
++        raise ValueError(f"The EPW file '{name}' contains NUL characters and is not valid text input.")
++    if len(text.encode("utf-8")) > MAX_EPW_BYTES:
++        raise ValueError(
++            f"The EPW file '{name}' exceeds the {MAX_EPW_BYTES // (1024 * 1024)} MiB upload limit."
++        )
++    return text, name
++
++
++def _validate_epw_structure(text: str, name: str) -> tuple[list[str], int]:
++    """Validate bounded EPW structure before pandas parses numeric content."""
++    lines = text.splitlines()
++    if len(lines) < 9:
++        raise ValueError("The uploaded file is too short to be a valid EPW file.")
++
++    if any(len(line) > MAX_EPW_LINE_LENGTH for line in lines):
++        raise ValueError(f"The EPW file '{name}' contains an excessively long record.")
++
++    # Validate LOCATION early, including coordinate bounds.
++    _parse_location(lines[0])
++
++    data_lines = [line for line in lines[8:] if line.strip()]
++    record_count = len(data_lines)
++    if record_count < MIN_EPW_RECORDS:
++        raise ValueError(
++            f"The EPW file '{name}' contains only {record_count} data records; at least {MIN_EPW_RECORDS} are required."
++        )
++    if record_count > MAX_EPW_RECORDS:
++        raise ValueError(
++            f"The EPW file '{name}' contains {record_count} data records; the maximum accepted count is {MAX_EPW_RECORDS}."
++        )
++
++    expected_fields = len(EPW_COLUMNS)
++    for index, line in enumerate(data_lines, start=9):
++        if len(line.split(",")) != expected_fields:
++            raise ValueError(
++                f"The EPW file '{name}' has {len(line.split(','))} fields on line {index}; "
++                f"expected {expected_fields}."
++            )
++
++    return lines, record_count
++
++
++def validate_epw_payload(payload: bytes, name: str = "uploaded.epw") -> None:
++    """Validate raw EPW bytes for safe storage or downstream parsing."""
++    text = _decode_epw_bytes(payload, name)
++    _validate_epw_structure(text, name)
+ 
+ 
+ def _parse_location(line: str) -> EpwLocation:
+@@ -148,16 +217,33 @@
+     parts = [p.strip() for p in line.split(",")]
+     if len(parts) < 10 or parts[0].upper() != "LOCATION":
+         raise ValueError("The EPW file does not contain a valid LOCATION header.")
++    latitude = float(parts[6])
++    longitude = float(parts[7])
++    utc_offset = float(parts[8])
++    elevation_m = float(parts[9])
++
++    values = (latitude, longitude, utc_offset, elevation_m)
++    if not all(math.isfinite(value) for value in values):
++        raise ValueError("The EPW LOCATION header contains non-finite numeric values.")
++    if not -90.0 <= latitude <= 90.0:
++        raise ValueError("The EPW LOCATION latitude must be between -90 and 90 degrees.")
++    if not -180.0 <= longitude <= 180.0:
++        raise ValueError("The EPW LOCATION longitude must be between -180 and 180 degrees.")
++    if not -14.0 <= utc_offset <= 14.0:
++        raise ValueError("The EPW LOCATION UTC offset must be between -14 and +14 hours.")
++    if not -500.0 <= elevation_m <= 10000.0:
++        raise ValueError("The EPW LOCATION elevation is outside the accepted -500...10000 m range.")
++
+     return EpwLocation(
+         city=parts[1],
+         state=parts[2],
+         country=parts[3],
+         source=parts[4],
+         wmo=parts[5],
+-        latitude=float(parts[6]),
+-        longitude=float(parts[7]),
+-        utc_offset=float(parts[8]),
+-        elevation_m=float(parts[9]),
++        latitude=latitude,
++        longitude=longitude,
++        utc_offset=utc_offset,
++        elevation_m=elevation_m,
+     )
+ 
+ 
+@@ -298,14 +384,16 @@
+ def parse_epw(file: str | Path | BinaryIO | TextIO) -> EpwFile:
+     """Parse an EPW file and return metadata plus a normalized DataFrame."""
+     text, name = _read_text(file)
+-    lines = text.splitlines()
+-    if len(lines) < 10:
+-        raise ValueError("The uploaded file is too short to be a valid EPW file.")
++    lines, expected_records = _validate_epw_structure(text, name)
+ 
+     header_lines = lines[:8]
+     location = _parse_location(header_lines[0])
+-    data_text = "\n".join(lines[8:])
++    data_text = "\n".join(line for line in lines[8:] if line.strip())
+     df = pd.read_csv(StringIO(data_text), header=None, names=EPW_COLUMNS)
++    if len(df) != expected_records:
++        raise ValueError(
++            f"The EPW parser produced {len(df)} rows but {expected_records} validated records were supplied."
++        )
+     df = clean_epw_dataframe(df)
+     df.attrs["timezone_name"] = _timezone_name_from_offset(location.utc_offset)
+     df.attrs["typical_year"] = int(df["typical_year"].iloc[0]) if not df.empty else DEFAULT_TYPICAL_YEAR
+--- a/tools/climate_analyzer/epw_climate_analyzer/climate_sources.py
++++ b/tools/climate_analyzer/epw_climate_analyzer/climate_sources.py
+@@ -16,7 +16,7 @@
+ 
+ from dataclasses import dataclass
+ from io import BytesIO
+-from pathlib import Path
++from pathlib import Path, PurePosixPath
+ from typing import Callable, Iterable
+ from urllib.parse import urljoin, urlparse
+ from zipfile import BadZipFile, ZipFile
+@@ -30,12 +30,20 @@
+ from bs4 import BeautifulSoup
+ from openpyxl import load_workbook
+ 
++from epw_climate_analyzer.epw_parser import MAX_EPW_BYTES, validate_epw_payload
++
+ 
+ BASE_URL = "https://climate.onebuilding.org/"
+ CATALOG_PATH = Path(__file__).resolve().parent / "data" / "station_catalog.csv"
+ CACHE_DIR = Path.home() / ".epw_climate_analyzer"
+ ONEBUILDING_CACHE_PATH = CACHE_DIR / "onebuilding_station_catalog.csv"
+-USER_AGENT = "EPW Climate Analyzer/1.1 (+local Streamlit app)"
++USER_AGENT = "Building-Energy-Tools-Climate-Analyzer/0.3"
++ALLOWED_DOWNLOAD_HOSTS = {"climate.onebuilding.org"}
++MAX_DOWNLOAD_BYTES = 32 * 1024 * 1024
++MAX_ZIP_MEMBERS = 128
++MAX_ZIP_UNCOMPRESSED_BYTES = 64 * 1024 * 1024
++MAX_ZIP_COMPRESSION_RATIO = 200.0
++MAX_REDIRECTS = 3
+ 
+ ONEBUILDING_REGION_PAGES = [
+     "WMO_Region_1_Africa/default.html",
+@@ -117,6 +125,78 @@
+     return ONEBUILDING_CACHE_PATH
+ 
+ 
++def _validate_onebuilding_url(url: str) -> str:
++    """Return a normalized Climate.OneBuilding HTTPS URL or reject it."""
++    clean_url = url.strip()
++    if not clean_url:
++        raise ValueError("The download URL is empty.")
++
++    parsed = urlparse(clean_url)
++    if parsed.scheme.lower() != "https":
++        raise ValueError("Climate downloads must use HTTPS.")
++    if parsed.username or parsed.password:
++        raise ValueError("Credential-bearing download URLs are not allowed.")
++    hostname = (parsed.hostname or "").rstrip(".").lower()
++    if hostname not in ALLOWED_DOWNLOAD_HOSTS:
++        raise ValueError("Climate downloads are restricted to climate.onebuilding.org.")
++    if parsed.port not in (None, 443):
++        raise ValueError("Non-standard download ports are not allowed.")
++    return clean_url
++
++
++def _download_limited(url: str, timeout_s: int = 60) -> tuple[bytes, str | None, str]:
++    """Download bounded bytes while validating every redirect target."""
++    current_url = _validate_onebuilding_url(url)
++
++    for redirect_count in range(MAX_REDIRECTS + 1):
++        response = requests.get(
++            current_url,
++            timeout=(10, timeout_s),
++            headers={"User-Agent": USER_AGENT},
++            stream=True,
++            allow_redirects=False,
++        )
++        try:
++            if 300 <= response.status_code < 400:
++                location = response.headers.get("location")
++                if not location:
++                    response.raise_for_status()
++                if redirect_count >= MAX_REDIRECTS:
++                    raise ValueError("The climate download exceeded the allowed redirect count.")
++                current_url = _validate_onebuilding_url(urljoin(current_url, location))
++                continue
++
++            response.raise_for_status()
++            content_length = response.headers.get("content-length")
++            if content_length:
++                try:
++                    declared_size = int(content_length)
++                except ValueError:
++                    declared_size = 0
++                if declared_size > MAX_DOWNLOAD_BYTES:
++                    raise ValueError(
++                        f"The climate download exceeds the {MAX_DOWNLOAD_BYTES // (1024 * 1024)} MiB limit."
++                    )
++
++            chunks: list[bytes] = []
++            total = 0
++            for chunk in response.iter_content(chunk_size=64 * 1024):
++                if not chunk:
++                    continue
++                total += len(chunk)
++                if total > MAX_DOWNLOAD_BYTES:
++                    raise ValueError(
++                        f"The climate download exceeds the {MAX_DOWNLOAD_BYTES // (1024 * 1024)} MiB limit."
++                    )
++                chunks.append(chunk)
++
++            return b"".join(chunks), response.headers.get("content-type"), current_url
++        finally:
++            response.close()
++
++    raise ValueError("The climate download could not be completed safely.")
++
++
+ def _http_get(url: str, timeout_s: int = 60) -> requests.Response:
+     """Execute a GET request with a consistent User-Agent and status check."""
+     response = requests.get(url, timeout=timeout_s, headers={"User-Agent": USER_AGENT})
+@@ -132,32 +212,46 @@
+ 
+ 
+ def _extract_epw_from_zip(zip_payload: bytes, archive_name: str) -> tuple[str, bytes]:
+-    """Extract the first EPW file from a ZIP payload.
+-
+-    Parameters
+-    ----------
+-    zip_payload:
+-        Raw ZIP bytes.
+-    archive_name:
+-        Display name of the downloaded ZIP archive.
+-
+-    Returns
+-    -------
+-    tuple[str, bytes]
+-        Extracted EPW filename and raw EPW bytes.
+-
+-    Raises
+-    ------
+-    ValueError
+-        If the ZIP archive is invalid or does not contain an EPW file.
+-    """
++    """Read one bounded EPW member from a ZIP archive without filesystem extraction."""
+     try:
+         with ZipFile(BytesIO(zip_payload)) as archive:
+-            candidates = [name for name in archive.namelist() if name.lower().endswith(".epw") and not name.endswith("/")]
++            members = archive.infolist()
++            if len(members) > MAX_ZIP_MEMBERS:
++                raise ValueError(
++                    f"The archive '{archive_name}' contains too many members ({len(members)} > {MAX_ZIP_MEMBERS})."
++                )
++
++            total_uncompressed = sum(info.file_size for info in members)
++            if total_uncompressed > MAX_ZIP_UNCOMPRESSED_BYTES:
++                raise ValueError(
++                    f"The archive '{archive_name}' exceeds the uncompressed size limit."
++                )
++
++            candidates = []
++            for info in members:
++                if info.is_dir() or not info.filename.lower().endswith(".epw"):
++                    continue
++                member_path = PurePosixPath(info.filename)
++                if member_path.is_absolute() or ".." in member_path.parts:
++                    raise ValueError(f"The archive '{archive_name}' contains an unsafe EPW path.")
++                if info.flag_bits & 0x1:
++                    raise ValueError(f"The archive '{archive_name}' contains an encrypted EPW member.")
++                if info.file_size > MAX_EPW_BYTES:
++                    raise ValueError(f"The EPW member in '{archive_name}' exceeds the EPW size limit.")
++                if info.compress_size == 0 and info.file_size > 0:
++                    raise ValueError(f"The archive '{archive_name}' has an invalid compressed EPW member.")
++                if info.compress_size > 0 and info.file_size / info.compress_size > MAX_ZIP_COMPRESSION_RATIO:
++                    raise ValueError(f"The archive '{archive_name}' has a suspicious EPW compression ratio.")
++                candidates.append(info)
++
+             if not candidates:
+                 raise ValueError(f"The archive '{archive_name}' does not contain an EPW file.")
+-            selected = sorted(candidates, key=lambda item: (item.count("/"), len(item)))[0]
+-            return Path(selected).name, archive.read(selected)
++
++            selected = sorted(candidates, key=lambda item: (PurePosixPath(item.filename).parent.parts, len(item.filename)))[0]
++            epw_payload = archive.read(selected)
++            epw_name = Path(selected.filename).name
++            validate_epw_payload(epw_payload, epw_name)
++            return epw_name, epw_payload
+     except BadZipFile as exc:
+         raise ValueError(f"The downloaded file '{archive_name}' is not a valid ZIP archive.") from exc
+ 
+@@ -180,33 +274,28 @@
+     DownloadResult
+         Extracted EPW payload and metadata.
+     """
+-    clean_url = url.strip()
+-    if not clean_url:
+-        raise ValueError("The download URL is empty.")
+-    if not clean_url.lower().startswith(("http://", "https://")):
+-        raise ValueError("The download URL must start with http:// or https://.")
+-
+-    response = _http_get(clean_url, timeout_s=timeout_s)
+-    payload = response.content
+-    url_name = _safe_file_name_from_url(clean_url)
+-    content_type = response.headers.get("content-type")
++    clean_url = _validate_onebuilding_url(url)
++    payload, content_type, final_url = _download_limited(clean_url, timeout_s=timeout_s)
++    url_name = _safe_file_name_from_url(final_url)
+     lower_name = url_name.lower()
+ 
+     if lower_name.endswith(".zip") or (content_type and "zip" in content_type.lower()):
+         epw_name, epw_payload = _extract_epw_from_zip(payload, url_name)
+-        return DownloadResult(epw_name, epw_payload, url_name, content_type, clean_url)
++        return DownloadResult(epw_name, epw_payload, url_name, content_type, final_url)
+ 
+     if lower_name.endswith(".epw") or payload[:32].decode("utf-8", errors="ignore").upper().startswith("LOCATION"):
+         file_name = url_name if lower_name.endswith(".epw") else "downloaded_weather.epw"
+-        return DownloadResult(file_name, payload, None, content_type, clean_url)
++        validate_epw_payload(payload, file_name)
++        return DownloadResult(file_name, payload, None, content_type, final_url)
+ 
+     try:
+         epw_name, epw_payload = _extract_epw_from_zip(payload, url_name)
+-        return DownloadResult(epw_name, epw_payload, url_name, content_type, clean_url)
++        return DownloadResult(epw_name, epw_payload, url_name, content_type, final_url)
+     except ValueError:
+         header = payload[:128].decode("utf-8", errors="ignore").upper()
+         if header.startswith("LOCATION"):
+-            return DownloadResult("downloaded_weather.epw", payload, None, content_type, clean_url)
++            validate_epw_payload(payload, "downloaded_weather.epw")
++            return DownloadResult("downloaded_weather.epw", payload, None, content_type, final_url)
+ 
+     raise ValueError("The downloaded file is neither an EPW file nor a ZIP archive containing an EPW file.")
+ 
