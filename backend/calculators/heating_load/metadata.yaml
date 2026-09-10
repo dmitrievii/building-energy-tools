@@ -1,7 +1,0 @@
-id: heating_load
-name: Heating Load Calculator
-version: 0.1.0
-status: draft
-category: Comfort & Loads
-route: /en/tools/heating-load
-description: Estimate preliminary room heating load from transmission and ventilation losses.

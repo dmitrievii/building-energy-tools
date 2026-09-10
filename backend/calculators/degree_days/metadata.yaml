@@ -1,7 +1,0 @@
-id: degree_days
-name: Degree Days Calculator
-version: 0.1.0
-status: draft
-category: Basics & Climate
-route: /en/tools/degree-days
-description: Calculate heating and cooling degree days from daily mean outdoor temperatures.
