@@ -3,5 +3,10 @@ headless = true
 maxUploadSize = 10
 maxMessageSize = 50
 
+[client]
+toolbarMode = "viewer"
+
 [browser]
+# Honored for local/self-hosted use. Streamlit Community Cloud currently
+# overrides this setting to true; see deployment privacy documentation.
 gatherUsageStats = false
