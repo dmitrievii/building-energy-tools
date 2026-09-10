@@ -66,7 +66,9 @@ class PublicationContractTests(unittest.TestCase):
         legal_template = (REPO_ROOT / "website" / "content" / "legal-notice.template.md").read_text(encoding="utf-8")
         self.assertIn("PUBLICATION BLOCKED", checklist)
         self.assertIn("geographic address", checklist.lower())
-        self.assertIn("to be approved before publication", privacy.lower())
+        self.assertIn("to be approved before public promotion", privacy.lower())
+        self.assertIn("legal basis", privacy.lower())
+        self.assertIn("consent", privacy.lower())
         self.assertIn("DO NOT DEPLOY", legal_template)
         self.assertIn("PUBLICATION REQUIRED", legal_template)
 
