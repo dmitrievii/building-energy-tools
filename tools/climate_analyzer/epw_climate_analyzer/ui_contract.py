@@ -11,15 +11,26 @@ from __future__ import annotations
 from collections.abc import MutableMapping
 from typing import Any
 
+from .release_info import (
+    ENGINEERING_DISCLAIMER,
+    INDEPENDENCE_NOTICE,
+    PROJECT_NAME,
+    TOOL_NAME,
+    TOOL_VERSION,
+)
 
-PUBLIC_UX_STAGE = "WEB-0.6"
-APP_NAME = "Climate Analyzer"
-APP_BROWSER_TITLE = "Climate Analyzer | Building Energy Tools"
+
+PUBLIC_UX_STAGE = "WEB-0.7"
+APP_NAME = TOOL_NAME
+APP_BROWSER_TITLE = f"{TOOL_NAME} | {PROJECT_NAME}"
 APP_TAGLINE = "Climate analysis for building design and building performance"
 APP_INTRO = (
     "Explore EPW weather data for temperature, moisture, solar radiation, wind, "
     "passive-design potential and early HVAC decision support."
 )
+APP_RELEASE_LABEL = f"{TOOL_NAME} {TOOL_VERSION} · Beta candidate"
+APP_INDEPENDENCE_NOTICE = INDEPENDENCE_NOTICE
+APP_ENGINEERING_DISCLAIMER = ENGINEERING_DISCLAIMER
 
 NAVIGATION_KEY = "climate_analyzer_navigation"
 PENDING_NAVIGATION_KEY = "_climate_analyzer_pending_navigation"
