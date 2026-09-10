@@ -272,6 +272,21 @@ MONTHS = {
 
 st.set_page_config(page_title=APP_BROWSER_TITLE, layout="wide", page_icon="🌦️")
 
+# Streamlit 1.63 renders the file-uploader size/type hint with a 0.6-alpha
+# foreground color that fails WCAG AA contrast on the default light background.
+# Inherit the surrounding instruction color through a stable Streamlit test id;
+# do not bind this override to generated Emotion class names.
+st.markdown(
+    """
+    <style>
+    [data-testid="stFileUploaderDropzoneInstructions"] span {
+        color: inherit !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 
 @st.cache_data(show_spinner=True)
 def load_epw_from_bytes(
