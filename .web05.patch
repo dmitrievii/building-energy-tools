@@ -1,0 +1,179 @@
+--- a/tools/climate_analyzer/app.py
++++ b/tools/climate_analyzer/app.py
+@@ -24,12 +24,13 @@
+ )
+ from epw_climate_analyzer.climate_sources import (
+     ClimateFilePayload,
+-    ONEBUILDING_REGION_OPTIONS,
+-    build_onebuilding_station_catalog,
+-    catalog_cache_path,
+     download_station_epw,
+     filter_station_catalog,
+-    load_onebuilding_catalog,
++)
++from epw_climate_analyzer.catalog_runtime import (
++    catalog_runtime_summary,
++    load_production_station_catalog,
++    station_provenance_text,
+ )
+ from epw_climate_analyzer.charts import (
+     duration_chart,
+@@ -270,8 +271,8 @@
+ 
+ @st.cache_data(show_spinner=False)
+ def cached_station_catalog() -> pd.DataFrame:
+-    """Load and cache the Climate.OneBuilding station catalog for the OSM map."""
+-    return load_onebuilding_catalog()
++    """Load and cache the reviewed, versioned station catalog for the OSM map."""
++    return load_production_station_catalog()
+ 
+ 
+ @st.cache_data(show_spinner=False)
+@@ -656,38 +657,6 @@
+     )
+     return station_groups[mask].copy()
+ 
+-def refresh_catalog_button() -> None:
+-    """Render controls that rebuild the Climate.OneBuilding station catalog."""
+-    st.caption(f"Catalog cache: `{catalog_cache_path()}`")
+-    selected_regions = st.multiselect(
+-        "Catalog regions to refresh",
+-        list(ONEBUILDING_REGION_OPTIONS.keys()),
+-        default=["Europe"],
+-        help="Build only the selected WMO regions to keep the local catalog and station map responsive. Select all regions only when a global catalog is required.",
+-    )
+-    region_pages = [ONEBUILDING_REGION_OPTIONS[name] for name in selected_regions]
+-    if st.button("Build / refresh selected Climate.OneBuilding catalog", type="secondary"):
+-        if not region_pages:
+-            st.warning("Select at least one WMO region before refreshing the catalog.")
+-            return
+-        messages: list[str] = []
+-        status = st.empty()
+-
+-        def progress(message: str) -> None:
+-            messages.append(message)
+-            status.info(message)
+-
+-        with st.spinner("Reading selected Climate.OneBuilding KML/XLSX catalogs..."):
+-            report = build_onebuilding_station_catalog(progress_callback=progress, region_pages=region_pages)
+-        cached_station_catalog.clear()
+-        status.success(
+-            f"Catalog refreshed: {report.station_count:,} stations, "
+-            f"{report.xlsx_catalog_count} XLSX catalogs, {report.kml_catalog_count} KML catalogs, "
+-            f"{report.failed_catalog_count} failed catalogs."
+-        )
+-        st.rerun()
+-
+-
+ def render_climate_file_source() -> None:
+     """Render the first page for local EPW upload and Climate.OneBuilding selection."""
+     st.header("Climate file source")
+@@ -713,7 +682,7 @@
+         if local_file is not None:
+             st.write(f"Selected file: `{local_file.name}`")
+             if st.button("Use uploaded EPW file", type="primary"):
+-                set_active_climate_file(local_file.name, local_file.getvalue(), "Local upload")
++                set_active_climate_file(local_file.name, local_file.getvalue(), "Local upload | user-provided EPW | transient session")
+                 st.rerun()
+ 
+     with map_tab:
+@@ -722,10 +691,14 @@
+             "The map uses clustered markers: at low zoom levels it displays station counts; "
+             "after zooming in, individual stations appear as purple points."
+         )
+-        refresh_catalog_button()
+-        catalog = cached_station_catalog()
++        try:
++            catalog = cached_station_catalog()
++        except Exception as exc:
++            st.error(f"The versioned station catalog failed integrity/provenance validation: {exc}")
++            return
++        st.caption(catalog_runtime_summary(catalog))
+         if catalog.empty:
+-            st.warning("No station catalog is available yet. Build the Climate.OneBuilding catalog first.")
++            st.error("The versioned station catalog is empty. A reviewed catalog update is required before online station selection can be used.")
+             return
+ 
+         col_filter1, col_filter2, col_filter3 = st.columns([2, 1, 1])
+@@ -881,12 +854,14 @@
+             st.dataframe(
+                 pd.DataFrame(
+                     {
+-                        "Field": ["Station ID", "Dataset", "Source", "Region", "Download URL"],
++                        "Field": ["Station ID", "Dataset", "Source", "Region", "Catalog version", "Catalog snapshot", "Download URL"],
+                         "Value": [
+                             selected.get("station_id", ""),
+                             selected.get("dataset", ""),
+                             selected.get("source", ""),
+                             selected.get("region", ""),
++                            selected.get("catalog_version", ""),
++                            selected.get("catalog_source_snapshot_date", ""),
+                             selected.get("download_url", ""),
+                         ],
+                     }
+@@ -899,12 +874,11 @@
+                 try:
+                     with st.spinner("Downloading and extracting EPW file..."):
+                         result = download_station_epw(selected)
+-                    source_text = (
+-                        f"Climate.OneBuilding | {selected.get('name', '')} | "
+-                        f"{selected.get('country', '')} | {selected.get('dataset', '')} | {result.source_url}"
++                    source_text = station_provenance_text(
++                        selected,
++                        final_download_url=result.source_url,
++                        archive_name=result.extracted_from,
+                     )
+-                    if result.extracted_from:
+-                        source_text += f" | extracted from {result.extracted_from}"
+                     set_active_climate_file(result.file_name, result.payload, source_text)
+                     st.rerun()
+                 except Exception as exc:
+@@ -918,8 +892,9 @@
+                     st.session_state["selected_station_group_id"] = station_group_options[selected_label]
+                     st.rerun()
+         st.info(
+-            "Source note: Climate.OneBuilding publishes regional KML maps and XLSX spreadsheets. "
+-            "This app reads those public catalogs and caches a normalized station list locally."
++            "Source note: the public app reads a reviewed, versioned station catalog bundled with this release. "
++            "Catalog crawling and refresh are maintenance operations outside user sessions. Selected EPW files are "
++            "downloaded on demand from Climate.OneBuilding and are not bundled with this repository."
+         )
+ 
+ def render_interpretation(text: str) -> None:
+@@ -1162,15 +1137,19 @@
+     if uploaded:
+         if st.button("Add uploaded EPW files", type="primary"):
+             for file in uploaded:
+-                add_to_comparison_basket(file.name, file.getvalue(), "Local comparison upload", file.name)
++                add_to_comparison_basket(file.name, file.getvalue(), "Local comparison upload | user-provided EPW | transient session", file.name)
+             st.rerun()
+ 
+     with st.expander("Add Climate.OneBuilding station to comparison", expanded=False):
+-        refresh_catalog_button()
+-        catalog = cached_station_catalog()
++        try:
++            catalog = cached_station_catalog()
++        except Exception as exc:
++            st.error(f"The versioned station catalog failed integrity/provenance validation: {exc}")
++            catalog = pd.DataFrame()
+         if catalog.empty:
+-            st.warning("No Climate.OneBuilding catalog is available. Build the station catalog first.")
++            st.warning("No reviewed Climate.OneBuilding station catalog is available in this release.")
+         else:
++            st.caption(catalog_runtime_summary(catalog))
+             c1, c2, c3 = st.columns([2, 1, 1])
+             search_text = c1.text_input("Station search", value="", key="comparison_station_search")
+             countries = sorted([value for value in catalog["country"].dropna().unique().tolist() if str(value).strip()])
+@@ -1193,7 +1172,11 @@
+                         with st.spinner("Downloading and extracting station EPW..."):
+                             result = download_station_epw(selected)
+                         display = f"{selected.get('name', result.file_name)} — {selected.get('country', '')}"
+-                        source_text = f"Climate.OneBuilding comparison station | {selected.get('name', '')} | {result.source_url}"
++                        source_text = station_provenance_text(
++                            selected,
++                            final_download_url=result.source_url,
++                            archive_name=result.extracted_from,
++                        )
+                         add_to_comparison_basket(result.file_name, result.payload, source_text, display)
+                         st.rerun()
+                     except Exception as exc:
