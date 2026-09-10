@@ -69,11 +69,12 @@ class StartupDependencyContractTests(unittest.TestCase):
         self.assertIn("if include_comparison and not _COMPARISON_DEPENDENCIES_LOADED:", self.source)
         self.assertIn('include_comparison=(page == "Compare Climates")', self.source)
 
-    def test_lazy_dependency_gates_resolve_full_runtime_symbol_sets(self) -> None:
+    def test_lazy_dependency_gates_resolve_and_derive_epw_at_runtime(self) -> None:
         code = textwrap.dedent(
             f"""
             import importlib.util
             from pathlib import Path
+            from epw_climate_analyzer.epw_parser import EPW_COLUMNS
 
             app_path = Path({str(APP_PATH)!r})
             spec = importlib.util.spec_from_file_location("climate_analyzer_lazy_gate_test", app_path)
@@ -99,6 +100,50 @@ class StartupDependencyContractTests(unittest.TestCase):
                 "ClimateDataset", "psychrometric_comparison_chart", "px",
             ):
                 assert hasattr(module, name), name
+
+            headers = [
+                "LOCATION,Test City,Test State,AUT,TEST,123456,47.07,15.44,1.0,350.0",
+                "DESIGN CONDITIONS,0",
+                "TYPICAL/EXTREME PERIODS,0",
+                "GROUND TEMPERATURES,0",
+                "HOLIDAYS/DAYLIGHT SAVINGS,No,0,0,0",
+                "COMMENTS 1,WEB-0.9 lazy dependency runtime fixture",
+                "COMMENTS 2,WEB-0.9 lazy dependency runtime fixture",
+                "DATA PERIODS,1,1,Data,Sunday,1/1,12/31",
+            ]
+            rows = []
+            for index in range(24):
+                values = ["0"] * len(EPW_COLUMNS)
+                values[0] = "2020"
+                values[1] = "1"
+                values[2] = "1"
+                values[3] = str(index + 1)
+                values[4] = "60"
+                values[5] = "?9?9?9?9E0?9?9?9*9*9*9*9*9*9*9*9*9*9*9*9*9*9*9"
+                values[6] = "5.0"
+                values[7] = "2.0"
+                values[8] = "80"
+                values[9] = "101325"
+                values[13] = "100"
+                values[14] = "50"
+                values[15] = "50"
+                values[20] = "180"
+                values[21] = "2.0"
+                rows.append(",".join(values))
+            payload = ("\\n".join(headers + rows) + "\\n").encode("utf-8")
+
+            epw, frame, issues = module.load_epw_from_bytes(
+                "runtime-fixture.epw",
+                payload,
+                "Normal pressure: 101325 Pa",
+                None,
+                include_psychrometrics=True,
+                include_solar=True,
+            )
+            assert epw.location.country == "AUT"
+            assert len(frame) == 24
+            assert "humidity_ratio_g_kg" in frame.columns
+            assert len(issues) >= 0
             print("LAZY_DEPENDENCY_RUNTIME_GATE=PASS")
             """
         )
