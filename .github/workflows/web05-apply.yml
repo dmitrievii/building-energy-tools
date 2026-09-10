@@ -1,0 +1,41 @@
+name: WEB-0.5 Apply Runtime Patch
+
+on:
+  push:
+    branches:
+      - web-0.5-climate-data-provenance
+    paths:
+      - '.github/workflows/web05-apply.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: web-0.5-climate-data-provenance
+          fetch-depth: 0
+
+      - name: Apply app patch
+        run: |
+          set -euo pipefail
+          git apply --check .web05.patch
+          git apply .web05.patch
+          python -m compileall -q tools/climate_analyzer/app.py
+
+      - name: Remove one-time transport files
+        run: |
+          rm .web05.patch
+          rm .github/workflows/web05-apply.yml
+
+      - name: Commit patched runtime
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'WEB-0.5: switch public app to versioned catalog runtime'
+          git push origin HEAD:web-0.5-climate-data-provenance
