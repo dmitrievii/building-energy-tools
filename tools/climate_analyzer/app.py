@@ -128,8 +128,12 @@ from epw_climate_analyzer.ui_contract import (
     APP_INTRO,
     APP_NAME,
     APP_TAGLINE,
+    NAVIGATION_KEY,
     NAVIGATION_PAGES,
+    apply_queued_navigation,
     navigation_label,
+    queue_navigation,
+    queue_navigation_reset,
 )
 
 
@@ -201,7 +205,6 @@ MONTHS = {
 }
 
 
-NAVIGATION_KEY = "climate_analyzer_navigation"
 st.set_page_config(page_title=APP_BROWSER_TITLE, layout="wide", page_icon="🌦️")
 
 
@@ -264,7 +267,7 @@ def page_derivation_flags(page: str) -> tuple[bool, bool]:
 def set_active_climate_file(name: str, payload: bytes, source: str) -> None:
     """Store the selected EPW payload and open the summary view."""
     st.session_state["active_climate_file"] = ClimateFilePayload(name=name, payload=payload, source=source)
-    st.session_state[NAVIGATION_KEY] = "Overview"
+    queue_navigation(st.session_state, "Overview")
 
 
 def get_active_climate_file() -> ClimateFilePayload | None:
@@ -276,7 +279,7 @@ def get_active_climate_file() -> ClimateFilePayload | None:
 def clear_active_climate_file() -> None:
     """Remove the currently selected climate file and reset navigation."""
     st.session_state.pop("active_climate_file", None)
-    st.session_state.pop(NAVIGATION_KEY, None)
+    queue_navigation_reset(st.session_state)
 
 
 
@@ -2270,6 +2273,7 @@ def main() -> None:
     """Run the Streamlit Climate Analyzer application."""
     st.sidebar.caption("Building Energy Tools")
     st.sidebar.title(APP_NAME)
+    apply_queued_navigation(st.session_state)
     active_file = get_active_climate_file()
 
     if active_file is None:
