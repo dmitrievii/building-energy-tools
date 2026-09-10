@@ -6,9 +6,15 @@ from epw_climate_analyzer.ui_contract import (
     APP_BROWSER_TITLE,
     APP_NAME,
     APP_TAGLINE,
+    NAVIGATION_KEY,
     NAVIGATION_LABELS,
     NAVIGATION_PAGES,
+    PENDING_NAVIGATION_KEY,
+    RESET_NAVIGATION_KEY,
+    apply_queued_navigation,
     navigation_label,
+    queue_navigation,
+    queue_navigation_reset,
 )
 
 
@@ -30,6 +36,28 @@ class PublicUxContractTests(unittest.TestCase):
         self.assertEqual(labels[0], "Start — Climate source")
         for prefix in ("Climate —", "Design —", "Compare —", "Data —"):
             self.assertTrue(any(label.startswith(prefix) for label in labels), prefix)
+
+    def test_navigation_is_queued_before_widget_state_is_changed(self) -> None:
+        state: dict[str, object] = {NAVIGATION_KEY: "Climate File Source"}
+        queue_navigation(state, "Overview")
+        self.assertEqual(state[NAVIGATION_KEY], "Climate File Source")
+        self.assertEqual(state[PENDING_NAVIGATION_KEY], "Overview")
+        apply_queued_navigation(state)
+        self.assertEqual(state[NAVIGATION_KEY], "Overview")
+        self.assertNotIn(PENDING_NAVIGATION_KEY, state)
+
+    def test_navigation_reset_is_applied_on_next_render(self) -> None:
+        state: dict[str, object] = {NAVIGATION_KEY: "Climate File Source"}
+        queue_navigation_reset(state)
+        self.assertEqual(state[NAVIGATION_KEY], "Climate File Source")
+        self.assertTrue(state[RESET_NAVIGATION_KEY])
+        apply_queued_navigation(state)
+        self.assertNotIn(NAVIGATION_KEY, state)
+        self.assertNotIn(RESET_NAVIGATION_KEY, state)
+
+    def test_unknown_navigation_target_is_rejected(self) -> None:
+        with self.assertRaises(ValueError):
+            queue_navigation({}, "Unknown page")
 
 
 if __name__ == "__main__":
