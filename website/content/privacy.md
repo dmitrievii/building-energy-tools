@@ -1,14 +1,14 @@
 # Privacy information — public beta draft
 
-**Status:** live-deployment draft. A Streamlit Community Cloud deployment exists, but controller contact fields, legal-basis/consent review and final publication clearance remain unresolved. Do not represent this document as a completed legal privacy notice.
+**Status:** live-deployment draft. A Streamlit Community Cloud deployment exists, but controller/disclosure fields and the provider-controlled analytics/consent issue remain unresolved. Do not represent this document as a completed legal privacy notice or publication clearance.
 
 ## Controller
 
 Project operator: **Ivan Dmitriev**.
 
-Public geographic/contact address and public electronic contact address: **to be approved before public promotion**.
+Public residence/establishment/contact fields: **to be approved before public promotion**.
 
-These fields must not be replaced with the TU Graz address merely because an academic affiliation is stated. Final controller/contact information and the applicable Austrian/GDPR disclosure basis require a deployment-specific review.
+These fields must not be populated from private project metadata or replaced with the TU Graz address merely because an academic affiliation is stated. The final public disclosure set depends on the actual Austrian MedienG/ECG classification and must use facts the operator has explicitly approved for publication.
 
 ## Current deployment
 
@@ -18,7 +18,7 @@ Climate Analyzer is currently deployed at:
 https://building-climate-analyzer.streamlit.app/
 ```
 
-The host is **Streamlit Community Cloud**. Streamlit's current Community Cloud documentation states that Community Cloud applications are hosted in the United States and that this location is not configurable.
+The host is **Streamlit Community Cloud**. Current Streamlit documentation states that Community Cloud applications are hosted in the United States and that this location is not configurable.
 
 Streamlit also documents that Community Cloud overrides contrary application configuration and sets:
 
@@ -29,12 +29,7 @@ gatherUsageStats = true
 
 Therefore the repository's local/self-hosted `gatherUsageStats = false` setting must **not** be interpreted as disabling Community Cloud platform analytics or telemetry.
 
-Provider references:
-
-- https://docs.streamlit.io/deploy/streamlit-community-cloud
-- https://docs.streamlit.io/deploy/streamlit-community-cloud/status
-- https://docs.streamlit.io/deploy/streamlit-community-cloud/manage-your-app/app-analytics
-- https://streamlit.io/privacy-policy
+Provider references reviewed on 2026-09-10 include Streamlit Community Cloud status/trust/privacy documentation and Snowflake's current Privacy Notice / Data Privacy Framework material.
 
 ## What Building Energy Tools intentionally processes
 
@@ -58,7 +53,7 @@ The application does not promise a precise platform-level deletion time beyond t
 
 ## Live provider analytics and telemetry evidence
 
-A reproducible anonymous-browser audit of the live Community Cloud deployment on **2026-09-10** observed provider-controlled requests before any Climate Analyzer map interaction to domains including:
+Reproducible anonymous-browser audits of the live Community Cloud deployment on **2026-09-10**, including the post-`WEB-0.9.1` replay, observed provider-controlled requests before any Climate Analyzer map interaction to domains including:
 
 ```text
 building-climate-analyzer.streamlit.app
@@ -75,15 +70,21 @@ www.streamlitstatus.com
 qjmnz4vd2y07.statuspage.io
 ```
 
-The application source does not add Google Analytics, Google Tag Manager, Segment, Heap or advertising code itself. These requests were observed in the **Community Cloud hosting/wrapper layer** and must nevertheless be considered part of the user's actual deployed experience.
+The application source does not add Google Analytics, Google Tag Manager, Segment, Heap or advertising code itself. These requests occur in the **Community Cloud hosting/wrapper layer**, but they remain part of the actual experience of a visitor to the deployed URL.
 
-The project has not yet completed a legal-basis/consent assessment for these provider-controlled analytics/storage mechanisms. Their presence is therefore a publication blocker, not something this draft declares compliant.
+The post-`WEB-0.9.1` audit also observed the following Streamlit-platform HTTP responses on both desktop and mobile:
 
-Detailed engineering evidence is recorded in `deployment/LIVE_AUDIT_2026-09-10.md`.
+```text
+403  /api/v1/app/event/open
+404  /api/v2/user/details
+404  /api/v2/user/details
+```
+
+Climate Analyzer defines none of these endpoints. There were no failed browser requests, no uncaught page errors and the UI rendered successfully, so these responses are classified as Community Cloud wrapper/session/telemetry behavior rather than application API failures.
 
 ## Cookies and browser storage observed live
 
-No cookie values are retained in the project audit evidence. The anonymous live audit observed cookie names including:
+No cookie values are retained in the project audit evidence. Anonymous production sessions observed cookie names including:
 
 ```text
 _streamlit_csrf
@@ -110,46 +111,74 @@ stMetricsConfig
 
 No `sessionStorage` keys were observed in the audited sessions.
 
-The names above are an observed technical inventory. This draft does not assign a legal classification, retention basis or consent exemption to each item. That assessment must be completed before publication clearance.
+This is an engineering inventory, not a legal classification of each identifier. However, Austrian Datenschutzbehörde guidance on § 165(3) TKG 2021 states that terminal storage/access which is not technically necessary for a service requested by the user generally requires prior consent. The current Community Cloud wrapper initiates analytics-associated storage/network activity before Building Energy Tools application code can present or process a project-level consent choice.
+
+Accordingly, **an in-app consent banner would not by itself close this hosting-level issue**, because it executes after the outer Community Cloud layer has already started.
+
+## Current hosting/privacy gate
+
+For engineering release governance, the present decision is:
+
+```text
+STREAMLIT_COMMUNITY_CLOUD_TECHNICAL_BETA_RUNTIME       ACCEPTED
+STREAMLIT_COMMUNITY_CLOUD_PUBLICATION_PRIVACY_GATE     OPEN
+PUBLIC_PROMOTION_CLEARANCE                             BLOCKED
+```
+
+The blocker can be resolved only after one of the following is established for the final deployment:
+
+1. a defensible legal/provider-control basis for the provider-controlled analytics/storage behavior, including any consent requirements; or
+2. a promoted production runtime/hosting architecture in which Building Energy Tools can control non-essential storage/analytics before they occur.
+
+This is deliberately fail-closed. It is not a conclusion that Streamlit Community Cloud itself is unlawful; it is a conclusion that the project does not currently possess enough control/evidence to declare its own Austrian/EU publication gate closed.
 
 ## Streamlit public-session bootstrap
 
-An unauthenticated request to the custom Streamlit subdomain first redirects through `share.streamlit.io` and the app's `/-/login` bootstrap before returning to the public app. The audit observed Streamlit session and CSRF cookies during this process.
+An unauthenticated request to the custom Streamlit subdomain redirects through Streamlit's Community Cloud session/bootstrap layer before the application frame is rendered. The live audit observes Streamlit session and CSRF cookies during this process.
 
-This bootstrap occurs for an anonymous public app session and must not be described as the application having no platform-level session identifiers.
+This occurs for an anonymous public app session and must not be described as the application having no platform-level session identifiers.
 
 ## External map resources
 
-The station-selection interface uses an OpenStreetMap-based interactive map through Folium/Leaflet. When the user opens the map, browser requests can be made to external map/component infrastructure including `tile.openstreetmap.org` and supporting JavaScript/CDN resources. Ordinary connection metadata such as IP address, timestamp, requested resource and user-agent information may therefore be transmitted to those providers.
+The station-selection interface uses an OpenStreetMap-based interactive map through Folium/Leaflet. When the user explicitly chooses `Find climate`, browser requests can be made to external map/component infrastructure including `tile.openstreetmap.org` and supporting JavaScript/CDN resources. Ordinary connection metadata such as IP address, timestamp, requested resource and user-agent information may therefore be transmitted to those providers.
 
-The first live audit also identified that the pre-remediation `st.tabs()` implementation could instantiate the map before explicit `Find climate` selection. `WEB-0.8.1` replaces those eager tabs with conditional rendering so the OpenStreetMap path is not executed until the user actively chooses `Find climate`. This change requires post-merge live verification before the finding is considered closed.
+`WEB-0.8.1` replaced the previous eager `st.tabs()` implementation with conditional rendering. **Post-merge production browser audits now confirm that no OpenStreetMap request occurs before explicit `Find climate` selection on either desktop or mobile.** This remediation is closed.
 
-The live map displayed a visible `OpenStreetMap` attribution link to the OpenStreetMap copyright page.
+The live map displays visible OpenStreetMap attribution linking to the OSM copyright page.
+
+## International transfers / provider transparency
+
+Community Cloud documentation states that all Community Cloud apps are hosted in the United States. Streamlit's privacy policy points to Snowflake's privacy framework. Snowflake's current privacy material states that personal information may be processed outside the user's country, including primarily in the United States, and describes safeguards including the EU-U.S. Data Privacy Framework and, where applicable, Standard Contractual Clauses or other recognized mechanisms.
+
+This completes the **engineering transparency inventory** for the provider transfer mechanism. It does **not** by itself determine the correct legal basis for Building Energy Tools' use of the provider or eliminate the separate consent/storage question described above.
 
 ## Server logs and provider processing
 
-Hosting and infrastructure providers may process technical connection/log data needed to operate, secure and analyze their services. Streamlit Community Cloud provides app analytics; public app viewers are represented in its analytics system according to Streamlit's documented behavior.
+Hosting and infrastructure providers may process technical connection/log data needed to operate, secure and analyze their services. Streamlit Community Cloud also provides app analytics; public app viewers are represented in its analytics system according to Streamlit's documented behavior.
 
-Building Energy Tools does not control all platform-level logging or telemetry performed by Streamlit/Snowflake. A future static-site host will require a separate inventory of its own logging, cookies and data transfers.
+Building Energy Tools does not control all platform-level logging or telemetry performed by Streamlit/Snowflake. A future static-site or replacement runtime host requires a separate inventory of its own logging, cookies and data transfers.
 
 ## Your data-protection rights
 
 Where the GDPR applies to processing for which the project operator is the controller, data subjects may have rights including access, rectification, erasure, restriction, objection and data portability, subject to the conditions and exceptions in applicable law. They may also have the right to lodge a complaint with a competent supervisory authority.
 
-Final controller contact details must be present before this section can function as a usable Article 13 transparency notice.
+GDPR Article 13 requires, among other information depending on the processing, the controller's identity/contact details, processing purposes and legal basis. Final approved contact/disclosure details are therefore still required before this draft can function as a complete public transparency notice.
 
 ## Publication gate
 
-The current live deployment evidence does **not** clear the project for public promotion. At minimum, the following remain open:
+The current live deployment evidence does **not** clear the project for public promotion. The remaining privacy/publication tasks are now narrower than in the first beta audit:
 
-- approve and publish appropriate controller contact information;
-- determine the applicable legal basis and, where required, consent mechanism for provider analytics/cookies/storage;
-- review international-transfer/provider information for the actual Community Cloud deployment;
-- repeat browser/network/accessibility checks after the `WEB-0.8.1` remediation is live;
-- ensure the final privacy/legal notice is directly accessible to users of the public project.
+- approve only the controller/disclosure information that is intended and legally required for publication;
+- confirm the applicable Austrian MedienG/ECG classification for the final project facts;
+- resolve the Community Cloud pre-consent analytics/storage control issue or migrate the promoted runtime;
+- perform the remaining manual keyboard/focus/zoom accessibility review;
+- select a software licence before describing the project as open-source;
+- audit the static website host when it is deployed.
+
+The earlier post-remediation network, OSM, automated accessibility and CPU/memory gates are now closed and must not be listed as outstanding blockers.
 
 ## Revision
 
-Live-audit draft: **2026-09-10 / Climate Analyzer 0.1.0-beta.1 candidate**.
+WEB-1.0 publication-readiness reconciliation: **2026-09-10 / Climate Analyzer 0.1.0-beta.1 candidate**.
 
 This notice must be reviewed whenever hosting, analytics, authentication, external resources, file persistence, contact forms or other data-processing behavior changes.

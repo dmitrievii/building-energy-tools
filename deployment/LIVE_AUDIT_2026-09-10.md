@@ -4,6 +4,8 @@ Target: `https://building-climate-analyzer.streamlit.app/`
 
 This document records the first reproducible live-deployment audit of Climate Analyzer on Streamlit Community Cloud. It is engineering evidence, not legal advice and not a declaration of publication clearance.
 
+> **Follow-up correction:** the first audit correctly detected a desktop `color-contrast` violation group but initially described it too broadly as landing-page caption text. A later exact production DOM probe identified the violating node as Streamlit's generated file-uploader hint `10MB per file • EPW`, with computed foreground `rgba(49, 51, 63, 0.6)`. The measured first-audit result is retained; only the attribution is corrected. WEB-0.9.1 subsequently closed this finding in production. See `deployment/LIVE_AUDIT_WEB_0_9_1_2026-09-10.md`.
+
 ## Deployment under test
 
 The live application was deployed from the `main` branch after `WEB-0.8` deployment-readiness work. The first audited production baseline was commit:
@@ -99,6 +101,8 @@ Two HTTP `404` responses were observed for:
 
 The Climate Analyzer code defines no such API endpoint; these requests belong to the Community Cloud wrapper/session UI. They did not prevent the app from rendering and produced no uncaught page error.
 
+A later post-WEB-0.9.1 replay additionally observed a platform `403` on `/api/v1/app/event/open`; all three wrapper responses remained non-fatal with zero failed browser requests and zero uncaught page errors. See the closure audit for the final classification.
+
 ## Cookies and browser storage
 
 The audit stores no cookie values. The following cookie names were observed during an anonymous public session:
@@ -138,33 +142,35 @@ The pre-remediation source page used:
 st.tabs(["Upload EPW", "Find climate"])
 ```
 
-Streamlit executes both tab bodies. The live browser audit consequently observed an OpenStreetMap tile request before explicit `Find climate` selection in the mobile run; desktop timing did not catch the same request before its sampling point, although the inactive map component was already created.
+Streamlit executes both tab bodies. The first live browser audit consequently observed an OpenStreetMap tile request before explicit `Find climate` selection in the mobile run; desktop timing did not catch the same request before its sampling point, although the inactive map component was already created.
 
-`WEB-0.8.1` remediates this by replacing the eager tabs with a conditional source selector. The map path is then not executed until the user explicitly selects `Find climate`. This remediation requires post-merge live verification.
+`WEB-0.8.1` remediated this by replacing the eager tabs with a conditional source selector. Subsequent production audits confirm that no OpenStreetMap request occurs before explicit `Find climate` selection on either desktop or mobile.
 
 ## Accessibility findings
 
 Axe WCAG A/AA testing was run in the actual Streamlit app frame, not only in the outer Community Cloud shell.
 
-Three violation groups were reported on the initial landing page:
+The first audit reported three desktop violation groups:
 
 1. `aria-allowed-attr` on `.stSidebar` — Streamlit-generated framework markup;
 2. `button-name` on a Streamlit toolbar action button — Streamlit-generated framework/platform control;
-3. `color-contrast` on landing-page `st.caption` text — application-visible content and therefore actionable in this project.
+3. `color-contrast` — application-visible landing content requiring remediation.
 
-`WEB-0.8.1` promotes the essential landing/release captions to normal body text and requests `client.toolbarMode = "viewer"` to reduce public developer controls. The sidebar ARIA finding is retained as an upstream/framework limitation unless later Streamlit releases resolve it.
+**Corrected attribution for item 3:** a later exact DOM probe showed that the violating text was the Streamlit-generated file-uploader hint `10MB per file • EPW`, not the project's sidebar/release caption. Its computed foreground used 0.6 alpha while the surrounding uploader instruction container used the full theme text color.
 
-These remediations also require a post-merge live axe replay.
+WEB-0.9.1 applies a stable test-id-based, theme-safe `color: inherit` override. The post-merge production replay reports 2 groups on desktop and 2 on mobile; the `color-contrast` group is gone. The application-owned automated contrast finding is closed.
+
+The remaining two findings are retained as Streamlit framework/platform limitations. Manual keyboard, focus and 200% zoom review remains open.
 
 ## Throttling interpretation
 
-The user-visible throttle notice is a Streamlit Community Cloud resource-control state, not a scientific calculation failure. During the throttle period the anonymous browser still reached and rendered Climate Analyzer in roughly three seconds.
+The operator-visible throttle notice is a Streamlit Community Cloud resource-control state, not a scientific calculation failure. During the first throttle-period audit the anonymous browser still reached and rendered Climate Analyzer in roughly three seconds.
 
-This does **not** prove that the application is optimally resource-efficient. The live audit identified one unnecessary eager map render and the codebase still warrants a separate CPU/memory profiling pass before deciding whether higher platform limits are necessary.
+This did **not** by itself prove optimal resource efficiency. WEB-0.9 therefore performed a separate repeated CPU/memory startup review. Its controlled AppTest measurements reduced median first landing render from 1.323783 s to 0.429831 s (−67.5%) and median maximum RSS from 188446 kB to 71280 kB (−62.2%). See `deployment/RUNTIME_PERFORMANCE_2026-09-10.md`.
 
-Streamlit documents that Community Cloud apps can be slowed by throttling when they meet resource limits and recommends caching, bounding caches and memory profiling. Community Cloud also accepts case-by-case increased-resource requests for eligible educational/nonprofit/good-for-the-world applications.
+## Historical gate status after the first live audit
 
-## Gate status after first live audit
+The following block records the state **at the time of the first audit**, before WEB-0.8.1/0.9/0.9.1 live closure:
 
 ```text
 LIVE_APP_REACHABLE                         PASS
@@ -176,10 +182,25 @@ OSM_VISIBLE_ATTRIBUTION                   PASS
 UNCAUGHT_PAGE_ERRORS                      PASS (0)
 PROVIDER_ANALYTICS/STORAGE_INVENTORY      CAPTURED
 OSM_PRIVACY_BY_DEFAULT                    REMEDIATION_PENDING_LIVE_REPLAY
-APP_CAPTION_CONTRAST                      REMEDIATION_PENDING_LIVE_REPLAY
+APP_CONTRAST_FINDING                      REMEDIATION_PENDING_LIVE_REPLAY
 STREAMLIT_FRAMEWORK_ARIA                  OPEN_UPSTREAM_LIMITATION
 RESOURCE_THROTTLE                         OBSERVED_BY_OPERATOR / PERFORMANCE_REVIEW_REQUIRED
 PUBLICATION_CLEARANCE                     BLOCKED
 ```
 
-The project must remain `BETA_CANDIDATE_NOT_YET_PUBLICATION_CLEARED` until the remaining identity/contact, privacy/legal review and post-remediation live audit gates are resolved.
+## Current follow-up status
+
+After WEB-0.8.1, WEB-0.9 and WEB-0.9.1 production replay:
+
+```text
+OSM_PRIVACY_BY_DEFAULT                    PASS
+APP_UPLOADER_HINT_CONTRAST                PASS / CLOSED_LIVE
+WEB_0_9_RUNTIME_PERFORMANCE               PASS
+STREAMLIT_FRAMEWORK_ACCESSIBILITY         OPEN_UPSTREAM_LIMITATIONS
+MANUAL_KEYBOARD_FOCUS_ZOOM                OPEN
+PROVIDER_ANALYTICS_CONSENT_CONTROL        OPEN / PUBLICATION_BLOCKER
+OWNER_DISCLOSURE_CLASSIFICATION           OPEN / PUBLICATION_BLOCKER
+PUBLICATION_CLEARANCE                     BLOCKED
+```
+
+The project remains `BETA_CANDIDATE_NOT_YET_PUBLICATION_CLEARED` until the remaining disclosure, privacy/hosting, manual accessibility, licensing and final-host gates are resolved.
