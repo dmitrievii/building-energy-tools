@@ -1,0 +1,73 @@
+name: Build Climate Catalog Candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      regions:
+        description: Climate.OneBuilding WMO coverage to build
+        required: true
+        default: Europe
+        type: choice
+        options:
+          - Europe
+          - all
+
+permissions:
+  contents: read
+
+jobs:
+  build-candidate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools/climate_analyzer
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/climate_analyzer/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Build candidate catalog
+        env:
+          CATALOG_REGIONS: ${{ inputs.regions }}
+        run: |
+          mkdir -p /tmp/climate-catalog-candidate
+          python scripts/update_station_catalog.py \
+            --regions "$CATALOG_REGIONS" \
+            --catalog /tmp/climate-catalog-candidate/station_catalog.csv \
+            --manifest /tmp/climate-catalog-candidate/station_catalog.meta.json
+
+      - name: Validate candidate integrity and schema
+        run: |
+          python - <<'PY'
+          from epw_climate_analyzer.catalog_runtime import load_production_station_catalog, load_station_catalog_manifest
+
+          catalog_path = "/tmp/climate-catalog-candidate/station_catalog.csv"
+          manifest_path = "/tmp/climate-catalog-candidate/station_catalog.meta.json"
+          catalog = load_production_station_catalog(catalog_path, manifest_path)
+          manifest = load_station_catalog_manifest(manifest_path)
+          assert len(catalog) == manifest.station_count
+          assert manifest.catalog_kind == "generated_provider_snapshot"
+          print(f"Candidate validation PASS: {manifest.catalog_version}, {len(catalog):,} stations")
+          PY
+
+      - name: Upload review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: climate-catalog-${{ inputs.regions }}-${{ github.run_id }}
+          path: |
+            /tmp/climate-catalog-candidate/station_catalog.csv
+            /tmp/climate-catalog-candidate/station_catalog.meta.json
+          if-no-files-found: error
+          retention-days: 14
