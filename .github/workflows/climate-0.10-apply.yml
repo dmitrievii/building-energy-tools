@@ -73,6 +73,7 @@ jobs:
           git add tools/climate_analyzer/app.py \
                   tools/climate_analyzer/epw_climate_analyzer/data/station_catalog.csv \
                   tools/climate_analyzer/epw_climate_analyzer/data/station_catalog.meta.json \
+                  tools/climate_analyzer/scripts/update_station_catalog.py \
                   tools/climate_analyzer/scripts/_apply_climate_0_10.py \
                   .github/workflows/climate-0.10-apply.yml
           git commit -m 'CLIMATE-0.10: stabilize map state and promote global catalog'
