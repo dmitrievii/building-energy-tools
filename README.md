@@ -10,6 +10,7 @@ The first public application is **Climate Analyzer**, an interactive EPW climate
 
 - `website/` — public project website content and publication gates
 - `tools/` — interactive engineering and research tools
+- `deployment/` — deployment contracts and live-audit checklists
 - `docs/` — architecture and project-wide publication policy
 - `.github/workflows/` — automated quality and release gates
 
@@ -43,6 +44,8 @@ Key documentation:
 - `tools/climate_analyzer/DATA_SOURCES.md`
 - `tools/climate_analyzer/ATTRIBUTION.md`
 - `tools/climate_analyzer/SECURITY.md`
+- `deployment/STREAMLIT_COMMUNITY_CLOUD.md`
+- `deployment/BROWSER_AUDIT_CHECKLIST.md`
 
 ## Licensing status
 
@@ -57,7 +60,8 @@ WEB-0.3  Runtime + Security                    CLOSED
 WEB-0.4  Scientific Validation                 CLOSED
 WEB-0.5  Data Catalog + Provenance             CLOSED
 WEB-0.6  Public UX                             CLOSED
-WEB-0.7  Identity + Legal/Methodology          IN REVIEW
+WEB-0.7  Identity + Legal/Methodology          CLOSED
+WEB-0.8  Beta Deployment + Browser Audit       IN PROGRESS
 ```
 
-The previous experimental MVP remains preserved in `archive/legacy-mvp-2026-06`.
+`WEB-0.8` aligns repository execution with Streamlit Community Cloud and prepares the evidence checklist for the live deployment. Public promotion remains blocked until the publication checklist and deployed-browser audit are complete.

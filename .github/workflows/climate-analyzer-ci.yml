@@ -4,6 +4,11 @@ on:
   pull_request:
     paths:
       - 'tools/climate_analyzer/**'
+      - '.streamlit/**'
+      - 'deployment/**'
+      - 'website/PUBLICATION_CHECKLIST.md'
+      - 'website/content/**'
+      - 'docs/PUBLICATION_POLICY.md'
       - '.github/workflows/climate-analyzer-ci.yml'
   push:
     branches:
@@ -11,6 +16,11 @@ on:
       - 'web-*'
     paths:
       - 'tools/climate_analyzer/**'
+      - '.streamlit/**'
+      - 'deployment/**'
+      - 'website/PUBLICATION_CHECKLIST.md'
+      - 'website/content/**'
+      - 'docs/PUBLICATION_POLICY.md'
       - '.github/workflows/climate-analyzer-ci.yml'
 
 permissions:
@@ -57,6 +67,34 @@ jobs:
           print(f"Catalog provenance PASS: {manifest.catalog_version}, {len(catalog):,} records, SHA-256 {manifest.csv_sha256}")
           PY
 
+      - name: Validate Community Cloud deployment contract
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          python -m json.tool deployment/streamlit-community-cloud.json >/dev/null
+          python - <<'PY'
+          import json
+          import pathlib
+          import tomllib
+
+          root = pathlib.Path('.')
+          contract = json.loads((root / 'deployment/streamlit-community-cloud.json').read_text(encoding='utf-8'))
+          config_path = root / contract['streamlit_config']
+          config = tomllib.loads(config_path.read_text(encoding='utf-8'))
+
+          assert contract['repository'] == 'dmitrievii/building-energy-tools'
+          assert contract['branch'] == 'main'
+          assert contract['entrypoint'] == 'tools/climate_analyzer/app.py'
+          assert contract['python_version'] == '3.12'
+          assert (root / contract['entrypoint']).is_file()
+          assert (root / contract['dependency_file']).is_file()
+          assert config_path == root / '.streamlit/config.toml'
+          assert config['server']['headless'] is True
+          assert config['server']['maxUploadSize'] == 10
+          assert config['browser']['gatherUsageStats'] is False
+          assert not (root / 'tools/climate_analyzer/.streamlit/config.toml').exists()
+          print('Community Cloud deployment contract PASS')
+          PY
+
       - name: Run security and scientific regression tests
         run: python -m unittest discover -s tests -p 'test_*.py' -v
 
@@ -72,16 +110,18 @@ jobs:
           import epw_climate_analyzer.epw_parser
           import epw_climate_analyzer.interpretations
           import epw_climate_analyzer.psychrometrics
+          import epw_climate_analyzer.release_info
           import epw_climate_analyzer.solar
           import epw_climate_analyzer.statistics
           print('Module import smoke PASS')
           PY
 
-      - name: Start Streamlit and verify health endpoint
+      - name: Start Streamlit from repository root and verify health endpoint
         shell: bash
         run: |
           set -euo pipefail
-          streamlit run app.py --server.headless=true --server.port=8501 > /tmp/climate-analyzer-streamlit.log 2>&1 &
+          cd "$GITHUB_WORKSPACE"
+          streamlit run tools/climate_analyzer/app.py --server.port=8501 > /tmp/climate-analyzer-streamlit.log 2>&1 &
           pid=$!
           trap 'kill "$pid" 2>/dev/null || true' EXIT
 
@@ -100,4 +140,4 @@ jobs:
           fi
 
           grep -qi 'ok' /tmp/health.txt
-          echo 'Streamlit health smoke PASS'
+          echo 'Community Cloud root-launch health smoke PASS'
