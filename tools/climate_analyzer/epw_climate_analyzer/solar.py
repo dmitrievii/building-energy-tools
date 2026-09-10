@@ -7,6 +7,8 @@ climate analysis from EPW data.
 
 from __future__ import annotations
 
+from datetime import timedelta, timezone
+
 import numpy as np
 import pandas as pd
 
@@ -14,21 +16,34 @@ from .epw_parser import EpwLocation
 
 
 def fixed_offset_timezone_name(utc_offset: float) -> str:
-    """Return an IANA fixed-offset timezone name from an EPW UTC offset."""
-    rounded = int(round(utc_offset))
-    if rounded == 0:
+    """Return an exact human-readable fixed UTC-offset label.
+
+    EPW time-zone offsets are not restricted to whole hours. Locations such as
+    India (+5.5), Nepal (+5.75) and parts of Australia (+9.5) therefore must not
+    be rounded before solar-position calculations.
+    """
+    total_minutes = int(round(float(utc_offset) * 60.0))
+    if total_minutes == 0:
         return "UTC"
-    sign = "-" if rounded > 0 else "+"
-    return f"Etc/GMT{sign}{abs(rounded)}"
+    sign = "+" if total_minutes > 0 else "-"
+    absolute = abs(total_minutes)
+    hours, minutes = divmod(absolute, 60)
+    return f"UTC{sign}{hours:02d}:{minutes:02d}"
+
+
+def fixed_offset_timezone(utc_offset: float) -> timezone:
+    """Return a ``datetime.timezone`` preserving the EPW offset to the minute."""
+    total_minutes = int(round(float(utc_offset) * 60.0))
+    return timezone(timedelta(minutes=total_minutes), name=fixed_offset_timezone_name(utc_offset))
 
 
 def localized_times(df: pd.DataFrame, location: EpwLocation) -> pd.DatetimeIndex:
-    """Return the DataFrame index localized to the EPW fixed UTC offset."""
-    tz_name = fixed_offset_timezone_name(location.utc_offset)
+    """Return the DataFrame index localized to the exact EPW fixed UTC offset."""
+    tz_info = fixed_offset_timezone(location.utc_offset)
     index = pd.DatetimeIndex(df.index)
     if index.tz is not None:
-        return index.tz_convert(tz_name)
-    return index.tz_localize(tz_name, ambiguous="NaT", nonexistent="shift_forward")
+        return index.tz_convert(tz_info)
+    return index.tz_localize(tz_info)
 
 
 def add_solar_position(df: pd.DataFrame, location: EpwLocation) -> pd.DataFrame:
