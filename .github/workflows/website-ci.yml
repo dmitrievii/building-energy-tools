@@ -1,0 +1,55 @@
+name: Website CI
+
+on:
+  push:
+    branches:
+      - main
+      - site-0.1-main-website-foundation
+    paths:
+      - 'website/**'
+      - 'docs/ARCHITECTURE.md'
+      - '.github/workflows/website-ci.yml'
+  pull_request:
+    paths:
+      - 'website/**'
+      - 'docs/ARCHITECTURE.md'
+      - '.github/workflows/website-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  static-site-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate static site contract
+        run: python website/scripts/check_static_site.py
+
+      - name: Run website regression tests
+        run: python -m unittest discover -s website/tests -p 'test_*.py' -v
+
+      - name: Serve website and smoke-test routes
+        shell: bash
+        run: |
+          python -m http.server 4173 --directory website/site >/tmp/building-energy-tools-site.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:4173/ >/dev/null; then
+              break
+            fi
+            sleep 0.25
+          done
+          for route in / /tools/ /teaching/ /research/ /documentation/ /about/ /privacy/ /accessibility/ /legal/; do
+            curl --fail --silent --show-error "http://127.0.0.1:4173${route}" >/dev/null
+          done
+          echo 'Static route smoke PASS'
