@@ -679,11 +679,11 @@ def render_climate_file_source() -> None:
     st.title(APP_NAME)
     st.markdown(f"#### {APP_TAGLINE}")
     st.write(APP_INTRO)
-    st.caption(APP_RELEASE_LABEL)
+    st.write(APP_RELEASE_LABEL)
     with st.expander("About this beta", expanded=False):
         st.write(APP_ENGINEERING_DISCLAIMER)
         st.caption(APP_INDEPENDENCE_NOTICE)
-    st.caption(
+    st.write(
         "Start with an EPW weather file from your computer or select a climate from the reviewed "
         "Climate.OneBuilding station catalog. No building model is required."
     )
