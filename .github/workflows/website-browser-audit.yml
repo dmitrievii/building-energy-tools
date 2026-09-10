@@ -1,0 +1,81 @@
+name: Website Browser Audit
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'website/site/**'
+      - 'website/scripts/browser_audit.mjs'
+      - 'website/tests/test_browser_audit_contract.py'
+      - '.github/workflows/website-browser-audit.yml'
+  pull_request:
+    paths:
+      - 'website/site/**'
+      - 'website/scripts/browser_audit.mjs'
+      - 'website/tests/test_browser_audit_contract.py'
+      - '.github/workflows/website-browser-audit.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  browser-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install browser audit dependencies
+        run: npm install --no-save --ignore-scripts puppeteer-core@24.16.0 axe-core@4.10.3
+
+      - name: Locate Chrome
+        id: chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser)"
+          test -n "$CHROME_PATH"
+          echo "path=$CHROME_PATH" >> "$GITHUB_OUTPUT"
+          "$CHROME_PATH" --version
+
+      - name: Serve static website
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m http.server 8765 --directory website/site > /tmp/building-energy-tools-site.log 2>&1 &
+          echo $! > /tmp/building-energy-tools-site.pid
+          for i in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8765/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/building-energy-tools-site.log
+          exit 1
+
+      - name: Run Chromium responsive and accessibility audit
+        env:
+          CHROME_PATH: ${{ steps.chrome.outputs.path }}
+          SITE_AUDIT_BASE_URL: http://127.0.0.1:8765
+          SITE_AUDIT_OUTPUT: artifacts/site-browser-audit
+        run: node website/scripts/browser_audit.mjs
+
+      - name: Upload browser audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-browser-audit-${{ github.sha }}
+          path: artifacts/site-browser-audit
+          if-no-files-found: error
+          retention-days: 30
