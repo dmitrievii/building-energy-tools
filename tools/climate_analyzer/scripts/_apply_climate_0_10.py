@@ -10,8 +10,8 @@ CLIMATE_SOURCES = ROOT / "epw_climate_analyzer" / "climate_sources.py"
 text = APP.read_text(encoding="utf-8")
 original = text
 
-# 1) Remove the server-side zoom/center feedback loop. Leaflet owns ordinary
-# pan/zoom state. The server controls only the initial/reset viewport.
+# 1) Leaflet/browser owns ordinary pan and zoom state. Streamlit only receives
+# a station-click event, so viewport interaction cannot drive Python reruns.
 pattern = re.compile(
     r"    # Initialize map view only once\. After that, always preserve the user's\n"
     r"    # current zoom and center, especially after clicking another station\.\n"
@@ -41,9 +41,6 @@ replacement = '''    # Leaflet/browser owns ordinary pan and zoom state. Do not 
 text, count = pattern.subn(replacement, text, count=1)
 assert count == 1, f"map view-state block replacement count={count}"
 
-# 2) Make rendered map content invariant to which station is selected. Selection
-# belongs in the right-hand panel; changing marker JS would remount the map and
-# destroy the browser-owned viewport.
 old = '''        selected_flag = 1 if group_id == str(selected_group_id) else 0
         data.append([
             float(row["latitude"]),
@@ -93,9 +90,6 @@ new = '''        var color = '#7c3aed';
 assert old in text, "selected marker callback block not found"
 text = text.replace(old, new, 1)
 
-# 3) Restrict component return values to the only interaction that must cause a
-# Streamlit rerun: a station selection. Pass viewport through st_folium's dynamic
-# center/zoom API and use an epoch key only for explicit resets.
 old = '''            station_catalog_fast_selectable_map(
                 station_groups_for_map,
                 selected_group_id=selected_group_id,
@@ -129,7 +123,6 @@ new = '''            station_catalog_fast_selectable_map(
 assert old in text, "st_folium map block not found"
 text = text.replace(old, new, 1)
 
-# 4) User-facing explanation must match the new browser-owned viewport model.
 old = '''            "The map no longer switches between separate Streamlit components while zooming."
 '''
 new = '''            "Pan and zoom stay in the browser and do not trigger a Streamlit rerun; only station selection or an explicit reset returns control to the app."
@@ -140,23 +133,151 @@ text = text.replace(old, new, 1)
 assert text != original
 APP.write_text(text, encoding="utf-8")
 
-# 5) Make catalog-build failures auditable instead of swallowing four upstream
-# exceptions into one aggregate count.
+# 2) Climate.OneBuilding commonly provides the same logical catalog in XLSX and
+# KML. Parse both to retain any format-specific records, but fail promotion only
+# if every representation of a logical catalog fails. Raw source-file failures
+# remain separately counted and logged for auditability.
 source = CLIMATE_SOURCES.read_text(encoding="utf-8")
-old = '''        except Exception:
+old_dataclass = '''class CatalogBuildReport:
+    """Summary of a Climate.OneBuilding catalog build operation."""
+
+    station_count: int
+    xlsx_catalog_count: int
+    kml_catalog_count: int
+    failed_catalog_count: int
+    cache_path: Path
+'''
+new_dataclass = '''class CatalogBuildReport:
+    """Summary of a Climate.OneBuilding catalog build operation.
+
+    ``failed_catalog_count`` counts logical catalogs for which no published
+    representation could be parsed. ``source_file_failure_count`` counts raw
+    XLSX/KML failures even when another representation recovered the catalog.
+    """
+
+    station_count: int
+    xlsx_catalog_count: int
+    kml_catalog_count: int
+    failed_catalog_count: int
+    source_file_failure_count: int
+    recovered_source_file_failure_count: int
+    cache_path: Path
+'''
+assert old_dataclass in source, "CatalogBuildReport block not found"
+source = source.replace(old_dataclass, new_dataclass, 1)
+
+old_build = '''    catalog_links = discover_onebuilding_catalog_links(timeout_s=timeout_s, region_pages=region_pages)
+    frames: list[pd.DataFrame] = []
+    xlsx_ok = 0
+    kml_ok = 0
+    failed = 0
+
+    for index, item in enumerate(catalog_links, start=1):
+        url = item["url"]
+        kind = item["kind"]
+        report(f"Reading {index}/{len(catalog_links)}: {Path(urlparse(url).path).name}")
+        try:
+            response = _http_get(url, timeout_s=timeout_s)
+            if kind == "xlsx":
+                frame = _catalog_from_xlsx(response.content, source_url=url, source_label=item["label"])
+                xlsx_ok += 1
+            else:
+                frame = _catalog_from_kml(response.content, source_url=url, source_label=item["label"])
+                kml_ok += 1
+            if not frame.empty:
+                frames.append(frame)
+        except Exception:
             failed += 1
             continue
+
+    if frames:
+        catalog = pd.concat(frames, ignore_index=True)
+        catalog = _finalize_catalog(catalog)
+    else:
+        catalog = _empty_catalog()
+
+    cache_path = save_onebuilding_catalog(catalog)
+    return CatalogBuildReport(
+        station_count=len(catalog),
+        xlsx_catalog_count=xlsx_ok,
+        kml_catalog_count=kml_ok,
+        failed_catalog_count=failed,
+        cache_path=cache_path,
+    )
 '''
-new = '''        except Exception as exc:
-            failed += 1
+new_build = '''    catalog_links = discover_onebuilding_catalog_links(timeout_s=timeout_s, region_pages=region_pages)
+    frames: list[pd.DataFrame] = []
+    xlsx_ok = 0
+    kml_ok = 0
+    source_file_failures = 0
+    successful_logical_catalogs: set[str] = set()
+    failed_files_by_logical_catalog: dict[str, list[str]] = {}
+
+    def logical_catalog_key(url: str) -> str:
+        path = urlparse(url).path
+        return path.rsplit(".", 1)[0].lower()
+
+    for index, item in enumerate(catalog_links, start=1):
+        url = item["url"]
+        kind = item["kind"]
+        logical_key = logical_catalog_key(url)
+        report(f"Reading {index}/{len(catalog_links)}: {Path(urlparse(url).path).name}")
+        try:
+            response = _http_get(url, timeout_s=timeout_s)
+            if kind == "xlsx":
+                frame = _catalog_from_xlsx(response.content, source_url=url, source_label=item["label"])
+                xlsx_ok += 1
+            else:
+                frame = _catalog_from_kml(response.content, source_url=url, source_label=item["label"])
+                kml_ok += 1
+            if frame.empty:
+                raise ValueError("parsed catalog contains zero usable station records")
+            frames.append(frame)
+            successful_logical_catalogs.add(logical_key)
+        except Exception as exc:
+            source_file_failures += 1
+            failed_files_by_logical_catalog.setdefault(logical_key, []).append(url)
             report(
-                f"FAILED catalog: {url} [{kind}] "
+                f"FAILED source representation: {url} [{kind}] "
                 f"{type(exc).__name__}: {exc}"
             )
-            continue
+
+    uncovered_logical_catalogs = {
+        key: urls
+        for key, urls in failed_files_by_logical_catalog.items()
+        if key not in successful_logical_catalogs
+    }
+    failed_logical_catalog_count = len(uncovered_logical_catalogs)
+    unrecovered_source_failures = sum(len(urls) for urls in uncovered_logical_catalogs.values())
+    recovered_source_failures = source_file_failures - unrecovered_source_failures
+
+    for key, urls in sorted(uncovered_logical_catalogs.items()):
+        report(f"UNRECOVERED logical catalog: {key} | failed representations: {len(urls)}")
+    if recovered_source_failures:
+        report(
+            f"Recovered {recovered_source_failures} failed source representation(s) "
+            "through another published representation of the same logical catalog."
+        )
+
+    if frames:
+        catalog = pd.concat(frames, ignore_index=True)
+        catalog = _finalize_catalog(catalog)
+    else:
+        catalog = _empty_catalog()
+
+    cache_path = save_onebuilding_catalog(catalog)
+    return CatalogBuildReport(
+        station_count=len(catalog),
+        xlsx_catalog_count=xlsx_ok,
+        kml_catalog_count=kml_ok,
+        failed_catalog_count=failed_logical_catalog_count,
+        source_file_failure_count=source_file_failures,
+        recovered_source_file_failure_count=recovered_source_failures,
+        cache_path=cache_path,
+    )
 '''
-assert source.count(old) == 1, f"catalog failure handler count={source.count(old)}"
-source = source.replace(old, new, 1)
+assert old_build in source, "catalog build block not found"
+source = source.replace(old_build, new_build, 1)
 CLIMATE_SOURCES.write_text(source, encoding="utf-8")
 
-print("CLIMATE-0.10 map patch + catalog diagnostics applied")
+print("CLIMATE-0.10 stable map + logical catalog recovery patch applied")
