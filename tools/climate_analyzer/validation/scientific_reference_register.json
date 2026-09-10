@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0",
+  "stage": "WEB-0.4",
+  "purpose": "Numerical reference anchors and deterministic regression values for Climate Analyzer scientific behavior.",
+  "external_references": {
+    "psychrolib": {
+      "basis": "PsychroLib SI functions based on ASHRAE Handbook Fundamentals 2017 Chapter 1",
+      "overview": "https://github.com/psychrometrics/psychrolib/blob/master/docs/overview.md",
+      "documented_dew_point_example": {
+        "dry_bulb_c": 25.0,
+        "relative_humidity_fraction": 0.8,
+        "expected_dew_point_c": 21.309397163661785,
+        "source": "https://github.com/psychrometrics/psychrolib/blob/master/docs/examples.md"
+      }
+    },
+    "energyplus_epw": {
+      "hour_semantics": "EPW Hour is 1..24; Hour 1 represents the first hourly interval after midnight.",
+      "source": "https://energyplus.readthedocs.io/en/v25.1.0/auxiliary-programs/auxiliary-programs.html"
+    },
+    "pvlib": {
+      "poa_equation": "POA total = beam + sky diffuse + ground reflected; get_total_irradiance defaults to the isotropic sky model.",
+      "source": "https://pvlib-python.readthedocs.io/en/stable/reference/generated/pvlib.irradiance.get_total_irradiance.html"
+    }
+  },
+  "tolerances": {
+    "psychrometric_relative": 1e-08,
+    "psychrometric_absolute": 1e-08,
+    "solar_poa_absolute_wh_m2": 1e-06,
+    "annual_float_absolute": 1e-06
+  },
+  "synthetic_annual_regression": {
+    "generator_id": "WEB-0.4-SYNTH-1",
+    "calendar": "2025-01-01 00:00 through 2025-12-31 23:00, hourly, 8760 records",
+    "description": "Deterministic analytical climate used only for regression. It is not intended to represent a real location.",
+    "expected": {
+      "hours": 8760,
+      "mean_temp_c": 12.0,
+      "min_temp_c": -2.999592550278921,
+      "max_temp_c": 27.0,
+      "heating_degree_hours_kh": 62888.73462630291,
+      "cooling_degree_hours_kh": 107.31474783268321,
+      "annual_ghi_kwh_m2": 1663.470150686808,
+      "mean_humidity_ratio_g_kg": 6.5,
+      "mean_wind_m_s": 2.8008540956189845,
+      "natural_ventilation_hours": 1822,
+      "night_flushing_hours": 301,
+      "shading_hours": 461,
+      "comfort_hours": 1612,
+      "economizer_hours": 5857,
+      "dehumidification_hours": 399,
+      "humidification_hours": 404
+    },
+    "monthly_ghi_kwh_m2": [
+      94.759094,
+      90.281896,
+      115.739277,
+      134.203377,
+      162.319312,
+      174.505115,
+      187.756429,
+      182.51649,
+      160.80792,
+      143.083063,
+      115.659541,
+      101.838637
+    ]
+  }
+}

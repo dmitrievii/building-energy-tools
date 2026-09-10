@@ -8,7 +8,7 @@ on:
   push:
     branches:
       - main
-      - web-0.3-runtime-security-hardening
+      - 'web-*'
     paths:
       - 'tools/climate_analyzer/**'
       - '.github/workflows/climate-analyzer-ci.yml'
@@ -17,7 +17,7 @@ permissions:
   contents: read
 
 jobs:
-  runtime-security:
+  quality-gates:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -42,7 +42,10 @@ jobs:
       - name: Compile Python sources
         run: python -m compileall -q app.py epw_climate_analyzer tests
 
-      - name: Run security boundary tests
+      - name: Validate scientific reference register
+        run: python -m json.tool validation/scientific_reference_register.json >/dev/null
+
+      - name: Run security and scientific regression tests
         run: python -m unittest discover -s tests -p 'test_*.py' -v
 
       - name: Import scientific modules

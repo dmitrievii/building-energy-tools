@@ -66,11 +66,52 @@ def night_flushing_condition(
     night_start_hour: int = 22,
     night_end_hour: int = 6,
 ) -> pd.Series:
-    """Return a Boolean mask for potential night-flushing hours."""
-    is_night = (df["hour_of_day"] >= night_start_hour) | (df["hour_of_day"] <= night_end_hour)
+    """Return a Boolean mask for potential night-flushing hours.
+
+    For the usual cross-midnight interval (for example 22...6), late-evening
+    hours are evaluated against the maximum temperature of the same calendar
+    day, while early-morning hours are evaluated against the preceding calendar
+    day. This prevents 00...06 from using temperatures that occur later in the
+    future day.
+    """
+    start = int(max(0, min(23, night_start_hour)))
+    end = int(max(0, min(23, night_end_hour)))
+    hour = df["hour_of_day"]
+
+    crosses_midnight = start > end
+    if crosses_midnight:
+        is_night = (hour >= start) | (hour <= end)
+    else:
+        is_night = hour.between(start, end)
+
     cool_enough = df["dry_bulb_temperature_c"] <= night_max_c
-    daily_max = df["dry_bulb_temperature_c"].resample("D").max().reindex(df.index, method="ffill")
-    follows_hot_day = daily_max >= day_hot_threshold_c
+    daily_max = df["dry_bulb_temperature_c"].resample("D").max()
+    normalized_days = pd.DatetimeIndex(df.index).normalize()
+
+    current_day_max = pd.Series(
+        daily_max.reindex(normalized_days).to_numpy(),
+        index=df.index,
+        dtype=float,
+    )
+    previous_day_max = pd.Series(
+        daily_max.shift(1).reindex(normalized_days).to_numpy(),
+        index=df.index,
+        dtype=float,
+    )
+
+    if crosses_midnight:
+        hot_day_reference = current_day_max.copy()
+        early_morning = hour <= end
+        hot_day_reference.loc[early_morning] = previous_day_max.loc[early_morning]
+    else:
+        # A non-crossing night interval in the early half of the day belongs to
+        # the preceding evening; an evening-only interval belongs to the same day.
+        if end <= 12:
+            hot_day_reference = previous_day_max
+        else:
+            hot_day_reference = current_day_max
+
+    follows_hot_day = hot_day_reference >= day_hot_threshold_c
     return (is_night & cool_enough & follows_hot_day).fillna(False)
 
 
