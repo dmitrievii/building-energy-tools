@@ -40,10 +40,22 @@ jobs:
           python -m pip install -r requirements.txt
 
       - name: Compile Python sources
-        run: python -m compileall -q app.py epw_climate_analyzer tests
+        run: python -m compileall -q app.py epw_climate_analyzer tests scripts
 
       - name: Validate scientific reference register
         run: python -m json.tool validation/scientific_reference_register.json >/dev/null
+
+      - name: Validate station catalog provenance
+        run: |
+          python -m json.tool epw_climate_analyzer/data/station_catalog.meta.json >/dev/null
+          python - <<'PY'
+          from epw_climate_analyzer.catalog_runtime import load_production_station_catalog, load_station_catalog_manifest
+
+          manifest = load_station_catalog_manifest()
+          catalog = load_production_station_catalog()
+          assert len(catalog) == manifest.station_count
+          print(f"Catalog provenance PASS: {manifest.catalog_version}, {len(catalog):,} records, SHA-256 {manifest.csv_sha256}")
+          PY
 
       - name: Run security and scientific regression tests
         run: python -m unittest discover -s tests -p 'test_*.py' -v
@@ -52,6 +64,7 @@ jobs:
         run: |
           python - <<'PY'
           import epw_climate_analyzer.aggregations
+          import epw_climate_analyzer.catalog_runtime
           import epw_climate_analyzer.charts
           import epw_climate_analyzer.climate_sources
           import epw_climate_analyzer.comparison

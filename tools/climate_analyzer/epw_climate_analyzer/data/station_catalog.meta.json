@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "catalog_version": "onebuilding-bootstrap-2026-09-10",
+  "catalog_kind": "curated_bootstrap",
+  "generated_at_utc": "2026-09-10T16:20:00Z",
+  "source_snapshot_date": "2026-09-10",
+  "station_count": 20,
+  "coverage": "Austria plus selected nearby Central European stations; this bootstrap catalog is not global.",
+  "csv_sha256": "39921ccd579c0e48c34de7e842c700c4eef06fe28780d7e24f6350f97e2d9eb0",
+  "provider": {
+    "name": "Climate.OneBuilding",
+    "home_url": "https://climate.onebuilding.org/",
+    "sources_url": "https://climate.onebuilding.org/sources/default.html",
+    "news_url": "https://climate.onebuilding.org/news/default.html",
+    "citation": "Lawrie, Linda K.; Crawley, Drury B. 2026. Development of Global Typical Meteorological Years (TMYx). Climate.OneBuilding.Org (paper in progress)."
+  },
+  "distribution_policy": {
+    "bundled_content": "Normalized station metadata and provider download URLs only.",
+    "epw_files_bundled": false,
+    "note": "Building Energy Tools does not assert a blanket redistribution license for upstream climate files. EPW payloads are fetched on demand from the provider and are not committed to this repository. Dataset-specific source and citation information remains the responsibility of the upstream provider/source dataset."
+  },
+  "maintenance": {
+    "script": "scripts/update_station_catalog.py",
+    "workflow": ".github/workflows/update-climate-catalog.yml",
+    "promotion_model": "Generate candidate catalog and manifest, validate them, review the diff, then merge through a normal pull request."
+  }
+}
