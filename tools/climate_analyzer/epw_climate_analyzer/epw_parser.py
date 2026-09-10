@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+import math
 from io import StringIO
 from pathlib import Path
 from typing import BinaryIO, TextIO
@@ -94,6 +95,14 @@ MISSING_VALUE_LIMITS = {
 # to change later if a fixed reference year is preferred.
 DEFAULT_TYPICAL_YEAR = date.today().year
 
+# Public-upload guardrails. These limits are intentionally structural rather
+# than scientific: valid annual EPW files are far below 10 MiB, and the record
+# ceiling leaves room for leap-year files while preventing unbounded parsing.
+MAX_EPW_BYTES = 10 * 1024 * 1024
+MAX_EPW_RECORDS = 9000
+MIN_EPW_RECORDS = 24
+MAX_EPW_LINE_LENGTH = 4096
+
 
 @dataclass(frozen=True)
 class EpwLocation:
@@ -130,17 +139,77 @@ class DataQualityIssue:
     severity: str
 
 
+def _decode_epw_bytes(raw: bytes, name: str) -> str:
+    """Decode bounded EPW bytes without accepting embedded NUL characters."""
+    if len(raw) > MAX_EPW_BYTES:
+        raise ValueError(
+            f"The EPW file '{name}' exceeds the {MAX_EPW_BYTES // (1024 * 1024)} MiB upload limit."
+        )
+    if b"\x00" in raw:
+        raise ValueError(f"The EPW file '{name}' contains NUL bytes and is not valid text input.")
+    return raw.decode("utf-8-sig", errors="replace")
+
+
 def _read_text(file: str | Path | BinaryIO | TextIO) -> tuple[str, str]:
-    """Read uploaded or path-based EPW content and return text plus a name."""
+    """Read uploaded or path-based EPW content and return bounded text plus a name."""
     if isinstance(file, (str, Path)):
         path = Path(file)
-        return path.read_text(encoding="utf-8", errors="replace"), path.name
+        raw = path.read_bytes()
+        return _decode_epw_bytes(raw, path.name), path.name
 
-    name = getattr(file, "name", "uploaded.epw")
+    name = str(getattr(file, "name", "uploaded.epw"))
     raw = file.read()
     if isinstance(raw, bytes):
-        return raw.decode("utf-8", errors="replace"), name
-    return str(raw), name
+        return _decode_epw_bytes(raw, name), name
+
+    text = str(raw)
+    if "\x00" in text:
+        raise ValueError(f"The EPW file '{name}' contains NUL characters and is not valid text input.")
+    if len(text.encode("utf-8")) > MAX_EPW_BYTES:
+        raise ValueError(
+            f"The EPW file '{name}' exceeds the {MAX_EPW_BYTES // (1024 * 1024)} MiB upload limit."
+        )
+    return text, name
+
+
+def _validate_epw_structure(text: str, name: str) -> tuple[list[str], int]:
+    """Validate bounded EPW structure before pandas parses numeric content."""
+    lines = text.splitlines()
+    if len(lines) < 9:
+        raise ValueError("The uploaded file is too short to be a valid EPW file.")
+
+    if any(len(line) > MAX_EPW_LINE_LENGTH for line in lines):
+        raise ValueError(f"The EPW file '{name}' contains an excessively long record.")
+
+    # Validate LOCATION early, including coordinate bounds.
+    _parse_location(lines[0])
+
+    data_lines = [line for line in lines[8:] if line.strip()]
+    record_count = len(data_lines)
+    if record_count < MIN_EPW_RECORDS:
+        raise ValueError(
+            f"The EPW file '{name}' contains only {record_count} data records; at least {MIN_EPW_RECORDS} are required."
+        )
+    if record_count > MAX_EPW_RECORDS:
+        raise ValueError(
+            f"The EPW file '{name}' contains {record_count} data records; the maximum accepted count is {MAX_EPW_RECORDS}."
+        )
+
+    expected_fields = len(EPW_COLUMNS)
+    for index, line in enumerate(data_lines, start=9):
+        if len(line.split(",")) != expected_fields:
+            raise ValueError(
+                f"The EPW file '{name}' has {len(line.split(','))} fields on line {index}; "
+                f"expected {expected_fields}."
+            )
+
+    return lines, record_count
+
+
+def validate_epw_payload(payload: bytes, name: str = "uploaded.epw") -> None:
+    """Validate raw EPW bytes for safe storage or downstream parsing."""
+    text = _decode_epw_bytes(payload, name)
+    _validate_epw_structure(text, name)
 
 
 def _parse_location(line: str) -> EpwLocation:
@@ -148,16 +217,33 @@ def _parse_location(line: str) -> EpwLocation:
     parts = [p.strip() for p in line.split(",")]
     if len(parts) < 10 or parts[0].upper() != "LOCATION":
         raise ValueError("The EPW file does not contain a valid LOCATION header.")
+    latitude = float(parts[6])
+    longitude = float(parts[7])
+    utc_offset = float(parts[8])
+    elevation_m = float(parts[9])
+
+    values = (latitude, longitude, utc_offset, elevation_m)
+    if not all(math.isfinite(value) for value in values):
+        raise ValueError("The EPW LOCATION header contains non-finite numeric values.")
+    if not -90.0 <= latitude <= 90.0:
+        raise ValueError("The EPW LOCATION latitude must be between -90 and 90 degrees.")
+    if not -180.0 <= longitude <= 180.0:
+        raise ValueError("The EPW LOCATION longitude must be between -180 and 180 degrees.")
+    if not -14.0 <= utc_offset <= 14.0:
+        raise ValueError("The EPW LOCATION UTC offset must be between -14 and +14 hours.")
+    if not -500.0 <= elevation_m <= 10000.0:
+        raise ValueError("The EPW LOCATION elevation is outside the accepted -500...10000 m range.")
+
     return EpwLocation(
         city=parts[1],
         state=parts[2],
         country=parts[3],
         source=parts[4],
         wmo=parts[5],
-        latitude=float(parts[6]),
-        longitude=float(parts[7]),
-        utc_offset=float(parts[8]),
-        elevation_m=float(parts[9]),
+        latitude=latitude,
+        longitude=longitude,
+        utc_offset=utc_offset,
+        elevation_m=elevation_m,
     )
 
 
@@ -298,14 +384,16 @@ def clean_epw_dataframe(df: pd.DataFrame, target_year: int | None = None) -> pd.
 def parse_epw(file: str | Path | BinaryIO | TextIO) -> EpwFile:
     """Parse an EPW file and return metadata plus a normalized DataFrame."""
     text, name = _read_text(file)
-    lines = text.splitlines()
-    if len(lines) < 10:
-        raise ValueError("The uploaded file is too short to be a valid EPW file.")
+    lines, expected_records = _validate_epw_structure(text, name)
 
     header_lines = lines[:8]
     location = _parse_location(header_lines[0])
-    data_text = "\n".join(lines[8:])
+    data_text = "\n".join(line for line in lines[8:] if line.strip())
     df = pd.read_csv(StringIO(data_text), header=None, names=EPW_COLUMNS)
+    if len(df) != expected_records:
+        raise ValueError(
+            f"The EPW parser produced {len(df)} rows but {expected_records} validated records were supplied."
+        )
     df = clean_epw_dataframe(df)
     df.attrs["timezone_name"] = _timezone_name_from_offset(location.utc_offset)
     df.attrs["typical_year"] = int(df["typical_year"].iloc[0]) if not df.empty else DEFAULT_TYPICAL_YEAR
