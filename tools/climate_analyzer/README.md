@@ -103,4 +103,4 @@ or via the manually triggered GitHub workflow **Build Climate Catalog Candidate*
 
 ## Project status
 
-Climate Analyzer is under active development toward a public beta. Calculation outputs should be interpreted together with the documented assumptions, source provenance and validation scope.
+`WEB-0.6` is the current public-UX candidate for the Climate Analyzer public-beta preparation. Calculation outputs should be interpreted together with the documented assumptions, source provenance and validation scope.
