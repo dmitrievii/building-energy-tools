@@ -94,38 +94,41 @@ The application code does not add advertising, Google Analytics or tracking pixe
 
 The current deployment-aware privacy draft is `../../website/content/privacy.md`. It is intentionally not marked final until public controller/contact fields and actual browser/network behavior are verified.
 
-## Local development
+## Local development and cloud-parity launch
 
-Use Python 3.12.
+Use Python 3.12. Run the application from the **repository root**, matching Streamlit Community Cloud's execution model and ensuring the root `.streamlit/config.toml` is used.
 
 ```bash
-cd tools/climate_analyzer
 python -m venv .venv
 ```
 
 Activate the environment, then install the pinned direct dependency baseline:
 
 ```bash
-python -m pip install -r requirements.txt
+python -m pip install -r tools/climate_analyzer/requirements.txt
 ```
 
-Run the application:
+Run the application from repository root:
 
 ```bash
-streamlit run app.py
+streamlit run tools/climate_analyzer/app.py
 ```
 
 Run the validation suite:
 
 ```bash
+cd tools/climate_analyzer
 python -m unittest discover -s tests -p 'test_*.py' -v
 ```
+
+The intended Community Cloud coordinates and post-deployment audit process are defined in `../../deployment/STREAMLIT_COMMUNITY_CLOUD.md` and `../../deployment/BROWSER_AUDIT_CHECKLIST.md`.
 
 ## Catalog maintenance
 
 Catalog crawling is a maintenance task, not a public UI function. A candidate can be generated locally with:
 
 ```bash
+cd tools/climate_analyzer
 python scripts/update_station_catalog.py --regions Europe
 ```
 
@@ -137,4 +140,4 @@ No repository-wide software licence has been selected yet. Public source availab
 
 ## Project status
 
-`WEB-0.7` is the current identity / methodology / publication-policy candidate. Scientific and runtime behavior remain governed by the previously validated calculation, security and provenance gates; publication clearance is a separate explicit gate.
+`WEB-0.8` is the current deployment-readiness and live-audit stage. Repository configuration is being aligned with Streamlit Community Cloud, while public promotion remains fail-closed until the publication checklist and live browser/network audit are complete.
