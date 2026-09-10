@@ -1,20 +1,32 @@
-.env
-.env.local
-.env.production
-.env.*
-!.env.example
-node_modules/
-.next/
-out/
-dist/
+# Python
 __pycache__/
 *.py[cod]
-.venv/
-venv/
+*.pyo
 .pytest_cache/
 .mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# OS / IDE
 .DS_Store
+Thumbs.db
 .vscode/
 .idea/
-*.log
-coverage/
+
+# Build / coverage
+build/
+dist/
+*.egg-info/
+.coverage
+htmlcov/
+
+# Local application data
+.epw_climate_analyzer/

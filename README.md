@@ -1,33 +1,24 @@
 # Building Energy Tools
 
-Building Energy Tools is an English-first, multilingual-ready platform for climate-responsive building design.
+Independent research and teaching tools for building physics, climate analysis and building performance.
 
-The platform combines learning content, Python-based calculators, case studies, and transparent calculation assumptions.
+**Author:** Ivan Dmitriev
 
-## Core concept
+This repository is being rebuilt as a production-oriented monorepo. The first public tool will be **Climate Analyzer**, an interactive EPW climate analysis application for building design and building performance.
 
-```text
-Learn → Calculate → Explore Case Studies
-```
+## Repository structure
 
-## Main navigation
+- `website/` — public project website and documentation portal
+- `tools/` — interactive engineering and research tools
+- `docs/` — architecture, methodology and deployment documentation
+- `.github/workflows/` — automated quality and release gates
 
-- Home
-- Learn
-- Tools
-- Case Studies
-- About
+## Affiliation
 
-## Tech stack
+Academic affiliation may be stated textually in the public website. This is an independent personal research and teaching project and is not an official website or service of Graz University of Technology.
 
-- Frontend: Next.js, TypeScript, Tailwind CSS
-- Backend: FastAPI, Python, Pydantic
-- Calculators: Python modules
-- Tests: pytest
-- Hosting: Vercel + Render/Railway/Fly.io
+## Current status
 
-## MVP tools
+`WEB-0.1 Production Foundation` — repository reset and Climate Analyzer production migration in progress.
 
-- U-value Calculator
-- Degree Days Calculator
-- Heating Load Calculator
+The previous experimental MVP is preserved in the branch `archive/legacy-mvp-2026-06`.
