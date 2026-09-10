@@ -52,7 +52,11 @@ class PublicationContractTests(unittest.TestCase):
             REPO_ROOT / "website" / "PUBLICATION_CHECKLIST.md",
             REPO_ROOT / "website" / "content" / "about.md",
             REPO_ROOT / "website" / "content" / "privacy.md",
+            REPO_ROOT / "website" / "content" / "accessibility.md",
             REPO_ROOT / "website" / "content" / "legal-notice.template.md",
+            REPO_ROOT / "deployment" / "LIVE_AUDIT_2026-09-10.md",
+            REPO_ROOT / "deployment" / "LIVE_AUDIT_WEB_0_9_1_2026-09-10.md",
+            REPO_ROOT / "deployment" / "RUNTIME_PERFORMANCE_2026-09-10.md",
             TOOL_ROOT / "METHODOLOGY.md",
             TOOL_ROOT / "ATTRIBUTION.md",
         ]
@@ -69,8 +73,34 @@ class PublicationContractTests(unittest.TestCase):
         self.assertIn("to be approved before public promotion", privacy.lower())
         self.assertIn("legal basis", privacy.lower())
         self.assertIn("consent", privacy.lower())
+        self.assertIn("PUBLIC_PROMOTION_CLEARANCE", privacy)
+        self.assertIn("BLOCKED", privacy)
         self.assertIn("DO NOT DEPLOY", legal_template)
         self.assertIn("PUBLICATION REQUIRED", legal_template)
+
+    def test_hosting_privacy_gap_is_explicit_and_not_masked_by_in_app_consent(self) -> None:
+        checklist = (REPO_ROOT / "website" / "PUBLICATION_CHECKLIST.md").read_text(encoding="utf-8")
+        privacy = (REPO_ROOT / "website" / "content" / "privacy.md").read_text(encoding="utf-8")
+        self.assertIn("provider-controlled analytics/cookies/storage", checklist)
+        self.assertIn("§ 165(3) TKG 2021", checklist)
+        self.assertIn("An application-level consent banner", checklist)
+        self.assertIn("STREAMLIT_COMMUNITY_CLOUD_PUBLICATION_PRIVACY_GATE", privacy)
+        self.assertIn("An in-app consent banner would not by itself close", privacy)
+
+    def test_accessibility_status_does_not_claim_full_conformance(self) -> None:
+        accessibility = (REPO_ROOT / "website" / "content" / "accessibility.md").read_text(encoding="utf-8")
+        closure_audit = (REPO_ROOT / "deployment" / "LIVE_AUDIT_WEB_0_9_1_2026-09-10.md").read_text(encoding="utf-8")
+        self.assertIn("not a formal declaration of WCAG conformance", accessibility)
+        self.assertIn("Manual review still required", accessibility)
+        self.assertIn("APP_UPLOADER_HINT_CONTRAST = CLOSED_LIVE", closure_audit)
+        self.assertIn("STREAMLIT_FRAMEWORK_ACCESSIBILITY", closure_audit)
+        self.assertIn("PUBLICATION_CLEARANCE                     BLOCKED", closure_audit)
+
+    def test_historical_audit_contains_corrected_contrast_attribution(self) -> None:
+        historical = (REPO_ROOT / "deployment" / "LIVE_AUDIT_2026-09-10.md").read_text(encoding="utf-8")
+        self.assertIn("Follow-up correction", historical)
+        self.assertIn("10MB per file • EPW", historical)
+        self.assertIn("only the attribution is corrected", historical)
 
     def test_public_app_exposes_beta_and_disclaimer_contract(self) -> None:
         app_source = (TOOL_ROOT / "app.py").read_text(encoding="utf-8")
