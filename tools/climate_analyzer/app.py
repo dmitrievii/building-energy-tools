@@ -2007,7 +2007,7 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float) -> None:
             color_metric_label=color_metric_label,
             color_mode=color_mode,
         )
-        st.plotly_chart(fig, use_container_width=False, config={"displaylogo": False, "scrollZoom": True}, key=next_plot_key("psychrometric"))
+        st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False, "scrollZoom": True}, key=next_plot_key("psychrometric"))
         if show_givoni:
             render_bioclimatic_report(df[df["month_index"].isin(selected_months)])
     elif chart_group == "Moisture thresholds":
