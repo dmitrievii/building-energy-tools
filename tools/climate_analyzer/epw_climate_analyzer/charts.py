@@ -11,6 +11,18 @@ import psychrolib
 
 from .aggregations import aggregate_summary, aggregate_sum, calendar_matrix, duration_curve, monthly_box_data, monthly_hour_matrix
 from .psychrometrics import DEFAULT_PRESSURE_PA, psychrometric_rh_curves
+from .chart_theme import (
+    BINARY_SUITABILITY_COLORSCALE,
+    CLIMATE_COLORS,
+    DEFAULT_METRIC_COLOR,
+    WIND_SPEED_COLOR_MAP,
+    WIND_SPEED_LABELS,
+    metric_band_colors,
+    metric_color,
+    metric_colorscale,
+    rgba,
+    semantic_color_from_text,
+)
 
 psychrolib.SetUnitSystem(psychrolib.SI)
 
@@ -142,7 +154,7 @@ def _heatmap_colorscale(column: str, values=None, temperature_thresholds: tuple[
         green_end = max(green_start + 1e-6, min(1.0, (cool_t - vmin) / (vmax - vmin)))
         return [[0.0, "#1d4ed8"], [green_start, "#22c55e"], [green_end, "#22c55e"], [1.0, "#dc2626"]]
     if column in {"natural_ventilation_suitable", "night_flushing_suitable"} or "suitable" in column:
-        return BINARY_BLUE_COLORSCALE
+        return BINARY_SUITABILITY_COLORSCALE
     if "sky_cover" in column:
         return [[0.0, "rgba(255,255,255,0.0)"], [0.25, "#dbeafe"], [1.0, "#0f172a"]]
     if "radiation" in column or "irradiance" in column or "illuminance" in column:
@@ -185,6 +197,7 @@ def profile_ribbon_chart(
         summary = aggregate_summary(df, column, aggregation)
         central = "mean"
 
+    low_color, central_color, high_color, band_fill = metric_band_colors(column)
     fig = go.Figure()
     if aggregation == "Hourly":
         x = summary.index
@@ -194,6 +207,7 @@ def profile_ribbon_chart(
                 y=summary[central],
                 mode="lines",
                 name=f"Hourly {unit}",
+                line=dict(color=central_color, width=1.6),
                 hovertemplate="%{x}<br>Value: %{y:.2f} " + unit + "<extra></extra>",
             )
         )
@@ -207,7 +221,7 @@ def profile_ribbon_chart(
             y=summary["max"],
             mode="lines+markers",
             name="Maximum",
-            line=dict(color="red", width=1.4),
+            line=dict(color=high_color, width=1.4),
             hovertemplate="Maximum: %{y:.2f} " + unit + "<extra></extra>",
         )
     )
@@ -217,9 +231,9 @@ def profile_ribbon_chart(
             y=summary["min"],
             mode="lines+markers",
             name="Minimum",
-            line=dict(color="blue", width=1.4),
+            line=dict(color=low_color, width=1.4),
             fill="tonexty",
-            fillcolor="rgba(120,120,120,0.18)",
+            fillcolor=band_fill,
             hovertemplate="Minimum: %{y:.2f} " + unit + "<extra></extra>",
         )
     )
@@ -229,7 +243,7 @@ def profile_ribbon_chart(
             y=summary[central],
             mode="lines+markers",
             name="Mean" if central == "mean" else "Sum",
-            line=dict(width=2.2),
+            line=dict(color=central_color, width=2.2),
             hovertemplate=("Mean: %{y:.2f} " + unit + "<extra></extra>") if central == "mean" else ("Sum: %{y:.2f} " + unit + "<extra></extra>"),
         )
     )
@@ -242,20 +256,22 @@ def percentile_band_chart(df: pd.DataFrame, column: str, aggregation: str, title
     """Create a percentile-band chart using P05, median and P95."""
     summary = aggregate_summary(df, column, aggregation)
     x = _period_x(summary, aggregation)
+    low_color, central_color, high_color, band_fill = metric_band_colors(column)
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=x, y=summary["p95"], mode="lines+markers", name="P95", hovertemplate="P95: %{y:.2f} " + unit + "<extra></extra>"))
+    fig.add_trace(go.Scatter(x=x, y=summary["p95"], mode="lines+markers", name="P95", line=dict(color=high_color, width=1.4), hovertemplate="P95: %{y:.2f} " + unit + "<extra></extra>"))
     fig.add_trace(
         go.Scatter(
             x=x,
             y=summary["p05"],
             mode="lines+markers",
             name="P05",
+            line=dict(color=low_color, width=1.4),
             fill="tonexty",
-            fillcolor="rgba(120,120,120,0.18)",
+            fillcolor=band_fill,
             hovertemplate="P05: %{y:.2f} " + unit + "<extra></extra>",
         )
     )
-    fig.add_trace(go.Scatter(x=x, y=summary["median"], mode="lines+markers", name="Median", hovertemplate="Median: %{y:.2f} " + unit + "<extra></extra>"))
+    fig.add_trace(go.Scatter(x=x, y=summary["median"], mode="lines+markers", name="Median", line=dict(color=central_color, width=2.2), hovertemplate="Median: %{y:.2f} " + unit + "<extra></extra>"))
     fig = apply_common_layout(fig, title, "Period", unit)
     if aggregation == "Monthly":
         fig.update_xaxes(categoryorder="array", categoryarray=MONTH_LABELS)
@@ -319,14 +335,14 @@ def duration_chart(df: pd.DataFrame, column: str, title: str, unit: str, ascendi
     """Create a sorted duration curve."""
     values = duration_curve(df, column, ascending=ascending)
     fig = px.line(values, x="rank_hour", y=column, title=title, labels={"rank_hour": "Sorted hour", column: unit})
-    fig.update_traces(hovertemplate="Sorted hour: %{x}<br>Value: %{y:.2f} " + unit + "<extra></extra>")
+    fig.update_traces(line_color=metric_color(column), hovertemplate="Sorted hour: %{x}<br>Value: %{y:.2f} " + unit + "<extra></extra>")
     fig.update_layout(template=PLOT_TEMPLATE, margin=dict(l=40, r=20, t=70, b=45))
     return _apply_axis_constraints(fig, column=column, x_values=values["rank_hour"], y_values=values[column])
 
 def histogram_chart(df: pd.DataFrame, column: str, title: str, unit: str, bins: int = 40) -> go.Figure:
     """Create an interactive histogram."""
     data = df[[column]].dropna()
-    fig = px.histogram(data, x=column, nbins=bins, title=title, labels={column: unit})
+    fig = px.histogram(data, x=column, nbins=bins, title=title, labels={column: unit}, color_discrete_sequence=[metric_color(column)])
     fig.update_layout(template=PLOT_TEMPLATE, yaxis_title="Hours", margin=dict(l=40, r=20, t=70, b=45))
     lo, hi = _axis_limits_for_column(column, data[column], pad_fraction=0.03)
     if lo is not None or hi is not None:
@@ -337,10 +353,13 @@ def monthly_box_chart(df: pd.DataFrame, column: str, title: str, unit: str, viol
     """Create monthly boxplot or violin plot."""
     data = monthly_box_data(df, column)
     data["month_name"] = pd.Categorical(data["month_name"], MONTH_LABELS, ordered=True)
+    base_color = metric_color(column)
     if violin:
         fig = px.violin(data, x="month_name", y=column, box=True, points=False, title=title)
+        fig.update_traces(marker_color=base_color, line_color=base_color, fillcolor=rgba(base_color, 0.24))
     else:
         fig = px.box(data, x="month_name", y=column, title=title)
+        fig.update_traces(marker_color=base_color, line_color=base_color)
     fig = apply_common_layout(fig, title, "Month", unit)
     fig.update_xaxes(categoryorder="array", categoryarray=MONTH_LABELS)
     return _apply_axis_constraints(fig, column=column, y_values=data[column])
@@ -369,7 +388,7 @@ def threshold_bar_chart(counts: pd.DataFrame, title: str, unit: str = "hours") -
         categoryarray = MONTH_LABELS if set(data["Period"].astype(str)).issubset(set(MONTH_LABELS)) else None
     if "Period" not in data.columns:
         data = data.reset_index().rename(columns={data.index.name or "index": "Period"})
-    fig = px.bar(data, x="Period", y=column, title=title)
+    fig = px.bar(data, x="Period", y=column, title=title, color_discrete_sequence=[semantic_color_from_text(title)])
     fig.update_layout(template=PLOT_TEMPLATE, xaxis_title="Period", yaxis_title=unit, margin=dict(l=40, r=20, t=70, b=45))
     if categoryarray is not None:
         fig.update_xaxes(categoryorder="array", categoryarray=categoryarray)
@@ -1066,16 +1085,8 @@ def _add_heat_index_overlay(
 
 
 def _metric_colorscale(column: str | None) -> object:
-    """Return a suitable colorscale for mapping a weather metric on psychrometric data."""
-    if not column:
-        return "Viridis"
-    if "radiation" in column or "illuminance" in column or "irradiance" in column:
-        return SOLAR_COLORSCALE
-    if "sky_cover" in column:
-        return [[0.0, "rgba(255,255,255,0.0)"], [1.0, "#0f172a"]]
-    if "wind" in column:
-        return "Turbo"
-    return "Viridis"
+    """Return the central semantic colorscale for psychrometric metric mapping."""
+    return metric_colorscale(column)
 
 
 def _unique_existing_columns(columns: list[str | None], df: pd.DataFrame) -> list[str]:
@@ -1367,7 +1378,7 @@ def wind_rose_chart(df: pd.DataFrame, title: str = "Wind rose") -> go.Figure:
     data["speed_bin"] = pd.cut(
         data["wind_speed_m_s"],
         bins=[0, 1, 2, 4, 6, 8, 12, np.inf],
-        labels=["0-1", "1-2", "2-4", "4-6", "6-8", "8-12", ">12"],
+        labels=WIND_SPEED_LABELS,
         include_lowest=True,
     )
     rose = data.groupby(["direction_sector_deg", "speed_bin"], observed=False).size().reset_index(name="hours")
@@ -1378,6 +1389,8 @@ def wind_rose_chart(df: pd.DataFrame, title: str = "Wind rose") -> go.Figure:
         color="speed_bin",
         title=title,
         labels={"hours": "Hours", "direction_sector_deg": "Wind direction [deg]", "speed_bin": "Speed [m/s]"},
+        category_orders={"speed_bin": WIND_SPEED_LABELS},
+        color_discrete_map=WIND_SPEED_COLOR_MAP,
     )
     fig.update_layout(template=PLOT_TEMPLATE, margin=dict(l=40, r=20, t=70, b=45))
     return fig
@@ -1614,7 +1627,7 @@ def sun_position_diagram(df: pd.DataFrame, title: str = "Sun-path diagram") -> g
 
 def orientation_bar_chart(data: pd.DataFrame, title: str) -> go.Figure:
     """Create a bar chart for annual radiation by façade orientation."""
-    fig = px.bar(data, x="orientation", y="annual_kwh_m2", title=title, labels={"annual_kwh_m2": "Annual irradiation [kWh/m²]"})
+    fig = px.bar(data, x="orientation", y="annual_kwh_m2", title=title, labels={"annual_kwh_m2": "Annual irradiation [kWh/m²]"}, color_discrete_sequence=[metric_color("global_horizontal_radiation_wh_m2")])
     fig.update_layout(template=PLOT_TEMPLATE, margin=dict(l=40, r=20, t=70, b=45))
     return fig
 
@@ -1634,20 +1647,32 @@ def matrix_heatmap(matrix: pd.DataFrame, title: str, x_label: str, y_label: str,
 
 
 def stacked_monthly_bar(df: pd.DataFrame, title: str, y_label: str = "Hours") -> go.Figure:
-    """Create a stacked monthly bar chart from a month-indexed table."""
+    """Create semantic monthly bars; solar components are grouped, never stacked."""
+    series_names = [str(column) for column in df.columns]
     data = df.reset_index().melt(id_vars=df.index.name or "index", var_name="series", value_name="value")
     x_column = df.index.name or "index"
-    fig = px.bar(data, x=x_column, y="value", color="series", title=title)
-    fig.update_layout(template=PLOT_TEMPLATE, xaxis_title="Month", yaxis_title=y_label, barmode="stack", margin=dict(l=40, r=20, t=70, b=45))
+    color_map: dict[str, str] = {}
+    for index, name in enumerate(series_names):
+        inferred = semantic_color_from_text(name)
+        color_map[name] = inferred if inferred != DEFAULT_METRIC_COLOR else CLIMATE_COLORS[index % len(CLIMATE_COLORS)]
+    solar_tokens = ("global horizontal", "direct normal", "diffuse horizontal", "ghi", "dni", "dhi")
+    solar_series = [name for name in series_names if any(token in name.lower() for token in solar_tokens)]
+    is_solar_components = len(solar_series) >= 2 and any(token in title.lower() for token in ("solar", "radiation", "irradiation"))
+    barmode = "group" if is_solar_components else "stack"
+    fig = px.bar(data, x=x_column, y="value", color="series", title=title, barmode=barmode, category_orders={"series": series_names}, color_discrete_map=color_map)
+    fig.update_layout(template=PLOT_TEMPLATE, xaxis_title="Month", yaxis_title=y_label, barmode=barmode, margin=dict(l=40, r=20, t=70, b=45))
     fig.update_xaxes(tickmode="array", tickvals=list(range(1, 13)), ticktext=MONTH_LABELS)
     return fig
 
 
 def multi_line_monthly(df: pd.DataFrame, title: str, y_label: str) -> go.Figure:
-    """Create a multi-line monthly chart from a month-indexed table."""
+    """Create multi-line monthly charts with semantic series colours."""
     fig = go.Figure()
-    for column in df.columns:
-        fig.add_trace(go.Scatter(x=df.index, y=df[column], mode="lines+markers", name=str(column)))
+    for index, column in enumerate(df.columns):
+        name = str(column)
+        inferred = semantic_color_from_text(name)
+        color = inferred if inferred != DEFAULT_METRIC_COLOR else CLIMATE_COLORS[index % len(CLIMATE_COLORS)]
+        fig.add_trace(go.Scatter(x=df.index, y=df[column], mode="lines+markers", name=name, line=dict(color=color)))
     fig = apply_common_layout(fig, title, "Month", y_label)
     fig.update_xaxes(tickmode="array", tickvals=list(range(1, 13)), ticktext=MONTH_LABELS)
     return fig
