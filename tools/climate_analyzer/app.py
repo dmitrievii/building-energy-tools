@@ -373,6 +373,8 @@ def clear_active_climate_file() -> None:
 @st.cache_data(show_spinner=False)
 def _cached_station_catalog_by_identity(catalog_version: str, catalog_sha256: str) -> pd.DataFrame:
     """Load one reviewed catalog snapshot under an immutable cache identity."""
+    from epw_climate_analyzer.catalog_runtime import load_production_station_catalog
+
     catalog = load_production_station_catalog()
     if catalog.empty:
         return catalog
@@ -397,6 +399,8 @@ def cached_station_catalog() -> pd.DataFrame:
     stale-cache protection across redeploys without leaking cache mechanics into
     Find climate, Compare climates, or future UI call-sites.
     """
+    from epw_climate_analyzer.catalog_runtime import load_station_catalog_manifest
+
     manifest = load_station_catalog_manifest()
     return _cached_station_catalog_by_identity(manifest.catalog_version, manifest.csv_sha256)
 
