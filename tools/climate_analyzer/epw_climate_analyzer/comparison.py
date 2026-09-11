@@ -48,7 +48,6 @@ MONTH_ORDER = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "O
 ORIENTATION_ORDER = ["North", "North-East", "East", "South-East", "South", "South-West", "West", "North-West"]
 SOLAR_COLORSCALE = [[0.0, "#4c1d95"], [0.45, "#f97316"], [1.0, "#fef08a"]]
 TEMPERATURE_COLORSCALE = [[0.0, "#1d4ed8"], [0.45, "#22c55e"], [0.55, "#22c55e"], [1.0, "#dc2626"]]
-BINARY_SUITABILITY_COLORSCALE = [[0.0, "rgba(255,255,255,0.0)"], [0.01, "#eff6ff"], [1.0, "#1d4ed8"]]
 
 
 DisplayMode = Literal["Auto", "Overlay", "Small multiples", "Difference to reference", "Ranked summary"]
