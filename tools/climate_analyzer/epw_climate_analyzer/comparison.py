@@ -32,13 +32,22 @@ from .decisions import (
 from .epw_parser import DataQualityIssue, EpwFile
 from .psychrometrics import DEFAULT_PRESSURE_PA, psychrometric_rh_curves
 from .solar import orientation_annual_radiation, orientation_tilt_matrix, surface_irradiance_series
+from .chart_theme import (
+    BINARY_SUITABILITY_COLORSCALE,
+    COOLING_COLOR,
+    HEATING_COLOR,
+    WIND_SPEED_COLOR_MAP,
+    WIND_SPEED_LABELS,
+    climate_color_map,
+    metric_color,
+    semantic_color_from_text,
+)
 
 PLOT_TEMPLATE = "plotly_white"
 MONTH_ORDER = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 ORIENTATION_ORDER = ["North", "North-East", "East", "South-East", "South", "South-West", "West", "North-West"]
 SOLAR_COLORSCALE = [[0.0, "#4c1d95"], [0.45, "#f97316"], [1.0, "#fef08a"]]
 TEMPERATURE_COLORSCALE = [[0.0, "#1d4ed8"], [0.45, "#22c55e"], [0.55, "#22c55e"], [1.0, "#dc2626"]]
-BINARY_BLUE_COLORSCALE = [[0.0, "rgba(255,255,255,0.0)"], [0.01, "#eff6ff"], [1.0, "#1d4ed8"]]
 
 
 DisplayMode = Literal["Auto", "Overlay", "Small multiples", "Difference to reference", "Ranked summary"]
@@ -179,7 +188,7 @@ def comparison_interpretation(metrics: pd.DataFrame, reference: str | None = Non
 def ranked_metric_chart(metrics: pd.DataFrame, metric: str, title: str | None = None) -> go.Figure:
     """Create a horizontal ranked bar chart for one comparison metric."""
     data = metrics[["Climate", metric]].dropna().sort_values(metric, ascending=True)
-    fig = px.bar(data, x=metric, y="Climate", orientation="h", title=title or f"Climate ranking: {metric}")
+    fig = px.bar(data, x=metric, y="Climate", orientation="h", title=title or f"Climate ranking: {metric}", color_discrete_sequence=[semantic_color_from_text(metric)])
     fig.update_layout(template=PLOT_TEMPLATE, xaxis_title=metric, yaxis_title="Climate", margin=dict(l=40, r=20, t=70, b=45))
     return fig
 
@@ -209,8 +218,9 @@ def monthly_profile_table(climates: list[ClimateDataset], column: str, statistic
 def overlay_monthly_chart(table: pd.DataFrame, title: str, y_label: str) -> go.Figure:
     """Create an overlaid monthly line chart from a climate-by-month table."""
     fig = go.Figure()
+    colors = climate_color_map(table.columns)
     for column in table.columns:
-        fig.add_trace(go.Scatter(x=table.index, y=table[column], mode="lines+markers", name=str(column)))
+        fig.add_trace(go.Scatter(x=table.index, y=table[column], mode="lines+markers", name=str(column), line=dict(color=colors[str(column)])))
     fig.update_layout(template=PLOT_TEMPLATE, title=title, xaxis_title="Month", yaxis_title=y_label, hovermode="x unified", margin=dict(l=40, r=20, t=70, b=45))
     fig.update_xaxes(tickmode="array", tickvals=list(range(1, 13)), ticktext=MONTH_ORDER, range=[1, 12], autorangeoptions=dict(minallowed=1, maxallowed=12))
     return fig
@@ -218,9 +228,10 @@ def overlay_monthly_chart(table: pd.DataFrame, title: str, y_label: str) -> go.F
 def small_multiple_monthly_chart(table: pd.DataFrame, title: str, y_label: str) -> go.Figure:
     """Create small multiples for monthly climate profiles."""
     columns = list(table.columns)
+    colors = climate_color_map(columns)
     fig = make_subplots(rows=len(columns), cols=1, shared_xaxes=True, subplot_titles=columns, vertical_spacing=0.03)
     for row, column in enumerate(columns, start=1):
-        fig.add_trace(go.Scatter(x=table.index, y=table[column], mode="lines+markers", name=column, showlegend=False), row=row, col=1)
+        fig.add_trace(go.Scatter(x=table.index, y=table[column], mode="lines+markers", name=column, showlegend=False, line=dict(color=colors[str(column)])), row=row, col=1)
     fig.update_layout(template=PLOT_TEMPLATE, title=title, height=max(320, 210 * len(columns)), hovermode="x unified", margin=dict(l=40, r=20, t=70, b=45))
     fig.update_yaxes(title_text=y_label)
     fig.update_xaxes(title_text="Month", row=len(columns), col=1, tickmode="array", tickvals=list(range(1, 13)), ticktext=MONTH_ORDER, range=[1, 12], autorangeoptions=dict(minallowed=1, maxallowed=12))
@@ -237,10 +248,11 @@ def monthly_difference_chart(table: pd.DataFrame, reference: str, title: str, y_
 def duration_comparison_chart(climates: list[ClimateDataset], column: str, title: str, y_label: str, ascending: bool = False) -> go.Figure:
     """Create overlaid duration curves for several climates."""
     fig = go.Figure()
+    colors = climate_color_map([climate.display_name for climate in climates])
     for climate in climates:
         values = climate.data[column].dropna().sort_values(ascending=ascending).reset_index(drop=True)
         x = np.arange(1, len(values) + 1)
-        fig.add_trace(go.Scatter(x=x, y=values, mode="lines", name=climate.display_name))
+        fig.add_trace(go.Scatter(x=x, y=values, mode="lines", name=climate.display_name, line=dict(color=colors[climate.display_name])))
     fig.update_layout(template=PLOT_TEMPLATE, title=title, xaxis_title="Sorted hour", yaxis_title=y_label, hovermode="x unified", margin=dict(l=40, r=20, t=70, b=45))
     return fig
 
@@ -272,7 +284,7 @@ def heatmap_small_multiples(climates: list[ClimateDataset], column: str, row_gro
         else:
             colorscale = TEMPERATURE_COLORSCALE
     elif column in {"natural_ventilation_suitable", "night_flushing_suitable", "nv"} or "suitable" in column:
-        colorscale = BINARY_BLUE_COLORSCALE
+        colorscale = BINARY_SUITABILITY_COLORSCALE
         zmin = 0.0 if zmin is None else min(0.0, float(zmin))
         zmax = 1.0 if zmax is None else max(1.0, float(zmax))
     else:
@@ -301,7 +313,7 @@ def difference_heatmap_chart(reference: ClimateDataset, target: ClimateDataset, 
 def hdd_cdd_grouped_chart(metrics: pd.DataFrame) -> go.Figure:
     """Create grouped bars for annual heating and cooling degree-hours."""
     data = metrics[["Climate", "HDD18 [K·h]", "CDD26 [K·h]"]].melt(id_vars="Climate", var_name="Metric", value_name="K·h")
-    fig = px.bar(data, x="Climate", y="K·h", color="Metric", barmode="group", title="Heating and cooling degree-hour comparison")
+    fig = px.bar(data, x="Climate", y="K·h", color="Metric", barmode="group", title="Heating and cooling degree-hour comparison", color_discrete_map={"HDD18 [K·h]": HEATING_COLOR, "CDD26 [K·h]": COOLING_COLOR})
     fig.update_layout(template=PLOT_TEMPLATE, xaxis_title="Climate", yaxis_title="K·h", margin=dict(l=40, r=20, t=70, b=45))
     fig.update_yaxes(range=[0, max(float(data["K·h"].max()) * 1.05, 1.0)], autorangeoptions=dict(minallowed=0))
     return fig
@@ -337,12 +349,12 @@ def monthly_box_compare_chart(climates: list[ClimateDataset], column: str, mode:
             data = climate.data[climate.data["month_index"] == selected_month][column].dropna()
             rows.extend({"Climate": climate.display_name, "Value": value} for value in data)
         frame = pd.DataFrame(rows)
-        fig = px.box(frame, x="Climate", y="Value", title=f"{title}: month {selected_month}")
+        fig = px.box(frame, x="Climate", y="Value", color="Climate", color_discrete_map=climate_color_map([climate.display_name for climate in climates]), title=f"{title}: month {selected_month}")
         x_label = "Climate"
     else:
         climate = next((c for c in climates if c.display_name == selected_climate), climates[0])
         frame = climate.data[[column, "month_name", "month_index"]].dropna().sort_values("month_index")
-        fig = px.box(frame, x="month_name", y=column, title=f"{title}: {climate.display_name}")
+        fig = px.box(frame, x="month_name", y=column, title=f"{title}: {climate.display_name}", color_discrete_sequence=[metric_color(column)])
         x_label = "Month"
     fig.update_layout(template=PLOT_TEMPLATE, xaxis_title=x_label, yaxis_title=y_label, margin=dict(l=40, r=20, t=70, b=45))
     return fig
@@ -350,6 +362,7 @@ def monthly_box_compare_chart(climates: list[ClimateDataset], column: str, mode:
 
 def psychrometric_comparison_chart(climates: list[ClimateDataset], chart_type: str = "T-d", mode: str = "Small multiples", pressure_pa: float = DEFAULT_PRESSURE_PA) -> go.Figure:
     """Create psychrometric comparison as overlay or small-multiple density plots."""
+    colors = climate_color_map([climate.display_name for climate in climates])
     if mode == "Overlay" and len(climates) <= 3:
         fig = go.Figure()
         for climate in climates:
@@ -364,7 +377,7 @@ def psychrometric_comparison_chart(climates: list[ClimateDataset], chart_type: s
                 y = df["humidity_ratio_g_kg"]
                 x_label = "Dry-bulb temperature [°C]"
                 y_label = "Moisture content d [g/kg dry air]"
-            fig.add_trace(go.Scattergl(x=x, y=y, mode="markers", name=climate.display_name, marker=dict(size=4, opacity=0.22)))
+            fig.add_trace(go.Scattergl(x=x, y=y, mode="markers", name=climate.display_name, marker=dict(size=4, opacity=0.22, color=colors[climate.display_name])))
         fig.update_layout(template=PLOT_TEMPLATE, title=f"Psychrometric comparison ({chart_type})", xaxis_title=x_label, yaxis_title=y_label, margin=dict(l=40, r=20, t=70, b=45))
         return fig
 
@@ -394,18 +407,19 @@ def psychrometric_comparison_chart(climates: list[ClimateDataset], chart_type: s
 
 def sun_path_comparison_chart(climates: list[ClimateDataset], mode: str, selected_dates: list[str]) -> go.Figure:
     """Create overlay or small-multiple sun-path comparison for selected calendar dates."""
+    colors = climate_color_map([climate.display_name for climate in climates])
     if mode == "Overlay" and len(climates) <= 4:
         fig = go.Figure()
         for climate in climates:
             data = climate.data[climate.data.index.strftime("%m-%d").isin(selected_dates) & climate.data["is_daylight"]]
-            fig.add_trace(go.Scatter(x=data["solar_azimuth_deg"], y=data["solar_elevation_deg"], mode="lines+markers", name=climate.display_name, marker=dict(size=4)))
+            fig.add_trace(go.Scatter(x=data["solar_azimuth_deg"], y=data["solar_elevation_deg"], mode="lines+markers", name=climate.display_name, line=dict(color=colors[climate.display_name]), marker=dict(size=4, color=colors[climate.display_name])))
         fig.update_layout(template=PLOT_TEMPLATE, title="Sun-path comparison for selected dates", xaxis_title="Solar azimuth [deg]", yaxis_title="Solar altitude [deg]", margin=dict(l=40, r=20, t=70, b=45))
         return fig
     rows = len(climates)
     fig = make_subplots(rows=rows, cols=1, subplot_titles=[c.display_name for c in climates], vertical_spacing=0.04)
     for idx, climate in enumerate(climates, start=1):
         data = climate.data[climate.data.index.strftime("%m-%d").isin(selected_dates) & climate.data["is_daylight"]]
-        fig.add_trace(go.Scatter(x=data["solar_azimuth_deg"], y=data["solar_elevation_deg"], mode="lines+markers", name=climate.display_name, showlegend=False, marker=dict(size=4)), row=idx, col=1)
+        fig.add_trace(go.Scatter(x=data["solar_azimuth_deg"], y=data["solar_elevation_deg"], mode="lines+markers", name=climate.display_name, showlegend=False, line=dict(color=colors[climate.display_name]), marker=dict(size=4, color=colors[climate.display_name])), row=idx, col=1)
     fig.update_layout(template=PLOT_TEMPLATE, title="Sun-path comparison for selected dates", height=max(360, 230 * rows), margin=dict(l=40, r=20, t=70, b=45))
     fig.update_xaxes(title_text="Solar azimuth [deg]", row=rows, col=1)
     fig.update_yaxes(title_text="Solar altitude [deg]")
@@ -431,7 +445,7 @@ def facade_radiation_comparison_chart(climates: list[ClimateDataset], tilt_deg: 
     data = pd.DataFrame(rows)
     data["Orientation"] = pd.Categorical(data["Orientation"], ORIENTATION_ORDER, ordered=True)
     data = data.sort_values("Orientation")
-    fig = px.line(data, x="Orientation", y="Annual irradiation [kWh/m²]", color="Climate", markers=True, title=f"Annual façade irradiation comparison, tilt {tilt_deg:.0f}°")
+    fig = px.line(data, x="Orientation", y="Annual irradiation [kWh/m²]", color="Climate", markers=True, title=f"Annual façade irradiation comparison, tilt {tilt_deg:.0f}°", color_discrete_map=climate_color_map([climate.display_name for climate in climates]))
     fig.update_layout(template=PLOT_TEMPLATE, xaxis_title="Orientation", yaxis_title="Annual irradiation [kWh/m²]", margin=dict(l=40, r=20, t=70, b=45))
     return fig
 
@@ -444,7 +458,7 @@ def tilt_radiation_comparison_chart(climates: list[ClimateDataset], azimuth_deg:
             poa = surface_irradiance_series(climate.data, float(tilt), azimuth_deg)
             rows.append({"Climate": climate.display_name, "Tilt [deg]": tilt, "Annual irradiation [kWh/m²]": poa.sum() / 1000.0})
     data = pd.DataFrame(rows)
-    fig = px.line(data, x="Tilt [deg]", y="Annual irradiation [kWh/m²]", color="Climate", markers=True, title=f"Tilt sensitivity at azimuth {azimuth_deg:.0f}°")
+    fig = px.line(data, x="Tilt [deg]", y="Annual irradiation [kWh/m²]", color="Climate", markers=True, title=f"Tilt sensitivity at azimuth {azimuth_deg:.0f}°", color_discrete_map=climate_color_map([climate.display_name for climate in climates]))
     fig.update_layout(template=PLOT_TEMPLATE, xaxis_title="Surface tilt [deg]", yaxis_title="Annual irradiation [kWh/m²]", margin=dict(l=40, r=20, t=70, b=45))
     return fig
 
@@ -471,17 +485,16 @@ def wind_rose_small_multiples(climates: list[ClimateDataset]) -> go.Figure:
     specs = [[{"type": "polar"} for _ in range(cols)] for _ in range(rows)]
     fig = make_subplots(rows=rows, cols=cols, specs=specs, subplot_titles=[c.display_name for c in climates], vertical_spacing=0.12)
     bins = [0, 1, 2, 4, 6, 8, 12, np.inf]
-    labels = ["0-1", "1-2", "2-4", "4-6", "6-8", "8-12", ">12"]
     for i, climate in enumerate(climates):
         row = i // cols + 1
         col = i % cols + 1
         data = climate.data[["wind_direction_deg", "wind_speed_m_s"]].dropna().copy()
         data["direction_sector_deg"] = (np.round(data["wind_direction_deg"] / 22.5) * 22.5) % 360
-        data["speed_bin"] = pd.cut(data["wind_speed_m_s"], bins=bins, labels=labels, include_lowest=True)
+        data["speed_bin"] = pd.cut(data["wind_speed_m_s"], bins=bins, labels=WIND_SPEED_LABELS, include_lowest=True)
         rose = data.groupby(["direction_sector_deg", "speed_bin"], observed=False).size().reset_index(name="hours")
-        for label in labels:
+        for label in WIND_SPEED_LABELS:
             subset = rose[rose["speed_bin"] == label]
-            fig.add_trace(go.Barpolar(r=subset["hours"], theta=subset["direction_sector_deg"], name=label, showlegend=i == 0), row=row, col=col)
+            fig.add_trace(go.Barpolar(r=subset["hours"], theta=subset["direction_sector_deg"], name=label, marker_color=WIND_SPEED_COLOR_MAP[label], showlegend=i == 0), row=row, col=col)
     fig.update_layout(template=PLOT_TEMPLATE, title="Wind rose comparison", height=max(420, 360 * rows), margin=dict(l=40, r=20, t=70, b=45))
     return fig
 
