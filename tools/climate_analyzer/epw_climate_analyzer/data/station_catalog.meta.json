@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "catalog_version": "onebuilding-20260910-d9bce4713677",
+  "catalog_version": "onebuilding-20260911-121e0ff64acd",
   "catalog_kind": "generated_provider_snapshot",
-  "generated_at_utc": "2026-09-10T23:13:15Z",
-  "source_snapshot_date": "2026-09-10",
+  "generated_at_utc": "2026-09-11T07:27:53Z",
+  "source_snapshot_date": "2026-09-11",
   "station_count": 98047,
   "coverage": "Generated from selected Climate.OneBuilding WMO regions: Africa, Asia, South America, North and Central America, Southwest Pacific, Europe, Antarctica.",
-  "csv_sha256": "d9bce471367784cb68966035585d0ff36c8d9978c2c3c7783e55940d7638c5ce",
+  "csv_sha256": "121e0ff64acd522728650b0eb55e3a588288d0976533bdf9a8583b4f6402d02e",
   "build_evidence": {
     "regions": [
       "Africa",

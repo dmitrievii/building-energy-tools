@@ -865,9 +865,9 @@ def render_climate_file_source() -> None:
         selectable_limit = st.slider(
             "Maximum station groups rendered on map",
             min_value=1000,
-            max_value=50000,
-            value=int(st.session_state.get("station_selectable_cluster_limit", 20000)),
-            step=1000,
+            max_value=100000,
+            value=int(st.session_state.get("station_selectable_cluster_limit", 50000)),
+            step=5000,
             help=(
                 "The map renders one browser-side clustered marker per physical station group. "
                 "If the filtered catalog is larger than this limit, refine the country, dataset, or search filters."
@@ -882,7 +882,7 @@ def render_climate_file_source() -> None:
         st.session_state["selected_station_group_id"] = selected_group_id
 
     station_groups_for_map = station_groups_all
-    if len(station_groups_for_map) > int(st.session_state.get("station_selectable_cluster_limit", 20000)):
+    if len(station_groups_for_map) > int(st.session_state.get("station_selectable_cluster_limit", 50000)):
         st.warning(
             f"The current filter returns {len(station_groups_for_map):,} physical station groups. "
             "This is too many for a responsive selectable browser map. Refine the country, dataset, or search filters. "

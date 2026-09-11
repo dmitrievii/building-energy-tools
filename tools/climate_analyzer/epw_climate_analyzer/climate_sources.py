@@ -524,6 +524,13 @@ def _finalize_catalog(df: pd.DataFrame) -> pd.DataFrame:
     for column in ["name", "country", "region", "source", "dataset", "download_url", "catalog_url", "notes"]:
         result[column] = result[column].astype(str).str.strip()
 
+    # Climate.OneBuilding often publishes the same logical catalog as both KML
+    # and XLSX. XLSX carries richer country/region metadata, while KML is the
+    # fallback for records not represented in a spreadsheet. Give spreadsheet
+    # rows deterministic precedence before URL-level de-duplication.
+    result["__metadata_priority"] = result["notes"].str.contains("; sheet=", regex=False).astype(int)
+    result = result.sort_values("__metadata_priority", ascending=False, kind="stable")
+
     inferred = result.apply(_infer_metadata_from_url, axis=1, result_type="expand")
     for column in ["name", "country", "dataset"]:
         empty = result[column].eq("") | result[column].eq("nan")
@@ -532,6 +539,7 @@ def _finalize_catalog(df: pd.DataFrame) -> pd.DataFrame:
     result["station_id"] = result.apply(_make_station_id, axis=1)
     result = result.drop_duplicates(subset=["download_url"], keep="first")
     result = result.drop_duplicates(subset=["station_id"], keep="first")
+    result = result.drop(columns=["__metadata_priority"], errors="ignore")
     return result[_empty_catalog().columns].sort_values(["country", "name", "dataset"]).reset_index(drop=True)
 
 
@@ -543,12 +551,21 @@ def _infer_metadata_from_url(row: pd.Series) -> pd.Series:
     file_stem = file_stem.replace(".epw", "")
     country = ""
     dataset = ""
-    if len(path_parts) >= 2:
+    tokens = file_stem.split("_") if "_" in file_stem else [file_stem]
+
+    # Climate.OneBuilding weather filenames conventionally begin with a
+    # three-letter country/territory code (for example CAN_AB_..., USA_TX_...,
+    # AUS_NSW_...). Prefer that stable country-level token over a nearby URL
+    # directory, which can be a state/province such as AB_Alberta or TX_Texas.
+    filename_country = tokens[0].upper() if tokens else ""
+    if re.fullmatch(r"[A-Z]{3}", filename_country):
+        country = filename_country
+    elif len(path_parts) >= 2:
         country = path_parts[-3] if len(path_parts) >= 3 else path_parts[-2]
         if len(country) != 3:
             country = path_parts[-2]
+
     if "_" in file_stem:
-        tokens = file_stem.split("_")
         dataset = tokens[-1]
         name = " ".join(tokens[2:-1]) if len(tokens) > 3 else file_stem
     else:
