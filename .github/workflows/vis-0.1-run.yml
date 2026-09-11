@@ -27,6 +27,20 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r tools/climate_analyzer/requirements.txt
 
+      - name: Repair one-shot patch anchor
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('tools/climate_analyzer/scripts/apply_semantic_chart_colors.py')
+          text = path.read_text(encoding='utf-8')
+          old = "replace_once(block, 'labels = [\"0-1\", \"1-2\", \"2-4\", \"4-6\", \"6-8\", \"8-12\", \">12\"]\\n', '', \"remove local wind labels\")"
+          new = "replace_once(block, '    labels = [\"0-1\", \"1-2\", \"2-4\", \"4-6\", \"6-8\", \"8-12\", \">12\"]\\n', '', \"remove local wind labels\")"
+          if old not in text:
+              raise SystemExit('wind-label patch anchor not found')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          print('One-shot wind-label indentation repair applied')
+          PY
+
       - name: Patch production chart builders
         run: python tools/climate_analyzer/scripts/apply_semantic_chart_colors.py
 
