@@ -9,15 +9,19 @@ const ROOT = path.resolve(HERE, '..');
 const index = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 const mainCss = fs.readFileSync(path.join(ROOT, 'src', 'styles', 'main.css'), 'utf8');
 const responsiveCss = fs.readFileSync(path.join(ROOT, 'src', 'styles', 'responsive.css'), 'utf8');
+const visualFixesCss = fs.readFileSync(path.join(ROOT, 'src', 'styles', 'visual-fixes.css'), 'utf8');
 
-test('responsive layer is loaded after base CSS with the current cache identity', () => {
+test('responsive and visual-fix layers load after base CSS with current cache identity', () => {
   const basePos = index.indexOf('./src/styles/main.css');
   const responsivePos = index.indexOf('./src/styles/responsive.css');
+  const visualFixesPos = index.indexOf('./src/styles/visual-fixes.css');
   assert.ok(basePos >= 0, 'base stylesheet must be present');
   assert.ok(responsivePos > basePos, 'responsive stylesheet must load after base stylesheet');
-  assert.match(index, /main\.css\?v=comfort-0\.1\.3/);
-  assert.match(index, /responsive\.css\?v=comfort-0\.1\.3/);
-  assert.match(index, /main\.js\?v=comfort-0\.1\.3/);
+  assert.ok(visualFixesPos > responsivePos, 'visual fixes must load after responsive CSS');
+  assert.match(index, /main\.css\?v=comfort-0\.1\.4/);
+  assert.match(index, /responsive\.css\?v=comfort-0\.1\.4/);
+  assert.match(index, /visual-fixes\.css\?v=comfort-0\.1\.4/);
+  assert.match(index, /main\.js\?v=comfort-0\.1\.4/);
 });
 
 test('laptop layout uses fluid three-column tracks instead of fixed desktop widths', () => {
@@ -42,6 +46,13 @@ test('laptop avatar is fitted inside the stage instead of being cropped at 116 p
   assert.match(responsiveCss, /max-height:\s*calc\(100%\s*-\s*8px\)/);
   assert.match(responsiveCss, /@media\s*\(max-height:\s*860px\)\s*and\s*\(min-width:\s*1201px\)/);
   assert.match(responsiveCss, /height:\s*calc\(100%\s*-\s*6px\)/);
+});
+
+test('stage overlay is removed and respiration label is lowered', () => {
+  assert.match(visualFixesCss, /\.avatar-stage::before\s*\{[\s\S]*?content:\s*none\s*!important/);
+  assert.match(visualFixesCss, /display:\s*none\s*!important/);
+  assert.match(visualFixesCss, /\.heat-resp\s*\{[\s\S]*?top:\s*46%/);
+  assert.match(visualFixesCss, /@media\s*\(max-width:\s*900px\)[\s\S]*?\.heat-resp\s*\{[\s\S]*?top:\s*auto/);
 });
 
 test('narrow layouts reflow rather than crop or globally scale the application', () => {

@@ -1,0 +1,23 @@
+/* COMFORT-0.1.4 visual cleanup
+   Presentation-only corrections from live review. */
+
+/* Remove the former decorative blue/light column entirely. It was a stage
+   pseudo-element, not part of any avatar image, and read visually as an image
+   defect. */
+.avatar-stage::before {
+  content: none !important;
+  display: none !important;
+}
+
+/* Keep the respiration callout clear of its violet flow arrow on desktop and
+   laptop layouts. */
+.heat-resp {
+  top: 46%;
+}
+
+/* Narrow layouts already place heat labels in normal flow. */
+@media (max-width: 900px) {
+  .heat-resp {
+    top: auto;
+  }
+}
