@@ -1,0 +1,62 @@
+name: VIS-0.1 Theme Consistency Cleanup
+
+on:
+  push:
+    branches:
+      - climate-vis-0.1-semantic-chart-colors
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/climate_analyzer/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r tools/climate_analyzer/requirements.txt
+
+      - name: Remove comparison-local suitability override
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('tools/climate_analyzer/epw_climate_analyzer/comparison.py')
+          text = path.read_text(encoding='utf-8')
+          line = 'BINARY_SUITABILITY_COLORSCALE = [[0.0, "rgba(255,255,255,0.0)"], [0.01, "#eff6ff"], [1.0, "#1d4ed8"]]\n'
+          if text.count(line) != 1:
+              raise SystemExit(f'expected exactly one local suitability override, found {text.count(line)}')
+          path.write_text(text.replace(line, '', 1), encoding='utf-8')
+          print('Comparison now uses centralized green suitability scale')
+          PY
+
+      - name: Compile Python
+        working-directory: tools/climate_analyzer
+        run: python -m compileall -q app.py epw_climate_analyzer tests
+
+      - name: Focused semantic theme tests
+        working-directory: tools/climate_analyzer
+        run: python -m unittest discover -s tests -p 'test_semantic*.py' -v
+
+      - name: Full Climate Analyzer regressions
+        working-directory: tools/climate_analyzer
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
+
+      - name: Commit validated cleanup
+        run: |
+          rm .github/workflows/vis-0.1-theme-cleanup.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "VIS-0.1: centralize suitability comparison colour"
+          git push origin HEAD:climate-vis-0.1-semantic-chart-colors
