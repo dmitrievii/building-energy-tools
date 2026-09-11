@@ -1,12 +1,28 @@
 {
   "schema_version": "1.0",
-  "catalog_version": "onebuilding-bootstrap-2026-09-10",
-  "catalog_kind": "curated_bootstrap",
-  "generated_at_utc": "2026-09-10T16:20:00Z",
-  "source_snapshot_date": "2026-09-10",
-  "station_count": 20,
-  "coverage": "Austria plus selected nearby Central European stations; this bootstrap catalog is not global.",
-  "csv_sha256": "39921ccd579c0e48c34de7e842c700c4eef06fe28780d7e24f6350f97e2d9eb0",
+  "catalog_version": "onebuilding-20260911-121e0ff64acd",
+  "catalog_kind": "generated_provider_snapshot",
+  "generated_at_utc": "2026-09-11T07:27:53Z",
+  "source_snapshot_date": "2026-09-11",
+  "station_count": 98047,
+  "coverage": "Generated from selected Climate.OneBuilding WMO regions: Africa, Asia, South America, North and Central America, Southwest Pacific, Europe, Antarctica.",
+  "csv_sha256": "121e0ff64acd522728650b0eb55e3a588288d0976533bdf9a8583b4f6402d02e",
+  "build_evidence": {
+    "regions": [
+      "Africa",
+      "Asia",
+      "South America",
+      "North and Central America",
+      "Southwest Pacific",
+      "Europe",
+      "Antarctica"
+    ],
+    "xlsx_catalogs_parsed": 50,
+    "kml_catalogs_parsed": 47,
+    "failed_catalogs": 0,
+    "source_file_failures": 6,
+    "recovered_source_file_failures": 6
+  },
   "provider": {
     "name": "Climate.OneBuilding",
     "home_url": "https://climate.onebuilding.org/",

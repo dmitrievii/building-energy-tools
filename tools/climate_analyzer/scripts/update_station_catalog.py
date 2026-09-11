@@ -14,14 +14,19 @@ import hashlib
 import json
 from pathlib import Path
 import shutil
+import sys
 
-from epw_climate_analyzer.climate_sources import (
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from epw_climate_analyzer.climate_sources import (  # noqa: E402
     ONEBUILDING_REGION_OPTIONS,
     build_onebuilding_station_catalog,
 )
 
 
-ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CATALOG = ROOT / "epw_climate_analyzer" / "data" / "station_catalog.csv"
 DEFAULT_MANIFEST = ROOT / "epw_climate_analyzer" / "data" / "station_catalog.meta.json"
 
@@ -57,6 +62,8 @@ def write_manifest(
     xlsx_count: int,
     kml_count: int,
     failed_count: int,
+    source_file_failure_count: int,
+    recovered_source_file_failure_count: int,
 ) -> dict[str, object]:
     generated_at = datetime.now(timezone.utc).replace(microsecond=0)
     digest = sha256_file(catalog_path)
@@ -74,6 +81,8 @@ def write_manifest(
             "xlsx_catalogs_parsed": int(xlsx_count),
             "kml_catalogs_parsed": int(kml_count),
             "failed_catalogs": int(failed_count),
+            "source_file_failures": int(source_file_failure_count),
+            "recovered_source_file_failures": int(recovered_source_file_failure_count),
         },
         "provider": {
             "name": "Climate.OneBuilding",
@@ -111,7 +120,7 @@ def main() -> int:
     parser.add_argument(
         "--allow-partial",
         action="store_true",
-        help="Allow promotion candidate generation even when one or more upstream catalog files fail to parse.",
+        help="Allow promotion candidate generation even when one or more logical upstream catalogs have no usable representation.",
     )
     args = parser.parse_args()
 
@@ -126,7 +135,7 @@ def main() -> int:
         raise RuntimeError("Catalog build produced zero station records; refusing to replace the bundled catalog.")
     if report.failed_catalog_count and not args.allow_partial:
         raise RuntimeError(
-            f"Catalog build had {report.failed_catalog_count} failed upstream catalog(s); "
+            f"Catalog build had {report.failed_catalog_count} uncovered logical upstream catalog(s); "
             "refusing to create a promotion candidate without --allow-partial."
         )
 
@@ -140,12 +149,17 @@ def main() -> int:
         xlsx_count=report.xlsx_catalog_count,
         kml_count=report.kml_catalog_count,
         failed_count=report.failed_catalog_count,
+        source_file_failure_count=report.source_file_failure_count,
+        recovered_source_file_failure_count=report.recovered_source_file_failure_count,
     )
 
     print(f"Catalog:  {args.catalog}")
     print(f"Manifest: {args.manifest}")
     print(f"Version:  {manifest['catalog_version']}")
     print(f"Stations: {report.station_count}")
+    print(f"Source-file failures: {report.source_file_failure_count} "
+          f"({report.recovered_source_file_failure_count} recovered by alternate representation)")
+    print(f"Uncovered logical catalogs: {report.failed_catalog_count}")
     print(f"SHA-256:  {manifest['csv_sha256']}")
     return 0
 
