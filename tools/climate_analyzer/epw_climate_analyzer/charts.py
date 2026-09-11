@@ -1191,7 +1191,7 @@ def _add_psychrometric_tile_occupancy(
                 cmin=vmin,
                 cmax=vmax,
                 showscale=True,
-                colorbar=dict(title=color_metric_label, orientation="h", x=0.5, y=-0.08, len=0.42, thickness=10),
+                colorbar=dict(title=color_metric_label, orientation="h", x=0.36, y=-0.20, len=0.44, thickness=12, xanchor="center", yanchor="top"),
             ),
             hoverinfo="skip",
         )
@@ -1292,7 +1292,7 @@ def psychrometric_chart(
                         cmin=cmin,
                         cmax=cmax,
                         showscale=True,
-                        colorbar=dict(title=color_metric_label, orientation="h", x=0.5, y=-0.08, len=0.42, thickness=10),
+                        colorbar=dict(title=color_metric_label, orientation="h", x=0.36, y=-0.20, len=0.44, thickness=12, xanchor="center", yanchor="top"),
                     ),
                     hovertemplate=hover_base + f"<br>{color_metric_label}: %{{marker.color:.2f}}<extra></extra>",
                 )
@@ -1307,7 +1307,7 @@ def psychrometric_chart(
 
     fig = apply_common_layout(fig, f"Psychrometric chart ({chart_type})", x_label, y_label)
     fig.update_layout(
-        height=900,
+        height=760,
         autosize=True,
         hovermode="closest",
         legend=dict(
@@ -1315,8 +1315,8 @@ def psychrometric_chart(
             orientation="h",
             yanchor="top",
             y=-0.12,
-            xanchor="left",
-            x=0.0,
+            xanchor="center",
+            x=0.36,
             itemsizing="constant",
             font=dict(size=12),
             groupclick="toggleitem",
@@ -1324,18 +1324,22 @@ def psychrometric_chart(
         ),
         legend2=dict(
             title=dict(text="Zones", font=dict(size=13)),
-            orientation="h",
+            orientation="v",
             yanchor="top",
-            y=-0.28,
+            y=1.0,
             xanchor="left",
-            x=0.0,
+            x=0.755,
             itemsizing="constant",
             font=dict(size=12),
             groupclick="togglegroup",
             traceorder="normal",
         ),
-        margin=dict(l=64, r=44, t=74, b=340),
+        margin=dict(l=64, r=24, t=74, b=155),
     )
+    # Explicitly allocate the responsive figure width between the chart and the
+    # zone legend.  This avoids Plotly shrinking the plotting domain to the old
+    # near-square area while still using the full Streamlit container.
+    fig.update_xaxes(domain=[0.0, 0.72])
     if chart_type == "T-d":
         if t_range is not None:
             fig.update_xaxes(range=list(t_range), autorangeoptions=dict(minallowed=t_range[0], maxallowed=t_range[1]), constrain="domain")

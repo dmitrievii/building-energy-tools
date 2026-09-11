@@ -1254,6 +1254,12 @@ def load_comparison_datasets(
 
 def render_comparison_basket_manager(active_file: ClimateFilePayload | None) -> None:
     """Render controls for adding, renaming and removing comparison climates."""
+    # Compare Climates must not depend on the Find climate map dependency gate.
+    # Keep all catalog/download helpers page-local so direct navigation to this
+    # page is safe in a fresh Streamlit process.
+    from epw_climate_analyzer.catalog_runtime import catalog_runtime_summary, station_provenance_text
+    from epw_climate_analyzer.climate_sources import download_station_epw, filter_station_catalog
+
     st.subheader("Comparison basket")
     st.caption("Add two or more EPW climates. All comparison metrics are calculated from EPW hourly data only.")
 
