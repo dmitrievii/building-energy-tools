@@ -698,7 +698,7 @@ GIVONI_MILNE_ZONES: list[dict[str, object]] = [
         "label": GIVONI_ZONE_COLORS[zone_id][2],
         "strategy": GIVONI_ZONE_STRATEGIES[zone_id],
     }
-    for zone_id in GIVONI_DRAW_ORDER
+    for zone_id in sorted(GIVONI_ZONE_NAMES)
 ]
 
 
@@ -832,7 +832,9 @@ def _add_givoni_milne_overlay(
                 y=ys,
                 mode="lines",
                 name=f"{zone_id}. {zone_name}",
+                legend="legend2",
                 legendgroup=legend_group,
+                legendrank=zone_id,
                 showlegend=True,
                 line=dict(width=1.65, color=GIVONI_OUTLINE_COLOR, dash="dash"),
                 fill="toself",
@@ -856,7 +858,9 @@ def _add_givoni_milne_overlay(
                 textfont=dict(size=9, color=line_color),
                 textposition="middle center",
                 name=f"{zone_id}. {short_label} label",
+                legend="legend2",
                 legendgroup=legend_group,
+                legendrank=zone_id,
                 showlegend=False,
                 hovertemplate=f"{zone_id}. {zone_name}<extra></extra>",
             )
@@ -1052,7 +1056,9 @@ def _add_heat_index_overlay(
                     y=[p[1] for p in points],
                     mode="lines",
                     name=f"Heat index {level:.0f} °C",
+                    legend="legend2",
                     legendgroup="Heat index",
+                    legendrank=1000 + int(level),
                     line=dict(width=1.1, color="rgba(185,28,28,0.75)", dash="dash"),
                     hovertemplate=f"Heat index {level:.0f} °C<extra></extra>",
                 )
@@ -1250,7 +1256,7 @@ def psychrometric_chart(
         base_cols = _unique_existing_columns([x_col, y_col, "month_index", "month_name", "hour_of_day", color_metric_column], plot_df)
         data = plot_df[base_cols].dropna(subset=[x_col, y_col]).copy()
         if color_mode == "Month" or color_metric_column not in data.columns:
-            for month in selected_months:
+            for month in sorted(set(selected_months)):
                 subset = data[data["month_index"] == month]
                 if subset.empty:
                     continue
@@ -1260,6 +1266,9 @@ def psychrometric_chart(
                         y=subset[y_col],
                         mode="markers",
                         name=MONTH_LABELS[month - 1],
+                        legend="legend",
+                        legendgroup="months",
+                        legendrank=month,
                         marker=dict(size=3.5, opacity=0.42, color=MONTH_COLORS[month - 1]),
                         customdata=np.repeat(MONTH_LABELS[month - 1], len(subset)),
                         hovertemplate="Month: %{customdata}<br>" + hover_base + "<extra></extra>",
@@ -1298,22 +1307,34 @@ def psychrometric_chart(
 
     fig = apply_common_layout(fig, f"Psychrometric chart ({chart_type})", x_label, y_label)
     fig.update_layout(
-        width=920,
-        height=920,
-        autosize=False,
+        height=900,
+        autosize=True,
         hovermode="closest",
         legend=dict(
+            title=dict(text="Month", font=dict(size=13)),
             orientation="h",
             yanchor="top",
-            y=-0.22,
-            xanchor="center",
-            x=0.5,
+            y=-0.12,
+            xanchor="left",
+            x=0.0,
             itemsizing="constant",
-            font=dict(size=8),
-            groupclick="togglegroup",
-            traceorder="grouped",
+            font=dict(size=12),
+            groupclick="toggleitem",
+            traceorder="normal",
         ),
-        margin=dict(l=64, r=44, t=74, b=300),
+        legend2=dict(
+            title=dict(text="Zones", font=dict(size=13)),
+            orientation="h",
+            yanchor="top",
+            y=-0.28,
+            xanchor="left",
+            x=0.0,
+            itemsizing="constant",
+            font=dict(size=12),
+            groupclick="togglegroup",
+            traceorder="normal",
+        ),
+        margin=dict(l=64, r=44, t=74, b=340),
     )
     if chart_type == "T-d":
         if t_range is not None:
