@@ -1,18 +1,31 @@
-/* COMFORT-0.1.1 responsive hotfix
-   Keep the scientific/dashboard design intact while preventing intrinsic grid
-   widths from exceeding laptop and zoomed browser viewports. */
+/* COMFORT-0.1.2 responsive fit
+   Fluid laptop geometry + cache-busted deployment. This layer is intentionally
+   presentation-only: no scientific calculation code is touched. */
+
+html,
+body,
+#app {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
 
 html,
 body {
+  overflow-x: hidden;
+}
+
+.app-header {
+  width: 100%;
   max-width: 100%;
-  overflow-x: clip;
 }
 
 .dashboard-grid,
 .lower-grid,
 .diagnosis,
 .app-footer {
-  max-width: calc(100% - 32px);
+  width: min(calc(100% - 32px), var(--app-max-width));
+  max-width: min(calc(100% - 32px), var(--app-max-width));
 }
 
 .dashboard-grid > *,
@@ -28,37 +41,142 @@ body {
 .chart-svg,
 .state-strip,
 .state-dot,
-.control-row > * {
+.control-row,
+.control-row > *,
+.header-actions,
+.brand {
   min-width: 0;
 }
 
+img,
+svg,
+canvas,
 .chart-svg,
 .psychrometric-svg,
 .heat-table {
   max-width: 100%;
 }
 
-@media (max-width: 1540px) {
+/* Fluid compact-desktop mode. Instead of waiting until the original 1540 px
+   breakpoint and then keeping large fixed tracks, all three principal columns
+   are allowed to contract proportionally. This is the laptop layout. */
+@media (max-width: 1750px) and (min-width: 1201px) {
   .dashboard-grid {
-    grid-template-columns: minmax(320px, 390px) minmax(0, 1fr);
+    grid-template-columns:
+      minmax(300px, 0.82fr)
+      minmax(0, 1.35fr)
+      minmax(350px, 1fr);
+    gap: 12px;
+  }
+
+  .lower-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
   }
 
   .results-column {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-column: auto;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 96px minmax(0, 1fr) minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .kpi-grid {
+    grid-column: auto;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .kpi {
+    min-height: 96px;
+    padding-inline: 8px;
+  }
+
+  .kpi strong {
+    font-size: clamp(24px, 2vw, 31px);
+  }
+
+  .kpi span {
+    font-size: clamp(12px, 0.9vw, 14.5px);
+  }
+
+  .control-row {
+    grid-template-columns: minmax(0, 1fr) minmax(104px, 126px) 48px;
+    gap: 7px;
+    padding-inline: 9px;
+  }
+
+  .checkbox-row {
+    grid-template-columns: minmax(0, 1fr) minmax(145px, 178px) 72px;
+  }
+
+  .control-row span {
+    font-size: clamp(14.5px, 1vw, 17.4px);
+  }
+
+  .control-row input,
+  .control-row select {
+    font-size: clamp(15px, 1.05vw, 18px);
+  }
+
+  .heat-label {
+    min-width: 0;
+    max-width: 42%;
+    padding: 10px 12px 10px 14px;
+    font-size: clamp(14px, 0.95vw, 17.4px);
+  }
+
+  .heat-label b {
+    font-size: clamp(15px, 1vw, 18.8px);
+  }
+
+  .heat-label span {
+    font-size: clamp(12px, 0.86vw, 15.4px);
+  }
+
+  .heat-evap,
+  .heat-resp,
+  .heat-met,
+  .heat-cond {
+    min-width: 0;
+  }
+
+  .avatar-image {
+    max-width: 96%;
   }
 }
 
-@media (max-width: 1280px) {
-  .dashboard-grid {
-    grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+/* Short laptop displays: fit the primary dashboard more naturally into the
+   available vertical viewport while retaining ordinary vertical scrolling. */
+@media (max-height: 860px) and (min-width: 1201px) {
+  :root {
+    --top-panel-height: 690px;
+  }
+
+  #inputControls {
+    padding-block: 9px;
+    gap: 7px;
+  }
+
+  .control-row {
+    min-height: 50px;
+    padding-block: 6px;
+  }
+
+  .control-row input,
+  .control-row select {
+    height: 36px;
+  }
+
+  .preset-note {
+    margin-bottom: 10px;
+    padding-block: 9px;
+    font-size: 13.5px;
   }
 }
 
-/* Laptop / Windows display-scaling breakpoint.
-   A 1366–1536 px panel at 125–150% scaling commonly exposes only ~900–1230
-   CSS pixels. Collapse the two-column upper dashboard before its intrinsic
-   content can force horizontal overflow. */
-@media (max-width: 1180px) {
+/* At genuinely narrow widths reflow instead of cropping. */
+@media (max-width: 1200px) {
   .app-header {
     height: auto;
     min-height: 78px;
@@ -70,7 +188,8 @@ body {
     flex-wrap: wrap;
   }
 
-  .dashboard-grid {
+  .dashboard-grid,
+  .lower-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -81,6 +200,16 @@ body {
 
   .results-column {
     grid-column: 1;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto minmax(260px, auto);
+  }
+
+  .kpi-grid {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
@@ -99,6 +228,11 @@ body {
     max-width: calc(100% - 24px);
   }
 
+  .kpi-grid {
+    grid-column: 1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .header-actions {
     padding-left: 0;
   }
@@ -107,6 +241,27 @@ body {
   .chart-head {
     gap: 10px;
     flex-wrap: wrap;
+  }
+
+  .avatar-image {
+    height: auto;
+    width: auto;
+    max-width: 82%;
+    max-height: 580px;
+  }
+
+  .heat-label {
+    position: relative;
+    left: auto;
+    right: auto;
+    top: auto;
+    bottom: auto;
+    transform: none;
+    margin: 6px;
+    display: inline-grid;
+    min-width: 0;
+    max-width: calc(50% - 16px);
+    font-size: 14px;
   }
 }
 
@@ -163,6 +318,10 @@ body {
 
   .state-dot em {
     font-size: 10.5px;
+  }
+
+  .heat-label {
+    max-width: calc(100% - 12px);
   }
 
   .heat-table {
