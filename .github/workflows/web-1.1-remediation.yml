@@ -10,7 +10,6 @@ permissions:
 
 jobs:
   remediate:
-    if: ${{ !contains(github.event.head_commit.message, '[web-1.1-generated]') }}
     runs-on: ubuntu-latest
 
     steps:
