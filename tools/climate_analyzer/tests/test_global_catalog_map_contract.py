@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import hashlib
 import json
 from pathlib import Path
@@ -29,15 +30,26 @@ class GlobalCatalogMapContractTests(unittest.TestCase):
     def test_station_catalog_cache_is_bound_to_manifest_identity(self) -> None:
         app = APP_PATH.read_text(encoding="utf-8")
         self.assertIn(
-            "def cached_station_catalog(catalog_version: str, catalog_sha256: str)",
+            "def _cached_station_catalog_by_identity(catalog_version: str, catalog_sha256: str)",
             app,
         )
+        self.assertIn("def cached_station_catalog() -> pd.DataFrame:", app)
         self.assertIn("manifest = load_station_catalog_manifest()", app)
         self.assertIn(
-            "cached_station_catalog(manifest.catalog_version, manifest.csv_sha256)",
+            "return _cached_station_catalog_by_identity(manifest.catalog_version, manifest.csv_sha256)",
             app,
         )
-        self.assertNotIn("def cached_station_catalog()", app)
+
+        tree = ast.parse(app)
+        public_calls = [
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "cached_station_catalog"
+        ]
+        self.assertGreaterEqual(len(public_calls), 2)
+        self.assertTrue(all(not node.args and not node.keywords for node in public_calls))
 
     def test_global_map_default_capacity_covers_snapshot(self) -> None:
         app = APP_PATH.read_text(encoding="utf-8")

@@ -371,14 +371,8 @@ def clear_active_climate_file() -> None:
 
 
 @st.cache_data(show_spinner=False)
-def cached_station_catalog(catalog_version: str, catalog_sha256: str) -> pd.DataFrame:
-    """Load the reviewed catalog using immutable manifest identity as the cache key.
-
-    Streamlit may preserve ``st.cache_data`` entries across a source redeploy. A
-    no-argument cache therefore allowed the previous 20-record bootstrap DataFrame
-    to survive after the global catalog files had changed. Binding the cache entry
-    to both the catalog version and byte-level SHA prevents stale catalog reuse.
-    """
+def _cached_station_catalog_by_identity(catalog_version: str, catalog_sha256: str) -> pd.DataFrame:
+    """Load one reviewed catalog snapshot under an immutable cache identity."""
     catalog = load_production_station_catalog()
     if catalog.empty:
         return catalog
@@ -392,6 +386,19 @@ def cached_station_catalog(catalog_version: str, catalog_sha256: str) -> pd.Data
             f"loaded {actual_version}/{actual_sha256}."
         )
     return catalog
+
+
+def cached_station_catalog() -> pd.DataFrame:
+    """Return the current reviewed catalog through a call-site-safe public API.
+
+    The public helper is intentionally uncached and has no cache-key arguments.
+    It reads the current manifest on every rerun and delegates to the internal
+    cached function keyed by catalog version and byte-level SHA. This preserves
+    stale-cache protection across redeploys without leaking cache mechanics into
+    Find climate, Compare climates, or future UI call-sites.
+    """
+    manifest = load_station_catalog_manifest()
+    return _cached_station_catalog_by_identity(manifest.catalog_version, manifest.csv_sha256)
 
 
 @st.cache_data(show_spinner=False)
@@ -822,8 +829,7 @@ def render_climate_file_source() -> None:
         "Search or zoom to a station, choose one of its available climate datasets, then load the EPW for analysis."
     )
     try:
-        manifest = load_station_catalog_manifest()
-        catalog = cached_station_catalog(manifest.catalog_version, manifest.csv_sha256)
+        catalog = cached_station_catalog()
     except Exception as exc:
         st.error(f"The versioned station catalog failed integrity/provenance validation: {exc}")
         return
