@@ -12,7 +12,6 @@ PROJECT_NAME = "Building Energy Tools"
 TOOL_NAME = "Climate Analyzer"
 TOOL_VERSION = "0.1.0-beta.1"
 RELEASE_CHANNEL = "public-beta-candidate"
-RUNTIME_BUILD_ID = "vis-0.1.1-semantic-colors-live"
 AUTHOR_NAME = "Ivan Dmitriev"
 ACADEMIC_AFFILIATION = "Institute of Buildings and Energy, Graz University of Technology"
 
