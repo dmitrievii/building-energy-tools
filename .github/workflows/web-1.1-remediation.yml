@@ -1,13 +1,57 @@
-name: WEB-1.1 Remediation Probe
+name: WEB-1.1 Remediation
 
 on:
   push:
     branches:
       - web-1.1-global-catalog-map-viewport-fix
 
+permissions:
+  contents: write
+
 jobs:
-  probe:
+  remediate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: echo "WEB-1.1 probe PASS"
+        with:
+          ref: web-1.1-global-catalog-map-viewport-fix
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/climate_analyzer/requirements.txt
+
+      - name: Install dependencies
+        working-directory: tools/climate_analyzer
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install pytest
+
+      - name: Build strict global Climate.OneBuilding snapshot
+        working-directory: tools/climate_analyzer
+        run: python scripts/update_station_catalog.py --regions all
+
+      - name: Apply map viewport remediation
+        run: python .github/remediation/web_1_1_patch.py
+
+      - name: Validate compile, catalog and regressions
+        working-directory: tools/climate_analyzer
+        run: |
+          python -m compileall -q app.py epw_climate_analyzer scripts tests
+          python -m pytest -q
+
+      - name: Commit validated result
+        run: |
+          git rm .github/workflows/web-1.1-remediation.yml
+          git rm .github/remediation/web_1_1_patch.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tools/climate_analyzer/app.py
+          git add tools/climate_analyzer/epw_climate_analyzer/data/station_catalog.csv
+          git add tools/climate_analyzer/epw_climate_analyzer/data/station_catalog.meta.json
+          git add tools/climate_analyzer/tests/test_map_viewport_and_global_catalog_contract.py
+          git commit -m "WEB-1.1: fix map viewport and promote global climate catalog"
+          git push origin HEAD:web-1.1-global-catalog-map-viewport-fix
