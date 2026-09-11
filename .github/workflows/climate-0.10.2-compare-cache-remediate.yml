@@ -1,0 +1,196 @@
+name: CLIMATE-0.10.2 Compare Catalog Cache Remediation
+
+on:
+  push:
+    branches:
+      - climate-0.10.2-compare-catalog-cache
+
+permissions:
+  contents: write
+
+jobs:
+  remediate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: climate-0.10.2-compare-catalog-cache
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/climate_analyzer/requirements.txt
+
+      - name: Install dependencies
+        working-directory: tools/climate_analyzer
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Apply compare-catalog cache API remediation
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          app_path = Path('tools/climate_analyzer/app.py')
+          app = app_path.read_text(encoding='utf-8')
+
+          old_cache = '''@st.cache_data(show_spinner=False)
+          def cached_station_catalog(catalog_version: str, catalog_sha256: str) -> pd.DataFrame:
+              """Load the reviewed catalog using immutable manifest identity as the cache key.
+
+              Streamlit may preserve ``st.cache_data`` entries across a source redeploy. A
+              no-argument cache therefore allowed the previous 20-record bootstrap DataFrame
+              to survive after the global catalog files had changed. Binding the cache entry
+              to both the catalog version and byte-level SHA prevents stale catalog reuse.
+              """
+              catalog = load_production_station_catalog()
+              if catalog.empty:
+                  return catalog
+
+              actual_version = str(catalog["catalog_version"].iloc[0])
+              actual_sha256 = str(catalog["catalog_sha256"].iloc[0])
+              if actual_version != catalog_version or actual_sha256 != catalog_sha256:
+                  raise RuntimeError(
+                      "Station catalog cache identity mismatch: "
+                      f"expected {catalog_version}/{catalog_sha256}, "
+                      f"loaded {actual_version}/{actual_sha256}."
+                  )
+              return catalog
+          '''
+          old_cache = '\n'.join(line[10:] if line.startswith('          ') else line for line in old_cache.splitlines())
+
+          new_cache = '''@st.cache_data(show_spinner=False)
+          def _cached_station_catalog_by_identity(catalog_version: str, catalog_sha256: str) -> pd.DataFrame:
+              """Load one reviewed catalog snapshot under an immutable cache identity."""
+              catalog = load_production_station_catalog()
+              if catalog.empty:
+                  return catalog
+
+              actual_version = str(catalog["catalog_version"].iloc[0])
+              actual_sha256 = str(catalog["catalog_sha256"].iloc[0])
+              if actual_version != catalog_version or actual_sha256 != catalog_sha256:
+                  raise RuntimeError(
+                      "Station catalog cache identity mismatch: "
+                      f"expected {catalog_version}/{catalog_sha256}, "
+                      f"loaded {actual_version}/{actual_sha256}."
+                  )
+              return catalog
+
+
+          def cached_station_catalog() -> pd.DataFrame:
+              """Return the current reviewed catalog while keeping Streamlit cache identity safe.
+
+              Callers intentionally use a zero-argument API. The wrapper reads the current
+              manifest on every rerun, then delegates to an internal cached function keyed by
+              catalog version and byte-level SHA. This prevents stale data across redeploys
+              without requiring every UI path to know the cache-key contract.
+              """
+              manifest = load_station_catalog_manifest()
+              return _cached_station_catalog_by_identity(manifest.catalog_version, manifest.csv_sha256)
+          '''
+          new_cache = '\n'.join(line[10:] if line.startswith('          ') else line for line in new_cache.splitlines())
+
+          if old_cache not in app:
+              raise SystemExit('Expected CLIMATE-0.10.1 cache block not found; refusing blind patch')
+          app = app.replace(old_cache, new_cache, 1)
+
+          old_find = '''    try:
+                  manifest = load_station_catalog_manifest()
+                  catalog = cached_station_catalog(manifest.catalog_version, manifest.csv_sha256)
+              except Exception as exc:
+          '''
+          old_find = '\n'.join(line[10:] if line.startswith('          ') else line for line in old_find.splitlines())
+          new_find = '''    try:
+                  catalog = cached_station_catalog()
+              except Exception as exc:
+          '''
+          new_find = '\n'.join(line[10:] if line.startswith('          ') else line for line in new_find.splitlines())
+          if old_find not in app:
+              raise SystemExit('Expected Find climate cache call not found; refusing blind patch')
+          app = app.replace(old_find, new_find, 1)
+          app_path.write_text(app, encoding='utf-8')
+
+          test_path = Path('tools/climate_analyzer/tests/test_global_catalog_map_contract.py')
+          tests = test_path.read_text(encoding='utf-8')
+          tests = tests.replace('import hashlib\n', 'import ast\nimport hashlib\n', 1)
+
+          old_test = '''    def test_station_catalog_cache_is_bound_to_manifest_identity(self) -> None:
+                  app = APP_PATH.read_text(encoding="utf-8")
+                  self.assertIn(
+                      "def cached_station_catalog(catalog_version: str, catalog_sha256: str)",
+                      app,
+                  )
+                  self.assertIn("manifest = load_station_catalog_manifest()", app)
+                  self.assertIn(
+                      "cached_station_catalog(manifest.catalog_version, manifest.csv_sha256)",
+                      app,
+                  )
+                  self.assertNotIn("def cached_station_catalog()", app)
+          '''
+          old_test = '\n'.join(line[10:] if line.startswith('          ') else line for line in old_test.splitlines())
+
+          new_test = '''    def test_station_catalog_cache_is_bound_to_manifest_identity(self) -> None:
+                  app = APP_PATH.read_text(encoding="utf-8")
+                  self.assertIn(
+                      "def _cached_station_catalog_by_identity(catalog_version: str, catalog_sha256: str)",
+                      app,
+                  )
+                  self.assertIn("def cached_station_catalog() -> pd.DataFrame:", app)
+                  self.assertIn("manifest = load_station_catalog_manifest()", app)
+                  self.assertIn(
+                      "return _cached_station_catalog_by_identity(manifest.catalog_version, manifest.csv_sha256)",
+                      app,
+                  )
+
+                  tree = ast.parse(app)
+                  public_calls = [
+                      node
+                      for node in ast.walk(tree)
+                      if isinstance(node, ast.Call)
+                      and isinstance(node.func, ast.Name)
+                      and node.func.id == "cached_station_catalog"
+                  ]
+                  self.assertGreaterEqual(len(public_calls), 2)
+                  self.assertTrue(all(not node.args and not node.keywords for node in public_calls))
+          '''
+          new_test = '\n'.join(line[10:] if line.startswith('          ') else line for line in new_test.splitlines())
+
+          if old_test not in tests:
+              raise SystemExit('Expected cache regression test not found; refusing blind patch')
+          tests = tests.replace(old_test, new_test, 1)
+          test_path.write_text(tests, encoding='utf-8')
+          print('CLIMATE-0.10.2 compare-catalog cache remediation applied')
+          PY
+
+      - name: Compile and run regression suite
+        working-directory: tools/climate_analyzer
+        run: |
+          python -m compileall -q app.py epw_climate_analyzer tests scripts
+          python -m unittest discover -s tests -p 'test_*.py' -v
+
+      - name: Focused compare cache contract
+        run: |
+          python - <<'PY'
+          import ast
+          from pathlib import Path
+          app = Path('tools/climate_analyzer/app.py').read_text(encoding='utf-8')
+          tree = ast.parse(app)
+          calls = [n for n in ast.walk(tree) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'cached_station_catalog']
+          assert len(calls) >= 2
+          assert all(not n.args and not n.keywords for n in calls)
+          assert 'def _cached_station_catalog_by_identity(catalog_version: str, catalog_sha256: str)' in app
+          assert 'return _cached_station_catalog_by_identity(manifest.catalog_version, manifest.csv_sha256)' in app
+          print(f'CLIMATE-0.10.2 focused contract PASS: {len(calls)} zero-argument public call-sites')
+          PY
+
+      - name: Commit validated remediation
+        run: |
+          git rm .github/workflows/climate-0.10.2-compare-cache-remediate.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tools/climate_analyzer/app.py tools/climate_analyzer/tests/test_global_catalog_map_contract.py
+          git commit -m "CLIMATE-0.10.2: make catalog cache API call-site safe"
+          git push origin HEAD:climate-0.10.2-compare-catalog-cache
