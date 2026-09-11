@@ -1,0 +1,79 @@
+name: CLIMATE-0.10.1 Runtime Cache Live Gate
+
+on:
+  push:
+    branches:
+      - climate-0.10.1-runtime-cache-live-gate
+
+permissions:
+  contents: write
+
+jobs:
+  remediate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: tools/climate_analyzer
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: climate-0.10.1-runtime-cache-live-gate
+          fetch-depth: 0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/climate_analyzer/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Apply cache/live-gate remediation
+        working-directory: .
+        run: python .github/remediation/climate_0_10_1_runtime_cache_live_gate.py
+
+      - name: Compile and run regression suite
+        run: |
+          python -m compileall -q app.py epw_climate_analyzer tests scripts
+          python -m unittest discover -s tests -p 'test_*.py' -v
+
+      - name: Validate live-audit JavaScript syntax
+        working-directory: .
+        run: node --check deployment/live_browser_audit.mjs
+
+      - name: Verify cache contract text
+        working-directory: .
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          app = Path('tools/climate_analyzer/app.py').read_text(encoding='utf-8')
+          assert 'def cached_station_catalog(catalog_version: str, catalog_sha256: str)' in app
+          assert 'cached_station_catalog(manifest.catalog_version, manifest.csv_sha256)' in app
+          assert 'def cached_station_catalog()' not in app
+          live = Path('deployment/live_browser_audit.mjs').read_text(encoding='utf-8')
+          assert 'building-energy-tools-live-audit-v3' in live
+          assert 'matches_manifest' in live
+          assert 'zoom_sequence' in live
+          print('CLIMATE-0.10.1 focused contract PASS')
+          PY
+
+      - name: Commit validated remediation
+        working-directory: .
+        run: |
+          git rm .github/workflows/climate-0.10.1-remediate.yml
+          git rm .github/remediation/climate_0_10_1_runtime_cache_live_gate.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tools/climate_analyzer/app.py
+          git add tools/climate_analyzer/tests/test_global_catalog_map_contract.py
+          git add deployment/live_browser_audit.mjs
+          git commit -m "CLIMATE-0.10.1: bind catalog cache and harden live regression"
+          git push origin HEAD:climate-0.10.1-runtime-cache-live-gate
