@@ -18,10 +18,10 @@ test('responsive and visual-fix layers load after base CSS with current cache id
   assert.ok(basePos >= 0, 'base stylesheet must be present');
   assert.ok(responsivePos > basePos, 'responsive stylesheet must load after base stylesheet');
   assert.ok(visualFixesPos > responsivePos, 'visual fixes must load after responsive CSS');
-  assert.match(index, /main\.css\?v=comfort-0\.1\.4/);
-  assert.match(index, /responsive\.css\?v=comfort-0\.1\.4/);
-  assert.match(index, /visual-fixes\.css\?v=comfort-0\.1\.4/);
-  assert.match(index, /main\.js\?v=comfort-0\.1\.4/);
+  assert.match(index, /main\.css\?v=comfort-0\.1\.5/);
+  assert.match(index, /responsive\.css\?v=comfort-0\.1\.5/);
+  assert.match(index, /visual-fixes\.css\?v=comfort-0\.1\.5/);
+  assert.match(index, /main\.js\?v=comfort-0\.1\.5/);
 });
 
 test('laptop layout uses fluid three-column tracks instead of fixed desktop widths', () => {
