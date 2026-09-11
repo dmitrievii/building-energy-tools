@@ -1,0 +1,553 @@
+name: VIS-0.1 Semantic Chart Colours Remediation
+
+on:
+  push:
+    branches:
+      - climate-vis-0.1-semantic-chart-colors
+
+permissions:
+  contents: write
+
+jobs:
+  remediate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/climate_analyzer/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r tools/climate_analyzer/requirements.txt
+
+      - name: Apply semantic colour architecture
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_function(text: str, name: str, next_name: str | None, replacement: str) -> str:
+              start = text.index(f"def {name}(")
+              end = text.index(f"def {next_name}(", start) if next_name else len(text)
+              return text[:start] + replacement.rstrip() + "\n\n" + text[end:]
+
+          charts_path = Path("tools/climate_analyzer/epw_climate_analyzer/charts.py")
+          text = charts_path.read_text(encoding="utf-8")
+          anchor = "from .psychrometrics import DEFAULT_PRESSURE_PA, psychrometric_rh_curves\n"
+          theme_import = '''from .chart_theme import (
+              BINARY_SUITABILITY_COLORSCALE,
+              CLIMATE_COLORS,
+              DEFAULT_METRIC_COLOR,
+              WIND_SPEED_COLOR_MAP,
+              WIND_SPEED_LABELS,
+              metric_band_colors,
+              metric_color,
+              metric_colorscale,
+              rgba,
+              semantic_color_from_text,
+          )
+'''
+          if theme_import not in text:
+              if anchor not in text:
+                  raise SystemExit("charts.py import anchor not found")
+              text = text.replace(anchor, anchor + theme_import, 1)
+
+          text = text.replace("return BINARY_BLUE_COLORSCALE", "return BINARY_SUITABILITY_COLORSCALE")
+
+          text = replace_function(text, "profile_ribbon_chart", "percentile_band_chart", r'''
+          def profile_ribbon_chart(
+              df: pd.DataFrame,
+              column: str,
+              aggregation: str,
+              title: str,
+              unit: str,
+              extensive: bool = False,
+          ) -> go.Figure:
+              """Create an hourly line or aggregated min/mean/max ribbon chart."""
+              if extensive:
+                  summary = aggregate_sum(df, column, aggregation)
+                  central = "sum" if aggregation != "Hourly" else "mean"
+              else:
+                  summary = aggregate_summary(df, column, aggregation)
+                  central = "mean"
+
+              low_color, central_color, high_color, band_fill = metric_band_colors(column)
+              fig = go.Figure()
+              if aggregation == "Hourly":
+                  x = summary.index
+                  fig.add_trace(
+                      go.Scatter(
+                          x=x,
+                          y=summary[central],
+                          mode="lines",
+                          name=f"Hourly {unit}",
+                          line=dict(color=central_color, width=1.6),
+                          hovertemplate="%{x}<br>Value: %{y:.2f} " + unit + "<extra></extra>",
+                      )
+                  )
+                  fig = apply_common_layout(fig, title, "Time", unit)
+                  return _apply_axis_constraints(fig, column=column, x_values=x, y_values=summary[central])
+
+              x = _period_x(summary, aggregation)
+              fig.add_trace(
+                  go.Scatter(
+                      x=x,
+                      y=summary["max"],
+                      mode="lines+markers",
+                      name="Maximum",
+                      line=dict(color=high_color, width=1.4),
+                      hovertemplate="Maximum: %{y:.2f} " + unit + "<extra></extra>",
+                  )
+              )
+              fig.add_trace(
+                  go.Scatter(
+                      x=x,
+                      y=summary["min"],
+                      mode="lines+markers",
+                      name="Minimum",
+                      line=dict(color=low_color, width=1.4),
+                      fill="tonexty",
+                      fillcolor=band_fill,
+                      hovertemplate="Minimum: %{y:.2f} " + unit + "<extra></extra>",
+                  )
+              )
+              fig.add_trace(
+                  go.Scatter(
+                      x=x,
+                      y=summary[central],
+                      mode="lines+markers",
+                      name="Mean" if central == "mean" else "Sum",
+                      line=dict(color=central_color, width=2.2),
+                      hovertemplate=("Mean: %{y:.2f} " + unit + "<extra></extra>") if central == "mean" else ("Sum: %{y:.2f} " + unit + "<extra></extra>"),
+                  )
+              )
+              fig = apply_common_layout(fig, title, "Period", unit)
+              if aggregation == "Monthly":
+                  fig.update_xaxes(categoryorder="array", categoryarray=MONTH_LABELS)
+              return _apply_axis_constraints(fig, column=column, y_values=pd.concat([summary["min"], summary[central], summary["max"]]))
+          ''')
+
+          text = replace_function(text, "percentile_band_chart", "heatmap_chart", r'''
+          def percentile_band_chart(df: pd.DataFrame, column: str, aggregation: str, title: str, unit: str) -> go.Figure:
+              """Create a percentile-band chart using P05, median and P95."""
+              summary = aggregate_summary(df, column, aggregation)
+              x = _period_x(summary, aggregation)
+              low_color, central_color, high_color, band_fill = metric_band_colors(column)
+              fig = go.Figure()
+              fig.add_trace(go.Scatter(x=x, y=summary["p95"], mode="lines+markers", name="P95", line=dict(color=high_color, width=1.4), hovertemplate="P95: %{y:.2f} " + unit + "<extra></extra>"))
+              fig.add_trace(
+                  go.Scatter(
+                      x=x,
+                      y=summary["p05"],
+                      mode="lines+markers",
+                      name="P05",
+                      line=dict(color=low_color, width=1.4),
+                      fill="tonexty",
+                      fillcolor=band_fill,
+                      hovertemplate="P05: %{y:.2f} " + unit + "<extra></extra>",
+                  )
+              )
+              fig.add_trace(go.Scatter(x=x, y=summary["median"], mode="lines+markers", name="Median", line=dict(color=central_color, width=2.2), hovertemplate="Median: %{y:.2f} " + unit + "<extra></extra>"))
+              fig = apply_common_layout(fig, title, "Period", unit)
+              if aggregation == "Monthly":
+                  fig.update_xaxes(categoryorder="array", categoryarray=MONTH_LABELS)
+              return _apply_axis_constraints(fig, column=column, y_values=pd.concat([summary["p05"], summary["median"], summary["p95"]]))
+          ''')
+
+          text = replace_function(text, "duration_chart", "histogram_chart", r'''
+          def duration_chart(df: pd.DataFrame, column: str, title: str, unit: str, ascending: bool = False) -> go.Figure:
+              """Create a sorted duration curve."""
+              values = duration_curve(df, column, ascending=ascending)
+              fig = px.line(values, x="rank_hour", y=column, title=title, labels={"rank_hour": "Sorted hour", column: unit})
+              fig.update_traces(line_color=metric_color(column), hovertemplate="Sorted hour: %{x}<br>Value: %{y:.2f} " + unit + "<extra></extra>")
+              fig.update_layout(template=PLOT_TEMPLATE, margin=dict(l=40, r=20, t=70, b=45))
+              return _apply_axis_constraints(fig, column=column, x_values=values["rank_hour"], y_values=values[column])
+          ''')
+
+          text = replace_function(text, "histogram_chart", "monthly_box_chart", r'''
+          def histogram_chart(df: pd.DataFrame, column: str, title: str, unit: str, bins: int = 40) -> go.Figure:
+              """Create an interactive histogram."""
+              data = df[[column]].dropna()
+              fig = px.histogram(data, x=column, nbins=bins, title=title, labels={column: unit}, color_discrete_sequence=[metric_color(column)])
+              fig.update_layout(template=PLOT_TEMPLATE, yaxis_title="Hours", margin=dict(l=40, r=20, t=70, b=45))
+              lo, hi = _axis_limits_for_column(column, data[column], pad_fraction=0.03)
+              if lo is not None or hi is not None:
+                  fig.update_xaxes(range=[lo, hi], autorangeoptions=dict(minallowed=lo, maxallowed=hi))
+              return fig
+          ''')
+
+          text = replace_function(text, "monthly_box_chart", "threshold_bar_chart", r'''
+          def monthly_box_chart(df: pd.DataFrame, column: str, title: str, unit: str, violin: bool = False) -> go.Figure:
+              """Create monthly boxplot or violin plot with a physical-variable colour."""
+              data = monthly_box_data(df, column)
+              data["month_name"] = pd.Categorical(data["month_name"], MONTH_LABELS, ordered=True)
+              base = metric_color(column)
+              if violin:
+                  fig = px.violin(data, x="month_name", y=column, box=True, points=False, title=title)
+                  fig.update_traces(marker_color=base, line_color=base, fillcolor=rgba(base, 0.24))
+              else:
+                  fig = px.box(data, x="month_name", y=column, title=title)
+                  fig.update_traces(marker_color=base, line_color=base)
+              fig = apply_common_layout(fig, title, "Month", unit)
+              fig.update_xaxes(categoryorder="array", categoryarray=MONTH_LABELS)
+              return _apply_axis_constraints(fig, column=column, y_values=data[column])
+          ''')
+
+          old_bar = 'fig = px.bar(data, x="Period", y=column, title=title)'
+          new_bar = 'fig = px.bar(data, x="Period", y=column, title=title, color_discrete_sequence=[semantic_color_from_text(title)])'
+          if old_bar not in text:
+              raise SystemExit("threshold_bar_chart bar constructor not found")
+          text = text.replace(old_bar, new_bar, 1)
+
+          text = replace_function(text, "_metric_colorscale", "_unique_existing_columns", r'''
+          def _metric_colorscale(column: str | None) -> object:
+              """Return the central semantic colorscale for psychrometric metric mapping."""
+              return metric_colorscale(column)
+          ''')
+
+          text = replace_function(text, "wind_rose_chart", "_representative_sun_day", r'''
+          def wind_rose_chart(df: pd.DataFrame, title: str = "Wind rose") -> go.Figure:
+              """Create a wind rose with an ordered sequential speed palette."""
+              data = df[["wind_direction_deg", "wind_speed_m_s"]].dropna().copy()
+              if data.empty:
+                  return go.Figure().update_layout(title="No wind data available")
+              direction_bin = (np.round(data["wind_direction_deg"] / 22.5) * 22.5) % 360
+              data["direction_sector_deg"] = direction_bin
+              data["speed_bin"] = pd.cut(
+                  data["wind_speed_m_s"],
+                  bins=[0, 1, 2, 4, 6, 8, 12, np.inf],
+                  labels=WIND_SPEED_LABELS,
+                  include_lowest=True,
+              )
+              rose = data.groupby(["direction_sector_deg", "speed_bin"], observed=False).size().reset_index(name="hours")
+              fig = px.bar_polar(
+                  rose,
+                  r="hours",
+                  theta="direction_sector_deg",
+                  color="speed_bin",
+                  title=title,
+                  labels={"hours": "Hours", "direction_sector_deg": "Wind direction [deg]", "speed_bin": "Speed [m/s]"},
+                  category_orders={"speed_bin": WIND_SPEED_LABELS},
+                  color_discrete_map=WIND_SPEED_COLOR_MAP,
+              )
+              fig.update_layout(template=PLOT_TEMPLATE, margin=dict(l=40, r=20, t=70, b=45))
+              return fig
+          ''')
+
+          text = replace_function(text, "orientation_bar_chart", "matrix_heatmap", r'''
+          def orientation_bar_chart(data: pd.DataFrame, title: str) -> go.Figure:
+              """Create a solar-coloured bar chart for annual radiation by façade orientation."""
+              fig = px.bar(
+                  data,
+                  x="orientation",
+                  y="annual_kwh_m2",
+                  title=title,
+                  labels={"annual_kwh_m2": "Annual irradiation [kWh/m²]"},
+                  color_discrete_sequence=[metric_color("global_horizontal_radiation_wh_m2")],
+              )
+              fig.update_layout(template=PLOT_TEMPLATE, margin=dict(l=40, r=20, t=70, b=45))
+              return fig
+          ''')
+
+          text = replace_function(text, "stacked_monthly_bar", "multi_line_monthly", r'''
+          def stacked_monthly_bar(df: pd.DataFrame, title: str, y_label: str = "Hours") -> go.Figure:
+              """Create a semantic monthly bar chart; solar components are grouped, not stacked."""
+              series_names = [str(column) for column in df.columns]
+              data = df.reset_index().melt(id_vars=df.index.name or "index", var_name="series", value_name="value")
+              x_column = df.index.name or "index"
+              color_map: dict[str, str] = {}
+              for index, name in enumerate(series_names):
+                  inferred = semantic_color_from_text(name)
+                  color_map[name] = inferred if inferred != DEFAULT_METRIC_COLOR else CLIMATE_COLORS[index % len(CLIMATE_COLORS)]
+              title_lower = title.lower()
+              solar_tokens = ("global horizontal", "direct normal", "diffuse horizontal", "ghi", "dni", "dhi")
+              solar_series = [name for name in series_names if any(token in name.lower() for token in solar_tokens)]
+              is_solar_components = len(solar_series) >= 2 and any(token in title_lower for token in ("solar", "radiation", "irradiation"))
+              barmode = "group" if is_solar_components else "stack"
+              fig = px.bar(
+                  data,
+                  x=x_column,
+                  y="value",
+                  color="series",
+                  title=title,
+                  barmode=barmode,
+                  category_orders={"series": series_names},
+                  color_discrete_map=color_map,
+              )
+              fig.update_layout(template=PLOT_TEMPLATE, xaxis_title="Month", yaxis_title=y_label, barmode=barmode, margin=dict(l=40, r=20, t=70, b=45))
+              fig.update_xaxes(tickmode="array", tickvals=list(range(1, 13)), ticktext=MONTH_LABELS)
+              return fig
+          ''')
+
+          text = replace_function(text, "multi_line_monthly", None, r'''
+          def multi_line_monthly(df: pd.DataFrame, title: str, y_label: str) -> go.Figure:
+              """Create a multi-line monthly chart with semantic series colours."""
+              fig = go.Figure()
+              for index, column in enumerate(df.columns):
+                  name = str(column)
+                  inferred = semantic_color_from_text(name)
+                  color = inferred if inferred != DEFAULT_METRIC_COLOR else CLIMATE_COLORS[index % len(CLIMATE_COLORS)]
+                  fig.add_trace(go.Scatter(x=df.index, y=df[column], mode="lines+markers", name=name, line=dict(color=color)))
+              fig = apply_common_layout(fig, title, "Month", y_label)
+              fig.update_xaxes(tickmode="array", tickvals=list(range(1, 13)), ticktext=MONTH_LABELS)
+              return fig
+          ''')
+          charts_path.write_text(text, encoding="utf-8")
+
+          comparison_path = Path("tools/climate_analyzer/epw_climate_analyzer/comparison.py")
+          text = comparison_path.read_text(encoding="utf-8")
+          anchor = "from .solar import orientation_annual_radiation, orientation_tilt_matrix, surface_irradiance_series\n"
+          theme_import = '''from .chart_theme import (
+              BINARY_SUITABILITY_COLORSCALE,
+              CLIMATE_COLORS,
+              COOLING_COLOR,
+              DEFAULT_METRIC_COLOR,
+              HEATING_COLOR,
+              WIND_SPEED_COLOR_MAP,
+              WIND_SPEED_LABELS,
+              climate_color_map,
+              metric_color,
+              semantic_color_from_text,
+          )
+'''
+          if theme_import not in text:
+              if anchor not in text:
+                  raise SystemExit("comparison.py import anchor not found")
+              text = text.replace(anchor, anchor + theme_import, 1)
+          text = text.replace("BINARY_BLUE_COLORSCALE", "BINARY_SUITABILITY_COLORSCALE")
+
+          text = replace_function(text, "ranked_metric_chart", "monthly_profile_table", r'''
+          def ranked_metric_chart(metrics: pd.DataFrame, metric: str, title: str | None = None) -> go.Figure:
+              """Create a horizontal ranked bar chart using the metric's semantic colour."""
+              data = metrics[["Climate", metric]].dropna().sort_values(metric, ascending=True)
+              fig = px.bar(data, x=metric, y="Climate", orientation="h", title=title or f"Climate ranking: {metric}", color_discrete_sequence=[semantic_color_from_text(metric)])
+              fig.update_layout(template=PLOT_TEMPLATE, xaxis_title=metric, yaxis_title="Climate", margin=dict(l=40, r=20, t=70, b=45))
+              return fig
+          ''')
+
+          text = replace_function(text, "overlay_monthly_chart", "small_multiple_monthly_chart", r'''
+          def overlay_monthly_chart(table: pd.DataFrame, title: str, y_label: str) -> go.Figure:
+              """Create an overlaid monthly line chart with stable climate identity colours."""
+              fig = go.Figure()
+              colors = climate_color_map(table.columns)
+              for column in table.columns:
+                  fig.add_trace(go.Scatter(x=table.index, y=table[column], mode="lines+markers", name=str(column), line=dict(color=colors[str(column)])))
+              fig.update_layout(template=PLOT_TEMPLATE, title=title, xaxis_title="Month", yaxis_title=y_label, hovermode="x unified", margin=dict(l=40, r=20, t=70, b=45))
+              fig.update_xaxes(tickmode="array", tickvals=list(range(1, 13)), ticktext=MONTH_ORDER, range=[1, 12], autorangeoptions=dict(minallowed=1, maxallowed=12))
+              return fig
+          ''')
+
+          text = replace_function(text, "small_multiple_monthly_chart", "monthly_difference_chart", r'''
+          def small_multiple_monthly_chart(table: pd.DataFrame, title: str, y_label: str) -> go.Figure:
+              """Create small multiples while preserving each climate's identity colour."""
+              columns = list(table.columns)
+              colors = climate_color_map(columns)
+              fig = make_subplots(rows=len(columns), cols=1, shared_xaxes=True, subplot_titles=columns, vertical_spacing=0.03)
+              for row, column in enumerate(columns, start=1):
+                  fig.add_trace(go.Scatter(x=table.index, y=table[column], mode="lines+markers", name=column, showlegend=False, line=dict(color=colors[str(column)])), row=row, col=1)
+              fig.update_layout(template=PLOT_TEMPLATE, title=title, height=max(320, 210 * len(columns)), hovermode="x unified", margin=dict(l=40, r=20, t=70, b=45))
+              fig.update_yaxes(title_text=y_label)
+              fig.update_xaxes(title_text="Month", row=len(columns), col=1, tickmode="array", tickvals=list(range(1, 13)), ticktext=MONTH_ORDER, range=[1, 12], autorangeoptions=dict(minallowed=1, maxallowed=12))
+              return fig
+          ''')
+
+          text = replace_function(text, "duration_comparison_chart", "heatmap_small_multiples", r'''
+          def duration_comparison_chart(climates: list[ClimateDataset], column: str, title: str, y_label: str, ascending: bool = False) -> go.Figure:
+              """Create overlaid duration curves with stable climate identity colours."""
+              fig = go.Figure()
+              colors = climate_color_map([climate.display_name for climate in climates])
+              for climate in climates:
+                  values = climate.data[column].dropna().sort_values(ascending=ascending).reset_index(drop=True)
+                  x = np.arange(1, len(values) + 1)
+                  fig.add_trace(go.Scatter(x=x, y=values, mode="lines", name=climate.display_name, line=dict(color=colors[climate.display_name])))
+              fig.update_layout(template=PLOT_TEMPLATE, title=title, xaxis_title="Sorted hour", yaxis_title=y_label, hovermode="x unified", margin=dict(l=40, r=20, t=70, b=45))
+              return fig
+          ''')
+
+          text = replace_function(text, "hdd_cdd_grouped_chart", "heating_cooling_season_timeline", r'''
+          def hdd_cdd_grouped_chart(metrics: pd.DataFrame) -> go.Figure:
+              """Create grouped bars with explicit heating-red / cooling-blue semantics."""
+              data = metrics[["Climate", "HDD18 [K·h]", "CDD26 [K·h]"]].melt(id_vars="Climate", var_name="Metric", value_name="K·h")
+              fig = px.bar(
+                  data,
+                  x="Climate",
+                  y="K·h",
+                  color="Metric",
+                  barmode="group",
+                  title="Heating and cooling degree-hour comparison",
+                  color_discrete_map={"HDD18 [K·h]": HEATING_COLOR, "CDD26 [K·h]": COOLING_COLOR},
+              )
+              fig.update_layout(template=PLOT_TEMPLATE, xaxis_title="Climate", yaxis_title="K·h", margin=dict(l=40, r=20, t=70, b=45))
+              fig.update_yaxes(range=[0, max(float(data["K·h"].max()) * 1.05, 1.0)], autorangeoptions=dict(minallowed=0))
+              return fig
+          ''')
+
+          text = replace_function(text, "monthly_box_compare_chart", "psychrometric_comparison_chart", r'''
+          def monthly_box_compare_chart(climates: list[ClimateDataset], column: str, mode: str, selected_month: int, selected_climate: str, title: str, y_label: str) -> go.Figure:
+              """Create monthly boxplots with climate identity or physical-variable colour."""
+              rows = []
+              if mode == "Compare climates for selected month":
+                  for climate in climates:
+                      data = climate.data[climate.data["month_index"] == selected_month][column].dropna()
+                      rows.extend({"Climate": climate.display_name, "Value": value} for value in data)
+                  frame = pd.DataFrame(rows)
+                  colors = climate_color_map([climate.display_name for climate in climates])
+                  fig = px.box(frame, x="Climate", y="Value", color="Climate", color_discrete_map=colors, title=f"{title}: month {selected_month}")
+                  x_label = "Climate"
+              else:
+                  climate = next((c for c in climates if c.display_name == selected_climate), climates[0])
+                  frame = climate.data[[column, "month_name", "month_index"]].dropna().sort_values("month_index")
+                  fig = px.box(frame, x="month_name", y=column, title=f"{title}: {climate.display_name}", color_discrete_sequence=[metric_color(column)])
+                  x_label = "Month"
+              fig.update_layout(template=PLOT_TEMPLATE, xaxis_title=x_label, yaxis_title=y_label, margin=dict(l=40, r=20, t=70, b=45))
+              return fig
+          ''')
+
+          text = replace_function(text, "psychrometric_comparison_chart", "sun_path_comparison_chart", r'''
+          def psychrometric_comparison_chart(climates: list[ClimateDataset], chart_type: str = "T-d", mode: str = "Small multiples", pressure_pa: float = DEFAULT_PRESSURE_PA) -> go.Figure:
+              """Create psychrometric comparison as overlay or small-multiple density plots."""
+              colors = climate_color_map([climate.display_name for climate in climates])
+              if mode == "Overlay" and len(climates) <= 3:
+                  fig = go.Figure()
+                  for climate in climates:
+                      df = climate.data.sample(min(len(climate.data), 2500), random_state=7) if len(climate.data) > 2500 else climate.data
+                      if chart_type == "i-d":
+                          x = df["humidity_ratio_g_kg"]
+                          y = df["moist_air_enthalpy_kj_kg"]
+                          x_label = "Moisture content d [g/kg dry air]"
+                          y_label = "Enthalpy i [kJ/kg dry air]"
+                      else:
+                          x = df["dry_bulb_temperature_c"]
+                          y = df["humidity_ratio_g_kg"]
+                          x_label = "Dry-bulb temperature [°C]"
+                          y_label = "Moisture content d [g/kg dry air]"
+                      fig.add_trace(go.Scattergl(x=x, y=y, mode="markers", name=climate.display_name, marker=dict(size=4, opacity=0.22, color=colors[climate.display_name])))
+                  fig.update_layout(template=PLOT_TEMPLATE, title=f"Psychrometric comparison ({chart_type})", xaxis_title=x_label, yaxis_title=y_label, margin=dict(l=40, r=20, t=70, b=45))
+                  return fig
+
+              rows = len(climates)
+              fig = make_subplots(rows=rows, cols=1, subplot_titles=[c.display_name for c in climates], vertical_spacing=0.04)
+              for idx, climate in enumerate(climates, start=1):
+                  df = climate.data
+                  if chart_type == "i-d":
+                      x = df["humidity_ratio_g_kg"]
+                      y = df["moist_air_enthalpy_kj_kg"]
+                      x_label = "Moisture content d [g/kg dry air]"
+                      y_label = "Enthalpy i [kJ/kg dry air]"
+                  else:
+                      x = df["dry_bulb_temperature_c"]
+                      y = df["humidity_ratio_g_kg"]
+                      x_label = "Dry-bulb temperature [°C]"
+                      y_label = "Moisture content d [g/kg dry air]"
+                  fig.add_trace(go.Histogram2dContour(x=x, y=y, contours=dict(coloring="heatmap"), showscale=idx == 1, coloraxis="coloraxis", name=climate.display_name), row=idx, col=1)
+                  if chart_type == "T-d":
+                      for curve in psychrometric_rh_curves("T-d", pressure_pa=pressure_pa):
+                          fig.add_trace(go.Scatter(x=curve["x"], y=curve["y"], mode="lines", line=dict(width=0.5), showlegend=False, hoverinfo="skip"), row=idx, col=1)
+              fig.update_layout(template=PLOT_TEMPLATE, title=f"Psychrometric density comparison ({chart_type})", height=max(360, 280 * rows), coloraxis=dict(colorscale="Viridis", colorbar=dict(title="Density")), margin=dict(l=40, r=20, t=70, b=45))
+              fig.update_xaxes(title_text=x_label, row=rows, col=1)
+              fig.update_yaxes(title_text=y_label)
+              return fig
+          ''')
+
+          text = replace_function(text, "sun_path_comparison_chart", "solar_monthly_comparison", r'''
+          def sun_path_comparison_chart(climates: list[ClimateDataset], mode: str, selected_dates: list[str]) -> go.Figure:
+              """Create sun-path comparison while keeping stable climate identity colours."""
+              colors = climate_color_map([climate.display_name for climate in climates])
+              if mode == "Overlay" and len(climates) <= 4:
+                  fig = go.Figure()
+                  for climate in climates:
+                      data = climate.data[climate.data.index.strftime("%m-%d").isin(selected_dates) & climate.data["is_daylight"]]
+                      color = colors[climate.display_name]
+                      fig.add_trace(go.Scatter(x=data["solar_azimuth_deg"], y=data["solar_elevation_deg"], mode="lines+markers", name=climate.display_name, line=dict(color=color), marker=dict(size=4, color=color)))
+                  fig.update_layout(template=PLOT_TEMPLATE, title="Sun-path comparison for selected dates", xaxis_title="Solar azimuth [deg]", yaxis_title="Solar altitude [deg]", margin=dict(l=40, r=20, t=70, b=45))
+                  return fig
+              rows = len(climates)
+              fig = make_subplots(rows=rows, cols=1, subplot_titles=[c.display_name for c in climates], vertical_spacing=0.04)
+              for idx, climate in enumerate(climates, start=1):
+                  data = climate.data[climate.data.index.strftime("%m-%d").isin(selected_dates) & climate.data["is_daylight"]]
+                  color = colors[climate.display_name]
+                  fig.add_trace(go.Scatter(x=data["solar_azimuth_deg"], y=data["solar_elevation_deg"], mode="lines+markers", name=climate.display_name, showlegend=False, line=dict(color=color), marker=dict(size=4, color=color)), row=idx, col=1)
+              fig.update_layout(template=PLOT_TEMPLATE, title="Sun-path comparison for selected dates", height=max(360, 230 * rows), margin=dict(l=40, r=20, t=70, b=45))
+              fig.update_xaxes(title_text="Solar azimuth [deg]", row=rows, col=1)
+              fig.update_yaxes(title_text="Solar altitude [deg]")
+              return fig
+          ''')
+
+          old = 'fig = px.line(data, x="Orientation", y="Annual irradiation [kWh/m²]", color="Climate", markers=True, title=f"Annual façade irradiation comparison, tilt {tilt_deg:.0f}°")'
+          new = 'fig = px.line(data, x="Orientation", y="Annual irradiation [kWh/m²]", color="Climate", markers=True, title=f"Annual façade irradiation comparison, tilt {tilt_deg:.0f}°", color_discrete_map=climate_color_map([climate.display_name for climate in climates]))'
+          if old not in text:
+              raise SystemExit("facade comparison line constructor not found")
+          text = text.replace(old, new, 1)
+
+          old = 'fig = px.line(data, x="Tilt [deg]", y="Annual irradiation [kWh/m²]", color="Climate", markers=True, title=f"Tilt sensitivity at azimuth {azimuth_deg:.0f}°")'
+          new = 'fig = px.line(data, x="Tilt [deg]", y="Annual irradiation [kWh/m²]", color="Climate", markers=True, title=f"Tilt sensitivity at azimuth {azimuth_deg:.0f}°", color_discrete_map=climate_color_map([climate.display_name for climate in climates]))'
+          if old not in text:
+              raise SystemExit("tilt comparison line constructor not found")
+          text = text.replace(old, new, 1)
+
+          text = replace_function(text, "wind_rose_small_multiples", "natural_ventilation_monthly_table", r'''
+          def wind_rose_small_multiples(climates: list[ClimateDataset]) -> go.Figure:
+              """Create small-multiple wind roses with a shared ordered speed palette."""
+              rows = int(np.ceil(len(climates) / 2))
+              cols = 2 if len(climates) > 1 else 1
+              specs = [[{"type": "polar"} for _ in range(cols)] for _ in range(rows)]
+              fig = make_subplots(rows=rows, cols=cols, specs=specs, subplot_titles=[c.display_name for c in climates], vertical_spacing=0.12)
+              bins = [0, 1, 2, 4, 6, 8, 12, np.inf]
+              for i, climate in enumerate(climates):
+                  row = i // cols + 1
+                  col = i % cols + 1
+                  data = climate.data[["wind_direction_deg", "wind_speed_m_s"]].dropna().copy()
+                  data["direction_sector_deg"] = (np.round(data["wind_direction_deg"] / 22.5) * 22.5) % 360
+                  data["speed_bin"] = pd.cut(data["wind_speed_m_s"], bins=bins, labels=WIND_SPEED_LABELS, include_lowest=True)
+                  rose = data.groupby(["direction_sector_deg", "speed_bin"], observed=False).size().reset_index(name="hours")
+                  for label in WIND_SPEED_LABELS:
+                      subset = rose[rose["speed_bin"] == label]
+                      fig.add_trace(go.Barpolar(r=subset["hours"], theta=subset["direction_sector_deg"], name=label, marker_color=WIND_SPEED_COLOR_MAP[label], showlegend=i == 0), row=row, col=col)
+              fig.update_layout(template=PLOT_TEMPLATE, title="Wind rose comparison", height=max(420, 360 * rows), margin=dict(l=40, r=20, t=70, b=45))
+              return fig
+          ''')
+
+          comparison_path.write_text(text, encoding="utf-8")
+          PY
+
+      - name: Compile
+        working-directory: tools/climate_analyzer
+        run: python -m compileall -q app.py epw_climate_analyzer tests
+
+      - name: Run semantic colour regression tests
+        working-directory: tools/climate_analyzer
+        run: python -m unittest discover -s tests -p 'test_semantic_chart_colors.py' -v
+
+      - name: Run full Climate Analyzer regression suite
+        working-directory: tools/climate_analyzer
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
+
+      - name: Import smoke
+        working-directory: tools/climate_analyzer
+        run: |
+          python - <<'PY'
+          import epw_climate_analyzer.chart_theme
+          import epw_climate_analyzer.charts
+          import epw_climate_analyzer.comparison
+          print('Semantic chart colour import smoke PASS')
+          PY
+
+      - name: Commit remediation and remove one-shot workflow
+        run: |
+          rm .github/workflows/vis-0.1-semantic-chart-colors.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tools/climate_analyzer/epw_climate_analyzer/charts.py \
+                  tools/climate_analyzer/epw_climate_analyzer/comparison.py \
+                  .github/workflows/vis-0.1-semantic-chart-colors.yml
+          git commit -m "VIS-0.1: apply semantic chart colours"
+          git push origin HEAD:climate-vis-0.1-semantic-chart-colors
