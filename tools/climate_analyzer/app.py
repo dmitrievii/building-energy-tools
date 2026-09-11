@@ -38,7 +38,7 @@ def _ensure_map_dependencies() -> None:
     global _MAP_DEPENDENCIES_LOADED
     global pd, folium, FastMarkerCluster, MarkerCluster, st_folium
     global download_station_epw, filter_station_catalog
-    global catalog_runtime_summary, load_production_station_catalog, station_provenance_text
+    global catalog_runtime_summary, load_production_station_catalog, load_station_catalog_manifest, station_provenance_text
 
     if _MAP_DEPENDENCIES_LOADED:
         return
@@ -51,6 +51,7 @@ def _ensure_map_dependencies() -> None:
     from epw_climate_analyzer.catalog_runtime import (
         catalog_runtime_summary,
         load_production_station_catalog,
+        load_station_catalog_manifest,
         station_provenance_text,
     )
     _MAP_DEPENDENCIES_LOADED = True
@@ -370,9 +371,27 @@ def clear_active_climate_file() -> None:
 
 
 @st.cache_data(show_spinner=False)
-def cached_station_catalog() -> pd.DataFrame:
-    """Load and cache the reviewed, versioned station catalog for the OSM map."""
-    return load_production_station_catalog()
+def cached_station_catalog(catalog_version: str, catalog_sha256: str) -> pd.DataFrame:
+    """Load the reviewed catalog using immutable manifest identity as the cache key.
+
+    Streamlit may preserve ``st.cache_data`` entries across a source redeploy. A
+    no-argument cache therefore allowed the previous 20-record bootstrap DataFrame
+    to survive after the global catalog files had changed. Binding the cache entry
+    to both the catalog version and byte-level SHA prevents stale catalog reuse.
+    """
+    catalog = load_production_station_catalog()
+    if catalog.empty:
+        return catalog
+
+    actual_version = str(catalog["catalog_version"].iloc[0])
+    actual_sha256 = str(catalog["catalog_sha256"].iloc[0])
+    if actual_version != catalog_version or actual_sha256 != catalog_sha256:
+        raise RuntimeError(
+            "Station catalog cache identity mismatch: "
+            f"expected {catalog_version}/{catalog_sha256}, "
+            f"loaded {actual_version}/{actual_sha256}."
+        )
+    return catalog
 
 
 @st.cache_data(show_spinner=False)
@@ -803,7 +822,8 @@ def render_climate_file_source() -> None:
         "Search or zoom to a station, choose one of its available climate datasets, then load the EPW for analysis."
     )
     try:
-        catalog = cached_station_catalog()
+        manifest = load_station_catalog_manifest()
+        catalog = cached_station_catalog(manifest.catalog_version, manifest.csv_sha256)
     except Exception as exc:
         st.error(f"The versioned station catalog failed integrity/provenance validation: {exc}")
         return

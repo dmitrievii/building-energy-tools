@@ -7,6 +7,8 @@ import { chromium } from 'playwright-core';
 const TARGET_URL = process.env.TARGET_URL || 'https://building-climate-analyzer.streamlit.app/';
 const OUT_DIR = process.env.AUDIT_OUTPUT_DIR || 'artifacts/live-audit';
 const CHROME_PATH = process.env.CHROME_PATH || '/usr/bin/google-chrome';
+const CATALOG_MANIFEST_PATH = process.env.CATALOG_MANIFEST_PATH || 'tools/climate_analyzer/epw_climate_analyzer/data/station_catalog.meta.json';
+const expectedCatalogManifest = JSON.parse(await fs.readFile(CATALOG_MANIFEST_PATH, 'utf8'));
 
 await fs.mkdir(OUT_DIR, { recursive: true });
 
@@ -131,6 +133,79 @@ function domainSet(urls) {
   }).filter(Boolean))].sort();
 }
 
+function parseIntegerText(value) {
+  if (value == null) return null;
+  const cleaned = String(value).replace(/,/g, '').trim();
+  const parsed = Number.parseInt(cleaned, 10);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function parseLiveCatalogIdentity(text) {
+  const summary = text.match(/Versioned station catalog:\s*([^·\n]+?)\s*·\s*([\d,]+)\s+records/i);
+  const visible = text.match(/Visible catalog records after filters:\s*([\d,]+)\s+of\s+([\d,]+)/i);
+  const displayedVersion = summary ? summary[1].trim() : null;
+  const displayedRecords = summary ? parseIntegerText(summary[2]) : null;
+  const filteredVisible = visible ? parseIntegerText(visible[1]) : null;
+  const filteredTotal = visible ? parseIntegerText(visible[2]) : null;
+  const expectedVersion = String(expectedCatalogManifest.catalog_version);
+  const expectedRecords = Number(expectedCatalogManifest.station_count);
+  return {
+    expected_version: expectedVersion,
+    expected_records: expectedRecords,
+    displayed_version: displayedVersion,
+    displayed_records: displayedRecords,
+    filtered_visible: filteredVisible,
+    filtered_total: filteredTotal,
+    matches_manifest: displayedVersion === expectedVersion
+      && displayedRecords === expectedRecords
+      && filteredTotal === expectedRecords,
+  };
+}
+
+async function leafletTileZoom(frame) {
+  const urls = await frame.locator('img.leaflet-tile').evaluateAll((nodes) =>
+    nodes.map((node) => node.src || '').filter(Boolean)
+  ).catch(() => []);
+  const levels = [];
+  for (const raw of urls) {
+    try {
+      const match = new URL(raw).pathname.match(/^\/(\d+)\//);
+      if (match) levels.push(Number.parseInt(match[1], 10));
+    } catch {
+      // Ignore non-URL tile placeholders.
+    }
+  }
+  return levels.length ? Math.max(...levels) : null;
+}
+
+async function exerciseLeafletZoom(page, timeoutMs = 15_000) {
+  const started = performance.now();
+  while (performance.now() - started < timeoutMs) {
+    for (const frame of page.frames()) {
+      const zoomIn = frame.locator('.leaflet-control-zoom-in').first();
+      if (!(await zoomIn.count().catch(() => 0))) continue;
+      try {
+        const levels = [];
+        levels.push(await leafletTileZoom(frame));
+        await zoomIn.click({ timeout: 5_000 });
+        await sleep(1_200);
+        levels.push(await leafletTileZoom(frame));
+        await zoomIn.click({ timeout: 5_000 });
+        await sleep(1_200);
+        levels.push(await leafletTileZoom(frame));
+        const monotonic = levels.every((value) => Number.isInteger(value))
+          && levels[1] > levels[0]
+          && levels[2] > levels[1];
+        return { attempted: true, frame_url: frame.url(), levels, monotonic };
+      } catch (error) {
+        return { attempted: true, frame_url: frame.url(), levels: [], monotonic: false, error: String(error) };
+      }
+    }
+    await sleep(500);
+  }
+  return { attempted: false, frame_url: null, levels: [], monotonic: false };
+}
+
 async function runViewportAudit(browser, name, viewport) {
   const context = await browser.newContext({ viewport });
   const page = await context.newPage();
@@ -212,6 +287,8 @@ async function runViewportAudit(browser, name, viewport) {
     clicked: false,
     openstreetmap_visible: false,
     frame_attribution: [],
+    catalog: null,
+    zoom_sequence: null,
   };
   if (appVisible) {
     try {
@@ -224,6 +301,9 @@ async function runViewportAudit(browser, name, viewport) {
         await locator.click({ timeout: 15_000 });
         findClimate.clicked = true;
         await sleep(5_000);
+        const liveCatalogText = await bodyText(appFrame);
+        findClimate.catalog = parseLiveCatalogIdentity(liveCatalogText);
+        findClimate.zoom_sequence = await exerciseLeafletZoom(page);
         findClimate.frame_attribution = await collectAttribution(page);
         findClimate.openstreetmap_visible = findClimate.frame_attribution.some((item) =>
           item.has_openstreetmap_text || (item.osm_links || []).length > 0
@@ -280,7 +360,8 @@ async function runViewportAudit(browser, name, viewport) {
 }
 
 const report = {
-  schema: 'building-energy-tools-live-audit-v2',
+  schema: 'building-energy-tools-live-audit-v3',
+  expected_catalog: { version: expectedCatalogManifest.catalog_version, records: expectedCatalogManifest.station_count, sha256: expectedCatalogManifest.csv_sha256 },
   target_url: TARGET_URL,
   audited_at_utc: nowIso(),
   first_http_response: await firstHttpResponse(TARGET_URL),
@@ -326,6 +407,19 @@ for (const view of views) {
   if (view.find_climate.clicked && !view.find_climate.openstreetmap_visible) {
     critical.push(`${view.name}: OpenStreetMap attribution was not detected after opening Find climate.`);
   }
+  if (view.find_climate.clicked && !view.find_climate.catalog?.matches_manifest) {
+    critical.push(
+      `${view.name}: live catalog does not match checked-out manifest `
+      + `(expected ${view.find_climate.catalog?.expected_version}/${view.find_climate.catalog?.expected_records}, `
+      + `displayed ${view.find_climate.catalog?.displayed_version}/${view.find_climate.catalog?.displayed_records}).`
+    );
+  }
+  if (view.find_climate.clicked && !view.find_climate.zoom_sequence?.monotonic) {
+    critical.push(
+      `${view.name}: two consecutive Leaflet zoom-in actions were not monotonic `
+      + `(levels=${JSON.stringify(view.find_climate.zoom_sequence?.levels || [])}).`
+    );
+  }
   if ((view.accessibility.violations || []).length) {
     findings.push(`${view.name}: ${view.accessibility.violations.length} axe WCAG A/AA violation group(s) in the detected app frame.`);
   }
@@ -357,6 +451,10 @@ const md = [
     `- Axe WCAG A/AA violation groups in app frame: ${view.accessibility.violations?.length ?? 'n/a'}`,
     `- OSM requested before Find climate: ${view.initial_osm_requested_before_find_climate}`,
     `- Find climate clicked: ${view.find_climate.clicked}`,
+    `- Live catalog matches checked-out manifest: ${view.find_climate.catalog?.matches_manifest ?? false}`,
+    `- Live catalog records: ${view.find_climate.catalog?.displayed_records ?? 'n/a'} / expected ${view.find_climate.catalog?.expected_records ?? 'n/a'}`,
+    `- Consecutive zoom-in levels: ${JSON.stringify(view.find_climate.zoom_sequence?.levels || [])}`,
+    `- Consecutive zoom monotonic: ${view.find_climate.zoom_sequence?.monotonic ?? false}`,
     `- OSM attribution detected after Find climate: ${view.find_climate.openstreetmap_visible}`,
     '',
   ]),

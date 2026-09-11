@@ -26,6 +26,19 @@ class GlobalCatalogMapContractTests(unittest.TestCase):
         self.assertIn("station_map_view_epoch", app)
         self.assertIn("climate_onebuilding_selectable_cluster_map_", app)
 
+    def test_station_catalog_cache_is_bound_to_manifest_identity(self) -> None:
+        app = APP_PATH.read_text(encoding="utf-8")
+        self.assertIn(
+            "def cached_station_catalog(catalog_version: str, catalog_sha256: str)",
+            app,
+        )
+        self.assertIn("manifest = load_station_catalog_manifest()", app)
+        self.assertIn(
+            "cached_station_catalog(manifest.catalog_version, manifest.csv_sha256)",
+            app,
+        )
+        self.assertNotIn("def cached_station_catalog()", app)
+
     def test_global_map_default_capacity_covers_snapshot(self) -> None:
         app = APP_PATH.read_text(encoding="utf-8")
         self.assertIn('station_selectable_cluster_limit", 50000', app)
