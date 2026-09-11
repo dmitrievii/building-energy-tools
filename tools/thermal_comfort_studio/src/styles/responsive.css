@@ -1,0 +1,172 @@
+/* COMFORT-0.1.1 responsive hotfix
+   Keep the scientific/dashboard design intact while preventing intrinsic grid
+   widths from exceeding laptop and zoomed browser viewports. */
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+.dashboard-grid,
+.lower-grid,
+.diagnosis,
+.app-footer {
+  max-width: calc(100% - 32px);
+}
+
+.dashboard-grid > *,
+.lower-grid > *,
+.results-column,
+.results-column > *,
+.kpi-grid,
+.kpi-grid > *,
+.panel,
+.mini-chart,
+.heat-table-panel,
+.chart-head,
+.chart-svg,
+.state-strip,
+.state-dot,
+.control-row > * {
+  min-width: 0;
+}
+
+.chart-svg,
+.psychrometric-svg,
+.heat-table {
+  max-width: 100%;
+}
+
+@media (max-width: 1540px) {
+  .dashboard-grid {
+    grid-template-columns: minmax(320px, 390px) minmax(0, 1fr);
+  }
+
+  .results-column {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 1280px) {
+  .dashboard-grid {
+    grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+  }
+}
+
+/* Laptop / Windows display-scaling breakpoint.
+   A 1366–1536 px panel at 125–150% scaling commonly exposes only ~900–1230
+   CSS pixels. Collapse the two-column upper dashboard before its intrinsic
+   content can force horizontal overflow. */
+@media (max-width: 1180px) {
+  .app-header {
+    height: auto;
+    min-height: 78px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .header-actions {
+    flex-wrap: wrap;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .input-panel {
+    height: auto;
+    min-height: 0;
+  }
+
+  .results-column {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 900px) {
+  .dashboard-grid,
+  .lower-grid,
+  .results-column {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dashboard-grid,
+  .lower-grid,
+  .diagnosis,
+  .app-footer {
+    width: calc(100% - 24px);
+    max-width: calc(100% - 24px);
+  }
+
+  .header-actions {
+    padding-left: 0;
+  }
+
+  .panel-title,
+  .chart-head {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 560px) {
+  body {
+    font-size: 15px;
+  }
+
+  .dashboard-grid,
+  .lower-grid,
+  .diagnosis,
+  .app-footer {
+    width: calc(100% - 16px);
+    max-width: calc(100% - 16px);
+  }
+
+  .kpi-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .control-row {
+    grid-template-columns: minmax(0, 1fr) 92px 44px;
+    gap: 6px;
+    padding-inline: 8px;
+  }
+
+  .checkbox-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .checkbox-row > span,
+  .checkbox-row .check-control,
+  .checkbox-row > em {
+    grid-column: 1;
+  }
+
+  .check-control {
+    justify-self: start;
+  }
+
+  .state-strip {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 2px;
+    padding-inline: 8px;
+  }
+
+  .state-dot {
+    font-size: 11px;
+  }
+
+  .state-dot i {
+    font-size: 17px;
+  }
+
+  .state-dot em {
+    font-size: 10.5px;
+  }
+
+  .heat-table {
+    table-layout: fixed;
+    overflow-wrap: anywhere;
+  }
+}
