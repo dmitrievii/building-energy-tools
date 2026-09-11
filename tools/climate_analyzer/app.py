@@ -25,6 +25,8 @@ from epw_climate_analyzer.ui_contract import (
     queue_navigation,
     queue_navigation_reset,
 )
+from epw_climate_analyzer.chart_theme import metric_color
+from epw_climate_analyzer.runtime_identity import RUNTIME_BUILD_ID
 
 
 _MAP_DEPENDENCIES_LOADED = False
@@ -272,6 +274,21 @@ MONTHS = {
 
 
 st.set_page_config(page_title=APP_BROWSER_TITLE, layout="wide", page_icon="🌦️")
+
+# Hidden machine-readable deployment identity.  The live browser audit compares
+# this source-derived fingerprint with the exact checked-out source set before a
+# deployment is considered current.  The semantic GHI colour is included as a
+# direct visual-contract sentinel for VIS-0.1.
+_RUNTIME_GHI_COLOR = metric_color("global_horizontal_radiation_wh_m2")
+st.markdown(
+    (
+        '<span id="climate-analyzer-runtime-build" '
+        f'data-runtime-build="{html.escape(RUNTIME_BUILD_ID, quote=True)}" '
+        f'data-ghi-color="{html.escape(_RUNTIME_GHI_COLOR, quote=True)}" '
+        'aria-hidden="true" style="display:none"></span>'
+    ),
+    unsafe_allow_html=True,
+)
 
 # Streamlit 1.63 renders the file-uploader size/type hint with a 0.6-alpha
 # foreground color that fails WCAG AA contrast on the default light background.
