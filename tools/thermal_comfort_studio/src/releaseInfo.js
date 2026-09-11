@@ -1,0 +1,11 @@
+export const PROJECT_NAME = 'Building Energy Tools';
+export const TOOL_NAME = 'Thermal Comfort Studio';
+export const TOOL_VERSION = '0.1.0-beta.1';
+export const RELEASE_CHANNEL = 'public-beta-candidate';
+export const PUBLICATION_STATUS = 'BETA_CANDIDATE_NOT_YET_PUBLICATION_CLEARED';
+export const SOURCE_LINEAGE = 'thermal_comfort_studio_web 1.0.20';
+export const ASSET_VERSION = 'tcs-0.1.0-beta.1';
+export const AUTHOR_NAME = 'Ivan Dmitriev';
+export const ACADEMIC_AFFILIATION = 'Institute of Buildings and Energy, Graz University of Technology';
+export const INDEPENDENCE_NOTICE = 'Independent personal research and teaching project. Academic affiliation is biographical context only; this is not an official website, service or product of Graz University of Technology.';
+export const ENGINEERING_DISCLAIMER = 'Research and teaching aid for thermal-comfort analysis and early design support. Outputs do not replace project-specific engineering judgement, regulatory verification, certification or professional design responsibility.';

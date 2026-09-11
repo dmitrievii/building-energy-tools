@@ -1,0 +1,1199 @@
+[
+  {
+    "preset_id": "preset_00_underwear",
+    "state_key": "pmv_0_comfortable",
+    "output": "./assets/avatars/preset_00_underwear/pmv_0_comfortable.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 339701,
+    "bbox": [
+      298,
+      77,
+      725,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_00_underwear",
+    "state_key": "pmv_-1_slightly_cool",
+    "output": "./assets/avatars/preset_00_underwear/pmv_m1_slightly_cool.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 323320,
+    "bbox": [
+      328,
+      77,
+      694,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_00_underwear",
+    "state_key": "pmv_-2_cold",
+    "output": "./assets/avatars/preset_00_underwear/pmv_m2_cold.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 323993,
+    "bbox": [
+      329,
+      77,
+      694,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_00_underwear",
+    "state_key": "pmv_-3_freezing",
+    "output": "./assets/avatars/preset_00_underwear/pmv_m3_freezing.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 331064,
+    "bbox": [
+      326,
+      77,
+      698,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_00_underwear",
+    "state_key": "pmv_+1_slightly_warm",
+    "output": "./assets/avatars/preset_00_underwear/pmv_p1_slightly_warm.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 328220,
+    "bbox": [
+      298,
+      77,
+      724,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_00_underwear",
+    "state_key": "pmv_+2_warm",
+    "output": "./assets/avatars/preset_00_underwear/pmv_p2_warm.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 332729,
+    "bbox": [
+      286,
+      77,
+      738,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_00_underwear",
+    "state_key": "pmv_+3_overheated",
+    "output": "./assets/avatars/preset_00_underwear/pmv_p3_overheated.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 353704,
+    "bbox": [
+      250,
+      77,
+      772,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_01_summer_light",
+    "state_key": "pmv_0_comfortable",
+    "output": "./assets/avatars/preset_01_summer_light/pmv_0_comfortable.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 344967,
+    "bbox": [
+      300,
+      77,
+      724,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_01_summer_light",
+    "state_key": "pmv_-1_slightly_cool",
+    "output": "./assets/avatars/preset_01_summer_light/pmv_m1_slightly_cool.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 320272,
+    "bbox": [
+      326,
+      77,
+      697,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_01_summer_light",
+    "state_key": "pmv_-2_cold",
+    "output": "./assets/avatars/preset_01_summer_light/pmv_m2_cold.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 318482,
+    "bbox": [
+      329,
+      77,
+      694,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_01_summer_light",
+    "state_key": "pmv_-3_freezing",
+    "output": "./assets/avatars/preset_01_summer_light/pmv_m3_freezing.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 324658,
+    "bbox": [
+      328,
+      77,
+      695,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_01_summer_light",
+    "state_key": "pmv_+1_slightly_warm",
+    "output": "./assets/avatars/preset_01_summer_light/pmv_p1_slightly_warm.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 328791,
+    "bbox": [
+      296,
+      77,
+      728,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_01_summer_light",
+    "state_key": "pmv_+2_warm",
+    "output": "./assets/avatars/preset_01_summer_light/pmv_p2_warm.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 341823,
+    "bbox": [
+      287,
+      77,
+      736,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_01_summer_light",
+    "state_key": "pmv_+3_overheated",
+    "output": "./assets/avatars/preset_01_summer_light/pmv_p3_overheated.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 351682,
+    "bbox": [
+      254,
+      77,
+      769,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_02_light_indoor",
+    "state_key": "pmv_0_comfortable",
+    "output": "./assets/avatars/preset_02_light_indoor/pmv_0_comfortable.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 350403,
+    "bbox": [
+      300,
+      77,
+      723,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_02_light_indoor",
+    "state_key": "pmv_-1_slightly_cool",
+    "output": "./assets/avatars/preset_02_light_indoor/pmv_m1_slightly_cool.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 323131,
+    "bbox": [
+      313,
+      77,
+      710,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_02_light_indoor",
+    "state_key": "pmv_-2_cold",
+    "output": "./assets/avatars/preset_02_light_indoor/pmv_m2_cold.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 322346,
+    "bbox": [
+      320,
+      77,
+      703,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_02_light_indoor",
+    "state_key": "pmv_-3_freezing",
+    "output": "./assets/avatars/preset_02_light_indoor/pmv_m3_freezing.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 288592,
+    "bbox": [
+      332,
+      77,
+      692,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_02_light_indoor",
+    "state_key": "pmv_+1_slightly_warm",
+    "output": "./assets/avatars/preset_02_light_indoor/pmv_p1_slightly_warm.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 348053,
+    "bbox": [
+      292,
+      77,
+      731,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_02_light_indoor",
+    "state_key": "pmv_+2_warm",
+    "output": "./assets/avatars/preset_02_light_indoor/pmv_p2_warm.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 319008,
+    "bbox": [
+      283,
+      77,
+      740,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_02_light_indoor",
+    "state_key": "pmv_+3_overheated",
+    "output": "./assets/avatars/preset_02_light_indoor/pmv_p3_overheated.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 369729,
+    "bbox": [
+      251,
+      77,
+      772,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_03_neutral_indoor",
+    "state_key": "pmv_0_comfortable",
+    "output": "./assets/avatars/preset_03_neutral_indoor/pmv_0_comfortable.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 365589,
+    "bbox": [
+      295,
+      77,
+      728,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_03_neutral_indoor",
+    "state_key": "pmv_-1_slightly_cool",
+    "output": "./assets/avatars/preset_03_neutral_indoor/pmv_m1_slightly_cool.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 327798,
+    "bbox": [
+      323,
+      77,
+      700,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_03_neutral_indoor",
+    "state_key": "pmv_-2_cold",
+    "output": "./assets/avatars/preset_03_neutral_indoor/pmv_m2_cold.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 324908,
+    "bbox": [
+      332,
+      77,
+      692,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_03_neutral_indoor",
+    "state_key": "pmv_-3_freezing",
+    "output": "./assets/avatars/preset_03_neutral_indoor/pmv_m3_freezing.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 348576,
+    "bbox": [
+      328,
+      77,
+      695,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_03_neutral_indoor",
+    "state_key": "pmv_+1_slightly_warm",
+    "output": "./assets/avatars/preset_03_neutral_indoor/pmv_p1_slightly_warm.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 348871,
+    "bbox": [
+      296,
+      77,
+      727,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_03_neutral_indoor",
+    "state_key": "pmv_+2_warm",
+    "output": "./assets/avatars/preset_03_neutral_indoor/pmv_p2_warm.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 355472,
+    "bbox": [
+      280,
+      77,
+      743,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_03_neutral_indoor",
+    "state_key": "pmv_+3_overheated",
+    "output": "./assets/avatars/preset_03_neutral_indoor/pmv_p3_overheated.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 360745,
+    "bbox": [
+      256,
+      77,
+      768,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_04_cool_indoor_layered",
+    "state_key": "pmv_0_comfortable",
+    "output": "./assets/avatars/preset_04_cool_indoor_layered/pmv_0_comfortable.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 367426,
+    "bbox": [
+      296,
+      77,
+      727,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_04_cool_indoor_layered",
+    "state_key": "pmv_-1_slightly_cool",
+    "output": "./assets/avatars/preset_04_cool_indoor_layered/pmv_m1_slightly_cool.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 330990,
+    "bbox": [
+      316,
+      77,
+      708,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_04_cool_indoor_layered",
+    "state_key": "pmv_-2_cold",
+    "output": "./assets/avatars/preset_04_cool_indoor_layered/pmv_m2_cold.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 330042,
+    "bbox": [
+      336,
+      77,
+      686,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_04_cool_indoor_layered",
+    "state_key": "pmv_-3_freezing",
+    "output": "./assets/avatars/preset_04_cool_indoor_layered/pmv_m3_freezing.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 336833,
+    "bbox": [
+      326,
+      77,
+      696,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_04_cool_indoor_layered",
+    "state_key": "pmv_+1_slightly_warm",
+    "output": "./assets/avatars/preset_04_cool_indoor_layered/pmv_p1_slightly_warm.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 334320,
+    "bbox": [
+      305,
+      77,
+      718,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_04_cool_indoor_layered",
+    "state_key": "pmv_+2_warm",
+    "output": "./assets/avatars/preset_04_cool_indoor_layered/pmv_p2_warm.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 360586,
+    "bbox": [
+      286,
+      77,
+      738,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_04_cool_indoor_layered",
+    "state_key": "pmv_+3_overheated",
+    "output": "./assets/avatars/preset_04_cool_indoor_layered/pmv_p3_overheated.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 353232,
+    "bbox": [
+      280,
+      77,
+      742,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_05_warm_office",
+    "state_key": "pmv_0_comfortable",
+    "output": "./assets/avatars/preset_05_warm_office/pmv_0_comfortable.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 365752,
+    "bbox": [
+      300,
+      77,
+      723,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_05_warm_office",
+    "state_key": "pmv_-1_slightly_cool",
+    "output": "./assets/avatars/preset_05_warm_office/pmv_m1_slightly_cool.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 329025,
+    "bbox": [
+      320,
+      77,
+      704,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_05_warm_office",
+    "state_key": "pmv_-2_cold",
+    "output": "./assets/avatars/preset_05_warm_office/pmv_m2_cold.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 341979,
+    "bbox": [
+      331,
+      77,
+      692,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_05_warm_office",
+    "state_key": "pmv_-3_freezing",
+    "output": "./assets/avatars/preset_05_warm_office/pmv_m3_freezing.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 364800,
+    "bbox": [
+      324,
+      77,
+      700,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_05_warm_office",
+    "state_key": "pmv_+1_slightly_warm",
+    "output": "./assets/avatars/preset_05_warm_office/pmv_p1_slightly_warm.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 348790,
+    "bbox": [
+      300,
+      77,
+      723,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_05_warm_office",
+    "state_key": "pmv_+2_warm",
+    "output": "./assets/avatars/preset_05_warm_office/pmv_p2_warm.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 362960,
+    "bbox": [
+      288,
+      77,
+      734,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_05_warm_office",
+    "state_key": "pmv_+3_overheated",
+    "output": "./assets/avatars/preset_05_warm_office/pmv_p3_overheated.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 374188,
+    "bbox": [
+      260,
+      77,
+      764,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_06_cold_indoor_heavy_layered",
+    "state_key": "pmv_0_comfortable",
+    "output": "./assets/avatars/preset_06_cold_indoor_heavy_layered/pmv_0_comfortable.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 389700,
+    "bbox": [
+      284,
+      77,
+      739,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_06_cold_indoor_heavy_layered",
+    "state_key": "pmv_-1_slightly_cool",
+    "output": "./assets/avatars/preset_06_cold_indoor_heavy_layered/pmv_m1_slightly_cool.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 356639,
+    "bbox": [
+      311,
+      77,
+      712,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_06_cold_indoor_heavy_layered",
+    "state_key": "pmv_-2_cold",
+    "output": "./assets/avatars/preset_06_cold_indoor_heavy_layered/pmv_m2_cold.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 361455,
+    "bbox": [
+      326,
+      77,
+      698,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_06_cold_indoor_heavy_layered",
+    "state_key": "pmv_-3_freezing",
+    "output": "./assets/avatars/preset_06_cold_indoor_heavy_layered/pmv_m3_freezing.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 362675,
+    "bbox": [
+      322,
+      77,
+      702,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_06_cold_indoor_heavy_layered",
+    "state_key": "pmv_+1_slightly_warm",
+    "output": "./assets/avatars/preset_06_cold_indoor_heavy_layered/pmv_p1_slightly_warm.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 393039,
+    "bbox": [
+      262,
+      77,
+      760,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_06_cold_indoor_heavy_layered",
+    "state_key": "pmv_+2_warm",
+    "output": "./assets/avatars/preset_06_cold_indoor_heavy_layered/pmv_p2_warm.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 390305,
+    "bbox": [
+      270,
+      77,
+      754,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_06_cold_indoor_heavy_layered",
+    "state_key": "pmv_+3_overheated",
+    "output": "./assets/avatars/preset_06_cold_indoor_heavy_layered/pmv_p3_overheated.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 421876,
+    "bbox": [
+      242,
+      77,
+      782,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_07_winter_outdoor",
+    "state_key": "pmv_0_comfortable",
+    "output": "./assets/avatars/preset_07_winter_outdoor/pmv_0_comfortable.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 406268,
+    "bbox": [
+      275,
+      77,
+      748,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_07_winter_outdoor",
+    "state_key": "pmv_-1_slightly_cool",
+    "output": "./assets/avatars/preset_07_winter_outdoor/pmv_m1_slightly_cool.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 352303,
+    "bbox": [
+      322,
+      77,
+      702,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_07_winter_outdoor",
+    "state_key": "pmv_-2_cold",
+    "output": "./assets/avatars/preset_07_winter_outdoor/pmv_m2_cold.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 365587,
+    "bbox": [
+      324,
+      77,
+      699,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_07_winter_outdoor",
+    "state_key": "pmv_-3_freezing",
+    "output": "./assets/avatars/preset_07_winter_outdoor/pmv_m3_freezing.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 365521,
+    "bbox": [
+      316,
+      77,
+      707,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_07_winter_outdoor",
+    "state_key": "pmv_+1_slightly_warm",
+    "output": "./assets/avatars/preset_07_winter_outdoor/pmv_p1_slightly_warm.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 389378,
+    "bbox": [
+      284,
+      77,
+      739,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_07_winter_outdoor",
+    "state_key": "pmv_+2_warm",
+    "output": "./assets/avatars/preset_07_winter_outdoor/pmv_p2_warm.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 406254,
+    "bbox": [
+      263,
+      77,
+      760,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_07_winter_outdoor",
+    "state_key": "pmv_+3_overheated",
+    "output": "./assets/avatars/preset_07_winter_outdoor/pmv_p3_overheated.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 430272,
+    "bbox": [
+      240,
+      77,
+      783,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_08_extreme_winter_outdoor",
+    "state_key": "pmv_0_comfortable",
+    "output": "./assets/avatars/preset_08_extreme_winter_outdoor/pmv_0_comfortable.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 430846,
+    "bbox": [
+      266,
+      77,
+      756,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_08_extreme_winter_outdoor",
+    "state_key": "pmv_-1_slightly_cool",
+    "output": "./assets/avatars/preset_08_extreme_winter_outdoor/pmv_m1_slightly_cool.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 413406,
+    "bbox": [
+      306,
+      77,
+      716,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_08_extreme_winter_outdoor",
+    "state_key": "pmv_-2_cold",
+    "output": "./assets/avatars/preset_08_extreme_winter_outdoor/pmv_m2_cold.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 365397,
+    "bbox": [
+      322,
+      77,
+      700,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_08_extreme_winter_outdoor",
+    "state_key": "pmv_-3_freezing",
+    "output": "./assets/avatars/preset_08_extreme_winter_outdoor/pmv_m3_freezing.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 401539,
+    "bbox": [
+      280,
+      77,
+      744,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_08_extreme_winter_outdoor",
+    "state_key": "pmv_+1_slightly_warm",
+    "output": "./assets/avatars/preset_08_extreme_winter_outdoor/pmv_p1_slightly_warm.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 434567,
+    "bbox": [
+      242,
+      77,
+      780,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_08_extreme_winter_outdoor",
+    "state_key": "pmv_+2_warm",
+    "output": "./assets/avatars/preset_08_extreme_winter_outdoor/pmv_p2_warm.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 387243,
+    "bbox": [
+      300,
+      77,
+      722,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  },
+  {
+    "preset_id": "preset_08_extreme_winter_outdoor",
+    "state_key": "pmv_+3_overheated",
+    "output": "./assets/avatars/preset_08_extreme_winter_outdoor/pmv_p3_overheated.webp",
+    "source_preview": null,
+    "method": "v1.0.12 normalized existing transparent PNG: alpha bbox crop, proportional resize, fixed visible-height, center and foot baseline; no new drawing/generation",
+    "target_center_x": 512,
+    "target_bottom_y": 1506,
+    "target_visible_height_px": 1430,
+    "opaque_pixels": 426983,
+    "bbox": [
+      262,
+      77,
+      760,
+      1506
+    ],
+    "edge_alpha_max": 0,
+    "status": "ok"
+  }
+]
