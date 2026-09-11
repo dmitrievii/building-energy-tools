@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import crypto from 'node:crypto';
 import path from 'node:path';
 import process from 'node:process';
 import axe from 'axe-core';
@@ -9,6 +10,36 @@ const OUT_DIR = process.env.AUDIT_OUTPUT_DIR || 'artifacts/live-audit';
 const CHROME_PATH = process.env.CHROME_PATH || '/usr/bin/google-chrome';
 const CATALOG_MANIFEST_PATH = process.env.CATALOG_MANIFEST_PATH || 'tools/climate_analyzer/epw_climate_analyzer/data/station_catalog.meta.json';
 const expectedCatalogManifest = JSON.parse(await fs.readFile(CATALOG_MANIFEST_PATH, 'utf8'));
+const TOOL_ROOT = 'tools/climate_analyzer';
+const PACKAGE_ROOT = path.join(TOOL_ROOT, 'epw_climate_analyzer');
+const EXPECTED_GHI_COLOR = '#F59E0B';
+
+async function runtimeSourceFiles() {
+  const entries = await fs.readdir(PACKAGE_ROOT, { withFileTypes: true });
+  const packageFiles = entries
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.py'))
+    .map((entry) => path.join(PACKAGE_ROOT, entry.name))
+    .sort();
+  return [
+    path.join(TOOL_ROOT, 'app.py'),
+    path.join(TOOL_ROOT, 'requirements.txt'),
+    ...packageFiles,
+  ];
+}
+
+async function expectedRuntimeBuildId() {
+  const hash = crypto.createHash('sha256');
+  for (const file of await runtimeSourceFiles()) {
+    const relative = path.relative(TOOL_ROOT, file).split(path.sep).join('/');
+    hash.update(Buffer.from(relative, 'utf8'));
+    hash.update(Buffer.from([0]));
+    hash.update(await fs.readFile(file));
+    hash.update(Buffer.from([0]));
+  }
+  return hash.digest('hex');
+}
+
+const EXPECTED_RUNTIME_BUILD_ID = await expectedRuntimeBuildId();
 
 await fs.mkdir(OUT_DIR, { recursive: true });
 
@@ -162,6 +193,69 @@ function parseLiveCatalogIdentity(text) {
   };
 }
 
+async function readRuntimeMarker(page) {
+  for (const frame of page.frames()) {
+    const marker = frame.locator('#climate-analyzer-runtime-build').first();
+    if (!(await marker.count().catch(() => 0))) continue;
+    return {
+      frame_url: frame.url(),
+      build_id: await marker.getAttribute('data-runtime-build').catch(() => null),
+      ghi_color: await marker.getAttribute('data-ghi-color').catch(() => null),
+    };
+  }
+  return { frame_url: null, build_id: null, ghi_color: null };
+}
+
+function runtimeMatchesExpected(runtime) {
+  return runtime?.build_id === EXPECTED_RUNTIME_BUILD_ID
+    && String(runtime?.ghi_color || '').toUpperCase() === EXPECTED_GHI_COLOR;
+}
+
+async function waitForExpectedRuntimeBuild(browser, timeoutMs = 480_000, intervalMs = 15_000) {
+  const started = performance.now();
+  const attempts = [];
+  while (performance.now() - started < timeoutMs) {
+    const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+    const page = await context.newPage();
+    let runtime = { frame_url: null, build_id: null, ghi_color: null };
+    let error = null;
+    try {
+      await page.goto(TARGET_URL, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+      await waitForFrameContaining(page, 'Climate Analyzer', 60_000);
+      await sleep(1_000);
+      runtime = await readRuntimeMarker(page);
+    } catch (exc) {
+      error = String(exc);
+    } finally {
+      await context.close();
+    }
+    const matchesExpected = runtimeMatchesExpected(runtime);
+    attempts.push({
+      elapsed_ms: Math.round(performance.now() - started),
+      build_id: runtime.build_id,
+      ghi_color: runtime.ghi_color,
+      matches_expected: matchesExpected,
+      error,
+    });
+    if (matchesExpected) {
+      return {
+        matches_expected: true,
+        elapsed_ms: Math.round(performance.now() - started),
+        attempts,
+        runtime,
+      };
+    }
+    await sleep(intervalMs);
+  }
+  const last = attempts.at(-1) || null;
+  return {
+    matches_expected: false,
+    elapsed_ms: Math.round(performance.now() - started),
+    attempts,
+    runtime: last ? { build_id: last.build_id, ghi_color: last.ghi_color } : null,
+  };
+}
+
 async function leafletTileZoom(frame) {
   const urls = await frame.locator('img.leaflet-tile').evaluateAll((nodes) =>
     nodes.map((node) => node.src || '').filter(Boolean)
@@ -257,6 +351,7 @@ async function runViewportAudit(browser, name, viewport) {
 
   const appText = await bodyText(appFrame);
   const pageText = await bodyText(page.mainFrame());
+  const runtimeBuild = await readRuntimeMarker(page);
   const title = await page.title().catch(() => '');
   const headings = await appFrame.locator('h1,h2,h3').allInnerTexts().catch(() => []);
   const frameUrls = page.frames().map((frame) => frame.url());
@@ -333,6 +428,7 @@ async function runViewportAudit(browser, name, viewport) {
     frame_urls: frameUrls,
     throttle_visible: throttleVisible,
     resource_limit_visible: resourceLimitVisible,
+    runtime_build: runtimeBuild,
     viewport_metrics: viewportMetrics,
     console_messages: consoleMessages.slice(0, 100),
     page_errors: pageErrors.slice(0, 100),
@@ -360,8 +456,10 @@ async function runViewportAudit(browser, name, viewport) {
 }
 
 const report = {
-  schema: 'building-energy-tools-live-audit-v3',
+  schema: 'building-energy-tools-live-audit-v4',
   expected_catalog: { version: expectedCatalogManifest.catalog_version, records: expectedCatalogManifest.station_count, sha256: expectedCatalogManifest.csv_sha256 },
+  expected_runtime: { build_id: EXPECTED_RUNTIME_BUILD_ID, ghi_color: EXPECTED_GHI_COLOR },
+  runtime_preflight: null,
   target_url: TARGET_URL,
   audited_at_utc: nowIso(),
   first_http_response: await firstHttpResponse(TARGET_URL),
@@ -375,6 +473,7 @@ try {
     headless: true,
     args: ['--no-sandbox', '--disable-dev-shm-usage'],
   });
+  report.runtime_preflight = await waitForExpectedRuntimeBuild(browser);
   report.browser = {
     desktop: await runViewportAudit(browser, 'desktop', { width: 1440, height: 1000 }),
     mobile: await runViewportAudit(browser, 'mobile', { width: 390, height: 844 }),
@@ -395,7 +494,21 @@ const views = report.browser && !report.browser.error
   : [];
 const critical = [];
 const findings = [];
+if (!report.runtime_preflight?.matches_expected) {
+  critical.push(
+    `live runtime build does not match checked-out source after propagation wait `
+    + `(expected ${EXPECTED_RUNTIME_BUILD_ID}/${EXPECTED_GHI_COLOR}, `
+    + `observed ${report.runtime_preflight?.runtime?.build_id ?? 'missing'}/${report.runtime_preflight?.runtime?.ghi_color ?? 'missing'}).`
+  );
+}
 for (const view of views) {
+  if (!runtimeMatchesExpected(view.runtime_build)) {
+    critical.push(
+      `${view.name}: live runtime build does not match checked-out source `
+      + `(expected ${EXPECTED_RUNTIME_BUILD_ID}/${EXPECTED_GHI_COLOR}, `
+      + `observed ${view.runtime_build?.build_id ?? 'missing'}/${view.runtime_build?.ghi_color ?? 'missing'}).`
+    );
+  }
   if (!view.app_visible) critical.push(`${view.name}: Climate Analyzer UI was not detected.`);
   if (view.page_errors.length) critical.push(`${view.name}: ${view.page_errors.length} uncaught page error(s).`);
   if (view.viewport_metrics?.horizontal_overflow_px > 0) {
@@ -431,6 +544,10 @@ const md = [
   `- Target: ${TARGET_URL}`,
   `- Audited at: ${report.audited_at_utc}`,
   `- First unauthenticated HTTP response: ${report.first_http_response.status ?? 'ERROR'} (${report.first_http_response.elapsed_ms} ms)`,
+  `- Expected runtime build: ${EXPECTED_RUNTIME_BUILD_ID}`,
+  `- Expected GHI semantic colour: ${EXPECTED_GHI_COLOR}`,
+  `- Runtime propagation preflight matched: ${report.runtime_preflight?.matches_expected ?? false}`,
+  `- Runtime propagation wait: ${report.runtime_preflight?.elapsed_ms ?? 'n/a'} ms`,
   '',
   '## Browser summary',
   '',
@@ -441,6 +558,9 @@ const md = [
     `- Navigation HTTP: ${view.navigation_status ?? 'n/a'}`,
     `- UI detected: ${view.app_visible}`,
     `- App frame: ${view.app_frame_url}`,
+    `- Runtime build: ${view.runtime_build?.build_id ?? 'missing'}`,
+    `- Runtime GHI semantic colour: ${view.runtime_build?.ghi_color ?? 'missing'}`,
+    `- Runtime matches checked-out source: ${runtimeMatchesExpected(view.runtime_build)}`,
     `- Time to detected app text: ${view.app_detected_ms ?? 'n/a'} ms`,
     `- Throttle banner detected for anonymous viewer: ${view.throttle_visible}`,
     `- Horizontal overflow: ${view.viewport_metrics?.horizontal_overflow_px ?? 'n/a'} px`,
