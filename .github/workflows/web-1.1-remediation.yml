@@ -32,7 +32,7 @@ jobs:
 
       - name: Build strict global Climate.OneBuilding snapshot
         working-directory: tools/climate_analyzer
-        run: python scripts/update_station_catalog.py --regions all
+        run: PYTHONPATH=. python scripts/update_station_catalog.py --regions all
 
       - name: Apply map viewport remediation
         run: python .github/remediation/web_1_1_patch.py
@@ -40,8 +40,8 @@ jobs:
       - name: Validate compile, catalog and regressions
         working-directory: tools/climate_analyzer
         run: |
-          python -m compileall -q app.py epw_climate_analyzer scripts tests
-          python -m pytest -q
+          PYTHONPATH=. python -m compileall -q app.py epw_climate_analyzer scripts tests
+          PYTHONPATH=. python -m pytest -q
 
       - name: Commit validated result
         run: |
