@@ -1,0 +1,52 @@
+name: CLIMATE-0.10.4 Compare + Psychrometric Hotfix
+
+on:
+  push:
+    branches:
+      - climate-0.10.4-compare-lazy-import-psychrometric-domain
+
+permissions:
+  contents: write
+
+jobs:
+  validate-and-commit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: tools/climate_analyzer
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: climate-0.10.4-compare-lazy-import-psychrometric-domain
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/climate_analyzer/requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+      - name: Apply remediation
+        working-directory: ${{ github.workspace }}
+        run: python .github/remediation/climate_0_10_4_hotfix.py
+      - name: Compile Python sources
+        run: python -m compileall -q app.py epw_climate_analyzer tests scripts
+      - name: Focused CLIMATE-0.10.4 regression
+        run: python -m unittest tests.test_climate_0_10_4_regressions -v
+      - name: Full regression suite
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
+      - name: Commit validated hotfix
+        working-directory: ${{ github.workspace }}
+        run: |
+          git rm .github/workflows/climate-0.10.4-hotfix.yml
+          git rm .github/remediation/climate_0_10_4_hotfix.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tools/climate_analyzer/app.py
+          git add tools/climate_analyzer/epw_climate_analyzer/charts.py
+          git add tools/climate_analyzer/tests/test_climate_0_10_4_regressions.py
+          git commit -m "CLIMATE-0.10.4: fix compare lazy imports and psychrometric domain"
+          git push origin HEAD:climate-0.10.4-compare-lazy-import-psychrometric-domain
