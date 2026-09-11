@@ -1,27 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
-
-ROOT = Path(__file__).resolve().parents[1]
-APP = ROOT / "app.py"
-TEST = ROOT / "tests" / "test_wet_bulb_temperature_route.py"
-
-source = APP.read_text(encoding="utf-8")
-old_doc = '''    Expensive calculations are controlled by page-level flags. This keeps\n    temperature, wind, sky and data-quality pages responsive because they do not\n    need wet-bulb inversion or solar-position calculations.\n'''
-new_doc = '''    Expensive calculations are controlled by page-level flags. This keeps wind,\n    sky and data-quality pages responsive by skipping optional derivations they\n    do not need. The Temperature page opts into psychrometrics because its\n    variable explorer exposes wet-bulb temperature.\n'''
-if old_doc not in source:
-    raise SystemExit("expected load_epw_from_bytes performance note not found")
-source = source.replace(old_doc, new_doc, 1)
-
-old_pages = '''    pages_requiring_psychrometrics = {\n        "Overview",\n        "Humidity and Psychrometrics",\n'''
-new_pages = '''    pages_requiring_psychrometrics = {\n        "Overview",\n        "Temperature",\n        "Humidity and Psychrometrics",\n'''
-if old_pages not in source:
-    raise SystemExit("expected psychrometric page set not found")
-source = source.replace(old_pages, new_pages, 1)
-APP.write_text(source, encoding="utf-8")
-
-TEST.write_text(r'''from __future__ import annotations
-
 import os
 import subprocess
 import sys
@@ -133,6 +111,3 @@ class WetBulbTemperatureRouteTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-''', encoding="utf-8")
-
-print("CLIMATE-0.10.6 wet-bulb temperature hotfix applied")
