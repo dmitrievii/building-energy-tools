@@ -15,8 +15,9 @@ test('responsive layer is loaded after base CSS with the current cache identity'
   const responsivePos = index.indexOf('./src/styles/responsive.css');
   assert.ok(basePos >= 0, 'base stylesheet must be present');
   assert.ok(responsivePos > basePos, 'responsive stylesheet must load after base stylesheet');
-  assert.match(index, /main\.css\?v=comfort-0\.1\.2/);
-  assert.match(index, /responsive\.css\?v=comfort-0\.1\.2/);
+  assert.match(index, /main\.css\?v=comfort-0\.1\.3/);
+  assert.match(index, /responsive\.css\?v=comfort-0\.1\.3/);
+  assert.match(index, /main\.js\?v=comfort-0\.1\.3/);
 });
 
 test('laptop layout uses fluid three-column tracks instead of fixed desktop widths', () => {
@@ -26,6 +27,21 @@ test('laptop layout uses fluid three-column tracks instead of fixed desktop widt
   assert.match(responsiveCss, /minmax\(350px,\s*1fr\)/);
   assert.match(responsiveCss, /\.dashboard-grid\s*>\s*\*/);
   assert.match(responsiveCss, /min-width:\s*0/);
+});
+
+test('header is auto-height and typography is fluid', () => {
+  assert.match(responsiveCss, /\.app-header\s*\{[\s\S]*?height:\s*auto/);
+  assert.match(responsiveCss, /grid-template-columns:\s*minmax\(0,\s*1fr\)\s*auto/);
+  assert.match(responsiveCss, /\.brand h1\s*\{[\s\S]*?font-size:\s*clamp\(/);
+  assert.match(responsiveCss, /\.brand p\s*\{[\s\S]*?font-size:\s*clamp\(/);
+  assert.match(responsiveCss, /\.badge\s*\{[\s\S]*?font-size:\s*clamp\(/);
+});
+
+test('laptop avatar is fitted inside the stage instead of being cropped at 116 percent height', () => {
+  assert.match(responsiveCss, /\.avatar-image\s*\{[\s\S]*?height:\s*calc\(100%\s*-\s*8px\)/);
+  assert.match(responsiveCss, /max-height:\s*calc\(100%\s*-\s*8px\)/);
+  assert.match(responsiveCss, /@media\s*\(max-height:\s*860px\)\s*and\s*\(min-width:\s*1201px\)/);
+  assert.match(responsiveCss, /height:\s*calc\(100%\s*-\s*6px\)/);
 });
 
 test('narrow layouts reflow rather than crop or globally scale the application', () => {
