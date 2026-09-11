@@ -1,0 +1,15 @@
+{
+  "name": "thermal-comfort-studio-web",
+  "version": "0.1.0-beta.1",
+  "private": true,
+  "type": "module",
+  "description": "Interactive ISO 7730 PMV/PPD thermal-comfort and human heat-balance analysis for Building Energy Tools.",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "test": "node --test tests/*.test.js",
+    "build": "python3 scripts/build_static_dist.py"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

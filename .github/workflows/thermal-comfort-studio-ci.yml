@@ -1,0 +1,45 @@
+name: Thermal Comfort Studio CI
+
+on:
+  pull_request:
+    paths:
+      - 'tools/thermal_comfort_studio/**'
+      - '.github/workflows/thermal-comfort-studio-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'tools/thermal_comfort_studio/**'
+      - '.github/workflows/thermal-comfort-studio-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run unit and publication tests
+        working-directory: tools/thermal_comfort_studio
+        run: npm test
+      - name: Build static publication payload
+        working-directory: tools/thermal_comfort_studio
+        run: python scripts/build_static_dist.py --output dist
+      - name: HTTP smoke
+        working-directory: tools/thermal_comfort_studio
+        run: |
+          python -m http.server 8765 --directory dist > /tmp/tcs-http.log 2>&1 &
+          pid=$!
+          trap 'kill $pid' EXIT
+          for i in {1..20}; do curl -fsS http://127.0.0.1:8765/ >/dev/null && break; sleep 0.25; done
+          curl -fsS http://127.0.0.1:8765/src/main.js >/dev/null
+          curl -fsS http://127.0.0.1:8765/assets/avatars/preset_02_light_indoor/pmv_0_comfortable.webp >/dev/null

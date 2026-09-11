@@ -1,0 +1,1010 @@
+{
+  "preset_00_underwear:pmv_0_comfortable": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      298,
+      77,
+      725,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_00_underwear:pmv_-1_slightly_cool": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      328,
+      77,
+      694,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_00_underwear:pmv_-2_cold": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      329,
+      77,
+      694,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_00_underwear:pmv_-3_freezing": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      326,
+      77,
+      698,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_00_underwear:pmv_+1_slightly_warm": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      298,
+      77,
+      724,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_00_underwear:pmv_+2_warm": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      286,
+      77,
+      738,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_00_underwear:pmv_+3_overheated": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      250,
+      77,
+      772,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_01_summer_light:pmv_0_comfortable": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      300,
+      77,
+      724,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_01_summer_light:pmv_-1_slightly_cool": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      326,
+      77,
+      697,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_01_summer_light:pmv_-2_cold": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      329,
+      77,
+      694,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_01_summer_light:pmv_-3_freezing": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      328,
+      77,
+      695,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_01_summer_light:pmv_+1_slightly_warm": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      296,
+      77,
+      728,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_01_summer_light:pmv_+2_warm": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      287,
+      77,
+      736,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_01_summer_light:pmv_+3_overheated": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      254,
+      77,
+      769,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_02_light_indoor:pmv_0_comfortable": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      300,
+      77,
+      723,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_02_light_indoor:pmv_-1_slightly_cool": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      313,
+      77,
+      710,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_02_light_indoor:pmv_-2_cold": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      320,
+      77,
+      703,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_02_light_indoor:pmv_-3_freezing": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      332,
+      77,
+      692,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_02_light_indoor:pmv_+1_slightly_warm": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      292,
+      77,
+      731,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_02_light_indoor:pmv_+2_warm": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      283,
+      77,
+      740,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_02_light_indoor:pmv_+3_overheated": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      251,
+      77,
+      772,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_03_neutral_indoor:pmv_0_comfortable": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      295,
+      77,
+      728,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_03_neutral_indoor:pmv_-1_slightly_cool": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      323,
+      77,
+      700,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_03_neutral_indoor:pmv_-2_cold": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      332,
+      77,
+      692,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_03_neutral_indoor:pmv_-3_freezing": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      328,
+      77,
+      695,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_03_neutral_indoor:pmv_+1_slightly_warm": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      296,
+      77,
+      727,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_03_neutral_indoor:pmv_+2_warm": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      280,
+      77,
+      743,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_03_neutral_indoor:pmv_+3_overheated": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      256,
+      77,
+      768,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_04_cool_indoor_layered:pmv_0_comfortable": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      296,
+      77,
+      727,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 10,
+    "scaleCorrection": 1.0
+  },
+  "preset_04_cool_indoor_layered:pmv_-1_slightly_cool": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      316,
+      77,
+      708,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 10,
+    "scaleCorrection": 1.0
+  },
+  "preset_04_cool_indoor_layered:pmv_-2_cold": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      336,
+      77,
+      686,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 10,
+    "scaleCorrection": 1.0
+  },
+  "preset_04_cool_indoor_layered:pmv_-3_freezing": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      326,
+      77,
+      696,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 10,
+    "scaleCorrection": 1.0
+  },
+  "preset_04_cool_indoor_layered:pmv_+1_slightly_warm": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      305,
+      77,
+      718,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 10,
+    "scaleCorrection": 1.0
+  },
+  "preset_04_cool_indoor_layered:pmv_+2_warm": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      286,
+      77,
+      738,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 10,
+    "scaleCorrection": 1.0
+  },
+  "preset_04_cool_indoor_layered:pmv_+3_overheated": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      280,
+      77,
+      742,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 10,
+    "scaleCorrection": 1.0
+  },
+  "preset_05_warm_office:pmv_0_comfortable": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      300,
+      77,
+      723,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_05_warm_office:pmv_-1_slightly_cool": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      320,
+      77,
+      704,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_05_warm_office:pmv_-2_cold": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      331,
+      77,
+      692,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_05_warm_office:pmv_-3_freezing": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      324,
+      77,
+      700,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_05_warm_office:pmv_+1_slightly_warm": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      300,
+      77,
+      723,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_05_warm_office:pmv_+2_warm": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      288,
+      77,
+      734,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_05_warm_office:pmv_+3_overheated": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      260,
+      77,
+      764,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 0,
+    "scaleCorrection": 1.0
+  },
+  "preset_06_cold_indoor_heavy_layered:pmv_0_comfortable": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      284,
+      77,
+      739,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 10,
+    "scaleCorrection": 1.0
+  },
+  "preset_06_cold_indoor_heavy_layered:pmv_-1_slightly_cool": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      311,
+      77,
+      712,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 10,
+    "scaleCorrection": 1.0
+  },
+  "preset_06_cold_indoor_heavy_layered:pmv_-2_cold": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      326,
+      77,
+      698,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 10,
+    "scaleCorrection": 1.0
+  },
+  "preset_06_cold_indoor_heavy_layered:pmv_-3_freezing": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      322,
+      77,
+      702,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 10,
+    "scaleCorrection": 1.0
+  },
+  "preset_06_cold_indoor_heavy_layered:pmv_+1_slightly_warm": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      262,
+      77,
+      760,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 10,
+    "scaleCorrection": 1.0
+  },
+  "preset_06_cold_indoor_heavy_layered:pmv_+2_warm": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      270,
+      77,
+      754,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 10,
+    "scaleCorrection": 1.0
+  },
+  "preset_06_cold_indoor_heavy_layered:pmv_+3_overheated": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      242,
+      77,
+      782,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 10,
+    "scaleCorrection": 1.0
+  },
+  "preset_07_winter_outdoor:pmv_0_comfortable": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      275,
+      77,
+      748,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 14,
+    "scaleCorrection": 1.0
+  },
+  "preset_07_winter_outdoor:pmv_-1_slightly_cool": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      322,
+      77,
+      702,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 14,
+    "scaleCorrection": 1.0
+  },
+  "preset_07_winter_outdoor:pmv_-2_cold": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      324,
+      77,
+      699,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 14,
+    "scaleCorrection": 1.0
+  },
+  "preset_07_winter_outdoor:pmv_-3_freezing": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      316,
+      77,
+      707,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 14,
+    "scaleCorrection": 1.0
+  },
+  "preset_07_winter_outdoor:pmv_+1_slightly_warm": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      284,
+      77,
+      739,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 14,
+    "scaleCorrection": 1.0
+  },
+  "preset_07_winter_outdoor:pmv_+2_warm": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      263,
+      77,
+      760,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 14,
+    "scaleCorrection": 1.0
+  },
+  "preset_07_winter_outdoor:pmv_+3_overheated": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      240,
+      77,
+      783,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 14,
+    "scaleCorrection": 1.0
+  },
+  "preset_08_extreme_winter_outdoor:pmv_0_comfortable": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      266,
+      77,
+      756,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 5,
+    "scaleCorrection": 1.0
+  },
+  "preset_08_extreme_winter_outdoor:pmv_-1_slightly_cool": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      306,
+      77,
+      716,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 5,
+    "scaleCorrection": 1.0
+  },
+  "preset_08_extreme_winter_outdoor:pmv_-2_cold": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      322,
+      77,
+      700,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 5,
+    "scaleCorrection": 1.0
+  },
+  "preset_08_extreme_winter_outdoor:pmv_-3_freezing": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      280,
+      77,
+      744,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 5,
+    "scaleCorrection": 1.0
+  },
+  "preset_08_extreme_winter_outdoor:pmv_+1_slightly_warm": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      242,
+      77,
+      780,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 5,
+    "scaleCorrection": 1.0
+  },
+  "preset_08_extreme_winter_outdoor:pmv_+2_warm": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      300,
+      77,
+      722,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 5,
+    "scaleCorrection": 1.0
+  },
+  "preset_08_extreme_winter_outdoor:pmv_+3_overheated": {
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "bbox": [
+      262,
+      77,
+      760,
+      1506
+    ],
+    "targetCenterX": 512,
+    "targetBottomY": 1506,
+    "targetVisibleHeightPx": 1430,
+    "xOffsetPx": 0,
+    "yOffsetPx": 5,
+    "scaleCorrection": 1.0
+  }
+}

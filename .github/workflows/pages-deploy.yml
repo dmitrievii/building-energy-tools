@@ -8,6 +8,7 @@ on:
       - 'website/site/**'
       - 'website/scripts/check_static_site.py'
       - 'website/tests/**'
+      - 'tools/thermal_comfort_studio/**'
       - '.github/workflows/pages-deploy.yml'
   workflow_dispatch:
 
@@ -27,30 +28,38 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
       - name: Validate static site contract
         run: python website/scripts/check_static_site.py
-
       - name: Run website regression tests
         run: python -m unittest discover -s website/tests -p 'test_*.py' -v
-
+      - name: Run Thermal Comfort Studio tests
+        working-directory: tools/thermal_comfort_studio
+        run: npm test
+      - name: Assemble GitHub Pages artifact
+        run: |
+          rm -rf _site
+          mkdir -p _site
+          cp -a website/site/. _site/
+          python tools/thermal_comfort_studio/scripts/build_static_dist.py --output _site/tools/thermal-comfort-studio
+          test -f _site/tools/thermal-comfort-studio/index.html
+          test -f _site/tools/thermal-comfort-studio/src/main.js
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
-
-      - name: Upload website/site artifact
+      - name: Upload assembled Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: website/site
-
+          path: _site
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
