@@ -317,9 +317,10 @@ def load_epw_from_bytes(
 ) -> tuple[object, pd.DataFrame, list[object]]:
     """Load an EPW file, calculate only needed derived variables and return cached objects.
 
-    Expensive calculations are controlled by page-level flags. This keeps
-    temperature, wind, sky and data-quality pages responsive because they do not
-    need wet-bulb inversion or solar-position calculations.
+    Expensive calculations are controlled by page-level flags. This keeps wind,
+    sky and data-quality pages responsive by skipping optional derivations they
+    do not need. The Temperature page opts into psychrometrics because its
+    variable explorer exposes wet-bulb temperature.
     """
     epw = parse_epw(BytesIO(payload))
     data = add_degree_metrics(epw.data)
@@ -347,6 +348,7 @@ def page_derivation_flags(page: str) -> tuple[bool, bool]:
     """Return whether the selected page needs psychrometric and solar columns."""
     pages_requiring_psychrometrics = {
         "Overview",
+        "Temperature",
         "Humidity and Psychrometrics",
         "Natural Ventilation",
         "HVAC and Passive Design",
