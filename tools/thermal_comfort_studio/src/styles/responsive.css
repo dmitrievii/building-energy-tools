@@ -1,6 +1,7 @@
-/* COMFORT-0.1.2 responsive fit
-   Fluid laptop geometry + cache-busted deployment. This layer is intentionally
-   presentation-only: no scientific calculation code is touched. */
+/* COMFORT-0.1.3 fluid typography + avatar fit
+   Presentation-only remediation for short laptop viewports. Scientific code is
+   unchanged. The goals are: no cropped avatar, no clipped header copy, fluid
+   typography, and slightly lower vertical density on compact screens. */
 
 html,
 body,
@@ -18,6 +19,57 @@ body {
 .app-header {
   width: 100%;
   max-width: 100%;
+  height: auto;
+  min-height: 78px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 16px;
+  padding-block: clamp(9px, 1.1vh, 13px);
+}
+
+.brand {
+  min-width: 0;
+  align-items: flex-start;
+}
+
+.brand > div {
+  min-width: 0;
+}
+
+.project-kicker {
+  font-size: clamp(10px, 0.58rem + 0.08vw, 11.5px);
+  line-height: 1.12;
+}
+
+.brand h1 {
+  font-size: clamp(24px, 1.18rem + 0.55vw, 27px);
+  line-height: 1.08;
+}
+
+.brand p {
+  margin-top: 3px;
+  font-size: clamp(12.5px, 0.76rem + 0.16vw, 15px);
+  line-height: 1.28;
+}
+
+.header-actions {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+}
+
+.badge {
+  padding: clamp(6px, 0.7vh, 8px) clamp(10px, 0.8vw, 13px);
+  font-size: clamp(12px, 0.72rem + 0.12vw, 14px);
+}
+
+.version {
+  font-size: clamp(11.5px, 0.7rem + 0.1vw, 13px);
+  white-space: nowrap;
 }
 
 .dashboard-grid,
@@ -57,10 +109,12 @@ canvas,
   max-width: 100%;
 }
 
-/* Fluid compact-desktop mode. Instead of waiting until the original 1540 px
-   breakpoint and then keeping large fixed tracks, all three principal columns
-   are allowed to contract proportionally. This is the laptop layout. */
+/* Fluid compact-desktop / laptop mode. */
 @media (max-width: 1750px) and (min-width: 1201px) {
+  :root {
+    --top-panel-height: clamp(700px, 80vh, 790px);
+  }
+
   .dashboard-grid {
     grid-template-columns:
       minmax(300px, 0.82fr)
@@ -77,7 +131,7 @@ canvas,
   .results-column {
     grid-column: auto;
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: 96px minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: 92px minmax(0, 1fr) minmax(0, 1fr);
     gap: 12px;
   }
 
@@ -88,22 +142,41 @@ canvas,
   }
 
   .kpi {
-    min-height: 96px;
-    padding-inline: 8px;
+    min-height: 92px;
+    padding: 10px 8px;
   }
 
   .kpi strong {
-    font-size: clamp(24px, 2vw, 31px);
+    font-size: clamp(23px, 1.55vw, 30px);
   }
 
   .kpi span {
-    font-size: clamp(12px, 0.9vw, 14.5px);
+    font-size: clamp(11.5px, 0.78vw, 14px);
+  }
+
+  .kpi em {
+    font-size: clamp(11px, 0.72vw, 13px);
+  }
+
+  .panel-title,
+  .chart-head {
+    padding: 13px 16px 10px;
+  }
+
+  .panel-title h2,
+  .chart-head h3 {
+    font-size: clamp(18px, 1.16vw, 21px);
+  }
+
+  .panel-title span {
+    font-size: clamp(12px, 0.78vw, 14px);
   }
 
   .control-row {
     grid-template-columns: minmax(0, 1fr) minmax(104px, 126px) 48px;
     gap: 7px;
-    padding-inline: 9px;
+    padding: 7px 9px;
+    min-height: 54px;
   }
 
   .checkbox-row {
@@ -111,27 +184,33 @@ canvas,
   }
 
   .control-row span {
-    font-size: clamp(14.5px, 1vw, 17.4px);
+    font-size: clamp(14px, 0.92vw, 16.5px);
   }
 
   .control-row input,
   .control-row select {
-    font-size: clamp(15px, 1.05vw, 18px);
+    height: 38px;
+    font-size: clamp(14.5px, 0.98vw, 17px);
+  }
+
+  .control-row em,
+  .check-control {
+    font-size: clamp(12.5px, 0.78vw, 14.5px);
   }
 
   .heat-label {
     min-width: 0;
     max-width: 42%;
-    padding: 10px 12px 10px 14px;
-    font-size: clamp(14px, 0.95vw, 17.4px);
+    padding: 9px 11px 9px 13px;
+    font-size: clamp(13.5px, 0.9vw, 16.5px);
   }
 
   .heat-label b {
-    font-size: clamp(15px, 1vw, 18.8px);
+    font-size: clamp(14.5px, 0.96vw, 17.8px);
   }
 
   .heat-label span {
-    font-size: clamp(12px, 0.86vw, 15.4px);
+    font-size: clamp(11.5px, 0.78vw, 14.5px);
   }
 
   .heat-evap,
@@ -141,51 +220,76 @@ canvas,
     min-width: 0;
   }
 
+  /* The original desktop image is 116% of the avatar stage and bottom-anchored.
+     On short laptop screens that pushes the head outside the clipped stage.
+     Fit the full person inside the stage instead of cropping it. */
   .avatar-image {
-    max-width: 96%;
+    height: calc(100% - 8px);
+    max-height: calc(100% - 8px);
+    width: auto;
+    max-width: 90%;
+    bottom: 4px;
   }
 }
 
-/* Short laptop displays: fit the primary dashboard more naturally into the
-   available vertical viewport while retaining ordinary vertical scrolling. */
+/* Short laptop displays: further reduce vertical density, but never crop the
+   person. */
 @media (max-height: 860px) and (min-width: 1201px) {
   :root {
-    --top-panel-height: 690px;
+    --top-panel-height: clamp(670px, 79vh, 710px);
+  }
+
+  .app-header {
+    min-height: 72px;
+    padding-block: 8px;
+  }
+
+  .brand h1 {
+    font-size: clamp(23px, 1.4vw, 26px);
+  }
+
+  .brand p {
+    font-size: clamp(12px, 0.78vw, 14px);
   }
 
   #inputControls {
-    padding-block: 9px;
-    gap: 7px;
+    padding-block: 8px;
+    gap: 6px;
   }
 
   .control-row {
-    min-height: 50px;
-    padding-block: 6px;
+    min-height: 48px;
+    padding-block: 5px;
   }
 
   .control-row input,
   .control-row select {
-    height: 36px;
+    height: 34px;
   }
 
   .preset-note {
-    margin-bottom: 10px;
-    padding-block: 9px;
-    font-size: 13.5px;
+    margin-bottom: 9px;
+    padding-block: 8px;
+    font-size: 13px;
+  }
+
+  .avatar-image {
+    height: calc(100% - 6px);
+    max-height: calc(100% - 6px);
+    bottom: 3px;
   }
 }
 
 /* At genuinely narrow widths reflow instead of cropping. */
 @media (max-width: 1200px) {
   .app-header {
-    height: auto;
-    min-height: 78px;
-    gap: 10px;
-    flex-wrap: wrap;
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+    gap: 8px;
   }
 
   .header-actions {
-    flex-wrap: wrap;
+    justify-content: flex-start;
   }
 
   .dashboard-grid,
@@ -211,6 +315,14 @@ canvas,
     grid-column: 1 / -1;
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
+
+  .avatar-image {
+    height: auto;
+    width: auto;
+    max-width: 80%;
+    max-height: calc(100% - 10px);
+    bottom: 5px;
+  }
 }
 
 @media (max-width: 900px) {
@@ -233,10 +345,6 @@ canvas,
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .header-actions {
-    padding-left: 0;
-  }
-
   .panel-title,
   .chart-head {
     gap: 10px;
@@ -246,8 +354,8 @@ canvas,
   .avatar-image {
     height: auto;
     width: auto;
-    max-width: 82%;
-    max-height: 580px;
+    max-width: 78%;
+    max-height: calc(100% - 12px);
   }
 
   .heat-label {
@@ -268,6 +376,18 @@ canvas,
 @media (max-width: 560px) {
   body {
     font-size: 15px;
+  }
+
+  .app-header {
+    padding-inline: 12px;
+  }
+
+  .brand h1 {
+    font-size: clamp(21px, 6vw, 24px);
+  }
+
+  .brand p {
+    font-size: 12.5px;
   }
 
   .dashboard-grid,
