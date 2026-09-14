@@ -23,6 +23,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Run Envelope Studio calculation tests
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run calculation tests
         working-directory: tools/envelope_studio
         run: npm test
+      - name: Check browser-module syntax
+        working-directory: tools/envelope_studio
+        run: npm run check
+      - name: Build static distribution
+        working-directory: tools/envelope_studio
+        run: |
+          npm run build
+          test -f dist/index.html
+          test -f dist/src/main.js
