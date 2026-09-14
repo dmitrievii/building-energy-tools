@@ -86,12 +86,19 @@ export function stepGlaser({
 }) {
   if (!(duration_s > 0)) throw new RangeError('duration_s must be > 0');
   const thermal = interfaceState(layers, {...boundary, rsi, rse});
+
+  // Vapour-diffusion coordinates run from the indoor vapour boundary (sd=0)
+  // to the outdoor vapour boundary (sd=sum(sd_layer)). Internal material
+  // interfaces are the only saturation constraints. Do not add a duplicate
+  // outdoor-air node at the same sd as the outer material surface.
   const diffusionNodes = [{sd_m: 0, T_C: boundary.ti_C, psat_Pa: saturationPressurePa(boundary.ti_C), label: 'inside'}];
   let sd = 0;
   thermal.layers.forEach((layer, i) => {
     sd += layer.sd_m;
-    const tempNode = thermal.nodes[i + 2];
-    diffusionNodes.push({sd_m: sd, T_C: tempNode.T_C, psat_Pa: saturationPressurePa(tempNode.T_C), label: `interface_${i}`});
+    if (i < thermal.layers.length - 1) {
+      const tempNode = thermal.nodes[i + 2];
+      diffusionNodes.push({sd_m: sd, T_C: tempNode.T_C, psat_Pa: saturationPressurePa(tempNode.T_C), label: `interface_${i}`});
+    }
   });
   diffusionNodes.push({sd_m: sd, T_C: boundary.te_C, psat_Pa: saturationPressurePa(boundary.te_C), label: 'outside'});
 
