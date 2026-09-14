@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "check": "node --check src/App.js && node --check src/main.js && node --check src/engine/glaser.js && node --check src/engine/thermal.js && node --check src/engine/psychrometrics.js && node --check src/climate/epw.js && node --check src/modes/monthly.js && node --check src/modes/quasiHourly.js && node --check src/data/reference.js && node --check src/data/materialLibrary.js && node --check src/charts/svgCharts.js",
+    "build": "python3 scripts/build_static_dist.py --output dist"
   }
 }
