@@ -1,0 +1,9 @@
+{
+  "name": "building-envelope-studio",
+  "version": "0.1.0-alpha.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  }
+}
