@@ -26,7 +26,7 @@ test('lower convex hull drops high non-governing points', () => {
   assert.deepEqual(h.map(p => p.x), [0,2]);
 });
 
-test('winter reference case produces condensate', () => {
+test('winter reference case produces condensate and unique diffusion coordinates', () => {
   const r = stepGlaser({
     layers,
     boundary:{ti_C:22, te_C:-1.38, rhi:0.51105866735767, rhe:0.9},
@@ -36,6 +36,9 @@ test('winter reference case produces condensate', () => {
   });
   assert.ok(r.totalStored_kg_m2 > 0);
   assert.ok(Object.keys(r.storedMass_kg_m2).length >= 1);
+  const sd = r.diffusionNodes.map(n => n.sd_m);
+  assert.equal(new Set(sd).size, sd.length);
+  assert.equal(r.diffusionNodes.at(-1).sd_m, r.thermal.totalSd_m);
 });
 
 test('period series carries condensate between periods and allows drying', () => {
