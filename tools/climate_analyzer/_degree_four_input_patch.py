@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 APP = Path(__file__).resolve().parent / "app.py"
 text = APP.read_text(encoding="utf-8")
@@ -65,11 +66,23 @@ new_controls = '''        st.caption(
 '''
 block = block[:controls_start] + new_controls + block[controls_end:]
 
-old_args = '''            heating_base_c=heat_threshold,\n            cooling_base_c=cool_threshold,\n'''
-new_args = '''            heating_indoor_c=heating_indoor,\n            heating_limit_c=heating_limit,\n            cooling_indoor_c=cooling_indoor,\n            cooling_limit_c=cooling_limit,\n'''
-if block.count(old_args) != 2:
-    raise SystemExit(f"Expected two old degree-metric argument blocks, found {block.count(old_args)}")
-block = block.replace(old_args, new_args)
+pattern = re.compile(
+    r"(?P<indent>^[ \t]*)heating_base_c=heat_threshold,\n(?P=indent)cooling_base_c=cool_threshold,",
+    flags=re.MULTILINE,
+)
+
+def replace_args(match: re.Match[str]) -> str:
+    indent = match.group("indent")
+    return (
+        f"{indent}heating_indoor_c=heating_indoor,\n"
+        f"{indent}heating_limit_c=heating_limit,\n"
+        f"{indent}cooling_indoor_c=cooling_indoor,\n"
+        f"{indent}cooling_limit_c=cooling_limit,"
+    )
+
+block, argument_replacements = pattern.subn(replace_args, block)
+if argument_replacements != 2:
+    raise SystemExit(f"Expected two old degree-metric argument blocks, found {argument_replacements}")
 
 old_title = '''                f"{aggregation} heating and cooling {metric.lower()} "\n                f"(bases {heat_threshold:g}/{cool_threshold:g} °C)"\n'''
 new_title = '''                f"{aggregation} heating and cooling {metric.lower()} "\n                f"(HGT {heating_indoor:g}/{heating_limit:g}; KGT {cooling_indoor:g}/{cooling_limit:g})"\n'''
