@@ -29,16 +29,21 @@ class PublicUxContractTests(unittest.TestCase):
         self.assertIn("building design", APP_TAGLINE.lower())
 
     def test_navigation_contract_is_complete_and_unique(self) -> None:
-        self.assertEqual(len(NAVIGATION_PAGES), 12)
+        self.assertEqual(len(NAVIGATION_PAGES), 13)
         self.assertEqual(len(set(NAVIGATION_PAGES)), len(NAVIGATION_PAGES))
         self.assertEqual(set(NAVIGATION_LABELS), set(NAVIGATION_PAGES))
         labels = [navigation_label(page) for page in NAVIGATION_PAGES]
         self.assertEqual(len(set(labels)), len(labels))
+        self.assertIn("Time Series and Overlay", NAVIGATION_PAGES)
+        self.assertEqual(
+            navigation_label("Time Series and Overlay"),
+            "Explore — Time series & overlay",
+        )
 
     def test_navigation_exposes_expected_groups(self) -> None:
         labels = [navigation_label(page) for page in NAVIGATION_PAGES]
         self.assertEqual(labels[0], "Start — Climate source")
-        for prefix in ("Climate —", "Design —", "Compare —", "Data —"):
+        for prefix in ("Climate —", "Explore —", "Design —", "Compare —", "Data —"):
             self.assertTrue(any(label.startswith(prefix) for label in labels), prefix)
 
     def test_navigation_is_queued_before_widget_state_is_changed(self) -> None:

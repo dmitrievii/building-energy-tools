@@ -92,6 +92,8 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
     global psychrometric_comparison_chart, ranked_metric_chart, small_multiple_monthly_chart
     global solar_monthly_comparison, sun_path_comparison_chart, tilt_radiation_comparison_chart
     global wind_rose_small_multiples
+    global OverlaySeries, available_resolution_labels, build_overlay_figure
+    global native_resolution_minutes, validate_unit_families
 
     if not _ANALYSIS_DEPENDENCIES_LOADED:
         import pandas as pd
@@ -164,6 +166,13 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
         from epw_climate_analyzer.precipitation import (
             aggregate_liquid_precipitation,
             occurrence_hours,
+        )
+        from epw_climate_analyzer.timeseries import (
+            OverlaySeries,
+            available_resolution_labels,
+            build_overlay_figure,
+            native_resolution_minutes,
+            validate_unit_families,
         )
         _ANALYSIS_DEPENDENCIES_LOADED = True
 
@@ -355,6 +364,7 @@ def page_derivation_flags(page: str) -> tuple[bool, bool]:
         "Overview",
         "Temperature",
         "Humidity and Psychrometrics",
+        "Time Series and Overlay",
         "Natural Ventilation",
         "HVAC and Passive Design",
         "Compare Climates",
@@ -2552,6 +2562,145 @@ def render_hvac_passive(df: pd.DataFrame) -> None:
         render_plot(fig, hvac_interpretation(df))
 
 
+def render_time_series_overlay(df: pd.DataFrame) -> None:
+    """Render aligned variable-resolution series on one absolute time axis."""
+    st.header("Time series and overlay")
+    native_minutes = native_resolution_minutes(pd.DatetimeIndex(df.index))
+    st.caption(
+        f"Source resolution: {native_minutes} min. Choose an exact time window and overlay up to six series. "
+        "Resolutions finer than the source are intentionally unavailable; no temporal interpolation is performed."
+    )
+
+    index = pd.DatetimeIndex(df.index).sort_values()
+    if index.empty:
+        st.info("No time-series records are available.")
+        return
+
+    default_start = pd.Timestamp(index.min())
+    default_end = pd.Timestamp(index.max())
+    date_min = default_start.date()
+    date_max = default_end.date()
+    step_seconds = max(60, int(native_minutes * 60))
+
+    c1, c2, c3, c4 = st.columns(4)
+    start_date = c1.date_input(
+        "From date",
+        value=default_start.date(),
+        min_value=date_min,
+        max_value=date_max,
+        key="overlay_start_date",
+    )
+    start_time = c2.time_input(
+        "From time",
+        value=default_start.time(),
+        step=step_seconds,
+        key="overlay_start_time",
+    )
+    end_date = c3.date_input(
+        "Through date",
+        value=default_end.date(),
+        min_value=date_min,
+        max_value=date_max,
+        key="overlay_end_date",
+    )
+    end_time = c4.time_input(
+        "Through time",
+        value=default_end.time(),
+        step=step_seconds,
+        key="overlay_end_time",
+    )
+
+    start = pd.Timestamp.combine(start_date, start_time)
+    selected_end = pd.Timestamp.combine(end_date, end_time)
+    # "Through" denotes the selected source interval, so the internal viewport
+    # ends at the following native interval boundary. This includes the selected
+    # 23:00 EPW record without fabricating sub-hourly values.
+    end = selected_end + pd.Timedelta(minutes=native_minutes)
+    if selected_end < start:
+        st.error("The end timestamp must not be earlier than the start timestamp.")
+        return
+
+    if start < pd.Timestamp(index.min()) or selected_end > pd.Timestamp(index.max()):
+        st.error("The selected time range must stay inside the loaded source calendar.")
+        return
+
+
+    available_variables = [
+        label
+        for label, (column, _unit) in VARIABLES.items()
+        if column in df.columns and pd.to_numeric(df[column], errors="coerce").notna().any()
+    ]
+    if not available_variables:
+        st.info("No numeric climate variables are available for overlay.")
+        return
+
+    resolutions = available_resolution_labels(pd.DatetimeIndex(df.index))
+    n_series = st.slider("Number of series", min_value=1, max_value=6, value=2, step=1)
+    preferred = [
+        "Dry-bulb temperature",
+        "Global horizontal radiation",
+        "Relative humidity",
+        "Wind speed",
+        "Dew-point temperature",
+        "Station pressure",
+    ]
+    defaults = [item for item in preferred if item in available_variables]
+    specs: list[OverlaySeries] = []
+
+    st.markdown("#### Series")
+    for i in range(n_series):
+        col_variable, col_resolution = st.columns([3, 2])
+        default_label = defaults[i] if i < len(defaults) else available_variables[min(i, len(available_variables) - 1)]
+        variable_label = col_variable.selectbox(
+            f"Series {i + 1} variable",
+            available_variables,
+            index=available_variables.index(default_label),
+            key=f"overlay_variable_{i}",
+        )
+        default_resolution = "Native" if i == 0 else ("Daily" if "Daily" in resolutions else "Native")
+        resolution = col_resolution.selectbox(
+            f"Series {i + 1} resolution",
+            resolutions,
+            index=resolutions.index(default_resolution),
+            key=f"overlay_resolution_{i}",
+        )
+        column, unit = VARIABLES[variable_label]
+        specs.append(OverlaySeries(variable_label, column, unit, resolution))
+
+    try:
+        families = validate_unit_families(specs)
+    except ValueError as exc:
+        st.error(str(exc) + " Remove a physical quantity or choose variables from the same unit family.")
+        return
+
+    raw_view = df.loc[(df.index >= start) & (df.index < end)].copy()
+    st.session_state["_active_filtered_export_df"] = raw_view
+    if raw_view.empty:
+        st.warning("The selected interval contains no source records.")
+        return
+
+
+    try:
+        fig, tables = build_overlay_figure(df, specs, start, end, title="Climate time-series overlay")
+    except (ValueError, KeyError) as exc:
+        st.error(f"The requested overlay could not be constructed: {exc}")
+        return
+
+    st.caption(
+        "All series share the same absolute X-axis. Aggregated series use calendar-aligned complete bins before the "
+        "selected viewport is applied. Extensive interval quantities are summed, state/intensive quantities are averaged, "
+        "and wind direction uses a circular mean."
+    )
+    if len(families) == 2:
+        st.caption("Two physical unit families are shown on separate left and right Y-axes.")
+    render_plot(
+        fig,
+        "The overlay preserves one common time axis for every series. Different temporal resolutions are displayed without "
+        "upsampling or interpolation; complete aggregation bins retain their physical meaning even when only part of a bin "
+        "falls inside the visible range.",
+    )
+
+
 def render_data_quality(epw, df: pd.DataFrame, issues: list[object]) -> None:
     """Render data-quality diagnostics and EPW metadata."""
     st.header("Data quality and EPW diagnostics")
@@ -2660,10 +2809,17 @@ def main() -> None:
         valid_pressure = full_df["atmospheric_station_pressure_pa"].dropna()
         active_pressure = float(valid_pressure.median()) if not valid_pressure.empty else DEFAULT_PRESSURE_PA
 
-    filtered_df = sidebar_filters(full_df)
-    if filtered_df.empty:
-        st.warning("The current filters remove all data. Adjust the month or hour filter.")
-        return
+    if page == "Time Series and Overlay":
+        # This page owns an exact date/hour/minute viewport. Applying the global
+        # month/hour sidebar filter as well would create two conflicting time
+        # filters, so it starts from the complete loaded source calendar.
+        filtered_df = full_df
+        st.session_state["_active_filtered_export_df"] = full_df
+    else:
+        filtered_df = sidebar_filters(full_df)
+        if filtered_df.empty:
+            st.warning("The current filters remove all data. Adjust the month or hour filter.")
+            return
 
     st.sidebar.markdown("### Current climate")
     st.sidebar.write(f"**{epw.location.city}, {epw.location.country}**")
@@ -2690,6 +2846,8 @@ def main() -> None:
         render_sky_daylight(filtered_df)
     elif page == "Precipitation and Snow":
         render_precipitation(filtered_df)
+    elif page == "Time Series and Overlay":
+        render_time_series_overlay(full_df)
     elif page == "Natural Ventilation":
         render_natural_ventilation(filtered_df, pressure_pa=active_pressure)
     elif page == "HVAC and Passive Design":
