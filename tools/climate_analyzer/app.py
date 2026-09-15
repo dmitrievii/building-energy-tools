@@ -1136,18 +1136,22 @@ def render_generic_variable_page(
     """Render a generic variable explorer with chart-type and aggregation controls."""
     variable_label = st.selectbox("Variable", variable_labels, index=variable_labels.index(default_variable))
     column, unit = VARIABLES[variable_label]
-    chart_type = st.selectbox(
-        "Chart type",
-        [
-            "Profile with min-mean-max ribbon",
-            "Percentile band P05-P50-P95",
-            "Heat map",
-            "Duration curve",
-            "Histogram",
-            "Monthly boxplot",
-            "Monthly violin plot",
-        ],
-    )
+    chart_types = [
+        "Profile with min-mean-max ribbon",
+        "Percentile band P05-P50-P95",
+        "Heat map",
+        "Duration curve",
+        "Histogram",
+        "Monthly boxplot",
+        "Monthly violin plot",
+    ]
+    if column == "liquid_precipitation_depth_mm":
+        # Accumulated precipitation belongs to the dedicated totals analysis.
+        # A min/mean/max ribbon cannot use a period sum as its centre line while
+        # its bounds remain per-record extrema, so that chart is deliberately
+        # unavailable for this extensive variable.
+        chart_types.remove("Profile with min-mean-max ribbon")
+    chart_type = st.selectbox("Chart type", chart_types)
     if chart_type == "Heat map":
         heatmap_period = st.selectbox("Heat-map aggregation", ["Day", "Week", "Month"], index=0)
         if column == "dry_bulb_temperature_c":
@@ -1178,9 +1182,8 @@ def render_generic_variable_page(
             aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Hourly", "Seasonal"], index=0)
         # Radiation and illuminance are visualized as mean intensities in the generic explorer.
         # Monthly/annual energy sums are available in the dedicated solar component charts.
-        extensive = column == "liquid_precipitation_depth_mm"
         if chart_type == "Profile with min-mean-max ribbon":
-            fig = profile_ribbon_chart(df, column, aggregation or "Monthly", f"{title_prefix}: {variable_label}", unit, extensive=extensive)
+            fig = profile_ribbon_chart(df, column, aggregation or "Monthly", f"{title_prefix}: {variable_label}", unit)
         elif chart_type == "Percentile band P05-P50-P95":
             fig = percentile_band_chart(df, column, aggregation or "Monthly", f"{title_prefix}: {variable_label} percentiles", unit)
         elif chart_type == "Duration curve":

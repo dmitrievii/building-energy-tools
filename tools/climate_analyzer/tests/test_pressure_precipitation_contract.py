@@ -46,10 +46,16 @@ class PressureAndPrecipitationContractTests(unittest.TestCase):
         self.assertIn('elif page == "Precipitation and Snow":', self.source)
         self.assertIn("render_precipitation(filtered_df)", self.source)
 
-    def test_liquid_precipitation_is_explicitly_extensive_but_snow_is_not(self) -> None:
-        self.assertIn('extensive = column == "liquid_precipitation_depth_mm"', self.source)
-        self.assertNotIn('extensive = column.endswith("_mm")', self.source)
-        self.assertIn('["Snow depth"]', self.source)
+    def test_liquid_precipitation_accumulation_stays_in_dedicated_totals_route(self) -> None:
+        function = next(
+            node for node in self.tree.body
+            if isinstance(node, ast.FunctionDef) and node.name == "render_precipitation"
+        )
+        source = ast.get_source_segment(self.source, function) or ""
+        self.assertIn("aggregate_liquid_precipitation(df, aggregation)", source)
+        self.assertIn('"Precipitation totals"', source)
+        self.assertIn('["Snow depth"]', source)
+        self.assertNotIn('column.endswith("_mm")', self.source)
 
     def _fixture(self) -> pd.DataFrame:
         index = pd.to_datetime(
@@ -87,6 +93,17 @@ class PressureAndPrecipitationContractTests(unittest.TestCase):
         snow = occurrence_hours(df, "snow_depth_cm", 0.0, "Monthly", inclusive=False)
         self.assertEqual(float(snow.iloc[0, 0]), 1.0)
         self.assertEqual(float(snow.iloc[1, 0]), 1.0)
+
+    def test_liquid_precipitation_explorer_never_mixes_period_sum_with_record_min_max(self) -> None:
+        function = next(
+            node for node in self.tree.body
+            if isinstance(node, ast.FunctionDef) and node.name == "render_generic_variable_page"
+        )
+        source = ast.get_source_segment(self.source, function) or ""
+        self.assertIn('if column == "liquid_precipitation_depth_mm":', source)
+        self.assertIn('chart_types.remove("Profile with min-mean-max ribbon")', source)
+        self.assertNotIn('extensive = column == "liquid_precipitation_depth_mm"', source)
+        self.assertNotIn('extensive=extensive', source)
 
     def test_precipitation_page_uses_chart_first_layout_without_kpi_strip(self) -> None:
         function = next(
