@@ -502,6 +502,9 @@ if (!report.runtime_preflight?.matches_expected) {
   );
 }
 for (const view of views) {
+  if (view.resource_limit_visible) {
+    critical.push(`${view.name}: Streamlit resource-limit page detected.`);
+  }
   if (!runtimeMatchesExpected(view.runtime_build)) {
     critical.push(
       `${view.name}: live runtime build does not match checked-out source `

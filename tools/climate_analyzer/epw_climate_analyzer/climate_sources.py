@@ -788,28 +788,33 @@ def filter_station_catalog(
     countries: Iterable[str] | None = None,
     datasets: Iterable[str] | None = None,
 ) -> pd.DataFrame:
-    """Filter station catalog by free text, country list and dataset list."""
-    df = catalog.copy()
-    if countries:
-        country_list = list(countries)
-        if country_list:
-            df = df[df["country"].isin(country_list)]
-    if datasets:
-        dataset_list = list(datasets)
-        if dataset_list:
-            df = df[df["dataset"].isin(dataset_list)]
-    if search_text.strip():
-        token = search_text.strip().lower()
+    """Filter station catalog without copying the full snapshot on the no-filter path."""
+    country_list = list(countries or [])
+    dataset_list = list(datasets or [])
+    token = search_text.strip().lower()
+
+    # The default Find climate view is intentionally zero-copy. The production
+    # catalog is a shared read-only cache resource; all filtered branches below
+    # create their own DataFrame through boolean indexing/reset_index.
+    if not country_list and not dataset_list and not token:
+        return catalog
+
+    df = catalog
+    if country_list:
+        df = df[df["country"].isin(country_list)]
+    if dataset_list:
+        df = df[df["dataset"].isin(dataset_list)]
+    if token:
         searchable = (
-            df["name"].fillna("")
+            df["name"].astype("string").fillna("")
             + " "
-            + df["country"].fillna("")
+            + df["country"].astype("string").fillna("")
             + " "
-            + df.get("region", pd.Series("", index=df.index)).fillna("")
+            + df.get("region", pd.Series("", index=df.index)).astype("string").fillna("")
             + " "
-            + df.get("dataset", pd.Series("", index=df.index)).fillna("")
+            + df.get("dataset", pd.Series("", index=df.index)).astype("string").fillna("")
             + " "
-            + df.get("station_id", pd.Series("", index=df.index)).fillna("")
+            + df.get("station_id", pd.Series("", index=df.index)).astype("string").fillna("")
         ).str.lower()
         df = df[searchable.str.contains(token, regex=False)]
     return df.reset_index(drop=True)
