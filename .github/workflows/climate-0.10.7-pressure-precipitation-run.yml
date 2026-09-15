@@ -25,7 +25,9 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r tools/climate_analyzer/requirements.txt
       - name: Apply pressure and precipitation update
-        run: python tools/climate_analyzer/scripts/apply_pressure_precipitation_update.py
+        run: |
+          python tools/climate_analyzer/scripts/apply_pressure_precipitation_update.py
+          python tools/climate_analyzer/scripts/fix_precipitation_navigation_contract.py
       - name: Compile Python
         working-directory: tools/climate_analyzer
         run: python -m compileall -q app.py epw_climate_analyzer tests
@@ -43,6 +45,7 @@ jobs:
       - name: Commit validated update
         run: |
           rm tools/climate_analyzer/scripts/apply_pressure_precipitation_update.py
+          rm tools/climate_analyzer/scripts/fix_precipitation_navigation_contract.py
           rm .github/workflows/climate-0.10.7-pressure-precipitation-run.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
