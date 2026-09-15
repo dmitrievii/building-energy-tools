@@ -104,9 +104,10 @@ def monthly_hour_matrix(df: pd.DataFrame, column: str, aggfunc: str = "mean") ->
 
 
 def duration_curve(df: pd.DataFrame, column: str, ascending: bool = False) -> pd.DataFrame:
-    """Return a sorted duration curve for a continuous variable."""
+    """Return a sorted duration curve with both record rank and physical duration."""
     values = df[column].dropna().sort_values(ascending=ascending).reset_index(drop=True)
     out = pd.DataFrame({"rank_hour": range(1, len(values) + 1), column: values})
+    out["duration_hours"] = out["rank_hour"].astype(float) * native_interval_hours(df)
     out["exceedance_fraction"] = out["rank_hour"] / max(len(out), 1)
     return out
 
@@ -115,7 +116,7 @@ def native_interval_hours(df: pd.DataFrame) -> float:
     """Return one source record's declared physical duration in hours.
 
     Canonical datasets carry ``canonical_native_interval_minutes`` as source
-    metadata.  Historical gaps must not be interpreted as longer observations,
+    metadata. Historical gaps must not be interpreted as longer observations,
     so a present record always contributes only the declared native interval.
     Legacy frames without that attribute fall back to the median positive
     timestamp spacing, then to one hour when no cadence can be inferred.
