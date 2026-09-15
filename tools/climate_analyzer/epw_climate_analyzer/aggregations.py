@@ -111,26 +111,60 @@ def duration_curve(df: pd.DataFrame, column: str, ascending: bool = False) -> pd
     return out
 
 
+def native_interval_hours(df: pd.DataFrame) -> float:
+    """Return one source record's declared physical duration in hours.
+
+    Canonical datasets carry ``canonical_native_interval_minutes`` as source
+    metadata.  Historical gaps must not be interpreted as longer observations,
+    so a present record always contributes only the declared native interval.
+    Legacy frames without that attribute fall back to the median positive
+    timestamp spacing, then to one hour when no cadence can be inferred.
+    """
+    declared = df.attrs.get("canonical_native_interval_minutes")
+    try:
+        minutes = float(declared)
+    except (TypeError, ValueError):
+        minutes = float("nan")
+
+    if not pd.notna(minutes) or minutes <= 0.0:
+        if isinstance(df.index, pd.DatetimeIndex) and len(df.index) > 1:
+            index = pd.DatetimeIndex(df.index).sort_values().unique()
+            deltas = pd.Series(index[1:] - index[:-1]).dt.total_seconds().div(60.0)
+            positive = deltas[deltas > 0.0]
+            minutes = float(positive.median()) if not positive.empty else 60.0
+        else:
+            minutes = 60.0
+
+    return minutes / 60.0
+
+
 def threshold_count_by_period(
     df: pd.DataFrame,
     condition: pd.Series,
     aggregation: str,
     label: str = "hours",
 ) -> pd.DataFrame:
-    """Count hours satisfying a Boolean condition by a selected aggregation."""
-    indicator = condition.fillna(False).astype(int).rename(label)
+    """Integrate condition duration in physical hours by aggregation period."""
+    hours_per_record = native_interval_hours(df)
+    aligned = condition.reindex(df.index).fillna(False).astype(float)
     temp = df.copy()
-    temp[label] = indicator.values
+    temp[label] = aligned * hours_per_record
 
     if aggregation == "Hourly":
-        return temp[[label]]
+        return temp[label].resample("h").sum(min_count=1).to_frame()
     if aggregation == "Seasonal":
-        return temp.groupby("season", observed=False)[label].sum().reindex(SEASON_ORDER).dropna().to_frame()
+        return (
+            temp.groupby("season", observed=False)[label]
+            .sum(min_count=1)
+            .reindex(SEASON_ORDER)
+            .dropna()
+            .to_frame()
+        )
 
     rule = RESAMPLE_RULES.get(aggregation)
     if rule is None:
         raise ValueError(f"Unsupported aggregation: {aggregation}")
-    return temp[label].resample(rule).sum().to_frame()
+    return temp[label].resample(rule).sum(min_count=1).to_frame()
 
 
 def monthly_box_data(df: pd.DataFrame, column: str) -> pd.DataFrame:

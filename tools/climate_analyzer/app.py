@@ -3282,11 +3282,11 @@ def render_canonical_climate_analysis(dataset) -> None:
             st.caption(f"Calculation pressure: {active_pressure:,.0f} Pa")
 
     if page == "Temperature":
-        st.info("Measured-data mode: count-based 'threshold hours' is hidden until all occurrence routes are cadence-aware. HGT/KGT degree-hours already use the native 10-minute interval.")
-        render_temperature(filtered_df, interval_count_metrics=False)
+        st.caption("Measured-data threshold hours are integrated from the declared native interval; missing timestamp gaps are not counted as observed duration.")
+        render_temperature(filtered_df)
     elif page == "Humidity and Psychrometrics":
-        st.info("Measured-data mode: count-based moisture-threshold hours are hidden until occurrence metrics are cadence-aware.")
-        render_humidity(filtered_df, pressure_pa=active_pressure, interval_count_metrics=False)
+        st.caption("Measured-data moisture-threshold hours are integrated from the declared native interval; missing timestamp gaps are not counted as observed duration.")
+        render_humidity(filtered_df, pressure_pa=active_pressure)
     elif page == "Time Series and Overlay":
         render_time_series_overlay(full_df)
     else:
