@@ -52,6 +52,7 @@ class LiveRuntimeIdentityContractTests(unittest.TestCase):
         self.assertIn("streamlit_folium.st_folium", source)
         self.assertIn("waitForLeafletTileZoom", source)
         self.assertIn("timeoutMs = 45_000", source)
+        self.assertIn("await sleep(1_200);", source)
         self.assertNotIn("exerciseLeafletZoom(page);", source)
 
     def test_live_audit_runs_automatically_after_main_climate_changes(self) -> None:
