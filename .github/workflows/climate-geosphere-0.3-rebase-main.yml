@@ -21,6 +21,8 @@ jobs:
 
       - name: Print app.py diff3 conflict hunks
         run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config merge.conflictstyle diff3
           git fetch origin climate-geosphere-0.3-public-historical-selection
           git merge --no-commit --no-ff origin/climate-geosphere-0.3-public-historical-selection || true
