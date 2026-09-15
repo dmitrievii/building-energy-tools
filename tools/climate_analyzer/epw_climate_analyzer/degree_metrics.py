@@ -1,13 +1,19 @@
 """Heating/cooling degree-hour and degree-day climate indicators.
 
-Degree-hours and degree-days are deliberately treated as two distinct methods:
+The Austrian HGT/KGT notation contains two independent temperatures for each
+indicator.  They must not be collapsed into one generic balance temperature:
 
-* degree-hours integrate temperature difference at the native source interval;
-* degree-days first calculate daily mean outdoor temperature and then apply the
-  heating/cooling base temperatures.
+* HGT_i/gr: the heating limit selects heating periods; the temperature
+  difference is measured from the heating indoor-air reference temperature.
+* KGT_i/gr: the cooling limit selects cooling periods; the temperature
+  difference is measured from the cooling indoor-air reference temperature.
 
-They are therefore not interchangeable through a simple division by 24 when a
-threshold is crossed within a day.
+For example HGT20/12 uses 20 °C indoor air and a 12 °C heating limit, while
+KGT20/18.3 uses 20 °C indoor air and an 18.3 °C cooling limit.
+
+Degree-hours evaluate the native source intervals. Degree-days first calculate
+one daily-mean outdoor temperature and then apply the same selection/difference
+semantics. They are therefore not interchangeable through division by 24.
 """
 
 from __future__ import annotations
@@ -29,9 +35,32 @@ RESAMPLE_RULES: dict[str, str] = {
 }
 
 
-def _validate_bases(heating_base_c: float, cooling_base_c: float) -> None:
-    if float(heating_base_c) > float(cooling_base_c):
-        raise ValueError("Heating base temperature must not exceed cooling base temperature.")
+def _validate_parameters(
+    heating_indoor_c: float,
+    heating_limit_c: float,
+    cooling_indoor_c: float,
+    cooling_limit_c: float,
+) -> None:
+    values = {
+        "heating indoor-air temperature": heating_indoor_c,
+        "heating limit": heating_limit_c,
+        "cooling indoor-air temperature": cooling_indoor_c,
+        "cooling limit": cooling_limit_c,
+    }
+    for label, value in values.items():
+        try:
+            numeric = float(value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"Invalid {label}.") from exc
+        if not -80.0 <= numeric <= 80.0:
+            raise ValueError(f"{label.capitalize()} is outside the supported -80...80 °C range.")
+
+    # HGT convention requires the heating limit to be below or equal to the
+    # indoor-air reference.  The analogous restriction is deliberately NOT
+    # imposed on cooling: KGT20/18.3 is a valid requested convention with the
+    # cooling limit below the 20 °C indoor-air reference.
+    if float(heating_limit_c) > float(heating_indoor_c):
+        raise ValueError("Heating limit must not exceed heating indoor-air temperature.")
 
 
 def _native_interval_hours(df: pd.DataFrame, interval_minutes: float | None) -> float:
@@ -75,35 +104,69 @@ def _aggregate_table(table: pd.DataFrame, aggregation: DegreeAggregation) -> pd.
     return table.resample(rule).sum(min_count=1).dropna(how="all")
 
 
+def _degree_contributions(
+    temperature: pd.Series,
+    *,
+    heating_indoor_c: float,
+    heating_limit_c: float,
+    cooling_indoor_c: float,
+    cooling_limit_c: float,
+) -> tuple[pd.Series, pd.Series]:
+    """Return HGT/KGT temperature differences on their selected periods.
+
+    HGT contribution:
+        ``T_i,H - T_e`` when ``T_e < T_limit,H``, otherwise 0.
+
+    KGT contribution:
+        ``T_e - T_i,C`` when ``T_e > T_limit,C``, otherwise 0.
+
+    The KGT expression intentionally does not clip negative differences. With
+    KGT20/18.3, an interval in the 18.3...20 °C band belongs to the selected
+    cooling period but has a negative difference to the 20 °C indoor reference.
+    This keeps the two-temperature KGT definition explicit instead of silently
+    replacing it by a one-temperature CDD18.3 calculation.
+    """
+    valid = temperature.notna()
+    heating_selected = valid & (temperature < float(heating_limit_c))
+    cooling_selected = valid & (temperature > float(cooling_limit_c))
+
+    heating = pd.Series(0.0, index=temperature.index, dtype=float)
+    cooling = pd.Series(0.0, index=temperature.index, dtype=float)
+    heating.loc[heating_selected] = float(heating_indoor_c) - temperature.loc[heating_selected]
+    cooling.loc[cooling_selected] = temperature.loc[cooling_selected] - float(cooling_indoor_c)
+    heating.loc[~valid] = float("nan")
+    cooling.loc[~valid] = float("nan")
+    return heating, cooling
+
+
 def degree_metric_table(
     df: pd.DataFrame,
     *,
-    heating_base_c: float = 18.0,
-    cooling_base_c: float = 26.0,
-    metric: DegreeMetric = "Degree-hours",
+    heating_indoor_c: float = 20.0,
+    heating_limit_c: float = 12.0,
+    cooling_indoor_c: float = 20.0,
+    cooling_limit_c: float = 18.3,
+    metric: DegreeMetric = "Degree-days",
     aggregation: DegreeAggregation = "Monthly",
     interval_minutes: float | None = None,
 ) -> pd.DataFrame:
-    """Calculate heating/cooling degree metrics with explicit reference bases.
+    """Calculate HGT/KGT with four explicit temperature inputs.
 
-    Parameters
-    ----------
-    df:
-        Climate data containing ``dry_bulb_temperature_c`` on a DatetimeIndex.
-    heating_base_c, cooling_base_c:
-        User-selected climate balance/reference temperatures. They are not a
-        building load model and should not be interpreted as automatically equal
-        to indoor thermostat setpoints.
-    metric:
-        ``Degree-hours`` uses every source interval. ``Degree-days`` uses daily
-        mean outdoor temperature before applying the temperature difference.
-    aggregation:
-        Display/summation period for the resulting extensive indicator.
-    interval_minutes:
-        Optional source cadence override for degree-hours. If omitted, the
-        canonical dataframe attribute is used when present, otherwise 60 min.
+    ``heating_limit_c`` and ``cooling_limit_c`` decide which source intervals or
+    days belong to the corresponding heating/cooling period. The accumulated
+    temperature difference is measured to the separate indoor-air reference
+    temperature for that indicator.
+
+    Degree-hours use each native source interval and multiply the selected
+    difference by its duration. Degree-days first form daily-mean outdoor
+    temperatures and then evaluate the two selection rules once per day.
     """
-    _validate_bases(heating_base_c, cooling_base_c)
+    _validate_parameters(
+        heating_indoor_c,
+        heating_limit_c,
+        cooling_indoor_c,
+        cooling_limit_c,
+    )
     if not isinstance(df.index, pd.DatetimeIndex):
         raise TypeError("Degree metrics require a pandas DatetimeIndex.")
     if "dry_bulb_temperature_c" not in df.columns:
@@ -112,18 +175,32 @@ def degree_metric_table(
     temperature = pd.to_numeric(df["dry_bulb_temperature_c"], errors="coerce")
 
     if metric == "Degree-hours":
+        heating, cooling = _degree_contributions(
+            temperature,
+            heating_indoor_c=heating_indoor_c,
+            heating_limit_c=heating_limit_c,
+            cooling_indoor_c=cooling_indoor_c,
+            cooling_limit_c=cooling_limit_c,
+        )
         interval_hours = _native_interval_hours(df, interval_minutes)
         source = pd.DataFrame(index=df.index.copy())
-        source["Heating degree-hours"] = (float(heating_base_c) - temperature).clip(lower=0) * interval_hours
-        source["Cooling degree-hours"] = (temperature - float(cooling_base_c)).clip(lower=0) * interval_hours
+        source["Heating degree-hours (HGT)"] = heating * interval_hours
+        source["Cooling degree-hours (KGT)"] = cooling * interval_hours
         result = _aggregate_table(source, aggregation)
         result.attrs["unit"] = "K·h"
         result.attrs["method"] = "source-interval"
     elif metric == "Degree-days":
         daily_temperature = temperature.resample("D").mean()
+        heating, cooling = _degree_contributions(
+            daily_temperature,
+            heating_indoor_c=heating_indoor_c,
+            heating_limit_c=heating_limit_c,
+            cooling_indoor_c=cooling_indoor_c,
+            cooling_limit_c=cooling_limit_c,
+        )
         daily = pd.DataFrame(index=daily_temperature.index)
-        daily["Heating degree-days"] = (float(heating_base_c) - daily_temperature).clip(lower=0)
-        daily["Cooling degree-days"] = (daily_temperature - float(cooling_base_c)).clip(lower=0)
+        daily["Heating degree-days (HGT)"] = heating
+        daily["Cooling degree-days (KGT)"] = cooling
         if aggregation == "Daily":
             result = daily.dropna(how="all")
         else:
@@ -135,19 +212,25 @@ def degree_metric_table(
 
     result.attrs["metric"] = metric
     result.attrs["aggregation"] = aggregation
-    result.attrs["heating_base_c"] = float(heating_base_c)
-    result.attrs["cooling_base_c"] = float(cooling_base_c)
+    result.attrs["heating_indoor_c"] = float(heating_indoor_c)
+    result.attrs["heating_limit_c"] = float(heating_limit_c)
+    result.attrs["cooling_indoor_c"] = float(cooling_indoor_c)
+    result.attrs["cooling_limit_c"] = float(cooling_limit_c)
+    result.attrs["heating_notation"] = f"HGT {heating_indoor_c:g}/{heating_limit_c:g}"
+    result.attrs["cooling_notation"] = f"KGT {cooling_indoor_c:g}/{cooling_limit_c:g}"
     return result
 
 
 def degree_metric_interpretation(
     table: pd.DataFrame,
     *,
-    heating_base_c: float,
-    cooling_base_c: float,
+    heating_indoor_c: float,
+    heating_limit_c: float,
+    cooling_indoor_c: float,
+    cooling_limit_c: float,
     metric: DegreeMetric,
 ) -> str:
-    """Return a concise explanation tied to the actual user-selected bases."""
+    """Return a concise interpretation tied to all four actual inputs."""
     if table.empty:
         return "No valid temperature data are available for the selected degree-metric calculation."
     heating_column = next((name for name in table.columns if str(name).startswith("Heating")), None)
@@ -155,15 +238,17 @@ def degree_metric_interpretation(
     heating = float(table[heating_column].sum()) if heating_column else 0.0
     cooling = float(table[cooling_column].sum()) if cooling_column else 0.0
     unit = str(table.attrs.get("unit", "K·h" if metric == "Degree-hours" else "K·d"))
-    dominant = "heating-dominated" if heating > cooling else "cooling-dominated" if cooling > heating else "balanced"
-    method = (
-        "each source interval"
-        if metric == "Degree-hours"
-        else "daily mean outdoor temperature"
-    )
+    heating_notation = f"HGT {heating_indoor_c:g}/{heating_limit_c:g}"
+    cooling_notation = f"KGT {cooling_indoor_c:g}/{cooling_limit_c:g}"
+    method = "native source intervals" if metric == "Degree-hours" else "daily mean outdoor temperatures"
+    cooling_note = ""
+    if float(cooling_limit_c) < float(cooling_indoor_c):
+        cooling_note = (
+            f" For {cooling_notation}, periods between {cooling_limit_c:g} and {cooling_indoor_c:g} °C are selected by the cooling-limit rule "
+            "but contribute a negative difference to the indoor-air reference."
+        )
     return (
-        f"Using a heating base/reference temperature of {heating_base_c:g} °C and a cooling base/reference temperature of "
-        f"{cooling_base_c:g} °C, the selected data produce {heating:,.1f} {unit} heating and {cooling:,.1f} {unit} cooling. "
-        f"{metric} are calculated from {method}; on this simplified climate-indicator basis the period is {dominant}. "
-        "These base temperatures are user-defined balance/reference temperatures, not a complete building indoor-temperature or load model."
+        f"{heating_notation}: indoor air {heating_indoor_c:g} °C, heating limit {heating_limit_c:g} °C → {heating:,.1f} {unit}. "
+        f"{cooling_notation}: indoor air {cooling_indoor_c:g} °C, cooling limit {cooling_limit_c:g} °C → {cooling:,.1f} {unit}. "
+        f"{metric} are calculated from {method}.{cooling_note}"
     )
