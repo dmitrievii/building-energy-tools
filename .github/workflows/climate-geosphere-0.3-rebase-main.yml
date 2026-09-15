@@ -9,9 +9,9 @@ permissions:
   contents: write
 
 jobs:
-  integrate:
+  inspect-conflict:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - name: Checkout current integration branch
         uses: actions/checkout@v4
@@ -19,80 +19,35 @@ jobs:
           ref: climate-geosphere-0.3-rebase-main
           fetch-depth: 0
 
-      - name: Configure git
+      - name: Print app.py diff3 conflict hunks
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-      - name: Merge qualified CLIMATE-GEOSPHERE-0.3
-        run: |
+          git config merge.conflictstyle diff3
           git fetch origin climate-geosphere-0.3-public-historical-selection
-          if ! git merge --no-commit --no-ff origin/climate-geosphere-0.3-public-historical-selection; then
-            echo "--- MERGE CONFLICTS ---"
-            git status --short
-            git diff --name-only --diff-filter=U
-            exit 1
-          fi
-          echo "--- MERGED WORKTREE ---"
+          git merge --no-commit --no-ff origin/climate-geosphere-0.3-public-historical-selection || true
+          echo '--- STATUS ---'
           git status --short
-
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-          cache-dependency-path: tools/climate_analyzer/requirements.txt
-
-      - name: Install Climate Analyzer dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r tools/climate_analyzer/requirements.txt
-
-      - name: Compile integrated source
-        working-directory: tools/climate_analyzer
-        run: python -m compileall -q app.py epw_climate_analyzer tests
-
-      - name: Run GeoSphere focused regression
-        working-directory: tools/climate_analyzer
-        run: |
-          python -m unittest tests.test_geosphere_adapter -v
-          python -m unittest tests.test_geosphere_public_integration -v
-          python -m unittest tests.test_climate_0_10_12_memory_hotfix -v
-          python -m unittest tests.test_live_runtime_identity_contract -v
-
-      - name: Run full Climate Analyzer regression suite
-        working-directory: tools/climate_analyzer
-        run: python -m unittest discover -s tests -p 'test_*.py' -v
-
-      - name: Remove one-shot workflow and generated files
-        run: |
-          rm -f .github/workflows/climate-geosphere-0.3-rebase-main.yml
-          rm -rf node_modules artifacts .pytest_cache
-          find tools/climate_analyzer -type d -name __pycache__ -prune -exec rm -rf {} +
-          find tools/climate_analyzer -type f -name '*.pyc' -delete
-
-      - name: Commit qualified integration only
-        run: |
-          git add -A
-          git status --short
-          git commit -m "CLIMATE-GEOSPHERE-0.3: integrate public historical station source on current main"
-          echo "--- NET DIFF VS MAIN ---"
-          git diff --name-only origin/main...HEAD | tee /tmp/net-files.txt
+          echo '--- APP.PY CONFLICT HUNKS ---'
           python - <<'PY'
           from pathlib import Path
-          allowed = {
-              'tools/climate_analyzer/CLIMATE_GEOSPHERE_0_3.md',
-              'tools/climate_analyzer/app.py',
-              'tools/climate_analyzer/epw_climate_analyzer/historical.py',
-              'tools/climate_analyzer/epw_climate_analyzer/ui_contract.py',
-              'tools/climate_analyzer/tests/test_geosphere_public_integration.py',
-              'tools/climate_analyzer/tests/test_pressure_precipitation_contract.py',
-          }
-          actual = {line.strip() for line in Path('/tmp/net-files.txt').read_text().splitlines() if line.strip()}
-          unexpected = sorted(actual - allowed)
-          missing = sorted(allowed - actual)
-          if unexpected or missing:
-              raise SystemExit(f'Net diff gate failed. unexpected={unexpected}; missing={missing}')
-          print('Net diff gate PASS:', len(actual), 'expected files')
+          path = Path('tools/climate_analyzer/app.py')
+          lines = path.read_text(encoding='utf-8').splitlines()
+          i = 0
+          found = 0
+          while i < len(lines):
+              if lines[i].startswith('<<<<<<<'):
+                  found += 1
+                  start = max(0, i - 12)
+                  j = i + 1
+                  while j < len(lines) and not lines[j].startswith('>>>>>>>'):
+                      j += 1
+                  end = min(len(lines), j + 13)
+                  print(f'\n===== CONFLICT {found} lines {i+1}-{j+1} =====')
+                  for n in range(start, end):
+                      print(f'{n+1:05d}: {lines[n]}')
+                  i = j + 1
+              else:
+                  i += 1
+          print(f'\nTOTAL_CONFLICTS={found}')
+          if found == 0:
+              raise SystemExit('Expected app.py merge conflict was not found')
           PY
-          git push origin HEAD:climate-geosphere-0.3-rebase-main
