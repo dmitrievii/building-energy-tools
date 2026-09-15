@@ -92,16 +92,17 @@ class GeoSpherePublicUiContractTests(unittest.TestCase):
         self.assertIn('fetch_geosphere_station_dataset', self.source)
 
     def test_historical_dataset_uses_existing_analysis_renderers_not_duplicate_provider_pages(self) -> None:
-        self.assertIn('render_temperature(filtered_df, interval_count_metrics=False)', self.source)
-        self.assertIn('render_humidity(filtered_df, pressure_pa=active_pressure, interval_count_metrics=False)', self.source)
+        self.assertIn('render_temperature(filtered_df)', self.source)
+        self.assertIn('render_humidity(filtered_df, pressure_pa=active_pressure)', self.source)
         self.assertIn('render_time_series_overlay(full_df)', self.source)
         self.assertNotIn('def render_geosphere_temperature', self.source)
         self.assertNotIn('def render_geosphere_humidity', self.source)
 
-    def test_record_count_hour_routes_are_hidden_for_ten_minute_measured_data(self) -> None:
-        self.assertIn('chart_options.remove("Threshold hours")', self.source)
-        self.assertIn('chart_options.remove("Moisture thresholds")', self.source)
-        self.assertIn('HGT/KGT degree-hours already use the native 10-minute interval', self.source)
+    def test_historical_threshold_routes_are_reenabled_with_duration_semantics(self) -> None:
+        self.assertIn('Measured-data threshold hours are integrated from the declared native interval', self.source)
+        self.assertIn('Measured-data moisture-threshold hours are integrated from the declared native interval', self.source)
+        self.assertNotIn('render_temperature(filtered_df, interval_count_metrics=False)', self.source)
+        self.assertNotIn('render_humidity(filtered_df, pressure_pa=active_pressure, interval_count_metrics=False)', self.source)
 
     def test_time_series_localizes_ui_range_to_real_historical_timezone(self) -> None:
         self.assertIn('if index.tz is not None:', self.source)
