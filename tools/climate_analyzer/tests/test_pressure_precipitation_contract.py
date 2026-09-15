@@ -94,7 +94,7 @@ class PressureAndPrecipitationContractTests(unittest.TestCase):
         self.assertTrue(summary["liquid_data_available"])
         self.assertTrue(summary["snow_data_available"])
         self.assertAlmostEqual(float(summary["liquid_total_mm"]), 7.0)
-        self.assertEqual(summary["wet_hours"], 3)
+        self.assertEqual(summary["precipitation_records"], 3)
         self.assertAlmostEqual(float(summary["max_record_precipitation_mm"]), 4.0)
         self.assertAlmostEqual(float(summary["max_snow_depth_cm"]), 3.0)
         self.assertEqual(summary["snow_cover_hours"], 2)

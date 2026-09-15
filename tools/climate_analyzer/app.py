@@ -2198,8 +2198,8 @@ def render_precipitation(df: pd.DataFrame) -> None:
         help="Sum of valid EPW liquid-precipitation depth records in the current sidebar-filtered view.",
     )
     metric_cols[1].metric(
-        "Wet hours ≥ 0.1 mm",
-        "N/A" if summary["wet_hours"] is None else f"{summary['wet_hours']:,}",
+        "Precipitation records ≥ 0.1 mm",
+        "N/A" if summary["precipitation_records"] is None else f"{summary['precipitation_records']:,}",
     )
     metric_cols[2].metric(
         "Max precipitation record",
@@ -2221,7 +2221,7 @@ def render_precipitation(df: pd.DataFrame) -> None:
 
     options: list[str] = []
     if liquid_available:
-        options.extend(["Precipitation totals", "Wet-hour occurrence", "Liquid precipitation explorer"])
+        options.extend(["Precipitation totals", "Precipitation-record occurrence", "Liquid precipitation explorer"])
     if snow_available:
         options.extend(["Snow depth explorer", "Snow-cover occurrence"])
     if not options:
@@ -2248,8 +2248,8 @@ def render_precipitation(df: pd.DataFrame) -> None:
             fig,
             "Period totals sum valid EPW liquid-precipitation depth records. Missing EPW values are excluded rather than treated as zero.",
         )
-    elif chart_group == "Wet-hour occurrence":
-        threshold = st.number_input("Wet-hour threshold [mm]", min_value=0.0, value=0.1, step=0.1)
+    elif chart_group == "Precipitation-record occurrence":
+        threshold = st.number_input("Precipitation-record threshold [mm]", min_value=0.0, value=0.1, step=0.1)
         aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0)
         counts = occurrence_hours(
             df,
@@ -2264,12 +2264,15 @@ def render_precipitation(df: pd.DataFrame) -> None:
             plot_data,
             x=x_column,
             y="hours",
-            title=f"Wet-hour occurrence ≥ {threshold:g} mm",
-            labels={x_column: "Period", "hours": "Wet hours"},
+            title=f"Precipitation-record occurrence ≥ {threshold:g} mm",
+            labels={x_column: "Period", "hours": "Records meeting threshold"},
         )
         fig.update_traces(marker_color=metric_color("liquid_precipitation_depth_mm"))
-        fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Wet hours")
-        render_plot(fig, "Counts only EPW records with valid precipitation data that meet the selected depth threshold.")
+        fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Records meeting threshold")
+        render_plot(
+            fig,
+            "Counts EPW precipitation records meeting the selected depth threshold. This is an observation-record occurrence metric, not exact rainfall duration: EPW liquid precipitation depth may refer to the measurement interval reported by Liquid Precipitation Quantity.",
+        )
     elif chart_group == "Liquid precipitation explorer":
         render_generic_variable_page(
             df,

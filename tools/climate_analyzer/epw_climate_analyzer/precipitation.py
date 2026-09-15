@@ -93,7 +93,7 @@ def precipitation_summary(df: pd.DataFrame, wet_threshold_mm: float = 0.1) -> di
         "liquid_data_available": liquid_available,
         "snow_data_available": snow_available,
         "liquid_total_mm": _finite_or_none(liquid.sum(min_count=1)) if liquid_available else None,
-        "wet_hours": int((liquid >= wet_threshold_mm).sum()) if liquid_available else None,
+        "precipitation_records": int((liquid >= wet_threshold_mm).sum()) if liquid_available else None,
         "max_record_precipitation_mm": _finite_or_none(liquid.max()) if liquid_available else None,
         "max_snow_depth_cm": _finite_or_none(snow.max()) if snow_available else None,
         "snow_cover_hours": int((snow > 0.0).sum()) if snow_available else None,
