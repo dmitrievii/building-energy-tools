@@ -6,6 +6,8 @@ Independent research and teaching tools for building physics, climate analysis a
 
 The first public application is **Climate Analyzer**, an interactive EPW climate-analysis tool for building design, building physics and early passive/HVAC decision support.
 
+<!-- streamlit-community-cloud-redeploy-trigger -->
+
 ## Repository structure
 
 - `website/` — public project website content and publication gates
