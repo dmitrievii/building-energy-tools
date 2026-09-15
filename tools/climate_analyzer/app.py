@@ -30,6 +30,7 @@ from epw_climate_analyzer.runtime_identity import RUNTIME_BUILD_ID
 
 
 _MAP_DEPENDENCIES_LOADED = False
+_GEOSPHERE_DEPENDENCIES_LOADED = False
 _ANALYSIS_DEPENDENCIES_LOADED = False
 _SOLAR_DEPENDENCIES_LOADED = False
 _COMPARISON_DEPENDENCIES_LOADED = False
@@ -57,6 +58,30 @@ def _ensure_map_dependencies() -> None:
         station_provenance_text,
     )
     _MAP_DEPENDENCIES_LOADED = True
+
+
+def _ensure_geosphere_dependencies() -> None:
+    """Load GeoSphere adapter dependencies only when that source is selected."""
+    global _GEOSPHERE_DEPENDENCIES_LOADED
+    global pd
+    global fetch_geosphere_metadata, geosphere_station_catalog, parse_geosphere_stations
+    global supported_geosphere_parameter_mapping, fetch_geosphere_station_dataset
+    global plan_geosphere_queries, estimate_geosphere_datapoints
+
+    if _GEOSPHERE_DEPENDENCIES_LOADED:
+        return
+
+    import pandas as pd
+    from epw_climate_analyzer.geosphere import (
+        estimate_request_datapoints as estimate_geosphere_datapoints,
+        fetch_metadata as fetch_geosphere_metadata,
+        fetch_station_dataset as fetch_geosphere_station_dataset,
+        parse_stations as parse_geosphere_stations,
+        plan_data_queries as plan_geosphere_queries,
+        station_catalog as geosphere_station_catalog,
+        supported_parameter_mapping as supported_geosphere_parameter_mapping,
+    )
+    _GEOSPHERE_DEPENDENCIES_LOADED = True
 
 
 def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bool) -> None:
@@ -386,7 +411,19 @@ def set_active_climate_file(name: str, payload: bytes, source: str) -> None:
     from epw_climate_analyzer.climate_sources import ClimateFilePayload
 
     st.session_state["active_climate_file"] = ClimateFilePayload(name=name, payload=payload, source=source)
+    st.session_state.pop("active_canonical_climate", None)
     queue_navigation(st.session_state, "Overview")
+
+
+def set_active_canonical_climate(dataset: object) -> None:
+    """Store a provider-neutral canonical historical dataset for analysis."""
+    from epw_climate_analyzer.climate_model import CanonicalClimateDataset
+
+    if not isinstance(dataset, CanonicalClimateDataset):
+        raise TypeError("Expected CanonicalClimateDataset for historical climate activation.")
+    st.session_state["active_canonical_climate"] = dataset
+    st.session_state.pop("active_climate_file", None)
+    queue_navigation(st.session_state, "Temperature")
 
 
 def get_active_climate_file() -> ClimateFilePayload | None:
@@ -399,11 +436,30 @@ def get_active_climate_file() -> ClimateFilePayload | None:
     return value if isinstance(value, ClimateFilePayload) else None
 
 
+def get_active_canonical_climate():
+    """Return the active provider-neutral historical dataset, if any."""
+    value = st.session_state.get("active_canonical_climate")
+    if value is None:
+        return None
+    from epw_climate_analyzer.climate_model import CanonicalClimateDataset
+
+    return value if isinstance(value, CanonicalClimateDataset) else None
+
+
 def clear_active_climate_file() -> None:
-    """Remove the currently selected climate file and reset navigation."""
+    """Remove every active climate source and reset navigation."""
     st.session_state.pop("active_climate_file", None)
+    st.session_state.pop("active_canonical_climate", None)
     queue_navigation_reset(st.session_state)
 
+
+
+@st.cache_data(show_spinner=False, ttl=3600)
+def cached_geosphere_metadata() -> dict:
+    """Cache current GeoSphere metadata for one hour within a user session/runtime."""
+    from epw_climate_analyzer.geosphere import fetch_metadata
+
+    return fetch_metadata()
 
 
 @st.cache_resource(show_spinner=False, max_entries=1)
@@ -883,6 +939,138 @@ def filter_groups_to_bounds(
     )
     return station_groups[mask].copy()
 
+def render_geosphere_source() -> None:
+    """Render GeoSphere Austria historical station selection and bounded loading."""
+    _ensure_geosphere_dependencies()
+    st.subheader("GeoSphere Austria — measured historical station data")
+    st.caption(
+        "Quality-checked `klima-v2-10min` observations are loaded directly from the official GeoSphere Austria Dataset API. "
+        "Timestamps remain real UTC historical timestamps; the data are not converted to an EPW typical year."
+    )
+    try:
+        metadata = cached_geosphere_metadata()
+        supported = supported_geosphere_parameter_mapping(metadata)
+        stations = parse_geosphere_stations(metadata)
+        catalog = geosphere_station_catalog(metadata)
+    except Exception as exc:
+        st.error(f"GeoSphere metadata could not be loaded or validated: {exc}")
+        return
+
+    search = st.text_input("Search GeoSphere station", value="", key="geosphere_station_search")
+    states = sorted(value for value in catalog["state"].dropna().astype(str).unique().tolist() if value.strip())
+    selected_states = st.multiselect("Federal states / regions", states, default=[], key="geosphere_station_states")
+    filtered = catalog.copy()
+    if search.strip():
+        needle = search.strip().lower()
+        mask = (
+            filtered["name"].astype(str).str.lower().str.contains(needle, regex=False)
+            | filtered["station_id"].astype(str).str.lower().str.contains(needle, regex=False)
+            | filtered["state"].astype(str).str.lower().str.contains(needle, regex=False)
+        )
+        filtered = filtered[mask]
+    if selected_states:
+        filtered = filtered[filtered["state"].isin(selected_states)]
+    if filtered.empty:
+        st.warning("No GeoSphere stations match the current filter.")
+        return
+
+    station_by_id = {station.station_id: station for station in stations}
+    option_ids = [str(value) for value in filtered["station_id"].tolist() if str(value) in station_by_id]
+    if not option_ids:
+        st.error("GeoSphere metadata contain no selectable stations after normalization.")
+        return
+
+    def station_label(station_id: str) -> str:
+        station = station_by_id[station_id]
+        state = f" — {station.state}" if station.state else ""
+        return f"{station.name}{state} — ID {station.station_id}"
+
+    selected_id = st.selectbox(
+        "Station",
+        option_ids,
+        format_func=station_label,
+        key="geosphere_station_id",
+    )
+    station = station_by_id[selected_id]
+    st.dataframe(
+        pd.DataFrame(
+            {
+                "Field": ["Station", "ID", "Region", "Latitude", "Longitude", "Elevation", "Provider validity"],
+                "Value": [
+                    station.name, station.station_id, station.state,
+                    f"{station.latitude:.5f}", f"{station.longitude:.5f}",
+                    f"{station.elevation_m:.0f} m" if station.elevation_m is not None else "",
+                    f"{station.valid_from or 'unknown'} … {station.valid_to or 'unknown'}",
+                ],
+            }
+        ),
+        hide_index=True,
+        use_container_width=True,
+    )
+
+    today = pd.Timestamp.now(tz="UTC").date()
+    parsed_from = pd.to_datetime(station.valid_from, errors="coerce")
+    parsed_to = pd.to_datetime(station.valid_to, errors="coerce")
+    min_date = parsed_from.date() if pd.notna(parsed_from) else pd.Timestamp("1900-01-01").date()
+    provider_max = parsed_to.date() if pd.notna(parsed_to) else today
+    max_date = min(provider_max, today)
+    if max_date < min_date:
+        st.error("The station validity interval does not overlap the available historical date range.")
+        return
+    default_end = max_date
+    default_start = max(min_date, (pd.Timestamp(default_end) - pd.Timedelta(days=30)).date())
+    c1, c2 = st.columns(2)
+    start_date = c1.date_input(
+        "From date (UTC)", value=default_start, min_value=min_date, max_value=max_date, key="geosphere_start_date"
+    )
+    end_date = c2.date_input(
+        "Through date (UTC)", value=default_end, min_value=min_date, max_value=max_date, key="geosphere_end_date"
+    )
+    if end_date < start_date:
+        st.error("GeoSphere end date must not be earlier than start date.")
+        return
+    selected_days = (pd.Timestamp(end_date) - pd.Timestamp(start_date)).days + 1
+    if selected_days > 366:
+        st.error("The public beta currently allows at most 366 days per GeoSphere load. Choose a shorter interval.")
+        return
+
+    start_ts = pd.Timestamp(start_date, tz="UTC")
+    end_ts = pd.Timestamp(end_date, tz="UTC") + pd.Timedelta(hours=23, minutes=50)
+    provider_parameters = tuple(supported.keys())
+    if "tl" not in provider_parameters:
+        st.error("Current GeoSphere metadata do not expose the required air-temperature parameter `tl`.")
+        return
+    canonical_variables = tuple(spec.canonical_name for spec in supported.values())
+    estimated = estimate_geosphere_datapoints(start_ts, end_ts, len(provider_parameters), 1)
+    batches = plan_geosphere_queries(station.station_id, start_ts, end_ts, provider_parameters)
+    st.caption(
+        f"Requested interval: {selected_days} day(s), 10-minute source data, {len(provider_parameters)} supported measured variables. "
+        f"Estimated provider datapoints: {estimated:,}; bounded API batches: {len(batches)}."
+    )
+    with st.expander("Measured variables and provenance", expanded=False):
+        variable_rows = [
+            {"Provider": name, "Canonical field": spec.canonical_name, "Description": spec.description}
+            for name, spec in supported.items()
+        ]
+        st.dataframe(pd.DataFrame(variable_rows), hide_index=True, use_container_width=True)
+        st.caption("Source: GeoSphere Austria `klima-v2-10min` · CC BY 4.0 · DOI 10.60669/8fya-7x87")
+
+    if st.button("Load measured GeoSphere interval", type="primary", key="load_geosphere_interval"):
+        try:
+            with st.spinner(f"Loading {len(batches)} bounded GeoSphere request batch(es)..."):
+                dataset = fetch_geosphere_station_dataset(
+                    station=station,
+                    start=start_ts,
+                    end=end_ts,
+                    metadata=metadata,
+                    canonical_variables=canonical_variables,
+                )
+            set_active_canonical_climate(dataset)
+            st.rerun()
+        except Exception as exc:
+            st.error(f"GeoSphere station-data load failed: {exc}")
+
+
 def render_climate_file_source() -> None:
     """Render the product entry page for local or catalog climate selection."""
     st.title(APP_NAME)
@@ -893,15 +1081,21 @@ def render_climate_file_source() -> None:
         st.write(APP_ENGINEERING_DISCLAIMER)
         st.caption(APP_INDEPENDENCE_NOTICE)
     st.write(
-        "Start with an EPW weather file from your computer or select a climate from the reviewed "
-        "Climate.OneBuilding station catalog. No building model is required."
+        "Start with an EPW weather file, select a reviewed Climate.OneBuilding climate, or load measured "
+        "historical station observations from GeoSphere Austria. No building model is required."
     )
 
     active = get_active_climate_file()
-    if active is not None:
-        st.success(f"Current climate: {active.name}")
+    active_historical = get_active_canonical_climate()
+    if active is not None or active_historical is not None:
+        active_name = active.name if active is not None else active_historical.display_name
+        st.success(f"Current climate: {active_name}")
         with st.expander("Data source details", expanded=False):
-            st.caption(active.source)
+            if active is not None:
+                st.caption(active.source)
+            else:
+                st.caption(f"{active_historical.provenance.provider} | {active_historical.provenance.dataset}")
+                st.caption(active_historical.provenance.source_reference)
         if st.button("Choose a different climate"):
             clear_active_climate_file()
             st.rerun()
@@ -909,7 +1103,7 @@ def render_climate_file_source() -> None:
     st.divider()
     source_mode = st.radio(
         "Climate source",
-        ["Upload EPW", "Find climate"],
+        ["Upload EPW", "Find climate", "GeoSphere Austria"],
         horizontal=True,
         label_visibility="collapsed",
         key="climate_source_mode",
@@ -924,6 +1118,10 @@ def render_climate_file_source() -> None:
             if st.button("Analyze this EPW", type="primary"):
                 set_active_climate_file(local_file.name, local_file.getvalue(), "Local upload | user-provided EPW | transient session")
                 st.rerun()
+        return
+
+    if source_mode == "GeoSphere Austria":
+        render_geosphere_source()
         return
 
     _ensure_map_dependencies()
@@ -2040,10 +2238,13 @@ def render_overview(epw, df: pd.DataFrame, full_df: pd.DataFrame, issues: list[o
     st.info(data_quality_interpretation(issue_count, error_count))
 
 
-def render_temperature(df: pd.DataFrame) -> None:
+def render_temperature(df: pd.DataFrame, *, interval_count_metrics: bool = True) -> None:
     """Render temperature-analysis charts."""
     st.header("Temperature and extremes")
-    chart_group = st.selectbox("Analysis type", ["Temperature variable explorer", "Threshold hours", "Degree days", "Extreme days"])
+    chart_options = ["Temperature variable explorer", "Threshold hours", "Degree days", "Extreme days"]
+    if not interval_count_metrics:
+        chart_options.remove("Threshold hours")
+    chart_group = st.selectbox("Analysis type", chart_options)
 
     if chart_group == "Degree days":
         st.caption(
@@ -2224,13 +2425,13 @@ def render_temperature(df: pd.DataFrame) -> None:
         render_plot(fig, temperature_interpretation(df, heat_threshold, cool_threshold))
 
 
-def render_humidity(df: pd.DataFrame, pressure_pa: float) -> None:
+def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metrics: bool = True) -> None:
     """Render humidity and psychrometric charts."""
     st.header("Humidity and psychrometrics")
-    chart_group = st.selectbox(
-        "Analysis type",
-        ["Humidity variable explorer", "Psychrometric chart", "Moisture thresholds", "Psychrometric scatter relationships"],
-    )
+    chart_options = ["Humidity variable explorer", "Psychrometric chart", "Moisture thresholds", "Psychrometric scatter relationships"]
+    if not interval_count_metrics:
+        chart_options.remove("Moisture thresholds")
+    chart_group = st.selectbox("Analysis type", chart_options)
     if chart_group == "Humidity variable explorer":
         render_generic_variable_page(
             df,
@@ -2814,6 +3015,9 @@ def render_time_series_overlay(df: pd.DataFrame) -> None:
 
     start = pd.Timestamp.combine(start_date, start_time)
     selected_end = pd.Timestamp.combine(end_date, end_time)
+    if index.tz is not None:
+        start = start.tz_localize(index.tz)
+        selected_end = selected_end.tz_localize(index.tz)
     # "Through" denotes the selected source interval, so the internal viewport
     # ends at the following native interval boundary. This includes the selected
     # 23:00 EPW record without fabricating sub-hourly values.
@@ -2932,6 +3136,163 @@ def render_data_quality(epw, df: pd.DataFrame, issues: list[object]) -> None:
         st.code(line)
 
 
+def render_canonical_data_quality(dataset, df: pd.DataFrame) -> None:
+    """Render diagnostics/provenance for a provider-neutral historical dataset."""
+    st.header("Data quality and source metadata")
+    location = dataset.location
+    st.subheader("Station")
+    st.dataframe(
+        pd.DataFrame(
+            {
+                "Field": ["Station", "Station ID", "Region", "Country", "Latitude", "Longitude", "Elevation"],
+                "Value": [
+                    location.city, location.station_id, location.state, location.country,
+                    location.latitude, location.longitude, location.elevation_m,
+                ],
+            }
+        ),
+        hide_index=True,
+        use_container_width=True,
+    )
+    st.subheader("Temporal/source contract")
+    st.dataframe(
+        pd.DataFrame(
+            {
+                "Field": ["Provider", "Dataset", "Calendar mode", "Native interval", "Timezone", "First timestamp", "Last timestamp", "Records"],
+                "Value": [
+                    dataset.provenance.provider, dataset.provenance.dataset, dataset.temporal.calendar_mode,
+                    f"{dataset.temporal.native_interval_minutes} min", dataset.temporal.timezone_name,
+                    str(dataset.start), str(dataset.end), len(df),
+                ],
+            }
+        ),
+        hide_index=True,
+        use_container_width=True,
+    )
+    st.subheader("Missing values by field")
+    missing = df[list(dataset.available_canonical_variables)].isna().sum().reset_index()
+    missing.columns = ["field", "missing_count"]
+    missing = missing[missing["missing_count"] > 0].sort_values("missing_count", ascending=False)
+    if missing.empty:
+        st.success("No missing values occur in the loaded canonical measured variables.")
+    else:
+        st.dataframe(missing, hide_index=True, use_container_width=True)
+    with st.expander("Provider provenance", expanded=False):
+        st.write(dataset.provenance.source_name)
+        st.code(dataset.provenance.source_reference)
+        for note in dataset.provenance.notes:
+            st.caption(note)
+
+
+def render_canonical_climate_analysis(dataset) -> None:
+    """Run existing source-agnostic analyses on a real historical canonical dataset."""
+    historical_pages = (
+        "Climate File Source",
+        "Temperature",
+        "Humidity and Psychrometrics",
+        "Time Series and Overlay",
+        "Data Quality",
+    )
+    if NAVIGATION_KEY not in st.session_state or st.session_state[NAVIGATION_KEY] not in historical_pages:
+        st.session_state[NAVIGATION_KEY] = "Temperature"
+
+    st.sidebar.markdown("### Explore")
+    page = st.sidebar.radio(
+        "Analysis section",
+        historical_pages,
+        format_func=navigation_label,
+        key=NAVIGATION_KEY,
+        label_visibility="collapsed",
+    )
+    if page == "Climate File Source":
+        render_climate_file_source()
+        return
+
+    with st.sidebar.expander("Advanced calculation settings", expanded=False):
+        pressure_mode = st.selectbox(
+            "Psychrometric pressure mode",
+            [
+                "Measured station pressure with fallback median",
+                "Normal pressure: 101325 Pa",
+                "Altitude-derived standard atmosphere pressure",
+                "Custom constant pressure",
+            ],
+            index=0,
+            help=(
+                "Default: use the measured GeoSphere station pressure for each 10-minute record. "
+                "The median valid measured pressure is only a fallback for missing/invalid records."
+            ),
+        )
+        custom_pressure = None
+        if pressure_mode == "Custom constant pressure":
+            custom_pressure = st.number_input(
+                "Custom pressure [Pa]", min_value=30000.0, max_value=120000.0, value=101325.0, step=100.0
+            )
+
+    include_psychrometrics = page in {"Temperature", "Humidity and Psychrometrics", "Time Series and Overlay"}
+    _ensure_analysis_dependencies(include_solar=False, include_comparison=False)
+    source_pressure = dataset.data.get("atmospheric_station_pressure_pa")
+    valid_pressure = pd.to_numeric(source_pressure, errors="coerce").dropna() if source_pressure is not None else pd.Series(dtype=float)
+    measured_median = float(valid_pressure.median()) if not valid_pressure.empty else DEFAULT_PRESSURE_PA
+    if pressure_mode == "Measured station pressure with fallback median":
+        fallback_pressure = measured_median
+        pressure_override = None
+    elif pressure_mode == "Normal pressure: 101325 Pa":
+        fallback_pressure = DEFAULT_PRESSURE_PA
+        pressure_override = DEFAULT_PRESSURE_PA
+    elif pressure_mode == "Altitude-derived standard atmosphere pressure":
+        fallback_pressure = pressure_from_altitude_m(float(dataset.location.elevation_m or 0.0))
+        pressure_override = fallback_pressure
+    else:
+        fallback_pressure = float(custom_pressure or DEFAULT_PRESSURE_PA)
+        pressure_override = fallback_pressure
+
+    from epw_climate_analyzer.historical import prepare_historical_analysis_frame
+    try:
+        full_df = prepare_historical_analysis_frame(
+            dataset,
+            include_psychrometrics=include_psychrometrics,
+            fallback_pressure_pa=fallback_pressure,
+            pressure_override_pa=pressure_override,
+        )
+    except Exception as exc:
+        st.error(f"Historical climate data could not be prepared for this analysis: {exc}")
+        return
+
+    active_pressure = fallback_pressure if pressure_mode != "Measured station pressure with fallback median" else measured_median
+    if page == "Time Series and Overlay":
+        filtered_df = full_df
+        st.session_state["_active_filtered_export_df"] = full_df
+    else:
+        filtered_df = sidebar_filters(full_df)
+        if filtered_df.empty:
+            st.warning("The current filters remove all data. Adjust the month or hour filter.")
+            return
+
+    st.sidebar.markdown("### Current climate")
+    st.sidebar.write(f"**{dataset.location.city}, {dataset.location.country}**")
+    st.sidebar.caption("GeoSphere Austria · measured 10-minute historical data")
+    st.sidebar.write(f"Rows in current view: {len(filtered_df):,}")
+    with st.sidebar.expander("Data provenance", expanded=False):
+        st.caption(dataset.provenance.dataset)
+        st.caption(f"Calendar: real historical UTC · native interval {dataset.temporal.native_interval_minutes} min")
+        if pressure_mode == "Measured station pressure with fallback median":
+            st.caption(f"Pressure: measured station values; fallback median {active_pressure:,.0f} Pa")
+        else:
+            st.caption(f"Calculation pressure: {active_pressure:,.0f} Pa")
+
+    if page == "Temperature":
+        st.info("Measured-data mode: count-based 'threshold hours' is hidden until all occurrence routes are cadence-aware. HGT/KGT degree-hours already use the native 10-minute interval.")
+        render_temperature(filtered_df, interval_count_metrics=False)
+    elif page == "Humidity and Psychrometrics":
+        st.info("Measured-data mode: count-based moisture-threshold hours are hidden until occurrence metrics are cadence-aware.")
+        render_humidity(filtered_df, pressure_pa=active_pressure, interval_count_metrics=False)
+    elif page == "Time Series and Overlay":
+        render_time_series_overlay(full_df)
+    else:
+        render_canonical_data_quality(dataset, full_df)
+
+
 def main() -> None:
     """Run the Streamlit Climate Analyzer application."""
     st.sidebar.caption("Building Energy Tools")
@@ -2939,10 +3300,14 @@ def main() -> None:
     st.sidebar.caption(APP_RELEASE_LABEL)
     apply_queued_navigation(st.session_state)
     active_file = get_active_climate_file()
+    active_canonical = get_active_canonical_climate()
 
-    if active_file is None:
-        st.sidebar.info("Choose a climate file to start the analysis.")
+    if active_file is None and active_canonical is None:
+        st.sidebar.info("Choose a climate source to start the analysis.")
         render_climate_file_source()
+        return
+    if active_canonical is not None:
+        render_canonical_climate_analysis(active_canonical)
         return
 
     if NAVIGATION_KEY not in st.session_state or st.session_state[NAVIGATION_KEY] not in NAVIGATION_PAGES:
