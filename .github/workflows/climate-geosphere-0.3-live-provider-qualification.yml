@@ -33,7 +33,7 @@ jobs:
 
       - name: Run live GeoSphere Dataset API smoke
         working-directory: tools/climate_analyzer
-        run: python remediation/geosphere_live_provider_smoke.py
+        run: PYTHONPATH=. python remediation/geosphere_live_provider_smoke.py
 
       - name: Verify Chrome
         run: |
