@@ -1,0 +1,43 @@
+name: CLIMATE-0.10.9 Precipitation Copy Cleanup
+
+on:
+  push:
+    branches:
+      - climate-0.10.9-precipitation-chart-semantics
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/climate_analyzer/requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r tools/climate_analyzer/requirements.txt
+      - name: Apply terminology cleanup
+        run: python tools/climate_analyzer/scripts/fix_precipitation_overview_copy.py
+      - name: Compile Python
+        working-directory: tools/climate_analyzer
+        run: python -m compileall -q app.py epw_climate_analyzer tests
+      - name: Focused precipitation regressions
+        working-directory: tools/climate_analyzer
+        run: python -m unittest discover -s tests -p 'test_pressure_precipitation_contract.py' -v
+      - name: Commit validated cleanup
+        run: |
+          rm tools/climate_analyzer/scripts/fix_precipitation_overview_copy.py
+          rm .github/workflows/climate-0.10.9-precipitation-copy-cleanup.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "CLIMATE-0.10.9: align precipitation terminology"
+          git push origin HEAD:climate-0.10.9-precipitation-chart-semantics
