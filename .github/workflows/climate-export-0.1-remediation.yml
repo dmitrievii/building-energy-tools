@@ -27,7 +27,9 @@ jobs:
           pip install -r tools/climate_analyzer/requirements.txt pytest
 
       - name: Apply local chart export patch
-        run: python tools/climate_analyzer/_climate_export_patch.py
+        run: |
+          python tools/climate_analyzer/_climate_export_patch.py
+          python tools/climate_analyzer/_climate_export_postpatch.py
 
       - name: Compile
         run: python -m compileall -q tools/climate_analyzer
@@ -47,6 +49,7 @@ jobs:
       - name: Remove temporary remediation files
         run: |
           rm tools/climate_analyzer/_climate_export_patch.py
+          rm tools/climate_analyzer/_climate_export_postpatch.py
           rm .github/workflows/climate-export-0.1-remediation.yml
 
       - name: Commit validated export implementation
