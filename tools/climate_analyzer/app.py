@@ -1074,8 +1074,63 @@ def next_plot_key(prefix: str = "plot") -> str:
     return f"{prefix}_{st.session_state['_plotly_element_counter']}"
 
 
+def render_chart_export_controls(fig) -> None:
+    """Render a compact local export control without reducing chart width."""
+    from epw_climate_analyzer.exporting import (
+        dataframe_to_csv_bytes,
+        figure_export_stem,
+        figure_to_csv_bytes,
+        safe_export_stem,
+    )
+
+    # Keep the chart itself full-width. The tiny control occupies its own row
+    # immediately above the figure instead of stealing horizontal chart space.
+    _, export_col = st.columns([24, 1], gap="small")
+    with export_col:
+        with st.popover("⇩"):
+            st.caption("Export this chart")
+            stem = figure_export_stem(fig)
+            chart_csv = figure_to_csv_bytes(fig)
+            if chart_csv:
+                st.download_button(
+                    "Chart data · CSV",
+                    data=chart_csv,
+                    file_name=f"{stem}.csv",
+                    mime="text/csv",
+                    use_container_width=True,
+                )
+            else:
+                st.caption("No tabular trace data are available for this figure.")
+
+            # A comparison figure can combine several independent EPW files, so
+            # offering one arbitrary active source/filtered table there would be
+            # misleading. Its trace-level CSV remains available above.
+            if st.session_state.get(NAVIGATION_KEY) != "Compare Climates":
+                filtered = st.session_state.get("_active_filtered_export_df")
+                if hasattr(filtered, "to_csv"):
+                    st.download_button(
+                        "Filtered data · CSV",
+                        data=dataframe_to_csv_bytes(filtered),
+                        file_name=f"{stem}_filtered.csv",
+                        mime="text/csv",
+                        use_container_width=True,
+                    )
+
+                active = get_active_climate_file()
+                if active is not None:
+                    source_name = safe_export_stem(active.name, default="source_weather")
+                    st.download_button(
+                        "Source weather · EPW",
+                        data=active.payload,
+                        file_name=f"{source_name}.epw",
+                        mime="application/octet-stream",
+                        use_container_width=True,
+                    )
+
+
 def render_plot(fig, text: str) -> None:
-    """Render a Plotly figure and its automatic interpretation."""
+    """Render a Plotly figure, local export control and interpretation."""
+    render_chart_export_controls(fig)
     st.plotly_chart(
         fig,
         use_container_width=True,
@@ -1113,7 +1168,12 @@ def sidebar_filters(df: pd.DataFrame) -> pd.DataFrame:
     selected_hours = st.sidebar.slider("Hour range", min_value=0, max_value=23, value=(0, 23))
     months = [MONTHS[m] for m in selected_month_names]
     hours = list(range(selected_hours[0], selected_hours[1] + 1))
-    return filter_by_months_and_hours(df, months=months, hours=hours)
+    filtered = filter_by_months_and_hours(df, months=months, hours=hours)
+    # Export uses exactly the dataframe after the active global filters. Keeping
+    # it in transient Streamlit session state avoids duplicating filter logic in
+    # every chart renderer.
+    st.session_state["_active_filtered_export_df"] = filtered
+    return filtered
 
 
 def metric_cards(df: pd.DataFrame) -> None:
