@@ -33,7 +33,14 @@ class PressureAndPrecipitationContractTests(unittest.TestCase):
                 continue
             if node.args[0].value != "Psychrometric pressure mode":
                 continue
-            matches.append(node)
+            if len(node.args) < 2:
+                continue
+            try:
+                options = ast.literal_eval(node.args[1])
+            except Exception:
+                continue
+            if "EPW station pressure with fallback median" in options:
+                matches.append(node)
         self.assertEqual(len(matches), 1)
         keywords = {kw.arg: kw.value for kw in matches[0].keywords if kw.arg}
         self.assertEqual(ast.literal_eval(keywords["index"]), 1)
