@@ -25,6 +25,12 @@ app = replace_once(
 APP.write_text(app, encoding="utf-8")
 
 test = TEST.read_text(encoding="utf-8")
+test = replace_once(
+    test,
+    '''    def test_liquid_precipitation_is_explicitly_extensive_but_snow_is_not(self) -> None:\n        self.assertIn('extensive = column == "liquid_precipitation_depth_mm"', self.source)\n        self.assertNotIn('extensive = column.endswith("_mm")', self.source)\n        self.assertIn('["Snow depth"]', self.source)\n\n''',
+    '''    def test_liquid_precipitation_accumulation_stays_in_dedicated_totals_route(self) -> None:\n        function = next(\n            node for node in self.tree.body\n            if isinstance(node, ast.FunctionDef) and node.name == "render_precipitation"\n        )\n        source = ast.get_source_segment(self.source, function) or ""\n        self.assertIn("aggregate_liquid_precipitation(df, aggregation)", source)\n        self.assertIn('"Precipitation totals"', source)\n        self.assertIn('["Snow depth"]', source)\n        self.assertNotIn('column.endswith("_mm")', self.source)\n\n''',
+    "replace obsolete extensive UI contract",
+)
 needle = '''    def test_precipitation_page_uses_chart_first_layout_without_kpi_strip(self) -> None:\n'''
 if needle not in test:
     raise RuntimeError("expected precipitation UI test anchor")
