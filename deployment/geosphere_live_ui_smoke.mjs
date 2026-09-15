@@ -80,7 +80,9 @@ try {
     evidence.metadata_error_visible = text.includes('GeoSphere metadata could not be loaded or validated:');
     if (evidence.metadata_error_visible) break;
     evidence.geosphere_panel_visible = text.includes('GeoSphere Austria — measured historical station data');
-    evidence.station_controls_visible = text.includes('Search GeoSphere station') && text.includes('Provider validity');
+    evidence.station_controls_visible = text.includes('Search GeoSphere station')
+      && text.includes('Federal states / regions')
+      && text.includes('Station');
     evidence.date_controls_visible = text.includes('From date (UTC)') && text.includes('Through date (UTC)');
     evidence.request_plan_visible = text.includes('10-minute source data') && text.includes('bounded API batches');
     if (
