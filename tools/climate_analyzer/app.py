@@ -406,7 +406,7 @@ def clear_active_climate_file() -> None:
 
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_resource(show_spinner=False, max_entries=1)
 def _cached_station_catalog_by_identity(catalog_version: str, catalog_sha256: str) -> pd.DataFrame:
     """Load one reviewed catalog snapshot under an immutable cache identity."""
     from epw_climate_analyzer.catalog_runtime import load_production_station_catalog
@@ -441,7 +441,6 @@ def cached_station_catalog() -> pd.DataFrame:
     return _cached_station_catalog_by_identity(manifest.catalog_version, manifest.csv_sha256)
 
 
-@st.cache_data(show_spinner=False)
 def station_options_from_catalog(catalog: pd.DataFrame, limit: int = 10000) -> dict[str, str]:
     """Return cached station-list labels for the right-panel selectors."""
     options: dict[str, str] = {}
@@ -482,47 +481,82 @@ def station_group_id(row: pd.Series) -> str:
     return f"{country}|{name}|{lat:.4f}|{lon:.4f}"
 
 
-@st.cache_data(show_spinner=False)
-def grouped_station_catalog(catalog: pd.DataFrame) -> pd.DataFrame:
-    """Return one map row per physical weather station.
+def _limited_distinct_text(values: pd.Series, limit: int) -> str:
+    items = sorted({str(value).strip() for value in values.dropna().tolist() if str(value).strip()})
+    return ", ".join(items[:limit])
 
-    The returned DataFrame contains one representative row for each station group
-    and a climate_count column indicating how many EPW climates are available for
-    that station. Detailed climate selection is handled after the station bubble
-    is clicked.
-    """
+
+def grouped_station_catalog(catalog: pd.DataFrame) -> pd.DataFrame:
+    """Return one compact row per physical station without copying the full catalog."""
     if catalog.empty:
         return pd.DataFrame()
 
-    work = catalog.copy()
-    work["station_group_id"] = work.apply(station_group_id, axis=1)
-    grouped_rows: list[dict] = []
+    lat_key = pd.to_numeric(catalog["latitude"], errors="coerce").round(4).rename("_lat_key")
+    lon_key = pd.to_numeric(catalog["longitude"], errors="coerce").round(4).rename("_lon_key")
+    country_key = catalog["country"].astype("string").fillna("").str.strip().str.lower().rename("_country_key")
+    name_key = catalog["name"].astype("string").fillna("").str.strip().str.lower().rename("_name_key")
+    valid = lat_key.notna() & lon_key.notna()
+    if not bool(valid.any()):
+        return pd.DataFrame()
 
-    for group_id, group in work.groupby("station_group_id", sort=False):
-        first = group.iloc[0]
-        datasets = sorted({str(v).strip() for v in group.get("dataset", pd.Series(dtype=str)).dropna().tolist() if str(v).strip()})
-        regions = sorted({str(v).strip() for v in group.get("region", pd.Series(dtype=str)).dropna().tolist() if str(v).strip()})
-        grouped_rows.append(
-            {
-                "station_group_id": group_id,
-                "name": first.get("name", ""),
-                "country": first.get("country", ""),
-                "region": ", ".join(regions[:3]),
-                "dataset": ", ".join(datasets[:4]),
-                "latitude": float(first.get("latitude")),
-                "longitude": float(first.get("longitude")),
-                "elevation_m": first.get("elevation_m", ""),
-                "climate_count": int(len(group)),
-            }
-        )
+    # Project only the seven columns needed for grouping. This bounds the
+    # temporary table even when the reviewed catalog contains 98k climate rows.
+    base = catalog.loc[
+        valid,
+        ["name", "country", "region", "dataset", "latitude", "longitude", "elevation_m"],
+    ]
+    grouped = base.groupby(
+        [
+            country_key.loc[valid],
+            name_key.loc[valid],
+            lat_key.loc[valid],
+            lon_key.loc[valid],
+        ],
+        sort=False,
+        observed=True,
+        dropna=False,
+    )
+    summary = grouped.agg(
+        name=("name", "first"),
+        country=("country", "first"),
+        region=("region", lambda values: _limited_distinct_text(values, 3)),
+        dataset=("dataset", lambda values: _limited_distinct_text(values, 4)),
+        latitude=("latitude", "first"),
+        longitude=("longitude", "first"),
+        elevation_m=("elevation_m", "first"),
+        climate_count=("name", "size"),
+    ).reset_index()
 
-    return pd.DataFrame(grouped_rows)
+    summary["station_group_id"] = (
+        summary["_country_key"].astype(str)
+        + "|"
+        + summary["_name_key"].astype(str)
+        + "|"
+        + summary["_lat_key"].map(lambda value: f"{float(value):.4f}")
+        + "|"
+        + summary["_lon_key"].map(lambda value: f"{float(value):.4f}")
+    )
+    return summary[
+        [
+            "station_group_id",
+            "name",
+            "country",
+            "region",
+            "dataset",
+            "latitude",
+            "longitude",
+            "elevation_m",
+            "climate_count",
+            "_country_key",
+            "_name_key",
+            "_lat_key",
+            "_lon_key",
+        ]
+    ]
 
 
-@st.cache_data(show_spinner=False)
-def station_group_options_from_catalog(catalog: pd.DataFrame, limit: int = 10000) -> dict[str, str]:
-    """Return cached station-group labels for manual station selection."""
-    groups = grouped_station_catalog(catalog)
+def station_group_options_from_groups(groups: pd.DataFrame, limit: int = 10000) -> dict[str, str]:
+    """Return manual-selector labels from an already grouped station table."""
     options: dict[str, str] = {}
     for _, row in groups.head(limit).iterrows():
         count = int(row.get("climate_count", 1))
@@ -530,6 +564,11 @@ def station_group_options_from_catalog(catalog: pd.DataFrame, limit: int = 10000
         region = f", {row.get('region', '')}" if str(row.get("region", "")).strip() else ""
         options[f"{row['name']} — {row['country']}{region}{suffix}"] = str(row["station_group_id"])
     return options
+
+
+def station_group_options_from_catalog(catalog: pd.DataFrame, limit: int = 10000) -> dict[str, str]:
+    """Compatibility wrapper for callers that have not already grouped the catalog."""
+    return station_group_options_from_groups(grouped_station_catalog(catalog), limit=limit)
 
 
 def climate_option_label(row: pd.Series) -> str:
@@ -727,13 +766,37 @@ def station_group_from_tooltip(station_groups: pd.DataFrame, tooltip: str | None
     return matches.iloc[0]
 
 
-def catalog_rows_for_station_group(catalog: pd.DataFrame, group_id: str) -> pd.DataFrame:
-    """Return all climate rows belonging to one physical station group."""
-    if catalog.empty or not group_id:
+def catalog_rows_for_station_group(catalog: pd.DataFrame, station_group: object) -> pd.DataFrame:
+    """Return climates for one station using coordinate-first bounded filtering."""
+    if catalog.empty or station_group is None:
         return pd.DataFrame()
-    work = catalog.copy()
-    work["station_group_id"] = work.apply(station_group_id, axis=1)
-    return work[work["station_group_id"].astype(str) == str(group_id)].copy()
+
+    if isinstance(station_group, pd.Series):
+        group = station_group
+    elif isinstance(station_group, dict):
+        group = pd.Series(station_group)
+    else:
+        # Compatibility path for an old textual group id. It is not used by the
+        # production UI; resolve it once through the compact grouped table.
+        groups = grouped_station_catalog(catalog)
+        matches = groups[groups["station_group_id"].astype(str) == str(station_group)]
+        if matches.empty:
+            return pd.DataFrame()
+        group = matches.iloc[0]
+
+    target_lat = float(group.get("_lat_key", round(float(group.get("latitude")), 4)))
+    target_lon = float(group.get("_lon_key", round(float(group.get("longitude")), 4)))
+    lat = pd.to_numeric(catalog["latitude"], errors="coerce").round(4)
+    lon = pd.to_numeric(catalog["longitude"], errors="coerce").round(4)
+    candidates = catalog.loc[lat.eq(target_lat) & lon.eq(target_lon)]
+    if candidates.empty:
+        return pd.DataFrame()
+
+    target_name = str(group.get("_name_key", group.get("name", ""))).strip().lower()
+    target_country = str(group.get("_country_key", group.get("country", ""))).strip().lower()
+    names = candidates["name"].astype("string").fillna("").str.strip().str.lower()
+    countries = candidates["country"].astype("string").fillna("").str.strip().str.lower()
+    return candidates.loc[names.eq(target_name) & countries.eq(target_country)].copy()
 
 
 def _map_state_center(map_state: dict | None) -> list[float] | None:
@@ -988,7 +1051,7 @@ def render_climate_file_source() -> None:
 
     selected_group_matches = station_groups_all[station_groups_all["station_group_id"].astype(str) == str(selected_group_id)]
     selected_group = selected_group_matches.iloc[0] if not selected_group_matches.empty else station_groups_all.iloc[0]
-    selected_climates = catalog_rows_for_station_group(filtered_catalog, str(selected_group["station_group_id"]))
+    selected_climates = catalog_rows_for_station_group(filtered_catalog, selected_group)
     if selected_climates.empty:
         selected_climates = filtered_catalog.head(1).copy()
 
@@ -1062,7 +1125,7 @@ def render_climate_file_source() -> None:
                 st.error(f"Station download failed: {exc}")
 
         st.markdown("#### Manual station selection")
-        station_group_options = station_group_options_from_catalog(filtered_catalog, limit=10000)
+        station_group_options = station_group_options_from_groups(station_groups_all, limit=10000)
         if station_group_options:
             selected_label = st.selectbox("Search-result station groups", list(station_group_options.keys()))
             if st.button("Use station group from list"):
