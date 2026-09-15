@@ -71,6 +71,7 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
     global sun_position_diagram, threshold_bar_chart, wind_rose_chart
     global add_degree_metrics, comfort_condition, dehumidification_condition, economizer_condition
     global humidification_condition, natural_ventilation_condition, night_flushing_condition
+    global degree_metric_table, degree_metric_interpretation
     global passive_strategy_monthly, passive_strategy_table, rejection_reasons_for_nv, shading_condition
     global location_summary, parse_epw, quality_issues
     global data_quality_interpretation, degree_day_interpretation, hvac_interpretation
@@ -138,6 +139,7 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
             rejection_reasons_for_nv,
             shading_condition,
         )
+        from epw_climate_analyzer.degree_metrics import degree_metric_interpretation, degree_metric_table
         from epw_climate_analyzer.epw_parser import location_summary, parse_epw, quality_issues
         from epw_climate_analyzer.interpretations import (
             data_quality_interpretation,
@@ -1978,9 +1980,119 @@ def render_overview(epw, df: pd.DataFrame, full_df: pd.DataFrame, issues: list[o
 def render_temperature(df: pd.DataFrame) -> None:
     """Render temperature-analysis charts."""
     st.header("Temperature and extremes")
-    heat_threshold = st.slider("Heating threshold [°C]", -5.0, 25.0, 18.0, 0.5)
-    cool_threshold = st.slider("Cooling threshold [°C]", 15.0, 40.0, 26.0, 0.5)
     chart_group = st.selectbox("Analysis type", ["Temperature variable explorer", "Threshold hours", "Degree days", "Extreme days"])
+
+    if chart_group == "Degree days":
+        st.caption(
+            "Choose the heating and cooling base/reference temperatures explicitly. "
+            "They are climate balance/reference temperatures for this indicator, not a complete indoor setpoint or building-load model."
+        )
+        base_col1, base_col2 = st.columns(2)
+        heat_threshold = base_col1.slider(
+            "Heating base/reference temperature [°C]",
+            -5.0,
+            30.0,
+            18.0,
+            0.5,
+            help="Heating degree metric is accumulated only when outdoor temperature is below this reference/base temperature.",
+        )
+        cool_threshold = base_col2.slider(
+            "Cooling base/reference temperature [°C]",
+            10.0,
+            40.0,
+            26.0,
+            0.5,
+            help="Cooling degree metric is accumulated only when outdoor temperature is above this reference/base temperature.",
+        )
+        if heat_threshold > cool_threshold:
+            st.error("Heating base/reference temperature must not exceed cooling base/reference temperature.")
+            return
+
+        method_col, aggregation_col = st.columns(2)
+        metric = method_col.radio(
+            "Degree metric",
+            ["Degree-hours", "Degree-days"],
+            horizontal=True,
+            help=(
+                "Degree-hours use every source interval. Degree-days first calculate the daily mean outdoor temperature; "
+                "they are not obtained by simply dividing degree-hours by 24."
+            ),
+        )
+        aggregation = aggregation_col.selectbox(
+            "Aggregation",
+            ["Daily", "Weekly", "Monthly", "Seasonal", "Annual"],
+            index=2,
+            key="degree_metric_aggregation",
+        )
+        table = degree_metric_table(
+            df,
+            heating_base_c=heat_threshold,
+            cooling_base_c=cool_threshold,
+            metric=metric,
+            aggregation=aggregation,
+        )
+        unit = str(table.attrs.get("unit", "K·h" if metric == "Degree-hours" else "K·d"))
+
+        plot_data = table.reset_index()
+        plot_data = plot_data.rename(columns={plot_data.columns[0]: "Period"})
+        if aggregation == "Monthly":
+            plot_data["Period"] = pd.to_datetime(plot_data["Period"]).dt.strftime("%b")
+        elif aggregation == "Weekly":
+            timestamps = pd.to_datetime(plot_data["Period"])
+            plot_data["Period"] = [f"W{int(ts.isocalendar().week):02d}" for ts in timestamps]
+        elif aggregation == "Daily":
+            plot_data["Period"] = pd.to_datetime(plot_data["Period"]).dt.strftime("%d %b")
+        elif aggregation == "Annual":
+            plot_data["Period"] = pd.to_datetime(plot_data["Period"]).dt.strftime("%Y")
+
+        series_names = [str(column) for column in table.columns]
+        long = plot_data.melt(id_vars="Period", var_name="Series", value_name="Value")
+        fig = px.bar(
+            long,
+            x="Period",
+            y="Value",
+            color="Series",
+            barmode="group",
+            title=(
+                f"{aggregation} heating and cooling {metric.lower()} "
+                f"(bases {heat_threshold:g}/{cool_threshold:g} °C)"
+            ),
+            color_discrete_map={name: metric_color(name) for name in series_names},
+        )
+        fig.update_layout(
+            template="plotly_white",
+            xaxis_title="Period",
+            yaxis_title=unit,
+            legend_title_text="Indicator",
+            margin=dict(l=40, r=20, t=70, b=45),
+        )
+        fig.update_yaxes(rangemode="tozero")
+        st.caption(
+            "Degree-hours integrate the temperature difference at each source interval. "
+            "Degree-days use daily mean outdoor temperature before applying the heating/cooling base. "
+            "Heating and cooling bars are grouped because they are separate indicators, not additive components of one total."
+        )
+        render_plot(
+            fig,
+            degree_metric_interpretation(
+                table,
+                heating_base_c=heat_threshold,
+                cooling_base_c=cool_threshold,
+                metric=metric,
+            ),
+        )
+        return
+
+    if chart_group in {"Temperature variable explorer", "Threshold hours"}:
+        threshold_col1, threshold_col2 = st.columns(2)
+        heat_threshold = threshold_col1.slider("Heating threshold [°C]", -5.0, 25.0, 18.0, 0.5)
+        cool_threshold = threshold_col2.slider("Cooling threshold [°C]", 15.0, 40.0, 26.0, 0.5)
+        if heat_threshold > cool_threshold:
+            st.error("Heating threshold must not exceed cooling threshold.")
+            return
+    else:
+        heat_threshold = 18.0
+        cool_threshold = 26.0
 
     if chart_group == "Temperature variable explorer":
         render_generic_variable_page(
@@ -2005,11 +2117,6 @@ def render_temperature(df: pd.DataFrame) -> None:
         counts = threshold_count_by_period(df, condition, aggregation, label="hours")
         fig = threshold_bar_chart(counts, f"Temperature threshold hours: {mode}")
         render_plot(fig, temperature_interpretation(df, heat_threshold, cool_threshold))
-    elif chart_group == "Degree days":
-        monthly = aggregate_sum(df, "heating_degree_hours_kh", "Monthly")[["sum"]].rename(columns={"sum": "Heating degree-hours"})
-        monthly["Cooling degree-hours"] = aggregate_sum(df, "cooling_degree_hours_kh", "Monthly")["sum"]
-        fig = stacked_monthly_bar(monthly, "Monthly heating and cooling degree-hours", "K·h")
-        render_plot(fig, degree_day_interpretation(df))
     else:
         st.subheader("Extreme daily conditions")
         daily = df["dry_bulb_temperature_c"].resample("D").agg(mean="mean", min="min", max="max")
