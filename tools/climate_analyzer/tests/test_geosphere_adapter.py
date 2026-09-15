@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import patch
 
 import pandas as pd
 
@@ -15,6 +16,8 @@ from epw_climate_analyzer.geosphere import (
     estimate_request_datapoints,
     parse_parameters,
     parse_station_data_response,
+    plan_data_queries,
+    fetch_station_provider_frame,
     parse_stations,
     provider_frame_to_canonical,
     station_catalog,
@@ -101,6 +104,77 @@ class GeoSphereAdapterTests(unittest.TestCase):
         very_long_end = start + pd.Timedelta(minutes=10 * (MAX_REQUEST_DATAPOINTS + 1))
         with self.assertRaisesRegex(ValueError, "local .* limit"):
             build_data_query("11240", start, very_long_end, ["tl"])
+
+    def test_year_scale_request_is_partitioned_without_boundary_overlap(self) -> None:
+        start = pd.Timestamp("2025-01-01T00:00:00Z")
+        end = pd.Timestamp("2025-12-31T23:50:00Z")
+        parameters = [item["name"] for item in PARAMETERS if item["name"] != "tl_flag"]
+        queries = plan_data_queries("11240", start, end, parameters)
+        self.assertGreater(len(queries), 1)
+        previous_end = None
+        for query in queries:
+            q_start = pd.Timestamp(query["start"], tz="UTC")
+            q_end = pd.Timestamp(query["end"], tz="UTC")
+            self.assertLessEqual(estimate_request_datapoints(q_start, q_end, len(parameters)), MAX_REQUEST_DATAPOINTS)
+            if previous_end is not None:
+                self.assertEqual(q_start, previous_end + pd.Timedelta(minutes=10))
+            previous_end = q_end
+        self.assertEqual(pd.Timestamp(queries[0]["start"], tz="UTC"), start)
+        self.assertEqual(pd.Timestamp(queries[-1]["end"], tz="UTC"), end)
+
+    def test_batched_fetch_concatenates_non_overlapping_responses_and_records_references(self) -> None:
+        start = pd.Timestamp("2025-01-01T00:00:00Z")
+        end = pd.Timestamp("2025-01-01T00:30:00Z")
+        payloads = [
+            {
+                "timestamps": ["2025-01-01T00:00+00:00", "2025-01-01T00:10+00:00"],
+                "features": [{"properties": {"station": 11240, "parameters": {"tl": {"data": [1.0, 2.0]}}}}],
+            },
+            {
+                "timestamps": ["2025-01-01T00:20+00:00", "2025-01-01T00:30+00:00"],
+                "features": [{"properties": {"station": 11240, "parameters": {"tl": {"data": [3.0, 4.0]}}}}],
+            },
+        ]
+        planned = [
+            {"parameters": "tl", "station_ids": "11240", "start": "2025-01-01T00:00", "end": "2025-01-01T00:10"},
+            {"parameters": "tl", "station_ids": "11240", "start": "2025-01-01T00:20", "end": "2025-01-01T00:30"},
+        ]
+        with patch("epw_climate_analyzer.geosphere.plan_data_queries", return_value=planned), patch(
+            "epw_climate_analyzer.geosphere._bounded_get_json", side_effect=payloads
+        ):
+            frame, references = fetch_station_provider_frame(
+                station_id="11240", start=start, end=end, provider_parameters=["tl"]
+            )
+        self.assertEqual(frame["tl"].tolist(), [1.0, 2.0, 3.0, 4.0])
+        self.assertFalse(frame.index.has_duplicates)
+        self.assertEqual(len(references), 2)
+        self.assertTrue(all("station_ids=11240" in ref for ref in references))
+
+    def test_batched_fetch_fails_closed_on_duplicate_boundary_timestamp(self) -> None:
+        payloads = [
+            {
+                "timestamps": ["2025-01-01T00:00+00:00", "2025-01-01T00:10+00:00"],
+                "features": [{"properties": {"station": 11240, "parameters": {"tl": {"data": [1.0, 2.0]}}}}],
+            },
+            {
+                "timestamps": ["2025-01-01T00:10+00:00", "2025-01-01T00:20+00:00"],
+                "features": [{"properties": {"station": 11240, "parameters": {"tl": {"data": [2.0, 3.0]}}}}],
+            },
+        ]
+        planned = [
+            {"parameters": "tl", "station_ids": "11240", "start": "2025-01-01T00:00", "end": "2025-01-01T00:10"},
+            {"parameters": "tl", "station_ids": "11240", "start": "2025-01-01T00:10", "end": "2025-01-01T00:20"},
+        ]
+        with patch("epw_climate_analyzer.geosphere.plan_data_queries", return_value=planned), patch(
+            "epw_climate_analyzer.geosphere._bounded_get_json", side_effect=payloads
+        ):
+            with self.assertRaisesRegex(ValueError, "duplicate timestamps"):
+                fetch_station_provider_frame(
+                    station_id="11240",
+                    start=pd.Timestamp("2025-01-01T00:00:00Z"),
+                    end=pd.Timestamp("2025-01-01T00:20:00Z"),
+                    provider_parameters=["tl"],
+                )
 
     def test_station_json_parser_retains_real_utc_timestamps_and_nulls(self) -> None:
         payload = {
