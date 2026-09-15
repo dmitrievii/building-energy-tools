@@ -1,3 +1,5 @@
+"""Regression contract for physical-hour semantics on sub-hourly climate data."""
+
 from __future__ import annotations
 
 import ast
