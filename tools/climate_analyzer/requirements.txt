@@ -1,5 +1,6 @@
 # WEB-0.3 direct dependency baseline (Python 3.12).
 # Major scientific-stack upgrades are intentionally deferred to a dedicated validation stage.
+# Community Cloud deployment refresh after CLIMATE-0.10.12 memory remediation; dependency pins unchanged.
 streamlit==1.63.0
 streamlit-folium==0.27.4
 folium==0.20.0
