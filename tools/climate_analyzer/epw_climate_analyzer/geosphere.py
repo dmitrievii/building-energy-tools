@@ -359,6 +359,96 @@ def build_data_query(
     }
 
 
+def plan_data_queries(
+    station_id: str,
+    start: pd.Timestamp,
+    end: pd.Timestamp,
+    provider_parameters: Iterable[str],
+    *,
+    max_datapoints: int = MAX_REQUEST_DATAPOINTS,
+) -> list[dict[str, str]]:
+    """Split one inclusive station interval into bounded 10-minute requests.
+
+    GeoSphere request size scales with ``timestamps × parameters × stations``.
+    The public app requests one station at a time, so this planner partitions a
+    long interval along the time axis. Adjacent batches are separated by exactly
+    one native 10-minute interval: the first timestamp of a new batch is the
+    timestamp after the previous batch's inclusive end. No overlap or synthetic
+    interpolation is introduced.
+    """
+    station_id = str(station_id).strip()
+    if not station_id:
+        raise ValueError("GeoSphere station_id must not be empty.")
+    parameters = tuple(dict.fromkeys(str(item).strip() for item in provider_parameters if str(item).strip()))
+    if not parameters:
+        raise ValueError("At least one GeoSphere parameter is required.")
+    unknown = sorted(set(parameters) - set(FIELD_SPEC_BY_PROVIDER))
+    if unknown:
+        raise ValueError(f"Unsupported GeoSphere parameters: {', '.join(unknown)}")
+    if int(max_datapoints) <= 0:
+        raise ValueError("GeoSphere batch datapoint limit must be positive.")
+
+    start_ts = pd.Timestamp(start)
+    end_ts = pd.Timestamp(end)
+    if end_ts < start_ts:
+        raise ValueError("GeoSphere request end must not be earlier than start.")
+
+    max_steps = int(max_datapoints) // len(parameters)
+    if max_steps < 1:
+        raise ValueError("GeoSphere batch datapoint limit is too small for the selected parameter set.")
+
+    interval = pd.Timedelta(minutes=GEOSPHERE_NATIVE_INTERVAL_MINUTES)
+    queries: list[dict[str, str]] = []
+    cursor = start_ts
+    while cursor <= end_ts:
+        batch_end = min(end_ts, cursor + interval * (max_steps - 1))
+        query = build_data_query(station_id, cursor, batch_end, parameters)
+        if estimate_request_datapoints(cursor, batch_end, len(parameters), 1) > int(max_datapoints):
+            raise RuntimeError("Internal GeoSphere batch planner exceeded its datapoint limit.")
+        queries.append(query)
+        cursor = batch_end + interval
+    return queries
+
+
+def _query_reference(query: Mapping[str, str]) -> str:
+    return f"{GEOSPHERE_ENDPOINT}?{urlencode(dict(query))}"
+
+
+def fetch_station_provider_frame(
+    *,
+    station_id: str,
+    start: pd.Timestamp,
+    end: pd.Timestamp,
+    provider_parameters: Iterable[str],
+    timeout_s: int = DEFAULT_TIMEOUT_SECONDS,
+) -> tuple[pd.DataFrame, tuple[str, ...]]:
+    """Fetch and concatenate all bounded batches for one historical interval.
+
+    Missing observations remain missing. Only structural corruption is rejected:
+    duplicate timestamps across batches, an empty aggregate response, or malformed
+    provider payloads. Historical gaps are not fabricated or interpolated.
+    """
+    parameters = tuple(dict.fromkeys(str(item).strip() for item in provider_parameters if str(item).strip()))
+    queries = plan_data_queries(station_id, start, end, parameters)
+    frames: list[pd.DataFrame] = []
+    references: list[str] = []
+    for query in queries:
+        payload = _bounded_get_json(GEOSPHERE_ENDPOINT, params=query, timeout_s=timeout_s)
+        frames.append(parse_station_data_response(payload, station_id, parameters))
+        references.append(_query_reference(query))
+
+    if not frames:
+        raise ValueError("GeoSphere batching produced no requests.")
+    combined = pd.concat(frames, axis=0)
+    if combined.empty:
+        raise ValueError("GeoSphere returned no timestamps for the selected interval.")
+    if combined.index.has_duplicates:
+        duplicate_count = int(combined.index.duplicated(keep=False).sum())
+        raise ValueError(f"GeoSphere batched response contains {duplicate_count} duplicate timestamps.")
+    combined = combined.sort_index(kind="mergesort")
+    return combined, tuple(references)
+
+
 def _feature_station_id(feature: Mapping[str, Any]) -> str:
     properties = feature.get("properties")
     if not isinstance(properties, Mapping):
@@ -440,6 +530,7 @@ def build_canonical_station_dataset(
     mapping: Mapping[str, ProviderFieldSpec],
     request_reference: str = "",
     retrieval_time_utc: str | None = None,
+    request_count: int = 1,
 ) -> CanonicalClimateDataset:
     """Build a historical 10-minute canonical dataset for one station."""
     canonical = provider_frame_to_canonical(provider_frame, mapping)
@@ -471,6 +562,7 @@ def build_canonical_station_dataset(
             f"Dataset DOI: {GEOSPHERE_DOI}",
             "Provider timestamps are retained as real UTC historical timestamps.",
             "10-minute mean radiation in W/m² is converted to interval irradiation in Wh/m².",
+            f"Historical interval retrieved in {int(request_count)} bounded Dataset API request batch(es).",
         ),
     )
     return build_canonical_dataset(
@@ -509,13 +601,17 @@ def fetch_station_dataset(
                     f"GeoSphere metadata do not currently expose required parameter '{spec.provider_name}'."
                 )
             selected[spec.provider_name] = spec
-    query = build_data_query(station.station_id, start, end, selected.keys())
-    payload = _bounded_get_json(GEOSPHERE_ENDPOINT, params=query, timeout_s=timeout_s)
-    provider_frame = parse_station_data_response(payload, station.station_id, selected.keys())
-    request_reference = f"{GEOSPHERE_ENDPOINT}?{urlencode(query)}"
+    provider_frame, request_references = fetch_station_provider_frame(
+        station_id=station.station_id,
+        start=start,
+        end=end,
+        provider_parameters=selected.keys(),
+        timeout_s=timeout_s,
+    )
     return build_canonical_station_dataset(
         station=station,
         provider_frame=provider_frame,
         mapping=selected,
-        request_reference=request_reference,
+        request_reference="\n".join(request_references),
+        request_count=len(request_references),
     )

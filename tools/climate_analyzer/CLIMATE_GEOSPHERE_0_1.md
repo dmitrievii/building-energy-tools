@@ -1,4 +1,4 @@
-# CLIMATE-GEOSPHERE-0.1 — GeoSphere Austria historical station adapter
+# CLIMATE-GEOSPHERE-0.2 — GeoSphere Austria batched historical station adapter
 
 ## Scope
 
@@ -15,7 +15,7 @@ This stage adds a provider adapter for GeoSphere Austria's public, quality-check
 
 The legacy `klima-v1-10min` resource is deliberately not used. It stopped receiving updates in 2024. The raw/near-real-time TAWES endpoint is also not used as the historical source because this stage targets the quality-checked `klima-v2-10min` archive.
 
-This is an **adapter stage**, not yet a public UI/map stage.
+This stage extends the qualified adapter with deterministic bounded batching for long historical ranges. It is still not a public station-selection UI stage.
 
 ## Supported provider quantities
 
@@ -59,10 +59,12 @@ The public adapter:
 - bounds response size;
 - estimates requested datapoints before a network call;
 - uses a conservative local request cap of 200,000 datapoints;
-- currently requests one station per canonical dataset;
-- preserves missing values rather than treating them as zero.
+- requests one station per canonical dataset;
+- partitions year-scale ranges into deterministic non-overlapping 10-minute batches under the same 200,000-datapoint local cap;
+- rejects duplicate timestamps across returned batches;
+- preserves historical gaps and missing values rather than interpolating or treating them as zero.
 
-The official API's request-size accounting is based on parameters × time steps × stations. A later UI stage may batch long ranges, but batching must preserve these same limits and provider rate limits.
+The official API's request-size accounting is based on parameters × time steps × stations. Batch boundaries are inclusive and the next batch starts exactly one native 10-minute interval after the previous end, so request windows neither overlap nor leave a planner-created gap.
 
 ## Time semantics
 
@@ -81,11 +83,11 @@ Every returned `CanonicalClimateDataset` records:
 - GeoSphere Austria as provider;
 - `klima-v2-10min` dataset identity;
 - station ID and name;
-- exact request reference when data were downloaded;
+- exact request reference for every bounded batch when data were downloaded;
 - retrieval timestamp;
 - CC BY 4.0 attribution and dataset DOI;
 - the radiation unit conversion note.
 
 ## Next stage
 
-After this adapter is qualified, the next stage can add a GeoSphere station-selection experience and request batching for year-scale ranges. Detailed Year and Historical Comparison should consume the canonical dataset rather than introduce a second provider-specific analysis path.
+After this batched adapter is qualified, the next stage can add a GeoSphere station-selection experience. Detailed Year and Historical Comparison should consume the canonical dataset rather than introduce a second provider-specific analysis path.
