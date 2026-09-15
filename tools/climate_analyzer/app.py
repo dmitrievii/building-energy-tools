@@ -77,6 +77,7 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
     global natural_ventilation_interpretation, psychrometric_interpretation, sky_interpretation
     global solar_interpretation, temperature_interpretation, variable_interpretation, wind_interpretation
     global DEFAULT_PRESSURE_PA, add_psychrometric_properties, pressure_from_altitude_m
+    global aggregate_liquid_precipitation, occurrence_hours, precipitation_summary
     global calculated_statistics_tables, climate_statistics_interpretation, extreme_day_summary
     global monthly_climate_summary, seasonal_climate_summary
     global add_solar_position, monthly_orientation_radiation, orientation_annual_radiation
@@ -159,6 +160,11 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
             extreme_day_summary,
             monthly_climate_summary,
             seasonal_climate_summary,
+        )
+        from epw_climate_analyzer.precipitation import (
+            aggregate_liquid_precipitation,
+            occurrence_hours,
+            precipitation_summary,
         )
         _ANALYSIS_DEPENDENCIES_LOADED = True
 
@@ -1173,7 +1179,7 @@ def render_generic_variable_page(
             aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Hourly", "Seasonal"], index=0)
         # Radiation and illuminance are visualized as mean intensities in the generic explorer.
         # Monthly/annual energy sums are available in the dedicated solar component charts.
-        extensive = column.endswith("_mm")
+        extensive = column == "liquid_precipitation_depth_mm"
         if chart_type == "Profile with min-mean-max ribbon":
             fig = profile_ribbon_chart(df, column, aggregation or "Monthly", f"{title_prefix}: {variable_label}", unit, extensive=extensive)
         elif chart_type == "Percentile band P05-P50-P95":
@@ -1881,6 +1887,7 @@ def render_overview(epw, df: pd.DataFrame, full_df: pd.DataFrame, issues: list[o
             - Duration curves, histograms, boxplots and violin plots
             - Psychrometric T-d and i-d charts
             - Wind roses, sun-path plots and façade-radiation charts
+            - Precipitation totals, wet-hour occurrence, snow depth and snow-cover occurrence
             - Natural-ventilation, night-flushing, shading, economizer and latent-load indicators
             - EPW data-quality diagnostics
             """
@@ -2176,6 +2183,120 @@ def render_wind(df: pd.DataFrame) -> None:
         render_plot(fig, wind_interpretation(df))
 
 
+
+def render_precipitation(df: pd.DataFrame) -> None:
+    """Render liquid-precipitation and snow-cover analysis from EPW fields."""
+    st.header("Precipitation and snow")
+    summary = precipitation_summary(df)
+    liquid_available = bool(summary["liquid_data_available"])
+    snow_available = bool(summary["snow_data_available"])
+
+    metric_cols = st.columns(5)
+    metric_cols[0].metric(
+        "Liquid precipitation",
+        "N/A" if summary["liquid_total_mm"] is None else f"{summary['liquid_total_mm']:.1f} mm",
+        help="Sum of valid EPW liquid-precipitation depth records in the current sidebar-filtered view.",
+    )
+    metric_cols[1].metric(
+        "Wet hours ≥ 0.1 mm",
+        "N/A" if summary["wet_hours"] is None else f"{summary['wet_hours']:,}",
+    )
+    metric_cols[2].metric(
+        "Max precipitation record",
+        "N/A" if summary["max_record_precipitation_mm"] is None else f"{summary['max_record_precipitation_mm']:.1f} mm",
+    )
+    metric_cols[3].metric(
+        "Max snow depth",
+        "N/A" if summary["max_snow_depth_cm"] is None else f"{summary['max_snow_depth_cm']:.1f} cm",
+    )
+    metric_cols[4].metric(
+        "Snow-cover hours",
+        "N/A" if summary["snow_cover_hours"] is None else f"{summary['snow_cover_hours']:,}",
+    )
+
+    st.caption(
+        "Precipitation and snow availability depends on the source EPW. Missing EPW sentinel values are excluded. "
+        "Liquid precipitation is accumulated; snow depth is treated as a state variable and is never summed."
+    )
+
+    options: list[str] = []
+    if liquid_available:
+        options.extend(["Precipitation totals", "Wet-hour occurrence", "Liquid precipitation explorer"])
+    if snow_available:
+        options.extend(["Snow depth explorer", "Snow-cover occurrence"])
+    if not options:
+        st.info("This EPW file does not contain usable liquid-precipitation or snow-depth data.")
+        return
+
+    chart_group = st.selectbox("Analysis type", options)
+
+    if chart_group == "Precipitation totals":
+        aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0)
+        totals = aggregate_liquid_precipitation(df, aggregation)
+        plot_data = totals.reset_index()
+        x_column = plot_data.columns[0]
+        fig = px.bar(
+            plot_data,
+            x=x_column,
+            y="precipitation_mm",
+            title=f"Liquid precipitation totals — {aggregation.lower()}",
+            labels={x_column: "Period", "precipitation_mm": "Precipitation [mm]"},
+        )
+        fig.update_traces(marker_color=metric_color("liquid_precipitation_depth_mm"))
+        fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Precipitation [mm]")
+        render_plot(
+            fig,
+            "Period totals sum valid EPW liquid-precipitation depth records. Missing EPW values are excluded rather than treated as zero.",
+        )
+    elif chart_group == "Wet-hour occurrence":
+        threshold = st.number_input("Wet-hour threshold [mm]", min_value=0.0, value=0.1, step=0.1)
+        aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0)
+        counts = occurrence_hours(
+            df,
+            "liquid_precipitation_depth_mm",
+            float(threshold),
+            aggregation,
+            inclusive=True,
+        )
+        plot_data = counts.reset_index()
+        x_column = plot_data.columns[0]
+        fig = px.bar(
+            plot_data,
+            x=x_column,
+            y="hours",
+            title=f"Wet-hour occurrence ≥ {threshold:g} mm",
+            labels={x_column: "Period", "hours": "Wet hours"},
+        )
+        fig.update_traces(marker_color=metric_color("liquid_precipitation_depth_mm"))
+        fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Wet hours")
+        render_plot(fig, "Counts only EPW records with valid precipitation data that meet the selected depth threshold.")
+    elif chart_group == "Liquid precipitation explorer":
+        render_generic_variable_page(
+            df,
+            ["Liquid precipitation depth"],
+            "Liquid precipitation depth",
+            "Precipitation",
+            None,
+        )
+    elif chart_group == "Snow depth explorer":
+        render_generic_variable_page(df, ["Snow depth"], "Snow depth", "Snow cover", None)
+    else:
+        aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0)
+        counts = occurrence_hours(df, "snow_depth_cm", 0.0, aggregation, inclusive=False)
+        plot_data = counts.reset_index()
+        x_column = plot_data.columns[0]
+        fig = px.bar(
+            plot_data,
+            x=x_column,
+            y="hours",
+            title="Snow-cover occurrence",
+            labels={x_column: "Period", "hours": "Hours with snow depth > 0 cm"},
+        )
+        fig.update_traces(marker_color=metric_color("snow_depth_cm"))
+        fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Snow-cover hours")
+        render_plot(fig, "Snow depth is a state variable; this chart counts valid EPW records with snow depth greater than zero.")
+
+
 def render_sky_daylight(df: pd.DataFrame) -> None:
     """Render sky-cover and daylight charts."""
     st.header("Sky cover and daylight")
@@ -2456,7 +2577,11 @@ def main() -> None:
                 "Altitude-derived standard atmosphere pressure",
                 "Custom constant pressure",
             ],
-            index=0,
+            index=1,
+            help=(
+                "Default: use the atmospheric station pressure stored in the EPW for each hourly record. "
+                "The median valid EPW pressure is used only as a fallback when an EPW pressure value is missing or invalid."
+            ),
         )
         custom_pressure = None
         if pressure_mode == "Custom constant pressure":
@@ -2504,7 +2629,10 @@ def main() -> None:
     st.sidebar.write(f"Rows in current view: {len(filtered_df):,}")
     with st.sidebar.expander("Data provenance", expanded=False):
         st.caption(active_file.source)
-        st.caption(f"Calculation pressure: {active_pressure:,.0f} Pa")
+        if pressure_mode == "EPW station pressure with fallback median":
+            st.caption(f"Pressure: hourly EPW station values; fallback median {active_pressure:,.0f} Pa")
+        else:
+            st.caption(f"Calculation pressure: {active_pressure:,.0f} Pa")
 
     if page == "Overview":
         render_overview(epw, filtered_df, full_df, issues)
@@ -2518,6 +2646,8 @@ def main() -> None:
         render_wind(filtered_df)
     elif page == "Sky and Daylight":
         render_sky_daylight(filtered_df)
+    elif page == "Precipitation and Snow":
+        render_precipitation(filtered_df)
     elif page == "Natural Ventilation":
         render_natural_ventilation(filtered_df, pressure_pa=active_pressure)
     elif page == "HVAC and Passive Design":

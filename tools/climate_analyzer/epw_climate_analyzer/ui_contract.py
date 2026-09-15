@@ -25,7 +25,7 @@ APP_NAME = TOOL_NAME
 APP_BROWSER_TITLE = f"{TOOL_NAME} | {PROJECT_NAME}"
 APP_TAGLINE = "Climate analysis for building design and building performance"
 APP_INTRO = (
-    "Explore EPW weather data for temperature, moisture, solar radiation, wind, "
+    "Explore EPW weather data for temperature, moisture, solar radiation, wind, precipitation, "
     "passive-design potential and early HVAC decision support."
 )
 APP_RELEASE_LABEL = f"{TOOL_NAME} {TOOL_VERSION} · Beta candidate"
@@ -44,6 +44,7 @@ NAVIGATION_PAGES = (
     "Solar and Radiation",
     "Wind and Ventilation",
     "Sky and Daylight",
+    "Precipitation and Snow",
     "Natural Ventilation",
     "HVAC and Passive Design",
     "Compare Climates",
@@ -58,6 +59,7 @@ NAVIGATION_LABELS = {
     "Solar and Radiation": "Climate — Solar radiation",
     "Wind and Ventilation": "Climate — Wind",
     "Sky and Daylight": "Climate — Sky & daylight",
+    "Precipitation and Snow": "Climate — Precipitation & snow",
     "Natural Ventilation": "Design — Natural ventilation",
     "HVAC and Passive Design": "Design — Passive strategies & HVAC",
     "Compare Climates": "Compare — Multiple climates",

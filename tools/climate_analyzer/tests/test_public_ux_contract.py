@@ -29,7 +29,7 @@ class PublicUxContractTests(unittest.TestCase):
         self.assertIn("building design", APP_TAGLINE.lower())
 
     def test_navigation_contract_is_complete_and_unique(self) -> None:
-        self.assertEqual(len(NAVIGATION_PAGES), 11)
+        self.assertEqual(len(NAVIGATION_PAGES), 12)
         self.assertEqual(len(set(NAVIGATION_PAGES)), len(NAVIGATION_PAGES))
         self.assertEqual(set(NAVIGATION_LABELS), set(NAVIGATION_PAGES))
         labels = [navigation_label(page) for page in NAVIGATION_PAGES]
