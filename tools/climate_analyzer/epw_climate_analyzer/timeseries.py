@@ -20,6 +20,11 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from .chart_theme import metric_color
+from .climate_model import (
+    aggregation_semantics_for,
+    infer_native_resolution_minutes,
+    unit_family_for,
+)
 
 
 @dataclass(frozen=True)
@@ -45,43 +50,6 @@ RESOLUTIONS: tuple[ResolutionSpec, ...] = (
 RESOLUTION_BY_LABEL = {item.label: item for item in RESOLUTIONS}
 
 
-# Aggregation semantics are quantity-specific.  Extensive interval quantities
-# are summed; state/intensive quantities are averaged; directions need circular
-# statistics.  This table is intentionally explicit so future measured-data
-# adapters can extend it without relying on column-name heuristics.
-SUM_COLUMNS = {
-    "global_horizontal_radiation_wh_m2",
-    "direct_normal_radiation_wh_m2",
-    "diffuse_horizontal_radiation_wh_m2",
-    "liquid_precipitation_depth_mm",
-}
-CIRCULAR_COLUMNS = {"wind_direction_deg"}
-
-UNIT_FAMILY_BY_COLUMN = {
-    "dry_bulb_temperature_c": "temperature",
-    "dew_point_temperature_c": "temperature",
-    "wet_bulb_temperature_c": "temperature",
-    "relative_humidity_pct": "relative humidity",
-    "humidity_ratio_g_kg": "humidity ratio",
-    "moist_air_enthalpy_kj_kg": "enthalpy",
-    "specific_volume_m3_kg": "specific volume",
-    "moist_air_density_kg_m3": "density",
-    "atmospheric_station_pressure_pa": "pressure",
-    "global_horizontal_radiation_wh_m2": "irradiation",
-    "direct_normal_radiation_wh_m2": "irradiation",
-    "diffuse_horizontal_radiation_wh_m2": "irradiation",
-    "global_horizontal_illuminance_lux": "illuminance",
-    "direct_normal_illuminance_lux": "illuminance",
-    "diffuse_horizontal_illuminance_lux": "illuminance",
-    "wind_speed_m_s": "wind speed",
-    "wind_direction_deg": "direction",
-    "total_sky_cover_tenths": "sky cover",
-    "opaque_sky_cover_tenths": "sky cover",
-    "liquid_precipitation_depth_mm": "precipitation",
-    "snow_depth_cm": "snow depth",
-}
-
-
 @dataclass(frozen=True)
 class OverlaySeries:
     label: str
@@ -91,21 +59,13 @@ class OverlaySeries:
 
     @property
     def unit_family(self) -> str:
-        return UNIT_FAMILY_BY_COLUMN.get(self.column, self.unit)
+        return unit_family_for(self.column, self.unit)
 
 
 
 def native_resolution_minutes(index: pd.DatetimeIndex) -> int:
-    """Infer the median positive native timestep in whole minutes."""
-    idx = pd.DatetimeIndex(index).sort_values().unique()
-    if len(idx) < 2:
-        return 60
-    deltas = pd.Series(idx[1:] - idx[:-1])
-    positive = deltas[deltas > pd.Timedelta(0)]
-    if positive.empty:
-        return 60
-    minutes = float(positive.median() / pd.Timedelta(minutes=1))
-    return max(1, int(round(minutes)))
+    """Compatibility wrapper around the canonical source-resolution inference."""
+    return infer_native_resolution_minutes(index)
 
 
 
@@ -119,11 +79,8 @@ def available_resolution_labels(index: pd.DatetimeIndex) -> list[str]:
 
 
 def aggregation_semantics(column: str) -> str:
-    if column in SUM_COLUMNS:
-        return "sum"
-    if column in CIRCULAR_COLUMNS:
-        return "circular mean"
-    return "mean"
+    """Compatibility wrapper around canonical quantity aggregation semantics."""
+    return aggregation_semantics_for(column)
 
 
 

@@ -191,15 +191,9 @@ class CanonicalClimateDataset:
         validated = validate_canonical_frame(self.data)
         object.__setattr__(self, "data", validated)
         inferred = infer_native_resolution_minutes(validated.index)
-        # Gaps are allowed in historical observations, therefore only reject an
-        # explicit cadence that is finer than the actually represented minimum
-        # positive spacing. A declared 10-minute station remains valid even if
-        # some observations are missing and the median gap becomes 20 minutes.
-        positive = _positive_interval_minutes(validated.index)
-        if positive and self.temporal.native_interval_minutes < min(positive):
-            raise ValueError(
-                "Declared native interval is finer than any timestamp spacing present in the canonical frame."
-            )
+        # The declared cadence belongs to the source contract. Historical
+        # observations may have arbitrary gaps, so observed timestamp spacing
+        # must not rewrite or invalidate a provider-declared native interval.
         validated.attrs.setdefault("canonical_native_interval_minutes", self.temporal.native_interval_minutes)
         validated.attrs.setdefault("canonical_calendar_mode", self.temporal.calendar_mode)
         validated.attrs.setdefault("canonical_timezone_name", self.temporal.timezone_name)
