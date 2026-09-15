@@ -1,0 +1,54 @@
+name: CLIMATE-EXPORT-0.1 branch remediation
+
+on:
+  push:
+    branches:
+      - climate-export-0.1-local-chart-export
+
+permissions:
+  contents: write
+
+jobs:
+  patch-validate-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: climate-export-0.1-local-chart-export
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Climate Analyzer dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r tools/climate_analyzer/requirements.txt pytest
+
+      - name: Apply local chart export patch
+        run: python tools/climate_analyzer/_climate_export_patch.py
+
+      - name: Compile
+        run: python -m compileall -q tools/climate_analyzer
+
+      - name: Focused export regression
+        working-directory: tools/climate_analyzer
+        run: pytest -q tests/test_local_chart_export.py
+
+      - name: Full Climate Analyzer regression suite
+        working-directory: tools/climate_analyzer
+        run: pytest -q tests
+
+      - name: Remove temporary remediation files
+        run: |
+          rm tools/climate_analyzer/_climate_export_patch.py
+          rm .github/workflows/climate-export-0.1-remediation.yml
+
+      - name: Commit validated export implementation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "CLIMATE-EXPORT-0.1: add local chart export controls"
+          git push origin HEAD:climate-export-0.1-local-chart-export
