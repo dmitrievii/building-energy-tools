@@ -45,6 +45,15 @@ class LiveRuntimeIdentityContractTests(unittest.TestCase):
         self.assertIn("waitForExpectedRuntimeBuild", source)
         self.assertRegex(source, r"runtime[^\n]*build[^\n]*does not match|runtime_preflight")
 
+    def test_live_audit_scrolls_to_lazy_map_and_waits_for_real_leaflet_tiles(self) -> None:
+        source = AUDIT_PATH.read_text(encoding="utf-8")
+        self.assertIn("exerciseLeafletZoom(page, appFrame", source)
+        self.assertIn("scrollIntoViewIfNeeded", source)
+        self.assertIn("streamlit_folium.st_folium", source)
+        self.assertIn("waitForLeafletTileZoom", source)
+        self.assertIn("timeoutMs = 45_000", source)
+        self.assertNotIn("exerciseLeafletZoom(page);", source)
+
     def test_live_audit_runs_automatically_after_main_climate_changes(self) -> None:
         source = WORKFLOW_PATH.read_text(encoding="utf-8")
         self.assertIn("workflow_dispatch:", source)
