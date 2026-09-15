@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 from plotly.colors import sample_colorscale
 import psychrolib
 
-from .aggregations import aggregate_summary, aggregate_sum, calendar_matrix, duration_curve, monthly_box_data, monthly_hour_matrix
+from .aggregations import aggregate_summary, aggregate_sum, calendar_matrix, duration_curve, monthly_box_data, monthly_hour_matrix, native_interval_hours
 from .psychrometrics import DEFAULT_PRESSURE_PA, psychrometric_rh_curves
 from .chart_theme import (
     BINARY_SUITABILITY_COLORSCALE,
@@ -332,17 +332,27 @@ def month_hour_heatmap(
     return fig
 
 def duration_chart(df: pd.DataFrame, column: str, title: str, unit: str, ascending: bool = False) -> go.Figure:
-    """Create a sorted duration curve."""
+    """Create a sorted duration curve on a physical-hours axis."""
     values = duration_curve(df, column, ascending=ascending)
-    fig = px.line(values, x="rank_hour", y=column, title=title, labels={"rank_hour": "Sorted hour", column: unit})
-    fig.update_traces(line_color=metric_color(column), hovertemplate="Sorted hour: %{x}<br>Value: %{y:.2f} " + unit + "<extra></extra>")
+    fig = px.line(values, x="duration_hours", y=column, title=title, labels={"duration_hours": "Sorted duration [h]", column: unit})
+    fig.update_traces(line_color=metric_color(column), hovertemplate="Sorted duration: %{x:.2f} h<br>Value: %{y:.2f} " + unit + "<extra></extra>")
     fig.update_layout(template=PLOT_TEMPLATE, margin=dict(l=40, r=20, t=70, b=45))
-    return _apply_axis_constraints(fig, column=column, x_values=values["rank_hour"], y_values=values[column])
+    return _apply_axis_constraints(fig, column=column, x_values=values["duration_hours"], y_values=values[column])
 
 def histogram_chart(df: pd.DataFrame, column: str, title: str, unit: str, bins: int = 40) -> go.Figure:
-    """Create an interactive histogram."""
-    data = df[[column]].dropna()
-    fig = px.histogram(data, x=column, nbins=bins, title=title, labels={column: unit}, color_discrete_sequence=[metric_color(column)])
+    """Create an interactive histogram weighted by physical source-record duration."""
+    data = df[[column]].dropna().copy()
+    data["_duration_hours"] = native_interval_hours(df)
+    fig = px.histogram(
+        data,
+        x=column,
+        y="_duration_hours",
+        histfunc="sum",
+        nbins=bins,
+        title=title,
+        labels={column: unit, "_duration_hours": "Hours"},
+        color_discrete_sequence=[metric_color(column)],
+    )
     fig.update_layout(template=PLOT_TEMPLATE, yaxis_title="Hours", margin=dict(l=40, r=20, t=70, b=45))
     lo, hi = _axis_limits_for_column(column, data[column], pad_fraction=0.03)
     if lo is not None or hi is not None:
@@ -901,27 +911,29 @@ def _point_in_polygon(x: np.ndarray, y: np.ndarray, polygon: list[tuple[float, f
 
 
 def givoni_milne_zone_table(df: pd.DataFrame) -> pd.DataFrame:
-    """Return hourly counts for each manually mapped Givoni-Milne zone.
+    """Return physical-duration hours for each manually mapped Givoni-Milne zone.
 
-    The zones overlap by design.  Therefore percentages are not mutually
-    exclusive and should be read as strategy-potential counts, not as a sum to
-    100 percent.
+    The zones overlap by design. Therefore percentages are not mutually
+    exclusive and should be read as strategy-potential durations, not as a sum
+    to 100 percent.
     """
     data = df[["dry_bulb_temperature_c", "humidity_ratio_g_kg"]].dropna()
     if data.empty:
         return pd.DataFrame(columns=["zone", "hours", "share_pct", "design_response"])
+    hours_per_record = native_interval_hours(df)
     x = data["dry_bulb_temperature_c"].to_numpy(dtype=float)
     y = data["humidity_ratio_g_kg"].to_numpy(dtype=float)
     rows = []
     for zone_id in GIVONI_DRAW_ORDER:
         t_path, w_path = _build_givoni_zone_path(zone_id, DEFAULT_PRESSURE_PA, use_clip=True)
         mask = _point_in_polygon(x, y, list(zip(t_path, w_path, strict=False)))
-        hours = int(mask.sum())
+        matching_records = int(mask.sum())
+        hours = float(matching_records) * hours_per_record
         rows.append(
             {
                 "zone": f"{zone_id}. {GIVONI_ZONE_NAMES[zone_id]}",
                 "hours": hours,
-                "share_pct": hours / max(len(data), 1) * 100.0,
+                "share_pct": matching_records / max(len(data), 1) * 100.0,
                 "design_response": GIVONI_ZONE_STRATEGIES[zone_id],
             }
         )
@@ -1135,10 +1147,13 @@ def _add_psychrometric_tile_occupancy(
     data["temperature_bin_c"] = np.floor(data["dry_bulb_temperature_c"]).astype(int)
     data["rh_bin_pct"] = (np.floor(data["relative_humidity_pct"] / 5.0) * 5.0).clip(0, 95).astype(int)
     group_cols = ["temperature_bin_c", "rh_bin_pct"]
+    hours_per_record = native_interval_hours(df)
     if color_metric_column and color_metric_column in data.columns:
-        tiles = data.groupby(group_cols, observed=True).agg(hours=("dry_bulb_temperature_c", "size"), value=(color_metric_column, "mean")).reset_index()
+        tiles = data.groupby(group_cols, observed=True).agg(records=("dry_bulb_temperature_c", "size"), value=(color_metric_column, "mean")).reset_index()
+        tiles["hours"] = tiles["records"].astype(float) * hours_per_record
     else:
-        tiles = data.groupby(group_cols, observed=True).size().reset_index(name="hours")
+        tiles = data.groupby(group_cols, observed=True).size().reset_index(name="records")
+        tiles["hours"] = tiles["records"].astype(float) * hours_per_record
         tiles["value"] = tiles["hours"]
         color_metric_label = "Frequency [h]"
     if t_range is not None:
@@ -1184,7 +1199,7 @@ def _add_psychrometric_tile_occupancy(
                 hovertemplate=(
                     f"Temperature bin: {t0:.0f}...{t1:.0f} °C<br>"
                     f"RH bin: {rh0:.0f}...{rh1:.0f} %<br>"
-                    f"Hours: {int(row['hours'])}<br>"
+                    f"Hours: {float(row['hours']):.2f}<br>"
                     f"{color_metric_label}: {float(row['value']):.2f}<extra></extra>"
                 ),
             )
