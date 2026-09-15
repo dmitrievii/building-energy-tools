@@ -447,7 +447,7 @@ def build_canonical_station_dataset(
         native_interval_minutes=GEOSPHERE_NATIVE_INTERVAL_MINUTES,
         calendar_mode="historical",
         timezone_name="UTC",
-        interval_semantics="interval_end",
+        interval_semantics="unknown",
     )
     location = ClimateLocation(
         latitude=station.latitude,
@@ -467,7 +467,7 @@ def build_canonical_station_dataset(
         provider_station_id=station.station_id,
         retrieval_time_utc=retrieval_time_utc or datetime.now(timezone.utc).isoformat(),
         notes=(
-            f"License: {GEOSPHERE_LICENSE}",
+            f"License: CC BY 4.0 ({GEOSPHERE_LICENSE})",
             f"Dataset DOI: {GEOSPHERE_DOI}",
             "Provider timestamps are retained as real UTC historical timestamps.",
             "10-minute mean radiation in W/m² is converted to interval irradiation in Wh/m².",
