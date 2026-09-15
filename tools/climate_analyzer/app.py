@@ -77,7 +77,7 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
     global natural_ventilation_interpretation, psychrometric_interpretation, sky_interpretation
     global solar_interpretation, temperature_interpretation, variable_interpretation, wind_interpretation
     global DEFAULT_PRESSURE_PA, add_psychrometric_properties, pressure_from_altitude_m
-    global aggregate_liquid_precipitation, occurrence_hours, precipitation_summary
+    global aggregate_liquid_precipitation, occurrence_hours
     global calculated_statistics_tables, climate_statistics_interpretation, extreme_day_summary
     global monthly_climate_summary, seasonal_climate_summary
     global add_solar_position, monthly_orientation_radiation, orientation_annual_radiation
@@ -164,7 +164,6 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
         from epw_climate_analyzer.precipitation import (
             aggregate_liquid_precipitation,
             occurrence_hours,
-            precipitation_summary,
         )
         _ANALYSIS_DEPENDENCIES_LOADED = True
 
@@ -2187,36 +2186,13 @@ def render_wind(df: pd.DataFrame) -> None:
 def render_precipitation(df: pd.DataFrame) -> None:
     """Render liquid-precipitation and snow-cover analysis from EPW fields."""
     st.header("Precipitation and snow")
-    summary = precipitation_summary(df)
-    liquid_available = bool(summary["liquid_data_available"])
-    snow_available = bool(summary["snow_data_available"])
-
-    metric_cols = st.columns(5)
-    metric_cols[0].metric(
-        "Liquid precipitation",
-        "N/A" if summary["liquid_total_mm"] is None else f"{summary['liquid_total_mm']:.1f} mm",
-        help="Sum of valid EPW liquid-precipitation depth records in the current sidebar-filtered view.",
+    liquid_available = (
+        "liquid_precipitation_depth_mm" in df.columns
+        and pd.to_numeric(df["liquid_precipitation_depth_mm"], errors="coerce").notna().any()
     )
-    metric_cols[1].metric(
-        "Precipitation records ≥ 0.1 mm",
-        "N/A" if summary["precipitation_records"] is None else f"{summary['precipitation_records']:,}",
-    )
-    metric_cols[2].metric(
-        "Max precipitation record",
-        "N/A" if summary["max_record_precipitation_mm"] is None else f"{summary['max_record_precipitation_mm']:.1f} mm",
-    )
-    metric_cols[3].metric(
-        "Max snow depth",
-        "N/A" if summary["max_snow_depth_cm"] is None else f"{summary['max_snow_depth_cm']:.1f} cm",
-    )
-    metric_cols[4].metric(
-        "Snow-cover hours",
-        "N/A" if summary["snow_cover_hours"] is None else f"{summary['snow_cover_hours']:,}",
-    )
-
-    st.caption(
-        "Precipitation and snow availability depends on the source EPW. Missing EPW sentinel values are excluded. "
-        "Liquid precipitation is accumulated; snow depth is treated as a state variable and is never summed."
+    snow_available = (
+        "snow_depth_cm" in df.columns
+        and pd.to_numeric(df["snow_depth_cm"], errors="coerce").notna().any()
     )
 
     options: list[str] = []
