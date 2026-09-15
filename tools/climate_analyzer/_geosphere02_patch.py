@@ -35,11 +35,15 @@ geosphere_path.write_text(text, encoding="utf-8")
 # Extend adapter tests with deterministic batching coverage and a mocked multi-batch fetch.
 tests = test_path.read_text(encoding="utf-8")
 tests = tests.replace(
-'''    parse_parameters,\n    parse_station_data_response,\n''',
-'''    parse_parameters,\n    parse_station_data_response,\n    plan_data_queries,\n    fetch_station_provider_frame,\n''',
-1,
+    '''import unittest\n\nimport pandas as pd\n''',
+    '''import unittest\nfrom unittest.mock import patch\n\nimport pandas as pd\n''',
+    1,
 )
-tests = tests.replace('''import unittest\n\nimport pandas as pd\n''', '''import unittest\nfrom unittest.mock import patch\n\nimport pandas as pd\n''', 1)
+tests = tests.replace(
+    '''    parse_parameters,\n    parse_station_data_response,\n''',
+    '''    parse_parameters,\n    parse_station_data_response,\n    plan_data_queries,\n    fetch_station_provider_frame,\n''',
+    1,
+)
 
 method_anchor = '''    def test_station_json_parser_retains_real_utc_timestamps_and_nulls(self) -> None:\n'''
 new_methods = '''    def test_year_scale_request_is_partitioned_without_boundary_overlap(self) -> None:\n        start = pd.Timestamp("2025-01-01T00:00:00Z")\n        end = pd.Timestamp("2025-12-31T23:50:00Z")\n        parameters = [item["name"] for item in PARAMETERS if item["name"] != "tl_flag"]\n        queries = plan_data_queries("11240", start, end, parameters)\n        self.assertGreater(len(queries), 1)\n        previous_end = None\n        for query in queries:\n            q_start = pd.Timestamp(query["start"], tz="UTC")\n            q_end = pd.Timestamp(query["end"], tz="UTC")\n            self.assertLessEqual(estimate_request_datapoints(q_start, q_end, len(parameters)), MAX_REQUEST_DATAPOINTS)\n            if previous_end is not None:\n                self.assertEqual(q_start, previous_end + pd.Timedelta(minutes=10))\n            previous_end = q_end\n        self.assertEqual(pd.Timestamp(queries[0]["start"], tz="UTC"), start)\n        self.assertEqual(pd.Timestamp(queries[-1]["end"], tz="UTC"), end)\n\n    def test_batched_fetch_concatenates_non_overlapping_responses_and_records_references(self) -> None:\n        start = pd.Timestamp("2025-01-01T00:00:00Z")\n        end = pd.Timestamp("2025-01-01T00:30:00Z")\n        payloads = [\n            {\n                "timestamps": ["2025-01-01T00:00+00:00", "2025-01-01T00:10+00:00"],\n                "features": [{"properties": {"station": 11240, "parameters": {"tl": {"data": [1.0, 2.0]}}}}],\n            },\n            {\n                "timestamps": ["2025-01-01T00:20+00:00", "2025-01-01T00:30+00:00"],\n                "features": [{"properties": {"station": 11240, "parameters": {"tl": {"data": [3.0, 4.0]}}}}],\n            },\n        ]\n        planned = [\n            {"parameters": "tl", "station_ids": "11240", "start": "2025-01-01T00:00", "end": "2025-01-01T00:10"},\n            {"parameters": "tl", "station_ids": "11240", "start": "2025-01-01T00:20", "end": "2025-01-01T00:30"},\n        ]\n        with patch("epw_climate_analyzer.geosphere.plan_data_queries", return_value=planned), patch(\n            "epw_climate_analyzer.geosphere._bounded_get_json", side_effect=payloads\n        ):\n            frame, references = fetch_station_provider_frame(\n                station_id="11240", start=start, end=end, provider_parameters=["tl"]\n            )\n        self.assertEqual(frame["tl"].tolist(), [1.0, 2.0, 3.0, 4.0])\n        self.assertFalse(frame.index.has_duplicates)\n        self.assertEqual(len(references), 2)\n        self.assertTrue(all("station_ids=11240" in ref for ref in references))\n\n    def test_batched_fetch_fails_closed_on_duplicate_boundary_timestamp(self) -> None:\n        payloads = [\n            {\n                "timestamps": ["2025-01-01T00:00+00:00", "2025-01-01T00:10+00:00"],\n                "features": [{"properties": {"station": 11240, "parameters": {"tl": {"data": [1.0, 2.0]}}}}],\n            },\n            {\n                "timestamps": ["2025-01-01T00:10+00:00", "2025-01-01T00:20+00:00"],\n                "features": [{"properties": {"station": 11240, "parameters": {"tl": {"data": [2.0, 3.0]}}}}],\n            },\n        ]\n        planned = [\n            {"parameters": "tl", "station_ids": "11240", "start": "2025-01-01T00:00", "end": "2025-01-01T00:10"},\n            {"parameters": "tl", "station_ids": "11240", "start": "2025-01-01T00:10", "end": "2025-01-01T00:20"},\n        ]\n        with patch("epw_climate_analyzer.geosphere.plan_data_queries", return_value=planned), patch(\n            "epw_climate_analyzer.geosphere._bounded_get_json", side_effect=payloads\n        ):\n            with self.assertRaisesRegex(ValueError, "duplicate timestamps"):\n                fetch_station_provider_frame(\n                    station_id="11240",\n                    start=pd.Timestamp("2025-01-01T00:00:00Z"),\n                    end=pd.Timestamp("2025-01-01T00:20:00Z"),\n                    provider_parameters=["tl"],\n                )\n\n'''
@@ -48,5 +52,33 @@ if method_anchor not in tests:
 tests = tests.replace(method_anchor, new_methods + method_anchor, 1)
 test_path.write_text(tests, encoding="utf-8")
 
-# Update the staged roadmap: batching is no longer a future item.
-doc = doc_path.read_text(encoding="utf-8")n
+# Advance the documented adapter stage without claiming UI work that is not in this patch.
+doc = doc_path.read_text(encoding="utf-8")
+doc = doc.replace(
+    "# CLIMATE-GEOSPHERE-0.1 — GeoSphere Austria historical station adapter",
+    "# CLIMATE-GEOSPHERE-0.2 — GeoSphere Austria batched historical station adapter",
+    1,
+)
+doc = doc.replace(
+    "This is an **adapter stage**, not yet a public UI/map stage.",
+    "This stage extends the qualified adapter with deterministic bounded batching for long historical ranges. It is still not a public station-selection UI stage.",
+    1,
+)
+doc = doc.replace(
+    "- currently requests one station per canonical dataset;\n- preserves missing values rather than treating them as zero.\n\nThe official API's request-size accounting is based on parameters × time steps × stations. A later UI stage may batch long ranges, but batching must preserve these same limits and provider rate limits.",
+    "- requests one station per canonical dataset;\n- partitions year-scale ranges into deterministic non-overlapping 10-minute batches under the same 200,000-datapoint local cap;\n- rejects duplicate timestamps across returned batches;\n- preserves historical gaps and missing values rather than interpolating or treating them as zero.\n\nThe official API's request-size accounting is based on parameters × time steps × stations. Batch boundaries are inclusive and the next batch starts exactly one native 10-minute interval after the previous end, so request windows neither overlap nor leave a planner-created gap.",
+    1,
+)
+doc = doc.replace(
+    "- exact request reference when data were downloaded;",
+    "- exact request reference for every bounded batch when data were downloaded;",
+    1,
+)
+doc = doc.replace(
+    "After this adapter is qualified, the next stage can add a GeoSphere station-selection experience and request batching for year-scale ranges. Detailed Year and Historical Comparison should consume the canonical dataset rather than introduce a second provider-specific analysis path.",
+    "After this batched adapter is qualified, the next stage can add a GeoSphere station-selection experience. Detailed Year and Historical Comparison should consume the canonical dataset rather than introduce a second provider-specific analysis path.",
+    1,
+)
+doc_path.write_text(doc, encoding="utf-8")
+
+print("CLIMATE-GEOSPHERE-0.2 batching patch applied")
