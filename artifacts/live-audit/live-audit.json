@@ -1,0 +1,789 @@
+{
+  "schema": "building-energy-tools-live-audit-v4",
+  "expected_catalog": {
+    "version": "onebuilding-20260911-121e0ff64acd",
+    "records": 98047,
+    "sha256": "121e0ff64acd522728650b0eb55e3a588288d0976533bdf9a8583b4f6402d02e"
+  },
+  "expected_runtime": {
+    "build_id": "690228ca0c337d687952b8532dffaaa07c0aaf462ae941ad649b8516b04afdd6",
+    "ghi_color": "#F59E0B"
+  },
+  "runtime_preflight": {
+    "matches_expected": true,
+    "elapsed_ms": 9281,
+    "attempts": [
+      {
+        "elapsed_ms": 9281,
+        "build_id": "690228ca0c337d687952b8532dffaaa07c0aaf462ae941ad649b8516b04afdd6",
+        "ghi_color": "#F59E0B",
+        "matches_expected": true,
+        "error": null
+      }
+    ],
+    "runtime": {
+      "frame_url": "https://building-climate-analyzer.streamlit.app/~/+/",
+      "build_id": "690228ca0c337d687952b8532dffaaa07c0aaf462ae941ad649b8516b04afdd6",
+      "ghi_color": "#F59E0B"
+    }
+  },
+  "target_url": "https://building-climate-analyzer.streamlit.app/",
+  "audited_at_utc": "2026-09-15T19:43:44.436Z",
+  "first_http_response": {
+    "status": 303,
+    "elapsed_ms": 640,
+    "location": "https://share.streamlit.io/-/auth/app?redirect_uri=https%3A%2F%2Fbuilding-climate-analyzer.streamlit.app%2F",
+    "server": "nginx/1.31.3",
+    "content_type": "text/html; charset=utf-8"
+  },
+  "browser": {
+    "desktop": {
+      "name": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "navigation_status": 200,
+      "navigation_error": null,
+      "app_visible": true,
+      "app_frame_url": "https://building-climate-analyzer.streamlit.app/~/+/",
+      "app_detected_ms": 3134,
+      "total_initial_audit_ms": 4867,
+      "title": "Climate Analyzer | Building Energy Tools · Streamlit",
+      "headings": [
+        "Climate Analyzer",
+        "Climate Analyzer",
+        "Upload an EPW weather file"
+      ],
+      "frame_urls": [
+        "https://building-climate-analyzer.streamlit.app/",
+        "https://qjmnz4vd2y07.statuspage.io/embed/frame",
+        "https://building-climate-analyzer.streamlit.app/~/+/"
+      ],
+      "throttle_visible": false,
+      "resource_limit_visible": false,
+      "runtime_build": {
+        "frame_url": "https://building-climate-analyzer.streamlit.app/~/+/",
+        "build_id": "690228ca0c337d687952b8532dffaaa07c0aaf462ae941ad649b8516b04afdd6",
+        "ghi_color": "#F59E0B"
+      },
+      "viewport_metrics": {
+        "client_width": 1440,
+        "scroll_width": 1440,
+        "client_height": 1000,
+        "scroll_height": 1000,
+        "horizontal_overflow_px": 0
+      },
+      "console_messages": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 ()"
+        },
+        {
+          "type": "warning",
+          "text": "Unrecognized feature: 'ambient-light-sensor'."
+        },
+        {
+          "type": "warning",
+          "text": "Unrecognized feature: 'battery'."
+        },
+        {
+          "type": "warning",
+          "text": "Unrecognized feature: 'document-domain'."
+        },
+        {
+          "type": "warning",
+          "text": "Unrecognized feature: 'layout-animations'."
+        },
+        {
+          "type": "warning",
+          "text": "Unrecognized feature: 'legacy-image-formats'."
+        },
+        {
+          "type": "warning",
+          "text": "Unrecognized feature: 'oversized-images'."
+        },
+        {
+          "type": "warning",
+          "text": "Unrecognized feature: 'vr'."
+        },
+        {
+          "type": "warning",
+          "text": "Unrecognized feature: 'wake-lock'."
+        },
+        {
+          "type": "warning",
+          "text": "An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing."
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 ()"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 ()"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 ()"
+        }
+      ],
+      "page_errors": [],
+      "failed_requests": [],
+      "http_error_responses": [
+        {
+          "status": 403,
+          "url": "https://building-climate-analyzer.streamlit.app/api/v1/app/event/open"
+        },
+        {
+          "status": 404,
+          "url": "https://building-climate-analyzer.streamlit.app/api/v2/user/details"
+        },
+        {
+          "status": 404,
+          "url": "https://building-climate-analyzer.streamlit.app/api/v2/user/details"
+        },
+        {
+          "status": 404,
+          "url": "https://building-climate-analyzer.streamlit.app/api/v2/user/details"
+        }
+      ],
+      "initial_network_domains": [
+        "avatars.githubusercontent.com",
+        "building-climate-analyzer.streamlit.app",
+        "cdn.heapanalytics.com",
+        "cdn.segment.com",
+        "data.streamlit.io",
+        "heapanalytics.com",
+        "qjmnz4vd2y07.statuspage.io",
+        "share.streamlit.io",
+        "stats.g.doubleclick.net",
+        "webhooks.fivetran.com",
+        "www.google-analytics.com",
+        "www.googletagmanager.com",
+        "www.streamlitstatus.com"
+      ],
+      "initial_osm_requested_before_find_climate": false,
+      "network_domains_after_find_climate": [
+        "avatars.githubusercontent.com",
+        "building-climate-analyzer.streamlit.app",
+        "cdn.heapanalytics.com",
+        "cdn.jsdelivr.net",
+        "cdn.segment.com",
+        "cdnjs.cloudflare.com",
+        "code.jquery.com",
+        "data.streamlit.io",
+        "heapanalytics.com",
+        "netdna.bootstrapcdn.com",
+        "qjmnz4vd2y07.statuspage.io",
+        "share.streamlit.io",
+        "stats.g.doubleclick.net",
+        "tile.openstreetmap.org",
+        "webhooks.fivetran.com",
+        "www.google-analytics.com",
+        "www.googletagmanager.com",
+        "www.streamlitstatus.com"
+      ],
+      "cookies": [
+        {
+          "name": "_streamlit_csrf",
+          "domain": "share.streamlit.io",
+          "path": "/",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax",
+          "expires": 1789544643.310701
+        },
+        {
+          "name": "streamlit_session",
+          "domain": "share.streamlit.io",
+          "path": "/",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax",
+          "expires": 1789515843.310786
+        },
+        {
+          "name": "streamlit_session",
+          "domain": "building-climate-analyzer.streamlit.app",
+          "path": "/",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax",
+          "expires": -1
+        },
+        {
+          "name": "proxy-tracking-id",
+          "domain": "building-climate-analyzer.streamlit.app",
+          "path": "/",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax",
+          "expires": 1792179843.881059
+        },
+        {
+          "name": "_ga",
+          "domain": ".building-climate-analyzer.streamlit.app",
+          "path": "/",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax",
+          "expires": 1824061444.571055
+        },
+        {
+          "name": "_gid",
+          "domain": ".building-climate-analyzer.streamlit.app",
+          "path": "/",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax",
+          "expires": 1789587844
+        },
+        {
+          "name": "_dc_gtm_UA-122023594-8",
+          "domain": ".building-climate-analyzer.streamlit.app",
+          "path": "/",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax",
+          "expires": 1789501504
+        },
+        {
+          "name": "_hp2_id.269788835",
+          "domain": ".building-climate-analyzer.streamlit.app",
+          "path": "/",
+          "secure": true,
+          "http_only": false,
+          "same_site": "None",
+          "expires": 1823579044
+        },
+        {
+          "name": "_hp2_ses_props.269788835",
+          "domain": ".building-climate-analyzer.streamlit.app",
+          "path": "/",
+          "secure": true,
+          "http_only": false,
+          "same_site": "None",
+          "expires": 1789503244
+        },
+        {
+          "name": "_dd_s",
+          "domain": "building-climate-analyzer.streamlit.app",
+          "path": "/",
+          "secure": true,
+          "http_only": false,
+          "same_site": "None",
+          "expires": 1821037444
+        },
+        {
+          "name": "_streamlit_csrf",
+          "domain": "building-climate-analyzer.streamlit.app",
+          "path": "/",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax",
+          "expires": 1789544645.205005
+        },
+        {
+          "name": "ajs_anonymous_id",
+          "domain": "building-climate-analyzer.streamlit.app",
+          "path": "/",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax",
+          "expires": 1821037447
+        }
+      ],
+      "storage": {
+        "local_storage_keys": [
+          "ajs_anonymous_id",
+          "appSessionId-6cc2ed3d-61a8-45e4-ba58-3ea38989d602",
+          "appSessionId-undefined",
+          "machineId",
+          "stMetricsConfig"
+        ],
+        "session_storage_keys": []
+      },
+      "accessibility": {
+        "violations": [
+          {
+            "id": "aria-allowed-attr",
+            "impact": "critical",
+            "description": "Ensure an element's role supports its ARIA attributes",
+            "help": "Elements must only use supported ARIA attributes",
+            "help_url": "https://dequeuniversity.com/rules/axe/4.10/aria-allowed-attr?application=axeAPI",
+            "nodes": 1,
+            "targets": [
+              [
+                ".stSidebar"
+              ]
+            ]
+          },
+          {
+            "id": "button-name",
+            "impact": "critical",
+            "description": "Ensure buttons have discernible text",
+            "help": "Buttons must have discernible text",
+            "help_url": "https://dequeuniversity.com/rules/axe/4.10/button-name?application=axeAPI",
+            "nodes": 1,
+            "targets": [
+              [
+                ".stToolbarActionButton[data-testid=\"stToolbarActionButton\"]:nth-child(2) > .st-emotion-cache-egm30d.eqzt73c14[kind=\"header\"]"
+              ]
+            ]
+          }
+        ],
+        "incomplete": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "nodes": 2
+          }
+        ],
+        "passes": [
+          "aria-allowed-attr",
+          "aria-conditional-attr",
+          "aria-deprecated-role",
+          "aria-hidden-body",
+          "aria-hidden-focus",
+          "aria-prohibited-attr",
+          "aria-required-attr",
+          "aria-roles",
+          "aria-valid-attr-value",
+          "aria-valid-attr",
+          "avoid-inline-spacing",
+          "button-name",
+          "bypass",
+          "color-contrast",
+          "document-title",
+          "duplicate-id-aria",
+          "form-field-multiple-labels",
+          "html-has-lang",
+          "html-lang-valid",
+          "label",
+          "link-name",
+          "meta-viewport",
+          "nested-interactive",
+          "summary-name"
+        ]
+      },
+      "find_climate": {
+        "attempted": true,
+        "clicked": true,
+        "openstreetmap_visible": true,
+        "frame_attribution": [
+          {
+            "url": "https://building-climate-analyzer.streamlit.app/",
+            "has_openstreetmap_text": false,
+            "osm_links": []
+          },
+          {
+            "url": "https://qjmnz4vd2y07.statuspage.io/embed/frame",
+            "has_openstreetmap_text": false,
+            "osm_links": []
+          },
+          {
+            "url": "https://building-climate-analyzer.streamlit.app/~/+/",
+            "has_openstreetmap_text": false,
+            "osm_links": []
+          },
+          {
+            "url": "https://building-climate-analyzer.streamlit.app/~/+/component/streamlit_folium.st_folium/index.html?streamlitUrl=https%3A%2F%2Fbuilding-climate-analyzer.streamlit.app%2F~%2F%2B%2F",
+            "has_openstreetmap_text": true,
+            "osm_links": [
+              {
+                "text": "OpenStreetMap",
+                "href": "https://www.openstreetmap.org/copyright"
+              }
+            ]
+          }
+        ],
+        "catalog": {
+          "expected_version": "onebuilding-20260911-121e0ff64acd",
+          "expected_records": 98047,
+          "displayed_version": "onebuilding-20260911-121e0ff64acd",
+          "displayed_records": 98047,
+          "filtered_visible": 98047,
+          "filtered_total": 98047,
+          "matches_manifest": true
+        },
+        "zoom_sequence": {
+          "attempted": true,
+          "frame_url": "https://building-climate-analyzer.streamlit.app/~/+/component/streamlit_folium.st_folium/index.html?streamlitUrl=https%3A%2F%2Fbuilding-climate-analyzer.streamlit.app%2F~%2F%2B%2F",
+          "levels": [
+            2,
+            3,
+            4
+          ],
+          "monotonic": true,
+          "anchor_scrolled": true,
+          "anchor_error": null,
+          "wait_ms": 16723
+        }
+      }
+    },
+    "mobile": {
+      "name": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "navigation_status": 200,
+      "navigation_error": null,
+      "app_visible": true,
+      "app_frame_url": "https://building-climate-analyzer.streamlit.app/~/+/",
+      "app_detected_ms": 3106,
+      "total_initial_audit_ms": 4838,
+      "title": "Climate Analyzer | Building Energy Tools · Streamlit",
+      "headings": [
+        "Climate Analyzer",
+        "Climate Analyzer",
+        "Upload an EPW weather file"
+      ],
+      "frame_urls": [
+        "https://building-climate-analyzer.streamlit.app/",
+        "https://qjmnz4vd2y07.statuspage.io/embed/frame?mobile=true",
+        "https://building-climate-analyzer.streamlit.app/~/+/"
+      ],
+      "throttle_visible": false,
+      "resource_limit_visible": false,
+      "runtime_build": {
+        "frame_url": "https://building-climate-analyzer.streamlit.app/~/+/",
+        "build_id": "690228ca0c337d687952b8532dffaaa07c0aaf462ae941ad649b8516b04afdd6",
+        "ghi_color": "#F59E0B"
+      },
+      "viewport_metrics": {
+        "client_width": 390,
+        "scroll_width": 390,
+        "client_height": 844,
+        "scroll_height": 844,
+        "horizontal_overflow_px": 0
+      },
+      "console_messages": [
+        {
+          "type": "warning",
+          "text": "Unrecognized feature: 'ambient-light-sensor'."
+        },
+        {
+          "type": "warning",
+          "text": "Unrecognized feature: 'battery'."
+        },
+        {
+          "type": "warning",
+          "text": "Unrecognized feature: 'document-domain'."
+        },
+        {
+          "type": "warning",
+          "text": "Unrecognized feature: 'layout-animations'."
+        },
+        {
+          "type": "warning",
+          "text": "Unrecognized feature: 'legacy-image-formats'."
+        },
+        {
+          "type": "warning",
+          "text": "Unrecognized feature: 'oversized-images'."
+        },
+        {
+          "type": "warning",
+          "text": "Unrecognized feature: 'vr'."
+        },
+        {
+          "type": "warning",
+          "text": "Unrecognized feature: 'wake-lock'."
+        },
+        {
+          "type": "warning",
+          "text": "An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing."
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 ()"
+        },
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 404 ()"
+        }
+      ],
+      "page_errors": [],
+      "failed_requests": [],
+      "http_error_responses": [
+        {
+          "status": 404,
+          "url": "https://building-climate-analyzer.streamlit.app/api/v2/user/details"
+        },
+        {
+          "status": 404,
+          "url": "https://building-climate-analyzer.streamlit.app/api/v2/user/details"
+        }
+      ],
+      "initial_network_domains": [
+        "avatars.githubusercontent.com",
+        "building-climate-analyzer.streamlit.app",
+        "cdn.heapanalytics.com",
+        "cdn.segment.com",
+        "data.streamlit.io",
+        "heapanalytics.com",
+        "qjmnz4vd2y07.statuspage.io",
+        "share.streamlit.io",
+        "stats.g.doubleclick.net",
+        "webhooks.fivetran.com",
+        "www.google-analytics.com",
+        "www.googletagmanager.com",
+        "www.streamlitstatus.com"
+      ],
+      "initial_osm_requested_before_find_climate": false,
+      "network_domains_after_find_climate": [
+        "avatars.githubusercontent.com",
+        "building-climate-analyzer.streamlit.app",
+        "cdn.heapanalytics.com",
+        "cdn.jsdelivr.net",
+        "cdn.segment.com",
+        "cdnjs.cloudflare.com",
+        "code.jquery.com",
+        "data.streamlit.io",
+        "heapanalytics.com",
+        "netdna.bootstrapcdn.com",
+        "qjmnz4vd2y07.statuspage.io",
+        "share.streamlit.io",
+        "stats.g.doubleclick.net",
+        "tile.openstreetmap.org",
+        "webhooks.fivetran.com",
+        "www.google-analytics.com",
+        "www.googletagmanager.com",
+        "www.streamlitstatus.com"
+      ],
+      "cookies": [
+        {
+          "name": "_streamlit_csrf",
+          "domain": "share.streamlit.io",
+          "path": "/",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax",
+          "expires": 1789544673.061653
+        },
+        {
+          "name": "streamlit_session",
+          "domain": "share.streamlit.io",
+          "path": "/",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax",
+          "expires": 1789515873.061739
+        },
+        {
+          "name": "streamlit_session",
+          "domain": "building-climate-analyzer.streamlit.app",
+          "path": "/",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax",
+          "expires": -1
+        },
+        {
+          "name": "proxy-tracking-id",
+          "domain": "building-climate-analyzer.streamlit.app",
+          "path": "/",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax",
+          "expires": 1792179873.650043
+        },
+        {
+          "name": "_ga",
+          "domain": ".building-climate-analyzer.streamlit.app",
+          "path": "/",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax",
+          "expires": 1824061474.324754
+        },
+        {
+          "name": "_gid",
+          "domain": ".building-climate-analyzer.streamlit.app",
+          "path": "/",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax",
+          "expires": 1789587874
+        },
+        {
+          "name": "_dc_gtm_UA-122023594-8",
+          "domain": ".building-climate-analyzer.streamlit.app",
+          "path": "/",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax",
+          "expires": 1789501533
+        },
+        {
+          "name": "_hp2_id.269788835",
+          "domain": ".building-climate-analyzer.streamlit.app",
+          "path": "/",
+          "secure": true,
+          "http_only": false,
+          "same_site": "None",
+          "expires": 1823579074
+        },
+        {
+          "name": "_hp2_ses_props.269788835",
+          "domain": ".building-climate-analyzer.streamlit.app",
+          "path": "/",
+          "secure": true,
+          "http_only": false,
+          "same_site": "None",
+          "expires": 1789503274
+        },
+        {
+          "name": "_dd_s",
+          "domain": "building-climate-analyzer.streamlit.app",
+          "path": "/",
+          "secure": true,
+          "http_only": false,
+          "same_site": "None",
+          "expires": 1821037474
+        },
+        {
+          "name": "_streamlit_csrf",
+          "domain": "building-climate-analyzer.streamlit.app",
+          "path": "/",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax",
+          "expires": 1789544674.968745
+        },
+        {
+          "name": "ajs_anonymous_id",
+          "domain": "building-climate-analyzer.streamlit.app",
+          "path": "/",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax",
+          "expires": 1821037476
+        }
+      ],
+      "storage": {
+        "local_storage_keys": [
+          "ajs_anonymous_id",
+          "appSessionId-6cc2ed3d-61a8-45e4-ba58-3ea38989d602",
+          "appSessionId-undefined",
+          "machineId",
+          "stMetricsConfig"
+        ],
+        "session_storage_keys": []
+      },
+      "accessibility": {
+        "violations": [
+          {
+            "id": "aria-allowed-attr",
+            "impact": "critical",
+            "description": "Ensure an element's role supports its ARIA attributes",
+            "help": "Elements must only use supported ARIA attributes",
+            "help_url": "https://dequeuniversity.com/rules/axe/4.10/aria-allowed-attr?application=axeAPI",
+            "nodes": 1,
+            "targets": [
+              [
+                ".stSidebar"
+              ]
+            ]
+          },
+          {
+            "id": "button-name",
+            "impact": "critical",
+            "description": "Ensure buttons have discernible text",
+            "help": "Buttons must have discernible text",
+            "help_url": "https://dequeuniversity.com/rules/axe/4.10/button-name?application=axeAPI",
+            "nodes": 1,
+            "targets": [
+              [
+                ".stToolbarActionButton[data-testid=\"stToolbarActionButton\"]:nth-child(2) > .st-emotion-cache-egm30d.eqzt73c14[kind=\"header\"]"
+              ]
+            ]
+          }
+        ],
+        "incomplete": [],
+        "passes": [
+          "aria-allowed-attr",
+          "aria-conditional-attr",
+          "aria-deprecated-role",
+          "aria-hidden-body",
+          "aria-hidden-focus",
+          "aria-prohibited-attr",
+          "aria-required-attr",
+          "aria-roles",
+          "aria-valid-attr-value",
+          "aria-valid-attr",
+          "button-name",
+          "bypass",
+          "color-contrast",
+          "document-title",
+          "duplicate-id-aria",
+          "form-field-multiple-labels",
+          "html-has-lang",
+          "html-lang-valid",
+          "label",
+          "link-name",
+          "meta-viewport",
+          "nested-interactive",
+          "scrollable-region-focusable",
+          "summary-name"
+        ]
+      },
+      "find_climate": {
+        "attempted": true,
+        "clicked": true,
+        "openstreetmap_visible": true,
+        "frame_attribution": [
+          {
+            "url": "https://building-climate-analyzer.streamlit.app/",
+            "has_openstreetmap_text": false,
+            "osm_links": []
+          },
+          {
+            "url": "https://qjmnz4vd2y07.statuspage.io/embed/frame?mobile=true",
+            "has_openstreetmap_text": false,
+            "osm_links": []
+          },
+          {
+            "url": "https://building-climate-analyzer.streamlit.app/~/+/",
+            "has_openstreetmap_text": false,
+            "osm_links": []
+          },
+          {
+            "url": "https://building-climate-analyzer.streamlit.app/~/+/component/streamlit_folium.st_folium/index.html?streamlitUrl=https%3A%2F%2Fbuilding-climate-analyzer.streamlit.app%2F~%2F%2B%2F",
+            "has_openstreetmap_text": true,
+            "osm_links": [
+              {
+                "text": "OpenStreetMap",
+                "href": "https://www.openstreetmap.org/copyright"
+              }
+            ]
+          }
+        ],
+        "catalog": {
+          "expected_version": "onebuilding-20260911-121e0ff64acd",
+          "expected_records": 98047,
+          "displayed_version": "onebuilding-20260911-121e0ff64acd",
+          "displayed_records": 98047,
+          "filtered_visible": 98047,
+          "filtered_total": 98047,
+          "matches_manifest": true
+        },
+        "zoom_sequence": {
+          "attempted": true,
+          "frame_url": "https://building-climate-analyzer.streamlit.app/~/+/component/streamlit_folium.st_folium/index.html?streamlitUrl=https%3A%2F%2Fbuilding-climate-analyzer.streamlit.app%2F~%2F%2B%2F",
+          "levels": [
+            2,
+            3,
+            4
+          ],
+          "monotonic": true,
+          "anchor_scrolled": true,
+          "anchor_error": null,
+          "wait_ms": 17507
+        }
+      }
+    }
+  }
+}

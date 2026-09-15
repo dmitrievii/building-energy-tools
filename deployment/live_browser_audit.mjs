@@ -328,6 +328,10 @@ async function exerciseLeafletZoom(page, appFrame, timeoutMs = 45_000) {
           };
         }
 
+        // Seeing the first higher tile level can precede the end of Leaflet's
+        // zoom animation. Give the control a short stabilization interval so a
+        // real second user click is not swallowed by the active transition.
+        await sleep(1_200);
         await zoomIn.click({ timeout: 5_000 });
         const secondZoom = await waitForLeafletTileZoom(frame, (value) => value > levels[1]);
         levels.push(secondZoom);
