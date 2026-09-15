@@ -1,0 +1,58 @@
+name: CLIMATE-TIMESERIES-0.1 branch remediation
+
+on:
+  push:
+    branches:
+      - climate-timeseries-0.1-overlay
+
+permissions:
+  contents: write
+
+jobs:
+  patch-validate-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: climate-timeseries-0.1-overlay
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Climate Analyzer dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r tools/climate_analyzer/requirements.txt
+
+      - name: Apply time-series integration patch
+        run: python tools/climate_analyzer/_timeseries_patch.py
+
+      - name: Compile
+        run: python -m compileall -q tools/climate_analyzer
+
+      - name: Focused time-series regression
+        working-directory: tools/climate_analyzer
+        env:
+          PYTHONPATH: .
+        run: python -m unittest -v tests.test_time_series_overlay
+
+      - name: Full Climate Analyzer regression suite
+        working-directory: tools/climate_analyzer
+        env:
+          PYTHONPATH: .
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
+
+      - name: Remove temporary remediation files
+        run: |
+          rm tools/climate_analyzer/_timeseries_patch.py
+          rm .github/workflows/climate-timeseries-0.1-remediation.yml
+
+      - name: Commit validated time-series integration
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "CLIMATE-TIMESERIES-0.1: integrate aligned overlay page"
+          git push origin HEAD:climate-timeseries-0.1-overlay
