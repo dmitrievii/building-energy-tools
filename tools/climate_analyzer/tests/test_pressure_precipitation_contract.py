@@ -10,7 +10,6 @@ import pandas as pd
 from epw_climate_analyzer.precipitation import (
     aggregate_liquid_precipitation,
     occurrence_hours,
-    precipitation_summary,
 )
 from epw_climate_analyzer.ui_contract import NAVIGATION_LABELS, NAVIGATION_PAGES
 
@@ -89,15 +88,17 @@ class PressureAndPrecipitationContractTests(unittest.TestCase):
         self.assertEqual(float(snow.iloc[0, 0]), 1.0)
         self.assertEqual(float(snow.iloc[1, 0]), 1.0)
 
-    def test_summary_keeps_liquid_accumulation_and_snow_state_semantics_separate(self) -> None:
-        summary = precipitation_summary(self._fixture())
-        self.assertTrue(summary["liquid_data_available"])
-        self.assertTrue(summary["snow_data_available"])
-        self.assertAlmostEqual(float(summary["liquid_total_mm"]), 7.0)
-        self.assertEqual(summary["precipitation_records"], 3)
-        self.assertAlmostEqual(float(summary["max_record_precipitation_mm"]), 4.0)
-        self.assertAlmostEqual(float(summary["max_snow_depth_cm"]), 3.0)
-        self.assertEqual(summary["snow_cover_hours"], 2)
+    def test_precipitation_page_uses_chart_first_layout_without_kpi_strip(self) -> None:
+        function = next(
+            node for node in self.tree.body
+            if isinstance(node, ast.FunctionDef) and node.name == "render_precipitation"
+        )
+        source = ast.get_source_segment(self.source, function) or ""
+        self.assertNotIn(".metric(", source)
+        self.assertNotIn("metric_cols", source)
+        self.assertNotIn("Max precipitation record", source)
+        self.assertNotIn("Max snow depth", source)
+        self.assertIn('chart_group = st.selectbox("Analysis type", options)', source)
 
 
 if __name__ == "__main__":
