@@ -1,6 +1,9 @@
 name: CLIMATE-GEOSPHERE-0.2 remediation
 
 on:
+  push:
+    branches:
+      - climate-geosphere-0.2-batched-historical-selection
   workflow_dispatch:
 
 permissions:
@@ -8,6 +11,7 @@ permissions:
 
 jobs:
   patch-validate-commit:
+    if: ${{ github.actor != 'github-actions[bot]' }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
