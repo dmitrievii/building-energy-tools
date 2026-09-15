@@ -25,7 +25,7 @@ APP_NAME = TOOL_NAME
 APP_BROWSER_TITLE = f"{TOOL_NAME} | {PROJECT_NAME}"
 APP_TAGLINE = "Climate analysis for building design and building performance"
 APP_INTRO = (
-    "Explore EPW weather data for temperature, moisture, solar radiation, wind, precipitation, "
+    "Explore EPW weather files and measured station data for temperature, moisture, solar radiation, wind, precipitation, "
     "passive-design potential and early HVAC decision support."
 )
 APP_RELEASE_LABEL = f"{TOOL_NAME} {TOOL_VERSION} · Beta candidate"
