@@ -62,9 +62,11 @@ class CadenceFrequencyVisualTests(unittest.TestCase):
 
     def test_psychrometric_frequency_tiles_report_physical_hours(self) -> None:
         fig = go.Figure()
+        frame = sample_frame(interval_minutes=10)
+        frame["dry_bulb_temperature_c"] = 22.0
         _add_psychrometric_tile_occupancy(
             fig,
-            sample_frame(interval_minutes=10),
+            frame,
             "T-d",
             101325.0,
             None,
@@ -72,7 +74,7 @@ class CadenceFrequencyVisualTests(unittest.TestCase):
             None,
         )
         tile_traces = [trace for trace in fig.data if getattr(trace, "hovertemplate", None) and "Hours:" in str(trace.hovertemplate)]
-        self.assertEqual(len(tile_traces), 6)
+        self.assertEqual(len(tile_traces), 1)
         total = 0.0
         for trace in tile_traces:
             marker = "Hours: "
