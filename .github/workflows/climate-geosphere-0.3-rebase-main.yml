@@ -1,4 +1,4 @@
-name: CLIMATE-GEOSPHERE-0.3 rebase on current main
+name: CLIMATE-GEOSPHERE-0.3 qualified rebase
 
 on:
   push:
@@ -13,51 +13,22 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
-      - name: Checkout current integration branch
+      - name: Checkout integration branch
         uses: actions/checkout@v4
         with:
           ref: climate-geosphere-0.3-rebase-main
           fetch-depth: 0
 
-      - name: Merge and resolve qualified CLIMATE-GEOSPHERE-0.3
+      - name: Merge old qualified stage and resolve app conflict
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config merge.conflictstyle diff3
-          git fetch origin climate-geosphere-0.3-public-historical-selection
+          git fetch origin main climate-geosphere-0.3-public-historical-selection
           git merge --no-commit --no-ff origin/climate-geosphere-0.3-public-historical-selection || true
-          python - <<'PY'
-          from pathlib import Path
-
-          path = Path('tools/climate_analyzer/app.py')
-          text = path.read_text(encoding='utf-8')
-          if text.count('<<<<<<< HEAD') != 1 or text.count('>>>>>>> origin/climate-geosphere-0.3-public-historical-selection') != 1:
-              raise SystemExit('Expected exactly one known app.py conflict')
-          start = text.index('<<<<<<< HEAD')
-          end_marker = '>>>>>>> origin/climate-geosphere-0.3-public-historical-selection'
-          end = text.index(end_marker, start) + len(end_marker)
-          replacement = '''@st.cache_data(show_spinner=False, ttl=3600)
-def cached_geosphere_metadata() -> dict:
-    """Cache current GeoSphere metadata for one hour within a user session/runtime."""
-    from epw_climate_analyzer.geosphere import fetch_metadata
-
-    return fetch_metadata()
-
-
-@st.cache_resource(show_spinner=False, max_entries=1)'''
-          text = text[:start] + replacement + text[end:]
-          if any(marker in text for marker in ('<<<<<<<', '|||||||', '=======', '>>>>>>>')):
-              raise SystemExit('Conflict markers remain in app.py')
-          path.write_text(text, encoding='utf-8')
-          print('Resolved app.py by retaining GeoSphere metadata TTL cache and memory-safe station catalog cache_resource.')
-          PY
+          python tools/climate_analyzer/remediation/climate_geosphere_0_3_rebase_resolve.py
           git add tools/climate_analyzer/app.py
-          if git diff --name-only --diff-filter=U | grep -q .; then
-            echo 'Unresolved conflicts remain:'
-            git diff --name-only --diff-filter=U
-            exit 1
-          fi
-          echo '--- INTEGRATED WORKTREE ---'
+          test -z "$(git diff --name-only --diff-filter=U)"
           git status --short
 
       - name: Set up Python 3.12
@@ -67,7 +38,7 @@ def cached_geosphere_metadata() -> dict:
           cache: pip
           cache-dependency-path: tools/climate_analyzer/requirements.txt
 
-      - name: Install Climate Analyzer dependencies
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r tools/climate_analyzer/requirements.txt
@@ -76,7 +47,7 @@ def cached_geosphere_metadata() -> dict:
         working-directory: tools/climate_analyzer
         run: python -m compileall -q app.py epw_climate_analyzer tests
 
-      - name: Run GeoSphere focused regression
+      - name: Run focused GeoSphere and production regression
         working-directory: tools/climate_analyzer
         run: |
           python -m unittest tests.test_geosphere_adapter -v
@@ -89,35 +60,28 @@ def cached_geosphere_metadata() -> dict:
         working-directory: tools/climate_analyzer
         run: python -m unittest discover -s tests -p 'test_*.py' -v
 
-      - name: Remove one-shot workflow and generated files
+      - name: Remove one-shot integration files
         run: |
           rm -f .github/workflows/climate-geosphere-0.3-rebase-main.yml
+          rm -f tools/climate_analyzer/remediation/climate_geosphere_0_3_rebase_resolve.py
           rm -rf node_modules artifacts .pytest_cache
           find tools/climate_analyzer -type d -name __pycache__ -prune -exec rm -rf {} +
           find tools/climate_analyzer -type f -name '*.pyc' -delete
 
-      - name: Commit qualified integration only
+      - name: Commit and push qualified integration
         run: |
           git add -A
           git status --short
           git commit -m "CLIMATE-GEOSPHERE-0.3: integrate public historical station source on current main"
-          echo '--- NET DIFF VS MAIN ---'
-          git diff --name-only origin/main...HEAD | tee /tmp/net-files.txt
-          python - <<'PY'
-          from pathlib import Path
-          allowed = {
-              'tools/climate_analyzer/CLIMATE_GEOSPHERE_0_3.md',
-              'tools/climate_analyzer/app.py',
-              'tools/climate_analyzer/epw_climate_analyzer/historical.py',
-              'tools/climate_analyzer/epw_climate_analyzer/ui_contract.py',
-              'tools/climate_analyzer/tests/test_geosphere_public_integration.py',
-              'tools/climate_analyzer/tests/test_pressure_precipitation_contract.py',
-          }
-          actual = {line.strip() for line in Path('/tmp/net-files.txt').read_text().splitlines() if line.strip()}
-          unexpected = sorted(actual - allowed)
-          missing = sorted(allowed - actual)
-          if unexpected or missing:
-              raise SystemExit(f'Net diff gate failed. unexpected={unexpected}; missing={missing}')
-          print('Net diff gate PASS:', len(actual), 'expected files')
-          PY
+          git diff --name-only origin/main...HEAD | sort > /tmp/actual-files.txt
+          printf '%s\n' \
+            tools/climate_analyzer/CLIMATE_GEOSPHERE_0_3.md \
+            tools/climate_analyzer/app.py \
+            tools/climate_analyzer/epw_climate_analyzer/historical.py \
+            tools/climate_analyzer/epw_climate_analyzer/ui_contract.py \
+            tools/climate_analyzer/tests/test_geosphere_public_integration.py \
+            tools/climate_analyzer/tests/test_pressure_precipitation_contract.py \
+            | sort > /tmp/expected-files.txt
+          diff -u /tmp/expected-files.txt /tmp/actual-files.txt
+          echo 'Net diff gate PASS: exactly six expected files.'
           git push origin HEAD:climate-geosphere-0.3-rebase-main
