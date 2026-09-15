@@ -1984,29 +1984,57 @@ def render_temperature(df: pd.DataFrame) -> None:
 
     if chart_group == "Degree days":
         st.caption(
-            "Choose the heating and cooling base/reference temperatures explicitly. "
-            "They are climate balance/reference temperatures for this indicator, not a complete indoor setpoint or building-load model."
+            "HGT/KGT use two independent temperatures each: the limit selects the heating/cooling period, "
+            "while the temperature difference is measured to the corresponding indoor-air reference."
         )
-        base_col1, base_col2 = st.columns(2)
-        heat_threshold = base_col1.slider(
-            "Heating base/reference temperature [°C]",
-            -5.0,
-            30.0,
-            18.0,
-            0.5,
-            help="Heating degree metric is accumulated only when outdoor temperature is below this reference/base temperature.",
-        )
-        cool_threshold = base_col2.slider(
-            "Cooling base/reference temperature [°C]",
+        st.markdown("**Heating degree metric (HGT)**")
+        heat_col1, heat_col2 = st.columns(2)
+        heating_indoor = heat_col1.slider(
+            "Heating indoor air temperature [°C]",
             10.0,
-            40.0,
-            26.0,
+            30.0,
+            20.0,
             0.5,
-            help="Cooling degree metric is accumulated only when outdoor temperature is above this reference/base temperature.",
+            key="degree_heating_indoor_c",
+            help="Indoor-air reference used for the HGT temperature difference.",
         )
-        if heat_threshold > cool_threshold:
-            st.error("Heating base/reference temperature must not exceed cooling base/reference temperature.")
+        heating_limit = heat_col2.slider(
+            "Heating limit [°C]",
+            -5.0,
+            25.0,
+            12.0,
+            0.5,
+            key="degree_heating_limit_c",
+            help="Only intervals/days with mean outdoor temperature below this limit contribute to HGT.",
+        )
+        if heating_limit > heating_indoor:
+            st.error("Heating limit must not exceed heating indoor air temperature.")
             return
+
+        st.markdown("**Cooling degree metric (KGT)**")
+        cool_col1, cool_col2 = st.columns(2)
+        cooling_indoor = cool_col1.slider(
+            "Cooling indoor air temperature [°C]",
+            10.0,
+            30.0,
+            20.0,
+            0.5,
+            key="degree_cooling_indoor_c",
+            help="Indoor-air reference used for the KGT temperature difference.",
+        )
+        cooling_limit = cool_col2.slider(
+            "Cooling limit [°C]",
+            10.0,
+            35.0,
+            18.3,
+            0.1,
+            key="degree_cooling_limit_c",
+            help="Only intervals/days with mean outdoor temperature above this limit contribute to KGT.",
+        )
+        st.caption(
+            f"Current definitions: HGT {heating_indoor:g}/{heating_limit:g} and "
+            f"KGT {cooling_indoor:g}/{cooling_limit:g}."
+        )
 
         method_col, aggregation_col = st.columns(2)
         metric = method_col.radio(
@@ -2026,8 +2054,10 @@ def render_temperature(df: pd.DataFrame) -> None:
         )
         table = degree_metric_table(
             df,
-            heating_base_c=heat_threshold,
-            cooling_base_c=cool_threshold,
+            heating_indoor_c=heating_indoor,
+            heating_limit_c=heating_limit,
+            cooling_indoor_c=cooling_indoor,
+            cooling_limit_c=cooling_limit,
             metric=metric,
             aggregation=aggregation,
         )
@@ -2055,7 +2085,7 @@ def render_temperature(df: pd.DataFrame) -> None:
             barmode="group",
             title=(
                 f"{aggregation} heating and cooling {metric.lower()} "
-                f"(bases {heat_threshold:g}/{cool_threshold:g} °C)"
+                f"(HGT {heating_indoor:g}/{heating_limit:g}; KGT {cooling_indoor:g}/{cooling_limit:g})"
             ),
             color_discrete_map={name: metric_color(name) for name in series_names},
         )
@@ -2076,8 +2106,10 @@ def render_temperature(df: pd.DataFrame) -> None:
             fig,
             degree_metric_interpretation(
                 table,
-                heating_base_c=heat_threshold,
-                cooling_base_c=cool_threshold,
+                heating_indoor_c=heating_indoor,
+                heating_limit_c=heating_limit,
+                cooling_indoor_c=cooling_indoor,
+                cooling_limit_c=cooling_limit,
                 metric=metric,
             ),
         )
