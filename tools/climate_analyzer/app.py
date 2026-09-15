@@ -1889,7 +1889,7 @@ def render_overview(epw, df: pd.DataFrame, full_df: pd.DataFrame, issues: list[o
             - Duration curves, histograms, boxplots and violin plots
             - Psychrometric T-d and i-d charts
             - Wind roses, sun-path plots and façade-radiation charts
-            - Precipitation totals, wet-hour occurrence, snow depth and snow-cover occurrence
+            - Precipitation totals, precipitation-record occurrence, snow depth and snow-cover occurrence
             - Natural-ventilation, night-flushing, shading, economizer and latent-load indicators
             - EPW data-quality diagnostics
             """
