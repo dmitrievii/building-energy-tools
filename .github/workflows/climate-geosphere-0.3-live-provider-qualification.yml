@@ -1,0 +1,56 @@
+name: CLIMATE-GEOSPHERE-0.3 live provider qualification
+
+on:
+  push:
+    branches:
+      - climate-geosphere-0.3-live-provider-qualification
+
+permissions:
+  contents: read
+
+jobs:
+  provider-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      TARGET_URL: https://building-climate-analyzer.streamlit.app/
+      EXPECTED_RUNTIME_BUILD: 2628303a222f5b30dba2a5c7423620f712f1a3e2070d2acda994aaad053a6864
+      CHROME_PATH: /usr/bin/google-chrome
+      OUT_DIR: artifacts/geosphere-provider
+    steps:
+      - name: Checkout exact production source
+        uses: actions/checkout@v4
+        with:
+          ref: climate-geosphere-0.3-live-provider-qualification
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install bounded provider-smoke dependencies
+        run: python -m pip install pandas==2.3.3 requests==2.34.2
+
+      - name: Run live GeoSphere Dataset API smoke
+        working-directory: tools/climate_analyzer
+        run: python remediation/geosphere_live_provider_smoke.py
+
+      - name: Verify Chrome
+        run: |
+          test -x "$CHROME_PATH"
+          "$CHROME_PATH" --version
+
+      - name: Install browser-smoke dependency
+        run: npm install --no-save playwright-core@1.55.0
+
+      - name: Run production GeoSphere UI smoke
+        run: node deployment/geosphere_live_ui_smoke.mjs
+
+      - name: Upload provider qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: climate-geosphere-0.3-live-provider-evidence
+          path: artifacts/geosphere-provider
+          if-no-files-found: warn
+          retention-days: 14
