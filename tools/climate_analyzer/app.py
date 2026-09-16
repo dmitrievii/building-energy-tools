@@ -88,7 +88,7 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
     """Load scientific/plotting dependencies only after an EPW analysis is requested."""
     global _ANALYSIS_DEPENDENCIES_LOADED, _SOLAR_DEPENDENCIES_LOADED, _COMPARISON_DEPENDENCIES_LOADED
     global pd, px
-    global aggregate_sum, duration_curve, filter_by_months_and_hours, threshold_count_by_period
+    global aggregate_sum, duration_curve, filter_by_months_and_hours, native_interval_hours, threshold_count_by_period
     global duration_chart, heatmap_chart, histogram_chart, GIVONI_MILNE_ZONES
     global matrix_heatmap, month_hour_heatmap, givoni_milne_zone_table, monthly_box_chart
     global multi_line_monthly, orientation_bar_chart, percentile_band_chart, profile_ribbon_chart
@@ -128,6 +128,7 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
             aggregate_sum,
             duration_curve,
             filter_by_months_and_hours,
+            native_interval_hours,
             threshold_count_by_period,
         )
         from epw_climate_analyzer.charts import (
@@ -1423,14 +1424,22 @@ def render_bioclimatic_report(df: pd.DataFrame) -> None:
         st.info("No valid dry-bulb temperature and humidity-ratio data are available for the bioclimatic-zone report.")
         return
     top = table.head(3)
-    total_tagged = int(table["hours"].sum())
-    total_hours = max(len(df.dropna(subset=["dry_bulb_temperature_c", "humidity_ratio_g_kg"])), 1)
+    total_tagged = float(table["hours"].sum())
+    valid_records = len(df.dropna(subset=["dry_bulb_temperature_c", "humidity_ratio_g_kg"]))
+    total_hours = float(valid_records) * native_interval_hours(df)
     leader = top.iloc[0]
+
+    def format_hours(value: float) -> str:
+        numeric = float(value)
+        if abs(numeric - round(numeric)) < 1e-9:
+            return f"{int(round(numeric)):,}"
+        return f"{numeric:,.2f}".rstrip("0").rstrip(".")
+
     st.info(
         f"The largest Givoni-Milne-style strategy region is **{leader['zone']}** "
-        f"with {int(leader['hours']):,} hours ({float(leader['share_pct']):.1f}% of valid psychrometric hours). "
-        f"The reported zones are overlapping design-potential regions, so their hour counts should be interpreted as strategy opportunities rather than mutually exclusive classes. "
-        f"Across all displayed strategy regions, {total_tagged:,} zone-hours were detected over {total_hours:,} valid EPW hours."
+        f"with {format_hours(float(leader['hours']))} hours ({float(leader['share_pct']):.1f}% of valid psychrometric duration). "
+        f"The reported zones are overlapping design-potential regions, so their hour totals should be interpreted as strategy opportunities rather than mutually exclusive classes. "
+        f"Across all displayed strategy regions, {format_hours(total_tagged)} zone-hours were detected over {format_hours(total_hours)} valid climate-data hours."
     )
     st.dataframe(table, hide_index=True, use_container_width=True)
 
@@ -2442,7 +2451,8 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
         )
     elif chart_group == "Psychrometric chart":
         chart_type = st.radio("Psychrometric axes", ["T-d", "i-d"], horizontal=True)
-        data_mode = st.radio("Loaded climate data mode", ["Hourly values", "Distributive grid"], horizontal=True)
+        source_interval_mode = "Hourly values" if abs(native_interval_hours(df) - 1.0) < 1e-9 else "Source interval values"
+        data_mode = st.radio("Loaded climate data mode", [source_interval_mode, "Distributive grid"], horizontal=True)
         st.caption("Distributive grid uses 1 °C × 5 %RH cells drawn on the real psychrometric chart geometry.")
 
         col_a, col_b, col_c = st.columns(3)
@@ -2485,8 +2495,8 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
             default_metric = "Frequency" if data_mode == "Distributive grid" else "Month"
             color_mode = st.selectbox("Colour mapped metric", metric_options, index=metric_options.index(default_metric))
             color_metric_column, color_metric_label = PSYCHROMETRIC_COLOR_METRICS[color_mode]
-            if data_mode == "Hourly values" and color_mode == "Frequency":
-                st.caption("Frequency is only meaningful for the distributive grid. Hourly values will be shown by month.")
+            if data_mode != "Distributive grid" and color_mode == "Frequency":
+                st.caption("Frequency is only meaningful for the distributive grid. Source interval values will be shown by month.")
                 color_mode = "Month"
                 color_metric_column, color_metric_label = PSYCHROMETRIC_COLOR_METRICS[color_mode]
 
