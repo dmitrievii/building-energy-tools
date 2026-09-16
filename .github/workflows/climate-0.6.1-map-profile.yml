@@ -1,0 +1,91 @@
+name: CLIMATE-0.6.1 OneBuilding map profile
+
+on:
+  push:
+    branches:
+      - climate-0.6.1-map-profile
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  profile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: climate-0.6.1-map-profile
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/climate_analyzer/requirements.txt
+
+      - name: Install production dependencies
+        run: python -m pip install -r tools/climate_analyzer/requirements.txt
+
+      - name: Profile catalog grouping and map serialization
+        working-directory: tools/climate_analyzer
+        run: |
+          python - <<'PY'
+          import json
+          import runpy
+          import time
+          from pathlib import Path
+
+          from epw_climate_analyzer.catalog_runtime import load_production_station_catalog
+
+          ns = runpy.run_path('app.py', run_name='climate_profile_module')
+          grouped_station_catalog = ns['grouped_station_catalog']
+          station_catalog_fast_selectable_map = ns['station_catalog_fast_selectable_map']
+
+          t0 = time.perf_counter()
+          catalog = load_production_station_catalog()
+          t1 = time.perf_counter()
+          groups = grouped_station_catalog(catalog)
+          t2 = time.perf_counter()
+          fmap = station_catalog_fast_selectable_map(
+              groups,
+              selected_group_id=None,
+              center=[20.0, 0.0],
+              zoom=2,
+              detail_zoom_threshold=8,
+          )
+          t3 = time.perf_counter()
+          html = fmap.get_root().render()
+          t4 = time.perf_counter()
+
+          fmap2 = station_catalog_fast_selectable_map(
+              groups,
+              selected_group_id=None,
+              center=[20.0, 0.0],
+              zoom=2,
+              detail_zoom_threshold=8,
+          )
+          t5 = time.perf_counter()
+          html2 = fmap2.get_root().render()
+          t6 = time.perf_counter()
+
+          result = {
+              'catalog_rows': len(catalog),
+              'station_groups': len(groups),
+              'catalog_load_s': round(t1-t0, 4),
+              'grouping_s': round(t2-t1, 4),
+              'map_build_first_s': round(t3-t2, 4),
+              'html_render_first_s': round(t4-t3, 4),
+              'map_build_second_s': round(t5-t4, 4),
+              'html_render_second_s': round(t6-t5, 4),
+              'html_bytes': len(html.encode('utf-8')),
+              'html2_bytes': len(html2.encode('utf-8')),
+          }
+          print('MAP_PROFILE=' + json.dumps(result, sort_keys=True))
+          Path('map-profile.json').write_text(json.dumps(result, indent=2, sort_keys=True), encoding='utf-8')
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: climate-0.6.1-map-profile
+          path: tools/climate_analyzer/map-profile.json
