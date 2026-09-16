@@ -1,0 +1,41 @@
+name: CLIMATE-0.6.1 live map performance
+
+on:
+  push:
+    branches:
+      - climate-0.6.1-live-map-performance
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  performance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      TARGET_URL: https://building-climate-analyzer.streamlit.app/
+      PERF_OUTPUT_DIR: artifacts/live-map-performance
+      CHROME_PATH: /usr/bin/google-chrome
+      REPETITIONS: '3'
+      EXPECTED_RUNTIME: 63a13a692f6f4cd92ab152750bb37e3ed9e14bda0678d44bd9763f9ee10adea2
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: climate-0.6.1-live-map-performance
+      - name: Verify Chrome
+        run: |
+          test -x "$CHROME_PATH"
+          "$CHROME_PATH" --version
+      - name: Install browser dependency
+        run: npm install --no-save playwright-core@1.55.0
+      - name: Run warm production latency probe
+        run: node deployment/live_map_performance.mjs
+      - name: Upload performance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: climate-0.6.1-live-map-performance
+          path: artifacts/live-map-performance
+          if-no-files-found: warn
+          retention-days: 14
