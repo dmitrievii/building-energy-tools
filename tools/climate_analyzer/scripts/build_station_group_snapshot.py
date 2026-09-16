@@ -4,11 +4,16 @@ from hashlib import sha256
 import json
 from pathlib import Path
 import runpy
+import sys
+
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from epw_climate_analyzer.catalog_runtime import load_production_station_catalog, load_station_catalog_manifest
 
 
-ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "epw_climate_analyzer" / "data"
 CSV_PATH = DATA_DIR / "station_groups.csv"
 META_PATH = DATA_DIR / "station_groups.meta.json"
