@@ -65,6 +65,21 @@ class InterannualHeatmap064Tests(unittest.TestCase):
         self.assertAlmostEqual(float(matrix.loc[2024, 1]), 5.0)
         self.assertAlmostEqual(float(matrix.loc[2025, 1]), 7.0)
 
+    def test_week_by_year_uses_iso_week_year_at_calendar_boundary(self) -> None:
+        idx = pd.to_datetime([
+            "2020-12-31T12:00:00Z",  # ISO 2020-W53
+            "2021-01-01T12:00:00Z",  # still ISO 2020-W53
+            "2021-01-04T12:00:00Z",  # ISO 2021-W01
+        ])
+        df = pd.DataFrame({"dry_bulb_temperature_c": [1.0, 3.0, 10.0]}, index=idx)
+        df["hour_of_day"] = df.index.hour
+        df = with_time_basis(df, CHRONOLOGICAL)
+        matrix = temporal_heatmap_matrix(df, "dry_bulb_temperature_c", "week", HEATMAP_COMPARE_YEAR, "Mean")
+        self.assertEqual(matrix.index.tolist(), [2020, 2021])
+        self.assertAlmostEqual(float(matrix.loc[2020, "W53"]), 2.0)
+        self.assertAlmostEqual(float(matrix.loc[2021, "W01"]), 10.0)
+        self.assertTrue(pd.isna(matrix.loc[2021, "W53"]))
+
     def test_one_year_year_compare_is_a_single_stripe(self) -> None:
         df = frame().loc["2024"].copy()
         df = with_time_basis(df, CHRONOLOGICAL)

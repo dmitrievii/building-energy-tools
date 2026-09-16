@@ -343,8 +343,16 @@ def temporal_heatmap_matrix(
     temp = pd.DataFrame({"_value": values.to_numpy()}, index=index)
 
     if compare_across == HEATMAP_COMPARE_YEAR:
-        temp["_y"] = index.year.astype(int)
-        temp["_x"] = _heatmap_period_key(index, row_group, include_year=False).to_numpy()
+        # A week number and its year are one ISO-8601 coordinate. Build both
+        # from the same timestamp tuple so New-Year boundary dates cannot be
+        # assigned to calendar year Y while carrying ISO week Y-1/W53.
+        if str(row_group).strip().lower() == "week":
+            iso_coordinates = [stamp.isocalendar() for stamp in index.to_pydatetime()]
+            temp["_y"] = [int(item.year) for item in iso_coordinates]
+            temp["_x"] = [f"W{int(item.week):02d}" for item in iso_coordinates]
+        else:
+            temp["_y"] = index.year.astype(int)
+            temp["_x"] = _heatmap_period_key(index, row_group, include_year=False).to_numpy()
     else:
         preserve_year = time_basis(df) == CHRONOLOGICAL and is_multiyear(df)
         temp["_y"] = (
