@@ -147,6 +147,9 @@ def available_historical_pages(df: pd.DataFrame) -> tuple[str, ...]:
     has_solar = has_numeric_observations(df, "global_horizontal_radiation_wh_m2") or has_numeric_observations(
         df, "diffuse_horizontal_radiation_wh_m2"
     )
+    has_precipitation_or_snow = has_numeric_observations(df, "liquid_precipitation_depth_mm") or has_numeric_observations(
+        df, "snow_depth_cm"
+    )
 
     if has_temperature:
         pages.append("Temperature")
@@ -156,6 +159,8 @@ def available_historical_pages(df: pd.DataFrame) -> tuple[str, ...]:
         pages.append("Solar and Radiation")
     if has_wind:
         pages.append("Wind and Ventilation")
+    if has_precipitation_or_snow:
+        pages.append("Precipitation and Snow")
     pages.extend(["Time Series and Overlay", "Data Quality"])
     return tuple(pages)
 

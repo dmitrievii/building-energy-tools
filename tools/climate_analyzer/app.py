@@ -105,7 +105,7 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
     global natural_ventilation_interpretation, psychrometric_interpretation, sky_interpretation
     global solar_interpretation, temperature_interpretation, variable_interpretation, wind_interpretation
     global DEFAULT_PRESSURE_PA, add_psychrometric_properties, pressure_from_altitude_m
-    global aggregate_liquid_precipitation, occurrence_hours
+    global aggregate_liquid_precipitation, occurrence_hours, occurrence_records
     global calculated_statistics_tables, climate_statistics_interpretation, extreme_day_summary
     global monthly_climate_summary, seasonal_climate_summary
     global add_solar_position, monthly_orientation_radiation, orientation_annual_radiation
@@ -196,6 +196,7 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
         from epw_climate_analyzer.precipitation import (
             aggregate_liquid_precipitation,
             occurrence_hours,
+            occurrence_records,
         )
         from epw_climate_analyzer.timeseries import (
             OverlaySeries,
@@ -1047,9 +1048,10 @@ def render_geosphere_source() -> None:
         st.error(f"GeoSphere metadata could not be loaded or validated: {exc}")
         return
 
-    search = st.text_input("Search GeoSphere station", value="", key="geosphere_station_search")
+    col_filter1, col_filter2 = st.columns([2, 1])
+    search = col_filter1.text_input("Search GeoSphere station", value="", key="geosphere_station_search")
     states = sorted(value for value in catalog["state"].dropna().astype(str).unique().tolist() if value.strip())
-    selected_states = st.multiselect("Federal states / regions", states, default=[], key="geosphere_station_states")
+    selected_states = col_filter2.multiselect("Federal states / regions", states, default=[], key="geosphere_station_states")
     filtered = catalog.copy()
     if search.strip():
         needle = search.strip().lower()
@@ -1061,6 +1063,7 @@ def render_geosphere_source() -> None:
         filtered = filtered[mask]
     if selected_states:
         filtered = filtered[filtered["state"].isin(selected_states)]
+    st.caption(f"Visible GeoSphere stations after filters: {len(filtered):,} of {len(catalog):,}")
     if filtered.empty:
         st.warning("No GeoSphere stations match the current filter.")
         return
@@ -1076,28 +1079,108 @@ def render_geosphere_source() -> None:
         state = f" — {station.state}" if station.state else ""
         return f"{station.name}{state} — ID {station.station_id}"
 
-    selected_id = st.selectbox(
-        "Station",
-        option_ids,
-        format_func=station_label,
-        key="geosphere_station_id",
-    )
+    selected_id = str(st.session_state.get("geosphere_selected_station_id", option_ids[0]))
+    if selected_id not in option_ids:
+        selected_id = option_ids[0]
+        st.session_state["geosphere_selected_station_id"] = selected_id
+
+    # GeoSphere uses the same persistent clustered Leaflet engine as Find climate.
+    # Only the 530-provider-station table differs; pan/zoom remain browser-owned
+    # and the map returns only an explicit station click to Streamlit.
+    _ensure_map_dependencies()
+    map_groups = filtered[["station_id", "name", "state", "latitude", "longitude", "elevation_m"]].copy()
+    map_groups["station_group_id"] = map_groups["station_id"].astype(str)
+    map_groups["country"] = "Austria"
+    map_groups["region"] = map_groups["state"].fillna("").astype(str)
+    map_groups["dataset"] = "GeoSphere klima-v2-10min"
+    map_groups["climate_count"] = 1
+    map_groups = map_groups.reset_index(drop=True)
+
+    if "geosphere_map_view_epoch" not in st.session_state:
+        st.session_state["geosphere_map_view_epoch"] = 0
+    default_center = [float(map_groups["latitude"].mean()), float(map_groups["longitude"].mean())]
+    initial_zoom = 7 if len(map_groups) > 25 else 9
+
+    left, right = st.columns([2, 1])
+    with left:
+        map_reset_col, map_note_col = st.columns([1, 3])
+        with map_reset_col:
+            if st.button("Reset map", key="geosphere_reset_map"):
+                st.session_state["geosphere_map_view_epoch"] = int(st.session_state.get("geosphere_map_view_epoch", 0)) + 1
+                st.rerun()
+        with map_note_col:
+            st.caption("Clustered GeoSphere station map · click a station bubble to select it.")
+        with st.expander("Advanced map settings", expanded=False):
+            detail_zoom_threshold = st.slider(
+                "Show individual stations from zoom level",
+                min_value=6,
+                max_value=12,
+                value=int(st.session_state.get("geosphere_detail_zoom_threshold", 9)),
+                key="geosphere_detail_zoom_threshold_slider",
+                help=(
+                    "The clustered overview remains visible at lower zoom levels. At this zoom level or closer, "
+                    "the same Leaflet map reveals clickable individual station bubbles."
+                ),
+            )
+            st.session_state["geosphere_detail_zoom_threshold"] = detail_zoom_threshold
+
+        marker_payload = station_marker_payload(map_groups)
+        base_map, marker_group = station_catalog_persistent_map_layers(
+            map_groups,
+            marker_payload=marker_payload,
+            center=[47.5, 14.2],
+            zoom=7,
+            detail_zoom_threshold=int(st.session_state.get("geosphere_detail_zoom_threshold", 9)),
+        )
+        map_state = st_folium(
+            base_map,
+            feature_group_to_add=marker_group,
+            height=560,
+            use_container_width=True,
+            returned_objects=["last_object_clicked_tooltip"],
+            center=tuple(default_center),
+            zoom=initial_zoom,
+            key=f"geosphere_selectable_cluster_map_{int(st.session_state.get('geosphere_map_view_epoch', 0))}",
+        )
+
+    clicked_station = None
+    if isinstance(map_state, dict):
+        clicked_station = station_group_from_tooltip(map_groups, map_state.get("last_object_clicked_tooltip"))
+    if clicked_station is not None:
+        clicked_id = str(clicked_station["station_group_id"])
+        if clicked_id in option_ids:
+            selected_id = clicked_id
+            st.session_state["geosphere_selected_station_id"] = selected_id
+
     station = station_by_id[selected_id]
-    st.dataframe(
-        pd.DataFrame(
-            {
-                "Field": ["Station", "ID", "Region", "Latitude", "Longitude", "Elevation", "Provider validity"],
-                "Value": [
-                    station.name, station.station_id, station.state,
-                    f"{station.latitude:.5f}", f"{station.longitude:.5f}",
-                    f"{station.elevation_m:.0f} m" if station.elevation_m is not None else "",
-                    f"{station.valid_from or 'unknown'} … {station.valid_to or 'unknown'}",
-                ],
-            }
-        ),
-        hide_index=True,
-        use_container_width=True,
-    )
+    with right:
+        st.markdown("#### Selected station")
+        st.dataframe(
+            pd.DataFrame(
+                {
+                    "Field": ["Station", "ID", "Region", "Latitude", "Longitude", "Elevation", "Provider validity"],
+                    "Value": [
+                        station.name, station.station_id, station.state,
+                        f"{station.latitude:.5f}", f"{station.longitude:.5f}",
+                        f"{station.elevation_m:.0f} m" if station.elevation_m is not None else "",
+                        f"{station.valid_from or 'unknown'} … {station.valid_to or 'unknown'}",
+                    ],
+                }
+            ),
+            hide_index=True,
+            use_container_width=True,
+        )
+        st.markdown("#### Manual station selection")
+        manual_id = st.selectbox(
+            "Search-result stations",
+            option_ids,
+            index=option_ids.index(selected_id),
+            format_func=station_label,
+            key="geosphere_manual_station_choice",
+        )
+        if st.button("Use station from list", key="geosphere_use_station_from_list"):
+            st.session_state["geosphere_selected_station_id"] = manual_id
+            st.rerun()
 
     today = pd.Timestamp.now(tz="UTC").date()
     parsed_from = pd.to_datetime(station.valid_from, errors="coerce")
@@ -1122,23 +1205,40 @@ def render_geosphere_source() -> None:
         return
     selected_days = (pd.Timestamp(end_date) - pd.Timestamp(start_date)).days + 1
 
-    provider_options = list(supported.keys())
-    provider_parameters = tuple(
-        st.multiselect(
-            "Measured variables to load",
-            provider_options,
-            default=provider_options,
-            format_func=lambda name: (
-                f"{supported[name].description or supported[name].canonical_name} "
-                f"({name} → {supported[name].canonical_name})"
-            ),
-            key="geosphere_provider_parameters",
-            help=(
-                "Only selected variables are requested from GeoSphere. Analysis pages are enabled later from actual "
-                "numeric observations, not merely from metadata or a selected checkbox."
-            ),
-        )
+    st.markdown("#### Measured variables to load")
+    st.caption(
+        "Select the measured GeoSphere fields required for this load. The checkbox is the single source of selection state; "
+        "analysis pages are still enabled only when the returned interval contains actual numeric observations."
     )
+    variable_rows = pd.DataFrame(
+        [
+            {
+                "Selected": True,
+                "Measured variable": spec.description or spec.canonical_name,
+                "Provider": name,
+                "Canonical field": spec.canonical_name,
+            }
+            for name, spec in supported.items()
+        ]
+    )
+    edited_variables = st.data_editor(
+        variable_rows,
+        hide_index=True,
+        use_container_width=True,
+        num_rows="fixed",
+        disabled=["Measured variable", "Provider", "Canonical field"],
+        column_config={
+            "Selected": st.column_config.CheckboxColumn("Load", width="small"),
+            "Measured variable": st.column_config.TextColumn("Measured variable", width="medium"),
+            "Provider": st.column_config.TextColumn("Provider parameter", width="small"),
+            "Canonical field": st.column_config.TextColumn("Canonical field", width="large"),
+        },
+        key="geosphere_variable_editor",
+    )
+    provider_parameters = tuple(
+        edited_variables.loc[edited_variables["Selected"].fillna(False).astype(bool), "Provider"].astype(str).tolist()
+    )
+    st.caption("Source: GeoSphere Austria `klima-v2-10min` · CC BY 4.0 · DOI 10.60669/8fya-7x87")
     if not provider_parameters:
         st.warning("Select at least one measured GeoSphere variable to load.")
         return
@@ -1164,19 +1264,6 @@ def render_geosphere_source() -> None:
             "unavailable unless a later load contains measured temperature observations."
         )
 
-    with st.expander("Measured variables and provenance", expanded=False):
-        variable_rows = [
-            {
-                "Selected": name in provider_parameters,
-                "Provider": name,
-                "Canonical field": spec.canonical_name,
-                "Description": spec.description,
-            }
-            for name, spec in supported.items()
-        ]
-        st.dataframe(pd.DataFrame(variable_rows), hide_index=True, use_container_width=True)
-        st.caption("Source: GeoSphere Austria `klima-v2-10min` · CC BY 4.0 · DOI 10.60669/8fya-7x87")
-
     if st.button("Load measured GeoSphere interval", type="primary", key="load_geosphere_interval"):
         try:
             with st.spinner(f"Loading {len(batches)} bounded GeoSphere request batch(es)..."):
@@ -1191,7 +1278,6 @@ def render_geosphere_source() -> None:
             st.rerun()
         except Exception as exc:
             st.error(f"GeoSphere station-data load failed: {exc}")
-
 
 def render_climate_file_source() -> None:
     """Render the product entry page for local or catalog climate selection."""
@@ -2826,7 +2912,7 @@ def render_wind(df: pd.DataFrame) -> None:
 
 
 def render_precipitation(df: pd.DataFrame) -> None:
-    """Render liquid-precipitation and snow-cover analysis from EPW fields."""
+    """Render liquid-precipitation and snow-cover analysis from available source fields."""
     st.header("Precipitation and snow")
     liquid_available = (
         "liquid_precipitation_depth_mm" in df.columns
@@ -2841,9 +2927,9 @@ def render_precipitation(df: pd.DataFrame) -> None:
     if liquid_available:
         options.extend(["Precipitation totals", "Precipitation-record occurrence", "Liquid precipitation explorer"])
     if snow_available:
-        options.extend(["Snow depth explorer", "Snow-cover occurrence"])
+        options.extend(["Snow depth explorer", "Snow-cover duration"])
     if not options:
-        st.info("This EPW file does not contain usable liquid-precipitation or snow-depth data.")
+        st.info("The loaded climate interval does not contain usable liquid-precipitation or snow-depth observations.")
         return
 
     chart_group = st.selectbox("Analysis type", options)
@@ -2864,12 +2950,12 @@ def render_precipitation(df: pd.DataFrame) -> None:
         fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Precipitation [mm]")
         render_plot(
             fig,
-            "Period totals sum valid EPW liquid-precipitation depth records. Missing EPW values are excluded rather than treated as zero.",
+            "Period totals sum valid interval precipitation-depth records. Missing source values and missing timestamp gaps are excluded rather than treated as zero.",
         )
     elif chart_group == "Precipitation-record occurrence":
         threshold = st.number_input("Precipitation-record threshold [mm]", min_value=0.0, value=0.1, step=0.1)
         aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0)
-        counts = occurrence_hours(
+        counts = occurrence_records(
             df,
             "liquid_precipitation_depth_mm",
             float(threshold),
@@ -2881,15 +2967,15 @@ def render_precipitation(df: pd.DataFrame) -> None:
         fig = px.bar(
             plot_data,
             x=x_column,
-            y="hours",
+            y="records",
             title=f"Precipitation-record occurrence ≥ {threshold:g} mm",
-            labels={x_column: "Period", "hours": "Records meeting threshold"},
+            labels={x_column: "Period", "records": "Source records meeting threshold"},
         )
         fig.update_traces(marker_color=metric_color("liquid_precipitation_depth_mm"))
-        fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Records meeting threshold")
+        fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Source records meeting threshold")
         render_plot(
             fig,
-            "Counts EPW precipitation records meeting the selected depth threshold. This is an observation-record occurrence metric, not exact rainfall duration: EPW liquid precipitation depth may refer to the measurement interval reported by Liquid Precipitation Quantity.",
+            "Counts source precipitation-depth records meeting the selected threshold. This is deliberately a record-occurrence metric, not exact rainfall duration: an interval precipitation amount does not reveal how long rain occurred inside that source interval.",
         )
     elif chart_group == "Liquid precipitation explorer":
         render_generic_variable_page(
@@ -2910,13 +2996,15 @@ def render_precipitation(df: pd.DataFrame) -> None:
             plot_data,
             x=x_column,
             y="hours",
-            title="Snow-cover occurrence",
-            labels={x_column: "Period", "hours": "Hours with snow depth > 0 cm"},
+            title="Snow-cover duration",
+            labels={x_column: "Period", "hours": "Observed hours with snow depth > 0 cm"},
         )
         fig.update_traces(marker_color=metric_color("snow_depth_cm"))
-        fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Snow-cover hours")
-        render_plot(fig, "Snow depth is a state variable; this chart counts valid EPW records with snow depth greater than zero.")
-
+        fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Observed snow-cover hours")
+        render_plot(
+            fig,
+            "Snow depth is a state variable. Each valid record with snow depth greater than zero contributes exactly one native source interval: 1 h for hourly EPW and 1/6 h for 10-minute GeoSphere data. Missing timestamp gaps contribute no duration.",
+        )
 
 def render_sky_daylight(df: pd.DataFrame) -> None:
     """Render sky-cover and daylight charts."""
@@ -3697,6 +3785,12 @@ def render_canonical_climate_analysis(dataset) -> None:
         render_historical_solar(filtered_df)
     elif page == "Wind and Ventilation":
         render_historical_wind(filtered_df)
+    elif page == "Precipitation and Snow":
+        st.caption(
+            "Liquid precipitation is an interval-depth measurement; threshold occurrence therefore counts source records, not rainfall duration. "
+            "Snow-cover duration integrates the declared native cadence, and missing timestamp gaps contribute no observed time."
+        )
+        render_precipitation(filtered_df)
     elif page == "Time Series and Overlay":
         render_time_series_overlay(full_df)
     else:
