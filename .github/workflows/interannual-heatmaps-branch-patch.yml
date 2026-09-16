@@ -31,6 +31,7 @@ jobs:
         run: |
           python tools/climate_analyzer/scripts/apply_interannual_heatmaps_064.py
           python tools/climate_analyzer/scripts/fix_interannual_heatmap_wrapper_orientation_064.py
+          python tools/climate_analyzer/scripts/fix_interannual_heatmap_iso_week_year_064.py
       - name: Compile changed Python modules
         run: |
           python -m py_compile \
@@ -58,5 +59,5 @@ jobs:
                   tools/climate_analyzer/epw_climate_analyzer/charts.py \
                   tools/climate_analyzer/epw_climate_analyzer/temporal_filtering.py \
                   tools/climate_analyzer/tests/test_interannual_heatmaps_0_6_4.py
-          git commit -m 'CLIMATE 0.6.4: add interannual heatmaps and annual aggregation'
+          git commit -m 'CLIMATE 0.6.4: align interannual heatmaps with ISO week-year'
           git push origin HEAD:feature/v0.6.4-interannual-heatmaps
