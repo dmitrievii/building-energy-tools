@@ -532,21 +532,6 @@ def _cached_grouped_station_catalog(map_cache_key: str, _catalog: pd.DataFrame) 
     return grouped_station_catalog(_catalog)
 
 
-@st.cache_resource(show_spinner=False, max_entries=8)
-def _cached_station_map_resource(
-    map_cache_key: str,
-    detail_zoom_threshold: int,
-    _station_groups: pd.DataFrame,
-):
-    """Cache the immutable Folium map so station-click reruns do not rebuild ~26k markers."""
-    return station_catalog_fast_selectable_map(
-        _station_groups,
-        selected_group_id=None,
-        center=[20.0, 0.0],
-        zoom=2,
-        detail_zoom_threshold=int(detail_zoom_threshold),
-    )
-
 
 @st.cache_data(show_spinner=False, max_entries=8)
 def _cached_station_group_options(
@@ -1302,10 +1287,12 @@ def render_climate_file_source() -> None:
             "Pan and zoom stay in the browser and do not trigger a Streamlit rerun; only station selection or an explicit reset returns control to the app."
         )
         map_state = st_folium(
-            _cached_station_map_resource(
-                f"{map_cache_key}|limit={int(st.session_state.get('station_selectable_cluster_limit', 50000))}|rows={len(station_groups_for_map)}",
-                int(st.session_state.get("station_detail_zoom_threshold", 8)),
+            station_catalog_fast_selectable_map(
                 station_groups_for_map,
+                selected_group_id=None,
+                center=[20.0, 0.0],
+                zoom=2,
+                detail_zoom_threshold=int(st.session_state.get("station_detail_zoom_threshold", 8)),
             ),
             height=620,
             use_container_width=True,
