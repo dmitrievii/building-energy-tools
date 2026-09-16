@@ -1,0 +1,56 @@
+name: CLIMATE-GEOSPHERE-0.6.2 qualification
+
+on:
+  push:
+    branches:
+      - climate-geosphere-0.6.2-precipitation-snow
+
+permissions:
+  contents: write
+
+jobs:
+  qualify:
+    if: ${{ !contains(github.event.head_commit.message, '[qualified]') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: climate-geosphere-0.6.2-precipitation-snow
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          python -m pip install -r tools/climate_analyzer/requirements.txt
+          python -m pip install pytest
+      - name: Apply 0.6.2 patch
+        run: python deployment/apply_geosphere_0_6_2.py
+      - name: Compile
+        run: python -m compileall -q tools/climate_analyzer
+      - name: Focused GeoSphere 0.6.2 tests
+        working-directory: tools/climate_analyzer
+        run: |
+          pytest -q \
+            tests/test_geosphere_0_6_2_precip_map_variables.py \
+            tests/test_pressure_precipitation_contract.py \
+            tests/test_geosphere_public_integration.py \
+            tests/test_historical_wind_solar_capabilities.py
+      - name: Full Climate Analyzer test suite
+        working-directory: tools/climate_analyzer
+        run: pytest -q tests
+      - name: Commit qualified permanent diff
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            tools/climate_analyzer/app.py \
+            tools/climate_analyzer/epw_climate_analyzer/precipitation.py \
+            tools/climate_analyzer/epw_climate_analyzer/historical_capabilities.py \
+            tools/climate_analyzer/tests/test_pressure_precipitation_contract.py \
+            tools/climate_analyzer/tests/test_geosphere_0_6_2_precip_map_variables.py
+          git diff --cached --check
+          git diff --cached --quiet && exit 0
+          git commit -m "CLIMATE-GEOSPHERE-0.6.2: precipitation, variable-list and station-map closure [qualified]"
+          git push origin HEAD:climate-geosphere-0.6.2-precipitation-snow
