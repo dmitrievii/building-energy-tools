@@ -84,12 +84,15 @@ class GeoSpherePublicUiContractTests(unittest.TestCase):
         cls.source = APP.read_text(encoding="utf-8")
         cls.tree = ast.parse(cls.source)
 
-    def test_source_selector_exposes_geosphere_and_bounded_year_range(self) -> None:
+    def test_source_selector_exposes_geosphere_and_batched_arbitrary_range(self) -> None:
         self.assertIn('"GeoSphere Austria"', self.source)
         self.assertIn('def render_geosphere_source()', self.source)
-        self.assertIn('selected_days > 366', self.source)
+        self.assertNotIn('selected_days > 366', self.source)
+        self.assertIn('"Measured variables to load"', self.source)
+        self.assertIn('There is no fixed one-year UI limit', self.source)
         self.assertIn('plan_geosphere_queries', self.source)
         self.assertIn('fetch_geosphere_station_dataset', self.source)
+        self.assertNotIn('required air-temperature parameter `tl`', self.source)
 
     def test_historical_dataset_uses_existing_analysis_renderers_not_duplicate_provider_pages(self) -> None:
         self.assertIn('render_temperature(filtered_df)', self.source)

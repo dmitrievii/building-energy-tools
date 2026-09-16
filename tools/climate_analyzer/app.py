@@ -316,6 +316,11 @@ MONTHS = {
     "Dec": 12,
 }
 
+WIND_DIRECTION_FROM_NOTE = (
+    "Wind direction uses the meteorological FROM convention: N / 0° means wind coming from the north, "
+    "E / 90° means wind coming from the east. Wind roses and direction histograms use this same convention."
+)
+
 
 st.set_page_config(page_title=APP_BROWSER_TITLE, layout="wide", page_icon="🌦️")
 
@@ -1116,26 +1121,57 @@ def render_geosphere_source() -> None:
         st.error("GeoSphere end date must not be earlier than start date.")
         return
     selected_days = (pd.Timestamp(end_date) - pd.Timestamp(start_date)).days + 1
-    if selected_days > 366:
-        st.error("The public beta currently allows at most 366 days per GeoSphere load. Choose a shorter interval.")
+
+    provider_options = list(supported.keys())
+    provider_parameters = tuple(
+        st.multiselect(
+            "Measured variables to load",
+            provider_options,
+            default=provider_options,
+            format_func=lambda name: (
+                f"{supported[name].description or supported[name].canonical_name} "
+                f"({name} → {supported[name].canonical_name})"
+            ),
+            key="geosphere_provider_parameters",
+            help=(
+                "Only selected variables are requested from GeoSphere. Analysis pages are enabled later from actual "
+                "numeric observations, not merely from metadata or a selected checkbox."
+            ),
+        )
+    )
+    if not provider_parameters:
+        st.warning("Select at least one measured GeoSphere variable to load.")
         return
 
     start_ts = pd.Timestamp(start_date, tz="UTC")
     end_ts = pd.Timestamp(end_date, tz="UTC") + pd.Timedelta(hours=23, minutes=50)
-    provider_parameters = tuple(supported.keys())
-    if "tl" not in provider_parameters:
-        st.error("Current GeoSphere metadata do not expose the required air-temperature parameter `tl`.")
-        return
-    canonical_variables = tuple(spec.canonical_name for spec in supported.values())
+    canonical_variables = tuple(supported[name].canonical_name for name in provider_parameters)
     estimated = estimate_geosphere_datapoints(start_ts, end_ts, len(provider_parameters), 1)
     batches = plan_geosphere_queries(station.station_id, start_ts, end_ts, provider_parameters)
     st.caption(
-        f"Requested interval: {selected_days} day(s), 10-minute source data, {len(provider_parameters)} supported measured variables. "
-        f"Estimated provider datapoints: {estimated:,}; bounded API batches: {len(batches)}."
+        f"Requested interval: {selected_days} day(s), 10-minute source data, {len(provider_parameters)} selected measured variables. "
+        f"Estimated provider datapoints: {estimated:,}; bounded API batches: {len(batches)}. "
+        "There is no fixed one-year UI limit; long intervals are split into bounded provider requests."
     )
+    if estimated > 2_000_000:
+        st.warning(
+            "This is a large historical request. It is valid and will be split into bounded API batches, but loading and "
+            "browser analysis can take substantially longer. Selecting only the variables you need reduces transfer and memory use."
+        )
+    if "tl" not in provider_parameters:
+        st.info(
+            "Air temperature is not selected. Temperature and temperature-dependent psychrometric analyses will remain "
+            "unavailable unless a later load contains measured temperature observations."
+        )
+
     with st.expander("Measured variables and provenance", expanded=False):
         variable_rows = [
-            {"Provider": name, "Canonical field": spec.canonical_name, "Description": spec.description}
+            {
+                "Selected": name in provider_parameters,
+                "Provider": name,
+                "Canonical field": spec.canonical_name,
+                "Description": spec.description,
+            }
             for name, spec in supported.items()
         ]
         st.dataframe(pd.DataFrame(variable_rows), hide_index=True, use_container_width=True)
@@ -1585,7 +1621,17 @@ def render_generic_variable_page(
     temperature_thresholds: tuple[float, float] | None = None,
 ) -> None:
     """Render a generic variable explorer with chart-type and aggregation controls."""
-    variable_label = st.selectbox("Variable", variable_labels, index=variable_labels.index(default_variable))
+    available_labels = [
+        label
+        for label in variable_labels
+        if VARIABLES[label][0] in df.columns
+        and pd.to_numeric(df[VARIABLES[label][0]], errors="coerce").notna().any()
+    ]
+    if not available_labels:
+        st.info("No measured numeric variables required by this explorer are available in the loaded dataset.")
+        return
+    selected_default = default_variable if default_variable in available_labels else available_labels[0]
+    variable_label = st.selectbox("Variable", available_labels, index=available_labels.index(selected_default))
     column, unit = VARIABLES[variable_label]
     chart_types = [
         "Profile with min-mean-max ribbon",
@@ -2738,6 +2784,7 @@ def render_solar(df: pd.DataFrame) -> None:
 def render_wind(df: pd.DataFrame) -> None:
     """Render wind and ventilation-wind charts."""
     st.header("Wind and natural-ventilation wind context")
+    st.caption(WIND_DIRECTION_FROM_NOTE)
     chart_group = st.selectbox(
         "Analysis type",
         [
@@ -3257,6 +3304,8 @@ def render_data_quality(epw, df: pd.DataFrame, issues: list[object]) -> None:
 
 def render_canonical_data_quality(dataset, df: pd.DataFrame) -> None:
     """Render diagnostics/provenance for a provider-neutral historical dataset."""
+    from epw_climate_analyzer.historical_capabilities import historical_coverage_summary, historical_variable_coverage
+
     st.header("Data quality and source metadata")
     location = dataset.location
     st.subheader("Station")
@@ -3288,6 +3337,39 @@ def render_canonical_data_quality(dataset, df: pd.DataFrame) -> None:
         hide_index=True,
         use_container_width=True,
     )
+    st.subheader("Timeline coverage and gaps")
+    coverage = historical_coverage_summary(df)
+    coverage_table = pd.DataFrame(
+        {
+            "Metric": [
+                "Timeline coverage", "Expected source records", "Observed timestamps", "Missing source intervals",
+                "Gap segments", "Longest missing gap", "Observed duration", "Expected duration",
+            ],
+            "Value": [
+                f"{float(coverage['timeline_coverage_pct']):.2f}%",
+                f"{int(coverage['expected_records']):,}",
+                f"{int(coverage['observed_records']):,}",
+                f"{int(coverage['missing_timestamp_intervals']):,}",
+                f"{int(coverage['gap_count']):,}",
+                f"{float(coverage['longest_missing_gap_minutes']):g} min",
+                f"{float(coverage['observed_duration_hours']):,.2f} h",
+                f"{float(coverage['expected_duration_hours']):,.2f} h",
+            ],
+        }
+    )
+    st.dataframe(coverage_table, hide_index=True, use_container_width=True)
+    st.caption(
+        "Coverage is measured against the requested source interval at the declared native cadence. Missing timestamp gaps "
+        "are not interpolated and therefore contribute no duration to threshold/frequency metrics."
+    )
+
+    per_variable = historical_variable_coverage(df, list(dataset.available_canonical_variables))
+    if not per_variable.empty:
+        per_variable["coverage_pct"] = per_variable["coverage_pct"].round(2)
+        per_variable["observed_hours"] = per_variable["observed_hours"].round(2)
+        st.subheader("Per-variable measured coverage")
+        st.dataframe(per_variable, hide_index=True, use_container_width=True)
+
     st.subheader("Missing values by field")
     missing = df[list(dataset.available_canonical_variables)].isna().sum().reset_index()
     missing.columns = ["field", "missing_count"]
@@ -3303,11 +3385,77 @@ def render_canonical_data_quality(dataset, df: pd.DataFrame) -> None:
             st.caption(note)
 
 
+def render_historical_overview(dataset, df: pd.DataFrame) -> None:
+    """Render a provider-neutral overview of one measured historical dataset."""
+    from epw_climate_analyzer.historical_capabilities import (
+        has_numeric_observations,
+        historical_coverage_summary,
+        historical_variable_coverage,
+    )
+
+    st.header("Measured climate overview")
+    st.caption(
+        "This overview describes the loaded historical observations as measured. Missing timestamps and missing variable "
+        "values are not interpolated or converted to a typical year."
+    )
+    coverage = historical_coverage_summary(df)
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Timeline coverage", f"{float(coverage['timeline_coverage_pct']):.2f}%")
+    m2.metric("Observed records", f"{int(coverage['observed_records']):,}")
+    m3.metric("Missing source intervals", f"{int(coverage['missing_timestamp_intervals']):,}")
+    m4.metric("Longest missing gap", f"{float(coverage['longest_missing_gap_minutes']):g} min")
+    st.caption(
+        f"Requested/covered timeline: {coverage['requested_start']} → {coverage['requested_end']} · "
+        f"native cadence {float(coverage['native_interval_minutes']):g} min · "
+        f"{int(coverage['gap_count'])} detected gap segment(s)."
+    )
+
+    reverse_labels = {column: label for label, (column, _unit) in VARIABLES.items()}
+    requested_columns = [str(column) for column in dataset.available_canonical_variables]
+    variable_coverage = historical_variable_coverage(df, requested_columns)
+    if not variable_coverage.empty:
+        variable_coverage.insert(0, "Measured variable", variable_coverage["variable"].map(lambda x: reverse_labels.get(str(x), str(x))))
+        variable_coverage = variable_coverage.drop(columns=["variable"])
+        variable_coverage["coverage_pct"] = variable_coverage["coverage_pct"].round(2)
+        variable_coverage["observed_hours"] = variable_coverage["observed_hours"].round(2)
+        st.subheader("Measured-variable availability")
+        st.dataframe(variable_coverage, hide_index=True, use_container_width=True)
+
+    metric_values: list[tuple[str, str]] = []
+    if has_numeric_observations(df, "dry_bulb_temperature_c"):
+        temp = pd.to_numeric(df["dry_bulb_temperature_c"], errors="coerce")
+        metric_values.extend([
+            ("Mean temperature", f"{temp.mean():.1f} °C"),
+            ("Minimum temperature", f"{temp.min():.1f} °C"),
+            ("Maximum temperature", f"{temp.max():.1f} °C"),
+        ])
+    if has_numeric_observations(df, "relative_humidity_pct"):
+        rh = pd.to_numeric(df["relative_humidity_pct"], errors="coerce")
+        metric_values.append(("Mean relative humidity", f"{rh.mean():.1f} %"))
+    if has_numeric_observations(df, "wind_speed_m_s"):
+        wind = pd.to_numeric(df["wind_speed_m_s"], errors="coerce")
+        metric_values.append(("Mean wind speed", f"{wind.mean():.2f} m/s"))
+    if has_numeric_observations(df, "global_horizontal_radiation_wh_m2"):
+        ghi = pd.to_numeric(df["global_horizontal_radiation_wh_m2"], errors="coerce").clip(lower=0)
+        metric_values.append(("Measured GHI total", f"{ghi.sum(min_count=1) / 1000.0:.1f} kWh/m²"))
+    if metric_values:
+        st.subheader("Quick measured-climate metrics")
+        for start in range(0, len(metric_values), 4):
+            cols = st.columns(min(4, len(metric_values) - start))
+            for col, (label, value) in zip(cols, metric_values[start:start + 4]):
+                col.metric(label, value)
+
+    if has_numeric_observations(df, "dry_bulb_temperature_c"):
+        fig = profile_ribbon_chart(df, "dry_bulb_temperature_c", "Monthly", "Measured monthly outdoor temperature", "°C")
+        render_plot(fig, temperature_interpretation(df, heat_threshold=18.0, cool_threshold=26.0))
+
+
 def render_historical_wind(df: pd.DataFrame) -> None:
     """Render only measured-wind analyses supported by the historical frame."""
     from epw_climate_analyzer.historical_capabilities import has_numeric_observations
 
     st.header("Measured wind analysis")
+    st.caption(WIND_DIRECTION_FROM_NOTE)
     has_speed = has_numeric_observations(df, "wind_speed_m_s")
     has_direction = has_numeric_observations(df, "wind_direction_deg")
     options: list[str] = []
@@ -3439,11 +3587,11 @@ def render_historical_solar(df: pd.DataFrame) -> None:
 
 def render_canonical_climate_analysis(dataset) -> None:
     """Run existing source-agnostic analyses on a real historical canonical dataset."""
-    from epw_climate_analyzer.historical_capabilities import available_historical_pages
+    from epw_climate_analyzer.historical_capabilities import available_historical_pages, has_numeric_observations
 
     historical_pages = available_historical_pages(dataset.data)
     if NAVIGATION_KEY not in st.session_state or st.session_state[NAVIGATION_KEY] not in historical_pages:
-        preferred = "Temperature" if "Temperature" in historical_pages else "Time Series and Overlay"
+        preferred = "Overview" if "Overview" in historical_pages else "Time Series and Overlay"
         st.session_state[NAVIGATION_KEY] = preferred
 
     st.sidebar.markdown("### Explore")
@@ -3479,7 +3627,13 @@ def render_canonical_climate_analysis(dataset) -> None:
                 "Custom pressure [Pa]", min_value=30000.0, max_value=120000.0, value=101325.0, step=100.0
             )
 
-    include_psychrometrics = page in {"Temperature", "Humidity and Psychrometrics", "Time Series and Overlay"}
+    can_derive_psychrometrics = (
+        has_numeric_observations(dataset.data, "dry_bulb_temperature_c")
+        and has_numeric_observations(dataset.data, "relative_humidity_pct")
+    )
+    include_psychrometrics = can_derive_psychrometrics and page in {
+        "Temperature", "Humidity and Psychrometrics", "Time Series and Overlay"
+    }
     _ensure_analysis_dependencies(include_solar=False, include_comparison=False)
     source_pressure = dataset.data.get("atmospheric_station_pressure_pa")
     valid_pressure = pd.to_numeric(source_pressure, errors="coerce").dropna() if source_pressure is not None else pd.Series(dtype=float)
@@ -3510,7 +3664,7 @@ def render_canonical_climate_analysis(dataset) -> None:
         return
 
     active_pressure = fallback_pressure if pressure_mode != "Measured station pressure with fallback median" else measured_median
-    if page == "Time Series and Overlay":
+    if page in {"Time Series and Overlay", "Overview", "Data Quality"}:
         filtered_df = full_df
         st.session_state["_active_filtered_export_df"] = full_df
     else:
@@ -3531,7 +3685,9 @@ def render_canonical_climate_analysis(dataset) -> None:
         else:
             st.caption(f"Calculation pressure: {active_pressure:,.0f} Pa")
 
-    if page == "Temperature":
+    if page == "Overview":
+        render_historical_overview(dataset, full_df)
+    elif page == "Temperature":
         st.caption("Measured-data threshold hours are integrated from the declared native interval; missing timestamp gaps are not counted as observed duration.")
         render_temperature(filtered_df)
     elif page == "Humidity and Psychrometrics":
