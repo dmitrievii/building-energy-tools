@@ -19,6 +19,12 @@ replacements = [
         self.assertIn("marker_payload=marker_payload", self.source)
 ''',
     ),
+    (
+        '''        self.assertIn("counts = occurrence_hours(df, "snow_depth_cm"", self.source)
+''',
+        '''        self.assertIn('counts = occurrence_hours(df, "snow_depth_cm"', self.source)
+''',
+    ),
 ]
 
 for broken, fixed in replacements:
