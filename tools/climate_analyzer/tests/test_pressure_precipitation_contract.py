@@ -10,6 +10,7 @@ import pandas as pd
 from epw_climate_analyzer.precipitation import (
     aggregate_liquid_precipitation,
     occurrence_hours,
+    occurrence_records,
 )
 from epw_climate_analyzer.ui_contract import NAVIGATION_LABELS, NAVIGATION_PAGES
 
@@ -94,7 +95,7 @@ class PressureAndPrecipitationContractTests(unittest.TestCase):
 
     def test_occurrence_counts_do_not_treat_missing_as_events(self) -> None:
         df = self._fixture()
-        wet = occurrence_hours(df, "liquid_precipitation_depth_mm", 0.1, "Monthly")
+        wet = occurrence_records(df, "liquid_precipitation_depth_mm", 0.1, "Monthly")
         self.assertEqual(float(wet.iloc[0, 0]), 2.0)
         self.assertEqual(float(wet.iloc[1, 0]), 1.0)
         snow = occurrence_hours(df, "snow_depth_cm", 0.0, "Monthly", inclusive=False)
