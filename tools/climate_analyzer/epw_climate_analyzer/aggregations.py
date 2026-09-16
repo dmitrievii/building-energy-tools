@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 
+from .climate_model import aggregation_semantics_for
 from .temporal_filtering import (
     CALENDAR_PROFILE,
     CHRONOLOGICAL,
@@ -220,45 +222,198 @@ def aggregate_sum(df: pd.DataFrame, column: str, aggregation: str) -> pd.DataFra
     return _attach_temporal_attrs(out, df, aggregation)
 
 
-def calendar_matrix(df: pd.DataFrame, column: str, row_group: str = "day") -> pd.DataFrame:
-    """Create a period-by-hour matrix honoring chronological vs calendar-profile basis."""
-    basis = time_basis(df)
-    data = df.copy()
-    index = pd.DatetimeIndex(data.index)
-    if basis == CHRONOLOGICAL and is_multiyear(data):
-        if row_group == "day":
-            data["_row_key"] = index.strftime("%Y-%m-%d")
-        elif row_group == "week":
-            iso = index.isocalendar()
-            data["_row_key"] = [f"{int(y):04d}-W{int(w):02d}" for y, w in zip(iso.year, iso.week, strict=False)]
-        elif row_group == "month":
-            data["_row_key"] = index.strftime("%Y-%m")
+HEATMAP_COMPARE_HOUR = "Hour of day"
+HEATMAP_COMPARE_YEAR = "Year"
+HEATMAP_COMPARISON_DIMENSIONS = (HEATMAP_COMPARE_HOUR, HEATMAP_COMPARE_YEAR)
+HEATMAP_INTENSIVE_STATISTICS = ("Mean", "Minimum", "Maximum", "Median", "P05", "P95")
+HEATMAP_EXTENSIVE_STATISTICS = ("Total",) + HEATMAP_INTENSIVE_STATISTICS
+HEATMAP_CIRCULAR_STATISTICS = ("Circular mean",)
+
+
+def heatmap_statistic_options(column: str) -> tuple[str, ...]:
+    """Return quantity-aware statistics that are meaningful for a heat-map cell."""
+    semantics = aggregation_semantics_for(column)
+    if semantics == "sum":
+        return HEATMAP_EXTENSIVE_STATISTICS
+    if semantics == "circular mean":
+        return HEATMAP_CIRCULAR_STATISTICS
+    return HEATMAP_INTENSIVE_STATISTICS
+
+
+def heatmap_default_statistic(column: str) -> str:
+    """Return the physically preferred default statistic for a canonical variable."""
+    semantics = aggregation_semantics_for(column)
+    if semantics == "sum":
+        return "Total"
+    if semantics == "circular mean":
+        return "Circular mean"
+    return "Mean"
+
+
+def _normalise_heatmap_statistic(column: str, statistic: str) -> str:
+    requested = str(statistic).strip()
+    semantics = aggregation_semantics_for(column)
+    if semantics == "circular mean" and requested == "Mean":
+        requested = "Circular mean"
+    options = heatmap_statistic_options(column)
+    if requested not in options:
+        raise ValueError(f"Unsupported heat-map statistic '{requested}' for {column}; choose one of {options}.")
+    return requested
+
+
+def _circular_mean_degrees(values: pd.Series) -> float:
+    numeric = pd.to_numeric(values, errors="coerce").dropna().astype(float)
+    if numeric.empty:
+        return float("nan")
+    radians = np.deg2rad(np.mod(numeric.to_numpy(), 360.0))
+    sin_mean = float(np.sin(radians).mean())
+    cos_mean = float(np.cos(radians).mean())
+    if abs(sin_mean) < 1e-12 and abs(cos_mean) < 1e-12:
+        return float("nan")
+    return float(np.mod(np.rad2deg(np.arctan2(sin_mean, cos_mean)), 360.0))
+
+
+def _heatmap_reduce(grouped, statistic: str) -> pd.Series:
+    if statistic == "Mean":
+        return grouped.mean()
+    if statistic == "Minimum":
+        return grouped.min()
+    if statistic == "Maximum":
+        return grouped.max()
+    if statistic == "Median":
+        return grouped.median()
+    if statistic == "P05":
+        return grouped.quantile(0.05)
+    if statistic == "P95":
+        return grouped.quantile(0.95)
+    if statistic == "Total":
+        return grouped.sum(min_count=1)
+    if statistic == "Circular mean":
+        return grouped.apply(_circular_mean_degrees)
+    raise ValueError(f"Unsupported heat-map statistic: {statistic}")
+
+
+def _heatmap_period_key(index: pd.DatetimeIndex, row_group: str, *, include_year: bool) -> pd.Index:
+    group = str(row_group).strip().lower()
+    if group == "day":
+        values = index.strftime("%Y-%m-%d" if include_year else "%m-%d")
+        return pd.Index(values, name="Day")
+    if group == "week":
+        iso = index.isocalendar()
+        if include_year:
+            values = [f"{int(year):04d}-W{int(week):02d}" for year, week in zip(iso.year, iso.week, strict=False)]
         else:
-            raise ValueError("row_group must be 'day', 'week' or 'month'")
-        row_key = "_row_key"
+            values = [f"W{int(week):02d}" for week in iso.week]
+        return pd.Index(values, name="Week")
+    if group == "month":
+        if include_year:
+            return pd.Index(index.strftime("%Y-%m"), name="Month")
+        return pd.Index(index.month.astype(int), name="Month")
+    raise ValueError("row_group must be 'day', 'week' or 'month'")
+
+
+def temporal_heatmap_matrix(
+    df: pd.DataFrame,
+    column: str,
+    row_group: str = "day",
+    compare_across: str = HEATMAP_COMPARE_HOUR,
+    statistic: str = "Mean",
+) -> pd.DataFrame:
+    """Create a generic heat-map matrix from period, comparison dimension and statistic.
+
+    ``Hour of day`` preserves the existing heat-map semantics. In chronological
+    multi-year mode the period key keeps the year; in calendar-profile mode the
+    year is intentionally folded away. ``Year`` is an explicit interannual view
+    and therefore always preserves real calendar years regardless of the global
+    calendar-profile setting.
+
+    For extensive quantities in calendar-profile mode, ``Total`` is first
+    calculated independently for every year/cell and then averaged across years,
+    preventing a multi-year dataset from being reported as an inflated typical
+    period total.
+    """
+    if column not in df.columns:
+        raise KeyError(f"Heat-map column is missing: {column}")
+    if compare_across not in HEATMAP_COMPARISON_DIMENSIONS:
+        raise ValueError(f"Unsupported heat-map comparison dimension: {compare_across}")
+
+    statistic = _normalise_heatmap_statistic(column, statistic)
+    index = pd.DatetimeIndex(df.index)
+    values = pd.to_numeric(df[column], errors="coerce")
+    temp = pd.DataFrame({"_value": values.to_numpy()}, index=index)
+
+    if compare_across == HEATMAP_COMPARE_YEAR:
+        # A week number and its year are one ISO-8601 coordinate. Build both
+        # from the same timestamp tuple so New-Year boundary dates cannot be
+        # assigned to calendar year Y while carrying ISO week Y-1/W53.
+        if str(row_group).strip().lower() == "week":
+            iso_coordinates = [stamp.isocalendar() for stamp in index.to_pydatetime()]
+            temp["_y"] = [int(item.year) for item in iso_coordinates]
+            temp["_x"] = [f"W{int(item.week):02d}" for item in iso_coordinates]
+        else:
+            temp["_y"] = index.year.astype(int)
+            temp["_x"] = _heatmap_period_key(index, row_group, include_year=False).to_numpy()
     else:
-        if row_group == "day":
-            row_key = "day_of_year"
-        elif row_group == "week":
-            row_key = "week_of_year"
-        elif row_group == "month":
-            row_key = "month_index"
-        else:
-            raise ValueError("row_group must be 'day', 'week' or 'month'")
-    matrix = data.pivot_table(values=column, index=row_key, columns="hour_of_day", aggfunc="mean")
-    return matrix.sort_index()
+        preserve_year = time_basis(df) == CHRONOLOGICAL and is_multiyear(df)
+        temp["_y"] = (
+            pd.to_numeric(df["hour_of_day"], errors="coerce").to_numpy()
+            if "hour_of_day" in df.columns
+            else index.hour.astype(int)
+        )
+        temp["_x"] = _heatmap_period_key(index, row_group, include_year=preserve_year).to_numpy()
+
+    temp = temp.dropna(subset=["_value", "_y"])
+    if temp.empty:
+        return pd.DataFrame()
+
+    if (
+        statistic == "Total"
+        and compare_across == HEATMAP_COMPARE_HOUR
+        and time_basis(df) == CALENDAR_PROFILE
+        and is_multiyear(df)
+    ):
+        temp["_year"] = temp.index.year.astype(int)
+        per_year = temp.groupby(["_year", "_y", "_x"], observed=False, sort=True)["_value"].sum(min_count=1)
+        reduced = per_year.groupby(["_y", "_x"], observed=False, sort=True).mean()
+    else:
+        grouped = temp.groupby(["_y", "_x"], observed=False, sort=True)["_value"]
+        reduced = _heatmap_reduce(grouped, statistic)
+
+    matrix = reduced.unstack("_x").sort_index()
+    if str(row_group).strip().lower() == "month" and all(isinstance(value, (int, np.integer)) for value in matrix.columns):
+        matrix = matrix.reindex(columns=list(range(1, 13)))
+    return matrix
+
+
+def calendar_matrix(df: pd.DataFrame, column: str, row_group: str = "day") -> pd.DataFrame:
+    """Backward-compatible period-by-hour matrix using a mean cell statistic."""
+    return temporal_heatmap_matrix(
+        df,
+        column,
+        row_group=row_group,
+        compare_across=HEATMAP_COMPARE_HOUR,
+        statistic="Mean",
+    ).T
 
 
 def monthly_hour_matrix(df: pd.DataFrame, column: str, aggfunc: str = "mean") -> pd.DataFrame:
-    """Create month-by-hour matrix, preserving year-month in chronological multiyear mode."""
-    data = df.copy()
-    if time_basis(data) == CHRONOLOGICAL and is_multiyear(data):
-        data["_month_period"] = pd.DatetimeIndex(data.index).strftime("%Y-%m")
-        row_key = "_month_period"
-    else:
-        row_key = "month_index"
-    matrix = data.pivot_table(values=column, index=row_key, columns="hour_of_day", aggfunc=aggfunc)
-    return matrix.sort_index()
+    """Backward-compatible month-by-hour matrix without folding chronological years."""
+    statistic = {
+        "mean": "Mean",
+        "min": "Minimum",
+        "max": "Maximum",
+        "median": "Median",
+        "sum": "Total",
+    }.get(str(aggfunc).strip().lower())
+    if statistic is None:
+        raise ValueError(f"Unsupported monthly-hour aggregation: {aggfunc}")
+    return temporal_heatmap_matrix(
+        df,
+        column,
+        row_group="month",
+        compare_across=HEATMAP_COMPARE_HOUR,
+        statistic=statistic,
+    ).T
 
 
 def duration_curve(df: pd.DataFrame, column: str, ascending: bool = False) -> pd.DataFrame:

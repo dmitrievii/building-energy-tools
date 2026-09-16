@@ -90,8 +90,8 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
     """Load scientific/plotting dependencies only after an EPW analysis is requested."""
     global _ANALYSIS_DEPENDENCIES_LOADED, _SOLAR_DEPENDENCIES_LOADED, _COMPARISON_DEPENDENCIES_LOADED
     global pd, px
-    global aggregate_sum, duration_curve, filter_by_months_and_hours, native_interval_hours, threshold_count_by_period
-    global duration_chart, heatmap_chart, histogram_chart, GIVONI_MILNE_ZONES
+    global aggregate_sum, duration_curve, filter_by_months_and_hours, heatmap_default_statistic, heatmap_statistic_options, native_interval_hours, threshold_count_by_period
+    global duration_chart, heatmap_chart, histogram_chart, temporal_heatmap_chart, GIVONI_MILNE_ZONES
     global matrix_heatmap, month_hour_heatmap, givoni_milne_zone_table, monthly_box_chart
     global multi_line_monthly, orientation_bar_chart, percentile_band_chart, profile_ribbon_chart
     global psychrometric_chart, scatter_chart, stacked_monthly_bar, sun_path_chart
@@ -132,6 +132,8 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
             aggregate_sum,
             duration_curve,
             filter_by_months_and_hours,
+            heatmap_default_statistic,
+            heatmap_statistic_options,
             native_interval_hours,
             threshold_count_by_period,
         )
@@ -139,6 +141,7 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
             duration_chart,
             heatmap_chart,
             histogram_chart,
+            temporal_heatmap_chart,
             GIVONI_MILNE_ZONES,
             matrix_heatmap,
             month_hour_heatmap,
@@ -1952,32 +1955,41 @@ def render_generic_variable_page(
     chart_type = st.selectbox("Chart type", chart_types)
     if chart_type == "Heat map":
         heatmap_period = st.selectbox("Heat-map aggregation", ["Day", "Week", "Month"], index=0)
+        compare_across = st.selectbox("Compare across", ["Hour of day", "Year"], index=0)
+        statistic_options = list(heatmap_statistic_options(column))
+        default_statistic = heatmap_default_statistic(column)
+        statistic = st.selectbox(
+            "Statistic",
+            statistic_options,
+            index=statistic_options.index(default_statistic),
+            help=(
+                "The statistic defines the value represented by each heat-map cell. Extensive canonical variables "
+                "such as irradiation and precipitation default to period Total; state/intensive variables default to Mean."
+            ),
+        )
+        if compare_across == "Year":
+            st.caption(
+                "Year comparison preserves real calendar years from the current Data filter even when the global Time basis is Calendar profile."
+            )
         if column == "dry_bulb_temperature_c":
             st.caption("Temperature heatmap colours use the current heating and cooling thresholds: blue = cold, green = neutral band, red = hot.")
-        if heatmap_period == "Month":
-            fig = month_hour_heatmap(
-                df,
-                column,
-                f"{title_prefix}: {variable_label} month-hour heat map",
-                unit,
-                temperature_thresholds=temperature_thresholds if column == "dry_bulb_temperature_c" else None,
-            )
-        else:
-            fig = heatmap_chart(
-                df,
-                column,
-                heatmap_period.lower(),
-                f"{title_prefix}: {variable_label} {heatmap_period.lower()}-hour heat map",
-                unit,
-                temperature_thresholds=temperature_thresholds if column == "dry_bulb_temperature_c" else None,
-            )
+        fig = temporal_heatmap_chart(
+            df,
+            column,
+            heatmap_period.lower(),
+            compare_across,
+            statistic,
+            f"{title_prefix}: {variable_label} {heatmap_period.lower()} × {compare_across.lower()} heat map · {statistic}",
+            unit,
+            temperature_thresholds=temperature_thresholds if column == "dry_bulb_temperature_c" else None,
+        )
     else:
         # Only charts that actually aggregate a time series expose the
         # aggregation selector. Distribution and monthly-distribution charts do
         # not need it.
         aggregation = None
         if chart_type in {"Profile with min-mean-max ribbon", "Percentile band P05-P50-P95"}:
-            aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Hourly", "Seasonal"], index=0)
+            aggregation = st.selectbox("Aggregation", ["Monthly", "Annual", "Weekly", "Daily", "Hourly", "Seasonal"], index=0)
         # Radiation and illuminance are visualized as mean intensities in the generic explorer.
         # Monthly/annual energy sums are available in the dedicated solar component charts.
         if chart_type == "Profile with min-mean-max ribbon":
@@ -3312,8 +3324,21 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
         ],
     )
     if chart_group == "Heat map":
-        row_group = st.radio("Heat-map aggregation", ["day", "week", "month"], horizontal=True)
-        fig = heatmap_chart(df_nv, "natural_ventilation_suitable", row_group, "Natural ventilation eligibility", "0/1")
+        row_group = st.radio("Heat-map aggregation", ["Day", "Week", "Month"], horizontal=True)
+        compare_across = st.radio("Compare across", ["Hour of day", "Year"], horizontal=True)
+        statistic_options = list(heatmap_statistic_options("natural_ventilation_suitable"))
+        statistic = st.selectbox("Statistic", statistic_options, index=0, key="nv_heatmap_statistic")
+        if compare_across == "Year":
+            st.caption("Year comparison preserves real calendar years from the current Data filter.")
+        fig = temporal_heatmap_chart(
+            df_nv,
+            "natural_ventilation_suitable",
+            row_group.lower(),
+            compare_across,
+            statistic,
+            f"Natural ventilation eligibility · {row_group.lower()} × {compare_across.lower()} · {statistic}",
+            "0/1",
+        )
         render_plot(fig, natural_ventilation_interpretation(df, mask))
     elif chart_group == "Suitable hours by aggregation":
         aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0)

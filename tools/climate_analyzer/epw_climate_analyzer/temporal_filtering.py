@@ -176,6 +176,8 @@ def display_period_labels(index: Iterable[object], aggregation: str, basis: str 
             if multiyear:
                 return list(idx.strftime("%d %b %Y"))
             return [int(stamp.dayofyear) for stamp in idx]
+        if aggregation == "Annual":
+            return [str(int(stamp.year)) for stamp in idx]
         if aggregation == "Seasonal":
             return [f"{season_name(stamp.month)} {stamp.year if stamp.month != 12 else stamp.year + 1}" for stamp in idx]
         return list(idx)
