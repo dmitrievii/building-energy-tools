@@ -65,3 +65,5 @@ WEB-0.8  Beta Deployment + Browser Audit       IN PROGRESS
 ```
 
 `WEB-0.8` aligns repository execution with Streamlit Community Cloud and prepares the evidence checklist for the live deployment. Public promotion remains blocked until the publication checklist and deployed-browser audit are complete.
+
+<!-- Streamlit Community Cloud deployment refresh trigger for CLIMATE-GEOSPHERE-0.5. -->
