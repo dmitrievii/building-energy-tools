@@ -1,11 +1,11 @@
 """Canonical hourly analysis normalization for measured climate sources.
 
 The application keeps provider-native observations intact for provenance,
-export and explicitly native diagnostics.  Ordinary scientific analysis uses a
-single hourly representation produced here.  The conversion is quantity-aware
+export and explicitly native diagnostics. Ordinary scientific analysis uses a
+single hourly representation produced here. The conversion is quantity-aware
 and fail-closed on incomplete source intervals: a 10-minute source therefore
-requires six valid values for a canonical variable before that hourly value is
-considered valid.
+requires six physical source timestamps in the hour and six valid values for a
+canonical variable before that variable receives an hourly value.
 """
 
 from __future__ import annotations
@@ -89,15 +89,15 @@ def canonical_hourly_analysis_frame(
 ) -> pd.DataFrame:
     """Return the canonical hourly representation of one canonical climate frame.
 
-    The source dataframe is never overwritten.  Hourly source data take a
-    shallow-copy fast path.  Sub-hourly data are reduced once by the canonical
-    variable aggregation contract and then masked per variable unless every
-    expected native observation in that hour is present and numeric.
+    The source dataframe is never overwritten. Hourly source data take a
+    shallow-copy fast path. Sub-hourly data are reduced once by the canonical
+    variable aggregation contract.
 
-    Missing timestamps and missing values are therefore never silently converted
-    to zero or hidden inside a partial hourly mean.  Coverage is variable-local:
-    if temperature is missing in one native slot but precipitation is complete,
-    the temperature hour is invalid while the precipitation total remains valid.
+    A physical hour with a missing source timestamp is omitted completely from
+    the hourly timeline. Within a physically complete hour, a variable is masked
+    to NaN unless all expected native values for that variable are numeric. This
+    separates source-timeline gaps from variable-local missing observations and
+    prevents partial means or silent zero-fill.
     """
     if not isinstance(data.index, pd.DatetimeIndex):
         raise TypeError("Canonical hourly analysis requires a pandas DatetimeIndex.")
@@ -110,7 +110,7 @@ def canonical_hourly_analysis_frame(
     _validate_hour_alignment(index, minutes)
 
     # EPW and any other native-hourly source should not pay for a resampling
-    # pass.  The shallow frame shares data blocks but receives independent attrs.
+    # pass. The shallow frame shares data blocks but receives independent attrs.
     if minutes == CANONICAL_ANALYSIS_INTERVAL_MINUTES:
         hourly = data.copy(deep=False)
         hourly.attrs.update(dict(data.attrs))
@@ -120,6 +120,7 @@ def canonical_hourly_analysis_frame(
         hourly.attrs["canonical_analysis_resolution"] = "hourly"
         hourly.attrs["canonical_hourly_expected_source_records"] = 1
         hourly.attrs["canonical_hourly_completeness_policy"] = HOURLY_COMPLETENESS_POLICY
+        hourly.attrs["canonical_hourly_incomplete_source_hours"] = 0
         hourly.attrs["canonical_hourly_incomplete_hours_by_variable"] = {}
         hourly.attrs["canonical_hourly_source_rows"] = int(len(data))
         hourly.attrs["canonical_hourly_rows"] = int(len(hourly))
@@ -135,6 +136,7 @@ def canonical_hourly_analysis_frame(
     source_counts = timestamp_indicator.resample("h", label="left", closed="left").sum().reindex(hourly_index, fill_value=0)
     if bool((source_counts > expected).any()):
         raise ValueError("A source hour contains more timestamps than allowed by the declared native cadence.")
+    complete_timeline = source_counts == expected
 
     hourly = pd.DataFrame(index=hourly_index)
     incomplete_by_variable: dict[str, int] = {}
@@ -145,10 +147,13 @@ def canonical_hourly_analysis_frame(
         semantics = aggregation_semantics_for(column)
         reduced = _hourly_reduce(values, semantics).reindex(hourly_index)
         valid_counts = values.resample("h", label="left", closed="left").count().reindex(hourly_index, fill_value=0)
-        complete = (source_counts == expected) & (valid_counts == expected)
-        reduced = reduced.where(complete)
-        hourly[column] = reduced
+        complete = complete_timeline & (valid_counts == expected)
+        hourly[column] = reduced.where(complete)
         incomplete_by_variable[str(column)] = int((~complete).sum())
+
+    # A missing physical source slot invalidates the complete hour itself. Keep
+    # variable-local NaNs only for hours whose physical timestamp grid is whole.
+    hourly = hourly.loc[complete_timeline].copy()
 
     hourly.attrs.update(dict(data.attrs))
     hourly.attrs["canonical_source_interval_minutes"] = minutes
@@ -157,6 +162,7 @@ def canonical_hourly_analysis_frame(
     hourly.attrs["canonical_analysis_resolution"] = "hourly"
     hourly.attrs["canonical_hourly_expected_source_records"] = int(expected)
     hourly.attrs["canonical_hourly_completeness_policy"] = HOURLY_COMPLETENESS_POLICY
+    hourly.attrs["canonical_hourly_incomplete_source_hours"] = int((~complete_timeline).sum())
     hourly.attrs["canonical_hourly_incomplete_hours_by_variable"] = incomplete_by_variable
     hourly.attrs["canonical_hourly_source_rows"] = int(len(data))
     hourly.attrs["canonical_hourly_rows"] = int(len(hourly))
