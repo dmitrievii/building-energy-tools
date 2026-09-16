@@ -39,6 +39,7 @@ jobs:
           from epw_climate_analyzer.catalog_runtime import load_production_station_catalog
 
           ns = runpy.run_path('app.py', run_name='climate_profile_module')
+          ns['_ensure_map_dependencies']()
           grouped_station_catalog = ns['grouped_station_catalog']
           station_catalog_fast_selectable_map = ns['station_catalog_fast_selectable_map']
 
