@@ -6,7 +6,7 @@ on:
       - climate-0.6.2-live-performance
     paths:
       - '.github/workflows/climate-0.6.2-live-performance.yml'
-      - 'deployment/live_map_performance_0_6_2_v4.mjs'
+      - 'deployment/live_map_performance_0_6_2_v5.mjs'
   workflow_dispatch:
 
 permissions:
@@ -22,7 +22,7 @@ jobs:
       CHROME_PATH: /usr/bin/google-chrome
       REPETITIONS: '5'
       EXPECTED_RUNTIME: f3e068e3ce247bf40c7896b8cb95b2e2823f2b4fa20d46823cb56b3f202c7bcd
-      PROBE_REV: '4'
+      PROBE_REV: '5'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,7 +34,7 @@ jobs:
       - name: Install browser dependency
         run: npm install --no-save playwright-core@1.55.0
       - name: Run warm production latency probe
-        run: node deployment/live_map_performance_0_6_2_v4.mjs
+        run: node deployment/live_map_performance_0_6_2_v5.mjs
       - name: Upload performance evidence
         if: always()
         uses: actions/upload-artifact@v4
