@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/climate-geosphere-0.6.1-qualification.yml'
       - 'deployment/apply_geosphere_0_6_1_patch.py'
+      - 'deployment/apply_geosphere_0_6_1_gap_hotfix.py'
       - 'tools/climate_analyzer/app.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/geosphere.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/historical_capabilities.py'
@@ -40,6 +41,7 @@ jobs:
             echo 'Patch already applied.'
           else
             python deployment/apply_geosphere_0_6_1_patch.py
+            python deployment/apply_geosphere_0_6_1_gap_hotfix.py
             printf '\n# CLIMATE_GEOSPHERE_0_6_1_PERMANENT\n' >> tools/climate_analyzer/tests/test_geosphere_0_6_1_overview_range_coverage.py
           fi
       - name: Compile
