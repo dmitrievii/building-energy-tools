@@ -12,6 +12,7 @@ from .temporal_filtering import (
     calendar_profile_slot,
     chronological_season_start,
     is_multiyear,
+    season_name,
     time_basis,
 )
 
@@ -150,7 +151,15 @@ def period_total_series(values: pd.Series, df: pd.DataFrame, aggregation: str) -
             result = temp.groupby("_season_start", sort=True)["_value"].sum(min_count=1)
             result.index = pd.DatetimeIndex(result.index, name="Season start")
             return result.dropna()
-        frame = pd.DataFrame({"season": df.get("season"), "_value": numeric}, index=df.index)
+        if "season" in df.columns:
+            season_values = df["season"]
+        else:
+            season_values = pd.Categorical(
+                [season_name(month) for month in pd.DatetimeIndex(df.index).month],
+                categories=list(SEASON_ORDER),
+                ordered=True,
+            )
+        frame = pd.DataFrame({"season": season_values, "_value": numeric.to_numpy()}, index=df.index)
         return frame.groupby("season", observed=False)["_value"].sum(min_count=1).reindex(list(SEASON_ORDER)).dropna()
 
     rule = RESAMPLE_RULES.get(aggregation)
@@ -183,7 +192,16 @@ def aggregate_sum(df: pd.DataFrame, column: str, aggregation: str) -> pd.DataFra
         return _attach_temporal_attrs(out, df, aggregation)
 
     if aggregation == "Seasonal" and not is_multiyear(df):
-        grouped = df.groupby("season", observed=False)[column]
+        if "season" in df.columns:
+            season_values = df["season"]
+        else:
+            season_values = pd.Categorical(
+                [season_name(month) for month in pd.DatetimeIndex(df.index).month],
+                categories=list(SEASON_ORDER),
+                ordered=True,
+            )
+        temp = pd.DataFrame({"season": season_values, "_value": values.to_numpy()}, index=df.index)
+        grouped = temp.groupby("season", observed=False)["_value"]
         out = grouped.agg(sum="sum", mean="mean", min="min", max="max").reindex(list(SEASON_ORDER)).dropna(how="all")
         return _attach_temporal_attrs(out, df, aggregation)
 

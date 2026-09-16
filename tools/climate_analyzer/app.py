@@ -3975,17 +3975,10 @@ def main() -> None:
         valid_pressure = full_df["atmospheric_station_pressure_pa"].dropna()
         active_pressure = float(valid_pressure.median()) if not valid_pressure.empty else DEFAULT_PRESSURE_PA
 
-    if page == "Time Series and Overlay":
-        # This page owns an exact date/hour/minute viewport. Applying the global
-        # month/hour sidebar filter as well would create two conflicting time
-        # filters, so it starts from the complete loaded source calendar.
-        filtered_df = full_df
-        st.session_state["_active_filtered_export_df"] = full_df
-    else:
-        filtered_df = sidebar_filters(full_df)
-        if filtered_df.empty:
-            st.warning("The current filters remove all data. Adjust the month or hour filter.")
-            return
+    filtered_df = sidebar_filters(full_df)
+    if filtered_df.empty:
+        st.warning("The current filters remove all data. Adjust the date, month or hour filter.")
+        return
 
     st.sidebar.markdown("### Current climate")
     st.sidebar.write(f"**{epw.location.city}, {epw.location.country}**")
@@ -4013,7 +4006,7 @@ def main() -> None:
     elif page == "Precipitation and Snow":
         render_precipitation(filtered_df)
     elif page == "Time Series and Overlay":
-        render_time_series_overlay(full_df)
+        render_time_series_overlay(filtered_df)
     elif page == "Natural Ventilation":
         render_natural_ventilation(filtered_df, pressure_pa=active_pressure)
     elif page == "HVAC and Passive Design":
@@ -4021,7 +4014,7 @@ def main() -> None:
     elif page == "Compare Climates":
         render_compare_climates(active_file, pressure_mode, custom_pressure, active_pressure)
     else:
-        render_data_quality(epw, full_df, issues)
+        render_data_quality(epw, filtered_df, issues)
 
 
 if __name__ == "__main__":
