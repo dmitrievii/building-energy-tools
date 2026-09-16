@@ -122,6 +122,8 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
     global wind_rose_small_multiples
     global OverlaySeries, available_resolution_labels, build_overlay_figure
     global native_resolution_minutes, validate_unit_families
+    global available_years, filter_datetime_range, filter_year, with_time_basis
+    global CHRONOLOGICAL, CALENDAR_PROFILE, display_period_labels, time_basis
 
     if not _ANALYSIS_DEPENDENCIES_LOADED:
         import pandas as pd
@@ -204,6 +206,16 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
             build_overlay_figure,
             native_resolution_minutes,
             validate_unit_families,
+        )
+        from epw_climate_analyzer.temporal_filtering import (
+            CALENDAR_PROFILE,
+            CHRONOLOGICAL,
+            available_years,
+            display_period_labels,
+            filter_datetime_range,
+            filter_year,
+            time_basis,
+            with_time_basis,
         )
         _ANALYSIS_DEPENDENCIES_LOADED = True
 
@@ -1675,13 +1687,100 @@ def render_bioclimatic_report(df: pd.DataFrame) -> None:
     st.dataframe(table, hide_index=True, use_container_width=True)
 
 def sidebar_filters(df: pd.DataFrame) -> pd.DataFrame:
-    """Create global month and hour filters in the sidebar."""
+    """Apply the source-neutral global time, month and hour filters.
+
+    The absolute range is the primary filter for EPW, GeoSphere and future
+    sources. Chronological is the default temporal basis, so multi-year data keep
+    every real month/day/hour distinct. Calendar profile is an explicit opt-in
+    that aligns equivalent calendar positions across the selected years.
+    """
     st.sidebar.markdown("### Data filter")
+    if df.empty or not isinstance(df.index, pd.DatetimeIndex):
+        st.session_state["_active_filtered_export_df"] = df
+        return df
+
+    source_start = pd.Timestamp(df.index.min())
+    source_end = pd.Timestamp(df.index.max())
+    years = available_years(df)
+    st.sidebar.caption(
+        f"Available: {source_start.strftime('%d %b %Y %H:%M')} → {source_end.strftime('%d %b %Y %H:%M')}"
+    )
+
+    range_mode = st.sidebar.selectbox(
+        "Range",
+        ["All available", "Year", "Custom"],
+        index=0,
+        key="global_data_range_mode",
+    )
+    ranged = df
+    if range_mode == "Year":
+        selected_year = st.sidebar.selectbox(
+            "Year",
+            years,
+            index=max(len(years) - 1, 0),
+            key="global_data_range_year",
+        )
+        ranged = filter_year(df, int(selected_year))
+    elif range_mode == "Custom":
+        date_cols = st.sidebar.columns(2)
+        start_date = date_cols[0].date_input(
+            "From date",
+            value=source_start.date(),
+            min_value=source_start.date(),
+            max_value=source_end.date(),
+            key="global_data_range_start_date",
+        )
+        end_date = date_cols[1].date_input(
+            "To date",
+            value=source_end.date(),
+            min_value=source_start.date(),
+            max_value=source_end.date(),
+            key="global_data_range_end_date",
+        )
+        time_cols = st.sidebar.columns(2)
+        start_time = time_cols[0].time_input(
+            "From time",
+            value=source_start.time().replace(tzinfo=None),
+            key="global_data_range_start_time",
+        )
+        end_time = time_cols[1].time_input(
+            "To time",
+            value=source_end.time().replace(tzinfo=None),
+            key="global_data_range_end_time",
+        )
+        start_value = pd.Timestamp.combine(start_date, start_time)
+        end_value = pd.Timestamp.combine(end_date, end_time)
+        if start_value > end_value:
+            st.sidebar.error("From must not be later than To.")
+            ranged = df.iloc[0:0].copy()
+        else:
+            ranged = filter_datetime_range(df, start=start_value, end=end_value)
+
+    ranged_years = available_years(ranged) if not ranged.empty else []
+    if len(ranged_years) > 1:
+        basis = st.sidebar.selectbox(
+            "Time basis",
+            [CHRONOLOGICAL, CALENDAR_PROFILE],
+            index=0,
+            key="global_time_basis",
+            help=(
+                "Chronological keeps every real period in order. Calendar profile aligns equivalent "
+                "calendar positions across the selected years for multi-year min/mean/max or typical-period analysis."
+            ),
+        )
+    else:
+        basis = CHRONOLOGICAL
+    ranged = with_time_basis(ranged, basis)
+
+    # Existing recurring month/hour controls are retained: they now refine the
+    # absolute range instead of acting as the only global time filter.
     selected_month_names = st.sidebar.multiselect("Months", list(MONTHS.keys()), default=list(MONTHS.keys()))
     selected_hours = st.sidebar.slider("Hour range", min_value=0, max_value=23, value=(0, 23))
     months = [MONTHS[m] for m in selected_month_names]
     hours = list(range(selected_hours[0], selected_hours[1] + 1))
-    filtered = filter_by_months_and_hours(df, months=months, hours=hours)
+    filtered = filter_by_months_and_hours(ranged, months=months, hours=hours)
+    filtered = with_time_basis(filtered, basis)
+
     # Export uses exactly the dataframe after the active global filters. Keeping
     # it in transient Streamlit session state avoids duplicating filter logic in
     # every chart renderer.
@@ -3752,14 +3851,10 @@ def render_canonical_climate_analysis(dataset) -> None:
         return
 
     active_pressure = fallback_pressure if pressure_mode != "Measured station pressure with fallback median" else measured_median
-    if page in {"Time Series and Overlay", "Overview", "Data Quality"}:
-        filtered_df = full_df
-        st.session_state["_active_filtered_export_df"] = full_df
-    else:
-        filtered_df = sidebar_filters(full_df)
-        if filtered_df.empty:
-            st.warning("The current filters remove all data. Adjust the month or hour filter.")
-            return
+    filtered_df = sidebar_filters(full_df)
+    if filtered_df.empty:
+        st.warning("The current filters remove all data. Adjust the date, month or hour filter.")
+        return
 
     st.sidebar.markdown("### Current climate")
     st.sidebar.write(f"**{dataset.location.city}, {dataset.location.country}**")
@@ -3774,7 +3869,7 @@ def render_canonical_climate_analysis(dataset) -> None:
             st.caption(f"Calculation pressure: {active_pressure:,.0f} Pa")
 
     if page == "Overview":
-        render_historical_overview(dataset, full_df)
+        render_historical_overview(dataset, filtered_df)
     elif page == "Temperature":
         st.caption("Measured-data threshold hours are integrated from the declared native interval; missing timestamp gaps are not counted as observed duration.")
         render_temperature(filtered_df)
@@ -3792,9 +3887,9 @@ def render_canonical_climate_analysis(dataset) -> None:
         )
         render_precipitation(filtered_df)
     elif page == "Time Series and Overlay":
-        render_time_series_overlay(full_df)
+        render_time_series_overlay(filtered_df)
     else:
-        render_canonical_data_quality(dataset, full_df)
+        render_canonical_data_quality(dataset, filtered_df)
 
 
 def main() -> None:
@@ -3880,17 +3975,10 @@ def main() -> None:
         valid_pressure = full_df["atmospheric_station_pressure_pa"].dropna()
         active_pressure = float(valid_pressure.median()) if not valid_pressure.empty else DEFAULT_PRESSURE_PA
 
-    if page == "Time Series and Overlay":
-        # This page owns an exact date/hour/minute viewport. Applying the global
-        # month/hour sidebar filter as well would create two conflicting time
-        # filters, so it starts from the complete loaded source calendar.
-        filtered_df = full_df
-        st.session_state["_active_filtered_export_df"] = full_df
-    else:
-        filtered_df = sidebar_filters(full_df)
-        if filtered_df.empty:
-            st.warning("The current filters remove all data. Adjust the month or hour filter.")
-            return
+    filtered_df = sidebar_filters(full_df)
+    if filtered_df.empty:
+        st.warning("The current filters remove all data. Adjust the date, month or hour filter.")
+        return
 
     st.sidebar.markdown("### Current climate")
     st.sidebar.write(f"**{epw.location.city}, {epw.location.country}**")
@@ -3918,7 +4006,7 @@ def main() -> None:
     elif page == "Precipitation and Snow":
         render_precipitation(filtered_df)
     elif page == "Time Series and Overlay":
-        render_time_series_overlay(full_df)
+        render_time_series_overlay(filtered_df)
     elif page == "Natural Ventilation":
         render_natural_ventilation(filtered_df, pressure_pa=active_pressure)
     elif page == "HVAC and Passive Design":
@@ -3926,7 +4014,7 @@ def main() -> None:
     elif page == "Compare Climates":
         render_compare_climates(active_file, pressure_mode, custom_pressure, active_pressure)
     else:
-        render_data_quality(epw, full_df, issues)
+        render_data_quality(epw, filtered_df, issues)
 
 
 if __name__ == "__main__":

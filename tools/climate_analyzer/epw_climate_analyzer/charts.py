@@ -10,6 +10,7 @@ from plotly.colors import sample_colorscale
 import psychrolib
 
 from .aggregations import aggregate_summary, aggregate_sum, calendar_matrix, duration_curve, monthly_box_data, monthly_hour_matrix, native_interval_hours
+from .temporal_filtering import CALENDAR_PROFILE, CHRONOLOGICAL, display_period_labels, is_multiyear, time_basis
 from .psychrometrics import DEFAULT_PRESSURE_PA, psychrometric_rh_curves
 from .chart_theme import (
     BINARY_SUITABILITY_COLORSCALE,
@@ -126,21 +127,20 @@ def _apply_axis_constraints(fig: go.Figure, column: str | None = None, x_values=
 
 
 def _period_x(summary: pd.DataFrame, aggregation: str) -> list:
-    """Return human-readable x values for an aggregated summary table."""
+    """Return source-neutral period labels without collapsing chronological years."""
+    return display_period_labels(summary.index, aggregation, time_basis(summary))
+
+
+def _year_neutral_monthly(summary: pd.DataFrame, aggregation: str) -> bool:
+    """Return whether a monthly result should use the legacy Jan...Dec axis order."""
+    if aggregation != "Monthly":
+        return False
     idx = summary.index
-    if aggregation == "Monthly":
-        if isinstance(idx, pd.DatetimeIndex):
-            return [MONTH_LABELS[i - 1] for i in idx.month]
-        return [MONTH_LABELS[int(i) - 1] if str(i).isdigit() and 1 <= int(i) <= 12 else str(i) for i in idx]
-    if aggregation == "Weekly":
-        if isinstance(idx, pd.DatetimeIndex):
-            return [f"W{int(i.isocalendar().week):02d}" for i in idx]
-        return [f"W{int(i):02d}" if str(i).isdigit() else str(i) for i in idx]
-    if aggregation == "Daily":
-        if isinstance(idx, pd.DatetimeIndex):
-            return [int(i.dayofyear) for i in idx]
-        return list(idx)
-    return list(idx)
+    return not (
+        isinstance(idx, pd.DatetimeIndex)
+        and time_basis(summary) == CHRONOLOGICAL
+        and is_multiyear(idx)
+    )
 
 
 def _heatmap_colorscale(column: str, values=None, temperature_thresholds: tuple[float, float] | None = None):
@@ -199,7 +199,7 @@ def profile_ribbon_chart(
 
     low_color, central_color, high_color, band_fill = metric_band_colors(column)
     fig = go.Figure()
-    if aggregation == "Hourly":
+    if aggregation == "Hourly" and time_basis(summary) == CHRONOLOGICAL:
         x = summary.index
         fig.add_trace(
             go.Scatter(
@@ -248,7 +248,7 @@ def profile_ribbon_chart(
         )
     )
     fig = apply_common_layout(fig, title, "Period", unit)
-    if aggregation == "Monthly":
+    if _year_neutral_monthly(summary, aggregation):
         fig.update_xaxes(categoryorder="array", categoryarray=MONTH_LABELS)
     return _apply_axis_constraints(fig, column=column, y_values=pd.concat([summary["min"], summary[central], summary["max"]]))
 
@@ -273,7 +273,7 @@ def percentile_band_chart(df: pd.DataFrame, column: str, aggregation: str, title
     )
     fig.add_trace(go.Scatter(x=x, y=summary["median"], mode="lines+markers", name="Median", line=dict(color=central_color, width=2.2), hovertemplate="Median: %{y:.2f} " + unit + "<extra></extra>"))
     fig = apply_common_layout(fig, title, "Period", unit)
-    if aggregation == "Monthly":
+    if _year_neutral_monthly(summary, aggregation):
         fig.update_xaxes(categoryorder="array", categoryarray=MONTH_LABELS)
     return _apply_axis_constraints(fig, column=column, y_values=pd.concat([summary["p05"], summary["median"], summary["p95"]]))
 
@@ -312,9 +312,11 @@ def month_hour_heatmap(
     aggfunc: str = "mean",
     temperature_thresholds: tuple[float, float] | None = None,
 ) -> go.Figure:
-    """Create a month-by-hour heatmap with month on x-axis and hour on y-axis."""
+    """Create a month/period-by-hour heatmap without folding chronological years."""
     matrix = monthly_hour_matrix(df, column, aggfunc=aggfunc)
     z = matrix.T
+    year_neutral = not (time_basis(df) == CHRONOLOGICAL and is_multiyear(df))
+    x_label = "Month" if year_neutral else "Period"
     colorscale = _heatmap_colorscale(column, z.values, temperature_thresholds)
     zmin, zmax = _axis_limits_for_column(column, z.values, pad_fraction=0.0)
     fig = px.imshow(
@@ -323,10 +325,11 @@ def month_hour_heatmap(
         color_continuous_scale=colorscale,
         zmin=zmin,
         zmax=zmax,
-        labels=dict(x="Month", y="Hour of day", color=unit),
+        labels=dict(x=x_label, y="Hour of day", color=unit),
         title=title,
     )
-    fig.update_xaxes(tickmode="array", tickvals=list(range(1, 13)), ticktext=MONTH_LABELS)
+    if year_neutral:
+        fig.update_xaxes(tickmode="array", tickvals=list(range(1, 13)), ticktext=MONTH_LABELS)
     fig.update_yaxes(range=[23, 0], autorangeoptions=dict(minallowed=0, maxallowed=23))
     fig.update_layout(template=PLOT_TEMPLATE, margin=dict(l=40, r=20, t=70, b=45))
     return fig
@@ -360,44 +363,47 @@ def histogram_chart(df: pd.DataFrame, column: str, title: str, unit: str, bins: 
     return fig
 
 def monthly_box_chart(df: pd.DataFrame, column: str, title: str, unit: str, violin: bool = False) -> go.Figure:
-    """Create monthly boxplot or violin plot."""
+    """Create monthly boxplot/violin while preserving chronological year-months."""
     data = monthly_box_data(df, column)
-    data["month_name"] = pd.Categorical(data["month_name"], MONTH_LABELS, ordered=True)
+    chronological_multiyear = time_basis(df) == CHRONOLOGICAL and is_multiyear(df)
+    if chronological_multiyear:
+        x_column = "period_name"
+        x_label = "Period"
+    else:
+        data["month_name"] = pd.Categorical(data["month_name"], MONTH_LABELS, ordered=True)
+        x_column = "month_name"
+        x_label = "Month"
     base_color = metric_color(column)
     if violin:
-        fig = px.violin(data, x="month_name", y=column, box=True, points=False, title=title)
+        fig = px.violin(data, x=x_column, y=column, box=True, points=False, title=title)
         fig.update_traces(marker_color=base_color, line_color=base_color, fillcolor=rgba(base_color, 0.24))
     else:
-        fig = px.box(data, x="month_name", y=column, title=title)
+        fig = px.box(data, x=x_column, y=column, title=title)
         fig.update_traces(marker_color=base_color, line_color=base_color)
-    fig = apply_common_layout(fig, title, "Month", unit)
-    fig.update_xaxes(categoryorder="array", categoryarray=MONTH_LABELS)
+    fig = apply_common_layout(fig, title, x_label, unit)
+    if not chronological_multiyear:
+        fig.update_xaxes(categoryorder="array", categoryarray=MONTH_LABELS)
     return _apply_axis_constraints(fig, column=column, y_values=data[column])
 
 def threshold_bar_chart(counts: pd.DataFrame, title: str, unit: str = "hours") -> go.Figure:
-    """Create a bar chart for threshold-hour counts with readable period labels."""
+    """Create a threshold bar chart using the aggregation's explicit time semantics."""
     column = counts.columns[0]
+    aggregation = str(counts.attrs.get("aggregation", ""))
+    basis = time_basis(counts)
     data = counts.copy()
-    # Preserve correct period order while avoiding unreadable month-end datetime
-    # labels such as "Mar 2026" for a typical-year monthly chart.
-    if isinstance(data.index, pd.DatetimeIndex):
-        if len(data) <= 12 and data.index.to_series().dt.is_month_end.all():
-            data = data.copy()
-            data["Period"] = [MONTH_LABELS[int(i.month) - 1] for i in data.index]
-            categoryarray = MONTH_LABELS
-        elif len(data) <= 60:
-            data = data.copy()
-            data["Period"] = [f"W{int(i.isocalendar().week):02d}" for i in data.index]
-            categoryarray = None
-        else:
-            data = data.copy()
-            data["Period"] = [int(i.dayofyear) for i in data.index]
-            categoryarray = None
+    if aggregation:
+        labels = display_period_labels(data.index, aggregation, basis)
     else:
-        data = data.reset_index().rename(columns={data.index.name or "index": "Period"})
-        categoryarray = MONTH_LABELS if set(data["Period"].astype(str)).issubset(set(MONTH_LABELS)) else None
-    if "Period" not in data.columns:
-        data = data.reset_index().rename(columns={data.index.name or "index": "Period"})
+        labels = [str(value) for value in data.index]
+    data = data.reset_index(drop=False)
+    data["Period"] = labels
+    categoryarray = None
+    if aggregation == "Monthly" and not (
+        isinstance(counts.index, pd.DatetimeIndex)
+        and basis == CHRONOLOGICAL
+        and is_multiyear(counts.index)
+    ):
+        categoryarray = MONTH_LABELS
     fig = px.bar(data, x="Period", y=column, title=title, color_discrete_sequence=[semantic_color_from_text(title)])
     fig.update_layout(template=PLOT_TEMPLATE, xaxis_title="Period", yaxis_title=unit, margin=dict(l=40, r=20, t=70, b=45))
     if categoryarray is not None:
@@ -1662,11 +1668,25 @@ def matrix_heatmap(matrix: pd.DataFrame, title: str, x_label: str, y_label: str,
     return fig
 
 
+def _monthly_axis_values(df: pd.DataFrame) -> tuple[list, str, bool]:
+    """Return adaptive monthly x values, axis label and Jan-Dec ordering flag."""
+    if isinstance(df.index, pd.DatetimeIndex):
+        chronological_multiyear = time_basis(df) == CHRONOLOGICAL and is_multiyear(df.index)
+        return display_period_labels(df.index, "Monthly", time_basis(df)), ("Period" if chronological_multiyear else "Month"), not chronological_multiyear
+    values = list(df.index)
+    numeric_months = all(str(value).isdigit() and 1 <= int(value) <= 12 for value in values)
+    if numeric_months:
+        return [MONTH_LABELS[int(value) - 1] for value in values], "Month", True
+    return [str(value) for value in values], "Period", False
+
+
 def stacked_monthly_bar(df: pd.DataFrame, title: str, y_label: str = "Hours") -> go.Figure:
-    """Create semantic monthly bars; solar components are grouped, never stacked."""
+    """Create semantic monthly bars without folding chronological year-months."""
     series_names = [str(column) for column in df.columns]
-    data = df.reset_index().melt(id_vars=df.index.name or "index", var_name="series", value_name="value")
-    x_column = df.index.name or "index"
+    x_values, x_label, year_neutral = _monthly_axis_values(df)
+    wide = df.copy()
+    wide["__period__"] = x_values
+    data = wide.reset_index(drop=True).melt(id_vars="__period__", var_name="series", value_name="value")
     color_map: dict[str, str] = {}
     for index, name in enumerate(series_names):
         inferred = semantic_color_from_text(name)
@@ -1675,20 +1695,23 @@ def stacked_monthly_bar(df: pd.DataFrame, title: str, y_label: str = "Hours") ->
     solar_series = [name for name in series_names if any(token in name.lower() for token in solar_tokens)]
     is_solar_components = len(solar_series) >= 2 and any(token in title.lower() for token in ("solar", "radiation", "irradiation"))
     barmode = "group" if is_solar_components else "stack"
-    fig = px.bar(data, x=x_column, y="value", color="series", title=title, barmode=barmode, category_orders={"series": series_names}, color_discrete_map=color_map)
-    fig.update_layout(template=PLOT_TEMPLATE, xaxis_title="Month", yaxis_title=y_label, barmode=barmode, margin=dict(l=40, r=20, t=70, b=45))
-    fig.update_xaxes(tickmode="array", tickvals=list(range(1, 13)), ticktext=MONTH_LABELS)
+    fig = px.bar(data, x="__period__", y="value", color="series", title=title, barmode=barmode, category_orders={"series": series_names}, color_discrete_map=color_map)
+    fig.update_layout(template=PLOT_TEMPLATE, xaxis_title=x_label, yaxis_title=y_label, barmode=barmode, margin=dict(l=40, r=20, t=70, b=45))
+    if year_neutral:
+        fig.update_xaxes(categoryorder="array", categoryarray=MONTH_LABELS)
     return fig
 
 
 def multi_line_monthly(df: pd.DataFrame, title: str, y_label: str) -> go.Figure:
-    """Create multi-line monthly charts with semantic series colours."""
+    """Create multi-line monthly charts without collapsing distinct years."""
+    x_values, x_label, year_neutral = _monthly_axis_values(df)
     fig = go.Figure()
     for index, column in enumerate(df.columns):
         name = str(column)
         inferred = semantic_color_from_text(name)
         color = inferred if inferred != DEFAULT_METRIC_COLOR else CLIMATE_COLORS[index % len(CLIMATE_COLORS)]
-        fig.add_trace(go.Scatter(x=df.index, y=df[column], mode="lines+markers", name=name, line=dict(color=color)))
-    fig = apply_common_layout(fig, title, "Month", y_label)
-    fig.update_xaxes(tickmode="array", tickvals=list(range(1, 13)), ticktext=MONTH_LABELS)
+        fig.add_trace(go.Scatter(x=x_values, y=df[column], mode="lines+markers", name=name, line=dict(color=color)))
+    fig = apply_common_layout(fig, title, x_label, y_label)
+    if year_neutral:
+        fig.update_xaxes(categoryorder="array", categoryarray=MONTH_LABELS)
     return fig
