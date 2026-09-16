@@ -47,3 +47,34 @@ jobs:
                   tools/climate_analyzer/epw_climate_analyzer/degree_metrics.py
           git commit -m 'CLIMATE 0.6.3: integrate global temporal filtering'
           git push origin HEAD:feature/v0.6.3-temporal-filtering
+      - name: Install Climate Analyzer dependencies for diagnostics
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r tools/climate_analyzer/requirements.txt
+      - name: Capture focused and full regression diagnostics
+        id: diagnostics
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          cd tools/climate_analyzer
+          {
+            echo '=== FOCUSED 0.6.3 ==='
+            python -m unittest tests.test_temporal_filtering_0_6_3 -v
+            focused=$?
+            echo
+            echo '=== FULL SUITE ==='
+            python -m unittest discover -s tests -p 'test_*.py' -v
+            full=$?
+            echo
+            echo "focused_exit=$focused"
+            echo "full_exit=$full"
+            exit $(( focused != 0 || full != 0 ))
+          } 2>&1 | tee ../../temporal-test-diagnostics.log
+      - name: Upload regression diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: temporal-test-diagnostics
+          path: temporal-test-diagnostics.log
+          if-no-files-found: error
