@@ -108,15 +108,32 @@ async function waitForCatalogAndMap(page, appFrame, started) {
 }
 
 async function prepareGrazStationClick(frame) {
-  const mapLocator = frame.locator('.folium-map').first();
-  const mapId = await mapLocator.getAttribute('id');
-  if (!mapId) throw new Error('Folium map id missing.');
+  const mapLocator = frame.locator('.leaflet-container').first();
+  await mapLocator.waitFor({ state: 'visible', timeout: 10_000 });
 
-  const result = await frame.evaluate(async ({ mapId }) => {
-    const map = window[mapId];
-    if (!map) throw new Error(`Leaflet map ${mapId} unavailable.`);
+  const result = await frame.evaluate(async () => {
+    let map = null;
+    let mapKey = null;
+    for (const key of Object.keys(window)) {
+      let value = null;
+      try { value = window[key]; } catch { continue; }
+      if (
+        value
+        && typeof value.setView === 'function'
+        && typeof value.latLngToContainerPoint === 'function'
+        && value._container
+        && value._container.classList
+        && value._container.classList.contains('leaflet-container')
+      ) {
+        map = value;
+        mapKey = key;
+        break;
+      }
+    }
+    if (!map) throw new Error('Leaflet map object was not found on the component window.');
+
     map.setView([47.0707, 15.4395], 11, { animate: false });
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 650));
 
     const seen = new Set();
     const candidates = [];
@@ -132,7 +149,7 @@ async function prepareGrazStationClick(frame) {
         const content = tooltip && typeof tooltip.getContent === 'function' ? String(tooltip.getContent() || '') : '';
         if (ll && content.includes('station_idx=')) {
           const d = Math.abs(ll.lat - 47.0707) + Math.abs(ll.lng - 15.4395);
-          candidates.push({ layer, ll, content, d });
+          candidates.push({ ll, content, d });
         }
       }
     }
@@ -140,8 +157,9 @@ async function prepareGrazStationClick(frame) {
     candidates.sort((a, b) => a.d - b.d);
     const chosen = candidates[0];
     if (!chosen) throw new Error('No station layer found near Graz.');
+
     map.panTo(chosen.ll, { animate: false });
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    await new Promise((resolve) => setTimeout(resolve, 300));
     const point = map.latLngToContainerPoint(chosen.ll);
     return {
       x: point.x,
@@ -150,9 +168,9 @@ async function prepareGrazStationClick(frame) {
       lat: chosen.ll.lat,
       lon: chosen.ll.lng,
       candidate_count: candidates.length,
-      map_id: mapId,
+      map_key: mapKey,
     };
-  }, { mapId });
+  });
 
   return { mapLocator, ...result };
 }
@@ -214,6 +232,7 @@ async function runSample(context, index) {
     sample.clicked_station = stationNameFromTooltip(chosen.tooltip);
     sample.clicked_lat = chosen.lat;
     sample.clicked_lon = chosen.lon;
+    sample.map_key = chosen.map_key;
 
     const stationStarted = performance.now();
     await chosen.mapLocator.click({
@@ -269,7 +288,7 @@ try {
 const findMap = samples.map((s) => s.find_climate_map_ready_ms);
 const stationPanel = samples.map((s) => s.station_panel_ready_ms);
 const result = {
-  schema: 'climate-0.6.2-live-map-performance-v1',
+  schema: 'climate-0.6.2-live-map-performance-v2',
   target_url: TARGET_URL,
   expected_runtime: EXPECTED_RUNTIME || null,
   repetitions_requested: REPETITIONS,
