@@ -22,26 +22,25 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install dependencies
-        run: |
-          python -m pip install -r tools/climate_analyzer/requirements.txt
-          python -m pip install pytest
+        working-directory: tools/climate_analyzer
+        run: python -m pip install -r requirements.txt
       - name: Apply 0.6.2 patch
         run: python deployment/apply_geosphere_0_6_2.py
       - name: Fix generated qualification test
         run: python deployment/fix_geosphere_0_6_2_generated_test.py
       - name: Compile
-        run: python -m compileall -q tools/climate_analyzer
+        working-directory: tools/climate_analyzer
+        run: python -m compileall -q app.py epw_climate_analyzer tests scripts
       - name: Focused GeoSphere 0.6.2 tests
         working-directory: tools/climate_analyzer
         run: |
-          pytest -q \
-            tests/test_geosphere_0_6_2_precip_map_variables.py \
-            tests/test_pressure_precipitation_contract.py \
-            tests/test_geosphere_public_integration.py \
-            tests/test_historical_wind_solar_capabilities.py
+          python -m unittest discover -s tests -p 'test_geosphere_0_6_2_precip_map_variables.py' -v
+          python -m unittest discover -s tests -p 'test_pressure_precipitation_contract.py' -v
+          python -m unittest discover -s tests -p 'test_geosphere_public_integration.py' -v
+          python -m unittest discover -s tests -p 'test_historical_wind_solar_capabilities.py' -v
       - name: Full Climate Analyzer test suite
         working-directory: tools/climate_analyzer
-        run: pytest -q tests
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
       - name: Commit qualified permanent diff
         run: |
           git config user.name "github-actions[bot]"
