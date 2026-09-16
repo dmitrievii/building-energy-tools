@@ -76,7 +76,10 @@ class GeoSphere061CoverageTests(unittest.TestCase):
     def test_public_ui_contract_contains_overview_variable_selection_and_from_direction(self) -> None:
         source = APP.read_text(encoding="utf-8")
         self.assertIn('def render_historical_overview(dataset, df: pd.DataFrame)', source)
-        self.assertIn('"Measured variables to load"', source)
+        self.assertIn('st.markdown("#### Measured variables to load")', source)
+        self.assertIn("edited_variables = st.data_editor(", source)
+        self.assertIn('st.column_config.CheckboxColumn("Load"', source)
+        self.assertNotIn('key="geosphere_provider_parameters"', source)
         self.assertNotIn('selected_days > 366', source)
         self.assertIn('meteorological FROM convention', source)
         self.assertIn('st.caption(WIND_DIRECTION_FROM_NOTE)', source)
