@@ -107,11 +107,9 @@ async function waitForCatalogAndMap(page, appFrame, started) {
   };
 }
 
-async function prepareGrazStationClick(frame) {
-  const mapLocator = frame.locator('.leaflet-container').first();
-  await mapLocator.waitFor({ state: 'visible', timeout: 10_000 });
-
-  const result = await frame.evaluate(async () => {
+async function prepareGrazStation(frame) {
+  await frame.locator('.leaflet-container').first().waitFor({ state: 'visible', timeout: 10_000 });
+  return frame.evaluate(async () => {
     let map = null;
     let mapKey = null;
     for (const key of Object.keys(window)) {
@@ -148,8 +146,10 @@ async function prepareGrazStationClick(frame) {
         const tooltip = layer.getTooltip();
         const content = tooltip && typeof tooltip.getContent === 'function' ? String(tooltip.getContent() || '') : '';
         if (ll && content.includes('station_idx=')) {
+          const match = content.match(/station_idx=(\d+)/);
+          if (!match) return;
           const d = Math.abs(ll.lat - 47.0707) + Math.abs(ll.lng - 15.4395);
-          candidates.push({ ll, content, d });
+          candidates.push({ ll, content, d, stationIdx: Number.parseInt(match[1], 10) });
         }
       }
     }
@@ -157,13 +157,10 @@ async function prepareGrazStationClick(frame) {
     candidates.sort((a, b) => a.d - b.d);
     const chosen = candidates[0];
     if (!chosen) throw new Error('No station layer found near Graz.');
-
     map.panTo(chosen.ll, { animate: false });
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    const point = map.latLngToContainerPoint(chosen.ll);
+    await new Promise((resolve) => setTimeout(resolve, 250));
     return {
-      x: point.x,
-      y: point.y,
+      station_idx: chosen.stationIdx,
       tooltip: chosen.content,
       lat: chosen.ll.lat,
       lon: chosen.ll.lng,
@@ -171,8 +168,48 @@ async function prepareGrazStationClick(frame) {
       map_key: mapKey,
     };
   });
+}
 
-  return { mapLocator, ...result };
+async function fireStationClick(frame, stationIdx) {
+  return frame.evaluate(async ({ stationIdx }) => {
+    let map = null;
+    for (const key of Object.keys(window)) {
+      let value = null;
+      try { value = window[key]; } catch { continue; }
+      if (
+        value
+        && typeof value.setView === 'function'
+        && value._container
+        && value._container.classList
+        && value._container.classList.contains('leaflet-container')
+      ) {
+        map = value;
+        break;
+      }
+    }
+    if (!map) throw new Error('Leaflet map object unavailable while firing station click.');
+
+    const seen = new Set();
+    let chosen = null;
+    function visit(layer) {
+      if (!layer || seen.has(layer) || chosen) return;
+      seen.add(layer);
+      if (typeof layer.getLayers === 'function') {
+        for (const child of layer.getLayers()) visit(child);
+      }
+      if (typeof layer.getTooltip === 'function' && typeof layer.fire === 'function') {
+        const tooltip = layer.getTooltip();
+        const content = tooltip && typeof tooltip.getContent === 'function' ? String(tooltip.getContent() || '') : '';
+        if (content.startsWith(`station_idx=${stationIdx} |`)) chosen = layer;
+      }
+    }
+    for (const layer of Object.values(map._layers || {})) visit(layer);
+    if (!chosen) throw new Error(`Station layer ${stationIdx} was not found.`);
+    const ll = chosen.getLatLng();
+    chosen.fire('click', { latlng: ll, layer: chosen, sourceTarget: chosen, target: chosen }, true);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    return true;
+  }, { stationIdx });
 }
 
 function stationNameFromTooltip(text) {
@@ -226,20 +263,17 @@ async function runSample(context, index) {
     sample.find_climate_map_ready_ms = map.map_ready_ms;
     sample.initial_map_zoom = map.initial_zoom;
 
-    const chosen = await prepareGrazStationClick(map.frame);
+    const chosen = await prepareGrazStation(map.frame);
     sample.station_candidates = chosen.candidate_count;
     sample.clicked_tooltip = chosen.tooltip;
     sample.clicked_station = stationNameFromTooltip(chosen.tooltip);
+    sample.clicked_station_idx = chosen.station_idx;
     sample.clicked_lat = chosen.lat;
     sample.clicked_lon = chosen.lon;
     sample.map_key = chosen.map_key;
 
     const stationStarted = performance.now();
-    await chosen.mapLocator.click({
-      position: { x: Math.max(1, chosen.x), y: Math.max(1, chosen.y) },
-      force: true,
-      timeout: 5_000,
-    });
+    await fireStationClick(map.frame, chosen.station_idx);
     Object.assign(sample, await waitForStationPanel(page, appFrame, map.frame, sample.clicked_station, stationStarted));
     sample.page_errors = [...pageErrors];
     await page.screenshot({ path: path.join(OUT_DIR, `sample-${index}.png`), fullPage: true }).catch(() => {});
@@ -288,7 +322,7 @@ try {
 const findMap = samples.map((s) => s.find_climate_map_ready_ms);
 const stationPanel = samples.map((s) => s.station_panel_ready_ms);
 const result = {
-  schema: 'climate-0.6.2-live-map-performance-v2',
+  schema: 'climate-0.6.2-live-map-performance-v3',
   target_url: TARGET_URL,
   expected_runtime: EXPECTED_RUNTIME || null,
   repetitions_requested: REPETITIONS,
