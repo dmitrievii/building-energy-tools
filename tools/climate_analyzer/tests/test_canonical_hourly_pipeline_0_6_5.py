@@ -118,7 +118,7 @@ class CanonicalHourlyPipeline065Tests(unittest.TestCase):
 
         hourly = canonical_hourly_analysis_frame(source, source_interval_minutes=60)
 
-        pd.testing.assert_frame_equal(hourly, source, check_attrs=False)
+        pd.testing.assert_frame_equal(hourly, source)
         self.assertEqual(hourly.attrs["canonical_source_interval_minutes"], 60)
         self.assertEqual(hourly.attrs["canonical_native_interval_minutes"], 60)
         self.assertEqual(hourly.attrs["canonical_hourly_expected_source_records"], 1)
