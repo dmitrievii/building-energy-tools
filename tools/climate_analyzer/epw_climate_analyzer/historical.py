@@ -8,11 +8,52 @@ columns or derived psychrometric quantities are added.
 
 from __future__ import annotations
 
+from threading import RLock
+import weakref
+
 import pandas as pd
 
 from .canonical_hourly import canonical_hourly_analysis_frame
 from .climate_model import CanonicalClimateDataset
 from .psychrometrics import DEFAULT_PRESSURE_PA, add_psychrometric_properties
+
+
+# Identity cache: the active CanonicalClimateDataset object lives in Streamlit
+# session state across reruns.  Keep exactly one normalized hourly frame for that
+# object without hashing/copying its large native dataframe.  Weak references
+# remove entries automatically when the source dataset leaves the session.
+_HOURLY_CACHE_LOCK = RLock()
+_HOURLY_CACHE: dict[int, tuple[weakref.ReferenceType[CanonicalClimateDataset], pd.DataFrame]] = {}
+
+
+def _canonical_hourly_for_dataset(dataset: CanonicalClimateDataset) -> pd.DataFrame:
+    key = id(dataset)
+    with _HOURLY_CACHE_LOCK:
+        cached = _HOURLY_CACHE.get(key)
+        if cached is not None and cached[0]() is dataset:
+            return cached[1]
+
+    hourly = canonical_hourly_analysis_frame(
+        dataset.data,
+        source_interval_minutes=dataset.temporal.native_interval_minutes,
+    )
+
+    def _remove(_reference, *, cache_key: int = key) -> None:
+        with _HOURLY_CACHE_LOCK:
+            current = _HOURLY_CACHE.get(cache_key)
+            if current is not None and current[0]() is None:
+                _HOURLY_CACHE.pop(cache_key, None)
+
+    reference = weakref.ref(dataset, _remove)
+    with _HOURLY_CACHE_LOCK:
+        _HOURLY_CACHE[key] = (reference, hourly)
+    return hourly
+
+
+def clear_historical_hourly_cache() -> None:
+    """Clear the process-local hourly identity cache (primarily for tests)."""
+    with _HOURLY_CACHE_LOCK:
+        _HOURLY_CACHE.clear()
 
 
 def add_historical_calendar_columns(df: pd.DataFrame) -> pd.DataFrame:
@@ -48,13 +89,13 @@ def prepare_historical_analysis_frame(
     fallback_pressure_pa: float = DEFAULT_PRESSURE_PA,
     pressure_override_pa: float | None = None,
 ) -> pd.DataFrame:
-    """Prepare the canonical hourly historical frame used by ordinary analyses.
+    """Prepare the cached canonical hourly frame used by ordinary analyses.
 
-    Provider-native observations are normalized exactly once per call before any
-    calendar helpers or derived variables are added.  Sub-hourly state variables
-    use arithmetic means, extensive interval quantities use sums, and circular
-    quantities use circular means.  Strict hourly completeness is enforced by
-    :func:`canonical_hourly_analysis_frame`.
+    Provider-native observations are normalized once per active dataset object
+    before any calendar helpers or derived variables are added. Sub-hourly state
+    variables use arithmetic means, extensive interval quantities use sums, and
+    circular quantities use circular means. Strict hourly completeness is
+    enforced by :func:`canonical_hourly_analysis_frame`.
 
     ``pressure_override_pa`` is an explicit calculation-mode override. When it
     is ``None``, valid hourly measured station pressure is retained record by
@@ -62,10 +103,7 @@ def prepare_historical_analysis_frame(
     When an override is supplied, the hourly pressure series is deliberately
     replaced before psychrometric derivation.
     """
-    hourly = canonical_hourly_analysis_frame(
-        dataset.data,
-        source_interval_minutes=dataset.temporal.native_interval_minutes,
-    )
+    hourly = _canonical_hourly_for_dataset(dataset)
     data = add_historical_calendar_columns(hourly)
     if pressure_override_pa is not None:
         pressure_override = float(pressure_override_pa)
