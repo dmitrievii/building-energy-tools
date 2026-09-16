@@ -100,7 +100,7 @@ class GeoSpherePublicUiContractTests(unittest.TestCase):
     def test_historical_dataset_uses_existing_analysis_renderers_not_duplicate_provider_pages(self) -> None:
         self.assertIn('render_temperature(filtered_df)', self.source)
         self.assertIn('render_humidity(filtered_df, pressure_pa=active_pressure)', self.source)
-        self.assertIn('render_time_series_overlay(full_df)', self.source)
+        self.assertIn('render_time_series_overlay(filtered_df)', self.source)
         self.assertNotIn('def render_geosphere_temperature', self.source)
         self.assertNotIn('def render_geosphere_humidity', self.source)
 
