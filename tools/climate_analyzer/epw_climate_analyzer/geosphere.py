@@ -58,6 +58,10 @@ class GeoSphereStation:
     state: str = ""
     valid_from: str = ""
     valid_to: str = ""
+    station_type: str = ""
+    is_active: bool | None = None
+    has_global_radiation: bool | None = None
+    has_sunshine: bool | None = None
 
 
 @dataclass(frozen=True)
@@ -184,6 +188,21 @@ def _float_or_none(value: object) -> float | None:
     return result if math.isfinite(result) else None
 
 
+def _bool_or_none(value: object) -> bool | None:
+    """Return a provider Boolean without inventing truth for missing metadata."""
+    if isinstance(value, bool):
+        return value
+    if value in (0, 1):
+        return bool(value)
+    if isinstance(value, str):
+        normalized = value.strip().casefold()
+        if normalized in {"true", "yes", "1"}:
+            return True
+        if normalized in {"false", "no", "0"}:
+            return False
+    return None
+
+
 def _station_coordinates(record: Mapping[str, Any]) -> tuple[float, float]:
     lat = _float_or_none(_coalesce(record, "lat", "latitude", "y", default=None))
     lon = _float_or_none(_coalesce(record, "lon", "longitude", "x", default=None))
@@ -254,6 +273,10 @@ def parse_stations(metadata: Mapping[str, Any]) -> list[GeoSphereStation]:
                 state=str(_coalesce(record, "state", "region", default="")).strip(),
                 valid_from=str(_coalesce(record, "valid_from", "start", "start_time", default="")).strip(),
                 valid_to=str(_coalesce(record, "valid_to", "end", "end_time", default="")).strip(),
+                station_type=str(_coalesce(record, "type", "station_type", default="")).strip(),
+                is_active=_bool_or_none(record.get("is_active")),
+                has_global_radiation=_bool_or_none(record.get("has_global_radiation")),
+                has_sunshine=_bool_or_none(record.get("has_sunshine")),
             )
         )
     if not result:
@@ -302,6 +325,81 @@ def supported_parameter_mapping(metadata: Mapping[str, Any]) -> dict[str, Provid
     if not resolved:
         raise ValueError("GeoSphere metadata expose none of the supported climate parameters.")
     return resolved
+
+
+CAPABILITY_RESOURCE_SUPPORTED = "resource-supported"
+CAPABILITY_STATION_CONFIRMED = "station-confirmed"
+CAPABILITY_STATION_UNAVAILABLE = "station-unavailable"
+
+
+def station_parameter_capability_index(metadata: Mapping[str, Any]) -> dict[str, dict[str, str]]:
+    """Return O(1) station -> provider-parameter capability lookups.
+
+    GeoSphere currently publishes the full resource parameter list plus a small
+    set of station-specific sensor flags.  Only an explicit station flag is
+    allowed to disable a parameter.  For fields without station-specific
+    metadata, the status remains ``resource-supported`` and actual observations
+    for the selected period are still verified after data loading.
+
+    In particular, ``has_global_radiation`` authoritatively qualifies ``cglo``.
+    No station-level flag for diffuse radiation is published, so ``chim`` is not
+    inferred from the global-radiation flag.
+    """
+    supported = supported_parameter_mapping(metadata)
+    base = {name: CAPABILITY_RESOURCE_SUPPORTED for name in supported}
+    result: dict[str, dict[str, str]] = {}
+    for record in _station_records(metadata):
+        station_id = str(_coalesce(record, "id", "station_id", "station", default="")).strip()
+        if not station_id:
+            continue
+        statuses = dict(base)
+        global_radiation = _bool_or_none(record.get("has_global_radiation"))
+        if "cglo" in statuses and global_radiation is not None:
+            statuses["cglo"] = (
+                CAPABILITY_STATION_CONFIRMED if global_radiation else CAPABILITY_STATION_UNAVAILABLE
+            )
+        result[station_id] = statuses
+    if not result:
+        raise ValueError("GeoSphere metadata contain no station capability index.")
+    return result
+
+
+def station_parameter_capability_table(metadata: Mapping[str, Any], station_id: str) -> pd.DataFrame:
+    """Return a display-ready metadata capability table for one station.
+
+    ``Available`` means selectable from metadata, not guaranteed non-null data
+    for every timestamp. Selected-period coverage remains a loaded-data quality
+    concern and is intentionally not fabricated from station validity dates.
+    """
+    station_key = str(station_id).strip()
+    index = station_parameter_capability_index(metadata)
+    if station_key not in index:
+        raise KeyError(f"Unknown GeoSphere station id: {station_key}")
+    parameters = parse_parameters(metadata)
+    supported = supported_parameter_mapping(metadata)
+    statuses = index[station_key]
+    rows: list[dict[str, object]] = []
+    for provider_name, spec in supported.items():
+        parameter = parameters.get(provider_name)
+        status = statuses.get(provider_name, CAPABILITY_RESOURCE_SUPPORTED)
+        if status == CAPABILITY_STATION_CONFIRMED:
+            basis = "Station metadata confirms sensor"
+        elif status == CAPABILITY_STATION_UNAVAILABLE:
+            basis = "Station metadata reports unavailable"
+        else:
+            basis = "Resource metadata; period coverage checked after load"
+        rows.append(
+            {
+                "provider": provider_name,
+                "canonical": spec.canonical_name,
+                "variable": (parameter.long_name if parameter and parameter.long_name else spec.description or spec.canonical_name),
+                "unit": parameter.unit if parameter else "",
+                "status": status,
+                "available": status != CAPABILITY_STATION_UNAVAILABLE,
+                "basis": basis,
+            }
+        )
+    return pd.DataFrame(rows)
 
 
 def station_catalog(metadata: Mapping[str, Any]) -> pd.DataFrame:
