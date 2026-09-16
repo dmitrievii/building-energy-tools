@@ -39,7 +39,7 @@ jobs:
       - name: Run focused GeoSphere 0.6 regressions
         working-directory: tools/climate_analyzer
         run: |
-          pytest -q \
+          PYTHONPATH=. pytest -q \
             tests/test_historical_wind_solar_capabilities.py \
             tests/test_geosphere_public_integration.py \
             tests/test_cadence_duration_metrics.py \
@@ -47,7 +47,7 @@ jobs:
 
       - name: Run full Climate Analyzer regression suite
         working-directory: tools/climate_analyzer
-        run: pytest -q tests
+        run: PYTHONPATH=. pytest -q tests
 
       - name: Remove one-shot infrastructure
         run: |
