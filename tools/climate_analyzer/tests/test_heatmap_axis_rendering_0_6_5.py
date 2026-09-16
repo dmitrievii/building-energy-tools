@@ -82,6 +82,31 @@ class HeatmapAxisRendering065Tests(unittest.TestCase):
         self.assertNotIn(2010, x)
         self.assertNotIn(2018, x)
 
+    def test_complete_day_hour_heatmap_keeps_all_24_hour_rows(self) -> None:
+        index = pd.date_range("2018-07-01T00:00:00Z", periods=24, freq="h")
+        frame = pd.DataFrame(
+            {"dry_bulb_temperature_c": np.linspace(12.0, 28.0, 24)},
+            index=index,
+        )
+        frame["hour_of_day"] = frame.index.hour
+        frame["month_index"] = frame.index.month
+        frame["day_of_year"] = frame.index.dayofyear
+        frame["week_of_year"] = frame.index.isocalendar().week.astype(int).to_numpy()
+        frame.attrs["canonical_native_interval_minutes"] = 60
+        frame = with_time_basis(frame, CHRONOLOGICAL)
+
+        fig = temporal_heatmap_chart(
+            frame,
+            "dry_bulb_temperature_c",
+            "day",
+            HEATMAP_COMPARE_HOUR,
+            "Mean",
+            "Day × hour",
+            "°C",
+        )
+        self.assertEqual([int(value) for value in fig.data[0].y], list(range(24)))
+        self.assertEqual(np.asarray(fig.data[0].z).shape[0], 24)
+
 
 if __name__ == "__main__":
     unittest.main()
