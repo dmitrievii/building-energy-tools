@@ -293,21 +293,33 @@ def _heatmap_reduce(grouped, statistic: str) -> pd.Series:
     raise ValueError(f"Unsupported heat-map statistic: {statistic}")
 
 
-def _heatmap_period_key(index: pd.DatetimeIndex, row_group: str, *, include_year: bool) -> pd.Index:
+def _calendar_day_slot(index: pd.DatetimeIndex) -> pd.Index:
+    """Return leap-neutral calendar-day numbers on a fixed 366-day reference year.
+
+    Using a leap reference year keeps the same month/day at the same coordinate
+    in leap and non-leap source years.  Feb 29 is slot 60; Mar 1 is slot 61 in
+    every year, so an absent leap day becomes a real gap rather than shifting all
+    later dates by one column.
+    """
+    reference = pd.to_datetime(
+        {
+            "year": np.full(len(index), 2000, dtype=int),
+            "month": index.month.astype(int),
+            "day": index.day.astype(int),
+        }
+    )
+    return pd.Index(reference.dayofyear.astype(int), name="Day")
+
+
+def _heatmap_period_key(index: pd.DatetimeIndex, row_group: str) -> pd.Index:
+    """Return numeric calendar coordinates that Plotly cannot reinterpret as dates."""
     group = str(row_group).strip().lower()
     if group == "day":
-        values = index.strftime("%Y-%m-%d" if include_year else "%m-%d")
-        return pd.Index(values, name="Day")
+        return _calendar_day_slot(index)
     if group == "week":
         iso = index.isocalendar()
-        if include_year:
-            values = [f"{int(year):04d}-W{int(week):02d}" for year, week in zip(iso.year, iso.week, strict=False)]
-        else:
-            values = [f"W{int(week):02d}" for week in iso.week]
-        return pd.Index(values, name="Week")
+        return pd.Index(iso.week.astype(int).to_numpy(), name="Week")
     if group == "month":
-        if include_year:
-            return pd.Index(index.strftime("%Y-%m"), name="Month")
         return pd.Index(index.month.astype(int), name="Month")
     raise ValueError("row_group must be 'day', 'week' or 'month'")
 
@@ -319,18 +331,22 @@ def temporal_heatmap_matrix(
     compare_across: str = HEATMAP_COMPARE_HOUR,
     statistic: str = "Mean",
 ) -> pd.DataFrame:
-    """Create a generic heat-map matrix from period, comparison dimension and statistic.
+    """Create a generic heat-map matrix from calendar period and comparison dimension.
 
-    ``Hour of day`` preserves the existing heat-map semantics. In chronological
-    multi-year mode the period key keeps the year; in calendar-profile mode the
-    year is intentionally folded away. ``Year`` is an explicit interannual view
-    and therefore always preserves real calendar years regardless of the global
-    calendar-profile setting.
+    Heat-map period axes are always calendar coordinates: day 1...366 on a
+    leap-neutral reference year, ISO week 1...53, or month 1...12.  This prevents
+    multi-year chronological data from expanding a day×hour chart into thousands
+    of columns and prevents Plotly from parsing ``MM-DD`` labels as dates.
 
-    For extensive quantities in calendar-profile mode, ``Total`` is first
-    calculated independently for every year/cell and then averaged across years,
-    preventing a multi-year dataset from being reported as an inflated typical
-    period total.
+    ``Hour of day`` aligns equivalent calendar slots across all selected years.
+    ``Year`` is the explicit interannual view and preserves the real calendar
+    year (ISO week-year for weekly heat maps) on the Y axis regardless of the
+    global time-basis selection.
+
+    For extensive quantities in a multi-year hour-of-day heat map, ``Total`` is
+    first calculated independently for each source year/cell and then averaged
+    across years.  This avoids totals that scale merely with the number of years
+    loaded while retaining one comparable calendar heat map.
     """
     if column not in df.columns:
         raise KeyError(f"Heat-map column is missing: {column}")
@@ -341,38 +357,33 @@ def temporal_heatmap_matrix(
     index = pd.DatetimeIndex(df.index)
     values = pd.to_numeric(df[column], errors="coerce")
     temp = pd.DataFrame({"_value": values.to_numpy()}, index=index)
+    group = str(row_group).strip().lower()
 
     if compare_across == HEATMAP_COMPARE_YEAR:
-        # A week number and its year are one ISO-8601 coordinate. Build both
-        # from the same timestamp tuple so New-Year boundary dates cannot be
-        # assigned to calendar year Y while carrying ISO week Y-1/W53.
-        if str(row_group).strip().lower() == "week":
-            iso_coordinates = [stamp.isocalendar() for stamp in index.to_pydatetime()]
-            temp["_y"] = [int(item.year) for item in iso_coordinates]
-            temp["_x"] = [f"W{int(item.week):02d}" for item in iso_coordinates]
+        if group == "week":
+            iso = index.isocalendar()
+            temp["_y"] = iso.year.astype(int).to_numpy()
+            temp["_x"] = iso.week.astype(int).to_numpy()
         else:
             temp["_y"] = index.year.astype(int)
-            temp["_x"] = _heatmap_period_key(index, row_group, include_year=False).to_numpy()
+            temp["_x"] = _heatmap_period_key(index, row_group).to_numpy()
     else:
-        preserve_year = time_basis(df) == CHRONOLOGICAL and is_multiyear(df)
         temp["_y"] = (
             pd.to_numeric(df["hour_of_day"], errors="coerce").to_numpy()
             if "hour_of_day" in df.columns
             else index.hour.astype(int)
         )
-        temp["_x"] = _heatmap_period_key(index, row_group, include_year=preserve_year).to_numpy()
+        temp["_x"] = _heatmap_period_key(index, row_group).to_numpy()
 
-    temp = temp.dropna(subset=["_value", "_y"])
+    temp = temp.dropna(subset=["_value", "_y", "_x"])
     if temp.empty:
         return pd.DataFrame()
 
-    if (
-        statistic == "Total"
-        and compare_across == HEATMAP_COMPARE_HOUR
-        and time_basis(df) == CALENDAR_PROFILE
-        and is_multiyear(df)
-    ):
-        temp["_year"] = temp.index.year.astype(int)
+    if statistic == "Total" and compare_across == HEATMAP_COMPARE_HOUR and is_multiyear(df):
+        if group == "week":
+            temp["_year"] = pd.DatetimeIndex(temp.index).isocalendar().year.astype(int).to_numpy()
+        else:
+            temp["_year"] = temp.index.year.astype(int)
         per_year = temp.groupby(["_year", "_y", "_x"], observed=False, sort=True)["_value"].sum(min_count=1)
         reduced = per_year.groupby(["_y", "_x"], observed=False, sort=True).mean()
     else:
@@ -380,13 +391,16 @@ def temporal_heatmap_matrix(
         reduced = _heatmap_reduce(grouped, statistic)
 
     matrix = reduced.unstack("_x").sort_index()
-    if str(row_group).strip().lower() == "month" and all(isinstance(value, (int, np.integer)) for value in matrix.columns):
+    if group == "month" and all(isinstance(value, (int, np.integer)) for value in matrix.columns):
         matrix = matrix.reindex(columns=list(range(1, 13)))
+    elif group in {"day", "week"} and len(matrix.columns):
+        numeric_columns = [int(value) for value in matrix.columns]
+        matrix = matrix.reindex(columns=list(range(min(numeric_columns), max(numeric_columns) + 1)))
     return matrix
 
 
 def calendar_matrix(df: pd.DataFrame, column: str, row_group: str = "day") -> pd.DataFrame:
-    """Backward-compatible period-by-hour matrix using a mean cell statistic."""
+    """Backward-compatible period-by-hour matrix using mean cell values."""
     return temporal_heatmap_matrix(
         df,
         column,
@@ -397,7 +411,7 @@ def calendar_matrix(df: pd.DataFrame, column: str, row_group: str = "day") -> pd
 
 
 def monthly_hour_matrix(df: pd.DataFrame, column: str, aggfunc: str = "mean") -> pd.DataFrame:
-    """Backward-compatible month-by-hour matrix without folding chronological years."""
+    """Backward-compatible month-by-hour matrix on calendar month coordinates."""
     statistic = {
         "mean": "Mean",
         "min": "Minimum",
