@@ -22,7 +22,7 @@ jobs:
       CHROME_PATH: /usr/bin/google-chrome
       REPETITIONS: '5'
       EXPECTED_RUNTIME: f3e068e3ce247bf40c7896b8cb95b2e2823f2b4fa20d46823cb56b3f202c7bcd
-      PROBE_REV: '2'
+      PROBE_REV: '3'
     steps:
       - uses: actions/checkout@v4
         with:
