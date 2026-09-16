@@ -1397,6 +1397,7 @@ def wind_rose_chart(df: pd.DataFrame, title: str = "Wind rose") -> go.Figure:
         include_lowest=True,
     )
     rose = data.groupby(["direction_sector_deg", "speed_bin"], observed=False).size().reset_index(name="hours")
+    rose["hours"] = rose["hours"].astype(float) * native_interval_hours(df)
     fig = px.bar_polar(
         rose,
         r="hours",
