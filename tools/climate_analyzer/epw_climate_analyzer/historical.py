@@ -1,15 +1,16 @@
 """Provider-neutral preparation helpers for real historical climate datasets.
 
-Historical observations keep their real timezone-aware timestamps. This module
-adds only the calendar helper columns required by existing analysis views and,
-when requested, derives psychrometric quantities from canonical primary
-observations. It does not convert observations to an EPW typical-year calendar.
+Historical observations keep their real timezone-aware timestamps. Provider-
+native data remain intact for provenance, export and native diagnostics. Ordinary
+analysis is prepared from one canonical hourly representation before calendar
+columns or derived psychrometric quantities are added.
 """
 
 from __future__ import annotations
 
 import pandas as pd
 
+from .canonical_hourly import canonical_hourly_analysis_frame
 from .climate_model import CanonicalClimateDataset
 from .psychrometrics import DEFAULT_PRESSURE_PA, add_psychrometric_properties
 
@@ -47,15 +48,25 @@ def prepare_historical_analysis_frame(
     fallback_pressure_pa: float = DEFAULT_PRESSURE_PA,
     pressure_override_pa: float | None = None,
 ) -> pd.DataFrame:
-    """Prepare a canonical historical dataset for source-agnostic analysis views.
+    """Prepare the canonical hourly historical frame used by ordinary analyses.
+
+    Provider-native observations are normalized exactly once per call before any
+    calendar helpers or derived variables are added.  Sub-hourly state variables
+    use arithmetic means, extensive interval quantities use sums, and circular
+    quantities use circular means.  Strict hourly completeness is enforced by
+    :func:`canonical_hourly_analysis_frame`.
 
     ``pressure_override_pa`` is an explicit calculation-mode override. When it
-    is ``None``, valid measured station pressure is retained record by record and
-    ``fallback_pressure_pa`` is used only for missing/invalid values. When an
-    override is supplied, the measured pressure series is deliberately replaced
-    before psychrometric derivation.
+    is ``None``, valid hourly measured station pressure is retained record by
+    record and ``fallback_pressure_pa`` is used only for missing/invalid values.
+    When an override is supplied, the hourly pressure series is deliberately
+    replaced before psychrometric derivation.
     """
-    data = add_historical_calendar_columns(dataset.data)
+    hourly = canonical_hourly_analysis_frame(
+        dataset.data,
+        source_interval_minutes=dataset.temporal.native_interval_minutes,
+    )
+    data = add_historical_calendar_columns(hourly)
     if pressure_override_pa is not None:
         pressure_override = float(pressure_override_pa)
         if not 30_000.0 <= pressure_override <= 120_000.0:
@@ -71,7 +82,10 @@ def prepare_historical_analysis_frame(
         if "atmospheric_station_pressure_pa" not in data.columns:
             data["atmospheric_station_pressure_pa"] = float(fallback_pressure_pa)
         data = add_psychrometric_properties(data, fallback_pressure_pa=float(fallback_pressure_pa))
-        data.attrs.setdefault("canonical_native_interval_minutes", dataset.temporal.native_interval_minutes)
-        data.attrs.setdefault("canonical_calendar_mode", dataset.temporal.calendar_mode)
-        data.attrs.setdefault("canonical_timezone_name", dataset.temporal.timezone_name)
+        # Derived psychrometrics must inherit the hourly analysis cadence, not
+        # the provider-native sub-hourly cadence retained on the source dataset.
+        data.attrs["canonical_native_interval_minutes"] = 60
+        data.attrs["canonical_analysis_interval_minutes"] = 60
+        data.attrs["canonical_calendar_mode"] = dataset.temporal.calendar_mode
+        data.attrs["canonical_timezone_name"] = dataset.temporal.timezone_name
     return data
