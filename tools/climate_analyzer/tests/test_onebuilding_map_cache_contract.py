@@ -29,15 +29,15 @@ class OneBuildingMapCacheContractTests(unittest.TestCase):
         self.assertEqual(len(groups), snapshot_meta["station_group_count"])
         self.assertFalse(groups["station_group_id"].astype(str).duplicated().any())
 
-    def test_world_map_uses_snapshot_and_cached_folium_resource(self) -> None:
+    def test_world_map_uses_snapshot_and_fresh_folium_resource(self) -> None:
         app = APP_PATH.read_text(encoding="utf-8")
         self.assertIn("def _cached_station_group_snapshot(", app)
         self.assertIn("def _cached_grouped_station_catalog(", app)
-        self.assertIn("def _cached_station_map_resource(", app)
         self.assertIn("def _cached_station_group_options(", app)
         self.assertIn("uses_full_catalog_snapshot", app)
         self.assertIn("_cached_station_group_snapshot(catalog_version, catalog_sha256)", app)
-        self.assertIn("_cached_station_map_resource(", app)
+        self.assertNotIn("def _cached_station_map_resource(", app)
+        self.assertIn("station_catalog_fast_selectable_map(", app)
         self.assertIn("filtered_catalog = catalog", app)
 
     def test_snapshot_loader_is_lazy_map_dependency(self) -> None:
