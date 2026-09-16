@@ -28,7 +28,9 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
       - name: Apply deterministic 0.6.4 patch
-        run: python tools/climate_analyzer/scripts/apply_interannual_heatmaps_064.py
+        run: |
+          python tools/climate_analyzer/scripts/apply_interannual_heatmaps_064.py
+          python tools/climate_analyzer/scripts/fix_interannual_heatmap_wrapper_orientation_064.py
       - name: Compile changed Python modules
         run: |
           python -m py_compile \
