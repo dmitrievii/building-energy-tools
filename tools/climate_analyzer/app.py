@@ -475,12 +475,50 @@ def clear_active_climate_file() -> None:
 
 
 
-@st.cache_data(show_spinner=False, ttl=3600)
-def cached_geosphere_metadata() -> dict:
-    """Cache current GeoSphere metadata for one hour within a user session/runtime."""
-    from epw_climate_analyzer.geosphere import fetch_metadata
+GEOSPHERE_METADATA_CACHE_TTL_SECONDS = 18 * 60 * 60
 
-    return fetch_metadata()
+
+@st.cache_data(show_spinner=False, ttl=GEOSPHERE_METADATA_CACHE_TTL_SECONDS, max_entries=2)
+def _cached_geosphere_metadata_bundle(resource_id: str) -> tuple:
+    """Cache GeoSphere metadata and its normalized station capability index.
+
+    The resource id is part of the Streamlit cache key so a future resource
+    migration cannot silently reuse a metadata snapshot from another dataset.
+    The cache contains metadata only; no measurement endpoint is called here.
+    """
+    from epw_climate_analyzer.geosphere import (
+        GEOSPHERE_RESOURCE_ID,
+        fetch_metadata,
+        parse_parameters,
+        parse_stations,
+        station_catalog,
+        station_parameter_capability_index,
+        supported_parameter_mapping,
+    )
+
+    if str(resource_id) != GEOSPHERE_RESOURCE_ID:
+        raise ValueError(f"Unsupported GeoSphere metadata resource: {resource_id}")
+    metadata = fetch_metadata()
+    return (
+        metadata,
+        supported_parameter_mapping(metadata),
+        parse_stations(metadata),
+        station_catalog(metadata),
+        station_parameter_capability_index(metadata),
+        parse_parameters(metadata),
+    )
+
+
+def cached_geosphere_metadata_bundle() -> tuple:
+    """Return the current resource-keyed GeoSphere metadata bundle."""
+    from epw_climate_analyzer.geosphere import GEOSPHERE_RESOURCE_ID
+
+    return _cached_geosphere_metadata_bundle(GEOSPHERE_RESOURCE_ID)
+
+
+def cached_geosphere_metadata() -> dict:
+    """Compatibility accessor for callers that only need raw metadata."""
+    return cached_geosphere_metadata_bundle()[0]
 
 
 @st.cache_resource(show_spinner=False, max_entries=1)
@@ -1052,10 +1090,7 @@ def render_geosphere_source() -> None:
         "Timestamps remain real UTC historical timestamps; the data are not converted to an EPW typical year."
     )
     try:
-        metadata = cached_geosphere_metadata()
-        supported = supported_geosphere_parameter_mapping(metadata)
-        stations = parse_geosphere_stations(metadata)
-        catalog = geosphere_station_catalog(metadata)
+        metadata, supported, stations, catalog, capability_index, parameter_metadata = cached_geosphere_metadata_bundle()
     except Exception as exc:
         st.error(f"GeoSphere metadata could not be loaded or validated: {exc}")
         return
@@ -1100,9 +1135,24 @@ def render_geosphere_source() -> None:
     # Only the 530-provider-station table differs; pan/zoom remain browser-owned
     # and the map returns only an explicit station click to Streamlit.
     _ensure_map_dependencies()
-    map_groups = filtered[["station_id", "name", "state", "latitude", "longitude", "elevation_m"]].copy()
+    map_groups = filtered[[
+        "station_id", "name", "state", "latitude", "longitude", "elevation_m",
+        "valid_from", "valid_to", "station_type", "is_active", "has_global_radiation", "has_sunshine",
+    ]].copy()
     map_groups["station_group_id"] = map_groups["station_id"].astype(str)
-    map_groups["country"] = "Austria"
+
+    # Keep the shared Leaflet engine, but enrich only the GeoSphere marker label.
+    # Hover stays entirely client-side and therefore never triggers a metadata or
+    # measurement request. The station validity interval is shown as metadata,
+    # not as a claim of gap-free parameter coverage.
+    def geosphere_hover_name(row: pd.Series) -> str:
+        elevation = f"{float(row['elevation_m']):.0f} m" if pd.notna(row.get("elevation_m")) else "elevation unknown"
+        valid_from = str(row.get("valid_from", "")).split("T", 1)[0] or "unknown"
+        valid_to = str(row.get("valid_to", "")).split("T", 1)[0] or "unknown"
+        return f"{row['name']} · ID {row['station_id']} · {elevation} · validity {valid_from} → {valid_to}"
+
+    map_groups["name"] = map_groups.apply(geosphere_hover_name, axis=1)
+    map_groups["country"] = ""
     map_groups["region"] = map_groups["state"].fillna("").astype(str)
     map_groups["dataset"] = "GeoSphere klima-v2-10min"
     map_groups["climate_count"] = 1
@@ -1167,14 +1217,22 @@ def render_geosphere_source() -> None:
     station = station_by_id[selected_id]
     with right:
         st.markdown("#### Selected station")
+        def yes_no_unknown(value: bool | None) -> str:
+            return "Yes" if value is True else ("No" if value is False else "Unknown")
+
         st.dataframe(
             pd.DataFrame(
                 {
-                    "Field": ["Station", "ID", "Region", "Latitude", "Longitude", "Elevation", "Provider validity"],
+                    "Field": [
+                        "Station", "ID", "Region", "Latitude", "Longitude", "Elevation",
+                        "Station type", "Active", "Global radiation flag", "Sunshine flag", "Provider validity",
+                    ],
                     "Value": [
                         station.name, station.station_id, station.state,
                         f"{station.latitude:.5f}", f"{station.longitude:.5f}",
                         f"{station.elevation_m:.0f} m" if station.elevation_m is not None else "",
+                        station.station_type or "unknown", yes_no_unknown(station.is_active),
+                        yes_no_unknown(station.has_global_radiation), yes_no_unknown(station.has_sunshine),
                         f"{station.valid_from or 'unknown'} … {station.valid_to or 'unknown'}",
                     ],
                 }
@@ -1182,6 +1240,32 @@ def render_geosphere_source() -> None:
             hide_index=True,
             use_container_width=True,
         )
+
+        station_capabilities = capability_index.get(selected_id, {})
+        preview_rows = []
+        for name, spec in supported.items():
+            parameter = parameter_metadata.get(name)
+            status = station_capabilities.get(name, "resource-supported")
+            availability = (
+                "Confirmed by station metadata" if status == "station-confirmed"
+                else ("Unavailable at station" if status == "station-unavailable" else "Resource-supported")
+            )
+            preview_rows.append(
+                {
+                    "Variable": parameter.long_name if parameter and parameter.long_name else spec.description or spec.canonical_name,
+                    "Provider": name,
+                    "Unit": parameter.unit if parameter else "",
+                    "Availability": availability,
+                }
+            )
+        with st.expander("Measured-variable metadata", expanded=False):
+            st.dataframe(pd.DataFrame(preview_rows), hide_index=True, use_container_width=True)
+            st.caption(
+                "GeoSphere publishes an explicit station-level global-radiation flag. Other listed variables are supported "
+                "by the resource metadata; their actual numeric coverage for the selected period is verified only after load. "
+                "No per-parameter validity dates are inferred."
+            )
+
         st.markdown("#### Manual station selection")
         manual_id = st.selectbox(
             "Search-result stations",
@@ -1222,15 +1306,45 @@ def render_geosphere_source() -> None:
         "Select the measured GeoSphere fields required for this load. The checkbox is the single source of selection state; "
         "analysis pages are still enabled only when the returned interval contains actual numeric observations."
     )
+    station_capabilities = capability_index.get(selected_id, {})
+    selectable_supported = {
+        name: spec
+        for name, spec in supported.items()
+        if station_capabilities.get(name, "resource-supported") != "station-unavailable"
+    }
+    unavailable_names = [
+        name for name in supported
+        if station_capabilities.get(name, "resource-supported") == "station-unavailable"
+    ]
+    if unavailable_names:
+        st.info(
+            "Not selectable because station metadata reports the sensor unavailable: "
+            + ", ".join(unavailable_names)
+            + "."
+        )
+    if not selectable_supported:
+        st.warning("No supported GeoSphere variables are selectable for this station according to metadata.")
+        return
+
     variable_rows = pd.DataFrame(
         [
             {
                 "Selected": True,
-                "Measured variable": spec.description or spec.canonical_name,
+                "Measured variable": (
+                    parameter_metadata[name].long_name
+                    if name in parameter_metadata and parameter_metadata[name].long_name
+                    else spec.description or spec.canonical_name
+                ),
                 "Provider": name,
+                "Unit": parameter_metadata[name].unit if name in parameter_metadata else "",
+                "Availability": (
+                    "Station-confirmed"
+                    if station_capabilities.get(name) == "station-confirmed"
+                    else "Resource-supported"
+                ),
                 "Canonical field": spec.canonical_name,
             }
-            for name, spec in supported.items()
+            for name, spec in selectable_supported.items()
         ]
     )
     edited_variables = st.data_editor(
@@ -1238,11 +1352,13 @@ def render_geosphere_source() -> None:
         hide_index=True,
         use_container_width=True,
         num_rows="fixed",
-        disabled=["Measured variable", "Provider", "Canonical field"],
+        disabled=["Measured variable", "Provider", "Unit", "Availability", "Canonical field"],
         column_config={
             "Selected": st.column_config.CheckboxColumn("Load", width="small"),
             "Measured variable": st.column_config.TextColumn("Measured variable", width="medium"),
             "Provider": st.column_config.TextColumn("Provider parameter", width="small"),
+            "Unit": st.column_config.TextColumn("Unit", width="small"),
+            "Availability": st.column_config.TextColumn("Metadata availability", width="medium"),
             "Canonical field": st.column_config.TextColumn("Canonical field", width="large"),
         },
         key="geosphere_variable_editor",
