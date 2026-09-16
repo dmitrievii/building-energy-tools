@@ -42,6 +42,7 @@ def _ensure_map_dependencies() -> None:
     global pd, folium, FastMarkerCluster, MarkerCluster, st_folium
     global download_station_epw, filter_station_catalog
     global catalog_runtime_summary, load_production_station_catalog, load_station_catalog_manifest, station_provenance_text
+    global load_station_group_snapshot
 
     if _MAP_DEPENDENCIES_LOADED:
         return
@@ -57,6 +58,7 @@ def _ensure_map_dependencies() -> None:
         load_station_catalog_manifest,
         station_provenance_text,
     )
+    from epw_climate_analyzer.station_group_snapshot import load_station_group_snapshot
     _MAP_DEPENDENCIES_LOADED = True
 
 
@@ -496,6 +498,64 @@ def cached_station_catalog() -> pd.DataFrame:
 
     manifest = load_station_catalog_manifest()
     return _cached_station_catalog_by_identity(manifest.catalog_version, manifest.csv_sha256)
+
+
+def _onebuilding_map_cache_key(
+    catalog_identity: str,
+    search_text: str,
+    countries: list[str],
+    datasets: list[str],
+) -> str:
+    """Return a deterministic identity for one immutable OneBuilding map/filter state."""
+    country_key = ",".join(sorted(str(value).strip() for value in countries if str(value).strip()))
+    dataset_key = ",".join(sorted(str(value).strip() for value in datasets if str(value).strip()))
+    return f"{catalog_identity}|q={search_text.strip().casefold()}|c={country_key}|d={dataset_key}"
+
+
+@st.cache_resource(show_spinner=False, max_entries=4)
+def _cached_station_group_snapshot(catalog_version: str, catalog_sha256: str) -> pd.DataFrame:
+    """Load the release-time physical-station snapshot once per immutable catalog identity."""
+    return load_station_group_snapshot(catalog_version, catalog_sha256)
+
+
+@st.cache_resource(show_spinner=False, max_entries=4)
+def _cached_catalog_filter_options(catalog_identity: str, _catalog: pd.DataFrame) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """Cache stable country/dataset selector values for one reviewed catalog snapshot."""
+    countries = tuple(sorted(value for value in _catalog["country"].dropna().unique().tolist() if str(value).strip()))
+    datasets = tuple(sorted(value for value in _catalog["dataset"].dropna().unique().tolist() if str(value).strip()))
+    return countries, datasets
+
+
+@st.cache_resource(show_spinner=False, max_entries=8)
+def _cached_grouped_station_catalog(map_cache_key: str, _catalog: pd.DataFrame) -> pd.DataFrame:
+    """Cache filtered physical-station grouping; the unfiltered route uses the release snapshot."""
+    return grouped_station_catalog(_catalog)
+
+
+@st.cache_resource(show_spinner=False, max_entries=8)
+def _cached_station_map_resource(
+    map_cache_key: str,
+    detail_zoom_threshold: int,
+    _station_groups: pd.DataFrame,
+):
+    """Cache the immutable Folium map so station-click reruns do not rebuild ~26k markers."""
+    return station_catalog_fast_selectable_map(
+        _station_groups,
+        selected_group_id=None,
+        center=[20.0, 0.0],
+        zoom=2,
+        detail_zoom_threshold=int(detail_zoom_threshold),
+    )
+
+
+@st.cache_data(show_spinner=False, max_entries=8)
+def _cached_station_group_options(
+    map_cache_key: str,
+    limit: int,
+    _station_groups: pd.DataFrame,
+) -> dict[str, str]:
+    """Cache the manual station-group selector derived from the same immutable groups."""
+    return station_group_options_from_groups(_station_groups, limit=limit)
 
 
 def station_options_from_catalog(catalog: pd.DataFrame, limit: int = 10000) -> dict[str, str]:
@@ -1142,23 +1202,39 @@ def render_climate_file_source() -> None:
 
     col_filter1, col_filter2, col_filter3 = st.columns([2, 1, 1])
     search_text = col_filter1.text_input("Search station, country, region, dataset or ID", value="")
-    countries = sorted([value for value in catalog["country"].dropna().unique().tolist() if str(value).strip()])
-    datasets = sorted([value for value in catalog["dataset"].dropna().unique().tolist() if str(value).strip()])
+    catalog_version = str(catalog["catalog_version"].iloc[0])
+    catalog_sha256 = str(catalog["catalog_sha256"].iloc[0])
+    catalog_identity = f"{catalog_version}:{catalog_sha256}"
+    countries, datasets = _cached_catalog_filter_options(catalog_identity, catalog)
     selected_countries = col_filter2.multiselect("Countries", countries, default=[])
     selected_datasets = col_filter3.multiselect("Datasets", datasets, default=[])
-    filtered_catalog = filter_station_catalog(
-        catalog,
-        search_text=search_text,
-        countries=selected_countries if selected_countries else None,
-        datasets=selected_datasets if selected_datasets else None,
-    )
+    map_cache_key = _onebuilding_map_cache_key(catalog_identity, search_text, selected_countries, selected_datasets)
+    uses_full_catalog_snapshot = not search_text.strip() and not selected_countries and not selected_datasets
+    if uses_full_catalog_snapshot:
+        # Common world-map route: reuse the immutable reviewed catalog and a release-time
+        # physical-station snapshot. No 98k-row copy or live grouping is required.
+        filtered_catalog = catalog
+    else:
+        filtered_catalog = filter_station_catalog(
+            catalog,
+            search_text=search_text,
+            countries=selected_countries if selected_countries else None,
+            datasets=selected_datasets if selected_datasets else None,
+        )
 
     st.caption(f"Visible catalog records after filters: {len(filtered_catalog):,} of {len(catalog):,}")
     if filtered_catalog.empty:
         st.warning("No stations match the current filters.")
         return
 
-    station_groups_all = grouped_station_catalog(filtered_catalog)
+    if uses_full_catalog_snapshot:
+        try:
+            station_groups_all = _cached_station_group_snapshot(catalog_version, catalog_sha256)
+        except Exception as exc:
+            st.warning(f"Pre-grouped station snapshot is unavailable; rebuilding the map index once: {exc}")
+            station_groups_all = _cached_grouped_station_catalog(map_cache_key, filtered_catalog)
+    else:
+        station_groups_all = _cached_grouped_station_catalog(map_cache_key, filtered_catalog)
     if station_groups_all.empty:
         st.warning("No grouped station records are available for the current filters.")
         return
@@ -1226,12 +1302,10 @@ def render_climate_file_source() -> None:
             "Pan and zoom stay in the browser and do not trigger a Streamlit rerun; only station selection or an explicit reset returns control to the app."
         )
         map_state = st_folium(
-            station_catalog_fast_selectable_map(
+            _cached_station_map_resource(
+                f"{map_cache_key}|limit={int(st.session_state.get('station_selectable_cluster_limit', 50000))}|rows={len(station_groups_for_map)}",
+                int(st.session_state.get("station_detail_zoom_threshold", 8)),
                 station_groups_for_map,
-                selected_group_id=selected_group_id,
-                center=[20.0, 0.0],
-                zoom=2,
-                detail_zoom_threshold=int(st.session_state.get("station_detail_zoom_threshold", 8)),
             ),
             height=620,
             use_container_width=True,
@@ -1324,7 +1398,7 @@ def render_climate_file_source() -> None:
                 st.error(f"Station download failed: {exc}")
 
         st.markdown("#### Manual station selection")
-        station_group_options = station_group_options_from_groups(station_groups_all, limit=10000)
+        station_group_options = _cached_station_group_options(map_cache_key, 10000, station_groups_all)
         if station_group_options:
             selected_label = st.selectbox("Search-result station groups", list(station_group_options.keys()))
             if st.button("Use station group from list"):
