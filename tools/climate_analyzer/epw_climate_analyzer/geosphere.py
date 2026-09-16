@@ -608,10 +608,13 @@ def fetch_station_dataset(
         provider_parameters=selected.keys(),
         timeout_s=timeout_s,
     )
-    return build_canonical_station_dataset(
+    dataset = build_canonical_station_dataset(
         station=station,
         provider_frame=provider_frame,
         mapping=selected,
         request_reference="\n".join(request_references),
         request_count=len(request_references),
     )
+    dataset.data.attrs["canonical_requested_start"] = pd.Timestamp(start).isoformat()
+    dataset.data.attrs["canonical_requested_end"] = pd.Timestamp(end).isoformat()
+    return dataset
