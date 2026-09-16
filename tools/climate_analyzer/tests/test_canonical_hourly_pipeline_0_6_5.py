@@ -80,6 +80,7 @@ class CanonicalHourlyPipeline065Tests(unittest.TestCase):
         self.assertEqual(hourly.attrs["canonical_native_interval_minutes"], 60)
         self.assertEqual(hourly.attrs["canonical_source_interval_minutes"], 10)
         self.assertEqual(hourly.attrs["canonical_hourly_expected_source_records"], 6)
+        self.assertEqual(hourly.attrs["canonical_hourly_incomplete_source_hours"], 0)
         self.assertAlmostEqual(float(hourly.attrs["canonical_hourly_reduction_factor"]), 6.0)
 
     def test_missing_value_invalidates_only_that_variable_hour(self) -> None:
@@ -93,16 +94,16 @@ class CanonicalHourlyPipeline065Tests(unittest.TestCase):
         incomplete = hourly.attrs["canonical_hourly_incomplete_hours_by_variable"]
         self.assertEqual(int(incomplete["dry_bulb_temperature_c"]), 1)
         self.assertEqual(int(incomplete["liquid_precipitation_depth_mm"]), 0)
+        self.assertEqual(hourly.attrs["canonical_hourly_incomplete_source_hours"], 0)
 
-    def test_missing_timestamp_invalidates_the_incomplete_hour_without_zero_fill(self) -> None:
+    def test_missing_timestamp_removes_the_incomplete_hour_without_zero_fill(self) -> None:
         source = self._ten_minute_frame().drop(pd.Timestamp("2026-01-01T00:20:00Z"))
 
         hourly = canonical_hourly_analysis_frame(source, source_interval_minutes=10)
 
-        self.assertEqual(len(hourly), 1)
-        self.assertTrue(pd.isna(hourly.iloc[0]["dry_bulb_temperature_c"]))
-        self.assertTrue(pd.isna(hourly.iloc[0]["liquid_precipitation_depth_mm"]))
-        self.assertTrue(pd.isna(hourly.iloc[0]["global_horizontal_radiation_wh_m2"]))
+        self.assertTrue(hourly.empty)
+        self.assertEqual(hourly.attrs["canonical_hourly_incomplete_source_hours"], 1)
+        self.assertEqual(hourly.attrs["canonical_hourly_rows"], 0)
 
     def test_native_hourly_source_uses_no_resampling_semantic_change(self) -> None:
         index = pd.date_range("2026-01-01T00:00:00Z", periods=3, freq="h", name="timestamp")
