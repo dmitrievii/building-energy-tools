@@ -297,16 +297,18 @@ def _calendar_day_slot(index: pd.DatetimeIndex) -> pd.Index:
     """Return leap-neutral calendar-day numbers on a fixed 366-day reference year.
 
     Using a leap reference year keeps the same month/day at the same coordinate
-    in leap and non-leap source years.  Feb 29 is slot 60; Mar 1 is slot 61 in
+    in leap and non-leap source years. Feb 29 is slot 60; Mar 1 is slot 61 in
     every year, so an absent leap day becomes a real gap rather than shifting all
     later dates by one column.
     """
-    reference = pd.to_datetime(
-        {
-            "year": np.full(len(index), 2000, dtype=int),
-            "month": index.month.astype(int),
-            "day": index.day.astype(int),
-        }
+    reference = pd.DatetimeIndex(
+        pd.to_datetime(
+            {
+                "year": np.full(len(index), 2000, dtype=int),
+                "month": index.month.astype(int),
+                "day": index.day.astype(int),
+            }
+        )
     )
     return pd.Index(reference.dayofyear.astype(int), name="Day")
 
@@ -334,7 +336,7 @@ def temporal_heatmap_matrix(
     """Create a generic heat-map matrix from calendar period and comparison dimension.
 
     Heat-map period axes are always calendar coordinates: day 1...366 on a
-    leap-neutral reference year, ISO week 1...53, or month 1...12.  This prevents
+    leap-neutral reference year, ISO week 1...53, or month 1...12. This prevents
     multi-year chronological data from expanding a day×hour chart into thousands
     of columns and prevents Plotly from parsing ``MM-DD`` labels as dates.
 
@@ -345,7 +347,7 @@ def temporal_heatmap_matrix(
 
     For extensive quantities in a multi-year hour-of-day heat map, ``Total`` is
     first calculated independently for each source year/cell and then averaged
-    across years.  This avoids totals that scale merely with the number of years
+    across years. This avoids totals that scale merely with the number of years
     loaded while retaining one comparable calendar heat map.
     """
     if column not in df.columns:
