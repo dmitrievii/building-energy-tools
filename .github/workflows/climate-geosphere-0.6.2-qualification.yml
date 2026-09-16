@@ -27,6 +27,8 @@ jobs:
           python -m pip install pytest
       - name: Apply 0.6.2 patch
         run: python deployment/apply_geosphere_0_6_2.py
+      - name: Fix generated qualification test
+        run: python deployment/fix_geosphere_0_6_2_generated_test.py
       - name: Compile
         run: python -m compileall -q tools/climate_analyzer
       - name: Focused GeoSphere 0.6.2 tests
