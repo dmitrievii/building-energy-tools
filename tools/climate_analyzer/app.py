@@ -543,6 +543,26 @@ def _cached_station_group_options(
     return station_group_options_from_groups(_station_groups, limit=limit)
 
 
+@st.cache_data(show_spinner=False, max_entries=8)
+def _cached_station_marker_payload(
+    map_cache_key: str,
+    _station_groups: pd.DataFrame,
+) -> list[list[object]]:
+    """Cache the compact browser marker payload for one immutable map/filter state."""
+    return station_marker_payload(_station_groups)
+
+
+@st.cache_data(show_spinner=False, max_entries=512)
+def _cached_catalog_rows_for_station_group(
+    map_cache_key: str,
+    station_group_id: str,
+    _catalog: pd.DataFrame,
+    _station_group: object,
+) -> pd.DataFrame:
+    """Cache one station group's climate rows for the exact catalog/filter identity."""
+    return catalog_rows_for_station_group(_catalog, _station_group)
+
+
 def station_options_from_catalog(catalog: pd.DataFrame, limit: int = 10000) -> dict[str, str]:
     """Return cached station-list labels for the right-panel selectors."""
     options: dict[str, str] = {}
@@ -766,82 +786,75 @@ def station_catalog_fast_map(catalog: pd.DataFrame, center: list[float] | None =
     return fmap
 
 
-def station_catalog_fast_selectable_map(
+def station_marker_payload(station_groups: pd.DataFrame) -> list[list[object]]:
+    """Return the minimal stable marker payload needed by the browser map.
+
+    The right-hand station panel owns rich metadata.  The map therefore sends
+    only coordinates, a positional station index and a short label.  This keeps
+    the world-map transfer bounded while preserving exact click resolution.
+    """
+    payload: list[list[object]] = []
+    if station_groups.empty:
+        return payload
+    columns = list(station_groups.columns)
+    lat_idx = columns.index("latitude")
+    lon_idx = columns.index("longitude")
+    name_idx = columns.index("name")
+    country_idx = columns.index("country")
+    for station_idx, row in enumerate(station_groups.itertuples(index=False, name=None)):
+        try:
+            lat = float(row[lat_idx])
+            lon = float(row[lon_idx])
+        except (TypeError, ValueError):
+            continue
+        if pd.isna(lat) or pd.isna(lon):
+            continue
+        name = _map_text(row[name_idx])
+        country = _map_text(row[country_idx])
+        label = f"{name} — {country}" if country else name
+        payload.append([lat, lon, int(station_idx), label])
+    return payload
+
+
+def station_catalog_persistent_map_layers(
     station_groups: pd.DataFrame,
-    selected_group_id: str | None = None,
+    marker_payload: list[list[object]] | None = None,
     center: list[float] | None = None,
     zoom: int = 2,
     detail_zoom_threshold: int = 8,
-) -> folium.Map:
-    """Build one stable fast clustered map with selectable close-zoom markers.
+) -> tuple[folium.Map, folium.FeatureGroup]:
+    """Build a lightweight base map plus a dynamically managed marker layer.
 
-    The map uses Folium's FastMarkerCluster, preserving the fast aggregated
-    overview style from the previous patch. The important difference is that the
-    browser-side cluster itself now contains one marker per physical station
-    group. Leaflet automatically keeps the clustered overview at low zoom levels
-    and reveals individual violet station bubbles at close zoom levels. This
-    avoids the previous server-side switch between two different maps, which
-    could cause repeated reruns and make it difficult to zoom back out.
-
-    Parameters
-    ----------
-    station_groups:
-        One row per physical station group.
-    selected_group_id:
-        Currently selected station group. Used only for popup text; markers stay
-        violet to avoid unnecessary map redraw changes after every click.
-    center, zoom:
-        Preserved map view.
-    detail_zoom_threshold:
-        Leaflet disables clustering at this zoom level, exposing individual
-        clickable violet station bubbles.
+    ``streamlit-folium`` keeps the mounted Leaflet map alive when marker data are
+    supplied via ``feature_group_to_add``.  The feature-group string is compared
+    in the browser, so an unchanged station layer is not recreated after a
+    station click.  A fresh Python Folium base object is still used on every
+    rerun to avoid mutable-JS identifier reuse.
     """
     center_lat = float(station_groups["latitude"].mean()) if center is None and not station_groups.empty else (center[0] if center else 20.0)
     center_lon = float(station_groups["longitude"].mean()) if center is None and not station_groups.empty else (center[1] if center else 0.0)
-    fmap = folium.Map(location=[center_lat, center_lon], zoom_start=int(zoom), tiles="OpenStreetMap", control_scale=True)
-
-    data: list[list[object]] = []
-    for _, row in station_groups.dropna(subset=["latitude", "longitude"]).iterrows():
-        group_id = str(row.get("station_group_id", ""))
-        name = _map_text(row.get("name", ""))
-        country = _map_text(row.get("country", ""))
-        region = _map_text(row.get("region", ""))
-        dataset = _map_text(row.get("dataset", ""))
-        climate_count = int(row.get("climate_count", 1))
-        data.append([
-            float(row["latitude"]),
-            float(row["longitude"]),
-            group_id,
-            name,
-            country,
-            region,
-            dataset,
-            climate_count,
-        ])
-
+    fmap = folium.Map(
+        location=[center_lat, center_lon],
+        zoom_start=int(zoom),
+        tiles="OpenStreetMap",
+        control_scale=True,
+        prefer_canvas=True,
+    )
+    feature_group = folium.FeatureGroup(name="Climate stations", overlay=True, control=False)
+    data = marker_payload if marker_payload is not None else station_marker_payload(station_groups)
     callback = """
     function (row) {
-        var color = '#7c3aed';
         var marker = L.circleMarker(new L.LatLng(row[0], row[1]), {
             radius: 6,
-            color: color,
-            fillColor: color,
+            color: '#7c3aed',
+            fillColor: '#7c3aed',
             fillOpacity: 0.86,
             weight: 1
         });
-        var label = 'station_group_id=' + row[2] + ' | ' + row[3] + ' — ' + row[4];
-        marker.bindTooltip(label, {sticky: true});
-        var popupHtml = '<b>' + row[3] + '</b><br>' +
-            'Country: ' + row[4] + '<br>' +
-            'Region: ' + row[5] + '<br>' +
-            'Datasets: ' + row[6] + '<br>' +
-            'Available climates: ' + row[7] + '<br>' +
-            '<small>Click this station bubble, then choose the required climate in the right panel.</small>';
-        marker.bindPopup(popupHtml, {maxWidth: 360});
+        marker.bindTooltip('station_idx=' + row[2] + ' | ' + row[3], {sticky: true});
         return marker;
     }
     """
-
     if data:
         FastMarkerCluster(
             data,
@@ -851,15 +864,42 @@ def station_catalog_fast_selectable_map(
             spiderfyOnMaxZoom=True,
             showCoverageOnHover=False,
             chunkedLoading=True,
-        ).add_to(fmap)
+        ).add_to(feature_group)
+    return fmap, feature_group
 
-    folium.LayerControl().add_to(fmap)
+
+def station_catalog_fast_selectable_map(
+    station_groups: pd.DataFrame,
+    selected_group_id: str | None = None,
+    center: list[float] | None = None,
+    zoom: int = 2,
+    detail_zoom_threshold: int = 8,
+) -> folium.Map:
+    """Compatibility wrapper returning a standalone selectable Folium map."""
+    fmap, marker_group = station_catalog_persistent_map_layers(
+        station_groups,
+        center=center,
+        zoom=zoom,
+        detail_zoom_threshold=detail_zoom_threshold,
+    )
+    marker_group.add_to(fmap)
     return fmap
 
 
 def station_group_from_tooltip(station_groups: pd.DataFrame, tooltip: str | None) -> pd.Series | None:
     """Resolve a clicked grouped station tooltip to a station-group row."""
-    if not tooltip or "station_group_id=" not in tooltip:
+    if not tooltip:
+        return None
+    if "station_idx=" in tooltip:
+        raw = tooltip.split("station_idx=", 1)[1].split(" | ", 1)[0].strip()
+        try:
+            station_idx = int(raw)
+        except ValueError:
+            return None
+        if 0 <= station_idx < len(station_groups):
+            return station_groups.iloc[station_idx]
+        return None
+    if "station_group_id=" not in tooltip:
         return None
     group_id = tooltip.split("station_group_id=", 1)[1].split(" | ", 1)[0].strip()
     matches = station_groups[station_groups["station_group_id"].astype(str) == group_id]
@@ -1286,14 +1326,17 @@ def render_climate_file_source() -> None:
             "or closer, the same map reveals clickable violet station bubbles. "
             "Pan and zoom stay in the browser and do not trigger a Streamlit rerun; only station selection or an explicit reset returns control to the app."
         )
+        marker_payload = _cached_station_marker_payload(map_cache_key, station_groups_for_map)
+        base_map, marker_group = station_catalog_persistent_map_layers(
+            station_groups_for_map,
+            marker_payload=marker_payload,
+            center=[20.0, 0.0],
+            zoom=2,
+            detail_zoom_threshold=int(st.session_state.get("station_detail_zoom_threshold", 8)),
+        )
         map_state = st_folium(
-            station_catalog_fast_selectable_map(
-                station_groups_for_map,
-                selected_group_id=None,
-                center=[20.0, 0.0],
-                zoom=2,
-                detail_zoom_threshold=int(st.session_state.get("station_detail_zoom_threshold", 8)),
-            ),
+            base_map,
+            feature_group_to_add=marker_group,
             height=620,
             use_container_width=True,
             returned_objects=["last_object_clicked_tooltip"],
@@ -1311,7 +1354,12 @@ def render_climate_file_source() -> None:
 
     selected_group_matches = station_groups_all[station_groups_all["station_group_id"].astype(str) == str(selected_group_id)]
     selected_group = selected_group_matches.iloc[0] if not selected_group_matches.empty else station_groups_all.iloc[0]
-    selected_climates = catalog_rows_for_station_group(filtered_catalog, selected_group)
+    selected_climates = _cached_catalog_rows_for_station_group(
+        map_cache_key,
+        str(selected_group.get("station_group_id", "")),
+        filtered_catalog,
+        selected_group,
+    )
     if selected_climates.empty:
         selected_climates = filtered_catalog.head(1).copy()
 
