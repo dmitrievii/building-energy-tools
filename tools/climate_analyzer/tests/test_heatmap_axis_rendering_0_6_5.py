@@ -60,9 +60,13 @@ class HeatmapAxisRendering065Tests(unittest.TestCase):
                     self.assertLessEqual(max(int(value) for value in x), hi)
                     self.assertFalse(any(isinstance(value, str) and "-" in value for value in x))
 
-                    y = list(fig.data[0].y)
+                    y = [int(value) for value in fig.data[0].y]
                     if comparison == HEATMAP_COMPARE_HOUR:
-                        self.assertTrue(all(0 <= int(value) <= 23 for value in y))
+                        self.assertTrue(all(0 <= value <= 23 for value in y))
+                    elif period == "week":
+                        # 2010-01-01 belongs to ISO 2009-W53. Weekly heat maps
+                        # therefore use ISO week-year, not calendar year.
+                        self.assertEqual(y, [2009, 2010, 2018])
                     else:
                         self.assertEqual(y, [2010, 2018])
 
