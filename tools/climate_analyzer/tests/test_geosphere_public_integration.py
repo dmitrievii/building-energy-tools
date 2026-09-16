@@ -52,12 +52,18 @@ class HistoricalPreparationTests(unittest.TestCase):
         self.assertEqual(prepared["hour_of_day"].iloc[0], 0)
         self.assertEqual(prepared["month_index"].iloc[0], 7)
 
-    def test_psychrometric_derivation_uses_canonical_primary_observations(self) -> None:
-        prepared = prepare_historical_analysis_frame(sample_dataset(), include_psychrometrics=True, fallback_pressure_pa=96500.0)
+    def test_psychrometric_derivation_uses_hourly_canonical_primary_observations(self) -> None:
+        dataset = sample_dataset()
+        prepared = prepare_historical_analysis_frame(dataset, include_psychrometrics=True, fallback_pressure_pa=96500.0)
         self.assertIn("humidity_ratio_g_kg", prepared.columns)
         self.assertIn("wet_bulb_temperature_c", prepared.columns)
         self.assertTrue(prepared["humidity_ratio_g_kg"].notna().all())
-        self.assertEqual(prepared.attrs["canonical_native_interval_minutes"], 10)
+        self.assertEqual(len(dataset.data), 12)
+        self.assertEqual(dataset.temporal.native_interval_minutes, 10)
+        self.assertEqual(prepared.attrs["canonical_source_interval_minutes"], 10)
+        self.assertEqual(prepared.attrs["canonical_native_interval_minutes"], 60)
+        self.assertEqual(prepared.attrs["canonical_analysis_interval_minutes"], 60)
+        self.assertEqual(len(prepared), 2)
 
     def test_explicit_constant_pressure_replaces_measured_station_pressure(self) -> None:
         prepared = prepare_historical_analysis_frame(
