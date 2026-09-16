@@ -3194,17 +3194,148 @@ def render_canonical_data_quality(dataset, df: pd.DataFrame) -> None:
             st.caption(note)
 
 
+def render_historical_wind(df: pd.DataFrame) -> None:
+    """Render only measured-wind analyses supported by the historical frame."""
+    from epw_climate_analyzer.historical_capabilities import has_numeric_observations
+
+    st.header("Measured wind analysis")
+    has_speed = has_numeric_observations(df, "wind_speed_m_s")
+    has_direction = has_numeric_observations(df, "wind_direction_deg")
+    options: list[str] = []
+    if has_speed:
+        options.append("Wind speed explorer")
+    if has_speed and has_direction:
+        options.extend(["Wind rose", "Monthly wind rose", "Day-night wind rose"])
+    if has_direction:
+        options.append("Wind direction histogram")
+    if not options:
+        st.info("No measured wind observations are available in the selected interval.")
+        return
+
+    st.caption(
+        "GeoSphere historical wind values are measured source-interval observations. Wind-rose radii and histogram "
+        "frequencies are integrated in physical hours from the declared native cadence; missing timestamp gaps are not filled."
+    )
+    chart_group = st.selectbox("Analysis type", options, key="historical_wind_analysis")
+    if chart_group == "Wind speed explorer":
+        render_generic_variable_page(df, ["Wind speed"], "Wind speed", "Measured wind", None)
+    elif chart_group == "Wind rose":
+        fig = wind_rose_chart(df, "Measured wind rose")
+        render_plot(fig, wind_interpretation(df))
+    elif chart_group == "Monthly wind rose":
+        observed = sorted({int(v) for v in pd.to_numeric(df["month_index"], errors="coerce").dropna().tolist() if 1 <= int(v) <= 12})
+        month_names = [name for name, number in MONTHS.items() if number in observed]
+        if not month_names:
+            st.info("No valid month labels are available for the selected wind observations.")
+            return
+        month = st.selectbox("Month", month_names, key="historical_wind_month")
+        data = df[df["month_index"] == MONTHS[month]]
+        fig = wind_rose_chart(data, f"Measured wind rose: {month}")
+        render_plot(fig, wind_interpretation(data))
+    elif chart_group == "Day-night wind rose":
+        period = st.radio("Period", ["Day", "Night"], horizontal=True, key="historical_wind_daynight")
+        if period == "Day":
+            data = df[df["hour_of_day"].between(7, 19)]
+        else:
+            data = df[(df["hour_of_day"] < 7) | (df["hour_of_day"] > 19)]
+        fig = wind_rose_chart(data, f"Measured {period.lower()} wind rose")
+        render_plot(fig, wind_interpretation(data))
+    else:
+        fig = histogram_chart(df, "wind_direction_deg", "Measured wind direction histogram", "deg", bins=36)
+        render_plot(
+            fig,
+            "The histogram integrates the physical duration represented by each observed wind-direction record. "
+            "Direction is circular; the histogram should be read by sectors rather than by arithmetic averaging."
+        )
+
+
+def render_historical_solar(df: pd.DataFrame) -> None:
+    """Render measured horizontal solar analyses without fabricating DNI."""
+    from epw_climate_analyzer.historical_capabilities import has_numeric_observations, horizontal_irradiance_frame
+
+    st.header("Measured horizontal solar radiation")
+    solar = horizontal_irradiance_frame(df)
+    specs: list[tuple[str, str, str]] = []
+    if has_numeric_observations(df, "global_horizontal_radiation_wh_m2"):
+        specs.append(("Global horizontal irradiance", "global_horizontal_irradiance_w_m2", "global_horizontal_radiation_wh_m2"))
+    if has_numeric_observations(df, "diffuse_horizontal_radiation_wh_m2"):
+        specs.append(("Diffuse horizontal irradiance", "diffuse_horizontal_irradiance_w_m2", "diffuse_horizontal_radiation_wh_m2"))
+    if not specs:
+        st.info("No measured horizontal radiation observations are available in the selected interval.")
+        return
+
+    st.caption(
+        "GeoSphere cglo/chim are measured 10-minute mean horizontal irradiances. The adapter stores canonical interval "
+        "irradiation [Wh/m²]; this page converts it back to mean irradiance [W/m²] using the declared native interval. "
+        "DNI and plane-of-array routes are intentionally unavailable in measured historical mode."
+    )
+    options = ["Horizontal irradiance explorer", "Monthly horizontal irradiation"]
+    has_ghi = any(source == "global_horizontal_radiation_wh_m2" for _, _, source in specs)
+    has_temperature = has_numeric_observations(df, "dry_bulb_temperature_c")
+    if has_ghi and has_temperature:
+        options.extend(["Cooling-risk solar hours", "Temperature vs GHI"])
+    chart_group = st.selectbox("Analysis type", options, key="historical_solar_analysis")
+
+    if chart_group == "Horizontal irradiance explorer":
+        labels = [label for label, _, _ in specs]
+        selected = st.selectbox("Variable", labels, key="historical_solar_variable")
+        column = next(column for label, column, _ in specs if label == selected)
+        chart_type = st.selectbox("Chart type", ["Profile", "Duration curve", "Month-hour heat map", "Histogram"], key="historical_solar_chart")
+        if chart_type == "Profile":
+            aggregation = st.selectbox("Aggregation", ["Hourly", "Daily", "Weekly", "Monthly", "Seasonal"], index=0, key="historical_solar_aggregation")
+            fig = profile_ribbon_chart(solar, column, aggregation, f"{selected} — {aggregation.lower()}", "W/m²")
+        elif chart_type == "Duration curve":
+            fig = duration_chart(solar, column, f"{selected} duration curve", "W/m²", ascending=False)
+        elif chart_type == "Month-hour heat map":
+            fig = month_hour_heatmap(solar, column, f"{selected} month-hour heat map", "W/m²")
+        else:
+            bins = st.slider("Histogram bins", 10, 120, 40, key="historical_solar_bins")
+            fig = histogram_chart(solar, column, f"{selected} histogram", "W/m²", bins=bins)
+        render_plot(
+            fig,
+            "Values are measured mean horizontal irradiance over each source interval. Duration/frequency views use physical hours, not record counts."
+        )
+    elif chart_group == "Monthly horizontal irradiation":
+        monthly = pd.DataFrame(index=range(1, 13))
+        for label, _, source in specs:
+            monthly[label] = pd.to_numeric(df[source], errors="coerce").clip(lower=0).groupby(df["month_index"]).sum(min_count=1) / 1000.0
+        fig = stacked_monthly_bar(monthly, "Measured monthly horizontal irradiation", "kWh/m²")
+        render_plot(
+            fig,
+            "Monthly irradiation sums the measured interval energy [Wh/m²]. Missing source records are excluded rather than interpolated."
+        )
+    elif chart_group == "Cooling-risk solar hours":
+        t_threshold = st.slider("Temperature threshold [°C]", 15.0, 35.0, 24.0, 0.5, key="historical_solar_t_threshold")
+        ghi_threshold = st.slider("Mean GHI threshold [W/m²]", 50.0, 1000.0, 300.0, 25.0, key="historical_solar_ghi_threshold")
+        aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0, key="historical_solar_threshold_aggregation")
+        condition = (solar["dry_bulb_temperature_c"] > t_threshold) & (solar["global_horizontal_irradiance_w_m2"] > ghi_threshold)
+        counts = threshold_count_by_period(solar, condition, aggregation, label="hours")
+        fig = threshold_bar_chart(counts, "Measured cooling-risk solar hours")
+        render_plot(
+            fig,
+            "Hours combine measured outdoor temperature with measured mean global horizontal irradiance. Missing timestamp gaps do not contribute duration."
+        )
+    else:
+        fig = scatter_chart(
+            solar,
+            "dry_bulb_temperature_c",
+            "global_horizontal_irradiance_w_m2",
+            "month_index",
+            "Outdoor temperature vs measured global horizontal irradiance",
+            "Dry-bulb temperature [°C]",
+            "GHI [W/m²]",
+        )
+        render_plot(fig, "Each point combines coincident measured temperature and global horizontal irradiance at the source timestamp.")
+
+
 def render_canonical_climate_analysis(dataset) -> None:
     """Run existing source-agnostic analyses on a real historical canonical dataset."""
-    historical_pages = (
-        "Climate File Source",
-        "Temperature",
-        "Humidity and Psychrometrics",
-        "Time Series and Overlay",
-        "Data Quality",
-    )
+    from epw_climate_analyzer.historical_capabilities import available_historical_pages
+
+    historical_pages = available_historical_pages(dataset.data)
     if NAVIGATION_KEY not in st.session_state or st.session_state[NAVIGATION_KEY] not in historical_pages:
-        st.session_state[NAVIGATION_KEY] = "Temperature"
+        preferred = "Temperature" if "Temperature" in historical_pages else "Time Series and Overlay"
+        st.session_state[NAVIGATION_KEY] = preferred
 
     st.sidebar.markdown("### Explore")
     page = st.sidebar.radio(
@@ -3297,6 +3428,10 @@ def render_canonical_climate_analysis(dataset) -> None:
     elif page == "Humidity and Psychrometrics":
         st.caption("Measured-data moisture-threshold hours are integrated from the declared native interval; missing timestamp gaps are not counted as observed duration.")
         render_humidity(filtered_df, pressure_pa=active_pressure)
+    elif page == "Solar and Radiation":
+        render_historical_solar(filtered_df)
+    elif page == "Wind and Ventilation":
+        render_historical_wind(filtered_df)
     elif page == "Time Series and Overlay":
         render_time_series_overlay(full_df)
     else:
