@@ -21,6 +21,7 @@ RESAMPLE_RULES = {
     "Daily": "D",
     "Weekly": "W",
     "Monthly": "ME",
+    "Annual": "YE",
     "Seasonal": None,
 }
 

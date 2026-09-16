@@ -22,6 +22,8 @@ from typing import Literal
 
 import pandas as pd
 
+from .aggregations import period_total_series
+
 
 DegreeMetric = Literal["Degree-hours", "Degree-days"]
 DegreeAggregation = Literal["Daily", "Weekly", "Monthly", "Seasonal", "Annual"]
@@ -87,21 +89,17 @@ def _season_from_month(month: int) -> str:
 
 
 def _aggregate_table(table: pd.DataFrame, aggregation: DegreeAggregation) -> pd.DataFrame:
-    if aggregation == "Daily":
-        return table.resample("D").sum(min_count=1).dropna(how="all")
-    if aggregation == "Seasonal":
-        season = pd.Categorical(
-            [_season_from_month(int(ts.month)) for ts in table.index],
-            categories=SEASON_ORDER,
-            ordered=True,
-        )
-        grouped = table.groupby(season, observed=False).sum(min_count=1)
-        grouped.index.name = "Season"
-        return grouped.reindex(SEASON_ORDER).dropna(how="all")
-    rule = RESAMPLE_RULES.get(aggregation)
-    if rule is None:
-        raise ValueError(f"Unsupported degree-metric aggregation: {aggregation}")
-    return table.resample(rule).sum(min_count=1).dropna(how="all")
+    """Aggregate extensive degree metrics using the active global time basis."""
+    columns: list[pd.Series] = []
+    for column in table.columns:
+        aggregated = period_total_series(table[column], table, aggregation).rename(column)
+        columns.append(aggregated)
+    if not columns:
+        return table.iloc[0:0].copy()
+    result = pd.concat(columns, axis=1).dropna(how="all")
+    result.attrs.update(dict(table.attrs))
+    result.attrs["aggregation"] = aggregation
+    return result
 
 
 def _degree_contributions(
@@ -184,6 +182,7 @@ def degree_metric_table(
         )
         interval_hours = _native_interval_hours(df, interval_minutes)
         source = pd.DataFrame(index=df.index.copy())
+        source.attrs.update(dict(df.attrs))
         source["Heating degree-hours (HGT)"] = heating * interval_hours
         source["Cooling degree-hours (KGT)"] = cooling * interval_hours
         result = _aggregate_table(source, aggregation)
@@ -199,12 +198,10 @@ def degree_metric_table(
             cooling_limit_c=cooling_limit_c,
         )
         daily = pd.DataFrame(index=daily_temperature.index)
+        daily.attrs.update(dict(df.attrs))
         daily["Heating degree-days (HGT)"] = heating
         daily["Cooling degree-days (KGT)"] = cooling
-        if aggregation == "Daily":
-            result = daily.dropna(how="all")
-        else:
-            result = _aggregate_table(daily, aggregation)
+        result = _aggregate_table(daily, aggregation)
         result.attrs["unit"] = "K·d"
         result.attrs["method"] = "daily-mean"
     else:

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import pandas as pd
 
+from .aggregations import threshold_count_by_period
+
 
 def add_degree_metrics(
     df: pd.DataFrame,
@@ -185,7 +187,7 @@ def passive_strategy_table(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def passive_strategy_monthly(df: pd.DataFrame) -> pd.DataFrame:
-    """Return monthly hours for selected passive and HVAC strategy indicators."""
+    """Return monthly strategy hours using the active global temporal basis."""
     masks = {
         "Comfort": comfort_condition(df),
         "Natural ventilation": natural_ventilation_condition(df),
@@ -197,12 +199,15 @@ def passive_strategy_monthly(df: pd.DataFrame) -> pd.DataFrame:
         "Heating": df["dry_bulb_temperature_c"] < 18.0,
         "Cooling": df["dry_bulb_temperature_c"] > 26.0,
     }
-    out = pd.DataFrame(index=range(1, 13))
-    for label, mask in masks.items():
-        temp = pd.Series(mask.fillna(False).astype(int).values, index=df.index)
-        out[label] = temp.groupby(df["month_index"]).sum()
-    out.index.name = "month"
-    return out.fillna(0)
+    frames = [
+        threshold_count_by_period(df, mask, "Monthly", label=label)
+        for label, mask in masks.items()
+    ]
+    if not frames:
+        return pd.DataFrame()
+    out = pd.concat(frames, axis=1).fillna(0.0)
+    out.attrs.update(dict(frames[0].attrs))
+    return out
 
 
 def rejection_reasons_for_nv(
