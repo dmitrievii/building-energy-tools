@@ -1,0 +1,32 @@
+name: CLIMATE-GEOSPHERE-0.6.2 live provider smoke
+
+on:
+  push:
+    branches:
+      - climate-geosphere-0.6.2-live-provider-qualification
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: climate-geosphere-0.6.2-live-provider-qualification
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Climate Analyzer dependencies
+        run: python -m pip install -r tools/climate_analyzer/requirements.txt
+      - name: Run live GeoSphere precipitation/snow smoke
+        run: python deployment/geosphere_0_6_2_live_provider_smoke.py
+      - name: Upload evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: geosphere-0.6.2-live-provider-smoke
+          path: artifacts/geosphere-0.6.2-live-provider-smoke.json
+          if-no-files-found: error
+          retention-days: 14
