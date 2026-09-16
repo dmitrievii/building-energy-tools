@@ -72,8 +72,15 @@ class CommunityCloudMemoryHotfixTests(unittest.TestCase):
             "def grouped_station_catalog",
             app,
         )
+        # Manual station options must be derived from the compact physical-station
+        # table, never by copying/re-scanning the 98k-row climate catalog.  The
+        # current implementation additionally caches that compact derived mapping.
         self.assertIn(
-            "station_group_options_from_groups(station_groups_all, limit=10000)",
+            "_cached_station_group_options(map_cache_key, 10000, station_groups_all)",
+            app,
+        )
+        self.assertIn(
+            "return station_group_options_from_groups(_station_groups, limit=limit)",
             app,
         )
 
