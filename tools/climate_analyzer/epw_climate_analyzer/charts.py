@@ -9,7 +9,15 @@ import plotly.graph_objects as go
 from plotly.colors import sample_colorscale
 import psychrolib
 
-from .aggregations import aggregate_summary, aggregate_sum, calendar_matrix, duration_curve, monthly_box_data, monthly_hour_matrix, native_interval_hours
+from .aggregations import (
+    HEATMAP_COMPARE_HOUR,
+    aggregate_summary,
+    aggregate_sum,
+    duration_curve,
+    monthly_box_data,
+    native_interval_hours,
+    temporal_heatmap_matrix,
+)
 from .temporal_filtering import CALENDAR_PROFILE, CHRONOLOGICAL, display_period_labels, is_multiyear, time_basis
 from .psychrometrics import DEFAULT_PRESSURE_PA, psychrometric_rh_curves
 from .chart_theme import (
@@ -277,6 +285,47 @@ def percentile_band_chart(df: pd.DataFrame, column: str, aggregation: str, title
         fig.update_xaxes(categoryorder="array", categoryarray=MONTH_LABELS)
     return _apply_axis_constraints(fig, column=column, y_values=pd.concat([summary["p05"], summary["median"], summary["p95"]]))
 
+def temporal_heatmap_chart(
+    df: pd.DataFrame,
+    column: str,
+    row_group: str,
+    compare_across: str,
+    statistic: str,
+    title: str,
+    unit: str,
+    temperature_thresholds: tuple[float, float] | None = None,
+) -> go.Figure:
+    """Create a period × comparison-dimension heatmap with an explicit cell statistic."""
+    matrix = temporal_heatmap_matrix(
+        df,
+        column,
+        row_group=row_group,
+        compare_across=compare_across,
+        statistic=statistic,
+    )
+    if matrix.empty:
+        raise ValueError("No numeric observations remain for the selected heat-map configuration.")
+
+    period_label = str(row_group).strip().capitalize()
+    colorscale = _heatmap_colorscale(column, matrix.values, temperature_thresholds)
+    zmin, zmax = _axis_limits_for_column(column, matrix.values, pad_fraction=0.0)
+    fig = px.imshow(
+        matrix,
+        aspect="auto",
+        color_continuous_scale=colorscale,
+        zmin=zmin,
+        zmax=zmax,
+        labels=dict(x=period_label, y=compare_across, color=unit),
+        title=title,
+    )
+    if str(row_group).strip().lower() == "month" and all(isinstance(value, (int, np.integer)) for value in matrix.columns):
+        fig.update_xaxes(tickmode="array", tickvals=list(range(1, 13)), ticktext=MONTH_LABELS)
+    if compare_across == HEATMAP_COMPARE_HOUR:
+        fig.update_yaxes(range=[23, 0], autorangeoptions=dict(minallowed=0, maxallowed=23))
+    fig.update_layout(template=PLOT_TEMPLATE, margin=dict(l=40, r=20, t=70, b=45))
+    return fig
+
+
 def heatmap_chart(
     df: pd.DataFrame,
     column: str,
@@ -285,23 +334,17 @@ def heatmap_chart(
     unit: str,
     temperature_thresholds: tuple[float, float] | None = None,
 ) -> go.Figure:
-    """Create a period-by-hour heatmap with period on x-axis and hour on y-axis."""
-    matrix = calendar_matrix(df, column, row_group=row_group)
-    z = matrix.T
-    colorscale = _heatmap_colorscale(column, z.values, temperature_thresholds)
-    zmin, zmax = _axis_limits_for_column(column, z.values, pad_fraction=0.0)
-    fig = px.imshow(
-        z,
-        aspect="auto",
-        color_continuous_scale=colorscale,
-        zmin=zmin,
-        zmax=zmax,
-        labels=dict(x=row_group.capitalize(), y="Hour of day", color=unit),
+    """Create the legacy period-by-hour heatmap using mean cell values."""
+    return temporal_heatmap_chart(
+        df,
+        column,
+        row_group=row_group,
+        compare_across=HEATMAP_COMPARE_HOUR,
+        statistic="Mean",
         title=title,
+        unit=unit,
+        temperature_thresholds=temperature_thresholds,
     )
-    fig.update_layout(template=PLOT_TEMPLATE, margin=dict(l=40, r=20, t=70, b=45))
-    fig.update_yaxes(range=[23, 0], autorangeoptions=dict(minallowed=0, maxallowed=23))
-    return fig
 
 
 def month_hour_heatmap(
@@ -312,27 +355,27 @@ def month_hour_heatmap(
     aggfunc: str = "mean",
     temperature_thresholds: tuple[float, float] | None = None,
 ) -> go.Figure:
-    """Create a month/period-by-hour heatmap without folding chronological years."""
-    matrix = monthly_hour_matrix(df, column, aggfunc=aggfunc)
-    z = matrix.T
-    year_neutral = not (time_basis(df) == CHRONOLOGICAL and is_multiyear(df))
-    x_label = "Month" if year_neutral else "Period"
-    colorscale = _heatmap_colorscale(column, z.values, temperature_thresholds)
-    zmin, zmax = _axis_limits_for_column(column, z.values, pad_fraction=0.0)
-    fig = px.imshow(
-        z,
-        aspect="auto",
-        color_continuous_scale=colorscale,
-        zmin=zmin,
-        zmax=zmax,
-        labels=dict(x=x_label, y="Hour of day", color=unit),
+    """Create the legacy month-by-hour heatmap through the generic heatmap engine."""
+    statistic = {
+        "mean": "Mean",
+        "min": "Minimum",
+        "max": "Maximum",
+        "median": "Median",
+        "sum": "Total",
+    }.get(str(aggfunc).strip().lower())
+    if statistic is None:
+        raise ValueError(f"Unsupported month-hour aggregation: {aggfunc}")
+    return temporal_heatmap_chart(
+        df,
+        column,
+        row_group="month",
+        compare_across=HEATMAP_COMPARE_HOUR,
+        statistic=statistic,
         title=title,
+        unit=unit,
+        temperature_thresholds=temperature_thresholds,
     )
-    if year_neutral:
-        fig.update_xaxes(tickmode="array", tickvals=list(range(1, 13)), ticktext=MONTH_LABELS)
-    fig.update_yaxes(range=[23, 0], autorangeoptions=dict(minallowed=0, maxallowed=23))
-    fig.update_layout(template=PLOT_TEMPLATE, margin=dict(l=40, r=20, t=70, b=45))
-    return fig
+
 
 def duration_chart(df: pd.DataFrame, column: str, title: str, unit: str, ascending: bool = False) -> go.Figure:
     """Create a sorted duration curve on a physical-hours axis."""
