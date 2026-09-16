@@ -1621,7 +1621,17 @@ def render_generic_variable_page(
     temperature_thresholds: tuple[float, float] | None = None,
 ) -> None:
     """Render a generic variable explorer with chart-type and aggregation controls."""
-    variable_label = st.selectbox("Variable", variable_labels, index=variable_labels.index(default_variable))
+    available_labels = [
+        label
+        for label in variable_labels
+        if VARIABLES[label][0] in df.columns
+        and pd.to_numeric(df[VARIABLES[label][0]], errors="coerce").notna().any()
+    ]
+    if not available_labels:
+        st.info("No measured numeric variables required by this explorer are available in the loaded dataset.")
+        return
+    selected_default = default_variable if default_variable in available_labels else available_labels[0]
+    variable_label = st.selectbox("Variable", available_labels, index=available_labels.index(selected_default))
     column, unit = VARIABLES[variable_label]
     chart_types = [
         "Profile with min-mean-max ribbon",
@@ -3577,7 +3587,7 @@ def render_historical_solar(df: pd.DataFrame) -> None:
 
 def render_canonical_climate_analysis(dataset) -> None:
     """Run existing source-agnostic analyses on a real historical canonical dataset."""
-    from epw_climate_analyzer.historical_capabilities import available_historical_pages
+    from epw_climate_analyzer.historical_capabilities import available_historical_pages, has_numeric_observations
 
     historical_pages = available_historical_pages(dataset.data)
     if NAVIGATION_KEY not in st.session_state or st.session_state[NAVIGATION_KEY] not in historical_pages:
@@ -3617,7 +3627,13 @@ def render_canonical_climate_analysis(dataset) -> None:
                 "Custom pressure [Pa]", min_value=30000.0, max_value=120000.0, value=101325.0, step=100.0
             )
 
-    include_psychrometrics = page in {"Temperature", "Humidity and Psychrometrics", "Time Series and Overlay"}
+    can_derive_psychrometrics = (
+        has_numeric_observations(dataset.data, "dry_bulb_temperature_c")
+        and has_numeric_observations(dataset.data, "relative_humidity_pct")
+    )
+    include_psychrometrics = can_derive_psychrometrics and page in {
+        "Temperature", "Humidity and Psychrometrics", "Time Series and Overlay"
+    }
     _ensure_analysis_dependencies(include_solar=False, include_comparison=False)
     source_pressure = dataset.data.get("atmospheric_station_pressure_pa")
     valid_pressure = pd.to_numeric(source_pressure, errors="coerce").dropna() if source_pressure is not None else pd.Series(dtype=float)

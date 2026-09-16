@@ -83,6 +83,47 @@ class GeoSphere061CoverageTests(unittest.TestCase):
         self.assertIn('preferred = "Overview"', source)
 
 
+class GeoSphere061RuntimeCapabilityTests(unittest.TestCase):
+    def test_temperature_only_runtime_does_not_require_humidity(self) -> None:
+        source = APP.read_text(encoding="utf-8")
+        self.assertIn("can_derive_psychrometrics = (", source)
+        self.assertIn('has_numeric_observations(dataset.data, "dry_bulb_temperature_c")', source)
+        self.assertIn('has_numeric_observations(dataset.data, "relative_humidity_pct")', source)
+        self.assertIn("include_psychrometrics = can_derive_psychrometrics", source)
+
+    def test_generic_explorer_filters_to_actual_numeric_columns(self) -> None:
+        source = APP.read_text(encoding="utf-8")
+        self.assertIn("available_labels = [", source)
+        self.assertIn("VARIABLES[label][0] in df.columns", source)
+        self.assertIn("selected_default = default_variable if default_variable in available_labels", source)
+
+    def test_temperature_only_historical_preparation_is_valid_without_psychrometrics(self) -> None:
+        from epw_climate_analyzer.climate_model import (
+            CanonicalClimateDataset,
+            ClimateLocation,
+            ClimateProvenance,
+            ClimateTemporalMetadata,
+        )
+        from epw_climate_analyzer.historical import prepare_historical_analysis_frame
+
+        index = pd.date_range("2025-01-01T00:00:00Z", periods=6, freq="10min")
+        data = pd.DataFrame({"dry_bulb_temperature_c": [1, 2, 3, 4, 5, 6]}, index=index)
+        data.attrs["canonical_native_interval_minutes"] = 10
+        dataset = CanonicalClimateDataset(
+            climate_id="temp-only",
+            display_name="Temperature only",
+            data=data,
+            location=ClimateLocation(47.0, 15.0, 350.0, "Test", "", "Austria", "1"),
+            temporal=ClimateTemporalMetadata(10, "historical", "UTC", "unknown"),
+            provenance=ClimateProvenance("GeoSphere Austria", "test", "Dataset API JSON", "test"),
+        )
+        prepared = prepare_historical_analysis_frame(dataset, include_psychrometrics=False)
+        self.assertIn("dry_bulb_temperature_c", prepared.columns)
+        self.assertNotIn("humidity_ratio_g_kg", prepared.columns)
+        self.assertIn("Temperature", available_historical_pages(prepared))
+
+
+
 if __name__ == "__main__":
     unittest.main()
 
