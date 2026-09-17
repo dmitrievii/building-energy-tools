@@ -96,7 +96,18 @@ jobs:
           PY
 
       - name: Run security and scientific regression tests
-        run: python -m unittest discover -s tests -p 'test_*.py' -v
+        shell: bash
+        run: |
+          set -o pipefail
+          python -m unittest discover -s tests -p 'test_*.py' -v 2>&1 | tee /tmp/climate-regression.log
+
+      - name: Upload regression diagnostic log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: climate-regression-log-final-diagnosis
+          path: /tmp/climate-regression.log
+          if-no-files-found: ignore
 
       - name: Import scientific modules
         run: |
