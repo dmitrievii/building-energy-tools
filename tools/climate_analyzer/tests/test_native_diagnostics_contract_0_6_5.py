@@ -124,11 +124,18 @@ class NativeDiagnosticsUi065ContractTests(unittest.TestCase):
         self.assertIn("Source records in loaded interval", self.source)
         self.assertIn("canonical hourly analysis series", self.source)
 
-    def test_precipitation_ui_no_longer_calls_hourly_records_native_source_records(self) -> None:
-        self.assertIn("Precipitation-interval occurrence", self.source)
-        self.assertIn("Analysis intervals meeting threshold", self.source)
-        self.assertNotIn("Precipitation-record occurrence", self.source)
-        self.assertNotIn("Source records meeting threshold", self.source)
+    def test_precipitation_ui_uses_native_records_only_for_native_occurrence_metrics(self) -> None:
+        # 0.6.5 correctly stopped calling *hourly analysis rows* source records.
+        # 0.7 adds an explicit dual-resolution route, so source-record wording is
+        # again correct for the provider-native occurrence metric only.
+        self.assertIn("Precipitation-record occurrence", self.source)
+        self.assertIn("Source records meeting threshold", self.source)
+        self.assertIn("provider/source records at the active native cadence", self.source)
+        self.assertIn("record-occurrence metric, not rainfall duration", self.source)
+        self.assertIn("Dual-resolution semantics", self.source)
+        self.assertIn("true native-interval precipitation extremes", self.source)
+        self.assertNotIn("Precipitation-interval occurrence", self.source)
+        self.assertNotIn("Analysis intervals meeting threshold", self.source)
 
 
 if __name__ == "__main__":
