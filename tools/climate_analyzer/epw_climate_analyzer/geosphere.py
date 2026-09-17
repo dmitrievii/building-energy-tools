@@ -15,6 +15,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import math
+import time
 from typing import Any, Iterable, Mapping
 from urllib.parse import urlencode, urlparse
 
@@ -40,11 +41,19 @@ GEOSPHERE_DOI = "https://doi.org/10.60669/8fya-7x87"
 GEOSPHERE_LICENSE = "Creative Commons Attribution 4.0 International"
 GEOSPHERE_NATIVE_INTERVAL_MINUTES = 10
 
-# The official API limit is larger, but a lower local cap keeps public app
+# The official API limit is larger, but a lower local hard cap keeps public app
 # requests bounded and leaves margin for provider-side changes and null values.
 MAX_REQUEST_DATAPOINTS = 200_000
+# Normal planning deliberately stays below the hard cap. Long public requests
+# are more reliable as moderately sized batches, while adaptive splitting below
+# handles occasional provider-side slow responses without restarting the load.
+DEFAULT_BATCH_DATAPOINTS = 100_000
 MAX_RESPONSE_BYTES = 24 * 1024 * 1024
 DEFAULT_TIMEOUT_SECONDS = 60
+MAX_TRANSIENT_ATTEMPTS = 2
+RETRY_BACKOFF_BASE_SECONDS = 0.5
+MAX_ADAPTIVE_SPLIT_DEPTH = 4
+TRANSIENT_HTTP_STATUS_CODES = frozenset({408, 425, 429, 500, 502, 503, 504})
 USER_AGENT = "Building-Energy-Tools-Climate-Analyzer/0.1 GeoSphere-adapter"
 
 
@@ -463,7 +472,7 @@ def plan_data_queries(
     end: pd.Timestamp,
     provider_parameters: Iterable[str],
     *,
-    max_datapoints: int = MAX_REQUEST_DATAPOINTS,
+    max_datapoints: int = DEFAULT_BATCH_DATAPOINTS,
 ) -> list[dict[str, str]]:
     """Split one inclusive station interval into bounded 10-minute requests.
 
@@ -485,6 +494,10 @@ def plan_data_queries(
         raise ValueError(f"Unsupported GeoSphere parameters: {', '.join(unknown)}")
     if int(max_datapoints) <= 0:
         raise ValueError("GeoSphere batch datapoint limit must be positive.")
+    if int(max_datapoints) > MAX_REQUEST_DATAPOINTS:
+        raise ValueError(
+            f"GeoSphere batch datapoint limit must not exceed the local hard cap of {MAX_REQUEST_DATAPOINTS:,}."
+        )
 
     start_ts = pd.Timestamp(start)
     end_ts = pd.Timestamp(end)
@@ -512,6 +525,106 @@ def _query_reference(query: Mapping[str, str]) -> str:
     return f"{GEOSPHERE_ENDPOINT}?{urlencode(dict(query))}"
 
 
+def _http_status_from_exception(exc: BaseException) -> int | None:
+    if not isinstance(exc, requests.HTTPError):
+        return None
+    response = getattr(exc, "response", None)
+    try:
+        return int(response.status_code) if response is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _is_transient_provider_error(exc: BaseException) -> bool:
+    """Classify only retry-safe transport/provider failures as transient."""
+    if isinstance(exc, (requests.Timeout, requests.ConnectionError, requests.exceptions.ChunkedEncodingError)):
+        return True
+    status = _http_status_from_exception(exc)
+    return status in TRANSIENT_HTTP_STATUS_CODES if status is not None else False
+
+
+def _is_response_size_error(exc: BaseException) -> bool:
+    return isinstance(exc, ValueError) and "response exceeds the local response-size limit" in str(exc)
+
+
+def _split_data_query(query: Mapping[str, str]) -> tuple[dict[str, str], dict[str, str]] | None:
+    """Bisect one inclusive query on the native 10-minute grid without overlap."""
+    parameters = tuple(item for item in str(query.get("parameters", "")).split(",") if item)
+    station_id = str(query.get("station_ids", "")).strip()
+    if not station_id or not parameters:
+        raise ValueError("GeoSphere query is missing station or parameter identity.")
+    start = pd.Timestamp(str(query.get("start", "")), tz="UTC")
+    end = pd.Timestamp(str(query.get("end", "")), tz="UTC")
+    interval = pd.Timedelta(minutes=GEOSPHERE_NATIVE_INTERVAL_MINUTES)
+    steps = int(math.floor((end - start) / interval)) + 1
+    if steps <= 1:
+        return None
+    left_steps = max(1, steps // 2)
+    left_end = start + interval * (left_steps - 1)
+    right_start = left_end + interval
+    if right_start > end:
+        return None
+    return (
+        build_data_query(station_id, start, left_end, parameters),
+        build_data_query(station_id, right_start, end, parameters),
+    )
+
+
+def _fetch_query_with_resilience(
+    query: Mapping[str, str],
+    *,
+    timeout_s: int,
+    split_depth: int = 0,
+) -> list[tuple[dict[str, Any], dict[str, str]]]:
+    """Fetch one planned query, retrying transient failures and splitting only that batch.
+
+    Permanent HTTP 4xx failures, redirects, invalid JSON and malformed provider
+    payloads are not retried or hidden. A timeout/connection/429/5xx failure is
+    retried once at the same size; if it still fails, the failing query is
+    bisected on the native cadence and each child is attempted independently.
+    Deterministic local response-size failures skip the same-size retry and go
+    directly to adaptive splitting.
+    """
+    normalized_query = {str(key): str(value) for key, value in query.items()}
+    last_error: BaseException | None = None
+    for attempt in range(1, MAX_TRANSIENT_ATTEMPTS + 1):
+        try:
+            payload = _bounded_get_json(GEOSPHERE_ENDPOINT, params=normalized_query, timeout_s=timeout_s)
+            return [(payload, normalized_query)]
+        except Exception as exc:
+            last_error = exc
+            transient = _is_transient_provider_error(exc)
+            size_error = _is_response_size_error(exc)
+            if not transient and not size_error:
+                raise
+            if size_error:
+                break
+            if attempt < MAX_TRANSIENT_ATTEMPTS:
+                time.sleep(RETRY_BACKOFF_BASE_SECONDS * (2 ** (attempt - 1)))
+                continue
+            break
+
+    if split_depth >= MAX_ADAPTIVE_SPLIT_DEPTH:
+        raise RuntimeError(
+            f"GeoSphere batch failed after retries and {split_depth} adaptive split level(s): "
+            f"{normalized_query.get('start')} → {normalized_query.get('end')}."
+        ) from last_error
+
+    children = _split_data_query(normalized_query)
+    if children is None:
+        raise RuntimeError(
+            f"GeoSphere single-interval batch failed after retries: "
+            f"{normalized_query.get('start')} → {normalized_query.get('end')}."
+        ) from last_error
+
+    completed: list[tuple[dict[str, Any], dict[str, str]]] = []
+    for child in children:
+        completed.extend(
+            _fetch_query_with_resilience(child, timeout_s=timeout_s, split_depth=split_depth + 1)
+        )
+    return completed
+
+
 def fetch_station_provider_frame(
     *,
     station_id: str,
@@ -520,20 +633,23 @@ def fetch_station_provider_frame(
     provider_parameters: Iterable[str],
     timeout_s: int = DEFAULT_TIMEOUT_SECONDS,
 ) -> tuple[pd.DataFrame, tuple[str, ...]]:
-    """Fetch and concatenate all bounded batches for one historical interval.
+    """Fetch and concatenate resilient bounded batches for one historical interval.
 
-    Missing observations remain missing. Only structural corruption is rejected:
-    duplicate timestamps across batches, an empty aggregate response, or malformed
-    provider payloads. Historical gaps are not fabricated or interpolated.
+    Missing observations remain missing. Successful batches are retained when a
+    neighbouring batch times out; only the failing batch is retried/split.
+    Structural corruption remains fail-closed: duplicate timestamps, an empty
+    aggregate response, malformed payloads or permanent provider errors are not
+    silently repaired or interpolated.
     """
     parameters = tuple(dict.fromkeys(str(item).strip() for item in provider_parameters if str(item).strip()))
     queries = plan_data_queries(station_id, start, end, parameters)
     frames: list[pd.DataFrame] = []
     references: list[str] = []
     for query in queries:
-        payload = _bounded_get_json(GEOSPHERE_ENDPOINT, params=query, timeout_s=timeout_s)
-        frames.append(parse_station_data_response(payload, station_id, parameters))
-        references.append(_query_reference(query))
+        completed = _fetch_query_with_resilience(query, timeout_s=timeout_s)
+        for payload, successful_query in completed:
+            frames.append(parse_station_data_response(payload, station_id, parameters))
+            references.append(_query_reference(successful_query))
 
     if not frames:
         raise ValueError("GeoSphere batching produced no requests.")
