@@ -7,6 +7,7 @@ import pandas as pd
 from epw_climate_analyzer.canonical_hourly import canonical_hourly_analysis_frame
 from epw_climate_analyzer.climate_model import aggregation_semantics_for
 from epw_climate_analyzer.geosphere import FIELD_SPEC_BY_PROVIDER
+from epw_climate_analyzer.historical_capabilities import available_historical_pages
 from epw_climate_analyzer.precipitation import (
     aggregate_precipitation_duration,
     annual_native_precipitation_peaks,
@@ -22,6 +23,12 @@ class PrecipitationSnow07Tests(unittest.TestCase):
         self.assertEqual(spec.canonical_name, "precipitation_duration_min")
         self.assertEqual(spec.expected_units, ("min",))
         self.assertEqual(aggregation_semantics_for("precipitation_duration_min"), "sum")
+
+    def test_duration_only_historical_load_enables_precipitation_page(self) -> None:
+        index = pd.date_range("2024-01-01T00:00:00Z", periods=6, freq="10min")
+        frame = pd.DataFrame({"precipitation_duration_min": [0.0, 0.0, 2.0, 0.0, 1.0, 0.0]}, index=index)
+        frame.attrs["canonical_native_interval_minutes"] = 10
+        self.assertIn("Precipitation and Snow", available_historical_pages(frame))
 
     def test_hourly_rrm_sum_is_conserved_and_variable_local_missingness_stays_strict(self) -> None:
         index = pd.date_range("2024-06-01T00:00:00Z", periods=12, freq="10min")
