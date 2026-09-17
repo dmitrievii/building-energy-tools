@@ -24,6 +24,15 @@ class PrecipitationSnowUiContract07Tests(unittest.TestCase):
         ):
             self.assertIn(label, self.source)
 
+    def test_snow_explorer_and_native_snow_metrics_have_separate_capabilities(self) -> None:
+        self.assertIn("hourly_snow_available", self.source)
+        self.assertIn("native_snow_available", self.source)
+        self.assertIn('if hourly_snow_available:\n        options.append("Snow depth explorer")', self.source)
+        self.assertIn(
+            'if native_snow_available:\n        options.extend(["Snow-cover duration", "Snow-season indices"])',
+            self.source,
+        )
+
     def test_rrm_duration_is_explicitly_not_inferred_from_rr(self) -> None:
         self.assertIn("GeoSphere rrm where available", self.source)
         self.assertIn("It is never inferred from precipitation depth rr", self.source)

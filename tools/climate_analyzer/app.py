@@ -3239,7 +3239,11 @@ def render_precipitation(df: pd.DataFrame, native_df: pd.DataFrame | None = None
         "precipitation_duration_min" in df.columns
         and pd.to_numeric(df["precipitation_duration_min"], errors="coerce").notna().any()
     )
-    snow_available = (
+    hourly_snow_available = (
+        "snow_depth_cm" in df.columns
+        and pd.to_numeric(df["snow_depth_cm"], errors="coerce").notna().any()
+    )
+    native_snow_available = (
         "snow_depth_cm" in source_df.columns
         and pd.to_numeric(source_df["snow_depth_cm"], errors="coerce").notna().any()
     )
@@ -3251,8 +3255,10 @@ def render_precipitation(df: pd.DataFrame, native_df: pd.DataFrame | None = None
         options.append("Precipitation-record occurrence")
     if duration_available:
         options.append("Measured precipitation duration")
-    if snow_available:
-        options.extend(["Snow depth explorer", "Snow-cover duration", "Snow-season indices"])
+    if hourly_snow_available:
+        options.append("Snow depth explorer")
+    if native_snow_available:
+        options.extend(["Snow-cover duration", "Snow-season indices"])
     if not options:
         st.info("The loaded climate interval does not contain usable liquid-precipitation or snow-depth observations.")
         return
