@@ -51,6 +51,13 @@ class GeoSpherePrecipSnowLiveSmoke071ContractTests(unittest.TestCase):
         self.assertIn("HOURLY_REQUIRED_CANONICAL", self.probe)
         self.assertNotIn('PREFERRED_STATION_IDS = ("11240",)', self.probe)
 
+    def test_browser_smoke_explicitly_selects_filtered_station(self) -> None:
+        self.assertIn("async function selectStationFromList", self.browser)
+        self.assertIn("Search-result stations", self.browser)
+        self.assertIn("Use station from list", self.browser)
+        self.assertIn("station_selection_option", self.browser)
+        self.assertNotIn("await waitForText(appFrame, `ID ${fixture.station_id}`);", self.browser)
+
     def test_browser_smoke_drives_exact_fixture_dates(self) -> None:
         self.assertIn("async function setDateInput", self.browser)
         self.assertIn("From date (UTC)", self.browser)

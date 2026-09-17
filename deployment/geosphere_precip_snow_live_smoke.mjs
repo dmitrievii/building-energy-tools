@@ -206,6 +206,69 @@ async function setDateInput(frame, label, iso) {
   throw new Error(`Date input ${label} did not accept ${iso}; observed value=${lastValue}`);
 }
 
+async function selectStationFromList(page, frame, fixture, timeoutMs = 60_000) {
+  await waitForText(frame, 'Manual station selection', timeoutMs);
+
+  let combo = frame.getByRole('combobox', { name: 'Search-result stations', exact: true }).first();
+  if (!(await combo.count().catch(() => 0))) {
+    combo = frame.getByLabel('Search-result stations', { exact: true }).first();
+  }
+  if (!(await combo.count().catch(() => 0))) {
+    throw new Error('Could not locate Search-result stations selectbox.');
+  }
+
+  await combo.click({ timeout: 15_000 });
+  await sleep(300);
+  const targetText = `ID ${fixture.station_id}`;
+  let option = frame.getByRole('option').filter({ hasText: targetText }).last();
+  if (!(await option.count().catch(() => 0))) {
+    option = frame.locator('[data-baseweb="menu"] li').filter({ hasText: targetText }).last();
+  }
+  if (!(await option.count().catch(() => 0))) {
+    throw new Error(`Search-result stations contains no option for ${targetText}.`);
+  }
+  const selectedLabel = (await option.innerText().catch(() => '')).trim();
+  await option.click({ timeout: 15_000 });
+  await sleep(500);
+
+  const useButton = frame.getByRole('button', { name: 'Use station from list', exact: true }).first();
+  if (!(await useButton.count().catch(() => 0))) {
+    throw new Error('Could not locate Use station from list button.');
+  }
+  await useButton.click({ timeout: 15_000 });
+
+  const started = performance.now();
+  while (performance.now() - started < timeoutMs) {
+    let currentFrame;
+    try {
+      currentFrame = await waitForFrameContaining(page, 'Selected station', 5_000);
+    } catch {
+      await sleep(300);
+      continue;
+    }
+    let currentCombo = currentFrame.getByRole('combobox', { name: 'Search-result stations', exact: true }).first();
+    if (!(await currentCombo.count().catch(() => 0))) {
+      currentCombo = currentFrame.getByLabel('Search-result stations', { exact: true }).first();
+    }
+    if (await currentCombo.count().catch(() => 0)) {
+      const rendered = [
+        await currentCombo.innerText().catch(() => ''),
+        await currentCombo.textContent().catch(() => ''),
+        await currentCombo.inputValue().catch(() => ''),
+      ].join(' ');
+      if (rendered.includes(targetText) || rendered.includes(fixture.station_name)) {
+        return { frame: currentFrame, selectedLabel, rendered: rendered.trim() };
+      }
+    }
+    const selectedText = await bodyText(currentFrame);
+    if (selectedText.includes('Selected station') && selectedText.includes(fixture.station_name)) {
+      return { frame: currentFrame, selectedLabel, rendered: fixture.station_name };
+    }
+    await sleep(400);
+  }
+  throw new Error(`Station selection did not settle on ${fixture.station_name} (${targetText}).`);
+}
+
 async function analysisCombo(frame) {
   const byRole = frame.getByRole('combobox', { name: 'Analysis type', exact: true });
   if (await byRole.count()) return byRole.first();
@@ -304,8 +367,11 @@ try {
 
   await fillInput(appFrame, 'Search GeoSphere station', fixture.station_id);
   await waitForText(appFrame, 'Visible GeoSphere stations after filters:');
-  await waitForText(appFrame, `ID ${fixture.station_id}`);
+  const stationSelection = await selectStationFromList(page, appFrame, fixture);
+  appFrame = stationSelection.frame;
   report.checks.station_selected = `${fixture.station_name} (${fixture.station_id})`;
+  report.checks.station_selection_option = stationSelection.selectedLabel;
+  report.checks.station_selection_rendered = stationSelection.rendered;
 
   const fromValue = await setDateInput(appFrame, 'From date (UTC)', fixture.ui_start_date);
   const throughValue = await setDateInput(appFrame, 'Through date (UTC)', fixture.ui_end_date);
