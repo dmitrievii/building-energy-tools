@@ -43,35 +43,39 @@ async function waitForText(frame, text, timeoutMs = 90_000) {
 }
 
 async function clickChoice(frame, name) {
+  // Match the strategy used by the stable general live audit: click the
+  // visible Streamlit label text first. Clicking the hidden BaseWeb radio input
+  // can change DOM checked-state without sending Streamlit's widget event.
+  const exactText = frame.getByText(name, { exact: true });
+  if (await exactText.count()) {
+    await exactText.last().click({ timeout: 15_000 });
+    await sleep(500);
+    return;
+  }
+
+  const label = frame.locator('label').filter({ hasText: name });
+  if (await label.count()) {
+    await label.last().click({ timeout: 15_000 });
+    await sleep(500);
+    return;
+  }
+
   const radio = frame.getByRole('radio', { name, exact: true });
   if (await radio.count()) {
     await radio.first().click({ timeout: 15_000 });
+    await sleep(500);
     return;
   }
-
-  // Streamlit's horizontal st.radio currently renders a clickable <label>
-  // containing a visually custom radio input and text. The accessible-name
-  // relationship can vary across Streamlit releases, so preserve a DOM-label
-  // fallback rather than binding this operational smoke to one ARIA shape.
-  const label = frame.locator('label').filter({ hasText: name });
-  if (await label.count()) {
-    const nestedRadio = label.last().locator('input[type="radio"]');
-    if (await nestedRadio.count()) {
-      await nestedRadio.first().click({ timeout: 15_000, force: true });
-    } else {
-      await label.last().click({ timeout: 15_000 });
-    }
-    return;
-  }
-
   const tab = frame.getByRole('tab', { name, exact: true });
   if (await tab.count()) {
     await tab.first().click({ timeout: 15_000 });
+    await sleep(500);
     return;
   }
-  const text = frame.getByText(name, { exact: false });
-  if (await text.count()) {
-    await text.last().click({ timeout: 15_000 });
+  const fuzzyText = frame.getByText(name, { exact: false });
+  if (await fuzzyText.count()) {
+    await fuzzyText.last().click({ timeout: 15_000 });
+    await sleep(500);
     return;
   }
   throw new Error(`Could not locate choice: ${name}`);
@@ -112,7 +116,7 @@ async function setDateInput(frame, label, iso) {
     await input.fill(candidate, { timeout: 15_000 });
     await input.press('Enter').catch(() => {});
     await input.press('Tab').catch(() => {});
-    await sleep(1_200); // Streamlit reruns after a committed date change.
+    await sleep(1_200);
     const refreshed = await labelledInput(frame, label);
     lastValue = await refreshed.inputValue().catch(() => null);
     if (dateValueMatches(lastValue, iso)) return lastValue;
