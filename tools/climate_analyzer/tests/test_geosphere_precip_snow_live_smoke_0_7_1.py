@@ -39,7 +39,26 @@ class GeoSpherePrecipSnowLiveSmoke071ContractTests(unittest.TestCase):
         self.assertIn("prepare_historical_analysis_frame", self.probe)
         self.assertIn("annual_precipitation_indices", self.probe)
         self.assertIn("snow_season_indices", self.probe)
-        self.assertIn('PREFERRED_STATION_IDS = ("11240",)', self.probe)
+        self.assertIn("PREFERRED_STATION_NAMES", self.probe)
+        self.assertIn("MAX_TOTAL_INTERVAL_ATTEMPTS", self.probe)
+
+    def test_probe_uses_bounded_winter_windows_not_current_default_period(self) -> None:
+        self.assertIn("def _winter_intervals", self.probe)
+        self.assertIn("WINTER_WINDOW_DAYS", self.probe)
+        self.assertIn("WINTER_YEARS_BACK", self.probe)
+        self.assertIn("historical winter", self.doc)
+        self.assertIn('"hourly_snow_available"', self.probe)
+        self.assertIn("HOURLY_REQUIRED_CANONICAL", self.probe)
+        self.assertNotIn('PREFERRED_STATION_IDS = ("11240",)', self.probe)
+
+    def test_browser_smoke_drives_exact_fixture_dates(self) -> None:
+        self.assertIn("async function setDateInput", self.browser)
+        self.assertIn("From date (UTC)", self.browser)
+        self.assertIn("Through date (UTC)", self.browser)
+        self.assertIn("fixture.ui_start_date", self.browser)
+        self.assertIn("fixture.ui_end_date", self.browser)
+        self.assertIn("rendered_start", self.browser)
+        self.assertIn("rendered_end", self.browser)
 
     def test_browser_smoke_exercises_new_0_7_analysis_families(self) -> None:
         expected = (
@@ -58,6 +77,12 @@ class GeoSpherePrecipSnowLiveSmoke071ContractTests(unittest.TestCase):
         self.assertIn("Load measured GeoSphere interval", self.browser)
         self.assertIn("provider-fixture.json", self.workflow)
         self.assertIn("retention-days: 14", self.workflow)
+
+    def test_hourly_snow_explorer_is_conditional_but_native_snow_routes_are_required(self) -> None:
+        self.assertIn("if (fixture.hourly_snow_available) expectedOptions.push('Snow depth explorer')", self.browser)
+        self.assertIn("Snow-cover duration", self.browser)
+        self.assertIn("Snow-season indices", self.browser)
+        self.assertIn("strict-complete hourly `sh`", self.doc)
 
     def test_smoke_does_not_freeze_provider_measurements(self) -> None:
         self.assertNotIn("expected_precipitation_mm", self.probe)
