@@ -1,0 +1,69 @@
+from __future__ import annotations
+
+from pathlib import Path
+import unittest
+
+
+ROOT = Path(__file__).resolve().parents[3]
+WORKFLOW = ROOT / ".github" / "workflows" / "climate-analyzer-geosphere-precip-snow-live-smoke.yml"
+PROBE = ROOT / "deployment" / "geosphere_precip_snow_provider_probe.py"
+BROWSER = ROOT / "deployment" / "geosphere_precip_snow_live_smoke.mjs"
+CORE_CI = ROOT / ".github" / "workflows" / "climate-analyzer-ci.yml"
+DOC = ROOT / "tools" / "climate_analyzer" / "CLIMATE_CORE_0_7_1.md"
+
+
+class GeoSpherePrecipSnowLiveSmoke071ContractTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.workflow = WORKFLOW.read_text(encoding="utf-8")
+        cls.probe = PROBE.read_text(encoding="utf-8")
+        cls.browser = BROWSER.read_text(encoding="utf-8")
+        cls.core_ci = CORE_CI.read_text(encoding="utf-8")
+        cls.doc = DOC.read_text(encoding="utf-8")
+
+    def test_provider_smoke_is_isolated_from_core_ci(self) -> None:
+        self.assertIn("Climate Analyzer GeoSphere Precipitation Snow Live Smoke", self.workflow)
+        self.assertIn("workflow_dispatch:", self.workflow)
+        self.assertIn("schedule:", self.workflow)
+        self.assertIn("branches:\n      - main", self.workflow)
+        self.assertNotIn("geosphere_precip_snow_provider_probe.py", self.core_ci)
+        self.assertNotIn("geosphere_precip_snow_live_smoke.mjs", self.core_ci)
+        self.assertIn("GeoSphere availability", self.doc)
+
+    def test_probe_requires_rr_rrm_sh_through_production_adapter(self) -> None:
+        self.assertIn('"liquid_precipitation_depth_mm"', self.probe)
+        self.assertIn('"precipitation_duration_min"', self.probe)
+        self.assertIn('"snow_depth_cm"', self.probe)
+        self.assertIn("fetch_metadata", self.probe)
+        self.assertIn("fetch_station_dataset", self.probe)
+        self.assertIn("prepare_historical_analysis_frame", self.probe)
+        self.assertIn("annual_precipitation_indices", self.probe)
+        self.assertIn("snow_season_indices", self.probe)
+        self.assertIn('PREFERRED_STATION_IDS = ("11240",)', self.probe)
+
+    def test_browser_smoke_exercises_new_0_7_analysis_families(self) -> None:
+        expected = (
+            "Annual precipitation indices",
+            "Measured precipitation duration",
+            "Precipitation-record occurrence",
+            "Snow-cover duration",
+            "Snow-season indices",
+            "Dual-resolution semantics:",
+            "never inferred from precipitation depth rr",
+            "source-state cadence",
+            "July–June analysis year",
+        )
+        for text in expected:
+            self.assertIn(text, self.browser)
+        self.assertIn("Load measured GeoSphere interval", self.browser)
+        self.assertIn("provider-fixture.json", self.workflow)
+        self.assertIn("retention-days: 14", self.workflow)
+
+    def test_smoke_does_not_freeze_provider_measurements(self) -> None:
+        self.assertNotIn("expected_precipitation_mm", self.probe)
+        self.assertNotIn("expected_snow_depth_cm", self.probe)
+        self.assertIn("No measured provider values are committed as golden data", self.doc)
+
+
+if __name__ == "__main__":
+    unittest.main()
