@@ -48,12 +48,28 @@ async function clickChoice(frame, name) {
     await radio.first().click({ timeout: 15_000 });
     return;
   }
+
+  // Streamlit's horizontal st.radio currently renders a clickable <label>
+  // containing a visually custom radio input and text. The accessible-name
+  // relationship can vary across Streamlit releases, so preserve a DOM-label
+  // fallback rather than binding this operational smoke to one ARIA shape.
+  const label = frame.locator('label').filter({ hasText: name });
+  if (await label.count()) {
+    const nestedRadio = label.last().locator('input[type="radio"]');
+    if (await nestedRadio.count()) {
+      await nestedRadio.first().click({ timeout: 15_000, force: true });
+    } else {
+      await label.last().click({ timeout: 15_000 });
+    }
+    return;
+  }
+
   const tab = frame.getByRole('tab', { name, exact: true });
   if (await tab.count()) {
     await tab.first().click({ timeout: 15_000 });
     return;
   }
-  const text = frame.getByText(name, { exact: true });
+  const text = frame.getByText(name, { exact: false });
   if (await text.count()) {
     await text.last().click({ timeout: 15_000 });
     return;
