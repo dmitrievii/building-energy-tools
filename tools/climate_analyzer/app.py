@@ -3723,8 +3723,12 @@ def render_canonical_data_quality(dataset, df: pd.DataFrame) -> None:
             st.caption(note)
 
 
-def render_historical_overview(dataset, df: pd.DataFrame) -> None:
-    """Render a provider-neutral overview of one measured historical dataset."""
+def render_historical_overview(
+    dataset,
+    df: pd.DataFrame,
+    coverage_df: pd.DataFrame | None = None,
+) -> None:
+    """Render hourly climate metrics with unfiltered hourly coverage context."""
     from epw_climate_analyzer.historical_capabilities import (
         has_numeric_observations,
         historical_coverage_summary,
@@ -3737,7 +3741,12 @@ def render_historical_overview(dataset, df: pd.DataFrame) -> None:
         "Physically incomplete source hours are omitted and variable-local missing values remain missing; native-resolution "
         "coverage and gaps are reported on Data Quality."
     )
-    coverage = historical_coverage_summary(df)
+    quality_frame = coverage_df if coverage_df is not None else df
+    coverage = historical_coverage_summary(quality_frame)
+    st.caption(
+        "Coverage indicators describe the complete loaded canonical hourly frame; climate metrics and charts below "
+        "respect the active global Data filter."
+    )
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("Hourly timeline coverage", f"{float(coverage['timeline_coverage_pct']):.2f}%")
     m2.metric("Hourly analysis records", f"{int(coverage['observed_records']):,}")
@@ -3751,7 +3760,7 @@ def render_historical_overview(dataset, df: pd.DataFrame) -> None:
 
     reverse_labels = {column: label for label, (column, _unit) in VARIABLES.items()}
     requested_columns = [str(column) for column in dataset.available_canonical_variables]
-    variable_coverage = historical_variable_coverage(df, requested_columns)
+    variable_coverage = historical_variable_coverage(quality_frame, requested_columns)
     if not variable_coverage.empty:
         variable_coverage.insert(0, "Measured variable", variable_coverage["variable"].map(lambda x: reverse_labels.get(str(x), str(x))))
         variable_coverage = variable_coverage.drop(columns=["variable"])
@@ -4048,7 +4057,7 @@ def render_canonical_climate_analysis(dataset) -> None:
             st.caption(f"Calculation pressure: {active_pressure:,.0f} Pa")
 
     if page == "Overview":
-        render_historical_overview(dataset, filtered_df)
+        render_historical_overview(dataset, filtered_df, full_df)
     elif page == "Temperature":
         st.caption("Threshold hours are evaluated on the canonical hourly analysis series. Physically incomplete source hours are absent and contribute no duration.")
         render_temperature(filtered_df)
