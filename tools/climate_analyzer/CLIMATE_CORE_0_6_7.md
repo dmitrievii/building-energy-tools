@@ -1,6 +1,6 @@
 # Climate Analyzer 0.6.7 — GeoSphere Load Progress UX
 
-Status: implementation branch
+Status: qualified merge candidate in PR #63
 
 ## Goal
 
@@ -13,6 +13,7 @@ Make long GeoSphere historical downloads visibly progressive without changing th
 - A transient retry remains inside the current root batch and updates the status text without falsely advancing progress.
 - Adaptive split children also remain inside the current root batch; the denominator never jumps when a provider response is bisected.
 - Root progress advances only after all successful child requests for that planned batch have been parsed.
+- `load_complete` is emitted only after the concatenated provider frame has passed final empty/duplicate-timestamp structural validation.
 - On failure, the bar remains at the number of fully completed planned batches and the existing fail-closed error is shown.
 - Progress reporting is observational only: a callback/rendering failure must not alter provider requests, data values, retry policy or fail-closed behavior.
 
@@ -28,6 +29,17 @@ The GeoSphere adapter exposes an optional callback with these events:
 
 Each event carries `completed_batches`, `total_batches`, `batch_number`, source time bounds and split depth; retry events also carry the retry attempt.
 
-## Initial scope
+## Scope
 
-0.6.7 starts with GeoSphere load progress only. It does not introduce Plotly downsampling or change the canonical hourly pipeline. Further 0.6.7 work should remain isolated behind separate regressions.
+0.6.7 is intentionally limited to GeoSphere load-progress UX. It does not introduce Plotly downsampling, change the canonical hourly pipeline, or add precipitation/snow analytics. Those remain a separate subsequent functional stage.
+
+## Qualification
+
+Final candidate validation covers:
+
+- stable root-batch denominator through retry and adaptive split;
+- monotonic root-batch completion;
+- callback-failure isolation;
+- no premature `load_complete` before final structural validation;
+- existing 0.6.5 GeoSphere transport regressions;
+- full Climate Analyzer compile, scientific/security regressions, imports, deployment contract and Streamlit root-launch health.
