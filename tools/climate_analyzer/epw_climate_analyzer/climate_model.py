@@ -103,6 +103,9 @@ CANONICAL_VARIABLES: dict[str, CanonicalVariable] = {
     "liquid_precipitation_depth_mm": CanonicalVariable(
         "liquid_precipitation_depth_mm", "mm", "precipitation", "sum", "Liquid precipitation depth per reported source interval"
     ),
+    "precipitation_duration_min": CanonicalVariable(
+        "precipitation_duration_min", "min", "duration", "sum", "Measured precipitation duration within the reported source interval"
+    ),
     "snow_depth_cm": CanonicalVariable(
         "snow_depth_cm", "cm", "snow depth", "mean", "Snow depth state"
     ),
