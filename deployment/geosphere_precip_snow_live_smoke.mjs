@@ -61,18 +61,47 @@ async function clickChoice(frame, name) {
   throw new Error(`Could not locate choice: ${name}`);
 }
 
-async function fillInput(frame, label, value) {
+async function labelledInput(frame, label) {
   const labelled = frame.getByLabel(label, { exact: true });
-  if (await labelled.count()) {
-    await labelled.first().fill(String(value), { timeout: 15_000 });
-    return;
-  }
-  const input = frame.locator(`input[aria-label="${label}"]`).first();
-  if (await input.count()) {
-    await input.fill(String(value), { timeout: 15_000 });
-    return;
+  if (await labelled.count()) return labelled.first();
+  const aria = frame.locator(`input[aria-label="${label}"]`).first();
+  if (await aria.count()) return aria;
+  const text = frame.getByText(label, { exact: true }).first();
+  if (await text.count()) {
+    const container = text.locator('xpath=..');
+    const input = container.locator('input').first();
+    if (await input.count()) return input;
   }
   throw new Error(`Could not locate input: ${label}`);
+}
+
+async function fillInput(frame, label, value) {
+  const input = await labelledInput(frame, label);
+  await input.fill(String(value), { timeout: 15_000 });
+  await input.press('Tab').catch(() => {});
+}
+
+function dateValueMatches(value, iso) {
+  const [year, month, day] = iso.split('-').map(Number);
+  const parts = String(value).split(/\D+/).filter(Boolean).map(Number);
+  return parts.includes(year) && parts.includes(month) && parts.includes(day);
+}
+
+async function setDateInput(frame, label, iso) {
+  const displayCandidates = [iso.replaceAll('-', '/'), iso];
+  let lastValue = null;
+  for (const candidate of displayCandidates) {
+    const input = await labelledInput(frame, label);
+    await input.click({ timeout: 15_000 });
+    await input.fill(candidate, { timeout: 15_000 });
+    await input.press('Enter').catch(() => {});
+    await input.press('Tab').catch(() => {});
+    await sleep(1_200); // Streamlit reruns after a committed date change.
+    const refreshed = await labelledInput(frame, label);
+    lastValue = await refreshed.inputValue().catch(() => null);
+    if (dateValueMatches(lastValue, iso)) return lastValue;
+  }
+  throw new Error(`Date input ${label} did not accept ${iso}; observed value=${lastValue}`);
 }
 
 async function analysisCombo(frame) {
@@ -107,18 +136,20 @@ async function selectAnalysis(frame, name) {
   const roleOption = frame.getByRole('option', { name, exact: true });
   if (await roleOption.count()) {
     await roleOption.last().click({ timeout: 15_000 });
+    await sleep(500);
     return;
   }
   const textOption = frame.getByText(name, { exact: true });
   if (await textOption.count()) {
     await textOption.last().click({ timeout: 15_000 });
+    await sleep(500);
     return;
   }
   throw new Error(`Analysis option not found: ${name}`);
 }
 
 const report = {
-  schema: 'climate-analyzer-geosphere-precip-snow-live-smoke-v1',
+  schema: 'climate-analyzer-geosphere-precip-snow-live-smoke-v2',
   target_url: TARGET_URL,
   fixture,
   started_at_utc: new Date().toISOString(),
@@ -133,12 +164,14 @@ const report = {
 let browser;
 let page;
 try {
+  if (!fixture.success) throw new Error(`Provider probe did not produce a valid fixture: ${fixture.error ?? 'unknown'}`);
+
   browser = await chromium.launch({
     executablePath: CHROME_PATH,
     headless: true,
     args: ['--no-sandbox', '--disable-dev-shm-usage'],
   });
-  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: 'en-US' });
   page = await context.newPage();
   page.on('pageerror', (error) => report.page_errors.push(String(error)));
   page.on('console', (message) => {
@@ -166,8 +199,15 @@ try {
   await waitForText(appFrame, `ID ${fixture.station_id}`);
   report.checks.station_selected = `${fixture.station_name} (${fixture.station_id})`;
 
-  // The provider probe deliberately mirrors the UI's default 30-day interval,
-  // so no locale-sensitive date-widget automation is required here.
+  const fromValue = await setDateInput(appFrame, 'From date (UTC)', fixture.ui_start_date);
+  const throughValue = await setDateInput(appFrame, 'Through date (UTC)', fixture.ui_end_date);
+  report.checks.date_interval = {
+    requested_start: fixture.ui_start_date,
+    requested_end: fixture.ui_end_date,
+    rendered_start: fromValue,
+    rendered_end: throughValue,
+  };
+
   const loadButton = appFrame.getByRole('button', { name: 'Load measured GeoSphere interval', exact: true });
   if (!(await loadButton.count())) throw new Error('GeoSphere load button not found.');
   await loadButton.first().click({ timeout: 15_000 });
@@ -185,14 +225,19 @@ try {
     'Liquid precipitation explorer',
     'Precipitation-record occurrence',
     'Measured precipitation duration',
-    'Snow depth explorer',
     'Snow-cover duration',
     'Snow-season indices',
   ];
+  if (fixture.hourly_snow_available) expectedOptions.push('Snow depth explorer');
+
   const options = await analysisOptions(appFrame);
   report.checks.analysis_options = options;
+  report.checks.hourly_snow_available = Boolean(fixture.hourly_snow_available);
   const missing = expectedOptions.filter((value) => !options.includes(value));
   if (missing.length) throw new Error(`Missing precipitation/snow analysis option(s): ${missing.join(', ')}`);
+  if (!fixture.hourly_snow_available && options.includes('Snow depth explorer')) {
+    throw new Error('Snow depth explorer was exposed despite no strict-complete hourly snow state in the provider probe.');
+  }
   await page.keyboard.press('Escape').catch(() => {});
 
   await selectAnalysis(appFrame, 'Annual precipitation indices');
@@ -243,9 +288,11 @@ try {
     '# GeoSphere precipitation/snow live smoke',
     '',
     `- Target: ${TARGET_URL}`,
-    `- Station: ${fixture.station_name} (ID ${fixture.station_id})`,
-    `- Provider probe interval: ${fixture.probe_start} → ${fixture.probe_end}`,
-    `- Browser UI default interval: ${fixture.ui_start_date} → ${fixture.ui_end_date}`,
+    `- Station: ${fixture.station_name ?? 'unresolved'} (ID ${fixture.station_id ?? 'n/a'})`,
+    `- Provider/browser interval: ${fixture.ui_start_date ?? 'n/a'} → ${fixture.ui_end_date ?? 'n/a'}`,
+    `- Native valid records: ${JSON.stringify(fixture.native_valid_records ?? {})}`,
+    `- Hourly valid records: ${JSON.stringify(fixture.hourly_valid_records ?? {})}`,
+    `- Strict-complete hourly snow available: ${fixture.hourly_snow_available ?? 'n/a'}`,
     `- Success: ${report.success}`,
     `- Page errors: ${report.page_errors.length}`,
     `- Browser HTTP 4xx/5xx observed: ${report.http_errors.length}`,
