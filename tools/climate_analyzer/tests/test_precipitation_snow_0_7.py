@@ -4,6 +4,9 @@ import unittest
 
 import pandas as pd
 
+from epw_climate_analyzer.canonical_hourly import canonical_hourly_analysis_frame
+from epw_climate_analyzer.climate_model import aggregation_semantics_for
+from epw_climate_analyzer.geosphere import FIELD_SPEC_BY_PROVIDER
 from epw_climate_analyzer.precipitation import (
     aggregate_precipitation_duration,
     annual_native_precipitation_peaks,
@@ -14,6 +17,29 @@ from epw_climate_analyzer.precipitation import (
 
 
 class PrecipitationSnow07Tests(unittest.TestCase):
+    def test_rrm_is_explicit_geosphere_duration_quantity_with_sum_semantics(self) -> None:
+        spec = FIELD_SPEC_BY_PROVIDER["rrm"]
+        self.assertEqual(spec.canonical_name, "precipitation_duration_min")
+        self.assertEqual(spec.expected_units, ("min",))
+        self.assertEqual(aggregation_semantics_for("precipitation_duration_min"), "sum")
+
+    def test_hourly_rrm_sum_is_conserved_and_variable_local_missingness_stays_strict(self) -> None:
+        index = pd.date_range("2024-06-01T00:00:00Z", periods=12, freq="10min")
+        frame = pd.DataFrame(
+            {
+                "precipitation_duration_min": [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 0.0, 1.0, float("nan"), 3.0, 4.0, 5.0],
+                "liquid_precipitation_depth_mm": [0.1] * 12,
+            },
+            index=index,
+        )
+        frame.attrs["canonical_native_interval_minutes"] = 10
+        hourly = canonical_hourly_analysis_frame(frame)
+        self.assertEqual(len(hourly), 2)
+        self.assertAlmostEqual(float(hourly.iloc[0]["precipitation_duration_min"]), 15.0)
+        self.assertTrue(pd.isna(hourly.iloc[1]["precipitation_duration_min"]))
+        self.assertAlmostEqual(float(hourly.iloc[0]["liquid_precipitation_depth_mm"]), 0.6)
+        self.assertAlmostEqual(float(hourly.iloc[1]["liquid_precipitation_depth_mm"]), 0.6)
+
     def test_annual_precipitation_indices_use_daily_thresholds_and_missing_day_breaks_dry_spell(self) -> None:
         index = pd.date_range("2024-01-01", periods=8, freq="D", tz="UTC")
         frame = pd.DataFrame(
