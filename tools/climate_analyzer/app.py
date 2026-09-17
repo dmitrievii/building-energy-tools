@@ -105,7 +105,8 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
     global natural_ventilation_interpretation, psychrometric_interpretation, sky_interpretation
     global solar_interpretation, temperature_interpretation, variable_interpretation, wind_interpretation
     global DEFAULT_PRESSURE_PA, add_psychrometric_properties, pressure_from_altitude_m
-    global aggregate_liquid_precipitation, occurrence_hours, occurrence_records
+    global aggregate_liquid_precipitation, aggregate_precipitation_duration, occurrence_hours, occurrence_records
+    global annual_native_precipitation_peaks, annual_precipitation_indices, snow_season_indices
     global calculated_statistics_tables, climate_statistics_interpretation, extreme_day_summary
     global monthly_climate_summary, seasonal_climate_summary
     global add_solar_position, monthly_orientation_radiation, orientation_annual_radiation
@@ -200,8 +201,12 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
         )
         from epw_climate_analyzer.precipitation import (
             aggregate_liquid_precipitation,
+            aggregate_precipitation_duration,
+            annual_native_precipitation_peaks,
+            annual_precipitation_indices,
             occurrence_hours,
             occurrence_records,
+            snow_season_indices,
         )
         from epw_climate_analyzer.timeseries import (
             OverlaySeries,
@@ -286,6 +291,7 @@ VARIABLES = {
     "Total sky cover": ("total_sky_cover_tenths", "tenths"),
     "Opaque sky cover": ("opaque_sky_cover_tenths", "tenths"),
     "Liquid precipitation depth": ("liquid_precipitation_depth_mm", "mm"),
+    "Precipitation duration": ("precipitation_duration_min", "min"),
     "Snow depth": ("snow_depth_cm", "cm"),
 }
 
@@ -1874,6 +1880,9 @@ def sidebar_filters(df: pd.DataFrame) -> pd.DataFrame:
         key="global_data_range_mode",
     )
     ranged = df
+    selected_year_value: int | None = None
+    start_value = None
+    end_value = None
     if range_mode == "Year":
         selected_year = st.sidebar.selectbox(
             "Year",
@@ -1881,7 +1890,8 @@ def sidebar_filters(df: pd.DataFrame) -> pd.DataFrame:
             index=max(len(years) - 1, 0),
             key="global_data_range_year",
         )
-        ranged = filter_year(df, int(selected_year))
+        selected_year_value = int(selected_year)
+        ranged = filter_year(df, selected_year_value)
     elif range_mode == "Custom":
         date_cols = st.sidebar.columns(2)
         start_date = date_cols[0].date_input(
@@ -1941,12 +1951,40 @@ def sidebar_filters(df: pd.DataFrame) -> pd.DataFrame:
     hours = list(range(selected_hours[0], selected_hours[1] + 1))
     filtered = filter_by_months_and_hours(ranged, months=months, hours=hours)
     filtered = with_time_basis(filtered, basis)
+    st.session_state["_active_global_filter_spec"] = {
+        "range_mode": range_mode,
+        "year": selected_year_value,
+        "start": start_value,
+        "end": end_value,
+        "basis": basis,
+        "months": tuple(months),
+        "hours": tuple(hours),
+    }
 
     # Export uses exactly the dataframe after the active global filters. Keeping
     # it in transient Streamlit session state avoids duplicating filter logic in
     # every chart renderer.
     st.session_state["_active_filtered_export_df"] = filtered
     return filtered
+
+
+def apply_active_global_filter(df: pd.DataFrame) -> pd.DataFrame:
+    """Replay the already-rendered global Data filter on another time resolution."""
+    spec = st.session_state.get("_active_global_filter_spec")
+    if not isinstance(spec, dict):
+        return df
+    ranged = df
+    mode = str(spec.get("range_mode", "All available"))
+    if mode == "Year" and spec.get("year") is not None:
+        ranged = filter_year(df, int(spec["year"]))
+    elif mode == "Custom":
+        ranged = filter_datetime_range(df, start=spec.get("start"), end=spec.get("end"))
+    basis = str(spec.get("basis", CHRONOLOGICAL))
+    ranged = with_time_basis(ranged, basis)
+    months = [int(value) for value in spec.get("months", tuple(range(1, 13)))]
+    hours = [int(value) for value in spec.get("hours", tuple(range(24)))]
+    filtered = filter_by_months_and_hours(ranged, months=months, hours=hours)
+    return with_time_basis(filtered, basis)
 
 
 def metric_cards(df: pd.DataFrame) -> None:
@@ -3180,23 +3218,47 @@ def render_wind(df: pd.DataFrame) -> None:
 
 
 
-def render_precipitation(df: pd.DataFrame) -> None:
-    """Render liquid-precipitation and snow-cover analysis from available source fields."""
+def render_precipitation(df: pd.DataFrame, native_df: pd.DataFrame | None = None) -> None:
+    """Render dual-resolution precipitation and snow analysis.
+
+    Conserved extensive totals use the canonical analysis frame. Source-record
+    occurrence, true native-interval extremes and thresholded snow-state
+    duration use the provider-native frame when one is supplied.
+    """
     st.header("Precipitation and snow")
+    source_df = native_df if native_df is not None else df
     liquid_available = (
         "liquid_precipitation_depth_mm" in df.columns
         and pd.to_numeric(df["liquid_precipitation_depth_mm"], errors="coerce").notna().any()
     )
-    snow_available = (
+    native_liquid_available = (
+        "liquid_precipitation_depth_mm" in source_df.columns
+        and pd.to_numeric(source_df["liquid_precipitation_depth_mm"], errors="coerce").notna().any()
+    )
+    duration_available = (
+        "precipitation_duration_min" in df.columns
+        and pd.to_numeric(df["precipitation_duration_min"], errors="coerce").notna().any()
+    )
+    hourly_snow_available = (
         "snow_depth_cm" in df.columns
         and pd.to_numeric(df["snow_depth_cm"], errors="coerce").notna().any()
+    )
+    native_snow_available = (
+        "snow_depth_cm" in source_df.columns
+        and pd.to_numeric(source_df["snow_depth_cm"], errors="coerce").notna().any()
     )
 
     options: list[str] = []
     if liquid_available:
-        options.extend(["Precipitation totals", "Precipitation-interval occurrence", "Liquid precipitation explorer"])
-    if snow_available:
-        options.extend(["Snow depth explorer", "Snow-cover duration"])
+        options.extend(["Precipitation totals", "Annual precipitation indices", "Liquid precipitation explorer"])
+    if native_liquid_available:
+        options.append("Precipitation-record occurrence")
+    if duration_available:
+        options.append("Measured precipitation duration")
+    if hourly_snow_available:
+        options.append("Snow depth explorer")
+    if native_snow_available:
+        options.extend(["Snow-cover duration", "Snow-season indices"])
     if not options:
         st.info("The loaded climate interval does not contain usable liquid-precipitation or snow-depth observations.")
         return
@@ -3204,7 +3266,7 @@ def render_precipitation(df: pd.DataFrame) -> None:
     chart_group = st.selectbox("Analysis type", options)
 
     if chart_group == "Precipitation totals":
-        aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0)
+        aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal", "Annual"], index=0)
         totals = aggregate_liquid_precipitation(df, aggregation)
         plot_data = totals.reset_index()
         x_column = plot_data.columns[0]
@@ -3219,13 +3281,50 @@ def render_precipitation(df: pd.DataFrame) -> None:
         fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Precipitation [mm]")
         render_plot(
             fig,
-            "Period totals sum valid interval precipitation-depth values from the active analysis frame. Missing values and missing intervals are excluded rather than treated as zero.",
+            "Precipitation depth is interval-extensive. Period totals sum the canonical analysis intervals; missing values and missing intervals are excluded rather than converted to zero.",
         )
-    elif chart_group == "Precipitation-interval occurrence":
-        threshold = st.number_input("Precipitation-interval threshold [mm]", min_value=0.0, value=0.1, step=0.1)
-        aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0)
+    elif chart_group == "Annual precipitation indices":
+        table = annual_precipitation_indices(df)
+        if native_liquid_available:
+            peaks = annual_native_precipitation_peaks(source_df)
+            if not peaks.empty:
+                table = table.merge(peaks, on="year", how="left")
+        if table.empty:
+            st.info("No annual precipitation indices can be calculated for the current Data filter.")
+            return
+        source_minutes = float(source_df.attrs.get("canonical_native_interval_minutes", native_interval_hours(source_df) * 60.0))
+        st.caption(
+            "Wet day ≥ 1 mm/day; heavy day ≥ 10 mm/day; very heavy day ≥ 20 mm/day; dry spell = consecutive observed daily totals < 1 mm/day. "
+            "A fully unobserved day breaks a dry spell and is never treated as zero precipitation. All values respect the active Data filter."
+        )
+        display = table.copy()
+        if "max_native_interval_mm" in display.columns:
+            display = display.rename(columns={
+                "max_native_interval_mm": f"max_native_{source_minutes:g}min_mm",
+                "max_native_interval_timestamp": "max_native_timestamp",
+            })
+        st.dataframe(display, hide_index=True, use_container_width=True)
+        metric_labels = {
+            "precipitation_total_mm": "Annual precipitation [mm]",
+            "wet_days_ge_1mm": "Wet days ≥ 1 mm [d]",
+            "heavy_days_ge_10mm": "Heavy days ≥ 10 mm [d]",
+            "very_heavy_days_ge_20mm": "Very heavy days ≥ 20 mm [d]",
+            "max_daily_precipitation_mm": "Maximum daily precipitation [mm]",
+            "longest_dry_spell_days": "Longest dry spell [d]",
+        }
+        if "max_native_interval_mm" in table.columns:
+            metric_labels["max_native_interval_mm"] = f"Maximum native {source_minutes:g}-min precipitation [mm]"
+        if "measured_precipitation_duration_h" in table.columns:
+            metric_labels["measured_precipitation_duration_h"] = "Measured precipitation duration [h]"
+        metric = st.selectbox("Trend metric", list(metric_labels), format_func=lambda key: metric_labels[key])
+        fig = px.line(table, x="year", y=metric, markers=True, title=metric_labels[metric])
+        fig.update_layout(template="plotly_white", xaxis_title="Year", yaxis_title=metric_labels[metric])
+        render_plot(fig, "Annual indices preserve real source years even when Calendar profile is selected; the Data filter still limits which months/hours contribute before the annual index is calculated.")
+    elif chart_group == "Precipitation-record occurrence":
+        threshold = st.number_input("Source-record precipitation threshold [mm]", min_value=0.0, value=0.1, step=0.1)
+        aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal", "Annual"], index=0)
         counts = occurrence_records(
-            df,
+            source_df,
             "liquid_precipitation_depth_mm",
             float(threshold),
             aggregation,
@@ -3233,18 +3332,40 @@ def render_precipitation(df: pd.DataFrame) -> None:
         )
         plot_data = counts.reset_index()
         x_column = plot_data.columns[0]
+        source_minutes = float(source_df.attrs.get("canonical_native_interval_minutes", native_interval_hours(source_df) * 60.0))
         fig = px.bar(
             plot_data,
             x=x_column,
             y="records",
-            title=f"Precipitation-interval occurrence ≥ {threshold:g} mm",
-            labels={x_column: "Period", "records": "Analysis intervals meeting threshold"},
+            title=f"Precipitation-record occurrence ≥ {threshold:g} mm",
+            labels={x_column: "Period", "records": "Source records meeting threshold"},
         )
         fig.update_traces(marker_color=metric_color("liquid_precipitation_depth_mm"))
-        fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Analysis intervals meeting threshold")
+        fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Source records meeting threshold")
         render_plot(
             fig,
-            "Counts records in the active analysis frame whose interval precipitation depth meets the threshold. This is deliberately an interval-occurrence metric, not exact rainfall duration: an interval precipitation amount does not reveal how long rain occurred inside that interval.",
+            f"Counts provider/source records at the active native cadence ({source_minutes:g} min here). This is deliberately a record-occurrence metric, not rainfall duration.",
+        )
+    elif chart_group == "Measured precipitation duration":
+        aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal", "Annual"], index=0)
+        duration = aggregate_precipitation_duration(df, aggregation)
+        if duration.empty:
+            st.info("Independent precipitation-duration observations are unavailable in the current Data filter.")
+            return
+        plot_data = duration.assign(duration_h=duration["duration_min"] / 60.0).reset_index()
+        x_column = plot_data.columns[0]
+        fig = px.bar(
+            plot_data,
+            x=x_column,
+            y="duration_h",
+            title=f"Measured precipitation duration — {aggregation.lower()}",
+            labels={x_column: "Period", "duration_h": "Precipitation duration [h]"},
+        )
+        fig.update_traces(marker_color=metric_color("liquid_precipitation_depth_mm"))
+        fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Measured precipitation duration [h]")
+        render_plot(
+            fig,
+            "Duration is taken only from the independent measured precipitation-duration field (GeoSphere rrm where available) and summed. It is never inferred from precipitation depth rr.",
         )
     elif chart_group == "Liquid precipitation explorer":
         render_generic_variable_page(
@@ -3256,24 +3377,48 @@ def render_precipitation(df: pd.DataFrame) -> None:
         )
     elif chart_group == "Snow depth explorer":
         render_generic_variable_page(df, ["Snow depth"], "Snow depth", "Snow cover", None)
-    else:
-        aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0)
-        counts = occurrence_hours(df, "snow_depth_cm", 0.0, aggregation, inclusive=False)
+    elif chart_group == "Snow-cover duration":
+        aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal", "Annual"], index=0)
+        counts = occurrence_hours(source_df, "snow_depth_cm", 0.0, aggregation, inclusive=False)
         plot_data = counts.reset_index()
         x_column = plot_data.columns[0]
+        source_minutes = float(source_df.attrs.get("canonical_native_interval_minutes", native_interval_hours(source_df) * 60.0))
         fig = px.bar(
             plot_data,
             x=x_column,
             y="hours",
             title="Snow-cover duration",
-            labels={x_column: "Period", "hours": "Observed hours with snow depth > 0 cm"},
+            labels={x_column: "Period", "hours": "Observed snow-cover hours"},
         )
         fig.update_traces(marker_color=metric_color("snow_depth_cm"))
         fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Observed snow-cover hours")
         render_plot(
             fig,
-            "Snow depth is a state variable. Each valid record with snow depth greater than zero contributes the physical duration declared by the active frame. Ordinary GeoSphere analysis uses the canonical 1-hour cadence; native 10-minute source gaps remain a Data Quality diagnostic.",
+            f"Snow depth is a state variable. Duration is integrated from the source-state cadence ({source_minutes:g} min here): each valid record with snow depth > 0 cm contributes exactly one source interval; missing timestamps contribute no duration.",
         )
+    else:
+        table = snow_season_indices(source_df)
+        if table.empty:
+            st.info("No snow-season indices can be calculated for the current Data filter.")
+            return
+        st.caption(
+            "Snow seasons use a July–June analysis year so autumn and spring snow from one cold season are not split at 31 December. "
+            "Snow-cover day: daily observed maximum > 0 cm; meaningful-cover day: > 5 cm. Missing days do not count as snow cover."
+        )
+        display = table.copy()
+        for column in ["first_snow_date", "last_snow_date"]:
+            display[column] = pd.to_datetime(display[column], errors="coerce").dt.strftime("%Y-%m-%d")
+        st.dataframe(display, hide_index=True, use_container_width=True)
+        metric_labels = {
+            "snow_cover_days": "Snow-cover days [d]",
+            "days_gt_5cm": "Days with snow depth > 5 cm [d]",
+            "max_snow_depth_cm": "Maximum snow depth [cm]",
+            "snow_season_span_days": "First-to-last snow span [d]",
+        }
+        metric = st.selectbox("Trend metric", list(metric_labels), format_func=lambda key: metric_labels[key], key="snow_season_trend_metric")
+        fig = px.line(table, x="season_start_year", y=metric, markers=True, title=metric_labels[metric])
+        fig.update_layout(template="plotly_white", xaxis_title="Snow season start year", yaxis_title=metric_labels[metric])
+        render_plot(fig, "Snow-season trends are calculated from provider/source snow-depth states after the active global Data filter is replayed at native cadence.")
 
 def render_sky_daylight(df: pd.DataFrame) -> None:
     """Render sky-cover and daylight charts."""
@@ -4111,11 +4256,12 @@ def render_canonical_climate_analysis(dataset) -> None:
     elif page == "Wind and Ventilation":
         render_historical_wind(filtered_df)
     elif page == "Precipitation and Snow":
+        native_precipitation_df = apply_active_global_filter(prepare_historical_native_diagnostic_frame(dataset))
         st.caption(
-            "Liquid precipitation is aggregated to canonical hourly interval depth before ordinary analysis; interval occurrence is not rainfall duration. "
-            "Snow-cover duration is evaluated on the canonical hourly state series. Native 10-minute source coverage remains available on Data Quality."
+            "Dual-resolution semantics: conserved liquid-precipitation totals and measured duration use the canonical hourly analysis frame; "
+            "source-record occurrence, true native-interval precipitation extremes and snow-state duration/season indices use provider-native observations under the same global Data filter."
         )
-        render_precipitation(filtered_df)
+        render_precipitation(filtered_df, native_df=native_precipitation_df)
     elif page == "Time Series and Overlay":
         render_time_series_overlay(filtered_df)
     else:

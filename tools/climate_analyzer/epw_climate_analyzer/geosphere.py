@@ -101,6 +101,7 @@ _PROVIDER_FIELD_SPECS: tuple[ProviderFieldSpec, ...] = (
     ProviderFieldSpec("ffam", "wind_speed_m_s", ("m/s", "m s-1", "m s^-1"), description="Windgeschwindigkeit 10m, arithmetischer Mittelwert"),
     ProviderFieldSpec("dd", "wind_direction_deg", ("°", "deg", "degree"), description="Windrichtung"),
     ProviderFieldSpec("rr", "liquid_precipitation_depth_mm", ("mm",), description="Niederschlagssumme"),
+    ProviderFieldSpec("rrm", "precipitation_duration_min", ("min",), description="Niederschlagsdauer"),
     ProviderFieldSpec("sh", "snow_depth_cm", ("cm",), description="Gesamtschneehöhe"),
     ProviderFieldSpec("cglo", "global_horizontal_radiation_wh_m2", ("w/m²", "w/m2", "w m-2", "w m^-2"), scale=GEOSPHERE_NATIVE_INTERVAL_MINUTES / 60.0, description="Globalstrahlung Mittelwert"),
     ProviderFieldSpec("chim", "diffuse_horizontal_radiation_wh_m2", ("w/m²", "w/m2", "w m-2", "w m^-2"), scale=GEOSPHERE_NATIVE_INTERVAL_MINUTES / 60.0, description="Himmelsstrahlung Mittelwert"),

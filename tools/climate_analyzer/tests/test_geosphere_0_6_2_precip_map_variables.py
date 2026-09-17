@@ -83,14 +83,22 @@ class GeoSphere062UiContractTests(unittest.TestCase):
         self.assertIn('key=f"geosphere_selectable_cluster_map_', self.source)
         self.assertIn('tiles="OpenStreetMap"', self.source)
 
-    def test_precipitation_ui_keeps_interval_occurrence_and_duration_semantically_separate(self) -> None:
+    def test_precipitation_ui_keeps_source_occurrence_and_duration_semantically_separate(self) -> None:
+        # 0.7 deliberately routes occurrence and thresholded snow-state duration
+        # through the provider-native frame. Conserved totals/duration stay on
+        # the canonical hourly analysis frame.
         self.assertIn("counts = occurrence_records(", self.source)
+        self.assertIn('source_df,\n            "liquid_precipitation_depth_mm"', self.source)
         self.assertIn('y="records"', self.source)
-        self.assertIn('counts = occurrence_hours(df, "snow_depth_cm"', self.source)
-        self.assertIn("Precipitation-interval occurrence", self.source)
-        self.assertIn("Analysis intervals meeting threshold", self.source)
-        self.assertIn("canonical 1-hour cadence", self.source)
+        self.assertIn('counts = occurrence_hours(source_df, "snow_depth_cm"', self.source)
+        self.assertIn("Precipitation-record occurrence", self.source)
+        self.assertIn("Source records meeting threshold", self.source)
+        self.assertIn("active native cadence", self.source)
+        self.assertIn("record-occurrence metric, not rainfall duration", self.source)
+        self.assertIn("source-state cadence", self.source)
         self.assertIn('elif page == "Precipitation and Snow":', self.source)
+        self.assertNotIn("Precipitation-interval occurrence", self.source)
+        self.assertNotIn("Analysis intervals meeting threshold", self.source)
 
 
 if __name__ == "__main__":
