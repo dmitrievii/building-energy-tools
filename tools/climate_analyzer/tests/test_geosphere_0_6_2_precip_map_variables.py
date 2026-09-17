@@ -83,11 +83,13 @@ class GeoSphere062UiContractTests(unittest.TestCase):
         self.assertIn('key=f"geosphere_selectable_cluster_map_', self.source)
         self.assertIn('tiles="OpenStreetMap"', self.source)
 
-    def test_precipitation_ui_keeps_records_and_hours_semantically_separate(self) -> None:
+    def test_precipitation_ui_keeps_interval_occurrence_and_duration_semantically_separate(self) -> None:
         self.assertIn("counts = occurrence_records(", self.source)
         self.assertIn('y="records"', self.source)
         self.assertIn('counts = occurrence_hours(df, "snow_depth_cm"', self.source)
-        self.assertIn("10-minute GeoSphere data", self.source)
+        self.assertIn("Precipitation-interval occurrence", self.source)
+        self.assertIn("Analysis intervals meeting threshold", self.source)
+        self.assertIn("canonical 1-hour cadence", self.source)
         self.assertIn('elif page == "Precipitation and Snow":', self.source)
 
 
