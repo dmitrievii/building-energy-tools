@@ -110,9 +110,16 @@ class GeoSpherePublicUiContractTests(unittest.TestCase):
         self.assertNotIn('def render_geosphere_temperature', self.source)
         self.assertNotIn('def render_geosphere_humidity', self.source)
 
-    def test_historical_threshold_routes_are_reenabled_with_duration_semantics(self) -> None:
-        self.assertIn('Measured-data threshold hours are integrated from the declared native interval', self.source)
-        self.assertIn('Measured-data moisture-threshold hours are integrated from the declared native interval', self.source)
+    def test_historical_threshold_routes_use_canonical_hourly_duration_semantics(self) -> None:
+        self.assertIn(
+            'Threshold hours are evaluated on the canonical hourly analysis series.',
+            self.source,
+        )
+        self.assertIn(
+            'Moisture-threshold hours are evaluated on the canonical hourly analysis series.',
+            self.source,
+        )
+        self.assertIn('Physically incomplete source hours are absent and contribute no duration.', self.source)
         self.assertNotIn('render_temperature(filtered_df, interval_count_metrics=False)', self.source)
         self.assertNotIn('render_humidity(filtered_df, pressure_pa=active_pressure, interval_count_metrics=False)', self.source)
 
