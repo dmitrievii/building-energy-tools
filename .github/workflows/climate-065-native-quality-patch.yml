@@ -5,7 +5,7 @@ on:
     branches:
       - feature/v0.6.5-canonical-hourly-analysis
     paths:
-      - 'tools/climate_analyzer/scripts/apply_065_native_quality_followup.py'
+      - 'tools/climate_analyzer/scripts/apply_065_overview_coverage_patch.py'
       - '.github/workflows/climate-065-native-quality-patch.yml'
 
 permissions:
@@ -22,8 +22,8 @@ jobs:
           ref: feature/v0.6.5-canonical-hourly-analysis
           fetch-depth: 0
 
-      - name: Apply guarded follow-up patch
-        run: python tools/climate_analyzer/scripts/apply_065_native_quality_followup.py
+      - name: Apply guarded overview coverage patch
+        run: python tools/climate_analyzer/scripts/apply_065_overview_coverage_patch.py
 
       - name: Validate patch whitespace
         run: git diff --check
@@ -34,5 +34,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add tools/climate_analyzer/app.py
           git diff --cached --quiet && exit 0
-          git commit -m "Climate 0.6.5: isolate native Data Quality from analysis filters"
+          git commit -m "Climate 0.6.5: separate overview coverage from Data filter"
           git push origin HEAD:feature/v0.6.5-canonical-hourly-analysis
