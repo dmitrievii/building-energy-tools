@@ -65,7 +65,7 @@ class InterannualHeatmap064Tests(unittest.TestCase):
         self.assertAlmostEqual(float(matrix.loc[2024, 1]), 5.0)
         self.assertAlmostEqual(float(matrix.loc[2025, 1]), 7.0)
 
-    def test_week_by_year_uses_iso_week_year_at_calendar_boundary(self) -> None:
+    def test_week_by_year_uses_numeric_iso_week_and_iso_year_at_calendar_boundary(self) -> None:
         idx = pd.to_datetime([
             "2020-12-31T12:00:00Z",  # ISO 2020-W53
             "2021-01-01T12:00:00Z",  # still ISO 2020-W53
@@ -76,9 +76,10 @@ class InterannualHeatmap064Tests(unittest.TestCase):
         df = with_time_basis(df, CHRONOLOGICAL)
         matrix = temporal_heatmap_matrix(df, "dry_bulb_temperature_c", "week", HEATMAP_COMPARE_YEAR, "Mean")
         self.assertEqual(matrix.index.tolist(), [2020, 2021])
-        self.assertAlmostEqual(float(matrix.loc[2020, "W53"]), 2.0)
-        self.assertAlmostEqual(float(matrix.loc[2021, "W01"]), 10.0)
-        self.assertTrue(pd.isna(matrix.loc[2021, "W53"]))
+        self.assertEqual(matrix.columns.tolist(), list(range(1, 54)))
+        self.assertAlmostEqual(float(matrix.loc[2020, 53]), 2.0)
+        self.assertAlmostEqual(float(matrix.loc[2021, 1]), 10.0)
+        self.assertTrue(pd.isna(matrix.loc[2021, 53]))
 
     def test_one_year_year_compare_is_a_single_stripe(self) -> None:
         df = frame().loc["2024"].copy()
@@ -87,17 +88,47 @@ class InterannualHeatmap064Tests(unittest.TestCase):
         self.assertEqual(matrix.index.tolist(), [2024])
         self.assertEqual(matrix.shape[0], 1)
 
-    def test_day_by_year_uses_calendar_date_and_keeps_leap_day_gap(self) -> None:
+    def test_day_by_year_uses_numeric_leap_neutral_calendar_day(self) -> None:
         df = frame()
         matrix = temporal_heatmap_matrix(df, "dry_bulb_temperature_c", "day", HEATMAP_COMPARE_YEAR, "Mean")
-        self.assertIn("02-29", matrix.columns)
-        self.assertAlmostEqual(float(matrix.loc[2024, "02-29"]), 40.0)
-        self.assertTrue(np.isnan(matrix.loc[2025, "02-29"]))
+        self.assertIn(60, matrix.columns)  # Feb 29 on leap-reference axis
+        self.assertAlmostEqual(float(matrix.loc[2024, 60]), 40.0)
+        self.assertTrue(np.isnan(matrix.loc[2025, 60]))
+
+        # Mar 1 is always slot 61, both in leap and non-leap source years.
+        idx = pd.to_datetime(["2024-03-01T12:00:00Z", "2025-03-01T12:00:00Z"])
+        march = pd.DataFrame({"dry_bulb_temperature_c": [4.0, 5.0]}, index=idx)
+        march["hour_of_day"] = 12
+        march = with_time_basis(march, CHRONOLOGICAL)
+        march_matrix = temporal_heatmap_matrix(march, "dry_bulb_temperature_c", "day", HEATMAP_COMPARE_YEAR, "Mean")
+        self.assertEqual(march_matrix.columns.tolist(), [61])
+        self.assertAlmostEqual(float(march_matrix.loc[2024, 61]), 4.0)
+        self.assertAlmostEqual(float(march_matrix.loc[2025, 61]), 5.0)
+
+    def test_hour_compare_uses_calendar_axes_even_in_chronological_multiyear_mode(self) -> None:
+        df = frame()
+        day = temporal_heatmap_matrix(df, "dry_bulb_temperature_c", "day", HEATMAP_COMPARE_HOUR, "Mean")
+        week = temporal_heatmap_matrix(df, "dry_bulb_temperature_c", "week", HEATMAP_COMPARE_HOUR, "Mean")
+        month = temporal_heatmap_matrix(df, "dry_bulb_temperature_c", "month", HEATMAP_COMPARE_HOUR, "Mean")
+
+        self.assertTrue(all(isinstance(v, (int, np.integer)) for v in day.columns))
+        self.assertTrue(all(1 <= int(v) <= 366 for v in day.columns))
+        self.assertTrue(all(isinstance(v, (int, np.integer)) for v in week.columns))
+        self.assertTrue(all(1 <= int(v) <= 53 for v in week.columns))
+        self.assertEqual(month.columns.tolist(), list(range(1, 13)))
+        self.assertNotIn("2024-01-01", day.columns)
+        self.assertNotIn("W01", week.columns)
 
     def test_calendar_profile_hour_total_averages_per_year_totals(self) -> None:
         df = with_time_basis(frame(), CALENDAR_PROFILE)
         matrix = temporal_heatmap_matrix(df, "global_horizontal_radiation_wh_m2", "month", HEATMAP_COMPARE_HOUR, "Total")
         # Jan 00:00 totals are 1 (2024) and 10 (2025), so the typical-year cell is 5.5, not 11.
+        self.assertAlmostEqual(float(matrix.loc[0, 1]), 5.5)
+        self.assertAlmostEqual(float(matrix.loc[12, 1]), 11.0)
+
+    def test_chronological_multiyear_hour_total_is_not_inflated_by_year_count(self) -> None:
+        df = frame()
+        matrix = temporal_heatmap_matrix(df, "global_horizontal_radiation_wh_m2", "month", HEATMAP_COMPARE_HOUR, "Total")
         self.assertAlmostEqual(float(matrix.loc[0, 1]), 5.5)
         self.assertAlmostEqual(float(matrix.loc[12, 1]), 11.0)
 
