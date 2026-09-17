@@ -135,7 +135,7 @@ class TemporalFiltering063Tests(unittest.TestCase):
             '"All available", "Year", "Custom"',
             '"Time basis"',
             "filter_datetime_range",
-            "render_historical_overview(dataset, filtered_df)",
+            "render_historical_overview(dataset, filtered_df, full_df)",
             "render_time_series_overlay(filtered_df)",
         ]:
             self.assertIn(token, source)
