@@ -51,6 +51,13 @@ class GeoSpherePrecipSnowLiveSmoke071ContractTests(unittest.TestCase):
         self.assertIn("HOURLY_REQUIRED_CANONICAL", self.probe)
         self.assertNotIn('PREFERRED_STATION_IDS = ("11240",)', self.probe)
 
+    def test_browser_smoke_supports_streamlit_segmented_date_fields(self) -> None:
+        self.assertIn("async function dateControl", self.browser)
+        self.assertIn("role === 'group'", self.browser)
+        self.assertIn("[role=\"spinbutton\"]", self.browser)
+        self.assertIn("async function setSegmentedDate", self.browser)
+        self.assertIn("aria-valuenow", self.browser)
+
     def test_browser_smoke_explicitly_selects_filtered_station(self) -> None:
         self.assertIn("async function selectStationFromList", self.browser)
         self.assertIn("Search-result stations", self.browser)
