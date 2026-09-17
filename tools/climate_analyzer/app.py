@@ -3658,7 +3658,7 @@ def render_canonical_data_quality(dataset, df: pd.DataFrame) -> None:
             {
                 "Field": [
                     "Provider", "Dataset", "Calendar mode", "Source cadence", "Canonical analysis cadence",
-                    "Timezone", "First source timestamp", "Last source timestamp", "Source records in current view",
+                    "Timezone", "First source timestamp", "Last source timestamp", "Source records in loaded interval",
                 ],
                 "Value": [
                     dataset.provenance.provider, dataset.provenance.dataset, dataset.temporal.calendar_mode,
@@ -3671,8 +3671,9 @@ def render_canonical_data_quality(dataset, df: pd.DataFrame) -> None:
         use_container_width=True,
     )
     st.caption(
-        "This page is calculated from provider-native source observations. Ordinary Climate Analyzer pages use the "
-        "canonical hourly analysis series; hourly normalization is not used to calculate the diagnostics below."
+        "This page is calculated from the complete loaded provider-native source interval. Ordinary Climate Analyzer "
+        "pages use the canonical hourly analysis series. The global analysis Data filter is intentionally not applied "
+        "here, so user-excluded months or hours cannot be misclassified as missing source observations."
     )
     st.subheader("Native timeline coverage and gaps")
     coverage = historical_coverage_summary(df)
@@ -3712,7 +3713,7 @@ def render_canonical_data_quality(dataset, df: pd.DataFrame) -> None:
     missing.columns = ["field", "missing_count"]
     missing = missing[missing["missing_count"] > 0].sort_values("missing_count", ascending=False)
     if missing.empty:
-        st.success("No missing values occur in the native measured variables in the current Data filter.")
+        st.success("No missing values occur in the native measured variables in the loaded source interval.")
     else:
         st.dataframe(missing, hide_index=True, use_container_width=True)
     with st.expander("Provider provenance", expanded=False):
@@ -4010,7 +4011,14 @@ def render_canonical_climate_analysis(dataset) -> None:
         return
 
     active_pressure = fallback_pressure if pressure_mode != "Measured station pressure with fallback median" else measured_median
-    filtered_df = sidebar_filters(full_df)
+    if page == "Data Quality":
+        # Source-quality diagnostics must not interpret intentionally excluded
+        # months/hours as missing provider observations. Audit the complete
+        # loaded native interval; the global Data filter belongs to analysis.
+        filtered_df = full_df
+        st.session_state["_active_filtered_export_df"] = full_df
+    else:
+        filtered_df = sidebar_filters(full_df)
     if filtered_df.empty:
         st.warning("The current filters remove all data. Adjust the date, month or hour filter.")
         return
@@ -4022,7 +4030,7 @@ def render_canonical_climate_analysis(dataset) -> None:
     st.sidebar.write(f"**{dataset.location.city}, {dataset.location.country}**")
     if frame_role == "native-diagnostics":
         st.sidebar.caption(f"GeoSphere Austria · native source diagnostics · {source_interval:g} min")
-        st.sidebar.write(f"Source rows in current view: {len(filtered_df):,}")
+        st.sidebar.write(f"Source rows loaded: {len(filtered_df):,}")
     else:
         st.sidebar.caption(
             f"GeoSphere Austria · source {source_interval:g} min → canonical analysis {analysis_interval:g} min"
