@@ -61,24 +61,34 @@ def _validate_hour_alignment(index: pd.DatetimeIndex, source_interval_minutes: i
         )
 
 
-def _circular_mean_degrees(values: pd.Series) -> float:
-    numeric = pd.to_numeric(values, errors="coerce").dropna().astype(float)
-    if numeric.empty:
-        return float("nan")
-    radians = np.deg2rad(np.mod(numeric.to_numpy(), 360.0))
-    sin_mean = float(np.sin(radians).mean())
-    cos_mean = float(np.cos(radians).mean())
-    if abs(sin_mean) < 1e-12 and abs(cos_mean) < 1e-12:
-        return float("nan")
-    return float(np.mod(np.rad2deg(np.arctan2(sin_mean, cos_mean)), 360.0))
+def _circular_hourly_mean(values: pd.Series) -> pd.Series:
+    """Return vectorized hourly circular means in degrees.
+
+    This is mathematically equivalent to applying
+    ``atan2(mean(sin(theta)), mean(cos(theta)))`` to each hourly group, but
+    avoids Python-level ``Resampler.apply`` calls for every hour. NaNs are
+    ignored here exactly as by the former group function; strict valid-count
+    masking is applied by the caller afterwards. A cancelling resultant vector
+    remains undefined and is returned as NaN.
+    """
+    numeric = pd.to_numeric(values, errors="coerce").astype(float)
+    radians = np.deg2rad(np.mod(numeric, 360.0))
+    sin_values = pd.Series(np.sin(radians), index=numeric.index, dtype="float64")
+    cos_values = pd.Series(np.cos(radians), index=numeric.index, dtype="float64")
+    sin_mean = sin_values.resample("h", label="left", closed="left").mean()
+    cos_mean = cos_values.resample("h", label="left", closed="left").mean()
+    undefined = (sin_mean.abs() < 1e-12) & (cos_mean.abs() < 1e-12)
+    angles = np.mod(np.rad2deg(np.arctan2(sin_mean, cos_mean)), 360.0)
+    result = pd.Series(angles, index=sin_mean.index, dtype="float64")
+    return result.mask(undefined)
 
 
 def _hourly_reduce(values: pd.Series, semantics: str) -> pd.Series:
+    if semantics == "circular mean":
+        return _circular_hourly_mean(values)
     grouped = values.resample("h", label="left", closed="left")
     if semantics == "sum":
         return grouped.sum(min_count=1)
-    if semantics == "circular mean":
-        return grouped.apply(_circular_mean_degrees)
     return grouped.mean()
 
 
