@@ -57,6 +57,8 @@ class GeoSpherePrecipSnowLiveSmoke071ContractTests(unittest.TestCase):
         self.assertIn("[role=\"spinbutton\"]", self.browser)
         self.assertIn("async function setSegmentedDate", self.browser)
         self.assertIn("aria-valuenow", self.browser)
+        self.assertIn("segment.fill(String(expected)", self.browser)
+        self.assertIn("for (const part of ['year', 'month', 'day'])", self.browser)
 
     def test_browser_smoke_explicitly_selects_filtered_station(self) -> None:
         self.assertIn("async function selectStationFromList", self.browser)
