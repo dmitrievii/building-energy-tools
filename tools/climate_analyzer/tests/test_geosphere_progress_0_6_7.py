@@ -129,6 +129,38 @@ class GeoSphereProgress067Tests(unittest.TestCase):
             )
         self.assertEqual(frame["tl"].tolist(), [1.0, 2.0])
 
+    def test_load_complete_is_not_emitted_before_final_structural_validation(self) -> None:
+        planned = [
+            {
+                "parameters": "tl",
+                "station_ids": "11240",
+                "start": "2025-01-01T00:00",
+                "end": "2025-01-01T00:10",
+            },
+            {
+                "parameters": "tl",
+                "station_ids": "11240",
+                "start": "2025-01-01T00:10",
+                "end": "2025-01-01T00:20",
+            },
+        ]
+        events: list[dict[str, object]] = []
+        with patch("epw_climate_analyzer.geosphere.plan_data_queries", return_value=planned), patch(
+            "epw_climate_analyzer.geosphere._bounded_get_json",
+            side_effect=[payload(0, [1.0, 2.0]), payload(10, [3.0, 4.0])],
+        ):
+            with self.assertRaisesRegex(ValueError, "duplicate timestamps"):
+                fetch_station_provider_frame(
+                    station_id="11240",
+                    start=pd.Timestamp("2025-01-01T00:00:00Z"),
+                    end=pd.Timestamp("2025-01-01T00:20:00Z"),
+                    provider_parameters=["tl"],
+                    progress_callback=lambda event: events.append(dict(event)),
+                )
+        self.assertFalse(any(event["event"] == "load_complete" for event in events))
+        self.assertEqual(events[-1]["event"], "batch_complete")
+        self.assertEqual(int(events[-1]["completed_batches"]), 2)
+
     def test_public_ui_uses_determinate_progress_callback(self) -> None:
         source = APP.read_text(encoding="utf-8")
         self.assertIn("progress_bar = st.progress(", source)

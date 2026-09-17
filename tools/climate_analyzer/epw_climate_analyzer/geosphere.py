@@ -748,16 +748,6 @@ def fetch_station_provider_frame(
             query=query,
         )
 
-    if queries:
-        _emit_progress(
-            progress_callback,
-            event="load_complete",
-            completed_batches=total_batches,
-            total_batches=total_batches,
-            batch_number=total_batches,
-            query=queries[-1],
-        )
-
     if not frames:
         raise ValueError("GeoSphere batching produced no requests.")
     combined = pd.concat(frames, axis=0)
@@ -767,6 +757,14 @@ def fetch_station_provider_frame(
         duplicate_count = int(combined.index.duplicated(keep=False).sum())
         raise ValueError(f"GeoSphere batched response contains {duplicate_count} duplicate timestamps.")
     combined = combined.sort_index(kind="mergesort")
+    _emit_progress(
+        progress_callback,
+        event="load_complete",
+        completed_batches=total_batches,
+        total_batches=total_batches,
+        batch_number=total_batches,
+        query=queries[-1],
+    )
     return combined, tuple(references)
 
 
