@@ -3152,7 +3152,7 @@ def render_precipitation(df: pd.DataFrame) -> None:
 
     options: list[str] = []
     if liquid_available:
-        options.extend(["Precipitation totals", "Precipitation-record occurrence", "Liquid precipitation explorer"])
+        options.extend(["Precipitation totals", "Precipitation-interval occurrence", "Liquid precipitation explorer"])
     if snow_available:
         options.extend(["Snow depth explorer", "Snow-cover duration"])
     if not options:
@@ -3177,10 +3177,10 @@ def render_precipitation(df: pd.DataFrame) -> None:
         fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Precipitation [mm]")
         render_plot(
             fig,
-            "Period totals sum valid interval precipitation-depth records. Missing source values and missing timestamp gaps are excluded rather than treated as zero.",
+            "Period totals sum valid interval precipitation-depth values from the active analysis frame. Missing values and missing intervals are excluded rather than treated as zero.",
         )
-    elif chart_group == "Precipitation-record occurrence":
-        threshold = st.number_input("Precipitation-record threshold [mm]", min_value=0.0, value=0.1, step=0.1)
+    elif chart_group == "Precipitation-interval occurrence":
+        threshold = st.number_input("Precipitation-interval threshold [mm]", min_value=0.0, value=0.1, step=0.1)
         aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0)
         counts = occurrence_records(
             df,
@@ -3195,14 +3195,14 @@ def render_precipitation(df: pd.DataFrame) -> None:
             plot_data,
             x=x_column,
             y="records",
-            title=f"Precipitation-record occurrence ≥ {threshold:g} mm",
-            labels={x_column: "Period", "records": "Source records meeting threshold"},
+            title=f"Precipitation-interval occurrence ≥ {threshold:g} mm",
+            labels={x_column: "Period", "records": "Analysis intervals meeting threshold"},
         )
         fig.update_traces(marker_color=metric_color("liquid_precipitation_depth_mm"))
-        fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Source records meeting threshold")
+        fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Analysis intervals meeting threshold")
         render_plot(
             fig,
-            "Counts source precipitation-depth records meeting the selected threshold. This is deliberately a record-occurrence metric, not exact rainfall duration: an interval precipitation amount does not reveal how long rain occurred inside that source interval.",
+            "Counts records in the active analysis frame whose interval precipitation depth meets the threshold. This is deliberately an interval-occurrence metric, not exact rainfall duration: an interval precipitation amount does not reveal how long rain occurred inside that interval.",
         )
     elif chart_group == "Liquid precipitation explorer":
         render_generic_variable_page(
@@ -3230,7 +3230,7 @@ def render_precipitation(df: pd.DataFrame) -> None:
         fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Observed snow-cover hours")
         render_plot(
             fig,
-            "Snow depth is a state variable. Each valid record with snow depth greater than zero contributes exactly one native source interval: 1 h for hourly EPW and 1/6 h for 10-minute GeoSphere data. Missing timestamp gaps contribute no duration.",
+            "Snow depth is a state variable. Each valid record with snow depth greater than zero contributes the physical duration declared by the active frame. Ordinary GeoSphere analysis uses the canonical 1-hour cadence; native 10-minute source gaps remain a Data Quality diagnostic.",
         )
 
 def render_sky_daylight(df: pd.DataFrame) -> None:
@@ -3651,13 +3651,18 @@ def render_canonical_data_quality(dataset, df: pd.DataFrame) -> None:
         use_container_width=True,
     )
     st.subheader("Temporal/source contract")
+    source_interval = float(dataset.temporal.native_interval_minutes)
+    analysis_interval = float(df.attrs.get("canonical_analysis_interval_minutes", 60.0))
     st.dataframe(
         pd.DataFrame(
             {
-                "Field": ["Provider", "Dataset", "Calendar mode", "Native interval", "Timezone", "First timestamp", "Last timestamp", "Records"],
+                "Field": [
+                    "Provider", "Dataset", "Calendar mode", "Source cadence", "Canonical analysis cadence",
+                    "Timezone", "First source timestamp", "Last source timestamp", "Source records in current view",
+                ],
                 "Value": [
                     dataset.provenance.provider, dataset.provenance.dataset, dataset.temporal.calendar_mode,
-                    f"{dataset.temporal.native_interval_minutes} min", dataset.temporal.timezone_name,
+                    f"{source_interval:g} min", f"{analysis_interval:g} min", dataset.temporal.timezone_name,
                     str(dataset.start), str(dataset.end), len(df),
                 ],
             }
@@ -3665,7 +3670,11 @@ def render_canonical_data_quality(dataset, df: pd.DataFrame) -> None:
         hide_index=True,
         use_container_width=True,
     )
-    st.subheader("Timeline coverage and gaps")
+    st.caption(
+        "This page is calculated from provider-native source observations. Ordinary Climate Analyzer pages use the "
+        "canonical hourly analysis series; hourly normalization is not used to calculate the diagnostics below."
+    )
+    st.subheader("Native timeline coverage and gaps")
     coverage = historical_coverage_summary(df)
     coverage_table = pd.DataFrame(
         {
@@ -3687,23 +3696,23 @@ def render_canonical_data_quality(dataset, df: pd.DataFrame) -> None:
     )
     st.dataframe(coverage_table, hide_index=True, use_container_width=True)
     st.caption(
-        "Coverage is measured against the requested source interval at the declared native cadence. Missing timestamp gaps "
-        "are not interpolated and therefore contribute no duration to threshold/frequency metrics."
+        "Coverage is measured against the requested source interval at the provider-native cadence. Missing source "
+        "timestamps are not interpolated. Ordinary hourly analyses omit physically incomplete source hours."
     )
 
     per_variable = historical_variable_coverage(df, list(dataset.available_canonical_variables))
     if not per_variable.empty:
         per_variable["coverage_pct"] = per_variable["coverage_pct"].round(2)
         per_variable["observed_hours"] = per_variable["observed_hours"].round(2)
-        st.subheader("Per-variable measured coverage")
+        st.subheader("Native per-variable measured coverage")
         st.dataframe(per_variable, hide_index=True, use_container_width=True)
 
-    st.subheader("Missing values by field")
+    st.subheader("Native missing values by measured field")
     missing = df[list(dataset.available_canonical_variables)].isna().sum().reset_index()
     missing.columns = ["field", "missing_count"]
     missing = missing[missing["missing_count"] > 0].sort_values("missing_count", ascending=False)
     if missing.empty:
-        st.success("No missing values occur in the loaded canonical measured variables.")
+        st.success("No missing values occur in the native measured variables in the current Data filter.")
     else:
         st.dataframe(missing, hide_index=True, use_container_width=True)
     with st.expander("Provider provenance", expanded=False):
@@ -3721,20 +3730,21 @@ def render_historical_overview(dataset, df: pd.DataFrame) -> None:
         historical_variable_coverage,
     )
 
-    st.header("Measured climate overview")
+    st.header("Hourly climate overview")
     st.caption(
-        "This overview describes the loaded historical observations as measured. Missing timestamps and missing variable "
-        "values are not interpolated or converted to a typical year."
+        "This overview uses the canonical hourly analysis series derived from provider-native observations. "
+        "Physically incomplete source hours are omitted and variable-local missing values remain missing; native-resolution "
+        "coverage and gaps are reported on Data Quality."
     )
     coverage = historical_coverage_summary(df)
     m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Timeline coverage", f"{float(coverage['timeline_coverage_pct']):.2f}%")
-    m2.metric("Observed records", f"{int(coverage['observed_records']):,}")
-    m3.metric("Missing source intervals", f"{int(coverage['missing_timestamp_intervals']):,}")
-    m4.metric("Longest missing gap", f"{float(coverage['longest_missing_gap_minutes']):g} min")
+    m1.metric("Hourly timeline coverage", f"{float(coverage['timeline_coverage_pct']):.2f}%")
+    m2.metric("Hourly analysis records", f"{int(coverage['observed_records']):,}")
+    m3.metric("Missing analysis hours", f"{int(coverage['missing_timestamp_intervals']):,}")
+    m4.metric("Longest analysis gap", f"{float(coverage['longest_missing_gap_minutes']):g} min")
     st.caption(
         f"Requested/covered timeline: {coverage['requested_start']} → {coverage['requested_end']} · "
-        f"native cadence {float(coverage['native_interval_minutes']):g} min · "
+        f"analysis cadence {float(coverage['native_interval_minutes']):g} min · "
         f"{int(coverage['gap_count'])} detected gap segment(s)."
     )
 
@@ -3746,16 +3756,16 @@ def render_historical_overview(dataset, df: pd.DataFrame) -> None:
         variable_coverage = variable_coverage.drop(columns=["variable"])
         variable_coverage["coverage_pct"] = variable_coverage["coverage_pct"].round(2)
         variable_coverage["observed_hours"] = variable_coverage["observed_hours"].round(2)
-        st.subheader("Measured-variable availability")
+        st.subheader("Hourly-variable availability")
         st.dataframe(variable_coverage, hide_index=True, use_container_width=True)
 
     metric_values: list[tuple[str, str]] = []
     if has_numeric_observations(df, "dry_bulb_temperature_c"):
         temp = pd.to_numeric(df["dry_bulb_temperature_c"], errors="coerce")
         metric_values.extend([
-            ("Mean temperature", f"{temp.mean():.1f} °C"),
-            ("Minimum temperature", f"{temp.min():.1f} °C"),
-            ("Maximum temperature", f"{temp.max():.1f} °C"),
+            ("Hourly mean temperature", f"{temp.mean():.1f} °C"),
+            ("Hourly minimum temperature", f"{temp.min():.1f} °C"),
+            ("Hourly maximum temperature", f"{temp.max():.1f} °C"),
         ])
     if has_numeric_observations(df, "relative_humidity_pct"):
         rh = pd.to_numeric(df["relative_humidity_pct"], errors="coerce")
@@ -3774,7 +3784,7 @@ def render_historical_overview(dataset, df: pd.DataFrame) -> None:
                 col.metric(label, value)
 
     if has_numeric_observations(df, "dry_bulb_temperature_c"):
-        fig = profile_ribbon_chart(df, "dry_bulb_temperature_c", "Monthly", "Measured monthly outdoor temperature", "°C")
+        fig = profile_ribbon_chart(df, "dry_bulb_temperature_c", "Monthly", "Canonical hourly monthly outdoor temperature", "°C")
         render_plot(fig, temperature_interpretation(df, heat_threshold=18.0, cool_threshold=26.0))
 
 
@@ -3798,8 +3808,9 @@ def render_historical_wind(df: pd.DataFrame) -> None:
         return
 
     st.caption(
-        "GeoSphere historical wind values are measured source-interval observations. Wind-rose radii and histogram "
-        "frequencies are integrated in physical hours from the declared native cadence; missing timestamp gaps are not filled."
+        "GeoSphere wind observations are normalized to canonical hourly analysis values before this page is rendered. "
+        "Wind-rose radii and histogram frequencies therefore integrate physical hours from the 60-minute analysis cadence; "
+        "native 10-minute source coverage remains available on Data Quality."
     )
     chart_group = st.selectbox("Analysis type", options, key="historical_wind_analysis")
     if chart_group == "Wind speed explorer":
@@ -3829,7 +3840,7 @@ def render_historical_wind(df: pd.DataFrame) -> None:
         fig = histogram_chart(df, "wind_direction_deg", "Measured wind direction histogram", "deg", bins=36)
         render_plot(
             fig,
-            "The histogram integrates the physical duration represented by each observed wind-direction record. "
+            "The histogram integrates the physical duration represented by each canonical hourly wind-direction record. "
             "Direction is circular; the histogram should be read by sectors rather than by arithmetic averaging."
         )
 
@@ -3850,9 +3861,10 @@ def render_historical_solar(df: pd.DataFrame) -> None:
         return
 
     st.caption(
-        "GeoSphere cglo/chim are measured 10-minute mean horizontal irradiances. The adapter stores canonical interval "
-        "irradiation [Wh/m²]; this page converts it back to mean irradiance [W/m²] using the declared native interval. "
-        "DNI and plane-of-array routes are intentionally unavailable in measured historical mode."
+        "GeoSphere cglo/chim originate as measured 10-minute mean horizontal irradiances. The adapter first stores "
+        "interval irradiation [Wh/m²], and the canonical hourly layer sums those interval energies without changing the "
+        "energy total. This page converts the hourly Wh/m² value to hourly mean irradiance [W/m²]. DNI and plane-of-array "
+        "routes remain intentionally unavailable in measured historical mode."
     )
     options = ["Horizontal irradiance explorer", "Monthly horizontal irradiation"]
     has_ghi = any(source == "global_horizontal_radiation_wh_m2" for _, _, source in specs)
@@ -3878,7 +3890,7 @@ def render_historical_solar(df: pd.DataFrame) -> None:
             fig = histogram_chart(solar, column, f"{selected} histogram", "W/m²", bins=bins)
         render_plot(
             fig,
-            "Values are measured mean horizontal irradiance over each source interval. Duration/frequency views use physical hours, not record counts."
+            "Values are canonical hourly mean horizontal irradiance derived from measured source intervals. Duration/frequency views use physical hours, not record counts."
         )
     elif chart_group == "Monthly horizontal irradiation":
         monthly = pd.DataFrame(index=range(1, 13))
@@ -3887,7 +3899,7 @@ def render_historical_solar(df: pd.DataFrame) -> None:
         fig = stacked_monthly_bar(monthly, "Measured monthly horizontal irradiation", "kWh/m²")
         render_plot(
             fig,
-            "Monthly irradiation sums the measured interval energy [Wh/m²]. Missing source records are excluded rather than interpolated."
+            "Monthly irradiation sums canonical hourly interval energy [Wh/m²]. A physically incomplete source hour is absent rather than interpolated."
         )
     elif chart_group == "Cooling-risk solar hours":
         t_threshold = st.slider("Temperature threshold [°C]", 15.0, 35.0, 24.0, 0.5, key="historical_solar_t_threshold")
@@ -3898,7 +3910,7 @@ def render_historical_solar(df: pd.DataFrame) -> None:
         fig = threshold_bar_chart(counts, "Measured cooling-risk solar hours")
         render_plot(
             fig,
-            "Hours combine measured outdoor temperature with measured mean global horizontal irradiance. Missing timestamp gaps do not contribute duration."
+            "Hours combine canonical hourly outdoor temperature with canonical hourly mean global horizontal irradiance. Incomplete source hours do not contribute duration."
         )
     else:
         fig = scatter_chart(
@@ -3910,7 +3922,7 @@ def render_historical_solar(df: pd.DataFrame) -> None:
             "Dry-bulb temperature [°C]",
             "GHI [W/m²]",
         )
-        render_plot(fig, "Each point combines coincident measured temperature and global horizontal irradiance at the source timestamp.")
+        render_plot(fig, "Each point combines coincident canonical hourly temperature and global horizontal irradiance at the analysis timestamp.")
 
 
 def render_canonical_climate_analysis(dataset) -> None:
@@ -3945,8 +3957,8 @@ def render_canonical_climate_analysis(dataset) -> None:
             ],
             index=0,
             help=(
-                "Default: use the measured GeoSphere station pressure for each 10-minute record. "
-                "The median valid measured pressure is only a fallback for missing/invalid records."
+                "Default: normalize measured GeoSphere station pressure to the canonical hourly analysis cadence. "
+                "The measured-pressure median is used only as a fallback where an hourly pressure value is unavailable."
             ),
         )
         custom_pressure = None
@@ -3979,14 +3991,20 @@ def render_canonical_climate_analysis(dataset) -> None:
         fallback_pressure = float(custom_pressure or DEFAULT_PRESSURE_PA)
         pressure_override = fallback_pressure
 
-    from epw_climate_analyzer.historical import prepare_historical_analysis_frame
+    from epw_climate_analyzer.historical import (
+        prepare_historical_analysis_frame,
+        prepare_historical_native_diagnostic_frame,
+    )
     try:
-        full_df = prepare_historical_analysis_frame(
-            dataset,
-            include_psychrometrics=include_psychrometrics,
-            fallback_pressure_pa=fallback_pressure,
-            pressure_override_pa=pressure_override,
-        )
+        if page == "Data Quality":
+            full_df = prepare_historical_native_diagnostic_frame(dataset)
+        else:
+            full_df = prepare_historical_analysis_frame(
+                dataset,
+                include_psychrometrics=include_psychrometrics,
+                fallback_pressure_pa=fallback_pressure,
+                pressure_override_pa=pressure_override,
+            )
     except Exception as exc:
         st.error(f"Historical climate data could not be prepared for this analysis: {exc}")
         return
@@ -3997,13 +4015,25 @@ def render_canonical_climate_analysis(dataset) -> None:
         st.warning("The current filters remove all data. Adjust the date, month or hour filter.")
         return
 
+    source_interval = float(dataset.temporal.native_interval_minutes)
+    analysis_interval = float(full_df.attrs.get("canonical_analysis_interval_minutes", 60.0))
+    frame_role = str(full_df.attrs.get("canonical_frame_role", "hourly-analysis"))
     st.sidebar.markdown("### Current climate")
     st.sidebar.write(f"**{dataset.location.city}, {dataset.location.country}**")
-    st.sidebar.caption("GeoSphere Austria · measured 10-minute historical data")
-    st.sidebar.write(f"Rows in current view: {len(filtered_df):,}")
+    if frame_role == "native-diagnostics":
+        st.sidebar.caption(f"GeoSphere Austria · native source diagnostics · {source_interval:g} min")
+        st.sidebar.write(f"Source rows in current view: {len(filtered_df):,}")
+    else:
+        st.sidebar.caption(
+            f"GeoSphere Austria · source {source_interval:g} min → canonical analysis {analysis_interval:g} min"
+        )
+        st.sidebar.write(f"Hourly analysis rows in current view: {len(filtered_df):,}")
     with st.sidebar.expander("Data provenance", expanded=False):
         st.caption(dataset.provenance.dataset)
-        st.caption(f"Calendar: real historical UTC · native interval {dataset.temporal.native_interval_minutes} min")
+        st.caption(f"Source cadence: {source_interval:g} min")
+        st.caption(f"Canonical analysis cadence: {analysis_interval:g} min")
+        st.caption(f"Active frame: {'native source diagnostics' if frame_role == 'native-diagnostics' else 'canonical hourly analysis'}")
+        st.caption(f"Calendar: real historical UTC · {dataset.temporal.calendar_mode}")
         if pressure_mode == "Measured station pressure with fallback median":
             st.caption(f"Pressure: measured station values; fallback median {active_pressure:,.0f} Pa")
         else:
@@ -4012,10 +4042,10 @@ def render_canonical_climate_analysis(dataset) -> None:
     if page == "Overview":
         render_historical_overview(dataset, filtered_df)
     elif page == "Temperature":
-        st.caption("Measured-data threshold hours are integrated from the declared native interval; missing timestamp gaps are not counted as observed duration.")
+        st.caption("Threshold hours are evaluated on the canonical hourly analysis series. Physically incomplete source hours are absent and contribute no duration.")
         render_temperature(filtered_df)
     elif page == "Humidity and Psychrometrics":
-        st.caption("Measured-data moisture-threshold hours are integrated from the declared native interval; missing timestamp gaps are not counted as observed duration.")
+        st.caption("Moisture-threshold hours are evaluated on the canonical hourly analysis series. Physically incomplete source hours are absent and contribute no duration.")
         render_humidity(filtered_df, pressure_pa=active_pressure)
     elif page == "Solar and Radiation":
         render_historical_solar(filtered_df)
@@ -4023,8 +4053,8 @@ def render_canonical_climate_analysis(dataset) -> None:
         render_historical_wind(filtered_df)
     elif page == "Precipitation and Snow":
         st.caption(
-            "Liquid precipitation is an interval-depth measurement; threshold occurrence therefore counts source records, not rainfall duration. "
-            "Snow-cover duration integrates the declared native cadence, and missing timestamp gaps contribute no observed time."
+            "Liquid precipitation is aggregated to canonical hourly interval depth before ordinary analysis; interval occurrence is not rainfall duration. "
+            "Snow-cover duration is evaluated on the canonical hourly state series. Native 10-minute source coverage remains available on Data Quality."
         )
         render_precipitation(filtered_df)
     elif page == "Time Series and Overlay":
