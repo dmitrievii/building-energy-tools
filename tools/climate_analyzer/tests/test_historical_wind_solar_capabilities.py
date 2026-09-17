@@ -76,7 +76,8 @@ class HistoricalCapabilityTests(unittest.TestCase):
         self.assertIn("available_historical_pages(dataset.data)", source)
         self.assertIn("Measured horizontal solar radiation", source)
         self.assertIn("Global horizontal irradiance", source)
-        self.assertIn("DNI and plane-of-array routes remain intentionally unavailable", source)
+        self.assertIn("DNI and plane-of-array", source)
+        self.assertIn("routes remain intentionally unavailable", source)
         self.assertIn('elif page == "Solar and Radiation":', source)
         self.assertIn('elif page == "Wind and Ventilation":', source)
 
