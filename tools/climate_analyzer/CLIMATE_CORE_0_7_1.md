@@ -25,15 +25,21 @@ The workflow runs:
 
 `deployment/geosphere_precip_snow_provider_probe.py` uses the production GeoSphere adapter against the official `klima-v2-10min` API.
 
-It:
+The first provider-backed run demonstrated that recent September intervals expose numeric `rr` and `rrm` but `sh` is entirely missing at the sampled stations. The smoke therefore must not assume that the current/default UI period is a valid snow fixture.
+
+The revised probe:
 
 1. validates live resource metadata and units;
-2. prefers the existing Graz/Universitaet integration station (`11240`), then falls back to a bounded list of recent active stations;
-3. requests a small recent provider interval for only `rr`, `rrm` and `sh`;
-4. requires numeric native observations for all three quantities;
-5. requires at least one strict-complete canonical hour for all three quantities;
-6. verifies annual precipitation and snow-season calculations are non-empty;
-7. writes a transient JSON fixture containing station identity and the same default 30-day UI interval used by the public application.
+2. tries a bounded set of familiar stations and then active/high-elevation candidates;
+3. searches short recent **historical winter** windows inside each station's published validity interval;
+4. requests only `rr`, `rrm` and `sh`;
+5. requires numeric provider-native observations for all three quantities;
+6. requires at least one strict-complete canonical hour for `rr` and `rrm`;
+7. records whether strict-complete hourly `sh` exists, but does **not** require it because 0.7 intentionally allows native snow metrics without an hourly snow explorer;
+8. verifies annual precipitation and native snow-season calculations are non-empty;
+9. writes the exact selected winter dates into a transient JSON fixture for the browser smoke.
+
+The search is capped by station and total-interval limits so a provider problem cannot turn the smoke into an unbounded API crawl.
 
 No measured provider values are committed as golden data.
 
@@ -43,15 +49,17 @@ No measured provider values are committed as golden data.
 
 1. open `GeoSphere Austria`;
 2. filter to the provider-probed station;
-3. load the measured interval through the public UI;
-4. wait for `Precipitation and Snow` to become available;
-5. open the page and verify the dual-resolution caption;
-6. verify all expected 0.7 analysis families are available;
-7. exercise annual precipitation indices;
-8. exercise independently measured precipitation duration;
-9. exercise native precipitation-record occurrence;
-10. exercise native snow-cover duration;
-11. exercise July–June snow-season indices.
+3. explicitly set `From date (UTC)` and `Through date (UTC)` to the validated winter fixture;
+4. load the measured interval through the public UI;
+5. wait for `Precipitation and Snow` to become available;
+6. open the page and verify the dual-resolution caption;
+7. verify all native precipitation/snow analysis families are available;
+8. require `Snow depth explorer` only when the provider probe found strict-complete hourly `sh`;
+9. exercise annual precipitation indices;
+10. exercise independently measured precipitation duration;
+11. exercise native precipitation-record occurrence;
+12. exercise native snow-cover duration;
+13. exercise July–June snow-season indices.
 
 The smoke fails on missing functionality or uncaught browser page errors. Browser HTTP 4xx/5xx responses are recorded as evidence rather than treated generically as fatal because Streamlit itself may emit unrelated platform requests; the functional route is the governing assertion.
 
@@ -59,7 +67,7 @@ The smoke fails on missing functionality or uncaught browser page errors. Browse
 
 Each run uploads:
 
-- `provider-fixture.json`;
+- `provider-fixture.json`, including failures when provider fixture selection itself fails;
 - `geosphere-precip-snow-live-smoke.json`;
 - `LIVE_SMOKE.md`;
 - final or failure screenshot.
