@@ -75,7 +75,9 @@ class GeoSphere061CoverageTests(unittest.TestCase):
 
     def test_public_ui_contract_contains_overview_variable_selection_and_from_direction(self) -> None:
         source = APP.read_text(encoding="utf-8")
-        self.assertIn('def render_historical_overview(dataset, df: pd.DataFrame)', source)
+        self.assertIn('def render_historical_overview(', source)
+        self.assertIn('coverage_df: pd.DataFrame | None = None', source)
+        self.assertIn('render_historical_overview(dataset, filtered_df, full_df)', source)
         self.assertIn('st.markdown("#### Measured variables to load")', source)
         self.assertIn("edited_variables = st.data_editor(", source)
         self.assertIn('st.column_config.CheckboxColumn("Load"', source)
