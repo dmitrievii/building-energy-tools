@@ -1,0 +1,50 @@
+name: Climate 0.7 Snow Capability Patch
+
+on:
+  push:
+    branches:
+      - feature/v0.7-precipitation-snow
+    paths:
+      - tools/climate_analyzer/scripts/patch_0_7_snow_capability.py
+      - .github/workflows/climate-0.7-snow-capability-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply-patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/v0.7-precipitation-snow
+          fetch-depth: 0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Climate Analyzer dependencies
+        run: python -m pip install -r tools/climate_analyzer/requirements.txt
+
+      - name: Apply 0.7 snow capability patch
+        run: python tools/climate_analyzer/scripts/patch_0_7_snow_capability.py
+
+      - name: Validate focused contracts
+        working-directory: tools/climate_analyzer
+        run: |
+          python -m compileall -q epw_climate_analyzer app.py
+          python -m unittest tests.test_geosphere_0_6_2_precip_map_variables tests.test_precipitation_snow_0_7 tests.test_precipitation_snow_ui_contract_0_7
+          git diff --check
+
+      - name: Commit production changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tools/climate_analyzer/app.py tools/climate_analyzer/tests/test_precipitation_snow_ui_contract_0_7.py
+          if ! git diff --cached --quiet; then
+            git commit -m 'Climate 0.7: split hourly and native snow capabilities'
+            git push origin HEAD:feature/v0.7-precipitation-snow
+          fi
