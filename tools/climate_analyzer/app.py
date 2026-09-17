@@ -1396,18 +1396,60 @@ def render_geosphere_source() -> None:
         )
 
     if st.button("Load measured GeoSphere interval", type="primary", key="load_geosphere_interval"):
-        try:
-            with st.spinner(f"Loading {len(batches)} bounded GeoSphere request batch(es)..."):
-                dataset = fetch_geosphere_station_dataset(
-                    station=station,
-                    start=start_ts,
-                    end=end_ts,
-                    metadata=metadata,
-                    canonical_variables=canonical_variables,
+        progress_state = {"completed": 0, "total": max(1, len(batches))}
+        progress_bar = st.progress(
+            0.0,
+            text=f"GeoSphere load — 0/{len(batches)} planned batch(es) complete",
+        )
+
+        def update_geosphere_progress(event) -> None:
+            total = max(1, int(event.get("total_batches", len(batches))))
+            completed = min(total, max(0, int(event.get("completed_batches", 0))))
+            batch_number = min(total, max(1, int(event.get("batch_number", completed + 1))))
+            progress_state["completed"] = completed
+            progress_state["total"] = total
+            event_name = str(event.get("event", ""))
+            if event_name == "batch_start":
+                label = f"Loading GeoSphere batch {batch_number}/{total}..."
+            elif event_name == "retry":
+                attempt = int(event.get("attempt", 2))
+                label = f"GeoSphere batch {batch_number}/{total}: transient provider error — retry {attempt}..."
+            elif event_name == "split":
+                split_depth = int(event.get("split_depth", 1))
+                label = (
+                    f"GeoSphere batch {batch_number}/{total}: provider response still slow — "
+                    f"splitting this batch (level {split_depth})..."
                 )
+            elif event_name == "batch_complete":
+                label = f"GeoSphere load — {completed}/{total} planned batch(es) complete"
+            elif event_name == "load_complete":
+                label = f"GeoSphere load complete — {completed}/{total} planned batch(es)"
+            else:
+                label = f"GeoSphere load — {completed}/{total} planned batch(es) complete"
+            progress_bar.progress(completed / total, text=label)
+
+        try:
+            dataset = fetch_geosphere_station_dataset(
+                station=station,
+                start=start_ts,
+                end=end_ts,
+                metadata=metadata,
+                canonical_variables=canonical_variables,
+                progress_callback=update_geosphere_progress,
+            )
+            progress_bar.progress(
+                1.0,
+                text=f"GeoSphere load complete — {len(batches)}/{len(batches)} planned batch(es)",
+            )
             set_active_canonical_climate(dataset)
             st.rerun()
         except Exception as exc:
+            total = max(1, int(progress_state["total"]))
+            completed = min(total, max(0, int(progress_state["completed"])))
+            progress_bar.progress(
+                completed / total,
+                text=f"GeoSphere load stopped — {completed}/{total} planned batch(es) complete",
+            )
             st.error(f"GeoSphere station-data load failed: {exc}")
 
 def render_climate_file_source() -> None:
