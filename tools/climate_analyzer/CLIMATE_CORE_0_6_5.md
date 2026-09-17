@@ -1,6 +1,6 @@
 # Climate Analyzer 0.6.5 — Canonical Hourly Analysis Pipeline
 
-Status: implementation complete / draft PR #62 awaiting merge decision
+Status: merged to `main` in PR #62 (`d728b0bbe937ac1b77400b8d9a7f1fd0b5f15238`); post-merge quality gates and live browser audit PASS
 
 ## Goal
 
@@ -140,13 +140,16 @@ Focused regressions cover:
 - adaptive failed-batch splitting without overlap;
 - permanent-error fail-closed behavior.
 
-## Merge gate
+## Post-merge qualification
 
-Implementation scope is complete. Before merge, the final branch head must retain:
+PR #62 was merged to `main` as `d728b0bbe937ac1b77400b8d9a7f1fd0b5f15238`. Post-merge qualification is complete:
 
-- Climate Analyzer compile PASS;
+- Climate Analyzer quality gates PASS;
 - full security/scientific regression suite PASS;
 - scientific module import smoke PASS;
-- Streamlit root-launch health PASS.
+- Streamlit root-launch health PASS;
+- production live browser audit PASS on desktop and mobile;
+- production station catalog `98,047 / 98,047`;
+- production runtime fingerprint matched the merged source.
 
-PR #62 remains draft until an explicit merge decision.
+0.6.5 is closed. Subsequent work continues in 0.6.7.

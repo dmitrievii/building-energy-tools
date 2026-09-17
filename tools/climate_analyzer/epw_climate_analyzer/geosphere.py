@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 import math
 import time
-from typing import Any, Iterable, Mapping
+from typing import Any, Callable, Iterable, Mapping
 from urllib.parse import urlencode, urlparse
 
 import pandas as pd
@@ -570,11 +570,56 @@ def _split_data_query(query: Mapping[str, str]) -> tuple[dict[str, str], dict[st
     )
 
 
+GeoSphereProgressCallback = Callable[[Mapping[str, object]], None]
+
+
+def _emit_progress(
+    progress_callback: GeoSphereProgressCallback | None,
+    *,
+    event: str,
+    completed_batches: int,
+    total_batches: int,
+    batch_number: int,
+    query: Mapping[str, str],
+    attempt: int | None = None,
+    split_depth: int = 0,
+) -> None:
+    """Emit best-effort transport progress without affecting data loading.
+
+    Progress is observational only. A UI callback failure must never alter the
+    provider request, scientific data, retry policy or fail-closed behavior.
+    The denominator is the original set of planned root batches; adaptive child
+    requests remain inside the currently active root batch.
+    """
+    if progress_callback is None:
+        return
+    payload: dict[str, object] = {
+        "event": str(event),
+        "completed_batches": int(completed_batches),
+        "total_batches": int(total_batches),
+        "batch_number": int(batch_number),
+        "split_depth": int(split_depth),
+        "start": str(query.get("start", "")),
+        "end": str(query.get("end", "")),
+    }
+    if attempt is not None:
+        payload["attempt"] = int(attempt)
+    try:
+        progress_callback(payload)
+    except Exception:
+        # Rendering/status reporting is deliberately non-critical.
+        return
+
+
 def _fetch_query_with_resilience(
     query: Mapping[str, str],
     *,
     timeout_s: int,
     split_depth: int = 0,
+    progress_callback: GeoSphereProgressCallback | None = None,
+    root_batch_number: int = 1,
+    root_batch_count: int = 1,
+    completed_root_batches: int = 0,
 ) -> list[tuple[dict[str, Any], dict[str, str]]]:
     """Fetch one planned query, retrying transient failures and splitting only that batch.
 
@@ -600,6 +645,16 @@ def _fetch_query_with_resilience(
             if size_error:
                 break
             if attempt < MAX_TRANSIENT_ATTEMPTS:
+                _emit_progress(
+                    progress_callback,
+                    event="retry",
+                    completed_batches=completed_root_batches,
+                    total_batches=root_batch_count,
+                    batch_number=root_batch_number,
+                    query=normalized_query,
+                    attempt=attempt + 1,
+                    split_depth=split_depth,
+                )
                 time.sleep(RETRY_BACKOFF_BASE_SECONDS * (2 ** (attempt - 1)))
                 continue
             break
@@ -617,10 +672,27 @@ def _fetch_query_with_resilience(
             f"{normalized_query.get('start')} → {normalized_query.get('end')}."
         ) from last_error
 
+    _emit_progress(
+        progress_callback,
+        event="split",
+        completed_batches=completed_root_batches,
+        total_batches=root_batch_count,
+        batch_number=root_batch_number,
+        query=normalized_query,
+        split_depth=split_depth + 1,
+    )
     completed: list[tuple[dict[str, Any], dict[str, str]]] = []
     for child in children:
         completed.extend(
-            _fetch_query_with_resilience(child, timeout_s=timeout_s, split_depth=split_depth + 1)
+            _fetch_query_with_resilience(
+                child,
+                timeout_s=timeout_s,
+                split_depth=split_depth + 1,
+                progress_callback=progress_callback,
+                root_batch_number=root_batch_number,
+                root_batch_count=root_batch_count,
+                completed_root_batches=completed_root_batches,
+            )
         )
     return completed
 
@@ -632,6 +704,7 @@ def fetch_station_provider_frame(
     end: pd.Timestamp,
     provider_parameters: Iterable[str],
     timeout_s: int = DEFAULT_TIMEOUT_SECONDS,
+    progress_callback: GeoSphereProgressCallback | None = None,
 ) -> tuple[pd.DataFrame, tuple[str, ...]]:
     """Fetch and concatenate resilient bounded batches for one historical interval.
 
@@ -645,11 +718,35 @@ def fetch_station_provider_frame(
     queries = plan_data_queries(station_id, start, end, parameters)
     frames: list[pd.DataFrame] = []
     references: list[str] = []
-    for query in queries:
-        completed = _fetch_query_with_resilience(query, timeout_s=timeout_s)
+    total_batches = len(queries)
+    for batch_number, query in enumerate(queries, start=1):
+        _emit_progress(
+            progress_callback,
+            event="batch_start",
+            completed_batches=batch_number - 1,
+            total_batches=total_batches,
+            batch_number=batch_number,
+            query=query,
+        )
+        completed = _fetch_query_with_resilience(
+            query,
+            timeout_s=timeout_s,
+            progress_callback=progress_callback,
+            root_batch_number=batch_number,
+            root_batch_count=total_batches,
+            completed_root_batches=batch_number - 1,
+        )
         for payload, successful_query in completed:
             frames.append(parse_station_data_response(payload, station_id, parameters))
             references.append(_query_reference(successful_query))
+        _emit_progress(
+            progress_callback,
+            event="batch_complete",
+            completed_batches=batch_number,
+            total_batches=total_batches,
+            batch_number=batch_number,
+            query=query,
+        )
 
     if not frames:
         raise ValueError("GeoSphere batching produced no requests.")
@@ -660,6 +757,14 @@ def fetch_station_provider_frame(
         duplicate_count = int(combined.index.duplicated(keep=False).sum())
         raise ValueError(f"GeoSphere batched response contains {duplicate_count} duplicate timestamps.")
     combined = combined.sort_index(kind="mergesort")
+    _emit_progress(
+        progress_callback,
+        event="load_complete",
+        completed_batches=total_batches,
+        total_batches=total_batches,
+        batch_number=total_batches,
+        query=queries[-1],
+    )
     return combined, tuple(references)
 
 
@@ -797,6 +902,7 @@ def fetch_station_dataset(
     metadata: Mapping[str, Any] | None = None,
     canonical_variables: Iterable[str] | None = None,
     timeout_s: int = DEFAULT_TIMEOUT_SECONDS,
+    progress_callback: GeoSphereProgressCallback | None = None,
 ) -> CanonicalClimateDataset:
     """Fetch one bounded station interval and return canonical historical data."""
     metadata_payload = dict(metadata) if metadata is not None else fetch_metadata(timeout_s=timeout_s)
@@ -821,6 +927,7 @@ def fetch_station_dataset(
         end=end,
         provider_parameters=selected.keys(),
         timeout_s=timeout_s,
+        progress_callback=progress_callback,
     )
     dataset = build_canonical_station_dataset(
         station=station,
