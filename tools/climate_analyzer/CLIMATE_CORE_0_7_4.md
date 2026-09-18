@@ -34,7 +34,7 @@ Implemented in the current branch; qualification runs from this documented head:
 
 ## C — UX cleanup
 
-Implemented in C1/C2:
+Implemented in C1/C2/C3:
 
 - Ground-temperature profile and animation views use one stable 12-month temperature domain and a wider fixed-height presentation.
 - Chronological multi-year ground calculations preserve real years through an explicit year selector; Calendar profile fits one clearly labelled climatological annual harmonic across represented years.
@@ -42,11 +42,13 @@ Implemented in C1/C2:
 - Liquid-precipitation heat maps are anchored at 0 mm with white for dry intervals and progressively stronger blue toward the observed maximum.
 - Precipitation duration/histogram/box/violin distributions default to **Wet intervals only**, with an explicit **All intervals including dry periods** option.
 - Every Time Series and Overlay series has independent line colour, style, width and opacity while retaining the existing common time axis, resolution semantics and two-unit-family limit.
+- Sky & Daylight uses one capability-gated quantity explorer for daylight, measured sunshine, relative sunshine, sky cover and illuminance; quantity-specific aggregation remains physical (duration sums versus state/intensity statistics).
+- Overview no longer repeats the monthly temperature profile already available under Temperature.
+- Humidity remains the canonical home for humidity-control threshold and enthalpy analyses; HVAC no longer duplicates those routes or the Temperature degree-metric route.
+- Natural Ventilation removes the redundant Month × hour route because the canonical heat map already provides Month × Hour of day, and it follows the shared Chronological/Calendar-profile temporal contract.
+- Passive-strategy annual and monthly views are consolidated under one HVAC analysis with a view selector.
 
-Still planned for C:
-
-- Sky & Daylight consolidation and removal of duplicated analysis routes.
-- Overview, humidity and natural-ventilation/HVAC duplicated-analysis cleanup.
+C is closed on the current branch subject to CI qualification.
 
 ## D — Psychrometric redesign
 

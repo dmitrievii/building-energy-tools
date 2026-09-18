@@ -2016,6 +2016,7 @@ def render_generic_variable_page(
     title_prefix: str,
     interpretation_factory: Callable[[pd.DataFrame, str, str, str], str] | None = None,
     temperature_thresholds: tuple[float, float] | None = None,
+    fixed_variable_label: str | None = None,
 ) -> None:
     """Render a generic variable explorer with chart-type and aggregation controls."""
     available_labels = [
@@ -2028,7 +2029,13 @@ def render_generic_variable_page(
         st.info("No measured numeric variables required by this explorer are available in the loaded dataset.")
         return
     selected_default = default_variable if default_variable in available_labels else available_labels[0]
-    variable_label = st.selectbox("Variable", available_labels, index=available_labels.index(selected_default))
+    if fixed_variable_label is not None:
+        if fixed_variable_label not in available_labels:
+            st.info("The selected quantity is not available in the active climate data.")
+            return
+        variable_label = fixed_variable_label
+    else:
+        variable_label = st.selectbox("Variable", available_labels, index=available_labels.index(selected_default))
     column, unit = VARIABLES[variable_label]
     chart_types = [
         "Profile with min-mean-max ribbon",
@@ -2831,9 +2838,6 @@ def render_overview(epw, df: pd.DataFrame, full_df: pd.DataFrame, issues: list[o
             """
         )
 
-    fig = profile_ribbon_chart(stats_df, "dry_bulb_temperature_c", "Monthly", "Monthly outdoor temperature profile", "°C")
-    render_plot(fig, temperature_interpretation(stats_df, heat_threshold=18.0, cool_threshold=26.0))
-
     render_calculated_epw_statistics(stats_df)
 
     issue_count = len(issues)
@@ -3580,26 +3584,48 @@ def render_precipitation(df: pd.DataFrame, native_df: pd.DataFrame | None = None
         render_plot(fig, "Snow-season trends are calculated from provider/source snow-depth states after the active global Data filter is replayed at native cadence.")
 
 def render_sky_daylight(df: pd.DataFrame, *, latitude: float | None = None) -> None:
-    """Render capability-gated sky, daylight and sunshine diagnostics."""
+    """Render source-neutral sky, daylight and measured-sunshine diagnostics."""
     from epw_climate_analyzer.daylight import daily_daylight_table, monthly_daylight_sunshine_summary
     from epw_climate_analyzer.historical_capabilities import has_numeric_observations
 
     st.header("Sky cover and daylight")
-    has_sky = any(has_numeric_observations(df, c) for c in ("total_sky_cover_tenths", "opaque_sky_cover_tenths"))
+    has_sky = any(
+        has_numeric_observations(df, column)
+        for column in ("total_sky_cover_tenths", "opaque_sky_cover_tenths")
+    )
     has_illuminance = any(
-        has_numeric_observations(df, c)
-        for c in ("global_horizontal_illuminance_lux", "direct_normal_illuminance_lux", "diffuse_horizontal_illuminance_lux")
+        has_numeric_observations(df, column)
+        for column in (
+            "global_horizontal_illuminance_lux",
+            "direct_normal_illuminance_lux",
+            "diffuse_horizontal_illuminance_lux",
+        )
     )
     has_sunshine = has_numeric_observations(df, "sunshine_duration_s")
-    options: list[str] = []
+
+    quantities: list[str] = []
     if latitude is not None:
-        options.extend(["Astronomical daylight duration", "Monthly daylight summary"])
+        quantities.append("Astronomical daylight duration")
     if has_sunshine:
-        options.extend(["Measured sunshine duration", "Relative sunshine duration"])
+        quantities.append("Measured sunshine duration")
+    if has_sunshine and latitude is not None:
+        quantities.append("Relative sunshine duration")
+    if has_numeric_observations(df, "total_sky_cover_tenths"):
+        quantities.append("Total sky cover")
+    if has_numeric_observations(df, "opaque_sky_cover_tenths"):
+        quantities.append("Opaque sky cover")
+    if has_numeric_observations(df, "global_horizontal_illuminance_lux"):
+        quantities.append("Global horizontal illuminance")
+    if has_numeric_observations(df, "direct_normal_illuminance_lux"):
+        quantities.append("Direct normal illuminance")
+    if has_numeric_observations(df, "diffuse_horizontal_illuminance_lux"):
+        quantities.append("Diffuse horizontal illuminance")
+
+    options: list[str] = []
+    if quantities:
+        options.append("Sky and daylight explorer")
     if has_sky:
-        options.extend(["Sky-cover variable explorer", "Clear and overcast hours"])
-    if has_illuminance:
-        options.append("Illuminance variable explorer")
+        options.append("Clear and overcast hours")
     if has_sky and has_numeric_observations(df, "global_horizontal_radiation_wh_m2"):
         options.append("Daylight scatter")
     if not options:
@@ -3607,69 +3633,161 @@ def render_sky_daylight(df: pd.DataFrame, *, latitude: float | None = None) -> N
         return
 
     st.caption(
-        "Astronomical daylight is calculated from date and latitude. GeoSphere sunshine duration is an independent measured quantity; "
-        "it is not converted into sky cover, illuminance or DNI."
+        "Astronomical daylight is calculated from date and latitude. Measured sunshine duration is independent provider data; "
+        "it is never converted into sky cover, illuminance or DNI. Duration quantities are summed, while sky-cover and "
+        "illuminance state/intensity quantities retain their normal statistical aggregation."
     )
     chart_group = st.selectbox("Analysis type", options, key="sky_daylight_analysis")
-    if chart_group == "Astronomical daylight duration":
-        table = daily_daylight_table(pd.DatetimeIndex(df.index), float(latitude))
-        fig = px.line(table.reset_index(), x="date", y="daylight_duration_h", title="Astronomical daylight duration")
-        fig.update_layout(template="plotly_white", xaxis_title="Date", yaxis_title="Daylight duration [h]")
-        render_plot(fig, "Calculated sunrise-to-sunset duration for an ideal geometric horizon; refraction, terrain and local obstructions are not included.")
-    elif chart_group == "Monthly daylight summary":
-        summary = monthly_daylight_sunshine_summary(df, float(latitude))
-        columns = ["mean_daylight_h"] + (["mean_sunshine_h"] if "mean_sunshine_h" in summary.columns else [])
-        long = summary.melt(id_vars=["month"], value_vars=columns, var_name="series", value_name="hours")
-        labels = {"mean_daylight_h": "Astronomical daylight", "mean_sunshine_h": "Measured sunshine"}
-        long["series"] = long["series"].map(labels)
-        fig = px.line(long, x="month", y="hours", color="series", markers=True, title="Monthly daylight and sunshine")
-        fig.update_layout(template="plotly_white", xaxis_title="Month", yaxis_title="Mean duration per represented day [h]", legend_title="")
-        render_plot(fig, "Daylight is calculated geometrically; measured sunshine is summed from provider duration observations when available.")
-    elif chart_group == "Measured sunshine duration":
-        sunshine = pd.to_numeric(df["sunshine_duration_s"], errors="coerce") / 3600.0
-        aggregation = st.selectbox("Aggregation", ["Daily", "Monthly", "Annual"], index=1, key="sunshine_duration_aggregation")
-        rule = {"Daily": "D", "Monthly": "MS", "Annual": "YS"}[aggregation]
-        totals = sunshine.resample(rule).sum(min_count=1).dropna().to_frame("sunshine_h")
-        if totals.empty:
-            st.info("No measured sunshine-duration values are available in the active Data filter.")
-            return
-        plot_data = totals.reset_index()
-        period_column = plot_data.columns[0]
-        fig = px.bar(plot_data, x=period_column, y="sunshine_h", title=f"Measured sunshine duration — {aggregation.lower()}")
-        fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Measured sunshine duration [h]")
-        render_plot(fig, "GeoSphere sunshine duration is a measured interval-duration quantity summed in hours. Missing observations are excluded, never replaced by zero.")
-    elif chart_group == "Relative sunshine duration":
-        summary = monthly_daylight_sunshine_summary(df, float(latitude))
-        if "relative_sunshine_pct" not in summary.columns:
-            st.info("Relative sunshine duration requires complete measured sunshine coverage for at least one full calendar day in the active Data filter.")
-            return
-        data = summary.dropna(subset=["relative_sunshine_pct"])
-        if data.empty:
-            st.info("Relative sunshine duration requires complete measured sunshine coverage for at least one full calendar day in the active Data filter.")
-            return
-        fig = px.bar(data, x="month", y="relative_sunshine_pct", title="Measured sunshine as share of astronomical daylight")
-        fig.update_layout(template="plotly_white", xaxis_title="Month", yaxis_title="Relative sunshine duration [%]")
-        render_plot(fig, "Measured sunshine duration divided by astronomical daylight only for fully observed calendar days; incomplete days are excluded rather than treated as zero sunshine.")
-    elif chart_group == "Sky-cover variable explorer":
-        available = [label for label, column in (("Total sky cover", "total_sky_cover_tenths"), ("Opaque sky cover", "opaque_sky_cover_tenths")) if has_numeric_observations(df, column)]
-        render_generic_variable_page(df, available, available[0], "Sky cover", None)
-    elif chart_group == "Illuminance variable explorer":
-        labels = [
-            label for label, column in (
-                ("Global horizontal illuminance", "global_horizontal_illuminance_lux"),
-                ("Direct normal illuminance", "direct_normal_illuminance_lux"),
-                ("Diffuse horizontal illuminance", "diffuse_horizontal_illuminance_lux"),
-            ) if has_numeric_observations(df, column)
-        ]
-        render_generic_variable_page(df, labels, labels[0], "Illuminance", None)
+
+    if chart_group == "Sky and daylight explorer":
+        quantity = st.selectbox("Quantity", quantities, key="sky_daylight_quantity")
+        if quantity == "Astronomical daylight duration":
+            view = st.radio(
+                "View",
+                ["Daily series", "Monthly daylight and sunshine"],
+                horizontal=True,
+                key="daylight_duration_view",
+            )
+            if view == "Daily series":
+                table = daily_daylight_table(pd.DatetimeIndex(df.index), float(latitude))
+                fig = px.line(
+                    table.reset_index(),
+                    x="date",
+                    y="daylight_duration_h",
+                    title="Astronomical daylight duration",
+                )
+                fig.update_layout(
+                    template="plotly_white",
+                    xaxis_title="Date",
+                    yaxis_title="Daylight duration [h]",
+                )
+                render_plot(
+                    fig,
+                    "Calculated sunrise-to-sunset duration for an ideal geometric horizon; refraction, terrain and local obstructions are not included.",
+                )
+            else:
+                summary = monthly_daylight_sunshine_summary(df, float(latitude))
+                columns = ["mean_daylight_h"] + (
+                    ["mean_sunshine_h"] if "mean_sunshine_h" in summary.columns else []
+                )
+                long = summary.melt(
+                    id_vars=["month"],
+                    value_vars=columns,
+                    var_name="series",
+                    value_name="hours",
+                )
+                labels = {
+                    "mean_daylight_h": "Astronomical daylight",
+                    "mean_sunshine_h": "Measured sunshine",
+                }
+                long["series"] = long["series"].map(labels)
+                fig = px.line(
+                    long,
+                    x="month",
+                    y="hours",
+                    color="series",
+                    markers=True,
+                    title="Monthly daylight and sunshine",
+                )
+                fig.update_layout(
+                    template="plotly_white",
+                    xaxis_title="Month",
+                    yaxis_title="Mean duration per represented day [h]",
+                    legend_title="",
+                )
+                render_plot(
+                    fig,
+                    "Daylight is calculated geometrically; measured sunshine is included only when complete provider observations support it.",
+                )
+        elif quantity == "Measured sunshine duration":
+            sunshine = pd.to_numeric(df["sunshine_duration_s"], errors="coerce") / 3600.0
+            aggregation = st.selectbox(
+                "Aggregation",
+                ["Daily", "Monthly", "Annual"],
+                index=1,
+                key="sunshine_duration_aggregation",
+            )
+            rule = {"Daily": "D", "Monthly": "MS", "Annual": "YS"}[aggregation]
+            totals = sunshine.resample(rule).sum(min_count=1).dropna().to_frame("sunshine_h")
+            if totals.empty:
+                st.info("No measured sunshine-duration values are available in the active Data filter.")
+                return
+            plot_data = totals.reset_index()
+            period_column = plot_data.columns[0]
+            fig = px.bar(
+                plot_data,
+                x=period_column,
+                y="sunshine_h",
+                title=f"Measured sunshine duration — {aggregation.lower()}",
+            )
+            fig.update_layout(
+                template="plotly_white",
+                xaxis_title="Period",
+                yaxis_title="Measured sunshine duration [h]",
+            )
+            render_plot(
+                fig,
+                "Measured sunshine is an interval-duration quantity summed in hours. Missing observations are excluded, never replaced by zero.",
+            )
+        elif quantity == "Relative sunshine duration":
+            summary = monthly_daylight_sunshine_summary(df, float(latitude))
+            if "relative_sunshine_pct" not in summary.columns:
+                st.info(
+                    "Relative sunshine duration requires complete measured sunshine coverage for at least one full calendar day in the active Data filter."
+                )
+                return
+            data = summary.dropna(subset=["relative_sunshine_pct"])
+            if data.empty:
+                st.info(
+                    "Relative sunshine duration requires complete measured sunshine coverage for at least one full calendar day in the active Data filter."
+                )
+                return
+            fig = px.bar(
+                data,
+                x="month",
+                y="relative_sunshine_pct",
+                title="Measured sunshine as share of astronomical daylight",
+            )
+            fig.update_layout(
+                template="plotly_white",
+                xaxis_title="Month",
+                yaxis_title="Relative sunshine duration [%]",
+            )
+            render_plot(
+                fig,
+                "Measured sunshine duration divided by astronomical daylight only for fully observed calendar days; incomplete days are excluded rather than treated as zero sunshine.",
+            )
+        elif quantity in {"Total sky cover", "Opaque sky cover"}:
+            render_generic_variable_page(
+                df,
+                [quantity],
+                quantity,
+                "Sky cover",
+                None,
+                fixed_variable_label=quantity,
+            )
+        else:
+            render_generic_variable_page(
+                df,
+                [quantity],
+                quantity,
+                "Illuminance",
+                None,
+                fixed_variable_label=quantity,
+            )
     elif chart_group == "Clear and overcast hours":
-        aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0)
+        aggregation = st.selectbox(
+            "Aggregation",
+            ["Monthly", "Weekly", "Daily", "Seasonal"],
+            index=0,
+            key="sky_condition_aggregation",
+        )
         choices: list[str] = []
         if has_numeric_observations(df, "total_sky_cover_tenths"):
             choices.extend(["Clear sky cover <= 2", "Overcast sky cover >= 8"])
         if has_numeric_observations(df, "global_horizontal_illuminance_lux"):
             choices.append("Illuminance > 10000 lux")
-        mode = st.radio("Condition", choices)
+        mode = st.radio("Condition", choices, key="sky_condition")
         if mode == "Clear sky cover <= 2":
             condition = df["total_sky_cover_tenths"] <= 2
         elif mode == "Overcast sky cover >= 8":
@@ -3747,7 +3865,6 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
         [
             "Heat map",
             "Suitable hours by aggregation",
-            "Month × hour suitability",
             "Daily suitable-hours duration curve",
             "Rejected reasons",
             "Psychrometric NV overlay",
@@ -3756,7 +3873,13 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
     )
     if chart_group == "Heat map":
         row_group = st.radio("Heat-map aggregation", ["Day", "Week", "Month"], horizontal=True)
-        compare_across = st.radio("Compare across", ["Hour of day", "Year"], horizontal=True)
+        compare_options = ["Hour of day"] if time_basis(df_nv) == CHRONOLOGICAL else ["Hour of day", "Year"]
+        compare_across = st.radio("Compare across", compare_options, horizontal=True)
+        if time_basis(df_nv) == CHRONOLOGICAL and is_multiyear(df_nv):
+            st.caption(
+                "Chronological natural-ventilation heat maps keep real periods in sequence across years. "
+                "Switch Time basis to Calendar profile to compare equivalent calendar periods by year."
+            )
         statistic_options = list(heatmap_statistic_options("natural_ventilation_suitable"))
         statistic = st.selectbox("Statistic", statistic_options, index=0, key="nv_heatmap_statistic")
         if compare_across == "Year":
@@ -3776,9 +3899,7 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
         counts = threshold_count_by_period(df, mask, aggregation, label="suitable_hours")
         fig = threshold_bar_chart(counts, "Natural-ventilation suitable hours", "hours")
         render_plot(fig, natural_ventilation_interpretation(df, mask))
-    elif chart_group == "Month × hour suitability":
-        fig = month_hour_heatmap(df_nv, "natural_ventilation_suitable", "Mean natural-ventilation eligibility by month and hour", "share", aggfunc="mean")
-        render_plot(fig, natural_ventilation_interpretation(df, mask))
+
     elif chart_group == "Daily suitable-hours duration curve":
         daily = df_nv["natural_ventilation_suitable"].resample("D").sum().to_frame("suitable_hours")
         fig = duration_chart(daily, "suitable_hours", "Daily natural-ventilation suitable-hours duration curve", "hours/day", ascending=False)
@@ -3803,62 +3924,71 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
 
 
 def render_hvac_passive(df: pd.DataFrame) -> None:
-    """Render HVAC and passive-design decision-support charts."""
+    """Render non-duplicated HVAC and passive-design decision-support charts."""
     st.header("HVAC operation and passive strategies")
     has_ghi = (
         "global_horizontal_radiation_wh_m2" in df.columns
         and pd.to_numeric(df["global_horizontal_radiation_wh_m2"], errors="coerce").notna().any()
     )
     if not has_ghi:
-        st.caption("No usable GHI is available in this climate interval; solar-shading strategy rows are omitted rather than inferred.")
+        st.caption(
+            "No usable GHI is available in this climate interval; solar-shading strategy rows are omitted rather than inferred."
+        )
+    st.caption(
+        "Humidity-control thresholds and enthalpy distributions are analysed on Humidity; heating/cooling degree metrics are analysed on Temperature. "
+        "This page keeps only HVAC/passive-design views that add a distinct decision layer."
+    )
     chart_group = st.selectbox(
         "Analysis type",
         [
-            "Passive strategy annual table",
-            "Passive strategy monthly stacked bars",
+            "Passive strategy summary",
             "Economizer availability",
-            "Dehumidification and humidification",
-            "Outdoor-air enthalpy duration curve",
-            "Heating and cooling degree-hours",
             "Design-day candidates",
             "Ventilation load proxy",
         ],
     )
-    if chart_group == "Passive strategy annual table":
-        table = passive_strategy_table(df)
-        fig = px.bar(table, x="hours", y="strategy", orientation="h", title="Annual passive and HVAC strategy hours")
-        fig.update_layout(template="plotly_white", xaxis_title="Hours", yaxis_title="Strategy")
-        st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False, "scrollZoom": True}, key=next_plot_key())
-        st.dataframe(table, hide_index=True, use_container_width=True)
-        render_interpretation(hvac_interpretation(df))
-    elif chart_group == "Passive strategy monthly stacked bars":
-        monthly = passive_strategy_monthly(df)
-        fig = stacked_monthly_bar(monthly, "Monthly passive and HVAC strategy hours", "hours")
-        render_plot(fig, hvac_interpretation(df))
+
+    if chart_group == "Passive strategy summary":
+        view = st.radio(
+            "View",
+            ["Annual totals", "Monthly stacked bars"],
+            horizontal=True,
+            key="passive_strategy_view",
+        )
+        if view == "Annual totals":
+            table = passive_strategy_table(df)
+            fig = px.bar(
+                table,
+                x="hours",
+                y="strategy",
+                orientation="h",
+                title="Annual passive and HVAC strategy hours",
+            )
+            fig.update_layout(template="plotly_white", xaxis_title="Hours", yaxis_title="Strategy")
+            st.plotly_chart(
+                fig,
+                use_container_width=True,
+                config={"displaylogo": False, "scrollZoom": True},
+                key=next_plot_key(),
+            )
+            st.dataframe(table, hide_index=True, use_container_width=True)
+            render_interpretation(hvac_interpretation(df))
+        else:
+            monthly = passive_strategy_monthly(df)
+            fig = stacked_monthly_bar(monthly, "Monthly passive and HVAC strategy hours", "hours")
+            render_plot(fig, hvac_interpretation(df))
     elif chart_group == "Economizer availability":
         h_return = st.slider("Return-air enthalpy limit [kJ/kg]", 30.0, 80.0, 50.0, 1.0)
         mask = economizer_condition(df, return_air_enthalpy_kj_kg=h_return)
-        aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0)
+        aggregation = st.selectbox(
+            "Aggregation",
+            ["Monthly", "Weekly", "Daily", "Seasonal"],
+            index=0,
+            key="economizer_aggregation",
+        )
         counts = threshold_count_by_period(df, mask, aggregation, label="hours")
         fig = threshold_bar_chart(counts, "Air-side economizer availability", "hours")
         render_plot(fig, hvac_interpretation(df))
-    elif chart_group == "Dehumidification and humidification":
-        d_high = st.slider("Dehumidification threshold [g/kg]", 5.0, 20.0, 10.0, 0.5)
-        d_low = st.slider("Humidification threshold [g/kg]", 0.5, 8.0, 3.0, 0.5)
-        aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0)
-        dehum = threshold_count_by_period(df, dehumidification_condition(df, d_high), aggregation, label="Dehumidification hours")
-        humid = threshold_count_by_period(df, humidification_condition(df, d_low), aggregation, label="Humidification hours")
-        combined = dehum.join(humid, how="outer").fillna(0)
-        fig = stacked_monthly_bar(combined, "Humidification and dehumidification climate hours", "hours")
-        render_plot(fig, hvac_interpretation(df))
-    elif chart_group == "Outdoor-air enthalpy duration curve":
-        fig = duration_chart(df, "moist_air_enthalpy_kj_kg", "Outdoor-air enthalpy duration curve", "kJ/kg dry air", ascending=False)
-        render_plot(fig, hvac_interpretation(df))
-    elif chart_group == "Heating and cooling degree-hours":
-        monthly = aggregate_sum(df, "heating_degree_hours_kh", "Monthly")[["sum"]].rename(columns={"sum": "Heating degree-hours"})
-        monthly["Cooling degree-hours"] = aggregate_sum(df, "cooling_degree_hours_kh", "Monthly")["sum"]
-        fig = stacked_monthly_bar(monthly, "Monthly degree-hour climate severity", "K·h")
-        render_plot(fig, degree_day_interpretation(df))
     elif chart_group == "Design-day candidates":
         daily_aggregation = {
             "mean_t": ("dry_bulb_temperature_c", "mean"),
@@ -3870,7 +4000,11 @@ def render_hvac_passive(df: pd.DataFrame) -> None:
         if has_ghi:
             daily_aggregation["max_ghi"] = ("global_horizontal_radiation_wh_m2", "max")
         daily = df.resample("D").agg(**daily_aggregation)
-        mode = st.radio("Design-day ranking", ["Coldest days", "Hottest days", "Highest enthalpy days", "Most humid days"], horizontal=True)
+        mode = st.radio(
+            "Design-day ranking",
+            ["Coldest days", "Hottest days", "Highest enthalpy days", "Most humid days"],
+            horizontal=True,
+        )
         if mode == "Coldest days":
             table = daily.sort_values("min_t").head(15)
         elif mode == "Hottest days":
@@ -3880,21 +4014,54 @@ def render_hvac_passive(df: pd.DataFrame) -> None:
         else:
             table = daily.sort_values("max_humidity_ratio", ascending=False).head(15)
         st.dataframe(table, use_container_width=True)
-        fig = profile_ribbon_chart(df, "dry_bulb_temperature_c", "Daily", "Daily dry-bulb temperature for design-day screening", "°C")
+        fig = profile_ribbon_chart(
+            df,
+            "dry_bulb_temperature_c",
+            "Daily",
+            "Daily dry-bulb temperature for design-day screening",
+            "°C",
+        )
         render_plot(fig, hvac_interpretation(df))
     else:
-        airflow_m3_h = st.number_input("Outdoor airflow [m³/h]", min_value=1.0, value=1000.0, step=100.0)
-        heat_set_c = st.number_input("Heating supply target temperature [°C]", value=20.0, step=0.5)
-        cool_set_c = st.number_input("Cooling supply target temperature [°C]", value=26.0, step=0.5)
+        airflow_m3_h = st.number_input(
+            "Outdoor airflow [m³/h]",
+            min_value=1.0,
+            value=1000.0,
+            step=100.0,
+        )
+        heat_set_c = st.number_input(
+            "Heating supply target temperature [°C]",
+            value=20.0,
+            step=0.5,
+        )
+        cool_set_c = st.number_input(
+            "Cooling supply target temperature [°C]",
+            value=26.0,
+            step=0.5,
+        )
         rho = df["moist_air_density_kg_m3"].fillna(1.2)
         m_dot = rho * airflow_m3_h / 3600.0
         cp = 1.006
         proxy = df.copy()
-        proxy["ventilation_heating_kw"] = m_dot * cp * (heat_set_c - proxy["dry_bulb_temperature_c"]).clip(lower=0)
-        proxy["ventilation_cooling_kw"] = m_dot * cp * (proxy["dry_bulb_temperature_c"] - cool_set_c).clip(lower=0)
-        monthly = aggregate_sum(proxy, "ventilation_heating_kw", "Monthly")[["sum"]].rename(columns={"sum": "Heating proxy [kWh-like]"})
-        monthly["Cooling proxy [kWh-like]"] = aggregate_sum(proxy, "ventilation_cooling_kw", "Monthly")["sum"]
-        fig = stacked_monthly_bar(monthly, "Outdoor-air sensible ventilation load proxy", "kW·h proxy")
+        proxy["ventilation_heating_kw"] = m_dot * cp * (
+            heat_set_c - proxy["dry_bulb_temperature_c"]
+        ).clip(lower=0)
+        proxy["ventilation_cooling_kw"] = m_dot * cp * (
+            proxy["dry_bulb_temperature_c"] - cool_set_c
+        ).clip(lower=0)
+        monthly = aggregate_sum(proxy, "ventilation_heating_kw", "Monthly")[["sum"]].rename(
+            columns={"sum": "Heating proxy [kWh-like]"}
+        )
+        monthly["Cooling proxy [kWh-like]"] = aggregate_sum(
+            proxy,
+            "ventilation_cooling_kw",
+            "Monthly",
+        )["sum"]
+        fig = stacked_monthly_bar(
+            monthly,
+            "Outdoor-air sensible ventilation load proxy",
+            "kW·h proxy",
+        )
         render_plot(fig, hvac_interpretation(df))
 
 
@@ -4294,11 +4461,6 @@ def render_historical_overview(
             cols = st.columns(min(4, len(metric_values) - start))
             for col, (label, value) in zip(cols, metric_values[start:start + 4]):
                 col.metric(label, value)
-
-    if has_numeric_observations(df, "dry_bulb_temperature_c"):
-        fig = profile_ribbon_chart(df, "dry_bulb_temperature_c", "Monthly", "Canonical hourly monthly outdoor temperature", "°C")
-        render_plot(fig, temperature_interpretation(df, heat_threshold=18.0, cool_threshold=26.0))
-
 
 def render_historical_wind(df: pd.DataFrame) -> None:
     """Backward-compatible entry point; canonical wind UI is source-neutral."""
