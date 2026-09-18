@@ -45,10 +45,10 @@ jobs:
               raise RuntimeError('C3 transport payload was not found.')
 
           source = zlib.decompress(base64.b64decode(payload)).decode('utf-8')
-          root_anchor = "ROOT = Path(__file__).resolve().parents[2]"
-          if source.count(root_anchor) != 1:
-              raise RuntimeError(f'C3 payload root anchor mismatch: {source.count(root_anchor)}')
-          source = source.replace(root_anchor, "ROOT = Path.cwd()", 1)
+          root_lines = [line for line in source.splitlines() if line.startswith('ROOT = ')]
+          if len(root_lines) != 1:
+              raise RuntimeError(f'C3 payload must contain exactly one ROOT assignment, found {len(root_lines)}')
+          source = source.replace(root_lines[0], 'ROOT = Path.cwd()', 1)
 
           helper_start = source.index('def replace_once(')
           helper_end = source.index('\nreplace_once(', helper_start)
