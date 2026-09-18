@@ -8,6 +8,7 @@ import pandas as pd
 from epw_climate_analyzer.timeseries import OverlaySeries, build_overlay_figure
 
 ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = ROOT.parents[1]
 APP = ROOT / "app.py"
 
 
@@ -69,6 +70,10 @@ class TimeSeriesStyling074C2Tests(unittest.TestCase):
         self.assertIn('"Line color"', source)
         self.assertIn('"Opacity"', source)
         self.assertIn('"Dash-dot"', source)
+
+    def test_temporary_c2_patch_transport_is_not_part_of_release_tree(self) -> None:
+        self.assertFalse((ROOT / "scripts" / "apply_v074_c2.py").exists())
+        self.assertFalse((REPO_ROOT / ".github" / "workflows" / "v074-c2-patch.yml").exists())
 
 
 if __name__ == "__main__":
