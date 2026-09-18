@@ -1,0 +1,50 @@
+name: Climate Analyzer GeoSphere Capability Census
+
+on:
+  pull_request:
+    paths:
+      - 'deployment/geosphere_capability_census.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/geosphere.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/historical_capabilities.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/ui_contract.py'
+      - '.github/workflows/climate-analyzer-geosphere-capability-census.yml'
+  push:
+    branches:
+      - main
+      - chore/v0.7.2-geosphere-parity-audit
+    paths:
+      - 'deployment/geosphere_capability_census.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/geosphere.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/historical_capabilities.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/ui_contract.py'
+      - '.github/workflows/climate-analyzer-geosphere-capability-census.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '17 5 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  live-metadata-census:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/climate_analyzer/requirements.txt
+      - name: Install Climate Analyzer dependencies
+        run: python -m pip install -r tools/climate_analyzer/requirements.txt
+      - name: Fetch live metadata and build capability census
+        env:
+          PYTHONPATH: tools/climate_analyzer
+        run: |
+          python deployment/geosphere_capability_census.py
+      - name: Upload census evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: climate-analyzer-geosphere-capability-census
+          path: artifacts/geosphere-capability-census
+          retention-days: 30
