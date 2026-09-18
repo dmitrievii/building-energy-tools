@@ -1,0 +1,51 @@
+name: Climate 0.7.4.1 remaining CI diagnostic
+
+on:
+  push:
+    branches:
+      - fix/v0.7.4.1-psychrometric-integration-remediation
+    paths:
+      - '.github/workflows/v0741-ci-diagnose.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        working-directory: tools/climate_analyzer
+        run: pip install -r requirements.txt
+      - name: Full suite
+        working-directory: tools/climate_analyzer
+        shell: bash
+        run: |
+          set +e
+          python -m unittest discover -s tests -p 'test_*.py' -v > /tmp/tests.log 2>&1
+          status=$?
+          echo '===== FAILURE SUMMARY ====='
+          grep -nE '^(FAIL|ERROR):|^FAILED \(' /tmp/tests.log || true
+          echo '===== FAILURE CONTEXT ====='
+          python - <<'PY'
+          from pathlib import Path
+          lines = Path('/tmp/tests.log').read_text(errors='replace').splitlines()
+          starts = [i for i, line in enumerate(lines) if line.startswith(('FAIL:', 'ERROR:'))]
+          for i in starts:
+              print('\n'.join(lines[i:min(len(lines), i + 30)]))
+              print('---')
+          print('\n'.join(lines[-20:]))
+          PY
+          exit $status
+      - name: Upload transcript
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v0741-remaining-ci-diagnostic
+          path: /tmp/tests.log
+          retention-days: 2
