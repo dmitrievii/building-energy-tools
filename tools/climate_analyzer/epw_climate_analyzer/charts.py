@@ -1455,15 +1455,24 @@ def psychrometric_chart(
             fig.update_yaxes(range=list(h_range), autorangeoptions=dict(minallowed=h_range[0], maxallowed=h_range[1]))
     return fig
 
-def wind_rose_chart(df: pd.DataFrame, title: str = "Wind rose") -> go.Figure:
-    """Create a wind rose grouped by direction sectors and wind-speed bins."""
-    data = df[["wind_direction_deg", "wind_speed_m_s"]].dropna().copy()
+def wind_rose_chart(
+    df: pd.DataFrame,
+    title: str = "Wind rose",
+    *,
+    speed_column: str = "wind_speed_m_s",
+    direction_column: str = "wind_direction_deg",
+) -> go.Figure:
+    """Create a source-neutral wind rose from a paired speed/direction quantity."""
+    required = [direction_column, speed_column]
+    if any(column not in df.columns for column in required):
+        return go.Figure().update_layout(title="No paired wind data available")
+    data = df[required].dropna().copy()
     if data.empty:
-        return go.Figure().update_layout(title="No wind data available")
-    direction_bin = (np.round(data["wind_direction_deg"] / 22.5) * 22.5) % 360
+        return go.Figure().update_layout(title="No paired wind data available")
+    direction_bin = (np.round(data[direction_column] / 22.5) * 22.5) % 360
     data["direction_sector_deg"] = direction_bin
     data["speed_bin"] = pd.cut(
-        data["wind_speed_m_s"],
+        data[speed_column],
         bins=[0, 1, 2, 4, 6, 8, 12, np.inf],
         labels=WIND_SPEED_LABELS,
         include_lowest=True,

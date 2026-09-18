@@ -2817,13 +2817,47 @@ def render_overview(epw, df: pd.DataFrame, full_df: pd.DataFrame, issues: list[o
     st.info(data_quality_interpretation(issue_count, error_count))
 
 
-def render_temperature(df: pd.DataFrame, *, interval_count_metrics: bool = True) -> None:
+def render_temperature(
+    df: pd.DataFrame,
+    *,
+    interval_count_metrics: bool = True,
+    ground_source_label: str | None = None,
+    ground_native_df: pd.DataFrame | None = None,
+) -> None:
     """Render temperature-analysis charts."""
     st.header("Temperature and extremes")
-    chart_options = ["Temperature variable explorer", "Threshold hours", "Degree days", "Extreme days"]
-    if not interval_count_metrics:
-        chart_options.remove("Threshold hours")
+    measured_ground_source = ground_native_df if ground_native_df is not None else df
+    has_air_temperature = (
+        "dry_bulb_temperature_c" in df.columns
+        and pd.to_numeric(df["dry_bulb_temperature_c"], errors="coerce").notna().any()
+    )
+    has_ground_measurement = any(
+        column in measured_ground_source.columns
+        and pd.to_numeric(measured_ground_source[column], errors="coerce").notna().any()
+        for column in ("ground_temperature_0_10m_c", "ground_temperature_0_20m_c", "ground_temperature_0_50m_c")
+    )
+
+    chart_options: list[str] = []
+    if has_air_temperature:
+        chart_options.append("Temperature variable explorer")
+    if has_air_temperature or has_ground_measurement:
+        chart_options.append("Ground temperature")
+    if has_air_temperature and interval_count_metrics:
+        chart_options.append("Threshold conditions")
+    if has_air_temperature:
+        chart_options.extend(["Degree days", "Extreme days"])
+    if not chart_options:
+        st.info("No air- or ground-temperature observations are available for the current Data filter.")
+        return
     chart_group = st.selectbox("Analysis type", chart_options)
+
+    if chart_group == "Ground temperature":
+        render_ground_temperature_page(
+            df,
+            source_label=ground_source_label or "Calculated from outdoor dry-bulb temperature",
+            native_df=ground_native_df,
+        )
+        return
 
     if chart_group == "Degree days":
         st.caption(
@@ -2950,7 +2984,7 @@ def render_temperature(df: pd.DataFrame, *, interval_count_metrics: bool = True)
         )
         return
 
-    if chart_group in {"Temperature variable explorer", "Threshold hours"}:
+    if chart_group in {"Temperature variable explorer", "Threshold conditions"}:
         threshold_col1, threshold_col2 = st.columns(2)
         heat_threshold = threshold_col1.slider("Heating threshold [°C]", -5.0, 25.0, 18.0, 0.5)
         cool_threshold = threshold_col2.slider("Cooling threshold [°C]", 15.0, 40.0, 26.0, 0.5)
@@ -2976,7 +3010,7 @@ def render_temperature(df: pd.DataFrame, *, interval_count_metrics: bool = True)
             lambda data, column, label, unit: variable_interpretation(data, column, label, unit, high_threshold=cool_threshold, low_threshold=heat_threshold),
             temperature_thresholds=(heat_threshold, cool_threshold),
         )
-    elif chart_group == "Threshold hours":
+    elif chart_group == "Threshold conditions":
         aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0)
         mode = st.radio("Condition", ["Below heating threshold", "Above cooling threshold", "Frost hours (Tdry < 0 °C)", "Nighttime hours > 20 °C (20:00–06:59)"])
         if mode == "Below heating threshold":
@@ -3195,47 +3229,128 @@ def render_solar(df: pd.DataFrame) -> None:
 
 
 def render_wind(df: pd.DataFrame) -> None:
-    """Render wind and ventilation-wind charts."""
+    """Render one capability-gated wind UI for every canonical climate source."""
     st.header("Wind and natural-ventilation wind context")
     st.caption(WIND_DIRECTION_FROM_NOTE)
-    chart_group = st.selectbox(
-        "Analysis type",
-        [
-            "Wind variable explorer",
-            "Wind rose",
-            "Monthly wind rose",
-            "Day-night wind rose",
-            "Wind during natural-ventilation hours",
-            "Wind direction histogram",
-        ],
+
+    def numeric(column: str) -> bool:
+        return column in df.columns and pd.to_numeric(df[column], errors="coerce").notna().any()
+
+    variable_labels = [
+        label
+        for label, column in (
+            ("Wind speed", "wind_speed_m_s"),
+            ("Wind direction", "wind_direction_deg"),
+            ("Wind gust speed", "wind_gust_speed_m_s"),
+            ("Wind gust direction", "wind_gust_direction_deg"),
+        )
+        if numeric(column)
+    ]
+    paired_datasets: list[tuple[str, str, str]] = []
+    if numeric("wind_speed_m_s") and numeric("wind_direction_deg"):
+        paired_datasets.append(("Mean wind", "wind_speed_m_s", "wind_direction_deg"))
+    if numeric("wind_gust_speed_m_s") and numeric("wind_gust_direction_deg"):
+        paired_datasets.append(("Maximum gust", "wind_gust_speed_m_s", "wind_gust_direction_deg"))
+    direction_datasets: list[tuple[str, str]] = []
+    if numeric("wind_direction_deg"):
+        direction_datasets.append(("Mean wind", "wind_direction_deg"))
+    if numeric("wind_gust_direction_deg"):
+        direction_datasets.append(("Maximum gust", "wind_gust_direction_deg"))
+
+    has_nv_inputs = all(
+        numeric(column)
+        for column in (
+            "wind_speed_m_s", "wind_direction_deg", "dry_bulb_temperature_c",
+            "relative_humidity_pct", "humidity_ratio_g_kg",
+        )
     )
+    options: list[str] = []
+    if variable_labels:
+        options.append("Wind variable explorer")
+    if paired_datasets:
+        options.extend(["Wind rose", "Monthly wind rose", "Day-night wind rose"])
+    if has_nv_inputs:
+        options.append("Wind during natural-ventilation hours")
+    if direction_datasets:
+        options.append("Direction histogram")
+    if not options:
+        st.info("No usable wind observations are available in the selected interval.")
+        return
+
+    chart_group = st.selectbox("Analysis type", options, key="wind_analysis_type")
     if chart_group == "Wind variable explorer":
-        render_generic_variable_page(df, ["Wind speed", "Wind direction"], "Wind speed", "Wind", None)
-    elif chart_group == "Wind rose":
-        fig = wind_rose_chart(df, "Annual wind rose")
-        render_plot(fig, wind_interpretation(df))
+        default = "Wind speed" if "Wind speed" in variable_labels else variable_labels[0]
+        render_generic_variable_page(df, variable_labels, default, "Wind", None)
+        return
+
+    if chart_group == "Wind during natural-ventilation hours":
+        mask = natural_ventilation_condition(df)
+        data = df[mask]
+        if data.empty:
+            st.info("No records satisfy the active natural-ventilation suitability condition.")
+            return
+        fig = wind_rose_chart(data, "Mean wind during natural-ventilation-suitable hours")
+        render_plot(fig, natural_ventilation_interpretation(df, mask))
+        return
+
+    if chart_group == "Direction histogram":
+        labels = [item[0] for item in direction_datasets]
+        selected = st.selectbox("Wind dataset", labels, key="wind_direction_dataset") if len(labels) > 1 else labels[0]
+        direction_column = next(column for label, column in direction_datasets if label == selected)
+        fig = histogram_chart(df, direction_column, f"{selected} direction histogram", "deg", bins=36)
+        if selected == "Maximum gust":
+            text = (
+                "Gust direction remains paired with the governing maximum gust observation; it is not independently averaged. "
+                "The histogram integrates the physical duration represented by each canonical record."
+            )
+        else:
+            text = wind_interpretation(df)
+        render_plot(fig, text)
+        return
+
+    dataset_labels = [item[0] for item in paired_datasets]
+    selected_dataset = (
+        st.selectbox("Wind dataset", dataset_labels, key="wind_paired_dataset")
+        if len(dataset_labels) > 1 else dataset_labels[0]
+    )
+    _, speed_column, direction_column = next(item for item in paired_datasets if item[0] == selected_dataset)
+
+    if selected_dataset == "Maximum gust":
+        interpretation = (
+            "Maximum-gust visualizations use the canonical maximum gust speed together with its paired governing gust direction. "
+            "The direction is never independently circular-averaged away from the gust that produced it."
+        )
+    else:
+        interpretation = wind_interpretation(df)
+
+    if chart_group == "Wind rose":
+        fig = wind_rose_chart(
+            df, f"{selected_dataset} wind rose",
+            speed_column=speed_column, direction_column=direction_column,
+        )
     elif chart_group == "Monthly wind rose":
-        month = st.selectbox("Month", list(MONTHS.keys()))
+        observed = sorted({int(v) for v in pd.to_numeric(df["month_index"], errors="coerce").dropna().tolist() if 1 <= int(v) <= 12})
+        month_names = [name for name, number in MONTHS.items() if number in observed]
+        if not month_names:
+            st.info("No valid month labels are available for the selected wind observations.")
+            return
+        month = st.selectbox("Month", month_names, key="wind_month")
         data = df[df["month_index"] == MONTHS[month]]
-        fig = wind_rose_chart(data, f"Wind rose: {month}")
-        render_plot(fig, wind_interpretation(data))
-    elif chart_group == "Day-night wind rose":
-        period = st.radio("Period", ["Day", "Night"], horizontal=True)
+        fig = wind_rose_chart(
+            data, f"{selected_dataset} wind rose: {month}",
+            speed_column=speed_column, direction_column=direction_column,
+        )
+    else:
+        period = st.radio("Period", ["Day", "Night"], horizontal=True, key="wind_daynight_period")
         if period == "Day":
             data = df[df["hour_of_day"].between(7, 19)]
         else:
             data = df[(df["hour_of_day"] < 7) | (df["hour_of_day"] > 19)]
-        fig = wind_rose_chart(data, f"{period} wind rose")
-        render_plot(fig, wind_interpretation(data))
-    elif chart_group == "Wind during natural-ventilation hours":
-        mask = natural_ventilation_condition(df)
-        data = df[mask]
-        fig = wind_rose_chart(data, "Wind rose during natural-ventilation-suitable hours")
-        render_plot(fig, natural_ventilation_interpretation(df, mask))
-    else:
-        fig = histogram_chart(df, "wind_direction_deg", "Wind direction histogram", "deg", bins=36)
-        render_plot(fig, wind_interpretation(df))
-
+        fig = wind_rose_chart(
+            data, f"{selected_dataset} · {period.lower()} wind rose",
+            speed_column=speed_column, direction_column=direction_column,
+        )
+    render_plot(fig, interpretation)
 
 
 def render_precipitation(df: pd.DataFrame, native_df: pd.DataFrame | None = None) -> None:
@@ -4120,92 +4235,8 @@ def render_historical_overview(
 
 
 def render_historical_wind(df: pd.DataFrame) -> None:
-    """Render only measured-wind analyses supported by the historical frame."""
-    from epw_climate_analyzer.historical_capabilities import has_numeric_observations
-
-    st.header("Measured wind analysis")
-    st.caption(WIND_DIRECTION_FROM_NOTE)
-    has_speed = has_numeric_observations(df, "wind_speed_m_s")
-    has_direction = has_numeric_observations(df, "wind_direction_deg")
-    has_gust_speed = has_numeric_observations(df, "wind_gust_speed_m_s")
-    has_gust_direction = has_numeric_observations(df, "wind_gust_direction_deg")
-    has_nv_inputs = (
-        has_speed
-        and has_direction
-        and has_numeric_observations(df, "dry_bulb_temperature_c")
-        and has_numeric_observations(df, "relative_humidity_pct")
-        and has_numeric_observations(df, "humidity_ratio_g_kg")
-    )
-    options: list[str] = []
-    if has_speed:
-        options.append("Wind speed explorer")
-    if has_gust_speed:
-        options.append("Wind gust explorer")
-    if has_gust_direction:
-        options.append("Gust direction histogram")
-    if has_speed and has_direction:
-        options.extend(["Wind rose", "Monthly wind rose", "Day-night wind rose"])
-        if has_nv_inputs:
-            options.append("Wind during natural-ventilation hours")
-    if has_direction:
-        options.append("Wind direction histogram")
-    if not options:
-        st.info("No measured wind observations are available in the selected interval.")
-        return
-
-    st.caption(
-        "GeoSphere wind observations are normalized to canonical hourly analysis values before this page is rendered. "
-        "Wind-rose radii and histogram frequencies therefore integrate physical hours from the 60-minute analysis cadence; "
-        "native 10-minute source coverage remains available on Data Quality."
-    )
-    chart_group = st.selectbox("Analysis type", options, key="historical_wind_analysis")
-    if chart_group == "Wind speed explorer":
-        render_generic_variable_page(df, ["Wind speed"], "Wind speed", "Measured wind", None)
-    elif chart_group == "Wind gust explorer":
-        render_generic_variable_page(df, ["Wind gust speed"], "Wind gust speed", "Measured wind gust", None)
-    elif chart_group == "Gust direction histogram":
-        fig = histogram_chart(df, "wind_gust_direction_deg", "Direction of maximum measured gust", "deg", bins=36)
-        render_plot(
-            fig,
-            "Each hourly direction remains paired with the largest measured source-interval gust in that hour; it is not independently circular-averaged.",
-        )
-    elif chart_group == "Wind rose":
-        fig = wind_rose_chart(df, "Measured wind rose")
-        render_plot(fig, wind_interpretation(df))
-    elif chart_group == "Monthly wind rose":
-        observed = sorted({int(v) for v in pd.to_numeric(df["month_index"], errors="coerce").dropna().tolist() if 1 <= int(v) <= 12})
-        month_names = [name for name, number in MONTHS.items() if number in observed]
-        if not month_names:
-            st.info("No valid month labels are available for the selected wind observations.")
-            return
-        month = st.selectbox("Month", month_names, key="historical_wind_month")
-        data = df[df["month_index"] == MONTHS[month]]
-        fig = wind_rose_chart(data, f"Measured wind rose: {month}")
-        render_plot(fig, wind_interpretation(data))
-    elif chart_group == "Day-night wind rose":
-        period = st.radio("Period", ["Day", "Night"], horizontal=True, key="historical_wind_daynight")
-        if period == "Day":
-            data = df[df["hour_of_day"].between(7, 19)]
-        else:
-            data = df[(df["hour_of_day"] < 7) | (df["hour_of_day"] > 19)]
-        fig = wind_rose_chart(data, f"Measured {period.lower()} wind rose")
-        render_plot(fig, wind_interpretation(data))
-    elif chart_group == "Wind during natural-ventilation hours":
-        mask = natural_ventilation_condition(df)
-        data = df[mask]
-        if data.empty:
-            st.info("No canonical hourly records satisfy the default natural-ventilation suitability limits in the current Data filter.")
-            return
-        fig = wind_rose_chart(data, "Measured wind during natural-ventilation-suitable hours")
-        render_plot(fig, natural_ventilation_interpretation(df, mask))
-    else:
-        fig = histogram_chart(df, "wind_direction_deg", "Measured wind direction histogram", "deg", bins=36)
-        render_plot(
-            fig,
-            "The histogram integrates the physical duration represented by each canonical hourly wind-direction record. "
-            "Direction is circular; the histogram should be read by sectors rather than by arithmetic averaging."
-        )
-
+    """Backward-compatible entry point; canonical wind UI is source-neutral."""
+    render_wind(df)
 
 
 def render_ground_temperature_page(df: pd.DataFrame, *, source_label: str, native_df: pd.DataFrame | None = None) -> None:
@@ -4528,14 +4559,12 @@ def render_canonical_climate_analysis(dataset) -> None:
     if page == "Overview":
         render_historical_overview(dataset, filtered_df, full_df)
     elif page == "Temperature":
-        st.caption("Threshold hours are evaluated on the canonical hourly analysis series. Physically incomplete source hours are absent and contribute no duration.")
-        render_temperature(filtered_df)
-    elif page == "Ground Temperature":
+        st.caption("Threshold conditions are evaluated on the canonical hourly analysis series. Physically incomplete source hours are absent and contribute no duration.")
         native_ground_df = apply_active_global_filter(prepare_historical_native_diagnostic_frame(dataset))
-        render_ground_temperature_page(
+        render_temperature(
             filtered_df,
-            source_label="GeoSphere measured",
-            native_df=native_ground_df,
+            ground_source_label="GeoSphere measured",
+            ground_native_df=native_ground_df,
         )
     elif page == "Humidity and Psychrometrics":
         st.caption("Moisture-threshold hours are evaluated on the canonical hourly analysis series. Physically incomplete source hours are absent and contribute no duration.")
@@ -4545,7 +4574,7 @@ def render_canonical_climate_analysis(dataset) -> None:
     elif page == "Sky and Daylight":
         render_sky_daylight(filtered_df, latitude=float(dataset.location.latitude))
     elif page == "Wind and Ventilation":
-        render_historical_wind(filtered_df)
+        render_wind(filtered_df)
     elif page == "Natural Ventilation":
         st.caption(
             "GeoSphere natural-ventilation suitability uses canonical hourly T/RH-derived psychrometrics and, when available, measured hourly wind speed. "
@@ -4673,9 +4702,7 @@ def main() -> None:
     if page == "Overview":
         render_overview(epw, filtered_df, full_df, issues)
     elif page == "Temperature":
-        render_temperature(filtered_df)
-    elif page == "Ground Temperature":
-        render_ground_temperature_page(filtered_df, source_label="EPW calculated")
+        render_temperature(filtered_df, ground_source_label="EPW calculated")
     elif page == "Humidity and Psychrometrics":
         render_humidity(filtered_df, pressure_pa=active_pressure)
     elif page == "Solar and Radiation":

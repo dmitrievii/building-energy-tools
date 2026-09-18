@@ -25,11 +25,12 @@ Implemented in the current branch:
 
 ## B — Source-neutral UI consolidation
 
-Planned next on this same Draft PR:
+Implemented in the current branch:
 
-- Move Ground Temperature into **Temperature and extremes** while preserving its dedicated `T(z,t)` views rather than pretending it is an ordinary scalar variable.
-- Remove source-specific visualization divergence for canonical variables.
-- Consolidate mean wind and maximum gust around one wind-analysis architecture, including the existing direction/circular analyses and wind roses.
+- Ground Temperature is nested inside **Temperature and extremes** while retaining dedicated `T(z,t)` views.
+- The standalone Ground Temperature navigation page is removed.
+- EPW and GeoSphere use the same capability-gated wind renderer.
+- Mean wind and maximum gust share the variable explorer, direction distribution and wind-rose architecture; gust direction remains paired with the governing gust.
 
 ## C — UX cleanup
 

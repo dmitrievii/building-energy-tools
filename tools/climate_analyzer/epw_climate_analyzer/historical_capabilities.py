@@ -179,10 +179,8 @@ def available_historical_pages(df: pd.DataFrame) -> tuple[str, ...]:
         )
     )
 
-    if has_temperature:
+    if has_temperature or has_ground:
         pages.append("Temperature")
-    if has_mean_temperature or has_ground:
-        pages.append("Ground Temperature")
     if has_mean_temperature and has_humidity:
         pages.append("Humidity and Psychrometrics")
     if has_solar:
