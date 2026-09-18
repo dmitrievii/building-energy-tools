@@ -1,0 +1,44 @@
+name: Climate 0.7.4.1 full-test diagnostic
+
+on:
+  push:
+    branches:
+      - fix/v0.7.4.1-psychrometric-integration-remediation
+    paths:
+      - '.github/workflows/v0741-full-test-diagnostic.yml'
+      - 'tools/climate_analyzer/**'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        working-directory: tools/climate_analyzer
+        run: pip install -r requirements.txt
+      - name: Run full unittest suite with explicit failure transcript
+        working-directory: tools/climate_analyzer
+        shell: bash
+        run: |
+          set +e
+          python -m unittest discover -s tests -p 'test_*.py' -v > /tmp/v0741-tests.log 2>&1
+          status=$?
+          echo '===== FAILURE / ERROR SUMMARY ====='
+          grep -nE '^(FAIL|ERROR):|^FAILED \(' /tmp/v0741-tests.log || true
+          echo '===== LAST 220 LINES ====='
+          tail -n 220 /tmp/v0741-tests.log
+          exit $status
+      - name: Upload full diagnostic transcript
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v0741-full-test-diagnostic
+          path: /tmp/v0741-tests.log
+          retention-days: 3
