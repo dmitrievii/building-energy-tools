@@ -17,6 +17,7 @@ from epw_climate_analyzer.ground_temperature import (
 from epw_climate_analyzer.temporal_filtering import CHRONOLOGICAL, with_time_basis
 
 ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = ROOT.parents[1]
 APP = ROOT / "app.py"
 
 
@@ -72,6 +73,10 @@ class UxCleanup074C1Tests(unittest.TestCase):
         self.assertIn('"Wet intervals only"', source)
         self.assertIn('"All intervals including dry periods"', source)
         self.assertIn("precipitation depth > 0 mm", source)
+
+    def test_temporary_c1_patch_transport_is_not_part_of_release_tree(self) -> None:
+        self.assertFalse((ROOT / "scripts" / "apply_v074_c1.py").exists())
+        self.assertFalse((REPO_ROOT / ".github" / "workflows" / "v074-c1-patch.yml").exists())
 
 
 if __name__ == "__main__":
