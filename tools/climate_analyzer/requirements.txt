@@ -12,3 +12,4 @@ pvlib==0.15.2
 requests==2.34.2
 beautifulsoup4==4.15.0
 openpyxl==3.1.5
+pillow==12.3.0

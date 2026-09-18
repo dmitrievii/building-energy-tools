@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import unittest
+from io import BytesIO
 
 import numpy as np
 import pandas as pd
+from PIL import Image
 
 from epw_climate_analyzer.daylight import daylight_duration_hours, monthly_daylight_sunshine_summary
-from epw_climate_analyzer.ground_temperature import AnnualHarmonic, fit_annual_harmonic, monthly_ground_profile
+from epw_climate_analyzer.ground_temperature import AnnualHarmonic, animated_profile_gif_bytes, fit_annual_harmonic, monthly_ground_profile
 from epw_climate_analyzer.geosphere import FIELD_SPEC_BY_PROVIDER
 from epw_climate_analyzer.historical_capabilities import available_historical_pages
 
@@ -61,6 +63,16 @@ class DaylightGround073Tests(unittest.TestCase):
         values = pd.Series(5.0 + np.sin(np.arange(len(index)) / 100.0), index=index)
         with self.assertRaisesRegex(ValueError, "300 represented calendar days"):
             fit_annual_harmonic(values)
+
+
+    def test_ground_profile_gif_is_infinite_twelve_frame_loop(self) -> None:
+        harmonic = AnnualHarmonic(mean_c=10.5, sin_c=-2.3, cos_c=-10.9, amplitude_c=11.14)
+        profile = monthly_ground_profile(harmonic, np.linspace(0.0, 15.0, 61), 2.0, 2000.0, 1000.0)
+        payload = animated_profile_gif_bytes(profile, duration_ms=500, width=640, height=480)
+        self.assertTrue(payload.startswith((b"GIF87a", b"GIF89a")))
+        image = Image.open(BytesIO(payload))
+        self.assertEqual(image.n_frames, 12)
+        self.assertEqual(int(image.info.get("loop", -1)), 0)
 
     def test_geosphere_ground_fields_are_canonical_and_pages_are_exposed(self) -> None:
         self.assertEqual(FIELD_SPEC_BY_PROVIDER["tb10"].canonical_name, "ground_temperature_0_10m_c")

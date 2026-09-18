@@ -4210,6 +4210,7 @@ def render_ground_temperature_page(df: pd.DataFrame, *, source_label: str, nativ
     """Render calculated deep profiles and, when present, measured shallow soil temperatures."""
     from epw_climate_analyzer.ground_temperature import (
         animated_profile_figure,
+        animated_profile_gif_bytes,
         damping_depth_m,
         fit_annual_harmonic,
         measured_monthly_ground,
@@ -4253,7 +4254,7 @@ def render_ground_temperature_page(df: pd.DataFrame, *, source_label: str, nativ
 
     modes: list[str] = []
     if profile is not None:
-        modes.extend(["Monthly profiles vs depth", "Animated monthly profile", "Temperature through year at selected depth"])
+        modes.extend(["Monthly profiles vs depth", "Animated monthly profile", "Looping GIF", "Temperature through year at selected depth"])
     if not measured.empty:
         modes.append("Measured shallow ground temperature")
     if profile is not None and not measured.empty:
@@ -4276,7 +4277,18 @@ def render_ground_temperature_page(df: pd.DataFrame, *, source_label: str, nativ
         render_plot(profile_figure(profile, measured if not measured.empty else None), "Lines are calculated monthly mean profiles; open markers are measured GeoSphere shallow-soil monthly means where available.")
     elif mode == "Animated monthly profile":
         render_plot(animated_profile_figure(profile, measured if not measured.empty else None), "Interactive loop through January–December. The axes stay fixed while the calculated profile moves with seasonal phase lag and attenuation.")
-        st.caption("GIF export is a presentation/export layer and is intentionally deferred until the interactive animation is qualified.")
+    elif mode == "Looping GIF":
+        gif_speed = st.slider("Frame duration [ms]", 300, 1500, 700, 100, key="ground_gif_duration")
+        gif_bytes = animated_profile_gif_bytes(profile, measured if not measured.empty else None, duration_ms=int(gif_speed))
+        st.image(gif_bytes, caption="Looping January–December ground-temperature profile")
+        st.download_button(
+            "Download GIF",
+            data=gif_bytes,
+            file_name="ground_temperature_monthly_loop.gif",
+            mime="image/gif",
+            key="ground_temperature_gif_download",
+        )
+        st.caption("The GIF is a visualization of the already calculated monthly profile; it does not perform a separate calculation.")
     elif mode == "Temperature through year at selected depth":
         depth = st.slider("Depth [m]", 0.0, float(max_depth), min(2.0, float(max_depth)), float(step))
         values = {month: float(pd.Series(profile[month].to_numpy(), index=profile.index).reindex(profile.index.union([depth])).interpolate(method="index").loc[depth]) for month in profile.columns}

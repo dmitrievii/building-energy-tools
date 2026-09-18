@@ -98,9 +98,10 @@ The UI always distinguishes calculated ground temperature from measured GeoSpher
 - temperature through the year at a selected depth;
 - measured shallow ground temperature;
 - measured vs calculated validation;
-- interactive January → December looping profile animation with Play/Pause and month slider.
+- interactive January → December looping profile animation with Play/Pause and month slider;
+- generated infinitely looping 12-frame GIF preview and download, with fixed axes and optional measured GeoSphere points.
 
-GIF export is not part of this qualified increment yet; it remains a presentation/export layer after the interactive route.
+The GIF is a pure presentation layer over the already calculated monthly profile; it does not change or repeat the scientific calculation.
 
 ### Workbook regression contract
 
@@ -172,4 +173,4 @@ Ground-temperature live proof passed on **Wien Hohe Warte, station ID 105**, **2
 - canonical hourly ground temperatures: 72/72 records each;
 - independent source-to-hourly check reproduced arithmetic means for all three sensor depths.
 
-PR #67 remains Draft and targets `main`. It is not merged.
+PR #67 remains Draft and targets `main`. It is not merged. The GIF presentation layer is included after the D/E provider qualification and must pass the subsequent CI requalification before final review.

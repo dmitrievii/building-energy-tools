@@ -12,12 +12,14 @@ profiles are always labelled as calculated and are never presented as measured.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from io import BytesIO
 import calendar
 import math
 
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
+from PIL import Image, ImageDraw, ImageFont
 
 MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 MEASURED_GROUND_DEPTHS_M = {
@@ -211,6 +213,137 @@ def animated_profile_figure(profile: pd.DataFrame, measured: pd.DataFrame | None
     )
     fig.update_yaxes(autorange="reversed")
     return fig
+
+
+
+def animated_profile_gif_bytes(
+    profile: pd.DataFrame,
+    measured: pd.DataFrame | None = None,
+    *,
+    duration_ms: int = 700,
+    width: int = 900,
+    height: int = 650,
+) -> bytes:
+    """Render a fixed-axis, infinitely looping 12-month GIF.
+
+    The raster export is a presentation layer only: it consumes the already
+    calculated monthly profile and optional measured shallow-soil points. It
+    performs no additional climate or ground-temperature calculation.
+    """
+    months = [month for month in MONTH_LABELS if month in profile.columns]
+    if not months:
+        raise ValueError("Ground-temperature GIF requires at least one monthly profile.")
+    if int(duration_ms) < 100:
+        raise ValueError("GIF frame duration must be at least 100 ms.")
+    if int(width) < 400 or int(height) < 300:
+        raise ValueError("GIF canvas is too small for labelled axes.")
+
+    depth = profile.index.to_numpy(dtype=float)
+    if len(depth) < 2 or not np.isfinite(depth).all():
+        raise ValueError("GIF export requires a finite ground-depth profile.")
+    calculated_values = profile[months].to_numpy(dtype=float)
+    finite = calculated_values[np.isfinite(calculated_values)]
+    if finite.size == 0:
+        raise ValueError("GIF export requires finite calculated temperatures.")
+
+    observed_values = np.array([], dtype=float)
+    if measured is not None and not measured.empty and "temperature_c" in measured.columns:
+        observed_values = pd.to_numeric(measured["temperature_c"], errors="coerce").dropna().to_numpy(dtype=float)
+    all_t = np.concatenate([finite, observed_values]) if observed_values.size else finite
+    t_min = float(np.min(all_t))
+    t_max = float(np.max(all_t))
+    pad = max(1.0, 0.08 * max(t_max - t_min, 1.0))
+    x_min, x_max = t_min - pad, t_max + pad
+    z_min, z_max = float(np.min(depth)), float(np.max(depth))
+    if z_max <= z_min:
+        raise ValueError("GIF export requires a non-zero depth range.")
+
+    left, right, top, bottom = 105, 45, 70, 85
+    plot_left, plot_right = left, int(width) - right
+    plot_top, plot_bottom = top, int(height) - bottom
+    font = ImageFont.load_default()
+
+    def map_x(value: float) -> int:
+        return int(round(plot_left + (float(value) - x_min) / (x_max - x_min) * (plot_right - plot_left)))
+
+    def map_y(value: float) -> int:
+        return int(round(plot_top + (float(value) - z_min) / (z_max - z_min) * (plot_bottom - plot_top)))
+
+    background = (255, 255, 255)
+    grid = (220, 224, 228)
+    axis = (55, 60, 65)
+    inactive = (220, 223, 226)
+    active = (35, 95, 165)
+    observed = (170, 55, 55)
+
+    frames: list[Image.Image] = []
+    x_ticks = np.linspace(x_min, x_max, 6)
+    z_ticks = np.linspace(z_min, z_max, 6)
+    for month_index, month in enumerate(months, start=1):
+        image = Image.new("RGB", (int(width), int(height)), background)
+        draw = ImageDraw.Draw(image)
+        draw.text((left, 20), f"Ground-temperature profile — {month}", fill=axis, font=font)
+
+        for tick in x_ticks:
+            x = map_x(float(tick))
+            draw.line((x, plot_top, x, plot_bottom), fill=grid, width=1)
+            draw.text((x - 18, plot_bottom + 12), f"{tick:.1f}", fill=axis, font=font)
+        for tick in z_ticks:
+            y = map_y(float(tick))
+            draw.line((plot_left, y, plot_right, y), fill=grid, width=1)
+            draw.text((25, y - 6), f"{tick:.1f}", fill=axis, font=font)
+
+        draw.line((plot_left, plot_top, plot_left, plot_bottom), fill=axis, width=2)
+        draw.line((plot_left, plot_bottom, plot_right, plot_bottom), fill=axis, width=2)
+        draw.text(((plot_left + plot_right) // 2 - 72, int(height) - 32), "Ground temperature [degC]", fill=axis, font=font)
+        draw.text((8, 45), "Depth [m]", fill=axis, font=font)
+
+        # Keep the annual context faintly visible while the active month moves.
+        for background_month in months:
+            vals = pd.to_numeric(profile[background_month], errors="coerce").to_numpy(dtype=float)
+            pts = [(map_x(v), map_y(z)) for v, z in zip(vals, depth) if np.isfinite(v) and np.isfinite(z)]
+            if len(pts) >= 2:
+                draw.line(pts, fill=inactive, width=1)
+
+        vals = pd.to_numeric(profile[month], errors="coerce").to_numpy(dtype=float)
+        pts = [(map_x(v), map_y(z)) for v, z in zip(vals, depth) if np.isfinite(v) and np.isfinite(z)]
+        if len(pts) >= 2:
+            draw.line(pts, fill=active, width=4)
+
+        if measured is not None and not measured.empty:
+            points = measured[measured["month_index"] == month_index]
+            for record in points.to_dict("records"):
+                try:
+                    tx = float(record["temperature_c"])
+                    zz = float(record["depth_m"])
+                except (KeyError, TypeError, ValueError):
+                    continue
+                if not (math.isfinite(tx) and math.isfinite(zz)):
+                    continue
+                x, y = map_x(tx), map_y(zz)
+                radius = 5
+                draw.ellipse((x - radius, y - radius, x + radius, y + radius), outline=observed, width=3)
+
+        draw.line((plot_right - 210, 35, plot_right - 175, 35), fill=active, width=4)
+        draw.text((plot_right - 165, 29), "Calculated", fill=axis, font=font)
+        if measured is not None and not measured.empty:
+            x0, y0 = plot_right - 85, 35
+            draw.ellipse((x0 - 4, y0 - 4, x0 + 4, y0 + 4), outline=observed, width=2)
+            draw.text((x0 + 10, 29), "Observed", fill=axis, font=font)
+        frames.append(image)
+
+    output = BytesIO()
+    frames[0].save(
+        output,
+        format="GIF",
+        save_all=True,
+        append_images=frames[1:],
+        duration=int(duration_ms),
+        loop=0,
+        disposal=2,
+        optimize=False,
+    )
+    return output.getvalue()
 
 
 def measured_vs_calculated_table(profile: pd.DataFrame, measured: pd.DataFrame) -> pd.DataFrame:
