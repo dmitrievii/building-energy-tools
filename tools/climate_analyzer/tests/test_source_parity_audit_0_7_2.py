@@ -22,7 +22,7 @@ class SourceParityAudit072Tests(unittest.TestCase):
             {"tl", "rf", "p", "ffam", "dd", "rr", "rrm", "sh", "cglo", "chim"},
         )
 
-    def test_page_gap_is_machine_readable_for_fully_populated_current_geosphere_mapping(self) -> None:
+    def test_page_gap_reflects_0_7_3_supported_functional_closure(self) -> None:
         index = pd.date_range("2026-01-01", periods=24, freq="h", tz="UTC")
         frame = pd.DataFrame(
             {
@@ -34,26 +34,26 @@ class SourceParityAudit072Tests(unittest.TestCase):
         pages = set(available_historical_pages(frame))
         expected_missing = {
             "Sky and Daylight",
-            "Natural Ventilation",
-            "HVAC and Passive Design",
             "Compare Climates",
         }
         self.assertEqual(set(NAVIGATION_PAGES) - pages, expected_missing)
 
-    def test_natural_ventilation_is_an_implementation_gap_not_a_provider_data_gap(self) -> None:
+    def test_natural_ventilation_and_hvac_are_wired_for_historical_data(self) -> None:
         mapped = {spec.canonical_name for spec in FIELD_SPEC_BY_PROVIDER.values()}
         self.assertIn("dry_bulb_temperature_c", mapped)
         self.assertIn("relative_humidity_pct", mapped)
         self.assertIn("wind_speed_m_s", mapped)
         source = APP.read_text(encoding="utf-8")
-        self.assertIn('elif page == "Natural Ventilation":\n        render_natural_ventilation', source)
-        self.assertNotIn('elif page == "Natural Ventilation":\n        st.caption("GeoSphere', source)
+        self.assertIn('render_natural_ventilation(filtered_df, pressure_pa=active_pressure)', source)
+        self.assertIn('render_hvac_passive(filtered_df)', source)
+        self.assertIn('"Wind during natural-ventilation hours"', source)
+        self.assertIn("GeoSphere natural-ventilation suitability uses canonical hourly", source)
 
     def test_comparison_is_still_explicitly_epw_only(self) -> None:
         source = APP.read_text(encoding="utf-8")
         self.assertIn("Add two or more EPW climates. All comparison metrics are calculated from EPW hourly data only.", source)
 
-    def test_priority_a_provider_fields_are_not_silently_claimed_as_used(self) -> None:
+    def test_priority_a_provider_fields_remain_next_0_7_3_increment(self) -> None:
         self.assertTrue({"ffx", "ddx", "so", "tlmin", "tlmax"}.isdisjoint(FIELD_SPEC_BY_PROVIDER))
         doc = DOC.read_text(encoding="utf-8")
         for name in ("ffx", "ddx", "so", "tlmin", "tlmax", "*_flag"):
