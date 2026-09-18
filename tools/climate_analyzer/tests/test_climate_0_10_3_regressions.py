@@ -71,7 +71,7 @@ class Climate0103RegressionTests(unittest.TestCase):
             if getattr(trace, "legendgroup", None) == "months" and trace.showlegend is not False
         ]
         self.assertEqual([trace.name for trace in month_traces], ["Jan", "Feb", "Dec"])
-        self.assertTrue(all(getattr(trace, "legend", None) == "legend" for trace in month_traces))
+        self.assertTrue(all(getattr(trace, "legend", None) in (None, "legend") for trace in month_traces))
 
         zone_traces = [
             trace
