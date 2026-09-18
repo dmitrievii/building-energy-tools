@@ -164,7 +164,9 @@ class InterannualHeatmap064UiContractTests(unittest.TestCase):
 
     def test_generic_heatmap_exposes_orthogonal_controls(self) -> None:
         self.assertIn('st.selectbox("Heat-map aggregation", ["Day", "Week", "Month"]', self.source)
-        self.assertIn('st.selectbox("Compare across", ["Hour of day", "Year"]', self.source)
+        self.assertIn('compare_options = ["Hour of day"] if time_basis(df) == CHRONOLOGICAL else ["Hour of day", "Year"]', self.source)
+        self.assertIn('st.selectbox("Compare across", compare_options', self.source)
+        self.assertIn("Chronological heat maps keep every real day, week or month in sequence across years", self.source)
         self.assertIn('"Statistic",\n            statistic_options', self.source)
         self.assertIn("temporal_heatmap_chart(", self.source)
 

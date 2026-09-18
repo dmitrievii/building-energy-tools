@@ -2090,7 +2090,7 @@ def render_generic_variable_page(
         # aggregation selector. Distribution and monthly-distribution charts do
         # not need it.
         aggregation = None
-        if chart_type in {"Profile with min-mean-max ribbon", "Percentile band P05-P50-P95"}:
+        if chart_type in {"Profile with min-mean-max ribbon", "Middle 90% range with median"}:
             aggregation = st.selectbox("Aggregation", ["Monthly", "Annual", "Weekly", "Daily", "Hourly", "Seasonal"], index=0)
         # Radiation and illuminance are visualized as mean intensities in the generic explorer.
         # Monthly/annual energy sums are available in the dedicated solar component charts.
