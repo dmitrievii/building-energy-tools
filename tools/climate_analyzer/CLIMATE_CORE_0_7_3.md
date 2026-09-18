@@ -1,6 +1,6 @@
 # Climate Analyzer 0.7.3 — GeoSphere parity closure
 
-Status: implementation complete on the stacked 0.7.3 branch; final qualification in progress before any merge decision.
+Status: implementation and qualification complete in the current stacked scope; awaiting the explicit #66 → #67 merge/retarget sequence and requalification after retargeting.
 
 ## Goal
 
