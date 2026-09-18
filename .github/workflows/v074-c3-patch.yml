@@ -1,0 +1,38 @@
+name: Climate 0.7.4 C3 patch transport
+
+on:
+  push:
+    branches:
+      - fix/v0.7.4-temporal-ux-psychrometric-remediation
+    paths:
+      - 'tools/climate_analyzer/scripts/apply_v074_c3.py'
+      - '.github/workflows/v074-c3-patch.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-c3:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/v0.7.4-temporal-ux-psychrometric-remediation
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply C3 patch
+        working-directory: tools/climate_analyzer
+        run: |
+          python scripts/apply_v074_c3.py
+          python -m compileall -q app.py epw_climate_analyzer tests
+      - name: Commit patched source and remove transport
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm tools/climate_analyzer/scripts/apply_v074_c3.py .github/workflows/v074-c3-patch.yml
+          git add -A
+          git commit -m 'feat: close 0.7.4-C3 source-neutral UX cleanup'
+          git push origin HEAD:fix/v0.7.4-temporal-ux-psychrometric-remediation
