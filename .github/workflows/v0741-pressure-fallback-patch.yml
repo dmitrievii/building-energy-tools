@@ -1,0 +1,43 @@
+name: Climate 0.7.4.1 pressure fallback patch
+
+on:
+  push:
+    branches:
+      - fix/v0.7.4.1-psychrometric-integration-remediation
+    paths:
+      - 'tools/climate_analyzer/scripts/apply_v0741_pressure_fallback.py'
+      - '.github/workflows/v0741-pressure-fallback-patch.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/v0.7.4.1-psychrometric-integration-remediation
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        working-directory: tools/climate_analyzer
+        run: pip install -r requirements.txt
+      - name: Apply and verify
+        working-directory: tools/climate_analyzer
+        run: |
+          python scripts/apply_v0741_pressure_fallback.py
+          python -m compileall -q app.py epw_climate_analyzer tests
+          python -m unittest tests.test_pressure_precipitation_contract tests.test_psychrometric_redesign_0_7_4 tests.test_psychrometric_integration_0_7_4_1 -v
+      - name: Commit release source and cleanup
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm -f tools/climate_analyzer/scripts/apply_v0741_pressure_fallback.py .github/workflows/v0741-pressure-fallback-patch.yml
+          git add -A
+          git commit -m 'fix: make psychrometric pressure fallbacks location-specific'
+          git push origin HEAD:fix/v0.7.4.1-psychrometric-integration-remediation
