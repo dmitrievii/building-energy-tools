@@ -1,0 +1,39 @@
+name: Temporary Climate 0.7.3 Ground GIF Patch
+
+on:
+  push:
+    branches:
+      - feature/v0.7.3-geosphere-parity-closure
+    paths:
+      - 'deployment/patch_ground_gif_073.py'
+      - '.github/workflows/patch-ground-gif-073.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: temporary-climate-073-ground-gif-patch
+  cancel-in-progress: false
+
+jobs:
+  apply-and-clean:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/v0.7.3-geosphere-parity-closure
+          fetch-depth: 0
+
+      - name: Apply deterministic patch
+        run: python deployment/patch_ground_gif_073.py
+
+      - name: Commit patched files and remove temporary infrastructure
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "Climate 0.7.3: add looping ground-temperature GIF"
+          git push origin HEAD:feature/v0.7.3-geosphere-parity-closure
