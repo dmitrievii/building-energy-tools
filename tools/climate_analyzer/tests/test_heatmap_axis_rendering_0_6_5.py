@@ -7,107 +7,57 @@ import pandas as pd
 
 from epw_climate_analyzer.aggregations import HEATMAP_COMPARE_HOUR, HEATMAP_COMPARE_YEAR
 from epw_climate_analyzer.charts import temporal_heatmap_chart
-from epw_climate_analyzer.temporal_filtering import CHRONOLOGICAL, with_time_basis
+from epw_climate_analyzer.temporal_filtering import CALENDAR_PROFILE, CHRONOLOGICAL, with_time_basis
 
 
 class HeatmapAxisRendering065Tests(unittest.TestCase):
     @staticmethod
-    def _frame() -> pd.DataFrame:
-        index = pd.to_datetime(
-            [
-                "2010-01-01T00:00:00Z",
-                "2010-01-01T12:00:00Z",
-                "2010-03-01T00:00:00Z",
-                "2010-03-01T12:00:00Z",
-                "2018-01-01T00:00:00Z",
-                "2018-01-01T12:00:00Z",
-                "2018-03-01T00:00:00Z",
-                "2018-03-01T12:00:00Z",
-            ]
-        )
-        frame = pd.DataFrame(
-            {"dry_bulb_temperature_c": [0.0, 5.0, 10.0, 15.0, 2.0, 7.0, 12.0, 17.0]},
-            index=index,
-        )
+    def _frame(basis: str = CHRONOLOGICAL) -> pd.DataFrame:
+        index = pd.to_datetime([
+            "2010-01-01T00:00:00Z", "2010-01-01T12:00:00Z",
+            "2010-03-01T00:00:00Z", "2010-03-01T12:00:00Z",
+            "2018-01-01T00:00:00Z", "2018-01-01T12:00:00Z",
+            "2018-03-01T00:00:00Z", "2018-03-01T12:00:00Z",
+        ])
+        frame = pd.DataFrame({"dry_bulb_temperature_c": [0.0, 5.0, 10.0, 15.0, 2.0, 7.0, 12.0, 17.0]}, index=index)
         frame["hour_of_day"] = frame.index.hour
-        frame["month_index"] = frame.index.month
-        frame["day_of_year"] = frame.index.dayofyear
-        frame["week_of_year"] = frame.index.isocalendar().week.astype(int).to_numpy()
         frame.attrs["canonical_native_interval_minutes"] = 60
-        return with_time_basis(frame, CHRONOLOGICAL)
+        return with_time_basis(frame, basis)
 
-    def test_all_period_by_comparison_heatmaps_render_numeric_period_axes(self) -> None:
-        frame = self._frame()
+    def test_chronological_hour_heatmaps_use_absolute_period_labels(self) -> None:
+        frame = self._frame(CHRONOLOGICAL)
+        expected = {"day": "2010-01-01", "week": "2009-W53", "month": "2010-01"}
+        for period, first_label in expected.items():
+            with self.subTest(period=period):
+                fig = temporal_heatmap_chart(frame, "dry_bulb_temperature_c", period, HEATMAP_COMPARE_HOUR, "Mean", "test", "°C")
+                x = list(fig.data[0].x)
+                self.assertIn(first_label, x)
+                self.assertTrue(any(str(value).startswith("2018") for value in x))
+                self.assertEqual([int(value) for value in fig.data[0].y], [0, 12])
+
+    def test_calendar_profile_hour_heatmaps_keep_numeric_calendar_axes(self) -> None:
+        frame = self._frame(CALENDAR_PROFILE)
         bounds = {"day": (1, 366), "week": (1, 53), "month": (1, 12)}
+        for period, (lo, hi) in bounds.items():
+            fig = temporal_heatmap_chart(frame, "dry_bulb_temperature_c", period, HEATMAP_COMPARE_HOUR, "Mean", "test", "°C")
+            x = list(fig.data[0].x)
+            self.assertTrue(all(isinstance(value, (int, np.integer)) for value in x))
+            self.assertGreaterEqual(min(int(value) for value in x), lo)
+            self.assertLessEqual(max(int(value) for value in x), hi)
 
-        for period in ("day", "week", "month"):
-            for comparison in (HEATMAP_COMPARE_HOUR, HEATMAP_COMPARE_YEAR):
-                with self.subTest(period=period, comparison=comparison):
-                    fig = temporal_heatmap_chart(
-                        frame,
-                        "dry_bulb_temperature_c",
-                        period,
-                        comparison,
-                        "Mean",
-                        f"{period} × {comparison}",
-                        "°C",
-                    )
-                    x = list(fig.data[0].x)
-                    self.assertTrue(x)
-                    self.assertTrue(all(isinstance(value, (int, np.integer)) for value in x))
-                    lo, hi = bounds[period]
-                    self.assertGreaterEqual(min(int(value) for value in x), lo)
-                    self.assertLessEqual(max(int(value) for value in x), hi)
-                    self.assertFalse(any(isinstance(value, str) and "-" in value for value in x))
-
-                    y = [int(value) for value in fig.data[0].y]
-                    if comparison == HEATMAP_COMPARE_HOUR:
-                        self.assertTrue(all(0 <= value <= 23 for value in y))
-                    elif period == "week":
-                        # 2010-01-01 belongs to ISO 2009-W53. Weekly heat maps
-                        # therefore use ISO week-year, not calendar year.
-                        self.assertEqual(y, [2009, 2010, 2018])
-                    else:
-                        self.assertEqual(y, [2010, 2018])
-
-    def test_day_hour_does_not_expand_to_one_column_per_absolute_date(self) -> None:
-        frame = self._frame()
-        fig = temporal_heatmap_chart(
-            frame,
-            "dry_bulb_temperature_c",
-            "day",
-            HEATMAP_COMPARE_HOUR,
-            "Mean",
-            "Day × hour",
-            "°C",
-        )
-        x = [int(value) for value in fig.data[0].x]
-        self.assertLessEqual(max(x), 366)
-        self.assertNotIn(2010, x)
-        self.assertNotIn(2018, x)
+    def test_year_comparison_uses_integer_tick_labels_only(self) -> None:
+        frame = self._frame(CALENDAR_PROFILE)
+        fig = temporal_heatmap_chart(frame, "dry_bulb_temperature_c", "month", HEATMAP_COMPARE_YEAR, "Mean", "test", "°C")
+        self.assertEqual(list(fig.layout.yaxis.tickvals), [2010, 2018])
+        self.assertEqual(list(fig.layout.yaxis.ticktext), ["2010", "2018"])
 
     def test_complete_day_hour_heatmap_keeps_all_24_hour_rows(self) -> None:
         index = pd.date_range("2018-07-01T00:00:00Z", periods=24, freq="h")
-        frame = pd.DataFrame(
-            {"dry_bulb_temperature_c": np.linspace(12.0, 28.0, 24)},
-            index=index,
-        )
+        frame = pd.DataFrame({"dry_bulb_temperature_c": np.linspace(12.0, 28.0, 24)}, index=index)
         frame["hour_of_day"] = frame.index.hour
-        frame["month_index"] = frame.index.month
-        frame["day_of_year"] = frame.index.dayofyear
-        frame["week_of_year"] = frame.index.isocalendar().week.astype(int).to_numpy()
         frame.attrs["canonical_native_interval_minutes"] = 60
         frame = with_time_basis(frame, CHRONOLOGICAL)
-
-        fig = temporal_heatmap_chart(
-            frame,
-            "dry_bulb_temperature_c",
-            "day",
-            HEATMAP_COMPARE_HOUR,
-            "Mean",
-            "Day × hour",
-            "°C",
-        )
+        fig = temporal_heatmap_chart(frame, "dry_bulb_temperature_c", "day", HEATMAP_COMPARE_HOUR, "Mean", "test", "°C")
         self.assertEqual([int(value) for value in fig.data[0].y], list(range(24)))
         self.assertEqual(np.asarray(fig.data[0].z).shape[0], 24)
 

@@ -105,19 +105,18 @@ class InterannualHeatmap064Tests(unittest.TestCase):
         self.assertAlmostEqual(float(march_matrix.loc[2024, 61]), 4.0)
         self.assertAlmostEqual(float(march_matrix.loc[2025, 61]), 5.0)
 
-    def test_hour_compare_uses_calendar_axes_even_in_chronological_multiyear_mode(self) -> None:
+    def test_hour_compare_preserves_absolute_periods_in_chronological_multiyear_mode(self) -> None:
         df = frame()
         day = temporal_heatmap_matrix(df, "dry_bulb_temperature_c", "day", HEATMAP_COMPARE_HOUR, "Mean")
         week = temporal_heatmap_matrix(df, "dry_bulb_temperature_c", "week", HEATMAP_COMPARE_HOUR, "Mean")
         month = temporal_heatmap_matrix(df, "dry_bulb_temperature_c", "month", HEATMAP_COMPARE_HOUR, "Mean")
 
-        self.assertTrue(all(isinstance(v, (int, np.integer)) for v in day.columns))
-        self.assertTrue(all(1 <= int(v) <= 366 for v in day.columns))
-        self.assertTrue(all(isinstance(v, (int, np.integer)) for v in week.columns))
-        self.assertTrue(all(1 <= int(v) <= 53 for v in week.columns))
-        self.assertEqual(month.columns.tolist(), list(range(1, 13)))
-        self.assertNotIn("2024-01-01", day.columns)
-        self.assertNotIn("W01", week.columns)
+        self.assertIn("2024-01-01", day.columns)
+        self.assertIn("2025-01-01", day.columns)
+        self.assertIn("2024-W01", week.columns)
+        self.assertIn("2025-W01", week.columns)
+        self.assertIn("2024-01", month.columns)
+        self.assertIn("2025-01", month.columns)
 
     def test_calendar_profile_hour_total_averages_per_year_totals(self) -> None:
         df = with_time_basis(frame(), CALENDAR_PROFILE)
@@ -126,11 +125,13 @@ class InterannualHeatmap064Tests(unittest.TestCase):
         self.assertAlmostEqual(float(matrix.loc[0, 1]), 5.5)
         self.assertAlmostEqual(float(matrix.loc[12, 1]), 11.0)
 
-    def test_chronological_multiyear_hour_total_is_not_inflated_by_year_count(self) -> None:
+    def test_chronological_multiyear_hour_total_keeps_real_year_months_separate(self) -> None:
         df = frame()
         matrix = temporal_heatmap_matrix(df, "global_horizontal_radiation_wh_m2", "month", HEATMAP_COMPARE_HOUR, "Total")
-        self.assertAlmostEqual(float(matrix.loc[0, 1]), 5.5)
-        self.assertAlmostEqual(float(matrix.loc[12, 1]), 11.0)
+        self.assertAlmostEqual(float(matrix.loc[0, "2024-01"]), 1.0)
+        self.assertAlmostEqual(float(matrix.loc[0, "2025-01"]), 10.0)
+        self.assertAlmostEqual(float(matrix.loc[12, "2024-01"]), 2.0)
+        self.assertAlmostEqual(float(matrix.loc[12, "2025-01"]), 20.0)
 
     def test_quantity_aware_statistic_options_and_defaults(self) -> None:
         self.assertEqual(heatmap_default_statistic("dry_bulb_temperature_c"), "Mean")

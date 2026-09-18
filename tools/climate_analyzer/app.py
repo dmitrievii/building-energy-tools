@@ -125,7 +125,7 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
     global OverlaySeries, available_resolution_labels, build_overlay_figure
     global native_resolution_minutes, validate_unit_families
     global available_years, filter_datetime_range, filter_year, with_time_basis
-    global CHRONOLOGICAL, CALENDAR_PROFILE, display_period_labels, time_basis
+    global CHRONOLOGICAL, CALENDAR_PROFILE, display_period_labels, is_multiyear, time_basis
 
     if not _ANALYSIS_DEPENDENCIES_LOADED:
         import pandas as pd
@@ -221,6 +221,7 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
             CHRONOLOGICAL,
             available_years,
             display_period_labels,
+            is_multiyear,
             filter_datetime_range,
             filter_year,
             time_basis,
@@ -2031,7 +2032,7 @@ def render_generic_variable_page(
     column, unit = VARIABLES[variable_label]
     chart_types = [
         "Profile with min-mean-max ribbon",
-        "Percentile band P05-P50-P95",
+        "Middle 90% range with median",
         "Heat map",
         "Duration curve",
         "Histogram",
@@ -2047,16 +2048,25 @@ def render_generic_variable_page(
     chart_type = st.selectbox("Chart type", chart_types)
     if chart_type == "Heat map":
         heatmap_period = st.selectbox("Heat-map aggregation", ["Day", "Week", "Month"], index=0)
-        compare_across = st.selectbox("Compare across", ["Hour of day", "Year"], index=0)
+        compare_options = ["Hour of day"] if time_basis(df) == CHRONOLOGICAL else ["Hour of day", "Year"]
+        compare_across = st.selectbox("Compare across", compare_options, index=0)
+        if time_basis(df) == CHRONOLOGICAL and is_multiyear(df):
+            st.caption("Chronological heat maps keep every real day, week or month in sequence across years. Switch Time basis to Calendar profile to align equivalent calendar periods and compare years directly.")
         statistic_options = list(heatmap_statistic_options(column))
         default_statistic = heatmap_default_statistic(column)
+        statistic_labels = {
+            "P05": "Lower 5% boundary (P05)",
+            "P95": "Upper 5% boundary (P95)",
+        }
         statistic = st.selectbox(
             "Statistic",
             statistic_options,
             index=statistic_options.index(default_statistic),
+            format_func=lambda value: statistic_labels.get(value, value),
             help=(
-                "The statistic defines the value represented by each heat-map cell. Extensive canonical variables "
-                "such as irradiation and precipitation default to period Total; state/intensive variables default to Mean."
+                "The statistic defines the value represented by each heat-map cell. Lower 5% boundary means only about 5% of contributing values are lower; "
+                "Upper 5% boundary means only about 5% are higher. The interval between them contains the middle 90% of observations. "
+                "Extensive canonical variables such as irradiation and precipitation default to period Total; state/intensive variables default to Mean."
             ),
         )
         if compare_across == "Year":
@@ -2086,8 +2096,8 @@ def render_generic_variable_page(
         # Monthly/annual energy sums are available in the dedicated solar component charts.
         if chart_type == "Profile with min-mean-max ribbon":
             fig = profile_ribbon_chart(df, column, aggregation or "Monthly", f"{title_prefix}: {variable_label}", unit)
-        elif chart_type == "Percentile band P05-P50-P95":
-            fig = percentile_band_chart(df, column, aggregation or "Monthly", f"{title_prefix}: {variable_label} percentiles", unit)
+        elif chart_type == "Middle 90% range with median":
+            fig = percentile_band_chart(df, column, aggregation or "Monthly", f"{title_prefix}: {variable_label} · middle 90% range with median", unit)
         elif chart_type == "Duration curve":
             ascending = st.checkbox("Ascending order", value=False)
             direction = "ascending" if ascending else "descending"
@@ -2859,7 +2869,7 @@ def render_temperature(df: pd.DataFrame, *, interval_count_metrics: bool = True)
             "Cooling limit [°C]",
             10.0,
             35.0,
-            18.3,
+            20.0,
             0.1,
             key="degree_cooling_limit_c",
             help="Only intervals/days with mean outdoor temperature above this limit contribute to KGT.",
@@ -2898,15 +2908,7 @@ def render_temperature(df: pd.DataFrame, *, interval_count_metrics: bool = True)
 
         plot_data = table.reset_index()
         plot_data = plot_data.rename(columns={plot_data.columns[0]: "Period"})
-        if aggregation == "Monthly":
-            plot_data["Period"] = pd.to_datetime(plot_data["Period"]).dt.strftime("%b")
-        elif aggregation == "Weekly":
-            timestamps = pd.to_datetime(plot_data["Period"])
-            plot_data["Period"] = [f"W{int(ts.isocalendar().week):02d}" for ts in timestamps]
-        elif aggregation == "Daily":
-            plot_data["Period"] = pd.to_datetime(plot_data["Period"]).dt.strftime("%d %b")
-        elif aggregation == "Annual":
-            plot_data["Period"] = pd.to_datetime(plot_data["Period"]).dt.strftime("%Y")
+        plot_data["Period"] = display_period_labels(table.index, aggregation, time_basis(df))
 
         series_names = [str(column) for column in table.columns]
         long = plot_data.melt(id_vars="Period", var_name="Series", value_name="Value")
@@ -2976,12 +2978,12 @@ def render_temperature(df: pd.DataFrame, *, interval_count_metrics: bool = True)
         )
     elif chart_group == "Threshold hours":
         aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0)
-        mode = st.radio("Condition", ["Below heating threshold", "Above cooling threshold", "Frost hours", "Tropical nights proxy"])
+        mode = st.radio("Condition", ["Below heating threshold", "Above cooling threshold", "Frost hours (Tdry < 0 °C)", "Nighttime hours > 20 °C (20:00–06:59)"])
         if mode == "Below heating threshold":
             condition = df["dry_bulb_temperature_c"] < heat_threshold
         elif mode == "Above cooling threshold":
             condition = df["dry_bulb_temperature_c"] > cool_threshold
-        elif mode == "Frost hours":
+        elif mode == "Frost hours (Tdry < 0 °C)":
             condition = df["dry_bulb_temperature_c"] < 0.0
         else:
             condition = (df["hour_of_day"].isin(list(range(20, 24)) + list(range(0, 7)))) & (df["dry_bulb_temperature_c"] > 20.0)

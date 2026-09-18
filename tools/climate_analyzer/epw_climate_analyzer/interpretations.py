@@ -12,6 +12,7 @@ import math
 import pandas as pd
 
 from .aggregations import native_interval_hours
+from .temporal_filtering import CHRONOLOGICAL, time_basis
 
 
 def _fmt(value: float, digits: int = 1) -> str:
@@ -46,6 +47,25 @@ def _valid_record_sentence(df: pd.DataFrame, count: int) -> str:
     )
 
 
+def _interannual_mean_sentence(df: pd.DataFrame, column: str, label: str, unit: str) -> str:
+    """Summarize real-year mean evolution for chronological multi-year data."""
+    if not isinstance(df.index, pd.DatetimeIndex) or time_basis(df) != CHRONOLOGICAL:
+        return ""
+    numeric = pd.to_numeric(df.get(column), errors="coerce")
+    if numeric is None:
+        return ""
+    annual = numeric.groupby(pd.DatetimeIndex(df.index).year).mean().dropna()
+    if len(annual) < 2:
+        return ""
+    first_year, last_year = int(annual.index[0]), int(annual.index[-1])
+    low_year, high_year = int(annual.idxmin()), int(annual.idxmax())
+    return (
+        f" Across real years, annual mean {label} changes from {_fmt(annual.iloc[0])} {unit} in {first_year} "
+        f"to {_fmt(annual.iloc[-1])} {unit} in {last_year}; the lowest annual mean is {_fmt(annual.min())} {unit} "
+        f"({low_year}) and the highest is {_fmt(annual.max())} {unit} ({high_year})."
+    )
+
+
 def variable_interpretation(
     df: pd.DataFrame,
     column: str,
@@ -67,7 +87,8 @@ def variable_interpretation(
     text = (
         _valid_record_sentence(df, len(values))
         + f"Mean {label} is {_fmt(mean)} {unit}; the range is {_fmt(minimum)}...{_fmt(maximum)} {unit}. "
-        f"The 5th to 95th percentile interval is {_fmt(p05)}...{_fmt(p95)} {unit}."
+        f"The middle 90% of observations lies between {_fmt(p05)} and {_fmt(p95)} {unit}; only about 5% are lower and about 5% are higher."
+        + _interannual_mean_sentence(df, column, label, unit)
     )
     if high_threshold is not None:
         high_hours = _duration_hours_from_count(df, int((values > high_threshold).sum()))
@@ -92,6 +113,7 @@ def temperature_interpretation(df: pd.DataFrame, heat_threshold: float, cool_thr
         f"There are {_fmt_hours(cold_hours)} hours below {heat_threshold:g} °C and {_fmt_hours(hot_hours)} hours above {cool_threshold:g} °C. "
         f"The average daily temperature amplitude is {_fmt(amplitude)} K. "
         f"The file contains approximately {tropical_nights:,} tropical nights with night minimum above 20 °C."
+        + _interannual_mean_sentence(df, "dry_bulb_temperature_c", "outdoor temperature", "°C")
     )
 
 

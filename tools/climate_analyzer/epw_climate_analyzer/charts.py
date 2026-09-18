@@ -152,15 +152,35 @@ def _year_neutral_monthly(summary: pd.DataFrame, aggregation: str) -> bool:
 
 
 def _heatmap_colorscale(column: str, values=None, temperature_thresholds: tuple[float, float] | None = None):
-    """Return a colorscale suitable for the selected climate variable."""
+    """Return a valid semantic colorscale for the selected climate variable."""
     if column == "dry_bulb_temperature_c" and temperature_thresholds is not None:
-        heat_t, cool_t = temperature_thresholds
+        heat_t, cool_t = map(float, temperature_thresholds)
         vmin, vmax = _finite_min_max(values)
         if vmin is None or vmax is None or abs(vmax - vmin) < 1e-9:
             return TEMPERATURE_COMFORT_COLORSCALE
-        green_start = max(0.0, min(1.0, (heat_t - vmin) / (vmax - vmin)))
-        green_end = max(green_start + 1e-6, min(1.0, (cool_t - vmin) / (vmax - vmin)))
-        return [[0.0, "#1d4ed8"], [green_start, "#22c55e"], [green_end, "#22c55e"], [1.0, "#dc2626"]]
+        if heat_t > cool_t:
+            heat_t, cool_t = cool_t, heat_t
+        blue, green, red = "#1d4ed8", "#22c55e", "#dc2626"
+        if vmax <= heat_t:
+            return [[0.0, blue], [1.0, blue]]
+        if vmin >= cool_t:
+            return [[0.0, red], [1.0, red]]
+        if vmin >= heat_t and vmax <= cool_t:
+            return [[0.0, green], [1.0, green]]
+
+        span = vmax - vmin
+        stops: list[list[float | str]] = []
+        start_color = blue if vmin < heat_t else (green if vmin < cool_t else red)
+        stops.append([0.0, start_color])
+        if vmin < heat_t < vmax:
+            p = float(np.clip((heat_t - vmin) / span, 0.0, 1.0))
+            stops.extend([[p, blue], [p, green]])
+        if vmin < cool_t < vmax:
+            p = float(np.clip((cool_t - vmin) / span, 0.0, 1.0))
+            stops.extend([[p, green], [p, red]])
+        end_color = red if vmax > cool_t else (green if vmax > heat_t else blue)
+        stops.append([1.0, end_color])
+        return stops
     if column in {"natural_ventilation_suitable", "night_flushing_suitable"} or "suitable" in column:
         return BINARY_SUITABILITY_COLORSCALE
     if "sky_cover" in column:
@@ -266,17 +286,17 @@ def percentile_band_chart(df: pd.DataFrame, column: str, aggregation: str, title
     x = _period_x(summary, aggregation)
     low_color, central_color, high_color, band_fill = metric_band_colors(column)
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=x, y=summary["p95"], mode="lines+markers", name="P95", line=dict(color=high_color, width=1.4), hovertemplate="P95: %{y:.2f} " + unit + "<extra></extra>"))
+    fig.add_trace(go.Scatter(x=x, y=summary["p95"], mode="lines+markers", name="Upper 5% boundary (P95)", line=dict(color=high_color, width=1.4), hovertemplate="Upper 5% boundary (P95): %{y:.2f} " + unit + "<extra></extra>"))
     fig.add_trace(
         go.Scatter(
             x=x,
             y=summary["p05"],
             mode="lines+markers",
-            name="P05",
+            name="Lower 5% boundary (P05)",
             line=dict(color=low_color, width=1.4),
             fill="tonexty",
             fillcolor=band_fill,
-            hovertemplate="P05: %{y:.2f} " + unit + "<extra></extra>",
+            hovertemplate="Lower 5% boundary (P05): %{y:.2f} " + unit + "<extra></extra>",
         )
     )
     fig.add_trace(go.Scatter(x=x, y=summary["median"], mode="lines+markers", name="Median", line=dict(color=central_color, width=2.2), hovertemplate="Median: %{y:.2f} " + unit + "<extra></extra>"))
@@ -320,6 +340,9 @@ def temporal_heatmap_chart(
     )
     if str(row_group).strip().lower() == "month" and all(isinstance(value, (int, np.integer)) for value in matrix.columns):
         fig.update_xaxes(tickmode="array", tickvals=list(range(1, 13)), ticktext=MONTH_LABELS)
+    if compare_across == "Year":
+        years = [int(value) for value in matrix.index]
+        fig.update_yaxes(tickmode="array", tickvals=years, ticktext=[str(year) for year in years])
     if compare_across == HEATMAP_COMPARE_HOUR:
         fig.update_yaxes(range=[23, 0], autorangeoptions=dict(minallowed=0, maxallowed=23))
     fig.update_layout(template=PLOT_TEMPLATE, margin=dict(l=40, r=20, t=70, b=45))
