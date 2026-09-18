@@ -4004,7 +4004,49 @@ def render_time_series_overlay(df: pd.DataFrame) -> None:
             key=f"overlay_resolution_{i}",
         )
         column, unit = VARIABLES[variable_label]
-        specs.append(OverlaySeries(variable_label, column, unit, resolution))
+        style_labels = ["Solid", "Dashed", "Dotted", "Dash-dot"]
+        style_to_dash = {"Solid": "solid", "Dashed": "dash", "Dotted": "dot", "Dash-dot": "dashdot"}
+        with st.expander(f"Series {i + 1} style", expanded=False):
+            style_col1, style_col2, style_col3, style_col4 = st.columns([1.25, 1.0, 1.0, 1.0])
+            line_style = style_col1.selectbox(
+                "Line style",
+                style_labels,
+                index=i % len(style_labels),
+                key=f"overlay_line_style_{i}",
+            )
+            line_width = style_col2.slider(
+                "Line width",
+                min_value=0.5,
+                max_value=6.0,
+                value=2.0,
+                step=0.5,
+                key=f"overlay_line_width_{i}",
+            )
+            line_color = style_col3.color_picker(
+                "Line color",
+                value=metric_color(column),
+                key=f"overlay_line_color_{i}",
+            )
+            line_opacity = style_col4.slider(
+                "Opacity",
+                min_value=0.2,
+                max_value=1.0,
+                value=1.0,
+                step=0.05,
+                key=f"overlay_line_opacity_{i}",
+            )
+        specs.append(
+            OverlaySeries(
+                variable_label,
+                column,
+                unit,
+                resolution,
+                color=line_color,
+                dash=style_to_dash[line_style],
+                width=float(line_width),
+                opacity=float(line_opacity),
+            )
+        )
 
     try:
         families = validate_unit_families(specs)
