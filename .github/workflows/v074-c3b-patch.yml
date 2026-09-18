@@ -75,7 +75,7 @@ jobs:
                           return
 
               raise RuntimeError(f"{path}: expected one anchor after indentation normalization: {old[:120]!r}")
-'''
+          '''
           source = source[:helper_start] + resilient_helper + source[helper_end:]
           exec(compile(source, 'apply_v074_c3_payload', 'exec'))
           PY
