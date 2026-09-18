@@ -19,7 +19,7 @@ class SourceParityAudit072Tests(unittest.TestCase):
     def test_current_geosphere_adapter_field_boundary_is_explicit(self) -> None:
         self.assertEqual(
             set(FIELD_SPEC_BY_PROVIDER),
-            {"tl", "tlmin", "tlmax", "rf", "p", "ffam", "dd", "ffx", "ddx", "rr", "rrm", "sh", "so", "cglo", "chim"},
+            {"tl", "tlmin", "tlmax", "tb10", "tb20", "tb50", "rf", "p", "ffam", "dd", "ffx", "ddx", "rr", "rrm", "sh", "so", "cglo", "chim"},
         )
 
     def test_page_gap_reflects_0_7_3_supported_functional_closure(self) -> None:
@@ -32,10 +32,7 @@ class SourceParityAudit072Tests(unittest.TestCase):
             index=index,
         )
         pages = set(available_historical_pages(frame))
-        expected_missing = {
-            "Sky and Daylight",
-            "Compare Climates",
-        }
+        expected_missing = {"Compare Climates"}
         self.assertEqual(set(NAVIGATION_PAGES) - pages, expected_missing)
 
     def test_natural_ventilation_and_hvac_are_wired_for_historical_data(self) -> None:

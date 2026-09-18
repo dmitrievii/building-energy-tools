@@ -14,9 +14,9 @@ APP = ROOT / "app.py"
 DOC = ROOT / "CLIMATE_CORE_0_7_3.md"
 
 EXPECTED_MAPPED = {
-    "cglo", "chim", "dd", "ddx", "ffam", "ffx", "p", "rf", "rr", "rrm", "sh", "so", "tl", "tlmax", "tlmin"
+    "cglo", "chim", "dd", "ddx", "ffam", "ffx", "p", "rf", "rr", "rrm", "sh", "so", "tb10", "tb20", "tb50", "tl", "tlmax", "tlmin"
 }
-EXPLICITLY_DEFERRED = {"ff", "pred", "tb10", "tb20", "tb50", "ts", "tsmax", "tsmin", "zeitx"}
+EXPLICITLY_DEFERRED = {"ff", "pred", "ts", "tsmax", "tsmin", "zeitx"}
 
 
 class SourceParityClosure073Tests(unittest.TestCase):
@@ -34,7 +34,8 @@ class SourceParityClosure073Tests(unittest.TestCase):
             index=index,
         )
         pages = set(available_historical_pages(frame))
-        self.assertNotIn("Sky and Daylight", pages)
+        self.assertIn("Sky and Daylight", pages)
+        self.assertIn("Ground Temperature", pages)
         self.assertNotIn("Compare Climates", pages)
         self.assertIn("Natural Ventilation", pages)
         self.assertIn("HVAC and Passive Design", pages)

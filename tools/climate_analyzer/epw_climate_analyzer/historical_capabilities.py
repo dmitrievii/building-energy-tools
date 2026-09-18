@@ -153,7 +153,22 @@ def available_historical_pages(df: pd.DataFrame) -> tuple[str, ...]:
     )
     has_solar = any(
         has_numeric_observations(df, column)
-        for column in ("global_horizontal_radiation_wh_m2", "diffuse_horizontal_radiation_wh_m2", "sunshine_duration_s")
+        for column in ("global_horizontal_radiation_wh_m2", "diffuse_horizontal_radiation_wh_m2")
+    )
+    has_daylight = any(
+        has_numeric_observations(df, column)
+        for column in (
+            "sunshine_duration_s",
+            "total_sky_cover_tenths",
+            "opaque_sky_cover_tenths",
+            "global_horizontal_illuminance_lux",
+            "direct_normal_illuminance_lux",
+            "diffuse_horizontal_illuminance_lux",
+        )
+    )
+    has_ground = any(
+        has_numeric_observations(df, column)
+        for column in ("ground_temperature_0_10m_c", "ground_temperature_0_20m_c", "ground_temperature_0_50m_c")
     )
     has_precipitation_or_snow = any(
         has_numeric_observations(df, column)
@@ -166,10 +181,14 @@ def available_historical_pages(df: pd.DataFrame) -> tuple[str, ...]:
 
     if has_temperature:
         pages.append("Temperature")
+    if has_mean_temperature or has_ground:
+        pages.append("Ground Temperature")
     if has_mean_temperature and has_humidity:
         pages.append("Humidity and Psychrometrics")
     if has_solar:
         pages.append("Solar and Radiation")
+    if has_daylight:
+        pages.append("Sky and Daylight")
     if has_wind:
         pages.append("Wind and Ventilation")
     if has_precipitation_or_snow:

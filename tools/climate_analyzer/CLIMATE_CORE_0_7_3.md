@@ -130,3 +130,14 @@ The live census after Increment B reports:
 - exactly two intentional page differences: `Sky and Daylight` and `Compare Climates`.
 
 PR #67 remains Draft and stacked on the 0.7.2 audit until an explicit merge sequence is approved.
+
+
+## Increment D/E — daylight and ground-temperature closure
+
+- `so` is now presented on `Sky and Daylight` as measured sunshine duration, alongside calculated astronomical daylight duration and relative sunshine duration.
+- Sunshine duration is no longer treated as a solar-radiation quantity and is never converted to sky cover, illuminance or DNI.
+- GeoSphere `tb10`, `tb20`, `tb50` are mapped as measured ground temperatures at 0.10/0.20/0.50 m with matching quality flags.
+- A new source-neutral `Ground Temperature` page calculates a deep periodic ground profile from outdoor dry-bulb temperature. GeoSphere shallow observations can be overlaid and compared with the calculated profile.
+- The calculated model reproduces the monthly analytical integration used by the user-provided `Klimate.xlsx` reference workbook. Default generic-soil inputs are λ=2 W/(m·K), ρ=2000 kg/m³ and c=1000 J/(kg·K), all editable in the UI.
+- An interactive January→December looping profile animation is included. GIF export remains a later presentation/export layer after the interactive route is qualified.
+- The only intentional navigation-level source gap remaining is `Compare Climates`; source-specific sky-cover/illuminance analyses remain capability-gated inside `Sky and Daylight`.

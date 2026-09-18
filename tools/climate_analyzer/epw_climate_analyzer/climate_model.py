@@ -52,6 +52,15 @@ CANONICAL_VARIABLES: dict[str, CanonicalVariable] = {
     "dry_bulb_temperature_max_c": CanonicalVariable(
         "dry_bulb_temperature_max_c", "°C", "temperature", "max", "True source-interval maximum 2 m air temperature"
     ),
+    "ground_temperature_0_10m_c": CanonicalVariable(
+        "ground_temperature_0_10m_c", "°C", "ground temperature", "mean", "Measured ground temperature at 0.10 m depth"
+    ),
+    "ground_temperature_0_20m_c": CanonicalVariable(
+        "ground_temperature_0_20m_c", "°C", "ground temperature", "mean", "Measured ground temperature at 0.20 m depth"
+    ),
+    "ground_temperature_0_50m_c": CanonicalVariable(
+        "ground_temperature_0_50m_c", "°C", "ground temperature", "mean", "Measured ground temperature at 0.50 m depth"
+    ),
     "dew_point_temperature_c": CanonicalVariable(
         "dew_point_temperature_c", "°C", "temperature", "mean", "Outdoor dew-point temperature"
     ),
