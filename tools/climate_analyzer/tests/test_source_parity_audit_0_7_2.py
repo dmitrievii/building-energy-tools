@@ -53,7 +53,7 @@ class SourceParityAudit072Tests(unittest.TestCase):
         source = APP.read_text(encoding="utf-8")
         self.assertIn("Add two or more EPW climates. All comparison metrics are calculated from EPW hourly data only.", source)
 
-    def test_priority_a_provider_fields_remain_next_0_7_3_increment(self) -> None:
+    def test_priority_a_provider_fields_are_not_silently_claimed_as_used(self) -> None:
         self.assertTrue({"ffx", "ddx", "so", "tlmin", "tlmax"}.isdisjoint(FIELD_SPEC_BY_PROVIDER))
         doc = DOC.read_text(encoding="utf-8")
         for name in ("ffx", "ddx", "so", "tlmin", "tlmax", "*_flag"):
