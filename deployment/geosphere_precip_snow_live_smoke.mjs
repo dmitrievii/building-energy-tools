@@ -490,9 +490,9 @@ try {
   if (!(await loadButton.count())) throw new Error('GeoSphere load button not found.');
   await loadButton.first().click({ timeout: 15_000 });
 
-  appFrame = await waitForFrameContaining(page, 'Precipitation and Snow', 180_000);
+  appFrame = await waitForFrameContaining(page, 'Climate — Precipitation & snow', 180_000);
   report.checks.provider_interval_loaded = true;
-  await clickChoice(appFrame, 'Precipitation and Snow');
+  await clickChoice(appFrame, 'Climate — Precipitation & snow');
   await waitForText(appFrame, 'Dual-resolution semantics:', 60_000);
   await waitForText(appFrame, 'Precipitation and snow', 60_000);
   report.checks.precipitation_page_opened = true;

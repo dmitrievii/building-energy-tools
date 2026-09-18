@@ -76,6 +76,11 @@ class GeoSpherePrecipSnowLiveSmoke071ContractTests(unittest.TestCase):
         self.assertIn("rendered_start", self.browser)
         self.assertIn("rendered_end", self.browser)
 
+    def test_browser_smoke_uses_current_precipitation_navigation_label(self) -> None:
+        self.assertIn("Climate — Precipitation & snow", self.browser)
+        self.assertNotIn("waitForFrameContaining(page, 'Precipitation and Snow'", self.browser)
+        self.assertNotIn("clickChoice(appFrame, 'Precipitation and Snow'", self.browser)
+
     def test_browser_smoke_exercises_new_0_7_analysis_families(self) -> None:
         expected = (
             "Annual precipitation indices",
