@@ -3476,8 +3476,19 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
         occupied_start = int(occ1.number_input("Occupied start hour", min_value=0, max_value=23, value=8, step=1))
         occupied_end = int(occ2.number_input("Occupied end hour", min_value=0, max_value=23, value=18, step=1))
         weekdays_only = occ3.checkbox("Weekdays only", value=False)
-        st.caption("Occupied-hour filtering uses local EPW clock time. Intervals crossing midnight are supported, for example 22...6.")
-    wind_filter = st.checkbox("Use wind-speed limits", value=False)
+        st.caption("Occupied-hour filtering uses the active climate timestamps. Intervals crossing midnight are supported, for example 22...6.")
+    wind_available = (
+        "wind_speed_m_s" in df.columns
+        and pd.to_numeric(df["wind_speed_m_s"], errors="coerce").notna().any()
+    )
+    wind_filter = st.checkbox(
+        "Use wind-speed limits",
+        value=False,
+        disabled=not wind_available,
+        help="Requires measured/available wind speed in the active climate dataset.",
+    )
+    if not wind_available:
+        st.caption("Wind-speed limits are unavailable because this climate interval contains no usable wind-speed observations.")
     wind_min = wind_max = None
     if wind_filter:
         wind_min = st.number_input("Minimum wind speed [m/s]", value=0.5, step=0.1)
@@ -3561,6 +3572,12 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
 def render_hvac_passive(df: pd.DataFrame) -> None:
     """Render HVAC and passive-design decision-support charts."""
     st.header("HVAC operation and passive strategies")
+    has_ghi = (
+        "global_horizontal_radiation_wh_m2" in df.columns
+        and pd.to_numeric(df["global_horizontal_radiation_wh_m2"], errors="coerce").notna().any()
+    )
+    if not has_ghi:
+        st.caption("No usable GHI is available in this climate interval; solar-shading strategy rows are omitted rather than inferred.")
     chart_group = st.selectbox(
         "Analysis type",
         [
@@ -3610,14 +3627,16 @@ def render_hvac_passive(df: pd.DataFrame) -> None:
         fig = stacked_monthly_bar(monthly, "Monthly degree-hour climate severity", "K·h")
         render_plot(fig, degree_day_interpretation(df))
     elif chart_group == "Design-day candidates":
-        daily = df.resample("D").agg(
-            mean_t=("dry_bulb_temperature_c", "mean"),
-            min_t=("dry_bulb_temperature_c", "min"),
-            max_t=("dry_bulb_temperature_c", "max"),
-            max_enthalpy=("moist_air_enthalpy_kj_kg", "max"),
-            max_humidity_ratio=("humidity_ratio_g_kg", "max"),
-            max_ghi=("global_horizontal_radiation_wh_m2", "max"),
-        )
+        daily_aggregation = {
+            "mean_t": ("dry_bulb_temperature_c", "mean"),
+            "min_t": ("dry_bulb_temperature_c", "min"),
+            "max_t": ("dry_bulb_temperature_c", "max"),
+            "max_enthalpy": ("moist_air_enthalpy_kj_kg", "max"),
+            "max_humidity_ratio": ("humidity_ratio_g_kg", "max"),
+        }
+        if has_ghi:
+            daily_aggregation["max_ghi"] = ("global_horizontal_radiation_wh_m2", "max")
+        daily = df.resample("D").agg(**daily_aggregation)
         mode = st.radio("Design-day ranking", ["Coldest days", "Hottest days", "Highest enthalpy days", "Most humid days"], horizontal=True)
         if mode == "Coldest days":
             table = daily.sort_values("min_t").head(15)
@@ -3993,11 +4012,20 @@ def render_historical_wind(df: pd.DataFrame) -> None:
     st.caption(WIND_DIRECTION_FROM_NOTE)
     has_speed = has_numeric_observations(df, "wind_speed_m_s")
     has_direction = has_numeric_observations(df, "wind_direction_deg")
+    has_nv_inputs = (
+        has_speed
+        and has_direction
+        and has_numeric_observations(df, "dry_bulb_temperature_c")
+        and has_numeric_observations(df, "relative_humidity_pct")
+        and has_numeric_observations(df, "humidity_ratio_g_kg")
+    )
     options: list[str] = []
     if has_speed:
         options.append("Wind speed explorer")
     if has_speed and has_direction:
         options.extend(["Wind rose", "Monthly wind rose", "Day-night wind rose"])
+        if has_nv_inputs:
+            options.append("Wind during natural-ventilation hours")
     if has_direction:
         options.append("Wind direction histogram")
     if not options:
@@ -4033,6 +4061,14 @@ def render_historical_wind(df: pd.DataFrame) -> None:
             data = df[(df["hour_of_day"] < 7) | (df["hour_of_day"] > 19)]
         fig = wind_rose_chart(data, f"Measured {period.lower()} wind rose")
         render_plot(fig, wind_interpretation(data))
+    elif chart_group == "Wind during natural-ventilation hours":
+        mask = natural_ventilation_condition(df)
+        data = df[mask]
+        if data.empty:
+            st.info("No canonical hourly records satisfy the default natural-ventilation suitability limits in the current Data filter.")
+            return
+        fig = wind_rose_chart(data, "Measured wind during natural-ventilation-suitable hours")
+        render_plot(fig, natural_ventilation_interpretation(df, mask))
     else:
         fig = histogram_chart(df, "wind_direction_deg", "Measured wind direction histogram", "deg", bins=36)
         render_plot(
@@ -4169,7 +4205,12 @@ def render_canonical_climate_analysis(dataset) -> None:
         and has_numeric_observations(dataset.data, "relative_humidity_pct")
     )
     include_psychrometrics = can_derive_psychrometrics and page in {
-        "Temperature", "Humidity and Psychrometrics", "Time Series and Overlay"
+        "Temperature",
+        "Humidity and Psychrometrics",
+        "Wind and Ventilation",
+        "Time Series and Overlay",
+        "Natural Ventilation",
+        "HVAC and Passive Design",
     }
     _ensure_analysis_dependencies(include_solar=False, include_comparison=False)
     source_pressure = dataset.data.get("atmospheric_station_pressure_pa")
@@ -4255,6 +4296,18 @@ def render_canonical_climate_analysis(dataset) -> None:
         render_historical_solar(filtered_df)
     elif page == "Wind and Ventilation":
         render_historical_wind(filtered_df)
+    elif page == "Natural Ventilation":
+        st.caption(
+            "GeoSphere natural-ventilation suitability uses canonical hourly T/RH-derived psychrometrics and, when available, measured hourly wind speed. "
+            "No EPW-only field is required for this route."
+        )
+        render_natural_ventilation(filtered_df, pressure_pa=active_pressure)
+    elif page == "HVAC and Passive Design":
+        st.caption(
+            "Historical HVAC/passive-design indicators use canonical hourly temperature and psychrometrics. "
+            "Solar-shading indicators are included only when measured GHI exists in the selected GeoSphere interval."
+        )
+        render_hvac_passive(filtered_df)
     elif page == "Precipitation and Snow":
         native_precipitation_df = apply_active_global_filter(prepare_historical_native_diagnostic_frame(dataset))
         st.caption(
