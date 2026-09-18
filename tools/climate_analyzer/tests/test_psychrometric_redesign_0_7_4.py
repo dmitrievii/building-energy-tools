@@ -93,6 +93,7 @@ class PsychrometricRedesign074Tests(unittest.TestCase):
         self.assertEqual({trace.name for trace in envelope_traces}, {"Climate A", "Climate B"})
         self.assertEqual(fig.layout.legend.title.text, "Climate")
         self.assertFalse(any(str(key).startswith("xaxis2") or str(key).startswith("yaxis2") for key in fig.layout))
+        self.assertFalse(any(getattr(trace, "showlegend", None) is False and getattr(trace, "hoverinfo", None) == "skip" for trace in fig.data))
 
     def test_ui_exposes_common_all_observations_and_middle_90_contract(self) -> None:
         source = APP.read_text(encoding="utf-8")

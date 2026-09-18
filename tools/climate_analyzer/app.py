@@ -2475,7 +2475,7 @@ def render_compare_humidity(climates: list[ClimateDataset], reference_name: str,
             key="compare_psychrometric_distribution",
         )
         st.caption(
-            "All selected climates use one shared psychrometric axis. Middle 90% retains the densest 1 °C × 5 %RH cells containing at least 90% of each climate's represented duration."
+            "All selected climates use one shared psychrometric axis. Middle 90% retains the densest 1 °C × 5 %RH cells containing at least 90% of each climate's represented duration. A common RH construction grid is omitted because comparison climates may have different station pressures."
         )
         fig = psychrometric_comparison_chart(
             climates,

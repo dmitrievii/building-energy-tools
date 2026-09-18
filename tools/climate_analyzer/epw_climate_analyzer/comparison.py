@@ -400,7 +400,12 @@ def psychrometric_comparison_chart(
             envelope = psychrometric_occupancy_envelope(climate.data, target_share=0.90)
             if envelope.selected_tiles.empty:
                 continue
-            xs, ys = envelope_polygon_coordinates(envelope, chart_type=chart_type, pressure_pa=pressure_pa)
+            if "atmospheric_station_pressure_pa" in climate.data.columns:
+                observed_pressure = pd.to_numeric(climate.data["atmospheric_station_pressure_pa"], errors="coerce").dropna()
+                climate_pressure_pa = float(observed_pressure.median()) if not observed_pressure.empty else float(pressure_pa)
+            else:
+                climate_pressure_pa = float(pressure_pa)
+            xs, ys = envelope_polygon_coordinates(envelope, chart_type=chart_type, pressure_pa=climate_pressure_pa)
             fig.add_trace(
                 go.Scatter(
                     x=xs,
@@ -431,15 +436,10 @@ def psychrometric_comparison_chart(
                 )
             )
 
-    if chart_type == "T-d":
-        for curve in psychrometric_rh_curves("T-d", pressure_pa=pressure_pa):
-            fig.add_trace(
-                go.Scatter(
-                    x=curve["x"], y=curve["y"], mode="lines",
-                    line=dict(width=0.55, color="rgba(75,85,99,0.34)"),
-                    showlegend=False, hoverinfo="skip",
-                )
-            )
+    # Do not draw one shared relative-humidity construction grid here.
+    # Different comparison climates can sit at different station pressures, so
+    # a single RH grid would imply one pressure state that is not valid for all
+    # datasets. Actual T/d or i/d observations remain directly comparable.
     fig.update_layout(
         template=PLOT_TEMPLATE,
         title=f"Psychrometric climate comparison — {data_display} ({chart_type})",
