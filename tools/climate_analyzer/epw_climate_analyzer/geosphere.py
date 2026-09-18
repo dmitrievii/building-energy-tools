@@ -96,19 +96,59 @@ class ProviderFieldSpec:
 # interval irradiation [Wh/m²] for the canonical extensive-energy variables.
 _PROVIDER_FIELD_SPECS: tuple[ProviderFieldSpec, ...] = (
     ProviderFieldSpec("tl", "dry_bulb_temperature_c", ("°c", "c", "degc"), description="Lufttemperatur 2m"),
+    ProviderFieldSpec("tlmin", "dry_bulb_temperature_min_c", ("°c", "c", "degc"), description="Lufttemperatur 2m Minimalwert"),
+    ProviderFieldSpec("tlmax", "dry_bulb_temperature_max_c", ("°c", "c", "degc"), description="Lufttemperatur 2m Maximalwert"),
     ProviderFieldSpec("rf", "relative_humidity_pct", ("%",), description="Relative Feuchte"),
     ProviderFieldSpec("p", "atmospheric_station_pressure_pa", ("hpa",), scale=100.0, description="Luftdruck"),
     ProviderFieldSpec("ffam", "wind_speed_m_s", ("m/s", "m s-1", "m s^-1"), description="Windgeschwindigkeit 10m, arithmetischer Mittelwert"),
     ProviderFieldSpec("dd", "wind_direction_deg", ("°", "deg", "degree"), description="Windrichtung"),
+    ProviderFieldSpec("ffx", "wind_gust_speed_m_s", ("m/s", "m s-1", "m s^-1"), description="Maximale Windgeschwindigkeit (Spitzenböe)"),
+    ProviderFieldSpec("ddx", "wind_gust_direction_deg", ("°", "deg", "degree"), description="Windrichtung zur Spitzenböe"),
     ProviderFieldSpec("rr", "liquid_precipitation_depth_mm", ("mm",), description="Niederschlagssumme"),
     ProviderFieldSpec("rrm", "precipitation_duration_min", ("min",), description="Niederschlagsdauer"),
     ProviderFieldSpec("sh", "snow_depth_cm", ("cm",), description="Gesamtschneehöhe"),
+    ProviderFieldSpec("so", "sunshine_duration_s", ("s",), description="Sonnenscheindauer"),
     ProviderFieldSpec("cglo", "global_horizontal_radiation_wh_m2", ("w/m²", "w/m2", "w m-2", "w m^-2"), scale=GEOSPHERE_NATIVE_INTERVAL_MINUTES / 60.0, description="Globalstrahlung Mittelwert"),
     ProviderFieldSpec("chim", "diffuse_horizontal_radiation_wh_m2", ("w/m²", "w/m2", "w m-2", "w m^-2"), scale=GEOSPHERE_NATIVE_INTERVAL_MINUTES / 60.0, description="Himmelsstrahlung Mittelwert"),
 )
 FIELD_SPEC_BY_PROVIDER = {item.provider_name: item for item in _PROVIDER_FIELD_SPECS}
 FIELD_SPEC_BY_CANONICAL = {item.canonical_name: item for item in _PROVIDER_FIELD_SPECS}
 DEFAULT_PROVIDER_PARAMETERS = tuple(item.provider_name for item in _PROVIDER_FIELD_SPECS)
+QUALITY_FLAG_COLUMN_PREFIX = "quality_flag__"
+QUALITY_FLAG_PROVIDER_NAMES = frozenset(f"{name}_flag" for name in FIELD_SPEC_BY_PROVIDER)
+SUPPORTED_QUERY_PARAMETERS = frozenset(FIELD_SPEC_BY_PROVIDER) | QUALITY_FLAG_PROVIDER_NAMES
+
+
+def quality_flag_column(provider_name: str) -> str:
+    return f"{QUALITY_FLAG_COLUMN_PREFIX}{str(provider_name).strip()}"
+
+
+def provider_parameters_with_quality_flags(
+    metadata: Mapping[str, Any],
+    provider_parameters: Iterable[str],
+) -> tuple[str, ...]:
+    """Return selected physical parameters plus their live provider quality flags.
+
+    Flags are requested only when the live metadata exposes the exact matching
+    ``<parameter>_flag`` field with unit ``code``. They remain native diagnostic
+    metadata and are never promoted to physical canonical variables.
+    """
+    parameters = parse_parameters(metadata)
+    result: list[str] = []
+    for name in dict.fromkeys(str(item).strip() for item in provider_parameters if str(item).strip()):
+        if name not in FIELD_SPEC_BY_PROVIDER:
+            raise ValueError(f"Unsupported GeoSphere physical parameter: {name}")
+        result.append(name)
+        flag_name = f"{name}_flag"
+        flag = parameters.get(flag_name)
+        if flag is None:
+            continue
+        if _normalise_unit(flag.unit) != "code":
+            raise ValueError(
+                f"GeoSphere quality flag '{flag_name}' unit changed: expected 'code', got '{_normalise_unit(flag.unit)}'."
+            )
+        result.append(flag_name)
+    return tuple(result)
 
 
 def _normalise_unit(unit: object) -> str:
@@ -451,7 +491,7 @@ def build_data_query(
     parameters = tuple(dict.fromkeys(str(item).strip() for item in provider_parameters if str(item).strip()))
     if not parameters:
         raise ValueError("At least one GeoSphere parameter is required.")
-    unknown = sorted(set(parameters) - set(FIELD_SPEC_BY_PROVIDER))
+    unknown = sorted(set(parameters) - set(SUPPORTED_QUERY_PARAMETERS))
     if unknown:
         raise ValueError(f"Unsupported GeoSphere parameters: {', '.join(unknown)}")
     count = estimate_request_datapoints(pd.Timestamp(start), pd.Timestamp(end), len(parameters), 1)
@@ -490,7 +530,7 @@ def plan_data_queries(
     parameters = tuple(dict.fromkeys(str(item).strip() for item in provider_parameters if str(item).strip()))
     if not parameters:
         raise ValueError("At least one GeoSphere parameter is required.")
-    unknown = sorted(set(parameters) - set(FIELD_SPEC_BY_PROVIDER))
+    unknown = sorted(set(parameters) - set(SUPPORTED_QUERY_PARAMETERS))
     if unknown:
         raise ValueError(f"Unsupported GeoSphere parameters: {', '.join(unknown)}")
     if int(max_datapoints) <= 0:
@@ -838,6 +878,11 @@ def provider_frame_to_canonical(
             continue
         values = pd.to_numeric(provider_frame[provider_name], errors="coerce")
         canonical[spec.canonical_name] = values * float(spec.scale)
+        flag_name = f"{provider_name}_flag"
+        if flag_name in provider_frame.columns:
+            canonical[quality_flag_column(provider_name)] = pd.to_numeric(
+                provider_frame[flag_name], errors="coerce"
+            )
     if canonical.empty:
         raise ValueError("GeoSphere response produced no supported canonical climate variables.")
     return canonical
@@ -922,11 +967,12 @@ def fetch_station_dataset(
                     f"GeoSphere metadata do not currently expose required parameter '{spec.provider_name}'."
                 )
             selected[spec.provider_name] = spec
+    query_parameters = provider_parameters_with_quality_flags(metadata_payload, selected.keys())
     provider_frame, request_references = fetch_station_provider_frame(
         station_id=station.station_id,
         start=start,
         end=end,
-        provider_parameters=selected.keys(),
+        provider_parameters=query_parameters,
         timeout_s=timeout_s,
         progress_callback=progress_callback,
     )

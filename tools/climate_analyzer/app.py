@@ -68,7 +68,7 @@ def _ensure_geosphere_dependencies() -> None:
     global pd
     global fetch_geosphere_metadata, geosphere_station_catalog, parse_geosphere_stations
     global supported_geosphere_parameter_mapping, fetch_geosphere_station_dataset
-    global plan_geosphere_queries, estimate_geosphere_datapoints
+    global plan_geosphere_queries, estimate_geosphere_datapoints, provider_parameters_with_quality_flags
 
     if _GEOSPHERE_DEPENDENCIES_LOADED:
         return
@@ -80,6 +80,7 @@ def _ensure_geosphere_dependencies() -> None:
         fetch_station_dataset as fetch_geosphere_station_dataset,
         parse_stations as parse_geosphere_stations,
         plan_data_queries as plan_geosphere_queries,
+        provider_parameters_with_quality_flags,
         station_catalog as geosphere_station_catalog,
         supported_parameter_mapping as supported_geosphere_parameter_mapping,
     )
@@ -272,6 +273,8 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
 
 VARIABLES = {
     "Dry-bulb temperature": ("dry_bulb_temperature_c", "°C"),
+    "Dry-bulb temperature minimum": ("dry_bulb_temperature_min_c", "°C"),
+    "Dry-bulb temperature maximum": ("dry_bulb_temperature_max_c", "°C"),
     "Dew-point temperature": ("dew_point_temperature_c", "°C"),
     "Relative humidity": ("relative_humidity_pct", "%"),
     "Humidity ratio": ("humidity_ratio_g_kg", "g/kg dry air"),
@@ -288,11 +291,14 @@ VARIABLES = {
     "Diffuse horizontal illuminance": ("diffuse_horizontal_illuminance_lux", "lux"),
     "Wind speed": ("wind_speed_m_s", "m/s"),
     "Wind direction": ("wind_direction_deg", "deg"),
+    "Wind gust speed": ("wind_gust_speed_m_s", "m/s"),
+    "Wind gust direction": ("wind_gust_direction_deg", "deg"),
     "Total sky cover": ("total_sky_cover_tenths", "tenths"),
     "Opaque sky cover": ("opaque_sky_cover_tenths", "tenths"),
     "Liquid precipitation depth": ("liquid_precipitation_depth_mm", "mm"),
     "Precipitation duration": ("precipitation_duration_min", "min"),
     "Snow depth": ("snow_depth_cm", "cm"),
+    "Sunshine duration": ("sunshine_duration_s", "s"),
 }
 
 
@@ -1383,10 +1389,13 @@ def render_geosphere_source() -> None:
     start_ts = pd.Timestamp(start_date, tz="UTC")
     end_ts = pd.Timestamp(end_date, tz="UTC") + pd.Timedelta(hours=23, minutes=50)
     canonical_variables = tuple(supported[name].canonical_name for name in provider_parameters)
-    estimated = estimate_geosphere_datapoints(start_ts, end_ts, len(provider_parameters), 1)
-    batches = plan_geosphere_queries(station.station_id, start_ts, end_ts, provider_parameters)
+    query_parameters = provider_parameters_with_quality_flags(metadata, provider_parameters)
+    estimated = estimate_geosphere_datapoints(start_ts, end_ts, len(query_parameters), 1)
+    batches = plan_geosphere_queries(station.station_id, start_ts, end_ts, query_parameters)
+    loaded_flag_count = len(query_parameters) - len(provider_parameters)
     st.caption(
-        f"Requested interval: {selected_days} day(s), 10-minute source data, {len(provider_parameters)} selected measured variables. "
+        f"Requested interval: {selected_days} day(s), 10-minute source data, {len(provider_parameters)} selected measured variables "
+        f"plus {loaded_flag_count} matching provider quality flag(s). "
         f"Estimated provider datapoints: {estimated:,}; bounded API batches: {len(batches)}. "
         "There is no fixed one-year UI limit; long intervals are split into bounded provider requests."
     )
@@ -2950,7 +2959,13 @@ def render_temperature(df: pd.DataFrame, *, interval_count_metrics: bool = True)
     if chart_group == "Temperature variable explorer":
         render_generic_variable_page(
             df,
-            ["Dry-bulb temperature", "Dew-point temperature", "Wet-bulb temperature"],
+            [
+                "Dry-bulb temperature",
+                "Dry-bulb temperature minimum",
+                "Dry-bulb temperature maximum",
+                "Dew-point temperature",
+                "Wet-bulb temperature",
+            ],
             "Dry-bulb temperature",
             "Temperature",
             lambda data, column, label, unit: variable_interpretation(data, column, label, unit, high_threshold=cool_threshold, low_threshold=heat_threshold),
@@ -3914,6 +3929,27 @@ def render_canonical_data_quality(dataset, df: pd.DataFrame) -> None:
         st.subheader("Native per-variable measured coverage")
         st.dataframe(per_variable, hide_index=True, use_container_width=True)
 
+    flag_columns = [column for column in df.columns if str(column).startswith("quality_flag__")]
+    if flag_columns:
+        flag_rows: list[dict[str, object]] = []
+        for column in flag_columns:
+            values = pd.to_numeric(df[column], errors="coerce")
+            counts = values.value_counts(dropna=True).sort_index()
+            code_summary = ", ".join(f"{float(code):g}: {int(count):,}" for code, count in counts.items())
+            flag_rows.append(
+                {
+                    "Provider parameter": str(column).split("__", 1)[1],
+                    "Flag records": int(values.notna().sum()),
+                    "Missing flags": int(values.isna().sum()),
+                    "Observed provider codes": code_summary or "none",
+                }
+            )
+        st.subheader("Provider quality-flag diagnostics")
+        st.dataframe(pd.DataFrame(flag_rows), hide_index=True, use_container_width=True)
+        st.caption(
+            "GeoSphere quality codes are retained verbatim at native source cadence. Climate Analyzer reports their observed distributions but does not invent an accept/reject meaning for undocumented code values."
+        )
+
     st.subheader("Native missing values by measured field")
     missing = df[list(dataset.available_canonical_variables)].isna().sum().reset_index()
     missing.columns = ["field", "missing_count"]
@@ -4012,6 +4048,8 @@ def render_historical_wind(df: pd.DataFrame) -> None:
     st.caption(WIND_DIRECTION_FROM_NOTE)
     has_speed = has_numeric_observations(df, "wind_speed_m_s")
     has_direction = has_numeric_observations(df, "wind_direction_deg")
+    has_gust_speed = has_numeric_observations(df, "wind_gust_speed_m_s")
+    has_gust_direction = has_numeric_observations(df, "wind_gust_direction_deg")
     has_nv_inputs = (
         has_speed
         and has_direction
@@ -4022,6 +4060,10 @@ def render_historical_wind(df: pd.DataFrame) -> None:
     options: list[str] = []
     if has_speed:
         options.append("Wind speed explorer")
+    if has_gust_speed:
+        options.append("Wind gust explorer")
+    if has_gust_direction:
+        options.append("Gust direction histogram")
     if has_speed and has_direction:
         options.extend(["Wind rose", "Monthly wind rose", "Day-night wind rose"])
         if has_nv_inputs:
@@ -4040,6 +4082,14 @@ def render_historical_wind(df: pd.DataFrame) -> None:
     chart_group = st.selectbox("Analysis type", options, key="historical_wind_analysis")
     if chart_group == "Wind speed explorer":
         render_generic_variable_page(df, ["Wind speed"], "Wind speed", "Measured wind", None)
+    elif chart_group == "Wind gust explorer":
+        render_generic_variable_page(df, ["Wind gust speed"], "Wind gust speed", "Measured wind gust", None)
+    elif chart_group == "Gust direction histogram":
+        fig = histogram_chart(df, "wind_gust_direction_deg", "Direction of maximum measured gust", "deg", bins=36)
+        render_plot(
+            fig,
+            "Each hourly direction remains paired with the largest measured source-interval gust in that hour; it is not independently circular-averaged.",
+        )
     elif chart_group == "Wind rose":
         fig = wind_rose_chart(df, "Measured wind rose")
         render_plot(fig, wind_interpretation(df))
@@ -4089,8 +4139,9 @@ def render_historical_solar(df: pd.DataFrame) -> None:
         specs.append(("Global horizontal irradiance", "global_horizontal_irradiance_w_m2", "global_horizontal_radiation_wh_m2"))
     if has_numeric_observations(df, "diffuse_horizontal_radiation_wh_m2"):
         specs.append(("Diffuse horizontal irradiance", "diffuse_horizontal_irradiance_w_m2", "diffuse_horizontal_radiation_wh_m2"))
-    if not specs:
-        st.info("No measured horizontal radiation observations are available in the selected interval.")
+    has_sunshine = has_numeric_observations(df, "sunshine_duration_s")
+    if not specs and not has_sunshine:
+        st.info("No measured horizontal radiation or sunshine-duration observations are available in the selected interval.")
         return
 
     st.caption(
@@ -4099,14 +4150,20 @@ def render_historical_solar(df: pd.DataFrame) -> None:
         "energy total. This page converts the hourly Wh/m² value to hourly mean irradiance [W/m²]. DNI and plane-of-array "
         "routes remain intentionally unavailable in measured historical mode."
     )
-    options = ["Horizontal irradiance explorer", "Monthly horizontal irradiation"]
+    options: list[str] = []
+    if specs:
+        options.extend(["Horizontal irradiance explorer", "Monthly horizontal irradiation"])
+    if has_sunshine:
+        options.append("Sunshine duration explorer")
     has_ghi = any(source == "global_horizontal_radiation_wh_m2" for _, _, source in specs)
     has_temperature = has_numeric_observations(df, "dry_bulb_temperature_c")
     if has_ghi and has_temperature:
         options.extend(["Cooling-risk solar hours", "Temperature vs GHI"])
     chart_group = st.selectbox("Analysis type", options, key="historical_solar_analysis")
 
-    if chart_group == "Horizontal irradiance explorer":
+    if chart_group == "Sunshine duration explorer":
+        render_generic_variable_page(df, ["Sunshine duration"], "Sunshine duration", "Measured sunshine", None)
+    elif chart_group == "Horizontal irradiance explorer":
         labels = [label for label, _, _ in specs]
         selected = st.selectbox("Variable", labels, key="historical_solar_variable")
         column = next(column for label, column, _ in specs if label == selected)

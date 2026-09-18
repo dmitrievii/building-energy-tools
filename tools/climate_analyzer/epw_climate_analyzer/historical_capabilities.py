@@ -141,11 +141,19 @@ def historical_variable_coverage(
 def available_historical_pages(df: pd.DataFrame) -> tuple[str, ...]:
     """Return source-agnostic historical pages supported by observed variables."""
     pages: list[str] = ["Climate File Source", "Overview"]
-    has_temperature = has_numeric_observations(df, "dry_bulb_temperature_c")
+    has_mean_temperature = has_numeric_observations(df, "dry_bulb_temperature_c")
+    has_temperature = has_mean_temperature or any(
+        has_numeric_observations(df, column)
+        for column in ("dry_bulb_temperature_min_c", "dry_bulb_temperature_max_c")
+    )
     has_humidity = has_numeric_observations(df, "relative_humidity_pct")
-    has_wind = has_numeric_observations(df, "wind_speed_m_s") or has_numeric_observations(df, "wind_direction_deg")
-    has_solar = has_numeric_observations(df, "global_horizontal_radiation_wh_m2") or has_numeric_observations(
-        df, "diffuse_horizontal_radiation_wh_m2"
+    has_wind = any(
+        has_numeric_observations(df, column)
+        for column in ("wind_speed_m_s", "wind_direction_deg", "wind_gust_speed_m_s", "wind_gust_direction_deg")
+    )
+    has_solar = any(
+        has_numeric_observations(df, column)
+        for column in ("global_horizontal_radiation_wh_m2", "diffuse_horizontal_radiation_wh_m2", "sunshine_duration_s")
     )
     has_precipitation_or_snow = any(
         has_numeric_observations(df, column)
@@ -158,7 +166,7 @@ def available_historical_pages(df: pd.DataFrame) -> tuple[str, ...]:
 
     if has_temperature:
         pages.append("Temperature")
-    if has_temperature and has_humidity:
+    if has_mean_temperature and has_humidity:
         pages.append("Humidity and Psychrometrics")
     if has_solar:
         pages.append("Solar and Radiation")
@@ -167,7 +175,7 @@ def available_historical_pages(df: pd.DataFrame) -> tuple[str, ...]:
     if has_precipitation_or_snow:
         pages.append("Precipitation and Snow")
     pages.append("Time Series and Overlay")
-    if has_temperature and has_humidity:
+    if has_mean_temperature and has_humidity:
         pages.extend(["Natural Ventilation", "HVAC and Passive Design"])
     pages.append("Data Quality")
     return tuple(pages)

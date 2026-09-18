@@ -19,7 +19,7 @@ class SourceParityAudit072Tests(unittest.TestCase):
     def test_current_geosphere_adapter_field_boundary_is_explicit(self) -> None:
         self.assertEqual(
             set(FIELD_SPEC_BY_PROVIDER),
-            {"tl", "rf", "p", "ffam", "dd", "rr", "rrm", "sh", "cglo", "chim"},
+            {"tl", "tlmin", "tlmax", "rf", "p", "ffam", "dd", "ffx", "ddx", "rr", "rrm", "sh", "so", "cglo", "chim"},
         )
 
     def test_page_gap_reflects_0_7_3_supported_functional_closure(self) -> None:
@@ -53,8 +53,8 @@ class SourceParityAudit072Tests(unittest.TestCase):
         source = APP.read_text(encoding="utf-8")
         self.assertIn("Add two or more EPW climates. All comparison metrics are calculated from EPW hourly data only.", source)
 
-    def test_priority_a_provider_fields_are_not_silently_claimed_as_used(self) -> None:
-        self.assertTrue({"ffx", "ddx", "so", "tlmin", "tlmax"}.isdisjoint(FIELD_SPEC_BY_PROVIDER))
+    def test_priority_a_provider_fields_from_audit_are_now_explicitly_mapped(self) -> None:
+        self.assertTrue({"ffx", "ddx", "so", "tlmin", "tlmax"}.issubset(FIELD_SPEC_BY_PROVIDER))
         doc = DOC.read_text(encoding="utf-8")
         for name in ("ffx", "ddx", "so", "tlmin", "tlmax", "*_flag"):
             self.assertIn(name, doc)

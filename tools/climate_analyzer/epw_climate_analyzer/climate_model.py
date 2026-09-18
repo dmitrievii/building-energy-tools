@@ -28,7 +28,7 @@ from .epw_parser import EpwFile
 
 CalendarMode = Literal["typical_year", "historical", "forecast", "climatology"]
 IntervalSemantics = Literal["interval_start", "interval_end", "instantaneous", "unknown"]
-AggregationSemantics = Literal["mean", "sum", "circular mean"]
+AggregationSemantics = Literal["mean", "sum", "max", "min", "circular mean", "paired max direction"]
 
 
 @dataclass(frozen=True)
@@ -45,6 +45,12 @@ class CanonicalVariable:
 CANONICAL_VARIABLES: dict[str, CanonicalVariable] = {
     "dry_bulb_temperature_c": CanonicalVariable(
         "dry_bulb_temperature_c", "°C", "temperature", "mean", "Outdoor dry-bulb air temperature"
+    ),
+    "dry_bulb_temperature_min_c": CanonicalVariable(
+        "dry_bulb_temperature_min_c", "°C", "temperature", "min", "True source-interval minimum 2 m air temperature"
+    ),
+    "dry_bulb_temperature_max_c": CanonicalVariable(
+        "dry_bulb_temperature_max_c", "°C", "temperature", "max", "True source-interval maximum 2 m air temperature"
     ),
     "dew_point_temperature_c": CanonicalVariable(
         "dew_point_temperature_c", "°C", "temperature", "mean", "Outdoor dew-point temperature"
@@ -94,6 +100,12 @@ CANONICAL_VARIABLES: dict[str, CanonicalVariable] = {
     "wind_direction_deg": CanonicalVariable(
         "wind_direction_deg", "deg", "direction", "circular mean", "Wind direction clockwise from north"
     ),
+    "wind_gust_speed_m_s": CanonicalVariable(
+        "wind_gust_speed_m_s", "m/s", "wind speed", "max", "Maximum wind gust speed within the source interval"
+    ),
+    "wind_gust_direction_deg": CanonicalVariable(
+        "wind_gust_direction_deg", "deg", "direction", "paired max direction", "Direction paired with the maximum wind gust"
+    ),
     "total_sky_cover_tenths": CanonicalVariable(
         "total_sky_cover_tenths", "tenths", "sky cover", "mean", "Total sky cover"
     ),
@@ -108,6 +120,9 @@ CANONICAL_VARIABLES: dict[str, CanonicalVariable] = {
     ),
     "snow_depth_cm": CanonicalVariable(
         "snow_depth_cm", "cm", "snow depth", "mean", "Snow depth state"
+    ),
+    "sunshine_duration_s": CanonicalVariable(
+        "sunshine_duration_s", "s", "duration", "sum", "Measured sunshine duration within the source interval"
     ),
 }
 

@@ -46,8 +46,11 @@ def _canonical_hourly_for_dataset(dataset: CanonicalClimateDataset) -> pd.DataFr
         if cached is not None and cached[0]() is dataset:
             return cached[1]
 
+    canonical_columns = list(dataset.available_canonical_variables)
+    source_frame = dataset.data[canonical_columns].copy()
+    source_frame.attrs.update(dict(dataset.data.attrs))
     hourly = canonical_hourly_analysis_frame(
-        dataset.data,
+        source_frame,
         source_interval_minutes=dataset.temporal.native_interval_minutes,
     )
 
