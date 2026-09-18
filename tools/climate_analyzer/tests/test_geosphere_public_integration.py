@@ -104,15 +104,19 @@ class GeoSpherePublicUiContractTests(unittest.TestCase):
         self.assertNotIn('required air-temperature parameter `tl`', self.source)
 
     def test_historical_dataset_uses_existing_analysis_renderers_not_duplicate_provider_pages(self) -> None:
-        self.assertIn('render_temperature(filtered_df)', self.source)
+        self.assertIn('render_temperature(', self.source)
+        self.assertIn('ground_source_label="GeoSphere measured"', self.source)
+        self.assertIn('ground_native_df=native_ground_df', self.source)
         self.assertIn('render_humidity(filtered_df, pressure_pa=active_pressure)', self.source)
+        self.assertIn('render_wind(filtered_df)', self.source)
         self.assertIn('render_time_series_overlay(filtered_df)', self.source)
         self.assertNotIn('def render_geosphere_temperature', self.source)
         self.assertNotIn('def render_geosphere_humidity', self.source)
+        self.assertNotIn('def render_geosphere_wind', self.source)
 
     def test_historical_threshold_routes_use_canonical_hourly_duration_semantics(self) -> None:
         self.assertIn(
-            'Threshold hours are evaluated on the canonical hourly analysis series.',
+            'Threshold conditions are evaluated on the canonical hourly analysis series.',
             self.source,
         )
         self.assertIn(
