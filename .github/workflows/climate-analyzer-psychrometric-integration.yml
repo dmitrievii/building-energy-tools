@@ -1,0 +1,58 @@
+name: Climate Analyzer Psychrometric Integration
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'tools/climate_analyzer/app.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/psychrometrics.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/psychrometric_distribution.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/charts.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/comparison.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/interpretations.py'
+      - 'tools/climate_analyzer/tests/test_psychrometric*.py'
+      - 'tools/climate_analyzer/tests/test_pressure_precipitation_contract.py'
+      - 'tools/climate_analyzer/tests/test_cadence_frequency_visuals.py'
+      - '.github/workflows/climate-analyzer-psychrometric-integration.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'tools/climate_analyzer/app.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/psychrometrics.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/psychrometric_distribution.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/charts.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/comparison.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/interpretations.py'
+      - 'tools/climate_analyzer/tests/test_psychrometric*.py'
+      - 'tools/climate_analyzer/tests/test_pressure_precipitation_contract.py'
+      - 'tools/climate_analyzer/tests/test_cadence_frequency_visuals.py'
+      - '.github/workflows/climate-analyzer-psychrometric-integration.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  psychrometric-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Climate Analyzer dependencies
+        working-directory: tools/climate_analyzer
+        run: pip install -r requirements.txt
+      - name: Compile psychrometric runtime
+        working-directory: tools/climate_analyzer
+        run: python -m compileall -q app.py epw_climate_analyzer
+      - name: Run psychrometric integration regressions
+        working-directory: tools/climate_analyzer
+        run: |
+          python -m unittest \
+            tests.test_psychrometric_redesign_0_7_4 \
+            tests.test_psychrometric_integration_0_7_4_1 \
+            tests.test_pressure_precipitation_contract \
+            tests.test_cadence_frequency_visuals \
+            -v
