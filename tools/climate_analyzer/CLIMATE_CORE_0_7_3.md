@@ -1,143 +1,175 @@
 # Climate Analyzer 0.7.3 — GeoSphere parity closure
 
-Status: implementation and qualification complete in the current stacked scope; awaiting the explicit #66 → #67 merge/retarget sequence and requalification after retargeting.
+Status: implementation complete on Draft PR #67, retargeted to `main` after PR #66 was merged. Functional and provider-backed qualification is green on the current implementation baseline; the PR remains Draft while the final handoff/documentation and any remaining presentation-layer work are completed.
 
 ## Goal
 
-Close scientifically supportable EPW ↔ GeoSphere functional gaps and consume the useful provider-native observations identified by the 0.7.2 live metadata census before starting a new analysis family.
+Close scientifically supportable EPW ↔ GeoSphere functional gaps and consume the useful provider-native observations identified by the 0.7.2 live metadata census without pretending that unlike sources are identical.
 
-0.7.3 does **not** force unlike sources to become identical. A route is exposed only when its physical inputs exist or can be derived explicitly from measured inputs. Missing measured DNI, EPW sky-cover fields and EPW illuminance fields are not fabricated.
+A route is exposed only when its physical inputs exist or can be derived explicitly. Missing measured DNI, EPW sky-cover fields and EPW illuminance equivalents are never fabricated.
 
 ## Increment A — functional parity
 
 Implemented and qualified:
 
-- historical `Natural Ventilation` is exposed when measured temperature and relative humidity are available;
-- historical psychrometric properties are derived from the canonical hourly T/RH/pressure frame before natural-ventilation and HVAC calculations;
-- historical hourly heating/cooling degree metrics are added after canonical hourly normalization;
-- `HVAC and Passive Design` is exposed for historical data when T/RH support the required psychrometrics;
-- passive-strategy solar shading is capability-gated: it is present only when usable measured GHI exists;
-- design-day screening no longer assumes a GHI column;
-- wind-speed limits on Natural Ventilation are disabled rather than failing when wind observations are unavailable;
-- `Wind during natural-ventilation hours` is restored for historical measured wind when T/RH/wind inputs are present.
+- historical `Natural Ventilation` is exposed when measured temperature and relative humidity support psychrometrics;
+- historical psychrometric properties are derived after canonical hourly normalization;
+- historical heating/cooling degree metrics are available;
+- `HVAC and Passive Design` is exposed for historical data with capability gates;
+- solar-shading rows are shown only when usable measured GHI exists;
+- design-day screening no longer assumes GHI;
+- Natural Ventilation wind limits fail closed when wind is unavailable;
+- `Wind during natural-ventilation hours` is available for historical measured wind.
 
-## Increment B — GeoSphere Priority-A measurements
+## Increment B — Priority-A GeoSphere measurements
 
 Implemented and provider-validated:
 
-- `ffx` → `wind_gust_speed_m_s`: true provider 10-minute gust maximum; canonical hourly reduction uses the maximum of the six complete source intervals;
-- `ddx` → `wind_gust_direction_deg`: direction remains paired with the source row containing the governing `ffx`; the hourly value is **not** an independent circular mean;
-- `so` → `sunshine_duration_s`: measured source-interval sunshine duration; canonical hourly reduction conserves duration by summation;
-- `tlmin` → `dry_bulb_temperature_min_c`: true source-interval 2 m minimum temperature; hourly reduction preserves the minimum;
-- `tlmax` → `dry_bulb_temperature_max_c`: true source-interval 2 m maximum temperature; hourly reduction preserves the maximum;
-- matching live GeoSphere `<parameter>_flag` fields are requested automatically when metadata exposes them with unit `code`.
+- `ffx` → `wind_gust_speed_m_s`: hourly maximum of complete 10-minute source intervals;
+- `ddx` → `wind_gust_direction_deg`: direction paired with the governing `ffx`, never independently circular-averaged;
+- `so` → `sunshine_duration_s`: measured source-interval sunshine duration, conserved by summation;
+- `tlmin` → `dry_bulb_temperature_min_c`: true source extrema preserved by minimum;
+- `tlmax` → `dry_bulb_temperature_max_c`: true source extrema preserved by maximum;
+- exact matching live GeoSphere `<parameter>_flag` fields are requested and retained as native diagnostics.
 
-Provider quality flags are retained only on the native diagnostic frame under `quality_flag__<provider_parameter>`. They are excluded from the canonical hourly physical-analysis frame and shown on Data Quality as raw provider-code distributions. No undocumented accept/reject meaning is assigned to a code.
+Provider quality flags remain diagnostic metadata under `quality_flag__<provider_parameter>` and are excluded from physical canonical-hourly analysis variables. Climate Analyzer reports observed provider code distributions without inventing undocumented accept/reject semantics.
 
-The GeoSphere request estimator and batch planner include automatically requested quality flags, so long-range request size remains bounded using the actual number of provider fields transferred.
-
-### Quantity semantics frozen by regression tests
+### Priority-A quantity semantics
 
 - temperature minima: `min`;
 - temperature maxima: `max`;
 - sunshine duration: `sum`;
 - gust speed: `max`;
-- gust direction: direction paired with the governing gust-speed row;
+- gust direction: direction paired with governing gust speed;
 - equal gust maxima: deterministic earliest-source-timestamp tie break;
-- incomplete native hours remain fail-closed under the existing canonical-hourly completeness policy.
+- incomplete native hours remain fail-closed under the canonical-hourly completeness policy.
 
-The historical UI exposes true temperature extrema, gust speed/direction and sunshine duration when those measured fields are present. None of these additions fabricates DNI, sky cover or illuminance.
+## Increment D — Sky and Daylight closure
 
-### Live provider proof
+`Sky and Daylight` is source-capability based rather than EPW-only.
 
-A permanent provider-backed Priority-A smoke now uses the production GeoSphere adapter against live `klima-v2-10min` data. The first qualified run passed on station **Wien Hohe Warte (ID 105)** for **2026-07-15 → 2026-07-16**:
+Shared/calculated analyses:
 
-- 288/288 native records for `tlmin`, `tlmax` and `so`;
-- 284 numeric native gust-speed records and 283 gust-direction records;
-- all five matching quality flags present for all 288 native timestamps;
-- strict hourly output retained 48 temperature-extrema/sunshine records, 47 gust-speed records and 46 paired gust-direction records;
-- source-to-hourly checks independently reproduced `min`, `max`, `sum` and paired-gust-direction semantics.
+- astronomical daylight duration from date and latitude;
+- monthly daylight summary.
 
-The smoke is scheduled and also runs when its adapter/scientific contract changes.
+GeoSphere-specific measured analyses when `so` exists:
 
-## Increment C — explicit disposition of remaining source differences
+- measured sunshine duration;
+- relative sunshine duration = measured sunshine / calculated astronomical daylight, using only fully observed calendar days.
 
-The remaining live physical GeoSphere fields are deliberately **not mapped in 0.7.3** unless they have a current Climate Analyzer use case and a defensible cross-source semantic contract:
+EPW-only sky/illuminance analyses remain available when their native EPW quantities exist. GeoSphere sunshine duration is **not** converted into sky cover, illuminance or DNI.
 
-- `tb10`, `tb20`, `tb50` — soil temperatures at 10/20/50 cm depth. Useful for a future ground/soil analysis family, but not an EPW hourly-parity field and currently without a UI destination;
-- `ts`, `tsmin`, `tsmax` — 5 cm air-temperature observations/extrema. They are physically distinct from the canonical 2 m outdoor air temperature and therefore must not be substituted for it;
-- `zeitx` — time of the maximum gust inside the provider interval. It is auxiliary event metadata associated with `ffx`, not an independent hourly climate quantity; the current hourly route already preserves the governing gust and its `ddx` direction;
-- `ff` — vector-mean 10 m wind speed. The application already maps the provider arithmetic 10-minute mean `ffam`; adding `ff` under the same generic wind-speed concept would create ambiguous duplicate semantics;
-- `pred` — sea-level-reduced pressure. It is not substituted for measured station pressure `p`, which remains the pressure used for psychrometric calculations.
+`so` is no longer classified as a solar-radiation quantity for navigation: it opens `Sky and Daylight`, while `Solar and Radiation` remains tied to actual radiation observations.
 
-Their matching quality flags are likewise left unconsumed because the corresponding physical fields are not mapped. The live census therefore closes 0.7.3 at **15/24 mapped physical parameters and 15/24 consumed matching quality flags**, with the remaining 9/24 explicitly dispositioned rather than silently ignored.
+## Increment E — Ground Temperature
 
-### Sky and Daylight
+A new source-neutral `Ground Temperature` page is implemented.
 
-`Sky and Daylight` remains unavailable for GeoSphere historical mode in 0.7.3. The live resource does not supply the EPW sky-cover or illuminance quantities used by that page. Measured sunshine duration `so` enriches the Solar route but is **not** converted into invented sky cover, illuminance or DNI.
+### GeoSphere observations
 
-### Compare Climates
+The provider fields are mapped as measured ground temperatures:
 
-`Compare Climates` remains **explicitly EPW-only in 0.7.3**. The existing comparison engine assumes comparable EPW hourly/typical-year datasets and exposes metrics that can depend on EPW-only solar fields. Treating an arbitrary multi-year historical GeoSphere interval as interchangeable with an EPW typical year would introduce ambiguous calendar weighting and capability semantics.
+- `tb10` → `ground_temperature_0_10m_c` at 0.10 m;
+- `tb20` → `ground_temperature_0_20m_c` at 0.20 m;
+- `tb50` → `ground_temperature_0_50m_c` at 0.50 m.
 
-A future source-neutral comparison stage may compare canonical datasets, but it must first define:
+Their exact matching quality flags are retained as native diagnostics. Canonical hourly ground temperatures use arithmetic means over complete six-record 10-minute hours.
 
-- real historical period alignment versus typical-year alignment;
-- variable-intersection/capability gating per comparison chart;
-- extensive-quantity normalization for unequal periods;
-- handling of missing physical hours and unequal coverage;
-- source-specific metrics that have no defensible common basis.
+### Calculated profile
 
-Keeping this page EPW-only is therefore an explicit scientific/product boundary, not an unimplemented silent fallback.
+For EPW, and optionally alongside GeoSphere observations, Climate Analyzer calculates a deep periodic profile from outdoor dry-bulb temperature using the one-dimensional periodic semi-infinite-ground solution.
 
-## Final parity boundary
+The annual air-temperature harmonic is fitted as mean + first sine/cosine harmonic. The ground model applies depth attenuation and phase shift and analytically integrates monthly mean temperature over each calendar month.
 
-With every currently mapped GeoSphere observation present, Climate Analyzer exposes **11 of 13** EPW navigation pages. The two non-shared pages are intentionally explained source-contract differences:
+The calculated route requires at least 300 represented calendar days to avoid fitting an annual harmonic to a short seasonal window.
 
-1. `Sky and Daylight` — unavailable source quantities;
-2. `Compare Climates` — intentionally EPW-only comparison semantics in 0.7.3.
+Default generic-soil inputs reproduce the supplied `Klimate.xlsx` reference calculation and are editable:
 
-All other previously identified implementation gaps are closed.
+- thermal conductivity λ = 2 W/(m·K);
+- density ρ = 2000 kg/m³;
+- specific heat c = 1000 J/(kg·K).
+
+The UI always distinguishes calculated ground temperature from measured GeoSphere ground temperature.
+
+### Ground Temperature views
+
+- monthly profiles versus depth;
+- temperature through the year at a selected depth;
+- measured shallow ground temperature;
+- measured vs calculated validation;
+- interactive January → December looping profile animation with Play/Pause and month slider.
+
+GIF export is not part of this qualified increment yet; it remains a presentation/export layer after the interactive route.
+
+### Workbook regression contract
+
+The analytical monthly integration is frozen against the supplied reference workbook with exact regression points, including:
+
+- January at 0.00 m: `-0.5337866745508535 °C`;
+- July at 0.25 m: `20.710435720735227 °C`;
+- October at 15.00 m: `10.409625038969944 °C`.
+
+## Remaining GeoSphere fields
+
+The live resource exposes 24 physical parameters. After D/E, **18/24 physical parameters are mapped** and **18/24 matching quality flags are consumed**.
+
+The remaining six physical provider fields are intentionally not mapped:
+
+- `ts`, `tsmin`, `tsmax`: air temperature at 5 cm, physically distinct from canonical 2 m outdoor dry-bulb temperature;
+- `zeitx`: intra-interval timestamp of the maximum gust, auxiliary event metadata rather than an independent hourly climate quantity;
+- `ff`: vector-mean 10 m wind speed; the application already uses provider arithmetic-mean `ffam` for scalar wind speed;
+- `pred`: sea-level-reduced pressure; measured station pressure `p` remains the correct psychrometric input.
+
+Their matching quality flags remain unconsumed because the corresponding physical fields are not mapped.
+
+## Final page-parity boundary
+
+Navigation now contains **14 pages**, including the new `Ground Temperature` page.
+
+With all currently mapped GeoSphere observations present, historical mode exposes **13/14 pages**. The only navigation-level source gap is:
+
+- `Compare Climates` — intentionally EPW-only in 0.7.3 because the existing comparison engine assumes EPW/typical-year comparison semantics.
+
+A future source-neutral comparison stage must define historical-vs-typical-year alignment, unequal-period normalization, coverage handling and per-chart capability intersections before GeoSphere comparison is enabled.
 
 ## Scientific invariants
 
-- GeoSphere provider-native observations remain intact for native diagnostics and true source extrema.
-- Ordinary cross-source analyses use the canonical hourly analysis frame.
-- Psychrometrics are derived after quantity-aware hourly normalization.
-- Missing provider observations are never converted to zero.
-- Source-specific quality flags are diagnostic metadata, not physical analysis variables.
-- Gust direction remains paired with its governing gust maximum.
-- 5 cm or soil temperatures are not substituted for 2 m dry-bulb temperature.
-- sea-level-reduced pressure is not substituted for measured station pressure.
-- No measured DNI, sky-cover or illuminance value is invented from unavailable provider fields.
+- measured and calculated quantities are labelled separately;
+- GeoSphere provider-native observations remain intact for native diagnostics;
+- ordinary cross-source analyses use the quantity-aware canonical hourly frame;
+- missing provider observations are never converted to zero;
+- provider quality flags remain diagnostics, not physical analysis variables;
+- gust direction stays paired with the governing gust maximum;
+- 5 cm air temperature is not substituted for 2 m outdoor air temperature;
+- shallow measured ground temperature is not presented as a measured deep profile;
+- sea-level-reduced pressure is not substituted for measured station pressure;
+- sunshine duration is not used to fabricate DNI, sky cover or illuminance.
 
 ## Validation
 
-0.7.3 qualification includes:
+Qualification on implementation head `f54ab3d318117eeee2fb12f279ce11982f99fb36`:
 
-- complete Climate Analyzer CI: compilation, scientific reference register, station-catalog provenance, deployment contract, security/scientific regression suite, module import and Streamlit health;
-- live GeoSphere capability census;
-- provider-backed Priority-A live smoke;
-- regression coverage for historical page gating, psychrometric/degree-metric preparation, GHI-dependent passive-strategy behavior, Priority-A mappings, quantity-aware hourly reduction, gust pairing, flag retention and explicit final source-parity boundaries.
+- Climate Analyzer CI #313 — **PASS**;
+- GeoSphere Capability Census #38 — **PASS**;
+- GeoSphere Priority-A Live Smoke #24 — **PASS**;
+- GeoSphere Ground Temperature Live Smoke #7 — **PASS**.
 
-The live census after Increment B reports:
+Live capability census:
 
 - 48 provider parameters total;
-- 24 physical parameters and 24 matching quality flags;
-- 15/24 physical parameters mapped;
-- 15/24 matching quality flags consumed for mapped parameters;
-- zero remaining Priority-A unmapped fields;
-- exactly two intentional page differences: `Sky and Daylight` and `Compare Climates`.
+- 24 physical parameters + 24 matching quality flags;
+- **18/24 physical parameters mapped**;
+- **18/24 matching quality flags consumed**;
+- unsupported physical parameters: `ff`, `pred`, `ts`, `tsmax`, `tsmin`, `zeitx`;
+- GeoSphere pages with all mapped observations: **13/14**;
+- only missing navigation page: `Compare Climates`.
 
-PR #67 remains Draft and stacked on the 0.7.2 audit until an explicit merge sequence is approved.
+Ground-temperature live proof passed on **Wien Hohe Warte, station ID 105**, **2026-07-15 → 2026-07-17**:
 
+- `tb10`, `tb20`, `tb50`: 432/432 native 10-minute observations each;
+- matching `tb10_flag`, `tb20_flag`, `tb50_flag`: 432/432 each;
+- canonical hourly ground temperatures: 72/72 records each;
+- independent source-to-hourly check reproduced arithmetic means for all three sensor depths.
 
-## Increment D/E — daylight and ground-temperature closure
-
-- `so` is now presented on `Sky and Daylight` as measured sunshine duration, alongside calculated astronomical daylight duration and relative sunshine duration.
-- Sunshine duration is no longer treated as a solar-radiation quantity and is never converted to sky cover, illuminance or DNI.
-- GeoSphere `tb10`, `tb20`, `tb50` are mapped as measured ground temperatures at 0.10/0.20/0.50 m with matching quality flags.
-- A new source-neutral `Ground Temperature` page calculates a deep periodic ground profile from outdoor dry-bulb temperature. GeoSphere shallow observations can be overlaid and compared with the calculated profile.
-- The calculated model reproduces the monthly analytical integration used by the user-provided `Klimate.xlsx` reference workbook. Default generic-soil inputs are λ=2 W/(m·K), ρ=2000 kg/m³ and c=1000 J/(kg·K), all editable in the UI.
-- An interactive January→December looping profile animation is included. GIF export remains a later presentation/export layer after the interactive route is qualified.
-- The only intentional navigation-level source gap remaining is `Compare Climates`; source-specific sky-cover/illuminance analyses remain capability-gated inside `Sky and Daylight`.
+PR #67 remains Draft and targets `main`. It is not merged.
