@@ -1,7 +1,7 @@
 """Capability helpers for measured historical climate analysis views.
 
 The historical GeoSphere route exposes only analyses whose required measured
-variables are actually present in the selected interval.  Provider support in
+variables are actually present in the selected interval. Provider support in
 metadata is not enough: an all-missing column does not qualify a page.
 """
 
@@ -166,14 +166,17 @@ def available_historical_pages(df: pd.DataFrame) -> tuple[str, ...]:
         pages.append("Wind and Ventilation")
     if has_precipitation_or_snow:
         pages.append("Precipitation and Snow")
-    pages.extend(["Time Series and Overlay", "Data Quality"])
+    pages.append("Time Series and Overlay")
+    if has_temperature and has_humidity:
+        pages.extend(["Natural Ventilation", "HVAC and Passive Design"])
+    pages.append("Data Quality")
     return tuple(pages)
 
 
 def horizontal_irradiance_frame(df: pd.DataFrame) -> pd.DataFrame:
     """Add mean horizontal irradiance [W/m²] from interval irradiation columns.
 
-    Canonical radiation variables are interval-extensive Wh/m².  For a source
+    Canonical radiation variables are interval-extensive Wh/m². For a source
     with declared native interval ``dt`` [h], mean irradiance is ``Wh/m² / dt``.
     This avoids the hourly-only numerical equivalence between Wh/m² and W/m².
     """
