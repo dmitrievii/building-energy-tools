@@ -15,6 +15,7 @@ from epw_climate_analyzer.temporal_filtering import CHRONOLOGICAL, with_time_bas
 
 psychrolib.SetUnitSystem(psychrolib.SI)
 ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = ROOT.parents[1]
 APP = ROOT / "app.py"
 
 
@@ -91,7 +92,7 @@ class PsychrometricRedesign074Tests(unittest.TestCase):
         envelope_traces = [trace for trace in fig.data if getattr(trace, "fill", None) == "toself"]
         self.assertEqual({trace.name for trace in envelope_traces}, {"Climate A", "Climate B"})
         self.assertEqual(fig.layout.legend.title.text, "Climate")
-        self.assertEqual(len(fig.layout.xaxis.domain or ()), 0)
+        self.assertFalse(any(str(key).startswith("xaxis2") or str(key).startswith("yaxis2") for key in fig.layout))
 
     def test_ui_exposes_common_all_observations_and_middle_90_contract(self) -> None:
         source = APP.read_text(encoding="utf-8")
@@ -100,6 +101,10 @@ class PsychrometricRedesign074Tests(unittest.TestCase):
         self.assertIn('["All observations", "Middle 90% envelopes"]', source)
         self.assertIn("highest-density 1 °C × 5 %RH occupancy cells", source)
         self.assertIn("one Middle-90% occupancy envelope per real source year", source)
+
+    def test_temporary_d_transport_is_not_part_of_release_tree(self) -> None:
+        self.assertFalse((ROOT / "scripts" / "apply_v074_d.py").exists())
+        self.assertFalse((REPO_ROOT / ".github" / "workflows" / "v074-d-patch.yml").exists())
 
 
 if __name__ == "__main__":
