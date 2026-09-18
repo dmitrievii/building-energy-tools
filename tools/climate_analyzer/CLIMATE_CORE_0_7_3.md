@@ -130,7 +130,7 @@ Navigation now contains **14 pages**, including the new `Ground Temperature` pag
 
 With all currently mapped GeoSphere observations present, historical mode exposes **13/14 pages**. The only navigation-level source gap is:
 
-- `Compare Climates` — intentionally EPW-only in 0.7.3 because the existing comparison engine assumes EPW/typical-year comparison semantics.
+- `Compare Climates` — explicitly EPW-only in 0.7.3 because the existing comparison engine assumes EPW/typical-year comparison semantics.
 
 A future source-neutral comparison stage must define historical-vs-typical-year alignment, unequal-period normalization, coverage handling and per-chart capability intersections before GeoSphere comparison is enabled.
 
@@ -173,4 +173,4 @@ Ground-temperature live proof passed on **Wien Hohe Warte, station ID 105**, **2
 - canonical hourly ground temperatures: 72/72 records each;
 - independent source-to-hourly check reproduced arithmetic means for all three sensor depths.
 
-PR #67 remains Draft and targets `main`. It is not merged. The GIF presentation layer is included after the D/E provider qualification and must pass the subsequent CI requalification before final review.
+PR #67 remains Draft and targets `main`. It is not merged. The GIF presentation layer is covered by regression tests; the current PR head must have all qualification gates green before final review.
