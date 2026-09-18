@@ -83,12 +83,45 @@ def _circular_hourly_mean(values: pd.Series) -> pd.Series:
     return result.mask(undefined)
 
 
+def _paired_direction_at_hourly_max(direction: pd.Series, magnitude: pd.Series) -> pd.Series:
+    """Return the direction paired with the largest magnitude in each hour.
+
+    GeoSphere ``ddx`` is not an independently averaged direction: every source
+    value belongs to the source-interval gust maximum ``ffx``. For an hourly
+    analysis value we therefore select the direction from the row containing the
+    largest gust. Ties are resolved deterministically by the earliest timestamp.
+    Strict completeness is applied by the caller.
+    """
+    direction_numeric = pd.to_numeric(direction, errors="coerce").astype(float)
+    magnitude_numeric = pd.to_numeric(magnitude, errors="coerce").astype(float)
+    hour_key = pd.DatetimeIndex(direction_numeric.index).floor("h")
+    hourly_max = magnitude_numeric.groupby(hour_key).transform("max")
+    candidates = (
+        direction_numeric.notna()
+        & magnitude_numeric.notna()
+        & magnitude_numeric.eq(hourly_max)
+    )
+    selected = direction_numeric[candidates]
+    if selected.empty:
+        return pd.Series(dtype="float64", index=pd.DatetimeIndex([], name=direction_numeric.index.name))
+    selected_hour = pd.DatetimeIndex(selected.index).floor("h")
+    result = selected.groupby(selected_hour).first().astype(float).mod(360.0)
+    result.index.name = direction_numeric.index.name
+    return result
+
+
 def _hourly_reduce(values: pd.Series, semantics: str) -> pd.Series:
     if semantics == "circular mean":
         return _circular_hourly_mean(values)
+    if semantics == "paired max direction":
+        raise ValueError("Paired maximum-direction reduction requires the paired magnitude series.")
     grouped = values.resample("h", label="left", closed="left")
     if semantics == "sum":
         return grouped.sum(min_count=1)
+    if semantics == "max":
+        return grouped.max()
+    if semantics == "min":
+        return grouped.min()
     return grouped.mean()
 
 
@@ -155,9 +188,21 @@ def canonical_hourly_analysis_frame(
         values = pd.to_numeric(data[column], errors="coerce")
         values.index = index
         semantics = aggregation_semantics_for(column)
-        reduced = _hourly_reduce(values, semantics).reindex(hourly_index)
         valid_counts = values.resample("h", label="left", closed="left").count().reindex(hourly_index, fill_value=0)
         complete = complete_timeline & (valid_counts == expected)
+        if semantics == "paired max direction":
+            companion_column = "wind_gust_speed_m_s"
+            if companion_column not in data.columns:
+                reduced = pd.Series(float("nan"), index=hourly_index, dtype="float64")
+                complete = complete & False
+            else:
+                companion = pd.to_numeric(data[companion_column], errors="coerce")
+                companion.index = index
+                companion_counts = companion.resample("h", label="left", closed="left").count().reindex(hourly_index, fill_value=0)
+                complete = complete & (companion_counts == expected)
+                reduced = _paired_direction_at_hourly_max(values, companion).reindex(hourly_index)
+        else:
+            reduced = _hourly_reduce(values, semantics).reindex(hourly_index)
         hourly[column] = reduced.where(complete)
         incomplete_by_variable[str(column)] = int((~complete).sum())
 

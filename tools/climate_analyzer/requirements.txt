@@ -1,6 +1,6 @@
 # WEB-0.3 direct dependency baseline (Python 3.12).
 # Major scientific-stack upgrades are intentionally deferred to a dedicated validation stage.
-# Community Cloud deployment refresh after CLIMATE-0.10.12 memory remediation; dependency pins unchanged.
+# Pillow is pinned directly because Climate 0.7.3 exports looping ground-temperature GIFs.
 streamlit==1.63.0
 streamlit-folium==0.27.4
 folium==0.20.0
@@ -12,3 +12,4 @@ pvlib==0.15.2
 requests==2.34.2
 beautifulsoup4==4.15.0
 openpyxl==3.1.5
+pillow==12.3.0

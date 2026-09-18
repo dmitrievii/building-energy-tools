@@ -1,0 +1,72 @@
+name: Climate Analyzer GeoSphere Priority-A Live Smoke
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'deployment/geosphere_priority_a_provider_probe.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/geosphere.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/climate_model.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/canonical_hourly.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/historical.py'
+      - 'tools/climate_analyzer/tests/test_priority_a_geosphere_0_7_3.py'
+      - '.github/workflows/climate-analyzer-geosphere-priority-a-live-smoke.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'deployment/geosphere_priority_a_provider_probe.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/geosphere.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/climate_model.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/canonical_hourly.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/historical.py'
+      - 'tools/climate_analyzer/tests/test_priority_a_geosphere_0_7_3.py'
+      - '.github/workflows/climate-analyzer-geosphere-priority-a-live-smoke.yml'
+  schedule:
+    - cron: '29 5 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: climate-analyzer-geosphere-priority-a-live-smoke
+  cancel-in-progress: true
+
+jobs:
+  provider-backed-priority-a-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONPATH: tools/climate_analyzer
+      GEOSPHERE_PRIORITY_A_SMOKE_FIXTURE: artifacts/geosphere-priority-a-smoke/provider-fixture.json
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/climate_analyzer/requirements.txt
+
+      - name: Install Climate Analyzer dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r tools/climate_analyzer/requirements.txt
+
+      - name: Probe live GeoSphere Priority-A values and flags
+        run: |
+          python deployment/geosphere_priority_a_provider_probe.py \
+            --output "$GEOSPHERE_PRIORITY_A_SMOKE_FIXTURE" \
+            --timeout 60
+
+      - name: Upload provider-backed Priority-A evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: climate-analyzer-geosphere-priority-a-live-smoke
+          path: artifacts/geosphere-priority-a-smoke
+          if-no-files-found: warn
+          retention-days: 14

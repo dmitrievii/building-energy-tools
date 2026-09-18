@@ -68,7 +68,7 @@ def _ensure_geosphere_dependencies() -> None:
     global pd
     global fetch_geosphere_metadata, geosphere_station_catalog, parse_geosphere_stations
     global supported_geosphere_parameter_mapping, fetch_geosphere_station_dataset
-    global plan_geosphere_queries, estimate_geosphere_datapoints
+    global plan_geosphere_queries, estimate_geosphere_datapoints, provider_parameters_with_quality_flags
 
     if _GEOSPHERE_DEPENDENCIES_LOADED:
         return
@@ -80,6 +80,7 @@ def _ensure_geosphere_dependencies() -> None:
         fetch_station_dataset as fetch_geosphere_station_dataset,
         parse_stations as parse_geosphere_stations,
         plan_data_queries as plan_geosphere_queries,
+        provider_parameters_with_quality_flags,
         station_catalog as geosphere_station_catalog,
         supported_parameter_mapping as supported_geosphere_parameter_mapping,
     )
@@ -272,6 +273,11 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
 
 VARIABLES = {
     "Dry-bulb temperature": ("dry_bulb_temperature_c", "°C"),
+    "Dry-bulb temperature minimum": ("dry_bulb_temperature_min_c", "°C"),
+    "Dry-bulb temperature maximum": ("dry_bulb_temperature_max_c", "°C"),
+    "Ground temperature 0.10 m": ("ground_temperature_0_10m_c", "°C"),
+    "Ground temperature 0.20 m": ("ground_temperature_0_20m_c", "°C"),
+    "Ground temperature 0.50 m": ("ground_temperature_0_50m_c", "°C"),
     "Dew-point temperature": ("dew_point_temperature_c", "°C"),
     "Relative humidity": ("relative_humidity_pct", "%"),
     "Humidity ratio": ("humidity_ratio_g_kg", "g/kg dry air"),
@@ -288,11 +294,14 @@ VARIABLES = {
     "Diffuse horizontal illuminance": ("diffuse_horizontal_illuminance_lux", "lux"),
     "Wind speed": ("wind_speed_m_s", "m/s"),
     "Wind direction": ("wind_direction_deg", "deg"),
+    "Wind gust speed": ("wind_gust_speed_m_s", "m/s"),
+    "Wind gust direction": ("wind_gust_direction_deg", "deg"),
     "Total sky cover": ("total_sky_cover_tenths", "tenths"),
     "Opaque sky cover": ("opaque_sky_cover_tenths", "tenths"),
     "Liquid precipitation depth": ("liquid_precipitation_depth_mm", "mm"),
     "Precipitation duration": ("precipitation_duration_min", "min"),
     "Snow depth": ("snow_depth_cm", "cm"),
+    "Sunshine duration": ("sunshine_duration_s", "s"),
 }
 
 
@@ -1383,10 +1392,13 @@ def render_geosphere_source() -> None:
     start_ts = pd.Timestamp(start_date, tz="UTC")
     end_ts = pd.Timestamp(end_date, tz="UTC") + pd.Timedelta(hours=23, minutes=50)
     canonical_variables = tuple(supported[name].canonical_name for name in provider_parameters)
-    estimated = estimate_geosphere_datapoints(start_ts, end_ts, len(provider_parameters), 1)
-    batches = plan_geosphere_queries(station.station_id, start_ts, end_ts, provider_parameters)
+    query_parameters = provider_parameters_with_quality_flags(metadata, provider_parameters)
+    estimated = estimate_geosphere_datapoints(start_ts, end_ts, len(query_parameters), 1)
+    batches = plan_geosphere_queries(station.station_id, start_ts, end_ts, query_parameters)
+    loaded_flag_count = len(query_parameters) - len(provider_parameters)
     st.caption(
-        f"Requested interval: {selected_days} day(s), 10-minute source data, {len(provider_parameters)} selected measured variables. "
+        f"Requested interval: {selected_days} day(s), 10-minute source data, {len(provider_parameters)} selected measured variables "
+        f"plus {loaded_flag_count} matching provider quality flag(s). "
         f"Estimated provider datapoints: {estimated:,}; bounded API batches: {len(batches)}. "
         "There is no fixed one-year UI limit; long intervals are split into bounded provider requests."
     )
@@ -2950,7 +2962,13 @@ def render_temperature(df: pd.DataFrame, *, interval_count_metrics: bool = True)
     if chart_group == "Temperature variable explorer":
         render_generic_variable_page(
             df,
-            ["Dry-bulb temperature", "Dew-point temperature", "Wet-bulb temperature"],
+            [
+                "Dry-bulb temperature",
+                "Dry-bulb temperature minimum",
+                "Dry-bulb temperature maximum",
+                "Dew-point temperature",
+                "Wet-bulb temperature",
+            ],
             "Dry-bulb temperature",
             "Temperature",
             lambda data, column, label, unit: variable_interpretation(data, column, label, unit, high_threshold=cool_threshold, low_threshold=heat_threshold),
@@ -3420,23 +3438,97 @@ def render_precipitation(df: pd.DataFrame, native_df: pd.DataFrame | None = None
         fig.update_layout(template="plotly_white", xaxis_title="Snow season start year", yaxis_title=metric_labels[metric])
         render_plot(fig, "Snow-season trends are calculated from provider/source snow-depth states after the active global Data filter is replayed at native cadence.")
 
-def render_sky_daylight(df: pd.DataFrame) -> None:
-    """Render sky-cover and daylight charts."""
+def render_sky_daylight(df: pd.DataFrame, *, latitude: float | None = None) -> None:
+    """Render capability-gated sky, daylight and sunshine diagnostics."""
+    from epw_climate_analyzer.daylight import daily_daylight_table, monthly_daylight_sunshine_summary
+    from epw_climate_analyzer.historical_capabilities import has_numeric_observations
+
     st.header("Sky cover and daylight")
-    chart_group = st.selectbox("Analysis type", ["Sky-cover variable explorer", "Illuminance variable explorer", "Clear and overcast hours", "Daylight scatter"])
-    if chart_group == "Sky-cover variable explorer":
-        render_generic_variable_page(df, ["Total sky cover", "Opaque sky cover"], "Total sky cover", "Sky cover", None)
+    has_sky = any(has_numeric_observations(df, c) for c in ("total_sky_cover_tenths", "opaque_sky_cover_tenths"))
+    has_illuminance = any(
+        has_numeric_observations(df, c)
+        for c in ("global_horizontal_illuminance_lux", "direct_normal_illuminance_lux", "diffuse_horizontal_illuminance_lux")
+    )
+    has_sunshine = has_numeric_observations(df, "sunshine_duration_s")
+    options: list[str] = []
+    if latitude is not None:
+        options.extend(["Astronomical daylight duration", "Monthly daylight summary"])
+    if has_sunshine:
+        options.extend(["Measured sunshine duration", "Relative sunshine duration"])
+    if has_sky:
+        options.extend(["Sky-cover variable explorer", "Clear and overcast hours"])
+    if has_illuminance:
+        options.append("Illuminance variable explorer")
+    if has_sky and has_numeric_observations(df, "global_horizontal_radiation_wh_m2"):
+        options.append("Daylight scatter")
+    if not options:
+        st.info("No sky/daylight analysis is supported by the active climate data.")
+        return
+
+    st.caption(
+        "Astronomical daylight is calculated from date and latitude. GeoSphere sunshine duration is an independent measured quantity; "
+        "it is not converted into sky cover, illuminance or DNI."
+    )
+    chart_group = st.selectbox("Analysis type", options, key="sky_daylight_analysis")
+    if chart_group == "Astronomical daylight duration":
+        table = daily_daylight_table(pd.DatetimeIndex(df.index), float(latitude))
+        fig = px.line(table.reset_index(), x="date", y="daylight_duration_h", title="Astronomical daylight duration")
+        fig.update_layout(template="plotly_white", xaxis_title="Date", yaxis_title="Daylight duration [h]")
+        render_plot(fig, "Calculated sunrise-to-sunset duration for an ideal geometric horizon; refraction, terrain and local obstructions are not included.")
+    elif chart_group == "Monthly daylight summary":
+        summary = monthly_daylight_sunshine_summary(df, float(latitude))
+        columns = ["mean_daylight_h"] + (["mean_sunshine_h"] if "mean_sunshine_h" in summary.columns else [])
+        long = summary.melt(id_vars=["month"], value_vars=columns, var_name="series", value_name="hours")
+        labels = {"mean_daylight_h": "Astronomical daylight", "mean_sunshine_h": "Measured sunshine"}
+        long["series"] = long["series"].map(labels)
+        fig = px.line(long, x="month", y="hours", color="series", markers=True, title="Monthly daylight and sunshine")
+        fig.update_layout(template="plotly_white", xaxis_title="Month", yaxis_title="Mean duration per represented day [h]", legend_title="")
+        render_plot(fig, "Daylight is calculated geometrically; measured sunshine is summed from provider duration observations when available.")
+    elif chart_group == "Measured sunshine duration":
+        sunshine = pd.to_numeric(df["sunshine_duration_s"], errors="coerce") / 3600.0
+        aggregation = st.selectbox("Aggregation", ["Daily", "Monthly", "Annual"], index=1, key="sunshine_duration_aggregation")
+        rule = {"Daily": "D", "Monthly": "MS", "Annual": "YS"}[aggregation]
+        totals = sunshine.resample(rule).sum(min_count=1).dropna().to_frame("sunshine_h")
+        if totals.empty:
+            st.info("No measured sunshine-duration values are available in the active Data filter.")
+            return
+        plot_data = totals.reset_index()
+        period_column = plot_data.columns[0]
+        fig = px.bar(plot_data, x=period_column, y="sunshine_h", title=f"Measured sunshine duration — {aggregation.lower()}")
+        fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Measured sunshine duration [h]")
+        render_plot(fig, "GeoSphere sunshine duration is a measured interval-duration quantity summed in hours. Missing observations are excluded, never replaced by zero.")
+    elif chart_group == "Relative sunshine duration":
+        summary = monthly_daylight_sunshine_summary(df, float(latitude))
+        if "relative_sunshine_pct" not in summary.columns:
+            st.info("Relative sunshine duration requires complete measured sunshine coverage for at least one full calendar day in the active Data filter.")
+            return
+        data = summary.dropna(subset=["relative_sunshine_pct"])
+        if data.empty:
+            st.info("Relative sunshine duration requires complete measured sunshine coverage for at least one full calendar day in the active Data filter.")
+            return
+        fig = px.bar(data, x="month", y="relative_sunshine_pct", title="Measured sunshine as share of astronomical daylight")
+        fig.update_layout(template="plotly_white", xaxis_title="Month", yaxis_title="Relative sunshine duration [%]")
+        render_plot(fig, "Measured sunshine duration divided by astronomical daylight only for fully observed calendar days; incomplete days are excluded rather than treated as zero sunshine.")
+    elif chart_group == "Sky-cover variable explorer":
+        available = [label for label, column in (("Total sky cover", "total_sky_cover_tenths"), ("Opaque sky cover", "opaque_sky_cover_tenths")) if has_numeric_observations(df, column)]
+        render_generic_variable_page(df, available, available[0], "Sky cover", None)
     elif chart_group == "Illuminance variable explorer":
-        render_generic_variable_page(
-            df,
-            ["Global horizontal illuminance", "Direct normal illuminance", "Diffuse horizontal illuminance"],
-            "Global horizontal illuminance",
-            "Illuminance",
-            None,
-        )
+        labels = [
+            label for label, column in (
+                ("Global horizontal illuminance", "global_horizontal_illuminance_lux"),
+                ("Direct normal illuminance", "direct_normal_illuminance_lux"),
+                ("Diffuse horizontal illuminance", "diffuse_horizontal_illuminance_lux"),
+            ) if has_numeric_observations(df, column)
+        ]
+        render_generic_variable_page(df, labels, labels[0], "Illuminance", None)
     elif chart_group == "Clear and overcast hours":
         aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0)
-        mode = st.radio("Condition", ["Clear sky cover <= 2", "Overcast sky cover >= 8", "Illuminance > 10000 lux"])
+        choices: list[str] = []
+        if has_numeric_observations(df, "total_sky_cover_tenths"):
+            choices.extend(["Clear sky cover <= 2", "Overcast sky cover >= 8"])
+        if has_numeric_observations(df, "global_horizontal_illuminance_lux"):
+            choices.append("Illuminance > 10000 lux")
+        mode = st.radio("Condition", choices)
         if mode == "Clear sky cover <= 2":
             condition = df["total_sky_cover_tenths"] <= 2
         elif mode == "Overcast sky cover >= 8":
@@ -3476,8 +3568,19 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
         occupied_start = int(occ1.number_input("Occupied start hour", min_value=0, max_value=23, value=8, step=1))
         occupied_end = int(occ2.number_input("Occupied end hour", min_value=0, max_value=23, value=18, step=1))
         weekdays_only = occ3.checkbox("Weekdays only", value=False)
-        st.caption("Occupied-hour filtering uses local EPW clock time. Intervals crossing midnight are supported, for example 22...6.")
-    wind_filter = st.checkbox("Use wind-speed limits", value=False)
+        st.caption("Occupied-hour filtering uses the active climate timestamps. Intervals crossing midnight are supported, for example 22...6.")
+    wind_available = (
+        "wind_speed_m_s" in df.columns
+        and pd.to_numeric(df["wind_speed_m_s"], errors="coerce").notna().any()
+    )
+    wind_filter = st.checkbox(
+        "Use wind-speed limits",
+        value=False,
+        disabled=not wind_available,
+        help="Requires measured/available wind speed in the active climate dataset.",
+    )
+    if not wind_available:
+        st.caption("Wind-speed limits are unavailable because this climate interval contains no usable wind-speed observations.")
     wind_min = wind_max = None
     if wind_filter:
         wind_min = st.number_input("Minimum wind speed [m/s]", value=0.5, step=0.1)
@@ -3561,6 +3664,12 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
 def render_hvac_passive(df: pd.DataFrame) -> None:
     """Render HVAC and passive-design decision-support charts."""
     st.header("HVAC operation and passive strategies")
+    has_ghi = (
+        "global_horizontal_radiation_wh_m2" in df.columns
+        and pd.to_numeric(df["global_horizontal_radiation_wh_m2"], errors="coerce").notna().any()
+    )
+    if not has_ghi:
+        st.caption("No usable GHI is available in this climate interval; solar-shading strategy rows are omitted rather than inferred.")
     chart_group = st.selectbox(
         "Analysis type",
         [
@@ -3610,14 +3719,16 @@ def render_hvac_passive(df: pd.DataFrame) -> None:
         fig = stacked_monthly_bar(monthly, "Monthly degree-hour climate severity", "K·h")
         render_plot(fig, degree_day_interpretation(df))
     elif chart_group == "Design-day candidates":
-        daily = df.resample("D").agg(
-            mean_t=("dry_bulb_temperature_c", "mean"),
-            min_t=("dry_bulb_temperature_c", "min"),
-            max_t=("dry_bulb_temperature_c", "max"),
-            max_enthalpy=("moist_air_enthalpy_kj_kg", "max"),
-            max_humidity_ratio=("humidity_ratio_g_kg", "max"),
-            max_ghi=("global_horizontal_radiation_wh_m2", "max"),
-        )
+        daily_aggregation = {
+            "mean_t": ("dry_bulb_temperature_c", "mean"),
+            "min_t": ("dry_bulb_temperature_c", "min"),
+            "max_t": ("dry_bulb_temperature_c", "max"),
+            "max_enthalpy": ("moist_air_enthalpy_kj_kg", "max"),
+            "max_humidity_ratio": ("humidity_ratio_g_kg", "max"),
+        }
+        if has_ghi:
+            daily_aggregation["max_ghi"] = ("global_horizontal_radiation_wh_m2", "max")
+        daily = df.resample("D").agg(**daily_aggregation)
         mode = st.radio("Design-day ranking", ["Coldest days", "Hottest days", "Highest enthalpy days", "Most humid days"], horizontal=True)
         if mode == "Coldest days":
             table = daily.sort_values("min_t").head(15)
@@ -3895,6 +4006,27 @@ def render_canonical_data_quality(dataset, df: pd.DataFrame) -> None:
         st.subheader("Native per-variable measured coverage")
         st.dataframe(per_variable, hide_index=True, use_container_width=True)
 
+    flag_columns = [column for column in df.columns if str(column).startswith("quality_flag__")]
+    if flag_columns:
+        flag_rows: list[dict[str, object]] = []
+        for column in flag_columns:
+            values = pd.to_numeric(df[column], errors="coerce")
+            counts = values.value_counts(dropna=True).sort_index()
+            code_summary = ", ".join(f"{float(code):g}: {int(count):,}" for code, count in counts.items())
+            flag_rows.append(
+                {
+                    "Provider parameter": str(column).split("__", 1)[1],
+                    "Flag records": int(values.notna().sum()),
+                    "Missing flags": int(values.isna().sum()),
+                    "Observed provider codes": code_summary or "none",
+                }
+            )
+        st.subheader("Provider quality-flag diagnostics")
+        st.dataframe(pd.DataFrame(flag_rows), hide_index=True, use_container_width=True)
+        st.caption(
+            "GeoSphere quality codes are retained verbatim at native source cadence. Climate Analyzer reports their observed distributions but does not invent an accept/reject meaning for undocumented code values."
+        )
+
     st.subheader("Native missing values by measured field")
     missing = df[list(dataset.available_canonical_variables)].isna().sum().reset_index()
     missing.columns = ["field", "missing_count"]
@@ -3993,11 +4125,26 @@ def render_historical_wind(df: pd.DataFrame) -> None:
     st.caption(WIND_DIRECTION_FROM_NOTE)
     has_speed = has_numeric_observations(df, "wind_speed_m_s")
     has_direction = has_numeric_observations(df, "wind_direction_deg")
+    has_gust_speed = has_numeric_observations(df, "wind_gust_speed_m_s")
+    has_gust_direction = has_numeric_observations(df, "wind_gust_direction_deg")
+    has_nv_inputs = (
+        has_speed
+        and has_direction
+        and has_numeric_observations(df, "dry_bulb_temperature_c")
+        and has_numeric_observations(df, "relative_humidity_pct")
+        and has_numeric_observations(df, "humidity_ratio_g_kg")
+    )
     options: list[str] = []
     if has_speed:
         options.append("Wind speed explorer")
+    if has_gust_speed:
+        options.append("Wind gust explorer")
+    if has_gust_direction:
+        options.append("Gust direction histogram")
     if has_speed and has_direction:
         options.extend(["Wind rose", "Monthly wind rose", "Day-night wind rose"])
+        if has_nv_inputs:
+            options.append("Wind during natural-ventilation hours")
     if has_direction:
         options.append("Wind direction histogram")
     if not options:
@@ -4012,6 +4159,14 @@ def render_historical_wind(df: pd.DataFrame) -> None:
     chart_group = st.selectbox("Analysis type", options, key="historical_wind_analysis")
     if chart_group == "Wind speed explorer":
         render_generic_variable_page(df, ["Wind speed"], "Wind speed", "Measured wind", None)
+    elif chart_group == "Wind gust explorer":
+        render_generic_variable_page(df, ["Wind gust speed"], "Wind gust speed", "Measured wind gust", None)
+    elif chart_group == "Gust direction histogram":
+        fig = histogram_chart(df, "wind_gust_direction_deg", "Direction of maximum measured gust", "deg", bins=36)
+        render_plot(
+            fig,
+            "Each hourly direction remains paired with the largest measured source-interval gust in that hour; it is not independently circular-averaged.",
+        )
     elif chart_group == "Wind rose":
         fig = wind_rose_chart(df, "Measured wind rose")
         render_plot(fig, wind_interpretation(df))
@@ -4033,6 +4188,14 @@ def render_historical_wind(df: pd.DataFrame) -> None:
             data = df[(df["hour_of_day"] < 7) | (df["hour_of_day"] > 19)]
         fig = wind_rose_chart(data, f"Measured {period.lower()} wind rose")
         render_plot(fig, wind_interpretation(data))
+    elif chart_group == "Wind during natural-ventilation hours":
+        mask = natural_ventilation_condition(df)
+        data = df[mask]
+        if data.empty:
+            st.info("No canonical hourly records satisfy the default natural-ventilation suitability limits in the current Data filter.")
+            return
+        fig = wind_rose_chart(data, "Measured wind during natural-ventilation-suitable hours")
+        render_plot(fig, natural_ventilation_interpretation(df, mask))
     else:
         fig = histogram_chart(df, "wind_direction_deg", "Measured wind direction histogram", "deg", bins=36)
         render_plot(
@@ -4041,6 +4204,118 @@ def render_historical_wind(df: pd.DataFrame) -> None:
             "Direction is circular; the histogram should be read by sectors rather than by arithmetic averaging."
         )
 
+
+
+def render_ground_temperature_page(df: pd.DataFrame, *, source_label: str, native_df: pd.DataFrame | None = None) -> None:
+    """Render calculated deep profiles and, when present, measured shallow soil temperatures."""
+    from epw_climate_analyzer.ground_temperature import (
+        animated_profile_figure,
+        animated_profile_gif_bytes,
+        damping_depth_m,
+        fit_annual_harmonic,
+        measured_monthly_ground,
+        measured_vs_calculated_table,
+        monthly_ground_profile,
+        profile_figure,
+    )
+    from epw_climate_analyzer.historical_capabilities import has_numeric_observations
+
+    st.header("Ground temperature")
+    measured_source = native_df if native_df is not None else df
+    measured = measured_monthly_ground(measured_source)
+    can_calculate = has_numeric_observations(df, "dry_bulb_temperature_c")
+    if not can_calculate and measured.empty:
+        st.info("Neither outdoor dry-bulb temperature nor measured ground temperatures are available in this climate interval.")
+        return
+
+    profile = None
+    harmonic = None
+    conductivity = 2.0
+    density = 2000.0
+    heat_capacity = 1000.0
+    max_depth = 15.0
+    step = 0.25
+    if can_calculate:
+        with st.expander("Calculated-profile soil properties", expanded=False):
+            st.caption("Defaults reproduce the generic-soil assumptions in the reference workbook. They are model inputs, not EPW measurements.")
+            c1, c2, c3 = st.columns(3)
+            conductivity = c1.number_input("Thermal conductivity λ [W/(m·K)]", min_value=0.1, max_value=10.0, value=2.0, step=0.1)
+            density = c2.number_input("Density ρ [kg/m³]", min_value=500.0, max_value=3500.0, value=2000.0, step=50.0)
+            heat_capacity = c3.number_input("Specific heat c [J/(kg·K)]", min_value=300.0, max_value=3000.0, value=1000.0, step=50.0)
+            d1, d2 = st.columns(2)
+            max_depth = d1.number_input("Maximum depth [m]", min_value=1.0, max_value=50.0, value=15.0, step=1.0)
+            step = d2.selectbox("Depth resolution [m]", [0.1, 0.25, 0.5, 1.0], index=1)
+        try:
+            harmonic = fit_annual_harmonic(pd.to_numeric(df["dry_bulb_temperature_c"], errors="coerce"))
+            depths = pd.Series(range(int(round(float(max_depth) / float(step))) + 1), dtype=float).to_numpy() * float(step)
+            profile = monthly_ground_profile(harmonic, depths, float(conductivity), float(density), float(heat_capacity))
+        except Exception as exc:
+            st.warning(f"Calculated ground-temperature profile is unavailable: {exc}")
+
+    modes: list[str] = []
+    if profile is not None:
+        modes.extend(["Monthly profiles vs depth", "Animated monthly profile", "Looping GIF", "Temperature through year at selected depth"])
+    if not measured.empty:
+        modes.append("Measured shallow ground temperature")
+    if profile is not None and not measured.empty:
+        modes.append("Measured vs calculated")
+    if not modes:
+        st.info("No ground-temperature display can be generated for the active interval.")
+        return
+    mode = st.selectbox("Analysis type", modes, key="ground_temperature_analysis")
+
+    if profile is not None and harmonic is not None:
+        st.caption(
+            f"Calculated profile: first annual harmonic of outdoor dry-bulb temperature; 1-D periodic semi-infinite ground conduction. "
+            f"Mean {harmonic.mean_c:.2f} °C · annual amplitude {harmonic.amplitude_c:.2f} K · damping depth "
+            f"{damping_depth_m(float(conductivity), float(density), float(heat_capacity)):.2f} m."
+        )
+    if not measured.empty:
+        st.caption(f"Observed points: {source_label} ground-temperature measurements at provider sensor depths (0.10 / 0.20 / 0.50 m where available).")
+
+    if mode == "Monthly profiles vs depth":
+        render_plot(profile_figure(profile, measured if not measured.empty else None), "Lines are calculated monthly mean profiles; open markers are measured GeoSphere shallow-soil monthly means where available.")
+    elif mode == "Animated monthly profile":
+        render_plot(animated_profile_figure(profile, measured if not measured.empty else None), "Interactive loop through January–December. The axes stay fixed while the calculated profile moves with seasonal phase lag and attenuation.")
+    elif mode == "Looping GIF":
+        gif_speed = st.slider("Frame duration [ms]", 300, 1500, 700, 100, key="ground_gif_duration")
+        gif_bytes = animated_profile_gif_bytes(profile, measured if not measured.empty else None, duration_ms=int(gif_speed))
+        st.image(gif_bytes, caption="Looping January–December ground-temperature profile")
+        st.download_button(
+            "Download GIF",
+            data=gif_bytes,
+            file_name="ground_temperature_monthly_loop.gif",
+            mime="image/gif",
+            key="ground_temperature_gif_download",
+        )
+        st.caption("The GIF is a visualization of the already calculated monthly profile; it does not perform a separate calculation.")
+    elif mode == "Temperature through year at selected depth":
+        depth = st.slider("Depth [m]", 0.0, float(max_depth), min(2.0, float(max_depth)), float(step))
+        values = {month: float(pd.Series(profile[month].to_numpy(), index=profile.index).reindex(profile.index.union([depth])).interpolate(method="index").loc[depth]) for month in profile.columns}
+        series = pd.DataFrame({"month": list(values), "temperature_c": list(values.values())})
+        fig = px.line(series, x="month", y="temperature_c", markers=True, title=f"Calculated ground temperature at {depth:g} m")
+        fig.update_layout(template="plotly_white", xaxis_title="Month", yaxis_title="Ground temperature [°C]")
+        render_plot(fig, "Calculated monthly mean temperature at the selected depth.")
+    elif mode == "Measured shallow ground temperature":
+        plot = measured.copy()
+        plot["month"] = plot["month_index"].map({v: k for k, v in MONTHS.items()})
+        plot["depth"] = plot["depth_m"].map(lambda v: f"{v:.2f} m")
+        fig = px.line(plot, x="month", y="temperature_c", color="depth", markers=True, title="Measured shallow ground temperature")
+        fig.update_layout(template="plotly_white", xaxis_title="Month", yaxis_title="Ground temperature [°C]", legend_title="Sensor depth")
+        render_plot(fig, "Monthly means of measured provider ground-temperature sensors; no deep profile is inferred from these points.")
+    else:
+        comparison = measured_vs_calculated_table(profile, measured)
+        comparison["error_c"] = comparison["error_c"].round(2)
+        st.dataframe(comparison[["month", "depth_m", "observed_c", "calculated_c", "error_c"]], hide_index=True, use_container_width=True)
+        mae = float(comparison["error_c"].abs().mean()) if not comparison.empty else float("nan")
+        st.metric("Mean absolute model–measurement difference", f"{mae:.2f} K")
+        fig = px.scatter(comparison, x="observed_c", y="calculated_c", color="depth_m", hover_data=["month"], title="Calculated vs measured ground temperature")
+        if not comparison.empty:
+            lo = float(min(comparison["observed_c"].min(), comparison["calculated_c"].min()))
+            hi = float(max(comparison["observed_c"].max(), comparison["calculated_c"].max()))
+            fig.add_shape(type="line", x0=lo, y0=lo, x1=hi, y1=hi, line={"dash": "dash"})
+        fig.update_layout(template="plotly_white", xaxis_title="Observed [°C]", yaxis_title="Calculated [°C]")
+        render_plot(fig, "Validation view for the generic periodic-soil model against measured GeoSphere shallow-soil temperatures.")
 
 def render_historical_solar(df: pd.DataFrame) -> None:
     """Render measured horizontal solar analyses without fabricating DNI."""
@@ -4063,7 +4338,7 @@ def render_historical_solar(df: pd.DataFrame) -> None:
         "energy total. This page converts the hourly Wh/m² value to hourly mean irradiance [W/m²]. DNI and plane-of-array "
         "routes remain intentionally unavailable in measured historical mode."
     )
-    options = ["Horizontal irradiance explorer", "Monthly horizontal irradiation"]
+    options: list[str] = ["Horizontal irradiance explorer", "Monthly horizontal irradiation"]
     has_ghi = any(source == "global_horizontal_radiation_wh_m2" for _, _, source in specs)
     has_temperature = has_numeric_observations(df, "dry_bulb_temperature_c")
     if has_ghi and has_temperature:
@@ -4169,7 +4444,12 @@ def render_canonical_climate_analysis(dataset) -> None:
         and has_numeric_observations(dataset.data, "relative_humidity_pct")
     )
     include_psychrometrics = can_derive_psychrometrics and page in {
-        "Temperature", "Humidity and Psychrometrics", "Time Series and Overlay"
+        "Temperature",
+        "Humidity and Psychrometrics",
+        "Wind and Ventilation",
+        "Time Series and Overlay",
+        "Natural Ventilation",
+        "HVAC and Passive Design",
     }
     _ensure_analysis_dependencies(include_solar=False, include_comparison=False)
     source_pressure = dataset.data.get("atmospheric_station_pressure_pa")
@@ -4248,13 +4528,34 @@ def render_canonical_climate_analysis(dataset) -> None:
     elif page == "Temperature":
         st.caption("Threshold hours are evaluated on the canonical hourly analysis series. Physically incomplete source hours are absent and contribute no duration.")
         render_temperature(filtered_df)
+    elif page == "Ground Temperature":
+        native_ground_df = apply_active_global_filter(prepare_historical_native_diagnostic_frame(dataset))
+        render_ground_temperature_page(
+            filtered_df,
+            source_label="GeoSphere measured",
+            native_df=native_ground_df,
+        )
     elif page == "Humidity and Psychrometrics":
         st.caption("Moisture-threshold hours are evaluated on the canonical hourly analysis series. Physically incomplete source hours are absent and contribute no duration.")
         render_humidity(filtered_df, pressure_pa=active_pressure)
     elif page == "Solar and Radiation":
         render_historical_solar(filtered_df)
+    elif page == "Sky and Daylight":
+        render_sky_daylight(filtered_df, latitude=float(dataset.location.latitude))
     elif page == "Wind and Ventilation":
         render_historical_wind(filtered_df)
+    elif page == "Natural Ventilation":
+        st.caption(
+            "GeoSphere natural-ventilation suitability uses canonical hourly T/RH-derived psychrometrics and, when available, measured hourly wind speed. "
+            "No EPW-only field is required for this route."
+        )
+        render_natural_ventilation(filtered_df, pressure_pa=active_pressure)
+    elif page == "HVAC and Passive Design":
+        st.caption(
+            "Historical HVAC/passive-design indicators use canonical hourly temperature and psychrometrics. "
+            "Solar-shading indicators are included only when measured GHI exists in the selected GeoSphere interval."
+        )
+        render_hvac_passive(filtered_df)
     elif page == "Precipitation and Snow":
         native_precipitation_df = apply_active_global_filter(prepare_historical_native_diagnostic_frame(dataset))
         st.caption(
@@ -4371,6 +4672,8 @@ def main() -> None:
         render_overview(epw, filtered_df, full_df, issues)
     elif page == "Temperature":
         render_temperature(filtered_df)
+    elif page == "Ground Temperature":
+        render_ground_temperature_page(filtered_df, source_label="EPW calculated")
     elif page == "Humidity and Psychrometrics":
         render_humidity(filtered_df, pressure_pa=active_pressure)
     elif page == "Solar and Radiation":
@@ -4378,7 +4681,7 @@ def main() -> None:
     elif page == "Wind and Ventilation":
         render_wind(filtered_df)
     elif page == "Sky and Daylight":
-        render_sky_daylight(filtered_df)
+        render_sky_daylight(filtered_df, latitude=float(epw.location.latitude))
     elif page == "Precipitation and Snow":
         render_precipitation(filtered_df)
     elif page == "Time Series and Overlay":

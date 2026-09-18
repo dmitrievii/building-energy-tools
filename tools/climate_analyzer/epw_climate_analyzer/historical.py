@@ -15,6 +15,7 @@ import pandas as pd
 
 from .canonical_hourly import CANONICAL_ANALYSIS_INTERVAL_MINUTES, canonical_hourly_analysis_frame
 from .climate_model import CanonicalClimateDataset
+from .decisions import add_degree_metrics
 from .psychrometrics import DEFAULT_PRESSURE_PA, add_psychrometric_properties
 
 
@@ -45,8 +46,11 @@ def _canonical_hourly_for_dataset(dataset: CanonicalClimateDataset) -> pd.DataFr
         if cached is not None and cached[0]() is dataset:
             return cached[1]
 
+    canonical_columns = list(dataset.available_canonical_variables)
+    source_frame = dataset.data[canonical_columns].copy()
+    source_frame.attrs.update(dict(dataset.data.attrs))
     hourly = canonical_hourly_analysis_frame(
-        dataset.data,
+        source_frame,
         source_interval_minutes=dataset.temporal.native_interval_minutes,
     )
 
@@ -141,6 +145,10 @@ def prepare_historical_analysis_frame(
     circular quantities use circular means. Strict hourly completeness is
     enforced by :func:`canonical_hourly_analysis_frame`.
 
+    Temperature-derived degree-hour proxies are added to historical hourly data
+    whenever dry-bulb temperature is available. This keeps the historical route
+    aligned with the EPW analysis pipeline without changing source values.
+
     ``pressure_override_pa`` is an explicit calculation-mode override. When it
     is ``None``, valid hourly measured station pressure is retained record by
     record and ``fallback_pressure_pa`` is used only for missing/invalid values.
@@ -149,6 +157,8 @@ def prepare_historical_analysis_frame(
     """
     hourly = _canonical_hourly_for_dataset(dataset)
     data = add_historical_calendar_columns(hourly)
+    if "dry_bulb_temperature_c" in data.columns:
+        data = add_degree_metrics(data)
     data.attrs["canonical_frame_role"] = "hourly-analysis"
     data.attrs["canonical_source_interval_minutes"] = int(dataset.temporal.native_interval_minutes)
     data.attrs["canonical_analysis_interval_minutes"] = CANONICAL_ANALYSIS_INTERVAL_MINUTES
