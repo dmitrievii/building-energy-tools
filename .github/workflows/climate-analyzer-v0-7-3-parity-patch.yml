@@ -1,0 +1,46 @@
+name: Climate Analyzer 0.7.3 parity patch
+
+on:
+  push:
+    branches:
+      - feature/v0.7.3-geosphere-parity-closure
+    paths:
+      - tools/climate_analyzer/scripts/apply_0_7_3_parity_patch.py
+      - .github/workflows/climate-analyzer-v0-7-3-parity-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout stage branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/v0.7.3-geosphere-parity-closure
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Apply deterministic app patch
+        run: python tools/climate_analyzer/scripts/apply_0_7_3_parity_patch.py
+
+      - name: Verify syntax
+        run: python -m py_compile tools/climate_analyzer/app.py
+
+      - name: Commit patched app
+        run: |
+          if git diff --quiet -- tools/climate_analyzer/app.py; then
+            echo 'No app changes produced; refusing silent patch no-op.'
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tools/climate_analyzer/app.py
+          git commit -m 'Climate 0.7.3: wire historical NV and HVAC parity routes'
+          git push origin HEAD:feature/v0.7.3-geosphere-parity-closure
