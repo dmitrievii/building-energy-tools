@@ -20,7 +20,7 @@ from .aggregations import (
 )
 from .temporal_filtering import CALENDAR_PROFILE, CHRONOLOGICAL, display_period_labels, is_multiyear, time_basis
 from .psychrometrics import DEFAULT_PRESSURE_PA, psychrometric_rh_curves
-from .psychrometric_distribution import envelope_polygon_coordinates, psychrometric_occupancy_envelope
+from .psychrometric_distribution import add_climate_zone_traces, psychrometric_axis_ranges
 from .chart_theme import (
     BINARY_SUITABILITY_COLORSCALE,
     CLIMATE_COLORS,
@@ -1316,7 +1316,7 @@ def psychrometric_chart(
     pressure_pa: float = DEFAULT_PRESSURE_PA,
     show_rh_curves: bool = True,
     show_comfort_zone: bool = True,
-    data_mode: str = "Hourly values",
+    data_mode: str = "Climate zone",
     t_range: tuple[float, float] | None = None,
     d_range: tuple[float, float] | None = None,
     h_range: tuple[float, float] | None = None,
@@ -1327,28 +1327,39 @@ def psychrometric_chart(
     color_metric_column: str | None = None,
     color_metric_label: str = "Month",
     color_mode: str = "Month",
+    zone_coverage: float = 0.90,
+    zone_interior_style: str = "Density gradient",
+    show_core_zone: bool = True,
+    year_mode: str = "All years combined",
+    selected_years: list[int] | None = None,
 ) -> go.Figure:
-    """Create an EPW psychrometric chart with selectable metric layers.
+    """Create a source-neutral psychrometric chart with climate-zone-first UX.
 
-    Data modes:
-        - ``Hourly values``: plot hourly EPW states as points.
-        - ``Distributive grid``: plot 1 °C × 5 %RH tiles on the same chart
-          geometry and colour them by frequency or another weather metric.
+    Climate zones are smooth duration-weighted 2-D iso-density regions in the
+    displayed psychrometric coordinates. The old selected-cell 90% mosaic is no
+    longer used. Points remain available as a diagnostic representation.
     """
     fig = go.Figure()
     chart_type = "i-d" if chart_type == "i-d" else "T-d"
-    if data_mode in {"Monthly points", "Hourly values", "Source interval values"}:
-        data_mode = "Hourly values"
-    elif data_mode == "Middle 90% envelopes":
-        data_mode = "Middle 90% envelopes"
+    if data_mode in {"Hourly values", "Source interval values", "Monthly points", "All observations", "Points"}:
+        representation = "Points"
     else:
-        data_mode = "Distributive grid"
+        representation = "Climate zone"
     if selected_months is None:
         selected_months = list(range(1, 13))
 
+    plot_df = df[df["month_index"].isin(selected_months)].copy() if "month_index" in df.columns else df.copy()
+    plot_df.attrs.update(df.attrs)
+    years_available: list[int] = []
+    if isinstance(plot_df.index, pd.DatetimeIndex) and not plot_df.empty:
+        years_available = sorted({int(value) for value in pd.DatetimeIndex(plot_df.index).year})
+    if selected_years:
+        chosen = {int(value) for value in selected_years}
+        plot_df = plot_df[pd.DatetimeIndex(plot_df.index).year.isin(chosen)].copy()
+        plot_df.attrs.update(df.attrs)
+
     if metric_layers is None:
         metric_layers = ["Relative humidity"] if show_rh_curves else []
-    _add_psychrometric_metric_layers(fig, chart_type, pressure_pa, t_range, d_range, h_range, metric_layers)
 
     if chart_type == "i-d":
         x_label = "Moisture content d [g/kg dry air]"
@@ -1363,49 +1374,74 @@ def psychrometric_chart(
         y_col = "humidity_ratio_g_kg"
         hover_base = "T: %{x:.2f} °C<br>d: %{y:.2f} g/kg"
 
-    plot_df = df[df["month_index"].isin(selected_months)].copy() if "month_index" in df.columns else df.copy()
-    data_for_limits = plot_df[[x_col, y_col]].dropna().copy()
+    auto_x, auto_y = psychrometric_axis_ranges([plot_df], chart_type)
+    if chart_type == "T-d":
+        axis_ranges = (tuple(t_range) if t_range is not None else auto_x, tuple(d_range) if d_range is not None else auto_y)
+    else:
+        axis_ranges = (tuple(d_range) if d_range is not None else auto_x, tuple(h_range) if h_range is not None else auto_y)
 
-    if data_mode == "Middle 90% envelopes":
-        if time_basis(plot_df) == CHRONOLOGICAL and is_multiyear(plot_df):
-            envelope_groups: list[tuple[str, pd.DataFrame]] = []
+    # Reference construction lines are deliberately separate from climate-state
+    # coordinates. Changing pressure_pa moves the psychrometric reference grid,
+    # not the already calculated T-d / i-d climate observations.
+    _add_psychrometric_metric_layers(
+        fig,
+        chart_type,
+        pressure_pa,
+        t_range,
+        d_range,
+        h_range,
+        metric_layers,
+    )
+
+    compare_years = (
+        year_mode == "Compare selected years"
+        and isinstance(plot_df.index, pd.DatetimeIndex)
+        and len({int(value) for value in pd.DatetimeIndex(plot_df.index).year}) > 1
+    )
+
+    if representation == "Climate zone":
+        if compare_years:
+            grouped: list[tuple[str, pd.DataFrame]] = []
             for year in sorted({int(value) for value in pd.DatetimeIndex(plot_df.index).year}):
                 group = plot_df[pd.DatetimeIndex(plot_df.index).year == year].copy()
                 group.attrs.update(plot_df.attrs)
-                envelope_groups.append((str(year), group))
+                grouped.append((str(year), group))
         else:
-            envelope_groups = [("Middle 90% occupancy", plot_df)]
-        for index, (label, group) in enumerate(envelope_groups):
-            envelope = psychrometric_occupancy_envelope(group, target_share=0.90)
-            if envelope.selected_tiles.empty:
-                continue
-            xs, ys = envelope_polygon_coordinates(envelope, chart_type=chart_type, pressure_pa=pressure_pa)
+            grouped = [("Climate zone", plot_df)]
+        for index, (label, group) in enumerate(grouped):
             color = CLIMATE_COLORS[index % len(CLIMATE_COLORS)]
-            fig.add_trace(
-                go.Scatter(
-                    x=xs,
-                    y=ys,
-                    mode="lines",
-                    name=label,
-                    legend="legend",
-                    line=dict(color=rgba(color, 0.78), width=0.55),
-                    fill="toself",
-                    fillcolor=rgba(color, 0.14),
-                    connectgaps=False,
-                    hovertemplate=(
-                        f"{label}<br>Highest-density occupancy region<br>"
-                        f"Covered duration: {envelope.achieved_share * 100.0:.1f}%<br>"
-                        f"Selected: {envelope.selected_hours:.1f} h of {envelope.total_hours:.1f} h<extra></extra>"
-                    ),
-                )
+            add_climate_zone_traces(
+                fig,
+                group,
+                chart_type=chart_type,
+                label=label,
+                color=color,
+                coverage=float(zone_coverage),
+                interior_style=zone_interior_style,
+                axis_ranges=axis_ranges,
+                show_core=bool(show_core_zone),
+                core_coverage=0.50,
+                legendgroup=f"psych-zone-{label}",
             )
-    elif data_mode == "Distributive grid":
-        metric_col = None if color_mode == "Frequency" else color_metric_column
-        _add_psychrometric_tile_occupancy(fig, plot_df, chart_type, pressure_pa, t_range, d_range, h_range, metric_col, color_metric_label)
     else:
         base_cols = _unique_existing_columns([x_col, y_col, "month_index", "month_name", "hour_of_day", color_metric_column], plot_df)
         data = plot_df[base_cols].dropna(subset=[x_col, y_col]).copy()
-        if color_mode == "Month" or color_metric_column not in data.columns:
+        if compare_years:
+            for index, year in enumerate(sorted({int(value) for value in pd.DatetimeIndex(data.index).year})):
+                subset = data[pd.DatetimeIndex(data.index).year == year]
+                if subset.empty:
+                    continue
+                fig.add_trace(
+                    go.Scattergl(
+                        x=subset[x_col],
+                        y=subset[y_col],
+                        mode="markers",
+                        name=str(year),
+                        marker=dict(size=3.6, opacity=0.34, color=CLIMATE_COLORS[index % len(CLIMATE_COLORS)]),
+                        hovertemplate=f"Year: {year}<br>" + hover_base + "<extra></extra>",
+                    )
+                )
+        elif color_mode == "Month" or color_metric_column not in data.columns:
             for month in sorted(set(selected_months)):
                 subset = data[data["month_index"] == month]
                 if subset.empty:
@@ -1416,7 +1452,6 @@ def psychrometric_chart(
                         y=subset[y_col],
                         mode="markers",
                         name=MONTH_LABELS[month - 1],
-                        legend="legend",
                         legendgroup="months",
                         legendrank=month,
                         marker=dict(size=3.5, opacity=0.42, color=MONTH_COLORS[month - 1]),
@@ -1447,21 +1482,25 @@ def psychrometric_chart(
                     hovertemplate=hover_base + f"<br>{color_metric_label}: %{{marker.color:.2f}}<extra></extra>",
                 )
             )
-        data_for_limits = data[[x_col, y_col]] if not data.empty else data_for_limits
 
-    # Draw comfort/process overlays after loaded data so their outlines remain visible.
     if show_comfort_zone:
         _add_givoni_milne_overlay(fig, chart_type, pressure_pa, shown_bioclimatic_zones)
     if show_heat_index_overlay:
         _add_heat_index_overlay(fig, chart_type, pressure_pa, t_range, d_range, h_range)
 
     fig = apply_common_layout(fig, f"Psychrometric chart ({chart_type})", x_label, y_label)
+    if compare_years:
+        legend_title = "Year"
+    elif representation == "Climate zone":
+        legend_title = "Climate data"
+    else:
+        legend_title = "Month" if color_mode == "Month" else "Climate data"
     fig.update_layout(
         height=760,
         autosize=True,
         hovermode="closest",
         legend=dict(
-            title=dict(text=("Year" if data_mode == "Middle 90% envelopes" and time_basis(plot_df) == CHRONOLOGICAL and is_multiyear(plot_df) else ("Envelope" if data_mode == "Middle 90% envelopes" else "Month")), font=dict(size=13)),
+            title=dict(text=legend_title, font=dict(size=13)),
             orientation="h",
             yanchor="top",
             y=-0.12,
@@ -1486,25 +1525,8 @@ def psychrometric_chart(
         ),
         margin=dict(l=64, r=24, t=74, b=155),
     )
-    # Explicitly allocate the responsive figure width between the chart and the
-    # zone legend.  This avoids Plotly shrinking the plotting domain to the old
-    # near-square area while still using the full Streamlit container.
-    fig.update_xaxes(domain=[0.0, 0.72])
-    if chart_type == "T-d":
-        if t_range is not None:
-            fig.update_xaxes(range=list(t_range), autorangeoptions=dict(minallowed=t_range[0], maxallowed=t_range[1]), constrain="domain")
-        if d_range is not None:
-            fig.update_yaxes(range=list(d_range), autorangeoptions=dict(minallowed=d_range[0], maxallowed=d_range[1]))
-        elif not data_for_limits.empty:
-            fig = _apply_axis_constraints(fig, y_column="humidity_ratio_g_kg", y_values=data_for_limits[y_col])
-    else:
-        if d_range is not None:
-            fig.update_xaxes(range=list(d_range), autorangeoptions=dict(minallowed=d_range[0], maxallowed=d_range[1]), constrain="domain")
-        elif not data_for_limits.empty:
-            lo, hi = _axis_limits_for_column("humidity_ratio_g_kg", data_for_limits[x_col])
-            fig.update_xaxes(range=[lo, hi], autorangeoptions=dict(minallowed=lo, maxallowed=hi), constrain="domain")
-        if h_range is not None:
-            fig.update_yaxes(range=list(h_range), autorangeoptions=dict(minallowed=h_range[0], maxallowed=h_range[1]))
+    fig.update_xaxes(domain=[0.0, 0.72], range=list(axis_ranges[0]), autorange=False, constrain="domain")
+    fig.update_yaxes(range=list(axis_ranges[1]), autorange=False)
     return fig
 
 def wind_rose_chart(

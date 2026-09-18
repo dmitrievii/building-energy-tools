@@ -413,8 +413,12 @@ def load_epw_from_bytes(
     elif pressure_mode == "Custom constant pressure":
         fallback_pressure = float(custom_pressure_pa or DEFAULT_PRESSURE_PA)
     else:
-        valid = data["atmospheric_station_pressure_pa"].dropna()
-        fallback_pressure = float(valid.median()) if not valid.empty else DEFAULT_PRESSURE_PA
+        valid = pd.to_numeric(data["atmospheric_station_pressure_pa"], errors="coerce").dropna()
+        fallback_pressure = (
+            float(valid.median())
+            if not valid.empty
+            else pressure_from_altitude_m(float(epw.location.elevation_m or 0.0))
+        )
 
     if include_psychrometrics:
         data = add_psychrometric_properties(data, fallback_pressure_pa=fallback_pressure)
@@ -2437,7 +2441,7 @@ def render_compare_temperature(climates: list[ClimateDataset], reference_name: s
         render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
 
 
-def render_compare_humidity(climates: list[ClimateDataset], reference_name: str, display_mode: str, pressure_pa: float) -> None:
+def render_compare_humidity(climates: list[ClimateDataset], reference_name: str, display_mode: str) -> None:
     """Render humidity and psychrometric comparison charts."""
     st.subheader("Humidity and psychrometric comparison")
     chart = st.selectbox(
@@ -2446,7 +2450,7 @@ def render_compare_humidity(climates: list[ClimateDataset], reference_name: str,
             "Humidity ratio monthly profile",
             "Humidity ratio duration curve",
             "Outdoor-air enthalpy duration curve",
-            "Psychrometric density",
+            "Psychrometric climate zones",
             "Moisture and latent-load ranking",
         ],
     )
@@ -2466,23 +2470,71 @@ def render_compare_humidity(climates: list[ClimateDataset], reference_name: str,
     elif chart == "Outdoor-air enthalpy duration curve":
         fig = duration_comparison_chart(climates, "moist_air_enthalpy_kj_kg", "Outdoor-air enthalpy duration curves", "Enthalpy [kJ/kg dry air]", ascending=False)
         render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
-    elif chart == "Psychrometric density":
-        chart_type = st.radio("Psychrometric axes", ["T-d", "i-d"], horizontal=True)
-        distribution_display = st.radio(
-            "Climate distribution",
-            ["All observations", "Middle 90% envelopes"],
+    elif chart == "Psychrometric climate zones":
+        chart_type = st.radio("Psychrometric axes", ["T-d", "i-d"], horizontal=True, key="compare_psych_axes")
+        representation = st.radio(
+            "Representation",
+            ["Climate zones", "Points"],
             horizontal=True,
-            key="compare_psychrometric_distribution",
+            key="compare_psych_representation",
         )
+        zone_coverage = 0.90
+        zone_interior_style = "Density gradient"
+        show_core_zone = True
+        if representation == "Climate zones":
+            c1, c2, c3 = st.columns([1, 1.4, 1])
+            zone_coverage = float(c1.slider("Zone coverage [%]", 50, 99, 90, 1, key="compare_psych_coverage")) / 100.0
+            zone_interior_style = c2.selectbox(
+                "Zone interior",
+                ["Density gradient", "Sparse points", "Solid fill", "Contour only"],
+                index=0,
+                key="compare_psych_interior",
+            )
+            show_core_zone = c3.checkbox("Show 50% core contour", value=True, key="compare_psych_core")
+
+        reference = next((climate for climate in climates if climate.display_name == reference_name), climates[0])
+        pressure_values = pd.to_numeric(reference.data.get("atmospheric_station_pressure_pa"), errors="coerce").dropna()
+        if not pressure_values.empty:
+            reference_climate_pressure = float(pressure_values.median())
+        else:
+            reference_climate_pressure = pressure_from_altitude_m(float(reference.epw.location.elevation_m or 0.0))
+        grid_mode = st.selectbox(
+            "Reference psychrometric grid pressure",
+            ["Standard atmosphere — 101325 Pa", f"Reference climate — {reference_name}", "Custom pressure"],
+            index=0,
+            key="compare_psych_grid_pressure_mode",
+            help="This pressure controls only the grey RH construction grid. Climate zones and points retain each dataset's actual calculated psychrometric state.",
+        )
+        if grid_mode == "Standard atmosphere — 101325 Pa":
+            reference_grid_pressure = DEFAULT_PRESSURE_PA
+        elif grid_mode.startswith("Reference climate"):
+            reference_grid_pressure = reference_climate_pressure
+        else:
+            reference_grid_pressure = st.number_input(
+                "Reference grid pressure [Pa]",
+                min_value=30000.0,
+                max_value=120000.0,
+                value=float(round(reference_climate_pressure / 100.0) * 100.0),
+                step=100.0,
+                key="compare_psych_grid_pressure_custom",
+            )
         st.caption(
-            "All selected climates use one shared psychrometric axis. Middle 90% retains the densest 1 °C × 5 %RH cells containing at least 90% of each climate's represented duration. A common RH construction grid is omitted because comparison climates may have different station pressures."
+            f"Shared axes are fixed across representations. Reference grid: {float(reference_grid_pressure):,.0f} Pa. "
+            "The grid is only a visual psychrometric reference; every climate retains the pressure used to derive its own humidity ratio and enthalpy."
         )
+        if representation == "Climate zones":
+            st.caption(
+                "Each colour is one climate zone. The solid outer line encloses the selected duration share, the optional dotted line marks the 50% core, and the default interior gradient shows relative occurrence density within that climate."
+            )
         fig = psychrometric_comparison_chart(
             climates,
             chart_type=chart_type,
             mode=mode,
-            pressure_pa=pressure_pa,
-            data_display=distribution_display,
+            data_display=representation,
+            zone_coverage=zone_coverage,
+            zone_interior_style=zone_interior_style,
+            show_core_zone=show_core_zone,
+            reference_pressure_pa=float(reference_grid_pressure),
         )
         render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
     else:
@@ -2725,7 +2777,7 @@ def render_compare_climates(active_file: ClimateFilePayload | None, pressure_mod
     with tabs[1]:
         render_compare_temperature(climates, reference_name, display_mode)
     with tabs[2]:
-        render_compare_humidity(climates, reference_name, display_mode, pressure_pa=active_pressure)
+        render_compare_humidity(climates, reference_name, display_mode)
     with tabs[3]:
         render_compare_solar(climates, reference_name, display_mode)
     with tabs[4]:
@@ -3096,12 +3148,31 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
         )
     elif chart_group == "Psychrometric chart":
         chart_type = st.radio("Psychrometric axes", ["T-d", "i-d"], horizontal=True)
-        source_interval_mode = "Hourly values" if abs(native_interval_hours(df) - 1.0) < 1e-9 else "Source interval values"
-        data_mode = st.radio("Loaded climate data mode", [source_interval_mode, "Distributive grid", "Middle 90% envelopes"], horizontal=True)
-        if data_mode == "Distributive grid":
-            st.caption("Distributive grid uses 1 °C × 5 %RH cells drawn on the real psychrometric chart geometry; frequency is mapped from pale to saturated blue.")
-        elif data_mode == "Middle 90% envelopes":
-            st.caption("Middle 90% uses the highest-density 1 °C × 5 %RH occupancy cells covering at least 90% of represented physical duration. It is not an independent T/d percentile rectangle.")
+        representation = st.radio(
+            "Representation",
+            ["Climate zone", "Points"],
+            horizontal=True,
+            help="Climate zone is the recommended view. Points are retained for inspecting individual observations and outliers.",
+        )
+
+        zone_coverage = 0.90
+        zone_interior_style = "Density gradient"
+        show_core_zone = True
+        if representation == "Climate zone":
+            z1, z2, z3 = st.columns([1, 1.4, 1])
+            coverage_pct = z1.slider("Zone coverage [%]", 50, 99, 90, 1, key="psych_zone_coverage")
+            zone_coverage = float(coverage_pct) / 100.0
+            zone_interior_style = z2.selectbox(
+                "Zone interior",
+                ["Density gradient", "Sparse points", "Solid fill", "Contour only"],
+                index=0,
+                key="psych_zone_interior",
+            )
+            show_core_zone = z3.checkbox("Show 50% core contour", value=True, key="psych_zone_core")
+            st.caption(
+                "The zone boundary is a smooth two-dimensional iso-density contour containing the selected share of represented climate duration. "
+                "The density gradient shows where states occur most frequently inside that contour; no selected-cell mosaic is used."
+            )
 
         col_a, col_b, col_c = st.columns(3)
         t_min = float(df["dry_bulb_temperature_c"].min())
@@ -3139,22 +3210,35 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
         with st.expander("Loaded data mapping", expanded=True):
             months = st.multiselect("Displayed months", list(MONTHS.keys()), default=list(MONTHS.keys()), key="psych_month_filter")
             selected_months = [MONTHS[m] for m in months]
-            metric_options = list(PSYCHROMETRIC_COLOR_METRICS.keys())
-            if data_mode == "Middle 90% envelopes":
-                color_mode = "Month"
+            chronological_multiyear = time_basis(df) == CHRONOLOGICAL and is_multiyear(df)
+            year_mode = "All years combined"
+            selected_years: list[int] | None = None
+            if chronological_multiyear:
+                years = available_years(df)
+                year_mode = st.selectbox(
+                    "Year display",
+                    ["All years combined", "Single year", "Compare selected years"],
+                    index=0,
+                    key="psych_year_mode",
+                )
+                if year_mode == "Single year":
+                    selected_years = [int(st.selectbox("Year", years, index=len(years) - 1, key="psych_single_year"))]
+                elif year_mode == "Compare selected years":
+                    default_years = years if len(years) <= 5 else years[-5:]
+                    selected_years = [int(value) for value in st.multiselect("Years", years, default=default_years, key="psych_compare_years")]
+                    if not selected_years:
+                        st.info("Select at least one real source year for the psychrometric comparison.")
+                        return
+                    st.caption("Each selected year is drawn independently on the same fixed psychrometric axes.")
+
+            color_mode = "Month"
+            color_metric_column, color_metric_label = PSYCHROMETRIC_COLOR_METRICS[color_mode]
+            if representation == "Points" and year_mode != "Compare selected years":
+                metric_options = [name for name in PSYCHROMETRIC_COLOR_METRICS if name != "Frequency"]
+                color_mode = st.selectbox("Colour mapped metric", metric_options, index=metric_options.index("Month"))
                 color_metric_column, color_metric_label = PSYCHROMETRIC_COLOR_METRICS[color_mode]
-                if time_basis(df) == CHRONOLOGICAL and is_multiyear(df):
-                    st.caption("Chronological multi-year mode draws one Middle-90% occupancy envelope per real source year; years are not folded together.")
-                else:
-                    st.caption("The active filtered climate interval is represented by one duration-weighted Middle-90% occupancy envelope.")
-            else:
-                default_metric = "Frequency" if data_mode == "Distributive grid" else "Month"
-                color_mode = st.selectbox("Colour mapped metric", metric_options, index=metric_options.index(default_metric))
-                color_metric_column, color_metric_label = PSYCHROMETRIC_COLOR_METRICS[color_mode]
-                if data_mode != "Distributive grid" and color_mode == "Frequency":
-                    st.caption("Frequency is only meaningful for the distributive grid. Source interval values will be shown by month.")
-                    color_mode = "Month"
-                    color_metric_column, color_metric_label = PSYCHROMETRIC_COLOR_METRICS[color_mode]
+            elif representation == "Points" and year_mode == "Compare selected years":
+                st.caption("Point colours identify real source years; metric colouring is disabled while years are being compared.")
 
         fig = psychrometric_chart(
             df,
@@ -3162,7 +3246,7 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
             pressure_pa=pressure_pa,
             show_rh_curves="Relative humidity" in metric_layers,
             show_comfort_zone=show_givoni,
-            data_mode=data_mode,
+            data_mode=representation,
             t_range=t_limits,
             d_range=d_limits,
             h_range=h_limits,
@@ -3173,10 +3257,21 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
             color_metric_column=color_metric_column,
             color_metric_label=color_metric_label,
             color_mode=color_mode,
+            zone_coverage=zone_coverage,
+            zone_interior_style=zone_interior_style,
+            show_core_zone=show_core_zone,
+            year_mode=year_mode,
+            selected_years=selected_years,
         )
         st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False, "scrollZoom": True}, key=next_plot_key("psychrometric"))
+        report_df = df[df["month_index"].isin(selected_months)].copy()
+        report_df.attrs.update(df.attrs)
+        if selected_years and isinstance(report_df.index, pd.DatetimeIndex):
+            report_df = report_df[pd.DatetimeIndex(report_df.index).year.isin(selected_years)].copy()
+            report_df.attrs.update(df.attrs)
+        render_interpretation(psychrometric_interpretation(report_df))
         if show_givoni:
-            render_bioclimatic_report(df[df["month_index"].isin(selected_months)])
+            render_bioclimatic_report(report_df)
     elif chart_group == "Moisture thresholds":
         d_low = st.slider("Dry-air threshold [g/kg]", 0.0, 8.0, 3.0, 0.25)
         d_high = st.slider("Humid-air threshold [g/kg]", 5.0, 25.0, 10.0, 0.25)
