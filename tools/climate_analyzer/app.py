@@ -3534,6 +3534,383 @@ def render_sky_daylight(df: pd.DataFrame, *, latitude: float | None = None) -> N
         render_plot(fig, sky_interpretation(df))
 
 
+def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
+    """Render natural-ventilation and night-flushing charts."""
+    st.header("Natural ventilation and night flushing")
+    st.markdown("Adjust the outdoor-air suitability limits and inspect when window ventilation is climatically possible.")
+    col1, col2, col3, col4 = st.columns(4)
+    t_min = col1.number_input("Minimum outdoor temperature [°C]", value=16.0, step=0.5)
+    t_max = col2.number_input("Maximum outdoor temperature [°C]", value=26.0, step=0.5)
+    d_max = col3.number_input("Maximum humidity ratio [g/kg]", value=9.0, step=0.5)
+    occupied_only = col4.checkbox("Occupied hours only", value=False)
+    occupied_start = 8
+    occupied_end = 18
+    weekdays_only = False
+    if occupied_only:
+        occ1, occ2, occ3 = st.columns(3)
+        occupied_start = int(occ1.number_input("Occupied start hour", min_value=0, max_value=23, value=8, step=1))
+        occupied_end = int(occ2.number_input("Occupied end hour", min_value=0, max_value=23, value=18, step=1))
+        weekdays_only = occ3.checkbox("Weekdays only", value=False)
+        st.caption("Occupied-hour filtering uses the active climate timestamps. Intervals crossing midnight are supported, for example 22...6.")
+    wind_available = (
+        "wind_speed_m_s" in df.columns
+        and pd.to_numeric(df["wind_speed_m_s"], errors="coerce").notna().any()
+    )
+    wind_filter = st.checkbox(
+        "Use wind-speed limits",
+        value=False,
+        disabled=not wind_available,
+        help="Requires measured/available wind speed in the active climate dataset.",
+    )
+    if not wind_available:
+        st.caption("Wind-speed limits are unavailable because this climate interval contains no usable wind-speed observations.")
+    wind_min = wind_max = None
+    if wind_filter:
+        wind_min = st.number_input("Minimum wind speed [m/s]", value=0.5, step=0.1)
+        wind_max = st.number_input("Maximum wind speed [m/s]", value=6.0, step=0.1)
+
+    mask = natural_ventilation_condition(
+        df,
+        t_min,
+        t_max,
+        d_max,
+        wind_min_m_s=wind_min,
+        wind_max_m_s=wind_max,
+        occupied_only=occupied_only,
+        occupied_start_hour=occupied_start,
+        occupied_end_hour=occupied_end,
+        weekdays_only=weekdays_only,
+    )
+    df_nv = df.copy()
+    df_nv["natural_ventilation_suitable"] = mask.astype(int)
+
+    chart_group = st.selectbox(
+        "Analysis type",
+        [
+            "Heat map",
+            "Suitable hours by aggregation",
+            "Month × hour suitability",
+            "Daily suitable-hours duration curve",
+            "Rejected reasons",
+            "Psychrometric NV overlay",
+            "Night-flushing potential",
+        ],
+    )
+    if chart_group == "Heat map":
+        row_group = st.radio("Heat-map aggregation", ["Day", "Week", "Month"], horizontal=True)
+        compare_across = st.radio("Compare across", ["Hour of day", "Year"], horizontal=True)
+        statistic_options = list(heatmap_statistic_options("natural_ventilation_suitable"))
+        statistic = st.selectbox("Statistic", statistic_options, index=0, key="nv_heatmap_statistic")
+        if compare_across == "Year":
+            st.caption("Year comparison preserves real calendar years from the current Data filter.")
+        fig = temporal_heatmap_chart(
+            df_nv,
+            "natural_ventilation_suitable",
+            row_group.lower(),
+            compare_across,
+            statistic,
+            f"Natural ventilation eligibility · {row_group.lower()} × {compare_across.lower()} · {statistic}",
+            "0/1",
+        )
+        render_plot(fig, natural_ventilation_interpretation(df, mask))
+    elif chart_group == "Suitable hours by aggregation":
+        aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0)
+        counts = threshold_count_by_period(df, mask, aggregation, label="suitable_hours")
+        fig = threshold_bar_chart(counts, "Natural-ventilation suitable hours", "hours")
+        render_plot(fig, natural_ventilation_interpretation(df, mask))
+    elif chart_group == "Month × hour suitability":
+        fig = month_hour_heatmap(df_nv, "natural_ventilation_suitable", "Mean natural-ventilation eligibility by month and hour", "share", aggfunc="mean")
+        render_plot(fig, natural_ventilation_interpretation(df, mask))
+    elif chart_group == "Daily suitable-hours duration curve":
+        daily = df_nv["natural_ventilation_suitable"].resample("D").sum().to_frame("suitable_hours")
+        fig = duration_chart(daily, "suitable_hours", "Daily natural-ventilation suitable-hours duration curve", "hours/day", ascending=False)
+        render_plot(fig, natural_ventilation_interpretation(df, mask))
+    elif chart_group == "Rejected reasons":
+        reasons = rejection_reasons_for_nv(df, t_min, t_max, d_max, wind_min_m_s=wind_min, wind_max_m_s=wind_max)
+        fig = px.bar(reasons, x="reason", y="hours", title="Natural-ventilation rejected reasons")
+        fig.update_layout(template="plotly_white", xaxis_title="Reason", yaxis_title="Hours")
+        st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False, "scrollZoom": True}, key=next_plot_key())
+        st.dataframe(reasons, hide_index=True, use_container_width=True)
+        render_interpretation(natural_ventilation_interpretation(df, mask))
+    elif chart_group == "Psychrometric NV overlay":
+        fig = psychrometric_chart(df, chart_type="T-d", pressure_pa=pressure_pa, show_rh_curves=True, show_comfort_zone=False)
+        fig.add_shape(type="rect", x0=t_min, x1=t_max, y0=0, y1=d_max, line=dict(dash="dash"), fillcolor="rgba(0,150,0,0.08)")
+        render_plot(fig, natural_ventilation_interpretation(df, mask))
+    else:
+        night_mask = night_flushing_condition(df)
+        df_nf = df.copy()
+        df_nf["night_flushing_suitable"] = night_mask.astype(int)
+        fig = heatmap_chart(df_nf, "night_flushing_suitable", "day", "Night-flushing potential", "0/1")
+        render_plot(fig, natural_ventilation_interpretation(df, night_mask))
+
+
+def render_hvac_passive(df: pd.DataFrame) -> None:
+    """Render HVAC and passive-design decision-support charts."""
+    st.header("HVAC operation and passive strategies")
+    has_ghi = (
+        "global_horizontal_radiation_wh_m2" in df.columns
+        and pd.to_numeric(df["global_horizontal_radiation_wh_m2"], errors="coerce").notna().any()
+    )
+    if not has_ghi:
+        st.caption("No usable GHI is available in this climate interval; solar-shading strategy rows are omitted rather than inferred.")
+    chart_group = st.selectbox(
+        "Analysis type",
+        [
+            "Passive strategy annual table",
+            "Passive strategy monthly stacked bars",
+            "Economizer availability",
+            "Dehumidification and humidification",
+            "Outdoor-air enthalpy duration curve",
+            "Heating and cooling degree-hours",
+            "Design-day candidates",
+            "Ventilation load proxy",
+        ],
+    )
+    if chart_group == "Passive strategy annual table":
+        table = passive_strategy_table(df)
+        fig = px.bar(table, x="hours", y="strategy", orientation="h", title="Annual passive and HVAC strategy hours")
+        fig.update_layout(template="plotly_white", xaxis_title="Hours", yaxis_title="Strategy")
+        st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False, "scrollZoom": True}, key=next_plot_key())
+        st.dataframe(table, hide_index=True, use_container_width=True)
+        render_interpretation(hvac_interpretation(df))
+    elif chart_group == "Passive strategy monthly stacked bars":
+        monthly = passive_strategy_monthly(df)
+        fig = stacked_monthly_bar(monthly, "Monthly passive and HVAC strategy hours", "hours")
+        render_plot(fig, hvac_interpretation(df))
+    elif chart_group == "Economizer availability":
+        h_return = st.slider("Return-air enthalpy limit [kJ/kg]", 30.0, 80.0, 50.0, 1.0)
+        mask = economizer_condition(df, return_air_enthalpy_kj_kg=h_return)
+        aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0)
+        counts = threshold_count_by_period(df, mask, aggregation, label="hours")
+        fig = threshold_bar_chart(counts, "Air-side economizer availability", "hours")
+        render_plot(fig, hvac_interpretation(df))
+    elif chart_group == "Dehumidification and humidification":
+        d_high = st.slider("Dehumidification threshold [g/kg]", 5.0, 20.0, 10.0, 0.5)
+        d_low = st.slider("Humidification threshold [g/kg]", 0.5, 8.0, 3.0, 0.5)
+        aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0)
+        dehum = threshold_count_by_period(df, dehumidification_condition(df, d_high), aggregation, label="Dehumidification hours")
+        humid = threshold_count_by_period(df, humidification_condition(df, d_low), aggregation, label="Humidification hours")
+        combined = dehum.join(humid, how="outer").fillna(0)
+        fig = stacked_monthly_bar(combined, "Humidification and dehumidification climate hours", "hours")
+        render_plot(fig, hvac_interpretation(df))
+    elif chart_group == "Outdoor-air enthalpy duration curve":
+        fig = duration_chart(df, "moist_air_enthalpy_kj_kg", "Outdoor-air enthalpy duration curve", "kJ/kg dry air", ascending=False)
+        render_plot(fig, hvac_interpretation(df))
+    elif chart_group == "Heating and cooling degree-hours":
+        monthly = aggregate_sum(df, "heating_degree_hours_kh", "Monthly")[["sum"]].rename(columns={"sum": "Heating degree-hours"})
+        monthly["Cooling degree-hours"] = aggregate_sum(df, "cooling_degree_hours_kh", "Monthly")["sum"]
+        fig = stacked_monthly_bar(monthly, "Monthly degree-hour climate severity", "K·h")
+        render_plot(fig, degree_day_interpretation(df))
+    elif chart_group == "Design-day candidates":
+        daily_aggregation = {
+            "mean_t": ("dry_bulb_temperature_c", "mean"),
+            "min_t": ("dry_bulb_temperature_c", "min"),
+            "max_t": ("dry_bulb_temperature_c", "max"),
+            "max_enthalpy": ("moist_air_enthalpy_kj_kg", "max"),
+            "max_humidity_ratio": ("humidity_ratio_g_kg", "max"),
+        }
+        if has_ghi:
+            daily_aggregation["max_ghi"] = ("global_horizontal_radiation_wh_m2", "max")
+        daily = df.resample("D").agg(**daily_aggregation)
+        mode = st.radio("Design-day ranking", ["Coldest days", "Hottest days", "Highest enthalpy days", "Most humid days"], horizontal=True)
+        if mode == "Coldest days":
+            table = daily.sort_values("min_t").head(15)
+        elif mode == "Hottest days":
+            table = daily.sort_values("max_t", ascending=False).head(15)
+        elif mode == "Highest enthalpy days":
+            table = daily.sort_values("max_enthalpy", ascending=False).head(15)
+        else:
+            table = daily.sort_values("max_humidity_ratio", ascending=False).head(15)
+        st.dataframe(table, use_container_width=True)
+        fig = profile_ribbon_chart(df, "dry_bulb_temperature_c", "Daily", "Daily dry-bulb temperature for design-day screening", "°C")
+        render_plot(fig, hvac_interpretation(df))
+    else:
+        airflow_m3_h = st.number_input("Outdoor airflow [m³/h]", min_value=1.0, value=1000.0, step=100.0)
+        heat_set_c = st.number_input("Heating supply target temperature [°C]", value=20.0, step=0.5)
+        cool_set_c = st.number_input("Cooling supply target temperature [°C]", value=26.0, step=0.5)
+        rho = df["moist_air_density_kg_m3"].fillna(1.2)
+        m_dot = rho * airflow_m3_h / 3600.0
+        cp = 1.006
+        proxy = df.copy()
+        proxy["ventilation_heating_kw"] = m_dot * cp * (heat_set_c - proxy["dry_bulb_temperature_c"]).clip(lower=0)
+        proxy["ventilation_cooling_kw"] = m_dot * cp * (proxy["dry_bulb_temperature_c"] - cool_set_c).clip(lower=0)
+        monthly = aggregate_sum(proxy, "ventilation_heating_kw", "Monthly")[["sum"]].rename(columns={"sum": "Heating proxy [kWh-like]"})
+        monthly["Cooling proxy [kWh-like]"] = aggregate_sum(proxy, "ventilation_cooling_kw", "Monthly")["sum"]
+        fig = stacked_monthly_bar(monthly, "Outdoor-air sensible ventilation load proxy", "kW·h proxy")
+        render_plot(fig, hvac_interpretation(df))
+
+
+def render_time_series_overlay(df: pd.DataFrame) -> None:
+    """Render aligned variable-resolution series on one absolute time axis."""
+    st.header("Time series and overlay")
+    native_minutes = native_resolution_minutes(pd.DatetimeIndex(df.index))
+    st.caption(
+        f"Source resolution: {native_minutes} min. Choose an exact time window and overlay up to six series. "
+        "Resolutions finer than the source are intentionally unavailable; no temporal interpolation is performed."
+    )
+
+    index = pd.DatetimeIndex(df.index).sort_values()
+    if index.empty:
+        st.info("No time-series records are available.")
+        return
+
+    default_start = pd.Timestamp(index.min())
+    default_end = pd.Timestamp(index.max())
+    date_min = default_start.date()
+    date_max = default_end.date()
+    step_seconds = max(60, int(native_minutes * 60))
+
+    c1, c2, c3, c4 = st.columns(4)
+    start_date = c1.date_input(
+        "From date",
+        value=default_start.date(),
+        min_value=date_min,
+        max_value=date_max,
+        key="overlay_start_date",
+    )
+    start_time = c2.time_input(
+        "From time",
+        value=default_start.time(),
+        step=step_seconds,
+        key="overlay_start_time",
+    )
+    end_date = c3.date_input(
+        "Through date",
+        value=default_end.date(),
+        min_value=date_min,
+        max_value=date_max,
+        key="overlay_end_date",
+    )
+    end_time = c4.time_input(
+        "Through time",
+        value=default_end.time(),
+        step=step_seconds,
+        key="overlay_end_time",
+    )
+
+    start = pd.Timestamp.combine(start_date, start_time)
+    selected_end = pd.Timestamp.combine(end_date, end_time)
+    if index.tz is not None:
+        start = start.tz_localize(index.tz)
+        selected_end = selected_end.tz_localize(index.tz)
+    # "Through" denotes the selected source interval, so the internal viewport
+    # ends at the following native interval boundary. This includes the selected
+    # 23:00 EPW record without fabricating sub-hourly values.
+    end = selected_end + pd.Timedelta(minutes=native_minutes)
+    if selected_end < start:
+        st.error("The end timestamp must not be earlier than the start timestamp.")
+        return
+
+    if start < pd.Timestamp(index.min()) or selected_end > pd.Timestamp(index.max()):
+        st.error("The selected time range must stay inside the loaded source calendar.")
+        return
+
+
+    available_variables = [
+        label
+        for label, (column, _unit) in VARIABLES.items()
+        if column in df.columns and pd.to_numeric(df[column], errors="coerce").notna().any()
+    ]
+    if not available_variables:
+        st.info("No numeric climate variables are available for overlay.")
+        return
+
+    resolutions = available_resolution_labels(pd.DatetimeIndex(df.index))
+    n_series = st.slider("Number of series", min_value=1, max_value=6, value=2, step=1)
+    preferred = [
+        "Dry-bulb temperature",
+        "Global horizontal radiation",
+        "Relative humidity",
+        "Wind speed",
+        "Dew-point temperature",
+        "Station pressure",
+    ]
+    defaults = [item for item in preferred if item in available_variables]
+    specs: list[OverlaySeries] = []
+
+    st.markdown("#### Series")
+    for i in range(n_series):
+        col_variable, col_resolution = st.columns([3, 2])
+        default_label = defaults[i] if i < len(defaults) else available_variables[min(i, len(available_variables) - 1)]
+        variable_label = col_variable.selectbox(
+            f"Series {i + 1} variable",
+            available_variables,
+            index=available_variables.index(default_label),
+            key=f"overlay_variable_{i}",
+        )
+        default_resolution = "Native" if i == 0 else ("Daily" if "Daily" in resolutions else "Native")
+        resolution = col_resolution.selectbox(
+            f"Series {i + 1} resolution",
+            resolutions,
+            index=resolutions.index(default_resolution),
+            key=f"overlay_resolution_{i}",
+        )
+        column, unit = VARIABLES[variable_label]
+        specs.append(OverlaySeries(variable_label, column, unit, resolution))
+
+    try:
+        families = validate_unit_families(specs)
+    except ValueError as exc:
+        st.error(str(exc) + " Remove a physical quantity or choose variables from the same unit family.")
+        return
+
+    raw_view = df.loc[(df.index >= start) & (df.index < end)].copy()
+    st.session_state["_active_filtered_export_df"] = raw_view
+    if raw_view.empty:
+        st.warning("The selected interval contains no source records.")
+        return
+
+
+    try:
+        fig, tables = build_overlay_figure(df, specs, start, end, title="Climate time-series overlay")
+    except (ValueError, KeyError) as exc:
+        st.error(f"The requested overlay could not be constructed: {exc}")
+        return
+
+    st.caption(
+        "All series share the same absolute X-axis. Aggregated series use calendar-aligned complete bins before the "
+        "selected viewport is applied. Extensive interval quantities are summed, state/intensive quantities are averaged, "
+        "and wind direction uses a circular mean."
+    )
+    if len(families) == 2:
+        st.caption("Two physical unit families are shown on separate left and right Y-axes.")
+    render_plot(
+        fig,
+        "The overlay preserves one common time axis for every series. Different temporal resolutions are displayed without "
+        "upsampling or interpolation; complete aggregation bins retain their physical meaning even when only part of a bin "
+        "falls inside the visible range.",
+    )
+
+
+def render_data_quality(epw, df: pd.DataFrame, issues: list[object]) -> None:
+    """Render data-quality diagnostics and EPW metadata."""
+    st.header("Data quality and EPW diagnostics")
+    st.subheader("EPW location header")
+    st.dataframe(pd.DataFrame(location_summary(epw.location).items(), columns=["Field", "Value"]), hide_index=True, use_container_width=True)
+
+    st.subheader("Diagnostics")
+    rows = [{"field": i.field, "issue": i.issue, "count": i.count, "severity": i.severity} for i in issues]
+    if rows:
+        issue_df = pd.DataFrame(rows)
+        st.dataframe(issue_df, hide_index=True, use_container_width=True)
+        fig = px.bar(issue_df, x="field", y="count", color="severity", title="Data-quality issue counts")
+        fig.update_layout(template="plotly_white", xaxis_title="Field", yaxis_title="Count")
+        st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False, "scrollZoom": True}, key=next_plot_key())
+        render_interpretation(data_quality_interpretation(len(rows), int((issue_df["severity"] == "error").sum())))
+    else:
+        render_interpretation(data_quality_interpretation(0, 0))
+
+    st.subheader("Missing values by field")
+    missing = df.isna().sum().reset_index()
+    missing.columns = ["field", "missing_count"]
+    missing = missing[missing["missing_count"] > 0].sort_values("missing_count", ascending=False)
+    st.dataframe(missing, hide_index=True, use_container_width=True)
+
+    st.subheader("Header lines")
+    for line in epw.header_lines:
+        st.code(line)
+
+
 def render_canonical_data_quality(dataset, df: pd.DataFrame) -> None:
     """Render diagnostics/provenance for a provider-neutral historical dataset."""
     from epw_climate_analyzer.historical_capabilities import historical_coverage_summary, historical_variable_coverage
