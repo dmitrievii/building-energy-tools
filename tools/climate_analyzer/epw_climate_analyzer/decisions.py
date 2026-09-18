@@ -106,8 +106,6 @@ def night_flushing_condition(
         early_morning = hour <= end
         hot_day_reference.loc[early_morning] = previous_day_max.loc[early_morning]
     else:
-        # A non-crossing night interval in the early half of the day belongs to
-        # the preceding evening; an evening-only interval belongs to the same day.
         if end <= 12:
             hot_day_reference = previous_day_max
         else:
@@ -166,42 +164,60 @@ def comfort_condition(
     return condition.fillna(False)
 
 
-def passive_strategy_table(df: pd.DataFrame) -> pd.DataFrame:
-    """Classify climate hours into simple passive/HVAC strategy buckets."""
-    strategies = {
+def _has_numeric(df: pd.DataFrame, column: str) -> bool:
+    if column not in df.columns:
+        return False
+    return bool(pd.to_numeric(df[column], errors="coerce").notna().any())
+
+
+def _passive_strategy_masks(df: pd.DataFrame) -> dict[str, pd.Series]:
+    """Return only strategy masks supported by the actual analysis columns.
+
+    The core thermal/psychrometric strategies require T/RH-derived properties.
+    Solar shading is added only when measured/available GHI exists. This lets the
+    same decision-support code serve EPW and measured historical data without
+    fabricating a solar variable that the source does not provide.
+    """
+    masks: dict[str, pd.Series] = {
         "Comfort without conditioning": comfort_condition(df),
         "Natural ventilation": natural_ventilation_condition(df),
         "Night flushing": night_flushing_condition(df),
-        "Solar shading likely useful": shading_condition(df),
         "Air-side economizer": economizer_condition(df),
         "Dehumidification likely useful": dehumidification_condition(df),
         "Humidification likely useful": humidification_condition(df),
         "Heating likely required": df["dry_bulb_temperature_c"] < 18.0,
         "Cooling likely required": df["dry_bulb_temperature_c"] > 26.0,
     }
+    if _has_numeric(df, "global_horizontal_radiation_wh_m2"):
+        masks["Solar shading likely useful"] = shading_condition(df)
+    return masks
+
+
+def passive_strategy_table(df: pd.DataFrame) -> pd.DataFrame:
+    """Classify climate hours into source-supported passive/HVAC strategy buckets."""
     rows = []
-    for strategy, mask in strategies.items():
+    for strategy, mask in _passive_strategy_masks(df).items():
         hours = int(mask.fillna(False).sum())
         rows.append({"strategy": strategy, "hours": hours, "share_pct": hours / max(len(df), 1) * 100.0})
     return pd.DataFrame(rows).sort_values("hours", ascending=False)
 
 
 def passive_strategy_monthly(df: pd.DataFrame) -> pd.DataFrame:
-    """Return monthly strategy hours using the active global temporal basis."""
-    masks = {
-        "Comfort": comfort_condition(df),
-        "Natural ventilation": natural_ventilation_condition(df),
-        "Night flushing": night_flushing_condition(df),
-        "Shading": shading_condition(df),
-        "Economizer": economizer_condition(df),
-        "Dehumidification": dehumidification_condition(df),
-        "Humidification": humidification_condition(df),
-        "Heating": df["dry_bulb_temperature_c"] < 18.0,
-        "Cooling": df["dry_bulb_temperature_c"] > 26.0,
+    """Return monthly source-supported strategy hours using the active temporal basis."""
+    label_map = {
+        "Comfort without conditioning": "Comfort",
+        "Natural ventilation": "Natural ventilation",
+        "Night flushing": "Night flushing",
+        "Solar shading likely useful": "Shading",
+        "Air-side economizer": "Economizer",
+        "Dehumidification likely useful": "Dehumidification",
+        "Humidification likely useful": "Humidification",
+        "Heating likely required": "Heating",
+        "Cooling likely required": "Cooling",
     }
     frames = [
-        threshold_count_by_period(df, mask, "Monthly", label=label)
-        for label, mask in masks.items()
+        threshold_count_by_period(df, mask, "Monthly", label=label_map[strategy])
+        for strategy, mask in _passive_strategy_masks(df).items()
     ]
     if not frames:
         return pd.DataFrame()
