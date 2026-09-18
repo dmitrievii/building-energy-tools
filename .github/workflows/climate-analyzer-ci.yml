@@ -96,7 +96,19 @@ jobs:
           PY
 
       - name: Run security and scientific regression tests
-        run: python -m unittest discover -s tests -p 'test_*.py' -v
+        shell: bash
+        run: |
+          set -o pipefail
+          python -m unittest discover -s tests -p 'test_*.py' -v 2>&1 | tee "$GITHUB_WORKSPACE/unittest.log"
+
+      - name: Upload unittest diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: climate-analyzer-unittest-log
+          path: unittest.log
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Import scientific modules
         run: |
