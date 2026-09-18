@@ -38,7 +38,7 @@ class Climate0103RegressionTests(unittest.TestCase):
                 }
                 self.assertIn(imported_name, local_imports)
 
-    def test_psychrometric_chart_is_responsive_and_legend_is_split_and_sorted(self) -> None:
+    def test_psychrometric_points_are_responsive_and_legend_is_split_and_sorted(self) -> None:
         data = pd.DataFrame(
             {
                 "dry_bulb_temperature_c": [8.0, 18.0, 28.0],
@@ -55,6 +55,7 @@ class Climate0103RegressionTests(unittest.TestCase):
             shown_bioclimatic_zones=[GIVONI_ZONE_NAMES[3], GIVONI_ZONE_NAMES[1], GIVONI_ZONE_NAMES[2]],
             selected_months=[12, 2, 1],
             color_mode="Month",
+            data_mode="Points",
         )
 
         self.assertTrue(fig.layout.autosize)
