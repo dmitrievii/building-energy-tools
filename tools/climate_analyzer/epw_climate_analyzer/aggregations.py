@@ -326,6 +326,23 @@ def _heatmap_period_key(index: pd.DatetimeIndex, row_group: str) -> pd.Index:
     raise ValueError("row_group must be 'day', 'week' or 'month'")
 
 
+def _chronological_heatmap_period_key(index: pd.DatetimeIndex, row_group: str) -> pd.Index:
+    """Return absolute, sortable period labels for chronological heat maps."""
+    idx = pd.DatetimeIndex(index)
+    group = str(row_group).strip().lower()
+    if group == "day":
+        return pd.Index(idx.strftime("%Y-%m-%d"), name="Date")
+    if group == "week":
+        iso = idx.isocalendar()
+        return pd.Index(
+            [f"{int(year):04d}-W{int(week):02d}" for year, week in zip(iso.year, iso.week, strict=False)],
+            name="Week",
+        )
+    if group == "month":
+        return pd.Index(idx.strftime("%Y-%m"), name="Month")
+    raise ValueError("row_group must be 'day', 'week' or 'month'")
+
+
 def temporal_heatmap_matrix(
     df: pd.DataFrame,
     column: str,
@@ -360,8 +377,12 @@ def temporal_heatmap_matrix(
     values = pd.to_numeric(df[column], errors="coerce")
     temp = pd.DataFrame({"_value": values.to_numpy()}, index=index)
     group = str(row_group).strip().lower()
+    basis = time_basis(df)
 
     if compare_across == HEATMAP_COMPARE_YEAR:
+        # Interannual comparison intentionally aligns equivalent calendar
+        # positions, independent of the global basis. The UI exposes this view
+        # in Calendar-profile mode, where that alignment is semantically clear.
         if group == "week":
             iso = index.isocalendar()
             temp["_y"] = iso.year.astype(int).to_numpy()
@@ -375,13 +396,22 @@ def temporal_heatmap_matrix(
             if "hour_of_day" in df.columns
             else index.hour.astype(int)
         )
-        temp["_x"] = _heatmap_period_key(index, row_group).to_numpy()
+        temp["_x"] = (
+            _chronological_heatmap_period_key(index, row_group).to_numpy()
+            if basis == CHRONOLOGICAL
+            else _heatmap_period_key(index, row_group).to_numpy()
+        )
 
     temp = temp.dropna(subset=["_value", "_y", "_x"])
     if temp.empty:
         return pd.DataFrame()
 
-    if statistic == "Total" and compare_across == HEATMAP_COMPARE_HOUR and is_multiyear(df):
+    if (
+        statistic == "Total"
+        and compare_across == HEATMAP_COMPARE_HOUR
+        and basis == CALENDAR_PROFILE
+        and is_multiyear(df)
+    ):
         if group == "week":
             temp["_year"] = pd.DatetimeIndex(temp.index).isocalendar().year.astype(int).to_numpy()
         else:
@@ -395,7 +425,11 @@ def temporal_heatmap_matrix(
     matrix = reduced.unstack("_x").sort_index()
     if group == "month" and all(isinstance(value, (int, np.integer)) for value in matrix.columns):
         matrix = matrix.reindex(columns=list(range(1, 13)))
-    elif group in {"day", "week"} and len(matrix.columns):
+    elif (
+        group in {"day", "week"}
+        and len(matrix.columns)
+        and all(isinstance(value, (int, np.integer)) for value in matrix.columns)
+    ):
         numeric_columns = [int(value) for value in matrix.columns]
         matrix = matrix.reindex(columns=list(range(min(numeric_columns), max(numeric_columns) + 1)))
     return matrix

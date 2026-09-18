@@ -56,6 +56,10 @@ class OverlaySeries:
     column: str
     unit: str
     resolution: str
+    color: str | None = None
+    dash: str | None = None
+    width: float = 2.0
+    opacity: float = 1.0
 
     @property
     def unit_family(self) -> str:
@@ -245,6 +249,15 @@ def build_overlay_figure(
             y = visible["value"].tolist()
         else:
             x, y = _segment_coordinates(table)
+        dash = spec.dash or dash_cycle[index % len(dash_cycle)]
+        if dash not in {"solid", "dash", "dot", "dashdot", "longdash", "longdashdot"}:
+            raise ValueError(f"Unsupported line dash style: {dash}")
+        width = float(spec.width)
+        opacity = float(spec.opacity)
+        if not np.isfinite(width) or width <= 0.0:
+            raise ValueError("Overlay line width must be a finite positive number.")
+        if not np.isfinite(opacity) or not 0.0 < opacity <= 1.0:
+            raise ValueError("Overlay opacity must be greater than 0 and at most 1.")
         fig.add_trace(
             go.Scatter(
                 x=x,
@@ -252,7 +265,12 @@ def build_overlay_figure(
                 mode="lines",
                 name=name,
                 yaxis=axis,
-                line={"color": metric_color(spec.column), "dash": dash_cycle[index % len(dash_cycle)]},
+                line={
+                    "color": spec.color or metric_color(spec.column),
+                    "dash": dash,
+                    "width": width,
+                },
+                opacity=opacity,
                 connectgaps=False,
                 hovertemplate=f"{name}<br>%{{x|%Y-%m-%d %H:%M}}<br>%{{y:.3g}} {spec.unit}<extra></extra>",
             )

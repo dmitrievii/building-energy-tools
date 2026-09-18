@@ -159,6 +159,28 @@ def measured_monthly_ground(df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def shared_temperature_range(
+    profile: pd.DataFrame,
+    measured: pd.DataFrame | None = None,
+    *,
+    pad_fraction: float = 0.08,
+    minimum_pad_c: float = 1.0,
+) -> tuple[float, float]:
+    '''Return one temperature axis range that contains all monthly/observed states.'''
+    calculated = profile.to_numpy(dtype=float).ravel()
+    calculated = calculated[np.isfinite(calculated)]
+    observed = np.array([], dtype=float)
+    if measured is not None and not measured.empty and "temperature_c" in measured.columns:
+        observed = pd.to_numeric(measured["temperature_c"], errors="coerce").dropna().to_numpy(dtype=float)
+    values = np.concatenate([calculated, observed]) if observed.size else calculated
+    if values.size == 0:
+        raise ValueError("Ground-temperature visualization requires finite temperature values.")
+    t_min = float(np.min(values))
+    t_max = float(np.max(values))
+    pad = max(float(minimum_pad_c), float(pad_fraction) * max(t_max - t_min, 1.0))
+    return t_min - pad, t_max + pad
+
+
 def profile_figure(profile: pd.DataFrame, measured: pd.DataFrame | None = None, title: str = "Monthly ground-temperature profiles") -> go.Figure:
     fig = go.Figure()
     for month_index, month in enumerate(MONTH_LABELS, start=1):
@@ -175,7 +197,17 @@ def profile_figure(profile: pd.DataFrame, measured: pd.DataFrame | None = None, 
                         marker={"size": 7, "symbol": "circle-open"},
                     )
                 )
-    fig.update_layout(template="plotly_white", title=title, xaxis_title="Ground temperature [°C]", yaxis_title="Depth below ground [m]", legend_title="Month")
+    x_range = shared_temperature_range(profile, measured)
+    fig.update_layout(
+        template="plotly_white",
+        title=title,
+        xaxis_title="Ground temperature [°C]",
+        yaxis_title="Depth below ground [m]",
+        legend_title="Month",
+        height=650,
+        margin=dict(l=55, r=25, t=70, b=55),
+    )
+    fig.update_xaxes(range=list(x_range))
     fig.update_yaxes(autorange="reversed")
     return fig
 
@@ -200,11 +232,14 @@ def animated_profile_figure(profile: pd.DataFrame, measured: pd.DataFrame | None
         frames.append(go.Frame(name=month, data=frame_data))
     fig = go.Figure(data=traces, frames=frames)
     steps = [{"args": [[m], {"frame": {"duration": 0, "redraw": True}, "mode": "immediate"}], "label": m, "method": "animate"} for m in months]
+    x_range = shared_temperature_range(profile, measured)
     fig.update_layout(
         template="plotly_white",
         title=f"Ground-temperature profile — {first}",
         xaxis_title="Ground temperature [°C]",
         yaxis_title="Depth below ground [m]",
+        xaxis_range=list(x_range),
+        height=650,
         updatemenus=[{"type": "buttons", "showactive": False, "buttons": [
             {"label": "Play", "method": "animate", "args": [None, {"frame": {"duration": 700, "redraw": True}, "transition": {"duration": 250}, "fromcurrent": True, "mode": "immediate"}]},
             {"label": "Pause", "method": "animate", "args": [[None], {"frame": {"duration": 0, "redraw": False}, "mode": "immediate"}]},
@@ -246,14 +281,7 @@ def animated_profile_gif_bytes(
     if finite.size == 0:
         raise ValueError("GIF export requires finite calculated temperatures.")
 
-    observed_values = np.array([], dtype=float)
-    if measured is not None and not measured.empty and "temperature_c" in measured.columns:
-        observed_values = pd.to_numeric(measured["temperature_c"], errors="coerce").dropna().to_numpy(dtype=float)
-    all_t = np.concatenate([finite, observed_values]) if observed_values.size else finite
-    t_min = float(np.min(all_t))
-    t_max = float(np.max(all_t))
-    pad = max(1.0, 0.08 * max(t_max - t_min, 1.0))
-    x_min, x_max = t_min - pad, t_max + pad
+    x_min, x_max = shared_temperature_range(profile, measured)
     z_min, z_max = float(np.min(depth)), float(np.max(depth))
     if z_max <= z_min:
         raise ValueError("GIF export requires a non-zero depth range.")

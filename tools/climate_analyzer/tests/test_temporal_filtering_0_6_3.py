@@ -100,12 +100,13 @@ class TemporalFiltering063Tests(unittest.TestCase):
         # 2023 = 20 min, 2024 = 10 min -> average January duration = 15 min.
         self.assertAlmostEqual(float(result.loc[1, "hours"]), 0.25)
 
-    def test_chronological_multiyear_hour_heatmap_aligns_calendar_months(self) -> None:
+    def test_chronological_multiyear_hour_heatmap_preserves_real_year_months(self) -> None:
         idx = pd.to_datetime(["2023-01-01 00:00", "2024-01-01 00:00"])
         df = with_time_basis(frame(idx, [1.0, 2.0]), CHRONOLOGICAL)
         matrix = calendar_matrix(df, "dry_bulb_temperature_c", row_group="month")
-        self.assertEqual(list(matrix.index), list(range(1, 13)))
-        self.assertAlmostEqual(float(matrix.loc[1, 0]), 1.5)
+        self.assertEqual(list(matrix.index), ["2023-01", "2024-01"])
+        self.assertAlmostEqual(float(matrix.loc["2023-01", 0]), 1.0)
+        self.assertAlmostEqual(float(matrix.loc["2024-01", 0]), 2.0)
 
     def test_monthly_box_chart_keeps_distinct_year_month_categories(self) -> None:
         idx = pd.to_datetime(["2023-01-01", "2023-01-02", "2024-01-01", "2024-01-02"])

@@ -20,9 +20,11 @@ from .aggregations import (
 )
 from .temporal_filtering import CALENDAR_PROFILE, CHRONOLOGICAL, display_period_labels, is_multiyear, time_basis
 from .psychrometrics import DEFAULT_PRESSURE_PA, psychrometric_rh_curves
+from .psychrometric_distribution import envelope_polygon_coordinates, psychrometric_occupancy_envelope
 from .chart_theme import (
     BINARY_SUITABILITY_COLORSCALE,
     CLIMATE_COLORS,
+    PSYCHROMETRIC_TILE_COLORSCALE,
     DEFAULT_METRIC_COLOR,
     WIND_SPEED_COLOR_MAP,
     WIND_SPEED_LABELS,
@@ -56,10 +58,10 @@ BINARY_BLUE_COLORSCALE = [
     [0.01, "#eff6ff"],
     [1.00, "#1d4ed8"],
 ]
-PSYCHROMETRIC_TILE_COLORSCALE = [
-    [0.00, "rgba(255,255,255,0.0)"],
-    [0.10, "#dbeafe"],
-    [0.35, "#60a5fa"],
+PRECIPITATION_COLORSCALE = [
+    [0.00, "#ffffff"],
+    [0.08, "#eff6ff"],
+    [0.35, "#93c5fd"],
     [0.70, "#2563eb"],
     [1.00, "#172554"],
 ]
@@ -152,17 +154,39 @@ def _year_neutral_monthly(summary: pd.DataFrame, aggregation: str) -> bool:
 
 
 def _heatmap_colorscale(column: str, values=None, temperature_thresholds: tuple[float, float] | None = None):
-    """Return a colorscale suitable for the selected climate variable."""
+    """Return a valid semantic colorscale for the selected climate variable."""
     if column == "dry_bulb_temperature_c" and temperature_thresholds is not None:
-        heat_t, cool_t = temperature_thresholds
+        heat_t, cool_t = map(float, temperature_thresholds)
         vmin, vmax = _finite_min_max(values)
         if vmin is None or vmax is None or abs(vmax - vmin) < 1e-9:
             return TEMPERATURE_COMFORT_COLORSCALE
-        green_start = max(0.0, min(1.0, (heat_t - vmin) / (vmax - vmin)))
-        green_end = max(green_start + 1e-6, min(1.0, (cool_t - vmin) / (vmax - vmin)))
-        return [[0.0, "#1d4ed8"], [green_start, "#22c55e"], [green_end, "#22c55e"], [1.0, "#dc2626"]]
+        if heat_t > cool_t:
+            heat_t, cool_t = cool_t, heat_t
+        blue, green, red = "#1d4ed8", "#22c55e", "#dc2626"
+        if vmax <= heat_t:
+            return [[0.0, blue], [1.0, blue]]
+        if vmin >= cool_t:
+            return [[0.0, red], [1.0, red]]
+        if vmin >= heat_t and vmax <= cool_t:
+            return [[0.0, green], [1.0, green]]
+
+        span = vmax - vmin
+        stops: list[list[float | str]] = []
+        start_color = blue if vmin < heat_t else (green if vmin < cool_t else red)
+        stops.append([0.0, start_color])
+        if vmin < heat_t < vmax:
+            p = float(np.clip((heat_t - vmin) / span, 0.0, 1.0))
+            stops.extend([[p, blue], [p, green]])
+        if vmin < cool_t < vmax:
+            p = float(np.clip((cool_t - vmin) / span, 0.0, 1.0))
+            stops.extend([[p, green], [p, red]])
+        end_color = red if vmax > cool_t else (green if vmax > heat_t else blue)
+        stops.append([1.0, end_color])
+        return stops
     if column in {"natural_ventilation_suitable", "night_flushing_suitable"} or "suitable" in column:
         return BINARY_SUITABILITY_COLORSCALE
+    if column == "liquid_precipitation_depth_mm":
+        return PRECIPITATION_COLORSCALE
     if "sky_cover" in column:
         return [[0.0, "rgba(255,255,255,0.0)"], [0.25, "#dbeafe"], [1.0, "#0f172a"]]
     if "radiation" in column or "irradiance" in column or "illuminance" in column:
@@ -266,17 +290,17 @@ def percentile_band_chart(df: pd.DataFrame, column: str, aggregation: str, title
     x = _period_x(summary, aggregation)
     low_color, central_color, high_color, band_fill = metric_band_colors(column)
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=x, y=summary["p95"], mode="lines+markers", name="P95", line=dict(color=high_color, width=1.4), hovertemplate="P95: %{y:.2f} " + unit + "<extra></extra>"))
+    fig.add_trace(go.Scatter(x=x, y=summary["p95"], mode="lines+markers", name="Upper 5% boundary (P95)", line=dict(color=high_color, width=1.4), hovertemplate="Upper 5% boundary (P95): %{y:.2f} " + unit + "<extra></extra>"))
     fig.add_trace(
         go.Scatter(
             x=x,
             y=summary["p05"],
             mode="lines+markers",
-            name="P05",
+            name="Lower 5% boundary (P05)",
             line=dict(color=low_color, width=1.4),
             fill="tonexty",
             fillcolor=band_fill,
-            hovertemplate="P05: %{y:.2f} " + unit + "<extra></extra>",
+            hovertemplate="Lower 5% boundary (P05): %{y:.2f} " + unit + "<extra></extra>",
         )
     )
     fig.add_trace(go.Scatter(x=x, y=summary["median"], mode="lines+markers", name="Median", line=dict(color=central_color, width=2.2), hovertemplate="Median: %{y:.2f} " + unit + "<extra></extra>"))
@@ -309,6 +333,10 @@ def temporal_heatmap_chart(
     period_label = str(row_group).strip().capitalize()
     colorscale = _heatmap_colorscale(column, matrix.values, temperature_thresholds)
     zmin, zmax = _axis_limits_for_column(column, matrix.values, pad_fraction=0.0)
+    if column == "liquid_precipitation_depth_mm":
+        # A dry interval is a meaningful precipitation state. Keep the colour
+        # domain anchored at 0 mm so zero is always rendered as white.
+        zmin = 0.0
     fig = px.imshow(
         matrix,
         aspect="auto",
@@ -320,6 +348,9 @@ def temporal_heatmap_chart(
     )
     if str(row_group).strip().lower() == "month" and all(isinstance(value, (int, np.integer)) for value in matrix.columns):
         fig.update_xaxes(tickmode="array", tickvals=list(range(1, 13)), ticktext=MONTH_LABELS)
+    if compare_across == "Year":
+        years = [int(value) for value in matrix.index]
+        fig.update_yaxes(tickmode="array", tickvals=years, ticktext=[str(year) for year in years])
     if compare_across == HEATMAP_COMPARE_HOUR:
         fig.update_yaxes(range=[23, 0], autorangeoptions=dict(minallowed=0, maxallowed=23))
     fig.update_layout(template=PLOT_TEMPLATE, margin=dict(l=40, r=20, t=70, b=45))
@@ -1212,7 +1243,13 @@ def _add_psychrometric_tile_occupancy(
     vmin, vmax = _finite_min_max(tiles["value"])
     vmin = float(vmin if vmin is not None else 0.0)
     vmax = float(vmax if vmax is not None else max(float(tiles["value"].max()), 1.0))
-    colorscale = _metric_colorscale(color_metric_column)
+    if color_metric_column is None:
+        # Frequency is a duration density: keep the scale anchored at zero and
+        # use the dedicated pale-to-saturated blue psychrometric palette.
+        vmin = 0.0
+        colorscale = PSYCHROMETRIC_TILE_COLORSCALE
+    else:
+        colorscale = _metric_colorscale(color_metric_column)
     for _, row in tiles.iterrows():
         t0 = float(row["temperature_bin_c"])
         t1 = t0 + 1.0
@@ -1300,7 +1337,12 @@ def psychrometric_chart(
     """
     fig = go.Figure()
     chart_type = "i-d" if chart_type == "i-d" else "T-d"
-    data_mode = "Hourly values" if data_mode in {"Monthly points", "Hourly values"} else "Distributive grid"
+    if data_mode in {"Monthly points", "Hourly values", "Source interval values"}:
+        data_mode = "Hourly values"
+    elif data_mode == "Middle 90% envelopes":
+        data_mode = "Middle 90% envelopes"
+    else:
+        data_mode = "Distributive grid"
     if selected_months is None:
         selected_months = list(range(1, 13))
 
@@ -1324,7 +1366,40 @@ def psychrometric_chart(
     plot_df = df[df["month_index"].isin(selected_months)].copy() if "month_index" in df.columns else df.copy()
     data_for_limits = plot_df[[x_col, y_col]].dropna().copy()
 
-    if data_mode == "Distributive grid":
+    if data_mode == "Middle 90% envelopes":
+        if time_basis(plot_df) == CHRONOLOGICAL and is_multiyear(plot_df):
+            envelope_groups: list[tuple[str, pd.DataFrame]] = []
+            for year in sorted({int(value) for value in pd.DatetimeIndex(plot_df.index).year}):
+                group = plot_df[pd.DatetimeIndex(plot_df.index).year == year].copy()
+                group.attrs.update(plot_df.attrs)
+                envelope_groups.append((str(year), group))
+        else:
+            envelope_groups = [("Middle 90% occupancy", plot_df)]
+        for index, (label, group) in enumerate(envelope_groups):
+            envelope = psychrometric_occupancy_envelope(group, target_share=0.90)
+            if envelope.selected_tiles.empty:
+                continue
+            xs, ys = envelope_polygon_coordinates(envelope, chart_type=chart_type, pressure_pa=pressure_pa)
+            color = CLIMATE_COLORS[index % len(CLIMATE_COLORS)]
+            fig.add_trace(
+                go.Scatter(
+                    x=xs,
+                    y=ys,
+                    mode="lines",
+                    name=label,
+                    legend="legend",
+                    line=dict(color=rgba(color, 0.78), width=0.55),
+                    fill="toself",
+                    fillcolor=rgba(color, 0.14),
+                    connectgaps=False,
+                    hovertemplate=(
+                        f"{label}<br>Highest-density occupancy region<br>"
+                        f"Covered duration: {envelope.achieved_share * 100.0:.1f}%<br>"
+                        f"Selected: {envelope.selected_hours:.1f} h of {envelope.total_hours:.1f} h<extra></extra>"
+                    ),
+                )
+            )
+    elif data_mode == "Distributive grid":
         metric_col = None if color_mode == "Frequency" else color_metric_column
         _add_psychrometric_tile_occupancy(fig, plot_df, chart_type, pressure_pa, t_range, d_range, h_range, metric_col, color_metric_label)
     else:
@@ -1386,7 +1461,7 @@ def psychrometric_chart(
         autosize=True,
         hovermode="closest",
         legend=dict(
-            title=dict(text="Month", font=dict(size=13)),
+            title=dict(text=("Year" if data_mode == "Middle 90% envelopes" and time_basis(plot_df) == CHRONOLOGICAL and is_multiyear(plot_df) else ("Envelope" if data_mode == "Middle 90% envelopes" else "Month")), font=dict(size=13)),
             orientation="h",
             yanchor="top",
             y=-0.12,
@@ -1432,15 +1507,24 @@ def psychrometric_chart(
             fig.update_yaxes(range=list(h_range), autorangeoptions=dict(minallowed=h_range[0], maxallowed=h_range[1]))
     return fig
 
-def wind_rose_chart(df: pd.DataFrame, title: str = "Wind rose") -> go.Figure:
-    """Create a wind rose grouped by direction sectors and wind-speed bins."""
-    data = df[["wind_direction_deg", "wind_speed_m_s"]].dropna().copy()
+def wind_rose_chart(
+    df: pd.DataFrame,
+    title: str = "Wind rose",
+    *,
+    speed_column: str = "wind_speed_m_s",
+    direction_column: str = "wind_direction_deg",
+) -> go.Figure:
+    """Create a source-neutral wind rose from a paired speed/direction quantity."""
+    required = [direction_column, speed_column]
+    if any(column not in df.columns for column in required):
+        return go.Figure().update_layout(title="No paired wind data available")
+    data = df[required].dropna().copy()
     if data.empty:
-        return go.Figure().update_layout(title="No wind data available")
-    direction_bin = (np.round(data["wind_direction_deg"] / 22.5) * 22.5) % 360
+        return go.Figure().update_layout(title="No paired wind data available")
+    direction_bin = (np.round(data[direction_column] / 22.5) * 22.5) % 360
     data["direction_sector_deg"] = direction_bin
     data["speed_bin"] = pd.cut(
-        data["wind_speed_m_s"],
+        data[speed_column],
         bins=[0, 1, 2, 4, 6, 8, 12, np.inf],
         labels=WIND_SPEED_LABELS,
         include_lowest=True,

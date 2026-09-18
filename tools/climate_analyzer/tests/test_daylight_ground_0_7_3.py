@@ -85,7 +85,8 @@ class DaylightGround073Tests(unittest.TestCase):
             "ground_temperature_0_10m_c": [4.0] * 24,
         }, index=index)
         pages = set(available_historical_pages(frame))
-        self.assertIn("Ground Temperature", pages)
+        self.assertIn("Temperature", pages)
+        self.assertNotIn("Ground Temperature", pages)
         self.assertIn("Sky and Daylight", pages)
 
 

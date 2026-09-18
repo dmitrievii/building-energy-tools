@@ -31,6 +31,7 @@ from .decisions import (
 )
 from .epw_parser import DataQualityIssue, EpwFile
 from .psychrometrics import DEFAULT_PRESSURE_PA, psychrometric_rh_curves
+from .psychrometric_distribution import envelope_polygon_coordinates, psychrometric_occupancy_envelope
 from .solar import orientation_annual_radiation, orientation_tilt_matrix, surface_irradiance_series
 from .chart_theme import (
     BINARY_SUITABILITY_COLORSCALE,
@@ -40,6 +41,7 @@ from .chart_theme import (
     WIND_SPEED_LABELS,
     climate_color_map,
     metric_color,
+    rgba,
     semantic_color_from_text,
 )
 
@@ -360,48 +362,94 @@ def monthly_box_compare_chart(climates: list[ClimateDataset], column: str, mode:
     return fig
 
 
-def psychrometric_comparison_chart(climates: list[ClimateDataset], chart_type: str = "T-d", mode: str = "Small multiples", pressure_pa: float = DEFAULT_PRESSURE_PA) -> go.Figure:
-    """Create psychrometric comparison as overlay or small-multiple density plots."""
-    colors = climate_color_map([climate.display_name for climate in climates])
-    if mode == "Overlay" and len(climates) <= 3:
-        fig = go.Figure()
-        for climate in climates:
-            df = climate.data.sample(min(len(climate.data), 2500), random_state=7) if len(climate.data) > 2500 else climate.data
-            if chart_type == "i-d":
-                x = df["humidity_ratio_g_kg"]
-                y = df["moist_air_enthalpy_kj_kg"]
-                x_label = "Moisture content d [g/kg dry air]"
-                y_label = "Enthalpy i [kJ/kg dry air]"
-            else:
-                x = df["dry_bulb_temperature_c"]
-                y = df["humidity_ratio_g_kg"]
-                x_label = "Dry-bulb temperature [°C]"
-                y_label = "Moisture content d [g/kg dry air]"
-            fig.add_trace(go.Scattergl(x=x, y=y, mode="markers", name=climate.display_name, marker=dict(size=4, opacity=0.22, color=colors[climate.display_name])))
-        fig.update_layout(template=PLOT_TEMPLATE, title=f"Psychrometric comparison ({chart_type})", xaxis_title=x_label, yaxis_title=y_label, margin=dict(l=40, r=20, t=70, b=45))
-        return fig
+def psychrometric_comparison_chart(
+    climates: list[ClimateDataset],
+    chart_type: str = "T-d",
+    mode: str = "Overlay",
+    pressure_pa: float = DEFAULT_PRESSURE_PA,
+    data_display: str = "All observations",
+) -> go.Figure:
+    """Create one shared psychrometric comparison chart for all climates.
 
-    rows = len(climates)
-    fig = make_subplots(rows=rows, cols=1, subplot_titles=[c.display_name for c in climates], vertical_spacing=0.04)
-    for idx, climate in enumerate(climates, start=1):
-        df = climate.data
-        if chart_type == "i-d":
-            x = df["humidity_ratio_g_kg"]
-            y = df["moist_air_enthalpy_kj_kg"]
-            x_label = "Moisture content d [g/kg dry air]"
-            y_label = "Enthalpy i [kJ/kg dry air]"
+    ``All observations`` preserves the observed joint distribution as WebGL
+    points. ``Middle 90% envelopes`` draws duration-weighted highest-density
+    occupancy regions on the same psychrometric axes. The global comparison
+    display mode is accepted for API compatibility but this chart deliberately
+    remains shared so climate envelopes are directly comparable.
+    """
+    del mode
+    if data_display not in {"All observations", "Middle 90% envelopes"}:
+        raise ValueError(f"Unsupported psychrometric comparison display: {data_display}")
+    chart_type = "i-d" if chart_type == "i-d" else "T-d"
+    colors = climate_color_map([climate.display_name for climate in climates])
+    fig = go.Figure()
+    if chart_type == "i-d":
+        x_col = "humidity_ratio_g_kg"
+        y_col = "moist_air_enthalpy_kj_kg"
+        x_label = "Moisture content d [g/kg dry air]"
+        y_label = "Enthalpy i [kJ/kg dry air]"
+    else:
+        x_col = "dry_bulb_temperature_c"
+        y_col = "humidity_ratio_g_kg"
+        x_label = "Dry-bulb temperature [°C]"
+        y_label = "Moisture content d [g/kg dry air]"
+
+    for climate in climates:
+        color = colors[climate.display_name]
+        if data_display == "Middle 90% envelopes":
+            envelope = psychrometric_occupancy_envelope(climate.data, target_share=0.90)
+            if envelope.selected_tiles.empty:
+                continue
+            if "atmospheric_station_pressure_pa" in climate.data.columns:
+                observed_pressure = pd.to_numeric(climate.data["atmospheric_station_pressure_pa"], errors="coerce").dropna()
+                climate_pressure_pa = float(observed_pressure.median()) if not observed_pressure.empty else float(pressure_pa)
+            else:
+                climate_pressure_pa = float(pressure_pa)
+            xs, ys = envelope_polygon_coordinates(envelope, chart_type=chart_type, pressure_pa=climate_pressure_pa)
+            fig.add_trace(
+                go.Scatter(
+                    x=xs,
+                    y=ys,
+                    mode="lines",
+                    name=climate.display_name,
+                    line=dict(color=rgba(color, 0.88), width=0.8),
+                    fill="toself",
+                    fillcolor=rgba(color, 0.12),
+                    connectgaps=False,
+                    hovertemplate=(
+                        f"{climate.display_name}<br>Middle 90% highest-density occupancy region<br>"
+                        f"Covered duration: {envelope.achieved_share * 100.0:.1f}%<br>"
+                        f"Selected: {envelope.selected_hours:.1f} h of {envelope.total_hours:.1f} h<extra></extra>"
+                    ),
+                )
+            )
         else:
-            x = df["dry_bulb_temperature_c"]
-            y = df["humidity_ratio_g_kg"]
-            x_label = "Dry-bulb temperature [°C]"
-            y_label = "Moisture content d [g/kg dry air]"
-        fig.add_trace(go.Histogram2dContour(x=x, y=y, contours=dict(coloring="heatmap"), showscale=idx == 1, coloraxis="coloraxis", name=climate.display_name), row=idx, col=1)
-        if chart_type == "T-d":
-            for curve in psychrometric_rh_curves("T-d", pressure_pa=pressure_pa):
-                fig.add_trace(go.Scatter(x=curve["x"], y=curve["y"], mode="lines", line=dict(width=0.5), showlegend=False, hoverinfo="skip"), row=idx, col=1)
-    fig.update_layout(template=PLOT_TEMPLATE, title=f"Psychrometric density comparison ({chart_type})", height=max(360, 280 * rows), coloraxis=dict(colorscale="Viridis", colorbar=dict(title="Density")), margin=dict(l=40, r=20, t=70, b=45))
-    fig.update_xaxes(title_text=x_label, row=rows, col=1)
-    fig.update_yaxes(title_text=y_label)
+            data = climate.data[[x_col, y_col]].replace([np.inf, -np.inf], np.nan).dropna()
+            fig.add_trace(
+                go.Scattergl(
+                    x=data[x_col],
+                    y=data[y_col],
+                    mode="markers",
+                    name=climate.display_name,
+                    marker=dict(size=3.5, opacity=0.20, color=color),
+                    hovertemplate=f"{climate.display_name}<br>x: %{{x:.2f}}<br>y: %{{y:.2f}}<extra></extra>",
+                )
+            )
+
+    # Do not draw one shared relative-humidity construction grid here.
+    # Different comparison climates can sit at different station pressures, so
+    # a single RH grid would imply one pressure state that is not valid for all
+    # datasets. Actual T/d or i/d observations remain directly comparable.
+    fig.update_layout(
+        template=PLOT_TEMPLATE,
+        title=f"Psychrometric climate comparison — {data_display} ({chart_type})",
+        xaxis_title=x_label,
+        yaxis_title=y_label,
+        hovermode="closest",
+        height=720,
+        legend_title_text="Climate",
+        margin=dict(l=55, r=25, t=70, b=55),
+    )
     return fig
 
 
