@@ -34,13 +34,19 @@ Implemented in the current branch; qualification runs from this documented head:
 
 ## C — UX cleanup
 
-Planned:
+Implemented in C1:
 
-- Ground-temperature layout/range improvements and explicit multi-year semantics.
-- Precipitation zero-aware heat-map and distribution treatment.
+- Ground-temperature profile and animation views use one stable 12-month temperature domain and a wider fixed-height presentation.
+- Chronological multi-year ground calculations preserve real years through an explicit year selector; Calendar profile fits one clearly labelled climatological annual harmonic across represented years.
+- The selected-depth annual curve uses the same annual temperature range so seasonal damping with depth is visually comparable.
+- Liquid-precipitation heat maps are anchored at 0 mm with white for dry intervals and progressively stronger blue toward the observed maximum.
+- Precipitation duration/histogram/box/violin distributions default to **Wet intervals only**, with an explicit **All intervals including dry periods** option.
+
+Still planned for C:
+
 - Per-series Time Series and Overlay styling.
 - Sky & Daylight consolidation and removal of duplicated analysis routes.
-- Natural-ventilation/HVAC duplicated-analysis cleanup.
+- Overview, humidity and natural-ventilation/HVAC duplicated-analysis cleanup.
 
 ## D — Psychrometric redesign
 

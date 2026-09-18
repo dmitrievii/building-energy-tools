@@ -56,6 +56,13 @@ BINARY_BLUE_COLORSCALE = [
     [0.01, "#eff6ff"],
     [1.00, "#1d4ed8"],
 ]
+PRECIPITATION_COLORSCALE = [
+    [0.00, "#ffffff"],
+    [0.08, "#eff6ff"],
+    [0.35, "#93c5fd"],
+    [0.70, "#2563eb"],
+    [1.00, "#172554"],
+]
 PSYCHROMETRIC_TILE_COLORSCALE = [
     [0.00, "rgba(255,255,255,0.0)"],
     [0.10, "#dbeafe"],
@@ -183,6 +190,8 @@ def _heatmap_colorscale(column: str, values=None, temperature_thresholds: tuple[
         return stops
     if column in {"natural_ventilation_suitable", "night_flushing_suitable"} or "suitable" in column:
         return BINARY_SUITABILITY_COLORSCALE
+    if column == "liquid_precipitation_depth_mm":
+        return PRECIPITATION_COLORSCALE
     if "sky_cover" in column:
         return [[0.0, "rgba(255,255,255,0.0)"], [0.25, "#dbeafe"], [1.0, "#0f172a"]]
     if "radiation" in column or "irradiance" in column or "illuminance" in column:
@@ -329,6 +338,10 @@ def temporal_heatmap_chart(
     period_label = str(row_group).strip().capitalize()
     colorscale = _heatmap_colorscale(column, matrix.values, temperature_thresholds)
     zmin, zmax = _axis_limits_for_column(column, matrix.values, pad_fraction=0.0)
+    if column == "liquid_precipitation_depth_mm":
+        # A dry interval is a meaningful precipitation state. Keep the colour
+        # domain anchored at 0 mm so zero is always rendered as white.
+        zmin = 0.0
     fig = px.imshow(
         matrix,
         aspect="auto",

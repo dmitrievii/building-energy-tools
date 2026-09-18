@@ -2046,6 +2046,30 @@ def render_generic_variable_page(
         # unavailable for this extensive variable.
         chart_types.remove("Profile with min-mean-max ribbon")
     chart_type = st.selectbox("Chart type", chart_types)
+    chart_df = df
+    if column == "liquid_precipitation_depth_mm" and chart_type in {
+        "Duration curve", "Histogram", "Monthly boxplot", "Monthly violin plot"
+    }:
+        distribution_basis = st.radio(
+            "Distribution basis",
+            ["Wet intervals only", "All intervals including dry periods"],
+            index=0,
+            horizontal=True,
+            help=(
+                "Wet intervals only describes the precipitation-event distribution. "
+                "All intervals includes the physical zero-precipitation mass and therefore also describes dry-period frequency."
+            ),
+        )
+        if distribution_basis == "Wet intervals only":
+            wet = pd.to_numeric(df[column], errors="coerce").gt(0.0)
+            chart_df = df.loc[wet].copy()
+            chart_df.attrs.update(df.attrs)
+            if chart_df.empty:
+                st.info("No wet precipitation intervals remain in the active Data filter.")
+                return
+            st.caption("Distribution calculated from observed intervals with precipitation depth > 0 mm; dry intervals are excluded.")
+        else:
+            st.caption("Distribution includes observed dry intervals at 0 mm as well as wet intervals.")
     if chart_type == "Heat map":
         heatmap_period = st.selectbox("Heat-map aggregation", ["Day", "Week", "Month"], index=0)
         compare_options = ["Hour of day"] if time_basis(df) == CHRONOLOGICAL else ["Hour of day", "Year"]
@@ -2101,19 +2125,19 @@ def render_generic_variable_page(
         elif chart_type == "Duration curve":
             ascending = st.checkbox("Ascending order", value=False)
             direction = "ascending" if ascending else "descending"
-            fig = duration_chart(df, column, f"{title_prefix}: {variable_label} {direction} duration curve", unit, ascending=ascending)
+            fig = duration_chart(chart_df, column, f"{title_prefix}: {variable_label} {direction} duration curve", unit, ascending=ascending)
         elif chart_type == "Histogram":
             bins = st.slider("Histogram bins", 10, 120, 40)
-            fig = histogram_chart(df, column, f"{title_prefix}: {variable_label} histogram", unit, bins=bins)
+            fig = histogram_chart(chart_df, column, f"{title_prefix}: {variable_label} histogram", unit, bins=bins)
         elif chart_type == "Monthly violin plot":
-            fig = monthly_box_chart(df, column, f"{title_prefix}: {variable_label} monthly violin plot", unit, violin=True)
+            fig = monthly_box_chart(chart_df, column, f"{title_prefix}: {variable_label} monthly violin plot", unit, violin=True)
         else:
-            fig = monthly_box_chart(df, column, f"{title_prefix}: {variable_label} monthly boxplot", unit, violin=False)
+            fig = monthly_box_chart(chart_df, column, f"{title_prefix}: {variable_label} monthly boxplot", unit, violin=False)
 
     if interpretation_factory:
-        text = interpretation_factory(df, column, variable_label.lower(), unit)
+        text = interpretation_factory(chart_df, column, variable_label.lower(), unit)
     else:
-        text = variable_interpretation(df, column, variable_label.lower(), unit)
+        text = variable_interpretation(chart_df, column, variable_label.lower(), unit)
     render_plot(fig, text)
 
 
@@ -4250,16 +4274,46 @@ def render_ground_temperature_page(df: pd.DataFrame, *, source_label: str, nativ
         measured_vs_calculated_table,
         monthly_ground_profile,
         profile_figure,
+        shared_temperature_range,
     )
     from epw_climate_analyzer.historical_capabilities import has_numeric_observations
 
     st.header("Ground temperature")
     measured_source = native_df if native_df is not None else df
-    measured = measured_monthly_ground(measured_source)
+    measured_all = measured_monthly_ground(measured_source)
     can_calculate = has_numeric_observations(df, "dry_bulb_temperature_c")
-    if not can_calculate and measured.empty:
+    if not can_calculate and measured_all.empty:
         st.info("Neither outdoor dry-bulb temperature nor measured ground temperatures are available in this climate interval.")
         return
+
+    calculation_df = df
+    calculation_measured_source = measured_source
+    represented_years = available_years(df) if can_calculate else []
+    if can_calculate and len(represented_years) > 1 and time_basis(df) == CHRONOLOGICAL:
+        selected_year = st.selectbox(
+            "Ground-profile year",
+            represented_years,
+            index=len(represented_years) - 1,
+            key="ground_profile_year",
+            help="Chronological multi-year data are fitted year by year so interannual differences are not collapsed.",
+        )
+        calculation_df = filter_year(df, int(selected_year))
+        measured_index = pd.DatetimeIndex(measured_source.index)
+        calculation_measured_source = measured_source.loc[measured_index.year == int(selected_year)].copy()
+        calculation_measured_source.attrs.update(measured_source.attrs)
+        st.caption(
+            f"Chronological multi-year mode: the calculated annual harmonic and measured monthly ground values are shown for {int(selected_year)} only. "
+            "Choose another real source year to compare interannual ground-temperature behaviour."
+        )
+    elif can_calculate and len(represented_years) > 1 and time_basis(df) == CALENDAR_PROFILE:
+        st.caption(
+            "Calendar profile multi-year mode: one climatological annual harmonic is fitted jointly from all represented years using calendar phase. "
+            "Equivalent calendar dates contribute to the same annual cycle; this view intentionally does not represent year-to-year change."
+        )
+    elif can_calculate and represented_years:
+        st.caption(f"Single-year ground-profile calculation from the represented source year {int(represented_years[0])}.")
+
+    measured = measured_monthly_ground(calculation_measured_source) if can_calculate else measured_all
 
     profile = None
     harmonic = None
@@ -4279,7 +4333,7 @@ def render_ground_temperature_page(df: pd.DataFrame, *, source_label: str, nativ
             max_depth = d1.number_input("Maximum depth [m]", min_value=1.0, max_value=50.0, value=15.0, step=1.0)
             step = d2.selectbox("Depth resolution [m]", [0.1, 0.25, 0.5, 1.0], index=1)
         try:
-            harmonic = fit_annual_harmonic(pd.to_numeric(df["dry_bulb_temperature_c"], errors="coerce"))
+            harmonic = fit_annual_harmonic(pd.to_numeric(calculation_df["dry_bulb_temperature_c"], errors="coerce"))
             depths = pd.Series(range(int(round(float(max_depth) / float(step))) + 1), dtype=float).to_numpy() * float(step)
             profile = monthly_ground_profile(harmonic, depths, float(conductivity), float(density), float(heat_capacity))
         except Exception as exc:
@@ -4327,8 +4381,18 @@ def render_ground_temperature_page(df: pd.DataFrame, *, source_label: str, nativ
         values = {month: float(pd.Series(profile[month].to_numpy(), index=profile.index).reindex(profile.index.union([depth])).interpolate(method="index").loc[depth]) for month in profile.columns}
         series = pd.DataFrame({"month": list(values), "temperature_c": list(values.values())})
         fig = px.line(series, x="month", y="temperature_c", markers=True, title=f"Calculated ground temperature at {depth:g} m")
-        fig.update_layout(template="plotly_white", xaxis_title="Month", yaxis_title="Ground temperature [°C]")
-        render_plot(fig, "Calculated monthly mean temperature at the selected depth.")
+        temperature_range = shared_temperature_range(profile, measured if not measured.empty else None)
+        fig.update_layout(
+            template="plotly_white",
+            xaxis_title="Month",
+            yaxis_title="Ground temperature [°C]",
+            height=520,
+        )
+        fig.update_yaxes(range=list(temperature_range))
+        render_plot(
+            fig,
+            "Calculated monthly mean temperature at the selected depth. The temperature axis is held to the common annual profile range so seasonal-amplitude damping with increasing depth remains visually comparable.",
+        )
     elif mode == "Measured shallow ground temperature":
         plot = measured.copy()
         plot["month"] = plot["month_index"].map({v: k for k, v in MONTHS.items()})
