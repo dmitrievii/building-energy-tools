@@ -10,7 +10,7 @@ import psychrolib
 from epw_climate_analyzer.chart_theme import PSYCHROMETRIC_TILE_COLORSCALE
 from epw_climate_analyzer.charts import psychrometric_chart
 from epw_climate_analyzer.comparison import ClimateDataset, psychrometric_comparison_chart
-from epw_climate_analyzer.psychrometric_distribution import psychrometric_occupancy_envelope
+from epw_climate_analyzer.psychrometric_distribution import envelope_polygon_coordinates, psychrometric_occupancy_envelope
 from epw_climate_analyzer.temporal_filtering import CHRONOLOGICAL, with_time_basis
 
 psychrolib.SetUnitSystem(psychrolib.SI)
@@ -83,10 +83,24 @@ class PsychrometricRedesign074Tests(unittest.TestCase):
         self.assertIn("2024", names)
         self.assertIn("2025", names)
 
+    def test_envelope_geometry_respects_station_pressure(self) -> None:
+        envelope = psychrometric_occupancy_envelope(_psych_frame(), target_share=0.90)
+        x_sea, y_sea = envelope_polygon_coordinates(envelope, chart_type="T-d", pressure_pa=101325.0)
+        x_high, y_high = envelope_polygon_coordinates(envelope, chart_type="T-d", pressure_pa=85000.0)
+        sea_points = [(float(x), float(y)) for x, y in zip(x_sea, y_sea, strict=True) if x is not None and y is not None]
+        high_points = [(float(x), float(y)) for x, y in zip(x_high, y_high, strict=True) if x is not None and y is not None]
+        self.assertEqual([point[0] for point in sea_points], [point[0] for point in high_points])
+        self.assertEqual(len(sea_points), len(high_points))
+        self.assertTrue(all(high_y > sea_y for (_, sea_y), (_, high_y) in zip(sea_points, high_points, strict=True) if sea_y > 0.0))
+
     def test_compare_climates_middle_90_uses_one_shared_axis_and_climate_identity(self) -> None:
+        climate_a = _psych_frame(2026)
+        climate_b = _psych_frame(2026, offset_c=3.0)
+        climate_a["atmospheric_station_pressure_pa"] = 101325.0
+        climate_b["atmospheric_station_pressure_pa"] = 85000.0
         climates = [
-            ClimateDataset("a", "Climate A", "test", None, _psych_frame(2026), []),
-            ClimateDataset("b", "Climate B", "test", None, _psych_frame(2026, offset_c=3.0), []),
+            ClimateDataset("a", "Climate A", "test", None, climate_a, []),
+            ClimateDataset("b", "Climate B", "test", None, climate_b, []),
         ]
         fig = psychrometric_comparison_chart(climates, data_display="Middle 90% envelopes")
         envelope_traces = [trace for trace in fig.data if getattr(trace, "fill", None) == "toself"]
@@ -102,10 +116,13 @@ class PsychrometricRedesign074Tests(unittest.TestCase):
         self.assertIn('["All observations", "Middle 90% envelopes"]', source)
         self.assertIn("highest-density 1 °C × 5 %RH occupancy cells", source)
         self.assertIn("one Middle-90% occupancy envelope per real source year", source)
+        self.assertIn("common RH construction grid is omitted", source)
 
     def test_temporary_d_transport_is_not_part_of_release_tree(self) -> None:
-        self.assertFalse((ROOT / "scripts" / "apply_v074_d.py").exists())
-        self.assertFalse((REPO_ROOT / ".github" / "workflows" / "v074-d-patch.yml").exists())
+        for name in ("apply_v074_d.py", "apply_v074_d_pressure.py"):
+            self.assertFalse((ROOT / "scripts" / name).exists())
+        for name in ("v074-d-patch.yml", "v074-d-pressure-patch.yml"):
+            self.assertFalse((REPO_ROOT / ".github" / "workflows" / name).exists())
 
 
 if __name__ == "__main__":
