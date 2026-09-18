@@ -25,7 +25,7 @@ Implemented in the current branch:
 
 ## B — Source-neutral UI consolidation
 
-Implemented in the current branch:
+Implemented in the current branch; qualification runs from this documented head:
 
 - Ground Temperature is nested inside **Temperature and extremes** while retaining dedicated `T(z,t)` views.
 - The standalone Ground Temperature navigation page is removed.
