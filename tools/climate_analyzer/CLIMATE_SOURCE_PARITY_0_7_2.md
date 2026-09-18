@@ -1,6 +1,6 @@
 # Climate Analyzer 0.7.2 — EPW ↔ GeoSphere parity and provider-data audit
 
-Status: audit in progress; no new analysis feature stage may start until the findings below are dispositioned.
+Status: live census verified; parity gaps identified; no new analysis feature stage should start until the scientifically closable gaps are resolved.
 
 ## Purpose
 
@@ -10,6 +10,27 @@ This stage answers two separate questions:
 2. Which live GeoSphere parameters are currently consumed by the adapter, and which useful provider measurements are being left unused?
 
 The audit deliberately distinguishes **scientific impossibility/source mismatch** from **implementation gap**. GeoSphere historical observations must not be forced to imitate EPW where the provider does not measure the required quantity.
+
+## Verified live resource census — 2026-09-18
+
+The live GeoSphere metadata endpoint was queried through the production adapter in GitHub Actions. The census completed successfully and reported:
+
+- **48 total resource parameters**;
+- **24 physical/data parameters**;
+- **24 parameter-specific quality flags**;
+- **10 / 24 physical parameters currently mapped by Climate Analyzer**;
+- **14 / 24 physical parameters currently not mapped**;
+- **0 / 24 quality flags currently retained or exposed by Climate Analyzer**.
+
+Current mapped physical provider parameters:
+
+`cglo`, `chim`, `dd`, `ffam`, `p`, `rf`, `rr`, `rrm`, `sh`, `tl`.
+
+Current unmapped physical provider parameters:
+
+`ddx`, `ff`, `ffx`, `pred`, `so`, `tb10`, `tb20`, `tb50`, `tlmax`, `tlmin`, `ts`, `tsmax`, `tsmin`, `zeitx`.
+
+The live census is intentionally repeated weekly so future provider metadata drift becomes visible rather than silently changing the application's effective source coverage.
 
 ## Current page-level parity
 
@@ -75,9 +96,9 @@ These are meaningful for ground/frost/microclimate/extreme analysis, but they ha
 
 ## Quality flags
 
-GeoSphere v2 publishes parameter-specific quality flags and code lists. The current adapter does not request or retain these flags. That means `Data Quality` currently reports structural coverage and missingness, but cannot distinguish provider statuses such as automatically/manually checked, original or changed observations.
+GeoSphere v2 currently exposes exactly **24 `*_flag` fields**, one for each physical/data parameter in the live resource census. The current adapter requests and retains none of them. `Data Quality` therefore reports structural coverage and missingness, but cannot distinguish the provider's own quality/review status for individual observations.
 
-This is a real data-utilization gap and belongs in the parity-closure stage.
+This is a real data-utilization gap and belongs in the parity-closure stage. Quality codes must remain native categorical diagnostics; they must not be averaged or summed into the canonical hourly physical-analysis frame.
 
 ## Required closure before 0.8
 
@@ -93,6 +114,8 @@ The audit recommends the following order:
 
 Only after these items are resolved should the project move to new analysis families such as historical extremes/design climate.
 
-## Live census
+## Live census implementation
 
-`deployment/geosphere_capability_census.py` reads the current official GeoSphere metadata at workflow time and writes a JSON/Markdown census. The workflow is isolated from core deterministic CI and runs on relevant changes, manually and weekly so provider metadata drift is visible.
+`deployment/geosphere_capability_census.py` reads the current official GeoSphere metadata at workflow time and writes a JSON/Markdown census. The dedicated workflow is isolated from core deterministic CI and runs on relevant changes, manually and weekly so provider metadata drift is visible.
+
+The first census workflow run completed successfully on 2026-09-18 and uploaded both JSON and Markdown evidence.
