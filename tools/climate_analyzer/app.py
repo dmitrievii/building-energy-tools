@@ -3485,13 +3485,30 @@ def render_sky_daylight(df: pd.DataFrame, *, latitude: float | None = None) -> N
         fig.update_layout(template="plotly_white", xaxis_title="Month", yaxis_title="Mean duration per represented day [h]", legend_title="")
         render_plot(fig, "Daylight is calculated geometrically; measured sunshine is summed from provider duration observations when available.")
     elif chart_group == "Measured sunshine duration":
-        render_generic_variable_page(df, ["Sunshine duration"], "Sunshine duration", "Measured sunshine duration", None)
+        sunshine = pd.to_numeric(df["sunshine_duration_s"], errors="coerce") / 3600.0
+        aggregation = st.selectbox("Aggregation", ["Daily", "Monthly", "Annual"], index=1, key="sunshine_duration_aggregation")
+        rule = {"Daily": "D", "Monthly": "MS", "Annual": "YS"}[aggregation]
+        totals = sunshine.resample(rule).sum(min_count=1).dropna().to_frame("sunshine_h")
+        if totals.empty:
+            st.info("No measured sunshine-duration values are available in the active Data filter.")
+            return
+        plot_data = totals.reset_index()
+        period_column = plot_data.columns[0]
+        fig = px.bar(plot_data, x=period_column, y="sunshine_h", title=f"Measured sunshine duration — {aggregation.lower()}")
+        fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Measured sunshine duration [h]")
+        render_plot(fig, "GeoSphere sunshine duration is a measured interval-duration quantity summed in hours. Missing observations are excluded, never replaced by zero.")
     elif chart_group == "Relative sunshine duration":
         summary = monthly_daylight_sunshine_summary(df, float(latitude))
+        if "relative_sunshine_pct" not in summary.columns:
+            st.info("Relative sunshine duration requires complete measured sunshine coverage for at least one full calendar day in the active Data filter.")
+            return
         data = summary.dropna(subset=["relative_sunshine_pct"])
+        if data.empty:
+            st.info("Relative sunshine duration requires complete measured sunshine coverage for at least one full calendar day in the active Data filter.")
+            return
         fig = px.bar(data, x="month", y="relative_sunshine_pct", title="Measured sunshine as share of astronomical daylight")
         fig.update_layout(template="plotly_white", xaxis_title="Month", yaxis_title="Relative sunshine duration [%]")
-        render_plot(fig, "Measured sunshine duration divided by the astronomical daylight duration represented by the same calendar days.")
+        render_plot(fig, "Measured sunshine duration divided by astronomical daylight only for fully observed calendar days; incomplete days are excluded rather than treated as zero sunshine.")
     elif chart_group == "Sky-cover variable explorer":
         available = [label for label, column in (("Total sky cover", "total_sky_cover_tenths"), ("Opaque sky cover", "opaque_sky_cover_tenths")) if has_numeric_observations(df, column)]
         render_generic_variable_page(df, available, available[0], "Sky cover", None)
@@ -4189,7 +4206,7 @@ def render_historical_wind(df: pd.DataFrame) -> None:
 
 
 
-def render_ground_temperature_page(df: pd.DataFrame, *, source_label: str) -> None:
+def render_ground_temperature_page(df: pd.DataFrame, *, source_label: str, native_df: pd.DataFrame | None = None) -> None:
     """Render calculated deep profiles and, when present, measured shallow soil temperatures."""
     from epw_climate_analyzer.ground_temperature import (
         animated_profile_figure,
@@ -4203,7 +4220,8 @@ def render_ground_temperature_page(df: pd.DataFrame, *, source_label: str) -> No
     from epw_climate_analyzer.historical_capabilities import has_numeric_observations
 
     st.header("Ground temperature")
-    measured = measured_monthly_ground(df)
+    measured_source = native_df if native_df is not None else df
+    measured = measured_monthly_ground(measured_source)
     can_calculate = has_numeric_observations(df, "dry_bulb_temperature_c")
     if not can_calculate and measured.empty:
         st.info("Neither outdoor dry-bulb temperature nor measured ground temperatures are available in this climate interval.")
@@ -4499,7 +4517,12 @@ def render_canonical_climate_analysis(dataset) -> None:
         st.caption("Threshold hours are evaluated on the canonical hourly analysis series. Physically incomplete source hours are absent and contribute no duration.")
         render_temperature(filtered_df)
     elif page == "Ground Temperature":
-        render_ground_temperature_page(filtered_df, source_label="GeoSphere measured")
+        native_ground_df = apply_active_global_filter(prepare_historical_native_diagnostic_frame(dataset))
+        render_ground_temperature_page(
+            filtered_df,
+            source_label="GeoSphere measured",
+            native_df=native_ground_df,
+        )
     elif page == "Humidity and Psychrometrics":
         st.caption("Moisture-threshold hours are evaluated on the canonical hourly analysis series. Physically incomplete source hours are absent and contribute no duration.")
         render_humidity(filtered_df, pressure_pa=active_pressure)

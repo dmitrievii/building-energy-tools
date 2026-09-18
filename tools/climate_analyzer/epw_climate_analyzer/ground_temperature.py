@@ -45,6 +45,12 @@ def fit_annual_harmonic(temperature: pd.Series, period_days: float = 365.0) -> A
     if int(valid.sum()) < 24:
         raise ValueError("At least 24 valid outdoor-temperature records are required.")
     idx = pd.DatetimeIndex(values.index[valid])
+    represented_day_of_year = set(int(day) for day in idx.dayofyear)
+    if len(represented_day_of_year) < 300:
+        raise ValueError(
+            "Calculated annual ground profile requires at least 300 represented calendar days; "
+            "use a near-full-year Data filter or measured ground temperatures instead."
+        )
     y = values.loc[valid].to_numpy(dtype=float)
     # Use annual phase within each represented calendar year so multi-year
     # historical data contribute to one climatological annual harmonic.
