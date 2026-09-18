@@ -4876,7 +4876,11 @@ def render_canonical_climate_analysis(dataset) -> None:
     _ensure_analysis_dependencies(include_solar=False, include_comparison=False)
     source_pressure = dataset.data.get("atmospheric_station_pressure_pa")
     valid_pressure = pd.to_numeric(source_pressure, errors="coerce").dropna() if source_pressure is not None else pd.Series(dtype=float)
-    measured_median = float(valid_pressure.median()) if not valid_pressure.empty else DEFAULT_PRESSURE_PA
+    measured_median = (
+        float(valid_pressure.median())
+        if not valid_pressure.empty
+        else pressure_from_altitude_m(float(dataset.location.elevation_m or 0.0))
+    )
     if pressure_mode == "Measured station pressure with fallback median":
         fallback_pressure = measured_median
         pressure_override = None
@@ -5070,7 +5074,11 @@ def main() -> None:
         active_pressure = float(custom_pressure or DEFAULT_PRESSURE_PA)
     else:
         valid_pressure = full_df["atmospheric_station_pressure_pa"].dropna()
-        active_pressure = float(valid_pressure.median()) if not valid_pressure.empty else DEFAULT_PRESSURE_PA
+        active_pressure = (
+            float(valid_pressure.median())
+            if not valid_pressure.empty
+            else pressure_from_altitude_m(float(epw.location.elevation_m or 0.0))
+        )
 
     filtered_df = sidebar_filters(full_df)
     if filtered_df.empty:
