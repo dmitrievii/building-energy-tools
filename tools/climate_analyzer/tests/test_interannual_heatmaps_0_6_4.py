@@ -174,7 +174,10 @@ class InterannualHeatmap064UiContractTests(unittest.TestCase):
         self.assertIn('["Monthly", "Annual", "Weekly", "Daily", "Hourly", "Seasonal"]', self.source)
 
     def test_natural_ventilation_heatmap_uses_same_dimensions(self) -> None:
-        self.assertIn('st.radio("Compare across", ["Hour of day", "Year"]', self.source)
+        self.assertIn('row_group = st.radio("Heat-map aggregation", ["Day", "Week", "Month"]', self.source)
+        self.assertIn('compare_options = ["Hour of day"] if time_basis(df_nv) == CHRONOLOGICAL else ["Hour of day", "Year"]', self.source)
+        self.assertIn('compare_across = st.radio("Compare across", compare_options', self.source)
+        self.assertIn("Switch Time basis to Calendar profile", self.source)
         self.assertIn('key="nv_heatmap_statistic"', self.source)
 
 
