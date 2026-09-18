@@ -1,12 +1,12 @@
 # Climate Analyzer 0.7.1 — GeoSphere Precipitation/Snow Live Smoke
 
-Status: implementation branch
+Status: merged to `main` and post-merge qualified
 
 ## Goal
 
 Add provider-backed operational validation for the 0.7 precipitation/snow route without making the core Climate Analyzer CI depend on GeoSphere availability.
 
-The existing general live browser audit verifies deployment propagation, catalog identity, map behaviour, responsive layout and uncaught browser errors. It does not load a measured GeoSphere interval or exercise the `Precipitation and Snow` page. 0.7.1 closes that validation gap with a separate workflow.
+The general live browser audit verifies deployment propagation, catalog identity, map behaviour, responsive layout and uncaught browser errors. It does not load a measured GeoSphere interval or exercise the dedicated precipitation/snow analyses. 0.7.1 closes that validation gap with a separate workflow.
 
 ## Isolation contract
 
@@ -25,7 +25,7 @@ The workflow runs:
 
 `deployment/geosphere_precip_snow_provider_probe.py` uses the production GeoSphere adapter against the official `klima-v2-10min` API.
 
-The first provider-backed run demonstrated that recent September intervals expose numeric `rr` and `rrm` but `sh` is entirely missing at the sampled stations. The smoke therefore must not assume that the current/default UI period is a valid snow fixture.
+The first provider-backed run demonstrated that recent September intervals expose numeric `rr` and `rrm` but `sh` is entirely missing at the sampled stations. The smoke therefore does not assume that the current/default UI period is a valid snow fixture.
 
 The revised probe:
 
@@ -48,11 +48,11 @@ No measured provider values are committed as golden data.
 `deployment/geosphere_precip_snow_live_smoke.mjs` opens the deployed Community Cloud application and performs a real user route:
 
 1. open `GeoSphere Austria`;
-2. filter to the provider-probed station;
-3. explicitly set `From date (UTC)` and `Through date (UTC)` to the validated winter fixture;
+2. filter to the provider-probed station and explicitly select it;
+3. set `From date (UTC)` and `Through date (UTC)` to the validated winter fixture;
 4. load the measured interval through the public UI;
-5. wait for `Precipitation and Snow` to become available;
-6. open the page and verify the dual-resolution caption;
+5. open `Climate — Precipitation & snow`;
+6. verify the dual-resolution caption;
 7. verify all native precipitation/snow analysis families are available;
 8. require `Snow depth explorer` only when the provider probe found strict-complete hourly `sh`;
 9. exercise annual precipitation indices;
@@ -63,9 +63,19 @@ No measured provider values are committed as golden data.
 
 The smoke fails on missing functionality or uncaught browser page errors. Browser HTTP 4xx/5xx responses are recorded as evidence rather than treated generically as fatal because Streamlit itself may emit unrelated platform requests; the functional route is the governing assertion.
 
+## Post-merge qualification
+
+Merge commit: `b9a8c790a970cc26b54f8bb392ff2911b3ec6c5e`.
+
+On that exact `main` commit the following workflows completed successfully:
+
+- `Climate Analyzer CI`;
+- `Climate Analyzer Live Browser Audit`;
+- `Climate Analyzer GeoSphere Precipitation Snow Live Smoke`.
+
 ## Evidence
 
-Each run uploads:
+Each provider-backed run uploads:
 
 - `provider-fixture.json`, including failures when provider fixture selection itself fails;
 - `geosphere-precip-snow-live-smoke.json`;
