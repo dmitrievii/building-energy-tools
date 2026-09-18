@@ -14,9 +14,18 @@ DISTRIBUTION = ROOT / "epw_climate_analyzer" / "psychrometric_distribution.py"
 
 class PsychrometricIntegration0741Tests(unittest.TestCase):
     def test_release_tree_contains_no_temporary_diagnostic_or_patch_transport(self) -> None:
-        self.assertFalse((REPO_ROOT / ".github" / "workflows" / "v0741-full-test-diagnostic.yml").exists())
-        self.assertFalse((REPO_ROOT / ".github" / "workflows" / "v0741-psychrometric-patch.yml").exists())
-        self.assertFalse((ROOT / "scripts" / "apply_v0741_psychrometric.py").exists())
+        for workflow in (
+            "v0741-full-test-diagnostic.yml",
+            "v0741-ci-diagnose.yml",
+            "v0741-psychrometric-patch.yml",
+            "v0741-pressure-fallback-patch.yml",
+        ):
+            self.assertFalse((REPO_ROOT / ".github" / "workflows" / workflow).exists(), workflow)
+        for script in (
+            "apply_v0741_psychrometric.py",
+            "apply_v0741_pressure_fallback.py",
+        ):
+            self.assertFalse((ROOT / "scripts" / script).exists(), script)
 
     def test_runtime_has_no_old_selected_cell_envelope_api(self) -> None:
         runtime = "\n".join(
@@ -47,9 +56,16 @@ class PsychrometricIntegration0741Tests(unittest.TestCase):
         self.assertIn('"Reference climate — {reference_name}"', source)
         self.assertIn("grid is only a visual psychrometric reference", source)
 
-    def test_epw_missing_pressure_fallback_is_location_specific(self) -> None:
+    def test_missing_pressure_fallbacks_are_location_specific(self) -> None:
         source = APP.read_text(encoding="utf-8")
-        self.assertIn("pressure_from_altitude_m(float(epw.location.elevation_m or 0.0))", source)
+        self.assertGreaterEqual(
+            source.count("pressure_from_altitude_m(float(epw.location.elevation_m or 0.0))"),
+            2,
+        )
+        self.assertIn(
+            "else pressure_from_altitude_m(float(dataset.location.elevation_m or 0.0))",
+            source,
+        )
 
 
 if __name__ == "__main__":
