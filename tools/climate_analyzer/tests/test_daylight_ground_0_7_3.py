@@ -21,8 +21,19 @@ class DaylightGround073Tests(unittest.TestCase):
         frame = pd.DataFrame({"sunshine_duration_s": [1800.0] * 48}, index=index)
         summary = monthly_daylight_sunshine_summary(frame, 47.0)
         june = summary[summary["month_index"] == 6].iloc[0]
+        self.assertEqual(int(june["sunshine_days"]), 2)
         self.assertGreater(float(june["relative_sunshine_pct"]), 0.0)
         self.assertLess(float(june["relative_sunshine_pct"]), 100.0)
+
+    def test_incomplete_sunshine_day_is_excluded_from_relative_ratio(self) -> None:
+        index = pd.date_range("2026-06-01", periods=48, freq="h", tz="UTC")
+        values = pd.Series([1800.0] * 48, index=index)
+        values.iloc[5] = np.nan
+        frame = pd.DataFrame({"sunshine_duration_s": values}, index=index)
+        summary = monthly_daylight_sunshine_summary(frame, 47.0)
+        june = summary[summary["month_index"] == 6].iloc[0]
+        self.assertEqual(int(june["sunshine_days"]), 1)
+        self.assertGreater(float(june["observed_daylight_h"]), 0.0)
 
     def test_ground_profile_matches_user_reference_workbook_formula(self) -> None:
         harmonic = AnnualHarmonic(
@@ -44,6 +55,12 @@ class DaylightGround073Tests(unittest.TestCase):
         self.assertAlmostEqual(fitted.mean_c, 10.5, places=6)
         self.assertAlmostEqual(fitted.sin_c, -2.3, places=6)
         self.assertAlmostEqual(fitted.cos_c, -10.9, places=6)
+
+    def test_ground_harmonic_rejects_short_seasonal_window(self) -> None:
+        index = pd.date_range("2026-01-01", periods=90 * 24, freq="h", tz="UTC")
+        values = pd.Series(5.0 + np.sin(np.arange(len(index)) / 100.0), index=index)
+        with self.assertRaisesRegex(ValueError, "300 represented calendar days"):
+            fit_annual_harmonic(values)
 
     def test_geosphere_ground_fields_are_canonical_and_pages_are_exposed(self) -> None:
         self.assertEqual(FIELD_SPEC_BY_PROVIDER["tb10"].canonical_name, "ground_temperature_0_10m_c")
