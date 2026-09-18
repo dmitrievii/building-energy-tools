@@ -78,7 +78,7 @@ class PriorityAGeoSphere073Tests(unittest.TestCase):
         self.assertIn(quality_flag_column("ffx"), canonical.columns)
         self.assertEqual(canonical[quality_flag_column("tl")].tolist(), [0, 1])
 
-    def test_new_measurements_enable_temperature_wind_and_solar_pages_without_fabrication(self) -> None:
+    def test_new_measurements_enable_temperature_wind_and_daylight_pages_without_fabrication(self) -> None:
         index = pd.date_range("2026-01-01", periods=2, freq="h", tz="UTC")
         frame = pd.DataFrame(
             {
@@ -93,10 +93,10 @@ class PriorityAGeoSphere073Tests(unittest.TestCase):
         pages = set(available_historical_pages(frame))
         self.assertIn("Temperature", pages)
         self.assertIn("Wind and Ventilation", pages)
-        self.assertIn("Solar and Radiation", pages)
+        self.assertIn("Sky and Daylight", pages)
+        self.assertNotIn("Solar and Radiation", pages)
         self.assertNotIn("Humidity and Psychrometrics", pages)
         self.assertNotIn("Natural Ventilation", pages)
-        self.assertNotIn("Sky and Daylight", pages)
 
 
 if __name__ == "__main__":
