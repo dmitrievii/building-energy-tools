@@ -53,24 +53,22 @@ class Climate0104RegressionTests(unittest.TestCase):
         zone_traces = [trace for trace in fig.data if getattr(trace, "legend", None) == "legend2" and getattr(trace, "showlegend", False)]
         self.assertEqual(sorted(trace.legendrank for trace in zone_traces), [1, 2])
 
-    def test_frequency_colorbar_is_below_axis_labels(self):
+    def test_default_climate_zone_uses_density_gradient_without_frequency_colorbar(self):
         fig = psychrometric_chart(
             self._frame(),
             chart_type="T-d",
             show_comfort_zone=False,
-            data_mode="Distributive grid",
-            color_mode="Frequency",
-            color_metric_label="Frequency [h]",
+            data_mode="Climate zone",
+            zone_coverage=0.90,
+            zone_interior_style="Density gradient",
         )
-        bars = []
-        for trace in fig.data:
-            marker = getattr(trace, "marker", None)
-            colorbar = getattr(marker, "colorbar", None) if marker is not None else None
-            if colorbar is not None and getattr(marker, "showscale", False):
-                bars.append(colorbar)
-        self.assertEqual(len(bars), 1)
-        self.assertLessEqual(bars[0].y, -0.18)
-        self.assertAlmostEqual(bars[0].x, 0.36)
+        contour_traces = [trace for trace in fig.data if trace.type == "contour"]
+        self.assertGreaterEqual(len(contour_traces), 2)
+        self.assertTrue(all(getattr(trace, "showscale", False) is False for trace in contour_traces))
+        self.assertFalse(bool(fig.layout.xaxis.autorange))
+        self.assertFalse(bool(fig.layout.yaxis.autorange))
+        self.assertIsNotNone(fig.layout.xaxis.range)
+        self.assertIsNotNone(fig.layout.yaxis.range)
 
 
 if __name__ == "__main__":
