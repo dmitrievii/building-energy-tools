@@ -1,0 +1,73 @@
+name: Climate Analyzer 0.7.3 Priority-A patch
+
+on:
+  push:
+    branches:
+      - feature/v0.7.3-geosphere-parity-closure
+    paths:
+      - tools/climate_analyzer/scripts/apply_0_7_3_priority_a_patch.py
+      - .github/workflows/climate-analyzer-v0-7-3-priority-a-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout stage branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/v0.7.3-geosphere-parity-closure
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Climate Analyzer dependencies
+        run: pip install -r tools/climate_analyzer/requirements.txt
+
+      - name: Apply deterministic Priority-A patch
+        run: python tools/climate_analyzer/scripts/apply_0_7_3_priority_a_patch.py
+
+      - name: Verify Python syntax
+        run: |
+          python -m py_compile \
+            tools/climate_analyzer/app.py \
+            tools/climate_analyzer/epw_climate_analyzer/climate_model.py \
+            tools/climate_analyzer/epw_climate_analyzer/canonical_hourly.py \
+            tools/climate_analyzer/epw_climate_analyzer/historical.py \
+            tools/climate_analyzer/epw_climate_analyzer/historical_capabilities.py \
+            tools/climate_analyzer/epw_climate_analyzer/geosphere.py \
+            tools/climate_analyzer/tests/test_priority_a_geosphere_0_7_3.py
+
+      - name: Run focused 0.7.3 regression tests
+        working-directory: tools/climate_analyzer
+        run: |
+          python -m unittest \
+            tests.test_priority_a_geosphere_0_7_3 \
+            tests.test_canonical_hourly_pipeline_0_6_5 \
+            tests.test_source_parity_audit_0_7_2
+
+      - name: Commit patched stage
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            tools/climate_analyzer/app.py \
+            tools/climate_analyzer/epw_climate_analyzer/climate_model.py \
+            tools/climate_analyzer/epw_climate_analyzer/canonical_hourly.py \
+            tools/climate_analyzer/epw_climate_analyzer/historical.py \
+            tools/climate_analyzer/epw_climate_analyzer/historical_capabilities.py \
+            tools/climate_analyzer/epw_climate_analyzer/geosphere.py \
+            tools/climate_analyzer/tests/test_source_parity_audit_0_7_2.py \
+            tools/climate_analyzer/tests/test_priority_a_geosphere_0_7_3.py
+          if git diff --cached --quiet; then
+            echo 'No Priority-A changes produced; refusing silent patch no-op.'
+            exit 1
+          fi
+          git commit -m 'Climate 0.7.3: integrate Priority-A GeoSphere measurements and quality flags'
+          git push origin HEAD:feature/v0.7.3-geosphere-parity-closure
