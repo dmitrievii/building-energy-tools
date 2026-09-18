@@ -1,0 +1,64 @@
+name: TEMP Climate 0.7.3 Restore UI
+
+on:
+  push:
+    branches:
+      - feature/v0.7.3-geosphere-parity-closure
+    paths:
+      - '.github/workflows/temp-climate-073-restore-ui.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  restore-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/v0.7.3-geosphere-parity-closure
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Restore pre-patch UI functions
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess
+
+          path = Path('tools/climate_analyzer/app.py')
+          current = path.read_text(encoding='utf-8')
+          old = subprocess.check_output([
+              'git', 'show',
+              'f905028d8e77d99b44ba54c99969ef16c4a34393:tools/climate_analyzer/app.py'
+          ], text=True)
+          start = old.index('def render_natural_ventilation(')
+          end = old.index('def render_canonical_data_quality(', start)
+          restored = old[start:end]
+          if 'def render_natural_ventilation(' in current:
+              raise SystemExit('restore guard: function already present')
+          marker = 'def render_canonical_data_quality('
+          if marker not in current:
+              raise SystemExit('restore marker missing')
+          current = current.replace(marker, restored + marker, 1)
+          path.write_text(current, encoding='utf-8')
+          PY
+          python -m py_compile tools/climate_analyzer/app.py
+          python - <<'PY'
+          from pathlib import Path
+          text = Path('tools/climate_analyzer/app.py').read_text(encoding='utf-8')
+          for name in ('render_natural_ventilation', 'render_hvac_passive', 'render_time_series_overlay', 'render_data_quality'):
+              count = text.count(f'def {name}(')
+              if count != 1:
+                  raise SystemExit(f'{name}: expected exactly one definition, got {count}')
+          PY
+      - name: Commit and self-clean
+        run: |
+          rm -f .github/workflows/temp-climate-073-restore-ui.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix: restore Climate Analyzer UI routes after ground patch"
+          git push origin HEAD:feature/v0.7.3-geosphere-parity-closure
