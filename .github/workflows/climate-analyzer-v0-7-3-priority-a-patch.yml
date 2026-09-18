@@ -1,5 +1,6 @@
 name: Climate Analyzer 0.7.3 Priority-A patch
 
+# Deterministic patch runner; temporary stage-only workflow.
 on:
   push:
     branches:
