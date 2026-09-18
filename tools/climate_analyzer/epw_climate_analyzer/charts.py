@@ -20,9 +20,11 @@ from .aggregations import (
 )
 from .temporal_filtering import CALENDAR_PROFILE, CHRONOLOGICAL, display_period_labels, is_multiyear, time_basis
 from .psychrometrics import DEFAULT_PRESSURE_PA, psychrometric_rh_curves
+from .psychrometric_distribution import envelope_polygon_coordinates, psychrometric_occupancy_envelope
 from .chart_theme import (
     BINARY_SUITABILITY_COLORSCALE,
     CLIMATE_COLORS,
+    PSYCHROMETRIC_TILE_COLORSCALE,
     DEFAULT_METRIC_COLOR,
     WIND_SPEED_COLOR_MAP,
     WIND_SPEED_LABELS,
@@ -60,13 +62,6 @@ PRECIPITATION_COLORSCALE = [
     [0.00, "#ffffff"],
     [0.08, "#eff6ff"],
     [0.35, "#93c5fd"],
-    [0.70, "#2563eb"],
-    [1.00, "#172554"],
-]
-PSYCHROMETRIC_TILE_COLORSCALE = [
-    [0.00, "rgba(255,255,255,0.0)"],
-    [0.10, "#dbeafe"],
-    [0.35, "#60a5fa"],
     [0.70, "#2563eb"],
     [1.00, "#172554"],
 ]
@@ -1248,7 +1243,13 @@ def _add_psychrometric_tile_occupancy(
     vmin, vmax = _finite_min_max(tiles["value"])
     vmin = float(vmin if vmin is not None else 0.0)
     vmax = float(vmax if vmax is not None else max(float(tiles["value"].max()), 1.0))
-    colorscale = _metric_colorscale(color_metric_column)
+    if color_metric_column is None:
+        # Frequency is a duration density: keep the scale anchored at zero and
+        # use the dedicated pale-to-saturated blue psychrometric palette.
+        vmin = 0.0
+        colorscale = PSYCHROMETRIC_TILE_COLORSCALE
+    else:
+        colorscale = _metric_colorscale(color_metric_column)
     for _, row in tiles.iterrows():
         t0 = float(row["temperature_bin_c"])
         t1 = t0 + 1.0
@@ -1336,7 +1337,12 @@ def psychrometric_chart(
     """
     fig = go.Figure()
     chart_type = "i-d" if chart_type == "i-d" else "T-d"
-    data_mode = "Hourly values" if data_mode in {"Monthly points", "Hourly values"} else "Distributive grid"
+    if data_mode in {"Monthly points", "Hourly values", "Source interval values"}:
+        data_mode = "Hourly values"
+    elif data_mode == "Middle 90% envelopes":
+        data_mode = "Middle 90% envelopes"
+    else:
+        data_mode = "Distributive grid"
     if selected_months is None:
         selected_months = list(range(1, 13))
 
@@ -1360,7 +1366,40 @@ def psychrometric_chart(
     plot_df = df[df["month_index"].isin(selected_months)].copy() if "month_index" in df.columns else df.copy()
     data_for_limits = plot_df[[x_col, y_col]].dropna().copy()
 
-    if data_mode == "Distributive grid":
+    if data_mode == "Middle 90% envelopes":
+        if time_basis(plot_df) == CHRONOLOGICAL and is_multiyear(plot_df):
+            envelope_groups: list[tuple[str, pd.DataFrame]] = []
+            for year in sorted({int(value) for value in pd.DatetimeIndex(plot_df.index).year}):
+                group = plot_df[pd.DatetimeIndex(plot_df.index).year == year].copy()
+                group.attrs.update(plot_df.attrs)
+                envelope_groups.append((str(year), group))
+        else:
+            envelope_groups = [("Middle 90% occupancy", plot_df)]
+        for index, (label, group) in enumerate(envelope_groups):
+            envelope = psychrometric_occupancy_envelope(group, target_share=0.90)
+            if envelope.selected_tiles.empty:
+                continue
+            xs, ys = envelope_polygon_coordinates(envelope, chart_type=chart_type, pressure_pa=pressure_pa)
+            color = CLIMATE_COLORS[index % len(CLIMATE_COLORS)]
+            fig.add_trace(
+                go.Scatter(
+                    x=xs,
+                    y=ys,
+                    mode="lines",
+                    name=label,
+                    legend="legend",
+                    line=dict(color=rgba(color, 0.78), width=0.55),
+                    fill="toself",
+                    fillcolor=rgba(color, 0.14),
+                    connectgaps=False,
+                    hovertemplate=(
+                        f"{label}<br>Highest-density occupancy region<br>"
+                        f"Covered duration: {envelope.achieved_share * 100.0:.1f}%<br>"
+                        f"Selected: {envelope.selected_hours:.1f} h of {envelope.total_hours:.1f} h<extra></extra>"
+                    ),
+                )
+            )
+    elif data_mode == "Distributive grid":
         metric_col = None if color_mode == "Frequency" else color_metric_column
         _add_psychrometric_tile_occupancy(fig, plot_df, chart_type, pressure_pa, t_range, d_range, h_range, metric_col, color_metric_label)
     else:
@@ -1422,7 +1461,7 @@ def psychrometric_chart(
         autosize=True,
         hovermode="closest",
         legend=dict(
-            title=dict(text="Month", font=dict(size=13)),
+            title=dict(text=("Year" if data_mode == "Middle 90% envelopes" and time_basis(plot_df) == CHRONOLOGICAL and is_multiyear(plot_df) else ("Envelope" if data_mode == "Middle 90% envelopes" else "Month")), font=dict(size=13)),
             orientation="h",
             yanchor="top",
             y=-0.12,

@@ -2468,7 +2468,22 @@ def render_compare_humidity(climates: list[ClimateDataset], reference_name: str,
         render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
     elif chart == "Psychrometric density":
         chart_type = st.radio("Psychrometric axes", ["T-d", "i-d"], horizontal=True)
-        fig = psychrometric_comparison_chart(climates, chart_type=chart_type, mode=mode, pressure_pa=pressure_pa)
+        distribution_display = st.radio(
+            "Climate distribution",
+            ["All observations", "Middle 90% envelopes"],
+            horizontal=True,
+            key="compare_psychrometric_distribution",
+        )
+        st.caption(
+            "All selected climates use one shared psychrometric axis. Middle 90% retains the densest 1 °C × 5 %RH cells containing at least 90% of each climate's represented duration."
+        )
+        fig = psychrometric_comparison_chart(
+            climates,
+            chart_type=chart_type,
+            mode=mode,
+            pressure_pa=pressure_pa,
+            data_display=distribution_display,
+        )
         render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
     else:
         metric = st.selectbox("Moisture metric", ["Mean humidity ratio [g/kg]", "Humidity ratio P95 [g/kg]", "Hours d >10 g/kg [h]", "Hours d <3 g/kg [h]", "Enthalpy P95 [kJ/kg]", "Maximum wet-bulb [°C]", "Dehumidification hours [h]", "Humidification hours [h]"])
@@ -3082,8 +3097,11 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
     elif chart_group == "Psychrometric chart":
         chart_type = st.radio("Psychrometric axes", ["T-d", "i-d"], horizontal=True)
         source_interval_mode = "Hourly values" if abs(native_interval_hours(df) - 1.0) < 1e-9 else "Source interval values"
-        data_mode = st.radio("Loaded climate data mode", [source_interval_mode, "Distributive grid"], horizontal=True)
-        st.caption("Distributive grid uses 1 °C × 5 %RH cells drawn on the real psychrometric chart geometry.")
+        data_mode = st.radio("Loaded climate data mode", [source_interval_mode, "Distributive grid", "Middle 90% envelopes"], horizontal=True)
+        if data_mode == "Distributive grid":
+            st.caption("Distributive grid uses 1 °C × 5 %RH cells drawn on the real psychrometric chart geometry; frequency is mapped from pale to saturated blue.")
+        elif data_mode == "Middle 90% envelopes":
+            st.caption("Middle 90% uses the highest-density 1 °C × 5 %RH occupancy cells covering at least 90% of represented physical duration. It is not an independent T/d percentile rectangle.")
 
         col_a, col_b, col_c = st.columns(3)
         t_min = float(df["dry_bulb_temperature_c"].min())
@@ -3122,13 +3140,21 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
             months = st.multiselect("Displayed months", list(MONTHS.keys()), default=list(MONTHS.keys()), key="psych_month_filter")
             selected_months = [MONTHS[m] for m in months]
             metric_options = list(PSYCHROMETRIC_COLOR_METRICS.keys())
-            default_metric = "Frequency" if data_mode == "Distributive grid" else "Month"
-            color_mode = st.selectbox("Colour mapped metric", metric_options, index=metric_options.index(default_metric))
-            color_metric_column, color_metric_label = PSYCHROMETRIC_COLOR_METRICS[color_mode]
-            if data_mode != "Distributive grid" and color_mode == "Frequency":
-                st.caption("Frequency is only meaningful for the distributive grid. Source interval values will be shown by month.")
+            if data_mode == "Middle 90% envelopes":
                 color_mode = "Month"
                 color_metric_column, color_metric_label = PSYCHROMETRIC_COLOR_METRICS[color_mode]
+                if time_basis(df) == CHRONOLOGICAL and is_multiyear(df):
+                    st.caption("Chronological multi-year mode draws one Middle-90% occupancy envelope per real source year; years are not folded together.")
+                else:
+                    st.caption("The active filtered climate interval is represented by one duration-weighted Middle-90% occupancy envelope.")
+            else:
+                default_metric = "Frequency" if data_mode == "Distributive grid" else "Month"
+                color_mode = st.selectbox("Colour mapped metric", metric_options, index=metric_options.index(default_metric))
+                color_metric_column, color_metric_label = PSYCHROMETRIC_COLOR_METRICS[color_mode]
+                if data_mode != "Distributive grid" and color_mode == "Frequency":
+                    st.caption("Frequency is only meaningful for the distributive grid. Source interval values will be shown by month.")
+                    color_mode = "Month"
+                    color_metric_column, color_metric_label = PSYCHROMETRIC_COLOR_METRICS[color_mode]
 
         fig = psychrometric_chart(
             df,

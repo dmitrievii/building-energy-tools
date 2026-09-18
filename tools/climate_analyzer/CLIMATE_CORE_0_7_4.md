@@ -52,9 +52,11 @@ C is closed on the current branch subject to CI qualification.
 
 ## D — Psychrometric redesign
 
-Planned:
+Implemented in D1/D2:
 
-- Chronological multi-year yearly climate envelopes.
-- Frequency palette: low frequency pale blue, high frequency saturated blue.
-- One common psychrometric comparison chart for all selected climates.
-- Envelope extent selector: **All observations** or **Middle 90%**.
+- Chronological multi-year psychrometric analysis draws one envelope per real source year; year identity is never folded away in Chronological mode.
+- Psychrometric frequency tiles use the dedicated blue duration scale: zero is transparent/white, low occupancy is pale blue and high occupancy is saturated dark blue.
+- **Middle 90%** is a two-dimensional highest-density occupancy region based on 1 °C × 5 %RH cells weighted by represented physical duration. It is not a rectangle from independent marginal T/d percentiles.
+- Ties at the 90% cutoff are retained together, so the achieved coverage may be slightly above 90% rather than arbitrarily dropping spatially equivalent cells.
+- Compare Climates uses one shared psychrometric axis for every selected climate with **All observations** and **Middle 90% envelopes** modes.
+- Comparison envelope colours retain the stable per-climate identity palette.
