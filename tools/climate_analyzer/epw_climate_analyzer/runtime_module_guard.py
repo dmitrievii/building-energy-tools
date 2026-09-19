@@ -24,7 +24,7 @@ _REQUIRED_DISTRIBUTION_API = frozenset(
     }
 )
 _REQUIRED_DISTRIBUTION_PARAMETERS = frozenset({"additional_coverages", "pressure_pa"})
-_REQUIRED_COMPARISON_PARAMETERS = frozenset({"additional_contour_coverages"})
+_REQUIRED_COMPARISON_PARAMETERS = frozenset({"additional_contour_coverages", "show_givoni_overlay", "show_heat_index_overlay"})
 
 _REQUIRED_CHART_PARAMETERS = frozenset(
     {
@@ -105,8 +105,10 @@ def ensure_current_psychrometric_runtime() -> tuple[ModuleType, ModuleType]:
 
     charts = importlib.import_module("epw_climate_analyzer.charts")
     missing_parameters = _missing_psychrometric_chart_parameters(charts)
+    charts_was_reloaded = False
     if distribution_was_reloaded or missing_parameters:
         charts = importlib.reload(charts)
+        charts_was_reloaded = True
         missing_parameters = _missing_psychrometric_chart_parameters(charts)
     if missing_parameters:
         raise RuntimeError(
@@ -120,7 +122,7 @@ def ensure_current_psychrometric_runtime() -> tuple[ModuleType, ModuleType]:
         "psychrometric_comparison_chart",
         _REQUIRED_COMPARISON_PARAMETERS,
     )
-    if missing_compare:
+    if distribution_was_reloaded or charts_was_reloaded or missing_compare:
         comparison = importlib.reload(comparison)
         missing_compare = _missing_callable_parameters(
             comparison,

@@ -33,6 +33,7 @@ from .decisions import (
 from .epw_parser import DataQualityIssue, EpwFile
 from .psychrometrics import DEFAULT_PRESSURE_PA, pressure_from_altitude_m, psychrometric_rh_curves
 from .psychrometric_distribution import add_climate_zone_traces, psychrometric_axis_ranges
+from .charts import _add_givoni_milne_overlay, _add_heat_index_overlay
 from .solar import orientation_annual_radiation, orientation_tilt_matrix, surface_irradiance_series
 from .chart_theme import (
     BINARY_SUITABILITY_COLORSCALE,
@@ -534,6 +535,8 @@ def psychrometric_comparison_chart(
     show_core_zone: bool = False,
     additional_contour_coverages: list[float] | None = None,
     reference_pressure_pa: float | None = None,
+    show_givoni_overlay: bool = False,
+    show_heat_index_overlay: bool = False,
 ) -> go.Figure:
     """Create one shared psychrometric comparison diagram.
 
@@ -637,6 +640,23 @@ def psychrometric_comparison_chart(
                     )
                 )
 
+    # These overlays are common reference layers rather than climate-specific
+    # datasets, so they use the same selected display pressure as all climates.
+    if show_givoni_overlay:
+        _add_givoni_milne_overlay(fig, chart_type, grid_pressure, None)
+    if show_heat_index_overlay:
+        heat_t_range = (t_min, t_max)
+        heat_d_range = shared_ranges[1] if chart_type == "T-d" else shared_ranges[0]
+        heat_h_range = None if chart_type == "T-d" else shared_ranges[1]
+        _add_heat_index_overlay(
+            fig,
+            chart_type,
+            grid_pressure,
+            heat_t_range,
+            heat_d_range,
+            heat_h_range,
+        )
+
     title_mode = {
         "Climate contour": "climate contours",
         "Distribution grid": "distribution grid",
@@ -654,6 +674,34 @@ def psychrometric_comparison_chart(
     )
     fig.update_xaxes(range=list(shared_ranges[0]), autorange=False)
     fig.update_yaxes(range=list(shared_ranges[1]), autorange=False)
+    if show_givoni_overlay or show_heat_index_overlay:
+        fig.update_layout(
+            legend=dict(
+                title=dict(text="Climate", font=dict(size=13)),
+                orientation="v",
+                yanchor="bottom",
+                y=0.0,
+                xanchor="left",
+                x=0.755,
+                itemsizing="constant",
+                font=dict(size=12),
+                groupclick="toggleitem",
+            ),
+            legend2=dict(
+                title=dict(text="Bioclimatic / thermal overlays", font=dict(size=13)),
+                orientation="v",
+                yanchor="top",
+                y=1.0,
+                xanchor="left",
+                x=0.755,
+                itemsizing="constant",
+                font=dict(size=12),
+                groupclick="togglegroup",
+                traceorder="normal",
+            ),
+            margin=dict(l=55, r=25, t=70, b=70),
+        )
+        fig.update_xaxes(domain=[0.0, 0.72])
     return fig
 
 def sun_path_comparison_chart(climates: list[ClimateDataset], mode: str, selected_dates: list[str]) -> go.Figure:

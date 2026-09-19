@@ -2519,6 +2519,22 @@ def render_compare_humidity(climates: list[ClimateDataset], reference_name: str,
                 "Distribution-grid comparison uses the original 1 °C × 5 %RH psychrometric cells. Climate hue identifies the dataset; cell opacity follows represented hours on one shared scale."
             )
 
+        with st.expander("Chart overlays", expanded=True):
+            overlay_c1, overlay_c2 = st.columns(2)
+            show_givoni = overlay_c1.checkbox(
+                "Show Givoni-Milne bioclimatic overlay",
+                value=True,
+                key="compare_psych_show_givoni",
+            )
+            show_heat_index = overlay_c2.checkbox(
+                "Show heat-index overlay",
+                value=False,
+                key="compare_psych_show_heat_index",
+            )
+            st.caption(
+                "Givoni-Milne zones and heat-index isolines use the same common psychrometric reference pressure as the compared climate representations."
+            )
+
         reference = next((climate for climate in climates if climate.display_name == reference_name), climates[0])
         pressure_values = pd.to_numeric(reference.data.get("atmospheric_station_pressure_pa"), errors="coerce").dropna()
         if not pressure_values.empty:
@@ -2563,6 +2579,8 @@ def render_compare_humidity(climates: list[ClimateDataset], reference_name: str,
             show_core_zone=False,
             additional_contour_coverages=additional_contour_coverages,
             reference_pressure_pa=float(reference_grid_pressure),
+            show_givoni_overlay=show_givoni,
+            show_heat_index_overlay=show_heat_index,
         )
         render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
     else:
