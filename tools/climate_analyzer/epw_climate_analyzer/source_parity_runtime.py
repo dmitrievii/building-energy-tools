@@ -68,9 +68,11 @@ def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     # preserves the established lightweight-startup contract.
     from . import source_parity_ui as parity
     from .source_parity_fixes import apply_source_parity_fixes
+    from .source_parity_resolution import enforce_native_timeseries_only
 
     proxy = _GlobalsProxy(namespace)
     parity.install_source_parity_ui(proxy)
     apply_source_parity_fixes(proxy, parity)
+    enforce_native_timeseries_only(parity)
     namespace["_SOURCE_PARITY_RUNTIME_INSTALLED"] = True
     return True
