@@ -202,7 +202,7 @@ def sky_interpretation(df: pd.DataFrame) -> str:
 
 
 def psychrometric_interpretation(df: pd.DataFrame) -> str:
-    """Interpret the psychrometric point cloud."""
+    """Interpret psychrometric conditions and preserve real-year change."""
     d = df["humidity_ratio_g_kg"].dropna()
     h = df["moist_air_enthalpy_kj_kg"].dropna()
     if d.empty or h.empty:
@@ -210,11 +210,42 @@ def psychrometric_interpretation(df: pd.DataFrame) -> str:
     dry = _duration_hours_from_count(df, int((d < 3).sum()))
     humid = _duration_hours_from_count(df, int((d > 10).sum()))
     high_enthalpy = _duration_hours_from_count(df, int((h > 55).sum()))
-    return (
+    text = (
         f"The humidity-ratio range is {_fmt(d.min())}...{_fmt(d.max())} g/kg. "
         f"There are {_fmt_hours(dry)} very dry hours below 3 g/kg and {_fmt_hours(humid)} humid hours above 10 g/kg. "
         f"{_fmt_hours(high_enthalpy)} hours exceed 55 kJ/kg moist-air enthalpy, which is relevant for economizer and cooling/dehumidification decisions."
     )
+    if isinstance(df.index, pd.DatetimeIndex) and time_basis(df) == CHRONOLOGICAL:
+        years = pd.DatetimeIndex(df.index).year
+        unique_years = sorted({int(value) for value in years})
+        if len(unique_years) >= 2:
+            annual_rows = []
+            interval_h = native_interval_hours(df)
+            for year in unique_years:
+                mask = years == year
+                d_year = pd.to_numeric(df.loc[mask, "humidity_ratio_g_kg"], errors="coerce").dropna()
+                h_year = pd.to_numeric(df.loc[mask, "moist_air_enthalpy_kj_kg"], errors="coerce").dropna()
+                if d_year.empty or h_year.empty:
+                    continue
+                annual_rows.append(
+                    {
+                        "year": year,
+                        "mean_d": float(d_year.mean()),
+                        "p95_d": float(d_year.quantile(0.95)),
+                        "high_enthalpy_h": float((h_year > 55.0).sum()) * interval_h,
+                    }
+                )
+            if len(annual_rows) >= 2:
+                first = annual_rows[0]
+                last = annual_rows[-1]
+                wettest = max(annual_rows, key=lambda row: row["p95_d"])
+                text += (
+                    f" Across real years, mean humidity ratio changes from {first['mean_d']:.1f} g/kg in {first['year']} "
+                    f"to {last['mean_d']:.1f} g/kg in {last['year']}; the highest annual P95 is {wettest['p95_d']:.1f} g/kg "
+                    f"in {wettest['year']}. High-enthalpy duration changes from {_fmt_hours(first['high_enthalpy_h'])} to "
+                    f"{_fmt_hours(last['high_enthalpy_h'])} hours between the first and last represented years."
+                )
+    return text
 
 
 def hvac_interpretation(df: pd.DataFrame) -> str:

@@ -7,25 +7,28 @@ import numpy as np
 import pandas as pd
 import psychrolib
 
-from epw_climate_analyzer.chart_theme import PSYCHROMETRIC_TILE_COLORSCALE
 from epw_climate_analyzer.charts import psychrometric_chart
 from epw_climate_analyzer.comparison import ClimateDataset, psychrometric_comparison_chart
-from epw_climate_analyzer.psychrometric_distribution import envelope_polygon_coordinates, psychrometric_occupancy_envelope
+from epw_climate_analyzer.psychrometric_distribution import psychrometric_axis_ranges, psychrometric_density_field
 from epw_climate_analyzer.temporal_filtering import CHRONOLOGICAL, with_time_basis
 
 psychrolib.SetUnitSystem(psychrolib.SI)
 ROOT = Path(__file__).resolve().parents[1]
-REPO_ROOT = ROOT.parents[1]
 APP = ROOT / "app.py"
+DIST = ROOT / "epw_climate_analyzer" / "psychrometric_distribution.py"
 
 
-def _psych_frame(year: int = 2026, *, offset_c: float = 0.0) -> pd.DataFrame:
-    states = [(20.2 + offset_c, 47.0)] * 60 + [(25.2 + offset_c, 57.0)] * 30 + [(30.2 + offset_c, 77.0)] * 10
-    index = pd.date_range(f"{year}-01-01", periods=len(states), freq="h")
-    t = np.array([item[0] for item in states], dtype=float)
-    rh = np.array([item[1] for item in states], dtype=float)
-    pressure = 101325.0
-    w = np.array([psychrolib.GetHumRatioFromRelHum(float(tt), float(rr) / 100.0, pressure) for tt, rr in states])
+def _psych_frame(year: int = 2026, *, offset_c: float = 0.0, pressure_pa: float = 101325.0) -> pd.DataFrame:
+    rng = np.random.default_rng(year)
+    n = 720
+    t = np.concatenate([
+        rng.normal(8.0 + offset_c, 3.0, n // 3),
+        rng.normal(19.0 + offset_c, 3.2, n // 3),
+        rng.normal(28.0 + offset_c, 2.8, n - 2 * (n // 3)),
+    ])
+    rh = np.clip(72.0 - 0.9 * t + rng.normal(0.0, 8.0, n), 20.0, 98.0)
+    index = pd.date_range(f"{year}-01-01", periods=n, freq="h")
+    w = np.array([psychrolib.GetHumRatioFromRelHum(float(tt), float(rr) / 100.0, pressure_pa) for tt, rr in zip(t, rh, strict=True)])
     d = w * 1000.0
     h = np.array([psychrolib.GetMoistAirEnthalpy(float(tt), float(ww)) / 1000.0 for tt, ww in zip(t, w, strict=True)])
     frame = pd.DataFrame(
@@ -34,6 +37,7 @@ def _psych_frame(year: int = 2026, *, offset_c: float = 0.0) -> pd.DataFrame:
             "relative_humidity_pct": rh,
             "humidity_ratio_g_kg": d,
             "moist_air_enthalpy_kj_kg": h,
+            "atmospheric_station_pressure_pa": pressure_pa,
             "month_index": index.month,
             "month_name": index.strftime("%b"),
             "hour_of_day": index.hour,
@@ -43,86 +47,107 @@ def _psych_frame(year: int = 2026, *, offset_c: float = 0.0) -> pd.DataFrame:
     return with_time_basis(frame, CHRONOLOGICAL)
 
 
-class PsychrometricRedesign074Tests(unittest.TestCase):
-    def test_middle_90_is_duration_weighted_joint_highest_density_region(self) -> None:
-        envelope = psychrometric_occupancy_envelope(_psych_frame(), target_share=0.90)
-        self.assertAlmostEqual(envelope.total_hours, 100.0)
-        self.assertAlmostEqual(envelope.selected_hours, 90.0)
-        self.assertAlmostEqual(envelope.achieved_share, 0.90)
-        selected = envelope.selected_tiles
-        self.assertEqual(len(selected), 2)
-        self.assertFalse(np.isclose(selected["temperature_bin_c"].to_numpy(dtype=float), 30.0).any())
+class PsychrometricRedesign0741Tests(unittest.TestCase):
+    def test_zone_is_smooth_joint_density_with_requested_coverage(self) -> None:
+        frame = _psych_frame()
+        field = psychrometric_density_field(frame, target_share=0.90)
+        self.assertGreater(field.threshold_hours, 0.0)
+        self.assertGreaterEqual(field.achieved_share, 0.90)
+        self.assertLess(field.achieved_share, 0.94)
+        self.assertEqual(field.mass_hours.shape, (140, 120))
+        self.assertFalse(hasattr(field, "selected_tiles"))
+        self.assertGreater(np.count_nonzero((field.mass_hours > 0) & (field.mass_hours < field.max_mass_hours)), 100)
 
-    def test_frequency_tiles_use_zero_anchored_blue_scale(self) -> None:
+    def test_climate_zone_uses_contours_not_selected_cell_polygons(self) -> None:
         fig = psychrometric_chart(
             _psych_frame(),
             chart_type="T-d",
             show_comfort_zone=False,
             metric_layers=[],
-            data_mode="Distributive grid",
-            color_mode="Frequency",
+            data_mode="Climate zone",
+            zone_coverage=0.90,
+            zone_interior_style="Density gradient",
         )
-        scale_traces = [trace for trace in fig.data if getattr(getattr(trace, "marker", None), "showscale", False)]
-        self.assertEqual(len(scale_traces), 1)
-        marker = scale_traces[0].marker
-        self.assertAlmostEqual(float(marker.cmin), 0.0)
-        self.assertEqual(str(marker.colorscale[0][1]).lower(), str(PSYCHROMETRIC_TILE_COLORSCALE[0][1]).lower())
-        self.assertEqual(str(marker.colorscale[-1][1]).lower(), str(PSYCHROMETRIC_TILE_COLORSCALE[-1][1]).lower())
+        contour_traces = [trace for trace in fig.data if trace.type == "contour"]
+        self.assertGreaterEqual(len(contour_traces), 2)
+        self.assertFalse(any(getattr(trace, "fill", None) == "toself" for trace in fig.data))
+        self.assertIsNotNone(fig.layout.xaxis.range)
+        self.assertIsNotNone(fig.layout.yaxis.range)
 
-    def test_chronological_multiyear_single_climate_keeps_real_year_envelopes(self) -> None:
-        frame = pd.concat([_psych_frame(2024), _psych_frame(2025, offset_c=1.0)])
+    def test_multiyear_compare_selected_years_draws_independent_zones_on_fixed_axes(self) -> None:
+        frame = pd.concat([_psych_frame(2024), _psych_frame(2025, offset_c=1.5)])
         frame = with_time_basis(frame, CHRONOLOGICAL)
         fig = psychrometric_chart(
             frame,
             chart_type="T-d",
             show_comfort_zone=False,
             metric_layers=[],
-            data_mode="Middle 90% envelopes",
+            data_mode="Climate zone",
+            year_mode="Compare selected years",
+            selected_years=[2024, 2025],
         )
-        names = {str(trace.name) for trace in fig.data if getattr(trace, "fill", None) == "toself"}
-        self.assertIn("2024", names)
-        self.assertIn("2025", names)
+        legend_names = {str(trace.name) for trace in fig.data if trace.type == "scatter" and trace.showlegend}
+        self.assertIn("2024", legend_names)
+        self.assertIn("2025", legend_names)
+        self.assertFalse(bool(fig.layout.xaxis.autorange))
+        self.assertFalse(bool(fig.layout.yaxis.autorange))
 
-    def test_envelope_geometry_respects_station_pressure(self) -> None:
-        envelope = psychrometric_occupancy_envelope(_psych_frame(), target_share=0.90)
-        x_sea, y_sea = envelope_polygon_coordinates(envelope, chart_type="T-d", pressure_pa=101325.0)
-        x_high, y_high = envelope_polygon_coordinates(envelope, chart_type="T-d", pressure_pa=85000.0)
-        sea_points = [(float(x), float(y)) for x, y in zip(x_sea, y_sea, strict=True) if x is not None and y is not None]
-        high_points = [(float(x), float(y)) for x, y in zip(x_high, y_high, strict=True) if x is not None and y is not None]
-        self.assertEqual([point[0] for point in sea_points], [point[0] for point in high_points])
-        self.assertEqual(len(sea_points), len(high_points))
-        self.assertTrue(all(high_y > sea_y for (_, sea_y), (_, high_y) in zip(sea_points, high_points, strict=True) if sea_y > 0.0))
-
-    def test_compare_climates_middle_90_uses_one_shared_axis_and_climate_identity(self) -> None:
-        climate_a = _psych_frame(2026)
-        climate_b = _psych_frame(2026, offset_c=3.0)
-        climate_a["atmospheric_station_pressure_pa"] = 101325.0
-        climate_b["atmospheric_station_pressure_pa"] = 85000.0
+    def test_reference_grid_pressure_does_not_move_comparison_zone_density(self) -> None:
+        climate_a = _psych_frame(2026, pressure_pa=101325.0)
+        climate_b = _psych_frame(2026, offset_c=3.0, pressure_pa=85000.0)
         climates = [
             ClimateDataset("a", "Climate A", "test", None, climate_a, []),
             ClimateDataset("b", "Climate B", "test", None, climate_b, []),
         ]
-        fig = psychrometric_comparison_chart(climates, data_display="Middle 90% envelopes")
-        envelope_traces = [trace for trace in fig.data if getattr(trace, "fill", None) == "toself"]
-        self.assertEqual({trace.name for trace in envelope_traces}, {"Climate A", "Climate B"})
+        sea = psychrometric_comparison_chart(climates, data_display="Climate zones", reference_pressure_pa=101325.0)
+        high = psychrometric_comparison_chart(climates, data_display="Climate zones", reference_pressure_pa=85000.0)
+        sea_zone = [trace for trace in sea.data if trace.type == "contour" and "% zone" in str(trace.name)]
+        high_zone = [trace for trace in high.data if trace.type == "contour" and "% zone" in str(trace.name)]
+        self.assertEqual(len(sea_zone), 2)
+        self.assertEqual(len(high_zone), 2)
+        for left, right in zip(sea_zone, high_zone, strict=True):
+            np.testing.assert_allclose(np.asarray(left.z, dtype=float), np.asarray(right.z, dtype=float), rtol=0.0, atol=0.0)
+            np.testing.assert_allclose(np.asarray(left.x, dtype=float), np.asarray(right.x, dtype=float), rtol=0.0, atol=0.0)
+            np.testing.assert_allclose(np.asarray(left.y, dtype=float), np.asarray(right.y, dtype=float), rtol=0.0, atol=0.0)
+        self.assertEqual(tuple(sea.layout.xaxis.range), tuple(high.layout.xaxis.range))
+        self.assertEqual(tuple(sea.layout.yaxis.range), tuple(high.layout.yaxis.range))
+
+    def test_comparison_has_one_shared_axis_and_climate_zone_identity(self) -> None:
+        climates = [
+            ClimateDataset("a", "Climate A", "test", None, _psych_frame(2026), []),
+            ClimateDataset("b", "Climate B", "test", None, _psych_frame(2026, offset_c=4.0), []),
+        ]
+        fig = psychrometric_comparison_chart(climates, data_display="Climate zones")
+        legend_names = {str(trace.name) for trace in fig.data if trace.type == "scatter" and trace.showlegend}
+        self.assertEqual(legend_names, {"Climate A", "Climate B"})
         self.assertEqual(fig.layout.legend.title.text, "Climate")
         self.assertFalse(any(str(key).startswith("xaxis2") or str(key).startswith("yaxis2") for key in fig.layout))
-        self.assertFalse(any(getattr(trace, "showlegend", None) is False and getattr(trace, "hoverinfo", None) == "skip" for trace in fig.data))
+        self.assertFalse(bool(fig.layout.xaxis.autorange))
+        self.assertFalse(bool(fig.layout.yaxis.autorange))
 
-    def test_ui_exposes_common_all_observations_and_middle_90_contract(self) -> None:
+    def test_shared_axis_helper_spans_all_climates(self) -> None:
+        a = _psych_frame(2026)
+        b = _psych_frame(2026, offset_c=8.0)
+        (x0, x1), (y0, y1) = psychrometric_axis_ranges([a, b], "T-d")
+        self.assertLessEqual(x0, float(min(a["dry_bulb_temperature_c"].min(), b["dry_bulb_temperature_c"].min())))
+        self.assertGreaterEqual(x1, float(max(a["dry_bulb_temperature_c"].max(), b["dry_bulb_temperature_c"].max())))
+        self.assertLessEqual(y0, float(min(a["humidity_ratio_g_kg"].min(), b["humidity_ratio_g_kg"].min())))
+        self.assertGreaterEqual(y1, float(max(a["humidity_ratio_g_kg"].max(), b["humidity_ratio_g_kg"].max())))
+
+    def test_ui_contract_removes_cell_90_and_exposes_zone_controls(self) -> None:
         source = APP.read_text(encoding="utf-8")
-        self.assertIn('[source_interval_mode, "Distributive grid", "Middle 90% envelopes"]', source)
-        self.assertIn('"Climate distribution"', source)
-        self.assertIn('["All observations", "Middle 90% envelopes"]', source)
-        self.assertIn("highest-density 1 °C × 5 %RH occupancy cells", source)
-        self.assertIn("one Middle-90% occupancy envelope per real source year", source)
-        self.assertIn("common RH construction grid is omitted", source)
-
-    def test_temporary_d_transport_is_not_part_of_release_tree(self) -> None:
-        for name in ("apply_v074_d.py", "apply_v074_d_pressure.py"):
-            self.assertFalse((ROOT / "scripts" / name).exists())
-        for name in ("v074-d-patch.yml", "v074-d-pressure-patch.yml"):
-            self.assertFalse((REPO_ROOT / ".github" / "workflows" / name).exists())
+        distribution_source = DIST.read_text(encoding="utf-8")
+        self.assertIn('["Climate zone", "Points"]', source)
+        self.assertIn('["Climate zones", "Points"]', source)
+        self.assertIn('"Zone coverage [%]"', source)
+        self.assertIn('"Zone interior"', source)
+        self.assertIn('"Density gradient"', source)
+        self.assertIn('"Year display"', source)
+        self.assertIn('"Compare selected years"', source)
+        self.assertIn('"Reference psychrometric grid pressure"', source)
+        self.assertNotIn("highest-density 1 °C × 5 %RH occupancy cells", source)
+        self.assertNotIn("PsychrometricOccupancyEnvelope", distribution_source)
+        self.assertNotIn("selected_tiles", distribution_source)
 
 
 if __name__ == "__main__":

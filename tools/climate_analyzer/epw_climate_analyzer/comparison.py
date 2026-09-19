@@ -31,7 +31,7 @@ from .decisions import (
 )
 from .epw_parser import DataQualityIssue, EpwFile
 from .psychrometrics import DEFAULT_PRESSURE_PA, psychrometric_rh_curves
-from .psychrometric_distribution import envelope_polygon_coordinates, psychrometric_occupancy_envelope
+from .psychrometric_distribution import add_climate_zone_traces, psychrometric_axis_ranges
 from .solar import orientation_annual_radiation, orientation_tilt_matrix, surface_irradiance_series
 from .chart_theme import (
     BINARY_SUITABILITY_COLORSCALE,
@@ -367,18 +367,24 @@ def psychrometric_comparison_chart(
     chart_type: str = "T-d",
     mode: str = "Overlay",
     pressure_pa: float = DEFAULT_PRESSURE_PA,
-    data_display: str = "All observations",
+    data_display: str = "Climate zones",
+    zone_coverage: float = 0.90,
+    zone_interior_style: str = "Density gradient",
+    show_core_zone: bool = True,
+    reference_pressure_pa: float | None = None,
 ) -> go.Figure:
-    """Create one shared psychrometric comparison chart for all climates.
+    """Create one shared psychrometric comparison diagram.
 
-    ``All observations`` preserves the observed joint distribution as WebGL
-    points. ``Middle 90% envelopes`` draws duration-weighted highest-density
-    occupancy regions on the same psychrometric axes. The global comparison
-    display mode is accepted for API compatibility but this chart deliberately
-    remains shared so climate envelopes are directly comparable.
+    Climate zones are the primary representation. Their geometry comes only
+    from each climate's already calculated T-d / i-d states. ``reference_pressure_pa``
+    controls the common RH construction grid only and cannot move a climate zone.
     """
     del mode
-    if data_display not in {"All observations", "Middle 90% envelopes"}:
+    if data_display in {"All observations", "Points"}:
+        representation = "Points"
+    elif data_display in {"Climate zones", "Middle 90% envelopes"}:
+        representation = "Climate zones"
+    else:
         raise ValueError(f"Unsupported psychrometric comparison display: {data_display}")
     chart_type = "i-d" if chart_type == "i-d" else "T-d"
     colors = climate_color_map([climate.display_name for climate in climates])
@@ -394,34 +400,49 @@ def psychrometric_comparison_chart(
         x_label = "Dry-bulb temperature [°C]"
         y_label = "Moisture content d [g/kg dry air]"
 
+    shared_ranges = psychrometric_axis_ranges([climate.data for climate in climates], chart_type)
+    grid_pressure = float(reference_pressure_pa if reference_pressure_pa is not None else pressure_pa)
+    temperature_values = pd.concat(
+        [pd.to_numeric(climate.data.get("dry_bulb_temperature_c"), errors="coerce") for climate in climates],
+        ignore_index=True,
+    ).dropna()
+    if temperature_values.empty:
+        t_min, t_max = -10.0, 40.0
+    else:
+        t_min = float(temperature_values.min()) - 2.0
+        t_max = float(temperature_values.max()) + 2.0
+
+    # One explicitly chosen reference grid keeps the psychrometric background
+    # readable. It is a visual construction reference only; climate state points
+    # and density zones retain the pressure used when each dataset was derived.
+    for curve in psychrometric_rh_curves(chart_type, pressure_pa=grid_pressure, t_min_c=t_min, t_max_c=t_max):
+        fig.add_trace(
+            go.Scatter(
+                x=curve["x"],
+                y=curve["y"],
+                mode="lines",
+                line=dict(color="rgba(100,116,139,0.30)", width=0.75, dash="dash"),
+                name=str(curve["label"]),
+                showlegend=False,
+                hoverinfo="skip",
+            )
+        )
+
     for climate in climates:
         color = colors[climate.display_name]
-        if data_display == "Middle 90% envelopes":
-            envelope = psychrometric_occupancy_envelope(climate.data, target_share=0.90)
-            if envelope.selected_tiles.empty:
-                continue
-            if "atmospheric_station_pressure_pa" in climate.data.columns:
-                observed_pressure = pd.to_numeric(climate.data["atmospheric_station_pressure_pa"], errors="coerce").dropna()
-                climate_pressure_pa = float(observed_pressure.median()) if not observed_pressure.empty else float(pressure_pa)
-            else:
-                climate_pressure_pa = float(pressure_pa)
-            xs, ys = envelope_polygon_coordinates(envelope, chart_type=chart_type, pressure_pa=climate_pressure_pa)
-            fig.add_trace(
-                go.Scatter(
-                    x=xs,
-                    y=ys,
-                    mode="lines",
-                    name=climate.display_name,
-                    line=dict(color=rgba(color, 0.88), width=0.8),
-                    fill="toself",
-                    fillcolor=rgba(color, 0.12),
-                    connectgaps=False,
-                    hovertemplate=(
-                        f"{climate.display_name}<br>Middle 90% highest-density occupancy region<br>"
-                        f"Covered duration: {envelope.achieved_share * 100.0:.1f}%<br>"
-                        f"Selected: {envelope.selected_hours:.1f} h of {envelope.total_hours:.1f} h<extra></extra>"
-                    ),
-                )
+        if representation == "Climate zones":
+            add_climate_zone_traces(
+                fig,
+                climate.data,
+                chart_type=chart_type,
+                label=climate.display_name,
+                color=color,
+                coverage=float(zone_coverage),
+                interior_style=zone_interior_style,
+                axis_ranges=shared_ranges,
+                show_core=bool(show_core_zone),
+                core_coverage=0.50,
+                legendgroup=f"climate-{climate.climate_id}",
             )
         else:
             data = climate.data[[x_col, y_col]].replace([np.inf, -np.inf], np.nan).dropna()
@@ -431,27 +452,25 @@ def psychrometric_comparison_chart(
                     y=data[y_col],
                     mode="markers",
                     name=climate.display_name,
-                    marker=dict(size=3.5, opacity=0.20, color=color),
+                    marker=dict(size=3.5, opacity=0.22, color=color),
                     hovertemplate=f"{climate.display_name}<br>x: %{{x:.2f}}<br>y: %{{y:.2f}}<extra></extra>",
                 )
             )
 
-    # Do not draw one shared relative-humidity construction grid here.
-    # Different comparison climates can sit at different station pressures, so
-    # a single RH grid would imply one pressure state that is not valid for all
-    # datasets. Actual T/d or i/d observations remain directly comparable.
+    title_mode = "climate zones" if representation == "Climate zones" else "observations"
     fig.update_layout(
         template=PLOT_TEMPLATE,
-        title=f"Psychrometric climate comparison — {data_display} ({chart_type})",
+        title=f"Psychrometric climate comparison — {title_mode} ({chart_type})",
         xaxis_title=x_label,
         yaxis_title=y_label,
         hovermode="closest",
-        height=720,
+        height=760,
         legend_title_text="Climate",
         margin=dict(l=55, r=25, t=70, b=55),
     )
+    fig.update_xaxes(range=list(shared_ranges[0]), autorange=False)
+    fig.update_yaxes(range=list(shared_ranges[1]), autorange=False)
     return fig
-
 
 def sun_path_comparison_chart(climates: list[ClimateDataset], mode: str, selected_dates: list[str]) -> go.Figure:
     """Create overlay or small-multiple sun-path comparison for selected calendar dates."""

@@ -17,6 +17,7 @@ from epw_climate_analyzer.charts import (
     givoni_milne_zone_table,
     histogram_chart,
 )
+from epw_climate_analyzer.psychrometric_distribution import psychrometric_density_field
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -85,6 +86,14 @@ class CadenceFrequencyVisualTests(unittest.TestCase):
             total += float(value)
         self.assertTrue(math.isclose(total, 1.0, abs_tol=1e-9))
 
+    def test_psychrometric_climate_zone_density_is_duration_weighted(self) -> None:
+        ten = psychrometric_density_field(sample_frame(interval_minutes=10), target_share=0.90, grid_shape=(32, 32))
+        hourly = psychrometric_density_field(sample_frame(interval_minutes=60), target_share=0.90, grid_shape=(32, 32))
+        self.assertTrue(math.isclose(ten.total_hours, 1.0, abs_tol=1e-9))
+        self.assertTrue(math.isclose(hourly.total_hours, 6.0, abs_tol=1e-9))
+        self.assertGreaterEqual(ten.achieved_share, 0.90)
+        self.assertGreaterEqual(hourly.achieved_share, 0.90)
+
     def test_givoni_zone_hours_scale_with_native_cadence(self) -> None:
         ten = givoni_milne_zone_table(sample_frame(interval_minutes=10)).set_index("zone")
         hourly = givoni_milne_zone_table(sample_frame(interval_minutes=60)).set_index("zone")
@@ -95,13 +104,15 @@ class CadenceFrequencyVisualTests(unittest.TestCase):
             )
             self.assertTrue(math.isclose(float(ten.loc[zone, "share_pct"]), float(hourly.loc[zone, "share_pct"]), abs_tol=1e-9))
 
-    def test_historical_psychrometric_ui_uses_source_interval_wording_and_duration_helper(self) -> None:
+    def test_psychrometric_ui_uses_zone_first_source_neutral_contract(self) -> None:
         source = APP.read_text(encoding="utf-8")
         ast.parse(source)
-        self.assertIn('"Source interval values"', source)
-        self.assertIn('native_interval_hours(df)', source)
-        self.assertIn('data_mode != "Distributive grid"', source)
-        self.assertIn('valid climate-data hours', source)
+        self.assertIn('["Climate zone", "Points"]', source)
+        self.assertIn('"Zone coverage [%]"', source)
+        self.assertIn('"Zone interior"', source)
+        self.assertIn('"Year display"', source)
+        self.assertNotIn('data_mode != "Distributive grid"', source)
+        self.assertNotIn('"Source interval values"', source)
 
 
 if __name__ == "__main__":

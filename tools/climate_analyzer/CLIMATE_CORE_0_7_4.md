@@ -1,6 +1,6 @@
-# Climate Analyzer 0.7.4 — Temporal and source-neutral UX remediation
+# Climate Analyzer 0.7.4 / 0.7.4.1 — Temporal, source-neutral and psychrometric remediation
 
-Status: Draft implementation branch. Parent production baseline: Climate 0.7.3 (`main` merge `88b0f0138e2942f37ff3432acf4508fe3e51c5e6`).
+Status: 0.7.4.1 remediation on PR #69. Parent production baseline: Climate 0.7.4 (`main` merge `c0728c0771239fd8a77aa60bd2fdc55c254ae1e4`).
 
 ## Core architecture contract
 
@@ -48,16 +48,30 @@ Implemented and qualified in C1/C2/C3:
 - Natural Ventilation removes the redundant Month × hour route because the canonical heat map already provides Month × Hour of day, and it follows the shared Chronological/Calendar-profile temporal contract.
 - Passive-strategy annual and monthly views are consolidated under one HVAC analysis with a view selector.
 
-## D — Psychrometric redesign
+## D — Psychrometric redesign — superseded by 0.7.4.1
 
-Implemented in D1/D2:
+The selected-cell 0.7.4 implementation is no longer the release contract. 0.7.4.1 replaces it with a continuous climate-zone representation:
 
-- Chronological multi-year psychrometric analysis draws one envelope per real source year; year identity is never folded away in Chronological mode.
-- Psychrometric frequency tiles use the dedicated blue duration scale: zero is transparent/white, low occupancy is pale blue and high occupancy is saturated dark blue.
-- **Middle 90%** is a two-dimensional highest-density occupancy region based on 1 °C × 5 %RH cells weighted by represented physical duration. It is not a rectangle from independent marginal T/d percentiles.
-- Ties at the 90% cutoff are retained together, so the achieved coverage may be slightly above 90% rather than arbitrarily dropping spatially equivalent cells.
-- Compare Climates uses one shared psychrometric axis for every selected climate with **All observations** and **Middle 90% envelopes** modes.
-- Comparison envelope colours retain the stable per-climate identity palette.
-- Each comparison envelope is transformed from its T–RH occupancy cells with that climate's own median station pressure when measured station pressure is available. A single shared RH construction grid is deliberately omitted because it would imply one pressure state for climates at different elevations.
+- **Climate zone** is the default representation for single-climate and Compare Climates psychrometrics.
+- The zone is calculated from a duration-weighted two-dimensional density field in the actual displayed `T–d` or `i–d` coordinates, smoothed deterministically with NumPy.
+- The outer contour is an iso-density region containing at least the requested share of represented physical duration. Coverage is user-selectable from 50–99%, default 90%.
+- The former 1 °C × 5 %RH selected-cell mosaic and its square-cell geometry are removed from the runtime contract.
+- Zone interior can be shown as **Density gradient**, **Sparse points**, **Solid fill** or **Contour only**; an optional 50% core contour is available.
+- Chronological multi-year analysis exposes **All years combined**, **Single year** and **Compare selected years**. Real source years remain explicit.
+- Compare Climates uses one fixed shared axis domain for all selected climates.
+- Climate-state coordinates retain each source's own pressure-derived psychrometric properties. **Reference psychrometric grid pressure** is a separate visual setting and cannot move the climate zones.
+- If measured/station pressure is completely unavailable, EPW and GeoSphere fall back to standard-atmosphere pressure derived from that climate location's own elevation, not an unrelated global 101325 Pa default.
+- A permanent **Climate Analyzer Psychrometric Integration** workflow guards the density-zone, year, shared-axis and pressure-separation contracts.
 
-D is implemented; the final 0.7.4 release candidate remains Draft until the branch-wide CI, capability census and provider-backed live smoke qualification are all green on the same head.
+## E — Original 0.7.4 audit closure
+
+0.7.4.1 re-audits the full original remediation scope rather than treating psychrometrics as an isolated hotfix. The retained closure contract is:
+
+- A — chronological/calendar heat-map semantics, safe temperature colour domains, plain-language P05/P95 terminology, real-year degree-metric labels, 20 °C default KGT cooling limit, explicit frost/nighttime-hour terminology and interannual interpretations remain regression-protected.
+- B — Ground Temperature remains nested under Temperature with stable annual axes and explicit chronological-year semantics; EPW and GeoSphere retain one capability-gated wind architecture.
+- C — Overview temperature duplication remains removed; precipitation zero/wet-interval semantics, per-series Time Series styling, Sky & Daylight consolidation, Natural Ventilation route consolidation and HVAC/Humidity de-duplication remain regression-protected.
+- **Wet-bulb temperature has one generic variable home: Temperature.** It remains available to psychrometric calculations/relationships but is no longer duplicated in the generic Humidity variable explorer.
+- **Passive-strategy annual totals preserve real years.** In Chronological multi-year mode, `By year` is the default; `Selected-period summary` is an explicit opt-in pooled view.
+- Compare Climates uses the 0.7.4.1 continuous climate-zone contract described above.
+
+The release candidate must pass the full Climate Analyzer CI and the dedicated psychrometric integration gate on the same final head before PR #69 is marked Ready.
