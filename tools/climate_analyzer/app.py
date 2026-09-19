@@ -3141,7 +3141,7 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
     if chart_group == "Humidity variable explorer":
         render_generic_variable_page(
             df,
-            ["Relative humidity", "Humidity ratio", "Dew-point temperature", "Wet-bulb temperature", "Moist-air enthalpy", "Specific volume", "Moist-air density"],
+            ["Relative humidity", "Humidity ratio", "Dew-point temperature", "Moist-air enthalpy", "Specific volume", "Moist-air density"],
             "Humidity ratio",
             "Humidity",
             None,
@@ -4077,14 +4077,58 @@ def render_hvac_passive(df: pd.DataFrame) -> None:
             key="passive_strategy_view",
         )
         if view == "Annual totals":
-            table = passive_strategy_table(df)
-            fig = px.bar(
-                table,
-                x="hours",
-                y="strategy",
-                orientation="h",
-                title="Annual passive and HVAC strategy hours",
-            )
+            chronological_multiyear = time_basis(df) == CHRONOLOGICAL and len(available_years(df)) > 1
+            annual_summary = "Selected-period summary"
+            if chronological_multiyear:
+                annual_summary = st.radio(
+                    "Annual summary",
+                    ["By year", "Selected-period summary"],
+                    index=0,
+                    horizontal=True,
+                    key="passive_strategy_annual_summary",
+                    help=(
+                        "By year keeps every real source year separate in Chronological mode. "
+                        "Selected-period summary deliberately pools the currently filtered interval."
+                    ),
+                )
+
+            if annual_summary == "By year":
+                annual_frames = []
+                for year in available_years(df):
+                    year_frame = filter_year(df, int(year))
+                    year_table = passive_strategy_table(year_frame).copy()
+                    year_table.insert(0, "year", str(int(year)))
+                    annual_frames.append(year_table)
+                table = pd.concat(annual_frames, ignore_index=True)
+                fig = px.bar(
+                    table,
+                    x="hours",
+                    y="strategy",
+                    color="year",
+                    barmode="group",
+                    orientation="h",
+                    title="Passive and HVAC strategy hours by year",
+                    labels={"year": "Year"},
+                )
+                st.caption(
+                    "Chronological multi-year mode: annual strategy hours are separated by real source year. "
+                    "No climatological folding or cross-year pooling is applied in this default view."
+                )
+            else:
+                table = passive_strategy_table(df)
+                fig = px.bar(
+                    table,
+                    x="hours",
+                    y="strategy",
+                    orientation="h",
+                    title="Passive and HVAC strategy hours — selected period",
+                )
+                if chronological_multiyear:
+                    st.caption(
+                        "Selected-period summary intentionally pools all currently filtered chronological years. "
+                        "Use By year for interannual comparison."
+                    )
+
             fig.update_layout(template="plotly_white", xaxis_title="Hours", yaxis_title="Strategy")
             st.plotly_chart(
                 fig,
