@@ -1,9 +1,11 @@
 """Provider-neutral preparation helpers for real historical climate datasets.
 
-Historical observations keep their real timezone-aware timestamps. Provider-
-native data remain intact for provenance, export and native diagnostics. Ordinary
-analysis is prepared from one canonical hourly representation before calendar
-columns or derived psychrometric quantities are added.
+Provider-native observations remain intact for provenance, export and native
+source diagnostics.  Ordinary scientific analysis uses one canonical hourly
+representation.  Source timestamp timezone and building-analysis clock are
+separate: hourly normalization happens on the provider timeline first, then the
+same physical instants can be represented in local civil/standard time before
+calendar columns and calendar-based analyses are evaluated.
 """
 
 from __future__ import annotations
@@ -13,17 +15,19 @@ import weakref
 
 import pandas as pd
 
+from .analysis_clock import (
+    SOURCE_TIME,
+    AnalysisClockMode,
+    add_calendar_columns,
+    prepare_analysis_calendar,
+)
 from .canonical_hourly import CANONICAL_ANALYSIS_INTERVAL_MINUTES, canonical_hourly_analysis_frame
 from .climate_model import CanonicalClimateDataset
 from .decisions import add_degree_metrics
 from .psychrometrics import DEFAULT_PRESSURE_PA, add_psychrometric_properties
+from .solar import ensure_solar_radiation_components
 
 
-# Identity caches: the active CanonicalClimateDataset object lives in Streamlit
-# session state across reruns. Keep exactly one normalized hourly frame and one
-# calendar-enriched native diagnostics frame for that object without hashing its
-# large provider dataframe. Weak references remove entries automatically when
-# the source dataset leaves the session.
 _HOURLY_CACHE_LOCK = RLock()
 _HOURLY_CACHE: dict[int, tuple[weakref.ReferenceType[CanonicalClimateDataset], pd.DataFrame]] = {}
 _NATIVE_DIAGNOSTIC_CACHE: dict[int, tuple[weakref.ReferenceType[CanonicalClimateDataset], pd.DataFrame]] = {}
@@ -40,6 +44,7 @@ def _remove_identity_cache_entry(
 
 
 def _canonical_hourly_for_dataset(dataset: CanonicalClimateDataset) -> pd.DataFrame:
+    """Return cached canonical hourly physics on the original provider timeline."""
     key = id(dataset)
     with _HOURLY_CACHE_LOCK:
         cached = _HOURLY_CACHE.get(key)
@@ -71,39 +76,33 @@ def clear_historical_hourly_cache() -> None:
 
 
 def add_historical_calendar_columns(df: pd.DataFrame) -> pd.DataFrame:
-    """Add analysis calendar columns without changing real historical timestamps."""
-    if not isinstance(df.index, pd.DatetimeIndex):
-        raise TypeError("Historical climate data require a pandas DatetimeIndex.")
-    attrs = dict(df.attrs)
-    data = df.copy()
-    index = pd.DatetimeIndex(data.index)
-    data["year"] = index.year
-    data["date"] = index.date
-    data["month_index"] = index.month
-    data["month_name"] = index.month_name().str.slice(stop=3)
-    data["day_of_year"] = index.dayofyear
-    data["week_of_year"] = index.isocalendar().week.astype(int)
-    data["hour_of_day"] = index.hour
-    data["season"] = data["month_index"].map(
-        {
-            12: "Winter", 1: "Winter", 2: "Winter",
-            3: "Spring", 4: "Spring", 5: "Spring",
-            6: "Summer", 7: "Summer", 8: "Summer",
-            9: "Autumn", 10: "Autumn", 11: "Autumn",
-        }
+    """Backward-compatible alias for source-neutral calendar-column creation."""
+    return add_calendar_columns(df)
+
+
+def _calendar_frame(
+    df: pd.DataFrame,
+    *,
+    analysis_clock_mode: AnalysisClockMode,
+    local_timezone_name: str | None,
+    standard_utc_offset_hours: float | None,
+    source_timezone_name: str | None,
+) -> pd.DataFrame:
+    return prepare_analysis_calendar(
+        df,
+        mode=analysis_clock_mode,
+        local_timezone_name=local_timezone_name,
+        standard_utc_offset_hours=standard_utc_offset_hours,
+        source_timezone_name=source_timezone_name,
     )
-    data.attrs.update(attrs)
-    return data
 
 
 def prepare_historical_native_diagnostic_frame(dataset: CanonicalClimateDataset) -> pd.DataFrame:
-    """Return calendar-enriched provider-native observations for Data Quality.
+    """Return provider-native observations for source Data Quality.
 
-    This route deliberately does not use the canonical hourly normalizer. It is
-    the source-of-truth frame for timestamp gaps, provider-record counts,
-    per-variable measured coverage and native-resolution missingness. Calendar
-    helper columns are cached only to support the same global Data filter without
-    mutating ``dataset.data``.
+    Diagnostics deliberately remain on the provider/source clock.  User-facing
+    building analysis may use another clock, but a source gap at 12:10 UTC must
+    still be audited as the actual provider timestamp rather than relabelled.
     """
     key = id(dataset)
     with _HOURLY_CACHE_LOCK:
@@ -111,7 +110,13 @@ def prepare_historical_native_diagnostic_frame(dataset: CanonicalClimateDataset)
         if cached is not None and cached[0]() is dataset:
             return cached[1]
 
-    native = add_historical_calendar_columns(dataset.data)
+    native = _calendar_frame(
+        dataset.data,
+        analysis_clock_mode=SOURCE_TIME,
+        local_timezone_name=None,
+        standard_utc_offset_hours=None,
+        source_timezone_name=dataset.temporal.timezone_name,
+    )
     source_minutes = int(dataset.temporal.native_interval_minutes)
     native.attrs["canonical_source_interval_minutes"] = source_minutes
     native.attrs["canonical_native_interval_minutes"] = source_minutes
@@ -130,45 +135,95 @@ def prepare_historical_native_diagnostic_frame(dataset: CanonicalClimateDataset)
     return native
 
 
+def prepare_historical_native_analysis_frame(
+    dataset: CanonicalClimateDataset,
+    *,
+    analysis_clock_mode: AnalysisClockMode = SOURCE_TIME,
+    local_timezone_name: str | None = None,
+    standard_utc_offset_hours: float | None = None,
+    include_psychrometrics: bool = False,
+    include_solar: bool = False,
+    fallback_pressure_pa: float = DEFAULT_PRESSURE_PA,
+) -> pd.DataFrame:
+    """Prepare provider-native data for the Time Series page only.
+
+    No temporal upsampling/downsampling is performed.  This function exists so
+    sub-hourly observations can be inspected without forcing every climate chart
+    to process the provider cadence.  Other analysis pages should use
+    :func:`prepare_historical_analysis_frame`.
+    """
+    source = dataset.data.copy()
+    data = _calendar_frame(
+        source,
+        analysis_clock_mode=analysis_clock_mode,
+        local_timezone_name=local_timezone_name,
+        standard_utc_offset_hours=standard_utc_offset_hours,
+        source_timezone_name=dataset.temporal.timezone_name,
+    )
+    if include_psychrometrics:
+        required = {"dry_bulb_temperature_c", "relative_humidity_pct"}
+        if required.issubset(data.columns):
+            data = add_psychrometric_properties(data, fallback_pressure_pa=float(fallback_pressure_pa))
+    if include_solar:
+        data = ensure_solar_radiation_components(
+            data,
+            latitude=float(dataset.location.latitude),
+            longitude=float(dataset.location.longitude),
+            elevation_m=dataset.location.elevation_m,
+            timezone_name=local_timezone_name,
+        )
+    source_minutes = int(dataset.temporal.native_interval_minutes)
+    data.attrs["canonical_source_interval_minutes"] = source_minutes
+    data.attrs["canonical_native_interval_minutes"] = source_minutes
+    data.attrs["canonical_analysis_interval_minutes"] = source_minutes
+    data.attrs["canonical_frame_role"] = "native-time-series"
+    data.attrs["canonical_calendar_mode"] = dataset.temporal.calendar_mode
+    data.attrs["canonical_timezone_name"] = dataset.temporal.timezone_name
+    return data
+
+
 def prepare_historical_analysis_frame(
     dataset: CanonicalClimateDataset,
     *,
     include_psychrometrics: bool = False,
+    include_solar: bool = False,
     fallback_pressure_pa: float = DEFAULT_PRESSURE_PA,
     pressure_override_pa: float | None = None,
+    analysis_clock_mode: AnalysisClockMode = SOURCE_TIME,
+    local_timezone_name: str | None = None,
+    standard_utc_offset_hours: float | None = None,
 ) -> pd.DataFrame:
-    """Prepare the cached canonical hourly frame used by ordinary analyses.
+    """Prepare the canonical hourly frame used by ordinary analyses.
 
-    Provider-native observations are normalized once per active dataset object
-    before any calendar helpers or derived variables are added. Sub-hourly state
-    variables use arithmetic means, extensive interval quantities use sums, and
-    circular quantities use circular means. Strict hourly completeness is
-    enforced by :func:`canonical_hourly_analysis_frame`.
-
-    Temperature-derived degree-hour proxies are added to historical hourly data
-    whenever dry-bulb temperature is available. This keeps the historical route
-    aligned with the EPW analysis pipeline without changing source values.
-
-    ``pressure_override_pa`` is an explicit calculation-mode override. When it
-    is ``None``, valid hourly measured station pressure is retained record by
-    record and ``fallback_pressure_pa`` is used only for missing/invalid values.
-    When an override is supplied, the hourly pressure series is deliberately
-    replaced before psychrometric derivation.
+    Sub-hourly source values are normalized on the provider timeline first. Only
+    after that physical aggregation is complete is the index represented in the
+    selected analysis clock.  This prevents DST changes from creating malformed
+    50/70-minute aggregation windows while ensuring occupancy, day/night and
+    month-hour analyses use the intended local clock.
     """
     hourly = _canonical_hourly_for_dataset(dataset)
-    data = add_historical_calendar_columns(hourly)
+    data = _calendar_frame(
+        hourly,
+        analysis_clock_mode=analysis_clock_mode,
+        local_timezone_name=local_timezone_name,
+        standard_utc_offset_hours=standard_utc_offset_hours,
+        source_timezone_name=dataset.temporal.timezone_name,
+    )
     if "dry_bulb_temperature_c" in data.columns:
         data = add_degree_metrics(data)
     data.attrs["canonical_frame_role"] = "hourly-analysis"
     data.attrs["canonical_source_interval_minutes"] = int(dataset.temporal.native_interval_minutes)
+    data.attrs["canonical_native_interval_minutes"] = CANONICAL_ANALYSIS_INTERVAL_MINUTES
     data.attrs["canonical_analysis_interval_minutes"] = CANONICAL_ANALYSIS_INTERVAL_MINUTES
     data.attrs["canonical_calendar_mode"] = dataset.temporal.calendar_mode
     data.attrs["canonical_timezone_name"] = dataset.temporal.timezone_name
+
     if pressure_override_pa is not None:
         pressure_override = float(pressure_override_pa)
         if not 30_000.0 <= pressure_override <= 120_000.0:
             raise ValueError("Historical psychrometric pressure override must be within 30000...120000 Pa.")
         data["atmospheric_station_pressure_pa"] = pressure_override
+
     if include_psychrometrics:
         required = {"dry_bulb_temperature_c", "relative_humidity_pct"}
         missing = sorted(required - set(data.columns))
@@ -179,12 +234,20 @@ def prepare_historical_analysis_frame(
         if "atmospheric_station_pressure_pa" not in data.columns:
             data["atmospheric_station_pressure_pa"] = float(fallback_pressure_pa)
         data = add_psychrometric_properties(data, fallback_pressure_pa=float(fallback_pressure_pa))
-        # Derived psychrometrics inherit the hourly analysis cadence, not the
-        # provider-native sub-hourly cadence retained on the source dataset.
-        data.attrs["canonical_native_interval_minutes"] = CANONICAL_ANALYSIS_INTERVAL_MINUTES
-        data.attrs["canonical_analysis_interval_minutes"] = CANONICAL_ANALYSIS_INTERVAL_MINUTES
-        data.attrs["canonical_source_interval_minutes"] = int(dataset.temporal.native_interval_minutes)
-        data.attrs["canonical_frame_role"] = "hourly-analysis"
-        data.attrs["canonical_calendar_mode"] = dataset.temporal.calendar_mode
-        data.attrs["canonical_timezone_name"] = dataset.temporal.timezone_name
+
+    if include_solar:
+        data = ensure_solar_radiation_components(
+            data,
+            latitude=float(dataset.location.latitude),
+            longitude=float(dataset.location.longitude),
+            elevation_m=dataset.location.elevation_m,
+            timezone_name=local_timezone_name,
+        )
+
+    data.attrs["canonical_native_interval_minutes"] = CANONICAL_ANALYSIS_INTERVAL_MINUTES
+    data.attrs["canonical_analysis_interval_minutes"] = CANONICAL_ANALYSIS_INTERVAL_MINUTES
+    data.attrs["canonical_source_interval_minutes"] = int(dataset.temporal.native_interval_minutes)
+    data.attrs["canonical_frame_role"] = "hourly-analysis"
+    data.attrs["canonical_calendar_mode"] = dataset.temporal.calendar_mode
+    data.attrs["canonical_timezone_name"] = dataset.temporal.timezone_name
     return data

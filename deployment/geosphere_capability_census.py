@@ -7,45 +7,183 @@ from pathlib import Path
 import pandas as pd
 
 from epw_climate_analyzer.climate_model import CANONICAL_VARIABLES
-from epw_climate_analyzer.geosphere import FIELD_SPEC_BY_PROVIDER, fetch_metadata, parse_parameters
+from epw_climate_analyzer.geosphere import (
+    available_resource_specs,
+    fetch_metadata,
+    parse_parameters,
+    parse_stations,
+    supported_parameter_mapping,
+)
 from epw_climate_analyzer.historical_capabilities import available_historical_pages
 from epw_climate_analyzer.ui_contract import NAVIGATION_PAGES
 
-HIGH_PRIORITY_MISSING = {
-    "ffx": "maximum 10-minute wind gust speed",
-    "ddx": "wind direction at maximum gust",
-    "so": "sunshine duration",
-    "tlmin": "10-minute minimum 2 m air temperature",
-    "tlmax": "10-minute maximum 2 m air temperature",
+
+CORE_CANONICAL = {
+    "dry_bulb_temperature_c",
+    "relative_humidity_pct",
+    "atmospheric_station_pressure_pa",
+    "wind_speed_m_s",
+    "wind_direction_deg",
 }
-SECONDARY_BUILDING_RELEVANT = {
-    "tb10": "soil temperature at -10 cm",
-    "tb20": "soil temperature at -20 cm",
-    "tb50": "soil temperature at -50 cm",
-    "ts": "air temperature at 5 cm",
-    "tsmin": "10-minute minimum air temperature at 5 cm",
-    "tsmax": "10-minute maximum air temperature at 5 cm",
-    "zeitx": "time of maximum gust inside the 10-minute interval",
-}
-LOW_PRIORITY_OR_REDUNDANT = {
-    "ff": "vector-mean 10 m wind speed; arithmetic mean ffam is already used",
-    "pred": "sea-level-reduced pressure; station pressure p is the correct psychrometric input",
+SOLAR_CANONICAL = {
+    "global_horizontal_radiation_wh_m2",
+    "diffuse_horizontal_radiation_wh_m2",
 }
 
 
-def static_page_audit() -> dict[str, object]:
+def static_page_audit(canonical_columns: set[str]) -> dict[str, object]:
     idx = pd.date_range("2026-01-01", periods=24, freq="h", tz="UTC")
-    data: dict[str, list[float]] = {}
-    for spec in FIELD_SPEC_BY_PROVIDER.values():
-        data[spec.canonical_name] = [1.0] * len(idx)
-    frame = pd.DataFrame(data, index=idx)
+    frame = pd.DataFrame({column: [1.0] * len(idx) for column in sorted(canonical_columns)}, index=idx)
     historical = list(available_historical_pages(frame))
     epw = list(NAVIGATION_PAGES)
     return {
         "epw_navigation_pages": epw,
-        "geosphere_current_pages_with_all_supported_observations": historical,
+        "geosphere_pages_with_all_resource_mapped_observations": historical,
         "missing_geosphere_pages": [page for page in epw if page not in historical],
         "shared_pages": [page for page in epw if page in historical],
+    }
+
+
+def _resource_report(resource_id: str, timeout_s: int) -> dict[str, object]:
+    spec = next(item for item in available_resource_specs() if item.resource_id == resource_id)
+    metadata = fetch_metadata(resource_id=resource_id, timeout_s=timeout_s)
+    parameters = parse_parameters(metadata)
+    mapping = supported_parameter_mapping(metadata, resource_id=resource_id)
+    stations = parse_stations(metadata)
+
+    names = sorted(parameters)
+    physical = [name for name in names if not name.endswith("_flag")]
+    flags = [name for name in names if name.endswith("_flag")]
+    supported_provider = sorted(mapping)
+    unsupported_provider = sorted(set(physical) - set(supported_provider))
+    canonical_supported = sorted({item.canonical_name for item in mapping.values()})
+    canonical_set = set(canonical_supported)
+    missing_core = sorted(CORE_CANONICAL - canonical_set)
+    if missing_core:
+        raise RuntimeError(
+            f"GeoSphere live metadata for {resource_id} no longer satisfy the Climate Analyzer core contract: "
+            + ", ".join(missing_core)
+        )
+
+    matching_flags = sorted(f"{name}_flag" for name in supported_provider if f"{name}_flag" in parameters)
+    code_list_flags = sorted(
+        name for name in matching_flags if parameters[name].code_list_ref
+    )
+
+    radiation = {
+        name: {
+            "provider": item.provider_name,
+            "scale_to_interval_wh_m2": float(item.scale),
+            "interval_semantics": item.interval_semantics,
+        }
+        for name, item in ((field.canonical_name, field) for field in mapping.values())
+        if name in SOLAR_CANONICAL
+    }
+
+    # Fail closed on the two resource contracts that are critical to cadence
+    # parity.  The provider can add fields freely, but it may not silently change
+    # the hourly wind identity or radiation interval conversion underneath us.
+    if resource_id == "klima-v2-1h":
+        if int(spec.native_interval_minutes) != 60:
+            raise RuntimeError("klima-v2-1h resource contract is no longer 60 minutes")
+        hourly_wind = mapping.get("ff")
+        if hourly_wind is None or hourly_wind.canonical_name != "wind_speed_m_s":
+            raise RuntimeError("klima-v2-1h live metadata no longer validate ff -> wind_speed_m_s")
+        for provider_name in ("cglo", "chim"):
+            field = mapping.get(provider_name)
+            if field is not None and abs(float(field.scale) - 1.0) > 1e-12:
+                raise RuntimeError(f"klima-v2-1h {provider_name} radiation scale must remain 1.0 Wh/m² per W/m² hourly mean")
+    elif resource_id == "klima-v2-10min":
+        ten_min_wind = mapping.get("ffam")
+        if ten_min_wind is None or ten_min_wind.canonical_name != "wind_speed_m_s":
+            raise RuntimeError("klima-v2-10min live metadata no longer validate ffam -> wind_speed_m_s")
+
+    station_rows = [
+        {
+            "station_id": station.station_id,
+            "name": station.name,
+            "state": station.state,
+            "valid_from": station.valid_from,
+            "valid_to": station.valid_to,
+            "is_active": station.is_active,
+        }
+        for station in stations
+    ]
+    unique_station_ids = sorted({row["station_id"] for row in station_rows})
+
+    return {
+        "resource_id": resource_id,
+        "label": spec.label,
+        "doi": spec.doi,
+        "dataset_page": spec.dataset_page,
+        "native_interval_minutes": int(spec.native_interval_minutes),
+        "station_count": len(stations),
+        "unique_station_id_count": len(unique_station_ids),
+        "active_station_records": sum(1 for station in stations if station.is_active is True),
+        "station_ids": unique_station_ids,
+        "stations": station_rows,
+        "parameter_count": len(names),
+        "physical_parameter_count": len(physical),
+        "quality_flag_count": len(flags),
+        "supported_physical_parameters": supported_provider,
+        "unsupported_physical_parameters": unsupported_provider,
+        "matching_quality_flags_consumed": matching_flags,
+        "matching_quality_flags_with_code_list_ref": code_list_flags,
+        "canonical_variables_supported": canonical_supported,
+        "canonical_variables_not_directly_mapped": sorted(set(CANONICAL_VARIABLES) - canonical_set),
+        "core_contract": {
+            "required": sorted(CORE_CANONICAL),
+            "missing": missing_core,
+            "pass": not missing_core,
+        },
+        "solar_horizontal_components": radiation,
+        "page_parity": static_page_audit(canonical_set),
+        "all_live_parameters": {
+            name: {
+                "long_name": parameters[name].long_name,
+                "unit": parameters[name].unit,
+                "description": parameters[name].description,
+                "code_list_ref": parameters[name].code_list_ref,
+            }
+            for name in names
+        },
+    }
+
+
+def _station_overlap(reports: dict[str, dict[str, object]]) -> dict[str, object]:
+    ten = reports.get("klima-v2-10min")
+    hourly = reports.get("klima-v2-1h")
+    if not ten or not hourly:
+        return {}
+
+    ten_ids = set(str(value) for value in ten.get("station_ids", []))
+    hourly_ids = set(str(value) for value in hourly.get("station_ids", []))
+    shared = sorted(ten_ids & hourly_ids)
+    ten_only = sorted(ten_ids - hourly_ids)
+    hourly_only = sorted(hourly_ids - ten_ids)
+
+    ten_rows = {str(row["station_id"]): row for row in ten.get("stations", [])}
+    hourly_rows = {str(row["station_id"]): row for row in hourly.get("stations", [])}
+    name_mismatches = [
+        {
+            "station_id": station_id,
+            "klima-v2-10min": ten_rows[station_id].get("name", ""),
+            "klima-v2-1h": hourly_rows[station_id].get("name", ""),
+        }
+        for station_id in shared
+        if ten_rows.get(station_id, {}).get("name") != hourly_rows.get(station_id, {}).get("name")
+    ]
+
+    return {
+        "shared_station_ids": len(shared),
+        "klima_v2_10min_only_station_ids": len(ten_only),
+        "klima_v2_1h_only_station_ids": len(hourly_only),
+        "share_of_10min_ids_present_in_1h_pct": (100.0 * len(shared) / len(ten_ids)) if ten_ids else 0.0,
+        "share_of_1h_ids_present_in_10min_pct": (100.0 * len(shared) / len(hourly_ids)) if hourly_ids else 0.0,
+        "shared_ids_with_different_names": len(name_mismatches),
+        "name_mismatch_examples": name_mismatches[:20],
+        "klima_v2_10min_only_examples": [ten_rows[station_id] for station_id in ten_only[:20] if station_id in ten_rows],
+        "klima_v2_1h_only_examples": [hourly_rows[station_id] for station_id in hourly_only[:20] if station_id in hourly_rows],
     }
 
 
@@ -53,55 +191,32 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--json", dest="json_path", default="artifacts/geosphere-capability-census/census.json")
     parser.add_argument("--markdown", dest="markdown_path", default="artifacts/geosphere-capability-census/CENSUS.md")
+    parser.add_argument("--timeout", type=int, default=60)
     args = parser.parse_args()
 
-    metadata = fetch_metadata(timeout_s=60)
-    parameters = parse_parameters(metadata)
-    names = sorted(parameters)
-    physical = [name for name in names if not name.endswith("_flag")]
-    flags = [name for name in names if name.endswith("_flag")]
-    supported = sorted(set(physical) & set(FIELD_SPEC_BY_PROVIDER))
-    unsupported = sorted(set(physical) - set(FIELD_SPEC_BY_PROVIDER))
-    high = [name for name in unsupported if name in HIGH_PRIORITY_MISSING]
-    secondary = [name for name in unsupported if name in SECONDARY_BUILDING_RELEVANT]
-    low = [name for name in unsupported if name in LOW_PRIORITY_OR_REDUNDANT]
-    uncategorized = sorted(set(unsupported) - set(high) - set(secondary) - set(low))
+    reports: dict[str, dict[str, object]] = {}
+    for spec in available_resource_specs():
+        reports[spec.resource_id] = _resource_report(spec.resource_id, args.timeout)
 
-    consumed_flags = sorted(
-        flag_name
-        for name in supported
-        for flag_name in (f"{name}_flag",)
-        if flag_name in parameters
-    )
-    unconsumed_flags = sorted(set(flags) - set(consumed_flags))
-
-    canonical_supported = sorted({FIELD_SPEC_BY_PROVIDER[name].canonical_name for name in supported})
-    canonical_missing = sorted(set(CANONICAL_VARIABLES) - set(canonical_supported))
-    page_audit = static_page_audit()
+    canonical_sets = {
+        resource_id: set(report["canonical_variables_supported"])
+        for resource_id, report in reports.items()
+    }
+    canonical_union = sorted(set().union(*canonical_sets.values())) if canonical_sets else []
+    canonical_intersection = sorted(set.intersection(*canonical_sets.values())) if canonical_sets else []
+    station_overlap = _station_overlap(reports)
 
     report = {
-        "resource": "klima-v2-10min",
-        "parameter_count": len(names),
-        "physical_parameter_count": len(physical),
-        "quality_flag_count": len(flags),
-        "supported_physical_parameters": supported,
-        "unsupported_physical_parameters": unsupported,
-        "high_priority_missing": {name: HIGH_PRIORITY_MISSING[name] for name in high},
-        "secondary_building_relevant_missing": {name: SECONDARY_BUILDING_RELEVANT[name] for name in secondary},
-        "low_priority_or_redundant": {name: LOW_PRIORITY_OR_REDUNDANT[name] for name in low},
-        "uncategorized_physical_parameters": uncategorized,
-        "quality_flags_consumed_for_mapped_parameters": consumed_flags,
-        "quality_flags_not_consumed_by_adapter": unconsumed_flags,
-        "canonical_variables_supported_by_geosphere_adapter": canonical_supported,
-        "canonical_variables_not_directly_mapped_from_geosphere": canonical_missing,
-        "page_parity": page_audit,
-        "all_live_parameters": {
-            name: {
-                "long_name": parameters[name].long_name,
-                "unit": parameters[name].unit,
-                "description": parameters[name].description,
-            }
-            for name in names
+        "schema": "climate-analyzer-geosphere-capability-census-v3",
+        "resources": reports,
+        "cross_resource": {
+            "resource_ids": list(reports),
+            "canonical_union": canonical_union,
+            "canonical_intersection": canonical_intersection,
+            "core_contract_shared": sorted(CORE_CANONICAL),
+            "canonical_hourly_target_minutes": 60,
+            "klima_v2_1h_fast_path_expected": reports.get("klima-v2-1h", {}).get("native_interval_minutes") == 60,
+            "station_overlap": station_overlap,
         },
     }
 
@@ -114,46 +229,68 @@ def main() -> int:
     lines = [
         "# GeoSphere capability census",
         "",
-        f"- Live parameters: **{len(names)}**",
-        f"- Physical parameters: **{len(physical)}**",
-        f"- Quality flags: **{len(flags)}**",
-        f"- Physical parameters currently mapped: **{len(supported)} / {len(physical)}**",
-        f"- Matching quality flags consumed for mapped parameters: **{len(consumed_flags)} / {len(flags)}**",
-        f"- EPW navigation pages: **{len(page_audit['epw_navigation_pages'])}**",
-        f"- GeoSphere pages with all currently mapped observations present: **{len(page_audit['geosphere_current_pages_with_all_supported_observations'])}**",
-        "",
-        "## Current page gaps",
+        "The Climate Analyzer uses one canonical adapter/engine for all listed GeoSphere historical resources.",
+        "Live metadata are validated independently for every resource; a resource-specific provider field or unit change fails closed.",
         "",
     ]
-    for page in page_audit["missing_geosphere_pages"]:
-        lines.append(f"- {page}")
-    lines.extend(["", "## High-priority provider fields not mapped", ""])
-    if high:
-        for name in high:
-            p = parameters[name]
-            lines.append(f"- `{name}` — {p.long_name or HIGH_PRIORITY_MISSING[name]} [{p.unit}]")
-    else:
-        lines.append("- None. The Priority-A provider fields identified by the 0.7.2 audit are mapped.")
-    lines.extend(["", "## Secondary building-relevant provider fields not mapped", ""])
-    for name in secondary:
-        p = parameters[name]
-        lines.append(f"- `{name}` — {p.long_name or SECONDARY_BUILDING_RELEVANT[name]} [{p.unit}]")
-    lines.extend(["", "## Quality flags", ""])
-    lines.append(
-        f"The live resource exposes {len(flags)} `*_flag` fields. The adapter consumes the exact matching flag for each mapped physical parameter when it is present in live metadata: **{len(consumed_flags)} consumed**, **{len(unconsumed_flags)} not consumed**."
-    )
-    lines.append(
-        "Consumed flags are retained as provider-native diagnostic metadata and are not promoted to physical canonical variables."
-    )
-    if unconsumed_flags:
+    for resource_id, item in reports.items():
+        lines.extend(
+            [
+                f"## {resource_id}",
+                "",
+                f"- Native cadence: **{item['native_interval_minutes']} min**",
+                f"- Station records in live metadata: **{item['station_count']}**",
+                f"- Unique station IDs: **{item['unique_station_id_count']}**",
+                f"- Records marked active: **{item['active_station_records']}**",
+                f"- Live parameters: **{item['parameter_count']}**",
+                f"- Physical parameters mapped: **{len(item['supported_physical_parameters'])} / {item['physical_parameter_count']}**",
+                f"- Matching quality flags retained: **{len(item['matching_quality_flags_consumed'])}**",
+                f"- Canonical variables mapped: **{len(item['canonical_variables_supported'])}**",
+                f"- Core T/RH/p/wind contract: **PASS**",
+                "",
+                "### Mapped provider → canonical fields",
+                "",
+            ]
+        )
+        mapping = supported_parameter_mapping(
+            fetch_metadata(resource_id=resource_id, timeout_s=args.timeout),
+            resource_id=resource_id,
+        )
+        for provider_name, field in sorted(mapping.items()):
+            lines.append(f"- `{provider_name}` → `{field.canonical_name}` (scale {field.scale:g})")
+        lines.extend(["", "### Current page gaps with the complete mapped resource vocabulary", ""])
+        gaps = item["page_parity"]["missing_geosphere_pages"]
+        if gaps:
+            lines.extend(f"- {page}" for page in gaps)
+        else:
+            lines.append("- None")
         lines.append("")
-        lines.append("Unconsumed flags belong to physical provider fields that are themselves not mapped:")
-        for name in unconsumed_flags:
-            lines.append(f"- `{name}`")
-    lines.extend(["", "## Complete unsupported physical parameter list", ""])
-    for name in unsupported:
-        p = parameters[name]
-        lines.append(f"- `{name}` — {p.long_name} [{p.unit}]")
+
+    lines.extend(
+        [
+            "## Cross-resource contract",
+            "",
+            f"- Canonical union: **{len(canonical_union)} variables**",
+            f"- Canonical intersection: **{len(canonical_intersection)} variables**",
+            "- Ordinary analysis target: **60 min canonical hourly**",
+            "- `klima-v2-1h`: **native-hourly fast path expected** (no temporal resampling)",
+            "- Native source resolution remains an explicit Time Series concern; ordinary charts use the canonical hourly frame.",
+        ]
+    )
+    if station_overlap:
+        lines.extend(
+            [
+                "",
+                "### Station-catalog overlap",
+                "",
+                f"- Shared station IDs: **{station_overlap['shared_station_ids']}**",
+                f"- 10-min-only station IDs: **{station_overlap['klima_v2_10min_only_station_ids']}**",
+                f"- 1-h-only station IDs: **{station_overlap['klima_v2_1h_only_station_ids']}**",
+                f"- Share of 10-min station IDs also present in 1-h: **{station_overlap['share_of_10min_ids_present_in_1h_pct']:.1f}%**",
+                f"- Share of 1-h station IDs also present in 10-min: **{station_overlap['share_of_1h_ids_present_in_10min_pct']:.1f}%**",
+                f"- Shared IDs with different station names: **{station_overlap['shared_ids_with_different_names']}**",
+            ]
+        )
     md_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))

@@ -1,0 +1,85 @@
+name: Climate Analyzer GeoSphere Hourly Live Smoke
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'deployment/geosphere_hourly_provider_probe.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/geosphere.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/geosphere_resource_overlay.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/climate_model.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/canonical_hourly.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/historical.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/psychrometrics.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/solar.py'
+      - '.github/workflows/climate-analyzer-geosphere-hourly-live-smoke.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'deployment/geosphere_hourly_provider_probe.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/geosphere.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/geosphere_resource_overlay.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/climate_model.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/canonical_hourly.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/historical.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/psychrometrics.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/solar.py'
+      - '.github/workflows/climate-analyzer-geosphere-hourly-live-smoke.yml'
+  schedule:
+    - cron: '41 5 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: climate-analyzer-geosphere-hourly-live-smoke
+  cancel-in-progress: true
+
+jobs:
+  provider-backed-hourly-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONPATH: tools/climate_analyzer
+      GEOSPHERE_HOURLY_SMOKE_FIXTURE: artifacts/geosphere-hourly-smoke/provider-fixture.json
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/climate_analyzer/requirements.txt
+
+      - name: Install Climate Analyzer dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r tools/climate_analyzer/requirements.txt
+
+      - name: Probe live GeoSphere klima-v2-1h data and canonical fast path
+        run: |
+          python - <<'PY'
+          import sys
+          from epw_climate_analyzer.geosphere_resource_overlay import apply_geosphere_resource_overlay
+          apply_geosphere_resource_overlay()
+          from deployment.geosphere_hourly_provider_probe import main
+          sys.argv = [
+              'geosphere_hourly_provider_probe.py',
+              '--output', 'artifacts/geosphere-hourly-smoke/provider-fixture.json',
+              '--timeout', '60',
+          ]
+          raise SystemExit(main())
+          PY
+
+      - name: Upload provider-backed hourly evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: climate-analyzer-geosphere-hourly-live-smoke
+          path: artifacts/geosphere-hourly-smoke
+          if-no-files-found: warn
+          retention-days: 30
