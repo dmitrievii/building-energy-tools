@@ -2,10 +2,11 @@
 """Provider-backed smoke probe for GeoSphere ``klima-v2-1h`` integration.
 
 The probe deliberately uses the production adapter and canonical historical
-analysis path.  It validates live metadata, fetches real hourly observations,
-confirms that native-hourly data take the no-resampling fast path, and (when the
-live resource exposes GHI+DHI, as expected) verifies calculated DNI on real
-provider radiation without replacing any measured source quantity.
+analysis path. It validates live metadata, fetches real hourly observations,
+confirms that native-hourly data take the no-resampling fast path, verifies the
+hourly sunshine-duration conversion exposed by the long-term resource, records
+station-dependent deep-ground coverage, and verifies calculated DNI only when
+the live resource exposes both GHI and DHI.
 """
 
 from __future__ import annotations
@@ -37,7 +38,15 @@ CORE_CANONICAL = (
     "wind_speed_m_s",
     "wind_direction_deg",
 )
-SOLAR_CANONICAL = (
+HOURLY_REQUIRED_EXTRAS = (
+    "sunshine_duration_s",
+    "global_horizontal_radiation_wh_m2",
+)
+DEEP_GROUND_CANONICAL = (
+    "ground_temperature_1_00m_c",
+    "ground_temperature_2_00m_c",
+)
+DNI_INPUTS = (
     "global_horizontal_radiation_wh_m2",
     "diffuse_horizontal_radiation_wh_m2",
 )
@@ -100,6 +109,7 @@ def _candidate_order(stations: Iterable[GeoSphereStation]) -> list[GeoSphereStat
     remaining = [station for station in stations if station not in ordered]
     remaining.sort(
         key=lambda station: (
+            station.has_sunshine is not True,
             station.has_global_radiation is not True,
             station.is_active is not True,
             station.name.casefold(),
@@ -116,7 +126,7 @@ def _valid_count(frame: pd.DataFrame, column: str) -> int:
     return int(pd.to_numeric(frame[column], errors="coerce").notna().sum())
 
 
-def _assert_fast_path(native: pd.DataFrame, hourly: pd.DataFrame) -> None:
+def _assert_fast_path(native: pd.DataFrame, hourly: pd.DataFrame, preserved_columns: Iterable[str]) -> None:
     if len(native) != len(hourly):
         raise RuntimeError(f"hourly fast path changed row count: native={len(native)}, analysis={len(hourly)}")
     if not pd.DatetimeIndex(native.index).equals(pd.DatetimeIndex(hourly.index)):
@@ -125,11 +135,33 @@ def _assert_fast_path(native: pd.DataFrame, hourly: pd.DataFrame) -> None:
         raise RuntimeError("canonical hourly engine did not report the native-hourly fast path")
     if int(hourly.attrs.get("canonical_source_interval_minutes", -1)) != 60:
         raise RuntimeError("canonical hourly output lost the 60-minute source cadence")
-    for column in CORE_CANONICAL:
+    for column in preserved_columns:
+        if column not in native.columns or column not in hourly.columns:
+            continue
         source = pd.to_numeric(native[column], errors="coerce")
         target = pd.to_numeric(hourly[column], errors="coerce")
         if not source.equals(target):
             raise RuntimeError(f"hourly fast path altered source values for {column}")
+
+
+def _assert_hourly_sunshine_seconds(frame: pd.DataFrame) -> dict[str, float | int]:
+    values = pd.to_numeric(frame.get("sunshine_duration_s"), errors="coerce").dropna()
+    if values.empty:
+        raise RuntimeError("live hourly resource returned no numeric sunshine-duration values")
+    if float(values.min()) < -1e-9 or float(values.max()) > 3600.0 + 1e-6:
+        raise RuntimeError(
+            "hourly sunshine conversion is outside the physical 0..3600 s interval; "
+            f"observed {float(values.min()):.3f}..{float(values.max()):.3f} s"
+        )
+    if not bool((values > 0.0).any()):
+        raise RuntimeError("live hourly sunshine probe found only zero sunshine; choose another interval")
+    return {
+        "valid_records": int(len(values)),
+        "positive_records": int((values > 0.0).sum()),
+        "minimum_s": float(values.min()),
+        "maximum_s": float(values.max()),
+        "sum_h": float(values.sum() / 3600.0),
+    }
 
 
 def find_fixture(timeout_s: int) -> dict[str, object]:
@@ -146,10 +178,19 @@ def find_fixture(timeout_s: int) -> dict[str, object]:
     if canonical_to_provider.get("wind_speed_m_s") != "ff":
         raise RuntimeError("live hourly wind contract is not ff -> wind_speed_m_s")
 
-    solar_supported = all(column in canonical_to_provider for column in SOLAR_CANONICAL)
-    requested = list(CORE_CANONICAL)
-    if solar_supported:
-        requested.extend(SOLAR_CANONICAL)
+    missing_extras = [column for column in HOURLY_REQUIRED_EXTRAS if column not in canonical_to_provider]
+    if missing_extras:
+        raise RuntimeError(
+            "live hourly metadata miss required long-term integration fields: " + ", ".join(missing_extras)
+        )
+    if canonical_to_provider.get("sunshine_duration_s") != "so_h":
+        raise RuntimeError("live hourly sunshine contract is not so_h -> sunshine_duration_s")
+
+    dni_supported = all(column in canonical_to_provider for column in DNI_INPUTS)
+    optional_deep_ground = [column for column in DEEP_GROUND_CANONICAL if column in canonical_to_provider]
+    requested = list(dict.fromkeys(CORE_CANONICAL + HOURLY_REQUIRED_EXTRAS + tuple(optional_deep_ground)))
+    if dni_supported:
+        requested.extend(column for column in DNI_INPUTS if column not in requested)
 
     failures: list[str] = []
     attempts = 0
@@ -174,22 +215,37 @@ def find_fixture(timeout_s: int) -> dict[str, object]:
                 if any(count <= 0 for count in native_counts.values()):
                     raise RuntimeError(f"core hourly coverage insufficient: {native_counts}")
 
-                solar_counts: dict[str, int] = {}
-                if solar_supported:
-                    solar_counts = {column: _valid_count(dataset.data, column) for column in SOLAR_CANONICAL}
-                    if any(count <= 0 for count in solar_counts.values()):
-                        raise RuntimeError(f"hourly GHI/DHI coverage insufficient: {solar_counts}")
+                sunshine_evidence = _assert_hourly_sunshine_seconds(dataset.data)
+                ghi_count = _valid_count(dataset.data, "global_horizontal_radiation_wh_m2")
+                if ghi_count <= 0:
+                    raise RuntimeError("live hourly resource returned no numeric GHI in the probe interval")
+
+                deep_ground_counts = {
+                    column: _valid_count(dataset.data, column)
+                    for column in optional_deep_ground
+                }
+                dni_input_counts = {
+                    column: _valid_count(dataset.data, column)
+                    for column in DNI_INPUTS
+                    if column in dataset.data.columns
+                }
+                if dni_supported and any(dni_input_counts.get(column, 0) <= 0 for column in DNI_INPUTS):
+                    raise RuntimeError(f"hourly GHI/DHI coverage insufficient: {dni_input_counts}")
 
                 hourly = prepare_historical_analysis_frame(
                     dataset,
                     include_psychrometrics=True,
-                    include_solar=solar_supported,
+                    include_solar=True,
                 )
-                _assert_fast_path(dataset.data, hourly)
+                _assert_fast_path(
+                    dataset.data,
+                    hourly,
+                    CORE_CANONICAL + HOURLY_REQUIRED_EXTRAS + tuple(optional_deep_ground),
+                )
 
                 calculated_dni_count = 0
-                dni_origin = "not requested"
-                if solar_supported:
+                dni_origin = "not available — hourly resource publishes GHI without DHI"
+                if dni_supported:
                     calculated_dni_count = _valid_count(hourly, "direct_normal_radiation_wh_m2")
                     if calculated_dni_count <= 0:
                         raise RuntimeError("GHI+DHI were live but the source-neutral engine produced no calculable DNI")
@@ -198,7 +254,7 @@ def find_fixture(timeout_s: int) -> dict[str, object]:
                         raise RuntimeError(f"derived DNI is not explicitly marked calculated: {dni_origin}")
 
                 return {
-                    "schema": "climate-analyzer-geosphere-hourly-smoke-v1",
+                    "schema": "climate-analyzer-geosphere-hourly-smoke-v2",
                     "success": True,
                     "resource_id": RESOURCE_ID,
                     "station_id": station.station_id,
@@ -212,12 +268,19 @@ def find_fixture(timeout_s: int) -> dict[str, object]:
                     "canonical_hourly_expected_source_records": int(hourly.attrs.get("canonical_hourly_expected_source_records", -1)),
                     "core_provider_mapping": {column: canonical_to_provider[column] for column in CORE_CANONICAL},
                     "core_valid_records": native_counts,
-                    "solar_supported_by_live_metadata": solar_supported,
-                    "solar_valid_records": solar_counts,
+                    "hourly_extra_provider_mapping": {
+                        column: canonical_to_provider[column]
+                        for column in HOURLY_REQUIRED_EXTRAS + tuple(optional_deep_ground)
+                    },
+                    "sunshine_duration_evidence": sunshine_evidence,
+                    "ghi_valid_records": ghi_count,
+                    "deep_ground_valid_records": deep_ground_counts,
+                    "dni_reconstruction_supported_by_live_metadata": dni_supported,
+                    "dni_input_valid_records": dni_input_counts,
                     "calculated_dni_valid_records": calculated_dni_count,
                     "dni_origin": dni_origin,
                     "provider_probe_attempts": attempts,
-                    "fast_path": "PASS — native 60-minute timestamps and core values preserved without temporal resampling",
+                    "fast_path": "PASS — native 60-minute timestamps and measured canonical values preserved without temporal resampling",
                 }
             except Exception as exc:
                 failures.append(
@@ -229,7 +292,7 @@ def find_fixture(timeout_s: int) -> dict[str, object]:
 
     tail = " | ".join(failures[-15:])
     raise RuntimeError(
-        f"No bounded live {RESOURCE_ID} interval passed metadata + data + fast-path validation after {attempts} attempt(s). "
+        f"No bounded live {RESOURCE_ID} interval passed metadata + hourly extras + data + fast-path validation after {attempts} attempt(s). "
         + tail
     )
 
@@ -246,7 +309,7 @@ def main() -> int:
         fixture = find_fixture(timeout_s=args.timeout)
     except Exception as exc:
         failure = {
-            "schema": "climate-analyzer-geosphere-hourly-smoke-v1",
+            "schema": "climate-analyzer-geosphere-hourly-smoke-v2",
             "success": False,
             "resource_id": RESOURCE_ID,
             "error": f"{type(exc).__name__}: {exc}",
