@@ -109,7 +109,7 @@ class CadenceFrequencyVisualTests(unittest.TestCase):
         ast.parse(source)
         self.assertIn('["Points", "Distribution grid", "Climate contour"]', source)
         self.assertIn('["Climate contour", "Distribution grid", "Points"]', source)
-        self.assertIn('"Zone coverage [%]"', source)
+        self.assertIn('"Outer contour coverage [%]"', source)
         self.assertIn('"Zone interior"', source)
         self.assertIn('"Year display"', source)
         self.assertNotIn('data_mode != "Distributive grid"', source)
