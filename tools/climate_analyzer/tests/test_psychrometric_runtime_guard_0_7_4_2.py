@@ -12,16 +12,23 @@ REQUIRED_CHART_PARAMETERS = {
     "zone_coverage",
     "zone_interior_style",
     "show_core_zone",
+    "additional_contour_coverages",
     "year_mode",
     "selected_years",
 }
+REQUIRED_DISTRIBUTION_PARAMETERS = {"additional_coverages", "pressure_pa"}
 
 
 class PsychrometricRuntimeGuard0742Tests(unittest.TestCase):
     def test_current_runtime_is_accepted_without_contract_loss(self) -> None:
-        _, current_charts = ensure_current_psychrometric_runtime()
+        current_distribution, current_charts = ensure_current_psychrometric_runtime()
         self.assertTrue(
             REQUIRED_CHART_PARAMETERS.issubset(inspect.signature(current_charts.psychrometric_chart).parameters)
+        )
+        self.assertTrue(
+            REQUIRED_DISTRIBUTION_PARAMETERS.issubset(
+                inspect.signature(current_distribution.add_climate_zone_traces).parameters
+            )
         )
 
     def test_stale_old_chart_signature_is_reloaded(self) -> None:
@@ -54,6 +61,37 @@ class PsychrometricRuntimeGuard0742Tests(unittest.TestCase):
         self.assertEqual(
             inspect.signature(refreshed_distribution.add_climate_zone_traces),
             inspect.signature(original_zone_helper),
+        )
+
+    def test_stale_distribution_helper_signature_is_reloaded_and_rebound(self) -> None:
+        def old_add_climate_zone_traces(
+            fig,
+            df,
+            *,
+            chart_type,
+            label,
+            color,
+            coverage=0.90,
+            interior_style="Density gradient",
+            axis_ranges=None,
+            show_core=False,
+            core_coverage=0.50,
+            legendgroup=None,
+        ):
+            return None
+
+        distribution.add_climate_zone_traces = old_add_climate_zone_traces
+        charts.add_climate_zone_traces = old_add_climate_zone_traces
+
+        refreshed_distribution, refreshed_charts = ensure_current_psychrometric_runtime()
+
+        self.assertIsNot(refreshed_distribution.add_climate_zone_traces, old_add_climate_zone_traces)
+        self.assertIsNot(refreshed_charts.add_climate_zone_traces, old_add_climate_zone_traces)
+        self.assertIs(refreshed_charts.add_climate_zone_traces, refreshed_distribution.add_climate_zone_traces)
+        self.assertTrue(
+            REQUIRED_DISTRIBUTION_PARAMETERS.issubset(
+                inspect.signature(refreshed_distribution.add_climate_zone_traces).parameters
+            )
         )
 
 
