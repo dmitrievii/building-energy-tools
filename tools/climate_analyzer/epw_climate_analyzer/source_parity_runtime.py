@@ -72,6 +72,7 @@ def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     from .source_parity_ground import install_ground_depth_contract
     from .source_parity_resolution import enforce_native_timeseries_only
     from .source_parity_longterm_hotfix import install_longterm_hourly_hotfix
+    from .source_parity_resource_bounds import install_resource_temporal_bounds
 
     # Apply provider vocabulary before the Streamlit resource selector builds
     # metadata mappings. Scientific engines remain provider-neutral.
@@ -83,5 +84,6 @@ def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     install_ground_depth_contract(proxy)
     enforce_native_timeseries_only(parity)
     install_longterm_hourly_hotfix(proxy, parity)
+    install_resource_temporal_bounds(proxy, parity)
     namespace["_SOURCE_PARITY_RUNTIME_INSTALLED"] = True
     return True
