@@ -90,8 +90,8 @@ class OriginalAuditClosure0741Tests(unittest.TestCase):
         self.assertIn('title="Passive and HVAC strategy hours by year"', hvac)
 
     def test_compare_climates_uses_current_zone_contract_not_selected_cells(self) -> None:
-        self.assertIn('["Climate zones", "Points"]', self.source)
-        self.assertIn('"Reference psychrometric grid pressure"', self.source)
+        self.assertIn('["Climate contour", "Distribution grid", "Points"]', self.source)
+        self.assertIn('"Reference psychrometric pressure"', self.source)
         doc = DOC.read_text(encoding="utf-8")
         self.assertIn("duration-weighted two-dimensional density field", doc)
         self.assertIn("former 1 °C × 5 %RH selected-cell mosaic", doc)

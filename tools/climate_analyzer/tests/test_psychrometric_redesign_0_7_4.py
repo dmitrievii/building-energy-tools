@@ -92,25 +92,25 @@ class PsychrometricRedesign0741Tests(unittest.TestCase):
         self.assertFalse(bool(fig.layout.xaxis.autorange))
         self.assertFalse(bool(fig.layout.yaxis.autorange))
 
-    def test_reference_grid_pressure_does_not_move_comparison_zone_density(self) -> None:
+    def test_reference_pressure_moves_all_comparison_coordinates_consistently(self) -> None:
         climate_a = _psych_frame(2026, pressure_pa=101325.0)
         climate_b = _psych_frame(2026, offset_c=3.0, pressure_pa=85000.0)
         climates = [
             ClimateDataset("a", "Climate A", "test", None, climate_a, []),
             ClimateDataset("b", "Climate B", "test", None, climate_b, []),
         ]
-        sea = psychrometric_comparison_chart(climates, data_display="Climate zones", reference_pressure_pa=101325.0)
-        high = psychrometric_comparison_chart(climates, data_display="Climate zones", reference_pressure_pa=85000.0)
-        sea_zone = [trace for trace in sea.data if trace.type == "contour" and "% zone" in str(trace.name)]
-        high_zone = [trace for trace in high.data if trace.type == "contour" and "% zone" in str(trace.name)]
-        self.assertEqual(len(sea_zone), 2)
-        self.assertEqual(len(high_zone), 2)
-        for left, right in zip(sea_zone, high_zone, strict=True):
-            np.testing.assert_allclose(np.asarray(left.z, dtype=float), np.asarray(right.z, dtype=float), rtol=0.0, atol=0.0)
-            np.testing.assert_allclose(np.asarray(left.x, dtype=float), np.asarray(right.x, dtype=float), rtol=0.0, atol=0.0)
-            np.testing.assert_allclose(np.asarray(left.y, dtype=float), np.asarray(right.y, dtype=float), rtol=0.0, atol=0.0)
-        self.assertEqual(tuple(sea.layout.xaxis.range), tuple(high.layout.xaxis.range))
-        self.assertEqual(tuple(sea.layout.yaxis.range), tuple(high.layout.yaxis.range))
+        sea = psychrometric_comparison_chart(climates, data_display="Points", reference_pressure_pa=101325.0)
+        high = psychrometric_comparison_chart(climates, data_display="Points", reference_pressure_pa=85000.0)
+        sea_points = {str(trace.name): trace for trace in sea.data if trace.type == "scattergl"}
+        high_points = {str(trace.name): trace for trace in high.data if trace.type == "scattergl"}
+        self.assertEqual(set(sea_points), {"Climate A", "Climate B"})
+        self.assertEqual(set(high_points), {"Climate A", "Climate B"})
+        for name in sea_points:
+            np.testing.assert_allclose(np.asarray(sea_points[name].x, dtype=float), np.asarray(high_points[name].x, dtype=float))
+            sea_y = np.asarray(sea_points[name].y, dtype=float)
+            high_y = np.asarray(high_points[name].y, dtype=float)
+            self.assertGreater(float(np.nanmean(high_y)), float(np.nanmean(sea_y)))
+            self.assertFalse(np.allclose(sea_y, high_y))
 
     def test_comparison_has_one_shared_axis_and_climate_zone_identity(self) -> None:
         climates = [
@@ -137,14 +137,16 @@ class PsychrometricRedesign0741Tests(unittest.TestCase):
     def test_ui_contract_removes_cell_90_and_exposes_zone_controls(self) -> None:
         source = APP.read_text(encoding="utf-8")
         distribution_source = DIST.read_text(encoding="utf-8")
-        self.assertIn('["Climate zone", "Points"]', source)
-        self.assertIn('["Climate zones", "Points"]', source)
-        self.assertIn('"Zone coverage [%]"', source)
+        self.assertIn('["Points", "Distribution grid", "Climate contour"]', source)
+        self.assertIn('["Climate contour", "Distribution grid", "Points"]', source)
+        self.assertIn('"Outer contour coverage [%]"', source)
         self.assertIn('"Zone interior"', source)
         self.assertIn('"Density gradient"', source)
+        self.assertIn('"Additional contour levels [%]"', source)
+        self.assertNotIn('"Show 50% core contour"', source)
         self.assertIn('"Year display"', source)
         self.assertIn('"Compare selected years"', source)
-        self.assertIn('"Reference psychrometric grid pressure"', source)
+        self.assertIn('"Reference psychrometric pressure"', source)
         self.assertNotIn("highest-density 1 °C × 5 %RH occupancy cells", source)
         self.assertNotIn("PsychrometricOccupancyEnvelope", distribution_source)
         self.assertNotIn("selected_tiles", distribution_source)

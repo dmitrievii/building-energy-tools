@@ -23,11 +23,14 @@ _REQUIRED_DISTRIBUTION_API = frozenset(
         "psychrometric_axis_ranges",
     }
 )
+_REQUIRED_COMPARISON_PARAMETERS = frozenset({"additional_contour_coverages"})
+
 _REQUIRED_CHART_PARAMETERS = frozenset(
     {
         "zone_coverage",
         "zone_interior_style",
         "show_core_zone",
+        "additional_contour_coverages",
         "year_mode",
         "selected_years",
     }
@@ -86,6 +89,27 @@ def ensure_current_psychrometric_runtime() -> tuple[ModuleType, ModuleType]:
         raise RuntimeError(
             "Psychrometric chart runtime API is stale after reload; missing parameters: "
             + ", ".join(sorted(missing_parameters))
+        )
+
+    comparison = importlib.import_module("epw_climate_analyzer.comparison")
+    compare_fn = getattr(comparison, "psychrometric_comparison_chart", None)
+    try:
+        compare_parameters = inspect.signature(compare_fn).parameters if compare_fn is not None else {}
+    except (TypeError, ValueError):
+        compare_parameters = {}
+    missing_compare = set(_REQUIRED_COMPARISON_PARAMETERS).difference(compare_parameters)
+    if missing_compare:
+        comparison = importlib.reload(comparison)
+        compare_fn = getattr(comparison, "psychrometric_comparison_chart", None)
+        try:
+            compare_parameters = inspect.signature(compare_fn).parameters if compare_fn is not None else {}
+        except (TypeError, ValueError):
+            compare_parameters = {}
+        missing_compare = set(_REQUIRED_COMPARISON_PARAMETERS).difference(compare_parameters)
+    if missing_compare:
+        raise RuntimeError(
+            "Psychrometric comparison runtime API is stale after reload; missing parameters: "
+            + ", ".join(sorted(missing_compare))
         )
 
     return distribution, charts

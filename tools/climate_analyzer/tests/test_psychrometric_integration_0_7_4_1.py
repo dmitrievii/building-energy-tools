@@ -13,7 +13,7 @@ DISTRIBUTION = ROOT / "epw_climate_analyzer" / "psychrometric_distribution.py"
 
 
 class PsychrometricIntegration0741Tests(unittest.TestCase):
-    def test_release_tree_contains_no_temporary_diagnostic_or_patch_transport(self) -> None:
+    def test_release_tree_contains_no_old_temporary_transport(self) -> None:
         for workflow in (
             "v0741-full-test-diagnostic.yml",
             "v0741-ci-diagnose.yml",
@@ -28,44 +28,36 @@ class PsychrometricIntegration0741Tests(unittest.TestCase):
             self.assertFalse((ROOT / "scripts" / script).exists(), script)
 
     def test_runtime_has_no_old_selected_cell_envelope_api(self) -> None:
-        runtime = "\n".join(
-            path.read_text(encoding="utf-8")
-            for path in (CHARTS, COMPARISON, DISTRIBUTION)
-        )
+        runtime = "\n".join(path.read_text(encoding="utf-8") for path in (CHARTS, COMPARISON, DISTRIBUTION))
         self.assertNotIn("PsychrometricOccupancyEnvelope", runtime)
         self.assertNotIn("psychrometric_occupancy_envelope", runtime)
         self.assertNotIn("envelope_polygon_coordinates", runtime)
         self.assertNotIn("selected_tiles", runtime)
 
-    def test_single_climate_ui_is_zone_first_and_year_aware(self) -> None:
+    def test_single_climate_ui_exposes_all_three_peer_representations(self) -> None:
         source = APP.read_text(encoding="utf-8")
-        self.assertIn('["Climate zone", "Points"]', source)
-        self.assertIn('"Zone coverage [%]"', source)
-        self.assertIn('"Zone interior"', source)
-        self.assertIn('"Show 50% core contour"', source)
+        self.assertIn('["Points", "Distribution grid", "Climate contour"]', source)
+        self.assertIn('"Outer contour coverage [%]"', source)
+        self.assertIn('"Additional contour levels [%]"', source)
+        self.assertNotIn('"Show 50% core contour"', source)
         self.assertIn('"All years combined"', source)
         self.assertIn('"Single year"', source)
         self.assertIn('"Compare selected years"', source)
 
-    def test_comparison_ui_is_zone_first_and_reference_grid_pressure_is_explicit(self) -> None:
+    def test_comparison_ui_uses_one_common_reference_pressure(self) -> None:
         source = APP.read_text(encoding="utf-8")
         self.assertIn('"Psychrometric climate zones"', source)
-        self.assertIn('["Climate zones", "Points"]', source)
-        self.assertIn('"Reference psychrometric grid pressure"', source)
+        self.assertIn('["Climate contour", "Distribution grid", "Points"]', source)
+        self.assertIn('"Reference psychrometric pressure"', source)
         self.assertIn('"Standard atmosphere — 101325 Pa"', source)
         self.assertIn('"Reference climate — {reference_name}"', source)
-        self.assertIn("grid is only a visual psychrometric reference", source)
+        self.assertIn("points, grid cells and contours", source.lower())
+        self.assertIn("source station-pressure data remain unchanged", source.lower())
 
     def test_missing_pressure_fallbacks_are_location_specific(self) -> None:
         source = APP.read_text(encoding="utf-8")
-        self.assertGreaterEqual(
-            source.count("pressure_from_altitude_m(float(epw.location.elevation_m or 0.0))"),
-            2,
-        )
-        self.assertIn(
-            "else pressure_from_altitude_m(float(dataset.location.elevation_m or 0.0))",
-            source,
-        )
+        self.assertGreaterEqual(source.count("pressure_from_altitude_m(float(epw.location.elevation_m or 0.0))"), 2)
+        self.assertIn("else pressure_from_altitude_m(float(dataset.location.elevation_m or 0.0))", source)
 
 
 if __name__ == "__main__":

@@ -104,11 +104,12 @@ class CadenceFrequencyVisualTests(unittest.TestCase):
             )
             self.assertTrue(math.isclose(float(ten.loc[zone, "share_pct"]), float(hourly.loc[zone, "share_pct"]), abs_tol=1e-9))
 
-    def test_psychrometric_ui_uses_zone_first_source_neutral_contract(self) -> None:
+    def test_psychrometric_ui_uses_three_representation_source_neutral_contract(self) -> None:
         source = APP.read_text(encoding="utf-8")
         ast.parse(source)
-        self.assertIn('["Climate zone", "Points"]', source)
-        self.assertIn('"Zone coverage [%]"', source)
+        self.assertIn('["Points", "Distribution grid", "Climate contour"]', source)
+        self.assertIn('["Climate contour", "Distribution grid", "Points"]', source)
+        self.assertIn('"Outer contour coverage [%]"', source)
         self.assertIn('"Zone interior"', source)
         self.assertIn('"Year display"', source)
         self.assertNotIn('data_mode != "Distributive grid"', source)

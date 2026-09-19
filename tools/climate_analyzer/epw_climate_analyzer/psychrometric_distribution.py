@@ -20,8 +20,11 @@ from typing import Iterable
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
+import psychrolib
 
 from .aggregations import native_interval_hours
+
+psychrolib.SetUnitSystem(psychrolib.SI)
 from .chart_theme import rgba
 
 
@@ -149,6 +152,45 @@ def _smooth_2d(values: np.ndarray, sigma_x: float, sigma_y: float) -> np.ndarray
     return smoothed
 
 
+def _physical_psychrometric_mask(
+    x: np.ndarray,
+    y: np.ndarray,
+    *,
+    chart_type: str,
+    pressure_pa: float,
+) -> np.ndarray:
+    """Return grid cells that represent physically possible 0...100% RH states.
+
+    Gaussian smoothing is performed on a rectangular numerical domain. Without
+    this mask, a small amount of smoothed density can leak above the saturation
+    curve even though every source observation is physically valid.
+    """
+    xx, yy = np.meshgrid(np.asarray(x, dtype=float), np.asarray(y, dtype=float), indexing="ij")
+    if chart_type == "i-d":
+        d_g_kg = xx
+        w = d_g_kg / 1000.0
+        denominator = 1.006 + 1.86 * w
+        t_c = (yy - 2501.0 * w) / np.maximum(denominator, 1e-12)
+    else:
+        t_c = xx
+        d_g_kg = yy
+
+    valid = np.isfinite(t_c) & np.isfinite(d_g_kg) & (d_g_kg >= 0.0)
+    saturation = np.full(t_c.shape, np.nan, dtype=float)
+    flat_t = t_c.ravel()
+    flat_sat = saturation.ravel()
+    flat_valid = valid.ravel()
+    for idx in np.where(flat_valid)[0]:
+        try:
+            flat_sat[idx] = psychrolib.GetSatHumRatio(float(flat_t[idx]), float(pressure_pa)) * 1000.0
+        except Exception:
+            flat_valid[idx] = False
+    saturation = flat_sat.reshape(t_c.shape)
+    valid = flat_valid.reshape(t_c.shape) & np.isfinite(saturation)
+    tolerance = np.maximum(1e-9, np.abs(saturation) * 1e-8)
+    return valid & (d_g_kg <= saturation + tolerance)
+
+
 def psychrometric_density_field(
     df: pd.DataFrame,
     *,
@@ -156,6 +198,7 @@ def psychrometric_density_field(
     target_share: float = 0.90,
     axis_ranges: tuple[tuple[float, float], tuple[float, float]] | None = None,
     grid_shape: tuple[int, int] = (140, 120),
+    pressure_pa: float = 101325.0,
 ) -> PsychrometricDensityField:
     """Build a smooth duration-weighted field and cumulative-density climate zone.
 
@@ -212,6 +255,21 @@ def psychrometric_density_field(
     sigma_y = np.clip((std_y * scott) / max(dy, 1e-12), 1.0, 7.0)
     smooth_mass = _smooth_2d(raw_mass, float(sigma_x), float(sigma_y))
 
+    # Remove the purely numerical Gaussian tail outside the physical
+    # psychrometric domain (RH > 100% or negative humidity ratio). The removed
+    # mass is smoothing leakage, not observed duration, so renormalize the
+    # remaining physical field back to the represented source duration.
+    physical_mask = _physical_psychrometric_mask(
+        x_centers,
+        y_centers,
+        chart_type=chart_type,
+        pressure_pa=float(pressure_pa),
+    )
+    smooth_mass = np.where(physical_mask, smooth_mass, 0.0)
+    physical_mass = float(smooth_mass.sum())
+    if physical_mass > 0.0:
+        smooth_mass *= total_hours / physical_mass
+
     flat = smooth_mass.ravel()
     positive = flat[flat > 0.0]
     if positive.size == 0:
@@ -255,8 +313,10 @@ def add_climate_zone_traces(
     coverage: float = 0.90,
     interior_style: str = "Density gradient",
     axis_ranges: tuple[tuple[float, float], tuple[float, float]] | None = None,
-    show_core: bool = True,
+    show_core: bool = False,
     core_coverage: float = 0.50,
+    additional_coverages: list[float] | tuple[float, ...] | None = None,
+    pressure_pa: float = 101325.0,
     legendgroup: str | None = None,
 ) -> PsychrometricDensityField:
     """Render one smooth climate zone on a shared psychrometric figure.
@@ -275,12 +335,16 @@ def add_climate_zone_traces(
         chart_type=chart_type,
         target_share=coverage,
         axis_ranges=axis_ranges,
+        pressure_pa=float(pressure_pa),
     )
     if field.total_hours <= 0.0 or field.threshold_hours <= 0.0:
         return field
 
     group = legendgroup or label
-    mask = field.mask
+    physical_mask = _physical_psychrometric_mask(
+        field.x, field.y, chart_type=chart_type, pressure_pa=float(pressure_pa)
+    )
+    mask = field.mask & physical_mask
     max_mass = max(field.max_mass_hours, float(field.threshold_hours))
     relative = (field.mass_hours - float(field.threshold_hours)) / max(max_mass - float(field.threshold_hours), 1e-12)
     relative = np.clip(relative, 0.0, 1.0)
@@ -349,7 +413,7 @@ def add_climate_zone_traces(
         go.Contour(
             x=field.x,
             y=field.y,
-            z=field.mass_hours.T,
+            z=np.where(physical_mask, field.mass_hours, np.nan).T,
             autocontour=False,
             contours=dict(
                 start=float(field.threshold_hours),
@@ -368,36 +432,53 @@ def add_climate_zone_traces(
         )
     )
 
-    if show_core and 0.0 < float(core_coverage) < float(coverage):
-        core = psychrometric_density_field(
+    contour_levels: list[float] = []
+    if additional_coverages is not None:
+        contour_levels.extend(float(value) for value in additional_coverages)
+    elif show_core:
+        # Backward-compatible API only; current UI supplies explicit levels.
+        contour_levels.append(float(core_coverage))
+    contour_levels = sorted({value for value in contour_levels if 0.0 < value < float(coverage)})
+    dash_cycle = ["dot", "dash", "dashdot", "longdash"]
+    for level_index, contour_coverage in enumerate(contour_levels):
+        inner = psychrometric_density_field(
             df,
             chart_type=chart_type,
-            target_share=float(core_coverage),
+            target_share=float(contour_coverage),
             axis_ranges=axis_ranges,
+            pressure_pa=float(pressure_pa),
         )
-        if core.threshold_hours > 0.0:
-            fig.add_trace(
-                go.Contour(
-                    x=core.x,
-                    y=core.y,
-                    z=core.mass_hours.T,
-                    autocontour=False,
-                    contours=dict(
-                        start=float(core.threshold_hours),
-                        end=float(core.threshold_hours),
-                        size=max(float(core.threshold_hours) * 0.02, 1e-12),
-                        coloring="lines",
-                        showlabels=False,
-                    ),
-                    line=dict(color=rgba(color, 0.78), width=1.3, dash="dot"),
-                    showscale=False,
-                    hoverinfo="skip",
-                    connectgaps=False,
-                    name=f"{label} {core_coverage * 100.0:.0f}% core",
-                    legendgroup=group,
-                    showlegend=False,
-                )
+        if inner.threshold_hours <= 0.0:
+            continue
+        inner_physical_mask = _physical_psychrometric_mask(
+            inner.x, inner.y, chart_type=chart_type, pressure_pa=float(pressure_pa)
+        )
+        fig.add_trace(
+            go.Contour(
+                x=inner.x,
+                y=inner.y,
+                z=np.where(inner_physical_mask, inner.mass_hours, np.nan).T,
+                autocontour=False,
+                contours=dict(
+                    start=float(inner.threshold_hours),
+                    end=float(inner.threshold_hours),
+                    size=max(float(inner.threshold_hours) * 0.02, 1e-12),
+                    coloring="lines",
+                    showlabels=False,
+                ),
+                line=dict(
+                    color=rgba(color, 0.78),
+                    width=1.35,
+                    dash=dash_cycle[level_index % len(dash_cycle)],
+                ),
+                showscale=False,
+                hoverinfo="skip",
+                connectgaps=False,
+                name=f"{label} {contour_coverage * 100.0:.0f}% contour",
+                legendgroup=group,
+                showlegend=False,
             )
+        )
 
     # One explicit legend item keeps the comparison readable even though the
     # actual zone is composed of Contour traces.
