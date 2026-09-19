@@ -4,6 +4,7 @@ import inspect
 import unittest
 
 import epw_climate_analyzer.charts as charts
+import epw_climate_analyzer.comparison as comparison
 import epw_climate_analyzer.psychrometric_distribution as distribution
 from epw_climate_analyzer.runtime_module_guard import ensure_current_psychrometric_runtime
 
@@ -17,6 +18,7 @@ REQUIRED_CHART_PARAMETERS = {
     "selected_years",
 }
 REQUIRED_DISTRIBUTION_PARAMETERS = {"additional_coverages", "pressure_pa"}
+REQUIRED_COMPARISON_PARAMETERS = {"additional_contour_coverages", "show_givoni_overlay", "show_heat_index_overlay"}
 
 
 class PsychrometricRuntimeGuard0742Tests(unittest.TestCase):
@@ -28,6 +30,11 @@ class PsychrometricRuntimeGuard0742Tests(unittest.TestCase):
         self.assertTrue(
             REQUIRED_DISTRIBUTION_PARAMETERS.issubset(
                 inspect.signature(current_distribution.add_climate_zone_traces).parameters
+            )
+        )
+        self.assertTrue(
+            REQUIRED_COMPARISON_PARAMETERS.issubset(
+                inspect.signature(comparison.psychrometric_comparison_chart).parameters
             )
         )
 
@@ -61,6 +68,31 @@ class PsychrometricRuntimeGuard0742Tests(unittest.TestCase):
         self.assertEqual(
             inspect.signature(refreshed_distribution.add_climate_zone_traces),
             inspect.signature(original_zone_helper),
+        )
+
+    def test_stale_comparison_signature_is_reloaded(self) -> None:
+        def stale_comparison_chart(
+            climates,
+            chart_type="T-d",
+            mode="Overlay",
+            pressure_pa=101325.0,
+            data_display="Climate zones",
+            zone_coverage=0.90,
+            zone_interior_style="Density gradient",
+            show_core_zone=False,
+            additional_contour_coverages=None,
+            reference_pressure_pa=None,
+        ):
+            return None
+
+        comparison.psychrometric_comparison_chart = stale_comparison_chart
+        ensure_current_psychrometric_runtime()
+
+        self.assertIsNot(comparison.psychrometric_comparison_chart, stale_comparison_chart)
+        self.assertTrue(
+            REQUIRED_COMPARISON_PARAMETERS.issubset(
+                inspect.signature(comparison.psychrometric_comparison_chart).parameters
+            )
         )
 
     def test_stale_distribution_helper_signature_is_reloaded_and_rebound(self) -> None:

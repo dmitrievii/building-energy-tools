@@ -419,7 +419,7 @@ def add_climate_zone_traces(
                 start=float(field.threshold_hours),
                 end=float(field.threshold_hours),
                 size=contour_size,
-                coloring="lines",
+                coloring="none",
                 showlabels=False,
             ),
             line=dict(color=rgba(color, 0.98), width=2.5),
@@ -463,7 +463,7 @@ def add_climate_zone_traces(
                     start=float(inner.threshold_hours),
                     end=float(inner.threshold_hours),
                     size=max(float(inner.threshold_hours) * 0.02, 1e-12),
-                    coloring="lines",
+                    coloring="none",
                     showlabels=False,
                 ),
                 line=dict(

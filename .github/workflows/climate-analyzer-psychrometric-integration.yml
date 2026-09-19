@@ -53,6 +53,10 @@ jobs:
           python -m unittest \
             tests.test_psychrometric_redesign_0_7_4 \
             tests.test_psychrometric_integration_0_7_4_1 \
+            tests.test_psychrometric_runtime_guard_0_7_4_2 \
+            tests.test_psychrometric_reference_pressure_0_7_4_3 \
+            tests.test_psychrometric_representation_0_7_4_3 \
+            tests.test_psychrometric_comparison_overlays_0_7_4_5 \
             tests.test_pressure_precipitation_contract \
             tests.test_cadence_frequency_visuals \
             -v
