@@ -1,9 +1,10 @@
-"""Psychrometric derived quantities and chart curves.
+"""Source-neutral psychrometric derived quantities and chart curves.
 
-The module uses PsychroLib for ASHRAE-style moist-air calculations. The app does
-not reimplement these equations manually; PsychroLib is used as the calculation
-backend for humidity ratio, enthalpy, wet-bulb temperature, dew point, specific
-volume, density and standard atmosphere pressure.
+The module uses PsychroLib for ASHRAE-style moist-air calculations and accepts
+ordinary timestamped pandas DataFrames.  Provider/source adapters only need to
+supply canonical dry-bulb temperature, relative humidity and (when available)
+station pressure; missing pressure falls back explicitly to the caller-selected
+reference pressure.
 """
 
 from __future__ import annotations
@@ -15,6 +16,7 @@ import psychrolib
 psychrolib.SetUnitSystem(psychrolib.SI)
 
 DEFAULT_PRESSURE_PA = 101325.0
+VARIABLE_ORIGIN_ATTR = "canonical_variable_origin"
 
 
 def pressure_from_altitude_m(altitude_m: float) -> float:
@@ -42,17 +44,31 @@ def _safe_station_pressure(row_pressure: float | None, fallback_pressure_pa: flo
     return float(fallback_pressure_pa)
 
 
+def _numeric_column_or_nan(df: pd.DataFrame, column: str) -> np.ndarray:
+    if column not in df.columns:
+        return np.full(len(df), np.nan, dtype=float)
+    return pd.to_numeric(df[column], errors="coerce").to_numpy(dtype=float)
+
+
+def _record_variable_origin(df: pd.DataFrame, column: str, description: str) -> None:
+    origins = dict(df.attrs.get(VARIABLE_ORIGIN_ATTR, {}))
+    origins[str(column)] = str(description)
+    df.attrs[VARIABLE_ORIGIN_ATTR] = origins
+
+
 def add_psychrometric_properties(df: pd.DataFrame, fallback_pressure_pa: float = DEFAULT_PRESSURE_PA) -> pd.DataFrame:
-    """Add psychrometric properties to an EPW DataFrame.
+    """Add psychrometric properties to a canonical climate DataFrame.
 
-    The implementation avoids ``DataFrame.iterrows()`` because that made EPW
-    loading unnecessarily slow. Humidity ratio, vapour pressure, enthalpy,
-    volume, density and degree of saturation are calculated with vectorized
-    ASHRAE/PsychroLib-equivalent equations. Wet-bulb temperature is still
-    calculated with PsychroLib because it is an iterative psychrometric
-    inversion, but the loop is restricted to valid rows only.
+    Existing source dew-point observations are preserved.  Where dew point is
+    absent or missing, it is calculated from the same dry-bulb/RH state used for
+    the other psychrometric quantities and the affected rows are marked in
+    ``dew_point_temperature_is_calculated``.  This keeps EPW source dew point
+    intact while giving measured sources such as GeoSphere the same complete
+    psychrometric state without dataset-specific code.
 
-    Added fields:
+    Added/filled fields:
+        - dew_point_temperature_c
+        - dew_point_temperature_is_calculated
         - vapor_pressure_pa
         - saturation_vapor_pressure_pa
         - humidity_ratio_kg_kg
@@ -63,15 +79,25 @@ def add_psychrometric_properties(df: pd.DataFrame, fallback_pressure_pa: float =
         - moist_air_density_kg_m3
         - degree_of_saturation
     """
+    attrs = dict(df.attrs)
     data = df.copy()
+    data.attrs.update(attrs)
     n = len(data)
     if n == 0:
         return data
 
-    t = pd.to_numeric(data.get("dry_bulb_temperature_c"), errors="coerce").to_numpy(dtype=float)
-    rh_pct = pd.to_numeric(data.get("relative_humidity_pct"), errors="coerce").to_numpy(dtype=float)
-    pressure_raw = pd.to_numeric(data.get("atmospheric_station_pressure_pa"), errors="coerce").to_numpy(dtype=float)
-    pressure = np.where((pressure_raw >= 30_000.0) & (pressure_raw <= 120_000.0), pressure_raw, float(fallback_pressure_pa))
+    fallback = float(fallback_pressure_pa)
+    if not 30_000.0 <= fallback <= 120_000.0:
+        raise ValueError("Psychrometric fallback pressure must be within 30000...120000 Pa.")
+
+    t = _numeric_column_or_nan(data, "dry_bulb_temperature_c")
+    rh_pct = _numeric_column_or_nan(data, "relative_humidity_pct")
+    pressure_raw = _numeric_column_or_nan(data, "atmospheric_station_pressure_pa")
+    pressure = np.where(
+        np.isfinite(pressure_raw) & (pressure_raw >= 30_000.0) & (pressure_raw <= 120_000.0),
+        pressure_raw,
+        fallback,
+    )
 
     valid = np.isfinite(t) & np.isfinite(rh_pct) & np.isfinite(pressure)
     rh = np.clip(rh_pct / 100.0, 0.0, 1.0)
@@ -79,6 +105,7 @@ def add_psychrometric_properties(df: pd.DataFrame, fallback_pressure_pa: float =
     w = np.full(n, np.nan, dtype=float)
     h = np.full(n, np.nan, dtype=float)
     twb = np.full(n, np.nan, dtype=float)
+    tdp_calculated = np.full(n, np.nan, dtype=float)
     v = np.full(n, np.nan, dtype=float)
     rho = np.full(n, np.nan, dtype=float)
     vap = np.full(n, np.nan, dtype=float)
@@ -91,16 +118,12 @@ def add_psychrometric_properties(df: pd.DataFrame, fallback_pressure_pa: float =
         rh_valid = rh[idx]
         p_valid = pressure[idx]
 
-        # PsychroLib saturation pressure is scalar; this loop is cheap compared
-        # with the wet-bulb inversion and keeps the saturation curve identical
-        # to the PsychroLib implementation.
         sat = np.array([psychrolib.GetSatVapPres(float(tv)) for tv in t_valid], dtype=float)
         pv = rh_valid * sat
         pv = np.minimum(pv, p_valid * 0.999999)
         w_valid = 0.621945 * pv / np.maximum(p_valid - pv, 1e-9)
         w_valid = np.maximum(w_valid, psychrolib.MIN_HUM_RATIO)
 
-        # ASHRAE/PsychroLib SI equations.
         h_valid = 1.006 * t_valid + w_valid * (2501.0 + 1.86 * t_valid)
         t_k = t_valid + 273.15
         v_valid = 287.042 * t_k * (1.0 + 1.607858 * w_valid) / p_valid
@@ -116,15 +139,30 @@ def add_psychrometric_properties(df: pd.DataFrame, fallback_pressure_pa: float =
         sat_vap[idx] = sat
         degree[idx] = degree_valid
 
-        # Wet-bulb temperature remains delegated to PsychroLib. This is the
-        # slowest part of EPW loading, but using ndarray inputs and valid-row
-        # iteration avoids the major overhead of row-wise pandas access.
-        for out_i, tv, wv, pv_press in zip(idx, t_valid, w_valid, p_valid, strict=False):
+        # Wet-bulb and dew-point inversions stay delegated to PsychroLib.  The
+        # loop is restricted to valid source rows and therefore remains modest
+        # compared with repeated pandas row access.
+        for out_i, tv, rh_value, wv, pv_press in zip(
+            idx, t_valid, rh_valid, w_valid, p_valid, strict=False
+        ):
             try:
                 twb[out_i] = psychrolib.GetTWetBulbFromHumRatio(float(tv), float(wv), float(pv_press))
             except Exception:
                 twb[out_i] = np.nan
+            try:
+                # PsychroLib defines dew point from dry-bulb and vapour pressure;
+                # GetTDewPointFromRelHum performs that inversion consistently.
+                tdp_calculated[out_i] = psychrolib.GetTDewPointFromRelHum(float(tv), float(rh_value))
+            except Exception:
+                tdp_calculated[out_i] = np.nan
 
+    source_dew = _numeric_column_or_nan(data, "dew_point_temperature_c")
+    dew_fill_mask = ~np.isfinite(source_dew) & np.isfinite(tdp_calculated)
+    resolved_dew = source_dew.copy()
+    resolved_dew[dew_fill_mask] = tdp_calculated[dew_fill_mask]
+
+    data["dew_point_temperature_c"] = resolved_dew
+    data["dew_point_temperature_is_calculated"] = dew_fill_mask
     data["humidity_ratio_kg_kg"] = w
     data["humidity_ratio_g_kg"] = w * 1000.0
     data["moist_air_enthalpy_kj_kg"] = h
@@ -134,6 +172,17 @@ def add_psychrometric_properties(df: pd.DataFrame, fallback_pressure_pa: float =
     data["vapor_pressure_pa"] = vap
     data["saturation_vapor_pressure_pa"] = sat_vap
     data["degree_of_saturation"] = degree
+
+    if dew_fill_mask.any():
+        if np.isfinite(source_dew).any():
+            origin = "source values preserved; missing rows calculated from dry-bulb temperature and relative humidity (PsychroLib)"
+        else:
+            origin = "calculated from dry-bulb temperature and relative humidity (PsychroLib)"
+        _record_variable_origin(data, "dew_point_temperature_c", origin)
+    _record_variable_origin(data, "wet_bulb_temperature_c", "calculated from canonical moist-air state (PsychroLib)")
+    _record_variable_origin(data, "humidity_ratio_g_kg", "calculated from dry-bulb temperature, relative humidity and pressure")
+    _record_variable_origin(data, "moist_air_enthalpy_kj_kg", "calculated from dry-bulb temperature and humidity ratio")
+    data.attrs.update({key: value for key, value in attrs.items() if key != VARIABLE_ORIGIN_ATTR})
     return data
 
 
