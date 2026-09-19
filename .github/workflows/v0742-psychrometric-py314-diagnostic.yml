@@ -1,0 +1,37 @@
+name: Climate 0.7.4.2 psychrometric Python 3.14 diagnostic
+
+on:
+  push:
+    branches:
+      - hotfix/v0.7.4.2-psychrometric-runtime-typeerror
+    paths:
+      - 'tools/climate_analyzer/tests/test_psychrometric_runtime_smoke_0_7_4_2.py'
+      - '.github/workflows/v0742-psychrometric-py314-diagnostic.yml'
+      - 'tools/climate_analyzer/epw_climate_analyzer/charts.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/psychrometric_distribution.py'
+
+jobs:
+  py314-runtime-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - name: Install dependencies
+        working-directory: tools/climate_analyzer
+        run: pip install -r requirements.txt
+      - name: Show runtime versions
+        working-directory: tools/climate_analyzer
+        run: |
+          python - <<'PY'
+          import sys, numpy, pandas, plotly
+          print(sys.version)
+          print('numpy', numpy.__version__)
+          print('pandas', pandas.__version__)
+          print('plotly', plotly.__version__)
+          PY
+      - name: Run psychrometric runtime smoke
+        working-directory: tools/climate_analyzer
+        run: python -m unittest tests.test_psychrometric_runtime_smoke_0_7_4_2 -v
