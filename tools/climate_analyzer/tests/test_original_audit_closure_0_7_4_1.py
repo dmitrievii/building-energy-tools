@@ -10,6 +10,7 @@ from epw_climate_analyzer.ground_temperature import AnnualHarmonic, animated_pro
 from epw_climate_analyzer.temporal_filtering import CHRONOLOGICAL, with_time_basis
 
 ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = ROOT.parents[1]
 APP = ROOT / "app.py"
 DOC = ROOT / "CLIMATE_CORE_0_7_4.md"
 
@@ -97,6 +98,10 @@ class OriginalAuditClosure0741Tests(unittest.TestCase):
         self.assertIn("no longer the release contract", doc)
         self.assertIn("Wet-bulb temperature has one generic variable home", doc)
         self.assertIn("By year", doc)
+
+    def test_temporary_original_audit_patch_transport_is_not_in_release_tree(self) -> None:
+        self.assertFalse((ROOT / "scripts" / "apply_v0741_original_audit_closure.py").exists())
+        self.assertFalse((REPO_ROOT / ".github" / "workflows" / "v0741-original-audit-closure-patch.yml").exists())
 
 
 if __name__ == "__main__":
