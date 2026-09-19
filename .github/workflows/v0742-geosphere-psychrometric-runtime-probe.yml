@@ -1,0 +1,35 @@
+name: Climate 0.7.4.2 GeoSphere psychrometric runtime probe
+
+on:
+  push:
+    branches:
+      - hotfix/v0.7.4.2-psychrometric-runtime-typeerror
+    paths:
+      - 'deployment/geosphere_psychrometric_runtime_probe.py'
+      - '.github/workflows/v0742-geosphere-psychrometric-runtime-probe.yml'
+      - 'tools/climate_analyzer/epw_climate_analyzer/charts.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/psychrometric_distribution.py'
+
+jobs:
+  provider-backed-psychrometric-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONPATH: tools/climate_analyzer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - name: Install dependencies
+        run: pip install -r tools/climate_analyzer/requirements.txt
+      - name: Run live GeoSphere psychrometric runtime probe
+        run: python deployment/geosphere_psychrometric_runtime_probe.py
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v0742-geosphere-psychrometric-runtime-probe
+          path: artifacts/geosphere-psychrometric-runtime-probe.json
+          if-no-files-found: warn
+          retention-days: 7
