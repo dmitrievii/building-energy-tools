@@ -1,19 +1,10 @@
-"""Canonical climate-data model shared by current and future source adapters.
+"""Canonical climate-data model shared by all source adapters.
 
-The Climate Analyzer started with EPW files, where one parsed dataframe carried
-both source-specific calendar semantics and the normalized columns consumed by
-the analysis pages.  Future sources (for example measured 10-minute station
-data) must not be forced through EPW-specific assumptions such as a synthetic
-typical year.  This module therefore defines a small canonical boundary:
-
-* source adapters map provider fields to canonical variable names;
-* spatial, temporal and provenance metadata are explicit and immutable;
-* real historical timestamps stay real historical timestamps;
-* typical-year EPW data remain explicitly marked as a typical-year calendar;
-* temporal upsampling is never implied by the canonical model.
-
-The model is deliberately independent of Streamlit and provider SDKs so it can
-be used by ingestion, comparison, export and validation code.
+Adapters map provider fields onto physical variables and explicit metadata;
+calculation engines consume canonical timestamped DataFrames without knowing
+whether the source was EPW, GeoSphere 10-minute, GeoSphere hourly, or a future
+provider. Real historical timestamps remain real; typical-year calendars remain
+explicitly marked as such.
 """
 
 from __future__ import annotations
@@ -33,8 +24,6 @@ AggregationSemantics = Literal["mean", "sum", "max", "min", "circular mean", "pa
 
 @dataclass(frozen=True)
 class CanonicalVariable:
-    """Metadata contract for one canonical climate variable."""
-
     column: str
     unit: str
     unit_family: str
@@ -43,103 +32,51 @@ class CanonicalVariable:
 
 
 CANONICAL_VARIABLES: dict[str, CanonicalVariable] = {
-    "dry_bulb_temperature_c": CanonicalVariable(
-        "dry_bulb_temperature_c", "°C", "temperature", "mean", "Outdoor dry-bulb air temperature"
-    ),
-    "dry_bulb_temperature_min_c": CanonicalVariable(
-        "dry_bulb_temperature_min_c", "°C", "temperature", "min", "True source-interval minimum 2 m air temperature"
-    ),
-    "dry_bulb_temperature_max_c": CanonicalVariable(
-        "dry_bulb_temperature_max_c", "°C", "temperature", "max", "True source-interval maximum 2 m air temperature"
-    ),
-    "ground_temperature_0_10m_c": CanonicalVariable(
-        "ground_temperature_0_10m_c", "°C", "ground temperature", "mean", "Measured ground temperature at 0.10 m depth"
-    ),
-    "ground_temperature_0_20m_c": CanonicalVariable(
-        "ground_temperature_0_20m_c", "°C", "ground temperature", "mean", "Measured ground temperature at 0.20 m depth"
-    ),
-    "ground_temperature_0_50m_c": CanonicalVariable(
-        "ground_temperature_0_50m_c", "°C", "ground temperature", "mean", "Measured ground temperature at 0.50 m depth"
-    ),
-    "dew_point_temperature_c": CanonicalVariable(
-        "dew_point_temperature_c", "°C", "temperature", "mean", "Outdoor dew-point temperature"
-    ),
-    "wet_bulb_temperature_c": CanonicalVariable(
-        "wet_bulb_temperature_c", "°C", "temperature", "mean", "Outdoor wet-bulb temperature"
-    ),
-    "relative_humidity_pct": CanonicalVariable(
-        "relative_humidity_pct", "%", "relative humidity", "mean", "Outdoor relative humidity"
-    ),
-    "humidity_ratio_g_kg": CanonicalVariable(
-        "humidity_ratio_g_kg", "g/kg dry air", "humidity ratio", "mean", "Humidity ratio"
-    ),
-    "moist_air_enthalpy_kj_kg": CanonicalVariable(
-        "moist_air_enthalpy_kj_kg", "kJ/kg dry air", "enthalpy", "mean", "Moist-air specific enthalpy"
-    ),
-    "specific_volume_m3_kg": CanonicalVariable(
-        "specific_volume_m3_kg", "m³/kg dry air", "specific volume", "mean", "Moist-air specific volume"
-    ),
-    "moist_air_density_kg_m3": CanonicalVariable(
-        "moist_air_density_kg_m3", "kg/m³", "density", "mean", "Moist-air density"
-    ),
-    "atmospheric_station_pressure_pa": CanonicalVariable(
-        "atmospheric_station_pressure_pa", "Pa", "pressure", "mean", "Atmospheric station pressure"
-    ),
-    "global_horizontal_radiation_wh_m2": CanonicalVariable(
-        "global_horizontal_radiation_wh_m2", "Wh/m²", "irradiation", "sum", "Global horizontal irradiation per source interval"
-    ),
-    "direct_normal_radiation_wh_m2": CanonicalVariable(
-        "direct_normal_radiation_wh_m2", "Wh/m²", "irradiation", "sum", "Direct normal irradiation per source interval"
-    ),
-    "diffuse_horizontal_radiation_wh_m2": CanonicalVariable(
-        "diffuse_horizontal_radiation_wh_m2", "Wh/m²", "irradiation", "sum", "Diffuse horizontal irradiation per source interval"
-    ),
-    "global_horizontal_illuminance_lux": CanonicalVariable(
-        "global_horizontal_illuminance_lux", "lux", "illuminance", "mean", "Global horizontal illuminance"
-    ),
-    "direct_normal_illuminance_lux": CanonicalVariable(
-        "direct_normal_illuminance_lux", "lux", "illuminance", "mean", "Direct normal illuminance"
-    ),
-    "diffuse_horizontal_illuminance_lux": CanonicalVariable(
-        "diffuse_horizontal_illuminance_lux", "lux", "illuminance", "mean", "Diffuse horizontal illuminance"
-    ),
-    "wind_speed_m_s": CanonicalVariable(
-        "wind_speed_m_s", "m/s", "wind speed", "mean", "Wind speed"
-    ),
-    "wind_direction_deg": CanonicalVariable(
-        "wind_direction_deg", "deg", "direction", "circular mean", "Wind direction clockwise from north"
-    ),
-    "wind_gust_speed_m_s": CanonicalVariable(
-        "wind_gust_speed_m_s", "m/s", "wind speed", "max", "Maximum wind gust speed within the source interval"
-    ),
-    "wind_gust_direction_deg": CanonicalVariable(
-        "wind_gust_direction_deg", "deg", "direction", "paired max direction", "Direction paired with the maximum wind gust"
-    ),
-    "total_sky_cover_tenths": CanonicalVariable(
-        "total_sky_cover_tenths", "tenths", "sky cover", "mean", "Total sky cover"
-    ),
-    "opaque_sky_cover_tenths": CanonicalVariable(
-        "opaque_sky_cover_tenths", "tenths", "sky cover", "mean", "Opaque sky cover"
-    ),
-    "liquid_precipitation_depth_mm": CanonicalVariable(
-        "liquid_precipitation_depth_mm", "mm", "precipitation", "sum", "Liquid precipitation depth per reported source interval"
-    ),
-    "precipitation_duration_min": CanonicalVariable(
-        "precipitation_duration_min", "min", "duration", "sum", "Measured precipitation duration within the reported source interval"
-    ),
-    "snow_depth_cm": CanonicalVariable(
-        "snow_depth_cm", "cm", "snow depth", "mean", "Snow depth state"
-    ),
-    "sunshine_duration_s": CanonicalVariable(
-        "sunshine_duration_s", "s", "duration", "sum", "Measured sunshine duration within the source interval"
-    ),
+    "dry_bulb_temperature_c": CanonicalVariable("dry_bulb_temperature_c", "°C", "temperature", "mean", "Outdoor dry-bulb air temperature"),
+    "dry_bulb_temperature_min_c": CanonicalVariable("dry_bulb_temperature_min_c", "°C", "temperature", "min", "True source-interval minimum 2 m air temperature"),
+    "dry_bulb_temperature_max_c": CanonicalVariable("dry_bulb_temperature_max_c", "°C", "temperature", "max", "True source-interval maximum 2 m air temperature"),
+    "ground_temperature_0_10m_c": CanonicalVariable("ground_temperature_0_10m_c", "°C", "ground temperature", "mean", "Measured ground temperature at 0.10 m depth"),
+    "ground_temperature_0_20m_c": CanonicalVariable("ground_temperature_0_20m_c", "°C", "ground temperature", "mean", "Measured ground temperature at 0.20 m depth"),
+    "ground_temperature_0_50m_c": CanonicalVariable("ground_temperature_0_50m_c", "°C", "ground temperature", "mean", "Measured ground temperature at 0.50 m depth"),
+    "dew_point_temperature_c": CanonicalVariable("dew_point_temperature_c", "°C", "temperature", "mean", "Outdoor dew-point temperature"),
+    "wet_bulb_temperature_c": CanonicalVariable("wet_bulb_temperature_c", "°C", "temperature", "mean", "Outdoor wet-bulb temperature"),
+    "relative_humidity_pct": CanonicalVariable("relative_humidity_pct", "%", "relative humidity", "mean", "Outdoor relative humidity"),
+    "humidity_ratio_g_kg": CanonicalVariable("humidity_ratio_g_kg", "g/kg dry air", "humidity ratio", "mean", "Humidity ratio"),
+    "moist_air_enthalpy_kj_kg": CanonicalVariable("moist_air_enthalpy_kj_kg", "kJ/kg dry air", "enthalpy", "mean", "Moist-air specific enthalpy"),
+    "specific_volume_m3_kg": CanonicalVariable("specific_volume_m3_kg", "m³/kg dry air", "specific volume", "mean", "Moist-air specific volume"),
+    "moist_air_density_kg_m3": CanonicalVariable("moist_air_density_kg_m3", "kg/m³", "density", "mean", "Moist-air density"),
+    "atmospheric_station_pressure_pa": CanonicalVariable("atmospheric_station_pressure_pa", "Pa", "pressure", "mean", "Atmospheric station pressure"),
+    "global_horizontal_radiation_wh_m2": CanonicalVariable("global_horizontal_radiation_wh_m2", "Wh/m²", "irradiation", "sum", "Global horizontal irradiation per source interval"),
+    "direct_normal_radiation_wh_m2": CanonicalVariable("direct_normal_radiation_wh_m2", "Wh/m²", "irradiation", "sum", "Direct normal irradiation per source interval"),
+    "diffuse_horizontal_radiation_wh_m2": CanonicalVariable("diffuse_horizontal_radiation_wh_m2", "Wh/m²", "irradiation", "sum", "Diffuse horizontal irradiation per source interval"),
+    "extraterrestrial_horizontal_radiation_wh_m2": CanonicalVariable("extraterrestrial_horizontal_radiation_wh_m2", "Wh/m²", "irradiation", "sum", "Extraterrestrial horizontal irradiation per source interval"),
+    "extraterrestrial_direct_normal_radiation_wh_m2": CanonicalVariable("extraterrestrial_direct_normal_radiation_wh_m2", "Wh/m²", "irradiation", "sum", "Extraterrestrial direct-normal irradiation per source interval"),
+    "horizontal_infrared_radiation_intensity_wh_m2": CanonicalVariable("horizontal_infrared_radiation_intensity_wh_m2", "Wh/m²", "longwave irradiation", "sum", "Horizontal infrared atmospheric irradiation per source interval"),
+    "global_horizontal_illuminance_lux": CanonicalVariable("global_horizontal_illuminance_lux", "lux", "illuminance", "mean", "Global horizontal illuminance"),
+    "direct_normal_illuminance_lux": CanonicalVariable("direct_normal_illuminance_lux", "lux", "illuminance", "mean", "Direct normal illuminance"),
+    "diffuse_horizontal_illuminance_lux": CanonicalVariable("diffuse_horizontal_illuminance_lux", "lux", "illuminance", "mean", "Diffuse horizontal illuminance"),
+    "zenith_luminance_cd_m2": CanonicalVariable("zenith_luminance_cd_m2", "cd/m²", "luminance", "mean", "Zenith luminance"),
+    "wind_speed_m_s": CanonicalVariable("wind_speed_m_s", "m/s", "wind speed", "mean", "Wind speed"),
+    "wind_direction_deg": CanonicalVariable("wind_direction_deg", "deg", "direction", "circular mean", "Wind direction clockwise from north"),
+    "wind_gust_speed_m_s": CanonicalVariable("wind_gust_speed_m_s", "m/s", "wind speed", "max", "Maximum wind gust speed within the source interval"),
+    "wind_gust_direction_deg": CanonicalVariable("wind_gust_direction_deg", "deg", "direction", "paired max direction", "Direction paired with the maximum wind gust"),
+    "total_sky_cover_tenths": CanonicalVariable("total_sky_cover_tenths", "tenths", "sky cover", "mean", "Total sky cover"),
+    "opaque_sky_cover_tenths": CanonicalVariable("opaque_sky_cover_tenths", "tenths", "sky cover", "mean", "Opaque sky cover"),
+    "visibility_km": CanonicalVariable("visibility_km", "km", "visibility", "mean", "Horizontal visibility"),
+    "ceiling_height_m": CanonicalVariable("ceiling_height_m", "m", "cloud ceiling", "mean", "Cloud ceiling height"),
+    "precipitable_water_mm": CanonicalVariable("precipitable_water_mm", "mm", "precipitable water", "mean", "Total atmospheric precipitable water"),
+    "aerosol_optical_depth_thousandths": CanonicalVariable("aerosol_optical_depth_thousandths", "0.001", "optical depth", "mean", "Aerosol optical depth in EPW thousandths"),
+    "albedo": CanonicalVariable("albedo", "-", "albedo", "mean", "Ground surface solar reflectance"),
+    "liquid_precipitation_depth_mm": CanonicalVariable("liquid_precipitation_depth_mm", "mm", "precipitation", "sum", "Liquid precipitation depth per reported source interval"),
+    "precipitation_duration_min": CanonicalVariable("precipitation_duration_min", "min", "duration", "sum", "Measured precipitation duration within the reported source interval"),
+    "snow_depth_cm": CanonicalVariable("snow_depth_cm", "cm", "snow depth", "mean", "Snow depth state"),
+    "days_since_last_snowfall": CanonicalVariable("days_since_last_snowfall", "d", "snow state", "mean", "Days since last snowfall"),
+    "sunshine_duration_s": CanonicalVariable("sunshine_duration_s", "s", "duration", "sum", "Measured sunshine duration within the source interval"),
 }
 
 
 @dataclass(frozen=True)
 class ClimateLocation:
-    """Canonical spatial metadata for a point or representative climate site."""
-
     latitude: float
     longitude: float
     elevation_m: float | None = None
@@ -157,8 +94,6 @@ class ClimateLocation:
 
 @dataclass(frozen=True)
 class ClimateTemporalMetadata:
-    """Explicit time-axis semantics independent of the data provider."""
-
     native_interval_minutes: int
     calendar_mode: CalendarMode
     timezone_name: str
@@ -177,8 +112,6 @@ class ClimateTemporalMetadata:
 
 @dataclass(frozen=True)
 class ClimateProvenance:
-    """Provider/source provenance retained across all analysis adapters."""
-
     provider: str
     dataset: str
     source_format: str
@@ -201,8 +134,6 @@ class ClimateProvenance:
 
 @dataclass(frozen=True)
 class CanonicalClimateDataset:
-    """One normalized climate dataset with explicit metadata and provenance."""
-
     climate_id: str
     display_name: str
     data: pd.DataFrame = field(repr=False, compare=False)
@@ -218,9 +149,6 @@ class CanonicalClimateDataset:
         validated = validate_canonical_frame(self.data)
         object.__setattr__(self, "data", validated)
         inferred = infer_native_resolution_minutes(validated.index)
-        # The declared cadence belongs to the source contract. Historical
-        # observations may have arbitrary gaps, so observed timestamp spacing
-        # must not rewrite or invalidate a provider-declared native interval.
         validated.attrs.setdefault("canonical_native_interval_minutes", self.temporal.native_interval_minutes)
         validated.attrs.setdefault("canonical_calendar_mode", self.temporal.calendar_mode)
         validated.attrs.setdefault("canonical_timezone_name", self.temporal.timezone_name)
@@ -252,7 +180,6 @@ def _positive_interval_minutes(index: pd.DatetimeIndex) -> list[int]:
 
 
 def infer_native_resolution_minutes(index: pd.DatetimeIndex) -> int:
-    """Infer the median positive timestamp spacing in whole minutes."""
     positive = _positive_interval_minutes(pd.DatetimeIndex(index))
     if not positive:
         return 60
@@ -260,26 +187,20 @@ def infer_native_resolution_minutes(index: pd.DatetimeIndex) -> int:
 
 
 def canonical_variable(column: str) -> CanonicalVariable | None:
-    """Return canonical variable metadata when the column is registered."""
     return CANONICAL_VARIABLES.get(column)
 
 
 def aggregation_semantics_for(column: str) -> AggregationSemantics:
-    """Return quantity-aware aggregation semantics, defaulting to state mean."""
     variable = canonical_variable(column)
     return variable.aggregation if variable is not None else "mean"
 
 
 def unit_family_for(column: str, fallback: str = "") -> str:
-    """Return the canonical physical unit family for overlay-axis grouping."""
     variable = canonical_variable(column)
-    if variable is not None:
-        return variable.unit_family
-    return fallback or column
+    return variable.unit_family if variable is not None else (fallback or column)
 
 
 def validate_canonical_frame(data: pd.DataFrame) -> pd.DataFrame:
-    """Validate and return a defensive copy of a canonical timestamped frame."""
     if not isinstance(data.index, pd.DatetimeIndex):
         raise TypeError("Canonical climate data require a pandas DatetimeIndex.")
     if data.empty:
@@ -301,13 +222,6 @@ def map_provider_frame(
     *,
     keep_unmapped: bool = False,
 ) -> pd.DataFrame:
-    """Map provider-specific columns onto the canonical climate vocabulary.
-
-    ``column_map`` is ``provider_name -> canonical_name``. Canonical targets must
-    be registered to prevent silent vocabulary drift. Unknown provider columns
-    are dropped by default; callers may retain them as explicitly non-canonical
-    extras with ``keep_unmapped=True``.
-    """
     unknown_targets = sorted({target for target in column_map.values() if target not in CANONICAL_VARIABLES})
     if unknown_targets:
         raise ValueError(f"Unknown canonical climate columns: {', '.join(unknown_targets)}")
@@ -330,7 +244,6 @@ def build_canonical_dataset(
     column_map: Mapping[str, str] | None = None,
     keep_unmapped: bool = True,
 ) -> CanonicalClimateDataset:
-    """Build a provider-neutral dataset without changing its timestamp calendar."""
     frame = (
         map_provider_frame(data, column_map, keep_unmapped=keep_unmapped)
         if column_map is not None
@@ -356,13 +269,7 @@ def canonical_from_epw(
     provider: str = "EPW",
     dataset: str = "EPW typical-year weather",
 ) -> CanonicalClimateDataset:
-    """Adapt the current normalized EPW representation to the canonical model.
-
-    EPW source years remain provenance metadata. The dataframe already contains
-    the unified plotting year created by ``epw_parser``; this adapter marks that
-    calendar explicitly as ``typical_year`` instead of pretending it is a real
-    historical year.
-    """
+    """Adapt an EPW normalized frame to the canonical source contract."""
     frame = validate_canonical_frame(epw.data if data is None else data)
     source_years = tuple(int(year) for year in frame.attrs.get("source_years", ()) if pd.notna(year))
     canonical_year_attr = frame.attrs.get("typical_year")
@@ -373,8 +280,6 @@ def canonical_from_epw(
         native_interval_minutes=infer_native_resolution_minutes(frame.index),
         calendar_mode="typical_year",
         timezone_name=timezone_name,
-        # epw_parser converts EPW hour-ending records to interval-start plotting
-        # timestamps (hour 1 -> 00:00, hour 24 -> 23:00).
         interval_semantics="interval_start",
         source_years=source_years,
         canonical_year=int(canonical_year_attr),
@@ -395,9 +300,7 @@ def canonical_from_epw(
         source_name=str(epw.name),
         source_reference=source_reference,
         provider_station_id=str(epw.location.wmo),
-        notes=(
-            "EPW source years are preserved separately from the canonical typical-year plotting calendar.",
-        ),
+        notes=("EPW source years are preserved separately from the canonical typical-year plotting calendar.",),
     )
     return build_canonical_dataset(
         climate_id=climate_id or str(epw.name),
