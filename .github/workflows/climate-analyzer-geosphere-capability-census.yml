@@ -5,6 +5,8 @@ on:
     paths:
       - 'deployment/geosphere_capability_census.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/geosphere.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/geosphere_resource_overlay.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/climate_model.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/historical_capabilities.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/ui_contract.py'
       - '.github/workflows/climate-analyzer-geosphere-capability-census.yml'
@@ -15,6 +17,8 @@ on:
     paths:
       - 'deployment/geosphere_capability_census.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/geosphere.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/geosphere_resource_overlay.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/climate_model.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/historical_capabilities.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/ui_contract.py'
       - '.github/workflows/climate-analyzer-geosphere-capability-census.yml'
@@ -41,7 +45,12 @@ jobs:
         env:
           PYTHONPATH: tools/climate_analyzer
         run: |
-          python deployment/geosphere_capability_census.py
+          python - <<'PY'
+          from epw_climate_analyzer.geosphere_resource_overlay import apply_geosphere_resource_overlay
+          apply_geosphere_resource_overlay()
+          from deployment.geosphere_capability_census import main
+          raise SystemExit(main())
+          PY
       - name: Upload census evidence
         uses: actions/upload-artifact@v4
         with:
