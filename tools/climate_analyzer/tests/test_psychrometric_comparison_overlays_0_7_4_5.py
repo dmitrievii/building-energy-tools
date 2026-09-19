@@ -49,7 +49,8 @@ class PsychrometricComparisonOverlays0745Tests(unittest.TestCase):
         return ClimateDataset(climate_id, name, "test", epw, frame, [])
 
     def test_compare_ui_exposes_givoni_and_heat_index_toggles(self) -> None:
-        source = Path("tools/climate_analyzer/app.py").read_text(encoding="utf-8")
+        app_path = Path(__file__).resolve().parents[1] / "app.py"
+        source = app_path.read_text(encoding="utf-8")
         self.assertIn('key="compare_psych_show_givoni"', source)
         self.assertIn('key="compare_psych_show_heat_index"', source)
         self.assertIn("show_givoni_overlay=show_givoni", source)
