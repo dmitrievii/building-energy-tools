@@ -1,0 +1,410 @@
+name: Temporary psychrometric comparison 0.7.4.5 patch
+
+on:
+  push:
+    branches:
+      - hotfix/v0.7.4.5-psychrometric-comparison-overlays-colors
+
+permissions:
+  contents: write
+
+jobs:
+  apply-patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply focused source changes
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: Path, old: str, new: str) -> None:
+              text = path.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count != 1:
+                  raise RuntimeError(f'{path}: expected exactly one match, found {count}')
+              path.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          app = Path('tools/climate_analyzer/app.py')
+          comparison = Path('tools/climate_analyzer/epw_climate_analyzer/comparison.py')
+          guard = Path('tools/climate_analyzer/epw_climate_analyzer/runtime_module_guard.py')
+          guard_test = Path('tools/climate_analyzer/tests/test_psychrometric_runtime_guard_0_7_4_2.py')
+
+          # Compare Climates UI: expose the same two overlays as the single-climate chart.
+          old = '''        elif representation == "Distribution grid":
+            st.caption(
+                "Distribution-grid comparison uses the original 1 °C × 5 %RH psychrometric cells. Climate hue identifies the dataset; cell opacity follows represented hours on one shared scale."
+            )
+
+        reference = next((climate for climate in climates if climate.display_name == reference_name), climates[0])
+'''
+          new = '''        elif representation == "Distribution grid":
+            st.caption(
+                "Distribution-grid comparison uses the original 1 °C × 5 %RH psychrometric cells. Climate hue identifies the dataset; cell opacity follows represented hours on one shared scale."
+            )
+
+        with st.expander("Chart overlays", expanded=True):
+            overlay_c1, overlay_c2 = st.columns(2)
+            show_givoni = overlay_c1.checkbox(
+                "Show Givoni-Milne bioclimatic overlay",
+                value=True,
+                key="compare_psych_show_givoni",
+            )
+            show_heat_index = overlay_c2.checkbox(
+                "Show heat-index overlay",
+                value=False,
+                key="compare_psych_show_heat_index",
+            )
+            st.caption(
+                "Givoni-Milne zones and heat-index isolines use the same common psychrometric reference pressure as the compared climate representations."
+            )
+
+        reference = next((climate for climate in climates if climate.display_name == reference_name), climates[0])
+'''
+          replace_once(app, old, new)
+
+          old = '''            additional_contour_coverages=additional_contour_coverages,
+            reference_pressure_pa=float(reference_grid_pressure),
+        )
+'''
+          new = '''            additional_contour_coverages=additional_contour_coverages,
+            reference_pressure_pa=float(reference_grid_pressure),
+            show_givoni_overlay=show_givoni,
+            show_heat_index_overlay=show_heat_index,
+        )
+'''
+          replace_once(app, old, new)
+
+          # Comparison builder: reuse the validated single-climate overlay geometry.
+          old = '''from .psychrometric_distribution import add_climate_zone_traces, psychrometric_axis_ranges
+from .solar import orientation_annual_radiation, orientation_tilt_matrix, surface_irradiance_series
+'''
+          new = '''from .psychrometric_distribution import add_climate_zone_traces, psychrometric_axis_ranges
+from .charts import _add_givoni_milne_overlay, _add_heat_index_overlay
+from .solar import orientation_annual_radiation, orientation_tilt_matrix, surface_irradiance_series
+'''
+          replace_once(comparison, old, new)
+
+          old = '''    additional_contour_coverages: list[float] | None = None,
+    reference_pressure_pa: float | None = None,
+) -> go.Figure:
+'''
+          new = '''    additional_contour_coverages: list[float] | None = None,
+    reference_pressure_pa: float | None = None,
+    show_givoni_overlay: bool = False,
+    show_heat_index_overlay: bool = False,
+) -> go.Figure:
+'''
+          replace_once(comparison, old, new)
+
+          old = '''                fig.add_trace(
+                    go.Scattergl(
+                        x=data[x_col],
+                        y=data[y_col],
+                        mode="markers",
+                        name=climate.display_name,
+                        marker=dict(size=3.5, opacity=0.22, color=color),
+                        hovertemplate=f"{climate.display_name}<br>x: %{{x:.2f}}<br>y: %{{y:.2f}}<extra></extra>",
+                    )
+                )
+
+    title_mode = {
+'''
+          new = '''                fig.add_trace(
+                    go.Scattergl(
+                        x=data[x_col],
+                        y=data[y_col],
+                        mode="markers",
+                        name=climate.display_name,
+                        marker=dict(size=3.5, opacity=0.22, color=color),
+                        hovertemplate=f"{climate.display_name}<br>x: %{{x:.2f}}<br>y: %{{y:.2f}}<extra></extra>",
+                    )
+                )
+
+    # Comparison overlays are common reference layers, not climate-specific
+    # datasets. They therefore use exactly the same selected display pressure
+    # and shared axis coordinates as RH curves, points, grids and contours.
+    if show_givoni_overlay:
+        _add_givoni_milne_overlay(fig, chart_type, grid_pressure, None)
+    if show_heat_index_overlay:
+        heat_t_range = (t_min, t_max)
+        heat_d_range = shared_ranges[1] if chart_type == "T-d" else shared_ranges[0]
+        heat_h_range = None if chart_type == "T-d" else shared_ranges[1]
+        _add_heat_index_overlay(
+            fig,
+            chart_type,
+            grid_pressure,
+            heat_t_range,
+            heat_d_range,
+            heat_h_range,
+        )
+
+    title_mode = {
+'''
+          replace_once(comparison, old, new)
+
+          old = '''    fig.update_xaxes(range=list(shared_ranges[0]), autorange=False)
+    fig.update_yaxes(range=list(shared_ranges[1]), autorange=False)
+    return fig
+'''
+          new = '''    fig.update_xaxes(range=list(shared_ranges[0]), autorange=False)
+    fig.update_yaxes(range=list(shared_ranges[1]), autorange=False)
+    if show_givoni_overlay or show_heat_index_overlay:
+        fig.update_layout(
+            legend=dict(
+                title=dict(text="Climate", font=dict(size=13)),
+                orientation="v",
+                yanchor="bottom",
+                y=0.0,
+                xanchor="left",
+                x=0.755,
+                itemsizing="constant",
+                font=dict(size=12),
+                groupclick="toggleitem",
+            ),
+            legend2=dict(
+                title=dict(text="Bioclimatic / thermal overlays", font=dict(size=13)),
+                orientation="v",
+                yanchor="top",
+                y=1.0,
+                xanchor="left",
+                x=0.755,
+                itemsizing="constant",
+                font=dict(size=12),
+                groupclick="togglegroup",
+                traceorder="normal",
+            ),
+            margin=dict(l=55, r=25, t=70, b=70),
+        )
+        fig.update_xaxes(domain=[0.0, 0.72])
+    return fig
+'''
+          replace_once(comparison, old, new)
+
+          # Runtime guard: protect the new app→comparison call contract and
+          # rebind comparison whenever an imported dependency is reloaded.
+          old = '_REQUIRED_COMPARISON_PARAMETERS = frozenset({"additional_contour_coverages"})\n'
+          new = '_REQUIRED_COMPARISON_PARAMETERS = frozenset({"additional_contour_coverages", "show_givoni_overlay", "show_heat_index_overlay"})\n'
+          replace_once(guard, old, new)
+
+          old = '''    charts = importlib.import_module("epw_climate_analyzer.charts")
+    missing_parameters = _missing_psychrometric_chart_parameters(charts)
+    if distribution_was_reloaded or missing_parameters:
+        charts = importlib.reload(charts)
+        missing_parameters = _missing_psychrometric_chart_parameters(charts)
+'''
+          new = '''    charts = importlib.import_module("epw_climate_analyzer.charts")
+    missing_parameters = _missing_psychrometric_chart_parameters(charts)
+    charts_was_reloaded = False
+    if distribution_was_reloaded or missing_parameters:
+        charts = importlib.reload(charts)
+        charts_was_reloaded = True
+        missing_parameters = _missing_psychrometric_chart_parameters(charts)
+'''
+          replace_once(guard, old, new)
+
+          old = '''    if missing_compare:
+        comparison = importlib.reload(comparison)
+        missing_compare = _missing_callable_parameters(
+'''
+          new = '''    if distribution_was_reloaded or charts_was_reloaded or missing_compare:
+        comparison = importlib.reload(comparison)
+        missing_compare = _missing_callable_parameters(
+'''
+          replace_once(guard, old, new)
+
+          # Extend runtime guard regression coverage.
+          old = '''import epw_climate_analyzer.charts as charts
+import epw_climate_analyzer.psychrometric_distribution as distribution
+'''
+          new = '''import epw_climate_analyzer.charts as charts
+import epw_climate_analyzer.comparison as comparison
+import epw_climate_analyzer.psychrometric_distribution as distribution
+'''
+          replace_once(guard_test, old, new)
+
+          old = 'REQUIRED_DISTRIBUTION_PARAMETERS = {"additional_coverages", "pressure_pa"}\n'
+          new = '''REQUIRED_DISTRIBUTION_PARAMETERS = {"additional_coverages", "pressure_pa"}
+REQUIRED_COMPARISON_PARAMETERS = {"additional_contour_coverages", "show_givoni_overlay", "show_heat_index_overlay"}
+'''
+          replace_once(guard_test, old, new)
+
+          old = '''        self.assertTrue(
+            REQUIRED_DISTRIBUTION_PARAMETERS.issubset(
+                inspect.signature(current_distribution.add_climate_zone_traces).parameters
+            )
+        )
+'''
+          new = '''        self.assertTrue(
+            REQUIRED_DISTRIBUTION_PARAMETERS.issubset(
+                inspect.signature(current_distribution.add_climate_zone_traces).parameters
+            )
+        )
+        self.assertTrue(
+            REQUIRED_COMPARISON_PARAMETERS.issubset(
+                inspect.signature(comparison.psychrometric_comparison_chart).parameters
+            )
+        )
+'''
+          replace_once(guard_test, old, new)
+
+          marker = '''    def test_stale_distribution_helper_signature_is_reloaded_and_rebound(self) -> None:
+'''
+          insertion = '''    def test_stale_comparison_signature_is_reloaded(self) -> None:
+        old_comparison_chart = comparison.psychrometric_comparison_chart
+
+        def stale_comparison_chart(
+            climates,
+            chart_type="T-d",
+            mode="Overlay",
+            pressure_pa=101325.0,
+            data_display="Climate zones",
+            zone_coverage=0.90,
+            zone_interior_style="Density gradient",
+            show_core_zone=False,
+            additional_contour_coverages=None,
+            reference_pressure_pa=None,
+        ):
+            return None
+
+        comparison.psychrometric_comparison_chart = stale_comparison_chart
+        ensure_current_psychrometric_runtime()
+
+        self.assertIsNot(comparison.psychrometric_comparison_chart, stale_comparison_chart)
+        self.assertIsNot(comparison.psychrometric_comparison_chart, old_comparison_chart)
+        self.assertTrue(
+            REQUIRED_COMPARISON_PARAMETERS.issubset(
+                inspect.signature(comparison.psychrometric_comparison_chart).parameters
+            )
+        )
+
+'''
+          text = guard_test.read_text(encoding='utf-8')
+          if text.count(marker) != 1:
+              raise RuntimeError('runtime guard test insertion point not unique')
+          guard_test.write_text(text.replace(marker, insertion + marker, 1), encoding='utf-8')
+
+          # Functional regression: overlay parity + climate-colored contour lines.
+          test_path = Path('tools/climate_analyzer/tests/test_psychrometric_comparison_overlays_0_7_4_5.py')
+          if test_path.exists():
+              raise RuntimeError(f'{test_path} already exists')
+          test_path.write_text(r'''from __future__ import annotations
+
+from pathlib import Path
+from types import SimpleNamespace
+import unittest
+
+import numpy as np
+import pandas as pd
+import psychrolib
+
+from epw_climate_analyzer.chart_theme import climate_color_map, rgba
+from epw_climate_analyzer.comparison import ClimateDataset, psychrometric_comparison_chart
+
+psychrolib.SetUnitSystem(psychrolib.SI)
+
+
+class PsychrometricComparisonOverlays0745Tests(unittest.TestCase):
+    def _climate(self, climate_id: str, name: str, temperature_shift: float) -> ClimateDataset:
+        index = pd.date_range("2025-01-01", periods=96, freq="h")
+        phase = np.linspace(0.0, 4.0 * np.pi, len(index))
+        temperature = 20.0 + temperature_shift + 8.0 * np.sin(phase)
+        rh = 52.0 + 24.0 * np.cos(phase * 0.75)
+        pressure = 93000.0 + (1500.0 if temperature_shift > 0 else 0.0)
+        humidity_ratio = []
+        enthalpy = []
+        for t_c, rh_pct in zip(temperature, rh, strict=True):
+            w = psychrolib.GetHumRatioFromRelHum(float(t_c), float(rh_pct) / 100.0, pressure)
+            humidity_ratio.append(w * 1000.0)
+            enthalpy.append(psychrolib.GetMoistAirEnthalpy(float(t_c), w) / 1000.0)
+        frame = pd.DataFrame(
+            {
+                "dry_bulb_temperature_c": temperature,
+                "relative_humidity_pct": rh,
+                "humidity_ratio_g_kg": humidity_ratio,
+                "moist_air_enthalpy_kj_kg": enthalpy,
+                "atmospheric_station_pressure_pa": pressure,
+            },
+            index=index,
+        )
+        frame.attrs["canonical_native_interval_minutes"] = 60.0
+        location = SimpleNamespace(elevation_m=500.0, city=name, country="Test", latitude=47.0, longitude=15.0)
+        epw = SimpleNamespace(location=location)
+        return ClimateDataset(climate_id, name, "test", epw, frame, [])
+
+    def test_compare_ui_exposes_givoni_and_heat_index_toggles(self) -> None:
+        source = Path("tools/climate_analyzer/app.py").read_text(encoding="utf-8")
+        self.assertIn('key="compare_psych_show_givoni"', source)
+        self.assertIn('key="compare_psych_show_heat_index"', source)
+        self.assertIn("show_givoni_overlay=show_givoni", source)
+        self.assertIn("show_heat_index_overlay=show_heat_index", source)
+
+    def test_contour_lines_use_climate_hue_not_plotly_contour_colorscale(self) -> None:
+        climates = [self._climate("a", "Climate A", -2.0), self._climate("b", "Climate B", 3.0)]
+        colors = climate_color_map([climate.display_name for climate in climates])
+        figure = psychrometric_comparison_chart(
+            climates,
+            data_display="Climate contour",
+            zone_interior_style="Contour only",
+            zone_coverage=0.90,
+            additional_contour_coverages=[0.50, 0.70],
+            reference_pressure_pa=95000.0,
+        )
+        contour_traces = [trace for trace in figure.data if trace.type == "contour" and ("zone" in str(trace.name) or "contour" in str(trace.name))]
+        self.assertGreaterEqual(len(contour_traces), 6)
+        for trace in contour_traces:
+            self.assertEqual(trace.contours.coloring, "none")
+            climate_name = "Climate A" if str(trace.name).startswith("Climate A") else "Climate B"
+            expected_alpha = 0.98 if str(trace.name).endswith("% zone") else 0.78
+            self.assertEqual(trace.line.color, rgba(colors[climate_name], expected_alpha))
+
+    def test_common_pressure_overlays_are_available_without_mutating_sources(self) -> None:
+        climates = [self._climate("a", "Climate A", -2.0), self._climate("b", "Climate B", 3.0)]
+        before = [climate.data["humidity_ratio_g_kg"].copy() for climate in climates]
+        figure = psychrometric_comparison_chart(
+            climates,
+            chart_type="T-d",
+            data_display="Points",
+            reference_pressure_pa=90000.0,
+            show_givoni_overlay=True,
+            show_heat_index_overlay=True,
+        )
+        self.assertTrue(any(str(getattr(trace, "legendgroup", "")).startswith("givoni_zone_") for trace in figure.data))
+        self.assertTrue(any(str(trace.name).startswith("Heat index ") for trace in figure.data))
+        self.assertIsNotNone(figure.layout.legend2)
+        self.assertEqual(tuple(figure.layout.xaxis.domain), (0.0, 0.72))
+        for climate, original in zip(climates, before, strict=True):
+            pd.testing.assert_series_equal(climate.data["humidity_ratio_g_kg"], original)
+
+
+if __name__ == "__main__":
+    unittest.main()
+''', encoding='utf-8')
+          PY
+      - name: Validate patch compiles
+        run: |
+          python -m compileall -q tools/climate_analyzer/app.py tools/climate_analyzer/epw_climate_analyzer tools/climate_analyzer/tests/test_psychrometric_comparison_overlays_0_7_4_5.py
+          git diff --check
+      - name: Commit patch
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tools/climate_analyzer/app.py \
+                  tools/climate_analyzer/epw_climate_analyzer/comparison.py \
+                  tools/climate_analyzer/epw_climate_analyzer/runtime_module_guard.py \
+                  tools/climate_analyzer/tests/test_psychrometric_runtime_guard_0_7_4_2.py \
+                  tools/climate_analyzer/tests/test_psychrometric_comparison_overlays_0_7_4_5.py
+          git commit -m "fix(climate): restore comparison psychrometric overlays"
+          git push origin HEAD:hotfix/v0.7.4.5-psychrometric-comparison-overlays-colors
