@@ -59,13 +59,17 @@ def ensure_current_psychrometric_runtime() -> tuple[ModuleType, ModuleType]:
 
     No reload occurs during a normal fresh process. A reload is performed only
     when the imported module is demonstrably missing the API introduced by the
-    current psychrometric integration release. The function fails closed if the
-    expected API is still unavailable after reload.
+    current psychrometric integration release. If the distribution dependency is
+    refreshed, ``charts`` is refreshed as well so its imported helper references
+    cannot remain bound to the previous distribution module implementation. The
+    function fails closed if the expected API is still unavailable after reload.
     """
     distribution = importlib.import_module("epw_climate_analyzer.psychrometric_distribution")
     missing_distribution = _missing_attributes(distribution, _REQUIRED_DISTRIBUTION_API)
+    distribution_was_reloaded = False
     if missing_distribution:
         distribution = importlib.reload(distribution)
+        distribution_was_reloaded = True
         missing_distribution = _missing_attributes(distribution, _REQUIRED_DISTRIBUTION_API)
     if missing_distribution:
         raise RuntimeError(
@@ -75,7 +79,7 @@ def ensure_current_psychrometric_runtime() -> tuple[ModuleType, ModuleType]:
 
     charts = importlib.import_module("epw_climate_analyzer.charts")
     missing_parameters = _missing_psychrometric_chart_parameters(charts)
-    if missing_parameters:
+    if distribution_was_reloaded or missing_parameters:
         charts = importlib.reload(charts)
         missing_parameters = _missing_psychrometric_chart_parameters(charts)
     if missing_parameters:
