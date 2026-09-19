@@ -24,9 +24,11 @@ from epw_climate_analyzer.temporal_filtering import CHRONOLOGICAL, TIME_BASIS_AT
 class LongTermGeoSphereHotfixTests(unittest.TestCase):
     @staticmethod
     def _vienna_year() -> pd.DataFrame:
+        # Exact local-civil calendar year 2024 in Vienna.  Both endpoints are CET
+        # (UTC+1), so the UTC window is 2023-12-31 23:00 <= t < 2024-12-31 23:00.
         utc = pd.date_range(
-            "2024-01-01T00:00:00Z",
-            "2025-01-01T00:00:00Z",
+            "2023-12-31T23:00:00Z",
+            "2024-12-31T23:00:00Z",
             inclusive="left",
             freq="h",
         )
@@ -40,6 +42,8 @@ class LongTermGeoSphereHotfixTests(unittest.TestCase):
 
     def test_daily_weekly_monthly_annual_calendar_grouping_crosses_dst(self) -> None:
         frame = self._vienna_year()
+        self.assertEqual(len(frame), 8784)
+        self.assertEqual(set(pd.DatetimeIndex(frame.index).year), {2024})
         for aggregation in ("Daily", "Weekly", "Monthly", "Annual"):
             with self.subTest(aggregation=aggregation):
                 result = chronological_aggregate_summary(
