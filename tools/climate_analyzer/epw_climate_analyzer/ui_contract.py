@@ -11,7 +11,16 @@ from __future__ import annotations
 from collections.abc import MutableMapping
 from typing import Any
 
-from .i18n import DEFAULT_LOCALE, normalize_locale, translate
+from .i18n import (
+    DEFAULT_LOCALE,
+    LOCALE_DISPLAY_NAMES,
+    LOCALE_SESSION_KEY,
+    SUPPORTED_LOCALES,
+    active_locale,
+    normalize_locale,
+    set_active_locale,
+    translate,
+)
 from .release_info import (
     ENGINEERING_DISCLAIMER,
     INDEPENDENCE_NOTICE,
@@ -86,14 +95,14 @@ NAVIGATION_TRANSLATION_KEYS = {
 }
 
 
-def navigation_label(page: str, locale: str | None = DEFAULT_LOCALE) -> str:
+def navigation_label(page: str, locale: str | None = None) -> str:
     """Return the localized public label for a stable internal page identifier.
 
-    English remains the exact legacy label contract. Other supported locales
-    translate only the presentation label; page IDs and routing state remain
-    unchanged.
+    With no explicit locale, the active execution-context locale is used. This
+    lets the unchanged EPW and canonical routing code share one localized
+    ``format_func`` while keeping route IDs locale-neutral.
     """
-    resolved = normalize_locale(locale)
+    resolved = active_locale() if locale is None else normalize_locale(locale)
     if resolved == DEFAULT_LOCALE:
         return NAVIGATION_LABELS.get(page, page)
     key = NAVIGATION_TRANSLATION_KEYS.get(page)
@@ -114,14 +123,45 @@ def queue_navigation_reset(state: MutableMapping[str, Any]) -> None:
     state.pop(PENDING_NAVIGATION_KEY, None)
 
 
+def _apply_locale_control_for_app_caller(state: MutableMapping[str, Any]) -> str:
+    """Bind the per-session language selector without importing Streamlit here.
+
+    ``app.py`` already calls :func:`apply_queued_navigation` before either the
+    EPW or canonical navigation widget is rendered. Reusing that mature hand-off
+    keeps the huge app source unchanged and makes one locale selection apply to
+    both routing paths. The active locale lives in a ``ContextVar`` so concurrent
+    Streamlit sessions do not share mutable module-global language state.
+    """
+    import sys
+
+    current = normalize_locale(state.get(LOCALE_SESSION_KEY))
+    set_active_locale(current)
+    caller_globals = sys._getframe(2).f_globals
+    streamlit = caller_globals.get("st")
+    if streamlit is None:
+        return current
+
+    stored = state.get(LOCALE_SESSION_KEY)
+    if stored not in SUPPORTED_LOCALES:
+        state[LOCALE_SESSION_KEY] = current
+    selected = streamlit.sidebar.selectbox(
+        translate("ui.language", current),
+        SUPPORTED_LOCALES,
+        format_func=lambda locale: LOCALE_DISPLAY_NAMES.get(str(locale), str(locale)),
+        key=LOCALE_SESSION_KEY,
+        label_visibility="collapsed",
+    )
+    return set_active_locale(str(selected))
+
+
 def _install_source_parity_for_app_caller() -> None:
     """Install source-parity routing when called from the fully defined app.
 
-    ``app.py`` is deliberately kept as the mature source/AST contract.  The
+    ``app.py`` is deliberately kept as the mature source/AST contract. The
     navigation hand-off is the earliest runtime call made by ``main`` after all
     renderer functions have been defined, so it is a safe place to install the
     new source-neutral routing without importing pandas/numpy/plotly at module
-    startup.  Ordinary unit tests of this module do not satisfy the app sentinel
+    startup. Ordinary unit tests of this module do not satisfy the app sentinel
     and therefore do not load the parity layer.
     """
     import sys
@@ -142,7 +182,8 @@ def _install_source_parity_for_app_caller() -> None:
 
 
 def apply_queued_navigation(state: MutableMapping[str, Any]) -> None:
-    """Apply queued navigation before the Streamlit navigation widget is instantiated."""
+    """Apply locale/runtime hand-offs before the navigation widget is instantiated."""
+    _apply_locale_control_for_app_caller(state)
     _install_source_parity_for_app_caller()
     reset = bool(state.pop(RESET_NAVIGATION_KEY, False))
     pending = state.pop(PENDING_NAVIGATION_KEY, None)
