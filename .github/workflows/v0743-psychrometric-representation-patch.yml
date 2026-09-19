@@ -23,6 +23,43 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Harden compare-block patch locator
+        working-directory: tools/climate_analyzer
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/apply_v0743_psychrometric_representation.py')
+          text = path.read_text(encoding='utf-8')
+          old = '''def replace_block(path: Path, start_marker: str, next_marker: str, replacement: str, label: str) -> None:
+              text = path.read_text(encoding="utf-8")
+              start = text.find(start_marker)
+              if start < 0:
+                  raise RuntimeError(f"{label}: start marker missing")
+              end = text.find(next_marker, start + len(start_marker))
+              if end < 0:
+                  raise RuntimeError(f"{label}: next marker missing")
+              path.write_text(text[:start] + replacement + text[end:], encoding="utf-8")
+          '''
+          new = '''def replace_block(path: Path, start_marker: str, next_marker: str, replacement: str, label: str) -> None:
+              text = path.read_text(encoding="utf-8")
+              start = text.find(start_marker)
+              if start < 0:
+                  raise RuntimeError(f"{label}: start marker missing")
+              search_from = start + len(start_marker)
+              candidates = []
+              for token in ("\\n    elif chart == ", "\\n    else:"):
+                  position = text.find(token, search_from)
+                  if position >= 0:
+                      candidates.append(position + 1)
+              if not candidates:
+                  raise RuntimeError(f"{label}: next same-level branch missing")
+              end = min(candidates)
+              path.write_text(text[:start] + replacement + text[end:], encoding="utf-8")
+          '''
+          if text.count(old) != 1:
+              raise RuntimeError(f'Expected one replace_block helper, found {text.count(old)}')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
       - name: Apply patch
         working-directory: tools/climate_analyzer
         run: python scripts/apply_v0743_psychrometric_representation.py
