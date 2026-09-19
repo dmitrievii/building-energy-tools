@@ -1,8 +1,8 @@
 """Capability helpers for measured historical climate analysis views.
 
-The historical GeoSphere route exposes only analyses whose required measured
-variables are actually present in the selected interval. Provider support in
-metadata is not enough: an all-missing column does not qualify a page.
+The historical route exposes only analyses whose required canonical variables
+are actually present in the selected interval. Provider support in metadata is
+not enough: an all-missing column does not qualify a page.
 """
 
 from __future__ import annotations
@@ -10,6 +10,15 @@ from __future__ import annotations
 import pandas as pd
 
 from .aggregations import native_interval_hours
+
+
+GROUND_TEMPERATURE_COLUMNS = (
+    "ground_temperature_0_10m_c",
+    "ground_temperature_0_20m_c",
+    "ground_temperature_0_50m_c",
+    "ground_temperature_1_00m_c",
+    "ground_temperature_2_00m_c",
+)
 
 
 def has_numeric_observations(df: pd.DataFrame, column: str) -> bool:
@@ -37,13 +46,7 @@ def _requested_timeline_bounds(df: pd.DataFrame) -> tuple[pd.Timestamp | None, p
 
 
 def historical_coverage_summary(df: pd.DataFrame) -> dict[str, float | int | str | None]:
-    """Summarize measured-timeline coverage without interpolating missing records.
-
-    Coverage is evaluated against the exact requested interval when the adapter
-    provides it. Otherwise it falls back to the first/last observed timestamp.
-    A missing 10-minute source record therefore contributes one missing interval;
-    a timestamp gap is never expanded into fabricated observations.
-    """
+    """Summarize measured-timeline coverage without interpolating missing records."""
     interval_h = float(native_interval_hours(df))
     interval_minutes = interval_h * 60.0
     start, end = _requested_timeline_bounds(df)
@@ -166,10 +169,7 @@ def available_historical_pages(df: pd.DataFrame) -> tuple[str, ...]:
             "diffuse_horizontal_illuminance_lux",
         )
     )
-    has_ground = any(
-        has_numeric_observations(df, column)
-        for column in ("ground_temperature_0_10m_c", "ground_temperature_0_20m_c", "ground_temperature_0_50m_c")
-    )
+    has_ground = any(has_numeric_observations(df, column) for column in GROUND_TEMPERATURE_COLUMNS)
     has_precipitation_or_snow = any(
         has_numeric_observations(df, column)
         for column in (
@@ -199,12 +199,7 @@ def available_historical_pages(df: pd.DataFrame) -> tuple[str, ...]:
 
 
 def horizontal_irradiance_frame(df: pd.DataFrame) -> pd.DataFrame:
-    """Add mean horizontal irradiance [W/m²] from interval irradiation columns.
-
-    Canonical radiation variables are interval-extensive Wh/m². For a source
-    with declared native interval ``dt`` [h], mean irradiance is ``Wh/m² / dt``.
-    This avoids the hourly-only numerical equivalence between Wh/m² and W/m².
-    """
+    """Add mean horizontal irradiance [W/m²] from interval irradiation columns."""
     result = df.copy()
     interval_h = native_interval_hours(df)
     if interval_h <= 0:
