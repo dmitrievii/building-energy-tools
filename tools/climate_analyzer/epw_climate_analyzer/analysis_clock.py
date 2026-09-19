@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from datetime import timedelta, timezone
 from typing import Literal
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 
@@ -34,6 +35,19 @@ SOURCE_TIMEZONE_ATTR = "canonical_source_timezone_name"
 def _fixed_offset(offset_hours: float) -> timezone:
     minutes = int(round(float(offset_hours) * 60.0))
     return timezone(timedelta(minutes=minutes))
+
+
+def _named_timezone(name: str) -> ZoneInfo:
+    """Return a stdlib timezone object for deterministic DST-safe pandas use.
+
+    Passing timezone names as strings lets pandas choose the timezone backend.
+    On newer pandas/Python combinations that can still produce ``pytz`` zones;
+    calendar resampling may then re-localize bin edges and raise
+    ``pytz.NonExistentTimeError`` across a spring DST transition.  ``ZoneInfo``
+    preserves the same IANA timezone semantics without that backend-dependent
+    localization path.
+    """
+    return ZoneInfo(str(name))
 
 
 def analysis_index(
@@ -65,7 +79,7 @@ def analysis_index(
             # contract; EPW typical-year callers normally stay in source/local
             # standard mode and therefore do not pass through this branch.
             return idx.tz_localize(
-                str(local_timezone_name), ambiguous="infer", nonexistent="shift_forward"
+                _named_timezone(local_timezone_name), ambiguous="infer", nonexistent="shift_forward"
             )
         if mode == LOCAL_STANDARD_TIME:
             if standard_utc_offset_hours is None:
@@ -75,7 +89,7 @@ def analysis_index(
         # timezone/standard offset is explicitly known.
         if source_timezone_name:
             localized = idx.tz_localize(
-                str(source_timezone_name), ambiguous="infer", nonexistent="shift_forward"
+                _named_timezone(source_timezone_name), ambiguous="infer", nonexistent="shift_forward"
             )
             return localized.tz_convert("UTC")
         if standard_utc_offset_hours is not None:
@@ -89,7 +103,7 @@ def analysis_index(
     if mode == LOCAL_CIVIL_TIME:
         if not local_timezone_name:
             return idx
-        return idx.tz_convert(str(local_timezone_name))
+        return idx.tz_convert(_named_timezone(local_timezone_name))
     if standard_utc_offset_hours is None:
         raise ValueError("Local-standard analysis time requires standard_utc_offset_hours.")
     return idx.tz_convert(_fixed_offset(float(standard_utc_offset_hours)))
