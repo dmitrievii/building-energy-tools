@@ -88,8 +88,36 @@ def queue_navigation_reset(state: MutableMapping[str, Any]) -> None:
     state.pop(PENDING_NAVIGATION_KEY, None)
 
 
+def _install_source_parity_for_app_caller() -> None:
+    """Install source-parity routing when called from the fully defined app.
+
+    ``app.py`` is deliberately kept as the mature source/AST contract.  The
+    navigation hand-off is the earliest runtime call made by ``main`` after all
+    renderer functions have been defined, so it is a safe place to install the
+    new source-neutral routing without importing pandas/numpy/plotly at module
+    startup.  Ordinary unit tests of this module do not satisfy the app sentinel
+    and therefore do not load the parity layer.
+    """
+    import sys
+
+    caller_globals = sys._getframe(2).f_globals
+    if not {
+        "VARIABLES",
+        "load_epw_from_bytes",
+        "render_geosphere_source",
+        "render_canonical_climate_analysis",
+        "render_compare_climates",
+        "render_data_quality",
+    }.issubset(caller_globals):
+        return
+    from .source_parity_runtime import install_into_app_globals
+
+    install_into_app_globals(caller_globals)
+
+
 def apply_queued_navigation(state: MutableMapping[str, Any]) -> None:
     """Apply queued navigation before the Streamlit navigation widget is instantiated."""
+    _install_source_parity_for_app_caller()
     reset = bool(state.pop(RESET_NAVIGATION_KEY, False))
     pending = state.pop(PENDING_NAVIGATION_KEY, None)
     if reset:
