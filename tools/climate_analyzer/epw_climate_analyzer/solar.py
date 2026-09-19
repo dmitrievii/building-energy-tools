@@ -265,6 +265,11 @@ def surface_irradiance_series(
     If no explicit ``albedo`` is supplied, an available EPW/canonical ``albedo``
     series is used record-by-record; missing records fall back to 0.20.  Sources
     without an albedo measurement use the same documented 0.20 fallback.
+
+    Missing mandatory radiation or solar-geometry inputs remain missing in the
+    returned POA series.  They are never silently reinterpreted as zero-energy
+    intervals; temporary zero fills are used only to keep pvlib numerically
+    stable before the validity mask is restored.
     """
     import pvlib
 
@@ -279,17 +284,25 @@ def surface_irradiance_series(
         if column not in df.columns:
             raise ValueError(f"Missing required column for irradiance calculation: {column}")
 
+    solar_zenith = pd.to_numeric(df["solar_apparent_zenith_deg"], errors="coerce").clip(lower=0, upper=180)
+    solar_azimuth = pd.to_numeric(df["solar_azimuth_deg"], errors="coerce")
+    dni = pd.to_numeric(df["direct_normal_radiation_wh_m2"], errors="coerce")
+    ghi = pd.to_numeric(df["global_horizontal_radiation_wh_m2"], errors="coerce")
+    dhi = pd.to_numeric(df["diffuse_horizontal_radiation_wh_m2"], errors="coerce")
+    valid_inputs = solar_zenith.notna() & solar_azimuth.notna() & dni.notna() & ghi.notna() & dhi.notna()
+
     poa = pvlib.irradiance.get_total_irradiance(
         surface_tilt=float(surface_tilt_deg),
         surface_azimuth=float(surface_azimuth_deg),
-        solar_zenith=pd.to_numeric(df["solar_apparent_zenith_deg"], errors="coerce").clip(lower=0, upper=180),
-        solar_azimuth=pd.to_numeric(df["solar_azimuth_deg"], errors="coerce"),
-        dni=pd.to_numeric(df["direct_normal_radiation_wh_m2"], errors="coerce").fillna(0).clip(lower=0),
-        ghi=pd.to_numeric(df["global_horizontal_radiation_wh_m2"], errors="coerce").fillna(0).clip(lower=0),
-        dhi=pd.to_numeric(df["diffuse_horizontal_radiation_wh_m2"], errors="coerce").fillna(0).clip(lower=0),
+        solar_zenith=solar_zenith,
+        solar_azimuth=solar_azimuth,
+        dni=dni.fillna(0).clip(lower=0),
+        ghi=ghi.fillna(0).clip(lower=0),
+        dhi=dhi.fillna(0).clip(lower=0),
         albedo=_resolved_albedo(df, albedo),
     )
     result = pd.Series(poa["poa_global"].to_numpy(), index=df.index, name="poa_global_wh_m2")
+    result = result.where(valid_inputs)
     result.attrs["albedo_origin"] = "source series with 0.20 fallback" if "albedo" in df.columns and albedo is None else (
         "explicit" if albedo is not None else "default 0.20"
     )
