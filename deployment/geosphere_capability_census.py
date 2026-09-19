@@ -98,6 +98,19 @@ def _resource_report(resource_id: str, timeout_s: int) -> dict[str, object]:
         if ten_min_wind is None or ten_min_wind.canonical_name != "wind_speed_m_s":
             raise RuntimeError("klima-v2-10min live metadata no longer validate ffam -> wind_speed_m_s")
 
+    station_rows = [
+        {
+            "station_id": station.station_id,
+            "name": station.name,
+            "state": station.state,
+            "valid_from": station.valid_from,
+            "valid_to": station.valid_to,
+            "is_active": station.is_active,
+        }
+        for station in stations
+    ]
+    unique_station_ids = sorted({row["station_id"] for row in station_rows})
+
     return {
         "resource_id": resource_id,
         "label": spec.label,
@@ -105,6 +118,10 @@ def _resource_report(resource_id: str, timeout_s: int) -> dict[str, object]:
         "dataset_page": spec.dataset_page,
         "native_interval_minutes": int(spec.native_interval_minutes),
         "station_count": len(stations),
+        "unique_station_id_count": len(unique_station_ids),
+        "active_station_records": sum(1 for station in stations if station.is_active is True),
+        "station_ids": unique_station_ids,
+        "stations": station_rows,
         "parameter_count": len(names),
         "physical_parameter_count": len(physical),
         "quality_flag_count": len(flags),
@@ -133,6 +150,43 @@ def _resource_report(resource_id: str, timeout_s: int) -> dict[str, object]:
     }
 
 
+def _station_overlap(reports: dict[str, dict[str, object]]) -> dict[str, object]:
+    ten = reports.get("klima-v2-10min")
+    hourly = reports.get("klima-v2-1h")
+    if not ten or not hourly:
+        return {}
+
+    ten_ids = set(str(value) for value in ten.get("station_ids", []))
+    hourly_ids = set(str(value) for value in hourly.get("station_ids", []))
+    shared = sorted(ten_ids & hourly_ids)
+    ten_only = sorted(ten_ids - hourly_ids)
+    hourly_only = sorted(hourly_ids - ten_ids)
+
+    ten_rows = {str(row["station_id"]): row for row in ten.get("stations", [])}
+    hourly_rows = {str(row["station_id"]): row for row in hourly.get("stations", [])}
+    name_mismatches = [
+        {
+            "station_id": station_id,
+            "klima-v2-10min": ten_rows[station_id].get("name", ""),
+            "klima-v2-1h": hourly_rows[station_id].get("name", ""),
+        }
+        for station_id in shared
+        if ten_rows.get(station_id, {}).get("name") != hourly_rows.get(station_id, {}).get("name")
+    ]
+
+    return {
+        "shared_station_ids": len(shared),
+        "klima_v2_10min_only_station_ids": len(ten_only),
+        "klima_v2_1h_only_station_ids": len(hourly_only),
+        "share_of_10min_ids_present_in_1h_pct": (100.0 * len(shared) / len(ten_ids)) if ten_ids else 0.0,
+        "share_of_1h_ids_present_in_10min_pct": (100.0 * len(shared) / len(hourly_ids)) if hourly_ids else 0.0,
+        "shared_ids_with_different_names": len(name_mismatches),
+        "name_mismatch_examples": name_mismatches[:20],
+        "klima_v2_10min_only_examples": [ten_rows[station_id] for station_id in ten_only[:20] if station_id in ten_rows],
+        "klima_v2_1h_only_examples": [hourly_rows[station_id] for station_id in hourly_only[:20] if station_id in hourly_rows],
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--json", dest="json_path", default="artifacts/geosphere-capability-census/census.json")
@@ -150,9 +204,10 @@ def main() -> int:
     }
     canonical_union = sorted(set().union(*canonical_sets.values())) if canonical_sets else []
     canonical_intersection = sorted(set.intersection(*canonical_sets.values())) if canonical_sets else []
+    station_overlap = _station_overlap(reports)
 
     report = {
-        "schema": "climate-analyzer-geosphere-capability-census-v2",
+        "schema": "climate-analyzer-geosphere-capability-census-v3",
         "resources": reports,
         "cross_resource": {
             "resource_ids": list(reports),
@@ -161,6 +216,7 @@ def main() -> int:
             "core_contract_shared": sorted(CORE_CANONICAL),
             "canonical_hourly_target_minutes": 60,
             "klima_v2_1h_fast_path_expected": reports.get("klima-v2-1h", {}).get("native_interval_minutes") == 60,
+            "station_overlap": station_overlap,
         },
     }
 
@@ -183,7 +239,9 @@ def main() -> int:
                 f"## {resource_id}",
                 "",
                 f"- Native cadence: **{item['native_interval_minutes']} min**",
-                f"- Stations in live metadata: **{item['station_count']}**",
+                f"- Station records in live metadata: **{item['station_count']}**",
+                f"- Unique station IDs: **{item['unique_station_id_count']}**",
+                f"- Records marked active: **{item['active_station_records']}**",
                 f"- Live parameters: **{item['parameter_count']}**",
                 f"- Physical parameters mapped: **{len(item['supported_physical_parameters'])} / {item['physical_parameter_count']}**",
                 f"- Matching quality flags retained: **{len(item['matching_quality_flags_consumed'])}**",
@@ -219,6 +277,20 @@ def main() -> int:
             "- Native source resolution remains an explicit Time Series concern; ordinary charts use the canonical hourly frame.",
         ]
     )
+    if station_overlap:
+        lines.extend(
+            [
+                "",
+                "### Station-catalog overlap",
+                "",
+                f"- Shared station IDs: **{station_overlap['shared_station_ids']}**",
+                f"- 10-min-only station IDs: **{station_overlap['klima_v2_10min_only_station_ids']}**",
+                f"- 1-h-only station IDs: **{station_overlap['klima_v2_1h_only_station_ids']}**",
+                f"- Share of 10-min station IDs also present in 1-h: **{station_overlap['share_of_10min_ids_present_in_1h_pct']:.1f}%**",
+                f"- Share of 1-h station IDs also present in 10-min: **{station_overlap['share_of_1h_ids_present_in_10min_pct']:.1f}%**",
+                f"- Shared IDs with different station names: **{station_overlap['shared_ids_with_different_names']}**",
+            ]
+        )
     md_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
