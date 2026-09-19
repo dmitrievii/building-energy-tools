@@ -1,44 +1,5242 @@
-"""Climate Analyzer Streamlit entrypoint.
-
-The mature visual/UI shell lives in :mod:`app_legacy` during the source-parity
-migration.  Scientific/data-source behavior is installed through canonical,
-provider-neutral engines before ``main`` is executed.  This keeps the existing
-visual contract stable while EPW and GeoSphere routes converge on abstract
-DataFrames.
-
-Stable public concepts retained by this entrypoint include:
-``render_geosphere_source``, ``render_canonical_climate_analysis``,
-``render_compare_climates``, ``render_temperature``, ``render_humidity``,
-``render_solar``, ``render_sky_daylight``, ``render_wind``,
-``render_precipitation``, ``render_time_series_overlay``,
-``render_natural_ventilation``, ``render_hvac_passive`` and Data Quality.
-"""
+"""Streamlit browser app for interactive EPW climate analysis."""
 
 from __future__ import annotations
 
-# Re-export the established application surface so tests, integrations and local
-# launch scripts importing ``app`` do not have to know about the migration shell.
-from app_legacy import *  # noqa: F401,F403
-import app_legacy as _legacy
-
-from epw_climate_analyzer import source_parity_ui as _parity
-from epw_climate_analyzer.source_parity_fixes import apply_source_parity_fixes
+from io import BytesIO
+from typing import Callable
+import html
+from uuid import uuid4
 
 
-_parity.install_source_parity_ui(_legacy)
-apply_source_parity_fixes(_legacy, _parity)
+import streamlit as st
 
-# Refresh public exports after patch installation. ``from app_legacy import *``
-# above preserves the broad compatibility surface; this loop ensures names whose
-# implementation was replaced by the parity layer resolve to the active version.
-for _name in dir(_legacy):
-    if not _name.startswith("_"):
-        globals()[_name] = getattr(_legacy, _name)
+from epw_climate_analyzer.ui_contract import (
+    APP_BROWSER_TITLE,
+    APP_ENGINEERING_DISCLAIMER,
+    APP_INDEPENDENCE_NOTICE,
+    APP_INTRO,
+    APP_NAME,
+    APP_RELEASE_LABEL,
+    APP_TAGLINE,
+    NAVIGATION_KEY,
+    NAVIGATION_PAGES,
+    apply_queued_navigation,
+    navigation_label,
+    queue_navigation,
+    queue_navigation_reset,
+)
+from epw_climate_analyzer.chart_theme import metric_color
+from epw_climate_analyzer.runtime_identity import RUNTIME_BUILD_ID
+
+
+_MAP_DEPENDENCIES_LOADED = False
+_GEOSPHERE_DEPENDENCIES_LOADED = False
+_ANALYSIS_DEPENDENCIES_LOADED = False
+_SOLAR_DEPENDENCIES_LOADED = False
+_COMPARISON_DEPENDENCIES_LOADED = False
+
+
+def _ensure_map_dependencies() -> None:
+    """Load map/catalog dependencies only after the user selects Find climate."""
+    global _MAP_DEPENDENCIES_LOADED
+    global pd, folium, FastMarkerCluster, MarkerCluster, st_folium
+    global download_station_epw, filter_station_catalog
+    global catalog_runtime_summary, load_production_station_catalog, load_station_catalog_manifest, station_provenance_text
+    global load_station_group_snapshot
+
+    if _MAP_DEPENDENCIES_LOADED:
+        return
+
+    import pandas as pd
+    import folium
+    from folium.plugins import FastMarkerCluster, MarkerCluster
+    from streamlit_folium import st_folium
+    from epw_climate_analyzer.climate_sources import download_station_epw, filter_station_catalog
+    from epw_climate_analyzer.catalog_runtime import (
+        catalog_runtime_summary,
+        load_production_station_catalog,
+        load_station_catalog_manifest,
+        station_provenance_text,
+    )
+    from epw_climate_analyzer.station_group_snapshot import load_station_group_snapshot
+    _MAP_DEPENDENCIES_LOADED = True
+
+
+def _ensure_geosphere_dependencies() -> None:
+    """Load GeoSphere adapter dependencies only when that source is selected."""
+    global _GEOSPHERE_DEPENDENCIES_LOADED
+    global pd
+    global fetch_geosphere_metadata, geosphere_station_catalog, parse_geosphere_stations
+    global supported_geosphere_parameter_mapping, fetch_geosphere_station_dataset
+    global plan_geosphere_queries, estimate_geosphere_datapoints, provider_parameters_with_quality_flags
+
+    if _GEOSPHERE_DEPENDENCIES_LOADED:
+        return
+
+    import pandas as pd
+    from epw_climate_analyzer.geosphere import (
+        estimate_request_datapoints as estimate_geosphere_datapoints,
+        fetch_metadata as fetch_geosphere_metadata,
+        fetch_station_dataset as fetch_geosphere_station_dataset,
+        parse_stations as parse_geosphere_stations,
+        plan_data_queries as plan_geosphere_queries,
+        provider_parameters_with_quality_flags,
+        station_catalog as geosphere_station_catalog,
+        supported_parameter_mapping as supported_geosphere_parameter_mapping,
+    )
+    _GEOSPHERE_DEPENDENCIES_LOADED = True
+
+
+def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bool) -> None:
+    """Load scientific/plotting dependencies only after an EPW analysis is requested."""
+    global _ANALYSIS_DEPENDENCIES_LOADED, _SOLAR_DEPENDENCIES_LOADED, _COMPARISON_DEPENDENCIES_LOADED
+    global pd, px
+    global aggregate_sum, duration_curve, filter_by_months_and_hours, heatmap_default_statistic, heatmap_statistic_options, native_interval_hours, threshold_count_by_period
+    global duration_chart, heatmap_chart, histogram_chart, temporal_heatmap_chart, GIVONI_MILNE_ZONES
+    global matrix_heatmap, month_hour_heatmap, givoni_milne_zone_table, monthly_box_chart
+    global multi_line_monthly, orientation_bar_chart, percentile_band_chart, profile_ribbon_chart
+    global psychrometric_chart, scatter_chart, stacked_monthly_bar, sun_path_chart
+    global sun_position_diagram, threshold_bar_chart, wind_rose_chart
+    global add_degree_metrics, comfort_condition, dehumidification_condition, economizer_condition
+    global humidification_condition, natural_ventilation_condition, night_flushing_condition
+    global degree_metric_table, degree_metric_interpretation
+    global passive_strategy_monthly, passive_strategy_table, rejection_reasons_for_nv, shading_condition
+    global location_summary, parse_epw, quality_issues
+    global data_quality_interpretation, degree_day_interpretation, hvac_interpretation
+    global natural_ventilation_interpretation, psychrometric_interpretation, sky_interpretation
+    global solar_interpretation, temperature_interpretation, variable_interpretation, wind_interpretation
+    global DEFAULT_PRESSURE_PA, add_psychrometric_properties, pressure_from_altitude_m
+    global aggregate_liquid_precipitation, aggregate_precipitation_duration, occurrence_hours, occurrence_records
+    global annual_native_precipitation_peaks, annual_precipitation_indices, snow_season_indices
+    global calculated_statistics_tables, climate_statistics_interpretation, extreme_day_summary
+    global monthly_climate_summary, seasonal_climate_summary
+    global add_solar_position, monthly_orientation_radiation, orientation_annual_radiation
+    global orientation_tilt_matrix, surface_irradiance_series
+    global ClimateDataset, choose_display_mode, climate_summary_metrics, comparison_interpretation
+    global data_quality_matrix, difference_heatmap_chart, duration_comparison_chart
+    global facade_radiation_comparison_chart, hdd_cdd_grouped_chart, heatmap_small_multiples
+    global heating_cooling_season_timeline, monthly_box_compare_chart, monthly_difference_chart
+    global monthly_profile_table, natural_ventilation_difference_heatmap, natural_ventilation_monthly_table
+    global orientation_tilt_small_multiples, overlay_monthly_chart
+    global passive_strategy_calendar_small_multiples, passive_strategy_stacked_comparison
+    global psychrometric_comparison_chart, ranked_metric_chart, small_multiple_monthly_chart
+    global solar_monthly_comparison, sun_path_comparison_chart, tilt_radiation_comparison_chart
+    global wind_rose_small_multiples
+    global OverlaySeries, available_resolution_labels, build_overlay_figure
+    global native_resolution_minutes, validate_unit_families
+    global available_years, filter_datetime_range, filter_year, with_time_basis
+    global CHRONOLOGICAL, CALENDAR_PROFILE, display_period_labels, is_multiyear, time_basis
+
+    if not _ANALYSIS_DEPENDENCIES_LOADED:
+        import pandas as pd
+        import plotly.express as px
+        from epw_climate_analyzer.aggregations import (
+            aggregate_sum,
+            duration_curve,
+            filter_by_months_and_hours,
+            heatmap_default_statistic,
+            heatmap_statistic_options,
+            native_interval_hours,
+            threshold_count_by_period,
+        )
+        # Streamlit may rerun a newly deployed app.py while retaining package modules
+        # imported by the previous release. Validate and refresh the cross-file
+        # psychrometric API before binding chart functions into this script run.
+        from epw_climate_analyzer.runtime_module_guard import ensure_current_psychrometric_runtime
+        ensure_current_psychrometric_runtime()
+        from epw_climate_analyzer.charts import (
+            duration_chart,
+            heatmap_chart,
+            histogram_chart,
+            temporal_heatmap_chart,
+            GIVONI_MILNE_ZONES,
+            matrix_heatmap,
+            month_hour_heatmap,
+            givoni_milne_zone_table,
+            monthly_box_chart,
+            multi_line_monthly,
+            orientation_bar_chart,
+            percentile_band_chart,
+            profile_ribbon_chart,
+            psychrometric_chart,
+            scatter_chart,
+            stacked_monthly_bar,
+            sun_path_chart,
+            sun_position_diagram,
+            threshold_bar_chart,
+            wind_rose_chart,
+        )
+        from epw_climate_analyzer.decisions import (
+            add_degree_metrics,
+            comfort_condition,
+            dehumidification_condition,
+            economizer_condition,
+            humidification_condition,
+            natural_ventilation_condition,
+            night_flushing_condition,
+            passive_strategy_monthly,
+            passive_strategy_table,
+            rejection_reasons_for_nv,
+            shading_condition,
+        )
+        from epw_climate_analyzer.degree_metrics import degree_metric_interpretation, degree_metric_table
+        from epw_climate_analyzer.epw_parser import location_summary, parse_epw, quality_issues
+        from epw_climate_analyzer.interpretations import (
+            data_quality_interpretation,
+            degree_day_interpretation,
+            hvac_interpretation,
+            natural_ventilation_interpretation,
+            psychrometric_interpretation,
+            sky_interpretation,
+            solar_interpretation,
+            temperature_interpretation,
+            variable_interpretation,
+            wind_interpretation,
+        )
+        from epw_climate_analyzer.psychrometrics import (
+            DEFAULT_PRESSURE_PA,
+            add_psychrometric_properties,
+            pressure_from_altitude_m,
+        )
+        from epw_climate_analyzer.statistics import (
+            calculated_statistics_tables,
+            climate_statistics_interpretation,
+            extreme_day_summary,
+            monthly_climate_summary,
+            seasonal_climate_summary,
+        )
+        from epw_climate_analyzer.precipitation import (
+            aggregate_liquid_precipitation,
+            aggregate_precipitation_duration,
+            annual_native_precipitation_peaks,
+            annual_precipitation_indices,
+            occurrence_hours,
+            occurrence_records,
+            snow_season_indices,
+        )
+        from epw_climate_analyzer.timeseries import (
+            OverlaySeries,
+            available_resolution_labels,
+            build_overlay_figure,
+            native_resolution_minutes,
+            validate_unit_families,
+        )
+        from epw_climate_analyzer.temporal_filtering import (
+            CALENDAR_PROFILE,
+            CHRONOLOGICAL,
+            available_years,
+            display_period_labels,
+            is_multiyear,
+            filter_datetime_range,
+            filter_year,
+            time_basis,
+            with_time_basis,
+        )
+        _ANALYSIS_DEPENDENCIES_LOADED = True
+
+    if include_solar and not _SOLAR_DEPENDENCIES_LOADED:
+        from epw_climate_analyzer.solar import (
+            add_solar_position,
+            monthly_orientation_radiation,
+            orientation_annual_radiation,
+            orientation_tilt_matrix,
+            surface_irradiance_series,
+        )
+        _SOLAR_DEPENDENCIES_LOADED = True
+
+    if include_comparison and not _COMPARISON_DEPENDENCIES_LOADED:
+        from epw_climate_analyzer.comparison import (
+            ClimateDataset,
+            choose_display_mode,
+            climate_summary_metrics,
+            comparison_interpretation,
+            data_quality_matrix,
+            difference_heatmap_chart,
+            duration_comparison_chart,
+            facade_radiation_comparison_chart,
+            hdd_cdd_grouped_chart,
+            heatmap_small_multiples,
+            heating_cooling_season_timeline,
+            monthly_box_compare_chart,
+            monthly_difference_chart,
+            monthly_profile_table,
+            natural_ventilation_difference_heatmap,
+            natural_ventilation_monthly_table,
+            orientation_tilt_small_multiples,
+            overlay_monthly_chart,
+            passive_strategy_calendar_small_multiples,
+            passive_strategy_stacked_comparison,
+            psychrometric_comparison_chart,
+            ranked_metric_chart,
+            small_multiple_monthly_chart,
+            solar_monthly_comparison,
+            sun_path_comparison_chart,
+            tilt_radiation_comparison_chart,
+            wind_rose_small_multiples,
+        )
+        _COMPARISON_DEPENDENCIES_LOADED = True
+
+
+VARIABLES = {
+    "Dry-bulb temperature": ("dry_bulb_temperature_c", "°C"),
+    "Dry-bulb temperature minimum": ("dry_bulb_temperature_min_c", "°C"),
+    "Dry-bulb temperature maximum": ("dry_bulb_temperature_max_c", "°C"),
+    "Ground temperature 0.10 m": ("ground_temperature_0_10m_c", "°C"),
+    "Ground temperature 0.20 m": ("ground_temperature_0_20m_c", "°C"),
+    "Ground temperature 0.50 m": ("ground_temperature_0_50m_c", "°C"),
+    "Dew-point temperature": ("dew_point_temperature_c", "°C"),
+    "Relative humidity": ("relative_humidity_pct", "%"),
+    "Humidity ratio": ("humidity_ratio_g_kg", "g/kg dry air"),
+    "Moist-air enthalpy": ("moist_air_enthalpy_kj_kg", "kJ/kg dry air"),
+    "Wet-bulb temperature": ("wet_bulb_temperature_c", "°C"),
+    "Specific volume": ("specific_volume_m3_kg", "m³/kg dry air"),
+    "Moist-air density": ("moist_air_density_kg_m3", "kg/m³"),
+    "Station pressure": ("atmospheric_station_pressure_pa", "Pa"),
+    "Global horizontal radiation": ("global_horizontal_radiation_wh_m2", "Wh/m²"),
+    "Direct normal radiation": ("direct_normal_radiation_wh_m2", "Wh/m²"),
+    "Diffuse horizontal radiation": ("diffuse_horizontal_radiation_wh_m2", "Wh/m²"),
+    "Global horizontal illuminance": ("global_horizontal_illuminance_lux", "lux"),
+    "Direct normal illuminance": ("direct_normal_illuminance_lux", "lux"),
+    "Diffuse horizontal illuminance": ("diffuse_horizontal_illuminance_lux", "lux"),
+    "Wind speed": ("wind_speed_m_s", "m/s"),
+    "Wind direction": ("wind_direction_deg", "deg"),
+    "Wind gust speed": ("wind_gust_speed_m_s", "m/s"),
+    "Wind gust direction": ("wind_gust_direction_deg", "deg"),
+    "Total sky cover": ("total_sky_cover_tenths", "tenths"),
+    "Opaque sky cover": ("opaque_sky_cover_tenths", "tenths"),
+    "Liquid precipitation depth": ("liquid_precipitation_depth_mm", "mm"),
+    "Precipitation duration": ("precipitation_duration_min", "min"),
+    "Snow depth": ("snow_depth_cm", "cm"),
+    "Sunshine duration": ("sunshine_duration_s", "s"),
+}
+
+
+PSYCHROMETRIC_COLOR_METRICS = {
+    "Month": (None, "Month"),
+    "Frequency": (None, "Frequency [h]"),
+    "Dry-bulb temperature": ("dry_bulb_temperature_c", "Dry-bulb temperature [°C]"),
+    "Relative humidity": ("relative_humidity_pct", "Relative humidity [%]"),
+    "Humidity ratio": ("humidity_ratio_g_kg", "Moisture content [g/kg]"),
+    "Moist-air enthalpy": ("moist_air_enthalpy_kj_kg", "Enthalpy [kJ/kg]"),
+    "Wet-bulb temperature": ("wet_bulb_temperature_c", "Wet-bulb temperature [°C]"),
+    "Global horizontal radiation": ("global_horizontal_radiation_wh_m2", "GHI [Wh/m²]"),
+    "Direct normal radiation": ("direct_normal_radiation_wh_m2", "DNI [Wh/m²]"),
+    "Diffuse horizontal radiation": ("diffuse_horizontal_radiation_wh_m2", "DHI [Wh/m²]"),
+    "Wind speed": ("wind_speed_m_s", "Wind speed [m/s]"),
+    "Wind direction": ("wind_direction_deg", "Wind direction [deg]"),
+    "Total sky cover": ("total_sky_cover_tenths", "Total sky cover [tenths]"),
+    "Opaque sky cover": ("opaque_sky_cover_tenths", "Opaque sky cover [tenths]"),
+}
+
+PSYCHROMETRIC_METRIC_LINES = [
+    "Dry-bulb temperature",
+    "Humidity ratio",
+    "Relative humidity",
+    "Wet-bulb temperature",
+    "Vapour pressure",
+    "Specific volume",
+    "Enthalpy",
+]
+
+MONTHS = {
+    "Jan": 1,
+    "Feb": 2,
+    "Mar": 3,
+    "Apr": 4,
+    "May": 5,
+    "Jun": 6,
+    "Jul": 7,
+    "Aug": 8,
+    "Sep": 9,
+    "Oct": 10,
+    "Nov": 11,
+    "Dec": 12,
+}
+
+WIND_DIRECTION_FROM_NOTE = (
+    "Wind direction uses the meteorological FROM convention: N / 0° means wind coming from the north, "
+    "E / 90° means wind coming from the east. Wind roses and direction histograms use this same convention."
+)
+
+
+st.set_page_config(page_title=APP_BROWSER_TITLE, layout="wide", page_icon="🌦️")
+
+# Hidden machine-readable deployment identity.  The live browser audit compares
+# this source-derived fingerprint with the exact checked-out source set before a
+# deployment is considered current.  The semantic GHI colour is included as a
+# direct visual-contract sentinel for VIS-0.1.
+_RUNTIME_GHI_COLOR = metric_color("global_horizontal_radiation_wh_m2")
+st.markdown(
+    (
+        '<span id="climate-analyzer-runtime-build" '
+        f'data-runtime-build="{html.escape(RUNTIME_BUILD_ID, quote=True)}" '
+        f'data-ghi-color="{html.escape(_RUNTIME_GHI_COLOR, quote=True)}" '
+        'aria-hidden="true" style="display:none"></span>'
+    ),
+    unsafe_allow_html=True,
+)
+
+# Streamlit 1.63 renders the file-uploader size/type hint with a 0.6-alpha
+# foreground color that fails WCAG AA contrast on the default light background.
+# Inherit the surrounding instruction color through a stable Streamlit test id;
+# do not bind this override to generated Emotion class names.
+st.markdown(
+    """
+    <style>
+    [data-testid="stFileUploaderDropzoneInstructions"] span {
+        color: inherit !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+@st.cache_data(show_spinner=True)
+def load_epw_from_bytes(
+    file_name: str,
+    payload: bytes,
+    pressure_mode: str,
+    custom_pressure_pa: float | None,
+    include_psychrometrics: bool = True,
+    include_solar: bool = True,
+) -> tuple[object, pd.DataFrame, list[object]]:
+    """Load an EPW file, calculate only needed derived variables and return cached objects.
+
+    Expensive calculations are controlled by page-level flags. This keeps wind,
+    sky and data-quality pages responsive by skipping optional derivations they
+    do not need. The Temperature page opts into psychrometrics because its
+    variable explorer exposes wet-bulb temperature.
+    """
+    epw = parse_epw(BytesIO(payload))
+    data = add_degree_metrics(epw.data)
+
+    if pressure_mode == "Normal pressure: 101325 Pa":
+        fallback_pressure = DEFAULT_PRESSURE_PA
+    elif pressure_mode == "Altitude-derived standard atmosphere pressure":
+        fallback_pressure = pressure_from_altitude_m(epw.location.elevation_m)
+    elif pressure_mode == "Custom constant pressure":
+        fallback_pressure = float(custom_pressure_pa or DEFAULT_PRESSURE_PA)
+    else:
+        valid = pd.to_numeric(data["atmospheric_station_pressure_pa"], errors="coerce").dropna()
+        fallback_pressure = (
+            float(valid.median())
+            if not valid.empty
+            else pressure_from_altitude_m(float(epw.location.elevation_m or 0.0))
+        )
+
+    if include_psychrometrics:
+        data = add_psychrometric_properties(data, fallback_pressure_pa=fallback_pressure)
+    if include_solar:
+        data = add_solar_position(data, epw.location)
+
+    issues = quality_issues(data)
+    return epw, data, issues
+
+
+def page_derivation_flags(page: str) -> tuple[bool, bool]:
+    """Return whether the selected page needs psychrometric and solar columns."""
+    pages_requiring_psychrometrics = {
+        "Overview",
+        "Temperature",
+        "Humidity and Psychrometrics",
+        "Time Series and Overlay",
+        "Natural Ventilation",
+        "HVAC and Passive Design",
+        "Compare Climates",
+    }
+    pages_requiring_solar = {
+        "Overview",
+        "Solar and Radiation",
+        "Compare Climates",
+    }
+    return page in pages_requiring_psychrometrics, page in pages_requiring_solar
+
+
+
+
+def set_active_climate_file(name: str, payload: bytes, source: str) -> None:
+    """Store the selected EPW payload and open the summary view."""
+    from epw_climate_analyzer.climate_sources import ClimateFilePayload
+
+    st.session_state["active_climate_file"] = ClimateFilePayload(name=name, payload=payload, source=source)
+    st.session_state.pop("active_canonical_climate", None)
+    queue_navigation(st.session_state, "Overview")
+
+
+def set_active_canonical_climate(dataset: object) -> None:
+    """Store a provider-neutral canonical historical dataset for analysis."""
+    from epw_climate_analyzer.climate_model import CanonicalClimateDataset
+
+    if not isinstance(dataset, CanonicalClimateDataset):
+        raise TypeError("Expected CanonicalClimateDataset for historical climate activation.")
+    st.session_state["active_canonical_climate"] = dataset
+    st.session_state.pop("active_climate_file", None)
+    queue_navigation(st.session_state, "Temperature")
+
+
+def get_active_climate_file() -> ClimateFilePayload | None:
+    """Return the currently selected EPW payload from Streamlit session state."""
+    value = st.session_state.get("active_climate_file")
+    if value is None:
+        return None
+    from epw_climate_analyzer.climate_sources import ClimateFilePayload
+
+    return value if isinstance(value, ClimateFilePayload) else None
+
+
+def get_active_canonical_climate():
+    """Return the active provider-neutral historical dataset, if any."""
+    value = st.session_state.get("active_canonical_climate")
+    if value is None:
+        return None
+    from epw_climate_analyzer.climate_model import CanonicalClimateDataset
+
+    return value if isinstance(value, CanonicalClimateDataset) else None
+
+
+def clear_active_climate_file() -> None:
+    """Remove every active climate source and reset navigation."""
+    st.session_state.pop("active_climate_file", None)
+    st.session_state.pop("active_canonical_climate", None)
+    queue_navigation_reset(st.session_state)
+
+
+
+GEOSPHERE_METADATA_CACHE_TTL_SECONDS = 18 * 60 * 60
+
+
+@st.cache_data(show_spinner=False, ttl=GEOSPHERE_METADATA_CACHE_TTL_SECONDS, max_entries=2)
+def _cached_geosphere_metadata_bundle(resource_id: str) -> tuple:
+    """Cache GeoSphere metadata and its normalized station capability index.
+
+    The resource id is part of the Streamlit cache key so a future resource
+    migration cannot silently reuse a metadata snapshot from another dataset.
+    The cache contains metadata only; no measurement endpoint is called here.
+    """
+    from epw_climate_analyzer.geosphere import (
+        GEOSPHERE_RESOURCE_ID,
+        fetch_metadata,
+        parse_parameters,
+        parse_stations,
+        station_catalog,
+        station_parameter_capability_index,
+        supported_parameter_mapping,
+    )
+
+    if str(resource_id) != GEOSPHERE_RESOURCE_ID:
+        raise ValueError(f"Unsupported GeoSphere metadata resource: {resource_id}")
+    metadata = fetch_metadata()
+    return (
+        metadata,
+        supported_parameter_mapping(metadata),
+        parse_stations(metadata),
+        station_catalog(metadata),
+        station_parameter_capability_index(metadata),
+        parse_parameters(metadata),
+    )
+
+
+def cached_geosphere_metadata_bundle() -> tuple:
+    """Return the current resource-keyed GeoSphere metadata bundle."""
+    from epw_climate_analyzer.geosphere import GEOSPHERE_RESOURCE_ID
+
+    return _cached_geosphere_metadata_bundle(GEOSPHERE_RESOURCE_ID)
+
+
+def cached_geosphere_metadata() -> dict:
+    """Compatibility accessor for callers that only need raw metadata."""
+    return cached_geosphere_metadata_bundle()[0]
+
+
+@st.cache_resource(show_spinner=False, max_entries=1)
+def _cached_station_catalog_by_identity(catalog_version: str, catalog_sha256: str) -> pd.DataFrame:
+    """Load one reviewed catalog snapshot under an immutable cache identity."""
+    from epw_climate_analyzer.catalog_runtime import load_production_station_catalog
+
+    catalog = load_production_station_catalog()
+    if catalog.empty:
+        return catalog
+
+    actual_version = str(catalog["catalog_version"].iloc[0])
+    actual_sha256 = str(catalog["catalog_sha256"].iloc[0])
+    if actual_version != catalog_version or actual_sha256 != catalog_sha256:
+        raise RuntimeError(
+            "Station catalog cache identity mismatch: "
+            f"expected {catalog_version}/{catalog_sha256}, "
+            f"loaded {actual_version}/{actual_sha256}."
+        )
+    return catalog
+
+
+def cached_station_catalog() -> pd.DataFrame:
+    """Return the current reviewed catalog through a call-site-safe public API.
+
+    The public helper is intentionally uncached and has no cache-key arguments.
+    It reads the current manifest on every rerun and delegates to the internal
+    cached function keyed by catalog version and byte-level SHA. This preserves
+    stale-cache protection across redeploys without leaking cache mechanics into
+    Find climate, Compare climates, or future UI call-sites.
+    """
+    from epw_climate_analyzer.catalog_runtime import load_station_catalog_manifest
+
+    manifest = load_station_catalog_manifest()
+    return _cached_station_catalog_by_identity(manifest.catalog_version, manifest.csv_sha256)
+
+
+def _onebuilding_map_cache_key(
+    catalog_identity: str,
+    search_text: str,
+    countries: list[str],
+    datasets: list[str],
+) -> str:
+    """Return a deterministic identity for one immutable OneBuilding map/filter state."""
+    country_key = ",".join(sorted(str(value).strip() for value in countries if str(value).strip()))
+    dataset_key = ",".join(sorted(str(value).strip() for value in datasets if str(value).strip()))
+    return f"{catalog_identity}|q={search_text.strip().casefold()}|c={country_key}|d={dataset_key}"
+
+
+@st.cache_resource(show_spinner=False, max_entries=4)
+def _cached_station_group_snapshot(catalog_version: str, catalog_sha256: str) -> pd.DataFrame:
+    """Load the release-time physical-station snapshot once per immutable catalog identity."""
+    return load_station_group_snapshot(catalog_version, catalog_sha256)
+
+
+@st.cache_resource(show_spinner=False, max_entries=4)
+def _cached_catalog_filter_options(catalog_identity: str, _catalog: pd.DataFrame) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """Cache stable country/dataset selector values for one reviewed catalog snapshot."""
+    countries = tuple(sorted(value for value in _catalog["country"].dropna().unique().tolist() if str(value).strip()))
+    datasets = tuple(sorted(value for value in _catalog["dataset"].dropna().unique().tolist() if str(value).strip()))
+    return countries, datasets
+
+
+@st.cache_resource(show_spinner=False, max_entries=8)
+def _cached_grouped_station_catalog(map_cache_key: str, _catalog: pd.DataFrame) -> pd.DataFrame:
+    """Cache filtered physical-station grouping; the unfiltered route uses the release snapshot."""
+    return grouped_station_catalog(_catalog)
+
+
+
+@st.cache_data(show_spinner=False, max_entries=8)
+def _cached_station_group_options(
+    map_cache_key: str,
+    limit: int,
+    _station_groups: pd.DataFrame,
+) -> dict[str, str]:
+    """Cache the manual station-group selector derived from the same immutable groups."""
+    return station_group_options_from_groups(_station_groups, limit=limit)
+
+
+@st.cache_data(show_spinner=False, max_entries=8)
+def _cached_station_marker_payload(
+    map_cache_key: str,
+    _station_groups: pd.DataFrame,
+) -> list[list[object]]:
+    """Cache the compact browser marker payload for one immutable map/filter state."""
+    return station_marker_payload(_station_groups)
+
+
+@st.cache_data(show_spinner=False, max_entries=512)
+def _cached_catalog_rows_for_station_group(
+    map_cache_key: str,
+    station_group_id: str,
+    _catalog: pd.DataFrame,
+    _station_group: object,
+) -> pd.DataFrame:
+    """Cache one station group's climate rows for the exact catalog/filter identity."""
+    return catalog_rows_for_station_group(_catalog, _station_group)
+
+
+def station_options_from_catalog(catalog: pd.DataFrame, limit: int = 10000) -> dict[str, str]:
+    """Return cached station-list labels for the right-panel selectors."""
+    options: dict[str, str] = {}
+    for _, row in catalog.head(limit).iterrows():
+        options[station_label(row)] = str(row["station_id"])
+    return options
+
+
+def station_label(row: pd.Series) -> str:
+    """Return a compact human-readable label for a weather station."""
+    region = f", {row.get('region', '')}" if str(row.get("region", "")).strip() else ""
+    dataset = f" [{row.get('dataset', '')}]" if str(row.get("dataset", "")).strip() else ""
+    return f"{row['name']} — {row['country']}{region}{dataset}"
+
+
+def station_tooltip(row: pd.Series) -> str:
+    """Return a stable tooltip that can be parsed after a map marker click."""
+    return f"station_id={row['station_id']} | {station_label(row)}"
+
+
+
+def station_group_id(row: pd.Series) -> str:
+    """Return a stable group identifier for all climates belonging to one physical station.
+
+    Climate.OneBuilding may contain several EPW climates for the same physical
+    station, for example from different source datasets or periods. The map must
+    show one station bubble and let the user choose the climate after selecting
+    that bubble. The grouping key therefore combines the normalized station name,
+    country, and rounded coordinates.
+    """
+    name = str(row.get("name", "")).strip().lower()
+    country = str(row.get("country", "")).strip().lower()
+    try:
+        lat = round(float(row.get("latitude")), 4)
+        lon = round(float(row.get("longitude")), 4)
+    except Exception:
+        lat, lon = 0.0, 0.0
+    return f"{country}|{name}|{lat:.4f}|{lon:.4f}"
+
+
+def _limited_distinct_text(values: pd.Series, limit: int) -> str:
+    items = sorted({str(value).strip() for value in values.dropna().tolist() if str(value).strip()})
+    return ", ".join(items[:limit])
+
+
+def grouped_station_catalog(catalog: pd.DataFrame) -> pd.DataFrame:
+    """Return one compact row per physical station without copying the full catalog."""
+    if catalog.empty:
+        return pd.DataFrame()
+
+    lat_key = pd.to_numeric(catalog["latitude"], errors="coerce").round(4).rename("_lat_key")
+    lon_key = pd.to_numeric(catalog["longitude"], errors="coerce").round(4).rename("_lon_key")
+    country_key = catalog["country"].astype("string").fillna("").str.strip().str.lower().rename("_country_key")
+    name_key = catalog["name"].astype("string").fillna("").str.strip().str.lower().rename("_name_key")
+    valid = lat_key.notna() & lon_key.notna()
+    if not bool(valid.any()):
+        return pd.DataFrame()
+
+    # Project only the seven columns needed for grouping. This bounds the
+    # temporary table even when the reviewed catalog contains 98k climate rows.
+    base = catalog.loc[
+        valid,
+        ["name", "country", "region", "dataset", "latitude", "longitude", "elevation_m"],
+    ]
+    grouped = base.groupby(
+        [
+            country_key.loc[valid],
+            name_key.loc[valid],
+            lat_key.loc[valid],
+            lon_key.loc[valid],
+        ],
+        sort=False,
+        observed=True,
+        dropna=False,
+    )
+    summary = grouped.agg(
+        name=("name", "first"),
+        country=("country", "first"),
+        region=("region", lambda values: _limited_distinct_text(values, 3)),
+        dataset=("dataset", lambda values: _limited_distinct_text(values, 4)),
+        latitude=("latitude", "first"),
+        longitude=("longitude", "first"),
+        elevation_m=("elevation_m", "first"),
+        climate_count=("name", "size"),
+    ).reset_index()
+
+    summary["station_group_id"] = (
+        summary["_country_key"].astype(str)
+        + "|"
+        + summary["_name_key"].astype(str)
+        + "|"
+        + summary["_lat_key"].map(lambda value: f"{float(value):.4f}")
+        + "|"
+        + summary["_lon_key"].map(lambda value: f"{float(value):.4f}")
+    )
+    return summary[
+        [
+            "station_group_id",
+            "name",
+            "country",
+            "region",
+            "dataset",
+            "latitude",
+            "longitude",
+            "elevation_m",
+            "climate_count",
+            "_country_key",
+            "_name_key",
+            "_lat_key",
+            "_lon_key",
+        ]
+    ]
+
+
+def station_group_options_from_groups(groups: pd.DataFrame, limit: int = 10000) -> dict[str, str]:
+    """Return manual-selector labels from an already grouped station table."""
+    options: dict[str, str] = {}
+    for _, row in groups.head(limit).iterrows():
+        count = int(row.get("climate_count", 1))
+        suffix = f" ({count} climates)" if count != 1 else " (1 climate)"
+        region = f", {row.get('region', '')}" if str(row.get("region", "")).strip() else ""
+        options[f"{row['name']} — {row['country']}{region}{suffix}"] = str(row["station_group_id"])
+    return options
+
+
+def station_group_options_from_catalog(catalog: pd.DataFrame, limit: int = 10000) -> dict[str, str]:
+    """Compatibility wrapper for callers that have not already grouped the catalog."""
+    return station_group_options_from_groups(grouped_station_catalog(catalog), limit=limit)
+
+
+def climate_option_label(row: pd.Series) -> str:
+    """Return a label for one available climate within a selected station group."""
+    dataset = str(row.get("dataset", "")).strip() or "Unknown dataset"
+    source = str(row.get("source", "")).strip() or "Climate.OneBuilding"
+    region = str(row.get("region", "")).strip()
+    elevation = row.get("elevation_m", "")
+    try:
+        elevation_text = f", {float(elevation):.0f} m"
+    except Exception:
+        elevation_text = ""
+    region_text = f", {region}" if region else ""
+    return f"{dataset}{region_text}{elevation_text} — {source}"
+
+
+def station_group_tooltip(row: pd.Series) -> str:
+    """Return a tooltip that can be parsed after a grouped station marker click."""
+    return f"station_group_id={row['station_group_id']} | {row['name']} — {row['country']}"
+
+
+def station_catalog_grouped_map(
+    station_groups: pd.DataFrame,
+    selected_group_id: str | None = None,
+    center: list[float] | None = None,
+    zoom: int = 8,
+) -> folium.Map:
+    """Build the close-zoom map with one clickable violet bubble per station.
+
+    Each bubble represents one physical station. If that station has several
+    climate files, the bubble remains single and the climate list is shown in the
+    right-hand panel after clicking it.
+    """
+    center_lat = float(station_groups["latitude"].mean()) if center is None and not station_groups.empty else (center[0] if center else 20.0)
+    center_lon = float(station_groups["longitude"].mean()) if center is None and not station_groups.empty else (center[1] if center else 0.0)
+    fmap = folium.Map(location=[center_lat, center_lon], zoom_start=int(zoom), tiles="OpenStreetMap", control_scale=True)
+
+    for _, row in station_groups.iterrows():
+        group_id = str(row["station_group_id"])
+        is_selected = group_id == str(selected_group_id)
+        color = "#ef4444" if is_selected else "#7c3aed"
+        radius = 9 if is_selected else 6
+        count = int(row.get("climate_count", 1))
+        popup_html = (
+            f"<b>{row['name']}</b><br>"
+            f"Country: {row.get('country', '')}<br>"
+            f"Region: {row.get('region', '')}<br>"
+            f"Available climates: {count}<br>"
+            f"<small>Click this station bubble, then choose the required climate in the right panel.</small>"
+        )
+        folium.CircleMarker(
+            location=[float(row["latitude"]), float(row["longitude"])],
+            radius=radius,
+            color=color,
+            fill=True,
+            fill_color=color,
+            fill_opacity=0.85,
+            weight=2 if is_selected else 1,
+            popup=folium.Popup(popup_html, max_width=360),
+            tooltip=station_group_tooltip(row),
+        ).add_to(fmap)
+
+    return fmap
+
+
+def _map_text(value: object) -> str:
+    """Return HTML-safe text for station-map popups and JavaScript payloads."""
+    if value is None or pd.isna(value):
+        return ""
+    return html.escape(str(value), quote=True)
+
+
+def station_catalog_fast_map(catalog: pd.DataFrame, center: list[float] | None = None, zoom: int = 2) -> folium.Map:
+    """Build the original fast aggregated overview for station catalogs.
+
+    This function is retained for compatibility, but the UI now uses
+    ``station_catalog_fast_selectable_map`` so that the same clustered visual
+    style also supports clickable station bubbles at close zoom levels.
+    """
+    center_lat = float(catalog["latitude"].mean()) if center is None and not catalog.empty else (center[0] if center else 20.0)
+    center_lon = float(catalog["longitude"].mean()) if center is None and not catalog.empty else (center[1] if center else 0.0)
+    fmap = folium.Map(location=[center_lat, center_lon], zoom_start=int(zoom), tiles="OpenStreetMap", control_scale=True)
+    points = (
+        catalog[["latitude", "longitude"]]
+        .dropna()
+        .astype(float)
+        .values
+        .tolist()
+    )
+    if points:
+        FastMarkerCluster(points, name=f"Station clusters ({len(points):,})").add_to(fmap)
+    folium.LayerControl().add_to(fmap)
+    return fmap
+
+
+def station_marker_payload(station_groups: pd.DataFrame) -> list[list[object]]:
+    """Return the minimal stable marker payload needed by the browser map.
+
+    The right-hand station panel owns rich metadata.  The map therefore sends
+    only coordinates, a positional station index and a short label.  This keeps
+    the world-map transfer bounded while preserving exact click resolution.
+    """
+    payload: list[list[object]] = []
+    if station_groups.empty:
+        return payload
+    columns = list(station_groups.columns)
+    lat_idx = columns.index("latitude")
+    lon_idx = columns.index("longitude")
+    name_idx = columns.index("name")
+    country_idx = columns.index("country")
+    for station_idx, row in enumerate(station_groups.itertuples(index=False, name=None)):
+        try:
+            lat = float(row[lat_idx])
+            lon = float(row[lon_idx])
+        except (TypeError, ValueError):
+            continue
+        if pd.isna(lat) or pd.isna(lon):
+            continue
+        name = _map_text(row[name_idx])
+        country = _map_text(row[country_idx])
+        label = f"{name} — {country}" if country else name
+        payload.append([lat, lon, int(station_idx), label])
+    return payload
+
+
+def station_catalog_persistent_map_layers(
+    station_groups: pd.DataFrame,
+    marker_payload: list[list[object]] | None = None,
+    center: list[float] | None = None,
+    zoom: int = 2,
+    detail_zoom_threshold: int = 8,
+) -> tuple[folium.Map, folium.FeatureGroup]:
+    """Build a lightweight base map plus a dynamically managed marker layer.
+
+    ``streamlit-folium`` keeps the mounted Leaflet map alive when marker data are
+    supplied via ``feature_group_to_add``.  The feature-group string is compared
+    in the browser, so an unchanged station layer is not recreated after a
+    station click.  A fresh Python Folium base object is still used on every
+    rerun to avoid mutable-JS identifier reuse.
+    """
+    center_lat = float(station_groups["latitude"].mean()) if center is None and not station_groups.empty else (center[0] if center else 20.0)
+    center_lon = float(station_groups["longitude"].mean()) if center is None and not station_groups.empty else (center[1] if center else 0.0)
+    fmap = folium.Map(
+        location=[center_lat, center_lon],
+        zoom_start=int(zoom),
+        tiles="OpenStreetMap",
+        control_scale=True,
+        prefer_canvas=True,
+    )
+    feature_group = folium.FeatureGroup(name="Climate stations", overlay=True, control=False)
+    data = marker_payload if marker_payload is not None else station_marker_payload(station_groups)
+    callback = """
+    function (row) {
+        var marker = L.circleMarker(new L.LatLng(row[0], row[1]), {
+            radius: 6,
+            color: '#7c3aed',
+            fillColor: '#7c3aed',
+            fillOpacity: 0.86,
+            weight: 1
+        });
+        marker.bindTooltip('station_idx=' + row[2] + ' | ' + row[3], {sticky: true});
+        return marker;
+    }
+    """
+    if data:
+        FastMarkerCluster(
+            data,
+            callback=callback,
+            name=f"Station clusters ({len(data):,})",
+            disableClusteringAtZoom=int(detail_zoom_threshold),
+            spiderfyOnMaxZoom=True,
+            showCoverageOnHover=False,
+            chunkedLoading=True,
+        ).add_to(feature_group)
+    return fmap, feature_group
+
+
+def station_catalog_fast_selectable_map(
+    station_groups: pd.DataFrame,
+    selected_group_id: str | None = None,
+    center: list[float] | None = None,
+    zoom: int = 2,
+    detail_zoom_threshold: int = 8,
+) -> folium.Map:
+    """Compatibility wrapper returning a standalone selectable Folium map."""
+    fmap, marker_group = station_catalog_persistent_map_layers(
+        station_groups,
+        center=center,
+        zoom=zoom,
+        detail_zoom_threshold=detail_zoom_threshold,
+    )
+    marker_group.add_to(fmap)
+    return fmap
+
+
+def station_group_from_tooltip(station_groups: pd.DataFrame, tooltip: str | None) -> pd.Series | None:
+    """Resolve a clicked grouped station tooltip to a station-group row."""
+    if not tooltip:
+        return None
+    if "station_idx=" in tooltip:
+        raw = tooltip.split("station_idx=", 1)[1].split(" | ", 1)[0].strip()
+        try:
+            station_idx = int(raw)
+        except ValueError:
+            return None
+        if 0 <= station_idx < len(station_groups):
+            return station_groups.iloc[station_idx]
+        return None
+    if "station_group_id=" not in tooltip:
+        return None
+    group_id = tooltip.split("station_group_id=", 1)[1].split(" | ", 1)[0].strip()
+    matches = station_groups[station_groups["station_group_id"].astype(str) == group_id]
+    if matches.empty:
+        return None
+    return matches.iloc[0]
+
+
+def catalog_rows_for_station_group(catalog: pd.DataFrame, station_group: object) -> pd.DataFrame:
+    """Return climates for one station using coordinate-first bounded filtering."""
+    if catalog.empty or station_group is None:
+        return pd.DataFrame()
+
+    if isinstance(station_group, pd.Series):
+        group = station_group
+    elif isinstance(station_group, dict):
+        group = pd.Series(station_group)
+    else:
+        # Compatibility path for an old textual group id. It is not used by the
+        # production UI; resolve it once through the compact grouped table.
+        groups = grouped_station_catalog(catalog)
+        matches = groups[groups["station_group_id"].astype(str) == str(station_group)]
+        if matches.empty:
+            return pd.DataFrame()
+        group = matches.iloc[0]
+
+    target_lat = float(group.get("_lat_key", round(float(group.get("latitude")), 4)))
+    target_lon = float(group.get("_lon_key", round(float(group.get("longitude")), 4)))
+    lat = pd.to_numeric(catalog["latitude"], errors="coerce").round(4)
+    lon = pd.to_numeric(catalog["longitude"], errors="coerce").round(4)
+    candidates = catalog.loc[lat.eq(target_lat) & lon.eq(target_lon)]
+    if candidates.empty:
+        return pd.DataFrame()
+
+    target_name = str(group.get("_name_key", group.get("name", ""))).strip().lower()
+    target_country = str(group.get("_country_key", group.get("country", ""))).strip().lower()
+    names = candidates["name"].astype("string").fillna("").str.strip().str.lower()
+    countries = candidates["country"].astype("string").fillna("").str.strip().str.lower()
+    return candidates.loc[names.eq(target_name) & countries.eq(target_country)].copy()
+
+
+def _map_state_center(map_state: dict | None) -> list[float] | None:
+    """Extract a [lat, lon] center from a streamlit-folium state dictionary."""
+    if not isinstance(map_state, dict):
+        return None
+    center = map_state.get("center")
+    if isinstance(center, dict) and "lat" in center and "lng" in center:
+        return [float(center["lat"]), float(center["lng"])]
+    if isinstance(center, (list, tuple)) and len(center) >= 2:
+        return [float(center[0]), float(center[1])]
+    return None
+
+
+def _map_state_zoom(map_state: dict | None) -> int | None:
+    """Extract the current zoom level from a streamlit-folium state dictionary."""
+    if not isinstance(map_state, dict):
+        return None
+    zoom = map_state.get("zoom")
+    if zoom is None:
+        return None
+    try:
+        return int(zoom)
+    except Exception:
+        return None
+
+
+def _map_state_bounds(map_state: dict | None) -> tuple[float, float, float, float] | None:
+    """Extract south, west, north and east bounds from streamlit-folium state."""
+    if not isinstance(map_state, dict):
+        return None
+    bounds = map_state.get("bounds")
+    if not bounds:
+        return None
+    try:
+        if isinstance(bounds, dict):
+            sw = bounds.get("_southWest") or bounds.get("southWest") or bounds.get("southwest")
+            ne = bounds.get("_northEast") or bounds.get("northEast") or bounds.get("northeast")
+            if isinstance(sw, dict) and isinstance(ne, dict):
+                return float(sw["lat"]), float(sw["lng"]), float(ne["lat"]), float(ne["lng"])
+        if isinstance(bounds, (list, tuple)) and len(bounds) >= 2:
+            sw, ne = bounds[0], bounds[1]
+            return float(sw[0]), float(sw[1]), float(ne[0]), float(ne[1])
+    except Exception:
+        return None
+    return None
+
+
+def update_station_map_view_state(map_state: dict | None) -> None:
+    """Persist the current map center, zoom and bounds across reruns.
+
+    This prevents the map from jumping back to the world view after a station is
+    clicked or after switching between fast overview and detailed markers.
+    """
+    center = _map_state_center(map_state)
+    zoom = _map_state_zoom(map_state)
+    bounds = _map_state_bounds(map_state)
+    if center is not None:
+        st.session_state["station_map_center"] = center
+    if zoom is not None:
+        st.session_state["station_map_zoom"] = zoom
+    if bounds is not None:
+        st.session_state["station_map_bounds"] = bounds
+
+
+def filter_groups_to_bounds(
+    station_groups: pd.DataFrame,
+    bounds: tuple[float, float, float, float] | None,
+    margin_fraction: float = 0.15,
+) -> pd.DataFrame:
+    """Return station groups within the current map bounds plus a margin."""
+    if station_groups.empty or bounds is None:
+        return station_groups
+    south, west, north, east = bounds
+    lat_margin = max((north - south) * margin_fraction, 0.05)
+    lon_margin = max((east - west) * margin_fraction, 0.05)
+    south -= lat_margin
+    north += lat_margin
+    west -= lon_margin
+    east += lon_margin
+    mask = (
+        station_groups["latitude"].astype(float).between(south, north)
+        & station_groups["longitude"].astype(float).between(west, east)
+    )
+    return station_groups[mask].copy()
+
+def render_geosphere_source() -> None:
+    """Render GeoSphere Austria historical station selection and bounded loading."""
+    _ensure_geosphere_dependencies()
+    st.subheader("GeoSphere Austria — measured historical station data")
+    st.caption(
+        "Quality-checked `klima-v2-10min` observations are loaded directly from the official GeoSphere Austria Dataset API. "
+        "Timestamps remain real UTC historical timestamps; the data are not converted to an EPW typical year."
+    )
+    try:
+        metadata, supported, stations, catalog, capability_index, parameter_metadata = cached_geosphere_metadata_bundle()
+    except Exception as exc:
+        st.error(f"GeoSphere metadata could not be loaded or validated: {exc}")
+        return
+
+    col_filter1, col_filter2 = st.columns([2, 1])
+    search = col_filter1.text_input("Search GeoSphere station", value="", key="geosphere_station_search")
+    states = sorted(value for value in catalog["state"].dropna().astype(str).unique().tolist() if value.strip())
+    selected_states = col_filter2.multiselect("Federal states / regions", states, default=[], key="geosphere_station_states")
+    filtered = catalog.copy()
+    if search.strip():
+        needle = search.strip().lower()
+        mask = (
+            filtered["name"].astype(str).str.lower().str.contains(needle, regex=False)
+            | filtered["station_id"].astype(str).str.lower().str.contains(needle, regex=False)
+            | filtered["state"].astype(str).str.lower().str.contains(needle, regex=False)
+        )
+        filtered = filtered[mask]
+    if selected_states:
+        filtered = filtered[filtered["state"].isin(selected_states)]
+    st.caption(f"Visible GeoSphere stations after filters: {len(filtered):,} of {len(catalog):,}")
+    if filtered.empty:
+        st.warning("No GeoSphere stations match the current filter.")
+        return
+
+    station_by_id = {station.station_id: station for station in stations}
+    option_ids = [str(value) for value in filtered["station_id"].tolist() if str(value) in station_by_id]
+    if not option_ids:
+        st.error("GeoSphere metadata contain no selectable stations after normalization.")
+        return
+
+    def station_label(station_id: str) -> str:
+        station = station_by_id[station_id]
+        state = f" — {station.state}" if station.state else ""
+        return f"{station.name}{state} — ID {station.station_id}"
+
+    selected_id = str(st.session_state.get("geosphere_selected_station_id", option_ids[0]))
+    if selected_id not in option_ids:
+        selected_id = option_ids[0]
+        st.session_state["geosphere_selected_station_id"] = selected_id
+
+    # GeoSphere uses the same persistent clustered Leaflet engine as Find climate.
+    # Only the 530-provider-station table differs; pan/zoom remain browser-owned
+    # and the map returns only an explicit station click to Streamlit.
+    _ensure_map_dependencies()
+    map_groups = filtered[[
+        "station_id", "name", "state", "latitude", "longitude", "elevation_m",
+        "valid_from", "valid_to", "station_type", "is_active", "has_global_radiation", "has_sunshine",
+    ]].copy()
+    map_groups["station_group_id"] = map_groups["station_id"].astype(str)
+
+    # Keep the shared Leaflet engine, but enrich only the GeoSphere marker label.
+    # Hover stays entirely client-side and therefore never triggers a metadata or
+    # measurement request. The station validity interval is shown as metadata,
+    # not as a claim of gap-free parameter coverage.
+    def geosphere_hover_name(row: pd.Series) -> str:
+        elevation = f"{float(row['elevation_m']):.0f} m" if pd.notna(row.get("elevation_m")) else "elevation unknown"
+        valid_from = str(row.get("valid_from", "")).split("T", 1)[0] or "unknown"
+        valid_to = str(row.get("valid_to", "")).split("T", 1)[0] or "unknown"
+        return f"{row['name']} · ID {row['station_id']} · {elevation} · validity {valid_from} → {valid_to}"
+
+    map_groups["name"] = map_groups.apply(geosphere_hover_name, axis=1)
+    map_groups["country"] = ""
+    map_groups["region"] = map_groups["state"].fillna("").astype(str)
+    map_groups["dataset"] = "GeoSphere klima-v2-10min"
+    map_groups["climate_count"] = 1
+    map_groups = map_groups.reset_index(drop=True)
+
+    if "geosphere_map_view_epoch" not in st.session_state:
+        st.session_state["geosphere_map_view_epoch"] = 0
+    default_center = [float(map_groups["latitude"].mean()), float(map_groups["longitude"].mean())]
+    initial_zoom = 7 if len(map_groups) > 25 else 9
+
+    left, right = st.columns([2, 1])
+    with left:
+        map_reset_col, map_note_col = st.columns([1, 3])
+        with map_reset_col:
+            if st.button("Reset map", key="geosphere_reset_map"):
+                st.session_state["geosphere_map_view_epoch"] = int(st.session_state.get("geosphere_map_view_epoch", 0)) + 1
+                st.rerun()
+        with map_note_col:
+            st.caption("Clustered GeoSphere station map · click a station bubble to select it.")
+        with st.expander("Advanced map settings", expanded=False):
+            detail_zoom_threshold = st.slider(
+                "Show individual stations from zoom level",
+                min_value=6,
+                max_value=12,
+                value=int(st.session_state.get("geosphere_detail_zoom_threshold", 9)),
+                key="geosphere_detail_zoom_threshold_slider",
+                help=(
+                    "The clustered overview remains visible at lower zoom levels. At this zoom level or closer, "
+                    "the same Leaflet map reveals clickable individual station bubbles."
+                ),
+            )
+            st.session_state["geosphere_detail_zoom_threshold"] = detail_zoom_threshold
+
+        marker_payload = station_marker_payload(map_groups)
+        base_map, marker_group = station_catalog_persistent_map_layers(
+            map_groups,
+            marker_payload=marker_payload,
+            center=[47.5, 14.2],
+            zoom=7,
+            detail_zoom_threshold=int(st.session_state.get("geosphere_detail_zoom_threshold", 9)),
+        )
+        map_state = st_folium(
+            base_map,
+            feature_group_to_add=marker_group,
+            height=560,
+            use_container_width=True,
+            returned_objects=["last_object_clicked_tooltip"],
+            center=tuple(default_center),
+            zoom=initial_zoom,
+            key=f"geosphere_selectable_cluster_map_{int(st.session_state.get('geosphere_map_view_epoch', 0))}",
+        )
+
+    clicked_station = None
+    if isinstance(map_state, dict):
+        clicked_station = station_group_from_tooltip(map_groups, map_state.get("last_object_clicked_tooltip"))
+    if clicked_station is not None:
+        clicked_id = str(clicked_station["station_group_id"])
+        if clicked_id in option_ids:
+            selected_id = clicked_id
+            st.session_state["geosphere_selected_station_id"] = selected_id
+
+    station = station_by_id[selected_id]
+    with right:
+        st.markdown("#### Selected station")
+        def yes_no_unknown(value: bool | None) -> str:
+            return "Yes" if value is True else ("No" if value is False else "Unknown")
+
+        st.dataframe(
+            pd.DataFrame(
+                {
+                    "Field": [
+                        "Station", "ID", "Region", "Latitude", "Longitude", "Elevation",
+                        "Station type", "Active", "Global radiation flag", "Sunshine flag", "Provider validity",
+                    ],
+                    "Value": [
+                        station.name, station.station_id, station.state,
+                        f"{station.latitude:.5f}", f"{station.longitude:.5f}",
+                        f"{station.elevation_m:.0f} m" if station.elevation_m is not None else "",
+                        station.station_type or "unknown", yes_no_unknown(station.is_active),
+                        yes_no_unknown(station.has_global_radiation), yes_no_unknown(station.has_sunshine),
+                        f"{station.valid_from or 'unknown'} … {station.valid_to or 'unknown'}",
+                    ],
+                }
+            ),
+            hide_index=True,
+            use_container_width=True,
+        )
+
+        station_capabilities = capability_index.get(selected_id, {})
+        preview_rows = []
+        for name, spec in supported.items():
+            parameter = parameter_metadata.get(name)
+            status = station_capabilities.get(name, "resource-supported")
+            availability = (
+                "Confirmed by station metadata" if status == "station-confirmed"
+                else ("Unavailable at station" if status == "station-unavailable" else "Resource-supported")
+            )
+            preview_rows.append(
+                {
+                    "Variable": parameter.long_name if parameter and parameter.long_name else spec.description or spec.canonical_name,
+                    "Provider": name,
+                    "Unit": parameter.unit if parameter else "",
+                    "Availability": availability,
+                }
+            )
+        with st.expander("Measured-variable metadata", expanded=False):
+            st.dataframe(pd.DataFrame(preview_rows), hide_index=True, use_container_width=True)
+            st.caption(
+                "GeoSphere publishes an explicit station-level global-radiation flag. Other listed variables are supported "
+                "by the resource metadata; their actual numeric coverage for the selected period is verified only after load. "
+                "No per-parameter validity dates are inferred."
+            )
+
+        st.markdown("#### Manual station selection")
+        manual_id = st.selectbox(
+            "Search-result stations",
+            option_ids,
+            index=option_ids.index(selected_id),
+            format_func=station_label,
+            key="geosphere_manual_station_choice",
+        )
+        if st.button("Use station from list", key="geosphere_use_station_from_list"):
+            st.session_state["geosphere_selected_station_id"] = manual_id
+            st.rerun()
+
+    today = pd.Timestamp.now(tz="UTC").date()
+    parsed_from = pd.to_datetime(station.valid_from, errors="coerce")
+    parsed_to = pd.to_datetime(station.valid_to, errors="coerce")
+    min_date = parsed_from.date() if pd.notna(parsed_from) else pd.Timestamp("1900-01-01").date()
+    provider_max = parsed_to.date() if pd.notna(parsed_to) else today
+    max_date = min(provider_max, today)
+    if max_date < min_date:
+        st.error("The station validity interval does not overlap the available historical date range.")
+        return
+    default_end = max_date
+    default_start = max(min_date, (pd.Timestamp(default_end) - pd.Timedelta(days=30)).date())
+    c1, c2 = st.columns(2)
+    start_date = c1.date_input(
+        "From date (UTC)", value=default_start, min_value=min_date, max_value=max_date, key="geosphere_start_date"
+    )
+    end_date = c2.date_input(
+        "Through date (UTC)", value=default_end, min_value=min_date, max_value=max_date, key="geosphere_end_date"
+    )
+    if end_date < start_date:
+        st.error("GeoSphere end date must not be earlier than start date.")
+        return
+    selected_days = (pd.Timestamp(end_date) - pd.Timestamp(start_date)).days + 1
+
+    st.markdown("#### Measured variables to load")
+    st.caption(
+        "Select the measured GeoSphere fields required for this load. The checkbox is the single source of selection state; "
+        "analysis pages are still enabled only when the returned interval contains actual numeric observations."
+    )
+    station_capabilities = capability_index.get(selected_id, {})
+    selectable_supported = {
+        name: spec
+        for name, spec in supported.items()
+        if station_capabilities.get(name, "resource-supported") != "station-unavailable"
+    }
+    unavailable_names = [
+        name for name in supported
+        if station_capabilities.get(name, "resource-supported") == "station-unavailable"
+    ]
+    if unavailable_names:
+        st.info(
+            "Not selectable because station metadata reports the sensor unavailable: "
+            + ", ".join(unavailable_names)
+            + "."
+        )
+    if not selectable_supported:
+        st.warning("No supported GeoSphere variables are selectable for this station according to metadata.")
+        return
+
+    variable_rows = pd.DataFrame(
+        [
+            {
+                "Selected": True,
+                "Measured variable": (
+                    parameter_metadata[name].long_name
+                    if name in parameter_metadata and parameter_metadata[name].long_name
+                    else spec.description or spec.canonical_name
+                ),
+                "Provider": name,
+                "Unit": parameter_metadata[name].unit if name in parameter_metadata else "",
+                "Availability": (
+                    "Station-confirmed"
+                    if station_capabilities.get(name) == "station-confirmed"
+                    else "Resource-supported"
+                ),
+                "Canonical field": spec.canonical_name,
+            }
+            for name, spec in selectable_supported.items()
+        ]
+    )
+    edited_variables = st.data_editor(
+        variable_rows,
+        hide_index=True,
+        use_container_width=True,
+        num_rows="fixed",
+        disabled=["Measured variable", "Provider", "Unit", "Availability", "Canonical field"],
+        column_config={
+            "Selected": st.column_config.CheckboxColumn("Load", width="small"),
+            "Measured variable": st.column_config.TextColumn("Measured variable", width="medium"),
+            "Provider": st.column_config.TextColumn("Provider parameter", width="small"),
+            "Unit": st.column_config.TextColumn("Unit", width="small"),
+            "Availability": st.column_config.TextColumn("Metadata availability", width="medium"),
+            "Canonical field": st.column_config.TextColumn("Canonical field", width="large"),
+        },
+        key="geosphere_variable_editor",
+    )
+    provider_parameters = tuple(
+        edited_variables.loc[edited_variables["Selected"].fillna(False).astype(bool), "Provider"].astype(str).tolist()
+    )
+    st.caption("Source: GeoSphere Austria `klima-v2-10min` · CC BY 4.0 · DOI 10.60669/8fya-7x87")
+    if not provider_parameters:
+        st.warning("Select at least one measured GeoSphere variable to load.")
+        return
+
+    start_ts = pd.Timestamp(start_date, tz="UTC")
+    end_ts = pd.Timestamp(end_date, tz="UTC") + pd.Timedelta(hours=23, minutes=50)
+    canonical_variables = tuple(supported[name].canonical_name for name in provider_parameters)
+    query_parameters = provider_parameters_with_quality_flags(metadata, provider_parameters)
+    estimated = estimate_geosphere_datapoints(start_ts, end_ts, len(query_parameters), 1)
+    batches = plan_geosphere_queries(station.station_id, start_ts, end_ts, query_parameters)
+    loaded_flag_count = len(query_parameters) - len(provider_parameters)
+    st.caption(
+        f"Requested interval: {selected_days} day(s), 10-minute source data, {len(provider_parameters)} selected measured variables "
+        f"plus {loaded_flag_count} matching provider quality flag(s). "
+        f"Estimated provider datapoints: {estimated:,}; bounded API batches: {len(batches)}. "
+        "There is no fixed one-year UI limit; long intervals are split into bounded provider requests."
+    )
+    if estimated > 2_000_000:
+        st.warning(
+            "This is a large historical request. It is valid and will be split into bounded API batches, but loading and "
+            "browser analysis can take substantially longer. Selecting only the variables you need reduces transfer and memory use."
+        )
+    if "tl" not in provider_parameters:
+        st.info(
+            "Air temperature is not selected. Temperature and temperature-dependent psychrometric analyses will remain "
+            "unavailable unless a later load contains measured temperature observations."
+        )
+
+    if st.button("Load measured GeoSphere interval", type="primary", key="load_geosphere_interval"):
+        progress_state = {"completed": 0, "total": max(1, len(batches))}
+        progress_bar = st.progress(
+            0.0,
+            text=f"GeoSphere load — 0/{len(batches)} planned batch(es) complete",
+        )
+
+        def update_geosphere_progress(event) -> None:
+            total = max(1, int(event.get("total_batches", len(batches))))
+            completed = min(total, max(0, int(event.get("completed_batches", 0))))
+            batch_number = min(total, max(1, int(event.get("batch_number", completed + 1))))
+            progress_state["completed"] = completed
+            progress_state["total"] = total
+            event_name = str(event.get("event", ""))
+            if event_name == "batch_start":
+                label = f"Loading GeoSphere batch {batch_number}/{total}..."
+            elif event_name == "retry":
+                attempt = int(event.get("attempt", 2))
+                label = f"GeoSphere batch {batch_number}/{total}: transient provider error — retry {attempt}..."
+            elif event_name == "split":
+                split_depth = int(event.get("split_depth", 1))
+                label = (
+                    f"GeoSphere batch {batch_number}/{total}: provider response still slow — "
+                    f"splitting this batch (level {split_depth})..."
+                )
+            elif event_name == "batch_complete":
+                label = f"GeoSphere load — {completed}/{total} planned batch(es) complete"
+            elif event_name == "load_complete":
+                label = f"GeoSphere load complete — {completed}/{total} planned batch(es)"
+            else:
+                label = f"GeoSphere load — {completed}/{total} planned batch(es) complete"
+            progress_bar.progress(completed / total, text=label)
+
+        try:
+            dataset = fetch_geosphere_station_dataset(
+                station=station,
+                start=start_ts,
+                end=end_ts,
+                metadata=metadata,
+                canonical_variables=canonical_variables,
+                progress_callback=update_geosphere_progress,
+            )
+            progress_bar.progress(
+                1.0,
+                text=f"GeoSphere load complete — {len(batches)}/{len(batches)} planned batch(es)",
+            )
+            set_active_canonical_climate(dataset)
+            st.rerun()
+        except Exception as exc:
+            total = max(1, int(progress_state["total"]))
+            completed = min(total, max(0, int(progress_state["completed"])))
+            progress_bar.progress(
+                completed / total,
+                text=f"GeoSphere load stopped — {completed}/{total} planned batch(es) complete",
+            )
+            st.error(f"GeoSphere station-data load failed: {exc}")
+
+def render_climate_file_source() -> None:
+    """Render the product entry page for local or catalog climate selection."""
+    st.title(APP_NAME)
+    st.markdown(f"#### {APP_TAGLINE}")
+    st.write(APP_INTRO)
+    st.write(APP_RELEASE_LABEL)
+    with st.expander("About this beta", expanded=False):
+        st.write(APP_ENGINEERING_DISCLAIMER)
+        st.caption(APP_INDEPENDENCE_NOTICE)
+    st.write(
+        "Start with an EPW weather file, select a reviewed Climate.OneBuilding climate, or load measured "
+        "historical station observations from GeoSphere Austria. No building model is required."
+    )
+
+    active = get_active_climate_file()
+    active_historical = get_active_canonical_climate()
+    if active is not None or active_historical is not None:
+        active_name = active.name if active is not None else active_historical.display_name
+        st.success(f"Current climate: {active_name}")
+        with st.expander("Data source details", expanded=False):
+            if active is not None:
+                st.caption(active.source)
+            else:
+                st.caption(f"{active_historical.provenance.provider} | {active_historical.provenance.dataset}")
+                st.caption(active_historical.provenance.source_reference)
+        if st.button("Choose a different climate"):
+            clear_active_climate_file()
+            st.rerun()
+
+    st.divider()
+    source_mode = st.radio(
+        "Climate source",
+        ["Upload EPW", "Find climate", "GeoSphere Austria"],
+        horizontal=True,
+        label_visibility="collapsed",
+        key="climate_source_mode",
+    )
+
+    if source_mode == "Upload EPW":
+        st.subheader("Upload an EPW weather file")
+        st.write("Use an EnergyPlus Weather (EPW) file that you already have. The file is processed for the current session.")
+        local_file = st.file_uploader("Choose EPW file", type=["epw"], key="local_epw_upload")
+        if local_file is not None:
+            st.write(f"Selected file: `{local_file.name}`")
+            if st.button("Analyze this EPW", type="primary"):
+                set_active_climate_file(local_file.name, local_file.getvalue(), "Local upload | user-provided EPW | transient session")
+                st.rerun()
+        return
+
+    if source_mode == "GeoSphere Austria":
+        render_geosphere_source()
+        return
+
+    _ensure_map_dependencies()
+    st.subheader("Find a climate from Climate.OneBuilding")
+    st.caption(
+        "Search or zoom to a station, choose one of its available climate datasets, then load the EPW for analysis."
+    )
+    try:
+        catalog = cached_station_catalog()
+    except Exception as exc:
+        st.error(f"The versioned station catalog failed integrity/provenance validation: {exc}")
+        return
+    st.caption(catalog_runtime_summary(catalog))
+    if catalog.empty:
+        st.error("The versioned station catalog is empty. A reviewed catalog update is required before online station selection can be used.")
+        return
+
+    col_filter1, col_filter2, col_filter3 = st.columns([2, 1, 1])
+    search_text = col_filter1.text_input("Search station, country, region, dataset or ID", value="")
+    catalog_version = str(catalog["catalog_version"].iloc[0])
+    catalog_sha256 = str(catalog["catalog_sha256"].iloc[0])
+    catalog_identity = f"{catalog_version}:{catalog_sha256}"
+    countries, datasets = _cached_catalog_filter_options(catalog_identity, catalog)
+    selected_countries = col_filter2.multiselect("Countries", countries, default=[])
+    selected_datasets = col_filter3.multiselect("Datasets", datasets, default=[])
+    map_cache_key = _onebuilding_map_cache_key(catalog_identity, search_text, selected_countries, selected_datasets)
+    uses_full_catalog_snapshot = not search_text.strip() and not selected_countries and not selected_datasets
+    if uses_full_catalog_snapshot:
+        # Common world-map route: reuse the immutable reviewed catalog and a release-time
+        # physical-station snapshot. No 98k-row copy or live grouping is required.
+        filtered_catalog = catalog
+    else:
+        filtered_catalog = filter_station_catalog(
+            catalog,
+            search_text=search_text,
+            countries=selected_countries if selected_countries else None,
+            datasets=selected_datasets if selected_datasets else None,
+        )
+
+    st.caption(f"Visible catalog records after filters: {len(filtered_catalog):,} of {len(catalog):,}")
+    if filtered_catalog.empty:
+        st.warning("No stations match the current filters.")
+        return
+
+    if uses_full_catalog_snapshot:
+        try:
+            station_groups_all = _cached_station_group_snapshot(catalog_version, catalog_sha256)
+        except Exception as exc:
+            st.warning(f"Pre-grouped station snapshot is unavailable; rebuilding the map index once: {exc}")
+            station_groups_all = _cached_grouped_station_catalog(map_cache_key, filtered_catalog)
+    else:
+        station_groups_all = _cached_grouped_station_catalog(map_cache_key, filtered_catalog)
+    if station_groups_all.empty:
+        st.warning("No grouped station records are available for the current filters.")
+        return
+
+    # Leaflet/browser owns ordinary pan and zoom state. Do not return center,
+    # zoom or bounds to Streamlit: those values change continuously and used to
+    # trigger Python reruns that could race with a freshly rendered Leaflet view.
+    # A reset is explicit and remounts only the map component via a view epoch.
+    default_center = [float(station_groups_all["latitude"].mean()), float(station_groups_all["longitude"].mean())]
+    initial_zoom = 2 if len(station_groups_all) > 25 else 6
+    if "station_map_view_epoch" not in st.session_state:
+        st.session_state["station_map_view_epoch"] = 0
+
+    if st.button("Reset map view to filtered stations"):
+        st.session_state["station_map_view_epoch"] = int(st.session_state.get("station_map_view_epoch", 0)) + 1
+        st.rerun()
+
+    with st.expander("Advanced map settings", expanded=False):
+        detail_zoom_threshold = st.slider(
+            "Show individual stations from zoom level",
+            min_value=5,
+            max_value=12,
+            value=int(st.session_state.get("station_detail_zoom_threshold", 8)),
+            help=(
+                "The clustered overview remains visible at lower zoom levels. "
+                "At this zoom level or closer, Leaflet disables clustering and shows "
+                "clickable violet station bubbles. This is handled inside one stable map, "
+                "not by switching between two Streamlit map components."
+            ),
+        )
+        st.session_state["station_detail_zoom_threshold"] = detail_zoom_threshold
+        selectable_limit = st.slider(
+            "Maximum station groups rendered on map",
+            min_value=1000,
+            max_value=100000,
+            value=int(st.session_state.get("station_selectable_cluster_limit", 50000)),
+            step=5000,
+            help=(
+                "The map renders one browser-side clustered marker per physical station group. "
+                "If the filtered catalog is larger than this limit, refine the country, dataset, or search filters."
+            ),
+        )
+        st.session_state["station_selectable_cluster_limit"] = selectable_limit
+
+    selected_group_id = st.session_state.get("selected_station_group_id")
+    group_ids = set(station_groups_all["station_group_id"].astype(str))
+    if selected_group_id not in group_ids:
+        selected_group_id = str(station_groups_all.iloc[0]["station_group_id"])
+        st.session_state["selected_station_group_id"] = selected_group_id
+
+    station_groups_for_map = station_groups_all
+    if len(station_groups_for_map) > int(st.session_state.get("station_selectable_cluster_limit", 50000)):
+        st.warning(
+            f"The current filter returns {len(station_groups_for_map):,} physical station groups. "
+            "This is too many for a responsive selectable browser map. Refine the country, dataset, or search filters. "
+            "The table selector on the right remains available for filtered results."
+        )
+        station_groups_for_map = station_groups_for_map.head(0)
+
+    left, right = st.columns([2, 1])
+    with left:
+        st.caption(
+            f"Clustered overview is active. At zoom {int(st.session_state.get('station_detail_zoom_threshold', 8))} "
+            "or closer, the same map reveals clickable violet station bubbles. "
+            "Pan and zoom stay in the browser and do not trigger a Streamlit rerun; only station selection or an explicit reset returns control to the app."
+        )
+        marker_payload = _cached_station_marker_payload(map_cache_key, station_groups_for_map)
+        base_map, marker_group = station_catalog_persistent_map_layers(
+            station_groups_for_map,
+            marker_payload=marker_payload,
+            center=[20.0, 0.0],
+            zoom=2,
+            detail_zoom_threshold=int(st.session_state.get("station_detail_zoom_threshold", 8)),
+        )
+        map_state = st_folium(
+            base_map,
+            feature_group_to_add=marker_group,
+            height=620,
+            use_container_width=True,
+            returned_objects=["last_object_clicked_tooltip"],
+            center=tuple(default_center),
+            zoom=initial_zoom,
+            key=f"climate_onebuilding_selectable_cluster_map_{int(st.session_state.get('station_map_view_epoch', 0))}",
+        )
+
+    clicked_group = None
+    if isinstance(map_state, dict):
+        clicked_group = station_group_from_tooltip(station_groups_all, map_state.get("last_object_clicked_tooltip"))
+    if clicked_group is not None:
+        selected_group_id = str(clicked_group["station_group_id"])
+        st.session_state["selected_station_group_id"] = selected_group_id
+
+    selected_group_matches = station_groups_all[station_groups_all["station_group_id"].astype(str) == str(selected_group_id)]
+    selected_group = selected_group_matches.iloc[0] if not selected_group_matches.empty else station_groups_all.iloc[0]
+    selected_climates = _cached_catalog_rows_for_station_group(
+        map_cache_key,
+        str(selected_group.get("station_group_id", "")),
+        filtered_catalog,
+        selected_group,
+    )
+    if selected_climates.empty:
+        selected_climates = filtered_catalog.head(1).copy()
+
+    with right:
+        st.markdown("#### Selected station")
+        st.dataframe(
+            pd.DataFrame(
+                {
+                    "Field": ["Name", "Country", "Region", "Datasets", "Latitude", "Longitude", "Elevation", "Available climates"],
+                    "Value": [
+                        selected_group.get("name", ""),
+                        selected_group.get("country", ""),
+                        selected_group.get("region", ""),
+                        selected_group.get("dataset", ""),
+                        f"{float(selected_group['latitude']):.5f}",
+                        f"{float(selected_group['longitude']):.5f}",
+                        f"{float(selected_group.get('elevation_m', 0)):.0f} m" if pd.notna(selected_group.get("elevation_m", None)) else "",
+                        int(selected_group.get("climate_count", len(selected_climates))),
+                    ],
+                }
+            ),
+            hide_index=True,
+            use_container_width=True,
+        )
+
+        st.markdown("#### Available climates at this station")
+        climate_labels = [climate_option_label(row) for _, row in selected_climates.iterrows()]
+        if not climate_labels:
+            st.warning("No downloadable climates were found for this station.")
+            selected = filtered_catalog.iloc[0]
+        else:
+            climate_index = st.selectbox(
+                "Choose climate file",
+                list(range(len(climate_labels))),
+                format_func=lambda i: climate_labels[i],
+                key=f"station_climate_choice_{selected_group['station_group_id']}",
+            )
+            selected = selected_climates.iloc[int(climate_index)]
+
+        st.dataframe(
+            pd.DataFrame(
+                {
+                    "Field": ["Station ID", "Dataset", "Source", "Region", "Catalog version", "Catalog snapshot", "Download URL"],
+                    "Value": [
+                        selected.get("station_id", ""),
+                        selected.get("dataset", ""),
+                        selected.get("source", ""),
+                        selected.get("region", ""),
+                        selected.get("catalog_version", ""),
+                        selected.get("catalog_source_snapshot_date", ""),
+                        selected.get("download_url", ""),
+                    ],
+                }
+            ),
+            hide_index=True,
+            use_container_width=True,
+        )
+
+        if st.button("Select and download this climate EPW", type="primary"):
+            try:
+                with st.spinner("Downloading and extracting EPW file..."):
+                    result = download_station_epw(selected)
+                source_text = station_provenance_text(
+                    selected,
+                    final_download_url=result.source_url,
+                    archive_name=result.extracted_from,
+                )
+                set_active_climate_file(result.file_name, result.payload, source_text)
+                st.rerun()
+            except Exception as exc:
+                st.error(f"Station download failed: {exc}")
+
+        st.markdown("#### Manual station selection")
+        station_group_options = _cached_station_group_options(map_cache_key, 10000, station_groups_all)
+        if station_group_options:
+            selected_label = st.selectbox("Search-result station groups", list(station_group_options.keys()))
+            if st.button("Use station group from list"):
+                st.session_state["selected_station_group_id"] = station_group_options[selected_label]
+                st.rerun()
+    st.info(
+        "Source note: the public app reads a reviewed, versioned station catalog bundled with this release. "
+        "Catalog crawling and refresh are maintenance operations outside user sessions. Selected EPW files are "
+        "downloaded on demand from Climate.OneBuilding and are not bundled with this repository."
+    )
+
+def render_interpretation(text: str) -> None:
+    """Render an automatic interpretation block below a chart."""
+    st.markdown("#### Automatic interpretation")
+    st.info(text)
+
+
+def next_plot_key(prefix: str = "plot") -> str:
+    """Return a unique key for Plotly elements within one Streamlit rerun."""
+    st.session_state["_plotly_element_counter"] = int(st.session_state.get("_plotly_element_counter", 0)) + 1
+    return f"{prefix}_{st.session_state['_plotly_element_counter']}"
+
+
+def render_chart_export_controls(fig) -> None:
+    """Render a compact local export control without reducing chart width."""
+    from epw_climate_analyzer.exporting import (
+        dataframe_to_csv_bytes,
+        figure_export_stem,
+        figure_to_csv_bytes,
+        safe_export_stem,
+    )
+
+    # Keep the chart itself full-width. The tiny control occupies its own row
+    # immediately above the figure instead of stealing horizontal chart space.
+    _, export_col = st.columns([24, 1], gap="small")
+    with export_col:
+        with st.popover("⇩"):
+            st.caption("Export this chart")
+            stem = figure_export_stem(fig)
+            chart_csv = figure_to_csv_bytes(fig)
+            if chart_csv:
+                st.download_button(
+                    "Chart data · CSV",
+                    data=chart_csv,
+                    file_name=f"{stem}.csv",
+                    mime="text/csv",
+                    use_container_width=True,
+                )
+            else:
+                st.caption("No tabular trace data are available for this figure.")
+
+            # A comparison figure can combine several independent EPW files, so
+            # offering one arbitrary active source/filtered table there would be
+            # misleading. Its trace-level CSV remains available above.
+            if st.session_state.get(NAVIGATION_KEY) != "Compare Climates":
+                filtered = st.session_state.get("_active_filtered_export_df")
+                if hasattr(filtered, "to_csv"):
+                    st.download_button(
+                        "Filtered data · CSV",
+                        data=dataframe_to_csv_bytes(filtered),
+                        file_name=f"{stem}_filtered.csv",
+                        mime="text/csv",
+                        use_container_width=True,
+                    )
+
+                active = get_active_climate_file()
+                if active is not None:
+                    source_name = safe_export_stem(active.name, default="source_weather")
+                    st.download_button(
+                        "Source weather · EPW",
+                        data=active.payload,
+                        file_name=f"{source_name}.epw",
+                        mime="application/octet-stream",
+                        use_container_width=True,
+                    )
+
+
+def render_plot(fig, text: str) -> None:
+    """Render a Plotly figure, local export control and interpretation."""
+    render_chart_export_controls(fig)
+    st.plotly_chart(
+        fig,
+        use_container_width=True,
+        config={"displaylogo": False, "scrollZoom": True},
+        key=next_plot_key(),
+    )
+    render_interpretation(text)
+
+
+
+
+def render_bioclimatic_report(df: pd.DataFrame) -> None:
+    """Render a concise report for the Givoni-Milne bioclimatic overlay."""
+    table = givoni_milne_zone_table(df)
+    st.markdown("#### Bioclimatic-zone report")
+    if table.empty:
+        st.info("No valid dry-bulb temperature and humidity-ratio data are available for the bioclimatic-zone report.")
+        return
+    top = table.head(3)
+    total_tagged = float(table["hours"].sum())
+    valid_records = len(df.dropna(subset=["dry_bulb_temperature_c", "humidity_ratio_g_kg"]))
+    total_hours = float(valid_records) * native_interval_hours(df)
+    leader = top.iloc[0]
+
+    def format_hours(value: float) -> str:
+        numeric = float(value)
+        if abs(numeric - round(numeric)) < 1e-9:
+            return f"{int(round(numeric)):,}"
+        return f"{numeric:,.2f}".rstrip("0").rstrip(".")
+
+    st.info(
+        f"The largest Givoni-Milne-style strategy region is **{leader['zone']}** "
+        f"with {format_hours(float(leader['hours']))} hours ({float(leader['share_pct']):.1f}% of valid psychrometric duration). "
+        f"The reported zones are overlapping design-potential regions, so their hour totals should be interpreted as strategy opportunities rather than mutually exclusive classes. "
+        f"Across all displayed strategy regions, {format_hours(total_tagged)} zone-hours were detected over {format_hours(total_hours)} valid climate-data hours."
+    )
+    st.dataframe(table, hide_index=True, use_container_width=True)
+
+def sidebar_filters(df: pd.DataFrame) -> pd.DataFrame:
+    """Apply the source-neutral global time, month and hour filters.
+
+    The absolute range is the primary filter for EPW, GeoSphere and future
+    sources. Chronological is the default temporal basis, so multi-year data keep
+    every real month/day/hour distinct. Calendar profile is an explicit opt-in
+    that aligns equivalent calendar positions across the selected years.
+    """
+    st.sidebar.markdown("### Data filter")
+    if df.empty or not isinstance(df.index, pd.DatetimeIndex):
+        st.session_state["_active_filtered_export_df"] = df
+        return df
+
+    source_start = pd.Timestamp(df.index.min())
+    source_end = pd.Timestamp(df.index.max())
+    years = available_years(df)
+    st.sidebar.caption(
+        f"Available: {source_start.strftime('%d %b %Y %H:%M')} → {source_end.strftime('%d %b %Y %H:%M')}"
+    )
+
+    range_mode = st.sidebar.selectbox(
+        "Range",
+        ["All available", "Year", "Custom"],
+        index=0,
+        key="global_data_range_mode",
+    )
+    ranged = df
+    selected_year_value: int | None = None
+    start_value = None
+    end_value = None
+    if range_mode == "Year":
+        selected_year = st.sidebar.selectbox(
+            "Year",
+            years,
+            index=max(len(years) - 1, 0),
+            key="global_data_range_year",
+        )
+        selected_year_value = int(selected_year)
+        ranged = filter_year(df, selected_year_value)
+    elif range_mode == "Custom":
+        date_cols = st.sidebar.columns(2)
+        start_date = date_cols[0].date_input(
+            "From date",
+            value=source_start.date(),
+            min_value=source_start.date(),
+            max_value=source_end.date(),
+            key="global_data_range_start_date",
+        )
+        end_date = date_cols[1].date_input(
+            "To date",
+            value=source_end.date(),
+            min_value=source_start.date(),
+            max_value=source_end.date(),
+            key="global_data_range_end_date",
+        )
+        time_cols = st.sidebar.columns(2)
+        start_time = time_cols[0].time_input(
+            "From time",
+            value=source_start.time().replace(tzinfo=None),
+            key="global_data_range_start_time",
+        )
+        end_time = time_cols[1].time_input(
+            "To time",
+            value=source_end.time().replace(tzinfo=None),
+            key="global_data_range_end_time",
+        )
+        start_value = pd.Timestamp.combine(start_date, start_time)
+        end_value = pd.Timestamp.combine(end_date, end_time)
+        if start_value > end_value:
+            st.sidebar.error("From must not be later than To.")
+            ranged = df.iloc[0:0].copy()
+        else:
+            ranged = filter_datetime_range(df, start=start_value, end=end_value)
+
+    ranged_years = available_years(ranged) if not ranged.empty else []
+    if len(ranged_years) > 1:
+        basis = st.sidebar.selectbox(
+            "Time basis",
+            [CHRONOLOGICAL, CALENDAR_PROFILE],
+            index=0,
+            key="global_time_basis",
+            help=(
+                "Chronological keeps every real period in order. Calendar profile aligns equivalent "
+                "calendar positions across the selected years for multi-year min/mean/max or typical-period analysis."
+            ),
+        )
+    else:
+        basis = CHRONOLOGICAL
+    ranged = with_time_basis(ranged, basis)
+
+    # Existing recurring month/hour controls are retained: they now refine the
+    # absolute range instead of acting as the only global time filter.
+    selected_month_names = st.sidebar.multiselect("Months", list(MONTHS.keys()), default=list(MONTHS.keys()))
+    selected_hours = st.sidebar.slider("Hour range", min_value=0, max_value=23, value=(0, 23))
+    months = [MONTHS[m] for m in selected_month_names]
+    hours = list(range(selected_hours[0], selected_hours[1] + 1))
+    filtered = filter_by_months_and_hours(ranged, months=months, hours=hours)
+    filtered = with_time_basis(filtered, basis)
+    st.session_state["_active_global_filter_spec"] = {
+        "range_mode": range_mode,
+        "year": selected_year_value,
+        "start": start_value,
+        "end": end_value,
+        "basis": basis,
+        "months": tuple(months),
+        "hours": tuple(hours),
+    }
+
+    # Export uses exactly the dataframe after the active global filters. Keeping
+    # it in transient Streamlit session state avoids duplicating filter logic in
+    # every chart renderer.
+    st.session_state["_active_filtered_export_df"] = filtered
+    return filtered
+
+
+def apply_active_global_filter(df: pd.DataFrame) -> pd.DataFrame:
+    """Replay the already-rendered global Data filter on another time resolution."""
+    spec = st.session_state.get("_active_global_filter_spec")
+    if not isinstance(spec, dict):
+        return df
+    ranged = df
+    mode = str(spec.get("range_mode", "All available"))
+    if mode == "Year" and spec.get("year") is not None:
+        ranged = filter_year(df, int(spec["year"]))
+    elif mode == "Custom":
+        ranged = filter_datetime_range(df, start=spec.get("start"), end=spec.get("end"))
+    basis = str(spec.get("basis", CHRONOLOGICAL))
+    ranged = with_time_basis(ranged, basis)
+    months = [int(value) for value in spec.get("months", tuple(range(1, 13)))]
+    hours = [int(value) for value in spec.get("hours", tuple(range(24)))]
+    filtered = filter_by_months_and_hours(ranged, months=months, hours=hours)
+    return with_time_basis(filtered, basis)
+
+
+def metric_cards(df: pd.DataFrame) -> None:
+    """Render top-level climate summary metrics."""
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Mean dry-bulb temperature", f"{df['dry_bulb_temperature_c'].mean():.1f} °C")
+    col2.metric("Annual GHI", f"{df['global_horizontal_radiation_wh_m2'].sum() / 1000:.0f} kWh/m²")
+    col3.metric("Mean humidity ratio", f"{df['humidity_ratio_g_kg'].mean():.1f} g/kg")
+    col4.metric("Mean wind speed", f"{df['wind_speed_m_s'].mean():.1f} m/s")
+
+
+def render_generic_variable_page(
+    df: pd.DataFrame,
+    variable_labels: list[str],
+    default_variable: str,
+    title_prefix: str,
+    interpretation_factory: Callable[[pd.DataFrame, str, str, str], str] | None = None,
+    temperature_thresholds: tuple[float, float] | None = None,
+    fixed_variable_label: str | None = None,
+) -> None:
+    """Render a generic variable explorer with chart-type and aggregation controls."""
+    available_labels = [
+        label
+        for label in variable_labels
+        if VARIABLES[label][0] in df.columns
+        and pd.to_numeric(df[VARIABLES[label][0]], errors="coerce").notna().any()
+    ]
+    if not available_labels:
+        st.info("No measured numeric variables required by this explorer are available in the loaded dataset.")
+        return
+    selected_default = default_variable if default_variable in available_labels else available_labels[0]
+    if fixed_variable_label is not None:
+        if fixed_variable_label not in available_labels:
+            st.info("The selected quantity is not available in the active climate data.")
+            return
+        variable_label = fixed_variable_label
+    else:
+        variable_label = st.selectbox("Variable", available_labels, index=available_labels.index(selected_default))
+    column, unit = VARIABLES[variable_label]
+    chart_types = [
+        "Profile with min-mean-max ribbon",
+        "Middle 90% range with median",
+        "Heat map",
+        "Duration curve",
+        "Histogram",
+        "Monthly boxplot",
+        "Monthly violin plot",
+    ]
+    if column == "liquid_precipitation_depth_mm":
+        # Accumulated precipitation belongs to the dedicated totals analysis.
+        # A min/mean/max ribbon cannot use a period sum as its centre line while
+        # its bounds remain per-record extrema, so that chart is deliberately
+        # unavailable for this extensive variable.
+        chart_types.remove("Profile with min-mean-max ribbon")
+    chart_type = st.selectbox("Chart type", chart_types)
+    chart_df = df
+    if column == "liquid_precipitation_depth_mm" and chart_type in {
+        "Duration curve", "Histogram", "Monthly boxplot", "Monthly violin plot"
+    }:
+        distribution_basis = st.radio(
+            "Distribution basis",
+            ["Wet intervals only", "All intervals including dry periods"],
+            index=0,
+            horizontal=True,
+            help=(
+                "Wet intervals only describes the precipitation-event distribution. "
+                "All intervals includes the physical zero-precipitation mass and therefore also describes dry-period frequency."
+            ),
+        )
+        if distribution_basis == "Wet intervals only":
+            wet = pd.to_numeric(df[column], errors="coerce").gt(0.0)
+            chart_df = df.loc[wet].copy()
+            chart_df.attrs.update(df.attrs)
+            if chart_df.empty:
+                st.info("No wet precipitation intervals remain in the active Data filter.")
+                return
+            st.caption("Distribution calculated from observed intervals with precipitation depth > 0 mm; dry intervals are excluded.")
+        else:
+            st.caption("Distribution includes observed dry intervals at 0 mm as well as wet intervals.")
+    if chart_type == "Heat map":
+        heatmap_period = st.selectbox("Heat-map aggregation", ["Day", "Week", "Month"], index=0)
+        compare_options = ["Hour of day"] if time_basis(df) == CHRONOLOGICAL else ["Hour of day", "Year"]
+        compare_across = st.selectbox("Compare across", compare_options, index=0)
+        if time_basis(df) == CHRONOLOGICAL and is_multiyear(df):
+            st.caption("Chronological heat maps keep every real day, week or month in sequence across years. Switch Time basis to Calendar profile to align equivalent calendar periods and compare years directly.")
+        statistic_options = list(heatmap_statistic_options(column))
+        default_statistic = heatmap_default_statistic(column)
+        statistic_labels = {
+            "P05": "Lower 5% boundary (P05)",
+            "P95": "Upper 5% boundary (P95)",
+        }
+        statistic = st.selectbox(
+            "Statistic",
+            statistic_options,
+            index=statistic_options.index(default_statistic),
+            format_func=lambda value: statistic_labels.get(value, value),
+            help=(
+                "The statistic defines the value represented by each heat-map cell. Lower 5% boundary means only about 5% of contributing values are lower; "
+                "Upper 5% boundary means only about 5% are higher. The interval between them contains the middle 90% of observations. "
+                "Extensive canonical variables such as irradiation and precipitation default to period Total; state/intensive variables default to Mean."
+            ),
+        )
+        if compare_across == "Year":
+            st.caption(
+                "Year comparison preserves real calendar years from the current Data filter even when the global Time basis is Calendar profile."
+            )
+        if column == "dry_bulb_temperature_c":
+            st.caption("Temperature heatmap colours use the current heating and cooling thresholds: blue = cold, green = neutral band, red = hot.")
+        fig = temporal_heatmap_chart(
+            df,
+            column,
+            heatmap_period.lower(),
+            compare_across,
+            statistic,
+            f"{title_prefix}: {variable_label} {heatmap_period.lower()} × {compare_across.lower()} heat map · {statistic}",
+            unit,
+            temperature_thresholds=temperature_thresholds if column == "dry_bulb_temperature_c" else None,
+        )
+    else:
+        # Only charts that actually aggregate a time series expose the
+        # aggregation selector. Distribution and monthly-distribution charts do
+        # not need it.
+        aggregation = None
+        if chart_type in {"Profile with min-mean-max ribbon", "Middle 90% range with median"}:
+            aggregation = st.selectbox("Aggregation", ["Monthly", "Annual", "Weekly", "Daily", "Hourly", "Seasonal"], index=0)
+        # Radiation and illuminance are visualized as mean intensities in the generic explorer.
+        # Monthly/annual energy sums are available in the dedicated solar component charts.
+        if chart_type == "Profile with min-mean-max ribbon":
+            fig = profile_ribbon_chart(df, column, aggregation or "Monthly", f"{title_prefix}: {variable_label}", unit)
+        elif chart_type == "Middle 90% range with median":
+            fig = percentile_band_chart(df, column, aggregation or "Monthly", f"{title_prefix}: {variable_label} · middle 90% range with median", unit)
+        elif chart_type == "Duration curve":
+            ascending = st.checkbox("Ascending order", value=False)
+            direction = "ascending" if ascending else "descending"
+            fig = duration_chart(chart_df, column, f"{title_prefix}: {variable_label} {direction} duration curve", unit, ascending=ascending)
+        elif chart_type == "Histogram":
+            bins = st.slider("Histogram bins", 10, 120, 40)
+            fig = histogram_chart(chart_df, column, f"{title_prefix}: {variable_label} histogram", unit, bins=bins)
+        elif chart_type == "Monthly violin plot":
+            fig = monthly_box_chart(chart_df, column, f"{title_prefix}: {variable_label} monthly violin plot", unit, violin=True)
+        else:
+            fig = monthly_box_chart(chart_df, column, f"{title_prefix}: {variable_label} monthly boxplot", unit, violin=False)
+
+    if interpretation_factory:
+        text = interpretation_factory(chart_df, column, variable_label.lower(), unit)
+    else:
+        text = variable_interpretation(chart_df, column, variable_label.lower(), unit)
+    render_plot(fig, text)
+
+
+def get_comparison_payloads() -> list[dict[str, object]]:
+    """Return EPW payloads currently stored in the comparison basket."""
+    payloads = st.session_state.get("comparison_climate_payloads", [])
+    return payloads if isinstance(payloads, list) else []
+
+
+def save_comparison_payloads(payloads: list[dict[str, object]]) -> None:
+    """Store comparison-basket payloads in Streamlit session state."""
+    st.session_state["comparison_climate_payloads"] = payloads
+
+
+def add_to_comparison_basket(name: str, payload: bytes, source: str, display_name: str | None = None) -> None:
+    """Add an EPW file payload to the multi-climate comparison basket."""
+    payloads = get_comparison_payloads()
+    display = (display_name or name).strip() or name
+    duplicate = any(item.get("name") == name and item.get("source") == source for item in payloads)
+    if duplicate:
+        st.info(f"`{display}` is already in the comparison basket.")
+        return
+    payloads.append(
+        {
+            "climate_id": str(uuid4()),
+            "name": name,
+            "display_name": display,
+            "payload": payload,
+            "source": source,
+        }
+    )
+    save_comparison_payloads(payloads)
+
+
+def clear_comparison_basket() -> None:
+    """Remove all climates from the comparison basket."""
+    st.session_state.pop("comparison_climate_payloads", None)
+
+
+def remove_from_comparison_basket(climate_id: str) -> None:
+    """Remove one climate from the comparison basket by its internal ID."""
+    payloads = [item for item in get_comparison_payloads() if item.get("climate_id") != climate_id]
+    save_comparison_payloads(payloads)
+
+
+def load_comparison_datasets(
+    payloads: list[dict[str, object]],
+    pressure_mode: str,
+    custom_pressure_pa: float | None,
+) -> list[ClimateDataset]:
+    """Parse comparison EPW payloads and return normalized climate datasets."""
+    datasets: list[ClimateDataset] = []
+    for item in payloads:
+        try:
+            epw, data, issues = load_epw_from_bytes(
+                str(item["name"]),
+                bytes(item["payload"]),
+                pressure_mode,
+                custom_pressure_pa,
+                include_psychrometrics=True,
+                include_solar=True,
+            )
+            datasets.append(
+                ClimateDataset(
+                    climate_id=str(item["climate_id"]),
+                    display_name=str(item.get("display_name") or item["name"]),
+                    source=str(item.get("source", "")),
+                    epw=epw,
+                    data=data,
+                    issues=issues,
+                )
+            )
+        except Exception as exc:
+            st.error(f"Failed to load comparison climate `{item.get('display_name', item.get('name', 'unknown'))}`: {exc}")
+    return datasets
+
+
+def render_comparison_basket_manager(active_file: ClimateFilePayload | None) -> None:
+    """Render controls for adding, renaming and removing comparison climates."""
+    # Compare Climates must not depend on the Find climate map dependency gate.
+    # Keep all catalog/download helpers page-local so direct navigation to this
+    # page is safe in a fresh Streamlit process.
+    from epw_climate_analyzer.catalog_runtime import catalog_runtime_summary, station_provenance_text
+    from epw_climate_analyzer.climate_sources import download_station_epw, filter_station_catalog
+
+    st.subheader("Comparison basket")
+    st.caption("Add two or more EPW climates. All comparison metrics are calculated from EPW hourly data only.")
+
+    col_a, col_b, col_c = st.columns([1, 1, 1])
+    with col_a:
+        if active_file is not None and st.button("Add active climate to comparison", type="secondary"):
+            add_to_comparison_basket(active_file.name, active_file.payload, active_file.source, active_file.name)
+            st.rerun()
+    with col_b:
+        if st.button("Clear comparison basket", type="secondary"):
+            clear_comparison_basket()
+            st.rerun()
+    with col_c:
+        st.write(f"Selected climates: **{len(get_comparison_payloads())}**")
+
+    uploaded = st.file_uploader(
+        "Add local EPW files to comparison",
+        type=["epw"],
+        accept_multiple_files=True,
+        key="comparison_local_epw_upload",
+    )
+    if uploaded:
+        if st.button("Add uploaded EPW files", type="primary"):
+            for file in uploaded:
+                add_to_comparison_basket(file.name, file.getvalue(), "Local comparison upload | user-provided EPW | transient session", file.name)
+            st.rerun()
+
+    with st.expander("Add Climate.OneBuilding station to comparison", expanded=False):
+        try:
+            catalog = cached_station_catalog()
+        except Exception as exc:
+            st.error(f"The versioned station catalog failed integrity/provenance validation: {exc}")
+            catalog = pd.DataFrame()
+        if catalog.empty:
+            st.warning("No reviewed Climate.OneBuilding station catalog is available in this release.")
+        else:
+            st.caption(catalog_runtime_summary(catalog))
+            c1, c2, c3 = st.columns([2, 1, 1])
+            search_text = c1.text_input("Station search", value="", key="comparison_station_search")
+            countries = sorted([value for value in catalog["country"].dropna().unique().tolist() if str(value).strip()])
+            datasets = sorted([value for value in catalog["dataset"].dropna().unique().tolist() if str(value).strip()])
+            selected_countries = c2.multiselect("Station countries", countries, default=[], key="comparison_station_countries")
+            selected_datasets = c3.multiselect("Station datasets", datasets, default=[], key="comparison_station_datasets")
+            filtered_catalog = filter_station_catalog(
+                catalog,
+                search_text=search_text,
+                countries=selected_countries if selected_countries else None,
+                datasets=selected_datasets if selected_datasets else None,
+            )
+            st.caption(f"Matching stations: {len(filtered_catalog):,}")
+            if not filtered_catalog.empty:
+                station_options = station_options_from_catalog(filtered_catalog, limit=10000)
+                label = st.selectbox("Station", list(station_options.keys()), key="comparison_station_select")
+                selected = filtered_catalog[filtered_catalog["station_id"] == station_options[label]].iloc[0]
+                if st.button("Download and add selected station", type="primary"):
+                    try:
+                        with st.spinner("Downloading and extracting station EPW..."):
+                            result = download_station_epw(selected)
+                        display = f"{selected.get('name', result.file_name)} — {selected.get('country', '')}"
+                        source_text = station_provenance_text(
+                            selected,
+                            final_download_url=result.source_url,
+                            archive_name=result.extracted_from,
+                        )
+                        add_to_comparison_basket(result.file_name, result.payload, source_text, display)
+                        st.rerun()
+                    except Exception as exc:
+                        st.error(f"Station download failed: {exc}")
+
+    payloads = get_comparison_payloads()
+    if payloads:
+        st.markdown("#### Basket contents")
+        for item in payloads:
+            cols = st.columns([3, 4, 1])
+            current_name = str(item.get("display_name", item.get("name", "Climate")))
+            new_name = cols[0].text_input("Display name", value=current_name, key=f"rename_{item['climate_id']}")
+            item["display_name"] = new_name
+            cols[1].caption(f"File: `{item.get('name')}`  \\nSource: {item.get('source', '')}")
+            if cols[2].button("Remove", key=f"remove_{item['climate_id']}"):
+                remove_from_comparison_basket(str(item["climate_id"]))
+                st.rerun()
+        save_comparison_payloads(payloads)
+
+
+def filter_comparison_climates(climates: list[ClimateDataset], months: list[int], hours: list[int]) -> list[ClimateDataset]:
+    """Apply comparison-specific month and hour filters to each climate dataset."""
+    filtered: list[ClimateDataset] = []
+    for climate in climates:
+        data = filter_by_months_and_hours(climate.data, months=months, hours=hours)
+        filtered.append(ClimateDataset(climate.climate_id, climate.display_name, climate.source, climate.epw, data, climate.issues))
+    return filtered
+
+
+def comparison_controls(climates: list[ClimateDataset]) -> tuple[str, str, list[int], list[int]]:
+    """Render common comparison controls and return reference, mode, months and hours."""
+    climate_names = [climate.display_name for climate in climates]
+    c1, c2, c3 = st.columns([1, 1, 2])
+    reference = c1.selectbox("Reference climate", climate_names, index=0)
+    display_mode = c2.selectbox("Display mode", ["Auto", "Overlay", "Small multiples", "Difference to reference", "Ranked summary"], index=0)
+    selected_month_names = c3.multiselect("Comparison months", list(MONTHS.keys()), default=list(MONTHS.keys()))
+    hour_range = st.slider("Comparison hour range", min_value=0, max_value=23, value=(0, 23), key="comparison_hour_range")
+    months = [MONTHS[m] for m in selected_month_names]
+    hours = list(range(hour_range[0], hour_range[1] + 1))
+    return reference, display_mode, months, hours
+
+
+def get_reference_and_target(climates: list[ClimateDataset], reference_name: str, target_name: str | None = None) -> tuple[ClimateDataset, ClimateDataset]:
+    """Return reference and target climate datasets for difference charts."""
+    reference = next((climate for climate in climates if climate.display_name == reference_name), climates[0])
+    candidates = [climate for climate in climates if climate.display_name != reference_name]
+    if target_name:
+        target = next((climate for climate in climates if climate.display_name == target_name), candidates[0] if candidates else reference)
+    else:
+        target = candidates[0] if candidates else reference
+    return reference, target
+
+
+def render_compare_summary(climates: list[ClimateDataset], reference_name: str) -> None:
+    """Render summary tables and ranked metrics for climate comparison."""
+    metrics = climate_summary_metrics(climates)
+    st.subheader("Summary metrics")
+    st.dataframe(metrics, hide_index=True, use_container_width=True)
+    st.download_button(
+        "Download comparison summary as CSV",
+        data=metrics.to_csv(index=False).encode("utf-8"),
+        file_name="climate_comparison_summary.csv",
+        mime="text/csv",
+    )
+    numeric_columns = [col for col in metrics.columns if pd.api.types.is_numeric_dtype(metrics[col])]
+    default_metric = "HDD18 [K·h]" if "HDD18 [K·h]" in numeric_columns else numeric_columns[0]
+    metric = st.selectbox("Ranked metric", numeric_columns, index=numeric_columns.index(default_metric))
+    fig = ranked_metric_chart(metrics, metric)
+    render_plot(fig, comparison_interpretation(metrics, reference_name))
+    fig2 = hdd_cdd_grouped_chart(metrics)
+    render_plot(fig2, comparison_interpretation(metrics, reference_name))
+
+
+def render_compare_temperature(climates: list[ClimateDataset], reference_name: str, display_mode: str) -> None:
+    """Render temperature comparison charts."""
+    st.subheader("Temperature comparison")
+    chart = st.selectbox(
+        "Temperature chart",
+        [
+            "Monthly temperature profile",
+            "Temperature duration curve",
+            "Monthly temperature boxplots",
+            "Temperature heatmap",
+            "Temperature difference heatmap",
+            "HDD/CDD comparison",
+            "Heating and cooling season timeline",
+            "Extreme temperature ranking",
+        ],
+    )
+    mode = choose_display_mode(chart, display_mode, len(climates))
+    if chart == "Monthly temperature profile":
+        statistic = st.selectbox("Monthly statistic", ["mean", "p05", "p95", "min", "max"], index=0)
+        table = monthly_profile_table(climates, "dry_bulb_temperature_c", statistic=statistic)
+        if mode == "Difference to reference":
+            fig = monthly_difference_chart(table, reference_name, "Monthly dry-bulb temperature profile", "Temperature [°C]")
+        elif mode == "Small multiples":
+            fig = small_multiple_monthly_chart(table, "Monthly dry-bulb temperature profile", "Temperature [°C]")
+        elif mode == "Ranked summary":
+            metrics = climate_summary_metrics(climates)
+            fig = ranked_metric_chart(metrics, "Annual mean T [°C]")
+        else:
+            fig = overlay_monthly_chart(table, "Monthly dry-bulb temperature profile", "Temperature [°C]")
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+    elif chart == "Temperature duration curve":
+        ascending = st.checkbox("Ascending sort", value=False)
+        fig = duration_comparison_chart(climates, "dry_bulb_temperature_c", "Dry-bulb temperature duration curves", "Temperature [°C]", ascending=ascending)
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+    elif chart == "Monthly temperature boxplots":
+        mode_box = st.radio("Boxplot mode", ["Compare climates for selected month", "Compare months for selected climate"], horizontal=True)
+        selected_month = st.slider("Selected month", 1, 12, 7)
+        selected_climate = st.selectbox("Selected climate", [c.display_name for c in climates])
+        fig = monthly_box_compare_chart(climates, "dry_bulb_temperature_c", mode_box, selected_month, selected_climate, "Monthly temperature boxplot", "Temperature [°C]")
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+    elif chart == "Temperature heatmap":
+        row_group = st.radio("Heatmap period axis", ["day", "week", "month"], horizontal=True)
+        heat_threshold = st.slider("Heatmap heating threshold [°C]", -5.0, 25.0, 18.0, 0.5, key="compare_temp_heat_threshold")
+        cool_threshold = st.slider("Heatmap cooling threshold [°C]", 15.0, 40.0, 26.0, 0.5, key="compare_temp_cool_threshold")
+        fig = heatmap_small_multiples(climates, "dry_bulb_temperature_c", row_group, "Dry-bulb temperature heatmap comparison", "°C", temperature_thresholds=(heat_threshold, cool_threshold))
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+    elif chart == "Temperature difference heatmap":
+        targets = [c.display_name for c in climates if c.display_name != reference_name]
+        if not targets:
+            st.warning("Difference mode requires at least one non-reference climate.")
+            return
+        target_name = st.selectbox("Target climate", targets)
+        row_group = st.radio("Difference heatmap rows", ["day", "week", "month"], horizontal=True, key="temp_diff_rows")
+        reference, target = get_reference_and_target(climates, reference_name, target_name)
+        fig = difference_heatmap_chart(reference, target, "dry_bulb_temperature_c", row_group, f"Dry-bulb temperature difference: {target.display_name} minus {reference.display_name}", "Δ °C")
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+    elif chart == "HDD/CDD comparison":
+        fig = hdd_cdd_grouped_chart(climate_summary_metrics(climates))
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+    elif chart == "Heating and cooling season timeline":
+        heat_base = st.slider("Heating base temperature [°C]", 5.0, 25.0, 18.0, 0.5)
+        cool_base = st.slider("Cooling base temperature [°C]", 18.0, 35.0, 26.0, 0.5)
+        fig = heating_cooling_season_timeline(climates, heat_base, cool_base)
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+    else:
+        metric = st.selectbox("Extreme metric", ["Annual min T [°C]", "Annual max T [°C]", "T P01 [°C]", "T P99 [°C]", "Frost hours [h]", "Hot hours >30 °C [h]", "Tropical nights [d]"])
+        fig = ranked_metric_chart(climate_summary_metrics(climates), metric)
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+
+
+def render_compare_humidity(climates: list[ClimateDataset], reference_name: str, display_mode: str) -> None:
+    """Render humidity and psychrometric comparison charts."""
+    st.subheader("Humidity and psychrometric comparison")
+    chart = st.selectbox(
+        "Humidity chart",
+        [
+            "Humidity ratio monthly profile",
+            "Humidity ratio duration curve",
+            "Outdoor-air enthalpy duration curve",
+            "Psychrometric climate zones",
+            "Moisture and latent-load ranking",
+        ],
+    )
+    mode = choose_display_mode(chart, display_mode, len(climates))
+    if chart == "Humidity ratio monthly profile":
+        table = monthly_profile_table(climates, "humidity_ratio_g_kg", statistic="mean")
+        if mode == "Difference to reference":
+            fig = monthly_difference_chart(table, reference_name, "Monthly humidity ratio", "Humidity ratio [g/kg]")
+        elif mode == "Small multiples":
+            fig = small_multiple_monthly_chart(table, "Monthly humidity ratio", "Humidity ratio [g/kg]")
+        else:
+            fig = overlay_monthly_chart(table, "Monthly humidity ratio", "Humidity ratio [g/kg]")
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+    elif chart == "Humidity ratio duration curve":
+        fig = duration_comparison_chart(climates, "humidity_ratio_g_kg", "Humidity ratio duration curves", "Humidity ratio [g/kg]", ascending=False)
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+    elif chart == "Outdoor-air enthalpy duration curve":
+        fig = duration_comparison_chart(climates, "moist_air_enthalpy_kj_kg", "Outdoor-air enthalpy duration curves", "Enthalpy [kJ/kg dry air]", ascending=False)
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+    elif chart == "Psychrometric climate zones":
+        chart_type = st.radio("Psychrometric axes", ["T-d", "i-d"], horizontal=True, key="compare_psych_axes")
+        representation = st.radio(
+            "Representation",
+            ["Climate contour", "Distribution grid", "Points"],
+            index=0,
+            horizontal=True,
+            key="compare_psych_representation",
+            help=(
+                "Climate contour is the primary comparison view. Distribution grid and Points remain available as secondary diagnostic representations; the contour does not replace them."
+            ),
+        )
+        zone_coverage = 0.90
+        zone_interior_style = "Density gradient"
+        additional_contour_coverages: list[float] = []
+        if representation == "Climate contour":
+            c1, c2 = st.columns([1, 1.4])
+            coverage_pct = int(c1.slider("Outer contour coverage [%]", 50, 99, 90, 1, key="compare_psych_coverage"))
+            zone_coverage = float(coverage_pct) / 100.0
+            zone_interior_style = c2.selectbox(
+                "Zone interior",
+                ["Density gradient", "Sparse points", "Solid fill", "Contour only"],
+                index=0,
+                key="compare_psych_interior",
+            )
+            contour_options = list(range(1, coverage_pct))
+            contour_defaults: list[int] = []
+            selected_levels = st.multiselect(
+                "Additional contour levels [%]",
+                contour_options,
+                default=contour_defaults,
+                key="compare_psych_additional_contours",
+                help="Multiple nested contours can be displayed simultaneously, for example 50% and 70% inside a 90% outer zone.",
+            )
+            additional_contour_coverages = [float(value) / 100.0 for value in selected_levels]
+            st.caption(
+                "Each contour is clipped to the physical 0...100% RH domain at the selected common psychrometric pressure. "
+                "Additional contour levels are optional and can be combined freely."
+            )
+        elif representation == "Distribution grid":
+            st.caption(
+                "Distribution-grid comparison uses the original 1 °C × 5 %RH psychrometric cells. Climate hue identifies the dataset; cell opacity follows represented hours on one shared scale."
+            )
+
+        with st.expander("Chart overlays", expanded=True):
+            overlay_c1, overlay_c2 = st.columns(2)
+            show_givoni = overlay_c1.checkbox(
+                "Show Givoni-Milne bioclimatic overlay",
+                value=True,
+                key="compare_psych_show_givoni",
+            )
+            show_heat_index = overlay_c2.checkbox(
+                "Show heat-index overlay",
+                value=False,
+                key="compare_psych_show_heat_index",
+            )
+            st.caption(
+                "Givoni-Milne zones and heat-index isolines use the same common psychrometric reference pressure as the compared climate representations."
+            )
+
+        reference = next((climate for climate in climates if climate.display_name == reference_name), climates[0])
+        pressure_values = pd.to_numeric(reference.data.get("atmospheric_station_pressure_pa"), errors="coerce").dropna()
+        if not pressure_values.empty:
+            reference_climate_pressure = float(pressure_values.median())
+        else:
+            reference_climate_pressure = pressure_from_altitude_m(float(reference.epw.location.elevation_m or 0.0))
+        grid_mode = st.selectbox(
+            "Reference psychrometric pressure",
+            [f"Reference climate — {reference_name}", "Standard atmosphere — 101325 Pa", "Custom pressure"],
+            index=0,
+            key="compare_psych_grid_pressure_mode",
+            help=(
+                "This pressure defines one common psychrometric display coordinate system for RH curves, points, grid cells and contours. Source station-pressure data remain unchanged."
+            ),
+        )
+        if grid_mode == "Standard atmosphere — 101325 Pa":
+            reference_grid_pressure = DEFAULT_PRESSURE_PA
+        elif grid_mode.startswith("Reference climate"):
+            reference_grid_pressure = reference_climate_pressure
+        else:
+            reference_grid_pressure = st.number_input(
+                "Reference pressure [Pa]",
+                min_value=30000.0,
+                max_value=120000.0,
+                value=float(round(reference_climate_pressure / 100.0) * 100.0),
+                step=100.0,
+                key="compare_psych_grid_pressure_custom",
+            )
+        st.caption(
+            f"Shared axes are fixed across representations. Common psychrometric pressure: {float(reference_grid_pressure):,.0f} Pa. "
+            "Points, distribution-grid cells, contours and the RH background are all projected to this same display pressure; source data are not modified."
+        )
+
+        fig = psychrometric_comparison_chart(
+            climates,
+            chart_type=chart_type,
+            mode=display_mode,
+            pressure_pa=reference_climate_pressure,
+            data_display=representation,
+            zone_coverage=zone_coverage,
+            zone_interior_style=zone_interior_style,
+            show_core_zone=False,
+            additional_contour_coverages=additional_contour_coverages,
+            reference_pressure_pa=float(reference_grid_pressure),
+            show_givoni_overlay=show_givoni,
+            show_heat_index_overlay=show_heat_index,
+        )
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+    else:
+        metric = st.selectbox("Moisture metric", ["Mean humidity ratio [g/kg]", "Humidity ratio P95 [g/kg]", "Hours d >10 g/kg [h]", "Hours d <3 g/kg [h]", "Enthalpy P95 [kJ/kg]", "Maximum wet-bulb [°C]", "Dehumidification hours [h]", "Humidification hours [h]"])
+        fig = ranked_metric_chart(climate_summary_metrics(climates), metric)
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+
+
+def render_compare_solar(climates: list[ClimateDataset], reference_name: str, display_mode: str) -> None:
+    """Render solar and radiation comparison charts."""
+    st.subheader("Solar and radiation comparison")
+    chart = st.selectbox(
+        "Solar chart",
+        [
+            "Monthly GHI/DNI/DHI comparison",
+            "Radiation duration curve",
+            "Sun path",
+            "Façade radiation by orientation",
+            "Tilt sensitivity",
+            "Orientation-tilt heatmap",
+            "Solar and shading ranking",
+        ],
+    )
+    mode = choose_display_mode(chart, display_mode, len(climates))
+    if chart == "Monthly GHI/DNI/DHI comparison":
+        radiation_label = st.selectbox("Radiation variable", ["GHI", "DNI", "DHI"], index=0)
+        column = {"GHI": "global_horizontal_radiation_wh_m2", "DNI": "direct_normal_radiation_wh_m2", "DHI": "diffuse_horizontal_radiation_wh_m2"}[radiation_label]
+        table = solar_monthly_comparison(climates, column)
+        if mode == "Difference to reference":
+            fig = monthly_difference_chart(table, reference_name, f"Monthly {radiation_label} irradiation", "Irradiation [kWh/m²]")
+        elif mode == "Small multiples":
+            fig = small_multiple_monthly_chart(table, f"Monthly {radiation_label} irradiation", "Irradiation [kWh/m²]")
+        else:
+            fig = overlay_monthly_chart(table, f"Monthly {radiation_label} irradiation", "Irradiation [kWh/m²]")
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+    elif chart == "Radiation duration curve":
+        variable = st.selectbox("Radiation variable", ["Global horizontal radiation", "Direct normal radiation", "Diffuse horizontal radiation"])
+        column = VARIABLES[variable][0]
+        fig = duration_comparison_chart(climates, column, f"{variable} duration curves", "Radiation [Wh/m²]", ascending=False)
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+    elif chart == "Sun path":
+        date_options = {"Winter solstice": "12-21", "Equinox": "03-21", "Summer solstice": "06-21"}
+        selected = st.multiselect("Selected sun-path dates", list(date_options.keys()), default=list(date_options.keys()))
+        dates = [date_options[item] for item in selected]
+        fig = sun_path_comparison_chart(climates, mode=mode, selected_dates=dates)
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+    elif chart == "Façade radiation by orientation":
+        tilt = st.slider("Surface tilt [deg]", 0.0, 90.0, 90.0, 5.0)
+        fig = facade_radiation_comparison_chart(climates, tilt)
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+    elif chart == "Tilt sensitivity":
+        azimuth = st.slider("Surface azimuth [deg]", 0.0, 359.0, 180.0, 5.0)
+        fig = tilt_radiation_comparison_chart(climates, azimuth)
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+    elif chart == "Orientation-tilt heatmap":
+        fig = orientation_tilt_small_multiples(climates)
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+    else:
+        metric = st.selectbox("Solar metric", ["Annual GHI [kWh/m²]", "Annual DNI [kWh/m²]", "Annual DHI [kWh/m²]", "Diffuse share [%]", "Shading indicator hours [h]"])
+        fig = ranked_metric_chart(climate_summary_metrics(climates), metric)
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+
+
+def render_compare_wind(climates: list[ClimateDataset], reference_name: str, display_mode: str) -> None:
+    """Render wind comparison charts."""
+    st.subheader("Wind comparison")
+    chart = st.selectbox("Wind chart", ["Wind speed monthly profile", "Wind speed duration curve", "Wind rose", "Wind ranking"])
+    mode = choose_display_mode(chart, display_mode, len(climates))
+    if chart == "Wind speed monthly profile":
+        table = monthly_profile_table(climates, "wind_speed_m_s", statistic="mean")
+        if mode == "Difference to reference":
+            fig = monthly_difference_chart(table, reference_name, "Monthly mean wind speed", "Wind speed [m/s]")
+        elif mode == "Small multiples":
+            fig = small_multiple_monthly_chart(table, "Monthly mean wind speed", "Wind speed [m/s]")
+        else:
+            fig = overlay_monthly_chart(table, "Monthly mean wind speed", "Wind speed [m/s]")
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+    elif chart == "Wind speed duration curve":
+        fig = duration_comparison_chart(climates, "wind_speed_m_s", "Wind speed duration curves", "Wind speed [m/s]", ascending=False)
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+    elif chart == "Wind rose":
+        fig = wind_rose_small_multiples(climates)
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+    else:
+        metric = st.selectbox("Wind metric", ["Mean wind speed [m/s]", "Wind speed P95 [m/s]", "Calm hours <1 m/s [h]", "Strong wind hours >8 m/s [h]"])
+        fig = ranked_metric_chart(climate_summary_metrics(climates), metric)
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+
+
+def render_compare_natural_ventilation(climates: list[ClimateDataset], reference_name: str, display_mode: str) -> None:
+    """Render natural-ventilation and night-flushing comparison charts."""
+    st.subheader("Natural ventilation comparison")
+    c1, c2, c3 = st.columns(3)
+    t_min = c1.slider("NV minimum outdoor temperature [°C]", 0.0, 30.0, 16.0, 0.5)
+    t_max = c2.slider("NV maximum outdoor temperature [°C]", 10.0, 40.0, 26.0, 0.5)
+    d_max = c3.slider("NV maximum humidity ratio [g/kg]", 3.0, 20.0, 9.0, 0.5)
+    chart = st.selectbox("Natural ventilation chart", ["Monthly NV hours", "NV heatmap", "NV difference heatmap", "Night flushing monthly hours", "NV and comfort ranking"])
+    if chart == "Monthly NV hours":
+        table = natural_ventilation_monthly_table(climates, t_min, t_max, d_max)
+        if display_mode == "Difference to reference":
+            fig = monthly_difference_chart(table, reference_name, "Monthly natural-ventilation suitable hours", "Hours")
+        else:
+            fig = overlay_monthly_chart(table, "Monthly natural-ventilation suitable hours", "Hours")
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+    elif chart == "NV heatmap":
+        nv_climates = []
+        for climate in climates:
+            data = climate.data.copy()
+            data["nv_eligible"] = natural_ventilation_condition(data, t_min_c=t_min, t_max_c=t_max, d_max_g_kg=d_max).astype(int)
+            nv_climates.append(ClimateDataset(climate.climate_id, climate.display_name, climate.source, climate.epw, data, climate.issues))
+        fig = heatmap_small_multiples(nv_climates, "nv_eligible", "day", "Natural-ventilation eligibility heatmap comparison", "0/1")
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+    elif chart == "NV difference heatmap":
+        targets = [c.display_name for c in climates if c.display_name != reference_name]
+        if not targets:
+            st.warning("Difference mode requires at least one non-reference climate.")
+            return
+        target_name = st.selectbox("Target climate", targets, key="nv_diff_target")
+        reference, target = get_reference_and_target(climates, reference_name, target_name)
+        fig = natural_ventilation_difference_heatmap(reference, target, t_min, t_max, d_max)
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+    elif chart == "Night flushing monthly hours":
+        table = pd.DataFrame(index=range(1, 13))
+        for climate in climates:
+            mask = night_flushing_condition(climate.data)
+            table[climate.display_name] = pd.Series(mask.astype(int).values, index=climate.data.index).groupby(climate.data["month_index"]).sum()
+        table.index.name = "Month"
+        fig = overlay_monthly_chart(table.fillna(0), "Monthly night-flushing potential", "Hours")
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+    else:
+        metric = st.selectbox("Ventilation/comfort metric", ["Natural ventilation hours [h]", "Night flushing hours [h]", "Comfort hours [h]", "Economizer hours [h]"])
+        fig = ranked_metric_chart(climate_summary_metrics(climates), metric)
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+
+
+def render_compare_passive_hvac(climates: list[ClimateDataset], reference_name: str, display_mode: str) -> None:
+    """Render passive-design and HVAC indicator comparison charts."""
+    st.subheader("Passive and HVAC comparison")
+    chart = st.selectbox("Passive/HVAC chart", ["Passive strategy stacked bars", "Passive strategy calendar", "HVAC indicator ranking"])
+    if chart == "Passive strategy stacked bars":
+        fig = passive_strategy_stacked_comparison(climates)
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+    elif chart == "Passive strategy calendar":
+        fig = passive_strategy_calendar_small_multiples(climates)
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+    else:
+        metric = st.selectbox("HVAC indicator", ["HDD18 [K·h]", "CDD26 [K·h]", "Economizer hours [h]", "Dehumidification hours [h]", "Humidification hours [h]", "Shading indicator hours [h]"])
+        fig = ranked_metric_chart(climate_summary_metrics(climates), metric)
+        render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+
+
+def render_compare_difference(climates: list[ClimateDataset], reference_name: str) -> None:
+    """Render explicit difference-to-reference comparison charts."""
+    st.subheader("Difference to reference")
+    targets = [c.display_name for c in climates if c.display_name != reference_name]
+    if not targets:
+        st.warning("Difference charts require at least one non-reference climate.")
+        return
+    target_name = st.selectbox("Target climate", targets, key="difference_target")
+    variable_label = st.selectbox(
+        "Difference variable",
+        [
+            "Dry-bulb temperature",
+            "Humidity ratio",
+            "Moist-air enthalpy",
+            "Global horizontal radiation",
+            "Wind speed",
+            "Relative humidity",
+        ],
+    )
+    column, unit = VARIABLES[variable_label]
+    chart_type = st.radio("Difference chart type", ["Monthly difference", "Day/week/month × hour heatmap"], horizontal=True)
+    reference, target = get_reference_and_target(climates, reference_name, target_name)
+    if chart_type == "Monthly difference":
+        table = monthly_profile_table([reference, target], column, extensive=column.endswith("_wh_m2"))
+        fig = monthly_difference_chart(table, reference.display_name, f"Monthly difference: {variable_label}", unit)
+    else:
+        row_group = st.radio("Heatmap rows", ["day", "week", "month"], horizontal=True, key="generic_diff_rows")
+        fig = difference_heatmap_chart(reference, target, column, row_group, f"{variable_label} difference: {target.display_name} minus {reference.display_name}", f"Δ {unit}")
+    render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+
+
+def render_compare_data_quality(climates: list[ClimateDataset], reference_name: str) -> None:
+    """Render data-quality comparison matrices."""
+    st.subheader("Data-quality comparison")
+    matrix = data_quality_matrix(climates)
+    st.dataframe(matrix, hide_index=True, use_container_width=True)
+    st.download_button(
+        "Download data-quality comparison as CSV",
+        data=matrix.to_csv(index=False).encode("utf-8"),
+        file_name="climate_comparison_data_quality.csv",
+        mime="text/csv",
+    )
+    metric = st.selectbox("Data-quality metric", [col for col in matrix.columns if col != "Climate"])
+    fig = px.bar(matrix.sort_values(metric, ascending=True), x=metric, y="Climate", orientation="h", title=f"Data-quality comparison: {metric}")
+    fig.update_layout(template="plotly_white", xaxis_title=metric, yaxis_title="Climate")
+    render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
+
+
+def render_compare_climates(active_file: ClimateFilePayload | None, pressure_mode: str, custom_pressure_pa: float | None, active_pressure: float) -> None:
+    """Render the complete multi-climate comparison UI."""
+    st.header("Compare climates")
+    st.write(
+        "Compare several EPW climates with overlay, small-multiple, ranked and difference-to-reference modes. "
+        "All calculations use only EPW hourly data and EPW-derived indicators."
+    )
+    render_comparison_basket_manager(active_file)
+
+    payloads = get_comparison_payloads()
+    if len(payloads) < 2:
+        st.warning("Add at least two EPW climates to enable comparison charts.")
+        return
+
+    climates = load_comparison_datasets(payloads, pressure_mode, custom_pressure_pa)
+    if len(climates) < 2:
+        st.warning("At least two valid climates are required after loading.")
+        return
+
+    reference_name, display_mode, months, hours = comparison_controls(climates)
+    climates = filter_comparison_climates(climates, months=months, hours=hours)
+    if any(climate.data.empty for climate in climates):
+        st.warning("The current comparison filters remove all data for at least one climate. Adjust the month or hour filter.")
+        return
+
+    tabs = st.tabs(
+        [
+            "Summary",
+            "Temperature",
+            "Humidity / Psychrometrics",
+            "Solar",
+            "Wind",
+            "Natural ventilation",
+            "Passive / HVAC",
+            "Difference to reference",
+            "Data quality",
+        ]
+    )
+    with tabs[0]:
+        render_compare_summary(climates, reference_name)
+    with tabs[1]:
+        render_compare_temperature(climates, reference_name, display_mode)
+    with tabs[2]:
+        render_compare_humidity(climates, reference_name, display_mode)
+    with tabs[3]:
+        render_compare_solar(climates, reference_name, display_mode)
+    with tabs[4]:
+        render_compare_wind(climates, reference_name, display_mode)
+    with tabs[5]:
+        render_compare_natural_ventilation(climates, reference_name, display_mode)
+    with tabs[6]:
+        render_compare_passive_hvac(climates, reference_name, display_mode)
+    with tabs[7]:
+        render_compare_difference(climates, reference_name)
+    with tabs[8]:
+        render_compare_data_quality(climates, reference_name)
+
+def render_calculated_epw_statistics(df: pd.DataFrame) -> None:
+    """Render calculated EPW-derived statistics inside the Overview page.
+
+    The section uses only the active EPW hourly table and columns derived from
+    that EPW file. It does not parse or depend on companion weather-package
+    files such as DDY, STAT, RAIN, CLM, WEA or PVSyst.
+    """
+    st.subheader("Calculated EPW statistics")
+    st.caption(
+        "All metrics below are calculated from the active EPW hourly data and the "
+        "derived psychrometric, solar-position and decision-indicator columns."
+    )
+
+    tables = calculated_statistics_tables(df)
+    tab_names = [
+        "Dataset",
+        "Temperature",
+        "Humidity and psychrometrics",
+        "Solar and daylight",
+        "Wind",
+        "Sky, precipitation and snow",
+        "Decision indicators",
+        "Monthly summary",
+        "Seasonal summary",
+        "Extreme days",
+    ]
+    tabs = st.tabs(tab_names)
+
+    for tab, name in zip(tabs[:7], tab_names[:7], strict=False):
+        with tab:
+            table = tables[name]
+            st.dataframe(table, hide_index=True, use_container_width=True)
+            st.download_button(
+                f"Download {name.lower()} statistics as CSV",
+                data=table.to_csv(index=False).encode("utf-8"),
+                file_name=f"epw_{name.lower().replace(' ', '_').replace(',', '')}_statistics.csv",
+                mime="text/csv",
+            )
+
+    with tabs[7]:
+        monthly = monthly_climate_summary(df)
+        st.dataframe(monthly, hide_index=True, use_container_width=True)
+        numeric_columns = [col for col in monthly.columns if col != "Month" and pd.api.types.is_numeric_dtype(monthly[col])]
+        if numeric_columns:
+            metric = st.selectbox("Monthly chart metric", numeric_columns, index=numeric_columns.index("Mean dry-bulb [°C]") if "Mean dry-bulb [°C]" in numeric_columns else 0)
+            fig = px.bar(monthly, x="Month", y=metric, title=f"Monthly summary: {metric}")
+            fig.update_layout(template="plotly_white", xaxis_title="Month", yaxis_title=metric)
+            st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False, "scrollZoom": True}, key=next_plot_key())
+        st.download_button(
+            "Download monthly summary as CSV",
+            data=monthly.to_csv(index=False).encode("utf-8"),
+            file_name="epw_monthly_summary.csv",
+            mime="text/csv",
+        )
+
+    with tabs[8]:
+        seasonal = seasonal_climate_summary(df)
+        st.dataframe(seasonal, hide_index=True, use_container_width=True)
+        numeric_columns = [col for col in seasonal.columns if col != "Season" and pd.api.types.is_numeric_dtype(seasonal[col])]
+        if numeric_columns:
+            metric = st.selectbox("Seasonal chart metric", numeric_columns, index=numeric_columns.index("Mean dry-bulb [°C]") if "Mean dry-bulb [°C]" in numeric_columns else 0)
+            fig = px.bar(seasonal, x="Season", y=metric, title=f"Seasonal summary: {metric}")
+            fig.update_layout(template="plotly_white", xaxis_title="Season", yaxis_title=metric)
+            st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False, "scrollZoom": True}, key=next_plot_key())
+        st.download_button(
+            "Download seasonal summary as CSV",
+            data=seasonal.to_csv(index=False).encode("utf-8"),
+            file_name="epw_seasonal_summary.csv",
+            mime="text/csv",
+        )
+
+    with tabs[9]:
+        extremes = extreme_day_summary(df)
+        mode = st.selectbox("Extreme-day ranking", list(extremes.keys()))
+        table = extremes[mode].reset_index().rename(columns={"index": "Date"})
+        st.dataframe(table, hide_index=True, use_container_width=True)
+        st.download_button(
+            "Download selected extreme-day table as CSV",
+            data=table.to_csv(index=False).encode("utf-8"),
+            file_name=f"epw_{mode.lower().replace('-', '_').replace(' ', '_')}.csv",
+            mime="text/csv",
+        )
+
+    render_interpretation(climate_statistics_interpretation(df))
+
+
+def render_overview(epw, df: pd.DataFrame, full_df: pd.DataFrame, issues: list[object]) -> None:
+    """Render the landing dashboard."""
+    st.header("EPW Climate Analyzer")
+    st.write("Interactive climate-analysis dashboard for architecture and HVAC decision support.")
+    statistics_scope = st.radio("Statistics scope", ["Full EPW file", "Current sidebar filter"], horizontal=True)
+    stats_df = full_df if statistics_scope == "Full EPW file" else df
+    metric_cards(stats_df)
+
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        st.subheader("Location")
+        st.dataframe(pd.DataFrame(location_summary(epw.location).items(), columns=["Field", "Value"]), hide_index=True)
+    with col2:
+        st.subheader("Supported chart families")
+        st.markdown(
+            """
+            - Time-series profiles with hourly, daily, weekly, monthly and seasonal aggregation
+            - Min/mean/max ribbons and percentile bands
+            - Day-hour, week-hour and month-hour heatmaps
+            - Duration curves, histograms, boxplots and violin plots
+            - Psychrometric T-d and i-d charts
+            - Wind roses, sun-path plots and façade-radiation charts
+            - Precipitation totals, precipitation-record occurrence, snow depth and snow-cover occurrence
+            - Natural-ventilation, night-flushing, shading, economizer and latent-load indicators
+            - EPW data-quality diagnostics
+            """
+        )
+
+    render_calculated_epw_statistics(stats_df)
+
+    issue_count = len(issues)
+    error_count = sum(1 for issue in issues if getattr(issue, "severity", "") == "error")
+    st.info(data_quality_interpretation(issue_count, error_count))
+
+
+def render_temperature(
+    df: pd.DataFrame,
+    *,
+    interval_count_metrics: bool = True,
+    ground_source_label: str | None = None,
+    ground_native_df: pd.DataFrame | None = None,
+) -> None:
+    """Render temperature-analysis charts."""
+    st.header("Temperature and extremes")
+    measured_ground_source = ground_native_df if ground_native_df is not None else df
+    has_air_temperature = (
+        "dry_bulb_temperature_c" in df.columns
+        and pd.to_numeric(df["dry_bulb_temperature_c"], errors="coerce").notna().any()
+    )
+    has_ground_measurement = any(
+        column in measured_ground_source.columns
+        and pd.to_numeric(measured_ground_source[column], errors="coerce").notna().any()
+        for column in ("ground_temperature_0_10m_c", "ground_temperature_0_20m_c", "ground_temperature_0_50m_c")
+    )
+
+    chart_options: list[str] = []
+    if has_air_temperature:
+        chart_options.append("Temperature variable explorer")
+    if has_air_temperature or has_ground_measurement:
+        chart_options.append("Ground temperature")
+    if has_air_temperature and interval_count_metrics:
+        chart_options.append("Threshold conditions")
+    if has_air_temperature:
+        chart_options.extend(["Degree days", "Extreme days"])
+    if not chart_options:
+        st.info("No air- or ground-temperature observations are available for the current Data filter.")
+        return
+    chart_group = st.selectbox("Analysis type", chart_options)
+
+    if chart_group == "Ground temperature":
+        render_ground_temperature_page(
+            df,
+            source_label=ground_source_label or "Calculated from outdoor dry-bulb temperature",
+            native_df=ground_native_df,
+        )
+        return
+
+    if chart_group == "Degree days":
+        st.caption(
+            "HGT/KGT use two independent temperatures each: the limit selects the heating/cooling period, "
+            "while the temperature difference is measured to the corresponding indoor-air reference."
+        )
+        st.markdown("**Heating degree metric (HGT)**")
+        heat_col1, heat_col2 = st.columns(2)
+        heating_indoor = heat_col1.slider(
+            "Heating indoor air temperature [°C]",
+            10.0,
+            30.0,
+            20.0,
+            0.5,
+            key="degree_heating_indoor_c",
+            help="Indoor-air reference used for the HGT temperature difference.",
+        )
+        heating_limit = heat_col2.slider(
+            "Heating limit [°C]",
+            -5.0,
+            25.0,
+            12.0,
+            0.5,
+            key="degree_heating_limit_c",
+            help="Only intervals/days with mean outdoor temperature below this limit contribute to HGT.",
+        )
+        if heating_limit > heating_indoor:
+            st.error("Heating limit must not exceed heating indoor air temperature.")
+            return
+
+        st.markdown("**Cooling degree metric (KGT)**")
+        cool_col1, cool_col2 = st.columns(2)
+        cooling_indoor = cool_col1.slider(
+            "Cooling indoor air temperature [°C]",
+            10.0,
+            30.0,
+            20.0,
+            0.5,
+            key="degree_cooling_indoor_c",
+            help="Indoor-air reference used for the KGT temperature difference.",
+        )
+        cooling_limit = cool_col2.slider(
+            "Cooling limit [°C]",
+            10.0,
+            35.0,
+            20.0,
+            0.1,
+            key="degree_cooling_limit_c",
+            help="Only intervals/days with mean outdoor temperature above this limit contribute to KGT.",
+        )
+        st.caption(
+            f"Current definitions: HGT {heating_indoor:g}/{heating_limit:g} and "
+            f"KGT {cooling_indoor:g}/{cooling_limit:g}."
+        )
+
+        method_col, aggregation_col = st.columns(2)
+        metric = method_col.radio(
+            "Degree metric",
+            ["Degree-hours", "Degree-days"],
+            horizontal=True,
+            help=(
+                "Degree-hours use every source interval. Degree-days first calculate the daily mean outdoor temperature; "
+                "they are not obtained by simply dividing degree-hours by 24."
+            ),
+        )
+        aggregation = aggregation_col.selectbox(
+            "Aggregation",
+            ["Daily", "Weekly", "Monthly", "Seasonal", "Annual"],
+            index=2,
+            key="degree_metric_aggregation",
+        )
+        table = degree_metric_table(
+            df,
+            heating_indoor_c=heating_indoor,
+            heating_limit_c=heating_limit,
+            cooling_indoor_c=cooling_indoor,
+            cooling_limit_c=cooling_limit,
+            metric=metric,
+            aggregation=aggregation,
+        )
+        unit = str(table.attrs.get("unit", "K·h" if metric == "Degree-hours" else "K·d"))
+
+        plot_data = table.reset_index()
+        plot_data = plot_data.rename(columns={plot_data.columns[0]: "Period"})
+        plot_data["Period"] = display_period_labels(table.index, aggregation, time_basis(df))
+
+        series_names = [str(column) for column in table.columns]
+        long = plot_data.melt(id_vars="Period", var_name="Series", value_name="Value")
+        fig = px.bar(
+            long,
+            x="Period",
+            y="Value",
+            color="Series",
+            barmode="group",
+            title=(
+                f"{aggregation} heating and cooling {metric.lower()} "
+                f"(HGT {heating_indoor:g}/{heating_limit:g}; KGT {cooling_indoor:g}/{cooling_limit:g})"
+            ),
+            color_discrete_map={name: metric_color(name) for name in series_names},
+        )
+        fig.update_layout(
+            template="plotly_white",
+            xaxis_title="Period",
+            yaxis_title=unit,
+            legend_title_text="Indicator",
+            margin=dict(l=40, r=20, t=70, b=45),
+        )
+        fig.update_yaxes(rangemode="tozero")
+        st.caption(
+            "Degree-hours integrate the temperature difference at each source interval. "
+            "Degree-days use daily mean outdoor temperature before applying the heating/cooling base. "
+            "Heating and cooling bars are grouped because they are separate indicators, not additive components of one total."
+        )
+        render_plot(
+            fig,
+            degree_metric_interpretation(
+                table,
+                heating_indoor_c=heating_indoor,
+                heating_limit_c=heating_limit,
+                cooling_indoor_c=cooling_indoor,
+                cooling_limit_c=cooling_limit,
+                metric=metric,
+            ),
+        )
+        return
+
+    if chart_group in {"Temperature variable explorer", "Threshold conditions"}:
+        threshold_col1, threshold_col2 = st.columns(2)
+        heat_threshold = threshold_col1.slider("Heating threshold [°C]", -5.0, 25.0, 18.0, 0.5)
+        cool_threshold = threshold_col2.slider("Cooling threshold [°C]", 15.0, 40.0, 26.0, 0.5)
+        if heat_threshold > cool_threshold:
+            st.error("Heating threshold must not exceed cooling threshold.")
+            return
+    else:
+        heat_threshold = 18.0
+        cool_threshold = 26.0
+
+    if chart_group == "Temperature variable explorer":
+        render_generic_variable_page(
+            df,
+            [
+                "Dry-bulb temperature",
+                "Dry-bulb temperature minimum",
+                "Dry-bulb temperature maximum",
+                "Dew-point temperature",
+                "Wet-bulb temperature",
+            ],
+            "Dry-bulb temperature",
+            "Temperature",
+            lambda data, column, label, unit: variable_interpretation(data, column, label, unit, high_threshold=cool_threshold, low_threshold=heat_threshold),
+            temperature_thresholds=(heat_threshold, cool_threshold),
+        )
+    elif chart_group == "Threshold conditions":
+        aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0)
+        mode = st.radio("Condition", ["Below heating threshold", "Above cooling threshold", "Frost hours (Tdry < 0 °C)", "Nighttime hours > 20 °C (20:00–06:59)"])
+        if mode == "Below heating threshold":
+            condition = df["dry_bulb_temperature_c"] < heat_threshold
+        elif mode == "Above cooling threshold":
+            condition = df["dry_bulb_temperature_c"] > cool_threshold
+        elif mode == "Frost hours (Tdry < 0 °C)":
+            condition = df["dry_bulb_temperature_c"] < 0.0
+        else:
+            condition = (df["hour_of_day"].isin(list(range(20, 24)) + list(range(0, 7)))) & (df["dry_bulb_temperature_c"] > 20.0)
+        counts = threshold_count_by_period(df, condition, aggregation, label="hours")
+        fig = threshold_bar_chart(counts, f"Temperature threshold hours: {mode}")
+        render_plot(fig, temperature_interpretation(df, heat_threshold, cool_threshold))
+    else:
+        st.subheader("Extreme daily conditions")
+        daily = df["dry_bulb_temperature_c"].resample("D").agg(mean="mean", min="min", max="max")
+        hottest = daily.sort_values("max", ascending=False).head(10)
+        coldest = daily.sort_values("min", ascending=True).head(10)
+        col1, col2 = st.columns(2)
+        col1.dataframe(hottest, use_container_width=True)
+        col2.dataframe(coldest, use_container_width=True)
+        fig = profile_ribbon_chart(df, "dry_bulb_temperature_c", "Daily", "Daily temperature extremes", "°C")
+        render_plot(fig, temperature_interpretation(df, heat_threshold, cool_threshold))
+
+
+def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metrics: bool = True) -> None:
+    """Render humidity and psychrometric charts."""
+    st.header("Humidity and psychrometrics")
+    chart_options = ["Humidity variable explorer", "Psychrometric chart", "Moisture thresholds", "Psychrometric scatter relationships"]
+    if not interval_count_metrics:
+        chart_options.remove("Moisture thresholds")
+    chart_group = st.selectbox("Analysis type", chart_options)
+    if chart_group == "Humidity variable explorer":
+        render_generic_variable_page(
+            df,
+            ["Relative humidity", "Humidity ratio", "Dew-point temperature", "Moist-air enthalpy", "Specific volume", "Moist-air density"],
+            "Humidity ratio",
+            "Humidity",
+            None,
+        )
+    elif chart_group == "Psychrometric chart":
+        chart_type = st.radio("Psychrometric axes", ["T-d", "i-d"], horizontal=True)
+        representation = st.radio(
+            "Representation",
+            ["Points", "Distribution grid", "Climate contour"],
+            index=0,
+            horizontal=True,
+            help=(
+                "Points shows individual observations. Distribution grid restores the original 1 °C × 5 %RH frequency/metric cells. "
+                "Climate contour adds a smooth duration-density zone without replacing either original representation."
+            ),
+        )
+
+        zone_coverage = 0.90
+        zone_interior_style = "Density gradient"
+        show_core_zone = False
+        additional_contour_coverages: list[float] = []
+        if representation == "Climate contour":
+            z1, z2 = st.columns([1, 1.4])
+            coverage_pct = z1.slider("Outer contour coverage [%]", 50, 99, 90, 1, key="psych_zone_coverage")
+            zone_coverage = float(coverage_pct) / 100.0
+            zone_interior_style = z2.selectbox(
+                "Zone interior",
+                ["Density gradient", "Sparse points", "Solid fill", "Contour only"],
+                index=0,
+                key="psych_zone_interior",
+            )
+            contour_options = list(range(1, coverage_pct))
+            contour_defaults: list[int] = []
+            selected_levels = st.multiselect(
+                "Additional contour levels [%]",
+                contour_options,
+                default=contour_defaults,
+                key="psych_zone_additional_contours",
+                help="Choose any number of nested duration contours below the outer coverage, for example 50%, 70%, or both.",
+            )
+            additional_contour_coverages = [float(value) / 100.0 for value in selected_levels]
+            st.caption(
+                "Contours are calculated from a smooth two-dimensional duration density. Density outside the physical 0...100% RH domain is forced to zero before contour thresholds are calculated. "
+                "The density gradient shows where states occur most frequently inside the outer contour."
+            )
+        elif representation == "Distribution grid":
+            st.caption(
+                "Original distribution-grid representation restored: 1 °C × 5 %RH cells on the real psychrometric geometry. "
+                "Zero/low-frequency cells remain pale and the most frequent cells are saturated blue."
+            )
+
+        col_a, col_b, col_c = st.columns(3)
+        t_min = float(df["dry_bulb_temperature_c"].min())
+        t_max = float(df["dry_bulb_temperature_c"].max())
+        d_max_default = max(20.0, float(df["humidity_ratio_g_kg"].quantile(0.995)) * 1.1)
+        h_min = float(df["moist_air_enthalpy_kj_kg"].quantile(0.005))
+        h_max = float(df["moist_air_enthalpy_kj_kg"].quantile(0.995))
+        t_limits = col_a.slider(
+            "Dry-bulb temperature range [°C]",
+            -40.0,
+            60.0,
+            (float(max(-40, int(t_min // 5 * 5))), float(min(60, int(t_max // 5 * 5 + 10)))),
+            1.0,
+        )
+        d_limits = col_b.slider("Moisture content range [g/kg]", 0.0, 40.0, (0.0, float(min(40.0, d_max_default))), 0.5)
+        h_limits = col_c.slider(
+            "Enthalpy range [kJ/kg dry air]",
+            -30.0,
+            140.0,
+            (float(max(-30, int(h_min // 10 * 10))), float(min(140, int(h_max // 10 * 10 + 20)))),
+            1.0,
+        )
+
+        with st.expander("Chart metrics and overlays", expanded=True):
+            metric_layers = st.multiselect(
+                "Metric lines",
+                PSYCHROMETRIC_METRIC_LINES,
+                default=["Dry-bulb temperature", "Humidity ratio", "Relative humidity"],
+                help="Turn psychrometric metric lines on or off. Lines are intentionally grey and low-emphasis.",
+            )
+            show_givoni = st.checkbox("Show Givoni-Milne bioclimatic overlay", value=True)
+            selected_zones: list[str] | None = None
+            show_heat_index = st.checkbox("Show heat-index overlay", value=False)
+
+        with st.expander("Loaded data mapping", expanded=True):
+            months = st.multiselect("Displayed months", list(MONTHS.keys()), default=list(MONTHS.keys()), key="psych_month_filter")
+            selected_months = [MONTHS[m] for m in months]
+            chronological_multiyear = time_basis(df) == CHRONOLOGICAL and is_multiyear(df)
+            year_mode = "All years combined"
+            selected_years: list[int] | None = None
+            if chronological_multiyear:
+                years = available_years(df)
+                year_choices = ["All years combined", "Single year"]
+                if representation != "Distribution grid":
+                    year_choices.append("Compare selected years")
+                year_mode = st.selectbox(
+                    "Year display",
+                    year_choices,
+                    index=0,
+                    key="psych_year_mode",
+                )
+                if year_mode == "Single year":
+                    selected_years = [int(st.selectbox("Year", years, index=len(years) - 1, key="psych_single_year"))]
+                elif year_mode == "Compare selected years":
+                    default_years = years if len(years) <= 5 else years[-5:]
+                    selected_years = [int(value) for value in st.multiselect("Years", years, default=default_years, key="psych_compare_years")]
+                    if not selected_years:
+                        st.info("Select at least one real source year for the psychrometric comparison.")
+                        return
+                    st.caption("Each selected year is drawn independently on the same fixed psychrometric axes.")
+
+            color_mode = "Month"
+            color_metric_column, color_metric_label = PSYCHROMETRIC_COLOR_METRICS[color_mode]
+            if representation == "Points" and year_mode != "Compare selected years":
+                metric_options = [name for name in PSYCHROMETRIC_COLOR_METRICS if name != "Frequency"]
+                color_mode = st.selectbox("Colour mapped metric", metric_options, index=metric_options.index("Month"))
+                color_metric_column, color_metric_label = PSYCHROMETRIC_COLOR_METRICS[color_mode]
+            elif representation == "Points" and year_mode == "Compare selected years":
+                st.caption("Point colours identify real source years; metric colouring is disabled while years are being compared.")
+            elif representation == "Distribution grid":
+                metric_options = [name for name in PSYCHROMETRIC_COLOR_METRICS if name != "Month"]
+                color_mode = st.selectbox("Colour mapped metric", metric_options, index=metric_options.index("Frequency"))
+                color_metric_column, color_metric_label = PSYCHROMETRIC_COLOR_METRICS[color_mode]
+
+        fig = psychrometric_chart(
+            df,
+            chart_type=chart_type,
+            pressure_pa=pressure_pa,
+            show_rh_curves="Relative humidity" in metric_layers,
+            show_comfort_zone=show_givoni,
+            data_mode=representation,
+            t_range=t_limits,
+            d_range=d_limits,
+            h_range=h_limits,
+            metric_layers=metric_layers,
+            shown_bioclimatic_zones=selected_zones,
+            show_heat_index_overlay=show_heat_index,
+            selected_months=selected_months,
+            color_metric_column=color_metric_column,
+            color_metric_label=color_metric_label,
+            color_mode=color_mode,
+            zone_coverage=zone_coverage,
+            zone_interior_style=zone_interior_style,
+            show_core_zone=show_core_zone,
+            additional_contour_coverages=additional_contour_coverages,
+            year_mode=year_mode,
+            selected_years=selected_years,
+        )
+        st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False, "scrollZoom": True}, key=next_plot_key("psychrometric"))
+        report_df = df[df["month_index"].isin(selected_months)].copy()
+        report_df.attrs.update(df.attrs)
+        if selected_years and isinstance(report_df.index, pd.DatetimeIndex):
+            report_df = report_df[pd.DatetimeIndex(report_df.index).year.isin(selected_years)].copy()
+            report_df.attrs.update(df.attrs)
+        render_interpretation(psychrometric_interpretation(report_df))
+        if show_givoni:
+            render_bioclimatic_report(report_df)
+    elif chart_group == "Moisture thresholds":
+        d_low = st.slider("Dry-air threshold [g/kg]", 0.0, 8.0, 3.0, 0.25)
+        d_high = st.slider("Humid-air threshold [g/kg]", 5.0, 25.0, 10.0, 0.25)
+        aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0)
+        mode = st.radio("Condition", ["Below dry-air threshold", "Above humid-air threshold", "Relative humidity above 80%"])
+        if mode == "Below dry-air threshold":
+            condition = df["humidity_ratio_g_kg"] < d_low
+        elif mode == "Above humid-air threshold":
+            condition = df["humidity_ratio_g_kg"] > d_high
+        else:
+            condition = df["relative_humidity_pct"] > 80.0
+        counts = threshold_count_by_period(df, condition, aggregation, label="hours")
+        fig = threshold_bar_chart(counts, f"Moisture threshold hours: {mode}")
+        render_plot(fig, psychrometric_interpretation(df))
+    else:
+        x_label = st.selectbox("X variable", ["Dry-bulb temperature", "Dew-point temperature", "Humidity ratio", "Moist-air enthalpy"])
+        y_label = st.selectbox("Y variable", ["Humidity ratio", "Relative humidity", "Moist-air enthalpy", "Wet-bulb temperature"])
+        x, x_unit = VARIABLES[x_label]
+        y, y_unit = VARIABLES[y_label]
+        fig = scatter_chart(df, x, y, "month_index", f"{x_label} vs {y_label}", f"{x_label} [{x_unit}]", f"{y_label} [{y_unit}]")
+        render_plot(fig, psychrometric_interpretation(df))
+
+
+def render_solar(df: pd.DataFrame) -> None:
+    """Render solar, radiation and façade-decision charts."""
+    st.header("Solar, radiation and façade analysis")
+    chart_group = st.selectbox(
+        "Analysis type",
+        [
+            "Radiation variable explorer",
+            "Monthly radiation components",
+            "Sun path with radiation",
+            "Sun-path diagram",
+            "Radiation by façade orientation",
+            "Orientation-tilt heatmap",
+            "Monthly façade radiation",
+            "Cooling-risk solar hours",
+            "Solar scatter relationships",
+        ],
+    )
+
+    if chart_group == "Radiation variable explorer":
+        render_generic_variable_page(
+            df,
+            ["Global horizontal radiation", "Direct normal radiation", "Diffuse horizontal radiation"],
+            "Global horizontal radiation",
+            "Solar radiation",
+            None,
+        )
+    elif chart_group == "Monthly radiation components":
+        monthly = pd.DataFrame(index=range(1, 13))
+        for label in ["Global horizontal radiation", "Direct normal radiation", "Diffuse horizontal radiation"]:
+            col, _ = VARIABLES[label]
+            monthly[label] = df[col].clip(lower=0).groupby(df["month_index"]).sum() / 1000.0
+        fig = stacked_monthly_bar(monthly, "Monthly solar radiation components", "kWh/m²")
+        render_plot(fig, solar_interpretation(df))
+    elif chart_group == "Sun path with radiation":
+        col_a, col_b = st.columns(2)
+        invert_zenith_axis = col_a.checkbox("Invert zenith-angle axis (90° → 0°)", value=False)
+        hide_zero_radiation = col_b.checkbox("Hide zero radiation values", value=False)
+        fig = sun_path_chart(
+            df,
+            invert_zenith_axis=invert_zenith_axis,
+            hide_zero_radiation=hide_zero_radiation,
+        )
+        render_plot(fig, solar_interpretation(df))
+    elif chart_group == "Sun-path diagram":
+        fig = sun_position_diagram(df)
+        render_plot(fig, solar_interpretation(df))
+    elif chart_group == "Radiation by façade orientation":
+        tilt = st.slider("Surface tilt [deg]", 0.0, 90.0, 90.0, 5.0)
+        data = orientation_annual_radiation(df, tilt_deg=tilt)
+        fig = orientation_bar_chart(data, f"Annual irradiation by orientation at {tilt:.0f}° tilt")
+        render_plot(fig, solar_interpretation(df))
+    elif chart_group == "Orientation-tilt heatmap":
+        st.caption("This chart may take a few seconds because it calculates many plane-of-array irradiance variants.")
+        matrix = orientation_tilt_matrix(df)
+        fig = matrix_heatmap(matrix, "Annual irradiation by orientation and tilt", "Surface azimuth [deg]", "Surface tilt [deg]", "kWh/m²")
+        render_plot(fig, solar_interpretation(df))
+    elif chart_group == "Monthly façade radiation":
+        tilt = st.slider("Façade tilt [deg]", 0.0, 90.0, 90.0, 5.0)
+        monthly = monthly_orientation_radiation(df, tilt_deg=tilt)
+        fig = multi_line_monthly(monthly, f"Monthly façade irradiation at {tilt:.0f}° tilt", "kWh/m²")
+        render_plot(fig, solar_interpretation(df))
+    elif chart_group == "Cooling-risk solar hours":
+        t_threshold = st.slider("Temperature threshold [°C]", 15.0, 35.0, 24.0, 0.5)
+        ghi_threshold = st.slider("GHI threshold [Wh/m²]", 50.0, 800.0, 300.0, 25.0)
+        aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0)
+        condition = (df["dry_bulb_temperature_c"] > t_threshold) & (df["global_horizontal_radiation_wh_m2"] > ghi_threshold)
+        counts = threshold_count_by_period(df, condition, aggregation, label="hours")
+        fig = threshold_bar_chart(counts, "Cooling-risk solar hours")
+        render_plot(fig, solar_interpretation(df))
+    else:
+        fig = scatter_chart(
+            df,
+            "dry_bulb_temperature_c",
+            "global_horizontal_radiation_wh_m2",
+            "month_index",
+            "Outdoor temperature vs global horizontal radiation",
+            "Dry-bulb temperature [°C]",
+            "GHI [Wh/m²]",
+        )
+        render_plot(fig, solar_interpretation(df))
+
+
+def render_wind(df: pd.DataFrame) -> None:
+    """Render one capability-gated wind UI for every canonical climate source."""
+    st.header("Wind and natural-ventilation wind context")
+    st.caption(WIND_DIRECTION_FROM_NOTE)
+
+    def numeric(column: str) -> bool:
+        return column in df.columns and pd.to_numeric(df[column], errors="coerce").notna().any()
+
+    variable_labels = [
+        label
+        for label, column in (
+            ("Wind speed", "wind_speed_m_s"),
+            ("Wind direction", "wind_direction_deg"),
+            ("Wind gust speed", "wind_gust_speed_m_s"),
+            ("Wind gust direction", "wind_gust_direction_deg"),
+        )
+        if numeric(column)
+    ]
+    paired_datasets: list[tuple[str, str, str]] = []
+    if numeric("wind_speed_m_s") and numeric("wind_direction_deg"):
+        paired_datasets.append(("Mean wind", "wind_speed_m_s", "wind_direction_deg"))
+    if numeric("wind_gust_speed_m_s") and numeric("wind_gust_direction_deg"):
+        paired_datasets.append(("Maximum gust", "wind_gust_speed_m_s", "wind_gust_direction_deg"))
+    direction_datasets: list[tuple[str, str]] = []
+    if numeric("wind_direction_deg"):
+        direction_datasets.append(("Mean wind", "wind_direction_deg"))
+    if numeric("wind_gust_direction_deg"):
+        direction_datasets.append(("Maximum gust", "wind_gust_direction_deg"))
+
+    has_nv_inputs = all(
+        numeric(column)
+        for column in (
+            "wind_speed_m_s", "wind_direction_deg", "dry_bulb_temperature_c",
+            "relative_humidity_pct", "humidity_ratio_g_kg",
+        )
+    )
+    options: list[str] = []
+    if variable_labels:
+        options.append("Wind variable explorer")
+    if paired_datasets:
+        options.extend(["Wind rose", "Monthly wind rose", "Day-night wind rose"])
+    if has_nv_inputs:
+        options.append("Wind during natural-ventilation hours")
+    if direction_datasets:
+        options.append("Direction histogram")
+    if not options:
+        st.info("No usable wind observations are available in the selected interval.")
+        return
+
+    chart_group = st.selectbox("Analysis type", options, key="wind_analysis_type")
+    if chart_group == "Wind variable explorer":
+        default = "Wind speed" if "Wind speed" in variable_labels else variable_labels[0]
+        render_generic_variable_page(df, variable_labels, default, "Wind", None)
+        return
+
+    if chart_group == "Wind during natural-ventilation hours":
+        mask = natural_ventilation_condition(df)
+        data = df[mask]
+        if data.empty:
+            st.info("No records satisfy the active natural-ventilation suitability condition.")
+            return
+        fig = wind_rose_chart(data, "Mean wind during natural-ventilation-suitable hours")
+        render_plot(fig, natural_ventilation_interpretation(df, mask))
+        return
+
+    if chart_group == "Direction histogram":
+        labels = [item[0] for item in direction_datasets]
+        selected = st.selectbox("Wind dataset", labels, key="wind_direction_dataset") if len(labels) > 1 else labels[0]
+        direction_column = next(column for label, column in direction_datasets if label == selected)
+        fig = histogram_chart(df, direction_column, f"{selected} direction histogram", "deg", bins=36)
+        if selected == "Maximum gust":
+            text = (
+                "Gust direction remains paired with the governing maximum gust observation; it is not independently averaged. "
+                "The histogram integrates the physical duration represented by each canonical record."
+            )
+        else:
+            text = wind_interpretation(df)
+        render_plot(fig, text)
+        return
+
+    dataset_labels = [item[0] for item in paired_datasets]
+    selected_dataset = (
+        st.selectbox("Wind dataset", dataset_labels, key="wind_paired_dataset")
+        if len(dataset_labels) > 1 else dataset_labels[0]
+    )
+    _, speed_column, direction_column = next(item for item in paired_datasets if item[0] == selected_dataset)
+
+    if selected_dataset == "Maximum gust":
+        interpretation = (
+            "Maximum-gust visualizations use the canonical maximum gust speed together with its paired governing gust direction. "
+            "The direction is never independently circular-averaged away from the gust that produced it."
+        )
+    else:
+        interpretation = wind_interpretation(df)
+
+    if chart_group == "Wind rose":
+        fig = wind_rose_chart(
+            df, f"{selected_dataset} wind rose",
+            speed_column=speed_column, direction_column=direction_column,
+        )
+    elif chart_group == "Monthly wind rose":
+        observed = sorted({int(v) for v in pd.to_numeric(df["month_index"], errors="coerce").dropna().tolist() if 1 <= int(v) <= 12})
+        month_names = [name for name, number in MONTHS.items() if number in observed]
+        if not month_names:
+            st.info("No valid month labels are available for the selected wind observations.")
+            return
+        month = st.selectbox("Month", month_names, key="wind_month")
+        data = df[df["month_index"] == MONTHS[month]]
+        fig = wind_rose_chart(
+            data, f"{selected_dataset} wind rose: {month}",
+            speed_column=speed_column, direction_column=direction_column,
+        )
+    else:
+        period = st.radio("Period", ["Day", "Night"], horizontal=True, key="wind_daynight_period")
+        if period == "Day":
+            data = df[df["hour_of_day"].between(7, 19)]
+        else:
+            data = df[(df["hour_of_day"] < 7) | (df["hour_of_day"] > 19)]
+        fig = wind_rose_chart(
+            data, f"{selected_dataset} · {period.lower()} wind rose",
+            speed_column=speed_column, direction_column=direction_column,
+        )
+    render_plot(fig, interpretation)
+
+
+def render_precipitation(df: pd.DataFrame, native_df: pd.DataFrame | None = None) -> None:
+    """Render dual-resolution precipitation and snow analysis.
+
+    Conserved extensive totals use the canonical analysis frame. Source-record
+    occurrence, true native-interval extremes and thresholded snow-state
+    duration use the provider-native frame when one is supplied.
+    """
+    st.header("Precipitation and snow")
+    source_df = native_df if native_df is not None else df
+    liquid_available = (
+        "liquid_precipitation_depth_mm" in df.columns
+        and pd.to_numeric(df["liquid_precipitation_depth_mm"], errors="coerce").notna().any()
+    )
+    native_liquid_available = (
+        "liquid_precipitation_depth_mm" in source_df.columns
+        and pd.to_numeric(source_df["liquid_precipitation_depth_mm"], errors="coerce").notna().any()
+    )
+    duration_available = (
+        "precipitation_duration_min" in df.columns
+        and pd.to_numeric(df["precipitation_duration_min"], errors="coerce").notna().any()
+    )
+    hourly_snow_available = (
+        "snow_depth_cm" in df.columns
+        and pd.to_numeric(df["snow_depth_cm"], errors="coerce").notna().any()
+    )
+    native_snow_available = (
+        "snow_depth_cm" in source_df.columns
+        and pd.to_numeric(source_df["snow_depth_cm"], errors="coerce").notna().any()
+    )
+
+    options: list[str] = []
+    if liquid_available:
+        options.extend(["Precipitation totals", "Annual precipitation indices", "Liquid precipitation explorer"])
+    if native_liquid_available:
+        options.append("Precipitation-record occurrence")
+    if duration_available:
+        options.append("Measured precipitation duration")
+    if hourly_snow_available:
+        options.append("Snow depth explorer")
+    if native_snow_available:
+        options.extend(["Snow-cover duration", "Snow-season indices"])
+    if not options:
+        st.info("The loaded climate interval does not contain usable liquid-precipitation or snow-depth observations.")
+        return
+
+    chart_group = st.selectbox("Analysis type", options)
+
+    if chart_group == "Precipitation totals":
+        aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal", "Annual"], index=0)
+        totals = aggregate_liquid_precipitation(df, aggregation)
+        plot_data = totals.reset_index()
+        x_column = plot_data.columns[0]
+        fig = px.bar(
+            plot_data,
+            x=x_column,
+            y="precipitation_mm",
+            title=f"Liquid precipitation totals — {aggregation.lower()}",
+            labels={x_column: "Period", "precipitation_mm": "Precipitation [mm]"},
+        )
+        fig.update_traces(marker_color=metric_color("liquid_precipitation_depth_mm"))
+        fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Precipitation [mm]")
+        render_plot(
+            fig,
+            "Precipitation depth is interval-extensive. Period totals sum the canonical analysis intervals; missing values and missing intervals are excluded rather than converted to zero.",
+        )
+    elif chart_group == "Annual precipitation indices":
+        table = annual_precipitation_indices(df)
+        if native_liquid_available:
+            peaks = annual_native_precipitation_peaks(source_df)
+            if not peaks.empty:
+                table = table.merge(peaks, on="year", how="left")
+        if table.empty:
+            st.info("No annual precipitation indices can be calculated for the current Data filter.")
+            return
+        source_minutes = float(source_df.attrs.get("canonical_native_interval_minutes", native_interval_hours(source_df) * 60.0))
+        st.caption(
+            "Wet day ≥ 1 mm/day; heavy day ≥ 10 mm/day; very heavy day ≥ 20 mm/day; dry spell = consecutive observed daily totals < 1 mm/day. "
+            "A fully unobserved day breaks a dry spell and is never treated as zero precipitation. All values respect the active Data filter."
+        )
+        display = table.copy()
+        if "max_native_interval_mm" in display.columns:
+            display = display.rename(columns={
+                "max_native_interval_mm": f"max_native_{source_minutes:g}min_mm",
+                "max_native_interval_timestamp": "max_native_timestamp",
+            })
+        st.dataframe(display, hide_index=True, use_container_width=True)
+        metric_labels = {
+            "precipitation_total_mm": "Annual precipitation [mm]",
+            "wet_days_ge_1mm": "Wet days ≥ 1 mm [d]",
+            "heavy_days_ge_10mm": "Heavy days ≥ 10 mm [d]",
+            "very_heavy_days_ge_20mm": "Very heavy days ≥ 20 mm [d]",
+            "max_daily_precipitation_mm": "Maximum daily precipitation [mm]",
+            "longest_dry_spell_days": "Longest dry spell [d]",
+        }
+        if "max_native_interval_mm" in table.columns:
+            metric_labels["max_native_interval_mm"] = f"Maximum native {source_minutes:g}-min precipitation [mm]"
+        if "measured_precipitation_duration_h" in table.columns:
+            metric_labels["measured_precipitation_duration_h"] = "Measured precipitation duration [h]"
+        metric = st.selectbox("Trend metric", list(metric_labels), format_func=lambda key: metric_labels[key])
+        fig = px.line(table, x="year", y=metric, markers=True, title=metric_labels[metric])
+        fig.update_layout(template="plotly_white", xaxis_title="Year", yaxis_title=metric_labels[metric])
+        render_plot(fig, "Annual indices preserve real source years even when Calendar profile is selected; the Data filter still limits which months/hours contribute before the annual index is calculated.")
+    elif chart_group == "Precipitation-record occurrence":
+        threshold = st.number_input("Source-record precipitation threshold [mm]", min_value=0.0, value=0.1, step=0.1)
+        aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal", "Annual"], index=0)
+        counts = occurrence_records(
+            source_df,
+            "liquid_precipitation_depth_mm",
+            float(threshold),
+            aggregation,
+            inclusive=True,
+        )
+        plot_data = counts.reset_index()
+        x_column = plot_data.columns[0]
+        source_minutes = float(source_df.attrs.get("canonical_native_interval_minutes", native_interval_hours(source_df) * 60.0))
+        fig = px.bar(
+            plot_data,
+            x=x_column,
+            y="records",
+            title=f"Precipitation-record occurrence ≥ {threshold:g} mm",
+            labels={x_column: "Period", "records": "Source records meeting threshold"},
+        )
+        fig.update_traces(marker_color=metric_color("liquid_precipitation_depth_mm"))
+        fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Source records meeting threshold")
+        render_plot(
+            fig,
+            f"Counts provider/source records at the active native cadence ({source_minutes:g} min here). This is deliberately a record-occurrence metric, not rainfall duration.",
+        )
+    elif chart_group == "Measured precipitation duration":
+        aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal", "Annual"], index=0)
+        duration = aggregate_precipitation_duration(df, aggregation)
+        if duration.empty:
+            st.info("Independent precipitation-duration observations are unavailable in the current Data filter.")
+            return
+        plot_data = duration.assign(duration_h=duration["duration_min"] / 60.0).reset_index()
+        x_column = plot_data.columns[0]
+        fig = px.bar(
+            plot_data,
+            x=x_column,
+            y="duration_h",
+            title=f"Measured precipitation duration — {aggregation.lower()}",
+            labels={x_column: "Period", "duration_h": "Precipitation duration [h]"},
+        )
+        fig.update_traces(marker_color=metric_color("liquid_precipitation_depth_mm"))
+        fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Measured precipitation duration [h]")
+        render_plot(
+            fig,
+            "Duration is taken only from the independent measured precipitation-duration field (GeoSphere rrm where available) and summed. It is never inferred from precipitation depth rr.",
+        )
+    elif chart_group == "Liquid precipitation explorer":
+        render_generic_variable_page(
+            df,
+            ["Liquid precipitation depth"],
+            "Liquid precipitation depth",
+            "Precipitation",
+            None,
+        )
+    elif chart_group == "Snow depth explorer":
+        render_generic_variable_page(df, ["Snow depth"], "Snow depth", "Snow cover", None)
+    elif chart_group == "Snow-cover duration":
+        aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal", "Annual"], index=0)
+        counts = occurrence_hours(source_df, "snow_depth_cm", 0.0, aggregation, inclusive=False)
+        plot_data = counts.reset_index()
+        x_column = plot_data.columns[0]
+        source_minutes = float(source_df.attrs.get("canonical_native_interval_minutes", native_interval_hours(source_df) * 60.0))
+        fig = px.bar(
+            plot_data,
+            x=x_column,
+            y="hours",
+            title="Snow-cover duration",
+            labels={x_column: "Period", "hours": "Observed snow-cover hours"},
+        )
+        fig.update_traces(marker_color=metric_color("snow_depth_cm"))
+        fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Observed snow-cover hours")
+        render_plot(
+            fig,
+            f"Snow depth is a state variable. Duration is integrated from the source-state cadence ({source_minutes:g} min here): each valid record with snow depth > 0 cm contributes exactly one source interval; missing timestamps contribute no duration.",
+        )
+    else:
+        table = snow_season_indices(source_df)
+        if table.empty:
+            st.info("No snow-season indices can be calculated for the current Data filter.")
+            return
+        st.caption(
+            "Snow seasons use a July–June analysis year so autumn and spring snow from one cold season are not split at 31 December. "
+            "Snow-cover day: daily observed maximum > 0 cm; meaningful-cover day: > 5 cm. Missing days do not count as snow cover."
+        )
+        display = table.copy()
+        for column in ["first_snow_date", "last_snow_date"]:
+            display[column] = pd.to_datetime(display[column], errors="coerce").dt.strftime("%Y-%m-%d")
+        st.dataframe(display, hide_index=True, use_container_width=True)
+        metric_labels = {
+            "snow_cover_days": "Snow-cover days [d]",
+            "days_gt_5cm": "Days with snow depth > 5 cm [d]",
+            "max_snow_depth_cm": "Maximum snow depth [cm]",
+            "snow_season_span_days": "First-to-last snow span [d]",
+        }
+        metric = st.selectbox("Trend metric", list(metric_labels), format_func=lambda key: metric_labels[key], key="snow_season_trend_metric")
+        fig = px.line(table, x="season_start_year", y=metric, markers=True, title=metric_labels[metric])
+        fig.update_layout(template="plotly_white", xaxis_title="Snow season start year", yaxis_title=metric_labels[metric])
+        render_plot(fig, "Snow-season trends are calculated from provider/source snow-depth states after the active global Data filter is replayed at native cadence.")
+
+def render_sky_daylight(df: pd.DataFrame, *, latitude: float | None = None) -> None:
+    """Render source-neutral sky, daylight and measured-sunshine diagnostics."""
+    from epw_climate_analyzer.daylight import daily_daylight_table, monthly_daylight_sunshine_summary
+    from epw_climate_analyzer.historical_capabilities import has_numeric_observations
+
+    st.header("Sky cover and daylight")
+    has_sky = any(
+        has_numeric_observations(df, column)
+        for column in ("total_sky_cover_tenths", "opaque_sky_cover_tenths")
+    )
+    has_illuminance = any(
+        has_numeric_observations(df, column)
+        for column in (
+            "global_horizontal_illuminance_lux",
+            "direct_normal_illuminance_lux",
+            "diffuse_horizontal_illuminance_lux",
+        )
+    )
+    has_sunshine = has_numeric_observations(df, "sunshine_duration_s")
+
+    quantities: list[str] = []
+    if latitude is not None:
+        quantities.append("Astronomical daylight duration")
+    if has_sunshine:
+        quantities.append("Measured sunshine duration")
+    if has_sunshine and latitude is not None:
+        quantities.append("Relative sunshine duration")
+    if has_numeric_observations(df, "total_sky_cover_tenths"):
+        quantities.append("Total sky cover")
+    if has_numeric_observations(df, "opaque_sky_cover_tenths"):
+        quantities.append("Opaque sky cover")
+    if has_numeric_observations(df, "global_horizontal_illuminance_lux"):
+        quantities.append("Global horizontal illuminance")
+    if has_numeric_observations(df, "direct_normal_illuminance_lux"):
+        quantities.append("Direct normal illuminance")
+    if has_numeric_observations(df, "diffuse_horizontal_illuminance_lux"):
+        quantities.append("Diffuse horizontal illuminance")
+
+    options: list[str] = []
+    if quantities:
+        options.append("Sky and daylight explorer")
+    if has_sky:
+        options.append("Clear and overcast hours")
+    if has_sky and has_numeric_observations(df, "global_horizontal_radiation_wh_m2"):
+        options.append("Daylight scatter")
+    if not options:
+        st.info("No sky/daylight analysis is supported by the active climate data.")
+        return
+
+    st.caption(
+        "Astronomical daylight is calculated from date and latitude. Measured sunshine duration is independent provider data; "
+        "it is never converted into sky cover, illuminance or DNI. Duration quantities are summed, while sky-cover and "
+        "illuminance state/intensity quantities retain their normal statistical aggregation."
+    )
+    chart_group = st.selectbox("Analysis type", options, key="sky_daylight_analysis")
+
+    if chart_group == "Sky and daylight explorer":
+        quantity = st.selectbox("Quantity", quantities, key="sky_daylight_quantity")
+        if quantity == "Astronomical daylight duration":
+            view = st.radio(
+                "View",
+                ["Daily series", "Monthly daylight and sunshine"],
+                horizontal=True,
+                key="daylight_duration_view",
+            )
+            if view == "Daily series":
+                table = daily_daylight_table(pd.DatetimeIndex(df.index), float(latitude))
+                fig = px.line(
+                    table.reset_index(),
+                    x="date",
+                    y="daylight_duration_h",
+                    title="Astronomical daylight duration",
+                )
+                fig.update_layout(
+                    template="plotly_white",
+                    xaxis_title="Date",
+                    yaxis_title="Daylight duration [h]",
+                )
+                render_plot(
+                    fig,
+                    "Calculated sunrise-to-sunset duration for an ideal geometric horizon; refraction, terrain and local obstructions are not included.",
+                )
+            else:
+                summary = monthly_daylight_sunshine_summary(df, float(latitude))
+                columns = ["mean_daylight_h"] + (
+                    ["mean_sunshine_h"] if "mean_sunshine_h" in summary.columns else []
+                )
+                long = summary.melt(
+                    id_vars=["month"],
+                    value_vars=columns,
+                    var_name="series",
+                    value_name="hours",
+                )
+                labels = {
+                    "mean_daylight_h": "Astronomical daylight",
+                    "mean_sunshine_h": "Measured sunshine",
+                }
+                long["series"] = long["series"].map(labels)
+                fig = px.line(
+                    long,
+                    x="month",
+                    y="hours",
+                    color="series",
+                    markers=True,
+                    title="Monthly daylight and sunshine",
+                )
+                fig.update_layout(
+                    template="plotly_white",
+                    xaxis_title="Month",
+                    yaxis_title="Mean duration per represented day [h]",
+                    legend_title="",
+                )
+                render_plot(
+                    fig,
+                    "Daylight is calculated geometrically; measured sunshine is included only when complete provider observations support it.",
+                )
+        elif quantity == "Measured sunshine duration":
+            sunshine = pd.to_numeric(df["sunshine_duration_s"], errors="coerce") / 3600.0
+            aggregation = st.selectbox(
+                "Aggregation",
+                ["Daily", "Monthly", "Annual"],
+                index=1,
+                key="sunshine_duration_aggregation",
+            )
+            rule = {"Daily": "D", "Monthly": "MS", "Annual": "YS"}[aggregation]
+            totals = sunshine.resample(rule).sum(min_count=1).dropna().to_frame("sunshine_h")
+            if totals.empty:
+                st.info("No measured sunshine-duration values are available in the active Data filter.")
+                return
+            plot_data = totals.reset_index()
+            period_column = plot_data.columns[0]
+            fig = px.bar(
+                plot_data,
+                x=period_column,
+                y="sunshine_h",
+                title=f"Measured sunshine duration — {aggregation.lower()}",
+            )
+            fig.update_layout(
+                template="plotly_white",
+                xaxis_title="Period",
+                yaxis_title="Measured sunshine duration [h]",
+            )
+            render_plot(
+                fig,
+                "Measured sunshine is an interval-duration quantity summed in hours. Missing observations are excluded, never replaced by zero.",
+            )
+        elif quantity == "Relative sunshine duration":
+            summary = monthly_daylight_sunshine_summary(df, float(latitude))
+            if "relative_sunshine_pct" not in summary.columns:
+                st.info(
+                    "Relative sunshine duration requires complete measured sunshine coverage for at least one full calendar day in the active Data filter."
+                )
+                return
+            data = summary.dropna(subset=["relative_sunshine_pct"])
+            if data.empty:
+                st.info(
+                    "Relative sunshine duration requires complete measured sunshine coverage for at least one full calendar day in the active Data filter."
+                )
+                return
+            fig = px.bar(
+                data,
+                x="month",
+                y="relative_sunshine_pct",
+                title="Measured sunshine as share of astronomical daylight",
+            )
+            fig.update_layout(
+                template="plotly_white",
+                xaxis_title="Month",
+                yaxis_title="Relative sunshine duration [%]",
+            )
+            render_plot(
+                fig,
+                "Measured sunshine duration divided by astronomical daylight only for fully observed calendar days; incomplete days are excluded rather than treated as zero sunshine.",
+            )
+        elif quantity in {"Total sky cover", "Opaque sky cover"}:
+            render_generic_variable_page(
+                df,
+                [quantity],
+                quantity,
+                "Sky cover",
+                None,
+                fixed_variable_label=quantity,
+            )
+        else:
+            render_generic_variable_page(
+                df,
+                [quantity],
+                quantity,
+                "Illuminance",
+                None,
+                fixed_variable_label=quantity,
+            )
+    elif chart_group == "Clear and overcast hours":
+        aggregation = st.selectbox(
+            "Aggregation",
+            ["Monthly", "Weekly", "Daily", "Seasonal"],
+            index=0,
+            key="sky_condition_aggregation",
+        )
+        choices: list[str] = []
+        if has_numeric_observations(df, "total_sky_cover_tenths"):
+            choices.extend(["Clear sky cover <= 2", "Overcast sky cover >= 8"])
+        if has_numeric_observations(df, "global_horizontal_illuminance_lux"):
+            choices.append("Illuminance > 10000 lux")
+        mode = st.radio("Condition", choices, key="sky_condition")
+        if mode == "Clear sky cover <= 2":
+            condition = df["total_sky_cover_tenths"] <= 2
+        elif mode == "Overcast sky cover >= 8":
+            condition = df["total_sky_cover_tenths"] >= 8
+        else:
+            condition = df["global_horizontal_illuminance_lux"] > 10000
+        counts = threshold_count_by_period(df, condition, aggregation, label="hours")
+        fig = threshold_bar_chart(counts, mode)
+        render_plot(fig, sky_interpretation(df))
+    else:
+        fig = scatter_chart(
+            df,
+            "total_sky_cover_tenths",
+            "global_horizontal_radiation_wh_m2",
+            "month_index",
+            "Sky cover vs global horizontal radiation",
+            "Total sky cover [tenths]",
+            "GHI [Wh/m²]",
+        )
+        render_plot(fig, sky_interpretation(df))
+
+
+def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
+    """Render natural-ventilation and night-flushing charts."""
+    st.header("Natural ventilation and night flushing")
+    st.markdown("Adjust the outdoor-air suitability limits and inspect when window ventilation is climatically possible.")
+    col1, col2, col3, col4 = st.columns(4)
+    t_min = col1.number_input("Minimum outdoor temperature [°C]", value=16.0, step=0.5)
+    t_max = col2.number_input("Maximum outdoor temperature [°C]", value=26.0, step=0.5)
+    d_max = col3.number_input("Maximum humidity ratio [g/kg]", value=9.0, step=0.5)
+    occupied_only = col4.checkbox("Occupied hours only", value=False)
+    occupied_start = 8
+    occupied_end = 18
+    weekdays_only = False
+    if occupied_only:
+        occ1, occ2, occ3 = st.columns(3)
+        occupied_start = int(occ1.number_input("Occupied start hour", min_value=0, max_value=23, value=8, step=1))
+        occupied_end = int(occ2.number_input("Occupied end hour", min_value=0, max_value=23, value=18, step=1))
+        weekdays_only = occ3.checkbox("Weekdays only", value=False)
+        st.caption("Occupied-hour filtering uses the active climate timestamps. Intervals crossing midnight are supported, for example 22...6.")
+    wind_available = (
+        "wind_speed_m_s" in df.columns
+        and pd.to_numeric(df["wind_speed_m_s"], errors="coerce").notna().any()
+    )
+    wind_filter = st.checkbox(
+        "Use wind-speed limits",
+        value=False,
+        disabled=not wind_available,
+        help="Requires measured/available wind speed in the active climate dataset.",
+    )
+    if not wind_available:
+        st.caption("Wind-speed limits are unavailable because this climate interval contains no usable wind-speed observations.")
+    wind_min = wind_max = None
+    if wind_filter:
+        wind_min = st.number_input("Minimum wind speed [m/s]", value=0.5, step=0.1)
+        wind_max = st.number_input("Maximum wind speed [m/s]", value=6.0, step=0.1)
+
+    mask = natural_ventilation_condition(
+        df,
+        t_min,
+        t_max,
+        d_max,
+        wind_min_m_s=wind_min,
+        wind_max_m_s=wind_max,
+        occupied_only=occupied_only,
+        occupied_start_hour=occupied_start,
+        occupied_end_hour=occupied_end,
+        weekdays_only=weekdays_only,
+    )
+    df_nv = df.copy()
+    df_nv["natural_ventilation_suitable"] = mask.astype(int)
+
+    chart_group = st.selectbox(
+        "Analysis type",
+        [
+            "Heat map",
+            "Suitable hours by aggregation",
+            "Daily suitable-hours duration curve",
+            "Rejected reasons",
+            "Psychrometric NV overlay",
+            "Night-flushing potential",
+        ],
+    )
+    if chart_group == "Heat map":
+        row_group = st.radio("Heat-map aggregation", ["Day", "Week", "Month"], horizontal=True)
+        compare_options = ["Hour of day"] if time_basis(df_nv) == CHRONOLOGICAL else ["Hour of day", "Year"]
+        compare_across = st.radio("Compare across", compare_options, horizontal=True)
+        if time_basis(df_nv) == CHRONOLOGICAL and is_multiyear(df_nv):
+            st.caption(
+                "Chronological natural-ventilation heat maps keep real periods in sequence across years. "
+                "Switch Time basis to Calendar profile to compare equivalent calendar periods by year."
+            )
+        statistic_options = list(heatmap_statistic_options("natural_ventilation_suitable"))
+        statistic = st.selectbox("Statistic", statistic_options, index=0, key="nv_heatmap_statistic")
+        if compare_across == "Year":
+            st.caption("Year comparison preserves real calendar years from the current Data filter.")
+        fig = temporal_heatmap_chart(
+            df_nv,
+            "natural_ventilation_suitable",
+            row_group.lower(),
+            compare_across,
+            statistic,
+            f"Natural ventilation eligibility · {row_group.lower()} × {compare_across.lower()} · {statistic}",
+            "0/1",
+        )
+        render_plot(fig, natural_ventilation_interpretation(df, mask))
+    elif chart_group == "Suitable hours by aggregation":
+        aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0)
+        counts = threshold_count_by_period(df, mask, aggregation, label="suitable_hours")
+        fig = threshold_bar_chart(counts, "Natural-ventilation suitable hours", "hours")
+        render_plot(fig, natural_ventilation_interpretation(df, mask))
+
+    elif chart_group == "Daily suitable-hours duration curve":
+        daily = df_nv["natural_ventilation_suitable"].resample("D").sum().to_frame("suitable_hours")
+        fig = duration_chart(daily, "suitable_hours", "Daily natural-ventilation suitable-hours duration curve", "hours/day", ascending=False)
+        render_plot(fig, natural_ventilation_interpretation(df, mask))
+    elif chart_group == "Rejected reasons":
+        reasons = rejection_reasons_for_nv(df, t_min, t_max, d_max, wind_min_m_s=wind_min, wind_max_m_s=wind_max)
+        fig = px.bar(reasons, x="reason", y="hours", title="Natural-ventilation rejected reasons")
+        fig.update_layout(template="plotly_white", xaxis_title="Reason", yaxis_title="Hours")
+        st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False, "scrollZoom": True}, key=next_plot_key())
+        st.dataframe(reasons, hide_index=True, use_container_width=True)
+        render_interpretation(natural_ventilation_interpretation(df, mask))
+    elif chart_group == "Psychrometric NV overlay":
+        fig = psychrometric_chart(df, chart_type="T-d", pressure_pa=pressure_pa, show_rh_curves=True, show_comfort_zone=False)
+        fig.add_shape(type="rect", x0=t_min, x1=t_max, y0=0, y1=d_max, line=dict(dash="dash"), fillcolor="rgba(0,150,0,0.08)")
+        render_plot(fig, natural_ventilation_interpretation(df, mask))
+    else:
+        night_mask = night_flushing_condition(df)
+        df_nf = df.copy()
+        df_nf["night_flushing_suitable"] = night_mask.astype(int)
+        fig = heatmap_chart(df_nf, "night_flushing_suitable", "day", "Night-flushing potential", "0/1")
+        render_plot(fig, natural_ventilation_interpretation(df, night_mask))
+
+
+def render_hvac_passive(df: pd.DataFrame) -> None:
+    """Render non-duplicated HVAC and passive-design decision-support charts."""
+    st.header("HVAC operation and passive strategies")
+    has_ghi = (
+        "global_horizontal_radiation_wh_m2" in df.columns
+        and pd.to_numeric(df["global_horizontal_radiation_wh_m2"], errors="coerce").notna().any()
+    )
+    if not has_ghi:
+        st.caption(
+            "No usable GHI is available in this climate interval; solar-shading strategy rows are omitted rather than inferred."
+        )
+    st.caption(
+        "Humidity-control thresholds and enthalpy distributions are analysed on Humidity; heating/cooling degree metrics are analysed on Temperature. "
+        "This page keeps only HVAC/passive-design views that add a distinct decision layer."
+    )
+    chart_group = st.selectbox(
+        "Analysis type",
+        [
+            "Passive strategy summary",
+            "Economizer availability",
+            "Design-day candidates",
+            "Ventilation load proxy",
+        ],
+    )
+
+    if chart_group == "Passive strategy summary":
+        view = st.radio(
+            "View",
+            ["Annual totals", "Monthly stacked bars"],
+            horizontal=True,
+            key="passive_strategy_view",
+        )
+        if view == "Annual totals":
+            chronological_multiyear = time_basis(df) == CHRONOLOGICAL and len(available_years(df)) > 1
+            annual_summary = "Selected-period summary"
+            if chronological_multiyear:
+                annual_summary = st.radio(
+                    "Annual summary",
+                    ["By year", "Selected-period summary"],
+                    index=0,
+                    horizontal=True,
+                    key="passive_strategy_annual_summary",
+                    help=(
+                        "By year keeps every real source year separate in Chronological mode. "
+                        "Selected-period summary deliberately pools the currently filtered interval."
+                    ),
+                )
+
+            if annual_summary == "By year":
+                annual_frames = []
+                for year in available_years(df):
+                    year_frame = filter_year(df, int(year))
+                    year_table = passive_strategy_table(year_frame).copy()
+                    year_table.insert(0, "year", str(int(year)))
+                    annual_frames.append(year_table)
+                table = pd.concat(annual_frames, ignore_index=True)
+                fig = px.bar(
+                    table,
+                    x="hours",
+                    y="strategy",
+                    color="year",
+                    barmode="group",
+                    orientation="h",
+                    title="Passive and HVAC strategy hours by year",
+                    labels={"year": "Year"},
+                )
+                st.caption(
+                    "Chronological multi-year mode: annual strategy hours are separated by real source year. "
+                    "No climatological folding or cross-year pooling is applied in this default view."
+                )
+            else:
+                table = passive_strategy_table(df)
+                fig = px.bar(
+                    table,
+                    x="hours",
+                    y="strategy",
+                    orientation="h",
+                    title="Passive and HVAC strategy hours — selected period",
+                )
+                if chronological_multiyear:
+                    st.caption(
+                        "Selected-period summary intentionally pools all currently filtered chronological years. "
+                        "Use By year for interannual comparison."
+                    )
+
+            fig.update_layout(template="plotly_white", xaxis_title="Hours", yaxis_title="Strategy")
+            st.plotly_chart(
+                fig,
+                use_container_width=True,
+                config={"displaylogo": False, "scrollZoom": True},
+                key=next_plot_key(),
+            )
+            st.dataframe(table, hide_index=True, use_container_width=True)
+            render_interpretation(hvac_interpretation(df))
+        else:
+            monthly = passive_strategy_monthly(df)
+            fig = stacked_monthly_bar(monthly, "Monthly passive and HVAC strategy hours", "hours")
+            render_plot(fig, hvac_interpretation(df))
+    elif chart_group == "Economizer availability":
+        h_return = st.slider("Return-air enthalpy limit [kJ/kg]", 30.0, 80.0, 50.0, 1.0)
+        mask = economizer_condition(df, return_air_enthalpy_kj_kg=h_return)
+        aggregation = st.selectbox(
+            "Aggregation",
+            ["Monthly", "Weekly", "Daily", "Seasonal"],
+            index=0,
+            key="economizer_aggregation",
+        )
+        counts = threshold_count_by_period(df, mask, aggregation, label="hours")
+        fig = threshold_bar_chart(counts, "Air-side economizer availability", "hours")
+        render_plot(fig, hvac_interpretation(df))
+    elif chart_group == "Design-day candidates":
+        daily_aggregation = {
+            "mean_t": ("dry_bulb_temperature_c", "mean"),
+            "min_t": ("dry_bulb_temperature_c", "min"),
+            "max_t": ("dry_bulb_temperature_c", "max"),
+            "max_enthalpy": ("moist_air_enthalpy_kj_kg", "max"),
+            "max_humidity_ratio": ("humidity_ratio_g_kg", "max"),
+        }
+        if has_ghi:
+            daily_aggregation["max_ghi"] = ("global_horizontal_radiation_wh_m2", "max")
+        daily = df.resample("D").agg(**daily_aggregation)
+        mode = st.radio(
+            "Design-day ranking",
+            ["Coldest days", "Hottest days", "Highest enthalpy days", "Most humid days"],
+            horizontal=True,
+        )
+        if mode == "Coldest days":
+            table = daily.sort_values("min_t").head(15)
+        elif mode == "Hottest days":
+            table = daily.sort_values("max_t", ascending=False).head(15)
+        elif mode == "Highest enthalpy days":
+            table = daily.sort_values("max_enthalpy", ascending=False).head(15)
+        else:
+            table = daily.sort_values("max_humidity_ratio", ascending=False).head(15)
+        st.dataframe(table, use_container_width=True)
+        fig = profile_ribbon_chart(
+            df,
+            "dry_bulb_temperature_c",
+            "Daily",
+            "Daily dry-bulb temperature for design-day screening",
+            "°C",
+        )
+        render_plot(fig, hvac_interpretation(df))
+    else:
+        airflow_m3_h = st.number_input(
+            "Outdoor airflow [m³/h]",
+            min_value=1.0,
+            value=1000.0,
+            step=100.0,
+        )
+        heat_set_c = st.number_input(
+            "Heating supply target temperature [°C]",
+            value=20.0,
+            step=0.5,
+        )
+        cool_set_c = st.number_input(
+            "Cooling supply target temperature [°C]",
+            value=26.0,
+            step=0.5,
+        )
+        rho = df["moist_air_density_kg_m3"].fillna(1.2)
+        m_dot = rho * airflow_m3_h / 3600.0
+        cp = 1.006
+        proxy = df.copy()
+        proxy["ventilation_heating_kw"] = m_dot * cp * (
+            heat_set_c - proxy["dry_bulb_temperature_c"]
+        ).clip(lower=0)
+        proxy["ventilation_cooling_kw"] = m_dot * cp * (
+            proxy["dry_bulb_temperature_c"] - cool_set_c
+        ).clip(lower=0)
+        monthly = aggregate_sum(proxy, "ventilation_heating_kw", "Monthly")[["sum"]].rename(
+            columns={"sum": "Heating proxy [kWh-like]"}
+        )
+        monthly["Cooling proxy [kWh-like]"] = aggregate_sum(
+            proxy,
+            "ventilation_cooling_kw",
+            "Monthly",
+        )["sum"]
+        fig = stacked_monthly_bar(
+            monthly,
+            "Outdoor-air sensible ventilation load proxy",
+            "kW·h proxy",
+        )
+        render_plot(fig, hvac_interpretation(df))
+
+
+def render_time_series_overlay(df: pd.DataFrame) -> None:
+    """Render aligned variable-resolution series on one absolute time axis."""
+    st.header("Time series and overlay")
+    native_minutes = native_resolution_minutes(pd.DatetimeIndex(df.index))
+    st.caption(
+        f"Source resolution: {native_minutes} min. Choose an exact time window and overlay up to six series. "
+        "Resolutions finer than the source are intentionally unavailable; no temporal interpolation is performed."
+    )
+
+    index = pd.DatetimeIndex(df.index).sort_values()
+    if index.empty:
+        st.info("No time-series records are available.")
+        return
+
+    default_start = pd.Timestamp(index.min())
+    default_end = pd.Timestamp(index.max())
+    date_min = default_start.date()
+    date_max = default_end.date()
+    step_seconds = max(60, int(native_minutes * 60))
+
+    c1, c2, c3, c4 = st.columns(4)
+    start_date = c1.date_input(
+        "From date",
+        value=default_start.date(),
+        min_value=date_min,
+        max_value=date_max,
+        key="overlay_start_date",
+    )
+    start_time = c2.time_input(
+        "From time",
+        value=default_start.time(),
+        step=step_seconds,
+        key="overlay_start_time",
+    )
+    end_date = c3.date_input(
+        "Through date",
+        value=default_end.date(),
+        min_value=date_min,
+        max_value=date_max,
+        key="overlay_end_date",
+    )
+    end_time = c4.time_input(
+        "Through time",
+        value=default_end.time(),
+        step=step_seconds,
+        key="overlay_end_time",
+    )
+
+    start = pd.Timestamp.combine(start_date, start_time)
+    selected_end = pd.Timestamp.combine(end_date, end_time)
+    if index.tz is not None:
+        start = start.tz_localize(index.tz)
+        selected_end = selected_end.tz_localize(index.tz)
+    # "Through" denotes the selected source interval, so the internal viewport
+    # ends at the following native interval boundary. This includes the selected
+    # 23:00 EPW record without fabricating sub-hourly values.
+    end = selected_end + pd.Timedelta(minutes=native_minutes)
+    if selected_end < start:
+        st.error("The end timestamp must not be earlier than the start timestamp.")
+        return
+
+    if start < pd.Timestamp(index.min()) or selected_end > pd.Timestamp(index.max()):
+        st.error("The selected time range must stay inside the loaded source calendar.")
+        return
+
+
+    available_variables = [
+        label
+        for label, (column, _unit) in VARIABLES.items()
+        if column in df.columns and pd.to_numeric(df[column], errors="coerce").notna().any()
+    ]
+    if not available_variables:
+        st.info("No numeric climate variables are available for overlay.")
+        return
+
+    resolutions = available_resolution_labels(pd.DatetimeIndex(df.index))
+    n_series = st.slider("Number of series", min_value=1, max_value=6, value=2, step=1)
+    preferred = [
+        "Dry-bulb temperature",
+        "Global horizontal radiation",
+        "Relative humidity",
+        "Wind speed",
+        "Dew-point temperature",
+        "Station pressure",
+    ]
+    defaults = [item for item in preferred if item in available_variables]
+    specs: list[OverlaySeries] = []
+
+    st.markdown("#### Series")
+    for i in range(n_series):
+        col_variable, col_resolution = st.columns([3, 2])
+        default_label = defaults[i] if i < len(defaults) else available_variables[min(i, len(available_variables) - 1)]
+        variable_label = col_variable.selectbox(
+            f"Series {i + 1} variable",
+            available_variables,
+            index=available_variables.index(default_label),
+            key=f"overlay_variable_{i}",
+        )
+        default_resolution = "Native" if i == 0 else ("Daily" if "Daily" in resolutions else "Native")
+        resolution = col_resolution.selectbox(
+            f"Series {i + 1} resolution",
+            resolutions,
+            index=resolutions.index(default_resolution),
+            key=f"overlay_resolution_{i}",
+        )
+        column, unit = VARIABLES[variable_label]
+        style_labels = ["Solid", "Dashed", "Dotted", "Dash-dot"]
+        style_to_dash = {"Solid": "solid", "Dashed": "dash", "Dotted": "dot", "Dash-dot": "dashdot"}
+        with st.expander(f"Series {i + 1} style", expanded=False):
+            style_col1, style_col2, style_col3, style_col4 = st.columns([1.25, 1.0, 1.0, 1.0])
+            line_style = style_col1.selectbox(
+                "Line style",
+                style_labels,
+                index=i % len(style_labels),
+                key=f"overlay_line_style_{i}",
+            )
+            line_width = style_col2.slider(
+                "Line width",
+                min_value=0.5,
+                max_value=6.0,
+                value=2.0,
+                step=0.5,
+                key=f"overlay_line_width_{i}",
+            )
+            line_color = style_col3.color_picker(
+                "Line color",
+                value=metric_color(column),
+                key=f"overlay_line_color_{i}",
+            )
+            line_opacity = style_col4.slider(
+                "Opacity",
+                min_value=0.2,
+                max_value=1.0,
+                value=1.0,
+                step=0.05,
+                key=f"overlay_line_opacity_{i}",
+            )
+        specs.append(
+            OverlaySeries(
+                variable_label,
+                column,
+                unit,
+                resolution,
+                color=line_color,
+                dash=style_to_dash[line_style],
+                width=float(line_width),
+                opacity=float(line_opacity),
+            )
+        )
+
+    try:
+        families = validate_unit_families(specs)
+    except ValueError as exc:
+        st.error(str(exc) + " Remove a physical quantity or choose variables from the same unit family.")
+        return
+
+    raw_view = df.loc[(df.index >= start) & (df.index < end)].copy()
+    st.session_state["_active_filtered_export_df"] = raw_view
+    if raw_view.empty:
+        st.warning("The selected interval contains no source records.")
+        return
+
+
+    try:
+        fig, tables = build_overlay_figure(df, specs, start, end, title="Climate time-series overlay")
+    except (ValueError, KeyError) as exc:
+        st.error(f"The requested overlay could not be constructed: {exc}")
+        return
+
+    st.caption(
+        "All series share the same absolute X-axis. Aggregated series use calendar-aligned complete bins before the "
+        "selected viewport is applied. Extensive interval quantities are summed, state/intensive quantities are averaged, "
+        "and wind direction uses a circular mean."
+    )
+    if len(families) == 2:
+        st.caption("Two physical unit families are shown on separate left and right Y-axes.")
+    render_plot(
+        fig,
+        "The overlay preserves one common time axis for every series. Different temporal resolutions are displayed without "
+        "upsampling or interpolation; complete aggregation bins retain their physical meaning even when only part of a bin "
+        "falls inside the visible range.",
+    )
+
+
+def render_data_quality(epw, df: pd.DataFrame, issues: list[object]) -> None:
+    """Render data-quality diagnostics and EPW metadata."""
+    st.header("Data quality and EPW diagnostics")
+    st.subheader("EPW location header")
+    st.dataframe(pd.DataFrame(location_summary(epw.location).items(), columns=["Field", "Value"]), hide_index=True, use_container_width=True)
+
+    st.subheader("Diagnostics")
+    rows = [{"field": i.field, "issue": i.issue, "count": i.count, "severity": i.severity} for i in issues]
+    if rows:
+        issue_df = pd.DataFrame(rows)
+        st.dataframe(issue_df, hide_index=True, use_container_width=True)
+        fig = px.bar(issue_df, x="field", y="count", color="severity", title="Data-quality issue counts")
+        fig.update_layout(template="plotly_white", xaxis_title="Field", yaxis_title="Count")
+        st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False, "scrollZoom": True}, key=next_plot_key())
+        render_interpretation(data_quality_interpretation(len(rows), int((issue_df["severity"] == "error").sum())))
+    else:
+        render_interpretation(data_quality_interpretation(0, 0))
+
+    st.subheader("Missing values by field")
+    missing = df.isna().sum().reset_index()
+    missing.columns = ["field", "missing_count"]
+    missing = missing[missing["missing_count"] > 0].sort_values("missing_count", ascending=False)
+    st.dataframe(missing, hide_index=True, use_container_width=True)
+
+    st.subheader("Header lines")
+    for line in epw.header_lines:
+        st.code(line)
+
+
+def render_canonical_data_quality(dataset, df: pd.DataFrame) -> None:
+    """Render diagnostics/provenance for a provider-neutral historical dataset."""
+    from epw_climate_analyzer.historical_capabilities import historical_coverage_summary, historical_variable_coverage
+
+    st.header("Data quality and source metadata")
+    location = dataset.location
+    st.subheader("Station")
+    st.dataframe(
+        pd.DataFrame(
+            {
+                "Field": ["Station", "Station ID", "Region", "Country", "Latitude", "Longitude", "Elevation"],
+                "Value": [
+                    location.city, location.station_id, location.state, location.country,
+                    location.latitude, location.longitude, location.elevation_m,
+                ],
+            }
+        ),
+        hide_index=True,
+        use_container_width=True,
+    )
+    st.subheader("Temporal/source contract")
+    source_interval = float(dataset.temporal.native_interval_minutes)
+    analysis_interval = float(df.attrs.get("canonical_analysis_interval_minutes", 60.0))
+    st.dataframe(
+        pd.DataFrame(
+            {
+                "Field": [
+                    "Provider", "Dataset", "Calendar mode", "Source cadence", "Canonical analysis cadence",
+                    "Timezone", "First source timestamp", "Last source timestamp", "Source records in loaded interval",
+                ],
+                "Value": [
+                    dataset.provenance.provider, dataset.provenance.dataset, dataset.temporal.calendar_mode,
+                    f"{source_interval:g} min", f"{analysis_interval:g} min", dataset.temporal.timezone_name,
+                    str(dataset.start), str(dataset.end), len(df),
+                ],
+            }
+        ),
+        hide_index=True,
+        use_container_width=True,
+    )
+    st.caption(
+        "This page is calculated from the complete loaded provider-native source interval. Ordinary Climate Analyzer "
+        "pages use the canonical hourly analysis series. The global analysis Data filter is intentionally not applied "
+        "here, so user-excluded months or hours cannot be misclassified as missing source observations."
+    )
+    st.subheader("Native timeline coverage and gaps")
+    coverage = historical_coverage_summary(df)
+    coverage_table = pd.DataFrame(
+        {
+            "Metric": [
+                "Timeline coverage", "Expected source records", "Observed timestamps", "Missing source intervals",
+                "Gap segments", "Longest missing gap", "Observed duration", "Expected duration",
+            ],
+            "Value": [
+                f"{float(coverage['timeline_coverage_pct']):.2f}%",
+                f"{int(coverage['expected_records']):,}",
+                f"{int(coverage['observed_records']):,}",
+                f"{int(coverage['missing_timestamp_intervals']):,}",
+                f"{int(coverage['gap_count']):,}",
+                f"{float(coverage['longest_missing_gap_minutes']):g} min",
+                f"{float(coverage['observed_duration_hours']):,.2f} h",
+                f"{float(coverage['expected_duration_hours']):,.2f} h",
+            ],
+        }
+    )
+    st.dataframe(coverage_table, hide_index=True, use_container_width=True)
+    st.caption(
+        "Coverage is measured against the requested source interval at the provider-native cadence. Missing source "
+        "timestamps are not interpolated. Ordinary hourly analyses omit physically incomplete source hours."
+    )
+
+    per_variable = historical_variable_coverage(df, list(dataset.available_canonical_variables))
+    if not per_variable.empty:
+        per_variable["coverage_pct"] = per_variable["coverage_pct"].round(2)
+        per_variable["observed_hours"] = per_variable["observed_hours"].round(2)
+        st.subheader("Native per-variable measured coverage")
+        st.dataframe(per_variable, hide_index=True, use_container_width=True)
+
+    flag_columns = [column for column in df.columns if str(column).startswith("quality_flag__")]
+    if flag_columns:
+        flag_rows: list[dict[str, object]] = []
+        for column in flag_columns:
+            values = pd.to_numeric(df[column], errors="coerce")
+            counts = values.value_counts(dropna=True).sort_index()
+            code_summary = ", ".join(f"{float(code):g}: {int(count):,}" for code, count in counts.items())
+            flag_rows.append(
+                {
+                    "Provider parameter": str(column).split("__", 1)[1],
+                    "Flag records": int(values.notna().sum()),
+                    "Missing flags": int(values.isna().sum()),
+                    "Observed provider codes": code_summary or "none",
+                }
+            )
+        st.subheader("Provider quality-flag diagnostics")
+        st.dataframe(pd.DataFrame(flag_rows), hide_index=True, use_container_width=True)
+        st.caption(
+            "GeoSphere quality codes are retained verbatim at native source cadence. Climate Analyzer reports their observed distributions but does not invent an accept/reject meaning for undocumented code values."
+        )
+
+    st.subheader("Native missing values by measured field")
+    missing = df[list(dataset.available_canonical_variables)].isna().sum().reset_index()
+    missing.columns = ["field", "missing_count"]
+    missing = missing[missing["missing_count"] > 0].sort_values("missing_count", ascending=False)
+    if missing.empty:
+        st.success("No missing values occur in the native measured variables in the loaded source interval.")
+    else:
+        st.dataframe(missing, hide_index=True, use_container_width=True)
+    with st.expander("Provider provenance", expanded=False):
+        st.write(dataset.provenance.source_name)
+        st.code(dataset.provenance.source_reference)
+        for note in dataset.provenance.notes:
+            st.caption(note)
+
+
+def render_historical_overview(
+    dataset,
+    df: pd.DataFrame,
+    coverage_df: pd.DataFrame | None = None,
+) -> None:
+    """Render hourly climate metrics with unfiltered hourly coverage context."""
+    from epw_climate_analyzer.historical_capabilities import (
+        has_numeric_observations,
+        historical_coverage_summary,
+        historical_variable_coverage,
+    )
+
+    st.header("Hourly climate overview")
+    st.caption(
+        "This overview uses the canonical hourly analysis series derived from provider-native observations. "
+        "Physically incomplete source hours are omitted and variable-local missing values remain missing; native-resolution "
+        "coverage and gaps are reported on Data Quality."
+    )
+    quality_frame = coverage_df if coverage_df is not None else df
+    coverage = historical_coverage_summary(quality_frame)
+    st.caption(
+        "Coverage indicators describe the complete loaded canonical hourly frame; climate metrics and charts below "
+        "respect the active global Data filter."
+    )
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Hourly timeline coverage", f"{float(coverage['timeline_coverage_pct']):.2f}%")
+    m2.metric("Hourly analysis records", f"{int(coverage['observed_records']):,}")
+    m3.metric("Missing analysis hours", f"{int(coverage['missing_timestamp_intervals']):,}")
+    m4.metric("Longest analysis gap", f"{float(coverage['longest_missing_gap_minutes']):g} min")
+    st.caption(
+        f"Requested/covered timeline: {coverage['requested_start']} → {coverage['requested_end']} · "
+        f"analysis cadence {float(coverage['native_interval_minutes']):g} min · "
+        f"{int(coverage['gap_count'])} detected gap segment(s)."
+    )
+
+    reverse_labels = {column: label for label, (column, _unit) in VARIABLES.items()}
+    requested_columns = [str(column) for column in dataset.available_canonical_variables]
+    variable_coverage = historical_variable_coverage(quality_frame, requested_columns)
+    if not variable_coverage.empty:
+        variable_coverage.insert(0, "Measured variable", variable_coverage["variable"].map(lambda x: reverse_labels.get(str(x), str(x))))
+        variable_coverage = variable_coverage.drop(columns=["variable"])
+        variable_coverage["coverage_pct"] = variable_coverage["coverage_pct"].round(2)
+        variable_coverage["observed_hours"] = variable_coverage["observed_hours"].round(2)
+        st.subheader("Hourly-variable availability")
+        st.dataframe(variable_coverage, hide_index=True, use_container_width=True)
+
+    metric_values: list[tuple[str, str]] = []
+    if has_numeric_observations(df, "dry_bulb_temperature_c"):
+        temp = pd.to_numeric(df["dry_bulb_temperature_c"], errors="coerce")
+        metric_values.extend([
+            ("Hourly mean temperature", f"{temp.mean():.1f} °C"),
+            ("Hourly minimum temperature", f"{temp.min():.1f} °C"),
+            ("Hourly maximum temperature", f"{temp.max():.1f} °C"),
+        ])
+    if has_numeric_observations(df, "relative_humidity_pct"):
+        rh = pd.to_numeric(df["relative_humidity_pct"], errors="coerce")
+        metric_values.append(("Mean relative humidity", f"{rh.mean():.1f} %"))
+    if has_numeric_observations(df, "wind_speed_m_s"):
+        wind = pd.to_numeric(df["wind_speed_m_s"], errors="coerce")
+        metric_values.append(("Mean wind speed", f"{wind.mean():.2f} m/s"))
+    if has_numeric_observations(df, "global_horizontal_radiation_wh_m2"):
+        ghi = pd.to_numeric(df["global_horizontal_radiation_wh_m2"], errors="coerce").clip(lower=0)
+        metric_values.append(("Measured GHI total", f"{ghi.sum(min_count=1) / 1000.0:.1f} kWh/m²"))
+    if metric_values:
+        st.subheader("Quick measured-climate metrics")
+        for start in range(0, len(metric_values), 4):
+            cols = st.columns(min(4, len(metric_values) - start))
+            for col, (label, value) in zip(cols, metric_values[start:start + 4]):
+                col.metric(label, value)
+
+def render_historical_wind(df: pd.DataFrame) -> None:
+    """Backward-compatible entry point; canonical wind UI is source-neutral."""
+    render_wind(df)
+
+
+def render_ground_temperature_page(df: pd.DataFrame, *, source_label: str, native_df: pd.DataFrame | None = None) -> None:
+    """Render calculated deep profiles and, when present, measured shallow soil temperatures."""
+    from epw_climate_analyzer.ground_temperature import (
+        animated_profile_figure,
+        animated_profile_gif_bytes,
+        damping_depth_m,
+        fit_annual_harmonic,
+        measured_monthly_ground,
+        measured_vs_calculated_table,
+        monthly_ground_profile,
+        profile_figure,
+        shared_temperature_range,
+    )
+    from epw_climate_analyzer.historical_capabilities import has_numeric_observations
+
+    st.header("Ground temperature")
+    measured_source = native_df if native_df is not None else df
+    measured_all = measured_monthly_ground(measured_source)
+    can_calculate = has_numeric_observations(df, "dry_bulb_temperature_c")
+    if not can_calculate and measured_all.empty:
+        st.info("Neither outdoor dry-bulb temperature nor measured ground temperatures are available in this climate interval.")
+        return
+
+    calculation_df = df
+    calculation_measured_source = measured_source
+    represented_years = available_years(df) if can_calculate else []
+    if can_calculate and len(represented_years) > 1 and time_basis(df) == CHRONOLOGICAL:
+        selected_year = st.selectbox(
+            "Ground-profile year",
+            represented_years,
+            index=len(represented_years) - 1,
+            key="ground_profile_year",
+            help="Chronological multi-year data are fitted year by year so interannual differences are not collapsed.",
+        )
+        calculation_df = filter_year(df, int(selected_year))
+        measured_index = pd.DatetimeIndex(measured_source.index)
+        calculation_measured_source = measured_source.loc[measured_index.year == int(selected_year)].copy()
+        calculation_measured_source.attrs.update(measured_source.attrs)
+        st.caption(
+            f"Chronological multi-year mode: the calculated annual harmonic and measured monthly ground values are shown for {int(selected_year)} only. "
+            "Choose another real source year to compare interannual ground-temperature behaviour."
+        )
+    elif can_calculate and len(represented_years) > 1 and time_basis(df) == CALENDAR_PROFILE:
+        st.caption(
+            "Calendar profile multi-year mode: one climatological annual harmonic is fitted jointly from all represented years using calendar phase. "
+            "Equivalent calendar dates contribute to the same annual cycle; this view intentionally does not represent year-to-year change."
+        )
+    elif can_calculate and represented_years:
+        st.caption(f"Single-year ground-profile calculation from the represented source year {int(represented_years[0])}.")
+
+    measured = measured_monthly_ground(calculation_measured_source) if can_calculate else measured_all
+
+    profile = None
+    harmonic = None
+    conductivity = 2.0
+    density = 2000.0
+    heat_capacity = 1000.0
+    max_depth = 15.0
+    step = 0.25
+    if can_calculate:
+        with st.expander("Calculated-profile soil properties", expanded=False):
+            st.caption("Defaults reproduce the generic-soil assumptions in the reference workbook. They are model inputs, not EPW measurements.")
+            c1, c2, c3 = st.columns(3)
+            conductivity = c1.number_input("Thermal conductivity λ [W/(m·K)]", min_value=0.1, max_value=10.0, value=2.0, step=0.1)
+            density = c2.number_input("Density ρ [kg/m³]", min_value=500.0, max_value=3500.0, value=2000.0, step=50.0)
+            heat_capacity = c3.number_input("Specific heat c [J/(kg·K)]", min_value=300.0, max_value=3000.0, value=1000.0, step=50.0)
+            d1, d2 = st.columns(2)
+            max_depth = d1.number_input("Maximum depth [m]", min_value=1.0, max_value=50.0, value=15.0, step=1.0)
+            step = d2.selectbox("Depth resolution [m]", [0.1, 0.25, 0.5, 1.0], index=1)
+        try:
+            harmonic = fit_annual_harmonic(pd.to_numeric(calculation_df["dry_bulb_temperature_c"], errors="coerce"))
+            depths = pd.Series(range(int(round(float(max_depth) / float(step))) + 1), dtype=float).to_numpy() * float(step)
+            profile = monthly_ground_profile(harmonic, depths, float(conductivity), float(density), float(heat_capacity))
+        except Exception as exc:
+            st.warning(f"Calculated ground-temperature profile is unavailable: {exc}")
+
+    modes: list[str] = []
+    if profile is not None:
+        modes.extend(["Monthly profiles vs depth", "Animated monthly profile", "Looping GIF", "Temperature through year at selected depth"])
+    if not measured.empty:
+        modes.append("Measured shallow ground temperature")
+    if profile is not None and not measured.empty:
+        modes.append("Measured vs calculated")
+    if not modes:
+        st.info("No ground-temperature display can be generated for the active interval.")
+        return
+    mode = st.selectbox("Analysis type", modes, key="ground_temperature_analysis")
+
+    if profile is not None and harmonic is not None:
+        st.caption(
+            f"Calculated profile: first annual harmonic of outdoor dry-bulb temperature; 1-D periodic semi-infinite ground conduction. "
+            f"Mean {harmonic.mean_c:.2f} °C · annual amplitude {harmonic.amplitude_c:.2f} K · damping depth "
+            f"{damping_depth_m(float(conductivity), float(density), float(heat_capacity)):.2f} m."
+        )
+    if not measured.empty:
+        st.caption(f"Observed points: {source_label} ground-temperature measurements at provider sensor depths (0.10 / 0.20 / 0.50 m where available).")
+
+    if mode == "Monthly profiles vs depth":
+        render_plot(profile_figure(profile, measured if not measured.empty else None), "Lines are calculated monthly mean profiles; open markers are measured GeoSphere shallow-soil monthly means where available.")
+    elif mode == "Animated monthly profile":
+        render_plot(animated_profile_figure(profile, measured if not measured.empty else None), "Interactive loop through January–December. The axes stay fixed while the calculated profile moves with seasonal phase lag and attenuation.")
+    elif mode == "Looping GIF":
+        gif_speed = st.slider("Frame duration [ms]", 300, 1500, 700, 100, key="ground_gif_duration")
+        gif_bytes = animated_profile_gif_bytes(profile, measured if not measured.empty else None, duration_ms=int(gif_speed))
+        st.image(gif_bytes, caption="Looping January–December ground-temperature profile")
+        st.download_button(
+            "Download GIF",
+            data=gif_bytes,
+            file_name="ground_temperature_monthly_loop.gif",
+            mime="image/gif",
+            key="ground_temperature_gif_download",
+        )
+        st.caption("The GIF is a visualization of the already calculated monthly profile; it does not perform a separate calculation.")
+    elif mode == "Temperature through year at selected depth":
+        depth = st.slider("Depth [m]", 0.0, float(max_depth), min(2.0, float(max_depth)), float(step))
+        values = {month: float(pd.Series(profile[month].to_numpy(), index=profile.index).reindex(profile.index.union([depth])).interpolate(method="index").loc[depth]) for month in profile.columns}
+        series = pd.DataFrame({"month": list(values), "temperature_c": list(values.values())})
+        fig = px.line(series, x="month", y="temperature_c", markers=True, title=f"Calculated ground temperature at {depth:g} m")
+        temperature_range = shared_temperature_range(profile, measured if not measured.empty else None)
+        fig.update_layout(
+            template="plotly_white",
+            xaxis_title="Month",
+            yaxis_title="Ground temperature [°C]",
+            height=520,
+        )
+        fig.update_yaxes(range=list(temperature_range))
+        render_plot(
+            fig,
+            "Calculated monthly mean temperature at the selected depth. The temperature axis is held to the common annual profile range so seasonal-amplitude damping with increasing depth remains visually comparable.",
+        )
+    elif mode == "Measured shallow ground temperature":
+        plot = measured.copy()
+        plot["month"] = plot["month_index"].map({v: k for k, v in MONTHS.items()})
+        plot["depth"] = plot["depth_m"].map(lambda v: f"{v:.2f} m")
+        fig = px.line(plot, x="month", y="temperature_c", color="depth", markers=True, title="Measured shallow ground temperature")
+        fig.update_layout(template="plotly_white", xaxis_title="Month", yaxis_title="Ground temperature [°C]", legend_title="Sensor depth")
+        render_plot(fig, "Monthly means of measured provider ground-temperature sensors; no deep profile is inferred from these points.")
+    else:
+        comparison = measured_vs_calculated_table(profile, measured)
+        comparison["error_c"] = comparison["error_c"].round(2)
+        st.dataframe(comparison[["month", "depth_m", "observed_c", "calculated_c", "error_c"]], hide_index=True, use_container_width=True)
+        mae = float(comparison["error_c"].abs().mean()) if not comparison.empty else float("nan")
+        st.metric("Mean absolute model–measurement difference", f"{mae:.2f} K")
+        fig = px.scatter(comparison, x="observed_c", y="calculated_c", color="depth_m", hover_data=["month"], title="Calculated vs measured ground temperature")
+        if not comparison.empty:
+            lo = float(min(comparison["observed_c"].min(), comparison["calculated_c"].min()))
+            hi = float(max(comparison["observed_c"].max(), comparison["calculated_c"].max()))
+            fig.add_shape(type="line", x0=lo, y0=lo, x1=hi, y1=hi, line={"dash": "dash"})
+        fig.update_layout(template="plotly_white", xaxis_title="Observed [°C]", yaxis_title="Calculated [°C]")
+        render_plot(fig, "Validation view for the generic periodic-soil model against measured GeoSphere shallow-soil temperatures.")
+
+def render_historical_solar(df: pd.DataFrame) -> None:
+    """Render measured horizontal solar analyses without fabricating DNI."""
+    from epw_climate_analyzer.historical_capabilities import has_numeric_observations, horizontal_irradiance_frame
+
+    st.header("Measured horizontal solar radiation")
+    solar = horizontal_irradiance_frame(df)
+    specs: list[tuple[str, str, str]] = []
+    if has_numeric_observations(df, "global_horizontal_radiation_wh_m2"):
+        specs.append(("Global horizontal irradiance", "global_horizontal_irradiance_w_m2", "global_horizontal_radiation_wh_m2"))
+    if has_numeric_observations(df, "diffuse_horizontal_radiation_wh_m2"):
+        specs.append(("Diffuse horizontal irradiance", "diffuse_horizontal_irradiance_w_m2", "diffuse_horizontal_radiation_wh_m2"))
+    if not specs:
+        st.info("No measured horizontal radiation observations are available in the selected interval.")
+        return
+
+    st.caption(
+        "GeoSphere cglo/chim originate as measured 10-minute mean horizontal irradiances. The adapter first stores "
+        "interval irradiation [Wh/m²], and the canonical hourly layer sums those interval energies without changing the "
+        "energy total. This page converts the hourly Wh/m² value to hourly mean irradiance [W/m²]. DNI and plane-of-array "
+        "routes remain intentionally unavailable in measured historical mode."
+    )
+    options: list[str] = ["Horizontal irradiance explorer", "Monthly horizontal irradiation"]
+    has_ghi = any(source == "global_horizontal_radiation_wh_m2" for _, _, source in specs)
+    has_temperature = has_numeric_observations(df, "dry_bulb_temperature_c")
+    if has_ghi and has_temperature:
+        options.extend(["Cooling-risk solar hours", "Temperature vs GHI"])
+    chart_group = st.selectbox("Analysis type", options, key="historical_solar_analysis")
+
+    if chart_group == "Horizontal irradiance explorer":
+        labels = [label for label, _, _ in specs]
+        selected = st.selectbox("Variable", labels, key="historical_solar_variable")
+        column = next(column for label, column, _ in specs if label == selected)
+        chart_type = st.selectbox("Chart type", ["Profile", "Duration curve", "Month-hour heat map", "Histogram"], key="historical_solar_chart")
+        if chart_type == "Profile":
+            aggregation = st.selectbox("Aggregation", ["Hourly", "Daily", "Weekly", "Monthly", "Seasonal"], index=0, key="historical_solar_aggregation")
+            fig = profile_ribbon_chart(solar, column, aggregation, f"{selected} — {aggregation.lower()}", "W/m²")
+        elif chart_type == "Duration curve":
+            fig = duration_chart(solar, column, f"{selected} duration curve", "W/m²", ascending=False)
+        elif chart_type == "Month-hour heat map":
+            fig = month_hour_heatmap(solar, column, f"{selected} month-hour heat map", "W/m²")
+        else:
+            bins = st.slider("Histogram bins", 10, 120, 40, key="historical_solar_bins")
+            fig = histogram_chart(solar, column, f"{selected} histogram", "W/m²", bins=bins)
+        render_plot(
+            fig,
+            "Values are canonical hourly mean horizontal irradiance derived from measured source intervals. Duration/frequency views use physical hours, not record counts."
+        )
+    elif chart_group == "Monthly horizontal irradiation":
+        monthly = pd.DataFrame(index=range(1, 13))
+        for label, _, source in specs:
+            monthly[label] = pd.to_numeric(df[source], errors="coerce").clip(lower=0).groupby(df["month_index"]).sum(min_count=1) / 1000.0
+        fig = stacked_monthly_bar(monthly, "Measured monthly horizontal irradiation", "kWh/m²")
+        render_plot(
+            fig,
+            "Monthly irradiation sums canonical hourly interval energy [Wh/m²]. A physically incomplete source hour is absent rather than interpolated."
+        )
+    elif chart_group == "Cooling-risk solar hours":
+        t_threshold = st.slider("Temperature threshold [°C]", 15.0, 35.0, 24.0, 0.5, key="historical_solar_t_threshold")
+        ghi_threshold = st.slider("Mean GHI threshold [W/m²]", 50.0, 1000.0, 300.0, 25.0, key="historical_solar_ghi_threshold")
+        aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0, key="historical_solar_threshold_aggregation")
+        condition = (solar["dry_bulb_temperature_c"] > t_threshold) & (solar["global_horizontal_irradiance_w_m2"] > ghi_threshold)
+        counts = threshold_count_by_period(solar, condition, aggregation, label="hours")
+        fig = threshold_bar_chart(counts, "Measured cooling-risk solar hours")
+        render_plot(
+            fig,
+            "Hours combine canonical hourly outdoor temperature with canonical hourly mean global horizontal irradiance. Incomplete source hours do not contribute duration."
+        )
+    else:
+        fig = scatter_chart(
+            solar,
+            "dry_bulb_temperature_c",
+            "global_horizontal_irradiance_w_m2",
+            "month_index",
+            "Outdoor temperature vs measured global horizontal irradiance",
+            "Dry-bulb temperature [°C]",
+            "GHI [W/m²]",
+        )
+        render_plot(fig, "Each point combines coincident canonical hourly temperature and global horizontal irradiance at the analysis timestamp.")
+
+
+def render_canonical_climate_analysis(dataset) -> None:
+    """Run existing source-agnostic analyses on a real historical canonical dataset."""
+    from epw_climate_analyzer.historical_capabilities import available_historical_pages, has_numeric_observations
+
+    historical_pages = available_historical_pages(dataset.data)
+    if NAVIGATION_KEY not in st.session_state or st.session_state[NAVIGATION_KEY] not in historical_pages:
+        preferred = "Overview" if "Overview" in historical_pages else "Time Series and Overlay"
+        st.session_state[NAVIGATION_KEY] = preferred
+
+    st.sidebar.markdown("### Explore")
+    page = st.sidebar.radio(
+        "Analysis section",
+        historical_pages,
+        format_func=navigation_label,
+        key=NAVIGATION_KEY,
+        label_visibility="collapsed",
+    )
+    if page == "Climate File Source":
+        render_climate_file_source()
+        return
+
+    with st.sidebar.expander("Advanced calculation settings", expanded=False):
+        pressure_mode = st.selectbox(
+            "Psychrometric pressure mode",
+            [
+                "Measured station pressure with fallback median",
+                "Normal pressure: 101325 Pa",
+                "Altitude-derived standard atmosphere pressure",
+                "Custom constant pressure",
+            ],
+            index=0,
+            help=(
+                "Default: normalize measured GeoSphere station pressure to the canonical hourly analysis cadence. "
+                "The measured-pressure median is used only as a fallback where an hourly pressure value is unavailable."
+            ),
+        )
+        custom_pressure = None
+        if pressure_mode == "Custom constant pressure":
+            custom_pressure = st.number_input(
+                "Custom pressure [Pa]", min_value=30000.0, max_value=120000.0, value=101325.0, step=100.0
+            )
+
+    can_derive_psychrometrics = (
+        has_numeric_observations(dataset.data, "dry_bulb_temperature_c")
+        and has_numeric_observations(dataset.data, "relative_humidity_pct")
+    )
+    include_psychrometrics = can_derive_psychrometrics and page in {
+        "Temperature",
+        "Humidity and Psychrometrics",
+        "Wind and Ventilation",
+        "Time Series and Overlay",
+        "Natural Ventilation",
+        "HVAC and Passive Design",
+    }
+    _ensure_analysis_dependencies(include_solar=False, include_comparison=False)
+    source_pressure = dataset.data.get("atmospheric_station_pressure_pa")
+    valid_pressure = pd.to_numeric(source_pressure, errors="coerce").dropna() if source_pressure is not None else pd.Series(dtype=float)
+    measured_median = (
+        float(valid_pressure.median())
+        if not valid_pressure.empty
+        else pressure_from_altitude_m(float(dataset.location.elevation_m or 0.0))
+    )
+    if pressure_mode == "Measured station pressure with fallback median":
+        fallback_pressure = measured_median
+        pressure_override = None
+    elif pressure_mode == "Normal pressure: 101325 Pa":
+        fallback_pressure = DEFAULT_PRESSURE_PA
+        pressure_override = DEFAULT_PRESSURE_PA
+    elif pressure_mode == "Altitude-derived standard atmosphere pressure":
+        fallback_pressure = pressure_from_altitude_m(float(dataset.location.elevation_m or 0.0))
+        pressure_override = fallback_pressure
+    else:
+        fallback_pressure = float(custom_pressure or DEFAULT_PRESSURE_PA)
+        pressure_override = fallback_pressure
+
+    from epw_climate_analyzer.historical import (
+        prepare_historical_analysis_frame,
+        prepare_historical_native_diagnostic_frame,
+    )
+    try:
+        if page == "Data Quality":
+            full_df = prepare_historical_native_diagnostic_frame(dataset)
+        else:
+            full_df = prepare_historical_analysis_frame(
+                dataset,
+                include_psychrometrics=include_psychrometrics,
+                fallback_pressure_pa=fallback_pressure,
+                pressure_override_pa=pressure_override,
+            )
+    except Exception as exc:
+        st.error(f"Historical climate data could not be prepared for this analysis: {exc}")
+        return
+
+    active_pressure = fallback_pressure if pressure_mode != "Measured station pressure with fallback median" else measured_median
+    if page == "Data Quality":
+        # Source-quality diagnostics must not interpret intentionally excluded
+        # months/hours as missing provider observations. Audit the complete
+        # loaded native interval; the global Data filter belongs to analysis.
+        filtered_df = full_df
+        st.session_state["_active_filtered_export_df"] = full_df
+    else:
+        filtered_df = sidebar_filters(full_df)
+    if filtered_df.empty:
+        st.warning("The current filters remove all data. Adjust the date, month or hour filter.")
+        return
+
+    source_interval = float(dataset.temporal.native_interval_minutes)
+    analysis_interval = float(full_df.attrs.get("canonical_analysis_interval_minutes", 60.0))
+    frame_role = str(full_df.attrs.get("canonical_frame_role", "hourly-analysis"))
+    st.sidebar.markdown("### Current climate")
+    st.sidebar.write(f"**{dataset.location.city}, {dataset.location.country}**")
+    if frame_role == "native-diagnostics":
+        st.sidebar.caption(f"GeoSphere Austria · native source diagnostics · {source_interval:g} min")
+        st.sidebar.write(f"Source rows loaded: {len(filtered_df):,}")
+    else:
+        st.sidebar.caption(
+            f"GeoSphere Austria · source {source_interval:g} min → canonical analysis {analysis_interval:g} min"
+        )
+        st.sidebar.write(f"Hourly analysis rows in current view: {len(filtered_df):,}")
+    with st.sidebar.expander("Data provenance", expanded=False):
+        st.caption(dataset.provenance.dataset)
+        st.caption(f"Source cadence: {source_interval:g} min")
+        st.caption(f"Canonical analysis cadence: {analysis_interval:g} min")
+        st.caption(f"Active frame: {'native source diagnostics' if frame_role == 'native-diagnostics' else 'canonical hourly analysis'}")
+        st.caption(f"Calendar: real historical UTC · {dataset.temporal.calendar_mode}")
+        if pressure_mode == "Measured station pressure with fallback median":
+            st.caption(f"Pressure: measured station values; fallback median {active_pressure:,.0f} Pa")
+        else:
+            st.caption(f"Calculation pressure: {active_pressure:,.0f} Pa")
+
+    if page == "Overview":
+        render_historical_overview(dataset, filtered_df, full_df)
+    elif page == "Temperature":
+        st.caption("Threshold conditions are evaluated on the canonical hourly analysis series. Physically incomplete source hours are absent and contribute no duration.")
+        native_ground_df = apply_active_global_filter(prepare_historical_native_diagnostic_frame(dataset))
+        render_temperature(
+            filtered_df,
+            ground_source_label="GeoSphere measured",
+            ground_native_df=native_ground_df,
+        )
+    elif page == "Humidity and Psychrometrics":
+        st.caption("Moisture-threshold hours are evaluated on the canonical hourly analysis series. Physically incomplete source hours are absent and contribute no duration.")
+        render_humidity(filtered_df, pressure_pa=active_pressure)
+    elif page == "Solar and Radiation":
+        render_historical_solar(filtered_df)
+    elif page == "Sky and Daylight":
+        render_sky_daylight(filtered_df, latitude=float(dataset.location.latitude))
+    elif page == "Wind and Ventilation":
+        render_wind(filtered_df)
+    elif page == "Natural Ventilation":
+        st.caption(
+            "GeoSphere natural-ventilation suitability uses canonical hourly T/RH-derived psychrometrics and, when available, measured hourly wind speed. "
+            "No EPW-only field is required for this route."
+        )
+        render_natural_ventilation(filtered_df, pressure_pa=active_pressure)
+    elif page == "HVAC and Passive Design":
+        st.caption(
+            "Historical HVAC/passive-design indicators use canonical hourly temperature and psychrometrics. "
+            "Solar-shading indicators are included only when measured GHI exists in the selected GeoSphere interval."
+        )
+        render_hvac_passive(filtered_df)
+    elif page == "Precipitation and Snow":
+        native_precipitation_df = apply_active_global_filter(prepare_historical_native_diagnostic_frame(dataset))
+        st.caption(
+            "Dual-resolution semantics: conserved liquid-precipitation totals and measured duration use the canonical hourly analysis frame; "
+            "source-record occurrence, true native-interval precipitation extremes and snow-state duration/season indices use provider-native observations under the same global Data filter."
+        )
+        render_precipitation(filtered_df, native_df=native_precipitation_df)
+    elif page == "Time Series and Overlay":
+        render_time_series_overlay(filtered_df)
+    else:
+        render_canonical_data_quality(dataset, filtered_df)
 
 
 def main() -> None:
-    """Run the Climate Analyzer with canonical source-parity routing enabled."""
-    _legacy.main()
+    """Run the Streamlit Climate Analyzer application."""
+    st.sidebar.caption("Building Energy Tools")
+    st.sidebar.title(APP_NAME)
+    st.sidebar.caption(APP_RELEASE_LABEL)
+    apply_queued_navigation(st.session_state)
+    active_file = get_active_climate_file()
+    active_canonical = get_active_canonical_climate()
+
+    if active_file is None and active_canonical is None:
+        st.sidebar.info("Choose a climate source to start the analysis.")
+        render_climate_file_source()
+        return
+    if active_canonical is not None:
+        render_canonical_climate_analysis(active_canonical)
+        return
+
+    if NAVIGATION_KEY not in st.session_state or st.session_state[NAVIGATION_KEY] not in NAVIGATION_PAGES:
+        st.session_state[NAVIGATION_KEY] = "Overview"
+
+    st.sidebar.markdown("### Explore")
+    page = st.sidebar.radio(
+        "Analysis section",
+        NAVIGATION_PAGES,
+        format_func=navigation_label,
+        key=NAVIGATION_KEY,
+        label_visibility="collapsed",
+    )
+
+    if page == "Climate File Source":
+        render_climate_file_source()
+        return
+
+    with st.sidebar.expander("Advanced calculation settings", expanded=False):
+        pressure_mode = st.selectbox(
+            "Psychrometric pressure mode",
+            [
+                "Normal pressure: 101325 Pa",
+                "EPW station pressure with fallback median",
+                "Altitude-derived standard atmosphere pressure",
+                "Custom constant pressure",
+            ],
+            index=1,
+            help=(
+                "Default: use the atmospheric station pressure stored in the EPW for each hourly record. "
+                "The median valid EPW pressure is used only as a fallback when an EPW pressure value is missing or invalid."
+            ),
+        )
+        custom_pressure = None
+        if pressure_mode == "Custom constant pressure":
+            custom_pressure = st.number_input(
+                "Custom pressure [Pa]",
+                min_value=30000.0,
+                max_value=120000.0,
+                value=101325.0,
+                step=100.0,
+            )
+
+    include_psychrometrics, include_solar = page_derivation_flags(page)
+    _ensure_analysis_dependencies(
+        include_solar=include_solar,
+        include_comparison=(page == "Compare Climates"),
+    )
+    payload = active_file.payload
+    epw, full_df, issues = load_epw_from_bytes(
+        active_file.name,
+        payload,
+        pressure_mode,
+        custom_pressure,
+        include_psychrometrics=include_psychrometrics,
+        include_solar=include_solar,
+    )
+
+    if pressure_mode == "Normal pressure: 101325 Pa":
+        active_pressure = DEFAULT_PRESSURE_PA
+    elif pressure_mode == "Altitude-derived standard atmosphere pressure":
+        active_pressure = pressure_from_altitude_m(epw.location.elevation_m)
+    elif pressure_mode == "Custom constant pressure":
+        active_pressure = float(custom_pressure or DEFAULT_PRESSURE_PA)
+    else:
+        valid_pressure = full_df["atmospheric_station_pressure_pa"].dropna()
+        active_pressure = (
+            float(valid_pressure.median())
+            if not valid_pressure.empty
+            else pressure_from_altitude_m(float(epw.location.elevation_m or 0.0))
+        )
+
+    filtered_df = sidebar_filters(full_df)
+    if filtered_df.empty:
+        st.warning("The current filters remove all data. Adjust the date, month or hour filter.")
+        return
+
+    st.sidebar.markdown("### Current climate")
+    st.sidebar.write(f"**{epw.location.city}, {epw.location.country}**")
+    st.sidebar.caption(epw.name)
+    st.sidebar.write(f"Rows in current view: {len(filtered_df):,}")
+    with st.sidebar.expander("Data provenance", expanded=False):
+        st.caption(active_file.source)
+        if pressure_mode == "EPW station pressure with fallback median":
+            st.caption(f"Pressure: hourly EPW station values; fallback median {active_pressure:,.0f} Pa")
+        else:
+            st.caption(f"Calculation pressure: {active_pressure:,.0f} Pa")
+
+    if page == "Overview":
+        render_overview(epw, filtered_df, full_df, issues)
+    elif page == "Temperature":
+        render_temperature(filtered_df, ground_source_label="EPW calculated")
+    elif page == "Humidity and Psychrometrics":
+        render_humidity(filtered_df, pressure_pa=active_pressure)
+    elif page == "Solar and Radiation":
+        render_solar(filtered_df)
+    elif page == "Wind and Ventilation":
+        render_wind(filtered_df)
+    elif page == "Sky and Daylight":
+        render_sky_daylight(filtered_df, latitude=float(epw.location.latitude))
+    elif page == "Precipitation and Snow":
+        render_precipitation(filtered_df)
+    elif page == "Time Series and Overlay":
+        render_time_series_overlay(filtered_df)
+    elif page == "Natural Ventilation":
+        render_natural_ventilation(filtered_df, pressure_pa=active_pressure)
+    elif page == "HVAC and Passive Design":
+        render_hvac_passive(filtered_df)
+    elif page == "Compare Climates":
+        render_compare_climates(active_file, pressure_mode, custom_pressure, active_pressure)
+    else:
+        render_data_quality(epw, filtered_df, issues)
 
 
 if __name__ == "__main__":
