@@ -1,19 +1,23 @@
 """Lightweight presentation-layer internationalization for Climate Analyzer.
 
-The scientific/runtime model deliberately remains locale-neutral.  This module
-contains only small Python dictionaries and locale resolution helpers so adding
-translations does not add startup-heavy dependencies to the Streamlit app.
+The scientific/runtime model deliberately remains locale-neutral. This module
+contains only small Python dictionaries, locale resolution helpers and a
+``ContextVar`` for the active presentation locale, so adding translations does
+not add startup-heavy dependencies to the Streamlit app.
 
 Internal page IDs, DataFrame column names, provider parameter names and other
-calculation/routing identifiers must never be translated.  Callers translate
+calculation/routing identifiers must never be translated. Callers translate
 only presentation strings at the UI boundary.
 """
 
 from __future__ import annotations
 
+from contextvars import ContextVar
+
 
 DEFAULT_LOCALE = "en"
 SUPPORTED_LOCALES = ("en", "de", "es", "ru")
+LOCALE_SESSION_KEY = "climate_analyzer_locale"
 
 LOCALE_DISPLAY_NAMES = {
     "en": "English",
@@ -22,10 +26,19 @@ LOCALE_DISPLAY_NAMES = {
     "ru": "Русский",
 }
 
+_ACTIVE_LOCALE: ContextVar[str] = ContextVar(
+    "climate_analyzer_active_locale",
+    default=DEFAULT_LOCALE,
+)
+
 
 TRANSLATIONS: dict[str, dict[str, str]] = {
     "en": {
         "app.tagline": "Climate analysis for building design and building performance",
+        "ui.language": "Language",
+        "ui.analysis_section": "Analysis section",
+        "sidebar.explore": "Explore",
+        "sidebar.choose_source": "Choose a climate source to start the analysis.",
         "nav.climate_file_source": "Start — Climate source",
         "nav.overview": "Summary — Overview",
         "nav.temperature": "Climate — Temperature",
@@ -42,6 +55,10 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     },
     "de": {
         "app.tagline": "Klimaanalyse für Gebäudeentwurf und Gebäudeperformance",
+        "ui.language": "Sprache",
+        "ui.analysis_section": "Analysebereich",
+        "sidebar.explore": "Analyse",
+        "sidebar.choose_source": "Wählen Sie eine Klimaquelle, um die Analyse zu starten.",
         "nav.climate_file_source": "Start — Klimaquelle",
         "nav.overview": "Zusammenfassung — Übersicht",
         "nav.temperature": "Klima — Temperatur",
@@ -58,6 +75,10 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     },
     "es": {
         "app.tagline": "Análisis climático para diseño y rendimiento de edificios",
+        "ui.language": "Idioma",
+        "ui.analysis_section": "Sección de análisis",
+        "sidebar.explore": "Explorar",
+        "sidebar.choose_source": "Seleccione una fuente climática para iniciar el análisis.",
         "nav.climate_file_source": "Inicio — Fuente climática",
         "nav.overview": "Resumen — Vista general",
         "nav.temperature": "Clima — Temperatura",
@@ -74,6 +95,10 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
     },
     "ru": {
         "app.tagline": "Климатический анализ для проектирования и оценки зданий",
+        "ui.language": "Язык",
+        "ui.analysis_section": "Раздел анализа",
+        "sidebar.explore": "Анализ",
+        "sidebar.choose_source": "Выберите источник климатических данных, чтобы начать анализ.",
         "nav.climate_file_source": "Старт — Источник климатических данных",
         "nav.overview": "Сводка — Обзор",
         "nav.temperature": "Климат — Температура",
@@ -94,7 +119,7 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
 def normalize_locale(locale: str | None) -> str:
     """Resolve a locale or language tag to one of the supported base locales.
 
-    Region/script suffixes are intentionally ignored for the first i18n stage,
+    Region/script suffixes are intentionally ignored for this i18n stage,
     e.g. ``de-AT`` -> ``de`` and ``es_ES`` -> ``es``. Unknown or empty values
     fall back deterministically to English.
     """
@@ -107,9 +132,25 @@ def normalize_locale(locale: str | None) -> str:
     return base if base in SUPPORTED_LOCALES else DEFAULT_LOCALE
 
 
-def translate(key: str, locale: str | None = None) -> str:
-    """Return a localized presentation string with deterministic EN fallback."""
+def set_active_locale(locale: str | None) -> str:
+    """Set the locale for the current execution context and return its base code."""
     resolved = normalize_locale(locale)
+    _ACTIVE_LOCALE.set(resolved)
+    return resolved
+
+
+def active_locale() -> str:
+    """Return the locale bound to the current execution context."""
+    return normalize_locale(_ACTIVE_LOCALE.get())
+
+
+def translate(key: str, locale: str | None = None) -> str:
+    """Return a localized presentation string with deterministic EN fallback.
+
+    Omitting ``locale`` uses the active execution-context locale. Explicit
+    locale arguments remain deterministic and independent of the active context.
+    """
+    resolved = active_locale() if locale is None else normalize_locale(locale)
     english = TRANSLATIONS[DEFAULT_LOCALE]
     return TRANSLATIONS[resolved].get(key, english.get(key, key))
 
