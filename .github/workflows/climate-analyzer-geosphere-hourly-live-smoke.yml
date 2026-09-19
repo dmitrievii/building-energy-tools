@@ -6,6 +6,7 @@ on:
     paths:
       - 'deployment/geosphere_hourly_provider_probe.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/geosphere.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/geosphere_resource_overlay.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/climate_model.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/canonical_hourly.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/historical.py'
@@ -18,6 +19,7 @@ on:
     paths:
       - 'deployment/geosphere_hourly_provider_probe.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/geosphere.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/geosphere_resource_overlay.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/climate_model.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/canonical_hourly.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/historical.py'
@@ -60,9 +62,18 @@ jobs:
 
       - name: Probe live GeoSphere klima-v2-1h data and canonical fast path
         run: |
-          python deployment/geosphere_hourly_provider_probe.py \
-            --output "$GEOSPHERE_HOURLY_SMOKE_FIXTURE" \
-            --timeout 60
+          python - <<'PY'
+          import sys
+          from epw_climate_analyzer.geosphere_resource_overlay import apply_geosphere_resource_overlay
+          apply_geosphere_resource_overlay()
+          from deployment.geosphere_hourly_provider_probe import main
+          sys.argv = [
+              'geosphere_hourly_provider_probe.py',
+              '--output', 'artifacts/geosphere-hourly-smoke/provider-fixture.json',
+              '--timeout', '60',
+          ]
+          raise SystemExit(main())
+          PY
 
       - name: Upload provider-backed hourly evidence
         if: always()
