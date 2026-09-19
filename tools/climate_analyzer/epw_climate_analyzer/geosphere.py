@@ -1,13 +1,16 @@
-"""GeoSphere Austria quality-checked 10-minute station-data adapter.
+"""GeoSphere Austria historical station-data adapter.
 
-The adapter targets the public historical ``klima-v2-10min`` resource and
-terminates at :class:`CanonicalClimateDataset`.  It intentionally does not
-pretend measured observations are EPW data: real UTC timestamps, station
-identity, provider cadence and provenance remain explicit.
+One transport/canonical engine serves multiple quality-checked GeoSphere v2
+resources.  Resource-specific knowledge is declarative (cadence, DOI, provider
+field names and unit conversions); batching, validation, station parsing,
+quality metadata and canonical conversion are shared.
 
-Network access is restricted to the official GeoSphere Austria Dataset API.
-Product tests exercise parsing and normalization with fixed fixtures and do not
-require internet access.
+Supported resources:
+* ``klima-v2-10min`` — high-resolution quality-checked station observations;
+* ``klima-v2-1h`` — long-term quality-checked hourly station observations.
+
+Provider timestamps remain real UTC historical instants.  No GeoSphere dataset
+is converted to an EPW typical year.
 """
 
 from __future__ import annotations
@@ -33,20 +36,11 @@ from .climate_model import (
 
 GEOSPHERE_API_HOST = "dataset.api.hub.geosphere.at"
 GEOSPHERE_API_BASE = f"https://{GEOSPHERE_API_HOST}/v1"
-GEOSPHERE_RESOURCE_ID = "klima-v2-10min"
-GEOSPHERE_ENDPOINT = f"{GEOSPHERE_API_BASE}/station/historical/{GEOSPHERE_RESOURCE_ID}"
-GEOSPHERE_METADATA_ENDPOINT = f"{GEOSPHERE_ENDPOINT}/metadata"
-GEOSPHERE_DATASET_PAGE = "https://data.hub.geosphere.at/en/dataset/klima-v2-10min"
-GEOSPHERE_DOI = "https://doi.org/10.60669/8fya-7x87"
 GEOSPHERE_LICENSE = "Creative Commons Attribution 4.0 International"
-GEOSPHERE_NATIVE_INTERVAL_MINUTES = 10
+GEOSPHERE_LOCAL_TIMEZONE = "Europe/Vienna"
+GEOSPHERE_STANDARD_UTC_OFFSET_HOURS = 1.0
 
-# The official API limit is larger, but a lower local hard cap keeps public app
-# requests bounded and leaves margin for provider-side changes and null values.
 MAX_REQUEST_DATAPOINTS = 200_000
-# Normal planning deliberately stays below the hard cap. Long public requests
-# are more reliable as moderately sized batches, while adaptive splitting below
-# handles occasional provider-side slow responses without restarting the load.
 DEFAULT_BATCH_DATAPOINTS = 100_000
 MAX_RESPONSE_BYTES = 24 * 1024 * 1024
 DEFAULT_TIMEOUT_SECONDS = 60
@@ -55,6 +49,9 @@ RETRY_BACKOFF_BASE_SECONDS = 0.5
 MAX_ADAPTIVE_SPLIT_DEPTH = 4
 TRANSIENT_HTTP_STATUS_CODES = frozenset({408, 425, 429, 500, 502, 503, 504})
 USER_AGENT = "Building-Energy-Tools-Climate-Analyzer/0.1 GeoSphere-adapter"
+QUALITY_FLAG_COLUMN_PREFIX = "quality_flag__"
+QUALITY_CODEBOOK_ATTR = "geosphere_quality_codebooks"
+QUALITY_LABEL_ATTR = "geosphere_quality_labels"
 
 
 @dataclass(frozen=True)
@@ -79,6 +76,7 @@ class GeoSphereParameter:
     long_name: str
     unit: str
     description: str = ""
+    code_list_ref: str = ""
 
 
 @dataclass(frozen=True)
@@ -88,79 +86,138 @@ class ProviderFieldSpec:
     expected_units: tuple[str, ...]
     scale: float = 1.0
     description: str = ""
+    interval_semantics: str = "unknown"
 
 
-# The v2 parameter names below are from the provider metadata. Unit validation
-# is part of the contract so a future provider semantic change fails closed.
-# Radiation values are 10-minute mean irradiance [W/m²] and are converted to
-# interval irradiation [Wh/m²] for the canonical extensive-energy variables.
-_PROVIDER_FIELD_SPECS: tuple[ProviderFieldSpec, ...] = (
-    ProviderFieldSpec("tl", "dry_bulb_temperature_c", ("°c", "c", "degc"), description="Lufttemperatur 2m"),
-    ProviderFieldSpec("tlmin", "dry_bulb_temperature_min_c", ("°c", "c", "degc"), description="Lufttemperatur 2m Minimalwert"),
-    ProviderFieldSpec("tlmax", "dry_bulb_temperature_max_c", ("°c", "c", "degc"), description="Lufttemperatur 2m Maximalwert"),
-    ProviderFieldSpec("tb10", "ground_temperature_0_10m_c", ("°c", "c", "degc"), description="Bodentemperatur 10 cm"),
-    ProviderFieldSpec("tb20", "ground_temperature_0_20m_c", ("°c", "c", "degc"), description="Bodentemperatur 20 cm"),
-    ProviderFieldSpec("tb50", "ground_temperature_0_50m_c", ("°c", "c", "degc"), description="Bodentemperatur 50 cm"),
-    ProviderFieldSpec("rf", "relative_humidity_pct", ("%",), description="Relative Feuchte"),
-    ProviderFieldSpec("p", "atmospheric_station_pressure_pa", ("hpa",), scale=100.0, description="Luftdruck"),
-    ProviderFieldSpec("ffam", "wind_speed_m_s", ("m/s", "m s-1", "m s^-1"), description="Windgeschwindigkeit 10m, arithmetischer Mittelwert"),
-    ProviderFieldSpec("dd", "wind_direction_deg", ("°", "deg", "degree"), description="Windrichtung"),
-    ProviderFieldSpec("ffx", "wind_gust_speed_m_s", ("m/s", "m s-1", "m s^-1"), description="Maximale Windgeschwindigkeit (Spitzenböe)"),
-    ProviderFieldSpec("ddx", "wind_gust_direction_deg", ("°", "deg", "degree"), description="Windrichtung zur Spitzenböe"),
-    ProviderFieldSpec("rr", "liquid_precipitation_depth_mm", ("mm",), description="Niederschlagssumme"),
-    ProviderFieldSpec("rrm", "precipitation_duration_min", ("min",), description="Niederschlagsdauer"),
-    ProviderFieldSpec("sh", "snow_depth_cm", ("cm",), description="Gesamtschneehöhe"),
-    ProviderFieldSpec("so", "sunshine_duration_s", ("s",), description="Sonnenscheindauer"),
-    ProviderFieldSpec("cglo", "global_horizontal_radiation_wh_m2", ("w/m²", "w/m2", "w m-2", "w m^-2"), scale=GEOSPHERE_NATIVE_INTERVAL_MINUTES / 60.0, description="Globalstrahlung Mittelwert"),
-    ProviderFieldSpec("chim", "diffuse_horizontal_radiation_wh_m2", ("w/m²", "w/m2", "w m-2", "w m^-2"), scale=GEOSPHERE_NATIVE_INTERVAL_MINUTES / 60.0, description="Himmelsstrahlung Mittelwert"),
-)
-FIELD_SPEC_BY_PROVIDER = {item.provider_name: item for item in _PROVIDER_FIELD_SPECS}
-FIELD_SPEC_BY_CANONICAL = {item.canonical_name: item for item in _PROVIDER_FIELD_SPECS}
-DEFAULT_PROVIDER_PARAMETERS = tuple(item.provider_name for item in _PROVIDER_FIELD_SPECS)
-QUALITY_FLAG_COLUMN_PREFIX = "quality_flag__"
-QUALITY_FLAG_PROVIDER_NAMES = frozenset(f"{name}_flag" for name in FIELD_SPEC_BY_PROVIDER)
-SUPPORTED_QUERY_PARAMETERS = frozenset(FIELD_SPEC_BY_PROVIDER) | QUALITY_FLAG_PROVIDER_NAMES
+@dataclass(frozen=True)
+class GeoSphereResourceSpec:
+    resource_id: str
+    label: str
+    native_interval_minutes: int
+    doi: str
+    dataset_page: str
+    field_specs: tuple[ProviderFieldSpec, ...]
+    interval_semantics: str = "mixed-provider-defined"
+
+    @property
+    def endpoint(self) -> str:
+        return f"{GEOSPHERE_API_BASE}/station/historical/{self.resource_id}"
+
+    @property
+    def metadata_endpoint(self) -> str:
+        return f"{self.endpoint}/metadata"
+
+    @property
+    def field_by_provider(self) -> dict[str, ProviderFieldSpec]:
+        return {item.provider_name: item for item in self.field_specs}
+
+    @property
+    def field_by_canonical(self) -> dict[str, ProviderFieldSpec]:
+        # Resource contracts intentionally expose at most one preferred provider
+        # field for each canonical variable.
+        return {item.canonical_name: item for item in self.field_specs}
+
+    @property
+    def quality_flag_provider_names(self) -> frozenset[str]:
+        return frozenset(f"{name}_flag" for name in self.field_by_provider)
+
+    @property
+    def supported_query_parameters(self) -> frozenset[str]:
+        return frozenset(self.field_by_provider) | self.quality_flag_provider_names
+
+
+def _radiation_spec(provider_name: str, canonical_name: str, cadence_min: int, description: str) -> ProviderFieldSpec:
+    return ProviderFieldSpec(
+        provider_name,
+        canonical_name,
+        ("w/m²", "w/m2", "w m-2", "w m^-2"),
+        scale=float(cadence_min) / 60.0,
+        description=description,
+        interval_semantics="mean irradiance converted to interval irradiation",
+    )
+
+
+def _common_specs(*, cadence_min: int, mean_wind_provider: str) -> tuple[ProviderFieldSpec, ...]:
+    return (
+        ProviderFieldSpec("tl", "dry_bulb_temperature_c", ("°c", "c", "degc"), description="Lufttemperatur 2m", interval_semantics="provider-defined temperature state/mean"),
+        ProviderFieldSpec("tlmin", "dry_bulb_temperature_min_c", ("°c", "c", "degc"), description="Lufttemperatur 2m Minimalwert", interval_semantics="minimum"),
+        ProviderFieldSpec("tlmax", "dry_bulb_temperature_max_c", ("°c", "c", "degc"), description="Lufttemperatur 2m Maximalwert", interval_semantics="maximum"),
+        ProviderFieldSpec("tb10", "ground_temperature_0_10m_c", ("°c", "c", "degc"), description="Bodentemperatur 10 cm"),
+        ProviderFieldSpec("tb20", "ground_temperature_0_20m_c", ("°c", "c", "degc"), description="Bodentemperatur 20 cm"),
+        ProviderFieldSpec("tb50", "ground_temperature_0_50m_c", ("°c", "c", "degc"), description="Bodentemperatur 50 cm"),
+        ProviderFieldSpec("rf", "relative_humidity_pct", ("%",), description="Relative Feuchte"),
+        ProviderFieldSpec("p", "atmospheric_station_pressure_pa", ("hpa",), scale=100.0, description="Luftdruck"),
+        ProviderFieldSpec(mean_wind_provider, "wind_speed_m_s", ("m/s", "m s-1", "m s^-1"), description="Windgeschwindigkeit 10m"),
+        ProviderFieldSpec("dd", "wind_direction_deg", ("°", "deg", "degree"), description="Windrichtung"),
+        ProviderFieldSpec("ffx", "wind_gust_speed_m_s", ("m/s", "m s-1", "m s^-1"), description="Maximale Windgeschwindigkeit (Spitzenböe)", interval_semantics="maximum"),
+        ProviderFieldSpec("ddx", "wind_gust_direction_deg", ("°", "deg", "degree"), description="Windrichtung zur Spitzenböe", interval_semantics="paired with maximum gust"),
+        ProviderFieldSpec("rr", "liquid_precipitation_depth_mm", ("mm",), description="Niederschlagssumme", interval_semantics="sum"),
+        ProviderFieldSpec("rrm", "precipitation_duration_min", ("min",), description="Niederschlagsdauer", interval_semantics="duration"),
+        ProviderFieldSpec("sh", "snow_depth_cm", ("cm",), description="Gesamtschneehöhe"),
+        ProviderFieldSpec("so", "sunshine_duration_s", ("s",), description="Sonnenscheindauer", interval_semantics="duration"),
+        _radiation_spec("cglo", "global_horizontal_radiation_wh_m2", cadence_min, "Globalstrahlung Mittelwert"),
+        _radiation_spec("chim", "diffuse_horizontal_radiation_wh_m2", cadence_min, "Himmelsstrahlung Mittelwert"),
+    )
+
+
+GEOSPHERE_RESOURCES: dict[str, GeoSphereResourceSpec] = {
+    "klima-v2-10min": GeoSphereResourceSpec(
+        resource_id="klima-v2-10min",
+        label="GeoSphere climate station data — 10 min",
+        native_interval_minutes=10,
+        doi="https://doi.org/10.60669/8fya-7x87",
+        dataset_page="https://data.hub.geosphere.at/en/dataset/klima-v2-10min",
+        field_specs=_common_specs(cadence_min=10, mean_wind_provider="ffam"),
+    ),
+    "klima-v2-1h": GeoSphereResourceSpec(
+        resource_id="klima-v2-1h",
+        label="GeoSphere climate station data — 1 h (long-term)",
+        native_interval_minutes=60,
+        doi="https://doi.org/10.60669/9bdm-yq93",
+        dataset_page="https://data.hub.geosphere.at/en/dataset/klima-v2-1h",
+        # Hourly v2 metadata use ff for the mean wind-speed series. Every field
+        # is still live-metadata gated below, so a future provider change fails
+        # closed instead of silently reinterpreting another parameter.
+        field_specs=_common_specs(cadence_min=60, mean_wind_provider="ff"),
+    ),
+}
+
+# Backward-compatible default-resource constants used by existing callers/tests.
+GEOSPHERE_RESOURCE_ID = "klima-v2-10min"
+GEOSPHERE_NATIVE_INTERVAL_MINUTES = GEOSPHERE_RESOURCES[GEOSPHERE_RESOURCE_ID].native_interval_minutes
+GEOSPHERE_ENDPOINT = GEOSPHERE_RESOURCES[GEOSPHERE_RESOURCE_ID].endpoint
+GEOSPHERE_METADATA_ENDPOINT = GEOSPHERE_RESOURCES[GEOSPHERE_RESOURCE_ID].metadata_endpoint
+GEOSPHERE_DATASET_PAGE = GEOSPHERE_RESOURCES[GEOSPHERE_RESOURCE_ID].dataset_page
+GEOSPHERE_DOI = GEOSPHERE_RESOURCES[GEOSPHERE_RESOURCE_ID].doi
+_PROVIDER_FIELD_SPECS = GEOSPHERE_RESOURCES[GEOSPHERE_RESOURCE_ID].field_specs
+FIELD_SPEC_BY_PROVIDER = GEOSPHERE_RESOURCES[GEOSPHERE_RESOURCE_ID].field_by_provider
+FIELD_SPEC_BY_CANONICAL = GEOSPHERE_RESOURCES[GEOSPHERE_RESOURCE_ID].field_by_canonical
+DEFAULT_PROVIDER_PARAMETERS = tuple(FIELD_SPEC_BY_PROVIDER)
+QUALITY_FLAG_PROVIDER_NAMES = GEOSPHERE_RESOURCES[GEOSPHERE_RESOURCE_ID].quality_flag_provider_names
+SUPPORTED_QUERY_PARAMETERS = GEOSPHERE_RESOURCES[GEOSPHERE_RESOURCE_ID].supported_query_parameters
+
+
+def resource_spec(resource_id: str = GEOSPHERE_RESOURCE_ID) -> GeoSphereResourceSpec:
+    key = str(resource_id).strip()
+    try:
+        return GEOSPHERE_RESOURCES[key]
+    except KeyError as exc:
+        raise ValueError(f"Unsupported GeoSphere historical resource: {key}") from exc
+
+
+def available_resource_specs() -> tuple[GeoSphereResourceSpec, ...]:
+    return tuple(GEOSPHERE_RESOURCES.values())
 
 
 def quality_flag_column(provider_name: str) -> str:
     return f"{QUALITY_FLAG_COLUMN_PREFIX}{str(provider_name).strip()}"
 
 
-def provider_parameters_with_quality_flags(
-    metadata: Mapping[str, Any],
-    provider_parameters: Iterable[str],
-) -> tuple[str, ...]:
-    """Return selected physical parameters plus their live provider quality flags.
-
-    Flags are requested only when the live metadata exposes the exact matching
-    ``<parameter>_flag`` field with unit ``code``. They remain native diagnostic
-    metadata and are never promoted to physical canonical variables.
-    """
-    parameters = parse_parameters(metadata)
-    result: list[str] = []
-    for name in dict.fromkeys(str(item).strip() for item in provider_parameters if str(item).strip()):
-        if name not in FIELD_SPEC_BY_PROVIDER:
-            raise ValueError(f"Unsupported GeoSphere physical parameter: {name}")
-        result.append(name)
-        flag_name = f"{name}_flag"
-        flag = parameters.get(flag_name)
-        if flag is None:
-            continue
-        if _normalise_unit(flag.unit) != "code":
-            raise ValueError(
-                f"GeoSphere quality flag '{flag_name}' unit changed: expected 'code', got '{_normalise_unit(flag.unit)}'."
-            )
-        result.append(flag_name)
-    return tuple(result)
-
-
 def _normalise_unit(unit: object) -> str:
-    text = str(unit or "").strip().lower()
-    return text.replace(" ", " ").replace("℃", "°c")
+    return str(unit or "").strip().lower().replace("℃", "°c")
 
 
 def _validate_official_url(url: str) -> str:
-    """Accept only HTTPS URLs on the official Dataset API host."""
     parsed = urlparse(str(url).strip())
     if parsed.scheme.lower() != "https":
         raise ValueError("GeoSphere API requests must use HTTPS.")
@@ -176,7 +233,6 @@ def _validate_official_url(url: str) -> str:
 
 
 def _bounded_get_json(url: str, *, params: Mapping[str, object] | None = None, timeout_s: int = DEFAULT_TIMEOUT_SECONDS) -> dict[str, Any]:
-    """Download one bounded JSON response without following external redirects."""
     clean = _validate_official_url(url)
     response = requests.get(
         clean,
@@ -210,7 +266,7 @@ def _bounded_get_json(url: str, *, params: Mapping[str, object] | None = None, t
         payload = b"".join(chunks)
         try:
             decoded = response.json() if not payload else requests.models.complexjson.loads(payload.decode("utf-8"))
-        except Exception as exc:  # provider boundary: convert parser errors into a stable message
+        except Exception as exc:
             raise ValueError("GeoSphere API returned invalid JSON.") from exc
         if not isinstance(decoded, dict):
             raise ValueError("GeoSphere API JSON root must be an object.")
@@ -219,9 +275,9 @@ def _bounded_get_json(url: str, *, params: Mapping[str, object] | None = None, t
         response.close()
 
 
-def fetch_metadata(*, timeout_s: int = DEFAULT_TIMEOUT_SECONDS) -> dict[str, Any]:
-    """Fetch current metadata for the quality-checked 10-minute resource."""
-    return _bounded_get_json(GEOSPHERE_METADATA_ENDPOINT, timeout_s=timeout_s)
+def fetch_metadata(*, resource_id: str = GEOSPHERE_RESOURCE_ID, timeout_s: int = DEFAULT_TIMEOUT_SECONDS) -> dict[str, Any]:
+    """Fetch current metadata for one supported historical resource."""
+    return _bounded_get_json(resource_spec(resource_id).metadata_endpoint, timeout_s=timeout_s)
 
 
 def _coalesce(record: Mapping[str, Any], *keys: str, default: object = "") -> object:
@@ -242,7 +298,6 @@ def _float_or_none(value: object) -> float | None:
 
 
 def _bool_or_none(value: object) -> bool | None:
-    """Return a provider Boolean without inventing truth for missing metadata."""
     if isinstance(value, bool):
         return value
     if value in (0, 1):
@@ -307,7 +362,6 @@ def _station_records(metadata: Mapping[str, Any]) -> list[Mapping[str, Any]]:
 
 
 def parse_stations(metadata: Mapping[str, Any]) -> list[GeoSphereStation]:
-    """Parse station metadata from current Dataset API JSON variants."""
     result: list[GeoSphereStation] = []
     for record in _station_records(metadata):
         station_id = str(_coalesce(record, "id", "station_id", "station", default="")).strip()
@@ -338,7 +392,6 @@ def parse_stations(metadata: Mapping[str, Any]) -> list[GeoSphereStation]:
 
 
 def parse_parameters(metadata: Mapping[str, Any]) -> dict[str, GeoSphereParameter]:
-    """Return provider parameters keyed by exact Dataset API parameter name."""
     raw = metadata.get("parameters")
     if not isinstance(raw, list):
         raise ValueError("GeoSphere metadata contain no parameter list.")
@@ -354,17 +407,91 @@ def parse_parameters(metadata: Mapping[str, Any]) -> dict[str, GeoSphereParamete
             long_name=str(item.get("long_name") or item.get("desc") or "").strip(),
             unit=str(item.get("unit") or "").strip(),
             description=str(item.get("description") or "").strip(),
+            code_list_ref=str(item.get("code_list_ref") or "").strip(),
         )
     if not result:
         raise ValueError("GeoSphere metadata contain no usable parameters.")
     return result
 
 
-def supported_parameter_mapping(metadata: Mapping[str, Any]) -> dict[str, ProviderFieldSpec]:
-    """Resolve supported v2 fields from live metadata with strict unit checks."""
+def _code_value_and_label(item: object) -> tuple[int | None, str]:
+    if isinstance(item, Mapping):
+        raw_code = _coalesce(item, "code", "value", "id", default=None)
+        try:
+            code = int(raw_code) if raw_code is not None else None
+        except (TypeError, ValueError):
+            code = None
+        label = str(_coalesce(item, "description", "label", "name", "long_name", default="")).strip()
+        return code, label
+    return None, ""
+
+
+def parse_code_lists(metadata: Mapping[str, Any]) -> dict[str, dict[int, str]]:
+    """Normalize GeoSphere v2 top-level code lists into ``ref -> code -> label``."""
+    raw = metadata.get("code_lists")
+    result: dict[str, dict[int, str]] = {}
+    if isinstance(raw, Mapping):
+        iterable = raw.items()
+    elif isinstance(raw, list):
+        iterable = []
+        for entry in raw:
+            if isinstance(entry, Mapping):
+                ref = str(_coalesce(entry, "id", "name", "ref", default="")).strip()
+                iterable.append((ref, entry))
+    else:
+        return result
+
+    for ref, payload in iterable:
+        ref_text = str(ref).strip()
+        if not ref_text:
+            continue
+        values: object = payload
+        if isinstance(payload, Mapping):
+            values = _coalesce(payload, "values", "codes", "items", "entries", default=payload)
+        codebook: dict[int, str] = {}
+        if isinstance(values, Mapping):
+            for key, value in values.items():
+                try:
+                    code = int(key)
+                except (TypeError, ValueError):
+                    item_code, label = _code_value_and_label(value)
+                    if item_code is None:
+                        continue
+                    code = item_code
+                    codebook[code] = label or str(value)
+                    continue
+                if isinstance(value, Mapping):
+                    _, label = _code_value_and_label(value)
+                    codebook[code] = label or str(value)
+                else:
+                    codebook[code] = str(value)
+        elif isinstance(values, list):
+            for value in values:
+                code, label = _code_value_and_label(value)
+                if code is not None:
+                    codebook[code] = label or str(code)
+        if codebook:
+            result[ref_text] = codebook
+    return result
+
+
+def quality_flag_codebook(metadata: Mapping[str, Any], provider_name: str) -> dict[int, str]:
+    parameters = parse_parameters(metadata)
+    flag = parameters.get(f"{provider_name}_flag")
+    if flag is None or not flag.code_list_ref:
+        return {}
+    return dict(parse_code_lists(metadata).get(flag.code_list_ref, {}))
+
+
+def supported_parameter_mapping(
+    metadata: Mapping[str, Any],
+    *,
+    resource_id: str = GEOSPHERE_RESOURCE_ID,
+) -> dict[str, ProviderFieldSpec]:
+    """Resolve resource fields from live metadata with strict unit checks."""
     parameters = parse_parameters(metadata)
     resolved: dict[str, ProviderFieldSpec] = {}
-    for provider_name, spec in FIELD_SPEC_BY_PROVIDER.items():
+    for provider_name, spec in resource_spec(resource_id).field_by_provider.items():
         parameter = parameters.get(provider_name)
         if parameter is None:
             continue
@@ -380,25 +507,42 @@ def supported_parameter_mapping(metadata: Mapping[str, Any]) -> dict[str, Provid
     return resolved
 
 
+def provider_parameters_with_quality_flags(
+    metadata: Mapping[str, Any],
+    provider_parameters: Iterable[str],
+    *,
+    resource_id: str = GEOSPHERE_RESOURCE_ID,
+) -> tuple[str, ...]:
+    parameters = parse_parameters(metadata)
+    allowed = resource_spec(resource_id).field_by_provider
+    result: list[str] = []
+    for name in dict.fromkeys(str(item).strip() for item in provider_parameters if str(item).strip()):
+        if name not in allowed:
+            raise ValueError(f"Unsupported GeoSphere physical parameter: {name}")
+        result.append(name)
+        flag_name = f"{name}_flag"
+        flag = parameters.get(flag_name)
+        if flag is None:
+            continue
+        if _normalise_unit(flag.unit) != "code":
+            raise ValueError(
+                f"GeoSphere quality flag '{flag_name}' unit changed: expected 'code', got '{_normalise_unit(flag.unit)}'."
+            )
+        result.append(flag_name)
+    return tuple(result)
+
+
 CAPABILITY_RESOURCE_SUPPORTED = "resource-supported"
 CAPABILITY_STATION_CONFIRMED = "station-confirmed"
 CAPABILITY_STATION_UNAVAILABLE = "station-unavailable"
 
 
-def station_parameter_capability_index(metadata: Mapping[str, Any]) -> dict[str, dict[str, str]]:
-    """Return O(1) station -> provider-parameter capability lookups.
-
-    GeoSphere currently publishes the full resource parameter list plus a small
-    set of station-specific sensor flags.  Only an explicit station flag is
-    allowed to disable a parameter.  For fields without station-specific
-    metadata, the status remains ``resource-supported`` and actual observations
-    for the selected period are still verified after data loading.
-
-    In particular, ``has_global_radiation`` authoritatively qualifies ``cglo``.
-    No station-level flag for diffuse radiation is published, so ``chim`` is not
-    inferred from the global-radiation flag.
-    """
-    supported = supported_parameter_mapping(metadata)
+def station_parameter_capability_index(
+    metadata: Mapping[str, Any],
+    *,
+    resource_id: str = GEOSPHERE_RESOURCE_ID,
+) -> dict[str, dict[str, str]]:
+    supported = supported_parameter_mapping(metadata, resource_id=resource_id)
     base = {name: CAPABILITY_RESOURCE_SUPPORTED for name in supported}
     result: dict[str, dict[str, str]] = {}
     for record in _station_records(metadata):
@@ -408,44 +552,40 @@ def station_parameter_capability_index(metadata: Mapping[str, Any]) -> dict[str,
         statuses = dict(base)
         global_radiation = _bool_or_none(record.get("has_global_radiation"))
         if "cglo" in statuses and global_radiation is not None:
-            statuses["cglo"] = (
-                CAPABILITY_STATION_CONFIRMED if global_radiation else CAPABILITY_STATION_UNAVAILABLE
-            )
+            statuses["cglo"] = CAPABILITY_STATION_CONFIRMED if global_radiation else CAPABILITY_STATION_UNAVAILABLE
+        sunshine = _bool_or_none(record.get("has_sunshine"))
+        if "so" in statuses and sunshine is not None:
+            statuses["so"] = CAPABILITY_STATION_CONFIRMED if sunshine else CAPABILITY_STATION_UNAVAILABLE
         result[station_id] = statuses
     if not result:
         raise ValueError("GeoSphere metadata contain no station capability index.")
     return result
 
 
-def station_parameter_capability_table(metadata: Mapping[str, Any], station_id: str) -> pd.DataFrame:
-    """Return a display-ready metadata capability table for one station.
-
-    ``Available`` means selectable from metadata, not guaranteed non-null data
-    for every timestamp. Selected-period coverage remains a loaded-data quality
-    concern and is intentionally not fabricated from station validity dates.
-    """
+def station_parameter_capability_table(
+    metadata: Mapping[str, Any], station_id: str, *, resource_id: str = GEOSPHERE_RESOURCE_ID
+) -> pd.DataFrame:
     station_key = str(station_id).strip()
-    index = station_parameter_capability_index(metadata)
+    index = station_parameter_capability_index(metadata, resource_id=resource_id)
     if station_key not in index:
         raise KeyError(f"Unknown GeoSphere station id: {station_key}")
     parameters = parse_parameters(metadata)
-    supported = supported_parameter_mapping(metadata)
+    supported = supported_parameter_mapping(metadata, resource_id=resource_id)
     statuses = index[station_key]
     rows: list[dict[str, object]] = []
     for provider_name, spec in supported.items():
         parameter = parameters.get(provider_name)
         status = statuses.get(provider_name, CAPABILITY_RESOURCE_SUPPORTED)
-        if status == CAPABILITY_STATION_CONFIRMED:
-            basis = "Station metadata confirms sensor"
-        elif status == CAPABILITY_STATION_UNAVAILABLE:
-            basis = "Station metadata reports unavailable"
-        else:
-            basis = "Resource metadata; period coverage checked after load"
+        basis = (
+            "Station metadata confirms sensor" if status == CAPABILITY_STATION_CONFIRMED
+            else "Station metadata reports unavailable" if status == CAPABILITY_STATION_UNAVAILABLE
+            else "Resource metadata; period coverage checked after load"
+        )
         rows.append(
             {
                 "provider": provider_name,
                 "canonical": spec.canonical_name,
-                "variable": (parameter.long_name if parameter and parameter.long_name else spec.description or spec.canonical_name),
+                "variable": parameter.long_name if parameter and parameter.long_name else spec.description or spec.canonical_name,
                 "unit": parameter.unit if parameter else "",
                 "status": status,
                 "available": status != CAPABILITY_STATION_UNAVAILABLE,
@@ -456,21 +596,27 @@ def station_parameter_capability_table(metadata: Mapping[str, Any], station_id: 
 
 
 def station_catalog(metadata: Mapping[str, Any]) -> pd.DataFrame:
-    """Return a normalized station table suitable for a later station-map UI."""
     rows = [station.__dict__ for station in parse_stations(metadata)]
     table = pd.DataFrame(rows)
     return table.sort_values(["state", "name", "station_id"], kind="mergesort").reset_index(drop=True)
 
 
-def estimate_request_datapoints(start: pd.Timestamp, end: pd.Timestamp, parameter_count: int, station_count: int = 1) -> int:
-    """Estimate provider request size using the documented cadence formula."""
+def estimate_request_datapoints(
+    start: pd.Timestamp,
+    end: pd.Timestamp,
+    parameter_count: int,
+    station_count: int = 1,
+    *,
+    resource_id: str = GEOSPHERE_RESOURCE_ID,
+) -> int:
     start = pd.Timestamp(start)
     end = pd.Timestamp(end)
     if end < start:
         raise ValueError("GeoSphere request end must not be earlier than start.")
     if parameter_count <= 0 or station_count <= 0:
         raise ValueError("GeoSphere requests require at least one parameter and one station.")
-    steps = int(math.floor((end - start) / pd.Timedelta(minutes=GEOSPHERE_NATIVE_INTERVAL_MINUTES))) + 1
+    cadence = resource_spec(resource_id).native_interval_minutes
+    steps = int(math.floor((end - start) / pd.Timedelta(minutes=cadence))) + 1
     return steps * int(parameter_count) * int(station_count)
 
 
@@ -486,18 +632,19 @@ def build_data_query(
     start: pd.Timestamp,
     end: pd.Timestamp,
     provider_parameters: Iterable[str],
+    *,
+    resource_id: str = GEOSPHERE_RESOURCE_ID,
 ) -> dict[str, str]:
-    """Build a bounded one-station historical query for the v2 10-minute API."""
     station_id = str(station_id).strip()
     if not station_id:
         raise ValueError("GeoSphere station_id must not be empty.")
     parameters = tuple(dict.fromkeys(str(item).strip() for item in provider_parameters if str(item).strip()))
     if not parameters:
         raise ValueError("At least one GeoSphere parameter is required.")
-    unknown = sorted(set(parameters) - set(SUPPORTED_QUERY_PARAMETERS))
+    unknown = sorted(set(parameters) - set(resource_spec(resource_id).supported_query_parameters))
     if unknown:
         raise ValueError(f"Unsupported GeoSphere parameters: {', '.join(unknown)}")
-    count = estimate_request_datapoints(pd.Timestamp(start), pd.Timestamp(end), len(parameters), 1)
+    count = estimate_request_datapoints(pd.Timestamp(start), pd.Timestamp(end), len(parameters), 1, resource_id=resource_id)
     if count > MAX_REQUEST_DATAPOINTS:
         raise ValueError(
             f"GeoSphere request would contain about {count:,} datapoints, above the local {MAX_REQUEST_DATAPOINTS:,} limit."
@@ -517,56 +664,43 @@ def plan_data_queries(
     provider_parameters: Iterable[str],
     *,
     max_datapoints: int = DEFAULT_BATCH_DATAPOINTS,
+    resource_id: str = GEOSPHERE_RESOURCE_ID,
 ) -> list[dict[str, str]]:
-    """Split one inclusive station interval into bounded 10-minute requests.
-
-    GeoSphere request size scales with ``timestamps × parameters × stations``.
-    The public app requests one station at a time, so this planner partitions a
-    long interval along the time axis. Adjacent batches are separated by exactly
-    one native 10-minute interval: the first timestamp of a new batch is the
-    timestamp after the previous batch's inclusive end. No overlap or synthetic
-    interpolation is introduced.
-    """
     station_id = str(station_id).strip()
     if not station_id:
         raise ValueError("GeoSphere station_id must not be empty.")
     parameters = tuple(dict.fromkeys(str(item).strip() for item in provider_parameters if str(item).strip()))
     if not parameters:
         raise ValueError("At least one GeoSphere parameter is required.")
-    unknown = sorted(set(parameters) - set(SUPPORTED_QUERY_PARAMETERS))
+    unknown = sorted(set(parameters) - set(resource_spec(resource_id).supported_query_parameters))
     if unknown:
         raise ValueError(f"Unsupported GeoSphere parameters: {', '.join(unknown)}")
     if int(max_datapoints) <= 0:
         raise ValueError("GeoSphere batch datapoint limit must be positive.")
     if int(max_datapoints) > MAX_REQUEST_DATAPOINTS:
-        raise ValueError(
-            f"GeoSphere batch datapoint limit must not exceed the local hard cap of {MAX_REQUEST_DATAPOINTS:,}."
-        )
-
+        raise ValueError(f"GeoSphere batch datapoint limit must not exceed the local hard cap of {MAX_REQUEST_DATAPOINTS:,}.")
     start_ts = pd.Timestamp(start)
     end_ts = pd.Timestamp(end)
     if end_ts < start_ts:
         raise ValueError("GeoSphere request end must not be earlier than start.")
-
     max_steps = int(max_datapoints) // len(parameters)
     if max_steps < 1:
         raise ValueError("GeoSphere batch datapoint limit is too small for the selected parameter set.")
-
-    interval = pd.Timedelta(minutes=GEOSPHERE_NATIVE_INTERVAL_MINUTES)
+    interval = pd.Timedelta(minutes=resource_spec(resource_id).native_interval_minutes)
     queries: list[dict[str, str]] = []
     cursor = start_ts
     while cursor <= end_ts:
         batch_end = min(end_ts, cursor + interval * (max_steps - 1))
-        query = build_data_query(station_id, cursor, batch_end, parameters)
-        if estimate_request_datapoints(cursor, batch_end, len(parameters), 1) > int(max_datapoints):
+        query = build_data_query(station_id, cursor, batch_end, parameters, resource_id=resource_id)
+        if estimate_request_datapoints(cursor, batch_end, len(parameters), 1, resource_id=resource_id) > int(max_datapoints):
             raise RuntimeError("Internal GeoSphere batch planner exceeded its datapoint limit.")
         queries.append(query)
         cursor = batch_end + interval
     return queries
 
 
-def _query_reference(query: Mapping[str, str]) -> str:
-    return f"{GEOSPHERE_ENDPOINT}?{urlencode(dict(query))}"
+def _query_reference(query: Mapping[str, str], resource_id: str = GEOSPHERE_RESOURCE_ID) -> str:
+    return f"{resource_spec(resource_id).endpoint}?{urlencode(dict(query))}"
 
 
 def _http_status_from_exception(exc: BaseException) -> int | None:
@@ -580,7 +714,6 @@ def _http_status_from_exception(exc: BaseException) -> int | None:
 
 
 def _is_transient_provider_error(exc: BaseException) -> bool:
-    """Classify only retry-safe transport/provider failures as transient."""
     if isinstance(exc, (requests.Timeout, requests.ConnectionError, requests.exceptions.ChunkedEncodingError)):
         return True
     status = _http_status_from_exception(exc)
@@ -591,15 +724,16 @@ def _is_response_size_error(exc: BaseException) -> bool:
     return isinstance(exc, ValueError) and "response exceeds the local response-size limit" in str(exc)
 
 
-def _split_data_query(query: Mapping[str, str]) -> tuple[dict[str, str], dict[str, str]] | None:
-    """Bisect one inclusive query on the native 10-minute grid without overlap."""
+def _split_data_query(
+    query: Mapping[str, str], *, resource_id: str = GEOSPHERE_RESOURCE_ID
+) -> tuple[dict[str, str], dict[str, str]] | None:
     parameters = tuple(item for item in str(query.get("parameters", "")).split(",") if item)
     station_id = str(query.get("station_ids", "")).strip()
     if not station_id or not parameters:
         raise ValueError("GeoSphere query is missing station or parameter identity.")
     start = pd.Timestamp(str(query.get("start", "")), tz="UTC")
     end = pd.Timestamp(str(query.get("end", "")), tz="UTC")
-    interval = pd.Timedelta(minutes=GEOSPHERE_NATIVE_INTERVAL_MINUTES)
+    interval = pd.Timedelta(minutes=resource_spec(resource_id).native_interval_minutes)
     steps = int(math.floor((end - start) / interval)) + 1
     if steps <= 1:
         return None
@@ -609,8 +743,8 @@ def _split_data_query(query: Mapping[str, str]) -> tuple[dict[str, str], dict[st
     if right_start > end:
         return None
     return (
-        build_data_query(station_id, start, left_end, parameters),
-        build_data_query(station_id, right_start, end, parameters),
+        build_data_query(station_id, start, left_end, parameters, resource_id=resource_id),
+        build_data_query(station_id, right_start, end, parameters, resource_id=resource_id),
     )
 
 
@@ -628,13 +762,6 @@ def _emit_progress(
     attempt: int | None = None,
     split_depth: int = 0,
 ) -> None:
-    """Emit best-effort transport progress without affecting data loading.
-
-    Progress is observational only. A UI callback failure must never alter the
-    provider request, scientific data, retry policy or fail-closed behavior.
-    The denominator is the original set of planned root batches; adaptive child
-    requests remain inside the currently active root batch.
-    """
     if progress_callback is None:
         return
     payload: dict[str, object] = {
@@ -651,7 +778,6 @@ def _emit_progress(
     try:
         progress_callback(payload)
     except Exception:
-        # Rendering/status reporting is deliberately non-critical.
         return
 
 
@@ -659,26 +785,22 @@ def _fetch_query_with_resilience(
     query: Mapping[str, str],
     *,
     timeout_s: int,
+    resource_id: str = GEOSPHERE_RESOURCE_ID,
     split_depth: int = 0,
     progress_callback: GeoSphereProgressCallback | None = None,
     root_batch_number: int = 1,
     root_batch_count: int = 1,
     completed_root_batches: int = 0,
 ) -> list[tuple[dict[str, Any], dict[str, str]]]:
-    """Fetch one planned query, retrying transient failures and splitting only that batch.
-
-    Permanent HTTP 4xx failures, redirects, invalid JSON and malformed provider
-    payloads are not retried or hidden. A timeout/connection/429/5xx failure is
-    retried once at the same size; if it still fails, the failing query is
-    bisected on the native cadence and each child is attempted independently.
-    Deterministic local response-size failures skip the same-size retry and go
-    directly to adaptive splitting.
-    """
     normalized_query = {str(key): str(value) for key, value in query.items()}
     last_error: BaseException | None = None
     for attempt in range(1, MAX_TRANSIENT_ATTEMPTS + 1):
         try:
-            payload = _bounded_get_json(GEOSPHERE_ENDPOINT, params=normalized_query, timeout_s=timeout_s)
+            payload = _bounded_get_json(
+                resource_spec(resource_id).endpoint,
+                params=normalized_query,
+                timeout_s=timeout_s,
+            )
             return [(payload, normalized_query)]
         except Exception as exc:
             last_error = exc
@@ -702,20 +824,17 @@ def _fetch_query_with_resilience(
                 time.sleep(RETRY_BACKOFF_BASE_SECONDS * (2 ** (attempt - 1)))
                 continue
             break
-
     if split_depth >= MAX_ADAPTIVE_SPLIT_DEPTH:
         raise RuntimeError(
             f"GeoSphere batch failed after retries and {split_depth} adaptive split level(s): "
             f"{normalized_query.get('start')} → {normalized_query.get('end')}."
         ) from last_error
-
-    children = _split_data_query(normalized_query)
+    children = _split_data_query(normalized_query, resource_id=resource_id)
     if children is None:
         raise RuntimeError(
             f"GeoSphere single-interval batch failed after retries: "
             f"{normalized_query.get('start')} → {normalized_query.get('end')}."
         ) from last_error
-
     _emit_progress(
         progress_callback,
         event="split",
@@ -731,6 +850,7 @@ def _fetch_query_with_resilience(
             _fetch_query_with_resilience(
                 child,
                 timeout_s=timeout_s,
+                resource_id=resource_id,
                 split_depth=split_depth + 1,
                 progress_callback=progress_callback,
                 root_batch_number=root_batch_number,
@@ -747,34 +867,21 @@ def fetch_station_provider_frame(
     start: pd.Timestamp,
     end: pd.Timestamp,
     provider_parameters: Iterable[str],
+    resource_id: str = GEOSPHERE_RESOURCE_ID,
     timeout_s: int = DEFAULT_TIMEOUT_SECONDS,
     progress_callback: GeoSphereProgressCallback | None = None,
 ) -> tuple[pd.DataFrame, tuple[str, ...]]:
-    """Fetch and concatenate resilient bounded batches for one historical interval.
-
-    Missing observations remain missing. Successful batches are retained when a
-    neighbouring batch times out; only the failing batch is retried/split.
-    Structural corruption remains fail-closed: duplicate timestamps, an empty
-    aggregate response, malformed payloads or permanent provider errors are not
-    silently repaired or interpolated.
-    """
     parameters = tuple(dict.fromkeys(str(item).strip() for item in provider_parameters if str(item).strip()))
-    queries = plan_data_queries(station_id, start, end, parameters)
+    queries = plan_data_queries(station_id, start, end, parameters, resource_id=resource_id)
     frames: list[pd.DataFrame] = []
     references: list[str] = []
     total_batches = len(queries)
     for batch_number, query in enumerate(queries, start=1):
-        _emit_progress(
-            progress_callback,
-            event="batch_start",
-            completed_batches=batch_number - 1,
-            total_batches=total_batches,
-            batch_number=batch_number,
-            query=query,
-        )
+        _emit_progress(progress_callback, event="batch_start", completed_batches=batch_number - 1, total_batches=total_batches, batch_number=batch_number, query=query)
         completed = _fetch_query_with_resilience(
             query,
             timeout_s=timeout_s,
+            resource_id=resource_id,
             progress_callback=progress_callback,
             root_batch_number=batch_number,
             root_batch_count=total_batches,
@@ -782,16 +889,8 @@ def fetch_station_provider_frame(
         )
         for payload, successful_query in completed:
             frames.append(parse_station_data_response(payload, station_id, parameters))
-            references.append(_query_reference(successful_query))
-        _emit_progress(
-            progress_callback,
-            event="batch_complete",
-            completed_batches=batch_number,
-            total_batches=total_batches,
-            batch_number=batch_number,
-            query=query,
-        )
-
+            references.append(_query_reference(successful_query, resource_id))
+        _emit_progress(progress_callback, event="batch_complete", completed_batches=batch_number, total_batches=total_batches, batch_number=batch_number, query=query)
     if not frames:
         raise ValueError("GeoSphere batching produced no requests.")
     combined = pd.concat(frames, axis=0)
@@ -801,14 +900,7 @@ def fetch_station_provider_frame(
         duplicate_count = int(combined.index.duplicated(keep=False).sum())
         raise ValueError(f"GeoSphere batched response contains {duplicate_count} duplicate timestamps.")
     combined = combined.sort_index(kind="mergesort")
-    _emit_progress(
-        progress_callback,
-        event="load_complete",
-        completed_batches=total_batches,
-        total_batches=total_batches,
-        batch_number=total_batches,
-        query=queries[-1],
-    )
+    _emit_progress(progress_callback, event="load_complete", completed_batches=total_batches, total_batches=total_batches, batch_number=total_batches, query=queries[-1])
     return combined, tuple(references)
 
 
@@ -823,11 +915,8 @@ def _feature_station_id(feature: Mapping[str, Any]) -> str:
 
 
 def parse_station_data_response(
-    payload: Mapping[str, Any],
-    station_id: str,
-    provider_parameters: Iterable[str],
+    payload: Mapping[str, Any], station_id: str, provider_parameters: Iterable[str]
 ) -> pd.DataFrame:
-    """Parse the Dataset API station JSON response into provider-named columns."""
     timestamps = payload.get("timestamps")
     features = payload.get("features")
     if not isinstance(timestamps, list) or not isinstance(features, list):
@@ -837,7 +926,6 @@ def parse_station_data_response(
         raise ValueError("GeoSphere station response contains invalid timestamps.")
     if pd.DatetimeIndex(index).has_duplicates:
         raise ValueError("GeoSphere station response contains duplicate timestamps.")
-
     wanted = str(station_id).strip()
     candidates = [feature for feature in features if isinstance(feature, Mapping)]
     feature = next((item for item in candidates if _feature_station_id(item) == wanted), None)
@@ -851,30 +939,25 @@ def parse_station_data_response(
     parameters = properties.get("parameters")
     if not isinstance(parameters, Mapping):
         raise ValueError("GeoSphere station feature has no parameters object.")
-
     frame = pd.DataFrame(index=pd.DatetimeIndex(index, name="timestamp"))
     for name in provider_parameters:
         entry = parameters.get(name)
         if not isinstance(entry, Mapping):
             frame[name] = pd.NA
             continue
-        data = entry.get("data")
-        if not isinstance(data, list):
+        values = entry.get("data")
+        if not isinstance(values, list):
             frame[name] = pd.NA
             continue
-        if len(data) != len(frame):
-            raise ValueError(
-                f"GeoSphere parameter '{name}' has {len(data)} values for {len(frame)} timestamps."
-            )
-        frame[name] = pd.to_numeric(pd.Series(data, index=frame.index), errors="coerce")
+        if len(values) != len(frame):
+            raise ValueError(f"GeoSphere parameter '{name}' has {len(values)} values for {len(frame)} timestamps.")
+        frame[name] = pd.to_numeric(pd.Series(values, index=frame.index), errors="coerce")
     return frame
 
 
 def provider_frame_to_canonical(
-    provider_frame: pd.DataFrame,
-    mapping: Mapping[str, ProviderFieldSpec],
+    provider_frame: pd.DataFrame, mapping: Mapping[str, ProviderFieldSpec]
 ) -> pd.DataFrame:
-    """Convert supported provider quantities and units to canonical columns."""
     canonical = pd.DataFrame(index=provider_frame.index.copy())
     for provider_name, spec in mapping.items():
         if provider_name not in provider_frame.columns:
@@ -883,9 +966,7 @@ def provider_frame_to_canonical(
         canonical[spec.canonical_name] = values * float(spec.scale)
         flag_name = f"{provider_name}_flag"
         if flag_name in provider_frame.columns:
-            canonical[quality_flag_column(provider_name)] = pd.to_numeric(
-                provider_frame[flag_name], errors="coerce"
-            )
+            canonical[quality_flag_column(provider_name)] = pd.to_numeric(provider_frame[flag_name], errors="coerce")
     if canonical.empty:
         raise ValueError("GeoSphere response produced no supported canonical climate variables.")
     return canonical
@@ -896,14 +977,31 @@ def build_canonical_station_dataset(
     station: GeoSphereStation,
     provider_frame: pd.DataFrame,
     mapping: Mapping[str, ProviderFieldSpec],
+    resource_id: str = GEOSPHERE_RESOURCE_ID,
+    metadata: Mapping[str, Any] | None = None,
     request_reference: str = "",
     retrieval_time_utc: str | None = None,
     request_count: int = 1,
 ) -> CanonicalClimateDataset:
-    """Build a historical 10-minute canonical dataset for one station."""
+    spec = resource_spec(resource_id)
     canonical = provider_frame_to_canonical(provider_frame, mapping)
+    canonical.attrs["geosphere_resource_id"] = spec.resource_id
+    canonical.attrs["canonical_analysis_timezone_name"] = GEOSPHERE_LOCAL_TIMEZONE
+    canonical.attrs["canonical_standard_utc_offset_hours"] = GEOSPHERE_STANDARD_UTC_OFFSET_HOURS
+    if metadata is not None:
+        codebooks: dict[str, dict[int, str]] = {}
+        labels: dict[str, str] = {}
+        parameters = parse_parameters(metadata)
+        for provider_name in mapping:
+            codebook = quality_flag_codebook(metadata, provider_name)
+            if codebook:
+                codebooks[provider_name] = codebook
+                flag = parameters.get(f"{provider_name}_flag")
+                labels[provider_name] = flag.long_name if flag else provider_name
+        canonical.attrs[QUALITY_CODEBOOK_ATTR] = codebooks
+        canonical.attrs[QUALITY_LABEL_ATTR] = labels
     temporal = ClimateTemporalMetadata(
-        native_interval_minutes=GEOSPHERE_NATIVE_INTERVAL_MINUTES,
+        native_interval_minutes=spec.native_interval_minutes,
         calendar_mode="historical",
         timezone_name="UTC",
         interval_semantics="unknown",
@@ -917,25 +1015,31 @@ def build_canonical_station_dataset(
         country="Austria",
         station_id=station.station_id,
     )
+    notes = [
+        f"License: CC BY 4.0 ({GEOSPHERE_LICENSE})",
+        f"Dataset DOI: {spec.doi}",
+        "Provider timestamps are retained as real UTC historical timestamps.",
+        f"Preferred building-analysis timezone: {GEOSPHERE_LOCAL_TIMEZONE}; source UTC remains unchanged.",
+    ]
+    if any(item.canonical_name.endswith("radiation_wh_m2") for item in mapping.values()):
+        notes.append(
+            f"{spec.native_interval_minutes:g}-minute mean radiation in W/m² is converted to interval irradiation in Wh/m²."
+        )
+    notes.append(f"Historical interval retrieved in {int(request_count)} bounded Dataset API request batch(es).")
     provenance = ClimateProvenance(
         provider="GeoSphere Austria",
-        dataset="klima-v2-10min — quality-checked station data for Austria",
+        dataset=f"{spec.resource_id} — quality-checked station data for Austria",
         source_format="Dataset API JSON",
         source_name=f"GeoSphere station {station.station_id} ({station.name})",
-        source_reference=request_reference or GEOSPHERE_DATASET_PAGE,
+        source_reference=request_reference or spec.dataset_page,
         provider_station_id=station.station_id,
         retrieval_time_utc=retrieval_time_utc or datetime.now(timezone.utc).isoformat(),
-        notes=(
-            f"License: CC BY 4.0 ({GEOSPHERE_LICENSE})",
-            f"Dataset DOI: {GEOSPHERE_DOI}",
-            "Provider timestamps are retained as real UTC historical timestamps.",
-            "10-minute mean radiation in W/m² is converted to interval irradiation in Wh/m².",
-            f"Historical interval retrieved in {int(request_count)} bounded Dataset API request batch(es).",
-        ),
+        notes=tuple(notes),
     )
+    cadence_label = "10 min" if spec.native_interval_minutes == 10 else "1 h" if spec.native_interval_minutes == 60 else f"{spec.native_interval_minutes} min"
     return build_canonical_dataset(
-        climate_id=f"geosphere:{GEOSPHERE_RESOURCE_ID}:{station.station_id}",
-        display_name=f"{station.name} — GeoSphere 10 min",
+        climate_id=f"geosphere:{spec.resource_id}:{station.station_id}",
+        display_name=f"{station.name} — GeoSphere {cadence_label}",
         data=canonical,
         location=location,
         temporal=temporal,
@@ -948,34 +1052,37 @@ def fetch_station_dataset(
     station: GeoSphereStation,
     start: pd.Timestamp,
     end: pd.Timestamp,
+    resource_id: str = GEOSPHERE_RESOURCE_ID,
     metadata: Mapping[str, Any] | None = None,
     canonical_variables: Iterable[str] | None = None,
     timeout_s: int = DEFAULT_TIMEOUT_SECONDS,
     progress_callback: GeoSphereProgressCallback | None = None,
 ) -> CanonicalClimateDataset:
-    """Fetch one bounded station interval and return canonical historical data."""
-    metadata_payload = dict(metadata) if metadata is not None else fetch_metadata(timeout_s=timeout_s)
-    supported = supported_parameter_mapping(metadata_payload)
+    spec = resource_spec(resource_id)
+    metadata_payload = dict(metadata) if metadata is not None else fetch_metadata(resource_id=resource_id, timeout_s=timeout_s)
+    supported = supported_parameter_mapping(metadata_payload, resource_id=resource_id)
     if canonical_variables is None:
         selected = dict(supported)
     else:
         requested = tuple(dict.fromkeys(str(item).strip() for item in canonical_variables if str(item).strip()))
-        selected = {}
+        selected: dict[str, ProviderFieldSpec] = {}
+        by_canonical = spec.field_by_canonical
         for canonical_name in requested:
-            spec = FIELD_SPEC_BY_CANONICAL.get(canonical_name)
-            if spec is None:
-                raise ValueError(f"Canonical variable '{canonical_name}' is not supported by the GeoSphere adapter.")
-            if spec.provider_name not in supported:
+            field = by_canonical.get(canonical_name)
+            if field is None:
+                raise ValueError(f"Canonical variable '{canonical_name}' is not supported by GeoSphere resource {resource_id}.")
+            if field.provider_name not in supported:
                 raise ValueError(
-                    f"GeoSphere metadata do not currently expose required parameter '{spec.provider_name}'."
+                    f"GeoSphere metadata for {resource_id} do not currently expose required parameter '{field.provider_name}'."
                 )
-            selected[spec.provider_name] = spec
-    query_parameters = provider_parameters_with_quality_flags(metadata_payload, selected.keys())
+            selected[field.provider_name] = field
+    query_parameters = provider_parameters_with_quality_flags(metadata_payload, selected.keys(), resource_id=resource_id)
     provider_frame, request_references = fetch_station_provider_frame(
         station_id=station.station_id,
         start=start,
         end=end,
         provider_parameters=query_parameters,
+        resource_id=resource_id,
         timeout_s=timeout_s,
         progress_callback=progress_callback,
     )
@@ -983,6 +1090,8 @@ def fetch_station_dataset(
         station=station,
         provider_frame=provider_frame,
         mapping=selected,
+        resource_id=resource_id,
+        metadata=metadata_payload,
         request_reference="\n".join(request_references),
         request_count=len(request_references),
     )
