@@ -1329,7 +1329,8 @@ def psychrometric_chart(
     color_mode: str = "Month",
     zone_coverage: float = 0.90,
     zone_interior_style: str = "Density gradient",
-    show_core_zone: bool = True,
+    show_core_zone: bool = False,
+    additional_contour_coverages: list[float] | None = None,
     year_mode: str = "All years combined",
     selected_years: list[int] | None = None,
 ) -> go.Figure:
@@ -1343,8 +1344,10 @@ def psychrometric_chart(
     chart_type = "i-d" if chart_type == "i-d" else "T-d"
     if data_mode in {"Hourly values", "Source interval values", "Monthly points", "All observations", "Points"}:
         representation = "Points"
+    elif data_mode in {"Distribution grid", "Distributive grid"}:
+        representation = "Distribution grid"
     else:
-        representation = "Climate zone"
+        representation = "Climate contour"
     if selected_months is None:
         selected_months = list(range(1, 13))
 
@@ -1399,7 +1402,7 @@ def psychrometric_chart(
         and len({int(value) for value in pd.DatetimeIndex(plot_df.index).year}) > 1
     )
 
-    if representation == "Climate zone":
+    if representation == "Climate contour":
         if compare_years:
             grouped: list[tuple[str, pd.DataFrame]] = []
             for year in sorted({int(value) for value in pd.DatetimeIndex(plot_df.index).year}):
@@ -1421,8 +1424,23 @@ def psychrometric_chart(
                 axis_ranges=axis_ranges,
                 show_core=bool(show_core_zone),
                 core_coverage=0.50,
+                additional_coverages=additional_contour_coverages,
+                pressure_pa=float(pressure_pa),
                 legendgroup=f"psych-zone-{label}",
             )
+    elif representation == "Distribution grid":
+        metric_col = None if color_mode == "Frequency" else color_metric_column
+        _add_psychrometric_tile_occupancy(
+            fig,
+            plot_df,
+            chart_type,
+            pressure_pa,
+            t_range,
+            d_range,
+            h_range,
+            metric_col,
+            color_metric_label,
+        )
     else:
         base_cols = _unique_existing_columns([x_col, y_col, "month_index", "month_name", "hour_of_day", color_metric_column], plot_df)
         data = plot_df[base_cols].dropna(subset=[x_col, y_col]).copy()
@@ -1491,8 +1509,10 @@ def psychrometric_chart(
     fig = apply_common_layout(fig, f"Psychrometric chart ({chart_type})", x_label, y_label)
     if compare_years:
         legend_title = "Year"
-    elif representation == "Climate zone":
+    elif representation == "Climate contour":
         legend_title = "Climate data"
+    elif representation == "Distribution grid":
+        legend_title = "Distribution"
     else:
         legend_title = "Month" if color_mode == "Month" else "Climate data"
     fig.update_layout(

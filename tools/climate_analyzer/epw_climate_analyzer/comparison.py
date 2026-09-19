@@ -16,8 +16,9 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import psychrolib
 
-from .aggregations import SEASON_ORDER, aggregate_summary, aggregate_sum, calendar_matrix, monthly_hour_matrix
+from .aggregations import SEASON_ORDER, aggregate_summary, aggregate_sum, calendar_matrix, monthly_hour_matrix, native_interval_hours
 from .decisions import (
     comfort_condition,
     dehumidification_condition,
@@ -30,7 +31,7 @@ from .decisions import (
     shading_condition,
 )
 from .epw_parser import DataQualityIssue, EpwFile
-from .psychrometrics import DEFAULT_PRESSURE_PA, psychrometric_rh_curves
+from .psychrometrics import DEFAULT_PRESSURE_PA, pressure_from_altitude_m, psychrometric_rh_curves
 from .psychrometric_distribution import add_climate_zone_traces, psychrometric_axis_ranges
 from .solar import orientation_annual_radiation, orientation_tilt_matrix, surface_irradiance_series
 from .chart_theme import (
@@ -44,6 +45,8 @@ from .chart_theme import (
     rgba,
     semantic_color_from_text,
 )
+
+psychrolib.SetUnitSystem(psychrolib.SI)
 
 PLOT_TEMPLATE = "plotly_white"
 MONTH_ORDER = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -362,6 +365,164 @@ def monthly_box_compare_chart(climates: list[ClimateDataset], column: str, mode:
     return fig
 
 
+def _comparison_climate_pressure_pa(climate: ClimateDataset, fallback_pressure_pa: float) -> float:
+    if "atmospheric_station_pressure_pa" in climate.data.columns:
+        values = pd.to_numeric(climate.data["atmospheric_station_pressure_pa"], errors="coerce")
+        values = values[(values >= 30000.0) & (values <= 120000.0)].dropna()
+        if not values.empty:
+            return float(values.median())
+    elevation = float(climate.epw.location.elevation_m or 0.0)
+    try:
+        return float(pressure_from_altitude_m(elevation))
+    except Exception:
+        return float(fallback_pressure_pa)
+
+
+def _project_comparison_frame_to_pressure(
+    data: pd.DataFrame,
+    reference_pressure_pa: float,
+) -> pd.DataFrame:
+    """Project psychrometric display coordinates to one common pressure.
+
+    Dry-bulb temperature and relative humidity are pressure-independent source
+    state descriptors for this purpose. Humidity ratio and enthalpy are rebuilt
+    at ``reference_pressure_pa`` only in the returned display frame. The input
+    climate data are never mutated.
+    """
+    target_pressure = float(reference_pressure_pa)
+    if not 30000.0 <= target_pressure <= 120000.0:
+        raise ValueError("reference_pressure_pa must be between 30000 and 120000 Pa")
+
+    frame = data.copy()
+    temperature = pd.to_numeric(
+        frame.get("dry_bulb_temperature_c", pd.Series(np.nan, index=frame.index)),
+        errors="coerce",
+    )
+    rh_pct = pd.to_numeric(
+        frame.get("relative_humidity_pct", pd.Series(np.nan, index=frame.index)),
+        errors="coerce",
+    )
+
+    # Defensive fallback for canonical frames that carry d but no RH.
+    if not rh_pct.notna().any() and "humidity_ratio_g_kg" in frame.columns:
+        source_w = pd.to_numeric(frame["humidity_ratio_g_kg"], errors="coerce") / 1000.0
+        source_pressure = pd.to_numeric(
+            frame.get("atmospheric_station_pressure_pa", pd.Series(target_pressure, index=frame.index)),
+            errors="coerce",
+        ).fillna(target_pressure)
+        recovered = np.full(len(frame), np.nan, dtype=float)
+        for position, (t_c, w, p_pa) in enumerate(
+            zip(temperature.to_numpy(dtype=float), source_w.to_numpy(dtype=float), source_pressure.to_numpy(dtype=float), strict=True)
+        ):
+            if not (np.isfinite(t_c) and np.isfinite(w) and np.isfinite(p_pa) and w >= 0.0):
+                continue
+            try:
+                recovered[position] = 100.0 * psychrolib.GetRelHumFromHumRatio(float(t_c), float(w), float(p_pa))
+            except Exception:
+                continue
+        rh_pct = pd.Series(recovered, index=frame.index, dtype=float)
+
+    rh_fraction = (rh_pct / 100.0).clip(lower=0.0, upper=1.0)
+    target_w = np.full(len(frame), np.nan, dtype=float)
+    target_h = np.full(len(frame), np.nan, dtype=float)
+    for position, (t_c, rh) in enumerate(
+        zip(temperature.to_numpy(dtype=float), rh_fraction.to_numpy(dtype=float), strict=True)
+    ):
+        if not (np.isfinite(t_c) and np.isfinite(rh)):
+            continue
+        try:
+            w = psychrolib.GetHumRatioFromRelHum(float(t_c), float(rh), target_pressure)
+            target_w[position] = float(w)
+            target_h[position] = psychrolib.GetMoistAirEnthalpy(float(t_c), float(w)) / 1000.0
+        except Exception:
+            continue
+
+    frame["relative_humidity_pct"] = rh_fraction.to_numpy(dtype=float) * 100.0
+    frame["humidity_ratio_g_kg"] = target_w * 1000.0
+    frame["moist_air_enthalpy_kj_kg"] = target_h
+    frame["atmospheric_station_pressure_pa"] = target_pressure
+    frame.attrs.update(data.attrs)
+    frame.attrs["psychrometric_display_pressure_pa"] = target_pressure
+    return frame
+
+
+def _comparison_distribution_tiles(climate: ClimateDataset) -> pd.DataFrame:
+    data = climate.data[["dry_bulb_temperature_c", "relative_humidity_pct"]].replace([np.inf, -np.inf], np.nan).dropna().copy()
+    if data.empty:
+        return pd.DataFrame(columns=["temperature_bin_c", "rh_bin_pct", "hours"])
+    data["temperature_bin_c"] = np.floor(data["dry_bulb_temperature_c"]).astype(int)
+    data["rh_bin_pct"] = (np.floor(data["relative_humidity_pct"] / 5.0) * 5.0).clip(0, 95).astype(int)
+    tiles = data.groupby(["temperature_bin_c", "rh_bin_pct"], observed=True).size().reset_index(name="records")
+    tiles["hours"] = tiles["records"].astype(float) * float(native_interval_hours(climate.data))
+    return tiles
+
+
+def _add_comparison_distribution_grid(
+    fig: go.Figure,
+    climates: list[ClimateDataset],
+    *,
+    chart_type: str,
+    colors: dict[str, str],
+    reference_pressure_pa: float,
+) -> None:
+    tables = [(climate, _comparison_distribution_tiles(climate)) for climate in climates]
+    global_max = max((float(table["hours"].max()) for _climate, table in tables if not table.empty), default=1.0)
+    global_max = max(global_max, 1e-12)
+    for climate, tiles in tables:
+        if tiles.empty:
+            continue
+        color = colors[climate.display_name]
+        pressure_pa = float(reference_pressure_pa)
+        group = f"grid-{climate.climate_id}"
+        for _, row in tiles.iterrows():
+            t0 = float(row["temperature_bin_c"])
+            t1 = t0 + 1.0
+            rh0 = float(row["rh_bin_pct"])
+            rh1 = min(100.0, rh0 + 5.0)
+            corners: list[tuple[float, float]] = []
+            for t_c, rh_pct in [(t0, rh0), (t1, rh0), (t1, rh1), (t0, rh1), (t0, rh0)]:
+                try:
+                    w = psychrolib.GetHumRatioFromRelHum(float(t_c), float(rh_pct) / 100.0, float(pressure_pa))
+                    d = float(w) * 1000.0
+                    h = psychrolib.GetMoistAirEnthalpy(float(t_c), float(w)) / 1000.0
+                except Exception:
+                    continue
+                corners.append((d, h) if chart_type == "i-d" else (float(t_c), d))
+            if len(corners) != 5:
+                continue
+            intensity = float(row["hours"]) / global_max
+            alpha = 0.05 + 0.66 * max(0.0, min(1.0, intensity))
+            fig.add_trace(
+                go.Scatter(
+                    x=[point[0] for point in corners],
+                    y=[point[1] for point in corners],
+                    mode="lines",
+                    line=dict(width=0.25, color=rgba(color, 0.25)),
+                    fill="toself",
+                    fillcolor=rgba(color, alpha),
+                    name=climate.display_name,
+                    legendgroup=group,
+                    showlegend=False,
+                    hovertemplate=(
+                        f"{climate.display_name}<br>Temperature bin: {t0:.0f}...{t1:.0f} °C<br>"
+                        f"RH bin: {rh0:.0f}...{rh1:.0f} %<br>Hours: {float(row['hours']):.2f}<extra></extra>"
+                    ),
+                )
+            )
+        fig.add_trace(
+            go.Scatter(
+                x=[None],
+                y=[None],
+                mode="lines",
+                line=dict(color=color, width=5.0),
+                name=climate.display_name,
+                legendgroup=group,
+                showlegend=True,
+                hoverinfo="skip",
+            )
+        )
+
+
 def psychrometric_comparison_chart(
     climates: list[ClimateDataset],
     chart_type: str = "T-d",
@@ -370,20 +531,23 @@ def psychrometric_comparison_chart(
     data_display: str = "Climate zones",
     zone_coverage: float = 0.90,
     zone_interior_style: str = "Density gradient",
-    show_core_zone: bool = True,
+    show_core_zone: bool = False,
+    additional_contour_coverages: list[float] | None = None,
     reference_pressure_pa: float | None = None,
 ) -> go.Figure:
     """Create one shared psychrometric comparison diagram.
 
-    Climate zones are the primary representation. Their geometry comes only
-    from each climate's already calculated T-d / i-d states. ``reference_pressure_pa``
-    controls the common RH construction grid only and cannot move a climate zone.
+    All comparison representations use one explicitly selected display pressure.
+    Source station-pressure states are preserved in the climate datasets; T/RH is
+    projected to ``reference_pressure_pa`` only for common T-d / i-d rendering.
     """
     del mode
     if data_display in {"All observations", "Points"}:
         representation = "Points"
-    elif data_display in {"Climate zones", "Middle 90% envelopes"}:
-        representation = "Climate zones"
+    elif data_display in {"Distribution grid", "Distributive grid"}:
+        representation = "Distribution grid"
+    elif data_display in {"Climate contour", "Climate zones", "Middle 90% envelopes"}:
+        representation = "Climate contour"
     else:
         raise ValueError(f"Unsupported psychrometric comparison display: {data_display}")
     chart_type = "i-d" if chart_type == "i-d" else "T-d"
@@ -400,10 +564,14 @@ def psychrometric_comparison_chart(
         x_label = "Dry-bulb temperature [°C]"
         y_label = "Moisture content d [g/kg dry air]"
 
-    shared_ranges = psychrometric_axis_ranges([climate.data for climate in climates], chart_type)
     grid_pressure = float(reference_pressure_pa if reference_pressure_pa is not None else pressure_pa)
+    projected_frames = {
+        climate.climate_id: _project_comparison_frame_to_pressure(climate.data, grid_pressure)
+        for climate in climates
+    }
+    shared_ranges = psychrometric_axis_ranges(list(projected_frames.values()), chart_type)
     temperature_values = pd.concat(
-        [pd.to_numeric(climate.data.get("dry_bulb_temperature_c"), errors="coerce") for climate in climates],
+        [pd.to_numeric(projected_frames[climate.climate_id].get("dry_bulb_temperature_c"), errors="coerce") for climate in climates],
         ignore_index=True,
     ).dropna()
     if temperature_values.empty:
@@ -412,9 +580,9 @@ def psychrometric_comparison_chart(
         t_min = float(temperature_values.min()) - 2.0
         t_max = float(temperature_values.max()) + 2.0
 
-    # One explicitly chosen reference grid keeps the psychrometric background
-    # readable. It is a visual construction reference only; climate state points
-    # and density zones retain the pressure used when each dataset was derived.
+    # One explicitly chosen pressure defines the complete display coordinate
+    # system: RH curves, points, distribution cells and density contours. Source
+    # station-pressure psychrometric states remain untouched in each dataset.
     for curve in psychrometric_rh_curves(chart_type, pressure_pa=grid_pressure, t_min_c=t_min, t_max_c=t_max):
         fig.add_trace(
             go.Scatter(
@@ -428,36 +596,52 @@ def psychrometric_comparison_chart(
             )
         )
 
-    for climate in climates:
-        color = colors[climate.display_name]
-        if representation == "Climate zones":
-            add_climate_zone_traces(
-                fig,
-                climate.data,
-                chart_type=chart_type,
-                label=climate.display_name,
-                color=color,
-                coverage=float(zone_coverage),
-                interior_style=zone_interior_style,
-                axis_ranges=shared_ranges,
-                show_core=bool(show_core_zone),
-                core_coverage=0.50,
-                legendgroup=f"climate-{climate.climate_id}",
-            )
-        else:
-            data = climate.data[[x_col, y_col]].replace([np.inf, -np.inf], np.nan).dropna()
-            fig.add_trace(
-                go.Scattergl(
-                    x=data[x_col],
-                    y=data[y_col],
-                    mode="markers",
-                    name=climate.display_name,
-                    marker=dict(size=3.5, opacity=0.22, color=color),
-                    hovertemplate=f"{climate.display_name}<br>x: %{{x:.2f}}<br>y: %{{y:.2f}}<extra></extra>",
+    if representation == "Distribution grid":
+        _add_comparison_distribution_grid(
+            fig,
+            climates,
+            chart_type=chart_type,
+            colors=colors,
+            reference_pressure_pa=grid_pressure,
+        )
+    else:
+        for climate in climates:
+            color = colors[climate.display_name]
+            display_data = projected_frames[climate.climate_id]
+            if representation == "Climate contour":
+                add_climate_zone_traces(
+                    fig,
+                    display_data,
+                    chart_type=chart_type,
+                    label=climate.display_name,
+                    color=color,
+                    coverage=float(zone_coverage),
+                    interior_style=zone_interior_style,
+                    axis_ranges=shared_ranges,
+                    show_core=bool(show_core_zone),
+                    core_coverage=0.50,
+                    additional_coverages=additional_contour_coverages,
+                    pressure_pa=grid_pressure,
+                    legendgroup=f"climate-{climate.climate_id}",
                 )
-            )
+            else:
+                data = display_data[[x_col, y_col]].replace([np.inf, -np.inf], np.nan).dropna()
+                fig.add_trace(
+                    go.Scattergl(
+                        x=data[x_col],
+                        y=data[y_col],
+                        mode="markers",
+                        name=climate.display_name,
+                        marker=dict(size=3.5, opacity=0.22, color=color),
+                        hovertemplate=f"{climate.display_name}<br>x: %{{x:.2f}}<br>y: %{{y:.2f}}<extra></extra>",
+                    )
+                )
 
-    title_mode = "climate zones" if representation == "Climate zones" else "observations"
+    title_mode = {
+        "Climate contour": "climate contours",
+        "Distribution grid": "distribution grid",
+        "Points": "observations",
+    }[representation]
     fig.update_layout(
         template=PLOT_TEMPLATE,
         title=f"Psychrometric climate comparison — {title_mode} ({chart_type})",

@@ -2479,23 +2479,45 @@ def render_compare_humidity(climates: list[ClimateDataset], reference_name: str,
         chart_type = st.radio("Psychrometric axes", ["T-d", "i-d"], horizontal=True, key="compare_psych_axes")
         representation = st.radio(
             "Representation",
-            ["Climate zones", "Points"],
+            ["Climate contour", "Distribution grid", "Points"],
+            index=0,
             horizontal=True,
             key="compare_psych_representation",
+            help=(
+                "Climate contour is the primary comparison view. Distribution grid and Points remain available as secondary diagnostic representations; the contour does not replace them."
+            ),
         )
         zone_coverage = 0.90
         zone_interior_style = "Density gradient"
-        show_core_zone = True
-        if representation == "Climate zones":
-            c1, c2, c3 = st.columns([1, 1.4, 1])
-            zone_coverage = float(c1.slider("Zone coverage [%]", 50, 99, 90, 1, key="compare_psych_coverage")) / 100.0
+        additional_contour_coverages: list[float] = []
+        if representation == "Climate contour":
+            c1, c2 = st.columns([1, 1.4])
+            coverage_pct = int(c1.slider("Outer contour coverage [%]", 50, 99, 90, 1, key="compare_psych_coverage"))
+            zone_coverage = float(coverage_pct) / 100.0
             zone_interior_style = c2.selectbox(
                 "Zone interior",
                 ["Density gradient", "Sparse points", "Solid fill", "Contour only"],
                 index=0,
                 key="compare_psych_interior",
             )
-            show_core_zone = c3.checkbox("Show 50% core contour", value=True, key="compare_psych_core")
+            contour_options = list(range(1, coverage_pct))
+            contour_defaults: list[int] = []
+            selected_levels = st.multiselect(
+                "Additional contour levels [%]",
+                contour_options,
+                default=contour_defaults,
+                key="compare_psych_additional_contours",
+                help="Multiple nested contours can be displayed simultaneously, for example 50% and 70% inside a 90% outer zone.",
+            )
+            additional_contour_coverages = [float(value) / 100.0 for value in selected_levels]
+            st.caption(
+                "Each contour is clipped to the physical 0...100% RH domain at the selected common psychrometric pressure. "
+                "Additional contour levels are optional and can be combined freely."
+            )
+        elif representation == "Distribution grid":
+            st.caption(
+                "Distribution-grid comparison uses the original 1 °C × 5 %RH psychrometric cells. Climate hue identifies the dataset; cell opacity follows represented hours on one shared scale."
+            )
 
         reference = next((climate for climate in climates if climate.display_name == reference_name), climates[0])
         pressure_values = pd.to_numeric(reference.data.get("atmospheric_station_pressure_pa"), errors="coerce").dropna()
@@ -2504,11 +2526,13 @@ def render_compare_humidity(climates: list[ClimateDataset], reference_name: str,
         else:
             reference_climate_pressure = pressure_from_altitude_m(float(reference.epw.location.elevation_m or 0.0))
         grid_mode = st.selectbox(
-            "Reference psychrometric grid pressure",
-            ["Standard atmosphere — 101325 Pa", f"Reference climate — {reference_name}", "Custom pressure"],
+            "Reference psychrometric pressure",
+            [f"Reference climate — {reference_name}", "Standard atmosphere — 101325 Pa", "Custom pressure"],
             index=0,
             key="compare_psych_grid_pressure_mode",
-            help="This pressure controls only the grey RH construction grid. Climate zones and points retain each dataset's actual calculated psychrometric state.",
+            help=(
+                "This pressure defines one common psychrometric display coordinate system for RH curves, points, grid cells and contours. Source station-pressure data remain unchanged."
+            ),
         )
         if grid_mode == "Standard atmosphere — 101325 Pa":
             reference_grid_pressure = DEFAULT_PRESSURE_PA
@@ -2516,7 +2540,7 @@ def render_compare_humidity(climates: list[ClimateDataset], reference_name: str,
             reference_grid_pressure = reference_climate_pressure
         else:
             reference_grid_pressure = st.number_input(
-                "Reference grid pressure [Pa]",
+                "Reference pressure [Pa]",
                 min_value=30000.0,
                 max_value=120000.0,
                 value=float(round(reference_climate_pressure / 100.0) * 100.0),
@@ -2524,21 +2548,20 @@ def render_compare_humidity(climates: list[ClimateDataset], reference_name: str,
                 key="compare_psych_grid_pressure_custom",
             )
         st.caption(
-            f"Shared axes are fixed across representations. Reference grid: {float(reference_grid_pressure):,.0f} Pa. "
-            "The grid is only a visual psychrometric reference; every climate retains the pressure used to derive its own humidity ratio and enthalpy."
+            f"Shared axes are fixed across representations. Common psychrometric pressure: {float(reference_grid_pressure):,.0f} Pa. "
+            "Points, distribution-grid cells, contours and the RH background are all projected to this same display pressure; source data are not modified."
         )
-        if representation == "Climate zones":
-            st.caption(
-                "Each colour is one climate zone. The solid outer line encloses the selected duration share, the optional dotted line marks the 50% core, and the default interior gradient shows relative occurrence density within that climate."
-            )
+
         fig = psychrometric_comparison_chart(
             climates,
             chart_type=chart_type,
-            mode=mode,
+            mode=display_mode,
+            pressure_pa=reference_climate_pressure,
             data_display=representation,
             zone_coverage=zone_coverage,
             zone_interior_style=zone_interior_style,
-            show_core_zone=show_core_zone,
+            show_core_zone=False,
+            additional_contour_coverages=additional_contour_coverages,
             reference_pressure_pa=float(reference_grid_pressure),
         )
         render_plot(fig, comparison_interpretation(climate_summary_metrics(climates), reference_name))
@@ -3155,17 +3178,22 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
         chart_type = st.radio("Psychrometric axes", ["T-d", "i-d"], horizontal=True)
         representation = st.radio(
             "Representation",
-            ["Climate zone", "Points"],
+            ["Points", "Distribution grid", "Climate contour"],
+            index=0,
             horizontal=True,
-            help="Climate zone is the recommended view. Points are retained for inspecting individual observations and outliers.",
+            help=(
+                "Points shows individual observations. Distribution grid restores the original 1 °C × 5 %RH frequency/metric cells. "
+                "Climate contour adds a smooth duration-density zone without replacing either original representation."
+            ),
         )
 
         zone_coverage = 0.90
         zone_interior_style = "Density gradient"
-        show_core_zone = True
-        if representation == "Climate zone":
-            z1, z2, z3 = st.columns([1, 1.4, 1])
-            coverage_pct = z1.slider("Zone coverage [%]", 50, 99, 90, 1, key="psych_zone_coverage")
+        show_core_zone = False
+        additional_contour_coverages: list[float] = []
+        if representation == "Climate contour":
+            z1, z2 = st.columns([1, 1.4])
+            coverage_pct = z1.slider("Outer contour coverage [%]", 50, 99, 90, 1, key="psych_zone_coverage")
             zone_coverage = float(coverage_pct) / 100.0
             zone_interior_style = z2.selectbox(
                 "Zone interior",
@@ -3173,10 +3201,24 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
                 index=0,
                 key="psych_zone_interior",
             )
-            show_core_zone = z3.checkbox("Show 50% core contour", value=True, key="psych_zone_core")
+            contour_options = list(range(1, coverage_pct))
+            contour_defaults: list[int] = []
+            selected_levels = st.multiselect(
+                "Additional contour levels [%]",
+                contour_options,
+                default=contour_defaults,
+                key="psych_zone_additional_contours",
+                help="Choose any number of nested duration contours below the outer coverage, for example 50%, 70%, or both.",
+            )
+            additional_contour_coverages = [float(value) / 100.0 for value in selected_levels]
             st.caption(
-                "The zone boundary is a smooth two-dimensional iso-density contour containing the selected share of represented climate duration. "
-                "The density gradient shows where states occur most frequently inside that contour; no selected-cell mosaic is used."
+                "Contours are calculated from a smooth two-dimensional duration density. Density outside the physical 0...100% RH domain is forced to zero before contour thresholds are calculated. "
+                "The density gradient shows where states occur most frequently inside the outer contour."
+            )
+        elif representation == "Distribution grid":
+            st.caption(
+                "Original distribution-grid representation restored: 1 °C × 5 %RH cells on the real psychrometric geometry. "
+                "Zero/low-frequency cells remain pale and the most frequent cells are saturated blue."
             )
 
         col_a, col_b, col_c = st.columns(3)
@@ -3220,9 +3262,12 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
             selected_years: list[int] | None = None
             if chronological_multiyear:
                 years = available_years(df)
+                year_choices = ["All years combined", "Single year"]
+                if representation != "Distribution grid":
+                    year_choices.append("Compare selected years")
                 year_mode = st.selectbox(
                     "Year display",
-                    ["All years combined", "Single year", "Compare selected years"],
+                    year_choices,
                     index=0,
                     key="psych_year_mode",
                 )
@@ -3244,6 +3289,10 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
                 color_metric_column, color_metric_label = PSYCHROMETRIC_COLOR_METRICS[color_mode]
             elif representation == "Points" and year_mode == "Compare selected years":
                 st.caption("Point colours identify real source years; metric colouring is disabled while years are being compared.")
+            elif representation == "Distribution grid":
+                metric_options = [name for name in PSYCHROMETRIC_COLOR_METRICS if name != "Month"]
+                color_mode = st.selectbox("Colour mapped metric", metric_options, index=metric_options.index("Frequency"))
+                color_metric_column, color_metric_label = PSYCHROMETRIC_COLOR_METRICS[color_mode]
 
         fig = psychrometric_chart(
             df,
@@ -3265,6 +3314,7 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
             zone_coverage=zone_coverage,
             zone_interior_style=zone_interior_style,
             show_core_zone=show_core_zone,
+            additional_contour_coverages=additional_contour_coverages,
             year_mode=year_mode,
             selected_years=selected_years,
         )
