@@ -23,6 +23,7 @@ _REQUIRED_DISTRIBUTION_API = frozenset(
         "psychrometric_axis_ranges",
     }
 )
+_REQUIRED_DISTRIBUTION_PARAMETERS = frozenset({"additional_coverages", "pressure_pa"})
 _REQUIRED_COMPARISON_PARAMETERS = frozenset({"additional_contour_coverages"})
 
 _REQUIRED_CHART_PARAMETERS = frozenset(
@@ -41,15 +42,27 @@ def _missing_attributes(module: ModuleType, names: frozenset[str]) -> set[str]:
     return {name for name in names if not hasattr(module, name)}
 
 
-def _missing_psychrometric_chart_parameters(module: ModuleType) -> set[str]:
-    chart = getattr(module, "psychrometric_chart", None)
-    if chart is None:
-        return set(_REQUIRED_CHART_PARAMETERS)
+def _missing_callable_parameters(module: ModuleType, name: str, required: frozenset[str]) -> set[str]:
+    callable_object = getattr(module, name, None)
+    if callable_object is None:
+        return set(required)
     try:
-        parameters = inspect.signature(chart).parameters
+        parameters = inspect.signature(callable_object).parameters
     except (TypeError, ValueError):
-        return set(_REQUIRED_CHART_PARAMETERS)
-    return set(_REQUIRED_CHART_PARAMETERS).difference(parameters)
+        return set(required)
+    return set(required).difference(parameters)
+
+
+def _missing_psychrometric_chart_parameters(module: ModuleType) -> set[str]:
+    return _missing_callable_parameters(module, "psychrometric_chart", _REQUIRED_CHART_PARAMETERS)
+
+
+def _missing_distribution_helper_parameters(module: ModuleType) -> set[str]:
+    return _missing_callable_parameters(
+        module,
+        "add_climate_zone_traces",
+        _REQUIRED_DISTRIBUTION_PARAMETERS,
+    )
 
 
 def ensure_current_psychrometric_runtime() -> tuple[ModuleType, ModuleType]:
@@ -62,23 +75,33 @@ def ensure_current_psychrometric_runtime() -> tuple[ModuleType, ModuleType]:
 
     No reload occurs during a normal fresh process. A reload is performed only
     when the imported module is demonstrably missing the API introduced by the
-    current psychrometric integration release. If the distribution dependency is
-    refreshed, ``charts`` is refreshed as well so its imported helper references
-    cannot remain bound to the previous distribution module implementation. The
-    function fails closed if the expected API is still unavailable after reload.
+    current psychrometric integration release. Attribute presence alone is not
+    sufficient: helper signatures are validated as well, because an older helper
+    can keep the same name while lacking newly required keyword parameters. If
+    the distribution dependency is refreshed, ``charts`` is refreshed as well
+    so its imported helper references cannot remain bound to the previous
+    distribution module implementation. The function fails closed if the
+    expected API is still unavailable after reload.
     """
     distribution = importlib.import_module("epw_climate_analyzer.psychrometric_distribution")
     missing_distribution = _missing_attributes(distribution, _REQUIRED_DISTRIBUTION_API)
+    missing_distribution_parameters = _missing_distribution_helper_parameters(distribution)
     distribution_was_reloaded = False
-    if missing_distribution:
+    if missing_distribution or missing_distribution_parameters:
         distribution = importlib.reload(distribution)
         distribution_was_reloaded = True
         missing_distribution = _missing_attributes(distribution, _REQUIRED_DISTRIBUTION_API)
-    if missing_distribution:
-        raise RuntimeError(
-            "Psychrometric distribution runtime API is stale after reload; missing: "
-            + ", ".join(sorted(missing_distribution))
-        )
+        missing_distribution_parameters = _missing_distribution_helper_parameters(distribution)
+    if missing_distribution or missing_distribution_parameters:
+        details: list[str] = []
+        if missing_distribution:
+            details.append("missing attributes: " + ", ".join(sorted(missing_distribution)))
+        if missing_distribution_parameters:
+            details.append(
+                "add_climate_zone_traces missing parameters: "
+                + ", ".join(sorted(missing_distribution_parameters))
+            )
+        raise RuntimeError("Psychrometric distribution runtime API is stale after reload; " + "; ".join(details))
 
     charts = importlib.import_module("epw_climate_analyzer.charts")
     missing_parameters = _missing_psychrometric_chart_parameters(charts)
@@ -92,20 +115,18 @@ def ensure_current_psychrometric_runtime() -> tuple[ModuleType, ModuleType]:
         )
 
     comparison = importlib.import_module("epw_climate_analyzer.comparison")
-    compare_fn = getattr(comparison, "psychrometric_comparison_chart", None)
-    try:
-        compare_parameters = inspect.signature(compare_fn).parameters if compare_fn is not None else {}
-    except (TypeError, ValueError):
-        compare_parameters = {}
-    missing_compare = set(_REQUIRED_COMPARISON_PARAMETERS).difference(compare_parameters)
+    missing_compare = _missing_callable_parameters(
+        comparison,
+        "psychrometric_comparison_chart",
+        _REQUIRED_COMPARISON_PARAMETERS,
+    )
     if missing_compare:
         comparison = importlib.reload(comparison)
-        compare_fn = getattr(comparison, "psychrometric_comparison_chart", None)
-        try:
-            compare_parameters = inspect.signature(compare_fn).parameters if compare_fn is not None else {}
-        except (TypeError, ValueError):
-            compare_parameters = {}
-        missing_compare = set(_REQUIRED_COMPARISON_PARAMETERS).difference(compare_parameters)
+        missing_compare = _missing_callable_parameters(
+            comparison,
+            "psychrometric_comparison_chart",
+            _REQUIRED_COMPARISON_PARAMETERS,
+        )
     if missing_compare:
         raise RuntimeError(
             "Psychrometric comparison runtime API is stale after reload; missing parameters: "
