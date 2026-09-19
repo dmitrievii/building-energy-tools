@@ -11,6 +11,7 @@ from __future__ import annotations
 from collections.abc import MutableMapping
 from typing import Any
 
+from .i18n import DEFAULT_LOCALE, normalize_locale, translate
 from .release_info import (
     ENGINEERING_DISCLAIMER,
     INDEPENDENCE_NOTICE,
@@ -68,10 +69,35 @@ NAVIGATION_LABELS = {
     "Data Quality": "Data — Quality & metadata",
 }
 
+NAVIGATION_TRANSLATION_KEYS = {
+    "Climate File Source": "nav.climate_file_source",
+    "Overview": "nav.overview",
+    "Temperature": "nav.temperature",
+    "Humidity and Psychrometrics": "nav.humidity_psychrometrics",
+    "Solar and Radiation": "nav.solar_radiation",
+    "Wind and Ventilation": "nav.wind_ventilation",
+    "Sky and Daylight": "nav.sky_daylight",
+    "Precipitation and Snow": "nav.precipitation_snow",
+    "Time Series and Overlay": "nav.time_series_overlay",
+    "Natural Ventilation": "nav.natural_ventilation",
+    "HVAC and Passive Design": "nav.hvac_passive_design",
+    "Compare Climates": "nav.compare_climates",
+    "Data Quality": "nav.data_quality",
+}
 
-def navigation_label(page: str) -> str:
-    """Return the public label for an internal page identifier."""
-    return NAVIGATION_LABELS.get(page, page)
+
+def navigation_label(page: str, locale: str | None = DEFAULT_LOCALE) -> str:
+    """Return the localized public label for a stable internal page identifier.
+
+    English remains the exact legacy label contract. Other supported locales
+    translate only the presentation label; page IDs and routing state remain
+    unchanged.
+    """
+    resolved = normalize_locale(locale)
+    if resolved == DEFAULT_LOCALE:
+        return NAVIGATION_LABELS.get(page, page)
+    key = NAVIGATION_TRANSLATION_KEYS.get(page)
+    return translate(key, resolved) if key is not None else page
 
 
 def queue_navigation(state: MutableMapping[str, Any], page: str) -> None:
