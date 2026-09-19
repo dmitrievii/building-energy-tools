@@ -1,0 +1,50 @@
+name: Climate 0.7.4.3 psychrometric representation patch
+
+on:
+  push:
+    branches:
+      - hotfix/v0.7.4.3-psychrometric-representation-restoration
+    paths:
+      - 'tools/climate_analyzer/scripts/apply_v0743_psychrometric_representation.py'
+      - '.github/workflows/v0743-psychrometric-representation-patch.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: hotfix/v0.7.4.3-psychrometric-representation-restoration
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply patch
+        working-directory: tools/climate_analyzer
+        run: python scripts/apply_v0743_psychrometric_representation.py
+      - name: Install dependencies
+        working-directory: tools/climate_analyzer
+        run: pip install -r requirements.txt
+      - name: Compile changed runtime
+        working-directory: tools/climate_analyzer
+        run: python -m compileall -q app.py epw_climate_analyzer tests/test_psychrometric_representation_0_7_4_3.py
+      - name: Run focused psychrometric regressions
+        working-directory: tools/climate_analyzer
+        run: |
+          python -m unittest discover -s tests -p 'test_psychrometric_representation_0_7_4_3.py' -v
+          python -m unittest discover -s tests -p 'test_psychrometric_integration_0_7_4_1.py' -v
+          python -m unittest discover -s tests -p 'test_psychrometric_redesign_0_7_4.py' -v
+          python -m unittest discover -s tests -p 'test_psychrometric_runtime_guard_0_7_4_2.py' -v
+      - name: Commit source and remove temporary transport
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm -f tools/climate_analyzer/scripts/apply_v0743_psychrometric_representation.py .github/workflows/v0743-psychrometric-representation-patch.yml
+          git add -A
+          git commit -m 'fix: restore psychrometric grid and physical contours'
+          git push origin HEAD:hotfix/v0.7.4.3-psychrometric-representation-restoration
