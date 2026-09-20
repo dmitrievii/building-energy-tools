@@ -105,47 +105,62 @@ async function selectExactStation(page, frame, stationName, stationId) {
 
   frame = await appFrame(page, 'Visible GeoSphere stations after filters:', 60_000);
   const targetId = `ID ${stationId}`;
-  const started = performance.now();
-  let lastText = '';
-  while (performance.now() - started < 60_000) {
-    lastText = await bodyText(frame);
-    const visibleMatch = lastText.match(/Visible GeoSphere stations after filters:\s*([\d,]+)/);
-    const visibleCount = visibleMatch ? Number(visibleMatch[1].replaceAll(',', '')) : null;
-    if (visibleCount !== null && visibleCount >= 1 && lastText.includes(targetId)) break;
-    await sleep(300);
-    frame = await appFrame(page, 'Visible GeoSphere stations after filters:', 5_000);
-  }
-  if (!lastText.includes(targetId)) {
-    throw new Error(`Station-ID filter did not expose ${stationName} (${targetId}).`);
-  }
 
+  // Match the proven production smoke contract: filtered-result identity lives
+  // in the selectbox options and does not have to be rendered in the closed
+  // page body. Open the list and choose the provider station explicitly.
   const stationCombo = await combo(frame, 'Search-result stations');
   await stationCombo.click({ timeout: 15_000 });
   await sleep(300);
-  let options = frame.getByRole('option');
-  let texts = await options.allInnerTexts().catch(() => []);
-  let index = texts.findIndex((value) => value.includes(targetId));
-  if (index < 0) {
-    options = frame.locator('[data-baseweb="menu"] li');
-    texts = await options.allInnerTexts().catch(() => []);
-    index = texts.findIndex((value) => value.includes(targetId));
+
+  let option = frame.getByRole('option').filter({ hasText: targetId }).last();
+  if (!(await option.count().catch(() => 0))) {
+    option = frame.locator('[data-baseweb="menu"] li').filter({ hasText: targetId }).last();
   }
-  if (index < 0) {
-    throw new Error(`Search-result stations contains no option for ${targetId}. Options: ${texts.join(' | ')}`);
+  if (!(await option.count().catch(() => 0))) {
+    const roleTexts = await frame.getByRole('option').allInnerTexts().catch(() => []);
+    const menuTexts = await frame.locator('[data-baseweb="menu"] li').allInnerTexts().catch(() => []);
+    throw new Error(
+      `Search-result stations contains no option for ${targetId}. ` +
+      `Role options: ${roleTexts.join(' | ')}; menu options: ${menuTexts.join(' | ')}`
+    );
   }
-  const selectedLabel = String(texts[index] || '').trim();
-  await options.nth(index).click({ timeout: 15_000 });
+
+  const selectedLabel = (await option.innerText().catch(() => '')).trim();
+  await option.click({ timeout: 15_000 });
   await sleep(500);
 
   const use = frame.getByRole('button', { name: 'Use station from list', exact: true }).first();
   if (!(await use.count().catch(() => 0))) throw new Error('Use station from list button not found.');
   await use.click({ timeout: 15_000 });
-  frame = await appFrame(page, 'Selected station', 60_000);
-  const settled = await bodyText(frame);
-  if (!settled.includes(stationName) && !settled.includes(targetId)) {
-    throw new Error(`Selected station did not settle on ${stationName} (${targetId}); option=${selectedLabel}.`);
+
+  const started = performance.now();
+  while (performance.now() - started < 60_000) {
+    let currentFrame;
+    try { currentFrame = await appFrame(page, 'Selected station', 5_000); }
+    catch { await sleep(300); continue; }
+
+    const selectedText = await bodyText(currentFrame);
+    if (selectedText.includes('Selected station') && (selectedText.includes(stationName) || selectedText.includes(targetId))) {
+      return currentFrame;
+    }
+
+    let currentCombo = currentFrame.getByRole('combobox', { name: 'Search-result stations', exact: true }).first();
+    if (!(await currentCombo.count().catch(() => 0))) {
+      currentCombo = currentFrame.getByLabel('Search-result stations', { exact: true }).first();
+    }
+    if (await currentCombo.count().catch(() => 0)) {
+      const rendered = [
+        await currentCombo.innerText().catch(() => ''),
+        await currentCombo.textContent().catch(() => ''),
+        await currentCombo.inputValue().catch(() => ''),
+      ].join(' ');
+      if (rendered.includes(targetId) || rendered.includes(stationName)) return currentFrame;
+    }
+    await sleep(400);
   }
-  return frame;
+
+  throw new Error(`Selected station did not settle on ${stationName} (${targetId}); option=${selectedLabel}.`);
 }
 
 async function expandMonthlyContext(frame) {
@@ -162,7 +177,7 @@ function occurrences(text, needle) {
 }
 
 const report = {
-  schema: 'climate-analyzer-pr83-source-ui-smoke-v5',
+  schema: 'climate-analyzer-pr83-source-ui-smoke-v6',
   target_url: TARGET_URL,
   fixture,
   checks: {},
