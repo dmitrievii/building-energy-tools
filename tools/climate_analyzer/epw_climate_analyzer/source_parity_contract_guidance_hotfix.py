@@ -30,6 +30,7 @@ PARAMETER_SET_OPTIONS = (
 )
 PARAMETER_SET_KEY = "geosphere_monthly_parameter_catalogue_v2"
 _RESOURCE_KEY = "geosphere_resource_id"
+_RESOURCE_WIDGET_KEY = "_geosphere_resource_selector_widget_v1"
 
 
 def _decorate_monthly_table(parity: Any, data: pd.DataFrame) -> pd.DataFrame:
@@ -86,29 +87,43 @@ def _install_guidance_safe(parity: Any) -> None:
         real_selectbox = st.selectbox
 
         # Resolve the dataset widget before entering the older wrapper chain.
-        # Some monthly wrappers decide their route at function entry, while the
-        # historical base selector used to render the dataset widget only later.
-        # During a 1m -> 1h Streamlit rerun that allowed an outer wrapper to see
-        # the previous monthly state while the inner selector already returned
-        # the new hourly value.  Render the single real widget here, then make
-        # the inner duplicate call return the committed value without emitting a
-        # second widget.  Every downstream wrapper now sees one coherent resource.
+        # The visible widget owns a private Streamlit key; the effective resource
+        # is copied explicitly into the legacy routing key before any wrapper is
+        # entered.  Keeping widget state and routing state separate is important:
+        # the composed legacy chain still contains a (suppressed) selectbox call
+        # using ``geosphere_resource_id``.  Reusing that same key for the visible
+        # widget allowed a 1m -> 1h browser transition to be rolled back to the
+        # default 10-minute resource during the rerun even though the frontend
+        # briefly displayed the hourly option.
         specs = list(parity.available_resource_specs())
         resource_ids = [str(spec.resource_id) for spec in specs]
         if not resource_ids:
             raise RuntimeError("GeoSphere resource registry is empty.")
+
+        current_resource = str(st.session_state.get(_RESOURCE_KEY, resource_ids[0]))
+        if current_resource not in resource_ids:
+            current_resource = resource_ids[0]
+        widget_resource = str(st.session_state.get(_RESOURCE_WIDGET_KEY, ""))
+        if widget_resource and widget_resource not in resource_ids:
+            del st.session_state[_RESOURCE_WIDGET_KEY]
+            widget_resource = ""
+        initial_resource = widget_resource if widget_resource in resource_ids else current_resource
+
         selected_resource = real_selectbox(
             "GeoSphere dataset",
             resource_ids,
-            index=0,
+            index=resource_ids.index(initial_resource),
             format_func=lambda resource_id: parity.resource_spec(resource_id).label,
-            key=_RESOURCE_KEY,
+            key=_RESOURCE_WIDGET_KEY,
             help=(
                 "10-minute data are best for recent event/detail analysis. The 1-hour resource provides the "
                 "long-term historical series and enters the same canonical hourly engine without resampling."
             ),
         )
         selected_resource = str(selected_resource)
+        # This key is no longer a widget key in this outer layer, so it can be
+        # committed synchronously and all older wrappers observe the same route.
+        st.session_state[_RESOURCE_KEY] = selected_resource
 
         seen_info: set[str] = set()
         seen_caption: set[str] = set()
