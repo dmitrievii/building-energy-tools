@@ -13,6 +13,7 @@ on:
       - 'deployment/pr83_monthly_contract_probe.py'
       - 'deployment/pr83_source_ui_live_smoke.mjs'
       - 'deployment/pr83_source_ui_live_smoke_v16.mjs'
+      - 'deployment/pr83_source_ui_live_smoke_v17.mjs'
       - 'deployment/pr83_geosphere_data_editor_dom_probe.mjs'
       - 'deployment/pr83_precip_snow_live_smoke.mjs'
       - '.github/workflows/climate-analyzer-pr83-branch-contract-smoke.yml'
@@ -100,7 +101,7 @@ jobs:
         run: npm install --no-save playwright-core@1.55.0
 
       - name: Exercise monthly/hourly source UI against PR branch
-        run: node deployment/pr83_source_ui_live_smoke_v16.mjs
+        run: node deployment/pr83_source_ui_live_smoke_v17.mjs
 
       - name: Capture 10-minute measured-variable editor DOM
         if: always()
