@@ -8,6 +8,7 @@ functions are defined. Heavy scientific/UI dependencies therefore remain lazy.
 
 from __future__ import annotations
 
+import importlib
 from typing import Any, MutableMapping
 
 
@@ -46,6 +47,21 @@ def looks_like_climate_analyzer_app(namespace: MutableMapping[str, Any]) -> bool
     return required.issubset(namespace)
 
 
+def _fresh_source_parity_ui() -> Any:
+    """Return an unwrapped source-parity UI module for this Streamlit script run.
+
+    Streamlit reruns ``app.py`` in a fresh globals dictionary while imported
+    package modules remain alive in the Python process. Several source-parity
+    capability layers intentionally wrap module-level routing callables. Without
+    resetting this persistent module, every browser rerun would wrap the previous
+    run again, duplicating captions/widgets and eventually producing duplicate
+    Streamlit element keys.
+    """
+    from . import source_parity_ui as parity
+
+    return importlib.reload(parity)
+
+
 def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     """Install source-parity runtime patches once into the mature app globals."""
     if not looks_like_climate_analyzer_app(namespace):
@@ -56,7 +72,7 @@ def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     # Import only at runtime. Keeping these imports out of app.py module scope
     # preserves the established lightweight-startup contract.
     from .geosphere_resource_overlay import apply_geosphere_resource_overlay
-    from . import source_parity_ui as parity
+    parity = _fresh_source_parity_ui()
     from .source_parity_fixes import apply_source_parity_fixes
     from .source_parity_ground import install_ground_depth_contract
     from .source_parity_resolution import enforce_native_timeseries_only
