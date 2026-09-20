@@ -100,6 +100,7 @@ jobs:
         run: node deployment/pr83_source_ui_live_smoke.mjs
 
       - name: Capture 10-minute measured-variable editor DOM
+        if: always()
         continue-on-error: true
         run: node deployment/pr83_geosphere_data_editor_dom_probe.mjs
 
