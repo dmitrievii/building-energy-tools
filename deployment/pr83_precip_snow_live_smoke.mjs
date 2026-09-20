@@ -221,10 +221,20 @@ async function scrollEditorBottom(editor) {
   });
 }
 
+async function settledVariableEditor(page) {
+  let current = await variableEditor(page);
+  await scrollEditorBottom(current.editor);
+  // Match the independently verified DOM probe: Glide updates both the
+  // virtual accessibility grid and its keyboard model asynchronously after a
+  // programmatic scroll. A short 180 ms pause was sufficient to expose rr in
+  // the ARIA mirror but not sufficient for Control+Home to create a selection.
+  await sleep(1_200);
+  current = await variableEditor(page);
+  return current;
+}
+
 async function providerLoadState(page, providerName) {
-  const { frame, editor, canvas } = await variableEditor(page);
-  await scrollEditorBottom(editor);
-  await sleep(180);
+  const { frame, editor, canvas } = await settledVariableEditor(page);
   const rows = editor.locator('[role="grid"] tr[role="row"]');
   const count = await rows.count();
   for (let index = 0; index < count; index += 1) {
@@ -255,35 +265,46 @@ async function waitProviderLoadState(page, providerName, expected, timeoutMs = 1
 async function navigateToLoadCell(page, state, providerName) {
   const expectedTestId = `glide-cell-0-${state.dataIndex}`;
   let lastSelectedTestId = null;
+  let lastHomeTestId = null;
   let lastFocused = false;
 
   for (let navigationAttempt = 0; navigationAttempt < 3; navigationAttempt += 1) {
-    await state.canvas.focus();
-    lastFocused = await state.canvas.evaluate((node) => document.activeElement === node).catch(() => false);
+    // Reacquire the editor after virtualization settles. This deliberately
+    // mirrors deployment/pr83_geosphere_data_editor_dom_probe.mjs, whose
+    // Control+Home -> ArrowDown path is the browser-proven contract.
+    const current = await settledVariableEditor(page);
+    await current.canvas.focus();
+    lastFocused = await current.canvas.evaluate((node) => document.activeElement === node).catch(() => false);
     if (!lastFocused) {
-      await state.canvas.click({ position: { x: 12, y: 12 }, force: true, timeout: 5_000 }).catch(() => {});
-      await state.canvas.focus();
-      lastFocused = await state.canvas.evaluate((node) => document.activeElement === node).catch(() => false);
+      await sleep(250);
+      continue;
     }
 
     await page.keyboard.press('Control+Home');
     await sleep(250);
+    const homeSelected = current.editor.locator('[role="gridcell"][aria-selected="true"]').first();
+    lastHomeTestId = await homeSelected.getAttribute('data-testid').catch(() => null);
+    if (lastHomeTestId !== 'glide-cell-0-0') {
+      await sleep(350);
+      continue;
+    }
+
     for (let row = 0; row < state.dataIndex; row += 1) {
       await page.keyboard.press('ArrowDown');
       await sleep(40);
     }
     await sleep(300);
 
-    const selected = state.editor.locator('[role="gridcell"][aria-selected="true"]').first();
+    const selected = current.editor.locator('[role="gridcell"][aria-selected="true"]').first();
     lastSelectedTestId = await selected.getAttribute('data-testid').catch(() => null);
     if (lastSelectedTestId === expectedTestId) return expectedTestId;
 
-    await sleep(250);
+    await sleep(350);
   }
 
   throw new Error(
     `Glide navigation could not address ${expectedTestId} for ${providerName}; ` +
-    `last selected=${lastSelectedTestId}, canvas focused=${lastFocused}.`,
+    `home=${lastHomeTestId}, last selected=${lastSelectedTestId}, canvas focused=${lastFocused}.`,
   );
 }
 
