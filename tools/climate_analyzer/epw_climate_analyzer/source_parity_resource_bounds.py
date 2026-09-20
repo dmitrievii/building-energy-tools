@@ -6,6 +6,7 @@ come from the published GeoSphere Austria dataset metadata:
 
 * ``klima-v2-10min``: 1992-05-20 06:10 UTC
 * ``klima-v2-1h``: 1880-04-01 00:00 UTC
+* ``klima-v2-1m``: 1767-12-01 00:00 UTC (published extent starts Dec 1767)
 
 Parameter-specific coverage can begin later still and is determined from the
 returned numeric observations rather than inferred from station validity.
@@ -22,6 +23,7 @@ import pandas as pd
 GEOSPHERE_RESOURCE_START_UTC: dict[str, pd.Timestamp] = {
     "klima-v2-10min": pd.Timestamp("1992-05-20T06:10:00Z"),
     "klima-v2-1h": pd.Timestamp("1880-04-01T00:00:00Z"),
+    "klima-v2-1m": pd.Timestamp("1767-12-01T00:00:00Z"),
 }
 
 
@@ -69,7 +71,12 @@ def install_resource_temporal_bounds(proxy: Any, parity: Any) -> None:
             if changed:
                 resource_id = str(st.session_state.get("geosphere_resource_id", "klima-v2-10min"))
                 lower = GEOSPHERE_RESOURCE_START_UTC.get(resource_id)
-                start_text = lower.strftime("%d %b %Y %H:%M UTC") if lower is not None else "the published resource start"
+                start_text = (
+                    "Dec 1767 UTC"
+                    if resource_id == "klima-v2-1m"
+                    else lower.strftime("%d %b %Y %H:%M UTC") if lower is not None
+                    else "the published resource start"
+                )
                 st.caption(
                     f"Station metadata validity describes the station record, not measurement coverage for every variable. "
                     f"This resource starts at {start_text}; individual parameters can begin later and are verified from returned observations."
