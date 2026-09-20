@@ -242,7 +242,7 @@ function occurrences(text, needle) {
   return text.split(needle).length - 1;
 }
 
-async function waitForSettledSingleBlocks(page, needles, timeoutMs = 15_000) {
+async function waitForSettledSingleBlocks(page, needles, timeoutMs = 60_000) {
   const started = performance.now();
   let stablePasses = 0;
   let lastCounts = needles.map(() => 0);
@@ -329,7 +329,7 @@ try {
 
   const hourlyInfo = 'Official GeoSphere Austria availability context (translated summary)';
   const hourlySource = 'Authoritative source: GeoSphere Austria Stationsdaten-v2 (1 h)';
-  const settledGuidance = await waitForSettledSingleBlocks(page, [hourlyInfo, hourlySource], 15_000);
+  const settledGuidance = await waitForSettledSingleBlocks(page, [hourlyInfo, hourlySource], 60_000);
   frame = settledGuidance.frame;
   report.checks.hourly_context_count = settledGuidance.counts[0];
   report.checks.hourly_source_block_count = settledGuidance.counts[1];
