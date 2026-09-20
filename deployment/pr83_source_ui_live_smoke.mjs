@@ -209,8 +209,35 @@ function occurrences(text, needle) {
   return text.split(needle).length - 1;
 }
 
+async function waitForSettledSingleBlocks(page, needles, timeoutMs = 15_000) {
+  const started = performance.now();
+  let stablePasses = 0;
+  let lastCounts = needles.map(() => 0);
+  let lastText = '';
+  let lastFrame = null;
+
+  while (performance.now() - started < timeoutMs) {
+    try {
+      lastFrame = await appFrame(page, needles[0], 3_000);
+      lastText = await bodyText(lastFrame);
+      lastCounts = needles.map((needle) => occurrences(lastText, needle));
+      if (lastCounts.every((count) => count === 1)) {
+        stablePasses += 1;
+        if (stablePasses >= 3) return { frame: lastFrame, text: lastText, counts: lastCounts };
+      } else {
+        stablePasses = 0;
+      }
+    } catch {
+      stablePasses = 0;
+    }
+    await sleep(400);
+  }
+
+  throw new Error(`Expected settled single guidance blocks; observed counts ${lastCounts.join(', ')}.`);
+}
+
 const report = {
-  schema: 'climate-analyzer-pr83-source-ui-smoke-v11',
+  schema: 'climate-analyzer-pr83-source-ui-smoke-v12',
   target_url: TARGET_URL,
   fixture,
   checks: {},
@@ -266,18 +293,12 @@ try {
   report.checks.hourly_selected_station_visible = preGuidanceText.includes(fixture.station_name);
   report.checks.hourly_body_excerpt = preGuidanceText.slice(0, 8000);
 
-  frame = await appFrame(page, 'Official GeoSphere Austria availability context', 30_000);
-  const hourlyText = await bodyText(frame);
   const hourlyInfo = 'Official GeoSphere Austria availability context (translated summary)';
   const hourlySource = 'Authoritative source: GeoSphere Austria Stationsdaten-v2 (1 h)';
-  if (occurrences(hourlyText, hourlyInfo) !== 1) {
-    throw new Error(`Expected one hourly availability context, found ${occurrences(hourlyText, hourlyInfo)}.`);
-  }
-  if (occurrences(hourlyText, hourlySource) !== 1) {
-    throw new Error(`Expected one hourly authoritative-source caption, found ${occurrences(hourlyText, hourlySource)}.`);
-  }
-  report.checks.hourly_context_count = 1;
-  report.checks.hourly_source_block_count = 1;
+  const settledGuidance = await waitForSettledSingleBlocks(page, [hourlyInfo, hourlySource], 15_000);
+  frame = settledGuidance.frame;
+  report.checks.hourly_context_count = settledGuidance.counts[0];
+  report.checks.hourly_source_block_count = settledGuidance.counts[1];
 
   if (report.page_errors.length) throw new Error(`Browser page error(s): ${report.page_errors.join(' | ')}`);
   report.success = true;
