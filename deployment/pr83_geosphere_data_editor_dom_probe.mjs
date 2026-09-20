@@ -61,9 +61,47 @@ async function labelledInput(frame, label, timeoutMs = 60_000) {
   throw new Error(`Timed out waiting for input: ${label}`);
 }
 
+async function gridSnapshot(editor) {
+  return await editor.locator('[role="grid"] tr[role="row"]').evaluateAll((rows) => rows.map((row) => {
+    const rect = row.getBoundingClientRect();
+    const cells = [...row.querySelectorAll('[role="gridcell"], [role="columnheader"]')].map((cell) => {
+      const cellRect = cell.getBoundingClientRect();
+      return {
+        text: (cell.textContent || '').trim(),
+        ariaColIndex: cell.getAttribute('aria-colindex'),
+        ariaReadonly: cell.getAttribute('aria-readonly'),
+        testid: cell.getAttribute('data-testid'),
+        rect: { x: cellRect.x, y: cellRect.y, width: cellRect.width, height: cellRect.height },
+        display: getComputedStyle(cell).display,
+        visibility: getComputedStyle(cell).visibility,
+      };
+    });
+    return {
+      ariaRowIndex: row.getAttribute('aria-rowindex'),
+      text: (row.textContent || '').trim(),
+      rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
+      display: getComputedStyle(row).display,
+      visibility: getComputedStyle(row).visibility,
+      cells,
+    };
+  }));
+}
+
 let browser;
 let page;
-const report = { success: false, fixture, roles: [], data_testids: [], canvases: [], body_excerpt: '', error: null };
+const report = {
+  success: false,
+  fixture,
+  roles: [],
+  data_testids: [],
+  canvases: [],
+  body_excerpt: '',
+  editor_scrollables_before: [],
+  editor_rows_before: [],
+  editor_scroll_action: null,
+  editor_rows_after: [],
+  error: null,
+};
 try {
   browser = await chromium.launch({ executablePath: CHROME_PATH, headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
   const context = await browser.newContext({ viewport: { width: 1440, height: 1100 }, locale: 'en-US' });
@@ -109,6 +147,55 @@ try {
     role: node.getAttribute('role'),
     parent: node.parentElement?.outerHTML?.slice(0, 4000) || '',
   })));
+
+  const editors = frame.locator('[data-testid="stDataFrame"]');
+  const editorCount = await editors.count();
+  if (editorCount < 2) throw new Error(`Expected station table + measured-variable editor, found ${editorCount} stDataFrame element(s).`);
+  const editor = editors.last();
+  report.editor_rows_before = await gridSnapshot(editor);
+  report.editor_scrollables_before = await editor.locator('*').evaluateAll((nodes) => nodes
+    .map((node, index) => {
+      const style = getComputedStyle(node);
+      return {
+        index,
+        tag: node.tagName,
+        className: String(node.className || '').slice(0, 300),
+        testid: node.getAttribute('data-testid'),
+        overflowY: style.overflowY,
+        overflowX: style.overflowX,
+        clientHeight: node.clientHeight,
+        scrollHeight: node.scrollHeight,
+        clientWidth: node.clientWidth,
+        scrollWidth: node.scrollWidth,
+        scrollTop: node.scrollTop,
+        scrollLeft: node.scrollLeft,
+      };
+    })
+    .filter((item) => item.scrollHeight > item.clientHeight + 2 || item.scrollWidth > item.clientWidth + 2)
+    .slice(0, 100));
+
+  report.editor_scroll_action = await editor.locator('*').evaluateAll((nodes) => {
+    const candidates = nodes
+      .map((node, index) => ({ node, index, delta: node.scrollHeight - node.clientHeight }))
+      .filter((item) => item.delta > 2)
+      .sort((a, b) => b.delta - a.delta);
+    if (!candidates.length) return null;
+    const target = candidates[0];
+    target.node.scrollTop = target.node.scrollHeight;
+    target.node.dispatchEvent(new Event('scroll', { bubbles: true }));
+    return {
+      index: target.index,
+      tag: target.node.tagName,
+      className: String(target.node.className || '').slice(0, 300),
+      testid: target.node.getAttribute('data-testid'),
+      clientHeight: target.node.clientHeight,
+      scrollHeight: target.node.scrollHeight,
+      resultingScrollTop: target.node.scrollTop,
+    };
+  });
+  await sleep(1200);
+  report.editor_rows_after = await gridSnapshot(editor);
+
   report.success = true;
   await page.screenshot({ path: path.join(OUT_DIR, 'data-editor-dom-probe.png'), fullPage: true });
 } catch (error) {
@@ -117,6 +204,16 @@ try {
   process.exitCode = 1;
 } finally {
   await fs.writeFile(path.join(OUT_DIR, 'data-editor-dom-probe.json'), JSON.stringify(report, null, 2));
-  console.log(JSON.stringify({ success: report.success, error: report.error, role_count: report.roles.length, data_testid_count: report.data_testids.length, canvas_count: report.canvases.length }, null, 2));
+  console.log(JSON.stringify({
+    success: report.success,
+    error: report.error,
+    role_count: report.roles.length,
+    data_testid_count: report.data_testids.length,
+    canvas_count: report.canvases.length,
+    scrollable_count: report.editor_scrollables_before.length,
+    scroll_action: report.editor_scroll_action,
+    rows_before: report.editor_rows_before.map((row) => [row.ariaRowIndex, row.text]),
+    rows_after: report.editor_rows_after.map((row) => [row.ariaRowIndex, row.text]),
+  }, null, 2));
   if (browser) await browser.close().catch(() => {});
 }
