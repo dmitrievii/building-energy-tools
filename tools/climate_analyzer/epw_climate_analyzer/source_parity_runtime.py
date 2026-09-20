@@ -67,6 +67,7 @@ def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     from .source_parity_monthly_canonical import install_monthly_canonical_ui
     from .source_parity_monthly_cleanup import install_monthly_cleanup
     from .source_parity_monthly_catalogue import install_monthly_catalogue_adapter
+    from .source_parity_monthly_visual_contract import install_monthly_visual_contract
 
     # Provider vocabulary is installed before the shared resource selector builds
     # metadata mappings. Scientific engines remain provider-neutral.
@@ -90,5 +91,6 @@ def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     # shared canonical chart engines.
     install_monthly_cleanup(proxy, parity)
     install_monthly_catalogue_adapter()
+    install_monthly_visual_contract()
     namespace["_SOURCE_PARITY_RUNTIME_INSTALLED"] = True
     return True
