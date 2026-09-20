@@ -252,28 +252,54 @@ async function waitProviderLoadState(page, providerName, expected, timeoutMs = 1
   throw new Error(`Provider ${providerName} Load did not become ${expected}; last=${last?.load ?? 'unavailable'}.`);
 }
 
+async function navigateToLoadCell(page, state, providerName) {
+  const expectedTestId = `glide-cell-0-${state.dataIndex}`;
+  let lastSelectedTestId = null;
+  let lastFocused = false;
+
+  for (let navigationAttempt = 0; navigationAttempt < 3; navigationAttempt += 1) {
+    await state.canvas.focus();
+    lastFocused = await state.canvas.evaluate((node) => document.activeElement === node).catch(() => false);
+    if (!lastFocused) {
+      await state.canvas.click({ position: { x: 12, y: 12 }, force: true, timeout: 5_000 }).catch(() => {});
+      await state.canvas.focus();
+      lastFocused = await state.canvas.evaluate((node) => document.activeElement === node).catch(() => false);
+    }
+
+    await page.keyboard.press('Control+Home');
+    await sleep(250);
+    for (let row = 0; row < state.dataIndex; row += 1) {
+      await page.keyboard.press('ArrowDown');
+      await sleep(40);
+    }
+    await sleep(300);
+
+    const selected = state.editor.locator('[role="gridcell"][aria-selected="true"]').first();
+    lastSelectedTestId = await selected.getAttribute('data-testid').catch(() => null);
+    if (lastSelectedTestId === expectedTestId) return expectedTestId;
+
+    await sleep(250);
+  }
+
+  throw new Error(
+    `Glide navigation could not address ${expectedTestId} for ${providerName}; ` +
+    `last selected=${lastSelectedTestId}, canvas focused=${lastFocused}.`,
+  );
+}
+
 async function selectLoadProvider(page, providerName) {
-  for (let attempt = 0; attempt < 2; attempt += 1) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
     const state = await providerLoadState(page, providerName);
     if (state.load === 'true') return state;
     if (state.load !== 'false') throw new Error(`Unexpected Load value for ${providerName}: ${state.load}`);
 
-    await state.canvas.focus();
-    await page.keyboard.press('Control+Home');
-    for (let row = 0; row < state.dataIndex; row += 1) await page.keyboard.press('ArrowDown');
-    await sleep(100);
-    const selected = await state.editor.locator('[role="gridcell"][aria-selected="true"]').first();
-    const selectedTestId = await selected.getAttribute('data-testid').catch(() => null);
-    const expectedTestId = `glide-cell-0-${state.dataIndex}`;
-    if (selectedTestId !== expectedTestId) {
-      throw new Error(`Glide navigation selected ${selectedTestId}, expected ${expectedTestId} for ${providerName}.`);
-    }
-
+    await navigateToLoadCell(page, state, providerName);
     await page.keyboard.press(attempt === 0 ? 'Space' : 'Enter');
     try {
       return await waitProviderLoadState(page, providerName, 'true', 8_000);
     } catch (error) {
-      if (attempt >= 1) throw error;
+      if (attempt >= 2) throw error;
+      await sleep(500);
     }
   }
   throw new Error(`Could not enable Load for ${providerName}.`);
