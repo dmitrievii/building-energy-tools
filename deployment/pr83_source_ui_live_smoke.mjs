@@ -110,6 +110,17 @@ async function waitComboContains(page, label, needle, timeoutMs = 30_000) {
   throw new Error(`Timed out waiting for ${label} to settle on ${needle}. Rendered: ${rendered}`);
 }
 
+async function visibleMatchingIndex(options, needle) {
+  const count = await options.count().catch(() => 0);
+  for (let index = 0; index < count; index += 1) {
+    const option = options.nth(index);
+    const text = await option.innerText().catch(() => '');
+    if (!text.includes(needle)) continue;
+    if (await option.isVisible().catch(() => false)) return index;
+  }
+  return -1;
+}
+
 async function selectComboContains(page, frame, label, needle, timeoutMs = 60_000) {
   const started = performance.now();
   let lastTexts = [];
@@ -142,7 +153,7 @@ async function selectComboContains(page, frame, label, needle, timeoutMs = 60_00
       for (const options of candidates) {
         const texts = await options.allInnerTexts().catch(() => []);
         if (texts.length) lastTexts = texts;
-        const index = texts.findIndex((value) => value.includes(needle));
+        const index = await visibleMatchingIndex(options, needle);
         if (index < 0) continue;
         await options.nth(index).click({ timeout: 10_000 });
         const settled = await waitComboContains(page, label, needle, 30_000);
@@ -155,7 +166,32 @@ async function selectComboContains(page, frame, label, needle, timeoutMs = 60_00
     await sleep(300);
   }
 
-  throw new Error(`No ${label} option containing ${needle}. Last options: ${lastTexts.join(' | ')}`);
+  throw new Error(`No visible ${label} option containing ${needle}. Last options: ${lastTexts.join(' | ')}`);
+}
+
+async function selectDataset(page, frame, optionNeedle, resourceId, timeoutMs = 60_000) {
+  const started = performance.now();
+  let lastBackendText = '';
+  while (performance.now() - started < timeoutMs) {
+    try {
+      frame = await selectComboContains(page, frame, 'GeoSphere dataset', optionNeedle, 20_000);
+    } catch {
+      await sleep(400);
+      continue;
+    }
+    try {
+      frame = await appFrame(page, `Selected resource: ${resourceId}`, 8_000);
+      lastBackendText = await bodyText(frame);
+      if (lastBackendText.includes(`Selected resource: ${resourceId}`)) return frame;
+    } catch {
+      lastBackendText = await bodyText(frame).catch(() => '');
+    }
+    await sleep(500);
+  }
+  throw new Error(
+    `GeoSphere dataset control did not commit backend resource ${resourceId} after selecting ${optionNeedle}. ` +
+    `Last selected-resource excerpt: ${lastBackendText.match(/Selected resource:[^\n]*/)?.[0] || 'unavailable'}`
+  );
 }
 
 async function selectExactStation(page, frame, stationName, stationId) {
@@ -183,9 +219,6 @@ async function selectExactStation(page, frame, stationName, stationId) {
     return frame;
   }
 
-  // Diagnostic fallback: the closed control itself is sufficient evidence of
-  // the selected provider station. Do not require the popup menu to materialize
-  // in headless Chrome when the filtered result is already settled.
   const stationCombo = await combo(frame, 'Search-result stations', 60_000);
   const rendered = await renderedControlText(stationCombo);
   if (rendered.includes(targetId) || rendered.includes(stationName)) return frame;
@@ -237,7 +270,7 @@ async function waitForSettledSingleBlocks(page, needles, timeoutMs = 15_000) {
 }
 
 const report = {
-  schema: 'climate-analyzer-pr83-source-ui-smoke-v12',
+  schema: 'climate-analyzer-pr83-source-ui-smoke-v13',
   target_url: TARGET_URL,
   fixture,
   checks: {},
@@ -258,7 +291,7 @@ try {
   await page.goto(TARGET_URL, { waitUntil: 'domcontentloaded', timeout: 60_000 });
 
   let frame = await chooseAndWait(page, 'GeoSphere Austria', 'GeoSphere Austria — measured historical station data');
-  frame = await selectComboContains(page, frame, 'GeoSphere dataset', '1 month');
+  frame = await selectDataset(page, frame, '1 month', 'klima-v2-1m');
   frame = await selectExactStation(page, frame, fixture.station_name, fixture.station_id);
   frame = await appFrame(page, 'Parameter set', 60_000);
   await expandMonthlyContext(frame);
@@ -281,10 +314,11 @@ try {
   report.checks.monthly_source_block_count = 1;
   report.checks.monthly_context_count = 1;
 
-  frame = await selectComboContains(page, frame, 'GeoSphere dataset', '1 h (long-term)');
+  frame = await selectDataset(page, frame, '1 h (long-term)', 'klima-v2-1h');
   const hourlyDataset = await waitComboContains(page, 'GeoSphere dataset', '1 h (long-term)', 30_000);
   frame = hourlyDataset.frame;
   report.checks.hourly_dataset_control = hourlyDataset.rendered;
+  report.checks.hourly_backend_resource = 'klima-v2-1h';
 
   frame = await selectExactStation(page, frame, fixture.station_name, fixture.station_id);
   frame = await appFrame(page, 'Station metadata validity', 60_000);
