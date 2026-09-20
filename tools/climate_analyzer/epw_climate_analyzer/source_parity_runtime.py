@@ -1,9 +1,9 @@
 """Lazy runtime installer for Climate Analyzer source parity.
 
 The mature Streamlit entrypoint intentionally remains the source-of-truth UI
-module because regression and deployment contracts inspect its source/AST.  This
+module because regression and deployment contracts inspect its source/AST. This
 module is imported only from the navigation hand-off at runtime, after all app
-functions are defined.  Heavy scientific/UI dependencies therefore remain lazy.
+functions are defined. Heavy scientific/UI dependencies therefore remain lazy.
 """
 
 from __future__ import annotations
@@ -12,13 +12,7 @@ from typing import Any, MutableMapping
 
 
 class _GlobalsProxy:
-    """Attribute facade over a module globals dictionary.
-
-    The parity installer was designed against a module-like object.  Streamlit
-    can execute the app under runner-specific module names, so forwarding
-    attributes directly to the caller globals is more robust than relying on a
-    particular entry in ``sys.modules``.
-    """
+    """Attribute facade over a module globals dictionary."""
 
     def __init__(self, namespace: MutableMapping[str, Any]) -> None:
         object.__setattr__(self, "_namespace", namespace)
@@ -53,12 +47,7 @@ def looks_like_climate_analyzer_app(namespace: MutableMapping[str, Any]) -> bool
 
 
 def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
-    """Install parity patches once into a mature app globals dictionary.
-
-    Returns ``True`` when the namespace is the Climate Analyzer app (whether the
-    patches were newly installed or were already present) and ``False`` for
-    unrelated callers such as unit tests of the navigation contract.
-    """
+    """Install source-parity runtime patches once into the mature app globals."""
     if not looks_like_climate_analyzer_app(namespace):
         return False
     if bool(namespace.get("_SOURCE_PARITY_RUNTIME_INSTALLED", False)):
@@ -74,8 +63,10 @@ def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     from .source_parity_longterm_hotfix import install_longterm_hourly_hotfix
     from .source_parity_resource_bounds import install_resource_temporal_bounds
     from .source_parity_longterm_followup import install_longterm_followup
+    from .source_parity_monthly import install_monthly_resource
+    from .source_parity_monthly_canonical import install_monthly_canonical_ui
 
-    # Apply provider vocabulary before the Streamlit resource selector builds
+    # Provider vocabulary is installed before the shared resource selector builds
     # metadata mappings. Scientific engines remain provider-neutral.
     apply_geosphere_resource_overlay()
 
@@ -87,5 +78,10 @@ def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     install_longterm_hourly_hotfix(proxy, parity)
     install_resource_temporal_bounds(proxy, parity)
     install_longterm_followup(proxy, parity)
+    install_monthly_resource(proxy, parity)
+    # The monthly source changes temporal capabilities, not the application
+    # information architecture. Bind its capability gates to the same canonical
+    # analysis sections used by other climate sources.
+    install_monthly_canonical_ui(proxy, parity)
     namespace["_SOURCE_PARITY_RUNTIME_INSTALLED"] = True
     return True
