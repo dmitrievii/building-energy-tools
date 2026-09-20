@@ -267,12 +267,27 @@ async function navigateToLoadCell(page, state, providerName) {
   let lastSelectedTestId = null;
   let lastHomeTestId = null;
   let lastFocused = false;
+  let lastMouseInitialized = false;
 
   for (let navigationAttempt = 0; navigationAttempt < 3; navigationAttempt += 1) {
-    // Reacquire the editor after virtualization settles. This deliberately
-    // mirrors deployment/pr83_geosphere_data_editor_dom_probe.mjs, whose
-    // Control+Home -> ArrowDown path is the browser-proven contract.
+    // Reacquire the editor after virtualization settles. A DOM focus alone is
+    // not sufficient in GlideDataEditor: the canvas can be document.activeElement
+    // while Glide's internal selection model is still empty. Seed a selection
+    // with one real click in a non-checkbox body cell before keyboard navigation.
     const current = await settledVariableEditor(page);
+    const box = await current.canvas.boundingBox().catch(() => null);
+    if (!box || box.width < 100 || box.height < 80) {
+      await sleep(250);
+      continue;
+    }
+    await current.canvas.click({
+      position: { x: Math.min(box.width - 10, box.width * 0.55), y: Math.min(box.height - 10, 52) },
+      force: true,
+      timeout: 5_000,
+    }).catch(() => {});
+    await sleep(180);
+    lastMouseInitialized = true;
+
     await current.canvas.focus();
     lastFocused = await current.canvas.evaluate((node) => document.activeElement === node).catch(() => false);
     if (!lastFocused) {
@@ -304,7 +319,7 @@ async function navigateToLoadCell(page, state, providerName) {
 
   throw new Error(
     `Glide navigation could not address ${expectedTestId} for ${providerName}; ` +
-    `home=${lastHomeTestId}, last selected=${lastSelectedTestId}, canvas focused=${lastFocused}.`,
+    `home=${lastHomeTestId}, last selected=${lastSelectedTestId}, canvas focused=${lastFocused}, mouse initialized=${lastMouseInitialized}.`,
   );
 }
 
