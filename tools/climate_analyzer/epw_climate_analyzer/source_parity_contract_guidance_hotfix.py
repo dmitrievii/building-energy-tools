@@ -29,6 +29,7 @@ PARAMETER_SET_OPTIONS = (
     "All provider parameters",
 )
 PARAMETER_SET_KEY = "geosphere_monthly_parameter_catalogue_v2"
+_RESOURCE_KEY = "geosphere_resource_id"
 
 
 def _decorate_monthly_table(parity: Any, data: pd.DataFrame) -> pd.DataFrame:
@@ -82,6 +83,32 @@ def _install_guidance_safe(parity: Any) -> None:
         real_expander = st.expander
         real_radio = st.radio
         real_editor = st.data_editor
+        real_selectbox = st.selectbox
+
+        # Resolve the dataset widget before entering the older wrapper chain.
+        # Some monthly wrappers decide their route at function entry, while the
+        # historical base selector used to render the dataset widget only later.
+        # During a 1m -> 1h Streamlit rerun that allowed an outer wrapper to see
+        # the previous monthly state while the inner selector already returned
+        # the new hourly value.  Render the single real widget here, then make
+        # the inner duplicate call return the committed value without emitting a
+        # second widget.  Every downstream wrapper now sees one coherent resource.
+        specs = list(parity.available_resource_specs())
+        resource_ids = [str(spec.resource_id) for spec in specs]
+        if not resource_ids:
+            raise RuntimeError("GeoSphere resource registry is empty.")
+        selected_resource = real_selectbox(
+            "GeoSphere dataset",
+            resource_ids,
+            index=0,
+            format_func=lambda resource_id: parity.resource_spec(resource_id).label,
+            key=_RESOURCE_KEY,
+            help=(
+                "10-minute data are best for recent event/detail analysis. The 1-hour resource provides the "
+                "long-term historical series and enters the same canonical hourly engine without resampling."
+            ),
+        )
+        selected_resource = str(selected_resource)
 
         seen_info: set[str] = set()
         seen_caption: set[str] = set()
@@ -92,6 +119,12 @@ def _install_guidance_safe(parity: Any) -> None:
             if str(st.session_state.get(PARAMETER_SET_KEY, "Core variables")) in PARAMETER_SET_OPTIONS
             else "Core variables"
         }
+
+        def selectbox(label: str, options: Iterable[Any], *args: Any, **kwargs: Any):
+            values = list(options)
+            if label == "GeoSphere dataset" and str(kwargs.get("key", "")) == _RESOURCE_KEY:
+                return selected_resource
+            return real_selectbox(label, values, *args, **kwargs)
 
         def info(body: Any, *args: Any, **kwargs: Any):
             text = str(body)
@@ -115,7 +148,7 @@ def _install_guidance_safe(parity: Any) -> None:
 
         def write(body: Any, *args: Any, **kwargs: Any):
             if (
-                str(st.session_state.get("geosphere_resource_id", "")) == MONTHLY_RESOURCE_ID
+                str(st.session_state.get(_RESOURCE_KEY, "")) == MONTHLY_RESOURCE_ID
                 and str(body).strip() == MONTHLY_OFFICIAL_CONTEXT_EN.strip()
             ):
                 return None
@@ -123,7 +156,7 @@ def _install_guidance_safe(parity: Any) -> None:
 
         def expander(label: str, *args: Any, **kwargs: Any):
             if (
-                str(st.session_state.get("geosphere_resource_id", "")) == MONTHLY_RESOURCE_ID
+                str(st.session_state.get(_RESOURCE_KEY, "")) == MONTHLY_RESOURCE_ID
                 and label == "About this GeoSphere monthly dataset"
             ):
                 return nullcontext()
@@ -160,7 +193,7 @@ def _install_guidance_safe(parity: Any) -> None:
 
         def editor(data: Any, *args: Any, **kwargs: Any):
             if not (
-                str(st.session_state.get("geosphere_resource_id", "")) == MONTHLY_RESOURCE_ID
+                str(st.session_state.get(_RESOURCE_KEY, "")) == MONTHLY_RESOURCE_ID
                 and isinstance(data, pd.DataFrame)
                 and {"Provider", "Measured variable"}.issubset(data.columns)
             ):
@@ -212,6 +245,7 @@ def _install_guidance_safe(parity: Any) -> None:
         st.expander = expander
         st.radio = radio
         st.data_editor = editor
+        st.selectbox = selectbox
         try:
             previous(legacy, original)
         finally:
@@ -221,6 +255,7 @@ def _install_guidance_safe(parity: Any) -> None:
             st.expander = real_expander
             st.radio = real_radio
             st.data_editor = real_editor
+            st.selectbox = real_selectbox
 
     parity._render_geosphere_resource_selector = selector
 
