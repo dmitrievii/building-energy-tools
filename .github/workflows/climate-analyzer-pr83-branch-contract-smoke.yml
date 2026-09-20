@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_contract_closure.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_contract_guidance_hotfix.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_contract_guard.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_runtime.py'
       - 'tools/climate_analyzer/tests/test_canonical_contract_closure_0_7_5_3.py'
