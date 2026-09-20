@@ -70,6 +70,7 @@ async function gridSnapshot(editor) {
         text: (cell.textContent || '').trim(),
         ariaColIndex: cell.getAttribute('aria-colindex'),
         ariaReadonly: cell.getAttribute('aria-readonly'),
+        ariaSelected: cell.getAttribute('aria-selected'),
         testid: cell.getAttribute('data-testid'),
         rect: { x: cellRect.x, y: cellRect.y, width: cellRect.width, height: cellRect.height },
         display: getComputedStyle(cell).display,
@@ -78,6 +79,7 @@ async function gridSnapshot(editor) {
     });
     return {
       ariaRowIndex: row.getAttribute('aria-rowindex'),
+      ariaSelected: row.getAttribute('aria-selected'),
       text: (row.textContent || '').trim(),
       rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
       display: getComputedStyle(row).display,
@@ -85,6 +87,15 @@ async function gridSnapshot(editor) {
       cells,
     };
   }));
+}
+
+async function selectedCells(editor) {
+  return await editor.locator('[role="gridcell"][aria-selected="true"]').evaluateAll((cells) => cells.map((cell) => ({
+    text: (cell.textContent || '').trim(),
+    testid: cell.getAttribute('data-testid'),
+    ariaColIndex: cell.getAttribute('aria-colindex'),
+    rowIndex: cell.closest('[role="row"]')?.getAttribute('aria-rowindex') || null,
+  })));
 }
 
 let browser;
@@ -100,6 +111,7 @@ const report = {
   editor_rows_before: [],
   editor_scroll_action: null,
   editor_rows_after: [],
+  keyboard_probe: {},
   error: null,
 };
 try {
@@ -152,6 +164,9 @@ try {
   const editorCount = await editors.count();
   if (editorCount < 2) throw new Error(`Expected station table + measured-variable editor, found ${editorCount} stDataFrame element(s).`);
   const editor = editors.last();
+  const canvas = editor.locator('canvas[data-testid="data-grid-canvas"]').first();
+  if (!(await canvas.count())) throw new Error('Measured-variable Glide canvas not found.');
+
   report.editor_rows_before = await gridSnapshot(editor);
   report.editor_scrollables_before = await editor.locator('*').evaluateAll((nodes) => nodes
     .map((node, index) => {
@@ -196,6 +211,27 @@ try {
   await sleep(1200);
   report.editor_rows_after = await gridSnapshot(editor);
 
+  // Non-destructive keyboard probe: verify that Glide's focus/navigation model
+  // can address the first-column rr cell without changing any boolean values.
+  await canvas.focus();
+  report.keyboard_probe.active_after_focus = await canvas.evaluate((node) => document.activeElement === node);
+  await page.keyboard.press('Control+Home');
+  await sleep(250);
+  report.keyboard_probe.selected_after_home = await selectedCells(editor);
+  report.keyboard_probe.rows_after_home = (await gridSnapshot(editor)).map((row) => [row.ariaRowIndex, row.text]);
+  for (let index = 0; index < 12; index += 1) {
+    await page.keyboard.press('ArrowDown');
+    await sleep(40);
+  }
+  await sleep(300);
+  report.keyboard_probe.selected_after_12_down = await selectedCells(editor);
+  report.keyboard_probe.rows_after_12_down = (await gridSnapshot(editor)).map((row) => [row.ariaRowIndex, row.text]);
+  report.keyboard_probe.scroll_state_after_12_down = await editor.locator('.dvn-scroller').first().evaluate((node) => ({
+    scrollTop: node.scrollTop,
+    scrollHeight: node.scrollHeight,
+    clientHeight: node.clientHeight,
+  })).catch(() => null);
+
   report.success = true;
   await page.screenshot({ path: path.join(OUT_DIR, 'data-editor-dom-probe.png'), fullPage: true });
 } catch (error) {
@@ -214,6 +250,7 @@ try {
     scroll_action: report.editor_scroll_action,
     rows_before: report.editor_rows_before.map((row) => [row.ariaRowIndex, row.text]),
     rows_after: report.editor_rows_after.map((row) => [row.ariaRowIndex, row.text]),
+    keyboard_probe: report.keyboard_probe,
   }, null, 2));
   if (browser) await browser.close().catch(() => {});
 }
