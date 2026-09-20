@@ -111,6 +111,7 @@ jobs:
         run: node deployment/pr83_geosphere_data_editor_dom_probe.mjs
 
       - name: Exercise current 10-minute precipitation route against PR branch
+        if: ${{ !cancelled() }}
         run: node deployment/pr83_precip_snow_live_smoke.mjs
 
       - name: Reject Streamlit runtime tracebacks
