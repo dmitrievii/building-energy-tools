@@ -84,6 +84,7 @@ def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     from .source_parity_monthly_cleanup import install_monthly_cleanup
     from .source_parity_monthly_catalogue import install_monthly_catalogue_adapter
     from .source_parity_monthly_visual_contract import install_monthly_visual_contract
+    from .source_parity_contract_closure import install_contract_closure
 
     # Provider vocabulary is installed before the shared resource selector builds
     # metadata mappings. Scientific engines remain provider-neutral.
@@ -108,5 +109,8 @@ def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     install_monthly_cleanup(proxy, parity)
     install_monthly_catalogue_adapter()
     install_monthly_visual_contract()
+    # Cross-source audit closure is deliberately last: it resolves the final
+    # composed wrappers/capability gates rather than creating parallel engines.
+    install_contract_closure(proxy, parity)
     namespace["_SOURCE_PARITY_RUNTIME_INSTALLED"] = True
     return True
