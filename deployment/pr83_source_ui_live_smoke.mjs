@@ -9,14 +9,19 @@ const CHROME_PATH = process.env.CHROME_PATH || '/usr/bin/google-chrome';
 const fixture = JSON.parse(await fs.readFile(FIXTURE_PATH, 'utf8'));
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const MONTHLY_SOURCE = 'Official source: GeoSphere Austria Station Data-v2 (1 m)';
+const MONTHLY_CONTEXT = 'About this GeoSphere monthly dataset';
+const HOURLY_INFO = 'Official GeoSphere Austria availability context (translated summary)';
+const HOURLY_SOURCE = 'Authoritative source: GeoSphere Austria Stationsdaten-v2 (1 h)';
+
 async function bodyText(frame) {
   try { return await frame.locator('body').innerText({ timeout: 2_000 }); }
   catch { return ''; }
 }
 
 async function appFrame(page, needle = 'Climate Analyzer', timeoutMs = 90_000) {
-  const start = performance.now();
-  while (performance.now() - start < timeoutMs) {
+  const started = performance.now();
+  while (performance.now() - started < timeoutMs) {
     for (const frame of page.frames()) {
       if ((await bodyText(frame)).includes(needle)) return frame;
     }
@@ -133,6 +138,9 @@ async function selectComboContains(page, frame, label, needle, timeoutMs = 60_00
     try { control = await combo(frame, label, 5_000); }
     catch { await sleep(300); continue; }
 
+    const current = await renderedControlText(control);
+    if (current.includes(needle)) return frame;
+
     try {
       await control.scrollIntoViewIfNeeded({ timeout: 5_000 }).catch(() => {});
       await control.click({ timeout: 5_000 });
@@ -156,8 +164,7 @@ async function selectComboContains(page, frame, label, needle, timeoutMs = 60_00
         const index = await visibleMatchingIndex(options, needle);
         if (index < 0) continue;
         await options.nth(index).click({ timeout: 10_000 });
-        const settled = await waitComboContains(page, label, needle, 30_000);
-        return settled.frame;
+        return frame;
       }
       await sleep(250);
     }
@@ -169,29 +176,62 @@ async function selectComboContains(page, frame, label, needle, timeoutMs = 60_00
   throw new Error(`No visible ${label} option containing ${needle}. Last options: ${lastTexts.join(' | ')}`);
 }
 
-async function selectDataset(page, frame, optionNeedle, resourceId, timeoutMs = 60_000) {
+function occurrences(text, needle) {
+  return text.split(needle).length - 1;
+}
+
+function monthlyResourceSettled(text) {
+  return (
+    text.includes('Selected resource: klima-v2-1m') &&
+    text.includes('Parameter set') &&
+    text.includes(MONTHLY_CONTEXT) &&
+    !text.includes(HOURLY_INFO) &&
+    !text.includes(HOURLY_SOURCE)
+  );
+}
+
+function hourlyResourceSettled(text) {
+  return (
+    text.includes('Selected resource: klima-v2-1h') &&
+    text.includes('Station metadata validity') &&
+    occurrences(text, HOURLY_INFO) === 1 &&
+    occurrences(text, HOURLY_SOURCE) === 1 &&
+    !text.includes(MONTHLY_CONTEXT) &&
+    !text.includes('Parameter set') &&
+    !text.includes(MONTHLY_SOURCE)
+  );
+}
+
+async function waitForStableBody(page, predicate, description, timeoutMs = 90_000, stablePassesRequired = 3) {
   const started = performance.now();
-  let lastBackendText = '';
+  let stablePasses = 0;
+  let lastText = '';
+  let lastFrame = null;
+
   while (performance.now() - started < timeoutMs) {
     try {
-      frame = await selectComboContains(page, frame, 'GeoSphere dataset', optionNeedle, 20_000);
+      lastFrame = await appFrame(page, 'Climate Analyzer', 5_000);
+      lastText = await bodyText(lastFrame);
+      if (predicate(lastText)) {
+        stablePasses += 1;
+        if (stablePasses >= stablePassesRequired) return { frame: lastFrame, text: lastText };
+      } else {
+        stablePasses = 0;
+      }
     } catch {
-      await sleep(400);
-      continue;
-    }
-    try {
-      frame = await appFrame(page, `Selected resource: ${resourceId}`, 8_000);
-      lastBackendText = await bodyText(frame);
-      if (lastBackendText.includes(`Selected resource: ${resourceId}`)) return frame;
-    } catch {
-      lastBackendText = await bodyText(frame).catch(() => '');
+      stablePasses = 0;
     }
     await sleep(500);
   }
-  throw new Error(
-    `GeoSphere dataset control did not commit backend resource ${resourceId} after selecting ${optionNeedle}. ` +
-    `Last selected-resource excerpt: ${lastBackendText.match(/Selected resource:[^\n]*/)?.[0] || 'unavailable'}`
-  );
+
+  const selected = lastText.match(/Selected resource:[^\n]*/)?.[0] || 'unavailable';
+  throw new Error(`Timed out waiting for settled ${description}. Last resource: ${selected}`);
+}
+
+async function selectDataset(page, frame, optionNeedle, resourceId) {
+  frame = await selectComboContains(page, frame, 'GeoSphere dataset', optionNeedle, 60_000);
+  const predicate = resourceId === 'klima-v2-1m' ? monthlyResourceSettled : hourlyResourceSettled;
+  return (await waitForStableBody(page, predicate, `${resourceId} downstream render`, 90_000, 3)).frame;
 }
 
 async function selectExactStation(page, frame, stationName, stationId) {
@@ -229,48 +269,30 @@ async function selectExactStation(page, frame, stationName, stationId) {
   );
 }
 
+async function waitForStationAndResource(page, stationName, resourcePredicate, description) {
+  return await waitForStableBody(
+    page,
+    (text) => {
+      const visibleMatch = text.match(/Visible GeoSphere stations after filters:\s*([\d,]+)/);
+      const visibleCount = visibleMatch ? Number(visibleMatch[1].replaceAll(',', '')) : null;
+      return visibleCount === 1 && text.includes(stationName) && resourcePredicate(text);
+    },
+    description,
+    90_000,
+    2,
+  );
+}
+
 async function expandMonthlyContext(frame) {
-  const label = 'About this GeoSphere monthly dataset';
-  const text = frame.getByText(label, { exact: true }).last();
+  const text = frame.getByText(MONTHLY_CONTEXT, { exact: true }).last();
   if (await text.count().catch(() => 0)) {
     await text.click({ force: true, timeout: 10_000 }).catch(() => {});
     await sleep(350);
   }
 }
 
-function occurrences(text, needle) {
-  return text.split(needle).length - 1;
-}
-
-async function waitForSettledSingleBlocks(page, needles, timeoutMs = 60_000) {
-  const started = performance.now();
-  let stablePasses = 0;
-  let lastCounts = needles.map(() => 0);
-  let lastText = '';
-  let lastFrame = null;
-
-  while (performance.now() - started < timeoutMs) {
-    try {
-      lastFrame = await appFrame(page, needles[0], 3_000);
-      lastText = await bodyText(lastFrame);
-      lastCounts = needles.map((needle) => occurrences(lastText, needle));
-      if (lastCounts.every((count) => count === 1)) {
-        stablePasses += 1;
-        if (stablePasses >= 3) return { frame: lastFrame, text: lastText, counts: lastCounts };
-      } else {
-        stablePasses = 0;
-      }
-    } catch {
-      stablePasses = 0;
-    }
-    await sleep(400);
-  }
-
-  throw new Error(`Expected settled single guidance blocks; observed counts ${lastCounts.join(', ')}.`);
-}
-
 const report = {
-  schema: 'climate-analyzer-pr83-source-ui-smoke-v13',
+  schema: 'climate-analyzer-pr83-source-ui-smoke-v14',
   target_url: TARGET_URL,
   fixture,
   checks: {},
@@ -293,8 +315,16 @@ try {
   let frame = await chooseAndWait(page, 'GeoSphere Austria', 'GeoSphere Austria — measured historical station data');
   frame = await selectDataset(page, frame, '1 month', 'klima-v2-1m');
   frame = await selectExactStation(page, frame, fixture.station_name, fixture.station_id);
-  frame = await appFrame(page, 'Parameter set', 60_000);
+  const monthlyStation = await waitForStationAndResource(
+    page,
+    fixture.station_name,
+    monthlyResourceSettled,
+    'monthly station/resource render',
+  );
+  frame = monthlyStation.frame;
   await expandMonthlyContext(frame);
+  const monthlyStable = await waitForStableBody(page, monthlyResourceSettled, 'monthly source UI', 30_000, 2);
+  frame = monthlyStable.frame;
   const monthlyText = await bodyText(frame);
 
   const requiredSets = ['Core variables', 'Core + additional statistics', 'All provider parameters'];
@@ -302,13 +332,11 @@ try {
     if (!monthlyText.includes(name)) throw new Error(`Monthly Parameter set option missing: ${name}`);
   }
   if (monthlyText.includes('Parameter catalogue')) throw new Error('Legacy monthly Parameter catalogue control is still visible.');
-  const monthlySource = 'Official source: GeoSphere Austria Station Data-v2 (1 m)';
-  const monthlyContext = 'About this GeoSphere monthly dataset';
-  if (occurrences(monthlyText, monthlySource) !== 1) {
-    throw new Error(`Expected one monthly official-source block, found ${occurrences(monthlyText, monthlySource)}.`);
+  if (occurrences(monthlyText, MONTHLY_SOURCE) !== 1) {
+    throw new Error(`Expected one monthly official-source block, found ${occurrences(monthlyText, MONTHLY_SOURCE)}.`);
   }
-  if (occurrences(monthlyText, monthlyContext) !== 1) {
-    throw new Error(`Expected one monthly dataset context, found ${occurrences(monthlyText, monthlyContext)}.`);
+  if (occurrences(monthlyText, MONTHLY_CONTEXT) !== 1) {
+    throw new Error(`Expected one monthly dataset context, found ${occurrences(monthlyText, MONTHLY_CONTEXT)}.`);
   }
   report.checks.monthly_parameter_sets = requiredSets;
   report.checks.monthly_source_block_count = 1;
@@ -321,18 +349,19 @@ try {
   report.checks.hourly_backend_resource = 'klima-v2-1h';
 
   frame = await selectExactStation(page, frame, fixture.station_name, fixture.station_id);
-  frame = await appFrame(page, 'Station metadata validity', 60_000);
-  const preGuidanceText = await bodyText(frame);
-  report.checks.hourly_station_metadata_visible = preGuidanceText.includes('Station metadata validity');
-  report.checks.hourly_selected_station_visible = preGuidanceText.includes(fixture.station_name);
-  report.checks.hourly_body_excerpt = preGuidanceText.slice(0, 8000);
-
-  const hourlyInfo = 'Official GeoSphere Austria availability context (translated summary)';
-  const hourlySource = 'Authoritative source: GeoSphere Austria Stationsdaten-v2 (1 h)';
-  const settledGuidance = await waitForSettledSingleBlocks(page, [hourlyInfo, hourlySource], 60_000);
-  frame = settledGuidance.frame;
-  report.checks.hourly_context_count = settledGuidance.counts[0];
-  report.checks.hourly_source_block_count = settledGuidance.counts[1];
+  const hourlyStation = await waitForStationAndResource(
+    page,
+    fixture.station_name,
+    hourlyResourceSettled,
+    'hourly station/resource render',
+  );
+  frame = hourlyStation.frame;
+  const hourlyText = hourlyStation.text;
+  report.checks.hourly_station_metadata_visible = hourlyText.includes('Station metadata validity');
+  report.checks.hourly_selected_station_visible = hourlyText.includes(fixture.station_name);
+  report.checks.hourly_body_excerpt = hourlyText.slice(0, 8000);
+  report.checks.hourly_context_count = occurrences(hourlyText, HOURLY_INFO);
+  report.checks.hourly_source_block_count = occurrences(hourlyText, HOURLY_SOURCE);
 
   if (report.page_errors.length) throw new Error(`Browser page error(s): ${report.page_errors.join(' | ')}`);
   report.success = true;
