@@ -6,6 +6,7 @@ import unittest
 
 from epw_climate_analyzer.source_parity_contract_guidance_hotfix import (
     _RESOURCE_KEY,
+    _RESOURCE_WIDGET_KEY,
     _install_guidance_safe,
 )
 
@@ -25,11 +26,13 @@ class _FakeStreamlit:
 
     def selectbox(self, label, options, *args, **kwargs):
         values = list(options)
-        if label == "GeoSphere dataset" and kwargs.get("key") == _RESOURCE_KEY:
+        if label == "GeoSphere dataset" and kwargs.get("key") == _RESOURCE_WIDGET_KEY:
             self.resource_selectbox_calls += 1
             if self.selected_resource not in values:
                 raise AssertionError(f"Selected resource {self.selected_resource} not in {values}")
-            self.session_state[_RESOURCE_KEY] = self.selected_resource
+            # Model only the real widget state. The guidance layer must copy the
+            # selected value into the separate legacy routing key itself.
+            self.session_state[_RESOURCE_WIDGET_KEY] = self.selected_resource
             return self.selected_resource
         return values[0]
 
@@ -70,6 +73,7 @@ class GeoSphereResourceTransitionTests(unittest.TestCase):
         self.assertEqual(observed_at_previous_entry, [selected_resource])
         self.assertEqual(inner_dataset_returns, [selected_resource])
         self.assertEqual(st.session_state[_RESOURCE_KEY], selected_resource)
+        self.assertEqual(st.session_state[_RESOURCE_WIDGET_KEY], selected_resource)
         self.assertEqual(st.resource_selectbox_calls, 1)
 
     def test_monthly_to_hourly_commits_resource_before_legacy_wrappers_enter(self) -> None:
