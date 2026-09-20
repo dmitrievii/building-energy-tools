@@ -230,8 +230,15 @@ async function waitForStableBody(page, predicate, description, timeoutMs = 90_00
 
 async function selectDataset(page, frame, optionNeedle, resourceId) {
   frame = await selectComboContains(page, frame, 'GeoSphere dataset', optionNeedle, 60_000);
-  const predicate = resourceId === 'klima-v2-1m' ? monthlyResourceSettled : hourlyResourceSettled;
-  return (await waitForStableBody(page, predicate, `${resourceId} downstream render`, 90_000, 3)).frame;
+  const control = await waitComboContains(page, 'GeoSphere dataset', optionNeedle, 30_000);
+  frame = control.frame;
+  return (await waitForStableBody(
+    page,
+    (text) => text.includes(`Selected resource: ${resourceId}`),
+    `${resourceId} route commit`,
+    45_000,
+    2,
+  )).frame;
 }
 
 async function selectExactStation(page, frame, stationName, stationId) {
@@ -292,7 +299,7 @@ async function expandMonthlyContext(frame) {
 }
 
 const report = {
-  schema: 'climate-analyzer-pr83-source-ui-smoke-v14',
+  schema: 'climate-analyzer-pr83-source-ui-smoke-v15',
   target_url: TARGET_URL,
   fixture,
   checks: {},
