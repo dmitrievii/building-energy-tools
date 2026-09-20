@@ -72,6 +72,8 @@ def _reset_persistent_source_parity_modules() -> None:
         "source_parity_monthly_catalogue",
         "source_parity_monthly_visual_contract",
         "source_parity_contract_closure",
+        "source_parity_contract_guidance_hotfix",
+        "source_parity_contract_guard",
     )
     package = __package__ or "epw_climate_analyzer"
     for name in module_names:
@@ -110,6 +112,7 @@ def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     from .source_parity_monthly_catalogue import install_monthly_catalogue_adapter
     from .source_parity_monthly_visual_contract import install_monthly_visual_contract
     from .source_parity_contract_closure import install_contract_closure
+    from .source_parity_contract_guidance_hotfix import patch_contract_guidance
     from .source_parity_contract_guard import install_contract_guards
 
     # Provider vocabulary is installed before the shared resource selector builds
@@ -129,7 +132,9 @@ def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     install_monthly_cleanup(proxy, parity)
     install_monthly_catalogue_adapter()
     install_monthly_visual_contract()
-    # Final audit closure resolves the fully composed capability stack.
+    # The final guidance installer must be wrapper-order independent before the
+    # contract closure composes the outermost source selector.
+    patch_contract_guidance()
     install_contract_closure(proxy, parity)
     install_contract_guards()
     namespace["_SOURCE_PARITY_RUNTIME_INSTALLED"] = True
