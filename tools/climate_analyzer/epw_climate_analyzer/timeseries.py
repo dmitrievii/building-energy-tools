@@ -7,7 +7,8 @@ viewport therefore remains the mean of the complete month rather than silently
 becoming a three-day mean.
 
 No temporal upsampling is performed.  Resolutions finer than the native source
-timestep are unavailable by contract.
+timestep are unavailable by contract. Calendar-month native sources are treated
+as calendar periods rather than as a fictitious fixed 30-day timestep.
 """
 
 from __future__ import annotations
@@ -66,11 +67,9 @@ class OverlaySeries:
         return unit_family_for(self.column, self.unit)
 
 
-
 def native_resolution_minutes(index: pd.DatetimeIndex) -> int:
     """Compatibility wrapper around the canonical source-resolution inference."""
     return infer_native_resolution_minutes(index)
-
 
 
 def available_resolution_labels(index: pd.DatetimeIndex) -> list[str]:
@@ -81,11 +80,9 @@ def available_resolution_labels(index: pd.DatetimeIndex) -> list[str]:
     return labels
 
 
-
 def aggregation_semantics(column: str) -> str:
     """Compatibility wrapper around canonical quantity aggregation semantics."""
     return aggregation_semantics_for(column)
-
 
 
 def circular_mean_deg(values: pd.Series) -> float:
@@ -101,9 +98,10 @@ def circular_mean_deg(values: pd.Series) -> float:
     return float(np.rad2deg(np.arctan2(sin_mean, cos_mean)) % 360.0)
 
 
-
-def _interval_end(start: pd.Timestamp, resolution: str, native_minutes: int) -> pd.Timestamp:
+def _interval_end(start: pd.Timestamp, resolution: str, native_minutes: int, *, native_calendar: str | None = None) -> pd.Timestamp:
     if resolution == "Native":
+        if str(native_calendar or "").lower() == "monthly":
+            return start + pd.offsets.MonthBegin(1)
         return start + pd.Timedelta(minutes=native_minutes)
     if resolution == "10 min":
         return start + pd.Timedelta(minutes=10)
@@ -128,7 +126,6 @@ def _interval_end(start: pd.Timestamp, resolution: str, native_minutes: int) -> 
     raise ValueError(f"Unsupported resolution: {resolution}")
 
 
-
 def _resample_values(series: pd.Series, resolution: str) -> pd.Series:
     spec = RESOLUTION_BY_LABEL[resolution]
     if spec.rule is None:
@@ -142,10 +139,13 @@ def _resample_values(series: pd.Series, resolution: str) -> pd.Series:
     if semantics == "sum":
         # min_count=1 prevents an all-missing interval from becoming a false zero.
         return resampler.sum(min_count=1)
+    if semantics == "min":
+        return resampler.min()
+    if semantics == "max":
+        return resampler.max()
     if semantics == "circular mean":
         return resampler.apply(circular_mean_deg)
     return resampler.mean()
-
 
 
 def aggregate_series(
@@ -159,7 +159,9 @@ def aggregate_series(
 
     ``start`` and ``end`` define the visible range.  Aggregation is intentionally
     executed on the complete input dataframe before overlap clipping, preserving
-    the meaning of complete daily/monthly/seasonal means and totals.
+    the meaning of complete daily/monthly/seasonal means and totals. Calendar-
+    month native data may use Monthly without being rejected by the nominal
+    30-day resolution guard; the actual bins remain true calendar months.
     """
     if resolution not in RESOLUTION_BY_LABEL:
         raise ValueError(f"Unknown resolution: {resolution}")
@@ -171,9 +173,11 @@ def aggregate_series(
         raise ValueError("End time must be later than start time.")
 
     native_minutes = native_resolution_minutes(pd.DatetimeIndex(df.index))
+    native_calendar = str(df.attrs.get("canonical_native_resolution", "")).strip().lower()
     if resolution != "Native":
         target = RESOLUTION_BY_LABEL[resolution].nominal_minutes
-        if target < native_minutes:
+        calendar_month_identity = native_calendar == "monthly" and resolution == "Monthly"
+        if target < native_minutes and not calendar_month_identity:
             raise ValueError(
                 f"Cannot upsample {native_minutes}-minute source data to {resolution}."
             )
@@ -184,7 +188,7 @@ def aggregate_series(
     frame = values.rename("value").to_frame()
     frame["interval_start"] = pd.DatetimeIndex(frame.index)
     frame["interval_end"] = [
-        _interval_end(pd.Timestamp(ts), resolution, native_minutes)
+        _interval_end(pd.Timestamp(ts), resolution, native_minutes, native_calendar=native_calendar)
         for ts in frame["interval_start"]
     ]
     overlap = (frame["interval_end"] > start) & (frame["interval_start"] < end)
@@ -194,7 +198,6 @@ def aggregate_series(
     frame["resolution"] = resolution
     frame["aggregation"] = aggregation_semantics(column)
     return frame
-
 
 
 def _segment_coordinates(frame: pd.DataFrame) -> tuple[list[object], list[object]]:
@@ -208,7 +211,6 @@ def _segment_coordinates(frame: pd.DataFrame) -> tuple[list[object], list[object
     return x, y
 
 
-
 def validate_unit_families(series: Iterable[OverlaySeries]) -> list[str]:
     families: list[str] = []
     for item in series:
@@ -217,7 +219,6 @@ def validate_unit_families(series: Iterable[OverlaySeries]) -> list[str]:
     if len(families) > 2:
         raise ValueError("An overlay may contain at most two distinct unit families.")
     return families
-
 
 
 def build_overlay_figure(
@@ -297,7 +298,6 @@ def build_overlay_figure(
             }
         )
     return fig, tables
-
 
 
 def combined_series_table(tables: list[pd.DataFrame]) -> pd.DataFrame:

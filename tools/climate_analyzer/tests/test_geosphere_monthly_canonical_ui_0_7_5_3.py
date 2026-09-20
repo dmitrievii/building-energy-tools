@@ -81,11 +81,13 @@ class GeoSphereMonthlyCanonicalUiTests(unittest.TestCase):
         self.assertIn("sunshine_duration_s", frame.columns)
         self.assertAlmostEqual(float(frame["sunshine_duration_s"].iloc[0]), 60.0 * 3600.0)
 
-    def test_monthly_temporal_controls_are_locked_to_monthly_semantics(self) -> None:
-        self.assertEqual(MONTHLY_ALLOWED_AGGREGATIONS, ("Monthly",))
+    def test_monthly_temporal_controls_allow_only_native_or_coarser_semantics(self) -> None:
+        self.assertEqual(MONTHLY_ALLOWED_AGGREGATIONS, ("Monthly", "Annual"))
         self.assertEqual(MONTHLY_HEATMAP_PERIODS, ("Month",))
         self.assertEqual(MONTHLY_COMPARE_DIMENSIONS, ("Year",))
         self.assertNotIn("Duration curve", MONTHLY_ALLOWED_GENERIC_CHART_TYPES)
+        for forbidden in ("Hourly", "Daily", "Weekly", "Seasonal"):
+            self.assertNotIn(forbidden, MONTHLY_ALLOWED_AGGREGATIONS)
 
     def test_monthly_resource_uses_only_shared_canonical_page_taxonomy(self) -> None:
         dataset = self.dataset()

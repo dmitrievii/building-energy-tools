@@ -65,6 +65,9 @@ def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     from .source_parity_longterm_followup import install_longterm_followup
     from .source_parity_monthly import install_monthly_resource
     from .source_parity_monthly_canonical import install_monthly_canonical_ui
+    from .source_parity_monthly_cleanup import install_monthly_cleanup
+    from .source_parity_monthly_catalogue import install_monthly_catalogue_adapter
+    from .source_parity_monthly_visual_contract import install_monthly_visual_contract
 
     # Provider vocabulary is installed before the shared resource selector builds
     # metadata mappings. Scientific engines remain provider-neutral.
@@ -83,5 +86,11 @@ def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     # information architecture. Bind its capability gates to the same canonical
     # analysis sections used by other climate sources.
     install_monthly_canonical_ui(proxy, parity)
+    # Final monthly cleanup removes the provisional source-specific chart path,
+    # curates the provider vocabulary and binds native-monthly semantics into the
+    # shared canonical chart engines.
+    install_monthly_cleanup(proxy, parity)
+    install_monthly_catalogue_adapter()
+    install_monthly_visual_contract()
     namespace["_SOURCE_PARITY_RUNTIME_INSTALLED"] = True
     return True

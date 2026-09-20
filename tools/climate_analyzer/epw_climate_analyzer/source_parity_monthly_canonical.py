@@ -1,9 +1,9 @@
 """Canonical-page UI binding for GeoSphere ``klima-v2-1m``.
 
 The monthly resource changes temporal capabilities, not the product information
-architecture.  It therefore uses the same top-level analysis pages as EPW and
-higher-resolution GeoSphere resources.  Controls that would imply sub-monthly
-information are removed or locked to native monthly semantics.
+architecture. It therefore uses the same top-level analysis pages and shared
+chart engines as EPW and higher-resolution GeoSphere resources. Controls that
+would imply sub-monthly information are removed or capability-gated.
 """
 
 from __future__ import annotations
@@ -15,9 +15,7 @@ import pandas as pd
 
 from . import geosphere
 from .geosphere_monthly import (
-    MONTHLY_DATASET_PAGE,
     MONTHLY_DOI,
-    MONTHLY_OFFICIAL_CONTEXT_EN,
     MONTHLY_RESOURCE_ID,
     monthly_coverage_table,
 )
@@ -31,7 +29,7 @@ MONTHLY_ALLOWED_GENERIC_CHART_TYPES = (
     "Monthly boxplot",
     "Monthly violin plot",
 )
-MONTHLY_ALLOWED_AGGREGATIONS = ("Monthly",)
+MONTHLY_ALLOWED_AGGREGATIONS = ("Monthly", "Annual")
 MONTHLY_HEATMAP_PERIODS = ("Month",)
 MONTHLY_COMPARE_DIMENSIONS = ("Year",)
 
@@ -338,8 +336,7 @@ def _render_monthly_generic(legacy: Any, df: pd.DataFrame, labels: list[str], ti
         if label == "Chart type":
             replacement = [value for value in values if value in MONTHLY_ALLOWED_GENERIC_CHART_TYPES]
         elif label == "Aggregation":
-            replacement = ["Monthly"]
-            kwargs["disabled"] = True
+            replacement = list(MONTHLY_ALLOWED_AGGREGATIONS)
         elif label == "Heat-map aggregation":
             replacement = ["Month"]
             kwargs["disabled"] = True
@@ -367,8 +364,6 @@ def _render_monthly_generic(legacy: Any, df: pd.DataFrame, labels: list[str], ti
 def _render_monthly_overview(legacy: Any, dataset: Any, filtered: pd.DataFrame) -> None:
     st = legacy.st
     st.header("Climate overview")
-    st.info(MONTHLY_OFFICIAL_CONTEXT_EN)
-    st.caption(f"Official source: GeoSphere Austria Station Data-v2 (1 m) · {MONTHLY_DOI} · {MONTHLY_DATASET_PAGE}")
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("First month", pd.Timestamp(filtered.index.min()).strftime("%Y-%m"))
     c2.metric("Last month", pd.Timestamp(filtered.index.max()).strftime("%Y-%m"))
@@ -426,75 +421,6 @@ def _render_monthly_quality(legacy: Any, dataset: Any) -> None:
     st.dataframe(pd.DataFrame(quality_rows), hide_index=True, use_container_width=True)
 
 
-def _render_monthly_overlay(legacy: Any, df: pd.DataFrame, labels: list[str]) -> None:
-    import plotly.graph_objects as go
-
-    st = legacy.st
-    st.header("Time series and overlay")
-    st.caption("Native resolution: monthly. Finer resolutions are unavailable; no daily/hourly interpolation is performed.")
-    if not labels:
-        st.info("No numeric monthly variables are available for overlay.")
-        return
-
-    n_series = st.slider("Number of series", min_value=1, max_value=min(6, len(labels)), value=min(2, len(labels)), step=1)
-    selected: list[str] = []
-    for idx in range(n_series):
-        c1, c2 = st.columns([3, 2])
-        default = labels[min(idx, len(labels) - 1)]
-        chosen = c1.selectbox(
-            f"Series {idx + 1} variable",
-            labels,
-            index=labels.index(default),
-            key=f"monthly_overlay_variable_{idx}",
-        )
-        c2.selectbox(
-            f"Series {idx + 1} resolution",
-            ["Monthly (native)"],
-            index=0,
-            disabled=True,
-            key=f"monthly_overlay_resolution_{idx}",
-        )
-        selected.append(chosen)
-
-    units = []
-    for label in selected:
-        _column, unit = legacy.VARIABLES[label]
-        if unit not in units:
-            units.append(unit)
-    if len(units) > 2:
-        st.error("Overlay supports at most two physical unit families at once. Choose variables with no more than two units.")
-        return
-
-    fig = go.Figure()
-    for label in selected:
-        column, unit = legacy.VARIABLES[label]
-        values = pd.to_numeric(df[column], errors="coerce")
-        axis = "y" if units.index(unit) == 0 else "y2"
-        fig.add_trace(
-            go.Scatter(
-                x=df.index,
-                y=values,
-                mode="lines+markers",
-                name=label,
-                yaxis=axis,
-                hovertemplate="%{x|%Y-%m}<br>%{y:.4g} " + str(unit) + "<extra>" + label + "</extra>",
-            )
-        )
-    fig.update_layout(
-        template="plotly_white",
-        title="Climate time-series overlay",
-        xaxis_title="Month",
-        yaxis=dict(title=units[0] if units else "Value"),
-        margin=dict(l=45, r=55 if len(units) > 1 else 20, t=70, b=45),
-    )
-    if len(units) > 1:
-        fig.update_layout(yaxis2=dict(title=units[1], overlaying="y", side="right"))
-    legacy.render_plot(
-        fig,
-        "All traces use the same published monthly timestamps. No sub-monthly samples are created and no temporal interpolation is applied.",
-    )
-
-
 def render_monthly_canonical_analysis(legacy: Any, dataset: Any) -> None:
     """Render ``klima-v2-1m`` through the shared canonical page architecture."""
     st = legacy.st
@@ -539,7 +465,10 @@ def render_monthly_canonical_analysis(legacy: Any, dataset: Any) -> None:
         _render_monthly_quality(legacy, dataset)
         return
     if page == "Time Series and Overlay":
-        _render_monthly_overlay(legacy, filtered, groups.get(page, []))
+        # There is intentionally no monthly Plotly renderer here. The source
+        # capability layer forwards into the same canonical overlay renderer as
+        # every other source; its only job is to gate resolutions/semantics.
+        legacy.render_time_series_overlay(filtered)
         return
 
     titles = {
@@ -567,7 +496,7 @@ def render_monthly_canonical_analysis(legacy: Any, dataset: Any) -> None:
 
 
 def install_monthly_canonical_ui(proxy: Any, parity: Any) -> None:
-    """Override the provisional monthly-only explorer with canonical pages."""
+    """Bind the native-monthly source to canonical analysis pages."""
     if bool(getattr(proxy, "_GEOSPHERE_MONTHLY_CANONICAL_UI_INSTALLED", False)):
         return
     previous = proxy.render_canonical_climate_analysis
