@@ -109,6 +109,12 @@ def _install_guidance_safe(parity: Any) -> None:
             widget_resource = ""
         initial_resource = widget_resource if widget_resource in resource_ids else current_resource
 
+        # On a widget-triggered rerun the private widget state is already updated
+        # before the script starts. Commit it to the legacy routing key *before*
+        # rendering any widget so nested wrappers cannot observe the previous
+        # resource while the new Streamlit widget tree is being reconciled.
+        st.session_state[_RESOURCE_KEY] = initial_resource
+
         selected_resource = real_selectbox(
             "GeoSphere dataset",
             resource_ids,
