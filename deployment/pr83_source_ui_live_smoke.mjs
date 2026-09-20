@@ -20,19 +20,17 @@ async function appFrame(page, needle = 'Climate Analyzer', timeoutMs = 90_000) {
     for (const frame of page.frames()) {
       if ((await bodyText(frame)).includes(needle)) return frame;
     }
-    await sleep(350);
+    await sleep(300);
   }
   throw new Error(`Timed out waiting for app text: ${needle}`);
 }
 
 async function chooseAndWait(page, name, expectedText, timeoutMs = 45_000) {
   const started = performance.now();
-  let attempts = 0;
   while (performance.now() - started < timeoutMs) {
-    attempts += 1;
     let frame;
     try { frame = await appFrame(page, 'Climate Analyzer', 10_000); }
-    catch { await sleep(500); continue; }
+    catch { await sleep(400); continue; }
 
     const candidates = [
       frame.locator('label').filter({ hasText: name }).last(),
@@ -42,34 +40,17 @@ async function chooseAndWait(page, name, expectedText, timeoutMs = 45_000) {
     for (const candidate of candidates) {
       if (!(await candidate.count().catch(() => 0))) continue;
       try {
-        await candidate.scrollIntoViewIfNeeded({ timeout: 5_000 }).catch(() => {});
-        const tagName = await candidate.evaluate((node) => node.tagName.toLowerCase()).catch(() => '');
-        const inputType = await candidate.getAttribute('type').catch(() => null);
-        if (tagName === 'input' && inputType === 'radio') await candidate.check({ force: true, timeout: 5_000 });
+        const tag = await candidate.evaluate((node) => node.tagName.toLowerCase()).catch(() => '');
+        const type = await candidate.getAttribute('type').catch(() => null);
+        if (tag === 'input' && type === 'radio') await candidate.check({ force: true, timeout: 5_000 });
         else await candidate.click({ force: true, timeout: 5_000 });
       } catch { continue; }
-
-      const verifyStarted = performance.now();
-      while (performance.now() - verifyStarted < 6_000) {
-        for (const currentFrame of page.frames()) {
-          if ((await bodyText(currentFrame)).includes(expectedText)) return { frame: currentFrame, attempts };
-        }
-        await sleep(300);
-      }
+      try { return await appFrame(page, expectedText, 7_000); }
+      catch { /* retry */ }
     }
-    await sleep(700);
+    await sleep(500);
   }
-  throw new Error(`Timed out selecting ${name} and waiting for: ${expectedText}`);
-}
-
-async function chooseSource(page) {
-  const opened = await chooseAndWait(
-    page,
-    'GeoSphere Austria',
-    'GeoSphere Austria — measured historical station data',
-    45_000,
-  );
-  return opened.frame;
+  throw new Error(`Timed out selecting ${name} and waiting for ${expectedText}`);
 }
 
 async function labelledInput(frame, label, timeoutMs = 60_000) {
@@ -81,92 +62,87 @@ async function labelledInput(frame, label, timeoutMs = 60_000) {
     const aria = frame.locator(`input[aria-label="${label}"]`).first();
     if (await aria.count().catch(() => 0) && await aria.isVisible().catch(() => false)) return aria;
 
-    const domLabels = frame.locator('label').filter({ hasText: label });
-    const count = await domLabels.count().catch(() => 0);
-    for (let index = 0; index < count; index += 1) {
-      const input = domLabels.nth(index).locator('input').first();
+    const labels = frame.locator('label').filter({ hasText: label });
+    const count = await labels.count().catch(() => 0);
+    for (let i = 0; i < count; i += 1) {
+      const input = labels.nth(i).locator('input').first();
       if (await input.count().catch(() => 0) && await input.isVisible().catch(() => false)) return input;
     }
-
-    const text = frame.getByText(label, { exact: true }).first();
-    if (await text.count().catch(() => 0)) {
-      for (const container of [text.locator('xpath=..'), text.locator('xpath=../..'), text.locator('xpath=../../..')]) {
-        const input = container.locator('input').first();
-        if (await input.count().catch(() => 0) && await input.isVisible().catch(() => false)) return input;
-      }
-    }
-    await sleep(300);
+    await sleep(250);
   }
   throw new Error(`Timed out waiting for visible input: ${label}`);
 }
 
-async function findCombo(frame, label) {
-  let combo = frame.getByRole('combobox', { name: label, exact: true }).first();
-  if (!(await combo.count().catch(() => 0))) combo = frame.getByLabel(label, { exact: true }).first();
-  if (!(await combo.count().catch(() => 0))) throw new Error(`Combobox not found: ${label}`);
-  return combo;
+async function combo(frame, label) {
+  let control = frame.getByRole('combobox', { name: label, exact: true }).first();
+  if (!(await control.count().catch(() => 0))) control = frame.getByLabel(label, { exact: true }).first();
+  if (!(await control.count().catch(() => 0))) throw new Error(`Combobox not found: ${label}`);
+  return control;
 }
 
-async function selectComboContains(page, frame, label, optionNeedle) {
-  const combo = await findCombo(frame, label);
-  await combo.click({ timeout: 15_000 });
+async function selectComboContains(page, frame, label, needle) {
+  const control = await combo(frame, label);
+  await control.click({ timeout: 15_000 });
   await sleep(250);
   let options = frame.getByRole('option');
   let texts = await options.allInnerTexts().catch(() => []);
-  let index = texts.findIndex((value) => value.includes(optionNeedle));
+  let index = texts.findIndex((value) => value.includes(needle));
   if (index < 0) {
     options = frame.locator('[data-baseweb="menu"] li');
     texts = await options.allInnerTexts().catch(() => []);
-    index = texts.findIndex((value) => value.includes(optionNeedle));
+    index = texts.findIndex((value) => value.includes(needle));
   }
-  if (index < 0) throw new Error(`No option containing ${optionNeedle} in ${label}. Options: ${texts.join(' | ')}`);
+  if (index < 0) throw new Error(`No ${label} option containing ${needle}. Options: ${texts.join(' | ')}`);
   await options.nth(index).click({ timeout: 15_000 });
-  await sleep(1_200);
+  await sleep(1_000);
   return await appFrame(page);
 }
 
-async function fillStationSearch(page, frame, stationId) {
-  const input = await labelledInput(frame, 'Search GeoSphere station', 60_000);
-  await input.fill(String(stationId), { timeout: 15_000 });
+async function selectExactStation(page, frame, stationName, stationId) {
+  const input = await labelledInput(frame, 'Search GeoSphere station');
+  await input.fill(stationName, { timeout: 15_000 });
   await input.press('Tab').catch(() => {});
-  return await appFrame(page, 'Visible GeoSphere stations after filters:', 60_000);
-}
 
-async function selectStation(page, frame, stationId, stationName) {
-  frame = await appFrame(page, 'Manual station selection', 60_000);
-  const combo = await findCombo(frame, 'Search-result stations');
-  await combo.click({ timeout: 15_000 });
-  await sleep(300);
-  const needle = `ID ${stationId}`;
-  let options = frame.getByRole('option');
-  let texts = await options.allInnerTexts().catch(() => []);
-  let index = texts.findIndex((value) => value.includes(needle) || value.includes(stationName));
-  if (index < 0) {
-    options = frame.locator('[data-baseweb="menu"] li');
-    texts = await options.allInnerTexts().catch(() => []);
-    index = texts.findIndex((value) => value.includes(needle) || value.includes(stationName));
+  frame = await appFrame(page, stationName, 60_000);
+  const started = performance.now();
+  let lastText = '';
+  while (performance.now() - started < 60_000) {
+    lastText = await bodyText(frame);
+    const visibleMatch = lastText.match(/Visible GeoSphere stations after filters:\s*([\d,]+)/);
+    const visibleCount = visibleMatch ? Number(visibleMatch[1].replaceAll(',', '')) : null;
+    if (visibleCount === 1 && lastText.includes(stationName) && lastText.includes(`ID ${stationId}`)) break;
+    await sleep(300);
+    frame = await appFrame(page, 'Visible GeoSphere stations after filters:', 5_000);
   }
-  if (index < 0) throw new Error(`Station option not found: ${stationName} (${stationId})`);
-  await options.nth(index).click({ timeout: 15_000 });
-  await sleep(500);
+  if (!lastText.includes(stationName) || !lastText.includes(`ID ${stationId}`)) {
+    throw new Error(`Exact station filter did not expose ${stationName} (ID ${stationId}).`);
+  }
+
+  const stationCombo = await combo(frame, 'Search-result stations');
+  const rendered = [
+    await stationCombo.innerText().catch(() => ''),
+    await stationCombo.textContent().catch(() => ''),
+    await stationCombo.inputValue().catch(() => ''),
+  ].join(' ');
+  if (!rendered.includes(stationName) && !rendered.includes(`ID ${stationId}`)) {
+    throw new Error(`Filtered station was not selected by default. Rendered combobox: ${rendered}`);
+  }
+
   const use = frame.getByRole('button', { name: 'Use station from list', exact: true }).first();
   if (!(await use.count().catch(() => 0))) throw new Error('Use station from list button not found.');
   await use.click({ timeout: 15_000 });
-  return await appFrame(page, 'Selected station', 60_000);
+  frame = await appFrame(page, 'Selected station', 60_000);
+  const settled = await bodyText(frame);
+  if (!settled.includes(stationName)) throw new Error(`Selected station did not settle on ${stationName}.`);
+  return frame;
 }
 
 async function expandMonthlyContext(frame) {
   const label = 'About this GeoSphere monthly dataset';
-  const exact = frame.getByText(label, { exact: true }).last();
-  if (await exact.count().catch(() => 0)) {
-    await exact.click({ force: true, timeout: 10_000 }).catch(() => {});
-    await sleep(400);
-    return;
-  }
-  const summary = frame.locator('summary').filter({ hasText: label }).last();
-  if (await summary.count().catch(() => 0)) {
-    await summary.click({ force: true, timeout: 10_000 }).catch(() => {});
-    await sleep(400);
+  const text = frame.getByText(label, { exact: true }).last();
+  if (await text.count().catch(() => 0)) {
+    await text.click({ force: true, timeout: 10_000 }).catch(() => {});
+    await sleep(350);
   }
 }
 
@@ -175,7 +151,7 @@ function occurrences(text, needle) {
 }
 
 const report = {
-  schema: 'climate-analyzer-pr83-source-ui-smoke-v3',
+  schema: 'climate-analyzer-pr83-source-ui-smoke-v4',
   target_url: TARGET_URL,
   fixture,
   checks: {},
@@ -195,10 +171,9 @@ try {
   page.on('console', (message) => { if (message.type() === 'error') report.console_errors.push(message.text()); });
   await page.goto(TARGET_URL, { waitUntil: 'domcontentloaded', timeout: 60_000 });
 
-  let frame = await chooseSource(page);
+  let frame = await chooseAndWait(page, 'GeoSphere Austria', 'GeoSphere Austria — measured historical station data');
   frame = await selectComboContains(page, frame, 'GeoSphere dataset', '1 month');
-  frame = await fillStationSearch(page, frame, fixture.station_id);
-  frame = await selectStation(page, frame, fixture.station_id, fixture.station_name);
+  frame = await selectExactStation(page, frame, fixture.station_name, fixture.station_id);
   frame = await appFrame(page, 'Parameter set', 60_000);
   await expandMonthlyContext(frame);
   const monthlyText = await bodyText(frame);
@@ -208,32 +183,32 @@ try {
     if (!monthlyText.includes(name)) throw new Error(`Monthly Parameter set option missing: ${name}`);
   }
   if (monthlyText.includes('Parameter catalogue')) throw new Error('Legacy monthly Parameter catalogue control is still visible.');
-  const monthlySourceNeedle = 'Official source: GeoSphere Austria Station Data-v2 (1 m)';
-  if (occurrences(monthlyText, monthlySourceNeedle) !== 1) {
-    throw new Error(`Expected one monthly official-source block, found ${occurrences(monthlyText, monthlySourceNeedle)}.`);
+  const monthlySource = 'Official source: GeoSphere Austria Station Data-v2 (1 m)';
+  const monthlyContext = 'About this GeoSphere monthly dataset';
+  if (occurrences(monthlyText, monthlySource) !== 1) {
+    throw new Error(`Expected one monthly official-source block, found ${occurrences(monthlyText, monthlySource)}.`);
   }
-  if (occurrences(monthlyText, 'About this GeoSphere monthly dataset') !== 1) {
-    throw new Error('Monthly dataset context expander is missing or duplicated.');
+  if (occurrences(monthlyText, monthlyContext) !== 1) {
+    throw new Error(`Expected one monthly dataset context, found ${occurrences(monthlyText, monthlyContext)}.`);
   }
   report.checks.monthly_parameter_sets = requiredSets;
-  report.checks.monthly_source_block_count = occurrences(monthlyText, monthlySourceNeedle);
-  report.checks.monthly_context_count = occurrences(monthlyText, 'About this GeoSphere monthly dataset');
+  report.checks.monthly_source_block_count = 1;
+  report.checks.monthly_context_count = 1;
 
   frame = await selectComboContains(page, frame, 'GeoSphere dataset', '1 h (long-term)');
-  frame = await fillStationSearch(page, frame, fixture.station_id);
-  frame = await selectStation(page, frame, fixture.station_id, fixture.station_name);
+  frame = await selectExactStation(page, frame, fixture.station_name, fixture.station_id);
   frame = await appFrame(page, 'Official GeoSphere Austria availability context', 60_000);
   const hourlyText = await bodyText(frame);
-  const hourlyInfoNeedle = 'Official GeoSphere Austria availability context (translated summary)';
-  const hourlySourceNeedle = 'Authoritative source: GeoSphere Austria Stationsdaten-v2 (1 h)';
-  if (occurrences(hourlyText, hourlyInfoNeedle) !== 1) {
-    throw new Error(`Expected one hourly availability context, found ${occurrences(hourlyText, hourlyInfoNeedle)}.`);
+  const hourlyInfo = 'Official GeoSphere Austria availability context (translated summary)';
+  const hourlySource = 'Authoritative source: GeoSphere Austria Stationsdaten-v2 (1 h)';
+  if (occurrences(hourlyText, hourlyInfo) !== 1) {
+    throw new Error(`Expected one hourly availability context, found ${occurrences(hourlyText, hourlyInfo)}.`);
   }
-  if (occurrences(hourlyText, hourlySourceNeedle) !== 1) {
-    throw new Error(`Expected one hourly authoritative-source caption, found ${occurrences(hourlyText, hourlySourceNeedle)}.`);
+  if (occurrences(hourlyText, hourlySource) !== 1) {
+    throw new Error(`Expected one hourly authoritative-source caption, found ${occurrences(hourlyText, hourlySource)}.`);
   }
-  report.checks.hourly_context_count = occurrences(hourlyText, hourlyInfoNeedle);
-  report.checks.hourly_source_block_count = occurrences(hourlyText, hourlySourceNeedle);
+  report.checks.hourly_context_count = 1;
+  report.checks.hourly_source_block_count = 1;
 
   if (report.page_errors.length) throw new Error(`Browser page error(s): ${report.page_errors.join(' | ')}`);
   report.success = true;
