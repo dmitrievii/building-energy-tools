@@ -73,11 +73,16 @@ async function labelledInput(frame, label, timeoutMs = 60_000) {
   throw new Error(`Timed out waiting for visible input: ${label}`);
 }
 
-async function combo(frame, label) {
-  let control = frame.getByRole('combobox', { name: label, exact: true }).first();
-  if (!(await control.count().catch(() => 0))) control = frame.getByLabel(label, { exact: true }).first();
-  if (!(await control.count().catch(() => 0))) throw new Error(`Combobox not found: ${label}`);
-  return control;
+async function combo(frame, label, timeoutMs = 60_000) {
+  const started = performance.now();
+  while (performance.now() - started < timeoutMs) {
+    let control = frame.getByRole('combobox', { name: label, exact: true }).first();
+    if (await control.count().catch(() => 0) && await control.isVisible().catch(() => false)) return control;
+    control = frame.getByLabel(label, { exact: true }).first();
+    if (await control.count().catch(() => 0) && await control.isVisible().catch(() => false)) return control;
+    await sleep(250);
+  }
+  throw new Error(`Timed out waiting for visible combobox: ${label}`);
 }
 
 async function selectComboContains(page, frame, label, needle) {
@@ -104,12 +109,15 @@ async function selectExactStation(page, frame, stationName, stationId) {
   await input.press('Tab').catch(() => {});
 
   frame = await appFrame(page, 'Visible GeoSphere stations after filters:', 60_000);
+  frame = await appFrame(page, 'Manual station selection', 60_000);
   const targetId = `ID ${stationId}`;
 
   // Match the proven production smoke contract: filtered-result identity lives
   // in the selectbox options and does not have to be rendered in the closed
-  // page body. Open the list and choose the provider station explicitly.
-  const stationCombo = await combo(frame, 'Search-result stations');
+  // page body. Open the list only after the lower station-selector block has
+  // mounted; the Leaflet station map above it can render noticeably later than
+  // the filter counter.
+  const stationCombo = await combo(frame, 'Search-result stations', 60_000);
   await stationCombo.click({ timeout: 15_000 });
   await sleep(300);
 
@@ -177,7 +185,7 @@ function occurrences(text, needle) {
 }
 
 const report = {
-  schema: 'climate-analyzer-pr83-source-ui-smoke-v6',
+  schema: 'climate-analyzer-pr83-source-ui-smoke-v7',
   target_url: TARGET_URL,
   fixture,
   checks: {},
