@@ -12,7 +12,7 @@ on:
       - 'deployment/pr83_monthly_contract_probe.py'
       - 'deployment/pr83_source_ui_live_smoke.mjs'
       - 'deployment/pr83_geosphere_data_editor_dom_probe.mjs'
-      - 'deployment/geosphere_precip_snow_live_smoke.mjs'
+      - 'deployment/pr83_precip_snow_live_smoke.mjs'
       - '.github/workflows/climate-analyzer-pr83-branch-contract-smoke.yml'
   workflow_dispatch:
 
@@ -104,8 +104,8 @@ jobs:
         continue-on-error: true
         run: node deployment/pr83_geosphere_data_editor_dom_probe.mjs
 
-      - name: Exercise 10-minute precipitation route against PR branch
-        run: node deployment/geosphere_precip_snow_live_smoke.mjs
+      - name: Exercise current 10-minute precipitation route against PR branch
+        run: node deployment/pr83_precip_snow_live_smoke.mjs
 
       - name: Reject Streamlit runtime tracebacks
         if: always()
