@@ -1,19 +1,26 @@
 """Final fail-closed native-monthly aggregation guard.
 
-This module is installed after the composed runtime stack.  It keeps provider-
+This module is installed after the composed runtime stack. It keeps provider-
 defined monthly fields usable at their published cadence, refuses to invent
 Seasonal/Annual semantics for unknown statistics, and provides warning-free
 vectorized aggregation for known monthly quantities.
 """
 from __future__ import annotations
 
+import importlib
+from types import ModuleType
+
 import numpy as np
 import pandas as pd
 
-from . import source_parity_contract_closure as contract
+
+def _current_contract() -> ModuleType:
+    """Resolve the active contract module after any Streamlit runtime reload."""
+    return importlib.import_module(f"{__package__}.source_parity_contract_closure")
 
 
 def _known_monthly_period_values(
+    contract: ModuleType,
     df: pd.DataFrame,
     column: str,
     aggregation: str,
@@ -70,14 +77,14 @@ def _known_monthly_period_values(
 
 
 def install_contract_guards() -> None:
-    """Install the final native-monthly semantics contract exactly once per stack.
+    """Install the final native-monthly semantics contract on the active module.
 
-    The idempotency marker belongs to the wrapper function rather than the
-    module namespace. ``importlib.reload`` re-executes function definitions but
-    retains unrelated dynamic module attributes; a module-level installed flag
-    can therefore survive a Streamlit rerun after the wrapped function itself
-    has been replaced. A function-local marker cannot become stale that way.
+    ``source_parity_runtime._fresh_source_parity_ui`` reloads persistent runtime
+    modules between Streamlit reruns. A module object captured when this guard
+    was first imported can therefore become stale. Resolve the contract module
+    at installation time and bind the wrapper to that current object.
     """
+    contract = _current_contract()
     current = contract.monthly_period_values
     if bool(getattr(current, "_MONTHLY_CONTRACT_GUARDED", False)):
         return
@@ -97,7 +104,7 @@ def install_contract_guards() -> None:
                     f"Native monthly provider field {column} contains duplicate calendar-month records."
                 )
             return out
-        return _known_monthly_period_values(df, column, aggregation, semantics)
+        return _known_monthly_period_values(contract, df, column, aggregation, semantics)
 
     monthly_period_values._MONTHLY_CONTRACT_GUARDED = True
     contract.monthly_period_values = monthly_period_values
