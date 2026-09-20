@@ -85,6 +85,31 @@ async function combo(frame, label, timeoutMs = 60_000) {
   throw new Error(`Timed out waiting for visible combobox: ${label}`);
 }
 
+async function renderedControlText(control) {
+  return [
+    await control.innerText().catch(() => ''),
+    await control.textContent().catch(() => ''),
+    await control.inputValue().catch(() => ''),
+  ].join(' ').replace(/\s+/g, ' ').trim();
+}
+
+async function waitComboContains(page, label, needle, timeoutMs = 30_000) {
+  const started = performance.now();
+  let rendered = '';
+  while (performance.now() - started < timeoutMs) {
+    let frame;
+    try { frame = await appFrame(page, 'Climate Analyzer', 5_000); }
+    catch { await sleep(250); continue; }
+    try {
+      const control = await combo(frame, label, 5_000);
+      rendered = await renderedControlText(control);
+      if (rendered.includes(needle)) return { frame, rendered };
+    } catch { /* rerun in flight */ }
+    await sleep(250);
+  }
+  throw new Error(`Timed out waiting for ${label} to settle on ${needle}. Rendered: ${rendered}`);
+}
+
 async function selectComboContains(page, frame, label, needle, timeoutMs = 60_000) {
   const started = performance.now();
   let lastTexts = [];
@@ -120,8 +145,8 @@ async function selectComboContains(page, frame, label, needle, timeoutMs = 60_00
         const index = texts.findIndex((value) => value.includes(needle));
         if (index < 0) continue;
         await options.nth(index).click({ timeout: 10_000 });
-        await sleep(1_000);
-        return await appFrame(page);
+        const settled = await waitComboContains(page, label, needle, 30_000);
+        return settled.frame;
       }
       await sleep(250);
     }
@@ -162,11 +187,7 @@ async function selectExactStation(page, frame, stationName, stationId) {
   // the selected provider station. Do not require the popup menu to materialize
   // in headless Chrome when the filtered result is already settled.
   const stationCombo = await combo(frame, 'Search-result stations', 60_000);
-  const rendered = [
-    await stationCombo.innerText().catch(() => ''),
-    await stationCombo.textContent().catch(() => ''),
-    await stationCombo.inputValue().catch(() => ''),
-  ].join(' ');
+  const rendered = await renderedControlText(stationCombo);
   if (rendered.includes(targetId) || rendered.includes(stationName)) return frame;
 
   throw new Error(
@@ -189,7 +210,7 @@ function occurrences(text, needle) {
 }
 
 const report = {
-  schema: 'climate-analyzer-pr83-source-ui-smoke-v10',
+  schema: 'climate-analyzer-pr83-source-ui-smoke-v11',
   target_url: TARGET_URL,
   fixture,
   checks: {},
@@ -234,8 +255,18 @@ try {
   report.checks.monthly_context_count = 1;
 
   frame = await selectComboContains(page, frame, 'GeoSphere dataset', '1 h (long-term)');
+  const hourlyDataset = await waitComboContains(page, 'GeoSphere dataset', '1 h (long-term)', 30_000);
+  frame = hourlyDataset.frame;
+  report.checks.hourly_dataset_control = hourlyDataset.rendered;
+
   frame = await selectExactStation(page, frame, fixture.station_name, fixture.station_id);
-  frame = await appFrame(page, 'Official GeoSphere Austria availability context', 60_000);
+  frame = await appFrame(page, 'Station metadata validity', 60_000);
+  const preGuidanceText = await bodyText(frame);
+  report.checks.hourly_station_metadata_visible = preGuidanceText.includes('Station metadata validity');
+  report.checks.hourly_selected_station_visible = preGuidanceText.includes(fixture.station_name);
+  report.checks.hourly_body_excerpt = preGuidanceText.slice(0, 8000);
+
+  frame = await appFrame(page, 'Official GeoSphere Austria availability context', 30_000);
   const hourlyText = await bodyText(frame);
   const hourlyInfo = 'Official GeoSphere Austria availability context (translated summary)';
   const hourlySource = 'Authoritative source: GeoSphere Austria Stationsdaten-v2 (1 h)';
