@@ -70,8 +70,16 @@ def _known_monthly_period_values(
 
 
 def install_contract_guards() -> None:
-    """Install the final native-monthly semantics contract exactly once per stack."""
-    if bool(getattr(contract, "_MONTHLY_CONTRACT_GUARD_INSTALLED", False)):
+    """Install the final native-monthly semantics contract exactly once per stack.
+
+    The idempotency marker belongs to the wrapper function rather than the
+    module namespace. ``importlib.reload`` re-executes function definitions but
+    retains unrelated dynamic module attributes; a module-level installed flag
+    can therefore survive a Streamlit rerun after the wrapped function itself
+    has been replaced. A function-local marker cannot become stale that way.
+    """
+    current = contract.monthly_period_values
+    if bool(getattr(current, "_MONTHLY_CONTRACT_GUARDED", False)):
         return
 
     def monthly_period_values(df: pd.DataFrame, column: str, aggregation: str) -> pd.Series:
@@ -91,5 +99,5 @@ def install_contract_guards() -> None:
             return out
         return _known_monthly_period_values(df, column, aggregation, semantics)
 
+    monthly_period_values._MONTHLY_CONTRACT_GUARDED = True
     contract.monthly_period_values = monthly_period_values
-    contract._MONTHLY_CONTRACT_GUARD_INSTALLED = True
