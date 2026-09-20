@@ -47,16 +47,41 @@ def looks_like_climate_analyzer_app(namespace: MutableMapping[str, Any]) -> bool
     return required.issubset(namespace)
 
 
-def _fresh_source_parity_ui() -> Any:
-    """Return an unwrapped source-parity UI module for this Streamlit script run.
+def _reset_persistent_source_parity_modules() -> None:
+    """Reset modules whose callables are mutated by runtime patch installers.
 
-    Streamlit reruns ``app.py`` in a fresh globals dictionary while imported
-    package modules remain alive in the Python process. Several source-parity
-    capability layers intentionally wrap module-level routing callables. Without
-    resetting this persistent module, every browser rerun would wrap the previous
-    run again, duplicating captions/widgets and eventually producing duplicate
-    Streamlit element keys.
+    Streamlit reruns ``app.py`` with fresh script globals but keeps imported
+    package modules alive. Reload every persistent mutation target before the
+    patch chain is composed again; otherwise monthly/chart wrappers accumulate
+    even when ``source_parity_ui`` itself is reloaded.
     """
+    module_names = (
+        "aggregations",
+        "chart_theme",
+        "timeseries",
+        "charts",
+        "source_parity_fixes",
+        "source_parity_ground",
+        "source_parity_resolution",
+        "source_parity_longterm_hotfix",
+        "source_parity_resource_bounds",
+        "source_parity_longterm_followup",
+        "source_parity_monthly",
+        "source_parity_monthly_canonical",
+        "source_parity_monthly_cleanup",
+        "source_parity_monthly_catalogue",
+        "source_parity_monthly_visual_contract",
+        "source_parity_contract_closure",
+    )
+    package = __package__ or "epw_climate_analyzer"
+    for name in module_names:
+        module = importlib.import_module(f"{package}.{name}")
+        importlib.reload(module)
+
+
+def _fresh_source_parity_ui() -> Any:
+    """Return an unwrapped source-parity runtime stack for this script run."""
+    _reset_persistent_source_parity_modules()
     from . import source_parity_ui as parity
 
     return importlib.reload(parity)
@@ -99,18 +124,11 @@ def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     install_resource_temporal_bounds(proxy, parity)
     install_longterm_followup(proxy, parity)
     install_monthly_resource(proxy, parity)
-    # The monthly source changes temporal capabilities, not the application
-    # information architecture. Bind its capability gates to the same canonical
-    # analysis sections used by other climate sources.
     install_monthly_canonical_ui(proxy, parity)
-    # Final monthly cleanup removes the provisional source-specific chart path,
-    # curates the provider vocabulary and binds native-monthly semantics into the
-    # shared canonical chart engines.
     install_monthly_cleanup(proxy, parity)
     install_monthly_catalogue_adapter()
     install_monthly_visual_contract()
-    # Cross-source audit closure is deliberately last: it resolves the final
-    # composed wrappers/capability gates rather than creating parallel engines.
+    # Final audit closure resolves the fully composed capability stack.
     install_contract_closure(proxy, parity)
     namespace["_SOURCE_PARITY_RUNTIME_INSTALLED"] = True
     return True
