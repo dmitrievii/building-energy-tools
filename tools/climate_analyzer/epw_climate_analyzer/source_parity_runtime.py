@@ -75,6 +75,7 @@ def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     from .source_parity_resource_bounds import install_resource_temporal_bounds
     from .source_parity_longterm_followup import install_longterm_followup
     from .source_parity_monthly import install_monthly_resource
+    from .source_parity_monthly_canonical import install_monthly_canonical_ui
 
     # Apply provider vocabulary before the Streamlit resource selector builds
     # metadata mappings. Scientific engines remain provider-neutral.
@@ -89,5 +90,9 @@ def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     install_resource_temporal_bounds(proxy, parity)
     install_longterm_followup(proxy, parity)
     install_monthly_resource(proxy, parity)
+    # Monthly is a capability variant of the canonical UI, not a parallel
+    # product surface. Install this last so it supersedes the provisional
+    # monthly-only explorer route while leaving all non-monthly routes intact.
+    install_monthly_canonical_ui(proxy, parity)
     namespace["_SOURCE_PARITY_RUNTIME_INSTALLED"] = True
     return True
