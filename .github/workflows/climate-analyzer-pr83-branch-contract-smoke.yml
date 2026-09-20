@@ -9,6 +9,7 @@ on:
       - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_runtime.py'
       - 'tools/climate_analyzer/tests/test_canonical_contract_closure_0_7_5_3.py'
       - 'tools/climate_analyzer/tests/test_canonical_contract_runtime_0_7_5_4.py'
+      - 'tools/climate_analyzer/tests/test_geosphere_resource_transition_0_7_5_5.py'
       - 'deployment/pr83_monthly_contract_probe.py'
       - 'deployment/pr83_source_ui_live_smoke.mjs'
       - 'deployment/pr83_geosphere_data_editor_dom_probe.mjs'
@@ -58,7 +59,8 @@ jobs:
         run: |
           python -m unittest -v \
             tools.climate_analyzer.tests.test_canonical_contract_closure_0_7_5_3 \
-            tools.climate_analyzer.tests.test_canonical_contract_runtime_0_7_5_4
+            tools.climate_analyzer.tests.test_canonical_contract_runtime_0_7_5_4 \
+            tools.climate_analyzer.tests.test_geosphere_resource_transition_0_7_5_5
 
       - name: Probe live GeoSphere native-monthly contract
         run: python deployment/pr83_monthly_contract_probe.py
