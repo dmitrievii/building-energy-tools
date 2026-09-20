@@ -112,11 +112,22 @@ async function selectExactStation(page, frame, stationName, stationId) {
   frame = await appFrame(page, 'Manual station selection', 60_000);
   const targetId = `ID ${stationId}`;
 
-  // Match the proven production smoke contract: filtered-result identity lives
-  // in the selectbox options and does not have to be rendered in the closed
-  // page body. Open the list only after the lower station-selector block has
-  // mounted; the Leaflet station map above it can render noticeably later than
-  // the filter counter.
+  // The application normalizes selected_id to option_ids[0] when the active
+  // station no longer belongs to the filtered result set. Searching by an exact
+  // station ID therefore auto-selects the singleton result before the manual
+  // selectbox is rendered. Verify that settled state first; the manual picker is
+  // only a fallback for a non-singleton/unchanged selection.
+  const settledText = await bodyText(frame);
+  const visibleMatch = settledText.match(/Visible GeoSphere stations after filters:\s*([\d,]+)/);
+  const visibleCount = visibleMatch ? Number(visibleMatch[1].replaceAll(',', '')) : null;
+  if (
+    visibleCount === 1
+    && settledText.includes('Selected station')
+    && (settledText.includes(stationName) || settledText.includes(targetId))
+  ) {
+    return frame;
+  }
+
   const stationCombo = await combo(frame, 'Search-result stations', 60_000);
   await stationCombo.click({ timeout: 15_000 });
   await sleep(300);
@@ -126,11 +137,17 @@ async function selectExactStation(page, frame, stationName, stationId) {
     option = frame.locator('[data-baseweb="menu"] li').filter({ hasText: targetId }).last();
   }
   if (!(await option.count().catch(() => 0))) {
+    const rendered = [
+      await stationCombo.innerText().catch(() => ''),
+      await stationCombo.textContent().catch(() => ''),
+      await stationCombo.inputValue().catch(() => ''),
+    ].join(' ');
+    if (rendered.includes(targetId) || rendered.includes(stationName)) return frame;
     const roleTexts = await frame.getByRole('option').allInnerTexts().catch(() => []);
     const menuTexts = await frame.locator('[data-baseweb="menu"] li').allInnerTexts().catch(() => []);
     throw new Error(
       `Search-result stations contains no option for ${targetId}. ` +
-      `Role options: ${roleTexts.join(' | ')}; menu options: ${menuTexts.join(' | ')}`
+      `Rendered control: ${rendered}; role options: ${roleTexts.join(' | ')}; menu options: ${menuTexts.join(' | ')}`
     );
   }
 
@@ -152,19 +169,6 @@ async function selectExactStation(page, frame, stationName, stationId) {
     if (selectedText.includes('Selected station') && (selectedText.includes(stationName) || selectedText.includes(targetId))) {
       return currentFrame;
     }
-
-    let currentCombo = currentFrame.getByRole('combobox', { name: 'Search-result stations', exact: true }).first();
-    if (!(await currentCombo.count().catch(() => 0))) {
-      currentCombo = currentFrame.getByLabel('Search-result stations', { exact: true }).first();
-    }
-    if (await currentCombo.count().catch(() => 0)) {
-      const rendered = [
-        await currentCombo.innerText().catch(() => ''),
-        await currentCombo.textContent().catch(() => ''),
-        await currentCombo.inputValue().catch(() => ''),
-      ].join(' ');
-      if (rendered.includes(targetId) || rendered.includes(stationName)) return currentFrame;
-    }
     await sleep(400);
   }
 
@@ -185,7 +189,7 @@ function occurrences(text, needle) {
 }
 
 const report = {
-  schema: 'climate-analyzer-pr83-source-ui-smoke-v7',
+  schema: 'climate-analyzer-pr83-source-ui-smoke-v8',
   target_url: TARGET_URL,
   fixture,
   checks: {},
