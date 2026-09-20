@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import time
+from typing import Callable, TypeVar
 
 import pandas as pd
+import requests
 
 from epw_climate_analyzer import geosphere
 from epw_climate_analyzer.geosphere_monthly import (
@@ -19,6 +22,26 @@ from epw_climate_analyzer import source_parity_monthly_canonical as monthly_ui
 OUTPUT = Path("artifacts/pr83-contract-smoke/monthly-provider.json")
 REQUIRED = ("tl_mittel", "rf_mittel")
 OPTIONAL = ("p", "tp_mittel", "rr", "so_h")
+T = TypeVar("T")
+
+
+def _network_retry(label: str, operation: Callable[[], T], attempts: int = 3) -> T:
+    """Retry only transient HTTP transport failures; semantic failures stay immediate."""
+    delays_s = (2.0, 6.0)
+    for attempt in range(1, attempts + 1):
+        try:
+            return operation()
+        except requests.RequestException as exc:
+            if attempt >= attempts:
+                raise
+            delay = delays_s[min(attempt - 1, len(delays_s) - 1)]
+            print(
+                f"Transient GeoSphere network failure during {label} "
+                f"(attempt {attempt}/{attempts}): {exc}. Retrying in {delay:g} s...",
+                flush=True,
+            )
+            time.sleep(delay)
+    raise AssertionError("unreachable")
 
 
 def _station(metadata: dict) -> geosphere.GeoSphereStation:
@@ -34,7 +57,10 @@ def _station(metadata: dict) -> geosphere.GeoSphereStation:
 
 def main() -> int:
     ensure_monthly_resource_registered()
-    metadata = geosphere.fetch_metadata(resource_id=MONTHLY_RESOURCE_ID)
+    metadata = _network_retry(
+        "monthly metadata",
+        lambda: geosphere.fetch_metadata(resource_id=MONTHLY_RESOURCE_ID, timeout_s=30),
+    )
     parsed = geosphere.parse_parameters(metadata)
     missing = [name for name in REQUIRED if name not in parsed]
     if missing:
@@ -44,13 +70,16 @@ def main() -> int:
     selected = list(REQUIRED) + [name for name in OPTIONAL if name in parsed]
     start = pd.Timestamp("2020-01-01T00:00:00Z")
     end = pd.Timestamp("2025-12-31T23:59:59Z")
-    dataset = fetch_monthly_dataset(
-        station=station,
-        start=start,
-        end=end,
-        metadata=metadata,
-        provider_parameters=selected,
-        timeout_s=60,
+    dataset = _network_retry(
+        "monthly station data",
+        lambda: fetch_monthly_dataset(
+            station=station,
+            start=start,
+            end=end,
+            metadata=metadata,
+            provider_parameters=selected,
+            timeout_s=60,
+        ),
     )
 
     frame = monthly_ui.monthly_analysis_frame(dataset)
