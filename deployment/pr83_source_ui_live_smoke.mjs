@@ -25,27 +25,62 @@ async function appFrame(page, needle = 'Climate Analyzer', timeoutMs = 90_000) {
   throw new Error(`Timed out waiting for app text: ${needle}`);
 }
 
-async function clickChoice(frame, name) {
-  const exact = frame.getByText(name, { exact: true });
-  if (await exact.count()) {
-    await exact.last().click({ force: true, timeout: 15_000 });
+async function chooseAndWait(page, name, expectedText, timeoutMs = 45_000) {
+  const started = performance.now();
+  let attempts = 0;
+  while (performance.now() - started < timeoutMs) {
+    attempts += 1;
+    let frame;
+    try {
+      frame = await appFrame(page, 'Climate Analyzer', 10_000);
+    } catch {
+      await sleep(500);
+      continue;
+    }
+
+    const candidates = [
+      frame.locator('label').filter({ hasText: name }).last(),
+      frame.getByText(name, { exact: true }).last(),
+      frame.getByRole('radio', { name, exact: true }).last(),
+    ];
+
+    for (const candidate of candidates) {
+      if (!(await candidate.count().catch(() => 0))) continue;
+      try {
+        await candidate.scrollIntoViewIfNeeded({ timeout: 5_000 }).catch(() => {});
+        const tagName = await candidate.evaluate((node) => node.tagName.toLowerCase()).catch(() => '');
+        const inputType = await candidate.getAttribute('type').catch(() => null);
+        if (tagName === 'input' && inputType === 'radio') {
+          await candidate.check({ force: true, timeout: 5_000 });
+        } else {
+          await candidate.click({ force: true, timeout: 5_000 });
+        }
+      } catch {
+        continue;
+      }
+
+      const verifyStarted = performance.now();
+      while (performance.now() - verifyStarted < 6_000) {
+        for (const currentFrame of page.frames()) {
+          const textContent = await bodyText(currentFrame);
+          if (textContent.includes(expectedText)) return { frame: currentFrame, attempts };
+        }
+        await sleep(300);
+      }
+    }
     await sleep(700);
-    return;
   }
-  const label = frame.locator('label').filter({ hasText: name }).last();
-  if (await label.count()) {
-    await label.click({ force: true, timeout: 15_000 });
-    await sleep(700);
-    return;
-  }
-  throw new Error(`Could not find choice: ${name}`);
+  throw new Error(`Timed out selecting ${name} and waiting for: ${expectedText}`);
 }
 
 async function chooseSource(page) {
-  let frame = await appFrame(page);
-  await clickChoice(frame, 'GeoSphere Austria');
-  frame = await appFrame(page, 'GeoSphere Austria — measured historical station data', 60_000);
-  return frame;
+  const opened = await chooseAndWait(
+    page,
+    'GeoSphere Austria',
+    'GeoSphere Austria — measured historical station data',
+    45_000,
+  );
+  return opened.frame;
 }
 
 async function findCombo(frame, label) {
@@ -106,9 +141,19 @@ async function selectStation(page, frame, stationId, stationName) {
   return await appFrame(page, 'Selected station', 60_000);
 }
 
-async function visibleOptionTexts(frame) {
-  const options = await frame.locator('label').allInnerTexts().catch(() => []);
-  return options.map((value) => value.trim()).filter(Boolean);
+async function expandMonthlyContext(frame) {
+  const label = 'About this GeoSphere monthly dataset';
+  const exact = frame.getByText(label, { exact: true }).last();
+  if (await exact.count().catch(() => 0)) {
+    await exact.click({ force: true, timeout: 10_000 }).catch(() => {});
+    await sleep(400);
+    return;
+  }
+  const summary = frame.locator('summary').filter({ hasText: label }).last();
+  if (await summary.count().catch(() => 0)) {
+    await summary.click({ force: true, timeout: 10_000 }).catch(() => {});
+    await sleep(400);
+  }
 }
 
 function occurrences(text, needle) {
@@ -116,7 +161,7 @@ function occurrences(text, needle) {
 }
 
 const report = {
-  schema: 'climate-analyzer-pr83-source-ui-smoke-v1',
+  schema: 'climate-analyzer-pr83-source-ui-smoke-v2',
   target_url: TARGET_URL,
   fixture,
   checks: {},
@@ -141,6 +186,7 @@ try {
   frame = await fillStationSearch(page, frame, fixture.station_id);
   frame = await selectStation(page, frame, fixture.station_id, fixture.station_name);
   frame = await appFrame(page, 'Parameter set', 60_000);
+  await expandMonthlyContext(frame);
   const monthlyText = await bodyText(frame);
 
   const requiredSets = ['Core variables', 'Core + additional statistics', 'All provider parameters'];
