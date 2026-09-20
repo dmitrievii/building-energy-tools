@@ -1,4 +1,9 @@
-"""Runtime binding for the native ``klima-v2-1m`` GeoSphere resource."""
+"""Runtime source binding for GeoSphere ``klima-v2-1m``.
+
+This module only registers the provider resource, transport and source-selection
+UX. Analysis routing is handled separately by the canonical monthly capability
+layer so the source cannot create a parallel product surface.
+"""
 
 from __future__ import annotations
 
@@ -10,7 +15,6 @@ from . import geosphere
 from .geosphere_monthly import (
     MONTHLY_DATASET_PAGE,
     MONTHLY_DOI,
-    MONTHLY_NOMINAL_INTERVAL_MINUTES,
     MONTHLY_OFFICIAL_CONTEXT_EN,
     MONTHLY_RESOURCE_ID,
     ensure_monthly_resource_registered,
@@ -19,7 +23,6 @@ from .geosphere_monthly import (
     monthly_metadata_bundle,
     monthly_parameter_mapping,
     plan_monthly_queries,
-    render_monthly_analysis,
     selected_monthly_query_parameters,
 )
 from .source_parity_longterm_hotfix import QUALITY_FLAG_SELECTION_KEY
@@ -36,7 +39,7 @@ def _selected_flag_names(st: Any) -> tuple[str, ...]:
 
 
 def install_monthly_resource(proxy: Any, parity: Any) -> None:
-    """Add the monthly resource while preserving the stable source-selection shell."""
+    """Add the monthly GeoSphere resource to the shared source-selection shell."""
     if bool(getattr(proxy, "_GEOSPHERE_MONTHLY_RESOURCE_INSTALLED", False)):
         return
 
@@ -60,7 +63,11 @@ def install_monthly_resource(proxy: Any, parity: Any) -> None:
             return cached_monthly_bundle()
         return original_cached_bundle(resource_id)
 
-    def supported_mapping(metadata: Mapping[str, Any], *, resource_id: str = geosphere.GEOSPHERE_RESOURCE_ID):
+    def supported_mapping(
+        metadata: Mapping[str, Any],
+        *,
+        resource_id: str = geosphere.GEOSPHERE_RESOURCE_ID,
+    ):
         if str(resource_id) == MONTHLY_RESOURCE_ID:
             return monthly_parameter_mapping(metadata)
         return original_supported_mapping(metadata, resource_id=resource_id)
@@ -144,10 +151,6 @@ def install_monthly_resource(proxy: Any, parity: Any) -> None:
     parity.plan_data_queries = plan
     parity.fetch_station_dataset = fetch_dataset
 
-    # The app's dependency shim imports these geosphere helpers by name.  The
-    # source-parity selector replaces the shim callables per selected resource,
-    # so no module-scope dependency expansion is required here.
-
     previous_selector = parity._render_geosphere_resource_selector
 
     def selector_with_monthly_context(legacy: Any, original: Callable) -> None:
@@ -162,7 +165,7 @@ def install_monthly_resource(proxy: Any, parity: Any) -> None:
                 kwargs["help"] = (
                     "10-minute data are intended for recent event/detail analysis. The 1-hour resource provides long-term "
                     "hourly observations. The 1-month resource is a separate, richer climatological dataset containing native "
-                    "monthly means, extrema, totals and event statistics; it is analysed at monthly resolution and is never upsampled to hours."
+                    "monthly means, extrema, totals and event statistics. It is analysed at monthly resolution and is never upsampled to hours."
                 )
             return real_selectbox(label, options, *args, **kwargs)
 
@@ -186,8 +189,8 @@ def install_monthly_resource(proxy: Any, parity: Any) -> None:
                 and isinstance(body, str)
                 and body.startswith("Air temperature is not selected.")
             ):
-                # The mature hourly shell checks for provider field `tl`; the
-                # monthly resource uses `tl_mittel` and many related statistics.
+                # The shared hourly shell checks provider field `tl`; monthly
+                # temperature uses separate monthly provider statistics.
                 return None
             return real_info(body, *args, **kwargs)
 
@@ -236,7 +239,6 @@ def install_monthly_resource(proxy: Any, parity: Any) -> None:
 
     parity._render_geosphere_resource_selector = selector_with_monthly_context
 
-    # Keep marker provenance truthful when the shared GeoSphere map is reused.
     if hasattr(proxy, "station_marker_payload"):
         original_marker_payload = proxy.station_marker_payload
 
@@ -250,14 +252,4 @@ def install_monthly_resource(proxy: Any, parity: Any) -> None:
 
         proxy.station_marker_payload = marker_payload
 
-    previous_analysis = proxy.render_canonical_climate_analysis
-
-    def render_active_dataset(dataset: Any) -> None:
-        resource_id = str(getattr(dataset, "data", pd.DataFrame()).attrs.get("geosphere_resource_id", ""))
-        if resource_id == MONTHLY_RESOURCE_ID:
-            render_monthly_analysis(proxy, dataset)
-            return
-        previous_analysis(dataset)
-
-    proxy.render_canonical_climate_analysis = render_active_dataset
     proxy._GEOSPHERE_MONTHLY_RESOURCE_INSTALLED = True
