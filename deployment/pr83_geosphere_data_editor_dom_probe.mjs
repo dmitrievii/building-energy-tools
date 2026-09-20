@@ -61,28 +61,6 @@ async function labelledInput(frame, label, timeoutMs = 60_000) {
   throw new Error(`Timed out waiting for input: ${label}`);
 }
 
-async function selectDataset10min(page, frame) {
-  let combo = frame.getByRole('combobox', { name: 'GeoSphere dataset', exact: true }).first();
-  if (!(await combo.count().catch(() => 0))) combo = frame.getByLabel('GeoSphere dataset', { exact: true }).first();
-  if (!(await combo.count().catch(() => 0))) throw new Error('GeoSphere dataset combobox not found.');
-  const rendered = [await combo.innerText().catch(() => ''), await combo.textContent().catch(() => '')].join(' ');
-  if (rendered.includes('10 min')) return frame;
-  await combo.click({ timeout: 10_000 });
-  const started = performance.now();
-  while (performance.now() - started < 10_000) {
-    for (const options of [page.getByRole('option'), page.locator('[data-baseweb="menu"] li')]) {
-      const texts = await options.allInnerTexts().catch(() => []);
-      const index = texts.findIndex((value) => value.includes('10 min'));
-      if (index >= 0) {
-        await options.nth(index).click({ timeout: 10_000 });
-        return await appFrame(page, 'GeoSphere Austria — measured historical station data', 30_000);
-      }
-    }
-    await sleep(250);
-  }
-  throw new Error('10-minute dataset option did not materialize.');
-}
-
 let browser;
 let page;
 const report = { success: false, fixture, roles: [], data_testids: [], canvases: [], body_excerpt: '', error: null };
@@ -92,7 +70,7 @@ try {
   page = await context.newPage();
   await page.goto(TARGET_URL, { waitUntil: 'domcontentloaded', timeout: 60_000 });
   let frame = await chooseAndWait(page, 'GeoSphere Austria', 'GeoSphere Austria — measured historical station data');
-  frame = await selectDataset10min(page, frame);
+  frame = await appFrame(page, 'Selected resource: klima-v2-10min', 30_000);
 
   const search = await labelledInput(frame, 'Search GeoSphere station');
   await search.fill(String(fixture.station_name), { timeout: 15_000 });
