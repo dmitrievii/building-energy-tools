@@ -85,22 +85,52 @@ async function combo(frame, label, timeoutMs = 60_000) {
   throw new Error(`Timed out waiting for visible combobox: ${label}`);
 }
 
-async function selectComboContains(page, frame, label, needle) {
-  const control = await combo(frame, label);
-  await control.click({ timeout: 15_000 });
-  await sleep(250);
-  let options = frame.getByRole('option');
-  let texts = await options.allInnerTexts().catch(() => []);
-  let index = texts.findIndex((value) => value.includes(needle));
-  if (index < 0) {
-    options = frame.locator('[data-baseweb="menu"] li');
-    texts = await options.allInnerTexts().catch(() => []);
-    index = texts.findIndex((value) => value.includes(needle));
+async function selectComboContains(page, frame, label, needle, timeoutMs = 60_000) {
+  const started = performance.now();
+  let lastTexts = [];
+
+  while (performance.now() - started < timeoutMs) {
+    try { frame = await appFrame(page, 'Climate Analyzer', 5_000); }
+    catch { await sleep(300); continue; }
+
+    let control;
+    try { control = await combo(frame, label, 5_000); }
+    catch { await sleep(300); continue; }
+
+    try {
+      await control.scrollIntoViewIfNeeded({ timeout: 5_000 }).catch(() => {});
+      await control.click({ timeout: 5_000 });
+    } catch {
+      await sleep(300);
+      continue;
+    }
+
+    const optionsStarted = performance.now();
+    while (performance.now() - optionsStarted < 5_000) {
+      const candidates = [
+        frame.getByRole('option'),
+        frame.locator('[data-baseweb="menu"] li'),
+        page.getByRole('option'),
+        page.locator('[data-baseweb="menu"] li'),
+      ];
+
+      for (const options of candidates) {
+        const texts = await options.allInnerTexts().catch(() => []);
+        if (texts.length) lastTexts = texts;
+        const index = texts.findIndex((value) => value.includes(needle));
+        if (index < 0) continue;
+        await options.nth(index).click({ timeout: 10_000 });
+        await sleep(1_000);
+        return await appFrame(page);
+      }
+      await sleep(250);
+    }
+
+    await page.keyboard.press('Escape').catch(() => {});
+    await sleep(300);
   }
-  if (index < 0) throw new Error(`No ${label} option containing ${needle}. Options: ${texts.join(' | ')}`);
-  await options.nth(index).click({ timeout: 15_000 });
-  await sleep(1_000);
-  return await appFrame(page);
+
+  throw new Error(`No ${label} option containing ${needle}. Last options: ${lastTexts.join(' | ')}`);
 }
 
 async function selectExactStation(page, frame, stationName, stationId) {
@@ -159,7 +189,7 @@ function occurrences(text, needle) {
 }
 
 const report = {
-  schema: 'climate-analyzer-pr83-source-ui-smoke-v9',
+  schema: 'climate-analyzer-pr83-source-ui-smoke-v10',
   target_url: TARGET_URL,
   fixture,
   checks: {},
