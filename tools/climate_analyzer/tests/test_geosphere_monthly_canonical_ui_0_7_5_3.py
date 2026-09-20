@@ -87,7 +87,7 @@ class GeoSphereMonthlyCanonicalUiTests(unittest.TestCase):
         self.assertEqual(MONTHLY_COMPARE_DIMENSIONS, ("Year",))
         self.assertNotIn("Duration curve", MONTHLY_ALLOWED_GENERIC_CHART_TYPES)
 
-    def test_monthly_resource_uses_canonical_pages_not_monthly_explorer(self) -> None:
+    def test_monthly_resource_uses_only_shared_canonical_page_taxonomy(self) -> None:
         dataset = self.dataset()
         frame = monthly_analysis_frame(dataset)
         legacy = SimpleNamespace(
@@ -101,13 +101,25 @@ class GeoSphereMonthlyCanonicalUiTests(unittest.TestCase):
         )
         groups, _ = monthly_variable_registry(legacy, dataset, frame)
         pages = monthly_page_names(groups)
+        allowed = {
+            "Climate File Source",
+            "Overview",
+            "Temperature",
+            "Humidity and Psychrometrics",
+            "Solar and Radiation",
+            "Sky and Daylight",
+            "Wind and Ventilation",
+            "Precipitation and Snow",
+            "Time Series and Overlay",
+            "Data Quality",
+        }
+        self.assertTrue(set(pages).issubset(allowed))
         self.assertIn("Temperature", pages)
         self.assertIn("Humidity and Psychrometrics", pages)
         self.assertIn("Sky and Daylight", pages)
         self.assertIn("Precipitation and Snow", pages)
         self.assertIn("Time Series and Overlay", pages)
         self.assertIn("Data Quality", pages)
-        self.assertNotIn("Monthly Explorer", pages)
         self.assertIn("Frosttage", groups["Temperature"])
         self.assertIn("Tage mit Sichtklasse 1", groups["Sky and Daylight"])
 
