@@ -23,10 +23,10 @@ OPTIONAL = ("p", "tp_mittel", "rr", "so_h")
 
 def _station(metadata: dict) -> geosphere.GeoSphereStation:
     stations = geosphere.parse_stations(metadata)
-    preferred = [station for station in stations.values() if str(station.station_id) == "105"]
+    preferred = [station for station in stations if str(station.station_id) == "105"]
     if preferred:
         return preferred[0]
-    for station in stations.values():
+    for station in stations:
         if "wien" in station.name.lower() and "warte" in station.name.lower():
             return station
     raise RuntimeError("Could not resolve Wien Hohe Warte in klima-v2-1m metadata.")
