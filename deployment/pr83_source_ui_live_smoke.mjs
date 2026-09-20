@@ -31,39 +31,28 @@ async function chooseAndWait(page, name, expectedText, timeoutMs = 45_000) {
   while (performance.now() - started < timeoutMs) {
     attempts += 1;
     let frame;
-    try {
-      frame = await appFrame(page, 'Climate Analyzer', 10_000);
-    } catch {
-      await sleep(500);
-      continue;
-    }
+    try { frame = await appFrame(page, 'Climate Analyzer', 10_000); }
+    catch { await sleep(500); continue; }
 
     const candidates = [
       frame.locator('label').filter({ hasText: name }).last(),
       frame.getByText(name, { exact: true }).last(),
       frame.getByRole('radio', { name, exact: true }).last(),
     ];
-
     for (const candidate of candidates) {
       if (!(await candidate.count().catch(() => 0))) continue;
       try {
         await candidate.scrollIntoViewIfNeeded({ timeout: 5_000 }).catch(() => {});
         const tagName = await candidate.evaluate((node) => node.tagName.toLowerCase()).catch(() => '');
         const inputType = await candidate.getAttribute('type').catch(() => null);
-        if (tagName === 'input' && inputType === 'radio') {
-          await candidate.check({ force: true, timeout: 5_000 });
-        } else {
-          await candidate.click({ force: true, timeout: 5_000 });
-        }
-      } catch {
-        continue;
-      }
+        if (tagName === 'input' && inputType === 'radio') await candidate.check({ force: true, timeout: 5_000 });
+        else await candidate.click({ force: true, timeout: 5_000 });
+      } catch { continue; }
 
       const verifyStarted = performance.now();
       while (performance.now() - verifyStarted < 6_000) {
         for (const currentFrame of page.frames()) {
-          const textContent = await bodyText(currentFrame);
-          if (textContent.includes(expectedText)) return { frame: currentFrame, attempts };
+          if ((await bodyText(currentFrame)).includes(expectedText)) return { frame: currentFrame, attempts };
         }
         await sleep(300);
       }
@@ -81,6 +70,34 @@ async function chooseSource(page) {
     45_000,
   );
   return opened.frame;
+}
+
+async function labelledInput(frame, label, timeoutMs = 60_000) {
+  const started = performance.now();
+  while (performance.now() - started < timeoutMs) {
+    const labelled = frame.getByLabel(label, { exact: true }).first();
+    if (await labelled.count().catch(() => 0) && await labelled.isVisible().catch(() => false)) return labelled;
+
+    const aria = frame.locator(`input[aria-label="${label}"]`).first();
+    if (await aria.count().catch(() => 0) && await aria.isVisible().catch(() => false)) return aria;
+
+    const domLabels = frame.locator('label').filter({ hasText: label });
+    const count = await domLabels.count().catch(() => 0);
+    for (let index = 0; index < count; index += 1) {
+      const input = domLabels.nth(index).locator('input').first();
+      if (await input.count().catch(() => 0) && await input.isVisible().catch(() => false)) return input;
+    }
+
+    const text = frame.getByText(label, { exact: true }).first();
+    if (await text.count().catch(() => 0)) {
+      for (const container of [text.locator('xpath=..'), text.locator('xpath=../..'), text.locator('xpath=../../..')]) {
+        const input = container.locator('input').first();
+        if (await input.count().catch(() => 0) && await input.isVisible().catch(() => false)) return input;
+      }
+    }
+    await sleep(300);
+  }
+  throw new Error(`Timed out waiting for visible input: ${label}`);
 }
 
 async function findCombo(frame, label) {
@@ -109,19 +126,17 @@ async function selectComboContains(page, frame, label, optionNeedle) {
 }
 
 async function fillStationSearch(page, frame, stationId) {
-  let input = frame.getByLabel('Search GeoSphere station', { exact: true }).first();
-  if (!(await input.count().catch(() => 0))) input = frame.locator('input[aria-label="Search GeoSphere station"]').first();
-  if (!(await input.count().catch(() => 0))) throw new Error('Search GeoSphere station input not found.');
-  await input.fill(String(stationId));
+  const input = await labelledInput(frame, 'Search GeoSphere station', 60_000);
+  await input.fill(String(stationId), { timeout: 15_000 });
   await input.press('Tab').catch(() => {});
-  await sleep(1_200);
   return await appFrame(page, 'Visible GeoSphere stations after filters:', 60_000);
 }
 
 async function selectStation(page, frame, stationId, stationName) {
+  frame = await appFrame(page, 'Manual station selection', 60_000);
   const combo = await findCombo(frame, 'Search-result stations');
   await combo.click({ timeout: 15_000 });
-  await sleep(250);
+  await sleep(300);
   const needle = `ID ${stationId}`;
   let options = frame.getByRole('option');
   let texts = await options.allInnerTexts().catch(() => []);
@@ -133,11 +148,10 @@ async function selectStation(page, frame, stationId, stationName) {
   }
   if (index < 0) throw new Error(`Station option not found: ${stationName} (${stationId})`);
   await options.nth(index).click({ timeout: 15_000 });
-  await sleep(300);
+  await sleep(500);
   const use = frame.getByRole('button', { name: 'Use station from list', exact: true }).first();
-  if (!(await use.count())) throw new Error('Use station from list button not found.');
+  if (!(await use.count().catch(() => 0))) throw new Error('Use station from list button not found.');
   await use.click({ timeout: 15_000 });
-  await sleep(1_500);
   return await appFrame(page, 'Selected station', 60_000);
 }
 
@@ -161,7 +175,7 @@ function occurrences(text, needle) {
 }
 
 const report = {
-  schema: 'climate-analyzer-pr83-source-ui-smoke-v2',
+  schema: 'climate-analyzer-pr83-source-ui-smoke-v3',
   target_url: TARGET_URL,
   fixture,
   checks: {},
