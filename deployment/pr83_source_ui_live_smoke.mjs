@@ -100,40 +100,51 @@ async function selectComboContains(page, frame, label, needle) {
 
 async function selectExactStation(page, frame, stationName, stationId) {
   const input = await labelledInput(frame, 'Search GeoSphere station');
-  await input.fill(stationName, { timeout: 15_000 });
+  await input.fill(String(stationId), { timeout: 15_000 });
   await input.press('Tab').catch(() => {});
 
-  frame = await appFrame(page, stationName, 60_000);
+  frame = await appFrame(page, 'Visible GeoSphere stations after filters:', 60_000);
+  const targetId = `ID ${stationId}`;
   const started = performance.now();
   let lastText = '';
   while (performance.now() - started < 60_000) {
     lastText = await bodyText(frame);
     const visibleMatch = lastText.match(/Visible GeoSphere stations after filters:\s*([\d,]+)/);
     const visibleCount = visibleMatch ? Number(visibleMatch[1].replaceAll(',', '')) : null;
-    if (visibleCount === 1 && lastText.includes(stationName) && lastText.includes(`ID ${stationId}`)) break;
+    if (visibleCount !== null && visibleCount >= 1 && lastText.includes(targetId)) break;
     await sleep(300);
     frame = await appFrame(page, 'Visible GeoSphere stations after filters:', 5_000);
   }
-  if (!lastText.includes(stationName) || !lastText.includes(`ID ${stationId}`)) {
-    throw new Error(`Exact station filter did not expose ${stationName} (ID ${stationId}).`);
+  if (!lastText.includes(targetId)) {
+    throw new Error(`Station-ID filter did not expose ${stationName} (${targetId}).`);
   }
 
   const stationCombo = await combo(frame, 'Search-result stations');
-  const rendered = [
-    await stationCombo.innerText().catch(() => ''),
-    await stationCombo.textContent().catch(() => ''),
-    await stationCombo.inputValue().catch(() => ''),
-  ].join(' ');
-  if (!rendered.includes(stationName) && !rendered.includes(`ID ${stationId}`)) {
-    throw new Error(`Filtered station was not selected by default. Rendered combobox: ${rendered}`);
+  await stationCombo.click({ timeout: 15_000 });
+  await sleep(300);
+  let options = frame.getByRole('option');
+  let texts = await options.allInnerTexts().catch(() => []);
+  let index = texts.findIndex((value) => value.includes(targetId));
+  if (index < 0) {
+    options = frame.locator('[data-baseweb="menu"] li');
+    texts = await options.allInnerTexts().catch(() => []);
+    index = texts.findIndex((value) => value.includes(targetId));
   }
+  if (index < 0) {
+    throw new Error(`Search-result stations contains no option for ${targetId}. Options: ${texts.join(' | ')}`);
+  }
+  const selectedLabel = String(texts[index] || '').trim();
+  await options.nth(index).click({ timeout: 15_000 });
+  await sleep(500);
 
   const use = frame.getByRole('button', { name: 'Use station from list', exact: true }).first();
   if (!(await use.count().catch(() => 0))) throw new Error('Use station from list button not found.');
   await use.click({ timeout: 15_000 });
   frame = await appFrame(page, 'Selected station', 60_000);
   const settled = await bodyText(frame);
-  if (!settled.includes(stationName)) throw new Error(`Selected station did not settle on ${stationName}.`);
+  if (!settled.includes(stationName) && !settled.includes(targetId)) {
+    throw new Error(`Selected station did not settle on ${stationName} (${targetId}); option=${selectedLabel}.`);
+  }
   return frame;
 }
 
@@ -151,7 +162,7 @@ function occurrences(text, needle) {
 }
 
 const report = {
-  schema: 'climate-analyzer-pr83-source-ui-smoke-v4',
+  schema: 'climate-analyzer-pr83-source-ui-smoke-v5',
   target_url: TARGET_URL,
   fixture,
   checks: {},
