@@ -11,20 +11,21 @@ from .source_parity_longterm_followup import temperature_gradient_colorscale
 def monthly_metric_color(column: str, fallback: Callable[[str | None], str]) -> str:
     """Map monthly semantic columns onto the shared physical colour families."""
     text = str(column).lower()
+    provider = text.rsplit("__", 1)[-1]
     if "__temperature__" in text:
         return fallback("dry_bulb_temperature_c")
     if "__humidity_and_psychrometrics__" in text:
-        if "pressure" in text or "druck" in text:
+        if "pressure" in provider or "druck" in provider:
             return fallback("atmospheric_station_pressure_pa")
         return fallback("relative_humidity_pct")
-    if "__solar_and_radiation__" in text or "sunshine" in text or "sonnen" in text:
+    if "__solar_and_radiation__" in text or "sunshine" in provider or "sonnen" in provider:
         return chart_theme.SOLAR_COMPONENT_COLORS["GHI"]
     if "__sky_and_daylight__" in text:
         return fallback("total_sky_cover_tenths")
     if "__wind_and_ventilation__" in text:
         return fallback("wind_speed_m_s")
     if "__precipitation_and_snow__" in text:
-        if "snow" in text or "schnee" in text:
+        if "snow" in provider or "schnee" in provider:
             return fallback("snow_depth_cm")
         return fallback("liquid_precipitation_depth_mm")
     return fallback(column)
