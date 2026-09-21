@@ -14,6 +14,7 @@ on:
       - 'deployment/pr83_monthly_contract_probe.py'
       - 'deployment/pr83_source_ui_live_smoke_v18.mjs'
       - 'deployment/pr83_precip_snow_live_smoke.mjs'
+      - 'deployment/pr83_visual_walkthrough.mjs'
       - '.github/workflows/climate-analyzer-pr83-branch-contract-smoke.yml'
   workflow_dispatch:
 
@@ -27,13 +28,14 @@ concurrency:
 jobs:
   branch-local-contract-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     env:
       PYTHONPATH: tools/climate_analyzer
       TARGET_URL: http://127.0.0.1:8501/
       CHROME_PATH: /usr/bin/google-chrome
       PR83_MONTHLY_FIXTURE: artifacts/pr83-contract-smoke/monthly-provider.json
       PR83_UI_REPORT: artifacts/pr83-contract-smoke/source-ui.json
+      PR83_VISUAL_DIR: artifacts/pr83-visual-walkthrough
       GEOSPHERE_SMOKE_FIXTURE: artifacts/geosphere-precip-snow-smoke/provider-fixture.json
       AUDIT_OUTPUT_DIR: artifacts/geosphere-precip-snow-smoke
 
@@ -103,6 +105,12 @@ jobs:
         continue-on-error: true
         run: node deployment/pr83_source_ui_live_smoke_v18.mjs
 
+      - name: Capture monthly visual walkthrough
+        id: visual_walkthrough
+        if: ${{ always() && !cancelled() }}
+        continue-on-error: true
+        run: node deployment/pr83_visual_walkthrough.mjs
+
       - name: Exercise current 10-minute precipitation route against PR branch
         id: precipitation_smoke
         if: ${{ always() && !cancelled() }}
@@ -126,6 +134,7 @@ jobs:
           name: climate-analyzer-pr83-branch-contract-smoke
           path: |
             artifacts/pr83-contract-smoke
+            artifacts/pr83-visual-walkthrough
             artifacts/geosphere-precip-snow-smoke
           if-no-files-found: warn
           retention-days: 30
@@ -134,12 +143,15 @@ jobs:
         if: always()
         env:
           SOURCE_UI_OUTCOME: ${{ steps.source_ui_smoke.outcome }}
+          VISUAL_OUTCOME: ${{ steps.visual_walkthrough.outcome }}
           PRECIPITATION_OUTCOME: ${{ steps.precipitation_smoke.outcome }}
           TRACEBACK_OUTCOME: ${{ steps.traceback_gate.outcome }}
         run: |
           echo "source UI: $SOURCE_UI_OUTCOME"
+          echo "visual walkthrough: $VISUAL_OUTCOME"
           echo "precipitation/snow: $PRECIPITATION_OUTCOME"
           echo "runtime traceback gate: $TRACEBACK_OUTCOME"
           test "$SOURCE_UI_OUTCOME" = success
+          test "$VISUAL_OUTCOME" = success
           test "$PRECIPITATION_OUTCOME" = success
           test "$TRACEBACK_OUTCOME" = success
