@@ -120,31 +120,26 @@ jobs:
             frame=await appFrame(page,'Manual station selection',60000);
             const targetId=String(id);
             frame=await selectVisibleOption(page,frame,'Search-result stations',(t)=>t.includes(name)&&(t.includes(`ID ${targetId}`)||t.includes(targetId)),60000);
+            frame=await appFrame(page,'Manual station selection',10000);
+            const stationCombo=await combo(frame,'Search-result stations',10000);
+            const selected=await rendered(stationCombo);
+            if (!(selected.includes(name)&&(selected.includes(`ID ${targetId}`)||selected.includes(targetId)))) {
+              throw new Error(`Exact station option did not remain selected: ${selected}`);
+            }
+            const use=frame.getByRole('button',{name:'Use station from list',exact:true}).first();
+            if (!(await use.count().catch(()=>0)) || !(await use.isVisible().catch(()=>false))) {
+              throw new Error('Use station from list button is unavailable after exact station selection.');
+            }
+            await use.click({force:true,timeout:10000});
+            await sleep(1200);
             const started=performance.now();
-            let lastControl='';
-            let useClicks=0;
-            while (performance.now()-started<45000) {
+            while (performance.now()-started<30000) {
               frame=await appFrame(page,'Climate Analyzer',5000);
               const body=await bodyText(frame);
-              if (body.includes('Selected station')&&body.includes(name)&&body.includes(targetId)) return frame;
-              try {
-                const stationCombo=await combo(frame,'Search-result stations',3000);
-                lastControl=await rendered(stationCombo);
-                const exact=lastControl.includes(name)&&(lastControl.includes(`ID ${targetId}`)||lastControl.includes(targetId));
-                const use=frame.getByRole('button',{name:'Use station from list',exact:true}).first();
-                const useVisible=await use.count().catch(()=>0) && await use.isVisible().catch(()=>false);
-                if (exact && useVisible) {
-                  await use.click({force:true,timeout:10000}).catch(()=>{});
-                  useClicks+=1;
-                  await sleep(900);
-                  continue;
-                }
-                if (exact && !useVisible && body.includes('Measured variables to load')) return frame;
-              } catch {}
-              if (body.includes('Measured variables to load') && body.includes(name)) return frame;
+              if (body.includes('Selected station') && body.includes(name) && body.includes('Measured variables to load')) return frame;
               await sleep(250);
             }
-            throw new Error(`Exact station ID ${targetId} did not settle; control=${lastControl}; useClicks=${useClicks}`);
+            throw new Error(`Selected station panel did not update to ${name} after applying exact ID ${targetId}.`);
           }
           '''
           text = text[:start] + replacement + text[end:]
