@@ -17,12 +17,25 @@ from . import source_parity_monthly_canonical as monthly_ui
 from .geosphere_monthly import MONTHLY_DOI, MONTHLY_RESOURCE_ID
 
 _RESOURCE_KEY = "geosphere_resource_id"
+_PARAMETER_SET_KEY = "geosphere_monthly_parameter_catalogue_v2"
 _MONTHLY_CONTEXT_LABEL = "About this GeoSphere monthly dataset"
 _LEGACY_CATALOGUE_OPTIONS = ("Recommended", "All parameters")
 
 
 def _monthly_active(st: Any) -> bool:
     return str(st.session_state.get(_RESOURCE_KEY, "")) == MONTHLY_RESOURCE_ID
+
+
+def _canonical_parameter_set_active(st: Any) -> bool:
+    """Return true only after the canonical Parameter set has rendered once.
+
+    The first monthly render must remain untouched so the outer resource wrapper
+    can commit the private dataset widget into the legacy routing key. Legacy
+    suppression is needed only on later Parameter-set reruns, where the canonical
+    key is already present and the old Recommended/All wrapper can otherwise
+    reappear beside the new control.
+    """
+    return _monthly_active(st) and _PARAMETER_SET_KEY in st.session_state
 
 
 def _dataset_has_station_pressure(dataset: Any) -> bool:
@@ -36,13 +49,7 @@ def _dataset_has_station_pressure(dataset: Any) -> bool:
 
 
 def _install_monthly_analysis_capability_note(st: Any) -> None:
-    """Expose measured monthly pressure capability on the moisture page.
-
-    The variable itself remains in the normal Humidity variable selector.  This
-    note makes the capability visible even while that selectbox is closed and is
-    useful provenance for the psychrometric route, which uses published monthly
-    station pressure whenever available.
-    """
+    """Expose measured monthly pressure capability on the moisture page."""
     if bool(getattr(monthly_ui, "_MONTHLY_SURFACE_ANALYSIS_GUARD_INSTALLED", False)):
         return
     previous = monthly_ui.render_monthly_canonical_analysis
@@ -89,24 +96,24 @@ def install_monthly_surface_guard(parity: Any) -> None:
         def info(body: Any, *args: Any, **kwargs: Any):
             text = str(body)
             if _monthly_active(st) and text.startswith("Air temperature is not selected."):
-                # The shared shell derives this warning from its hourly selection
-                # cache. Monthly capability is evaluated from the returned native
-                # monthly observations, so this warning is stale and false.
                 return None
             return real_info(body, *args, **kwargs)
 
         def radio(label: str, options: Iterable[Any], *args: Any, **kwargs: Any):
             values = list(options)
-            if _monthly_active(st) and label == "Parameter catalogue" and tuple(values) == _LEGACY_CATALOGUE_OPTIONS:
-                # The canonical Parameter set owns filtering. Returning the full
-                # legacy vocabulary here prevents the older Recommended/All
-                # wrapper from rendering a second control or dropping rows before
-                # the provider-keyed selection adapter sees them.
+            if (
+                _canonical_parameter_set_active(st)
+                and label == "Parameter catalogue"
+                and tuple(values) == _LEGACY_CATALOGUE_OPTIONS
+            ):
+                # On Parameter-set reruns the canonical selector owns filtering;
+                # keep the legacy layer transparent and preserve the full provider
+                # vocabulary for the provider-keyed selection adapter.
                 return "All parameters"
             return real_radio(label, values, *args, **kwargs)
 
         def expander(label: str, *args: Any, **kwargs: Any):
-            if _monthly_active(st) and label == _MONTHLY_CONTEXT_LABEL:
+            if _canonical_parameter_set_active(st) and label == _MONTHLY_CONTEXT_LABEL:
                 if context_seen["value"]:
                     return nullcontext()
                 context_seen["value"] = True
@@ -117,7 +124,7 @@ def install_monthly_surface_guard(parity: Any) -> None:
         st.radio = radio
         st.expander = expander
         try:
-            if _monthly_active(st):
+            if _canonical_parameter_set_active(st):
                 real_caption(
                     "Native monthly source data · Parameter set changes catalogue visibility only; Load/Flag selections are retained by provider."
                 )
