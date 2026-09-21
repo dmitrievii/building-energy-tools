@@ -82,7 +82,17 @@ def _reset_persistent_source_parity_modules() -> None:
 
 
 def _fresh_source_parity_ui() -> Any:
-    """Return an unwrapped source-parity runtime stack for this script run."""
+    """Return a pristine source-parity runtime stack for this script run.
+
+    Reset the persistent Streamlit module surface *before* reloading source-
+    parity modules.  Widget-triggered reruns can interrupt a nested selector
+    while ``st.data_editor``/``st.radio``/``DeltaGenerator.date_input`` are
+    temporarily replaced; without this reset those leaked wrappers become the
+    next run's apparent originals and the chain accumulates.
+    """
+    from .source_parity_streamlit_surface import restore_streamlit_surface
+
+    restore_streamlit_surface()
     _reset_persistent_source_parity_modules()
     from . import source_parity_ui as parity
 
