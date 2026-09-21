@@ -43,6 +43,7 @@ _STREAMLIT_SURFACE_NAMES = (
     "selectbox",
     "data_editor",
     "slider",
+    "rerun",
 )
 _STREAMLIT_BASELINE: dict[str, Any] | None = None
 
@@ -115,6 +116,7 @@ def _reset_persistent_source_parity_modules() -> None:
         "source_parity_contract_closure",
         "source_parity_contract_guidance_hotfix",
         "source_parity_contract_guard",
+        "source_parity_resource_persistence",
     )
     package = __package__ or "epw_climate_analyzer"
     for name in module_names:
@@ -156,6 +158,7 @@ def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     from .source_parity_contract_closure import install_contract_closure
     from .source_parity_contract_guidance_hotfix import patch_contract_guidance
     from .source_parity_contract_guard import install_contract_guards
+    from .source_parity_resource_persistence import install_resource_persistence
 
     # Provider vocabulary is installed before the shared resource selector builds
     # metadata mappings. Scientific engines remain provider-neutral.
@@ -179,5 +182,9 @@ def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     patch_contract_guidance()
     install_contract_closure(proxy, parity)
     install_contract_guards()
+    # The rerun-persistence guard is deliberately outermost. It must observe
+    # station-browser reruns raised from any legacy layer after the visible
+    # dataset widget has committed its choice.
+    install_resource_persistence(parity)
     namespace["_SOURCE_PARITY_RUNTIME_INSTALLED"] = True
     return True
