@@ -299,6 +299,20 @@ async function visibleOption(page, frame, text) {
   return null;
 }
 
+async function visibleOptionTexts(page, frame) {
+  const values = [];
+  for (const options of [frame.getByRole('option'), page.getByRole('option'), frame.locator('[data-baseweb="menu"] li'), page.locator('[data-baseweb="menu"] li')]) {
+    const count = await options.count().catch(() => 0);
+    for (let index = 0; index < count; index += 1) {
+      const option = options.nth(index);
+      if (!await option.isVisible().catch(() => false)) continue;
+      const text = (await option.innerText().catch(() => '')).trim();
+      if (text && !values.includes(text)) values.push(text);
+    }
+  }
+  return values;
+}
+
 async function sidebarNavigation(page, name) {
   const started = performance.now();
   while (performance.now() - started < 120_000) {
@@ -326,29 +340,50 @@ async function analysisCombo(frame) {
   throw new Error('Could not locate Analysis type selectbox.');
 }
 
-async function analysisOptions(page) {
-  const frame = await appFrame(page, 'Precipitation and snow', 30_000);
-  const control = await analysisCombo(frame);
-  await control.click({ timeout: 10_000 }); await sleep(300);
-  const values = [];
-  for (const options of [frame.getByRole('option'), page.getByRole('option'), frame.locator('[data-baseweb="menu"] li'), page.locator('[data-baseweb="menu"] li')]) {
-    const count = await options.count().catch(() => 0);
-    for (let index = 0; index < count; index += 1) {
-      const option = options.nth(index); if (!await option.isVisible().catch(() => false)) continue;
-      const text = (await option.innerText().catch(() => '')).trim(); if (text && !values.includes(text)) values.push(text);
+async function analysisOptions(page, expected, timeoutMs = 20_000) {
+  const started = performance.now();
+  let lastValues = [];
+  while (performance.now() - started < timeoutMs) {
+    const frame = await appFrame(page, 'Precipitation and snow', 10_000);
+    const control = await analysisCombo(frame);
+    let values = await visibleOptionTexts(page, frame);
+    if (!values.length) {
+      const expanded = await control.getAttribute('aria-expanded').catch(() => null);
+      if (expanded !== 'true') {
+        await control.click({ timeout: 10_000 }).catch(() => {});
+      }
+      await sleep(350);
+      values = await visibleOptionTexts(page, frame);
     }
+    if (values.length) lastValues = [...new Set([...lastValues, ...values])];
+    if (expected.every((value) => lastValues.includes(value))) {
+      await page.keyboard.press('Escape').catch(() => {});
+      return lastValues;
+    }
+    await sleep(250);
   }
-  await page.keyboard.press('Escape').catch(() => {}); return values;
+  await page.keyboard.press('Escape').catch(() => {});
+  return lastValues;
 }
 
 async function selectAnalysis(page, name) {
-  const frame = await appFrame(page, 'Precipitation and snow', 30_000);
-  const control = await analysisCombo(frame); await control.click({ timeout: 10_000 });
   const started = performance.now();
-  while (performance.now() - started < 10_000) {
-    const option = await visibleOption(page, frame, name);
-    if (option) { await option.click({ timeout: 10_000 }); await sleep(500); return; }
-    await sleep(200);
+  while (performance.now() - started < 15_000) {
+    const frame = await appFrame(page, 'Precipitation and snow', 10_000);
+    const control = await analysisCombo(frame);
+    let option = await visibleOption(page, frame, name);
+    if (!option) {
+      const expanded = await control.getAttribute('aria-expanded').catch(() => null);
+      if (expanded !== 'true') await control.click({ timeout: 10_000 }).catch(() => {});
+      await sleep(250);
+      option = await visibleOption(page, frame, name);
+    }
+    if (option) {
+      await option.click({ timeout: 10_000 });
+      await sleep(500);
+      return;
+    }
+    await sleep(250);
   }
   throw new Error(`Analysis option not found: ${name}`);
 }
@@ -358,13 +393,11 @@ async function openPrecipitationPage(page) {
   const exact = frame.getByText('Climate — Precipitation & snow', { exact: true }).last();
   if (!(await exact.count().catch(() => 0))) throw new Error('Precipitation & snow navigation item not found.');
   await exact.click({ timeout: 15_000 });
-  // The renderer's contract is asserted below through its actual analysis modes
-  // and semantics captions. Do not depend on an obsolete page-level caption.
   frame = await appFrame(page, 'Precipitation and snow', 60_000);
   return frame;
 }
 
-const report = { schema: 'climate-analyzer-pr83-precip-snow-live-smoke-v2', target_url: TARGET_URL, fixture, started_at_utc: new Date().toISOString(), checks: {}, page_errors: [], console_errors: [], http_errors: [], success: false, error: null };
+const report = { schema: 'climate-analyzer-pr83-precip-snow-live-smoke-v3', target_url: TARGET_URL, fixture, started_at_utc: new Date().toISOString(), checks: {}, page_errors: [], console_errors: [], http_errors: [], success: false, error: null };
 let browser; let page;
 try {
   if (!fixture.success) throw new Error(`Provider fixture failed: ${fixture.error ?? 'unknown'}`);
@@ -391,7 +424,7 @@ try {
   frame = await openPrecipitationPage(page); report.checks.precipitation_page_opened = true;
   const expectedOptions = ['Precipitation totals','Annual precipitation indices','Liquid precipitation explorer','Precipitation-record occurrence','Measured precipitation duration','Snow-cover duration','Snow-season indices'];
   if (fixture.hourly_snow_available) expectedOptions.push('Snow depth explorer');
-  const options = await analysisOptions(page); report.checks.analysis_options = options;
+  const options = await analysisOptions(page, expectedOptions); report.checks.analysis_options = options;
   const missing = expectedOptions.filter((value) => !options.includes(value)); if (missing.length) throw new Error(`Missing precipitation/snow analysis option(s): ${missing.join(', ')}`);
   await selectAnalysis(page, 'Annual precipitation indices'); await appFrame(page, 'Wet day ≥ 1 mm/day', 60_000); report.checks.annual_precipitation_indices = true;
   await selectAnalysis(page, 'Measured precipitation duration'); await appFrame(page, 'never inferred from precipitation depth rr', 60_000); report.checks.measured_precipitation_duration = true;
