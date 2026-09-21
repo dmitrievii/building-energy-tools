@@ -58,6 +58,40 @@ async function visibleOption(page, frame, predicate) {
   }
   return null;
 }
+async function selectVisibleOption(page, frame, controlLabel, predicate, timeoutMs = 60000) {
+  const started = performance.now();
+  let last = [];
+  while (performance.now() - started < timeoutMs) {
+    frame = await appFrame(page, 'Climate Analyzer', 5000);
+    let control;
+    try { control = await combo(frame, controlLabel, 5000); } catch { await sleep(250); continue; }
+    try {
+      await control.scrollIntoViewIfNeeded({ timeout: 3000 }).catch(() => {});
+      await control.click({ timeout: 5000 });
+    } catch { await sleep(250); continue; }
+
+    const optionStarted = performance.now();
+    while (performance.now() - optionStarted < 6000) {
+      const collections = [frame.getByRole('option'), page.getByRole('option'), frame.locator('[data-baseweb="menu"] li'), page.locator('[data-baseweb="menu"] li')];
+      for (const options of collections) {
+        const count = await options.count().catch(() => 0);
+        if (!count) continue;
+        last = await options.allInnerTexts().catch(() => last);
+        for (let i = 0; i < count; i += 1) {
+          const option = options.nth(i);
+          const text = (await option.innerText().catch(() => '')).replace(/\s+/g, ' ').trim();
+          if (!predicate(text) || !(await option.isVisible().catch(() => false))) continue;
+          await option.click({ timeout: 8000 });
+          return await appFrame(page, 'Climate Analyzer', 10000);
+        }
+      }
+      await sleep(200);
+    }
+    await page.keyboard.press('Escape').catch(() => {});
+    await sleep(300);
+  }
+  throw new Error(`Could not select ${controlLabel}; last options: ${last.join(' | ')}`);
+}
 async function chooseSource(page) {
   const started = performance.now();
   while (performance.now() - started < 60000) {
@@ -97,39 +131,33 @@ async function input(frame, label, timeoutMs = 60000) {
 async function selectStation(page) {
   let frame = await appFrame(page, 'Search GeoSphere station', 60000);
   const search = await input(frame, 'Search GeoSphere station');
-  await search.fill(String(fixture.station_name));
+  await search.fill(String(fixture.station_name), { timeout: 15000 });
   await search.press('Tab').catch(() => {});
   frame = await appFrame(page, 'Manual station selection', 60000);
-  const control = await combo(frame, 'Search-result stations', 60000);
-  await control.click({ timeout: 10000 });
-  const started = performance.now();
-  let optionSelected = false;
-  while (performance.now() - started < 30000) {
-    frame = await appFrame(page, 'Manual station selection', 5000);
-    const option = await visibleOption(page, frame, (text) => text.includes(fixture.station_name) && (text.includes(`ID ${fixture.station_id}`) || text.includes(String(fixture.station_id))));
-    if (option) {
-      await option.click({ timeout: 10000 });
-      optionSelected = true;
-      break;
-    }
-    await sleep(200);
-  }
-  if (!optionSelected) throw new Error(`Could not select station ${fixture.station_name} / ID ${fixture.station_id}.`);
 
-  // Choosing the combobox value only stages the station.  The source UI requires
-  // the explicit commit button before it builds the variable catalogue.  Older
-  // walkthroughs skipped this step and then timed out waiting for Parameter set.
-  const commitStarted = performance.now();
-  while (performance.now() - commitStarted < 30000) {
-    frame = await appFrame(page, 'Manual station selection', 5000);
-    const button = frame.getByRole('button', { name: 'Use station from list', exact: true }).first();
-    if (await button.count().catch(() => 0) && await button.isVisible().catch(() => false)) {
-      await button.click({ timeout: 15000 });
-      return await appFrame(page, 'Measured variables to load', 60000);
-    }
+  const targetId = String(fixture.station_id);
+  frame = await selectVisibleOption(
+    page,
+    frame,
+    'Search-result stations',
+    (text) => text.includes(fixture.station_name) && (text.includes(`ID ${targetId}`) || text.includes(targetId)),
+    60000,
+  );
+
+  const started = performance.now();
+  let lastControl = '';
+  while (performance.now() - started < 30000) {
+    frame = await appFrame(page, 'Climate Analyzer', 5000);
+    try {
+      const stationCombo = await combo(frame, 'Search-result stations', 5000);
+      lastControl = await rendered(stationCombo);
+      if (lastControl.includes(fixture.station_name) && (lastControl.includes(`ID ${targetId}`) || lastControl.includes(targetId))) return frame;
+    } catch {}
+    const text = await bodyText(frame);
+    if (text.includes('Selected station') && text.includes(fixture.station_name) && text.includes(targetId)) return frame;
     await sleep(250);
   }
-  throw new Error('Use station from list button did not become available.');
+  throw new Error(`Exact station ID ${targetId} did not settle; control=${lastControl}`);
 }
 async function editor(page) {
   const frame = await appFrame(page, 'Measured variables to load', 30000);
