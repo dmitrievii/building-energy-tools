@@ -1,10 +1,9 @@
 """Reload-safe final guidance patch for the composed GeoSphere source selector.
 
-The contract-closure selector is intentionally the outermost source UI layer.
-It must therefore be able to receive the raw variable table directly instead of
-assuming that the older monthly-cleanup data-editor wrapper has already added
-Category/Statistic/Notes columns.  This patch makes the final layer own both
-monthly table decoration and the Core/Additional/All parameter-set selector.
+The final source selector owns the one visible GeoSphere dataset widget.  Older
+runtime layers still call a legacy selector internally, but those calls are
+suppressed and receive the already-selected resource.  The visible widget and
+all downstream routing therefore share exactly one Streamlit session-state key.
 """
 from __future__ import annotations
 
@@ -30,11 +29,13 @@ PARAMETER_SET_OPTIONS = (
 )
 PARAMETER_SET_KEY = "geosphere_monthly_parameter_catalogue_v2"
 _RESOURCE_KEY = "geosphere_resource_id"
-_RESOURCE_WIDGET_KEY = "_geosphere_resource_selector_widget_v1"
+# Retained as an exported compatibility constant for focused regression tests.
+# It deliberately aliases the routing key: there is no second widget state.
+_RESOURCE_WIDGET_KEY = _RESOURCE_KEY
 
 
 def _decorate_monthly_table(parity: Any, data: pd.DataFrame) -> pd.DataFrame:
-    """Return the final human-readable monthly selector table from raw or decorated input."""
+    """Return the final human-readable monthly selector table from raw/decorated input."""
     try:
         decorated = monthly_cleanup._decorate_parameter_table(parity, data)
     except Exception:
@@ -47,13 +48,14 @@ def _decorate_monthly_table(parity: Any, data: pd.DataFrame) -> pd.DataFrame:
         original_name = str(
             row.get("Original GeoSphere name", row.get("Measured variable", provider)) or provider
         )
-        descriptor = monthly_cleanup._metadata_descriptor(
-            parity,
-            provider,
-            original_name,
-            str(row.get("Unit", "") or ""),
+        descriptors.append(
+            monthly_cleanup._metadata_descriptor(
+                parity,
+                provider,
+                original_name,
+                str(row.get("Unit", "") or ""),
+            )
         )
-        descriptors.append(descriptor)
 
     if "Category" not in out.columns:
         out["Category"] = [item.category for item in descriptors]
@@ -74,6 +76,7 @@ def _decorate_monthly_table(parity: Any, data: pd.DataFrame) -> pd.DataFrame:
 
 
 def _install_guidance_safe(parity: Any) -> None:
+    """Install the final source selector and monthly catalogue guidance layer."""
     st = parity.st
     previous = parity._render_geosphere_resource_selector
 
@@ -86,15 +89,6 @@ def _install_guidance_safe(parity: Any) -> None:
         real_editor = st.data_editor
         real_selectbox = st.selectbox
 
-        # Resolve the dataset widget before entering the older wrapper chain.
-        # The visible widget owns a private Streamlit key; the effective resource
-        # is copied explicitly into the legacy routing key before any wrapper is
-        # entered.  Keeping widget state and routing state separate is important:
-        # the composed legacy chain still contains a (suppressed) selectbox call
-        # using ``geosphere_resource_id``.  Reusing that same key for the visible
-        # widget allowed a 1m -> 1h browser transition to be rolled back to the
-        # default 10-minute resource during the rerun even though the frontend
-        # briefly displayed the hourly option.
         specs = list(parity.available_resource_specs())
         resource_ids = [str(spec.resource_id) for spec in specs]
         if not resource_ids:
@@ -102,34 +96,28 @@ def _install_guidance_safe(parity: Any) -> None:
 
         current_resource = str(st.session_state.get(_RESOURCE_KEY, resource_ids[0]))
         if current_resource not in resource_ids:
+            # This happens before the widget is instantiated, so clearing an
+            # obsolete value is legal and lets Streamlit apply the default.
+            st.session_state.pop(_RESOURCE_KEY, None)
             current_resource = resource_ids[0]
-        widget_resource = str(st.session_state.get(_RESOURCE_WIDGET_KEY, ""))
-        if widget_resource and widget_resource not in resource_ids:
-            del st.session_state[_RESOURCE_WIDGET_KEY]
-            widget_resource = ""
-        initial_resource = widget_resource if widget_resource in resource_ids else current_resource
 
-        # On a widget-triggered rerun the private widget state is already updated
-        # before the script starts. Commit it to the legacy routing key *before*
-        # rendering any widget so nested wrappers cannot observe the previous
-        # resource while the new Streamlit widget tree is being reconciled.
-        st.session_state[_RESOURCE_KEY] = initial_resource
-
-        selected_resource = real_selectbox(
-            "GeoSphere dataset",
-            resource_ids,
-            index=resource_ids.index(initial_resource),
-            format_func=lambda resource_id: parity.resource_spec(resource_id).label,
-            key=_RESOURCE_WIDGET_KEY,
-            help=(
-                "10-minute data are best for recent event/detail analysis. The 1-hour resource provides the "
-                "long-term historical series and enters the same canonical hourly engine without resampling."
-            ),
+        # One source of truth: the visible widget owns the same key that all
+        # provider-routing layers read.  Nested legacy dataset selectboxes are
+        # suppressed below, so no second widget can overwrite this state.
+        selected_resource = str(
+            real_selectbox(
+                "GeoSphere dataset",
+                resource_ids,
+                index=resource_ids.index(current_resource),
+                format_func=lambda resource_id: parity.resource_spec(resource_id).label,
+                key=_RESOURCE_KEY,
+                help=(
+                    "10-minute data are best for recent event/detail analysis. The 1-hour resource provides the "
+                    "long-term historical series without resampling. The 1-month resource contains native "
+                    "monthly climatological statistics and is never upsampled to sub-monthly resolution."
+                ),
+            )
         )
-        selected_resource = str(selected_resource)
-        # This key is no longer a widget key in this outer layer, so it can be
-        # committed synchronously and all older wrappers observe the same route.
-        st.session_state[_RESOURCE_KEY] = selected_resource
 
         seen_info: set[str] = set()
         seen_caption: set[str] = set()
@@ -143,7 +131,9 @@ def _install_guidance_safe(parity: Any) -> None:
 
         def selectbox(label: str, options: Iterable[Any], *args: Any, **kwargs: Any):
             values = list(options)
-            if label == "GeoSphere dataset" and str(kwargs.get("key", "")) == _RESOURCE_KEY:
+            if label == "GeoSphere dataset":
+                # Every legacy selector in the nested wrapper chain observes the
+                # real visible widget value but renders no second widget.
                 return selected_resource
             return real_selectbox(label, values, *args, **kwargs)
 
@@ -168,18 +158,12 @@ def _install_guidance_safe(parity: Any) -> None:
             return real_caption(body, *args, **kwargs)
 
         def write(body: Any, *args: Any, **kwargs: Any):
-            if (
-                str(st.session_state.get(_RESOURCE_KEY, "")) == MONTHLY_RESOURCE_ID
-                and str(body).strip() == MONTHLY_OFFICIAL_CONTEXT_EN.strip()
-            ):
+            if selected_resource == MONTHLY_RESOURCE_ID and str(body).strip() == MONTHLY_OFFICIAL_CONTEXT_EN.strip():
                 return None
             return real_write(body, *args, **kwargs)
 
         def expander(label: str, *args: Any, **kwargs: Any):
-            if (
-                str(st.session_state.get(_RESOURCE_KEY, "")) == MONTHLY_RESOURCE_ID
-                and label == "About this GeoSphere monthly dataset"
-            ):
+            if selected_resource == MONTHLY_RESOURCE_ID and label == "About this GeoSphere monthly dataset":
                 return nullcontext()
             return real_expander(label, *args, **kwargs)
 
@@ -207,14 +191,14 @@ def _install_guidance_safe(parity: Any) -> None:
             values = list(options)
             if label == "Parameter catalogue" and values == ["Recommended", "All parameters"]:
                 render_parameter_set()
-                # The final editor below performs the actual filtering; force the
-                # legacy cleanup layer to pass its full vocabulary downstream.
+                # The final editor performs the filtering.  Force the legacy
+                # layer to pass its complete vocabulary downstream.
                 return "All parameters"
             return real_radio(label, values, *args, **kwargs)
 
         def editor(data: Any, *args: Any, **kwargs: Any):
             if not (
-                str(st.session_state.get(_RESOURCE_KEY, "")) == MONTHLY_RESOURCE_ID
+                selected_resource == MONTHLY_RESOURCE_ID
                 and isinstance(data, pd.DataFrame)
                 and {"Provider", "Measured variable"}.issubset(data.columns)
             ):
@@ -233,9 +217,7 @@ def _install_guidance_safe(parity: Any) -> None:
             if selected_view == "Core variables":
                 out = out.loc[out["Role"] == "Core variable"].copy()
             elif selected_view == "Core + additional statistics":
-                out = out.loc[
-                    out["Role"].isin(["Core variable", "Additional statistic"])
-                ].copy()
+                out = out.loc[out["Role"].isin(["Core variable", "Additional statistic"])].copy()
 
             config = dict(kwargs.get("column_config") or {})
             config["Measured variable"] = st.column_config.TextColumn("Variable", width="large")
