@@ -56,6 +56,35 @@ class CanonicalContractRuntimeTests(unittest.TestCase):
         self.assertIs(st.selectbox, pristine_selectbox)
         self.assertIs(DeltaGenerator.date_input, pristine_date_input)
 
+    def test_installed_marker_still_restores_leaked_streamlit_surface(self) -> None:
+        restore_streamlit_surface()
+        pristine_editor = pristine_streamlit_callable("data_editor")
+        pristine_radio = pristine_streamlit_callable("radio")
+        pristine_expander = pristine_streamlit_callable("expander")
+        pristine_date_input = pristine_delta_generator_date_input()
+
+        leaked = lambda *args, **kwargs: None
+        st.data_editor = leaked
+        st.radio = leaked
+        st.expander = leaked
+        DeltaGenerator.date_input = leaked
+
+        namespace = {
+            "VARIABLES": {},
+            "load_epw_from_bytes": object(),
+            "render_geosphere_source": object(),
+            "render_canonical_climate_analysis": object(),
+            "render_compare_climates": object(),
+            "render_data_quality": object(),
+            "_SOURCE_PARITY_RUNTIME_INSTALLED": True,
+        }
+        self.assertTrue(source_parity_runtime.install_into_app_globals(namespace))
+
+        self.assertIs(st.data_editor, pristine_editor)
+        self.assertIs(st.radio, pristine_radio)
+        self.assertIs(st.expander, pristine_expander)
+        self.assertIs(DeltaGenerator.date_input, pristine_date_input)
+
     def test_unknown_provider_statistic_is_native_monthly_only(self) -> None:
         install_contract_guards()
         column = "monthly__unknown__other__foo"
