@@ -103,6 +103,8 @@ jobs:
         run: npm install --no-save playwright-core@1.55.0
 
       - name: Exercise monthly/hourly source UI against PR branch
+        id: source_ui_smoke
+        continue-on-error: true
         run: node deployment/pr83_source_ui_live_smoke_v18.mjs
 
       - name: Capture 10-minute measured-variable editor DOM
@@ -111,11 +113,15 @@ jobs:
         run: node deployment/pr83_geosphere_data_editor_dom_probe.mjs
 
       - name: Exercise current 10-minute precipitation route against PR branch
-        if: ${{ !cancelled() }}
+        id: precipitation_smoke
+        if: ${{ always() && !cancelled() }}
+        continue-on-error: true
         run: node deployment/pr83_precip_snow_live_smoke.mjs
 
       - name: Reject Streamlit runtime tracebacks
+        id: traceback_gate
         if: always()
+        continue-on-error: true
         run: |
           if grep -E 'Traceback \(most recent call last\)|Uncaught app execution' artifacts/pr83-contract-smoke/streamlit.log; then
             echo 'Runtime traceback detected in branch-local Streamlit log.'
@@ -132,3 +138,17 @@ jobs:
             artifacts/geosphere-precip-snow-smoke
           if-no-files-found: warn
           retention-days: 30
+
+      - name: Enforce independent browser contract gates
+        if: always()
+        env:
+          SOURCE_UI_OUTCOME: ${{ steps.source_ui_smoke.outcome }}
+          PRECIPITATION_OUTCOME: ${{ steps.precipitation_smoke.outcome }}
+          TRACEBACK_OUTCOME: ${{ steps.traceback_gate.outcome }}
+        run: |
+          echo "source UI: $SOURCE_UI_OUTCOME"
+          echo "precipitation/snow: $PRECIPITATION_OUTCOME"
+          echo "runtime traceback gate: $TRACEBACK_OUTCOME"
+          test "$SOURCE_UI_OUTCOME" = success
+          test "$PRECIPITATION_OUTCOME" = success
+          test "$TRACEBACK_OUTCOME" = success
