@@ -5,6 +5,11 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - 'deployment/pr83_visual_walkthrough_core.mjs'
+      - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_runtime.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_streamlit_surface.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_contract_closure.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_contract_guidance_hotfix.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_contract_guard.py'
       - '.github/workflows/climate-analyzer-pr83-visual-walkthrough.yml'
   workflow_dispatch:
 
