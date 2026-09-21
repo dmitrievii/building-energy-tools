@@ -103,9 +103,21 @@ def _fresh_source_parity_ui() -> Any:
 
 
 def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
-    """Install source-parity runtime patches once into the mature app globals."""
+    """Install source-parity runtime patches once into the mature app globals.
+
+    Always restore the process-global Streamlit callable surface before honoring
+    the per-script installation marker. A widget-triggered rerun can interrupt a
+    nested wrapper before its ``finally`` block executes while the Streamlit
+    module itself survives that rerun. In that state the marker may already be
+    true even though ``st.radio``/``st.expander``/``st.data_editor`` still point
+    at temporary wrappers. Restoring first makes the short-circuit rerun-safe.
+    """
     if not looks_like_climate_analyzer_app(namespace):
         return False
+
+    from .source_parity_streamlit_surface import restore_streamlit_surface
+
+    restore_streamlit_surface()
     if bool(namespace.get("_SOURCE_PARITY_RUNTIME_INSTALLED", False)):
         return True
 
