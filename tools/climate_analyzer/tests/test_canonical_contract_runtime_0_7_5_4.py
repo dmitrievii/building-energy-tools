@@ -4,11 +4,18 @@ import unittest
 from types import SimpleNamespace
 
 import pandas as pd
+import streamlit as st
+from streamlit.delta_generator import DeltaGenerator
 
 from epw_climate_analyzer import aggregations, source_parity_monthly_canonical, source_parity_runtime
 from epw_climate_analyzer import source_parity_contract_closure as contract
 from epw_climate_analyzer.source_parity_contract_guard import install_contract_guards
 from epw_climate_analyzer.source_parity_contract_guidance_hotfix import _decorate_monthly_table
+from epw_climate_analyzer.source_parity_streamlit_surface import (
+    pristine_delta_generator_date_input,
+    pristine_streamlit_callable,
+    restore_streamlit_surface,
+)
 
 
 class CanonicalContractRuntimeTests(unittest.TestCase):
@@ -24,6 +31,26 @@ class CanonicalContractRuntimeTests(unittest.TestCase):
         self.assertIsNot(aggregations.aggregate_summary, stale_aggregation)
         self.assertEqual(source_parity_monthly_canonical._render_monthly_generic.__name__, "_render_monthly_generic")
         self.assertEqual(aggregations.aggregate_summary.__name__, "aggregate_summary")
+
+    def test_runtime_reset_restores_leaked_streamlit_surface(self) -> None:
+        restore_streamlit_surface()
+        pristine_editor = pristine_streamlit_callable("data_editor")
+        pristine_radio = pristine_streamlit_callable("radio")
+        pristine_selectbox = pristine_streamlit_callable("selectbox")
+        pristine_date_input = pristine_delta_generator_date_input()
+
+        leaked = lambda *args, **kwargs: None
+        st.data_editor = leaked
+        st.radio = leaked
+        st.selectbox = leaked
+        DeltaGenerator.date_input = leaked
+
+        source_parity_runtime._fresh_source_parity_ui()
+
+        self.assertIs(st.data_editor, pristine_editor)
+        self.assertIs(st.radio, pristine_radio)
+        self.assertIs(st.selectbox, pristine_selectbox)
+        self.assertIs(DeltaGenerator.date_input, pristine_date_input)
 
     def test_unknown_provider_statistic_is_native_monthly_only(self) -> None:
         install_contract_guards()
