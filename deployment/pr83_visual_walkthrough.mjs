@@ -69,7 +69,7 @@ async function chooseSource(page) {
   throw new Error('Could not select GeoSphere Austria source.');
 }
 async function selectComboContains(page,label,needle,timeoutMs=60000) {
-  const started=performance.now(); let last=[];
+  const started=performance.now();
   while (performance.now()-started<timeoutMs) {
     const frame=await appFrame(page,'Climate Analyzer',5000); const control=await combo(frame,label,5000);
     if ((await rendered(control)).includes(needle)) return frame;
@@ -82,7 +82,7 @@ async function selectComboContains(page,label,needle,timeoutMs=60000) {
     }
     await page.keyboard.press('Escape').catch(()=>{}); await sleep(300);
   }
-  throw new Error(`Could not select ${label}: ${needle}; last=${last.join('|')}`);
+  throw new Error(`Could not select ${label}: ${needle}`);
 }
 async function selectDataset(page,needle,resourceId) {
   await selectComboContains(page,'GeoSphere dataset',needle);
@@ -167,26 +167,33 @@ async function scrollEditor(editor,fraction) {
   await editor.locator('.dvn-scroller').first().evaluate((node,f)=>{node.scrollTop=Math.max(0,(node.scrollHeight-node.clientHeight)*f);node.dispatchEvent(new Event('scroll',{bubbles:true}));},fraction);
 }
 async function findProviderRow(page,provider) {
-  for (const fraction of [0,0.2,0.4,0.6,0.8,1]) {
-    let s=await editorState(page); await scrollEditor(s.editor,fraction); await sleep(500); s=await editorState(page);
+  const fractions=Array.from({length:41},(_,i)=>i/40);
+  let lastProviders=[];
+  for (const fraction of fractions) {
+    let s=await editorState(page); await scrollEditor(s.editor,fraction); await sleep(220); s=await editorState(page);
     const rows=s.editor.locator('[role="grid"] tr[role="row"]'); const count=await rows.count();
+    lastProviders=[];
     for(let i=0;i<count;i++) {
-      const row=rows.nth(i); const cells=row.locator('[role="gridcell"]'); const texts=[];
-      for(let j=0;j<await cells.count();j++) texts.push((await cells.nth(j).textContent().catch(()=>'' )).trim());
-      if (!texts.includes(provider)) continue;
-      const ariaRowIndex=Number(await row.getAttribute('aria-rowindex')); const load=(texts[0]||'').toLowerCase();
-      return {...s,ariaRowIndex,dataIndex:ariaRowIndex-2,load,texts};
+      const row=rows.nth(i);
+      const providerText=(await row.locator('[role="gridcell"][aria-colindex="4"]').textContent().catch(()=>'' )).trim();
+      if(providerText) lastProviders.push(providerText);
+      if(providerText!==provider) continue;
+      const load=(await row.locator('[role="gridcell"][aria-colindex="1"]').textContent().catch(()=>'' )).trim().toLowerCase();
+      const ariaRowIndex=Number(await row.getAttribute('aria-rowindex'));
+      if(!Number.isFinite(ariaRowIndex)||ariaRowIndex<2) throw new Error(`Invalid Glide row index for ${provider}: ${ariaRowIndex}`);
+      return {...s,ariaRowIndex,dataIndex:ariaRowIndex-2,load};
     }
   }
-  throw new Error(`Provider row not found: ${provider}`);
+  throw new Error(`Provider row not found: ${provider}; last visible providers=${lastProviders.join(',')}`);
 }
 async function toggleProvider(page,provider) {
   let state=await findProviderRow(page,provider); if(state.load==='true') return;
   for(let attempt=0;attempt<3;attempt++) {
     state=await findProviderRow(page,provider); const box=await state.canvas.boundingBox();
+    if(!box) throw new Error(`Monthly variable editor has no bounding box for ${provider}`);
     await state.canvas.click({position:{x:Math.min(box.width-10,box.width*0.55),y:Math.min(box.height-10,52)},force:true});
-    await state.canvas.focus(); await page.keyboard.press('Control+Home'); await sleep(200);
-    for(let i=0;i<state.dataIndex;i++) { await page.keyboard.press('ArrowDown'); await sleep(25); }
+    await state.canvas.focus(); await page.keyboard.press('Control+Home'); await sleep(220);
+    for(let i=0;i<state.dataIndex;i++) { await page.keyboard.press('ArrowDown'); await sleep(28); }
     await page.keyboard.press('Space'); await sleep(700);
     const check=await findProviderRow(page,provider); if(check.load==='true') return;
   }
