@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import nullcontext
 import unittest
 from types import SimpleNamespace
 
@@ -9,6 +10,7 @@ from streamlit.delta_generator import DeltaGenerator
 
 from epw_climate_analyzer import aggregations, source_parity_monthly_canonical, source_parity_runtime
 from epw_climate_analyzer import source_parity_contract_closure as contract
+from epw_climate_analyzer import source_parity_monthly_surface_guard as surface_guard
 from epw_climate_analyzer.source_parity_contract_guard import install_contract_guards
 from epw_climate_analyzer.source_parity_contract_guidance_hotfix import _decorate_monthly_table
 from epw_climate_analyzer.source_parity_monthly_selection_state import (
@@ -168,6 +170,70 @@ class CanonicalContractRuntimeTests(unittest.TestCase):
         self.assertEqual(rebuilt["Provider"].tolist(), ["absf_max", "tl_mittel", "rf_mittel", "p"])
         selected = rebuilt.loc[rebuilt["Selected"], "Provider"].tolist()
         self.assertEqual(selected, ["tl_mittel", "rf_mittel", "p"])
+
+    def test_monthly_surface_guard_arbitrates_inverted_wrapper_order(self) -> None:
+        radio_calls: list[tuple[str, tuple[str, ...]]] = []
+        expander_calls: list[str] = []
+        session_state = {surface_guard._RESOURCE_KEY: surface_guard.MONTHLY_RESOURCE_ID}
+
+        def real_radio(label, options, *args, **kwargs):
+            values = tuple(str(value) for value in options)
+            radio_calls.append((str(label), values))
+            if label != "Parameter set":
+                self.fail(f"Legacy radio reached the real Streamlit surface: {label}")
+            value = values[0]
+            key = kwargs.get("key")
+            if key:
+                session_state[str(key)] = value
+            return value
+
+        def real_expander(label, *args, **kwargs):
+            expander_calls.append(str(label))
+            return nullcontext()
+
+        fake_st = SimpleNamespace(
+            session_state=session_state,
+            caption=lambda *args, **kwargs: None,
+            info=lambda *args, **kwargs: None,
+            radio=real_radio,
+            expander=real_expander,
+        )
+        results: dict[str, str] = {}
+
+        def inverted_previous(_legacy, _original):
+            # Reproduce the cross-session failure shape: legacy cleanup reaches
+            # the radio surface before contract guidance, then guidance asks for
+            # the canonical selector afterwards.
+            results["legacy"] = fake_st.radio(
+                "Parameter catalogue",
+                ["Recommended", "All parameters"],
+            )
+            results["canonical"] = fake_st.radio(
+                "Parameter set",
+                list(surface_guard._PARAMETER_SET_OPTIONS),
+                key=surface_guard._PARAMETER_SET_KEY,
+            )
+            with fake_st.expander(surface_guard._MONTHLY_CONTEXT_LABEL):
+                pass
+            with fake_st.expander(surface_guard._MONTHLY_CONTEXT_LABEL):
+                pass
+
+        parity = SimpleNamespace(st=fake_st, _render_geosphere_resource_selector=inverted_previous)
+        old_flag = getattr(source_parity_monthly_canonical, "_MONTHLY_SURFACE_ANALYSIS_GUARD_INSTALLED", None)
+        source_parity_monthly_canonical._MONTHLY_SURFACE_ANALYSIS_GUARD_INSTALLED = True
+        try:
+            surface_guard.install_monthly_surface_guard(parity)
+            parity._render_geosphere_resource_selector(SimpleNamespace(), lambda: None)
+        finally:
+            if old_flag is None:
+                delattr(source_parity_monthly_canonical, "_MONTHLY_SURFACE_ANALYSIS_GUARD_INSTALLED")
+            else:
+                source_parity_monthly_canonical._MONTHLY_SURFACE_ANALYSIS_GUARD_INSTALLED = old_flag
+
+        self.assertEqual(results["legacy"], "All parameters")
+        self.assertEqual(results["canonical"], "Core variables")
+        self.assertEqual(radio_calls, [("Parameter set", surface_guard._PARAMETER_SET_OPTIONS)])
+        self.assertEqual(expander_calls, [surface_guard._MONTHLY_CONTEXT_LABEL])
 
 
 if __name__ == "__main__":
