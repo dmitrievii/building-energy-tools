@@ -102,13 +102,24 @@ def _normalize_catalogue_roles(data: pd.DataFrame) -> pd.DataFrame:
     the final ``Core variables`` UX contract. Only explicitly curated providers
     are Core. Any heuristic Core row outside that allow-list has known monthly
     semantics and is therefore presented as Additional rather than silently
-    loaded by default.
+    loaded by default. Re-sort after demotion so the visible table always keeps
+    Core before Additional before Other.
     """
     out = data.copy()
     if {"Provider", "Role"}.issubset(out.columns):
         providers = out["Provider"].fillna("").astype(str)
         demote = out["Role"].astype(str).eq("Core variable") & ~providers.isin(CORE_MONTHLY_PROVIDERS)
         out.loc[demote, "Role"] = "Additional statistic"
+        role_order = {"Core variable": 0, "Additional statistic": 1, "Other provider parameter": 2}
+        out["_normalized_role_order"] = out["Role"].map(role_order).fillna(9)
+        sort_columns = [
+            column
+            for column in ("_normalized_role_order", "Category", "Measured variable", "Provider")
+            if column in out.columns
+        ]
+        if sort_columns:
+            out = out.sort_values(sort_columns, kind="stable")
+        out = out.drop(columns=["_normalized_role_order"], errors="ignore")
     return out
 
 
