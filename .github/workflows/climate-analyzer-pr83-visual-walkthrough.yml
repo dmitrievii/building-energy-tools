@@ -74,7 +74,21 @@ jobs:
         run: npm install --no-save playwright-core@1.55.0
 
       - name: Capture core-variable visual walkthrough
-        run: node deployment/pr83_visual_walkthrough_core.mjs
+        run: |
+          # The isolated walkthrough chooses an exact station from the manual
+          # selectbox. Commit that pending choice exactly as a user does before
+          # waiting for the monthly parameter catalogue.
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('deployment/pr83_visual_walkthrough_core.mjs')
+          text = path.read_text(encoding='utf-8')
+          old = "  return await appFrame(page, 'Measured variables to load', 60000);\n}"
+          new = """  frame = await appFrame(page, 'Manual station selection', 30000);\n  const useStation = frame.getByRole('button', { name: 'Use station from list', exact: true }).first();\n  if (!(await useStation.count())) throw new Error('Use station from list button missing.');\n  await useStation.click({ timeout: 10000 });\n  return await appFrame(page, 'Parameter set', 60000);\n}"""
+          if old not in text:
+              raise SystemExit('visual walkthrough station-commit patch target not found')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+          node deployment/pr83_visual_walkthrough_core.mjs
 
       - name: Reject runtime tracebacks
         if: always()
