@@ -128,20 +128,43 @@ async function selectExactStation(page, stationName, stationId) {
   const targetId = String(stationId);
   frame = await selectVisibleOption(page, frame, 'Search-result stations', (text) => text.includes(stationName) && (text.includes(`ID ${targetId}`) || text.includes(targetId)), 60000);
 
-  const started = performance.now();
+  const settled = performance.now();
   let lastControl = '';
-  while (performance.now() - started < 30000) {
+  while (performance.now() - settled < 30000) {
     frame = await appFrame(page, 'Climate Analyzer', 5000);
     try {
       const stationCombo = await combo(frame, 'Search-result stations', 5000);
       lastControl = await rendered(stationCombo);
-      if (lastControl.includes(stationName) && (lastControl.includes(`ID ${targetId}`) || lastControl.includes(targetId))) return frame;
+      if (lastControl.includes(stationName) && (lastControl.includes(`ID ${targetId}`) || lastControl.includes(targetId))) break;
     } catch { /* rerun */ }
-    const text = await bodyText(frame);
-    if (text.includes('Selected station') && text.includes(stationName) && text.includes(targetId)) return frame;
     await sleep(250);
   }
-  throw new Error(`Exact station ID ${targetId} did not settle; control=${lastControl}`);
+  if (!lastControl.includes(stationName) || (!lastControl.includes(`ID ${targetId}`) && !lastControl.includes(targetId))) {
+    throw new Error(`Exact station ID ${targetId} did not settle; control=${lastControl}`);
+  }
+
+  // Selecting an option in the search-result combobox is only a preview. The
+  // production UI commits the station with this explicit button, so the smoke
+  // must exercise the same state transition before asserting monthly/hourly UI.
+  const commitStarted = performance.now();
+  while (performance.now() - commitStarted < 30000) {
+    frame = await appFrame(page, 'Manual station selection', 5000);
+    const button = frame.getByRole('button', { name: 'Use station from list', exact: true }).first();
+    if (await button.count().catch(() => 0) && await button.isVisible().catch(() => false)) {
+      await button.scrollIntoViewIfNeeded({ timeout: 5000 }).catch(() => {});
+      await button.click({ timeout: 15000 });
+      const committed = await waitBody(
+        page,
+        (text) => text.includes('Selected station') && text.includes(stationName) && text.includes(targetId),
+        `committed station ${stationName} ${targetId}`,
+        60000,
+        1,
+      );
+      return committed.frame;
+    }
+    await sleep(250);
+  }
+  throw new Error('Use station from list button did not become available.');
 }
 
 async function waitBody(page, predicate, description, timeoutMs = 60000, stable = 2) {
