@@ -8,10 +8,12 @@ that manifested as hundreds of stale selected rows, a missing visible table,
 and the contradictory warning that air temperature was not selected.
 
 This adapter owns monthly selection semantics independently of the mature shell's
-legacy ``Selected=True`` table default. A fresh monthly session selects only
-``Core variable`` rows; Additional/Other provider parameters and all quality
-flags start unchecked. The catalogue radio changes visibility only, and later
-user edits are retained by provider ID across Core/Additional/All views.
+legacy ``Selected=True`` table default. A fresh monthly session selects only the
+explicit engineering ``Core`` providers. Provider fields that are merely marked
+``recommended`` by the catalogue heuristic are demoted to ``Additional statistic``
+so event/count/secondary climatological statistics cannot leak into the default
+load. Quality flags start unchecked. The catalogue radio changes visibility only,
+and later user edits are retained by provider ID across Core/Additional/All views.
 """
 from __future__ import annotations
 
@@ -21,15 +23,17 @@ from typing import Any, Callable
 import pandas as pd
 
 from .geosphere_monthly import MONTHLY_RESOURCE_ID
+from .source_parity_contract_closure import CORE_MONTHLY_PROVIDERS
 from .source_parity_contract_guidance_hotfix import _decorate_monthly_table
 
 _RESOURCE_KEY = "geosphere_resource_id"
 _PARAMETER_SET_KEY = "geosphere_monthly_parameter_catalogue_v2"
-# v2 deliberately invalidates the earlier state map that could be seeded from
-# the mature shell's all-True legacy table.
-_SELECTION_STATE_KEY = "_geosphere_monthly_provider_selection_v2"
-_FLAG_STATE_KEY = "_geosphere_monthly_provider_flag_selection_v2"
-_LAST_VIEW_KEY = "_geosphere_monthly_provider_selection_last_view_v2"
+# v3 deliberately invalidates the earlier state maps that could either be seeded
+# from the mature shell's all-True legacy table or retain the former broad
+# catalogue ``recommended`` classification as Core.
+_SELECTION_STATE_KEY = "_geosphere_monthly_provider_selection_v3"
+_FLAG_STATE_KEY = "_geosphere_monthly_provider_flag_selection_v3"
+_LAST_VIEW_KEY = "_geosphere_monthly_provider_selection_last_view_v3"
 
 
 def _bool_value(value: Any) -> bool:
@@ -90,9 +94,27 @@ def _editor_key(view: str, providers: list[str]) -> str:
     return f"geosphere_variable_editor__monthly__{slug}__{signature}"
 
 
+def _normalize_catalogue_roles(data: pd.DataFrame) -> pd.DataFrame:
+    """Enforce the user-facing Core/Additional contract deterministically.
+
+    The cleanup catalogue's historical ``recommended`` heuristic intentionally
+    captures useful wind/solar/precipitation statistics, but it is broader than
+    the final ``Core variables`` UX contract. Only explicitly curated providers
+    are Core. Any heuristic Core row outside that allow-list has known monthly
+    semantics and is therefore presented as Additional rather than silently
+    loaded by default.
+    """
+    out = data.copy()
+    if {"Provider", "Role"}.issubset(out.columns):
+        providers = out["Provider"].fillna("").astype(str)
+        demote = out["Role"].astype(str).eq("Core variable") & ~providers.isin(CORE_MONTHLY_PROVIDERS)
+        out.loc[demote, "Role"] = "Additional statistic"
+    return out
+
+
 def _visible_catalogue(parity: Any, data: pd.DataFrame, view: str) -> pd.DataFrame:
     """Return the requested monthly catalogue slice from raw or decorated input."""
-    prepared = _decorate_monthly_table(parity, data)
+    prepared = _normalize_catalogue_roles(_decorate_monthly_table(parity, data))
     if "Role" not in prepared.columns:
         return prepared
     if view == "Core variables":
@@ -129,8 +151,9 @@ def install_monthly_selection_state(parity: Any) -> None:
                 view = "Core variables"
 
             # Own decoration/filtering at this boundary instead of trusting the
-            # shared shell's all-True selection defaults.
-            full = _decorate_monthly_table(parity, data)
+            # shared shell's all-True selection defaults or its broader legacy
+            # ``recommended`` heuristic.
+            full = _normalize_catalogue_roles(_decorate_monthly_table(parity, data))
             selection_state = _provider_state(
                 st,
                 _SELECTION_STATE_KEY,
