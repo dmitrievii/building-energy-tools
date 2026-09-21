@@ -81,44 +81,6 @@ async function visibleOption(page, frame, predicate) {
   return null;
 }
 
-async function selectVisibleOption(page, frame, controlLabel, predicate, timeoutMs = 60000) {
-  const started = performance.now();
-  let last = [];
-  while (performance.now() - started < timeoutMs) {
-    frame = await appFrame(page, 'Climate Analyzer', 5000);
-    let control;
-    try { control = await combo(frame, controlLabel, 5000); } catch { await sleep(250); continue; }
-    try {
-      await control.scrollIntoViewIfNeeded({ timeout: 3000 }).catch(() => {});
-      await control.click({ timeout: 5000 });
-    } catch { await sleep(250); continue; }
-    const optionStarted = performance.now();
-    while (performance.now() - optionStarted < 6000) {
-      for (const options of [
-        frame.getByRole('option'),
-        page.getByRole('option'),
-        frame.locator('[data-baseweb="menu"] li'),
-        page.locator('[data-baseweb="menu"] li'),
-      ]) {
-        const count = await options.count().catch(() => 0);
-        if (!count) continue;
-        last = await options.allInnerTexts().catch(() => last);
-        for (let i = 0; i < count; i += 1) {
-          const option = options.nth(i);
-          const text = (await option.innerText().catch(() => '')).replace(/\s+/g, ' ').trim();
-          if (!predicate(text) || !(await option.isVisible().catch(() => false))) continue;
-          await option.click({ timeout: 8000 });
-          return await appFrame(page, 'Climate Analyzer', 10000);
-        }
-      }
-      await sleep(200);
-    }
-    await page.keyboard.press('Escape').catch(() => {});
-    await sleep(300);
-  }
-  throw new Error(`Could not select ${controlLabel}; last options: ${last.join(' | ')}`);
-}
-
 async function chooseSource(page) {
   const started = performance.now();
   while (performance.now() - started < 60000) {
@@ -154,69 +116,112 @@ async function selectDataset(page) {
   throw new Error('Could not commit klima-v2-1m.');
 }
 
+function stationMatches(text, name, id) {
+  return text.includes(name) && (text.includes(`ID ${id}`) || text.includes(String(id)));
+}
+
 async function selectStation(page) {
-  let frame = await appFrame(page, 'Search GeoSphere station', 60000);
-  const search = await labelledInput(frame, 'Search GeoSphere station');
-  await search.fill(String(fixture.station_name), { timeout: 15000 });
-  await search.press('Tab').catch(() => {});
-  frame = await appFrame(page, 'Manual station selection', 60000);
-
+  const name = String(fixture.station_name);
   const targetId = String(fixture.station_id);
-  frame = await selectVisibleOption(
-    page,
-    frame,
-    'Search-result stations',
-    (text) => text.includes(fixture.station_name) && (text.includes(`ID ${targetId}`) || text.includes(targetId)),
-    60000,
-  );
-
-  const settleStarted = performance.now();
   let lastControl = '';
-  while (performance.now() - settleStarted < 30000) {
-    frame = await appFrame(page, 'Climate Analyzer', 5000);
-    try {
-      lastControl = await rendered(await combo(frame, 'Search-result stations', 5000));
-      if (lastControl.includes(fixture.station_name) && (lastControl.includes(`ID ${targetId}`) || lastControl.includes(targetId))) break;
-    } catch {}
-    await sleep(250);
-  }
-  if (!lastControl.includes(fixture.station_name) || (!lastControl.includes(`ID ${targetId}`) && !lastControl.includes(targetId))) {
-    throw new Error(`Exact station ID ${targetId} did not settle; control=${lastControl}`);
+  let lastOptions = [];
+
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    let frame = await appFrame(page, 'Search GeoSphere station', 60000);
+    const search = await labelledInput(frame, 'Search GeoSphere station');
+    const current = await search.inputValue().catch(() => '');
+    if (current !== name) {
+      await search.fill('', { timeout: 5000 }).catch(() => {});
+      await search.fill(name, { timeout: 15000 });
+    }
+    await search.press('Tab').catch(() => {});
+    await sleep(700 + attempt * 350);
+
+    frame = await appFrame(page, 'Manual station selection', 60000);
+    const selectStarted = performance.now();
+    while (performance.now() - selectStarted < 25000) {
+      frame = await appFrame(page, 'Climate Analyzer', 5000);
+      let control;
+      try { control = await combo(frame, 'Search-result stations', 5000); } catch { await sleep(300); continue; }
+      lastControl = await rendered(control);
+      if (stationMatches(lastControl, name, targetId)) break;
+
+      await control.scrollIntoViewIfNeeded({ timeout: 3000 }).catch(() => {});
+      await control.click({ timeout: 5000 }).catch(() => {});
+      const optionStarted = performance.now();
+      let selected = false;
+      while (performance.now() - optionStarted < 5000) {
+        const collections = [
+          frame.getByRole('option'),
+          page.getByRole('option'),
+          frame.locator('[data-baseweb="menu"] li'),
+          page.locator('[data-baseweb="menu"] li'),
+        ];
+        for (const options of collections) {
+          const count = await options.count().catch(() => 0);
+          if (!count) continue;
+          lastOptions = await options.allInnerTexts().catch(() => lastOptions);
+          for (let i = 0; i < count; i += 1) {
+            const option = options.nth(i);
+            if (!(await option.isVisible().catch(() => false))) continue;
+            const text = (await option.innerText().catch(() => '')).replace(/\s+/g, ' ').trim();
+            if (!stationMatches(text, name, targetId)) continue;
+            await option.click({ timeout: 8000 });
+            selected = true;
+            break;
+          }
+          if (selected) break;
+        }
+        if (selected) break;
+        await sleep(200);
+      }
+      if (!selected) await page.keyboard.press('Escape').catch(() => {});
+      await sleep(500);
+    }
+
+    frame = await appFrame(page, 'Climate Analyzer', 10000);
+    try { lastControl = await rendered(await combo(frame, 'Search-result stations', 5000)); } catch {}
+    if (!stationMatches(lastControl, name, targetId)) {
+      const retrySearch = await labelledInput(frame, 'Search GeoSphere station', 5000).catch(() => null);
+      if (retrySearch) {
+        await retrySearch.fill('', { timeout: 5000 }).catch(() => {});
+        await retrySearch.press('Tab').catch(() => {});
+      }
+      await sleep(500);
+      continue;
+    }
+
+    const commitStarted = performance.now();
+    while (performance.now() - commitStarted < 30000) {
+      frame = await appFrame(page, 'Manual station selection', 5000);
+      const button = frame.getByRole('button', { name: 'Use station from list', exact: true }).first();
+      if (await button.count().catch(() => 0) && await button.isVisible().catch(() => false)) {
+        await button.scrollIntoViewIfNeeded({ timeout: 5000 }).catch(() => {});
+        await button.click({ timeout: 15000 });
+        return await appFrame(page, 'Parameter set', 60000);
+      }
+      await sleep(250);
+    }
   }
 
-  const commitStarted = performance.now();
-  while (performance.now() - commitStarted < 30000) {
-    frame = await appFrame(page, 'Manual station selection', 5000);
-    const button = frame.getByRole('button', { name: 'Use station from list', exact: true }).first();
-    if (await button.count().catch(() => 0) && await button.isVisible().catch(() => false)) {
-      await button.scrollIntoViewIfNeeded({ timeout: 5000 }).catch(() => {});
-      await button.click({ timeout: 15000 });
-      return await appFrame(page, 'Parameter set', 60000);
-    }
-    await sleep(250);
-  }
-  throw new Error('Use station from list button did not become available.');
+  throw new Error(`Station ${name} ID ${targetId} did not settle; control=${lastControl}; last options=${lastOptions.join(' | ')}`);
 }
 
 async function selectParameterSet(page, name) {
   const started = performance.now();
   while (performance.now() - started < 30000) {
     const frame = await appFrame(page, 'Parameter set', 5000);
-    const radio = frame.getByRole('radio', { name, exact: true }).last();
-    if (await radio.count().catch(() => 0) && await radio.isVisible().catch(() => false)) {
+    for (const candidate of [
+      frame.getByRole('radio', { name, exact: true }).last(),
+      frame.getByText(name, { exact: true }).last(),
+      frame.locator('label').filter({ hasText: name }).last(),
+    ]) {
+      if (!(await candidate.count().catch(() => 0)) || !(await candidate.isVisible().catch(() => false))) continue;
       try {
-        const tag = await radio.evaluate((node) => node.tagName.toLowerCase()).catch(() => '');
-        if (tag === 'input') await radio.check({ force: true, timeout: 5000 });
-        else await radio.click({ force: true, timeout: 5000 });
-        await sleep(700);
-        const refreshed = await appFrame(page, 'Measured variables to load', 10000);
-        return { frame: refreshed, text: await bodyText(refreshed) };
-      } catch {}
-    }
-    const label = frame.getByText(name, { exact: true }).last();
-    if (await label.count().catch(() => 0) && await label.isVisible().catch(() => false)) {
-      try {
-        await label.click({ force: true, timeout: 5000 });
+        const tag = await candidate.evaluate((node) => node.tagName.toLowerCase()).catch(() => '');
+        const type = await candidate.getAttribute('type').catch(() => null);
+        if (tag === 'input' && type === 'radio') await candidate.check({ force: true, timeout: 5000 });
+        else await candidate.click({ force: true, timeout: 5000 });
         await sleep(700);
         const refreshed = await appFrame(page, 'Measured variables to load', 10000);
         return { frame: refreshed, text: await bodyText(refreshed) };
@@ -225,6 +230,11 @@ async function selectParameterSet(page, name) {
     await sleep(250);
   }
   throw new Error(`Parameter set did not settle: ${name}`);
+}
+
+function selectedMeasuredCount(text) {
+  const match = text.match(/(\d+) selected measured variables?/i);
+  return match ? Number(match[1]) : null;
 }
 
 async function screenshot(page, name) {
@@ -257,7 +267,7 @@ async function selectAnalysis(page, name) {
 }
 
 const report = {
-  schema: 'climate-analyzer-pr83-extended-visual-v3',
+  schema: 'climate-analyzer-pr83-extended-visual-v4',
   success: false,
   checks: {},
   page_errors: [],
@@ -279,17 +289,23 @@ try {
   await selectDataset(page);
   await selectStation(page);
 
-  // Exercise the catalogue view transition itself without scripting Glide cells.
-  // The product contract keeps provider selection keyed by provider ID, so opening
-  // All provider parameters must not convert the 13 curated Core fields into an
-  // all-provider load or clear them when returning to Core.
+  const initialFrame = await appFrame(page, 'Measured variables to load', 30000);
+  const initialText = await bodyText(initialFrame);
+  const initialCount = selectedMeasuredCount(initialText);
+  report.checks.initial_core_selection_count = initialCount;
+  if (!Number.isFinite(initialCount) || initialCount <= 0) throw new Error('Initial Core selection count is unavailable or empty.');
+
   const allView = await selectParameterSet(page, 'All provider parameters');
+  const allCount = selectedMeasuredCount(allView.text);
   report.checks.all_provider_view_visible = allView.text.includes('All provider parameters');
-  report.checks.all_view_keeps_core_selection = allView.text.includes('13 selected measured variables') && allView.text.includes('monthly source data');
+  report.checks.all_view_selection_count = allCount;
+  report.checks.all_view_keeps_core_selection = allCount === initialCount && allView.text.includes('monthly source data');
   await screenshot(page, '01-monthly-all-provider-catalogue.png');
 
   const coreView = await selectParameterSet(page, 'Core variables');
-  report.checks.core_selection_restored = coreView.text.includes('13 selected measured variables') && coreView.text.includes('monthly source data');
+  const restoredCount = selectedMeasuredCount(coreView.text);
+  report.checks.core_selection_restored_count = restoredCount;
+  report.checks.core_selection_restored = restoredCount === initialCount && coreView.text.includes('monthly source data');
   await screenshot(page, '02-monthly-core-roundtrip.png');
 
   const loadFrame = await appFrame(page, 'Measured variables to load', 30000);
@@ -324,9 +340,10 @@ try {
   await screenshot(page, '07-monthly-overlay.png');
 
   if (!report.checks.all_provider_view_visible) throw new Error('All provider parameters view was not exposed.');
-  if (!report.checks.all_view_keeps_core_selection) throw new Error('Opening All provider parameters changed the curated default selection.');
+  if (!report.checks.all_view_keeps_core_selection) throw new Error('Opening All provider parameters changed the curated selection.');
   if (!report.checks.core_selection_restored) throw new Error('Core selection did not survive the catalogue-view round trip.');
-  if (!report.checks.temperature_no_threshold_sliders) throw new Error('Threshold-only sliders leaked into default Temperature analysis.');
+  if (!report.checks.temperature_no_threshold_sliders) throw new Error('Threshold-only sliders leaked into the default Temperature view.');
+  if (!report.checks.station_pressure_in_humidity) throw new Error('Station pressure is missing on the humidity page.');
   if (report.page_errors.length) throw new Error(`Page errors: ${report.page_errors.join(' | ')}`);
   report.success = true;
 } catch (error) {
