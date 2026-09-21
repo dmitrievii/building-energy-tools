@@ -70,28 +70,71 @@ jobs:
 
       - name: Capture visual walkthrough
         run: |
-          # This is visual evidence, not a widget-mechanics test. Keep the native
-          # complete-year dates and the default Core-variable catalogue. Confirm
-          # the explicitly selected station before touching the variable editor.
+          # Visual evidence should reuse the already-proven exact station selection
+          # behaviour from the branch source-UI smoke, not introduce a second DOM
+          # contract. Keep the selector's native complete-year dates and the default
+          # Core-variable catalogue.
           python - <<'PY'
           from pathlib import Path
+
           path = Path('deployment/pr83_visual_walkthrough.mjs')
           text = path.read_text()
           text = text.replace("  await clickTextChoice(page,'All provider parameters');\n", "")
-          text = text.replace(
-              "    try { if ((await rendered(await combo(frame,'Search-result stations',3000))).includes(name)) return frame; } catch {}",
-              """    try {
-                const stationCombo=await combo(frame,'Search-result stations',3000);
-                if ((await rendered(stationCombo)).includes(name)) {
-                  const use=frame.getByRole('button',{name:'Use station from list',exact:true}).first();
-                  if (await use.count().catch(()=>0) && await use.isVisible().catch(()=>false)) {
-                    await use.click({timeout:10000}); await sleep(700);
+          text = text.replace("  await setDate(page,'From date (UTC)','2020-01-01'); await setDate(page,'Through date (UTC)','2025-12-31');\n", "")
+
+          start = text.index('async function selectExactStation(')
+          end = text.index('async function clickTextChoice(', start)
+          replacement = r'''async function selectVisibleOption(page, frame, controlLabel, predicate, timeoutMs=60000) {
+            const started=performance.now();
+            while (performance.now()-started<timeoutMs) {
+              frame=await appFrame(page,'Climate Analyzer',5000);
+              let control;
+              try { control=await combo(frame,controlLabel,5000); } catch { await sleep(250); continue; }
+              try { await control.scrollIntoViewIfNeeded({timeout:3000}).catch(()=>{}); await control.click({timeout:5000}); }
+              catch { await sleep(250); continue; }
+              const optionStarted=performance.now();
+              while (performance.now()-optionStarted<6000) {
+                for (const options of [frame.getByRole('option'),page.getByRole('option'),frame.locator('[data-baseweb="menu"] li'),page.locator('[data-baseweb="menu"] li')]) {
+                  const count=await options.count().catch(()=>0);
+                  for (let i=0;i<count;i++) {
+                    const option=options.nth(i);
+                    const optionText=(await option.innerText().catch(()=>'' )).replace(/\s+/g,' ').trim();
+                    if (!predicate(optionText) || !(await option.isVisible().catch(()=>false))) continue;
+                    await option.click({timeout:8000});
+                    return await appFrame(page,'Climate Analyzer',10000);
                   }
                 }
-              } catch {}"""
-          )
-          # The two date setters are on one source line; remove that visual-only line.
-          text = text.replace("  await setDate(page,'From date (UTC)','2020-01-01'); await setDate(page,'Through date (UTC)','2025-12-31');\n", "")
+                await sleep(200);
+              }
+              await page.keyboard.press('Escape').catch(()=>{}); await sleep(300);
+            }
+            throw new Error(`Could not select ${controlLabel}`);
+          }
+          async function selectExactStation(page,name,id) {
+            let frame=await appFrame(page,'Search GeoSphere station',60000);
+            const input=await labelledInput(frame,'Search GeoSphere station');
+            await input.fill(String(name),{timeout:15000});
+            await input.press('Tab').catch(()=>{});
+            frame=await appFrame(page,'Manual station selection',60000);
+            const targetId=String(id);
+            frame=await selectVisibleOption(page,frame,'Search-result stations',(t)=>t.includes(name)&&(t.includes(`ID ${targetId}`)||t.includes(targetId)),60000);
+            const started=performance.now();
+            let lastControl='';
+            while (performance.now()-started<30000) {
+              frame=await appFrame(page,'Climate Analyzer',5000);
+              try {
+                const stationCombo=await combo(frame,'Search-result stations',5000);
+                lastControl=await rendered(stationCombo);
+                if (lastControl.includes(name)&&(lastControl.includes(`ID ${targetId}`)||lastControl.includes(targetId))) return frame;
+              } catch {}
+              const body=await bodyText(frame);
+              if (body.includes('Selected station')&&body.includes(name)&&body.includes(targetId)) return frame;
+              await sleep(250);
+            }
+            throw new Error(`Exact station ID ${targetId} did not settle; control=${lastControl}`);
+          }
+          '''
+          text = text[:start] + replacement + text[end:]
           path.write_text(text)
           PY
           node deployment/pr83_visual_walkthrough.mjs
