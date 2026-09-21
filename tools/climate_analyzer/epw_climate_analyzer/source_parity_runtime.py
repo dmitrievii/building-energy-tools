@@ -34,6 +34,47 @@ class _GlobalsProxy:
             raise AttributeError(name) from exc
 
 
+_STREAMLIT_SURFACE_NAMES = (
+    "info",
+    "caption",
+    "write",
+    "expander",
+    "radio",
+    "selectbox",
+    "data_editor",
+    "slider",
+)
+_STREAMLIT_BASELINE: dict[str, Any] | None = None
+
+
+def _restore_streamlit_surface() -> None:
+    """Restore Streamlit callables that source-parity layers patch temporarily.
+
+    Streamlit reruns execute a fresh ``app.py`` globals dictionary but keep the
+    imported ``streamlit`` module alive. Normally each wrapper restores its
+    temporary monkey patches in ``finally``. A rerun interrupted while a widget
+    callback/reconciliation is in flight can nevertheless leave an old wrapper
+    attached to ``st``. Rebuilding the Python modules alone does not clear that
+    module-level mutation, so a later run can traverse an old and a new wrapper
+    and register the same widget key twice.
+
+    Capture the pristine runtime surface on the first source-parity install and
+    restore it before every later install. This is intentionally limited to the
+    small set of Streamlit callables patched by the compatibility stack.
+    """
+    import streamlit as st
+
+    global _STREAMLIT_BASELINE
+    if _STREAMLIT_BASELINE is None:
+        _STREAMLIT_BASELINE = {
+            name: getattr(st, name)
+            for name in _STREAMLIT_SURFACE_NAMES
+        }
+        return
+    for name, value in _STREAMLIT_BASELINE.items():
+        setattr(st, name, value)
+
+
 def looks_like_climate_analyzer_app(namespace: MutableMapping[str, Any]) -> bool:
     """Return true only for the fully defined mature Streamlit app namespace."""
     required = {
@@ -83,6 +124,7 @@ def _reset_persistent_source_parity_modules() -> None:
 
 def _fresh_source_parity_ui() -> Any:
     """Return an unwrapped source-parity runtime stack for this script run."""
+    _restore_streamlit_surface()
     _reset_persistent_source_parity_modules()
     from . import source_parity_ui as parity
 
