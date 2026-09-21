@@ -103,12 +103,33 @@ async function selectStation(page) {
   const control = await combo(frame, 'Search-result stations', 60000);
   await control.click({ timeout: 10000 });
   const started = performance.now();
+  let optionSelected = false;
   while (performance.now() - started < 30000) {
+    frame = await appFrame(page, 'Manual station selection', 5000);
     const option = await visibleOption(page, frame, (text) => text.includes(fixture.station_name) && (text.includes(`ID ${fixture.station_id}`) || text.includes(String(fixture.station_id))));
-    if (option) { await option.click({ timeout: 10000 }); break; }
+    if (option) {
+      await option.click({ timeout: 10000 });
+      optionSelected = true;
+      break;
+    }
     await sleep(200);
   }
-  return await appFrame(page, 'Measured variables to load', 60000);
+  if (!optionSelected) throw new Error(`Could not select station ${fixture.station_name} / ID ${fixture.station_id}.`);
+
+  // Choosing the combobox value only stages the station.  The source UI requires
+  // the explicit commit button before it builds the variable catalogue.  Older
+  // walkthroughs skipped this step and then timed out waiting for Parameter set.
+  const commitStarted = performance.now();
+  while (performance.now() - commitStarted < 30000) {
+    frame = await appFrame(page, 'Manual station selection', 5000);
+    const button = frame.getByRole('button', { name: 'Use station from list', exact: true }).first();
+    if (await button.count().catch(() => 0) && await button.isVisible().catch(() => false)) {
+      await button.click({ timeout: 15000 });
+      return await appFrame(page, 'Measured variables to load', 60000);
+    }
+    await sleep(250);
+  }
+  throw new Error('Use station from list button did not become available.');
 }
 async function editor(page) {
   const frame = await appFrame(page, 'Measured variables to load', 30000);
