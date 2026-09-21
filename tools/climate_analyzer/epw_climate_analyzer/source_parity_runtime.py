@@ -73,6 +73,7 @@ def _reset_persistent_source_parity_modules() -> None:
         "source_parity_monthly_visual_contract",
         "source_parity_contract_closure",
         "source_parity_contract_guidance_hotfix",
+        "source_parity_monthly_selection_state",
         "source_parity_contract_guard",
     )
     package = __package__ or "epw_climate_analyzer"
@@ -123,6 +124,7 @@ def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     from .source_parity_monthly_visual_contract import install_monthly_visual_contract
     from .source_parity_contract_closure import install_contract_closure
     from .source_parity_contract_guidance_hotfix import patch_contract_guidance
+    from .source_parity_monthly_selection_state import install_monthly_selection_state
     from .source_parity_contract_guard import install_contract_guards
 
     # Provider vocabulary is installed before the shared resource selector builds
@@ -146,6 +148,9 @@ def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     # contract closure composes the outermost source selector.
     patch_contract_guidance()
     install_contract_closure(proxy, parity)
+    # Isolate the final monthly DataEditor from the shared 10min/1h widget key
+    # and preserve checkbox state by provider while catalogue views are filtered.
+    install_monthly_selection_state(parity)
     install_contract_guards()
     namespace["_SOURCE_PARITY_RUNTIME_INSTALLED"] = True
     return True
