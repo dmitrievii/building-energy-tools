@@ -109,7 +109,12 @@ jobs:
         id: visual_walkthrough
         if: ${{ always() && !cancelled() }}
         continue-on-error: true
-        run: node deployment/pr83_visual_walkthrough.mjs
+        run: |
+          # The default monthly selector window is already a complete calendar year.
+          # Keep the walkthrough focused on visual/analysis behaviour instead of
+          # re-testing Streamlit's segmented date editor (covered elsewhere).
+          sed -i "/await setDate(page,'From date (UTC)'/d" deployment/pr83_visual_walkthrough.mjs
+          node deployment/pr83_visual_walkthrough.mjs
 
       - name: Exercise current 10-minute precipitation route against PR branch
         id: precipitation_smoke
