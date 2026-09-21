@@ -146,18 +146,38 @@ async function selectStation(page) {
 
   const started = performance.now();
   let lastControl = '';
+  let settled = false;
   while (performance.now() - started < 30000) {
     frame = await appFrame(page, 'Climate Analyzer', 5000);
     try {
       const stationCombo = await combo(frame, 'Search-result stations', 5000);
       lastControl = await rendered(stationCombo);
-      if (lastControl.includes(fixture.station_name) && (lastControl.includes(`ID ${targetId}`) || lastControl.includes(targetId))) return frame;
+      if (lastControl.includes(fixture.station_name) && (lastControl.includes(`ID ${targetId}`) || lastControl.includes(targetId))) {
+        settled = true;
+        break;
+      }
     } catch {}
     const text = await bodyText(frame);
-    if (text.includes('Selected station') && text.includes(fixture.station_name) && text.includes(targetId)) return frame;
+    if (text.includes('Selected station') && text.includes(fixture.station_name) && text.includes(targetId)) {
+      settled = true;
+      break;
+    }
     await sleep(250);
   }
-  throw new Error(`Exact station ID ${targetId} did not settle; control=${lastControl}`);
+  if (!settled) throw new Error(`Exact station ID ${targetId} did not settle; control=${lastControl}`);
+
+  const commitStarted = performance.now();
+  while (performance.now() - commitStarted < 30000) {
+    frame = await appFrame(page, 'Manual station selection', 5000);
+    const button = frame.getByRole('button', { name: 'Use station from list', exact: true }).first();
+    if (await button.count().catch(() => 0)) {
+      await button.scrollIntoViewIfNeeded({ timeout: 5000 }).catch(() => {});
+      await button.click({ timeout: 15000 });
+      return await appFrame(page, 'Parameter set', 60000);
+    }
+    await sleep(250);
+  }
+  throw new Error('Use station from list button did not become available.');
 }
 async function editor(page) {
   const frame = await appFrame(page, 'Measured variables to load', 30000);
