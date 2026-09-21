@@ -9,7 +9,16 @@ functions are defined. Heavy scientific/UI dependencies therefore remain lazy.
 from __future__ import annotations
 
 import importlib
+from threading import RLock
 from typing import Any, MutableMapping
+
+
+# Streamlit browser sessions share imported Python modules while executing their
+# app-script bodies on separate threads. Source-parity installation intentionally
+# reloads and composes several package modules, so installation and selector
+# execution must not overlap across sessions. RLock is used because the frozen
+# selector can re-enter helper paths in the same thread.
+_RUNTIME_PATCH_LOCK = RLock()
 
 
 class _GlobalsProxy:
@@ -113,29 +122,22 @@ def _freeze_session_geosphere_selector(proxy: Any, parity: Any) -> None:
     The older session would then execute the other session's selector chain.
 
     Capture the final composed selector and original legacy source renderer after
-    every wrapper has been installed. The callable stored in this script's globals
-    is therefore stable even when another Streamlit session later reloads or
-    mutates the process-global parity module.
+    every wrapper has been installed. Execution is protected by the same process-
+    wide lock as installation so another session cannot reload shared module
+    globals while this selector chain is active.
     """
     final_selector = parity._render_geosphere_resource_selector
     original_geosphere = proxy._source_parity_original_geosphere
 
     def render_geosphere_source() -> Any:
-        return final_selector(proxy, original_geosphere)
+        with _RUNTIME_PATCH_LOCK:
+            return final_selector(proxy, original_geosphere)
 
     proxy.render_geosphere_source = render_geosphere_source
 
 
-def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
-    """Install source-parity runtime patches once into the mature app globals.
-
-    Always restore the process-global Streamlit callable surface before honoring
-    the per-script installation marker. A widget-triggered rerun can interrupt a
-    nested wrapper before its ``finally`` block executes while the Streamlit
-    module itself survives that rerun. In that state the marker may already be
-    true even though ``st.radio``/``st.expander``/``st.data_editor`` still point
-    at temporary wrappers. Restoring first makes the short-circuit rerun-safe.
-    """
+def _install_into_app_globals_locked(namespace: MutableMapping[str, Any]) -> bool:
+    """Install source-parity runtime while the process-wide patch lock is held."""
     if not looks_like_climate_analyzer_app(namespace):
         return False
 
@@ -212,3 +214,15 @@ def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
 
     namespace["_SOURCE_PARITY_RUNTIME_INSTALLED"] = True
     return True
+
+
+def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
+    """Install source-parity runtime patches once into the mature app globals.
+
+    Streamlit sessions share the imported source-parity modules. Serializing the
+    complete reset/reload/composition transaction prevents two browser sessions
+    from interleaving wrapper installation and producing a mixed selector chain.
+    The same lock protects execution of each frozen GeoSphere selector.
+    """
+    with _RUNTIME_PATCH_LOCK:
+        return _install_into_app_globals_locked(namespace)
