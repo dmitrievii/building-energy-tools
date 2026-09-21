@@ -70,10 +70,10 @@ jobs:
 
       - name: Capture visual walkthrough
         run: |
-          # Visual evidence uses the normal Core catalogue first. For deterministic
-          # automation only, switch to All provider parameters after that screenshot
-          # so provider IDs are visible to the DataEditor row locator. Station
-          # selection reuses the provider-backed precipitation smoke contract.
+          # Keep the walkthrough in the normal user-facing Core catalogue. The
+          # DataEditor helper matches any cell text, so use human-readable labels
+          # instead of hidden provider IDs. Station selection reuses the proven
+          # precipitation-smoke station metadata contract.
           python - <<'PY'
           from pathlib import Path
 
@@ -81,8 +81,12 @@ jobs:
           text = path.read_text()
           text = text.replace("  await setDate(page,'From date (UTC)','2020-01-01'); await setDate(page,'Through date (UTC)','2025-12-31');\n", "")
           text = text.replace(
+              "const REQUIRED_PROVIDERS = ['tl_mittel','tlmin','tlmax','rf_mittel','p','tp_mittel','tb10_mittel'];",
+              "const REQUIRED_PROVIDERS = ['Air temperature — monthly mean','Air temperature — absolute monthly minimum','Air temperature — absolute monthly maximum','Relative humidity — monthly mean','Station pressure — monthly mean','Dew-point temperature — monthly mean','Ground temperature 0.10 m — monthly mean'];"
+          )
+          text = text.replace(
               "  await page.goto(TARGET_URL,{waitUntil:'domcontentloaded',timeout:60000}); await chooseSource(page); await selectDataset(page,'1 month','klima-v2-1m'); await selectExactStation(page,fixture.station_name,fixture.station_id);\n  await clickTextChoice(page,'All provider parameters');",
-              "  await page.goto(TARGET_URL,{waitUntil:'domcontentloaded',timeout:60000}); await chooseSource(page); await selectDataset(page,'1 month','klima-v2-1m'); await selectExactStation(page,fixture.station_name,fixture.station_id);\n  await screenshot(page,'00-monthly-core-source.png');\n  await clickTextChoice(page,'All provider parameters');"
+              "  await page.goto(TARGET_URL,{waitUntil:'domcontentloaded',timeout:60000}); await chooseSource(page); await selectDataset(page,'1 month','klima-v2-1m'); await selectExactStation(page,fixture.station_name,fixture.station_id);\n  await screenshot(page,'00-monthly-core-source.png');"
           )
 
           start = text.index('async function selectExactStation(')
