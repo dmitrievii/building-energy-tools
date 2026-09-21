@@ -12,6 +12,7 @@ from epw_climate_analyzer import source_parity_contract_closure as contract
 from epw_climate_analyzer.source_parity_contract_guard import install_contract_guards
 from epw_climate_analyzer.source_parity_contract_guidance_hotfix import _decorate_monthly_table
 from epw_climate_analyzer.source_parity_monthly_selection_state import (
+    _loader_table_from_provider_state,
     _normalize_catalogue_roles,
     _visible_catalogue,
 )
@@ -114,9 +115,6 @@ class CanonicalContractRuntimeTests(unittest.TestCase):
                 "Canonical field": ["dry_bulb_temperature_c", "", ""],
             }
         )
-        # _metadata_descriptor intentionally tolerates a parity object without a
-        # live metadata bundle; this reproduces the raw-table stage that caused
-        # the branch-local Streamlit KeyError('Category').
         decorated = _decorate_monthly_table(SimpleNamespace(), raw)
 
         for column in ("Category", "Statistic", "Notes", "Role", "Original GeoSphere name"):
@@ -151,6 +149,25 @@ class CanonicalContractRuntimeTests(unittest.TestCase):
         expanded = _visible_catalogue(SimpleNamespace(), normalized, "Core + additional statistics")
         self.assertEqual(expanded["Provider"].tolist(), ["tl_mittel", "snow_days_ge_100"])
         self.assertNotIn("mystery", expanded["Provider"].tolist())
+
+    def test_monthly_loader_rebuild_preserves_provider_identity_not_editor_row_order(self) -> None:
+        raw = pd.DataFrame(
+            {
+                "Selected": [True, True, True, True],
+                "Quality flag": [False, False, False, False],
+                "Provider": ["absf_max", "tl_mittel", "rf_mittel", "p"],
+                "Measured variable": ["Absolute humidity max", "Temperature", "RH", "Pressure"],
+            }
+        )
+        # Simulate a sorted/filtered editor whose checkbox positions are unrelated
+        # to the original provider order. Loader truth must still be provider keyed.
+        selection = {"absf_max": False, "tl_mittel": True, "rf_mittel": True, "p": True}
+        flags = {provider: False for provider in raw["Provider"]}
+        rebuilt = _loader_table_from_provider_state(raw, selection, flags)
+
+        self.assertEqual(rebuilt["Provider"].tolist(), ["absf_max", "tl_mittel", "rf_mittel", "p"])
+        selected = rebuilt.loc[rebuilt["Selected"], "Provider"].tolist()
+        self.assertEqual(selected, ["tl_mittel", "rf_mittel", "p"])
 
 
 if __name__ == "__main__":
