@@ -88,6 +88,32 @@ class CanonicalContractRuntimeTests(unittest.TestCase):
         self.assertIs(st.expander, pristine_expander)
         self.assertIs(DeltaGenerator.date_input, pristine_date_input)
 
+    def test_frozen_session_selector_survives_later_process_global_recomposition(self) -> None:
+        calls: list[str] = []
+
+        def selector_a(_legacy, original):
+            calls.append("session-a")
+            return original()
+
+        def selector_b(_legacy, original):
+            calls.append("session-b")
+            return original()
+
+        namespace = {
+            "_source_parity_original_geosphere": lambda: calls.append("legacy"),
+            "render_geosphere_source": lambda: None,
+        }
+        proxy = source_parity_runtime._GlobalsProxy(namespace)
+        parity = SimpleNamespace(_render_geosphere_resource_selector=selector_a)
+
+        source_parity_runtime._freeze_session_geosphere_selector(proxy, parity)
+        # Model a second Streamlit browser session reloading/recomposing the
+        # shared parity module after session A has completed installation.
+        parity._render_geosphere_resource_selector = selector_b
+
+        namespace["render_geosphere_source"]()
+        self.assertEqual(calls, ["session-a", "legacy"])
+
     def test_unknown_provider_statistic_is_native_monthly_only(self) -> None:
         install_contract_guards()
         column = "monthly__unknown__other__foo"
