@@ -70,9 +70,30 @@ jobs:
 
       - name: Capture visual walkthrough
         run: |
-          # Use the selector's native complete-year default. Date-editor mechanics
-          # are unrelated to this visual review and are covered by the normal UI tests.
-          sed -i "/await setDate(page,'From date (UTC)'/d" deployment/pr83_visual_walkthrough.mjs
+          # This is visual evidence, not a widget-mechanics test. Keep the native
+          # complete-year dates and the default Core-variable catalogue. Confirm
+          # the explicitly selected station before touching the variable editor.
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('deployment/pr83_visual_walkthrough.mjs')
+          text = path.read_text()
+          text = text.replace("  await clickTextChoice(page,'All provider parameters');\n", "")
+          text = text.replace(
+              "    try { if ((await rendered(await combo(frame,'Search-result stations',3000))).includes(name)) return frame; } catch {}",
+              """    try {
+                const stationCombo=await combo(frame,'Search-result stations',3000);
+                if ((await rendered(stationCombo)).includes(name)) {
+                  const use=frame.getByRole('button',{name:'Use station from list',exact:true}).first();
+                  if (await use.count().catch(()=>0) && await use.isVisible().catch(()=>false)) {
+                    await use.click({timeout:10000}); await sleep(700);
+                  }
+                }
+              } catch {}"""
+          )
+          # The two date setters are on one source line; remove that visual-only line.
+          text = text.replace("  await setDate(page,'From date (UTC)','2020-01-01'); await setDate(page,'Through date (UTC)','2025-12-31');\n", "")
+          path.write_text(text)
+          PY
           node deployment/pr83_visual_walkthrough.mjs
 
       - name: Reject runtime tracebacks
