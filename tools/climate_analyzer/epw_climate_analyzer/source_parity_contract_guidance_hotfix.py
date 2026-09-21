@@ -1,9 +1,11 @@
 """Reload-safe final guidance patch for the composed GeoSphere source selector.
 
-The final source selector owns the one visible GeoSphere dataset widget.  Older
-runtime layers still call a legacy selector internally, but those calls are
-suppressed and receive the already-selected resource.  The visible widget and
-all downstream routing therefore share exactly one Streamlit session-state key.
+The mature source selector is assembled from several compatibility layers. This
+final wrapper owns the one visible dataset widget and keeps its state distinct
+from the legacy routing key used by nested wrappers. Fresh browser sessions never
+inherit that legacy routing state: without a private widget value they always
+start from the registry default, then synchronize routing before legacy code is
+entered.
 """
 from __future__ import annotations
 
@@ -29,9 +31,10 @@ PARAMETER_SET_OPTIONS = (
 )
 PARAMETER_SET_KEY = "geosphere_monthly_parameter_catalogue_v2"
 _RESOURCE_KEY = "geosphere_resource_id"
-# Retained as an exported compatibility constant for focused regression tests.
-# It deliberately aliases the routing key: there is no second widget state.
-_RESOURCE_WIDGET_KEY = _RESOURCE_KEY
+# Separate widget identity is required because older nested selector wrappers
+# still recognize the legacy routing key.  This private widget is the visible
+# source of truth; _RESOURCE_KEY is only a synchronized compatibility state.
+_RESOURCE_WIDGET_KEY = "_geosphere_resource_selector_widget_v2"
 
 
 def _decorate_monthly_table(parity: Any, data: pd.DataFrame) -> pd.DataFrame:
@@ -94,23 +97,25 @@ def _install_guidance_safe(parity: Any) -> None:
         if not resource_ids:
             raise RuntimeError("GeoSphere resource registry is empty.")
 
-        current_resource = str(st.session_state.get(_RESOURCE_KEY, resource_ids[0]))
-        if current_resource not in resource_ids:
-            # This happens before the widget is instantiated, so clearing an
-            # obsolete value is legal and lets Streamlit apply the default.
-            st.session_state.pop(_RESOURCE_KEY, None)
-            current_resource = resource_ids[0]
+        widget_resource = str(st.session_state.get(_RESOURCE_WIDGET_KEY, ""))
+        if widget_resource and widget_resource not in resource_ids:
+            st.session_state.pop(_RESOURCE_WIDGET_KEY, None)
+            widget_resource = ""
 
-        # One source of truth: the visible widget owns the same key that all
-        # provider-routing layers read.  Nested legacy dataset selectboxes are
-        # suppressed below, so no second widget can overwrite this state.
+        # Critical fresh-session rule: never initialize the visible widget from
+        # the legacy routing key. That key may have been touched by a previous
+        # compatibility layer/session in the shared Streamlit process. Only an
+        # existing private widget value can retain a non-default resource.
+        initial_resource = widget_resource if widget_resource in resource_ids else resource_ids[0]
+        st.session_state[_RESOURCE_KEY] = initial_resource
+
         selected_resource = str(
             real_selectbox(
                 "GeoSphere dataset",
                 resource_ids,
-                index=resource_ids.index(current_resource),
+                index=resource_ids.index(initial_resource),
                 format_func=lambda resource_id: parity.resource_spec(resource_id).label,
-                key=_RESOURCE_KEY,
+                key=_RESOURCE_WIDGET_KEY,
                 help=(
                     "10-minute data are best for recent event/detail analysis. The 1-hour resource provides the "
                     "long-term historical series without resampling. The 1-month resource contains native "
@@ -118,6 +123,8 @@ def _install_guidance_safe(parity: Any) -> None:
                 ),
             )
         )
+        # Commit before any legacy wrapper can inspect the compatibility key.
+        st.session_state[_RESOURCE_KEY] = selected_resource
 
         seen_info: set[str] = set()
         seen_caption: set[str] = set()
@@ -132,8 +139,9 @@ def _install_guidance_safe(parity: Any) -> None:
         def selectbox(label: str, options: Iterable[Any], *args: Any, **kwargs: Any):
             values = list(options)
             if label == "GeoSphere dataset":
-                # Every legacy selector in the nested wrapper chain observes the
-                # real visible widget value but renders no second widget.
+                # Every legacy selector observes the visible widget value but
+                # renders no second dataset widget.
+                st.session_state[_RESOURCE_KEY] = selected_resource
                 return selected_resource
             return real_selectbox(label, values, *args, **kwargs)
 
@@ -191,8 +199,6 @@ def _install_guidance_safe(parity: Any) -> None:
             values = list(options)
             if label == "Parameter catalogue" and values == ["Recommended", "All parameters"]:
                 render_parameter_set()
-                # The final editor performs the filtering.  Force the legacy
-                # layer to pass its complete vocabulary downstream.
                 return "All parameters"
             return real_radio(label, values, *args, **kwargs)
 
@@ -252,6 +258,9 @@ def _install_guidance_safe(parity: Any) -> None:
         try:
             previous(legacy, original)
         finally:
+            # Keep the compatibility route synchronized for the remainder of
+            # this script run, even if a nested legacy wrapper touched it.
+            st.session_state[_RESOURCE_KEY] = selected_resource
             st.info = real_info
             st.caption = real_caption
             st.write = real_write
