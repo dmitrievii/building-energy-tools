@@ -13,7 +13,6 @@ on:
       - 'tools/climate_analyzer/tests/test_geosphere_resource_transition_0_7_5_5.py'
       - 'deployment/pr83_monthly_contract_probe.py'
       - 'deployment/pr83_source_ui_live_smoke_v18.mjs'
-      - 'deployment/pr83_geosphere_data_editor_dom_probe.mjs'
       - 'deployment/pr83_precip_snow_live_smoke.mjs'
       - '.github/workflows/climate-analyzer-pr83-branch-contract-smoke.yml'
   workflow_dispatch:
@@ -103,11 +102,6 @@ jobs:
         id: source_ui_smoke
         continue-on-error: true
         run: node deployment/pr83_source_ui_live_smoke_v18.mjs
-
-      - name: Capture 10-minute measured-variable editor DOM
-        if: always()
-        continue-on-error: true
-        run: node deployment/pr83_geosphere_data_editor_dom_probe.mjs
 
       - name: Exercise current 10-minute precipitation route against PR branch
         id: precipitation_smoke
