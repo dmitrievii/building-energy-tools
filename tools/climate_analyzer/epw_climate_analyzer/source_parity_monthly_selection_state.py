@@ -7,12 +7,11 @@ can reconcile an old DataEditor state into the new table. In the monthly path
 that manifested as hundreds of stale selected rows, a missing visible table,
 and the contradictory warning that air temperature was not selected.
 
-This adapter is installed after the composed source-selector stack. It therefore
-acts as the final DataEditor boundary: it decorates/filters the monthly catalogue
-again if necessary, assigns a resource/view-specific widget key, and keeps the
-actual checkbox state in provider-keyed session maps. The catalogue radio changes
-visibility only; provider selection never leaks from another GeoSphere resource
-or from an incompatible DataEditor table shape.
+This adapter owns monthly selection semantics independently of the mature shell's
+legacy ``Selected=True`` table default. A fresh monthly session selects only
+``Core variable`` rows; Additional/Other provider parameters and all quality
+flags start unchecked. The catalogue radio changes visibility only, and later
+user edits are retained by provider ID across Core/Additional/All views.
 """
 from __future__ import annotations
 
@@ -26,9 +25,11 @@ from .source_parity_contract_guidance_hotfix import _decorate_monthly_table
 
 _RESOURCE_KEY = "geosphere_resource_id"
 _PARAMETER_SET_KEY = "geosphere_monthly_parameter_catalogue_v2"
-_SELECTION_STATE_KEY = "_geosphere_monthly_provider_selection_v1"
-_FLAG_STATE_KEY = "_geosphere_monthly_provider_flag_selection_v1"
-_LAST_VIEW_KEY = "_geosphere_monthly_provider_selection_last_view_v1"
+# v2 deliberately invalidates the earlier state map that could be seeded from
+# the mature shell's all-True legacy table.
+_SELECTION_STATE_KEY = "_geosphere_monthly_provider_selection_v2"
+_FLAG_STATE_KEY = "_geosphere_monthly_provider_flag_selection_v2"
+_LAST_VIEW_KEY = "_geosphere_monthly_provider_selection_last_view_v2"
 
 
 def _bool_value(value: Any) -> bool:
@@ -41,8 +42,22 @@ def _bool_value(value: Any) -> bool:
     return bool(value)
 
 
-def _provider_state(st: Any, key: str, data: pd.DataFrame, column: str) -> dict[str, bool]:
-    """Return/update one provider-keyed boolean state map."""
+def _provider_state(
+    st: Any,
+    key: str,
+    data: pd.DataFrame,
+    column: str,
+    *,
+    default: bool | Callable[[pd.Series], bool] | None = None,
+) -> dict[str, bool]:
+    """Return/update one provider-keyed boolean state map.
+
+    ``default`` is authoritative for providers not yet present in the state map.
+    This is required for monthly selection because the mature shared source table
+    deliberately starts every measured variable with ``Selected=True``. That
+    legacy default is valid for the old generic shell but must not silently turn
+    ``Core variables`` into an all-provider load.
+    """
     raw = st.session_state.get(key, {})
     state = (
         {str(provider): _bool_value(value) for provider, value in raw.items()}
@@ -52,8 +67,14 @@ def _provider_state(st: Any, key: str, data: pd.DataFrame, column: str) -> dict[
     if {"Provider", column}.issubset(data.columns):
         for _, row in data.iterrows():
             provider = str(row.get("Provider", "") or "").strip()
-            if provider:
-                state.setdefault(provider, _bool_value(row.get(column, False)))
+            if not provider or provider in state:
+                continue
+            if callable(default):
+                state[provider] = _bool_value(default(row))
+            elif default is not None:
+                state[provider] = _bool_value(default)
+            else:
+                state[provider] = _bool_value(row.get(column, False))
     st.session_state[key] = state
     return state
 
@@ -84,7 +105,7 @@ def _visible_catalogue(parity: Any, data: pd.DataFrame, view: str) -> pd.DataFra
 
 
 def install_monthly_selection_state(parity: Any) -> None:
-    """Wrap the final GeoSphere selector with resource/view-safe DataEditor state."""
+    """Wrap the GeoSphere selector with resource/view-safe DataEditor state."""
     previous = parity._render_geosphere_resource_selector
     st = parity.st
 
@@ -107,12 +128,23 @@ def install_monthly_selection_state(parity: Any) -> None:
             }:
                 view = "Core variables"
 
-            # Own decoration/filtering at this final boundary instead of relying
-            # on wrapper order. This is intentionally idempotent for an already
-            # decorated table.
+            # Own decoration/filtering at this boundary instead of trusting the
+            # shared shell's all-True selection defaults.
             full = _decorate_monthly_table(parity, data)
-            selection_state = _provider_state(st, _SELECTION_STATE_KEY, full, "Selected")
-            flag_state = _provider_state(st, _FLAG_STATE_KEY, full, "Quality flag")
+            selection_state = _provider_state(
+                st,
+                _SELECTION_STATE_KEY,
+                full,
+                "Selected",
+                default=lambda row: str(row.get("Role", "")) == "Core variable",
+            )
+            flag_state = _provider_state(
+                st,
+                _FLAG_STATE_KEY,
+                full,
+                "Quality flag",
+                default=False,
+            )
             prepared = _visible_catalogue(parity, full, view)
 
             providers = prepared["Provider"].fillna("").astype(str).tolist()
