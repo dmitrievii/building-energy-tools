@@ -34,48 +34,6 @@ class _GlobalsProxy:
             raise AttributeError(name) from exc
 
 
-_STREAMLIT_SURFACE_NAMES = (
-    "info",
-    "caption",
-    "write",
-    "expander",
-    "radio",
-    "selectbox",
-    "data_editor",
-    "slider",
-    "rerun",
-)
-_STREAMLIT_BASELINE: dict[str, Any] | None = None
-
-
-def _restore_streamlit_surface() -> None:
-    """Restore Streamlit callables that source-parity layers patch temporarily.
-
-    Streamlit reruns execute a fresh ``app.py`` globals dictionary but keep the
-    imported ``streamlit`` module alive. Normally each wrapper restores its
-    temporary monkey patches in ``finally``. A rerun interrupted while a widget
-    callback/reconciliation is in flight can nevertheless leave an old wrapper
-    attached to ``st``. Rebuilding the Python modules alone does not clear that
-    module-level mutation, so a later run can traverse an old and a new wrapper
-    and register the same widget key twice.
-
-    Capture the pristine runtime surface on the first source-parity install and
-    restore it before every later install. This is intentionally limited to the
-    small set of Streamlit callables patched by the compatibility stack.
-    """
-    import streamlit as st
-
-    global _STREAMLIT_BASELINE
-    if _STREAMLIT_BASELINE is None:
-        _STREAMLIT_BASELINE = {
-            name: getattr(st, name)
-            for name in _STREAMLIT_SURFACE_NAMES
-        }
-        return
-    for name, value in _STREAMLIT_BASELINE.items():
-        setattr(st, name, value)
-
-
 def looks_like_climate_analyzer_app(namespace: MutableMapping[str, Any]) -> bool:
     """Return true only for the fully defined mature Streamlit app namespace."""
     required = {
@@ -116,7 +74,6 @@ def _reset_persistent_source_parity_modules() -> None:
         "source_parity_contract_closure",
         "source_parity_contract_guidance_hotfix",
         "source_parity_contract_guard",
-        "source_parity_resource_persistence",
     )
     package = __package__ or "epw_climate_analyzer"
     for name in module_names:
@@ -126,7 +83,6 @@ def _reset_persistent_source_parity_modules() -> None:
 
 def _fresh_source_parity_ui() -> Any:
     """Return an unwrapped source-parity runtime stack for this script run."""
-    _restore_streamlit_surface()
     _reset_persistent_source_parity_modules()
     from . import source_parity_ui as parity
 
@@ -158,7 +114,6 @@ def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     from .source_parity_contract_closure import install_contract_closure
     from .source_parity_contract_guidance_hotfix import patch_contract_guidance
     from .source_parity_contract_guard import install_contract_guards
-    from .source_parity_resource_persistence import install_resource_persistence
 
     # Provider vocabulary is installed before the shared resource selector builds
     # metadata mappings. Scientific engines remain provider-neutral.
@@ -182,9 +137,5 @@ def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     patch_contract_guidance()
     install_contract_closure(proxy, parity)
     install_contract_guards()
-    # The rerun-persistence guard is deliberately outermost. It must observe
-    # station-browser reruns raised from any legacy layer after the visible
-    # dataset widget has committed its choice.
-    install_resource_persistence(parity)
     namespace["_SOURCE_PARITY_RUNTIME_INSTALLED"] = True
     return True
