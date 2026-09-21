@@ -29,7 +29,10 @@ async function appFrame(page, needle = 'Climate Analyzer', timeoutMs = 90000) {
 async function combo(frame, label, timeoutMs = 60000) {
   const started = performance.now();
   while (performance.now() - started < timeoutMs) {
-    for (const candidate of [frame.getByRole('combobox', { name: label, exact: true }).first(), frame.getByLabel(label, { exact: true }).first()]) {
+    for (const candidate of [
+      frame.getByRole('combobox', { name: label, exact: true }).first(),
+      frame.getByLabel(label, { exact: true }).first(),
+    ]) {
       if (await candidate.count().catch(() => 0) && await candidate.isVisible().catch(() => false)) return candidate;
     }
     await sleep(250);
@@ -40,7 +43,10 @@ async function combo(frame, label, timeoutMs = 60000) {
 async function labelledInput(frame, label, timeoutMs = 60000) {
   const started = performance.now();
   while (performance.now() - started < timeoutMs) {
-    for (const candidate of [frame.getByLabel(label, { exact: true }).first(), frame.locator(`input[aria-label="${label}"]`).first()]) {
+    for (const candidate of [
+      frame.getByLabel(label, { exact: true }).first(),
+      frame.locator(`input[aria-label="${label}"]`).first(),
+    ]) {
       if (await candidate.count().catch(() => 0) && await candidate.isVisible().catch(() => false)) return candidate;
     }
     await sleep(250);
@@ -49,8 +55,29 @@ async function labelledInput(frame, label, timeoutMs = 60000) {
 }
 
 async function rendered(control) {
-  return [await control.innerText().catch(() => ''), await control.textContent().catch(() => ''), await control.inputValue().catch(() => '')]
-    .join(' ').replace(/\s+/g, ' ').trim();
+  return [
+    await control.innerText().catch(() => ''),
+    await control.textContent().catch(() => ''),
+    await control.inputValue().catch(() => ''),
+  ].join(' ').replace(/\s+/g, ' ').trim();
+}
+
+async function visibleOption(page, frame, predicate) {
+  for (const options of [
+    frame.getByRole('option'),
+    page.getByRole('option'),
+    frame.locator('[data-baseweb="menu"] li'),
+    page.locator('[data-baseweb="menu"] li'),
+  ]) {
+    const count = await options.count().catch(() => 0);
+    for (let i = 0; i < count; i += 1) {
+      const option = options.nth(i);
+      if (!(await option.isVisible().catch(() => false))) continue;
+      const text = (await option.innerText().catch(() => '')).replace(/\s+/g, ' ').trim();
+      if (predicate(text)) return option;
+    }
+  }
+  return null;
 }
 
 async function selectVisibleOption(page, frame, controlLabel, predicate, timeoutMs = 60000) {
@@ -60,13 +87,19 @@ async function selectVisibleOption(page, frame, controlLabel, predicate, timeout
     frame = await appFrame(page, 'Climate Analyzer', 5000);
     let control;
     try { control = await combo(frame, controlLabel, 5000); } catch { await sleep(250); continue; }
-    try { await control.scrollIntoViewIfNeeded({ timeout: 3000 }).catch(() => {}); await control.click({ timeout: 5000 }); }
-    catch { await sleep(250); continue; }
+    try {
+      await control.scrollIntoViewIfNeeded({ timeout: 3000 }).catch(() => {});
+      await control.click({ timeout: 5000 });
+    } catch { await sleep(250); continue; }
 
     const optionStarted = performance.now();
     while (performance.now() - optionStarted < 6000) {
-      const collections = [frame.getByRole('option'), page.getByRole('option'), frame.locator('[data-baseweb="menu"] li'), page.locator('[data-baseweb="menu"] li')];
-      for (const options of collections) {
+      for (const options of [
+        frame.getByRole('option'),
+        page.getByRole('option'),
+        frame.locator('[data-baseweb="menu"] li'),
+        page.locator('[data-baseweb="menu"] li'),
+      ]) {
         const count = await options.count().catch(() => 0);
         if (!count) continue;
         last = await options.allInnerTexts().catch(() => last);
@@ -90,14 +123,19 @@ async function chooseSource(page) {
   const started = performance.now();
   while (performance.now() - started < 60000) {
     const frame = await appFrame(page, 'Climate Analyzer', 10000);
-    for (const c of [frame.getByRole('radio', { name: 'GeoSphere Austria', exact: true }).last(), frame.getByText('GeoSphere Austria', { exact: true }).last(), frame.locator('label').filter({ hasText: 'GeoSphere Austria' }).last()]) {
-      if (!(await c.count().catch(() => 0))) continue;
+    for (const candidate of [
+      frame.getByRole('radio', { name: 'GeoSphere Austria', exact: true }).last(),
+      frame.getByText('GeoSphere Austria', { exact: true }).last(),
+      frame.locator('label').filter({ hasText: 'GeoSphere Austria' }).last(),
+    ]) {
+      if (!(await candidate.count().catch(() => 0))) continue;
       try {
-        const tag = await c.evaluate((n) => n.tagName.toLowerCase()).catch(() => '');
-        const type = await c.getAttribute('type').catch(() => null);
-        if (tag === 'input' && type === 'radio') await c.check({ force: true, timeout: 5000 }); else await c.click({ force: true, timeout: 5000 });
+        const tag = await candidate.evaluate((node) => node.tagName.toLowerCase()).catch(() => '');
+        const type = await candidate.getAttribute('type').catch(() => null);
+        if (tag === 'input' && type === 'radio') await candidate.check({ force: true, timeout: 5000 });
+        else await candidate.click({ force: true, timeout: 5000 });
         return await appFrame(page, 'GeoSphere Austria — measured historical station data', 15000);
-      } catch { /* retry */ }
+      } catch {}
     }
     await sleep(400);
   }
@@ -126,26 +164,33 @@ async function selectExactStation(page, stationName, stationId) {
   frame = await appFrame(page, 'Manual station selection', 60000);
 
   const targetId = String(stationId);
-  frame = await selectVisibleOption(page, frame, 'Search-result stations', (text) => text.includes(stationName) && (text.includes(`ID ${targetId}`) || text.includes(targetId)), 60000);
+  frame = await selectVisibleOption(
+    page,
+    frame,
+    'Search-result stations',
+    (text) => text.includes(stationName) && (text.includes(`ID ${targetId}`) || text.includes(targetId)),
+    60000,
+  );
 
   const settled = performance.now();
   let lastControl = '';
   while (performance.now() - settled < 30000) {
     frame = await appFrame(page, 'Climate Analyzer', 5000);
     try {
-      const stationCombo = await combo(frame, 'Search-result stations', 5000);
-      lastControl = await rendered(stationCombo);
+      lastControl = await rendered(await combo(frame, 'Search-result stations', 5000));
       if (lastControl.includes(stationName) && (lastControl.includes(`ID ${targetId}`) || lastControl.includes(targetId))) break;
-    } catch { /* rerun */ }
+    } catch {}
     await sleep(250);
   }
   if (!lastControl.includes(stationName) || (!lastControl.includes(`ID ${targetId}`) && !lastControl.includes(targetId))) {
     throw new Error(`Exact station ID ${targetId} did not settle; control=${lastControl}`);
   }
 
-  // Selecting an option in the search-result combobox is only a preview. The
-  // production UI commits the station with this explicit button, so the smoke
-  // must exercise the same state transition before asserting monthly/hourly UI.
+  // The search-result combobox is only a preview. Commit through the real
+  // production button, then assert the stable post-commit source controls.
+  // Do not depend on text inside Streamlit's virtualized metadata DataFrame:
+  // that text can legitimately be absent from the DOM even after a successful
+  // station commit.
   const commitStarted = performance.now();
   while (performance.now() - commitStarted < 30000) {
     frame = await appFrame(page, 'Manual station selection', 5000);
@@ -153,14 +198,10 @@ async function selectExactStation(page, stationName, stationId) {
     if (await button.count().catch(() => 0) && await button.isVisible().catch(() => false)) {
       await button.scrollIntoViewIfNeeded({ timeout: 5000 }).catch(() => {});
       await button.click({ timeout: 15000 });
-      const committed = await waitBody(
-        page,
-        (text) => text.includes('Selected station') && text.includes(stationName) && text.includes(targetId),
-        `committed station ${stationName} ${targetId}`,
-        60000,
-        1,
-      );
-      return committed.frame;
+      const committed = await appFrame(page, 'Measured variables to load', 60000);
+      const committedText = await bodyText(committed);
+      if (!committedText.includes('Measured variables to load')) throw new Error('Station commit did not expose measured-variable controls.');
+      return committed;
     }
     await sleep(250);
   }
@@ -168,11 +209,18 @@ async function selectExactStation(page, stationName, stationId) {
 }
 
 async function waitBody(page, predicate, description, timeoutMs = 60000, stable = 2) {
-  const started = performance.now(); let passes = 0; let lastText = ''; let frame;
+  const started = performance.now();
+  let passes = 0;
+  let lastText = '';
+  let frame;
   while (performance.now() - started < timeoutMs) {
     try {
-      frame = await appFrame(page, 'Climate Analyzer', 5000); lastText = await bodyText(frame);
-      if (predicate(lastText)) { passes += 1; if (passes >= stable) return { frame, text: lastText }; } else passes = 0;
+      frame = await appFrame(page, 'Climate Analyzer', 5000);
+      lastText = await bodyText(frame);
+      if (predicate(lastText)) {
+        passes += 1;
+        if (passes >= stable) return { frame, text: lastText };
+      } else passes = 0;
     } catch { passes = 0; }
     await sleep(400);
   }
@@ -180,37 +228,63 @@ async function waitBody(page, predicate, description, timeoutMs = 60000, stable 
 }
 
 async function expandMonthly(frame) {
-  const x = frame.getByText(MONTHLY_CONTEXT, { exact: true }).last();
-  if (await x.count().catch(() => 0)) { await x.click({ force: true, timeout: 10000 }).catch(() => {}); await sleep(350); }
+  const expander = frame.getByText(MONTHLY_CONTEXT, { exact: true }).last();
+  if (await expander.count().catch(() => 0)) {
+    await expander.click({ force: true, timeout: 10000 }).catch(() => {});
+    await sleep(350);
+  }
 }
 
-const report = { schema: 'climate-analyzer-pr83-source-ui-smoke-v18', target_url: TARGET_URL, fixture, checks: {}, page_errors: [], console_errors: [], success: false, error: null };
+const report = {
+  schema: 'climate-analyzer-pr83-source-ui-smoke-v19',
+  target_url: TARGET_URL,
+  fixture,
+  checks: {},
+  page_errors: [],
+  console_errors: [],
+  success: false,
+  error: null,
+};
 let browser;
 try {
   if (!fixture.success) throw new Error('Monthly provider fixture is not successful.');
   browser = await chromium.launch({ executablePath: CHROME_PATH, headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
   const context = await browser.newContext({ viewport: { width: 1440, height: 1100 }, locale: 'en-US' });
   const page = await context.newPage();
-  page.on('pageerror', (e) => report.page_errors.push(String(e)));
-  page.on('console', (m) => { if (m.type() === 'error') report.console_errors.push(m.text()); });
+  page.on('pageerror', (error) => report.page_errors.push(String(error)));
+  page.on('console', (message) => { if (message.type() === 'error') report.console_errors.push(message.text()); });
   await page.goto(TARGET_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
 
   await chooseSource(page);
   await selectDataset(page, '1 month', 'klima-v2-1m');
   await selectExactStation(page, fixture.station_name, fixture.station_id);
-  const monthly = await waitBody(page, (t) => t.includes('Selected resource: klima-v2-1m') && t.includes('Parameter set') && t.includes(MONTHLY_CONTEXT), 'monthly source UI');
+  const monthly = await waitBody(
+    page,
+    (text) => text.includes('Selected resource: klima-v2-1m') && text.includes('Parameter set') && text.includes(MONTHLY_CONTEXT),
+    'monthly source UI',
+  );
   await expandMonthly(monthly.frame);
-  const mx = await waitBody(page, (t) => t.includes('Core variables') && t.includes('Core + additional statistics') && t.includes('All provider parameters') && occurrences(t, MONTHLY_CONTEXT) === 1 && occurrences(t, MONTHLY_SOURCE) === 1, 'expanded monthly source UI');
-  if (mx.text.includes('Parameter catalogue')) throw new Error('Legacy monthly Parameter catalogue is still visible.');
-  report.checks.monthly_context_count = occurrences(mx.text, MONTHLY_CONTEXT);
-  report.checks.monthly_source_block_count = occurrences(mx.text, MONTHLY_SOURCE);
+  const monthlyExpanded = await waitBody(
+    page,
+    (text) => text.includes('Core variables') && text.includes('Core + additional statistics') && text.includes('All provider parameters') && occurrences(text, MONTHLY_CONTEXT) === 1 && occurrences(text, MONTHLY_SOURCE) === 1,
+    'expanded monthly source UI',
+  );
+  if (monthlyExpanded.text.includes('Parameter catalogue')) throw new Error('Legacy monthly Parameter catalogue is still visible.');
+  report.checks.monthly_context_count = occurrences(monthlyExpanded.text, MONTHLY_CONTEXT);
+  report.checks.monthly_source_block_count = occurrences(monthlyExpanded.text, MONTHLY_SOURCE);
 
   await selectDataset(page, '1 h (long-term)', 'klima-v2-1h');
   await selectExactStation(page, fixture.station_name, fixture.station_id);
-  const hx = await waitBody(page, (t) => t.includes('Selected resource: klima-v2-1h') && t.includes('Station metadata validity') && occurrences(t, HOURLY_INFO) === 1 && occurrences(t, HOURLY_SOURCE) === 1, 'hourly source UI', 90000, 3);
-  if (hx.text.includes(MONTHLY_CONTEXT) || hx.text.includes('Parameter set')) throw new Error('Monthly-only controls remained visible for hourly resource.');
-  report.checks.hourly_context_count = occurrences(hx.text, HOURLY_INFO);
-  report.checks.hourly_source_block_count = occurrences(hx.text, HOURLY_SOURCE);
+  const hourly = await waitBody(
+    page,
+    (text) => text.includes('Selected resource: klima-v2-1h') && text.includes('Station metadata validity') && occurrences(text, HOURLY_INFO) === 1 && occurrences(text, HOURLY_SOURCE) === 1,
+    'hourly source UI',
+    90000,
+    3,
+  );
+  if (hourly.text.includes(MONTHLY_CONTEXT) || hourly.text.includes('Parameter set')) throw new Error('Monthly-only controls remained visible for hourly resource.');
+  report.checks.hourly_context_count = occurrences(hourly.text, HOURLY_INFO);
+  report.checks.hourly_source_block_count = occurrences(hourly.text, HOURLY_SOURCE);
 
   if (report.page_errors.length) throw new Error(`Browser page error(s): ${report.page_errors.join(' | ')}`);
   report.success = true;
@@ -221,5 +295,8 @@ try {
   report.error = String(error?.stack || error);
   await fs.mkdir('artifacts/pr83-contract-smoke', { recursive: true });
   await fs.writeFile(OUT_PATH, JSON.stringify(report, null, 2));
-  console.error(report.error); process.exitCode = 1;
-} finally { if (browser) await browser.close().catch(() => {}); }
+  console.error(report.error);
+  process.exitCode = 1;
+} finally {
+  if (browser) await browser.close().catch(() => {});
+}
