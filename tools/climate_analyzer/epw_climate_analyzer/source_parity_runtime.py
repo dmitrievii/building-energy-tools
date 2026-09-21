@@ -76,6 +76,7 @@ def _reset_persistent_source_parity_modules() -> None:
         "source_parity_monthly_selection_state",
         "source_parity_contract_guard",
         "source_parity_monthly_overlay_hotfix",
+        "source_parity_monthly_surface_guard",
     )
     package = __package__ or "epw_climate_analyzer"
     for name in module_names:
@@ -128,6 +129,7 @@ def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     from .source_parity_monthly_selection_state import install_monthly_selection_state
     from .source_parity_contract_guard import install_contract_guards
     from .source_parity_monthly_overlay_hotfix import install_monthly_overlay_timezone_guard
+    from .source_parity_monthly_surface_guard import install_monthly_surface_guard
 
     # Provider vocabulary is installed before the shared resource selector builds
     # metadata mappings. Scientific engines remain provider-neutral.
@@ -161,5 +163,9 @@ def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     install_contract_closure(proxy, parity)
     install_contract_guards()
     install_monthly_overlay_timezone_guard()
+    # Final sink for user-visible monthly-only wording/warnings. Installing this
+    # last makes the cleanup independent of whichever inner wrapper emitted the
+    # legacy shared-shell text.
+    install_monthly_surface_guard(parity)
     namespace["_SOURCE_PARITY_RUNTIME_INSTALLED"] = True
     return True
