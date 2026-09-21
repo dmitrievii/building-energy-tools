@@ -102,6 +102,30 @@ def _fresh_source_parity_ui() -> Any:
     return importlib.reload(parity)
 
 
+def _freeze_session_geosphere_selector(proxy: Any, parity: Any) -> None:
+    """Bind the fully composed GeoSphere selector to this app-script session.
+
+    ``install_source_parity_ui`` initially routes ``render_geosphere_source``
+    through a lambda whose ``_render_geosphere_resource_selector`` name is looked
+    up in the process-global ``source_parity_ui`` module at call time. Streamlit
+    browser sessions share that imported module, so another session can reload
+    and recompose the module after this session has installed its own app globals.
+    The older session would then execute the other session's selector chain.
+
+    Capture the final composed selector and original legacy source renderer after
+    every wrapper has been installed. The callable stored in this script's globals
+    is therefore stable even when another Streamlit session later reloads or
+    mutates the process-global parity module.
+    """
+    final_selector = parity._render_geosphere_resource_selector
+    original_geosphere = proxy._source_parity_original_geosphere
+
+    def render_geosphere_source() -> Any:
+        return final_selector(proxy, original_geosphere)
+
+    proxy.render_geosphere_source = render_geosphere_source
+
+
 def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     """Install source-parity runtime patches once into the mature app globals.
 
@@ -179,5 +203,12 @@ def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     # last makes the cleanup independent of whichever inner wrapper emitted the
     # legacy shared-shell text.
     install_monthly_surface_guard(parity)
+
+    # Freeze the fully composed selector into this Streamlit app-script namespace.
+    # Without this final binding, the lambda installed by source_parity_ui performs
+    # a process-global module lookup and can be redirected by another browser
+    # session that reloads/recomposes source_parity_ui concurrently.
+    _freeze_session_geosphere_selector(proxy, parity)
+
     namespace["_SOURCE_PARITY_RUNTIME_INSTALLED"] = True
     return True
