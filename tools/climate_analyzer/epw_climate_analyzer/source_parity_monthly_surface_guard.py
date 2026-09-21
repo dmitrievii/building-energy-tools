@@ -20,22 +20,20 @@ _RESOURCE_KEY = "geosphere_resource_id"
 _PARAMETER_SET_KEY = "geosphere_monthly_parameter_catalogue_v2"
 _MONTHLY_CONTEXT_LABEL = "About this GeoSphere monthly dataset"
 _LEGACY_CATALOGUE_OPTIONS = ("Recommended", "All parameters")
+_PARAMETER_SET_OPTIONS = (
+    "Core variables",
+    "Core + additional statistics",
+    "All provider parameters",
+)
+_PARAMETER_SET_HELP = (
+    "Core variables are canonical/building-climate quantities. Additional statistics are "
+    "provider-published monthly counts, extrema and indicators. All provider parameters also "
+    "shows fields without normalized Seasonal/Annual semantics."
+)
 
 
 def _monthly_active(st: Any) -> bool:
     return str(st.session_state.get(_RESOURCE_KEY, "")) == MONTHLY_RESOURCE_ID
-
-
-def _canonical_parameter_set_active(st: Any) -> bool:
-    """Return true only after the canonical Parameter set has rendered once.
-
-    The first monthly render must remain untouched so the outer resource wrapper
-    can commit the private dataset widget into the legacy routing key. Legacy
-    suppression is needed only on later Parameter-set reruns, where the canonical
-    key is already present and the old Recommended/All wrapper can otherwise
-    reappear beside the new control.
-    """
-    return _monthly_active(st) and _PARAMETER_SET_KEY in st.session_state
 
 
 def _dataset_has_station_pressure(dataset: Any) -> bool:
@@ -67,7 +65,17 @@ def _install_monthly_analysis_capability_note(st: Any) -> None:
 
 
 def install_monthly_surface_guard(parity: Any) -> None:
-    """Normalize the final native-monthly Streamlit surface."""
+    """Normalize the final native-monthly Streamlit surface.
+
+    The source-parity stack contains both the legacy ``Parameter catalogue``
+    wrapper and the canonical ``Parameter set`` wrapper.  Streamlit sessions
+    share imported Python modules, so a previous session can leave those wrappers
+    composed in a different order for the next session even when the underlying
+    Streamlit callables themselves have been restored.  This final guard therefore
+    owns the user-visible monthly radio contract: whichever inner wrapper calls
+    first, one canonical Parameter-set widget is rendered and every later call in
+    the same selector pass returns that already selected value.
+    """
     previous = parity._render_geosphere_resource_selector
     st = parity.st
 
@@ -77,6 +85,12 @@ def install_monthly_surface_guard(parity: Any) -> None:
         real_radio = st.radio
         real_expander = st.expander
         context_seen = {"value": False}
+        parameter_set_rendered = {"value": False}
+        selected_parameter_set = {
+            "value": str(st.session_state.get(_PARAMETER_SET_KEY, "Core variables"))
+        }
+        if selected_parameter_set["value"] not in _PARAMETER_SET_OPTIONS:
+            selected_parameter_set["value"] = "Core variables"
 
         def caption(body: Any, *args: Any, **kwargs: Any):
             text = str(body)
@@ -99,21 +113,41 @@ def install_monthly_surface_guard(parity: Any) -> None:
                 return None
             return real_info(body, *args, **kwargs)
 
+        def render_parameter_set() -> str:
+            if parameter_set_rendered["value"]:
+                return selected_parameter_set["value"]
+            current = selected_parameter_set["value"]
+            chosen = real_radio(
+                "Parameter set",
+                list(_PARAMETER_SET_OPTIONS),
+                index=list(_PARAMETER_SET_OPTIONS).index(current),
+                horizontal=True,
+                key=_PARAMETER_SET_KEY,
+                help=_PARAMETER_SET_HELP,
+            )
+            selected_parameter_set["value"] = str(chosen)
+            parameter_set_rendered["value"] = True
+            return selected_parameter_set["value"]
+
         def radio(label: str, options: Iterable[Any], *args: Any, **kwargs: Any):
             values = list(options)
-            if (
-                _canonical_parameter_set_active(st)
-                and label == "Parameter catalogue"
-                and tuple(values) == _LEGACY_CATALOGUE_OPTIONS
-            ):
-                # On Parameter-set reruns the canonical selector owns filtering;
-                # keep the legacy layer transparent and preserve the full provider
-                # vocabulary for the provider-keyed selection adapter.
-                return "All parameters"
+            if _monthly_active(st):
+                if label == "Parameter catalogue" and tuple(values) == _LEGACY_CATALOGUE_OPTIONS:
+                    # Never expose the obsolete Recommended/All control.  Rendering
+                    # the canonical selector here (rather than merely returning
+                    # ``All parameters``) also makes the very first monthly render
+                    # safe when legacy cleanup happens to be the outer wrapper.
+                    render_parameter_set()
+                    return "All parameters"
+                if label == "Parameter set" and tuple(values) == _PARAMETER_SET_OPTIONS:
+                    # The contract-guidance wrapper may independently ask for the
+                    # same widget.  Return the value already rendered by this final
+                    # guard so duplicate widget IDs cannot be created.
+                    return render_parameter_set()
             return real_radio(label, values, *args, **kwargs)
 
         def expander(label: str, *args: Any, **kwargs: Any):
-            if _canonical_parameter_set_active(st) and label == _MONTHLY_CONTEXT_LABEL:
+            if _monthly_active(st) and label == _MONTHLY_CONTEXT_LABEL:
                 if context_seen["value"]:
                     return nullcontext()
                 context_seen["value"] = True
@@ -124,10 +158,6 @@ def install_monthly_surface_guard(parity: Any) -> None:
         st.radio = radio
         st.expander = expander
         try:
-            if _canonical_parameter_set_active(st):
-                real_caption(
-                    "Native monthly source data · Parameter set changes catalogue visibility only; Load/Flag selections are retained by provider."
-                )
             previous(legacy, original)
         finally:
             st.caption = real_caption
