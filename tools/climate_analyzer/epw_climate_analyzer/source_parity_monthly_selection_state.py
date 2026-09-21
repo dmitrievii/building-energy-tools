@@ -3,17 +3,14 @@
 The mature source UI reuses ``geosphere_variable_editor`` for 10-minute, hourly
 and monthly datasets. Streamlit keys identify widget state, so reusing one key
 for different provider vocabularies (and for filtered Core/Additional/All views)
-can reconcile an old DataEditor state into the new table. In the monthly path
-that manifested as hundreds of stale selected rows, a missing visible table,
-and the contradictory warning that air temperature was not selected.
+can reconcile an old DataEditor state into the new table.
 
 This adapter owns monthly selection semantics independently of the mature shell's
 legacy ``Selected=True`` table default. A fresh monthly session selects only the
-explicit engineering ``Core`` providers. Provider fields that are merely marked
-``recommended`` by the catalogue heuristic are demoted to ``Additional statistic``
-so event/count/secondary climatological statistics cannot leak into the default
-load. Quality flags start unchecked. The catalogue radio changes visibility only,
+explicit engineering Core providers. The catalogue radio changes visibility only,
 and later user edits are retained by provider ID across Core/Additional/All views.
+The loader is always fed a table reconstructed in the original provider order;
+therefore UI sorting/filtering can never change provider identity by row position.
 """
 from __future__ import annotations
 
@@ -28,9 +25,6 @@ from .source_parity_contract_guidance_hotfix import _decorate_monthly_table
 
 _RESOURCE_KEY = "geosphere_resource_id"
 _PARAMETER_SET_KEY = "geosphere_monthly_parameter_catalogue_v2"
-# v3 deliberately invalidates the earlier state maps that could either be seeded
-# from the mature shell's all-True legacy table or retain the former broad
-# catalogue ``recommended`` classification as Core.
 _SELECTION_STATE_KEY = "_geosphere_monthly_provider_selection_v3"
 _FLAG_STATE_KEY = "_geosphere_monthly_provider_flag_selection_v3"
 _LAST_VIEW_KEY = "_geosphere_monthly_provider_selection_last_view_v3"
@@ -54,14 +48,7 @@ def _provider_state(
     *,
     default: bool | Callable[[pd.Series], bool] | None = None,
 ) -> dict[str, bool]:
-    """Return/update one provider-keyed boolean state map.
-
-    ``default`` is authoritative for providers not yet present in the state map.
-    This is required for monthly selection because the mature shared source table
-    deliberately starts every measured variable with ``Selected=True``. That
-    legacy default is valid for the old generic shell but must not silently turn
-    ``Core variables`` into an all-provider load.
-    """
+    """Return/update one provider-keyed boolean state map."""
     raw = st.session_state.get(key, {})
     state = (
         {str(provider): _bool_value(value) for provider, value in raw.items()}
@@ -95,16 +82,7 @@ def _editor_key(view: str, providers: list[str]) -> str:
 
 
 def _normalize_catalogue_roles(data: pd.DataFrame) -> pd.DataFrame:
-    """Enforce the user-facing Core/Additional contract deterministically.
-
-    The cleanup catalogue's historical ``recommended`` heuristic intentionally
-    captures useful wind/solar/precipitation statistics, but it is broader than
-    the final ``Core variables`` UX contract. Only explicitly curated providers
-    are Core. Any heuristic Core row outside that allow-list has known monthly
-    semantics and is therefore presented as Additional rather than silently
-    loaded by default. Re-sort after demotion so the visible table always keeps
-    Core before Additional before Other.
-    """
+    """Enforce the user-facing Core/Additional contract deterministically."""
     out = data.copy()
     if {"Provider", "Role"}.issubset(out.columns):
         providers = out["Provider"].fillna("").astype(str)
@@ -137,6 +115,30 @@ def _visible_catalogue(parity: Any, data: pd.DataFrame, view: str) -> pd.DataFra
     return prepared
 
 
+def _loader_table_from_provider_state(
+    data: pd.DataFrame,
+    selection_state: dict[str, bool],
+    flag_state: dict[str, bool],
+) -> pd.DataFrame:
+    """Rebuild the shell-facing loader table in original provider order.
+
+    The DataEditor may be sorted, filtered or reconciled by Streamlit.  The mature
+    loader, however, derives its provider query directly from the DataFrame it
+    receives back from ``st.data_editor``. Reconstructing that result from the
+    original table and provider-keyed state makes provider identity independent
+    of every UI row position.
+    """
+    out = data.copy()
+    if "Provider" not in out.columns:
+        return out
+    providers = out["Provider"].fillna("").astype(str)
+    if "Selected" in out.columns:
+        out["Selected"] = [bool(selection_state.get(provider, False)) for provider in providers]
+    if "Quality flag" in out.columns:
+        out["Quality flag"] = [bool(flag_state.get(provider, False)) for provider in providers]
+    return out.reset_index(drop=True)
+
+
 def install_monthly_selection_state(parity: Any) -> None:
     """Wrap the GeoSphere selector with resource/view-safe DataEditor state."""
     previous = parity._render_geosphere_resource_selector
@@ -161,9 +163,6 @@ def install_monthly_selection_state(parity: Any) -> None:
             }:
                 view = "Core variables"
 
-            # Own decoration/filtering at this boundary instead of trusting the
-            # shared shell's all-True selection defaults or its broader legacy
-            # ``recommended`` heuristic.
             full = _normalize_catalogue_roles(_decorate_monthly_table(parity, data))
             selection_state = _provider_state(
                 st,
@@ -188,45 +187,48 @@ def install_monthly_selection_state(parity: Any) -> None:
 
             widget_key = _editor_key(view, providers)
             previous_view = str(st.session_state.get(_LAST_VIEW_KEY, ""))
-            if previous_view != view:
-                # Re-entering an existing view must start from the provider map,
-                # not a stale DataEditor snapshot created before another view
-                # changed the same providers.
+            view_changed = previous_view != view
+            if view_changed:
+                # The rerun was caused by changing Parameter set, not by editing
+                # a checkbox. Drop any old widget snapshot and do not ingest its
+                # row-position deltas into provider state on this render.
                 st.session_state.pop(widget_key, None)
             st.session_state[_LAST_VIEW_KEY] = view
 
             kwargs["key"] = widget_key
             edited = real_editor(prepared.reset_index(drop=True), *args, **kwargs)
-            if not isinstance(edited, pd.DataFrame):
-                return edited
 
-            # Fail closed against any unexpected stale Streamlit reconciliation:
-            # the legacy loader may receive only providers visible in the active
-            # parameter set, never rows from another resource/table shape.
-            visible = set(providers)
-            if "Provider" in edited.columns:
-                edited = edited.loc[
-                    edited["Provider"].fillna("").astype(str).isin(visible)
-                ].copy()
-            else:
-                edited = prepared.reset_index(drop=True)
+            if isinstance(edited, pd.DataFrame) and not view_changed:
+                visible = set(providers)
+                if "Provider" in edited.columns:
+                    edited = edited.loc[
+                        edited["Provider"].fillna("").astype(str).isin(visible)
+                    ].copy()
+                else:
+                    edited = prepared.reset_index(drop=True)
 
-            if {"Provider", "Selected"}.issubset(edited.columns):
-                updated = dict(selection_state)
-                for _, row in edited.iterrows():
-                    provider = str(row.get("Provider", "") or "").strip()
-                    if provider:
-                        updated[provider] = _bool_value(row.get("Selected", False))
-                st.session_state[_SELECTION_STATE_KEY] = updated
+                if {"Provider", "Selected"}.issubset(edited.columns):
+                    updated = dict(selection_state)
+                    for _, row in edited.iterrows():
+                        provider = str(row.get("Provider", "") or "").strip()
+                        if provider:
+                            updated[provider] = _bool_value(row.get("Selected", False))
+                    selection_state = updated
+                    st.session_state[_SELECTION_STATE_KEY] = updated
 
-            if {"Provider", "Quality flag"}.issubset(edited.columns):
-                updated_flags = dict(flag_state)
-                for _, row in edited.iterrows():
-                    provider = str(row.get("Provider", "") or "").strip()
-                    if provider:
-                        updated_flags[provider] = _bool_value(row.get("Quality flag", False))
-                st.session_state[_FLAG_STATE_KEY] = updated_flags
-            return edited.reset_index(drop=True)
+                if {"Provider", "Quality flag"}.issubset(edited.columns):
+                    updated_flags = dict(flag_state)
+                    for _, row in edited.iterrows():
+                        provider = str(row.get("Provider", "") or "").strip()
+                        if provider:
+                            updated_flags[provider] = _bool_value(row.get("Quality flag", False))
+                    flag_state = updated_flags
+                    st.session_state[_FLAG_STATE_KEY] = updated_flags
+
+            # Never feed the filtered/sorted DataEditor result directly to the
+            # mature loader. Its provider query is reconstructed from the original
+            # table and canonical provider-keyed state instead.
+            return _loader_table_from_provider_state(data, selection_state, flag_state)
 
         st.data_editor = editor
         try:
