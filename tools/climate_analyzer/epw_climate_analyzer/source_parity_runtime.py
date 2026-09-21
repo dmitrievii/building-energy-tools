@@ -86,7 +86,7 @@ def _fresh_source_parity_ui() -> Any:
     """Return a pristine source-parity runtime stack for this script run.
 
     Reset the persistent Streamlit module surface *before* reloading source-
-    parity modules.  Widget-triggered reruns can interrupt a nested selector
+    parity modules. Widget-triggered reruns can interrupt a nested selector
     while ``st.data_editor``/``st.radio``/``DeltaGenerator.date_input`` are
     temporarily replaced; without this reset those leaked wrappers become the
     next run's apparent originals and the chain accumulates.
@@ -138,6 +138,15 @@ def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     enforce_native_timeseries_only(parity)
     install_longterm_hourly_hotfix(proxy, parity)
     install_resource_temporal_bounds(proxy, parity)
+
+    # The monthly editor-state adapter must sit inside the later selection
+    # wrappers. At the DataEditor call boundary this lets it assign the
+    # resource/view-specific key and provider-filtered table *before* the legacy
+    # long-term wrapper can reinterpret ``geosphere_variable_editor`` as an
+    # hourly/10-minute widget. Installing it at the end of the chain is too late:
+    # the legacy wrapper has already changed the data/key by then.
+    install_monthly_selection_state(parity)
+
     install_longterm_followup(proxy, parity)
     install_monthly_resource(proxy, parity)
     install_monthly_canonical_ui(proxy, parity)
@@ -148,9 +157,6 @@ def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     # contract closure composes the outermost source selector.
     patch_contract_guidance()
     install_contract_closure(proxy, parity)
-    # Isolate the final monthly DataEditor from the shared 10min/1h widget key
-    # and preserve checkbox state by provider while catalogue views are filtered.
-    install_monthly_selection_state(parity)
     install_contract_guards()
     namespace["_SOURCE_PARITY_RUNTIME_INSTALLED"] = True
     return True
