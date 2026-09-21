@@ -4,6 +4,7 @@ import unittest
 from types import SimpleNamespace
 
 import pandas as pd
+import streamlit as st
 
 from epw_climate_analyzer import aggregations, source_parity_monthly_canonical, source_parity_runtime
 from epw_climate_analyzer import source_parity_contract_closure as contract
@@ -24,6 +25,22 @@ class CanonicalContractRuntimeTests(unittest.TestCase):
         self.assertIsNot(aggregations.aggregate_summary, stale_aggregation)
         self.assertEqual(source_parity_monthly_canonical._render_monthly_generic.__name__, "_render_monthly_generic")
         self.assertEqual(aggregations.aggregate_summary.__name__, "aggregate_summary")
+
+    def test_streamlit_surface_is_restored_before_a_new_runtime_stack(self) -> None:
+        source_parity_runtime._restore_streamlit_surface()
+        original_data_editor = st.data_editor
+        original_radio = st.radio
+        original_selectbox = st.selectbox
+
+        st.data_editor = lambda *args, **kwargs: None
+        st.radio = lambda *args, **kwargs: None
+        st.selectbox = lambda *args, **kwargs: None
+
+        source_parity_runtime._restore_streamlit_surface()
+
+        self.assertIs(st.data_editor, original_data_editor)
+        self.assertIs(st.radio, original_radio)
+        self.assertIs(st.selectbox, original_selectbox)
 
     def test_unknown_provider_statistic_is_native_monthly_only(self) -> None:
         install_contract_guards()
