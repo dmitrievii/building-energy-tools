@@ -70,17 +70,19 @@ jobs:
 
       - name: Capture visual walkthrough
         run: |
-          # Visual evidence should reuse the already-proven exact station selection
-          # behaviour from the branch source-UI smoke, not introduce a second DOM
-          # contract. Keep the selector's native complete-year dates and the default
-          # Core-variable catalogue.
+          # Visual evidence uses the normal Core catalogue first. For deterministic
+          # automation only, switch to All provider parameters after that screenshot
+          # so provider IDs are visible to the DataEditor row locator.
           python - <<'PY'
           from pathlib import Path
 
           path = Path('deployment/pr83_visual_walkthrough.mjs')
           text = path.read_text()
-          text = text.replace("  await clickTextChoice(page,'All provider parameters');\n", "")
           text = text.replace("  await setDate(page,'From date (UTC)','2020-01-01'); await setDate(page,'Through date (UTC)','2025-12-31');\n", "")
+          text = text.replace(
+              "  await page.goto(TARGET_URL,{waitUntil:'domcontentloaded',timeout:60000}); await chooseSource(page); await selectDataset(page,'1 month','klima-v2-1m'); await selectExactStation(page,fixture.station_name,fixture.station_id);\n  await clickTextChoice(page,'All provider parameters');",
+              "  await page.goto(TARGET_URL,{waitUntil:'domcontentloaded',timeout:60000}); await chooseSource(page); await selectDataset(page,'1 month','klima-v2-1m'); await selectExactStation(page,fixture.station_name,fixture.station_id);\n  await screenshot(page,'00-monthly-core-source.png');\n  await clickTextChoice(page,'All provider parameters');"
+          )
 
           start = text.index('async function selectExactStation(')
           end = text.index('async function clickTextChoice(', start)
@@ -118,17 +120,23 @@ jobs:
             frame=await appFrame(page,'Manual station selection',60000);
             const targetId=String(id);
             frame=await selectVisibleOption(page,frame,'Search-result stations',(t)=>t.includes(name)&&(t.includes(`ID ${targetId}`)||t.includes(targetId)),60000);
+            const use=frame.getByRole('button',{name:'Use station from list',exact:true}).first();
+            if (await use.count().catch(()=>0) && await use.isVisible().catch(()=>false)) {
+              await use.click({timeout:10000});
+              await sleep(700);
+            }
             const started=performance.now();
             let lastControl='';
             while (performance.now()-started<30000) {
               frame=await appFrame(page,'Climate Analyzer',5000);
-              try {
-                const stationCombo=await combo(frame,'Search-result stations',5000);
-                lastControl=await rendered(stationCombo);
-                if (lastControl.includes(name)&&(lastControl.includes(`ID ${targetId}`)||lastControl.includes(targetId))) return frame;
-              } catch {}
               const body=await bodyText(frame);
               if (body.includes('Selected station')&&body.includes(name)&&body.includes(targetId)) return frame;
+              try {
+                const stationCombo=await combo(frame,'Search-result stations',3000);
+                lastControl=await rendered(stationCombo);
+                if (lastControl.includes(name)&&(lastControl.includes(`ID ${targetId}`)||lastControl.includes(targetId)) && !(await frame.getByRole('button',{name:'Use station from list',exact:true}).first().isVisible().catch(()=>false))) return frame;
+              } catch {}
+              if (body.includes('Measured variables to load') && body.includes(name)) return frame;
               await sleep(250);
             }
             throw new Error(`Exact station ID ${targetId} did not settle; control=${lastControl}`);
