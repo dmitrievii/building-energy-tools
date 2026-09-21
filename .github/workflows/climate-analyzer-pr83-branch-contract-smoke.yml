@@ -1,0 +1,162 @@
+name: Climate Analyzer PR83 Branch Contract Smoke
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_contract_closure.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_contract_guidance_hotfix.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_contract_guard.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_overlay_hotfix.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_selection_state.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_surface_guard.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_streamlit_surface.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_runtime.py'
+      - 'tools/climate_analyzer/tests/test_canonical_contract_closure_0_7_5_3.py'
+      - 'tools/climate_analyzer/tests/test_canonical_contract_runtime_0_7_5_4.py'
+      - 'tools/climate_analyzer/tests/test_geosphere_resource_transition_0_7_5_5.py'
+      - 'deployment/pr83_monthly_contract_probe.py'
+      - 'deployment/pr83_source_ui_live_smoke_v18.mjs'
+      - 'deployment/pr83_precip_snow_live_smoke.mjs'
+      - 'deployment/pr83_visual_walkthrough.mjs'
+      - 'deployment/pr83_visual_walkthrough_core.mjs'
+      - '.github/workflows/climate-analyzer-pr83-branch-contract-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: climate-analyzer-pr83-branch-contract-smoke-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  branch-local-contract-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONPATH: tools/climate_analyzer
+      TARGET_URL: http://127.0.0.1:8501/
+      CHROME_PATH: /usr/bin/google-chrome
+      PR83_MONTHLY_FIXTURE: artifacts/pr83-contract-smoke/monthly-provider.json
+      PR83_UI_REPORT: artifacts/pr83-contract-smoke/source-ui.json
+      PR83_VISUAL_DIR: artifacts/pr83-visual-walkthrough
+      GEOSPHERE_SMOKE_FIXTURE: artifacts/geosphere-precip-snow-smoke/provider-fixture.json
+      AUDIT_OUTPUT_DIR: artifacts/geosphere-precip-snow-smoke
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/climate_analyzer/requirements.txt
+
+      - name: Install Climate Analyzer dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r tools/climate_analyzer/requirements.txt
+
+      - name: Run focused contract tests with FutureWarnings fatal
+        env:
+          PYTHONWARNINGS: error::FutureWarning
+        run: |
+          python -m unittest -v \
+            tools.climate_analyzer.tests.test_canonical_contract_closure_0_7_5_3 \
+            tools.climate_analyzer.tests.test_canonical_contract_runtime_0_7_5_4 \
+            tools.climate_analyzer.tests.test_geosphere_resource_transition_0_7_5_5
+
+      - name: Probe live GeoSphere native-monthly contract
+        run: python deployment/pr83_monthly_contract_probe.py
+
+      - name: Probe live GeoSphere precipitation/snow fixture
+        run: |
+          python deployment/geosphere_precip_snow_provider_probe.py \
+            --output "$GEOSPHERE_SMOKE_FIXTURE" \
+            --timeout 60
+
+      - name: Start PR branch Streamlit locally
+        run: |
+          mkdir -p artifacts/pr83-contract-smoke
+          nohup python -m streamlit run tools/climate_analyzer/app.py \
+            --server.headless true \
+            --server.address 127.0.0.1 \
+            --server.port 8501 \
+            > artifacts/pr83-contract-smoke/streamlit.log 2>&1 &
+          echo $! > artifacts/pr83-contract-smoke/streamlit.pid
+          for i in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:8501/_stcore/health >/dev/null; then
+              echo 'Branch-local Streamlit is healthy.'
+              exit 0
+            fi
+            sleep 1
+          done
+          cat artifacts/pr83-contract-smoke/streamlit.log || true
+          exit 1
+
+      - name: Show Chrome version
+        run: |
+          test -x "$CHROME_PATH"
+          "$CHROME_PATH" --version
+
+      - name: Install browser smoke dependency
+        run: npm install --no-save playwright-core@1.55.0
+
+      - name: Exercise monthly/hourly source UI against PR branch
+        id: source_ui_smoke
+        continue-on-error: true
+        run: node deployment/pr83_source_ui_live_smoke_v18.mjs
+
+      - name: Capture monthly visual walkthrough
+        id: visual_walkthrough
+        if: ${{ always() && !cancelled() }}
+        continue-on-error: true
+        run: node deployment/pr83_visual_walkthrough.mjs
+
+      - name: Exercise current 10-minute precipitation route against PR branch
+        id: precipitation_smoke
+        if: ${{ always() && !cancelled() }}
+        continue-on-error: true
+        run: node deployment/pr83_precip_snow_live_smoke.mjs
+
+      - name: Reject Streamlit runtime tracebacks
+        id: traceback_gate
+        if: always()
+        continue-on-error: true
+        run: |
+          if grep -E 'Traceback \(most recent call last\)|Uncaught app execution' artifacts/pr83-contract-smoke/streamlit.log; then
+            echo 'Runtime traceback detected in branch-local Streamlit log.'
+            exit 1
+          fi
+
+      - name: Upload PR83 branch smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: climate-analyzer-pr83-branch-contract-smoke
+          path: |
+            artifacts/pr83-contract-smoke
+            artifacts/pr83-visual-walkthrough
+            artifacts/geosphere-precip-snow-smoke
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Enforce independent browser contract gates
+        if: always()
+        env:
+          SOURCE_UI_OUTCOME: ${{ steps.source_ui_smoke.outcome }}
+          VISUAL_OUTCOME: ${{ steps.visual_walkthrough.outcome }}
+          PRECIPITATION_OUTCOME: ${{ steps.precipitation_smoke.outcome }}
+          TRACEBACK_OUTCOME: ${{ steps.traceback_gate.outcome }}
+        run: |
+          echo "source UI: $SOURCE_UI_OUTCOME"
+          echo "visual walkthrough: $VISUAL_OUTCOME"
+          echo "precipitation/snow: $PRECIPITATION_OUTCOME"
+          echo "runtime traceback gate: $TRACEBACK_OUTCOME"
+          test "$SOURCE_UI_OUTCOME" = success
+          test "$VISUAL_OUTCOME" = success
+          test "$PRECIPITATION_OUTCOME" = success
+          test "$TRACEBACK_OUTCOME" = success
