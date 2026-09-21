@@ -9,227 +9,332 @@ const OUT_DIR = process.env.PR83_VISUAL_DIR || 'artifacts/pr83-visual-walkthroug
 const CHROME_PATH = process.env.CHROME_PATH || '/usr/bin/google-chrome';
 const fixture = JSON.parse(await fs.readFile(FIXTURE_PATH, 'utf8'));
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const REQUIRED_PROVIDERS = ['tl_mittel','tlmin','tlmax','rf_mittel','p','tp_mittel','tb10_mittel'];
 
 await fs.mkdir(OUT_DIR, { recursive: true });
 
-async function bodyText(frame) { try { return await frame.locator('body').innerText({ timeout: 2000 }); } catch { return ''; } }
+async function bodyText(frame) {
+  try { return await frame.locator('body').innerText({ timeout: 2000 }); } catch { return ''; }
+}
+
 async function appFrame(page, needle = 'Climate Analyzer', timeoutMs = 90000) {
   const started = performance.now();
   while (performance.now() - started < timeoutMs) {
-    for (const frame of page.frames()) if ((await bodyText(frame)).includes(needle)) return frame;
+    for (const frame of page.frames()) {
+      if ((await bodyText(frame)).includes(needle)) return frame;
+    }
     await sleep(250);
   }
   throw new Error(`Timed out waiting for app text: ${needle}`);
 }
+
 async function combo(frame, label, timeoutMs = 60000) {
   const started = performance.now();
   while (performance.now() - started < timeoutMs) {
-    for (const c of [frame.getByRole('combobox', { name: label, exact: true }).first(), frame.getByLabel(label, { exact: true }).first()]) {
-      if (await c.count().catch(() => 0) && await c.isVisible().catch(() => false)) return c;
+    for (const candidate of [
+      frame.getByRole('combobox', { name: label, exact: true }).first(),
+      frame.getByLabel(label, { exact: true }).first(),
+    ]) {
+      if (await candidate.count().catch(() => 0) && await candidate.isVisible().catch(() => false)) return candidate;
     }
     await sleep(250);
   }
-  throw new Error(`Timed out waiting for combobox: ${label}`);
+  throw new Error(`Combobox not found: ${label}`);
 }
+
 async function labelledInput(frame, label, timeoutMs = 60000) {
   const started = performance.now();
   while (performance.now() - started < timeoutMs) {
-    for (const c of [frame.getByLabel(label, { exact: true }).first(), frame.locator(`input[aria-label="${label}"]`).first()]) {
-      if (await c.count().catch(() => 0) && await c.isVisible().catch(() => false)) return c;
+    for (const candidate of [
+      frame.getByLabel(label, { exact: true }).first(),
+      frame.locator(`input[aria-label="${label}"]`).first(),
+    ]) {
+      if (await candidate.count().catch(() => 0) && await candidate.isVisible().catch(() => false)) return candidate;
     }
     await sleep(250);
   }
-  throw new Error(`Timed out waiting for input: ${label}`);
+  throw new Error(`Input not found: ${label}`);
 }
+
 async function rendered(control) {
-  return [await control.innerText().catch(() => ''), await control.textContent().catch(() => ''), await control.inputValue().catch(() => '')].join(' ').replace(/\s+/g, ' ').trim();
+  return [
+    await control.innerText().catch(() => ''),
+    await control.textContent().catch(() => ''),
+    await control.inputValue().catch(() => ''),
+  ].join(' ').replace(/\s+/g, ' ').trim();
 }
+
 async function visibleOption(page, frame, predicate) {
-  for (const options of [frame.getByRole('option'), page.getByRole('option'), frame.locator('[data-baseweb="menu"] li'), page.locator('[data-baseweb="menu"] li')]) {
+  for (const options of [
+    frame.getByRole('option'),
+    page.getByRole('option'),
+    frame.locator('[data-baseweb="menu"] li'),
+    page.locator('[data-baseweb="menu"] li'),
+  ]) {
     const count = await options.count().catch(() => 0);
-    for (let i=0;i<count;i++) {
-      const option=options.nth(i); if (!(await option.isVisible().catch(() => false))) continue;
-      const text=(await option.innerText().catch(()=>'')).replace(/\s+/g,' ').trim();
+    for (let i = 0; i < count; i += 1) {
+      const option = options.nth(i);
+      if (!(await option.isVisible().catch(() => false))) continue;
+      const text = (await option.innerText().catch(() => '')).replace(/\s+/g, ' ').trim();
       if (predicate(text)) return option;
     }
   }
   return null;
 }
-async function chooseSource(page) {
-  const started=performance.now();
-  while (performance.now()-started<60000) {
-    const frame=await appFrame(page,'Climate Analyzer',10000);
-    for (const c of [frame.getByRole('radio',{name:'GeoSphere Austria',exact:true}).last(),frame.getByText('GeoSphere Austria',{exact:true}).last(),frame.locator('label').filter({hasText:'GeoSphere Austria'}).last()]) {
-      if (!(await c.count().catch(()=>0))) continue;
-      try { await c.click({force:true,timeout:5000}); return await appFrame(page,'GeoSphere Austria — measured historical station data',15000); } catch {}
-    }
-    await sleep(400);
-  }
-  throw new Error('Could not select GeoSphere Austria source.');
-}
-async function selectComboContains(page,label,needle,timeoutMs=60000) {
-  const started=performance.now();
-  while (performance.now()-started<timeoutMs) {
-    const frame=await appFrame(page,'Climate Analyzer',5000); const control=await combo(frame,label,5000);
-    if ((await rendered(control)).includes(needle)) return frame;
-    await control.click({timeout:5000}).catch(()=>{});
-    const optionStarted=performance.now();
-    while (performance.now()-optionStarted<6000) {
-      const option=await visibleOption(page,frame,(t)=>t.includes(needle));
-      if (option) { await option.click({timeout:8000}); return await appFrame(page,'Climate Analyzer',10000); }
+
+async function selectVisibleOption(page, frame, controlLabel, predicate, timeoutMs = 60000) {
+  const started = performance.now();
+  let last = [];
+  while (performance.now() - started < timeoutMs) {
+    frame = await appFrame(page, 'Climate Analyzer', 5000);
+    let control;
+    try { control = await combo(frame, controlLabel, 5000); } catch { await sleep(250); continue; }
+    try {
+      await control.scrollIntoViewIfNeeded({ timeout: 3000 }).catch(() => {});
+      await control.click({ timeout: 5000 });
+    } catch { await sleep(250); continue; }
+    const optionStarted = performance.now();
+    while (performance.now() - optionStarted < 6000) {
+      for (const options of [
+        frame.getByRole('option'),
+        page.getByRole('option'),
+        frame.locator('[data-baseweb="menu"] li'),
+        page.locator('[data-baseweb="menu"] li'),
+      ]) {
+        const count = await options.count().catch(() => 0);
+        if (!count) continue;
+        last = await options.allInnerTexts().catch(() => last);
+        for (let i = 0; i < count; i += 1) {
+          const option = options.nth(i);
+          const text = (await option.innerText().catch(() => '')).replace(/\s+/g, ' ').trim();
+          if (!predicate(text) || !(await option.isVisible().catch(() => false))) continue;
+          await option.click({ timeout: 8000 });
+          return await appFrame(page, 'Climate Analyzer', 10000);
+        }
+      }
       await sleep(200);
     }
-    await page.keyboard.press('Escape').catch(()=>{}); await sleep(300);
-  }
-  throw new Error(`Could not select ${label}: ${needle}`);
-}
-async function selectDataset(page,needle,resourceId) {
-  await selectComboContains(page,'GeoSphere dataset',needle);
-  const started=performance.now();
-  while (performance.now()-started<60000) {
-    const frame=await appFrame(page,'Climate Analyzer',5000); const text=await bodyText(frame);
-    if ((await rendered(await combo(frame,'GeoSphere dataset',5000))).includes(needle) && text.includes(`Selected resource: ${resourceId}`)) return frame;
+    await page.keyboard.press('Escape').catch(() => {});
     await sleep(300);
   }
-  throw new Error(`Dataset did not commit: ${resourceId}`);
-}
-async function selectExactStation(page,name,id) {
-  let frame=await appFrame(page,'Search GeoSphere station',60000); const input=await labelledInput(frame,'Search GeoSphere station');
-  await input.fill(String(name),{timeout:15000}); await input.press('Tab').catch(()=>{});
-  frame=await appFrame(page,'Manual station selection',60000);
-  const control=await combo(frame,'Search-result stations',60000); await control.click({timeout:10000});
-  const started=performance.now();
-  while (performance.now()-started<30000) {
-    const option=await visibleOption(page,frame,(t)=>t.includes(name)&&(t.includes(`ID ${id}`)||t.includes(String(id))));
-    if (option) { await option.click({timeout:10000}); break; }
-    await sleep(200);
-  }
-  const settled=performance.now();
-  while (performance.now()-settled<30000) {
-    frame=await appFrame(page,'Climate Analyzer',5000); const text=await bodyText(frame);
-    if (text.includes('Selected station')&&text.includes(name)&&text.includes(String(id))) return frame;
-    try { if ((await rendered(await combo(frame,'Search-result stations',3000))).includes(name)) return frame; } catch {}
-    await sleep(250);
-  }
-  throw new Error(`Station did not settle: ${name} ${id}`);
-}
-async function clickTextChoice(page,text,timeoutMs=60000) {
-  const started=performance.now();
-  while (performance.now()-started<timeoutMs) {
-    const frame=await appFrame(page,'Climate Analyzer',5000);
-    for (const c of [frame.getByText(text,{exact:true}).last(),frame.locator('label').filter({hasText:text}).last(),frame.getByRole('radio',{name:text,exact:true}).last()]) {
-      if (!(await c.count().catch(()=>0))||!(await c.isVisible().catch(()=>false))) continue;
-      try { await c.click({force:true,timeout:5000}); await sleep(500); return await appFrame(page,'Climate Analyzer',10000); } catch {}
-    }
-    await sleep(250);
-  }
-  throw new Error(`Choice not found: ${text}`);
-}
-async function dateControl(frame,label,timeoutMs=60000) {
-  const started=performance.now();
-  while (performance.now()-started<timeoutMs) {
-    const c=frame.getByLabel(label,{exact:true}).first(); if (await c.count().catch(()=>0)&&await c.isVisible().catch(()=>false)) return c;
-    const a=frame.locator(`input[aria-label="${label}"]`).first(); if (await a.count().catch(()=>0)&&await a.isVisible().catch(()=>false)) return a;
-    await sleep(250);
-  }
-  throw new Error(`Date control not found: ${label}`);
-}
-async function setDate(page,label,value) {
-  for (let attempt=0;attempt<3;attempt++) {
-    const frame=await appFrame(page,'Measured variables to load',30000); const control=await dateControl(frame,label);
-    const tag=await control.evaluate(n=>n.tagName.toLowerCase()).catch(()=>'');
-    if (tag==='input') { await control.fill(value,{timeout:10000}); await control.press('Enter').catch(()=>{}); await control.press('Tab').catch(()=>{}); }
-    else {
-      const spins=control.locator('[role="spinbutton"]'); const [y,m,d]=value.split('-').map(Number);
-      const desired={year:y,month:m,day:d};
-      for (let i=0;i<await spins.count();i++) {
-        const s=spins.nth(i); const lab=String(await s.getAttribute('aria-label').catch(()=>'')).toLowerCase();
-        const part=lab.includes('year')?'year':lab.includes('month')?'month':lab.includes('day')?'day':null; if(!part) continue;
-        await s.click(); await s.press('Control+A').catch(()=>{}); await s.press('Backspace').catch(()=>{}); await page.keyboard.type(String(desired[part]),{delay:40});
-      }
-      await page.keyboard.press('Tab').catch(()=>{});
-    }
-    await sleep(900);
-    const refreshed=await appFrame(page,'Measured variables to load',30000); const text=await bodyText(refreshed);
-    if (text.includes(value.slice(0,4))) return;
-  }
-  throw new Error(`Date did not settle: ${label} ${value}`);
-}
-async function editorState(page) {
-  const frame=await appFrame(page,'Measured variables to load',30000); const tables=frame.locator('[data-testid="stDataFrame"]');
-  if (!(await tables.count())) throw new Error('No DataEditor/DataFrame found.');
-  const editor=tables.last(); const canvas=editor.locator('canvas[data-testid="data-grid-canvas"]').first();
-  if (!(await canvas.count())) throw new Error('Monthly variable editor canvas not found.');
-  return {frame,editor,canvas};
-}
-async function scrollEditor(editor,fraction) {
-  await editor.locator('.dvn-scroller').first().evaluate((node,f)=>{node.scrollTop=Math.max(0,(node.scrollHeight-node.clientHeight)*f);node.dispatchEvent(new Event('scroll',{bubbles:true}));},fraction);
-}
-async function findProviderRow(page,provider) {
-  const fractions=Array.from({length:41},(_,i)=>i/40);
-  let lastProviders=[];
-  for (const fraction of fractions) {
-    let s=await editorState(page); await scrollEditor(s.editor,fraction); await sleep(220); s=await editorState(page);
-    const rows=s.editor.locator('[role="grid"] tr[role="row"]'); const count=await rows.count();
-    lastProviders=[];
-    for(let i=0;i<count;i++) {
-      const row=rows.nth(i);
-      const providerText=(await row.locator('[role="gridcell"][aria-colindex="4"]').textContent().catch(()=>'' )).trim();
-      if(providerText) lastProviders.push(providerText);
-      if(providerText!==provider) continue;
-      const load=(await row.locator('[role="gridcell"][aria-colindex="1"]').textContent().catch(()=>'' )).trim().toLowerCase();
-      const ariaRowIndex=Number(await row.getAttribute('aria-rowindex'));
-      if(!Number.isFinite(ariaRowIndex)||ariaRowIndex<2) throw new Error(`Invalid Glide row index for ${provider}: ${ariaRowIndex}`);
-      return {...s,ariaRowIndex,dataIndex:ariaRowIndex-2,load};
-    }
-  }
-  throw new Error(`Provider row not found: ${provider}; last visible providers=${lastProviders.join(',')}`);
-}
-async function toggleProvider(page,provider) {
-  let state=await findProviderRow(page,provider); if(state.load==='true') return;
-  for(let attempt=0;attempt<3;attempt++) {
-    state=await findProviderRow(page,provider); const box=await state.canvas.boundingBox();
-    if(!box) throw new Error(`Monthly variable editor has no bounding box for ${provider}`);
-    await state.canvas.click({position:{x:Math.min(box.width-10,box.width*0.55),y:Math.min(box.height-10,52)},force:true});
-    await state.canvas.focus(); await page.keyboard.press('Control+Home'); await sleep(220);
-    for(let i=0;i<state.dataIndex;i++) { await page.keyboard.press('ArrowDown'); await sleep(28); }
-    await page.keyboard.press('Space'); await sleep(700);
-    const check=await findProviderRow(page,provider); if(check.load==='true') return;
-  }
-  throw new Error(`Could not enable Load for ${provider}`);
-}
-async function screenshot(page,name) { await page.screenshot({path:path.join(OUT_DIR,name),fullPage:true}); }
-async function nav(page,label,needle) {
-  const frame=await appFrame(page,'Climate Analyzer',30000); const target=frame.getByText(label,{exact:true}).last();
-  if (!(await target.count().catch(()=>0))) throw new Error(`Navigation item not found: ${label}`);
-  await target.click({force:true,timeout:10000}); return await appFrame(page,needle,60000);
-}
-async function selectAnalysis(page,name) {
-  const frame=await appFrame(page,'Analysis type',30000); const control=await combo(frame,'Analysis type',30000); await control.click({timeout:10000});
-  const started=performance.now();
-  while(performance.now()-started<10000) { const option=await visibleOption(page,frame,t=>t===name); if(option){await option.click({timeout:10000});await sleep(700);return;} await sleep(200); }
-  throw new Error(`Analysis option not found: ${name}`);
+  throw new Error(`Could not select ${controlLabel}; last options: ${last.join(' | ')}`);
 }
 
-const report={success:false,checks:{},error:null,page_errors:[],console_errors:[]}; let browser; let page;
+async function chooseSource(page) {
+  const started = performance.now();
+  while (performance.now() - started < 60000) {
+    const frame = await appFrame(page, 'Climate Analyzer', 10000);
+    for (const candidate of [
+      frame.getByRole('radio', { name: 'GeoSphere Austria', exact: true }).last(),
+      frame.getByText('GeoSphere Austria', { exact: true }).last(),
+      frame.locator('label').filter({ hasText: 'GeoSphere Austria' }).last(),
+    ]) {
+      if (!(await candidate.count().catch(() => 0))) continue;
+      try {
+        await candidate.click({ force: true, timeout: 5000 });
+        return await appFrame(page, 'GeoSphere Austria — measured historical station data', 15000);
+      } catch {}
+    }
+    await sleep(300);
+  }
+  throw new Error('Could not select GeoSphere Austria.');
+}
+
+async function selectDataset(page) {
+  const started = performance.now();
+  while (performance.now() - started < 60000) {
+    const frame = await appFrame(page, 'Climate Analyzer', 5000);
+    const control = await combo(frame, 'GeoSphere dataset', 5000);
+    const text = await bodyText(frame);
+    if ((await rendered(control)).includes('1 month') && text.includes('Selected resource: klima-v2-1m')) return frame;
+    await control.click({ timeout: 5000 }).catch(() => {});
+    const option = await visibleOption(page, frame, (value) => value.includes('1 month'));
+    if (option) await option.click({ timeout: 8000 }).catch(() => {});
+    await sleep(500);
+  }
+  throw new Error('Could not commit klima-v2-1m.');
+}
+
+async function selectStation(page) {
+  let frame = await appFrame(page, 'Search GeoSphere station', 60000);
+  const search = await labelledInput(frame, 'Search GeoSphere station');
+  await search.fill(String(fixture.station_name), { timeout: 15000 });
+  await search.press('Tab').catch(() => {});
+  frame = await appFrame(page, 'Manual station selection', 60000);
+
+  const targetId = String(fixture.station_id);
+  frame = await selectVisibleOption(
+    page,
+    frame,
+    'Search-result stations',
+    (text) => text.includes(fixture.station_name) && (text.includes(`ID ${targetId}`) || text.includes(targetId)),
+    60000,
+  );
+
+  const settleStarted = performance.now();
+  let lastControl = '';
+  while (performance.now() - settleStarted < 30000) {
+    frame = await appFrame(page, 'Climate Analyzer', 5000);
+    try {
+      lastControl = await rendered(await combo(frame, 'Search-result stations', 5000));
+      if (lastControl.includes(fixture.station_name) && (lastControl.includes(`ID ${targetId}`) || lastControl.includes(targetId))) break;
+    } catch {}
+    await sleep(250);
+  }
+  if (!lastControl.includes(fixture.station_name) || (!lastControl.includes(`ID ${targetId}`) && !lastControl.includes(targetId))) {
+    throw new Error(`Exact station ID ${targetId} did not settle; control=${lastControl}`);
+  }
+
+  const commitStarted = performance.now();
+  while (performance.now() - commitStarted < 30000) {
+    frame = await appFrame(page, 'Manual station selection', 5000);
+    const button = frame.getByRole('button', { name: 'Use station from list', exact: true }).first();
+    if (await button.count().catch(() => 0) && await button.isVisible().catch(() => false)) {
+      await button.scrollIntoViewIfNeeded({ timeout: 5000 }).catch(() => {});
+      await button.click({ timeout: 15000 });
+      return await appFrame(page, 'Parameter set', 60000);
+    }
+    await sleep(250);
+  }
+  throw new Error('Use station from list button did not become available.');
+}
+
+async function selectParameterSet(page, name) {
+  const started = performance.now();
+  while (performance.now() - started < 30000) {
+    const frame = await appFrame(page, 'Parameter set', 5000);
+    const radio = frame.getByRole('radio', { name, exact: true }).last();
+    if (await radio.count().catch(() => 0) && await radio.isVisible().catch(() => false)) {
+      try {
+        const tag = await radio.evaluate((node) => node.tagName.toLowerCase()).catch(() => '');
+        if (tag === 'input') await radio.check({ force: true, timeout: 5000 });
+        else await radio.click({ force: true, timeout: 5000 });
+        await sleep(700);
+        const refreshed = await appFrame(page, 'Measured variables to load', 10000);
+        return { frame: refreshed, text: await bodyText(refreshed) };
+      } catch {}
+    }
+    const label = frame.getByText(name, { exact: true }).last();
+    if (await label.count().catch(() => 0) && await label.isVisible().catch(() => false)) {
+      try {
+        await label.click({ force: true, timeout: 5000 });
+        await sleep(700);
+        const refreshed = await appFrame(page, 'Measured variables to load', 10000);
+        return { frame: refreshed, text: await bodyText(refreshed) };
+      } catch {}
+    }
+    await sleep(250);
+  }
+  throw new Error(`Parameter set did not settle: ${name}`);
+}
+
+async function screenshot(page, name) {
+  await page.screenshot({ path: path.join(OUT_DIR, name), fullPage: true });
+}
+
+async function nav(page, label, needle) {
+  const frame = await appFrame(page, 'Climate Analyzer', 30000);
+  const target = frame.getByText(label, { exact: true }).last();
+  if (!(await target.count().catch(() => 0))) throw new Error(`Navigation missing: ${label}`);
+  await target.click({ force: true, timeout: 10000 });
+  return await appFrame(page, needle, 60000);
+}
+
+async function selectAnalysis(page, name) {
+  const frame = await appFrame(page, 'Analysis type', 30000);
+  const control = await combo(frame, 'Analysis type', 30000);
+  await control.click({ timeout: 10000 });
+  const started = performance.now();
+  while (performance.now() - started < 15000) {
+    const option = await visibleOption(page, frame, (text) => text === name);
+    if (option) {
+      await option.click({ timeout: 10000 });
+      await sleep(700);
+      return;
+    }
+    await sleep(200);
+  }
+  throw new Error(`Analysis option missing: ${name}`);
+}
+
+const report = {
+  schema: 'climate-analyzer-pr83-extended-visual-v3',
+  success: false,
+  checks: {},
+  page_errors: [],
+  console_errors: [],
+  error: null,
+};
+let browser;
+let page;
+
 try {
-  browser=await chromium.launch({executablePath:CHROME_PATH,headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
-  const context=await browser.newContext({viewport:{width:1440,height:1100},locale:'en-US'}); page=await context.newPage();
-  page.on('pageerror',e=>report.page_errors.push(String(e))); page.on('console',m=>{if(m.type()==='error')report.console_errors.push(m.text());});
-  await page.goto(TARGET_URL,{waitUntil:'domcontentloaded',timeout:60000}); await chooseSource(page); await selectDataset(page,'1 month','klima-v2-1m'); await selectExactStation(page,fixture.station_name,fixture.station_id);
-  await clickTextChoice(page,'All provider parameters');
-  await setDate(page,'From date (UTC)','2020-01-01'); await setDate(page,'Through date (UTC)','2025-12-31');
-  for (const provider of REQUIRED_PROVIDERS) await toggleProvider(page,provider);
-  report.checks.loaded_providers=REQUIRED_PROVIDERS; await screenshot(page,'01-monthly-source-selection.png');
-  let frame=await appFrame(page,'Measured variables to load',30000); const load=frame.getByRole('button',{name:'Load measured GeoSphere interval',exact:true}).first(); if(!(await load.count()))throw new Error('Load button missing'); await load.click({timeout:15000});
-  await appFrame(page,'Summary — Overview',180000); await nav(page,'Summary — Overview','Climate overview'); await screenshot(page,'02-monthly-overview.png');
-  await nav(page,'Climate — Temperature','Temperature and extremes'); await screenshot(page,'03-monthly-temperature.png');
-  const tempText=await bodyText(await appFrame(page,'Temperature and extremes',30000)); report.checks.temperature_no_threshold_sliders=!tempText.includes('Heating threshold [°C]')&&!tempText.includes('Cooling threshold [°C]');
-  if (tempText.includes('Ground temperature')) { await selectAnalysis(page,'Ground temperature'); await appFrame(page,'Ground temperature',30000); await screenshot(page,'04-monthly-ground-temperature.png'); }
-  await nav(page,'Climate — Moisture & psychrometrics','Humidity and psychrometrics'); await selectAnalysis(page,'Psychrometric chart'); await appFrame(page,'Psychrometric axes',30000); await screenshot(page,'05-monthly-psychrometric.png');
-  await nav(page,'Explore — Time series & overlay','Time series'); await screenshot(page,'06-monthly-overlay.png');
+  browser = await chromium.launch({ executablePath: CHROME_PATH, headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1100 }, locale: 'en-US' });
+  page = await context.newPage();
+  page.on('pageerror', (error) => report.page_errors.push(String(error)));
+  page.on('console', (message) => { if (message.type() === 'error') report.console_errors.push(message.text()); });
+
+  await page.goto(TARGET_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await chooseSource(page);
+  await selectDataset(page);
+  await selectStation(page);
+
+  // Exercise the catalogue view transition itself without scripting Glide cells.
+  // The product contract keeps provider selection keyed by provider ID, so opening
+  // All provider parameters must not convert the 13 curated Core fields into an
+  // all-provider load or clear them when returning to Core.
+  const allView = await selectParameterSet(page, 'All provider parameters');
+  report.checks.all_provider_view_visible = allView.text.includes('All provider parameters');
+  report.checks.all_view_keeps_core_selection = allView.text.includes('13 selected measured variables') && allView.text.includes('monthly source data');
+  await screenshot(page, '01-monthly-all-provider-catalogue.png');
+
+  const coreView = await selectParameterSet(page, 'Core variables');
+  report.checks.core_selection_restored = coreView.text.includes('13 selected measured variables') && coreView.text.includes('monthly source data');
+  await screenshot(page, '02-monthly-core-roundtrip.png');
+
+  const loadFrame = await appFrame(page, 'Measured variables to load', 30000);
+  const load = loadFrame.getByRole('button', { name: 'Load measured GeoSphere interval', exact: true }).first();
+  if (!(await load.count().catch(() => 0))) throw new Error('Load button missing.');
+  await load.scrollIntoViewIfNeeded({ timeout: 5000 }).catch(() => {});
+  await load.click({ timeout: 15000 });
+  await appFrame(page, 'Summary — Overview', 180000);
+
+  await nav(page, 'Summary — Overview', 'Climate overview');
+  await screenshot(page, '03-monthly-overview.png');
+
+  await nav(page, 'Climate — Temperature', 'Temperature and extremes');
+  let text = await bodyText(await appFrame(page, 'Temperature and extremes', 30000));
+  report.checks.temperature_no_threshold_sliders = !text.includes('Heating threshold [°C]') && !text.includes('Cooling threshold [°C]');
+  await screenshot(page, '04-monthly-temperature.png');
+
+  if (text.includes('Ground temperature')) {
+    await selectAnalysis(page, 'Ground temperature');
+    await appFrame(page, 'Ground temperature', 30000);
+    await screenshot(page, '05-monthly-ground-temperature.png');
+  }
+
+  await nav(page, 'Climate — Moisture & psychrometrics', 'Humidity and psychrometrics');
+  text = await bodyText(await appFrame(page, 'Humidity and psychrometrics', 30000));
+  report.checks.station_pressure_in_humidity = text.includes('Station pressure');
+  await selectAnalysis(page, 'Psychrometric chart');
+  await appFrame(page, 'Psychrometric axes', 30000);
+  await screenshot(page, '06-monthly-psychrometric.png');
+
+  await nav(page, 'Explore — Time series & overlay', 'Time series');
+  await screenshot(page, '07-monthly-overlay.png');
+
+  if (!report.checks.all_provider_view_visible) throw new Error('All provider parameters view was not exposed.');
+  if (!report.checks.all_view_keeps_core_selection) throw new Error('Opening All provider parameters changed the curated default selection.');
+  if (!report.checks.core_selection_restored) throw new Error('Core selection did not survive the catalogue-view round trip.');
+  if (!report.checks.temperature_no_threshold_sliders) throw new Error('Threshold-only sliders leaked into default Temperature analysis.');
   if (report.page_errors.length) throw new Error(`Page errors: ${report.page_errors.join(' | ')}`);
-  report.success=true;
-} catch(error) { report.error=String(error?.stack||error); if(page) await screenshot(page,'99-failure.png').catch(()=>{}); process.exitCode=1; }
-finally { await fs.writeFile(path.join(OUT_DIR,'visual-walkthrough.json'),JSON.stringify(report,null,2)); console.log(JSON.stringify(report,null,2)); if(browser) await browser.close().catch(()=>{}); }
+  report.success = true;
+} catch (error) {
+  report.error = String(error?.stack || error);
+  if (page) await screenshot(page, '99-failure.png').catch(() => {});
+  process.exitCode = 1;
+} finally {
+  await fs.writeFile(path.join(OUT_DIR, 'visual-walkthrough.json'), JSON.stringify(report, null, 2));
+  console.log(JSON.stringify(report, null, 2));
+  if (browser) await browser.close().catch(() => {});
+}
