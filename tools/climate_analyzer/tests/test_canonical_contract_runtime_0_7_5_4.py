@@ -11,6 +11,10 @@ from epw_climate_analyzer import aggregations, source_parity_monthly_canonical, 
 from epw_climate_analyzer import source_parity_contract_closure as contract
 from epw_climate_analyzer.source_parity_contract_guard import install_contract_guards
 from epw_climate_analyzer.source_parity_contract_guidance_hotfix import _decorate_monthly_table
+from epw_climate_analyzer.source_parity_monthly_selection_state import (
+    _normalize_catalogue_roles,
+    _visible_catalogue,
+)
 from epw_climate_analyzer.source_parity_streamlit_surface import (
     pristine_delta_generator_date_input,
     pristine_streamlit_callable,
@@ -94,6 +98,30 @@ class CanonicalContractRuntimeTests(unittest.TestCase):
         self.assertIn("Core variable", roles)
         self.assertIn("Additional statistic", roles)
         self.assertIn("Other provider parameter", roles)
+
+    def test_monthly_core_demotes_heuristic_recommended_statistics(self) -> None:
+        decorated = pd.DataFrame(
+            {
+                "Provider": ["tl_mittel", "snow_days_ge_100", "mystery"],
+                "Measured variable": [
+                    "Air temperature — monthly mean",
+                    "Days with total snow depth >= 100 cm",
+                    "Mystery provider field",
+                ],
+                "Role": ["Core variable", "Core variable", "Other provider parameter"],
+                "Selected": [True, True, True],
+            }
+        )
+        normalized = _normalize_catalogue_roles(decorated)
+        self.assertEqual(normalized.loc[0, "Role"], "Core variable")
+        self.assertEqual(normalized.loc[1, "Role"], "Additional statistic")
+
+        core = _visible_catalogue(SimpleNamespace(), normalized, "Core variables")
+        self.assertEqual(core["Provider"].tolist(), ["tl_mittel"])
+
+        expanded = _visible_catalogue(SimpleNamespace(), normalized, "Core + additional statistics")
+        self.assertEqual(expanded["Provider"].tolist(), ["tl_mittel", "snow_days_ge_100"])
+        self.assertNotIn("mystery", expanded["Provider"].tolist())
 
 
 if __name__ == "__main__":
