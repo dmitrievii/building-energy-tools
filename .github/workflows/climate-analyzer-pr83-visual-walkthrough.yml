@@ -4,7 +4,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
-      - 'deployment/pr83_visual_walkthrough.mjs'
+      - 'deployment/pr83_visual_walkthrough_core.mjs'
       - '.github/workflows/climate-analyzer-pr83-visual-walkthrough.yml'
   workflow_dispatch:
 
@@ -68,63 +68,8 @@ jobs:
       - name: Install browser dependency
         run: npm install --no-save playwright-core@1.55.0
 
-      - name: Capture visual walkthrough
-        run: |
-          # First capture the normal user-facing Core catalogue. Then switch to
-          # All provider parameters only for deterministic checkbox automation by
-          # exact GeoSphere provider ID. Station selection reuses the proven
-          # precipitation-smoke station metadata contract.
-          python - <<'PY'
-          from pathlib import Path
-
-          path = Path('deployment/pr83_visual_walkthrough.mjs')
-          text = path.read_text()
-          text = text.replace("  await setDate(page,'From date (UTC)','2020-01-01'); await setDate(page,'Through date (UTC)','2025-12-31');\n", "")
-          text = text.replace(
-              "  await page.goto(TARGET_URL,{waitUntil:'domcontentloaded',timeout:60000}); await chooseSource(page); await selectDataset(page,'1 month','klima-v2-1m'); await selectExactStation(page,fixture.station_name,fixture.station_id);\n  await clickTextChoice(page,'All provider parameters');",
-              "  await page.goto(TARGET_URL,{waitUntil:'domcontentloaded',timeout:60000}); await chooseSource(page); await selectDataset(page,'1 month','klima-v2-1m'); await selectExactStation(page,fixture.station_name,fixture.station_id);\n  await screenshot(page,'00-monthly-core-source.png');\n  let catalogueFrame=await appFrame(page,'Measured variables to load',30000);\n  await catalogueFrame.evaluate(()=>window.scrollTo(0,document.body.scrollHeight));\n  await sleep(1200);\n  await clickTextChoice(page,'All provider parameters');\n  await sleep(900);"
-          )
-
-          start = text.index('async function selectExactStation(')
-          end = text.index('async function clickTextChoice(', start)
-          replacement = r'''async function stationMetadata(frame) {
-            const tables=frame.locator('[data-testid="stDataFrame"]');
-            if (!(await tables.count())) return {};
-            const rows=tables.first().locator('[role="grid"] tr[role="row"]');
-            const result={};
-            const count=await rows.count();
-            for (let index=0; index<count; index+=1) {
-              const cells=rows.nth(index).locator('[role="gridcell"]');
-              if (await cells.count()<2) continue;
-              const key=(await cells.nth(0).textContent().catch(()=>'' )).trim();
-              const value=(await cells.nth(1).textContent().catch(()=>'' )).trim();
-              if (key) result[key]=value;
-            }
-            return result;
-          }
-          async function selectExactStation(page,name,id) {
-            let frame=await appFrame(page,'Search GeoSphere station',60000);
-            const input=await labelledInput(frame,'Search GeoSphere station');
-            await input.fill(String(name),{timeout:15000});
-            await input.press('Tab').catch(()=>{});
-            const started=performance.now();
-            let observed={};
-            while (performance.now()-started<60000) {
-              try {
-                frame=await appFrame(page,'Selected station',5000);
-                frame=await appFrame(page,'Measured variables to load',5000);
-                observed=await stationMetadata(frame);
-                if (String(observed.ID||'')===String(id) && String(observed.Station||'').includes(name)) return frame;
-              } catch {}
-              await sleep(300);
-            }
-            throw new Error(`Station search did not settle on ${name} (ID ${id}); observed ${JSON.stringify(observed)}.`);
-          }
-          '''
-          text = text[:start] + replacement + text[end:]
-          path.write_text(text)
-          PY
-          node deployment/pr83_visual_walkthrough.mjs
+      - name: Capture core-variable visual walkthrough
+        run: node deployment/pr83_visual_walkthrough_core.mjs
 
       - name: Reject runtime tracebacks
         if: always()
