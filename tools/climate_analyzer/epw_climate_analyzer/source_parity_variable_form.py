@@ -1,9 +1,10 @@
 """Transactional GeoSphere measured-variable form runtime contract.
 
-This module owns the production installer for the measured-variable form.  The
-submit request is cleared once per selector execution, not once per data-editor
-call, so a successful form submit cannot be erased by another editor wrapper in
-the same Streamlit rerun before the mature load button is evaluated.
+The visible form stages DataEditor changes client-side and hands a valid submit
+directly to the mature provider loader later in the same Streamlit script run.
+No persistent request flag is used: the form submit and the mature load-button
+branch are part of one execution, so a one-shot closure is both simpler and
+immune to session-state reconciliation between nested runtime wrappers.
 """
 from __future__ import annotations
 
@@ -14,7 +15,6 @@ import pandas as pd
 
 
 _GEOSPHERE_FORM_INSTALLED = "_GEOSPHERE_VARIABLE_FORM_INSTALLED_V1"
-_FORM_REQUEST_KEY = "_geosphere_variable_form_load_requested_v1"
 _FORM_KEY_PREFIX = "geosphere_variable_load_form_v1"
 
 
@@ -32,7 +32,7 @@ def _scope(st: Any) -> tuple[str, str]:
 
 
 def install_geosphere_variable_form(parity: Any) -> None:
-    """Stage editor changes in a form and proxy submit into the mature loader."""
+    """Stage editor changes in a form and trigger the mature loader once."""
     if bool(getattr(parity, _GEOSPHERE_FORM_INSTALLED, False)):
         return
     setattr(parity, _GEOSPHERE_FORM_INSTALLED, True)
@@ -45,13 +45,7 @@ def install_geosphere_variable_form(parity: Any) -> None:
         real_button = st.button
         real_warning = st.warning
         form_rendered = {"value": False}
-
-        # Clear a stale request from an interrupted *previous* script run once.
-        # Do not clear it from inside editor(): several runtime wrappers can
-        # legitimately traverse the editor surface during one rerun, and doing
-        # so would erase the request created by the submit event before the
-        # mature load button consumes it later in this same run.
-        st.session_state.pop(_FORM_REQUEST_KEY, None)
+        load_requested = {"value": False}
 
         def editor(data: Any, *args: Any, **kwargs: Any):
             qualifies = (
@@ -81,16 +75,22 @@ def install_geosphere_variable_form(parity: Any) -> None:
                     if _selected_count(edited) <= 0:
                         real_warning("Select at least one measured GeoSphere variable to load.")
                     else:
-                        st.session_state[_FORM_REQUEST_KEY] = (resource_id, station_id)
+                        # The mature loader is evaluated later in this same
+                        # selector execution. A closure gives it the submit event
+                        # exactly once without any persistent intermediate state.
+                        load_requested["value"] = True
             return edited
 
         def button(label: Any, *args: Any, **kwargs: Any):
             if str(label) != "Load measured GeoSphere interval":
                 return real_button(label, *args, **kwargs)
-            request = st.session_state.pop(_FORM_REQUEST_KEY, None)
-            return request == _scope(st)
+            requested = bool(load_requested["value"])
+            load_requested["value"] = False
+            return requested
 
         def warning(body: Any, *args: Any, **kwargs: Any):
+            # The form owns empty-selection validation. Suppress the mature
+            # renderer's always-visible copy while the form is on screen.
             if (
                 form_rendered["value"]
                 and str(body).strip() == "Select at least one measured GeoSphere variable to load."
