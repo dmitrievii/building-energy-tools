@@ -86,11 +86,6 @@ def _freeze_session_geosphere_selector(proxy: Any, parity: Any) -> None:
             if st is None:
                 return final_selector(proxy, original_geosphere)
 
-            # Install the form-load bridge *outside* the complete composed
-            # selector chain. Inner wrappers are free to save/replace/restore
-            # ``st.button``; their saved "real" button will still be this root
-            # bridge, so the exact mature provider-load action cannot lose the
-            # form submit event.
             from .source_parity_variable_form import (
                 consume_geosphere_variable_form_load_request,
                 geosphere_variable_form_owns_load_action,
@@ -103,12 +98,19 @@ def _freeze_session_geosphere_selector(proxy: Any, parity: Any) -> None:
                     str(label) == "Load measured GeoSphere interval"
                     and str(kwargs.get("key", "")) == "load_geosphere_interval"
                 )
-                if is_mature_load and geosphere_variable_form_owns_load_action(st):
-                    # The transactional form is the only visible action for this
-                    # scope. Suppress the legacy duplicate button and return the
-                    # durable one-shot submit request directly to the mature load
-                    # branch in app.py.
-                    return consume_geosphere_variable_form_load_request(st)
+                if is_mature_load:
+                    # Phase 2: consume an already-committed request first. The
+                    # request was persisted on the preceding form-submit run, so
+                    # provider execution no longer depends on same-run wrapper or
+                    # widget return ordering.
+                    if consume_geosphere_variable_form_load_request(st):
+                        return True
+                    # When the transactional form owns this scope, its submit is
+                    # the only visible action. Keep the mature legacy button
+                    # suppressed while idle; unrelated/non-form scopes retain the
+                    # original button behaviour.
+                    if geosphere_variable_form_owns_load_action(st):
+                        return False
                 return real_button(label, *args, **kwargs)
 
             st.button = button
