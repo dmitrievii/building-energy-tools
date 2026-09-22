@@ -136,38 +136,12 @@ class InterannualOverlayAndVariableFormTests(unittest.TestCase):
         self.assertEqual(len(fake_st.form_calls), 1)
         self.assertTrue(any("staged locally" in text for text in fake_st.caption_calls))
 
-    def test_monthly_variable_label_alias_enters_transactional_form(self) -> None:
-        edited = pd.DataFrame(
-            {
-                "Selected": [True, False],
-                "Variable": ["Temperature — monthly mean", "Humidity — monthly mean"],
-                "Provider": ["tl_mittel", "rf_mittel"],
-            }
-        )
-        fake_st = _FakeStreamlit(edited, submit=True)
-        fake_st.session_state["geosphere_resource_id"] = "klima-v2-1m"
-        captured: dict[str, object] = {}
-
-        def base_selector(_legacy, _original):
-            source = edited.copy()
-            source["Selected"] = False
-            result = fake_st.data_editor(
-                source,
-                key="geosphere_variable_editor__monthly__v2__core__fixture",
-            )
-            captured["columns"] = tuple(result.columns)
-            captured["load"] = fake_st.button("Load measured GeoSphere interval", type="primary")
-
-        parity = SimpleNamespace(st=fake_st, _render_geosphere_resource_selector=base_selector)
-        surface_guard._install_monthly_form_table_alias(parity)
-        ux.install_geosphere_variable_form(parity)
-        parity._render_geosphere_resource_selector(SimpleNamespace(), lambda: None)
-
-        self.assertTrue(captured["load"])
-        self.assertNotIn("Measured variable", captured["columns"])
-        self.assertEqual(fake_st.real_button_calls, [])
-        self.assertEqual(len(fake_st.form_calls), 1)
-        self.assertTrue(any("staged locally" in text for text in fake_st.caption_calls))
+    def test_monthly_form_alias_is_retired(self) -> None:
+        # Native monthly selection now returns a normal loader-facing DataFrame
+        # and continues through the mature GeoSphere button/loader path.  The
+        # former monthly table alias existed only to qualify that table for the
+        # transactional form wrapper and must not return.
+        self.assertFalse(hasattr(surface_guard, "_install_monthly_form_table_alias"))
 
     def test_empty_form_submit_warns_once_and_never_triggers_load(self) -> None:
         edited = pd.DataFrame(
