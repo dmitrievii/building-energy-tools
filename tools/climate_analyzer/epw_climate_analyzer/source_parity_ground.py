@@ -39,6 +39,18 @@ def _numeric(df: pd.DataFrame, column: str) -> bool:
 
 def install_ground_depth_contract(legacy: Any) -> None:
     """Register all canonical measured ground depths in the common UI/engine."""
+    # Interannual rendering belongs to the mature analysis proxy and can be bound
+    # here. The transactional GeoSphere variable form is still installed only by
+    # the final monthly surface guard, but publish the schema-compatible installer
+    # now so that later composition accepts both ``Measured variable`` and the
+    # native-monthly ``Variable`` table schema.
+    if hasattr(legacy, "st"):
+        from .source_parity_variable_form_compat import patch_variable_form_installer
+        from .source_parity_ux_followup import install_interannual_overlay
+
+        patch_variable_form_installer()
+        install_interannual_overlay(legacy)
+
     ground_temperature.MEASURED_GROUND_DEPTHS_M.update(CANONICAL_GROUND_DEPTHS_M)
     legacy.VARIABLES.update(GROUND_VARIABLE_LABELS)
 
@@ -69,7 +81,7 @@ def install_ground_depth_contract(legacy: Any) -> None:
         has_any_ground = any(_numeric(measured, column) for column in CANONICAL_GROUND_DEPTHS_M)
 
         # The mature renderer already handles all normal air/shallow-ground
-        # combinations.  Its internal availability check predates the 1/2 m
+        # combinations. Its internal availability check predates the 1/2 m
         # canonical depths, so only the deep-ground-only edge case needs routing.
         if has_any_ground and not has_air and not has_shallow:
             st.header("Temperature and extremes")
