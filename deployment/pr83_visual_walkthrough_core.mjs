@@ -53,7 +53,7 @@ async function toggleMonthlyRows(page, rowIndexes) {
   }
 }
 
-const report = { schema: 'climate-analyzer-pr83-core-visual-v3-explicit-selection', success: false, checks: {}, page_errors: [], console_errors: [], error: null };
+const report = { schema: 'climate-analyzer-pr83-core-visual-v4-explicit-selection', success: false, checks: {}, page_errors: [], console_errors: [], error: null };
 let browser; let page;
 try {
   browser = await chromium.launch({ executablePath: CHROME_PATH, headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
@@ -62,10 +62,9 @@ try {
   const sourceFrame = await appFrame(page, 'Parameter set', 30000); const sourceText = await bodyText(sourceFrame); report.checks.parameter_set_core = sourceText.includes('Core variables'); report.checks.monthly_context_once = (sourceText.match(/About this GeoSphere monthly dataset/g) || []).length === 1; report.checks.core_default_selection = sourceText.includes('Measured variables to load'); await screenshot(page, '01-monthly-core-source.png');
 
   // Zero-default is the product contract. Explicitly select the three inputs
-  // needed by the pages this walkthrough validates: RH mean, station pressure,
-  // and dry-bulb mean. Core table display order is stable/alphabetical:
-  // Rf mittel=row 0, P=row 3, Tl mittel=row 6.
-  await toggleMonthlyRows(page, [0, 3, 6]);
+  // needed by the pages this walkthrough validates. Current Core display order:
+  // Rf mittel=row 0, P=row 1, Tl mittel=row 6.
+  await toggleMonthlyRows(page, [0, 1, 6]);
   const loadFrame = await appFrame(page, 'Measured variables to load', 30000); const load = loadFrame.getByRole('button', { name: 'Load measured GeoSphere interval', exact: true }).first(); if (!(await load.count().catch(() => 0))) throw new Error('Load button missing.'); await screenshot(page, '02-monthly-core-selected.png'); await load.click({ timeout: 15000 }); await appFrame(page, 'Summary — Overview', 180000);
 
   await nav(page, 'Summary — Overview', 'Climate overview'); await screenshot(page, '03-monthly-overview.png');
