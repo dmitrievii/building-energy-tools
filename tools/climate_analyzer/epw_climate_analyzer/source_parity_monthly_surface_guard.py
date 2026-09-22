@@ -218,17 +218,19 @@ def install_monthly_surface_guard(parity: Any) -> None:
 
     # The monthly catalogue uses ``Variable`` while the shared form layer
     # recognizes the mature ``Measured variable`` semantic. Install a temporary
-    # alias adapter first, then the form wrapper so the form remains outermost.
+    # alias adapter first, then the authoritative v2 transactional form wrapper
+    # so the form remains outermost. Do not route through source_parity_ux_followup:
+    # that legacy v1 wrapper shares the same installation flag and can otherwise
+    # prevent the v2 request/restore contract from ever being installed.
     required_form_surface = (
         "data_editor",
-        "button",
         "warning",
         "form",
         "form_submit_button",
         "caption",
     )
     if all(hasattr(st, name) for name in required_form_surface):
-        from .source_parity_ux_followup import install_geosphere_variable_form
+        from .source_parity_variable_form import install_geosphere_variable_form
 
         _install_monthly_form_table_alias(parity)
         install_geosphere_variable_form(parity)
