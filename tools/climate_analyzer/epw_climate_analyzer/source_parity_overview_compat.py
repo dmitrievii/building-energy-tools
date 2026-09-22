@@ -12,7 +12,7 @@ from typing import Any, Callable
 import pandas as pd
 import streamlit as st
 
-from .source_parity_longterm_hotfix import aggregate_summary_safe
+from . import aggregations as agg
 
 
 def install_overview_pandas_compat(parity: Any) -> None:
@@ -77,7 +77,12 @@ def install_overview_pandas_compat(parity: Any) -> None:
             )
 
         if parity._numeric(df, "dry_bulb_temperature_c"):
-            daily = aggregate_summary_safe(df, "dry_bulb_temperature_c", "Daily")[["mean", "min", "max"]]
+            # install_longterm_hourly_hotfix has already replaced this module-level
+            # callable with its DST-safe implementation before this renderer is
+            # installed. Keeping the module reference also makes runtime reloads
+            # safe: there is no import of a function that exists only as a local
+            # closure inside the hotfix installer.
+            daily = agg.aggregate_summary(df, "dry_bulb_temperature_c", "Daily")[["mean", "min", "max"]]
             c1, c2 = st.columns(2)
             c1.markdown("**Hottest days**")
             c1.dataframe(daily.sort_values("max", ascending=False).head(10), use_container_width=True)
