@@ -23,6 +23,12 @@ _CANONICAL_LABELS = {
     "ground_temperature_2_00m_c": "Ground temperature 2.00 m",
 }
 
+_MONTHLY_PARAMETER_SET_OPTIONS = (
+    "Core variables",
+    "Core + additional statistics",
+    "All provider parameters",
+)
+
 
 def _english_variable_name(row: pd.Series) -> str:
     canonical = str(row.get("Canonical field", "")).strip()
@@ -58,7 +64,7 @@ def install_source_ux_polish(proxy: Any, parity: Any) -> None:
 
     previous_selector = parity._render_geosphere_resource_selector
     def selector(legacy: Any, original: Callable) -> Any:
-        real_editor, real_info = st.data_editor, st.info
+        real_editor, real_info, real_radio = st.data_editor, st.info, st.radio
 
         def editor(data: Any, *args: Any, **kwargs: Any):
             if isinstance(data, pd.DataFrame) and {"Measured variable", "Provider"}.issubset(data.columns):
@@ -72,18 +78,36 @@ def install_source_ux_polish(proxy: Any, parity: Any) -> None:
                 return None
             return real_info(body, *args, **kwargs)
 
-        st.data_editor, st.info = editor, info
+        def radio(label: Any, options: Any, *args: Any, **kwargs: Any):
+            # The final monthly guidance layer historically intercepted a legacy
+            # "Parameter catalogue" radio without checking cadence, then called
+            # its captured real_radio as "Parameter set" even on 1 h / 10 min.
+            # Suppress only that synthetic monthly control outside klima-v2-1m;
+            # the inner wrapper already forces the legacy catalogue to its full
+            # vocabulary, so no user-visible non-monthly control is lost here.
+            values = list(options) if not isinstance(options, str) else [options]
+            if (
+                str(label) == "Parameter set"
+                and str(st.session_state.get("geosphere_resource_id", "")) != "klima-v2-1m"
+                and values == list(_MONTHLY_PARAMETER_SET_OPTIONS)
+            ):
+                return "Core variables"
+            return real_radio(label, options, *args, **kwargs)
+
+        st.data_editor, st.info, st.radio = editor, info, radio
         try:
-            # Render this mandatory source contract directly from the selected
-            # resource state. Do not tie it to map/folium rendering: the map can
-            # be absent, virtualized or skipped on perfectly valid reruns.
+            result = previous_selector(legacy, original)
+            # Resolve context after the composed selector has committed the
+            # private dataset widget into geosphere_resource_id. Rendering it
+            # before that hand-off could show stale monthly text on a 1m -> 1h
+            # transition even though the selected resource was already hourly.
             resource_id = str(st.session_state.get("geosphere_resource_id", "klima-v2-10min"))
             context = _RESOURCE_CONTEXT.get(resource_id)
             if context:
                 real_info(context)
-            return previous_selector(legacy, original)
+            return result
         finally:
-            st.data_editor, st.info = real_editor, real_info
+            st.data_editor, st.info, st.radio = real_editor, real_info, real_radio
 
     parity._render_geosphere_resource_selector = selector
     proxy._GEOSPHERE_SOURCE_UX_POLISH_V1 = True
