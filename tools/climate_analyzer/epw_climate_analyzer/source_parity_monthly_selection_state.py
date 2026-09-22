@@ -6,8 +6,8 @@ for different provider vocabularies (and for filtered Core/Additional/All views)
 can reconcile an old DataEditor state into the new table.
 
 This adapter owns monthly selection semantics independently of the mature shell's
-legacy ``Selected=True`` table default. A fresh monthly session selects only the
-explicit engineering Core providers. The catalogue radio changes visibility only,
+legacy ``Selected=True`` table default. A fresh monthly session starts with every
+measured-variable checkbox cleared. The catalogue radio changes visibility only,
 and later user edits are retained by provider ID across Core/Additional/All views.
 The loader is always fed a table reconstructed in the original provider order;
 therefore UI sorting/filtering can never change provider identity by row position.
@@ -25,9 +25,13 @@ from .source_parity_contract_guidance_hotfix import _decorate_monthly_table
 
 _RESOURCE_KEY = "geosphere_resource_id"
 _PARAMETER_SET_KEY = "geosphere_monthly_parameter_catalogue_v2"
-_SELECTION_STATE_KEY = "_geosphere_monthly_provider_selection_v3"
-_FLAG_STATE_KEY = "_geosphere_monthly_provider_flag_selection_v3"
-_LAST_VIEW_KEY = "_geosphere_monthly_provider_selection_last_view_v3"
+# v4 deliberately invalidates the former v3 Core-selected session state. Without
+# a version bump, an already-open production browser could resurrect the old
+# checked defaults after deployment even though the new contract starts empty.
+_SELECTION_STATE_KEY = "_geosphere_monthly_provider_selection_v4"
+_FLAG_STATE_KEY = "_geosphere_monthly_provider_flag_selection_v4"
+_LAST_VIEW_KEY = "_geosphere_monthly_provider_selection_last_view_v4"
+_EDITOR_KEY_VERSION = "v2"
 
 
 def _bool_value(value: Any) -> bool:
@@ -78,7 +82,7 @@ def _editor_key(view: str, providers: list[str]) -> str:
         "All provider parameters": "all",
     }.get(str(view), "custom")
     signature = sha1("\0".join(providers).encode("utf-8")).hexdigest()[:12]
-    return f"geosphere_variable_editor__monthly__{slug}__{signature}"
+    return f"geosphere_variable_editor__monthly__{_EDITOR_KEY_VERSION}__{slug}__{signature}"
 
 
 def _normalize_catalogue_roles(data: pd.DataFrame) -> pd.DataFrame:
@@ -122,11 +126,10 @@ def _loader_table_from_provider_state(
 ) -> pd.DataFrame:
     """Rebuild the shell-facing loader table in original provider order.
 
-    The DataEditor may be sorted, filtered or reconciled by Streamlit.  The mature
-    loader, however, derives its provider query directly from the DataFrame it
-    receives back from ``st.data_editor``. Reconstructing that result from the
-    original table and provider-keyed state makes provider identity independent
-    of every UI row position.
+    The DataEditor may be sorted, filtered or reconciled by Streamlit. The mature
+    loader derives its provider query directly from the DataFrame it receives back
+    from ``st.data_editor``. Reconstructing that result from the original table and
+    provider-keyed state makes provider identity independent of UI row position.
     """
     out = data.copy()
     if "Provider" not in out.columns:
@@ -164,12 +167,15 @@ def install_monthly_selection_state(parity: Any) -> None:
                 view = "Core variables"
 
             full = _normalize_catalogue_roles(_decorate_monthly_table(parity, data))
+            # Selection is opt-in for every GeoSphere resolution. Core/Additional
+            # describes catalogue visibility and engineering relevance only; it
+            # must not silently turn provider downloads on.
             selection_state = _provider_state(
                 st,
                 _SELECTION_STATE_KEY,
                 full,
                 "Selected",
-                default=lambda row: str(row.get("Role", "")) == "Core variable",
+                default=False,
             )
             flag_state = _provider_state(
                 st,
@@ -225,9 +231,6 @@ def install_monthly_selection_state(parity: Any) -> None:
                     flag_state = updated_flags
                     st.session_state[_FLAG_STATE_KEY] = updated_flags
 
-            # Never feed the filtered/sorted DataEditor result directly to the
-            # mature loader. Its provider query is reconstructed from the original
-            # table and canonical provider-keyed state instead.
             return _loader_table_from_provider_state(data, selection_state, flag_state)
 
         st.data_editor = editor
