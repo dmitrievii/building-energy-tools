@@ -12,6 +12,7 @@ on:
       - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_contract_guard.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_source_ux_polish.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_variable_form.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_canonical.py'
       - '.github/workflows/climate-analyzer-pr83-visual-walkthrough.yml'
   workflow_dispatch:
 
