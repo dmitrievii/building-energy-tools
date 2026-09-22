@@ -10,6 +10,7 @@ on:
       - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_contract_closure.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_contract_guidance_hotfix.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_contract_guard.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_source_ux_polish.py'
       - '.github/workflows/climate-analyzer-pr83-visual-walkthrough.yml'
   workflow_dispatch:
 
@@ -34,31 +35,25 @@ jobs:
     steps:
       - name: Checkout PR branch
         uses: actions/checkout@v4
-
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
           cache: pip
           cache-dependency-path: tools/climate_analyzer/requirements.txt
-
       - name: Install Climate Analyzer dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r tools/climate_analyzer/requirements.txt
-
       - name: Prepare monthly provider fixture
         run: |
           mkdir -p artifacts/pr83-visual/screenshots
           python deployment/pr83_monthly_contract_probe.py
           cp artifacts/pr83-contract-smoke/monthly-provider.json "$PR83_MONTHLY_FIXTURE"
-
       - name: Start fresh PR branch Streamlit
         run: |
           nohup python -m streamlit run tools/climate_analyzer/app.py \
-            --server.headless true \
-            --server.address 127.0.0.1 \
-            --server.port 8502 \
+            --server.headless true --server.address 127.0.0.1 --server.port 8502 \
             > artifacts/pr83-visual/streamlit.log 2>&1 &
           for i in $(seq 1 90); do
             if curl --fail --silent http://127.0.0.1:8502/_stcore/health >/dev/null; then
@@ -69,10 +64,8 @@ jobs:
           done
           cat artifacts/pr83-visual/streamlit.log || true
           exit 1
-
       - name: Install browser dependency
         run: npm install --no-save playwright-core@1.55.0
-
       - name: Align visual driver with zero-default variable contract
         run: |
           python - <<'PY'
@@ -80,15 +73,13 @@ jobs:
           path = Path('deployment/pr83_visual_walkthrough_core.mjs')
           text = path.read_text(encoding='utf-8')
           old = '''  // The source contract initializes every selectable row with Selected=true.\n  // For this Core visual walkthrough, preserve the user-facing default instead\n  // of scripting implementation-specific Glide/DataEditor cells.\n  const loadFrame = await appFrame(page, 'Measured variables to load', 30000);\n  const load = loadFrame.getByRole('button', { name: 'Load measured GeoSphere interval', exact: true }).first();'''
-          new = '''  // User-facing contract: measured variables start unselected. Streamlit's\n  // DataEditor is canvas/grid based and does not expose its boolean cells as\n  // ARIA checkboxes, so exercise the first editable Selected cell through the\n  // rendered grid instead of assuming checkbox DOM nodes exist.\n  const loadFrame = await appFrame(page, 'Measured variables to load', 30000);\n  const editor = loadFrame.locator('[data-testid="stDataEditor"]').first();\n  if (!(await editor.count().catch(() => 0))) throw new Error('Measured-variable DataEditor missing.');\n  await editor.scrollIntoViewIfNeeded({ timeout: 5000 }).catch(() => {});\n  const box = await editor.boundingBox();\n  if (!box) throw new Error('Measured-variable DataEditor has no visible bounds.');\n  // Selected is the first data column; click the first row cell below the header.\n  await editor.click({ position: { x: Math.min(55, box.width * 0.08), y: Math.min(78, box.height * 0.30) }, force: true, timeout: 8000 });\n  await page.keyboard.press('Space').catch(() => {});\n  await sleep(500);\n  const load = loadFrame.getByRole('button', { name: 'Load measured GeoSphere interval', exact: true }).first();'''
+          new = '''  // User-facing contract: measured variables start unselected. Streamlit 1.63\n  // renders DataEditor through Glide canvas rather than checkbox DOM nodes.\n  const loadFrame = await appFrame(page, 'Measured variables to load', 30000);\n  const canvases = loadFrame.locator('canvas');\n  const canvasCount = await canvases.count().catch(() => 0);\n  if (!canvasCount) throw new Error('Measured-variable Glide canvas missing.');\n  const editorCanvas = canvases.nth(canvasCount - 1);\n  await editorCanvas.scrollIntoViewIfNeeded({ timeout: 5000 }).catch(() => {});\n  const box = await editorCanvas.boundingBox();\n  if (!box) throw new Error('Measured-variable Glide canvas has no visible bounds.');\n  // First editable Load cell: first data column, first row below the header.\n  await editorCanvas.click({ position: { x: Math.min(36, box.width * 0.06), y: Math.min(55, box.height * 0.22) }, force: true, timeout: 8000 });\n  await page.keyboard.press('Space').catch(() => {});\n  await sleep(700);\n  const load = loadFrame.getByRole('button', { name: 'Load measured GeoSphere interval', exact: true }).first();'''
           if old not in text:
               raise SystemExit('visual-driver contract block not found')
           path.write_text(text.replace(old, new, 1), encoding='utf-8')
           PY
-
       - name: Capture core-variable visual walkthrough
         run: node deployment/pr83_visual_walkthrough_core.mjs
-
       - name: Reject runtime tracebacks
         if: always()
         run: |
@@ -96,7 +87,6 @@ jobs:
             cat artifacts/pr83-visual/streamlit.log
             exit 1
           fi
-
       - name: Upload visual evidence
         if: always()
         uses: actions/upload-artifact@v4
