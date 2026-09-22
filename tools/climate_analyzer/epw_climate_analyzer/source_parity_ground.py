@@ -40,12 +40,15 @@ def _numeric(df: pd.DataFrame, column: str) -> bool:
 def install_ground_depth_contract(legacy: Any) -> None:
     """Register all canonical measured ground depths in the common UI/engine."""
     # Interannual rendering belongs to the mature analysis proxy and can be bound
-    # here. The transactional GeoSphere variable form is deliberately *not*
-    # installed here: it must be the final outer UI wrapper, after monthly
-    # guidance/surface guards have composed their Parameter-set controls.
+    # here. The transactional GeoSphere variable form is still installed only by
+    # the final monthly surface guard, but publish the schema-compatible installer
+    # now so that later composition accepts both ``Measured variable`` and the
+    # native-monthly ``Variable`` table schema.
     if hasattr(legacy, "st"):
+        from .source_parity_variable_form_compat import patch_variable_form_installer
         from .source_parity_ux_followup import install_interannual_overlay
 
+        patch_variable_form_installer()
         install_interannual_overlay(legacy)
 
     ground_temperature.MEASURED_GROUND_DEPTHS_M.update(CANONICAL_GROUND_DEPTHS_M)
