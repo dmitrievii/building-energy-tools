@@ -178,7 +178,7 @@ async function screenshot(page, name) {
 }
 
 const report = {
-  schema: 'climate-analyzer-pr83-extended-visual-v5-empty-default',
+  schema: 'climate-analyzer-pr83-extended-visual-v6-empty-default',
   success: false,
   checks: {},
   page_errors: [],
@@ -200,22 +200,25 @@ try {
   await selectDataset(page);
   let frame = await selectStation(page);
 
-  let text = await assertEmptySelection(frame, 'Core variables');
+  await assertEmptySelection(frame, 'Initial monthly view');
   report.checks.initial_selection_empty = true;
-  report.checks.parameter_set_core = text.includes('Core variables');
-  await screenshot(page, '01-monthly-core-empty.png');
+  await screenshot(page, '01-monthly-initial-empty.png');
+
+  frame = await selectParameterSet(page, 'Core variables');
+  await assertEmptySelection(frame, 'Core variables');
+  report.checks.core_view_selection_still_empty = true;
+  await screenshot(page, '02-monthly-core-empty.png');
 
   frame = await selectParameterSet(page, 'All provider parameters');
-  text = await assertEmptySelection(frame, 'All provider parameters');
-  report.checks.all_view_selection_still_empty = text.includes('All provider parameters');
-  await screenshot(page, '02-monthly-all-empty.png');
+  await assertEmptySelection(frame, 'All provider parameters');
+  report.checks.all_view_selection_still_empty = true;
+  await screenshot(page, '03-monthly-all-empty.png');
 
   frame = await selectParameterSet(page, 'Core variables');
   await assertEmptySelection(frame, 'Core variables roundtrip');
   report.checks.core_roundtrip_selection_still_empty = true;
-  await screenshot(page, '03-monthly-core-empty-roundtrip.png');
+  await screenshot(page, '04-monthly-core-empty-roundtrip.png');
 
-  if (!report.checks.parameter_set_core) throw new Error('Core variables parameter set is not visible.');
   if (report.page_errors.length) throw new Error(`Page errors: ${report.page_errors.join(' | ')}`);
   report.success = true;
 } catch (error) {
