@@ -6,6 +6,7 @@ on:
     paths:
       - 'deployment/geosphere_precip_snow_provider_probe.py'
       - 'deployment/geosphere_precip_snow_live_smoke.mjs'
+      - 'deployment/pr83_precip_snow_live_smoke.mjs'
       - '.github/workflows/climate-analyzer-geosphere-precip-snow-live-smoke.yml'
       - 'tools/climate_analyzer/CLIMATE_CORE_0_7_1.md'
       - 'tools/climate_analyzer/tests/test_geosphere_precip_snow_live_smoke_0_7_1.py'
@@ -16,6 +17,7 @@ on:
       - 'tools/climate_analyzer/**'
       - 'deployment/geosphere_precip_snow_provider_probe.py'
       - 'deployment/geosphere_precip_snow_live_smoke.mjs'
+      - 'deployment/pr83_precip_snow_live_smoke.mjs'
       - '.github/workflows/climate-analyzer-geosphere-precip-snow-live-smoke.yml'
   schedule:
     - cron: '17 5 * * 1'
@@ -69,7 +71,7 @@ jobs:
         run: npm install --no-save playwright-core@1.55.0
 
       - name: Exercise live precipitation and snow route
-        run: node deployment/geosphere_precip_snow_live_smoke.mjs
+        run: node deployment/pr83_precip_snow_live_smoke.mjs
 
       - name: Upload provider-backed smoke evidence
         if: always()
