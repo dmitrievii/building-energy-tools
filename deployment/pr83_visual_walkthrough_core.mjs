@@ -53,7 +53,33 @@ async function toggleMonthlyRows(page, rowIndexes) {
   }
 }
 
-const report = { schema: 'climate-analyzer-pr83-core-visual-v4-explicit-selection', success: false, checks: {}, page_errors: [], console_errors: [], error: null };
+async function waitForLoadHandoff(page, timeoutMs = 180000) {
+  const started = performance.now();
+  let submitCommitted = false;
+  let providerStarted = false;
+  let lastText = '';
+  while (performance.now() - started < timeoutMs) {
+    try {
+      const frame = await appFrame(page, 'Climate Analyzer', 5000);
+      lastText = await bodyText(frame);
+      if (/3 selected measured variables/.test(lastText)) submitCommitted = true;
+      if (/GeoSphere load|Loading GeoSphere batch/.test(lastText)) providerStarted = true;
+      if (lastText.includes('Summary — Overview')) {
+        return { frame, submitCommitted, providerStarted };
+      }
+    } catch {}
+    await sleep(250);
+  }
+  const selected = lastText.match(/\d+ selected measured variables/)?.[0] || 'not observed';
+  const resource = lastText.match(/Selected resource:[^\n]*/)?.[0] || 'not observed';
+  throw new Error(
+    `GeoSphere submit-to-load handoff timed out; ` +
+    `submit_committed=${submitCommitted}; provider_started=${providerStarted}; ` +
+    `selection=${selected}; resource=${resource}`,
+  );
+}
+
+const report = { schema: 'climate-analyzer-pr83-core-visual-v5-load-handoff', success: false, checks: {}, page_errors: [], console_errors: [], error: null };
 let browser; let page;
 try {
   browser = await chromium.launch({ executablePath: CHROME_PATH, headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
@@ -65,7 +91,8 @@ try {
   // needed by the pages this walkthrough validates. Current Core display order:
   // Rf mittel=row 0, P=row 1, Tl mittel=row 6.
   await toggleMonthlyRows(page, [0, 1, 6]);
-  const loadFrame = await appFrame(page, 'Measured variables to load', 30000); const load = loadFrame.getByRole('button', { name: 'Load measured GeoSphere interval', exact: true }).first(); if (!(await load.count().catch(() => 0))) throw new Error('Load button missing.'); await screenshot(page, '02-monthly-core-selected.png'); await load.click({ timeout: 15000 }); await appFrame(page, 'Summary — Overview', 180000);
+  const loadFrame = await appFrame(page, 'Measured variables to load', 30000); const load = loadFrame.getByRole('button', { name: 'Load measured GeoSphere interval', exact: true }).first(); if (!(await load.count().catch(() => 0))) throw new Error('Load button missing.'); await screenshot(page, '02-monthly-core-selected.png'); await load.click({ timeout: 15000 });
+  const handoff = await waitForLoadHandoff(page, 180000); report.checks.submit_committed = handoff.submitCommitted; report.checks.provider_started = handoff.providerStarted; report.checks.dataset_activated = true;
 
   await nav(page, 'Summary — Overview', 'Climate overview'); await screenshot(page, '03-monthly-overview.png');
   await nav(page, 'Climate — Temperature', 'Temperature and extremes'); let text = await bodyText(await appFrame(page, 'Temperature and extremes', 30000)); report.checks.temperature_threshold_sliders_hidden = !text.includes('Heating threshold [°C]') && !text.includes('Cooling threshold [°C]'); report.checks.dew_point_in_temperature = text.includes('Dew-point temperature'); await screenshot(page, '04-monthly-temperature.png');
