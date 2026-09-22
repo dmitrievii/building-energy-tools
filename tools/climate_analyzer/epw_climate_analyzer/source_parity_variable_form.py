@@ -16,6 +16,8 @@ import pandas as pd
 
 _GEOSPHERE_FORM_INSTALLED = "_GEOSPHERE_VARIABLE_FORM_INSTALLED_V1"
 _FORM_KEY_PREFIX = "geosphere_variable_load_form_v1"
+_MATURE_LOAD_BUTTON_KEY = "load_geosphere_interval"
+_MATURE_LOAD_BUTTON_LABEL = "Load measured GeoSphere interval"
 
 
 def _selected_count(data: Any) -> int:
@@ -67,7 +69,7 @@ def install_geosphere_variable_form(parity: Any) -> None:
                     "Variable choices are staged locally. Checking or unchecking rows does not reload this page and does not request GeoSphere data."
                 )
                 submitted = st.form_submit_button(
-                    "Load measured GeoSphere interval",
+                    _MATURE_LOAD_BUTTON_LABEL,
                     type="primary",
                     help="Submit the current variable selection and start the provider request.",
                 )
@@ -76,14 +78,21 @@ def install_geosphere_variable_form(parity: Any) -> None:
                         real_warning("Select at least one measured GeoSphere variable to load.")
                     else:
                         # The mature loader is evaluated later in this same
-                        # selector execution. A closure gives it the submit event
-                        # exactly once without any persistent intermediate state.
+                        # selector execution. Keep the event pending until the
+                        # exact mature action is reached; matching only the label
+                        # is unsafe because composed wrappers may probe/render the
+                        # same user-facing action before the real load branch.
                         load_requested["value"] = True
             return edited
 
         def button(label: Any, *args: Any, **kwargs: Any):
-            if str(label) != "Load measured GeoSphere interval":
+            key = str(kwargs.get("key", ""))
+            if key != _MATURE_LOAD_BUTTON_KEY:
                 return real_button(label, *args, **kwargs)
+
+            # The mature provider-load branch has a stable explicit key in the
+            # source-of-truth app. Consume the staged form submit only here, so
+            # no earlier wrapper/button probe can steal the one-shot event.
             requested = bool(load_requested["value"])
             load_requested["value"] = False
             return requested
