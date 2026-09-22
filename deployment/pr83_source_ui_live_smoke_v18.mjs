@@ -48,9 +48,25 @@ async function visibleOption(page, frame, predicate) {
   return null;
 }
 async function chooseSource(page) {
-  const frame = await appFrame(page, 'Climate Analyzer');
-  for (const candidate of [frame.getByRole('radio', { name: 'GeoSphere Austria', exact: true }).last(), frame.getByText('GeoSphere Austria', { exact: true }).last(), frame.locator('label').filter({ hasText: 'GeoSphere Austria' }).last()]) {
-    if (await candidate.count().catch(() => 0)) { await candidate.click({ force: true, timeout: 5000 }).catch(() => {}); if ((await bodyText(await appFrame(page, 'GeoSphere Austria — measured historical station data', 15000))).includes('GeoSphere dataset')) return; }
+  const started = performance.now();
+  while (performance.now() - started < 60000) {
+    const frame = await appFrame(page, 'Climate Analyzer', 10000);
+    for (const candidate of [
+      frame.getByRole('radio', { name: 'GeoSphere Austria', exact: true }).last(),
+      frame.getByText('GeoSphere Austria', { exact: true }).last(),
+      frame.locator('label').filter({ hasText: 'GeoSphere Austria' }).last(),
+    ]) {
+      if (!(await candidate.count().catch(() => 0))) continue;
+      try {
+        const tag = await candidate.evaluate((node) => node.tagName.toLowerCase()).catch(() => '');
+        const type = await candidate.getAttribute('type').catch(() => null);
+        if (tag === 'input' && type === 'radio') await candidate.check({ force: true, timeout: 5000 });
+        else await candidate.click({ force: true, timeout: 5000 });
+        const selected = await appFrame(page, 'GeoSphere Austria — measured historical station data', 10000);
+        if ((await bodyText(selected)).includes('GeoSphere dataset')) return;
+      } catch {}
+    }
+    await sleep(300);
   }
   throw new Error('Could not select GeoSphere Austria.');
 }
@@ -81,7 +97,7 @@ async function waitBody(page, predicate, description, timeoutMs = 60000, stable 
 }
 async function expandMonthly(frame) { const expander = frame.getByText(MONTHLY_CONTEXT, { exact: true }).last(); if (await expander.count().catch(() => 0)) { await expander.click({ force: true, timeout: 10000 }).catch(() => {}); await sleep(350); } }
 
-const report = { schema: 'climate-analyzer-pr83-source-ui-smoke-v20', target_url: TARGET_URL, fixture, checks: {}, page_errors: [], console_errors: [], success: false, error: null };
+const report = { schema: 'climate-analyzer-pr83-source-ui-smoke-v21', target_url: TARGET_URL, fixture, checks: {}, page_errors: [], console_errors: [], success: false, error: null };
 let browser;
 try {
   if (!fixture.success) throw new Error('Monthly provider fixture is not successful.');
