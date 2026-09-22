@@ -32,31 +32,38 @@ def _selected_count(data: Any) -> int:
 def _apply_submitted_editor_state(data: Any, state: Any) -> Any:
     """Overlay Streamlit's submitted DataEditor delta onto its returned frame.
 
-    Streamlit can preserve the visibly edited Glide grid while ``st.data_editor``
-    still returns the pre-edit DataFrame on the form-submit rerun. The widget
-    state is nevertheless submitted under the editor key as ``edited_rows``.
-    Reconstruct the authoritative submitted frame from that delta so the mature
-    GeoSphere loader sees the exact checkboxes the user submitted.
+    ``st.session_state[editor_key]`` is a Streamlit ``DataEditorState`` in the
+    production runtime. It is intentionally a read-only dictionary-like object,
+    not necessarily a built-in ``dict``. Use the mapping protocol instead of
+    concrete-type checks so the submitted ``edited_rows`` payload is accepted.
     """
-    if not isinstance(data, pd.DataFrame) or not isinstance(state, dict):
+    if not isinstance(data, pd.DataFrame):
         return data
-    edited_rows = state.get("edited_rows")
-    if not isinstance(edited_rows, dict) or not edited_rows:
+
+    getter = getattr(state, "get", None)
+    if not callable(getter):
+        return data
+    edited_rows = getter("edited_rows")
+    items = getattr(edited_rows, "items", None)
+    if not callable(items):
         return data
 
     out = data.copy()
-    for raw_row, changes in edited_rows.items():
+    changed = False
+    for raw_row, changes in items():
         try:
             row = int(raw_row)
         except (TypeError, ValueError):
             continue
-        if row < 0 or row >= len(out) or not isinstance(changes, dict):
+        change_items = getattr(changes, "items", None)
+        if row < 0 or row >= len(out) or not callable(change_items):
             continue
-        for column, value in changes.items():
+        for column, value in change_items():
             if column not in out.columns:
                 continue
             out.iat[row, out.columns.get_loc(column)] = value
-    return out
+            changed = True
+    return out if changed else data
 
 
 def _scope(st: Any) -> tuple[str, str]:
@@ -169,11 +176,10 @@ def install_geosphere_variable_form(parity: Any) -> None:
                 )
 
             if submitted:
-                # On a real Streamlit form submit the visible Glide edits may be
-                # present only in the widget delta while data_editor returns the
-                # pre-edit DataFrame. Reconstruct before validation *and* return
-                # the reconstructed frame so the mature loader computes its
-                # provider-parameter list from the submitted checkboxes.
+                # On a real Streamlit form submit the visible Glide edits can be
+                # represented by the DataEditorState delta. Reconstruct before
+                # validation *and* return the reconstructed frame so the mature
+                # loader computes its parameter list from submitted checkboxes.
                 edited = _apply_submitted_editor_state(
                     edited,
                     st.session_state.get(editor_key),
@@ -182,11 +188,6 @@ def install_geosphere_variable_form(parity: Any) -> None:
                     st.session_state.pop(_FORM_REQUEST_KEY, None)
                     real_warning("Select at least one measured GeoSphere variable to load.")
                 else:
-                    # Do not start a second Streamlit rerun here. The mature
-                    # renderer continues in this same submit run with the exact
-                    # submitted DataEditor values and reaches its existing load
-                    # button a few statements later. Convert that one button
-                    # evaluation into True exactly once.
                     st.session_state[_FORM_REQUEST_KEY] = submit_scope
             return edited
 
