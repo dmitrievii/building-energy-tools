@@ -1,10 +1,10 @@
 """Transactional GeoSphere measured-variable form runtime contract.
 
 The visible form stages DataEditor changes client-side. A valid form submit is
-committed by a Streamlit submit callback into one scoped request token. The
-mature provider-load button can be rendered after the composed selector wrapper
-has returned, so its exact button proxy intentionally survives that boundary and
-restores itself only when the mature action is reached.
+committed by a Streamlit submit callback into one resource/station-scoped
+request token. The production loader consumes that token explicitly through the
+helpers below; no temporary ``st.button`` monkey-patch is used for event
+transport.
 """
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ import pandas as pd
 _GEOSPHERE_FORM_INSTALLED = "_GEOSPHERE_VARIABLE_FORM_INSTALLED_V1"
 _FORM_KEY_PREFIX = "geosphere_variable_load_form_v1"
 _FORM_REQUEST_KEY = "_geosphere_variable_form_load_requested_v2"
-_MATURE_LOAD_KEY = "load_geosphere_interval"
+_FORM_ACTIVE_SCOPE_KEY = "_geosphere_variable_form_active_scope_v1"
 
 
 def _selected_count(data: Any) -> int:
@@ -33,8 +33,19 @@ def _scope(st: Any) -> tuple[str, str]:
     )
 
 
+def geosphere_variable_form_owns_load_action(st: Any) -> bool:
+    """Return whether the current resource/station uses the transactional form action."""
+    return st.session_state.get(_FORM_ACTIVE_SCOPE_KEY) == _scope(st)
+
+
+def consume_geosphere_variable_form_load_request(st: Any) -> bool:
+    """Consume one valid form-submit request for the current resource/station."""
+    request = st.session_state.pop(_FORM_REQUEST_KEY, None)
+    return request == _scope(st)
+
+
 def install_geosphere_variable_form(parity: Any) -> None:
-    """Stage editor changes in a form and trigger the mature loader exactly once."""
+    """Stage editor changes in a form and publish a durable one-shot load request."""
     if bool(getattr(parity, _GEOSPHERE_FORM_INSTALLED, False)):
         return
     setattr(parity, _GEOSPHERE_FORM_INSTALLED, True)
@@ -44,7 +55,6 @@ def install_geosphere_variable_form(parity: Any) -> None:
 
     def selector(legacy: Any, original: Callable) -> Any:
         real_editor = st.data_editor
-        real_button = st.button
         real_warning = st.warning
         form_rendered = {"value": False}
 
@@ -62,11 +72,15 @@ def install_geosphere_variable_form(parity: Any) -> None:
             form_signature = sha1(f"{resource_id}\0{station_id}".encode("utf-8")).hexdigest()[:12]
             form_key = f"{_FORM_KEY_PREFIX}::{form_signature}"
             form_rendered["value"] = True
+            # Mark ownership on every render. The production app compares this
+            # exact scope before deciding whether a fallback legacy button is
+            # required, so a stale marker from another resource/station is inert.
+            st.session_state[_FORM_ACTIVE_SCOPE_KEY] = submit_scope
 
             def commit_submit() -> None:
                 # Streamlit callbacks execute before the submit-triggered main
-                # rerun. Keep the request until the exact mature loader consumes
-                # it; selector.finally must not clear it prematurely.
+                # rerun. Keep the scoped request until app.py consumes it at the
+                # mature provider-load boundary.
                 st.session_state[_FORM_REQUEST_KEY] = submit_scope
 
             with st.form(form_key, clear_on_submit=False):
@@ -88,23 +102,6 @@ def install_geosphere_variable_form(parity: Any) -> None:
                 real_warning("Select at least one measured GeoSphere variable to load.")
             return edited
 
-        def button(label: Any, *args: Any, **kwargs: Any):
-            # The mature action is rendered outside the composed selector in the
-            # production source path. Forward all unrelated buttons unchanged and
-            # consume the form token only at the exact mature key.
-            if not (
-                str(label) == "Load measured GeoSphere interval"
-                and str(kwargs.get("key", "")) == _MATURE_LOAD_KEY
-            ):
-                return real_button(label, *args, **kwargs)
-
-            request = st.session_state.pop(_FORM_REQUEST_KEY, None)
-            # The bridge is one-shot. Restore the real Streamlit surface as soon
-            # as the mature load boundary is reached, irrespective of token match.
-            if st.button is button:
-                st.button = real_button
-            return request == _scope(st)
-
         def warning(body: Any, *args: Any, **kwargs: Any):
             # The form owns empty-selection validation. Suppress the mature
             # renderer's always-visible copy while the transactional form exists.
@@ -116,15 +113,13 @@ def install_geosphere_variable_form(parity: Any) -> None:
             return real_warning(body, *args, **kwargs)
 
         st.data_editor = editor
-        st.button = button
         st.warning = warning
         try:
             return previous(legacy, original)
         finally:
-            # The data-editor and warning proxies are selector-local. The exact
-            # button proxy deliberately survives this boundary because the mature
-            # load button is rendered immediately afterwards in app.py; it
-            # restores itself when that exact action is reached.
+            # Only selector-local presentation surfaces are restored. The
+            # request/ownership state intentionally survives until the production
+            # loader consumes it explicitly.
             st.data_editor = real_editor
             st.warning = real_warning
 
