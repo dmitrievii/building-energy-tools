@@ -39,6 +39,16 @@ def _numeric(df: pd.DataFrame, column: str) -> bool:
 
 def install_ground_depth_contract(legacy: Any) -> None:
     """Register all canonical measured ground depths in the common UI/engine."""
+    # The production runtime passes the mature app proxy, including its Streamlit
+    # surface. Lightweight unit tests intentionally use a minimal namespace; do
+    # not make this ground-depth contract depend on those optional UX installers.
+    if hasattr(legacy, "st"):
+        from . import source_parity_ui as parity
+        from .source_parity_ux_followup import install_geosphere_variable_form, install_interannual_overlay
+
+        install_geosphere_variable_form(parity)
+        install_interannual_overlay(legacy)
+
     ground_temperature.MEASURED_GROUND_DEPTHS_M.update(CANONICAL_GROUND_DEPTHS_M)
     legacy.VARIABLES.update(GROUND_VARIABLE_LABELS)
 
