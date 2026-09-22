@@ -25,102 +25,61 @@ async function screenshot(page, name) { await page.screenshot({ path: path.join(
 async function nav(page, label, needle) { const frame = await appFrame(page, 'Climate Analyzer', 30000); const target = frame.getByText(label, { exact: true }).last(); if (!(await target.count().catch(() => 0))) throw new Error(`Navigation missing: ${label}`); await target.click({ force: true, timeout: 10000 }); return await appFrame(page, needle, 60000); }
 async function selectAnalysis(page, name) { const frame = await appFrame(page, 'Analysis type', 30000); const control = await combo(frame, 'Analysis type', 30000); await control.click({ timeout: 10000 }); const started = performance.now(); while (performance.now() - started < 15000) { const option = await visibleOption(page, frame, (text) => text === name); if (option) { await option.click({ timeout: 10000 }); await sleep(700); return; } await sleep(200); } throw new Error(`Analysis option missing: ${name}`); }
 
-async function visibleEditorCanvas(frame) {
-  const canvases = frame.locator('canvas');
-  const count = await canvases.count().catch(() => 0);
-  let best = null; let bestBox = null;
-  for (let i = 0; i < count; i += 1) {
-    const candidate = canvases.nth(i);
-    if (!(await candidate.isVisible().catch(() => false))) continue;
-    const box = await candidate.boundingBox().catch(() => null);
-    if (!box || box.width < 200 || box.height < 250) continue;
-    if (!bestBox || box.width * box.height > bestBox.width * bestBox.height) { best = candidate; bestBox = box; }
+async function selectMeasuredProviders(page, providers) {
+  let frame = await appFrame(page, 'Select measured variables', 30000);
+  const control = await combo(frame, 'Select measured variables', 30000);
+  await control.click({ timeout: 10000 });
+  for (const provider of providers) {
+    let option = await visibleOption(page, frame, (text) => text.includes(`[${provider}]`));
+    if (!option) {
+      await control.click({ timeout: 5000 }).catch(() => {});
+      await sleep(150);
+      option = await visibleOption(page, frame, (text) => text.includes(`[${provider}]`));
+    }
+    if (!option) throw new Error(`Measured-variable provider option missing: ${provider}`);
+    await option.click({ timeout: 10000 });
+    await sleep(150);
   }
-  if (!best || !bestBox) throw new Error('Measured-variable visible Glide canvas missing.');
-  return { canvas: best, box: bestBox };
-}
-async function toggleMonthlyRows(page, rowIndexes) {
-  let frame = await appFrame(page, 'Measured variables to load', 30000);
-  for (const rowIndex of rowIndexes) {
-    frame = await appFrame(page, 'Measured variables to load', 10000);
-    const { canvas, box } = await visibleEditorCanvas(frame);
-    await canvas.scrollIntoViewIfNeeded({ timeout: 5000 }).catch(() => {});
-    const rowHeight = 36;
-    const y = Math.min(18 + rowHeight * (rowIndex + 1), box.height - 18);
-    await canvas.click({ position: { x: Math.min(36, box.width * 0.06), y }, force: true, timeout: 8000 });
-    await page.keyboard.press('Space').catch(() => {});
-    await sleep(650);
+  await page.keyboard.press('Escape').catch(() => {});
+  const selectShell = control.locator('xpath=ancestor::*[@data-baseweb="select"][1]').first();
+  const stagedText = (await selectShell.innerText().catch(() => '')).replace(/\s+/g, ' ').trim();
+  for (const provider of providers) {
+    if (!stagedText.includes(provider)) throw new Error(`Provider ${provider} was not staged in the multiselect; rendered=${stagedText}`);
   }
-}
-
-async function commitDataEditorEdits(page) {
-  // Streamlit's Glide editor keeps the focused cell as an open edit. Directly
-  // clicking a button can submit the pre-edit widget value, so blur the grid
-  // through a non-button element before dispatching the form submit.
-  const frame = await appFrame(page, 'Measured variables to load', 30000);
-  const heading = frame.getByRole('heading', { name: 'Measured variables to load', exact: true }).first();
-  if (await heading.count().catch(() => 0) && await heading.isVisible().catch(() => false)) {
-    await heading.click({ force: true, timeout: 10000 });
-  } else {
-    const outside = frame.getByText('Select the measured GeoSphere fields required for this load.', { exact: false }).first();
-    if (!(await outside.count().catch(() => 0))) throw new Error('No non-button target available to commit the DataEditor edit.');
-    await outside.click({ force: true, timeout: 10000 });
-  }
-  await sleep(500);
-  const { canvas } = await visibleEditorCanvas(frame);
-  const stillFocused = await canvas.evaluate((node) => document.activeElement === node).catch(() => false);
-  if (stillFocused) throw new Error('Measured-variable DataEditor remained focused after explicit blur/commit.');
+  return frame;
 }
 
 async function waitForStreamlitIdleSubmit(page, timeoutMs = 60000) {
-  const started = performance.now();
-  let stable = 0;
-  let last = '';
+  const started = performance.now(); let stable = 0; let last = '';
   while (performance.now() - started < timeoutMs) {
-    const frame = await appFrame(page, 'Measured variables to load', 5000);
-    last = await bodyText(frame);
+    const frame = await appFrame(page, 'Measured variables to load', 5000); last = await bodyText(frame);
     const stop = frame.getByRole('button', { name: 'Stop', exact: true }).first();
     const stopVisible = await stop.count().catch(() => 0) && await stop.isVisible().catch(() => false);
     const load = frame.getByRole('button', { name: 'Load measured GeoSphere interval', exact: true }).first();
     const loadReady = await load.count().catch(() => 0) && await load.isVisible().catch(() => false) && await load.isEnabled().catch(() => false);
-    if (!stopVisible && loadReady) {
-      stable += 1;
-      if (stable >= 4) return { frame, load };
-    } else {
-      stable = 0;
-    }
+    if (!stopVisible && loadReady) { stable += 1; if (stable >= 4) return { frame, load }; } else stable = 0;
     await sleep(250);
   }
   throw new Error(`Streamlit did not become idle before GeoSphere submit; last selection=${last.match(/\d+ selected measured variables/)?.[0] || 'not observed'}`);
 }
 
 async function waitForLoadHandoff(page, timeoutMs = 180000) {
-  const started = performance.now();
-  let selectionObserved = false;
-  let providerStarted = false;
-  let lastText = '';
+  const started = performance.now(); let selectionObserved = false; let providerStarted = false; let lastText = '';
   while (performance.now() - started < timeoutMs) {
     try {
-      const frame = await appFrame(page, 'Climate Analyzer', 5000);
-      lastText = await bodyText(frame);
+      const frame = await appFrame(page, 'Climate Analyzer', 5000); lastText = await bodyText(frame);
       if (/3 selected measured variables/.test(lastText)) selectionObserved = true;
       if (/GeoSphere load|Loading GeoSphere batch/.test(lastText)) providerStarted = true;
-      if (lastText.includes('Summary — Overview')) {
-        return { frame, selectionObserved, providerStarted };
-      }
+      if (lastText.includes('Summary — Overview')) return { frame, selectionObserved, providerStarted };
     } catch {}
     await sleep(250);
   }
   const selected = lastText.match(/\d+ selected measured variables/)?.[0] || 'not observed';
   const resource = lastText.match(/Selected resource:[^\n]*/)?.[0] || 'not observed';
-  throw new Error(
-    `GeoSphere submit-to-load handoff timed out; ` +
-    `selection_observed=${selectionObserved}; provider_started=${providerStarted}; ` +
-    `selection=${selected}; resource=${resource}`,
-  );
+  throw new Error(`GeoSphere submit-to-load handoff timed out; selection_observed=${selectionObserved}; provider_started=${providerStarted}; selection=${selected}; resource=${resource}`);
 }
 
-const report = { schema: 'climate-analyzer-pr83-core-visual-v7-committed-data-editor', success: false, checks: {}, page_errors: [], console_errors: [], error: null };
+const report = { schema: 'climate-analyzer-pr83-core-visual-v8-form-native-provider-selector', success: false, checks: {}, page_errors: [], console_errors: [], error: null };
 let browser; let page;
 try {
   browser = await chromium.launch({ executablePath: CHROME_PATH, headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
@@ -128,16 +87,11 @@ try {
   await page.goto(TARGET_URL, { waitUntil: 'domcontentloaded', timeout: 60000 }); await chooseSource(page); await selectDataset(page); await selectStation(page);
   const sourceFrame = await appFrame(page, 'Parameter set', 30000); const sourceText = await bodyText(sourceFrame); report.checks.parameter_set_core = sourceText.includes('Core variables'); report.checks.monthly_context_once = (sourceText.match(/About this GeoSphere monthly dataset/g) || []).length === 1; report.checks.core_default_selection = sourceText.includes('Measured variables to load'); await screenshot(page, '01-monthly-core-source.png');
 
-  // Zero-default is the product contract. Explicitly select the three inputs
-  // needed by the pages this walkthrough validates. Current Core display order:
-  // Rf mittel=row 0, P=row 1, Tl mittel=row 6.
-  await toggleMonthlyRows(page, [0, 1, 6]);
-  await commitDataEditorEdits(page);
-  report.checks.data_editor_blur_committed = true;
+  await selectMeasuredProviders(page, ['rf_mittel', 'p', 'tl_mittel']);
+  report.checks.form_native_provider_selection_staged = true;
   const ready = await waitForStreamlitIdleSubmit(page, 60000);
   await screenshot(page, '02-monthly-core-selected.png');
-  await ready.load.click({ timeout: 15000 });
-  report.checks.submit_click_dispatched = true;
+  await ready.load.click({ timeout: 15000 }); report.checks.submit_click_dispatched = true;
   const handoff = await waitForLoadHandoff(page, 180000); report.checks.selection_observed = handoff.selectionObserved; report.checks.provider_started = handoff.providerStarted; report.checks.dataset_activated = true;
 
   await nav(page, 'Summary — Overview', 'Climate overview'); await screenshot(page, '03-monthly-overview.png');
