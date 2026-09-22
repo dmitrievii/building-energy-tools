@@ -3,7 +3,7 @@
 The contract-closure selector is intentionally the outermost source UI layer.
 It must therefore be able to receive the raw variable table directly instead of
 assuming that the older monthly-cleanup data-editor wrapper has already added
-Category/Statistic/Notes columns. This patch makes the final layer own both
+Category/Statistic/Notes columns.  This patch makes the final layer own both
 monthly table decoration and the Core/Additional/All parameter-set selector.
 """
 from __future__ import annotations
@@ -90,11 +90,8 @@ def _install_guidance_safe(parity: Any) -> None:
         # The visible widget owns a private Streamlit key; the effective resource
         # is copied explicitly into the legacy routing key before any wrapper is
         # entered. Keeping widget state and routing state separate is important:
-        # the composed legacy chain still contains a (suppressed) selectbox call
-        # using ``geosphere_resource_id``. Reusing that same key for the visible
-        # widget allowed a 1m -> 1h browser transition to be rolled back to the
-        # default 10-minute resource during the rerun even though the frontend
-        # briefly displayed the hourly option.
+        # the composed legacy chain still contains a suppressed selectbox call
+        # using ``geosphere_resource_id``.
         specs = list(parity.available_resource_specs())
         resource_ids = [str(spec.resource_id) for spec in specs]
         if not resource_ids:
@@ -110,9 +107,8 @@ def _install_guidance_safe(parity: Any) -> None:
         initial_resource = widget_resource if widget_resource in resource_ids else current_resource
 
         # On a widget-triggered rerun the private widget state is already updated
-        # before the script starts. Commit it to the legacy routing key *before*
-        # rendering any widget so nested wrappers cannot observe the previous
-        # resource while the new Streamlit widget tree is being reconciled.
+        # before the script starts. Commit it to the legacy routing key before
+        # rendering any nested wrapper.
         st.session_state[_RESOURCE_KEY] = initial_resource
 
         selected_resource = real_selectbox(
@@ -127,9 +123,8 @@ def _install_guidance_safe(parity: Any) -> None:
             ),
         )
         selected_resource = str(selected_resource)
-        # This key is no longer a widget key in this outer layer, so it can be
-        # committed synchronously and all older wrappers observe the same route.
         st.session_state[_RESOURCE_KEY] = selected_resource
+        is_monthly = selected_resource == MONTHLY_RESOURCE_ID
 
         seen_info: set[str] = set()
         seen_caption: set[str] = set()
@@ -168,18 +163,12 @@ def _install_guidance_safe(parity: Any) -> None:
             return real_caption(body, *args, **kwargs)
 
         def write(body: Any, *args: Any, **kwargs: Any):
-            if (
-                str(st.session_state.get(_RESOURCE_KEY, "")) == MONTHLY_RESOURCE_ID
-                and str(body).strip() == MONTHLY_OFFICIAL_CONTEXT_EN.strip()
-            ):
+            if is_monthly and str(body).strip() == MONTHLY_OFFICIAL_CONTEXT_EN.strip():
                 return None
             return real_write(body, *args, **kwargs)
 
         def expander(label: str, *args: Any, **kwargs: Any):
-            if (
-                str(st.session_state.get(_RESOURCE_KEY, "")) == MONTHLY_RESOURCE_ID
-                and label == "About this GeoSphere monthly dataset"
-            ):
+            if is_monthly and label == "About this GeoSphere monthly dataset":
                 return nullcontext()
             return real_expander(label, *args, **kwargs)
 
@@ -206,15 +195,19 @@ def _install_guidance_safe(parity: Any) -> None:
         def radio(label: str, options: Iterable[Any], *args: Any, **kwargs: Any):
             values = list(options)
             if label == "Parameter catalogue" and values == ["Recommended", "All parameters"]:
-                render_parameter_set()
-                # The final editor below performs the actual filtering; force the
-                # legacy cleanup layer to pass its full vocabulary downstream.
+                # The legacy monthly-cleanup wrapper can still invoke this control
+                # during non-monthly routes. Never render monthly-only UI there.
+                if is_monthly:
+                    render_parameter_set()
+                # Always pass the full vocabulary downstream; monthly filtering is
+                # owned by the final editor below and non-monthly routes must not
+                # inherit a stale monthly catalogue widget.
                 return "All parameters"
             return real_radio(label, values, *args, **kwargs)
 
         def editor(data: Any, *args: Any, **kwargs: Any):
             if not (
-                str(st.session_state.get(_RESOURCE_KEY, "")) == MONTHLY_RESOURCE_ID
+                is_monthly
                 and isinstance(data, pd.DataFrame)
                 and {"Provider", "Measured variable"}.issubset(data.columns)
             ):
