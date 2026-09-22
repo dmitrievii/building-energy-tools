@@ -171,8 +171,17 @@ def install_monthly_surface_guard(parity: Any) -> None:
     # This guard is the final source-selector composition step. Install the
     # transactional measured-variable form only now, so it becomes the outermost
     # DataEditor wrapper and cannot bypass the canonical monthly Parameter-set
-    # layer above. The form remains source-neutral and therefore also applies to
-    # 10-minute and hourly GeoSphere resources.
-    from .source_parity_ux_followup import install_geosphere_variable_form
+    # layer above. Lightweight contract tests intentionally provide only the
+    # Streamlit primitives they exercise; skip the optional form layer there.
+    required_form_surface = (
+        "data_editor",
+        "button",
+        "warning",
+        "form",
+        "form_submit_button",
+        "caption",
+    )
+    if all(hasattr(st, name) for name in required_form_surface):
+        from .source_parity_ux_followup import install_geosphere_variable_form
 
-    install_geosphere_variable_form(parity)
+        install_geosphere_variable_form(parity)
