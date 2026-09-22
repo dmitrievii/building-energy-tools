@@ -21,21 +21,36 @@ class _FakeForm:
 
 
 class _FakeStreamlit:
-    def __init__(self, edited: pd.DataFrame, *, submit: bool = True):
+    def __init__(self, selected_providers: list[str], *, submit: bool = True):
         self.session_state = {
             "geosphere_resource_id": "klima-v2-1h",
             "geosphere_selected_station_id": "105",
         }
-        self._edited = edited
+        self._selected_providers = [str(value) for value in selected_providers]
         self._submit = submit
         self.real_button_calls: list[str] = []
         self.warning_calls: list[str] = []
         self.caption_calls: list[str] = []
         self.form_calls: list[str] = []
+        self.dataframe_calls: list[pd.DataFrame] = []
+        self.multiselect_calls: list[dict[str, object]] = []
         self.rerun_calls = 0
 
     def data_editor(self, data, *args, **kwargs):
-        return self._edited.copy()
+        raise AssertionError("qualified GeoSphere selection must not use DataEditor transport")
+
+    def dataframe(self, data, *args, **kwargs):
+        self.dataframe_calls.append(data.copy())
+        return None
+
+    def multiselect(self, label, options, default=None, **kwargs):
+        values = [str(value) for value in options]
+        chosen = [value for value in self._selected_providers if value in values]
+        self.multiselect_calls.append({"label": str(label), "options": values, "chosen": chosen, "key": kwargs.get("key")})
+        key = kwargs.get("key")
+        if key:
+            self.session_state[str(key)] = list(chosen)
+        return chosen
 
     def button(self, label, *args, **kwargs):
         self.real_button_calls.append(str(label))
@@ -78,17 +93,14 @@ class InterannualOverlayAndVariableFormTests(unittest.TestCase):
         slots, summaries = ux.interannual_year_summaries(self._frame(), "value", "Monthly")
         self.assertEqual(slots, [1, 2])
         self.assertEqual(sorted(summaries), [2022, 2023])
-
         self.assertAlmostEqual(float(summaries[2022].loc[1, "mean"]), 2.0)
         self.assertAlmostEqual(float(summaries[2022].loc[1, "min"]), 1.0)
         self.assertAlmostEqual(float(summaries[2022].loc[1, "max"]), 3.0)
         self.assertTrue(pd.isna(summaries[2022].loc[2, "mean"]))
-
         self.assertAlmostEqual(float(summaries[2023].loc[1, "mean"]), 12.0)
         self.assertAlmostEqual(float(summaries[2023].loc[1, "min"]), 10.0)
         self.assertAlmostEqual(float(summaries[2023].loc[1, "max"]), 14.0)
         self.assertAlmostEqual(float(summaries[2023].loc[2, "mean"]), 20.0)
-
         self.assertNotEqual(float(summaries[2022].loc[1, "mean"]), 7.0)
         self.assertNotEqual(float(summaries[2023].loc[1, "mean"]), 7.0)
 
@@ -122,31 +134,41 @@ class InterannualOverlayAndVariableFormTests(unittest.TestCase):
                 "geosphere_selected_station_id": "999",
             }
         )
-
         self.assertTrue(variable_form.consume_geosphere_variable_form_load_request(fake_st))
         self.assertEqual(fake_st.session_state["geosphere_resource_id"], submitted[0])
-        # The selectbox has already been instantiated when the mature load gate
-        # runs. Streamlit forbids writing its widget-owned session-state key at
-        # that point, so the handoff must leave it untouched.
         self.assertEqual(fake_st.session_state["_geosphere_resource_selector_widget_v1"], "klima-v2-1h")
         self.assertEqual(fake_st.session_state["geosphere_selected_station_id"], submitted[1])
         self.assertNotIn(variable_form._FORM_REQUEST_KEY, fake_st.session_state)
         self.assertFalse(variable_form.consume_geosphere_variable_form_load_request(fake_st))
 
-    def test_v2_variable_form_submit_forwards_to_mature_load_same_run(self) -> None:
-        edited = pd.DataFrame(
+    def test_provider_selection_is_identity_based_not_row_order(self) -> None:
+        source = pd.DataFrame(
             {
-                "Selected": [True, False],
+                "Selected": [False, False, False],
+                "Measured variable": ["Humidity", "Pressure", "Temperature"],
+                "Provider": ["rf", "p", "tl"],
+            },
+            index=[8, 2, 11],
+        )
+        result = variable_form._apply_provider_selection(source, ["tl", "rf"])
+        selected = set(result.loc[result["Selected"], "Provider"].astype(str))
+        self.assertEqual(selected, {"tl", "rf"})
+        self.assertFalse(bool(source["Selected"].any()))
+
+    def test_v3_form_submit_forwards_multiselect_to_mature_load_same_run(self) -> None:
+        source = pd.DataFrame(
+            {
+                "Selected": [False, False],
                 "Measured variable": ["Temperature", "Humidity"],
                 "Provider": ["tl", "rf"],
             }
         )
-        fake_st = _FakeStreamlit(edited, submit=True)
+        fake_st = _FakeStreamlit(["tl"], submit=True)
         captured: dict[str, object] = {}
 
         def base_selector(_legacy, _original):
-            result = fake_st.data_editor(edited, key="geosphere_variable_editor")
-            captured["selected"] = int(result["Selected"].sum())
+            result = fake_st.data_editor(source, key="geosphere_variable_editor")
+            captured["selected"] = list(result.loc[result["Selected"], "Provider"])
             captured["load"] = fake_st.button(
                 "Load measured GeoSphere interval",
                 type="primary",
@@ -158,34 +180,35 @@ class InterannualOverlayAndVariableFormTests(unittest.TestCase):
         variable_form.install_geosphere_variable_form(parity)
         parity._render_geosphere_resource_selector(SimpleNamespace(), lambda: None)
 
-        self.assertEqual(captured["selected"], 1)
+        self.assertEqual(captured["selected"], ["tl"])
         self.assertTrue(captured["load"])
         self.assertEqual(fake_st.rerun_calls, 0)
         self.assertNotIn(variable_form._FORM_REQUEST_KEY, fake_st.session_state)
         self.assertEqual(fake_st.real_button_calls, [])
         self.assertEqual(len(fake_st.form_calls), 1)
+        self.assertEqual(len(fake_st.dataframe_calls), 1)
+        self.assertEqual(fake_st.multiselect_calls[0]["label"], "Select measured variables")
         self.assertTrue(any("staged locally" in text for text in fake_st.caption_calls))
 
-    def test_monthly_variable_label_alias_enters_v2_transactional_form(self) -> None:
-        edited = pd.DataFrame(
+    def test_monthly_variable_label_alias_enters_v3_transactional_form(self) -> None:
+        source = pd.DataFrame(
             {
-                "Selected": [True, False],
+                "Selected": [False, False],
                 "Variable": ["Temperature — monthly mean", "Humidity — monthly mean"],
                 "Provider": ["tl_mittel", "rf_mittel"],
             }
         )
-        fake_st = _FakeStreamlit(edited, submit=True)
+        fake_st = _FakeStreamlit(["tl_mittel"], submit=True)
         fake_st.session_state["geosphere_resource_id"] = "klima-v2-1m"
         captured: dict[str, object] = {}
 
         def base_selector(_legacy, _original):
-            source = edited.copy()
-            source["Selected"] = False
             result = fake_st.data_editor(
                 source,
                 key="geosphere_variable_editor__monthly__v2__core__fixture",
             )
             captured["columns"] = tuple(result.columns)
+            captured["selected"] = list(result.loc[result["Selected"], "Provider"])
             captured["load"] = fake_st.button(
                 "Load measured GeoSphere interval",
                 type="primary",
@@ -198,25 +221,26 @@ class InterannualOverlayAndVariableFormTests(unittest.TestCase):
         parity._render_geosphere_resource_selector(SimpleNamespace(), lambda: None)
 
         self.assertTrue(captured["load"])
+        self.assertEqual(captured["selected"], ["tl_mittel"])
         self.assertNotIn("Measured variable", captured["columns"])
         self.assertNotIn(variable_form._FORM_REQUEST_KEY, fake_st.session_state)
         self.assertEqual(fake_st.rerun_calls, 0)
         self.assertEqual(fake_st.real_button_calls, [])
         self.assertEqual(len(fake_st.form_calls), 1)
 
-    def test_empty_v2_form_submit_warns_once_and_never_commits_request(self) -> None:
-        edited = pd.DataFrame(
+    def test_empty_v3_form_submit_warns_once_and_never_commits_request(self) -> None:
+        source = pd.DataFrame(
             {
                 "Selected": [False, False],
                 "Measured variable": ["Temperature", "Humidity"],
                 "Provider": ["tl", "rf"],
             }
         )
-        fake_st = _FakeStreamlit(edited, submit=True)
+        fake_st = _FakeStreamlit([], submit=True)
         captured: dict[str, object] = {}
 
         def base_selector(_legacy, _original):
-            result = fake_st.data_editor(edited, key="geosphere_variable_editor")
+            result = fake_st.data_editor(source, key="geosphere_variable_editor")
             if int(result["Selected"].sum()) == 0:
                 fake_st.warning("Select at least one measured GeoSphere variable to load.")
                 captured["load"] = False
