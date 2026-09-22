@@ -168,7 +168,11 @@ def _install_guidance_safe(parity: Any) -> None:
             return real_write(body, *args, **kwargs)
 
         def expander(label: str, *args: Any, **kwargs: Any):
-            if is_monthly and label == "About this GeoSphere monthly dataset":
+            # Suppress every legacy monthly-context shell regardless of cadence.
+            # The one intended monthly context block is rendered below via the
+            # captured ``real_expander`` inside the final monthly editor, so this
+            # does not alter the transactional form or provider-load lifecycle.
+            if label == "About this GeoSphere monthly dataset":
                 return nullcontext()
             return real_expander(label, *args, **kwargs)
 
