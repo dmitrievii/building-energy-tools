@@ -1,11 +1,11 @@
 """Transactional GeoSphere measured-variable form runtime contract.
 
-The visible form stages DataEditor changes client-side. A valid submit commits a
-resource/station-scoped one-shot request and forwards that request directly into
-the mature provider-load button later in the same Streamlit script run. The
-submitted scope remains authoritative while the one-shot request is consumed,
-so nested compatibility wrappers cannot invalidate a committed submit by
-mutating routing state.
+The visible form stages DataEditor changes client-side. A valid submit snapshots
+Streamlit's submitted DataEditor state in the form-submit callback, then forwards
+one resource/station-scoped request into the mature provider-load button in the
+same script run. Capturing the editor delta in the callback is deliberate: form
+callbacks run before the post-submit script rerun can re-instantiate the editor
+and normalize its widget state.
 """
 from __future__ import annotations
 
@@ -19,6 +19,7 @@ _GEOSPHERE_FORM_INSTALLED = "_GEOSPHERE_VARIABLE_FORM_INSTALLED_V1"
 _FORM_KEY_PREFIX = "geosphere_variable_load_form_v1"
 _FORM_REQUEST_KEY = "_geosphere_variable_form_load_requested_v2"
 _FORM_ACTIVE_SCOPE_KEY = "_geosphere_variable_form_active_scope_v1"
+_FORM_SUBMITTED_EDITOR_STATE_KEY = "_geosphere_variable_form_submitted_editor_state_v1"
 _RESOURCE_KEY = "geosphere_resource_id"
 _STATION_KEY = "geosphere_selected_station_id"
 
@@ -29,14 +30,66 @@ def _selected_count(data: Any) -> int:
     return int(data["Selected"].fillna(False).astype(bool).sum())
 
 
-def _apply_submitted_editor_state(data: Any, state: Any) -> Any:
-    """Overlay Streamlit's submitted DataEditor delta onto its returned frame.
+def _editor_state_snapshot(state: Any) -> dict[str, Any]:
+    """Copy the immutable Streamlit DataEditorState into plain Python data."""
+    getter = getattr(state, "get", None)
+    if not callable(getter):
+        return {"edited_rows": {}}
 
-    ``st.session_state[editor_key]`` is a Streamlit ``DataEditorState`` in the
-    production runtime. It is intentionally a read-only dictionary-like object,
-    not necessarily a built-in ``dict``. Use the mapping protocol instead of
-    concrete-type checks so the submitted ``edited_rows`` payload is accepted.
-    """
+    edited_rows = getter("edited_rows", {})
+    items = getattr(edited_rows, "items", None)
+    if not callable(items):
+        return {"edited_rows": {}}
+
+    copied: dict[int, dict[str, Any]] = {}
+    for raw_row, changes in items():
+        try:
+            row = int(raw_row)
+        except (TypeError, ValueError):
+            continue
+        change_items = getattr(changes, "items", None)
+        if not callable(change_items):
+            continue
+        copied[row] = {str(column): value for column, value in change_items()}
+    return {"edited_rows": copied}
+
+
+def _capture_submitted_editor_state(
+    st: Any,
+    editor_key: str,
+    submit_scope: tuple[str, str],
+) -> None:
+    """Snapshot form widget state before Streamlit starts the submit rerun."""
+    st.session_state[_FORM_SUBMITTED_EDITOR_STATE_KEY] = {
+        "editor_key": str(editor_key),
+        "scope": (str(submit_scope[0]), str(submit_scope[1])),
+        "state": _editor_state_snapshot(st.session_state.get(editor_key)),
+    }
+
+
+def _consume_submitted_editor_state(
+    st: Any,
+    editor_key: str,
+    submit_scope: tuple[str, str],
+) -> Any:
+    """Consume only the callback snapshot belonging to this exact form scope."""
+    payload = st.session_state.pop(_FORM_SUBMITTED_EDITOR_STATE_KEY, None)
+    getter = getattr(payload, "get", None)
+    if not callable(getter):
+        return None
+    if str(getter("editor_key", "")) != str(editor_key):
+        return None
+    scope = getter("scope")
+    if not isinstance(scope, (tuple, list)) or len(scope) != 2:
+        return None
+    normalized_scope = (str(scope[0]), str(scope[1]))
+    if normalized_scope != (str(submit_scope[0]), str(submit_scope[1])):
+        return None
+    return getter("state")
+
+
+def _apply_submitted_editor_state(data: Any, state: Any) -> Any:
+    """Overlay a submitted DataEditor ``edited_rows`` delta onto ``data``."""
     if not isinstance(data, pd.DataFrame):
         return data
 
@@ -81,14 +134,7 @@ def _request_scope(st: Any) -> tuple[str, str] | None:
 
 
 def _restore_scope(st: Any, request: tuple[str, str]) -> bool:
-    """Restore routing state without mutating Streamlit-owned widget state.
-
-    This function can run after the GeoSphere resource selectbox has already
-    been instantiated in the current script run. Streamlit forbids assigning to
-    that widget's session-state key at that point. The provider-load handoff only
-    needs the canonical routing resource/station keys, so leave the widget-owned
-    selector key untouched.
-    """
+    """Restore routing state without mutating Streamlit-owned widget state."""
     resource_id, station_id = request
     if not resource_id or not station_id:
         return False
@@ -111,14 +157,7 @@ def geosphere_variable_form_owns_load_action(st: Any) -> bool:
 
 
 def consume_geosphere_variable_form_load_request(st: Any) -> bool:
-    """Consume exactly one valid form-submit request at the mature load boundary.
-
-    The request is created only by a successful form submit. The submitted
-    routing scope is restored immediately before consumption, then the one-shot
-    token is removed. Widget-owned state is deliberately never written here
-    because the resource selectbox already exists by the time the mature load
-    button is evaluated in the same Streamlit run.
-    """
+    """Consume exactly one valid form-submit request at the mature load boundary."""
     request = _request_scope(st)
     if request is None:
         return False
@@ -155,7 +194,7 @@ def install_geosphere_variable_form(parity: Any) -> None:
                 return real_editor(data, *args, **kwargs)
 
             # A fresh form render owns the load action for this exact scope. Any
-            # stale token from a previously abandoned render must not fire later.
+            # stale provider token from a previously abandoned render must not fire.
             st.session_state.pop(_FORM_REQUEST_KEY, None)
             resource_id, station_id = _scope(st)
             submit_scope = (resource_id, station_id)
@@ -163,6 +202,9 @@ def install_geosphere_variable_form(parity: Any) -> None:
             form_key = f"{_FORM_KEY_PREFIX}::{form_signature}"
             form_rendered["value"] = True
             st.session_state[_FORM_ACTIVE_SCOPE_KEY] = submit_scope
+
+            def capture_submit() -> None:
+                _capture_submitted_editor_state(st, editor_key, submit_scope)
 
             with st.form(form_key, clear_on_submit=False):
                 edited = real_editor(data, *args, **kwargs)
@@ -173,17 +215,23 @@ def install_geosphere_variable_form(parity: Any) -> None:
                     "Load measured GeoSphere interval",
                     type="primary",
                     help="Submit the current variable selection and start the provider request.",
+                    on_click=capture_submit,
                 )
 
             if submitted:
-                # On a real Streamlit form submit the visible Glide edits can be
-                # represented by the DataEditorState delta. Reconstruct before
-                # validation *and* return the reconstructed frame so the mature
-                # loader computes its parameter list from submitted checkboxes.
-                edited = _apply_submitted_editor_state(
-                    edited,
-                    st.session_state.get(editor_key),
+                # The form-submit callback runs before this script rerun. Consume
+                # that immutable snapshot instead of inspecting the editor widget
+                # after it has already been re-instantiated in the current run.
+                submitted_state = _consume_submitted_editor_state(
+                    st,
+                    editor_key,
+                    submit_scope,
                 )
+                if submitted_state is None:
+                    # Defensive fallback for synthetic/unit runtimes where form
+                    # callbacks may not execute like real Streamlit callbacks.
+                    submitted_state = st.session_state.get(editor_key)
+                edited = _apply_submitted_editor_state(edited, submitted_state)
                 if _selected_count(edited) <= 0:
                     st.session_state.pop(_FORM_REQUEST_KEY, None)
                     real_warning("Select at least one measured GeoSphere variable to load.")
