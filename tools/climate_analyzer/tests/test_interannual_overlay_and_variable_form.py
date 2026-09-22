@@ -112,7 +112,7 @@ class InterannualOverlayAndVariableFormTests(unittest.TestCase):
         self.assertFalse(bool(central["2023"].connectgaps))
         self.assertGreater(float(central["2023"].line.width), float(central["2022"].line.width))
 
-    def test_authoritative_submitted_request_survives_mutable_scope_skew(self) -> None:
+    def test_authoritative_submitted_request_restores_routing_without_mutating_widget_state(self) -> None:
         submitted = ("klima-v2-1m", "105")
         fake_st = SimpleNamespace(
             session_state={
@@ -125,7 +125,10 @@ class InterannualOverlayAndVariableFormTests(unittest.TestCase):
 
         self.assertTrue(variable_form.consume_geosphere_variable_form_load_request(fake_st))
         self.assertEqual(fake_st.session_state["geosphere_resource_id"], submitted[0])
-        self.assertEqual(fake_st.session_state["_geosphere_resource_selector_widget_v1"], submitted[0])
+        # The selectbox has already been instantiated when the mature load gate
+        # runs. Streamlit forbids writing its widget-owned session-state key at
+        # that point, so the handoff must leave it untouched.
+        self.assertEqual(fake_st.session_state["_geosphere_resource_selector_widget_v1"], "klima-v2-1h")
         self.assertEqual(fake_st.session_state["geosphere_selected_station_id"], submitted[1])
         self.assertNotIn(variable_form._FORM_REQUEST_KEY, fake_st.session_state)
         self.assertFalse(variable_form.consume_geosphere_variable_form_load_request(fake_st))
