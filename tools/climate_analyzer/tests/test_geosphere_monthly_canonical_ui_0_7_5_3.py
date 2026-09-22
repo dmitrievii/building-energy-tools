@@ -13,6 +13,9 @@ from epw_climate_analyzer.source_parity_monthly_canonical import (
     MONTHLY_ALLOWED_GENERIC_CHART_TYPES,
     MONTHLY_COMPARE_DIMENSIONS,
     MONTHLY_HEATMAP_PERIODS,
+    MONTHLY_HUMIDITY_ANALYSIS_OPTIONS,
+    _monthly_psychrometric_ready,
+    _monthly_reference_pressure,
     monthly_analysis_frame,
     monthly_page_names,
     monthly_variable_registry,
@@ -27,6 +30,7 @@ class GeoSphereMonthlyCanonicalUiTests(unittest.TestCase):
                 {"name": "tl_mittel", "long_name": "Lufttemperatur Monatsmittel", "unit": "°C"},
                 {"name": "tlmin", "long_name": "Absolutes Temperaturminimum", "unit": "°C"},
                 {"name": "rf_mittel", "long_name": "Relative Feuchte Monatsmittel", "unit": "%"},
+                {"name": "p", "long_name": "Luftdruck Monatsmittel", "unit": "hPa"},
                 {"name": "rr", "long_name": "Niederschlagssumme", "unit": "mm"},
                 {"name": "so_h", "long_name": "Sonnenscheindauer", "unit": "h"},
                 {"name": "tage_frost", "long_name": "Frosttage", "unit": "d"},
@@ -55,6 +59,7 @@ class GeoSphereMonthlyCanonicalUiTests(unittest.TestCase):
                 "tl_mittel": [0.5, 1.0, 5.0, 9.0],
                 "tlmin": [-12.0, -10.0, -5.0, -1.0],
                 "rf_mittel": [82.0, 79.0, 72.0, 68.0],
+                "p": [992.0, 993.0, 994.0, 995.0],
                 "rr": [35.0, 28.0, 42.0, 50.0],
                 "so_h": [60.0, 75.0, 120.0, 150.0],
                 "tage_frost": [20.0, 15.0, 5.0, 1.0],
@@ -77,8 +82,10 @@ class GeoSphereMonthlyCanonicalUiTests(unittest.TestCase):
         self.assertIn("dry_bulb_temperature_c", frame.columns)
         self.assertIn("dry_bulb_temperature_min_c", frame.columns)
         self.assertIn("relative_humidity_pct", frame.columns)
+        self.assertIn("atmospheric_station_pressure_pa", frame.columns)
         self.assertIn("liquid_precipitation_depth_mm", frame.columns)
         self.assertIn("sunshine_duration_s", frame.columns)
+        self.assertAlmostEqual(float(frame["atmospheric_station_pressure_pa"].iloc[0]), 99200.0)
         self.assertAlmostEqual(float(frame["sunshine_duration_s"].iloc[0]), 60.0 * 3600.0)
 
     def test_monthly_temporal_controls_allow_only_native_or_coarser_semantics(self) -> None:
@@ -89,6 +96,19 @@ class GeoSphereMonthlyCanonicalUiTests(unittest.TestCase):
         for forbidden in ("Hourly", "Daily", "Weekly", "Seasonal"):
             self.assertNotIn(forbidden, MONTHLY_ALLOWED_AGGREGATIONS)
 
+    def test_monthly_psychrometric_route_requires_a_complete_representative_state(self) -> None:
+        frame = monthly_analysis_frame(self.dataset())
+        self.assertTrue(_monthly_psychrometric_ready(frame))
+        self.assertEqual(
+            MONTHLY_HUMIDITY_ANALYSIS_OPTIONS,
+            ("Humidity variable explorer", "Psychrometric chart"),
+        )
+        pressure = _monthly_reference_pressure(SimpleNamespace(DEFAULT_PRESSURE_PA=101325.0), frame)
+        self.assertAlmostEqual(pressure, 99350.0)
+
+        missing_rh = frame.drop(columns=["relative_humidity_pct"])
+        self.assertFalse(_monthly_psychrometric_ready(missing_rh))
+
     def test_monthly_resource_uses_only_shared_canonical_page_taxonomy(self) -> None:
         dataset = self.dataset()
         frame = monthly_analysis_frame(dataset)
@@ -97,6 +117,7 @@ class GeoSphereMonthlyCanonicalUiTests(unittest.TestCase):
                 "Dry-bulb temperature": ("dry_bulb_temperature_c", "°C"),
                 "Dry-bulb temperature minimum": ("dry_bulb_temperature_min_c", "°C"),
                 "Relative humidity": ("relative_humidity_pct", "%"),
+                "Station pressure": ("atmospheric_station_pressure_pa", "Pa"),
                 "Liquid precipitation depth": ("liquid_precipitation_depth_mm", "mm"),
                 "Sunshine duration": ("sunshine_duration_s", "s"),
             }
