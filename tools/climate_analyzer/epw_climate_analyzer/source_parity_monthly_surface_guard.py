@@ -64,6 +64,54 @@ def _install_monthly_analysis_capability_note(st: Any) -> None:
     monthly_ui._MONTHLY_SURFACE_ANALYSIS_GUARD_INSTALLED = True
 
 
+def _install_monthly_form_table_alias(parity: Any) -> None:
+    """Make the decorated monthly editor recognizable by the shared form layer.
+
+    The mature 10-minute/hourly editor calls the display column ``Measured
+    variable``.  The monthly catalogue decorator intentionally shortens that
+    display label to ``Variable``.  The transactional form qualification is
+    source-neutral and keys off the mature semantic column name, so without this
+    adapter the monthly DataEditor bypasses the form and every checkbox edit
+    triggers a full Streamlit rerun.
+
+    Install this adapter *inside* the form wrapper.  At execution time it adds a
+    temporary semantic alias only while delegating to the form-aware editor and
+    removes the alias from the returned table, so provider identity and the
+    monthly loader contract remain unchanged.
+    """
+    previous = parity._render_geosphere_resource_selector
+    st = parity.st
+
+    def selector(legacy: Any, original: Callable) -> Any:
+        real_editor = st.data_editor
+
+        def editor(data: Any, *args: Any, **kwargs: Any):
+            alias_added = (
+                _monthly_active(st)
+                and isinstance(data, pd.DataFrame)
+                and {"Provider", "Selected", "Variable"}.issubset(data.columns)
+                and "Measured variable" not in data.columns
+                and str(kwargs.get("key", "")).startswith("geosphere_variable_editor")
+            )
+            prepared = data
+            if alias_added:
+                prepared = data.copy()
+                prepared["Measured variable"] = prepared["Variable"]
+
+            edited = real_editor(prepared, *args, **kwargs)
+            if alias_added and isinstance(edited, pd.DataFrame):
+                edited = edited.drop(columns=["Measured variable"], errors="ignore")
+            return edited
+
+        st.data_editor = editor
+        try:
+            return previous(legacy, original)
+        finally:
+            st.data_editor = real_editor
+
+    parity._render_geosphere_resource_selector = selector
+
+
 def install_monthly_surface_guard(parity: Any) -> None:
     """Normalize the final native-monthly Streamlit surface.
 
@@ -168,11 +216,9 @@ def install_monthly_surface_guard(parity: Any) -> None:
     parity._render_geosphere_resource_selector = selector
     _install_monthly_analysis_capability_note(st)
 
-    # This guard is the final source-selector composition step. Install the
-    # transactional measured-variable form only now, so it becomes the outermost
-    # DataEditor wrapper and cannot bypass the canonical monthly Parameter-set
-    # layer above. Lightweight contract tests intentionally provide only the
-    # Streamlit primitives they exercise; skip the optional form layer there.
+    # The monthly catalogue uses ``Variable`` while the shared form layer
+    # recognizes the mature ``Measured variable`` semantic. Install a temporary
+    # alias adapter first, then the form wrapper so the form remains outermost.
     required_form_surface = (
         "data_editor",
         "button",
@@ -184,4 +230,5 @@ def install_monthly_surface_guard(parity: Any) -> None:
     if all(hasattr(st, name) for name in required_form_surface):
         from .source_parity_ux_followup import install_geosphere_variable_form
 
+        _install_monthly_form_table_alias(parity)
         install_geosphere_variable_form(parity)
