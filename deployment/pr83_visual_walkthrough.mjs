@@ -11,8 +11,13 @@ const fixture = JSON.parse(await fs.readFile(FIXTURE_PATH, 'utf8'));
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const MONTHLY_RESOURCE = 'klima-v2-1m';
-const FORM_CAPTION = 'Variable choices are staged locally.';
+const LEGACY_FORM_CAPTION = 'Variable choices are staged locally.';
 const EMPTY_WARNING = 'Select at least one measured GeoSphere variable to load.';
+const PARAMETER_SETS = [
+  'Core variables',
+  'Core + additional statistics',
+  'All provider parameters',
+];
 
 await fs.mkdir(OUT_DIR, { recursive: true });
 
@@ -192,10 +197,12 @@ async function waitMonthlyEditor(page) {
     (text) => (
       text.includes(`Selected resource: ${MONTHLY_RESOURCE}`) &&
       text.includes('Parameter set') &&
+      PARAMETER_SETS.every((name) => text.includes(name)) &&
       text.includes('Measured variables to load') &&
-      text.includes(FORM_CAPTION)
+      text.includes(EMPTY_WARNING) &&
+      !text.includes(LEGACY_FORM_CAPTION)
     ),
-    'stable monthly measured-variable form',
+    'stable monthly mature-loader selector',
     90000,
     3,
   );
@@ -233,30 +240,19 @@ async function selectParameterSet(page, name) {
   throw new Error(`Parameter set did not settle: ${name}`);
 }
 
-async function assertStagedEmptySelection(frame, label) {
+async function assertMatureEmptySelection(frame, label) {
   const text = await bodyText(frame);
-  if (!text.includes(`Selected resource: ${MONTHLY_RESOURCE}`)) {
-    throw new Error(`${label}: monthly resource is not active.`);
-  }
-  if (!text.includes('Parameter set')) {
-    throw new Error(`${label}: monthly Parameter set control is missing.`);
-  }
-  if (!text.includes(FORM_CAPTION)) {
-    throw new Error(`${label}: measured-variable editor is not staged inside the transactional form.`);
-  }
-  if (text.includes(EMPTY_WARNING)) {
-    throw new Error(`${label}: empty-selection warning is visible before the user submits the form.`);
-  }
+  if (!text.includes(`Selected resource: ${MONTHLY_RESOURCE}`)) throw new Error(`${label}: monthly resource is not active.`);
+  if (!text.includes('Parameter set')) throw new Error(`${label}: monthly Parameter set control is missing.`);
+  if (text.includes(LEGACY_FORM_CAPTION)) throw new Error(`${label}: legacy transactional-form caption is still visible.`);
+  if (!text.includes(EMPTY_WARNING)) throw new Error(`${label}: mature empty-selection warning is missing.`);
 
   const load = frame.getByRole('button', { name: 'Load measured GeoSphere interval', exact: true }).first();
-  if (!(await load.count().catch(() => 0)) || !(await load.isVisible().catch(() => false))) {
-    throw new Error(`${label}: form submit action is not visible.`);
-  }
+  if (await load.count().catch(() => 0)) throw new Error(`${label}: load button must not be reachable with zero selected variables.`);
 
-  // Streamlit DataEditor exposes checkbox inputs in current browser builds. If
-  // they are accessibility-visible, verify that the fresh/default view contains
-  // no checked Load/quality-flag cells. Unit tests remain the source of truth if
-  // the grid implementation stops exposing checkbox roles.
+  const tables = frame.locator('[data-testid="stDataFrame"]');
+  if (await tables.count().catch(() => 0) < 2) throw new Error(`${label}: measured-variable DataEditor is missing.`);
+
   const checkboxes = frame.getByRole('checkbox');
   const count = await checkboxes.count().catch(() => 0);
   let checked = 0;
@@ -265,24 +261,7 @@ async function assertStagedEmptySelection(frame, label) {
   }
   if (checked !== 0) throw new Error(`${label}: ${checked} checkbox(es) are unexpectedly selected by default.`);
 
-  return { text, checkboxCount: count };
-}
-
-async function validateEmptySubmit(page, frame) {
-  const load = frame.getByRole('button', { name: 'Load measured GeoSphere interval', exact: true }).first();
-  await load.click({ timeout: 10000 });
-  const settled = await waitBody(
-    page,
-    (text) => (
-      text.includes(`Selected resource: ${MONTHLY_RESOURCE}`) &&
-      text.includes('Parameter set') &&
-      text.includes(EMPTY_WARNING)
-    ),
-    'empty form-submit validation',
-    30000,
-    2,
-  );
-  return settled.frame;
+  return { checkboxCount: count };
 }
 
 async function screenshot(page, name) {
@@ -290,7 +269,7 @@ async function screenshot(page, name) {
 }
 
 const report = {
-  schema: 'climate-analyzer-pr83-extended-visual-v7-transactional-form',
+  schema: 'climate-analyzer-pr83-extended-visual-v8-mature-loader',
   success: false,
   checks: {},
   page_errors: [],
@@ -301,6 +280,9 @@ let browser;
 let page;
 
 try {
+  if (!fixture.success) throw new Error('Monthly provider fixture is not successful.');
+  if (String(fixture.station_id) !== '105') throw new Error(`Monthly fixture must resolve station 105; got ${fixture.station_id}.`);
+
   browser = await chromium.launch({ executablePath: CHROME_PATH, headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
   const context = await browser.newContext({ viewport: { width: 1440, height: 1100 }, locale: 'en-US' });
   page = await context.newPage();
@@ -312,40 +294,32 @@ try {
   await selectDataset(page);
   await selectStation(page);
 
-  // Do not re-select the dataset after station commit. That click creates a
-  // second, competing Streamlit state transition. Instead wait for the same
-  // stable monthly contract used by the independent source-UI browser smoke.
   let monthly = await waitMonthlyEditor(page);
   let frame = monthly.frame;
   report.checks.monthly_resource_stable_after_station = true;
+  report.checks.legacy_transactional_form_absent = true;
 
-  const initial = await assertStagedEmptySelection(frame, 'Initial monthly view');
+  const initial = await assertMatureEmptySelection(frame, 'Initial monthly view');
   report.checks.initial_selection_empty = true;
-  report.checks.transactional_form_visible = true;
+  report.checks.empty_warning_visible = true;
+  report.checks.mature_load_button_hidden_for_empty_selection = true;
   report.checks.initial_accessible_checkbox_count = initial.checkboxCount;
   await screenshot(page, '01-monthly-initial-empty.png');
 
   frame = await selectParameterSet(page, 'Core variables');
-  await assertStagedEmptySelection(frame, 'Core variables');
+  await assertMatureEmptySelection(frame, 'Core variables');
   report.checks.core_view_selection_still_empty = true;
   await screenshot(page, '02-monthly-core-empty.png');
 
   frame = await selectParameterSet(page, 'All provider parameters');
-  await assertStagedEmptySelection(frame, 'All provider parameters');
+  await assertMatureEmptySelection(frame, 'All provider parameters');
   report.checks.all_view_selection_still_empty = true;
   await screenshot(page, '03-monthly-all-empty.png');
 
   frame = await selectParameterSet(page, 'Core variables');
-  await assertStagedEmptySelection(frame, 'Core variables roundtrip');
+  await assertMatureEmptySelection(frame, 'Core variables roundtrip');
   report.checks.core_roundtrip_selection_still_empty = true;
   await screenshot(page, '04-monthly-core-empty-roundtrip.png');
-
-  // Empty submit is a validation event, not a provider load. Before submit the
-  // warning must be absent; after submit it must appear while the monthly source
-  // and Parameter-set controls remain intact.
-  frame = await validateEmptySubmit(page, frame);
-  report.checks.empty_submit_warns_without_leaving_monthly = true;
-  await screenshot(page, '05-monthly-empty-submit-warning.png');
 
   if (report.page_errors.length) throw new Error(`Page errors: ${report.page_errors.join(' | ')}`);
   report.success = true;
