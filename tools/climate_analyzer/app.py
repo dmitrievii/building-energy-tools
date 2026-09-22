@@ -125,7 +125,7 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
     global OverlaySeries, available_resolution_labels, build_overlay_figure
     global native_resolution_minutes, validate_unit_families
     global available_years, filter_datetime_range, filter_year, with_time_basis
-    global CHRONOLOGICAL, CALENDAR_PROFILE, display_period_labels, is_multiyear, time_basis
+    global CHRONOLOGICAL, CALENDAR_PROFILE, INTERANNUAL_OVERLAY, display_period_labels, is_multiyear, time_basis
 
     if not _ANALYSIS_DEPENDENCIES_LOADED:
         import pandas as pd
@@ -224,6 +224,7 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
         from epw_climate_analyzer.temporal_filtering import (
             CALENDAR_PROFILE,
             CHRONOLOGICAL,
+            INTERANNUAL_OVERLAY,
             available_years,
             display_period_labels,
             is_multiyear,
@@ -1953,12 +1954,13 @@ def sidebar_filters(df: pd.DataFrame) -> pd.DataFrame:
     if len(ranged_years) > 1:
         basis = st.sidebar.selectbox(
             "Time basis",
-            [CHRONOLOGICAL, CALENDAR_PROFILE],
+            [CHRONOLOGICAL, CALENDAR_PROFILE, INTERANNUAL_OVERLAY],
             index=0,
             key="global_time_basis",
             help=(
-                "Chronological keeps every real period in order. Calendar profile aligns equivalent "
-                "calendar positions across the selected years for multi-year min/mean/max or typical-period analysis."
+                "Chronological keeps every real period in order. Calendar profile combines equivalent "
+                "calendar positions according to the existing profile/averaging rules. Interannual overlay "
+                "keeps every real year independent and aligns the yearly series on a common calendar axis."
             ),
         )
     else:
