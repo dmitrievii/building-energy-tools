@@ -8,6 +8,7 @@ import pandas as pd
 
 from epw_climate_analyzer import source_parity_monthly_surface_guard as surface_guard
 from epw_climate_analyzer import source_parity_ux_followup as ux
+from epw_climate_analyzer import source_parity_variable_form as variable_form
 from epw_climate_analyzer import temporal_filtering
 
 
@@ -107,6 +108,34 @@ class InterannualOverlayAndVariableFormTests(unittest.TestCase):
         self.assertFalse(bool(central["2022"].connectgaps))
         self.assertFalse(bool(central["2023"].connectgaps))
         self.assertGreater(float(central["2023"].line.width), float(central["2022"].line.width))
+
+    def test_authoritative_submitted_request_survives_mutable_scope_skew(self) -> None:
+        """A committed submit must not be vetoed by wrapper routing skew.
+
+        The live Streamlit failure that motivated this regression had already
+        committed three DataEditor selections server-side, but the mature load
+        button never became true.  The request captured at form submit is the
+        authoritative one-shot scope; compatibility wrappers may not invalidate
+        it by rewriting the mutable resource/station keys before consumption.
+        """
+        submitted = ("klima-v2-1m", "105")
+        fake_st = SimpleNamespace(
+            session_state={
+                variable_form._FORM_REQUEST_KEY: submitted,
+                "geosphere_resource_id": "klima-v2-1h",
+                "_geosphere_resource_selector_widget_v1": "klima-v2-1h",
+                "geosphere_selected_station_id": "999",
+            }
+        )
+
+        self.assertTrue(variable_form.consume_geosphere_variable_form_load_request(fake_st))
+        self.assertEqual(fake_st.session_state["geosphere_resource_id"], submitted[0])
+        self.assertEqual(fake_st.session_state["_geosphere_resource_selector_widget_v1"], submitted[0])
+        self.assertEqual(fake_st.session_state["geosphere_selected_station_id"], submitted[1])
+        self.assertNotIn(variable_form._FORM_REQUEST_KEY, fake_st.session_state)
+
+        # One submit is exactly one provider-load action.
+        self.assertFalse(variable_form.consume_geosphere_variable_form_load_request(fake_st))
 
     def test_variable_form_submit_is_forwarded_to_existing_load_action(self) -> None:
         edited = pd.DataFrame(
