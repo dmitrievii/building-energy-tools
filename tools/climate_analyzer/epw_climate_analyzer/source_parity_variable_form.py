@@ -1,10 +1,11 @@
 """Transactional GeoSphere measured-variable form runtime contract.
 
-The visible form stages DataEditor changes client-side. A valid form submit is
-committed synchronously in the same Streamlit run in which
-``form_submit_button`` returns ``True``. The mature provider loader consumes the
-resource/station-scoped one-shot request later in that same run. This avoids
-using callback timing as event transport across reruns.
+The visible form stages DataEditor changes client-side. A valid submit commits a
+resource/station-scoped one-shot request and immediately starts one clean
+Streamlit rerun. The mature provider loader consumes that already-persisted
+request on the following run. This deliberately separates form widget commit
+from provider execution so the load action no longer depends on same-run wrapper
+ordering.
 """
 from __future__ import annotations
 
@@ -45,7 +46,7 @@ def consume_geosphere_variable_form_load_request(st: Any) -> bool:
 
 
 def install_geosphere_variable_form(parity: Any) -> None:
-    """Stage editor changes in a form and publish a same-run one-shot load request."""
+    """Stage editor changes and commit a valid submit for the next clean rerun."""
     if bool(getattr(parity, _GEOSPHERE_FORM_INSTALLED, False)):
         return
     setattr(parity, _GEOSPHERE_FORM_INSTALLED, True)
@@ -72,9 +73,8 @@ def install_geosphere_variable_form(parity: Any) -> None:
             form_signature = sha1(f"{resource_id}\0{station_id}".encode("utf-8")).hexdigest()[:12]
             form_key = f"{_FORM_KEY_PREFIX}::{form_signature}"
             form_rendered["value"] = True
-            # Mark ownership on every render. The production load boundary
-            # compares this exact scope before suppressing the duplicate legacy
-            # button, so stale state from another resource/station is inert.
+            # Mark ownership on every render. Stale state from another
+            # resource/station cannot suppress that scope's fallback action.
             st.session_state[_FORM_ACTIVE_SCOPE_KEY] = submit_scope
 
             with st.form(form_key, clear_on_submit=False):
@@ -89,15 +89,18 @@ def install_geosphere_variable_form(parity: Any) -> None:
                 )
 
             if submitted:
-                # ``submitted`` is true in the same script run that contains the
-                # committed DataEditor values. Arm the exact current scope here,
-                # immediately before the mature loader is reached. No callback
-                # or cross-rerun closure is required.
                 if _selected_count(edited) <= 0:
                     st.session_state.pop(_FORM_REQUEST_KEY, None)
                     real_warning("Select at least one measured GeoSphere variable to load.")
                 else:
+                    # Phase 1: persist the exact load request after Streamlit has
+                    # committed the form's DataEditor values. End this script run
+                    # deliberately. On the next run the request exists before any
+                    # wrapper is composed, so the mature loader can consume it
+                    # deterministically instead of depending on same-run widget
+                    # return ordering.
                     st.session_state[_FORM_REQUEST_KEY] = submit_scope
+                    st.rerun()
             return edited
 
         def warning(body: Any, *args: Any, **kwargs: Any):
@@ -115,8 +118,8 @@ def install_geosphere_variable_form(parity: Any) -> None:
         try:
             return previous(legacy, original)
         finally:
-            # Presentation proxies are selector-local. Request/ownership state
-            # survives only until the mature load boundary consumes it.
+            # Presentation proxies are selector-local. The scoped request is
+            # intentionally durable across exactly one rerun until consumed.
             st.data_editor = real_editor
             st.warning = real_warning
 
