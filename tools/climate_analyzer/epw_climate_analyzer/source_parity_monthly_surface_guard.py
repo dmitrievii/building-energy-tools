@@ -133,7 +133,7 @@ def install_monthly_surface_guard(parity: Any) -> None:
             values = list(options)
             if _monthly_active(st):
                 if label == "Parameter catalogue" and tuple(values) == _LEGACY_CATALOGUE_OPTIONS:
-                    # Never expose the obsolete Recommended/All control.  Rendering
+                    # Never expose the obsolete Recommended/All control. Rendering
                     # the canonical selector here (rather than merely returning
                     # ``All parameters``) also makes the very first monthly render
                     # safe when legacy cleanup happens to be the outer wrapper.
@@ -141,7 +141,7 @@ def install_monthly_surface_guard(parity: Any) -> None:
                     return "All parameters"
                 if label == "Parameter set" and tuple(values) == _PARAMETER_SET_OPTIONS:
                     # The contract-guidance wrapper may independently ask for the
-                    # same widget.  Return the value already rendered by this final
+                    # same widget. Return the value already rendered by this final
                     # guard so duplicate widget IDs cannot be created.
                     return render_parameter_set()
             return real_radio(label, values, *args, **kwargs)
@@ -167,3 +167,12 @@ def install_monthly_surface_guard(parity: Any) -> None:
 
     parity._render_geosphere_resource_selector = selector
     _install_monthly_analysis_capability_note(st)
+
+    # This guard is the final source-selector composition step. Install the
+    # transactional measured-variable form only now, so it becomes the outermost
+    # DataEditor wrapper and cannot bypass the canonical monthly Parameter-set
+    # layer above. The form remains source-neutral and therefore also applies to
+    # 10-minute and hourly GeoSphere resources.
+    from .source_parity_ux_followup import install_geosphere_variable_form
+
+    install_geosphere_variable_form(parity)
