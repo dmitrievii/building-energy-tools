@@ -1,6 +1,5 @@
 """Cross-cadence GeoSphere source UX polish."""
 from __future__ import annotations
-from contextlib import nullcontext
 from typing import Any, Callable
 import pandas as pd
 
@@ -29,7 +28,6 @@ _MONTHLY_PARAMETER_SET_OPTIONS = (
     "Core + additional statistics",
     "All provider parameters",
 )
-_MONTHLY_CONTEXT_LABEL = "About this GeoSphere monthly dataset"
 
 
 def _english_variable_name(row: pd.Series) -> str:
@@ -66,7 +64,7 @@ def install_source_ux_polish(proxy: Any, parity: Any) -> None:
 
     previous_selector = parity._render_geosphere_resource_selector
     def selector(legacy: Any, original: Callable) -> Any:
-        real_editor, real_info, real_radio, real_expander = st.data_editor, st.info, st.radio, st.expander
+        real_editor, real_info, real_radio = st.data_editor, st.info, st.radio
 
         def editor(data: Any, *args: Any, **kwargs: Any):
             if isinstance(data, pd.DataFrame) and {"Measured variable", "Provider"}.issubset(data.columns):
@@ -96,20 +94,7 @@ def install_source_ux_polish(proxy: Any, parity: Any) -> None:
                 return "Core variables"
             return real_radio(label, options, *args, **kwargs)
 
-        def expander(label: Any, *args: Any, **kwargs: Any):
-            # Older monthly wrappers may still invoke their explanatory expander
-            # while a 1m -> 1h/10min transition is being recomposed. Suppress the
-            # monthly-only shell whenever the committed resource is non-monthly.
-            # On klima-v2-1m the final guidance layer renders the single intended
-            # context block through this same outer boundary.
-            if (
-                str(label) == _MONTHLY_CONTEXT_LABEL
-                and str(st.session_state.get("geosphere_resource_id", "")) != "klima-v2-1m"
-            ):
-                return nullcontext()
-            return real_expander(label, *args, **kwargs)
-
-        st.data_editor, st.info, st.radio, st.expander = editor, info, radio, expander
+        st.data_editor, st.info, st.radio = editor, info, radio
         try:
             result = previous_selector(legacy, original)
             # Resolve context after the composed selector has committed the
@@ -122,7 +107,7 @@ def install_source_ux_polish(proxy: Any, parity: Any) -> None:
                 real_info(context)
             return result
         finally:
-            st.data_editor, st.info, st.radio, st.expander = real_editor, real_info, real_radio, real_expander
+            st.data_editor, st.info, st.radio = real_editor, real_info, real_radio
 
     parity._render_geosphere_resource_selector = selector
     proxy._GEOSPHERE_SOURCE_UX_POLISH_V1 = True
