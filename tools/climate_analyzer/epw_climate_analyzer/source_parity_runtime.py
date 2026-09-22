@@ -89,7 +89,14 @@ def _freeze_session_geosphere_selector(proxy: Any, parity: Any) -> None:
             from .source_parity_variable_form import (
                 consume_geosphere_variable_form_load_request,
                 geosphere_variable_form_owns_load_action,
+                restore_geosphere_variable_form_request_scope,
             )
+
+            # A valid transactional form submit owns one exact resource/station
+            # scope. Restore it before the visible dataset selector and nested
+            # legacy wrappers are composed so transient widget/routing skew cannot
+            # invalidate or consume the pending request.
+            restore_geosphere_variable_form_request_scope(st)
 
             real_button = st.button
 
@@ -99,10 +106,6 @@ def _freeze_session_geosphere_selector(proxy: Any, parity: Any) -> None:
                     and str(kwargs.get("key", "")) == "load_geosphere_interval"
                 )
                 if is_mature_load:
-                    # Phase 2: consume an already-committed request first. The
-                    # request was persisted on the preceding form-submit run, so
-                    # provider execution no longer depends on same-run wrapper or
-                    # widget return ordering.
                     if consume_geosphere_variable_form_load_request(st):
                         return True
                     # When the transactional form owns this scope, its submit is
