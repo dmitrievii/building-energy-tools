@@ -164,6 +164,33 @@ async function selectExactStation(page, stationName, stationId) {
   throw new Error('Use station from list button did not become available.');
 }
 
+async function waitMonthlySelectionSurface(page, timeoutMs = 60_000) {
+  const started = performance.now();
+  let stablePasses = 0;
+  let lastText = '';
+  while (performance.now() - started < timeoutMs) {
+    const frame = await appFrame(page, 'Measured variables to load', 5_000);
+    const text = await bodyText(frame);
+    lastText = text;
+    const ready = (
+      text.includes('Selected resource: klima-v2-1m') &&
+      text.includes('Parameter set') &&
+      text.includes('Core variables') &&
+      text.includes('Core + additional statistics') &&
+      text.includes('All provider parameters') &&
+      text.includes('Select at least one measured GeoSphere variable to load.')
+    );
+    if (ready) {
+      stablePasses += 1;
+      if (stablePasses >= 3) return frame;
+    } else {
+      stablePasses = 0;
+    }
+    await sleep(300);
+  }
+  throw new Error(`Monthly selection surface did not settle; last text contains Parameter set=${lastText.includes('Parameter set')}.`);
+}
+
 async function selectRadio(page, name, expectedNeedle = 'Measured variables to load') {
   const started = performance.now();
   while (performance.now() - started < 30_000) {
@@ -290,7 +317,7 @@ async function clickSidebar(page, label, expectedText) {
 }
 
 const report = {
-  schema: 'climate-analyzer-monthly-selected-load-smoke-v1',
+  schema: 'climate-analyzer-monthly-selected-load-smoke-v2',
   target_url: TARGET_URL,
   fixture,
   checks: {},
@@ -315,7 +342,8 @@ try {
 
   await chooseSource(page);
   await selectDataset(page);
-  let frame = await selectExactStation(page, fixture.station_name, fixture.station_id);
+  await selectExactStation(page, fixture.station_name, fixture.station_id);
+  let frame = await waitMonthlySelectionSurface(page);
   let text = await bodyText(frame);
   if (!text.includes('Select at least one measured GeoSphere variable to load.')) throw new Error('Empty monthly selection warning is missing.');
   if (await frame.getByRole('button', { name: 'Load measured GeoSphere interval', exact: true }).count().catch(() => 0)) {
@@ -323,8 +351,8 @@ try {
   }
   report.checks.initial_selection = 'zero';
   report.checks.empty_selection_warning = true;
+  report.checks.initial_core_view = true;
 
-  if (!text.includes('Core variables')) throw new Error('Core variables view is not visible on initial monthly render.');
   await selectRadio(page, 'All provider parameters');
   const selected = {};
   for (const provider of REQUIRED) {
