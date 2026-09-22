@@ -32,6 +32,10 @@ MONTHLY_ALLOWED_GENERIC_CHART_TYPES = (
 MONTHLY_ALLOWED_AGGREGATIONS = ("Monthly", "Annual")
 MONTHLY_HEATMAP_PERIODS = ("Month",)
 MONTHLY_COMPARE_DIMENSIONS = ("Year",)
+MONTHLY_HUMIDITY_ANALYSIS_OPTIONS = (
+    "Humidity variable explorer",
+    "Psychrometric chart",
+)
 
 # Provider monthly statistics that have a direct, physically compatible
 # canonical interpretation at the source interval (= one calendar month).
@@ -269,7 +273,7 @@ def _monthly_sidebar_filters(legacy: Any, df: pd.DataFrame) -> pd.DataFrame:
         start_value = pd.Timestamp(start_date)
         end_value = pd.Timestamp(end_date) + pd.Timedelta(days=1) - pd.Timedelta(microseconds=1)
         if start_value > end_value:
-            st.sidebar.error("From must not be later than To.")
+            st.sidebar.error("From must not be later than start date.")
             ranged = df.iloc[0:0].copy()
         else:
             ranged = legacy.filter_datetime_range(df, start=start_value, end=end_value)
@@ -359,6 +363,86 @@ def _render_monthly_generic(legacy: Any, df: pd.DataFrame, labels: list[str], ti
         )
     finally:
         st.selectbox = real_selectbox
+
+
+def _monthly_psychrometric_ready(df: pd.DataFrame) -> bool:
+    """Return whether at least one representative monthly moist-air state exists."""
+    required = ("dry_bulb_temperature_c", "relative_humidity_pct")
+    if any(column not in df.columns for column in required):
+        return False
+    pair = pd.DataFrame(
+        {
+            column: pd.to_numeric(df[column], errors="coerce")
+            for column in required
+        },
+        index=df.index,
+    )
+    return bool(pair.notna().all(axis=1).any())
+
+
+def _monthly_reference_pressure(legacy: Any, df: pd.DataFrame) -> float:
+    """Return a representative pressure for chart background curves."""
+    if "atmospheric_station_pressure_pa" in df.columns:
+        values = pd.to_numeric(df["atmospheric_station_pressure_pa"], errors="coerce")
+        values = values.loc[values.between(30_000.0, 120_000.0)]
+        if not values.empty:
+            return float(values.median())
+    return float(getattr(legacy, "DEFAULT_PRESSURE_PA", 101325.0))
+
+
+def _render_monthly_humidity(legacy: Any, filtered: pd.DataFrame, labels: list[str], title: str) -> None:
+    """Render monthly humidity with a physically valid representative-state chart."""
+    st = legacy.st
+    psychrometric_ready = _monthly_psychrometric_ready(filtered)
+    options = list(MONTHLY_HUMIDITY_ANALYSIS_OPTIONS if psychrometric_ready else MONTHLY_HUMIDITY_ANALYSIS_OPTIONS[:1])
+    analysis = st.selectbox(
+        "Analysis type",
+        options,
+        index=0,
+        key="monthly_humidity_analysis_v1",
+        help=(
+            "The psychrometric chart uses one representative state per published month. "
+            "No hourly distribution, duration, or threshold count is reconstructed."
+        ),
+    )
+    st.caption(
+        "Native monthly source: sub-monthly analyses are unavailable. Only graph operations that remain physically meaningful for published monthly statistics are enabled."
+    )
+
+    if analysis != "Psychrometric chart":
+        _render_monthly_generic(legacy, filtered, labels, title)
+        return
+
+    pressure_pa = _monthly_reference_pressure(legacy, filtered)
+    psychrometric = legacy.add_psychrometric_properties(filtered, fallback_pressure_pa=pressure_pa)
+    valid = psychrometric[["dry_bulb_temperature_c", "humidity_ratio_g_kg"]].dropna()
+    if valid.empty:
+        st.info("No complete monthly temperature / relative-humidity state is available for the psychrometric chart.")
+        return
+
+    chart_type = st.radio(
+        "Psychrometric axes",
+        ["T-d", "i-d"],
+        horizontal=True,
+        key="monthly_psychrometric_axes_v1",
+    )
+    st.caption(
+        "Each point is one published monthly-mean temperature / relative-humidity state. Derived dew point, humidity ratio, enthalpy and wet-bulb temperature describe that representative monthly state; they are not arithmetic means of unobserved hourly psychrometric quantities."
+    )
+    fig = legacy.psychrometric_chart(
+        psychrometric,
+        chart_type=chart_type,
+        pressure_pa=pressure_pa,
+        show_rh_curves=True,
+        show_comfort_zone=False,
+        data_mode="Monthly points",
+        metric_layers=["Relative humidity"],
+        color_mode="Month",
+    )
+    legacy.render_plot(
+        fig,
+        "Representative monthly psychrometric states from published monthly mean temperature and relative humidity; no sub-monthly distribution is inferred.",
+    )
 
 
 def _render_monthly_overview(legacy: Any, dataset: Any, filtered: pd.DataFrame) -> None:
@@ -479,10 +563,15 @@ def render_monthly_canonical_analysis(legacy: Any, dataset: Any) -> None:
         "Wind and Ventilation": "Wind and ventilation",
         "Precipitation and Snow": "Precipitation and snow",
     }
+
+    if page == "Humidity and Psychrometrics":
+        st.header(titles[page])
+        _render_monthly_humidity(legacy, filtered, groups.get(page, []), titles[page])
+        return
+
     st.header(titles.get(page, page))
     analysis_label = {
         "Temperature": "Temperature variable explorer",
-        "Humidity and Psychrometrics": "Humidity variable explorer",
         "Solar and Radiation": "Solar/radiation variable explorer",
         "Sky and Daylight": "Sky/daylight variable explorer",
         "Wind and Ventilation": "Wind variable explorer",
