@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from contextlib import nullcontext
+import inspect
 from types import SimpleNamespace
 import unittest
 
@@ -20,6 +20,10 @@ class _FakeForm:
         return False
 
 
+class _FakeRerun(RuntimeError):
+    pass
+
+
 class _FakeStreamlit:
     def __init__(self, edited: pd.DataFrame, *, submit: bool = True):
         self.session_state = {
@@ -32,6 +36,7 @@ class _FakeStreamlit:
         self.warning_calls: list[str] = []
         self.caption_calls: list[str] = []
         self.form_calls: list[str] = []
+        self.rerun_calls = 0
 
     def data_editor(self, data, *args, **kwargs):
         return self._edited.copy()
@@ -52,6 +57,10 @@ class _FakeStreamlit:
 
     def form_submit_button(self, label, *args, **kwargs):
         return bool(self._submit)
+
+    def rerun(self):
+        self.rerun_calls += 1
+        raise _FakeRerun("streamlit rerun")
 
 
 class InterannualOverlayAndVariableFormTests(unittest.TestCase):
@@ -110,14 +119,7 @@ class InterannualOverlayAndVariableFormTests(unittest.TestCase):
         self.assertGreater(float(central["2023"].line.width), float(central["2022"].line.width))
 
     def test_authoritative_submitted_request_survives_mutable_scope_skew(self) -> None:
-        """A committed submit must not be vetoed by wrapper routing skew.
-
-        The live Streamlit failure that motivated this regression had already
-        committed three DataEditor selections server-side, but the mature load
-        button never became true.  The request captured at form submit is the
-        authoritative one-shot scope; compatibility wrappers may not invalidate
-        it by rewriting the mutable resource/station keys before consumption.
-        """
+        """A committed submit must not be vetoed by wrapper routing skew."""
         submitted = ("klima-v2-1m", "105")
         fake_st = SimpleNamespace(
             session_state={
@@ -137,7 +139,7 @@ class InterannualOverlayAndVariableFormTests(unittest.TestCase):
         # One submit is exactly one provider-load action.
         self.assertFalse(variable_form.consume_geosphere_variable_form_load_request(fake_st))
 
-    def test_variable_form_submit_is_forwarded_to_existing_load_action(self) -> None:
+    def test_v2_variable_form_submit_commits_request_then_reruns(self) -> None:
         edited = pd.DataFrame(
             {
                 "Selected": [True, False],
@@ -146,26 +148,33 @@ class InterannualOverlayAndVariableFormTests(unittest.TestCase):
             }
         )
         fake_st = _FakeStreamlit(edited, submit=True)
-        captured: dict[str, object] = {}
 
         def base_selector(_legacy, _original):
-            source = edited.copy()
-            source["Selected"] = False
-            result = fake_st.data_editor(source, key="geosphere_variable_editor")
-            captured["selected"] = int(result["Selected"].sum())
-            captured["load"] = fake_st.button("Load measured GeoSphere interval", type="primary")
+            result = fake_st.data_editor(edited, key="geosphere_variable_editor")
+            fake_st.button("Load measured GeoSphere interval", type="primary")
+            return result
 
         parity = SimpleNamespace(st=fake_st, _render_geosphere_resource_selector=base_selector)
-        ux.install_geosphere_variable_form(parity)
-        parity._render_geosphere_resource_selector(SimpleNamespace(), lambda: None)
+        variable_form.install_geosphere_variable_form(parity)
 
-        self.assertEqual(captured["selected"], 1)
-        self.assertTrue(captured["load"])
+        with self.assertRaises(_FakeRerun):
+            parity._render_geosphere_resource_selector(SimpleNamespace(), lambda: None)
+
+        submitted = ("klima-v2-1h", "105")
+        self.assertEqual(fake_st.session_state[variable_form._FORM_REQUEST_KEY], submitted)
+        self.assertEqual(fake_st.rerun_calls, 1)
         self.assertEqual(fake_st.real_button_calls, [])
         self.assertEqual(len(fake_st.form_calls), 1)
         self.assertTrue(any("staged locally" in text for text in fake_st.caption_calls))
 
-    def test_monthly_variable_label_alias_enters_transactional_form(self) -> None:
+        # Simulate one rerun of legacy routing state before the mature load gate.
+        fake_st.session_state["geosphere_resource_id"] = "klima-v2-10min"
+        fake_st.session_state["geosphere_selected_station_id"] = "999"
+        self.assertTrue(variable_form.consume_geosphere_variable_form_load_request(fake_st))
+        self.assertEqual(fake_st.session_state["geosphere_resource_id"], submitted[0])
+        self.assertEqual(fake_st.session_state["geosphere_selected_station_id"], submitted[1])
+
+    def test_monthly_variable_label_alias_enters_v2_transactional_form(self) -> None:
         edited = pd.DataFrame(
             {
                 "Selected": [True, False],
@@ -189,16 +198,26 @@ class InterannualOverlayAndVariableFormTests(unittest.TestCase):
 
         parity = SimpleNamespace(st=fake_st, _render_geosphere_resource_selector=base_selector)
         surface_guard._install_monthly_form_table_alias(parity)
-        ux.install_geosphere_variable_form(parity)
+        variable_form.install_geosphere_variable_form(parity)
+
+        with self.assertRaises(_FakeRerun):
+            parity._render_geosphere_resource_selector(SimpleNamespace(), lambda: None)
+
+        self.assertEqual(
+            fake_st.session_state[variable_form._FORM_REQUEST_KEY],
+            ("klima-v2-1m", "105"),
+        )
+        self.assertEqual(fake_st.rerun_calls, 1)
+
+        # On the clean rerun the alias is still temporary: provider-facing output
+        # must keep the monthly ``Variable`` column and remove the semantic helper.
+        fake_st._submit = False
         parity._render_geosphere_resource_selector(SimpleNamespace(), lambda: None)
-
-        self.assertTrue(captured["load"])
         self.assertNotIn("Measured variable", captured["columns"])
-        self.assertEqual(fake_st.real_button_calls, [])
-        self.assertEqual(len(fake_st.form_calls), 1)
-        self.assertTrue(any("staged locally" in text for text in fake_st.caption_calls))
+        self.assertEqual(captured["load"], False)
+        self.assertEqual(len(fake_st.form_calls), 2)
 
-    def test_empty_form_submit_warns_once_and_never_triggers_load(self) -> None:
+    def test_empty_v2_form_submit_warns_once_and_never_commits_request(self) -> None:
         edited = pd.DataFrame(
             {
                 "Selected": [False, False],
@@ -218,12 +237,25 @@ class InterannualOverlayAndVariableFormTests(unittest.TestCase):
             captured["load"] = fake_st.button("Load measured GeoSphere interval", type="primary")
 
         parity = SimpleNamespace(st=fake_st, _render_geosphere_resource_selector=base_selector)
-        ux.install_geosphere_variable_form(parity)
+        variable_form.install_geosphere_variable_form(parity)
         parity._render_geosphere_resource_selector(SimpleNamespace(), lambda: None)
 
         self.assertFalse(captured["load"])
         self.assertEqual(fake_st.warning_calls, ["Select at least one measured GeoSphere variable to load."])
+        self.assertEqual(fake_st.rerun_calls, 0)
+        self.assertNotIn(variable_form._FORM_REQUEST_KEY, fake_st.session_state)
         self.assertEqual(fake_st.real_button_calls, [])
+
+    def test_monthly_surface_guard_wires_authoritative_v2_form_module(self) -> None:
+        source = inspect.getsource(surface_guard.install_monthly_surface_guard)
+        self.assertIn(
+            "from .source_parity_variable_form import install_geosphere_variable_form",
+            source,
+        )
+        self.assertNotIn(
+            "from .source_parity_ux_followup import install_geosphere_variable_form",
+            source,
+        )
 
 
 if __name__ == "__main__":
