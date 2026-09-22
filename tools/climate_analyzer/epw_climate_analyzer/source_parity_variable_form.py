@@ -1,11 +1,11 @@
 """Transactional GeoSphere measured-variable form runtime contract.
 
 The visible form stages DataEditor changes client-side. A valid submit commits a
-resource/station-scoped one-shot request and immediately starts one clean
-Streamlit rerun. The submitted scope is authoritative for that one load action:
-it is restored before selector composition and again when the mature loader
-consumes the request. This keeps a later wrapper from invalidating a submit by
-mutating routing state during the same rerun.
+resource/station-scoped one-shot request and forwards that request directly into
+the mature provider-load button later in the same Streamlit script run. The
+submitted scope remains authoritative while the one-shot request is consumed,
+so nested compatibility wrappers cannot invalidate a committed submit by
+mutating routing state.
 """
 from __future__ import annotations
 
@@ -55,7 +55,7 @@ def _restore_scope(st: Any, request: tuple[str, str]) -> bool:
 
 
 def restore_geosphere_variable_form_request_scope(st: Any) -> bool:
-    """Restore the exact submitted resource/station before selector composition."""
+    """Restore the exact submitted resource/station while a request is pending."""
     request = _request_scope(st)
     if request is None:
         return False
@@ -70,14 +70,9 @@ def geosphere_variable_form_owns_load_action(st: Any) -> bool:
 def consume_geosphere_variable_form_load_request(st: Any) -> bool:
     """Consume exactly one valid form-submit request at the mature load boundary.
 
-    The request is created only by a successful form submit and the submit
-    immediately ends that script run with ``st.rerun()``.  On the next run the
-    request therefore represents the user's committed resource/station choice.
-    Nested compatibility wrappers may rewrite legacy routing keys while they are
-    composed; those mutable keys must not veto an already committed submit.
-
-    Re-restore the submitted scope immediately before consumption, then remove
-    the one-shot token.  Invalid/incomplete tokens are discarded fail-closed.
+    The request is created only by a successful form submit. The submitted scope
+    is restored immediately before consumption, then the one-shot token is
+    removed. Invalid/incomplete tokens are discarded fail-closed.
     """
     request = _request_scope(st)
     if request is None:
@@ -90,7 +85,7 @@ def consume_geosphere_variable_form_load_request(st: Any) -> bool:
 
 
 def install_geosphere_variable_form(parity: Any) -> None:
-    """Stage editor changes and commit a valid submit for the next clean rerun."""
+    """Stage editor changes and forward one valid submit to the mature loader."""
     if bool(getattr(parity, _GEOSPHERE_FORM_INSTALLED, False)):
         return
     setattr(parity, _GEOSPHERE_FORM_INSTALLED, True)
@@ -100,6 +95,7 @@ def install_geosphere_variable_form(parity: Any) -> None:
 
     def selector(legacy: Any, original: Callable) -> Any:
         real_editor = st.data_editor
+        real_button = st.button
         real_warning = st.warning
         form_rendered = {"value": False}
 
@@ -112,6 +108,9 @@ def install_geosphere_variable_form(parity: Any) -> None:
             if not qualifies:
                 return real_editor(data, *args, **kwargs)
 
+            # A fresh form render owns the load action for this exact scope. Any
+            # stale token from a previously abandoned render must not fire later.
+            st.session_state.pop(_FORM_REQUEST_KEY, None)
             resource_id, station_id = _scope(st)
             submit_scope = (resource_id, station_id)
             form_signature = sha1(f"{resource_id}\0{station_id}".encode("utf-8")).hexdigest()[:12]
@@ -135,9 +134,25 @@ def install_geosphere_variable_form(parity: Any) -> None:
                     st.session_state.pop(_FORM_REQUEST_KEY, None)
                     real_warning("Select at least one measured GeoSphere variable to load.")
                 else:
+                    # Do not start a second Streamlit rerun here. The mature
+                    # renderer continues in this same submit run with the exact
+                    # submitted DataEditor values and reaches its existing load
+                    # button a few statements later. Convert that one button
+                    # evaluation into True exactly once.
                     st.session_state[_FORM_REQUEST_KEY] = submit_scope
-                    st.rerun()
             return edited
+
+        def button(label: Any, *args: Any, **kwargs: Any):
+            is_mature_load = (
+                str(label) == "Load measured GeoSphere interval"
+                and str(kwargs.get("key", "")) == "load_geosphere_interval"
+            )
+            if is_mature_load:
+                if consume_geosphere_variable_form_load_request(st):
+                    return True
+                if form_rendered["value"] or geosphere_variable_form_owns_load_action(st):
+                    return False
+            return real_button(label, *args, **kwargs)
 
         def warning(body: Any, *args: Any, **kwargs: Any):
             if (
@@ -148,11 +163,13 @@ def install_geosphere_variable_form(parity: Any) -> None:
             return real_warning(body, *args, **kwargs)
 
         st.data_editor = editor
+        st.button = button
         st.warning = warning
         try:
             return previous(legacy, original)
         finally:
             st.data_editor = real_editor
+            st.button = real_button
             st.warning = real_warning
 
     parity._render_geosphere_resource_selector = selector
