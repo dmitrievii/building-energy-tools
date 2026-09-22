@@ -76,19 +76,26 @@ def _fresh_source_parity_ui() -> Any:
 def _freeze_session_geosphere_selector(proxy: Any, parity: Any) -> None:
     final_selector = parity._render_geosphere_resource_selector
     original_geosphere = proxy._source_parity_original_geosphere
-    st = parity.st
+    # The frozen-selector contract is intentionally usable in isolation by unit
+    # tests and by non-Streamlit composition checks. Only production app globals
+    # are guaranteed to expose ``st``.
+    st = getattr(proxy, "st", None)
 
     def render_geosphere_source() -> Any:
-        # Install the form-load bridge *outside* the complete composed selector
-        # chain. Inner wrappers are free to save/replace/restore ``st.button``;
-        # their saved "real" button will still be this root bridge, so the exact
-        # mature provider-load action cannot lose the form submit event.
-        from .source_parity_variable_form import (
-            consume_geosphere_variable_form_load_request,
-            geosphere_variable_form_owns_load_action,
-        )
-
         with _RUNTIME_PATCH_LOCK:
+            if st is None:
+                return final_selector(proxy, original_geosphere)
+
+            # Install the form-load bridge *outside* the complete composed
+            # selector chain. Inner wrappers are free to save/replace/restore
+            # ``st.button``; their saved "real" button will still be this root
+            # bridge, so the exact mature provider-load action cannot lose the
+            # form submit event.
+            from .source_parity_variable_form import (
+                consume_geosphere_variable_form_load_request,
+                geosphere_variable_form_owns_load_action,
+            )
+
             real_button = st.button
 
             def button(label: Any, *args: Any, **kwargs: Any) -> Any:
