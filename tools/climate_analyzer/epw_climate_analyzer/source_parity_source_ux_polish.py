@@ -59,8 +59,6 @@ def install_source_ux_polish(proxy: Any, parity: Any) -> None:
     previous_selector = parity._render_geosphere_resource_selector
     def selector(legacy: Any, original: Callable) -> Any:
         real_editor, real_info = st.data_editor, st.info
-        real_folium = getattr(proxy, "st_folium", None)
-        context_rendered = {"value": False}
 
         def editor(data: Any, *args: Any, **kwargs: Any):
             if isinstance(data, pd.DataFrame) and {"Measured variable", "Provider"}.issubset(data.columns):
@@ -74,23 +72,18 @@ def install_source_ux_polish(proxy: Any, parity: Any) -> None:
                 return None
             return real_info(body, *args, **kwargs)
 
-        def folium(*args: Any, **kwargs: Any):
-            result = real_folium(*args, **kwargs)
-            if not context_rendered["value"]:
-                resource_id = str(st.session_state.get("geosphere_resource_id", "klima-v2-10min"))
-                text = _RESOURCE_CONTEXT.get(resource_id)
-                if text:
-                    real_info(text)
-                    context_rendered["value"] = True
-            return result
-
         st.data_editor, st.info = editor, info
-        if callable(real_folium): proxy.st_folium = folium
         try:
+            # Render this mandatory source contract directly from the selected
+            # resource state. Do not tie it to map/folium rendering: the map can
+            # be absent, virtualized or skipped on perfectly valid reruns.
+            resource_id = str(st.session_state.get("geosphere_resource_id", "klima-v2-10min"))
+            context = _RESOURCE_CONTEXT.get(resource_id)
+            if context:
+                real_info(context)
             return previous_selector(legacy, original)
         finally:
             st.data_editor, st.info = real_editor, real_info
-            if callable(real_folium): proxy.st_folium = real_folium
 
     parity._render_geosphere_resource_selector = selector
     proxy._GEOSPHERE_SOURCE_UX_POLISH_V1 = True
