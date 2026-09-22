@@ -62,6 +62,7 @@ def _reset_persistent_source_parity_modules() -> None:
         "source_parity_ground",
         "source_parity_resolution",
         "source_parity_longterm_hotfix",
+        "source_parity_overview_compat",
         "source_parity_resource_bounds",
         "source_parity_longterm_followup",
         "source_parity_monthly",
@@ -123,6 +124,7 @@ def _install_into_app_globals_locked(namespace: MutableMapping[str, Any]) -> boo
     from .source_parity_ground import install_ground_depth_contract
     from .source_parity_resolution import enforce_native_timeseries_only
     from .source_parity_longterm_hotfix import install_longterm_hourly_hotfix
+    from .source_parity_overview_compat import install_overview_pandas_compat
     from .source_parity_resource_bounds import install_resource_temporal_bounds
     from .source_parity_longterm_followup import install_longterm_followup
     from .source_parity_monthly import install_monthly_resource
@@ -146,6 +148,10 @@ def _install_into_app_globals_locked(namespace: MutableMapping[str, Any]) -> boo
     install_ground_depth_contract(proxy)
     enforce_native_timeseries_only(parity)
     install_longterm_hourly_hotfix(proxy, parity)
+    # Replace the final enhanced Overview renderer after the long-term wrapper is
+    # composed, so both chronological and non-chronological paths use the
+    # pandas-safe Series.reset_index contract before later wrappers capture it.
+    install_overview_pandas_compat(parity)
     install_resource_temporal_bounds(proxy, parity)
     install_monthly_selection_state(parity)
     install_longterm_followup(proxy, parity)
