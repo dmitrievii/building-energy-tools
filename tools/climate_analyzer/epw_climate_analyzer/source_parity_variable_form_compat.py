@@ -96,5 +96,19 @@ def install_geosphere_variable_form_compat(parity: Any) -> None:
 
 
 def patch_variable_form_installer() -> None:
-    """Publish the schema-compatible installer for later runtime composition."""
+    """Publish the schema-compatible installer for a fresh runtime composition.
+
+    ``importlib.reload(source_parity_ui)`` re-executes the module in its existing
+    dictionary and therefore does not remove dynamically-added attributes. The
+    form-installed marker is one such attribute: without clearing it, a second
+    browser session in the same Streamlit process can inherit ``True`` from the
+    first session and skip installing the form into its newly composed selector.
+    Reset that marker here before the final monthly surface guard installs the
+    form for the current app-script session.
+    """
+    from . import source_parity_ui as parity
+
+    marker = ux._GEOSPHERE_FORM_INSTALLED
+    if hasattr(parity, marker):
+        delattr(parity, marker)
     ux.install_geosphere_variable_form = install_geosphere_variable_form_compat
