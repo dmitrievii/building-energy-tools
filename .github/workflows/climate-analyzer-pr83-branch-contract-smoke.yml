@@ -10,6 +10,7 @@ on:
       - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_overlay_hotfix.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_selection_state.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_surface_guard.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_canonical.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_streamlit_surface.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_runtime.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_variable_form.py'
@@ -17,6 +18,7 @@ on:
       - 'tools/climate_analyzer/tests/test_canonical_contract_closure_0_7_5_3.py'
       - 'tools/climate_analyzer/tests/test_canonical_contract_runtime_0_7_5_4.py'
       - 'tools/climate_analyzer/tests/test_geosphere_resource_transition_0_7_5_5.py'
+      - 'tools/climate_analyzer/tests/test_geosphere_monthly_canonical_ui_0_7_5_3.py'
       - 'tools/climate_analyzer/tests/test_interannual_overlay_and_variable_form.py'
       - 'deployment/pr83_monthly_contract_probe.py'
       - 'deployment/pr83_source_ui_live_smoke_v18.mjs'
@@ -71,6 +73,7 @@ jobs:
             tools.climate_analyzer.tests.test_canonical_contract_closure_0_7_5_3 \
             tools.climate_analyzer.tests.test_canonical_contract_runtime_0_7_5_4 \
             tools.climate_analyzer.tests.test_geosphere_resource_transition_0_7_5_5 \
+            tools.climate_analyzer.tests.test_geosphere_monthly_canonical_ui_0_7_5_3 \
             tools.climate_analyzer.tests.test_interannual_overlay_and_variable_form
 
       - name: Probe live GeoSphere native-monthly contract
