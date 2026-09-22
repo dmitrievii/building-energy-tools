@@ -200,6 +200,13 @@ try {
   await selectDataset(page);
   let frame = await selectStation(page);
 
+  // Committing the station is itself a Streamlit rerun. Re-assert the intended
+  // monthly resource after that state transition so this walkthrough cannot
+  // accidentally validate the 10-minute editor while labelling it "monthly".
+  await selectDataset(page);
+  frame = await appFrame(page, 'Measured variables to load', 60000);
+  report.checks.monthly_resource_reasserted_after_station = true;
+
   await assertEmptySelection(frame, 'Initial monthly view');
   report.checks.initial_selection_empty = true;
   await screenshot(page, '01-monthly-initial-empty.png');
