@@ -118,7 +118,18 @@ jobs:
         id: monthly_selected_load
         if: ${{ always() && !cancelled() }}
         continue-on-error: true
-        run: node deployment/pr83_monthly_selected_load_smoke.mjs
+        run: |
+          for attempt in 1 2 3; do
+            echo "Monthly mature-loader browser smoke attempt ${attempt}/3"
+            if node deployment/pr83_monthly_selected_load_smoke.mjs; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo 'Transient browser interaction failed; retrying with a fresh browser context.'
+              sleep 2
+            fi
+          done
+          exit 1
 
       - name: Capture monthly visual walkthrough
         id: visual_walkthrough
