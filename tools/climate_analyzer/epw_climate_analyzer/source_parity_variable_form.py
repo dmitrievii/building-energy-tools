@@ -2,11 +2,10 @@
 
 The visible form stages DataEditor changes client-side. A valid submit commits a
 resource/station-scoped one-shot request and immediately starts one clean
-Streamlit rerun. The submitted scope is restored before the selector is composed
-on that rerun, and the mature provider loader consumes the request only after the
-current scope matches it. This separates form widget commit from provider
-execution without allowing a transient selector-state mismatch to destroy the
-load event.
+Streamlit rerun. The submitted scope is authoritative for that one load action:
+it is restored before selector composition and again when the mature loader
+consumes the request. This keeps a later wrapper from invalidating a submit by
+mutating routing state during the same rerun.
 """
 from __future__ import annotations
 
@@ -45,17 +44,7 @@ def _request_scope(st: Any) -> tuple[str, str] | None:
     return (str(request[0]), str(request[1]))
 
 
-def restore_geosphere_variable_form_request_scope(st: Any) -> bool:
-    """Restore the exact submitted resource/station before selector composition.
-
-    Streamlit widget state can briefly lead legacy routing state on the clean
-    rerun started by a form submit. The request itself is the authoritative
-    scope for that one load action, so restore both the effective resource key
-    and its private visible-widget key before any nested wrapper is rendered.
-    """
-    request = _request_scope(st)
-    if request is None:
-        return False
+def _restore_scope(st: Any, request: tuple[str, str]) -> bool:
     resource_id, station_id = request
     if not resource_id or not station_id:
         return False
@@ -65,21 +54,36 @@ def restore_geosphere_variable_form_request_scope(st: Any) -> bool:
     return True
 
 
+def restore_geosphere_variable_form_request_scope(st: Any) -> bool:
+    """Restore the exact submitted resource/station before selector composition."""
+    request = _request_scope(st)
+    if request is None:
+        return False
+    return _restore_scope(st, request)
+
+
 def geosphere_variable_form_owns_load_action(st: Any) -> bool:
     """Return whether the current resource/station uses the transactional form action."""
     return st.session_state.get(_FORM_ACTIVE_SCOPE_KEY) == _scope(st)
 
 
 def consume_geosphere_variable_form_load_request(st: Any) -> bool:
-    """Consume one valid form-submit request only when its exact scope is active.
+    """Consume exactly one valid form-submit request at the mature load boundary.
 
-    A mismatched request is deliberately retained. Destroying it before the
-    selector has finished restoring/committing the submitted scope makes the
-    submit event race the widget rerun and was the source of intermittent visual
-    walkthrough failures.
+    The request is created only by a successful form submit and the submit
+    immediately ends that script run with ``st.rerun()``.  On the next run the
+    request therefore represents the user's committed resource/station choice.
+    Nested compatibility wrappers may rewrite legacy routing keys while they are
+    composed; those mutable keys must not veto an already committed submit.
+
+    Re-restore the submitted scope immediately before consumption, then remove
+    the one-shot token.  Invalid/incomplete tokens are discarded fail-closed.
     """
     request = _request_scope(st)
-    if request is None or request != _scope(st):
+    if request is None:
+        return False
+    if not _restore_scope(st, request):
+        st.session_state.pop(_FORM_REQUEST_KEY, None)
         return False
     st.session_state.pop(_FORM_REQUEST_KEY, None)
     return True
@@ -113,8 +117,6 @@ def install_geosphere_variable_form(parity: Any) -> None:
             form_signature = sha1(f"{resource_id}\0{station_id}".encode("utf-8")).hexdigest()[:12]
             form_key = f"{_FORM_KEY_PREFIX}::{form_signature}"
             form_rendered["value"] = True
-            # Mark ownership on every render. Stale state from another
-            # resource/station cannot suppress that scope's fallback action.
             st.session_state[_FORM_ACTIVE_SCOPE_KEY] = submit_scope
 
             with st.form(form_key, clear_on_submit=False):
@@ -133,18 +135,11 @@ def install_geosphere_variable_form(parity: Any) -> None:
                     st.session_state.pop(_FORM_REQUEST_KEY, None)
                     real_warning("Select at least one measured GeoSphere variable to load.")
                 else:
-                    # Phase 1: persist the exact load request after Streamlit has
-                    # committed the form's DataEditor values. End this script run
-                    # deliberately. The next run restores this exact scope before
-                    # selector composition and consumes the request only after the
-                    # effective routing state matches it.
                     st.session_state[_FORM_REQUEST_KEY] = submit_scope
                     st.rerun()
             return edited
 
         def warning(body: Any, *args: Any, **kwargs: Any):
-            # The form owns empty-selection validation. Suppress the mature
-            # renderer's always-visible copy while the transactional form exists.
             if (
                 form_rendered["value"]
                 and str(body).strip() == "Select at least one measured GeoSphere variable to load."
@@ -157,8 +152,6 @@ def install_geosphere_variable_form(parity: Any) -> None:
         try:
             return previous(legacy, original)
         finally:
-            # Presentation proxies are selector-local. The scoped request is
-            # intentionally durable across exactly one rerun until consumed.
             st.data_editor = real_editor
             st.warning = real_warning
 
