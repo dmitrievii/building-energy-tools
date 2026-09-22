@@ -1,10 +1,10 @@
 """Transactional GeoSphere measured-variable form runtime contract.
 
 The visible form stages DataEditor changes client-side. A valid form submit is
-committed by a Streamlit submit callback into one resource/station-scoped
-request token. The production loader consumes that token explicitly through the
-helpers below; no temporary ``st.button`` monkey-patch is used for event
-transport.
+committed synchronously in the same Streamlit run in which
+``form_submit_button`` returns ``True``. The mature provider loader consumes the
+resource/station-scoped one-shot request later in that same run. This avoids
+using callback timing as event transport across reruns.
 """
 from __future__ import annotations
 
@@ -45,7 +45,7 @@ def consume_geosphere_variable_form_load_request(st: Any) -> bool:
 
 
 def install_geosphere_variable_form(parity: Any) -> None:
-    """Stage editor changes in a form and publish a durable one-shot load request."""
+    """Stage editor changes in a form and publish a same-run one-shot load request."""
     if bool(getattr(parity, _GEOSPHERE_FORM_INSTALLED, False)):
         return
     setattr(parity, _GEOSPHERE_FORM_INSTALLED, True)
@@ -72,16 +72,10 @@ def install_geosphere_variable_form(parity: Any) -> None:
             form_signature = sha1(f"{resource_id}\0{station_id}".encode("utf-8")).hexdigest()[:12]
             form_key = f"{_FORM_KEY_PREFIX}::{form_signature}"
             form_rendered["value"] = True
-            # Mark ownership on every render. The production app compares this
-            # exact scope before deciding whether a fallback legacy button is
-            # required, so a stale marker from another resource/station is inert.
+            # Mark ownership on every render. The production load boundary
+            # compares this exact scope before suppressing the duplicate legacy
+            # button, so stale state from another resource/station is inert.
             st.session_state[_FORM_ACTIVE_SCOPE_KEY] = submit_scope
-
-            def commit_submit() -> None:
-                # Streamlit callbacks execute before the submit-triggered main
-                # rerun. Keep the scoped request until app.py consumes it at the
-                # mature provider-load boundary.
-                st.session_state[_FORM_REQUEST_KEY] = submit_scope
 
             with st.form(form_key, clear_on_submit=False):
                 edited = real_editor(data, *args, **kwargs)
@@ -92,14 +86,18 @@ def install_geosphere_variable_form(parity: Any) -> None:
                     "Load measured GeoSphere interval",
                     type="primary",
                     help="Submit the current variable selection and start the provider request.",
-                    on_click=commit_submit,
                 )
 
-            if submitted and _selected_count(edited) <= 0:
-                # Empty submit must never arm a later provider request.
-                if st.session_state.get(_FORM_REQUEST_KEY) == submit_scope:
+            if submitted:
+                # ``submitted`` is true in the same script run that contains the
+                # committed DataEditor values. Arm the exact current scope here,
+                # immediately before the mature loader is reached. No callback
+                # or cross-rerun closure is required.
+                if _selected_count(edited) <= 0:
                     st.session_state.pop(_FORM_REQUEST_KEY, None)
-                real_warning("Select at least one measured GeoSphere variable to load.")
+                    real_warning("Select at least one measured GeoSphere variable to load.")
+                else:
+                    st.session_state[_FORM_REQUEST_KEY] = submit_scope
             return edited
 
         def warning(body: Any, *args: Any, **kwargs: Any):
@@ -117,9 +115,8 @@ def install_geosphere_variable_form(parity: Any) -> None:
         try:
             return previous(legacy, original)
         finally:
-            # Only selector-local presentation surfaces are restored. The
-            # request/ownership state intentionally survives until the production
-            # loader consumes it explicitly.
+            # Presentation proxies are selector-local. Request/ownership state
+            # survives only until the mature load boundary consumes it.
             st.data_editor = real_editor
             st.warning = real_warning
 
