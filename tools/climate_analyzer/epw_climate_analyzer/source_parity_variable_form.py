@@ -20,7 +20,6 @@ _FORM_KEY_PREFIX = "geosphere_variable_load_form_v1"
 _FORM_REQUEST_KEY = "_geosphere_variable_form_load_requested_v2"
 _FORM_ACTIVE_SCOPE_KEY = "_geosphere_variable_form_active_scope_v1"
 _RESOURCE_KEY = "geosphere_resource_id"
-_RESOURCE_WIDGET_KEY = "_geosphere_resource_selector_widget_v1"
 _STATION_KEY = "geosphere_selected_station_id"
 
 
@@ -45,17 +44,24 @@ def _request_scope(st: Any) -> tuple[str, str] | None:
 
 
 def _restore_scope(st: Any, request: tuple[str, str]) -> bool:
+    """Restore routing state without mutating Streamlit-owned widget state.
+
+    This function can run after the GeoSphere resource selectbox has already
+    been instantiated in the current script run. Streamlit forbids assigning to
+    that widget's session-state key at that point. The provider-load handoff only
+    needs the canonical routing resource/station keys, so leave the widget-owned
+    selector key untouched.
+    """
     resource_id, station_id = request
     if not resource_id or not station_id:
         return False
     st.session_state[_RESOURCE_KEY] = resource_id
-    st.session_state[_RESOURCE_WIDGET_KEY] = resource_id
     st.session_state[_STATION_KEY] = station_id
     return True
 
 
 def restore_geosphere_variable_form_request_scope(st: Any) -> bool:
-    """Restore the exact submitted resource/station while a request is pending."""
+    """Restore the exact submitted routing resource/station while a request is pending."""
     request = _request_scope(st)
     if request is None:
         return False
@@ -70,9 +76,11 @@ def geosphere_variable_form_owns_load_action(st: Any) -> bool:
 def consume_geosphere_variable_form_load_request(st: Any) -> bool:
     """Consume exactly one valid form-submit request at the mature load boundary.
 
-    The request is created only by a successful form submit. The submitted scope
-    is restored immediately before consumption, then the one-shot token is
-    removed. Invalid/incomplete tokens are discarded fail-closed.
+    The request is created only by a successful form submit. The submitted
+    routing scope is restored immediately before consumption, then the one-shot
+    token is removed. Widget-owned state is deliberately never written here
+    because the resource selectbox already exists by the time the mature load
+    button is evaluated in the same Streamlit run.
     """
     request = _request_scope(st)
     if request is None:
