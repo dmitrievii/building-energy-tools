@@ -20,8 +20,8 @@ from epw_climate_analyzer import source_parity_monthly_canonical as monthly_ui
 
 
 OUTPUT = Path("artifacts/pr83-contract-smoke/monthly-provider.json")
-REQUIRED = ("tl_mittel", "rf_mittel")
-OPTIONAL = ("p", "tp_mittel", "rr", "so_h")
+REQUIRED = ("tl_mittel", "rf_mittel", "p")
+OPTIONAL = ("tp_mittel", "rr", "so_h")
 T = TypeVar("T")
 
 
@@ -91,15 +91,20 @@ def main() -> int:
     if valid_t < 12 or valid_rh < 12:
         raise RuntimeError(f"Insufficient monthly T/RH observations: T={valid_t}, RH={valid_rh}")
 
+    dew_point = pd.to_numeric(frame.get("dew_point_temperature_c"), errors="coerce").dropna()
+    if dew_point.empty:
+        raise RuntimeError("Derived monthly dew-point temperature is unavailable.")
+
     seasonal_t = contract.monthly_period_values(frame, "dry_bulb_temperature_c", "Seasonal")
     annual_t = contract.monthly_period_values(frame, "dry_bulb_temperature_c", "Annual")
     if seasonal_t.empty or annual_t.empty:
         raise RuntimeError("Seasonal/Annual temperature aggregation returned no values.")
 
     pressure = pd.to_numeric(frame.get("atmospheric_station_pressure_pa"), errors="coerce").dropna()
-    fallback = float(pressure.mean()) if not pressure.empty else float(
-        frame.attrs.get("canonical_monthly_psychrometric_fallback_pressure_pa", 101325.0)
-    )
+    if pressure.empty:
+        raise RuntimeError("Measured monthly station pressure is unavailable.")
+    fallback = float(pressure.mean())
+
     profile = contract.monthly_psychrometric_profile(frame, fallback)
     if profile.empty:
         raise RuntimeError("Monthly psychrometric profile is empty.")
@@ -124,6 +129,8 @@ def main() -> int:
         "loaded_rows": int(len(dataset.data)),
         "valid_temperature_months": valid_t,
         "valid_relative_humidity_months": valid_rh,
+        "valid_dew_point_months": int(len(dew_point)),
+        "measured_station_pressure_months": int(len(pressure)),
         "seasonal_temperature_periods": int(len(seasonal_t)),
         "annual_temperature_periods": int(len(annual_t)),
         "psychrometric_profile_points": int(len(profile)),
