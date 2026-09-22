@@ -39,6 +39,16 @@ def _numeric(df: pd.DataFrame, column: str) -> bool:
 
 def install_ground_depth_contract(legacy: Any) -> None:
     """Register all canonical measured ground depths in the common UI/engine."""
+    # This installer is one of the earliest source-parity hooks that receives the
+    # mature app proxy. Bind the small follow-up UX contracts here so later
+    # selector wrappers compose around them and the final frozen selector retains
+    # the transactional GeoSphere form.
+    from . import source_parity_ui as parity
+    from .source_parity_ux_followup import install_geosphere_variable_form, install_interannual_overlay
+
+    install_geosphere_variable_form(parity)
+    install_interannual_overlay(legacy)
+
     ground_temperature.MEASURED_GROUND_DEPTHS_M.update(CANONICAL_GROUND_DEPTHS_M)
     legacy.VARIABLES.update(GROUND_VARIABLE_LABELS)
 
