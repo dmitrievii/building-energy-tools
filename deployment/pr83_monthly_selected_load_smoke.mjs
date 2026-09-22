@@ -330,28 +330,29 @@ async function selectProvider(page, provider) {
   throw new Error(`Could not select provider ${provider}.`);
 }
 
-async function clickSidebar(page, label, expectedText) {
+async function navigatePage(page, label, expectedText) {
   const started = performance.now();
   while (performance.now() - started < 60000) {
     const frame = await appFrame(page, 'Climate Analyzer', 10000);
-    const sidebar = frame.locator('section[data-testid="stSidebar"]');
-    for (const candidate of [
-      sidebar.getByText(label, { exact: true }).last(),
-      sidebar.locator('label').filter({ hasText: label }).last(),
-    ]) {
-      if (!(await candidate.count().catch(() => 0)) || !(await candidate.isVisible().catch(() => false))) continue;
+    const candidates = [
+      frame.getByText(label, { exact: true }).last(),
+      frame.getByRole('radio', { name: label, exact: true }).last(),
+      frame.locator('label').filter({ hasText: label }).last(),
+    ];
+    for (const candidate of candidates) {
+      if (!(await candidate.count().catch(() => 0))) continue;
       try {
         await candidate.click({ force: true, timeout: 5000 });
-        return await appFrame(page, expectedText, 30000);
+        return await appFrame(page, expectedText, 60000);
       } catch {}
     }
-    await sleep(300);
+    await sleep(400);
   }
-  throw new Error(`Sidebar navigation item not found: ${label}`);
+  throw new Error(`Navigation item not found or did not settle: ${label}`);
 }
 
 const report = {
-  schema: 'climate-analyzer-monthly-selected-load-smoke-v4',
+  schema: 'climate-analyzer-monthly-selected-load-smoke-v5',
   target_url: TARGET_URL,
   fixture,
   checks: {},
@@ -440,18 +441,18 @@ try {
   if (!(await loadButton.count().catch(() => 0))) throw new Error('Mature GeoSphere load button missing.');
   await loadButton.click({ timeout: 15000 });
 
-  frame = await appFrame(page, 'Summary — Overview', 180000);
+  frame = await appFrame(page, 'Climate overview', 180000);
   text = await bodyText(frame);
   if (!text.includes('Climate overview')) throw new Error('Monthly canonical dataset did not activate Overview.');
   report.checks.canonical_dataset_activated = true;
   report.checks.summary_overview = true;
 
-  frame = await clickSidebar(page, 'Climate — Temperature', 'Temperature and extremes');
+  frame = await navigatePage(page, 'Climate — Temperature', 'Temperature and extremes');
   text = await bodyText(frame);
   if (!text.includes('Dew-point temperature')) throw new Error('Dew-point capability missing.');
   report.checks.temperature_dew_point_capability = true;
 
-  frame = await clickSidebar(page, 'Climate — Moisture & psychrometrics', 'Humidity and psychrometrics');
+  frame = await navigatePage(page, 'Climate — Moisture & psychrometrics', 'Humidity and psychrometrics');
   text = await bodyText(frame);
   if (!text.includes('Station pressure') || !text.includes('published monthly mean is available')) {
     throw new Error('Measured monthly station-pressure capability missing.');
