@@ -273,7 +273,7 @@ def _monthly_sidebar_filters(legacy: Any, df: pd.DataFrame) -> pd.DataFrame:
         start_value = pd.Timestamp(start_date)
         end_value = pd.Timestamp(end_date) + pd.Timedelta(days=1) - pd.Timedelta(microseconds=1)
         if start_value > end_value:
-            st.sidebar.error("From must not be later than start date.")
+            st.sidebar.error("From must not be later than To.")
             ranged = df.iloc[0:0].copy()
         else:
             ranged = legacy.filter_datetime_range(df, start=start_value, end=end_value)
