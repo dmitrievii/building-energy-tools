@@ -57,7 +57,7 @@ def _reset_persistent_source_parity_modules() -> None:
         "source_parity_contract_closure", "source_parity_contract_guidance_hotfix",
         "source_parity_monthly_selection_state", "source_parity_contract_guard",
         "source_parity_monthly_overlay_hotfix", "source_parity_monthly_surface_guard",
-        "source_parity_ux_followup", "source_parity_source_ux_polish",
+        "source_parity_ux_followup", "source_parity_variable_form", "source_parity_source_ux_polish",
     )
     package = __package__ or "epw_climate_analyzer"
     for name in module_names:
@@ -110,7 +110,8 @@ def _install_into_app_globals_locked(namespace: MutableMapping[str, Any]) -> boo
     from .source_parity_contract_guard import install_contract_guards
     from .source_parity_monthly_overlay_hotfix import install_monthly_overlay_timezone_guard
     from .source_parity_monthly_surface_guard import install_monthly_surface_guard
-    from .source_parity_ux_followup import install_geosphere_variable_form, install_interannual_overlay
+    from .source_parity_ux_followup import install_interannual_overlay
+    from .source_parity_variable_form import install_geosphere_variable_form
     from .source_parity_source_ux_polish import install_source_ux_polish
 
     apply_geosphere_resource_overlay()
