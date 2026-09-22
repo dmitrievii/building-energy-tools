@@ -53,6 +53,25 @@ async function toggleMonthlyRows(page, rowIndexes) {
   }
 }
 
+async function commitDataEditorEdits(page) {
+  // Streamlit's Glide editor keeps the focused cell as an open edit. Directly
+  // clicking a button can submit the pre-edit widget value, so blur the grid
+  // through a non-button element before dispatching the form submit.
+  const frame = await appFrame(page, 'Measured variables to load', 30000);
+  const heading = frame.getByRole('heading', { name: 'Measured variables to load', exact: true }).first();
+  if (await heading.count().catch(() => 0) && await heading.isVisible().catch(() => false)) {
+    await heading.click({ force: true, timeout: 10000 });
+  } else {
+    const outside = frame.getByText('Select the measured GeoSphere fields required for this load.', { exact: false }).first();
+    if (!(await outside.count().catch(() => 0))) throw new Error('No non-button target available to commit the DataEditor edit.');
+    await outside.click({ force: true, timeout: 10000 });
+  }
+  await sleep(500);
+  const { canvas } = await visibleEditorCanvas(frame);
+  const stillFocused = await canvas.evaluate((node) => document.activeElement === node).catch(() => false);
+  if (stillFocused) throw new Error('Measured-variable DataEditor remained focused after explicit blur/commit.');
+}
+
 async function waitForStreamlitIdleSubmit(page, timeoutMs = 60000) {
   const started = performance.now();
   let stable = 0;
@@ -101,7 +120,7 @@ async function waitForLoadHandoff(page, timeoutMs = 180000) {
   );
 }
 
-const report = { schema: 'climate-analyzer-pr83-core-visual-v6-idle-submit', success: false, checks: {}, page_errors: [], console_errors: [], error: null };
+const report = { schema: 'climate-analyzer-pr83-core-visual-v7-committed-data-editor', success: false, checks: {}, page_errors: [], console_errors: [], error: null };
 let browser; let page;
 try {
   browser = await chromium.launch({ executablePath: CHROME_PATH, headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
@@ -113,6 +132,8 @@ try {
   // needed by the pages this walkthrough validates. Current Core display order:
   // Rf mittel=row 0, P=row 1, Tl mittel=row 6.
   await toggleMonthlyRows(page, [0, 1, 6]);
+  await commitDataEditorEdits(page);
+  report.checks.data_editor_blur_committed = true;
   const ready = await waitForStreamlitIdleSubmit(page, 60000);
   await screenshot(page, '02-monthly-core-selected.png');
   await ready.load.click({ timeout: 15000 });

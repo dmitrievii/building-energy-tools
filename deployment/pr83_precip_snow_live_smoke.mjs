@@ -287,6 +287,26 @@ async function selectLoadProvider(page, providerName) {
   throw new Error(`Could not toggle Load for provider ${providerName}.`);
 }
 
+async function commitVariableEditorEdits(page) {
+  // Streamlit/DataEditor keeps the focused Glide cell as an open edit. A direct
+  // button click can submit the pre-edit widget value. Blur the grid through a
+  // non-button element first so the staged checkbox edits are committed into
+  // the form widget state before the Load submit is dispatched.
+  const frame = await appFrame(page, 'Measured variables to load', 30_000);
+  const heading = frame.getByRole('heading', { name: 'Measured variables to load', exact: true }).first();
+  if (await heading.count().catch(() => 0) && await heading.isVisible().catch(() => false)) {
+    await heading.click({ force: true, timeout: 10_000 });
+  } else {
+    const outside = frame.getByText('Select the measured GeoSphere fields required for this load.', { exact: false }).first();
+    if (!(await outside.count().catch(() => 0))) throw new Error('No non-button target available to commit the DataEditor edit.');
+    await outside.click({ force: true, timeout: 10_000 });
+  }
+  await sleep(500);
+  const { canvas } = await variableEditor(page);
+  const stillFocused = await canvas.evaluate((node) => document.activeElement === node).catch(() => false);
+  if (stillFocused) throw new Error('Measured-variable DataEditor remained focused after explicit blur/commit.');
+}
+
 async function visibleOption(page, frame, text) {
   for (const options of [frame.getByRole('option'), page.getByRole('option'), frame.locator('[data-baseweb="menu"] li'), page.locator('[data-baseweb="menu"] li')]) {
     const count = await options.count().catch(() => 0);
@@ -417,6 +437,8 @@ try {
   const selected = {};
   for (const provider of fixture.required_provider_parameters) { const state = await selectLoadProvider(page, provider); selected[provider] = { load: state.load, row: state.ariaRowIndex, data_index: state.dataIndex }; }
   report.checks.selected_provider_parameters = selected;
+  await commitVariableEditorEdits(page);
+  report.checks.data_editor_blur_committed = true;
   frame = await appFrame(page, 'Measured variables to load', 30_000);
   const loadButton = frame.getByRole('button', { name: 'Load measured GeoSphere interval', exact: true }).first();
   if (!(await loadButton.count().catch(() => 0))) throw new Error('GeoSphere load button not found after selecting rr/rrm/sh.');

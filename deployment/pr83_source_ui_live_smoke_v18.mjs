@@ -125,11 +125,13 @@ async function selectExactStation(page, stationName, stationId) {
 async function waitBody(page, predicate, description, timeoutMs = 60000, stable = 2) {
   const started = performance.now(); let passes = 0; let lastText = ''; let frame;
   while (performance.now() - started < timeoutMs) { try { frame = await appFrame(page, 'Climate Analyzer', 5000); lastText = await bodyText(frame); if (predicate(lastText)) { passes += 1; if (passes >= stable) return { frame, text: lastText }; } else passes = 0; } catch { passes = 0; } await sleep(400); }
-  throw new Error(`Timed out waiting for ${description}; resource=${lastText.match(/Selected resource:[^\n]*/)?.[0] || 'none'}`);
+  const monthlyContextCount = occurrences(lastText, MONTHLY_CONTEXT);
+  const parameterSetVisible = lastText.includes('Parameter set');
+  throw new Error(`Timed out waiting for ${description}; resource=${lastText.match(/Selected resource:[^\n]*/)?.[0] || 'none'}; monthly_context_count=${monthlyContextCount}; parameter_set_visible=${parameterSetVisible}`);
 }
 async function expandMonthly(frame) { const expander = frame.getByText(MONTHLY_CONTEXT, { exact: true }).last(); if (await expander.count().catch(() => 0)) { await expander.click({ force: true, timeout: 10000 }).catch(() => {}); await sleep(350); } }
 
-const report = { schema: 'climate-analyzer-pr83-source-ui-smoke-v22', target_url: TARGET_URL, fixture, checks: {}, page_errors: [], console_errors: [], success: false, error: null };
+const report = { schema: 'climate-analyzer-pr83-source-ui-smoke-v23-stable-hourly-transition', target_url: TARGET_URL, fixture, checks: {}, page_errors: [], console_errors: [], success: false, error: null };
 let browser;
 try {
   if (!fixture.success) throw new Error('Monthly provider fixture is not successful.');
@@ -142,10 +144,22 @@ try {
   const monthlyExpanded = await waitBody(page, (text) => text.includes('Core variables') && text.includes('Core + additional statistics') && text.includes('All provider parameters') && occurrences(text, MONTHLY_CONTEXT) === 1 && occurrences(text, MONTHLY_SOURCE) === 1 && occurrences(text, RESOURCE_CONTEXT) === 1, 'expanded monthly source UI');
   if (monthlyExpanded.text.includes('Parameter catalogue')) throw new Error('Legacy monthly Parameter catalogue is still visible.');
   report.checks.monthly_context_count = occurrences(monthlyExpanded.text, RESOURCE_CONTEXT); report.checks.monthly_source_block_count = occurrences(monthlyExpanded.text, MONTHLY_SOURCE);
+
   await selectDataset(page, '1 h (long-term)', 'klima-v2-1h'); await selectExactStation(page, fixture.station_name, fixture.station_id);
-  const hourly = await waitBody(page, (text) => text.includes('Selected resource: klima-v2-1h') && text.includes('Station metadata validity') && occurrences(text, RESOURCE_CONTEXT) === 1, 'hourly source UI', 90000, 3);
-  if (hourly.text.includes(MONTHLY_CONTEXT) || hourly.text.includes('Parameter set')) throw new Error('Monthly-only controls remained visible for hourly resource.');
+  const hourly = await waitBody(
+    page,
+    (text) => text.includes('Selected resource: klima-v2-1h')
+      && text.includes('Station metadata validity')
+      && occurrences(text, RESOURCE_CONTEXT) === 1
+      && !text.includes(MONTHLY_CONTEXT)
+      && !text.includes('Parameter set'),
+    'clean hourly source UI',
+    90000,
+    3,
+  );
   report.checks.hourly_context_count = occurrences(hourly.text, RESOURCE_CONTEXT);
+  report.checks.hourly_monthly_context_count = occurrences(hourly.text, MONTHLY_CONTEXT);
+  report.checks.hourly_parameter_set_visible = hourly.text.includes('Parameter set');
   if (report.page_errors.length) throw new Error(`Browser page error(s): ${report.page_errors.join(' | ')}`);
   report.success = true; await fs.mkdir('artifacts/pr83-contract-smoke', { recursive: true }); await fs.writeFile(OUT_PATH, JSON.stringify(report, null, 2)); console.log(JSON.stringify(report, null, 2));
 } catch (error) { report.error = String(error?.stack || error); await fs.mkdir('artifacts/pr83-contract-smoke', { recursive: true }); await fs.writeFile(OUT_PATH, JSON.stringify(report, null, 2)); console.error(report.error); process.exitCode = 1; } finally { if (browser) await browser.close().catch(() => {}); }
