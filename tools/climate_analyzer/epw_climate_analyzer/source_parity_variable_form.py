@@ -29,6 +29,36 @@ def _selected_count(data: Any) -> int:
     return int(data["Selected"].fillna(False).astype(bool).sum())
 
 
+def _apply_submitted_editor_state(data: Any, state: Any) -> Any:
+    """Overlay Streamlit's submitted DataEditor delta onto its returned frame.
+
+    Streamlit can preserve the visibly edited Glide grid while ``st.data_editor``
+    still returns the pre-edit DataFrame on the form-submit rerun. The widget
+    state is nevertheless submitted under the editor key as ``edited_rows``.
+    Reconstruct the authoritative submitted frame from that delta so the mature
+    GeoSphere loader sees the exact checkboxes the user submitted.
+    """
+    if not isinstance(data, pd.DataFrame) or not isinstance(state, dict):
+        return data
+    edited_rows = state.get("edited_rows")
+    if not isinstance(edited_rows, dict) or not edited_rows:
+        return data
+
+    out = data.copy()
+    for raw_row, changes in edited_rows.items():
+        try:
+            row = int(raw_row)
+        except (TypeError, ValueError):
+            continue
+        if row < 0 or row >= len(out) or not isinstance(changes, dict):
+            continue
+        for column, value in changes.items():
+            if column not in out.columns:
+                continue
+            out.iat[row, out.columns.get_loc(column)] = value
+    return out
+
+
 def _scope(st: Any) -> tuple[str, str]:
     return (
         str(st.session_state.get(_RESOURCE_KEY, "klima-v2-10min")),
@@ -108,10 +138,11 @@ def install_geosphere_variable_form(parity: Any) -> None:
         form_rendered = {"value": False}
 
         def editor(data: Any, *args: Any, **kwargs: Any):
+            editor_key = str(kwargs.get("key", ""))
             qualifies = (
                 isinstance(data, pd.DataFrame)
                 and {"Provider", "Selected", "Measured variable"}.issubset(data.columns)
-                and str(kwargs.get("key", "")).startswith("geosphere_variable_editor")
+                and editor_key.startswith("geosphere_variable_editor")
             )
             if not qualifies:
                 return real_editor(data, *args, **kwargs)
@@ -138,6 +169,15 @@ def install_geosphere_variable_form(parity: Any) -> None:
                 )
 
             if submitted:
+                # On a real Streamlit form submit the visible Glide edits may be
+                # present only in the widget delta while data_editor returns the
+                # pre-edit DataFrame. Reconstruct before validation *and* return
+                # the reconstructed frame so the mature loader computes its
+                # provider-parameter list from the submitted checkboxes.
+                edited = _apply_submitted_editor_state(
+                    edited,
+                    st.session_state.get(editor_key),
+                )
                 if _selected_count(edited) <= 0:
                     st.session_state.pop(_FORM_REQUEST_KEY, None)
                     real_warning("Select at least one measured GeoSphere variable to load.")
