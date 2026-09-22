@@ -15,7 +15,6 @@ const RESOURCE_CONTEXT = 'Official GeoSphere Austria availability context (trans
 
 function occurrences(text, needle) { return text.split(needle).length - 1; }
 async function bodyText(frame) { try { return await frame.locator('body').innerText({ timeout: 2000 }); } catch { return ''; } }
-
 async function appFrame(page, needle = 'Climate Analyzer', timeoutMs = 90000) {
   const started = performance.now();
   while (performance.now() - started < timeoutMs) {
@@ -24,7 +23,6 @@ async function appFrame(page, needle = 'Climate Analyzer', timeoutMs = 90000) {
   }
   throw new Error(`Timed out waiting for app text: ${needle}`);
 }
-
 async function combo(frame, label, timeoutMs = 60000) {
   const started = performance.now();
   while (performance.now() - started < timeoutMs) {
@@ -35,7 +33,6 @@ async function combo(frame, label, timeoutMs = 60000) {
   }
   throw new Error(`Timed out waiting for combobox: ${label}`);
 }
-
 async function rendered(control) { return [await control.innerText().catch(() => ''), await control.textContent().catch(() => ''), await control.inputValue().catch(() => '')].join(' ').replace(/\s+/g, ' ').trim(); }
 async function visibleOption(page, frame, predicate) {
   for (const options of [frame.getByRole('option'), page.getByRole('option'), frame.locator('[data-baseweb="menu"] li'), page.locator('[data-baseweb="menu"] li')]) {
@@ -51,17 +48,12 @@ async function chooseSource(page) {
   const started = performance.now();
   while (performance.now() - started < 60000) {
     const frame = await appFrame(page, 'Climate Analyzer', 10000);
-    for (const candidate of [
-      frame.getByRole('radio', { name: 'GeoSphere Austria', exact: true }).last(),
-      frame.getByText('GeoSphere Austria', { exact: true }).last(),
-      frame.locator('label').filter({ hasText: 'GeoSphere Austria' }).last(),
-    ]) {
+    for (const candidate of [frame.getByRole('radio', { name: 'GeoSphere Austria', exact: true }).last(), frame.getByText('GeoSphere Austria', { exact: true }).last(), frame.locator('label').filter({ hasText: 'GeoSphere Austria' }).last()]) {
       if (!(await candidate.count().catch(() => 0))) continue;
       try {
         const tag = await candidate.evaluate((node) => node.tagName.toLowerCase()).catch(() => '');
         const type = await candidate.getAttribute('type').catch(() => null);
-        if (tag === 'input' && type === 'radio') await candidate.check({ force: true, timeout: 5000 });
-        else await candidate.click({ force: true, timeout: 5000 });
+        if (tag === 'input' && type === 'radio') await candidate.check({ force: true, timeout: 5000 }); else await candidate.click({ force: true, timeout: 5000 });
         const selected = await appFrame(page, 'GeoSphere Austria — measured historical station data', 10000);
         if ((await bodyText(selected)).includes('GeoSphere dataset')) return;
       } catch {}
@@ -86,9 +78,49 @@ async function labelledInput(frame, label, timeoutMs = 60000) {
   } throw new Error(`Input not found: ${label}`);
 }
 async function selectExactStation(page, stationName, stationId) {
-  let frame = await appFrame(page, 'Search GeoSphere station', 60000); const search = await labelledInput(frame, 'Search GeoSphere station'); await search.fill(String(stationName)); await search.press('Tab').catch(() => {}); frame = await appFrame(page, 'Manual station selection', 60000);
-  const control = await combo(frame, 'Search-result stations'); await control.click(); const option = await visibleOption(page, frame, (text) => text.includes(stationName) && (text.includes(`ID ${stationId}`) || text.includes(String(stationId)))); if (!option) throw new Error(`Station option missing: ${stationName} ${stationId}`); await option.click(); await sleep(500);
-  frame = await appFrame(page, 'Manual station selection', 30000); const button = frame.getByRole('button', { name: 'Use station from list', exact: true }).first(); await button.click({ timeout: 15000 }); return appFrame(page, 'Measured variables to load', 60000);
+  const targetId = String(stationId);
+  let frame = await appFrame(page, 'Search GeoSphere station', 60000);
+  let search = await labelledInput(frame, 'Search GeoSphere station');
+  await search.fill(String(stationName), { timeout: 15000 });
+  await search.press('Tab').catch(() => {});
+
+  const selectStarted = performance.now();
+  let lastOptions = [];
+  while (performance.now() - selectStarted < 60000) {
+    frame = await appFrame(page, 'Manual station selection', 10000);
+    let control;
+    try { control = await combo(frame, 'Search-result stations', 5000); } catch { await sleep(250); continue; }
+    const current = await rendered(control);
+    if (current.includes(stationName) && (current.includes(`ID ${targetId}`) || current.includes(targetId))) break;
+    await control.click({ timeout: 5000 }).catch(() => {});
+    for (const options of [frame.getByRole('option'), page.getByRole('option'), frame.locator('[data-baseweb="menu"] li'), page.locator('[data-baseweb="menu"] li')]) {
+      lastOptions = await options.allInnerTexts().catch(() => lastOptions);
+    }
+    const option = await visibleOption(page, frame, (text) => text.includes(stationName) && (text.includes(`ID ${targetId}`) || text.includes(targetId)));
+    if (option) { await option.click({ timeout: 8000 }).catch(() => {}); await sleep(500); continue; }
+    await page.keyboard.press('Escape').catch(() => {});
+    frame = await appFrame(page, 'Search GeoSphere station', 5000);
+    search = await labelledInput(frame, 'Search GeoSphere station', 5000);
+    if ((await search.inputValue().catch(() => '')) !== String(stationName)) await search.fill(String(stationName)).catch(() => {});
+    await sleep(500);
+  }
+
+  frame = await appFrame(page, 'Manual station selection', 10000);
+  const settled = await rendered(await combo(frame, 'Search-result stations', 5000));
+  if (!settled.includes(stationName) || (!settled.includes(`ID ${targetId}`) && !settled.includes(targetId))) {
+    throw new Error(`Exact station did not settle: ${stationName} ${targetId}; control=${settled}; options=${lastOptions.join(' | ')}`);
+  }
+  const commitStarted = performance.now();
+  while (performance.now() - commitStarted < 30000) {
+    frame = await appFrame(page, 'Manual station selection', 5000);
+    const button = frame.getByRole('button', { name: 'Use station from list', exact: true }).first();
+    if (await button.count().catch(() => 0) && await button.isVisible().catch(() => false)) {
+      await button.click({ timeout: 15000 });
+      return appFrame(page, 'Measured variables to load', 60000);
+    }
+    await sleep(250);
+  }
+  throw new Error('Use station from list button did not become available.');
 }
 async function waitBody(page, predicate, description, timeoutMs = 60000, stable = 2) {
   const started = performance.now(); let passes = 0; let lastText = ''; let frame;
@@ -97,7 +129,7 @@ async function waitBody(page, predicate, description, timeoutMs = 60000, stable 
 }
 async function expandMonthly(frame) { const expander = frame.getByText(MONTHLY_CONTEXT, { exact: true }).last(); if (await expander.count().catch(() => 0)) { await expander.click({ force: true, timeout: 10000 }).catch(() => {}); await sleep(350); } }
 
-const report = { schema: 'climate-analyzer-pr83-source-ui-smoke-v21', target_url: TARGET_URL, fixture, checks: {}, page_errors: [], console_errors: [], success: false, error: null };
+const report = { schema: 'climate-analyzer-pr83-source-ui-smoke-v22', target_url: TARGET_URL, fixture, checks: {}, page_errors: [], console_errors: [], success: false, error: null };
 let browser;
 try {
   if (!fixture.success) throw new Error('Monthly provider fixture is not successful.');
