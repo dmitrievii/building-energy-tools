@@ -1,0 +1,253 @@
+name: Interannual Overlay Acceptance Patch
+
+on:
+  push:
+    branches: [feat/interannual-overlay]
+    paths:
+      - '.github/workflows/interannual-overlay-acceptance-patch.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/interannual-overlay
+          fetch-depth: 0
+      - name: Apply exact acceptance patches
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str) -> None:
+              file = Path(path)
+              text = file.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected one match, got {count}: {old[:100]!r}')
+              file.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          app = 'tools/climate_analyzer/app.py'
+          replace_once(
+              app,
+              'def render_time_series_overlay(df: pd.DataFrame) -> None:\n    """Render aligned variable-resolution series on one absolute time axis."""\n    st.header("Time series and overlay")\n    native_minutes = native_resolution_minutes(pd.DatetimeIndex(df.index))\n    st.caption(\n        f"Source resolution: {native_minutes} min. Choose an exact time window and overlay up to six series. "\n        "Resolutions finer than the source are intentionally unavailable; no temporal interpolation is performed."\n    )\n',
+              'def render_time_series_overlay(df: pd.DataFrame) -> None:\n    """Render aligned variable-resolution series under the active time basis."""\n    st.header("Time series and overlay")\n    native_minutes = native_resolution_minutes(pd.DatetimeIndex(df.index))\n    native_calendar = str(df.attrs.get("canonical_native_resolution", "")).strip().lower()\n    if native_calendar == "monthly":\n        st.caption(\n            "Source resolution: native monthly. Published monthly observations remain monthly; "\n            "no hourly or daily values are reconstructed or interpolated."\n        )\n    else:\n        st.caption(\n            f"Source resolution: {native_minutes} min. Choose an exact time window and overlay up to six series. "\n            "Resolutions finer than the source are intentionally unavailable; no temporal interpolation is performed."\n        )\n',
+          )
+          replace_once(
+              app,
+              '    step_seconds = max(60, int(native_minutes * 60))\n',
+              '    step_seconds = 3600 if native_calendar == "monthly" else max(60, int(native_minutes * 60))\n',
+          )
+          replace_once(
+              app,
+              '    end = selected_end + pd.Timedelta(minutes=native_minutes)\n',
+              '    end = selected_end + pd.offsets.MonthBegin(1) if native_calendar == "monthly" else selected_end + pd.Timedelta(minutes=native_minutes)\n',
+          )
+          replace_once(
+              app,
+              '''    st.caption(\n        "All series share the same absolute X-axis. Aggregated series use calendar-aligned complete bins before the "\n        "selected viewport is applied. Extensive interval quantities are summed, state/intensive quantities are averaged, "\n        "and wind direction uses a circular mean."\n    )\n''',
+              '''    if time_basis(df) == INTERANNUAL_OVERLAY:\n        st.caption(\n            "Every real year remains an independent series. Aggregation is performed inside each real year first, then "\n            "the yearly results are aligned on one leap-year calendar axis. Source timestamps remain available in hover; "\n            "no values are averaged across years before plotting."\n        )\n    else:\n        st.caption(\n            "All series share the same absolute X-axis. Aggregated series use calendar-aligned complete bins before the "\n            "selected viewport is applied. Extensive interval quantities are summed, state/intensive quantities are averaged, "\n            "and wind direction uses a circular mean."\n        )\n''',
+          )
+          replace_once(
+              app,
+              '''    render_plot(\n        fig,\n        "The overlay preserves one common time axis for every series. Different temporal resolutions are displayed without "\n        "upsampling or interpolation; complete aggregation bins retain their physical meaning even when only part of a bin "\n        "falls inside the visible range.",\n    )\n''',
+              '''    overlay_interpretation = (\n        "Real source years are preserved as independent traces on a common calendar axis. Values are aggregated only within "\n        "their own real year; missing calendar bins remain gaps and source timestamps remain attached to hover data."\n        if time_basis(df) == INTERANNUAL_OVERLAY\n        else\n        "The overlay preserves one common time axis for every series. Different temporal resolutions are displayed without "\n        "upsampling or interpolation; complete aggregation bins retain their physical meaning even when only part of a bin "\n        "falls inside the visible range."\n    )\n    render_plot(fig, overlay_interpretation)\n''',
+          )
+
+          timeseries = 'tools/climate_analyzer/epw_climate_analyzer/timeseries.py'
+          replace_once(
+              timeseries,
+              '''    year_dash_cycle = ["solid", "dash", "dot", "dashdot", "longdash", "longdashdot"]\n    all_years = sorted({int(year) for year in pd.DatetimeIndex(df.index).year})\n    year_dash = {year: year_dash_cycle[index % len(year_dash_cycle)] for index, year in enumerate(all_years)}\n''',
+              '''    year_dash_cycle = ["solid", "dash", "dot", "dashdot", "longdash", "longdashdot"]\n    all_years = sorted({int(year) for year in pd.DatetimeIndex(df.index).year})\n    year_dash = {year: year_dash_cycle[index % len(year_dash_cycle)] for index, year in enumerate(all_years)}\n    native_monthly = str(df.attrs.get("canonical_native_resolution", "")).strip().lower() == "monthly"\n''',
+          )
+          replace_once(
+              timeseries,
+              '            mode = "lines+markers" if spec.resolution == "Monthly" else "lines"\n',
+              '            mode = "lines+markers" if spec.resolution == "Monthly" or (native_monthly and spec.resolution == "Native") else "lines"\n',
+          )
+          replace_once(
+              timeseries,
+              '''    resolutions = {item.resolution for item in series}\n    if resolutions == {"Monthly"}:\n        tickformat = "%b"\n        dtick: object = "M1"\n    else:\n''',
+              '''    resolutions = {item.resolution for item in series}\n    monthly_axis = resolutions == {"Monthly"} or (native_monthly and resolutions.issubset({"Native", "Monthly"}))\n    if monthly_axis:\n        tickformat = "%b"\n        dtick: object = "M1"\n    else:\n''',
+          )
+
+          smoke = 'deployment/pr83_monthly_selected_load_smoke.mjs'
+          insert_after = '''async function selectStation(page, stationName, stationId) {\n'''
+          # Insert date/select/plot helpers before waitMonthlySurface, avoiding changes to the proven Glide selector.
+          marker = 'async function waitMonthlySurface(page, timeoutMs = 60000) {'
+          helpers = r'''function dateValueMatches(value, iso) {
+  const [year, month, day] = iso.split('-').map(Number);
+  const parts = String(value).split(/\D+/).filter(Boolean).map(Number);
+  return parts.includes(year) && parts.includes(month) && parts.includes(day);
+}
+
+async function dateControl(frame, label) {
+  const labelled = frame.getByLabel(label, { exact: true }).first();
+  if (await labelled.count().catch(() => 0) && await labelled.isVisible().catch(() => false)) {
+    const tag = await labelled.evaluate((node) => node.tagName.toLowerCase()).catch(() => '');
+    const role = await labelled.getAttribute('role').catch(() => null);
+    if (['input', 'textarea', 'select'].includes(tag)) return { kind: 'input', locator: labelled };
+    if (role === 'group' && await labelled.locator('[role="spinbutton"]').count().catch(() => 0) >= 3) return { kind: 'segmented', locator: labelled };
+  }
+  const aria = frame.locator(`input[aria-label="${label}"]`).first();
+  if (await aria.count().catch(() => 0) && await aria.isVisible().catch(() => false)) return { kind: 'input', locator: aria };
+  throw new Error(`Date control unavailable: ${label}`);
+}
+
+async function segmentedDateValue(group) {
+  const segments = group.locator('[role="spinbutton"]');
+  const values = {};
+  for (let i = 0; i < await segments.count(); i += 1) {
+    const segment = segments.nth(i);
+    const label = String(await segment.getAttribute('aria-label').catch(() => '')).toLowerCase();
+    const value = Number(await segment.getAttribute('aria-valuenow').catch(() => NaN));
+    if (label.includes('year')) values.year = value;
+    else if (label.includes('month')) values.month = value;
+    else if (label.includes('day')) values.day = value;
+  }
+  if ([values.year, values.month, values.day].every(Number.isFinite)) return `${values.year}-${String(values.month).padStart(2, '0')}-${String(values.day).padStart(2, '0')}`;
+  return await group.innerText().catch(() => '');
+}
+
+async function setSegmentedDate(page, group, iso) {
+  const [year, month, day] = iso.split('-').map(Number);
+  const desired = { year, month, day };
+  const segments = group.locator('[role="spinbutton"]');
+  const byPart = {};
+  for (let i = 0; i < await segments.count(); i += 1) {
+    const segment = segments.nth(i);
+    const label = String(await segment.getAttribute('aria-label').catch(() => '')).toLowerCase();
+    if (label.includes('year')) byPart.year = segment;
+    else if (label.includes('month')) byPart.month = segment;
+    else if (label.includes('day')) byPart.day = segment;
+  }
+  for (const part of ['year', 'month', 'day']) {
+    const segment = byPart[part];
+    if (!segment) throw new Error(`Missing ${part} segment for ${iso}`);
+    await segment.click();
+    await segment.press(process.platform === 'darwin' ? 'Meta+A' : 'Control+A').catch(() => {});
+    await segment.press('Backspace').catch(() => {});
+    await page.keyboard.type(String(desired[part]), { delay: 30 });
+  }
+  await page.keyboard.press('Tab').catch(() => {});
+}
+
+async function setDate(page, label, iso) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const frame = await appFrame(page, 'Measured variables to load');
+    const control = await dateControl(frame, label);
+    if (control.kind === 'input') {
+      await control.locator.fill(attempt === 0 ? iso.replaceAll('-', '/') : iso);
+      await control.locator.press('Enter').catch(() => {});
+      await control.locator.press('Tab').catch(() => {});
+    } else await setSegmentedDate(page, control.locator, iso);
+    await sleep(800);
+    const refreshed = await appFrame(page, 'Measured variables to load');
+    const current = await dateControl(refreshed, label);
+    const value = current.kind === 'input' ? await current.locator.inputValue().catch(() => '') : await segmentedDateValue(current.locator);
+    if (dateValueMatches(value, iso)) return;
+  }
+  throw new Error(`${label} did not accept ${iso}.`);
+}
+
+async function selectComboOption(page, label, expected) {
+  const frame = await appFrame(page);
+  const control = await combo(frame, label, 15000);
+  await control.click({ timeout: 5000 });
+  const option = await visibleOption(page, frame, (text) => text.trim() === expected);
+  if (!option) throw new Error(`Option ${expected} not found for ${label}.`);
+  await option.click({ timeout: 5000 });
+  await sleep(650);
+}
+
+async function verifyNativeMonthlyInterannual(page) {
+  await selectComboOption(page, 'Time basis', 'Interannual overlay');
+  let frame = await appFrame(page);
+  const navigation = frame.getByText('Explore — Time series & overlay', { exact: true }).last();
+  if (!(await navigation.count().catch(() => 0))) throw new Error('Monthly Time series & overlay navigation is missing.');
+  await navigation.click({ force: true, timeout: 10000 });
+  frame = await appFrame(page, 'Time series and overlay', 30000);
+
+  const slider = frame.getByRole('slider', { name: 'Number of series', exact: true }).first();
+  if (await slider.count().catch(() => 0)) {
+    await slider.focus();
+    await slider.press('Home');
+    await sleep(500);
+  }
+  await selectComboOption(page, 'Series 1 resolution', 'Monthly');
+  frame = await appFrame(page, 'Time series and overlay', 30000);
+  const plots = frame.locator('.js-plotly-plot');
+  if (!(await plots.count().catch(() => 0))) throw new Error('Native-monthly interannual Plotly figure missing.');
+  const snapshot = await plots.last().evaluate((node) => ({
+    traces: (node.data || []).map((trace) => ({
+      name: String(trace.name || ''),
+      legendgroup: String(trace.legendgroup || ''),
+      x: Array.from(trace.x || []).map((value) => value == null ? null : String(value)),
+      y: Array.from(trace.y || []).map((value) => value == null ? null : Number(value)),
+      customdata: Array.from(trace.customdata || []),
+      hovertemplate: String(trace.hovertemplate || ''),
+    })),
+    tickformat: String(node.layout?.xaxis?.tickformat || ''),
+  }));
+  const expectedYears = [2020, 2021, 2022, 2023, 2024, 2025];
+  for (const year of expectedYears) {
+    const trace = snapshot.traces.find((item) => item.name.endsWith(`— ${year}`));
+    if (!trace) throw new Error(`Native monthly overlay missing real-year trace ${year}.`);
+    const calendarPositions = trace.x.filter(Boolean);
+    if (calendarPositions.length !== 12) throw new Error(`Year ${year} has ${calendarPositions.length} calendar positions, expected 12.`);
+    if (!trace.customdata.some((row) => Number(row?.[0]) === year)) throw new Error(`Trace ${year} lost real-year customdata.`);
+    if (!trace.hovertemplate.includes('Year:') || !trace.hovertemplate.includes('Value:')) throw new Error(`Trace ${year} lost real-year hover.`);
+  }
+  if (snapshot.tickformat !== '%b') throw new Error(`Native monthly overlay tick format is ${snapshot.tickformat}, expected %b.`);
+  return { years: expectedYears, trace_names: snapshot.traces.map((item) => item.name), tickformat: snapshot.tickformat };
+}
+
+'''
+          file = Path(smoke)
+          text = file.read_text(encoding='utf-8')
+          if marker not in text or text.count(marker) != 1:
+              raise SystemExit('monthly smoke insertion marker missing or ambiguous')
+          text = text.replace(marker, helpers + marker, 1)
+          old = '  await selectStation(page, fixture.station_name, fixture.station_id);\n\n  let frame = await waitMonthlySurface(page);'
+          new = '  await selectStation(page, fixture.station_name, fixture.station_id);\n  await setDate(page, \'From date (UTC)\', \'2020-01-01\');\n  await setDate(page, \'Through date (UTC)\', \'2025-12-31\');\n\n  let frame = await waitMonthlySurface(page);'
+          if text.count(old) != 1:
+              raise SystemExit('monthly smoke date insertion target missing')
+          text = text.replace(old, new, 1)
+          old = '''  report.checks.measured_station_pressure_contract_from_fixture = true;\n\n  if (report.page_errors.length) {\n'''
+          new = '''  report.checks.measured_station_pressure_contract_from_fixture = true;\n  report.checks.native_monthly_interannual = await verifyNativeMonthlyInterannual(page);\n\n  if (report.page_errors.length) {\n'''
+          if text.count(old) != 1:
+              raise SystemExit('monthly smoke acceptance insertion target missing')
+          text = text.replace(old, new, 1)
+          text = text.replace(
+              "schema: 'climate-analyzer-monthly-selected-load-smoke-v7-proven-selector-minimal'",
+              "schema: 'climate-analyzer-monthly-selected-load-smoke-v8-interannual-native-monthly'",
+              1,
+          )
+          file.write_text(text, encoding='utf-8')
+          PY
+      - name: Verify syntax and focused tests
+        env:
+          PYTHONPATH: tools/climate_analyzer
+        run: |
+          python -m pip install -q -r tools/climate_analyzer/requirements.txt
+          python -m compileall -q tools/climate_analyzer/app.py tools/climate_analyzer/epw_climate_analyzer
+          node --check deployment/pr83_monthly_selected_load_smoke.mjs
+          node --check deployment/interannual_overlay_browser_smoke.mjs
+          python -m unittest -v \
+            tools.climate_analyzer.tests.test_interannual_overlay \
+            tools.climate_analyzer.tests.test_interannual_overlay_profiles \
+            tools.climate_analyzer.tests.test_time_series_overlay
+      - name: Commit acceptance patch and remove transport
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add tools/climate_analyzer/app.py \
+                  tools/climate_analyzer/epw_climate_analyzer/timeseries.py \
+                  deployment/pr83_monthly_selected_load_smoke.mjs
+          git rm .github/workflows/interannual-overlay-acceptance-patch.yml
+          git commit -m 'Climate: close interannual overlay runtime acceptance'
+          git push origin HEAD:feat/interannual-overlay
