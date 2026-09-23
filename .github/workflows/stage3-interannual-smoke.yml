@@ -1,0 +1,32 @@
+name: Stage3 Interannual Smoke Patch
+
+on:
+  push:
+    branches:
+      - fix/interannual-overlay-proven-editor-stage-3
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/interannual-overlay-proven-editor-stage-3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Apply proven editor patch
+        run: python deployment/stage3_patch_interannual_smoke.py
+      - name: Check smoke syntax
+        run: node --check deployment/interannual_overlay_browser_smoke.mjs
+      - name: Commit staged result
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add deployment/interannual_overlay_browser_smoke.mjs
+          git diff --cached --quiet && exit 0
+          git commit -m "Climate: reuse proven GeoSphere editor path for overlay smoke"
+          git push origin HEAD:fix/interannual-overlay-proven-editor-stage-3
