@@ -4,10 +4,18 @@ The UI layer owns selection and attaches it as dataframe presentation metadata.
 Actual Plotly styling is applied at the chart-builder boundary, before the figure
 is handed to Streamlit. This avoids late runtime monkey-patching of render_plot
 and makes the visual contract independent of nested source-parity UI wrappers.
+
+Streamlit reruns keep imported package modules alive. ``importlib.reload``
+re-executes module source but retains dictionary entries that are not redefined,
+so module-level boolean patch guards can survive a reload even after the wrapped
+function itself has been replaced by its source definition. Builder installation
+therefore identifies the *current function object* instead of trusting stale
+module flags.
 """
 
 from __future__ import annotations
 
+from functools import wraps
 from typing import Any, Callable
 
 import pandas as pd
@@ -25,6 +33,7 @@ from .temporal_filtering import INTERANNUAL_OVERLAY, time_basis
 
 
 HIGHLIGHT_STATE_KEY = "overlay_highlight_year"
+_BUILDER_WRAPPER_MARK = "_interannual_year_highlight_builder_wrapper"
 
 
 def _selected_highlight_year(proxy: Any, df: pd.DataFrame) -> int | None:
@@ -77,48 +86,68 @@ def _render_with_highlight_metadata(
     return renderer(_frame_with_highlight_year(df, selected), *args, **kwargs)
 
 
+def _is_current_builder_wrapped(builder: Any) -> bool:
+    """Return whether this exact callable is a live highlight wrapper."""
+    return bool(getattr(builder, _BUILDER_WRAPPER_MARK, False))
+
+
+def _mark_builder_wrapper(builder: Callable[..., Any]) -> Callable[..., Any]:
+    """Mark a wrapper on the function object, which reload replaces reliably."""
+    setattr(builder, _BUILDER_WRAPPER_MARK, True)
+    return builder
+
+
 def _install_builder_styling() -> None:
     """Bind focused-year styling to the actual Plotly chart builders.
 
-    The wrappers consume only dataframe presentation metadata. They therefore
-    work regardless of which Streamlit/source-parity wrapper invoked the builder.
+    Do not use module-level booleans as the installation authority. Python's
+    ``importlib.reload`` preserves names that are absent from reloaded source, so
+    a stale ``..._INSTALLED = True`` can outlive the wrapper it described. The
+    function-object marker disappears whenever reload restores the source
+    function, causing the wrapper to be installed again on the next rerun.
     """
     from . import charts, timeseries
 
-    if not bool(getattr(timeseries, "_INTERANNUAL_HIGHLIGHT_BUILDER_INSTALLED", False)):
-        original_overlay_builder = timeseries.build_overlay_figure
-
+    current_overlay_builder = timeseries.build_overlay_figure
+    if not _is_current_builder_wrapped(current_overlay_builder):
+        @wraps(current_overlay_builder)
         def build_overlay_figure(df: pd.DataFrame, *args: Any, **kwargs: Any):
-            fig, tables = original_overlay_builder(df, *args, **kwargs)
+            fig, tables = current_overlay_builder(df, *args, **kwargs)
             year = highlight_year_from_frame(df)
             if time_basis(df) == INTERANNUAL_OVERLAY and year is not None:
                 fig = apply_interannual_year_highlight(fig, year)
             return fig, tables
 
-        timeseries.build_overlay_figure = build_overlay_figure
-        timeseries._INTERANNUAL_HIGHLIGHT_BUILDER_INSTALLED = True
+        timeseries.build_overlay_figure = _mark_builder_wrapper(build_overlay_figure)
+    # Compatibility/diagnostic flag only. It is intentionally not consulted.
+    timeseries._INTERANNUAL_HIGHLIGHT_BUILDER_INSTALLED = True
 
-    if not bool(getattr(charts, "_INTERANNUAL_HIGHLIGHT_BUILDERS_INSTALLED", False)):
-        original_profile = charts.profile_ribbon_chart
-        original_percentile = charts.percentile_band_chart
-
+    current_profile = charts.profile_ribbon_chart
+    if not _is_current_builder_wrapped(current_profile):
+        @wraps(current_profile)
         def profile_ribbon_chart(df: pd.DataFrame, *args: Any, **kwargs: Any):
-            fig = original_profile(df, *args, **kwargs)
+            fig = current_profile(df, *args, **kwargs)
             year = highlight_year_from_frame(df)
             if time_basis(df) == INTERANNUAL_OVERLAY and year is not None:
                 fig = apply_interannual_year_highlight(fig, year)
             return fig
 
+        charts.profile_ribbon_chart = _mark_builder_wrapper(profile_ribbon_chart)
+
+    current_percentile = charts.percentile_band_chart
+    if not _is_current_builder_wrapped(current_percentile):
+        @wraps(current_percentile)
         def percentile_band_chart(df: pd.DataFrame, *args: Any, **kwargs: Any):
-            fig = original_percentile(df, *args, **kwargs)
+            fig = current_percentile(df, *args, **kwargs)
             year = highlight_year_from_frame(df)
             if time_basis(df) == INTERANNUAL_OVERLAY and year is not None:
                 fig = apply_interannual_year_highlight(fig, year)
             return fig
 
-        charts.profile_ribbon_chart = profile_ribbon_chart
-        charts.percentile_band_chart = percentile_band_chart
-        charts._INTERANNUAL_HIGHLIGHT_BUILDERS_INSTALLED = True
+        charts.percentile_band_chart = _mark_builder_wrapper(percentile_band_chart)
+
+    # Compatibility/diagnostic flag only. It is intentionally not consulted.
+    charts._INTERANNUAL_HIGHLIGHT_BUILDERS_INSTALLED = True
 
 
 def install_interannual_year_highlight(proxy: Any) -> None:
