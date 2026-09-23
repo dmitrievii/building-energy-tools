@@ -411,7 +411,7 @@ async function loadDataset(page) {
     const button = frame.getByRole('button', { name: 'Load measured GeoSphere interval', exact: true }).first();
     if (await button.count().catch(() => 0)) {
       await button.click({ timeout: 15000 });
-      return appFrame(page, 'Hourly climate overview', 120000);
+      return appFrame(page, 'Explore — Time series & overlay', 120000);
     }
     await sleep(300);
   }
