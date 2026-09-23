@@ -20,35 +20,64 @@ old_series_count = '''async function setSeriesCountOne(page) {
   if (value !== 1) throw new Error(`Could not set Number of series to 1; observed ${value}.`);
 }
 '''
-new_series_count = '''async function setSeriesCountOne(page) {
+new_series_count = '''async function seriesCountSlider(frame) {
+  const labels = frame.getByText('Number of series', { exact: true });
+  const labelCount = await labels.count().catch(() => 0);
+  for (let index = 0; index < labelCount; index += 1) {
+    const label = labels.nth(index);
+    if (!(await label.isVisible().catch(() => false))) continue;
+    const container = label.locator(
+      'xpath=ancestor::*[descendant::*[@role="slider"] or descendant::input[@type="range"]][1]'
+    );
+    if (!(await container.count().catch(() => 0))) continue;
+    let slider = container.locator('[role="slider"]').first();
+    if (!(await slider.count().catch(() => 0))) slider = container.locator('input[type="range"]').first();
+    if (await slider.count().catch(() => 0) && await slider.isVisible().catch(() => false)) return slider;
+  }
+
+  const candidates = frame.locator('[role="slider"], input[type="range"]');
+  const candidateCount = await candidates.count().catch(() => 0);
+  for (let index = 0; index < candidateCount; index += 1) {
+    const candidate = candidates.nth(index);
+    if (!(await candidate.isVisible().catch(() => false))) continue;
+    const min = await candidate.getAttribute('aria-valuemin').catch(() => null) ?? await candidate.getAttribute('min').catch(() => null);
+    const max = await candidate.getAttribute('aria-valuemax').catch(() => null) ?? await candidate.getAttribute('max').catch(() => null);
+    if (String(min) === '1' && String(max) === '6') return candidate;
+  }
+  return null;
+}
+
+async function sliderNumericValue(slider) {
+  const aria = await slider.getAttribute('aria-valuenow').catch(() => null);
+  if (aria != null && aria !== '') return Number(aria);
+  const raw = await slider.inputValue().catch(() => null);
+  return raw == null || raw === '' ? NaN : Number(raw);
+}
+
+async function setSeriesCountOne(page) {
   let lastValue = NaN;
   for (let attempt = 0; attempt < 6; attempt += 1) {
     const frame = await appFrame(page, 'Time series and overlay', 10000);
-    const root = frame.locator('[data-testid="stSlider"]').filter({ hasText: 'Number of series' }).first();
-    let slider = root.locator('[role="slider"]').first();
-    if (!(await slider.count().catch(() => 0))) {
-      slider = frame.locator('[role="slider"][aria-valuemin="1"][aria-valuemax="6"]').first();
+    const slider = await seriesCountSlider(frame);
+    if (!slider) {
+      const text = (await bodyText(frame).catch(() => '')).replace(/\\s+/g, ' ').trim();
+      throw new Error(`Number of series slider is unavailable. Page text: ${text.slice(-900)}`);
     }
-    if (!(await slider.count().catch(() => 0)) || !(await slider.isVisible().catch(() => false))) {
-      throw new Error('Number of series slider is unavailable.');
-    }
-    lastValue = Number(await slider.getAttribute('aria-valuenow').catch(() => NaN));
+    lastValue = await sliderNumericValue(slider);
     if (lastValue === 1) {
       await sleep(700);
       return;
     }
     await slider.focus();
-    await slider.press('ArrowLeft', { timeout: 5000 });
+    await slider.press('Home', { timeout: 5000 }).catch(async () => {
+      await slider.press('ArrowLeft', { timeout: 5000 });
+    });
     await frame.page().keyboard.press('Tab').catch(() => {});
     await sleep(900);
   }
   const frame = await appFrame(page, 'Time series and overlay', 10000);
-  const root = frame.locator('[data-testid="stSlider"]').filter({ hasText: 'Number of series' }).first();
-  let slider = root.locator('[role="slider"]').first();
-  if (!(await slider.count().catch(() => 0))) {
-    slider = frame.locator('[role="slider"][aria-valuemin="1"][aria-valuemax="6"]').first();
-  }
-  lastValue = Number(await slider.getAttribute('aria-valuenow').catch(() => NaN));
+  const slider = await seriesCountSlider(frame);
+  lastValue = slider ? await sliderNumericValue(slider) : NaN;
   if (lastValue !== 1) throw new Error(`Could not commit Number of series = 1; observed ${lastValue}.`);
 }
 '''
