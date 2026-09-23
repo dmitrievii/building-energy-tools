@@ -11,6 +11,7 @@ from epw_climate_analyzer.interannual_profiles import (
     interannual_profile_table,
 )
 from epw_climate_analyzer.temporal_filtering import INTERANNUAL_OVERLAY, with_time_basis
+from epw_climate_analyzer.timeseries import available_resolution_labels
 
 
 class InterannualProfileTests(unittest.TestCase):
@@ -22,6 +23,13 @@ class InterannualProfileTests(unittest.TestCase):
         frame = pd.DataFrame({"dry_bulb_temperature_c": values}, index=index)
         frame.attrs["canonical_native_resolution"] = "monthly"
         return with_time_basis(frame, INTERANNUAL_OVERLAY)
+
+    def test_native_monthly_exposes_identity_and_only_coarser_resolutions(self) -> None:
+        labels = available_resolution_labels(self._monthly_frame())
+        self.assertEqual(labels, ["Native", "Monthly", "Seasonal", "Annual"])
+        self.assertNotIn("Daily", labels)
+        self.assertNotIn("Weekly", labels)
+        self.assertNotIn("1 h", labels)
 
     def test_monthly_profile_table_preserves_year_before_envelope(self) -> None:
         table = interannual_profile_table(self._monthly_frame(), "dry_bulb_temperature_c", "Monthly")
