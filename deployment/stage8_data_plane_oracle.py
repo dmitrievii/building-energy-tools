@@ -32,15 +32,15 @@ replacement = r'''async function inspectResolutionControl(page) {
 
 async function plotSnapshot'''
 
-text, count = re.subn(
+pattern = re.compile(
     r"async function setResolution\(page, resolution\) \{.*?\n\}\n\nasync function plotSnapshot",
-    replacement,
-    text,
-    count=1,
     flags=re.S,
 )
-if count != 1:
-    raise SystemExit("Could not replace setResolution with observational oracle")
+matches = list(pattern.finditer(text))
+if len(matches) != 1:
+    raise SystemExit(f"Could not replace setResolution with observational oracle; matches={len(matches)}")
+match = matches[0]
+text = text[:match.start()] + replacement + text[match.end():]
 
 old_call = "  await setResolution(page, 'Native');\n"
 new_call = "  report.checks.resolution_ui = await inspectResolutionControl(page);\n"
