@@ -2,7 +2,48 @@ from pathlib import Path
 
 path = Path("deployment/interannual_overlay_browser_smoke.mjs")
 text = path.read_text(encoding="utf-8")
-old = '''async function exerciseHover(page) {
+
+old_date = '''async function dateControl(frame, label) {
+  const labelled = frame.getByLabel(label, { exact: true }).first();
+  if (await labelled.count().catch(() => 0) && await labelled.isVisible().catch(() => false)) {
+    const tag = await labelled.evaluate((node) => node.tagName.toLowerCase()).catch(() => '');
+    const role = await labelled.getAttribute('role').catch(() => null);
+    if (['input', 'textarea', 'select'].includes(tag)) return { kind: 'input', locator: labelled };
+    if (role === 'group' && await labelled.locator('[role="spinbutton"]').count().catch(() => 0) >= 3) {
+      return { kind: 'segmented', locator: labelled };
+    }
+  }
+  const aria = frame.locator(`input[aria-label="${label}"]`).first();
+  if (await aria.count().catch(() => 0) && await aria.isVisible().catch(() => false)) return { kind: 'input', locator: aria };
+  throw new Error(`Date control unavailable: ${label}`);
+}
+'''
+new_date = '''async function dateControl(frame, label, timeoutMs = 30000) {
+  const started = performance.now();
+  let current = frame;
+  while (performance.now() - started < timeoutMs) {
+    const labelled = current.getByLabel(label, { exact: true }).first();
+    if (await labelled.count().catch(() => 0) && await labelled.isVisible().catch(() => false)) {
+      const tag = await labelled.evaluate((node) => node.tagName.toLowerCase()).catch(() => '');
+      const role = await labelled.getAttribute('role').catch(() => null);
+      if (['input', 'textarea', 'select'].includes(tag)) return { kind: 'input', locator: labelled };
+      if (role === 'group' && await labelled.locator('[role="spinbutton"]').count().catch(() => 0) >= 3) {
+        return { kind: 'segmented', locator: labelled };
+      }
+    }
+    const aria = current.locator(`input[aria-label="${label}"]`).first();
+    if (await aria.count().catch(() => 0) && await aria.isVisible().catch(() => false)) return { kind: 'input', locator: aria };
+    await sleep(200);
+    current = await appFrame(current.page(), 'Measured variables to load', 5000).catch(() => current);
+  }
+  throw new Error(`Date control unavailable after ${timeoutMs} ms: ${label}`);
+}
+'''
+if old_date not in text:
+    raise SystemExit("Expected dateControl block not found")
+text = text.replace(old_date, new_date, 1)
+
+old_hover = '''async function exerciseHover(page) {
   const frame = await appFrame(page, 'Time series and overlay');
   const plot = frame.locator('.js-plotly-plot').last();
   await plot.evaluate((node) => {
@@ -16,7 +57,7 @@ old = '''async function exerciseHover(page) {
   return text.replace(/\\s+/g, ' ').trim();
 }
 '''
-new = '''async function renderedHoverText(plot) {
+new_hover = '''async function renderedHoverText(plot) {
   const labels = await plot.locator('.hoverlayer text').allTextContents().catch(() => []);
   return labels.join(' ').replace(/\\s+/g, ' ').trim();
 }
@@ -58,7 +99,7 @@ async function exerciseHover(page) {
   for (let index = 0; index < lineCount; index += 1) {
     const box = await lines.nth(index).boundingBox().catch(() => null);
     if (!box || box.width < 4) continue;
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.move(box.x + box.width / 2, box.y + Math.max(1, box.height / 2));
     text = await waitForHoverText(plot, 2500);
     if (text.includes('Year:') && text.includes('Value:')) return text;
   }
@@ -66,6 +107,7 @@ async function exerciseHover(page) {
   throw new Error(`Hover did not expose Year and Value for curve ${target.curveNumber}, point ${target.pointNumber}: ${text}`);
 }
 '''
-if old not in text:
+if old_hover not in text:
     raise SystemExit("Expected exerciseHover block not found")
-path.write_text(text.replace(old, new, 1), encoding="utf-8")
+text = text.replace(old_hover, new_hover, 1)
+path.write_text(text, encoding="utf-8")
