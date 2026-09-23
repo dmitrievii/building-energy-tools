@@ -236,63 +236,68 @@ async function setDate(page, label, iso) {
 }
 
 async function variableEditor(page) {
-  const frame = await appFrame(page, 'Measured variables to load');
+  const frame = await appFrame(page, 'Measured variables to load', 30000);
   const tables = frame.locator('[data-testid="stDataFrame"]');
-  if (await tables.count() < 2) throw new Error('Measured-variable editor not found.');
+  if (await tables.count() < 2) throw new Error('Measured-variable data editor not found.');
   const editor = tables.last();
   const canvas = editor.locator('canvas[data-testid="data-grid-canvas"]').first();
   if (!(await canvas.count())) throw new Error('Measured-variable Glide canvas not found.');
   return { frame, editor, canvas };
 }
 
-async function resetEditor(page) {
-  let current = await variableEditor(page);
-  await current.editor.locator('.dvn-scroller').first().evaluate((node) => {
-    node.scrollTop = 0; node.scrollLeft = 0; node.dispatchEvent(new Event('scroll', { bubbles: true }));
+async function scrollEditorBottom(editor) {
+  return await editor.locator('.dvn-scroller').first().evaluate((node) => {
+    node.scrollTop = node.scrollHeight;
+    node.dispatchEvent(new Event('scroll', { bubbles: true }));
+    return { scrollTop: node.scrollTop, scrollHeight: node.scrollHeight, clientHeight: node.clientHeight };
   });
-  await sleep(400);
-  return variableEditor(page);
 }
 
-async function providerState(page, provider) {
-  let current = await resetEditor(page);
-  let lastTop = -1;
-  for (let scan = 0; scan < 40; scan += 1) {
-    const rows = current.editor.locator('[role="grid"] tr[role="row"]');
-    for (let i = 0; i < await rows.count(); i += 1) {
-      const row = rows.nth(i);
-      const cells = await row.locator('[role="gridcell"]').allTextContents().catch(() => []);
-      if (!cells.some((value) => value.trim() === provider)) continue;
-      const ariaRowIndex = Number(await row.getAttribute('aria-rowindex'));
-      const load = String(await row.locator('[role="gridcell"][aria-colindex="1"]').first().textContent().catch(() => '')).trim().toLowerCase();
-      return { ...current, ariaRowIndex, dataIndex: ariaRowIndex - 2, load };
-    }
-    const state = await current.editor.locator('.dvn-scroller').first().evaluate((node) => {
-      const before = node.scrollTop; const max = Math.max(0, node.scrollHeight - node.clientHeight);
-      node.scrollTop = Math.min(max, before + Math.max(80, Math.floor(node.clientHeight * 0.75)));
-      node.dispatchEvent(new Event('scroll', { bubbles: true }));
-      return { before, after: node.scrollTop };
-    });
-    if (state.after <= state.before || state.after === lastTop) break;
-    lastTop = state.after;
-    await sleep(300);
-    current = await variableEditor(page);
+async function settledVariableEditor(page) {
+  let current = await variableEditor(page);
+  await scrollEditorBottom(current.editor);
+  await sleep(1200);
+  current = await variableEditor(page);
+  return current;
+}
+
+async function providerState(page, providerName) {
+  const { frame, editor, canvas } = await settledVariableEditor(page);
+  const rows = editor.locator('[role="grid"] tr[role="row"]');
+  const count = await rows.count();
+  for (let index = 0; index < count; index += 1) {
+    const row = rows.nth(index);
+    const provider = (await row.locator('[role="gridcell"][aria-colindex="4"]').textContent().catch(() => '')).trim();
+    if (provider !== providerName) continue;
+    const load = (await row.locator('[role="gridcell"][aria-colindex="1"]').textContent().catch(() => '')).trim().toLowerCase();
+    const ariaRowIndex = Number(await row.getAttribute('aria-rowindex'));
+    if (!Number.isFinite(ariaRowIndex) || ariaRowIndex < 2) throw new Error(`Invalid Glide row index for ${providerName}: ${ariaRowIndex}`);
+    return { frame, editor, canvas, provider, load, ariaRowIndex, dataIndex: ariaRowIndex - 2 };
   }
-  throw new Error(`Provider ${provider} not found in variable editor.`);
+  throw new Error(`Provider parameter ${providerName} is not visible after scrolling the measured-variable editor to the bottom.`);
 }
 
-async function selectProvider(page, provider) {
-  let state = await providerState(page, provider);
-  if (state.load === 'true') return;
-  if (state.load !== 'false') throw new Error(`Unexpected Load state for ${provider}: ${state.load}`);
+async function waitProviderLoadState(page, providerName, expected, timeoutMs = 12000) {
+  const started = performance.now();
+  let last = null;
+  while (performance.now() - started < timeoutMs) {
+    try {
+      last = await providerState(page, providerName);
+      if (last.load === expected) return last;
+    } catch { /* rerun in flight */ }
+    await sleep(300);
+  }
+  throw new Error(`Provider ${providerName} Load did not become ${expected}; last=${last?.load ?? 'unavailable'}.`);
+}
+
+async function navigateToLoadCell(page, state, providerName) {
   const expectedTestId = `glide-cell-0-${state.dataIndex}`;
   let lastSelectedTestId = null;
   let lastHomeTestId = null;
   let lastFocused = false;
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    state = await providerState(page, provider);
-    if (state.load === 'true') return;
-    const current = await resetEditor(page);
+  let lastMouseInitialized = false;
+  for (let navigationAttempt = 0; navigationAttempt < 3; navigationAttempt += 1) {
+    const current = await settledVariableEditor(page);
     const box = await current.canvas.boundingBox().catch(() => null);
     if (!box || box.width < 100 || box.height < 80) { await sleep(250); continue; }
     await current.canvas.click({
@@ -301,6 +306,7 @@ async function selectProvider(page, provider) {
       timeout: 5000,
     }).catch(() => {});
     await sleep(180);
+    lastMouseInitialized = true;
     await current.canvas.focus();
     lastFocused = await current.canvas.evaluate((node) => document.activeElement === node).catch(() => false);
     if (!lastFocused) { await sleep(250); continue; }
@@ -316,33 +322,36 @@ async function selectProvider(page, provider) {
     await sleep(300);
     const selected = current.editor.locator('[role="gridcell"][aria-selected="true"]').first();
     lastSelectedTestId = await selected.getAttribute('data-testid').catch(() => null);
-    if (lastSelectedTestId !== expectedTestId) { await sleep(350); continue; }
-    await page.keyboard.press('Space');
-    const started = performance.now();
-    while (performance.now() - started < 10000) {
-      const after = await providerState(page, provider).catch(() => null);
-      if (after?.load === 'true') return;
-      await sleep(300);
-    }
+    if (lastSelectedTestId === expectedTestId) return expectedTestId;
+    await sleep(350);
   }
-  throw new Error(`Could not select provider ${provider}; focused=${lastFocused}, home=${lastHomeTestId}, selected=${lastSelectedTestId}, expected=${expectedTestId}.`);
+  throw new Error(`Glide navigation could not address ${expectedTestId} for ${providerName}; mouseInitialized=${lastMouseInitialized}, focused=${lastFocused}, home=${lastHomeTestId}, last selected=${lastSelectedTestId}.`);
+}
+
+async function selectProvider(page, providerName) {
+  let state = await providerState(page, providerName);
+  if (state.load === 'true') return state;
+  if (state.load !== 'false') throw new Error(`Unexpected Load state for ${providerName}: ${state.load}`);
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    state = await providerState(page, providerName);
+    if (state.load === 'true') return state;
+    await navigateToLoadCell(page, state, providerName);
+    await page.keyboard.press('Space');
+    try { return await waitProviderLoadState(page, providerName, 'true', 10000); }
+    catch { await sleep(500); }
+  }
+  throw new Error(`Could not toggle Load for provider ${providerName}.`);
 }
 
 async function loadDataset(page) {
-  const selected = await providerState(page, 'tl');
-  if (selected.load !== 'true') throw new Error(`Provider tl lost before load; state=${selected.load}.`);
-  const started = performance.now();
-  while (performance.now() - started < 30000) {
-    const frame = await appFrame(page, 'Measured variables to load', 10000);
-    const button = frame.getByRole('button', { name: 'Load measured GeoSphere interval', exact: true }).first();
-    if (await button.count().catch(() => 0)) {
-      await button.click({ timeout: 15000 });
-      return appFrame(page, 'Climate overview', 120000);
-    }
-    await sleep(400);
+  const state = await waitProviderLoadState(page, 'tl', 'true', 12000);
+  const frame = state.frame;
+  const button = frame.getByRole('button', { name: 'Load measured GeoSphere interval', exact: true }).first();
+  if (!(await button.count().catch(() => 0))) {
+    throw new Error(`GeoSphere load button not found after selecting tl; tl=${state.load}, row=${state.ariaRowIndex}.`);
   }
-  const finalState = await providerState(page, 'tl').catch(() => null);
-  throw new Error(`Load measured GeoSphere interval button missing after wait; tl=${finalState?.load ?? 'unavailable'}.`);
+  await button.click({ timeout: 15000 });
+  return appFrame(page, 'Climate overview', 120000);
 }
 
 async function chooseTimeBasis(page) {
