@@ -66,6 +66,23 @@ class InterannualYearHighlightTests(unittest.TestCase):
         frame.attrs["canonical_native_resolution"] = "monthly"
         return with_time_basis(frame, INTERANNUAL_OVERLAY)
 
+    @staticmethod
+    def _proxy(selected_year: int | None = None) -> SimpleNamespace:
+        class FakeStreamlit:
+            def __init__(self):
+                self.session_state = {HIGHLIGHT_STATE_KEY: selected_year}
+
+            def selectbox(self, label, options, **kwargs):
+                self.label = label
+                self.options = list(options)
+                return self.session_state.get(kwargs.get("key"))
+
+        return SimpleNamespace(
+            st=FakeStreamlit(),
+            render_time_series_overlay=lambda _df: None,
+            render_generic_variable_page=lambda _df, *args, **kwargs: None,
+        )
+
     def test_selected_year_is_red_thick_opaque_and_drawn_last(self) -> None:
         fig = apply_interannual_year_highlight(self._figure(), 2021)
 
@@ -120,22 +137,10 @@ class InterannualYearHighlightTests(unittest.TestCase):
         self.assertEqual(after, before)
 
     def test_temperature_profile_builder_receives_highlight_metadata(self) -> None:
-        class FakeStreamlit:
-            def __init__(self):
-                self.session_state = {HIGHLIGHT_STATE_KEY: 2021}
-
-            def selectbox(self, label, options, **kwargs):
-                self.label = label
-                self.options = list(options)
-                return self.session_state.get(kwargs.get("key"))
-
-        st = FakeStreamlit()
-        proxy = SimpleNamespace(st=st)
+        proxy = self._proxy(2021)
+        st = proxy.st
         rendered: dict[str, go.Figure] = {}
         metadata: dict[str, object] = {}
-
-        def render_time_series_overlay(_df):
-            return None
 
         def render_generic_variable_page(df, *args, **kwargs):
             from epw_climate_analyzer import charts
@@ -150,7 +155,6 @@ class InterannualYearHighlightTests(unittest.TestCase):
             )
             return rendered["fig"]
 
-        proxy.render_time_series_overlay = render_time_series_overlay
         proxy.render_generic_variable_page = render_generic_variable_page
         install_interannual_year_highlight(proxy)
         proxy.render_generic_variable_page(
@@ -178,11 +182,7 @@ class InterannualYearHighlightTests(unittest.TestCase):
         frame.attrs = dict(frame.attrs)
         frame.attrs[HIGHLIGHT_ATTR] = 2022
 
-        proxy = SimpleNamespace(
-            st=SimpleNamespace(session_state={}),
-            render_time_series_overlay=lambda _df: None,
-            render_generic_variable_page=lambda _df, *args, **kwargs: None,
-        )
+        proxy = self._proxy()
         install_interannual_year_highlight(proxy)
 
         fig, _tables = timeseries.build_overlay_figure(
@@ -199,6 +199,59 @@ class InterannualYearHighlightTests(unittest.TestCase):
             pd.Timestamp("2023-01-01"),
         )
         self.assertEqual(fig.data[-1].legendgroup, "2022")
+        self.assertEqual(fig.data[-1].line.color, HIGHLIGHT_COLOR)
+        self.assertGreaterEqual(float(fig.data[-1].line.width), HIGHLIGHT_WIDTH)
+
+    def test_stale_module_flags_cannot_suppress_repatch_after_reload(self) -> None:
+        """Reproduce Streamlit reload semantics that caused the production bug.
+
+        importlib.reload restores source-defined builder functions but preserves
+        dynamically added module names. Simulate that state by restoring each
+        wrapper's ``__wrapped__`` source callable while deliberately leaving the
+        old module-level ``...INSTALLED`` flags set to True. A fresh app-script
+        proxy must still cause all three builders to be wrapped again.
+        """
+        from epw_climate_analyzer import charts, timeseries
+
+        first_proxy = self._proxy(2021)
+        install_interannual_year_highlight(first_proxy)
+
+        wrapped_profile = charts.profile_ribbon_chart
+        wrapped_percentile = charts.percentile_band_chart
+        wrapped_overlay = timeseries.build_overlay_figure
+        self.assertTrue(getattr(wrapped_profile, "_interannual_year_highlight_builder_wrapper", False))
+        self.assertTrue(getattr(wrapped_percentile, "_interannual_year_highlight_builder_wrapper", False))
+        self.assertTrue(getattr(wrapped_overlay, "_interannual_year_highlight_builder_wrapper", False))
+
+        # This is the important reload state: source functions are back, while
+        # old dynamically-added module guards survive as True.
+        charts.profile_ribbon_chart = wrapped_profile.__wrapped__
+        charts.percentile_band_chart = wrapped_percentile.__wrapped__
+        timeseries.build_overlay_figure = wrapped_overlay.__wrapped__
+        charts._INTERANNUAL_HIGHLIGHT_BUILDERS_INSTALLED = True
+        timeseries._INTERANNUAL_HIGHLIGHT_BUILDER_INSTALLED = True
+
+        self.assertFalse(getattr(charts.profile_ribbon_chart, "_interannual_year_highlight_builder_wrapper", False))
+        self.assertFalse(getattr(timeseries.build_overlay_figure, "_interannual_year_highlight_builder_wrapper", False))
+
+        fresh_proxy = self._proxy(2021)
+        install_interannual_year_highlight(fresh_proxy)
+
+        self.assertTrue(getattr(charts.profile_ribbon_chart, "_interannual_year_highlight_builder_wrapper", False))
+        self.assertTrue(getattr(charts.percentile_band_chart, "_interannual_year_highlight_builder_wrapper", False))
+        self.assertTrue(getattr(timeseries.build_overlay_figure, "_interannual_year_highlight_builder_wrapper", False))
+
+        frame = self._monthly_frame().copy(deep=False)
+        frame.attrs = dict(frame.attrs)
+        frame.attrs[HIGHLIGHT_ATTR] = 2021
+        fig = charts.profile_ribbon_chart(
+            frame,
+            "dry_bulb_temperature_c",
+            "Monthly",
+            "Temperature and extremes: Dry-bulb temperature",
+            "°C",
+        )
+        self.assertEqual(fig.data[-1].legendgroup, "2021")
         self.assertEqual(fig.data[-1].line.color, HIGHLIGHT_COLOR)
         self.assertGreaterEqual(float(fig.data[-1].line.width), HIGHLIGHT_WIDTH)
 
