@@ -1,0 +1,32 @@
+name: Stage4 Interannual Hourly Editor Patch
+
+on:
+  push:
+    branches:
+      - fix/interannual-overlay-hourly-editor-stage-4
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/interannual-overlay-hourly-editor-stage-4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Apply hourly editor commit patch
+        run: python deployment/stage4_patch_interannual_hourly_editor.py
+      - name: Check smoke syntax
+        run: node --check deployment/interannual_overlay_browser_smoke.mjs
+      - name: Commit staged result
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add deployment/interannual_overlay_browser_smoke.mjs
+          git diff --cached --quiet && exit 0
+          git commit -m "Climate: commit hourly GeoSphere editor selection before load"
+          git push origin HEAD:fix/interannual-overlay-hourly-editor-stage-4
