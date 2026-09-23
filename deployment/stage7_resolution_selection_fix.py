@@ -95,16 +95,40 @@ new_resolution = '''async function setResolution(page, resolution) {
   if (resolution !== 'Native') {
     throw new Error(`Stage7 native-monthly acceptance only supports Native resolution, got ${resolution}.`);
   }
-  const frame = await appFrame(page, 'Time series and overlay');
-  const control = await combo(frame, 'Series 1 resolution', 10000);
-  if (!(await control.count().catch(() => 0)) || !(await control.isVisible().catch(() => false))) {
-    throw new Error('Series 1 resolution control is unavailable.');
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    let frame = await appFrame(page, 'Time series and overlay', 10000);
+    let control = await combo(frame, 'Series 1 resolution', 10000);
+    let current = await rendered(control);
+    if (current.includes('Native')) {
+      await sleep(700);
+      return;
+    }
+
+    await control.click({ timeout: 5000 }).catch(() => {});
+    await control.press('Home', { timeout: 5000 }).catch(() => {});
+    await control.press('Enter', { timeout: 5000 }).catch(() => {});
+    await sleep(800);
+
+    frame = await appFrame(page, 'Time series and overlay', 10000);
+    control = await combo(frame, 'Series 1 resolution', 10000);
+    current = await rendered(control);
+    if (current.includes('Native')) {
+      await sleep(700);
+      return;
+    }
+
+    await control.click({ timeout: 5000 }).catch(() => {});
+    const option = await visibleOption(page, frame, (text) => text.trim() === 'Native');
+    if (option) {
+      await option.click({ timeout: 5000 });
+      await sleep(800);
+    }
   }
-  // A fresh Streamlit session defaults Series 1 to Native in product code.
-  // Do not re-select the already-active value: BaseWeb may omit the current
-  // option from the popup. The rendered Plotly contract below proves that the
-  // active resolution is truly Native (markers, M1 month axis, 12 source
-  // observations per real year and unmodified source timestamps).
+
+  const frame = await appFrame(page, 'Time series and overlay', 10000);
+  const control = await combo(frame, 'Series 1 resolution', 10000);
+  const current = await rendered(control);
+  throw new Error(`Could not commit Series 1 resolution = Native; observed ${current}.`);
 }
 '''
 if old_resolution not in text:
