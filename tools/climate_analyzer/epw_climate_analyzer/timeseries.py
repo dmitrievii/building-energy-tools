@@ -72,9 +72,26 @@ def native_resolution_minutes(index: pd.DatetimeIndex) -> int:
     return infer_native_resolution_minutes(index)
 
 
-def available_resolution_labels(index: pd.DatetimeIndex) -> list[str]:
-    """Return only resolutions at or coarser than the native source timestep."""
-    native = native_resolution_minutes(index)
+def available_resolution_labels(source: pd.DatetimeIndex | pd.DataFrame) -> list[str]:
+    """Return resolutions at or coarser than the declared source cadence.
+
+    Calendar-native monthly data are not a fixed 30-day cadence.  Their published
+    monthly observations therefore expose Monthly/Seasonal/Annual directly while
+    still blocking all artificial sub-monthly upsampling.
+    """
+    if isinstance(source, pd.DataFrame):
+        index = pd.DatetimeIndex(source.index)
+        native_calendar = str(source.attrs.get("canonical_native_resolution", "")).strip().lower()
+        if native_calendar == "monthly":
+            return ["Native", "Monthly", "Seasonal", "Annual"]
+        declared = source.attrs.get("canonical_native_interval_minutes")
+        try:
+            native = int(declared) if declared is not None else native_resolution_minutes(index)
+        except (TypeError, ValueError):
+            native = native_resolution_minutes(index)
+    else:
+        index = pd.DatetimeIndex(source)
+        native = native_resolution_minutes(index)
     labels = ["Native"]
     labels.extend(spec.label for spec in RESOLUTIONS[1:] if spec.nominal_minutes >= native)
     return labels

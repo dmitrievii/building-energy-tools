@@ -4380,7 +4380,7 @@ def render_time_series_overlay(df: pd.DataFrame) -> None:
         st.info("No numeric climate variables are available for overlay.")
         return
 
-    resolutions = available_resolution_labels(pd.DatetimeIndex(df.index))
+    resolutions = available_resolution_labels(df)
     n_series = st.slider("Number of series", min_value=1, max_value=6, value=2, step=1)
     preferred = [
         "Dry-bulb temperature",

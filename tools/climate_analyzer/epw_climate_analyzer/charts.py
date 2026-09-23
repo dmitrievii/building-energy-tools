@@ -18,7 +18,8 @@ from .aggregations import (
     native_interval_hours,
     temporal_heatmap_matrix,
 )
-from .temporal_filtering import CALENDAR_PROFILE, CHRONOLOGICAL, display_period_labels, is_multiyear, time_basis
+from .temporal_filtering import CALENDAR_PROFILE, CHRONOLOGICAL, INTERANNUAL_OVERLAY, display_period_labels, is_multiyear, time_basis
+from .interannual_profiles import interannual_minmax_figure, interannual_percentile_figure
 from .psychrometrics import DEFAULT_PRESSURE_PA, psychrometric_rh_curves
 from .psychrometric_distribution import add_climate_zone_traces, psychrometric_axis_ranges
 from .chart_theme import (
@@ -222,6 +223,9 @@ def profile_ribbon_chart(
     same x-position through Plotly's unified hover. This makes the ribbon useful
     for copying exact min/mean/max values without searching separate points.
     """
+    if time_basis(df) == INTERANNUAL_OVERLAY:
+        return interannual_minmax_figure(df, column, aggregation, title, unit)
+
     if extensive:
         summary = aggregate_sum(df, column, aggregation)
         central = "sum" if aggregation != "Hourly" else "mean"
@@ -286,6 +290,8 @@ def profile_ribbon_chart(
 
 def percentile_band_chart(df: pd.DataFrame, column: str, aggregation: str, title: str, unit: str) -> go.Figure:
     """Create a percentile-band chart using P05, median and P95."""
+    if time_basis(df) == INTERANNUAL_OVERLAY:
+        return interannual_percentile_figure(df, column, aggregation, title, unit)
     summary = aggregate_summary(df, column, aggregation)
     x = _period_x(summary, aggregation)
     low_color, central_color, high_color, band_fill = metric_band_colors(column)

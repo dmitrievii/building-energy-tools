@@ -278,12 +278,13 @@ def _monthly_sidebar_filters(legacy: Any, df: pd.DataFrame) -> pd.DataFrame:
     if len(ranged_years) > 1:
         basis = st.sidebar.selectbox(
             "Time basis",
-            [legacy.CHRONOLOGICAL, legacy.CALENDAR_PROFILE],
+            [legacy.CHRONOLOGICAL, legacy.CALENDAR_PROFILE, legacy.INTERANNUAL_OVERLAY],
             index=0,
             key="global_time_basis",
             help=(
-                "Chronological keeps every published month in sequence. Calendar profile aligns the same calendar month "
-                "across source years for multi-year monthly statistics."
+                "Chronological keeps every published month in sequence. Calendar profile combines equivalent calendar months "
+                "according to the existing profile rules. Interannual overlay keeps every real year independent and "
+                "aligns its published monthly observations on the common Jan–Dec axis without cross-year averaging."
             ),
         )
     else:
