@@ -40,7 +40,7 @@ jobs:
         run: |
           python deployment/stage8_materialize_native_monthly.py
           python deployment/stage8_harden_browser_smoke.py
-          python deployment/stage8_overlay_resolution_context.py
+          python deployment/stage8_monthly_capability_contract.py
           python - <<'PY'
           from pathlib import Path
           import re
@@ -65,12 +65,13 @@ jobs:
         run: |
           node --check deployment/pr83_monthly_selected_load_smoke.mjs
           ! grep -q 'setResolution(' deployment/pr83_monthly_selected_load_smoke.mjs
-          grep -q 'overlay_resolution_context = f' tools/climate_analyzer/app.py
-          grep -q 'overlay_resolution_{overlay_resolution_context}_{i}' tools/climate_analyzer/app.py
+          grep -q 'MONTHLY_OVERLAY_RESOLUTIONS = ("Native", "Monthly", "Seasonal", "Annual")' tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_cleanup.py
+          grep -q 'resolution_options = list(monthly_overlay_resolution_options(column))' tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_cleanup.py
           git diff --check
           git diff -- \
-            tools/climate_analyzer/app.py \
+            tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_cleanup.py \
             tools/climate_analyzer/epw_climate_analyzer/timeseries.py \
+            tools/climate_analyzer/tests/test_geosphere_monthly_cleanup_0_7_5_4.py \
             tools/climate_analyzer/tests/test_interannual_overlay.py \
             deployment/pr83_monthly_selected_load_smoke.mjs
 
@@ -84,6 +85,7 @@ jobs:
           PYTHONWARNINGS: error::FutureWarning
         run: |
           python -m unittest -v \
+            tools.climate_analyzer.tests.test_geosphere_monthly_cleanup_0_7_5_4 \
             tools.climate_analyzer.tests.test_interannual_overlay \
             tools.climate_analyzer.tests.test_interannual_overlay_profiles \
             tools.climate_analyzer.tests.test_time_series_overlay \
@@ -127,14 +129,16 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add \
-            tools/climate_analyzer/app.py \
+            tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_cleanup.py \
             tools/climate_analyzer/epw_climate_analyzer/timeseries.py \
+            tools/climate_analyzer/tests/test_geosphere_monthly_cleanup_0_7_5_4.py \
             tools/climate_analyzer/tests/test_interannual_overlay.py \
             deployment/pr83_monthly_selected_load_smoke.mjs
           git rm \
             deployment/stage8_materialize_native_monthly.py \
             deployment/stage8_harden_browser_smoke.py \
             deployment/stage8_overlay_resolution_context.py \
+            deployment/stage8_monthly_capability_contract.py \
             .github/workflows/stage8-clean-native-monthly-interannual.yml
           git diff --cached --check
           git commit -m 'Climate: close native monthly interannual acceptance'
