@@ -1,8 +1,9 @@
-"""Streamlit control that attaches focused-year presentation metadata.
+"""Streamlit control and builder binding for focused-year interannual charts.
 
-The UI layer owns only selection. Actual Plotly styling is performed by the
-interannual chart builders from :mod:`interannual_presentation`, so the visual
-contract cannot be bypassed by later Streamlit/runtime wrappers.
+The UI layer owns selection and attaches it as dataframe presentation metadata.
+Actual Plotly styling is applied at the chart-builder boundary, before the figure
+is handed to Streamlit. This avoids late runtime monkey-patching of render_plot
+and makes the visual contract independent of nested source-parity UI wrappers.
 """
 
 from __future__ import annotations
@@ -18,6 +19,7 @@ from .interannual_presentation import (
     HIGHLIGHT_MARKER_SIZE,
     HIGHLIGHT_WIDTH,
     apply_interannual_year_highlight,
+    highlight_year_from_frame,
 )
 from .temporal_filtering import INTERANNUAL_OVERLAY, time_basis
 
@@ -75,10 +77,56 @@ def _render_with_highlight_metadata(
     return renderer(_frame_with_highlight_year(df, selected), *args, **kwargs)
 
 
+def _install_builder_styling() -> None:
+    """Bind focused-year styling to the actual Plotly chart builders.
+
+    The wrappers consume only dataframe presentation metadata. They therefore
+    work regardless of which Streamlit/source-parity wrapper invoked the builder.
+    """
+    from . import charts, timeseries
+
+    if not bool(getattr(timeseries, "_INTERANNUAL_HIGHLIGHT_BUILDER_INSTALLED", False)):
+        original_overlay_builder = timeseries.build_overlay_figure
+
+        def build_overlay_figure(df: pd.DataFrame, *args: Any, **kwargs: Any):
+            fig, tables = original_overlay_builder(df, *args, **kwargs)
+            year = highlight_year_from_frame(df)
+            if time_basis(df) == INTERANNUAL_OVERLAY and year is not None:
+                fig = apply_interannual_year_highlight(fig, year)
+            return fig, tables
+
+        timeseries.build_overlay_figure = build_overlay_figure
+        timeseries._INTERANNUAL_HIGHLIGHT_BUILDER_INSTALLED = True
+
+    if not bool(getattr(charts, "_INTERANNUAL_HIGHLIGHT_BUILDERS_INSTALLED", False)):
+        original_profile = charts.profile_ribbon_chart
+        original_percentile = charts.percentile_band_chart
+
+        def profile_ribbon_chart(df: pd.DataFrame, *args: Any, **kwargs: Any):
+            fig = original_profile(df, *args, **kwargs)
+            year = highlight_year_from_frame(df)
+            if time_basis(df) == INTERANNUAL_OVERLAY and year is not None:
+                fig = apply_interannual_year_highlight(fig, year)
+            return fig
+
+        def percentile_band_chart(df: pd.DataFrame, *args: Any, **kwargs: Any):
+            fig = original_percentile(df, *args, **kwargs)
+            year = highlight_year_from_frame(df)
+            if time_basis(df) == INTERANNUAL_OVERLAY and year is not None:
+                fig = apply_interannual_year_highlight(fig, year)
+            return fig
+
+        charts.profile_ribbon_chart = profile_ribbon_chart
+        charts.percentile_band_chart = percentile_band_chart
+        charts._INTERANNUAL_HIGHLIGHT_BUILDERS_INSTALLED = True
+
+
 def install_interannual_year_highlight(proxy: Any) -> None:
-    """Install source-neutral focused-year controls for interannual chart routes."""
+    """Install source-neutral focused-year controls and builder-level styling."""
     if bool(getattr(proxy, "_INTERANNUAL_YEAR_HIGHLIGHT_INSTALLED", False)):
         return
+
+    _install_builder_styling()
 
     original_overlay = proxy.render_time_series_overlay
 
