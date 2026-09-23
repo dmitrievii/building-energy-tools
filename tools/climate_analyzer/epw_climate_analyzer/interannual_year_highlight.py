@@ -1,16 +1,17 @@
-"""Streamlit control and builder binding for focused-year interannual charts.
+"""Streamlit control and rendering bindings for focused-year interannual charts.
 
 The UI layer owns selection and attaches it as dataframe presentation metadata.
-Actual Plotly styling is applied at the chart-builder boundary, before the figure
-is handed to Streamlit. This avoids late runtime monkey-patching of render_plot
-and makes the visual contract independent of nested source-parity UI wrappers.
+Actual Plotly styling is applied at the chart-builder boundary when possible and
+again at the final app ``render_plot`` boundary as a defensive presentation
+fallback. The final boundary is important because the mature Streamlit runtime
+reloads and rebinds chart modules dynamically; a valid UI selection must not
+silently lose its visual effect when one intermediate builder wrapper is reset.
 
-Streamlit reruns keep imported package modules alive. ``importlib.reload``
+Streamlit reruns keep imported Python package modules alive. ``importlib.reload``
 re-executes module source but retains dictionary entries that are not redefined,
 so module-level boolean patch guards can survive a reload even after the wrapped
-function itself has been replaced by its source definition. Builder installation
-therefore identifies the *current function object* instead of trusting stale
-module flags.
+function itself has been replaced by its source definition. Installation therefore
+identifies current function objects instead of trusting stale module/proxy flags.
 """
 
 from __future__ import annotations
@@ -33,7 +34,9 @@ from .temporal_filtering import INTERANNUAL_OVERLAY, time_basis
 
 
 HIGHLIGHT_STATE_KEY = "overlay_highlight_year"
+_TIME_BASIS_STATE_KEY = "global_time_basis"
 _BUILDER_WRAPPER_MARK = "_interannual_year_highlight_builder_wrapper"
+_RENDER_WRAPPER_MARK = "_interannual_year_highlight_render_wrapper"
 
 
 def _selected_highlight_year(proxy: Any, df: pd.DataFrame) -> int | None:
@@ -87,14 +90,37 @@ def _render_with_highlight_metadata(
 
 
 def _is_current_builder_wrapped(builder: Any) -> bool:
-    """Return whether this exact callable is a live highlight wrapper."""
+    """Return whether this exact callable is a live highlight builder wrapper."""
     return bool(getattr(builder, _BUILDER_WRAPPER_MARK, False))
 
 
 def _mark_builder_wrapper(builder: Callable[..., Any]) -> Callable[..., Any]:
-    """Mark a wrapper on the function object, which reload replaces reliably."""
+    """Mark a builder wrapper on the function object, which reload replaces reliably."""
     setattr(builder, _BUILDER_WRAPPER_MARK, True)
     return builder
+
+
+def _is_current_render_wrapped(renderer: Any) -> bool:
+    """Return whether this exact callable is the live final-render fallback."""
+    return bool(getattr(renderer, _RENDER_WRAPPER_MARK, False))
+
+
+def _mark_render_wrapper(renderer: Callable[..., Any]) -> Callable[..., Any]:
+    """Mark the final-render fallback directly on the function object."""
+    setattr(renderer, _RENDER_WRAPPER_MARK, True)
+    return renderer
+
+
+def _session_highlight_year(proxy: Any) -> int | None:
+    """Return the active focused year only while the global basis is Interannual overlay."""
+    state = proxy.st.session_state
+    if state.get(_TIME_BASIS_STATE_KEY) != INTERANNUAL_OVERLAY:
+        return None
+    value = state.get(HIGHLIGHT_STATE_KEY)
+    try:
+        return int(value) if value is not None else None
+    except (TypeError, ValueError):
+        return None
 
 
 def _install_builder_styling() -> None:
@@ -104,7 +130,7 @@ def _install_builder_styling() -> None:
     ``importlib.reload`` preserves names that are absent from reloaded source, so
     a stale ``..._INSTALLED = True`` can outlive the wrapper it described. The
     function-object marker disappears whenever reload restores the source
-    function, causing the wrapper to be installed again on the next rerun.
+    function, causing the wrapper to be installed again on the next installer call.
     """
     from . import charts, timeseries
 
@@ -150,12 +176,44 @@ def _install_builder_styling() -> None:
     charts._INTERANNUAL_HIGHLIGHT_BUILDERS_INSTALLED = True
 
 
-def install_interannual_year_highlight(proxy: Any) -> None:
-    """Install source-neutral focused-year controls and builder-level styling."""
-    if bool(getattr(proxy, "_INTERANNUAL_YEAR_HIGHLIGHT_INSTALLED", False)):
+def _install_final_render_fallback(proxy: Any) -> None:
+    """Style the selected year immediately before the app hands a figure to Streamlit.
+
+    The app-level renderer is intentionally a second line of defence. Builder
+    styling remains useful for shared overlay figures, but ``render_plot`` is the
+    authoritative boundary for canonical profile/percentile pages. Reapplying the
+    pure styling helper is idempotent and prevents runtime module rebinding from
+    turning a visible Highlight year selector into a no-op.
+    """
+    if not hasattr(proxy, "render_plot"):
+        return
+    current_render = proxy.render_plot
+    if _is_current_render_wrapped(current_render):
         return
 
+    @wraps(current_render)
+    def render_plot(fig: Any, *args: Any, **kwargs: Any) -> Any:
+        year = _session_highlight_year(proxy)
+        if year is not None:
+            fig = apply_interannual_year_highlight(fig, year)
+        return current_render(fig, *args, **kwargs)
+
+    proxy.render_plot = _mark_render_wrapper(render_plot)
+
+
+def install_interannual_year_highlight(proxy: Any) -> None:
+    """Install source-neutral focused-year controls and resilient final styling."""
+    # These bindings are deliberately refreshed on every installer call. A
+    # module reload can restore source-defined builders while proxy-level
+    # ``...INSTALLED`` flags remain true. Returning before this point recreates
+    # the production failure where the selector survives but its styling does not.
     _install_builder_styling()
+    _install_final_render_fallback(proxy)
+
+    # UI wrappers themselves must remain single-install to avoid duplicate
+    # Highlight year widgets in one app-script namespace.
+    if bool(getattr(proxy, "_INTERANNUAL_YEAR_HIGHLIGHT_INSTALLED", False)):
+        return
 
     original_overlay = proxy.render_time_series_overlay
 
