@@ -682,7 +682,7 @@ def _render_historical_overview_enhanced(legacy: Any, original: Callable, datase
             monthly = pd.to_numeric(df[column], errors="coerce").groupby(df["month_index"]).max()
         else:
             monthly = pd.to_numeric(df[column], errors="coerce").groupby(df["month_index"]).mean()
-        table = monthly.reindex(range(1, 13)).rename("value").reset_index(names="month")
+        table = monthly.reindex(range(1, 13)).rename_axis("month").reset_index(name="value")
         fig = px.bar(table, x="month", y="value", title=f"Monthly {labels.get(column, column)}")
         fig.update_layout(template="plotly_white", xaxis_title="Month", yaxis_title=CANONICAL_VARIABLES[column].unit)
         legacy.render_plot(fig, f"Monthly source-neutral {semantics} aggregation for {labels.get(column, column)}.")
