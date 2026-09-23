@@ -11,8 +11,8 @@ from epw_climate_analyzer import geosphere
 OUTPUT = Path("artifacts/interannual-overlay/hourly-provider.json")
 RESOURCE_ID = "klima-v2-1h"
 STATION_ID = "105"
-START = pd.Timestamp("2024-12-31T00:00:00Z")
-END = pd.Timestamp("2025-01-01T23:00:00Z")
+START = pd.Timestamp("2024-12-30T00:00:00Z")
+END = pd.Timestamp("2025-01-02T23:00:00Z")
 
 
 def main() -> int:
@@ -35,7 +35,7 @@ def main() -> int:
     years = sorted({int(year) for year in dataset.data.index.year[values.notna()]})
     if years != [2024, 2025]:
         raise RuntimeError(f"Expected observations in real years 2024 and 2025, got {years}.")
-    if int(values.notna().sum()) < 48:
+    if int(values.notna().sum()) < 96:
         raise RuntimeError("Hourly interannual fixture has insufficient valid temperature observations.")
 
     report = {
