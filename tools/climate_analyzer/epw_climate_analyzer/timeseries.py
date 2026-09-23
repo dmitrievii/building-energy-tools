@@ -418,6 +418,7 @@ def _build_interannual_overlay_figure(
     families: list[str],
 ) -> tuple[go.Figure, list[pd.DataFrame]]:
     fig = go.Figure()
+    native_monthly = str(df.attrs.get("canonical_native_resolution", "")).strip().lower() == "monthly"
     tables: list[pd.DataFrame] = []
     year_dash_cycle = ["solid", "dash", "dot", "dashdot", "longdash", "longdashdot"]
     all_years = sorted({int(year) for year in pd.DatetimeIndex(df.index).year})
@@ -439,7 +440,11 @@ def _build_interannual_overlay_figure(
                 continue
             dash = base_dash if len(represented_years) == 1 else year_dash.get(year, base_dash)
             name = f"{spec.label} — {year}"
-            mode = "lines+markers" if spec.resolution == "Monthly" else "lines"
+            mode = (
+                "lines+markers"
+                if spec.resolution == "Monthly" or (spec.resolution == "Native" and native_monthly)
+                else "lines"
+            )
             fig.add_trace(
                 go.Scatter(
                     x=x,
@@ -465,8 +470,11 @@ def _build_interannual_overlay_figure(
             )
 
     left_units = sorted({item.unit for item in series if item.unit_family == families[0]})
-    resolutions = {item.resolution for item in series}
-    if resolutions == {"Monthly"}:
+    monthly_calendar_axis = all(
+        item.resolution == "Monthly" or (item.resolution == "Native" and native_monthly)
+        for item in series
+    )
+    if monthly_calendar_axis:
         tickformat = "%b"
         dtick: object = "M1"
     else:

@@ -9,8 +9,11 @@ from epw_climate_analyzer import chart_theme, timeseries
 from epw_climate_analyzer.source_parity_monthly_catalogue import decorate_monthly_parameter_table
 from epw_climate_analyzer.source_parity_monthly_cleanup import (
     MONTHLY_GENERIC_AGGREGATIONS,
+    MONTHLY_OVERLAY_RESOLUTIONS,
     _forward_monthly_overlay,
     describe_monthly_parameter,
+    install_monthly_cleanup,
+    monthly_overlay_resolution_options,
     monthly_semantics_from_column,
     semantic_analysis_column,
 )
@@ -33,6 +36,29 @@ class _OverlayProbe:
 class GeoSphereMonthlyCleanupTests(unittest.TestCase):
     def test_monthly_and_annual_are_the_only_generic_periods(self) -> None:
         self.assertEqual(MONTHLY_GENERIC_AGGREGATIONS, ("Monthly", "Annual"))
+
+    def test_native_monthly_overlay_exposes_identity_and_only_valid_coarser_periods(self) -> None:
+        self.assertEqual(
+            MONTHLY_OVERLAY_RESOLUTIONS,
+            ("Native", "Monthly", "Seasonal", "Annual"),
+        )
+        self.assertEqual(
+            monthly_overlay_resolution_options("dry_bulb_temperature_c"),
+            ("Native", "Monthly", "Seasonal", "Annual"),
+        )
+        self.assertEqual(
+            monthly_overlay_resolution_options("monthly__mean__temperature__tl_mittel"),
+            ("Native", "Monthly", "Seasonal", "Annual"),
+        )
+        self.assertEqual(
+            monthly_overlay_resolution_options("provider_defined_unknown_statistic"),
+            ("Native",),
+        )
+
+    def test_monthly_cleanup_does_not_rewrap_shared_overlay_renderer(self) -> None:
+        source = inspect.getsource(install_monthly_cleanup)
+        self.assertNotIn("_install_unified_overlay(proxy)", source)
+        self.assertIn("monthly_ui._render_monthly_overlay = _forward_monthly_overlay", source)
 
     def test_recommended_core_parameter_has_explicit_statistic_semantics(self) -> None:
         descriptor = describe_monthly_parameter(

@@ -169,6 +169,26 @@ class InterannualOverlaySemanticsTests(unittest.TestCase):
         self.assertEqual(set(tables[0]["real_year"].astype(int)), {2020, 2021})
         self.assertTrue(all("Year: %{customdata[0]}" in trace.hovertemplate for trace in fig.data))
 
+    def test_native_monthly_interannual_uses_month_markers_and_month_axis(self) -> None:
+        index = pd.DatetimeIndex(
+            [pd.Timestamp(year, month, 1) for year in (2020, 2021) for month in range(1, 13)]
+        )
+        values = [float(year - 2020) * 100.0 + month for year in (2020, 2021) for month in range(1, 13)]
+        frame = pd.DataFrame({"dry_bulb_temperature_c": values}, index=index)
+        frame.attrs["canonical_native_resolution"] = "monthly"
+        frame = with_time_basis(frame, INTERANNUAL_OVERLAY)
+        fig, _tables = build_overlay_figure(
+            frame,
+            [OverlaySeries("Temperature", "dry_bulb_temperature_c", "°C", "Native")],
+            pd.Timestamp("2020-01-01"),
+            pd.Timestamp("2022-01-01"),
+        )
+        self.assertEqual([trace.name for trace in fig.data], ["Temperature — 2020", "Temperature — 2021"])
+        self.assertTrue(all(trace.mode == "lines+markers" for trace in fig.data))
+        self.assertTrue(all(len([value for value in trace.x if value is not None]) == 12 for trace in fig.data))
+        self.assertEqual(fig.layout.xaxis.tickformat, "%b")
+        self.assertEqual(fig.layout.xaxis.dtick, "M1")
+
 
 if __name__ == "__main__":
     unittest.main()
