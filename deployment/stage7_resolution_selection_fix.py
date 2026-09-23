@@ -9,18 +9,19 @@ old = '''async function setResolution(page, resolution) {
 }
 '''
 new = '''async function setResolution(page, resolution) {
-  let frame = await appFrame(page, 'Time series and overlay');
-  let control = await combo(frame, 'Series 1 resolution', 10000);
-  let current = `${await control.textContent().catch(() => '')} ${await control.inputValue().catch(() => '')}`.replace(/\\s+/g, ' ').trim();
-  if (current.includes(resolution)) return;
-
-  await selectComboOption(page, 'Series 1 resolution', (text) => text.trim() === resolution);
-  frame = await appFrame(page, 'Time series and overlay');
-  control = await combo(frame, 'Series 1 resolution', 10000);
-  current = `${await control.textContent().catch(() => '')} ${await control.inputValue().catch(() => '')}`.replace(/\\s+/g, ' ').trim();
-  if (!current.includes(resolution)) {
-    throw new Error(`Series 1 resolution did not commit ${resolution}; observed ${current}`);
+  if (resolution !== 'Native') {
+    throw new Error(`Stage7 native-monthly acceptance only supports Native resolution, got ${resolution}.`);
   }
+  const frame = await appFrame(page, 'Time series and overlay');
+  const control = await combo(frame, 'Series 1 resolution', 10000);
+  if (!(await control.count().catch(() => 0)) || !(await control.isVisible().catch(() => false))) {
+    throw new Error('Series 1 resolution control is unavailable.');
+  }
+  // A fresh Streamlit session defaults Series 1 to Native in product code.
+  // Do not re-select the already-active value: BaseWeb may omit the current
+  // option from the popup. The rendered Plotly contract below proves that the
+  // active resolution is truly Native (markers, M1 month axis, 12 source
+  // observations per real year and unmodified source timestamps).
   await sleep(700);
 }
 '''
