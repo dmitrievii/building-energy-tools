@@ -329,11 +329,20 @@ async function selectProvider(page, provider) {
 }
 
 async function loadDataset(page) {
-  const frame = await appFrame(page, 'Measured variables to load');
-  const button = frame.getByRole('button', { name: 'Load measured GeoSphere interval', exact: true }).first();
-  if (!(await button.count().catch(() => 0))) throw new Error('Load measured GeoSphere interval button missing.');
-  await button.click({ timeout: 15000 });
-  return appFrame(page, 'Climate overview', 120000);
+  const selected = await providerState(page, 'tl');
+  if (selected.load !== 'true') throw new Error(`Provider tl lost before load; state=${selected.load}.`);
+  const started = performance.now();
+  while (performance.now() - started < 30000) {
+    const frame = await appFrame(page, 'Measured variables to load', 10000);
+    const button = frame.getByRole('button', { name: 'Load measured GeoSphere interval', exact: true }).first();
+    if (await button.count().catch(() => 0)) {
+      await button.click({ timeout: 15000 });
+      return appFrame(page, 'Climate overview', 120000);
+    }
+    await sleep(400);
+  }
+  const finalState = await providerState(page, 'tl').catch(() => null);
+  throw new Error(`Load measured GeoSphere interval button missing after wait; tl=${finalState?.load ?? 'unavailable'}.`);
 }
 
 async function chooseTimeBasis(page) {
