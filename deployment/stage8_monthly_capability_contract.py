@@ -36,6 +36,16 @@ cleanup = replace_once(
     "monthly overlay help text",
 )
 
+# The monthly provider owns capabilities/metadata, not a second time-series UI.
+# Keep the canonical monthly page forwarding into proxy.render_time_series_overlay,
+# but do not wrap that shared renderer back into _render_calendar_monthly_overlay.
+cleanup = replace_once(
+    cleanup,
+    '''    _install_semantic_engines()\n    _install_unified_overlay(proxy)\n    _install_parameter_catalogue(parity)\n''',
+    '''    _install_semantic_engines()\n    _install_parameter_catalogue(parity)\n''',
+    "duplicate monthly overlay interception",
+)
+
 cleanup_path.write_text(cleanup, encoding="utf-8")
 
 
@@ -45,15 +55,15 @@ test = test_path.read_text(encoding="utf-8")
 test = replace_once(
     test,
     '''from epw_climate_analyzer.source_parity_monthly_cleanup import (\n    MONTHLY_GENERIC_AGGREGATIONS,\n    _forward_monthly_overlay,\n    describe_monthly_parameter,\n    monthly_semantics_from_column,\n    semantic_analysis_column,\n)\n''',
-    '''from epw_climate_analyzer.source_parity_monthly_cleanup import (\n    MONTHLY_GENERIC_AGGREGATIONS,\n    MONTHLY_OVERLAY_RESOLUTIONS,\n    _forward_monthly_overlay,\n    describe_monthly_parameter,\n    monthly_overlay_resolution_options,\n    monthly_semantics_from_column,\n    semantic_analysis_column,\n)\n''',
+    '''from epw_climate_analyzer.source_parity_monthly_cleanup import (\n    MONTHLY_GENERIC_AGGREGATIONS,\n    MONTHLY_OVERLAY_RESOLUTIONS,\n    _forward_monthly_overlay,\n    describe_monthly_parameter,\n    install_monthly_cleanup,\n    monthly_overlay_resolution_options,\n    monthly_semantics_from_column,\n    semantic_analysis_column,\n)\n''',
     "monthly cleanup imports",
 )
 
 test = replace_once(
     test,
     '''    def test_monthly_and_annual_are_the_only_generic_periods(self) -> None:\n        self.assertEqual(MONTHLY_GENERIC_AGGREGATIONS, ("Monthly", "Annual"))\n\n''',
-    '''    def test_monthly_and_annual_are_the_only_generic_periods(self) -> None:\n        self.assertEqual(MONTHLY_GENERIC_AGGREGATIONS, ("Monthly", "Annual"))\n\n    def test_native_monthly_overlay_exposes_identity_and_only_valid_coarser_periods(self) -> None:\n        self.assertEqual(\n            MONTHLY_OVERLAY_RESOLUTIONS,\n            ("Native", "Monthly", "Seasonal", "Annual"),\n        )\n        self.assertEqual(\n            monthly_overlay_resolution_options("dry_bulb_temperature_c"),\n            ("Native", "Monthly", "Seasonal", "Annual"),\n        )\n        self.assertEqual(\n            monthly_overlay_resolution_options("monthly__mean__temperature__tl_mittel"),\n            ("Native", "Monthly", "Seasonal", "Annual"),\n        )\n        self.assertEqual(\n            monthly_overlay_resolution_options("provider_defined_unknown_statistic"),\n            ("Native",),\n        )\n\n''',
-    "native monthly capability regression",
+    '''    def test_monthly_and_annual_are_the_only_generic_periods(self) -> None:\n        self.assertEqual(MONTHLY_GENERIC_AGGREGATIONS, ("Monthly", "Annual"))\n\n    def test_native_monthly_overlay_exposes_identity_and_only_valid_coarser_periods(self) -> None:\n        self.assertEqual(\n            MONTHLY_OVERLAY_RESOLUTIONS,\n            ("Native", "Monthly", "Seasonal", "Annual"),\n        )\n        self.assertEqual(\n            monthly_overlay_resolution_options("dry_bulb_temperature_c"),\n            ("Native", "Monthly", "Seasonal", "Annual"),\n        )\n        self.assertEqual(\n            monthly_overlay_resolution_options("monthly__mean__temperature__tl_mittel"),\n            ("Native", "Monthly", "Seasonal", "Annual"),\n        )\n        self.assertEqual(\n            monthly_overlay_resolution_options("provider_defined_unknown_statistic"),\n            ("Native",),\n        )\n\n    def test_monthly_cleanup_does_not_rewrap_shared_overlay_renderer(self) -> None:\n        source = inspect.getsource(install_monthly_cleanup)\n        self.assertNotIn("_install_unified_overlay(proxy)", source)\n        self.assertIn("monthly_ui._render_monthly_overlay = _forward_monthly_overlay", source)\n\n''',
+    "native monthly capability and routing regression",
 )
 
 test_path.write_text(test, encoding="utf-8")
