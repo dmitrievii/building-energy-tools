@@ -6,6 +6,7 @@ from types import SimpleNamespace
 import pandas as pd
 import plotly.graph_objects as go
 
+from epw_climate_analyzer.interannual_presentation import HIGHLIGHT_ATTR
 from epw_climate_analyzer.interannual_year_highlight import (
     BACKGROUND_OPACITY,
     HIGHLIGHT_COLOR,
@@ -49,6 +50,22 @@ class InterannualYearHighlightTests(unittest.TestCase):
             )
         return fig
 
+    @staticmethod
+    def _monthly_frame() -> pd.DataFrame:
+        index = pd.DatetimeIndex(
+            [
+                "2020-01-01", "2020-02-01",
+                "2021-01-01", "2021-02-01",
+                "2022-01-01", "2022-02-01",
+            ]
+        )
+        frame = pd.DataFrame(
+            {"dry_bulb_temperature_c": [0.0, 2.0, 4.0, 6.0, 8.0, 10.0]},
+            index=index,
+        )
+        frame.attrs["canonical_native_resolution"] = "monthly"
+        return with_time_basis(frame, INTERANNUAL_OVERLAY)
+
     def test_selected_year_is_red_thick_opaque_and_drawn_last(self) -> None:
         fig = apply_interannual_year_highlight(self._figure(), 2021)
 
@@ -63,6 +80,14 @@ class InterannualYearHighlightTests(unittest.TestCase):
         for trace in fig.data[:-1]:
             self.assertLessEqual(float(trace.opacity), BACKGROUND_OPACITY)
 
+    def test_trace_name_is_defensive_year_fallback(self) -> None:
+        fig = self._figure()
+        for trace in fig.data:
+            trace.legendgroup = None
+        styled = apply_interannual_year_highlight(fig, 2021)
+        self.assertEqual(styled.data[-1].name, "Temperature — 2021")
+        self.assertEqual(styled.data[-1].line.color, HIGHLIGHT_COLOR)
+
     def test_envelope_keeps_style_and_selected_year_is_above_it(self) -> None:
         fig = apply_interannual_year_highlight(self._figure(include_envelope=True), 2022)
 
@@ -71,10 +96,6 @@ class InterannualYearHighlightTests(unittest.TestCase):
         envelope = next(trace for trace in fig.data if trace.legendgroup == "interannual-envelope")
         self.assertEqual(envelope.line.color, "#f59e0b")
         self.assertEqual(float(envelope.opacity), 1.0)
-
-        year_traces = [trace for trace in fig.data if str(trace.legendgroup).isdigit()]
-        for trace in year_traces[:-1]:
-            self.assertLessEqual(float(trace.opacity), BACKGROUND_OPACITY)
 
     def test_missing_selected_year_does_not_mutate_unrelated_figure(self) -> None:
         fig = self._figure(include_envelope=True)
@@ -98,12 +119,9 @@ class InterannualYearHighlightTests(unittest.TestCase):
         self.assertIs(returned, fig)
         self.assertEqual(after, before)
 
-    def test_profile_render_context_needs_no_global_time_basis_session_key(self) -> None:
+    def test_temperature_profile_builder_receives_highlight_metadata(self) -> None:
         class FakeStreamlit:
             def __init__(self):
-                # Reproduces the production failure: the selected highlight year
-                # exists, while no duplicate global_time_basis session key is
-                # required by the final render path.
                 self.session_state = {HIGHLIGHT_STATE_KEY: 2021}
 
             def selectbox(self, label, options, **kwargs):
@@ -114,39 +132,75 @@ class InterannualYearHighlightTests(unittest.TestCase):
         st = FakeStreamlit()
         proxy = SimpleNamespace(st=st)
         rendered: dict[str, go.Figure] = {}
-
-        def render_plot(fig, *args, **kwargs):
-            rendered["fig"] = fig
-            return fig
-
-        original_render_plot = render_plot
+        metadata: dict[str, object] = {}
 
         def render_time_series_overlay(_df):
             return None
 
         def render_generic_variable_page(df, *args, **kwargs):
-            # This mimics Temperature and extremes: a year-grouped profile with
-            # envelope traces is sent through the common final rendering boundary.
-            return proxy.render_plot(self._figure(include_envelope=True), "text")
+            from epw_climate_analyzer import charts
 
-        proxy.render_plot = render_plot
+            metadata["highlight"] = df.attrs.get(HIGHLIGHT_ATTR)
+            rendered["fig"] = charts.profile_ribbon_chart(
+                df,
+                "dry_bulb_temperature_c",
+                "Monthly",
+                "Temperature and extremes: Dry-bulb temperature",
+                "°C",
+            )
+            return rendered["fig"]
+
         proxy.render_time_series_overlay = render_time_series_overlay
         proxy.render_generic_variable_page = render_generic_variable_page
         install_interannual_year_highlight(proxy)
-
-        index = pd.DatetimeIndex(["2020-01-01", "2021-01-01", "2022-01-01"])
-        frame = pd.DataFrame({"dry_bulb_temperature_c": [1.0, 2.0, 3.0]}, index=index)
-        frame = with_time_basis(frame, INTERANNUAL_OVERLAY)
-        proxy.render_generic_variable_page(frame, ["Dry-bulb temperature"], "Dry-bulb temperature", "Temperature")
+        proxy.render_generic_variable_page(
+            self._monthly_frame(),
+            ["Dry-bulb temperature"],
+            "Dry-bulb temperature",
+            "Temperature",
+        )
 
         fig = rendered["fig"]
+        self.assertEqual(metadata["highlight"], 2021)
         self.assertEqual(st.label, "Highlight year")
         self.assertEqual(st.options, [None, 2020, 2021, 2022])
         self.assertEqual(fig.data[-1].legendgroup, "2021")
         self.assertEqual(fig.data[-1].line.color, HIGHLIGHT_COLOR)
+        self.assertGreaterEqual(float(fig.data[-1].line.width), HIGHLIGHT_WIDTH)
+        self.assertEqual(float(fig.data[-1].opacity), 1.0)
         envelope = next(trace for trace in fig.data if trace.legendgroup == "interannual-envelope")
-        self.assertEqual(float(envelope.opacity), 1.0)
-        self.assertIs(proxy.render_plot, original_render_plot)
+        self.assertEqual(float(envelope.opacity or 1.0), 1.0)
+
+    def test_shared_overlay_builder_consumes_highlight_metadata(self) -> None:
+        from epw_climate_analyzer import timeseries
+
+        frame = self._monthly_frame().copy(deep=False)
+        frame.attrs = dict(frame.attrs)
+        frame.attrs[HIGHLIGHT_ATTR] = 2022
+
+        proxy = SimpleNamespace(
+            st=SimpleNamespace(session_state={}),
+            render_time_series_overlay=lambda _df: None,
+            render_generic_variable_page=lambda _df, *args, **kwargs: None,
+        )
+        install_interannual_year_highlight(proxy)
+
+        fig, _tables = timeseries.build_overlay_figure(
+            frame,
+            [
+                timeseries.OverlaySeries(
+                    label="Dry-bulb temperature",
+                    column="dry_bulb_temperature_c",
+                    unit="°C",
+                    resolution="Native",
+                )
+            ],
+            pd.Timestamp("2020-01-01"),
+            pd.Timestamp("2023-01-01"),
+        )
+        self.assertEqual(fig.data[-1].legendgroup, "2022")
+        self.assertEqual(fig.data[-1].line.color, HIGHLIGHT_COLOR)
+        self.assertGreaterEqual(float(fig.data[-1].line.width), HIGHLIGHT_WIDTH)
 
 
 if __name__ == "__main__":

@@ -1,11 +1,9 @@
-"""Focused-year styling for rendered interannual charts.
+"""Streamlit control and builder binding for focused-year interannual charts.
 
-The scientific interannual representation remains unchanged. This module adds a
-presentation control that can focus one real source year: background *year*
-traces are dimmed, while every trace belonging to the selected year is rendered
-red, thicker, fully opaque, and last so Plotly paints it above the other traces.
-Non-year analytical traces such as the interannual mean/min/max envelope keep
-their original styling.
+The UI layer owns selection and attaches it as dataframe presentation metadata.
+Actual Plotly styling is applied at the chart-builder boundary, before the figure
+is handed to Streamlit. This avoids late runtime monkey-patching of render_plot
+and makes the visual contract independent of nested source-parity UI wrappers.
 """
 
 from __future__ import annotations
@@ -14,88 +12,19 @@ from typing import Any, Callable
 
 import pandas as pd
 
+from .interannual_presentation import (
+    BACKGROUND_OPACITY,
+    HIGHLIGHT_ATTR,
+    HIGHLIGHT_COLOR,
+    HIGHLIGHT_MARKER_SIZE,
+    HIGHLIGHT_WIDTH,
+    apply_interannual_year_highlight,
+    highlight_year_from_frame,
+)
 from .temporal_filtering import INTERANNUAL_OVERLAY, time_basis
 
 
-HIGHLIGHT_COLOR = "#dc2626"
-HIGHLIGHT_WIDTH = 4.0
-HIGHLIGHT_MARKER_SIZE = 7.0
-BACKGROUND_OPACITY = 0.32
 HIGHLIGHT_STATE_KEY = "overlay_highlight_year"
-
-
-def _trace_real_year(trace: Any) -> int | None:
-    """Return the real year encoded by an interannual trace legend group."""
-    value = getattr(trace, "legendgroup", None)
-    try:
-        return int(value) if value is not None else None
-    except (TypeError, ValueError):
-        return None
-
-
-def apply_interannual_year_highlight(fig: Any, year: int | None) -> Any:
-    """Style and reorder an interannual Plotly figure around one selected year.
-
-    Plotly draws later traces above earlier traces. The selected year's traces
-    are therefore moved to the end after styling. Only traces whose
-    ``legendgroup`` is a real year participate in dimming/highlighting. Envelope,
-    reference and other analytical traces are left visually unchanged.
-    """
-    if year is None:
-        return fig
-
-    selected_year = int(year)
-    trace_years = [_trace_real_year(trace) for trace in tuple(fig.data)]
-    if selected_year not in trace_years:
-        # A stale widget selection must never alter an unrelated chart.
-        return fig
-
-    background_years: list[Any] = []
-    neutral: list[Any] = []
-    highlighted: list[Any] = []
-
-    for trace, trace_year in zip(tuple(fig.data), trace_years, strict=True):
-        if trace_year is None:
-            neutral.append(trace)
-            continue
-
-        if trace_year == selected_year:
-            line = getattr(trace, "line", None)
-            if line is not None:
-                line.color = HIGHLIGHT_COLOR
-                current_width = getattr(line, "width", None)
-                try:
-                    current_width_value = float(current_width) if current_width is not None else 0.0
-                except (TypeError, ValueError):
-                    current_width_value = 0.0
-                line.width = max(HIGHLIGHT_WIDTH, current_width_value)
-
-            mode = str(getattr(trace, "mode", "") or "")
-            marker = getattr(trace, "marker", None)
-            if marker is not None and "markers" in mode:
-                marker.color = HIGHLIGHT_COLOR
-                current_size = getattr(marker, "size", None)
-                try:
-                    current_size_value = float(current_size) if current_size is not None else 0.0
-                except (TypeError, ValueError):
-                    current_size_value = 0.0
-                marker.size = max(HIGHLIGHT_MARKER_SIZE, current_size_value)
-
-            trace.opacity = 1.0
-            highlighted.append(trace)
-        else:
-            current_opacity = getattr(trace, "opacity", None)
-            try:
-                opacity = float(current_opacity) if current_opacity is not None else 1.0
-            except (TypeError, ValueError):
-                opacity = 1.0
-            trace.opacity = min(opacity, BACKGROUND_OPACITY)
-            background_years.append(trace)
-
-    # Neutral analytical traces preserve their relative order, while the
-    # highlighted real-year trace is deliberately painted above everything.
-    fig.data = tuple(background_years + neutral + highlighted)
-    return fig
 
 
 def _selected_highlight_year(proxy: Any, df: pd.DataFrame) -> int | None:
@@ -126,57 +55,91 @@ def _selected_highlight_year(proxy: Any, df: pd.DataFrame) -> int | None:
     return None if selected is None else int(selected)
 
 
-def _render_with_highlight_context(
+def _frame_with_highlight_year(df: pd.DataFrame, year: int | None) -> pd.DataFrame:
+    """Return a shallow presentation copy carrying the focused-year metadata."""
+    if year is None:
+        return df
+    out = df.copy(deep=False)
+    out.attrs = dict(df.attrs)
+    out.attrs[HIGHLIGHT_ATTR] = int(year)
+    return out
+
+
+def _render_with_highlight_metadata(
     proxy: Any,
     renderer: Callable[..., Any],
     df: pd.DataFrame,
     *args: Any,
     **kwargs: Any,
 ) -> Any:
-    """Apply the selected year only while this interannual renderer is active.
-
-    This deliberately does not depend on a sidebar/session-state copy of the time
-    basis. ``time_basis(df)`` is the authoritative contract. Temporarily wrapping
-    ``render_plot`` keeps the styling local to the current page and prevents a
-    stale year selection from leaking into unrelated charts.
-    """
+    """Attach selection metadata before the chart builder sees the dataframe."""
     selected = _selected_highlight_year(proxy, df)
-    if selected is None or not hasattr(proxy, "render_plot"):
-        return renderer(df, *args, **kwargs)
+    return renderer(_frame_with_highlight_year(df, selected), *args, **kwargs)
 
-    original_render_plot = proxy.render_plot
 
-    def highlighted_render_plot(fig: Any, *plot_args: Any, **plot_kwargs: Any) -> Any:
-        styled = apply_interannual_year_highlight(fig, selected)
-        return original_render_plot(styled, *plot_args, **plot_kwargs)
+def _install_builder_styling() -> None:
+    """Bind focused-year styling to the actual Plotly chart builders.
 
-    proxy.render_plot = highlighted_render_plot
-    try:
-        return renderer(df, *args, **kwargs)
-    finally:
-        proxy.render_plot = original_render_plot
+    The wrappers consume only dataframe presentation metadata. They therefore
+    work regardless of which Streamlit/source-parity wrapper invoked the builder.
+    """
+    from . import charts, timeseries
+
+    if not bool(getattr(timeseries, "_INTERANNUAL_HIGHLIGHT_BUILDER_INSTALLED", False)):
+        original_overlay_builder = timeseries.build_overlay_figure
+
+        def build_overlay_figure(df: pd.DataFrame, *args: Any, **kwargs: Any):
+            fig, tables = original_overlay_builder(df, *args, **kwargs)
+            year = highlight_year_from_frame(df)
+            if time_basis(df) == INTERANNUAL_OVERLAY and year is not None:
+                fig = apply_interannual_year_highlight(fig, year)
+            return fig, tables
+
+        timeseries.build_overlay_figure = build_overlay_figure
+        timeseries._INTERANNUAL_HIGHLIGHT_BUILDER_INSTALLED = True
+
+    if not bool(getattr(charts, "_INTERANNUAL_HIGHLIGHT_BUILDERS_INSTALLED", False)):
+        original_profile = charts.profile_ribbon_chart
+        original_percentile = charts.percentile_band_chart
+
+        def profile_ribbon_chart(df: pd.DataFrame, *args: Any, **kwargs: Any):
+            fig = original_profile(df, *args, **kwargs)
+            year = highlight_year_from_frame(df)
+            if time_basis(df) == INTERANNUAL_OVERLAY and year is not None:
+                fig = apply_interannual_year_highlight(fig, year)
+            return fig
+
+        def percentile_band_chart(df: pd.DataFrame, *args: Any, **kwargs: Any):
+            fig = original_percentile(df, *args, **kwargs)
+            year = highlight_year_from_frame(df)
+            if time_basis(df) == INTERANNUAL_OVERLAY and year is not None:
+                fig = apply_interannual_year_highlight(fig, year)
+            return fig
+
+        charts.profile_ribbon_chart = profile_ribbon_chart
+        charts.percentile_band_chart = percentile_band_chart
+        charts._INTERANNUAL_HIGHLIGHT_BUILDERS_INSTALLED = True
 
 
 def install_interannual_year_highlight(proxy: Any) -> None:
-    """Install source-neutral focused-year controls for interannual chart routes."""
+    """Install source-neutral focused-year controls and builder-level styling."""
     if bool(getattr(proxy, "_INTERANNUAL_YEAR_HIGHLIGHT_INSTALLED", False)):
         return
+
+    _install_builder_styling()
 
     original_overlay = proxy.render_time_series_overlay
 
     def render_time_series_overlay(df: pd.DataFrame, *args: Any, **kwargs: Any) -> Any:
-        return _render_with_highlight_context(proxy, original_overlay, df, *args, **kwargs)
+        return _render_with_highlight_metadata(proxy, original_overlay, df, *args, **kwargs)
 
     proxy.render_time_series_overlay = render_time_series_overlay
 
-    # Generic variable pages (Temperature, Humidity, etc.) use the interannual
-    # profile/envelope builders rather than build_overlay_figure. Bind the same
-    # final-render context around that route too.
     if hasattr(proxy, "render_generic_variable_page"):
         original_generic = proxy.render_generic_variable_page
 
         def render_generic_variable_page(df: pd.DataFrame, *args: Any, **kwargs: Any) -> Any:
-            return _render_with_highlight_context(proxy, original_generic, df, *args, **kwargs)
+            return _render_with_highlight_metadata(proxy, original_generic, df, *args, **kwargs)
 
         proxy.render_generic_variable_page = render_generic_variable_page
 
