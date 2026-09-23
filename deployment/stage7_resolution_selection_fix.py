@@ -3,6 +3,59 @@ from pathlib import Path
 path = Path("deployment/pr83_monthly_selected_load_smoke.mjs")
 text = path.read_text(encoding="utf-8")
 
+old_series_count = '''async function setSeriesCountOne(page) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const frame = await appFrame(page, 'Time series and overlay');
+    const slider = frame.getByRole('slider', { name: 'Number of series', exact: true }).first();
+    if (!(await slider.count().catch(() => 0))) return;
+    const value = Number(await slider.getAttribute('aria-valuenow').catch(() => NaN));
+    if (value === 1) return;
+    await slider.focus();
+    await slider.press('Home');
+    await sleep(700);
+  }
+  const frame = await appFrame(page, 'Time series and overlay');
+  const slider = frame.getByRole('slider', { name: 'Number of series', exact: true }).first();
+  const value = Number(await slider.getAttribute('aria-valuenow').catch(() => NaN));
+  if (value !== 1) throw new Error(`Could not set Number of series to 1; observed ${value}.`);
+}
+'''
+new_series_count = '''async function setSeriesCountOne(page) {
+  let lastValue = NaN;
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const frame = await appFrame(page, 'Time series and overlay', 10000);
+    const root = frame.locator('[data-testid="stSlider"]').filter({ hasText: 'Number of series' }).first();
+    let slider = root.locator('[role="slider"]').first();
+    if (!(await slider.count().catch(() => 0))) {
+      slider = frame.locator('[role="slider"][aria-valuemin="1"][aria-valuemax="6"]').first();
+    }
+    if (!(await slider.count().catch(() => 0)) || !(await slider.isVisible().catch(() => false))) {
+      throw new Error('Number of series slider is unavailable.');
+    }
+    lastValue = Number(await slider.getAttribute('aria-valuenow').catch(() => NaN));
+    if (lastValue === 1) {
+      await sleep(700);
+      return;
+    }
+    await slider.focus();
+    await slider.press('ArrowLeft', { timeout: 5000 });
+    await frame.page().keyboard.press('Tab').catch(() => {});
+    await sleep(900);
+  }
+  const frame = await appFrame(page, 'Time series and overlay', 10000);
+  const root = frame.locator('[data-testid="stSlider"]').filter({ hasText: 'Number of series' }).first();
+  let slider = root.locator('[role="slider"]').first();
+  if (!(await slider.count().catch(() => 0))) {
+    slider = frame.locator('[role="slider"][aria-valuemin="1"][aria-valuemax="6"]').first();
+  }
+  lastValue = Number(await slider.getAttribute('aria-valuenow').catch(() => NaN));
+  if (lastValue !== 1) throw new Error(`Could not commit Number of series = 1; observed ${lastValue}.`);
+}
+'''
+if old_series_count not in text:
+    raise SystemExit("Expected staged setSeriesCountOne block not found")
+text = text.replace(old_series_count, new_series_count, 1)
+
 old_resolution = '''async function setResolution(page, resolution) {
   await selectComboOption(page, 'Series 1 resolution', (text) => text.trim() === resolution);
   await appFrame(page, 'Time series and overlay');
