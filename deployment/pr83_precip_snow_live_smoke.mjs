@@ -332,20 +332,30 @@ async function sidebarNavigation(page, name) {
   throw new Error(`Sidebar navigation item not found: ${name}`);
 }
 
-async function analysisCombo(frame) {
-  const byLabel = frame.getByLabel('Analysis type', { exact: true }).first();
-  if (await byLabel.count().catch(() => 0)) return byLabel;
-  const control = frame.getByRole('combobox', { name: 'Analysis type' }).first();
-  if (await control.count().catch(() => 0)) return control;
-  throw new Error('Could not locate Analysis type selectbox.');
+async function analysisCombo(frame, timeoutMs = 30_000) {
+  const started = performance.now();
+  while (performance.now() - started < timeoutMs) {
+    const byLabel = frame.getByLabel('Analysis type', { exact: true }).first();
+    if (await byLabel.count().catch(() => 0) && await byLabel.isVisible().catch(() => false)) return byLabel;
+    const control = frame.getByRole('combobox', { name: 'Analysis type' }).first();
+    if (await control.count().catch(() => 0) && await control.isVisible().catch(() => false)) return control;
+    await sleep(250);
+  }
+  throw new Error('Timed out waiting for visible Analysis type selectbox.');
 }
 
 async function analysisOptions(page, expected, timeoutMs = 20_000) {
   const started = performance.now();
   let lastValues = [];
   while (performance.now() - started < timeoutMs) {
-    const frame = await appFrame(page, 'Precipitation and snow', 10_000);
-    const control = await analysisCombo(frame);
+    let frame; let control;
+    try {
+      frame = await appFrame(page, 'Climate Analyzer', 10_000);
+      control = await analysisCombo(frame, 5_000);
+    } catch {
+      await sleep(300);
+      continue;
+    }
     let values = await visibleOptionTexts(page, frame);
     if (!values.length) {
       const expanded = await control.getAttribute('aria-expanded').catch(() => null);
@@ -368,9 +378,15 @@ async function analysisOptions(page, expected, timeoutMs = 20_000) {
 
 async function selectAnalysis(page, name) {
   const started = performance.now();
-  while (performance.now() - started < 15_000) {
-    const frame = await appFrame(page, 'Precipitation and snow', 10_000);
-    const control = await analysisCombo(frame);
+  while (performance.now() - started < 30_000) {
+    let frame; let control;
+    try {
+      frame = await appFrame(page, 'Climate Analyzer', 10_000);
+      control = await analysisCombo(frame, 5_000);
+    } catch {
+      await sleep(300);
+      continue;
+    }
     let option = await visibleOption(page, frame, name);
     if (!option) {
       const expanded = await control.getAttribute('aria-expanded').catch(() => null);
@@ -393,8 +409,17 @@ async function openPrecipitationPage(page) {
   const exact = frame.getByText('Climate — Precipitation & snow', { exact: true }).last();
   if (!(await exact.count().catch(() => 0))) throw new Error('Precipitation & snow navigation item not found.');
   await exact.click({ timeout: 15_000 });
-  frame = await appFrame(page, 'Precipitation and snow', 60_000);
-  return frame;
+
+  const started = performance.now();
+  while (performance.now() - started < 90_000) {
+    try {
+      frame = await appFrame(page, 'Climate Analyzer', 10_000);
+      await analysisCombo(frame, 5_000);
+      return frame;
+    } catch { /* Streamlit rerun still showing previous main content */ }
+    await sleep(300);
+  }
+  throw new Error('Precipitation & snow navigation did not settle on a page with Analysis type.');
 }
 
 const report = { schema: 'climate-analyzer-pr83-precip-snow-live-smoke-v3', target_url: TARGET_URL, fixture, started_at_utc: new Date().toISOString(), checks: {}, page_errors: [], console_errors: [], http_errors: [], success: false, error: null };
