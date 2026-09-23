@@ -40,6 +40,7 @@ jobs:
         run: |
           python deployment/stage8_materialize_native_monthly.py
           python deployment/stage8_harden_browser_smoke.py
+          python deployment/stage8_overlay_resolution_context.py
           python - <<'PY'
           from pathlib import Path
           import re
@@ -64,8 +65,13 @@ jobs:
         run: |
           node --check deployment/pr83_monthly_selected_load_smoke.mjs
           ! grep -q 'setResolution(' deployment/pr83_monthly_selected_load_smoke.mjs
+          grep -q '_overlay_resolution_context' tools/climate_analyzer/app.py
           git diff --check
-          git diff -- tools/climate_analyzer/epw_climate_analyzer/timeseries.py tools/climate_analyzer/tests/test_interannual_overlay.py deployment/pr83_monthly_selected_load_smoke.mjs
+          git diff -- \
+            tools/climate_analyzer/app.py \
+            tools/climate_analyzer/epw_climate_analyzer/timeseries.py \
+            tools/climate_analyzer/tests/test_interannual_overlay.py \
+            deployment/pr83_monthly_selected_load_smoke.mjs
 
       - name: Install Climate Analyzer dependencies
         run: |
@@ -79,7 +85,8 @@ jobs:
           python -m unittest -v \
             tools.climate_analyzer.tests.test_interannual_overlay \
             tools.climate_analyzer.tests.test_interannual_overlay_profiles \
-            tools.climate_analyzer.tests.test_time_series_overlay
+            tools.climate_analyzer.tests.test_time_series_overlay \
+            tools.climate_analyzer.tests.test_source_parity_streamlit_rerun_reset_0_7_5_5
 
       - name: Probe live GeoSphere native-monthly data
         run: python deployment/pr83_monthly_contract_probe.py
@@ -119,12 +126,14 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add \
+            tools/climate_analyzer/app.py \
             tools/climate_analyzer/epw_climate_analyzer/timeseries.py \
             tools/climate_analyzer/tests/test_interannual_overlay.py \
             deployment/pr83_monthly_selected_load_smoke.mjs
           git rm \
             deployment/stage8_materialize_native_monthly.py \
             deployment/stage8_harden_browser_smoke.py \
+            deployment/stage8_overlay_resolution_context.py \
             .github/workflows/stage8-clean-native-monthly-interannual.yml
           git diff --cached --check
           git commit -m 'Climate: close native monthly interannual acceptance'
