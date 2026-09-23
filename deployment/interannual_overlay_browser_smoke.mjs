@@ -184,13 +184,13 @@ async function segmentedDateValue(group) {
   return await group.innerText().catch(() => '');
 }
 
-async function setSegmentedDate(page, group, iso) {
+async function setSegmentedDate(frame, group, iso) {
   const [year, month, day] = iso.split('-').map(Number);
   const desired = { year, month, day };
   const segments = group.locator('[role="spinbutton"]');
   const byPart = {};
-  for (let i = 0; i < await segments.count(); i += 1) {
-    const segment = segments.nth(i);
+  for (let index = 0; index < await segments.count(); index += 1) {
+    const segment = segments.nth(index);
     const label = String(await segment.getAttribute('aria-label').catch(() => '')).toLowerCase();
     if (label.includes('year')) byPart.year = segment;
     else if (label.includes('month')) byPart.month = segment;
@@ -198,33 +198,41 @@ async function setSegmentedDate(page, group, iso) {
   }
   for (const part of ['year', 'month', 'day']) {
     const segment = byPart[part];
-    if (!segment) throw new Error(`Missing ${part} segment for ${iso}`);
-    await segment.click();
-    await segment.press(process.platform === 'darwin' ? 'Meta+A' : 'Control+A').catch(() => {});
-    await segment.press('Backspace').catch(() => {});
-    await page.keyboard.type(String(desired[part]), { delay: 30 });
+    if (!segment) throw new Error(`Could not identify ${part} segment for ${iso}.`);
+    await segment.click({ timeout: 10000 });
+    const editable = await segment.getAttribute('contenteditable').catch(() => null);
+    if (editable === 'true') await segment.fill(String(desired[part]), { timeout: 10000 });
+    else {
+      await segment.press(process.platform === 'darwin' ? 'Meta+A' : 'Control+A').catch(() => {});
+      await segment.press('Backspace').catch(() => {});
+      await frame.page().keyboard.type(String(desired[part]), { delay: 50 });
+    }
+    await sleep(160);
   }
-  await page.keyboard.press('Tab').catch(() => {});
+  await frame.page().keyboard.press('Tab').catch(() => {});
 }
 
 async function setDate(page, label, iso) {
+  let lastValue = null;
   for (let attempt = 0; attempt < 3; attempt += 1) {
-    const frame = await appFrame(page, 'Measured variables to load');
+    const frame = await appFrame(page, 'Measured variables to load', 20000);
     const control = await dateControl(frame, label);
     if (control.kind === 'input') {
-      await control.locator.fill(attempt === 0 ? iso.replaceAll('-', '/') : iso);
+      const candidate = attempt === 0 ? iso.replaceAll('-', '/') : iso;
+      await control.locator.click({ timeout: 10000 });
+      await control.locator.fill(candidate, { timeout: 10000 });
       await control.locator.press('Enter').catch(() => {});
       await control.locator.press('Tab').catch(() => {});
-    } else {
-      await setSegmentedDate(page, control.locator, iso);
-    }
-    await sleep(800);
-    const refreshed = await appFrame(page, 'Measured variables to load');
-    const current = await dateControl(refreshed, label);
-    const value = current.kind === 'input' ? await current.locator.inputValue().catch(() => '') : await segmentedDateValue(current.locator);
-    if (dateValueMatches(value, iso)) return;
+    } else await setSegmentedDate(frame, control.locator, iso);
+    await sleep(1000);
+    const refreshedFrame = await appFrame(page, 'Measured variables to load', 20000);
+    const refreshed = await dateControl(refreshedFrame, label);
+    lastValue = refreshed.kind === 'input'
+      ? await refreshed.locator.inputValue().catch(() => null)
+      : await segmentedDateValue(refreshed.locator);
+    if (dateValueMatches(lastValue, iso)) return lastValue;
   }
-  throw new Error(`${label} did not accept ${iso}.`);
+  throw new Error(`Date input ${label} did not accept ${iso}; observed ${lastValue}.`);
 }
 
 async function variableEditor(page) {
