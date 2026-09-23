@@ -76,6 +76,20 @@ class InterannualYearHighlightTests(unittest.TestCase):
         for trace in year_traces[:-1]:
             self.assertLessEqual(float(trace.opacity), BACKGROUND_OPACITY)
 
+    def test_missing_selected_year_does_not_mutate_unrelated_figure(self) -> None:
+        fig = self._figure(include_envelope=True)
+        before = [
+            (trace.legendgroup, trace.line.color, trace.line.width, trace.opacity)
+            for trace in fig.data
+        ]
+        returned = apply_interannual_year_highlight(fig, 2026)
+        after = [
+            (trace.legendgroup, trace.line.color, trace.line.width, trace.opacity)
+            for trace in fig.data
+        ]
+        self.assertIs(returned, fig)
+        self.assertEqual(after, before)
+
     def test_none_keeps_existing_trace_order_and_style(self) -> None:
         fig = self._figure()
         before = [(trace.legendgroup, trace.line.color, trace.line.width, trace.opacity) for trace in fig.data]
@@ -84,13 +98,13 @@ class InterannualYearHighlightTests(unittest.TestCase):
         self.assertIs(returned, fig)
         self.assertEqual(after, before)
 
-    def test_final_render_boundary_applies_highlight_to_profile_figure(self) -> None:
+    def test_profile_render_context_needs_no_global_time_basis_session_key(self) -> None:
         class FakeStreamlit:
             def __init__(self):
-                self.session_state = {
-                    "global_time_basis": INTERANNUAL_OVERLAY,
-                    HIGHLIGHT_STATE_KEY: 2021,
-                }
+                # Reproduces the production failure: the selected highlight year
+                # exists, while no duplicate global_time_basis session key is
+                # required by the final render path.
+                self.session_state = {HIGHLIGHT_STATE_KEY: 2021}
 
             def selectbox(self, label, options, **kwargs):
                 self.label = label
@@ -105,13 +119,14 @@ class InterannualYearHighlightTests(unittest.TestCase):
             rendered["fig"] = fig
             return fig
 
+        original_render_plot = render_plot
+
         def render_time_series_overlay(_df):
             return None
 
         def render_generic_variable_page(df, *args, **kwargs):
-            # This mimics the Temperature/interannual profile route: it builds an
-            # already-year-grouped figure and sends it through the shared final
-            # render boundary rather than through build_overlay_figure.
+            # This mimics Temperature and extremes: a year-grouped profile with
+            # envelope traces is sent through the common final rendering boundary.
             return proxy.render_plot(self._figure(include_envelope=True), "text")
 
         proxy.render_plot = render_plot
@@ -131,6 +146,7 @@ class InterannualYearHighlightTests(unittest.TestCase):
         self.assertEqual(fig.data[-1].line.color, HIGHLIGHT_COLOR)
         envelope = next(trace for trace in fig.data if trace.legendgroup == "interannual-envelope")
         self.assertEqual(float(envelope.opacity), 1.0)
+        self.assertIs(proxy.render_plot, original_render_plot)
 
 
 if __name__ == "__main__":
