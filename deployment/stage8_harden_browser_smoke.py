@@ -93,42 +93,61 @@ old_resolution = '''async function setResolution(page, resolution) {
 '''
 new_resolution = '''async function setResolution(page, resolution) {
   if (resolution !== 'Native') {
-    throw new Error(`Stage7 native-monthly acceptance only supports Native resolution, got ${resolution}.`);
+    throw new Error(`Stage8 native-monthly acceptance only supports Native resolution, got ${resolution}.`);
   }
-  for (let attempt = 0; attempt < 4; attempt += 1) {
+  let lastValue = '';
+  let lastOptions = [];
+  for (let attempt = 0; attempt < 5; attempt += 1) {
     let frame = await appFrame(page, 'Time series and overlay', 10000);
     let control = await combo(frame, 'Series 1 resolution', 10000);
-    let current = await rendered(control);
-    if (current.includes('Native')) {
+    lastValue = await rendered(control);
+    if (lastValue.includes('Native')) {
       await sleep(700);
       return;
     }
 
-    await control.click({ timeout: 5000 }).catch(() => {});
-    await control.press('Home', { timeout: 5000 }).catch(() => {});
-    await control.press('Enter', { timeout: 5000 }).catch(() => {});
-    await sleep(800);
+    await control.click({ timeout: 5000 });
+    await sleep(200);
+    lastOptions = [];
+    for (const options of [
+      frame.getByRole('option'),
+      page.getByRole('option'),
+      frame.locator('[data-baseweb="menu"] li'),
+      page.locator('[data-baseweb="menu"] li'),
+    ]) {
+      const count = await options.count().catch(() => 0);
+      for (let index = 0; index < count; index += 1) {
+        const option = options.nth(index);
+        if (!(await option.isVisible().catch(() => false))) continue;
+        const text = (await option.innerText().catch(() => '')).replace(/\\s+/g, ' ').trim();
+        if (text && !lastOptions.includes(text)) lastOptions.push(text);
+      }
+    }
+
+    if (lastValue.includes('Monthly')) {
+      await page.keyboard.press('ArrowUp');
+      await page.keyboard.press('Enter');
+    } else {
+      const option = await visibleOption(page, frame, (text) => text.trim() === 'Native');
+      if (option) {
+        await option.click({ timeout: 5000 });
+      } else {
+        await page.keyboard.press('Home');
+        await page.keyboard.press('Enter');
+      }
+    }
+    await sleep(1200);
 
     frame = await appFrame(page, 'Time series and overlay', 10000);
     control = await combo(frame, 'Series 1 resolution', 10000);
-    current = await rendered(control);
-    if (current.includes('Native')) {
+    lastValue = await rendered(control);
+    if (lastValue.includes('Native')) {
       await sleep(700);
       return;
     }
-
-    await control.click({ timeout: 5000 }).catch(() => {});
-    const option = await visibleOption(page, frame, (text) => text.trim() === 'Native');
-    if (option) {
-      await option.click({ timeout: 5000 });
-      await sleep(800);
-    }
   }
 
-  const frame = await appFrame(page, 'Time series and overlay', 10000);
-  const control = await combo(frame, 'Series 1 resolution', 10000);
-  const current = await rendered(control);
-  throw new Error(`Could not commit Series 1 resolution = Native; observed ${current}.`);
+  throw new Error(`Could not commit Series 1 resolution = Native; observed ${lastValue}; visible options=${JSON.stringify(lastOptions)}.`);
 }
 '''
 if old_resolution not in text:
