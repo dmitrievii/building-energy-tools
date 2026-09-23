@@ -82,18 +82,20 @@ class InterannualOverlaySemanticsTests(unittest.TestCase):
         self.assertEqual(pd.Timestamp(march["calendar_bin"]).day, 1)
 
     def test_missing_daily_bin_remains_missing(self) -> None:
-        index = pd.DatetimeIndex(["2020-01-01", "2020-01-03"])
-        frame = pd.DataFrame({"dry_bulb_temperature_c": [1.0, 3.0]}, index=index)
+        index = pd.DatetimeIndex([
+            "2020-01-01", "2020-01-02", "2020-01-03", "2020-01-05"
+        ])
+        frame = pd.DataFrame({"dry_bulb_temperature_c": [1.0, 2.0, 3.0, 5.0]}, index=index)
         result = aggregate_interannual_series(
             frame,
             "dry_bulb_temperature_c",
             "Daily",
             pd.Timestamp("2020-01-01"),
-            pd.Timestamp("2020-01-04"),
+            pd.Timestamp("2020-01-06"),
         )
-        jan2 = result.loc[result["calendar_label"] == "02 Jan"]
-        self.assertEqual(len(jan2), 1)
-        self.assertTrue(pd.isna(jan2.iloc[0]["value"]))
+        jan4 = result.loc[result["calendar_label"] == "04 Jan"]
+        self.assertEqual(len(jan4), 1)
+        self.assertTrue(pd.isna(jan4.iloc[0]["value"]))
 
     def test_monthly_keeps_twelve_independent_points_per_complete_year(self) -> None:
         index = pd.DatetimeIndex(
