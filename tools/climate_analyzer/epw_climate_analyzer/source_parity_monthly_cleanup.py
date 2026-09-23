@@ -36,7 +36,7 @@ from .geosphere_monthly import (
 
 
 MONTHLY_GENERIC_AGGREGATIONS = ("Monthly", "Annual")
-MONTHLY_OVERLAY_RESOLUTIONS = ("Monthly", "Annual")
+MONTHLY_OVERLAY_RESOLUTIONS = ("Native", "Monthly", "Seasonal", "Annual")
 
 _TERM_SCHEDULE = (
     "Historical climate-observation schedule: until 1971 Terms I/II/III were "
@@ -203,6 +203,19 @@ def monthly_semantics_from_column(column: str) -> str | None:
         return None
     semantics = parts[1].replace("_", " ")
     return semantics if semantics in {"mean", "sum", "min", "max", "circular mean"} else None
+
+
+def monthly_overlay_resolution_options(column: str) -> tuple[str, ...]:
+    """Return scientifically valid overlay resolutions for a native-monthly field.
+
+    Native always preserves the provider-published monthly observation/statistic.
+    Coarser aggregation is exposed only when the quantity semantics are known.
+    """
+    known_semantics = (
+        monthly_semantics_from_column(column) is not None
+        or column in monthly_ui._MONTHLY_CANONICAL_ALIASES.values()
+    )
+    return MONTHLY_OVERLAY_RESOLUTIONS if known_semantics else ("Native",)
 
 
 def monthly_metric_color(column: str, fallback: Callable[[str | None], str]) -> str:
@@ -427,16 +440,13 @@ def _render_calendar_monthly_overlay(legacy: Any, df: pd.DataFrame) -> None:
         )
         column, unit = legacy.VARIABLES[variable_label]
         semantics = monthly_semantics_from_column(column) or aggregation_semantics_for(column)
-        resolution_options = list(MONTHLY_OVERLAY_RESOLUTIONS)
-        if monthly_semantics_from_column(column) is None and column not in monthly_ui._MONTHLY_CANONICAL_ALIASES.values():
-            # Unknown provider statistics can still be plotted monthly. Do not
-            # invent an annual meaning until their provider contract is known.
-            resolution_options = ["Monthly"]
+        resolution_options = list(monthly_overlay_resolution_options(column))
         resolution = col_resolution.selectbox(
             f"Series {i + 1} resolution", resolution_options, index=0, key=f"overlay_resolution_{i}",
             help=(
-                "Monthly preserves the published value. Annual applies the canonical quantity semantics "
-                f"({semantics}) to the twelve published months when available."
+                "Native preserves each provider-published monthly value. Monthly keeps calendar-month bins without "
+                "reconstructing finer data. Seasonal and Annual aggregate only published monthly records using the "
+                f"canonical quantity semantics ({semantics}) when that semantics is known."
             ),
         )
         style_labels = ["Solid", "Dashed", "Dotted", "Dash-dot"]
@@ -601,7 +611,6 @@ def install_monthly_cleanup(proxy: Any, parity: Any) -> None:
     if bool(getattr(proxy, "_GEOSPHERE_MONTHLY_CLEANUP_INSTALLED", False)):
         return
     _install_semantic_engines()
-    _install_unified_overlay(proxy)
     _install_parameter_catalogue(parity)
 
     # Existing canonical monthly renderer resolves these module globals at call

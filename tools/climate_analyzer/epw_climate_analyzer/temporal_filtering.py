@@ -1,9 +1,9 @@
-"""Source-neutral temporal filtering and calendar-profile semantics.
+"""Source-neutral temporal filtering and calendar/profile semantics.
 
-The Climate Analyzer uses one canonical time axis for EPW, GeoSphere and future
-providers.  This module keeps the global data-range selection independent from
-chart rendering and exposes a small metadata contract that aggregation helpers
-can consume without source-specific branches.
+The Climate Analyzer keeps canonical real timestamps intact for every source.
+Temporal presentation is attached as dataframe metadata so chart/aggregation
+helpers can choose among chronological, climatological profile, and
+interannual-overlay semantics without rewriting source time coordinates.
 """
 
 from __future__ import annotations
@@ -15,9 +15,11 @@ import pandas as pd
 
 CHRONOLOGICAL = "Chronological"
 CALENDAR_PROFILE = "Calendar profile"
+INTERANNUAL_OVERLAY = "Interannual overlay"
 TIME_BASIS_ATTR = "climate_time_basis"
-VALID_TIME_BASES = (CHRONOLOGICAL, CALENDAR_PROFILE)
+VALID_TIME_BASES = (CHRONOLOGICAL, CALENDAR_PROFILE, INTERANNUAL_OVERLAY)
 SEASON_ORDER = ("Winter", "Spring", "Summer", "Autumn")
+CALENDAR_ANCHOR_YEAR = 2000  # leap year: presentation axis has a real Feb 29 slot
 
 
 def _require_datetime_index(df: pd.DataFrame) -> pd.DatetimeIndex:
@@ -45,7 +47,7 @@ def time_basis(df: pd.DataFrame) -> str:
 
 
 def with_time_basis(df: pd.DataFrame, basis: str) -> pd.DataFrame:
-    """Return a shallow data copy carrying an explicit temporal interpretation."""
+    """Return a data copy carrying an explicit temporal interpretation."""
     if basis not in VALID_TIME_BASES:
         raise ValueError(f"Unsupported time basis: {basis}")
     attrs = dict(df.attrs)
@@ -110,14 +112,67 @@ def season_name(month: int) -> str:
     return "Autumn"
 
 
-def calendar_profile_slot(index: pd.DatetimeIndex, aggregation: str) -> pd.Index:
-    """Return a year-neutral grouping slot for one temporal aggregation.
+def calendar_position(index: pd.DatetimeIndex) -> pd.DatetimeIndex:
+    """Map real timestamps to a leap-year presentation axis without losing source time.
 
-    The slot intentionally removes only the year.  Month/day/hour information is
-    retained at the requested aggregation resolution, so a calendar profile can
-    combine equivalent positions across many years without altering the source
-    observations themselves.
+    The returned timestamps are presentation coordinates only. ``2000`` is used
+    because it contains Feb 29. Real timestamps remain in the canonical frame and
+    must be retained separately by year-preserving intermediate tables.
     """
+    idx = pd.DatetimeIndex(index)
+    values = [
+        pd.Timestamp(
+            year=CALENDAR_ANCHOR_YEAR,
+            month=int(stamp.month),
+            day=int(stamp.day),
+            hour=int(stamp.hour),
+            minute=int(stamp.minute),
+            second=int(stamp.second),
+            microsecond=int(stamp.microsecond),
+        )
+        for stamp in idx
+    ]
+    return pd.DatetimeIndex(values, name="calendar_position")
+
+
+def interannual_calendar_bin(index: pd.DatetimeIndex, aggregation: str) -> pd.Index:
+    """Return deterministic year-neutral bins for one interannual series.
+
+    Weekly bins are fixed seven-day bins on the leap-year calendar axis starting
+    on Jan 1. They never contain records from two real years because real year is
+    always a separate grouping key. This avoids ISO week ownership crossing the
+    Dec/Jan boundary while keeping equivalent calendar dates aligned.
+    """
+    idx = pd.DatetimeIndex(index)
+    pos = calendar_position(idx)
+    label = str(aggregation)
+    if label in {"Native", "10 min", "30 min", "1 h", "3 h", "6 h"}:
+        return pd.Index(pos, name="calendar_bin")
+    if label in {"Hourly", "1h"}:
+        return pd.Index(pos.floor("h"), name="calendar_bin")
+    if label == "Daily":
+        return pd.Index(pos.normalize(), name="calendar_bin")
+    if label == "Weekly":
+        anchor = pd.Timestamp(CALENDAR_ANCHOR_YEAR, 1, 1)
+        day_index = (pos.normalize() - anchor).days
+        week_index = day_index // 7
+        return pd.Index(anchor + pd.to_timedelta(week_index * 7, unit="D"), name="calendar_bin")
+    if label == "Monthly":
+        return pd.Index([pd.Timestamp(CALENDAR_ANCHOR_YEAR, int(stamp.month), 1) for stamp in idx], name="calendar_bin")
+    if label == "Seasonal":
+        starts = []
+        for stamp in idx:
+            month = int(stamp.month)
+            start_month = 12 if month in (12, 1, 2) else (3 if month in (3, 4, 5) else (6 if month in (6, 7, 8) else 9))
+            starts.append(pd.Timestamp(CALENDAR_ANCHOR_YEAR, start_month, 1))
+        return pd.Index(starts, name="calendar_bin")
+    if label == "Annual":
+        return pd.Index([pd.Timestamp(CALENDAR_ANCHOR_YEAR, 1, 1)] * len(idx), name="calendar_bin")
+    raise ValueError(f"Unsupported aggregation: {aggregation}")
+
+
+def calendar_profile_slot(index: pd.DatetimeIndex, aggregation: str) -> pd.Index:
+    """Return a year-neutral grouping slot for one climatological profile."""
     idx = pd.DatetimeIndex(index)
     if aggregation == "Hourly":
         return pd.Index(idx.strftime("%m-%d %H:00"), name="Calendar period")
@@ -165,6 +220,16 @@ def display_period_labels(index: Iterable[object], aggregation: str, basis: str 
     if isinstance(index, pd.DatetimeIndex):
         idx = pd.DatetimeIndex(index)
         multiyear = len(set(int(year) for year in idx.year)) > 1
+        if basis == INTERANNUAL_OVERLAY:
+            if aggregation == "Monthly":
+                return list(idx.strftime("%b"))
+            if aggregation == "Weekly":
+                anchor = pd.Timestamp(CALENDAR_ANCHOR_YEAR, 1, 1)
+                return [f"W{int(((stamp.normalize() - anchor).days // 7) + 1):02d}" for stamp in idx]
+            if aggregation == "Daily":
+                return list(idx.strftime("%d %b"))
+            if aggregation in {"Hourly", "Native"}:
+                return list(idx.strftime("%d %b %H:%M"))
         if aggregation == "Monthly":
             return list(idx.strftime("%b %Y" if multiyear else "%b"))
         if aggregation == "Weekly":
@@ -183,7 +248,7 @@ def display_period_labels(index: Iterable[object], aggregation: str, basis: str 
         return list(idx)
 
     values = list(index)
-    if basis == CALENDAR_PROFILE:
+    if basis in {CALENDAR_PROFILE, INTERANNUAL_OVERLAY}:
         if aggregation == "Monthly":
             labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
             return [labels[int(value) - 1] if str(value).isdigit() and 1 <= int(value) <= 12 else str(value) for value in values]

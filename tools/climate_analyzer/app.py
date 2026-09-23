@@ -125,7 +125,7 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
     global OverlaySeries, available_resolution_labels, build_overlay_figure
     global native_resolution_minutes, validate_unit_families
     global available_years, filter_datetime_range, filter_year, with_time_basis
-    global CHRONOLOGICAL, CALENDAR_PROFILE, display_period_labels, is_multiyear, time_basis
+    global CHRONOLOGICAL, CALENDAR_PROFILE, INTERANNUAL_OVERLAY, display_period_labels, is_multiyear, time_basis
 
     if not _ANALYSIS_DEPENDENCIES_LOADED:
         import pandas as pd
@@ -224,6 +224,7 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
         from epw_climate_analyzer.temporal_filtering import (
             CALENDAR_PROFILE,
             CHRONOLOGICAL,
+            INTERANNUAL_OVERLAY,
             available_years,
             display_period_labels,
             is_multiyear,
@@ -1953,12 +1954,13 @@ def sidebar_filters(df: pd.DataFrame) -> pd.DataFrame:
     if len(ranged_years) > 1:
         basis = st.sidebar.selectbox(
             "Time basis",
-            [CHRONOLOGICAL, CALENDAR_PROFILE],
+            [CHRONOLOGICAL, CALENDAR_PROFILE, INTERANNUAL_OVERLAY],
             index=0,
             key="global_time_basis",
             help=(
-                "Chronological keeps every real period in order. Calendar profile aligns equivalent "
-                "calendar positions across the selected years for multi-year min/mean/max or typical-period analysis."
+                "Chronological keeps every real period in order. Calendar profile combines equivalent "
+                "calendar positions according to the existing profile/averaging rules. Interannual overlay "
+                "keeps every real year independent and aligns the yearly series on a common calendar axis."
             ),
         )
     else:
@@ -4307,10 +4309,17 @@ def render_time_series_overlay(df: pd.DataFrame) -> None:
     """Render aligned variable-resolution series on one absolute time axis."""
     st.header("Time series and overlay")
     native_minutes = native_resolution_minutes(pd.DatetimeIndex(df.index))
-    st.caption(
-        f"Source resolution: {native_minutes} min. Choose an exact time window and overlay up to six series. "
-        "Resolutions finer than the source are intentionally unavailable; no temporal interpolation is performed."
-    )
+    native_calendar = str(df.attrs.get("canonical_native_resolution", "")).strip().lower()
+    if native_calendar == "monthly":
+        st.caption(
+            "Source resolution: calendar month. Choose whole published months and overlay up to six series. "
+            "No sub-monthly timestamps are reconstructed or interpolated."
+        )
+    else:
+        st.caption(
+            f"Source resolution: {native_minutes} min. Choose an exact time window and overlay up to six series. "
+            "Resolutions finer than the source are intentionally unavailable; no temporal interpolation is performed."
+        )
 
     index = pd.DatetimeIndex(df.index).sort_values()
     if index.empty:
@@ -4319,47 +4328,68 @@ def render_time_series_overlay(df: pd.DataFrame) -> None:
 
     default_start = pd.Timestamp(index.min())
     default_end = pd.Timestamp(index.max())
-    date_min = default_start.date()
-    date_max = default_end.date()
-    step_seconds = max(60, int(native_minutes * 60))
 
-    c1, c2, c3, c4 = st.columns(4)
-    start_date = c1.date_input(
-        "From date",
-        value=default_start.date(),
-        min_value=date_min,
-        max_value=date_max,
-        key="overlay_start_date",
-    )
-    start_time = c2.time_input(
-        "From time",
-        value=default_start.time(),
-        step=step_seconds,
-        key="overlay_start_time",
-    )
-    end_date = c3.date_input(
-        "Through date",
-        value=default_end.date(),
-        min_value=date_min,
-        max_value=date_max,
-        key="overlay_end_date",
-    )
-    end_time = c4.time_input(
-        "Through time",
-        value=default_end.time(),
-        step=step_seconds,
-        key="overlay_end_time",
-    )
+    if native_calendar == "monthly":
+        month_options = list(dict.fromkeys(pd.Timestamp(value) for value in index))
+        c1, c2 = st.columns(2)
+        start = pd.Timestamp(c1.selectbox(
+            "From month",
+            month_options,
+            index=0,
+            format_func=lambda value: pd.Timestamp(value).strftime("%Y-%m"),
+            key="overlay_start_month",
+        ))
+        selected_end = pd.Timestamp(c2.selectbox(
+            "Through month",
+            month_options,
+            index=len(month_options) - 1,
+            format_func=lambda value: pd.Timestamp(value).strftime("%Y-%m"),
+            key="overlay_end_month",
+        ))
+        end = selected_end + pd.offsets.MonthBegin(1)
+    else:
+        date_min = default_start.date()
+        date_max = default_end.date()
+        step_seconds = max(60, int(native_minutes * 60))
 
-    start = pd.Timestamp.combine(start_date, start_time)
-    selected_end = pd.Timestamp.combine(end_date, end_time)
-    if index.tz is not None:
-        start = start.tz_localize(index.tz)
-        selected_end = selected_end.tz_localize(index.tz)
-    # "Through" denotes the selected source interval, so the internal viewport
-    # ends at the following native interval boundary. This includes the selected
-    # 23:00 EPW record without fabricating sub-hourly values.
-    end = selected_end + pd.Timedelta(minutes=native_minutes)
+        c1, c2, c3, c4 = st.columns(4)
+        start_date = c1.date_input(
+            "From date",
+            value=default_start.date(),
+            min_value=date_min,
+            max_value=date_max,
+            key="overlay_start_date",
+        )
+        start_time = c2.time_input(
+            "From time",
+            value=default_start.time(),
+            step=step_seconds,
+            key="overlay_start_time",
+        )
+        end_date = c3.date_input(
+            "Through date",
+            value=default_end.date(),
+            min_value=date_min,
+            max_value=date_max,
+            key="overlay_end_date",
+        )
+        end_time = c4.time_input(
+            "Through time",
+            value=default_end.time(),
+            step=step_seconds,
+            key="overlay_end_time",
+        )
+
+        start = pd.Timestamp.combine(start_date, start_time)
+        selected_end = pd.Timestamp.combine(end_date, end_time)
+        if index.tz is not None:
+            start = start.tz_localize(index.tz)
+            selected_end = selected_end.tz_localize(index.tz)
+        # "Through" denotes the selected source interval, so the internal viewport
+        # ends at the following native interval boundary. This includes the selected
+        # 23:00 EPW record without fabricating sub-hourly values.
+        end = selected_end + pd.Timedelta(minutes=native_minutes)
+
     if selected_end < start:
         st.error("The end timestamp must not be earlier than the start timestamp.")
         return
@@ -4378,7 +4408,7 @@ def render_time_series_overlay(df: pd.DataFrame) -> None:
         st.info("No numeric climate variables are available for overlay.")
         return
 
-    resolutions = available_resolution_labels(pd.DatetimeIndex(df.index))
+    resolutions = available_resolution_labels(df)
     n_series = st.slider("Number of series", min_value=1, max_value=6, value=2, step=1)
     preferred = [
         "Dry-bulb temperature",

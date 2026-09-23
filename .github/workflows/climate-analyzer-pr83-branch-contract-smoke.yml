@@ -4,9 +4,15 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
+      - 'tools/climate_analyzer/app.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/timeseries.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/temporal_filtering.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/interannual_profiles.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/charts.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_contract_closure.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_contract_guidance_hotfix.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_contract_guard.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_canonical.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_overlay_hotfix.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_selection_state.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_surface_guard.py'
@@ -16,12 +22,16 @@ on:
       - 'tools/climate_analyzer/tests/test_canonical_contract_runtime_0_7_5_4.py'
       - 'tools/climate_analyzer/tests/test_geosphere_resource_transition_0_7_5_5.py'
       - 'tools/climate_analyzer/tests/test_geosphere_monthly_mature_loader_contract.py'
+      - 'tools/climate_analyzer/tests/test_interannual_overlay.py'
+      - 'tools/climate_analyzer/tests/test_interannual_overlay_profiles.py'
       - 'deployment/pr83_monthly_contract_probe.py'
       - 'deployment/pr83_monthly_selected_load_smoke.mjs'
       - 'deployment/pr83_source_ui_live_smoke_v18.mjs'
       - 'deployment/pr83_precip_snow_live_smoke.mjs'
       - 'deployment/pr83_visual_walkthrough.mjs'
       - 'deployment/pr83_visual_walkthrough_core.mjs'
+      - 'deployment/interannual_overlay_provider_probe.py'
+      - 'deployment/interannual_overlay_browser_smoke.mjs'
       - '.github/workflows/climate-analyzer-pr83-branch-contract-smoke.yml'
   workflow_dispatch:
 
@@ -46,6 +56,8 @@ jobs:
       PR83_VISUAL_DIR: artifacts/pr83-visual-walkthrough
       GEOSPHERE_SMOKE_FIXTURE: artifacts/geosphere-precip-snow-smoke/provider-fixture.json
       AUDIT_OUTPUT_DIR: artifacts/geosphere-precip-snow-smoke
+      INTERANNUAL_HOURLY_FIXTURE: artifacts/interannual-overlay/hourly-provider.json
+      INTERANNUAL_BROWSER_REPORT: artifacts/interannual-overlay/browser-report.json
 
     steps:
       - name: Checkout PR branch
@@ -71,10 +83,15 @@ jobs:
             tools.climate_analyzer.tests.test_canonical_contract_closure_0_7_5_3 \
             tools.climate_analyzer.tests.test_canonical_contract_runtime_0_7_5_4 \
             tools.climate_analyzer.tests.test_geosphere_resource_transition_0_7_5_5 \
-            tools.climate_analyzer.tests.test_geosphere_monthly_mature_loader_contract
+            tools.climate_analyzer.tests.test_geosphere_monthly_mature_loader_contract \
+            tools.climate_analyzer.tests.test_interannual_overlay \
+            tools.climate_analyzer.tests.test_interannual_overlay_profiles
 
       - name: Probe live GeoSphere native-monthly contract
         run: python deployment/pr83_monthly_contract_probe.py
+
+      - name: Probe compact hourly interannual fixture
+        run: python deployment/interannual_overlay_provider_probe.py
 
       - name: Probe live GeoSphere precipitation/snow fixture
         run: |
@@ -120,6 +137,12 @@ jobs:
         continue-on-error: true
         run: node deployment/pr83_monthly_selected_load_smoke.mjs
 
+      - name: Exercise interannual Daily and Monthly overlay in browser
+        id: interannual_overlay_smoke
+        if: ${{ always() && !cancelled() }}
+        continue-on-error: true
+        run: node deployment/interannual_overlay_browser_smoke.mjs
+
       - name: Capture monthly visual walkthrough
         id: visual_walkthrough
         if: ${{ always() && !cancelled() }}
@@ -151,6 +174,7 @@ jobs:
             artifacts/pr83-contract-smoke
             artifacts/pr83-visual-walkthrough
             artifacts/geosphere-precip-snow-smoke
+            artifacts/interannual-overlay
           if-no-files-found: warn
           retention-days: 30
 
@@ -159,17 +183,20 @@ jobs:
         env:
           SOURCE_UI_OUTCOME: ${{ steps.source_ui_smoke.outcome }}
           MONTHLY_LOAD_OUTCOME: ${{ steps.monthly_selected_load.outcome }}
+          INTERANNUAL_OUTCOME: ${{ steps.interannual_overlay_smoke.outcome }}
           VISUAL_OUTCOME: ${{ steps.visual_walkthrough.outcome }}
           PRECIPITATION_OUTCOME: ${{ steps.precipitation_smoke.outcome }}
           TRACEBACK_OUTCOME: ${{ steps.traceback_gate.outcome }}
         run: |
           echo "source UI: $SOURCE_UI_OUTCOME"
           echo "monthly selected-variable load: $MONTHLY_LOAD_OUTCOME"
+          echo "interannual overlay: $INTERANNUAL_OUTCOME"
           echo "visual walkthrough: $VISUAL_OUTCOME"
           echo "precipitation/snow: $PRECIPITATION_OUTCOME"
           echo "runtime traceback gate: $TRACEBACK_OUTCOME"
           test "$SOURCE_UI_OUTCOME" = success
           test "$MONTHLY_LOAD_OUTCOME" = success
+          test "$INTERANNUAL_OUTCOME" = success
           test "$VISUAL_OUTCOME" = success
           test "$PRECIPITATION_OUTCOME" = success
           test "$TRACEBACK_OUTCOME" = success
