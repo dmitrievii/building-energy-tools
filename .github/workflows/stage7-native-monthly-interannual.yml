@@ -1,0 +1,110 @@
+name: Stage7 Native Monthly Interannual Acceptance
+
+on:
+  push:
+    branches:
+      - fix/interannual-overlay-native-monthly-stage-7
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: stage7-native-monthly-interannual
+  cancel-in-progress: true
+
+jobs:
+  native-monthly-smoke:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONPATH: tools/climate_analyzer
+      TARGET_URL: http://127.0.0.1:8501/
+      CHROME_PATH: /usr/bin/google-chrome
+      PR83_MONTHLY_FIXTURE: artifacts/pr83-contract-smoke/monthly-provider.json
+      PR83_MONTHLY_LOAD_REPORT: artifacts/pr83-contract-smoke/monthly-selected-load.json
+
+    steps:
+      - name: Checkout staging branch
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/climate_analyzer/requirements.txt
+
+      - name: Apply native-monthly acceptance patch
+        run: python deployment/stage7_patch_native_monthly_acceptance.py
+
+      - name: Syntax-check upgraded monthly browser smoke
+        run: node --check deployment/pr83_monthly_selected_load_smoke.mjs
+
+      - name: Install Climate Analyzer dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r tools/climate_analyzer/requirements.txt
+
+      - name: Run focused Interannual unit contract
+        env:
+          PYTHONWARNINGS: error::FutureWarning
+        run: |
+          python -m unittest -v \
+            tools.climate_analyzer.tests.test_interannual_overlay \
+            tools.climate_analyzer.tests.test_interannual_overlay_profiles
+
+      - name: Probe live GeoSphere 2020-2025 native-monthly contract
+        run: python deployment/pr83_monthly_contract_probe.py
+
+      - name: Start staging Streamlit
+        run: |
+          mkdir -p artifacts/pr83-contract-smoke
+          nohup python -m streamlit run tools/climate_analyzer/app.py \
+            --server.headless true \
+            --server.address 127.0.0.1 \
+            --server.port 8501 \
+            > artifacts/pr83-contract-smoke/streamlit.log 2>&1 &
+          for i in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:8501/_stcore/health >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat artifacts/pr83-contract-smoke/streamlit.log || true
+          exit 1
+
+      - name: Install browser smoke dependency
+        run: npm install --no-save playwright-core@1.55.0
+
+      - name: Exercise native-monthly 2020-2025 Interannual acceptance
+        run: node deployment/pr83_monthly_selected_load_smoke.mjs
+
+      - name: Reject Streamlit runtime tracebacks
+        run: |
+          if grep -E 'Traceback \(most recent call last\)|Uncaught app execution' artifacts/pr83-contract-smoke/streamlit.log; then
+            cat artifacts/pr83-contract-smoke/streamlit.log
+            exit 1
+          fi
+
+      - name: Commit validated Stage7 files
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            tools/climate_analyzer/epw_climate_analyzer/timeseries.py \
+            tools/climate_analyzer/tests/test_interannual_overlay.py \
+            deployment/pr83_monthly_selected_load_smoke.mjs
+          git diff --cached --quiet && exit 0
+          git commit -m 'Climate: validate native monthly interannual presentation'
+          git push
+
+      - name: Upload Stage7 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage7-native-monthly-interannual
+          path: artifacts/pr83-contract-smoke
+          if-no-files-found: warn
+          retention-days: 14
