@@ -74,16 +74,21 @@ async function selectComboOption(page, label, predicate) {
 }
 
 async function chooseSource(page) {
-  const frame = await appFrame(page, 'Climate Analyzer');
-  for (const candidate of [
-    frame.getByRole('radio', { name: 'GeoSphere Austria', exact: true }).last(),
-    frame.getByText('GeoSphere Austria', { exact: true }).last(),
-    frame.locator('label').filter({ hasText: 'GeoSphere Austria' }).last(),
-  ]) {
-    if (!(await candidate.count().catch(() => 0))) continue;
-    await candidate.click({ force: true, timeout: 5000 }).catch(() => {});
-    try { return await appFrame(page, 'GeoSphere Austria — measured historical station data', 15000); }
-    catch {}
+  const started = performance.now();
+  while (performance.now() - started < 60000) {
+    const frame = await appFrame(page, 'Climate Analyzer', 10000);
+    for (const candidate of [
+      frame.getByRole('radio', { name: 'GeoSphere Austria', exact: true }).last(),
+      frame.getByText('GeoSphere Austria', { exact: true }).last(),
+      frame.locator('label').filter({ hasText: 'GeoSphere Austria' }).last(),
+    ]) {
+      if (!(await candidate.count().catch(() => 0))) continue;
+      try {
+        await candidate.click({ force: true, timeout: 5000 });
+        return await appFrame(page, 'GeoSphere Austria — measured historical station data', 15000);
+      } catch {}
+    }
+    await sleep(300);
   }
   throw new Error('Could not select GeoSphere Austria.');
 }
