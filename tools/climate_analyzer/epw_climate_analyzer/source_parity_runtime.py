@@ -69,6 +69,7 @@ def _reset_persistent_source_parity_modules() -> None:
         "chart_theme",
         "temporal_filtering",
         "timeseries",
+        "interannual_year_highlight",
         "charts",
         "source_parity_fixes",
         "source_parity_ground",
@@ -152,6 +153,7 @@ def _install_into_app_globals_locked(namespace: MutableMapping[str, Any]) -> boo
     # preserves the established lightweight-startup contract.
     from .geosphere_resource_overlay import apply_geosphere_resource_overlay
     parity = _fresh_source_parity_ui()
+    from .interannual_year_highlight import install_interannual_year_highlight
     from .source_parity_fixes import apply_source_parity_fixes
     from .source_parity_ground import install_ground_depth_contract
     from .source_parity_resolution import enforce_native_timeseries_only
@@ -206,6 +208,11 @@ def _install_into_app_globals_locked(namespace: MutableMapping[str, Any]) -> boo
     # last makes the cleanup independent of whichever inner wrapper emitted the
     # legacy shared-shell text.
     install_monthly_surface_guard(parity)
+
+    # Source-neutral presentation control for Interannual overlay. Install it
+    # after all provider-specific wrappers so every source uses the same final
+    # shared time-series renderer and the same focused-year semantics.
+    install_interannual_year_highlight(proxy)
 
     # Freeze the fully composed selector into this Streamlit app-script namespace.
     # Without this final binding, the lambda installed by source_parity_ui performs
