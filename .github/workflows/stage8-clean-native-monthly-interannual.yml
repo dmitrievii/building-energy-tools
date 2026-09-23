@@ -49,7 +49,9 @@ jobs:
           grep -q "text.trim() === 'Native'" deployment/pr83_monthly_selected_load_smoke.mjs
           grep -q 'MONTHLY_OVERLAY_RESOLUTIONS = ("Native", "Monthly", "Seasonal", "Annual")' tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_cleanup.py
           grep -q 'resolution_options = list(monthly_overlay_resolution_options(column))' tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_cleanup.py
-          ! grep -q 'monthly_overlay_resolution_key' tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_cleanup.py
+          grep -q 'return f"monthly_overlay_resolution_{int(index)}"' tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_cleanup.py
+          grep -q 'key=resolution_key' tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_cleanup.py
+          ! grep -q 'key=f"overlay_resolution_{i}"' tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_cleanup.py
           git diff --check
           git diff -- \
             tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_cleanup.py \
