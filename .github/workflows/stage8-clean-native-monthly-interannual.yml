@@ -41,32 +41,15 @@ jobs:
           python deployment/stage8_materialize_native_monthly.py
           python deployment/stage8_harden_browser_smoke.py
           python deployment/stage8_monthly_capability_contract.py
-          python - <<'PY'
-          from pathlib import Path
-          import re
-          path = Path('deployment/pr83_monthly_selected_load_smoke.mjs')
-          text = path.read_text(encoding='utf-8')
-          text = text.replace("  await setResolution(page, 'Native');\n", '', 1)
-          text, count = re.subn(
-              r"\nasync function setResolution\(page, resolution\) \{.*?\n\}\n\nasync function plotSnapshot",
-              "\nasync function plotSnapshot",
-              text,
-              count=1,
-              flags=re.S,
-          )
-          if count != 1:
-              raise SystemExit('Could not remove obsolete forced-resolution helper')
-          if 'setResolution(' in text:
-              raise SystemExit('Forced resolution interaction remains in browser smoke')
-          path.write_text(text, encoding='utf-8')
-          PY
 
       - name: Prove candidate is direct and clean
         run: |
           node --check deployment/pr83_monthly_selected_load_smoke.mjs
-          ! grep -q 'setResolution(' deployment/pr83_monthly_selected_load_smoke.mjs
+          grep -q "await setResolution(page, 'Native')" deployment/pr83_monthly_selected_load_smoke.mjs
+          grep -q "text.trim() === 'Native'" deployment/pr83_monthly_selected_load_smoke.mjs
           grep -q 'MONTHLY_OVERLAY_RESOLUTIONS = ("Native", "Monthly", "Seasonal", "Annual")' tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_cleanup.py
           grep -q 'resolution_options = list(monthly_overlay_resolution_options(column))' tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_cleanup.py
+          ! grep -q 'monthly_overlay_resolution_key' tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_cleanup.py
           git diff --check
           git diff -- \
             tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_cleanup.py \
