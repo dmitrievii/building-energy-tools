@@ -37,7 +37,9 @@ jobs:
           cache-dependency-path: tools/climate_analyzer/requirements.txt
 
       - name: Apply native-monthly acceptance patch
-        run: python deployment/stage7_patch_native_monthly_acceptance.py
+        run: |
+          python deployment/stage7_patch_native_monthly_acceptance.py
+          python deployment/stage7_resolution_selection_fix.py
 
       - name: Syntax-check upgraded monthly browser smoke
         run: node --check deployment/pr83_monthly_selected_load_smoke.mjs
