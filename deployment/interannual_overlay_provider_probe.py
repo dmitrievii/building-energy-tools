@@ -11,8 +11,8 @@ from epw_climate_analyzer import geosphere
 OUTPUT = Path("artifacts/interannual-overlay/hourly-provider.json")
 RESOURCE_ID = "klima-v2-1h"
 STATION_ID = "105"
-START = pd.Timestamp("2024-12-28T00:00:00Z")
-END = pd.Timestamp("2025-01-04T23:00:00Z")
+START = pd.Timestamp("2024-12-31T00:00:00Z")
+END = pd.Timestamp("2025-01-01T23:00:00Z")
 
 
 def main() -> int:
