@@ -1,0 +1,65 @@
+name: Stage6 Interannual Hover Smoke
+
+on:
+  push:
+    branches:
+      - fix/interannual-overlay-hover-stage-6
+    paths:
+      - deployment/stage6_patch_hover.py
+
+permissions:
+  contents: write
+
+jobs:
+  hover-smoke:
+    runs-on: ubuntu-24.04
+    env:
+      PYTHONPATH: tools/climate_analyzer
+      TARGET_URL: http://127.0.0.1:8501/
+      CHROME_PATH: /usr/bin/google-chrome
+      INTERANNUAL_HOURLY_FIXTURE: artifacts/interannual-overlay/hourly-provider.json
+      INTERANNUAL_BROWSER_REPORT: artifacts/interannual-overlay/browser-report.json
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/climate_analyzer/requirements.txt
+      - name: Apply hover patch
+        run: python deployment/stage6_patch_hover.py
+      - name: Syntax-check browser smoke
+        run: node --check deployment/interannual_overlay_browser_smoke.mjs
+      - name: Install Climate Analyzer dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r tools/climate_analyzer/requirements.txt
+      - name: Probe compact hourly interannual fixture
+        run: python deployment/interannual_overlay_provider_probe.py
+      - name: Start branch Streamlit
+        run: |
+          mkdir -p artifacts/interannual-overlay
+          nohup python -m streamlit run tools/climate_analyzer/app.py \
+            --server.headless true \
+            --server.address 127.0.0.1 \
+            --server.port 8501 \
+            > artifacts/interannual-overlay/streamlit.log 2>&1 &
+          for i in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:8501/_stcore/health >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat artifacts/interannual-overlay/streamlit.log || true
+          exit 1
+      - name: Install browser smoke dependency
+        run: npm install --no-save playwright-core@1.55.0
+      - name: Run live interannual hover smoke
+        run: node deployment/interannual_overlay_browser_smoke.mjs
+      - name: Commit validated browser smoke
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add deployment/interannual_overlay_browser_smoke.mjs
+          git commit -m "Test: exercise visible interannual hover labels"
+          git push
