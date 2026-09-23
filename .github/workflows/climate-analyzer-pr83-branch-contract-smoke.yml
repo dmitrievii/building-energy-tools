@@ -8,6 +8,8 @@ on:
       - 'tools/climate_analyzer/epw_climate_analyzer/timeseries.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/temporal_filtering.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/interannual_profiles.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/interannual_presentation.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/interannual_year_highlight.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/charts.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_contract_closure.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_contract_guidance_hotfix.py'
@@ -24,6 +26,7 @@ on:
       - 'tools/climate_analyzer/tests/test_geosphere_monthly_mature_loader_contract.py'
       - 'tools/climate_analyzer/tests/test_interannual_overlay.py'
       - 'tools/climate_analyzer/tests/test_interannual_overlay_profiles.py'
+      - 'tools/climate_analyzer/tests/test_interannual_year_highlight.py'
       - 'deployment/pr83_monthly_contract_probe.py'
       - 'deployment/pr83_monthly_selected_load_smoke.mjs'
       - 'deployment/pr83_source_ui_live_smoke_v18.mjs'
@@ -85,7 +88,8 @@ jobs:
             tools.climate_analyzer.tests.test_geosphere_resource_transition_0_7_5_5 \
             tools.climate_analyzer.tests.test_geosphere_monthly_mature_loader_contract \
             tools.climate_analyzer.tests.test_interannual_overlay \
-            tools.climate_analyzer.tests.test_interannual_overlay_profiles
+            tools.climate_analyzer.tests.test_interannual_overlay_profiles \
+            tools.climate_analyzer.tests.test_interannual_year_highlight
 
       - name: Probe live GeoSphere native-monthly contract
         run: python deployment/pr83_monthly_contract_probe.py
