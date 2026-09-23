@@ -71,6 +71,22 @@ async function visibleOption(page, frame, predicate) {
   return null;
 }
 
+async function selectComboOption(page, label, predicate) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const frame = await appFrame(page);
+    const control = await combo(frame, label, 10000);
+    await control.click({ timeout: 5000 });
+    const option = await visibleOption(page, frame, predicate);
+    if (option) {
+      await option.click({ timeout: 5000 });
+      await sleep(700);
+      return appFrame(page);
+    }
+    await sleep(300);
+  }
+  throw new Error(`Could not select option for ${label}.`);
+}
+
 async function chooseSource(page) {
   const started = performance.now();
   while (performance.now() - started < 60000) {
@@ -164,6 +180,103 @@ async function selectStation(page, stationName, stationId) {
     await sleep(250);
   }
   throw new Error(`Could not commit station ${stationName} ID ${targetId}; observed=${observed}`);
+}
+
+function dateValueMatches(value, iso) {
+  const [year, month, day] = iso.split('-').map(Number);
+  const parts = String(value).split(/\D+/).filter(Boolean).map(Number);
+  return parts.includes(year) && parts.includes(month) && parts.includes(day);
+}
+
+async function dateControl(frame, label, timeoutMs = 30000) {
+  const started = performance.now();
+  let current = frame;
+  while (performance.now() - started < timeoutMs) {
+    const labelled = current.getByLabel(label, { exact: true }).first();
+    if (await labelled.count().catch(() => 0) && await labelled.isVisible().catch(() => false)) {
+      const tag = await labelled.evaluate((node) => node.tagName.toLowerCase()).catch(() => '');
+      const role = await labelled.getAttribute('role').catch(() => null);
+      if (['input', 'textarea', 'select'].includes(tag)) return { kind: 'input', locator: labelled };
+      if (role === 'group' && await labelled.locator('[role="spinbutton"]').count().catch(() => 0) >= 3) {
+        return { kind: 'segmented', locator: labelled };
+      }
+    }
+    const aria = current.locator(`input[aria-label="${label}"]`).first();
+    if (await aria.count().catch(() => 0) && await aria.isVisible().catch(() => false)) return { kind: 'input', locator: aria };
+    await sleep(200);
+    current = await appFrame(current.page(), 'Measured variables to load', 5000).catch(() => current);
+  }
+  throw new Error(`Date control unavailable after ${timeoutMs} ms: ${label}`);
+}
+
+async function segmentedDateValue(group) {
+  const segments = group.locator('[role="spinbutton"]');
+  const values = {};
+  for (let i = 0; i < await segments.count(); i += 1) {
+    const segment = segments.nth(i);
+    const label = String(await segment.getAttribute('aria-label').catch(() => '')).toLowerCase();
+    const value = Number(await segment.getAttribute('aria-valuenow').catch(() => NaN));
+    if (label.includes('year')) values.year = value;
+    else if (label.includes('month')) values.month = value;
+    else if (label.includes('day')) values.day = value;
+  }
+  if ([values.year, values.month, values.day].every(Number.isFinite)) {
+    return `${values.year}-${String(values.month).padStart(2, '0')}-${String(values.day).padStart(2, '0')}`;
+  }
+  return await group.innerText().catch(() => '');
+}
+
+async function setSegmentedDate(frame, group, iso) {
+  const [year, month, day] = iso.split('-').map(Number);
+  const desired = { year, month, day };
+  const segments = group.locator('[role="spinbutton"]');
+  const byPart = {};
+  for (let index = 0; index < await segments.count(); index += 1) {
+    const segment = segments.nth(index);
+    const label = String(await segment.getAttribute('aria-label').catch(() => '')).toLowerCase();
+    if (label.includes('year')) byPart.year = segment;
+    else if (label.includes('month')) byPart.month = segment;
+    else if (label.includes('day')) byPart.day = segment;
+  }
+  for (const part of ['year', 'month', 'day']) {
+    const segment = byPart[part];
+    if (!segment) throw new Error(`Could not identify ${part} segment for ${iso}.`);
+    await segment.click({ timeout: 10000 });
+    const editable = await segment.getAttribute('contenteditable').catch(() => null);
+    if (editable === 'true') await segment.fill(String(desired[part]), { timeout: 10000 });
+    else {
+      await segment.press(process.platform === 'darwin' ? 'Meta+A' : 'Control+A').catch(() => {});
+      await segment.press('Backspace').catch(() => {});
+      await frame.page().keyboard.type(String(desired[part]), { delay: 50 });
+    }
+    await sleep(160);
+  }
+  await frame.page().keyboard.press('Tab').catch(() => {});
+}
+
+async function setDate(page, label, iso) {
+  let lastValue = null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const frame = await appFrame(page, 'Measured variables to load', 20000);
+    const control = await dateControl(frame, label);
+    if (control.kind === 'input') {
+      const candidate = attempt === 0 ? iso.replaceAll('-', '/') : iso;
+      await control.locator.click({ timeout: 10000 });
+      await control.locator.fill(candidate, { timeout: 10000 });
+      await control.locator.press('Enter').catch(() => {});
+      await control.locator.press('Tab').catch(() => {});
+    } else {
+      await setSegmentedDate(frame, control.locator, iso);
+    }
+    await sleep(1000);
+    const refreshedFrame = await appFrame(page, 'Measured variables to load', 20000);
+    const refreshed = await dateControl(refreshedFrame, label);
+    lastValue = refreshed.kind === 'input'
+      ? await refreshed.locator.inputValue().catch(() => null)
+      : await segmentedDateValue(refreshed.locator);
+    if (dateValueMatches(lastValue, iso)) return lastValue;
+  }
+  throw new Error(`Date input ${label} did not accept ${iso}; observed ${lastValue}.`);
 }
 
 async function waitMonthlySurface(page, timeoutMs = 60000) {
@@ -330,8 +443,218 @@ async function selectProvider(page, provider) {
   throw new Error(`Could not select provider ${provider}.`);
 }
 
+
+async function chooseTimeBasis(page) {
+  await selectComboOption(page, 'Time basis', (text) => text.trim() === 'Interannual overlay');
+  const frame = await appFrame(page);
+  const control = await combo(frame, 'Time basis');
+  const value = `${await control.textContent().catch(() => '')} ${await control.inputValue().catch(() => '')}`;
+  if (!value.includes('Interannual overlay')) throw new Error('Interannual overlay time basis did not commit.');
+}
+
+async function openOverlay(page) {
+  const frame = await appFrame(page);
+  const target = frame.getByText('Explore — Time series & overlay', { exact: true }).last();
+  if (!(await target.count().catch(() => 0))) throw new Error('Time series & overlay navigation item missing.');
+  await target.click({ force: true, timeout: 10000 });
+  return appFrame(page, 'Time series and overlay', 30000);
+}
+
+async function seriesCountSlider(frame) {
+  const labels = frame.getByText('Number of series', { exact: true });
+  const labelCount = await labels.count().catch(() => 0);
+  for (let index = 0; index < labelCount; index += 1) {
+    const label = labels.nth(index);
+    if (!(await label.isVisible().catch(() => false))) continue;
+    const container = label.locator(
+      'xpath=ancestor::*[descendant::*[@role="slider"] or descendant::input[@type="range"]][1]'
+    );
+    if (!(await container.count().catch(() => 0))) continue;
+    let slider = container.locator('[role="slider"]').first();
+    if (!(await slider.count().catch(() => 0))) slider = container.locator('input[type="range"]').first();
+    if (await slider.count().catch(() => 0) && await slider.isVisible().catch(() => false)) return slider;
+  }
+
+  const candidates = frame.locator('[role="slider"], input[type="range"]');
+  const candidateCount = await candidates.count().catch(() => 0);
+  for (let index = 0; index < candidateCount; index += 1) {
+    const candidate = candidates.nth(index);
+    if (!(await candidate.isVisible().catch(() => false))) continue;
+    const min = await candidate.getAttribute('aria-valuemin').catch(() => null) ?? await candidate.getAttribute('min').catch(() => null);
+    const max = await candidate.getAttribute('aria-valuemax').catch(() => null) ?? await candidate.getAttribute('max').catch(() => null);
+    if (String(min) === '1' && String(max) === '6') return candidate;
+  }
+  return null;
+}
+
+async function sliderNumericValue(slider) {
+  const aria = await slider.getAttribute('aria-valuenow').catch(() => null);
+  if (aria != null && aria !== '') return Number(aria);
+  const raw = await slider.inputValue().catch(() => null);
+  return raw == null || raw === '' ? NaN : Number(raw);
+}
+
+async function setSeriesCountOne(page) {
+  let lastValue = NaN;
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const frame = await appFrame(page, 'Time series and overlay', 10000);
+    const slider = await seriesCountSlider(frame);
+    if (!slider) {
+      const text = (await bodyText(frame).catch(() => '')).replace(/\s+/g, ' ').trim();
+      throw new Error(`Number of series slider is unavailable. Page text: ${text.slice(-900)}`);
+    }
+    lastValue = await sliderNumericValue(slider);
+    if (lastValue === 1) {
+      await sleep(700);
+      return;
+    }
+    await slider.focus();
+    await slider.press('Home', { timeout: 5000 }).catch(async () => {
+      await slider.press('ArrowLeft', { timeout: 5000 });
+    });
+    await frame.page().keyboard.press('Tab').catch(() => {});
+    await sleep(900);
+  }
+  const frame = await appFrame(page, 'Time series and overlay', 10000);
+  const slider = await seriesCountSlider(frame);
+  lastValue = slider ? await sliderNumericValue(slider) : NaN;
+  if (lastValue !== 1) throw new Error(`Could not commit Number of series = 1; observed ${lastValue}.`);
+}
+
+async function inspectResolutionControl(page) {
+  const frame = await appFrame(page, 'Time series and overlay', 10000);
+  const control = await combo(frame, 'Series 1 resolution', 10000);
+  const renderedValue = await rendered(control);
+  const options = [];
+
+  await control.click({ timeout: 5000 }).catch(() => {});
+  await sleep(250);
+  for (const candidates of [
+    frame.getByRole('option'),
+    page.getByRole('option'),
+    frame.locator('[data-baseweb="menu"] li'),
+    page.locator('[data-baseweb="menu"] li'),
+  ]) {
+    const count = await candidates.count().catch(() => 0);
+    for (let index = 0; index < count; index += 1) {
+      const option = candidates.nth(index);
+      if (!(await option.isVisible().catch(() => false))) continue;
+      const value = (await option.innerText().catch(() => '')).replace(/\s+/g, ' ').trim();
+      if (value && !options.includes(value)) options.push(value);
+    }
+  }
+  await page.keyboard.press('Escape').catch(() => {});
+  return { rendered: renderedValue, visible_options: options };
+}
+
+async function plotSnapshot(page, timeoutMs = 30000) {
+  const started = performance.now();
+  let lastBody = '';
+  while (performance.now() - started < timeoutMs) {
+    const frame = await appFrame(page, 'Time series and overlay', 10000);
+    const plots = frame.locator('.js-plotly-plot');
+    const count = await plots.count().catch(() => 0);
+    if (count) {
+      const plot = plots.last();
+      const snapshot = await plot.evaluate((node) => ({
+        traces: (node.data || []).map((trace) => ({
+          name: String(trace.name || ''),
+          legendgroup: String(trace.legendgroup || ''),
+          mode: String(trace.mode || ''),
+          x: Array.from(trace.x || []).map((value) => value == null ? null : String(value)),
+          y: Array.from(trace.y || []).map((value) => value == null ? null : Number(value)),
+          customdata: Array.from(trace.customdata || []),
+          hovertemplate: String(trace.hovertemplate || ''),
+        })),
+        tickformat: String(node.layout?.xaxis?.tickformat || ''),
+        dtick: node.layout?.xaxis?.dtick ?? null,
+        xaxisTitle: String(node.layout?.xaxis?.title?.text || ''),
+      })).catch(() => null);
+      if (snapshot && snapshot.traces.length) return snapshot;
+    }
+    lastBody = (await bodyText(frame).catch(() => '')).replace(/\s+/g, ' ').trim();
+    await sleep(250);
+  }
+  throw new Error(`Native monthly Plotly chart did not render within ${timeoutMs} ms. Page text: ${lastBody.slice(-1200)}`);
+}
+
+function assertNativeMonthlyInterannual(snapshot) {
+  const expectedYears = [2020, 2021, 2022, 2023, 2024, 2025];
+  if (snapshot.traces.length !== expectedYears.length) {
+    throw new Error(`Expected 6 Native monthly yearly traces, got ${snapshot.traces.length}: ${snapshot.traces.map((trace) => trace.name).join(' | ')}`);
+  }
+  for (const year of expectedYears) {
+    const matches = snapshot.traces.filter((trace) => trace.name.includes(String(year)));
+    if (matches.length !== 1) throw new Error(`Expected exactly one Native monthly trace for ${year}, got ${matches.length}.`);
+    const trace = matches[0];
+    if (!trace.mode.includes('markers')) throw new Error(`Native monthly ${year} trace must expose markers; mode=${trace.mode}`);
+    const positions = trace.x.filter(Boolean);
+    if (positions.length !== 12) throw new Error(`Native monthly ${year} trace has ${positions.length} calendar positions, expected 12.`);
+    const months = positions.map((value) => {
+      const match = String(value).match(/2000-(\d{2})-/);
+      return match ? Number(match[1]) : NaN;
+    });
+    if (months.join(',') !== '1,2,3,4,5,6,7,8,9,10,11,12') {
+      throw new Error(`Native monthly ${year} calendar positions are not Jan-Dec: ${positions.join(' | ')}`);
+    }
+    const custom = trace.customdata.filter((row) => Array.isArray(row) && row[0] != null);
+    if (custom.length !== 12) throw new Error(`Native monthly ${year} customdata has ${custom.length} rows, expected 12.`);
+    for (const row of custom) {
+      if (Number(row[0]) !== year) throw new Error(`Native monthly ${year} customdata lost real-year identity: ${JSON.stringify(row)}`);
+      if (!String(row[1] || '').startsWith(`${year}-`)) throw new Error(`Native monthly ${year} source timestamp is not real-year provenance: ${JSON.stringify(row)}`);
+      if (String(row[3] || '') !== 'Native') throw new Error(`Native monthly ${year} resolution provenance is not Native: ${JSON.stringify(row)}`);
+    }
+    if (!trace.hovertemplate.includes('Year:') || !trace.hovertemplate.includes('Source:') || !trace.hovertemplate.includes('Value:')) {
+      throw new Error(`Native monthly ${year} hover template lost Year/Source/Value semantics.`);
+    }
+  }
+  if (snapshot.tickformat !== '%b') throw new Error(`Native monthly x-axis tickformat must be %b, got ${snapshot.tickformat}.`);
+  if (String(snapshot.dtick) !== 'M1') throw new Error(`Native monthly x-axis dtick must be M1, got ${snapshot.dtick}.`);
+  if (snapshot.xaxisTitle !== 'Calendar position') throw new Error(`Native monthly x-axis title changed: ${snapshot.xaxisTitle}`);
+  return expectedYears;
+}
+
+async function renderedHoverText(plot) {
+  const labels = await plot.locator('.hoverlayer text').allTextContents().catch(() => []);
+  return labels.join(' ').replace(/\s+/g, ' ').trim();
+}
+
+async function waitForHoverText(plot, timeoutMs = 5000) {
+  const started = performance.now();
+  let text = '';
+  while (performance.now() - started < timeoutMs) {
+    text = await renderedHoverText(plot);
+    if (text.includes('Year:') && text.includes('Value:')) return text;
+    await sleep(100);
+  }
+  return text;
+}
+
+async function exerciseHover(page) {
+  const frame = await appFrame(page, 'Time series and overlay');
+  const plot = frame.locator('.js-plotly-plot').last();
+  const target = await plot.evaluate((node) => {
+    if (!window.Plotly) throw new Error('Plotly global unavailable');
+    const traces = Array.from(node.data || []);
+    for (let curveNumber = 0; curveNumber < traces.length; curveNumber += 1) {
+      const values = Array.from(traces[curveNumber].y || []);
+      const pointNumber = values.findIndex((value) => value != null && Number.isFinite(Number(value)));
+      if (pointNumber >= 0) {
+        window.Plotly.Fx.hover(node, [{ curveNumber, pointNumber }]);
+        return { curveNumber, pointNumber };
+      }
+    }
+    throw new Error('No finite Native monthly point is available for hover exercise.');
+  });
+  const text = await waitForHoverText(plot, 5000);
+  if (!text.includes('Year:') || !text.includes('Value:')) {
+    throw new Error(`Native monthly hover did not expose Year and Value for curve ${target.curveNumber}, point ${target.pointNumber}: ${text}`);
+  }
+  return text;
+}
+
 const report = {
-  schema: 'climate-analyzer-monthly-selected-load-smoke-v7-proven-selector-minimal',
+  schema: 'climate-analyzer-monthly-selected-load-smoke-v8-native-interannual',
   target_url: TARGET_URL,
   fixture,
   checks: {},
@@ -373,6 +696,9 @@ try {
   await chooseSource(page);
   await selectDataset(page);
   await selectStation(page, fixture.station_name, fixture.station_id);
+  await setDate(page, 'From date (UTC)', '2020-01-01');
+  await setDate(page, 'Through date (UTC)', '2025-12-31');
+  report.checks.requested_interval = ['2020-01-01', '2025-12-31'];
 
   let frame = await waitMonthlySurface(page);
   let text = await bodyText(frame);
@@ -424,13 +750,23 @@ try {
   if (!(await loadButton.count().catch(() => 0))) throw new Error('Mature GeoSphere load button missing.');
   await loadButton.click({ timeout: 15000 });
 
-  frame = await appFrame(page, 'Climate overview', 180000);
-  text = await bodyText(frame);
-  if (!text.includes('Climate overview')) throw new Error('Monthly canonical dataset did not activate Overview.');
+  frame = await appFrame(page, 'Explore — Time series & overlay', 180000);
   report.checks.canonical_dataset_activated = true;
-  report.checks.summary_overview = true;
   report.checks.dew_point_contract_from_fixture = true;
   report.checks.measured_station_pressure_contract_from_fixture = true;
+
+  await chooseTimeBasis(page);
+  await openOverlay(page);
+  await setSeriesCountOne(page);
+  report.checks.resolution_ui = await inspectResolutionControl(page);
+  const nativeMonthly = await plotSnapshot(page);
+  report.checks.native_monthly_years = assertNativeMonthlyInterannual(nativeMonthly);
+  report.checks.native_monthly_trace_names = nativeMonthly.traces.map((trace) => trace.name);
+  report.checks.native_monthly_positions_per_year = Object.fromEntries(
+    nativeMonthly.traces.map((trace) => [trace.legendgroup, trace.x.filter(Boolean).length]),
+  );
+  report.checks.native_monthly_axis = { tickformat: nativeMonthly.tickformat, dtick: nativeMonthly.dtick };
+  report.checks.native_monthly_hover = await exerciseHover(page);
 
   if (report.page_errors.length) {
     throw new Error(`Browser page error(s): ${report.page_errors.join(' | ')}`);
