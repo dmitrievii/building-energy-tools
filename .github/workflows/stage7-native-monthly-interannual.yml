@@ -41,6 +41,7 @@ jobs:
           python deployment/stage7_patch_native_monthly_acceptance.py
           python deployment/stage7_resolution_selection_fix.py
           python deployment/stage7_native_resolution_fix2.py
+          python deployment/stage7_overlay_state_fix.py
 
       - name: Syntax-check upgraded monthly browser smoke
         run: node --check deployment/pr83_monthly_selected_load_smoke.mjs
@@ -96,6 +97,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add \
+            tools/climate_analyzer/app.py \
             tools/climate_analyzer/epw_climate_analyzer/timeseries.py \
             tools/climate_analyzer/tests/test_interannual_overlay.py \
             deployment/pr83_monthly_selected_load_smoke.mjs
