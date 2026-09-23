@@ -51,8 +51,12 @@ jobs:
           grep -q 'MONTHLY_OVERLAY_RESOLUTIONS = ("Native", "Monthly", "Seasonal", "Annual")' tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_cleanup.py
           grep -q 'resolution_options = list(monthly_overlay_resolution_options(column))' tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_cleanup.py
           ! grep -q 'monthly_overlay_resolution_key' tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_cleanup.py
+          grep -q 'Source resolution: calendar month' tools/climate_analyzer/app.py
+          grep -q 'key="overlay_start_month"' tools/climate_analyzer/app.py
+          grep -q 'selected_end + pd.offsets.MonthBegin(1)' tools/climate_analyzer/app.py
           git diff --check
           git diff -- \
+            tools/climate_analyzer/app.py \
             tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_cleanup.py \
             tools/climate_analyzer/epw_climate_analyzer/timeseries.py \
             tools/climate_analyzer/tests/test_geosphere_monthly_cleanup_0_7_5_4.py \
@@ -113,6 +117,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add \
+            tools/climate_analyzer/app.py \
             tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_cleanup.py \
             tools/climate_analyzer/epw_climate_analyzer/timeseries.py \
             tools/climate_analyzer/tests/test_geosphere_monthly_cleanup_0_7_5_4.py \
