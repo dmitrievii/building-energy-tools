@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import patch
 
 from epw_climate_analyzer import source_parity_runtime
 
@@ -33,6 +34,23 @@ class SourceParityStreamlitRerunResetTests(unittest.TestCase):
         fresh = source_parity_runtime._fresh_source_parity_ui()
         self.assertIsNot(fresh.supported_parameter_mapping, stale_mapping)
         self.assertEqual(fresh.supported_parameter_mapping.__name__, "supported_parameter_mapping")
+
+    def test_temporal_filtering_reloads_before_timeseries(self) -> None:
+        imported: list[str] = []
+
+        def fake_import(name: str):
+            imported.append(name.rsplit(".", 1)[-1])
+            return object()
+
+        with (
+            patch.object(source_parity_runtime.importlib, "import_module", side_effect=fake_import),
+            patch.object(source_parity_runtime.importlib, "reload", side_effect=lambda module: module),
+        ):
+            source_parity_runtime._reset_persistent_source_parity_modules()
+
+        self.assertIn("temporal_filtering", imported)
+        self.assertIn("timeseries", imported)
+        self.assertLess(imported.index("temporal_filtering"), imported.index("timeseries"))
 
 
 if __name__ == "__main__":
