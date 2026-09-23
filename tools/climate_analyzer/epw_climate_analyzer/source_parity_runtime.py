@@ -67,6 +67,7 @@ def _reset_persistent_source_parity_modules() -> None:
     module_names = (
         "aggregations",
         "chart_theme",
+        "temporal_filtering",
         "timeseries",
         "charts",
         "source_parity_fixes",
