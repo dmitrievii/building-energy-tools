@@ -65,7 +65,8 @@ jobs:
         run: |
           node --check deployment/pr83_monthly_selected_load_smoke.mjs
           ! grep -q 'setResolution(' deployment/pr83_monthly_selected_load_smoke.mjs
-          grep -q '_overlay_resolution_context' tools/climate_analyzer/app.py
+          grep -q 'overlay_resolution_context = f' tools/climate_analyzer/app.py
+          grep -q 'overlay_resolution_{overlay_resolution_context}_{i}' tools/climate_analyzer/app.py
           git diff --check
           git diff -- \
             tools/climate_analyzer/app.py \
