@@ -1,4 +1,4 @@
-"""Focused-year styling for every rendered interannual chart.
+"""Focused-year styling for rendered interannual charts.
 
 The scientific interannual representation remains unchanged. This module adds a
 presentation control that can focus one real source year: background *year*
@@ -10,7 +10,7 @@ their original styling.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Callable
 
 import pandas as pd
 
@@ -45,12 +45,16 @@ def apply_interannual_year_highlight(fig: Any, year: int | None) -> Any:
         return fig
 
     selected_year = int(year)
+    trace_years = [_trace_real_year(trace) for trace in tuple(fig.data)]
+    if selected_year not in trace_years:
+        # A stale widget selection must never alter an unrelated chart.
+        return fig
+
     background_years: list[Any] = []
     neutral: list[Any] = []
     highlighted: list[Any] = []
 
-    for trace in tuple(fig.data):
-        trace_year = _trace_real_year(trace)
+    for trace, trace_year in zip(tuple(fig.data), trace_years, strict=True):
         if trace_year is None:
             neutral.append(trace)
             continue
@@ -88,10 +92,9 @@ def apply_interannual_year_highlight(fig: Any, year: int | None) -> Any:
             trace.opacity = min(opacity, BACKGROUND_OPACITY)
             background_years.append(trace)
 
-    if highlighted:
-        # Neutral analytical traces preserve their relative order, while the
-        # highlighted real-year trace is deliberately painted above everything.
-        fig.data = tuple(background_years + neutral + highlighted)
+    # Neutral analytical traces preserve their relative order, while the
+    # highlighted real-year trace is deliberately painted above everything.
+    fig.data = tuple(background_years + neutral + highlighted)
     return fig
 
 
@@ -123,46 +126,58 @@ def _selected_highlight_year(proxy: Any, df: pd.DataFrame) -> int | None:
     return None if selected is None else int(selected)
 
 
-def install_interannual_year_highlight(proxy: Any) -> None:
-    """Install one source-neutral highlight control and final-figure styling.
+def _render_with_highlight_context(
+    proxy: Any,
+    renderer: Callable[..., Any],
+    df: pd.DataFrame,
+    *args: Any,
+    **kwargs: Any,
+) -> Any:
+    """Apply the selected year only while this interannual renderer is active.
 
-    Styling is applied at the common ``render_plot`` boundary rather than only
-    inside the time-series builder. This is essential because Temperature,
-    percentile and min/max interannual views are built by ``interannual_profiles``
-    rather than ``build_overlay_figure``.
+    This deliberately does not depend on a sidebar/session-state copy of the time
+    basis. ``time_basis(df)`` is the authoritative contract. Temporarily wrapping
+    ``render_plot`` keeps the styling local to the current page and prevents a
+    stale year selection from leaking into unrelated charts.
     """
+    selected = _selected_highlight_year(proxy, df)
+    if selected is None or not hasattr(proxy, "render_plot"):
+        return renderer(df, *args, **kwargs)
+
+    original_render_plot = proxy.render_plot
+
+    def highlighted_render_plot(fig: Any, *plot_args: Any, **plot_kwargs: Any) -> Any:
+        styled = apply_interannual_year_highlight(fig, selected)
+        return original_render_plot(styled, *plot_args, **plot_kwargs)
+
+    proxy.render_plot = highlighted_render_plot
+    try:
+        return renderer(df, *args, **kwargs)
+    finally:
+        proxy.render_plot = original_render_plot
+
+
+def install_interannual_year_highlight(proxy: Any) -> None:
+    """Install source-neutral focused-year controls for interannual chart routes."""
     if bool(getattr(proxy, "_INTERANNUAL_YEAR_HIGHLIGHT_INSTALLED", False)):
         return
 
     original_overlay = proxy.render_time_series_overlay
 
-    def render_time_series_overlay(df: pd.DataFrame) -> Any:
-        _selected_highlight_year(proxy, df)
-        return original_overlay(df)
+    def render_time_series_overlay(df: pd.DataFrame, *args: Any, **kwargs: Any) -> Any:
+        return _render_with_highlight_context(proxy, original_overlay, df, *args, **kwargs)
 
     proxy.render_time_series_overlay = render_time_series_overlay
 
     # Generic variable pages (Temperature, Humidity, etc.) use the interannual
-    # profile/envelope builders, so expose the same control there as well.
+    # profile/envelope builders rather than build_overlay_figure. Bind the same
+    # final-render context around that route too.
     if hasattr(proxy, "render_generic_variable_page"):
         original_generic = proxy.render_generic_variable_page
 
         def render_generic_variable_page(df: pd.DataFrame, *args: Any, **kwargs: Any) -> Any:
-            _selected_highlight_year(proxy, df)
-            return original_generic(df, *args, **kwargs)
+            return _render_with_highlight_context(proxy, original_generic, df, *args, **kwargs)
 
         proxy.render_generic_variable_page = render_generic_variable_page
-
-    if hasattr(proxy, "render_plot"):
-        original_render_plot = proxy.render_plot
-
-        def render_plot(fig: Any, *args: Any, **kwargs: Any) -> Any:
-            selected = proxy.st.session_state.get(HIGHLIGHT_STATE_KEY)
-            basis = proxy.st.session_state.get("global_time_basis")
-            if basis == INTERANNUAL_OVERLAY and selected is not None:
-                fig = apply_interannual_year_highlight(fig, int(selected))
-            return original_render_plot(fig, *args, **kwargs)
-
-        proxy.render_plot = render_plot
 
     proxy._INTERANNUAL_YEAR_HIGHLIGHT_INSTALLED = True
