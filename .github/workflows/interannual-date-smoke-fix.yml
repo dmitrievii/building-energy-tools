@@ -1,0 +1,99 @@
+name: Interannual smoke date setter fix
+
+on:
+  push:
+    branches:
+      - feat/interannual-overlay
+    paths:
+      - '.github/workflows/interannual-date-smoke-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-clean:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/interannual-overlay
+          fetch-depth: 1
+      - name: Apply proven date-control implementation
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('deployment/interannual_overlay_browser_smoke.mjs')
+          text = path.read_text(encoding='utf-8')
+          pattern = re.compile(
+              r"async function setSegmentedDate\(page, group, iso\) \{.*?\n\}\n\n"
+              r"async function setDate\(page, label, iso\) \{.*?\n\}\n\n"
+              r"async function variableEditor",
+              re.S,
+          )
+          replacement = r'''async function setSegmentedDate(frame, group, iso) {
+            const [year, month, day] = iso.split('-').map(Number);
+            const desired = { year, month, day };
+            const segments = group.locator('[role="spinbutton"]');
+            const byPart = {};
+            for (let index = 0; index < await segments.count(); index += 1) {
+              const segment = segments.nth(index);
+              const label = String(await segment.getAttribute('aria-label').catch(() => '')).toLowerCase();
+              if (label.includes('year')) byPart.year = segment;
+              else if (label.includes('month')) byPart.month = segment;
+              else if (label.includes('day')) byPart.day = segment;
+            }
+            for (const part of ['year', 'month', 'day']) {
+              const segment = byPart[part];
+              if (!segment) throw new Error(`Could not identify ${part} segment for ${iso}.`);
+              await segment.click({ timeout: 10000 });
+              const editable = await segment.getAttribute('contenteditable').catch(() => null);
+              if (editable === 'true') await segment.fill(String(desired[part]), { timeout: 10000 });
+              else {
+                await segment.press(process.platform === 'darwin' ? 'Meta+A' : 'Control+A').catch(() => {});
+                await segment.press('Backspace').catch(() => {});
+                await frame.page().keyboard.type(String(desired[part]), { delay: 50 });
+              }
+              await sleep(160);
+            }
+            await frame.page().keyboard.press('Tab').catch(() => {});
+          }
+
+          async function setDate(page, label, iso) {
+            let lastValue = null;
+            for (let attempt = 0; attempt < 3; attempt += 1) {
+              const frame = await appFrame(page, 'Measured variables to load', 20000);
+              const control = await dateControl(frame, label);
+              if (control.kind === 'input') {
+                const candidate = attempt === 0 ? iso.replaceAll('-', '/') : iso;
+                await control.locator.click({ timeout: 10000 });
+                await control.locator.fill(candidate, { timeout: 10000 });
+                await control.locator.press('Enter').catch(() => {});
+                await control.locator.press('Tab').catch(() => {});
+              } else await setSegmentedDate(frame, control.locator, iso);
+              await sleep(1000);
+              const refreshedFrame = await appFrame(page, 'Measured variables to load', 20000);
+              const refreshed = await dateControl(refreshedFrame, label);
+              lastValue = refreshed.kind === 'input'
+                ? await refreshed.locator.inputValue().catch(() => null)
+                : await segmentedDateValue(refreshed.locator);
+              if (dateValueMatches(lastValue, iso)) return lastValue;
+            }
+            throw new Error(`Date input ${label} did not accept ${iso}; observed ${lastValue}.`);
+          }
+
+          async function variableEditor'''
+          updated, count = pattern.subn(replacement, text, count=1)
+          if count != 1:
+              raise SystemExit(f'Expected one date-setter block, replaced {count}')
+          path.write_text(updated, encoding='utf-8')
+          PY
+      - name: Commit production smoke fix and remove temporary workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/interannual-date-smoke-fix.yml
+          git add deployment/interannual_overlay_browser_smoke.mjs
+          git commit -m 'Test: reuse proven Streamlit date setter for interannual smoke'
+          git push origin HEAD:feat/interannual-overlay
