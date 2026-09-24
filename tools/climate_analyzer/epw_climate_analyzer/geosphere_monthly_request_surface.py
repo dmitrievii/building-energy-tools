@@ -131,15 +131,18 @@ def _station_and_bundle(legacy: Any, st: Any):
     metadata, supported, stations, catalog, capability_index, parameter_metadata = legacy.cached_geosphere_metadata_bundle()
     station_id = str(st.session_state.get(_STATION_KEY, "") or "")
     station_by_id = {str(item.station_id): item for item in stations}
+    option_ids = _filtered_station_ids(catalog, stations, st)
+    if not option_ids:
+        return None
 
-    if station_id not in station_by_id:
-        option_ids = _filtered_station_ids(catalog, stations, st)
-        if not option_ids:
-            return None
+    # Match the mature browser literally: a station is effective only while it
+    # remains in the current Search/Region-filtered option set.  A stale but
+    # globally valid station id must not survive a filter change.
+    if station_id not in option_ids:
         station_id = option_ids[0]
         # This is the same station that the mature browser already displays as
         # selected. Persisting it closes the state gap without changing the
-        # semantics of an explicit manual/map selection.
+        # semantics of an explicit manual/map selection that is still visible.
         st.session_state[_STATION_KEY] = station_id
 
     station = station_by_id.get(station_id)
@@ -214,6 +217,46 @@ def _selected_payload(edited: pd.DataFrame) -> tuple[tuple[str, ...], tuple[str,
             )
         )
     return providers, flags
+
+
+def _submitted_editor_payload(
+    base: pd.DataFrame,
+    edited: Any,
+    widget_state: object,
+) -> pd.DataFrame:
+    """Reconcile a submitted DataEditor with Streamlit's staged widget delta.
+
+    ``st.data_editor`` inside ``st.form`` keeps checkbox edits client-side until
+    the submit event.  On a fragment rerun Streamlit can expose the submitted
+    ``edited_rows`` state before the returned DataFrame is fully reconciled with
+    the new server-owned base table.  Treat the widget delta as the authoritative
+    final layer for the two editable boolean columns so a visibly checked row can
+    never be rejected as an empty request.
+    """
+    if isinstance(edited, pd.DataFrame) and {"Provider", "Selected"}.issubset(edited.columns):
+        out = edited.copy().reset_index(drop=True)
+    elif isinstance(base, pd.DataFrame):
+        out = base.copy().reset_index(drop=True)
+    else:
+        return pd.DataFrame()
+
+    if not isinstance(widget_state, dict):
+        return out
+    changed_rows = widget_state.get("edited_rows")
+    if not isinstance(changed_rows, dict):
+        return out
+
+    for raw_index, changes in changed_rows.items():
+        try:
+            row_index = int(raw_index)
+        except (TypeError, ValueError):
+            continue
+        if row_index < 0 or row_index >= len(out) or not isinstance(changes, dict):
+            continue
+        for column in ("Selected", "Quality flag"):
+            if column in out.columns and column in changes:
+                out.at[row_index, column] = bool(changes[column])
+    return out
 
 
 def _persist_provider_state(st: Any, edited: pd.DataFrame) -> tuple[tuple[str, ...], tuple[str, ...]]:
@@ -382,10 +425,15 @@ def install_monthly_request_surface(parity: Any) -> None:
         if not submitted:
             return
 
-        providers_selected, _flags = _persist_provider_state(st, edited)
+        submitted_editor = _submitted_editor_payload(
+            visible,
+            edited,
+            st.session_state.get(editor_key),
+        )
+        providers_selected, _flags = _persist_provider_state(st, submitted_editor)
         request_form.capture_date(_START_KEY, start_date)
         request_form.capture_date(_END_KEY, end_date)
-        request_form.capture_editor(edited)
+        request_form.capture_editor(submitted_editor)
 
         if not providers_selected:
             st.warning(_EMPTY_WARNING)
