@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 from datetime import date
 from pathlib import Path
 from types import SimpleNamespace
@@ -7,12 +8,16 @@ import unittest
 
 import pandas as pd
 
+from epw_climate_analyzer import source_parity_ux_followup as ux
 from epw_climate_analyzer.geosphere_request_form import (
     COMMITTED_REQUEST_KEY,
     STAGED_REQUEST_KEY,
     GeoSphereRequestForm,
     GeoSphereRequestState,
     install_geosphere_request_form,
+)
+from epw_climate_analyzer.source_parity_variable_form_compat import (
+    install_geosphere_variable_form_compat,
 )
 
 
@@ -151,6 +156,51 @@ class GeoSphereSubmitBoundaryTests(unittest.TestCase):
         self.assertIn("st.form_submit_button = real_form_submit_button", source)
         self.assertNotIn("st.button = button", source)
         self.assertNotIn("real_button = st.button", source)
+
+
+class GeoSphereTransactionalFormValidationTests(unittest.TestCase):
+    def test_empty_submit_emits_one_persistent_warning_without_load_request(self) -> None:
+        warnings: list[str] = []
+
+        @contextmanager
+        def form(*_args, **_kwargs):
+            yield None
+
+        st = SimpleNamespace(
+            session_state={
+                "geosphere_resource_id": "klima-v2-1m",
+                "geosphere_selected_station_id": "105",
+            },
+            data_editor=lambda data, *args, **kwargs: data,
+            button=lambda *_args, **_kwargs: False,
+            warning=lambda body, *args, **kwargs: warnings.append(str(body)),
+            form=form,
+            caption=lambda *_args, **_kwargs: None,
+            form_submit_button=lambda *_args, **_kwargs: True,
+        )
+        empty_frame = pd.DataFrame(
+            {
+                "Selected": [False],
+                "Provider": ["tl_mittel"],
+                "Variable": ["Air temperature — monthly mean"],
+            }
+        )
+        message = "Select at least one measured GeoSphere variable to load."
+
+        def previous(_legacy, _original):
+            st.data_editor(empty_frame, key="geosphere_variable_editor::monthly")
+            # The mature selector still emits its legacy zero-selection warning;
+            # the transactional wrapper must suppress this duplicate and publish
+            # exactly one post-form validation message instead.
+            st.warning(message)
+            return "blocked"
+
+        parity = SimpleNamespace(st=st, _render_geosphere_resource_selector=previous)
+        install_geosphere_variable_form_compat(parity)
+
+        self.assertEqual(parity._render_geosphere_resource_selector(None, None), "blocked")
+        self.assertEqual(warnings, [message])
+        self.assertNotIn(ux._FORM_REQUEST_KEY, st.session_state)
 
 
 class GeoSphereRuntimeBoundaryContractTests(unittest.TestCase):
