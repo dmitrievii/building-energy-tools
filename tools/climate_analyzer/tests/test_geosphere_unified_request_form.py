@@ -154,15 +154,19 @@ class GeoSphereSubmitBoundaryTests(unittest.TestCase):
 
 
 class GeoSphereRuntimeBoundaryContractTests(unittest.TestCase):
-    def test_request_boundary_precedes_freeze_without_fragmenting_station_browser(self) -> None:
+    def test_transactional_form_and_request_boundary_precede_freeze_without_fragmenting_station_browser(self) -> None:
         source = (
             Path(__file__).resolve().parents[1]
             / "epw_climate_analyzer"
             / "source_parity_runtime.py"
         ).read_text(encoding="utf-8")
-        install_pos = source.index("install_geosphere_request_form(parity)")
+        patch_pos = source.index("patch_variable_form_installer()")
+        form_pos = source.index("install_geosphere_variable_form_compat(parity)")
+        request_pos = source.index("install_geosphere_request_form(parity)")
         freeze_pos = source.index("_freeze_session_geosphere_selector(proxy, parity)")
-        self.assertLess(install_pos, freeze_pos)
+        self.assertLess(patch_pos, form_pos)
+        self.assertLess(form_pos, request_pos)
+        self.assertLess(request_pos, freeze_pos)
         self.assertNotIn("fragment_factory", source)
         self.assertNotIn("fragment(execute_geosphere_selector)", source)
         # Request-state classes are pure value objects; reloading this module
