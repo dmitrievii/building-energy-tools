@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import pandas as pd
 
-from tools.climate_analyzer.epw_climate_analyzer.geosphere_monthly_request_surface import (
+from epw_climate_analyzer.geosphere_monthly_request_surface import (
     _STATION_KEY,
     _filtered_station_ids,
     _station_and_bundle,
