@@ -88,6 +88,7 @@ def _reset_persistent_source_parity_modules() -> None:
         "source_parity_contract_guard",
         "source_parity_monthly_overlay_hotfix",
         "source_parity_monthly_surface_guard",
+        "geosphere_request_form",
     )
     package = __package__ or "epw_climate_analyzer"
     for name in module_names:
@@ -127,15 +128,27 @@ def _freeze_session_geosphere_selector(proxy: Any, parity: Any) -> None:
     every wrapper has been installed. Execution is protected by the same process-
     wide lock as installation so another session cannot reload shared module
     globals while this selector chain is active.
+
+    The frozen selector is also a Streamlit fragment. GeoSphere source controls
+    therefore rerun only this already-composed selector instead of re-executing
+    the complete application script and rebuilding the runtime patch stack. A
+    successful provider load can still call ``st.rerun()`` to hand control back
+    to the full application and activate the loaded canonical dataset.
     """
     final_selector = parity._render_geosphere_resource_selector
     original_geosphere = proxy._source_parity_original_geosphere
 
-    def render_geosphere_source() -> Any:
+    def execute_geosphere_selector() -> Any:
         with _RUNTIME_PATCH_LOCK:
             return final_selector(proxy, original_geosphere)
 
-    proxy.render_geosphere_source = render_geosphere_source
+    fragment_factory = getattr(proxy.st, "fragment", None)
+    if callable(fragment_factory):
+        proxy.render_geosphere_source = fragment_factory(execute_geosphere_selector)
+    else:
+        # Defensive compatibility path for non-Streamlit test doubles. Production
+        # is pinned to a Streamlit version with fragment support.
+        proxy.render_geosphere_source = execute_geosphere_selector
 
 
 def _install_into_app_globals_locked(namespace: MutableMapping[str, Any]) -> bool:
@@ -171,6 +184,7 @@ def _install_into_app_globals_locked(namespace: MutableMapping[str, Any]) -> boo
     from .source_parity_contract_guard import install_contract_guards
     from .source_parity_monthly_overlay_hotfix import install_monthly_overlay_timezone_guard
     from .source_parity_monthly_surface_guard import install_monthly_surface_guard
+    from .geosphere_request_form import install_geosphere_request_form
 
     # Provider vocabulary is installed before the shared resource selector builds
     # metadata mappings. Scientific engines remain provider-neutral.
@@ -208,6 +222,11 @@ def _install_into_app_globals_locked(namespace: MutableMapping[str, Any]) -> boo
     # last makes the cleanup independent of whichever inner wrapper emitted the
     # legacy shared-shell text.
     install_monthly_surface_guard(parity)
+
+    # One final request-state boundary is shared by all GeoSphere resources. It
+    # observes the already-normalized editor/date widgets, records one canonical
+    # request schema and never owns provider transport or scientific conversion.
+    install_geosphere_request_form(parity)
 
     # Source-neutral presentation control for Interannual overlay. Install it
     # after all provider-specific wrappers so every source uses the same final
