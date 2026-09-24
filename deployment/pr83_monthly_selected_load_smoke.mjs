@@ -328,27 +328,68 @@ async function assertEmptySubmitBlocked(page, frame) {
   return validated;
 }
 
+async function measuredEditorRowCount(frame) {
+  const tables = frame.locator('[data-testid="stDataFrame"]');
+  const count = await tables.count().catch(() => 0);
+  if (count < 2) return null;
+  const editor = tables.last();
+  const grid = editor.locator('[role="grid"]').first();
+  const raw = await grid.getAttribute('aria-rowcount').catch(() => null);
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : null;
+}
+
 async function selectParameterSet(page, name) {
+  const initial = await waitMonthlySurface(page, 15000);
+  const radio = initial.getByRole('radio', { name, exact: true }).last();
+  const hasRadio = await radio.count().catch(() => 0);
+  if (hasRadio && await radio.isChecked().catch(() => false)) return initial;
+
+  const beforeRows = await measuredEditorRowCount(initial);
+  const oldLoad = initial.getByRole('button', { name: LOAD_LABEL, exact: true }).first();
+  const oldLoadHandle = await oldLoad.elementHandle().catch(() => null);
+
+  if (hasRadio && await radio.isVisible().catch(() => false)) {
+    await radio.check({ force: true, timeout: 5000 }).catch(async () => {
+      await initial.getByText(name, { exact: true }).last().click({ force: true, timeout: 5000 });
+    });
+  } else {
+    await initial.getByText(name, { exact: true }).last().click({ force: true, timeout: 5000 });
+  }
+
   const started = performance.now();
   while (performance.now() - started < 45000) {
-    const frame = await appFrame(page, 'Measured variables to load', 5000);
-    const radio = frame.getByRole('radio', { name, exact: true }).last();
-    if (await radio.count().catch(() => 0) && await radio.isVisible().catch(() => false)) {
-      if (await radio.isChecked().catch(() => false)) return frame;
-      await radio.check({ force: true, timeout: 5000 }).catch(async () => {
-        await frame.getByText(name, { exact: true }).last().click({ force: true, timeout: 5000 }).catch(() => {});
-      });
-    } else {
-      await frame.getByText(name, { exact: true }).last().click({ force: true, timeout: 5000 }).catch(() => {});
+    const settled = await appFrame(page, 'Measured variables to load', 5000).catch(() => null);
+    if (!settled) {
+      await sleep(250);
+      continue;
     }
-    await sleep(600);
-    const settled = await appFrame(page, 'Measured variables to load', 10000).catch(() => null);
-    if (settled) {
-      const selected = settled.getByRole('radio', { name, exact: true }).last();
-      if (await selected.count().catch(() => 0) && await selected.isChecked().catch(() => false)) return settled;
+
+    const selected = settled.getByRole('radio', { name, exact: true }).last();
+    const checked = Boolean(
+      await selected.count().catch(() => 0)
+      && await selected.isChecked().catch(() => false)
+    );
+    const afterRows = await measuredEditorRowCount(settled);
+    const oldDetached = oldLoadHandle
+      ? await oldLoadHandle.evaluate((node) => !node.isConnected).catch(() => true)
+      : true;
+    const editorChanged = (
+      beforeRows != null
+      && afterRows != null
+      && afterRows !== beforeRows
+    );
+
+    // A radio becomes checked optimistically in the browser before Streamlit has
+    // completed its server rerun. Do not treat that client-side state as a
+    // committed Parameter-set transition. Require evidence that the request form
+    // or DataEditor was actually replaced by the server-rendered view.
+    if (checked && (oldDetached || editorChanged)) {
+      return await waitMonthlySurface(page, 15000);
     }
+    await sleep(250);
   }
-  throw new Error(`Parameter set did not commit: ${name}`);
+  throw new Error(`Parameter set did not finish its Streamlit rerun: ${name}`);
 }
 
 async function variableEditor(page) {
@@ -675,7 +716,7 @@ async function exerciseHover(page) {
 }
 
 const report = {
-  schema: 'climate-analyzer-monthly-selected-load-smoke-v11-behavioral-reset',
+  schema: 'climate-analyzer-monthly-selected-load-smoke-v12-rerender-synchronized',
   target_url: TARGET_URL,
   fixture,
   checks: {},
