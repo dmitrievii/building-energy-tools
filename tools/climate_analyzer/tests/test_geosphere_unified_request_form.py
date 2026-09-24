@@ -12,6 +12,7 @@ from epw_climate_analyzer.geosphere_request_form import (
     STAGED_REQUEST_KEY,
     GeoSphereRequestForm,
     GeoSphereRequestState,
+    install_geosphere_request_form,
 )
 
 
@@ -99,6 +100,57 @@ class GeoSphereUnifiedRequestStateTests(unittest.TestCase):
         self.assertEqual(payload["start_date"], "1990-01-01")
         self.assertEqual(payload["provider_parameters"], ["tl", "rf"])
         self.assertEqual(GeoSphereRequestState.from_mapping(payload), state)
+
+
+class GeoSphereSubmitBoundaryTests(unittest.TestCase):
+    def test_visible_form_submit_commits_without_requiring_or_replacing_st_button(self) -> None:
+        calls: list[str] = []
+        st = SimpleNamespace(
+            session_state={
+                "geosphere_resource_id": "klima-v2-1m",
+                "geosphere_selected_station_id": "105",
+                "geosphere_start_date": date(2020, 1, 1),
+                "geosphere_end_date": date(2025, 12, 31),
+            },
+            data_editor=lambda data, *args, **kwargs: data,
+            form_submit_button=lambda label, *args, **kwargs: calls.append(str(label)) or True,
+        )
+        editor_frame = pd.DataFrame(
+            {
+                "Selected": [True, False],
+                "Provider": ["tl_mittel", "rf_mittel"],
+                "Canonical field": ["dry_bulb_temperature_c", "relative_humidity_pct"],
+            }
+        )
+
+        def previous(_legacy, _original):
+            st.data_editor(editor_frame, key="geosphere_variable_editor::monthly")
+            return st.form_submit_button("Load measured GeoSphere interval", type="primary")
+
+        parity = SimpleNamespace(st=st, _render_geosphere_resource_selector=previous)
+        install_geosphere_request_form(parity)
+
+        self.assertTrue(parity._render_geosphere_resource_selector(None, None))
+        self.assertEqual(calls, ["Load measured GeoSphere interval"])
+        self.assertFalse(hasattr(st, "button"))
+        committed = GeoSphereRequestState.from_mapping(st.session_state[COMMITTED_REQUEST_KEY])
+        self.assertIsNotNone(committed)
+        assert committed is not None
+        self.assertEqual(committed.resource_id, "klima-v2-1m")
+        self.assertEqual(committed.station_id, "105")
+        self.assertEqual(committed.provider_parameters, ("tl_mittel",))
+        self.assertTrue(committed.is_loadable)
+
+    def test_request_boundary_source_does_not_patch_plain_streamlit_button(self) -> None:
+        source = (
+            Path(__file__).resolve().parents[1]
+            / "epw_climate_analyzer"
+            / "geosphere_request_form.py"
+        ).read_text(encoding="utf-8")
+        self.assertIn("st.form_submit_button = form_submit_button", source)
+        self.assertIn("st.form_submit_button = real_form_submit_button", source)
+        self.assertNotIn("st.button = button", source)
+        self.assertNotIn("real_button = st.button", source)
 
 
 class GeoSphereRuntimeBoundaryContractTests(unittest.TestCase):
