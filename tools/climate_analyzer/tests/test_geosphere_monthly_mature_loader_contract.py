@@ -12,11 +12,15 @@ from epw_climate_analyzer import source_parity_monthly_selection_state as select
 from epw_climate_analyzer import source_parity_monthly_surface_guard as surface_guard
 from epw_climate_analyzer.source_parity_monthly_selection_state import (
     _FLAG_STATE_KEY,
+    _LAST_VIEW_KEY,
+    _MONTHLY_EDITOR_KEY_PREFIX,
+    _PARAMETER_SET_EPOCH_KEY,
     _SELECTION_STATE_KEY,
     _cleared_provider_state,
     _loader_table_from_provider_state,
     _provider_state,
     install_monthly_selection_state,
+    reset_monthly_parameter_set_state,
 )
 
 
@@ -73,6 +77,31 @@ class MonthlyMatureLoaderContractTests(unittest.TestCase):
         reset = _loader_table_from_provider_state(full, cleared, cleared)
         self.assertFalse(reset["Selected"].any())
         self.assertFalse(reset["Quality flag"].any())
+
+    def test_parameter_set_callback_clears_server_and_widget_snapshots_and_advances_epoch(self) -> None:
+        editor_key = f"{_MONTHLY_EDITOR_KEY_PREFIX}v3__all__fixture"
+        st = SimpleNamespace(
+            session_state={
+                _SELECTION_STATE_KEY: {"tl_mittel": True},
+                _FLAG_STATE_KEY: {"tl_mittel": True},
+                _LAST_VIEW_KEY: "All provider parameters",
+                _PARAMETER_SET_EPOCH_KEY: 4,
+                editor_key: {"edited_rows": {0: {"Selected": True}}},
+                "_geosphere_variable_form_load_requested_v1": ("klima-v2-1m", "105"),
+                "unrelated": "keep",
+            }
+        )
+
+        epoch = reset_monthly_parameter_set_state(st)
+
+        self.assertEqual(epoch, 5)
+        self.assertEqual(st.session_state[_PARAMETER_SET_EPOCH_KEY], 5)
+        self.assertEqual(st.session_state[_SELECTION_STATE_KEY], {})
+        self.assertEqual(st.session_state[_FLAG_STATE_KEY], {})
+        self.assertNotIn(_LAST_VIEW_KEY, st.session_state)
+        self.assertNotIn(editor_key, st.session_state)
+        self.assertNotIn("_geosphere_variable_form_load_requested_v1", st.session_state)
+        self.assertEqual(st.session_state["unrelated"], "keep")
 
     def test_monthly_parameter_set_transition_resets_server_side_provider_state(self) -> None:
         source = pd.DataFrame(
