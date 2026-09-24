@@ -16,6 +16,7 @@ on:
       - 'tools/climate_analyzer/tests/test_geosphere_unified_request_form.py'
       - 'tools/climate_analyzer/tests/test_streamlit_surface_transactional_restore.py'
       - 'deployment/pr98_geosphere_request_fast_smoke.mjs'
+      - 'deployment/pr98_geosphere_request_fast_smoke_v2.mjs'
       - '.github/workflows/climate-analyzer-geosphere-request-fast-gate.yml'
   workflow_dispatch:
 
@@ -82,7 +83,7 @@ jobs:
         run: npm install --no-save playwright-core@1.55.0
 
       - name: Exercise request/reset/reselection without measurement load
-        run: node deployment/pr98_geosphere_request_fast_smoke.mjs
+        run: node deployment/pr98_geosphere_request_fast_smoke_v2.mjs
 
       - name: Reject runtime tracebacks
         if: always()
