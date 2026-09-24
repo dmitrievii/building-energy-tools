@@ -20,7 +20,6 @@ import pandas as pd
 
 from . import source_parity_monthly_canonical as monthly_ui
 from .geosphere_monthly import MONTHLY_DOI, MONTHLY_RESOURCE_ID
-from .source_parity_monthly_selection_state import reset_monthly_parameter_set_state
 
 _RESOURCE_KEY = "geosphere_resource_id"
 _PARAMETER_SET_KEY = "geosphere_monthly_parameter_catalogue_v2"
@@ -81,7 +80,9 @@ def install_monthly_surface_guard(parity: Any) -> None:
     Streamlit callables themselves have been restored. This final guard therefore
     owns only the user-visible monthly radio/copy contract. It intentionally does
     not wrap ``st.data_editor`` or ``st.button``: variable selection/load remains
-    on the mature GeoSphere source path.
+    on the mature GeoSphere source path. Parameter-set reset semantics are owned
+    by the monthly selection adapter, which detects old-view/new-view transitions
+    on the server in the rerun that renders the new catalogue.
     """
     previous = parity._render_geosphere_resource_selector
     st = parity.st
@@ -131,7 +132,6 @@ def install_monthly_surface_guard(parity: Any) -> None:
                 horizontal=True,
                 key=_PARAMETER_SET_KEY,
                 help=_PARAMETER_SET_HELP,
-                on_change=lambda: reset_monthly_parameter_set_state(st),
             )
             selected_parameter_set["value"] = str(chosen)
             parameter_set_rendered["value"] = True
