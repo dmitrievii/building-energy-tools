@@ -20,6 +20,7 @@ import pandas as pd
 
 from . import source_parity_monthly_canonical as monthly_ui
 from .geosphere_monthly import MONTHLY_DOI, MONTHLY_RESOURCE_ID
+from .source_parity_monthly_selection_state import reset_monthly_parameter_set_state
 
 _RESOURCE_KEY = "geosphere_resource_id"
 _PARAMETER_SET_KEY = "geosphere_monthly_parameter_catalogue_v2"
@@ -33,7 +34,8 @@ _PARAMETER_SET_OPTIONS = (
 _PARAMETER_SET_HELP = (
     "Core variables are canonical/building-climate quantities. Additional statistics are "
     "provider-published monthly counts, extrema and indicators. All provider parameters also "
-    "shows fields without normalized Seasonal/Annual semantics."
+    "shows fields without normalized Seasonal/Annual semantics. Changing Parameter set clears "
+    "the current Load and quality-flag selections."
 )
 
 
@@ -129,6 +131,7 @@ def install_monthly_surface_guard(parity: Any) -> None:
                 horizontal=True,
                 key=_PARAMETER_SET_KEY,
                 help=_PARAMETER_SET_HELP,
+                on_change=lambda: reset_monthly_parameter_set_state(st),
             )
             selected_parameter_set["value"] = str(chosen)
             parameter_set_rendered["value"] = True
