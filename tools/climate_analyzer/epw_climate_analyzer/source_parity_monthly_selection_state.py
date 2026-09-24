@@ -33,6 +33,7 @@ _SELECTION_STATE_KEY = "_geosphere_monthly_provider_selection_v5"
 _FLAG_STATE_KEY = "_geosphere_monthly_provider_flag_selection_v5"
 _LAST_VIEW_KEY = "_geosphere_monthly_provider_selection_last_view_v5"
 _PARAMETER_SET_EPOCH_KEY = "_geosphere_monthly_parameter_set_epoch_v1"
+_PARAMETER_SET_RESET_PENDING_KEY = "_geosphere_monthly_parameter_set_reset_pending_v1"
 _EDITOR_KEY_VERSION = "v3"
 _MONTHLY_EDITOR_KEY_PREFIX = "geosphere_variable_editor__monthly__"
 _FORM_REQUEST_KEY = "_geosphere_variable_form_load_requested_v1"
@@ -85,6 +86,17 @@ def _parameter_set_epoch(st: Any) -> int:
         return 0
 
 
+def _parameter_set_reset_pending(st: Any) -> bool:
+    """Return true while the first clean form for the current epoch is pending."""
+    raw = st.session_state.get(_PARAMETER_SET_RESET_PENDING_KEY)
+    if raw is None:
+        return False
+    try:
+        return int(raw) == _parameter_set_epoch(st)
+    except (TypeError, ValueError):
+        return False
+
+
 def _editor_key(view: str, providers: list[str], *, epoch: int = 0) -> str:
     """Return a widget key stable only inside one catalogue-view reset epoch."""
     slug = {
@@ -100,15 +112,15 @@ def _editor_key(view: str, providers: list[str], *, epoch: int = 0) -> str:
 
 
 def reset_monthly_parameter_set_state(st: Any) -> int:
-    """Clear every monthly selection surface and advance the reset epoch.
+    """Clear every monthly selection surface and open a one-render reset barrier.
 
     ``st.data_editor`` lives inside a form, so browser-side staged edits are not
-    available to the server when the external Parameter-set radio triggers a
-    rerun. The reset therefore belongs to the monthly selection adapter itself:
-    once that adapter observes that the catalogue view changed, it clears the
-    provider state, discards every monthly editor snapshot, invalidates a latent
-    form-load token and advances an epoch used by both the transactional form and
-    the DataEditor widget identity.
+    necessarily synchronized with the server when the external Parameter-set
+    radio triggers a rerun. The reset therefore invalidates both server state and
+    widget identity, and records a pending reset generation. The first form/editor
+    render for that generation must distrust any client value reconciled from the
+    previous form subtree. The compatibility form clears the barrier only after
+    the clean replacement form has actually been rendered.
     """
     state = st.session_state
     state[_SELECTION_STATE_KEY] = {}
@@ -123,6 +135,7 @@ def reset_monthly_parameter_set_state(st: Any) -> int:
     except (TypeError, ValueError):
         epoch = 1
     state[_PARAMETER_SET_EPOCH_KEY] = epoch
+    state[_PARAMETER_SET_RESET_PENDING_KEY] = epoch
     return epoch
 
 
@@ -221,16 +234,13 @@ def install_monthly_selection_state(parity: Any) -> None:
             previous_view = str(st.session_state.get(_LAST_VIEW_KEY, ""))
             view_changed = bool(previous_view) and previous_view != view
 
-            # Detect the catalogue transition on the server in the same rerun in
-            # which the new view is rendered. This is intentionally independent
-            # of ``radio(on_change=...)`` timing: the old view has already been
-            # persisted by the previous completed render, while ``view`` comes
-            # from the newly committed radio value. Resetting here guarantees
-            # that the epoch changes before either the new form or DataEditor key
-            # is constructed.
+            # Normal production changes are reset by the Parameter-set callback
+            # before the rerun starts. Keep this server-side transition detector
+            # as a fail-safe for tests, legacy callers and interrupted callbacks.
             if view_changed:
                 reset_monthly_parameter_set_state(st)
 
+            reset_pending = _parameter_set_reset_pending(st)
             selection_state = _provider_state(
                 st,
                 _SELECTION_STATE_KEY,
@@ -253,25 +263,19 @@ def install_monthly_selection_state(parity: Any) -> None:
             if "Quality flag" in prepared.columns:
                 prepared["Quality flag"] = [flag_state.get(provider, False) for provider in providers]
 
-            # A Parameter-set reset must invalidate the browser-side Glide widget
-            # itself, not only its server-side session-state snapshot. Reusing the
-            # same DataEditor key lets the frontend reconcile an old checked cell
-            # back into the freshly-cleared DataFrame. The server-detected epoch
-            # therefore forms part of the widget identity as well as the
-            # surrounding transactional form identity.
             widget_key = _editor_key(view, providers, epoch=_parameter_set_epoch(st))
-            if view_changed:
+            if view_changed or reset_pending:
                 st.session_state.pop(widget_key, None)
 
             kwargs["key"] = widget_key
             edited = real_editor(prepared.reset_index(drop=True), *args, **kwargs)
 
-            # Do not ingest any value returned by the editor during the first
-            # render of a newly selected Parameter set. A browser may still be
-            # reconciling the old form subtree during that transition. The newly
-            # generated form/editor identities become authoritative from the next
-            # interaction onward.
-            if isinstance(edited, pd.DataFrame) and not view_changed:
+            # The first render after a Parameter-set reset is a trust boundary.
+            # Even if Streamlit/Glide reconciles staged cells from the retired form
+            # subtree, do not ingest them into provider state. The form wrapper
+            # observes the same pending generation and returns the clean server
+            # table for this render as an additional transport-level guard.
+            if isinstance(edited, pd.DataFrame) and not view_changed and not reset_pending:
                 visible = set(providers)
                 if "Provider" in edited.columns:
                     edited = edited.loc[
