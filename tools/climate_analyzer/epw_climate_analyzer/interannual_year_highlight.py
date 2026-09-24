@@ -142,18 +142,21 @@ def _render_generic_with_positioned_highlight(
     not render another control after Aggregation. It intercepts the lower call,
     draws the canonical widget under ``overlay_highlight_year``, and returns the
     selected concrete year to the legacy caller so its compatibility state remains
-    internally valid. Generic profiles intentionally expose real years only: the
-    legacy renderer assumes a concrete year and previously crashed on ``int(None)``.
+    internally valid. Generic production profiles intentionally expose real years
+    only because the legacy renderer assumes a concrete year and calls ``int`` on
+    the result. Lightweight renderers without that legacy wrapper retain the
+    optional ``None`` entry used by the standalone canonical control contract.
     """
     if not _highlight_year_options(df):
         return renderer(df, *args, **kwargs)
 
     st = proxy.st
     real_selectbox = st.selectbox
-    selected = _stored_highlight_year(proxy, df, include_none=False)
-    render_df = _frame_with_highlight_year(df, selected)
     highlight_rendered = False
     legacy_slot_expected = hasattr(proxy, "_source_parity_original_generic_interannual")
+    include_none = not legacy_slot_expected
+    selected = _stored_highlight_year(proxy, df, include_none=include_none)
+    render_df = _frame_with_highlight_year(df, selected)
 
     def render_highlight() -> int | None:
         nonlocal selected, highlight_rendered
@@ -163,7 +166,7 @@ def _render_generic_with_positioned_highlight(
             proxy,
             df,
             selectbox=real_selectbox,
-            include_none=False,
+            include_none=include_none,
         )
         highlight_rendered = True
         return selected
