@@ -9,6 +9,12 @@ const OUT_DIR = process.env.PR83_VISUAL_DIR || 'artifacts/pr83-visual/screenshot
 const CHROME_PATH = process.env.CHROME_PATH || '/usr/bin/google-chrome';
 const fixture = JSON.parse(await fs.readFile(FIXTURE_PATH, 'utf8'));
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const REQUIRED = ['rf_mittel', 'p', 'tl_mittel'];
+const PROVIDER_LABELS = {
+  rf_mittel: 'Relative humidity — monthly mean',
+  p: 'Station pressure — monthly mean',
+  tl_mittel: 'Air temperature — monthly mean',
+};
 
 await fs.mkdir(OUT_DIR, { recursive: true });
 
@@ -199,6 +205,110 @@ async function selectStation(page) {
   throw new Error('Use station from list button did not become available.');
 }
 
+async function variableEditor(page) {
+  const frame = await appFrame(page, 'Measured variables to load', 30000);
+  const tables = frame.locator('[data-testid="stDataFrame"]');
+  if (await tables.count() < 2) throw new Error('Measured-variable editor not found.');
+  const editor = tables.last();
+  const canvas = editor.locator('canvas[data-testid="data-grid-canvas"]').first();
+  if (!(await canvas.count())) throw new Error('Measured-variable Glide canvas not found.');
+  return { frame, editor, canvas };
+}
+
+async function resetEditor(page) {
+  let current = await variableEditor(page);
+  await current.editor.locator('.dvn-scroller').first().evaluate((node) => {
+    node.scrollLeft = 0;
+    node.scrollTop = 0;
+    node.dispatchEvent(new Event('scroll', { bubbles: true }));
+  }).catch(() => {});
+  await sleep(500);
+  return variableEditor(page);
+}
+
+async function providerState(page, provider) {
+  const label = PROVIDER_LABELS[provider];
+  if (!label) throw new Error(`No monthly label mapping for provider ${provider}.`);
+
+  let current = await resetEditor(page);
+  let lastScrollTop = -1;
+  for (let scan = 0; scan < 40; scan += 1) {
+    const rows = current.editor.locator('[role="grid"] tr[role="row"]');
+    const count = await rows.count().catch(() => 0);
+    for (let i = 0; i < count; i += 1) {
+      const row = rows.nth(i);
+      const texts = (await row.locator('[role="gridcell"]').allTextContents().catch(() => []))
+        .map((value) => value.replace(/\s+/g, ' ').trim());
+      if (!texts.includes(label)) continue;
+
+      const ariaRowIndex = Number(await row.getAttribute('aria-rowindex'));
+      if (!Number.isFinite(ariaRowIndex) || ariaRowIndex < 2) {
+        throw new Error(`Invalid row index for provider ${provider}: ${ariaRowIndex}`);
+      }
+      const load = String(
+        await row.locator('[role="gridcell"][aria-colindex="1"]').first().textContent().catch(() => ''),
+      ).trim().toLowerCase();
+      return { ...current, load, dataIndex: ariaRowIndex - 2 };
+    }
+
+    const scroll = await current.editor.locator('.dvn-scroller').first().evaluate((node) => {
+      const before = node.scrollTop;
+      const max = Math.max(0, node.scrollHeight - node.clientHeight);
+      const step = Math.max(80, Math.floor(node.clientHeight * 0.75));
+      node.scrollTop = Math.min(max, before + step);
+      node.dispatchEvent(new Event('scroll', { bubbles: true }));
+      return { before, after: node.scrollTop };
+    }).catch(() => null);
+    if (!scroll || scroll.after <= scroll.before || scroll.after === lastScrollTop) break;
+    lastScrollTop = scroll.after;
+    await sleep(350);
+    current = await variableEditor(page);
+  }
+  throw new Error(`Provider ${provider} (${label}) not visible while scanning the monthly variable editor.`);
+}
+
+async function navigateLoadCell(page, state, provider) {
+  const expected = `glide-cell-0-${state.dataIndex}`;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const current = await resetEditor(page);
+    const box = await current.canvas.boundingBox().catch(() => null);
+    if (!box) continue;
+    await current.canvas.click({
+      position: { x: Math.min(box.width - 10, box.width * 0.55), y: Math.min(box.height - 10, 52) },
+      force: true,
+      timeout: 5000,
+    }).catch(() => {});
+    await current.canvas.focus();
+    await page.keyboard.press('Control+Home');
+    await sleep(200);
+
+    const selected = current.editor.locator('[role="gridcell"][aria-selected="true"]').first();
+    if (await selected.getAttribute('data-testid').catch(() => null) !== 'glide-cell-0-0') continue;
+    for (let row = 0; row < state.dataIndex; row += 1) await page.keyboard.press('ArrowDown');
+    await sleep(200);
+    if (await selected.getAttribute('data-testid').catch(() => null) === expected) return;
+  }
+  throw new Error(`Could not address Load cell for ${provider}.`);
+}
+
+async function selectProvider(page, provider) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const state = await providerState(page, provider);
+    if (state.load === 'true') return state;
+    if (state.load !== 'false') throw new Error(`Unexpected Load state for ${provider}: ${state.load}`);
+    await navigateLoadCell(page, state, provider);
+    await page.keyboard.press('Space');
+
+    const started = performance.now();
+    while (performance.now() - started < 12000) {
+      const after = await providerState(page, provider).catch(() => null);
+      if (after?.load === 'true') return after;
+      await sleep(300);
+    }
+  }
+  throw new Error(`Could not select provider ${provider}.`);
+}
+
 async function screenshot(page, name) {
   await page.screenshot({ path: path.join(OUT_DIR, name), fullPage: true });
 }
@@ -259,15 +369,18 @@ try {
   const sourceText = await bodyText(sourceFrame);
   report.checks.parameter_set_core = sourceText.includes('Core variables');
   report.checks.monthly_context_once = (sourceText.match(/About this GeoSphere monthly dataset/g) || []).length === 1;
-  report.checks.core_default_selection = sourceText.includes('Measured variables to load');
+  report.checks.core_editor_visible = sourceText.includes('Measured variables to load');
   await screenshot(page, '01-monthly-core-source.png');
 
-  // The source contract initializes every selectable row with Selected=true.
-  // For this Core visual walkthrough, preserve the user-facing default instead
-  // of scripting implementation-specific Glide/DataEditor cells.
+  // GeoSphere selection is intentionally opt-in. Exercise the same three Core
+  // variables used by the selected-load browser smoke so this visual walkthrough
+  // verifies the real empty -> staged selection -> one-click submit lifecycle.
+  for (const provider of REQUIRED) await selectProvider(page, provider);
+  report.checks.required_core_variables_selected = true;
+
   const loadFrame = await appFrame(page, 'Measured variables to load', 30000);
   const load = loadFrame.getByRole('button', { name: 'Load measured GeoSphere interval', exact: true }).first();
-  if (!(await load.count().catch(() => 0))) throw new Error('Load button missing.');
+  if (!(await load.count().catch(() => 0))) throw new Error('Load button missing after explicit Core selection.');
   await load.scrollIntoViewIfNeeded({ timeout: 5000 }).catch(() => {});
   await screenshot(page, '02-monthly-core-selected.png');
   await load.click({ timeout: 15000 });
@@ -300,6 +413,8 @@ try {
 
   if (!report.checks.parameter_set_core) throw new Error('Core variables parameter set is not visible.');
   if (!report.checks.monthly_context_once) throw new Error('Monthly context is duplicated or missing.');
+  if (!report.checks.core_editor_visible) throw new Error('Monthly variable editor is not visible.');
+  if (!report.checks.required_core_variables_selected) throw new Error('Required Core variables were not explicitly selected.');
   if (!report.checks.temperature_threshold_sliders_hidden) throw new Error('Threshold-only temperature sliders leaked into the default Temperature view.');
   if (report.page_errors.length) throw new Error(`Page errors: ${report.page_errors.join(' | ')}`);
   report.success = true;
