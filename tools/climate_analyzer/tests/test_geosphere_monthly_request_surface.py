@@ -10,6 +10,7 @@ from epw_climate_analyzer.geosphere_monthly_request_surface import (
     _clamp,
     _selected_payload,
     _station_and_bundle,
+    _submitted_editor_payload,
 )
 
 
@@ -25,6 +26,47 @@ class MonthlyRequestSurfacePureTests(unittest.TestCase):
         providers, flags = _selected_payload(edited)
         self.assertEqual(providers, ("rf_mittel", "p"))
         self.assertEqual(flags, ("rf_mittel_flag",))
+
+    def test_submitted_widget_delta_restores_visible_checked_rows_when_returned_frame_is_stale(self) -> None:
+        base = pd.DataFrame(
+            {
+                "Selected": [False, False, False],
+                "Quality flag": [False, False, False],
+                "Provider": ["rf_mittel", "p", "tl_mittel"],
+            }
+        )
+        stale = base.copy()
+        widget_state = {
+            "edited_rows": {
+                0: {"Selected": True},
+                "2": {"Selected": True, "Quality flag": True},
+            },
+            "added_rows": [],
+            "deleted_rows": [],
+        }
+
+        submitted = _submitted_editor_payload(base, stale, widget_state)
+        providers, flags = _selected_payload(submitted)
+
+        self.assertEqual(providers, ("rf_mittel", "tl_mittel"))
+        self.assertEqual(flags, ("tl_mittel_flag",))
+
+    def test_submitted_widget_delta_can_explicitly_clear_a_returned_true_value(self) -> None:
+        base = pd.DataFrame(
+            {
+                "Selected": [False],
+                "Quality flag": [False],
+                "Provider": ["rf_mittel"],
+            }
+        )
+        edited = base.copy()
+        edited.loc[0, "Selected"] = True
+        submitted = _submitted_editor_payload(
+            base,
+            edited,
+            {"edited_rows": {0: {"Selected": False}}},
+        )
+        self.assertEqual(_selected_payload(submitted), ((), ()))
 
     def test_request_dates_are_clamped_to_station_validity(self) -> None:
         low = date(1900, 1, 1)
