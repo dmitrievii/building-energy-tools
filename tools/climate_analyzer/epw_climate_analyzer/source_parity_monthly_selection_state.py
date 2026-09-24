@@ -1,16 +1,18 @@
-"""Stable provider-keyed selection state for the native-monthly source editor.
+"""Deterministic provider-keyed selection state for the native-monthly source editor.
 
 The mature source UI reuses ``geosphere_variable_editor`` for 10-minute, hourly
 and monthly datasets. Streamlit keys identify widget state, so reusing one key
-for different provider vocabularies (and for filtered Core/Additional/All views)
-can reconcile an old DataEditor state into the new table.
+for different provider vocabularies can reconcile an old DataEditor state into a
+new table.
 
 This adapter owns monthly selection semantics independently of the mature shell's
 legacy ``Selected=True`` table default. A fresh monthly session starts with every
-measured-variable checkbox cleared. The catalogue radio changes visibility only,
-and later user edits are retained by provider ID across Core/Additional/All views.
-The loader is always fed a table reconstructed in the original provider order;
-therefore UI sorting/filtering can never change provider identity by row position.
+measured-variable checkbox cleared. Changing the Parameter set is an explicit
+selection boundary: Core / Core+Additional / All never inherit checkboxes or
+quality-flag choices from the previous view. Within one unchanged view, provider
+IDs still own row identity so sorting/reordering cannot change which parameter is
+selected. The loader is always fed a table reconstructed in original provider
+order.
 """
 from __future__ import annotations
 
@@ -25,13 +27,12 @@ from .source_parity_contract_guidance_hotfix import _decorate_monthly_table
 
 _RESOURCE_KEY = "geosphere_resource_id"
 _PARAMETER_SET_KEY = "geosphere_monthly_parameter_catalogue_v2"
-# v4 deliberately invalidates the former v3 Core-selected session state. Without
-# a version bump, an already-open production browser could resurrect the old
-# checked defaults after deployment even though the new contract starts empty.
-_SELECTION_STATE_KEY = "_geosphere_monthly_provider_selection_v4"
-_FLAG_STATE_KEY = "_geosphere_monthly_provider_flag_selection_v4"
-_LAST_VIEW_KEY = "_geosphere_monthly_provider_selection_last_view_v4"
-_EDITOR_KEY_VERSION = "v2"
+# v5 invalidates earlier cross-view selection preservation. Parameter-set changes
+# now intentionally reset both variable and quality-flag selections.
+_SELECTION_STATE_KEY = "_geosphere_monthly_provider_selection_v5"
+_FLAG_STATE_KEY = "_geosphere_monthly_provider_flag_selection_v5"
+_LAST_VIEW_KEY = "_geosphere_monthly_provider_selection_last_view_v5"
+_EDITOR_KEY_VERSION = "v3"
 
 
 def _bool_value(value: Any) -> bool:
@@ -126,9 +127,9 @@ def _loader_table_from_provider_state(
 ) -> pd.DataFrame:
     """Rebuild the shell-facing loader table in original provider order.
 
-    The DataEditor may be sorted, filtered or reconciled by Streamlit. The mature
-    loader derives its provider query directly from the DataFrame it receives back
-    from ``st.data_editor``. Reconstructing that result from the original table and
+    The DataEditor may be sorted or reconciled by Streamlit. The mature loader
+    derives its provider query directly from the DataFrame it receives back from
+    ``st.data_editor``. Reconstructing that result from the original table and
     provider-keyed state makes provider identity independent of UI row position.
     """
     out = data.copy()
@@ -140,6 +141,16 @@ def _loader_table_from_provider_state(
     if "Quality flag" in out.columns:
         out["Quality flag"] = [bool(flag_state.get(provider, False)) for provider in providers]
     return out.reset_index(drop=True)
+
+
+def _cleared_provider_state(data: pd.DataFrame) -> dict[str, bool]:
+    if "Provider" not in data.columns:
+        return {}
+    return {
+        str(provider): False
+        for provider in data["Provider"].fillna("").astype(str).tolist()
+        if str(provider).strip()
+    }
 
 
 def install_monthly_selection_state(parity: Any) -> None:
@@ -167,9 +178,6 @@ def install_monthly_selection_state(parity: Any) -> None:
                 view = "Core variables"
 
             full = _normalize_catalogue_roles(_decorate_monthly_table(parity, data))
-            # Selection is opt-in for every GeoSphere resolution. Core/Additional
-            # describes catalogue visibility and engineering relevance only; it
-            # must not silently turn provider downloads on.
             selection_state = _provider_state(
                 st,
                 _SELECTION_STATE_KEY,
@@ -184,22 +192,29 @@ def install_monthly_selection_state(parity: Any) -> None:
                 "Quality flag",
                 default=False,
             )
-            prepared = _visible_catalogue(parity, full, view)
 
+            previous_view = str(st.session_state.get(_LAST_VIEW_KEY, ""))
+            view_changed = bool(previous_view) and previous_view != view
+            if view_changed:
+                # Parameter-set changes are an explicit selection reset. Do not
+                # carry hidden selections or quality flags between catalogue views.
+                selection_state = _cleared_provider_state(full)
+                flag_state = _cleared_provider_state(full)
+                st.session_state[_SELECTION_STATE_KEY] = dict(selection_state)
+                st.session_state[_FLAG_STATE_KEY] = dict(flag_state)
+            st.session_state[_LAST_VIEW_KEY] = view
+
+            prepared = _visible_catalogue(parity, full, view)
             providers = prepared["Provider"].fillna("").astype(str).tolist()
             prepared["Selected"] = [selection_state.get(provider, False) for provider in providers]
             if "Quality flag" in prepared.columns:
                 prepared["Quality flag"] = [flag_state.get(provider, False) for provider in providers]
 
             widget_key = _editor_key(view, providers)
-            previous_view = str(st.session_state.get(_LAST_VIEW_KEY, ""))
-            view_changed = previous_view != view
             if view_changed:
-                # The rerun was caused by changing Parameter set, not by editing
-                # a checkbox. Drop any old widget snapshot and do not ingest its
-                # row-position deltas into provider state on this render.
+                # Remove a stale widget snapshot for the newly entered view. The
+                # table rendered below is the canonical cleared state.
                 st.session_state.pop(widget_key, None)
-            st.session_state[_LAST_VIEW_KEY] = view
 
             kwargs["key"] = widget_key
             edited = real_editor(prepared.reset_index(drop=True), *args, **kwargs)
