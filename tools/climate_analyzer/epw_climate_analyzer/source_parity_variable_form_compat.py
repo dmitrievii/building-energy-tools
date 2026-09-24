@@ -15,6 +15,9 @@ import pandas as pd
 from . import source_parity_ux_followup as ux
 
 
+_EMPTY_SELECTION_WARNING = "Select at least one measured GeoSphere variable to load."
+
+
 def _is_variable_editor(data: Any, key: object) -> bool:
     if not isinstance(data, pd.DataFrame):
         return False
@@ -40,6 +43,7 @@ def install_geosphere_variable_form_compat(parity: Any) -> None:
         real_button = st.button
         real_warning = st.warning
         form_rendered = {"value": False}
+        empty_submit = {"value": False}
 
         def editor(data: Any, *args: Any, **kwargs: Any):
             if not _is_variable_editor(data, kwargs.get("key")):
@@ -63,7 +67,13 @@ def install_geosphere_variable_form_compat(parity: Any) -> None:
                 )
                 if submitted:
                     if ux._selected_count(edited) <= 0:
-                        real_warning("Select at least one measured GeoSphere variable to load.")
+                        # Render validation after the mature selector returns.
+                        # A warning emitted inside the form during the submit rerun
+                        # can be reconciled away while the mature zero-selection
+                        # branch continues rendering. Keeping a local event flag
+                        # makes the feedback deterministic without creating a
+                        # provider-load request.
+                        empty_submit["value"] = True
                     else:
                         st.session_state[ux._FORM_REQUEST_KEY] = (resource_id, station_id)
             return edited
@@ -77,7 +87,7 @@ def install_geosphere_variable_form_compat(parity: Any) -> None:
         def warning(body: Any, *args: Any, **kwargs: Any):
             if (
                 form_rendered["value"]
-                and str(body).strip() == "Select at least one measured GeoSphere variable to load."
+                and str(body).strip() == _EMPTY_SELECTION_WARNING
             ):
                 return None
             return real_warning(body, *args, **kwargs)
@@ -86,7 +96,12 @@ def install_geosphere_variable_form_compat(parity: Any) -> None:
         st.button = button
         st.warning = warning
         try:
-            return previous(legacy, original)
+            result = previous(legacy, original)
+            if empty_submit["value"]:
+                # Deliberately outside st.form and through the unwrapped warning
+                # callable: exactly one validation message survives this rerun.
+                real_warning(_EMPTY_SELECTION_WARNING)
+            return result
         finally:
             st.data_editor = real_editor
             st.button = real_button
