@@ -68,6 +68,20 @@ class MonthlyDefaultStationSurfaceTests(unittest.TestCase):
         self.assertEqual(bundle[2].station_id, "112")
         self.assertEqual(st.session_state[_STATION_KEY], "112")
 
+    def test_search_filter_replaces_stale_but_globally_valid_station(self):
+        st = _FakeStreamlit(
+            {
+                _STATION_KEY: "105",
+                "geosphere_station_search": "Graz",
+            }
+        )
+        legacy = _FakeLegacy(self.stations, self.catalog)
+
+        bundle = _station_and_bundle(legacy, st)
+
+        self.assertEqual(bundle[2].station_id, "112")
+        self.assertEqual(st.session_state[_STATION_KEY], "112")
+
     def test_region_filter_controls_default_station_fallback(self):
         st = _FakeStreamlit({"geosphere_station_states": ["Steiermark"]})
         legacy = _FakeLegacy(self.stations, self.catalog)
@@ -77,7 +91,7 @@ class MonthlyDefaultStationSurfaceTests(unittest.TestCase):
         self.assertEqual(bundle[2].station_id, "112")
         self.assertEqual(st.session_state[_STATION_KEY], "112")
 
-    def test_explicit_station_is_not_replaced_by_fallback(self):
+    def test_explicit_visible_station_is_not_replaced_by_fallback(self):
         st = _FakeStreamlit({_STATION_KEY: "112"})
         legacy = _FakeLegacy(self.stations, self.catalog)
 
