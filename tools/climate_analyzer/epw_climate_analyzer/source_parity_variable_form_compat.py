@@ -13,6 +13,8 @@ from typing import Any, Callable
 import pandas as pd
 
 from . import source_parity_ux_followup as ux
+from .geosphere_monthly import MONTHLY_RESOURCE_ID
+from .source_parity_monthly_selection_state import _PARAMETER_SET_EPOCH_KEY
 
 
 _EMPTY_SELECTION_WARNING = "Select at least one measured GeoSphere variable to load."
@@ -51,7 +53,15 @@ def install_geosphere_variable_form_compat(parity: Any) -> None:
 
             st.session_state.pop(ux._FORM_REQUEST_KEY, None)
             resource_id, station_id = ux._scope(st)
-            form_signature = sha1(f"{resource_id}\0{station_id}".encode("utf-8")).hexdigest()[:12]
+            epoch = 0
+            if resource_id == MONTHLY_RESOURCE_ID:
+                try:
+                    epoch = int(st.session_state.get(_PARAMETER_SET_EPOCH_KEY, 0))
+                except (TypeError, ValueError):
+                    epoch = 0
+            form_signature = sha1(
+                f"{resource_id}\0{station_id}\0{epoch}".encode("utf-8")
+            ).hexdigest()[:12]
             form_key = f"{ux._FORM_KEY_PREFIX}::{form_signature}"
             form_rendered["value"] = True
 
@@ -67,12 +77,6 @@ def install_geosphere_variable_form_compat(parity: Any) -> None:
                 )
                 if submitted:
                     if ux._selected_count(edited) <= 0:
-                        # Render validation after the mature selector returns.
-                        # A warning emitted inside the form during the submit rerun
-                        # can be reconciled away while the mature zero-selection
-                        # branch continues rendering. Keeping a local event flag
-                        # makes the feedback deterministic without creating a
-                        # provider-load request.
                         empty_submit["value"] = True
                     else:
                         st.session_state[ux._FORM_REQUEST_KEY] = (resource_id, station_id)
@@ -98,8 +102,6 @@ def install_geosphere_variable_form_compat(parity: Any) -> None:
         try:
             result = previous(legacy, original)
             if empty_submit["value"]:
-                # Deliberately outside st.form and through the unwrapped warning
-                # callable: exactly one validation message survives this rerun.
                 real_warning(_EMPTY_SELECTION_WARNING)
             return result
         finally:
@@ -118,8 +120,8 @@ def patch_variable_form_installer() -> None:
     form-installed marker is one such attribute: without clearing it, a second
     browser session in the same Streamlit process can inherit ``True`` from the
     first session and skip installing the form into its newly composed selector.
-    Reset that marker here before the final monthly surface guard installs the
-    form for the current app-script session.
+    Reset that marker before composition starts, then make every downstream call
+    to the shared installer resolve to this compatibility owner.
     """
     from . import source_parity_ui as parity
 
