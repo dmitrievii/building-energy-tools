@@ -292,21 +292,20 @@ async function navigateLoadCell(page, state, provider) {
 }
 
 async function selectProvider(page, provider) {
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    const state = await providerState(page, provider);
-    if (state.load === 'true') return state;
-    if (state.load !== 'false') throw new Error(`Unexpected Load state for ${provider}: ${state.load}`);
-    await navigateLoadCell(page, state, provider);
-    await page.keyboard.press('Space');
-
-    const started = performance.now();
-    while (performance.now() - started < 12000) {
-      const after = await providerState(page, provider).catch(() => null);
-      if (after?.load === 'true') return after;
-      await sleep(300);
-    }
-  }
-  throw new Error(`Could not select provider ${provider}.`);
+  // This walkthrough starts from the product contract's fresh empty-selection
+  // state. Glide's accessibility text for a boolean cell can lag the canvas and
+  // report "true" even while the visible checkbox is empty. Do not use that
+  // shadow text as permission to skip the real user interaction: address the
+  // Load cell and toggle it exactly once from the known-fresh baseline.
+  const state = await providerState(page, provider);
+  await navigateLoadCell(page, state, provider);
+  await page.keyboard.press('Space');
+  await sleep(500);
+  return {
+    ...state,
+    accessibilityStateBeforeToggle: state.load,
+    toggledFromFreshBaseline: true,
+  };
 }
 
 async function screenshot(page, name) {
@@ -373,18 +372,33 @@ try {
   await screenshot(page, '01-monthly-core-source.png');
 
   // GeoSphere selection is intentionally opt-in. Exercise the same three Core
-  // variables used by the selected-load browser smoke so this visual walkthrough
-  // verifies the real empty -> staged selection -> one-click submit lifecycle.
-  for (const provider of REQUIRED) await selectProvider(page, provider);
-  report.checks.required_core_variables_selected = true;
+  // variables used by the selected-load browser smoke. The boolean accessibility
+  // shadow is diagnostic only; each visible Load cell is physically toggled once
+  // from the fresh empty-selection baseline.
+  const toggleEvidence = {};
+  for (const provider of REQUIRED) {
+    const state = await selectProvider(page, provider);
+    toggleEvidence[provider] = {
+      label: PROVIDER_LABELS[provider],
+      accessibility_before_toggle: state.accessibilityStateBeforeToggle,
+      data_index: state.dataIndex,
+      toggled_from_fresh_baseline: state.toggledFromFreshBaseline,
+    };
+  }
+  report.checks.required_core_variable_toggles = toggleEvidence;
 
   const loadFrame = await appFrame(page, 'Measured variables to load', 30000);
   const load = loadFrame.getByRole('button', { name: 'Load measured GeoSphere interval', exact: true }).first();
   if (!(await load.count().catch(() => 0))) throw new Error('Load button missing after explicit Core selection.');
   await load.scrollIntoViewIfNeeded({ timeout: 5000 }).catch(() => {});
+  await sleep(700);
   await screenshot(page, '02-monthly-core-selected.png');
   await load.click({ timeout: 15000 });
   await appFrame(page, 'Summary — Overview', 180000);
+  // Only the successful provider-load transition proves that the three staged
+  // checkbox edits reached Python. Do not mark selection success before this.
+  report.checks.required_core_variables_selected = true;
+  report.checks.one_click_load_activated_dataset = true;
 
   await nav(page, 'Summary — Overview', 'Climate overview');
   await screenshot(page, '03-monthly-overview.png');
@@ -414,7 +428,8 @@ try {
   if (!report.checks.parameter_set_core) throw new Error('Core variables parameter set is not visible.');
   if (!report.checks.monthly_context_once) throw new Error('Monthly context is duplicated or missing.');
   if (!report.checks.core_editor_visible) throw new Error('Monthly variable editor is not visible.');
-  if (!report.checks.required_core_variables_selected) throw new Error('Required Core variables were not explicitly selected.');
+  if (!report.checks.required_core_variables_selected) throw new Error('Required Core variables were not committed through the provider load.');
+  if (!report.checks.one_click_load_activated_dataset) throw new Error('One-click monthly Load did not activate the dataset.');
   if (!report.checks.temperature_threshold_sliders_hidden) throw new Error('Threshold-only temperature sliders leaked into the default Temperature view.');
   if (report.page_errors.length) throw new Error(`Page errors: ${report.page_errors.join(' | ')}`);
   report.success = true;
