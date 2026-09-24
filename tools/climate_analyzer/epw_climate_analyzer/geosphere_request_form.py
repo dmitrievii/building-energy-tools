@@ -2,11 +2,11 @@
 
 The three GeoSphere resources (10-minute, hourly and native-monthly) differ in
 provider metadata, parameter vocabulary and transport planning, but they should
-not have different Streamlit request-state machines.  This module establishes
-one resource-neutral state contract at the final UI boundary while the existing
+not have different Streamlit request-state machines. This module establishes one
+resource-neutral state contract at the final UI boundary while the existing
 mature loaders remain the transport implementation.
 
-The request boundary deliberately records only user intent.  It never fetches
+The request boundary deliberately records only user intent. It never fetches
 provider data, infers availability or changes scientific normalization.
 """
 from __future__ import annotations
@@ -107,7 +107,7 @@ class GeoSphereRequestState:
 class GeoSphereRequestForm:
     """Capture one canonical request state from the shared mature GeoSphere UI.
 
-    This class is intentionally resource-neutral.  Monthly catalogue adapters may
+    This class is intentionally resource-neutral. Monthly catalogue adapters may
     still alter which rows are visible, and resource adapters may still alter the
     provider query plan, but the final user intent is recorded here in exactly the
     same schema for ``klima-v2-10min``, ``klima-v2-1h`` and ``klima-v2-1m``.
@@ -202,13 +202,19 @@ def _is_request_editor(data: Any, key: object) -> bool:
 
 
 def install_geosphere_request_form(parity: Any) -> None:
-    """Install the one final request-state boundary for all GeoSphere resources."""
+    """Install the one final request-state boundary for all GeoSphere resources.
+
+    The mature transactional variable form remains the sole owner of the visible
+    Load action and of the legacy load-event bridge. This boundary observes the
+    same ``form_submit_button`` event only to persist the canonical committed
+    request snapshot. It must never replace or intercept ``st.button`` itself.
+    """
     previous = parity._render_geosphere_resource_selector
     st = parity.st
 
     def selector(legacy: Any, original: Callable) -> Any:
         real_editor = st.data_editor
-        real_button = st.button
+        real_form_submit_button = st.form_submit_button
         real_dg_date_input = DeltaGenerator.date_input
         request_form = GeoSphereRequestForm(st)
 
@@ -218,11 +224,15 @@ def install_geosphere_request_form(parity: Any) -> None:
                 request_form.capture_editor(edited)
             return edited
 
-        def button(label: Any, *args: Any, **kwargs: Any):
-            clicked = real_button(label, *args, **kwargs)
-            if str(label) == _LOAD_LABEL and bool(clicked):
-                request_form.commit()
-            return clicked
+        def form_submit_button(label: Any, *args: Any, **kwargs: Any):
+            submitted = real_form_submit_button(label, *args, **kwargs)
+            if str(label) == _LOAD_LABEL and bool(submitted):
+                # The mature form performs its own empty-selection validation.
+                # Record a committed snapshot only when the staged request is
+                # complete; transport remains owned by the existing loader.
+                if request_form.staged().is_loadable:
+                    request_form.commit()
+            return submitted
 
         def date_input(self: DeltaGenerator, label: str, *args: Any, **kwargs: Any):
             value = real_dg_date_input(self, label, *args, **kwargs)
@@ -232,13 +242,13 @@ def install_geosphere_request_form(parity: Any) -> None:
             return value
 
         st.data_editor = data_editor
-        st.button = button
+        st.form_submit_button = form_submit_button
         DeltaGenerator.date_input = date_input
         try:
             return previous(legacy, original)
         finally:
             st.data_editor = real_editor
-            st.button = real_button
+            st.form_submit_button = real_form_submit_button
             DeltaGenerator.date_input = real_dg_date_input
 
     parity._render_geosphere_resource_selector = selector
