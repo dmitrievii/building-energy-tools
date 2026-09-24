@@ -37,6 +37,7 @@ from .interannual_presentation import (
     HIGHLIGHT_WIDTH,
     apply_interannual_year_highlight,
     highlight_year_from_frame,
+    trace_real_year,
 )
 from .temporal_filtering import INTERANNUAL_OVERLAY, time_basis
 
@@ -45,6 +46,14 @@ HIGHLIGHT_STATE_KEY = "overlay_highlight_year"
 _TIME_BASIS_STATE_KEY = "global_time_basis"
 _BUILDER_WRAPPER_MARK = "_interannual_year_highlight_builder_wrapper"
 _RENDER_WRAPPER_MARK = "_interannual_year_highlight_render_wrapper"
+
+# Neutral visual contract for ordinary real-year traces.  Highlighting is the
+# only colour accent in the interannual overlay; without a highlight all years
+# intentionally share this thin light-grey presentation.
+NEUTRAL_YEAR_COLOR = "#cbd5e1"
+NEUTRAL_YEAR_WIDTH = 1.0
+NEUTRAL_YEAR_MARKER_SIZE = 4.0
+NEUTRAL_YEAR_FILL = "rgba(203,213,225,0.08)"
 
 
 def _highlight_year_options(df: pd.DataFrame, *, include_none: bool = True) -> list[int | None]:
@@ -100,7 +109,7 @@ def _selected_highlight_year(
         format_func=lambda value: "None" if value is None else str(int(value)),
         help=(
             "Focus one real source year in the Interannual overlay. The selected year is drawn red, thicker, "
-            "fully opaque, and above the other yearly traces; the underlying data and aggregation do not change."
+            "fully opaque, and above the other yearly traces. Choose None to keep all years equally neutral."
         ),
     )
     return None if selected is None else int(selected)
@@ -139,13 +148,14 @@ def _render_generic_with_positioned_highlight(
 
     ``source_parity_ux_followup`` already invokes a Highlight-year selector after
     ``Aggregation``. That call is the required UI position, so this wrapper does
-    not render another control after Aggregation. It intercepts the lower call,
-    draws the canonical widget under ``overlay_highlight_year``, and returns the
-    selected concrete year to the legacy caller so its compatibility state remains
-    internally valid. Generic production profiles intentionally expose real years
-    only because the legacy renderer assumes a concrete year and calls ``int`` on
-    the result. Lightweight renderers without that legacy wrapper retain the
-    optional ``None`` entry used by the standalone canonical control contract.
+    not render another control after Aggregation. It intercepts the lower call and
+    draws the canonical widget under ``overlay_highlight_year``.
+
+    The mature compatibility wrapper still calls ``int(highlight)``.  ``None`` is
+    therefore translated only on the return path to that legacy caller, while the
+    canonical session state remains ``None``.  The final canonical styling layer
+    then removes every focus effect and renders all real years neutrally.  This
+    keeps the old wrapper safe without removing the user-facing None option.
     """
     if not _highlight_year_options(df):
         return renderer(df, *args, **kwargs)
@@ -154,8 +164,7 @@ def _render_generic_with_positioned_highlight(
     real_selectbox = st.selectbox
     highlight_rendered = False
     legacy_slot_expected = hasattr(proxy, "_source_parity_original_generic_interannual")
-    include_none = not legacy_slot_expected
-    selected = _stored_highlight_year(proxy, df, include_none=include_none)
+    selected = _stored_highlight_year(proxy, df, include_none=True)
     render_df = _frame_with_highlight_year(df, selected)
 
     def render_highlight() -> int | None:
@@ -166,14 +175,18 @@ def _render_generic_with_positioned_highlight(
             proxy,
             df,
             selectbox=real_selectbox,
-            include_none=include_none,
+            include_none=True,
         )
         highlight_rendered = True
         return selected
 
     def selectbox(label: str, options_arg: Any, *widget_args: Any, **widget_kwargs: Any) -> Any:
         if str(label) == "Highlight year":
-            return render_highlight()
+            canonical_value = render_highlight()
+            if canonical_value is None and legacy_slot_expected:
+                concrete_years = _highlight_year_options(df, include_none=False)
+                return int(concrete_years[-1]) if concrete_years else None
+            return canonical_value
 
         result = real_selectbox(label, options_arg, *widget_args, **widget_kwargs)
         # Lightweight/unit-test renderers may not include the legacy lower-slot
@@ -189,6 +202,39 @@ def _render_generic_with_positioned_highlight(
         return renderer(render_df, *args, **kwargs)
     finally:
         st.selectbox = real_selectbox
+
+
+def _neutralize_interannual_year_traces(fig: Any) -> Any:
+    """Render every identifiable real-year trace as a thin light-grey baseline."""
+    for trace in tuple(getattr(fig, "data", ()) or ()):
+        if trace_real_year(trace) is None:
+            continue
+
+        line = getattr(trace, "line", None)
+        if line is not None:
+            line.color = NEUTRAL_YEAR_COLOR
+            line.width = NEUTRAL_YEAR_WIDTH
+
+        mode = str(getattr(trace, "mode", "") or "")
+        marker = getattr(trace, "marker", None)
+        if marker is not None and "markers" in mode:
+            marker.color = NEUTRAL_YEAR_COLOR
+            marker.size = NEUTRAL_YEAR_MARKER_SIZE
+
+        fill = str(getattr(trace, "fill", "") or "").lower()
+        if fill and fill != "none":
+            trace.fillcolor = NEUTRAL_YEAR_FILL
+
+        trace.opacity = BACKGROUND_OPACITY
+    return fig
+
+
+def _style_interannual_year_figure(fig: Any, year: int | None) -> Any:
+    """Apply the neutral year palette, then optionally promote one selected year."""
+    fig = _neutralize_interannual_year_traces(fig)
+    if year is not None:
+        fig = apply_interannual_year_highlight(fig, year)
+    return fig
 
 
 def _is_current_builder_wrapped(builder: Any) -> bool:
@@ -225,6 +271,11 @@ def _session_highlight_year(proxy: Any) -> int | None:
         return None
 
 
+def _session_is_interannual(proxy: Any) -> bool:
+    """Return whether the current global presentation basis is Interannual overlay."""
+    return proxy.st.session_state.get(_TIME_BASIS_STATE_KEY) == INTERANNUAL_OVERLAY
+
+
 def _install_builder_styling() -> None:
     """Bind focused-year styling to the actual Plotly chart builders.
 
@@ -242,8 +293,8 @@ def _install_builder_styling() -> None:
         def build_overlay_figure(df: pd.DataFrame, *args: Any, **kwargs: Any):
             fig, tables = current_overlay_builder(df, *args, **kwargs)
             year = highlight_year_from_frame(df)
-            if time_basis(df) == INTERANNUAL_OVERLAY and year is not None:
-                fig = apply_interannual_year_highlight(fig, year)
+            if time_basis(df) == INTERANNUAL_OVERLAY:
+                fig = _style_interannual_year_figure(fig, year)
             return fig, tables
 
         timeseries.build_overlay_figure = _mark_builder_wrapper(build_overlay_figure)
@@ -256,8 +307,8 @@ def _install_builder_styling() -> None:
         def profile_ribbon_chart(df: pd.DataFrame, *args: Any, **kwargs: Any):
             fig = current_profile(df, *args, **kwargs)
             year = highlight_year_from_frame(df)
-            if time_basis(df) == INTERANNUAL_OVERLAY and year is not None:
-                fig = apply_interannual_year_highlight(fig, year)
+            if time_basis(df) == INTERANNUAL_OVERLAY:
+                fig = _style_interannual_year_figure(fig, year)
             return fig
 
         charts.profile_ribbon_chart = _mark_builder_wrapper(profile_ribbon_chart)
@@ -268,8 +319,8 @@ def _install_builder_styling() -> None:
         def percentile_band_chart(df: pd.DataFrame, *args: Any, **kwargs: Any):
             fig = current_percentile(df, *args, **kwargs)
             year = highlight_year_from_frame(df)
-            if time_basis(df) == INTERANNUAL_OVERLAY and year is not None:
-                fig = apply_interannual_year_highlight(fig, year)
+            if time_basis(df) == INTERANNUAL_OVERLAY:
+                fig = _style_interannual_year_figure(fig, year)
             return fig
 
         charts.percentile_band_chart = _mark_builder_wrapper(percentile_band_chart)
@@ -279,7 +330,7 @@ def _install_builder_styling() -> None:
 
 
 def _install_final_render_fallback(proxy: Any) -> None:
-    """Style the selected year immediately before the app hands a figure to Streamlit.
+    """Style interannual years immediately before the app hands a figure to Streamlit.
 
     The app-level renderer is intentionally a second line of defence. Builder
     styling remains useful for shared overlay figures, but ``render_plot`` is the
@@ -295,9 +346,8 @@ def _install_final_render_fallback(proxy: Any) -> None:
 
     @wraps(current_render)
     def render_plot(fig: Any, *args: Any, **kwargs: Any) -> Any:
-        year = _session_highlight_year(proxy)
-        if year is not None:
-            fig = apply_interannual_year_highlight(fig, year)
+        if _session_is_interannual(proxy):
+            fig = _style_interannual_year_figure(fig, _session_highlight_year(proxy))
         return current_render(fig, *args, **kwargs)
 
     proxy.render_plot = _mark_render_wrapper(render_plot)
