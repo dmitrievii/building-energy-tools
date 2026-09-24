@@ -34,16 +34,20 @@ class MonthlyRequestSurfacePureTests(unittest.TestCase):
         self.assertEqual(_clamp(date(2030, 1, 1), low, high, fallback), high)
         self.assertEqual(_clamp(None, low, high, fallback), fallback)
 
-    def test_empty_station_transition_does_not_fetch_metadata_or_raise(self) -> None:
+    def test_empty_station_without_visible_catalogue_returns_none_after_cached_metadata(self) -> None:
         class StubStreamlit:
             session_state: dict[str, object] = {}
 
         class StubLegacy:
-            @staticmethod
-            def cached_geosphere_metadata_bundle():
-                raise AssertionError("Monthly metadata must not be fetched before a station is committed.")
+            calls = 0
+
+            @classmethod
+            def cached_geosphere_metadata_bundle(cls):
+                cls.calls += 1
+                return ({}, {}, [], pd.DataFrame(), {}, {})
 
         self.assertIsNone(_station_and_bundle(StubLegacy(), StubStreamlit()))
+        self.assertEqual(StubLegacy.calls, 1)
 
 
 class MonthlyRequestSurfaceArchitectureTests(unittest.TestCase):
