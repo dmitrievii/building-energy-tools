@@ -180,6 +180,10 @@ def _install_into_app_globals_locked(namespace: MutableMapping[str, Any]) -> boo
     from .source_parity_contract_guard import install_contract_guards
     from .source_parity_monthly_overlay_hotfix import install_monthly_overlay_timezone_guard
     from .source_parity_monthly_surface_guard import install_monthly_surface_guard
+    from .source_parity_variable_form_compat import (
+        install_geosphere_variable_form_compat,
+        patch_variable_form_installer,
+    )
     from .geosphere_request_form import install_geosphere_request_form
 
     # Provider vocabulary is installed before the shared resource selector builds
@@ -219,9 +223,19 @@ def _install_into_app_globals_locked(namespace: MutableMapping[str, Any]) -> boo
     # legacy shared-shell text.
     install_monthly_surface_guard(parity)
 
+    # The transactional variable form is part of the runtime contract, not an
+    # accidental side effect of a persistent module from an earlier Streamlit
+    # script run. Clear its reload-persistent marker and install the schema-
+    # compatible owner explicitly for 10-minute, hourly and monthly tables.
+    # This guarantees a visible submit action even while the opt-in variable
+    # selection is still empty; provider transport remains behind that submit.
+    patch_variable_form_installer()
+    install_geosphere_variable_form_compat(parity)
+
     # One final request-state boundary is shared by all GeoSphere resources. It
-    # observes the already-normalized editor/date widgets, records one canonical
-    # request schema and never owns provider transport or scientific conversion.
+    # observes the already-normalized editor/date widgets and the transactional
+    # form submit, records one canonical request schema and never owns provider
+    # transport or scientific conversion.
     install_geosphere_request_form(parity)
 
     # Source-neutral presentation control for Interannual overlay. Install it
