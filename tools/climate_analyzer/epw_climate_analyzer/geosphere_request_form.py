@@ -208,6 +208,14 @@ def install_geosphere_request_form(parity: Any) -> None:
     Load action and of the legacy load-event bridge. This boundary observes the
     same ``form_submit_button`` event only to persist the canonical committed
     request snapshot. It must never replace or intercept ``st.button`` itself.
+
+    Date widgets are the only request controls that remain outside the mature
+    variable form. Render exactly those two widgets as Streamlit fragments so a
+    date edit reruns only the date widget, not the station browser/map or the
+    runtime wrapper stack. On the next full run (Load, station/resource change,
+    or any other app rerun) their session-state values are captured into the
+    canonical request snapshot. The complete GeoSphere selector is deliberately
+    never fragmented.
     """
     previous = parity._render_geosphere_resource_selector
     st = parity.st
@@ -217,6 +225,27 @@ def install_geosphere_request_form(parity: Any) -> None:
         real_form_submit_button = st.form_submit_button
         real_dg_date_input = DeltaGenerator.date_input
         request_form = GeoSphereRequestForm(st)
+        fragment_factory = getattr(st, "fragment", None)
+
+        def _render_date_widget(delta: DeltaGenerator, label: str, args: tuple[Any, ...], kwargs: dict[str, Any]):
+            return real_dg_date_input(delta, label, *args, **kwargs)
+
+        if callable(fragment_factory):
+            @fragment_factory
+            def render_start_date(delta: DeltaGenerator, label: str, args: tuple[Any, ...], kwargs: dict[str, Any]):
+                return _render_date_widget(delta, label, args, kwargs)
+
+            @fragment_factory
+            def render_end_date(delta: DeltaGenerator, label: str, args: tuple[Any, ...], kwargs: dict[str, Any]):
+                return _render_date_widget(delta, label, args, kwargs)
+        else:
+            render_start_date = _render_date_widget
+            render_end_date = _render_date_widget
+
+        isolated_date_renderers = {
+            _START_KEY: render_start_date,
+            _END_KEY: render_end_date,
+        }
 
         def data_editor(data: Any, *args: Any, **kwargs: Any):
             edited = real_editor(data, *args, **kwargs)
@@ -235,10 +264,12 @@ def install_geosphere_request_form(parity: Any) -> None:
             return submitted
 
         def date_input(self: DeltaGenerator, label: str, *args: Any, **kwargs: Any):
-            value = real_dg_date_input(self, label, *args, **kwargs)
             key = str(kwargs.get("key") or "")
-            if key in {_START_KEY, _END_KEY}:
-                request_form.capture_date(key, value)
+            renderer = isolated_date_renderers.get(key)
+            if renderer is None:
+                return real_dg_date_input(self, label, *args, **kwargs)
+            value = renderer(self, label, tuple(args), dict(kwargs))
+            request_form.capture_date(key, value)
             return value
 
         st.data_editor = data_editor
