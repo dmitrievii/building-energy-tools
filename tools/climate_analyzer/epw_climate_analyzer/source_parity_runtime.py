@@ -75,6 +75,7 @@ def _reset_persistent_source_parity_modules() -> None:
         "timeseries",
         "interannual_year_highlight",
         "charts",
+        "source_parity_ux_followup",
         "source_parity_fixes",
         "source_parity_ground",
         "source_parity_resolution",
@@ -89,6 +90,7 @@ def _reset_persistent_source_parity_modules() -> None:
         "source_parity_contract_closure",
         "source_parity_contract_guidance_hotfix",
         "source_parity_monthly_selection_state",
+        "source_parity_variable_form_compat",
         "source_parity_contract_guard",
         "source_parity_monthly_overlay_hotfix",
         "source_parity_monthly_surface_guard",
@@ -186,6 +188,13 @@ def _install_into_app_globals_locked(namespace: MutableMapping[str, Any]) -> boo
     )
     from .geosphere_request_form import install_geosphere_request_form
 
+    # The shared UX module is mutable: older installers resolve its variable-form
+    # owner at runtime. Publish the compatibility owner before *any* source-parity
+    # installer can compose a legacy form. Calling this only at the end can delete
+    # an already-set marker and accidentally wrap a second transactional form over
+    # the first one, which is nondeterministic across Streamlit browser sessions.
+    patch_variable_form_installer()
+
     # Provider vocabulary is installed before the shared resource selector builds
     # metadata mappings. Scientific engines remain provider-neutral.
     apply_geosphere_resource_overlay()
@@ -223,13 +232,10 @@ def _install_into_app_globals_locked(namespace: MutableMapping[str, Any]) -> boo
     # legacy shared-shell text.
     install_monthly_surface_guard(parity)
 
-    # The transactional variable form is part of the runtime contract, not an
-    # accidental side effect of a persistent module from an earlier Streamlit
-    # script run. Clear its reload-persistent marker and install the schema-
-    # compatible owner explicitly for 10-minute, hourly and monthly tables.
-    # This guarantees a visible submit action even while the opt-in variable
-    # selection is still empty; provider transport remains behind that submit.
-    patch_variable_form_installer()
+    # Guarantee exactly one schema-compatible transactional form. If an earlier
+    # installer already requested the shared form, the marker now refers to this
+    # same compatibility owner and this call is a no-op. Do not clear the marker
+    # here: doing so would duplicate the form wrapper.
     install_geosphere_variable_form_compat(parity)
 
     # One final request-state boundary is shared by all GeoSphere resources. It
