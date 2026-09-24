@@ -7,6 +7,15 @@ fallback. The final boundary is important because the mature Streamlit runtime
 reloads and rebinds chart modules dynamically; a valid UI selection must not
 silently lose its visual effect when one intermediate builder wrapper is reset.
 
+For generic variable explorers the focused-year selector belongs to the local
+chart-control sequence, after ``Aggregation`` when that control exists.  The
+installer therefore does not prepend another selector before ``Variable`` /
+``Chart type``.  Instead it temporarily adapts ``st.selectbox`` while the generic
+renderer runs: an existing legacy ``Highlight year`` slot is replaced by the
+canonical stateful selector, or the canonical selector is inserted immediately
+after ``Aggregation``.  This preserves the established control order and ensures
+there is exactly one visible focused-year control.
+
 Streamlit reruns keep imported Python package modules alive. ``importlib.reload``
 re-executes module source but retains dictionary entries that are not redefined,
 so module-level boolean patch guards can survive a reload even after the wrapped
@@ -39,24 +48,49 @@ _BUILDER_WRAPPER_MARK = "_interannual_year_highlight_builder_wrapper"
 _RENDER_WRAPPER_MARK = "_interannual_year_highlight_render_wrapper"
 
 
-def _selected_highlight_year(proxy: Any, df: pd.DataFrame) -> int | None:
-    """Render/read the highlight control for a multi-year interannual frame."""
+def _highlight_year_options(df: pd.DataFrame) -> list[int | None]:
+    """Return canonical focused-year options for a multi-year overlay frame."""
     if time_basis(df) != INTERANNUAL_OVERLAY or not isinstance(df.index, pd.DatetimeIndex):
-        return None
-
+        return []
     years = sorted({int(value) for value in pd.DatetimeIndex(df.index).year})
     if len(years) < 2:
+        return []
+    return [None, *years]
+
+
+def _stored_highlight_year(proxy: Any, df: pd.DataFrame) -> int | None:
+    """Return a valid stored focused year without rendering another widget."""
+    options = _highlight_year_options(df)
+    if not options:
+        return None
+    stored = proxy.st.session_state.get(HIGHLIGHT_STATE_KEY)
+    try:
+        normalized = None if stored is None else int(stored)
+    except (TypeError, ValueError):
+        normalized = None
+    if normalized not in options:
+        normalized = None
+        proxy.st.session_state[HIGHLIGHT_STATE_KEY] = None
+    return normalized
+
+
+def _selected_highlight_year(
+    proxy: Any,
+    df: pd.DataFrame,
+    *,
+    selectbox: Callable[..., Any] | None = None,
+) -> int | None:
+    """Render/read the canonical highlight control for an interannual frame."""
+    options = _highlight_year_options(df)
+    if not options:
         return None
 
-    options: list[int | None] = [None, *years]
-    stored = proxy.st.session_state.get(HIGHLIGHT_STATE_KEY)
-    if stored not in options:
-        proxy.st.session_state[HIGHLIGHT_STATE_KEY] = None
-
-    selected = proxy.st.selectbox(
+    stored = _stored_highlight_year(proxy, df)
+    widget = selectbox or proxy.st.selectbox
+    selected = widget(
         "Highlight year",
         options,
-        index=0,
+        index=options.index(stored),
         key=HIGHLIGHT_STATE_KEY,
         format_func=lambda value: "None" if value is None else str(int(value)),
         help=(
@@ -87,6 +121,59 @@ def _render_with_highlight_metadata(
     """Attach selection metadata before the chart builder sees the dataframe."""
     selected = _selected_highlight_year(proxy, df)
     return renderer(_frame_with_highlight_year(df, selected), *args, **kwargs)
+
+
+def _render_generic_with_positioned_highlight(
+    proxy: Any,
+    renderer: Callable[..., Any],
+    df: pd.DataFrame,
+    *args: Any,
+    **kwargs: Any,
+) -> Any:
+    """Render one working focused-year selector in the generic control sequence.
+
+    The previous implementation rendered the canonical selector before entering
+    the generic page.  A legacy lower selector could then still be rendered after
+    ``Aggregation``, producing two controls with different state.  Here the
+    canonical selector is rendered in that lower position instead.  Any legacy
+    ``Highlight year`` call made by a nested compatibility layer is consumed and
+    returns the canonical value without drawing a second widget.
+    """
+    options = _highlight_year_options(df)
+    if not options:
+        return renderer(df, *args, **kwargs)
+
+    st = proxy.st
+    real_selectbox = st.selectbox
+    selected = _stored_highlight_year(proxy, df)
+    render_df = _frame_with_highlight_year(df, selected)
+    highlight_rendered = False
+
+    def render_highlight() -> int | None:
+        nonlocal selected, highlight_rendered, render_df
+        if highlight_rendered:
+            return selected
+        selected = _selected_highlight_year(proxy, df, selectbox=real_selectbox)
+        highlight_rendered = True
+        render_df = _frame_with_highlight_year(df, selected)
+        return selected
+
+    def selectbox(label: str, options_arg: Any, *widget_args: Any, **widget_kwargs: Any) -> Any:
+        # Replace any legacy lower Highlight-year widget with the canonical one.
+        # If Aggregation already inserted it, consume the legacy call silently.
+        if str(label) == "Highlight year":
+            return render_highlight()
+
+        result = real_selectbox(label, options_arg, *widget_args, **widget_kwargs)
+        if str(label) == "Aggregation" and not highlight_rendered:
+            render_highlight()
+        return result
+
+    st.selectbox = selectbox
+    try:
+        return renderer(render_df, *args, **kwargs)
+    finally:
+        st.selectbox = real_selectbox
 
 
 def _is_current_builder_wrapped(builder: Any) -> bool:
@@ -226,7 +313,7 @@ def install_interannual_year_highlight(proxy: Any) -> None:
         original_generic = proxy.render_generic_variable_page
 
         def render_generic_variable_page(df: pd.DataFrame, *args: Any, **kwargs: Any) -> Any:
-            return _render_with_highlight_metadata(proxy, original_generic, df, *args, **kwargs)
+            return _render_generic_with_positioned_highlight(proxy, original_generic, df, *args, **kwargs)
 
         proxy.render_generic_variable_page = render_generic_variable_page
 
