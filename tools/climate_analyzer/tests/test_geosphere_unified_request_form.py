@@ -101,8 +101,8 @@ class GeoSphereUnifiedRequestStateTests(unittest.TestCase):
         self.assertEqual(GeoSphereRequestState.from_mapping(payload), state)
 
 
-class GeoSphereFragmentRuntimeContractTests(unittest.TestCase):
-    def test_runtime_installs_request_boundary_before_freeze_and_uses_fragment(self) -> None:
+class GeoSphereRuntimeBoundaryContractTests(unittest.TestCase):
+    def test_request_boundary_precedes_freeze_without_fragmenting_station_browser(self) -> None:
         source = (
             Path(__file__).resolve().parents[1]
             / "epw_climate_analyzer"
@@ -111,9 +111,12 @@ class GeoSphereFragmentRuntimeContractTests(unittest.TestCase):
         install_pos = source.index("install_geosphere_request_form(parity)")
         freeze_pos = source.index("_freeze_session_geosphere_selector(proxy, parity)")
         self.assertLess(install_pos, freeze_pos)
-        self.assertIn('fragment_factory = getattr(proxy.st, "fragment", None)', source)
-        self.assertIn("fragment_factory(execute_geosphere_selector)", source)
-        self.assertIn('"geosphere_request_form"', source)
+        self.assertNotIn("fragment_factory", source)
+        self.assertNotIn("fragment(execute_geosphere_selector)", source)
+        # Request-state classes are pure value objects; reloading this module
+        # would produce incompatible dataclass identities during one process.
+        reset_block = source[source.index("module_names = (") : source.index("package = __package__")]
+        self.assertNotIn('"geosphere_request_form"', reset_block)
 
 
 if __name__ == "__main__":
