@@ -1,0 +1,102 @@
+name: Climate Analyzer GeoSphere Request Fast Gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'tools/climate_analyzer/app.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/geosphere_request_form.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_selection_state.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_monthly_surface_guard.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_runtime.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_streamlit_surface.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_variable_form_compat.py'
+      - 'tools/climate_analyzer/tests/test_geosphere_empty_selection_default.py'
+      - 'tools/climate_analyzer/tests/test_geosphere_monthly_mature_loader_contract.py'
+      - 'tools/climate_analyzer/tests/test_geosphere_unified_request_form.py'
+      - 'tools/climate_analyzer/tests/test_streamlit_surface_transactional_restore.py'
+      - 'deployment/pr98_geosphere_request_fast_smoke.mjs'
+      - '.github/workflows/climate-analyzer-geosphere-request-fast-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: climate-analyzer-geosphere-request-fast-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  request-fast-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      PYTHONPATH: tools/climate_analyzer
+      TARGET_URL: http://127.0.0.1:8501/
+      CHROME_PATH: /usr/bin/google-chrome
+      REQUEST_FAST_GATE: '1'
+      PR98_REQUEST_REPORT: artifacts/pr98-request-fast/request-report.json
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/climate_analyzer/requirements.txt
+
+      - name: Install Climate Analyzer dependencies
+        run: python -m pip install -r tools/climate_analyzer/requirements.txt
+
+      - name: Run request-state unit contracts
+        env:
+          PYTHONWARNINGS: error::FutureWarning
+        run: |
+          python -m unittest -v \
+            tools.climate_analyzer.tests.test_geosphere_empty_selection_default \
+            tools.climate_analyzer.tests.test_geosphere_monthly_mature_loader_contract \
+            tools.climate_analyzer.tests.test_geosphere_unified_request_form \
+            tools.climate_analyzer.tests.test_streamlit_surface_transactional_restore
+
+      - name: Start Streamlit
+        run: |
+          mkdir -p artifacts/pr98-request-fast
+          nohup python -m streamlit run tools/climate_analyzer/app.py \
+            --server.headless true \
+            --server.address 127.0.0.1 \
+            --server.port 8501 \
+            > artifacts/pr98-request-fast/streamlit.log 2>&1 &
+          for i in $(seq 1 45); do
+            if curl --fail --silent http://127.0.0.1:8501/_stcore/health >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat artifacts/pr98-request-fast/streamlit.log || true
+          exit 1
+
+      - name: Install browser driver
+        run: npm install --no-save playwright-core@1.55.0
+
+      - name: Exercise request/reset/reselection without measurement load
+        run: node deployment/pr98_geosphere_request_fast_smoke.mjs
+
+      - name: Reject runtime tracebacks
+        if: always()
+        run: |
+          if grep -E 'Traceback \(most recent call last\)|Uncaught app execution' artifacts/pr98-request-fast/streamlit.log; then
+            echo 'Runtime traceback detected.'
+            exit 1
+          fi
+
+      - name: Upload fast-gate evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: climate-analyzer-geosphere-request-fast-gate
+          path: artifacts/pr98-request-fast
+          if-no-files-found: warn
+          retention-days: 14
