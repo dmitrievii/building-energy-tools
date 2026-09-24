@@ -42,6 +42,25 @@ class GeoSphereDateFragmentIsolationTests(unittest.TestCase):
         self.assertNotIn("fetch_station_dataset", source)
         self.assertNotIn("fetch_geosphere_station_dataset", source)
 
+    def test_monthly_resource_bypasses_per_date_fragments(self) -> None:
+        source = self._source()
+        self.assertIn('_MONTHLY_RESOURCE_ID = "klima-v2-1m"', source)
+        self.assertIn(
+            'if str(st.session_state.get(_RESOURCE_KEY, "")) == _MONTHLY_RESOURCE_ID:',
+            source,
+        )
+        monthly_guard = source.index(
+            'if str(st.session_state.get(_RESOURCE_KEY, "")) == _MONTHLY_RESOURCE_ID:'
+        )
+        fragmented_call = source.index(
+            "value = renderer(self, label, tuple(args), dict(kwargs))"
+        )
+        self.assertLess(monthly_guard, fragmented_call)
+        self.assertIn(
+            "return real_dg_date_input(self, label, *args, **kwargs)",
+            source[monthly_guard:fragmented_call],
+        )
+
     def test_fragment_fallback_preserves_non_streamlit_test_doubles(self) -> None:
         source = self._source()
         self.assertIn('fragment_factory = getattr(st, "fragment", None)', source)
