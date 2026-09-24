@@ -187,6 +187,7 @@ def _install_into_app_globals_locked(namespace: MutableMapping[str, Any]) -> boo
         patch_variable_form_installer,
     )
     from .geosphere_request_form import install_geosphere_request_form
+    from .geosphere_monthly_request_surface import install_monthly_request_surface
 
     # The shared UX module is mutable: older installers resolve its variable-form
     # owner at runtime. Publish the compatibility owner before *any* source-parity
@@ -243,6 +244,12 @@ def _install_into_app_globals_locked(namespace: MutableMapping[str, Any]) -> boo
     # form submit, records one canonical request schema and never owns provider
     # transport or scientific conversion.
     install_geosphere_request_form(parity)
+
+    # Native-monthly now owns one request fragment below the mature station
+    # browser. The wrapper stops only the legacy request tail at its first date
+    # widget, then renders Parameter set + dates + DataEditor + Load together.
+    # 10-minute/hourly remain on the validated mature path.
+    install_monthly_request_surface(parity)
 
     # Source-neutral presentation control for Interannual overlay. Install it
     # after all provider-specific wrappers so every source uses the same final
