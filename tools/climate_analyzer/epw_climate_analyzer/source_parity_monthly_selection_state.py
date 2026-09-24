@@ -78,15 +78,25 @@ def _provider_state(
     return state
 
 
-def _editor_key(view: str, providers: list[str]) -> str:
-    """Return a widget key stable for one catalogue view/provider vocabulary."""
+def _parameter_set_epoch(st: Any) -> int:
+    try:
+        return max(0, int(st.session_state.get(_PARAMETER_SET_EPOCH_KEY, 0)))
+    except (TypeError, ValueError):
+        return 0
+
+
+def _editor_key(view: str, providers: list[str], *, epoch: int = 0) -> str:
+    """Return a widget key stable only inside one catalogue-view reset epoch."""
     slug = {
         "Core variables": "core",
         "Core + additional statistics": "core_additional",
         "All provider parameters": "all",
     }.get(str(view), "custom")
     signature = sha1("\0".join(providers).encode("utf-8")).hexdigest()[:12]
-    return f"{_MONTHLY_EDITOR_KEY_PREFIX}{_EDITOR_KEY_VERSION}__{slug}__{signature}"
+    return (
+        f"{_MONTHLY_EDITOR_KEY_PREFIX}{_EDITOR_KEY_VERSION}__{slug}__{signature}"
+        f"__epoch_{max(0, int(epoch))}"
+    )
 
 
 def reset_monthly_parameter_set_state(st: Any) -> int:
@@ -96,7 +106,8 @@ def reset_monthly_parameter_set_state(st: Any) -> int:
     server-side provider dictionaries when an external radio triggers a rerun.
     The Parameter-set callback therefore owns the reset boundary: clear provider
     state, discard every monthly editor widget snapshot, invalidate a latent form
-    load token and advance an epoch used by the transactional form identity.
+    load token and advance an epoch used by both the transactional form and the
+    DataEditor widget identity.
     """
     state = st.session_state
     state[_SELECTION_STATE_KEY] = {}
@@ -239,7 +250,12 @@ def install_monthly_selection_state(parity: Any) -> None:
             if "Quality flag" in prepared.columns:
                 prepared["Quality flag"] = [flag_state.get(provider, False) for provider in providers]
 
-            widget_key = _editor_key(view, providers)
+            # A Parameter-set reset must invalidate the browser-side Glide widget
+            # itself, not only its server-side session-state snapshot. Reusing the
+            # same DataEditor key lets the frontend reconcile an old checked cell
+            # back into the freshly-cleared DataFrame. The epoch therefore forms
+            # part of the widget identity as well as the surrounding form identity.
+            widget_key = _editor_key(view, providers, epoch=_parameter_set_epoch(st))
             if view_changed:
                 st.session_state.pop(widget_key, None)
 
