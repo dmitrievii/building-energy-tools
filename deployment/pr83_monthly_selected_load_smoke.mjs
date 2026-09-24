@@ -675,7 +675,7 @@ async function exerciseHover(page) {
 }
 
 const report = {
-  schema: 'climate-analyzer-monthly-selected-load-smoke-v9-transactional-request',
+  schema: 'climate-analyzer-monthly-selected-load-smoke-v10-parameter-set-reset',
   target_url: TARGET_URL,
   fixture,
   checks: {},
@@ -752,16 +752,31 @@ try {
   if (!(await frame.getByRole('button', { name: LOAD_LABEL, exact: true }).count().catch(() => 0))) {
     throw new Error('Transactional Load submit disappeared on All -> Core transition.');
   }
-  report.checks.core_all_core_form_preserved = true;
+  for (const provider of REQUIRED) {
+    const state = await providerState(page, provider);
+    if (state.load !== 'false') throw new Error(`All -> Core must reset ${provider}; observed ${state.load}.`);
+  }
+  report.checks.all_to_core_resets_selection = true;
 
   await selectParameterSet(page, 'All provider parameters');
   for (const provider of REQUIRED) {
     const state = await providerState(page, provider);
-    if (state.load !== 'true') throw new Error(`Provider-keyed roundtrip lost ${provider}.`);
+    if (state.load !== 'false') throw new Error(`Core -> All must keep reset state for ${provider}; observed ${state.load}.`);
   }
-  report.checks.provider_keyed_roundtrip = true;
+  report.checks.core_to_all_keeps_selection_empty = true;
 
   await selectParameterSet(page, 'Core variables');
+  const reselected = {};
+  for (const provider of REQUIRED) {
+    const state = await selectProvider(page, provider);
+    reselected[provider] = {
+      label: PROVIDER_LABELS[provider],
+      load: state.load,
+      row: state.ariaRowIndex,
+    };
+  }
+  report.checks.reselected_core_provider_parameters = reselected;
+
   frame = await appFrame(page, 'Measured variables to load', 20000);
   const loadButton = frame.getByRole('button', { name: LOAD_LABEL, exact: true }).first();
   if (!(await loadButton.count().catch(() => 0))) throw new Error('Transactional GeoSphere Load submit missing.');
