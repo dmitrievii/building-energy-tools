@@ -14,6 +14,9 @@ const PROVIDER_LABELS = {
   p: 'Station pressure — monthly mean',
   tl_mittel: 'Air temperature — monthly mean',
 };
+const FORM_CAPTION = 'Variable choices are staged locally.';
+const EMPTY_WARNING = 'Select at least one measured GeoSphere variable to load.';
+const LOAD_LABEL = 'Load measured GeoSphere interval';
 
 async function bodyText(frame) {
   try { return await frame.locator('body').innerText({ timeout: 2000 }); }
@@ -293,17 +296,36 @@ async function waitMonthlySurface(page, timeoutMs = 60000) {
       text.includes('Core variables') &&
       text.includes('Core + additional statistics') &&
       text.includes('All provider parameters') &&
-      text.includes('Select at least one measured GeoSphere variable to load.')
+      text.includes(FORM_CAPTION)
     );
     if (ready) {
-      stable += 1;
-      if (stable >= 3) return frame;
+      const load = frame.getByRole('button', { name: LOAD_LABEL, exact: true }).first();
+      if (await load.count().catch(() => 0) && await load.isVisible().catch(() => false)) {
+        stable += 1;
+        if (stable >= 3) return frame;
+      } else {
+        stable = 0;
+      }
     } else {
       stable = 0;
     }
     await sleep(300);
   }
-  throw new Error(`Monthly selector did not settle; Parameter set=${last.includes('Parameter set')}`);
+  throw new Error(`Monthly selector did not settle; Parameter set=${last.includes('Parameter set')}; form=${last.includes(FORM_CAPTION)}`);
+}
+
+async function assertEmptySubmitBlocked(page, frame) {
+  const load = frame.getByRole('button', { name: LOAD_LABEL, exact: true }).first();
+  if (!(await load.count().catch(() => 0)) || !(await load.isVisible().catch(() => false))) {
+    throw new Error('Transactional Load submit is not visible with empty selection.');
+  }
+  await load.click({ timeout: 15000 });
+  const validated = await appFrame(page, EMPTY_WARNING, 30000);
+  const text = await bodyText(validated);
+  if (!text.includes(EMPTY_WARNING)) throw new Error('Empty transactional submit did not show validation warning.');
+  if (text.includes('GeoSphere load complete')) throw new Error('Empty transactional submit activated provider loading.');
+  if (!text.includes('Measured variables to load')) throw new Error('Empty transactional submit left source configuration.');
+  return validated;
 }
 
 async function selectParameterSet(page, name) {
@@ -442,7 +464,6 @@ async function selectProvider(page, provider) {
   }
   throw new Error(`Could not select provider ${provider}.`);
 }
-
 
 async function chooseTimeBasis(page) {
   await selectComboOption(page, 'Time basis', (text) => text.trim() === 'Interannual overlay');
@@ -654,7 +675,7 @@ async function exerciseHover(page) {
 }
 
 const report = {
-  schema: 'climate-analyzer-monthly-selected-load-smoke-v8-native-interannual',
+  schema: 'climate-analyzer-monthly-selected-load-smoke-v9-transactional-request',
   target_url: TARGET_URL,
   fixture,
   checks: {},
@@ -701,15 +722,11 @@ try {
   report.checks.requested_interval = ['2020-01-01', '2025-12-31'];
 
   let frame = await waitMonthlySurface(page);
-  let text = await bodyText(frame);
-  if (!text.includes('Select at least one measured GeoSphere variable to load.')) {
-    throw new Error('Empty monthly selection warning is missing.');
-  }
-  if (await frame.getByRole('button', { name: 'Load measured GeoSphere interval', exact: true }).count().catch(() => 0)) {
-    throw new Error('Load button reachable with empty selection.');
-  }
   report.checks.initial_selection_zero = true;
+  report.checks.transactional_load_submit_visible = true;
+  frame = await assertEmptySubmitBlocked(page, frame);
   report.checks.empty_selection_warning = true;
+  report.checks.empty_submit_did_not_activate_dataset = true;
 
   await selectParameterSet(page, 'All provider parameters');
   const selected = {};
@@ -724,18 +741,18 @@ try {
   report.checks.selected_provider_parameters = selected;
 
   frame = await appFrame(page, 'Measured variables to load', 20000);
-  text = await bodyText(frame);
+  let text = await bodyText(frame);
   if (text.includes('GeoSphere load complete')) {
-    throw new Error('Checkbox edit triggered provider loading before mature load button.');
+    throw new Error('Checkbox edit triggered provider loading before transactional Load submit.');
   }
   report.checks.checkbox_edit_did_not_activate_dataset = true;
 
   await selectParameterSet(page, 'Core variables');
   frame = await appFrame(page, 'Measured variables to load', 20000);
-  if (!(await frame.getByRole('button', { name: 'Load measured GeoSphere interval', exact: true }).count().catch(() => 0))) {
-    throw new Error('Selection lost on All -> Core transition.');
+  if (!(await frame.getByRole('button', { name: LOAD_LABEL, exact: true }).count().catch(() => 0))) {
+    throw new Error('Transactional Load submit disappeared on All -> Core transition.');
   }
-  report.checks.core_all_core_load_button_preserved = true;
+  report.checks.core_all_core_form_preserved = true;
 
   await selectParameterSet(page, 'All provider parameters');
   for (const provider of REQUIRED) {
@@ -746,8 +763,8 @@ try {
 
   await selectParameterSet(page, 'Core variables');
   frame = await appFrame(page, 'Measured variables to load', 20000);
-  const loadButton = frame.getByRole('button', { name: 'Load measured GeoSphere interval', exact: true }).first();
-  if (!(await loadButton.count().catch(() => 0))) throw new Error('Mature GeoSphere load button missing.');
+  const loadButton = frame.getByRole('button', { name: LOAD_LABEL, exact: true }).first();
+  if (!(await loadButton.count().catch(() => 0))) throw new Error('Transactional GeoSphere Load submit missing.');
   await loadButton.click({ timeout: 15000 });
 
   frame = await appFrame(page, 'Explore — Time series & overlay', 180000);
