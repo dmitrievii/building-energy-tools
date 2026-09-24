@@ -16,6 +16,7 @@ from epw_climate_analyzer.geosphere_request_form import (
     GeoSphereRequestState,
     install_geosphere_request_form,
 )
+from epw_climate_analyzer.source_parity_monthly_selection_state import _PARAMETER_SET_EPOCH_KEY
 from epw_climate_analyzer.source_parity_variable_form_compat import (
     install_geosphere_variable_form_compat,
 )
@@ -189,9 +190,6 @@ class GeoSphereTransactionalFormValidationTests(unittest.TestCase):
 
         def previous(_legacy, _original):
             st.data_editor(empty_frame, key="geosphere_variable_editor::monthly")
-            # The mature selector still emits its legacy zero-selection warning;
-            # the transactional wrapper must suppress this duplicate and publish
-            # exactly one post-form validation message instead.
             st.warning(message)
             return "blocked"
 
@@ -202,6 +200,47 @@ class GeoSphereTransactionalFormValidationTests(unittest.TestCase):
         self.assertEqual(warnings, [message])
         self.assertNotIn(ux._FORM_REQUEST_KEY, st.session_state)
 
+    def test_monthly_parameter_set_epoch_changes_transactional_form_identity(self) -> None:
+        form_keys: list[str] = []
+
+        @contextmanager
+        def form(key, **_kwargs):
+            form_keys.append(str(key))
+            yield None
+
+        st = SimpleNamespace(
+            session_state={
+                "geosphere_resource_id": "klima-v2-1m",
+                "geosphere_selected_station_id": "105",
+                _PARAMETER_SET_EPOCH_KEY: 0,
+            },
+            data_editor=lambda data, *args, **kwargs: data,
+            button=lambda *_args, **_kwargs: False,
+            warning=lambda *_args, **_kwargs: None,
+            form=form,
+            caption=lambda *_args, **_kwargs: None,
+            form_submit_button=lambda *_args, **_kwargs: False,
+        )
+        frame = pd.DataFrame(
+            {
+                "Selected": [False],
+                "Provider": ["tl_mittel"],
+                "Variable": ["Air temperature — monthly mean"],
+            }
+        )
+
+        def previous(_legacy, _original):
+            return st.data_editor(frame, key="geosphere_variable_editor::monthly")
+
+        parity = SimpleNamespace(st=st, _render_geosphere_resource_selector=previous)
+        install_geosphere_variable_form_compat(parity)
+        parity._render_geosphere_resource_selector(None, None)
+        st.session_state[_PARAMETER_SET_EPOCH_KEY] = 1
+        parity._render_geosphere_resource_selector(None, None)
+
+        self.assertEqual(len(form_keys), 2)
+        self.assertNotEqual(form_keys[0], form_keys[1])
+
 
 class GeoSphereRuntimeBoundaryContractTests(unittest.TestCase):
     def test_transactional_form_and_request_boundary_precede_freeze_without_fragmenting_station_browser(self) -> None:
@@ -211,17 +250,22 @@ class GeoSphereRuntimeBoundaryContractTests(unittest.TestCase):
             / "source_parity_runtime.py"
         ).read_text(encoding="utf-8")
         patch_pos = source.index("patch_variable_form_installer()")
+        ui_install_pos = source.index("parity.install_source_parity_ui(proxy)")
         form_pos = source.index("install_geosphere_variable_form_compat(parity)")
         request_pos = source.index("install_geosphere_request_form(parity)")
         freeze_pos = source.index("_freeze_session_geosphere_selector(proxy, parity)")
+        self.assertEqual(source.count("patch_variable_form_installer()"), 1)
+        self.assertLess(patch_pos, ui_install_pos)
         self.assertLess(patch_pos, form_pos)
         self.assertLess(form_pos, request_pos)
         self.assertLess(request_pos, freeze_pos)
         self.assertNotIn("fragment_factory", source)
         self.assertNotIn("fragment(execute_geosphere_selector)", source)
+        reset_block = source[source.index("module_names = (") : source.index("package = __package__")]
+        self.assertIn('"source_parity_ux_followup"', reset_block)
+        self.assertIn('"source_parity_variable_form_compat"', reset_block)
         # Request-state classes are pure value objects; reloading this module
         # would produce incompatible dataclass identities during one process.
-        reset_block = source[source.index("module_names = (") : source.index("package = __package__")]
         self.assertNotIn('"geosphere_request_form"', reset_block)
 
 
