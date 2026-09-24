@@ -100,14 +100,15 @@ def _editor_key(view: str, providers: list[str], *, epoch: int = 0) -> str:
 
 
 def reset_monthly_parameter_set_state(st: Any) -> int:
-    """Clear every monthly selection surface before a Parameter-set rerun.
+    """Clear every monthly selection surface and advance the reset epoch.
 
-    ``st.data_editor`` lives inside a form, so its browser-side snapshot can outlive
-    server-side provider dictionaries when an external radio triggers a rerun.
-    The Parameter-set callback therefore owns the reset boundary: clear provider
-    state, discard every monthly editor widget snapshot, invalidate a latent form
-    load token and advance an epoch used by both the transactional form and the
-    DataEditor widget identity.
+    ``st.data_editor`` lives inside a form, so browser-side staged edits are not
+    available to the server when the external Parameter-set radio triggers a
+    rerun. The reset therefore belongs to the monthly selection adapter itself:
+    once that adapter observes that the catalogue view changed, it clears the
+    provider state, discards every monthly editor snapshot, invalidates a latent
+    form-load token and advances an epoch used by both the transactional form and
+    the DataEditor widget identity.
     """
     state = st.session_state
     state[_SELECTION_STATE_KEY] = {}
@@ -217,6 +218,19 @@ def install_monthly_selection_state(parity: Any) -> None:
                 view = "Core variables"
 
             full = _normalize_catalogue_roles(_decorate_monthly_table(parity, data))
+            previous_view = str(st.session_state.get(_LAST_VIEW_KEY, ""))
+            view_changed = bool(previous_view) and previous_view != view
+
+            # Detect the catalogue transition on the server in the same rerun in
+            # which the new view is rendered. This is intentionally independent
+            # of ``radio(on_change=...)`` timing: the old view has already been
+            # persisted by the previous completed render, while ``view`` comes
+            # from the newly committed radio value. Resetting here guarantees
+            # that the epoch changes before either the new form or DataEditor key
+            # is constructed.
+            if view_changed:
+                reset_monthly_parameter_set_state(st)
+
             selection_state = _provider_state(
                 st,
                 _SELECTION_STATE_KEY,
@@ -231,17 +245,6 @@ def install_monthly_selection_state(parity: Any) -> None:
                 "Quality flag",
                 default=False,
             )
-
-            previous_view = str(st.session_state.get(_LAST_VIEW_KEY, ""))
-            view_changed = bool(previous_view) and previous_view != view
-            if view_changed:
-                # Defensive server-side reset for non-callback callers/tests. In
-                # production the Parameter-set widget callback clears client and
-                # server snapshots before this rerun begins.
-                selection_state = _cleared_provider_state(full)
-                flag_state = _cleared_provider_state(full)
-                st.session_state[_SELECTION_STATE_KEY] = dict(selection_state)
-                st.session_state[_FLAG_STATE_KEY] = dict(flag_state)
             st.session_state[_LAST_VIEW_KEY] = view
 
             prepared = _visible_catalogue(parity, full, view)
@@ -253,8 +256,9 @@ def install_monthly_selection_state(parity: Any) -> None:
             # A Parameter-set reset must invalidate the browser-side Glide widget
             # itself, not only its server-side session-state snapshot. Reusing the
             # same DataEditor key lets the frontend reconcile an old checked cell
-            # back into the freshly-cleared DataFrame. The epoch therefore forms
-            # part of the widget identity as well as the surrounding form identity.
+            # back into the freshly-cleared DataFrame. The server-detected epoch
+            # therefore forms part of the widget identity as well as the
+            # surrounding transactional form identity.
             widget_key = _editor_key(view, providers, epoch=_parameter_set_epoch(st))
             if view_changed:
                 st.session_state.pop(widget_key, None)
@@ -262,6 +266,11 @@ def install_monthly_selection_state(parity: Any) -> None:
             kwargs["key"] = widget_key
             edited = real_editor(prepared.reset_index(drop=True), *args, **kwargs)
 
+            # Do not ingest any value returned by the editor during the first
+            # render of a newly selected Parameter set. A browser may still be
+            # reconciling the old form subtree during that transition. The newly
+            # generated form/editor identities become authoritative from the next
+            # interaction onward.
             if isinstance(edited, pd.DataFrame) and not view_changed:
                 visible = set(providers)
                 if "Provider" in edited.columns:
