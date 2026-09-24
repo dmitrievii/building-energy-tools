@@ -14,6 +14,9 @@ const PROVIDER_LABELS = {
   p: 'Station pressure — monthly mean',
   tl_mittel: 'Air temperature — monthly mean',
 };
+const FORM_CAPTION = 'Variable choices are staged locally.';
+const EMPTY_WARNING = 'Select at least one measured GeoSphere variable to load.';
+const LOAD_LABEL = 'Load measured GeoSphere interval';
 
 async function bodyText(frame) {
   try { return await frame.locator('body').innerText({ timeout: 2000 }); }
@@ -293,40 +296,100 @@ async function waitMonthlySurface(page, timeoutMs = 60000) {
       text.includes('Core variables') &&
       text.includes('Core + additional statistics') &&
       text.includes('All provider parameters') &&
-      text.includes('Select at least one measured GeoSphere variable to load.')
+      text.includes(FORM_CAPTION)
     );
     if (ready) {
-      stable += 1;
-      if (stable >= 3) return frame;
+      const load = frame.getByRole('button', { name: LOAD_LABEL, exact: true }).first();
+      if (await load.count().catch(() => 0) && await load.isVisible().catch(() => false)) {
+        stable += 1;
+        if (stable >= 3) return frame;
+      } else {
+        stable = 0;
+      }
     } else {
       stable = 0;
     }
     await sleep(300);
   }
-  throw new Error(`Monthly selector did not settle; Parameter set=${last.includes('Parameter set')}`);
+  throw new Error(`Monthly selector did not settle; Parameter set=${last.includes('Parameter set')}; form=${last.includes(FORM_CAPTION)}`);
+}
+
+async function assertEmptySubmitBlocked(page, frame) {
+  const load = frame.getByRole('button', { name: LOAD_LABEL, exact: true }).first();
+  if (!(await load.count().catch(() => 0)) || !(await load.isVisible().catch(() => false))) {
+    throw new Error('Transactional Load submit is not visible with empty selection.');
+  }
+  await load.click({ timeout: 15000 });
+  const validated = await appFrame(page, EMPTY_WARNING, 30000);
+  const text = await bodyText(validated);
+  if (!text.includes(EMPTY_WARNING)) throw new Error('Empty transactional submit did not show validation warning.');
+  if (text.includes('GeoSphere load complete')) throw new Error('Empty transactional submit activated provider loading.');
+  if (!text.includes('Measured variables to load')) throw new Error('Empty transactional submit left source configuration.');
+  return validated;
+}
+
+async function measuredEditorRowCount(frame) {
+  const tables = frame.locator('[data-testid="stDataFrame"]');
+  const count = await tables.count().catch(() => 0);
+  if (count < 2) return null;
+  const editor = tables.last();
+  const grid = editor.locator('[role="grid"]').first();
+  const raw = await grid.getAttribute('aria-rowcount').catch(() => null);
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : null;
 }
 
 async function selectParameterSet(page, name) {
+  const initial = await waitMonthlySurface(page, 15000);
+  const radio = initial.getByRole('radio', { name, exact: true }).last();
+  const hasRadio = await radio.count().catch(() => 0);
+  if (hasRadio && await radio.isChecked().catch(() => false)) return initial;
+
+  const beforeRows = await measuredEditorRowCount(initial);
+  const oldLoad = initial.getByRole('button', { name: LOAD_LABEL, exact: true }).first();
+  const oldLoadHandle = await oldLoad.elementHandle().catch(() => null);
+
+  if (hasRadio && await radio.isVisible().catch(() => false)) {
+    await radio.check({ force: true, timeout: 5000 }).catch(async () => {
+      await initial.getByText(name, { exact: true }).last().click({ force: true, timeout: 5000 });
+    });
+  } else {
+    await initial.getByText(name, { exact: true }).last().click({ force: true, timeout: 5000 });
+  }
+
   const started = performance.now();
   while (performance.now() - started < 45000) {
-    const frame = await appFrame(page, 'Measured variables to load', 5000);
-    const radio = frame.getByRole('radio', { name, exact: true }).last();
-    if (await radio.count().catch(() => 0) && await radio.isVisible().catch(() => false)) {
-      if (await radio.isChecked().catch(() => false)) return frame;
-      await radio.check({ force: true, timeout: 5000 }).catch(async () => {
-        await frame.getByText(name, { exact: true }).last().click({ force: true, timeout: 5000 }).catch(() => {});
-      });
-    } else {
-      await frame.getByText(name, { exact: true }).last().click({ force: true, timeout: 5000 }).catch(() => {});
+    const settled = await appFrame(page, 'Measured variables to load', 5000).catch(() => null);
+    if (!settled) {
+      await sleep(250);
+      continue;
     }
-    await sleep(600);
-    const settled = await appFrame(page, 'Measured variables to load', 10000).catch(() => null);
-    if (settled) {
-      const selected = settled.getByRole('radio', { name, exact: true }).last();
-      if (await selected.count().catch(() => 0) && await selected.isChecked().catch(() => false)) return settled;
+
+    const selected = settled.getByRole('radio', { name, exact: true }).last();
+    const checked = Boolean(
+      await selected.count().catch(() => 0)
+      && await selected.isChecked().catch(() => false)
+    );
+    const afterRows = await measuredEditorRowCount(settled);
+    const oldDetached = oldLoadHandle
+      ? await oldLoadHandle.evaluate((node) => !node.isConnected).catch(() => true)
+      : true;
+    const editorChanged = (
+      beforeRows != null
+      && afterRows != null
+      && afterRows !== beforeRows
+    );
+
+    // A radio becomes checked optimistically in the browser before Streamlit has
+    // completed its server rerun. Do not treat that client-side state as a
+    // committed Parameter-set transition. Require evidence that the request form
+    // or DataEditor was actually replaced by the server-rendered view.
+    if (checked && (oldDetached || editorChanged)) {
+      return await waitMonthlySurface(page, 15000);
     }
+    await sleep(250);
   }
-  throw new Error(`Parameter set did not commit: ${name}`);
+  throw new Error(`Parameter set did not finish its Streamlit rerun: ${name}`);
 }
 
 async function variableEditor(page) {
@@ -442,7 +505,6 @@ async function selectProvider(page, provider) {
   }
   throw new Error(`Could not select provider ${provider}.`);
 }
-
 
 async function chooseTimeBasis(page) {
   await selectComboOption(page, 'Time basis', (text) => text.trim() === 'Interannual overlay');
@@ -654,7 +716,7 @@ async function exerciseHover(page) {
 }
 
 const report = {
-  schema: 'climate-analyzer-monthly-selected-load-smoke-v8-native-interannual',
+  schema: 'climate-analyzer-monthly-selected-load-smoke-v12-rerender-synchronized',
   target_url: TARGET_URL,
   fixture,
   checks: {},
@@ -701,15 +763,11 @@ try {
   report.checks.requested_interval = ['2020-01-01', '2025-12-31'];
 
   let frame = await waitMonthlySurface(page);
-  let text = await bodyText(frame);
-  if (!text.includes('Select at least one measured GeoSphere variable to load.')) {
-    throw new Error('Empty monthly selection warning is missing.');
-  }
-  if (await frame.getByRole('button', { name: 'Load measured GeoSphere interval', exact: true }).count().catch(() => 0)) {
-    throw new Error('Load button reachable with empty selection.');
-  }
   report.checks.initial_selection_zero = true;
+  report.checks.transactional_load_submit_visible = true;
+  frame = await assertEmptySubmitBlocked(page, frame);
   report.checks.empty_selection_warning = true;
+  report.checks.empty_submit_did_not_activate_dataset = true;
 
   await selectParameterSet(page, 'All provider parameters');
   const selected = {};
@@ -724,30 +782,42 @@ try {
   report.checks.selected_provider_parameters = selected;
 
   frame = await appFrame(page, 'Measured variables to load', 20000);
-  text = await bodyText(frame);
+  let text = await bodyText(frame);
   if (text.includes('GeoSphere load complete')) {
-    throw new Error('Checkbox edit triggered provider loading before mature load button.');
+    throw new Error('Checkbox edit triggered provider loading before transactional Load submit.');
   }
   report.checks.checkbox_edit_did_not_activate_dataset = true;
 
   await selectParameterSet(page, 'Core variables');
   frame = await appFrame(page, 'Measured variables to load', 20000);
-  if (!(await frame.getByRole('button', { name: 'Load measured GeoSphere interval', exact: true }).count().catch(() => 0))) {
-    throw new Error('Selection lost on All -> Core transition.');
+  if (!(await frame.getByRole('button', { name: LOAD_LABEL, exact: true }).count().catch(() => 0))) {
+    throw new Error('Transactional Load submit disappeared on All -> Core transition.');
   }
-  report.checks.core_all_core_load_button_preserved = true;
+  frame = await assertEmptySubmitBlocked(page, frame);
+  report.checks.all_to_core_resets_selection_behaviorally = true;
+  report.checks.all_to_core_empty_submit_did_not_activate_dataset = true;
 
   await selectParameterSet(page, 'All provider parameters');
-  for (const provider of REQUIRED) {
-    const state = await providerState(page, provider);
-    if (state.load !== 'true') throw new Error(`Provider-keyed roundtrip lost ${provider}.`);
-  }
-  report.checks.provider_keyed_roundtrip = true;
+  frame = await appFrame(page, 'Measured variables to load', 20000);
+  frame = await assertEmptySubmitBlocked(page, frame);
+  report.checks.core_to_all_keeps_selection_empty_behaviorally = true;
+  report.checks.core_to_all_empty_submit_did_not_activate_dataset = true;
 
   await selectParameterSet(page, 'Core variables');
+  const reselected = {};
+  for (const provider of REQUIRED) {
+    const state = await selectProvider(page, provider);
+    reselected[provider] = {
+      label: PROVIDER_LABELS[provider],
+      load: state.load,
+      row: state.ariaRowIndex,
+    };
+  }
+  report.checks.reselected_core_provider_parameters = reselected;
+
   frame = await appFrame(page, 'Measured variables to load', 20000);
-  const loadButton = frame.getByRole('button', { name: 'Load measured GeoSphere interval', exact: true }).first();
-  if (!(await loadButton.count().catch(() => 0))) throw new Error('Mature GeoSphere load button missing.');
+  const loadButton = frame.getByRole('button', { name: LOAD_LABEL, exact: true }).first();
+  if (!(await loadButton.count().catch(() => 0))) throw new Error('Transactional GeoSphere Load submit missing.');
   await loadButton.click({ timeout: 15000 });
 
   frame = await appFrame(page, 'Explore — Time series & overlay', 180000);

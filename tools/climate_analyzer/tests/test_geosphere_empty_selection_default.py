@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import unittest
 from types import SimpleNamespace
 
@@ -48,11 +49,33 @@ class GeoSphereEmptySelectionDefaultTests(unittest.TestCase):
         )
         self.assertEqual(fake_st.session_state[_SELECTION_STATE_KEY], state)
 
-    def test_monthly_widget_and_provider_state_versions_invalidate_old_checked_snapshot(self) -> None:
-        self.assertTrue(_SELECTION_STATE_KEY.endswith("_v4"))
-        self.assertEqual(_EDITOR_KEY_VERSION, "v2")
+    def test_monthly_widget_and_provider_state_versions_invalidate_legacy_checked_snapshots(self) -> None:
+        # v4/v2 were the former cross-view-preservation contract. The current
+        # contract resets selection whenever Parameter set changes, so both the
+        # provider-state namespace and DataEditor widget namespace must be newer.
+        state_match = re.search(r"_v(\d+)$", _SELECTION_STATE_KEY)
+        editor_match = re.fullmatch(r"v(\d+)", _EDITOR_KEY_VERSION)
+        self.assertIsNotNone(state_match)
+        self.assertIsNotNone(editor_match)
+        assert state_match is not None and editor_match is not None
+        self.assertGreaterEqual(int(state_match.group(1)), 5)
+        self.assertGreaterEqual(int(editor_match.group(1)), 3)
+
         key = _editor_key("Core variables", ["tl_mittel", "rf_mittel"])
-        self.assertIn("__monthly__v2__core__", key)
+        self.assertIn(f"__monthly__{_EDITOR_KEY_VERSION}__core__", key)
+        self.assertNotIn("__monthly__v2__core__", key)
+
+    def test_parameter_set_reset_epoch_changes_data_editor_widget_identity(self) -> None:
+        providers = ["tl_mittel", "rf_mittel", "p"]
+        before = _editor_key("Core variables", providers, epoch=0)
+        after = _editor_key("Core variables", providers, epoch=1)
+        later = _editor_key("Core variables", providers, epoch=2)
+
+        self.assertNotEqual(before, after)
+        self.assertNotEqual(after, later)
+        self.assertTrue(before.endswith("__epoch_0"))
+        self.assertTrue(after.endswith("__epoch_1"))
+        self.assertTrue(later.endswith("__epoch_2"))
 
 
 if __name__ == "__main__":

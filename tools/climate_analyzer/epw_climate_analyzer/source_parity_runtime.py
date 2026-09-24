@@ -63,6 +63,10 @@ def _reset_persistent_source_parity_modules() -> None:
     package modules alive. Reload every persistent mutation target before the
     patch chain is composed again; otherwise monthly/chart wrappers accumulate
     even when ``source_parity_ui`` itself is reloaded.
+
+    Pure request-state value objects are deliberately not reloaded here. Reloading
+    them would create a second dataclass identity during a test/app process even
+    though their schema is unchanged, breaking deterministic request snapshots.
     """
     module_names = (
         "aggregations",
@@ -71,6 +75,7 @@ def _reset_persistent_source_parity_modules() -> None:
         "timeseries",
         "interannual_year_highlight",
         "charts",
+        "source_parity_ux_followup",
         "source_parity_fixes",
         "source_parity_ground",
         "source_parity_resolution",
@@ -85,6 +90,7 @@ def _reset_persistent_source_parity_modules() -> None:
         "source_parity_contract_closure",
         "source_parity_contract_guidance_hotfix",
         "source_parity_monthly_selection_state",
+        "source_parity_variable_form_compat",
         "source_parity_contract_guard",
         "source_parity_monthly_overlay_hotfix",
         "source_parity_monthly_surface_guard",
@@ -127,6 +133,11 @@ def _freeze_session_geosphere_selector(proxy: Any, parity: Any) -> None:
     every wrapper has been installed. Execution is protected by the same process-
     wide lock as installation so another session cannot reload shared module
     globals while this selector chain is active.
+
+    The station browser intentionally remains a normal Streamlit surface. A
+    request-only rerun boundary must be introduced below station selection rather
+    than fragmenting the entire GeoSphere selector; fragmenting the complete
+    selector destabilizes map/search widget reconciliation in real browser flows.
     """
     final_selector = parity._render_geosphere_resource_selector
     original_geosphere = proxy._source_parity_original_geosphere
@@ -171,6 +182,19 @@ def _install_into_app_globals_locked(namespace: MutableMapping[str, Any]) -> boo
     from .source_parity_contract_guard import install_contract_guards
     from .source_parity_monthly_overlay_hotfix import install_monthly_overlay_timezone_guard
     from .source_parity_monthly_surface_guard import install_monthly_surface_guard
+    from .source_parity_variable_form_compat import (
+        install_geosphere_variable_form_compat,
+        patch_variable_form_installer,
+    )
+    from .geosphere_request_form import install_geosphere_request_form
+    from .geosphere_monthly_request_surface import install_monthly_request_surface
+
+    # The shared UX module is mutable: older installers resolve its variable-form
+    # owner at runtime. Publish the compatibility owner before *any* source-parity
+    # installer can compose a legacy form. Calling this only at the end can delete
+    # an already-set marker and accidentally wrap a second transactional form over
+    # the first one, which is nondeterministic across Streamlit browser sessions.
+    patch_variable_form_installer()
 
     # Provider vocabulary is installed before the shared resource selector builds
     # metadata mappings. Scientific engines remain provider-neutral.
@@ -208,6 +232,24 @@ def _install_into_app_globals_locked(namespace: MutableMapping[str, Any]) -> boo
     # last makes the cleanup independent of whichever inner wrapper emitted the
     # legacy shared-shell text.
     install_monthly_surface_guard(parity)
+
+    # Guarantee exactly one schema-compatible transactional form. If an earlier
+    # installer already requested the shared form, the marker now refers to this
+    # same compatibility owner and this call is a no-op. Do not clear the marker
+    # here: doing so would duplicate the form wrapper.
+    install_geosphere_variable_form_compat(parity)
+
+    # One final request-state boundary is shared by all GeoSphere resources. It
+    # observes the already-normalized editor/date widgets and the transactional
+    # form submit, records one canonical request schema and never owns provider
+    # transport or scientific conversion.
+    install_geosphere_request_form(parity)
+
+    # Native-monthly now owns one request fragment below the mature station
+    # browser. The wrapper stops only the legacy request tail at its first date
+    # widget, then renders Parameter set + dates + DataEditor + Load together.
+    # 10-minute/hourly remain on the validated mature path.
+    install_monthly_request_surface(parity)
 
     # Source-neutral presentation control for Interannual overlay. Install it
     # after all provider-specific wrappers so every source uses the same final
