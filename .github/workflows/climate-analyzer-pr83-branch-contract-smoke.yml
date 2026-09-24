@@ -31,6 +31,7 @@ on:
       - 'tools/climate_analyzer/tests/test_interannual_year_highlight.py'
       - 'deployment/pr83_monthly_contract_probe.py'
       - 'deployment/pr98_geosphere_request_fast_smoke.mjs'
+      - 'deployment/pr98_geosphere_request_fast_smoke_v2.mjs'
       - 'deployment/pr83_source_ui_live_smoke_v18.mjs'
       - 'deployment/pr83_precip_snow_live_smoke.mjs'
       - 'deployment/pr83_visual_walkthrough.mjs'
@@ -129,7 +130,7 @@ jobs:
       - name: Exercise GeoSphere request/reset/load path
         env:
           REQUEST_FAST_GATE: '0'
-        run: node deployment/pr98_geosphere_request_fast_smoke.mjs
+        run: node deployment/pr98_geosphere_request_fast_smoke_v2.mjs
 
       # Expensive acceptance probes begin only after the request path is known-good.
       - name: Probe compact hourly interannual fixture
