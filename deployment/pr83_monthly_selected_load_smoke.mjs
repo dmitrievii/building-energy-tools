@@ -675,7 +675,7 @@ async function exerciseHover(page) {
 }
 
 const report = {
-  schema: 'climate-analyzer-monthly-selected-load-smoke-v10-parameter-set-reset',
+  schema: 'climate-analyzer-monthly-selected-load-smoke-v11-behavioral-reset',
   target_url: TARGET_URL,
   fixture,
   checks: {},
@@ -752,18 +752,15 @@ try {
   if (!(await frame.getByRole('button', { name: LOAD_LABEL, exact: true }).count().catch(() => 0))) {
     throw new Error('Transactional Load submit disappeared on All -> Core transition.');
   }
-  for (const provider of REQUIRED) {
-    const state = await providerState(page, provider);
-    if (state.load !== 'false') throw new Error(`All -> Core must reset ${provider}; observed ${state.load}.`);
-  }
-  report.checks.all_to_core_resets_selection = true;
+  frame = await assertEmptySubmitBlocked(page, frame);
+  report.checks.all_to_core_resets_selection_behaviorally = true;
+  report.checks.all_to_core_empty_submit_did_not_activate_dataset = true;
 
   await selectParameterSet(page, 'All provider parameters');
-  for (const provider of REQUIRED) {
-    const state = await providerState(page, provider);
-    if (state.load !== 'false') throw new Error(`Core -> All must keep reset state for ${provider}; observed ${state.load}.`);
-  }
-  report.checks.core_to_all_keeps_selection_empty = true;
+  frame = await appFrame(page, 'Measured variables to load', 20000);
+  frame = await assertEmptySubmitBlocked(page, frame);
+  report.checks.core_to_all_keeps_selection_empty_behaviorally = true;
+  report.checks.core_to_all_empty_submit_did_not_activate_dataset = true;
 
   await selectParameterSet(page, 'Core variables');
   const reselected = {};
