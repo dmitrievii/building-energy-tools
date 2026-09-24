@@ -11,8 +11,9 @@ const fixture = JSON.parse(await fs.readFile(FIXTURE_PATH, 'utf8'));
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const MONTHLY_RESOURCE = 'klima-v2-1m';
-const LEGACY_FORM_CAPTION = 'Variable choices are staged locally.';
+const FORM_CAPTION = 'Variable choices are staged locally.';
 const EMPTY_WARNING = 'Select at least one measured GeoSphere variable to load.';
+const LOAD_LABEL = 'Load measured GeoSphere interval';
 const PARAMETER_SETS = [
   'Core variables',
   'Core + additional statistics',
@@ -199,10 +200,9 @@ async function waitMonthlyEditor(page) {
       text.includes('Parameter set') &&
       PARAMETER_SETS.every((name) => text.includes(name)) &&
       text.includes('Measured variables to load') &&
-      text.includes(EMPTY_WARNING) &&
-      !text.includes(LEGACY_FORM_CAPTION)
+      text.includes(FORM_CAPTION)
     ),
-    'stable monthly mature-loader selector',
+    'stable monthly transactional selector',
     90000,
     3,
   );
@@ -240,15 +240,16 @@ async function selectParameterSet(page, name) {
   throw new Error(`Parameter set did not settle: ${name}`);
 }
 
-async function assertMatureEmptySelection(frame, label) {
+async function assertTransactionalEmptySelection(frame, label) {
   const text = await bodyText(frame);
   if (!text.includes(`Selected resource: ${MONTHLY_RESOURCE}`)) throw new Error(`${label}: monthly resource is not active.`);
   if (!text.includes('Parameter set')) throw new Error(`${label}: monthly Parameter set control is missing.`);
-  if (text.includes(LEGACY_FORM_CAPTION)) throw new Error(`${label}: legacy transactional-form caption is still visible.`);
-  if (!text.includes(EMPTY_WARNING)) throw new Error(`${label}: mature empty-selection warning is missing.`);
+  if (!text.includes(FORM_CAPTION)) throw new Error(`${label}: transactional form caption is missing.`);
 
-  const load = frame.getByRole('button', { name: 'Load measured GeoSphere interval', exact: true }).first();
-  if (await load.count().catch(() => 0)) throw new Error(`${label}: load button must not be reachable with zero selected variables.`);
+  const load = frame.getByRole('button', { name: LOAD_LABEL, exact: true }).first();
+  if (!(await load.count().catch(() => 0)) || !(await load.isVisible().catch(() => false))) {
+    throw new Error(`${label}: transactional Load submit is not visible.`);
+  }
 
   const tables = frame.locator('[data-testid="stDataFrame"]');
   if (await tables.count().catch(() => 0) < 2) throw new Error(`${label}: measured-variable DataEditor is missing.`);
@@ -261,7 +262,25 @@ async function assertMatureEmptySelection(frame, label) {
   }
   if (checked !== 0) throw new Error(`${label}: ${checked} checkbox(es) are unexpectedly selected by default.`);
 
-  return { checkboxCount: count };
+  return { checkboxCount: count, load };
+}
+
+async function assertEmptySubmitBlocked(page, load) {
+  await load.click({ timeout: 15000 });
+  const validated = await waitBody(
+    page,
+    (text) => text.includes(EMPTY_WARNING) && text.includes('Measured variables to load'),
+    'empty transactional-submit validation',
+    30000,
+    1,
+  );
+  if (validated.text.includes('GeoSphere load complete')) {
+    throw new Error('Empty transactional submit activated GeoSphere provider loading.');
+  }
+  if (!validated.text.includes(`Selected resource: ${MONTHLY_RESOURCE}`)) {
+    throw new Error('Empty transactional submit left the monthly source request surface.');
+  }
+  return validated.frame;
 }
 
 async function screenshot(page, name) {
@@ -269,7 +288,7 @@ async function screenshot(page, name) {
 }
 
 const report = {
-  schema: 'climate-analyzer-pr83-extended-visual-v8-mature-loader',
+  schema: 'climate-analyzer-pr83-extended-visual-v9-transactional-form',
   success: false,
   checks: {},
   page_errors: [],
@@ -297,29 +316,33 @@ try {
   let monthly = await waitMonthlyEditor(page);
   let frame = monthly.frame;
   report.checks.monthly_resource_stable_after_station = true;
-  report.checks.legacy_transactional_form_absent = true;
+  report.checks.transactional_form_present = true;
 
-  const initial = await assertMatureEmptySelection(frame, 'Initial monthly view');
+  const initial = await assertTransactionalEmptySelection(frame, 'Initial monthly view');
   report.checks.initial_selection_empty = true;
-  report.checks.empty_warning_visible = true;
-  report.checks.mature_load_button_hidden_for_empty_selection = true;
+  report.checks.transactional_load_submit_visible = true;
   report.checks.initial_accessible_checkbox_count = initial.checkboxCount;
   await screenshot(page, '01-monthly-initial-empty.png');
 
+  frame = await assertEmptySubmitBlocked(page, initial.load);
+  report.checks.empty_submit_validation_visible = true;
+  report.checks.empty_submit_did_not_load_provider = true;
+  await screenshot(page, '02-monthly-empty-submit-blocked.png');
+
   frame = await selectParameterSet(page, 'Core variables');
-  await assertMatureEmptySelection(frame, 'Core variables');
+  await assertTransactionalEmptySelection(frame, 'Core variables');
   report.checks.core_view_selection_still_empty = true;
-  await screenshot(page, '02-monthly-core-empty.png');
+  await screenshot(page, '03-monthly-core-empty.png');
 
   frame = await selectParameterSet(page, 'All provider parameters');
-  await assertMatureEmptySelection(frame, 'All provider parameters');
+  await assertTransactionalEmptySelection(frame, 'All provider parameters');
   report.checks.all_view_selection_still_empty = true;
-  await screenshot(page, '03-monthly-all-empty.png');
+  await screenshot(page, '04-monthly-all-empty.png');
 
   frame = await selectParameterSet(page, 'Core variables');
-  await assertMatureEmptySelection(frame, 'Core variables roundtrip');
+  await assertTransactionalEmptySelection(frame, 'Core variables roundtrip');
   report.checks.core_roundtrip_selection_still_empty = true;
-  await screenshot(page, '04-monthly-core-empty-roundtrip.png');
+  await screenshot(page, '05-monthly-core-empty-roundtrip.png');
 
   if (report.page_errors.length) throw new Error(`Page errors: ${report.page_errors.join(' | ')}`);
   report.success = true;
