@@ -82,11 +82,22 @@ def _clamp(value: date | None, low: date, high: date, fallback: date) -> date:
 
 
 def _station_and_bundle(legacy: Any, st: Any):
-    metadata, supported, stations, _catalog, capability_index, parameter_metadata = legacy.cached_geosphere_metadata_bundle()
     station_id = str(st.session_state.get(_STATION_KEY, "") or "")
+    # Switching resources and committing a station are separate Streamlit
+    # interactions. During that short transition monthly is already active while
+    # the station key is intentionally empty. Treat it as "request surface not
+    # ready yet" rather than an application error, and avoid even fetching the
+    # monthly metadata bundle until the station selection is committed.
+    if not station_id:
+        return None
+    metadata, supported, stations, _catalog, capability_index, parameter_metadata = legacy.cached_geosphere_metadata_bundle()
     station = next((item for item in stations if str(item.station_id) == station_id), None)
     if station is None:
-        raise RuntimeError(f"Selected GeoSphere station is no longer available: {station_id or 'none'}")
+        # A stale station id can briefly survive resource/station reconciliation.
+        # The mature browser remains visible and can establish a valid selection
+        # on the next full rerun; the request fragment must stay fail-closed and
+        # must not emit an uncaught traceback during that reconciliation.
+        return None
     return metadata, supported, station, capability_index, parameter_metadata
 
 
@@ -183,7 +194,10 @@ def install_monthly_request_surface(parity: Any) -> None:
     fragment_factory = getattr(st, "fragment", None)
 
     def render_surface(legacy: Any) -> None:
-        metadata, supported, station, capability_index, parameter_metadata = _station_and_bundle(legacy, st)
+        bundle = _station_and_bundle(legacy, st)
+        if bundle is None:
+            return
+        metadata, supported, station, capability_index, parameter_metadata = bundle
         station_id = str(station.station_id)
         minimum, maximum, default_start, default_end = _date_bounds(station)
         request_form = GeoSphereRequestForm(st)
