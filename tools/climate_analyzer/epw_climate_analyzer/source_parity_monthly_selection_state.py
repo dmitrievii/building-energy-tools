@@ -32,7 +32,10 @@ _PARAMETER_SET_KEY = "geosphere_monthly_parameter_catalogue_v2"
 _SELECTION_STATE_KEY = "_geosphere_monthly_provider_selection_v5"
 _FLAG_STATE_KEY = "_geosphere_monthly_provider_flag_selection_v5"
 _LAST_VIEW_KEY = "_geosphere_monthly_provider_selection_last_view_v5"
+_PARAMETER_SET_EPOCH_KEY = "_geosphere_monthly_parameter_set_epoch_v1"
 _EDITOR_KEY_VERSION = "v3"
+_MONTHLY_EDITOR_KEY_PREFIX = "geosphere_variable_editor__monthly__"
+_FORM_REQUEST_KEY = "_geosphere_variable_form_load_requested_v1"
 
 
 def _bool_value(value: Any) -> bool:
@@ -83,7 +86,32 @@ def _editor_key(view: str, providers: list[str]) -> str:
         "All provider parameters": "all",
     }.get(str(view), "custom")
     signature = sha1("\0".join(providers).encode("utf-8")).hexdigest()[:12]
-    return f"geosphere_variable_editor__monthly__{_EDITOR_KEY_VERSION}__{slug}__{signature}"
+    return f"{_MONTHLY_EDITOR_KEY_PREFIX}{_EDITOR_KEY_VERSION}__{slug}__{signature}"
+
+
+def reset_monthly_parameter_set_state(st: Any) -> int:
+    """Clear every monthly selection surface before a Parameter-set rerun.
+
+    ``st.data_editor`` lives inside a form, so its browser-side snapshot can outlive
+    server-side provider dictionaries when an external radio triggers a rerun.
+    The Parameter-set callback therefore owns the reset boundary: clear provider
+    state, discard every monthly editor widget snapshot, invalidate a latent form
+    load token and advance an epoch used by the transactional form identity.
+    """
+    state = st.session_state
+    state[_SELECTION_STATE_KEY] = {}
+    state[_FLAG_STATE_KEY] = {}
+    state.pop(_LAST_VIEW_KEY, None)
+    state.pop(_FORM_REQUEST_KEY, None)
+    for key in list(state.keys()):
+        if str(key).startswith(_MONTHLY_EDITOR_KEY_PREFIX):
+            state.pop(key, None)
+    try:
+        epoch = int(state.get(_PARAMETER_SET_EPOCH_KEY, 0)) + 1
+    except (TypeError, ValueError):
+        epoch = 1
+    state[_PARAMETER_SET_EPOCH_KEY] = epoch
+    return epoch
 
 
 def _normalize_catalogue_roles(data: pd.DataFrame) -> pd.DataFrame:
@@ -196,8 +224,9 @@ def install_monthly_selection_state(parity: Any) -> None:
             previous_view = str(st.session_state.get(_LAST_VIEW_KEY, ""))
             view_changed = bool(previous_view) and previous_view != view
             if view_changed:
-                # Parameter-set changes are an explicit selection reset. Do not
-                # carry hidden selections or quality flags between catalogue views.
+                # Defensive server-side reset for non-callback callers/tests. In
+                # production the Parameter-set widget callback clears client and
+                # server snapshots before this rerun begins.
                 selection_state = _cleared_provider_state(full)
                 flag_state = _cleared_provider_state(full)
                 st.session_state[_SELECTION_STATE_KEY] = dict(selection_state)
@@ -212,8 +241,6 @@ def install_monthly_selection_state(parity: Any) -> None:
 
             widget_key = _editor_key(view, providers)
             if view_changed:
-                # Remove a stale widget snapshot for the newly entered view. The
-                # table rendered below is the canonical cleared state.
                 st.session_state.pop(widget_key, None)
 
             kwargs["key"] = widget_key
