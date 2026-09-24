@@ -14,7 +14,10 @@ import pandas as pd
 
 from . import source_parity_ux_followup as ux
 from .geosphere_monthly import MONTHLY_RESOURCE_ID
-from .source_parity_monthly_selection_state import _PARAMETER_SET_EPOCH_KEY
+from .source_parity_monthly_selection_state import (
+    _PARAMETER_SET_EPOCH_KEY,
+    _PARAMETER_SET_RESET_PENDING_KEY,
+)
 
 
 _EMPTY_SELECTION_WARNING = "Select at least one measured GeoSphere variable to load."
@@ -28,6 +31,22 @@ def _is_variable_editor(data: Any, key: object) -> bool:
     if not ({"Measured variable", "Variable"} & set(data.columns)):
         return False
     return str(key or "").startswith("geosphere_variable_editor")
+
+
+def _monthly_reset_pending(st: Any, epoch: int) -> bool:
+    raw = st.session_state.get(_PARAMETER_SET_RESET_PENDING_KEY)
+    if raw is None:
+        return False
+    try:
+        return int(raw) == int(epoch)
+    except (TypeError, ValueError):
+        return False
+
+
+def _clear_monthly_reset_barrier(st: Any, epoch: int) -> None:
+    if not _monthly_reset_pending(st, epoch):
+        return
+    st.session_state.pop(_PARAMETER_SET_RESET_PENDING_KEY, None)
 
 
 def install_geosphere_variable_form_compat(parity: Any) -> None:
@@ -59,6 +78,10 @@ def install_geosphere_variable_form_compat(parity: Any) -> None:
                     epoch = int(st.session_state.get(_PARAMETER_SET_EPOCH_KEY, 0))
                 except (TypeError, ValueError):
                     epoch = 0
+            reset_pending = (
+                resource_id == MONTHLY_RESOURCE_ID
+                and _monthly_reset_pending(st, epoch)
+            )
             form_signature = sha1(
                 f"{resource_id}\0{station_id}\0{epoch}".encode("utf-8")
             ).hexdigest()[:12]
@@ -67,6 +90,12 @@ def install_geosphere_variable_form_compat(parity: Any) -> None:
 
             with st.form(form_key, clear_on_submit=False):
                 edited = real_editor(data, *args, **kwargs)
+                # During the first render after a monthly Parameter-set change,
+                # distrust any staged values reconciled from the retired form.
+                # ``data`` is the clean server-owned table created for the new
+                # reset epoch, so it is the only admissible submit payload until
+                # that replacement form has completed one render.
+                trusted = data.copy() if reset_pending and isinstance(data, pd.DataFrame) else edited
                 st.caption(
                     "Variable choices are staged locally. Checking or unchecking rows does not reload this page and does not request GeoSphere data."
                 )
@@ -76,10 +105,14 @@ def install_geosphere_variable_form_compat(parity: Any) -> None:
                     help="Submit the current variable selection and start the provider request.",
                 )
                 if submitted:
-                    if ux._selected_count(edited) <= 0:
+                    if ux._selected_count(trusted) <= 0:
                         empty_submit["value"] = True
                     else:
                         st.session_state[ux._FORM_REQUEST_KEY] = (resource_id, station_id)
+
+            if reset_pending:
+                _clear_monthly_reset_barrier(st, epoch)
+                return data.copy() if isinstance(data, pd.DataFrame) else edited
             return edited
 
         def button(label: Any, *args: Any, **kwargs: Any):
