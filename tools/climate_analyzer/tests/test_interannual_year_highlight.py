@@ -74,11 +74,24 @@ class InterannualYearHighlightTests(unittest.TestCase):
                     HIGHLIGHT_STATE_KEY: selected_year,
                     "global_time_basis": INTERANNUAL_OVERLAY,
                 }
+                self.calls: list[dict[str, object]] = []
 
-            def selectbox(self, label, options, **kwargs):
+            def selectbox(self, label, options, *args, **kwargs):
+                values = list(options)
                 self.label = label
-                self.options = list(options)
-                return self.session_state.get(kwargs.get("key"))
+                self.options = values
+                self.calls.append(
+                    {
+                        "label": str(label),
+                        "options": values,
+                        "key": kwargs.get("key"),
+                    }
+                )
+                key = kwargs.get("key")
+                if key is not None and key in self.session_state:
+                    return self.session_state.get(key)
+                index = int(kwargs.get("index", 0)) if values else 0
+                return values[index] if values else None
 
         return SimpleNamespace(
             st=FakeStreamlit(),
@@ -140,7 +153,7 @@ class InterannualYearHighlightTests(unittest.TestCase):
         self.assertIs(returned, fig)
         self.assertEqual(after, before)
 
-    def test_temperature_profile_builder_receives_highlight_metadata(self) -> None:
+    def test_temperature_profile_uses_one_working_highlight_after_aggregation(self) -> None:
         proxy = self._proxy(2021)
         st = proxy.st
         rendered: dict[str, go.Figure] = {}
@@ -149,6 +162,18 @@ class InterannualYearHighlightTests(unittest.TestCase):
         def render_generic_variable_page(df, *args, **kwargs):
             from epw_climate_analyzer import charts
 
+            # Reproduce the production control order, including the legacy lower
+            # Highlight-year call that previously created the second/no-op menu.
+            st.selectbox("Variable", ["Dry-bulb temperature"], index=0)
+            st.selectbox("Chart type", ["Profile with min-mean-max ribbon"], index=0)
+            st.selectbox("Aggregation", ["Monthly", "Annual"], index=0)
+            legacy_value = st.selectbox(
+                "Highlight year",
+                [None, 2020, 2021, 2022],
+                index=0,
+                key="legacy_profile_highlight_year",
+            )
+            metadata["legacy_return"] = legacy_value
             metadata["highlight"] = df.attrs.get(HIGHLIGHT_ATTR)
             rendered["fig"] = charts.profile_ribbon_chart(
                 df,
@@ -168,16 +193,47 @@ class InterannualYearHighlightTests(unittest.TestCase):
             "Temperature",
         )
 
-        fig = rendered["fig"]
+        labels = [call["label"] for call in st.calls]
+        highlight_calls = [call for call in st.calls if call["label"] == "Highlight year"]
+        self.assertEqual(labels, ["Variable", "Chart type", "Aggregation", "Highlight year"])
+        self.assertEqual(len(highlight_calls), 1)
+        self.assertEqual(highlight_calls[0]["key"], HIGHLIGHT_STATE_KEY)
+        self.assertEqual(highlight_calls[0]["options"], [None, 2020, 2021, 2022])
+        self.assertEqual(metadata["legacy_return"], 2021)
         self.assertEqual(metadata["highlight"], 2021)
-        self.assertEqual(st.label, "Highlight year")
-        self.assertEqual(st.options, [None, 2020, 2021, 2022])
+
+        fig = rendered["fig"]
         self.assertEqual(fig.data[-1].legendgroup, "2021")
         self.assertEqual(fig.data[-1].line.color, HIGHLIGHT_COLOR)
         self.assertGreaterEqual(float(fig.data[-1].line.width), HIGHLIGHT_WIDTH)
         self.assertEqual(float(fig.data[-1].opacity), 1.0)
         envelope = next(trace for trace in fig.data if trace.legendgroup == "interannual-envelope")
         self.assertEqual(float(envelope.opacity or 1.0), 1.0)
+
+    def test_existing_lower_slot_is_canonical_when_no_aggregation_control_exists(self) -> None:
+        proxy = self._proxy(2022)
+        st = proxy.st
+        returned: dict[str, object] = {}
+
+        def render_generic_variable_page(df, *args, **kwargs):
+            st.selectbox("Variable", ["Dry-bulb temperature"], index=0)
+            st.selectbox("Chart type", ["Some interannual chart"], index=0)
+            returned["year"] = st.selectbox(
+                "Highlight year",
+                [None, 2020, 2021, 2022],
+                key="obsolete_highlight_key",
+            )
+
+        proxy.render_generic_variable_page = render_generic_variable_page
+        install_interannual_year_highlight(proxy)
+        proxy.render_generic_variable_page(self._monthly_frame())
+
+        labels = [call["label"] for call in st.calls]
+        highlight_calls = [call for call in st.calls if call["label"] == "Highlight year"]
+        self.assertEqual(labels, ["Variable", "Chart type", "Highlight year"])
+        self.assertEqual(len(highlight_calls), 1)
+        self.assertEqual(highlight_calls[0]["key"], HIGHLIGHT_STATE_KEY)
+        self.assertEqual(returned["year"], 2022)
 
     def test_final_render_boundary_enforces_session_selected_year(self) -> None:
         proxy = self._proxy(2021)

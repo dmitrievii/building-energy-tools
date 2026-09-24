@@ -7,6 +7,14 @@ fallback. The final boundary is important because the mature Streamlit runtime
 reloads and rebinds chart modules dynamically; a valid UI selection must not
 silently lose its visual effect when one intermediate builder wrapper is reset.
 
+For generic variable explorers the focused-year selector belongs to the local
+chart-control sequence, after ``Aggregation`` when that control exists. The
+legacy interannual renderer already owns that lower slot. The canonical layer
+therefore replaces the widget invoked in that slot instead of prepending another
+selector or rendering one eagerly from the outer wrapper. This preserves the
+established control order and ensures there is exactly one visible focused-year
+control backed by the canonical state key.
+
 Streamlit reruns keep imported Python package modules alive. ``importlib.reload``
 re-executes module source but retains dictionary entries that are not redefined,
 so module-level boolean patch guards can survive a reload even after the wrapped
@@ -39,24 +47,55 @@ _BUILDER_WRAPPER_MARK = "_interannual_year_highlight_builder_wrapper"
 _RENDER_WRAPPER_MARK = "_interannual_year_highlight_render_wrapper"
 
 
-def _selected_highlight_year(proxy: Any, df: pd.DataFrame) -> int | None:
-    """Render/read the highlight control for a multi-year interannual frame."""
+def _highlight_year_options(df: pd.DataFrame, *, include_none: bool = True) -> list[int | None]:
+    """Return canonical focused-year options for a multi-year overlay frame."""
     if time_basis(df) != INTERANNUAL_OVERLAY or not isinstance(df.index, pd.DatetimeIndex):
-        return None
-
+        return []
     years = sorted({int(value) for value in pd.DatetimeIndex(df.index).year})
     if len(years) < 2:
+        return []
+    return [None, *years] if include_none else list(years)
+
+
+def _stored_highlight_year(
+    proxy: Any,
+    df: pd.DataFrame,
+    *,
+    include_none: bool = True,
+) -> int | None:
+    """Return a valid stored focused year without rendering another widget."""
+    options = _highlight_year_options(df, include_none=include_none)
+    if not options:
+        return None
+    stored = proxy.st.session_state.get(HIGHLIGHT_STATE_KEY)
+    try:
+        normalized = None if stored is None else int(stored)
+    except (TypeError, ValueError):
+        normalized = None
+    if normalized not in options:
+        normalized = None if include_none else int(options[-1])
+        proxy.st.session_state[HIGHLIGHT_STATE_KEY] = normalized
+    return normalized
+
+
+def _selected_highlight_year(
+    proxy: Any,
+    df: pd.DataFrame,
+    *,
+    selectbox: Callable[..., Any] | None = None,
+    include_none: bool = True,
+) -> int | None:
+    """Render/read the canonical highlight control for an interannual frame."""
+    options = _highlight_year_options(df, include_none=include_none)
+    if not options:
         return None
 
-    options: list[int | None] = [None, *years]
-    stored = proxy.st.session_state.get(HIGHLIGHT_STATE_KEY)
-    if stored not in options:
-        proxy.st.session_state[HIGHLIGHT_STATE_KEY] = None
-
-    selected = proxy.st.selectbox(
+    stored = _stored_highlight_year(proxy, df, include_none=include_none)
+    widget = selectbox or proxy.st.selectbox
+    selected = widget(
         "Highlight year",
         options,
-        index=0,
+        index=options.index(stored),
         key=HIGHLIGHT_STATE_KEY,
         format_func=lambda value: "None" if value is None else str(int(value)),
         help=(
@@ -87,6 +126,69 @@ def _render_with_highlight_metadata(
     """Attach selection metadata before the chart builder sees the dataframe."""
     selected = _selected_highlight_year(proxy, df)
     return renderer(_frame_with_highlight_year(df, selected), *args, **kwargs)
+
+
+def _render_generic_with_positioned_highlight(
+    proxy: Any,
+    renderer: Callable[..., Any],
+    df: pd.DataFrame,
+    *args: Any,
+    **kwargs: Any,
+) -> Any:
+    """Replace the established lower Highlight-year slot with the canonical widget.
+
+    ``source_parity_ux_followup`` already invokes a Highlight-year selector after
+    ``Aggregation``. That call is the required UI position, so this wrapper does
+    not render another control after Aggregation. It intercepts the lower call,
+    draws the canonical widget under ``overlay_highlight_year``, and returns the
+    selected concrete year to the legacy caller so its compatibility state remains
+    internally valid. Generic production profiles intentionally expose real years
+    only because the legacy renderer assumes a concrete year and calls ``int`` on
+    the result. Lightweight renderers without that legacy wrapper retain the
+    optional ``None`` entry used by the standalone canonical control contract.
+    """
+    if not _highlight_year_options(df):
+        return renderer(df, *args, **kwargs)
+
+    st = proxy.st
+    real_selectbox = st.selectbox
+    highlight_rendered = False
+    legacy_slot_expected = hasattr(proxy, "_source_parity_original_generic_interannual")
+    include_none = not legacy_slot_expected
+    selected = _stored_highlight_year(proxy, df, include_none=include_none)
+    render_df = _frame_with_highlight_year(df, selected)
+
+    def render_highlight() -> int | None:
+        nonlocal selected, highlight_rendered
+        if highlight_rendered:
+            return selected
+        selected = _selected_highlight_year(
+            proxy,
+            df,
+            selectbox=real_selectbox,
+            include_none=include_none,
+        )
+        highlight_rendered = True
+        return selected
+
+    def selectbox(label: str, options_arg: Any, *widget_args: Any, **widget_kwargs: Any) -> Any:
+        if str(label) == "Highlight year":
+            return render_highlight()
+
+        result = real_selectbox(label, options_arg, *widget_args, **widget_kwargs)
+        # Lightweight/unit-test renderers may not include the legacy lower-slot
+        # wrapper. In that case retain the same visible position by inserting the
+        # canonical widget immediately after Aggregation. Production uses the
+        # legacy call as the slot trigger and must not render eagerly here.
+        if str(label) == "Aggregation" and not highlight_rendered and not legacy_slot_expected:
+            render_highlight()
+        return result
+
+    st.selectbox = selectbox
+    try:
+        return renderer(render_df, *args, **kwargs)
+    finally:
+        st.selectbox = real_selectbox
 
 
 def _is_current_builder_wrapped(builder: Any) -> bool:
@@ -226,7 +328,7 @@ def install_interannual_year_highlight(proxy: Any) -> None:
         original_generic = proxy.render_generic_variable_page
 
         def render_generic_variable_page(df: pd.DataFrame, *args: Any, **kwargs: Any) -> Any:
-            return _render_with_highlight_metadata(proxy, original_generic, df, *args, **kwargs)
+            return _render_generic_with_positioned_highlight(proxy, original_generic, df, *args, **kwargs)
 
         proxy.render_generic_variable_page = render_generic_variable_page
 
