@@ -25,6 +25,7 @@ _RESOURCE_KEY = "geosphere_resource_id"
 _STATION_KEY = "geosphere_selected_station_id"
 _START_KEY = "geosphere_start_date"
 _END_KEY = "geosphere_end_date"
+_MONTHLY_RESOURCE_ID = "klima-v2-1m"
 _MONTHLY_VIEW_KEY = "geosphere_monthly_parameter_catalogue_v2"
 _LOAD_LABEL = "Load measured GeoSphere interval"
 _EDITOR_PREFIX = "geosphere_variable_editor"
@@ -210,12 +211,13 @@ def install_geosphere_request_form(parity: Any) -> None:
     request snapshot. It must never replace or intercept ``st.button`` itself.
 
     Date widgets are the only request controls that remain outside the mature
-    variable form. Render exactly those two widgets as Streamlit fragments so a
-    date edit reruns only the date widget, not the station browser/map or the
-    runtime wrapper stack. On the next full run (Load, station/resource change,
-    or any other app rerun) their session-state values are captured into the
-    canonical request snapshot. The complete GeoSphere selector is deliberately
-    never fragmented.
+    variable form for the 10-minute and hourly resources. Render exactly those
+    two widgets as Streamlit fragments so a date edit reruns only the date widget,
+    not the station browser/map or the runtime wrapper stack. Native-monthly dates
+    deliberately bypass these per-widget fragments because the complete monthly
+    request tail is owned by one later fragment boundary. Nesting the old date
+    fragment inside that boundary would move the monthly control-flow sentinel
+    into an independent fragment execution and make it uncaught.
     """
     previous = parity._render_geosphere_resource_selector
     st = parity.st
@@ -267,6 +269,11 @@ def install_geosphere_request_form(parity: Any) -> None:
             key = str(kwargs.get("key") or "")
             renderer = isolated_date_renderers.get(key)
             if renderer is None:
+                return real_dg_date_input(self, label, *args, **kwargs)
+            if str(st.session_state.get(_RESOURCE_KEY, "")) == _MONTHLY_RESOURCE_ID:
+                # A later monthly wrapper owns the whole request tail. Call the
+                # next date-input layer in the same Python stack so its boundary
+                # sentinel can propagate to and be caught by that wrapper.
                 return real_dg_date_input(self, label, *args, **kwargs)
             value = renderer(self, label, tuple(args), dict(kwargs))
             request_form.capture_date(key, value)
