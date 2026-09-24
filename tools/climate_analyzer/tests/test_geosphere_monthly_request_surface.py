@@ -9,6 +9,7 @@ import pandas as pd
 from epw_climate_analyzer.geosphere_monthly_request_surface import (
     _clamp,
     _selected_payload,
+    _station_and_bundle,
 )
 
 
@@ -32,6 +33,17 @@ class MonthlyRequestSurfacePureTests(unittest.TestCase):
         self.assertEqual(_clamp(date(1800, 1, 1), low, high, fallback), low)
         self.assertEqual(_clamp(date(2030, 1, 1), low, high, fallback), high)
         self.assertEqual(_clamp(None, low, high, fallback), fallback)
+
+    def test_empty_station_transition_does_not_fetch_metadata_or_raise(self) -> None:
+        class StubStreamlit:
+            session_state: dict[str, object] = {}
+
+        class StubLegacy:
+            @staticmethod
+            def cached_geosphere_metadata_bundle():
+                raise AssertionError("Monthly metadata must not be fetched before a station is committed.")
+
+        self.assertIsNone(_station_and_bundle(StubLegacy(), StubStreamlit()))
 
 
 class MonthlyRequestSurfaceArchitectureTests(unittest.TestCase):
