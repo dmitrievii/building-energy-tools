@@ -63,6 +63,10 @@ def _reset_persistent_source_parity_modules() -> None:
     package modules alive. Reload every persistent mutation target before the
     patch chain is composed again; otherwise monthly/chart wrappers accumulate
     even when ``source_parity_ui`` itself is reloaded.
+
+    Pure request-state value objects are deliberately not reloaded here. Reloading
+    them would create a second dataclass identity during a test/app process even
+    though their schema is unchanged, breaking deterministic request snapshots.
     """
     module_names = (
         "aggregations",
@@ -88,7 +92,6 @@ def _reset_persistent_source_parity_modules() -> None:
         "source_parity_contract_guard",
         "source_parity_monthly_overlay_hotfix",
         "source_parity_monthly_surface_guard",
-        "geosphere_request_form",
     )
     package = __package__ or "epw_climate_analyzer"
     for name in module_names:
@@ -129,26 +132,19 @@ def _freeze_session_geosphere_selector(proxy: Any, parity: Any) -> None:
     wide lock as installation so another session cannot reload shared module
     globals while this selector chain is active.
 
-    The frozen selector is also a Streamlit fragment. GeoSphere source controls
-    therefore rerun only this already-composed selector instead of re-executing
-    the complete application script and rebuilding the runtime patch stack. A
-    successful provider load can still call ``st.rerun()`` to hand control back
-    to the full application and activate the loaded canonical dataset.
+    The station browser intentionally remains a normal Streamlit surface. A
+    request-only rerun boundary must be introduced below station selection rather
+    than fragmenting the entire GeoSphere selector; fragmenting the complete
+    selector destabilizes map/search widget reconciliation in real browser flows.
     """
     final_selector = parity._render_geosphere_resource_selector
     original_geosphere = proxy._source_parity_original_geosphere
 
-    def execute_geosphere_selector() -> Any:
+    def render_geosphere_source() -> Any:
         with _RUNTIME_PATCH_LOCK:
             return final_selector(proxy, original_geosphere)
 
-    fragment_factory = getattr(proxy.st, "fragment", None)
-    if callable(fragment_factory):
-        proxy.render_geosphere_source = fragment_factory(execute_geosphere_selector)
-    else:
-        # Defensive compatibility path for non-Streamlit test doubles. Production
-        # is pinned to a Streamlit version with fragment support.
-        proxy.render_geosphere_source = execute_geosphere_selector
+    proxy.render_geosphere_source = render_geosphere_source
 
 
 def _install_into_app_globals_locked(namespace: MutableMapping[str, Any]) -> bool:
