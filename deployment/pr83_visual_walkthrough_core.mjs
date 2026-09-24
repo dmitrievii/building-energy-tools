@@ -364,7 +364,11 @@ try {
   await selectDataset(page);
   await selectStation(page);
 
-  const sourceFrame = await appFrame(page, 'Parameter set', 30000);
+  // A Streamlit fragment emits deltas incrementally. Seeing the Parameter-set
+  // radio is not proof that the request form and DataEditor have completed their
+  // render. Wait for the form heading that is emitted after both dates before
+  // taking the visual/DOM contract snapshot.
+  const sourceFrame = await appFrame(page, 'Measured variables to load', 30000);
   const sourceText = await bodyText(sourceFrame);
   report.checks.parameter_set_core = sourceText.includes('Core variables');
   report.checks.monthly_context_once = (sourceText.match(/About this GeoSphere monthly dataset/g) || []).length === 1;
