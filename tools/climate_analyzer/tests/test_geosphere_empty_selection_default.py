@@ -65,6 +65,18 @@ class GeoSphereEmptySelectionDefaultTests(unittest.TestCase):
         self.assertIn(f"__monthly__{_EDITOR_KEY_VERSION}__core__", key)
         self.assertNotIn("__monthly__v2__core__", key)
 
+    def test_parameter_set_reset_epoch_changes_data_editor_widget_identity(self) -> None:
+        providers = ["tl_mittel", "rf_mittel", "p"]
+        before = _editor_key("Core variables", providers, epoch=0)
+        after = _editor_key("Core variables", providers, epoch=1)
+        later = _editor_key("Core variables", providers, epoch=2)
+
+        self.assertNotEqual(before, after)
+        self.assertNotEqual(after, later)
+        self.assertTrue(before.endswith("__epoch_0"))
+        self.assertTrue(after.endswith("__epoch_1"))
+        self.assertTrue(later.endswith("__epoch_2"))
+
 
 if __name__ == "__main__":
     unittest.main()
