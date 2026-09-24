@@ -81,22 +81,72 @@ def _clamp(value: date | None, low: date, high: date, fallback: date) -> date:
     return current
 
 
+def _filtered_station_ids(catalog: Any, stations: Any, st: Any) -> tuple[str, ...]:
+    """Reproduce the mature browser's visible station order for fallback selection.
+
+    The mature source shell displays ``option_ids[0]`` as the selected station on
+    a fresh session but historically did not persist that default into
+    ``geosphere_selected_station_id``.  The monthly request fragment is rendered
+    after that browser and needs the same effective station.  Reconstruct only
+    this fallback path from the already-cached metadata; explicit map/list
+    selections continue to own the committed station key.
+    """
+    if not isinstance(catalog, pd.DataFrame) or catalog.empty or "station_id" not in catalog.columns:
+        return ()
+
+    filtered = catalog.copy()
+    search = str(st.session_state.get("geosphere_station_search", "") or "").strip()
+    if search:
+        needle = search.lower()
+        masks = [filtered["station_id"].astype(str).str.lower().str.contains(needle, regex=False)]
+        for column in ("name", "state"):
+            if column in filtered.columns:
+                masks.append(filtered[column].astype(str).str.lower().str.contains(needle, regex=False))
+        mask = masks[0]
+        for extra in masks[1:]:
+            mask = mask | extra
+        filtered = filtered.loc[mask]
+
+    raw_states = st.session_state.get("geosphere_station_states", ())
+    if isinstance(raw_states, (list, tuple, set)):
+        selected_states = {str(value) for value in raw_states if str(value).strip()}
+    else:
+        selected_states = set()
+    if selected_states and "state" in filtered.columns:
+        filtered = filtered.loc[filtered["state"].astype(str).isin(selected_states)]
+
+    station_ids = {str(item.station_id) for item in stations}
+    return tuple(
+        str(value)
+        for value in filtered["station_id"].tolist()
+        if str(value) in station_ids
+    )
+
+
 def _station_and_bundle(legacy: Any, st: Any):
+    # The mature station browser has already requested this metadata earlier in
+    # the same rerun.  Calling its cached accessor here therefore performs no
+    # measurement request and lets us reconcile the browser's displayed default
+    # station when the legacy key has not yet been persisted.
+    metadata, supported, stations, catalog, capability_index, parameter_metadata = legacy.cached_geosphere_metadata_bundle()
     station_id = str(st.session_state.get(_STATION_KEY, "") or "")
-    # Switching resources and committing a station are separate Streamlit
-    # interactions. During that short transition monthly is already active while
-    # the station key is intentionally empty. Treat it as "request surface not
-    # ready yet" rather than an application error, and avoid even fetching the
-    # monthly metadata bundle until the station selection is committed.
-    if not station_id:
+    station_by_id = {str(item.station_id): item for item in stations}
+    option_ids = _filtered_station_ids(catalog, stations, st)
+    if not option_ids:
         return None
-    metadata, supported, stations, _catalog, capability_index, parameter_metadata = legacy.cached_geosphere_metadata_bundle()
-    station = next((item for item in stations if str(item.station_id) == station_id), None)
+
+    # Match the mature browser literally: a station is effective only while it
+    # remains in the current Search/Region-filtered option set.  A stale but
+    # globally valid station id must not survive a filter change.
+    if station_id not in option_ids:
+        station_id = option_ids[0]
+        # This is the same station that the mature browser already displays as
+        # selected. Persisting it closes the state gap without changing the
+        # semantics of an explicit manual/map selection that is still visible.
+        st.session_state[_STATION_KEY] = station_id
+
+    station = station_by_id.get(station_id)
     if station is None:
-        # A stale station id can briefly survive resource/station reconciliation.
-        # The mature browser remains visible and can establish a valid selection
-        # on the next full rerun; the request fragment must stay fail-closed and
-        # must not emit an uncaught traceback during that reconciliation.
         return None
     return metadata, supported, station, capability_index, parameter_metadata
 
@@ -169,6 +219,46 @@ def _selected_payload(edited: pd.DataFrame) -> tuple[tuple[str, ...], tuple[str,
     return providers, flags
 
 
+def _submitted_editor_payload(
+    base: pd.DataFrame,
+    edited: Any,
+    widget_state: object,
+) -> pd.DataFrame:
+    """Reconcile a submitted DataEditor with Streamlit's staged widget delta.
+
+    ``st.data_editor`` inside ``st.form`` keeps checkbox edits client-side until
+    the submit event.  On a fragment rerun Streamlit can expose the submitted
+    ``edited_rows`` state before the returned DataFrame is fully reconciled with
+    the new server-owned base table.  Treat the widget delta as the authoritative
+    final layer for the two editable boolean columns so a visibly checked row can
+    never be rejected as an empty request.
+    """
+    if isinstance(edited, pd.DataFrame) and {"Provider", "Selected"}.issubset(edited.columns):
+        out = edited.copy().reset_index(drop=True)
+    elif isinstance(base, pd.DataFrame):
+        out = base.copy().reset_index(drop=True)
+    else:
+        return pd.DataFrame()
+
+    if not isinstance(widget_state, dict):
+        return out
+    changed_rows = widget_state.get("edited_rows")
+    if not isinstance(changed_rows, dict):
+        return out
+
+    for raw_index, changes in changed_rows.items():
+        try:
+            row_index = int(raw_index)
+        except (TypeError, ValueError):
+            continue
+        if row_index < 0 or row_index >= len(out) or not isinstance(changes, dict):
+            continue
+        for column in ("Selected", "Quality flag"):
+            if column in out.columns and column in changes:
+                out.at[row_index, column] = bool(changes[column])
+    return out
+
+
 def _persist_provider_state(st: Any, edited: pd.DataFrame) -> tuple[tuple[str, ...], tuple[str, ...]]:
     providers, flags = _selected_payload(edited)
     selected_set = set(providers)
@@ -225,6 +315,12 @@ def install_monthly_request_surface(parity: Any) -> None:
             return
 
         visible = _visible_catalogue(parity, base, chosen_view).reset_index(drop=True)
+        if visible.empty:
+            st.warning(
+                f"No GeoSphere monthly parameters match the current `{chosen_view}` catalogue view. "
+                "Choose `All provider parameters` to inspect the live provider catalogue."
+            )
+            return
         providers = visible["Provider"].fillna("").astype(str).tolist()
         selection_state = _provider_state(st, _SELECTION_STATE_KEY, visible, "Selected", default=False)
         flag_state = _provider_state(st, _FLAG_STATE_KEY, visible, "Quality flag", default=False)
@@ -329,10 +425,15 @@ def install_monthly_request_surface(parity: Any) -> None:
         if not submitted:
             return
 
-        providers_selected, _flags = _persist_provider_state(st, edited)
+        submitted_editor = _submitted_editor_payload(
+            visible,
+            edited,
+            st.session_state.get(editor_key),
+        )
+        providers_selected, _flags = _persist_provider_state(st, submitted_editor)
         request_form.capture_date(_START_KEY, start_date)
         request_form.capture_date(_END_KEY, end_date)
-        request_form.capture_editor(edited)
+        request_form.capture_editor(submitted_editor)
 
         if not providers_selected:
             st.warning(_EMPTY_WARNING)

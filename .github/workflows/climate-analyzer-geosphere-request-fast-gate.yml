@@ -14,6 +14,7 @@ on:
       - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_variable_form_compat.py'
       - 'tools/climate_analyzer/tests/test_geosphere_date_fragment_isolation.py'
       - 'tools/climate_analyzer/tests/test_geosphere_monthly_request_surface.py'
+      - 'tools/climate_analyzer/tests/test_geosphere_monthly_default_station_surface.py'
       - 'tools/climate_analyzer/tests/test_geosphere_empty_selection_default.py'
       - 'tools/climate_analyzer/tests/test_geosphere_monthly_mature_loader_contract.py'
       - 'tools/climate_analyzer/tests/test_geosphere_unified_request_form.py'
@@ -62,6 +63,7 @@ jobs:
           python -m unittest -v \
             tools.climate_analyzer.tests.test_geosphere_date_fragment_isolation \
             tools.climate_analyzer.tests.test_geosphere_monthly_request_surface \
+            tools.climate_analyzer.tests.test_geosphere_monthly_default_station_surface \
             tools.climate_analyzer.tests.test_geosphere_empty_selection_default \
             tools.climate_analyzer.tests.test_geosphere_monthly_mature_loader_contract \
             tools.climate_analyzer.tests.test_geosphere_unified_request_form \
