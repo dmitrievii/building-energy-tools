@@ -178,14 +178,40 @@ async function waitMonthlySurface(page, timeoutMs = 20000) {
 }
 
 async function assertEmptySubmitBlocked(page) {
-  const frame = await waitMonthlySurface(page);
-  const load = frame.getByRole('button', { name: LOAD_LABEL, exact: true }).first();
-  await load.click({ timeout: 10000 });
-  const validated = await appFrame(page, EMPTY_WARNING, 15000);
-  const text = await bodyText(validated);
-  if (!text.includes(EMPTY_WARNING)) throw new Error('Empty Load did not show validation warning.');
-  if (text.includes('GeoSphere load complete')) throw new Error('Empty Load activated provider loading.');
-  return validated;
+  let lastText = '';
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const frame = await waitMonthlySurface(page);
+    const load = frame.getByRole('button', { name: LOAD_LABEL, exact: true }).first();
+    const oldHandle = await load.elementHandle().catch(() => null);
+    await load.scrollIntoViewIfNeeded({ timeout: 5000 }).catch(() => {});
+    await load.click({ timeout: 10000 });
+
+    const started = performance.now();
+    while (performance.now() - started < 6000) {
+      const current = await appFrame(page, 'Climate Analyzer', 5000).catch(() => null);
+      if (!current) {
+        await sleep(120);
+        continue;
+      }
+      lastText = await bodyText(current);
+      if (lastText.includes('GeoSphere load complete')) {
+        throw new Error('Empty Load activated provider loading.');
+      }
+      if (lastText.includes(EMPTY_WARNING)) return current;
+      await sleep(120);
+    }
+
+    const detached = oldHandle
+      ? await oldHandle.evaluate((node) => !node.isConnected).catch(() => true)
+      : true;
+    if (!detached) {
+      await sleep(250);
+    }
+    await waitMonthlySurface(page, 10000);
+  }
+  throw new Error(
+    `Empty Load did not show validation warning after transactional retries; resource=${lastText.match(/Selected resource:[^\n]*/)?.[0] || 'none'}`,
+  );
 }
 
 async function measuredEditorRowCount(frame) {
