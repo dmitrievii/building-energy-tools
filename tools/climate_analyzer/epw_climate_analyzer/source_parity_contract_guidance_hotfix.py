@@ -119,7 +119,8 @@ def _install_guidance_safe(parity: Any) -> None:
         real_info = st.info
         real_caption = st.caption
         real_write = st.write
-        real_markdown = st.markdown
+        real_markdown = getattr(st, "markdown", None)
+        markdown_available = callable(real_markdown)
         real_expander = st.expander
         real_radio = st.radio
         real_editor = st.data_editor
@@ -234,6 +235,8 @@ def _install_guidance_safe(parity: Any) -> None:
                 # before this heading, so this is the deterministic under-map
                 # insertion point requested by the presentation contract.
                 render_hourly_context()
+            if not callable(real_markdown):
+                return None
             return real_markdown(body, *args, **kwargs)
 
         def write(body: Any, *args: Any, **kwargs: Any):
@@ -337,7 +340,8 @@ def _install_guidance_safe(parity: Any) -> None:
         st.info = info
         st.caption = caption
         st.write = write
-        st.markdown = markdown
+        if markdown_available:
+            st.markdown = markdown
         st.expander = expander
         st.radio = radio
         st.data_editor = editor
@@ -348,7 +352,8 @@ def _install_guidance_safe(parity: Any) -> None:
             st.info = real_info
             st.caption = real_caption
             st.write = real_write
-            st.markdown = real_markdown
+            if markdown_available:
+                st.markdown = real_markdown
             st.expander = real_expander
             st.radio = real_radio
             st.data_editor = real_editor
