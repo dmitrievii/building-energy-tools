@@ -265,22 +265,63 @@ async function assertTransactionalEmptySelection(frame, label) {
   return { checkboxCount: count, load };
 }
 
-async function assertEmptySubmitBlocked(page, load) {
-  await load.click({ timeout: 15000 });
-  const validated = await waitBody(
-    page,
-    (text) => text.includes(EMPTY_WARNING) && text.includes('Measured variables to load'),
-    'empty transactional-submit validation',
-    30000,
-    1,
+async function assertEmptySubmitBlocked(page) {
+  const started = performance.now();
+  let lastText = '';
+
+  for (let attempt = 0; attempt < 3 && performance.now() - started < 45000; attempt += 1) {
+    const monthly = await waitMonthlyEditor(page);
+    const frame = monthly.frame;
+    lastText = await bodyText(frame);
+    if (lastText.includes('GeoSphere load complete')) {
+      throw new Error('Empty transactional submit activated GeoSphere provider loading before validation.');
+    }
+
+    const load = frame.getByRole('button', { name: LOAD_LABEL, exact: true }).first();
+    if (!(await load.count().catch(() => 0)) || !(await load.isVisible().catch(() => false))) {
+      throw new Error('Empty transactional submit cannot find a fresh Load button.');
+    }
+
+    const oldHandle = await load.elementHandle().catch(() => null);
+    try {
+      await load.click({ timeout: 10000 });
+    } catch {
+      await sleep(250);
+      continue;
+    }
+
+    const validationStarted = performance.now();
+    while (performance.now() - validationStarted < 12000) {
+      const current = await appFrame(page, 'Climate Analyzer', 5000).catch(() => null);
+      if (!current) {
+        await sleep(200);
+        continue;
+      }
+      lastText = await bodyText(current);
+      if (lastText.includes('GeoSphere load complete')) {
+        throw new Error('Empty transactional submit activated GeoSphere provider loading.');
+      }
+      if (lastText.includes(EMPTY_WARNING) && lastText.includes('Measured variables to load')) {
+        if (!lastText.includes(`Selected resource: ${MONTHLY_RESOURCE}`)) {
+          throw new Error('Empty transactional submit left the monthly source request surface.');
+        }
+        return current;
+      }
+
+      const detached = oldHandle
+        ? await oldHandle.evaluate((node) => !node.isConnected).catch(() => true)
+        : true;
+      if (detached) break;
+      await sleep(200);
+    }
+
+    await sleep(250);
+  }
+
+  throw new Error(
+    'Timed out waiting for empty transactional-submit validation; ' +
+    `resource=${lastText.match(/Selected resource:[^\n]*/)?.[0] || 'none'}`,
   );
-  if (validated.text.includes('GeoSphere load complete')) {
-    throw new Error('Empty transactional submit activated GeoSphere provider loading.');
-  }
-  if (!validated.text.includes(`Selected resource: ${MONTHLY_RESOURCE}`)) {
-    throw new Error('Empty transactional submit left the monthly source request surface.');
-  }
-  return validated.frame;
 }
 
 async function screenshot(page, name) {
