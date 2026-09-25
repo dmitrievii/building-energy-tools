@@ -11,8 +11,10 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const MONTHLY_SOURCE = 'Official source: GeoSphere Austria Station Data-v2 (1 m)';
 const MONTHLY_CONTEXT = 'About this GeoSphere monthly dataset';
+const HOURLY_CONTEXT = 'About this GeoSphere hourly dataset';
 const HOURLY_INFO = 'Official GeoSphere Austria availability context (translated summary)';
-const HOURLY_SOURCE = 'Authoritative source: GeoSphere Austria Stationsdaten-v2 (1 h)';
+const HOURLY_SOURCE = 'Official source: GeoSphere Austria Station Data-v2 (1 h)';
+const LEGACY_HOURLY_SOURCE = 'Authoritative source: GeoSphere Austria Stationsdaten-v2 (1 h)';
 
 function occurrences(text, needle) { return text.split(needle).length - 1; }
 async function bodyText(frame) { try { return await frame.locator('body').innerText({ timeout: 2000 }); } catch { return ''; } }
@@ -60,24 +62,6 @@ async function rendered(control) {
     await control.textContent().catch(() => ''),
     await control.inputValue().catch(() => ''),
   ].join(' ').replace(/\s+/g, ' ').trim();
-}
-
-async function visibleOption(page, frame, predicate) {
-  for (const options of [
-    frame.getByRole('option'),
-    page.getByRole('option'),
-    frame.locator('[data-baseweb="menu"] li'),
-    page.locator('[data-baseweb="menu"] li'),
-  ]) {
-    const count = await options.count().catch(() => 0);
-    for (let i = 0; i < count; i += 1) {
-      const option = options.nth(i);
-      if (!(await option.isVisible().catch(() => false))) continue;
-      const text = (await option.innerText().catch(() => '')).replace(/\s+/g, ' ').trim();
-      if (predicate(text)) return option;
-    }
-  }
-  return null;
 }
 
 async function selectVisibleOption(page, frame, controlLabel, predicate, timeoutMs = 60000) {
@@ -186,11 +170,6 @@ async function selectExactStation(page, stationName, stationId) {
     throw new Error(`Exact station ID ${targetId} did not settle; control=${lastControl}`);
   }
 
-  // The search-result combobox is only a preview. Commit through the real
-  // production button, then assert the stable post-commit source controls.
-  // Do not depend on text inside Streamlit's virtualized metadata DataFrame:
-  // that text can legitimately be absent from the DOM even after a successful
-  // station commit.
   const commitStarted = performance.now();
   while (performance.now() - commitStarted < 30000) {
     frame = await appFrame(page, 'Manual station selection', 5000);
@@ -227,16 +206,15 @@ async function waitBody(page, predicate, description, timeoutMs = 60000, stable 
   throw new Error(`Timed out waiting for ${description}; resource=${lastText.match(/Selected resource:[^\n]*/)?.[0] || 'none'}`);
 }
 
-async function expandMonthly(frame) {
-  const expander = frame.getByText(MONTHLY_CONTEXT, { exact: true }).last();
-  if (await expander.count().catch(() => 0)) {
-    await expander.click({ force: true, timeout: 10000 }).catch(() => {});
-    await sleep(350);
-  }
+async function expandContext(frame, label) {
+  const expander = frame.getByText(label, { exact: true }).last();
+  if (!(await expander.count().catch(() => 0))) throw new Error(`Missing dataset context expander: ${label}`);
+  await expander.click({ force: true, timeout: 10000 });
+  await sleep(350);
 }
 
 const report = {
-  schema: 'climate-analyzer-pr83-source-ui-smoke-v19',
+  schema: 'climate-analyzer-pr83-source-ui-smoke-v20',
   target_url: TARGET_URL,
   fixture,
   checks: {},
@@ -263,7 +241,7 @@ try {
     (text) => text.includes('Selected resource: klima-v2-1m') && text.includes('Parameter set') && text.includes(MONTHLY_CONTEXT),
     'monthly source UI',
   );
-  await expandMonthly(monthly.frame);
+  await expandContext(monthly.frame, MONTHLY_CONTEXT);
   const monthlyExpanded = await waitBody(
     page,
     (text) => text.includes('Core variables') && text.includes('Core + additional statistics') && text.includes('All provider parameters') && occurrences(text, MONTHLY_CONTEXT) === 1 && occurrences(text, MONTHLY_SOURCE) === 1,
@@ -275,16 +253,35 @@ try {
 
   await selectDataset(page, '1 h (long-term)', 'klima-v2-1h');
   await selectExactStation(page, fixture.station_name, fixture.station_id);
-  const hourly = await waitBody(
+  const hourlyCollapsed = await waitBody(
     page,
-    (text) => text.includes('Selected resource: klima-v2-1h') && text.includes('Station metadata validity') && occurrences(text, HOURLY_INFO) === 1 && occurrences(text, HOURLY_SOURCE) === 1,
-    'hourly source UI',
+    (text) => text.includes('Selected resource: klima-v2-1h') && text.includes('Station metadata validity') && occurrences(text, HOURLY_CONTEXT) === 1,
+    'collapsed hourly source UI',
     90000,
     3,
   );
-  if (hourly.text.includes(MONTHLY_CONTEXT) || hourly.text.includes('Parameter set')) throw new Error('Monthly-only controls remained visible for hourly resource.');
-  report.checks.hourly_context_count = occurrences(hourly.text, HOURLY_INFO);
-  report.checks.hourly_source_block_count = occurrences(hourly.text, HOURLY_SOURCE);
+  if (hourlyCollapsed.text.includes(MONTHLY_CONTEXT) || hourlyCollapsed.text.includes('Parameter set')) throw new Error('Monthly-only controls remained visible for hourly resource.');
+  if (hourlyCollapsed.text.includes(LEGACY_HOURLY_SOURCE)) throw new Error('Legacy German hourly source caption is still visible.');
+  const contextIndex = hourlyCollapsed.text.indexOf(HOURLY_CONTEXT);
+  const manualIndex = hourlyCollapsed.text.indexOf('Manual station selection');
+  if (contextIndex < 0 || manualIndex < 0 || contextIndex >= manualIndex) {
+    throw new Error('Hourly dataset context is not positioned before Manual station selection.');
+  }
+  report.checks.hourly_expander_count = occurrences(hourlyCollapsed.text, HOURLY_CONTEXT);
+  report.checks.hourly_context_before_manual_station = true;
+
+  await expandContext(hourlyCollapsed.frame, HOURLY_CONTEXT);
+  const hourlyExpanded = await waitBody(
+    page,
+    (text) => text.includes('Selected resource: klima-v2-1h') && occurrences(text, HOURLY_CONTEXT) === 1 && occurrences(text, HOURLY_INFO) === 1 && occurrences(text, HOURLY_SOURCE) === 1 && occurrences(text, LEGACY_HOURLY_SOURCE) === 0,
+    'expanded hourly source UI',
+    60000,
+    2,
+  );
+  if (hourlyExpanded.text.includes(MONTHLY_CONTEXT) || hourlyExpanded.text.includes('Parameter set')) throw new Error('Monthly-only controls remained visible for expanded hourly resource.');
+  report.checks.hourly_context_count = occurrences(hourlyExpanded.text, HOURLY_INFO);
+  report.checks.hourly_source_block_count = occurrences(hourlyExpanded.text, HOURLY_SOURCE);
+  report.checks.hourly_legacy_source_count = occurrences(hourlyExpanded.text, LEGACY_HOURLY_SOURCE);
 
   if (report.page_errors.length) throw new Error(`Browser page error(s): ${report.page_errors.join(' | ')}`);
   report.success = true;
