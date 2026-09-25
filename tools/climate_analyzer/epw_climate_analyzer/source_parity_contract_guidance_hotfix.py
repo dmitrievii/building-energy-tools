@@ -3,8 +3,9 @@
 The contract-closure selector is intentionally the outermost source UI layer.
 It must therefore be able to receive the raw variable table directly instead of
 assuming that the older monthly-cleanup data-editor wrapper has already added
-Category/Statistic/Notes columns.  This patch makes the final layer own both
-monthly table decoration and the Core/Additional/All parameter-set selector.
+Category/Statistic/Notes columns. This patch makes the final layer own monthly
+table decoration, the Core/Additional/All parameter-set selector, and the final
+provider-facing presentation cleanup shared by the 10-minute/hourly resources.
 """
 from __future__ import annotations
 
@@ -15,6 +16,8 @@ import pandas as pd
 
 from . import source_parity_contract_closure as contract
 from . import source_parity_monthly_cleanup as monthly_cleanup
+from .climate_model import CANONICAL_VARIABLES
+from .geosphere import GEOSPHERE_RESOURCES
 from .geosphere_monthly import (
     MONTHLY_DATASET_PAGE,
     MONTHLY_DOI,
@@ -31,6 +34,41 @@ PARAMETER_SET_OPTIONS = (
 PARAMETER_SET_KEY = "geosphere_monthly_parameter_catalogue_v2"
 _RESOURCE_KEY = "geosphere_resource_id"
 _RESOURCE_WIDGET_KEY = "_geosphere_resource_selector_widget_v1"
+_TEN_MIN_RESOURCE_ID = "klima-v2-10min"
+_HOURLY_RESOURCE_ID = "klima-v2-1h"
+_ENGLISH_MEASURED_RESOURCE_IDS = frozenset({_TEN_MIN_RESOURCE_ID, _HOURLY_RESOURCE_ID})
+_HOURLY_CONTEXT_PREFIX = "Official GeoSphere Austria availability context"
+_HOURLY_SOURCE_PREFIX = "Authoritative source: GeoSphere Austria Stationsdaten-v2 (1 h)"
+_MANUAL_STATION_HEADING = "#### Manual station selection"
+
+
+def _english_measured_variable_table(data: Any, resource_id: str) -> Any:
+    """Replace provider-language display labels with canonical English labels.
+
+    Provider IDs, canonical IDs, units, selection state and row order are left
+    untouched.  Only the human-facing ``Measured variable`` column is replaced.
+    This keeps transport/scientific identity independent from UI language and is
+    the contract needed by the future multilingual presentation layer.
+    """
+    if (
+        str(resource_id) not in _ENGLISH_MEASURED_RESOURCE_IDS
+        or not isinstance(data, pd.DataFrame)
+        or not {"Provider", "Measured variable"}.issubset(data.columns)
+    ):
+        return data
+
+    spec = GEOSPHERE_RESOURCES.get(str(resource_id))
+    if spec is None:
+        return data
+    field_by_provider = spec.field_by_provider
+    out = data.copy()
+    for index, row in out.iterrows():
+        provider = str(row.get("Provider", "") or "").strip()
+        field = field_by_provider.get(provider)
+        canonical = CANONICAL_VARIABLES.get(str(getattr(field, "canonical_name", "") or "")) if field else None
+        if canonical is not None and str(canonical.description).strip():
+            out.at[index, "Measured variable"] = str(canonical.description)
+    return out
 
 
 def _decorate_monthly_table(parity: Any, data: pd.DataFrame) -> pd.DataFrame:
@@ -81,6 +119,8 @@ def _install_guidance_safe(parity: Any) -> None:
         real_info = st.info
         real_caption = st.caption
         real_write = st.write
+        real_markdown = getattr(st, "markdown", None)
+        markdown_available = callable(real_markdown)
         real_expander = st.expander
         real_radio = st.radio
         real_editor = st.data_editor
@@ -89,9 +129,9 @@ def _install_guidance_safe(parity: Any) -> None:
         # Resolve the dataset widget before entering the older wrapper chain.
         # The visible widget owns a private Streamlit key; the effective resource
         # is copied explicitly into the legacy routing key before any wrapper is
-        # entered.  Keeping widget state and routing state separate is important:
+        # entered. Keeping widget state and routing state separate is important:
         # the composed legacy chain still contains a (suppressed) selectbox call
-        # using ``geosphere_resource_id``.  Reusing that same key for the visible
+        # using ``geosphere_resource_id``. Reusing that same key for the visible
         # widget allowed a 1m -> 1h browser transition to be rolled back to the
         # default 10-minute resource during the rerun even though the frontend
         # briefly displayed the hourly option.
@@ -134,6 +174,7 @@ def _install_guidance_safe(parity: Any) -> None:
         seen_info: set[str] = set()
         seen_caption: set[str] = set()
         monthly_context = {"shown": False}
+        hourly_context: dict[str, Any] = {"body": "", "shown": False}
         parameter_set_rendered = {"value": False}
         view = {
             "value": str(st.session_state.get(PARAMETER_SET_KEY, "Core variables"))
@@ -151,7 +192,12 @@ def _install_guidance_safe(parity: Any) -> None:
             text = str(body)
             if text.strip() == MONTHLY_OFFICIAL_CONTEXT_EN.strip():
                 return None
-            if text.startswith("Official GeoSphere Austria availability context"):
+            if text.startswith(_HOURLY_CONTEXT_PREFIX):
+                if selected_resource == _HOURLY_RESOURCE_ID:
+                    hourly_context["body"] = text
+                    # Hourly context is deliberately re-rendered below the map
+                    # as a collapsed expander instead of as a blue info panel.
+                    return None
                 if text in seen_info:
                     return None
                 seen_info.add(text)
@@ -161,11 +207,37 @@ def _install_guidance_safe(parity: Any) -> None:
             text = str(body)
             if text.startswith("Official source: GeoSphere Austria Station Data-v2 (1 m)"):
                 return None
-            if text.startswith("Authoritative source: GeoSphere Austria Stationsdaten-v2 (1 h)"):
+            if text.startswith(_HOURLY_SOURCE_PREFIX):
+                if selected_resource == _HOURLY_RESOURCE_ID:
+                    # Rebuilt in English inside the hourly expander below.
+                    return None
                 if text in seen_caption:
                     return None
                 seen_caption.add(text)
             return real_caption(body, *args, **kwargs)
+
+        def render_hourly_context() -> None:
+            if selected_resource != _HOURLY_RESOURCE_ID or bool(hourly_context["shown"]):
+                return
+            spec = GEOSPHERE_RESOURCES[_HOURLY_RESOURCE_ID]
+            with real_expander("About this GeoSphere hourly dataset", expanded=False):
+                body = str(hourly_context.get("body", "") or "").strip()
+                if body:
+                    real_write(body)
+                real_caption(
+                    f"Official source: GeoSphere Austria Station Data-v2 (1 h) · {spec.doi} · {spec.dataset_page}"
+                )
+            hourly_context["shown"] = True
+
+        def markdown(body: Any, *args: Any, **kwargs: Any):
+            if selected_resource == _HOURLY_RESOURCE_ID and str(body).strip() == _MANUAL_STATION_HEADING:
+                # Mature UI closes the map/station-detail columns immediately
+                # before this heading, so this is the deterministic under-map
+                # insertion point requested by the presentation contract.
+                render_hourly_context()
+            if not callable(real_markdown):
+                return None
+            return real_markdown(body, *args, **kwargs)
 
         def write(body: Any, *args: Any, **kwargs: Any):
             if (
@@ -213,8 +285,13 @@ def _install_guidance_safe(parity: Any) -> None:
             return real_radio(label, values, *args, **kwargs)
 
         def editor(data: Any, *args: Any, **kwargs: Any):
+            resource_id = str(st.session_state.get(_RESOURCE_KEY, ""))
+            if resource_id in _ENGLISH_MEASURED_RESOURCE_IDS:
+                translated = _english_measured_variable_table(data, resource_id)
+                return real_editor(translated, *args, **kwargs)
+
             if not (
-                str(st.session_state.get(_RESOURCE_KEY, "")) == MONTHLY_RESOURCE_ID
+                resource_id == MONTHLY_RESOURCE_ID
                 and isinstance(data, pd.DataFrame)
                 and {"Provider", "Measured variable"}.issubset(data.columns)
             ):
@@ -263,6 +340,8 @@ def _install_guidance_safe(parity: Any) -> None:
         st.info = info
         st.caption = caption
         st.write = write
+        if markdown_available:
+            st.markdown = markdown
         st.expander = expander
         st.radio = radio
         st.data_editor = editor
@@ -273,6 +352,8 @@ def _install_guidance_safe(parity: Any) -> None:
             st.info = real_info
             st.caption = real_caption
             st.write = real_write
+            if markdown_available:
+                st.markdown = real_markdown
             st.expander = real_expander
             st.radio = real_radio
             st.data_editor = real_editor
