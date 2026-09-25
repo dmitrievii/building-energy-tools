@@ -15,6 +15,7 @@ import streamlit as st
 
 from .analysis_clock import LOCAL_CIVIL_TIME, LOCAL_STANDARD_TIME, SOURCE_TIME, UTC_TIME, add_calendar_columns
 from .climate_model import aggregation_semantics_for
+from .comparison_memory_hotfix import install_comparison_memory_hotfix
 from .epw_header import parse_epw_header
 from .quality_policy import QUALITY_POLICY_ALL
 
@@ -173,3 +174,5 @@ def apply_source_parity_fixes(legacy: Any, parity: Any) -> None:
             df,
             issues,
         )
+
+    install_comparison_memory_hotfix(legacy)
