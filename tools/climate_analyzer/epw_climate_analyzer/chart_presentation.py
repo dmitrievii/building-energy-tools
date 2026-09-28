@@ -160,6 +160,10 @@ def apply_chart_presentation(fig: Any, settings: ChartPresentationSettings) -> A
         _set_font_size(layout.title.font, size + 3)
     except Exception:
         pass
+    try:
+        _set_font_size(layout.hoverlabel.font, size)
+    except Exception:
+        pass
 
     # Cover ordinary and secondary legends, Cartesian subplots, polar wind
     # roses, 3D scenes and shared Plotly color axes. Most inherit the base layout
@@ -188,8 +192,11 @@ def apply_chart_presentation(fig: Any, settings: ChartPresentationSettings) -> A
     for annotation in getattr(layout, "annotations", ()) or ():
         _set_font_size(getattr(annotation, "font", None), size)
 
-    # Trace-local colorbars do not inherit the layout font reliably.
+    # Trace-local labels and colorbars can override the layout font, so they are
+    # explicitly synchronized with the global presentation size as well.
     for trace in getattr(fig, "data", ()) or ():
+        for font_name in ("textfont", "insidetextfont", "outsidetextfont"):
+            _set_font_size(getattr(trace, font_name, None), size)
         marker = getattr(trace, "marker", None)
         colorbar = getattr(marker, "colorbar", None) if marker is not None else None
         if colorbar is None:
