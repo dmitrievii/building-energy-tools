@@ -9,6 +9,7 @@ on:
       - 'deployment/chart_presentation_browser_smoke.mjs'
       - 'deployment/chart_presentation_browser_smoke_v2.mjs'
       - 'deployment/chart_presentation_browser_smoke_v3.mjs'
+      - 'deployment/chart_presentation_browser_smoke_v4.mjs'
       - '.github/workflows/climate-analyzer-chart-presentation-smoke.yml'
   push:
     branches:
@@ -20,6 +21,7 @@ on:
       - 'deployment/chart_presentation_browser_smoke.mjs'
       - 'deployment/chart_presentation_browser_smoke_v2.mjs'
       - 'deployment/chart_presentation_browser_smoke_v3.mjs'
+      - 'deployment/chart_presentation_browser_smoke_v4.mjs'
       - '.github/workflows/climate-analyzer-chart-presentation-smoke.yml'
 
 permissions:
@@ -82,7 +84,7 @@ jobs:
             exit 1
           fi
 
-          node deployment/chart_presentation_browser_smoke_v3.mjs
+          node deployment/chart_presentation_browser_smoke_v4.mjs
 
       - name: Upload visual evidence
         if: always()
