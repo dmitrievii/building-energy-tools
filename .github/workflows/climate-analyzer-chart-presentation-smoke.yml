@@ -7,6 +7,7 @@ on:
       - 'tools/climate_analyzer/epw_climate_analyzer/charts.py'
       - 'deployment/chart_presentation_visual_harness.py'
       - 'deployment/chart_presentation_browser_smoke.mjs'
+      - 'deployment/chart_presentation_browser_smoke_v2.mjs'
       - '.github/workflows/climate-analyzer-chart-presentation-smoke.yml'
   push:
     branches:
@@ -16,6 +17,7 @@ on:
       - 'tools/climate_analyzer/epw_climate_analyzer/charts.py'
       - 'deployment/chart_presentation_visual_harness.py'
       - 'deployment/chart_presentation_browser_smoke.mjs'
+      - 'deployment/chart_presentation_browser_smoke_v2.mjs'
       - '.github/workflows/climate-analyzer-chart-presentation-smoke.yml'
 
 permissions:
@@ -78,7 +80,7 @@ jobs:
             exit 1
           fi
 
-          node deployment/chart_presentation_browser_smoke.mjs
+          node deployment/chart_presentation_browser_smoke_v2.mjs
 
       - name: Upload visual evidence
         if: always()
