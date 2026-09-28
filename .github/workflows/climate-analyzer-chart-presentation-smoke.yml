@@ -1,0 +1,90 @@
+name: Climate Analyzer Chart Presentation Smoke
+
+on:
+  pull_request:
+    paths:
+      - 'tools/climate_analyzer/epw_climate_analyzer/chart_presentation.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/charts.py'
+      - 'deployment/chart_presentation_visual_harness.py'
+      - 'deployment/chart_presentation_browser_smoke.mjs'
+      - '.github/workflows/climate-analyzer-chart-presentation-smoke.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'tools/climate_analyzer/epw_climate_analyzer/chart_presentation.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/charts.py'
+      - 'deployment/chart_presentation_visual_harness.py'
+      - 'deployment/chart_presentation_browser_smoke.mjs'
+      - '.github/workflows/climate-analyzer-chart-presentation-smoke.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  browser-presentation-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/climate_analyzer/requirements.txt
+
+      - name: Install Climate Analyzer dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r tools/climate_analyzer/requirements.txt
+
+      - name: Show Chrome version
+        run: |
+          test -x /usr/bin/google-chrome
+          /usr/bin/google-chrome --version
+
+      - name: Install browser smoke dependency
+        run: npm install --no-save playwright-core@1.55.0
+
+      - name: Exercise global presentation controls in a real browser
+        env:
+          TARGET_URL: http://127.0.0.1:8502/
+          CHART_PRESENTATION_SMOKE_DIR: artifacts/chart-presentation-smoke
+          CHROME_PATH: /usr/bin/google-chrome
+          PYTHONPATH: tools/climate_analyzer
+        run: |
+          set -euo pipefail
+          streamlit run deployment/chart_presentation_visual_harness.py \
+            --server.headless=true \
+            --server.port=8502 \
+            > /tmp/chart-presentation-streamlit.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+
+          healthy=0
+          for _ in $(seq 1 45); do
+            if curl --fail --silent --show-error http://127.0.0.1:8502/_stcore/health >/tmp/chart-presentation-health.txt 2>/dev/null; then
+              healthy=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$healthy" -ne 1 ]; then
+            cat /tmp/chart-presentation-streamlit.log
+            exit 1
+          fi
+
+          node deployment/chart_presentation_browser_smoke.mjs
+
+      - name: Upload visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: climate-analyzer-chart-presentation-smoke
+          path: artifacts/chart-presentation-smoke
+          if-no-files-found: warn
+          retention-days: 14
