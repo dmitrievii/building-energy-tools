@@ -1,8 +1,8 @@
 """Global presentation settings for every Plotly chart in Climate Analyzer.
 
-Scientific chart builders own data, traces and scientific semantics.  This module
+Scientific chart builders own data, traces and scientific semantics. This module
 owns only presentation: chart canvas, font sizing and browser image-export
-settings.  The Streamlit ``plotly_chart`` entrypoint is wrapped once so existing
+settings. The Streamlit ``plotly_chart`` entrypoint is wrapped once so existing
 and future charts inherit the same presentation contract without page-specific
 patches.
 """
@@ -29,7 +29,7 @@ CANVAS_OPTIONS = (
     CANVAS_CUSTOM,
 )
 
-# Dimensions define the deterministic presentation/export canvas.  The display
+# Dimensions define the deterministic presentation/export canvas. The display
 # width control scales these dimensions; changing the browser width no longer
 # needs to be used as a chart-composition tool.
 CANVAS_DIMENSIONS: dict[str, tuple[int, int]] = {
@@ -107,6 +107,16 @@ def reset_state(state: MutableMapping[str, Any]) -> None:
     state[KEY_EXPORT_SCALE] = DEFAULT_EXPORT_SCALE
     state[KEY_CUSTOM_WIDTH] = DEFAULT_CUSTOM_WIDTH
     state[KEY_CUSTOM_HEIGHT] = DEFAULT_CUSTOM_HEIGHT
+
+
+def ensure_default_state(state: MutableMapping[str, Any]) -> None:
+    """Seed widget state once so controls never fight explicit widget defaults."""
+    state.setdefault(KEY_CANVAS, DEFAULT_CANVAS)
+    state.setdefault(KEY_WIDTH, DEFAULT_WIDTH_PERCENT)
+    state.setdefault(KEY_FONT, DEFAULT_FONT_SIZE)
+    state.setdefault(KEY_EXPORT_SCALE, DEFAULT_EXPORT_SCALE)
+    state.setdefault(KEY_CUSTOM_WIDTH, DEFAULT_CUSTOM_WIDTH)
+    state.setdefault(KEY_CUSTOM_HEIGHT, DEFAULT_CUSTOM_HEIGHT)
 
 
 def _set_font_size(font: Any, size: int) -> None:
@@ -198,6 +208,7 @@ def merge_plotly_config(
 
 def render_presentation_sidebar(st: Any) -> None:
     """Render the single global presentation control surface for this rerun."""
+    ensure_default_state(st.session_state)
     with st.sidebar.expander("Presentation", expanded=False):
         st.selectbox(
             "Canvas",
@@ -209,7 +220,6 @@ def render_presentation_sidebar(st: Any) -> None:
             "Display width [%]",
             min_value=50,
             max_value=100,
-            value=DEFAULT_WIDTH_PERCENT,
             step=5,
             key=KEY_WIDTH,
             help="Scales the selected presentation canvas for on-screen display. Export keeps the full preset canvas.",
@@ -218,14 +228,12 @@ def render_presentation_sidebar(st: Any) -> None:
             "Chart font size [pt]",
             min_value=8,
             max_value=26,
-            value=DEFAULT_FONT_SIZE,
             step=1,
             key=KEY_FONT,
         )
         st.select_slider(
             "Export scale",
             options=(1, 2, 3),
-            value=DEFAULT_EXPORT_SCALE,
             key=KEY_EXPORT_SCALE,
             format_func=lambda value: f"{value}×",
             help="Resolution multiplier used by Plotly's Download plot as PNG action.",
@@ -236,7 +244,6 @@ def render_presentation_sidebar(st: Any) -> None:
                 "Width [px]",
                 min_value=320,
                 max_value=3840,
-                value=DEFAULT_CUSTOM_WIDTH,
                 step=20,
                 key=KEY_CUSTOM_WIDTH,
             )
@@ -244,7 +251,6 @@ def render_presentation_sidebar(st: Any) -> None:
                 "Height [px]",
                 min_value=240,
                 max_value=3840,
-                value=DEFAULT_CUSTOM_HEIGHT,
                 step=20,
                 key=KEY_CUSTOM_HEIGHT,
             )
@@ -260,7 +266,7 @@ def render_presentation_sidebar(st: Any) -> None:
 def install_global_chart_presentation(st: Any | None = None) -> None:
     """Install one global Plotly renderer and render its sidebar controls.
 
-    The wrapper sits at the shared ``st.plotly_chart`` boundary.  Consequently
+    The wrapper sits at the shared ``st.plotly_chart`` boundary. Consequently
     every existing and future Plotly chart inherits presentation settings without
     modifying scientific chart builders or adding local per-chart switches.
     """
@@ -281,7 +287,7 @@ def install_global_chart_presentation(st: Any | None = None) -> None:
         if settings.is_auto:
             return original(fig, *args, **kwargs)
 
-        # A preset/custom canvas is intentionally deterministic.  Existing
+        # A preset/custom canvas is intentionally deterministic. Existing
         # use_container_width=True calls must not let browser width redefine it.
         kwargs["use_container_width"] = False
         return original(fig, *args, **kwargs)
