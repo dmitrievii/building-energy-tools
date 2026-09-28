@@ -128,6 +128,22 @@ def _set_font_size(font: Any, size: int) -> None:
         pass
 
 
+def _set_axis_font(axis: Any, size: int) -> None:
+    if axis is None:
+        return
+    _set_font_size(getattr(axis, "tickfont", None), size)
+    title = getattr(axis, "title", None)
+    _set_font_size(getattr(title, "font", None), size)
+
+
+def _set_colorbar_font(colorbar: Any, size: int) -> None:
+    if colorbar is None:
+        return
+    _set_font_size(getattr(colorbar, "tickfont", None), size)
+    title = getattr(colorbar, "title", None)
+    _set_font_size(getattr(title, "font", None), size)
+
+
 def apply_chart_presentation(fig: Any, settings: ChartPresentationSettings) -> Any:
     """Apply presentation-only layout changes to a Plotly figure in place."""
     if fig is None or not hasattr(fig, "layout"):
@@ -144,24 +160,30 @@ def apply_chart_presentation(fig: Any, settings: ChartPresentationSettings) -> A
         _set_font_size(layout.title.font, size + 3)
     except Exception:
         pass
-    try:
-        _set_font_size(layout.legend.font, size)
-        _set_font_size(layout.legend.title.font, size)
-    except Exception:
-        pass
 
-    # Plotly subplots create xaxis, xaxis2, ... / yaxis, yaxis2, ... dynamically.
+    # Cover ordinary and secondary legends, Cartesian subplots, polar wind
+    # roses, 3D scenes and shared Plotly color axes. Most inherit the base layout
+    # font, but explicit tick/title fonts need to be updated as well.
     for name in getattr(layout, "_props", {}):
-        if not (str(name).startswith("xaxis") or str(name).startswith("yaxis")):
+        name_text = str(name)
+        item = getattr(layout, name, None)
+        if item is None:
             continue
-        axis = getattr(layout, name, None)
-        if axis is None:
-            continue
-        try:
-            _set_font_size(axis.tickfont, size)
-            _set_font_size(axis.title.font, size)
-        except Exception:
-            pass
+        if name_text.startswith("legend"):
+            _set_font_size(getattr(item, "font", None), size)
+            title = getattr(item, "title", None)
+            _set_font_size(getattr(title, "font", None), size)
+        elif name_text.startswith("xaxis") or name_text.startswith("yaxis"):
+            _set_axis_font(item, size)
+        elif name_text.startswith("polar"):
+            _set_axis_font(getattr(item, "angularaxis", None), size)
+            _set_axis_font(getattr(item, "radialaxis", None), size)
+        elif name_text.startswith("scene"):
+            _set_axis_font(getattr(item, "xaxis", None), size)
+            _set_axis_font(getattr(item, "yaxis", None), size)
+            _set_axis_font(getattr(item, "zaxis", None), size)
+        elif name_text.startswith("coloraxis"):
+            _set_colorbar_font(getattr(item, "colorbar", None), size)
 
     for annotation in getattr(layout, "annotations", ()) or ():
         _set_font_size(getattr(annotation, "font", None), size)
@@ -172,10 +194,7 @@ def apply_chart_presentation(fig: Any, settings: ChartPresentationSettings) -> A
         colorbar = getattr(marker, "colorbar", None) if marker is not None else None
         if colorbar is None:
             colorbar = getattr(trace, "colorbar", None)
-        if colorbar is not None:
-            _set_font_size(getattr(colorbar, "tickfont", None), size)
-            title = getattr(colorbar, "title", None)
-            _set_font_size(getattr(title, "font", None), size)
+        _set_colorbar_font(colorbar, size)
 
     dimensions = settings.display_dimensions()
     if dimensions is None:
@@ -216,14 +235,18 @@ def render_presentation_sidebar(st: Any) -> None:
             key=KEY_CANVAS,
             help="Auto keeps the responsive chart geometry. Presets use a deterministic canvas independent of browser width.",
         )
+        auto_canvas = st.session_state.get(KEY_CANVAS, DEFAULT_CANVAS) == CANVAS_AUTO
         st.slider(
             "Display width [%]",
             min_value=50,
             max_value=100,
             step=5,
             key=KEY_WIDTH,
-            help="Scales the selected presentation canvas for on-screen display. Export keeps the full preset canvas.",
+            disabled=auto_canvas,
+            help="Scales a preset/custom canvas for on-screen display. Export keeps the full canvas size.",
         )
+        if auto_canvas:
+            st.caption("Auto keeps the current responsive chart size. Choose a canvas preset or Custom to control proportions and display width.")
         st.slider(
             "Chart font size [pt]",
             min_value=8,
