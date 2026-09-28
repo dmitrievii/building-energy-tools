@@ -89,14 +89,15 @@ def queue_navigation_reset(state: MutableMapping[str, Any]) -> None:
 
 
 def _install_source_parity_for_app_caller() -> None:
-    """Install source-parity routing when called from the fully defined app.
+    """Install source-parity and chart-presentation routing for the full app.
 
     ``app.py`` is deliberately kept as the mature source/AST contract.  The
     navigation hand-off is the earliest runtime call made by ``main`` after all
     renderer functions have been defined, so it is a safe place to install the
-    new source-neutral routing without importing pandas/numpy/plotly at module
-    startup.  Ordinary unit tests of this module do not satisfy the app sentinel
-    and therefore do not load the parity layer.
+    new source-neutral routing and the one global Plotly presentation boundary
+    without importing pandas/numpy/plotly at module startup. Ordinary unit tests
+    of this module do not satisfy the app sentinel and therefore do not load
+    either runtime layer.
     """
     import sys
 
@@ -110,8 +111,11 @@ def _install_source_parity_for_app_caller() -> None:
         "render_data_quality",
     }.issubset(caller_globals):
         return
+
+    from .chart_presentation import install_global_chart_presentation
     from .source_parity_runtime import install_into_app_globals
 
+    install_global_chart_presentation()
     install_into_app_globals(caller_globals)
 
 
