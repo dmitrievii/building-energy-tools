@@ -83,27 +83,41 @@ async function chooseCanvas(page, value) {
   return openPresentation(page);
 }
 
-async function sliderControl(frame, label) {
-  const byContainerText = frame.locator('[data-testid="stSlider"]').filter({ hasText: label }).first();
-  if (await byContainerText.count().catch(() => 0)) {
-    const slider = byContainerText.getByRole('slider').first();
-    if (await slider.count().catch(() => 0)) return slider;
-  }
-  const labelled = frame.getByRole('slider', { name: label, exact: false }).first();
-  if (await labelled.count().catch(() => 0)) return labelled;
-  throw new Error(`Slider control not found: ${label}`);
+async function sliderParts(frame, label) {
+  const container = frame.locator('[data-testid="stSlider"]').filter({ hasText: label }).first();
+  if (!(await container.count().catch(() => 0))) throw new Error(`Slider container not found: ${label}`);
+  const slider = container.getByRole('slider').first();
+  if (!(await slider.count().catch(() => 0))) throw new Error(`Slider control not found: ${label}`);
+  const track = container.locator('[data-baseweb="slider"]').first();
+  return { container, slider, track };
 }
 
 async function setSlider(page, label, target) {
-  for (let iteration = 0; iteration < 50; iteration += 1) {
+  let lastNow = NaN;
+  for (let iteration = 0; iteration < 12; iteration += 1) {
     const frame = await openPresentation(page);
-    const slider = await sliderControl(frame, label);
+    const { slider, track } = await sliderParts(frame, label);
     const now = Number(await slider.getAttribute('aria-valuenow'));
-    if (Math.abs(now - target) < 1e-9) return waitForCharts(page);
-    await slider.press(target > now ? 'ArrowRight' : 'ArrowLeft');
-    await sleep(220);
+    const min = Number(await slider.getAttribute('aria-valuemin'));
+    const max = Number(await slider.getAttribute('aria-valuemax'));
+    lastNow = now;
+    if (Number.isFinite(now) && Math.abs(now - target) < 1e-9) return waitForCharts(page);
+
+    // Streamlit 1.63/BaseWeb sliders can ignore synthetic key presses after a
+    // widget-triggered rerun. Drive the actual slider track instead, then use a
+    // keyboard nudge only as a fallback. The next loop always reacquires the
+    // freshly rendered widget and verifies aria-valuenow.
+    const box = await track.boundingBox().catch(() => null);
+    if (box && Number.isFinite(min) && Number.isFinite(max) && max > min) {
+      const ratio = Math.max(0, Math.min(1, (target - min) / (max - min)));
+      await page.mouse.click(box.x + ratio * box.width, box.y + box.height / 2);
+    } else {
+      await slider.click({ force: true }).catch(() => {});
+      await slider.press(target > now ? 'ArrowRight' : 'ArrowLeft');
+    }
+    await sleep(650);
   }
-  throw new Error(`Could not set ${label} to ${target}.`);
+  throw new Error(`Could not set ${label} to ${target}; last aria-valuenow=${lastNow}.`);
 }
 
 async function setNumberInput(page, label, value) {
