@@ -77,10 +77,30 @@ async function chooseCanvas(page, value) {
   const control = frame.getByRole('combobox', { name: 'Canvas', exact: true }).first();
   await control.click({ timeout: 10000 });
   const option = await visibleOption(page, frame, value);
-  if (!option) throw new Error(`Canvas option not found: ${value}`);
-  await option.click({ timeout: 10000 });
+  if (option) {
+    await option.click({ timeout: 10000 });
+  } else if (value === 'Custom') {
+    // BaseWeb can portal the final option outside the Streamlit app frame after
+    // repeated reruns. Keyboard navigation is deterministic here because Custom
+    // is the final item in the canonical CANVAS_OPTIONS sequence.
+    await page.keyboard.press('End');
+    await page.keyboard.press('Enter');
+  } else {
+    throw new Error(`Canvas option not found: ${value}`);
+  }
   await waitForCharts(page);
-  return openPresentation(page);
+  frame = await openPresentation(page);
+  if (value === 'Custom') {
+    const started = Date.now();
+    while (Date.now() - started < 10000) {
+      const text = await bodyText(frame);
+      if (text.includes('Width [px]') && text.includes('Height [px]')) return frame;
+      await sleep(150);
+      frame = await openPresentation(page);
+    }
+    throw new Error('Custom canvas selected but width/height controls did not appear.');
+  }
+  return frame;
 }
 
 async function sliderControl(frame, label) {
