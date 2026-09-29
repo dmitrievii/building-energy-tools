@@ -192,16 +192,22 @@ def apply_chart_presentation(fig: Any, settings: ChartPresentationSettings) -> A
     for annotation in getattr(layout, "annotations", ()) or ():
         _set_font_size(getattr(annotation, "font", None), size)
 
-    # Trace-local labels and colorbars can override the layout font, so they are
-    # explicitly synchronized with the global presentation size as well.
+    # Trace-local labels and colorbars can override the layout font. Crucially,
+    # only touch colorbars that already exist in the serialized trace props.
+    # Accessing ``trace.marker.colorbar`` on an ordinary Scatter lazily creates
+    # a colorbar object in Plotly and can make a phantom scale appear next to
+    # otherwise categorical line/marker charts.
     for trace in getattr(fig, "data", ()) or ():
         for font_name in ("textfont", "insidetextfont", "outsidetextfont"):
             _set_font_size(getattr(trace, font_name, None), size)
-        marker = getattr(trace, "marker", None)
-        colorbar = getattr(marker, "colorbar", None) if marker is not None else None
-        if colorbar is None:
-            colorbar = getattr(trace, "colorbar", None)
-        _set_colorbar_font(colorbar, size)
+
+        trace_props = getattr(trace, "_props", {}) or {}
+        marker_props = trace_props.get("marker") if isinstance(trace_props, Mapping) else None
+        if isinstance(marker_props, Mapping) and "colorbar" in marker_props:
+            marker = getattr(trace, "marker", None)
+            _set_colorbar_font(getattr(marker, "colorbar", None), size)
+        if isinstance(trace_props, Mapping) and "colorbar" in trace_props:
+            _set_colorbar_font(getattr(trace, "colorbar", None), size)
 
     dimensions = settings.display_dimensions()
     if dimensions is None:
