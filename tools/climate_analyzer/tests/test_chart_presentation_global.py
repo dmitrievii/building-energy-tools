@@ -66,6 +66,50 @@ class GlobalChartPresentationTests(unittest.TestCase):
         self.assertEqual(fig.layout.yaxis.title.font.size, 18)
         self.assertEqual(fig.layout.annotations[0].font.size, 18)
 
+    def test_presentation_does_not_create_marker_or_colorbar_on_plain_scatter(self) -> None:
+        fig = go.Figure(
+            go.Scatter(
+                x=["Jan", "Feb", "Mar"],
+                y=[1.0, 2.0, 3.0],
+                mode="lines+markers",
+                name="Mean",
+            )
+        )
+        before = fig.to_plotly_json()["data"][0]
+        self.assertNotIn("marker", before)
+
+        apply_chart_presentation(
+            fig,
+            ChartPresentationSettings(canvas=CANVAS_AUTO, font_size=20),
+        )
+
+        after = fig.to_plotly_json()["data"][0]
+        self.assertNotIn("marker", after)
+        self.assertNotIn("colorbar", after)
+
+    def test_existing_trace_colorbar_font_is_updated_without_changing_visibility(self) -> None:
+        fig = go.Figure(
+            go.Scatter(
+                x=[1, 2],
+                y=[2, 3],
+                mode="markers",
+                marker=dict(
+                    color=[1.0, 2.0],
+                    colorscale="Viridis",
+                    showscale=True,
+                    colorbar=dict(title="Scale"),
+                ),
+            )
+        )
+        apply_chart_presentation(
+            fig,
+            ChartPresentationSettings(canvas=CANVAS_AUTO, font_size=19),
+        )
+        marker = fig.to_plotly_json()["data"][0]["marker"]
+        self.assertTrue(marker["showscale"])
+        self.assertEqual(marker["colorbar"]["tickfont"]["size"], 19)
+        self.assertEqual(marker["colorbar"]["title"]["font"]["size"], 19)
+
     def test_auto_canvas_does_not_force_dimensions(self) -> None:
         fig = go.Figure(go.Bar(x=["A"], y=[1]))
         apply_chart_presentation(fig, ChartPresentationSettings(canvas=CANVAS_AUTO, font_size=15))
