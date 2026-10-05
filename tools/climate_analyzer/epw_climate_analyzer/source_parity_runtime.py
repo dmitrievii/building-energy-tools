@@ -164,6 +164,7 @@ def _install_into_app_globals_locked(namespace: MutableMapping[str, Any]) -> boo
     # preserves the established lightweight-startup contract.
     from .geosphere_resource_overlay import apply_geosphere_resource_overlay
     parity = _fresh_source_parity_ui()
+    from .epw_download_surface import install_epw_download_surface
     from .interannual_year_highlight import install_interannual_year_highlight
     from .source_parity_fixes import apply_source_parity_fixes
     from .source_parity_ground import install_ground_depth_contract
@@ -250,6 +251,11 @@ def _install_into_app_globals_locked(namespace: MutableMapping[str, Any]) -> boo
     # widget, then renders Parameter set + dates + DataEditor + Load together.
     # 10-minute/hourly remain on the validated mature path.
     install_monthly_request_surface(parity)
+
+    # EPW overview download control. The active ClimateFilePayload already keeps
+    # the exact source bytes; expose those bytes next to the Dataset statistics
+    # CSV rather than reconstructing an EPW from a filtered/derived DataFrame.
+    install_epw_download_surface(proxy)
 
     # Source-neutral presentation control for Interannual overlay. Install it
     # after all provider-specific wrappers so every source uses the same final
