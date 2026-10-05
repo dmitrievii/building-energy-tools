@@ -56,6 +56,12 @@ class _StreamlitDownloadFacade:
 
 def install_epw_download_surface(app: Any) -> None:
     """Add the exact active EPW payload to Calculated EPW statistics downloads."""
+    if not all(
+        hasattr(app, name)
+        for name in ("render_calculated_epw_statistics", "get_active_climate_file", "st")
+    ):
+        return
+
     original = app.render_calculated_epw_statistics
     if bool(getattr(original, "_epw_download_surface_installed", False)):
         return
