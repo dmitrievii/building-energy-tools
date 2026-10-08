@@ -8,7 +8,9 @@ from __future__ import annotations
 
 import ast
 from pathlib import Path
+from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -130,12 +132,76 @@ class GroundAlbedoContractTests(unittest.TestCase):
             rtol=0, atol=1e-10,
         )
 
+    def test_albedo_controls_follow_automatic_interpretation_in_solar_ui(self) -> None:
+        source = (Path(__file__).resolve().parents[1] / "app.py").read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        solar_render = next(
+            node for node in tree.body
+            if isinstance(node, ast.FunctionDef) and node.name == "render_solar"
+        )
+        top_level = solar_render.body
+        # The selector is intentionally rendered *after* every chart branch
+        # (including nested render_plot -> Automatic interpretation).
+        last = top_level[-1]
+        self.assertIsInstance(last, ast.Expr)
+        self.assertIsInstance(last.value, ast.Call)
+        self.assertIsInstance(last.value.func, ast.Name)
+        self.assertEqual(last.value.func.id, "_solar_ground_albedo_selection")
+        plot_calls = [
+            node for node in ast.walk(solar_render)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "render_plot"
+        ]
+        self.assertTrue(plot_calls)
+        self.assertTrue(all(call.lineno < last.lineno for call in plot_calls))
+        active = next(
+            node for node in top_level
+            if isinstance(node, ast.Assign)
+            and any(isinstance(target, ast.Name) and target.id == "ground_albedo" for target in node.targets)
+        )
+        self.assertIsInstance(active.value.func, ast.Name)
+        self.assertEqual(active.value.func.id, "_active_solar_ground_albedo")
+        self.assertLess(active.lineno, last.lineno)
+
+    def test_albedo_after_chart_uses_keyed_state_on_next_rerun(self) -> None:
+        # Exercise the pure *pre-chart* resolver without loading Streamlit UI.
+        # This models Streamlit session state already updated by a bottom widget.
+        from epw_climate_analyzer import solar
+        source = (Path(__file__).resolve().parents[1] / "app.py").read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        resolver = next(
+            node for node in tree.body
+            if isinstance(node, ast.FunctionDef) and node.name == "_active_solar_ground_albedo"
+        )
+        isolated = ast.Module(
+            body=[ast.ImportFrom(module="__future__", names=[ast.alias(name="annotations")], level=0), resolver],
+            type_ignores=[],
+        )
+        namespace = {"st": SimpleNamespace(session_state={}), "pd": pd}
+        exec(compile(ast.fix_missing_locations(isolated), "<solar-mode-contract>", "exec"), namespace)
+        current = namespace["st"].session_state
+        resolve = namespace["_active_solar_ground_albedo"]
+        frame = epw_like_year().iloc[:3].copy()
+        with patch("epw_climate_analyzer.runtime_module_guard.ensure_current_solar_runtime", return_value=solar):
+            self.assertIsNone(resolve(frame))
+            current["solar_ground_albedo_mode"] = "custom"
+            current["solar_custom_ground_albedo"] = 0.32
+            self.assertAlmostEqual(resolve(frame), 0.32)
+            current["solar_ground_albedo_mode"] = "source"
+            pd.testing.assert_series_equal(resolve(frame), solar.source_ground_albedo(frame))
+            missing = frame.drop(columns=["albedo"])
+            self.assertIsNone(resolve(missing))
+            current["solar_ground_albedo_mode"] = "standard"
+            self.assertIsNone(resolve(frame))
+
     def test_ui_all_poa_routes_explicitly_receive_ground_mode(self) -> None:
         path = Path(__file__).resolve().parents[1] / "app.py"
         source = path.read_text(encoding="utf-8")
         ast.parse(source)
         self.assertIn('key="solar_ground_albedo_mode"', source)
-        self.assertIn('ground_albedo = _solar_ground_albedo_selection(df)', source)
+        self.assertIn('ground_albedo = _active_solar_ground_albedo(df)', source)
+        self.assertIn('_solar_ground_albedo_selection(df)', source)
         self.assertIn("orientation_annual_radiation(df, tilt_deg=tilt, albedo=ground_albedo)", source)
         self.assertIn("orientation_tilt_matrix(df, albedo=ground_albedo)", source)
         self.assertIn("monthly_orientation_radiation(df, tilt_deg=tilt, albedo=ground_albedo)", source)
