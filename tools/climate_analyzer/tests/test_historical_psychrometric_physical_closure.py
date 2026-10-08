@@ -124,7 +124,7 @@ class PsychrometricPhysicalClosureTests(unittest.TestCase):
         self.assertEqual(historical.count("data = reconcile_historical_psychrometrics("), 2)
         self.assertIn("filtered_df = reconcile_historical_psychrometrics(", ui)
         self.assertIn('st.session_state["_active_filtered_export_df"] = filtered_df', ui)
-        self.assertIn('report["repaired_rows"]', ui)
+        self.assertIn("report['repaired_rows']", ui)
 
 
 if __name__ == "__main__":
