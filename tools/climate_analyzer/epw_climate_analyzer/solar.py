@@ -18,6 +18,8 @@ noise.  Existing measured DNI is never overwritten.
 from __future__ import annotations
 
 from datetime import timedelta, timezone
+from hashlib import sha256
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -27,6 +29,10 @@ import pandas as pd
 DEFAULT_ALBEDO = 0.20
 DEFAULT_DNI_MIN_COS_ZENITH = 0.065
 VARIABLE_ORIGIN_ATTR = "canonical_variable_origin"
+
+# Streamlit can retain this module after app.py has been hot-updated on disk.
+# A source fingerprint lets runtime_module_guard reload only on deploy changes.
+_RUNTIME_SOURCE_SHA256 = sha256(Path(__file__).read_bytes()).hexdigest()
 
 
 def fixed_offset_timezone_name(utc_offset: float) -> str:
