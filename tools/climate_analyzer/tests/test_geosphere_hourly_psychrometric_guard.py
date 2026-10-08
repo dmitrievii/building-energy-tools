@@ -98,15 +98,18 @@ class GeoSphereHourlyPsychrometricRegressionTests(unittest.TestCase):
         ):
             self.assertAlmostEqual(float(hourly.iloc[0][name]), float(ten_min.iloc[0][name]), places=10)
 
-    def test_bogus_psychrolib_saturation_is_rejected_not_plotted(self) -> None:
+    def test_corrupt_psychrolib_saturation_cannot_corrupt_derived_humidity(self) -> None:
+        # The foundational saturation pressure is now calculated directly from
+        # the ASHRAE equations, independently of mutable PsychroLib state.
         frame = pd.DataFrame({
             "dry_bulb_temperature_c": [20.0],
             "relative_humidity_pct": [50.0],
             "atmospheric_station_pressure_pa": [101325.0],
         })
         with patch.object(psychrolib, "GetSatVapPres", return_value=100000.0):
-            with self.assertRaisesRegex(ValueError, "saturation-pressure consistency"):
-                add_psychrometric_properties(frame)
+            result = add_psychrometric_properties(frame)
+        self.assertAlmostEqual(float(result.iloc[0]["saturation_vapor_pressure_pa"]), 2338.8037, delta=0.1)
+        self.assertAlmostEqual(float(result.iloc[0]["humidity_ratio_g_kg"]), 7.2617, delta=0.02)
 
     def test_near_zero_vapor_pressure_denominator_is_not_clamped(self) -> None:
         frame = pd.DataFrame({
