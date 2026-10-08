@@ -57,6 +57,14 @@ def _numeric_column_or_nan(df: pd.DataFrame, column: str) -> np.ndarray:
     return pd.to_numeric(df[column], errors="coerce").to_numpy(dtype=float)
 
 
+
+def _record_variable_origin(df: pd.DataFrame, column: str, description: str) -> None:
+    """Retain source/derivation provenance for the materialized climate field."""
+    origins = dict(df.attrs.get(VARIABLE_ORIGIN_ATTR, {}))
+    origins[str(column)] = str(description)
+    df.attrs[VARIABLE_ORIGIN_ATTR] = origins
+
+
 def _independent_saturation_pressure_pa(t_c: np.ndarray) -> np.ndarray:
     """Independent Magnus check for ordinary weather-state temperatures.
 
