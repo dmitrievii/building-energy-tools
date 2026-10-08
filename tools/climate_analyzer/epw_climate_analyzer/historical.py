@@ -10,6 +10,8 @@ calendar columns and calendar-based analyses are evaluated.
 
 from __future__ import annotations
 
+from hashlib import sha256
+from pathlib import Path
 from threading import RLock
 import weakref
 
@@ -27,6 +29,10 @@ from .decisions import add_degree_metrics
 from .psychrometrics import DEFAULT_PRESSURE_PA, add_psychrometric_properties
 from .solar import ensure_solar_radiation_components
 
+
+# Import-time fingerprint lets the runtime guard detect a redeployed module
+# without disrupting the expensive, in-process canonical-hourly cache on reruns.
+_RUNTIME_SOURCE_SHA256 = sha256(Path(__file__).read_bytes()).hexdigest()
 
 _HOURLY_CACHE_LOCK = RLock()
 _HOURLY_CACHE: dict[int, tuple[weakref.ReferenceType[CanonicalClimateDataset], pd.DataFrame]] = {}
