@@ -3390,19 +3390,42 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
         render_plot(fig, psychrometric_interpretation(df))
 
 
-def _solar_ground_albedo_selection(df: pd.DataFrame) -> float | pd.Series | None:
-    """Choose an explicit, shared POA ground-reflectance scenario.
+def _active_solar_ground_albedo(df: pd.DataFrame) -> float | pd.Series | None:
+    """Read the albedo scenario selected on the previous Streamlit rerun.
 
-    The EPW/provider albedo remains intact in the canonical source frame. A
-    standard 0.20 ground is the default for all orientation/tilt calculations;
-    using source observations is always an explicit opt-in.
+    The controls appear after Automatic interpretation, but Streamlit updates
+    keyed session state before re-executing the chart on a widget change.
+    Reading that state here lets all POA charts use the same assumption
+    without placing extra controls above the canonical Analysis type menu.
+    """
+    from epw_climate_analyzer.runtime_module_guard import ensure_current_solar_runtime
+
+    solar_module = ensure_current_solar_runtime()
+    mode = st.session_state.get("solar_ground_albedo_mode", "standard")
+    if mode == "source":
+        report = solar_module.albedo_source_diagnostics(df)
+        if report is not None and report["valid_count"] > 0:
+            return solar_module.source_ground_albedo(df)
+        # An EPW/source switch can invalidate an earlier source selection.
+        return None
+    if mode == "custom":
+        return float(st.session_state.get("solar_custom_ground_albedo", solar_module.DEFAULT_ALBEDO))
+    return None
+
+
+def _solar_ground_albedo_selection(df: pd.DataFrame) -> None:
+    """Render albedo controls and source diagnostics *below* the chart.
+
+    The current chart has already used the keyed scenario read by
+    _active_solar_ground_albedo(). Streamlit reruns on input changes, so the
+    next chart picks up the updated selection without changing chart order.
+    The EPW/provider albedo stays unmodified.
     """
     from epw_climate_analyzer.runtime_module_guard import ensure_current_solar_runtime
 
     solar_module = ensure_current_solar_runtime()
     DEFAULT_ALBEDO = solar_module.DEFAULT_ALBEDO
     albedo_source_diagnostics = solar_module.albedo_source_diagnostics
-    source_ground_albedo = solar_module.source_ground_albedo
 
     report = albedo_source_diagnostics(df)
     has_source = report is not None and report["valid_count"] > 0
@@ -3458,7 +3481,7 @@ def _solar_ground_albedo_selection(df: pd.DataFrame) -> float | pd.Series | None
 
     if mode == "source":
         st.caption("Calculation uses recorded source albedo per interval (0.20 only for missing values).")
-        return source_ground_albedo(df)
+        return
     if mode == "custom":
         value = float(st.number_input(
             "Custom ground albedo [–]", min_value=0.0, max_value=1.0,
@@ -3466,15 +3489,15 @@ def _solar_ground_albedo_selection(df: pd.DataFrame) -> float | pd.Series | None
             key="solar_custom_ground_albedo",
         ))
         st.caption(f"Calculation uses a fixed albedo of {value:.2f} at all timestamps.")
-        return value
+        return
     st.caption("Calculation uses standard ground albedo 0.20 at every timestamp; source values are not automatically adopted.")
-    return None
+    return
 
 
 def render_solar(df: pd.DataFrame) -> None:
     """Render solar, radiation and façade-decision charts."""
     st.header("Solar, radiation and façade analysis")
-    ground_albedo = _solar_ground_albedo_selection(df)
+    ground_albedo = _active_solar_ground_albedo(df)
     chart_group = st.selectbox(
         "Analysis type",
         [
@@ -3597,6 +3620,10 @@ def render_solar(df: pd.DataFrame) -> None:
             "GHI [Wh/m²]",
         )
         render_plot(fig, solar_interpretation(df))
+
+    # Keep the canonical chart/Automatic interpretation layout untouched:
+    # ground reflectance controls and their EPW plausibility notes come last.
+    _solar_ground_albedo_selection(df)
 
 
 def render_wind(df: pd.DataFrame) -> None:
