@@ -87,6 +87,27 @@ def _ensure_geosphere_dependencies() -> None:
     _GEOSPHERE_DEPENDENCIES_LOADED = True
 
 
+def _bind_current_solar_functions() -> None:
+    """Refresh the solar module and rebind globals after a Streamlit hot deploy.
+
+    This helper is intentionally lazy: it imports the solar module only after
+    the solar analysis is requested, preserving lightweight app startup.
+    """
+    global add_solar_position, monthly_orientation_radiation, orientation_annual_radiation
+    global orientation_tilt_matrix, surface_irradiance_series
+
+    import importlib
+    from epw_climate_analyzer import runtime_module_guard
+    if not hasattr(runtime_module_guard, "ensure_current_solar_runtime"):
+        importlib.reload(runtime_module_guard)
+    current_solar = runtime_module_guard.ensure_current_solar_runtime()
+    add_solar_position = current_solar.add_solar_position
+    monthly_orientation_radiation = current_solar.monthly_orientation_radiation
+    orientation_annual_radiation = current_solar.orientation_annual_radiation
+    orientation_tilt_matrix = current_solar.orientation_tilt_matrix
+    surface_irradiance_series = current_solar.surface_irradiance_series
+
+
 def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bool) -> None:
     """Load scientific/plotting dependencies only after an EPW analysis is requested."""
     global _ANALYSIS_DEPENDENCIES_LOADED, _SOLAR_DEPENDENCIES_LOADED, _COMPARISON_DEPENDENCIES_LOADED
@@ -237,22 +258,12 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
         )
         _ANALYSIS_DEPENDENCIES_LOADED = True
 
-    if include_solar:
-        # After a Community Cloud deployment, Streamlit may execute the new
-        # app.py while retaining an older epw_climate_analyzer.solar in memory.
-        # Refresh the module if required and REBIND previously imported helpers:
-        # reloading the module alone leaves these app globals on old callables.
-        import importlib
-        from epw_climate_analyzer import runtime_module_guard
-        if not hasattr(runtime_module_guard, "ensure_current_solar_runtime"):
-            importlib.reload(runtime_module_guard)
-        current_solar = runtime_module_guard.ensure_current_solar_runtime()
-        add_solar_position = current_solar.add_solar_position
-        monthly_orientation_radiation = current_solar.monthly_orientation_radiation
-        orientation_annual_radiation = current_solar.orientation_annual_radiation
-        orientation_tilt_matrix = current_solar.orientation_tilt_matrix
-        surface_irradiance_series = current_solar.surface_irradiance_series
+    if include_solar and not _SOLAR_DEPENDENCIES_LOADED:
+        _bind_current_solar_functions()
         _SOLAR_DEPENDENCIES_LOADED = True
+    elif include_solar:
+        # Streamlit reruns may retain stale solar module objects on deploy.
+        _bind_current_solar_functions()
 
     if include_comparison and not _COMPARISON_DEPENDENCIES_LOADED:
         from epw_climate_analyzer.comparison import (
