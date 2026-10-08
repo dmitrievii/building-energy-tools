@@ -3426,7 +3426,7 @@ def _solar_ground_albedo_selection(df: pd.DataFrame) -> None:
     solar_module = ensure_current_solar_runtime()
     DEFAULT_ALBEDO = solar_module.DEFAULT_ALBEDO
     albedo_source_diagnostics = solar_module.albedo_source_diagnostics
- 
+
     report = albedo_source_diagnostics(df)
     has_source = report is not None and report["valid_count"] > 0
     st.subheader("Ground reflectance for tilted-surface irradiation")
