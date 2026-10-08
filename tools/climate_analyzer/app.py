@@ -237,14 +237,21 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
         )
         _ANALYSIS_DEPENDENCIES_LOADED = True
 
-    if include_solar and not _SOLAR_DEPENDENCIES_LOADED:
-        from epw_climate_analyzer.solar import (
-            add_solar_position,
-            monthly_orientation_radiation,
-            orientation_annual_radiation,
-            orientation_tilt_matrix,
-            surface_irradiance_series,
-        )
+    if include_solar:
+        # After a Community Cloud deployment, Streamlit may execute the new
+        # app.py while retaining an older epw_climate_analyzer.solar in memory.
+        # Refresh the module if required and REBIND previously imported helpers:
+        # reloading the module alone leaves these app globals on old callables.
+        import importlib
+        from epw_climate_analyzer import runtime_module_guard
+        if not hasattr(runtime_module_guard, "ensure_current_solar_runtime"):
+            importlib.reload(runtime_module_guard)
+        current_solar = runtime_module_guard.ensure_current_solar_runtime()
+        add_solar_position = current_solar.add_solar_position
+        monthly_orientation_radiation = current_solar.monthly_orientation_radiation
+        orientation_annual_radiation = current_solar.orientation_annual_radiation
+        orientation_tilt_matrix = current_solar.orientation_tilt_matrix
+        surface_irradiance_series = current_solar.surface_irradiance_series
         _SOLAR_DEPENDENCIES_LOADED = True
 
     if include_comparison and not _COMPARISON_DEPENDENCIES_LOADED:
@@ -3379,9 +3386,12 @@ def _solar_ground_albedo_selection(df: pd.DataFrame) -> float | pd.Series | None
     standard 0.20 ground is the default for all orientation/tilt calculations;
     using source observations is always an explicit opt-in.
     """
-    from epw_climate_analyzer.solar import (
-        DEFAULT_ALBEDO, albedo_source_diagnostics, source_ground_albedo,
-    )
+    from epw_climate_analyzer.runtime_module_guard import ensure_current_solar_runtime
+
+    solar_module = ensure_current_solar_runtime()
+    DEFAULT_ALBEDO = solar_module.DEFAULT_ALBEDO
+    albedo_source_diagnostics = solar_module.albedo_source_diagnostics
+    source_ground_albedo = solar_module.source_ground_albedo
 
     report = albedo_source_diagnostics(df)
     has_source = report is not None and report["valid_count"] > 0
@@ -3504,8 +3514,9 @@ def render_solar(df: pd.DataFrame) -> None:
         fig = orientation_bar_chart(data, f"Annual irradiation by orientation at {tilt:.0f}° tilt")
         render_plot(fig, solar_interpretation(df))
     elif chart_group == "Plane-of-array components":
-        from epw_climate_analyzer.solar import surface_irradiance_components
+        from epw_climate_analyzer.runtime_module_guard import ensure_current_solar_runtime
 
+        surface_irradiance_components = ensure_current_solar_runtime().surface_irradiance_components
         col_a, col_b = st.columns(2)
         tilt = col_a.slider(
             "Surface tilt [deg]", min_value=0.0, max_value=90.0,
