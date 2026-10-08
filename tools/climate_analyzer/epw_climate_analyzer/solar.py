@@ -238,38 +238,99 @@ def ensure_solar_radiation_components(
     return data
 
 
+def albedo_source_diagnostics(df: pd.DataFrame) -> dict[str, float | int] | None:
+    """Describe source albedo without changing the underlying EPW observations.
+
+    An extreme modal albedo is a plausibility warning, not proof that an EPW
+    field is incorrect. The analysis distinguishes invalid numeric entries,
+    missing values, and physically possible but unusually high reflectance.
+    """
+    if "albedo" not in df.columns:
+        return None
+    raw = pd.to_numeric(df["albedo"], errors="coerce")
+    valid_mask = np.isfinite(raw) & raw.between(0.0, 1.0)
+    valid = raw.loc[valid_mask]
+    if valid.empty:
+        return {
+            "total_count": int(len(raw)), "valid_count": 0,
+            "missing_count": int(raw.isna().sum()),
+            "invalid_count": int((raw.notna() & ~valid_mask).sum()),
+            "high_count": 0, "high_fraction": 0.0,
+        }
+    rounded = valid.round(3)
+    mode_counts = rounded.value_counts()
+    dominant = float(mode_counts.index[0])
+    return {
+        "total_count": int(len(raw)),
+        "valid_count": int(len(valid)),
+        "missing_count": int(raw.isna().sum()),
+        "invalid_count": int((raw.notna() & ~valid_mask).sum()),
+        "mean": float(valid.mean()),
+        "minimum": float(valid.min()),
+        "maximum": float(valid.max()),
+        "high_count": int((valid >= 0.5).sum()),
+        "high_fraction": float((valid >= 0.5).mean()),
+        "dominant_value": dominant,
+        "dominant_count": int(mode_counts.iloc[0]),
+    }
+
+
+def source_ground_albedo(df: pd.DataFrame) -> pd.Series:
+    """Resolve EPW/provider albedo *only* when explicitly selected by the user.
+
+    Source entries outside the physical 0..1 range fail rather than being
+    silently clipped. Only genuinely missing entries use the documented
+    standard-ground fallback (0.20); original source data are never overwritten.
+    """
+    if "albedo" not in df.columns:
+        raise ValueError("Source ground albedo is unavailable for this climate.")
+    raw = pd.to_numeric(df["albedo"], errors="coerce")
+    invalid = raw.notna() & (~np.isfinite(raw) | ~raw.between(0.0, 1.0))
+    if invalid.any():
+        raise ValueError(
+            f"Source ground albedo contains {int(invalid.sum())} values outside 0..1; "
+            "review the source data before using this mode."
+        )
+    if not raw.notna().any():
+        raise ValueError("Source ground albedo has no valid numeric observations.")
+    return raw.fillna(DEFAULT_ALBEDO)
+
+
 def _resolved_albedo(df: pd.DataFrame, albedo: float | pd.Series | None) -> float | pd.Series:
+    """Standard ground is the default, even when the EPW contains albedo.
+
+    Callers choosing source observations must explicitly pass
+    ``source_ground_albedo(df)``. A numeric argument is an explicit custom
+    constant. No numeric values are silently clipped.
+    """
     if isinstance(albedo, pd.Series):
         values = pd.to_numeric(albedo.reindex(df.index), errors="coerce")
-        return values.clip(lower=0.0, upper=1.0).fillna(DEFAULT_ALBEDO)
-    if albedo is not None:
-        value = float(albedo)
-        if not 0.0 <= value <= 1.0:
-            raise ValueError("Albedo must be between 0 and 1.")
-        return value
-    if "albedo" in df.columns:
-        values = pd.to_numeric(df["albedo"], errors="coerce").clip(lower=0.0, upper=1.0)
-        if values.notna().any():
-            return values.fillna(DEFAULT_ALBEDO)
-    return DEFAULT_ALBEDO
+        invalid = values.notna() & (~np.isfinite(values) | ~values.between(0.0, 1.0))
+        if invalid.any():
+            raise ValueError("Ground albedo series contains values outside 0..1.")
+        return values.fillna(DEFAULT_ALBEDO)
+    if albedo is None:
+        return DEFAULT_ALBEDO
+    value = float(albedo)
+    if not np.isfinite(value) or not 0.0 <= value <= 1.0:
+        raise ValueError("Albedo must be finite and between 0 and 1.")
+    return value
 
 
-def surface_irradiance_series(
+def surface_irradiance_components(
     df: pd.DataFrame,
     surface_tilt_deg: float,
     surface_azimuth_deg: float,
     albedo: float | pd.Series | None = None,
-) -> pd.Series:
-    """Calculate total plane-of-array interval irradiation for a tilted surface.
+) -> pd.DataFrame:
+    """Return the coincident direct, sky-diffuse, ground and total POA irradiation.
 
-    If no explicit ``albedo`` is supplied, an available EPW/canonical ``albedo``
-    series is used record-by-record; missing records fall back to 0.20.  Sources
-    without an albedo measurement use the same documented 0.20 fallback.
+    All outputs are interval energies in Wh/m², masked when mandatory radiation
+    or solar-geometry fields are missing. The default calculation uses standard
+    ground reflectance 0.20; EPW/provider albedo is never selected implicitly.
 
-    Missing mandatory radiation or solar-geometry inputs remain missing in the
-    returned POA series.  They are never silently reinterpreted as zero-energy
-    intervals; temporary zero fills are used only to keep pvlib numerically
-    stable before the validity mask is restored.
+    Ground reflection assumes an unobstructed isotropic horizontal ground
+    surface and therefore does not represent urban canyon view-factor effects.
     """
     import pvlib
 
@@ -301,15 +362,47 @@ def surface_irradiance_series(
         dhi=dhi.fillna(0).clip(lower=0),
         albedo=_resolved_albedo(df, albedo),
     )
-    result = pd.Series(poa["poa_global"].to_numpy(), index=df.index, name="poa_global_wh_m2")
-    result = result.where(valid_inputs)
-    result.attrs["albedo_origin"] = "source series with 0.20 fallback" if "albedo" in df.columns and albedo is None else (
-        "explicit" if albedo is not None else "default 0.20"
+    columns = {
+        "poa_direct_wh_m2": "poa_direct",
+        "poa_sky_diffuse_wh_m2": "poa_sky_diffuse",
+        "poa_ground_diffuse_wh_m2": "poa_ground_diffuse",
+        "poa_global_wh_m2": "poa_global",
+    }
+    result = pd.DataFrame(
+        {name: np.asarray(poa[source], dtype=float) for name, source in columns.items()},
+        index=df.index,
     )
+    result = result.where(valid_inputs, axis=0)
+    result.attrs["albedo_origin"] = (
+        "standard ground 0.20 (explicit default)" if albedo is None
+        else "explicit hourly source/series with missing-value fallback 0.20"
+        if isinstance(albedo, pd.Series)
+        else f"explicit constant {float(albedo):g}"
+    )
+    result.attrs["surface_tilt_deg"] = float(surface_tilt_deg)
+    result.attrs["surface_azimuth_deg"] = float(surface_azimuth_deg)
     return result
 
 
-def orientation_annual_radiation(df: pd.DataFrame, tilt_deg: float = 90.0) -> pd.DataFrame:
+def surface_irradiance_series(
+    df: pd.DataFrame,
+    surface_tilt_deg: float,
+    surface_azimuth_deg: float,
+    albedo: float | pd.Series | None = None,
+) -> pd.Series:
+    """Calculate total POA interval irradiation; default is ground albedo 0.20."""
+    components = surface_irradiance_components(
+        df, surface_tilt_deg, surface_azimuth_deg, albedo=albedo,
+    )
+    result = components["poa_global_wh_m2"].rename("poa_global_wh_m2")
+    result.attrs.update(components.attrs)
+    return result
+
+
+def orientation_annual_radiation(
+    df: pd.DataFrame, tilt_deg: float = 90.0,
+    albedo: float | pd.Series | None = None,
+) -> pd.DataFrame:
     """Return annual/selected-period radiation sums for façade orientations."""
     orientations = {
         "North": 0.0,
@@ -323,7 +416,7 @@ def orientation_annual_radiation(df: pd.DataFrame, tilt_deg: float = 90.0) -> pd
     }
     rows = []
     for label, azimuth in orientations.items():
-        poa = surface_irradiance_series(df, tilt_deg, azimuth)
+        poa = surface_irradiance_series(df, tilt_deg, azimuth, albedo=albedo)
         rows.append({"orientation": label, "azimuth_deg": azimuth, "annual_kwh_m2": poa.sum() / 1000.0})
     return pd.DataFrame(rows)
 
@@ -332,6 +425,7 @@ def orientation_tilt_matrix(
     df: pd.DataFrame,
     tilt_values: list[float] | None = None,
     azimuth_values: list[float] | None = None,
+    albedo: float | pd.Series | None = None,
 ) -> pd.DataFrame:
     """Calculate a kWh/m² matrix for orientation and tilt combinations."""
     if tilt_values is None:
@@ -342,7 +436,7 @@ def orientation_tilt_matrix(
     rows = []
     for tilt in tilt_values:
         for azimuth in azimuth_values:
-            poa = surface_irradiance_series(df, float(tilt), float(azimuth))
+            poa = surface_irradiance_series(df, float(tilt), float(azimuth), albedo=albedo)
             rows.append(
                 {
                     "tilt_deg": float(tilt),
@@ -353,12 +447,15 @@ def orientation_tilt_matrix(
     return pd.DataFrame(rows).pivot(index="tilt_deg", columns="azimuth_deg", values="annual_kwh_m2")
 
 
-def monthly_orientation_radiation(df: pd.DataFrame, tilt_deg: float = 90.0) -> pd.DataFrame:
+def monthly_orientation_radiation(
+    df: pd.DataFrame, tilt_deg: float = 90.0,
+    albedo: float | pd.Series | None = None,
+) -> pd.DataFrame:
     """Return monthly radiation sums for main façade orientations."""
     orientations = {"North": 0.0, "East": 90.0, "South": 180.0, "West": 270.0}
     result = pd.DataFrame(index=range(1, 13))
     for label, azimuth in orientations.items():
-        poa = surface_irradiance_series(df, tilt_deg, azimuth)
+        poa = surface_irradiance_series(df, tilt_deg, azimuth, albedo=albedo)
         result[label] = poa.groupby(df["month_index"]).sum() / 1000.0
     result.index.name = "month"
     return result

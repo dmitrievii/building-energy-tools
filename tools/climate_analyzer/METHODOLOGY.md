@@ -71,6 +71,44 @@ Reference gates include horizontal plane-of-array consistency and a vertical sou
 
 Solar and radiation plots must be interpreted according to whether they display instantaneous/intensity-type quantities or energy sums. Dedicated regression tests protect monthly/annual radiation aggregation and energy conservation for the deterministic annual reference climate.
 
+### Ground reflectance for tilted surfaces
+
+The **design ground-reflectance assumption** is separate from the **source EPW albedo**.
+Climate Analyzer preserves the source `albedo` column unchanged, and offers three
+explicit scenarios for plane-of-array (POA) radiation calculations:
+
+1. **Standard ground (default):** `albedo = 0.20` at every timestamp. This is a
+   practical building-design reference scenario, not a measurement of the site's
+   ground conditions.
+2. **Source EPW/provider albedo:** user opt-in to the source series, record by
+   record. Genuinely missing entries fall back to 0.20 and the UI discloses
+   their count. Any numeric observation outside the physical 0–1 range fails
+   instead of being silently clipped.
+3. **Custom constant:** user-defined reflectance within 0–1, applied to every
+   timestamp.
+
+The selected albedo model applies consistently to orientation charts, tilt
+matrices, monthly façade irradiation and the individual-surface POA component
+view. Component totals are reported as **direct**, **sky diffuse**, **ground
+reflected**, and **total**; changing albedo affects only the ground-reflected
+component.
+
+For an unobstructed isotropically reflecting horizontal ground plane, the
+ground-reflected energy on a surface tilted by `β` from horizontal is
+
+`POA_ground = GHI × albedo × (1 − cos(β)) / 2`.
+
+This does not model partial ground view, façade recesses, nearby buildings,
+obstructions, snow-cover physics or detailed urban radiative exchange. A
+persistently high EPW albedo is surfaced as a **plausibility warning**, not
+silently corrected or presented as proof of bad source data. Albedo source
+values can be physically plausible on snow or specialized light-colored ground.
+
+The POA totals cover the **currently selected period** and must not be
+interpreted as annual values when date/month/hour filters remove observations.
+The current sky-diffuse treatment is the installed pvlib calculation mode; the
+ground-albedo scenario does not independently change the direct or sky terms.
+
 ## Degree-hour and climate-severity indicators
 
 Heating/cooling degree-hour indicators are climate-screening quantities based on declared application thresholds. Their threshold behavior is explicitly unit tested at and around the boundary values.

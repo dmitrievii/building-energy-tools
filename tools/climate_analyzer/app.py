@@ -3372,9 +3372,88 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
         render_plot(fig, psychrometric_interpretation(df))
 
 
+def _solar_ground_albedo_selection(df: pd.DataFrame) -> float | pd.Series | None:
+    """Choose an explicit, shared POA ground-reflectance scenario.
+
+    The EPW/provider albedo remains intact in the canonical source frame. A
+    standard 0.20 ground is the default for all orientation/tilt calculations;
+    using source observations is always an explicit opt-in.
+    """
+    from epw_climate_analyzer.solar import (
+        DEFAULT_ALBEDO, albedo_source_diagnostics, source_ground_albedo,
+    )
+
+    report = albedo_source_diagnostics(df)
+    has_source = report is not None and report["valid_count"] > 0
+    st.subheader("Ground reflectance for tilted-surface irradiation")
+    options = ["standard", "custom"]
+    if has_source:
+        options.insert(1, "source")
+    labels = {
+        "standard": "Standard ground — albedo 0.20 (default)",
+        "source": "Source EPW/provider albedo — hourly values",
+        "custom": "Custom constant albedo",
+    }
+    current = st.session_state.get("solar_ground_albedo_mode")
+    if current not in options:
+        st.session_state.pop("solar_ground_albedo_mode", None)
+    mode = st.selectbox(
+        "Ground reflectance model", options, index=0,
+        format_func=lambda key: labels[key], key="solar_ground_albedo_mode",
+        help=(
+            "Applied consistently to façade-orientation charts, tilt matrices, "
+            "monthly POA totals and component breakdown. No change to source EPW data. "
+            "The ground-reflected component assumes isotropic, unobstructed horizontal ground."
+        ),
+    )
+
+    if report is not None:
+        if report["valid_count"]:
+            st.caption(
+                f"Source albedo preserved: mean {report['mean']:.3f}; "
+                f"range {report['minimum']:.3f}–{report['maximum']:.3f}; "
+                f"most frequent value {report['dominant_value']:.3f} "
+                f"({report['dominant_count']:,}/{report['valid_count']:,} valid records)."
+            )
+            if report["high_fraction"] >= 0.80:
+                st.warning(
+                    f"Source albedo plausibility warning: {report['high_count']:,} of "
+                    f"{report['valid_count']:,} valid records ({100 * report['high_fraction']:.1f}%) "
+                    "have reflectance ≥ 0.50. This may greatly increase ground-reflected "
+                    "irradiation on steep/vertical surfaces. Check surface cover and "
+                    "snow conditions before selecting source albedo."
+                )
+        if report["invalid_count"]:
+            st.warning(
+                f"{report['invalid_count']:,} source-albedo observations fall outside "
+                "the physical 0..1 interval. Source mode will reject these records; "
+                "the original dataset is not modified."
+            )
+        if report["missing_count"]:
+            st.caption(
+                f"Source albedo missing in {report['missing_count']:,} records. "
+                "If source mode is selected, these hours use a documented 0.20 fallback."
+            )
+
+    if mode == "source":
+        st.caption("Calculation uses recorded source albedo per interval (0.20 only for missing values).")
+        return source_ground_albedo(df)
+    if mode == "custom":
+        value = float(st.number_input(
+            "Custom ground albedo [–]", min_value=0.0, max_value=1.0,
+            value=float(DEFAULT_ALBEDO), step=0.01,
+            key="solar_custom_ground_albedo",
+        ))
+        st.caption(f"Calculation uses a fixed albedo of {value:.2f} at all timestamps.")
+        return value
+    st.caption("Calculation uses standard ground albedo 0.20 at every timestamp; source values are not automatically adopted.")
+    return None
+
+
 def render_solar(df: pd.DataFrame) -> None:
     """Render solar, radiation and façade-decision charts."""
     st.header("Solar, radiation and façade analysis")
+    ground_albedo = _solar_ground_albedo_selection(df)
     chart_group = st.selectbox(
         "Analysis type",
         [
@@ -3383,6 +3462,7 @@ def render_solar(df: pd.DataFrame) -> None:
             "Sun path with radiation",
             "Sun-path diagram",
             "Radiation by façade orientation",
+            "Plane-of-array components",
             "Orientation-tilt heatmap",
             "Monthly façade radiation",
             "Cooling-risk solar hours",
@@ -3420,17 +3500,60 @@ def render_solar(df: pd.DataFrame) -> None:
         render_plot(fig, solar_interpretation(df))
     elif chart_group == "Radiation by façade orientation":
         tilt = st.slider("Surface tilt [deg]", 0.0, 90.0, 90.0, 5.0)
-        data = orientation_annual_radiation(df, tilt_deg=tilt)
+        data = orientation_annual_radiation(df, tilt_deg=tilt, albedo=ground_albedo)
         fig = orientation_bar_chart(data, f"Annual irradiation by orientation at {tilt:.0f}° tilt")
         render_plot(fig, solar_interpretation(df))
+    elif chart_group == "Plane-of-array components":
+        from epw_climate_analyzer.solar import surface_irradiance_components
+
+        col_a, col_b = st.columns(2)
+        tilt = col_a.slider(
+            "Surface tilt [deg]", min_value=0.0, max_value=90.0,
+            value=90.0, step=5.0, key="solar_components_tilt",
+        )
+        azimuth = col_b.slider(
+            "Surface azimuth [deg]", min_value=0.0, max_value=360.0,
+            value=60.0, step=5.0, key="solar_components_azimuth",
+            help="Clockwise from North (0° N, 90° E, 180° S, 270° W).",
+        )
+        poa = surface_irradiance_components(
+            df, tilt, azimuth, albedo=ground_albedo,
+        )
+        totals = poa.sum(min_count=1) / 1000.0
+        component_labels = {
+            "poa_direct_wh_m2": "Direct",
+            "poa_sky_diffuse_wh_m2": "Sky diffuse",
+            "poa_ground_diffuse_wh_m2": "Ground-reflected",
+            "poa_global_wh_m2": "Total POA",
+        }
+        table = pd.DataFrame({
+            "Component": [component_labels[key] for key in component_labels],
+            "Irradiation [kWh/m²]": [totals[key] for key in component_labels],
+        })
+        st.dataframe(table, hide_index=True, use_container_width=True)
+        fig = px.bar(
+            table.iloc[:3], x="Component", y="Irradiation [kWh/m²]",
+            title=f"POA components · tilt {tilt:.0f}° · azimuth {azimuth:.0f}°",
+        )
+        render_plot(
+            fig,
+            "Direct, sky-diffuse and ground-reflected contributions are shown "
+            "separately. Total POA is their sum. The model assumes isotropic, "
+            "unobstructed ground reflection and does not resolve urban shading "
+            "or actual ground view factors.",
+        )
+        st.caption(
+            f"Total POA: {totals['poa_global_wh_m2']:.1f} kWh/m² "
+            "over the currently selected period (not annualized if filtered)."
+        )
     elif chart_group == "Orientation-tilt heatmap":
         st.caption("This chart may take a few seconds because it calculates many plane-of-array irradiance variants.")
-        matrix = orientation_tilt_matrix(df)
+        matrix = orientation_tilt_matrix(df, albedo=ground_albedo)
         fig = matrix_heatmap(matrix, "Annual irradiation by orientation and tilt", "Surface azimuth [deg]", "Surface tilt [deg]", "kWh/m²")
         render_plot(fig, solar_interpretation(df))
     elif chart_group == "Monthly façade radiation":
         tilt = st.slider("Façade tilt [deg]", 0.0, 90.0, 90.0, 5.0)
-        monthly = monthly_orientation_radiation(df, tilt_deg=tilt)
+        monthly = monthly_orientation_radiation(df, tilt_deg=tilt, albedo=ground_albedo)
         fig = multi_line_monthly(monthly, f"Monthly façade irradiation at {tilt:.0f}° tilt", "kWh/m²")
         render_plot(fig, solar_interpretation(df))
     elif chart_group == "Cooling-risk solar hours":

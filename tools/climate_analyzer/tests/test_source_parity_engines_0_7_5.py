@@ -21,6 +21,7 @@ from epw_climate_analyzer.solar import (
     derive_direct_normal_radiation,
     ensure_solar_radiation_components,
     surface_irradiance_series,
+    source_ground_albedo,
     variable_origin,
 )
 
@@ -87,7 +88,7 @@ class SourceParityEngineTests(unittest.TestCase):
         self.assertIn("direct_normal_radiation_wh_m2", result)
         self.assertGreater(float(result.iloc[0]["solar_elevation_deg"]), 0.0)
 
-    def test_source_albedo_is_used_by_poa(self) -> None:
+    def test_source_albedo_is_explicit_opt_in_for_poa(self) -> None:
         index = pd.date_range("2026-06-21T12:00:00Z", periods=1, freq="h")
         base = pd.DataFrame(
             {
@@ -101,8 +102,11 @@ class SourceParityEngineTests(unittest.TestCase):
         )
         low = base.assign(albedo=0.1)
         high = base.assign(albedo=0.8)
-        poa_low = float(surface_irradiance_series(low, 90.0, 180.0).iloc[0])
-        poa_high = float(surface_irradiance_series(high, 90.0, 180.0).iloc[0])
+        default_low = float(surface_irradiance_series(low, 90.0, 180.0).iloc[0])
+        default_high = float(surface_irradiance_series(high, 90.0, 180.0).iloc[0])
+        self.assertAlmostEqual(default_low, default_high, places=10)
+        poa_low = float(surface_irradiance_series(low, 90.0, 180.0, albedo=source_ground_albedo(low)).iloc[0])
+        poa_high = float(surface_irradiance_series(high, 90.0, 180.0, albedo=source_ground_albedo(high)).iloc[0])
         self.assertGreater(poa_high, poa_low)
 
     def test_missing_dew_point_is_derived_but_source_value_is_preserved(self) -> None:
