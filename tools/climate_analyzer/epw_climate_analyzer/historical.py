@@ -171,7 +171,7 @@ def prepare_historical_native_analysis_frame(
         required = {"dry_bulb_temperature_c", "relative_humidity_pct"}
         if required.issubset(data.columns):
             data = add_psychrometric_properties(data, fallback_pressure_pa=float(fallback_pressure_pa))
-        data = reconcile_historical_psychrometrics(data, fallback_pressure_pa=float(fallback_pressure_pa))
+            data = reconcile_historical_psychrometrics(data, fallback_pressure_pa=float(fallback_pressure_pa))
     if include_solar:
         data = ensure_solar_radiation_components(
             data,
@@ -242,7 +242,7 @@ def prepare_historical_analysis_frame(
         if "atmospheric_station_pressure_pa" not in data.columns:
             data["atmospheric_station_pressure_pa"] = float(fallback_pressure_pa)
         data = add_psychrometric_properties(data, fallback_pressure_pa=float(fallback_pressure_pa))
-            data = reconcile_historical_psychrometrics(data, fallback_pressure_pa=float(fallback_pressure_pa))
+        data = reconcile_historical_psychrometrics(data, fallback_pressure_pa=float(fallback_pressure_pa))
 
     if include_solar:
         data = ensure_solar_radiation_components(
