@@ -9,6 +9,9 @@ reference pressure.
 
 from __future__ import annotations
 
+from hashlib import sha256
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import psychrolib
@@ -17,6 +20,10 @@ psychrolib.SetUnitSystem(psychrolib.SI)
 
 DEFAULT_PRESSURE_PA = 101325.0
 VARIABLE_ORIGIN_ATTR = "canonical_variable_origin"
+
+# Captured at import time: a running Streamlit worker must not keep obsolete
+# psychrometric functions after an updated source file is deployed.
+_RUNTIME_SOURCE_SHA256 = sha256(Path(__file__).read_bytes()).hexdigest()
 
 
 def pressure_from_altitude_m(altitude_m: float) -> float:
@@ -50,10 +57,35 @@ def _numeric_column_or_nan(df: pd.DataFrame, column: str) -> np.ndarray:
     return pd.to_numeric(df[column], errors="coerce").to_numpy(dtype=float)
 
 
-def _record_variable_origin(df: pd.DataFrame, column: str, description: str) -> None:
-    origins = dict(df.attrs.get(VARIABLE_ORIGIN_ATTR, {}))
-    origins[str(column)] = str(description)
-    df.attrs[VARIABLE_ORIGIN_ATTR] = origins
+def _independent_saturation_pressure_pa(t_c: np.ndarray) -> np.ndarray:
+    """Independent Magnus check for ordinary weather-state temperatures.
+
+    This is a *validation reference*, not a replacement for PsychroLib's ASHRAE
+    saturation equation. Distinct water/ice branches avoid false alarms below
+    freezing; the check is applied only between -50 and +60 degrees C.
+    """
+    t = np.asarray(t_c, dtype=float)
+    return np.where(
+        t >= 0.0,
+        610.94 * np.exp(17.625 * t / (243.04 + t)),
+        610.94 * np.exp(22.587 * t / (273.86 + t)),
+    )
+
+
+def _validate_saturation_pressure(t_c: np.ndarray, sat_pa: np.ndarray) -> None:
+    """Reject a numerically/units-corrupt PsychroLib state before division."""
+    typical = np.isfinite(t_c) & (t_c >= -50.0) & (t_c <= 60.0)
+    if not typical.any():
+        return
+    reference = _independent_saturation_pressure_pa(t_c[typical])
+    observed = sat_pa[typical]
+    if np.any(~np.isfinite(observed) | (observed <= 0.0) | (np.abs(observed - reference) > 0.15 * reference)):
+        raise ValueError(
+            "Psychrometric saturation-pressure consistency check failed for "
+            "the supplied dry-bulb temperature. Check PsychroLib SI units "
+            "and refresh stale Streamlit runtime modules; derived humidity "
+            "and psychrometric charts have been withheld."
+        )
 
 
 def add_psychrometric_properties(df: pd.DataFrame, fallback_pressure_pa: float = DEFAULT_PRESSURE_PA) -> pd.DataFrame:
@@ -99,8 +131,12 @@ def add_psychrometric_properties(df: pd.DataFrame, fallback_pressure_pa: float =
         fallback,
     )
 
-    valid = np.isfinite(t) & np.isfinite(rh_pct) & np.isfinite(pressure)
-    rh = np.clip(rh_pct / 100.0, 0.0, 1.0)
+    # Invalid provider RH must not be silently converted to 0 or 100 percent.
+    valid = (
+        np.isfinite(t) & np.isfinite(rh_pct) & (rh_pct >= 0.0) & (rh_pct <= 100.0)
+        & np.isfinite(pressure)
+    )
+    rh = rh_pct / 100.0
 
     w = np.full(n, np.nan, dtype=float)
     h = np.full(n, np.nan, dtype=float)
@@ -119,16 +155,32 @@ def add_psychrometric_properties(df: pd.DataFrame, fallback_pressure_pa: float =
         p_valid = pressure[idx]
 
         sat = np.array([psychrolib.GetSatVapPres(float(tv)) for tv in t_valid], dtype=float)
+        _validate_saturation_pressure(t_valid, sat)
         pv = rh_valid * sat
-        pv = np.minimum(pv, p_valid * 0.999999)
-        w_valid = 0.621945 * pv / np.maximum(p_valid - pv, 1e-9)
+        if np.any(~np.isfinite(pv) | (pv >= p_valid)):
+            raise ValueError(
+                "Psychrometric calculation rejected: vapour pressure equals "
+                "or exceeds total atmospheric pressure. Check the source "
+                "temperature, relative humidity and pressure units; derived "
+                "humidity and psychrometric charts have been withheld."
+            )
+        # Do not clip p_v to almost p_total: that produces finite humidity
+        # ratios of millions of g/kg, hiding an impossible atmospheric state.
+        w_valid = 0.621945 * pv / (p_valid - pv)
         w_valid = np.maximum(w_valid, psychrolib.MIN_HUM_RATIO)
 
         h_valid = 1.006 * t_valid + w_valid * (2501.0 + 1.86 * t_valid)
         t_k = t_valid + 273.15
         v_valid = 287.042 * t_k * (1.0 + 1.607858 * w_valid) / p_valid
         rho_valid = (1.0 + w_valid) / v_valid
-        w_sat = 0.621945 * sat / np.maximum(p_valid - sat, 1e-9)
+        # Saturated air may be undefined at extreme T/P even when the actual
+        # unsaturated state has valid p_v < p_total.
+        w_sat = np.full(len(idx), np.nan, dtype=float)
+        saturation_defined = sat < p_valid
+        w_sat[saturation_defined] = (
+            0.621945 * sat[saturation_defined]
+            / (p_valid[saturation_defined] - sat[saturation_defined])
+        )
         degree_valid = w_valid / np.maximum(w_sat, 1e-12)
 
         w[idx] = w_valid
