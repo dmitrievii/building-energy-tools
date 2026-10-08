@@ -82,8 +82,16 @@ def _refresh_physical_core() -> bool:
     Reload historical *only* when its source or the imported psychrometric
     callable changes, preserving canonical-hourly caches during normal reruns.
     """
+    # The consistency module owns the independent ASHRAE saturation helper.
+    # Refresh it *before* psychrometrics: the latter imports the helper by
+    # value, so simply reloading the owner would leave an old callable bound.
+    consistency = importlib.import_module("epw_climate_analyzer.psychrometric_consistency")
+    consistency_changed = _stale_source(consistency)
+    if consistency_changed:
+        importlib.reload(consistency)
+
     psychrometrics = importlib.import_module("epw_climate_analyzer.psychrometrics")
-    psychrometrics_changed = _stale_source(psychrometrics)
+    psychrometrics_changed = consistency_changed or _stale_source(psychrometrics)
     if psychrometrics_changed:
         psychrometrics = importlib.reload(psychrometrics)
     historical = importlib.import_module("epw_climate_analyzer.historical")
