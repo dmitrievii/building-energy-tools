@@ -92,6 +92,57 @@ def _refresh_physical_core() -> bool:
     return psychrometrics_changed
 
 
+_REQUIRED_SOLAR_API = frozenset({
+    "albedo_source_diagnostics",
+    "source_ground_albedo",
+    "surface_irradiance_components",
+    "surface_irradiance_series",
+    "orientation_annual_radiation",
+    "orientation_tilt_matrix",
+    "monthly_orientation_radiation",
+})
+_REQUIRED_SOLAR_ALBEDO_PARAMETERS = frozenset({"albedo"})
+
+
+def ensure_current_solar_runtime() -> ModuleType:
+    """Refresh an old, in-process solar implementation after a Streamlit deploy.
+
+    The installed `app.py` can be newer than the cached `solar.py` module in
+    Streamlit's long-lived Python worker. Validate both source fingerprint and
+    the albedo-enabled function contract before using the module. Reload at
+    most once if stale, then fail closed on a still-incompatible deployment.
+    """
+    solar = importlib.import_module("epw_climate_analyzer.solar")
+    missing = _missing_attributes(solar, _REQUIRED_SOLAR_API)
+    call_names = (
+        "surface_irradiance_components",
+        "surface_irradiance_series",
+        "orientation_annual_radiation",
+        "orientation_tilt_matrix",
+        "monthly_orientation_radiation",
+    )
+    missing_signatures = {
+        name: _missing_callable_parameters(solar, name, _REQUIRED_SOLAR_ALBEDO_PARAMETERS)
+        for name in call_names
+    }
+    missing_signatures = {name: value for name, value in missing_signatures.items() if value}
+    if _stale_source(solar) or missing or missing_signatures:
+        solar = importlib.reload(solar)
+        missing = _missing_attributes(solar, _REQUIRED_SOLAR_API)
+        missing_signatures = {
+            name: _missing_callable_parameters(solar, name, _REQUIRED_SOLAR_ALBEDO_PARAMETERS)
+            for name in call_names
+        }
+        missing_signatures = {name: value for name, value in missing_signatures.items() if value}
+    if _stale_source(solar) or missing or missing_signatures:
+        raise RuntimeError(
+            "Solar module runtime remains incompatible after reload: "
+            f"missing={sorted(missing)}; signatures={missing_signatures}. "
+            "Restart the Streamlit worker or redeploy the application."
+        )
+    return solar
+
+
 def ensure_current_psychrometric_runtime() -> tuple[ModuleType, ModuleType]:
     """Return distribution/charts modules compatible with the current app call API.
 
