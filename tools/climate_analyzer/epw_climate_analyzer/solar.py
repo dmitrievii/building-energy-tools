@@ -455,7 +455,7 @@ def monthly_orientation_radiation(
     orientations = {"North": 0.0, "East": 90.0, "South": 180.0, "West": 270.0}
     result = pd.DataFrame(index=range(1, 13))
     for label, azimuth in orientations.items():
-        poa = surface_irradiance_series(df, tilt_deg, azimuth)
+        poa = surface_irradiance_series(df, tilt_deg, azimuth, albedo=albedo)
         result[label] = poa.groupby(df["month_index"]).sum() / 1000.0
     result.index.name = "month"
     return result
