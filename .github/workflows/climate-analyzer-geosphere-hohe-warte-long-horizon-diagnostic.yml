@@ -5,6 +5,7 @@ on:
   pull_request:
     paths:
       - 'deployment/geosphere_hohe_warte_long_horizon_probe.py'
+      - 'deployment/geosphere_hohe_warte_full_parameter_probe.py'
       - '.github/workflows/climate-analyzer-geosphere-hohe-warte-long-horizon-diagnostic.yml'
 
 permissions:
@@ -41,11 +42,18 @@ jobs:
           python deployment/geosphere_hohe_warte_long_horizon_probe.py \
             --output artifacts/geosphere-hohe-warte-long-horizon/evidence.json
 
+      - name: Probe full-field GeoSphere multi-batch and local civil-time psychrometrics
+        run: |
+          python deployment/geosphere_hohe_warte_full_parameter_probe.py \
+            --output artifacts/geosphere-hohe-warte-full-fields/evidence.json
+
       - name: Upload incident diagnostic evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: geosphere-hohe-warte-long-horizon-evidence
-          path: artifacts/geosphere-hohe-warte-long-horizon
+          path: |
+            artifacts/geosphere-hohe-warte-long-horizon
+            artifacts/geosphere-hohe-warte-full-fields
           if-no-files-found: error
           retention-days: 30
