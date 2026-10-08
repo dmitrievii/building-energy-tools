@@ -862,6 +862,31 @@ def _render_canonical_analysis(legacy: Any, dataset: CanonicalClimateDataset) ->
         )
         filtered_df = legacy.sidebar_filters(full_df)
 
+    # A large historical dataset can have internally inconsistent *derived*
+    # humidity fields even though T, RH, pressure and vapour pressure are valid.
+    # Check the final filtered/export frame, not only the scientific core, so
+    # incorrect millions-of-g/kg values never reach charts or CSV downloads.
+    # Keep this import local to avoid adding a psychrometric dependency to the
+    # source-file/navigation views.
+    if include_psych and "humidity_ratio_g_kg" in filtered_df.columns:
+        from .psychrometric_consistency import reconcile_historical_psychrometrics
+
+        filtered_df = reconcile_historical_psychrometrics(
+            filtered_df, fallback_pressure_pa=fallback_pressure,
+        )
+        st.session_state["_active_filtered_export_df"] = filtered_df
+        report = filtered_df.attrs.get("psychrometric_physical_closure")
+        if isinstance(report, dict) and report.get("status") == "reconciled" and page in {
+            "Humidity and Psychrometrics", "Time Series and Overlay", "Overview",
+        }:
+            st.warning(
+                "Psychrometric physical-closure guard: derived quantities were "
+                f"reconciled from measured temperature, RH and pressure "
+                f"({report['repaired_rows']:,} affected records). Original provider "
+                "measurements are unchanged. Review the diagnostics if this "
+                "message occurs repeatedly."
+            )
+
     if filtered_df.empty:
         st.warning("The current filters remove all data. Adjust the date, month or hour filter.")
         return
