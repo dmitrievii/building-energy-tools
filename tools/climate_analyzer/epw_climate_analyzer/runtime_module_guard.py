@@ -14,6 +14,8 @@ from __future__ import annotations
 
 import importlib
 import inspect
+from hashlib import sha256
+from pathlib import Path
 from types import ModuleType
 
 
@@ -65,6 +67,31 @@ def _missing_distribution_helper_parameters(module: ModuleType) -> set[str]:
     )
 
 
+def _stale_source(module: ModuleType) -> bool:
+    """Check the source on disk against the source loaded into this process."""
+    source_path = getattr(module, "__file__", None)
+    if not source_path:
+        raise RuntimeError(f"Missing source path for required module {module.__name__}.")
+    disk_hash = sha256(Path(source_path).read_bytes()).hexdigest()
+    return getattr(module, "_RUNTIME_SOURCE_SHA256", None) != disk_hash
+
+
+def _refresh_physical_core() -> bool:
+    """Refresh changed psychrometrics + historical bindings once per deploy.
+
+    Reload historical *only* when its source or the imported psychrometric
+    callable changes, preserving canonical-hourly caches during normal reruns.
+    """
+    psychrometrics = importlib.import_module("epw_climate_analyzer.psychrometrics")
+    psychrometrics_changed = _stale_source(psychrometrics)
+    if psychrometrics_changed:
+        psychrometrics = importlib.reload(psychrometrics)
+    historical = importlib.import_module("epw_climate_analyzer.historical")
+    if psychrometrics_changed or _stale_source(historical):
+        importlib.reload(historical)
+    return psychrometrics_changed
+
+
 def ensure_current_psychrometric_runtime() -> tuple[ModuleType, ModuleType]:
     """Return distribution/charts modules compatible with the current app call API.
 
@@ -83,6 +110,8 @@ def ensure_current_psychrometric_runtime() -> tuple[ModuleType, ModuleType]:
     distribution module implementation. The function fails closed if the
     expected API is still unavailable after reload.
     """
+    physical_core_was_reloaded = _refresh_physical_core()
+
     distribution = importlib.import_module("epw_climate_analyzer.psychrometric_distribution")
     missing_distribution = _missing_attributes(distribution, _REQUIRED_DISTRIBUTION_API)
     missing_distribution_parameters = _missing_distribution_helper_parameters(distribution)
@@ -106,7 +135,7 @@ def ensure_current_psychrometric_runtime() -> tuple[ModuleType, ModuleType]:
     charts = importlib.import_module("epw_climate_analyzer.charts")
     missing_parameters = _missing_psychrometric_chart_parameters(charts)
     charts_was_reloaded = False
-    if distribution_was_reloaded or missing_parameters:
+    if physical_core_was_reloaded or distribution_was_reloaded or missing_parameters:
         charts = importlib.reload(charts)
         charts_was_reloaded = True
         missing_parameters = _missing_psychrometric_chart_parameters(charts)
@@ -122,7 +151,7 @@ def ensure_current_psychrometric_runtime() -> tuple[ModuleType, ModuleType]:
         "psychrometric_comparison_chart",
         _REQUIRED_COMPARISON_PARAMETERS,
     )
-    if distribution_was_reloaded or charts_was_reloaded or missing_compare:
+    if physical_core_was_reloaded or distribution_was_reloaded or charts_was_reloaded or missing_compare:
         comparison = importlib.reload(comparison)
         missing_compare = _missing_callable_parameters(
             comparison,
