@@ -16,6 +16,8 @@ import numpy as np
 import pandas as pd
 import psychrolib
 
+from .psychrometric_consistency import _ashrae_saturation_pressure_pa
+
 psychrolib.SetUnitSystem(psychrolib.SI)
 
 DEFAULT_PRESSURE_PA = 101325.0
@@ -162,7 +164,12 @@ def add_psychrometric_properties(df: pd.DataFrame, fallback_pressure_pa: float =
         rh_valid = rh[idx]
         p_valid = pressure[idx]
 
-        sat = np.array([psychrolib.GetSatVapPres(float(tv)) for tv in t_valid], dtype=float)
+        # Use the same ASHRAE water/ice equations as PsychroLib, but evaluate
+        # them independently and vectorially. For >2**15 historical records,
+        # isolated PsychroLib/Numba runtime state must never corrupt the
+        # foundational vapour pressure used by all derived moist-air fields.
+        # PsychroLib remains responsible for wet-bulb/dew-point inversions.
+        sat = _ashrae_saturation_pressure_pa(t_valid)
         _validate_saturation_pressure(t_valid, sat)
         pv = rh_valid * sat
         if np.any(~np.isfinite(pv) | (pv >= p_valid)):
