@@ -130,6 +130,24 @@ class GeoSphereHourlyPsychrometricRegressionTests(unittest.TestCase):
         self.assertTrue(np.isnan(result.iloc[0]["humidity_ratio_g_kg"]))
         self.assertAlmostEqual(float(result.iloc[1]["humidity_ratio_g_kg"]), 7.2617, delta=0.02)
 
+    def test_stale_consistency_module_reloads_all_bound_psychrometric_functions(self) -> None:
+        from epw_climate_analyzer import historical, psychrometric_consistency
+        old_function = psychrometric_consistency._ashrae_saturation_pressure_pa
+        with patch.object(psychrometric_consistency, "_RUNTIME_SOURCE_SHA256", "obsolete"):
+            runtime_module_guard.ensure_current_psychrometric_runtime()
+            self.assertFalse(runtime_module_guard._stale_source(psychrometric_consistency))
+            self.assertFalse(runtime_module_guard._stale_source(psychrometrics))
+            self.assertFalse(runtime_module_guard._stale_source(historical))
+            self.assertIsNot(psychrometric_consistency._ashrae_saturation_pressure_pa, old_function)
+            self.assertIs(
+                psychrometrics._ashrae_saturation_pressure_pa,
+                psychrometric_consistency._ashrae_saturation_pressure_pa,
+            )
+            self.assertIs(
+                historical.reconcile_historical_psychrometrics,
+                psychrometric_consistency.reconcile_historical_psychrometrics,
+            )
+
     def test_stale_source_fingerprint_refreshes_core_and_historical_binding(self) -> None:
         # A redeploy changes the source on disk while an old Python module stays
         # in sys.modules. The live guard must correct the imported function too.
