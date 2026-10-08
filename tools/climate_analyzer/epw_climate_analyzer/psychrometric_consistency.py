@@ -14,8 +14,15 @@ is a production protection and diagnostic, not a claim to identify that cause.
 
 from __future__ import annotations
 
+from hashlib import sha256
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
+
+
+# Streamlit may keep a pre-hotfix consistency module after source redeployment.
+_RUNTIME_SOURCE_SHA256 = sha256(Path(__file__).read_bytes()).hexdigest()
 
 
 _CORRECTED_FIELDS = (
