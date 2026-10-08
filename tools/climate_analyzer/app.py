@@ -139,11 +139,13 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
             native_interval_hours,
             threshold_count_by_period,
         )
-        # Streamlit may rerun a newly deployed app.py while retaining package modules
-        # imported by the previous release. Validate and refresh the cross-file
-        # psychrometric API before binding chart functions into this script run.
-        from epw_climate_analyzer.runtime_module_guard import ensure_current_psychrometric_runtime
-        ensure_current_psychrometric_runtime()
+        # Streamlit reruns app.py without necessarily reimporting package code.
+        # Refresh the small guard itself so an already-running worker receives
+        # newly deployed psychrometric/historical source fingerprint checks.
+        import importlib
+        from epw_climate_analyzer import runtime_module_guard
+        importlib.reload(runtime_module_guard)
+        runtime_module_guard.ensure_current_psychrometric_runtime()
         from epw_climate_analyzer.charts import (
             duration_chart,
             heatmap_chart,
