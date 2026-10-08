@@ -100,11 +100,43 @@ class PsychrometricPhysicalClosureTests(unittest.TestCase):
                     pd.testing.assert_series_equal(result[name], source[name])
                 self.assertGreater(result.attrs["psychrometric_physical_closure"]["maximum_humidity_ratio_deviation_g_kg"], 1e5)
 
-    def test_unphysical_saturation_fails_closed(self) -> None:
+    def test_corrupted_saturation_is_reconstructed_from_measured_temperature(self) -> None:
         good = add_psychrometric_properties(climate_source(3))
         tampered = good.copy()
         tampered["saturation_vapor_pressure_pa"] = 100000.0
-        with self.assertRaisesRegex(ValueError, "saturated vapour pressure"):
+        tampered["humidity_ratio_g_kg"] = 3_983_884.0
+        repaired = reconcile_historical_psychrometrics(tampered)
+        report = repaired.attrs["psychrometric_physical_closure"]
+        self.assertEqual(report["reconstructed_saturation_pressure_rows"], 3)
+        self.assertEqual(report["repaired_rows"], 3)
+        for field in (
+            "saturation_vapor_pressure_pa", "humidity_ratio_g_kg", "humidity_ratio_kg_kg",
+            "vapor_pressure_pa", "moist_air_enthalpy_kj_kg", "specific_volume_m3_kg",
+            "moist_air_density_kg_m3", "degree_of_saturation",
+        ):
+            np.testing.assert_allclose(repaired[field], good[field], rtol=0, atol=1e-8)
+        for source_field in ("dry_bulb_temperature_c", "relative_humidity_pct", "atmospheric_station_pressure_pa"):
+            pd.testing.assert_series_equal(repaired[source_field], good[source_field])
+
+    def test_corrupted_saturation_just_beyond_32768_hour_boundary_recovers(self) -> None:
+        # Use a large but vectorized fixture with no expensive wet-bulb loop.
+        original = add_psychrometric_properties(climate_source(2))
+        frame = pd.concat([original] * 16523, ignore_index=True).iloc[:33045].copy()
+        good = frame.copy()
+        frame.loc[32768:, "saturation_vapor_pressure_pa"] = 100000.0
+        frame.loc[32768:, "humidity_ratio_g_kg"] = 3_983_884.0
+        result = reconcile_historical_psychrometrics(frame)
+        self.assertEqual(len(result), 33045)
+        self.assertEqual(result.attrs["psychrometric_physical_closure"]["reconstructed_saturation_pressure_rows"], 277)
+        for field in ("saturation_vapor_pressure_pa", "humidity_ratio_g_kg", "humidity_ratio_kg_kg"):
+            np.testing.assert_allclose(result[field], good[field], atol=1e-8, rtol=0)
+        self.assertEqual(len(frame), len(result))
+
+    def test_impossible_measured_temperature_fails_closed(self) -> None:
+        good = add_psychrometric_properties(climate_source(3))
+        tampered = good.copy()
+        tampered.iloc[1, tampered.columns.get_loc("dry_bulb_temperature_c")] = 300.0
+        with self.assertRaisesRegex(ValueError, "outside ASHRAE"):
             reconcile_historical_psychrometrics(tampered)
 
     def test_missing_source_rows_not_invented(self) -> None:

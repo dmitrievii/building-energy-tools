@@ -14,11 +14,19 @@ is a production protection and diagnostic, not a claim to identify that cause.
 
 from __future__ import annotations
 
+from hashlib import sha256
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 
 
+# Streamlit may keep a pre-hotfix consistency module after source redeployment.
+_RUNTIME_SOURCE_SHA256 = sha256(Path(__file__).read_bytes()).hexdigest()
+
+
 _CORRECTED_FIELDS = (
+    "saturation_vapor_pressure_pa",
     "humidity_ratio_kg_kg",
     "humidity_ratio_g_kg",
     "vapor_pressure_pa",
@@ -28,6 +36,7 @@ _CORRECTED_FIELDS = (
     "degree_of_saturation",
 )
 _ABS_TOL = {
+    "saturation_vapor_pressure_pa": 0.5,
     "humidity_ratio_kg_kg": 1e-7,
     "humidity_ratio_g_kg": 1e-4,
     "vapor_pressure_pa": 0.05,
@@ -54,6 +63,28 @@ def _reference_saturation_pa(t: np.ndarray) -> np.ndarray:
         )
 
 
+def _ashrae_saturation_pressure_pa(t_c: np.ndarray) -> np.ndarray:
+    """Independent vectorized ASHRAE saturation pressure [Pa] from °C.
+
+    This deliberately does not call PsychroLib. Both the ice and liquid-water
+    equations reproduce ASHRAE/PsychroLib SI saturation pressure without
+    depending on global PsychroLib unit/Numba state.
+    """
+    t_k = np.asarray(t_c, dtype=float) + 273.15
+    with np.errstate(divide="ignore", over="ignore", invalid="ignore"):
+        log_ice = (
+            -5.6745359e3 / t_k + 6.3925247 - 9.677843e-3 * t_k
+            + 6.2215701e-7 * t_k**2 + 2.0747825e-9 * t_k**3
+            - 9.484024e-13 * t_k**4 + 4.1635019 * np.log(t_k)
+        )
+        log_water = (
+            -5.8002206e3 / t_k + 1.3914993 - 4.8640239e-2 * t_k
+            + 4.1764768e-5 * t_k**2 - 1.4452093e-8 * t_k**3
+            + 6.5459673 * np.log(t_k)
+        )
+        return np.exp(np.where(np.asarray(t_c, dtype=float) <= 0.0, log_ice, log_water))
+
+
 def reconcile_historical_psychrometrics(
     frame: pd.DataFrame,
     *,
@@ -61,11 +92,12 @@ def reconcile_historical_psychrometrics(
 ) -> pd.DataFrame:
     """Check and, if necessary, repair cross-field psychrometric consistency.
 
-    The reference is derived exclusively from the measured dry-bulb, RH,
-    resolved station pressure and independently checked saturation pressure.
-    Correction is restricted to materialized derived quantities. Unphysical
-    source saturation pressure or p_v >= p_total fails closed and never
-    produces artificial huge humidity ratios.
+    The reference is derived exclusively from measured dry-bulb, RH and
+    resolved station pressure. Derived saturation pressure is independently
+    reconstructed from vectorized ASHRAE equations if the materialized value
+    is inconsistent; all subsequent derived quantities are then reconciled.
+    Correction never overwrites measured inputs. Vapour pressure at/above
+    total pressure still fails closed rather than producing huge ratios.
 
     The routine is vectorized and therefore applies the same contract below
     and above the 2**15 record-length boundary. A stable, correct frame is
@@ -95,20 +127,31 @@ def reconcile_historical_psychrometrics(
     if not valid.any():
         return frame
 
+    # Saturation pressure is *derived*, not a station observation. A stale
+    # or incorrectly materialized value must be recovered from measured T,
+    # rather than raising an unhandled ValueError for the entire Streamlit UI.
+    # These ASHRAE equations are defined for -100..200 °C; impossible source
+    # temperatures still fail closed instead of being silently normalized.
+    if np.any(valid & ((t < -100.0) | (t > 200.0))):
+        raise ValueError("Psychrometric closure: source temperature outside ASHRAE -100..200 °C.")
+    reference_sat = _ashrae_saturation_pressure_pa(t)
+    if np.any(valid & (~np.isfinite(reference_sat) | (reference_sat <= 0.0))):
+        raise ValueError("Psychrometric closure: cannot reconstruct saturation pressure from source temperature.")
+    # Check independently against Magnus in the ordinary weather domain
+    # before accepting the reconstructed state; no PsychroLib dependency.
     typical = valid & (t >= -50.0) & (t <= 60.0)
     if typical.any():
-        reference_sat = _reference_saturation_pa(t[typical])
-        if np.any(~np.isfinite(sat[typical]) | (sat[typical] <= 0.0)
-                  | (np.abs(sat[typical] - reference_sat) > 0.15 * reference_sat)):
-            raise ValueError(
-                "Psychrometric closure: saturated vapour pressure is inconsistent "
-                "with dry-bulb temperature; derived properties cannot be recovered safely."
-            )
+        magnus_sat = _reference_saturation_pa(t[typical])
+        if np.any(np.abs(reference_sat[typical] - magnus_sat) > 0.15 * magnus_sat):
+            raise ValueError("Psychrometric closure: independent saturation references disagree.")
 
-    # A missing saturation-pressure result on an otherwise physically valid
-    # source row is itself an error, never a reason to silently lose the row.
-    if np.any(valid & (~np.isfinite(sat) | (sat <= 0))):
-        raise ValueError("Psychrometric closure: valid source rows lack saturation pressure.")
+    invalid_sat = valid & (
+        ~np.isfinite(sat) | (sat <= 0.0)
+        | (np.abs(sat - reference_sat) > np.maximum(0.5, 0.01 * reference_sat))
+    )
+    # Keep valid existing ASHRAE values untouched. Only reconstruct suspect
+    # derived saturation pressure, then reconcile all dependent derived fields.
+    sat = np.where(invalid_sat, reference_sat, sat)
 
     pv = rh_pct / 100.0 * sat
     if np.any(valid & (~np.isfinite(pv) | (pv >= p))):
@@ -128,6 +171,7 @@ def reconcile_historical_psychrometrics(
         degree = w / np.maximum(wsat, 1e-12)
 
     values = {
+        "saturation_vapor_pressure_pa": sat,
         "humidity_ratio_kg_kg": w,
         "humidity_ratio_g_kg": w * 1000.0,
         "vapor_pressure_pa": pv,
@@ -140,7 +184,7 @@ def reconcile_historical_psychrometrics(
     physically_defined_degree = valid & (sat < p)
     values["degree_of_saturation"] = np.where(physically_defined_degree, degree, np.nan)
 
-    inconsistent = np.zeros(n, dtype=bool)
+    inconsistent = invalid_sat.copy()
     for field, expected in values.items():
         original = _numeric(frame, field)
         ref[field][valid] = expected[valid]
@@ -170,6 +214,7 @@ def reconcile_historical_psychrometrics(
     repaired.attrs["psychrometric_physical_closure"] = {
         "status": "reconciled",
         "repaired_rows": int(inconsistent.sum()),
+        "reconstructed_saturation_pressure_rows": int(invalid_sat.sum()),
         "valid_source_rows": int(valid.sum()),
         "total_rows": n,
         "maximum_humidity_ratio_deviation_g_kg": float(deviation.max()) if len(deviation) else None,

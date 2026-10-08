@@ -74,8 +74,12 @@ the application recalculates those derived columns algebraically from the
 physically valid source inputs, preserves all original observations and records
 how many rows were reconciled. A visible warning identifies a corrected
 historical view; corresponding corrected values are used by both the chart
-and filtered CSV export. Invalid source saturation or vapour pressure
-at/above total pressure fails closed rather than inventing finite humidity.
+and filtered CSV export. The foundational saturation vapour pressure is
+evaluated vectorially with the ASHRAE water/ice equations rather than through
+mutable PsychroLib saturation runtime state; any inconsistent materialized
+saturation pressure is independently reconstructed from measured temperature.
+Impossible source temperatures or vapour pressure at/above total pressure
+still fail closed rather than inventing finite humidity.
 
 This gate addresses the observed **33,045-hour** versus **32,709-hour** GeoSphere
 humidity anomaly. The proximity to **32,768 = 2¹⁵** is diagnostic evidence for
