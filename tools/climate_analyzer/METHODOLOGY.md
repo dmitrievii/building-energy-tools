@@ -59,6 +59,30 @@ PsychroLib 2.5.0
 
 Reference tests compare vectorized application results against independent ASHRAE/PsychroLib-equivalent reference calculations and documented anchor values.
 
+### Post-materialization psychrometric physical-closure check
+
+Historical hourly and native-derived humidity outputs are validated a second
+time, after psychrometric computation, against the original measured dry-bulb
+temperature, relative humidity and atmospheric pressure. The check requires
+cross-field closure among humidity ratio (kg/kg and g/kg), vapour pressure,
+moist-air enthalpy, specific volume, moist-air density and degree of saturation.
+ASHRAE/PsychroLib saturated vapour pressure is independently checked against
+the Magnus water/ice reference in ordinary weather temperature ranges.
+
+If a running process has generated internally inconsistent *derived* columns,
+the application recalculates those derived columns algebraically from the
+physically valid source inputs, preserves all original observations and records
+how many rows were reconciled. A visible warning identifies a corrected
+historical view; corresponding corrected values are used by both the chart
+and filtered CSV export. Invalid source saturation or vapour pressure
+at/above total pressure fails closed rather than inventing finite humidity.
+
+This gate addresses the observed **33,045-hour** versus **32,709-hour** GeoSphere
+humidity anomaly. The proximity to **32,768 = 2¹⁵** is diagnostic evidence for
+a size-dependent runtime/materialization issue, but not proof of a specific
+pandas, NumPy, PsychroLib or Streamlit defect. The independent-closure guard
+is a protective layer, not an assertion that the underlying trigger is proven.
+
 ## Solar calculations
 
 Solar-position and plane-of-array calculations use the EPW location/time information and the validated application solar layer. The current direct dependency baseline includes:
