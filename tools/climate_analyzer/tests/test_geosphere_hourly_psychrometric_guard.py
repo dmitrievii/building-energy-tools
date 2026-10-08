@@ -70,6 +70,17 @@ class GeoSphereHourlyPsychrometricRegressionTests(unittest.TestCase):
         self.assertTrue(np.isfinite(float(result.iloc[0]["moist_air_enthalpy_kj_kg"])))
         self.assertTrue(np.isfinite(float(result.iloc[0]["wet_bulb_temperature_c"])))
 
+    def test_derived_variable_provenance_is_materialized(self) -> None:
+        """A missing helper formerly caused a NameError after valid physics."""
+        hourly = prepare_historical_analysis_frame(
+            _geosphere_dataset("klima-v2-1h"), include_psychrometrics=True,
+        )
+        origins = hourly.attrs.get("canonical_variable_origin", {})
+        self.assertIn("humidity_ratio_g_kg", origins)
+        self.assertIn("dew_point_temperature_c", origins)
+        self.assertIn("wet_bulb_temperature_c", origins)
+        self.assertIn("calculated", str(origins["humidity_ratio_g_kg"]))
+
     def test_1h_and_10min_sources_have_identical_physical_hourly_state(self) -> None:
         hourly = prepare_historical_analysis_frame(
             _geosphere_dataset("klima-v2-1h"), include_psychrometrics=True
