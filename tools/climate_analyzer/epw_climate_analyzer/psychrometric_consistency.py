@@ -213,6 +213,7 @@ def reconcile_historical_psychrometrics(
     valid_rows = 0
     repaired_rows = 0
     repaired_sat_rows = 0
+    field_reconciliation_counts = {field: 0 for field in _CORRECTED_FIELDS}
     max_w_deviation = 0.0
 
     for i, (temp, rh, p_src) in enumerate(zip(source_t, source_rh, source_p, strict=True)):
@@ -258,8 +259,10 @@ def reconcile_historical_psychrometrics(
             if math.isfinite(value):
                 if not math.isfinite(old) or abs(old - value) > _ABS_TOL[field]:
                     row_inconsistent = True
+                    field_reconciliation_counts[field] += 1
             elif math.isfinite(old):
                 row_inconsistent = True
+                field_reconciliation_counts[field] += 1
 
         if not math.isfinite(existing["saturation_vapor_pressure_pa"][i]) or (
             abs(existing["saturation_vapor_pressure_pa"][i] - sat)
@@ -275,8 +278,14 @@ def reconcile_historical_psychrometrics(
     for i, (temp, rh) in enumerate(zip(source_t, source_rh, strict=True)):
         if math.isfinite(temp) and math.isfinite(rh) and 0.0 <= rh <= 100.0:
             continue
-        if any(math.isfinite(existing[field][i]) for field in _CORRECTED_FIELDS):
+        fields_with_stale_data = [
+            field for field in _CORRECTED_FIELDS
+            if math.isfinite(existing[field][i])
+        ]
+        if fields_with_stale_data:
             repaired_rows += 1
+            for field in fields_with_stale_data:
+                field_reconciliation_counts[field] += 1
 
     if repaired_rows == 0:
         return frame
@@ -298,6 +307,9 @@ def reconcile_historical_psychrometrics(
         "status": "reconciled",
         "repaired_rows": int(repaired_rows),
         "reconstructed_saturation_pressure_rows": int(repaired_sat_rows),
+        "field_reconciliation_counts": {
+            field: int(count) for field, count in field_reconciliation_counts.items() if count
+        },
         "scalar_saturation_recovery_rows": 0,
         "valid_source_rows": int(valid_rows),
         "invalid_source_rows": int(invalid_rows),
