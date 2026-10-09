@@ -130,30 +130,64 @@ async function selectStation(page) {
   const search = await labelledInput(frame, 'Search GeoSphere station');
   await search.fill(STATION_NAME, { timeout: 10000 });
   await search.press('Tab').catch(() => {});
-  await sleep(400);
 
+  // Streamlit reruns the entire source panel after a text-input update, while
+  // st_folium and the station catalog are mounted asynchronously. The search
+  // result may be visible before the selectbox text is readable to Playwright.
+  // Wait for the actual filtered station result; never select an arbitrary ID.
+  const matches = (value) => value.includes(STATION_NAME)
+    && (value.includes(`ID ${STATION_ID}`) || value.includes(STATION_ID));
   const started = performance.now();
-  while (performance.now() - started < 30000) {
-    frame = await appFrame(page, 'Manual station selection', 5000);
+  const timeoutMs = 65000;
+  let lastValue = '';
+  let lastVisibleCount = '';
+  let lastSelectionError = '';
+  while (performance.now() - started < timeoutMs) {
+    frame = await appFrame(page, 'Manual station selection', 8000);
+    const text = await bodyText(frame);
+    const countMatch = text.match(/Visible GeoSphere stations after filters:\s*([\d,]+)\s+of\s+[\d,]+/);
+    lastVisibleCount = countMatch?.[1] || 'not displayed';
+    const uniquelyFiltered = countMatch && Number(countMatch[1].replace(/,/g, '')) === 1
+      && text.includes(STATION_NAME);
     const control = await combo(frame, 'Search-result stations', 5000).catch(() => null);
-    if (!control) { await sleep(180); continue; }
+    if (!control) { await sleep(250); continue; }
     const value = await rendered(control);
-    const matches = (text) => text.includes(STATION_NAME) && (text.includes(`ID ${STATION_ID}`) || text.includes(STATION_ID));
-    if (!matches(value)) {
-      await control.click({ timeout: 5000 }).catch(() => {});
+    lastValue = value.slice(0, 300);
+
+    if (!matches(value) && !uniquelyFiltered) {
+      await control.click({ timeout: 3000 }).catch(() => {});
       const option = await visibleOption(page, frame, matches);
-      if (option) await option.click({ timeout: 5000 }).catch(() => {});
-      await sleep(300);
+      if (option) await option.click({ timeout: 3000 }).catch(() => {});
+      await sleep(400);
       continue;
+    }
+    if (!matches(value) && uniquelyFiltered) {
+      // The search has been narrowed to exactly one matching station, so
+      // Streamlit's selectbox cannot commit a different station. Do not wait
+      // forever for BaseWeb to expose its selected label through accessibility.
+      const option = await control.click({ timeout: 3000 })
+        .then(() => visibleOption(page, frame, matches)).catch(() => null);
+      if (option) {
+        await option.click({ timeout: 3000 }).catch(() => {});
+        await sleep(200);
+      }
     }
     const button = frame.getByRole('button', { name: 'Use station from list', exact: true }).first();
     if (await button.count().catch(() => 0) && await button.isVisible().catch(() => false)) {
-      await button.click({ timeout: 10000 });
-      return appFrame(page, 'Measured variables to load', 30000);
+      try {
+        await button.click({ timeout: 8000 });
+        return await appFrame(page, 'Measured variables to load', 15000);
+      } catch (error) {
+        lastSelectionError = String(error).slice(0, 250);
+      }
     }
-    await sleep(180);
+    await sleep(250);
   }
-  throw new Error(`Could not commit ${STATION_NAME} ID ${STATION_ID}.`);
+  throw new Error(
+    `Could not commit ${STATION_NAME} ID ${STATION_ID} after ${timeoutMs} ms; `
+    + `visible filtered stations=${lastVisibleCount}; selected control=${JSON.stringify(lastValue)}; `
+    + `last click error=${lastSelectionError || 'none'}.`
+  );
 }
 
 async function waitMonthlySurface(page, timeoutMs = 20000) {

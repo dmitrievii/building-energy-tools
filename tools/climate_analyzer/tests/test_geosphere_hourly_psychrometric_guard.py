@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import psychrolib
 
-from epw_climate_analyzer import psychrometrics, runtime_module_guard
+from epw_climate_analyzer import psychrometrics, psychrometric_consistency, runtime_module_guard
 from epw_climate_analyzer.geosphere import (
     GeoSphereStation,
     build_canonical_station_dataset,
@@ -130,6 +130,48 @@ class GeoSphereHourlyPsychrometricRegressionTests(unittest.TestCase):
         self.assertTrue(np.isnan(result.iloc[0]["humidity_ratio_g_kg"]))
         self.assertAlmostEqual(float(result.iloc[1]["humidity_ratio_g_kg"]), 7.2617, delta=0.02)
 
+    def test_boundary_32768_vector_sat_corruption_is_recovered_using_scalar_math(self) -> None:
+        # Same boundary as the user's 33,045 vs 32,709 hour incident.
+        t = np.resize(np.array([-9.8, 0.0, 4.8, 24.1, 39.5], dtype=float), 33045)
+        reference = psychrometric_consistency._ashrae_saturation_pressure_pa(t)
+        original = psychrometric_consistency._ashrae_saturation_pressure_pa
+
+        def corrupted_vector(temps):
+            out = original(temps).copy()
+            if len(out) >= 32768:
+                out[32768:] = 100000.0
+            return out
+
+        with patch.object(psychrometric_consistency, "_ashrae_saturation_pressure_pa", side_effect=corrupted_vector):
+            repaired, count = psychrometric_consistency.stable_saturation_pressure_pa(t)
+        self.assertEqual(count, 277)
+        np.testing.assert_allclose(repaired, reference, rtol=0, atol=1e-8)
+
+        shorter, count_short = psychrometric_consistency.stable_saturation_pressure_pa(t[:32709])
+        self.assertEqual(count_short, 0)
+        np.testing.assert_allclose(shorter, reference[:32709], rtol=0, atol=1e-8)
+
+    def test_scalar_recovery_occurs_before_humidity_ratio_and_reports_rows(self) -> None:
+        frame = pd.DataFrame({
+            "dry_bulb_temperature_c": [4.8, 5.1, 4.6],
+            "relative_humidity_pct": [95.0, 94.0, 96.0],
+            "atmospheric_station_pressure_pa": [99770.0, 99780.0, 99760.0],
+        })
+        expected = add_psychrometric_properties(frame)
+        original = psychrometric_consistency._ashrae_saturation_pressure_pa
+        with patch.object(
+            psychrometric_consistency, "_ashrae_saturation_pressure_pa",
+            side_effect=lambda t: np.full(len(t), 100000.0),
+        ):
+            observed = add_psychrometric_properties(frame)
+        np.testing.assert_allclose(
+            observed["humidity_ratio_g_kg"], expected["humidity_ratio_g_kg"], rtol=0, atol=1e-9,
+        )
+        self.assertEqual(observed.attrs["psychrometric_saturation_integrity"]["recovered_rows"], 3)
+        self.assertLess(float(observed["humidity_ratio_g_kg"].max()), 20.0)
+        self.assertAlmostEqual(float(observed["humidity_ratio_g_kg"].iloc[0]), 5.137, delta=0.03)
+        self.assertNotIn("psychrometric_saturation_integrity", expected.attrs)
+
     def test_stale_consistency_module_reloads_all_bound_psychrometric_functions(self) -> None:
         from epw_climate_analyzer import historical, psychrometric_consistency
         old_function = psychrometric_consistency._ashrae_saturation_pressure_pa
@@ -140,8 +182,8 @@ class GeoSphereHourlyPsychrometricRegressionTests(unittest.TestCase):
             self.assertFalse(runtime_module_guard._stale_source(historical))
             self.assertIsNot(psychrometric_consistency._ashrae_saturation_pressure_pa, old_function)
             self.assertIs(
-                psychrometrics._ashrae_saturation_pressure_pa,
-                psychrometric_consistency._ashrae_saturation_pressure_pa,
+                psychrometrics.stable_saturation_pressure_pa,
+                psychrometric_consistency.stable_saturation_pressure_pa,
             )
             self.assertIs(
                 historical.reconcile_historical_psychrometrics,

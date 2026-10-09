@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from hashlib import sha256
 from pathlib import Path
+import math
 
 import numpy as np
 import pandas as pd
@@ -85,6 +86,72 @@ def _ashrae_saturation_pressure_pa(t_c: np.ndarray) -> np.ndarray:
         return np.exp(np.where(np.asarray(t_c, dtype=float) <= 0.0, log_ice, log_water))
 
 
+def _scalar_ashrae_saturation_pressure_pa(temp_c: float) -> float:
+    """Scalar, NumPy-independent ASHRAE 2017 water/ice saturation [Pa].
+
+    Used only for exceptional rows when a vector result violates an
+    independent saturation reference. It must not share vector intermediates.
+    """
+    kelvin = float(temp_c) + 273.15
+    if not (-100.0 <= temp_c <= 200.0):
+        raise ValueError("Psychrometric source temperature outside ASHRAE -100..200 °C.")
+    if temp_c <= 0.0:
+        log_p = (
+            -5.6745359e3 / kelvin + 6.3925247 - 9.677843e-3 * kelvin
+            + 6.2215701e-7 * kelvin**2 + 2.0747825e-9 * kelvin**3
+            - 9.484024e-13 * kelvin**4 + 4.1635019 * math.log(kelvin)
+        )
+    else:
+        log_p = (
+            -5.8002206e3 / kelvin + 1.3914993 - 4.8640239e-2 * kelvin
+            + 4.1764768e-5 * kelvin**2 - 1.4452093e-8 * kelvin**3
+            + 6.5459673 * math.log(kelvin)
+        )
+    return math.exp(log_p)
+
+
+def stable_saturation_pressure_pa(t_c: np.ndarray) -> tuple[np.ndarray, int]:
+    """Compute ASHRAE saturation with an independent per-row recovery path.
+
+    For ordinary weather temperatures, Magnus's water/ice equation validates
+    the vectorized implementation with a conservative 2% tolerance (ASHRAE
+    and Magnus normally agree within 0.5% from -50 to +60 °C).
+    A vector result that fails this check is NEVER passed downstream:
+    affected rows are recomputed using only Python math and checked again.
+    Impossible temperatures or an independently unresolvable mismatch fail
+    closed with an explicit error, rather than generating millions of g/kg.
+    """
+    t = np.asarray(t_c, dtype=float)
+    sat = _ashrae_saturation_pressure_pa(t)
+    sat = np.asarray(sat, dtype=float).copy()
+    if sat.shape != t.shape:
+        raise ValueError("Psychrometric saturation calculation returned an unexpected array shape.")
+    finite = np.isfinite(t)
+    bad = finite & (~np.isfinite(sat) | (sat <= 0.0))
+    typical = finite & (t >= -50.0) & (t <= 60.0)
+    if typical.any():
+        magnus = _reference_saturation_pa(t[typical])
+        observed = sat[typical]
+        mismatch = ~np.isfinite(observed) | (observed <= 0.0)
+        mismatch |= np.abs(observed - magnus) > 0.02 * magnus
+        bad[typical] |= mismatch
+    count = int(bad.sum())
+    if count:
+        for pos in np.flatnonzero(bad):
+            temp = float(t[pos])
+            corrected = _scalar_ashrae_saturation_pressure_pa(temp)
+            if not np.isfinite(corrected) or corrected <= 0.0:
+                raise ValueError("Psychrometric scalar saturation recovery returned a nonphysical value.")
+            if -50.0 <= temp <= 60.0:
+                # Independently validate recovered values, not just the
+                # original vector that triggered the recovery.
+                ref = float(_reference_saturation_pa(np.array([temp]))[0])
+                if abs(corrected - ref) > 0.02 * ref:
+                    raise ValueError("Psychrometric independent scalar saturation checks disagree.")
+            sat[pos] = corrected
+    return sat, count
+
+
 def reconcile_historical_psychrometrics(
     frame: pd.DataFrame,
     *,
@@ -134,7 +201,7 @@ def reconcile_historical_psychrometrics(
     # temperatures still fail closed instead of being silently normalized.
     if np.any(valid & ((t < -100.0) | (t > 200.0))):
         raise ValueError("Psychrometric closure: source temperature outside ASHRAE -100..200 °C.")
-    reference_sat = _ashrae_saturation_pressure_pa(t)
+    reference_sat, saturation_vector_repairs = stable_saturation_pressure_pa(t)
     if np.any(valid & (~np.isfinite(reference_sat) | (reference_sat <= 0.0))):
         raise ValueError("Psychrometric closure: cannot reconstruct saturation pressure from source temperature.")
     # Check independently against Magnus in the ordinary weather domain
@@ -215,6 +282,7 @@ def reconcile_historical_psychrometrics(
         "status": "reconciled",
         "repaired_rows": int(inconsistent.sum()),
         "reconstructed_saturation_pressure_rows": int(invalid_sat.sum()),
+        "scalar_saturation_recovery_rows": int(saturation_vector_repairs),
         "valid_source_rows": int(valid.sum()),
         "total_rows": n,
         "maximum_humidity_ratio_deviation_g_kg": float(deviation.max()) if len(deviation) else None,
