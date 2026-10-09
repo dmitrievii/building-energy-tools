@@ -260,7 +260,7 @@ class PsychrometricPhysicalClosureTests(unittest.TestCase):
         self.assertNotIn("Psychrometric physical-closure guard: derived quantities were", ui)
         self.assertLess(
             ui.index('legacy.render_time_series_overlay(filtered_df)'),
-            ui.index('_render_psychrometric_integrity_footer(\\n            closure_report,'),
+            ui.index('_render_psychrometric_integrity_footer(\n            closure_report,'),
         )
         self.assertIn('preferred_id = "klima-v2-1h"', ui)
         self.assertIn("calculate_inverse_psychrometrics=not fast_humidity_explorer", ui)
