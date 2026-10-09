@@ -18,6 +18,7 @@ import pandas as pd
 import psychrolib
 
 from epw_climate_analyzer import psychrometric_consistency
+from epw_climate_analyzer import psychrometric_consistency
 from epw_climate_analyzer.psychrometric_consistency import reconcile_historical_psychrometrics
 from epw_climate_analyzer.psychrometrics import add_psychrometric_properties
 
@@ -173,6 +174,55 @@ class PsychrometricPhysicalClosureTests(unittest.TestCase):
         recovered = reconcile_historical_psychrometrics(frame)
         self.assertIs(recovered, frame)
         self.assertTrue(np.isnan(recovered["humidity_ratio_g_kg"].iloc[1]))
+
+    def test_actual_long_series_failure_signature_yields_physical_monthly_profile(self) -> None:
+        # Reproduce the user's full exported 33,045 hourly slots, including
+        # exactly 104 missing psychrometric rows. In the broken deployment,
+        # humidity_ratio_kg_kg and degree_of_saturation were identical on
+        # all 32,941 valid records and measured millions of g/kg dry air.
+        source = climate_source(33045)
+        source.iloc[:104, source.columns.get_loc("relative_humidity_pct")] = np.nan
+        valid_count = source["relative_humidity_pct"].notna().sum()
+        self.assertEqual(valid_count, 32941)
+        clean = add_psychrometric_properties(source, calculate_inverse=False)
+        bad = clean.copy()
+        bad_kg = np.where(source["relative_humidity_pct"].notna(), 3983.883638, np.nan)
+        bad["humidity_ratio_kg_kg"] = bad_kg
+        bad["humidity_ratio_g_kg"] = bad_kg * 1000.0
+        bad["degree_of_saturation"] = bad_kg
+        bad["specific_volume_m3_kg"] = 17.5246711
+        with patch.object(
+            psychrometric_consistency, "_ashrae_saturation_pressure_pa",
+            side_effect=AssertionError("A long vector saturation is not an independent scalar closure"),
+        ):
+            recovered = reconcile_historical_psychrometrics(bad)
+        self.assertEqual(recovered.attrs["psychrometric_physical_closure"]["repaired_rows"], 33045)
+        self.assertEqual(recovered.attrs["psychrometric_physical_closure"]["valid_source_rows"], 32941)
+        for field in (
+            "humidity_ratio_g_kg", "humidity_ratio_kg_kg", "vapor_pressure_pa",
+            "saturation_vapor_pressure_pa", "moist_air_enthalpy_kj_kg",
+            "specific_volume_m3_kg", "moist_air_density_kg_m3", "degree_of_saturation",
+        ):
+            np.testing.assert_allclose(recovered[field], clean[field], rtol=0, atol=1e-8, equal_nan=True)
+        self.assertLess(float(recovered["humidity_ratio_g_kg"].max()), 20.0)
+        months = pd.Series(
+            recovered["humidity_ratio_g_kg"].to_numpy(),
+            index=pd.date_range("2023-01-01", periods=len(recovered), freq="h"),
+        ).resample("MS").agg(["min", "mean", "max"])
+        self.assertTrue((months["max"].dropna() < 20.0).all())
+        pd.testing.assert_series_equal(recovered["dry_bulb_temperature_c"], source["dry_bulb_temperature_c"])
+        pd.testing.assert_series_equal(recovered["relative_humidity_pct"], source["relative_humidity_pct"])
+
+    def test_hourly_humidity_only_does_not_call_expensive_inverse_functions(self) -> None:
+        with (
+            patch.object(psychrolib, "GetTWetBulbFromHumRatio", side_effect=AssertionError("wet-bulb inverse called")),
+            patch.object(psychrolib, "GetTDewPointFromRelHum", side_effect=AssertionError("dew-point inverse called")),
+        ):
+            output = add_psychrometric_properties(climate_source(33045), calculate_inverse=False)
+        self.assertEqual(len(output), 33045)
+        self.assertLess(float(output["humidity_ratio_g_kg"].max()), 20.0)
+        self.assertTrue(output["wet_bulb_temperature_c"].isna().all())
+        self.assertTrue(output["dew_point_temperature_c"].isna().all())
 
     def test_native_hourly_and_final_ui_paths_carry_physical_guard(self) -> None:
         root = Path(__file__).resolve().parents[1]
