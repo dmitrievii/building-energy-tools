@@ -244,6 +244,11 @@ class PsychrometricPhysicalClosureTests(unittest.TestCase):
         self.assertIn("filtered_df = reconcile_historical_psychrometrics(", ui)
         self.assertIn('st.session_state["_active_filtered_export_df"] = filtered_df', ui)
         self.assertIn("report['repaired_rows']", ui)
+        self.assertIn('preferred_id = "klima-v2-1h"', ui)
+        self.assertIn("calculate_inverse_psychrometrics=not fast_humidity_explorer", ui)
+        self.assertIn('st.session_state.get("humidity_explorer_variable", "Humidity ratio")', ui)
+        psychrometrics = (root / "epw_climate_analyzer" / "psychrometrics.py").read_text(encoding="utf-8")
+        self.assertIn("if calculate_inverse:", psychrometrics)
 
 
 if __name__ == "__main__":
