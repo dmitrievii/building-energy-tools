@@ -78,6 +78,12 @@ and filtered CSV export. The foundational saturation vapour pressure is
 evaluated vectorially with the ASHRAE water/ice equations rather than through
 mutable PsychroLib saturation runtime state; any inconsistent materialized
 saturation pressure is independently reconstructed from measured temperature.
+The ASHRAE and Magnus calculations operate on bounded 8,192-row batches, with
+a **single** strict 2% independent saturation check before either the
+psychrometric derivation or final materialization closure. The final
+cross-field check does not independently recalculate a second full-length
+Magnus array after source-quality filtering: that had repeatedly failed on
+the 33,045-hour source after the valid T/RH mask contracted to 32,941 rows.
 Impossible source temperatures or vapour pressure at/above total pressure
 still fail closed rather than inventing finite humidity.
 
