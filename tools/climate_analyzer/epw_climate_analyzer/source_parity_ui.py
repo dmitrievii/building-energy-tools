@@ -770,6 +770,76 @@ def _render_geosphere_resource_selector(legacy: Any, original: Callable) -> None
         legacy.st.caption = original_caption
 
 
+def _render_psychrometric_integrity_footer(
+    report: dict[str, Any] | None,
+    saturation_integrity: dict[str, Any] | None,
+    *,
+    full_record_count: int,
+    visible_record_count: int,
+) -> None:
+    """Show numerical repair provenance *after* the chart interpretation.
+
+    Reconciliation protects historical charts/exports from previously observed
+    implausible humidity ratios. A persistent warning above every chart was
+    disproportionate and did not say which derived quantities differed.
+    """
+    reconciled = isinstance(report, dict) and report.get("status") == "reconciled"
+    recovered = (
+        isinstance(saturation_integrity, dict)
+        and saturation_integrity.get("status") == "scalar-recovered"
+    )
+    if not reconciled and not recovered:
+        return
+
+    with st.expander("Psychrometric data integrity", expanded=False):
+        st.caption(
+            "Numerical verification of calculated moist-air properties. "
+            "Original measured temperature, relative humidity and station "
+            "pressure are never modified."
+        )
+        if reconciled:
+            st.write(
+                f"**{int(report.get('repaired_rows', 0)):,} records** had one or "
+                "more derived quantities independently reconciled from "
+                "measured temperature, RH and pressure."
+            )
+            field_counts = report.get("field_reconciliation_counts", {})
+            if isinstance(field_counts, dict) and field_counts:
+                names = {
+                    "saturation_vapor_pressure_pa": "Saturation vapour pressure",
+                    "humidity_ratio_kg_kg": "Humidity ratio (kg/kg)",
+                    "humidity_ratio_g_kg": "Humidity ratio (g/kg)",
+                    "vapor_pressure_pa": "Vapour pressure",
+                    "moist_air_enthalpy_kj_kg": "Moist-air enthalpy",
+                    "specific_volume_m3_kg": "Specific volume",
+                    "moist_air_density_kg_m3": "Moist-air density",
+                    "degree_of_saturation": "Degree of saturation",
+                }
+                details = [
+                    {"Derived quantity": names.get(field, field), "Affected records": int(count)}
+                    for field, count in field_counts.items() if int(count) > 0
+                ]
+                if details:
+                    st.dataframe(pd.DataFrame(details), hide_index=True, use_container_width=True)
+            deviation = report.get("maximum_humidity_ratio_deviation_g_kg")
+            if isinstance(deviation, (int, float)) and np.isfinite(deviation):
+                st.caption(
+                    f"Maximum humidity-ratio correction: {deviation:,.6g} g/kg dry air. "
+                    "The total reconciled-row count includes other derived quantities."
+                )
+            if full_record_count != visible_record_count:
+                st.caption(
+                    "Reconciliation metadata can describe the complete loaded "
+                    "series before the current Data filter."
+                )
+        if recovered:
+            st.caption(
+                "Independent scalar ASHRAE verification also recovered "
+                f"{int(saturation_integrity.get('recovered_rows', 0)):,} "
+                "numerical saturation-pressure value(s)."
+            )
+
+
 def _render_canonical_analysis(legacy: Any, dataset: CanonicalClimateDataset) -> None:
     legacy._ensure_analysis_dependencies(include_solar=True, include_comparison=True)
     supported = set(available_historical_pages(dataset.data))
@@ -878,21 +948,10 @@ def _render_canonical_analysis(legacy: Any, dataset: CanonicalClimateDataset) ->
         )
         filtered_df = legacy.sidebar_filters(full_df)
 
-    # Surface every scalar saturation recovery to the user. These cases are
-    # not silently accepted as ordinary source measurements.
+    # Preserve integrity metadata for an optional diagnostic *below* the
+    # rendered graph and its scientific interpretation, not above the graph.
     saturation_integrity = full_df.attrs.get("psychrometric_saturation_integrity")
-    if (
-        isinstance(saturation_integrity, dict)
-        and saturation_integrity.get("status") == "scalar-recovered"
-        and page in {"Humidity and Psychrometrics", "Time Series and Overlay", "Overview"}
-    ):
-        st.warning(
-            "Saturation-pressure numerical recovery: "
-            f"{saturation_integrity['recovered_rows']:,} derived hourly value(s) "
-            "were independently recalculated with scalar ASHRAE after failing "
-            "the vector/Magnus consistency check. Measured temperature, RH and "
-            "station pressure were not changed."
-        )
+    closure_report: dict[str, Any] | None = None
 
     # A large historical dataset can have internally inconsistent *derived*
     # humidity fields even though T, RH, pressure and vapour pressure are valid.
@@ -907,17 +966,7 @@ def _render_canonical_analysis(legacy: Any, dataset: CanonicalClimateDataset) ->
             filtered_df, fallback_pressure_pa=fallback_pressure,
         )
         st.session_state["_active_filtered_export_df"] = filtered_df
-        report = filtered_df.attrs.get("psychrometric_physical_closure")
-        if isinstance(report, dict) and report.get("status") == "reconciled" and page in {
-            "Humidity and Psychrometrics", "Time Series and Overlay", "Overview",
-        }:
-            st.warning(
-                "Psychrometric physical-closure guard: derived quantities were "
-                f"reconciled from measured temperature, RH and pressure "
-                f"({report['repaired_rows']:,} affected records). Original provider "
-                "measurements are unchanged. Review the diagnostics if this "
-                "message occurs repeatedly."
-            )
+        closure_report = filtered_df.attrs.get("psychrometric_physical_closure")
 
     if filtered_df.empty:
         st.warning("The current filters remove all data. Adjust the date, month or hour filter.")
@@ -967,6 +1016,14 @@ def _render_canonical_analysis(legacy: Any, dataset: CanonicalClimateDataset) ->
         legacy.render_time_series_overlay(filtered_df)
     else:
         _render_quality_decoded(legacy, legacy._source_parity_original_quality, dataset, filtered_df)
+
+    if page in {"Humidity and Psychrometrics", "Time Series and Overlay", "Overview"}:
+        _render_psychrometric_integrity_footer(
+            closure_report,
+            saturation_integrity,
+            full_record_count=len(full_df),
+            visible_record_count=len(filtered_df),
+        )
 
 
 def install_source_parity_ui(legacy: Any) -> None:

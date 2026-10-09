@@ -121,6 +121,14 @@ class PsychrometricPhysicalClosureTests(unittest.TestCase):
                 corrupted["specific_volume_m3_kg"] = 17.5246711
                 result = reconcile_historical_psychrometrics(corrupted)
                 self.assertEqual(result.attrs["psychrometric_physical_closure"]["repaired_rows"], count)
+                by_field = result.attrs["psychrometric_physical_closure"]["field_reconciliation_counts"]
+                for corrupted_field in (
+                    "humidity_ratio_kg_kg", "humidity_ratio_g_kg",
+                    "degree_of_saturation", "specific_volume_m3_kg",
+                ):
+                    self.assertEqual(by_field[corrupted_field], count)
+                # A repaired row need not imply every derived quantity was wrong.
+                self.assertNotIn("moist_air_enthalpy_kj_kg", by_field)
                 for field in (
                     "humidity_ratio_kg_kg", "humidity_ratio_g_kg",
                     "degree_of_saturation", "specific_volume_m3_kg",
@@ -246,7 +254,14 @@ class PsychrometricPhysicalClosureTests(unittest.TestCase):
         self.assertEqual(historical.count("data = reconcile_historical_psychrometrics("), 2)
         self.assertIn("filtered_df = reconcile_historical_psychrometrics(", ui)
         self.assertIn('st.session_state["_active_filtered_export_df"] = filtered_df', ui)
-        self.assertIn("report['repaired_rows']", ui)
+        self.assertIn("field_reconciliation_counts", ui)
+        self.assertIn("_render_psychrometric_integrity_footer(", ui)
+        self.assertIn('with st.expander("Psychrometric data integrity", expanded=False):', ui)
+        self.assertNotIn("Psychrometric physical-closure guard: derived quantities were", ui)
+        self.assertLess(
+            ui.index('legacy.render_time_series_overlay(filtered_df)'),
+            ui.index('_render_psychrometric_integrity_footer(\n            closure_report,'),
+        )
         self.assertIn('preferred_id = "klima-v2-1h"', ui)
         self.assertIn("calculate_inverse_psychrometrics=not fast_humidity_explorer", ui)
         self.assertIn('st.session_state.get("humidity_explorer_variable", "Humidity ratio")', ui)

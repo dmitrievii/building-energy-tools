@@ -96,7 +96,12 @@ This protects the plotted and exported quantities from long-array corruption
 even if the upstream vector psychrometrics are internally inconsistent. The
 user-observed symptom `humidity_ratio_kg_kg == degree_of_saturation` for
 32,941 valid records is explicitly covered by a 33,045-row monthly Plotly
-regression. The original T/RH/station-pressure observations are never changed.
+regression. The original T/RH/station-pressure observations are never changed. The historical interface keeps the
+number of reconciled rows, the per-derived-variable correction counts and the
+maximum humidity-ratio difference in a collapsed **Psychrometric data
+integrity** section placed *after* the graph and interpretation, rather than
+displaying the same warning above every chart. This is traceability of the
+numerical verification, not a new observation quality flag.
 
 The normal "Humidity ratio" variable explorer does not calculate expensive
 wet-bulb/dew-point inversions that its chart never uses. These inversions remain
