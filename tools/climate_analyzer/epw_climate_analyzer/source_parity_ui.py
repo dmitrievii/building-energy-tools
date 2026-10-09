@@ -862,6 +862,22 @@ def _render_canonical_analysis(legacy: Any, dataset: CanonicalClimateDataset) ->
         )
         filtered_df = legacy.sidebar_filters(full_df)
 
+    # Surface every scalar saturation recovery to the user. These cases are
+    # not silently accepted as ordinary source measurements.
+    saturation_integrity = full_df.attrs.get("psychrometric_saturation_integrity")
+    if (
+        isinstance(saturation_integrity, dict)
+        and saturation_integrity.get("status") == "scalar-recovered"
+        and page in {"Humidity and Psychrometrics", "Time Series and Overlay", "Overview"}
+    ):
+        st.warning(
+            "Saturation-pressure numerical recovery: "
+            f"{saturation_integrity['recovered_rows']:,} derived hourly value(s) "
+            "were independently recalculated with scalar ASHRAE after failing "
+            "the vector/Magnus consistency check. Measured temperature, RH and "
+            "station pressure were not changed."
+        )
+
     # A large historical dataset can have internally inconsistent *derived*
     # humidity fields even though T, RH, pressure and vapour pressure are valid.
     # Check the final filtered/export frame, not only the scientific core, so
