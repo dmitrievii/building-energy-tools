@@ -19,6 +19,7 @@ import psychrolib
 
 from epw_climate_analyzer import psychrometric_consistency
 from epw_climate_analyzer import psychrometric_consistency
+from epw_climate_analyzer.charts import profile_ribbon_chart
 from epw_climate_analyzer.psychrometric_consistency import reconcile_historical_psychrometrics
 from epw_climate_analyzer.psychrometrics import add_psychrometric_properties
 
@@ -205,6 +206,15 @@ class PsychrometricPhysicalClosureTests(unittest.TestCase):
         ):
             np.testing.assert_allclose(recovered[field], clean[field], rtol=0, atol=1e-8, equal_nan=True)
         self.assertLess(float(recovered["humidity_ratio_g_kg"].max()), 20.0)
+        chart = profile_ribbon_chart(
+            recovered, "humidity_ratio_g_kg", "Monthly",
+            "Humidity: Humidity ratio", "g/kg dry air",
+        )
+        for trace in chart.data:
+            if trace.y is not None:
+                values = pd.to_numeric(pd.Series(trace.y), errors="coerce").dropna()
+                if not values.empty:
+                    self.assertLess(float(values.max()), 20.0)
         months = pd.Series(
             recovered["humidity_ratio_g_kg"].to_numpy(),
             index=pd.date_range("2023-01-01", periods=len(recovered), freq="h"),
