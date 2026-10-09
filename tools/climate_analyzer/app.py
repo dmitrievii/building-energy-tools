@@ -1433,6 +1433,17 @@ def render_geosphere_source() -> None:
         f"Estimated provider datapoints: {estimated:,}; bounded API batches: {len(batches)}. "
         "There is no fixed one-year UI limit; long intervals are split into bounded provider requests."
     )
+    if (
+        selected_days > 90
+        and len(batches) > 1
+        and st.session_state.get("geosphere_resource_id") == "klima-v2-10min"
+    ):
+        st.info(
+            "Long-term hourly analysis: select the GeoSphere 1-hour dataset "
+            "instead of 10-minute observations before loading. It provides "
+            "native hourly values, avoids unnecessary 10-minute downloads and "
+            "can substantially reduce the number of provider API batches."
+        )
     if estimated > 2_000_000:
         st.warning(
             "This is a large historical request. It is valid and will be split into bounded API batches, but loading and "
