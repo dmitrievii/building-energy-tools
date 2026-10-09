@@ -194,6 +194,7 @@ def prepare_historical_analysis_frame(
     dataset: CanonicalClimateDataset,
     *,
     include_psychrometrics: bool = False,
+    calculate_inverse_psychrometrics: bool = True,
     include_solar: bool = False,
     fallback_pressure_pa: float = DEFAULT_PRESSURE_PA,
     pressure_override_pa: float | None = None,
@@ -241,7 +242,11 @@ def prepare_historical_analysis_frame(
             )
         if "atmospheric_station_pressure_pa" not in data.columns:
             data["atmospheric_station_pressure_pa"] = float(fallback_pressure_pa)
-        data = add_psychrometric_properties(data, fallback_pressure_pa=float(fallback_pressure_pa))
+        data = add_psychrometric_properties(
+            data,
+            fallback_pressure_pa=float(fallback_pressure_pa),
+            calculate_inverse=calculate_inverse_psychrometrics,
+        )
         data = reconcile_historical_psychrometrics(data, fallback_pressure_pa=float(fallback_pressure_pa))
 
     if include_solar:
