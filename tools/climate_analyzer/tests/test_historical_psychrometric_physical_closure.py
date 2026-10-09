@@ -60,21 +60,20 @@ class PsychrometricPhysicalClosureTests(unittest.TestCase):
         self.assertEqual(len(frame), 33045)
         self.assertEqual(int(frame["relative_humidity_pct"].notna().sum()), 32941)
         self.assertTrue(frame["humidity_ratio_g_kg"].iloc[:104].isna().all())
-        original = psychrometric_consistency._reference_saturation_pa
-        lengths: list[int] = []
-
-        def length_sensitive_reference(t):
-            lengths.append(len(t))
-            if len(t) == 32941:
-                return np.ones(len(t), dtype=float)
-            return original(t)
-
-        with patch.object(psychrometric_consistency, "_reference_saturation_pa", side_effect=length_sensitive_reference):
+        # The authoritative scalar closure must not call the old vector
+        # Magnus reference at all, regardless of valid-row count. It must
+        # also preserve a clean frame by identity and retain missing RH.
+        with patch.object(
+            psychrometric_consistency, "_reference_saturation_pa",
+            side_effect=AssertionError("obsolete vector Magnus called during scalar closure"),
+        ) as old_reference:
             repaired = reconcile_historical_psychrometrics(frame)
         self.assertIs(repaired, frame)
-        self.assertTrue(lengths)
-        self.assertLessEqual(max(lengths), 8192)
+        old_reference.assert_not_called()
         self.assertNotIn("psychrometric_physical_closure", repaired.attrs)
+        self.assertTrue(repaired["humidity_ratio_g_kg"].iloc[:104].isna().all())
+        self.assertTrue(np.isfinite(repaired["humidity_ratio_g_kg"].iloc[104:]).all())
+        self.assertLess(float(repaired["humidity_ratio_g_kg"].max()), 20.0)
 
     def test_reproduces_long_export_corruption_and_repairs_all_derived_fields(self) -> None:
         for count in (32709, 32768, 33045):
