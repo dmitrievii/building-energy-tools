@@ -130,26 +130,45 @@ class GeoSphereHourlyPsychrometricRegressionTests(unittest.TestCase):
         self.assertTrue(np.isnan(result.iloc[0]["humidity_ratio_g_kg"]))
         self.assertAlmostEqual(float(result.iloc[1]["humidity_ratio_g_kg"]), 7.2617, delta=0.02)
 
-    def test_boundary_32768_vector_sat_corruption_is_recovered_using_scalar_math(self) -> None:
-        # Same boundary as the user's 33,045 vs 32,709 hour incident.
+    def test_bounded_saturation_bypasses_corruption_triggered_by_32768_elements(self) -> None:
+        # The previously reported full dataset contains 33,045 hourly slots.
         t = np.resize(np.array([-9.8, 0.0, 4.8, 24.1, 39.5], dtype=float), 33045)
         reference = psychrometric_consistency._ashrae_saturation_pressure_pa(t)
         original = psychrometric_consistency._ashrae_saturation_pressure_pa
+        calls = []
 
-        def corrupted_vector(temps):
+        def long_array_corruption(temps):
+            calls.append(len(temps))
             out = original(temps).copy()
             if len(out) >= 32768:
                 out[32768:] = 100000.0
             return out
 
-        with patch.object(psychrometric_consistency, "_ashrae_saturation_pressure_pa", side_effect=corrupted_vector):
+        with patch.object(psychrometric_consistency, "_ashrae_saturation_pressure_pa", side_effect=long_array_corruption):
             repaired, count = psychrometric_consistency.stable_saturation_pressure_pa(t)
-        self.assertEqual(count, 277)
+        self.assertEqual(count, 0)
+        self.assertEqual(sum(calls), len(t))
+        self.assertLessEqual(max(calls), 8192)
         np.testing.assert_allclose(repaired, reference, rtol=0, atol=1e-8)
 
-        shorter, count_short = psychrometric_consistency.stable_saturation_pressure_pa(t[:32709])
-        self.assertEqual(count_short, 0)
+        shorter, short_recovery = psychrometric_consistency.stable_saturation_pressure_pa(t[:32709])
+        self.assertEqual(short_recovery, 0)
         np.testing.assert_allclose(shorter, reference[:32709], rtol=0, atol=1e-8)
+
+    def test_scalar_recovery_in_a_long_series_uses_local_reference_only(self) -> None:
+        t = np.resize(np.array([-9.8, 0.0, 4.8, 24.1, 39.5], dtype=float), 33045)
+        reference = psychrometric_consistency._ashrae_saturation_pressure_pa(t)
+        original = psychrometric_consistency._ashrae_saturation_pressure_pa
+
+        def corrupt_one_per_chunk(temps):
+            out = original(temps).copy()
+            out[0] = 100000.0
+            return out
+
+        with patch.object(psychrometric_consistency, "_ashrae_saturation_pressure_pa", side_effect=corrupt_one_per_chunk):
+            repaired, count = psychrometric_consistency.stable_saturation_pressure_pa(t)
+        self.assertEqual(count, 5)
+        np.testing.assert_allclose(repaired, reference, rtol=0, atol=1e-8)
 
     def test_scalar_recovery_occurs_before_humidity_ratio_and_reports_rows(self) -> None:
         frame = pd.DataFrame({
