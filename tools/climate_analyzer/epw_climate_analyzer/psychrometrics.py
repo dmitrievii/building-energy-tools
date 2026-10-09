@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 import psychrolib
 
-from .psychrometric_consistency import _ashrae_saturation_pressure_pa
+from .psychrometric_consistency import stable_saturation_pressure_pa
 
 psychrolib.SetUnitSystem(psychrolib.SI)
 
@@ -158,6 +158,7 @@ def add_psychrometric_properties(df: pd.DataFrame, fallback_pressure_pa: float =
     sat_vap = np.full(n, np.nan, dtype=float)
     degree = np.full(n, np.nan, dtype=float)
 
+    saturation_scalar_recovery_rows = 0
     if valid.any():
         idx = np.where(valid)[0]
         t_valid = t[idx]
@@ -169,7 +170,9 @@ def add_psychrometric_properties(df: pd.DataFrame, fallback_pressure_pa: float =
         # isolated PsychroLib/Numba runtime state must never corrupt the
         # foundational vapour pressure used by all derived moist-air fields.
         # PsychroLib remains responsible for wet-bulb/dew-point inversions.
-        sat = _ashrae_saturation_pressure_pa(t_valid)
+        sat, saturation_scalar_recovery_rows = stable_saturation_pressure_pa(t_valid)
+        # This independent check is retained. No derived psychrometric field
+        # is calculated using an unvalidated saturation pressure.
         _validate_saturation_pressure(t_valid, sat)
         pv = rh_valid * sat
         if np.any(~np.isfinite(pv) | (pv >= p_valid)):
@@ -239,6 +242,15 @@ def add_psychrometric_properties(df: pd.DataFrame, fallback_pressure_pa: float =
     data["vapor_pressure_pa"] = vap
     data["saturation_vapor_pressure_pa"] = sat_vap
     data["degree_of_saturation"] = degree
+
+    if saturation_scalar_recovery_rows:
+        data.attrs["psychrometric_saturation_integrity"] = {
+            "status": "scalar-recovered",
+            "recovered_rows": int(saturation_scalar_recovery_rows),
+            "valid_source_rows": int(valid.sum()),
+            "total_rows": n,
+            "method": "independent Magnus validation and scalar ASHRAE water/ice recovery",
+        }
 
     if dew_fill_mask.any():
         if np.isfinite(source_dew).any():
