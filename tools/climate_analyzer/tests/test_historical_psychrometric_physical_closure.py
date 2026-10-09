@@ -11,11 +11,13 @@ from __future__ import annotations
 from pathlib import Path
 import ast
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
 import psychrolib
 
+from epw_climate_analyzer import psychrometric_consistency
 from epw_climate_analyzer.psychrometric_consistency import reconcile_historical_psychrometrics
 from epw_climate_analyzer.psychrometrics import add_psychrometric_properties
 
@@ -42,6 +44,31 @@ class PsychrometricPhysicalClosureTests(unittest.TestCase):
         self.assertEqual(len(frame), 33045)
         self.assertIs(reconcile_historical_psychrometrics(frame), frame)
         self.assertNotIn("psychrometric_physical_closure", frame.attrs)
+
+    def test_33045_hours_and_104_missing_rh_do_not_run_a_second_reference_check(self) -> None:
+        # Actual full export: 33045 hours, 32941 valid T/RH states. A
+        # redundant second Magnus check used the differently sized 32941-row
+        # mask; simulated length-sensitive reference state raised ValueError.
+        seed = add_psychrometric_properties(climate_source(2))
+        frame = pd.concat([seed] * 16523, ignore_index=True).iloc[:33045].copy()
+        self.assertEqual(len(frame), 33045)
+        frame.loc[:103, "relative_humidity_pct"] = np.nan
+        self.assertEqual(int(frame["relative_humidity_pct"].notna().sum()), 32941)
+        original = psychrometric_consistency._reference_saturation_pa
+        lengths: list[int] = []
+
+        def length_sensitive_reference(t):
+            lengths.append(len(t))
+            if len(t) == 32941:
+                return np.ones(len(t), dtype=float)
+            return original(t)
+
+        with patch.object(psychrometric_consistency, "_reference_saturation_pa", side_effect=length_sensitive_reference):
+            repaired = reconcile_historical_psychrometrics(frame)
+        self.assertIs(repaired, frame)
+        self.assertTrue(lengths)
+        self.assertLessEqual(max(lengths), 8192)
+        self.assertNotIn("psychrometric_physical_closure", repaired.attrs)
 
     def test_reproduces_long_export_corruption_and_repairs_all_derived_fields(self) -> None:
         for count in (32709, 32768, 33045):

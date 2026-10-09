@@ -170,10 +170,11 @@ def add_psychrometric_properties(df: pd.DataFrame, fallback_pressure_pa: float =
         # isolated PsychroLib/Numba runtime state must never corrupt the
         # foundational vapour pressure used by all derived moist-air fields.
         # PsychroLib remains responsible for wet-bulb/dew-point inversions.
+        # stable_saturation_pressure_pa performs the independent 2% Magnus
+        # check in bounded batches (plus scalar recovery for exceptions).
+        # Do not repeat the check on the full 33k-element array: that invokes
+        # a second, differently sized numerical path after quality filtering.
         sat, saturation_scalar_recovery_rows = stable_saturation_pressure_pa(t_valid)
-        # This independent check is retained. No derived psychrometric field
-        # is calculated using an unvalidated saturation pressure.
-        _validate_saturation_pressure(t_valid, sat)
         pv = rh_valid * sat
         if np.any(~np.isfinite(pv) | (pv >= p_valid)):
             raise ValueError(

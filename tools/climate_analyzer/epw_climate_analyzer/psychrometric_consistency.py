@@ -111,45 +111,52 @@ def _scalar_ashrae_saturation_pressure_pa(temp_c: float) -> float:
 
 
 def stable_saturation_pressure_pa(t_c: np.ndarray) -> tuple[np.ndarray, int]:
-    """Compute ASHRAE saturation with an independent per-row recovery path.
+    """Calculate and validate ASHRAE saturation with bounded vector batches.
 
-    For ordinary weather temperatures, Magnus's water/ice equation validates
-    the vectorized implementation with a conservative 2% tolerance (ASHRAE
-    and Magnus normally agree within 0.5% from -50 to +60 °C).
-    A vector result that fails this check is NEVER passed downstream:
-    affected rows are recomputed using only Python math and checked again.
-    Impossible temperatures or an independently unresolvable mismatch fail
-    closed with an explicit error, rather than generating millions of g/kg.
+    The historical long-series incident crosses 2**15 elements. Batches below
+    that threshold ensure the numerical reference and saturated-pressure
+    arrays are never evaluated as a single 33k-element operation. This is
+    the sole saturation-reference comparison in the historical calculation.
+    Values failing a 2% independent Magnus check are re-evaluated with scalar
+    Python-math ASHRAE and verified again; irrecoverable states fail closed.
     """
     t = np.asarray(t_c, dtype=float)
-    sat = _ashrae_saturation_pressure_pa(t)
-    sat = np.asarray(sat, dtype=float).copy()
-    if sat.shape != t.shape:
-        raise ValueError("Psychrometric saturation calculation returned an unexpected array shape.")
-    finite = np.isfinite(t)
-    bad = finite & (~np.isfinite(sat) | (sat <= 0.0))
-    typical = finite & (t >= -50.0) & (t <= 60.0)
-    if typical.any():
-        magnus = _reference_saturation_pa(t[typical])
-        observed = sat[typical]
-        mismatch = ~np.isfinite(observed) | (observed <= 0.0)
-        mismatch |= np.abs(observed - magnus) > 0.02 * magnus
-        bad[typical] |= mismatch
-    count = int(bad.sum())
-    if count:
-        for pos in np.flatnonzero(bad):
-            temp = float(t[pos])
-            corrected = _scalar_ashrae_saturation_pressure_pa(temp)
-            if not np.isfinite(corrected) or corrected <= 0.0:
-                raise ValueError("Psychrometric scalar saturation recovery returned a nonphysical value.")
-            if -50.0 <= temp <= 60.0:
-                # Independently validate recovered values, not just the
-                # original vector that triggered the recovery.
-                ref = float(_reference_saturation_pa(np.array([temp]))[0])
-                if abs(corrected - ref) > 0.02 * ref:
-                    raise ValueError("Psychrometric independent scalar saturation checks disagree.")
-            sat[pos] = corrected
-    return sat, count
+    if t.ndim != 1:
+        raise ValueError("Psychrometric saturation calculation expects a one-dimensional temperature series.")
+    sat = np.full(len(t), np.nan, dtype=float)
+    recovery_count = 0
+    # A bounded batch avoids both a long NumPy temporary and different
+    # >2**15 reference-array sizes caused by missing RH observations.
+    batch_size = 8192
+    for offset in range(0, len(t), batch_size):
+        chunk = t[offset:offset + batch_size]
+        computed = np.asarray(_ashrae_saturation_pressure_pa(chunk), dtype=float).copy()
+        if computed.shape != chunk.shape:
+            raise ValueError("Psychrometric saturation calculation returned an unexpected array shape.")
+        finite = np.isfinite(chunk)
+        bad = finite & (~np.isfinite(computed) | (computed <= 0.0))
+        typical = finite & (chunk >= -50.0) & (chunk <= 60.0)
+        if typical.any():
+            magnus = _reference_saturation_pa(chunk[typical])
+            observed = computed[typical]
+            mismatched = (~np.isfinite(observed) | (observed <= 0.0)
+                          | (np.abs(observed - magnus) > 0.02 * magnus))
+            bad[typical] |= mismatched
+
+        if bad.any():
+            for local_pos in np.flatnonzero(bad):
+                temp = float(chunk[local_pos])
+                corrected = _scalar_ashrae_saturation_pressure_pa(temp)
+                if not math.isfinite(corrected) or corrected <= 0.0:
+                    raise ValueError("Psychrometric scalar saturation recovery returned a nonphysical value.")
+                if -50.0 <= temp <= 60.0:
+                    ref = float(_reference_saturation_pa(np.array([temp]))[0])
+                    if not math.isfinite(ref) or ref <= 0.0 or abs(corrected - ref) > 0.02 * ref:
+                        raise ValueError("Psychrometric independent scalar saturation checks disagree.")
+                computed[local_pos] = corrected
+            recovery_count += int(bad.sum())
+        sat[offset:offset + len(chunk)] = computed
+    return sat, recovery_count
 
 
 def reconcile_historical_psychrometrics(
@@ -204,13 +211,10 @@ def reconcile_historical_psychrometrics(
     reference_sat, saturation_vector_repairs = stable_saturation_pressure_pa(t)
     if np.any(valid & (~np.isfinite(reference_sat) | (reference_sat <= 0.0))):
         raise ValueError("Psychrometric closure: cannot reconstruct saturation pressure from source temperature.")
-    # Check independently against Magnus in the ordinary weather domain
-    # before accepting the reconstructed state; no PsychroLib dependency.
-    typical = valid & (t >= -50.0) & (t <= 60.0)
-    if typical.any():
-        magnus_sat = _reference_saturation_pa(t[typical])
-        if np.any(np.abs(reference_sat[typical] - magnus_sat) > 0.15 * magnus_sat):
-            raise ValueError("Psychrometric closure: independent saturation references disagree.")
+    # Saturation has already passed the stricter independent 2% check in
+    # stable_saturation_pressure_pa(), including scalar recovery where needed.
+    # Never recompute a second Magnus reference with a different array length:
+    # after RH/quality filtering it can cross a distinct 2**15-sized path.
 
     invalid_sat = valid & (
         ~np.isfinite(sat) | (sat <= 0.0)
