@@ -98,7 +98,12 @@ def _validate_saturation_pressure(t_c: np.ndarray, sat_pa: np.ndarray) -> None:
         )
 
 
-def add_psychrometric_properties(df: pd.DataFrame, fallback_pressure_pa: float = DEFAULT_PRESSURE_PA) -> pd.DataFrame:
+def add_psychrometric_properties(
+    df: pd.DataFrame,
+    fallback_pressure_pa: float = DEFAULT_PRESSURE_PA,
+    *,
+    calculate_inverse: bool = True,
+) -> pd.DataFrame:
     """Add psychrometric properties to a canonical climate DataFrame.
 
     Existing source dew-point observations are preserved.  Where dew point is
@@ -213,19 +218,20 @@ def add_psychrometric_properties(df: pd.DataFrame, fallback_pressure_pa: float =
         # Wet-bulb and dew-point inversions stay delegated to PsychroLib.  The
         # loop is restricted to valid source rows and therefore remains modest
         # compared with repeated pandas row access.
-        for out_i, tv, rh_value, wv, pv_press in zip(
-            idx, t_valid, rh_valid, w_valid, p_valid, strict=False
-        ):
-            try:
-                twb[out_i] = psychrolib.GetTWetBulbFromHumRatio(float(tv), float(wv), float(pv_press))
-            except Exception:
-                twb[out_i] = np.nan
-            try:
-                # PsychroLib defines dew point from dry-bulb and vapour pressure;
-                # GetTDewPointFromRelHum performs that inversion consistently.
-                tdp_calculated[out_i] = psychrolib.GetTDewPointFromRelHum(float(tv), float(rh_value))
-            except Exception:
-                tdp_calculated[out_i] = np.nan
+        if calculate_inverse:
+            for out_i, tv, rh_value, wv, pv_press in zip(
+                idx, t_valid, rh_valid, w_valid, p_valid, strict=False
+            ):
+                try:
+                    twb[out_i] = psychrolib.GetTWetBulbFromHumRatio(float(tv), float(wv), float(pv_press))
+                except Exception:
+                    twb[out_i] = np.nan
+                try:
+                    # PsychroLib defines dew point from dry-bulb and vapour pressure;
+                    # GetTDewPointFromRelHum performs that inversion consistently.
+                    tdp_calculated[out_i] = psychrolib.GetTDewPointFromRelHum(float(tv), float(rh_value))
+                except Exception:
+                    tdp_calculated[out_i] = np.nan
 
     source_dew = _numeric_column_or_nan(data, "dew_point_temperature_c")
     dew_fill_mask = ~np.isfinite(source_dew) & np.isfinite(tdp_calculated)
@@ -259,7 +265,8 @@ def add_psychrometric_properties(df: pd.DataFrame, fallback_pressure_pa: float =
         else:
             origin = "calculated from dry-bulb temperature and relative humidity (PsychroLib)"
         _record_variable_origin(data, "dew_point_temperature_c", origin)
-    _record_variable_origin(data, "wet_bulb_temperature_c", "calculated from canonical moist-air state (PsychroLib)")
+    if calculate_inverse:
+        _record_variable_origin(data, "wet_bulb_temperature_c", "calculated from canonical moist-air state (PsychroLib)")
     _record_variable_origin(data, "humidity_ratio_g_kg", "calculated from dry-bulb temperature, relative humidity and pressure")
     _record_variable_origin(data, "moist_air_enthalpy_kj_kg", "calculated from dry-bulb temperature and humidity ratio")
     data.attrs.update({key: value for key, value in attrs.items() if key != VARIABLE_ORIGIN_ATTR})
