@@ -1433,6 +1433,17 @@ def render_geosphere_source() -> None:
         f"Estimated provider datapoints: {estimated:,}; bounded API batches: {len(batches)}. "
         "There is no fixed one-year UI limit; long intervals are split into bounded provider requests."
     )
+    if (
+        selected_days > 90
+        and len(batches) > 1
+        and st.session_state.get("geosphere_resource_id") == "klima-v2-10min"
+    ):
+        st.info(
+            "Long-term hourly analysis: select the GeoSphere 1-hour dataset "
+            "instead of 10-minute observations before loading. It provides "
+            "native hourly values, avoids unnecessary 10-minute downloads and "
+            "can substantially reduce the number of provider API batches."
+        )
     if estimated > 2_000_000:
         st.warning(
             "This is a large historical request. It is valid and will be split into bounded API batches, but loading and "
@@ -2048,6 +2059,7 @@ def render_generic_variable_page(
     interpretation_factory: Callable[[pd.DataFrame, str, str, str], str] | None = None,
     temperature_thresholds: tuple[float, float] | None = None,
     fixed_variable_label: str | None = None,
+    variable_key: str | None = None,
 ) -> None:
     """Render a generic variable explorer with chart-type and aggregation controls."""
     available_labels = [
@@ -2066,7 +2078,7 @@ def render_generic_variable_page(
             return
         variable_label = fixed_variable_label
     else:
-        variable_label = st.selectbox("Variable", available_labels, index=available_labels.index(selected_default))
+        variable_label = st.selectbox("Variable", available_labels, index=available_labels.index(selected_default), key=variable_key)
     column, unit = VARIABLES[variable_label]
     chart_types = [
         "Profile with min-mean-max ribbon",
@@ -3205,7 +3217,7 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
     chart_options = ["Humidity variable explorer", "Psychrometric chart", "Moisture thresholds", "Psychrometric scatter relationships"]
     if not interval_count_metrics:
         chart_options.remove("Moisture thresholds")
-    chart_group = st.selectbox("Analysis type", chart_options)
+    chart_group = st.selectbox("Analysis type", chart_options, key="humidity_analysis_type")
     if chart_group == "Humidity variable explorer":
         render_generic_variable_page(
             df,
@@ -3213,6 +3225,7 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
             "Humidity ratio",
             "Humidity",
             None,
+            variable_key="humidity_explorer_variable",
         )
     elif chart_group == "Psychrometric chart":
         chart_type = st.radio("Psychrometric axes", ["T-d", "i-d"], horizontal=True)

@@ -18,6 +18,8 @@ import pandas as pd
 import psychrolib
 
 from epw_climate_analyzer import psychrometric_consistency
+from epw_climate_analyzer import psychrometric_consistency
+from epw_climate_analyzer.charts import profile_ribbon_chart
 from epw_climate_analyzer.psychrometric_consistency import reconcile_historical_psychrometrics
 from epw_climate_analyzer.psychrometrics import add_psychrometric_properties
 
@@ -49,26 +51,29 @@ class PsychrometricPhysicalClosureTests(unittest.TestCase):
         # Actual full export: 33045 hours, 32941 valid T/RH states. A
         # redundant second Magnus check used the differently sized 32941-row
         # mask; simulated length-sensitive reference state raised ValueError.
-        seed = add_psychrometric_properties(climate_source(2))
-        frame = pd.concat([seed] * 16523, ignore_index=True).iloc[:33045].copy()
+        # Missing provider RH must be set BEFORE calculating any derived
+        # properties. Previously this test created finite derived values and
+        # *then* removed RH, correctly triggering repair instead of identity.
+        source = climate_source(33045)
+        source.iloc[:104, source.columns.get_loc("relative_humidity_pct")] = np.nan
+        frame = add_psychrometric_properties(source, calculate_inverse=False)
         self.assertEqual(len(frame), 33045)
-        frame.loc[:103, "relative_humidity_pct"] = np.nan
         self.assertEqual(int(frame["relative_humidity_pct"].notna().sum()), 32941)
-        original = psychrometric_consistency._reference_saturation_pa
-        lengths: list[int] = []
-
-        def length_sensitive_reference(t):
-            lengths.append(len(t))
-            if len(t) == 32941:
-                return np.ones(len(t), dtype=float)
-            return original(t)
-
-        with patch.object(psychrometric_consistency, "_reference_saturation_pa", side_effect=length_sensitive_reference):
+        self.assertTrue(frame["humidity_ratio_g_kg"].iloc[:104].isna().all())
+        # The authoritative scalar closure must not call the old vector
+        # Magnus reference at all, regardless of valid-row count. It must
+        # also preserve a clean frame by identity and retain missing RH.
+        with patch.object(
+            psychrometric_consistency, "_reference_saturation_pa",
+            side_effect=AssertionError("obsolete vector Magnus called during scalar closure"),
+        ) as old_reference:
             repaired = reconcile_historical_psychrometrics(frame)
         self.assertIs(repaired, frame)
-        self.assertTrue(lengths)
-        self.assertLessEqual(max(lengths), 8192)
+        old_reference.assert_not_called()
         self.assertNotIn("psychrometric_physical_closure", repaired.attrs)
+        self.assertTrue(repaired["humidity_ratio_g_kg"].iloc[:104].isna().all())
+        self.assertTrue(np.isfinite(repaired["humidity_ratio_g_kg"].iloc[104:]).all())
+        self.assertLess(float(repaired["humidity_ratio_g_kg"].max()), 20.0)
 
     def test_reproduces_long_export_corruption_and_repairs_all_derived_fields(self) -> None:
         for count in (32709, 32768, 33045):
@@ -174,6 +179,64 @@ class PsychrometricPhysicalClosureTests(unittest.TestCase):
         self.assertIs(recovered, frame)
         self.assertTrue(np.isnan(recovered["humidity_ratio_g_kg"].iloc[1]))
 
+    def test_actual_long_series_failure_signature_yields_physical_monthly_profile(self) -> None:
+        # Reproduce the user's full exported 33,045 hourly slots, including
+        # exactly 104 missing psychrometric rows. In the broken deployment,
+        # humidity_ratio_kg_kg and degree_of_saturation were identical on
+        # all 32,941 valid records and measured millions of g/kg dry air.
+        source = climate_source(33045)
+        source.iloc[:104, source.columns.get_loc("relative_humidity_pct")] = np.nan
+        valid_count = source["relative_humidity_pct"].notna().sum()
+        self.assertEqual(valid_count, 32941)
+        clean = add_psychrometric_properties(source, calculate_inverse=False)
+        bad = clean.copy()
+        bad_kg = np.where(source["relative_humidity_pct"].notna(), 3983.883638, np.nan)
+        bad["humidity_ratio_kg_kg"] = bad_kg
+        bad["humidity_ratio_g_kg"] = bad_kg * 1000.0
+        bad["degree_of_saturation"] = bad_kg
+        bad["specific_volume_m3_kg"] = 17.5246711
+        with patch.object(
+            psychrometric_consistency, "_ashrae_saturation_pressure_pa",
+            side_effect=AssertionError("A long vector saturation is not an independent scalar closure"),
+        ):
+            recovered = reconcile_historical_psychrometrics(bad)
+        self.assertEqual(recovered.attrs["psychrometric_physical_closure"]["repaired_rows"], 33045)
+        self.assertEqual(recovered.attrs["psychrometric_physical_closure"]["valid_source_rows"], 32941)
+        for field in (
+            "humidity_ratio_g_kg", "humidity_ratio_kg_kg", "vapor_pressure_pa",
+            "saturation_vapor_pressure_pa", "moist_air_enthalpy_kj_kg",
+            "specific_volume_m3_kg", "moist_air_density_kg_m3", "degree_of_saturation",
+        ):
+            np.testing.assert_allclose(recovered[field], clean[field], rtol=0, atol=1e-8, equal_nan=True)
+        self.assertLess(float(recovered["humidity_ratio_g_kg"].max()), 20.0)
+        chart = profile_ribbon_chart(
+            recovered, "humidity_ratio_g_kg", "Monthly",
+            "Humidity: Humidity ratio", "g/kg dry air",
+        )
+        for trace in chart.data:
+            if trace.y is not None:
+                values = pd.to_numeric(pd.Series(trace.y), errors="coerce").dropna()
+                if not values.empty:
+                    self.assertLess(float(values.max()), 20.0)
+        months = pd.Series(
+            recovered["humidity_ratio_g_kg"].to_numpy(),
+            index=pd.date_range("2023-01-01", periods=len(recovered), freq="h"),
+        ).resample("MS").agg(["min", "mean", "max"])
+        self.assertTrue((months["max"].dropna() < 20.0).all())
+        pd.testing.assert_series_equal(recovered["dry_bulb_temperature_c"], source["dry_bulb_temperature_c"])
+        pd.testing.assert_series_equal(recovered["relative_humidity_pct"], source["relative_humidity_pct"])
+
+    def test_hourly_humidity_only_does_not_call_expensive_inverse_functions(self) -> None:
+        with (
+            patch.object(psychrolib, "GetTWetBulbFromHumRatio", side_effect=AssertionError("wet-bulb inverse called")),
+            patch.object(psychrolib, "GetTDewPointFromRelHum", side_effect=AssertionError("dew-point inverse called")),
+        ):
+            output = add_psychrometric_properties(climate_source(33045), calculate_inverse=False)
+        self.assertEqual(len(output), 33045)
+        self.assertLess(float(output["humidity_ratio_g_kg"].max()), 20.0)
+        self.assertTrue(output["wet_bulb_temperature_c"].isna().all())
+        self.assertTrue(output["dew_point_temperature_c"].isna().all())
+
     def test_native_hourly_and_final_ui_paths_carry_physical_guard(self) -> None:
         root = Path(__file__).resolve().parents[1]
         historical = (root / "epw_climate_analyzer" / "historical.py").read_text(encoding="utf-8")
@@ -184,6 +247,11 @@ class PsychrometricPhysicalClosureTests(unittest.TestCase):
         self.assertIn("filtered_df = reconcile_historical_psychrometrics(", ui)
         self.assertIn('st.session_state["_active_filtered_export_df"] = filtered_df', ui)
         self.assertIn("report['repaired_rows']", ui)
+        self.assertIn('preferred_id = "klima-v2-1h"', ui)
+        self.assertIn("calculate_inverse_psychrometrics=not fast_humidity_explorer", ui)
+        self.assertIn('st.session_state.get("humidity_explorer_variable", "Humidity ratio")', ui)
+        psychrometrics = (root / "epw_climate_analyzer" / "psychrometrics.py").read_text(encoding="utf-8")
+        self.assertIn("if calculate_inverse:", psychrometrics)
 
 
 if __name__ == "__main__":

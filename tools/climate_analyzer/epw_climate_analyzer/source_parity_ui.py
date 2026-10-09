@@ -722,10 +722,14 @@ def _render_quality_decoded(legacy: Any, original: Callable, dataset: CanonicalC
 
 def _render_geosphere_resource_selector(legacy: Any, original: Callable) -> None:
     specs = available_resource_specs()
+    preferred_id = "klima-v2-1h"  # Long-term climate analyses use the canonical hourly engine.
+    preferred_index = next(
+        (index for index, item in enumerate(specs) if item.resource_id == preferred_id), 0
+    )
     selected = st.selectbox(
         "GeoSphere dataset",
         [spec.resource_id for spec in specs],
-        index=0,
+        index=preferred_index,
         format_func=lambda resource_id: resource_spec(resource_id).label,
         key=_GEOSPHERE_RESOURCE_KEY,
         help=(
@@ -815,6 +819,17 @@ def _render_canonical_analysis(legacy: Any, dataset: CanonicalClimateDataset) ->
     include_psych = has_psych and page in {"Temperature", "Humidity and Psychrometrics", "Wind and Ventilation", "Time Series and Overlay", "Natural Ventilation", "HVAC and Passive Design", "Overview"}
     include_solar = page in {"Solar and Radiation", "Overview"}
 
+    # The default monthly humidity-ratio plot needs only T, RH and pressure.
+    # Full hourly PsychroLib inverse wet-bulb/dew-point solving costs tens of
+    # thousands of Python calls on a multi-year series without improving that
+    # plot. Keep the complete inverse path for all other analysis pages and
+    # when the user selects dew point or another humidity analysis type.
+    fast_humidity_explorer = (
+        page == "Humidity and Psychrometrics"
+        and st.session_state.get("humidity_analysis_type", "Humidity variable explorer") == "Humidity variable explorer"
+        and st.session_state.get("humidity_explorer_variable", "Humidity ratio") != "Dew-point temperature"
+    )
+
     if page == "Data Quality":
         full_df = prepare_historical_native_diagnostic_frame(dataset)
         filtered_df = full_df
@@ -853,6 +868,7 @@ def _render_canonical_analysis(legacy: Any, dataset: CanonicalClimateDataset) ->
         full_df = prepare_historical_analysis_frame(
             prepared_dataset,
             include_psychrometrics=include_psych,
+            calculate_inverse_psychrometrics=not fast_humidity_explorer,
             include_solar=include_solar,
             fallback_pressure_pa=fallback_pressure,
             pressure_override_pa=pressure_override,

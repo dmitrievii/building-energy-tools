@@ -87,6 +87,26 @@ the 33,045-hour source after the valid T/RH mask contracted to 32,941 rows.
 Impossible source temperatures or vapour pressure at/above total pressure
 still fail closed rather than inventing finite humidity.
 
+### Authoritative final humidity-ratio materialization and cost control
+
+The final humidity-physics closure reconstructs derived vapour pressure, humidity
+ratio (kg/kg and g/kg), enthalpy, specific volume, density and saturation degree
+**row by row using scalar ASHRAE water/ice equations and measured T/RH/pressure**.
+This protects the plotted and exported quantities from long-array corruption
+even if the upstream vector psychrometrics are internally inconsistent. The
+user-observed symptom `humidity_ratio_kg_kg == degree_of_saturation` for
+32,941 valid records is explicitly covered by a 33,045-row monthly Plotly
+regression. The original T/RH/station-pressure observations are never changed.
+
+The normal "Humidity ratio" variable explorer does not calculate expensive
+wet-bulb/dew-point inversions that its chart never uses. These inversions remain
+available when the user selects a chart requiring them. For multi-year weather
+analysis the GeoSphere source selector defaults to native hourly observations:
+with three requested provider fields, ~33,045 hourly records fit in one 100k
+datapoint API batch; equivalent 10-minute source data use approximately six
+batches. Selecting 10-minute data for detailed high-resolution analysis is
+still supported and explicitly shown.
+
 This gate addresses the observed **33,045-hour** versus **32,709-hour** GeoSphere
 humidity anomaly. The proximity to **32,768 = 2¹⁵** is diagnostic evidence for
 a size-dependent runtime/materialization issue, but not proof of a specific
