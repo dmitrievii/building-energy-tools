@@ -722,10 +722,14 @@ def _render_quality_decoded(legacy: Any, original: Callable, dataset: CanonicalC
 
 def _render_geosphere_resource_selector(legacy: Any, original: Callable) -> None:
     specs = available_resource_specs()
+    preferred_id = "klima-v2-1h"  # Long-term climate analyses use the canonical hourly engine.
+    preferred_index = next(
+        (index for index, item in enumerate(specs) if item.resource_id == preferred_id), 0
+    )
     selected = st.selectbox(
         "GeoSphere dataset",
         [spec.resource_id for spec in specs],
-        index=0,
+        index=preferred_index,
         format_func=lambda resource_id: resource_spec(resource_id).label,
         key=_GEOSPHERE_RESOURCE_KEY,
         help=(
