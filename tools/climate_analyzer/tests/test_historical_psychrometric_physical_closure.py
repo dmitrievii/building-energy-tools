@@ -51,11 +51,15 @@ class PsychrometricPhysicalClosureTests(unittest.TestCase):
         # Actual full export: 33045 hours, 32941 valid T/RH states. A
         # redundant second Magnus check used the differently sized 32941-row
         # mask; simulated length-sensitive reference state raised ValueError.
-        seed = add_psychrometric_properties(climate_source(2))
-        frame = pd.concat([seed] * 16523, ignore_index=True).iloc[:33045].copy()
+        # Missing provider RH must be set BEFORE calculating any derived
+        # properties. Previously this test created finite derived values and
+        # *then* removed RH, correctly triggering repair instead of identity.
+        source = climate_source(33045)
+        source.iloc[:104, source.columns.get_loc("relative_humidity_pct")] = np.nan
+        frame = add_psychrometric_properties(source, calculate_inverse=False)
         self.assertEqual(len(frame), 33045)
-        frame.loc[:103, "relative_humidity_pct"] = np.nan
         self.assertEqual(int(frame["relative_humidity_pct"].notna().sum()), 32941)
+        self.assertTrue(frame["humidity_ratio_g_kg"].iloc[:104].isna().all())
         original = psychrometric_consistency._reference_saturation_pa
         lengths: list[int] = []
 
