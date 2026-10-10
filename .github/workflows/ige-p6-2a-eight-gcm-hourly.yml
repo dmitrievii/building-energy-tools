@@ -1,0 +1,106 @@
+name: IGE P6.2A eight-GCM diagnostics and GeoSphere hourly source probe
+on:
+  push:
+    branches: [research/ige-p6-2a-eight-gcm-and-hourly-probe-20261010]
+    paths:
+      - .github/workflows/ige-p6-2a-eight-gcm-hourly.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  eight-gcm-multivariate:
+    name: 8 GCM 40-window original data, paired climate and GeoSphere residuals
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: P6.2A offline strict science contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p6_2a*.py' -v
+      - name: Download five previously accepted ACCESS-CM2 periods
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38067931031
+          github-token: ${{ github.token }}
+          pattern: ige-p6-access-*
+          path: inputs/access_downloads
+          merge-multiple: false
+      - name: Download original 28 accepted seven-GCM windows and seven rejected placeholders
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          pattern: ige-p6-*-20*
+          path: inputs/seven_prior
+          merge-multiple: false
+      - name: Download seven successful repair2 window artifacts
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38077903914
+          github-token: ${{ github.token }}
+          pattern: ige-p6-*-20*
+          path: inputs/seven_repairs
+          merge-multiple: false
+      - name: Download independent GeoSphere monthly station 30 observations (prior accepted P6.2A)
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38081032571
+          github-token: ${{ github.token }}
+          name: ige-p6-2a-access-multivariate-geosphere-residual-pilot
+          path: inputs/observations
+      - name: Verify 28 original and 7 repaired seven-GCM artifacts before reuse
+        run: |
+          python research/ige_cmip6/p6_seven_repair_stage.py \
+            --prior inputs/seven_prior --repaired inputs/seven_repairs \
+            --destination inputs/seven_clean \
+            --report outputs/p6_2a_eight_models/p6_1_source_selection.json
+          python research/ige_cmip6/p6_seven_daily_audit.py \
+            --root inputs/seven_clean \
+            --output outputs/p6_2a_eight_models/p6_1_source_audit.json
+      - name: Build clean ACCESS input directory from five original P6.1 artifacts
+        run: |
+          mkdir -p inputs/access_clean
+          for period in historical-1995-2014 ssp245-2040-2059 ssp245-2080-2099 ssp585-2040-2059 ssp585-2080-2099; do
+            test -f "inputs/access_downloads/ige-p6-access-$period/quality_report.json"
+            ln -s "../access_downloads/ige-p6-access-$period" "inputs/access_clean/$period"
+          done
+      - name: Compute eight GCM paired climate changes, seasonal dependence and station climatologies
+        run: |
+          python research/ige_cmip6/p6_2a_eight_model_ensemble.py \
+            --access-root inputs/access_clean \
+            --seven-root inputs/seven_clean \
+            --station-geojson inputs/observations/geosphere_station30/geosphere_station30_1995_2014_raw.geojson \
+            --out outputs/p6_2a_eight_models
+      - name: Save accepted P6.2A model-spread diagnostics and source provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p6-2a-8gcm-daily-ensemble-station-residuals
+          path: outputs/p6_2a_eight_models/
+          retention-days: 30
+          if-no-files-found: warn
+
+  geosphere-hourly:
+    name: GeoSphere station 30 UTC, six hourly variables and quality code availability
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run offline 8-GCM and hourly station metadata contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p6_2a_ensemble.py' -v
+      - name: Fetch real GeoSphere hourly metadata and one week of station-30 data
+        run: python research/ige_cmip6/p6_2a_hourly_station_probe.py --out outputs/p6_2a_hourly_source
+      - name: Preserve provider UTC data and live metadata/quality-flag inventory
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p6-2a-geosphere-hourly-quality-feasibility
+          path: outputs/p6_2a_hourly_source/
+          retention-days: 30
+          if-no-files-found: warn
