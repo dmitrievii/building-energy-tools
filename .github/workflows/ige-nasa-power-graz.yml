@@ -1,0 +1,24 @@
+name: IGE NASA POWER open GHI baseline probe
+on:
+  push:
+    branches: [research/ige-nex-gddp-rsds-20261010]
+    paths: [research/ige_cmip6/nasa_power_graz_probe.py, .github/workflows/ige-nasa-power-graz.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  nasa-power:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get open historical POWER GHI baseline
+        run: python research/ige_cmip6/nasa_power_graz_probe.py
+      - name: Preserve observations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-nasa-power-graz-1991-2020
+          path: outputs/power/
+          retention-days: 14
+          if-no-files-found: warn
