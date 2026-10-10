@@ -1,0 +1,27 @@
+name: IGE GeoSphere six-donor observed bridge
+on:
+  push:
+    branches:
+      - research/ige-cmip6-source-probe-20261010
+    paths:
+      - research/ige_cmip6/geosphere_graz_six_donors.py
+      - .github/workflows/ige-geosphere-graz-six-donors.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  observed-donors:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch matched historic station records
+        run: python research/ige_cmip6/geosphere_graz_six_donors.py
+      - name: Preserve source evidence on success or failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-geosphere-six-donors-observed-monthly
+          path: geosphere_graz_donors/
+          retention-days: 14
+          if-no-files-found: warn
