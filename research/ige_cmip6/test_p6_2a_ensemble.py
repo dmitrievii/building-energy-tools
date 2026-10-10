@@ -14,14 +14,14 @@ def make_period(model,window,index):
         'annual_mean_tas_c':10+index,
         'annual_mean_pr_mm':800+20*index,
         'annual_mean_ghi_kwh_m2':1500+10*index,
-        'seasons':{'JJA':{
+        'seasons':{season:{
             'tas_mean_c':20+index,
             'tasmax_p95_c':32+index,
             'wet_day_fraction_ge1mm':.4+.001*index,
             'pearson_daily_within_season':{
                 'tas_c__rsds_kwh_m2_day':.2+.01*index,
                 'pr_mm_day__rsds_kwh_m2_day':-.4+.01*index,
-            }}}
+            }} for season in ('DJF','MAM','JJA','SON')}
     }
 
 def make_hourly():
