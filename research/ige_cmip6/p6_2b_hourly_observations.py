@@ -177,7 +177,9 @@ def process_year(year,meta,data):
         "quality_flag_definitions":meta.get("code_lists",{}).get("q21",[]),
         "quality_policy":"accept only q21 codes 10/11/12/20/21/22 with broad physical screening; retain raw separately",
         "unavailable_quality_flags":missingflags,
-        "counts_by_parameter":{n:dict(counts[n]) for n in FIELDS},
+        "counts_by_parameter":{n:{k:counts[n].get(k,0) for k in
+                                  ("accepted","rejected","raw_null","out_of_range")}
+                               for n in FIELDS},
         "q21_distribution":{n:dict(codecounts[n]) for n in FIELDS},
         "method_caveat":"Hourly tl and cglo/rr timestamps need parameter-specific interpretation; precipitation sums unverified and not used in calibration",
     }
