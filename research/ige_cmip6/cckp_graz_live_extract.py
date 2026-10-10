@@ -133,13 +133,17 @@ def extract(path: Path, expected_variable: str):
                    and latdim in v.dimensions
                    and londim in v.dimensions
                    and v.ndim >= 3]
-        ranked = [(n,v) for n,v in options if expected_variable.lower() in n.lower()]
-        if len(ranked) == 1:
-            name, var = ranked[0]
-        elif len(options) == 1:
-            name, var = options[0]
-        else:
-            raise RuntimeError("Ambiguous data variables: " + str([(n,v.dimensions) for n,v in options]))
+        # CCKP stores both the requested anomaly field and an
+        # "anomalysignificance-..." field, with identical dimensions.
+        # Never select by substring or the latter may be mistaken for data.
+        requested_field = f"anomaly-{expected_variable}-monthly-mean"
+        matched = [(n, v) for n, v in options if n == requested_field]
+        if len(matched) != 1:
+            raise RuntimeError(
+                f"Expected exact CCKP primary field {requested_field!r}; "
+                f"available variables: {[(n, v.dimensions) for n, v in options]}"
+            )
+        name, var = matched[0]
         index = []
         untouched = []
         for dim in var.dimensions:
