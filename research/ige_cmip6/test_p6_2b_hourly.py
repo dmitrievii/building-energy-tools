@@ -41,7 +41,7 @@ class HourlyStationContracts(unittest.TestCase):
         self.assertEqual(quality["counts_by_parameter"]["tl"]["accepted"],8760)
         self.assertEqual(hourly[0]["tl_raw"],12)
         self.assertEqual(hourly[0]["tl_accepted"],12)
-        self.assertEqual(monthly[0]["rr_hourly_sum_unverified_mm"],223.2)
+        self.assertAlmostEqual(monthly[0]["rr_hourly_sum_unverified_mm"],223.2,places=8)
 
     def test_leap_year_8784(self):
         m,d=fixture(2000)
