@@ -2,7 +2,7 @@
 import json
 import unittest
 from p6_seven_daily import MODELS, WINDOWS, REFERENCE, check_reference, model_variables, SOURCE_EXCEPTIONS
-from p6_daily_multivariable import SPECS, strict_join
+from p6_daily_multivariable import SPECS, strict_join, validate_value
 from p6_access_full_period import summarize_daily
 from test_p6_daily_multivariable import fixture
 
@@ -77,6 +77,22 @@ class SevenModelContract(unittest.TestCase):
         del p['rsds']
         with self.assertRaisesRegex(ValueError,'Nine variables required'):
             strict_join(p,'historical',2014,allowed_missing=('huss',))
+
+    def test_raw_hurs_overshoot_is_preserved_and_diagnosed(self):
+        payload=fixture(2014)
+        payload['hurs']['values'][20]=100.2780990600586
+        rows,qa=strict_join(payload,'historical',2014)
+        self.assertEqual(rows[20]['hurs'],100.2780990600586)
+        self.assertEqual(qa['hurs_above_100_count'],1)
+        self.assertAlmostEqual(qa['hurs_above_100_max'],100.2780990600586)
+        self.assertTrue(qa['raw_hurs_requires_correction'])
+
+    def test_large_raw_hurs_overshoot_rejected(self):
+        self.assertEqual(validate_value('hurs',100.5),100.5)
+        with self.assertRaisesRegex(ValueError,'invalid daily value'):
+            validate_value('hurs',105.001)
+        with self.assertRaisesRegex(ValueError,'invalid daily value'):
+            validate_value('hurs',-0.01)
 
     def test_365_day_join(self):
         f=fixture(2014)
