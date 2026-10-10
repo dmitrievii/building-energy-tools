@@ -1,0 +1,71 @@
+name: IGE P6.2B GHI discrepancy root-cause triangulation
+on:
+  push:
+    branches:
+      - research/ige-p6-2b-solar-bias-root-cause-20261010
+    paths:
+      - .github/workflows/ige-p6-2b-solar-bias-triangulation.yml
+      - research/ige_cmip6/p6_2b_solar_bias_triangulation.py
+      - research/ige_cmip6/test_p6_2b_solar_bias_triangulation.py
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  independent-ghi-reference:
+    name: Matched 2005–2014 PVGIS SARAH3, ERA5, NASA POWER and eight GCM
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Test flux and energy unit conversions and external data semantics
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p6_2b_solar_bias_triangulation.py' -v
+      - name: Get 7305 independently accepted GeoSphere solar observations
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38084157993
+          github-token: ${{ github.token }}
+          name: ige-p6-2b-graz-1995-2014-verified-solar-eight-gcm-closeout
+          path: inputs/station
+      - name: Get independently accepted historical ACCESS-CM2 v2
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38067931031
+          github-token: ${{ github.token }}
+          name: ige-p6-access-historical-1995-2014
+          path: inputs/access/ige-p6-access-historical-1995-2014
+      - name: Get original seven-model NASA history
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          pattern: ige-p6-*-historical-1995-2014
+          path: inputs/seven_original
+          merge-multiple: false
+      - name: Get repaired source of three problematic original model history windows
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38077903914
+          github-token: ${{ github.token }}
+          pattern: ige-p6-*-historical-1995-2014
+          path: inputs/seven_repaired
+          merge-multiple: false
+      - name: Triangulate solar reference and unchanged NASA monthly GHI on exactly matched historical decade
+        run: |
+          python research/ige_cmip6/p6_2b_solar_bias_triangulation.py \
+            --station-csv inputs/station/station30_1995_2014_daily_solar_qc.csv \
+            --access inputs/access \
+            --original inputs/seven_original \
+            --repaired inputs/seven_repaired \
+            --out outputs/solar_bias_diagnostic
+      - name: Persist all source-provider responses and scientific diagnosis
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p6-2b-solar-44W-m2-root-cause-2005-2014
+          path: outputs/solar_bias_diagnostic/
+          retention-days: 30
+          if-no-files-found: warn
