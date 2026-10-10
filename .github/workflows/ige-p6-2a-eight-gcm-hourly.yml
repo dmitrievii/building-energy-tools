@@ -4,6 +4,9 @@ on:
     branches: [research/ige-p6-2a-eight-gcm-and-hourly-probe-20261010]
     paths:
       - .github/workflows/ige-p6-2a-eight-gcm-hourly.yml
+      - research/ige_cmip6/p6_2a_eight_model_ensemble.py
+      - research/ige_cmip6/p6_2a_hourly_station_probe.py
+      - research/ige_cmip6/test_p6_2a_ensemble.py
   workflow_dispatch:
 permissions:
   contents: read
