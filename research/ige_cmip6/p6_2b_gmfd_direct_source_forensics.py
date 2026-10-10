@@ -185,7 +185,7 @@ def verify_original_nasa(out, original):
             if int(row["year"])==2005:
                 expected[(int(row["month"]),int(row["day"]))]=float(row["rsds"])
     if len(expected)!=len(flux):raise ValueError("Original NASA P6.1 day mismatch")
-    if any(abs(float(v)-expected[int(y),int(m)])>1e-5
+    if any(abs(float(v)-expected[int(m),int(d)])>1e-5
            for v,(y,m,d) in zip(flux,payload["days"])):
         # The source key is by (month,day), not by a synthetic model day-of-year
         raise ValueError("Original NASA independent native NetCDF disagrees with P6.1 CSV")
