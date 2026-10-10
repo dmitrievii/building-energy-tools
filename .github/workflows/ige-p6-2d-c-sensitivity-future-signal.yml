@@ -1,0 +1,102 @@
+name: IGE P6.2D-C original 8-GCM future solar signal and M3 sensitivity
+on:
+  push:
+    branches:
+      - research/ige-p6-2d-c-sensitivity-future-signal-20261010
+    paths:
+      - .github/workflows/ige-p6-2d-c-sensitivity-future-signal.yml
+      - research/ige_cmip6/p6_2d_c_sensitivity_future_signals.py
+      - research/ige_cmip6/test_p6_2d_c_sensitivity_future.py
+      - docs/IGE_P6_2D_C_SENSITIVITY_FUTURE_SIGNAL.md
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  future-solar-sensitivity:
+    name: Eight GCM × four SSP windows with M3 historical sensitivity and solar bounds
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Unit tests, historical no-leakage and future signal math
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p6_2d_c_sensitivity_future.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p6_2d_b_daily_clearsky.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p6_2d_solar_methods_benchmark.py' -v
+      - name: Official fully verified GeoSphere historical daily solar
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38084157993
+          github-token: ${{ github.token }}
+          name: ige-p6-2b-graz-1995-2014-verified-solar-eight-gcm-closeout
+          path: inputs/station
+      - name: Original NASA ACCESS-CM2 historical source
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38067931031
+          github-token: ${{ github.token }}
+          name: ige-p6-access-historical-1995-2014
+          path: inputs/access_hist/ige-p6-access-historical-1995-2014
+      - name: Original NASA ACCESS-CM2 four future SSP scenario sources
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38067931031
+          github-token: ${{ github.token }}
+          pattern: ige-p6-access-ssp*-20*-20*
+          path: inputs/access_future
+          merge-multiple: false
+      - name: Original seven GCM 1995-2014 historical source products
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          pattern: ige-p6-*-historical-1995-2014
+          path: inputs/seven_original_hist
+          merge-multiple: false
+      - name: Original seven GCM four future SSP scenario source products
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          pattern: ige-p6-*-ssp*-20*-20*
+          path: inputs/seven_original_future
+          merge-multiple: false
+      - name: Historical 3-GCM accepted repaired original source products
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38077903914
+          github-token: ${{ github.token }}
+          pattern: ige-p6-*-historical-1995-2014
+          path: inputs/seven_repaired_hist
+          merge-multiple: false
+      - name: Future 4 accepted repaired original source products
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38077903914
+          github-token: ${{ github.token }}
+          pattern: ige-p6-*-ssp*-20*-20*
+          path: inputs/seven_repaired_future
+          merge-multiple: false
+      - name: Calculate historical 11-scenario M3 sensitivity and 32 original SSP future GHI signals
+        run: |
+          python research/ige_cmip6/p6_2d_c_sensitivity_future_signals.py \
+            --station-csv inputs/station/station30_1995_2014_daily_solar_qc.csv \
+            --access-historical inputs/access_hist \
+            --original-historical inputs/seven_original_hist \
+            --repaired-historical inputs/seven_repaired_hist \
+            --access-future inputs/access_future \
+            --original-future inputs/seven_original_future \
+            --repaired-future inputs/seven_repaired_future \
+            --out outputs/p6_2d_c_sensitivity_future
+      - name: Preserve complete 40-source provenance and science results even on partial failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p6-2d-c-sensitivity-8gcm-4ssp-original-future-solar-audit
+          path: outputs/p6_2d_c_sensitivity_future/
+          if-no-files-found: warn
+          retention-days: 30
