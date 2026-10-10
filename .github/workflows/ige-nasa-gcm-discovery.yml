@@ -1,0 +1,24 @@
+name: IGE discover independent NASA rsds GCMs
+on:
+  push:
+    branches: [research/ige-nex-gddp-rsds-20261010]
+    paths: [research/ige_cmip6/nasa_gcm_discovery.py, .github/workflows/ige-nasa-gcm-discovery.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  discover-models:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate models and realizations in live NASA catalog
+        run: python research/ige_cmip6/nasa_gcm_discovery.py
+      - name: Preserve model inventory even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-nasa-rsds-gcm-discovery
+          path: outputs/gcm_discovery/
+          if-no-files-found: warn
+          retention-days: 14
