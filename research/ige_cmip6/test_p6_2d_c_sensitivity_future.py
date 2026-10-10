@@ -1,11 +1,12 @@
 """P6.2D-C sensitivity and future-change science contracts; no source mutation."""
 from __future__ import annotations
 import tempfile,unittest,calendar
+from unittest.mock import patch
 from pathlib import Path
 from p6_2d_c_sensitivity_future_signals import (
     ALTITUDES,CAPS,BLOCKS,FUTURES,REPAIRED_FUTURES,
     normalized,fit,correct,year_months,monthly_methods,
-    future_signal_scores,write_union_csv,
+    future_signal_scores,write_union_csv,model_original_future,
 )
 from p6_2d_solar_methods_benchmark import METHODS
 from p6_2d_b_daily_clearsky_benchmark import NEW,solar_geometry
@@ -32,6 +33,31 @@ def example_rule():
     return {month:([.3,.4,.5],[.5,.6,.7]) for month in range(1,13)}
 
 class FutureSignalContracts(unittest.TestCase):
+    def test_original_future_source_archive_slugs_are_deterministic(self):
+        # These are the literal, immutable original GitHub artifact names.
+        checks=(
+            ("ACCESS-CM2","ssp245-2040-2059",
+             "access/ige-p6-access-ssp245-2040-2059"),
+            ("CanESM5","ssp585-2080-2099",
+             "original/ige-p6-CanESM5-ssp585-2080-2099"),
+            ("MPI-ESM1-2-HR","ssp585-2040-2059",
+             "repaired/ige-p6-MPI-ESM1-2-HR-ssp585-2040-2059"),
+            ("EC-Earth3","ssp245-2040-2059",
+             "repaired/ige-p6-EC-Earth3-ssp245-2040-2059"),
+        )
+        for model,window,expected in checks:
+            with self.subTest(model=model,window=window):
+                paths=[]
+                def fake_source(folder,seen_model,seen_window):
+                    paths.append((str(folder),seen_model,seen_window))
+                    raise RuntimeError("Sentinel: path capture before reading source")
+                with patch("p6_2d_c_sensitivity_future_signals.original_quality",
+                           side_effect=fake_source):
+                    with self.assertRaisesRegex(RuntimeError,"Sentinel"):
+                        model_original_future(model,window,Path("access"),
+                                              Path("original"),Path("repaired"))
+                self.assertEqual(paths,[(expected,model,window)])
+
     def test_all_four_future_gcm_periods(self):
         self.assertEqual(set(FUTURES),{"ssp245-2040-2059",
             "ssp585-2040-2059","ssp245-2080-2099","ssp585-2080-2099"})
