@@ -1,0 +1,59 @@
+name: IGE P6.2B Graz station-donor and verified solar source reconnaissance
+on:
+  push:
+    branches:
+      - research/ige-p6-2b-graz-donor-quality-solar-20261010
+    paths:
+      - .github/workflows/ige-p6-2b-graz-solar-network.yml
+      - research/ige_cmip6/p6_2b_graz_station_network.py
+      - research/ige_cmip6/test_p6_2b_graz_station_network.py
+      - research/ige_cmip6/p6_2b_geosphere_daily_solar_sources.py
+      - research/ige_cmip6/test_p6_2b_daily_solar_sources.py
+      - docs/IGE_P6_2B_GRAZ_DONOR_SOLAR_QC_PROTOCOL.md
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  geosphere-hourly-donor-network:
+    name: Graz candidate donor stations and source-verified solar q21
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Scientific source/QC unit contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p6_2b_graz_station_network.py' -v
+      - name: Live station metadata, 10 historical months, six-donor monthly archive
+        run: python research/ige_cmip6/p6_2b_graz_station_network.py --out outputs/p6_2b_graz_network
+      - name: Preserve station inventory, provider source and hashes even when a live source fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p6-2b-graz-station-network-solar-q21-recon
+          path: outputs/p6_2b_graz_network/
+          retention-days: 30
+          if-no-files-found: warn
+
+  geosphere-daily-monthly-solar:
+    name: Direct daily and monthly solar observation parameter/source catalogue
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verified solar only, no sunshine-as-GHI scientific contract
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p6_2b_daily_solar_sources.py' -v
+      - name: Read GeoSphere official daily and monthly solar metadata and source probes
+        run: python research/ige_cmip6/p6_2b_geosphere_daily_solar_sources.py --out outputs/p6_2b_daily_solar
+      - name: Preserve daily/monthly candidate parameters, original source and unit provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p6-2b-graz-daily-monthly-global-solar-source-recon
+          path: outputs/p6_2b_daily_solar/
+          retention-days: 30
+          if-no-files-found: warn
