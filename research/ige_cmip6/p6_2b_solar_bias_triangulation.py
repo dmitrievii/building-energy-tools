@@ -115,7 +115,8 @@ def parse_power(doc):
             "ALLSKY_SFC_SW_DWN",{}).get("units")
     # POWER solar monthly API reports monthly average of *daily* kWh/m²/d.
     # No unit guessing: accept explicit documented unit spelling only.
-    if units is None or "kWh" not in str(units):
+    if units is None or not any(t in str(units).lower().replace(" ","")
+                                for t in ("kwh/m", "kw-hr/m")) or "day" not in str(units).lower():
         raise ValueError(f"NASA POWER solar monthly unit missing/changed: {units}")
     raw=doc.get("properties",{}).get("parameter",{}).get("ALLSKY_SFC_SW_DWN")
     if not isinstance(raw,dict):raise ValueError("NASA POWER missing output")
