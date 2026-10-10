@@ -14,6 +14,7 @@ import hashlib
 import json
 from pathlib import Path
 import statistics
+from threading import Lock
 import time
 from urllib.parse import urlencode
 from xml.etree import ElementTree as ET
@@ -36,6 +37,8 @@ def model_variables(model):
     missing = SOURCE_EXCEPTIONS.get(model, ())
     if model not in MODELS: raise ValueError('Unknown research GCM')
     return tuple(v for v in SPECS if v not in missing)
+
+_decode_lock = Lock()  # Protect non-thread-safe native netCDF4/HDF5 decoder only.
 
 SMOKE = {'historical-2014':('historical',2014,2014),
          'ssp245-2050':('ssp245',2050,2050)}
@@ -78,7 +81,10 @@ def nasa_fetch(model,scenario,year,variable,path):
         'time_end':f'{year}-12-31T12:00:00Z',
         'accept':'netcdf3','addLatLon':'true'})
     raw=download(url)
-    payload=decode(raw,variable,year)
+    # Concurrent HTTP is safe, but native netCDF4/HDF5 readers are not always thread safe.
+    # Serialize every Dataset/CF-time read; preserve 3 concurrent network requests.
+    with _decode_lock:
+        payload=decode(raw,variable,year)
     provenance={'model':model,'member':MEMBER,'scenario':scenario,'year':year,
                 'variable':variable,'url':url,'sha256':hashlib.sha256(raw).hexdigest(),
                 'bytes':len(raw),'calendar':payload['calendar'],
