@@ -1,0 +1,24 @@
+name: IGE GeoSphere calibrated GHI observational census
+on:
+  push:
+    branches: [research/ige-nex-gddp-rsds-20261010]
+    paths: [research/ige_cmip6/ground_ghi_probe.py, .github/workflows/ige-geosphere-ground-ghi.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  observed-ghi:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch calibrated Austrian observed global radiation
+        run: python research/ige_cmip6/ground_ghi_probe.py
+      - name: Preserve raw observational evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-geosphere-observed-global-radiation-graz
+          path: outputs/ground_ghi/
+          retention-days: 14
+          if-no-files-found: warn
