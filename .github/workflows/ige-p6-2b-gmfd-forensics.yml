@@ -1,0 +1,47 @@
+name: IGE P6.2B direct GMFD and native NASA solar source forensic
+on:
+  push:
+    branches:
+      - research/ige-p6-2b-gmfd-direct-root-cause-20261010
+    paths:
+      - .github/workflows/ige-p6-2b-gmfd-forensics.yml
+      - research/ige_cmip6/p6_2b_gmfd_direct_source_forensics.py
+      - research/ige_cmip6/test_p6_2b_gmfd_direct_source.py
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  direct-original-reference:
+    name: Check NASA GMFD-for-GDDPv2 source versus NCAR archived dswrf and original NASA rsds 2005
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install only scientific NetCDF reader and PDF hyperlink extractor
+        run: python -m pip install netCDF4 numpy pypdf
+      - name: Guard raw NASA daily file equality and do not conflate NCAR archive with processed GMFD
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p6_2b_gmfd_direct_source.py' -v
+      - name: Retrieve previously quality-accepted ACCESS-CM2 historical 1995-2014 source data
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38067931031
+          github-token: ${{ github.token }}
+          name: ige-p6-access-historical-1995-2014
+          path: inputs/access
+      - name: Probe NASA v2 original GMFD hyperlink, independent archival NCAR forcing and NASA native rsds
+        run: |
+          python research/ige_cmip6/p6_2b_gmfd_direct_source_forensics.py \
+            --original inputs/access \
+            --out outputs/p6_2b_gmfd_forensics
+      - name: Upload source/evidence even if a provider blocks the test
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p6-2b-direct-gmfd-original-nasa-v2-solar-forensic-report
+          path: outputs/p6_2b_gmfd_forensics/
+          retention-days: 30
+          if-no-files-found: warn
