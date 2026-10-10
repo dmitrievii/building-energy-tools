@@ -125,6 +125,12 @@ def parse_power(doc):
         if len(k)!=6 or not k.isdigit():continue
         year,month=int(k[:4]),int(k[4:])
         if not START<=year<=END:continue
+        # POWER monthly endpoint also returns YYYY13 = annual climatology.
+        # It is NOT a thirteenth month: never pass it to monthrange() or
+        # include it in the 120 real-calendar-month comparison.
+        if month==13:continue
+        if not 1<=month<=12:
+            raise ValueError(f"NASA POWER unexpected non-calendar month {month}")
         if (year,month) in entries:raise ValueError("Duplicate NASA POWER month")
         daily=float(val)
         if not math.isfinite(daily) or not 0<=daily<16:raise ValueError("Invalid POWER daily mean")
