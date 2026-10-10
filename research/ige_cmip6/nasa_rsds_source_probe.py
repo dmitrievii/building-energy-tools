@@ -34,7 +34,7 @@ for model,member,scenario,year in models:
     except Exception as exc:
       print("CATALOG_FAIL",scenario,year,type(exc).__name__,str(exc),flush=True)
       rows.append({"scenario":scenario,"year":year,"kind":"catalog","request_url":url,"error":str(exc)})
-    basename=f"rsds_day_{model}_{scenario}_{member}_gn_{year}.nc"
+    basename=f"rsds_day_{model}_{scenario}_{member}_gn_{year}_v2.0.nc"
     path=f"/thredds/ncss/grid/AMES/NEX/GDDP-CMIP6/{model}/{scenario}/{member}/rsds/{basename}"
     query=urllib.parse.urlencode({"var":"rsds","north":"47.11","south":"46.88","west":"15.33","east":"15.59",
         "time_start":f"{year}-06-01T12:00:00Z","time_end":f"{year}-06-05T12:00:00Z","accept":"netcdf3","addLatLon":"true"})
