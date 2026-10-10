@@ -30,6 +30,21 @@ class ExternalSolarContracts(unittest.TestCase):
         self.assertAlmostEqual(p[2014,2],84.)
         self.assertAlmostEqual(statistics(p)["mean_annual_kwh_m2"],3*365.2)
 
+    def test_power_year13_is_annual_record_not_extra_month(self):
+        data=power_fixture()
+        values=data["properties"]["parameter"]["ALLSKY_SFC_SW_DWN"]
+        for year in range(2005,2015):
+            values[f"{year}13"]=3.0
+        monthly,unit=parse_power(data)
+        self.assertEqual(len(monthly),120)
+        self.assertAlmostEqual(monthly[2012,2],87.)
+
+    def test_power_invalid_month14_is_rejected(self):
+        data=power_fixture()
+        data["properties"]["parameter"]["ALLSKY_SFC_SW_DWN"]["201414"]=3.0
+        with self.assertRaisesRegex(ValueError,"unexpected non-calendar month"):
+            parse_power(data)
+
     def test_power_unit_unknown_fails_without_reinterpretation(self):
         with self.assertRaisesRegex(ValueError,"unit missing/changed"):
             parse_power(power_fixture("MJ/m^2/day"))
