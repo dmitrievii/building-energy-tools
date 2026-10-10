@@ -1,0 +1,100 @@
+name: IGE P6.1 seven GCM synchronized daily climate (35 windows)
+on:
+  push:
+    branches:
+      - research/ige-p6-seven-gcm-joint-daily-20261010
+    paths:
+      - .github/workflows/ige-p6-seven-gcm-daily.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  source-smoke:
+    name: smoke ${{ matrix.model }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        model: [CanESM5, EC-Earth3, GFDL-ESM4, IPSL-CM6A-LR, MPI-ESM1-2-HR, MRI-ESM2-0, NorESM2-MM]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install NASA NetCDF dependencies
+        run: python -m pip install --disable-pip-version-check 'numpy>=1.24,<3' 'netCDF4>=1.6,<2'
+      - name: Offline contracts for joint calendar and P5 raw GHI reference
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p6_*.py' -v
+      - name: NASA joint-field pilot for two individual model years
+        run: |
+          python research/ige_cmip6/p6_seven_daily.py --model "${{ matrix.model }}" --window historical-2014 --smoke --workers 2
+          python research/ige_cmip6/p6_seven_daily.py --model "${{ matrix.model }}" --window ssp245-2050 --smoke --workers 2
+      - name: Preserve live-source smoke QA including on failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p6-seven-smoke-${{ matrix.model }}
+          path: outputs/p6_seven_daily/${{ matrix.model }}/
+          retention-days: 14
+          if-no-files-found: warn
+
+  full-period:
+    name: full ${{ matrix.model }} ${{ matrix.window }}
+    runs-on: ubuntu-latest
+    needs: source-smoke
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        model: [CanESM5, EC-Earth3, GFDL-ESM4, IPSL-CM6A-LR, MPI-ESM1-2-HR, MRI-ESM2-0, NorESM2-MM]
+        window: [historical-1995-2014, ssp245-2040-2059, ssp245-2080-2099, ssp585-2040-2059, ssp585-2080-2099]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install NASA NetCDF dependencies
+        run: python -m pip install --disable-pip-version-check 'numpy>=1.24,<3' 'netCDF4>=1.6,<2'
+      - name: Strict science contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p6_*.py' -v
+      - name: Fetch 180 daily NASA NetCDF subsets and compare 12 raw GHI climatology months
+        run: python research/ige_cmip6/p6_seven_daily.py --model "${{ matrix.model }}" --window "${{ matrix.window }}" --workers 3
+      - name: Upload each individual GCM/window output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p6-${{ matrix.model }}-${{ matrix.window }}
+          path: outputs/p6_seven_daily/${{ matrix.model }}/${{ matrix.window }}/
+          retention-days: 14
+          if-no-files-found: warn
+
+  scientific-audit:
+    name: Seven-GCM 6300-source 420-P5-month closeout
+    needs: full-period
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download exactly 35 model/window research artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ige-p6-*-20*
+          path: p6_downloaded
+          merge-multiple: false
+      - name: Independent cross-GCM audit of dates, hashes, sources and monthly P5 GHI
+        run: python research/ige_cmip6/p6_seven_daily_audit.py --root p6_downloaded --output outputs/p6_seven_closeout.json
+      - name: Preserve cross-model scientific closeout, including failure diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p6-seven-gcm-700-year-scientific-closeout
+          path: outputs/p6_seven_closeout.json
+          retention-days: 30
+          if-no-files-found: warn
