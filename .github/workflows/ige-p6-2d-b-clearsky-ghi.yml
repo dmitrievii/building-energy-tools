@@ -1,0 +1,74 @@
+name: IGE P6.2D-B FAO56 daily clear-sky-index M3 vs original M0 M1 M2
+on:
+  push:
+    branches:
+      - research/ige-p6-2d-b-clearsky-index-20261010
+    paths:
+      - .github/workflows/ige-p6-2d-b-clearsky-ghi.yml
+      - research/ige_cmip6/p6_2d_b_daily_clearsky_benchmark.py
+      - research/ige_cmip6/test_p6_2d_b_daily_clearsky.py
+      - docs/IGE_P6_2D_B_CLEARSKY_GHI_PROTOCOL.md
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  daily-clearsky-holdout:
+    name: Scientific daily M3 solar physics plus 8-GCM M0 M1 M2 comparison
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: FAO-56 clear-sky physics, native calendars, holdout and climate-signal unit contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p6_2d_b_daily_clearsky.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p6_2d_solar_methods_benchmark.py' -v
+      - name: Retrieve official QC accepted Graz solar 1995-2014
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38084157993
+          github-token: ${{ github.token }}
+          name: ige-p6-2b-graz-1995-2014-verified-solar-eight-gcm-closeout
+          path: inputs/station
+      - name: Retrieve original accepted historical ACCESS-CM2 P6.1 source
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38067931031
+          github-token: ${{ github.token }}
+          name: ige-p6-access-historical-1995-2014
+          path: inputs/access/ige-p6-access-historical-1995-2014
+      - name: Retrieve seven original accepted historical NEX-GDDP sources
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          pattern: ige-p6-*-historical-1995-2014
+          path: inputs/seven_original
+          merge-multiple: false
+      - name: Retrieve three accepted original GCM historical repairs
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38077903914
+          github-token: ${{ github.token }}
+          pattern: ige-p6-*-historical-1995-2014
+          path: inputs/seven_repaired
+          merge-multiple: false
+      - name: Verify original native model calendars and compute physically bounded daily M3
+        run: |
+          python research/ige_cmip6/p6_2d_b_daily_clearsky_benchmark.py \
+            --station-csv inputs/station/station30_1995_2014_daily_solar_qc.csv \
+            --access inputs/access \
+            --original inputs/seven_original \
+            --repaired inputs/seven_repaired \
+            --out outputs/ige_p6_2d_b_clearsky_ghi
+      - name: Retain all 8-model original-unit and physical-bound audits
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p6-2d-b-eight-gcm-clear-sky-index-physical-holdout
+          path: outputs/ige_p6_2d_b_clearsky_ghi/
+          retention-days: 30
+          if-no-files-found: warn
