@@ -58,14 +58,16 @@ def validate_value(variable, value):
         raise ValueError(f'{variable}: invalid daily value {value!r}')
     return v
 
-def strict_join(payloads, scenario, year):
+def strict_join(payloads, scenario, year, allowed_missing=()):
     """Join by identical dated CF time axis and nearest-point grid; reject mismatches."""
-    if set(payloads) != set(SPECS):
-        raise ValueError(f'Nine variables required: missing={set(SPECS)-set(payloads)}')
+    missing = frozenset(allowed_missing)
+    if not missing <= set(SPECS) or set(payloads) != set(SPECS)-missing:
+        raise ValueError(f'Nine variables required unless explicit source exception: missing={set(SPECS)-set(payloads)}, permitted={set(missing)}')
+    variables = tuple(v for v in SPECS if v not in missing)
     dates = None
     series = {}
     coords, calendars = set(), set()
-    for variable in SPECS:
+    for variable in variables:
         p = payloads[variable]
         validate_unit(variable, p['unit'])
         days = [tuple(map(int, d)) for d in p['days']]
@@ -101,7 +103,8 @@ def strict_join(payloads, scenario, year):
     for i,(yy,mm,dd) in enumerate(dates):
         r={'scenario':scenario,'year':yy,'month':mm,'day':dd,
            'date':f'{yy:04d}-{mm:02d}-{dd:02d}','model':MODEL,'member':MEMBER}
-        r.update({v:series[v][i] for v in SPECS})
+        # The blank represents an unavailable source variable, not observed zero or an estimate.
+        r.update({v:series[v][i] if v in series else '' for v in SPECS})
         if r['tasmin']>r['tas']+.25 or r['tas']>r['tasmax']+.25:
             raise ValueError(f'{r["date"]}: tas lies outside daily extrema')
         for v in ('tas','tasmin','tasmax'):r[v+'_c']=r[v]-273.15
@@ -112,7 +115,8 @@ def strict_join(payloads, scenario, year):
     lat,lon=next(iter(coords))
     return rows, {'scenario':scenario,'year':year,'calendar':calendar,'days':len(rows),
                   'grid_lat':lat,'grid_lon':lon,
-                  'first_date':rows[0]['date'],'last_date':rows[-1]['date']}
+                  'first_date':rows[0]['date'],'last_date':rows[-1]['date'],
+                  'available_variables':list(variables),'missing_variables':sorted(missing)}
 
 def download(url, max_bytes=8000000):
     errors=[]
