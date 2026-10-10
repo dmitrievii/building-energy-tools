@@ -21,6 +21,15 @@ for model,member,scenario,year in models:
     try:
       item=request(url)
       print("CATALOG_OK",scenario,year,item["status"],item["content_type"],item["bytes"],item["sample"][:100],flush=True)
+      import xml.etree.ElementTree as ET
+      with urllib.request.urlopen(urllib.request.Request(url,headers={"User-Agent":"IGE-Climate-Engine-Independent-Research/0.3"}),timeout=40) as res:
+          root=ET.fromstring(res.read())
+      names=[(x.attrib.get("name"),x.attrib.get("urlPath")) for x in root.iter() if x.tag.endswith("dataset") and (str(year) in x.attrib.get("name","") or x.attrib.get("urlPath"))]
+      service=[x.attrib for x in root.iter() if x.tag.endswith("service")]
+      print("DATASETS",scenario,year,names[:8],flush=True)
+      print("SERVICES",scenario,year,service[:12],flush=True)
+      item["datasets"]=names[:8]
+      item["services"]=service[:12]
       rows.append({"scenario":scenario,"year":year,"kind":"catalog","request_url":url,**item})
     except Exception as exc:
       print("CATALOG_FAIL",scenario,year,type(exc).__name__,str(exc),flush=True)
