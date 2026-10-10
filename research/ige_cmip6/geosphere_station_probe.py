@@ -7,7 +7,7 @@ out=pathlib.Path("geosphere_bridge_probe");out.mkdir(exist_ok=True)
 api="https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1m"
 for name,url in [
  ("metadata",api+"/metadata"),
- ("station30",api+"?"+urllib.parse.urlencode({"parameters":"tl_mittel","station_ids":"30","start":"1991-01-01","end":"2020-12-31","output_format":"json"}))
+ ("station30",api+"?"+urllib.parse.urlencode({"parameters":"tl_mittel,rr","station_ids":"30","start":"1991-01-01","end":"2020-12-31","output_format":"geojson"}))
 ]:
  try:
   request=urllib.request.Request(url,headers={"User-Agent":"IGE-Independent-Climate-Engine-Research/0.2.3","Accept":"application/json"})
