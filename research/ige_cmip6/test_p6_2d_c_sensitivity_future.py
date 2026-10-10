@@ -1,6 +1,6 @@
 """P6.2D-C sensitivity and future-change science contracts; no source mutation."""
 from __future__ import annotations
-import tempfile,unittest
+import tempfile,unittest,calendar
 from pathlib import Path
 from p6_2d_c_sensitivity_future_signals import (
     ALTITUDES,CAPS,BLOCKS,FUTURES,REPAIRED_FUTURES,
@@ -17,7 +17,7 @@ def synthetic():
     for year in range(1995,2015):
         for month in range(1,13):
             ra,rso=solar_geometry(month,15,year,46.875,366.)
-            for day in (4,15,25):
+            for day in range(1,calendar.monthrange(year,month)[1]+1):
                 geom=solar_geometry(month,day,year,46.875,366.)
                 raw=.64*geom[1]
                 record={"year":year,"month":month,"day":day,
@@ -74,7 +74,7 @@ class FutureSignalContracts(unittest.TestCase):
         target=[x for x in arr if x["year"]>=2005]
         predicted=correct(target,example_rule(),1.05,
                           range(2005,2015),write_daily=True)
-        self.assertEqual(len(predicted),360)
+        self.assertEqual(len(predicted),3652)
         for r in predicted:
             self.assertGreaterEqual(r["corrected_kwh_m2_day"],0)
             self.assertLessEqual(r["corrected_kwh_m2_day"],
