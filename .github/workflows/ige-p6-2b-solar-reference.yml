@@ -1,0 +1,114 @@
+name: IGE P6.2B 1995-2014 solar reference closure and eight-GCM historical benchmark
+on:
+  push:
+    branches:
+      - research/ige-p6-2b-solar-reference-closure-20261010
+    paths:
+      - .github/workflows/ige-p6-2b-solar-reference.yml
+      - research/ige_cmip6/p6_2b_solar_daily_reference.py
+      - research/ige_cmip6/p6_2b_solar_reference_audit.py
+      - research/ige_cmip6/test_p6_2b_solar_reference.py
+      - docs/IGE_P6_2B_SOLAR_REFERENCE_CLOSURE_PROTOCOL.md
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  four-daily-source-chunks:
+    name: GeoSphere solar cglo_j ${{ matrix.first }}–${{ matrix.last }} q21
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        include:
+          - {first: 1995, last: 1999}
+          - {first: 2000, last: 2004}
+          - {first: 2005, last: 2009}
+          - {first: 2010, last: 2014}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Physical units, MOZ day and source quality contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p6_2b_solar_reference.py' -v
+      - name: Retrieve exactly five complete years of daily calibrated solar radiation with flags
+        run: |
+          python research/ige_cmip6/p6_2b_solar_daily_reference.py \
+            --first ${{ matrix.first }} --last ${{ matrix.last }} --out-root outputs/p6_2b_solar_chunks
+      - name: Retain raw unmodified GeoSphere response, daily QC and original SHA-256
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p6-2b-solar-${{ matrix.first }}-${{ matrix.last }}
+          path: outputs/p6_2b_solar_chunks/${{ matrix.first }}-${{ matrix.last }}/
+          retention-days: 30
+          if-no-files-found: warn
+
+  independent-solar-closure:
+    name: Scientific 7305-day solar QC, 240-month official closure and 8-GCM GHI benchmark
+    needs: four-daily-source-chunks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check research unit and source-integrity tests independently
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p6_2b_solar_reference.py' -v
+      - name: Retrieve all four accepted five-year station solar chunks
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ige-p6-2b-solar-*
+          path: inputs/solar_chunks_named
+          merge-multiple: false
+      - name: Retrieve P6.1 original accepted ACCESS-CM2 historical period
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38067931031
+          github-token: ${{ github.token }}
+          name: ige-p6-access-historical-1995-2014
+          path: inputs/access/ige-p6-access-historical-1995-2014
+      - name: Retrieve P6.1 seven-GCM original historical period artifacts
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          pattern: ige-p6-*-historical-1995-2014
+          path: inputs/seven_original
+          merge-multiple: false
+      - name: Retrieve P6.1 repaired historical artifacts, excluding previously failed sources
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38077903914
+          github-token: ${{ github.token }}
+          pattern: ige-p6-*-historical-1995-2014
+          path: inputs/seven_repaired
+          merge-multiple: false
+      - name: Select four immutable five-year solar source artifacts
+        run: |
+          mkdir -p inputs/solar_chunks
+          for period in 1995-1999 2000-2004 2005-2009 2010-2014; do
+            test -f "inputs/solar_chunks_named/ige-p6-2b-solar-$period/source_quality_report.json"
+            ln -s "../solar_chunks_named/ige-p6-2b-solar-$period" "inputs/solar_chunks/$period"
+          done
+      - name: Verify station solar, official monthly source, eight P6.1 GCM hashes and climate distribution
+        run: |
+          python research/ige_cmip6/p6_2b_solar_reference_audit.py \
+            --chunks inputs/solar_chunks \
+            --access inputs/access \
+            --original inputs/seven_original \
+            --repaired inputs/seven_repaired \
+            --out outputs/p6_2b_solar_reference_audit
+      - name: Preserve independent 20-year scientific solar closure and original official monthly source
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p6-2b-graz-1995-2014-verified-solar-eight-gcm-closeout
+          path: outputs/p6_2b_solar_reference_audit/
+          retention-days: 30
+          if-no-files-found: warn
