@@ -4,6 +4,9 @@ on:
     branches: [research/ige-p6-2b-hourly-observations-20261010]
     paths:
       - .github/workflows/ige-p6-2b-hourly-historical.yml
+      - research/ige_cmip6/p6_2b_hourly_observations.py
+      - research/ige_cmip6/p6_2b_hourly_archive_audit.py
+      - research/ige_cmip6/test_p6_2b_hourly.py
   workflow_dispatch:
 permissions:
   contents: read
