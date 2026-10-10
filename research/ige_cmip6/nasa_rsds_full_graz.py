@@ -191,16 +191,26 @@ def main():
           "began_utc":dt.datetime.now(dt.timezone.utc).isoformat(),"errors":[]}
     try:
         catalogs={scenario:catalog(scenario) for scenario in ("historical","ssp245","ssp585")}
+        # NASA THREDDS annual NetCDF subset service is slower than object storage.
+        # Bound concurrent requests to four; wait for every year and fail closed.
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        jobs=[]
         for group,(start,end) in PERIODS.items():
             scenario="historical" if group=="historical" else group.split("-")[0]
             for yr in range(start,end+1):
                 if yr not in catalogs[scenario]:raise RuntimeError(f"Missing year in catalog {scenario}/{yr}")
-                record=year_data(scenario,yr,catalogs[scenario][yr])
+                jobs.append((group,scenario,yr,catalogs[scenario][yr]))
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            submitted={pool.submit(year_data,sc,yr,k):(group,sc,yr) for group,sc,yr,k in jobs}
+            for fut in as_completed(submitted):
+                group,sc,yr=submitted[fut]
+                record=fut.result()
                 YEARROWS.extend(record)
                 first=record[0]
                 print("YEAR",group,yr,"days",sum(x["days"] for x in record),
                      "jan",round(first["monthly_mean_wm2"],2),
                      "grid",first["grid_lat"],first["grid_lon"],flush=True)
+        YEARROWS.sort(key=lambda r:(r["scenario"],r["year"],r["month"]))
         if len(YEARROWS)!=1200:raise RuntimeError(f"Expected 100 years * 12, got {len(YEARROWS)}")
         summary,anomalies=summarize(YEARROWS)
         full["status"]="PASS"
