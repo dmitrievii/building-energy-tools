@@ -129,10 +129,15 @@ def year_months(rows,values=None):
 
 def model_original_future(model,window,access_future,original_future,repaired_future):
     if window not in FUTURES:raise ValueError("Unsupported future source period")
-    label=f"ige-p6-{model}-{window}"
-    if model=="ACCESS-CM2":folder=access_future/label
-    elif (model,window) in REPAIRED_FUTURES:folder=repaired_future/label
-    else:folder=original_future/label
+    # Historical ACCESS-CM2 source and original future workflow artifacts
+    # deliberately use the archive slug "access" (not "ACCESS-CM2").
+    # Identity is still verified from signed-inventory QA/provenance metadata.
+    if model=="ACCESS-CM2":
+        folder=access_future/f"ige-p6-access-{window}"
+    else:
+        label=f"ige-p6-{model}-{window}"
+        folder=(repaired_future if (model,window) in REPAIRED_FUTURES
+                else original_future)/label
     qa,prov,sha,_=original_quality(folder,model,window)
     native_cal=qa["calendar"]
     if native_cal not in ("gregorian","noleap"):
