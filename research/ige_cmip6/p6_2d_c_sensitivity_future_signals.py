@@ -233,6 +233,15 @@ def future_signal_scores(model,window,historical,future):
         r["exceeds_10pp_signal_screen"]=abs(r["shift_from_raw_nex_pp"])>10
     return rows
 
+def write_union_csv(path,records):
+    """Losslessly preserve metadata from historical and future P6.1 products."""
+    columns=list(dict.fromkeys(key for r in records for key in r))
+    if not records:raise ValueError("No source records")
+    with path.open("w",newline="",encoding="utf8") as f:
+        w=csv.DictWriter(f,fieldnames=columns,extrasaction="raise")
+        w.writeheader();w.writerows(records)
+    return checksum(path)
+
 def run(station_csv,access_historical,original_historical,repaired_historical,
         access_future,original_future,repaired_future,out):
     out.mkdir(parents=True,exist_ok=True)
@@ -336,7 +345,7 @@ def run(station_csv,access_historical,original_historical,repaired_historical,
         "p6_2d_c_source_original_sha_manifest.csv":input_manifest,
         "p6_2d_c_historical_baseline_holdout_check.csv":calibration_checks,
     }
-    hashes={key:csvwrite(out/key,data) for key,data in csvsets.items()}
+    hashes={key:(write_union_csv(out/key,data) if key=="p6_2d_c_source_original_sha_manifest.csv" else csvwrite(out/key,data)) for key,data in csvsets.items()}
     screen5=[r for r in future_signals if
              r["method"]!=METHODS[0] and r["exceeds_5pp_signal_screen"]]
     screen10=[r for r in future_signals if
