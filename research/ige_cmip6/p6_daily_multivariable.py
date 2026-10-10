@@ -54,6 +54,11 @@ def validate_unit(variable, unit):
 def validate_value(variable, value):
     v = float(value)
     lo,hi = SPECS[variable][1:]
+    # NASA NEX-GDDP-CMIP6 can contain a small raw hurs overshoot above 100%.
+    # Preserve source fidelity, never silently clip the raw data; flag in annual QA.
+    # Values beyond 105% remain an error and require independent investigation.
+    if variable == 'hurs' and math.isfinite(v) and 100.0 < v <= 105.0:
+        return v
     if not math.isfinite(v) or not lo <= v <= hi:
         raise ValueError(f'{variable}: invalid daily value {value!r}')
     return v
@@ -113,7 +118,11 @@ def strict_join(payloads, scenario, year, allowed_missing=()):
         r['rlds_kwh_m2_day']=r['rlds']*.024
         rows.append(r)
     lat,lon=next(iter(coords))
+    hurs_exceedances = [r['hurs'] for r in rows if isinstance(r['hurs'],(int,float)) and r['hurs']>100.0]
     return rows, {'scenario':scenario,'year':year,'calendar':calendar,'days':len(rows),
+                  'hurs_above_100_count':len(hurs_exceedances),
+                  'hurs_above_100_max':max(hurs_exceedances) if hurs_exceedances else None,
+                  'raw_hurs_requires_correction':bool(hurs_exceedances),
                   'grid_lat':lat,'grid_lon':lon,
                   'first_date':rows[0]['date'],'last_date':rows[-1]['date'],
                   'available_variables':list(variables),'missing_variables':sorted(missing)}
