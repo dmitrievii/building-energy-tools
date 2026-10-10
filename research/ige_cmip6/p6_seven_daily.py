@@ -30,6 +30,13 @@ from p6_access_full_period import (
 REFERENCE = Path(__file__).with_name('p6_seven_gcm_p5_ghi_reference.json')
 MODELS = ('CanESM5','EC-Earth3','GFDL-ESM4','IPSL-CM6A-LR',
           'MPI-ESM1-2-HR','MRI-ESM2-0','NorESM2-MM')
+SOURCE_EXCEPTIONS = {'IPSL-CM6A-LR': ('huss',)}
+
+def model_variables(model):
+    missing = SOURCE_EXCEPTIONS.get(model, ())
+    if model not in MODELS: raise ValueError('Unknown research GCM')
+    return tuple(v for v in SPECS if v not in missing)
+
 SMOKE = {'historical-2014':('historical',2014,2014),
          'ssp245-2050':('ssp245',2050,2050)}
 
@@ -87,17 +94,20 @@ def execute(model,window,workers,root,smoke=False):
     years=tuple(range(first,last+1))
     out=root/model/window
     out.mkdir(parents=True,exist_ok=True)
+    variables = model_variables(model)
+    missing = SOURCE_EXCEPTIONS.get(model, ())
     provenance={'status':'IN_PROGRESS','stage':'P6.1','model':model,'member':MEMBER,
                 'window':window,'scenario':scenario,'start_year':first,
-                'end_year':last,'variables':list(SPECS),'site':SITE,
+                'end_year':last,'variables':list(variables),'missing_source_variables':list(missing),
+                'site':SITE,
                 'subset_provenance':[],'research_only':True}
     t0=time.monotonic()
     try:
-        catalogs={v:nasa_catalog(model,scenario,v) for v in SPECS}
-        jobs=[(model,scenario,y,v,catalogs[v][y]) for y in years for v in SPECS
+        catalogs={v:nasa_catalog(model,scenario,v) for v in variables}
+        jobs=[(model,scenario,y,v,catalogs[v][y]) for y in years for v in variables
               if y in catalogs[v]]
-        if len(jobs)!=len(years)*len(SPECS):
-            raise ValueError(f'Incomplete catalogs: requested {len(years)*9}, found {len(jobs)}')
+        if len(jobs)!=len(years)*len(variables):
+            raise ValueError(f'Incomplete catalogs: requested {len(years)*len(variables)}, found {len(jobs)}')
         result={}
         with ThreadPoolExecutor(max_workers=workers) as pool:
             pending={pool.submit(nasa_fetch,*job):(job[2],job[3]) for job in jobs}
@@ -110,7 +120,8 @@ def execute(model,window,workers,root,smoke=False):
                 print('SOURCE',model,scenario,key[0],key[1],prov['days'],prov['sha256'][:12],flush=True)
         rows=[];yearqa=[];coords=set();calendars=set()
         for y in years:
-            joined,qa=strict_join({v:result[y,v] for v in SPECS},scenario,y)
+            joined,qa=strict_join({v:result[y,v] for v in variables},scenario,y,
+                                  allowed_missing=missing)
             # strict_join is the validated ACCESS-CM2 mathematical joining contract;
             # only its output model label is rebound to this single immutable job model.
             if any(r['model']!=BASE_MODEL for r in joined):
@@ -145,6 +156,7 @@ def execute(model,window,workers,root,smoke=False):
             'annual_rows':len(annual),'climatology_rows':len(climo),
             'grid':list(coords)[0],'calendar':list(calendars)[0],
             'yearly_qa':yearqa,'p5_ghi_regression':p5check,
+            'available_source_variables':list(variables),'missing_source_variables':list(missing),
             'csv_sha256':checksums}
         (out/'quality_report.json').write_text(json.dumps(qa,indent=2)+'\n',encoding='utf8')
         provenance.update({'status':'PASS','source_count':len(result),
