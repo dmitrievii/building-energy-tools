@@ -1,0 +1,75 @@
+name: IGE CMIP6 live source probe (isolated)
+on:
+  push:
+    branches:
+      - research/ige-cmip6-source-probe-20261010
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  public-cckp-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Probe real anonymous World Bank CCKP S3 catalogue
+        shell: bash
+        run: |
+          python - <<'PY'
+          import urllib.parse, urllib.request, xml.etree.ElementTree as ET
+          import json, datetime, pathlib, sys, traceback
+          BASE = "https://wbg-cckp.s3.amazonaws.com/"
+          ROOT = "data/cmip6-x0.25/"
+          targets = [
+            ("tas", "ensemble-all-historical"),
+            ("tas", "ensemble-all-ssp585"),
+            ("tas", "ensemble-all-ssp245"),
+            ("pr", "ensemble-all-historical"),
+            ("pr", "ensemble-all-ssp585"),
+          ]
+          results=[]
+          errors=[]
+          for variable,model in targets:
+              prefix = ROOT + variable + "/" + model + "/"
+              url = BASE + "?list-type=2&max-keys=1000&prefix=" + urllib.parse.quote(prefix, safe="")
+              try:
+                  req=urllib.request.Request(url,headers={"User-Agent":"IGE-Climate-Engine-Research/0.2.1"})
+                  with urllib.request.urlopen(req,timeout=35) as response:
+                      raw=response.read(3000000)
+                      status=response.status
+                  root=ET.fromstring(raw)
+                  keys=[]
+                  for item in root.iter():
+                      if item.tag.endswith("Contents"):
+                          key=size=None
+                          for node in item:
+                              if node.tag.endswith("Key"): key=node.text
+                              if node.tag.endswith("Size"): size=int(node.text or 0)
+                          if key and key.endswith(".nc"):
+                              keys.append({"key":key,"bytes":size})
+                  monthly=[item for item in keys if item["key"].split("/")[-1].startswith("timeseries-") and "-monthly-" in item["key"]]
+                  out={"variable":variable,"model":model,"prefix":prefix,"http_status":status,
+                       "netcdf_objects":len(keys),"monthly_timeseries":monthly[:12],
+                       "sample_names":keys[:6]}
+                  results.append(out)
+                  print("SOURCE",json.dumps(out,ensure_ascii=False))
+                  if len(keys)==0: errors.append("EMPTY: "+prefix)
+              except Exception as exc:
+                  msg=type(exc).__name__+": "+str(exc)
+                  print("ERROR",prefix,msg,flush=True)
+                  errors.append(prefix+" "+msg)
+          report={"source":"World Bank CCKP official public anonymous S3",
+                  "date_utc":datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                  "bucket":"wbg-cckp","prefix_root":ROOT,"results":results,"errors":errors,
+                  "source_authenticated":False}
+          pathlib.Path("ige_cckp_live_probe.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
+          print("REPORT",json.dumps(report,ensure_ascii=False))
+          if errors:sys.exit(1)
+          PY
+      - name: Attach live provider report even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-cckp-live-source-probe
+          path: ige_cckp_live_probe.json
+          if-no-files-found: warn
+          retention-days: 7
