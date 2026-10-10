@@ -74,7 +74,9 @@ def summarize_daily(rows, window, scenario, years):
             'pr_mm': sum(r['pr_mm_day'] for r in rr),
             'tas_mean_c': statistics.fmean(r['tas_c'] for r in rr),
             'hurs_mean_pct': statistics.fmean(r['hurs'] for r in rr),
-            'huss_mean_kg_kg': statistics.fmean(r['huss'] for r in rr),
+            'huss_mean_kg_kg': (statistics.fmean(r['huss'] for r in rr)
+                                if all(isinstance(r['huss'],(int,float)) for r in rr)
+                                else ''),
             'wind_mean_m_s': statistics.fmean(r['sfcWind'] for r in rr),
         })
     annual = []
