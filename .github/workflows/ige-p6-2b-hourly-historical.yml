@@ -1,0 +1,111 @@
+name: IGE P6.2B GeoSphere 1995-2014 hourly station quality audit
+on:
+  push:
+    branches: [research/ige-p6-2b-hourly-observations-20261010]
+    paths:
+      - .github/workflows/ige-p6-2b-hourly-historical.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  historical-boundary-smoke:
+    name: hourly UTC station 30 boundary year ${{ matrix.year }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        year: [1995, 2014]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Offline hourly UTC/q21 contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p6_2b_hourly.py' -v
+      - name: Retrieve and preserve historical station data with explicit QC
+        run: python research/ige_cmip6/p6_2b_hourly_observations.py --year ${{ matrix.year }} --output-root outputs/p6_2b_hourly
+      - name: Save original provider response, hourly QC and monthly coverage, even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p6-2b-station30-${{ matrix.year }}
+          path: outputs/p6_2b_hourly/${{ matrix.year }}/
+          retention-days: 30
+          if-no-files-found: warn
+
+  historical-middle-years:
+    name: hourly UTC station 30 year ${{ matrix.year }}
+    runs-on: ubuntu-latest
+    needs: historical-boundary-smoke
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        year: [1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Offline station QC data contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p6_2b_hourly.py' -v
+      - name: Retrieve one immutable annual source, metadata, hourly and monthly QA
+        run: python research/ige_cmip6/p6_2b_hourly_observations.py --year ${{ matrix.year }} --output-root outputs/p6_2b_hourly
+      - name: Save complete yearly source evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p6-2b-station30-${{ matrix.year }}
+          path: outputs/p6_2b_hourly/${{ matrix.year }}/
+          retention-days: 30
+          if-no-files-found: warn
+
+  historical-source-audit:
+    name: Independent 175320-UTC-hour cross-year and official station monthly audit
+    runs-on: ubuntu-latest
+    needs: historical-middle-years
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download all 20 annual immutable GeoSphere source bundles
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ige-p6-2b-station30-*
+          path: inputs/years_named
+          merge-multiple: false
+      - name: Download independent accepted GeoSphere monthly 1995-2014 benchmark
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38081032571
+          github-token: ${{ github.token }}
+          name: ige-p6-2a-access-multivariate-geosphere-residual-pilot
+          path: inputs/official
+      - name: Organize 20 original annual artifacts by year
+        run: |
+          mkdir -p inputs/years
+          for year in $(seq 1995 2014); do
+            test -f "inputs/years_named/ige-p6-2b-station30-$year/quality_provenance.json"
+            ln -s "../years_named/ige-p6-2b-station30-$year" "inputs/years/$year"
+          done
+      - name: Audit 20 exact historical years, 175320 UTC hours, 240 official monthly pairs
+        run: |
+          python research/ige_cmip6/p6_2b_hourly_archive_audit.py \
+            --yearly-root inputs/years \
+            --official-monthly inputs/official/geosphere_station30/geosphere_station30_1995_2014_raw.geojson \
+            --output outputs/p6_2b_historical_audit
+      - name: Publish source integrity, hourly QC coverage and official monthly difference
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p6-2b-20-year-hourly-station30-source-closure
+          path: outputs/p6_2b_historical_audit/
+          retention-days: 30
+          if-no-files-found: warn
