@@ -1,0 +1,27 @@
+name: IGE GeoSphere observed monthly bridge probe
+on:
+  push:
+    branches:
+      - research/ige-cmip6-source-probe-20261010
+    paths:
+      - research/ige_cmip6/geosphere_station_probe.py
+      - .github/workflows/ige-geosphere-climate-bridge-probe.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe GeoSphere observed station monthly API
+        run: python research/ige_cmip6/geosphere_station_probe.py
+      - name: Upload provider response including on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-geosphere-bridge-raw-source
+          path: geosphere_bridge_probe/
+          retention-days: 14
+          if-no-files-found: warn
