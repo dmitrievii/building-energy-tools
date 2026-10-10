@@ -1,0 +1,29 @@
+name: IGE NASA GDDP CMIP6 Graz 100-year rsds benchmark
+on:
+  push:
+    branches: [research/ige-nex-gddp-rsds-20261010]
+    paths: [research/ige_cmip6/nasa_rsds_full_graz.py, .github/workflows/ige-nasa-gddp-rsds-graz.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  solar-radiation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Set up daily NetCDF processing libraries
+        run: python -m pip install --disable-pip-version-check netCDF4 numpy
+      - name: Get genuine NASA rsds (20y historical plus 80y future)
+        run: python research/ige_cmip6/nasa_rsds_full_graz.py
+      - name: Preserve calculation and provenance even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-nasa-gddp-cmip6-rsds-graz-real
+          path: outputs/nasa_rsds/
+          retention-days: 14
+          if-no-files-found: warn
