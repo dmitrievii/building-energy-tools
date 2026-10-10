@@ -23,9 +23,10 @@ from statistics import fmean
 from p6_2d_solar_methods_benchmark import (
     MODELS,REPAIRED,HIST,CAL,TEST,METHODS,station_months,
     original_nasa_months,fit_months,apply_heldout_month,discrepancy,
-    csvread,csvwrite,checksum,interp_percentile,
+    csvread,csvwrite,checksum,
 )
 from p6_2a_eight_model_ensemble import original_quality
+from p6_2a_joint_diagnostics import quantile
 
 STATION_LAT=47.080000
 STATION_ALT_M=366.0
@@ -177,8 +178,8 @@ def corrected_daily_indices(target,rules):
         rule=rules[month]
         for rank,(j,r) in enumerate(a):
             q=(rank+0.5)/len(a)
-            obsq=interp_percentile(rule["station_index"],q)
-            modq=interp_percentile(rule["model_index"],q)
+            obsq=quantile(rule["station_index"],q)
+            modq=quantile(rule["model_index"],q)
             k=min(MAX_CLEARSKY_INDEX,max(0.,obsq+r["index"]-modq))
             cap=min(r["ra"],MAX_CLEARSKY_INDEX*r["rso"])
             ghi=min(cap,k*r["rso"])
