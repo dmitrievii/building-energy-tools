@@ -5,7 +5,7 @@ import csv
 import hashlib
 import json
 from pathlib import Path
-from p6_seven_daily import MODELS, WINDOWS, check_reference
+from p6_seven_daily import MODELS, WINDOWS, check_reference, model_variables, SOURCE_EXCEPTIONS
 from p6_daily_multivariable import MEMBER, SPECS, FIELDS
 
 def load(p):
@@ -24,6 +24,8 @@ def audit(root):
     for model in MODELS:
         calendars=set()
         model_grids=set()
+        vars_for_model=model_variables(model)
+        missing=SOURCE_EXCEPTIONS.get(model, ())
         for window,(sc,start,end) in WINDOWS.items():
             path=root/f'ige-p6-{model}-{window}'
             if not path.is_dir():raise ValueError(f'Missing artifact {path}')
@@ -34,9 +36,14 @@ def audit(root):
                             'scenario':sc,'window':window}.items():
                     if d.get(k)!=v:raise ValueError(f'{model}/{window}: {k} mismatch')
             sources=p['subset_provenance']
-            expected={(sc,y,v) for y in range(start,end+1) for v in SPECS}
+            expected={(sc,y,v) for y in range(start,end+1) for v in vars_for_model}
             observed={(r['scenario'],r['year'],r['variable']) for r in sources}
-            if len(sources)!=180 or observed!=expected:raise ValueError('Incomplete source provenance')
+            if len(sources)!=20*len(vars_for_model) or observed!=expected:
+                raise ValueError('Incomplete source provenance')
+            if p.get('missing_source_variables')!=list(missing) or q.get('missing_source_variables')!=list(missing):
+                raise ValueError('Missing-variable provenance is inconsistent')
+            if p.get('variables')!=list(vars_for_model) or q.get('available_source_variables')!=list(vars_for_model):
+                raise ValueError('Available-variable provenance is inconsistent')
             for r in sources:
                 if r['model']!=model or r['member']!=MEMBER or len(r['sha256'])!=64:
                     raise ValueError('Invalid source hash/model')
@@ -56,6 +63,10 @@ def audit(root):
             for row in daily:
                 if set(row)!=set(FIELDS) or row['model']!=model or row['member']!=MEMBER or row['scenario']!=sc:
                     raise ValueError('Bad daily schema/model/scenario')
+                if model=='IPSL-CM6A-LR':
+                    if row['huss']!='': raise ValueError('Unobserved IPSL specific humidity must be blank')
+                elif row['huss']=='':
+                    raise ValueError('Unexpected missing specific humidity')
                 y,m,d=map(int,(row['year'],row['month'],row['day']))
                 if y not in yearly_dates or row['date']!=f'{y:04d}-{m:02d}-{d:02d}':
                     raise ValueError('Invalid model-day index')
@@ -78,7 +89,7 @@ def audit(root):
         out['models'][model]={'status':'PASS','calendar':next(iter(calendars)),
                               'grid':next(iter(model_grids))}
     if len(grids)!=1 or tuple(out[k] for k in
-       ('artifacts','netcdf','years','p5_month_checks'))!=(35,6300,700,420):
+       ('artifacts','netcdf','years','p5_month_checks'))!=(35,6200,700,420):
         raise ValueError('Cross-model totals mismatch')
     out['grid']=next(iter(grids));out['status']='PASS'
     return out
