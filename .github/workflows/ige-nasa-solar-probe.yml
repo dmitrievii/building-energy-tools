@@ -1,0 +1,24 @@
+name: IGE NASA NEX CMIP6 rsds real-source probe
+on:
+  push:
+    branches: [research/ige-nex-gddp-rsds-20261010]
+    paths: [research/ige_cmip6/nasa_rsds_source_probe.py, .github/workflows/ige-nasa-solar-probe.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  rsds-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe real NASA THREDDS NCSS and catalog
+        run: python research/ige_cmip6/nasa_rsds_source_probe.py
+      - name: Upload provenance even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-nasa-rsds-source-probe
+          path: outputs/solar_probe/
+          if-no-files-found: warn
+          retention-days: 14
