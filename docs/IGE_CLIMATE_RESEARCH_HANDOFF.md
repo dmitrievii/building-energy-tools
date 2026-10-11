@@ -10,6 +10,14 @@
 
 **READ FIRST FOR P1–P5:** `docs/IGE_CLIMATE_RESEARCH_P1_P5_BASELINE.md`. P1–P5 release ORIGINAL immutable SHA-256 `6e3dfefe03461feebeef36dd93ce4109861ad862c5e1c8ec312e10e541c57431`; original 166 entries, 164 source-science entries independently SHA-verified. **P5 historical 152/152 PASS** was reported by the frozen v0.4.0 release; not rerun in this freeze. **P1–P5 is NOT the application WEB-0.x roadmap and NOT the P6 methods.** Preserve original standalone P6 SHA `2c3ceecaf83aa3ff2b3e19d109d866111f1145eb5fe48ac6a4fdd010b27a22d7` unchanged.
 
+## P6.3F OPEN 10-minute GEOSPHERE PIVOT — active 2026-10-11
+
+**Current active scientific branch:** `research/ige-p6-3f-geosphere-open-10min-qc-2005-2014-20261011` forked from the P6.3F ARAD-readiness branch. Open `klima-v2-10min` GeoSphere `cglo` (global GHI) and `chim` (Himmelsstrahlung, provisional diffuse sky radiation) with individual original `_flag` quality indicators may establish independent observed 10-minute/aggregated hourly GHI and DHI without a restricted ARAD request. The ARAD German email is **NOT SENT**; ARAD is fallback for genuine DNI, precision sensor comparisons or gaps only.
+
+**Read** `docs/IGE_P6_3F_GEOSPHERE_OPEN_10MIN_GHI_DIFFUSE_VALIDATION.md` and `research/ige_cmip6/p6_3f_geosphere_open_10min_solar_qc.py`. The new separate CI workflow `ige-p6-3f-geosphere-open-10min-solar.yml` audits Graz IDs 30/16412, each 2005–2014 calendar year, original metadata and q21 flags, and pre-registered 10-min record-start/end hypotheses. **No claims** about station-specific QC availability, observed DHI fidelity or relative error may be made until successful original live data retrieval and interpretation of the saved report. Do not inherit GeoSphere hourly `cglo q21=0` failures to 10-minute observations automatically. Preserve original SNAPSHOT SHA and 6/6 minute complete-hour gate.
+
+The previously green [ARAD readiness #38132968798](https://github.com/dmitrievii/building-energy-tools/actions/runs/38132968798) remains evidence of strict scientific custody but **not** ground skill. Historic completed integrated P1–P6.3E freeze unchanged; `main` untouched. Open ten-minute source, not a Meteonorm integration or direct EPW production. `production_epw_ready=false`.
+
 ## New active research workstream: P6.3F original ARAD restricted ground reference
 
 The immutable integrated P1–P6.3E research freeze remains the **canonical completed historical baseline**. The new active development branch is `research/ige-p6-3f-arad-ground-validation-gate-20261011` (forked from verified freeze `f284de774f305f2953510b6bf9bb5119c8675451`). Do NOT reclassify P6.3F as independent observational validation until ORIGINAL ARAD Graz 2012–2014 minute readings and custodian metadata/rights are actually received and checked.
