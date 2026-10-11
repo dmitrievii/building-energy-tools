@@ -1,0 +1,87 @@
+name: IGE P7B.1 original hourly humidity feasibility and 2005-2014 unpaired solar validation
+on:
+  push:
+    branches:
+      - research/ige-p7b-1-moisture-and-multiyear-solar-validation-20261011
+    paths:
+      - .github/workflows/ige-p7b1-moisture-multiyear-solar.yml
+      - research/ige_cmip6/p7b1_moisture_solar_feasibility.py
+      - research/ige_cmip6/test_p7b1_moisture_solar_feasibility.py
+      - docs/IGE_P7B1_MOISTURE_AND_SOLAR_METHOD_PROTOCOL.md
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  original-source-moisture-qa-multiyear-solar:
+    name: Frozen original CanESM5/P7B/NASA SHA, bounded huss/hurs and 10yr unpaired solar climatology
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: P7B.1 source-independent constrained moisture and ten-year solar diagnostic contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7b1_moisture_solar_feasibility.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7b_daily_to_hourly_cmip6_pilot.py' -v
+      - name: Restore frozen original 20-year CanESM5 NASA NEX-GDDP-CMIP6 daily source
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          name: ige-p6-CanESM5-historical-1995-2014
+          path: inputs/original_model
+      - name: Restore frozen accepted P7B 2013 8760 original synthetic hour/EPW science audit
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38144426555
+          github-token: ${{ github.token }}
+          name: ige-p7b-canesm5-original-daily-to-synthetic-hourly-graz-2013
+          path: inputs/original_p7b
+      - name: Restore immutable original NASA POWER P6.3E 2005–2014 GHI/DNI/DHI
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38129047139
+          github-token: ${{ github.token }}
+          name: ige-p6-3e-ghi-dni-dhi-toa-arad-research-audit
+          path: inputs/original_nasa
+      - name: Analyse actual 2013 source RH/huss coexistence and 10-year unpaired original solar climatology
+        run: |
+          python research/ige_cmip6/p7b1_moisture_solar_feasibility.py \
+            --model-original inputs/original_model \
+            --p7b-original inputs/original_p7b \
+            --nasa-original inputs/original_nasa \
+            --out outputs/p7b1_original_source_feasibility
+      - name: Fail closed on source hashes, original native 2013 days, unpaired solar and false full-huss claims
+        run: |
+          python - <<'PY'
+          import csv,hashlib,json
+          from pathlib import Path
+          out=Path("outputs/p7b1_original_source_feasibility")
+          a=json.loads((out/"p7b1_science_audit.json").read_text())
+          assert a["technical_status"]=="P7B1_ORIGINAL_SOURCE_DIAGNOSTICS_COMPLETE"
+          assert a["production_epw_ready"] is False
+          assert a["humidity_2013_daily_days"]==365
+          assert a["humidity_days_closed_in_registered_family"]+a["humidity_days_not_closed_in_registered_family"]==365
+          assert a["humidity_days_not_closed_in_registered_family"]>0
+          assert a["provisional_moisture_candidate_epw_written"] is False
+          assert a["solar_model_and_observed_dates_event_matched"] is False
+          assert a["original_hourly_nasa_source_records"]==87648
+          for name,sha in a["output_sha256"].items():
+              assert hashlib.sha256((out/name).read_bytes()).hexdigest()==sha,name
+          print("P7B.1 accepted strict output source SHA and no false psychrometric closure")
+          print("hurs/huss jointly closable days:",a["humidity_days_closed_in_registered_family"])
+          print("remaining native huss discrepancy:",a["humidity_new_max_unclosed_source_huss_kg_kg"])
+          print("10yr model-minus-NASA annual GHI %:",
+                a["solar_10y_historical_climatology"]["model_minus_nasa_10y_climatological_pct"])
+          PY
+      - name: Archive native-input verified humid-air feasibility, solar comparisons and original source hashes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p7b1-can-esm5-psychrometric-huss-hurs-and-ten-year-solar-qa
+          path: outputs/p7b1_original_source_feasibility/
+          retention-days: 30
+          if-no-files-found: warn
