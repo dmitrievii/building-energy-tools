@@ -1,0 +1,58 @@
+name: IGE P6.3D official GeoSphere hourly q21 and NASA POWER hourly reference validation
+on:
+  push:
+    branches:
+      - research/ige-p6-3d-independent-hourly-ghi-validation-20261011
+    paths:
+      - .github/workflows/ige-p6-3d-independent-hourly-ghi.yml
+      - research/ige_cmip6/p6_3d_hourly_satellite_reference_validation.py
+      - research/ige_cmip6/test_p6_3d_hourly_satellite_reference.py
+      - docs/IGE_P6_3D_GEO_HOURLY_Q21_POWER_REFERENCE_PROTOCOL.md
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  certified-hourly-source-and-power-pilot:
+    name: Original q21=0 source guard, two-point POWER hourly UTC and daily GHI 2005–2014 comparison
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Scientific unit tests for official q21, physical hourly units and UTC/GHI integration seams
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p6_3d_hourly_satellite_reference.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p6_3c_hourly_original_source_alignment.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p6_3c_precip_semantics_daily_alignment.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p6_3b_independent_reference_and_attribution.py' -v
+      - name: Frozen original GeoSphere metadata, q21 and daily GHI 2005–2014 from P6.3B
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38124674795
+          github-token: ${{ github.token }}
+          name: ige-p6-3b-two-anomaly-independent-observations-source-qc
+          path: inputs/p6_3b_frozen
+      - name: Frozen P6.3C source verified 87648 hourly QC and 3652 observed daily GHI
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38126567048
+          github-token: ${{ github.token }}
+          name: ige-p6-3c-precipitation-utc-hourly-multistation-source-evidence
+          path: inputs/p6_3c_frozen
+      - name: Independently retrieve original satellite/reanalysis hourly POWER two locations and compare UTC-matched GeoSphere daily solar
+        run: |
+          python research/ige_cmip6/p6_3d_hourly_satellite_reference_validation.py \
+            --geosphere-original inputs/p6_3b_frozen \
+            --p6c-frozen inputs/p6_3c_frozen \
+            --out outputs/p6_3d_hourly_ghi_independent_science
+      - name: Preserve complete NASA POWER native source bytes and experimental scientific uncertainty even if retrieval fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p6-3d-independent-nasa-power-hourly-geosphere-q21-science-evidence
+          path: outputs/p6_3d_hourly_ghi_independent_science/
+          retention-days: 30
+          if-no-files-found: warn
