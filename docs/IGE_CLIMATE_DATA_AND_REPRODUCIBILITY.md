@@ -2,6 +2,19 @@
 
 Freeze date: **2026-10-11**. This repository is confirmed **PUBLIC**. Publicly committing third-party original climate data, proprietary Meteonorm material, or the full portable freeze is **prohibited by default**, pending a dataset-specific rights review.
 
+## 0. INTEGRATED science preservation now includes P1–P5 (2026-10-11 addition)
+
+The original **standalone P6 research freeze remains unchanged**. An independently checked earlier source release is preserved as a second nested original ZIP inside an **integrated container**, not by re-packaging or overwriting the scientific raw evidence.
+
+| Original science lineage | Original frozen ZIP | Bytes | Original SHA-256 |
+|---|---|---:|---|
+| P1–P5 Independent Climate Engine v0.4.0 | `IGE_Independent_Climate_Engine_v0.4.0_P5_CLOSED_2026-10-10.zip` | 3,126,846 | `6e3dfefe03461feebeef36dd93ce4109861ad862c5e1c8ec312e10e541c57431` |
+| P6.1–P6.3E standalone scientific freeze | `IGE_RESEARCH_P6_1_TO_P6_3E_FREEZE_2026-10-11.zip` | 68,062,328 | `2c3ceecaf83aa3ff2b3e19d109d866111f1145eb5fe48ac6a4fdd010b27a22d7` |
+
+**New integrated wrapper**: `IGE_CLIMATE_RESEARCH_P1_TO_P6_3E_INTEGRATED_FREEZE_2026-10-11.zip` — **71,193,259 bytes** — SHA-256 **`4b5d7dfc4b1805f0a3742e4f6e72ae9474718deb0683b321305f405939d46721`**. Verified the outer archive, both original nested source ZIP byte hashes/CRC, and all **164 P1–P5 manifest file hashes**. P1–P5 original release includes 166 entries (two additional original manifest/build-manifest entries). This integrated file has a portable `MANIFEST.json`, README and `verify_integrated_freeze.py`; it has **not** been uploaded to public GitHub or permanently deposited to university storage. Its presence in the current conversation is not durable storage.
+
+Do not equate P1–P5's original monthly hybrid ensemble with P6's research-specific M0–M3 daily/monthly solar corrections. Reference: `docs/IGE_CLIMATE_RESEARCH_P1_P5_BASELINE.md`. For source rights and original Meteonorm benchmarks retain the restricted-access policy below.
+
 ## 1. Immutable portable evidence bundle
 
 **Exact filename:** \`IGE_RESEARCH_P6_1_TO_P6_3E_FREEZE_2026-10-11.zip\`  
