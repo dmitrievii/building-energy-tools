@@ -77,7 +77,7 @@ class HourlyComponentsSourceScience(unittest.TestCase):
         for day in range(1,32):
             dt=datetime(2005,7,day,11,tzinfo=timezone.utc)
             comp={p:.2 for p in COMPONENTS}
-            r=classify_hour({"ghi_hour_kwh_m2":.3},comp,47.08,15.45,
+            r=classify_hour({"ghi_hour_kwh_m2":.9},comp,47.08,15.45,
                             dt.strftime("%Y%m%d%H"))
             r["site"]="graz_station30"
             example.append(r)
