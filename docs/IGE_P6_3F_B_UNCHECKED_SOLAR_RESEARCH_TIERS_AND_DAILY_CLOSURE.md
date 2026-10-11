@@ -68,3 +68,62 @@ This is a *different time-resolution source-internal consistency test*, not proo
 - Full future EPW validation still needs direct/diffuse representation, original multivariable temporal/psychrometric consistency and building simulation impact.
 
 **Original P1–P6.3E preservation remains unchanged.** \`production_epw_ready=false\`. \`main\` untouched.
+
+
+## Preliminary independent recalculation from frozen original data (before full P6.3F-B CI)
+
+A direct offline audit on the immutable original 20-GeoJSON research
+artifact (workflow #38134438339), NASA POWER P6.3E full original hour
+CSV and official QC-accepted GeoSphere daily GHI from P6.3D yields:
+
+| Year | 6/6 present unverified chim + GHI hours | NASA POWER DHI correlation r | MAE (kWh/m²/hour) |
+|---|---:|---:|---:|
+| 2006 | 8,710 | 0.8824 | 0.02333 |
+| 2007 | 8,643 | 0.8707 | 0.02273 |
+| 2008 | 8,703 | 0.8727 | 0.02402 |
+| 2009 | 6,183 | 0.8824 | 0.02802 |
+
+This exploratory comparison uses unverified q0 rather than treating q0
+as a failed instrument; excludes missing values and diffuse energy
+above global by more than max(0.020 kWh/m²/hour, 5% of GHI). It did not
+impute any source values. The full P6.3F-B code additionally applies
+nighttime solar-position flags, temporal provenance, strict immutable
+source checks and both time-label hypotheses; CI report is authoritative
+for final publication figures. These r values are encouraging evidence
+of a meaningful physical signal, **not proof of instrument calibration
+or independently QC-approved DHI**.
+
+### Unexpected discrepancy in OTHER (already QC-approved) source
+
+The original QC-accepted 10-minute \`cglo\` hourly series was summed over
+official solar day [D-1 23:00 UTC, D 23:00 UTC) and compared with
+**official GeoSphere daily \`cglo_j\`** from P6.3D. The initial strict
+daily 24-hour matched-source test detected average signed energy
+differences \`10min − daily\` for q21-approved days:
+
+| Year | Strict matched days (source start-label hypothesis) | Mean 10min minus daily, kWh/m²/day |
+|---|---:|---:|
+| 2007 | 355 | +0.0069 |
+| 2008 | 360 | +0.0054 |
+| 2009 | 364 | +0.0482 |
+| 2010 | 363 | **+0.4617** |
+| 2011 | 363 | **+0.2859** |
+| 2012 | 365 | +0.0058 |
+| 2013 | 362 | +0.0056 |
+| 2014 | 365 | +0.0057 |
+
+The 2010–2011 discrepancy is substantial (full calendar-year
+source solar totals ~+14.8% and +8.0% respectively). The daily
+quality-approved product and ten-minute quality-approved product
+**both exist**, but their source versions, instrument histories or
+aggregation/adjustment treatments might differ. This is **NOT**
+proof which series is inaccurate. A systematic processing or sensor
+change remains a hypothesis to investigate; do not silently normalize
+2010–2011, call a QA flag "wrong", or select the source with a desired
+future model correction. Explicit annual source-product discrepancy
+screens are now part of P6.3F-B outputs.
+
+**Scientific priority:** characterize the discrepancy and independent
+direct/diffuse partition alongside usability of provider q0. Data may
+be used with disclosed uncertainty; source QC and physical consistency
+are complementary and not interchangeable.
