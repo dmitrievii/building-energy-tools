@@ -1,0 +1,98 @@
+name: IGE P7B.3C original-source conditional cloud analogue M2
+on:
+  push:
+    branches:
+      - research/ige-p7b3c-conditional-cloud-analogue-20261011
+    paths:
+      - .github/workflows/ige-p7b3c-conditional-cloud-analogue.yml
+      - research/ige_cmip6/p7b3c_conditional_solar.py
+      - research/ige_cmip6/test_p7b3c_conditional_solar.py
+      - docs/IGE_P7B3C_CONDITIONAL_CLOUD_ANALOGUE_PROTOCOL.md
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  observed-conditional-cloud-analogue:
+    name: Original GeoSphere train 2007-08, select 2009, eval 2012-14
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Solar physics, sample independence, deterministic generation contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7b3c_conditional_solar.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7b3b_tag_benchmark.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7b3_observed_hourly_solar.py' -v
+      - name: Restore original GeoSphere ground 10-min source and QA
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38134438339
+          github-token: ${{ github.token }}
+          name: ige-p6-3f-open-geosphere-10min-graz-ghi-diffuse-qc-2005-2014
+          path: inputs/geosphere
+      - name: Restore accepted immutable P7B.2 source-hourly baseline
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38149471728
+          github-token: ${{ github.token }}
+          name: ige-p7b2-canesm5-physically-bounded-moisture-and-geo-ground-solar-epw
+          path: inputs/p7b2
+      - name: Exact original source hash, fail closed
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from hashlib import sha256
+          target={
+            'inputs/geosphere/p6_3f_geosphere_10min_hourly_pairwise.csv':
+             '95dc8f9b7341be69d0ee236b38029a3f171b7f6a9eb0aed75b03cd2e473500c0',
+            'inputs/p7b2/p7b2_2013_synthetic_hourly_physics_and_sources.csv':
+             '099c5b29f5c2ecdc9a72d274db5eb2a8bb870c7e3b54cfb5588c1567c6b2036a'}
+          for f, expected in target.items():
+              b=Path(f).read_bytes()
+              assert sha256(b).hexdigest()==expected, f
+          print('Original-source GHI and model SHA PASS')
+          PY
+      - name: M2 conditional cloud analogue source experiment, all years strictly separated
+        run: |
+          python research/ige_cmip6/p7b3c_conditional_solar.py \
+            --model-hourly inputs/p7b2/p7b2_2013_synthetic_hourly_physics_and_sources.csv \
+            --station-hourly inputs/geosphere/p6_3f_geosphere_10min_hourly_pairwise.csv \
+            --out outputs/p7b3c \
+            --tune-seeds 8 --test-seeds 20
+      - name: Hard physical constraints, temporal independence and evaluation gates
+        run: |
+          python - <<'PY'
+          import json,hashlib
+          from pathlib import Path
+          p=Path('outputs/p7b3c')
+          a=json.loads((p/'p7b3c_science_audit.json').read_text())
+          assert a['stage']=='P7B.3C_CONDITIONAL_DAY_ANALOGUE_M2'
+          assert a['production_ready'] is False
+          assert a['trained_only_on_qc_geosphere_years']==[2007,2008]
+          assert a['alpha_selected_only_on']==[2009]
+          assert a['evaluation_previously_consulted_years']==[2012,2013,2014]
+          assert a['eval_is_virgin_holdout'] is False
+          assert a['synthetic_dates_not_paired_to_measured_events'] is True
+          assert a['selected_alpha']==0.75
+          assert a['seed_count_final']==20
+          for window in ['record_start','record_end']:
+              b=a['reports'][window]
+              assert b['M2_seed0_max_daily_residual']<1e-9
+              assert b['M2_evaluation_20seed_p95_rel_error'] < b['M0_evaluation_2012_2014']['seasonal_mean_abs_rel_p95_error']
+              assert b['M2_evaluation_20seed_mean_hour_mae'] < 1.2*b['M0_evaluation_2012_2014']['daylight_month_hour_mae']
+          for n,d in a['derived_sha256'].items():
+              assert hashlib.sha256((p/n).read_bytes()).hexdigest()==d,n
+          print('P7B.3C technical QC PASS; scientific release still REVIEW_REQUIRED')
+          PY
+      - name: Preserve *derived* scores, realization and audit; no original provider redistribution
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p7b3c-observed-conditional-cloud-m2-solar-research
+          path: outputs/p7b3c/
+          if-no-files-found: warn
+          retention-days: 30
