@@ -261,6 +261,19 @@ def statistics(by_station,orig,nasa):
                             "nasa_is_ground_observed":False})
     return qcrows,scores,details
 
+def station_source_identity(left,right):
+    """Compare complete original returned time/value/QC streams, not station metadata.
+
+    A COMBINED parent station may deliver the identical underlying
+    historical samples as its INDIVIDUAL child. Treat these as one
+    independent observed solar series if every minute/parameter/QC agrees.
+    """
+    if len(left)!=len(right):
+        return False
+    keys=("timestamp","cglo","chim","cglo_flag","chim_flag")
+    return all(all(a.get(k)==b.get(k) for k in keys)
+               for a,b in zip(left,right))
+
 def run(out,p6e,years=YEARS):
     out.mkdir(parents=True,exist_ok=True)
     meta_url=GEO+"/metadata"
@@ -305,6 +318,14 @@ def run(out,p6e,years=YEARS):
                   "GHI qualified",tally["cglo"]["approved_slots"],
                   "DHI qualified",tally["chim"]["approved_slots"],flush=True)
         if year_map:by_station[station]=year_map
+    # Prevent false observational replication: GeoSphere ID 30 is a
+    # COMBINED parent of 16412; test actual returned original minute
+    # samples rather than counting provider feature IDs as independent.
+    same_years=sorted(set(by_station.get(30,{})) & set(by_station.get(16412,{})))
+    station_pair_identity={str(year):station_source_identity(
+        by_station[30][year],by_station[16412][year]) for year in same_years}
+    source_alias_all_years=(bool(same_years) and len(same_years)==len(years)
+                            and all(station_pair_identity.values()))
     # Independent NASA stats are only computable for accepted native observations.
     if by_station:
         qcs,stats,rows=statistics(by_station,meta,nasa)
@@ -320,15 +341,35 @@ def run(out,p6e,years=YEARS):
             if len(source)==len(STATIONS)*len(years) else
             "PARTIAL_OR_UNAVAILABLE_ORIGINAL_STATION_SOURCE")
     available={s:sorted(d) for s,d in by_station.items()}
+    measured_by_channel={name:sum(int(x["qc_accepted"]) for x in qcs
+                               if x["station_id"]==30 and x["parameter"]==name)
+                         for name in SOLAR} if by_station else {}
+    accepted_hours_graz_start={
+         name:next((int(x["qc_verified_ground_hours"]) for x in stats
+                    if x["station_id"]==30 and x["time_hypothesis"]=="record_start"
+                    and x["nasa_location"]=="graz_station30"
+                    and x["channel"]==name and x["season"]=="ANNUAL"),0)
+         for name in SOLAR} if by_station else {}
+    independent_dhi_qc_available=accepted_hours_graz_start.get("chim",0)>0
+    status_science=("OBSERVED_GHI_ONLY_DHI_QC_NOT_ACCEPTED_AND_SOURCE_ALIAS"
+                    if accepted_hours_graz_start.get("cglo",0)>0
+                    and not independent_dhi_qc_available and source_alias_all_years
+                    else "GHI_DHI_SOURCE_QC_REVIEW_REQUIRED")
     report={"stage":"IGE_P6_3F_GEOSPHERE_OPEN_TEN_MINUTE_SOLAR_QC",
       "technical_status":status,
-      "scientific_status":"QC_HOURLY_OBSERVED_GHI_DHI_SOURCE_REVIEW_REQUIRED",
+      "scientific_status":status_science,
       "provider":"GeoSphere Austria historical klima-v2-10min CC BY 4.0",
       "provider_metadata_url":meta_url,
       "provider_metadata_sha256":hashlib.sha256(original).hexdigest(),
       "original_metadata_parameters":frozen,
       "original_qc_legend":legend,
       "station_metadata":{str(s):stations.get(s) for s in STATIONS},
+      "combined_individual_original_stream_equal_by_year":station_pair_identity,
+      "combined_individual_original_stream_equal_all_years":source_alias_all_years,
+      "do_not_count_station_ids_as_independent_replicates":source_alias_all_years,
+      "graz_30_qc_approved_ten_minute_values_by_channel":measured_by_channel,
+      "graz_30_qc_complete_hour_count_record_start":accepted_hours_graz_start,
+      "independent_measured_dhi_validated":independent_dhi_qc_available,
       "requested_stations":STATIONS,"requested_years":list(years),
       "fetched_station_years":available,
       "failures":failures,
@@ -339,7 +380,8 @@ def run(out,p6e,years=YEARS):
       "numeric_results_status":"COMPUTED_FROM_ACTUAL_QC_APPROVED_SAMPLES_ONLY" if sha else "NONE",
       "derived_file_sha256":sha,
       "remaining_limits":[
-        "chim (Himmelsstrahlung) interpreted as diffuse horizontal sky radiation; confirm instrument/spec metadata for use as measured DHI.",
+        "Original chim (Himmelsstrahlung) has zero accepted q21 slots in all ten years at both queried IDs; it cannot validate measured DHI, regardless of non-null unchecked values. Confirm physical definition.",
+        "Graz #30 is COMBINED parent of station #16412; if original minute values and flags are identical per year these IDs are not independent observational replicates.",
         "Observed 10-minute instrument mean timestamp window convention must be confirmed before definitive 1h comparison.",
         "Only complete 6/6 independently QC-approved 10-minute channel observations qualify as observed 1h energy; neither missing data nor q=0 is imputed.",
         "Independent direct-normal radiation is NOT measured by cglo/chim: derived DNI cannot become independently measured DNI.",
