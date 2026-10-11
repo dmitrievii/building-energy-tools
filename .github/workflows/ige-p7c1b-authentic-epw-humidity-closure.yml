@@ -1,0 +1,94 @@
+name: IGE P7C.1B humidity conservation and authentic EPW provenance gate
+on:
+  push:
+    branches:
+      - research/ige-p7c1b-real-epw-humidity-closure-20261012
+    paths:
+      - research/ige_cmip6/p7c1b_humidity_closure.py
+      - research/ige_cmip6/test_p7c1b_humidity_closure.py
+      - docs/IGE_P7C1B_REAL_BASELINE_HUMIDITY_CLOSURE_PROTOCOL_RU.md
+      - .github/workflows/ige-p7c1b-authentic-epw-humidity-closure.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  research-humidity-closure:
+    name: 4 P7C1 research EPWs: source SHA, monthly humidity mass proxy and RH physics
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Contract tests of humidity constrained projection and P7C1 source
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7c1b_humidity_closure.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7c1_epw_morphing.py' -v
+      - name: Restore frozen P7C1 four-source original EPW morphs
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38178867655
+          github-token: ${{ github.token }}
+          name: ige-p7c1-canesm5-four-future-epw-morphs-research
+          path: inputs/p7c1
+      - name: Restore original P7B4 synthetic baseline (preflight only)
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38171672579
+          github-token: ${{ github.token }}
+          name: ige-p7b4-integrated-2013-canesm5-m2-research-epw
+          path: inputs/p7b4
+      - name: Verify exact baseline SHA and no genuine Meteonorm EPW substitution
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, json
+          epw=Path('inputs/p7b4/Graz_CanESM5_2013_IGE_P7B4_M2_SOLAR_INTEGRATED_RESEARCH_ONLY.epw')
+          assert hashlib.sha256(epw.read_bytes()).hexdigest()=='2e45abbcba52c49e51e3811676ba37167bc8700f697e13032ee103ff8f3f7012'
+          audit=json.loads(Path('inputs/p7c1/p7c1_source_science_audit.json').read_text())
+          assert audit['baseline']['baseline_epw_sha256']==hashlib.sha256(epw.read_bytes()).hexdigest()
+          assert audit['baseline_is_real_measured_Graz_EPW'] is False
+          assert audit['output_file_count']==4
+          print('P7C.1B original P7B4 and P7C1 immutable SHA PASS; REAL CONTEMPORARY EPW IS NOT PRESENT')
+          PY
+      - name: Calculate monthly bounded q projection without altering other EPW fields
+        run: |
+          python research/ige_cmip6/p7c1b_humidity_closure.py \
+            --original-p7b4-baseline inputs/p7b4/Graz_CanESM5_2013_IGE_P7B4_M2_SOLAR_INTEGRATED_RESEARCH_ONLY.epw \
+            --p7c1-source inputs/p7c1 \
+            --out outputs/p7c1b
+      - name: Fail-closed archive and monthly-conservation checks
+        run: |
+          python - <<'PY'
+          import csv,hashlib,json
+          from pathlib import Path
+          p=Path('outputs/p7c1b');a=json.loads((p/'p7c1b_humidity_science_audit.json').read_text())
+          assert a['production_epw_ready'] is False and a['research_only'] is True
+          assert a['real_contemporary_EPWs_generated'] is False
+          assert a['mode']=='synthetic_P7B4_preflight' and len(a['results'])==4
+          for scenario,data in a['results'].items():
+            h=data['humidity']
+            assert h['monthly_q_closed'] and h['max_month_q_mean_residual_kg_kg']<1e-9
+            assert h['RH_above_100_hours']==0 and h['source_wind_direction_changed'] is False
+            assert len(data['per_month'])==12
+            for name,digest in data['output_files_sha256'].items():
+              f=p/name
+              assert hashlib.sha256(f.read_bytes()).hexdigest()==digest
+              if name.endswith('.epw'):
+                with f.open(newline='') as s:
+                  rows=list(csv.reader(s))
+                assert len(rows)==8768 and all(len(x)==35 for x in rows[8:])
+              if name.endswith('_humidity_daily.csv'):
+                with f.open(newline='') as s:assert len(list(csv.DictReader(s)))==365
+          print('P7C.1B monthly q conservation four-scenario source-checked RESEARCH PASS; authentic user EPW gate BLOCKED')
+          PY
+      - name: Preserve only derived synthetic preflight research results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p7c1b-four-scenario-monthly-humidity-closure-synthetic-preflight
+          path: outputs/p7c1b/
+          retention-days: 30
+          if-no-files-found: warn
