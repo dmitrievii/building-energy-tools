@@ -4,7 +4,7 @@ import unittest,math,copy
 from pathlib import Path
 from p6_3a_solar_joint_coherence import (
     METHODS,NEW,ALL_METHODS,FUTURES,HIST,PAIRS,SEASONS,
-    source_folder,daily_methods,rank,corr_vectors,dependence_change,
+    source_folder,daily_methods,native_daily_ghi,rank,corr_vectors,dependence_change,
     physical_metrics,CANONICAL_CAP,
 )
 
@@ -56,6 +56,28 @@ class JointClimateScienceContracts(unittest.TestCase):
             self.assertAlmostEqual(row[METHODS[1]],src[i]["ghi_kwh_m2_day"]*.70)
             self.assertAlmostEqual(row[METHODS[2]],src[i]["ghi_kwh_m2_day"]*.66)
             self.assertAlmostEqual(row[NEW],m3[i])
+
+    def test_original_and_normalized_daily_ghi_contracts(self):
+        original={"year":2005,"month":6,"day":1,"ghi_kwh_m2_day":6.2}
+        normalized={"year":2005,"month":6,"day":1,"raw":6.2}
+        both={**original,"raw":6.2}
+        self.assertEqual(native_daily_ghi(original),6.2)
+        self.assertEqual(native_daily_ghi(normalized),6.2)
+        self.assertEqual(native_daily_ghi(both),6.2)
+        with self.assertRaisesRegex(ValueError,"mismatch"):
+            native_daily_ghi({**original,"raw":6.4})
+        for bad in ({"year":2005}, {"raw":float("nan")}, {"raw":-1.}):
+            with self.assertRaisesRegex(ValueError,"Missing, negative or non-finite"):
+                native_daily_ghi(bad)
+
+    def test_normalized_input_preserves_target_months(self):
+        solar=[{"year":2005,"month":m,"day":1,"raw":3.}
+               for m in range(1,13)]
+        months={(2005,m):{METHODS[0]:3.,METHODS[1]:2.1,METHODS[2]:2.4}
+                for m in range(1,13)}
+        result=daily_methods(solar,months,[2.7]*12)
+        self.assertEqual(len(result),12)
+        self.assertTrue(all(abs(r[METHODS[1]]-2.1)<1e-10 for r in result))
 
     def test_m1_m2_must_not_silently_break_original_monthly_solar_energy(self):
         solar=[{"year":2005,"month":m,"day":1,"ghi_kwh_m2_day":4.0}
