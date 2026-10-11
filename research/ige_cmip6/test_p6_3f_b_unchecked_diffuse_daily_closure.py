@@ -4,7 +4,7 @@ import unittest
 from datetime import datetime,date,timedelta,timezone
 from p6_3f_b_unchecked_diffuse_daily_closure import (
  tier,valid_values,hourly_energy,physical_screens,daily_closure,SCIENCE_TIERS,
- TIMESTAMPS_SUPPORTED,MAX_DIFFUSE_EXCESS_WM2
+ TIMESTAMPS_SUPPORTED,MAX_DIFFUSE_EXCESS_WM2,annual_daily_closure_screen
 )
 
 class ProvisionalOriginalSolarScience(unittest.TestCase):
@@ -67,6 +67,31 @@ class ProvisionalOriginalSolarScience(unittest.TestCase):
         self.assertTrue(out[0]["same_provider_not_independent_ground"])
         self.assertEqual(out[0]["source_day_window"],
                          "GeoSphere cglo_j 23:00 previous UTC to 23:00 labelled UTC")
+
+    def test_yearly_daily_closure_identifies_qc_approved_source_disagreement(self):
+        records=[]
+        for year,value in ((2010,.46),(2011,.005)):
+            for i in range(2):
+                records.append({
+                   "year":year,"hypothesis":"record_start",
+                   "tenminute_reconstructed_qc_confirmed_day":True,
+                   "tenminute_reconstructed_all_24_hours":True,
+                   "daily_provider_approved_kwh_m2":2.,
+                   "tenminute_reconstructed_kwh_m2":2.+value,
+                   "tenminute_minus_daily_kwh_m2":value})
+        annual=annual_daily_closure_screen(records)
+        a=next(r for r in annual if r["year"]==2010
+               and r["hypothesis"]=="record_start")
+        b=next(r for r in annual if r["year"]==2011
+               and r["hypothesis"]=="record_start")
+        self.assertTrue(a["review_internal_daily_bias_gt_0p10"])
+        self.assertFalse(b["review_internal_daily_bias_gt_0p10"])
+        self.assertEqual(a["matched_full_10min_qc_days"],2)
+        self.assertAlmostEqual(a["ratio_total_same_days"],1.23)
+        other=next(r for r in annual if r["year"]==2010
+                   and r["hypothesis"]=="record_end")
+        self.assertEqual(other["matched_full_10min_qc_days"],0)
+        self.assertIsNone(other["review_internal_daily_bias_gt_0p10"])
 
     def test_no_confirmation_from_missing_provider_qc(self):
         self.assertIn("COMPLETE_UNCHECKED_Q0",SCIENCE_TIERS)
