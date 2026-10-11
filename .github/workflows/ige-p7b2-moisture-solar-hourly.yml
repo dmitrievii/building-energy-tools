@@ -1,0 +1,103 @@
+name: IGE P7B.2 source-consistent hourly moisture and historical ground-calibrated solar EPW
+on:
+  push:
+    branches:
+      - research/ige-p7b2-moisture-solar-calibrated-hourly-20261011
+    paths:
+      - .github/workflows/ige-p7b2-moisture-solar-hourly.yml
+      - research/ige_cmip6/p7b2_hourly_physically_bounded_synthesis.py
+      - research/ige_cmip6/test_p7b2_hourly_physically_bounded_synthesis.py
+      - docs/IGE_P7B2_PHYSICALLY_BOUNDED_HOURLY_METHOD.md
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  physically-bounded-new-epw:
+    name: New original-source 8760h EPW from CanESM5 with bounded hurs-huss, independent training/holdout observed GHI
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Strict physics/source split unit and existing daily conservation regression contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7b2_hourly_physically_bounded_synthesis.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7b1_moisture_solar_feasibility.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7b_daily_to_hourly_cmip6_pilot.py' -v
+      - name: Restore original frozen 1995–2014 NEX CanESM5 raw NASA daily
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          name: ige-p6-CanESM5-historical-1995-2014
+          path: inputs/original_can_esm5_daily
+      - name: Restore accepted P7B original 2013 hourly model EPW and source SHA
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38144426555
+          github-token: ${{ github.token }}
+          name: ige-p7b-canesm5-original-daily-to-synthetic-hourly-graz-2013
+          path: inputs/original_p7b_hourly
+      - name: Restore independently observed original GeoSphere quality-approved 2005–2014 daily GHI
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38128314291
+          github-token: ${{ github.token }}
+          name: ige-p6-3d-independent-nasa-power-hourly-geosphere-q21-science-evidence
+          path: inputs/original_geosphere_daily
+      - name: Run registered multi-year station-trained 2013 CanESM5 source model, physical moisture prioritization and new EPW
+        run: |
+          python research/ige_cmip6/p7b2_hourly_physically_bounded_synthesis.py \
+            --model-original inputs/original_can_esm5_daily \
+            --p7b-original inputs/original_p7b_hourly \
+            --geosphere-daily inputs/original_geosphere_daily \
+            --out outputs/p7b2_model_hourly_epw
+      - name: Hard physical bounds, original source-humidity no-false-closure, observed GHI holdout, hashes, 8760x35 EPW
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import csv,hashlib,json,math
+          out=Path("outputs/p7b2_model_hourly_epw")
+          d=json.loads((out/"p7b2_science_audit.json").read_text())
+          assert d["technical_status"]=="HOURLY_PHYSICS_AND_HOLDOUT_GHI_EPW_FORMAT_PASS"
+          assert d["epw_production_ready"] is False
+          assert d["output_EPWhours"]==8760
+          assert d["original_daily_model_days"]==365
+          assert d["days_both_source_hurs_and_huss_closed"]+d["days_source_huss_closed_hurs_relaxed"]+d["days_source_huss_not_feasible_at_fixed_pressure"]==365
+          assert d["all_8760_hourly_RH_within_1_to_100_and_dewpoint_le_T"] is True
+          assert d["calibrated_daily_GHI_conserved_each_day"] is True
+          assert d["original_source_daily_GHI_deliberately_not_conserved"] is True
+          assert d["original_native_daily_T_wind_precip_LW_conserved"] is True
+          assert d["solar_bias_calibration_train_years"]==[2005,2006,2007,2008,2009]
+          assert d["solar_source_conflict_exclusion_years"]==[2010,2011]
+          assert d["solar_unpaired_holdout_years"]==[2012,2013,2014]
+          assert d["solar_model_event_dates_not_compared_to_observed_events"] is True
+          assert d["source_p7b_original_hourly_sha256"]
+          assert d["source_geosphere_observed_ground_daily_GHI_sha256"]
+          assert d["days_source_huss_not_feasible_at_fixed_pressure"]>0
+          for f,sha in d["output_sha256"].items():
+              assert hashlib.sha256((out/f).read_bytes()).hexdigest()==sha,f
+          path=out/"Graz_2013_CanESM5_P7B2_HISTORICAL_BIASCORRECTED_SYNTHETIC_RESEARCH.epw"
+          with path.open("r",newline="",encoding="utf8") as f:
+              rows=list(csv.reader(f))
+          assert len(rows)==8768 and all(len(x)==35 for x in rows[8:])
+          assert rows[8][:5]==["2013","1","1","1","60"]
+          assert rows[-1][:5]==["2013","12","31","24","60"]
+          assert all(0<float(x[8])<=100 and float(x[7])<=float(x[6])+.01 for x in rows[8:])
+          print("P7B2 new EPW",d["output_EPWhours"],"daily hurs+huss both",d["days_both_source_hurs_and_huss_closed"])
+          print("P7B2 source huss rescued hurs relaxed",d["days_source_huss_closed_hurs_relaxed"])
+          print("P7B2 incompatible huss saturation days",d["days_source_huss_not_feasible_at_fixed_pressure"])
+          print("P7B2 holdout solar",d["solar_holdout_metrics"])
+          print("P7B2 source EPW_PRODUCTION_READY",d["epw_production_ready"])
+          PY
+      - name: Preserve original weather EPW, daily source contradictions, station training/holdout and 8760 hourly provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p7b2-canesm5-physically-bounded-moisture-and-geo-ground-solar-epw
+          path: outputs/p7b2_model_hourly_epw/
+          retention-days: 30
+          if-no-files-found: warn
