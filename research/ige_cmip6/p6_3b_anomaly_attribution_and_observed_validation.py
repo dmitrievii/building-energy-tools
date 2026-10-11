@@ -125,7 +125,6 @@ def source_model_methods(name,station_csv,
 def case_audit(item,anomaly,station_rows,power_rows):
     met=anomaly["climate_variable"]
     ref=anomaly["reference_variable"]
-    historical=item["historical"];future=item["future"]
     model=item["name"];rel=anomaly["relationship"]
     selected=[r for r in item["change_drift"]
               if r["method"]==NEW and r["season"]=="JJA" and
@@ -136,6 +135,7 @@ def case_audit(item,anomaly,station_rows,power_rows):
     if numerical is None or abs(numerical-
          anomaly["expected_pearson_change_signal_distortion"])>1e-8:
         raise ValueError("P6.3A previously accepted anomaly could not be reproduced")
+    historical=item["historical"];future=item["future"]
     raw_and_corrected=[]
     for window,group in ((HIST,historical),(anomaly["window"],future)):
         joint=group["joint"];solar=group["solar"];geom=group["geometry"]
