@@ -10,6 +10,14 @@
 
 **READ FIRST FOR P1–P5:** `docs/IGE_CLIMATE_RESEARCH_P1_P5_BASELINE.md`. P1–P5 release ORIGINAL immutable SHA-256 `6e3dfefe03461feebeef36dd93ce4109861ad862c5e1c8ec312e10e541c57431`; original 166 entries, 164 source-science entries independently SHA-verified. **P5 historical 152/152 PASS** was reported by the frozen v0.4.0 release; not rerun in this freeze. **P1–P5 is NOT the application WEB-0.x roadmap and NOT the P6 methods.** Preserve original standalone P6 SHA `2c3ceecaf83aa3ff2b3e19d109d866111f1145eb5fe48ac6a4fdd010b27a22d7` unchanged.
 
+## New active research workstream: P6.3F original ARAD restricted ground reference
+
+The immutable integrated P1–P6.3E research freeze remains the **canonical completed historical baseline**. The new active development branch is `research/ige-p6-3f-arad-ground-validation-gate-20261011` (forked from verified freeze `f284de774f305f2953510b6bf9bb5119c8675451`). Do NOT reclassify P6.3F as independent observational validation until ORIGINAL ARAD Graz 2012–2014 minute readings and custodian metadata/rights are actually received and checked.
+
+P6.3F source discovery confirmed **ARAD data are restricted** (GCOS Austria 2025). Official national contacts: `klima@geosphere.at`, `marc.olefs@geosphere.at`, `florian.geyer@geosphere.at`; University of Graz local station `messung.physik@uni-graz.at`. A ready-to-send **unsent** German request is documented in `docs/IGE_P6_3F_ARAD_GRAZ_DATA_ACCESS_REQUEST_DE.md`.
+
+Read `docs/IGE_P6_3F_ARAD_GROUND_ORIGINAL_VALIDATION_PROTOCOL.md` and `research/ige_cmip6/p6_3f_arad_ground_qc_validation.py`. Public GitHub Action validates frozen P6.3E NASA original 2012–2014 source and deliberately reports `BLOCKED_ARAD_SOURCE_ACCESS_NOT_YET_ACQUIRED`, with null independent skill metrics; it cannot acquire restricted data. Full validation needs explicit original ARAD source bytes with source SHA, custodial authority, BSRN-style original minute QC, UTC conventions and research license. Do NOT upload private originals to public CI or silently replace them by NASA POWER or CAMS satellite/reanalysis grids. `production_epw_ready=false` throughout.
+
 ## Minimum source-of-truth reading order
 
 1. This file: \`docs/IGE_CLIMATE_RESEARCH_HANDOFF.md\`.
