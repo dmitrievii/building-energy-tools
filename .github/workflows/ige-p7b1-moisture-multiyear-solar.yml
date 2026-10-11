@@ -47,12 +47,20 @@ jobs:
           github-token: ${{ github.token }}
           name: ige-p6-3e-ghi-dni-dhi-toa-arad-research-audit
           path: inputs/original_nasa
+      - name: Restore official original GeoSphere 2005–14 station observed quality-checked daily GHI
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38128314291
+          github-token: ${{ github.token }}
+          name: ige-p6-3d-independent-nasa-power-hourly-geosphere-q21-science-evidence
+          path: inputs/original_geosphere_daily
       - name: Analyse actual 2013 source RH/huss coexistence and 10-year unpaired original solar climatology
         run: |
           python research/ige_cmip6/p7b1_moisture_solar_feasibility.py \
             --model-original inputs/original_model \
             --p7b-original inputs/original_p7b \
             --nasa-original inputs/original_nasa \
+            --geosphere-daily inputs/original_geosphere_daily \
             --out outputs/p7b1_original_source_feasibility
       - name: Fail closed on source hashes, original native 2013 days, unpaired solar and false full-huss claims
         run: |
@@ -69,6 +77,8 @@ jobs:
           assert a["provisional_moisture_candidate_epw_written"] is False
           assert a["solar_model_and_observed_dates_event_matched"] is False
           assert a["original_hourly_nasa_source_records"]==87648
+          assert len(a["input_original_geosphere_station_daily_sha256"])==64
+          assert "solar_10y_original_ground_observed_station_climatology" in a
           for name,sha in a["output_sha256"].items():
               assert hashlib.sha256((out/name).read_bytes()).hexdigest()==sha,name
           print("P7B.1 accepted strict output source SHA and no false psychrometric closure")
@@ -76,6 +86,8 @@ jobs:
           print("remaining native huss discrepancy:",a["humidity_new_max_unclosed_source_huss_kg_kg"])
           print("10yr model-minus-NASA annual GHI %:",
                 a["solar_10y_historical_climatology"]["model_minus_nasa_10y_climatological_pct"])
+          print("10yr model-minus-observed-station annual GHI %:",
+                a["solar_10y_original_ground_observed_station_climatology"]["model_minus_station_pct"])
           PY
       - name: Archive native-input verified humid-air feasibility, solar comparisons and original source hashes
         if: always()
