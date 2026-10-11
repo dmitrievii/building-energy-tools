@@ -1,0 +1,87 @@
+name: IGE P7B.5 original QC hourly wind direction and multivariate EPW readiness
+on:
+  push:
+    branches: [research/ige-p7b5-wind-coherence-epw-readiness-20261011]
+    paths:
+      - .github/workflows/ige-p7b5-wind-coherence-epw-readiness.yml
+      - research/ige_cmip6/p7b5_wind_coherence.py
+      - research/ige_cmip6/test_p7b5_wind_coherence.py
+      - docs/IGE_P7B5_WIND_COHERENCE_AND_EPW_READINESS_PROTOCOL.md
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  wind-qc-epw:
+    name: GeoSphere original dd+ff QC training and 2012-14 wind rose EPW research
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: P7B.5 original quality, time, source and EPW no-mutation contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7b5_wind_coherence.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7b4_integrated_hourly_epw.py' -v
+      - name: Restore accepted original P7B.4 research EPW
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38171672579
+          github-token: ${{ github.token }}
+          name: ige-p7b4-integrated-2013-canesm5-m2-research-epw
+          path: inputs/p7b4
+      - name: SHA-256 original immutable source and previous scientific status
+        run: |
+          python - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          root=Path('inputs/p7b4')
+          epw=root/'Graz_CanESM5_2013_IGE_P7B4_M2_SOLAR_INTEGRATED_RESEARCH_ONLY.epw'
+          assert epw.is_file()
+          expected='2e45abbcba52c49e51e3811676ba37167bc8700f697e13032ee103ff8f3f7012'
+          assert hashlib.sha256(epw.read_bytes()).hexdigest()==expected
+          audit=json.loads((root/'p7b4_scientific_audit.json').read_text())
+          assert audit['production_ready'] is False
+          assert audit['source_day_count']==365 and audit['hour_count']==8760
+          print('P7B5 original P7B.4 EPW SHA and limitations PASS')
+          PY
+      - name: Original GeoSphere dd dd_flag ff ff_flag tl rf rr six-years live QC and 8-seed wind candidate
+        run: |
+          python research/ige_cmip6/p7b5_wind_coherence.py \
+            --original-epw inputs/p7b4/Graz_CanESM5_2013_IGE_P7B4_M2_SOLAR_INTEGRATED_RESEARCH_ONLY.epw \
+            --out outputs/p7b5 --seeds 8
+      - name: Fail closed if source, wind direction, 8760 EPW read-back or scientific status invalid
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json,hashlib,csv
+          p=Path('outputs/p7b5')
+          a=json.loads((p/'p7b5_science_audit.json').read_text())
+          assert a['production_epw_ready'] is False and a['full_EnergyPlus_simulation_executed'] is False
+          assert a['baseline_hour_count']==8760 and a['wind_speed_unchanged_8760_hours']
+          assert a['P7B4_source_solar_and_thermodynamics_unchanged'] is True
+          assert a['baseline_missing_counts']['wind_direction']==8760
+          assert a['candidate_missing_counts']['wind_direction']==0
+          for w in ('record_start','record_end'):
+            r=a['both_unresolved_time_hypotheses'][w]
+            assert r['train_complete_approved_days']>500
+            assert r['selection_complete_approved_days']>=180
+            assert r['validation_complete_approved_days']>=600
+            assert 0<=r['mean_sector_TV_validation_known_speed']<=1
+          f=p/'Graz_CanESM5_2013_IGE_P7B5_WIND_ANALOGUE_RESEARCH_ONLY.epw'
+          rows=list(csv.reader(f.open()));assert len(rows)==8768 and all(len(x)==35 for x in rows[8:])
+          assert all(0<=float(x[20])<=360 for x in rows[8:])
+          for name,sh in a['derived_sha256'].items():
+            assert hashlib.sha256((p/name).read_bytes()).hexdigest()==sh
+          print('P7B5 source QC, circular wind direction, 8760 EPW, immutable 34 fields; RESEARCH ONLY PASS')
+          PY
+      - name: Archive derived wind research and audit, not original raw station observations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p7b5-original-qc-wind-direction-epw-readiness
+          path: outputs/p7b5/
+          retention-days: 30
+          if-no-files-found: warn
