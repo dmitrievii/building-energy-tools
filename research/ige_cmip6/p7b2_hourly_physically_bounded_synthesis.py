@@ -39,7 +39,7 @@ Q_TOL=1.e-9
 HURS_TOL=1.e-8
 SOLAR_FACTOR_BOUNDS=(.45,1.2)
 MODEL_NAME="CanESM5"
-SYNTHETIC_FILENAME="Graz_2013_CanESM5_P7B2_HISTORICAL_BIASCORRECTED_SYNTHETIC_RESEARCH.epw"
+SYNTHETIC_FILENAME="Graz_2013_CanESM5_P7B2_HISTORICAL_BIASCORRECTED_RH_CONTINUOUS_RESEARCH.epw"
 
 def specific_humidity_of_profile(t,rh,pressure):
     return fmean(q_from_t_rh(x,r,pressure) for x,r in zip(t,rh))
@@ -339,6 +339,70 @@ def generate(model,basehours,lookup):
     if len(hours)!=NONLEAP_HOURS:raise ValueError("Missing generated 2013 hourly support")
     return hours,closure,states
 
+def regularize_hourly_humidity_continuity(hours,days,window=5):
+    """Source-preserving *input*, output-continuous RH centered boxcar filter.
+
+    We prioritize smooth hourly physical weather over mathematically forcing
+    incompatible GCM native daily hurs+huss. Filtering across daily midnight
+    uses all 8760 consecutive hours (not a separate daily discontinuous fit).
+    The window's maximum possible RH step is (100-1)/5<20 percentage points/h.
+    The resulting *NEW* humidity source residuals are recomputed and exported:
+    NEVER reuse prefilter claims as final EPW conservation statistics.
+    """
+    if window!=5 or len(hours)!=8760 or len(days)!=365:
+        raise ValueError("RH continuity requires fixed 5-hour 2013 source")
+    previous=[x["RH_pct"] for x in hours]
+    smoothed=[]
+    for i in range(len(hours)):
+        samples=[previous[max(0,min(len(hours)-1,j))]
+                 for j in range(i-2,i+3)]
+        smoothed.append(sum(samples)/5)
+    changes=[abs(a-b) for a,b in zip(smoothed[1:],smoothed[:-1])]
+    max_step=max(changes)
+    if max_step>20+1.e-8:
+        raise ValueError("Hourly RH physical continuity 20-pp screen failure")
+    for x,rh in zip(hours,smoothed):
+        x["original_before_continuity_RH_pct"]=x["RH_pct"]
+        x["RH_pct"]=rh
+        x["dewpoint_C"]=dewpoint(x["T_C"],rh)
+        x["humidity_timing_method"]="FIVE_HOUR_CROSS_DAY_BOXCAR_REVIEW_ONLY"
+        if not RH_MIN-1e-8<=rh<=RH_MAX+1e-8 or x["dewpoint_C"]>x["T_C"]+1e-8:
+            raise ValueError("RH temporal smoothing produced unphysical psychrometrics")
+    corrected_status=Counter()
+    for i,day in enumerate(days):
+        h=hours[i*24:(i+1)*24]
+        if len(h)!=24 or h[0]["date"]!=day["date"] or h[-1]["date"]!=day["date"]:
+            raise ValueError("Original 2013 daily source time support changed after smoothing")
+        day["pre_continuity_humidity_stage"]=day["status"]
+        day["pre_continuity_huss_error_kg_kg"]=day["reconstructed_minus_source_huss_kg_kg"]
+        day["pre_continuity_hurs_error_pp"]=day["reconstructed_minus_source_hurs_pp"]
+        original_q=day["source_huss_kg_kg"]
+        original_rh=day["source_hurs_pct"]
+        new_q=specific_humidity_of_profile(
+              [x["T_C"] for x in h],[x["RH_pct"] for x in h],h[0]["pressure_pa"])
+        new_rh=fmean(x["RH_pct"] for x in h)
+        dq=new_q-original_q
+        drh=new_rh-original_rh
+        day["reconstructed_huss_kg_kg"]=new_q
+        day["reconstructed_hurs_pct"]=new_rh
+        day["reconstructed_minus_source_huss_kg_kg"]=dq
+        day["reconstructed_minus_source_hurs_pp"]=drh
+        day["daily_huss_conserved"]=abs(dq)<Q_TOL
+        day["daily_hurs_conserved"]=abs(drh)<HURS_TOL
+        day["status"]="FINAL_RH_TEMPORALLY_CONTINUOUS_SOURCE_RESIDUALS_RECOMPUTED"
+        key=("both_conserved" if day["daily_hurs_conserved"] and
+             day["daily_huss_conserved"] else
+             "huss_only" if day["daily_huss_conserved"] else
+             "hurs_only" if day["daily_hurs_conserved"] else "neither")
+        corrected_status[key]+=1
+    return {"method":"5_HOUR_CENTRED_BOXCAR_ALL_8760_CROSS_DAY",
+            "maximum_observed_adjacent_hour_RH_change_pp":max_step,
+            "number_adjacent_hours_RH_jump_above_20pp":sum(v>20 for v in changes),
+            "source_RH_before_continuity_max_jump_pp":
+                max(abs(a-b) for a,b in zip(previous[1:],previous[:-1])),
+            "final_native_daily_hurs_huss_conservation_classes":dict(corrected_status),
+            "actual_humidity_source_daily_compatibility_recomputed":True}
+
 def run(model_root,p7b_root,station_root,out):
     out.mkdir(parents=True,exist_ok=True)
     model,modelsha=original_model_daily(model_root)
@@ -347,6 +411,7 @@ def run(model_root,p7b_root,station_root,out):
     factors,factor_rows,sm,so=monthly_factors(model,station)
     holdout,holdout_summary=holdout_climatology(factors,sm,so)
     hours,days,states=generate(model,basehours,factors)
+    continuity=regularize_hourly_humidity_continuity(hours,days)
     epw=out/SYNTHETIC_FILENAME
     epwsha=write_epw(epw,hours)
     rows=[]
@@ -387,13 +452,19 @@ def run(model_root,p7b_root,station_root,out):
       "solar_model_event_dates_not_compared_to_observed_events":True,
       "output_EPWhours":len(hours),
       "original_daily_model_days":len(days),
-      "daily_humidity_source_status_counts":dict(states),
-      "days_both_source_hurs_and_huss_closed":states["JOINT_HURS_HUSS_CLOSED_BOUNDED_HOURLY_RH"],
-      "days_source_huss_closed_hurs_relaxed":states["HUSS_PRIORITIZED_HURS_RELAXED_CONSTANT_RH_PROXY"],
+      "pre_continuity_daily_humidity_stage_counts":dict(states),
+      "humidity_continuity_diagnostics":continuity,
+      "daily_humidity_source_status_counts":continuity["final_native_daily_hurs_huss_conservation_classes"],
+      "days_both_source_hurs_and_huss_closed":continuity["final_native_daily_hurs_huss_conservation_classes"].get("both_conserved",0),
+      "pre_continuity_days_both_source_hurs_and_huss_closed":states["JOINT_HURS_HUSS_CLOSED_BOUNDED_HOURLY_RH"],
+      "days_source_huss_closed_hurs_relaxed":continuity["final_native_daily_hurs_huss_conservation_classes"].get("huss_only",0),
+      "pre_continuity_days_source_huss_closed_hurs_relaxed":states["HUSS_PRIORITIZED_HURS_RELAXED_CONSTANT_RH_PROXY"],
       "days_source_huss_not_feasible_at_fixed_pressure":states["SOURCE_HUSS_UNACHIEVABLE_AT_PRESSURE_WITH_SATURATION_BOUND"],
       "max_abs_daily_huss_source_residual_kg_kg":max(dailyq),
       "max_abs_daily_hurs_source_residual_pp":max(dailyrh),
       "all_8760_hourly_RH_within_1_to_100_and_dewpoint_le_T":True,
+      "all_8759_hourly_RH_jumps_below_20pp":continuity["number_adjacent_hours_RH_jump_above_20pp"]==0,
+      "source_humidity_original_daily_constraints_can_be_broken_after_continuity":True,
       "calibrated_daily_GHI_conserved_each_day":True,
       "original_source_daily_GHI_deliberately_not_conserved":True,
       "original_native_daily_T_wind_precip_LW_conserved":True,
@@ -407,6 +478,8 @@ def run(model_root,p7b_root,station_root,out):
          "Historical 2005–2009 ground GHI monthly calibration is 5 training years only, with 2010–2011 excluded for original solar source-resolution mismatch, heldout 2012–2014.",
          "NEX-GDDP-CMIP6 original rsds already bias corrected by NASA BCSD; additional local calibration is explicitly applied, requires multi-model and future-change-signal validation to avoid excessive/double correction.",
          "RH and huss are incompatible on a subset of native model days at fixed pressure. HUSS is prioritized where possible while source hurs is relaxed; high huss beyond all-hour saturation remains unclosed and flagged. Original observations are not falsely changed.",
+         "A final source-independent cross-day five-hour RH continuity filter enforces <20 percentage point maximum adjacent-hour RH change, but deliberately breaks exact original daily hurs/huss conservation on many days; all FINAL residuals and PRE-filter source status are reported separately.",
+         "The 5-hour moving-average RH smoother is a physical continuity engineering guard, NOT statistically validated on observed hourly humidity or real weather cross-variable copulas.",
          "Humidity profiles are bounded and cross-variable coherent but NOT verified against observed hourly RH persistence or wind/rain/cloud copulas.",
          "Original daily GHI is deliberately modified by the monthly calibration. The CALIBRATED, not raw CMIP6 daily GHI target is conserved exactly.",
          "Erbs solar diffuse/direct split based on coarse solar geometry is not independently measured DHI/DNI.",
