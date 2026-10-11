@@ -4,6 +4,12 @@
 **Status at 2026-10-11 freeze:** Research code up to P6.3E computationally tested; ground hourly solar independently unvalidated.  
 **Repo:** \`dmitrievii/building-energy-tools\`. **NO automatic merge into \`main\`.**
 
+## Accepted P6.3F-B closeout and immutable addendum — 2026-10-11
+
+**Original scientific run:** [#38135836142](https://github.com/dmitrievii/building-energy-tools/actions/runs/38135836142) SUCCESS; source commit `8d6a0b7d68f97d0a6200877ab75cfd0be4c70615`, original artifact `11700429246`. **Canonical numerical closeout:** `docs/IGE_P6_3F_B_ACCEPTED_NUMERICAL_SCIENCE_CLOSEOUT.md`. Complete source + original results are preserved in portable addendum **`IGE_RESEARCH_P6_3F_GROUND_QC_SOURCE_ADDENDUM_2026-10-11.zip`**, 17,827,987 bytes, SHA256 `78873fb088880688a434bb3caeaa1e14e062028ba455f64859ef31ac0adabb0b`. It contains unchanged original P6.3F and P6.3F-B workflow ZIPs (2 files / 33 verified original artifact members), MANIFEST.json and executable standalone SHA verifier. Both nested original ZIP SHA and member SHA checked after extraction PASS. **NOT** a permanent institutional deposit; keep alongside untouched integrated P1–P6.3E freeze (original integrated SHA `4b5d7dfc4b1805f0a3742e4f6e72ae9474718deb0683b321305f405939d46721`).
+
+**Scientific result:** genuine original ten-minute `chim` q21=0 (not checked, NOT declared false) can support provisional DHI research in **32,239 complete original 6/6 hours** in 2006–2009, correlation NASA POWER r=0.871321, MAE=0.0242561 kWh/m²/hour (record-start hypothesis). GHI 73,393 quality-approved hours. Original source 10min GHI and QC-approved official daily GHI disagree notably during 2010 and 2011 (+0.461663 and +0.285946 kWh/m²/day on fully matched q21-approved days); **which source is incorrect is unknown**. Solar-day [previous 23 UTC, label day 23 UTC) and both 10-min averaging support hypotheses preserved. DHI data in 2010–2014 absent (not merely q0), and original directly measured DNI unavailable. No future EPW validation. Need further investigation of 2010/11 source processing/calibration provenance; cannot force data closure.
+
 ## ACTIVE P6.3F-B: Q21=0 is unchecked, NOT proved wrong (2026-10-11)
 
 **Active branch:** `research/ige-p6-3f-b-provisional-dhi-daily-closure-20261011`; parent is successful P6.3F original source branch `research/ige-p6-3f-geosphere-open-10min-qc-2005-2014-20261011`. **Read** `docs/IGE_P6_3F_B_UNCHECKED_SOLAR_RESEARCH_TIERS_AND_DAILY_CLOSURE.md`, `research/ige_cmip6/p6_3f_b_unchecked_diffuse_daily_closure.py` and its test/workflow.
