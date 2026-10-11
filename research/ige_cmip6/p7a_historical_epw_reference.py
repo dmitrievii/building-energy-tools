@@ -24,7 +24,7 @@ SITE=(47.08,15.45)
 ELEVATION_PROXY_M=366
 POWER="https://power.larc.nasa.gov/api/temporal/hourly/point"
 M_VARS=("T2M","T2MDEW","RH2M","PS","WS10M","WD10M",
-        "ALLSKY_SFC_LW_DWN","PRECTOT")
+        "ALLSKY_SFC_LW_DWN","PRECTOTCORR")
 STATION=("tl","rf","p","ff")
 SPECS={
     "tl":(-70,70),"rf":(0,100),"p":(310,1200),"ff":(0,40)}
@@ -114,8 +114,8 @@ def original_power_met(raw_json,request_url):
     # conversion below is not an unverified guess.
     expected={"T2M":("C","°C"),"T2MDEW":("C","°C"),"RH2M":("%",),
               "PS":("kPa",),"WS10M":("m/s",),"WD10M":("Degrees","degree","degrees"),
-              "ALLSKY_SFC_LW_DWN":("W/m^2","W/m²",),
-              "PRECTOT":("mm/hour","mm/hr","mm/h")}
+              "ALLSKY_SFC_LW_DWN":("W/m^2","W/m²","W m-2"),
+              "PRECTOTCORR":("mm/hour","mm/hr","mm/h")}
     for name,aliases in expected.items():
         actual=str(units.get(name,{}).get("units",""))
         if actual not in aliases:
@@ -211,7 +211,7 @@ def make_rows(station,solar,meteorology):
         if not all(finite_range(x,0,1600) for x in (ghi,dni,dhi)):
             raise ValueError("Unexpected NASA original shortwave solar")
         if rad["closure_review"]:risk["nasa_solar_component_review_hours"]+=1
-        rain=met["PRECTOT"]
+        rain=met["PRECTOTCORR"]
         liquid=rain if finite_range(rain,0,300) else 999
         if liquid==999:risk["missing_precipitation_hours"]+=1
         # 35 EPW fields, see EnergyPlus AuxiliaryPrograms EPW dictionary.
@@ -236,7 +236,7 @@ def make_rows(station,solar,meteorology):
            "sky_lw_source":"NASA_POWER_GRID",
            "solar_source":"NASA_POWER_GRID_P6_3E_ORIGINAL",
            "dewpoint_method":"MAGNUS_FROM_MIXED_TEMP_RH",
-           "precipitation_source":"NASA_POWER_PRECTOT" if rain is not None else "MISSING",
+           "precipitation_source":"NASA_POWER_PRECTOTCORR" if rain is not None else "MISSING",
            "solar_ghi_dni_dhi_closure_review":rad["closure_review"]})
     return rows,lineage,counts,risk
 
