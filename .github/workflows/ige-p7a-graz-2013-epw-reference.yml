@@ -1,0 +1,88 @@
+name: IGE P7A Graz 2013 historical hourly reference EPW source and format closure
+on:
+  push:
+    branches:
+      - research/ige-p7a-historical-hourly-epw-reference-20261011
+    paths:
+      - .github/workflows/ige-p7a-graz-2013-epw-reference.yml
+      - research/ige_cmip6/p7a_historical_epw_reference.py
+      - research/ige_cmip6/test_p7a_historical_epw_reference.py
+      - docs/IGE_P7_HOURLY_SYNTHESIS_EPW_EXECUTION_PROTOCOL.md
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  historical-hourly-epw-original-source-reference:
+    name: 8760-hour Graz 2013 GeoSphere station-QC and original NASA POWER solar/met EPW strict proof
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Confirm 35-field EPW, fixed CET UTC year seam, NASA units, psychrometrics and fail-closed station QC contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7a_historical_epw_reference.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p6_3e_hourly_solar_components_arad.py' -v
+      - name: Restore original 2012 GeoSphere Graz 30 hourly QC (for 2013 fixed CET first hour)
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38082122721
+          github-token: ${{ github.token }}
+          name: ige-p6-2b-station30-2012
+          path: inputs/geosphere/2012
+      - name: Restore original 2013 GeoSphere Graz 30 hourly station QC
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38082122721
+          github-token: ${{ github.token }}
+          name: ige-p6-2b-station30-2013
+          path: inputs/geosphere/2013
+      - name: Restore original P6.3E NASA POWER hourly 2005–14 GHI DNI DHI, immutable source SHA
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38129047139
+          github-token: ${{ github.token }}
+          name: ige-p6-3e-ghi-dni-dhi-toa-arad-research-audit
+          path: inputs/p6_3e_solar
+      - name: Fetch original NASA POWER 2012–2013 ancillary meteorology and write 2013 8760-hour experimental EPW
+        run: |
+          python research/ige_cmip6/p7a_historical_epw_reference.py \
+            --geosphere-source inputs/geosphere \
+            --solar-source inputs/p6_3e_solar \
+            --out outputs/p7a_graz_2013_historical_epw
+      - name: Scientific output gate for truthful historical source classification and full 8760 EPW structural closure
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import csv,json,hashlib
+          out=Path("outputs/p7a_graz_2013_historical_epw")
+          qa=json.loads((out/"p7a_epw_research_science_audit.json").read_text())
+          assert qa["technical_status"]=="FORMAT_AND_SOURCE_CONTRACTS_PASS"
+          assert qa["scientific_status"]=="HISTORICAL_MULTISOURCE_REFERENCE_ONLY_NOT_HOURLY_CLIMATE_SYNTHESIS"
+          assert qa["production_epw_ready"] is False
+          assert qa["local_2013_hour_count"]==8760
+          name="Graz_2013_P7A_Historical_Reference_RESEARCH_ONLY.epw"
+          with (out/name).open(newline="",encoding="utf8") as f:
+              rows=list(csv.reader(f))
+          assert len(rows)==8+8760
+          assert all(len(x)==35 for x in rows[8:])
+          assert rows[0][0]=="LOCATION" and rows[7][0]=="DATA PERIODS"
+          assert rows[8][:5]==["2013","1","1","1","60"]
+          assert rows[-1][:5]==["2013","12","31","24","60"]
+          for name,sha in qa["research_output_files_sha256"].items():
+              assert hashlib.sha256((out/name).read_bytes()).hexdigest()==sha,name
+          print("P7A FIRST EPW PASS source SHA, 8760 hours, 35 fields, CET UTC+1, no future climate claims")
+          print("P7A source origins",qa["hourly_source_choice_counts"])
+          print("P7A original scientific cautions",qa["source_quality_risks"])
+          PY
+      - name: Retain research EPW, raw NASA POWER ancillary JSON and per-hour source and QC evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p7a-graz-2013-historical-reference-epw-original-source
+          path: outputs/p7a_graz_2013_historical_epw/
+          retention-days: 30
+          if-no-files-found: warn
