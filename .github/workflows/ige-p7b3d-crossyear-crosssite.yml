@@ -1,0 +1,81 @@
+name: IGE P7B.3D independent cross-year cross-site hourly GHI generalization
+on:
+  push:
+    branches:
+      - research/ige-p7b3d-crossyear-crosssite-20261011
+    paths:
+      - .github/workflows/ige-p7b3d-crossyear-crosssite.yml
+      - research/ige_cmip6/p7b3d_crosssite_generalization.py
+      - research/ige_cmip6/test_p7b3d_crosssite_generalization.py
+      - docs/IGE_P7B3D_CROSS_YEAR_CROSS_SITE_PROTOCOL.md
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  registered-crossyear-crosssite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Pre-registered source QC, 5min geometry, solar physics and split tests
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7b3d_crosssite_generalization.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7b3c_conditional_solar.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7b3_observed_hourly_solar.py' -v
+      - name: Restore original immutable P6.3F Graz 10-minute ground source evidence
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38134438339
+          github-token: ${{ github.token }}
+          name: ige-p6-3f-open-geosphere-10min-graz-ghi-diffuse-qc-2005-2014
+          path: inputs/original_p6f
+      - name: Verify exact immutable original Graz 2005-14 source SHA-256
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib
+          f=Path('inputs/original_p6f/p6_3f_geosphere_10min_hourly_pairwise.csv')
+          assert f.is_file(),'original archived per-hour source absent'
+          assert hashlib.sha256(f.read_bytes()).hexdigest()=='95dc8f9b7341be69d0ee236b38029a3f171b7f6a9eb0aed75b03cd2e473500c0'
+          print('Original P6.3F original observed GHI SHA verified')
+          PY
+      - name: Live ORIGINAL GeoSphere radiation and QC on 3 independent registered stations 2012-14
+        run: |
+          python research/ige_cmip6/p7b3d_crosssite_generalization.py \
+            --graz-frozen-hourly inputs/original_p6f/p6_3f_geosphere_10min_hourly_pairwise.csv \
+            --out outputs/p7b3d \
+            --seeds 20
+      - name: Fail-closed research QC and independently supported geographic coverage
+        run: |
+          python - <<'PY'
+          import json,hashlib
+          from pathlib import Path
+          root=Path('outputs/p7b3d')
+          j=json.loads((root/'p7b3d_science_audit.json').read_text())
+          assert j['epw_production_ready'] is False
+          assert j['M2_has_no_test_site_or_evaluation_year_fitting'] is True
+          assert j['evaluation_conditions_on_known_measured_daily_energy'] is True
+          assert j['Graz_2012_2014_previously_consulted'] is True
+          assert j['observation_clock_hypotheses']==['record_start','record_end']
+          assert j['source_SHA']['frozen_graz_original_hourly_sha256']=='95dc8f9b7341be69d0ee236b38029a3f171b7f6a9eb0aed75b03cd2e473500c0'
+          assert j['coverage_gate_pass'], 'independent QC-approved geographic coverage blocked'
+          assert j['external_distinct_stations']>=2 and j['external_distinct_years']>=2
+          for r in j['results']:
+            assert r['evaluated_days']>=240
+            assert r['M2_max_daily_energy_residual']<1e-9
+          f=root/'p7b3d_crossyear_crosssite_scores.csv'
+          assert hashlib.sha256(f.read_bytes()).hexdigest()==j['scores_SHA256']
+          print('P7B.3D original-ground independent cross-site numerical SOURCE GATES PASS; SCIENTIFIC VALIDATION STILL REQUIRES REVIEW')
+          PY
+      - name: Preserve derived results / source provenance (no raw station observations)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p7b3d-crossyear-crosssite-independent-geo-hourly
+          path: outputs/p7b3d/
+          retention-days: 30
+          if-no-files-found: warn
