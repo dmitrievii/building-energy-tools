@@ -55,9 +55,11 @@ Contains 40/40 eight-GCM × five-period NASA source-derived ZIPs, 20 original ho
 - P6.3E: 2×87,648 original hourly GHI/DNI/DHI/TOA, provisional source-internal solar closure, 565/417 daylight screen exceedances, 0 deep-night source GHI flagged. ARAD Graz precision ground GHI/DNI/DHI/LW candidate identified since Sep 2011; original measured records not obtained.
 - \`production_epw_ready=false\`. No measured future projections, no proven hourly physical weather generation or building-energy validation yet.
 
-## Next research phase after freeze
+## Active P6.3F preflight — original ground archive request outstanding
 
-**P6.3F: ARAD Graz original ground radiation acquisition and independent comparison.**
+**The P6.3F software/QC preparation has PASSED GitHub Actions [#38132968798](https://github.com/dmitrievii/building-energy-tools/actions/runs/38132968798)**; source computation originally validated at `14fad0f088c86ea29086c8d0fc2d8bf37a2c7bd3`. This is a source-access gate **only**, not completed independent ground validation. NASA POWER reference checks 26,304 original 2012–14 UTC hours at each of 2 points (52,608 in total). ARAD real original observation records: **0 acquired**. The output explicitly has `comparison_statistics=null`, `scientific_status=BLOCKED_ARAD_SOURCE_ACCESS_NOT_YET_ACQUIRED` and `production_epw_ready=false`. Research module and custodian request are in this active branch. See `docs/IGE_P6_3F_ARAD_GROUND_ORIGINAL_VALIDATION_PROTOCOL.md` and `docs/IGE_P6_3F_ARAD_GRAZ_DATA_ACCESS_REQUEST_DE.md` (**draft, NOT SENT**).
+
+**Next required action: custodian-authorized original ARAD Graz 2012–2014 one-minute GHI/DNI/DHI/DLW acquisition and independent comparison.**
 1. Identify ARAD official custodian/access method, available 2012–2014 raw one-minute data, original UTC convention, flags, calibration documents, use/licensing.
 2. Obtain explicit access without fabricating data; published QC percentages are NOT the downloaded series.
 3. If data can be obtained, align site/date/horizon, aggregate to hourly, hold out validation years, compare NASA POWER measured GHI/DNI/DHI/LW independently.
@@ -68,4 +70,4 @@ Contains 40/40 eight-GCM × five-period NASA source-derived ZIPs, 20 original ho
 
 ## Restart prompt (copy verbatim)
 
-> Продолжай научный проект IGE Climate Analyzer из GitHub \`dmitrievii/building-energy-tools\`. Прочитай \`docs/IGE_CLIMATE_RESEARCH_HANDOFF.md\`, \`docs/IGE_CLIMATE_RESEARCH_MASTER_RECORD.md\`, \`docs/IGE_CLIMATE_RESEARCH_DECISION_LOG.md\`, \`docs/IGE_CLIMATE_PAPER_EVIDENCE_REGISTER.md\` и \`docs/IGE_CLIMATE_DATA_AND_REPRODUCIBILITY.md\` из ветки \`research/ige-research-preservation-freeze-20261011\`. Проверь current GitHub HEAD, не изменяй main. Источники и результаты P6.1–P6.3E зафиксированы в evidence freeze; научный статус REVIEW_REQUIRED, почасовая радиация не валидирована наземными данными. Следующий этап P6.3F ARAD Graz. CI запускай и прекращай polling до моего запроса. При необходимости попроси сам ZIP evidence freeze и сверь SHA.
+> Продолжай научный проект IGE Climate Analyzer из GitHub \`dmitrievii/building-energy-tools\`. Прочитай \`docs/IGE_CLIMATE_RESEARCH_HANDOFF.md\`, \`docs/IGE_CLIMATE_RESEARCH_MASTER_RECORD.md\`, \`docs/IGE_CLIMATE_RESEARCH_DECISION_LOG.md\`, \`docs/IGE_CLIMATE_PAPER_EVIDENCE_REGISTER.md\` и \`docs/IGE_CLIMATE_DATA_AND_REPRODUCIBILITY.md\` из ветки \`research/ige-research-preservation-freeze-20261011\`. Проверь current GitHub HEAD, не изменяй main. Источники и результаты P6.1–P6.3E зафиксированы в evidence freeze; научный статус REVIEW_REQUIRED, почасовая радиация не валидирована наземными данными. P6.3F подготовлен: CI #38132968798 PASS, но оригинальный ARAD архив закрыт и ещё не получен; подготовь и отправь запрос ответственным GeoSphere, затем ожидай официальные данные для независимой оценки. CI запускай и прекращай polling до моего запроса. При необходимости попроси сам ZIP evidence freeze и сверь SHA.
