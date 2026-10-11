@@ -95,12 +95,24 @@ def diffuse_fraction_erbs(kt):
 
 def temperature_curve(tavg,tmin,tmax):
     if not (tmin<=tavg<=tmax):raise ValueError("Temperature daily range inconsistent")
-    # Smooth 24h cosine with minimum 03:00 and maximum 15:00 LST;
-    # source CanESM5 provides tas mean at (tasmax+tasmin)/2 within ~1e-4 K.
-    if abs(tavg-(tmax+tmin)/2)>1e-3:
-        raise ValueError("Pilot symmetric temperature profile cannot preserve source daily mean and extrema")
+    # Native CanESM5 mean differs from midpoint(Tmin,Tmax) by small
+    # independently rounded source errors (up to ~1.53e-5 K for 2013).
+    # Preserve ALL THREE original native quantities rather than replacing
+    # the source mean with the midpoint and silently losing conservation.
+    midpoint=(tmax+tmin)/2
+    delta=tavg-midpoint
+    if abs(delta)>1e-3:
+        raise ValueError("Pilot midpoint constraint cannot preserve source daily mean and extrema")
     amplitude=(tmax-tmin)/2
-    vals=[tavg+amplitude*math.cos(2*math.pi*(h-15)/24) for h in range(24)]
+    vals=[midpoint+amplitude*math.cos(2*math.pi*(h-15)/24) for h in range(24)]
+    # The 03:00 Tmin and 15:00 Tmax remain untouched; distribute native
+    # mean-rounding residual to the 22 nonextreme hours. These microkelvin
+    # changes do not alter extrema, but retain daily mean to floating
+    # precision. Fail closed if near-degenerate Tmin/Tmax would be violated.
+    correction=delta*24/22
+    for h in range(24):
+        if h not in (3,15):
+            vals[h]+=correction
     if max(abs(fmean(vals)-tavg),abs(max(vals)-tmax),abs(min(vals)-tmin))>1e-8:
         raise ValueError("Temperature generator did not exactly preserve daily source")
     return vals
