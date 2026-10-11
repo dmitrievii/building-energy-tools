@@ -65,5 +65,15 @@ class OriginalPhysics(unittest.TestCase):
  def test_distant_site_source_metadata_fail_closed(self):
   with self.assertRaisesRegex(ValueError,'metadata incompatible'):
    check_original_metadata({'parameters':[],'stations':[]})
+ def test_provider_null_key_legend_entry_must_not_raise_typeerror(self):
+  from p7b3e_distant_sites import QUALITY
+  metadata={'parameters':[{'name':'cglo','unit':'W/m²'},{'name':'cglo_flag'}],
+            'code_lists':{'q21':[{'key':None,'value':'header'}]+
+                          [{'key':k,'value':str(k)} for k in sorted(set(QUALITY)|{0})]},
+            'stations':[]}
+  # The source is still invalid (stations absent), but must reach the
+  # fail-closed site-coverage contract, not fail on int(None).
+  with self.assertRaisesRegex(ValueError,'missing original provider site'):
+   check_original_metadata(metadata)
 
 if __name__=='__main__':unittest.main()
