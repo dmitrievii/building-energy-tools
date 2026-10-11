@@ -66,7 +66,11 @@ jobs:
           assert d["epw_production_ready"] is False
           assert d["output_EPWhours"]==8760
           assert d["original_daily_model_days"]==365
-          assert d["days_both_source_hurs_and_huss_closed"]+d["days_source_huss_closed_hurs_relaxed"]+d["days_source_huss_not_feasible_at_fixed_pressure"]==365
+          assert sum(d["daily_humidity_source_status_counts"].values())==365
+          assert d["pre_continuity_days_both_source_hurs_and_huss_closed"]+d["pre_continuity_days_source_huss_closed_hurs_relaxed"]+d["days_source_huss_not_feasible_at_fixed_pressure"]==365
+          assert d["humidity_continuity_diagnostics"]["number_adjacent_hours_RH_jump_above_20pp"]==0
+          assert d["all_8759_hourly_RH_jumps_below_20pp"] is True
+          assert d["source_humidity_original_daily_constraints_can_be_broken_after_continuity"] is True
           assert d["all_8760_hourly_RH_within_1_to_100_and_dewpoint_le_T"] is True
           assert d["calibrated_daily_GHI_conserved_each_day"] is True
           assert d["original_source_daily_GHI_deliberately_not_conserved"] is True
@@ -80,7 +84,7 @@ jobs:
           assert d["days_source_huss_not_feasible_at_fixed_pressure"]>0
           for f,sha in d["output_sha256"].items():
               assert hashlib.sha256((out/f).read_bytes()).hexdigest()==sha,f
-          path=out/"Graz_2013_CanESM5_P7B2_HISTORICAL_BIASCORRECTED_SYNTHETIC_RESEARCH.epw"
+          path=out/"Graz_2013_CanESM5_P7B2_HISTORICAL_BIASCORRECTED_RH_CONTINUOUS_RESEARCH.epw"
           with path.open("r",newline="",encoding="utf8") as f:
               rows=list(csv.reader(f))
           assert len(rows)==8768 and all(len(x)==35 for x in rows[8:])
@@ -88,7 +92,9 @@ jobs:
           assert rows[-1][:5]==["2013","12","31","24","60"]
           assert all(0<float(x[8])<=100 and float(x[7])<=float(x[6])+.01 for x in rows[8:])
           print("P7B2 new EPW",d["output_EPWhours"],"daily hurs+huss both",d["days_both_source_hurs_and_huss_closed"])
-          print("P7B2 source huss rescued hurs relaxed",d["days_source_huss_closed_hurs_relaxed"])
+          print("P7B2 after cross-day RH smoothing exact huss only",d["days_source_huss_closed_hurs_relaxed"])
+          print("P7B2 actual final humidity status",d["daily_humidity_source_status_counts"])
+          print("P7B2 raw vs final RH jump",d["humidity_continuity_diagnostics"]["source_RH_before_continuity_max_jump_pp"],d["humidity_continuity_diagnostics"]["maximum_observed_adjacent_hour_RH_change_pp"])
           print("P7B2 incompatible huss saturation days",d["days_source_huss_not_feasible_at_fixed_pressure"])
           print("P7B2 holdout solar",d["solar_holdout_metrics"])
           print("P7B2 source EPW_PRODUCTION_READY",d["epw_production_ready"])
