@@ -4,6 +4,16 @@
 **Status at 2026-10-11 freeze:** Research code up to P6.3E computationally tested; ground hourly solar independently unvalidated.  
 **Repo:** \`dmitrievii/building-energy-tools\`. **NO automatic merge into \`main\`.**
 
+## ACTIVE P6.3F-B: Q21=0 is unchecked, NOT proved wrong (2026-10-11)
+
+**Active branch:** `research/ige-p6-3f-b-provisional-dhi-daily-closure-20261011`; parent is successful P6.3F original source branch `research/ige-p6-3f-geosphere-open-10min-qc-2005-2014-20261011`. **Read** `docs/IGE_P6_3F_B_UNCHECKED_SOLAR_RESEARCH_TIERS_AND_DAILY_CLOSURE.md`, `research/ige_cmip6/p6_3f_b_unchecked_diffuse_daily_closure.py` and its test/workflow.
+
+**SCIENTIFIC REVISION:** Official GeoSphere `q21=0 = ungeprüfte Daten` means original observation NOT quality-checked; it does **not** mean measurement physically false. Archive original `chim` (sky diffuse candidate) has numerical source data in 2006–2009: 52,439 / 51,995 / 52,267 / 37,139 original ten-minute values respectively, always q0, and zero source numeric values in 2005 and 2010–2014. Use complete q0 hourly values **provisionally** in exploratory comparison with original NASA POWER DHI, keeping independent qc flags/tiers/physical screens and not describing them as provider-QC-approved. Preliminary original pairs r~0.87–0.88 each year 2006–09; full source-audited CI is the final numerical authority.
+
+**NEW INVESTIGATION:** official quality-approved daily GeoSphere `cglo_j` vs QC-approved 10min `cglo` have substantial original source disagreement in **2010 and 2011**, approx +0.462 and +0.286 kWh/m² per day (strict complete-source matched days). This means approved QC does not prove agreement across provider aggregations. Do not declare either source erroneous or adjust its values to force closure. P6.3F-B analyzes 23–23 UTC solar daily closure by year and both ten-minute timestamp hypotheses and records warnings; this is same-provider source consistency, not independent sensor skill. Exact cause unknown; instrument history and daily processing require investigation.
+
+The existing integrated frozen P1–P6.3E source baseline is unchanged. Full future EPW `production_epw_ready=false`. ARAD email remains UNSENT; data not required merely to explore q0. `main` untouched; start CI and do not poll until the user requests a check.
+
 ## Integrated scientific custody added 2026-10-11 (P1–P5 + P6)
 
 **PRIMARY INTEGRATED PORTABLE FILE:** `IGE_CLIMATE_RESEARCH_P1_TO_P6_3E_INTEGRATED_FREEZE_2026-10-11.zip`, **71,193,259 bytes**, SHA-256 `4b5d7dfc4b1805f0a3742e4f6e72ae9474718deb0683b321305f405939d46721`. This contains both ORIGINAL UNMODIFIED releases (P1–P5 Independent Climate Engine v0.4.0 and the previously accepted P6.1–P6.3E archive) and a standalone verifier. It is NOT hosted persistently in public GitHub and must be deposited to approved permanent storage.
