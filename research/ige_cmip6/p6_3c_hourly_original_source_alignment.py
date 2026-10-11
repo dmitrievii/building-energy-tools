@@ -88,7 +88,7 @@ def reconstruct(hourly_records,solar_daily,window):
         checked=complete and all(x["solar_checked"] for x in vals)
         # The entire 24h hourly source flux is hourly MEAN in W/m².
         # One hour * W/m² = Wh/m² -> divide by 1000 to kWh/m².
-        energy=(sum(max(0.,r["solar_Wm2_raw"]) for r in vals)/1000.
+        energy=(sum(r["solar_Wm2_raw"] for r in vals)/1000.
                 if complete else None)
         observed=day["ghi_kwh_m2_day"]
         out.append({"date":day["date"],"year":int(day["year"]),
@@ -146,11 +146,11 @@ def run(hourly_root,station_clean,out):
                 "hourly_verified_scientific_status":
                   "NO_INDEPENDENT_HOURLY_RADIATION_VALIDATION"
                   if not trusted else "SOME_Q21_CHECKED_HOURLY_AVAILABLE"})
-    csvwrite(out/"p6_3c_original_2010_hourly_boundary_all_years_solar_comparison.csv",
+    csvwrite(out/"p6_3c_2005_2014_hourly_daily_boundary_hypotheses.csv",
              predictions)
     csvwrite(out/"p6_3c_hourly_solar_comparison_summary.csv",stats)
     hashes={"daily_hypothesis_comparison":
-        checksum(out/"p6_3c_original_2010_hourly_boundary_all_years_solar_comparison.csv"),
+        checksum(out/"p6_3c_2005_2014_hourly_daily_boundary_hypotheses.csv"),
         "summary":checksum(out/"p6_3c_hourly_solar_comparison_summary.csv")}
     report={"stage":"IGE_P6_3C_HOURLY_GEOSPHERE_ORIGINAL_Q21_BOUNDARY",
        "status":"PASS_HOURLY_SOURCE_UNVERIFIED_SOLAR_QUALITY_MUST_NOT_CALIBRATE",
