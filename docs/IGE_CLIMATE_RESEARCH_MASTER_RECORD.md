@@ -8,6 +8,14 @@
 **Production main at freeze:** \`2a82a77d0fe8cc87a2324b820d6c6843b6598548\` — untouched  
 **SCIENCE STATUS: REVIEW_REQUIRED / NO FUTURE-HOURLY-EPW VALIDATION**
 
+## Pre-P6 foundational research is preserved separately (P1–P5)
+
+The original earlier **Independent Climate Engine v0.4.0**, frozen 2026-10-10, includes its documented P1 rasters/spatiotemporal benchmarking, P2 urban/UHI work, P3 station interpolation and independent ground-solar research, P4 independent scenario/source harmonization, and P5 eight-model CMIP6 **monthly** solar ensemble. P5 original release reports 152/152 tests PASS and intentionally declares itself not approved for production or future hourly EPW. See **`docs/IGE_CLIMATE_RESEARCH_P1_P5_BASELINE.md`** for evidence, source files, analytical boundaries and exact checksums. It is not included in the old standalone P6 archive and MUST NOT be inferred from P6 scripts.
+
+The new integrated frozen container `IGE_CLIMATE_RESEARCH_P1_TO_P6_3E_INTEGRATED_FREEZE_2026-10-11.zip` is 71,193,259 bytes, SHA256 `4b5d7dfc4b1805f0a3742e4f6e72ae9474718deb0683b321305f405939d46721`. It preserves original P1–P5 SHA `6e3dfefe03461feebeef36dd93ce4109861ad862c5e1c8ec312e10e541c57431` and previous P6 SHA `2c3ceecaf83aa3ff2b3e19d109d866111f1145eb5fe48ac6a4fdd010b27a22d7` as untouched nested original ZIPs. It has a JSON manifest and standalone verification. It is **not** an institutional archival deposit and not publicly redistributed.
+
+The chronology below documents **P6** research only; the earlier P1–P5 science has its **own authoritative immutable release**, not a claim that P6's solar methods existed in P5.
+
 ## 0. Authority and evidence hierarchy
 
 Scientific facts here are extracted from the successful GitHub Actions reports and their original archived JSON/CSV artifacts, cross-checked with the local portable research freeze. Treat these as evidence, not conversation memory. Every numerical claim requires a source archive, archived path, specific scenario/period and source provenance; convenient summaries or outputs from an earlier chat are secondary. CI PASS means the code executed and declared assertions passed; it **does not** establish independent observational skill.
