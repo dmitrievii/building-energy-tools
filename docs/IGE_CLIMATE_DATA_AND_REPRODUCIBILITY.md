@@ -2,6 +2,17 @@
 
 Freeze date: **2026-10-11**. This repository is confirmed **PUBLIC**. Publicly committing third-party original climate data, proprietary Meteonorm material, or the full portable freeze is **prohibited by default**, pending a dataset-specific rights review.
 
+## New restricted-source research addendum: P6.3F open GeoSphere and P6.3F-B (2026-10-11)
+
+**Exact portable file:** `IGE_RESEARCH_P6_3F_GROUND_QC_SOURCE_ADDENDUM_2026-10-11.zip` — **17,827,987 bytes**, SHA-256 **`78873fb088880688a434bb3caeaa1e14e062028ba455f64859ef31ac0adabb0b`**. The new addendum **does not modify** the original P1–P6.3E integrated freeze. Original nested research artifact ZIPs retained unchanged:
+
+- Open GeoSphere Graz #30/#16412 10-min 2005–2014 source ZIP, GitHub Action [#38134438339](https://github.com/dmitrievii/building-energy-tools/actions/runs/38134438339), artifact ID `11700138103`, original commit `911c781d2b6ba410b175c176c57bee4663c67785`;
+- P6.3F-B q0/provisional diffuse QC tiers, original official solar 23–23 UTC day audit and NASA gridded hourly sensitivity ZIP, accepted Action [#38135836142](https://github.com/dmitrievii/building-energy-tools/actions/runs/38135836142), artifact ID `11700429246`, original scientific commit `8d6a0b7d68f97d0a6200877ab75cfd0be4c70615`.
+
+Contains `MANIFEST.json`, original file/member byte sizes and **33 per-member SHA-256 values**, plus portable `verify_addendum.py`. Original outer ZIP CRC and both nested file SHA plus all 33 individual member SHA **passed after independent extraction**. This is a **private user-download**, **NOT** a managed permanent deposit. Custodian/rights and university archiving tasks stay pending; public repository contains code, documentation and exact references, not all raw source bytes.
+
+**Scientific status**: original provider q21=0 means unchecked, not automatically inaccurate. Preserve original unaltered source; 32,239 original 6/6 complete `chim` q0 hourly 2006–2009 support exploratory DHI, **not approved original sensor QA**. Historical QC-approved 10-min GHI disagrees in 2010–2011 with provider daily GHI; investigate source lineage before paper claims. Canonical `docs/IGE_P6_3F_B_ACCEPTED_NUMERICAL_SCIENCE_CLOSEOUT.md`. The original integrated freeze SHA remains pinned below.
+
 ## 0. INTEGRATED science preservation now includes P1–P5 (2026-10-11 addition)
 
 The original **standalone P6 research freeze remains unchanged**. An independently checked earlier source release is preserved as a second nested original ZIP inside an **integrated container**, not by re-packaging or overwriting the scientific raw evidence.
