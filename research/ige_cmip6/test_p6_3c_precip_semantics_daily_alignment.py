@@ -92,7 +92,8 @@ class GeoSphereRainAndTemporalContract(unittest.TestCase):
 
     def test_deterministic_daily_lags_no_station_donor_date_pairing(self):
         rows=[]
-        for day in range(1,29):
+        # Pearson requires >=30 samples; July has 31 days.
+        for day in range(1,32):
             rows.append({"station_id":30,"date":f"2010-07-{day:02d}",
                          "year":2010,"month":7,
                          "ghi_kwh_m2_day":float(day),
@@ -104,9 +105,9 @@ class GeoSphereRainAndTemporalContract(unittest.TestCase):
         idx={(r["season"],r["relationship"],r["weather_label_day_shift"]):r
              for r in result}
         self.assertEqual(len(LAGS),5)
-        self.assertEqual(idx["JJA","temperature_ghi",0]["n_complete"],28)
-        self.assertEqual(idx["JJA","temperature_ghi",1]["n_complete"],27)
-        self.assertEqual(idx["JJA","precipitation_ghi",0]["n_complete"],28)
+        self.assertEqual(idx["JJA","temperature_ghi",0]["n_complete"],31)
+        self.assertEqual(idx["JJA","temperature_ghi",1]["n_complete"],30)
+        self.assertEqual(idx["JJA","precipitation_ghi",0]["n_complete"],31)
         self.assertAlmostEqual(idx["JJA","temperature_ghi",0]["pearson"],1.)
         self.assertEqual(idx["JJA","temperature_ghi",0]["status"],"INSUFFICIENT_QC_SAMPLE")
 
