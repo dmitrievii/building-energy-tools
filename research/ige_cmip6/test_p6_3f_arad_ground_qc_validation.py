@@ -119,8 +119,14 @@ class ARADOriginalGroundScienceContracts(unittest.TestCase):
             "solar_coszen_noaa_midpoint":.6}}
         for key in nasa.copy():
             nasa[("nasa_gcm_cell",key[1])]=dict(nasa[key])
+        # Add one UTC source hour in every season; ground remains absent.
+        for month in (4,7,10):
+            h=datetime(2012,month,15,11,tzinfo=timezone.utc)
+            for site in SITES:
+                nasa[(site,h)]={"GHI":.2,"DNI":.3,"DHI":.1,
+                    "solar_coszen_noaa_midpoint":.8}
         rows,results=compare({},nasa)
-        self.assertEqual(len(rows),6)
+        self.assertEqual(len(rows),24)
         for result in results:
             self.assertEqual(result["independent_ground_q1_paired_hours"],0)
             self.assertIsNone(result["mae_kwh_m2_hour"])
@@ -137,6 +143,13 @@ class ARADOriginalGroundScienceContracts(unittest.TestCase):
             idx[("nasa_gcm_cell",dt)]=dict(idx[("graz_station30",dt)])
             ground[dt]={ch+"_kwh_m2_hour":
                  idx[("graz_station30",dt)][ch]-.05 for ch in ("GHI","DNI","DHI")}
+        # Seasonal metric function expects source windows represented in
+        # all seasons, as in the real 2012–14 immutable NASA archive.
+        for month in (4,7,10):
+            h=datetime(2012,month,15,11,tzinfo=timezone.utc)
+            for site in SITES:
+                idx[(site,h)]={"GHI":.2,"DNI":.3,"DHI":.1,
+                              "solar_coszen_noaa_midpoint":.8}
         rows,summary=compare(ground,idx)
         annual=next(z for z in summary if z["site"]=="graz_station30"
                    and z["channel"]=="GHI" and z["season"]=="ANNUAL")
