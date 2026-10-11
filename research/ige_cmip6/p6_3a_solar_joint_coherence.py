@@ -81,11 +81,26 @@ def validated_joint_file(path,model,window,solar):
                      "days":len(original),"huss_missing":True in optional_missing,
                      "calendar":qa["calendar"]}
 
+def native_daily_ghi(day):
+    """Validate either immutable P6.1 daily solar or normalized P6.2D-C input.
+
+    Normalized source uses 'raw'; original source uses 'ghi_kwh_m2_day'.
+    When both exist, their numerical agreement is mandatory.
+    """
+    values=[float(day[k]) for k in ("raw","ghi_kwh_m2_day") if k in day]
+    if not values or any(not math.isfinite(v) or v<0 for v in values):
+        raise ValueError("Missing, negative or non-finite original daily GHI")
+    if len(values)==2 and abs(values[0]-values[1])>1.e-7:
+        raise ValueError("Original/normalized daily GHI mismatch")
+    return values[0]
+
 def daily_methods(original_solar,corrected_monthly,reference_m3):
     """Daily solar ratios conserve M1 and M2 month sums exactly."""
     if len(original_solar)!=len(reference_m3):
         raise ValueError("M3 source row mismatch")
-    raw_month=year_months(original_solar)
+    raw_month=defaultdict(float)
+    for day in original_solar:
+        raw_month[day["year"],day["month"]]+=native_daily_ghi(day)
     if set(raw_month)!=set(corrected_monthly):
         raise ValueError("Corrected monthly target incomplete")
     factors={}
@@ -102,7 +117,7 @@ def daily_methods(original_solar,corrected_monthly,reference_m3):
     calculated=defaultdict(lambda:defaultdict(float))
     for i,(day,m3) in enumerate(zip(original_solar,reference_m3)):
         if not math.isfinite(m3) or m3<0:raise ValueError("Invalid physical M3 daily value")
-        raw=day["ghi_kwh_m2_day"]
+        raw=native_daily_ghi(day)
         key=(day["year"],day["month"])
         rows={METHODS[0]:raw,NEW:m3}
         for method in METHODS[1:]:
