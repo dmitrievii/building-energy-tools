@@ -1,0 +1,68 @@
+name: IGE P6.3C GeoSphere official rr sentinel, UTC daily hourly and 3-station climate coherence
+on:
+  push:
+    branches:
+      - research/ige-p6-3c-rain-qc-time-alignment-cross-station-20261011
+    paths:
+      - .github/workflows/ige-p6-3c-geo-rain-time-site-qc.yml
+      - research/ige_cmip6/p6_3c_precip_semantics_daily_alignment.py
+      - research/ige_cmip6/test_p6_3c_precip_semantics_daily_alignment.py
+      - research/ige_cmip6/p6_3c_hourly_original_source_alignment.py
+      - research/ige_cmip6/test_p6_3c_hourly_original_source_alignment.py
+      - docs/IGE_P6_3C_PRECIP_QC_DAY_WINDOWS_MULTISTATION.md
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  station-rain-hourly-and-donor:
+    name: 3652 observed days rain -1 semantics, 87648 original hourly source records and 3 regional donor stations
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Tests of original provider quality flag, precipitation trace and hourly time windows
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p6_3c_precip_semantics_daily_alignment.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p6_3c_hourly_original_source_alignment.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p6_3b_independent_reference_and_attribution.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p6_3a_solar_joint_coherence.py' -v
+      - name: Download immutable P6.3B original GeoSphere and satellite analysis with SHA evidence
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38124674795
+          github-token: ${{ github.token }}
+          name: ige-p6-3b-two-anomaly-independent-observations-source-qc
+          path: inputs/p6b_original
+      - name: Download 2000–2014 original GeoSphere hourly source artifacts (2005–2014 used)
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38082122721
+          github-token: ${{ github.token }}
+          pattern: ige-p6-2b-station30-20*
+          path: inputs/hourly_years
+          merge-multiple: false
+      - name: Official precipitation semantics and independent Laßnitzhöhe St Radegund Gleisdorf climate analyses
+        run: |
+          python research/ige_cmip6/p6_3c_precip_semantics_daily_alignment.py \
+            --p6b-frozen inputs/p6b_original \
+            --out outputs/p6_3c_rain_daily_sites
+      - name: Original P6.2B station 30 hourly W per m² UTC integration hypotheses
+        run: |
+          python research/ige_cmip6/p6_3c_hourly_original_source_alignment.py \
+            --yearly-root inputs/hourly_years \
+            --station-clean outputs/p6_3c_rain_daily_sites/p6_3c_station30_precipitation_reinterpreted.csv \
+            --out outputs/p6_3c_hourly_seam
+      - name: Preserve signed original sources, station precipitation QC, hourly radiative uncertainty and donor comparisons
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p6-3c-precipitation-utc-hourly-multistation-source-evidence
+          path: |
+            outputs/p6_3c_rain_daily_sites/
+            outputs/p6_3c_hourly_seam/
+          retention-days: 30
+          if-no-files-found: warn
