@@ -108,6 +108,80 @@ def original_nasa_p6e(root):
             raise ValueError(f"NASA original hourly {y} incomplete")
     return by_year,checksum(data),count
 
+def original_geosphere_daily(root):
+    """Independent actual station daily observed GHI, q21-approved.
+
+    Do NOT confuse with NASA POWER gridded satellite/reanalysis original.
+    Preserve official GeoSphere 23 UTC previous-to-23 UTC labelled day.
+    """
+    filename="p6_3d_power_vs_geosphere_daily_2005_2014_two_utc_windows.csv"
+    source=root/filename
+    report=root/"p6_3d_hourly_independent_validation_science_audit.json"
+    if not source.is_file() or not report.is_file():
+        raise FileNotFoundError("Frozen original P6.3D station daily GHI reference absent")
+    qa=json.loads(report.read_text(encoding="utf8"))
+    if checksum(source)!=qa["output_sha256"][filename] or \
+       qa["production_epw_ready"] is not False:
+        raise ValueError("Official original GeoSphere daily station source SHA/status mismatch")
+    by_year=defaultdict(list)
+    unique=set()
+    for row in read_csv(source):
+        if row["site"]!=NASA_SITE or row["window"]!="geosphere_23_23UTC":
+            continue
+        if row["valid_day"]!="True":raise ValueError("Official station GHI day not valid")
+        day=date.fromisoformat(row["date"])
+        if day.year not in MODEL_YEARS:continue
+        if day in unique:raise ValueError("Duplicate original GeoSphere solar day")
+        unique.add(day)
+        val=float(row["official_ghi_kwh_m2_day"])
+        if not math.isfinite(val) or val<0:
+            raise ValueError("Original station daily solar measured energy not usable")
+        by_year[day.year].append((day.month,val))
+    for y in MODEL_YEARS:
+        expected=366 if y in (2008,2012) else 365
+        if len(by_year[y])!=expected:
+            raise ValueError(f"Official GeoSphere daily station year {y} incomplete")
+    return by_year,checksum(source)
+
+def stationary_observed_solar_climatology(model,station):
+    """Unpaired GCM 365-day climatology vs actual GeoSphere station days."""
+    gcm=defaultdict(list)
+    for row in model:
+        y=int(row["year"])
+        if y in MODEL_YEARS:
+            gcm[y].append((int(row["month"]),float(row["rsds_kwh_m2_day"])))
+    annual=[]
+    for y in MODEL_YEARS:
+        model_energy=sum(v for _,v in gcm[y])
+        station_energy=sum(v for _,v in station[y])
+        norm_station=station_energy*365/len(station[y])
+        annual.append({"year_for_distribution_not_date_paired":y,
+                       "native_model_days":len(gcm[y]),
+                       "observed_station_days":len(station[y]),
+                       "model_annual_kwh_m2":model_energy,
+                       "original_geosphere_annual_365day_normalized_kwh_m2":norm_station,
+                       "comparison":"UNPAIRED_CALENDAR_YEAR_DISTRIBUTIONS_NO_GCM_OBSERVATION_EVENT_MATCH"})
+    months=[]
+    for m in range(1,13):
+        a=[v for y in MODEL_YEARS for mm,v in gcm[y] if mm==m]
+        b=[v for y in MODEL_YEARS for mm,v in station[y] if mm==m]
+        if not a or not b:raise ValueError("No station/model source climatological month")
+        avgmodel=fmean(a);avgstation=fmean(b)
+        months.append({"month":m,"model_native_days":len(a),
+                      "geosphere_original_station_days":len(b),
+                      "model_mean_daily_ghi_kwh_m2":avgmodel,
+                      "geosphere_station_mean_daily_ghi_kwh_m2":avgstation,
+                      "model_minus_station_pct":100*(avgmodel/avgstation-1)
+                          if avgstation else None,
+                      "source":"GEOSPHERE_OBSERVED_STATION_GHI_OFFICIAL_DAILY_QC",
+                      "comparison":"UNPAIRED_TEN_YEAR_MONTH_CLIMATOLOGY"})
+    ref=fmean(x["original_geosphere_annual_365day_normalized_kwh_m2"] for x in annual)
+    mod=fmean(x["model_annual_kwh_m2"] for x in annual)
+    return annual,months,{
+       "model_10y_mean_annual_kwh_m2":mod,
+       "station_observed_10y_mean_365day_normalized_kwh_m2":ref,
+       "model_minus_station_pct":100*(mod/ref-1)}
+
 def moisture_daily_candidate(t_series,mean_rh,source_huss,p=P_PROXY,cap_pp=RH_SHAPE_CAP_PP):
     """Pre-registered smooth RH family with exactly conserved mean RH.
 
@@ -248,20 +322,24 @@ def annual_solar_distribution(model,reference):
          "nasa_10y_mean_annual_365day_normalized_kwh_m2":nasa_clim,
          "model_minus_nasa_10y_climatological_pct":100*(model_clim/nasa_clim-1)}
 
-def run(model_root,p7b_root,nasa_root,out):
+def run(model_root,p7b_root,nasa_root,station_root,out):
     out.mkdir(parents=True,exist_ok=True)
     model,modelsha=original_model_daily(model_root)
     hourly,rawsha,original=original_p7b_hourly(p7b_root)
     nasa,nasasha,nasacount=original_nasa_p6e(nasa_root)
+    station,stationsha=original_geosphere_daily(station_root)
     moist,moist_hour=evaluate_moisture(model,hourly)
     solar,monthly,clim=annual_solar_distribution(model,nasa)
+    station_annual,station_monthly,station_clim=stationary_observed_solar_climatology(model,station)
     closed=sum(x["status"]=="JOINT_CLOSED_WITHIN_25PP_RH_FAMILY" for x in moist)
     rest=max(abs(x["candidate_minus_original_huss_kg_kg"]) for x in moist)
     outputs={
       "p7b1_native_moisture_feasibility_by_day.csv":moist,
       "p7b1_provisional_hourly_rh_candidate_not_epw.csv":moist_hour,
       "p7b1_10yr_unpaired_solar_annual_distribution.csv":solar,
-      "p7b1_10yr_unpaired_solar_monthly_climatology.csv":monthly}
+      "p7b1_10yr_unpaired_solar_monthly_climatology.csv":monthly,
+      "p7b1_10yr_ground_observed_geosphere_annual_distribution.csv":station_annual,
+      "p7b1_10yr_ground_observed_geosphere_monthly_climatology.csv":station_monthly}
     files={name:save_union(out/name,rows) for name,rows in outputs.items()}
     audit={"stage":"IGE_P7B1_MOISTURE_FEASIBILITY_AND_MULTYEAR_SOLAR_VALIDATION",
        "technical_status":"P7B1_ORIGINAL_SOURCE_DIAGNOSTICS_COMPLETE",
@@ -270,6 +348,7 @@ def run(model_root,p7b_root,nasa_root,out):
        "input_original_model_daily_sha256":modelsha,
        "input_original_p7b_2013_hourly_sha256":rawsha,
        "input_original_nasa_p6e_hourly_sha256":nasasha,
+       "input_original_geosphere_station_daily_sha256":stationsha,
        "input_p7b_reference_original_epw_sha256":original["hashes"][
            "Graz_2013_CanESM5_P7B_SYNTHETIC_DAILY_TO_HOURLY_RESEARCH.epw"],
        "original_hourly_nasa_source_records":nasacount,
@@ -284,6 +363,7 @@ def run(model_root,p7b_root,nasa_root,out):
        "humidity_daily_huss_joint_constraint_closed_for_every_day":closed==len(moist),
        "provisional_moisture_candidate_epw_written":False,
        "solar_10y_historical_climatology":clim,
+       "solar_10y_original_ground_observed_station_climatology":station_clim,
        "solar_model_and_observed_dates_event_matched":False,
        "solar_reference_source":"NASA POWER 2005–2014 original satellite/reanalysis grid, NOT station observation",
        "solar_model_source":"NASA NEX-GDDP-CMIP6 original BCSD daily CanESM5, not same dates as actual observations",
@@ -295,13 +375,16 @@ def run(model_root,p7b_root,nasa_root,out):
           "When native q is outside family feasible range, closest bounded candidate is diagnostic only and all original source data remain unchanged.",
           "This phase does NOT replace accepted P7B hourly/EPW or assert an improved EPW.",
           "Historical model event dates are NOT matched to NASA station/grid dates; only multi-year seasonal distribution is evidence.",
-          "Ten-year model/reference solar climatology alone does NOT show independent on-site solar accuracy, future predictive validity or building-energy simulation skill.",
+          "NASA ten-year model/gridded climatology is NOT ground observed; a second independent original GeoSphere station GHI source is reported separately.",
+          "GeoSphere station daily GHI is quality screened and observed, but source solar day is previous-day 23 UTC to labelled-day 23 UTC; unpaired monthly/annual comparisons only.",
+          "Ten-year historical climatology does not validate future projections or building-energy simulation skill.",
           "No wind/precipitation diurnal calibration, future SSP or other 7 CMIP6 models in this diagnostic." ]}
     (out/"p7b1_science_audit.json").write_text(
         json.dumps(audit,ensure_ascii=False,indent=2)+"\n",encoding="utf8")
     print("P7B.1",audit["technical_status"],"source humidity fit",
           closed,"/",len(moist),"max remaining huss",rest,
-          "10y solar pct",clim["model_minus_nasa_10y_climatological_pct"],
+          "10y solar pct vs NASA",clim["model_minus_nasa_10y_climatological_pct"],
+          "vs station",station_clim["model_minus_station_pct"],
           "EPW production",False,flush=True)
     return audit
 
@@ -310,6 +393,7 @@ if __name__=="__main__":
     ap.add_argument("--model-original",type=Path,required=True)
     ap.add_argument("--p7b-original",type=Path,required=True)
     ap.add_argument("--nasa-original",type=Path,required=True)
+    ap.add_argument("--geosphere-daily",type=Path,required=True)
     ap.add_argument("--out",type=Path,required=True)
     x=ap.parse_args()
-    run(x.model_original,x.p7b_original,x.nasa_original,x.out)
+    run(x.model_original,x.p7b_original,x.nasa_original,x.geosphere_daily,x.out)
