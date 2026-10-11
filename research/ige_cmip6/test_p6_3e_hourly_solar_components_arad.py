@@ -4,7 +4,7 @@ import unittest
 from datetime import datetime,date,timedelta,timezone
 from p6_3e_hourly_solar_components_arad import (
     solar_cos_zenith,component_contract,classify_hour,season_stats,
-    COMPONENTS,SITES,ARAD_EVIDENCE,MAX_ALLOWED_GHI_KWH_H,
+    COMPONENTS,SITES,ARAD_EVIDENCE,
 )
 
 class HourlyComponentsSourceScience(unittest.TestCase):
