@@ -230,19 +230,23 @@ def donors(base,out):
                 failures.append({"station_id":sid,"year_start":first,
                                  "year_end":last,"reason":str(error)})
                 print("P6.3C DONOR UNAVAILABLE",sid,first,last,str(error)[:170],flush=True)
-        if len(parts)==3652 and len({r["date"] for r in parts})==3652:
-            saved.extend(parts)
-            provenance.append({"station_id":sid,"station_name":station["name"],
-                "latitude":station["lat"],"longitude":station["lon"],
-                "altitude_m":station["altitude"],
-                "distance_from_station30_km":nearest_km(stations[30],station),
-                "source_quality":source_qc,"status":"COMPLETE_ORIGINAL_DAILY_COVERAGE"})
-        else:
-            provenance.append({"station_id":sid,"station_name":station["name"],
-                "latitude":station["lat"],"longitude":station["lon"],
-                "altitude_m":station["altitude"],
-                "distance_from_station30_km":nearest_km(stations[30],station),
-                "source_quality":source_qc,"status":"INCOMPLETE_OR_UNAVAILABLE"})
+        paired_days=sum(r["ghi_kwh_m2_day"] is not None and
+                        r["temperature_air_c"] is not None for r in parts)
+        paired_jja=sum(r["ghi_kwh_m2_day"] is not None and
+                       r["temperature_air_c"] is not None and
+                       r["month"] in (6,7,8) for r in parts)
+        usable=(len(parts)==3652 and len({r["date"] for r in parts})==3652
+                and paired_days>=500 and paired_jja>=120)
+        provenance.append({"station_id":sid,"station_name":station["name"],
+            "latitude":station["lat"],"longitude":station["lon"],
+            "altitude_m":station["altitude"],
+            "distance_from_station30_km":nearest_km(stations[30],station),
+            "original_q21_accepted_solar_temperature_days":paired_days,
+            "original_q21_accepted_solar_temperature_JJA_days":paired_jja,
+            "source_quality":source_qc,
+            "status":"VALIDATED_QC_DONOR_SOURCE" if usable
+                     else "INSUFFICIENT_QC_SAMPLE_OR_UNAVAILABLE"})
+        if usable:saved.extend(parts)
     if not saved:
         raise ValueError("No independent complete 10-year station donor source confirmed")
     csvwrite(out/"geosphere_three_independent_donor_station_daily_qc.csv",saved)
@@ -371,7 +375,7 @@ def run(source_dir,out):
     (out/"p6_3c_source_semantics_alignment_report.json").write_text(
         json.dumps(report,ensure_ascii=False,indent=2)+"\n",encoding="utf8")
     print("P6.3C",report["status"],"donor stations",
-          len([r for r in donor_prov if r["status"]=="COMPLETE_ORIGINAL_DAILY_COVERAGE"]),
+          len([r for r in donor_prov if r["status"]=="VALIDATED_QC_DONOR_SOURCE"]),
           "rr -1 days",counts["verified_no_precipitation"],
           "JJA T-GHI r0",next((round(r["pearson"],5) for r in selflags
                              if r["weather_label_day_shift"]==0),None),
