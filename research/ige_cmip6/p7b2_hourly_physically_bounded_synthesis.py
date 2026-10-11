@@ -39,7 +39,7 @@ Q_TOL=1.e-9
 HURS_TOL=1.e-8
 SOLAR_FACTOR_BOUNDS=(.45,1.2)
 MODEL_NAME="CanESM5"
-SYNTHETIC_FILENAME="Graz_2013_CanESM5_P7B2_HISTORICAL_BIASCORRECTED_RH_CONTINUOUS_RESEARCH.epw"
+SYNTHETIC_FILENAME="Graz_2013_CanESM5_P7B2_HISTORICAL_BIASCORRECTED_RH_RESTORED_RESEARCH.epw"
 
 def specific_humidity_of_profile(t,rh,pressure):
     return fmean(q_from_t_rh(x,r,pressure) for x,r in zip(t,rh))
@@ -339,69 +339,164 @@ def generate(model,basehours,lookup):
     if len(hours)!=NONLEAP_HOURS:raise ValueError("Missing generated 2013 hourly support")
     return hours,closure,states
 
-def regularize_hourly_humidity_continuity(hours,days,window=5):
-    """Source-preserving *input*, output-continuous RH centered boxcar filter.
+def solve_bounded_temporal_rh_family(allrh,start,bump,basis,a,target,temps,pressure):
+    """Find humidity q target along a two-basis affine smooth family.
 
-    We prioritize smooth hourly physical weather over mathematically forcing
-    incompatible GCM native daily hurs+huss. Filtering across daily midnight
-    uses all 8760 consecutive hours (not a separate daily discontinuous fit).
-    The window's maximum possible RH step is (100-1)/5<20 percentage points/h.
-    The resulting *NEW* humidity source residuals are recomputed and exported:
-    NEVER reuse prefilter claims as final EPW conservation statistics.
+    Linear inequality interval for the free coefficient b makes every
+    original RH_i stay in [1,100] and all neighbor differences including
+    previous/next day <=20 percentage points. No posthoc clipping.
     """
-    if window!=5 or len(hours)!=8760 or len(days)!=365:
-        raise ValueError("RH continuity requires fixed 5-hour 2013 source")
-    previous=[x["RH_pct"] for x in hours]
-    smoothed=[]
-    for i in range(len(hours)):
-        samples=[previous[max(0,min(len(hours)-1,j))]
-                 for j in range(i-2,i+3)]
-        smoothed.append(sum(samples)/5)
-    changes=[abs(a-b) for a,b in zip(smoothed[1:],smoothed[:-1])]
-    max_step=max(changes)
-    if max_step>20+1.e-8:
-        raise ValueError("Hourly RH physical continuity 20-pp screen failure")
-    for x,rh in zip(hours,smoothed):
+    n=24
+    if len(bump)!=n or len(basis)!=n:raise ValueError("Wrong smooth basis")
+    fixed=[allrh[start+i]+a*bump[i] for i in range(n)]
+    low,high=-250.,250.
+    def restrict(c0,c1,vmin,vmax):
+        nonlocal low,high
+        if abs(c1)<1e-12:
+            if not vmin-1.e-9<=c0<=vmax+1.e-9:
+                return False
+        else:
+            x,y=(vmin-c0)/c1,(vmax-c0)/c1
+            low=max(low,min(x,y))
+            high=min(high,max(x,y))
+            if low>high+1e-9:return False
+        return True
+    for i in range(n):
+        if not restrict(fixed[i],basis[i],RH_MIN,RH_MAX):
+            return None
+    neighbours=[(allrh[start-1] if start else fixed[0],0.)] + \
+               list(zip(fixed,basis)) + \
+               [(allrh[start+24] if start+24<len(allrh) else fixed[-1],0.)]
+    for i in range(len(neighbours)-1):
+        old,cold=neighbours[i]
+        new,cnew=neighbours[i+1]
+        if not restrict(new-old,cnew-cold,-20.,20.):
+            return None
+    if high<low:return None
+    def values(b):
+        return [v+b*w for v,w in zip(fixed,basis)]
+    qlo=specific_humidity_of_profile(temps,values(low),pressure)
+    qhi=specific_humidity_of_profile(temps,values(high),pressure)
+    if not min(qlo,qhi)-Q_TOL<=target<=max(qlo,qhi)+Q_TOL:return None
+    if abs(qlo-qhi)<Q_TOL:
+        result=values(low)
+    else:
+        left,right=low,high
+        ascending=qlo<qhi
+        for _ in range(55):
+            mid=(left+right)/2
+            qm=specific_humidity_of_profile(temps,values(mid),pressure)
+            if (qm<target)==ascending:left=mid
+            else:right=mid
+        result=values((left+right)/2)
+    if abs(specific_humidity_of_profile(temps,result,pressure)-target)>Q_TOL:
+        return None
+    if min(result)<RH_MIN-1e-8 or max(result)>RH_MAX+1e-8:
+        return None
+    check=allrh[start-1:start] + result + allrh[start+24:start+25]
+    if max(abs(a-b) for a,b in zip(check[:-1],check[1:]))>20+1e-7:
+        return None
+    return result
+
+def regularize_hourly_humidity_continuity(hours,days,window=7):
+    """Source-custodied global smooth RH with 2-constraint feasible recovery.
+
+    7h across ALL 8760 hours (including day boundaries) removes sharp
+    unrealistic source-reconstruction artifacts. Each day is then
+    adjusted using smooth taper basis for jointly conserving native hurs
+    and huss, or conserving huss only. Preserve a <=20pp/hour change.
+    Native source constraints may be unachievable; no false conservation.
+    """
+    if window!=7 or len(hours)!=8760 or len(days)!=365:
+        raise ValueError("P7B2 RH continuity requires 7h full 2013 hourly model")
+    source=[x["RH_pct"] for x in hours]
+    smoothed=[sum(source[max(0,min(len(source)-1,j))]
+                  for j in range(i-3,i+4))/7 for i in range(len(source))]
+    final=list(smoothed)
+    initial_source_jump=max(abs(a-b) for a,b in zip(source[:-1],source[1:]))
+    stage=Counter()
+    for dayidx,day in enumerate(days):
+        start=dayidx*24
+        h=hours[start:start+24]
+        if len(h)!=24 or h[0]["date"]!=day["date"] or h[-1]["date"]!=day["date"]:
+            raise ValueError("Original daily humidity support not aligned")
+        temp=[x["T_C"] for x in h]
+        pressure=h[0]["pressure_pa"]
+        meanRH=day["source_hurs_pct"]
+        targetQ=day["source_huss_kg_kg"]
+        curve=[math.sin(math.pi*(i+.5)/24)**2 for i in range(24)]
+        mean_curve=fmean(curve)
+        tbar=fmean(temp)
+        other=[curve[i]*(temp[i]-tbar) for i in range(24)]
+        orth=fmean(other)/mean_curve
+        other=[x-orth*curve[i] for i,x in enumerate(other)]
+        base=final[start:start+24]
+        # Use a smooth non-zero-mean basis to target original daily RH,
+        # plus an orthogonal (zero-mean) temperature-coupled basis to
+        # target original specific humidity without source alteration.
+        A=(meanRH-fmean(base))/mean_curve
+        joint=solve_bounded_temporal_rh_family(
+            final,start,curve,other,A,targetQ,temp,pressure)
+        if joint is not None:
+            final[start:start+24]=joint
+            stage["JOINT_HURS_HUSS_CLOSED_WITH_RH_RATE_LIMIT"]+=1
+            continue
+        # If the two original GCM humidity metrics are incompatible,
+        # prioritize source huss with a smooth mid-day tapered adjustment
+        # at the cost of a visible hurs daily source residual.
+        qonly=solve_bounded_temporal_rh_family(
+            final,start,[0.]*24,curve,0.,targetQ,temp,pressure)
+        if qonly is not None:
+            final[start:start+24]=qonly
+            stage["HUSS_CLOSED_HURS_RELAXED_WITH_RH_RATE_LIMIT"]+=1
+        else:
+            stage["HUSS_UNCLOSED_WITH_FIXED_PRESSURE_RH_RATE_LIMIT"]+=1
+    jumps=[abs(a-b) for a,b in zip(final[:-1],final[1:])]
+    maximum=max(jumps)
+    if maximum>20+1e-8:
+        raise ValueError("P7B2 smoothed full-year hourly RH >20pp/h")
+    for x,rh in zip(hours,final):
         x["original_before_continuity_RH_pct"]=x["RH_pct"]
         x["RH_pct"]=rh
         x["dewpoint_C"]=dewpoint(x["T_C"],rh)
-        x["humidity_timing_method"]="FIVE_HOUR_CROSS_DAY_BOXCAR_REVIEW_ONLY"
-        if not RH_MIN-1e-8<=rh<=RH_MAX+1e-8 or x["dewpoint_C"]>x["T_C"]+1e-8:
-            raise ValueError("RH temporal smoothing produced unphysical psychrometrics")
-    corrected_status=Counter()
+        x["humidity_timing_method"]="7H_CROSS_DAY_SMOOTH_PLUS_BOUNDED_SOURCE_RESTORATION"
+        if not RH_MIN-1e-8<=rh<=RH_MAX+1e-8 or x["dewpoint_C"]>x["T_C"]+1e-7:
+            raise ValueError("P7B2 invalid final humid-air physical state")
+    finalcounts=Counter()
     for i,day in enumerate(days):
         h=hours[i*24:(i+1)*24]
-        if len(h)!=24 or h[0]["date"]!=day["date"] or h[-1]["date"]!=day["date"]:
-            raise ValueError("Original 2013 daily source time support changed after smoothing")
         day["pre_continuity_humidity_stage"]=day["status"]
         day["pre_continuity_huss_error_kg_kg"]=day["reconstructed_minus_source_huss_kg_kg"]
         day["pre_continuity_hurs_error_pp"]=day["reconstructed_minus_source_hurs_pp"]
-        original_q=day["source_huss_kg_kg"]
-        original_rh=day["source_hurs_pct"]
-        new_q=specific_humidity_of_profile(
-              [x["T_C"] for x in h],[x["RH_pct"] for x in h],h[0]["pressure_pa"])
-        new_rh=fmean(x["RH_pct"] for x in h)
-        dq=new_q-original_q
-        drh=new_rh-original_rh
-        day["reconstructed_huss_kg_kg"]=new_q
-        day["reconstructed_hurs_pct"]=new_rh
+        recoveredQ=specific_humidity_of_profile(
+            [x["T_C"] for x in h],[x["RH_pct"] for x in h],h[0]["pressure_pa"])
+        recoveredRH=fmean(x["RH_pct"] for x in h)
+        dq=recoveredQ-day["source_huss_kg_kg"]
+        drh=recoveredRH-day["source_hurs_pct"]
+        day["reconstructed_huss_kg_kg"]=recoveredQ
+        day["reconstructed_hurs_pct"]=recoveredRH
         day["reconstructed_minus_source_huss_kg_kg"]=dq
         day["reconstructed_minus_source_hurs_pp"]=drh
         day["daily_huss_conserved"]=abs(dq)<Q_TOL
         day["daily_hurs_conserved"]=abs(drh)<HURS_TOL
-        day["status"]="FINAL_RH_TEMPORALLY_CONTINUOUS_SOURCE_RESIDUALS_RECOMPUTED"
-        key=("both_conserved" if day["daily_hurs_conserved"] and
-             day["daily_huss_conserved"] else
-             "huss_only" if day["daily_huss_conserved"] else
-             "hurs_only" if day["daily_hurs_conserved"] else "neither")
-        corrected_status[key]+=1
-    return {"method":"5_HOUR_CENTRED_BOXCAR_ALL_8760_CROSS_DAY",
-            "maximum_observed_adjacent_hour_RH_change_pp":max_step,
-            "number_adjacent_hours_RH_jump_above_20pp":sum(v>20 for v in changes),
-            "source_RH_before_continuity_max_jump_pp":
-                max(abs(a-b) for a,b in zip(previous[1:],previous[:-1])),
-            "final_native_daily_hurs_huss_conservation_classes":dict(corrected_status),
-            "actual_humidity_source_daily_compatibility_recomputed":True}
+        if day["daily_huss_conserved"] and day["daily_hurs_conserved"]:
+            key="both_conserved"
+        elif day["daily_huss_conserved"]:key="huss_only"
+        elif day["daily_hurs_conserved"]:key="hurs_only"
+        else:key="neither"
+        finalcounts[key]+=1
+        day["status"]="FINAL_HOURLY_RH_RATE_LIMITED_"+key.upper()
+    if sum(finalcounts.values())!=365:
+        raise ValueError("P7B2 final RH source audit day census broken")
+    return {
+      "method":"GLOBAL_7_HOUR_CENTRED_RH_PLUS_DAILY_2BASIS_SOURCE_HIERARCHY",
+      "source_RH_before_continuity_max_jump_pp":initial_source_jump,
+      "maximum_observed_adjacent_hour_RH_change_pp":maximum,
+      "number_adjacent_hours_RH_jump_above_20pp":sum(x>20 for x in jumps),
+      "prefilter_global_RH_smoothing_window_hours":window,
+      "post_smoothing_bounded_source_restoration_stage_counts":dict(stage),
+      "final_native_daily_hurs_huss_conservation_classes":dict(finalcounts),
+      "actual_humidity_source_daily_compatibility_recomputed":True}
 
 def run(model_root,p7b_root,station_root,out):
     out.mkdir(parents=True,exist_ok=True)
@@ -478,8 +573,8 @@ def run(model_root,p7b_root,station_root,out):
          "Historical 2005–2009 ground GHI monthly calibration is 5 training years only, with 2010–2011 excluded for original solar source-resolution mismatch, heldout 2012–2014.",
          "NEX-GDDP-CMIP6 original rsds already bias corrected by NASA BCSD; additional local calibration is explicitly applied, requires multi-model and future-change-signal validation to avoid excessive/double correction.",
          "RH and huss are incompatible on a subset of native model days at fixed pressure. HUSS is prioritized where possible while source hurs is relaxed; high huss beyond all-hour saturation remains unclosed and flagged. Original observations are not falsely changed.",
-         "A final source-independent cross-day five-hour RH continuity filter enforces <20 percentage point maximum adjacent-hour RH change, but deliberately breaks exact original daily hurs/huss conservation on many days; all FINAL residuals and PRE-filter source status are reported separately.",
-         "The 5-hour moving-average RH smoother is a physical continuity engineering guard, NOT statistically validated on observed hourly humidity or real weather cross-variable copulas.",
+         "Final seven-hour RH smoothing plus bounded source restoration enforces <20 percentage points maximum adjacent-hour RH change while exactly conserving hurs and huss jointly where feasible or huss only where source constraints conflict; all FINAL daily residuals reported.",
+         "Seven-hour moving-average and source-restoration diurnal RH shapes are still an engineering statistical prior, NOT calibrated on observed hourly GeoSphere humidity/wind/rain copulas.",
          "Humidity profiles are bounded and cross-variable coherent but NOT verified against observed hourly RH persistence or wind/rain/cloud copulas.",
          "Original daily GHI is deliberately modified by the monthly calibration. The CALIBRATED, not raw CMIP6 daily GHI target is conserved exactly.",
          "Erbs solar diffuse/direct split based on coarse solar geometry is not independently measured DHI/DNI.",
