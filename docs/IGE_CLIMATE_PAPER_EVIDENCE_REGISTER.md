@@ -8,6 +8,10 @@ The portable integrated science freeze now also contains the immutable pre-P6 re
 
 For any future manuscript, distinguish **P5 monthly hybrid delta transfer** from **P6 model/source-side temporal and multivariate bias correction**, explicitly separate numerical tests, same-source closure checks, independent GeoSphere observations, external gridded NASA POWER, and still-unavailable ARAD precision hourly observations. The existing P6 evidence remains unchanged and P6 EPW validation remains open. The new integrated release is not publicly published or institutionally deposited.
 
+## P6.3F — ground-hourly evidence currently blocked (2026-10-11)
+
+Research protocol: `docs/IGE_P6_3F_ARAD_GROUND_ORIGINAL_VALIDATION_PROTOCOL.md`. Official GCOS source access is restricted, and original ARAD Graz 2012–2014 minute measurement files/metadata are **not acquired**. Successful source/QC-preflight CI [#38132968798](https://github.com/dmitrievii/building-energy-tools/actions/runs/38132968798) verified P6.3E source SHA, 26,304 UTC NASA POWER historical hours per location, and 20 automated tests, but yielded **no actual ARAD-vs-POWER observed scores**. `comparison_statistics=null` by design. **Do not show P6.3F as an observational results section until actual source-custodian-approved ARAD data exist.** German ARAD request drafted, not sent. Scientific manuscript may include the independent-ground-data gap as an explicit limitation, not substitute satellite products as independent station observations.
+
 ## Candidate main question
 
 How can a reproducible source/QC and correction framework produce scientifically auditable local climate-change inputs for building simulation while identifying the limitations of single-variable solar bias adjustment and temporal/multivariate physical coherence?
