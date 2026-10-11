@@ -1,0 +1,83 @@
+name: IGE P7B.3A independent original observed hourly GHI validation
+on:
+  push:
+    branches:
+      - research/ige-p7b3-observed-hourly-solar-validation-20261011
+    paths:
+      - .github/workflows/ige-p7b3-observed-hourly-solar.yml
+      - research/ige_cmip6/p7b3_observed_hourly_solar.py
+      - research/ige_cmip6/test_p7b3_observed_hourly_solar.py
+      - docs/IGE_P7B3A_OBSERVED_HOURLY_SOLAR_BENCHMARK.md
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  source-validated-hourly-ghi:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Strict original-source independence contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7b3_observed_hourly_solar.py' -v
+      - name: Restore original GeoSphere q21 observed 10-minute source
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38134438339
+          github-token: ${{ github.token }}
+          name: ige-p6-3f-open-geosphere-10min-graz-ghi-diffuse-qc-2005-2014
+          path: inputs/original_geosphere_10min
+      - name: Restore untouched original P7B solar baseline
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38144426555
+          github-token: ${{ github.token }}
+          name: ige-p7b-canesm5-original-daily-to-synthetic-hourly-graz-2013
+          path: inputs/p7b_original
+      - name: Restore accepted final P7B.2 source-audited synthetic EPW
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38149471728
+          github-token: ${{ github.token }}
+          name: ige-p7b2-canesm5-physically-bounded-moisture-and-geo-ground-solar-epw
+          path: inputs/p7b2_final
+      - name: Independent ground GHI hour climatologies and source SHA audit
+        run: |
+          python research/ige_cmip6/p7b3_observed_hourly_solar.py \
+            --geosphere-hourly inputs/original_geosphere_10min/p6_3f_geosphere_10min_hourly_pairwise.csv \
+            --p7b-hourly inputs/p7b_original/p7b_hourly_synthetic_weather.csv \
+            --p7b2-hourly inputs/p7b2_final/p7b2_2013_synthetic_hourly_physics_and_sources.csv \
+            --out outputs/p7b3a
+      - name: Validate observed QC coverage and no date-synchronized model claims
+        run: |
+          python - <<'PY'
+          import json, hashlib
+          from pathlib import Path
+          p=Path('outputs/p7b3a')
+          a=json.loads((p/'p7b3a_science_audit.json').read_text())
+          assert a['epw_production_ready'] is False
+          assert a['synthetic_2013_dates_are_not_matched_to_observed_2013_weather'] is True
+          assert a['untouched_observed_holdout']==[2012,2013,2014]
+          assert a['comparison']['record_start__qc']['source']['qc_accepted_years']=={'2012':8782,'2013':8750,'2014':8760}
+          assert a['comparison']['record_end__qc']['source']['qc_accepted_years']=={'2012':8781,'2013':8749,'2014':8759}
+          for window in ['record_start','record_end']:
+              before=a['comparison'][window+'__p7b_original']['mean_diurnal_cell_metrics']['obs_daylight']
+              after=a['comparison'][window+'__p7b2_corrected']['mean_diurnal_cell_metrics']['obs_daylight']
+              assert before['cells']>=120 and after['cells']==before['cells']
+              assert after['mae_kwh_m2_hour']<before['mae_kwh_m2_hour']
+          for name,sha in a['output_sha256'].items():
+              assert hashlib.sha256((p/name).read_bytes()).hexdigest()==sha
+          print('P7B3A observed-hour QC and source/model science gates PASS; EPW production remains CLOSED')
+          PY
+      - name: Archive derived statistics, without re-publishing provider source records
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p7b3a-independent-observed-hourly-solar-validation
+          path: outputs/p7b3a/
+          retention-days: 30
+          if-no-files-found: warn
