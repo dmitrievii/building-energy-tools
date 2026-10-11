@@ -1,0 +1,101 @@
+name: IGE P7B.4 integrated hourly weather and independent EPW research
+on:
+  push:
+    branches:
+      - research/ige-p7b4-integrated-hourly-epw-20261011
+    paths:
+      - .github/workflows/ige-p7b4-integrated-hourly-epw-validation.yml
+      - research/ige_cmip6/p7b4_integrated_hourly_epw.py
+      - research/ige_cmip6/test_p7b4_integrated_hourly_epw.py
+      - docs/IGE_P7B4_INTEGRATED_HOURLY_EPW_SCIENCE_PROTOCOL.md
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  original-source-integrated-epw:
+    name: Frozen P7B2 plus M2 GHI DHI DNI and 20-seed 1R1C benchmark
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: All targeted EPW, M2 and repair physics contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7b4_integrated_hourly_epw.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7b3f_feasibility_repair.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7b3e_original_physical_closure.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7b3c_conditional_solar.py' -v
+      - name: Download accepted original P7B.2 source-hashed 8,760h research EPW
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38149471728
+          github-token: ${{ github.token }}
+          name: ige-p7b2-canesm5-physically-bounded-moisture-and-geo-ground-solar-epw
+          path: inputs/p7b2
+      - name: Download accepted ORIGINAL GeoSphere 10min strict QC calibration evidence
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38134438339
+          github-token: ${{ github.token }}
+          name: ige-p6-3f-open-geosphere-10min-graz-ghi-diffuse-qc-2005-2014
+          path: inputs/geosphere
+      - name: Immutable SHA and original-source audit gates
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib,json
+          root=Path('inputs/p7b2')
+          audit=json.loads((root/'p7b2_science_audit.json').read_text())
+          assert audit['epw_production_ready'] is False
+          for name,sha in audit['output_sha256'].items():
+              file=root/name
+              assert file.is_file() and hashlib.sha256(file.read_bytes()).hexdigest()==sha,(name,sha)
+          ground=Path('inputs/geosphere/p6_3f_geosphere_10min_hourly_pairwise.csv')
+          assert hashlib.sha256(ground.read_bytes()).hexdigest()=='95dc8f9b7341be69d0ee236b38029a3f171b7f6a9eb0aed75b03cd2e473500c0'
+          print('P7B.4 all parent P7B2 EPW and GeoSphere original source immutable SHA PASS')
+          PY
+      - name: Generate structurally audited 2013 CanESM5 hourly weather EPW from 20 M2 seeds
+        run: |
+          python research/ige_cmip6/p7b4_integrated_hourly_epw.py \
+            --p7b2-hourly inputs/p7b2/p7b2_2013_synthetic_hourly_physics_and_sources.csv \
+            --p7b2-daily inputs/p7b2/p7b2_2013_native_daily_source_and_constraint_tradeoffs.csv \
+            --p7b2-epw inputs/p7b2/Graz_2013_CanESM5_P7B2_HISTORICAL_BIASCORRECTED_RH_RESTORED_RESEARCH.epw \
+            --geosphere-hourly inputs/geosphere/p6_3f_geosphere_10min_hourly_pairwise.csv \
+            --out outputs/p7b4 --seeds 20
+      - name: Fail-closed EPW parser, unchanged 32 fields and all source GHI conservation
+        run: |
+          python - <<'PY'
+          import csv,json,hashlib
+          from pathlib import Path
+          out=Path('outputs/p7b4')
+          audit=json.loads((out/'p7b4_scientific_audit.json').read_text())
+          assert audit['production_ready'] is False
+          assert audit['full_EnergyPlus_simulation_executed'] is False
+          assert audit['hour_count']==8760 and audit['source_day_count']==365
+          assert audit['EPW_columns']==35 and audit['non_solar_EPWhourly_fields_preserved']==32
+          assert audit['seeds']==20 and audit['p7b3f_repair_applied_to_2013_calibrated_source_days']==0
+          assert audit['wind_direction_available'] is False
+          for name,digest in audit['derived_sha256'].items():
+              assert hashlib.sha256((out/name).read_bytes()).hexdigest()==digest,name
+          with (out/'Graz_CanESM5_2013_IGE_P7B4_M2_SOLAR_INTEGRATED_RESEARCH_ONLY.epw').open() as f:
+              rows=list(csv.reader(f))
+          assert len(rows)==8768
+          assert all(len(x)==35 and x[20]=='999' for x in rows[8:])
+          with (out/'p7b4_seed_load_sensitivity.csv').open() as f:
+              scores=list(csv.DictReader(f))
+          assert len(scores)==20
+          assert max(float(x['max_daily_ghi_residual_kwh_m2']) for x in scores)<1e-9
+          assert max(float(x['max_radiometric_residual_kwh_m2_h']) for x in scores)<1e-10
+          print('P7B.4 complete research EPW structural and source-conservation PASS; scientific release blocked')
+          PY
+      - name: Preserve derived integrated EPW and science audit, exclude raw provider sources
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p7b4-integrated-2013-canesm5-m2-research-epw
+          path: outputs/p7b4/
+          retention-days: 30
+          if-no-files-found: warn
