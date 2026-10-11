@@ -220,6 +220,42 @@ def daily_closure(hours,official):
           "same_provider_not_independent_ground":True})
     return results
 
+def annual_daily_closure_screen(daily_rows):
+    """Source-internal disagreement does not mean either instrument is false.
+
+    Threshold 0.10 kWh/m²/day mean absolute signed bias: a transparent
+    exploratory screen, not official QC pass/fail or legal calibration.
+    """
+    annual=[]
+    for hypothesis in TIMESTAMPS_SUPPORTED:
+        for year in YEARS:
+            days=[r for r in daily_rows if r["hypothesis"]==hypothesis
+                  and r["year"]==year]
+            qualified=[r for r in days
+                       if r["tenminute_reconstructed_qc_confirmed_day"]]
+            available=[r for r in days
+                       if r["tenminute_reconstructed_all_24_hours"]]
+            diffs=[r["tenminute_minus_daily_kwh_m2"] for r in qualified]
+            official=sum(r["daily_provider_approved_kwh_m2"] for r in qualified)
+            reconstructed=sum(r["tenminute_reconstructed_kwh_m2"]
+                              for r in qualified)
+            bias=fmean(diffs) if diffs else None
+            annual.append({
+               "year":year,"hypothesis":hypothesis,
+               "original_daily_qc_day_count":len(days),
+               "matched_complete_raw_days":len(available),
+               "matched_full_10min_qc_days":len(qualified),
+               "qc_matched_daily_bias_10min_minus_daily_kwh_m2_day":bias,
+               "qc_matched_daily_mae_kwh_m2_day":
+                   fmean(abs(d) for d in diffs) if diffs else None,
+               "tenminute_total_same_matched_days_kwh_m2":reconstructed,
+               "daily_total_same_matched_days_kwh_m2":official,
+               "ratio_total_same_days":reconstructed/official if official else None,
+               "review_internal_daily_bias_gt_0p10":
+                   abs(bias)>.10 if bias is not None else None,
+               "interpretation":"SAME_PROVIDER_DIFFERENT_RESOLUTIONS_NO_INDEPENDENT_CALIBRATION"})
+    return annual
+
 def aggregate_scores(hours,nasa,window):
     detailed=[];metrics=[];annual_qc=[]
     for y in YEARS:
@@ -313,7 +349,11 @@ def run(open_original,p6e,p6d,out):
             "daily_all_present_days":sum(
                 r["tenminute_reconstructed_all_24_hours"] for r in days)}
         print("P6.3F-B",window,summary[window],flush=True)
+    yearly_daily=annual_daily_closure_screen(all_daily)
+    review_years=sorted({r["year"] for r in yearly_daily
+                         if r["review_internal_daily_bias_gt_0p10"]})
     outputs={
+        "p6_3f_b_official_daily_qc_disagreement_by_year.csv":yearly_daily,
         "p6_3f_b_ghidiffuse_hourly_quality_tiers.csv":all_qc,
         "p6_3f_b_provisional_diffuse_nasa_hourly_seasonal_metrics.csv":all_scores,
         "p6_3f_b_qc_vs_provisional_hourly_details.csv":all_detail,
@@ -337,6 +377,9 @@ def run(open_original,p6e,p6d,out):
       "provisional_diffuse_scope":"2006–2009 only if available and physically screened; never independently QC-approved",
       "daily_consistency_not_independent_observational_validation":True,
       "source_time_label":"UNRESOLVED; both record_start and record_end retained",
+      "unresolved_geosphere_10min_vs_1d_qc_annual_disagreement_years":review_years,
+      "unresolved_daily_consistency_bias_screen_kwh_m2_day":.10,
+      "source_internal_quality_note":"QC approved ten-minute GHI can differ materially from official daily GHI even when q21 confirms provider QC; compare 2010–2011 without declaring either source erroneous.",
       "physics_review_screen_counts":{f"{w}:{flag}":v
                       for (w,flag),v in sorted(flags.items())},
       "hourly_source_summary_by_time_hypothesis":summary,
@@ -345,6 +388,7 @@ def run(open_original,p6e,p6d,out):
          "Research may use physically plausible original unverified samples with explicit classification and sensitivity, not as certified ground truth.",
          "GHI record q21-approved and DHI record q21=0 may legitimately be paired at the same hour; each channel maintains its own source quality tier.",
          "Daily cglo_j GHI comes from the same original station/provider; closure verifies consistency, not independent external accuracy.",
+         "2010–2011 source-resolution energy discrepancies were detected; provider QA flags on one product do not guarantee equality with independently processed daily products.",
          "DHI observations only available 2006–2009 in original archived historical source; 2005 and 2010–14 cannot be extrapolated.",
          "Solar screens check diffuse<=global with transparent allowance and deep-night flux; their absence does not prove a sensor is calibrated.",
          "DNI derived from GHI minus DHI is not an independently measured DNI source and is not presented as such.",
