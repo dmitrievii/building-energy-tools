@@ -1,0 +1,80 @@
+name: IGE P6.3F-B unchecked GeoSphere diffuse physical sensitivity and daily source closure
+on:
+  push:
+    branches:
+      - research/ige-p6-3f-b-provisional-dhi-daily-closure-20261011
+    paths:
+      - .github/workflows/ige-p6-3f-b-unchecked-ghi-diffuse.yml
+      - research/ige_cmip6/p6_3f_b_unchecked_diffuse_daily_closure.py
+      - research/ige_cmip6/test_p6_3f_b_unchecked_diffuse_daily_closure.py
+      - docs/IGE_P6_3F_B_UNCHECKED_SOLAR_RESEARCH_TIERS_AND_DAILY_CLOSURE.md
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  source-preserving-q0-sensitivity:
+    name: Frozen GeoSphere original q21=0 diffuse 2006-09 GHI+DHI NASA sensitivity and original daily 23-23 audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Original provider flag meaning, strict QC vs provisional, physical screens and day 23-23 source-contract tests
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p6_3f_b_unchecked_diffuse_daily_closure.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p6_3f_geosphere_open_10min_solar_qc.py' -v
+      - name: Restore frozen GeoSphere original station 30/16412 ten-minute GeoJSON and QC source reports
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38134438339
+          github-token: ${{ github.token }}
+          name: ige-p6-3f-open-geosphere-10min-graz-ghi-diffuse-qc-2005-2014
+          path: inputs/observed_original
+      - name: Restore independent NASA POWER original 2005–2014 GHI DHI hourly archive
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38129047139
+          github-token: ${{ github.token }}
+          name: ige-p6-3e-ghi-dni-dhi-toa-arad-research-audit
+          path: inputs/nasa_original
+      - name: Restore GeoSphere original daily QC-approved solar 2005–2014
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38128314291
+          github-token: ${{ github.token }}
+          name: ige-p6-3d-independent-nasa-power-hourly-geosphere-q21-science-evidence
+          path: inputs/observed_daily_original
+      - name: Execute immutable 10-min QC-provisional paired solar and GeoSphere daily closure
+        run: |
+          python research/ige_cmip6/p6_3f_b_unchecked_diffuse_daily_closure.py \
+            --open-original inputs/observed_original \
+            --p6e-frozen inputs/nasa_original \
+            --p6d-frozen inputs/observed_daily_original \
+            --out outputs/p6_3f_b_provisional_solar
+      - name: Assert no original unchecked irradiance falsely counted as quality-certified or EPW-ready
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path("outputs/p6_3f_b_provisional_solar/p6_3f_b_unverified_solar_research_science_report.json").read_text())
+          assert d["epw_production_ready"] is False
+          assert d["scientific_status"]=="GHI_QC_CONFIRMED_DHI_PROVISIONAL_UNCHECKED_ONLY"
+          assert d["original_q21_code0_interpretation"].startswith("UNGEPRUEFTE_DATEN")
+          for key,val in d["hourly_source_summary_by_time_hypothesis"].items():
+              assert val["source_qc_confirmed_dhi_hours"]==0,(key,val)
+              assert val["exploratory_dhi_hours"]>0,(key,val)
+              assert val["qc_confirmed_ghi_hours"]>0,(key,val)
+          print("P6.3F-B source preserved: observed q0 diffuse provisional without promoting to QC approved",flush=True)
+          print("P6.3F-B paired source sensitivity:",d["hourly_source_summary_by_time_hypothesis"],flush=True)
+          PY
+      - name: Retain experimental original-QC-tier hourly, seasonal and 23-23 daily consistency evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p6-3f-b-original-geosphere-unchecked-dhi-provisional-nasa-and-daily-closure
+          path: outputs/p6_3f_b_provisional_solar/
+          retention-days: 30
+          if-no-files-found: warn
