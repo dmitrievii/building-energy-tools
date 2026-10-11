@@ -69,6 +69,10 @@ jobs:
           assert sum(d["daily_humidity_source_status_counts"].values())==365
           assert d["pre_continuity_days_both_source_hurs_and_huss_closed"]+d["pre_continuity_days_source_huss_closed_hurs_relaxed"]+d["days_source_huss_not_feasible_at_fixed_pressure"]==365
           assert d["humidity_continuity_diagnostics"]["number_adjacent_hours_RH_jump_above_20pp"]==0
+          assert d["humidity_continuity_diagnostics"]["prefilter_global_RH_smoothing_window_hours"]==7
+          assert d["days_both_source_hurs_and_huss_closed"]>0
+          assert d["days_both_source_hurs_and_huss_closed"]+d["days_source_huss_closed_hurs_relaxed"]>0
+          assert d["humidity_continuity_diagnostics"]["actual_humidity_source_daily_compatibility_recomputed"] is True
           assert d["all_8759_hourly_RH_jumps_below_20pp"] is True
           assert d["source_humidity_original_daily_constraints_can_be_broken_after_continuity"] is True
           assert d["all_8760_hourly_RH_within_1_to_100_and_dewpoint_le_T"] is True
@@ -84,7 +88,7 @@ jobs:
           assert d["days_source_huss_not_feasible_at_fixed_pressure"]>0
           for f,sha in d["output_sha256"].items():
               assert hashlib.sha256((out/f).read_bytes()).hexdigest()==sha,f
-          path=out/"Graz_2013_CanESM5_P7B2_HISTORICAL_BIASCORRECTED_RH_CONTINUOUS_RESEARCH.epw"
+          path=out/"Graz_2013_CanESM5_P7B2_HISTORICAL_BIASCORRECTED_RH_RESTORED_RESEARCH.epw"
           with path.open("r",newline="",encoding="utf8") as f:
               rows=list(csv.reader(f))
           assert len(rows)==8768 and all(len(x)==35 for x in rows[8:])
