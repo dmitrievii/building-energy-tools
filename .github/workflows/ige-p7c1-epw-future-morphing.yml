@@ -1,0 +1,105 @@
+name: IGE P7C.1 CanESM5 four-future-EPW research morphing
+on:
+  push:
+    branches:
+      - research/ige-p7c1-epw-future-morphing-20261011
+    paths:
+      - .github/workflows/ige-p7c1-epw-future-morphing.yml
+      - research/ige_cmip6/p7c1_epw_morphing.py
+      - research/ige_cmip6/test_p7c1_epw_morphing.py
+      - docs/IGE_P7C1_EPW_BASED_FUTURE_CLIMATE_MORPHING_PROTOCOL_RU.md
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  four-future-epw-morphs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: P7C.1 independent physics and identity tests
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p7c1_epw_morphing.py' -v
+      - name: Retrieve five original CanESM5 P6 daily period archives
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          pattern: ige-p6-CanESM5-*
+          path: inputs/p6_original
+      - name: Retrieve immutable original P7B4 synthetic 2013 EPW baseline
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38171672579
+          github-token: ${{ github.token }}
+          name: ige-p7b4-integrated-2013-canesm5-m2-research-epw
+          path: inputs/p7b4_original
+      - name: Enforce original source SHA and registered five model windows
+        run: |
+          mkdir -p inputs/climate
+          ln -s "$PWD/inputs/p6_original/ige-p6-CanESM5-historical-1995-2014" inputs/climate/P6_CanESM5_historical
+          for window in ssp245-2040-2059 ssp245-2080-2099 ssp585-2040-2059 ssp585-2080-2099; do
+            underscore="${window//-/_}"
+            ln -s "$PWD/inputs/p6_original/ige-p6-CanESM5-$window" "inputs/climate/P6_CanESM5_$underscore"
+          done
+          python - <<'PY'
+          import hashlib
+          from pathlib import Path
+          import sys
+          sys.path.insert(0,'research/ige_cmip6')
+          from p7c1_epw_morphing import verify_model_dir,HIST,WINDOWS
+          base=Path('inputs/p7b4_original/Graz_CanESM5_2013_IGE_P7B4_M2_SOLAR_INTEGRATED_RESEARCH_ONLY.epw')
+          assert base.is_file()
+          assert hashlib.sha256(base.read_bytes()).hexdigest()=='2e45abbcba52c49e51e3811676ba37167bc8700f697e13032ee103ff8f3f7012'
+          verify_model_dir('inputs/climate/P6_CanESM5_historical',HIST)
+          for w in WINDOWS:verify_model_dir('inputs/climate/P6_CanESM5_'+w.replace('-','_'),w)
+          print('P7C.1 immutable baseline and 5×20y GCM original source checks PASS')
+          PY
+      - name: Generate and scientifically audit four alternative research EPWs
+        run: |
+          python research/ige_cmip6/p7c1_epw_morphing.py \
+            --baseline-epw inputs/p7b4_original/Graz_CanESM5_2013_IGE_P7B4_M2_SOLAR_INTEGRATED_RESEARCH_ONLY.epw \
+            --source-root inputs/climate \
+            --out outputs/p7c1
+      - name: Fail-closed four EPW source, physics, calendar and retained direction gate
+        run: |
+          python - <<'PY'
+          import csv,hashlib,json
+          from pathlib import Path
+          import sys
+          sys.path.insert(0,'research/ige_cmip6')
+          from p7c1_epw_morphing import read_epw,WINDOWS
+          root=Path('outputs/p7c1')
+          a=json.loads((root/'p7c1_source_science_audit.json').read_text())
+          assert a['production_epw_ready'] is False and a['baseline_is_real_measured_Graz_EPW'] is False
+          assert a['output_file_count']==4 and len(a['results'])==4
+          base=Path('inputs/p7b4_original/Graz_CanESM5_2013_IGE_P7B4_M2_SOLAR_INTEGRATED_RESEARCH_ONLY.epw')
+          _,old,_=read_epw(base)
+          for w in WINDOWS:
+            result=a['results'][w];info=result['numeric']
+            assert info['max_daily_GHI_residual_kwh_m2']<1e-8
+            assert info['max_hourly_GHI_DNI_DHI_residual_kwh_m2']<1e-8
+            assert info['missing_hours_by_epw_column']['20']==8760
+            assert result['source_8760_hours_preserved']
+            for name,digest in result['files_sha256'].items():
+              f=root/name
+              assert hashlib.sha256(f.read_bytes()).hexdigest()==digest
+              if name.endswith('.epw'):
+                _,rows,_=read_epw(f)
+                assert len(rows)==8760
+                assert all(row[20]==old[i][20] for i,row in enumerate(rows))
+                assert all(row[9]==old[i][9] for i,row in enumerate(rows))
+            assert len(result['monthly_signals'])==12
+          print('P7C.1 five original sources, four EPWs and scientific limitations verified; production release BLOCKED')
+          PY
+      - name: Preserve four full EPW files and research audits
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p7c1-canesm5-four-future-epw-morphs-research
+          path: outputs/p7c1/
+          retention-days: 30
+          if-no-files-found: warn
