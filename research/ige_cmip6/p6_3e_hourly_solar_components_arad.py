@@ -162,8 +162,9 @@ def classify_hour(original,components,latitude,longitude,stamp):
     cz=solar_cos_zenith(when,latitude,longitude)
     ghi=original["ghi_hour_kwh_m2"]
     if ghi is None or any(components[p] is None for p in COMPONENTS):
-        return {"timestamp_utc_start":when.isoformat(),"solar_coszen_noaa_midpoint":cz,
-                "valid":False}
+        return {"timestamp_utc_start":when.isoformat(),
+                "year":when.year,"month":when.month,"hour_utc":when.hour,
+                "solar_coszen_noaa_midpoint":cz,"valid":False}
     dni=components[COMPONENTS[0]]
     dhi=components[COMPONENTS[1]]
     toa=components[COMPONENTS[2]]
