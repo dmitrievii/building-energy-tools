@@ -4,7 +4,7 @@ import unittest
 from datetime import datetime,date,timedelta,timezone
 from p6_3f_geosphere_open_10min_solar_qc import (
     metadata_contract,decode_year,hourly_aggregate,parse_utc,metric,
-    QC_ACCEPTED,WINDOWS,SEASONS
+    QC_ACCEPTED,WINDOWS,SEASONS,station_source_identity
 )
 
 class OpenStationSolarQC(unittest.TestCase):
@@ -84,6 +84,19 @@ class OpenStationSolarQC(unittest.TestCase):
         payload["timestamps"][6]=payload["timestamps"][5]
         with self.assertRaisesRegex(ValueError,"shifted"):
             decode_year(payload,30,year)
+
+    def test_combined_parent_and_individual_child_not_independent_when_original_data_identical(self):
+        origin=datetime(2012,6,12,12,tzinfo=timezone.utc)
+        raw=[{"timestamp":origin+timedelta(minutes=10*i),"cglo":400.,
+              "chim":None,"cglo_flag":12,"chim_flag":0} for i in range(6)]
+        duplicate=[dict(r) for r in raw]
+        self.assertTrue(station_source_identity(raw,duplicate))
+        duplicate[2]["cglo"]=403.
+        self.assertFalse(station_source_identity(raw,duplicate))
+        duplicate[2]["cglo"]=400.
+        duplicate[4]["chim_flag"]=12
+        self.assertFalse(station_source_identity(raw,duplicate))
+        self.assertFalse(station_source_identity(raw,duplicate[:5]))
 
     def test_satellite_comparison_has_null_scores_with_no_verified_observations(self):
         self.assertEqual(metric([])["n"],0)
