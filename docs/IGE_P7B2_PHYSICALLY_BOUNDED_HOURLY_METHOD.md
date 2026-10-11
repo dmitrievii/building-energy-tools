@@ -13,6 +13,16 @@ Pre-registered source-priority process:
 
 Output original P7B source hourly remains unchanged. New P7B.2 has **per-day 365 source-conservation/tradeoff flags** including number of jointly closed days, number of days where native hurs is relaxed, number of days where source q is physically unachievable at the fixed pressure; report residuals in original units. This is an explicitly bounded *engineering candidate*, not statistically calibrated real-hour diurnal moisture dynamics or proof of physical incompatibility under arbitrary pressure.
 
+## Additional P7B.2 source-only runtime discovery: RH discontinuities and fixed-width temporal regularization
+
+The first original-source scientific run [#38148686542](https://github.com/dmitrievii/building-energy-tools/actions/runs/38148686542) **PASS** for source SHA, 8760x35 syntax and hourly 1–100% RH but additional independent inspection found **310 adjacent hourly differences above 30 RH percentage points, maximum nearly 99 pp**. That initial result is preserved in its immutable action artifact, but **must NOT be recommended as realistic hourly climate**. Individual bounded RH does not ensure temporally plausible humid-air evolution.
+
+A revised **separate EPW file** now applies a fixed, deterministic **5-hour, centered, all-8760-hour rolling average** to generated RH **across every daily boundary**, not a discontinuous per-day treatment. For source RH between 1–100%, this simple averaging guarantees a mathematical ceiling below 20 RH percentage points difference between adjacent smoothed hours. Dewpoint is recalculated from **unchanged original model-hour dry-bulb temperature and final smoothed RH** to preserve state consistency.
+
+**Scientific source trade-off:** RH smoothing can change both **original daily mean RH** and **original native daily huss**. Therefore after the filter, recompute and report BOTH daily source constraints from the FINAL 8760-hour EPW; original pre-filter closure classes 239/112/14 remain labelled as *pre-continuity*, not false final source conservation. The final hourly file must carry distinct name \`Graz_2013_CanESM5_P7B2_HISTORICAL_BIASCORRECTED_RH_CONTINUOUS_RESEARCH.epw\` and a new source SHA. The original first P7B.2 output remains archived unchanged.
+
+The rolling filter is a **necessary plausibility screening correction**, not a calibrated meteorological model: it introduces 5-hour numerical correlation by construction, can dampen real changes and does not establish realistic diurnal humidity statistics against GeoSphere observations. Final original hurs/huss discrepancies are scientific metrics, NOT software errors to erase by undocumented values. The next model should seek physically grounded moisture pressure/time-series covariance, not merely wider arbitrary smoothing.
+
 ## Problem 2 — independent source-trained historical ground GHI correction with proper holdout
 
 Earlier P7B.1 historical CanESM5 2005–2014 native model daily GHI climatology exceeded **actual quality-checked GeoSphere Graz station** by 29.96%, and NASA POWER gridded source by 36.98%. P6 also identified internal GeoSphere daily-vs-ten-minute solar disagreement in **2010–2011**, even for individually provider QC-accepted data, so these two years are quarantined from the calibration.
@@ -34,7 +44,7 @@ New separate \`Graz_2013_CanESM5_P7B2_HISTORICAL_BIASCORRECTED_SYNTHETIC_RESEARC
 - 8 EPW headers + 8760 2013 fixed-CET no-DST consecutive hours × 35 fields, source model location [46.875°, 15.375°] grid and proxy elevation 366 m;
 - physically valid 1–100% RH, \`Tdew≤Tdry\`, positive pressure proxy, retained nonnegative wind and rainfall, original native temperature and non-radiative daily conservation;
 - new solar-corrected daily GHI and synthetically derived beam/diffuse terms with detailed original/target delta and model provenance;
-- explicit source daily hurs/huss and status classes, **no false claim both are conserved on incompatible days**;
+- explicit FINAL source daily hurs/huss and status classes after cross-day RH continuity, plus PRE-filter status classes; **no false claim both are conserved on incompatible days**;
 - 12 original observed-GeoSphere training coefficients (2005–2009), 12 withheld monthly climatological evaluation records (2012–2014), exact SHA of source originals and derived EPW/CSV;
 - scientific status **RESEARCH ONLY**, \`epw_production_ready=false\`, no actual EnergyPlus model simulated, no future SSP year generated, no user-facing Climate Analyzer integration.
 
