@@ -33,10 +33,10 @@ class FirstHourlyEPWReference(unittest.TestCase):
               for h in range(EXPECTED_HOURS)]
         vals={"T2M":10,"T2MDEW":5,"RH2M":60,"PS":97,
               "WS10M":2,"WD10M":180,"ALLSKY_SFC_LW_DWN":310,
-              "PRECTOT":0}
+              "PRECTOTCORR":0}
         units={"T2M":"C","T2MDEW":"C","RH2M":"%","PS":"kPa",
              "WS10M":"m/s","WD10M":"Degrees",
-             "ALLSKY_SFC_LW_DWN":"W/m^2","PRECTOT":"mm/hour"}
+             "ALLSKY_SFC_LW_DWN":"W/m^2","PRECTOTCORR":"mm/hour"}
         obj={"messages":[],"header":{"fill_value":-999},
              "parameters":{p:{"units":units[p]} for p in M_VARS},
              "properties":{"parameter":{p:{k:vals[p] for k in keys}
@@ -63,7 +63,7 @@ class FirstHourlyEPWReference(unittest.TestCase):
                      "closure_review":i==33}
             met[dt]={"T2M":16.,"T2MDEW":10.,"RH2M":65.,"PS":97.3,
                      "WS10M":3.,"WD10M":240.,
-                     "ALLSKY_SFC_LW_DWN":320.,"PRECTOT":0.}
+                     "ALLSKY_SFC_LW_DWN":320.,"PRECTOTCORR":0.}
         rows,lineage,counts,risk=make_rows(station,sol,met)
         self.assertEqual(len(rows),8760)
         self.assertEqual(len(lineage),8760)
