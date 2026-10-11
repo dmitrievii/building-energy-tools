@@ -21,9 +21,13 @@ Raw local-station year 2013 and late-2012 original \`GeoSphere klima-v2-1h\` arc
 - GeoSphere station \`rf\`: %.
 - GeoSphere station \`p\`: hPa ⇒ ×100 Pa.
 - GeoSphere \`ff\`: m/s.
-- NASA POWER original ancillary hourly: \`T2M, T2MDEW, RH2M, PS, WS10M, WD10M, ALLSKY_SFC_LW_DWN, PRECTOT\`; source original unit for each verified at runtime; \`PS\` kPa ⇒ ×1000 Pa and \`PRECTOT\` mm/hour, direct LW W/m² ⇒ Wh/m² over complete hour.
+- NASA POWER original ancillary hourly: \`T2M, T2MDEW, RH2M, PS, WS10M, WD10M, ALLSKY_SFC_LW_DWN, PRECTOTCORR\`; source original unit for each verified at runtime; \`PS\` kPa ⇒ ×1000 Pa and \`PRECTOT\` mm/hour, direct LW W/m² ⇒ Wh/m² over complete hour.
 - Original gridded NASA POWER **GHI, DNI, DHI** from unchanged P6.3E, original satellite/reanalysis source (NOT original ARAD ground radiation). kWh/m²/hour archive ×1000 ⇒ EPW hourly Wh/m².
 - Dew point, when original station T/RH chosen, is derived with explicit Magnus inversion; neither a raw station dewpoint nor wet-bulb measured source. Source-lineage explains calculation. No unmeasured moisture variable is silently borrowed.
+
+**Original NASA provider anomaly, verified from an immutable failed-run response:** even when the request asked for `PRECTOT`, the original provider JSON answered under canonical `PRECTOTCORR`, not `PRECTOT`, and LW units were written `W m-2`. P7A now requests/requires `PRECTOTCORR` and verifies the observed real unit strings rather than assuming aliases. The failed-run original response remains in Actions evidence; its failure did not produce a valid EPW.
+
+**Time semantics limitation:** NASA POWER hourly UTC uses hour starts, but the exact averaging-interval placement of every original GeoSphere hourly meteorological variable is not established solely by its `timestamp_utc` label. The initial P7A joins station hour labels to NASA UTC hours as a declared working hypothesis; a local meteorological timestamp-source audit is required before an EPW is approved for quantitatively decisive building simulation. No artificial time offset is chosen by best correlation.
 
 No fabrication of cloud cover, snow depth, visibility, illuminance or aerosols: exact EPW missing-data markers. The EPW may still use EnergyPlus internal substitutions for some missing auxiliary variables. **A file that parses and is structurally valid is NOT itself proof of a successful building simulation or a physically accurate all-field climate**.
 
