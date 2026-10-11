@@ -14,7 +14,7 @@ permissions:
   actions: read
 jobs:
   research-humidity-closure:
-    name: 4 P7C1 research EPWs: source SHA, monthly humidity mass proxy and RH physics
+    name: "4 P7C1 research EPWs - source SHA, monthly humidity mass proxy and RH physics"
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
