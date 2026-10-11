@@ -1,4 +1,4 @@
-# IGE Climate Research — Scientific Decision Log (P6.1–P6.3E)
+# IGE Climate Research — Scientific Decision Log (P6.1–P6.3F preflight)
 
 These decisions are not claims of physical validity; each is a research choice documented by source protocols and successful original evidence. Log later revisions, who made them, dated rationale and superseding decision here; do not overwrite historical claims.
 
@@ -21,6 +21,9 @@ These decisions are not claims of physical validity; each is a research choice d
 | D-015 | P6.3E | Identify ARAD Graz since Sep 2011 as candidate one-minute ground GHI/DNI/DHI/LW reference | University of Graz official station and published ARAD QC percentages | Source originals acquired; 2005–2010 ARAD data exist; public data redistribution allowed |
 | D-016 | Research freeze | Separate **public GitHub methodological documentation** from **portable data-rich evidence ZIP** | GitHub repo confirmed public; NASA GDDP v2 tech note warns individual CMIP6 license terms; GeoSphere open CC BY 4.0 | Public release of source model archives automatically permitted |
 | D-017 | Research freeze | Preserve 81 original nested workflow ZIP byte streams (40 model + 20 hourly + 21 stage evidence), 467 member SHA256; verify portable package post-unzip | \`IGE_RESEARCH_P6_1_TO_P6_3E_FREEZE_2026-10-11.zip\` 68,062,328 bytes SHA256 \`2c3ceecaf83aa3ff2b3e19d109d866111f1145eb5fe48ac6a4fdd010b27a22d7\` | Permanently deposited into institutional archive; original NetCDF NCSS bytes available for every GCM year |
+
+| D-018 | P6.3F | Classify ARAD Graz original one-minute 2012–2014 as **restricted custodial data**, not a public geosphere `klima-v2` q21 equivalent; contact original responsible ARAD personnel and request usage rights | GCOS Austria 2025 access table, Olefs et al. 2016, official University of Graz station; code and access request on P6.3F branch | Original records in custody; paper rights; claimed station-versus-NASA hourly performance |
+| D-019 | P6.3F | Require original provider-approved q=1 for every one of 60 UTC source minutes per component, exact-source SHA and time labels; absent ARAD -> **NULL scores** and `BLOCKED_ARAD_SOURCE_ACCESS_NOT_YET_ACQUIRED` | `p6_3f_arad_ground_qc_validation.py` and successful CI [38132968798](https://github.com/dmitrievii/building-energy-tools/actions/runs/38132968798) with 20 test contracts | Numerically validated ground results, original ARAD data were accessed, hourly future EPW scientific readiness |
 
 ## Research protocol rules for later phases
 
