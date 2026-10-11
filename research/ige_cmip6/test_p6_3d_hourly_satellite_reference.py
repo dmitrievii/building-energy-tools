@@ -1,13 +1,39 @@
 """P6.3D scientific contracts: official q21=0, NASA POWER UTC starts, source units and daily solar boundaries."""
 from __future__ import annotations
-import unittest
+import unittest,json
+from unittest.mock import patch
 from datetime import date,datetime,timedelta,timezone
 from p6_3d_hourly_satellite_reference_validation import (
-    source_contract,energy_hourly_kwh,validate_power_response,
+    source_contract,http_json,energy_hourly_kwh,validate_power_response,
     hourly_sum,metrics,SITES,WINDOWS,RAW_POWER_KIND
 )
 
 class HourlyIndependentSolarContracts(unittest.TestCase):
+    def test_nasa_power_messages_array_supported_and_provider_errors_fail(self):
+        # Actual POWER API 'messages' field is an array, not a dictionary.
+        class Response:
+            status=200
+            def __init__(self,data):self.data=json.dumps(data).encode("utf8")
+            def __enter__(self):return self
+            def __exit__(self,*args):return False
+            def read(self,limit):return self.data
+        for messages in ([], ["Data provided from NASA POWER"], {"info":"ok"}):
+            with self.subTest(messages=messages):
+                with patch("p6_3d_hourly_satellite_reference_validation.urlopen",
+                           return_value=Response({"messages":messages,"header":{}})):
+                    raw,data=http_json("https://example.invalid/original")
+                    self.assertEqual(data["messages"],messages)
+                    self.assertGreater(len(raw),10)
+        for errors in ([{"level":"error","message":"INVALID"}],
+                       ["ERROR: provider data unavailable"],
+                       {"error":"POWER rejected request"}):
+            with self.subTest(errors=errors):
+                with patch("p6_3d_hourly_satellite_reference_validation.urlopen",
+                           return_value=Response({"messages":errors})):
+                    with self.assertRaisesRegex(RuntimeError,
+                                               "NO silent fallback"):
+                        http_json("https://example.invalid/original")
+
     def test_approved_geo_daily_does_not_certify_unchecked_hourly(self):
         meta={"code_lists":{"q21":[
            {"key":0,"value":"ungeprüfte Daten"},
