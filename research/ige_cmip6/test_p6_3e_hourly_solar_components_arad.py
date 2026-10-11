@@ -81,6 +81,16 @@ class HourlyComponentsSourceScience(unittest.TestCase):
                             dt.strftime("%Y%m%d%H"))
             r["site"]="graz_station30"
             example.append(r)
+        # season_stats is intentionally strict about complete seasonal
+        # structure; include at least one native hour in DJF, MAM and SON.
+        # Preserve the July-only JJA expected counts (31 source, 30 valid).
+        for month in (1,4,10):
+            dt=datetime(2005,month,15,11,tzinfo=timezone.utc)
+            comp={p:.2 for p in COMPONENTS}
+            r=classify_hour({"ghi_hour_kwh_m2":.9},comp,47.08,15.45,
+                            dt.strftime("%Y%m%d%H"))
+            r["site"]="graz_station30"
+            example.append(r)
         example[0]["valid"]=False
         result=next(x for x in season_stats(example,"graz_station30")
                     if x["season"]=="JJA")
