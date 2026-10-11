@@ -1,0 +1,61 @@
+name: IGE Research Preservation & Reproducibility Freeze — offline manifest and handoff contracts
+on:
+  push:
+    branches: [research/ige-research-preservation-freeze-20261011]
+    paths:
+      - .github/workflows/ige-research-preservation-freeze.yml
+      - docs/IGE_CLIMATE_RESEARCH_MASTER_RECORD.md
+      - docs/IGE_CLIMATE_RESEARCH_HANDOFF.md
+      - docs/IGE_CLIMATE_RESEARCH_DECISION_LOG.md
+      - docs/IGE_CLIMATE_PAPER_EVIDENCE_REGISTER.md
+      - docs/IGE_CLIMATE_DATA_AND_REPRODUCIBILITY.md
+      - research/ige_cmip6/verify_ige_research_freeze.py
+      - research/ige_cmip6/test_ige_research_freeze.py
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  science-freeze-contract:
+    name: Immutable 40 NASA windows plus 20 GeoSphere hourly years — offline integrity and portable custody contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Test archive verifier, nested original member tampering and source inventory
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_ige_research_freeze.py' -v
+      - name: Verify all canonical written scientific records and checkpoint fingerprint
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          digest="2c3ceecaf83aa3ff2b3e19d109d866111f1145eb5fe48ac6a4fdd010b27a22d7"
+          paths=[
+            "docs/IGE_CLIMATE_RESEARCH_MASTER_RECORD.md",
+            "docs/IGE_CLIMATE_RESEARCH_HANDOFF.md",
+            "docs/IGE_CLIMATE_RESEARCH_DECISION_LOG.md",
+            "docs/IGE_CLIMATE_PAPER_EVIDENCE_REGISTER.md",
+            "docs/IGE_CLIMATE_DATA_AND_REPRODUCIBILITY.md",
+          ]
+          for path in paths:
+              content=Path(path).read_text(encoding="utf-8")
+              assert len(content)>2000,(path,"unexpectedly short")
+              assert "P6.3" in content,(path,"missing research context")
+          for path in (paths[0],paths[1],paths[4]):
+              assert digest in Path(path).read_text(),(path,"missing archive digest")
+          assert not list(Path(".").rglob("IGE_RESEARCH_P6_1_TO_P6_3E_FREEZE_2026-10-11.zip")), \
+              "Evidence data-rich archive must not be committed to the public repository"
+          print("PASS: 5 canonical scientific records, SHA custody contract, and no raw freeze ZIP in public repo")
+          PY
+      - name: Declare scientific status (never claim ground radiation or future EPW validated)
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path("docs/IGE_CLIMATE_RESEARCH_MASTER_RECORD.md").read_text()
+          assert "REVIEW_REQUIRED" in s
+          assert "ground" in s.lower()
+          assert "ARAD" in s
+          assert "main" in s
+          print("SCIENCE GATE: historical observational hourly GHI not acquired; future EPW not ready")
+          PY
