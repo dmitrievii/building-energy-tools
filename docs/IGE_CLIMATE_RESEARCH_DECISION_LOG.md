@@ -1,0 +1,33 @@
+# IGE Climate Research — Scientific Decision Log (P6.1–P6.3E)
+
+These decisions are not claims of physical validity; each is a research choice documented by source protocols and successful original evidence. Log later revisions, who made them, dated rationale and superseding decision here; do not overwrite historical claims.
+
+| ID | Phase | Scientific/engineering decision | Evidence and rationale | What is NOT established |
+|---|---|---|---|---|
+| D-001 | P6.1 | Derive local daily 9-variable climate from NASA NEX-GDDP-CMIP6, not a proprietary Meteonorm integration | NASA native per-variable yearly NCSS provenance retained in each original derived P6.1 archive | NEX data equivalent to measured hourly climate; commercial usage permission |
+| D-002 | P6.1–2A | Use eight separate GCMs and five prescribed model windows, not a single GCM/scenario | 40 source model-window ZIPs and 8-GCM ensemble report | GCM ensemble is a probabilistic distribution, complete CMIP6 ensemble or calibrated local weather truth |
+| D-003 | P6.2B | GeoSphere Graz #30 accepted \`cglo_j\` J/cm²/360 used as historical **daily** GHI reference | \`p6_2b_solar_reference_audit.json\`, official QC flags | Hourly GHI validation; synchronized GCM-year dates |
+| D-004 | P6.2B | Trace original NASA/GMFD GHI baseline and PVGIS/NASA POWER cross-products separately | GMFD direct source and solar bias forensic artifacts | A 44 W/m² GHI discrepancy fully explained by local topography alone |
+| D-005 | P6.2D | Train solar corrections on 1995–2004, evaluate 2005–2014 without leaking holdout | \`p6_2d_solar_methods_benchmark.py\`, original heldout scores | Any future 2080–2099 observed skill |
+| D-006 | P6.2D | Label M0 original NASA NEX (already NASA-bias-corrected); M1 month ratio; M2 monthly QDM; M3 daily FAO-56 clear-sky index QDM | Original methods benchmark and P6.3A methodological contract | M2 as independently validated daily QDM; M3 as physically canonical global scheme |
+| D-007 | P6.2D-B | Preserve model daily/monthly energy bookkeeping; reject solar impossible negatives/TOA violations as defined | Daily FAO-56 clear-sky envelope, original sources preserved | Other climate variables jointly corrected; observed direct/diffuse radiation |
+| D-008 | P6.3A | Audit original climate-model temperature, humidity, precipitation, wind and downwelling longwave dependence after solar correction | 40 source model-window audits and 2 distortions exceeding provisional Pearson 0.10 | Physical approval based solely on good monthly GHI; prospective EPW readiness |
+| D-009 | P6.3B | Independently compare historical observational dependence from GeoSphere + NASA POWER, not paired GCM/observed daily events | Original station + gridded source full QC, reproduced P6.3A anomalies | Future observations, ground-observed longwave at Graz |
+| D-010 | P6.3C | Treat QC-approved \`rr=-1\` as officially dry (0 mm), QC-approved \`rr=0\` as **trace <0.1 mm**, not missing/dry | Original GeoSphere provider daily metadata, 2,122 dry/163 trace days | A negative code can be extrapolated to every external provider |
+| D-011 | P6.3C | Use explicit parameter-native UTC windows; inspect source label lags ±2 days without shifting originals | GeoSphere solar previous 23–labelled 23 vs precipitation 06:01–next 06:00, 4 Graz-region stations | Lag maximizing correlation is causal or timestamps should be changed |
+| D-012 | P6.3C–D | Reject original hourly GeoSphere \`cglo\` as independent QC ground reference because all 87,648 samples 2005–2014 have \`q21=0\` | Original 20-year hourly provider source, q21 metadata | Original hourly GHI necessarily wrong; calibrated daily GHI necessarily wrong |
+| D-013 | P6.3D | Use hourly NASA POWER UTC satellite/reanalysis gridded proxy with **station daily** GeoSphere comparison | 2 sites × 2005–2014, Pearson 0.9366 and 0.9635, full source QA | Independently measured ground hourly GHI, radiative decomposition skill |
+| D-014 | P6.3E | Screen \`GHI ≈ DHI + DNI*coszenith\` with independent solar geometry, TOA and night; retain original source without clipping | 175,296 hourly satellite-product rows, 565/417 daylight review flags | Flags prove NASA original corruption or closure tolerance is physically normative |
+| D-015 | P6.3E | Identify ARAD Graz since Sep 2011 as candidate one-minute ground GHI/DNI/DHI/LW reference | University of Graz official station and published ARAD QC percentages | Source originals acquired; 2005–2010 ARAD data exist; public data redistribution allowed |
+| D-016 | Research freeze | Separate **public GitHub methodological documentation** from **portable data-rich evidence ZIP** | GitHub repo confirmed public; NASA GDDP v2 tech note warns individual CMIP6 license terms; GeoSphere open CC BY 4.0 | Public release of source model archives automatically permitted |
+| D-017 | Research freeze | Preserve 81 original nested workflow ZIP byte streams (40 model + 20 hourly + 21 stage evidence), 467 member SHA256; verify portable package post-unzip | \`IGE_RESEARCH_P6_1_TO_P6_3E_FREEZE_2026-10-11.zip\` 68,062,328 bytes SHA256 \`2c3ceecaf83aa3ff2b3e19d109d866111f1145eb5fe48ac6a4fdd010b27a22d7\` | Permanently deposited into institutional archive; original NetCDF NCSS bytes available for every GCM year |
+
+## Research protocol rules for later phases
+
+1. Immutable source snapshots with checksum, exact URL/API query, date/time axis, units and provider metadata. Keep raw and cleaned values side by side.
+2. Preserve license/source attribution in science figures and final data availability statement.
+3. Separate stages: data completeness, algorithmic numerical correctness, physical source-internal structure, independent observational skill and downstream building simulation skill.
+4. Do **not** use green CI as proof of scientific acceptance. Quantitative uncertainty and competing baselines required.
+5. Censor trace precipitation explicitly. Never modify untrusted source time labels to boost correlation.
+6. Disallow merging research branch into production until an explicit user-approved merge and scientific acceptance.
+7. For new discoveries, append \`D-018\`, \`D-019\` etc, with date, evidence run, decision, scientific boundaries and supersession record.
