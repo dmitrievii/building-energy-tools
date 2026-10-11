@@ -291,8 +291,9 @@ def run(out,p6e,years=YEARS):
                 print("P6.3F 10MIN FAILED",station,y,str(err)[:150],flush=True)
                 continue
             original_path=out/f"original_geosphere_10min_station{station}_{y}.geojson.gz"
-            with gzip.open(original_path,"wb",compresslevel=6,mtime=0) as f:
-                f.write(payload)
+            with original_path.open("wb") as stream:
+                with gzip.GzipFile(fileobj=stream,mode="wb",compresslevel=6,mtime=0) as gz:
+                    gz.write(payload)
             digest=hashlib.sha256(payload).hexdigest()
             source.append({"station_id":station,"year":y,
                  "original_url":url,"uncompressed_original_sha256":digest,
