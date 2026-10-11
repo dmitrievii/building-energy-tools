@@ -1,0 +1,82 @@
+name: IGE P7B CanESM5 original DAILY CMIP6 to independent synthetic 8760-hour EPW pilot
+on:
+  push:
+    branches:
+      - research/ige-p7b-daily-cmip6-hourly-synthesis-pilot-20261011
+    paths:
+      - .github/workflows/ige-p7b-can-esm5-daily-hourly.yml
+      - research/ige_cmip6/p7b_daily_to_hourly_cmip6_pilot.py
+      - research/ige_cmip6/test_p7b_daily_to_hourly_cmip6_pilot.py
+      - docs/IGE_P7B_CMIP6_DAILY_TO_HOURLY_PILOT_PROTOCOL.md
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  daily-native-source-hourly-climate-synthesis:
+    name: CanESM5 2013 original 365 days to 8760 hours, daily physics conservation and EPW 35 fields
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify strict original-source daily hourly synthesis contract tests
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7b_daily_to_hourly_cmip6_pilot.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7a_historical_epw_reference.py' -v
+      - name: Restore accepted 20-year CanESM5 original NASA daily multivariable 1995–2014
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          name: ige-p6-CanESM5-historical-1995-2014
+          path: inputs/original_can_esm5_historical
+      - name: Restore accepted source-assembled historic Graz 2013 8760-hour EPW for UNPAIRED monthly distributions
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38142594430
+          github-token: ${{ github.token }}
+          name: ige-p7a-graz-2013-historical-reference-epw-original-source
+          path: inputs/original_p7a_epw
+      - name: Generate actual 2013 historical CanESM5 SYNTHETIC hourly model data (not date-wise observed weather)
+        run: |
+          python research/ige_cmip6/p7b_daily_to_hourly_cmip6_pilot.py \
+            --daily-frozen inputs/original_can_esm5_historical \
+            --reference-epw inputs/original_p7a_epw/Graz_2013_P7A_Historical_Reference_RESEARCH_ONLY.epw \
+            --seed 7313 \
+            --out outputs/p7b_can_esm5_2013
+      - name: Assert all 365 original daily source records conserved and 8760x35 EPW format valid
+        run: |
+          python - <<'PY'
+          import csv,hashlib,json
+          from pathlib import Path
+          out=Path("outputs/p7b_can_esm5_2013")
+          q=json.loads((out/"p7b_science_audit.json").read_text())
+          assert q["technical_status"]=="DAILY_CONSERVATION_AND_8760_EPW_FORMAT_PASS"
+          assert q["scientific_status"]=="SYNTHETIC_HOURLY_DAILY_CONSERVATION_ONLY_NOT_OBSERVED_CLIMATE"
+          assert q["native_daily_rows"]==365 and q["hourly_synthesized"]==8760
+          assert q["max_abs_native_daily_residual"]<1e-7
+          assert q["huss_constraint_closed"] is False
+          assert q["epw_production_ready"] is False
+          epw=out/"Graz_2013_CanESM5_P7B_SYNTHETIC_DAILY_TO_HOURLY_RESEARCH.epw"
+          with epw.open("r",encoding="utf8",newline="") as f:
+              rows=list(csv.reader(f))
+          assert len(rows)==8768 and all(len(r)==35 for r in rows[8:])
+          assert rows[8][:5]==["2013","1","1","1","60"]
+          assert rows[-1][:5]==["2013","12","31","24","60"]
+          for name,sha in q["hashes"].items():
+              assert hashlib.sha256((out/name).read_bytes()).hexdigest()==sha,name
+          print("P7B VERIFIED: original daily 365 source, native conserving 8760 independent synthetic hourly records and 35-field EPW")
+          print("P7B GHI partition review hours:",q["solar_physical_partition_review_hours"])
+          print("P7B source specific humidity q mismatch:",q["maximum_unclosed_huss_kg_kg"])
+          PY
+      - name: Archive first true hourly climate synthesis with immutable source provenance and daily conservation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p7b-canesm5-original-daily-to-synthetic-hourly-graz-2013
+          path: outputs/p7b_can_esm5_2013/
+          retention-days: 30
+          if-no-files-found: warn
