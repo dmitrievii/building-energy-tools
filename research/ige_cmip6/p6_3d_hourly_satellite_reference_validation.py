@@ -75,8 +75,25 @@ def http_json(url,limit=28000000):
                 if res.status!=200 or len(original)>limit:
                     raise RuntimeError("Unexpected provider HTTP status or payload length")
                 data=json.loads(original)
-                if data.get("messages",{}).get("error"):
-                    raise ValueError("NASA POWER provider message: "+str(data["messages"]["error"]))
+                if not isinstance(data,dict):
+                    raise ValueError("NASA POWER original response must be a JSON object")
+                messages=data.get("messages",[])
+                if isinstance(messages,dict):
+                    errors=messages.get("error") or messages.get("errors") or []
+                    if isinstance(errors,str):errors=[errors]
+                elif isinstance(messages,list):
+                    errors=[message for message in messages
+                        if (isinstance(message,dict) and
+                            str(message.get("level",message.get("type",""))).lower()
+                            in ("error","fatal")) or
+                           (isinstance(message,str) and
+                            message.strip().lower().startswith(("error:","fatal:")))]
+                elif messages in (None,""):
+                    errors=[]
+                else:
+                    raise ValueError("Unexpected NASA POWER messages metadata type")
+                if errors:
+                    raise ValueError("NASA POWER provider error message: "+str(errors)[:2000])
                 return original,data
         except (HTTPError,URLError,OSError,ValueError,RuntimeError,TimeoutError) as exc:
             failures.append(str(exc))
