@@ -1,0 +1,119 @@
+name: IGE P7B.3F minimal solar cap feasibility repair (8 GCM source)
+on:
+  push:
+    branches:
+      - research/ige-p7b3f-solar-feasibility-repair-20261011
+    paths:
+      - .github/workflows/ige-p7b3f-solar-physical-feasibility-repair.yml
+      - research/ige_cmip6/p7b3f_feasibility_repair.py
+      - research/ige_cmip6/test_p7b3f_feasibility_repair.py
+      - docs/IGE_P7B3F_SOLAR_PHYSICAL_FEASIBILITY_REPAIR_PROTOCOL.md
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  original-eight-gcm-repair:
+    name: Eight historical GCMs, unchanged daily energy, minimum repaired solar cap
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: New repair, frozen baseline, source and component contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7b3f_feasibility_repair.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7b3e_original_physical_closure.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7b3c_conditional_solar.py' -v
+      - name: Retrieve original ACCESS historical 1995-2014 archive
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38067931031
+          github-token: ${{ github.token }}
+          pattern: ige-p6-access-historical-1995-2014
+          path: inputs/access
+      - name: Retrieve source-accepted seven-GCM historical archives
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          pattern: ige-p6-*-historical-1995-2014
+          path: inputs/seven_prior
+      - name: Retrieve corrected original historical GCM archives
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38077903914
+          github-token: ${{ github.token }}
+          pattern: ige-p6-*-historical-1995-2014
+          path: inputs/seven_repaired
+      - name: Restore immutable original approved Graz GHI observations
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38134438339
+          github-token: ${{ github.token }}
+          name: ige-p6-3f-open-geosphere-10min-graz-ghi-diffuse-qc-2005-2014
+          path: inputs/frozen_graz
+      - name: Strict immutable source selection and original train SHA
+        run: |
+          mkdir -p inputs/historical_models
+          ln -s "$PWD/inputs/access/ige-p6-access-historical-1995-2014" inputs/historical_models/ACCESS-CM2
+          for model in CanESM5 GFDL-ESM4 MRI-ESM2-0 NorESM2-MM; do
+            ln -s "$PWD/inputs/seven_prior/ige-p6-$model-historical-1995-2014" "inputs/historical_models/$model"
+          done
+          for model in EC-Earth3 MPI-ESM1-2-HR IPSL-CM6A-LR; do
+            ln -s "$PWD/inputs/seven_repaired/ige-p6-$model-historical-1995-2014" "inputs/historical_models/$model"
+          done
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib
+          p=Path('inputs/frozen_graz/p6_3f_geosphere_10min_hourly_pairwise.csv')
+          assert p.is_file()
+          assert hashlib.sha256(p.read_bytes()).hexdigest()=='95dc8f9b7341be69d0ee236b38029a3f171b7f6a9eb0aed75b03cd2e473500c0'
+          for name in ('ACCESS-CM2','CanESM5','EC-Earth3','GFDL-ESM4','IPSL-CM6A-LR','MPI-ESM1-2-HR','MRI-ESM2-0','NorESM2-MM'):
+            root=Path('inputs/historical_models')/name
+            for f in ('quality_report.json','source_provenance.json','joint_daily_raw.csv'):
+              assert (root/f).is_file(),(name,f)
+          print('P7B3F immutable provider and 8 GCM source directories PASS')
+          PY
+      - name: Original 8 GCM 1995-2014 daily feasibility and 2012-2014 repaired hourly generator
+        run: |
+          python research/ige_cmip6/p7b3f_feasibility_repair.py \
+            --source-root inputs/historical_models \
+            --graz-original inputs/frozen_graz/p6_3f_geosphere_10min_hourly_pairwise.csv \
+            --out outputs/p7b3f --seeds 3
+      - name: Fail-closed complete daily source / legacy-invariance / component closure gates
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import csv,hashlib,json
+          p=Path('outputs/p7b3f');j=json.loads((p/'p7b3f_repair_science_audit.json').read_text())
+          assert j['production_epw_ready'] is False and j['ground_measured_DHI_DNI_qualified'] is False
+          assert j['n_models']==8 and j['seeds']==[0,1,2]
+          assert j['source_Graz_qc_sha256']=='95dc8f9b7341be69d0ee236b38029a3f171b7f6a9eb0aed75b03cd2e473500c0'
+          assert sum(m['counts']['stress_days_repaired'] for m in j['multimodel'])==300
+          assert len(j['multimodel'])==8
+          for m in j['multimodel']:
+            c=m['counts'];assert m['originals_infeasible_even_with_toa']==0
+            assert c['conservative_repair_admitted_days']==m['original_historical_days']
+            assert c['historical_days_requiring_relaxation']==c['original_frozen_cap_infeasible_days']
+            assert m['frozen_old_method_exact_on_unrepaired_days']
+            for r in m['runs'].values():
+              assert r['complete_days']==c['stress_model_days']
+              assert r['complete_hours']==24*c['stress_model_days']
+              assert r['max_daily_energy_residual']<1e-9
+              assert r['max_radiometric_identity_residual_kwh_m2_h']<1e-10
+              assert r['max_dni_above_normal_toa_kwh_m2_h']<1e-10
+          for name,digest in j['derived_sha256'].items():
+            assert hashlib.sha256((p/name).read_bytes()).hexdigest()==digest
+          print('P7B3F: all 300 old-cap-rejected stress days restored, 8 original GCMs daily GHI invariant; research-only PASS')
+          PY
+      - name: Archive calculated derived diagnostics (no provider raw records)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p7b3f-8gcm-minimum-solar-cap-relaxation-repair
+          path: outputs/p7b3f/
+          retention-days: 30
+          if-no-files-found: warn
