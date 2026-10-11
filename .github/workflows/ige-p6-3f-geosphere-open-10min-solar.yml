@@ -1,0 +1,69 @@
+name: IGE P6.3F open GeoSphere 10min source GHI Himmelsstrahlung independent ground QA
+on:
+  push:
+    branches:
+      - research/ige-p6-3f-geosphere-open-10min-qc-2005-2014-20261011
+    paths:
+      - .github/workflows/ige-p6-3f-geosphere-open-10min-solar.yml
+      - research/ige_cmip6/p6_3f_geosphere_open_10min_solar_qc.py
+      - research/ige_cmip6/test_p6_3f_geosphere_open_10min_solar_qc.py
+      - docs/IGE_P6_3F_GEOSPHERE_OPEN_10MIN_GHI_DIFFUSE_VALIDATION.md
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  open-geosphere-original-10min-ten-year-benchmark:
+    name: Original GeoSphere Graz 30+16412 source QC and NASA POWER 2005–2014 GHI/DHI audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Original station metadata, strict ten-minute per-parameter QC and source calendar tests
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p6_3f_geosphere_open_10min_solar_qc.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p6_3f_arad_ground_qc_validation.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p6_3e_hourly_solar_components_arad.py' -v
+      - name: Restore immutable P6.3E NASA POWER historical two-point original-hourly GHI/DHI
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38129047139
+          github-token: ${{ github.token }}
+          name: ige-p6-3e-ghi-dni-dhi-toa-arad-research-audit
+          path: inputs/p6_3e_original
+      - name: Live original open 10-minute GeoSphere Graz 30+16412 GHI/DHI QC for 2005–2014 and independent NASA comparisons
+        run: |
+          python research/ige_cmip6/p6_3f_geosphere_open_10min_solar_qc.py \
+            --p6e-frozen inputs/p6_3e_original \
+            --out outputs/p6_3f_geosphere_open_solar
+      - name: Verify fail-closed science state and retained official source SHA
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("outputs/p6_3f_geosphere_open_solar/p6_3f_open_10min_scientific_audit.json")
+          d=json.loads(p.read_text())
+          assert d["production_epw_ready"] is False
+          assert d["timestamp_interpretation"].startswith("UNRESOLVED")
+          assert d["original_qc_legend"]
+          assert "provider_metadata_sha256" in d
+          assert d["requested_stations"]==[30,16412]
+          assert d["requested_years"]==list(range(2005,2015))
+          assert d["numeric_results_status"] in (
+            "COMPUTED_FROM_ACTUAL_QC_APPROVED_SAMPLES_ONLY","NONE")
+          print("P6.3F OFFICIAL OPEN STATION SCIENCE STATUS:",d["technical_status"])
+          print("P6.3F fetched station-years:",d["fetched_station_years"])
+          print("P6.3F missing original station-years:",len(d["failures"]))
+          print("P6.3F EPW READY:",d["production_epw_ready"])
+          PY
+      - name: Preserve original GeoSphere source, QC and independent numerical comparison evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p6-3f-open-geosphere-10min-graz-ghi-diffuse-qc-2005-2014
+          path: outputs/p6_3f_geosphere_open_solar/
+          retention-days: 30
+          if-no-files-found: warn
