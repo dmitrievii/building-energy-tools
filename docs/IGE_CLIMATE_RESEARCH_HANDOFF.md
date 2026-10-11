@@ -4,6 +4,12 @@
 **Status at 2026-10-11 freeze:** Research code up to P6.3E computationally tested; ground hourly solar independently unvalidated.  
 **Repo:** \`dmitrievii/building-energy-tools\`. **NO automatic merge into \`main\`.**
 
+## VERIFIED P7A HISTORICAL EPW DELIVERABLE — 2026-10-11
+
+**Successful verified scientific execution:** [workflow #38142594430](https://github.com/dmitrievii/building-energy-tools/actions/runs/38142594430), source commit `b8638d6830849a6c123c3c7f7bf7bcd576c7f737`; archived GitHub result `11703014978`. Original real downloadable EPW `Graz_2013_P7A_Historical_Reference_RESEARCH_ONLY.epw` SHA256 `da8a4e08e032bebbb3105b6584c319714fc85c99fc06a59d5fa1d125bf3478fc` (1,837,333 bytes), **8 original EPW headers + 8760 year-2013 fixed-CET sequential 35-field hourly rows**. 8760 each of Graz station q21-approved T/RH/pressure/wind speed, original gridded NASA POWER meteorology where unavailable from station (direction, LW, rain), NASA P6.3E unchanged solar GHI/DNI/DHI with 47 source-closure screen hours retained. `production_epw_ready=false` and **this is NOT original daily-GCM-to-hourly climate synthesis or a future-SSP weather file**.
+
+Scientific closeout document: `docs/IGE_P7A_GRAZ_2013_ACCEPTED_REFERENCE_EPW.md`; original source data/four-file archival evidence **`IGE_P7A_GRAZ_2013_PORTABLE_RESEARCH_FREEZE.zip`**, 545,498 bytes SHA256 `2bda61d9bacd4a91918e2e3a6dd9e3e263f5bb14758c618247f5561c3e4631a7`, portable verifier passed after independent extraction. Archive external local user attachment, not in public GitHub and not deposited for permanent retention. Next phase **P7B** real hour synthesis from original daily CMIP6. Do not re-open P6.3F QA details as a prerequisite unless they block specific P7B quality gates.
+
 ## NEW ACTIVE PHASE P7A — first historical full-hour research EPW (2026-10-11)
 
 **Active branch:** `research/ige-p7a-historical-hourly-epw-reference-20261011`. **Read:** `docs/IGE_P7_HOURLY_SYNTHESIS_EPW_EXECUTION_PROTOCOL.md`, `research/ige_cmip6/p7a_historical_epw_reference.py` and regression/CI `ige-p7a-graz-2013-epw-reference.yml`. User explicitly refocused after P6.3F source-methodology research on end-to-end future climate EPW generation; **the immediate deliverable P7A is a 2013 original-source historical EPW reference** with 8760 hours and exact field/time/unit/provenance verification. Do NOT call P7A `hourly synthesis from daily CMIP6` or `future SSP EPW`; those are **P7B** and **P7C**, respectively.
