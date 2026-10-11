@@ -83,6 +83,10 @@ class P7B2SourcePhysicalContractTests(unittest.TestCase):
                          "JOINT_HURS_HUSS_CLOSED_BOUNDED_HOURLY_RH")
         self.assertNotEqual(audit[50]["status"],audit[50]["pre_continuity_humidity_stage"])
         self.assertTrue(all("reconstructed_minus_source_huss_kg_kg" in d for d in audit))
+        self.assertEqual(report["prefilter_global_RH_smoothing_window_hours"],7)
+        self.assertIn("post_smoothing_bounded_source_restoration_stage_counts",report)
+        self.assertGreater(report["final_native_daily_hurs_huss_conservation_classes"].get("both_conserved",0)
+                           +report["final_native_daily_hurs_huss_conservation_classes"].get("huss_only",0),0)
 
     def test_model_station_calibration_train_only_and_quarantine(self):
         rows=[];station={}
