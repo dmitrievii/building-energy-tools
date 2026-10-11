@@ -1,0 +1,165 @@
+name: IGE P7B.3E eight GCM physical closure and distant Austrian sites
+on:
+  push:
+    branches:
+      - research/ige-p7b3e-broader-climate-physical-closure-20261011
+    paths:
+      - .github/workflows/ige-p7b3e-broader-climate-physical-closure.yml
+      - research/ige_cmip6/p7b3e_multigcm_radiometric_closure.py
+      - research/ige_cmip6/p7b3e_distant_sites.py
+      - research/ige_cmip6/test_p7b3e_original_physical_closure.py
+      - docs/IGE_P7B3E_BROADER_CLIMATE_AND_PHYSICAL_CLOSURE_PROTOCOL.md
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  eight-gcm-physical-closure:
+    name: 8 original GCM 1995-2014 daily and 3-year GHI-DHI-DNI bounded closure
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Original physical, source and QC science contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7b3e_original_physical_closure.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7b3d_crosssite_generalization.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7b3c_conditional_solar.py' -v
+      - name: Retrieve original ACCESS historical 20-year 9-variable 1995-2014 source
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38067931031
+          github-token: ${{ github.token }}
+          pattern: ige-p6-access-historical-1995-2014
+          path: inputs/access
+      - name: Retrieve original seven-GCM P6 successful historical sources
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          pattern: ige-p6-*-historical-1995-2014
+          path: inputs/seven_prior
+      - name: Retrieve original source-audited repaired historical model artifacts
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38077903914
+          github-token: ${{ github.token }}
+          pattern: ige-p6-*-historical-1995-2014
+          path: inputs/seven_repaired
+      - name: Restore frozen Graz original six-of-six QC source
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38134438339
+          github-token: ${{ github.token }}
+          name: ige-p6-3f-open-geosphere-10min-graz-ghi-diffuse-qc-2005-2014
+          path: inputs/frozen_graz
+      - name: Enforce explicit immutable eight-model source selection
+        run: |
+          mkdir -p inputs/historical_models
+          ln -s "$PWD/inputs/access/ige-p6-access-historical-1995-2014" inputs/historical_models/ACCESS-CM2
+          for model in CanESM5 GFDL-ESM4 MRI-ESM2-0 NorESM2-MM; do
+            ln -s "$PWD/inputs/seven_prior/ige-p6-$model-historical-1995-2014" "inputs/historical_models/$model"
+          done
+          for model in EC-Earth3 MPI-ESM1-2-HR IPSL-CM6A-LR; do
+            ln -s "$PWD/inputs/seven_repaired/ige-p6-$model-historical-1995-2014" "inputs/historical_models/$model"
+          done
+          python - <<'PY'
+          from pathlib import Path
+          for model in ('ACCESS-CM2','CanESM5','EC-Earth3','GFDL-ESM4','IPSL-CM6A-LR','MPI-ESM1-2-HR','MRI-ESM2-0','NorESM2-MM'):
+              folder=Path('inputs/historical_models')/model
+              for filename in ('quality_report.json','source_provenance.json','joint_daily_raw.csv'):
+                  assert (folder/filename).is_file(),(model,filename)
+          print('P7B.3E eight original historical GCM source directories present')
+          PY
+      - name: Run original 8-GCM 20-year bound audit and 3-year radiometric closure
+        run: |
+          python research/ige_cmip6/p7b3e_multigcm_radiometric_closure.py \
+            --source-root inputs/historical_models \
+            --graz-original inputs/frozen_graz/p6_3f_geosphere_10min_hourly_pairwise.csv \
+            --out outputs/p7b3e_multigcm --seeds 3
+      - name: Numerical fail-closed physical closure audit
+        run: |
+          python - <<'PY'
+          import json,hashlib
+          from pathlib import Path
+          p=Path('outputs/p7b3e_multigcm')
+          a=json.loads((p/'p7b3e_multigcm_physics_audit.json').read_text())
+          assert a['production_epw_ready'] is False and a['ground_DHI_or_DNI_independently_validated'] is False
+          assert len(a['multi_model_results'])==8
+          for m in a['multi_model_results']:
+              assert m['historical_record_count']>=7000
+              for run in m['three_seed_hourly_component_closure'].values():
+                  assert run['max_ghi_day_residual_kwh_m2']<1e-9
+                  assert run['max_component_closure_residual_kwh_m2_h']<1e-10
+          for name,h in a['derived_sha256'].items():
+              assert hashlib.sha256((p/name).read_bytes()).hexdigest()==h
+          print('P7B3E eight-source radiometric algebra and physical feasibility PASS; SCIENCE RELEASE BLOCKED')
+          PY
+      - name: Archive source-audited derived climate stress only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p7b3e-eight-gcm-radiometric-physical-closure
+          path: outputs/p7b3e_multigcm/
+          retention-days: 30
+          if-no-files-found: warn
+  distant-austria-geo-transfer:
+    name: External Vienna Innsbruck Klagenfurt Linz Sonnblick original 10min station QC
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Independent site, physics and provider source contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7b3e_original_physical_closure.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7b3d_crosssite_generalization.py' -v
+      - name: Restore frozen original train-source Graz station30 radiation
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38134438339
+          github-token: ${{ github.token }}
+          name: ige-p6-3f-open-geosphere-10min-graz-ghi-diffuse-qc-2005-2014
+          path: inputs/frozen_graz
+      - name: Verify SHA-256 original ten-minute approved Graz source
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib
+          f=Path('inputs/frozen_graz/p6_3f_geosphere_10min_hourly_pairwise.csv')
+          assert f.is_file()
+          assert hashlib.sha256(f.read_bytes()).hexdigest()=='95dc8f9b7341be69d0ee236b38029a3f171b7f6a9eb0aed75b03cd2e473500c0'
+          print('P7B3E source SHA verified')
+          PY
+      - name: Live original GeoSphere 2012-14 ten-minute strict QC in distant climate regions
+        run: |
+          python research/ige_cmip6/p7b3e_distant_sites.py \
+            --graz-original inputs/frozen_graz/p6_3f_geosphere_10min_hourly_pairwise.csv \
+            --out outputs/p7b3e_sites --seeds 8
+      - name: Strict geographic original-site eligibility check
+        run: |
+          python - <<'PY'
+          import json,hashlib
+          from pathlib import Path
+          p=Path('outputs/p7b3e_sites')
+          a=json.loads((p/'p7b3e_distant_sites_audit.json').read_text())
+          assert a['production_epw_ready'] is False
+          assert a['test_has_no_site_or_year_parameter_fitting'] is True
+          assert a['geographic_coverage_pass'] and a['distinct_sites']>=2
+          for name,h in a['derived_files_sha256'].items():
+              assert hashlib.sha256((p/name).read_bytes()).hexdigest()==h
+          print('P7B3E distant Austrian observed source QC & geometry evidence PASS')
+          PY
+      - name: Archive derived regional transfer, no original provider time series
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p7b3e-distant-5site-ground-ghi-original-qc
+          path: outputs/p7b3e_sites/
+          retention-days: 30
+          if-no-files-found: warn
