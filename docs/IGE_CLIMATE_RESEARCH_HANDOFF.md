@@ -1,8 +1,14 @@
 # IGE CLIMATE RESEARCH — CANONICAL HANDOFF FOR A NEW CHAT
 
-**Project:** climate modelling / research phases P6.1–P6.3E, Graz  
+**Project:** independent climate engine **P1–P5** plus downstream CMIP6 scientific research **P6.1–P6.3E**, Graz  
 **Status at 2026-10-11 freeze:** Research code up to P6.3E computationally tested; ground hourly solar independently unvalidated.  
 **Repo:** \`dmitrievii/building-energy-tools\`. **NO automatic merge into \`main\`.**
+
+## Integrated scientific custody added 2026-10-11 (P1–P5 + P6)
+
+**PRIMARY INTEGRATED PORTABLE FILE:** `IGE_CLIMATE_RESEARCH_P1_TO_P6_3E_INTEGRATED_FREEZE_2026-10-11.zip`, **71,193,259 bytes**, SHA-256 `4b5d7dfc4b1805f0a3742e4f6e72ae9474718deb0683b321305f405939d46721`. This contains both ORIGINAL UNMODIFIED releases (P1–P5 Independent Climate Engine v0.4.0 and the previously accepted P6.1–P6.3E archive) and a standalone verifier. It is NOT hosted persistently in public GitHub and must be deposited to approved permanent storage.
+
+**READ FIRST FOR P1–P5:** `docs/IGE_CLIMATE_RESEARCH_P1_P5_BASELINE.md`. P1–P5 release ORIGINAL immutable SHA-256 `6e3dfefe03461feebeef36dd93ce4109861ad862c5e1c8ec312e10e541c57431`; original 166 entries, 164 source-science entries independently SHA-verified. **P5 historical 152/152 PASS** was reported by the frozen v0.4.0 release; not rerun in this freeze. **P1–P5 is NOT the application WEB-0.x roadmap and NOT the P6 methods.** Preserve original standalone P6 SHA `2c3ceecaf83aa3ff2b3e19d109d866111f1145eb5fe48ac6a4fdd010b27a22d7` unchanged.
 
 ## Minimum source-of-truth reading order
 
@@ -12,7 +18,7 @@
 4. Decision chronology: \`docs/IGE_CLIMATE_RESEARCH_DECISION_LOG.md\`.
 5. Artifact SHA, source licenses and recovery: \`docs/IGE_CLIMATE_DATA_AND_REPRODUCIBILITY.md\`.
 6. Original phase protocols: \`docs/IGE_P6_*.md\`, especially P6.2D / P6.3A–E; source code \`research/ige_cmip6/p6_*.py\`.
-7. Original JSON, CSV, model-window source-provenance and SHA inside the portable 81-archive research freeze.
+7. Original P1–P5 v0.4.0 immutable release and original P6 JSON/CSV, model-window provenance and SHA in the integrated P1–P6.3E ZIP (two untouched nested source releases).
 
 ## Code checkpoint
 
