@@ -30,7 +30,10 @@ def check_original_metadata(meta):
     params={p['name']:p for p in meta.get('parameters',[])}
     if params.get('cglo',{}).get('unit') not in ('W/m²','W/m2','W m-2','W/m^2') or 'cglo_flag' not in params:
         raise ValueError('GeoSphere original GHI/QC metadata incompatible')
-    code={int(q['key']):q['value'] for q in meta.get('code_lists',{}).get('q21',[])}
+    # GeoSphere metadata may include a null-key legend entry. Ignore that
+    # non-code record; still require all official accepted integer code keys.
+    code={int(q['key']):q.get('value') for q in meta.get('code_lists',{}).get('q21',[])
+          if isinstance(q,dict) and q.get('key') is not None}
     if not QUALITY<=set(code) or 0 not in code:raise ValueError('original provider QC legend drift')
     stations={int(s['id']):s for s in meta.get('stations',[]) if s.get('id') is not None}
     for sid,(_,lat,lon,height) in SITES.items():
