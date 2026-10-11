@@ -46,6 +46,16 @@ Compare native CanESM5 daily \`rsds_kwh_m2_day\` versus original independent gri
 - Do **not** calculate same-day model errors, time-correlated paired RMSE, same-year event skill or assimilate NASA radiation to force matching GCM daily events.
 - NASA POWER is a separate satellite/reanalysis grid product and may share underlying adjustments with NASA NEX BCSD; **not an independently measured ground pyranometer**. The supplementary station measured GeoSphere daily GHI archive remains a possible further source of truly ground-observed solar climatology.
 
+## Additional independent observed solar station benchmark
+
+The ten-year model-versus-NASA POWER gridded radiation comparison alone is insufficient to claim measured-ground skill. Therefore this P7B.1 calculation also restores the **original quality-accepted GeoSphere Graz #30 DAILY observed GHI** from P6.3D (official 23:00 UTC previous-day to labelled-day 23:00 UTC solar accumulation interval), original workflow [#38128314291](https://github.com/dmitrievii/building-energy-tools/actions/runs/38128314291). Its original `p6_3d_power_vs_geosphere_daily_2005_2014_two_utc_windows.csv` bytes are checked against its original `p6_3d_hourly_independent_validation_science_audit.json` original output SHA-256; 3,652 measured 2005–2014 station solar days including 2008/2012 leap days are required. This provides an **observed station reference**, alongside NASA POWER, and they are kept **separate**, not averaged or labelled identical.
+
+The source GCM calendar has 3,650 noleap days over this decade; station and NASA original Gregorian each have 3,652 days. Annual sums are 365-day-normalized; monthly means are **ten-year unpaired station-vs-model climatologies**, not comparisons of model-generated weather events with real station weather on the same dates. Extra outputs:
+- `p7b1_10yr_ground_observed_geosphere_annual_distribution.csv`
+- `p7b1_10yr_ground_observed_geosphere_monthly_climatology.csv`
+
+Neither the ten-year station comparison nor the NOAA/Erbs hourly GHI partition alone proves future SSP skill or an acceptable output EPW. `main` stays unchanged.
+
 ## Work product and quality gates
 
 Executable: \`research/ige_cmip6/p7b1_moisture_solar_feasibility.py\`.
