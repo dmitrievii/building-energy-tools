@@ -223,7 +223,10 @@ def acquire_power(out):
                    for v in values.values()):
                 # Missing POWER data must remain NULL with no infill; count.
                 records.append({"date":d.isoformat(),"year":d.year,"month":d.month,
-                    "day":d.day,"is_complete":False})
+                    "day":d.day,"is_complete":False,
+                    "ghi_kwh_m2_day":None,"longwave_kwh_m2_day":None,
+                    "temperature_air_c":None,"relative_humidity_pct":None,
+                    "precipitation_mm_day":None,"wind_speed_m_s":None})
                 continue
             ghi=power_radiation_kwh(float(values["ALLSKY_SFC_SW_DWN"]),
                                     units["ALLSKY_SFC_SW_DWN"])
