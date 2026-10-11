@@ -1,0 +1,95 @@
+name: IGE P7B.3B independent TAG-informed solar-variability benchmark
+on:
+  push:
+    branches:
+      - research/ige-p7b3b-tag-method-benchmark-20261011
+    paths:
+      - .github/workflows/ige-p7b3b-tag-method-benchmark.yml
+      - research/ige_cmip6/p7b3b_tag_benchmark.py
+      - research/ige_cmip6/test_p7b3b_tag_benchmark.py
+      - docs/IGE_P7B3B_TAG_METHOD_BENCHMARK.md
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  independent-tag-research:
+    name: Source-pinned M0/M1 20-seed hourly irradiance comparison
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: TAG physics, determinism and energy-conservation contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7b3b_tag_benchmark.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7b3_observed_hourly_solar.py' -v
+      - name: Retrieve ORIGINAL approved GeoSphere 10-minute ground radiation research data
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38134438339
+          github-token: ${{ github.token }}
+          name: ige-p6-3f-open-geosphere-10min-graz-ghi-diffuse-qc-2005-2014
+          path: inputs/p6f_ground
+      - name: Retrieve ORIGINAL accepted P7B.2 post-continuity hourly climate
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38149471728
+          github-token: ${{ github.token }}
+          name: ige-p7b2-canesm5-physically-bounded-moisture-and-geo-ground-solar-epw
+          path: inputs/p7b2_model
+      - name: Strict original-source SHA-256 before any processing
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib
+          sources={
+            'inputs/p6f_ground/p6_3f_geosphere_10min_hourly_pairwise.csv':
+              '95dc8f9b7341be69d0ee236b38029a3f171b7f6a9eb0aed75b03cd2e473500c0',
+            'inputs/p7b2_model/p7b2_2013_synthetic_hourly_physics_and_sources.csv':
+              '099c5b29f5c2ecdc9a72d274db5eb2a8bb870c7e3b54cfb5588c1567c6b2036a'}
+          for name,expected in sources.items():
+            p=Path(name)
+            assert p.is_file(),f'original source not found: {name}'
+            assert hashlib.sha256(p.read_bytes()).hexdigest()==expected, f'original-source SHA mismatch: {name}'
+          print('P7B.3B source SHA verified and approved')
+          PY
+      - name: 20 deterministic stochastic realizations with unchanged source-day GHI
+        run: |
+          python research/ige_cmip6/p7b3b_tag_benchmark.py \
+            --p7b2-hourly inputs/p7b2_model/p7b2_2013_synthetic_hourly_physics_and_sources.csv \
+            --geosphere-hourly inputs/p6f_ground/p6_3f_geosphere_10min_hourly_pairwise.csv \
+            --out outputs/p7b3b \
+            --seeds 20
+      - name: Fail-closed source and independence gates
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json,hashlib
+          p=Path('outputs/p7b3b')
+          a=json.loads((p/'p7b3b_science_audit.json').read_text())
+          assert a['production_ready'] is False
+          assert a['not_exact_meteonorm'] is True
+          assert a['observations_used_for_training_M1'] is False
+          assert a['observational_comparison_dates_unpaired_to_model_weather'] is True
+          assert a['seed_count']==20
+          assert len(a['two_timestamp_hypotheses'])==2
+          for window in a['two_timestamp_hypotheses']:
+              b=a['results'][window]
+              assert b['qc_original_station_hours']>=26000
+              assert b['M1_max_daily_energy_residual']<1e-9
+              assert b['M0']['daylight_month_hour_cells']>=120
+          for file,digest in a['derived_sha256'].items():
+              assert hashlib.sha256((p/file).read_bytes()).hexdigest()==digest
+          print('IGE P7B.3B original-source statistical benchmark PASS, SCIENCE APPROVAL OPEN')
+          PY
+      - name: Preserve derived metrics / not provider source or licensed Meteonorm software
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p7b3b-m0-m1-tag-inspired-source-benchmark
+          path: outputs/p7b3b/
+          retention-days: 30
+          if-no-files-found: warn
