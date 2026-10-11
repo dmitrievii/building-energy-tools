@@ -28,6 +28,12 @@ class DailyToHourlyCMIP6PilotTests(unittest.TestCase):
         self.assertEqual(x.index(min(x)),3)
         self.assertEqual(x.index(max(x)),15)
         self.assertLessEqual(dewpoint(21,65),21)
+        # Actual original CanESM5 NEX 2013 daily native tas and tasmax/min
+        # use distinct float32 rounding and can differ by 1.5e-5 K.
+        rounded=temperature_curve(20.0000152587890625,14,26)
+        self.assertAlmostEqual(fmean(rounded),20.0000152587890625,places=9)
+        self.assertAlmostEqual(min(rounded),14,places=9)
+        self.assertAlmostEqual(max(rounded),26,places=9)
         with self.assertRaisesRegex(ValueError,"midpoint"):
             temperature_curve(24,14,26)
 
