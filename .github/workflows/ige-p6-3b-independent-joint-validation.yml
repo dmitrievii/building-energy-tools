@@ -1,0 +1,86 @@
+name: IGE P6.3B independently validated GeoSphere and NASA POWER joint climate references
+on:
+  push:
+    branches:
+      - research/ige-p6-3b-independent-observed-joint-validation-20261011
+    paths:
+      - .github/workflows/ige-p6-3b-independent-joint-validation.yml
+      - research/ige_cmip6/p6_3b_independent_reference_sources.py
+      - research/ige_cmip6/p6_3b_anomaly_attribution_and_observed_validation.py
+      - research/ige_cmip6/test_p6_3b_independent_reference_and_attribution.py
+      - docs/IGE_P6_3B_INDEPENDENT_REFERENCE_VALIDATION.md
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  station-gridded-anomaly-validation:
+    name: GeoSphere observed daily QC + NASA POWER grid proxy vs two reproducible M3 GCM anomalies
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: P6.3B external reference units/QC, statistical bootstrap and original anomaly contract
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p6_3b_independent_reference_and_attribution.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p6_3a_solar_joint_coherence.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p6_2d_c_sensitivity_future.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p6_2d_b_daily_clearsky.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p6_2d_solar_methods_benchmark.py' -v
+      - name: Verified GeoSphere Graz station #30 calibrated daily solar 1995-2014
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38084157993
+          github-token: ${{ github.token }}
+          name: ige-p6-2b-graz-1995-2014-verified-solar-eight-gcm-closeout
+          path: inputs/station
+      - name: Original NASA CanESM5 historical 1995-2014
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          name: ige-p6-CanESM5-historical-1995-2014
+          path: inputs/original_historical/ige-p6-CanESM5-historical-1995-2014
+      - name: Accepted NASA IPSL historical repair
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38077903914
+          github-token: ${{ github.token }}
+          name: ige-p6-IPSL-CM6A-LR-historical-1995-2014
+          path: inputs/repaired_historical/ige-p6-IPSL-CM6A-LR-historical-1995-2014
+      - name: Original NASA CanESM5 SSP585 2080-2099
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          name: ige-p6-CanESM5-ssp585-2080-2099
+          path: inputs/original_future/ige-p6-CanESM5-ssp585-2080-2099
+      - name: Original NASA IPSL SSP585 2080-2099
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          name: ige-p6-IPSL-CM6A-LR-ssp585-2080-2099
+          path: inputs/original_future/ige-p6-IPSL-CM6A-LR-ssp585-2080-2099
+      - name: Live independent historical station and satellite/reanalysis retrieval plus M3 reproduction
+        run: |
+          python research/ige_cmip6/p6_3b_anomaly_attribution_and_observed_validation.py \
+            --station-csv inputs/station/station30_1995_2014_daily_solar_qc.csv \
+            --access-historical inputs/access_historical \
+            --original-historical inputs/original_historical \
+            --repaired-historical inputs/repaired_historical \
+            --access-future inputs/access_future \
+            --original-future inputs/original_future \
+            --repaired-future inputs/repaired_future \
+            --out outputs/p6_3b_independent_reference_validation
+      - name: Preserve original GeoSphere NASA POWER source bytes, QA flags and SHA-linked anomaly science
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p6-3b-two-anomaly-independent-observations-source-qc
+          path: outputs/p6_3b_independent_reference_validation/
+          retention-days: 30
+          if-no-files-found: warn
