@@ -1,0 +1,49 @@
+name: IGE P6.3E NASA POWER hourly GHI DNI DHI TOA science and ARAD ground data gate
+on:
+  push:
+    branches:
+      - research/ige-p6-3e-hourly-solar-components-arad-20261011
+    paths:
+      - .github/workflows/ige-p6-3e-hourly-solar-arad.yml
+      - research/ige_cmip6/p6_3e_hourly_solar_components_arad.py
+      - research/ige_cmip6/test_p6_3e_hourly_solar_components_arad.py
+      - docs/IGE_P6_3E_HOURLY_SOLAR_COMPONENTS_ARAD_GROUND_PROTOCOL.md
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  hourly-components-observation-gate:
+    name: Two-site 2005-2014 hourly NASA GHI/DNI/DHI/TOA native UTC closure and Graz ARAD reference readiness
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: P6.3E original solar component UTC, source unit and geometry tests
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p6_3e_hourly_solar_components_arad.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p6_3d_hourly_satellite_reference.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p6_3c_hourly_original_source_alignment.py' -v
+      - name: Restore frozen original P6.3D satellite/reanalysis NASA POWER GHI 2005-2014
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38128314291
+          github-token: ${{ github.token }}
+          name: ige-p6-3d-independent-nasa-power-hourly-geosphere-q21-science-evidence
+          path: inputs/p6_3d_original
+      - name: Native source NASA POWER DNI DHI TOA clear sky with strict UTC component physical audit
+        run: |
+          python research/ige_cmip6/p6_3e_hourly_solar_components_arad.py \
+            --p6d-frozen inputs/p6_3d_original \
+            --out outputs/p6_3e_hourly_original_solar
+      - name: Preserve original unmodified source bytes, SHA256 and all radiation component review screens
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p6-3e-ghi-dni-dhi-toa-arad-research-audit
+          path: outputs/p6_3e_hourly_original_solar/
+          retention-days: 30
+          if-no-files-found: warn
