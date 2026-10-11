@@ -1,0 +1,61 @@
+name: IGE P6.3F ARAD original ground QC independent validation readiness and restricted source gate
+on:
+  push:
+    branches:
+      - research/ige-p6-3f-arad-ground-validation-gate-20261011
+    paths:
+      - .github/workflows/ige-p6-3f-arad-original-ground-gate.yml
+      - research/ige_cmip6/p6_3f_arad_ground_qc_validation.py
+      - research/ige_cmip6/test_p6_3f_arad_ground_qc_validation.py
+      - docs/IGE_P6_3F_ARAD_GROUND_ORIGINAL_VALIDATION_PROTOCOL.md
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  original-data-custody-and-ground-validation-preflight:
+    name: Source-frozen NASA 2012–2014 + independent ARAD QC strict UTC 60/60 test and access gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: ARAD custodial original source auth, QC flags, 60/60 no imputation and no-observations-no-skill unit tests
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p6_3f_arad_ground_qc_validation.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p6_3e_hourly_solar_components_arad.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p6_3d_hourly_satellite_reference.py' -v
+      - name: Download immutable original P6.3E completed NASA POWER hourly reference
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38129047139
+          github-token: ${{ github.token }}
+          name: ige-p6-3e-ghi-dni-dhi-toa-arad-research-audit
+          path: inputs/p6_3e_source
+      - name: Execute fail-closed ARAD data access preflight and verify 2 x 26304 original NASA hours from frozen SHA
+        run: |
+          python research/ige_cmip6/p6_3f_arad_ground_qc_validation.py \
+            --p6e-frozen inputs/p6_3e_source \
+            --out outputs/p6_3f_arad_access_gate
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("outputs/p6_3f_arad_access_gate/p6_3f_ground_access_science_report.json")
+          d=json.loads(p.read_text())
+          assert d["scientific_status"]=="BLOCKED_ARAD_SOURCE_ACCESS_NOT_YET_ACQUIRED"
+          assert d["approved_ground_original_provided"] is False
+          assert d["comparison_statistics"] is None
+          assert d["production_epw_ready"] is False
+          assert d["source"]["utc_hours_per_site"]==26304
+          print("P6.3F PUBLIC SCIENCE GATE PASS: no authentic ARAD data -> no claimed ground-validation statistics")
+          PY
+      - name: Preserve source and science readiness evidence without publishing restricted ARAD data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p6-3f-arad-2012-2014-original-ground-restricted-access-qc-readiness
+          path: outputs/p6_3f_arad_access_gate/
+          retention-days: 30
+          if-no-files-found: warn
