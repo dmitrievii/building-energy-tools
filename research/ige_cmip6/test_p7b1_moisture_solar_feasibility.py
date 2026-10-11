@@ -1,7 +1,7 @@
 """P7B.1 contract: source hurs/huss source feasibility and UNPAIRED solar distribution."""
 from __future__ import annotations
 import math,unittest
-from datetime import date,timedelta
+from datetime import date,datetime,timedelta
 from statistics import fmean
 from p7b1_moisture_solar_feasibility import (
  moisture_daily_candidate,annual_solar_distribution,stationary_observed_solar_climatology,
@@ -77,12 +77,13 @@ class P7B1MoistureAndSolarContracts(unittest.TestCase):
             start=date(year,1,1)
             for i in range(365):
                 day=start+timedelta(days=i)
-                # Noleap model 2012/2008 has different date labels after
-                # February, but unpaired month/season stats do not match days.
+                # GCM source has 365 noleap solar days; test MONTH is genuine,
+                # not all January (missing-month synthetic fixture is invalid).
                 model.append({"year":str(year),"month":str(day.month),
                               "rsds_kwh_m2_day":"4"})
             length=(366 if year in (2008,2012) else 365)*24
-            nasa[year]=[(1,.125)]*length
+            nasa[year]=[((datetime(year,1,1)+timedelta(hours=i)).month,.125)
+                        for i in range(length)]
         annual,monthly,clim=annual_solar_distribution(model,nasa)
         self.assertEqual(len(annual),10)
         self.assertEqual(len(monthly),12)
