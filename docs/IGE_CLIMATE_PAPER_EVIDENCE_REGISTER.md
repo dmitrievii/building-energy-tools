@@ -2,6 +2,12 @@
 
 **Draft target:** peer-reviewed building simulation / climate-engine paper. Journal/volume/format remain to be confirmed independently when manuscript preparation begins. This file describes experimentally supported evidence, not a claim of journal acceptance, method novelty or fully validated EPW engine.
 
+## Earlier science and source evidence — P1–P5 added to the paper archive
+
+The portable integrated science freeze now also contains the immutable pre-P6 research release **Independent Climate Engine v0.4.0**, 10 October 2026 (164 internally SHA-verified science files, recorded 152/152 tests passing). Primary original P1–P5 methodological evidence: benchmark studies of climate raster decoding and spatial/temporal interpolation; urban heat island and urban climate distributions; GeoSphere station/geographic/altitude/source-quality comparisons; CCKP/CMIP6 reference period and solar-source harmonization; eight GCM **monthly hybrid** GHI ensemble and source uncertainty. See `docs/IGE_CLIMATE_RESEARCH_P1_P5_BASELINE.md` and the original P5 `docs/INTEGRATED_SCIENTIFIC_REPORT_RU.md`, `docs/P5_CLOSEOUT_RU.md` inside the private original release.
+
+For any future manuscript, distinguish **P5 monthly hybrid delta transfer** from **P6 model/source-side temporal and multivariate bias correction**, explicitly separate numerical tests, same-source closure checks, independent GeoSphere observations, external gridded NASA POWER, and still-unavailable ARAD precision hourly observations. The existing P6 evidence remains unchanged and P6 EPW validation remains open. The new integrated release is not publicly published or institutionally deposited.
+
 ## Candidate main question
 
 How can a reproducible source/QC and correction framework produce scientifically auditable local climate-change inputs for building simulation while identifying the limitations of single-variable solar bias adjustment and temporal/multivariate physical coherence?
