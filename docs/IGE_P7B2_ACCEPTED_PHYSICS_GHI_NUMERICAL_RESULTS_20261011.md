@@ -8,7 +8,7 @@ Original artifact independently downloaded and inspected; entire ZIP SHA-256 \`f
 
 ## Deliverable: original-new corrected experimental EPW
 
-\`Graz_2013_CanESM5_P7B2_HISTORICAL_BIASCORRECTED_RH_RESTORED_RESEARCH.epw\` — **1,892,862 bytes**, SHA-256 **\`0f72bc607c5d00a243ffcf5d034ba26a4876109d52a92ca35d604dc78b081d96\`**.
+\`Graz_2013_CanESM5_P7B2_HISTORICAL_BIASCORRECTED_RH_RESTORED_RESEARCH.epw\` — **1,892,862 bytes**, SHA-256 **\`ab7c06dcb28c969c7de7886a1afe0afb7917cc78815bb847d0fff1d846e7bd45\`**.
 
 - Exactly **8 original header lines and 8760 consecutive fixed-CET 2013 EPW hours**, 35 fields per hour, first \`2013,1,1,1,60\`, last \`2013,12,31,24,60\`. Source is original model weather for **CanESM5 historical 2013**, not the actual observed weather of Graz on those 2013 dates.
 - Dry-bulb source day T mean/min/max, wind mean, rain total and downwelling longwave total conserved. Hourly GHI, DHI, DNI satisfy source-internal beam/diffuse balance, but **DHI and DNI remain Erbs-derived**, not independently observed.
@@ -46,11 +46,15 @@ Synthetic EPW 2013 annual corrected GHI = **1271.8285 kWh/m²/year**. That value
 
 | Original artifact member | SHA-256 |
 |---|---|
-| \`Graz_2013_CanESM5_P7B2_HISTORICAL_BIASCORRECTED_RH_RESTORED_RESEARCH.epw\` | \`0f72bc607c5d00a243ffcf5d034ba26a4876109d52a92ca35d604dc78b081d96\` |
-| \`p7b2_2013_synthetic_hourly_physics_and_sources.csv\` | \`e8646b1913a2006a947f5afc2ad63ba2152626c6b7045c12194e79a1939d1377\` |
-| \`p7b2_2013_native_daily_source_and_constraint_tradeoffs.csv\` | \`674aa295621c93cb4f73c2a43f9be4b47fdbf08de8fca26e637460ba938a3e63\` |
+| \`Graz_2013_CanESM5_P7B2_HISTORICAL_BIASCORRECTED_RH_RESTORED_RESEARCH.epw\` | \`ab7c06dcb28c969c7de7886a1afe0afb7917cc78815bb847d0fff1d846e7bd45\` |
+| \`p7b2_2013_synthetic_hourly_physics_and_sources.csv\` | \`099c5b29f5c2ecdc9a72d274db5eb2a8bb870c7e3b54cfb5588c1567c6b2036a\` |
+| \`p7b2_2013_native_daily_source_and_constraint_tradeoffs.csv\` | \`5835eff14472367f5eb30bfab9e69a50c358d965e856e757a1377c2224bd3021\` |
 | \`p7b2_ground_observed_monthly_GHI_training_factors.csv\` | \`368b0c9ec8b84dac72b52ad0fbd01171081f1843586a18027bf5eebd3b7ffc73\` |
 | \`p7b2_ground_observed_2012_2014_holdout_months.csv\` | \`a3a149c8029aec52ba062ffb4acd01cfc73435ceef4b8a02b4b1d31d22a5abf6\` |
+
+## Portable long-term research custody (user-held)
+
+Portable filename `IGE_P7B2_SOURCE_VERIFIED_PORTABLE_RESEARCH_FREEZE_2026-10-11.zip`, **4,557,054 bytes**, SHA-256 **`22aeb8d60ef65ca5b0d3bc0630cd9567c548211a0d2f1e43f313ac134962c4a5`**. It includes five unchanged nested ZIP source/results archives: CanESM5 1995–2014 original daily, first accepted P7B hourly source, original independent GeoSphere daily observed GHI, P7B.1 research diagnostics and accepted P7B.2 EPW source audit. `MANIFEST.json` records nested complete original ZIP SHA/size and per-member SHA. The bundled `verify_p7b2.py` passed **5 original archives + 38 inner members** with exact original EPW SHA identification. This is user-accessible but not a managed permanent TU Graz data deposit. Preserve licences and provider attribution.
 
 ## Honest stage conclusion
 
