@@ -6,7 +6,7 @@ from datetime import date,timedelta
 from pathlib import Path
 from statistics import fmean
 from p7b2_hourly_physically_bounded_synthesis import (
-    solve_moisture,monthly_factors,holdout_climatology,write_epw,
+    solve_moisture,monthly_factors,holdout_climatology,write_epw,regularize_hourly_humidity_continuity,
     P_PROXY,TRAIN_YEARS,EXCLUDED_SOURCE_CONFLICT_YEARS,HOLDOUT_YEARS,
     RH_MIN,RH_MAX,SOLAR_FACTOR_BOUNDS,NONLEAP_HOURS)
 from p7b_daily_to_hourly_cmip6_pilot import synthesize_day,q_from_t_rh
@@ -55,6 +55,34 @@ class P7B2SourcePhysicalContractTests(unittest.TestCase):
         self.assertTrue(all(v==100 for v in rh))
         self.assertTrue(all(abs(a-b)<1e-7 for a,b in zip(t,dew)))
         self.assertGreater(abs(check["reconstructed_minus_source_huss_kg_kg"]),0)
+
+    def test_all_year_temporal_smoothing_removes_99pp_jump_and_recomputes_native_source_residuals(self):
+        records=[];audit=[]
+        base=date(2013,1,1)
+        for i in range(365):
+            d=(base+timedelta(days=i)).isoformat()
+            raw_rh=[1. if h<12 else 100. for h in range(24)]
+            qtarget=fmean(q_from_t_rh(15,v,P_PROXY) for v in raw_rh)
+            audit.append({
+                "date":d,"status":"JOINT_HURS_HUSS_CLOSED_BOUNDED_HOURLY_RH",
+                "source_hurs_pct":fmean(raw_rh),
+                "source_huss_kg_kg":qtarget,
+                "reconstructed_minus_source_huss_kg_kg":0.,
+                "reconstructed_minus_source_hurs_pp":0.})
+            for v in raw_rh:
+                records.append({"RH_pct":v,"T_C":15.,"pressure_pa":P_PROXY,
+                                "date":d})
+        report=regularize_hourly_humidity_continuity(records,audit)
+        self.assertGreater(report["source_RH_before_continuity_max_jump_pp"],98.)
+        self.assertLess(report["maximum_observed_adjacent_hour_RH_change_pp"],20.)
+        self.assertEqual(report["number_adjacent_hours_RH_jump_above_20pp"],0)
+        self.assertEqual(sum(report["final_native_daily_hurs_huss_conservation_classes"].values()),365)
+        self.assertTrue(all(1<=r["RH_pct"]<=100 for r in records))
+        self.assertTrue(all(r["dewpoint_C"]<=15+1e-8 for r in records))
+        self.assertEqual(audit[50]["pre_continuity_humidity_stage"],
+                         "JOINT_HURS_HUSS_CLOSED_BOUNDED_HOURLY_RH")
+        self.assertNotEqual(audit[50]["status"],audit[50]["pre_continuity_humidity_stage"])
+        self.assertTrue(all("reconstructed_minus_source_huss_kg_kg" in d for d in audit))
 
     def test_model_station_calibration_train_only_and_quarantine(self):
         rows=[];station={}
