@@ -4,7 +4,7 @@ import math,unittest
 from datetime import date,timedelta
 from statistics import fmean
 from p7b1_moisture_solar_feasibility import (
- moisture_daily_candidate,annual_solar_distribution,
+ moisture_daily_candidate,annual_solar_distribution,stationary_observed_solar_climatology,
  P_PROXY,MODEL_YEARS,RH_SHAPE_CAP_PP)
 from p7b_daily_to_hourly_cmip6_pilot import q_from_t_rh
 
@@ -51,6 +51,24 @@ class P7B1MoistureAndSolarContracts(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"24-hour"):
             moisture_daily_candidate(t[:23],60,.007)
         self.assertEqual(RH_SHAPE_CAP_PP,25.)
+
+    def test_true_station_observed_solar_climatology_is_distinct_from_nasa_grid(self):
+        original=[];station={}
+        for y in MODEL_YEARS:
+            days=366 if y in (2008,2012) else 365
+            start=date(y,1,1)
+            station[y]=[((start+timedelta(days=i)).month,2.5) for i in range(days)]
+            for i in range(365):
+                day=start+timedelta(days=i)
+                original.append({"year":str(y),"month":str(day.month),
+                                 "rsds_kwh_m2_day":"3.0"})
+        annual,month,clim=stationary_observed_solar_climatology(original,station)
+        self.assertEqual(len(annual),10)
+        self.assertEqual(len(month),12)
+        self.assertAlmostEqual(clim["model_10y_mean_annual_kwh_m2"],1095.)
+        self.assertAlmostEqual(clim["station_observed_10y_mean_365day_normalized_kwh_m2"],912.5)
+        self.assertAlmostEqual(clim["model_minus_station_pct"],20.)
+        self.assertEqual(annual[3]["observed_station_days"],366)
 
     def test_multiyear_unpaired_monthly_solar_and_leap_normalization(self):
         model=[];nasa={}
