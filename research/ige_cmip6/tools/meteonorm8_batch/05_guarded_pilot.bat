@@ -1,5 +1,5 @@
 @echo off
-setlocal
+setlocal EnableDelayedExpansion
 cd /d "%~dp0"
 if not exist "mn8_project" mkdir "mn8_project"
 echo IGE P8 Meteonorm 8.2 - guarded pilot
@@ -12,7 +12,7 @@ if "%MODE%"=="" set "MODE=inspect"
 if /I "%MODE%"=="save" (
   echo WARNING: save invokes Meteonorm Save All button once.
   set /p "CONFIRM=Type YES to authorize Save All: "
-  if /I NOT "%CONFIRM%"=="YES" exit /b 2
+  if /I NOT "!CONFIRM!"=="YES" exit /b 2
 )
 set /p "SCENARIO=Scenario [contemporary/rcp45_2050/rcp85_2050/rcp85_2100]: "
 if "%SCENARIO%"=="" set "SCENARIO=rcp45_2050"
