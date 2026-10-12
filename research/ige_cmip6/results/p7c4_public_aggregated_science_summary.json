@@ -1,0 +1,370 @@
+{
+  "stage": "IGE_P7C4_EIGHT_GCM_HOURLY_EPW_ENSEMBLE",
+  "version": "2026-10-12-research",
+  "research_only": true,
+  "production_epw_ready": false,
+  "n_gcm": 8,
+  "n_windows": 4,
+  "n_candidate_hourly_combinations": 32,
+  "n_generated_hourly_epws": 28,
+  "n_blocked_missing_huss": 4,
+  "source_20y_windows_audited": 40,
+  "n_validated_monthly_q_closures": 336,
+  "total_new_RH_jumps_gt20_after_p7c1c": 0,
+  "total_new_RH_jumps_gt20_before_p7c1c": 132,
+  "optimizer_runs_without_strict_convergence": 28,
+  "max_monthly_q_error_kg_kg": 9.871964357088814e-14,
+  "max_daily_GHI_balance_kwh_m2": 3.778488633088273e-11,
+  "max_hourly_radiometric_error_kwh_m2": 1.3676837440357303e-11,
+  "all_4_CanESM5_hourly_fields_exactly_match_P7C1C": true,
+  "baseline_sha256": "dad69174304c3a13cc095841c4cb9636bf99cc3f33a81502c553af862cd06677",
+  "original_meteonorm_epw_in_public_github": false,
+  "full_generated_hourly_epw_in_public_github": false,
+  "limitations": [
+    "Original Meteonorm EPW is a generated contemporary typical year, not an observed future year",
+    "Daily 20-y GCM distributions are not temporally paired with source EPW hours",
+    "No independent weather validation or EnergyPlus building simulation",
+    "No modifications to original wind directions, precipitation occurrence, sky cover and cloud fields",
+    "GHI direct/diffuse is decomposed with empirical Erbs correlation",
+    "All 28 humidity projected gradient runs exhausted registered 600 iterations without convergence-by-delta; accepted objective always decreased",
+    "RH>20pp/h screening is a reference-aware diagnostic not a physical impossibility criterion",
+    "Inter-model spread reflects 7 complete GCMs, not predictive probabilities or 8-model full-EPW ensemble"
+  ],
+  "report_scope": "AUTHENTIC_SOURCE_SHA_PINNED_LOCAL_RESEARCH_ONLY; no licensed data in GitHub CI",
+  "models": [
+    {
+      "model": "ACCESS-CM2",
+      "window": "ssp245-2040-2059",
+      "status": "RESEARCH_CLOSURE_PASS",
+      "annual_mean_T_delta_C": 2.677143607305936,
+      "annual_GHI_future_kwh_m2": 1292.8131963382,
+      "introduced_RH_gt20_pp_h_stage_b": 4,
+      "introduced_RH_gt20_pp_h_stage_c": 0,
+      "max_serialized_monthly_q_error_kg_kg": 5.993990026542662e-14,
+      "optimizer_converged_by_delta": false
+    },
+    {
+      "model": "ACCESS-CM2",
+      "window": "ssp245-2080-2099",
+      "status": "RESEARCH_CLOSURE_PASS",
+      "annual_mean_T_delta_C": 3.482658219178082,
+      "annual_GHI_future_kwh_m2": 1309.52185306811,
+      "introduced_RH_gt20_pp_h_stage_b": 6,
+      "introduced_RH_gt20_pp_h_stage_c": 0,
+      "max_serialized_monthly_q_error_kg_kg": 2.6303612066236326e-14,
+      "optimizer_converged_by_delta": false
+    },
+    {
+      "model": "ACCESS-CM2",
+      "window": "ssp585-2040-2059",
+      "status": "RESEARCH_CLOSURE_PASS",
+      "annual_mean_T_delta_C": 2.461657420091324,
+      "annual_GHI_future_kwh_m2": 1292.5249224515999,
+      "introduced_RH_gt20_pp_h_stage_b": 3,
+      "introduced_RH_gt20_pp_h_stage_c": 0,
+      "max_serialized_monthly_q_error_kg_kg": 3.11001224773122e-14,
+      "optimizer_converged_by_delta": false
+    },
+    {
+      "model": "ACCESS-CM2",
+      "window": "ssp585-2080-2099",
+      "status": "RESEARCH_CLOSURE_PASS",
+      "annual_mean_T_delta_C": 6.362057305936073,
+      "annual_GHI_future_kwh_m2": 1328.7990696518,
+      "introduced_RH_gt20_pp_h_stage_b": 5,
+      "introduced_RH_gt20_pp_h_stage_c": 0,
+      "max_serialized_monthly_q_error_kg_kg": 2.8267319041042072e-14,
+      "optimizer_converged_by_delta": false
+    },
+    {
+      "model": "CanESM5",
+      "window": "ssp245-2040-2059",
+      "status": "RESEARCH_CLOSURE_PASS",
+      "annual_mean_T_delta_C": 2.4755921232876714,
+      "annual_GHI_future_kwh_m2": 1265.87902639337,
+      "introduced_RH_gt20_pp_h_stage_b": 6,
+      "introduced_RH_gt20_pp_h_stage_c": 0,
+      "max_serialized_monthly_q_error_kg_kg": 2.857089564933801e-14,
+      "optimizer_converged_by_delta": false
+    },
+    {
+      "model": "CanESM5",
+      "window": "ssp245-2080-2099",
+      "status": "RESEARCH_CLOSURE_PASS",
+      "annual_mean_T_delta_C": 3.5491971461187215,
+      "annual_GHI_future_kwh_m2": 1266.79430417821,
+      "introduced_RH_gt20_pp_h_stage_b": 4,
+      "introduced_RH_gt20_pp_h_stage_c": 0,
+      "max_serialized_monthly_q_error_kg_kg": 5.603156827405087e-14,
+      "optimizer_converged_by_delta": false
+    },
+    {
+      "model": "CanESM5",
+      "window": "ssp585-2040-2059",
+      "status": "RESEARCH_CLOSURE_PASS",
+      "annual_mean_T_delta_C": 3.199111529680365,
+      "annual_GHI_future_kwh_m2": 1258.81985627563,
+      "introduced_RH_gt20_pp_h_stage_b": 3,
+      "introduced_RH_gt20_pp_h_stage_c": 0,
+      "max_serialized_monthly_q_error_kg_kg": 2.789261877023108e-14,
+      "optimizer_converged_by_delta": false
+    },
+    {
+      "model": "CanESM5",
+      "window": "ssp585-2080-2099",
+      "status": "RESEARCH_CLOSURE_PASS",
+      "annual_mean_T_delta_C": 6.927411757990868,
+      "annual_GHI_future_kwh_m2": 1265.20696510908,
+      "introduced_RH_gt20_pp_h_stage_b": 2,
+      "introduced_RH_gt20_pp_h_stage_c": 0,
+      "max_serialized_monthly_q_error_kg_kg": 9.871964357088814e-14,
+      "optimizer_converged_by_delta": false
+    },
+    {
+      "model": "EC-Earth3",
+      "window": "ssp245-2040-2059",
+      "status": "RESEARCH_CLOSURE_PASS",
+      "annual_mean_T_delta_C": 2.5196134703196345,
+      "annual_GHI_future_kwh_m2": 1304.69747461238,
+      "introduced_RH_gt20_pp_h_stage_b": 3,
+      "introduced_RH_gt20_pp_h_stage_c": 0,
+      "max_serialized_monthly_q_error_kg_kg": 3.336393661346193e-14,
+      "optimizer_converged_by_delta": false
+    },
+    {
+      "model": "EC-Earth3",
+      "window": "ssp245-2080-2099",
+      "status": "RESEARCH_CLOSURE_PASS",
+      "annual_mean_T_delta_C": 2.7562270547945205,
+      "annual_GHI_future_kwh_m2": 1288.2594986276101,
+      "introduced_RH_gt20_pp_h_stage_b": 5,
+      "introduced_RH_gt20_pp_h_stage_c": 0,
+      "max_serialized_monthly_q_error_kg_kg": 2.3094373635679233e-14,
+      "optimizer_converged_by_delta": false
+    },
+    {
+      "model": "EC-Earth3",
+      "window": "ssp585-2040-2059",
+      "status": "RESEARCH_CLOSURE_PASS",
+      "annual_mean_T_delta_C": 3.0743625570776256,
+      "annual_GHI_future_kwh_m2": 1291.34225653946,
+      "introduced_RH_gt20_pp_h_stage_b": 3,
+      "introduced_RH_gt20_pp_h_stage_c": 0,
+      "max_serialized_monthly_q_error_kg_kg": 3.4295483120061476e-14,
+      "optimizer_converged_by_delta": false
+    },
+    {
+      "model": "EC-Earth3",
+      "window": "ssp585-2080-2099",
+      "status": "RESEARCH_CLOSURE_PASS",
+      "annual_mean_T_delta_C": 6.361433789954338,
+      "annual_GHI_future_kwh_m2": 1301.14587047819,
+      "introduced_RH_gt20_pp_h_stage_b": 2,
+      "introduced_RH_gt20_pp_h_stage_c": 0,
+      "max_serialized_monthly_q_error_kg_kg": 4.354155924701786e-14,
+      "optimizer_converged_by_delta": false
+    },
+    {
+      "model": "GFDL-ESM4",
+      "window": "ssp245-2040-2059",
+      "status": "RESEARCH_CLOSURE_PASS",
+      "annual_mean_T_delta_C": 1.0720114155251141,
+      "annual_GHI_future_kwh_m2": 1285.0688348287,
+      "introduced_RH_gt20_pp_h_stage_b": 6,
+      "introduced_RH_gt20_pp_h_stage_c": 0,
+      "max_serialized_monthly_q_error_kg_kg": 2.932896980833988e-14,
+      "optimizer_converged_by_delta": false
+    },
+    {
+      "model": "GFDL-ESM4",
+      "window": "ssp245-2080-2099",
+      "status": "RESEARCH_CLOSURE_PASS",
+      "annual_mean_T_delta_C": 1.9505977168949773,
+      "annual_GHI_future_kwh_m2": 1294.70937483923,
+      "introduced_RH_gt20_pp_h_stage_b": 7,
+      "introduced_RH_gt20_pp_h_stage_c": 0,
+      "max_serialized_monthly_q_error_kg_kg": 5.562737770414827e-14,
+      "optimizer_converged_by_delta": false
+    },
+    {
+      "model": "GFDL-ESM4",
+      "window": "ssp585-2040-2059",
+      "status": "RESEARCH_CLOSURE_PASS",
+      "annual_mean_T_delta_C": 1.6346150684931506,
+      "annual_GHI_future_kwh_m2": 1275.72726761372,
+      "introduced_RH_gt20_pp_h_stage_b": 7,
+      "introduced_RH_gt20_pp_h_stage_c": 0,
+      "max_serialized_monthly_q_error_kg_kg": 1.6233108607321967e-14,
+      "optimizer_converged_by_delta": false
+    },
+    {
+      "model": "GFDL-ESM4",
+      "window": "ssp585-2080-2099",
+      "status": "RESEARCH_CLOSURE_PASS",
+      "annual_mean_T_delta_C": 3.7640969178082195,
+      "annual_GHI_future_kwh_m2": 1288.74259069178,
+      "introduced_RH_gt20_pp_h_stage_b": 2,
+      "introduced_RH_gt20_pp_h_stage_c": 0,
+      "max_serialized_monthly_q_error_kg_kg": 4.142866605327811e-14,
+      "optimizer_converged_by_delta": false
+    },
+    {
+      "model": "MPI-ESM1-2-HR",
+      "window": "ssp245-2040-2059",
+      "status": "RESEARCH_CLOSURE_PASS",
+      "annual_mean_T_delta_C": 1.4157480593607306,
+      "annual_GHI_future_kwh_m2": 1294.8740261513901,
+      "introduced_RH_gt20_pp_h_stage_b": 5,
+      "introduced_RH_gt20_pp_h_stage_c": 0,
+      "max_serialized_monthly_q_error_kg_kg": 3.2437594277290316e-14,
+      "optimizer_converged_by_delta": false
+    },
+    {
+      "model": "MPI-ESM1-2-HR",
+      "window": "ssp245-2080-2099",
+      "status": "RESEARCH_CLOSURE_PASS",
+      "annual_mean_T_delta_C": 2.19834497716895,
+      "annual_GHI_future_kwh_m2": 1295.71862482102,
+      "introduced_RH_gt20_pp_h_stage_b": 3,
+      "introduced_RH_gt20_pp_h_stage_c": 0,
+      "max_serialized_monthly_q_error_kg_kg": 2.1989354781482007e-14,
+      "optimizer_converged_by_delta": false
+    },
+    {
+      "model": "MPI-ESM1-2-HR",
+      "window": "ssp585-2040-2059",
+      "status": "RESEARCH_CLOSURE_PASS",
+      "annual_mean_T_delta_C": 1.4427784246575341,
+      "annual_GHI_future_kwh_m2": 1278.55898808128,
+      "introduced_RH_gt20_pp_h_stage_b": 5,
+      "introduced_RH_gt20_pp_h_stage_c": 0,
+      "max_serialized_monthly_q_error_kg_kg": 4.6650183715968296e-14,
+      "optimizer_converged_by_delta": false
+    },
+    {
+      "model": "MPI-ESM1-2-HR",
+      "window": "ssp585-2080-2099",
+      "status": "RESEARCH_CLOSURE_PASS",
+      "annual_mean_T_delta_C": 4.609637671232877,
+      "annual_GHI_future_kwh_m2": 1292.32030538448,
+      "introduced_RH_gt20_pp_h_stage_b": 3,
+      "introduced_RH_gt20_pp_h_stage_c": 0,
+      "max_serialized_monthly_q_error_kg_kg": 3.5414379762066517e-14,
+      "optimizer_converged_by_delta": false
+    },
+    {
+      "model": "MRI-ESM2-0",
+      "window": "ssp245-2040-2059",
+      "status": "RESEARCH_CLOSURE_PASS",
+      "annual_mean_T_delta_C": 1.2554900684931507,
+      "annual_GHI_future_kwh_m2": 1291.62509001606,
+      "introduced_RH_gt20_pp_h_stage_b": 4,
+      "introduced_RH_gt20_pp_h_stage_c": 0,
+      "max_serialized_monthly_q_error_kg_kg": 2.3795201919973863e-14,
+      "optimizer_converged_by_delta": false
+    },
+    {
+      "model": "MRI-ESM2-0",
+      "window": "ssp245-2080-2099",
+      "status": "RESEARCH_CLOSURE_PASS",
+      "annual_mean_T_delta_C": 1.659138698630137,
+      "annual_GHI_future_kwh_m2": 1288.92615169212,
+      "introduced_RH_gt20_pp_h_stage_b": 8,
+      "introduced_RH_gt20_pp_h_stage_c": 0,
+      "max_serialized_monthly_q_error_kg_kg": 3.744574095243536e-14,
+      "optimizer_converged_by_delta": false
+    },
+    {
+      "model": "MRI-ESM2-0",
+      "window": "ssp585-2040-2059",
+      "status": "RESEARCH_CLOSURE_PASS",
+      "annual_mean_T_delta_C": 1.6914569634703196,
+      "annual_GHI_future_kwh_m2": 1277.5353943649,
+      "introduced_RH_gt20_pp_h_stage_b": 3,
+      "introduced_RH_gt20_pp_h_stage_c": 0,
+      "max_serialized_monthly_q_error_kg_kg": 2.0267641731575026e-14,
+      "optimizer_converged_by_delta": false
+    },
+    {
+      "model": "MRI-ESM2-0",
+      "window": "ssp585-2080-2099",
+      "status": "RESEARCH_CLOSURE_PASS",
+      "annual_mean_T_delta_C": 3.3732713470319635,
+      "annual_GHI_future_kwh_m2": 1291.5799975682598,
+      "introduced_RH_gt20_pp_h_stage_b": 3,
+      "introduced_RH_gt20_pp_h_stage_c": 0,
+      "max_serialized_monthly_q_error_kg_kg": 1.8670828771938375e-14,
+      "optimizer_converged_by_delta": false
+    },
+    {
+      "model": "NorESM2-MM",
+      "window": "ssp245-2040-2059",
+      "status": "RESEARCH_CLOSURE_PASS",
+      "annual_mean_T_delta_C": 1.6373857305936073,
+      "annual_GHI_future_kwh_m2": 1278.77197010649,
+      "introduced_RH_gt20_pp_h_stage_b": 3,
+      "introduced_RH_gt20_pp_h_stage_c": 0,
+      "max_serialized_monthly_q_error_kg_kg": 5.834568939100393e-14,
+      "optimizer_converged_by_delta": false
+    },
+    {
+      "model": "NorESM2-MM",
+      "window": "ssp245-2080-2099",
+      "status": "RESEARCH_CLOSURE_PASS",
+      "annual_mean_T_delta_C": 2.114206392694064,
+      "annual_GHI_future_kwh_m2": 1287.46890959086,
+      "introduced_RH_gt20_pp_h_stage_b": 8,
+      "introduced_RH_gt20_pp_h_stage_c": 0,
+      "max_serialized_monthly_q_error_kg_kg": 2.0478410633906208e-14,
+      "optimizer_converged_by_delta": false
+    },
+    {
+      "model": "NorESM2-MM",
+      "window": "ssp585-2040-2059",
+      "status": "RESEARCH_CLOSURE_PASS",
+      "annual_mean_T_delta_C": 1.9369094748858449,
+      "annual_GHI_future_kwh_m2": 1280.11649734141,
+      "introduced_RH_gt20_pp_h_stage_b": 9,
+      "introduced_RH_gt20_pp_h_stage_c": 0,
+      "max_serialized_monthly_q_error_kg_kg": 1.7435705657042888e-14,
+      "optimizer_converged_by_delta": false
+    },
+    {
+      "model": "NorESM2-MM",
+      "window": "ssp585-2080-2099",
+      "status": "RESEARCH_CLOSURE_PASS",
+      "annual_mean_T_delta_C": 4.421462100456621,
+      "annual_GHI_future_kwh_m2": 1288.96670111598,
+      "introduced_RH_gt20_pp_h_stage_b": 10,
+      "introduced_RH_gt20_pp_h_stage_c": 0,
+      "max_serialized_monthly_q_error_kg_kg": 3.918219915188814e-14,
+      "optimizer_converged_by_delta": false
+    }
+  ],
+  "blocked": [
+    {
+      "model": "IPSL-CM6A-LR",
+      "window": "ssp245-2040-2059",
+      "status": "BLOCKED_MISSING_SOURCE_HUSS",
+      "complete_EPW_generated": false
+    },
+    {
+      "model": "IPSL-CM6A-LR",
+      "window": "ssp245-2080-2099",
+      "status": "BLOCKED_MISSING_SOURCE_HUSS",
+      "complete_EPW_generated": false
+    },
+    {
+      "model": "IPSL-CM6A-LR",
+      "window": "ssp585-2040-2059",
+      "status": "BLOCKED_MISSING_SOURCE_HUSS",
+      "complete_EPW_generated": false
+    },
+    {
+      "model": "IPSL-CM6A-LR",
+      "window": "ssp585-2080-2099",
+      "status": "BLOCKED_MISSING_SOURCE_HUSS",
+      "complete_EPW_generated": false
+    }
+  ]
+}

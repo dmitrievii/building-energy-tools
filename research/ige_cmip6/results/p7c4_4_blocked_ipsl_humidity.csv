@@ -1,0 +1,5 @@
+model,window,status,complete_EPW_generated,reason
+IPSL-CM6A-LR,ssp245-2040-2059,BLOCKED_MISSING_SOURCE_HUSS,False,Original historical and future daily huss missing (no imputation)
+IPSL-CM6A-LR,ssp245-2080-2099,BLOCKED_MISSING_SOURCE_HUSS,False,Original historical and future daily huss missing (no imputation)
+IPSL-CM6A-LR,ssp585-2040-2059,BLOCKED_MISSING_SOURCE_HUSS,False,Original historical and future daily huss missing (no imputation)
+IPSL-CM6A-LR,ssp585-2080-2099,BLOCKED_MISSING_SOURCE_HUSS,False,Original historical and future daily huss missing (no imputation)
