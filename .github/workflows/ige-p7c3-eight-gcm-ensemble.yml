@@ -1,0 +1,106 @@
+name: IGE P7C.3 eight-GCM original daily ensemble and source uncertainty
+on:
+  push:
+    branches:
+      - research/ige-p7c3-eight-gcm-ensemble-20261012
+    paths:
+      - research/ige_cmip6/p7c3_ensemble.py
+      - research/ige_cmip6/test_p7c3_ensemble.py
+      - research/ige_cmip6/p7c3_expected_daily_source_shas.json
+      - .github/workflows/ige-p7c3-eight-gcm-ensemble.yml
+      - docs/IGE_P7C3_EIGHT_GCM_ENSEMBLE_RESEARCH_PROTOCOL_RU.md
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  source-registered-8gcm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Synthetic unit and fail-closed original-source tests
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p7c3_ensemble.py' -v
+      - name: Download original ACCESS historical and future P6 research archives
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38067931031
+          github-token: ${{ github.token }}
+          pattern: ige-p6-access-*
+          path: inputs/access
+      - name: Download seven original P6 research models and windows
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          pattern: ige-p6-*
+          path: inputs/seven_original
+      - name: Download declared repaired P6 archives for source corrections
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38077903914
+          github-token: ${{ github.token }}
+          pattern: ige-p6-*
+          path: inputs/repair
+      - name: Construct deterministic archive containers without modifying daily CSVs
+        run: |
+          python - <<'PY'
+          import sys,hashlib,json,zipfile
+          from pathlib import Path
+          sys.path.insert(0,'research/ige_cmip6')
+          from p7c3_ensemble import MODELS, HIST, WINDOWS
+          out=Path('inputs/canonical');out.mkdir(parents=True,exist_ok=True)
+          expected=json.loads(Path('research/ige_cmip6/p7c3_expected_daily_source_shas.json').read_text())['source_sha256']
+          for model in MODELS:
+            for window in (HIST,)+WINDOWS:
+              suffix=('access' if model=='ACCESS-CM2' else model)+'-'+window
+              folders=[Path('inputs')/r/('ige-p6-'+suffix) for r in ('repair','seven_original','access')]
+              matches=[x for x in folders if x.is_dir()]
+              if not matches:raise ValueError('Missing original artifact '+model+' '+window)
+              selected=matches[0]
+              key=model+'_'+window
+              raw=(selected/'joint_daily_raw.csv').read_bytes()
+              if hashlib.sha256(raw).hexdigest()!=expected[key]:
+                raise ValueError('Expected original daily immutable SHA differs: '+key)
+              name='IGE_P7C3_SRC_'+key+'.zip'
+              with zipfile.ZipFile(out/name,'w',compression=zipfile.ZIP_DEFLATED) as z:
+                for p in sorted(selected.iterdir()):
+                  if p.is_file():
+                    info=zipfile.ZipInfo(p.name,date_time=(1980,1,1,0,0,0))
+                    info.compress_type=zipfile.ZIP_DEFLATED
+                    z.writestr(info,p.read_bytes())
+              print('selected',key,'source',selected,flush=True)
+          assert len(list(out.glob('*.zip')))==40
+          print('P7C3 original 40 model-windows and pinned daily source SHA PASS')
+          PY
+      - name: Original 40-archive 8-GCM climate-change ensemble calculation
+        run: |
+          python research/ige_cmip6/p7c3_ensemble.py --original-zip-root inputs/canonical --out outputs/p7c3
+      - name: Fail-closed independent 8-GCM model-ensemble and missing-huss audit
+        run: |
+          python - <<'PY'
+          import csv,hashlib,json
+          from pathlib import Path
+          p=Path('outputs/p7c3');j=json.loads((p/'p7c3_source_ensemble_science_audit.json').read_text())
+          assert j['production_epw_ready'] is False and j['n_original_archives']==40
+          assert j['n_models']==8 and j['n_windows']==4 and j['n_scenario_members']==32 and j['n_monthly_model_signals']==384
+          assert len(j['source_sha256'])==40
+          expected=json.loads(Path('research/ige_cmip6/p7c3_expected_daily_source_shas.json').read_text())['source_sha256']
+          assert {k:v['daily_csv_sha256'] for k,v in j['source_sha256'].items()}==expected
+          assert all(e['gcm_count']==8 and e['huss_delta_pct_n_models']==7 and e['huss_delta_pct_models_missing']=='IPSL-CM6A-LR' for e in j['ensemble_windows'])
+          assert all(e['temp_delta_C_min']<=e['temp_delta_C_p10']<=e['temp_delta_C_p50']<=e['temp_delta_C_p90']<=e['temp_delta_C_max'] for e in j['ensemble_windows'])
+          for name,sha in j['derived_sha256'].items():
+            assert hashlib.sha256((p/name).read_bytes()).hexdigest()==sha
+          print('P7C.3 8 original daily GCMs x four future windows, physical source flags and 7-model q guard PASS; EPW production BLOCKED')
+          PY
+      - name: Archive only aggregate derived climate results, NO Meteonorm EPW or raw NASA daily records
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ige-p7c3-original-eight-gcm-four-window-ensemble-research
+          path: outputs/p7c3/
+          retention-days: 30
+          if-no-files-found: warn
