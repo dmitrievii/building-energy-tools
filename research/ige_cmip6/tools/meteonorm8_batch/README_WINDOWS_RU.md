@@ -1,5 +1,23 @@
 # IGE P8 — пакетная генерация Meteonorm 8 на Windows
 
+## P8.0.4 — исправление отказа Batch Locations Import (Meteonorm 8.2)
+
+**Важно: предыдущий совет импортировать \`locations_format22.csv\` (запятые + необязательное \`situation\`) был неподтверждён и мог вызвать \`0 valid locations imported\`.**
+
+Официальное руководство Meteonorm 8.2, §2.4.1.3, показывает пример импорта с **TAB-separated** колонками \`name\`, \`longitude\`, \`latitude\`, \`altitude\`, без \`situation\`. Новый генератор использует его как основной вариант. Подготовлены простые **ASCII + CRLF** файлы:
+
+- \`mn8_project/batch_input/pilot_one_graz_tabs.txt\`: сначала одна точка Graz; использовать команду **Locations > Import locations for batch mode**, а не *Import user defined locations*.
+- \`mn8_project/batch_input/locations_5_tabs.txt\`: если одна точка принята, расширить до пяти.
+- \`mn8_project/batch_input/locations_5_semicolon.csv\`: диагностический fallback, если этот Meteonorm отвергает TAB.
+- Совместимые имена \`locations_format22.tsv\` и \`locations_format22.csv\` теперь перегенерируются с исправленным макетом.
+
+**Порядок:** запустить \`01_prepare_batches.bat\` заново (он НЕ перезаписывает изменённый \`project_config.json\`; новые файлы batch_input перегенерируются), затем импортировать \`pilot_one_graz_tabs.txt\`. Если появится \`1 valid location imported\`, перейти к \`locations_5_tabs.txt\`, проверить все пять названий, только потом запускать \`05_guarded_pilot.bat\` в \`inspect\`.
+
+Если даже одна точка не импортируется, остановиться. Прислать **скриншот открытого меню Locations с выбранной командой** и сообщение импорта. Не следует перебирать ещё 60 экспортов или включать \`save\`. Метод пока не подтверждён реальным запуском на пользовательском Windows.
+
+Официальный источник: https://mn8.meteonorm.com/assets/downloads/mn82_software.pdf, §2.4.1.3.
+
+
 ## P8.0.3 — первый управляемый пилот (4 загруженных UIA отчёта)
 
 Диагностика установленного **Meteonorm v8.2.0** подтверждает:

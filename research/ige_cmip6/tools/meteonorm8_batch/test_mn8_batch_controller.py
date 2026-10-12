@@ -75,13 +75,38 @@ class BatchContracts(unittest.TestCase):
     def test_documented_import_layout(self):
         with tempfile.TemporaryDirectory() as td:
             mod.create_project(Path(td) / "pilot")
-            p = Path(td) / "pilot" / "batch_input" / "locations_format22.csv"
-            contents = p.read_text(encoding="utf-8")
-            lines = contents.splitlines()
+            directory = Path(td) / "pilot" / "batch_input"
+            p = directory / "pilot_one_graz_tabs.txt"
+            payload = p.read_bytes()
+            self.assertTrue(payload.isascii())
+            self.assertIn(b"\r\n", payload)
+            lines = payload.decode("ascii").splitlines()
             self.assertEqual(lines[0], "Formattyp = 22")
             self.assertEqual(lines[1], "Save = hour")
-            self.assertEqual(lines[2].split(","), ["name", "longitude", "latitude", "altitude", "situation"])
-            self.assertEqual(len(lines), 3 + len(mod.DEFAULT_SITES))
+            self.assertEqual(lines[2].split("\t"),
+                             ["name", "longitude", "latitude", "altitude"])
+            self.assertEqual(lines[3].split("\t"),
+                             ["IGE_Graz", "15.450000", "46.983000", "342"])
+            self.assertEqual(len(lines), 4)
+            self.assertNotIn("situation", payload.decode("ascii"))
+            five = (directory / "locations_5_tabs.txt").read_text(encoding="ascii")
+            self.assertEqual(len(five.splitlines()), 3 + len(mod.DEFAULT_SITES))
+            self.assertEqual(five.splitlines()[2], lines[2])
+            fallback = (directory / "locations_5_semicolon.csv").read_text(encoding="ascii")
+            self.assertEqual(fallback.splitlines()[2].split(";"),
+                             ["name", "longitude", "latitude", "altitude"])
+
+    def test_regenerated_import_files_replace_old_layout(self):
+        with tempfile.TemporaryDirectory() as td:
+            folder = Path(td) / "pilot"
+            mod.create_project(folder)
+            inp = folder / "batch_input" / "locations_format22.csv"
+            inp.write_text("INVALID OLD DATA", encoding="utf-8")
+            mod.create_project(folder)
+            now = inp.read_text(encoding="ascii")
+            self.assertTrue(now.startswith("Formattyp = 22\nSave = hour\n"))
+            self.assertIn("name;longitude;latitude;altitude",now)
+            self.assertNotIn("situation",now)
 
     def test_id_validation(self):
         config = {"sites": [dict(mod.DEFAULT_SITES[0], id="unsafe path/hi")],

@@ -1,0 +1,4 @@
+Formattyp = 22
+Save = hour
+name	longitude	latitude	altitude
+IGE_Graz	15.450000	46.983000	342

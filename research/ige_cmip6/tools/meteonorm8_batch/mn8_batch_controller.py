@@ -86,17 +86,27 @@ def valid_config(config):
         raise ValueError("Meteonorm 8 first random seed must be one of its 10 GUI selections (1..10)")
 
 
-def batch_file(path, sites, sep):
-    # First two single-field records are prescribed by the Meteonorm 8.2 manual;
-    # exact import acceptance needs one on-PC GUI pilot.
-    with Path(path).open("w", encoding="utf-8", newline="") as f:
+def batch_file(path, sites, sep, *, include_situation=False):
+    """Make Meteonorm 8 batch file, using the official 4-column minimal example.
+
+    The 8.2 manual shows TAB-separated rows without optional columns.
+    Semicolon is a fallback. Comma + 'situation' from the former
+    pilot is unverified and intentionally no longer the default.
+    """
+    cols = ["name", "longitude", "latitude", "altitude"]
+    if include_situation:
+        cols.append("situation")
+    with Path(path).open("w", encoding="ascii", newline="") as f:
         w = csv.writer(f, delimiter=sep, lineterminator="\r\n")
         w.writerow(["Formattyp = 22"])
         w.writerow(["Save = hour"])
-        w.writerow(["name", "longitude", "latitude", "altitude", "situation"])
+        w.writerow(cols)
         for x in sites:
-            w.writerow([x["name"], format(float(x["longitude"]), ".6f"),
-                        format(float(x["latitude"]), ".6f"), x["altitude"], x["situation"]])
+            row = [x["name"], format(float(x["longitude"]), ".6f"),
+                   format(float(x["latitude"]), ".6f"), x["altitude"]]
+            if include_situation:
+                row.append(x["situation"])
+            w.writerow(row)
 
 
 def create_project(folder, *, rewrite=False):
@@ -128,7 +138,15 @@ def create_project(folder, *, rewrite=False):
 
     batches = folder / "batch_input"
     batches.mkdir(exist_ok=True)
-    batch_file(batches / "locations_format22.csv", config["sites"], ",")
+    # Primary on-PC pilot: test one location, 4 columns, literal TABs,
+    # plain ASCII, and CRLF, mirroring the Meteonorm 8.2 handbook example.
+    batch_file(batches / "pilot_one_graz_tabs.txt", config["sites"][:1], "\t")
+    batch_file(batches / "locations_5_tabs.txt", config["sites"], "\t")
+    # Fallback if this Meteonorm installation accepts semicolon CSV.
+    batch_file(batches / "locations_5_semicolon.csv", config["sites"], ";")
+    # Update compatibility names too: an existing project may contain the
+    # previously generated comma+optional-situation CSV.
+    batch_file(batches / "locations_format22.csv", config["sites"], ";")
     batch_file(batches / "locations_format22.tsv", config["sites"], "\t")
     run_rows = []
     for scenario in config["scenarios"]:
@@ -150,7 +168,8 @@ def create_project(folder, *, rewrite=False):
     print("Batch location inputs: ", batches)
     print("Runs: {}, expected individual EPWs: {}".format(
         len(run_rows), len(run_rows) * len(config["sites"])))
-    print("FIRST: import locations_format22.csv once into Meteonorm GUI and test 1 EPW.")
+    print("FIRST: import pilot_one_graz_tabs.txt with Locations > Import locations for batch mode.")
+    print("Only after success, import locations_5_tabs.txt; fallback locations_5_semicolon.csv.")
     print("Then for each run in run_plan.csv select GUI period/RCP/year/seed and Save All.")
     print("Finally: python mn8_batch_controller.py verify --project PROJECT_DIRECTORY")
 
