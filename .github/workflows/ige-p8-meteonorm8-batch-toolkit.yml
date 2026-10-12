@@ -27,6 +27,8 @@ jobs:
           test -f /tmp/mn8_pilot/batch_input/locations_format22.tsv
           test $(tail -n +4 /tmp/mn8_pilot/batch_input/locations_format22.csv | wc -l) -eq 5
           test $(tail -n +2 /tmp/mn8_pilot/run_plan.csv | wc -l) -eq 12
+      - name: Compile Python source under CI before packaging
+        run: python -m compileall -q research/ige_cmip6/tools/meteonorm8_batch
       - name: Make Windows-ready archive (no commercial Meteonorm binaries or EPWs)
         shell: bash
         run: |
@@ -35,10 +37,12 @@ jobs:
           cp research/ige_cmip6/tools/meteonorm8_batch/mn8_batch_controller.py release/mn8_batch_toolkit/
           cp research/ige_cmip6/tools/meteonorm8_batch/archive_probe.py release/mn8_batch_toolkit/
           cp research/ige_cmip6/tools/meteonorm8_batch/mn8_uia_deep_probe.py release/mn8_batch_toolkit/
+          cp research/ige_cmip6/tools/meteonorm8_batch/mn8_uia_pilot_driver.py release/mn8_batch_toolkit/
           cp research/ige_cmip6/tools/meteonorm8_batch/README_WINDOWS_RU.md release/mn8_batch_toolkit/
           cp research/ige_cmip6/tools/meteonorm8_batch/*.bat release/mn8_batch_toolkit/
           cp research/ige_cmip6/tools/meteonorm8_batch/test_mn8_batch_controller.py release/mn8_batch_toolkit/
           cp research/ige_cmip6/tools/meteonorm8_batch/test_mn8_uia_deep_probe.py release/mn8_batch_toolkit/
+          cp research/ige_cmip6/tools/meteonorm8_batch/test_mn8_uia_pilot_driver.py release/mn8_batch_toolkit/
           cp /tmp/mn8_pilot/batch_input/* release/mn8_batch_toolkit/
           cd release
           zip -qr IGE_P8_Meteonorm8_Windows_Batch_Toolkit_2026-10-12.zip mn8_batch_toolkit
