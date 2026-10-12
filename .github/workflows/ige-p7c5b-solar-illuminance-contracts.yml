@@ -1,0 +1,58 @@
+name: IGE P7C.5B Solar Illuminance Contracts and Public EnergyPlus Runtime
+on:
+  push:
+    branches:
+      - research/ige-p7c5b-solar-illuminance-energyplus-20261012
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  public-physical-contracts:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify synthetic P7C.5B sunlight-to-illuminance contracts; no commercial EPW
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p7c5b_solar_illuminance.py' -v
+      - name: Existing P7C.5 EnergyPlus input physics and p7c4 regression tests
+        run: |
+          python -m pip install numpy
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7c5_qualification.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7c4_hourly_ensemble.py' -v
+      - name: Confirm no licensed EPW published in branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          if find research/ige_cmip6 -name '*.epw' -o -name '*Meteonorm*.zip' | grep -q .; then
+            echo 'Licensed EPW found in public source'; exit 1
+          fi
+          echo 'No licensed EPWs in repository: PASS'
+  official-energyplus-linux-runtime-public-only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Get immutable EnergyPlus 26.2 Ubuntu x86_64 binary (public upstream, no weather data)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_runtime
+          curl --fail --show-error --location --retry 4 --retry-delay 3 \
+            -o public_runtime/energyplus-26.2.0-official.tar.gz \
+            https://github.com/NatLabRockies/EnergyPlus/releases/download/v26.2.0/EnergyPlus-26.2.0-4bd7a1f26f-Linux-Ubuntu24.04-x86_64.tar.gz
+          echo 'b848da8236482a2171a67d7eab00c82162105b653ffab3ae3b6c2217c433a8a1  public_runtime/energyplus-26.2.0-official.tar.gz' | sha256sum --check
+          mkdir -p check
+          tar xzf public_runtime/energyplus-26.2.0-official.tar.gz -C check
+          exe=$(find -L check -type f -name energyplus -print -quit)
+          if [[ -z "$exe" ]]; then exit 1; fi
+          chmod +x "$exe"
+          "$exe" --version | tee public_runtime/energyplus_version.txt
+          echo 'EnergyPlus 26.2 binary original and SHA-verified; safe for PRIVATE local test.'
+      - name: Upload upstream runtime only (no private weather files)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p7c5b-upstream-energyplus-26-2-linux-runtime
+          path: public_runtime/
+          retention-days: 2
+          if-no-files-found: error
