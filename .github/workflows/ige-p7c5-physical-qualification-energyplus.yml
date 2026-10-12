@@ -1,0 +1,122 @@
+name: IGE P7C.5 EnergyPlus 26.2 physical qualification (public fixtures)
+
+on:
+  push:
+    branches:
+      - research/ige-p7c5-energyplus-qualification-20261012
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  physical-contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - name: P7C.5 independent physical-qualification contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p7c5_qualification.py' -v
+      - name: P7C.4 original contracts and corrected metadata regression
+        shell: bash
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7c4_hourly_ensemble.py' -v
+          python - <<'PY'
+          import sys
+          sys.path.insert(0,'research/ige_cmip6')
+          import inspect,p7c4_hourly_ensemble as module
+          sig=inspect.signature(module.verify_hourly)
+          assert sig.parameters['authentic_source_graz_epw_reused'].default is False
+          print('Synthetic source-by-default provenance: PASS')
+          PY
+
+  energyplus-public-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download official EnergyPlus 26.2.0 Linux x86_64 release and verify SHA-256
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p tools_cache
+          URL='https://github.com/NatLabRockies/EnergyPlus/releases/download/v26.2.0/EnergyPlus-26.2.0-4bd7a1f26f-Linux-Ubuntu24.04-x86_64.tar.gz'
+          curl --fail --show-error --location --retry 4 --retry-delay 3 -o tools_cache/energyplus.tar.gz "$URL"
+          echo 'b848da8236482a2171a67d7eab00c82162105b653ffab3ae3b6c2217c433a8a1  tools_cache/energyplus.tar.gz' | sha256sum --check --status
+          mkdir -p tools_cache/EnergyPlus
+          tar xzf tools_cache/energyplus.tar.gz -C tools_cache/EnergyPlus
+          find "$PWD/tools_cache/EnergyPlus" -type f -name energyplus -print | head -4
+          BIN=$(find "$PWD/tools_cache/EnergyPlus" -type f -name energyplus | head -1)
+          test -n "$BIN"
+          chmod +x "$BIN"
+          "$BIN" --version
+          echo "ENERGYPLUS_BIN=$BIN" >> "$GITHUB_ENV"
+      - name: Download official pinned EnergyPlus 26.2 one-zone test model
+        run: |
+          curl --fail --location --retry 3 -o tools_cache/official_1ZoneUncontrolled.idf \
+            https://raw.githubusercontent.com/NatLabRockies/EnergyPlus/v26.2.0/testfiles/1ZoneUncontrolled.idf
+          python research/ige_cmip6/p7c5_energyplus_benchmark.py build \
+            --official-idf tools_cache/official_1ZoneUncontrolled.idf \
+            --out tools_cache/p7c5_one_zone_ideal_loads.idf
+      - name: Download public synthetic baseline P7B.4 (not Meteonorm)
+        uses: actions/download-artifact@v4
+        with:
+          name: ige-p7b4-integrated-2013-canesm5-m2-research-epw
+          repository: dmitrievii/building-energy-tools
+          run-id: 38171672579
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: inputs/p7b4_public
+      - name: Download public P7C.1 four CanESM5 EPWs (not Meteonorm)
+        uses: actions/download-artifact@v4
+        with:
+          name: ige-p7c1-canesm5-four-future-epw-morphs-research
+          repository: dmitrievii/building-energy-tools
+          run-id: 38178867655
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: inputs/p7c1_public
+      - name: Register reproducible 5-weather synthetic-only comparison
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p inputs/eplus_public
+          cp inputs/p7b4_public/Graz_CanESM5_2013_IGE_P7B4_M2_SOLAR_INTEGRATED_RESEARCH_ONLY.epw inputs/eplus_public/base.epw
+          cp inputs/p7c1_public/*RESEARCH_ONLY.epw inputs/eplus_public/
+          test $(find inputs/eplus_public -type f -name '*.epw' | wc -l) -eq 5
+          sha256sum inputs/eplus_public/*.epw > inputs/eplus_public_manifest.sha256
+      - name: Execute actual EnergyPlus for 5 public synthetic EPWs; reject severe/errors and empty SQL
+        run: |
+          python research/ige_cmip6/p7c5_energyplus_benchmark.py run \
+            --energyplus "$ENERGYPLUS_BIN" \
+            --idf tools_cache/p7c5_one_zone_ideal_loads.idf \
+            --weather-dir inputs/eplus_public \
+            --out outputs/p7c5_public_energyplus
+      - name: Verify benchmark provenance and outputs
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('outputs/p7c5_public_energyplus/p7c5_energyplus_real_benchmark_audit.json')
+          o=json.loads(p.read_text())
+          assert o['run_weather_count']==5 and not o['authentic_meteonorm_executed_in_public_CI']
+          assert all(r['severe']==0 and r['fatal']==0 and r['energyplus_real_executed'] for r in o['results'])
+          assert all(r['heating_kwh']>0 and r['cooling_kwh']>=0 for r in o['results'])
+          print('P7C.5 EnergyPlus 26.2 REAL SIMULATIONS (public synthetic inputs only) PASS')
+          PY
+      - name: Upload aggregate EnergyPlus result CSV, JSON and minimal diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p7c5-energyplus-26-2-public-synthetic-5-weather-benchmark
+          path: |
+            outputs/p7c5_public_energyplus/p7c5_energyplus_real_benchmark.csv
+            outputs/p7c5_public_energyplus/p7c5_energyplus_real_benchmark_audit.json
+            inputs/eplus_public_manifest.sha256
+          if-no-files-found: warn

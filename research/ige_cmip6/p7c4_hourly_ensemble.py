@@ -107,7 +107,7 @@ def can_morph_moisture(sources,model,win):
                for key in (model+'_'+HIST,model+'_'+win)
                for x in sources[key][0])
 
-def verify_hourly(base,stage_a,stage_b,final,signal,baseline_meta,model,win):
+def verify_hourly(base,stage_a,stage_b,final,signal,baseline_meta,model,win,authentic_source_graz_epw_reused=False):
     if len(stage_a)!=8760 or len(stage_b)!=8760 or len(final)!=8760:raise ValueError('Incomplete EPW member')
     if any(row[:5]!=old[:5] or stage_a[i][:5]!=old[:5] or stage_b[i][:5]!=old[:5] for i,(row,old) in enumerate(zip(final,base))):raise ValueError('Time anchor drift')
     for i,(old,a,b,c) in enumerate(zip(base,stage_a,stage_b,final)):
@@ -150,7 +150,7 @@ def verify_hourly(base,stage_a,stage_b,final,signal,baseline_meta,model,win):
           'RH_100_hours':int(np.sum(np.isclose(f_rh,100.,atol=1e-5))),'max_RH_hour_jump_pp':float(np.max(new)),
           'annual_mean_T_delta_C':statistics.fmean(float(c[6])-float(b[6]) for c,b in zip(final,base)),
           'annual_GHI_base_kwh_m2':sum(float(x[13]) for x in base)/1000.,'annual_GHI_future_kwh_m2':sum(float(x[13]) for x in final)/1000.,
-          'authentic_source_graz_epw_reused':True,'production_epw_ready':False}
+          'authentic_source_graz_epw_reused':bool(authentic_source_graz_epw_reused),'production_epw_ready':False}
     return info,months
 
 def run(baseline,provenance,zip_root,expected_sha,monthly_csv,out,model_subset=None):
@@ -177,6 +177,7 @@ def run(baseline,provenance,zip_root,expected_sha,monthly_csv,out,model_subset=N
                 continue
             sig=build_signal(model,win,sources,reg)
             head,a,daily,firstdiag=morph.morph_epw(h,base,sig,win.split('-')[0],win,meta)
+            head[0][4]='IGE_P7C4_RESEARCH_ONLY'
             head[5]=['COMMENTS 1',f'IGE P7C.4 model={model} member=r1i1p1f1 {win}; input Meteonorm Graz Contemporary, research only']
             head[6]=['COMMENTS 2','Source station hourly patterns inherited; monthly GCM climate signals; RH monthly q-closure and temporal optimization; not observed future weather']
             b,months_b,days_b,second=moist.hourly_redistribution(base,a,climate_ratio(sig))
@@ -187,7 +188,7 @@ def run(baseline,provenance,zip_root,expected_sha,monthly_csv,out,model_subset=N
             path=out/fname
             morph.write_epw(path,head,c)
             hh,rows,newmeta=morph.read_epw(path)
-            info,mlist=verify_hourly(base,a,b,rows,sig,meta,model,win)
+            info,mlist=verify_hourly(base,a,b,rows,sig,meta,model,win,authentic_source_graz_epw_reused=True)
             info.update({'EPW_filename':fname,'EPW_sha256':morph.sha(path),'source_historical_daily_csv_sha256':method['original_source_windows'][model+'_'+HIST]['source_daily_csv_sha256'],
                 'source_future_daily_csv_sha256':method['original_source_windows'][source_id]['source_daily_csv_sha256'],
                 'optimizer_objective_before':opt['objective_before'],'optimizer_objective_after':opt['objective_after'],
