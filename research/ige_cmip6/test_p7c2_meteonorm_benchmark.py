@@ -9,7 +9,7 @@ from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
 from p7c2_meteonorm_benchmark import (
     COLUMNS,N_HOURS,read_epw,percentiles,q_air,ks_distance,wind_rose,
-    pearson,max_run,metric,monthly_metrics,observed_deltas,run,sha256,
+    pearson,max_run,metric,monthly_metrics,observed_deltas,run,sha256,verify_registered_site,
 )
 
 NAME_MAP=(
@@ -34,10 +34,13 @@ NAME_MAP=(
 )
 
 
-def fixture(year=2005,shift=0):
+def fixture(year=2005,shift=0,city='Graz'):
     import datetime
     out=io.StringIO();w=csv.writer(out,lineterminator='\n')
-    w.writerow(['LOCATION','Graz','-','-','FAKE_UNIT_TEST_NOT_METEONORM',1,46.98,15.45,1,342])
+    coords={'Graz':(46.983,15.450),'Vienna':(48.250,16.367),
+            'Tripoli_Peloponnese_Greece':(37.527,22.412)}
+    lat,lon=coords[city]
+    w.writerow(['LOCATION',city,'-','-','FAKE_UNIT_TEST_NOT_METEONORM',1,lat,lon,1,342])
     for h in ('DESIGN CONDITIONS','TYPICAL/EXTREME PERIODS','GROUND TEMPERATURES',
               'HOLIDAYS/DAYLIGHT SAVINGS','COMMENTS 1','COMMENTS 2','DATA PERIODS'):
         w.writerow([h,0])
@@ -81,6 +84,10 @@ class BenchmarkMethods(unittest.TestCase):
         e=read_epw(fixture(),'fake.epw');self.assertEqual(len(e['hours']['temp']),8760)
         self.assertEqual(e['year_label'],2005)
         self.assertEqual(len(monthly_metrics(e)),12)
+    def test_registered_site_blocks_false_tripoli_libya(self):
+        e=read_epw(fixture(city='Tripoli_Peloponnese_Greece'),'Tripoli-hour_contemporary_seed1.epw')
+        verify_registered_site(e,'Tripoli_Peloponnese_Greece')
+        with self.assertRaises(ValueError):verify_registered_site(e,'Graz')
     def test_parser_rejects_invalid_non_epw(self):
         with self.assertRaises(ValueError):read_epw(b'wrong','fake.epw')
     def test_parser_rejects_missing_hour(self):
@@ -117,7 +124,8 @@ class FullResearchPipeline(unittest.TestCase):
                 for i,n in enumerate(NAME_MAP):
                     # Force exact duplicate pair in synthetic Vienna RCP 2100.
                     adj=13 if i==11 else 13 if i==12 else i
-                    f.writestr(n,fixture(2005,shift=adj/100))
+                    city='Vienna' if n.startswith('Wien-') else 'Tripoli_Peloponnese_Greece' if n.startswith('Tripoli') else 'Graz'
+                    f.writestr(n,fixture(2005,shift=adj/100,city=city))
             with ZipFile(b,'w',compression=ZIP_DEFLATED) as f:
                 for i,w in enumerate(('ssp245-2040-2059','ssp245-2080-2099',
                                         'ssp585-2040-2059','ssp585-2080-2099')):

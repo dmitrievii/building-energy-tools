@@ -24,7 +24,19 @@ COL = {'temp':6,'dewpoint':7,'rh':8,'pressure':9,'ghi':13,'dni':14,'dhi':15,
        'wind_dir':20,'wind_speed':21,'rain':33}
 SENTINELS = {'temp':99.9,'dewpoint':99.9,'rh':999.,'pressure':999999.,
              'ghi':9999.,'dni':9999.,'dhi':9999.,'wind_dir':999.,'wind_speed':999.,'rain':999.}
-SITE = {'Graz':'Graz','Wien-Hohe_Warte':'Vienna','Tripoli':'Tripoli'}
+SITE = {'Graz':'Graz','Wien-Hohe_Warte':'Vienna','Tripoli':'Tripoli_Peloponnese_Greece'}
+SITE_COORDS = {'Graz':(46.983,15.450),
+               'Vienna':(48.250,16.367),
+               'Tripoli_Peloponnese_Greece':(37.527,22.412)}
+
+def verify_registered_site(epw,site):
+    # Never substitute the African city Tripoli for Greek Peloponnese Tripoli.
+    if site not in SITE_COORDS:raise ValueError('Unregistered city/site name')
+    lat,lon=SITE_COORDS[site]
+    got_lat=float(epw['location'][6]);got_lon=float(epw['location'][7])
+    if abs(got_lat-lat)>.04 or abs(got_lon-lon)>.04:
+        raise ValueError(f'Untrusted geographical match for {site}: {got_lat},{got_lon}')
+
 MONTH_DAYS = (31,28,31,30,31,30,31,31,30,31,30,31)
 GRAZ_IGE = {'ssp245-2040-2059':'ssp245','ssp245-2080-2099':'ssp245',
             'ssp585-2040-2059':'ssp585','ssp585-2080-2099':'ssp585'}
@@ -219,7 +231,7 @@ def run(meteonorm_zip:str,ige_zip:str,out_dir:str):
         if len(names)!=18 or len(set(names))!=18:raise ValueError('Registered 18 Meteonorm source files required')
         for name in names:
             if not name.lower().endswith('.epw') or '/' in name:raise ValueError('Unexpected source ZIP path')
-            e=read_epw(z.read(name),name);metas[name]=e
+            e=read_epw(z.read(name),name);verify_registered_site(e,site_of(name));metas[name]=e
             aggregate.append({'provider':'Meteonorm_8_2','site':site_of(name),**metric(e)})
             monthly.extend([{'provider':'Meteonorm_8_2','site':site_of(name),**m} for m in monthly_metrics(e)])
     with ZipFile(ige_zip) as z:
@@ -228,7 +240,7 @@ def run(meteonorm_zip:str,ige_zip:str,out_dir:str):
         for name in files:
             key=next((w for w in GRAZ_IGE if w in name),None)
             if key is None or key in ige:raise ValueError('Unexpected or duplicated IGE scenario')
-            e=read_epw(z.read(name),name);ige[key]=e
+            e=read_epw(z.read(name),name);verify_registered_site(e,'Graz');ige[key]=e
             aggregate.append({'provider':'IGE_CanESM5_P7C1C','site':'Graz',**metric(e)})
             monthly.extend([{'provider':'IGE_CanESM5_P7C1C','site':'Graz',**m} for m in monthly_metrics(e)])
     if set(ige)!=set(GRAZ_IGE):raise ValueError('Incomplete IGE scenario ensemble')
@@ -238,7 +250,7 @@ def run(meteonorm_zip:str,ige_zip:str,out_dir:str):
     references={
         'Graz':'Graz-hour_contemporary_seed1.epw',
         'Vienna':'Wien-Hohe_Warte-hour_contemporary_seed1.epw',
-        'Tripoli':'Tripoli-hour_contemporary_seed1.epw',
+        'Tripoli_Peloponnese_Greece':'Tripoli-hour_contemporary_seed1.epw',
     }
     meta_stats={x['file']:x for x in aggregate}
     comparisons=[]
@@ -321,7 +333,7 @@ def run(meteonorm_zip:str,ige_zip:str,out_dir:str):
         'ige_zip_sha256':sha256(Path(ige_zip).read_bytes()),
         'meteonorm_count':len(metas),'ige_count':len(ige),
         'unique_meteonorm_sha_count':len(dupe),'duplicate_epw_sets':duplicates,
-        'reference_files':references,'method_comparisons':method,
+        'reference_files':references,'site_coordinate_verification':'STRICT_WITHIN_0.04_DEGREES_NO_CITY_NAME_ALIAS','method_comparisons':method,
         'controlled_vienna':controlled,
         'structural_dewpoint_discrepancy_over0p6_C_hours_total':total_invalid,
         'constraints':[
