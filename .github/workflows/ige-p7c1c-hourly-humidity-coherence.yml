@@ -1,0 +1,42 @@
+name: IGE P7C.1C reference-aware hourly humidity contracts (public fixture only)
+on:
+  push:
+    branches:
+      - research/ige-p7c1c-hourly-humidity-coherence-20261012
+    paths:
+      - research/ige_cmip6/p7c1c_hourly_humidity_coherence.py
+      - research/ige_cmip6/test_p7c1c_hourly_humidity_coherence.py
+      - docs/IGE_P7C1C_HOURLY_HUMIDITY_COHERENCE_PROTOCOL_RU.md
+      - .github/workflows/ige-p7c1c-hourly-humidity-coherence.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mathematical-and-physics-contracts:
+    name: Public synthetic humidity physics tests - no licensed EPW
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install numpy dependency
+        run: python -m pip install 'numpy>=1.26,<3'
+      - name: New reference-aware monthly q / RH temporal tests
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p7c1c_hourly_humidity_coherence.py' -v
+      - name: Preserve P7C.1B / P7C.1 parent source contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7c1b_humidity_closure.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7c1_epw_morphing.py' -v
+      - name: Research-only release and licensed-data gate
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          source=Path('research/ige_cmip6/p7c1c_hourly_humidity_coherence.py').read_text()
+          assert 'production_epw_ready' in source and "'production_epw_ready':False" in source
+          assert 'no_independent_humidity_validation' in source
+          assert 'no_EnergyPlus_run' in source
+          assert not list(Path('.').rglob('Graz-hour_contemporary_seed1.epw'))
+          print('P7C.1C PASS synthetic mathematical/physics gates. Licensed source-based locally audited only; no public real EPW validation.')
+          PY
