@@ -134,4 +134,7 @@ jobs:
             outputs/p7c5_public_energyplus/p7c5_energyplus_real_benchmark.csv
             outputs/p7c5_public_energyplus/p7c5_energyplus_real_benchmark_audit.json
             inputs/eplus_public_manifest.sha256
+            outputs/p7c5_public_energyplus/**/eplusout.err
+            outputs/p7c5_public_energyplus/**/stdout.txt
+            outputs/p7c5_public_energyplus/**/stderr.txt
           if-no-files-found: warn

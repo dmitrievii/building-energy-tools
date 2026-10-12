@@ -32,6 +32,10 @@ class Tests(unittest.TestCase):
   self.assertIn('IdealLoadsAirSystem',gen)
   self.assertIn('SimulationControl, No, No, No, No, Yes',gen)
   self.assertIn('Site:Location, Graz',gen)
+ def test_singleton_summary_report_from_upstream_not_duplicated(self):
+  upstream='! 1ZoneUncontrolled.idf\nVersion,26.2;\nSimulationControl,No,No,No,Yes,No;\nSite:Location,Denver,39,-105,-7,1800;\nRunPeriod,Annual,1,1,,12,31;\nZone,ZONE ONE;\nOutput:Table:SummaryReports, AllSummary;\n'
+  gen=e.generate_from_official(upstream)
+  self.assertEqual(gen.lower().count('output:table:summaryreports,'),1)
  def test_baseline_no_solar_change(self):
   base=demo();out=a.check(base,base)
   self.assertEqual(out['counts']['changed_GHI_hours_with_original_unchanged_global_lux'],0)

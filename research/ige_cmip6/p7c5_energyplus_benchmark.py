@@ -29,7 +29,8 @@ Output:Variable, *, Zone Ideal Loads Supply Air Total Cooling Energy, Hourly;
 Output:Variable, *, Zone Mean Air Temperature, Hourly;
 Output:Variable, *, Site Outdoor Air Drybulb Temperature, Hourly;
 Output:SQLite, SimpleAndTabular;
-Output:Table:SummaryReports, AnnualBuildingUtilityPerformanceSummary;
+! The upstream official IDF already defines Output:Table:SummaryReports.
+! Do not duplicate this singleton in the adapted IDF.
 """
 
 def generate_from_official(txt: str)->str:
@@ -84,7 +85,10 @@ def benchmark(eplus:Path,idf:Path,weather_dir:Path,out:Path):
   cmd=[str(eplus),'--weather',str(f.absolute()),'--output-directory',str(work.absolute()),str(idf.absolute())]
   p=subprocess.run(cmd,capture_output=True,text=True,timeout=350)
   (work/'stdout.txt').write_text(p.stdout[-18000:]);(work/'stderr.txt').write_text(p.stderr[-18000:])
-  if p.returncode!=0:raise RuntimeError(f'EnergyPlus exit code {p.returncode} for {f.name}: '+p.stderr[-1200:]+' '+p.stdout[-1200:])
+  if p.returncode!=0:
+   err_file=work/'eplusout.err'
+   ep_err=err_file.read_text(errors='replace') if err_file.exists() else 'NO EPLUSOUT.ERR WRITTEN'
+   raise RuntimeError(f'EnergyPlus exit code {p.returncode} for {f.name}; eplusout.err:\n{ep_err[-10000:]}\nstderr:\n{p.stderr[-1000:]}\nstdout:\n{p.stdout[-1000:]}')
   errors=check_errors(work/'eplusout.err')
   energy=extract_annual_sql(work/'eplusout.sql')
   records.append({'EPW_filename':f.name,'EPW_sha256':hashlib.sha256(f.read_bytes()).hexdigest(),**errors,**energy,'energyplus_real_executed':True})
