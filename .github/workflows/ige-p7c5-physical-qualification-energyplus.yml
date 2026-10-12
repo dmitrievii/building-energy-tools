@@ -50,12 +50,27 @@ jobs:
           mkdir -p tools_cache
           URL='https://github.com/NatLabRockies/EnergyPlus/releases/download/v26.2.0/EnergyPlus-26.2.0-4bd7a1f26f-Linux-Ubuntu24.04-x86_64.tar.gz'
           curl --fail --show-error --location --retry 4 --retry-delay 3 -o tools_cache/energyplus.tar.gz "$URL"
-          echo 'b848da8236482a2171a67d7eab00c82162105b653ffab3ae3b6c2217c433a8a1  tools_cache/energyplus.tar.gz' | sha256sum --check --status
+          # Diagnostic hashes must remain visible; do not silently replace an upstream digest.
+          expected='b848da8236482a2171a67d7eab00c82162105b653ffab3ae3b6c2217c433a8a1'
+          actual=$(sha256sum tools_cache/energyplus.tar.gz | awk '{print $1}')
+          echo "Official GitHub release SHA-256: $expected"
+          echo "Downloaded EnergyPlus archive SHA-256: $actual"
+          if [[ "$actual" != "$expected" ]]; then
+            echo "::error::Official EnergyPlus 26.2.0 archive SHA-256 mismatch; refusing to execute altered bytes."
+            exit 1
+          fi
+          echo "EnergyPlus release archive preview:"
+          tar tzf tools_cache/energyplus.tar.gz > tools_cache/energyplus_archive_contents.txt
+          sed -n '1,20p' tools_cache/energyplus_archive_contents.txt
           mkdir -p tools_cache/EnergyPlus
           tar xzf tools_cache/energyplus.tar.gz -C tools_cache/EnergyPlus
-          find "$PWD/tools_cache/EnergyPlus" -type f -name energyplus -print | head -4
-          BIN=$(find "$PWD/tools_cache/EnergyPlus" -type f -name energyplus | head -1)
-          test -n "$BIN"
+          echo "Installed EnergyPlus executable candidates (including symlink targets):"
+          find -L "$PWD/tools_cache/EnergyPlus" -maxdepth 5 -type f \( -iname 'energyplus' -o -iname 'energyplus-*' \) -print | head -20
+          BIN=$(find -L "$PWD/tools_cache/EnergyPlus" -maxdepth 5 -type f \( -name energyplus -o -name EnergyPlus \) -print -quit)
+          if [[ -z "$BIN" ]]; then
+            echo "::error::No EnergyPlus executable found (including symlinks) in the official archive."
+            exit 1
+          fi
           chmod +x "$BIN"
           "$BIN" --version
           echo "ENERGYPLUS_BIN=$BIN" >> "$GITHUB_ENV"
