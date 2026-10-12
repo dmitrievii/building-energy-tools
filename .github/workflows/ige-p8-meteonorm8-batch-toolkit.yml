@@ -1,0 +1,51 @@
+name: IGE P8 Meteonorm 8 Batch Automation Portable Windows Toolkit
+
+on:
+  push:
+    branches:
+      - research/ige-p8-meteonorm8-batch-automation-20261012
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-python-batch-contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run source-only synthetic Meteonorm 8 EPW QC contracts
+        run: python -m unittest discover -s research/ige_cmip6/tools/meteonorm8_batch -p 'test_mn8_batch_controller.py' -v
+      - name: Smoke-test project initialization and documented batch format 22
+        run: |
+          python research/ige_cmip6/tools/meteonorm8_batch/mn8_batch_controller.py init --project /tmp/mn8_pilot
+          test -f /tmp/mn8_pilot/batch_input/locations_format22.csv
+          test -f /tmp/mn8_pilot/batch_input/locations_format22.tsv
+          test $(tail -n +4 /tmp/mn8_pilot/batch_input/locations_format22.csv | wc -l) -eq 5
+          test $(tail -n +2 /tmp/mn8_pilot/run_plan.csv | wc -l) -eq 12
+      - name: Make Windows-ready archive (no commercial Meteonorm binaries or EPWs)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release/mn8_batch_toolkit
+          cp research/ige_cmip6/tools/meteonorm8_batch/mn8_batch_controller.py release/mn8_batch_toolkit/
+          cp research/ige_cmip6/tools/meteonorm8_batch/archive_probe.py release/mn8_batch_toolkit/
+          cp research/ige_cmip6/tools/meteonorm8_batch/README_WINDOWS_RU.md release/mn8_batch_toolkit/
+          cp research/ige_cmip6/tools/meteonorm8_batch/*.bat release/mn8_batch_toolkit/
+          cp research/ige_cmip6/tools/meteonorm8_batch/test_mn8_batch_controller.py release/mn8_batch_toolkit/
+          cp /tmp/mn8_pilot/batch_input/* release/mn8_batch_toolkit/
+          cd release
+          zip -qr IGE_P8_Meteonorm8_Windows_Batch_Toolkit_2026-10-12.zip mn8_batch_toolkit
+          sha256sum IGE_P8_Meteonorm8_Windows_Batch_Toolkit_2026-10-12.zip > toolkit.sha256
+          unzip -t IGE_P8_Meteonorm8_Windows_Batch_Toolkit_2026-10-12.zip | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-meteonorm8-windows-batch-toolkit
+          path: |
+            release/IGE_P8_Meteonorm8_Windows_Batch_Toolkit_2026-10-12.zip
+            release/toolkit.sha256
+          if-no-files-found: error
