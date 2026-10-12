@@ -1,0 +1,34 @@
+name: IGE P7C.2 method benchmark (synthetic tests only)
+on:
+  push:
+    branches:
+      - research/ige-p7c2-meteonorm-method-benchmark-20261012
+    paths:
+      - research/ige_cmip6/p7c2_meteonorm_benchmark.py
+      - research/ige_cmip6/test_p7c2_meteonorm_benchmark.py
+      - docs/IGE_P7C2_METEONORM_COMPARATIVE_BENCHMARK_RU.md
+      - .github/workflows/ige-p7c2-meteonorm-method-benchmark.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  public-synthetic-contracts:
+    name: Scientific method fixtures; no Meteonorm proprietary input
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check synthetic EPW strict parser, duplicate detection and method comparisons
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p7c2_meteonorm_benchmark.py' -v
+      - name: Confirm no original licensed EPW in repository
+        run: |
+          python - <<'PY'
+          import subprocess
+          files=subprocess.check_output(['git','ls-files'],text=True).splitlines()
+          assert not any(n.startswith('research/ige_cmip6/') and n.endswith('.epw') for n in files)
+          assert not any('EPW_collection.zip' in n or 'Graz-hour_contemporary_seed1.epw' in n for n in files)
+          print('No licensed Meteonorm input or generated hourly record committed: PASS')
+          PY
