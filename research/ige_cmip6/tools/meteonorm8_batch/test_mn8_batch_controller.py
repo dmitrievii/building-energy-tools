@@ -96,6 +96,20 @@ class BatchContracts(unittest.TestCase):
             self.assertEqual(fallback.splitlines()[2].split(";"),
                              ["name", "longitude", "latitude", "altitude"])
 
+    def test_native_user_defined_import_matches_installed_mn82_example(self):
+        with tempfile.TemporaryDirectory() as td:
+            mod.create_project(Path(td) / "pilot")
+            d = Path(td) / "pilot" / "batch_input"
+            one = (d / "native_user_defined_one_graz.csv").read_bytes()
+            five = (d / "native_user_defined_five_sites.csv").read_bytes()
+            self.assertTrue(one.startswith(b"\xef\xbb\xbfname;latitude;longitude\r\n"))
+            self.assertIn(b'"IGE_Graz";46.983000;15.450000\r\n', one)
+            self.assertEqual(len(one.decode("utf-8-sig").splitlines()), 3)
+            self.assertEqual(len(five.decode("utf-8-sig").splitlines()), 7)
+            self.assertNotIn(b"Formattyp", one)
+            self.assertNotIn(b"altitude", one)
+            self.assertNotIn(b"Save = hour", one)
+
     def test_regenerated_import_files_replace_old_layout(self):
         with tempfile.TemporaryDirectory() as td:
             folder = Path(td) / "pilot"

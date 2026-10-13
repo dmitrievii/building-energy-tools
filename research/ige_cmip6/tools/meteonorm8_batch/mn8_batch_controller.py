@@ -109,6 +109,26 @@ def batch_file(path, sites, sep, *, include_situation=False):
             w.writerow(row)
 
 
+def user_defined_import_file(path, sites):
+    """Import User defined locations CSV: mirror Meteonorm 8.2 native sample.
+
+    Official installed sample: Resources/Examples/custom_location_minimal_sample.csv
+    (UTF-8 BOM, semicolon, name;latitude;longitude, CRLF, quoted station names).
+    This is NOT Meteonorm's different 'Import locations for batch mode' syntax.
+    Native minimal sample has no altitude field. Validate altitude separately.
+    """
+    p = Path(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    lines = ["name;latitude;longitude"]
+    for site in sites:
+        lines.append('"{}";{};{}'.format(
+            site["name"], format(float(site["latitude"]), ".6f"),
+            format(float(site["longitude"]), ".6f")))
+    payload = ("\r\n".join(lines) + "\r\n\r\n").encode("utf-8-sig")
+    p.write_bytes(payload)
+
+
+
 def create_project(folder, *, rewrite=False):
     folder = Path(folder)
     folder.mkdir(parents=True, exist_ok=True)
@@ -138,6 +158,10 @@ def create_project(folder, *, rewrite=False):
 
     batches = folder / "batch_input"
     batches.mkdir(exist_ok=True)
+    # Different import command: Locations > Import user defined locations.
+    # Use this native sample-compatible format to register stations once.
+    user_defined_import_file(batches / "native_user_defined_one_graz.csv", config["sites"][:1])
+    user_defined_import_file(batches / "native_user_defined_five_sites.csv", config["sites"])
     # Primary on-PC pilot: test one location, 4 columns, literal TABs,
     # plain ASCII, and CRLF, mirroring the Meteonorm 8.2 handbook example.
     batch_file(batches / "pilot_one_graz_tabs.txt", config["sites"][:1], "\t")

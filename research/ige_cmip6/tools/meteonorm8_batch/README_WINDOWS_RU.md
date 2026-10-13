@@ -1,5 +1,32 @@
 # IGE P8 — пакетная генерация Meteonorm 8 на Windows
 
+
+## P8.0.5 — альтернативный доказательный импорт через оригинальный образец Meteonorm
+
+В предоставленном архиве установленного Meteonorm 8.2 обнаружены официальные
+\`Resources/Examples/custom_location_minimal_sample.csv\` и \`.xml\`.
+CSV-шаблон буквально использует \`name;latitude;longitude\` (BOM UTF-8,
+semicolon, CRLF, имена в кавычках), а НЕ \`Formattyp = 22\`.
+Первый шаблон относится к меню **Locations > Import user defined locations**,
+второй — к **Locations > Import locations for batch mode**.
+Файлы не взаимозаменяемы.
+
+Для первого теста:
+1. Если доступен оригинальный \`custom_location_minimal_sample.csv\` из установленной Meteonorm,
+   импортируй ЕГО, без изменения, через **Import user defined locations**.
+2. Если официальная контрольная станция импортирована, запусти \`01_prepare_batches.bat\` и импортируй
+   \`batch_input/native_user_defined_one_graz.csv\` тем же пунктом меню.
+3. После успешного Graz — \`batch_input/native_user_defined_five_sites.csv\`.
+   Перейди на вкладку User defined и выбери все станции для расчёта.
+4. Подготовленные CSV намеренно не содержат высот: Meteonorm будет определять их
+   по своей модели рельефа. Перед научными расчётами сравни высоты с \`project_config.json\`
+   и при необходимости откорректируй. Не считай эту проверку завершённой автоматически.
+
+Если не принимается даже исходный файл разработчика — остановись и отправь
+скриншот окна и меню: проблема требует отдельной проверки GUI, а не перебора CSV.
+
+
+
 ## P8.0.4 — исправление отказа Batch Locations Import (Meteonorm 8.2)
 
 **Важно: предыдущий совет импортировать \`locations_format22.csv\` (запятые + необязательное \`situation\`) был неподтверждён и мог вызвать \`0 valid locations imported\`.**
