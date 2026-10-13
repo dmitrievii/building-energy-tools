@@ -38,11 +38,13 @@ jobs:
           cp research/ige_cmip6/tools/meteonorm8_batch/archive_probe.py release/mn8_batch_toolkit/
           cp research/ige_cmip6/tools/meteonorm8_batch/mn8_uia_deep_probe.py release/mn8_batch_toolkit/
           cp research/ige_cmip6/tools/meteonorm8_batch/mn8_uia_pilot_driver.py release/mn8_batch_toolkit/
+          cp research/ige_cmip6/tools/meteonorm8_batch/mn8_benchmark_zip_audit.py release/mn8_batch_toolkit/
           cp research/ige_cmip6/tools/meteonorm8_batch/README_WINDOWS_RU.md release/mn8_batch_toolkit/
           cp research/ige_cmip6/tools/meteonorm8_batch/*.bat release/mn8_batch_toolkit/
           cp research/ige_cmip6/tools/meteonorm8_batch/test_mn8_batch_controller.py release/mn8_batch_toolkit/
           cp research/ige_cmip6/tools/meteonorm8_batch/test_mn8_uia_deep_probe.py release/mn8_batch_toolkit/
           cp research/ige_cmip6/tools/meteonorm8_batch/test_mn8_uia_pilot_driver.py release/mn8_batch_toolkit/
+          cp research/ige_cmip6/tools/meteonorm8_batch/test_mn8_benchmark_zip_audit.py release/mn8_batch_toolkit/
           cp /tmp/mn8_pilot/batch_input/* release/mn8_batch_toolkit/
           cd release
           zip -qr IGE_P8_Meteonorm8_Windows_Batch_Toolkit_2026-10-12.zip mn8_batch_toolkit
