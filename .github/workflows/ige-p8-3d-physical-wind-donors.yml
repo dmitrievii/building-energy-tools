@@ -1,0 +1,61 @@
+name: IGE P8.3D Swiss wind physical donor selection and 2024 independent-target evaluation
+on:
+  push:
+    branches: ['research/ige-p8-3d-physical-wind-donors-20261014']
+    paths:
+      - 'research/ige_cmip6/p8_3d_wind_terrain_donors.py'
+      - 'research/ige_cmip6/test_p8_3d_wind_terrain_donors.py'
+      - '.github/workflows/ige-p8-3d-physical-wind-donors.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  physics-ranking-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install prerequisites for frozen wind and existing DEM
+        run: python -m pip install numpy pillow
+      - name: Run P8.3D pre-registered donor and no-target-leakage scientific controls
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3d_wind_terrain_donors.py' -v
+      - name: Re-run P8.3A/B original physics contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3a_wind_spatial.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3b_wind_direction_qc.py' -v
+  original-2024-independent-site-wind:
+    needs: physics-ranking-contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 110
+    env:
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install only original research DEM prerequisites
+        run: python -m pip install numpy pillow
+      - name: Compare nearest versus altitude versus DEM topography on independent 2024 sites
+        run: |
+          mkdir -p "$RUNNER_TEMP/ige_p8_3d_wind"
+          python research/ige_cmip6/p8_3d_wind_terrain_donors.py \
+            --year 2024 --out "$RUNNER_TEMP/ige_p8_3d_wind"
+      - name: Upload only aggregates and source SHA; never original wind or DEM tiles
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-3d-original-2024-wind-physical-donor-aggregates
+          path: |
+            ${{ runner.temp }}/ige_p8_3d_wind/p8_3d_wind_scores.csv
+            ${{ runner.temp }}/ige_p8_3d_wind/p8_3d_wind_selected_donors.csv
+            ${{ runner.temp }}/ige_p8_3d_wind/p8_3d_source_coverage.csv
+            ${{ runner.temp }}/ige_p8_3d_wind/p8_3d_wind_headers.csv
+            ${{ runner.temp }}/ige_p8_3d_wind/p8_3d_dem_features.csv
+            ${{ runner.temp }}/ige_p8_3d_wind/p8_3d_provenance.json
+          if-no-files-found: warn
+          retention-days: 30
