@@ -1,0 +1,60 @@
+name: IGE P8.3C independent target-station wind hybrid 2023
+on:
+  push:
+    branches: ['research/ige-p8-3c-hybrid-holdout-20261014']
+    paths:
+      - 'research/ige_cmip6/p8_3c_wind_hybrid_holdout.py'
+      - 'research/ige_cmip6/test_p8_3c_wind_hybrid_holdout.py'
+      - '.github/workflows/ige-p8-3c-independent-hybrid-2023.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  frozen-hybrid-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - name: Predeclared 2023 6-site source independence, unchanged vector and scalar speed tests
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3a_wind_spatial.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3b_wind_direction_qc.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3c_wind_hybrid_holdout.py' -v
+  original-2023-independent-six-site-test:
+    needs: frozen-hybrid-contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - name: Download original SwissMetNet 2023 and run frozen hybrid on DAV GVE LUG SIO SMA WYN
+        run: |
+          mkdir -p "$RUNNER_TEMP/p8_3c"
+          python research/ige_cmip6/p8_3c_wind_hybrid_holdout.py \
+            --year 2023 --out "$RUNNER_TEMP/p8_3c"
+      - name: Upload only aggregated evaluations and original input hashes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-3c-six-site-2023-wind-hybrid-aggregates
+          path: |
+            ${{ runner.temp }}/p8_3c/p8_3c_station_skill.csv
+            ${{ runner.temp }}/p8_3c/p8_3c_stratified_skill.csv
+            ${{ runner.temp }}/p8_3c/p8_3c_wind_rose_sectors.csv
+            ${{ runner.temp }}/p8_3c/p8_3c_unresolved_spells.csv
+            ${{ runner.temp }}/p8_3c/p8_3c_selected_donors.csv
+            ${{ runner.temp }}/p8_3c/p8_3c_source_coverage.csv
+            ${{ runner.temp }}/p8_3c/p8_3c_source_qc_visibility.csv
+            ${{ runner.temp }}/p8_3c/p8_3c_provenance.json
+          if-no-files-found: error
+          retention-days: 30
