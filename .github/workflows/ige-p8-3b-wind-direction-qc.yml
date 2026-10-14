@@ -1,0 +1,57 @@
+name: IGE P8.3B Swiss original wind QC visibility and circular direction comparison
+on:
+  push:
+    branches: ['research/ige-p8-3b-wind-qc-20261014']
+    paths:
+      - 'research/ige_cmip6/p8_3b_wind_direction_qc.py'
+      - 'research/ige_cmip6/test_p8_3b_wind_direction_qc.py'
+      - '.github/workflows/ige-p8-3b-wind-direction-qc.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  qc-direction-physics-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - name: Run original P8.3A original vector and no-leakage contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3a_wind_spatial.py' -v
+      - name: Run P8.3B source-QC and unit-circular matched-hour contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3b_wind_direction_qc.py' -v
+  original-swiss-wind-circular:
+    needs: qc-direction-physics-contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 85
+    strategy:
+      fail-fast: false
+      matrix:
+        year: [2021, 2022]
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - name: Inspect original Swiss historical source QC visibility and evaluate unchanged scalar and vector vs unit-circle direction
+        run: |
+          mkdir -p "$RUNNER_TEMP/ige_p8_3b_wind"
+          python research/ige_cmip6/p8_3b_wind_direction_qc.py \
+            --year ${{ matrix.year }} --out "$RUNNER_TEMP/ige_p8_3b_wind"
+      - name: Upload aggregate scores and source provenance only, no measured hourly series
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-3b-wind-source-qc-and-circular-${{ matrix.year }}
+          path: |
+            ${{ runner.temp }}/ige_p8_3b_wind/p8_3b_*.csv
+            ${{ runner.temp }}/ige_p8_3b_wind/p8_3b_provenance.json
+          if-no-files-found: warn
+          retention-days: 30
