@@ -1,0 +1,91 @@
+name: IGE P8.1F causal inversion events and Swiss region holdout
+on:
+  push:
+    branches:
+      - 'research/ige-p8-meteonorm8-batch-automation-20261012'
+    paths:
+      - 'research/ige_cmip6/p8_1f_*.py'
+      - 'research/ige_cmip6/test_p8_1f.py'
+      - 'research/ige_cmip6/data/p8_1f_frozen_terrain.json'
+      - '.github/workflows/ige-p8-1f-events-terrain-regional-holdout.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  frozen-scientific-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy pillow
+      - name: Causal pre-event guards, geography block and frozen parameter contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p8_1f.py' -v
+  noaa-causal-events:
+    needs: frozen-scientific-contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy pillow
+      - name: Observed prior sounding -> next sounding inversion; heldout site + heldout year
+        run: |
+          mkdir -p "$RUNNER_TEMP/ige_p8_1f_events"
+          python research/ige_cmip6/p8_1f_events.py --out "$RUNNER_TEMP/ige_p8_1f_events"
+      - name: Publish only derived skill, sample counts and source hashes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-1f-original-noaa-causal-inversion-events
+          path: ${{ runner.temp }}/ige_p8_1f_events/
+          if-no-files-found: warn
+          retention-days: 30
+  swiss-entire-regions:
+    needs: frozen-scientific-contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy pillow
+      - name: Download independent Austrian station inventory; enforce source contract
+        run: |
+          mkdir -p "$RUNNER_TEMP/ige_p8_1f_swiss/metrics" "$RUNNER_TEMP/ige_p8_1f_swiss/dem_cache"
+          curl --fail --location --retry 3 --retry-all-errors --max-time 150 \
+            'https://tauernwetter.at/klimamittel/klimamittel_oesterreich.json' \
+            --output "$RUNNER_TEMP/ige_p8_1f_swiss/normals.json"
+          python - "$RUNNER_TEMP/ige_p8_1f_swiss/normals.json" <<'PY'
+          import json,sys
+          s=json.load(open(sys.argv[1],encoding='utf-8'))['stationen']
+          assert len(s)==258 and sum(x['periode']=='1991–2020' for x in s)==189
+          print('Provenance gate PASS, Austrian station metadata index only')
+          PY
+      - name: Frozen Austria lapse & terrain fit -> Swiss leave-whole-region-out 2011-2020
+        run: |
+          python research/ige_cmip6/p8_1f_regions.py \
+            --austria-station-normals "$RUNNER_TEMP/ige_p8_1f_swiss/normals.json" \
+            --frozen-params research/ige_cmip6/data/p8_1f_frozen_terrain.json \
+            --out "$RUNNER_TEMP/ige_p8_1f_swiss/metrics" --max-sites 36
+      - name: Publish derived regional and DEM skill metrics only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-1f-original-swiss-entire-region-holdout
+          path: |
+            ${{ runner.temp }}/ige_p8_1f_swiss/metrics/spatial_*.csv
+            ${{ runner.temp }}/ige_p8_1f_swiss/metrics/spatial_provenance.json
+            ${{ runner.temp }}/ige_p8_1f_swiss/metrics/swiss_stac_probe.json
+          if-no-files-found: warn
+          retention-days: 30
