@@ -1,0 +1,27 @@
+{
+  "source_stage": "P8.1D",
+  "source_aggregate_sha256": "dd740b390b8c2a57202a97fffbdaadde13ba3d0a4f9861585233ef009b84049d",
+  "purpose": "pre-frozen Austria 1991-2010 topography coefficients; never fit Swiss test results",
+  "coefficient_field_order": [
+    "valley_cold_k",
+    "ridge_cold_k",
+    "valley_warm_k",
+    "ridge_warm_k"
+  ],
+  "by_buffer": {
+    "0": {
+      "valley_cold_k": -0.022731471829078982,
+      "ridge_cold_k": 0.06252601032229414,
+      "valley_warm_k": -0.04220087631727573,
+      "ridge_warm_k": 0.052865434128406635
+    },
+    "50": {
+      "valley_cold_k": -0.023498853101609787,
+      "ridge_cold_k": 0.059539132991658666,
+      "valley_warm_k": -0.04138810319811782,
+      "ridge_warm_k": 0.05024863128188833
+    }
+  },
+  "scope": "P8.1D donor-fold average, descriptive prior chosen before Swiss region-holdout",
+  "warning": "These are averaged leave-station-fold coefficients, not a prespecified independent alpine model. Further transfer results exploratory."
+}
