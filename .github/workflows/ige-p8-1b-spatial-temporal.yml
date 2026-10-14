@@ -1,0 +1,62 @@
+name: IGE P8.1B spatial and temporal validation
+on:
+  push:
+    branches:
+      - 'research/ige-p8-meteonorm8-batch-automation-20261012'
+    paths:
+      - 'research/ige_cmip6/p8_1b_terrain_holdout.py'
+      - 'research/ige_cmip6/p8_1b_temporal_holdout.py'
+      - 'research/ige_cmip6/test_p8_1b.py'
+      - '.github/workflows/ige-p8-1b-spatial-temporal.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic-method-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - name: Strict out-of-station and out-of-time synthetic gates
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p8_1b.py' -v
+  real-geosphere-temporal-holdout:
+    needs: synthetic-method-contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - name: Fetch public station metadata ONLY - never commit or upload raw series
+        run: |
+          mkdir -p "$RUNNER_TEMP/ige_p8_1b"
+          curl --fail --location --retry 3 --retry-all-errors --max-time 120 \
+            'https://tauernwetter.at/klimamittel/klimamittel_oesterreich.json' \
+            --output "$RUNNER_TEMP/ige_p8_1b/station_normals.json"
+          python - "$RUNNER_TEMP/ige_p8_1b/station_normals.json" <<'PY'
+          import json,sys
+          stations=json.load(open(sys.argv[1],encoding='utf8'))['stationen']
+          assert len(stations)==258, 'Changed upstream station source requires scientific review'
+          assert sum(s['periode']=='1991–2020' for s in stations)==189, 'Changed climate-normal station subset'
+          print('GeoSphere-derived station source inventory verified; original bytes not committed')
+          PY
+      - name: GeoSphere 1991-2010 donor calibration, 2011-2020 original observation holdout
+        env:
+          OPENBLAS_NUM_THREADS: '1'
+        run: |
+          python research/ige_cmip6/p8_1b_temporal_holdout.py \
+            --station-normals "$RUNNER_TEMP/ige_p8_1b/station_normals.json" \
+            --out "$RUNNER_TEMP/ige_p8_1b/public_aggregate_results" --batch 16
+      - name: Publish derived non-hourly non-commercial metrics only
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-1b-original-geosphere-temporal-holdout
+          path: ${{ runner.temp }}/ige_p8_1b/public_aggregate_results/
+          if-no-files-found: error
+          retention-days: 30
