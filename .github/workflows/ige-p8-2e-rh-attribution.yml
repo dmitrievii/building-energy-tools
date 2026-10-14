@@ -1,0 +1,68 @@
+name: IGE P8.2E post-hoc RH temperature and vapour pressure attribution
+on:
+  push:
+    branches:
+      - research/ige-p8-meteonorm8-batch-automation-20261012
+    paths:
+      - research/ige_cmip6/p8_2e_rh_attribution.py
+      - research/ige_cmip6/test_p8_2e_rh_attribution.py
+      - .github/workflows/ige-p8-2e-rh-attribution.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  counterfactual-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - name: Frozen post-hoc psychrometric oracle contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p8_2e_rh_attribution.py' -v
+  real-Swiss-diagnostic:
+    needs: counterfactual-contracts
+    strategy:
+      fail-fast: false
+      matrix:
+        year: [2018, 2019, 2020]
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - name: Original Austrian calibration index
+        run: |
+          mkdir -p "$RUNNER_TEMP/ige_rh_attribution/source" "$RUNNER_TEMP/ige_rh_attribution/output"
+          curl --fail --location --retry 3 --retry-all-errors --max-time 150 \
+            'https://tauernwetter.at/klimamittel/klimamittel_oesterreich.json' \
+            --output "$RUNNER_TEMP/ige_rh_attribution/source/stations.json"
+          python - "$RUNNER_TEMP/ige_rh_attribution/source/stations.json" <<'PY'
+          import json,sys
+          station=json.load(open(sys.argv[1],encoding='utf-8'))['stationen']
+          assert len(station)==258 and sum(x.get('periode')=='1991–2020' for x in station)==189
+          PY
+      - name: Hourly T/e/P RH counterfactual audit without any model changes
+        run: |
+          python research/ige_cmip6/p8_2e_rh_attribution.py \
+             --year ${{ matrix.year }} \
+             --austria-station-normals "$RUNNER_TEMP/ige_rh_attribution/source/stations.json" \
+             --out "$RUNNER_TEMP/ige_rh_attribution/output"
+      - name: Export only aggregated station/year statistics and provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-2e-rh-attribution-${{ matrix.year }}-aggregates
+          path: |
+            ${{ runner.temp }}/ige_rh_attribution/output/rh_attribution_*.csv
+            ${{ runner.temp }}/ige_rh_attribution/output/rh_attribution_provenance.json
+          if-no-files-found: warn
+          retention-days: 30
