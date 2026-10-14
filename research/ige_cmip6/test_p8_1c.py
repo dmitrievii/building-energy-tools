@@ -31,6 +31,26 @@ class Tests(unittest.TestCase):
   b=io.BytesIO();Image.fromarray(a).save(b,format='PNG')
   with self.assertRaisesRegex(ValueError,'no valid elevation'):
    decode_tile(b.getvalue())
+ def test_single_implausible_dem_pixel_is_masked_and_audited(self):
+  # Original-source pathological RGB from tile (11,1081,721), 20,889m.
+  a=np.full((256,256,3),[140,37,0],dtype=np.uint8)
+  a[161,159]=[209,153,30]
+  b=io.BytesIO();Image.fromarray(a).save(b,format='PNG')
+  stats={}
+  h=decode_tile(b.getvalue(),key=(11,1081,721),stats=stats)
+  self.assertTrue(np.isnan(h[161,159]))
+  self.assertAlmostEqual(h[161,158],3109.)
+  self.assertEqual(stats['implausible_pixels'],1)
+  self.assertEqual(stats['first_implausible']['rgb'],[209,153,30])
+  self.assertGreater(stats['first_implausible']['decoded_m'],20000)
+ def test_implausible_value_at_sample_is_rejected(self):
+  cache=TileCache('/tmp/p8_1c_synthetic_invalid_sample')
+  k,x,y=tile_point(47.,15.,11)
+  h=np.full((256,256),3109.,dtype=float)
+  h[y,x]=np.nan
+  cache.arrays[k]=h
+  with self.assertRaisesRegex(ValueError,'DEM_NODATA_AT_SAMPLE'):
+   cache.point(47.,15.)
  def test_tile_geolocation(self):
   k,x,y=tile_point(0,0,11)
   self.assertEqual(k,(11,1024,1024));self.assertEqual((x,y),(0,0))
