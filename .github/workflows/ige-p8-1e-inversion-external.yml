@@ -1,0 +1,113 @@
+name: IGE P8.1E measured inversion profiles and Swiss transfer validation
+on:
+  push:
+    branches:
+      - 'research/ige-p8-meteonorm8-batch-automation-20261012'
+    paths:
+      - 'research/ige_cmip6/p8_1e_igra_profiles.py'
+      - 'research/ige_cmip6/p8_1e_swiss_external.py'
+      - 'research/ige_cmip6/test_p8_1e.py'
+      - '.github/workflows/ige-p8-1e-inversion-external.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  scientific-contract-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - name: Independent measured-profiles and foreign-country holdout test gates
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p8_1e.py' -v
+  original-noaa-vertical-profiles:
+    needs: scientific-contract-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - name: Obtain NOAA IGRA fixed-layout radiosonde profiles, 2017-2020
+        run: |
+          mkdir -p "$RUNNER_TEMP/p8_1e_noaa"
+          python research/ige_cmip6/p8_1e_igra_profiles.py \
+            --out "$RUNNER_TEMP/p8_1e_noaa"
+      - name: Upload profile-derived metrics only (not original radiosonde files)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-1e-original-igra-vertical-inversions
+          path: ${{ runner.temp }}/p8_1e_noaa/
+          if-no-files-found: error
+          retention-days: 30
+  swiss-open-data-metadata-probe:
+    needs: scientific-contract-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - name: Audit SwissMetNet station metadata and STAC monthly assets
+        run: |
+          mkdir -p "$RUNNER_TEMP/p8_1e_swiss_probe"
+          python - <<'PY'
+          import sys,os
+          sys.path.insert(0,'research/ige_cmip6')
+          from p8_1e_swiss_external import inventory_probe
+          inventory_probe(os.environ['RUNNER_TEMP']+'/p8_1e_swiss_probe')
+          PY
+      - name: Publish discoverability metadata and checksums, no raw station measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-1e-swiss-source-discovery
+          path: ${{ runner.temp }}/p8_1e_swiss_probe/
+          if-no-files-found: warn
+          retention-days: 30
+  original-swiss-geographic-holdout:
+    needs: swiss-open-data-metadata-probe
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - name: Fetch Austrian station IDs and fixed training-only metadata
+        run: |
+          mkdir -p "$RUNNER_TEMP/p8_1e_swiss"
+          curl --fail --location --retry 2 --max-time 120 \
+            'https://tauernwetter.at/klimamittel/klimamittel_oesterreich.json' \
+            --output "$RUNNER_TEMP/p8_1e_swiss/austria_normals.json"
+          python - "$RUNNER_TEMP/p8_1e_swiss/austria_normals.json" <<'PY'
+          import json,sys
+          a=json.load(open(sys.argv[1],encoding='utf-8'))['stationen']
+          assert len(a)==258 and sum(s['periode']=='1991–2020' for s in a)==189
+          PY
+      - name: Fixed Austrian 1991-2010 lapse -> Swiss 2011-2020 station holdout
+        run: |
+          python research/ige_cmip6/p8_1e_swiss_external.py \
+            --austria-station-normals "$RUNNER_TEMP/p8_1e_swiss/austria_normals.json" \
+            --out "$RUNNER_TEMP/p8_1e_swiss" --max-sites 36
+      - name: Upload only evaluation aggregates, source checksums and reproducibility manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-1e-swiss-original-external-transfer
+          path: |
+            ${{ runner.temp }}/p8_1e_swiss/external_swiss_*.csv
+            ${{ runner.temp }}/p8_1e_swiss/external_swiss_provenance.json
+            ${{ runner.temp }}/p8_1e_swiss/swiss_stac_probe.json
+          if-no-files-found: warn
+          retention-days: 30
