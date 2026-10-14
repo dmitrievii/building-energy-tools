@@ -34,14 +34,14 @@ def build_pairs(heads,station_elevation):
         date=date_utc(h)
         # Target truth based on current vertical sounding; never into predictors.
         from p8_1e_igra_profiles import level
-        decoded=[v for ln in raw if (v:=level(ln)) is not None]
+        decoded=[v for ln in raw if (v:=level(ln.decode('ascii','replace') if isinstance(ln,bytes) else ln)) is not None]
         cur=classify(decoded,station_elevation)
         if cur is None:issues['target_profile_incomplete']+=1
         if prev is not None and cur is not None:
             older_time,older_raw,older_header=prev
             hours=(date-older_time).total_seconds()/3600
             if LEAD_MIN_H<=hours<=LEAD_MAX_H:
-                last_levels=[v for ln in older_raw if (v:=level(ln)) is not None]
+                last_levels=[v for ln in older_raw if (v:=level(ln.decode('ascii','replace') if isinstance(ln,bytes) else ln)) is not None]
                 past=antecedent_from_lines(older_raw,last_levels,station_elevation)
                 if past is not None:
                     pairs.append({'site':h['id'],'year':h['year'],'month':h['month'],
