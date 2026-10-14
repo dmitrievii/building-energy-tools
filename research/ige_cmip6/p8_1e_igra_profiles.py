@@ -13,7 +13,7 @@ SITES=('AUM00011035','AUM00011120','SZM00006610','GMM00010868')
 START,END=2017,2020
 VALID_FLAGS={' ','A','B'}
 
-def http(url,max_size=65000000):
+def http(url,max_size=220000000):
     issues=[]
     for k in range(3):
         try:
