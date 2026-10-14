@@ -1,0 +1,53 @@
+name: IGE P8.2C conditional hourly moisture synthesis and psychrometric closure
+on:
+  push:
+    branches: ['research/ige-p8-meteonorm8-batch-automation-20261012']
+    paths:
+      - 'research/ige_cmip6/p8_2c_*.py'
+      - 'research/ige_cmip6/test_p8_2c.py'
+      - '.github/workflows/ige-p8-2c-hourly-moisture.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  psychrometric-scientific-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python -m pip install numpy
+      - name: Test hourly conservation, immutable input and psychrometric closure
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p8_2c.py' -v
+  observed-swiss-hourly-synthesis:
+    needs: psychrometric-scientific-contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python -m pip install numpy
+      - name: Reconstruct conditional hourly moisture using independent Swiss donors
+        run: |
+          mkdir -p "$RUNNER_TEMP/ige_p8_2c/derived"
+          python research/ige_cmip6/p8_2c_hourly.py --out "$RUNNER_TEMP/ige_p8_2c/derived"
+      - name: Publish derived metrics, closure checks and source hashes only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-2c-swiss-hourly-synthesis-results
+          path: ${{ runner.temp }}/ige_p8_2c/derived/*.csv
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Publish provenance (never raw observations)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-2c-synthesis-provenance
+          path: ${{ runner.temp }}/ige_p8_2c/derived/*.json
+          if-no-files-found: warn
+          retention-days: 30
