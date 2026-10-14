@@ -1,0 +1,68 @@
+name: IGE P8.2E post-hoc absolute humidity independent audit
+on:
+  push:
+    branches: ['research/ige-p8-meteonorm8-batch-automation-20261012']
+    paths:
+      - 'research/ige_cmip6/p8_2e_absolute_humidity_audit.py'
+      - 'research/ige_cmip6/test_p8_2e_absolute_humidity_audit.py'
+      - '.github/workflows/ige-p8-2e-absolute-humidity-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  physical-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - name: Independent thermodynamic definition and oracle-scoring contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p8_2e_absolute_humidity_audit.py' -v
+  no-retuning-hourly-density-audit:
+    needs: physical-contracts
+    strategy:
+      fail-fast: false
+      matrix:
+        year: [2018, 2019, 2020]
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - name: Original Austrian station index and identities
+        run: |
+          mkdir -p "$RUNNER_TEMP/ige_p8_absf/source" "$RUNNER_TEMP/ige_p8_absf/metrics"
+          curl --fail --location --retry 3 --retry-all-errors --max-time 150 \
+            'https://tauernwetter.at/klimamittel/klimamittel_oesterreich.json' \
+            --output "$RUNNER_TEMP/ige_p8_absf/source/stations.json"
+          python - "$RUNNER_TEMP/ige_p8_absf/source/stations.json" <<'PY'
+          import json,sys
+          stations=json.load(open(sys.argv[1],encoding='utf8'))['stationen']
+          assert len(stations)==258 and sum(s.get('periode')=='1991–2020' for s in stations)==189
+          print('P8.2E absolute humidity audit: Austrian 1991-2020 station index PASS')
+          PY
+      - name: Original target-isolated hourly Swiss e T rho_v and oracle diagnostic
+        run: |
+          python research/ige_cmip6/p8_2e_absolute_humidity_audit.py \
+            --year ${{ matrix.year }} \
+            --austria-station-normals "$RUNNER_TEMP/ige_p8_absf/source/stations.json" \
+            --out "$RUNNER_TEMP/ige_p8_absf/metrics"
+      - name: Only aggregate metrics and source provenance; no hourly provider values
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-2e-absolute-humidity-${{ matrix.year }}-metrics-only
+          path: |
+            ${{ runner.temp }}/ige_p8_absf/metrics/*.csv
+            ${{ runner.temp }}/ige_p8_absf/metrics/*.json
+          if-no-files-found: warn
+          retention-days: 30
