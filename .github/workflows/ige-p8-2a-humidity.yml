@@ -1,0 +1,63 @@
+name: IGE P8.2A independent historical humidity station holdout
+on:
+  push:
+    branches:
+      - 'research/ige-p8-meteonorm8-batch-automation-20261012'
+    paths:
+      - 'research/ige_cmip6/p8_2a_humidity.py'
+      - 'research/ige_cmip6/test_p8_2a.py'
+      - '.github/workflows/ige-p8-2a-humidity.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  humidity-physical-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - name: Test psychrometrics, strict QC, disjoint years, donor-exclusion and matched comparisons
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p8_2a.py' -v
+  original-geosphere-station-humidity:
+    needs: humidity-physical-contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - name: Fetch independently sourced Austrian station inventory
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/ige_p8_2a/input" "$RUNNER_TEMP/ige_p8_2a/results"
+          curl --fail --location --retry 3 --retry-all-errors --max-time 150 \
+            'https://tauernwetter.at/klimamittel/klimamittel_oesterreich.json' \
+            --output "$RUNNER_TEMP/ige_p8_2a/input/station_normals.json"
+          python - "$RUNNER_TEMP/ige_p8_2a/input/station_normals.json" <<'PY'
+          import json,sys
+          s=json.load(open(sys.argv[1],encoding='utf-8'))['stationen']
+          assert len(s)==258 and sum(v['periode']=='1991–2020' for v in s)==189
+          print('Station index PASS; temperature/humidity values from this index are NEVER fitted')
+          PY
+      - name: Original GeoSphere vapour pressure, RH and absolute humidity monthly paired holdout
+        run: |
+          python research/ige_cmip6/p8_2a_humidity.py \
+            --station-normals "$RUNNER_TEMP/ige_p8_2a/input/station_normals.json" \
+            --out "$RUNNER_TEMP/ige_p8_2a/results" --batch 12
+      - name: Upload ONLY derived metrics, QC, confidence intervals and hashes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-2a-original-geosphere-humidity-physical-holdout
+          path: ${{ runner.temp }}/ige_p8_2a/results/
+          if-no-files-found: warn
+          retention-days: 30
