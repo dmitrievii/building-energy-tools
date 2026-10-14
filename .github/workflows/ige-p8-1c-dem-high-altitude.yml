@@ -1,0 +1,70 @@
+name: IGE P8.1C DEM orographic and high-altitude validation
+on:
+  push:
+    branches:
+      - 'research/ige-p8-meteonorm8-batch-automation-20261012'
+    paths:
+      - 'research/ige_cmip6/p8_1c_dem.py'
+      - 'research/ige_cmip6/p8_1c_validate.py'
+      - 'research/ige_cmip6/test_p8_1c.py'
+      - '.github/workflows/ige-p8-1c-dem-high-altitude.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic-physics-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy pillow
+      - name: Test DEM encoding, geography, training exclusion and paired inference
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p8_1c.py' -v
+  original-dem-and-geosphere-temporal-holdout:
+    needs: synthetic-physics-contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy pillow
+      - name: Obtain independent station index and verify source counts
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/ige_p8_1c/input" "$RUNNER_TEMP/ige_p8_1c/out" "$RUNNER_TEMP/ige_p8_1c/tile_cache"
+          curl --fail --location --retry 3 --retry-all-errors --max-time 150 \
+            'https://tauernwetter.at/klimamittel/klimamittel_oesterreich.json' \
+            --output "$RUNNER_TEMP/ige_p8_1c/input/station_normals.json"
+          python - "$RUNNER_TEMP/ige_p8_1c/input/station_normals.json" <<'PY'
+          import json,sys
+          d=json.load(open(sys.argv[1],encoding='utf8'))['stationen']
+          assert len(d)==258 and sum(s['periode']=='1991–2020' for s in d)==189
+          print('Station source inventory accepted: 258 records, 189 common-period sites')
+          PY
+      - name: Retrieve actual DEM point neighbourhoods from public AWS Terrain Tiles
+        run: |
+          python research/ige_cmip6/p8_1c_dem.py \
+            --station-normals "$RUNNER_TEMP/ige_p8_1c/input/station_normals.json" \
+            --cache "$RUNNER_TEMP/ige_p8_1c/tile_cache" \
+            --out "$RUNNER_TEMP/ige_p8_1c/out" --zoom 11 --workers 12
+      - name: Independent GeoSphere temporal and terrain holdout with 50km buffer
+        run: |
+          python research/ige_cmip6/p8_1c_validate.py \
+            --station-normals "$RUNNER_TEMP/ige_p8_1c/input/station_normals.json" \
+            --terrain "$RUNNER_TEMP/ige_p8_1c/out/terrain_features.json" \
+            --out "$RUNNER_TEMP/ige_p8_1c/out" --batch 16
+      - name: Upload derived research metrics and provenance (no raw station series or DEM tiles)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-1c-dem-original-geosphere-validation
+          path: ${{ runner.temp }}/ige_p8_1c/out/
+          if-no-files-found: error
+          retention-days: 30
