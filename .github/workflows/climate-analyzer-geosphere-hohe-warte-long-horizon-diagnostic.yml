@@ -1,0 +1,59 @@
+name: Climate Analyzer Hohe Warte Long-Horizon Diagnostic
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'deployment/geosphere_hohe_warte_long_horizon_probe.py'
+      - 'deployment/geosphere_hohe_warte_full_parameter_probe.py'
+      - '.github/workflows/climate-analyzer-geosphere-hohe-warte-long-horizon-diagnostic.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: climate-analyzer-hohe-warte-diagnostic-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  live-long-horizon-diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONPATH: tools/climate_analyzer
+    steps:
+      - name: Checkout diagnostic branch
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/climate_analyzer/requirements.txt
+
+      - name: Install Climate Analyzer dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r tools/climate_analyzer/requirements.txt
+
+      - name: Probe live Hohe Warte 2023–2026 at 1h and compare shorter period
+        run: |
+          python deployment/geosphere_hohe_warte_long_horizon_probe.py \
+            --output artifacts/geosphere-hohe-warte-long-horizon/evidence.json
+
+      - name: Probe full-field GeoSphere multi-batch and local civil-time psychrometrics
+        run: |
+          python deployment/geosphere_hohe_warte_full_parameter_probe.py \
+            --output artifacts/geosphere-hohe-warte-full-fields/evidence.json
+
+      - name: Upload incident diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: geosphere-hohe-warte-long-horizon-evidence
+          path: |
+            artifacts/geosphere-hohe-warte-long-horizon
+            artifacts/geosphere-hohe-warte-full-fields
+          if-no-files-found: error
+          retention-days: 30
