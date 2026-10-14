@@ -37,7 +37,7 @@ def radial(lat,lon,dist_m,bearing_deg):
     l2=l1+math.atan2(math.sin(b)*math.sin(a)*math.cos(p1),math.cos(a)-math.sin(p1)*math.sin(p2))
     return math.degrees(p2),(math.degrees(l2)+540)%360-180
 
-def decode_tile(blob):
+def decode_tile(blob, key=None):
     with Image.open(io.BytesIO(blob)) as im:
         v=np.asarray(im.convert('RGB'),dtype=np.float64)
     if v.shape!=(256,256,3):raise ValueError('Wrong Terrarium tile shape')
@@ -49,7 +49,9 @@ def decode_tile(blob):
     nodata=v[:,:,0]==0
     bad=(~np.isfinite(h) | (h < -12000) | (h > 10000)) & ~nodata
     if np.any(bad):
-        raise ValueError('Corrupt non-NoData Terrarium pixels')
+        row,col=np.argwhere(bad)[0]
+        rgb=tuple(int(x) for x in v[row,col])
+        raise ValueError(f'Corrupt non-NoData Terrarium pixels tile={key} count={int(bad.sum())} first_rc=({int(row)},{int(col)}) rgb={rgb} decoded_m={h[row,col]:.3f} range_m=({float(np.min(h)):.3f},{float(np.max(h)):.3f})')
     h[nodata]=np.nan
     if not np.isfinite(h).any():
         raise ValueError('Terrarium tile contains no valid elevation pixels')
@@ -75,9 +77,9 @@ class TileCache:
                     issues.append(str(e));time.sleep(.35*(i+1))
             else:raise RuntimeError(f'Missing DEM tile {key}: {issues}')
             # Validate before retaining.
-            decode_tile(blob)
+            decode_tile(blob,key)
             path.write_bytes(blob)
-        a=decode_tile(blob)
+        a=decode_tile(blob,key)
         return key,a,hashlib.sha256(blob).hexdigest()
     def prefetch(self,keys,workers=12):
         unique=sorted(set(keys));missing=[key for key in unique if key not in self.arrays]
