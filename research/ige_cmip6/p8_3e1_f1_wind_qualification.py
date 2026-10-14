@@ -62,7 +62,7 @@ def classify_station_evidence(record, cols):
     def field(*names):
         for key in names:
             name = next((c for c in cols if c.casefold() == key.casefold()), None)
-            if name:
+            if name and (record.get(name) or "").strip():
                 return (record.get(name) or "").strip()
         return ""
     sid = field("station_abbr", "station", "abbreviation", "station_id")
@@ -339,6 +339,7 @@ def stage_f1():
     candidates = {sid: metadata[sid] for sid in CANDIDATE_DONORS if sid in metadata}
     targets = {sid: metadata[sid] for sid in TARGETS}
     climatologies, donor_history, source_digest, rejected = {}, {}, {}, {}
+    holdout_donor_sha256 = {}
     for sid, station in candidates.items():
         try:
             obs_train, swiss_sha = station_year(sid, TRAIN_YEAR)
@@ -352,8 +353,9 @@ def stage_f1():
         raise ValueError("F1_FEWER_THAN_FOUR_CALIBRATED_DONORS " + str(rejected))
     # Donor holdout obs used ONLY for baseline contemporaneous station IDW, never residual training.
     for sid in climatologies:
-        observed, _ = station_year(sid, HOLDOUT_YEAR)
+        observed, sha = station_year(sid, HOLDOUT_YEAR)
         donor_history[sid] = observed
+        holdout_donor_sha256[sid] = sha
     sites = []
     for sid, station in targets.items():
         if sid in climatologies:
@@ -373,6 +375,7 @@ def stage_f1():
         "failed_donor_sources": rejected,
         "sources": F1_SOURCES, "metadata_source_sha256": metadata_sha,
         "training_sha256": source_digest,
+        "holdout_donor_observation_sha256": holdout_donor_sha256,
         "sites": sites,
         "clock_convention": "nominal identical UTC hours, fixed before holdout; no posthoc clock shift optimization",
         "background": "Open-Meteo archive models=era5 (10m, GMT), gateway not native ECMWF file",
