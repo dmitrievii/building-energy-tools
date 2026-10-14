@@ -1,0 +1,53 @@
+name: IGE P8.3A independent Swiss spatial wind-vector research pilot
+on:
+  push:
+    branches: ['research/ige-p8-3a-spatial-wind-20261014']
+    paths:
+      - 'research/ige_cmip6/p8_3a_wind_spatial.py'
+      - 'research/ige_cmip6/test_p8_3a_wind_spatial.py'
+      - '.github/workflows/ige-p8-3a-wind-spatial.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  vector-physics-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - name: Assert meteorological FROM convention and circular-wind scientific contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3a_wind_spatial.py' -v
+  original-2021-swiss-wind-hindcast:
+    needs: vector-physics-contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    env:
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - name: Withhold target; use original SwissMetNet wind speed and azimuth of nearest eligible donors
+        run: |
+          mkdir -p "$RUNNER_TEMP/ige_p8_3a_wind"
+          python research/ige_cmip6/p8_3a_wind_spatial.py \
+            --year 2021 --out "$RUNNER_TEMP/ige_p8_3a_wind"
+      - name: Upload only aggregate scientific metrics and SHA provenance; never source hourly records
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-3a-swiss-wind-hindcast-2021-aggregate-only
+          path: |
+            ${{ runner.temp }}/ige_p8_3a_wind/wind_station_coverage.csv
+            ${{ runner.temp }}/ige_p8_3a_wind/wind_selected_donors.csv
+            ${{ runner.temp }}/ige_p8_3a_wind/wind_station_skill.csv
+            ${{ runner.temp }}/ige_p8_3a_wind/wind_spatial_provenance.json
+          if-no-files-found: warn
+          retention-days: 30
