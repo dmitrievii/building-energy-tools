@@ -1,0 +1,66 @@
+name: IGE P8.2D independent annual moisture spatial reconstruction and EPW structural validation
+on:
+  push:
+    branches:
+      - 'research/ige-p8-meteonorm8-batch-automation-20261012'
+    paths:
+      - 'research/ige_cmip6/p8_2d_*.py'
+      - 'research/ige_cmip6/test_p8_2d.py'
+      - '.github/workflows/ige-p8-2d-independent-annual-moisture.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  rigorous-hourly-epw-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - name: Strict source exclusion, annual 8760 hours and psychrometric EPW contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p8_2d.py' -v
+  original-swiss-2019-annual-holdout:
+    needs: rigorous-hourly-epw-contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy
+      - name: Download original GeoSphere Austrian station index and validate provenance
+        run: |
+          mkdir -p "$RUNNER_TEMP/ige_p8_2d/source" "$RUNNER_TEMP/ige_p8_2d/metrics"
+          curl --fail --location --retry 3 --retry-all-errors --max-time 120 \
+            'https://tauernwetter.at/klimamittel/klimamittel_oesterreich.json' \
+            --output "$RUNNER_TEMP/ige_p8_2d/source/klimamittel_oesterreich.json"
+          python - "$RUNNER_TEMP/ige_p8_2d/source/klimamittel_oesterreich.json" <<'PY'
+          import json,sys
+          station=json.load(open(sys.argv[1],encoding='utf-8'))['stationen']
+          assert len(station)==258 and sum(s.get('periode')=='1991–2020' for s in station)==189
+          print('P8.2D Source identity/QC baseline registered')
+          PY
+      - name: Frozen Austrian training 1991-2010 and genuine Swiss 2019 annual independent reconstruction
+        run: |
+          python research/ige_cmip6/p8_2d_annual.py \
+            --austria-station-normals "$RUNNER_TEMP/ige_p8_2d/source/klimamittel_oesterreich.json" \
+            --out "$RUNNER_TEMP/ige_p8_2d/metrics"
+      - name: Publish aggregate annual skill and provenance only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-2d-swiss-independent-annual-moisture-aggregate
+          path: |
+            ${{ runner.temp }}/ige_p8_2d/metrics/*.csv
+            ${{ runner.temp }}/ige_p8_2d/metrics/*.json
+          retention-days: 30
+          if-no-files-found: warn
