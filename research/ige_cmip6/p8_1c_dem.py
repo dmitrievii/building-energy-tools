@@ -37,7 +37,7 @@ def radial(lat,lon,dist_m,bearing_deg):
     l2=l1+math.atan2(math.sin(b)*math.sin(a)*math.cos(p1),math.cos(a)-math.sin(p1)*math.sin(p2))
     return math.degrees(p2),(math.degrees(l2)+540)%360-180
 
-def decode_tile(blob, key=None):
+def decode_tile(blob, key=None, stats=None):
     with Image.open(io.BytesIO(blob)) as im:
         v=np.asarray(im.convert('RGB'),dtype=np.float64)
     if v.shape!=(256,256,3):raise ValueError('Wrong Terrarium tile shape')
@@ -48,11 +48,18 @@ def decode_tile(blob, key=None):
     # https://github.com/tilezen/joerd/blob/master/joerd/output/terrarium.py
     nodata=v[:,:,0]==0
     bad=(~np.isfinite(h) | (h < -12000) | (h > 10000)) & ~nodata
-    if np.any(bad):
-        row,col=np.argwhere(bad)[0]
-        rgb=tuple(int(x) for x in v[row,col])
-        raise ValueError(f'Corrupt non-NoData Terrarium pixels tile={key} count={int(bad.sum())} first_rc=({int(row)},{int(col)}) rgb={rgb} decoded_m={h[row,col]:.3f} range_m=({float(np.min(h)):.3f},{float(np.max(h)):.3f})')
-    h[nodata]=np.nan
+    # A physically impossible pixel is unusable, not grounds to discard
+    # otherwise valid DEM terrain. Never interpolate, clip or substitute it.
+    # Requested terrain points are checked separately by TileCache.point().
+    if stats is not None:
+        stats['nodata_pixels']=int(np.count_nonzero(nodata))
+        stats['implausible_pixels']=int(np.count_nonzero(bad))
+        if np.any(bad):
+            row,col=np.argwhere(bad)[0]
+            stats['first_implausible']={'row':int(row),'col':int(col),
+                'rgb':[int(vv) for vv in v[row,col]],
+                'decoded_m':float(h[row,col])}
+    h[nodata | bad]=np.nan
     if not np.isfinite(h).any():
         raise ValueError('Terrarium tile contains no valid elevation pixels')
     return h
@@ -60,7 +67,7 @@ def decode_tile(blob, key=None):
 class TileCache:
     def __init__(self,cache,zoom=ZOOM):
         self.path=Path(cache);self.path.mkdir(parents=True,exist_ok=True)
-        self.zoom=zoom;self.arrays={};self.sha={}
+        self.zoom=zoom;self.arrays={};self.sha={};self.tile_stats={}
     def load(self,key):
         z,x,y=key
         path=self.path/f'{z}_{x}_{y}.png'
@@ -79,13 +86,15 @@ class TileCache:
             # Validate before retaining.
             decode_tile(blob,key)
             path.write_bytes(blob)
-        a=decode_tile(blob,key)
-        return key,a,hashlib.sha256(blob).hexdigest()
+        tile_stats={}
+        a=decode_tile(blob,key,stats=tile_stats)
+        return key,a,hashlib.sha256(blob).hexdigest(),tile_stats
     def prefetch(self,keys,workers=12):
         unique=sorted(set(keys));missing=[key for key in unique if key not in self.arrays]
         with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
-            for k,a,sha in pool.map(self.load,missing):
+            for k,a,sha,stats in pool.map(self.load,missing):
                 self.arrays[k]=a;self.sha[str(k)]=sha
+                self.tile_stats[str(k)]=stats
     def point(self,lat,lon):
         k,x,y=tile_point(lat,lon,self.zoom)
         if k not in self.arrays:raise KeyError('DEM_TILE_UNFETCHED '+str(k))
@@ -135,6 +144,10 @@ def run(reference,out,cache_dir,zoom=ZOOM,workers=12):
         'attribution':'https://github.com/tilezen/joerd/blob/master/docs/attribution.md',
         'source_kind':'multi-provider mosaicked bare-earth DEM, not single Copernicus or NASA source',
         'zoom':zoom,'pixel_interpretation':'Web Mercator Terrarium, nearest pixel; resolution depends on latitude',
+        'nodata_pixel_count':sum(x['nodata_pixels'] for x in cache.tile_stats.values()),
+        'implausible_pixel_count':sum(x['implausible_pixels'] for x in cache.tile_stats.values()),
+        'tile_invalid_pixel_diagnostics':{k:v for k,v in cache.tile_stats.items() if v['implausible_pixels']>0},
+        'invalid_pixel_policy':'NoData and physically impossible pixels are NaN; never interpolated or replaced; fail closed if sampled point is NaN',
         'rings_m':RINGS,'bearings_degrees':BEARINGS,'n_tile_hashes':len(cache.sha),'tile_sha256':cache.sha,
         'input_station_reference_sha256':hashlib.sha256(blob).hexdigest(),'n_stations':len(features),
         'n_station_dem_disagreements_gt200m':sum(x['elevation_warning'] for x in features),
