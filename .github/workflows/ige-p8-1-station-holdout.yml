@@ -1,0 +1,23 @@
+name: IGE P8.1 independent station holdout regression
+on:
+  push:
+    branches:
+      - 'research/ige-p8-*'
+    paths:
+      - 'research/ige_cmip6/p8_1_spatial_holdout.py'
+      - 'research/ige_cmip6/test_p8_1_spatial_holdout.py'
+      - '.github/workflows/ige-p8-1-station-holdout.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Independent synthetic station-space contract tests (no proprietary inputs)
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p8_1_spatial_holdout.py' -v
