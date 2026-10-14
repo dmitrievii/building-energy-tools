@@ -5,6 +5,26 @@ from p8_3e_h_wind_source_screens import (
     axial_wind,complete_days,block_bootstrap)
 
 class TestWindSourceChecks(unittest.TestCase):
+    def test_meteoswiss_parameter_table_utf8(self):
+        from p8_3e_h_wind_source_screens import decode_wind_parameter_metadata
+        raw = 'parameter;description\\nfkl010h0;wind speed\\ndkl010h0;wind direction\\n'.replace('\\n', '\n').encode('utf-8')
+        records, codec = decode_wind_parameter_metadata(raw)
+        self.assertEqual(codec, 'utf-8-sig')
+        self.assertEqual(len(records), 2)
+
+    def test_meteoswiss_parameter_table_cp1252(self):
+        from p8_3e_h_wind_source_screens import decode_wind_parameter_metadata
+        raw = b'parameter;description\\nfkl010h0;vitesse du vent \\xe8 10 m\\ndkl010h0;direction\\n'.replace(b'\\n', b'\n')
+        records, codec = decode_wind_parameter_metadata(raw)
+        self.assertEqual(codec, 'cp1252')
+        self.assertIn('\u00e8', records[0]['description'])
+        self.assertEqual(len(records), 2)
+
+    def test_meteoswiss_parameter_table_missing_parameters_rejected(self):
+        from p8_3e_h_wind_source_screens import decode_wind_parameter_metadata
+        with self.assertRaisesRegex(ValueError, 'WIND_PARAMETER_METADATA_FIELDS_NOT_FOUND'):
+            decode_wind_parameter_metadata(b'parameter;description\\nother;not wind\\n'.replace(b'\\n', b'\n'))
+
     def test_log_identity(self):
         self.assertAlmostEqual(log_profile(4,10,10,.1),4)
     def test_log_higher_height(self):
