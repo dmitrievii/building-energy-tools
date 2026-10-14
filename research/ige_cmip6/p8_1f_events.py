@@ -167,7 +167,7 @@ def execute(out,sites=SITES):
       'independent_fold_results':results,'excluded_folds':excluded,
       'required_n_folds':2,'required_n_test':120,
       'scientific_status':'INSUFFICIENT_COVERAGE' if len(results)<2 or sum(r['n_test'] for r in results)<120 else 'COVERAGE_PASS'}
-    (out/'event_coverage_diagnostic.json').write_text(json.dumps(diagnostic,indent=2)+'\\n')
+    (out/'event_coverage_diagnostic.json').write_text(json.dumps(diagnostic,indent=2)+'\n')
     print('IGE_P8_1F_EVENT_COVERAGE',json.dumps(diagnostic),flush=True)
     if len(results)<2 or sum(r['n_test'] for r in results)<120:
         raise RuntimeError('Not enough independent site- and time-held-out inversion predictions; see event_coverage_diagnostic.json')
