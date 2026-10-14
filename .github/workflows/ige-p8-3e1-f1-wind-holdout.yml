@@ -1,0 +1,60 @@
+name: IGE P8.3E1-F1 wind exposure and ERA5 residual holdout
+
+on:
+  push:
+    branches:
+      - research/ige-p8-3e1-f1-wind-20261015
+    paths:
+      - 'research/ige_cmip6/p8_3e1_f1_wind_qualification.py'
+      - 'research/ige_cmip6/test_p8_3e1_f1_wind_qualification.py'
+      - '.github/workflows/ige-p8-3e1-f1-wind-holdout.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy pillow
+      - name: E1/F1 domain, source and withheld-target regression contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3e1_f1_wind_qualification.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3e_h_wind_source_screens.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3d_wind_terrain_donors.py' -v
+
+  independent_source_science:
+    needs: contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        phase: [E1, F1]
+    env:
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy pillow
+      - name: Execute independent E1 or F1 source-backed method gate
+        run: |
+          mkdir -p "$RUNNER_TEMP/ige_p8_3${{ matrix.phase }}"
+          python research/ige_cmip6/p8_3e1_f1_wind_qualification.py --phase "${{ matrix.phase }}" --out "$RUNNER_TEMP/ige_p8_3${{ matrix.phase }}"
+      - name: Export aggregates and source digests only, never hours
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-3${{ matrix.phase }}-research-science-aggregates
+          path: ${{ runner.temp }}/ige_p8_3${{ matrix.phase }}/*.json
+          if-no-files-found: warn
+          retention-days: 30
