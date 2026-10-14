@@ -11,6 +11,9 @@ from p8_2b_humidity import swiss_monthly,train_austria_humidity
 from p8_2f_donor_audit import metrics,event_audit,source_station_geometry,export
 YEAR=2019
 
+def strict_source_eligible(n_hour_rows,n_hour_complete_tperh,n_month_e,expected=8760):
+    return n_hour_rows==expected and n_hour_complete_tperh==expected and n_month_e==12
+
 def prioritized_candidates(metadata,targets=TARGETS,original_pool=POOL,limit=12):
     per={}
     for sid in targets:
@@ -47,6 +50,11 @@ def run(normals,out):
            'eligible_original_selection_rule':eligible,'source_error':reason,
            'in_initial_pool':sid in POOL,
            'in_nearest_12_of_targets':','.join(t for t,v in nearest.items() if sid in v)})
+    # Strict completeness is essential: MeteoSwiss may expose 8760 timestamp rows with
+    # entirely missing T/e/P/RH. Never treat row count as observed variable coverage.
+    strict_valid={r['sid'] for r in status if strict_source_eligible(
+        r['n_hour_rows'],r['n_hour_complete_TPeRH'],r['n_monthly_e_2019'])}
+    for r in status:r['eligible_strict_full_2019']=r['sid'] in strict_valid
     train_e,train_t,cal=train_austria_humidity(normals)
     hours=annual_hours(YEAR)
     subsets=[];scores=[];events=[];geometry=[]
@@ -54,7 +62,7 @@ def run(normals,out):
         if target_id not in weather:raise RuntimeError('Target station unavailable '+target_id)
         t=metadata[target_id]
         original_meta={sid:metadata[sid] for sid in POOL if sid in metadata}
-        expanded_meta={sid:metadata[sid] for sid in candidates if sid in metadata}
+        expanded_meta={sid:metadata[sid] for sid in strict_valid if sid in metadata}
         safe_weather={sid:wx for sid,wx in weather.items() if sid!=target_id}
         safe_monthly={sid:wx for sid,wx in monthly.items() if sid!=target_id}
         selections={}
@@ -80,7 +88,9 @@ def run(normals,out):
     export(dest/'expanded_2019_wet_event_mechanisms.csv',events)
     source={'stage':'P8.2F_NEARBY_EXPANDED_SWISS_DONOR_2019_PILOT','year':YEAR,
         'source_metadata_sha256':msha,'source_sha256':digests,'calibration':cal,
-        'candidates_discovered':len(candidates),'station_meta_count':len(metadata),'nearest_candidates':nearest,
+        'candidates_discovered':len(candidates),'n_fully_qualified_candidates':len(strict_valid),
+       'eligibility':'EXACT_8760_COMPLETE_T_P_e_RH plus 12 monthly e; no row-count-only candidate admission',
+       'station_meta_count':len(metadata),'nearest_candidates':nearest,
         'raw_hourly_obs_exported':False,'all_site_observations_excluded_from_predictors':True,
         'explicit_limit':'Expanded candidate ranking checks station source availability; 2019 examined before, no untouched confirmation',
         'failure_policy':'If original baseline or data parsing fails, report failure; expanded donor failures not treated as zero error'}
