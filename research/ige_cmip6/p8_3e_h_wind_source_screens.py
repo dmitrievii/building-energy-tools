@@ -41,14 +41,35 @@ def log_profile(v,z_src,z_dst,z0):
         raise ValueError('INVALID_NEUTRAL_LOG_PROFILE_DOMAIN')
     return v*math.log(z_dst/z0)/math.log(z_src/z0)
 
+def decode_wind_parameter_metadata(raw):
+    """MeteoSwiss OGD station metadata may use legacy Windows-1252.
+
+    Decode strictly and record the actual successful codec. Never replace
+    invalid bytes or silently label undecodable provenance as verified.
+    """
+    try:
+        source = raw.decode('utf-8-sig', errors='strict')
+        codec = 'utf-8-sig'
+    except UnicodeDecodeError:
+        source = raw.decode('cp1252', errors='strict')
+        codec = 'cp1252'
+    rows = list(csv.DictReader(source.splitlines(), delimiter=';'))
+    if not rows or not any('fkl010h0' in str(v).lower() for r in rows for v in r.values()):
+        raise ValueError('WIND_PARAMETER_METADATA_FIELDS_NOT_FOUND')
+    matched = [r for r in rows if any(
+        ('fkl010h0' in str(v).lower() or 'dkl010h0' in str(v).lower())
+        for v in r.values())]
+    return matched, codec
+
+
 def stage_e(out):
     stations,sh,cols=metadata()
     raw,ph=fetch(ROOT+'/ogd-smn_meta_parameters.csv',max_bytes=3000000)
-    wind_parameters=[r for r in csv.DictReader(raw.decode('utf-8-sig').splitlines(),delimiter=';')
-                     if any('fkl010h0' in str(v) or 'dkl010h0' in str(v) for v in r.values())]
+    wind_parameters, parameter_encoding = decode_wind_parameter_metadata(raw)
     targets=('BAS','CHD','GRA','MUB','STG','VIS')
     result={'phase':'P8.3E','status':'METADATA_PASS__INSTRUMENT_HEIGHT_AND_ROUGHNESS_NOT_VERIFIED',
       'station_metadata_sha256':sh,'parameter_metadata_sha256':ph,
+      'parameter_metadata_decode_encoding':parameter_encoding,
       'station_columns':cols,'hourly_wind_parameter_definitions':wind_parameters,
       'sites':[{'id':sid,'ground_elevation_masl':stations[sid]['hoehe_m'],
                 'anemometer_height_m_agl':None,'roughness_length_z0_m':None,
