@@ -1,0 +1,57 @@
+name: IGE P8.3E-H four independent Swiss wind research source screens
+on:
+  push:
+    branches: ['research/ige-p8-3e-h-wind-screen-20261015']
+    paths:
+      - research/ige_cmip6/p8_3e_h_wind_source_screens.py
+      - research/ige_cmip6/test_p8_3e_h_wind_source_screens.py
+      - .github/workflows/ige-p8-3e-h-four-wind-source-screens.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  four_stage_contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy pillow
+      - name: Run P8.3E-H domain and original frozen wind physics contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3e_h_wind_source_screens.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3d_wind_terrain_donors.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3a_wind_spatial.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3b_wind_direction_qc.py' -v
+  phase_source_science:
+    needs: four_stage_contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        phase: [E, F, G, H]
+    env:
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy pillow
+      - name: P8.3${{ matrix.phase }} independent original-source gate
+        run: |
+          mkdir -p "$RUNNER_TEMP/ige_p8_3${{ matrix.phase }}"
+          python research/ige_cmip6/p8_3e_h_wind_source_screens.py --phase "${{ matrix.phase }}" --out "$RUNNER_TEMP/ige_p8_3${{ matrix.phase }}"
+      - name: Aggregate-only scientific provenance for P8.3${{ matrix.phase }}
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-3${{ matrix.phase }}-source-original-science-audit
+          path: |
+            ${{ runner.temp }}/ige_p8_3${{ matrix.phase }}/*.json
+          if-no-files-found: warn
+          retention-days: 30
