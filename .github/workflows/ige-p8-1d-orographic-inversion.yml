@@ -1,0 +1,84 @@
+name: IGE P8.1D Orographic Regimes and Inversion Pilot
+on:
+  push:
+    branches:
+      - 'research/ige-p8-meteonorm8-batch-automation-20261012'
+    paths:
+      - 'research/ige_cmip6/p8_1d_*.py'
+      - '.github/workflows/ige-p8-1d-orographic-inversion.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python -m pip install numpy pillow
+      - name: Run non-proprietary scientific regression contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p8_1d*.py' -v
+  historical-temporal-holdout:
+    needs: contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python -m pip install numpy pillow
+      - name: Re-fetch independent station index and verify inventory
+        run: |
+          mkdir -p "$RUNNER_TEMP/p8_1d/input" "$RUNNER_TEMP/p8_1d/dem_cache" "$RUNNER_TEMP/p8_1d/dem_out" "$RUNNER_TEMP/p8_1d/metrics"
+          curl -fL --retry 3 --retry-all-errors --max-time 150 'https://tauernwetter.at/klimamittel/klimamittel_oesterreich.json' --output "$RUNNER_TEMP/p8_1d/input/station_normals.json"
+          python - "$RUNNER_TEMP/p8_1d/input/station_normals.json" <<'PY'
+          import json,sys
+          ss=json.load(open(sys.argv[1],encoding='utf8'))['stationen']
+          assert len(ss)==258 and sum(x['periode']=='1991–2020' for x in ss)==189
+          print('Verified independent station inventory:',len(ss))
+          PY
+      - name: Independently re-sample Mapzen real DEM (no unpublished artificial data)
+        run: |
+          python research/ige_cmip6/p8_1c_dem.py \
+            --station-normals "$RUNNER_TEMP/p8_1d/input/station_normals.json" \
+            --cache "$RUNNER_TEMP/p8_1d/dem_cache" \
+            --out "$RUNNER_TEMP/p8_1d/dem_out" --zoom 11 --workers 12
+      - name: Strict donor-only 1991-2010 fitting and GeoSphere 2011-2020 holdout
+        run: |
+          python research/ige_cmip6/p8_1d_validate.py \
+            --station-normals "$RUNNER_TEMP/p8_1d/input/station_normals.json" \
+            --terrain "$RUNNER_TEMP/p8_1d/dem_out/terrain_features.json" \
+            --out "$RUNNER_TEMP/p8_1d/metrics" --batch 16
+      - name: Upload only aggregated statistics and DEM provenance
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-1d-historical-regime-holdout
+          path: |
+            ${{ runner.temp }}/p8_1d/metrics/
+            ${{ runner.temp }}/p8_1d/dem_out/terrain_summary.json
+          if-no-files-found: error
+          retention-days: 30
+  observed-hourly-pair-pilot:
+    needs: contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python -m pip install numpy pillow
+      - name: Check observed hourly temperature stratification for valley/ridge pairs
+        run: |
+          python research/ige_cmip6/p8_1d_hourly_pilot.py --out "$RUNNER_TEMP/p8_1d_hourly"
+      - name: Upload aggregated paired-hour stratification ONLY
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-1d-observed-hourly-stratification-pilot
+          path: ${{ runner.temp }}/p8_1d_hourly/
+          if-no-files-found: error
+          retention-days: 30
