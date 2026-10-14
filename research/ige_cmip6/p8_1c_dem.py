@@ -42,8 +42,17 @@ def decode_tile(blob):
         v=np.asarray(im.convert('RGB'),dtype=np.float64)
     if v.shape!=(256,256,3):raise ValueError('Wrong Terrarium tile shape')
     h=256*v[:,:,0]+v[:,:,1]+v[:,:,2]/256-32768
-    if not np.isfinite(h).all() or np.any((h< -12000)|(h>10000)):
-        raise ValueError('Invalid terrain values')
+    # The upstream joerd Terrarium writer sets R=0 for NoData, deliberately
+    # encoding a physically impossible elevation below -32512 m. Do not
+    # reject the *whole tile* if only unvisited pixels are NoData.
+    # https://github.com/tilezen/joerd/blob/master/joerd/output/terrarium.py
+    nodata=v[:,:,0]==0
+    bad=(~np.isfinite(h) | (h < -12000) | (h > 10000)) & ~nodata
+    if np.any(bad):
+        raise ValueError('Corrupt non-NoData Terrarium pixels')
+    h[nodata]=np.nan
+    if not np.isfinite(h).any():
+        raise ValueError('Terrarium tile contains no valid elevation pixels')
     return h
 
 class TileCache:
@@ -78,7 +87,10 @@ class TileCache:
     def point(self,lat,lon):
         k,x,y=tile_point(lat,lon,self.zoom)
         if k not in self.arrays:raise KeyError('DEM_TILE_UNFETCHED '+str(k))
-        return float(self.arrays[k][y,x])
+        elevation=float(self.arrays[k][y,x])
+        if not math.isfinite(elevation):
+            raise ValueError(f'DEM_NODATA_AT_SAMPLE tile={k} pixel=({x},{y}) lat={lat:.6f} lon={lon:.6f}')
+        return elevation
 
 def sample_locations(station):
     pts=[(station['lat'],station['lon'])]
