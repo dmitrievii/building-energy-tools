@@ -156,7 +156,21 @@ def execute(out,sites=SITES):
         all_pairs.extend(pairs);coverage.append({'site':sid,'n_soundings':len(heads),'n_pairs':len(pairs),**issues})
         sources.append({'site':sid,'archive_sha256':hashlib.sha256(archive).hexdigest(),'bytes':len(archive)})
     results,excluded=evaluate_folds(all_pairs)
-    if len(results)<2 or sum(r['n_test'] for r in results)<120:raise RuntimeError('Not enough independent site- and time-held-out inversion predictions')
+    # Provenance and sample sufficiency are always exported before a scientific
+    # coverage gate fails. This does not change fold membership or thresholds.
+    diagnostic={'phase':'P8.1F_EVENT_COVERAGE_AUDIT','sites':coverage,
+      'n_total_pairs':len(all_pairs),'train_years':list(TRAIN_YEARS),
+      'test_years':list(TEST_YEARS),'per_site_year':[
+        {'site':sid,'year':year,'n_pairs':sum(v['site']==sid and v['year']==year for v in all_pairs),
+         'n_inversions':sum(v['y'] for v in all_pairs if v['site']==sid and v['year']==year)}
+        for sid in sites for year in (*TRAIN_YEARS,*TEST_YEARS)],
+      'independent_fold_results':results,'excluded_folds':excluded,
+      'required_n_folds':2,'required_n_test':120,
+      'scientific_status':'INSUFFICIENT_COVERAGE' if len(results)<2 or sum(r['n_test'] for r in results)<120 else 'COVERAGE_PASS'}
+    (out/'event_coverage_diagnostic.json').write_text(json.dumps(diagnostic,indent=2)+'\\n')
+    print('IGE_P8_1F_EVENT_COVERAGE',json.dumps(diagnostic),flush=True)
+    if len(results)<2 or sum(r['n_test'] for r in results)<120:
+        raise RuntimeError('Not enough independent site- and time-held-out inversion predictions; see event_coverage_diagnostic.json')
     savecsv(out/'inversion_site_holdouts.csv',results)
     report={'phase':'P8.1F_EVENT_CAUSAL_12_TO_26_H','status':'EVENTS_VALIDATED_NOT_PRODUCTION',
      'sites':coverage,'sources':sources,'trained_on_years':list(TRAIN_YEARS),'test_years':list(TEST_YEARS),
