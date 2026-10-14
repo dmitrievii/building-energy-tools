@@ -2,7 +2,7 @@
 import unittest,math,io
 import numpy as np
 from PIL import Image
-from p8_1c_dem import tile_point,radial,decode_tile,sample_locations
+from p8_1c_dem import tile_point,radial,decode_tile,sample_locations,TileCache
 from p8_1c_validate import dem_coefficients,paired_prediction,station_cluster_bootstrap
 
 class Tests(unittest.TestCase):
@@ -11,6 +11,26 @@ class Tests(unittest.TestCase):
   a=np.zeros((256,256,3),dtype=np.uint8);a[:,:,:]=[140,37,0]
   b=io.BytesIO();Image.fromarray(a).save(b,format='PNG')
   self.assertAlmostEqual(decode_tile(b.getvalue())[123,24],3109.)
+ def test_terrarium_nodata_only_masks_unsampled_pixels(self):
+  a=np.full((256,256,3),[140,37,0],dtype=np.uint8)
+  a[7,9]=[0,0,0]
+  b=io.BytesIO();Image.fromarray(a).save(b,format='PNG')
+  h=decode_tile(b.getvalue())
+  self.assertTrue(np.isnan(h[7,9]))
+  self.assertAlmostEqual(h[8,9],3109.)
+  cache=TileCache('/tmp/p8_1c_synthetic_only')
+  tile,x,y=tile_point(47,15,11)
+  cache.arrays[tile]=h.copy()
+  cache.arrays[tile][y,x]=np.nan
+  with self.assertRaisesRegex(ValueError,'DEM_NODATA_AT_SAMPLE'):
+   cache.point(47,15)
+  cache.arrays[tile][y,x]=3109.
+  self.assertAlmostEqual(cache.point(47,15),3109.)
+ def test_all_nodata_rejected(self):
+  a=np.zeros((256,256,3),dtype=np.uint8)
+  b=io.BytesIO();Image.fromarray(a).save(b,format='PNG')
+  with self.assertRaisesRegex(ValueError,'no valid elevation'):
+   decode_tile(b.getvalue())
  def test_tile_geolocation(self):
   k,x,y=tile_point(0,0,11)
   self.assertEqual(k,(11,1024,1024));self.assertEqual((x,y),(0,0))
