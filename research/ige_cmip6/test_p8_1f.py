@@ -22,6 +22,18 @@ class Contracts(unittest.TestCase):
         from p8_1e_igra_profiles import level
         self.assertEqual(level(ln(200,5.0)),(200,5.))
 
+    def test_real_igra_archive_byte_lines_preserve_qualifying_profiles(self):
+        # IGRA ZIP stream yields bytes; the scientific decoder validates ASCII flags.
+        old=[ln(200,5.0,20,30).encode('ascii'),ln(500,3.0).encode('ascii')]
+        current=[ln(200,2.0,50,70).encode('ascii'),ln(500,5.0).encode('ascii')]
+        first=head('S',2019,1,1,0)
+        next_launch=head('S',2019,1,1,12)
+        pairs,issues=build_pairs([(first,old),(next_launch,current)],200)
+        self.assertEqual(len(pairs),1,issues)
+        self.assertEqual(pairs[0]['y'],1)
+        self.assertEqual(pairs[0]['lead_hours'],12.)
+        self.assertEqual(issues.get('target_profile_incomplete',0),0)
+
     def test_event_features_are_exclusively_antecedent(self):
         old=[ln(200,5.0,20,30),ln(500,3.0)]
         current=[ln(200,2.0,50,70),ln(500,5.0)]
