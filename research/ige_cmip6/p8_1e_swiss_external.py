@@ -74,7 +74,7 @@ def parse_meta(raw):
     return out,cols
 
 def station_id_from_name(name):
-    m=re.search(r'ogd-smn_([a-z]{3})_[tmhdy]_',name.lower())
+    m=re.search(r'ogd-smn_([a-z]{3})_[tmhdy](?:_|\.)',name.lower())
     return m.group(1).upper() if m else None
 
 def discover_assets(items):
@@ -86,7 +86,9 @@ def discover_assets(items):
             sid=station_id_from_name(candidate)
             if not sid:continue
             filename=urlparse(url).path.lower()
-            if not re.search(r'_m_(?:historical|hist)',filename):continue
+            # MeteoSwiss STAC monthly (m) assets have *no* recent/historical suffix.
+            # Historical/recent applies to d/h/t, not monthly/y.
+            if not re.search(r'_m(?:_(?:historical|hist))?\.csv$',filename):continue
             if not filename.endswith('.csv'):continue
             if urlparse(url).hostname!=ROOT_HOST:continue
             out[sid].append(url)
@@ -113,7 +115,7 @@ def inventory_probe(out):
     discovered=discover_assets(items)
     diagnostic={'source':'MeteoSwiss SwissMetNet STAC','station_metadata_sha256':digest,
          'station_count':len(stations),'station_metadata_columns':list(cols),
-         'stac_pages':pages,'n_stac_items':len(items),'n_station_monthly_historical_assets':len(discovered),
+         'stac_pages':pages,'n_stac_items':len(items),'n_station_monthly_full_series_assets':len(discovered),
          'asset_sample':{k:v[:3] for k,v in list(sorted(discovered.items()))[:8]},
          'sample_stac_items':[{'id':x.get('id'),'asset_names':list(x.get('assets',{}))[:6]} for x in items[:3]],
          'policy':'Station metadata and headers only for probe, no MeteoSwiss observed temperature series published.'}
@@ -125,7 +127,7 @@ def inventory_probe(out):
 def parse_month_csv(raw,station):
     rows,cols=decode_csv(raw)
     idcol=pick_col(cols,'station','station_abbr')
-    datecol=pick_col(cols,'time','date','datum')
+    datecol=pick_col(cols,'reference_timestamp','time','date','datum')
     tempcol=pick_col(cols,'tre200m0')
     if not datecol or not tempcol:raise ValueError('MONTHLY_TEMP_SCHEMA_CHANGED '+str(cols))
     out={}
@@ -133,8 +135,11 @@ def parse_month_csv(raw,station):
         if idcol and r[idcol].strip().upper()!=station:continue
         date=(r[datecol] or '').strip()
         ma=re.match(r'^(20\d\d)[-/.]?(0[1-9]|1[0-2])(?:\D|$)',date)
-        if not ma:continue
-        y=int(ma.group(1));m=int(ma.group(2))
+        if ma:y=int(ma.group(1));m=int(ma.group(2))
+        else:
+            eu=re.match(r'^\d{2}\.(0[1-9]|1[0-2])\.(20\d\d)(?:\s|$)',date)
+            if not eu:continue
+            y=int(eu.group(2));m=int(eu.group(1))
         if y not in TIME_YEARS:continue
         rawtemp=(r[tempcol] or '').strip()
         if not rawtemp or rawtemp in ('-','-9999','NaN'):continue
