@@ -52,12 +52,16 @@ class Swiss(unittest.TestCase):
     def test_month_csv_observed(self):
         s='station;time;tre200m0\nBER;201101;1.5\nBER;2011-02;2.2\nBER;1999-01;1\n'
         a,h=parse_month_csv(s.encode(),'BER');self.assertEqual(a,{'2011-01':1.5,'2011-02':2.2})
+    def test_month_time_dd_mm_yyyy(self):
+        s='station;reference_timestamp;tre200m0\nBER;01.01.2011 00:00;1.5\n'
+        a,_=parse_month_csv(s.encode(),'BER')
+        self.assertEqual(a,{'2011-01':1.5})
     def test_no_duplicate_date_inconsistent(self):
         s='station;time;tre200m0\nBER;201101;1.5\nBER;201101;3.5\n'
         with self.assertRaisesRegex(ValueError,'Conflicting'):
             parse_month_csv(s.encode(),'BER')
     def test_asset_discovery_filters(self):
-        src=[{'assets':{'a':{'href':'https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/ber/ogd-smn_ber_m_historical_2010-2019.csv'},
+        src=[{'assets':{'a':{'href':'https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/ber/ogd-smn_ber_m.csv'},
                          'b':{'href':'https://example.net/ch.meteoschweiz.ogd-smn/ogd-smn_ber_m_historical.csv'}}}]
         self.assertEqual(len(discover_assets(src)['BER']),1)
     def test_spatial_holdout_identical_training_month(self):
