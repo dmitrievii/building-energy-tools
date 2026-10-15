@@ -27,9 +27,9 @@ All 10 candidate donors successfully source-qualified for 2023. 3 targets × 878
 |---|---:|---:|---:|---:|---:|
 | BAS | 0.77370 | 0.77036 | 0.90454 | -0.00334 | -0.13418 |
 | GRA | 1.12387 | 1.10470 | 0.85056 | -0.01917 | +0.25414 |
-| MUB | 0.80488 | 0.85314 | 0.67021 | +0.04826 | +0.18293 |
+| MUB | 0.80487 | 0.85313 | 0.67025 | +0.04826 | +0.18289 |
 
-MAE units m/s. Note: exact GRA/MUB comparison differences may be rounded in this table; the artifact retains full precision. Lower is better.
+MAE units m/s. Values rounded to five decimals; the CI artifact retains full precision. Lower is better.
 
 | Target | ERA5 directional fixed90 | ERA5+residual fixed90 | Station IDW4 fixed90 |
 |---|---:|---:|---:|
