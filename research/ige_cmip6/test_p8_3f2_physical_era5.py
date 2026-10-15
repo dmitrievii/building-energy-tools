@@ -31,11 +31,12 @@ class PhysicalWindF2Contracts(unittest.TestCase):
         self.assertEqual(exposure_category(""),"unclassified")
 
     def test_real_metadata_encoding_and_site_labels(self):
-        meta={"BAS":station("BAS"),"CHD":station("CHD")}
-        b=("station_abbr;station_exposition_en\n"
-           "BAS;height (30-100 m above valley)\n"
-           "CHD;southern oriented slope\n").encode("utf-8")
-        labels=station_exposures(b,meta)
+        meta={sid:station(sid) for sid in TARGETS}
+        lines=["station_abbr;station_exposition_en",
+               "BAS;height (30-100 m above valley)",
+               "CHD;southern oriented slope"]
+        lines.extend(sid + ";plain" for sid in TARGETS if sid not in ("BAS","CHD"))
+        labels=station_exposures(("\\n".join(lines) + "\\n").replace("\\n","\n").encode("utf-8"),meta)
         self.assertEqual(labels["BAS"]["category"],"elevated_above_valley")
         self.assertEqual(labels["CHD"]["category"],"slope")
 
