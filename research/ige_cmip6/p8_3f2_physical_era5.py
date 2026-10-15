@@ -258,7 +258,14 @@ def moving_block_delta_ci(rows, reps=BOOTSTRAP_REPS, seed=BOOTSTRAP_SEED, days=B
     diff = loss[:, 1:] - loss[:, :1]
     rng = np.random.default_rng(seed)
     block = days*24
-    starts = np.arange(n-block+1)
+    # Reject windows crossing missing target/provider hours. The bootstrap
+    # must represent physical contiguous 7-day blocks, never compressed gaps.
+    starts = np.array([
+        i for i in range(n-block+1)
+        if (rows[i+block-1][0] - rows[i][0]).total_seconds() == (block-1)*3600
+    ], dtype=int)
+    if not len(starts):
+        raise ValueError("F2_NO_CONTIGUOUS_SEVEN_DAY_BLOCKS")
     repeat = math.ceil(n/block)
     sampled = np.empty((reps, len(METHODS)-1), dtype=float)
     for b in range(reps):
