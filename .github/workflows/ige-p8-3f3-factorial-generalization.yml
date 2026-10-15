@@ -1,0 +1,62 @@
+name: IGE P8.3F3 factor ablation and independent 2022/2025 wind holdouts
+
+on:
+  push:
+    branches: ['research/ige-p8-3f3-wind-ablation-20261015']
+    paths:
+      - 'research/ige_cmip6/p8_3f3_factorial_wind.py'
+      - 'research/ige_cmip6/test_p8_3f3_factorial_wind.py'
+      - '.github/workflows/ige-p8-3f3-factorial-generalization.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  frozen_science_contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy pillow
+      - name: Factorial and frozen original wind contracts, no source/weather data leakage
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3f3_factorial_wind.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3f2_physical_era5.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3e1_f1_wind_qualification.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3d_wind_terrain_donors.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3e_h_wind_source_screens.py' -v
+
+  independent_original_year_site_holdout:
+    needs: frozen_science_contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 110
+    strategy:
+      fail-fast: false
+      matrix:
+        year: [2022, 2025]
+    env:
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy pillow
+      - name: Generate scientifically independent station/year factor results
+        run: |
+          mkdir -p "$RUNNER_TEMP/ige_p8f3_${{ matrix.year }}"
+          python research/ige_cmip6/p8_3f3_factorial_wind.py --year "${{ matrix.year }}" --out "$RUNNER_TEMP/ige_p8f3_${{ matrix.year }}"
+      - name: Upload only aggregated original-source provenance, error metrics and bootstrap intervals
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-3f3-${{ matrix.year }}-original-source-factorial-aggregates
+          path: ${{ runner.temp }}/ige_p8f3_${{ matrix.year }}/*.json
+          if-no-files-found: warn
+          retention-days: 30
