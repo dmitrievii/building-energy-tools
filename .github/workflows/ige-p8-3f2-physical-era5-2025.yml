@@ -1,0 +1,57 @@
+name: IGE P8.3F2 physical ERA5 2025 independent benchmark
+
+on:
+  push:
+    branches: ['research/ige-p8-3f2-physical-era5-20261015']
+    paths:
+      - 'research/ige_cmip6/p8_3f2_physical_era5.py'
+      - 'research/ige_cmip6/test_p8_3f2_physical_era5.py'
+      - '.github/workflows/ige-p8-3f2-physical-era5-2025.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  physics_and_provenance_contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy pillow
+      - name: Independent F2 physical conditioning and anti-leakage test
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3f2_physical_era5.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3e1_f1_wind_qualification.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3d_wind_terrain_donors.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3e_h_wind_source_screens.py' -v
+
+  independent_2025_original_sources:
+    needs: physics_and_provenance_contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy pillow
+      - name: Load original MeteoSwiss and explicit ERA5, perform frozen 2025 scientific comparison
+        run: |
+          mkdir -p "$RUNNER_TEMP/p8_3f2_science"
+          python research/ige_cmip6/p8_3f2_physical_era5.py --out "$RUNNER_TEMP/p8_3f2_science"
+      - name: Upload aggregate performance, provenance and bootstrap CI (never hourly series)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-3f2-2025-original-science-aggregates
+          path: ${{ runner.temp }}/p8_3f2_science/*.json
+          if-no-files-found: warn
+          retention-days: 30
