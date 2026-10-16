@@ -5,6 +5,7 @@ import unittest
 from p8_4a1_source_semantics import (
     YEAR,MONTH,HOURS,SHIFTS,GEO_STATION,
     january_hours,normalize_era5_january,common_clock_sensitivity,geo_metadata_audit,
+    swiss_post2018_hourly_reference_stamps,
 )
 from p7b5_wind_coherence import QC as QC_APPROVED
 
@@ -44,6 +45,27 @@ class P84A1Contracts(unittest.TestCase):
         self.assertEqual(january_hours()[0],dt.datetime(2024,1,1))
         self.assertEqual(january_hours()[-1],dt.datetime(2024,1,31,23))
         self.assertEqual(SHIFTS,(-1,0,1))
+
+    def test_official_post2018_six_10min_end_stamps(self):
+        moment=dt.datetime(2024,1,1,16)
+        support=swiss_post2018_hourly_reference_stamps(moment)
+        self.assertEqual(support,tuple(
+            dt.datetime(2024,1,1,15,10)+dt.timedelta(minutes=10*i)
+            for i in range(6)))
+        self.assertEqual(support[-1],moment)
+
+    def test_pre2018_synop_cannot_reuse_post2018_window(self):
+        with self.assertRaisesRegex(ValueError,"PRE2018"):
+            swiss_post2018_hourly_reference_stamps(dt.datetime(2017,12,31,16))
+
+    def test_swiss_reference_timezone_must_be_explicitly_utc(self):
+        with self.assertRaisesRegex(ValueError,"UTC_NAIVE"):
+            swiss_post2018_hourly_reference_stamps(
+                dt.datetime(2024,1,1,16,tzinfo=dt.timezone.utc))
+
+    def test_swiss_reference_must_be_hourly(self):
+        with self.assertRaisesRegex(ValueError,"NOT_ON_HOUR"):
+            swiss_post2018_hourly_reference_stamps(dt.datetime(2024,1,1,16,10))
 
     def test_valid_gateway_metadata(self):
         d,cell=normalize_era5_january(era5_payload())
