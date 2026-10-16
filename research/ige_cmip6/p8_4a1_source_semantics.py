@@ -124,40 +124,55 @@ def normalize_era5_january(payload):
 
 
 def common_clock_sensitivity(observations,background):
-    """Predeclared shifts share *exactly* the same 742 interior hours."""
+    """Strictly paired -1/0/+1h sensitivity, never a best-clock inference.
+
+    Speed comparisons share identical original observed hours, even when one
+    shifted ERA5 predictor is missing. Direction comparisons likewise share
+    identical reference NONCALM hours and three valid ERA5 noncalm predictions.
+    """
     stamps=january_hours()[1:-1]
+    common=[
+        t for t in stamps
+        if usable_wind(observations.get(t)) and all(
+            usable_wind(background.get(t+dt.timedelta(hours=shift)))
+            for shift in SHIFTS
+        )
+    ]
+    if len(common)<700:
+        raise ValueError("A1_INSUFFICIENT_SWISS_ERA5_CLOCK_PAIRS")
+    direction_common=[
+        t for t in common
+        if observations[t]["speed"]>=CALM_MPS and all(
+            background[t+dt.timedelta(hours=shift)]["speed"]>=CALM_MPS
+            and background[t+dt.timedelta(hours=shift)].get("direction") is not None
+            for shift in SHIFTS
+        )
+    ]
     report={}
     for shift in SHIFTS:
         delta=dt.timedelta(hours=shift)
-        speed_errors=[]; vector_losses=[]; angular=[]
-        target_hours=0
-        for t in stamps:
-            observed=observations.get(t)
-            era=background.get(t+delta)
-            if not (usable_wind(observed) and usable_wind(era)):
-                continue
-            target_hours+=1
-            speed_errors.append(era["speed"]-observed["speed"])
-            if observed["speed"]>=CALM_MPS and era["speed"]>=CALM_MPS:
-                angular.append(circular_error_deg(
-                    era.get("direction"),observed.get("direction")))
-                ou,ov=wind_from_to_uv(observed["speed"],observed["direction"])
-                eu,ev=wind_from_to_uv(era["speed"],era["direction"])
-                vector_losses.append((eu-ou)**2+(ev-ov)**2)
-        if target_hours<700:
-            raise ValueError("A1_INSUFFICIENT_SWISS_ERA5_CLOCK_PAIRS")
+        errs=[
+            background[t+delta]["speed"]-observations[t]["speed"]
+            for t in common
+        ]
+        angular=[]
+        vector_losses=[]
+        for t in direction_common:
+            observed=observations[t]
+            era=background[t+delta]
+            angular.append(circular_error_deg(era["direction"],observed["direction"]))
+            ou,ov=wind_from_to_uv(observed["speed"],observed["direction"])
+            eu,ev=wind_from_to_uv(era["speed"],era["direction"])
+            vector_losses.append((eu-ou)**2+(ev-ov)**2)
         report[str(shift)]={
-            "label":{ -1:"ERA5_PREVIOUS_HOUR",0:"SAME_TIMESTAMP",1:"ERA5_NEXT_HOUR"}[shift],
-            "n_speed_pairs":target_hours,
-            "n_vector_direction_pairs":len(vector_losses),
-            "scalar_speed_mae_mps":statistics.mean(abs(x) for x in speed_errors),
-            "scalar_speed_bias_mps":statistics.mean(speed_errors),
+            "label":{-1:"ERA5_PREVIOUS_HOUR",0:"SAME_TIMESTAMP",1:"ERA5_NEXT_HOUR"}[shift],
+            "n_speed_pairs":len(common),
+            "n_vector_direction_pairs":len(direction_common),
+            "scalar_speed_mae_mps":statistics.mean(abs(x) for x in errs),
+            "scalar_speed_bias_mps":statistics.mean(errs),
             "direction_mae_deg_on_both_noncalm":statistics.mean(angular) if angular else None,
             "vector_east_north_rmse_mps":math.sqrt(statistics.mean(vector_losses)) if vector_losses else None,
         }
-    # Ensure that apparent alignment differences do not come from changing N.
-    if len(set(x["n_speed_pairs"] for x in report.values()))!=1:
-        raise ValueError("A1_CLOCK_COMPARISON_DENOMINATOR_CHANGED")
     return report
 
 
