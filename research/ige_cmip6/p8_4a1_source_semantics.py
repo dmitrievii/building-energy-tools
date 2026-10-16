@@ -68,6 +68,22 @@ def january_hours():
     return tuple(begin+dt.timedelta(hours=h) for h in range(HOURS))
 
 
+def swiss_post2018_hourly_reference_stamps(timestamp):
+    """Six 10-min end stamps forming MeteoSwiss h reference time, 2018+.
+
+    Official: https://opendatadocs.meteoswiss.ch/general/download
+    Example hourly 16:00 UTC -> 15:10,15:20,...,16:00.
+    Pre-2018 SYNOP window is different and deliberately not normalized.
+    """
+    if not isinstance(timestamp,dt.datetime) or timestamp.tzinfo is not None:
+        raise ValueError("A1_SWISS_EXPECT_UTC_NAIVE_REFERENCE_TIMESTAMP")
+    if timestamp.year < 2018:
+        raise ValueError("A1_SWISS_PRE2018_SYNOPTIC_INTERVAL_DIFFERENT")
+    if timestamp.minute!=0 or timestamp.second or timestamp.microsecond:
+        raise ValueError("A1_SWISS_HOURLY_REFERENCE_NOT_ON_HOUR")
+    return tuple(timestamp-dt.timedelta(minutes=50-10*i) for i in range(6))
+
+
 def normalize_era5_january(payload):
     """Strict 744h GMT axis; source is an Open-Meteo ERA5 *gateway* output."""
     units=payload.get("hourly_units") or {}
@@ -189,6 +205,11 @@ def swiss_hourly():
         "matched_original_parameter_metadata":matched,
         "sampling_year":YEAR,"month":MONTH,
         "source_time_basis":"UTC",
+        "swiss_h_hourly_reference_is_end_of_aggregation_interval":True,
+        "swiss_post2018_official_aggregation_reference_10min_stamps":["15:10","15:20","15:30","15:40","15:50","16:00"],
+        "swiss_post2018_reference_example_utc":"16:00",
+        "swiss_pre2018_synop_reference_interval_different":True,
+        "swiss_interval_reference_source":"https://opendatadocs.meteoswiss.ch/general/download",
         "observation_measurement":"Swiss original scalar hourly mean speed and hourly mean wind direction",
         "model_measurement":"ERA5 10m model instantaneous valid-time output via Open-Meteo",
         "comparison_shared_interior_hours":HOURS-2,
