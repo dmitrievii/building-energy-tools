@@ -1,0 +1,57 @@
+name: IGE P8.4A1 wind source temporal and QC physical closure preflight
+
+on:
+  push:
+    branches: ['research/ige-p8-4-wind-closure-20261016']
+    paths:
+      - 'research/ige_cmip6/p8_4a1_source_semantics.py'
+      - 'research/ige_cmip6/test_p8_4a1_source_semantics.py'
+      - '.github/workflows/ige-p8-4a1-wind-source-semantics.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  original_source_semantics_contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy pillow
+      - name: P8.4A1 timestamp and source QC contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_4a1_source_semantics.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3f3_factorial_wind.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3f2_physical_era5.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3e1_f1_wind_qualification.py' -v
+
+  independent_provider_original_audit:
+    needs: original_source_semantics_contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    env:
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy pillow
+      - name: Verify original MeteoSwiss and GeoSphere QC and explicit ERA5 wind 10m
+        run: |
+          mkdir -p "$RUNNER_TEMP/ige_p8_4_a1"
+          python research/ige_cmip6/p8_4a1_source_semantics.py --out "$RUNNER_TEMP/ige_p8_4_a1"
+      - name: Upload only derived aggregates and source SHA-256 (no hourly observations)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-4a1-wind-original-source-qc-and-time-semantics
+          path: ${{ runner.temp }}/ige_p8_4_a1/*.json
+          if-no-files-found: warn
+          retention-days: 30
