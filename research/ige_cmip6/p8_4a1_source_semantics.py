@@ -312,8 +312,10 @@ def geosphere_january():
             joint_valid+=1
         if approved["ff"] and pars["ff"]["data"][i]<CALM_MPS:
             calm+=1
-    if valid["ff"]<.85*HOURS:
-        raise ValueError("A1_GEO_TOO_FEW_QC_APPROVED_SPEED_HOURS")
+    # Audit evidence must survive a FAILED QC coverage gate. The 85% threshold
+    # stays immutable; a source-inadequate station blocks physical promotion,
+    # not the preservation of original provider flag distributions.
+    qc_coverage_qualified = valid["ff"]>=.85*HOURS
     meta.update({
         "dataset":"klima-v2-1h","year":YEAR,"month":MONTH,
         "metadata_sha256":metasha,"original_data_sha256":sha,
@@ -321,6 +323,11 @@ def geosphere_january():
         "quality_flag_counts":{k:dict(c) for k,c in counts.items()},
         "approved_flag_codes":sorted(GEO_QC),
         "n_qc_approved_speed":valid["ff"],
+        "wind_speed_qc_coverage_fraction":valid["ff"]/HOURS,
+        "wind_speed_qc_qualification_minimum_fraction":.85,
+        "wind_speed_qc_coverage_gate_passed":qc_coverage_qualified,
+        "physical_qc_usage_authorized":qc_coverage_qualified,
+        "qc_coverage_failure_reason":None if qc_coverage_qualified else "A1_GEO_TOO_FEW_QC_APPROVED_SPEED_HOURS",
         "n_qc_approved_direction":valid["dd"],
         "n_qc_approved_both":joint_valid,
         "n_qc_approved_calm_hours":calm,
@@ -337,13 +344,16 @@ def main():
     swiss=swiss_hourly()
     geo=geosphere_january()
     summary={
-        "phase":"IGE_P8_4A1","status":"ORIGINAL_SOURCE_SEMANTICS_AND_QC_PILOT_COMPLETED",
+        "phase":"IGE_P8_4A1","status":("ORIGINAL_SOURCE_SEMANTICS_AND_QC_PILOT_COMPLETED"
+                 if geo["wind_speed_qc_coverage_gate_passed"]
+                 else "ORIGINAL_SOURCE_QC_CENSUS_COMPLETED__GEO_WIND_GATE_BLOCKED"),
         "sources":OFFICIAL_DOCUMENTS,
         "swiss_vs_era5":swiss,"geosphere":geo,
         "hourly_temporal_support_identical":False,
         "time_shift_identified_as_correct":False,
         "anemometer_height_and_roughness_qualified":False,
         "source_semantics_validated_partial":True,
+        "geosphere_wind_original_qc_gate_passed":geo["wind_speed_qc_coverage_gate_passed"],
         "a_physical_closure_complete":False,
         "b_historical_spatial_reconstruction_complete":False,
         "c_future_synthesis_complete":False,
@@ -358,6 +368,8 @@ def main():
     print("IGE_P8_4A1",json.dumps({
         "status":summary["status"],"swiss_sites":len(swiss["sites"]),
         "geosphere_qc_hour_count":geo["n_qc_approved_speed"],
+        "geosphere_qc_gate_passed":geo["wind_speed_qc_coverage_gate_passed"],
+        "geosphere_flag_counts":geo["quality_flag_counts"],
         "physical_closure":False,
     }),flush=True)
 
