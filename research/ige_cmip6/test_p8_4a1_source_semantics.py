@@ -3,7 +3,7 @@ import datetime as dt
 import unittest
 
 from p8_4a1_source_semantics import (
-    YEAR,MONTH,HOURS,SHIFTS,GEO_STATION,
+    YEAR,MONTH,HOURS,SHIFTS,GEO_STATION,GEO_SITE_CENSUS,
     january_hours,normalize_era5_january,common_clock_sensitivity,geo_metadata_audit,
     swiss_post2018_hourly_reference_stamps,
 )
@@ -144,6 +144,18 @@ class P84A1Contracts(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"dd_flag"):
             geo_metadata_audit(m)
 
+    def test_census_is_fixed_not_fit_to_skill(self):
+        self.assertEqual(GEO_SITE_CENSUS,(30,16414,16400,16412))
+        self.assertEqual(len(set(GEO_SITE_CENSUS)),4)
+        self.assertEqual(GEO_SITE_CENSUS[0],GEO_STATION)
+
+    def test_new_graz_site_metadata_identity_distinct_from_composite(self):
+        meta=geosphere_metadata()
+        meta["stations"].append({"id":16414,"name":"Graz Universität/Heinrichstraße"})
+        x=geo_metadata_audit(meta,station_id=16414)
+        self.assertEqual(x["station_id"],16414)
+        self.assertEqual(x["station_name"],"Graz Universität/Heinrichstraße")
+
     def test_geo_invalid_units_must_fail(self):
         m=geosphere_metadata()
         m["parameters"][0]["unit"]="km/h"
@@ -159,7 +171,7 @@ class P84A1Contracts(unittest.TestCase):
     def test_only_original_station_id_is_accepted(self):
         m=geosphere_metadata()
         m["stations"]=[{"id":31,"name":"wrong site"}]
-        with self.assertRaisesRegex(ValueError,"STATION_30"):
+        with self.assertRaisesRegex(ValueError,"STATION_METADATA_MISSING_30"):
             geo_metadata_audit(m)
 
 
