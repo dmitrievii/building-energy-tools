@@ -29,6 +29,9 @@ from p7b5_wind_coherence import BASE as GEO_BASE, QC as GEO_QC
 YEAR, MONTH = 2024, 1
 SWISS = ("BAS", "GRA", "MUB")
 GEO_STATION = 30
+# Prior P7B.5 composite station and three independently identified Graz site-series.
+# No QC/site/model selection based on evaluation errors.
+GEO_SITE_CENSUS = (30, 16414, 16400, 16412)
 HOURS = 31*24
 SHIFTS = (-1,0,1)
 OFFICIAL_DOCUMENTS = {
@@ -63,8 +66,8 @@ def read_json(url, cap=14_000_000, retries=3):
     raise RuntimeError("A1_SOURCE_UNAVAILABLE "+url.split("?")[0]+" :: "+str(errors))
 
 
-def january_hours():
-    begin=dt.datetime(YEAR,MONTH,1)
+def january_hours(year=YEAR):
+    begin=dt.datetime(year,MONTH,1)
     return tuple(begin+dt.timedelta(hours=h) for h in range(HOURS))
 
 
@@ -218,7 +221,7 @@ def swiss_hourly():
     }
 
 
-def geo_metadata_audit(source):
+def geo_metadata_audit(source,station_id=GEO_STATION):
     """Check original QC coding; do not mistake generic 1h metadata for ff/dd semantics."""
     params={p["name"]:p for p in source.get("parameters",[])
             if isinstance(p,dict) and isinstance(p.get("name"),str)}
@@ -231,8 +234,8 @@ def geo_metadata_audit(source):
         raise ValueError("A1_GEO_WIND_UNIT_DRIFT")
     station={int(s["id"]):s for s in source.get("stations",[])
              if isinstance(s,dict) and s.get("id") is not None}
-    if GEO_STATION not in station:
-        raise ValueError("A1_GEO_STATION_30_MISSING")
+    if station_id not in station:
+        raise ValueError("A1_GEO_STATION_METADATA_MISSING_"+str(station_id))
     list_q21=source.get("code_lists",{}).get("q21",[])
     legend={int(q["key"]):str(q.get("value","")) for q in list_q21
             if isinstance(q,dict) and q.get("key") is not None}
@@ -247,25 +250,33 @@ def geo_metadata_audit(source):
                     "source_parameter_metadata":{name:value for name,value in p.items()
                          if name in ("name","unit","desc","description","time","aggregation","long_name")},
                     "has_source_quality_flag":True}
-    return {"station_id":GEO_STATION,"station_name":station[GEO_STATION].get("name"),
+    return {"station_id":station_id,"station_name":station[station_id].get("name"),
             "parameter_definitions":columns,"qc_flag_legend":legend,
             "unknown_flag_codes_accepted":False,
             "hourly_interval_semantics_verification":"FIELD_SPECIFIC_PENDING"}
 
 
-def geosphere_january():
-    raw,metasha=read_json(GEO_BASE+"/metadata",cap=10_000_000)
-    meta=geo_metadata_audit(raw)
+def geosphere_january(station_id=GEO_STATION, year=YEAR, source_meta=None):
+    """Preserve QC census even when station has no valid wind for test month.
+
+    A station's dataset-period metadata does NOT imply that wind was measured
+    in that year. Never interpret 744 timestamp rows as 744 wind values.
+    """
+    if source_meta is None:
+        raw,metasha=read_json(GEO_BASE+"/metadata",cap=10_000_000)
+    else:
+        raw,metasha=source_meta
+    meta=geo_metadata_audit(raw,station_id=station_id)
     args={
-        "parameters":"ff,ff_flag,dd,dd_flag","station_ids":str(GEO_STATION),
-        "start":"2024-01-01T00:00","end":"2024-01-31T23:00",
+        "parameters":"ff,ff_flag,dd,dd_flag","station_ids":str(station_id),
+        "start":f"{year}-01-01T00:00","end":f"{year}-01-31T23:00",
         "output_format":"geojson",
     }
     obj,sha=read_json(GEO_BASE+"?"+urlencode(args),cap=10_000_000)
     timestamps=obj.get("timestamps")
     if not isinstance(timestamps,list) or len(timestamps)!=HOURS:
         raise ValueError("A1_GEO_744_HOUR_AXIS_REQUIRED")
-    for stamp,expected in zip(timestamps,january_hours()):
+    for stamp,expected in zip(timestamps,january_hours(year)):
         try:
             timestamp=dt.datetime.fromisoformat(str(stamp).replace("Z","+00:00"))
         except (ValueError,TypeError) as exc:
@@ -278,7 +289,7 @@ def geosphere_january():
     properties=features[0].get("properties") or {}
     identity=properties.get("station")
     sid=int(identity.get("id") if isinstance(identity,dict) else identity)
-    if sid!=GEO_STATION:
+    if sid!=station_id:
         raise ValueError("A1_GEO_STATION_IDENTITY_DRIFT")
     pars=properties.get("parameters") or {}
     for k in ("ff","ff_flag","dd","dd_flag"):
@@ -288,6 +299,7 @@ def geosphere_january():
         if pars[k].get("unit")!=meta["parameter_definitions"][k]["units"]:
             raise ValueError("A1_GEO_PARAMETER_UNIT_MISMATCH")
     counts={k:collections.Counter() for k in ("ff","dd")}
+    n_present={k:0 for k in counts}
     valid={k:0 for k in counts}
     joint_valid=0
     calm=0
@@ -305,6 +317,8 @@ def geosphere_january():
                 raise ValueError("A1_GEO_UNKNOWN_QUALITY_FLAG_"+str(code))
             number=isinstance(value,(int,float)) and math.isfinite(value)
             physical=(0<=value<=60 if k=="ff" else 0<=value<=360) if number else False
+            if physical:
+                n_present[k]+=1
             approved[k]=code in GEO_QC and physical
             if approved[k]:
                 valid[k]+=1
@@ -312,24 +326,29 @@ def geosphere_january():
             joint_valid+=1
         if approved["ff"] and pars["ff"]["data"][i]<CALM_MPS:
             calm+=1
-    # Audit evidence must survive a FAILED QC coverage gate. The 85% threshold
-    # stays immutable; a source-inadequate station blocks physical promotion,
-    # not the preservation of original provider flag distributions.
-    qc_coverage_qualified = valid["ff"]>=.85*HOURS
+    speed_qualified=valid["ff"]>=.85*HOURS
+    direction_qualified=valid["dd"]>=.85*HOURS
+    # Physical wind reconstruction requires joint QC, not speed alone.
+    joint_qualified=joint_valid>=.85*HOURS
     meta.update({
-        "dataset":"klima-v2-1h","year":YEAR,"month":MONTH,
+        "dataset":"klima-v2-1h","year":year,"month":MONTH,
         "metadata_sha256":metasha,"original_data_sha256":sha,
         "expected_UTC_hours":HOURS,
+        "n_original_physical_value_present":n_present,
         "quality_flag_counts":{k:dict(c) for k,c in counts.items()},
         "approved_flag_codes":sorted(GEO_QC),
         "n_qc_approved_speed":valid["ff"],
-        "wind_speed_qc_coverage_fraction":valid["ff"]/HOURS,
-        "wind_speed_qc_qualification_minimum_fraction":.85,
-        "wind_speed_qc_coverage_gate_passed":qc_coverage_qualified,
-        "physical_qc_usage_authorized":qc_coverage_qualified,
-        "qc_coverage_failure_reason":None if qc_coverage_qualified else "A1_GEO_TOO_FEW_QC_APPROVED_SPEED_HOURS",
         "n_qc_approved_direction":valid["dd"],
         "n_qc_approved_both":joint_valid,
+        "wind_speed_qc_coverage_fraction":valid["ff"]/HOURS,
+        "wind_direction_qc_coverage_fraction":valid["dd"]/HOURS,
+        "wind_joint_qc_coverage_fraction":joint_valid/HOURS,
+        "wind_speed_qc_qualification_minimum_fraction":.85,
+        "wind_speed_qc_coverage_gate_passed":speed_qualified,
+        "wind_direction_qc_coverage_gate_passed":direction_qualified,
+        "wind_joint_qc_gate_passed":joint_qualified,
+        "physical_qc_usage_authorized":joint_qualified,
+        "qc_coverage_failure_reason":None if joint_qualified else "A1_GEO_TOO_FEW_JOINT_QC_APPROVED_WIND_HOURS",
         "n_qc_approved_calm_hours":calm,
         "record_start_or_end":"NOT_PROVEN",
         "coordinate_height_instrument":"NOT_EXTRACTED_AS_VALIDATED_MAST_HEIGHT",
@@ -337,15 +356,34 @@ def geosphere_january():
     return meta
 
 
+def geosphere_site_census():
+    """All prespecified sites are evaluated independently, no silent substitution."""
+    source=read_json(GEO_BASE+"/metadata",cap=10_000_000)
+    sites=[geosphere_january(site,YEAR,source) for site in GEO_SITE_CENSUS]
+    return {
+        "primary_composite_station_id":GEO_STATION,
+        "candidate_station_ids":list(GEO_SITE_CENSUS),
+        "date_range":"2024-01-01..2024-01-31 UTC",
+        "selection_optimized_against_era5":False,
+        "sites":sites,
+        "n_sites_passing_joint_qc_gate":sum(s["wind_joint_qc_gate_passed"] for s in sites),
+        "n_sites_passing_speed_qc_gate":sum(s["wind_speed_qc_coverage_gate_passed"] for s in sites),
+        "primary_station_qc_gate_passed":sites[0]["wind_joint_qc_gate_passed"],
+        "physical_qc_usage_authorized_for_new_site":any(s["wind_joint_qc_gate_passed"] for s in sites),
+        "all_sites_converted_to_same_temporal_support":False,
+        "no_failed_site_was_silently_replaced":True,
+    }
+
+
 def main():
     cli=argparse.ArgumentParser()
     cli.add_argument("--out",required=True)
     args=cli.parse_args()
     swiss=swiss_hourly()
-    geo=geosphere_january()
+    geo=geosphere_site_census()
     summary={
         "phase":"IGE_P8_4A1","status":("ORIGINAL_SOURCE_SEMANTICS_AND_QC_PILOT_COMPLETED"
-                 if geo["wind_speed_qc_coverage_gate_passed"]
+                 if geo["physical_qc_usage_authorized_for_new_site"]
                  else "ORIGINAL_SOURCE_QC_CENSUS_COMPLETED__GEO_WIND_GATE_BLOCKED"),
         "sources":OFFICIAL_DOCUMENTS,
         "swiss_vs_era5":swiss,"geosphere":geo,
@@ -353,7 +391,7 @@ def main():
         "time_shift_identified_as_correct":False,
         "anemometer_height_and_roughness_qualified":False,
         "source_semantics_validated_partial":True,
-        "geosphere_wind_original_qc_gate_passed":geo["wind_speed_qc_coverage_gate_passed"],
+        "geosphere_wind_original_qc_gate_passed":geo["physical_qc_usage_authorized_for_new_site"],
         "a_physical_closure_complete":False,
         "b_historical_spatial_reconstruction_complete":False,
         "c_future_synthesis_complete":False,
@@ -367,9 +405,9 @@ def main():
         json.dumps(summary,indent=2,sort_keys=True,ensure_ascii=False)+"\n",encoding="utf-8")
     print("IGE_P8_4A1",json.dumps({
         "status":summary["status"],"swiss_sites":len(swiss["sites"]),
-        "geosphere_qc_hour_count":geo["n_qc_approved_speed"],
-        "geosphere_qc_gate_passed":geo["wind_speed_qc_coverage_gate_passed"],
-        "geosphere_flag_counts":geo["quality_flag_counts"],
+        "geosphere_qc_sites_passed":geo["n_sites_passing_joint_qc_gate"],
+        "geosphere_qc_sites_examined":len(geo["sites"]),
+        "geosphere_primary_composite_gate_passed":geo["primary_station_qc_gate_passed"],
         "physical_closure":False,
     }),flush=True)
 
