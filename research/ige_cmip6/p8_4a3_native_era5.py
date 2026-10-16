@@ -269,9 +269,11 @@ def independent_arco_audit():
             for when in time_values:
                 sample={}
                 for component,name in zip(ARCO_COMPONENTS,("u","v")):
+                    # Nearest applies ONLY to the spatial grid. Time must
+                    # match a genuine archived ERA5 valid-time exactly.
                     point=ds[component].sel(
-                        time=when,latitude=target["lat"],
-                        longitude=target["lon"],method="nearest")
+                        latitude=target["lat"],
+                        longitude=target["lon"],method="nearest").sel(time=when)
                     lat=float(point["latitude"].values)
                     lon=float(point["longitude"].values)
                     if selected_grid is None:
