@@ -1,0 +1,81 @@
+name: IGE P8.4A3 native ERA5 vector semantics and cross-source equivalence
+
+on:
+  push:
+    branches: ['research/ige-p8-4a3-era5-native-20261017']
+    paths:
+      - 'research/ige_cmip6/p8_4a3_native_era5.py'
+      - 'research/ige_cmip6/test_p8_4a3_native_era5.py'
+      - '.github/workflows/ige-p8-4a3-era5-native.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source_vector_time_contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy pillow
+      - name: ERA5 u/v vector and strict UTC source contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_4a3_native_era5.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_4a2_temporal_aggregation.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_4a1_source_semantics.py' -v
+
+  openmeteo_2024_gateway_controls:
+    needs: source_vector_time_contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    env:
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy pillow
+      - name: Original Swiss observations and explicit ERA5 default versus no-downscaling controls
+        run: |
+          mkdir -p "$RUNNER_TEMP/ige_p8_4a3_gateway"
+          python research/ige_cmip6/p8_4a3_native_era5.py --mode gateway --out "$RUNNER_TEMP/ige_p8_4a3_gateway"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ige-p8-4a3-original-gateway-elevation-and-time-controls
+          path: ${{ runner.temp }}/ige_p8_4a3_gateway/*.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  independent_arco_native_components_spotcheck:
+    needs: source_vector_time_contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    env:
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy pillow 'xarray>=2024.9,<2026' 'zarr>=2.18,<3' 'gcsfs>=2024.9,<2026' 'fsspec>=2024.9,<2026'
+      - name: Independent Google ARCO ERA5 0.25 degree u10/v10 valid-time source
+        run: |
+          mkdir -p "$RUNNER_TEMP/ige_p8_4a3_arco"
+          python research/ige_cmip6/p8_4a3_native_era5.py --mode arco --out "$RUNNER_TEMP/ige_p8_4a3_arco"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ige-p8-4a3-independent-arco-regridded-original-uv
+          path: ${{ runner.temp }}/ige_p8_4a3_arco/*.json
+          if-no-files-found: warn
+          retention-days: 30
