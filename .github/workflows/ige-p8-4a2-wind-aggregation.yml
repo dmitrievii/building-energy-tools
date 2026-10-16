@@ -1,0 +1,56 @@
+name: IGE P8.4A2 measured 10min → 1h wind aggregation physical-closure pilot
+
+on:
+  push:
+    branches: ['research/ige-p8-4a2-temporal-aggregation-20261017']
+    paths:
+      - 'research/ige_cmip6/p8_4a2_temporal_aggregation.py'
+      - 'research/ige_cmip6/test_p8_4a2_temporal_aggregation.py'
+      - '.github/workflows/ige-p8-4a2-wind-aggregation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  physical_aggregation_contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy pillow
+      - name: A2 source-window, Jensen, scalar/vector and azimuth contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_4a2_temporal_aggregation.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_4a1_source_semantics.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3f3_factorial_wind.py' -v
+
+  original_swiss_and_geosphere_tenminute_validation:
+    needs: physical_aggregation_contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 110
+    env:
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install numpy pillow
+      - name: Original 2024-01 Swiss and GeoSphere hourly from six 10-minute source records
+        run: |
+          mkdir -p "$RUNNER_TEMP/ige_p8_4_a2"
+          python research/ige_cmip6/p8_4a2_temporal_aggregation.py --out "$RUNNER_TEMP/ige_p8_4_a2"
+      - name: Archive derived scientific metrics/provenance only (no original timeseries)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-4a2-original-six-to-one-wind-aggregates
+          path: ${{ runner.temp }}/ige_p8_4_a2/*.json
+          if-no-files-found: warn
+          retention-days: 30
