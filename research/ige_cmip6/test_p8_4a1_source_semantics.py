@@ -117,6 +117,17 @@ class P84A1Contracts(unittest.TestCase):
             self.assertEqual(scores[k]["scalar_speed_mae_mps"],0.)
             self.assertEqual(scores[k]["direction_mae_deg_on_both_noncalm"],2.)
 
+    def test_shifts_are_fair_on_same_exact_speed_and_direction_hours(self):
+        grid,_=normalize_era5_january(era5_payload())
+        reference={t:{"speed":2.,"direction":1.} for t in january_hours()}
+        # Deliberately remove one ERA5 hour, and make one other hour calm.
+        # Both changes must affect ALL three hypotheses, not only one side.
+        del grid[january_hours()[120]]
+        grid[january_hours()[150]]={"speed":0.,"direction":None}
+        scores=common_clock_sensitivity(reference,grid)
+        self.assertEqual({v["n_speed_pairs"] for v in scores.values()},{739})
+        self.assertEqual({v["n_vector_direction_pairs"] for v in scores.values()},{736})
+
     def test_shift_vector_metric_checks_actual_pairwise_vector(self):
         grid,_=normalize_era5_january(era5_payload())
         reference={t:{"speed":2.,"direction":179.} for t in january_hours()}
