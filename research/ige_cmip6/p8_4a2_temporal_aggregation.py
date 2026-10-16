@@ -97,6 +97,15 @@ def parse_swiss_tenminute(raw,site):
     return result
 
 
+def canonical_from_components(u,v):
+    """Meteorological FROM angle on [0,360), independent of unit scale.
+
+    Caller alone determines whether the resultant is physically resolved.
+    """
+    d=math.degrees(math.atan2(-u,-v))%360.
+    return 0. if math.isclose(d,360.,abs_tol=1e-10) else d
+
+
 def aggregate_six(samples):
     """Six 10min end stamps, no fills and no fabricated calm direction."""
     if len(samples)!=6:
@@ -129,9 +138,9 @@ def aggregate_six(samples):
     vec_speed=math.hypot(to_u/6,to_v/6)
     if vec_speed>scalar+1e-8:
         raise AssertionError("A2_VECTOR_GREATER_THAN_SCALAR")
-    weighted=uv_to_wind_from(to_u/6,to_v/6)[1] if vec_speed>=CALM_MPS else None
+    weighted=canonical_from_components(to_u,to_v) if vec_speed>=CALM_MPS else None
     unit_magnitude=math.hypot(unit_u,unit_v)/max(n_direction,1)
-    unit=uv_to_wind_from(unit_u/max(n_direction,1),unit_v/max(n_direction,1))[1] if n_direction and unit_magnitude>=.15 else None
+    unit=canonical_from_components(unit_u,unit_v) if n_direction and unit_magnitude>=.15 else None
     return {"scalar_speed":scalar,"vector_speed":vec_speed,
             "weighted_direction":weighted,"unit_direction":unit,
             "direction_qualified":n_direction>0}
