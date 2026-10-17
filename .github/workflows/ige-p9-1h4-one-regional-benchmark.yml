@@ -1,0 +1,31 @@
+name: IGE P9.1H4 single original AT DE CH 2022 four-method benchmark
+on:
+  push:
+    branches: ['research/ige-p9-1h-near-surface-inversion-20261017']
+    paths:
+      - '.github/workflows/ige-p9-1h4-one-regional-benchmark.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fixed_nine_stations_original_hourly_source_benchmark:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install fixed ERA5 ARCO geopotential and source climate dependencies
+        run: |
+          python -m pip install 'numpy>=1.26,<3' 'xarray==2025.9.0' 'zarr>=3.1,<4' 'gcsfs>=2025.7,<2027'
+      - name: Single physical comparison 2022 AT DE CH original QC station vs B0 B1 B2 H; one run, publish failures too
+        run: python -u research/ige_cmip6/p9_1h4_once_real_regional_2022_benchmark.py --out outputs/p9h4
+      - name: Archive only real-source aggregates and blocked-cell provenance; no raw station observations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p9h4-AT-DE-CH-2022-once-original-nine-station-comparison
+          path: outputs/p9h4/*.json
+          retention-days: 30
+          if-no-files-found: warn
