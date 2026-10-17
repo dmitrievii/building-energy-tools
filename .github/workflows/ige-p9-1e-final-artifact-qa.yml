@@ -73,7 +73,7 @@ jobs:
               raw=[r['scores'][method]['MAE_C'] for r in cases]
               assert math.isclose(statistics.fmean(raw),value,abs_tol=1e-10)
               assert all(r['scores'][method]['matched_original_QC_hours']==168 for r in cases)
-          assert all('2020_original_QC_observation_SHA256' in r for r in cases)
+          assert all('original_2020_QC_observation_SHA256' in r for r in cases)
           assert all('2020_original_weather_SHA256' in r for r in cases)
           print('P9.1E archived 2020 genuine original QC weather source 12/12 2016h reproduced; E1 remains SCIENTIFIC SOURCE BLOCKED; P9.1E2 exploratory only')
           print('Six-new-site 2020 macro MAE_C:',methods)
