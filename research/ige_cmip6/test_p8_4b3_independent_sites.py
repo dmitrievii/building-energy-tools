@@ -23,7 +23,7 @@ def generated_metadata():
     for j,z in enumerate((300,900,1700)):
         for i in range(9):
             sid=f"{chr(65+j)}{chr(65+i//3)}{chr(65+i%3)}"
-            sites[sid]=station(sid,46.0+j*.65+i*.03,6.1+(i%3)*.30+j*.15,z)
+            sites[sid]=station(sid,46.0+j*.60+(i//3)*.17,6.1+(i%3)*.29+j*.08,z)
     return sites
 
 
