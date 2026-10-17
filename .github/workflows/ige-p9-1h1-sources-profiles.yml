@@ -52,6 +52,9 @@ jobs:
       - name: Fetch original University of Helsinki SmartSMEAR API OpenAPI document and resolve source schema
         run: |
           python -u research/ige_cmip6/p9_1h1_smartsmear_source_schema.py --out outputs/p9h1/smartsmear_schema_audit.json
+      - name: Discover real original SMEAR mast variable metadata and source query semantics before ingesting any temperatures
+        run: |
+          python -u research/ige_cmip6/p9_1h1_smartsmear_source_metadata.py
       - name: Preserve metadata-only audit; do not archive or synthesize observations
         if: always()
         uses: actions/upload-artifact@v4
