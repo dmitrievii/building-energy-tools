@@ -167,11 +167,15 @@ def run(out,accepted_QN_levels=dwd.QC_FINAL):
                 raise ValueError("P9G_PRESSURE_TIME_SUBSET_NOT_IN_WEATHER_ERA5_TIME_SUPPORT")
             candidate_t={k:{} for k in METHODS}
             source_risk_hours=0
+            source_theta_guard_hours=0
+            source_resolved_free_air_temperature_inversion_hours=0
             source_pressure_valid=0
             for stamp in subset:
                 values=psub[stamp]
                 if values["status"]=="TWO_VALID_ABOVE_REGULAR_ERA5_SURFACE_LEVELS":
                     source_pressure_valid+=1
+                    source_resolved_free_air_temperature_inversion_hours+=int(
+                        values["resolved_free_air_temperature_inversion"])
                 wxrisk=bool(w["fixed_model_height_delta_m"]<=-150.)
                 risk_T=pressure.fixed_potential_temperature_stability_guard(
                     wxrisk,w["ghi"][stamp],w["wind"][stamp],w["cloud"][stamp],
@@ -180,6 +184,7 @@ def run(out,accepted_QN_levels=dwd.QC_FINAL):
                     wxrisk,w["ghi"][stamp],w["wind"][stamp],w["cloud"][stamp],
                     values,"THETA_STABLE")
                 source_risk_hours+=risk_T
+                source_theta_guard_hours+=risk_TH
                 candidate_t[METHODS[0]][stamp]=w["raw"][stamp]
                 candidate_t[METHODS[1]][stamp]=w["provider"][stamp]
                 candidate_t[METHODS[2]][stamp]=w["regular_lapse"][stamp]
@@ -206,6 +211,12 @@ def run(out,accepted_QN_levels=dwd.QC_FINAL):
                 "n_source_pressure_times_expected":len(subset),
                 "n_source_pressure_profiles_above_ground":source_pressure_valid,
                 "n_source_T_vertical_inversion_guard_hours":source_risk_hours,
+                "n_source_theta_stability_guard_hours":source_theta_guard_hours,
+                "n_source_resolved_T_warm_over_cold_free_air_hours":
+                    source_resolved_free_air_temperature_inversion_hours,
+                "source_DWD_original_quality_accepted_QN_levels":
+                    sorted(accepted_QN_levels),
+                "source_DWD_QN3_not_QN10_when_exploratory":G2_SOURCE_QN3,
                 "full_168h_original_DWD_QC_baseline_metrics":{
                     METHODS[0]:rawbase,METHODS[1]:providerbase,METHODS[2]:lapsebase,
                 },
@@ -217,7 +228,8 @@ def run(out,accepted_QN_levels=dwd.QC_FINAL):
             members.append(row)
             print("P9G_INDEPENDENT_DWD",json.dumps({
                 "station":s["name"],"season":season,
-                "original_QC10_hours":len(data),
+                "original_DWD_accepted_QN":sorted(accepted_QN_levels),
+                "original_QN_accepted_hours":len(data),
                 "full_hour_baselines":{
                     k:round(v["MAE_C"],3) if v else None
                     for k,v in row["full_168h_original_DWD_QC_baseline_metrics"].items()},
@@ -249,6 +261,11 @@ def run(out,accepted_QN_levels=dwd.QC_FINAL):
         "n_ERA5_pressure_original_above_grid_profiles":sum(
             x["n_source_pressure_profiles_above_ground"] for x in members),
         "source_original_ARCO_pressure_provenance":profile_meta,
+        "n_source_theta_stability_guard_hours":sum(
+            x["n_source_theta_stability_guard_hours"] for x in members),
+        "n_source_free_air_T_warm_over_cold_profiles":sum(
+            x["n_source_resolved_T_warm_over_cold_free_air_hours"] for x in members),
+        "original_DWD_source_quality_QN_levels":sorted(accepted_QN_levels),
         "original_DWD_source_directory_and_station_metadata_SHA":metadata,
         "original_regular_ARCO_ERA5_surface_geopotential_SHA":
             reg["digest_selected_original_grid_lat_lon_z_sha256"],
@@ -270,6 +287,8 @@ def run(out,accepted_QN_levels=dwd.QC_FINAL):
         "qualified":len(eligible),"total":8,
         "original_QC_hours":summary["n_original_DWD_qual_hour_pairs"],
         "source_pressure_times":summary["n_ERA5_pressure_original_2019_source_times"],
+        "theta_guard_hours":summary["n_source_theta_stability_guard_hours"],
+        "free_air_true_T_inversion_profiles":summary["n_source_free_air_T_warm_over_cold_profiles"],
         "full_macro_mae_C":means,
         "subsample_macro_mae_C":pilot,"production":False}),flush=True)
     if len(eligible)<6:
