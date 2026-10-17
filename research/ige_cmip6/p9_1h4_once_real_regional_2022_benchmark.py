@@ -142,32 +142,20 @@ def original_swiss_station_metadata():
                  "native_original_metadata_sha256":digest} for sid in SITES["CH"]}
 
 def fixed_CH_assets():
-    url=swiss.STAC+"/items?limit=100"
-    seen=set();filepaths={sid:[] for sid in SITES["CH"]}
-    for page in range(28):
-        if not url:break
-        if url in seen:raise ValueError("CH_STAC_PAGINATION_CYCLE")
-        seen.add(url)
-        raw,sha=swiss.fetch(url,max_bytes=10_000_000)
-        obj=json.loads(raw)
-        for item in obj.get("features",[]):
-            for k,v in item.get("assets",{}).items():
-                path=v.get("href","")
-                for sid in SITES["CH"]:
-                    # Need station, h (hourly), original history; require exact naming.
-                    if re.search(rf"ogd-smn_{sid.lower()}_h(?:_historical|_hist)?\.csv$",urllib.parse.urlsplit(path).path,re.I):
-                        if urllib.parse.urlsplit(path).hostname=="data.geo.admin.ch":
-                            filepaths[sid].append(path)
-        url=next((x.get("href") for x in obj.get("links",[]) if x.get("rel")=="next"),None)
-        if len(seen)>28:raise ValueError("CH_STAC_CRAWL_TOO_MANY_PAGES")
-    return {sid:sorted(set(filepaths[sid])) for sid in SITES["CH"]}
+    """Use original official documented per-station 2020–2029 archive only.
+
+    MeteoSwiss A1 data: /<abbr>/ogd-smn_<abbr>_h_historical_2020-2029.csv
+    No STAC full-catalog crawl, no source outcome-dependent replacement.
+    """
+    return {sid:[f"https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/{sid.lower()}/"
+                 f"ogd-smn_{sid.lower()}_h_historical_2020-2029.csv"]
+            for sid in SITES["CH"]}
 
 def swiss_timestamp(stamp):
-    s=stamp.strip().replace("Z","+00:00")
-    value=dt.datetime.fromisoformat(s)
-    if value.tzinfo is None or value.utcoffset() is None:
-        raise ValueError("CH_ORIGINAL_TIMESTAMP_NO_TIMEZONE")
-    return value.astimezone(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M")
+    """Original MeteoSwiss UTC reference time is end of preceding hourly interval."""
+    value=dt.datetime.strptime(stamp.strip(),"%d.%m.%Y %H:%M")
+    return value.strftime("%Y-%m-%dT%H:%M")
+
 
 def observed_CH():
     sites=original_swiss_station_metadata(); files=fixed_CH_assets()
@@ -183,6 +171,8 @@ def observed_CH():
         if not stampfield or not tempfield:
             raise ValueError("CH_TRE200H0_OR_TIMESTAMPS_NOT_PROVEN_ORIGINAL_"+str(cols[:25]))
         flagcol=swiss.pick_col(cols,"tre200h0_qc","tre200h0_flag")
+        # MeteoSwiss hourly reference_timestamp is UTC interval END (2018+).
+        # Nominal ERA5 hourly model timestamp is not proof of equivalent averaging.
         vals={name:{} for name,_,_ in PERIODS}
         native_flags=Counter()
         expected={name:set(fixed_times(start)) for name,start,end in PERIODS}
@@ -207,6 +197,8 @@ def observed_CH():
                 "quality_tier":"MeteoSwiss_original_published_OGD_hourly_no_explicit_QC_flag"+
                                ("_unqualified_flag_semantics" if flagcol else ""),
                 "qc_histogram":{"original_published_rows":len(vals[name]),"native_flags":dict(native_flags)},
+                "reference_timestamp_UTC_is_end_of_observed_hour":True,
+                "model_ERA5_timestamp_represents_instantaneous_nominal_hour":True,
                 "observed_original_source_SHA256":sha}
     return {r["id"]:r for r in sites.values()},observed
 
@@ -316,6 +308,7 @@ def benchmark(out):
             spatial_provenance["ARCO_SOURCE_BLOCKED"]=f"{type(e).__name__}: {e}"[:500]
             print("REGIONAL_ARCO_SOURCE_BLOCKED",repr(e),flush=True)
     report["spatial_provenance"]=spatial_provenance
+    model_cache={}
     for country in ("AT","DE","CH"):
         for x in SITES[country]:
             sid=f"{country}_{x}"
@@ -338,7 +331,9 @@ def benchmark(out):
                 else:
                     try:
                         s=original_sites[sid]
-                        model=model_at(s,None,None,terrain_by[sid],arco_by[sid])[season]
+                        if sid not in model_cache:
+                            model_cache[sid]=model_at(s,None,None,terrain_by[sid],arco_by[sid])
+                        model=model_cache[sid][season]
                         scores={method:site_season_score(
                             original["series"],fixed_times(start),model["predictions"][method])
                             for method in METHODS}
