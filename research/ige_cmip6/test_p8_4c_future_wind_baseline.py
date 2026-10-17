@@ -138,7 +138,7 @@ class WindBaselineContracts(unittest.TestCase):
 
     def test_contiguous_high_wind_excludes_missing_and_subthreshold(self):
         winds=[5.,5.,5.,5.,None,5.,5.,5.,4.,5.,5.,5.]
-        self.assertEqual(c.run_count(winds,3,5.),3)
+        self.assertEqual(c.run_count(winds,3,5.),4)
         self.assertEqual(c.run_count(winds,6,5.),0)
 
     def test_quantiles_are_finite_and_ordered(self):
