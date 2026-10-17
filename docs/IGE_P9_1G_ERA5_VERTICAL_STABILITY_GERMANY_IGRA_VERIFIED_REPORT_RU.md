@@ -61,7 +61,9 @@ Matched nearest regular 0.25° ARCO ERA5 source air-column temperatures and geop
 | Actual 925→850 temperature gradient MAE | **0.8403 K/km** |
 | Potential-temperature gradient MAE | **0.8678 K/km** |
 | Stability classification (`dθ/dz>5K/km`) agreement | **23/28 = 82.14%** |
-| Free-air positive `dT/dz` sign classification agreement | **28/28 = 100%** (must examine actual positive class counts before claiming detection skill; agreement may be degenerate) |
+| Free-air positive `dT/dz` sign classification agreement | **28/28 = 100%**, but **only 1/28** positive sounding in both IGRA and ERA5 — this rare-class agreement is not proof of sensitivity to frequent inversion events |
+
+**External radiosonde classification details (independently verified original-sounding sample):** 12/28 observed IGRA profiles have `dθ/dz>5K/km` vs 11/28 ERA5. Confusion matrix: **9 true stable, 14 true nonstable, 3 missed stable (IGRA-only), 2 false stable (ERA5-only)**. Accuracy 23/28=82.1%; for this frozen 5K/km threshold **sensitivity 9/12=75%**, **specificity 14/16=87.5%**, but only one station and two weeks. Both IGRA and ERA5 showed **1/28 actual positive free-air dT/dz**; the apparently perfect 28/28 sign agreement is dominated by negative cases. There is **no evidence here of skill recognizing frequent near-surface inversions**.
 
 **Critical representativeness limits:** IGRA source nominal 00/12-hour not necessarily exact balloon *release* or measurement at 925/850hPa timestamp, and ERA5 grid-center is horizontally separated from radiosonde station. One radiosonde station/two weeks cannot qualify real nighttime site-scale inversion or worldwide spatial skill.
 
