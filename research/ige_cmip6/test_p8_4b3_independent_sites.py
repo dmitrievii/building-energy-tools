@@ -92,12 +92,13 @@ class TestRegisteredUnseenStations(unittest.TestCase):
 
     def test_geographic_buffer_excludes_close_source(self):
         m={"AIG":station("AIG",47.,8.,300.),
-           "AAA":station("AAA",47.,8.01,350.),
-           "BBB":station("BBB",47.,8.5,350.),
-           "CCC":station("CCC",46.5,8.,600.)}
-        q=geometrically_blocked(m["AIG"],m,{"AAA","BBB","CCC"})
+           "AAA":station("AAA",47.,8.01,350.)}
+        for i in range(12):
+            sid=f"B{i:02d}"
+            m[sid]=station(sid,47.+i*.02,8.5+i*.02,350.)
+        q=geometrically_blocked(m["AIG"],m,set(m)-{"AIG"})
         self.assertNotIn("AAA",q)
-        self.assertEqual(q,{"BBB","CCC"})
+        self.assertEqual(len(q),12)
 
     def test_registered_acceptance_all_seven_gates(self):
         sites=[f"A{i:02d}" for i in range(18)]
