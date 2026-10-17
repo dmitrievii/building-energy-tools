@@ -1,0 +1,79 @@
+{
+  "phase": "P9H4_SINGLE_2022_REGIONAL_SCORING_COHORT",
+  "registered_at": "2026-10-17",
+  "registered_before_any_new_2022_P9H23_station_error_score": true,
+  "target_windows": [
+    [
+      "winter",
+      "2022-01-10",
+      "2022-01-16"
+    ],
+    [
+      "summer",
+      "2022-07-10",
+      "2022-07-16"
+    ]
+  ],
+  "site_selection_method": "Existing source IDs and documented geography/altitude; fixed before fetching target observations or weather residuals.",
+  "sites": {
+    "AT": [
+      {
+        "id": "39",
+        "name": "Innsbruck",
+        "source": "GeoSphere",
+        "prior_related_2022_validation_possible": true
+      },
+      {
+        "id": "196",
+        "name": "Patscherkofel",
+        "source": "GeoSphere",
+        "prior_related_2022_validation_possible": true
+      },
+      {
+        "id": "30",
+        "name": "Vienna/Station30",
+        "source": "GeoSphere",
+        "prior_related_2022_validation_possible": true
+      }
+    ],
+    "DE": [
+      {
+        "id": "03987",
+        "name": "Potsdam",
+        "source": "DWD_CDC"
+      },
+      {
+        "id": "03730",
+        "name": "Oberstdorf",
+        "source": "DWD_CDC"
+      },
+      {
+        "id": "02290",
+        "name": "Hohenpeissenberg",
+        "source": "DWD_CDC"
+      }
+    ],
+    "CH": [
+      {
+        "id": "PAY",
+        "name": "Payerne",
+        "source": "MeteoSwiss_SwissMetNet"
+      },
+      {
+        "id": "DAV",
+        "name": "Davos",
+        "source": "MeteoSwiss_SwissMetNet"
+      },
+      {
+        "id": "JUN",
+        "name": "Jungfraujoch",
+        "source": "MeteoSwiss_SwissMetNet"
+      }
+    ]
+  },
+  "cannot_replace_missing_stations_or_change_dates": true,
+  "no_2019_2021_station_temperature_as_training": true,
+  "comparator_identical_original_QC_hours": true,
+  "all_source_blocked_cells_reported": true,
+  "worldwide_publication_validation_delayed": true
+}
