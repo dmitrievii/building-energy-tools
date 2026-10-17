@@ -151,7 +151,18 @@ class P91SourceContracts(unittest.TestCase):
         self.assertAlmostEqual(p.haversine(47,15,47,15),0.)
         self.assertGreater(p.haversine(47,15,47,16),70.)
 
-    def test_20_response_is_source_request_provenance_not_native_CDS(self):
+    def test_20_canonical_hourly_SHA_ignores_volatile_provider_generation_time(self):
+        x=stub()
+        x["generationtime_ms"]=10.0
+        _,_,a=parse(x)
+        x["generationtime_ms"]=42.0
+        _,_,b=parse(x)
+        self.assertNotEqual(a["raw_original_response_sha256"],
+                            b["raw_original_response_sha256"])
+        self.assertEqual(a["canonical_hourly_weather_and_selected_cell_sha256"],
+                         b["canonical_hourly_weather_and_selected_cell_sha256"])
+
+    def test_21_response_is_source_request_provenance_not_native_CDS(self):
         self.assertIn("NOT_NATIVE",p.SOURCE_SCOPE)
         self.assertEqual(p.MODEL,"era5")
 
