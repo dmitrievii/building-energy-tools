@@ -286,10 +286,18 @@ def compare_one_state(original,ratio,model,window):
         and future[i]["direction"] is None
         for i in paired
     )
-    change_count=sum(
-        (original[i]["speed"]<CALM_MPS)!=(future[i]["speed"]<CALM_MPS)
+    # Even when the provider stored a numeric azimuth at speed <0.5 m/s,
+    # that calm-hour direction is NOT qualified as a new future noncalm
+    # direction. Any calm -> noncalm crossing needs an explicit safety flag.
+    promoted_source_calm=sum(
+        original[i]["speed"]<CALM_MPS and future[i]["speed"]>=CALM_MPS
         for i in paired
     )
+    demoted_source_noncalm=sum(
+        original[i]["speed"]>=CALM_MPS and future[i]["speed"]<CALM_MPS
+        for i in paired
+    )
+    change_count=promoted_source_calm+demoted_source_noncalm
     mismatch=max(
         [circular_distance(original[i]["direction"],future[i]["direction"])
          for i in paired if original[i]["direction"] is not None]+[0.])
@@ -303,6 +311,13 @@ def compare_one_state(original,ratio,model,window):
         "maximum_source_to_scaled_azimuth_change_deg":mismatch,
         "maximum_monthly_mean_speed_ratio_balance_error_mps":max_balance,
         "newly_noncalm_missing_direction_hour_count":newly_noncalm_missing,
+        "calm_source_promoted_to_noncalm_hours_even_if_azimuth_numeric":promoted_source_calm,
+        "source_noncalm_demoted_to_calm_hours":demoted_source_noncalm,
+        "noncalm_direction_physical_suitability_blocker_hours":sum(
+            future[i]["speed"]>=CALM_MPS
+            and (future[i]["direction"] is None
+                 or original[i]["speed"]<CALM_MPS)
+            for i in paired),
         "calm_threshold_crossing_hour_count":change_count,
         "historical":base,
         "future_scalar_baseline":prediction,
@@ -387,6 +402,9 @@ def run(out,signals=SIGNALS):
             r["maximum_monthly_mean_speed_ratio_balance_error_mps"] for r in states),
         "new_noncalm_missing_direction_states":sum(
             r["newly_noncalm_missing_direction_hour_count"]>0 for r in states),
+        "original_calm_to_new_noncalm_physics_blocker_states":sum(
+            r["calm_source_promoted_to_noncalm_hours_even_if_azimuth_numeric"]>0
+            for r in states),
         "production_epw_ready":False,
     },ensure_ascii=False),flush=True)
     return result
