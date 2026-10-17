@@ -1,0 +1,97 @@
+name: IGE P9.1G2 exploratory DWD QN3 Germany and original ERA5 pressure altitude
+
+on:
+  push:
+    branches: ['research/ige-p9-1g-era5-vertical-stability-dwd-20261017']
+    paths:
+      - '.github/workflows/ige-p9-1g2-auto-qn3-holdout.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  original_Germany_DWD_QN3_auto_control_readback_separate_from_strict_QN10:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Original four DWD archive ZIPs QN3 source only (not retrospectively G1 QN10)
+        run: |
+          mkdir -p outputs/p9g2_qn3
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import sys
+          sys.path.insert(0,'research/ige_cmip6')
+          import p9_1g_dwd_original_2019_observations as d
+          sites,original,meta=d.retrieve_all(frozenset((3,)))
+          records=[]
+          for sid in d.STATION_IDS:
+              for period,_,_ in d.SEASONS:
+                  item=original[sid]
+                  records.append(dict(id=sid,period=period,
+                      original_zip_sha256=item['source_zip_original_SHA256'],
+                      original_QN9=item['original_QC_histograms'][period],
+                      accepted_QN3_hour_count=item['QC_accepted_original_source_hours'][period]))
+          a=dict(phase='IGE_P9G2_ORIGINAL_DWD_LOWER_TIER_QN3_SOURCE',
+                 P9G1_original_strict_QN10_remains_BLOCKED=True,
+                 accepted_quality_description='DWD historical QN3 automatically checked and corrected, NOT fully reviewed QN10',
+                 n_original_sites=len(sites),n_site_seasons=len(records),
+                 n_qualified_QN3_hours=sum(r['accepted_QN3_hour_count'] for r in records),
+                 source_sha=meta,records=records,production_epw_ready=False)
+          Path('outputs/p9g2_qn3/p9_1g2_original_German_DWD_QN3_2019_source.json').write_text(
+              json.dumps(a,indent=2,ensure_ascii=False)+'\n')
+          assert len(records)==8 and all(r['accepted_QN3_hour_count']>=120 for r in records)
+          print('IGE P9.1G2 original German DWD 8/8 QC3 lower-tier observational source PASS')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ige-p9-1g2-original-DWD-Germany-QN3-not-QN10-source-proof
+          path: outputs/p9g2_qn3/*.json
+          if-no-files-found: warn
+
+  original_ERA5_pressure_and_new_Germany_QN3_2019_holdout:
+    needs: original_Germany_DWD_QN3_auto_control_readback_separate_from_strict_QN10
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: ERA5 original ARCO pressure-level Kelvin real surface model geopotential and data provenance
+        run: |
+          python -m pip install 'numpy>=1.26,<3' 'xarray==2025.9.0' 'zarr>=3.1,<4' 'gcsfs>=2025.7,<2027'
+      - name: Original independent German source 2019 QN3 auto-checked, 2019 pressure profile 00/12UTC sparse check
+        run: |
+          python -u research/ige_cmip6/p9_1g_germany_dwd_stability_holdout.py \
+             --exploratory-DWD-QN3 --out outputs/p9g2
+      - name: Validate original DWD QN3 true 2019 and physically limited 3D stability no global release
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('outputs/p9g2/p9_1g2_DWD_QN3_2019_ARCO_pressure_exploratory.json')
+          a=json.loads(p.read_text())
+          assert a['P9G2_exploratory_DWD_QN3_automatically_checked_not_QN10_fully_complete'] is True
+          assert a['P9G1_QN10_strict_source_qualification_stays_blocked_in_G2'] is True
+          assert a['n_predeclared_new_region_DWD_sites']==4
+          assert a['n_full_hour_DWD_QC10_qualified_seasons']==8
+          assert a['n_ERA5_pressure_original_2019_source_times']==112
+          assert a['insufficient_pressure_subsample_to_calibrate_or_qualify_hourly_inversion_model']
+          assert a['global_arbitrary_location_weather_skill_qualified'] is False
+          assert a['production_epw_ready'] is False
+          print('P9.1G2 source analysis PASS: original 2019 DWD auto QC3 and ERA5 profile, G1 QN10 FAIL unchanged')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ige-p9-1g2-QN3-Germany-2019-original-ERA5-pressure-subsample
+          path: outputs/p9g2/*.json
+          if-no-files-found: warn
+          retention-days: 30
