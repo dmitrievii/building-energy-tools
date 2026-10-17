@@ -1,0 +1,25 @@
+name: IGE P9.1H23 one-time existing SRTM/ERA5 adapter contracts
+
+on:
+  push:
+    branches: ['research/ige-p9-1h-near-surface-inversion-20261017']
+    paths:
+      - '.github/workflows/ige-p9-1h23-dem-adapter-once.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source_aligned_existing_ERA5_DEM_contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Original-SRTM ring provenance, strict 2018 development, no 2021, physical sign bounds; offline synthetic contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1h23_physical_inversion_candidate.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1h23_source_era5_dem_adapter.py' -v
