@@ -73,6 +73,14 @@ jobs:
           run-id: 38178867655
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: original_public/p7c1
+      - name: Retrieve original P7B5 research wind-analogue EPW with complete but noncontemporaneous directions
+        uses: actions/download-artifact@v4
+        with:
+          name: ige-p7b5-original-qc-wind-direction-epw-readiness
+          repository: dmitrievii/building-energy-tools
+          run-id: 38174920762
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: original_public/p7b5
       - name: Verify official original immutable source and exact prior P7C1 research provenance
         run: |
           python - <<'PY'
@@ -88,7 +96,13 @@ jobs:
           assert q['baseline']['baseline_missing_wind_direction_hours']==8760
           p7c1=list(Path('original_public/p7c1').glob('*.epw'))
           assert len(p7c1)==4
-          print('P7B4 original SHA + P7C1 synthetic provenance PASS, not licensed Meteonorm')
+          b5=Path('original_public/p7b5')
+          registered=json.loads((b5/'p7b5_science_audit.json').read_text())
+          b5_epw=b5/'Graz_CanESM5_2013_IGE_P7B5_WIND_ANALOGUE_RESEARCH_ONLY.epw'
+          assert registered['production_epw_ready'] is False
+          assert hashlib.sha256(b5_epw.read_bytes()).hexdigest()==registered['derived_sha256'][b5_epw.name]
+          assert registered['candidate_missing_counts']['wind_direction']==0
+          print('P7B4/P7B5 original SHA + P7C1 synthetic provenance PASS, not licensed Meteonorm')
           PY
       - name: Recheck five genuinely archived public EPW byte files and consolidated full generator evidence
         shell: bash
@@ -97,7 +111,8 @@ jobs:
           p7b4='original_public/p7b4/Graz_CanESM5_2013_IGE_P7B4_M2_SOLAR_INTEGRATED_RESEARCH_ONLY.epw'
           mapfile -t epws < <(find original_public/p7c1 -name '*.epw' -type f | sort)
           test ${#epws[@]} -eq 4
-          cmd=(python research/ige_cmip6/p8_5_final_epw_generator_audit.py --out outputs/p8_5_final_generator --public-epw "$p7b4")
+          p7b5='original_public/p7b5/Graz_CanESM5_2013_IGE_P7B5_WIND_ANALOGUE_RESEARCH_ONLY.epw'
+          cmd=(python research/ige_cmip6/p8_5_final_epw_generator_audit.py --out outputs/p8_5_final_generator --public-epw "$p7b4" --public-epw "$p7b5")
           for path in "${epws[@]}"; do cmd+=(--public-epw "$path"); done
           "${cmd[@]}"
       - name: Check technical audit PASS and operational release BLOCKED by actual evidence
@@ -107,7 +122,10 @@ jobs:
           from pathlib import Path
           a=json.loads(Path('outputs/p8_5_final_generator/ige_p8_5_final_generator_audit_aggregates.json').read_text())
           g=a['scientific_and_operational_gate_decisions']
-          assert a['genuinely_reloaded_public_hourly_epws']['public_original_research_epw_count']==5
+          assert a['genuinely_reloaded_public_hourly_epws']['public_original_research_epw_count']==6
+          assert a['genuinely_reloaded_public_hourly_epws']['public_research_EPWs_with_noncalm_direction_absent']==5
+          assert a['genuinely_reloaded_public_hourly_epws']['public_research_EPWs_with_noncalm_direction_present_all_hours']==1
+          assert g['release_gate_results']['all_archived_public_EPWs_noncalm_directions_complete'] is False
           assert g['research_aggregate_technical_audit_pass'] is True
           assert g['operational_release_ready'] is False
           assert g['production_epw_ready'] is False and a['production_epw_ready'] is False
