@@ -1,9 +1,7 @@
 name: IGE P9.2D final original 2013 pressure-envelope cause and synthetic-only real EnergyPlus format smoke
+# Archived one research run: original annual P9.2D weather legally fail-closed.
+# Only explicit manual reruns. All synthetic fixtures marked as such.
 on:
-  push:
-    branches: ['research/ige-p9-2d-integrated-epw-qualification-20261018']
-    paths:
-      - '.github/workflows/ige-p9-2d-once-source-envelope-synthetic-eplus.yml'
   workflow_dispatch:
 permissions:
   contents: read

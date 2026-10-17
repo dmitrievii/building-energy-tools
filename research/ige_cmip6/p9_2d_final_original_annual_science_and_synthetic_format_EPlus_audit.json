@@ -1,0 +1,86 @@
+{
+  "phase": "P9_2D_FROZEN_ONE_YEAR_CET_EPW_INTEGRATION_FINAL_VERIFIED",
+  "research_branch": "research/ige-p9-2d-integrated-epw-qualification-20261018",
+  "original_annual_source_run": 39078876855,
+  "original_source_annual_artifact": 12117503460,
+  "original_EnergyPlus_non_execution_artifact": 12118216843,
+  "source_pressure_and_synthetic_format_eplus_run": 39079305200,
+  "original_native_pressure_huss_envelope_artifact": 12117978708,
+  "synthetic_only_actual_energyplus_artifact": 12118541211,
+  "original_2013_source_sha256": "77ec2e5637eb487c3cedde4e0b660b31f8bd2606198e766255d75a985d61dfef",
+  "authentic_era5_donors": [
+    {
+      "year": 2019,
+      "hours": 8760,
+      "sha256": "9c7a19d5ae018df41dc6045de4d5cc2e9e8ae37d63e361bad3e079e1d2c97576"
+    },
+    {
+      "year": 2020,
+      "hours": 8784,
+      "sha256": "1b18154ca9f0a774a500a9a4e4dab7744cc1866f590fef36ec1e2db09ee6c4b9"
+    }
+  ],
+  "target_native_2013_days": 365,
+  "boundary_native_2012_days": 1,
+  "n_hard_physically_closed_native_days_including_boundary": 360,
+  "n_native_2013_days_physically_closed": 359,
+  "n_humidity_saturation_source_blocked_days": 6,
+  "blocked_dates": [
+    "2013-02-14",
+    "2013-02-21",
+    "2013-07-09",
+    "2013-11-19",
+    "2013-12-11",
+    "2013-12-15"
+  ],
+  "n_both_huss_hurs_closed_among_360": 267,
+  "n_target_hurs_above_proved_hourly_profile_max_among_360": 58,
+  "n_target_hurs_below_low_feasible_witness_unclassified_among_360": 35,
+  "n_genuine_reconstructed_weather_2013_epw_created": 0,
+  "real_genuine_CanESM5_2013_EnergyPlus_performed": false,
+  "EPWCET_8760x35_synthetic_offline_contract_PASS": true,
+  "offline_contracts_original_run": 32,
+  "additional_pressure_envelope_contracts": 5,
+  "original_365_native_day_huss_above_constant_p_convex_Tmin_mean_max_envelope": {
+    "90000_Pa": 0,
+    "92500_Pa": 2,
+    "94000_Pa": 5,
+    "95000_Pa": 7,
+    "97000_Pa": 9,
+    "100000_Pa": 20,
+    "101325_Pa": 23
+  },
+  "hypothetical_upper_pressure_kPa_source_six_blocked_dates": {
+    "2013-02-14": 92.67328983944503,
+    "2013-02-21": 94.64226562154494,
+    "2013-07-09": 93.9377997078931,
+    "2013-11-19": 90.08281617758458,
+    "2013-12-11": 93.27551106091094,
+    "2013-12-15": 90.95261576223957
+  },
+  "assumed_pressure_is_not_original_gcm_or_station_pressure": true,
+  "original_daily_NASA_GCM_pressure_missing": true,
+  "controlled_synthetic_8760_annual_format_EPWs_created": 2,
+  "synthetic_fixture_real_EnergyPlus_26_2_executions": 2,
+  "synthetic_fixture_real_energyplus_zero_severe_zero_fatal": true,
+  "synthetic_fixture_energy_totals_kWh": [
+    {
+      "offset_C": 0,
+      "heat": 17956.681035452184,
+      "cool": 0,
+      "warnings": 2
+    },
+    {
+      "offset_C": 5,
+      "heat": 11201.530437972277,
+      "cool": 1699.393082228973,
+      "warnings": 2
+    }
+  ],
+  "no_synthetic_only_EPWs_representation_as_real_or_future_climate": true,
+  "independent_AT_DE_CH_original_measured_precip_cloud_solar_lw_accuracy_not_validated": true,
+  "licensed_28_private_original_EPWs_re_read_and_simulated": false,
+  "EPW_production_ready": false,
+  "main_branch_unchanged": true,
+  "scientific_outcome": "FORMAT_AND_SYNTHETIC_ENERGYPLUS_INTEROPERABILITY_PASS__GENUINE_ANNUAL_WEATHER_FAIL_CLOSED"
+}

@@ -1,9 +1,7 @@
 name: IGE P9.2D one frozen original annual CanESM5 2013 joint EPW CET and actual EnergyPlus
+# Archived one research run: original annual P9.2D weather legally fail-closed.
+# Only explicit manual reruns. All synthetic fixtures marked as such.
 on:
-  push:
-    branches: ['research/ige-p9-2d-integrated-epw-qualification-20261018']
-    paths:
-      - '.github/workflows/ige-p9-2d-one-authentic-annual-epw-eplus.yml'
   workflow_dispatch:
 permissions:
   contents: read
