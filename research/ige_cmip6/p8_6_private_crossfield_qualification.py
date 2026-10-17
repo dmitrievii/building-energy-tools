@@ -477,5 +477,10 @@ if __name__=="__main__":
     else:
         if not all((opts.baseline,opts.p7c4_original_dir_or_zip,opts.p7c5b_corrected_dir_or_zip)):
             p.error("P8.6 original private validation needs ALL 57 source bytes")
-        verify_original_bundle(opts.baseline,opts.p7c4_original_dir_or_zip,
-                               opts.p7c5b_corrected_dir_or_zip,opts.out)
+        result=verify_original_bundle(opts.baseline,opts.p7c4_original_dir_or_zip,
+                                      opts.p7c5b_corrected_dir_or_zip,opts.out)
+        if not result["research_physics_qualification_pass"]:
+            raise SystemExit(
+                "P8_6_PRIVATE_CROSSFIELD_SCIENTIFIC_BLOCKED: "
+                "source-integrity passed but critical physical diagnostics "
+                "failed; review the aggregate report (exit=2).")
