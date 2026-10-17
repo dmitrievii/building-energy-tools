@@ -1,0 +1,82 @@
+{
+  "phase": "IGE_P9_1H_AT_DE_CH_FROZEN_REGIONAL_ONLY",
+  "registered_on": "2026-10-17",
+  "this_is_a_prospective_scope_amendment_not_original_protocol": true,
+  "allowed_country_codes": [
+    "AT",
+    "DE",
+    "CH"
+  ],
+  "registered_utc_windows": [
+    {
+      "name": "winter",
+      "from": "2022-01-10",
+      "through": "2022-01-16"
+    },
+    {
+      "name": "summer",
+      "from": "2022-07-10",
+      "through": "2022-07-16"
+    }
+  ],
+  "max_stations_per_country": 3,
+  "selection_inputs": [
+    "original_site_metadata",
+    "altitude_m",
+    "independent_DEM_morphology",
+    "pre-observation_temporal_coverage"
+  ],
+  "forbidden_selection_inputs": [
+    "observed_site_temperature_outcome",
+    "ERA5_model_error"
+  ],
+  "data_sources": {
+    "AT": {
+      "provider": "GeoSphere Austria",
+      "repository_existing_sources": [
+        "p9_1b_geosphere_original_station_holdouts.py",
+        "p9_1f1_terrain_inversion_2019_holdout.py"
+      ],
+      "source_url": "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h",
+      "temperature_parameter": "tl",
+      "native_qc": "tl_flag",
+      "historical_2022_P9D_overlap_possible": true
+    },
+    "DE": {
+      "provider": "DWD CDC",
+      "repository_existing_sources": [
+        "p9_1g_dwd_original_2019_observations.py"
+      ],
+      "source_url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/air_temperature/historical/",
+      "temperature_parameter": "TT_TU",
+      "native_qc": "QN_9",
+      "strict_QN10_not_automatically_substituted_for_QN3": true
+    },
+    "CH": {
+      "provider": "MeteoSwiss SwissMetNet",
+      "repository_existing_sources": [
+        "p8_1e_swiss_external.py",
+        "p8_1f_regions.py"
+      ],
+      "source_url": "https://data.geo.admin.ch/api/stac/v1/collections/ch.meteoschweiz.ogd-smn",
+      "granularity": "h",
+      "hourly_2m_temperature_variable": "TO_BE_VERIFIED_AGAINST_NATIVE_PARAMETER_INVENTORY",
+      "existing_P8_swiss_data_are_monthly_not_hourly_skill": true
+    }
+  },
+  "model_identifiers": [
+    "B0_raw_ERA5",
+    "B1_fixed_6p5K_per_km",
+    "B2_provider_altitude_blackbox",
+    "H_predeclared_bounded_cold_pool_v0"
+  ],
+  "claims": {
+    "regional_AT_DE_CH_qualified": false,
+    "near_surface_inversion_model_qualified": false,
+    "global_arbitrary_point_weather_qualified": false,
+    "production_epw_ready": false
+  },
+  "no_2021_Nordic_holdout_read": true,
+  "no_other_country_data_fetch": true,
+  "no_model_coefficient_refit_from_this_evaluation": true
+}
