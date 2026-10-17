@@ -1,0 +1,72 @@
+name: IGE P9.1G original German DWD QC and ERA5 pressure vertical stability pilot
+
+on:
+  push:
+    branches: ['research/ige-p9-1g-era5-vertical-stability-dwd-20261017']
+    paths:
+      - 'research/ige_cmip6/p9_1g_dwd_original_2019_observations.py'
+      - 'research/ige_cmip6/p9_1g_era5_pressure_stability.py'
+      - 'research/ige_cmip6/p9_1g_germany_dwd_stability_holdout.py'
+      - 'research/ige_cmip6/test_p9_1g_era5_dwd_pressure_source_contracts.py'
+      - '.github/workflows/ige-p9-1g-pressure-dwd.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  original_DWD_and_ERA5_pressure_source_science_contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Pressure Kelvin, below-ground rejection, original German DWD QC-10 and independent weather contracts
+        run: |
+          python -m pip install 'numpy>=1.26,<3'
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1g_era5_dwd_pressure_source_contracts.py' -v
+
+  original_2019_four_DWD_regional_sites_and_ARCO_ERA5_3D_stability:
+    needs: original_DWD_and_ERA5_pressure_source_science_contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install source-matched ERA5 ARCO actual regular pressure level fields and DWD CSV decoder
+        run: |
+          python -m pip install 'numpy>=1.26,<3' 'xarray==2025.9.0' 'zarr>=3.1,<4' 'gcsfs>=2025.7,<2027'
+      - name: Original DWD historical archives and real original ERA5 0.25 pressure temperatures and geopotentials
+        run: |
+          python -u research/ige_cmip6/p9_1g_germany_dwd_stability_holdout.py --out outputs/p9_1g
+      - name: Qualify physical site/pressure source and no false 2019 hourly inference
+        run: |
+          python - <<'PY'
+          import json,math,statistics
+          from pathlib import Path
+          p=Path('outputs/p9_1g/p9_1g_2019_real_DWD_ERA5_ARCO_vertical_holdout_results.json')
+          v=json.loads(p.read_text())
+          assert v['n_predeclared_new_region_DWD_sites']==4
+          assert v['n_predeclared_DWD_site_seasons']==8
+          assert v['n_full_hour_DWD_QC10_qualified_seasons']>=6
+          assert v['n_original_DWD_qual_hour_pairs']>=6*120
+          assert v['n_ERA5_pressure_original_2019_source_times']==4*2*14
+          assert v['model_parameters_and_sites_frozen_before_2019_DWD_observations'] is True
+          assert v['insufficient_pressure_subsample_to_calibrate_or_qualify_hourly_inversion_model'] is True
+          assert v['ERA5_25km_pressure_stability_not_local_measured_temperature_inversion'] is True
+          assert v['global_arbitrary_location_weather_skill_qualified'] is False
+          assert v['production_epw_ready'] is False
+          print('P9.1G source 0.25 ERA5 pressure real above-ground profiles and independent DWD QC10 2019 PASS')
+          PY
+      - name: Archive exclusively station/global-source SHA and QC error metrics, never original hourly DWD data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p9-1g-original-germany-dwd-2019-ERA5-vertical-stability-and-source
+          path: outputs/p9_1g/*.json
+          retention-days: 30
+          if-no-files-found: warn
