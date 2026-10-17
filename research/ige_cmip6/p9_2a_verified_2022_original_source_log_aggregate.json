@@ -1,0 +1,157 @@
+{
+  "phase": "P9_2A_VERIFIED_SOURCE_LOG_SUMMARY",
+  "action_run": 39066579481,
+  "action_job": 117495412139,
+  "action_sha": "3a859bc6baebf2f67ef010ca212650fbe2a37bfa",
+  "original_provenance_artifact": 12113522628,
+  "source": "ERA5 via Open-Meteo, NOT independent stations",
+  "training_years": [
+    2019,
+    2020
+  ],
+  "evaluated_year": 2022,
+  "one_seed": 7313,
+  "region_country_codes": [
+    "AT",
+    "DE",
+    "CH"
+  ],
+  "n_original_era5_target_hours": 1008,
+  "n_scorable_cases": 6,
+  "metric_cell_counts": {
+    "better": 14,
+    "worse": 18,
+    "unavailable": 4,
+    "equal": 0
+  },
+  "metrics_by_region_season": [
+    {
+      "country": "AT",
+      "season": "January",
+      "reference_wet_fraction": 0,
+      "original_wet_persistence": null,
+      "joint_wet_persistence": 0.6666666666666666,
+      "iid_wet_persistence": 0,
+      "better_metrics": [],
+      "worse_metrics": [
+        "wet_hour_fraction",
+        "mean_wet_spell_hours"
+      ],
+      "unavailable_metrics": [
+        "P_next_wet_given_wet",
+        "wet_minus_dry_RH_pp",
+        "wet_minus_dry_cloud_pp",
+        "wet_minus_dry_GHI_W_m2_daylight_UTC9to15"
+      ],
+      "seam_T_joint": 2.6999999999999997,
+      "seam_T_iid": 1.1666666666666665
+    },
+    {
+      "country": "AT",
+      "season": "July",
+      "reference_wet_fraction": 0.18452380952380953,
+      "original_wet_persistence": 0.6774193548387096,
+      "joint_wet_persistence": 0.8095238095238095,
+      "iid_wet_persistence": 0.14285714285714285,
+      "better_metrics": [
+        "wet_hour_fraction",
+        "mean_wet_spell_hours",
+        "P_next_wet_given_wet"
+      ],
+      "worse_metrics": [
+        "wet_minus_dry_RH_pp",
+        "wet_minus_dry_cloud_pp",
+        "wet_minus_dry_GHI_W_m2_daylight_UTC9to15"
+      ],
+      "unavailable_metrics": [],
+      "seam_T_joint": 2.0833333333333335,
+      "seam_T_iid": 0.8999999999999995
+    },
+    {
+      "country": "DE",
+      "season": "January",
+      "reference_wet_fraction": 0.10714285714285714,
+      "original_wet_persistence": 0.7647058823529411,
+      "joint_wet_persistence": 0.9090909090909091,
+      "iid_wet_persistence": 0.4307692307692308,
+      "better_metrics": [
+        "wet_hour_fraction",
+        "P_next_wet_given_wet",
+        "wet_minus_dry_cloud_pp"
+      ],
+      "worse_metrics": [
+        "mean_wet_spell_hours",
+        "wet_minus_dry_RH_pp",
+        "wet_minus_dry_GHI_W_m2_daylight_UTC9to15"
+      ],
+      "unavailable_metrics": [],
+      "seam_T_joint": 1.9666666666666666,
+      "seam_T_iid": 1.9500000000000002
+    },
+    {
+      "country": "DE",
+      "season": "July",
+      "reference_wet_fraction": 0.16666666666666666,
+      "original_wet_persistence": 0.75,
+      "joint_wet_persistence": 0.9629629629629629,
+      "iid_wet_persistence": 0.5070422535211268,
+      "better_metrics": [
+        "P_next_wet_given_wet"
+      ],
+      "worse_metrics": [
+        "wet_hour_fraction",
+        "mean_wet_spell_hours",
+        "wet_minus_dry_RH_pp",
+        "wet_minus_dry_cloud_pp",
+        "wet_minus_dry_GHI_W_m2_daylight_UTC9to15"
+      ],
+      "unavailable_metrics": [],
+      "seam_T_joint": 1.9333333333333336,
+      "seam_T_iid": 1.55
+    },
+    {
+      "country": "CH",
+      "season": "January",
+      "reference_wet_fraction": 0.09523809523809523,
+      "original_wet_persistence": 0.75,
+      "joint_wet_persistence": 0.9285714285714286,
+      "iid_wet_persistence": 0.3090909090909091,
+      "better_metrics": [
+        "wet_hour_fraction",
+        "P_next_wet_given_wet",
+        "wet_minus_dry_RH_pp",
+        "wet_minus_dry_cloud_pp",
+        "wet_minus_dry_GHI_W_m2_daylight_UTC9to15"
+      ],
+      "worse_metrics": [
+        "mean_wet_spell_hours"
+      ],
+      "unavailable_metrics": [],
+      "seam_T_joint": 1.416666666666667,
+      "seam_T_iid": 1.75
+    },
+    {
+      "country": "CH",
+      "season": "July",
+      "reference_wet_fraction": 0.05952380952380952,
+      "original_wet_persistence": 0.4,
+      "joint_wet_persistence": 0.863013698630137,
+      "iid_wet_persistence": 0.47692307692307695,
+      "better_metrics": [
+        "wet_minus_dry_RH_pp",
+        "wet_minus_dry_cloud_pp"
+      ],
+      "worse_metrics": [
+        "wet_hour_fraction",
+        "mean_wet_spell_hours",
+        "P_next_wet_given_wet",
+        "wet_minus_dry_GHI_W_m2_daylight_UTC9to15"
+      ],
+      "unavailable_metrics": [],
+      "seam_T_joint": 1.4500000000000004,
+      "seam_T_iid": 0.5333333333333337
+    }
+  ],
+  "not_production": true,
+  "no_worldwide_validation": true
+}

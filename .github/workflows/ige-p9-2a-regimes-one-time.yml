@@ -1,9 +1,7 @@
 name: IGE P9.2A single joint weather regime original ERA5 three-country pilot
+# One verified 13-contract + original ERA5 three-country pilot: Actions #39066579481.
+# Future execution requires manual dispatch only. No repeated network polling.
 on:
-  push:
-    branches: ['research/ige-p9-2-joint-hourly-regimes-20261017']
-    paths:
-      - '.github/workflows/ige-p9-2a-regimes-one-time.yml'
   workflow_dispatch:
 permissions:
   contents: read
