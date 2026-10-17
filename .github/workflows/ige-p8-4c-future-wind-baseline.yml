@@ -1,0 +1,60 @@
+name: IGE P8.4C original-source future scalar wind baseline and EPW wind physics
+
+on:
+  push:
+    branches: ['research/ige-p8-4c-future-wind-baseline-20261017']
+    paths:
+      - 'research/ige_cmip6/p8_4c_future_wind_baseline.py'
+      - 'research/ige_cmip6/test_p8_4c_future_wind_baseline.py'
+      - 'research/ige_cmip6/results/p7c3_384_monthly_model_signals.csv'
+      - '.github/workflows/ige-p8-4c-future-wind-baseline.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  monthly_GCM_and_EPW_wind_physics_contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install frozen runtime dependencies
+        run: python -m pip install 'numpy>=1.26,<3' 'pillow>=10,<13'
+      - name: GCM 384 ratio semantics, immutable direction, calm and 8760h source contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_4c_future_wind_baseline.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7c1_epw_morphing.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7c4_hourly_ensemble.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7b5_wind_coherence.py' -v
+
+  original_GeoSphere_2013_x_32_GCM_wind_ratio_audit:
+    needs: monthly_GCM_and_EPW_wind_physics_contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    env:
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install scientific runtime
+        run: python -m pip install 'numpy>=1.26,<3' 'pillow>=10,<13'
+      - name: Original Austrian hourly wind and 384 CMIP6 seasonal scalar-only climate ratios
+        run: |
+          mkdir -p "$RUNNER_TEMP/ige_p8_4c_wind"
+          python research/ige_cmip6/p8_4c_future_wind_baseline.py --out "$RUNNER_TEMP/ige_p8_4c_wind"
+      - name: Export research aggregates and source SHA only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-4c-original-geosphere-2013-32-gcm-wind-morph-aggregates
+          path: ${{ runner.temp }}/ige_p8_4c_wind/ige_p8_4c_future_wind_baseline_original_aggregates.json
+          if-no-files-found: warn
+          retention-days: 30
