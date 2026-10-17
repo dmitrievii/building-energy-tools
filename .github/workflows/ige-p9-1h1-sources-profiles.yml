@@ -55,17 +55,17 @@ jobs:
       - name: Discover real original SMEAR mast variable metadata and source query semantics before ingesting any temperatures
         run: |
           python -u research/ige_cmip6/p9_1h1_smartsmear_source_metadata.py
-      - name: Fetch actual original SmartSMEAR 2018 DEV-temperature payloads at 4.2m and 67.2m, SHA only, no QC claim or holdout
+      - name: Fetch original SmartSMEAR 2018 DEV-temperature payloads at 4.2m and 67.2m, SHA only, no QC claim or holdout
         run: |
           python -u research/ige_cmip6/p9_1h1_smartsmear_original_development_source.py
       - name: Real measured Hyytiälä Jan/Jul 2018 paired 4.2m and 67.2m temperature source; report SOURCE-QC-UNQUALIFIED only
         run: |
           python -u research/ige_cmip6/p9_1h1_original_2018_SMARTSMEAR_profile_exploratory.py
-      - name: Preserve metadata-only audit; do not archive or synthesize observations
+      - name: Archive source SHA and unqualified aggregated observation statistics; never upload raw sensor rows
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ige-p9h1-SmartSMEAR-real-upstream-API-schema-audit-NOT-sensor-data
+          name: ige-p9h1-SmartSMEAR-2018-real-source-provisional-observation-QC-audit
           path: outputs/p9h1/*.json
           if-no-files-found: warn
           retention-days: 30
