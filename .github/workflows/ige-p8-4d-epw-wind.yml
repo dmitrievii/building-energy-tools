@@ -1,0 +1,161 @@
+name: IGE P8.4D integrated public EPW wind qualification and native EnergyPlus sensitivity
+
+on:
+  push:
+    branches: ['research/ige-p8-4d-epw-wind-qualification-20261017']
+    paths:
+      - 'research/ige_cmip6/p8_4d_epw_wind_qualification.py'
+      - 'research/ige_cmip6/p8_4d_native_energyplus_wind.py'
+      - 'research/ige_cmip6/test_p8_4d_epw_wind_qualification.py'
+      - '.github/workflows/ige-p8-4d-epw-wind.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  immutable_wind_epw_contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Scientific dependencies
+        run: python -m pip install 'numpy>=1.26,<3' 'pillow>=10,<13'
+      - name: Registered 8760h physical, calm direction and EnergyPlus model contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_4d_epw_wind_qualification.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_4c_future_wind_baseline.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7c5_qualification.py' -v
+
+  original_public_epw_32_wind_only_qualification:
+    needs: immutable_wind_epw_contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Scientific dependencies
+        run: python -m pip install 'numpy>=1.26,<3' 'pillow>=10,<13'
+      - name: Restore original published P7B5 research-only EPW and audited source SHA
+        uses: actions/download-artifact@v4
+        with:
+          name: ige-p7b5-original-qc-wind-direction-epw-readiness
+          repository: dmitrievii/building-energy-tools
+          run-id: 38174920762
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: inputs/p7b5_public
+      - name: Check original immutable P7B5 EPW SHA and scientific status
+        run: |
+          python - <<'PY'
+          import json,hashlib
+          from pathlib import Path
+          p=Path('inputs/p7b5_public')
+          a=json.loads((p/'p7b5_science_audit.json').read_text())
+          epw=p/'Graz_CanESM5_2013_IGE_P7B5_WIND_ANALOGUE_RESEARCH_ONLY.epw'
+          assert a['production_epw_ready'] is False
+          assert epw.is_file() and hashlib.sha256(epw.read_bytes()).hexdigest()==a['derived_sha256'][epw.name]
+          assert a['candidate_missing_counts']['wind_direction']==0
+          print('Source authentic research-only P7B5 EPW: SHA and 8760h original source reference PASS')
+          PY
+      - name: Original research EPW 8760 x 35, 32 GCM wind-only monthly morphs
+        run: |
+          python research/ige_cmip6/p8_4d_epw_wind_qualification.py \
+            --base inputs/p7b5_public/Graz_CanESM5_2013_IGE_P7B5_WIND_ANALOGUE_RESEARCH_ONLY.epw \
+            --audit inputs/p7b5_public/p7b5_science_audit.json \
+            --source-type p7b5_public \
+            --out outputs/p8_4d_public
+      - name: Confirm research source, no direction invention, absent licensed EPW
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('outputs/p8_4d_public/p8_4d_epw_wind_32_scenario_aggregates.json')
+          x=json.loads(p.read_text())
+          assert x['n_wind_only_scenario_audits']==32
+          assert x['all_32_wind_morphs_structurally_valid']
+          assert not x['input_source']['authenticated_licensed_meteonorm']
+          assert not x['authenticated_28_meteonorm_EPWs_executed']
+          assert all(s['wind_direction_preserved_exactly']
+                     and s['nonwind_34_epw_fields_preserved_exactly'] for s in x['scenario_metrics'])
+          assert all(s['maximum_monthly_speed_balance_mps']<=.001 for s in x['scenario_metrics'])
+          assert not x['production_epw_ready']
+          print('P8.4D structural public research EPW validation SUCCESS, production NOT approved')
+          PY
+      - name: Publish ONLY derived aggregate source hashes and scenario statistics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-4d-public-research-epw-32-wind-only-source-aggregate
+          path: outputs/p8_4d_public/p8_4d_epw_wind_32_scenario_aggregates.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  pinned_native_energyplus_wind_infiltration:
+    needs: original_public_epw_32_wind_only_qualification
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Restore public original EPW for paired wind-only EnergyPlus simulations
+        uses: actions/download-artifact@v4
+        with:
+          name: ige-p7b5-original-qc-wind-direction-epw-readiness
+          repository: dmitrievii/building-energy-tools
+          run-id: 38174920762
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: inputs/p7b5_public
+      - name: Rebuild 0.5/1/1.5 wind-only EPWs from immutable public research EPW
+        run: |
+          python research/ige_cmip6/p8_4d_epw_wind_qualification.py \
+            --base inputs/p7b5_public/Graz_CanESM5_2013_IGE_P7B5_WIND_ANALOGUE_RESEARCH_ONLY.epw \
+            --audit inputs/p7b5_public/p7b5_science_audit.json \
+            --source-type p7b5_public \
+            --out outputs/p8_4d_eplus_public
+      - name: Download official native EnergyPlus 26.2.0 pinned SHA256
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p tools_cache/energyplus
+          url='https://github.com/NatLabRockies/EnergyPlus/releases/download/v26.2.0/EnergyPlus-26.2.0-4bd7a1f26f-Linux-Ubuntu24.04-x86_64.tar.gz'
+          curl --fail --location --show-error --retry 5 --retry-delay 3 -o tools_cache/EnergyPlus.tar.gz "$url"
+          expected='b848da8236482a2171a67d7eab00c82162105b653ffab3ae3b6c2217c433a8a1'
+          actual=$(sha256sum tools_cache/EnergyPlus.tar.gz | cut -d' ' -f1)
+          test "$actual" = "$expected" || { echo "::error::Official EnergyPlus hash mismatch"; exit 1; }
+          tar xzf tools_cache/EnergyPlus.tar.gz -C tools_cache/energyplus
+          EPLUS_BIN=$(find -L "$PWD/tools_cache/energyplus" -maxdepth 5 -type f -name energyplus -print -quit)
+          test -n "$EPLUS_BIN" || { echo "::error::Native EnergyPlus executable missing"; exit 1; }
+          chmod +x "$EPLUS_BIN"
+          "$EPLUS_BIN" --version
+          echo "EPLUS_BIN=$EPLUS_BIN" >> "$GITHUB_ENV"
+      - name: Original pinned official EnergyPlus one-zone IDF
+        run: |
+          curl --fail --location --retry 4 -o tools_cache/official_1ZoneUncontrolled.idf \
+            https://raw.githubusercontent.com/NatLabRockies/EnergyPlus/v26.2.0/testfiles/1ZoneUncontrolled.idf
+      - name: Five REAL EnergyPlus annual runs, 3 wind infiltration + 2 negative control
+        run: |
+          python research/ige_cmip6/p8_4d_native_energyplus_wind.py \
+            --energyplus "$EPLUS_BIN" \
+            --original-idf tools_cache/official_1ZoneUncontrolled.idf \
+            --epw-dir outputs/p8_4d_eplus_public/_private_hourly_epws \
+            --out outputs/p8_4d_eplus_results
+      - name: Upload measured EnergyPlus aggregate and logs, NEVER source hourly EPW
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-4d-native-energyplus-real-five-wind-sensitive-simulations
+          path: |
+            outputs/p8_4d_eplus_results/p8_4d_native_energyplus_5_wind_cases_aggregate.json
+            outputs/p8_4d_eplus_results/**/eplusout.err
+            outputs/p8_4d_eplus_results/**/stdout.txt
+            outputs/p8_4d_eplus_results/**/stderr.txt
+          if-no-files-found: warn
+          retention-days: 30
