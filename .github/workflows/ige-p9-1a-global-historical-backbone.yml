@@ -8,6 +8,8 @@ on:
       - 'research/ige_cmip6/test_p9_1a_global_historical_backbone.py'
       - 'research/ige_cmip6/p9_1b_geosphere_original_station_holdouts.py'
       - 'research/ige_cmip6/test_p9_1b_geosphere_original_station_holdouts.py'
+      - 'research/ige_cmip6/p9_1c_provider_altitude_2024_ablation.py'
+      - 'research/ige_cmip6/test_p9_1c_provider_altitude_2024_ablation.py'
       - '.github/workflows/ige-p9-1a-global-historical-backbone.yml'
   workflow_dispatch:
 
@@ -27,6 +29,7 @@ jobs:
         run: |
           python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1a_global_historical_backbone.py' -v
           python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1b_geosphere_original_station_holdouts.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1c_provider_altitude_2024_ablation.py' -v
 
   original_ERA5_five_world_climates_and_leap_year:
     needs: immutable_ERA5_source_spatial_hourly_contracts
@@ -125,5 +128,40 @@ jobs:
         with:
           name: ige-p9-1b-original-geosphere-three-station-two-season-ERA5-source-holdouts
           path: outputs/p9_1b_stations/ige_p9_1b_real_geosphere_ERA5_station_holdouts.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  independent_2024_altitude_provider_ablations:
+    needs: immutable_ERA5_source_spatial_hourly_contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: 2024 independent original GeoSphere 3-station winter and summer holdouts
+        run: |
+          python research/ige_cmip6/p9_1c_provider_altitude_2024_ablation.py --out outputs/p9_1c_2024
+      - name: Preserve physical meaning and independently verified held-out original temperature sample
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          a=json.loads(Path('outputs/p9_1c_2024/ige_p9_1c_independent_2024_original_station_elevation_ablation.json').read_text())
+          assert a['site_seasons']==6
+          assert all(r['n_original_observed_UTC_hour_pairs']>=120 for r in a['member_metrics'])
+          assert a['2024_observation_year_temporally_independent_from_P9_1B'] is True
+          assert a['no_tuning_to_test_site_target_observed_temperature'] is True
+          assert a['does_NOT_qualify_site_lapse_as_global_correction'] is True
+          assert a['production_epw_ready'] is False
+          print('2024 site-altitude provider black-box ablation completed; no physical native DEM certification')
+          PY
+      - name: Archive 2024 research climate source hashes and error aggregates only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p9-1c-2024-three-station-independent-altitude-source-ablation
+          path: outputs/p9_1c_2024/ige_p9_1c_independent_2024_original_station_elevation_ablation.json
           if-no-files-found: warn
           retention-days: 30
