@@ -161,10 +161,21 @@ def geometry(targetdate,lat,lon):
         alts.append(max(0.,math.sin(math.radians(alt))))
     return alts
 
-def new_day(target_day,donor,latitude,longitude):
+def new_day(target_day,donor,latitude,longitude,temperature_override=None):
     src=native_target(target_day)
     for w in donor.vectors:check_vector(w)
     t=source_hourly_mean_temperature(donor,src)
+    if temperature_override is not None:
+        # Research-only P9.3A extension; original P9.2B behavior is unchanged.
+        # Pressure is never an adjustable optimization variable.
+        if len(temperature_override)!=24 or not all(
+              isinstance(v,(int,float)) and math.isfinite(v) for v in temperature_override):
+            raise InfeasibleDailyClimate("P93A_INVALID_CONSTRAINED_TEMPERATURE_PROFILE")
+        t=[float(v) for v in temperature_override]
+        if not (abs(statistics.fmean(t)-src["tas_c"])<=1e-6
+                and abs(min(t)-src["tasmin_c"])<=1e-6
+                and abs(max(t)-src["tasmax_c"])<=1e-6):
+            raise InfeasibleDailyClimate("P93A_OVERRIDE_DAILY_NATIVE_T_MEAN_MIN_MAX_NOT_CONSERVED")
     p=[float(v["surface_pressure"])*100 for v in donor.vectors]
     if not all(30000<pi<115000 for pi in p):
         raise InfeasibleDailyClimate("P92B_DONOR_SURFACE_PRESSURE")

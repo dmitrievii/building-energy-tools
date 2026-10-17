@@ -53,7 +53,7 @@ def timestamp_rows(weather_days,longwave_per_day,year=YEAR):
     return intervals
 
 def epw_header(year=YEAR):
-    if year!=2013:
+    if year not in (2013,2014):
         raise EPWBlocked("P92D_FIXED_PREREGISTERED_CALENDAR_ONLY_2013")
     return [
         ["LOCATION","Graz-IGE-P9.2D-JOINT-RESEARCH-ONLY","Styria","AUT",
@@ -65,7 +65,7 @@ def epw_header(year=YEAR):
         ["HOLIDAYS/DAYLIGHT SAVINGS","No",0,0,0],
         ["COMMENTS 1","NASA NEX-GDDP-CMIP6 CanESM5 2013 daily + ERA5 2019/2020 joint analogues. Research only. NO independent station cloud/rain/solar validation."],
         ["COMMENTS 2","Fixed CET UTC+1, no DST; 2012-12-31 23:00 UTC required. GCM grid 46.875,15.375 differs donor 47.0707,15.4395. Opaque sky and photometry MISSING; LW derived proxy; sky donor analogues."],
-        ["DATA PERIODS",1,1,"P9.2D SYNTHETIC HISTORICAL YEAR 2013","Tuesday","1/1","12/31"]
+        ["DATA PERIODS",1,1,f"P9.3A SYNTHETIC RESEARCH HISTORICAL YEAR {year}", "Tuesday" if year==2013 else "Wednesday","1/1","12/31"]
     ]
 
 def make_record(local,v,ir):
