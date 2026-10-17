@@ -8,6 +8,8 @@ on:
       - 'research/ige_cmip6/test_p9_1d_native_orography_dem.py'
       - 'research/ige_cmip6/p9_1d_independent_station_correction.py'
       - 'research/ige_cmip6/test_p9_1d_independent_station_correction.py'
+      - 'research/ige_cmip6/p9_1d2_independent_new_alpine_stations.py'
+      - 'research/ige_cmip6/test_p9_1d2_independent_new_alpine_stations.py'
       - '.github/workflows/ige-p9-1d-orography-dem.yml'
   workflow_dispatch:
 
@@ -30,6 +32,7 @@ jobs:
         run: |
           python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1d_native_orography_dem.py' -v
           python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1d_independent_station_correction.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1d2_independent_new_alpine_stations.py' -v
       - name: Download native reduced Gaussian ERA5 surface geopotential and original independent SRTM DEM points
         run: |
           python research/ige_cmip6/p9_1d_native_orography_dem.py --out outputs/p9_1d_terrain
@@ -81,5 +84,46 @@ jobs:
         with:
           name: ige-p9-1d-original-era5-native-n320-and-independent-srtm-dem
           path: outputs/p9_1d_terrain/p9_1d_original_native_N320_independent_dem.json
+          retention-days: 30
+          if-no-files-found: warn
+
+  independent_new_six_Alpine_stations_2022_spatial_holdout:
+    needs: native_geopotential_original_source_and_independent_dem
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned native ERA5 numerical research runtime
+        run: |
+          python -m pip install 'numpy>=1.26,<3' 'xarray==2024.11.0' 'zarr>=2.18,<3' 'gcsfs>=2024.6,<2027'
+      - name: Six genuinely withheld Alpine station sites and original independent 2022 source QC 
+        run: |
+          python research/ige_cmip6/p9_1d2_independent_new_alpine_stations.py --out outputs/p9_1d2_new_sites
+      - name: Verify all predeclared site-season statuses and real original source QCs
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('outputs/p9_1d2_new_sites/p9_1d2_six_new_alpine_sites_2022_source_holdouts.json')
+          x=json.loads(p.read_text())
+          assert x['n_predeclared_stations']==6
+          assert x['n_predeclared_station_seasons']==12
+          assert x['n_eligible_site_seasons']>=8
+          assert x['n_true_independent_QC_matched_hours']>=8*96
+          assert x['all_scientific_holdouts_predeclared_not_chosen_for_improvement'] is True
+          assert x['exact_0p25_OpenMeteo_cell_grid_elevation_verified'] is False
+          assert x['arbitrary_global_site_skill_qualified'] is False
+          assert x['production_epw_ready'] is False
+          print('P9.1D2 independent spatial generalization measured, no arbitrary-point production qualification')
+          PY
+      - name: Archive new independent geographic station holdout aggregate, no originals
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p9-1d2-six-new-alpine-station-2022-spatial-holdout
+          path: outputs/p9_1d2_new_sites/p9_1d2_six_new_alpine_sites_2022_source_holdouts.json
           retention-days: 30
           if-no-files-found: warn
