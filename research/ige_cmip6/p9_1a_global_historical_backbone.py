@@ -169,6 +169,16 @@ def parse_source(original_bytes,latitude,longitude,start,end):
         "user_altitude_or_terrain_DEM_applied":False,
         "provider_statistical_elevation_downscaling_disabled":True,
         "raw_original_response_sha256":hashlib.sha256(original_bytes).hexdigest(),
+        # Open-Meteo includes volatile generationtime_ms in JSON. Hash a
+        # normalized immutable weather payload separately so identical hourly
+        # values can be recognized across independently fetched HTTP responses.
+        "canonical_hourly_weather_and_selected_cell_sha256":hashlib.sha256(
+            json.dumps({"hourly":arrays,"units":{k:units[k] for k in HOURLY},
+                        "selected_lat":slat,"selected_lon":slon},
+                       sort_keys=True,separators=(",",":"),
+                       ensure_ascii=False,allow_nan=False).encode("utf-8")
+        ).hexdigest(),
+        "raw_source_response_may_contain_volatile_generationtime_metadata":True,
         "n_received_hourly_rows":len(expected),
         "dates_UTC_contiguous":True,
         "original_hourly_payload_all_variables_same_time_axis":True,
