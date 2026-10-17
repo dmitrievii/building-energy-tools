@@ -157,6 +157,17 @@ class WindBaselineContracts(unittest.TestCase):
         self.assertLessEqual(r["maximum_monthly_mean_speed_ratio_balance_error_mps"],.001)
         self.assertGreater(r["newly_noncalm_missing_direction_hour_count"],0)
 
+    def test_numeric_source_calm_azimuth_still_unqualified_when_promoted(self):
+        series=sample_8760()
+        for x in series:
+            if x["speed"]<c.CALM_MPS:
+                x["direction"]=45.  # numeric but meteorologically calm
+        r=c.compare_one_state(series,ratios(1.5),"ACCESS-CM2",ens.WINDOWS[0])
+        self.assertEqual(
+            r["calm_source_promoted_to_noncalm_hours_even_if_azimuth_numeric"],365)
+        self.assertEqual(r["newly_noncalm_missing_direction_hour_count"],0)
+        self.assertEqual(r["noncalm_direction_physical_suitability_blocker_hours"],365)
+
     def test_incomplete_hourly_reference_cannot_pass(self):
         with self.assertRaisesRegex(ValueError,"8760"):
             c.compare_one_state(sample_8760()[:-1],ratios(1.),"ACCESS-CM2",ens.WINDOWS[0])
