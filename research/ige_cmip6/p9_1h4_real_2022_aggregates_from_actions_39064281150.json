@@ -1,0 +1,337 @@
+{
+  "phase": "IGE_P9_1H4_ORIGINAL_AT_DE_CH_2022_AGGREGATES_FROM_COMPLETED_GITHUB_ACTIONS",
+  "source_github_actions_run": "https://github.com/dmitrievii/building-energy-tools/actions/runs/39064281150",
+  "github_actions_run_commit": "256422f35d3fdb7dd17b988d62b13cde84d80c55",
+  "full_provenance_artifact_id": 12113210419,
+  "fixture_manifest": "research/ige_cmip6/p9_1h_2022_frozen_nine_regional_stations.json",
+  "time_periods_UTC": [
+    "2022-01-10..2022-01-16",
+    "2022-07-10..2022-07-16"
+  ],
+  "source_3_countries": "original GeoSphere Austria, DWD CDC, MeteoSwiss SwissMetNet hourly",
+  "qualified_native_QC_tiers_vary_by_provider": true,
+  "n_real_station_hours": 3024,
+  "n_site_seasons": 18,
+  "country": {
+    "AT": {
+      "n_site_seasons": 6,
+      "n_station_hours": 1008,
+      "macro_MAE_C": {
+        "B0": 4.022216666666666,
+        "B1": 2.2836666666666665,
+        "B2": 2.285316666666667,
+        "H": 2.2635666666666663
+      },
+      "n_worse_than_per_cell_best_baseline": 3,
+      "n_better_than_per_cell_best_baseline": 1,
+      "n_equal": 2,
+      "worst_degradation_C": 1.7735
+    },
+    "DE": {
+      "n_site_seasons": 6,
+      "n_station_hours": 1008,
+      "macro_MAE_C": {
+        "B0": 1.6292499999999999,
+        "B1": 1.6606000000000003,
+        "B2": 1.6584500000000002,
+        "H": 1.6208333333333333
+      },
+      "n_worse_than_per_cell_best_baseline": 3,
+      "n_better_than_per_cell_best_baseline": 1,
+      "n_equal": 2,
+      "worst_degradation_C": 0.7587
+    },
+    "CH": {
+      "n_site_seasons": 6,
+      "n_station_hours": 1008,
+      "macro_MAE_C": {
+        "B0": 4.259533333333334,
+        "B1": 3.281166666666666,
+        "B2": 3.2792500000000007,
+        "H": 3.3403500000000004
+      },
+      "n_worse_than_per_cell_best_baseline": 4,
+      "n_better_than_per_cell_best_baseline": 2,
+      "n_equal": 0,
+      "worst_degradation_C": 5.3549
+    }
+  },
+  "n_H_worse_than_best_B0_B1_B2": 10,
+  "n_H_better_than_best_B0_B1_B2": 4,
+  "n_H_equal_best": 4,
+  "rows": [
+    {
+      "country": "AT",
+      "site_id": "AT_39",
+      "site": "Innsbruck Universität",
+      "season": "winter",
+      "n": 168,
+      "MAE_C": {
+        "B0": 6.0405,
+        "B1": 2.3738,
+        "B2": 2.3744,
+        "H": 2.2222
+      },
+      "H_minus_per_cell_best_B0_B1_B2_C": -0.1516,
+      "n_active_cold_pool_hours": 99
+    },
+    {
+      "country": "AT",
+      "site_id": "AT_39",
+      "site": "Innsbruck Universität",
+      "season": "summer",
+      "n": 168,
+      "MAE_C": {
+        "B0": 7.0589,
+        "B1": 1.0193,
+        "B2": 1.0196,
+        "H": 1.0503
+      },
+      "H_minus_per_cell_best_B0_B1_B2_C": 0.031,
+      "n_active_cold_pool_hours": 52
+    },
+    {
+      "country": "AT",
+      "site_id": "AT_196",
+      "site": "Patscherkofel",
+      "season": "winter",
+      "n": 168,
+      "MAE_C": {
+        "B0": 4.6935,
+        "B1": 6.467,
+        "B2": 6.4655,
+        "H": 6.467
+      },
+      "H_minus_per_cell_best_B0_B1_B2_C": 1.7735,
+      "n_active_cold_pool_hours": 0
+    },
+    {
+      "country": "AT",
+      "site_id": "AT_196",
+      "site": "Patscherkofel",
+      "season": "summer",
+      "n": 168,
+      "MAE_C": {
+        "B0": 3.9131,
+        "B1": 1.6374,
+        "B2": 1.6369,
+        "H": 1.6374
+      },
+      "H_minus_per_cell_best_B0_B1_B2_C": 0.0005,
+      "n_active_cold_pool_hours": 0
+    },
+    {
+      "country": "AT",
+      "site_id": "AT_30",
+      "site": "Graz Universität",
+      "season": "winter",
+      "n": 168,
+      "MAE_C": {
+        "B0": 1.3208,
+        "B1": 1.3205,
+        "B2": 1.3298,
+        "H": 1.3205
+      },
+      "H_minus_per_cell_best_B0_B1_B2_C": 0,
+      "n_active_cold_pool_hours": 0
+    },
+    {
+      "country": "AT",
+      "site_id": "AT_30",
+      "site": "Graz Universität",
+      "season": "summer",
+      "n": 168,
+      "MAE_C": {
+        "B0": 1.1065,
+        "B1": 0.884,
+        "B2": 0.8857,
+        "H": 0.884
+      },
+      "H_minus_per_cell_best_B0_B1_B2_C": 0,
+      "n_active_cold_pool_hours": 0
+    },
+    {
+      "country": "DE",
+      "site_id": "DE_3987",
+      "site": "Potsdam",
+      "season": "winter",
+      "n": 168,
+      "MAE_C": {
+        "B0": 0.5315,
+        "B1": 0.4478,
+        "B2": 0.4577,
+        "H": 0.4478
+      },
+      "H_minus_per_cell_best_B0_B1_B2_C": 0,
+      "n_active_cold_pool_hours": 0
+    },
+    {
+      "country": "DE",
+      "site_id": "DE_3987",
+      "site": "Potsdam",
+      "season": "summer",
+      "n": 168,
+      "MAE_C": {
+        "B0": 0.5339,
+        "B1": 0.5613,
+        "B2": 0.5673,
+        "H": 0.5613
+      },
+      "H_minus_per_cell_best_B0_B1_B2_C": 0.0273,
+      "n_active_cold_pool_hours": 0
+    },
+    {
+      "country": "DE",
+      "site_id": "DE_3730",
+      "site": "Oberstdorf",
+      "season": "winter",
+      "n": 168,
+      "MAE_C": {
+        "B0": 2.194,
+        "B1": 3.1316,
+        "B2": 3.1304,
+        "H": 2.9527
+      },
+      "H_minus_per_cell_best_B0_B1_B2_C": 0.7587,
+      "n_active_cold_pool_hours": 97
+    },
+    {
+      "country": "DE",
+      "site_id": "DE_3730",
+      "site": "Oberstdorf",
+      "season": "summer",
+      "n": 168,
+      "MAE_C": {
+        "B0": 1.9458,
+        "B1": 1.1375,
+        "B2": 1.1256,
+        "H": 1.0778
+      },
+      "H_minus_per_cell_best_B0_B1_B2_C": -0.0478,
+      "n_active_cold_pool_hours": 53
+    },
+    {
+      "country": "DE",
+      "site_id": "DE_2290",
+      "site": "Hohenpeißenberg",
+      "season": "winter",
+      "n": 168,
+      "MAE_C": {
+        "B0": 3.0548,
+        "B1": 3.4079,
+        "B2": 3.3887,
+        "H": 3.4079
+      },
+      "H_minus_per_cell_best_B0_B1_B2_C": 0.3532,
+      "n_active_cold_pool_hours": 0
+    },
+    {
+      "country": "DE",
+      "site_id": "DE_2290",
+      "site": "Hohenpeißenberg",
+      "season": "summer",
+      "n": 168,
+      "MAE_C": {
+        "B0": 1.5155,
+        "B1": 1.2775,
+        "B2": 1.281,
+        "H": 1.2775
+      },
+      "H_minus_per_cell_best_B0_B1_B2_C": 0,
+      "n_active_cold_pool_hours": 0
+    },
+    {
+      "country": "CH",
+      "site_id": "CH_PAY",
+      "site": "Payerne",
+      "season": "winter",
+      "n": 168,
+      "MAE_C": {
+        "B0": 1.5714,
+        "B1": 1.3374,
+        "B2": 1.3482,
+        "H": 1.3289
+      },
+      "H_minus_per_cell_best_B0_B1_B2_C": -0.0085,
+      "n_active_cold_pool_hours": 101
+    },
+    {
+      "country": "CH",
+      "site_id": "CH_PAY",
+      "site": "Payerne",
+      "season": "summer",
+      "n": 168,
+      "MAE_C": {
+        "B0": 1.5881,
+        "B1": 1.1475,
+        "B2": 1.1571,
+        "H": 1.144
+      },
+      "H_minus_per_cell_best_B0_B1_B2_C": -0.0035,
+      "n_active_cold_pool_hours": 54
+    },
+    {
+      "country": "CH",
+      "site_id": "CH_DAV",
+      "site": "Davos",
+      "season": "winter",
+      "n": 168,
+      "MAE_C": {
+        "B0": 5.2792,
+        "B1": 3.0927,
+        "B2": 3.0845,
+        "H": 3.4019
+      },
+      "H_minus_per_cell_best_B0_B1_B2_C": 0.3174,
+      "n_active_cold_pool_hours": 98
+    },
+    {
+      "country": "CH",
+      "site_id": "CH_DAV",
+      "site": "Davos",
+      "season": "summer",
+      "n": 168,
+      "MAE_C": {
+        "B0": 2.3054,
+        "B1": 0.802,
+        "B2": 0.7946,
+        "H": 0.8599
+      },
+      "H_minus_per_cell_best_B0_B1_B2_C": 0.0653,
+      "n_active_cold_pool_hours": 54
+    },
+    {
+      "country": "CH",
+      "site_id": "CH_JUN",
+      "site": "Jungfraujoch",
+      "season": "winter",
+      "n": 168,
+      "MAE_C": {
+        "B0": 4.1887,
+        "B1": 9.5436,
+        "B2": 9.5387,
+        "H": 9.5436
+      },
+      "H_minus_per_cell_best_B0_B1_B2_C": 5.3549,
+      "n_active_cold_pool_hours": 0
+    },
+    {
+      "country": "CH",
+      "site_id": "CH_JUN",
+      "site": "Jungfraujoch",
+      "season": "summer",
+      "n": 168,
+      "MAE_C": {
+        "B0": 10.6244,
+        "B1": 3.7638,
+        "B2": 3.7524,
+        "H": 3.7638
+      },
+      "H_minus_per_cell_best_B0_B1_B2_C": 0.0114,
+      "n_active_cold_pool_hours": 0
+    }
+  ],
+  "no_fitting_to_2022_results": true,
+  "production_epw_ready": false,
+  "worldwide_validation_performed": false
+}

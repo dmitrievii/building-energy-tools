@@ -1,11 +1,9 @@
 name: IGE P9.1H4 source-schema-corrected final AT DE CH comparison
 # Corrections: AT source IDs, CH documented hourly decade paths and UTC end-time.
 # One rerun for the same frozen cohort and same untuned model; no new sites or years.
+# Frozen successful result: run #39064281150 (3,024 actual station pairs).
+# No push trigger or automatic reruns; publication-scale validation deferred.
 on:
-  push:
-    branches: ['research/ige-p9-1h-near-surface-inversion-20261017']
-    paths:
-      - '.github/workflows/ige-p9-1h4-one-regional-benchmark.yml'
   workflow_dispatch:
 permissions:
   contents: read
