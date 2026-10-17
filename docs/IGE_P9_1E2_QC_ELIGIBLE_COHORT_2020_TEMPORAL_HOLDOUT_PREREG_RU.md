@@ -1,0 +1,15 @@
+# IGE P9.1E2 — Source-completeness-eligible station cohort, separate 2020 holdout
+
+**Follow-up preregistration, 2026-10-17, after P9.1E1 source availability was evaluated.** This is NOT retroactive repair or a confirmatory rerun of preregistered E1. E1: 6 geographical targets, only Bregenz observation source >=120 QC paired hours in both 2021 weeks. E1 remains SCIENTIFIC BLOCKED, with original report preserved unchanged; no station may be substituted in E1.
+
+Follow-up question: can we construct a new lowland six-target sample with data availability checked **without inspecting any model prediction error**, then assess exactly the frozen E1 L0/P0/N320 lapse/regular lapse/regular bounded methods on an **independent, untouched 2020 meteorological year**?
+
+**Selection/eligibility registration**: Same six 2021 E1 fixed city coordinates Vienna, Linz, Salzburg, Klagenfurt, Bregenz, Eisenstadt. From original GeoSphere `klima-v2-1h/metadata` select geographically closest maximum **12** candidates within **35 km**, exclude all nine used P9.1D IDs `{30,39,196,119,14305,28,17005,66,184}`, unique station ID for each target, no weather-model errors. For *source availability only*, request 2021-01-10..16 and 2021-07-10..16 original `tl` and `tl_flag`; require >=120 QC-accepted/matched hours in **both** source-readiness weeks, choose **closest available** (tie by station ID). Use only counts of valid source observations, **not temperatures, MAE, bias, or held-out 2020 weather values**. This is eligibility conditioning and may bias sampling toward stable observing stations, not a random countrywide sample. Missing target must stay blocked.
+
+**Completely separate verification year**: 2020-01-10..16 and 2020-07-10..16 original station `tl/tl_flag` paired with fixed Open-Meteo ERA5 model, regular ERA5 ARCO 0.25 geopotential exactly at original weather response selected cell, N320 geopotential and independent SRTM. No use of 2020 station observations until six labels/IDs frozen and original 2021 QC availability SHA stored. Evaluate **same fixed five E1 methods** unchanged including lapse coefficient −0.0065K/m and cap ±3C. Do not tune anything on 2020, don't select best-of-five method as a global production model.
+
+**Minimum coverage**: >=4 of 6 targets with 2020 winter+summer valid pairs >=120 per season and >=8 measured site-season scores, all targets reported including source-ineligible, single-source observation condition well documented, exactly identical QC samples across methods.
+
+**Non-goals**: validate coastal, Arctic, tropical or global point skill; claim Google ARCO/Open-Meteo same internal DEM interpolation; use Meteonorm as independent ground truth; produce future EPW; include license-restricted hourly weather series in public artifacts.
+
+**Decision**: A PASS of E2 only means scientifically reproducible geographically held-out lowland/mid-altitude Austrian station evaluation of regular ARCO-geopotential-based temperature adjustment. Universally production-ready future climate stays FALSE.
