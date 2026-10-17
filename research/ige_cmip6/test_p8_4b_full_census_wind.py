@@ -148,7 +148,7 @@ class TestFullCensusFrozenMethods(unittest.TestCase):
         self.assertEqual(scores[0]["n_original_UTC_hourly_match"],72)
         self.assertEqual(scores[0]["vector_direction_all_six_method_strict_paired_n"],71)
         self.assertEqual(scores[0]["unit_direction_all_six_method_strict_paired_n"],72)
-        self.assertEqual(
+        self.assertAlmostEqual(
             next(x for x in scores if x["method"]=="altitude_idw4")["scalar_speed_MAE_mps"],.1)
         self.assertTrue(any(r["group"]=="MAM" for r in strata))
 
