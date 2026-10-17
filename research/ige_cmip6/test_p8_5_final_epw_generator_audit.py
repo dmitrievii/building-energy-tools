@@ -47,7 +47,10 @@ class TestFinalGeneratorAudit(unittest.TestCase):
 
     def test_original_28_humidity_saturation_total_remains_visible(self):
         audit=f.validate_manifests()
-        self.assertEqual(audit["RH_saturation_hours_28_members"],14536)
+        self.assertEqual(audit["P7C4_RH_near_100_hours_28_members_np_isclose"],14520)
+        self.assertEqual(audit["P7C5_RH_ge99p995_hours_28_members"],14536)
+        self.assertEqual(audit["P7C4_vs_P7C5_RH_saturation_count_difference"],16)
+        self.assertTrue(audit["P7C4_vs_P7C5_RH_count_definitions_differ"])
         self.assertEqual(audit["RH_source_original_8760_saturation_hours_from_previous_audit"],229)
 
     def test_stale_illuminance_in_original_28_is_explicit(self):
