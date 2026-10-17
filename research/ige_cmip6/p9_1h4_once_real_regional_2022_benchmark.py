@@ -176,7 +176,10 @@ def observed_CH():
         vals={name:{} for name,_,_ in PERIODS}
         native_flags=Counter()
         expected={name:set(fixed_times(start)) for name,start,end in PERIODS}
+        idfield=swiss.pick_col(cols,"station_abbr","station")
         for row in rows:
+            if idfield and (row.get(idfield) or "").strip().upper()!=sid:
+                raise ValueError("CH_HISTORICAL_CSV_FOREIGN_STATION_CODE")
             try:t=swiss_timestamp(row[stampfield])
             except (ValueError,TypeError):continue
             name=next((a for a in expected if t in expected[a]),None)
@@ -361,6 +364,27 @@ def benchmark(out):
                 report["members"].append(row)
     good=[r for r in report["members"] if r["status"]=="ORIGINAL_SOURCE_MODELS_SCORED"]
     report["n_frozen_registered_site_seasons"]=18
+    report["summaries_by_country"]={}
+    for country in ("AT","DE","CH"):
+        eligible=[r for r in good if r["country"]==country]
+        rows=[r for r in report["members"] if r["country"]==country]
+        report["summaries_by_country"][country]={
+            "n_registered_site_seasons":6,
+            "n_scored_original_site_seasons":len(eligible),
+            "n_blocked_or_unqualified_site_seasons":6-len(eligible),
+            "blocked_reasons":[{"station":r["sid"],"season":r["season"],
+                                 "status":r["status"],"reason":r.get("reason")}
+                for r in rows if r["status"]!="ORIGINAL_SOURCE_MODELS_SCORED"],
+            "source_published_natively_quality_flagged":all(
+                x.get("observation_QC_tier","").startswith(("GeoSphere_","DWD_QN9_10_"))
+                for x in eligible) if eligible else False,
+            "mae_macro_unweighted_by_site_season_C":{
+                m:statistics.fmean(x["metrics"][m]["MAE_C"] for x in eligible)
+                for m in METHODS} if eligible else None,
+            "worst_cell_H_delta_from_best_baseline_C":max(
+                (x["candidate_mae_minus_best_baseline_C"] for x in eligible),default=None),
+            "n_negative_cells_H_worse_than_best":sum(
+                x["candidate_worse_than_best_baseline"] for x in eligible)}
     report["n_original_observation_and_four_method_scored_site_seasons"]=len(good)
     report["n_real_obs_matched_hours"]=sum(r["metrics"]["H"]["n"] for r in good)
     report["negative_site_seasons_H_worse_than_best"]=sum(
