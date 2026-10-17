@@ -25,7 +25,8 @@ class CoupledWeatherContracts(unittest.TestCase):
         # Source hours are exactly same January 1 and January 2 local noon.
         i=12;j=24+12
         wet[i]=True;dry[i]=False
-        values[i]=80.;values[j]=60.
+        values[(c.MONTHS==1)&(c.HOURS==12)]=60.
+        values[i]=80.
         observed,n=c.monthly_hour_conditional(values,wet,dry,
                                              np.ones(8760,dtype=bool))
         self.assertEqual(n,1)
