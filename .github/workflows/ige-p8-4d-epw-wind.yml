@@ -6,7 +6,9 @@ on:
     paths:
       - 'research/ige_cmip6/p8_4d_epw_wind_qualification.py'
       - 'research/ige_cmip6/p8_4d_native_energyplus_wind.py'
+      - 'research/ige_cmip6/p8_4d_native_energyplus_opening.py'
       - 'research/ige_cmip6/test_p8_4d_epw_wind_qualification.py'
+      - 'research/ige_cmip6/test_p8_4d_native_energyplus_opening.py'
       - '.github/workflows/ige-p8-4d-epw-wind.yml'
   workflow_dispatch:
 
@@ -28,6 +30,7 @@ jobs:
       - name: Registered 8760h physical, calm direction and EnergyPlus model contracts
         run: |
           python -m unittest discover -s research/ige_cmip6 -p 'test_p8_4d_epw_wind_qualification.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_4d_native_energyplus_opening.py' -v
           python -m unittest discover -s research/ige_cmip6 -p 'test_p8_4c_future_wind_baseline.py' -v
           python -m unittest discover -s research/ige_cmip6 -p 'test_p7c5_qualification.py' -v
 
@@ -147,6 +150,13 @@ jobs:
             --original-idf tools_cache/official_1ZoneUncontrolled.idf \
             --epw-dir outputs/p8_4d_eplus_public/_private_hourly_epws \
             --out outputs/p8_4d_eplus_results
+      - name: Four REAL wind-and-stack natural ventilation simulations, wind speed and 90-degree orientation
+        run: |
+          python research/ige_cmip6/p8_4d_native_energyplus_opening.py \
+            --energyplus "$EPLUS_BIN" \
+            --original-idf tools_cache/official_1ZoneUncontrolled.idf \
+            --base-epw inputs/p7b5_public/Graz_CanESM5_2013_IGE_P7B5_WIND_ANALOGUE_RESEARCH_ONLY.epw \
+            --out outputs/p8_4d_opening_results
       - name: Upload measured EnergyPlus aggregate and logs, NEVER source hourly EPW
         if: always()
         uses: actions/upload-artifact@v4
@@ -157,5 +167,9 @@ jobs:
             outputs/p8_4d_eplus_results/**/eplusout.err
             outputs/p8_4d_eplus_results/**/stdout.txt
             outputs/p8_4d_eplus_results/**/stderr.txt
+            outputs/p8_4d_opening_results/p8_4d_native_energyplus_4_opening_cases_aggregate.json
+            outputs/p8_4d_opening_results/**/eplusout.err
+            outputs/p8_4d_opening_results/**/stdout.txt
+            outputs/p8_4d_opening_results/**/stderr.txt
           if-no-files-found: warn
           retention-days: 30
