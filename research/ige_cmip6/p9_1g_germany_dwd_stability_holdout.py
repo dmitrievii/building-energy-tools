@@ -103,6 +103,46 @@ def run(out):
                 "source_original_provider_SHA":downmeta["raw_original_response_sha256"],
                 "fixed_model_height_delta_m":dheight,
             }
+    # Persist authentic international observation baseline before attempting
+    # expensive pressure-level retrieval, never falsify later partial completion.
+    baseline_rows=[]
+    for item in sites:
+        sid=item["id"]
+        for season,_,_ in dwd.SEASONS:
+            w=weather[sid][season]
+            obs=original_observed[sid]["hourly_QC_accepted_TT_TU_for_scoring_PRIVATE"][season]
+            results={
+                METHODS[0]:scores(obs,w["raw"],w["times"],MIN_ORIGINAL_QC_HOURS),
+                METHODS[1]:scores(obs,w["provider"],w["times"],MIN_ORIGINAL_QC_HOURS),
+                METHODS[2]:scores(obs,w["regular_lapse"],w["times"],MIN_ORIGINAL_QC_HOURS),
+            }
+            baseline_rows.append({
+                "station_id":sid,"site":item["name"],"season":season,
+                "DWD_original_QN9_source_histogram":
+                    original_observed[sid]["original_QC_histograms"][season],
+                "DWD_original_zip_SHA256":
+                    original_observed[sid]["source_zip_original_SHA256"],
+                "ERA5_weather_source_SHA256":w["source_original_ERA5_SHA"],
+                "ERA5_regular_selected_grid_height_m":spatial[sid]["model_height_m"],
+                "registered_untuned_method_original_QC_results":results,
+            })
+    baseline={"phase":"P9G_INDEPENDENT_NEW_GERMANY_DWD_SOURCE_AND_ERA5_BASELINE",
+              "n_registered_site_seasons":8,
+              "n_original_2019_DWD_site_seasons_QC10_qualified":
+                  sum(all(v is not None for v in x["registered_untuned_method_original_QC_results"].values())
+                      for x in baseline_rows),
+              "original_DWD_source_archives_pinned":metadata,
+              "source_DWD_hourly_raw_temperature_not_uploaded":True,
+              "pressure_level_ERA5_stability_verified_at_this_stage":False,
+              "production_epw_ready":False,
+              "members":baseline_rows}
+    (folder/"p9_1g_germany_original_DWD_hourly_baseline_only.json").write_text(
+        json.dumps(baseline,indent=2,ensure_ascii=False)+"\n")
+    print("P9G_NEW_GERMANY_BASELINE_SOURCE",json.dumps({
+        "n":len(baseline_rows),
+        "QC_qualified":baseline["n_original_2019_DWD_site_seasons_QC10_qualified"],
+        "source_pressure_level_qualified":False}),flush=True)
+
     # Read actual source pressure levels independent of target DWD temperature.
     profiles,profile_meta=pressure.read_original_ERA5_pressure_subsample(
         sites,spatial,dwd.SEASONS)
