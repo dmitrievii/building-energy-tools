@@ -64,9 +64,13 @@ class B2Contracts(unittest.TestCase):
         self.assertEqual(train_hours()[-1],dt.datetime(2023,12,31,18))
         self.assertEqual(TRAIN_CADENCE_H,6)
 
-    def test_frozen_objective_coefficients_sum_to_one(self):
+    def test_objective_coefficients_match_exact_preregistered_protocol(self):
+        # Pre-registered 2026-10-17 prior to accessing original 2024/2025 results.
         self.assertEqual(CANDIDATES,10)
         self.assertEqual(DONORS,4)
+        self.assertEqual(
+            (COEFFICIENT_GEOMETRY,COEFFICIENT_DIRECTION,COEFFICIENT_COVERAGE),
+            (.65,.25,.10))
         self.assertAlmostEqual(
             COEFFICIENT_GEOMETRY+COEFFICIENT_DIRECTION+COEFFICIENT_COVERAGE,1.)
 
