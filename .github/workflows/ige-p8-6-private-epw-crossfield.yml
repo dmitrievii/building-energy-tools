@@ -1,0 +1,96 @@
+name: IGE P8.6 cross-variable physics and ORIGINAL private-57 EPW contract audit
+
+on:
+  push:
+    branches: ['research/ige-p8-6-private-28-epw-crossfield-20261017']
+    paths:
+      - 'research/ige_cmip6/p8_6_private_crossfield_qualification.py'
+      - 'research/ige_cmip6/test_p8_6_private_crossfield_qualification.py'
+      - '.github/workflows/ige-p8-6-private-epw-crossfield.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  physical_crossfield_and_private_57_source_contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Scientific test dependencies
+        run: python -m pip install 'numpy>=1.26,<3' 'pillow>=10,<13'
+      - name: Private-licensed 57-source integrity contracts and independent physical variable checks
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_6_private_crossfield_qualification.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7c5b_solar_illuminance.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_5_final_epw_generator_audit.py' -v
+      - name: Fail-closed original-source absence prevents false positive
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          assert not Path('Graz-hour_contemporary_seed1.epw').is_file()
+          print('P8.6 public CI: original licensed 57 EPWs are NOT available;'
+                ' code contracts PASS only, full 28 original validation remains BLOCKED.')
+          PY
+
+  original_public_epw_nonlicensed_physics_smoke:
+    needs: physical_crossfield_and_private_57_source_contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install 'numpy>=1.26,<3' 'pillow>=10,<13'
+      - name: Retrieve original P7B5 public research-only EPW, NOT licensed Meteonorm
+        uses: actions/download-artifact@v4
+        with:
+          name: ige-p7b5-original-qc-wind-direction-epw-readiness
+          repository: dmitrievii/building-energy-tools
+          run-id: 38174920762
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: original_public/p7b5
+      - name: Verify archived public EPW SHA and provenance
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json,hashlib
+          p=Path('original_public/p7b5')
+          m=json.loads((p/'p7b5_science_audit.json').read_text())
+          f=p/'Graz_CanESM5_2013_IGE_P7B5_WIND_ANALOGUE_RESEARCH_ONLY.epw'
+          assert m['production_epw_ready'] is False
+          assert hashlib.sha256(f.read_bytes()).hexdigest()==m['derived_sha256'][f.name]
+          print('P7B5 real research original byte SHA PASS')
+          PY
+      - name: Physical crossfield smoke on genuine archived SYNTHETIC research EPW
+        run: |
+          python research/ige_cmip6/p8_6_private_crossfield_qualification.py \
+            --public-research-smoke original_public/p7b5/Graz_CanESM5_2013_IGE_P7B5_WIND_ANALOGUE_RESEARCH_ONLY.epw \
+            --out outputs/p8_6_public
+      - name: Forbid public research smoke from masquerading as private 28-file research
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          x=json.loads(Path('outputs/p8_6_public/p8_6_public_only_smoke.json').read_text())
+          assert x['actual_licensed_Meteonorm_originals_validated']==0
+          assert x['actual_licensed_Meteonorm_corrected_validated']==0
+          assert x['scientific_original_57_file_gate_pass'] is False
+          assert x['production_epw_ready'] is False
+          assert x['public_crossfield_diagnostics']['diagnostics']['source_hourly_fields_scored']==8760
+          print('P8.6 original research weather physical diagnostics executed; private 57-file acceptance is BLOCKED.')
+          PY
+      - name: Archive public research-only physical diagnostics, never hourly EPW bytes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-6-public-physical-crossfield-smoke-not-private-validation
+          path: outputs/p8_6_public/p8_6_public_only_smoke.json
+          if-no-files-found: warn
+          retention-days: 30
