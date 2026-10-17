@@ -89,7 +89,7 @@ def parse_original_zip(raw,sid):
                if Path(n).name.startswith("produkt_tu_stunde_") and n.lower().endswith(".txt")]
         if len(names)!=1:raise ValueError("P9G_DWD_TU_2019_ORIGINAL_CSV_NOT_UNIQUE")
         name=names[0]
-        if z.getinfo(name).file_size>16*1024*1024:
+        if z.getinfo(name).file_size>180*1024*1024:
             raise ValueError("P9G_DWD_UNCOMPRESSED_CSV_EXCESSIVE")
         src=z.read(name).decode("latin1")
     reader=csv.DictReader(io.StringIO(src),delimiter=";")
