@@ -103,6 +103,36 @@ def actual_q(tc,rh,pressure_pa):
     return EPS*vapour/(pressure_pa-(1.-EPS)*vapour)
 
 
+def noaa_coszen_noleap(day_of_year,local_hour_mid,lat_deg,lon_deg,tz_hours):
+    """Independent approximate NOAA solar geometry for EPW local STANDARD time.
+
+    Returns geometric cos(zenith) before refraction correction. Calculated
+    using day-of-year 1..365; this is a quality-screen reference, NOT the
+    exact source P7C4 solar geometry or an independent irradiance observation.
+    """
+    if not -90<=lat_deg<=90 or not -180<=lon_deg<=180 or not -14<=tz_hours<=14:
+        raise ValueError("P8_6_INVALID_EPW_LOCATION_SOLAR_GEOMETRY")
+    gamma=2*math.pi/365*(day_of_year-1+(local_hour_mid-12)/24)
+    eq=229.18*(.000075+.001868*math.cos(gamma)-.032077*math.sin(gamma)
+              -.014615*math.cos(2*gamma)-.040849*math.sin(2*gamma))
+    decl=(.006918-.399912*math.cos(gamma)+.070257*math.sin(gamma)
+          -.006758*math.cos(2*gamma)+.000907*math.sin(2*gamma)
+          -.002697*math.cos(3*gamma)+.00148*math.sin(3*gamma))
+    minutes=60*local_hour_mid+eq+4*lon_deg-60*tz_hours
+    hour_angle=math.radians(minutes/4-180)
+    lat=math.radians(lat_deg)
+    return math.sin(lat)*math.sin(decl)+math.cos(lat)*math.cos(decl)*math.cos(hour_angle)
+
+
+def epw_location(headers):
+    if not headers or headers[0][0]!="LOCATION" or len(headers[0])<9:
+        raise ValueError("P8_6_EPW_LOCATION_HEADER_MISSING")
+    try:
+        return tuple(float(headers[0][i]) for i in (6,7,8))
+    except (ValueError,IndexError) as exc:
+        raise ValueError("P8_6_INVALID_LAT_LONG_STANDARD_TIME_ZONE") from exc
+
+
 def pearson(xs,ys):
     n=len(xs)
     if n<24:return None
@@ -123,7 +153,7 @@ def run_lengths(flags):
             "episodes_ge72h":sum(v>=72 for v in lengths)}
 
 
-def diagnose(rows,reference=None):
+def diagnose(rows,reference=None,location=None):
     """Calculate only aggregates; use diagnostic vs impossible-physics flags."""
     calendar(rows)
     if reference is not None:calendar(reference)
@@ -164,6 +194,17 @@ def diagnose(rows,reference=None):
                 count["illuminance_closure_scored_hours"]+=1
                 if err>2:hard["illuminance_GHI_DNI_DHI_closure_gt2lux"]+=1
                 month[m]["luminous_err"].append(err)
+        if location is not None:
+            latitude,longitude,tz=location
+            cosastr=noaa_coszen_noleap(day+1,(i%24)+.5,latitude,longitude,tz)
+            if G>20 and cosastr<-.1:
+                hard["nontrivial_solar_energy_at_astronomical_night"]+=1
+            if DNI>20 and G>20 and cosastr>.08:
+                count["independent_astro_sun_angle_scored_hours"]+=1
+                err=abs((G-DHI)-DNI*cosastr)
+                month[m]["independent_astro_GHI_diffuse_beam_abs_residual_Wm2"].append(err)
+                if err>max(35.,.10*G):
+                    count["independent_astro_radiation_projection_mismatch_diagnostic_hours"]+=1
         if G>20 and DNI<.1:count["diffuse_or_overcast_daylight_hours"]+=1
         if L<=0 or L>=9999:
             count["sky_longwave_missing_or_invalid_hours"]+=1
@@ -283,7 +324,8 @@ def verify_original_bundle(baseline,raw_dir,corrected_dir,out):
     base_bytes=Path(baseline).read_bytes()
     if file_sha(base_bytes)!=BASELINE_SHA:
         raise ValueError("P8_6_AUTHENTIC_METEONORM_BASELINE_SHA_MISMATCH")
-    _,base=parse_epw(base_bytes);calendar(base)
+    base_header,base=parse_epw(base_bytes);calendar(base)
+    location=epw_location(base_header)
     original=read_csv(P7C4_MEMBERS)
     corrected=read_csv(P7C5B_MEMBERS)
     by_source={m["source_p7c4_sha256"]:m for m in corrected}
@@ -307,7 +349,9 @@ def verify_original_bundle(baseline,raw_dir,corrected_dir,out):
         source_check=verify_source_pair(base,raw,rev)
         if raw_h!=corr_h:
             raise ValueError("P8_6_PHOTOMETRIC_CORRECTION_CHANGED_EPW_HEADERS")
-        a=diagnose(rev,reference=base)
+        if epw_location(raw_h)!=location or raw_h[3]!=base_header[3]:
+            raise ValueError("P8_6_LOCATION_OR_GROUND_TEMPERATURE_PROVENANCE_DRIFT")
+        a=diagnose(rev,reference=base,location=location)
         monthly=monthly_ratio_closure(base,rev,m["model"],m["window"],signal)
         largest={
             "q":max(x["monthly_q_ratio_abs_kgkg"] for x in monthly),
@@ -369,9 +413,9 @@ def verify_original_bundle(baseline,raw_dir,corrected_dir,out):
 def public_research_smoke(path,out):
     """A real archived file, explicitly NEVER a substitute for 57 licensed bytes."""
     bytes_=Path(path).read_bytes()
-    _,rows=parse_epw(bytes_)
+    headers,rows=parse_epw(bytes_)
     out=Path(out);out.mkdir(parents=True,exist_ok=True)
-    x=diagnose(rows)
+    x=diagnose(rows,location=epw_location(headers))
     report={
         "phase":"IGE_P8_6_PUBLIC_RESEARCH_SMOKE_ONLY",
         "source_epw_sha256":file_sha(bytes_),
