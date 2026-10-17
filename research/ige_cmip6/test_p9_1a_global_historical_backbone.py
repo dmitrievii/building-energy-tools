@@ -19,8 +19,8 @@ def stub(s="2023-01-01",e="2023-01-02"):
         "temperature_2m":[20.]*n,"dew_point_2m":[10.]*n,
         "relative_humidity_2m":[52.5]*n,
         "surface_pressure":[985.]*n,
-        "precipitation":[1. if i%24 in (8,9) else 0. for i in range(n)],
-        "cloud_cover":[95. if i%24 in (8,9) else 35. for i in range(n)],
+        "precipitation":[1. if i//24==0 and i%24 in (8,9) else 0. for i in range(n)],
+        "cloud_cover":[95. if i//24==0 and i%24 in (8,9) else 35. for i in range(n)],
         "shortwave_radiation":[100. if 8<=h<=16 else 0. for h in daily],
         "direct_radiation":[50. if 8<=h<=16 else 0. for h in daily],
         "diffuse_radiation":[50. if 8<=h<=16 else 0. for h in daily],
@@ -100,7 +100,7 @@ class P91SourceContracts(unittest.TestCase):
         _,arr,_=parse()
         metrics=p.statistics_and_coherence(arr)
         self.assertTrue(metrics["hard_QC_pass"])
-        self.assertEqual(metrics["rain_positive_hour_count"],4)
+        self.assertEqual(metrics["rain_positive_hour_count"],2)
         _,arr,_=parse()
         r=p.grouped_month_hour(arr,stub()["hourly"]["time"])
         self.assertGreater(r["rain_minus_dry_same_month_UTC_hour_cloud_percentage_points"],0)
