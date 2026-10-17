@@ -1,0 +1,95 @@
+name: IGE P9.2C original 2025 AT DE CH observations and physically qualified joint weather
+on:
+  push:
+    branches: ['research/ige-p9-2c-physical-donor-holdout-20261018']
+    paths:
+      - '.github/workflows/ige-p9-2c-one-regional-real-source.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  physical_29plus9_contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: New physical feasibility donor and native q/RH solar closures
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p9_2c_physical_donor_and_humidity.py' -v
+      - name: P9.2B original daily conservation regression suite
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p9_2b_cmip6_daily_joint_regimes.py' -v
+      - name: P9.2A original joint station-source field contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p9_2a_joint_weather_regimes.py' -v
+  original_cmip6_28_development_days:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Read genuine historical CanESM5 registered native daily dataset
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          name: ige-p6-CanESM5-historical-1995-2014
+          path: inputs/p92c-hist
+      - name: Read genuine SSP245 CanESM5 registered native daily dataset
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          name: ige-p6-CanESM5-ssp245-2040-2059
+          path: inputs/p92c-ssp245
+      - name: Check original registered sha and contain canonical P7C.3 source ZIPs only in CI
+        run: |
+          python - <<'PY'
+          import hashlib,json,zipfile
+          from pathlib import Path
+          expected=json.loads(Path("research/ige_cmip6/p7c3_expected_daily_source_shas.json").read_text())["source_sha256"]
+          source=(("historical-1995-2014","p92c-hist"),("ssp245-2040-2059","p92c-ssp245"))
+          dst=Path("inputs/p92c-original-GCM");dst.mkdir(parents=True,exist_ok=True)
+          for name,folder in source:
+              root=Path("inputs")/folder
+              necessary=("joint_daily_raw.csv","source_provenance.json","quality_report.json")
+              if not all((root/file).is_file() for file in necessary):raise ValueError("P92C_IMMUTABLE_ORIGINAL_SOURCE_MISSING")
+              binary=(root/"joint_daily_raw.csv").read_bytes()
+              sha=hashlib.sha256(binary).hexdigest()
+              if sha!=expected["CanESM5_"+name]:raise ValueError("P92C_AUTHENTIC_CANESM5_HASH_MISMATCH")
+              with zipfile.ZipFile(dst/f"IGE_P7C3_SRC_CanESM5_{name}.zip","w",zipfile.ZIP_DEFLATED) as z:
+                  for file in root.iterdir():
+                      if file.is_file():z.write(file,file.name)
+              print("P92C_ORIGINAL_GCM_SHA_VERIFIED",name,sha,flush=True)
+          PY
+      - name: Recheck exactly 28 authentic CanESM5 daily targets using physical donor eligibility, report all blocked
+        run: python -u research/ige_cmip6/p9_2c_canESM5_28_development_day_audit.py --source-root inputs/p92c-original-GCM --out outputs/p92c-original-GCM
+      - name: Archive diagnostics only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p92c-original-NASA-CMIP6-28-day-physical-donor-eligibility
+          path: outputs/p92c-original-GCM/*.json
+          if-no-files-found: warn
+          retention-days: 30
+  AT_DE_CH_2025_independent_measured_station_T_RH:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Genuine original station Geosphere DWD MeteoSwiss 2025 vs ERA5 and generated analogues
+        run: python -u research/ige_cmip6/p9_2c_original_AT_DE_CH_2025_observation_validation.py --out outputs/p92c-observed
+      - name: Archive original-source QC metrics and explicitly blocked station-season-variable cells; no original hourly sensor records
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p92c-AT-DE-CH-2025-real-station-QC-holdout
+          path: outputs/p92c-observed/*.json
+          if-no-files-found: warn
+          retention-days: 30
