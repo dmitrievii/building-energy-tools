@@ -19,7 +19,13 @@ from p9_2d_annual_cet_epw_export import raw_series_to_epw
 
 YEAR=2014
 SOURCE_HASH="77ec2e5637eb487c3cedde4e0b660b31f8bd2606198e766255d75a985d61dfef"
-EXPECTED_ERA5_SHA={
+# Canonical selected-grid, 12-field hourly original weather digest:
+# provider HTTP JSON envelope may change across requests (generation time etc.).
+# Never accept altered canonical weather. Keep raw SHA as provenance too.
+EXPECTED_ERA5_CANONICAL_SHA={
+    2019:"ac9749eb1cee4d2246b60871f1a139d8920451e30b8ed54ea134431fa0de4c29",
+    2020:"275804a076a81c3c8ae9a572e0359ca524ef9c90627ccca2c6862805093b019c"}
+PRIOR_ERA5_RAW_RESPONSE_SHA={
     2019:"9c7a19d5ae018df41dc6045de4d5cc2e9e8ae37d63e361bad3e079e1d2c97576",
     2020:"1b18154ca9f0a774a500a9a4e4dab7744cc1866f590fef36ec1e2db09ee6c4b9"}
 FILE="Graz_P93A_CanESM5_2014_ERA5_joint_pressure_T_q_CET_RESEARCH_ONLY.epw"
@@ -57,8 +63,11 @@ def run(zipfile,out):
     donors=[]
     for yr in (2019,2020):
         days,original=original_era5_year(yr)
-        if original["original_source_http_sha256"]!=EXPECTED_ERA5_SHA[yr]:
-            raise ValueError("P93A_NATIVE_DONOR_PROVIDER_ORIGINAL_SOURCE_SHA_DRIFT_"+str(yr))
+        if original["canonical_source_weather_sha256"]!=EXPECTED_ERA5_CANONICAL_SHA[yr]:
+            raise ValueError("P93A_DONOR_CANONICAL_ORIGINAL_HOURLY_WEATHER_SHA_DRIFT_"+str(yr))
+        original["HTTP_response_SHA_differs_from_prior_but_weather_identical"]=(
+            original["original_source_http_sha256"]!=PRIOR_ERA5_RAW_RESPONSE_SHA[yr])
+        original["canonical_weather_byte_equivalence_verified"]=True
         donors.extend(days);report["source_ERA5_provenance"].append(original)
     good,blocked=generate(targets,donors,DONOR_LAT,DONOR_LON,SEED)
     if len(good)+len(blocked)!=366:

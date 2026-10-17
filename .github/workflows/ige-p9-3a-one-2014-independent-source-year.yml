@@ -1,4 +1,4 @@
-name: IGE P9.3A one frozen ORIGINAL CanESM5 2014 year joint pressure T q source and 8760 EPW
+name: IGE P9.3A original 2014 unchanged cohort verified canonical weather content not HTTP envelope
 on:
   push:
     branches: ['research/ige-p9-3-physical-pressure-temperature-vapour-20261018']
