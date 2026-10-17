@@ -1,0 +1,56 @@
+name: IGE P8.4B3 unseen independent sites and 25km spatial stress
+
+on:
+  push:
+    branches: ['research/ige-p8-4b3-independent-sites-20261017']
+    paths:
+      - 'research/ige_cmip6/p8_4b3_independent_sites.py'
+      - 'research/ige_cmip6/test_p8_4b3_independent_sites.py'
+      - '.github/workflows/ige-p8-4b3-independent-sites.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preregistered_18_sites_contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install 'numpy>=1.26,<3' 'pillow>=10,<13'
+      - name: Frozen target selection, 25km buffer and joint loss guards
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_4b3_independent_sites.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_4b2_joint_wind.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_4b_full_census_wind.py' -v
+
+  original_18_target_2024_2025_numerical_spatial_holdout:
+    needs: preregistered_18_sites_contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    env:
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install 'numpy>=1.26,<3' 'pillow>=10,<13'
+      - name: Original Swiss full-catalog 18 new targets × 2024/2025 × 0/25km guard
+        run: |
+          mkdir -p "$RUNNER_TEMP/ige_p8_4b3_independent"
+          python research/ige_cmip6/p8_4b3_independent_sites.py --out "$RUNNER_TEMP/ige_p8_4b3_independent"
+      - name: Upload only scientific aggregates, provenance SHA and frozen donor IDs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-4b3-elevation-stratified-new-targets-2024-2025
+          path: ${{ runner.temp }}/ige_p8_4b3_independent/p8_4b3_independent_targets_2024_2025_aggregates.json
+          if-no-files-found: warn
+          retention-days: 30
