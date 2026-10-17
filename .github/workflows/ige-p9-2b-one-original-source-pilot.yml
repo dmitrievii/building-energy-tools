@@ -1,0 +1,70 @@
+name: IGE P9.2B single NASA CanESM5 real daily joint hourly conservation pilot
+on:
+  push:
+    branches: ['research/ige-p9-2-joint-hourly-regimes-20261017']
+    paths:
+      - '.github/workflows/ige-p9-2b-one-original-source-pilot.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  authentic_P6_daily_to_original_ERA5_joint_hourly_two_scenarios:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Preflight 16 physically bounded daily solver contracts and 13 original vector contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_2b_cmip6_daily_joint_regimes.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_2a_joint_weather_regimes.py' -v
+      - name: Read immutable original P6 NASA CanESM5 historical-1995-2014 research artifact
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          name: ige-p6-CanESM5-historical-1995-2014
+          path: inputs/p6hist
+      - name: Read immutable original P6 NASA CanESM5 SSP245-2040-2059 research artifact
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          name: ige-p6-CanESM5-ssp245-2040-2059
+          path: inputs/p6future
+      - name: Authenticate P6 original SHA from existing P7C.3 registry; original metadata and quality; zip only in runner
+        run: |
+          python - <<'PY'
+          import hashlib,json,zipfile
+          from pathlib import Path
+          folders=(("historical-1995-2014","p6hist"),("ssp245-2040-2059","p6future"))
+          expect=json.loads(Path("research/ige_cmip6/p7c3_expected_daily_source_shas.json").read_text())["source_sha256"]
+          out=Path("inputs/p9_2b_original_CMIP6");out.mkdir(exist_ok=True,parents=True)
+          for window,folder in folders:
+              source=Path("inputs")/folder
+              needed=("source_provenance.json","quality_report.json","joint_daily_raw.csv")
+              if not all((source/name).is_file() for name in needed):
+                  raise ValueError("P92B_ORIGINAL_NASA_ARTIFACT_INCOMPLETE_"+folder)
+              digest=hashlib.sha256((source/"joint_daily_raw.csv").read_bytes()).hexdigest()
+              assert digest==expect["CanESM5_"+window], "Original registered source SHA does not match"
+              output=out/("IGE_P7C3_SRC_CanESM5_"+window+".zip")
+              with zipfile.ZipFile(output,"w",compression=zipfile.ZIP_DEFLATED) as z:
+                  for p in sorted(source.iterdir()):
+                      if p.is_file():z.write(p,p.name)
+              print("P92B_ORIGINAL_NASA_SOURCE_SHA_PASS",window,digest,flush=True)
+          PY
+      - name: One real NASA P6 daily historical 2013 and SSP245 2050 vs original ERA5 2019/20 24h joint donor
+        run: python -u research/ige_cmip6/p9_2b_original_nasa_cmip6_graz_real_source_pilot.py --canonical-archive-dir inputs/p9_2b_original_CMIP6 --out outputs/p92b
+      - name: Archive true source-qualified daily conservation residuals, blocked cases, no NASA or ERA5 raw rows
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p92b-original-CanESM5-2013-historical-2050-ssp245-daily-joint-closure
+          path: outputs/p92b/*.json
+          retention-days: 30
+          if-no-files-found: warn

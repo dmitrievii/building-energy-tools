@@ -35,9 +35,8 @@ def read_cmip6(archive_dir):
         rows,prov=p7c3.read_source(file,MODEL,window)
         if prov["daily_csv_sha256"]!=expected[key] or prov["qa"]!="PASS":
             raise ValueError("P92B_GENUINE_NASA_P6_DAILY_SHA_QUALITY_GATE")
-        days=[d for d in rows if d['date'].year==year and any(
-              dt.date(year,int(season[:2]),int(season[3:])) if False else
-              d['date'].month==mon and 10<=d['date'].day<=16 for mon in (1,7))]
+        days=[d for d in rows if d['date'].year==year
+              and d['date'].month in (1,7) and 10<=d['date'].day<=16]
         if len(days)!=14:
             raise ValueError("P92B_ORIGINAL_CANESM5_TARGET_14_DAYS_NOT_PRESENT_"+label)
         if any(d.get(k) is None for d in days for k in DAY_FIELDS):
