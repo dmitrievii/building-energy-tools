@@ -1,10 +1,8 @@
 name: IGE P9.1H regional cohort one-time offline contracts
 
+# The first regional 22-contract check passed in GitHub Actions #39063446301.
+# Scope frozen. Re-execute only by explicit manual dispatch.
 on:
-  push:
-    branches: ['research/ige-p9-1h-near-surface-inversion-20261017']
-    paths:
-      - '.github/workflows/ige-p9-1h-at-de-ch-once.yml'
   workflow_dispatch:
 
 permissions:
