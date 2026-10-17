@@ -133,6 +133,7 @@ def independent_dem(sites):
             "sites":out}
 
 def run(out):
+    out=Path(out);out.mkdir(parents=True,exist_ok=True)
     metadata,msha=station.source_json(station.BASE+"/metadata")
     info=station.extract_metadata(metadata)
     sites=[info[i] for i in station.IDS]
