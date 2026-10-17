@@ -5,6 +5,9 @@ on:
     branches: ['research/ige-p9-1g-era5-vertical-stability-dwd-20261017']
     paths:
       - '.github/workflows/ige-p9-1g2-auto-qn3-holdout.yml'
+      - 'research/ige_cmip6/p9_1g_germany_dwd_stability_holdout.py'
+      - 'research/ige_cmip6/p9_1g_era5_pressure_stability.py'
+      - 'research/ige_cmip6/p9_1g_dwd_original_2019_observations.py'
   workflow_dispatch:
 
 permissions:
@@ -83,6 +86,10 @@ jobs:
           assert a['n_predeclared_new_region_DWD_sites']==4
           assert a['n_full_hour_DWD_QC10_qualified_seasons']==8
           assert a['n_ERA5_pressure_original_2019_source_times']==112
+          assert a['original_DWD_source_quality_QN_levels']==[3]
+          assert 0<=a['n_source_theta_stability_guard_hours']<=112
+          assert 0<=a['n_source_free_air_T_warm_over_cold_profiles']<=112
+          assert all(m['source_DWD_QN3_not_QN10_when_exploratory'] for m in a['members'])
           assert a['insufficient_pressure_subsample_to_calibrate_or_qualify_hourly_inversion_model']
           assert a['global_arbitrary_location_weather_skill_qualified'] is False
           assert a['production_epw_ready'] is False
