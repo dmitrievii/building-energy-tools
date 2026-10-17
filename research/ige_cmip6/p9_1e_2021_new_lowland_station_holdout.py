@@ -54,7 +54,7 @@ def fixed_predictions(raw,provider,z_station,z_native,z_regular):
     }
 
 
-def run(mapping_json,out):
+def run(mapping_json,out,record_blocked=False):
     geo=json.loads(Path(mapping_json).read_text())
     if not (geo.get("actual_original_ERA5_025_geopotential_values_read")
             and geo.get("same_selected_025_coordinate_as_source_verified")):
@@ -157,6 +157,8 @@ def run(mapping_json,out):
         "n_matched_original_station_geographies":len(picked),
         "n_predeclared_station_seasons":len(mapping.LOWLAND_TARGETS)*len(PERIODS),
         "n_original_station_seasons_scored":len(eligible),
+        "original_E1_source_QC_qualification_pass":len(eligible)>=8,
+        "initial_E1_frozen_cohort_any_substitution_performed":False,
         "n_original_QC_paired_hours":sum(
             x["scores"][METHODS[0]]["matched_original_QC_hours"] for x in eligible),
         "model_names_fixed_before_holdout":list(METHODS),
@@ -180,12 +182,15 @@ def run(mapping_json,out):
     print("P9E_2021_HOLDOUT",json.dumps({
         "n_geo":len(picked),"scored":len(eligible),"n_hours":result["n_original_QC_paired_hours"],
         "macro_mae_C":result["MAE_macro_by_method_C"],"production_ready":False}),flush=True)
-    if len(eligible)<8:raise RuntimeError("P9E_FROZEN_NEW_SITE_ORIGINAL_HOLDOUT_INSUFFICIENT")
+    if len(eligible)<8 and not record_blocked:
+        raise RuntimeError("P9E_FROZEN_NEW_SITE_ORIGINAL_HOLDOUT_INSUFFICIENT")
     return result
 
 if __name__=="__main__":
     cli=argparse.ArgumentParser()
     cli.add_argument("--mapping",required=True)
     cli.add_argument("--out",required=True)
+    cli.add_argument("--record-blocked",action="store_true",
+                     help="Scientific CI: retain prereg original source-QC blocked result; never mark qualified.")
     a=cli.parse_args()
-    run(a.mapping,a.out)
+    run(a.mapping,a.out,record_blocked=a.record_blocked)
