@@ -1,0 +1,120 @@
+name: IGE P9.2D final original 2013 pressure-envelope cause and synthetic-only real EnergyPlus format smoke
+on:
+  push:
+    branches: ['research/ige-p9-2d-integrated-epw-qualification-20261018']
+    paths:
+      - '.github/workflows/ige-p9-2d-once-source-envelope-synthetic-eplus.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  original_CanESM5_huss_source_pressure_envelope:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify model-free daily native T q pressure envelope contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p9_2d_2013_original_temperature_humidity_envelope.py' -v
+      - name: Download EXACT registered genuine historical original NASA P6 daily archive
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          name: ige-p6-CanESM5-historical-1995-2014
+          path: inputs/p92d-original-gcm
+      - name: Reauthenticate original daily native CanESM5 byte SHA; immutable ZIP
+        run: |
+          python - <<'PY'
+          import hashlib,json,zipfile
+          from pathlib import Path
+          root=Path("inputs/p92d-original-gcm")
+          need=("joint_daily_raw.csv","quality_report.json","source_provenance.json")
+          if not all((root/x).is_file() for x in need):raise ValueError("P92D_ORIGINAL_NASA_SOURCE_MISSING")
+          registered=json.loads(Path("research/ige_cmip6/p7c3_expected_daily_source_shas.json").read_text())["source_sha256"]["CanESM5_historical-1995-2014"]
+          sha=hashlib.sha256((root/"joint_daily_raw.csv").read_bytes()).hexdigest()
+          if sha!=registered:raise ValueError("P92D_ORIGINAL_SOURCE_BYTE_SHA_CHANGED")
+          dest=Path("inputs/p92d_source")
+          dest.mkdir(parents=True,exist_ok=True)
+          with zipfile.ZipFile(dest/"IGE_P7C3_SRC_CanESM5_historical-1995-2014.zip","w",zipfile.ZIP_DEFLATED) as z:
+              for p in root.iterdir():
+                  if p.is_file():z.write(p,p.name)
+          print("P92D_ORIGINAL_SOURCE_SHA_PASS",sha,flush=True)
+          PY
+      - name: Original 365 native daily saturation-envelope source pressure sensitivity and six blocked dates
+        run: python -u research/ige_cmip6/p9_2d_2013_original_temperature_humidity_envelope.py --source-zip inputs/p92d_source/IGE_P7C3_SRC_CanESM5_historical-1995-2014.zip --out outputs/p92d-pressure
+      - name: Archive only original native-data derived scientific aggregation and pressure-hypothesis limitations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p92d-original-CMIP6-2013-six-blocked-physical-pressure-sensitivity
+          path: outputs/p92d-pressure/*.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  synthetic_only_EPWCET_format_real_EnergyPlus26:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Real independent 8760 EPW serializer CET readback on explicit synthetic mathematical fixture, NOT original weather
+        run: python -u research/ige_cmip6/p9_2d_pure_synthetic_energyplus_format_fixture.py --out outputs/p92d-fixture
+      - name: Fetch and SHA-pin official EnergyPlus 26.2 executable, official 1ZoneUncontrolled fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p tools_cache
+          URL='https://github.com/NatLabRockies/EnergyPlus/releases/download/v26.2.0/EnergyPlus-26.2.0-4bd7a1f26f-Linux-Ubuntu24.04-x86_64.tar.gz'
+          curl --fail --show-error --location --retry 4 --retry-delay 3 -o tools_cache/energyplus.tar.gz "$URL"
+          expected='b848da8236482a2171a67d7eab00c82162105b653ffab3ae3b6c2217c433a8a1'
+          actual=$(sha256sum tools_cache/energyplus.tar.gz | awk '{print $1}')
+          if [[ "$actual" != "$expected" ]]; then echo "::error::Pinned official EnergyPlus binary differs"; exit 1; fi
+          mkdir -p tools_cache/EnergyPlus
+          tar xzf tools_cache/energyplus.tar.gz -C tools_cache/EnergyPlus
+          BIN=$(find -L "$PWD/tools_cache/EnergyPlus" -maxdepth 5 -type f \( -name energyplus -o -name EnergyPlus \) -print -quit)
+          if [[ -z "$BIN" ]]; then exit 1; fi
+          chmod +x "$BIN"
+          "$BIN" --version
+          echo "ENERGYPLUS_BIN=$BIN" >> "$GITHUB_ENV"
+          curl --fail --location --retry 3 -o tools_cache/official_1ZoneUncontrolled.idf \
+            https://raw.githubusercontent.com/NatLabRockies/EnergyPlus/v26.2.0/testfiles/1ZoneUncontrolled.idf
+          python research/ige_cmip6/p7c5_energyplus_benchmark.py build \
+            --official-idf tools_cache/official_1ZoneUncontrolled.idf --out tools_cache/p92d_one_zone.idf
+      - name: Execute ACTUAL EnergyPlus in two purely synthetic explicitly labelled EPW converter smoke fixtures
+        run: |
+          python research/ige_cmip6/p7c5_energyplus_benchmark.py run \
+            --energyplus "$ENERGYPLUS_BIN" --idf tools_cache/p92d_one_zone.idf \
+            --weather-dir outputs/p92d-fixture --out outputs/p92d-eplus-synthetic-control
+      - name: Verify no severe or fatal and no synthetic weather presented as NASA or ERA5 original
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path("outputs/p92d-fixture")
+          p=json.loads((root/"p9_2d_synthetic_format_fixture_provenance.json").read_text())
+          assert p["original_NASA_CMIP6_or_ERA5_real_hourly_weather_used"] is False
+          j=json.loads(Path("outputs/p92d-eplus-synthetic-control/p7c5_energyplus_real_benchmark_audit.json").read_text())
+          assert len(j["results"])==2
+          assert all(x["energyplus_real_executed"] and x["severe"]==0 and x["fatal"]==0 for x in j["results"])
+          assert all("SYNTHETIC_FORMAT_FIXTURE" in x["EPW_filename"] for x in j["results"])
+          print("P92D_ACTUAL_ENERGYPLUS_ONLY_ON_FULLY_FAKE_ANALYTICAL_EPW_CONVERTER_FIXTURES_PASS")
+          print("P92D_NO_REAL_CANESM5_ANNUAL_EPLUS_WAS_PERFORMED")
+          PY
+      - name: Archive only synthetic fixture explicit labels plus real EPlus energy totals, never scientific climate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p92d-synthetic-only-CET-EPW-exporter-real-EnergyPlus-format-smoke-NOT-climate-validation
+          path: |
+            outputs/p92d-fixture/p9_2d_synthetic_format_fixture_provenance.json
+            outputs/p92d-eplus-synthetic-control/*.json
+            outputs/p92d-eplus-synthetic-control/*.csv
+            outputs/p92d-eplus-synthetic-control/**/eplusout.err
+          if-no-files-found: warn
+          retention-days: 30
