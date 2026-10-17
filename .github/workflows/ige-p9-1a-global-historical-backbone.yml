@@ -6,6 +6,8 @@ on:
     paths:
       - 'research/ige_cmip6/p9_1a_global_historical_backbone.py'
       - 'research/ige_cmip6/test_p9_1a_global_historical_backbone.py'
+      - 'research/ige_cmip6/p9_1b_geosphere_original_station_holdouts.py'
+      - 'research/ige_cmip6/test_p9_1b_geosphere_original_station_holdouts.py'
       - '.github/workflows/ige-p9-1a-global-historical-backbone.yml'
   workflow_dispatch:
 
@@ -24,6 +26,7 @@ jobs:
       - name: UTC source semantics, selected cell, no hidden downscaling, source unit guards
         run: |
           python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1a_global_historical_backbone.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1b_geosphere_original_station_holdouts.py' -v
 
   original_ERA5_five_world_climates_and_leap_year:
     needs: immutable_ERA5_source_spatial_hourly_contracts
@@ -85,5 +88,42 @@ jobs:
         with:
           name: ige-p9-1a-five-global-ERA5-climates-plus-leap-year-source-audit
           path: outputs/p9_1a_global/*.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  independent_geosphere_original_3_station_x_2_season_source_skill:
+    needs: immutable_ERA5_source_spatial_hourly_contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Independent original GeoSphere Austria QC obs against untuned fixed ERA5 on two seasons
+        run: |
+          python research/ige_cmip6/p9_1b_geosphere_original_station_holdouts.py --out outputs/p9_1b_stations
+      - name: Validate original sensor/source paired sample and no source-data leakage
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          f=Path('outputs/p9_1b_stations/ige_p9_1b_real_geosphere_ERA5_station_holdouts.json')
+          o=json.loads(f.read_text())
+          assert o['n_real_station_season_holdouts']==6
+          assert o['all_station_season_original_QC_pairs_pass'] is True
+          assert o['no_station_data_used_for_grid_prediction'] is True
+          assert o['n_total_qualified_station_hour_pairs']>=6*120
+          assert o['arbitrary_global_station_skill_qualified'] is False
+          assert o['ERA5_native_orography_independently_verified'] is False
+          assert o['EPW_generator_production_ready'] is False
+          print('P9.1B original GeoSphere+ERA5 paired 3-site/2-season pilot PASS, site-scale/global skills NOT QUALIFIED')
+          PY
+      - name: Archive only source hashes and independent station error aggregates, not source measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p9-1b-original-geosphere-three-station-two-season-ERA5-source-holdouts
+          path: outputs/p9_1b_stations/ige_p9_1b_real_geosphere_ERA5_station_holdouts.json
           if-no-files-found: warn
           retention-days: 30
