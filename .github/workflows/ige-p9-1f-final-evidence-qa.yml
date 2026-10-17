@@ -1,0 +1,104 @@
+name: IGE P9.1F independent original-source scientific closure and re-score
+
+on:
+  push:
+    branches: ['research/ige-p9-1f-physically-conditioned-terrain-inversion-20261017']
+    paths:
+      - '.github/workflows/ige-p9-1f-final-evidence-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  independently_rescore_true_original_2019_ERA5_GeoSphere_SRTM_science:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Contract validation for predictor source science, observation independence and original QC flags
+        run: |
+          python -m pip install 'numpy>=1.26,<3'
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1f1_terrain_inversion_2019_holdout.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1f2_original_2019_observed_valley_summit_pairs.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1f3_2019_july_original_station_source_qc.py' -v
+      - uses: actions/download-artifact@v4
+        with:
+          repository: dmitrievii/building-energy-tools
+          run-id: 39054277766
+          name: ige-p9-1f1-original-2019-terrain-and-conditional-cold-pool-QC
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: original/p9f1
+      - uses: actions/download-artifact@v4
+        with:
+          repository: dmitrievii/building-energy-tools
+          run-id: 39054622938
+          name: ige-p9-1f2-original-2019-station-pair-vertical-stratification
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: original/p9f2
+      - uses: actions/download-artifact@v4
+        with:
+          repository: dmitrievii/building-energy-tools
+          run-id: 39054915474
+          name: ige-p9-1f3-original-2019-summer-nine-station-QC-flag-source-forensics
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: original/p9f3
+      - name: Independently verify real original sample counts, macro MAE, guard subsets and source QC July flags
+        run: |
+          python - <<'PY'
+          import json,math,statistics
+          from pathlib import Path
+          one=json.loads(Path('original/p9f1/p9_1f1_2019_original_station_physically_conditioned_result.json').read_text())
+          terrain=json.loads(Path('original/p9f1/p9_1f1_frozen_pre2019_terrain_geopotential.json').read_text())
+          two=json.loads(Path('original/p9f2/p9_1f2_2019_independent_original_station_pair_stratification.json').read_text())
+          three=json.loads(Path('original/p9f3/p9_1f3_original_2019_july_source_QC_forensic.json').read_text())
+          assert len(terrain['terrain_by_station'])==9
+          assert len(terrain['real_regular_z_by_station'])==9
+          assert terrain['physically_conditional_parameters_registered_before_observed_2019'] is True
+          assert one['n_predeclared_station_seasons']==27
+          assert one['n_QC_qualified_station_seasons']==18
+          assert one['n_original_QC_paired_hours']==3024
+          assert one['n_source_conditioned_regime_hours']==282
+          assert one['no_target_station_observation_fitted_to_physical_hyperparameters'] is True
+          assert not one['production_epw_ready']
+          assert all(r['n_original_QC_station_hours_available']==0 for r in one['members']
+                     if r['season']=='summer_2019')
+          eligible=[r for r in one['members'] if r['source_QC_status']=='REAL_OBSERVATIONAL_HOLDOUT_SCORED']
+          assert len(eligible)==18
+          for method,reported in one['method_2019_equal_station_season_macro_MAE_C'].items():
+              vals=[r['by_method'][method]['MAE_C'] for r in eligible]
+              assert math.isclose(statistics.fmean(vals),reported,abs_tol=1e-10)
+              guard=[(r['by_method'][method]['guarded_MAE_C'],
+                      r['by_method'][method]['n_original_QC_guarded_hours'])
+                     for r in eligible if r['by_method'][method]['n_original_QC_guarded_hours']>0]
+              assert sum(n for v,n in guard)==282
+              weighted=sum(v*n for v,n in guard)/282
+              if method=='L1_REGULAR_LAPSE':
+                  assert 1.76<weighted<1.79
+              if method=='L2_TERRAIN_NIGHT_GUARD':
+                  assert 2.97<weighted<3.0
+          assert one['method_2019_equal_station_season_macro_MAE_C']['L2_TERRAIN_NIGHT_GUARD'] > one['method_2019_equal_station_season_macro_MAE_C']['L1_REGULAR_LAPSE']
+          assert two['n_frozen_station_pairs']==4
+          assert two['n_original_2019_pair_seasons_expected']==12
+          assert two['n_QC_qualified_original_pair_seasons']==8
+          assert two['n_original_QC_matched_pair_hour_slots']==1339
+          assert two['station_upper_minus_lower_is_spatial_gradient_not_local_vertical_profile'] is True
+          assert not two['production_epw_ready']
+          assert three['july_2019_original_QC_accepted_total']==0
+          july=next(x for x in three['periods'] if x['name']=='july_2019')
+          assert july['aggregate_nonmissing_raw_tl_hours']==1489
+          assert july['aggregate_QC_accepted_hours']==0
+          assert all(x['original_QC_accepted_hour_count']==0 for x in july['per_station_original_source_counts'])
+          assert all(x['original_QC_flag_frequencies'].get('0')==168 for x in july['per_station_original_source_counts'])
+          assert all(x['aggregate_QC_accepted_hours']>=1500 for x in three['periods'] if x['name']!='july_2019')
+          assert three['no_override_of_original_QC_flags']
+          assert not three['production_epw_ready']
+          print('IGE P9.1F 31/31 contracts + original ERA5/DEM/GEO 3024h negative guard science independent SHA-backed aggregate closure PASS')
+          print('Mean 2019 errors (C):',one['method_2019_equal_station_season_macro_MAE_C'])
+          print('Observed spatial pair matches:',two['n_original_QC_matched_pair_hour_slots'])
+          print('GeoSphere July 2019 source unverified flag0:',july['aggregate_nonmissing_raw_tl_hours'])
+          PY
