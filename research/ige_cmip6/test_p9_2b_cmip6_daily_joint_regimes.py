@@ -90,12 +90,12 @@ class P92BDailyContracts(unittest.TestCase):
 
     def test_impossible_solar_cap_blocks(self):
         t=target();t["rsds_kwh_m2_day"]=15.
-        with self.assertRaisesRegex(InfeasibleDailyClimate,"EXCEEDS_PHYSICAL"):
+        with self.assertRaisesRegex(InfeasibleDailyClimate,"GHI_EXCEEDS_SELECTED_DONOR"):
             new_day(t,donor(),47.0707,15.4395)
 
     def test_supersaturation_q_blocks_without_clipping_source_q(self):
         t=target();t["huss"]=.06
-        with self.assertRaisesRegex(InfeasibleDailyClimate,"EXCEEDS_PHYSICAL"):
+        with self.assertRaisesRegex(InfeasibleDailyClimate,"HUSS_EXCEEDS_SELECTED_DONOR"):
             new_day(t,donor(),47.0707,15.4395)
 
     def test_zero_donor_rain_is_not_morphed_to_future_wet(self):

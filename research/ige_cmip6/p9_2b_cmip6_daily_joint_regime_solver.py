@@ -173,6 +173,11 @@ def new_day(target_day,donor,latitude,longitude):
     original_q=[q_of_e(sat_pa(v["dew_point_2m"]),pi)
                 for v,pi in zip(donor.vectors,p)]
     caps=[qsat(ti,pi)*.999999999 for ti,pi in zip(t,p)]
+    # Distinguish the thermodynamic saturation-capacity gate from solar
+    # energy/donor-hour geometry. This is a diagnostic/source-safety repair:
+    # no physical constants, donor selection or generated values change.
+    if 24*src["huss"]>sum(caps)+1e-8:
+        raise InfeasibleDailyClimate("P92B_HUSS_EXCEEDS_SELECTED_DONOR_T_P_SATURATION_CAPACITY")
     q=distribute_exact(original_q,caps,24*src["huss"])
     rh=[100*e_of_q(qi,pi)/sat_pa(ti) for qi,pi,ti in zip(q,p,t)]
     td=[dewpoint_of_q(qi,pi,ti) for qi,pi,ti in zip(q,p,t)]
@@ -196,6 +201,12 @@ def new_day(target_day,donor,latitude,longitude):
     caps_solar=[1450.*z for z in solarcos]
     raw_ghi=[max(0.,v["shortwave_radiation"]) if z>0 else 0.
              for v,z in zip(donor.vectors,solarcos)]
+    # A current donor may have zero radiation weights during some daylight
+    # hours. This is donor-profile support, NOT proof that source GCM GHI
+    # violates the extraterrestrial TOA bound for another feasible donor.
+    supported_capacity=sum(c for c,w in zip(caps_solar,raw_ghi) if w>0)
+    if src["rsds_kwh_m2_day"]*1000>supported_capacity+1e-8:
+        raise InfeasibleDailyClimate("P92B_GHI_EXCEEDS_SELECTED_DONOR_HOUR_SUPPORT_CAPACITY")
     ghi=distribute_exact(raw_ghi,caps_solar,src["rsds_kwh_m2_day"]*1000)
     direct=[];diffuse=[];dni=[]
     for a,v,z in zip(ghi,donor.vectors,solarcos):
