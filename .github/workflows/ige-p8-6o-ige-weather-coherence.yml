@@ -1,0 +1,113 @@
+name: IGE P8.6O actual archived IGE EPW rain humidity solar coherence
+
+on:
+  push:
+    branches: ['research/ige-p8-6o-ige-weather-coherence-20261017']
+    paths:
+      - 'research/ige_cmip6/p8_6o_ige_coupled_weather.py'
+      - 'research/ige_cmip6/test_p8_6o_ige_coupled_weather.py'
+      - '.github/workflows/ige-p8-6o-ige-weather-coherence.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  frozen_same_metric_physics_contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install 'numpy>=1.26,<3'
+      - name: Independent same-calendar-month and same-local-hour rain/solar/humidity contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_6o_ige_coupled_weather.py' -v
+
+  original_p7b4_p7b5_p7c1_8760_weather_cores:
+    needs: frozen_same_metric_physics_contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install 'numpy>=1.26,<3'
+      - name: Restore original public P7B4 from its published original archived CI
+        uses: actions/download-artifact@v4
+        with:
+          name: ige-p7b4-integrated-2013-canesm5-m2-research-epw
+          repository: dmitrievii/building-energy-tools
+          run-id: 38171672579
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: original_public/p7b4
+      - name: Restore independent P7B5 original wind-analogue research EPW
+        uses: actions/download-artifact@v4
+        with:
+          name: ige-p7b5-original-qc-wind-direction-epw-readiness
+          repository: dmitrievii/building-energy-tools
+          run-id: 38174920762
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: original_public/p7b5
+      - name: Restore four actual original P7C1 SSP future research EPWs
+        uses: actions/download-artifact@v4
+        with:
+          name: ige-p7c1-canesm5-four-future-epw-morphs-research
+          repository: dmitrievii/building-energy-tools
+          run-id: 38178867655
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: original_public/p7c1
+      - name: Verify original P7B4/P7B5 file SHA provenance and no surrogate source
+        run: |
+          python - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          b4=Path('original_public/p7b4/Graz_CanESM5_2013_IGE_P7B4_M2_SOLAR_INTEGRATED_RESEARCH_ONLY.epw')
+          b5=Path('original_public/p7b5/Graz_CanESM5_2013_IGE_P7B5_WIND_ANALOGUE_RESEARCH_ONLY.epw')
+          audit=json.loads(Path('original_public/p7b5/p7b5_science_audit.json').read_text())
+          assert hashlib.sha256(b4.read_bytes()).hexdigest()=='2e45abbcba52c49e51e3811676ba37167bc8700f697e13032ee103ff8f3f7012'
+          assert hashlib.sha256(b5.read_bytes()).hexdigest()==audit['derived_sha256'][b5.name]
+          assert audit['production_epw_ready'] is False
+          assert len(list(Path('original_public/p7c1').glob('*.epw')))==4
+          print('Original SIX archived public IGE EPW provenance PASS; final private 28 still absent')
+          PY
+      - name: Real 6 × 8760 EPW conditional coupling evaluation
+        run: |
+          python research/ige_cmip6/p8_6o_ige_coupled_weather.py \
+            --p7b4-epw original_public/p7b4/Graz_CanESM5_2013_IGE_P7B4_M2_SOLAR_INTEGRATED_RESEARCH_ONLY.epw \
+            --p7b5-epw original_public/p7b5/Graz_CanESM5_2013_IGE_P7B5_WIND_ANALOGUE_RESEARCH_ONLY.epw \
+            --p7c1-dir original_public/p7c1 \
+            --out outputs/p8_6o_ige
+      - name: Frozen negative scientific conclusion is independently reproduced
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          x=json.loads(Path('outputs/p8_6o_ige/ige_p8_6o_original_epw_coupled_metrics.json').read_text())
+          assert x['original_public_IGE_EPWs_verified']==6
+          assert x['n_original_hours_reloaded']==52560
+          assert x['private_P7C5B_28_verified']==0
+          assert x['same_hourly_rain_mask_all_six'] is True
+          assert x['all_six_cloud_99_every_hour'] is True
+          assert x['conditional_metric_signs_expected'] is True
+          a=x['member_metrics'][0]
+          assert a['n_wet']==896
+          assert abs(a['rain_minus_dry_month_hour_RH_pp']-4.095898)<0.002
+          assert abs(a['rain_minus_dry_month_hour_daylight_Kt']+.032966)<.002
+          assert abs(a['rain_minus_dry_month_hour_diffuse_fraction']-.055921)<.002
+          assert abs(a['rain_minus_dry_month_hour_sky_emissivity']-.016167)<.002
+          assert x['production_epw_ready'] is False
+          print('IGE P8.6O original data scientific results reproduced, production blocked')
+          PY
+      - name: Export aggregates and file SHA only, NEVER source EPWs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ige-p8-6o-six-original-ige-epw-rain-rh-solar-lw-aggregate
+          path: outputs/p8_6o_ige/ige_p8_6o_original_epw_coupled_metrics.json
+          if-no-files-found: warn
+          retention-days: 30
