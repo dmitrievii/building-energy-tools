@@ -1,0 +1,80 @@
+name: IGE P9.1E independent original-source archived-result verification
+
+on:
+  push:
+    branches: ['research/ige-p9-1e-regular-orography-spatial-generalization-20261017']
+    paths:
+      - '.github/workflows/ige-p9-1e-final-artifact-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  independently_revalidate_frozen_source_artifacts_and_21_contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install 'numpy>=1.26,<3'
+      - name: Frozen source spatial and independent QC-selection contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1e_regular_grid_mapping_holdout.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1e2_source_available_2020_holdout.py' -v
+      - name: Restore actual 2021 frozen source-incomplete original E1 evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: ige-p9-1e-six-new-lowland-2021-ERA5-regular-orography-QC-holdout
+          repository: dmitrievii/building-energy-tools
+          run-id: 39050244217
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: originals/e1
+      - name: Restore actual independent ORIGINAL 2020/2021 withheld GeoSphere+ERA5+ARCO reports
+        uses: actions/download-artifact@v4
+        with:
+          name: ige-p9-1e2-2020-exploratory-new-lowland-ERA5-orography-holdout
+          repository: dmitrievii/building-energy-tools
+          run-id: 39050244217
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: originals/e2
+      - name: Independently recompute every member MAE mean from genuine original source report and check source selection chronology
+        run: |
+          python - <<'PY'
+          import json,math,statistics
+          from pathlib import Path
+          e1=json.loads(Path('originals/e1/p9_1e_new_lowland_2021_station_holdout.json').read_text())
+          frozen=json.loads(Path('originals/e2/p9_1e2_2021_source_eligibility_pre_holdout.json').read_text())
+          e2=json.loads(Path('originals/e2/p9_1e2_separate_2020_original_lowland_holdout.json').read_text())
+          assert e1['original_E1_source_QC_qualification_pass'] is False
+          assert e1['n_original_station_seasons_scored']==2
+          assert e1['n_original_QC_paired_hours']==336
+          assert e1['initial_E1_frozen_cohort_any_substitution_performed'] is False
+          assert frozen['E1_original_2021_six_station_holdout_failed_source_coverage'] is True
+          assert frozen['never_selection_using_2020_target_observations'] is True
+          assert len(frozen['frozen_station_cohort'])==6
+          assert e2['n_six_geographic_targets']==6
+          assert e2['n_2021_source_eligible_stations']==6
+          assert e2['n_2020_real_original_station_seasons_scored']==12
+          assert e2['n_2020_original_paired_QC_hours']==2016
+          assert e2['this_followup_exploratory_not_confirmatory_original_E1'] is True
+          assert e2['station_selection_based_only_on_original_geography_and_2021_QC_availability'] is True
+          assert e2['native_vs_regular_exact_ERA5_provider_equivalence_unproven'] is True
+          assert e2['global_site_skill_validated'] is False
+          assert e2['production_epw_ready'] is False
+          methods=e2['macro_2020_MAE_C_by_untuned_method']
+          cases=e2['results']
+          assert len(cases)==12
+          assert len({r['station_id'] for r in cases})==6
+          for method,value in methods.items():
+              raw=[r['scores'][method]['MAE_C'] for r in cases]
+              assert math.isclose(statistics.fmean(raw),value,abs_tol=1e-10)
+              assert all(r['scores'][method]['matched_original_QC_hours']==168 for r in cases)
+          assert all('2020_original_QC_observation_SHA256' in r for r in cases)
+          assert all('2020_original_weather_SHA256' in r for r in cases)
+          print('P9.1E archived 2020 genuine original QC weather source 12/12 2016h reproduced; E1 remains SCIENTIFIC SOURCE BLOCKED; P9.1E2 exploratory only')
+          print('Six-new-site 2020 macro MAE_C:',methods)
+          PY
