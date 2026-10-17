@@ -136,7 +136,7 @@ jobs:
           assert x['E1_failed_original_holdout_source_completeness_remains_failed'] is True
           assert x['n_six_geographic_targets']==6
           assert x['n_2020_real_original_station_seasons_scored']>=8
-          assert x['n_2020_original_QC_paired_hours']>=8*120
+          assert x['n_2020_original_paired_QC_hours']>=8*120
           assert x['station_selection_based_only_on_original_geography_and_2021_QC_availability']
           assert x['this_followup_exploratory_not_confirmatory_original_E1']
           assert x['native_vs_regular_exact_ERA5_provider_equivalence_unproven']
