@@ -86,7 +86,6 @@ def parse_original_two_years(raw,sid):
             raise ValueError("B_DUPLICATED_WIND_SOURCE_HOUR_"+sid)
         speed=number(row["fkl010h0"],0.,90.)
         azimuth=number(row["dkl010h0"],0.,360.)
-        out[t.year]={"speed":speed,"direction":azimuth%360 if azimuth is not None else None} if False else out[t.year]
         out[t.year][t]={"speed":speed,"direction":azimuth%360 if azimuth is not None else None}
     return out,flag_columns
 
@@ -338,7 +337,6 @@ def site_year_results(year,site,metadata,features,qualified,observations):
         },
         "pairwise_selection_diffs":{
             "altitude_vs_distance_set_changed":(
-                {s["id"] for s in []} if False else
                 set(x["station_id"] for _,x in choices["altitude_idw4"])!=
                 set(x["station_id"] for _,x in choices["distance_idw4"])),
             "terrain_vs_altitude_set_changed":(
