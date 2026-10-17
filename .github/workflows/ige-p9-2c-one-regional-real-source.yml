@@ -1,9 +1,7 @@
 name: IGE P9.2C corrected independent 2025 station source deps and physical weather closure
+# P9.2C frozen original sources complete: Actions 39076913550.
+# All future runs require explicit manual dispatch.
 on:
-  push:
-    branches: ['research/ige-p9-2c-physical-donor-holdout-20261018']
-    paths:
-      - '.github/workflows/ige-p9-2c-one-regional-real-source.yml'
   workflow_dispatch:
 permissions:
   contents: read

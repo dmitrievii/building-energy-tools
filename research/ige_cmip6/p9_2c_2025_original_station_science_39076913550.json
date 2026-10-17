@@ -1,0 +1,240 @@
+{
+  "phase": "P92C_AUTHENTIC_ORIGINAL_AT_DE_CH_2025_VERIFIED_RESULT",
+  "run_id": 39076913550,
+  "artifact_measured": 12117720879,
+  "artifact_original_gcm": 12116813549,
+  "cohort_commit": "77356c4646c1ea999560e5d8ef921465e6940383",
+  "site_ids": [
+    "AT_GEOSPHERE_30",
+    "DE_DWD_03730",
+    "CH_SMW_DAV"
+  ],
+  "source_year_2025": true,
+  "donors_2019_2020": true,
+  "original_QC_station_variable_hour_pairs": 2016,
+  "station_result_cases": 12,
+  "negative_against_hourly_original_ERA5_cases": 12,
+  "negative_against_P92A_cases": 3,
+  "original_CanESM5_28_development_day_hard_closed": 28,
+  "original_CanESM5_28_development_day_joint_q_RH": 17,
+  "retrospective_ERA5_2025_joint_q_RH_days": 41,
+  "retrospective_ERA5_2025_days": 42,
+  "relative_humidity_measured_station_only_used_for_evaluation": true,
+  "comparison_is_not_equal_information_hourly_B0_vs_daily_C": true,
+  "internal_retrospective_LW_surrogate_not_observed": true,
+  "native_original_station_QC_levels_not_equivalent": true,
+  "station_observed_solar_cloud_precip_LW_validation": false,
+  "production_epw_ready": false,
+  "macro": {
+    "T2m": {
+      "B0": 1.7501984126984127,
+      "P92A": 3.4568452380952377,
+      "P92C": 2.087114544427807,
+      "worse_than_B0": 6,
+      "worse_than_P92A": 0
+    },
+    "RH2m": {
+      "B0": 7.973015873015872,
+      "P92A": 12.25436507936508,
+      "P92C": 10.75139948192931,
+      "worse_than_B0": 6,
+      "worse_than_P92A": 3
+    }
+  },
+  "rows": [
+    {
+      "country": "AT",
+      "season": "January",
+      "variable": "T2m",
+      "native_QC": "GeoSphere_tl_flag_native_goodflags",
+      "n_source": 168,
+      "n_common": 168,
+      "status": "SCORED_ON_IDENTICAL_ORIGINAL_STATION_QC_HOURS",
+      "MAE_B0": 1.0392857142857141,
+      "MAE_A": 3.0053571428571426,
+      "MAE_C": 1.600661298130535,
+      "delta_vs_B0": 0.5613755838448209
+    },
+    {
+      "country": "AT",
+      "season": "January",
+      "variable": "RH2m",
+      "native_QC": "GeoSphere_rf_flag_native_goodflags",
+      "n_source": 168,
+      "n_common": 168,
+      "status": "SCORED_ON_IDENTICAL_ORIGINAL_STATION_QC_HOURS",
+      "MAE_B0": 6.815476190476191,
+      "MAE_A": 16.083333333333332,
+      "MAE_C": 10.784448195390976,
+      "delta_vs_B0": 3.968972004914785
+    },
+    {
+      "country": "AT",
+      "season": "July",
+      "variable": "T2m",
+      "native_QC": "GeoSphere_tl_flag_native_goodflags",
+      "n_source": 168,
+      "n_common": 168,
+      "status": "SCORED_ON_IDENTICAL_ORIGINAL_STATION_QC_HOURS",
+      "MAE_B0": 1.2875,
+      "MAE_A": 3.0428571428571427,
+      "MAE_C": 1.6956296387515228,
+      "delta_vs_B0": 0.40812963875152275
+    },
+    {
+      "country": "AT",
+      "season": "July",
+      "variable": "RH2m",
+      "native_QC": "GeoSphere_rf_flag_native_goodflags",
+      "n_source": 168,
+      "n_common": 168,
+      "status": "SCORED_ON_IDENTICAL_ORIGINAL_STATION_QC_HOURS",
+      "MAE_B0": 7.9523809523809526,
+      "MAE_A": 12.154761904761905,
+      "MAE_C": 9.63655635742657,
+      "delta_vs_B0": 1.6841754050456181
+    },
+    {
+      "country": "DE",
+      "season": "January",
+      "variable": "T2m",
+      "native_QC": "DWD_QN9_3_AUTOMATIC_QC_NOT_EQUIVALENT_QN10",
+      "n_source": 168,
+      "n_common": 168,
+      "status": "SCORED_ON_IDENTICAL_ORIGINAL_STATION_QC_HOURS",
+      "MAE_B0": 1.6648809523809522,
+      "MAE_A": 4.445833333333333,
+      "MAE_C": 2.102347367367183,
+      "delta_vs_B0": 0.4374664149862306
+    },
+    {
+      "country": "DE",
+      "season": "January",
+      "variable": "RH2m",
+      "native_QC": "DWD_QN9_3_AUTOMATIC_QC_NOT_EQUIVALENT_QN10",
+      "n_source": 168,
+      "n_common": 168,
+      "status": "SCORED_ON_IDENTICAL_ORIGINAL_STATION_QC_HOURS",
+      "MAE_B0": 9.892857142857142,
+      "MAE_A": 15.470238095238095,
+      "MAE_C": 12.30996639487427,
+      "delta_vs_B0": 2.417109252017127
+    },
+    {
+      "country": "DE",
+      "season": "July",
+      "variable": "T2m",
+      "native_QC": "DWD_QN9_3_AUTOMATIC_QC_NOT_EQUIVALENT_QN10",
+      "n_source": 168,
+      "n_common": 168,
+      "status": "SCORED_ON_IDENTICAL_ORIGINAL_STATION_QC_HOURS",
+      "MAE_B0": 1.8261904761904764,
+      "MAE_A": 3.7470238095238093,
+      "MAE_C": 1.9994487243775625,
+      "delta_vs_B0": 0.17325824818708613
+    },
+    {
+      "country": "DE",
+      "season": "July",
+      "variable": "RH2m",
+      "native_QC": "DWD_QN9_3_AUTOMATIC_QC_NOT_EQUIVALENT_QN10",
+      "n_source": 168,
+      "n_common": 168,
+      "status": "SCORED_ON_IDENTICAL_ORIGINAL_STATION_QC_HOURS",
+      "MAE_B0": 7.75,
+      "MAE_A": 9.053571428571429,
+      "MAE_C": 10.539882893077033,
+      "delta_vs_B0": 2.789882893077033
+    },
+    {
+      "country": "CH",
+      "season": "January",
+      "variable": "T2m",
+      "native_QC": "MeteoSwiss_PUBLISHED_HOURLY_QC_PER_SAMPLE_NOT_CERTIFIED",
+      "n_source": 168,
+      "n_common": 168,
+      "status": "SCORED_ON_IDENTICAL_ORIGINAL_STATION_QC_HOURS",
+      "MAE_B0": 2.7541666666666664,
+      "MAE_A": 3.267857142857143,
+      "MAE_C": 3.0535576173716446,
+      "delta_vs_B0": 0.2993909507049781
+    },
+    {
+      "country": "CH",
+      "season": "January",
+      "variable": "RH2m",
+      "native_QC": "MeteoSwiss_PUBLISHED_HOURLY_QC_PER_SAMPLE_NOT_CERTIFIED",
+      "n_source": 168,
+      "n_common": 168,
+      "status": "SCORED_ON_IDENTICAL_ORIGINAL_STATION_QC_HOURS",
+      "MAE_B0": 9.585119047619047,
+      "MAE_A": 11.675595238095237,
+      "MAE_C": 12.132666440191782,
+      "delta_vs_B0": 2.547547392572735
+    },
+    {
+      "country": "CH",
+      "season": "July",
+      "variable": "T2m",
+      "native_QC": "MeteoSwiss_PUBLISHED_HOURLY_QC_PER_SAMPLE_NOT_CERTIFIED",
+      "n_source": 168,
+      "n_common": 168,
+      "status": "SCORED_ON_IDENTICAL_ORIGINAL_STATION_QC_HOURS",
+      "MAE_B0": 1.9291666666666667,
+      "MAE_A": 3.232142857142857,
+      "MAE_C": 2.0710426205683956,
+      "delta_vs_B0": 0.1418759539017289
+    },
+    {
+      "country": "CH",
+      "season": "July",
+      "variable": "RH2m",
+      "native_QC": "MeteoSwiss_PUBLISHED_HOURLY_QC_PER_SAMPLE_NOT_CERTIFIED",
+      "n_source": 168,
+      "n_common": 168,
+      "status": "SCORED_ON_IDENTICAL_ORIGINAL_STATION_QC_HOURS",
+      "MAE_B0": 5.842261904761905,
+      "MAE_A": 9.088690476190477,
+      "MAE_C": 9.104876610615216,
+      "delta_vs_B0": 3.262614705853311
+    }
+  ],
+  "natives": [
+    {
+      "scenario": "historical",
+      "season": "January",
+      "n_daily_hard_closed": 7,
+      "n_failed_physical_donor_days": 0,
+      "n_days_joint_native_q_and_RH_closed": 5,
+      "max_abs_RH_target_residual_pp": 6.924370979401047,
+      "blocked_cases": []
+    },
+    {
+      "scenario": "historical",
+      "season": "July",
+      "n_daily_hard_closed": 7,
+      "n_failed_physical_donor_days": 0,
+      "n_days_joint_native_q_and_RH_closed": 1,
+      "max_abs_RH_target_residual_pp": 7.527300856002071,
+      "blocked_cases": []
+    },
+    {
+      "scenario": "ssp245",
+      "season": "January",
+      "n_daily_hard_closed": 7,
+      "n_failed_physical_donor_days": 0,
+      "n_days_joint_native_q_and_RH_closed": 4,
+      "max_abs_RH_target_residual_pp": 10.712212975548795,
+      "blocked_cases": []
+    },
+    {
+      "scenario": "ssp245",
+      "season": "July",
+      "n_daily_hard_closed": 7,
+      "n_failed_physical_donor_days": 0,
+      "n_days_joint_native_q_and_RH_closed": 7,
+      "max_abs_RH_target_residual_pp": 1.4210854715202004e-14,
+      "blocked_cases": []
+    }
+  ]
+}
