@@ -2,12 +2,13 @@
 """P9.1H2/H3 adapter to already implemented P9.1F SRTM ring + P9.1E ARCO grid.
 
 No provider queries here. Original source provenance is mandatory. Reuses
-P9.1F fields, not 2019 observational residuals, and accepts 2018-only hours.
+P9.1F fields, not 2019 observational residuals, and accepts only frozen 2022 AT/DE/CH windows.
 """
 from __future__ import annotations
 import datetime as dt
 import math
 from p9_1h23_physical_inversion_candidate import State,baselines,evaluate,clamp
+from p9_1h_regional_AT_DE_CH_guard import qualification_scope
 
 FROZEN_P9F_12KM_P75_RELIEF_GATE_M=120.
 FROZEN_P9F_GRID_DELTA_GATE_M=-150.
@@ -50,7 +51,7 @@ def index_from_existing_P9F1_original_srtm(terrain:dict, site_height_m:float,
     eligible=(relief>=FROZEN_P9F_12KM_P75_RELIEF_GATE_M
               and dz<=FROZEN_P9F_GRID_DELTA_GATE_M)
     # Purely hypothesis-level ramps; 240m and 350m fixed prior to scoring,
-    # neither observed 2018 nor 2021 temperatures selected these numbers.
+    # neither observed 2018 Hyytiälä nor frozen 2022 AT/DE/CH temperature outcomes selected these numbers.
     index=(clamp((relief-FROZEN_P9F_12KM_P75_RELIEF_GATE_M)/240.)
            *clamp((-dz-150.)/350.)*fraction) if eligible else 0.
     return {"terrain_cold_pool_index":index,
@@ -62,18 +63,17 @@ def index_from_existing_P9F1_original_srtm(terrain:dict, site_height_m:float,
             "terrain_index_not_validation_of_actual_inversion":True}
 
 
-def predict_one_frozen_development_hour(*,timestamp_utc:str,latitude:float,longitude:float,
+def predict_one_frozen_regional_hour(*,country_code:str,timestamp_utc:str,latitude:float,longitude:float,
                                         source_weather_era5:dict,site_height_m:float,
                                         source_arco_grid_cell:dict,source_original_srtm:dict,
                                         provider_altitude_2m_c:float|None=None)->dict:
     """Caller passes source-verified original ERA5 and original SRTM/ARCO.
 
-    This 2018-only adapter cannot accidentally read frozen 2021 observations.
-    No implicit 2018 data retrieval; no 2019 target-station temperature.
+    Regional cohort only: three countries, two registered 2022 seven-day windows.
+    No implicit source retrieval or retroactive reuse of 2019 target-station errors.
     """
-    stamp=dt.datetime.fromisoformat(timestamp_utc.replace("Z","+00:00"))
-    if stamp.year!=2018 or stamp.tzinfo is None or stamp.utcoffset()!=dt.timedelta(0):
-        raise ValueError("P9H23_DEV_2018_UTC_ONLY_2021_HOLDOUT_PROTECTED")
+    country_code,normalized_stamp=qualification_scope(country_code,timestamp_utc)
+    stamp=dt.datetime.fromisoformat(normalized_stamp)
     if not -90<=latitude<=90 or not -180<=longitude<=180:
         raise ValueError("P9H23_SITE_GEOGRAPHY_INVALID")
     if source_arco_grid_cell.get("same_ERA5_grid_node_coordinate_as_OpenMeteo") is not True:
@@ -94,7 +94,8 @@ def predict_one_frozen_development_hour(*,timestamp_utc:str,latitude:float,longi
                 terrain_cold_pool_index=morph["terrain_cold_pool_index"],
                 independently_verified_snow_cover=None)
     result=evaluate(state,initial["B1_native_grid_fixed_lapse_C"])
-    return {"phase":"P9H23_2018_DEVELOPMENT_ONLY",
+    return {"phase":"P9H23_AT_DE_CH_FROZEN_2022_EVALUATION",
+            "country_code":country_code,
             "physically_bounded_temperature_C":result.corrected_temperature_c,
             "physical_correction_C":result.correction_c,
             "physical_status":result.status,
@@ -104,5 +105,7 @@ def predict_one_frozen_development_hour(*,timestamp_utc:str,latitude:float,longi
             "source_wind_and_cloud_only_no_measured_flux_closure":True,
             "real_observed_2m_station_MAE_unavailable":True,
             "source_snow_not_yet_qualified":True,
-            "independent_2021_holdout_unread":True,
+            "independent_2021_Nordic_holdout_unread":True,
+            "regional_AT_DE_CH_qualified":False,
+            "global_arbitrary_point_weather_qualified":False,
             "production_epw_ready":False}

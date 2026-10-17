@@ -1,7 +1,7 @@
 """Original-SRTM/ARCO adapter tests: synthetic fixtures, no new station reads."""
 import unittest
 from p9_1h23_source_era5_dem_adapter import (
-    index_from_existing_P9F1_original_srtm,predict_one_frozen_development_hour
+    index_from_existing_P9F1_original_srtm,predict_one_frozen_regional_hour
 )
 
 def terrain(*, center=100., ring=None):
@@ -21,8 +21,8 @@ def cell(z=500):
             "same_model_topographic_interpolation_proven":False}
 
 def predict(weather=None, tr=None, **extra):
-    return predict_one_frozen_development_hour(
-        timestamp_utc="2018-01-11T01:00:00Z",
+    return predict_one_frozen_regional_hour(
+        country_code="AT",timestamp_utc="2022-01-11T01:00:00Z",
         latitude=47.0,longitude=15.0,
         source_weather_era5=weather or {
             "temperature_2m":2.,
@@ -43,10 +43,10 @@ class TestH23ExistingResearchSources(unittest.TestCase):
         self.assertEqual(res["physical_correction_C"],0.)
         self.assertEqual(res["physical_status"],"NO_DEM_COLD_POOL_SIGNAL_BACKOFF")
 
-    def test_2018_strict_holdout_no_2021(self):
-        with self.assertRaisesRegex(ValueError,"HOLDOUT_PROTECTED"):
-            predict_one_frozen_development_hour(
-              timestamp_utc="2021-01-11T01:00:00Z",
+    def test_2022_strict_windows_no_2021(self):
+        with self.assertRaisesRegex(ValueError,"WINDOW"):
+            predict_one_frozen_regional_hour(
+              country_code="AT",timestamp_utc="2021-01-11T01:00:00Z",
               latitude=47.,longitude=15.,
               source_weather_era5={"temperature_2m":2.},
               site_height_m=100.,source_arco_grid_cell=cell(),
@@ -59,12 +59,23 @@ class TestH23ExistingResearchSources(unittest.TestCase):
         self.assertGreaterEqual(r["physical_correction_C"],-1.25)
         self.assertAlmostEqual(r["three_baselines"]["B1_native_grid_fixed_lapse_C"],4.6)
         self.assertTrue(r["real_observed_2m_station_MAE_unavailable"])
+        self.assertEqual(r["phase"],"P9H23_AT_DE_CH_FROZEN_2022_EVALUATION")
+        self.assertEqual(r["country_code"],"AT")
+
+    def test_no_netherlands_or_finland_reuse(self):
+        with self.assertRaisesRegex(ValueError,"COUNTRY"):
+            predict_one_frozen_regional_hour(
+                country_code="NL",timestamp_utc="2022-01-11T01:00:00Z",
+                latitude=52.,longitude=5.,
+                source_weather_era5={"temperature_2m":2.},
+                site_height_m=100.,source_arco_grid_cell=cell(),
+                source_original_srtm=terrain())
 
     def test_no_hidden_claim_ARCO_same_provider_regridding(self):
         x=cell();x["same_model_topographic_interpolation_proven"]=True
         with self.assertRaisesRegex(ValueError,"IMPOSSIBLE_PROVIDER_REGRID"):
-            predict_one_frozen_development_hour(
-                timestamp_utc="2018-01-11T01:00:00Z",
+            predict_one_frozen_regional_hour(
+                country_code="AT",timestamp_utc="2022-01-11T01:00:00Z",
                 latitude=47.,longitude=15.,
                 source_weather_era5={"temperature_2m":2.},
                 site_height_m=100.,source_arco_grid_cell=x,
