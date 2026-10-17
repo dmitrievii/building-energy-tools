@@ -99,6 +99,10 @@ A finite source diagnostic model with 0/1 labels and no measured inversion canno
 
 No global climate engine site-accuracy release yet. P9.2 joint future hourly multi-variable synthesis remains a separate milestone. `global_spatial_skill_qualified=false`, `production_epw_ready=false`.
 
+## Final independent QA — source/claim separation
+
+[GitHub Actions #39055183522](https://github.com/dmitrievii/building-energy-tools/actions/runs/39055183522): **SUCCESS**, original downloaded P9.1F1/F2/F3 scientific result artifacts were independently rescored without re-fetching or re-fitting source observations; **31/31 frozen unit contracts PASS** across F1 (18), F2 (7), F3 (6). Verified each 2019 original case's macro MAE, 282-hour conditional subset-weighted error, actual 2019 summer missing QC, 1339 observed original station-pair slots and **July 2019 flag0 not peer-reviewed/quality checked**. Reproduced negative verdict `L2_macro > L1_macro`. Raw station hourly temperatures and ERA5 original global grids not republished.
+
 ## Provenance GitHub Actions / artifacts
 
 - **P9.1F1 original 2019 source and fixed guard:** [run #39054277766](https://github.com/dmitrievii/building-energy-tools/actions/runs/39054277766) — **2/2 jobs SUCCESS, 18/18 unit contracts PASS**; [original 2019 9-site independent DEM/ERA5/GeoSphere aggregations #12108951334](https://github.com/dmitrievii/building-energy-tools/actions/runs/39054277766/artifacts/12108951334).
