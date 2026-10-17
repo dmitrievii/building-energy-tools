@@ -1,0 +1,52 @@
+name: IGE P9.1F2 genuine 2019 original valley mountain station-pair stratification
+
+on:
+  push:
+    branches: ['research/ige-p9-1f-physically-conditioned-terrain-inversion-20261017']
+    paths:
+      - 'research/ige_cmip6/p9_1f2_original_2019_observed_valley_summit_pairs.py'
+      - 'research/ige_cmip6/test_p9_1f2_original_2019_observed_valley_summit_pairs.py'
+      - '.github/workflows/ige-p9-1f2-observed-station-stratification.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  original_GeoSphere_2019_four_spatial_station_pairs:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Seven observed source geospatial and time semantics contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1f2_original_2019_observed_valley_summit_pairs.py' -v
+      - name: Four original upper-lower geographically separated GeoSphere QC thermometry pairs and 3 seasons
+        run: |
+          python research/ige_cmip6/p9_1f2_original_2019_observed_valley_summit_pairs.py --out outputs/p9_1f2
+      - name: Original 2019 measured upper-minus-lower is spatially separated and NOT collocated inversion
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('outputs/p9_1f2/p9_1f2_2019_independent_original_station_pair_stratification.json').read_text())
+          assert d['n_frozen_station_pairs']==4
+          assert d['n_original_2019_pair_seasons_expected']==12
+          assert d['n_qualified_winter_station_pairs']>=2
+          assert d['original_station_meta_sha256']
+          assert d['station_upper_minus_lower_is_spatial_gradient_not_local_vertical_profile'] is True
+          assert d['relevant_to_source_weather_cold_pool_diagnostics_not_temperature_model_fitting'] is True
+          assert d['local_inversion_physical_model_fully_qualified'] is False
+          assert d['production_epw_ready'] is False
+          print('Original geographically separated station temperature stratification measured; true co-located inversion NOT established')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ige-p9-1f2-original-2019-station-pair-vertical-stratification
+          path: outputs/p9_1f2/p9_1f2_2019_independent_original_station_pair_stratification.json
+          retention-days: 30
+          if-no-files-found: warn
