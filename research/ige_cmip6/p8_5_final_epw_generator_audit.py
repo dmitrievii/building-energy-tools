@@ -174,8 +174,12 @@ def validate_manifests(paths=None):
     no_convergence=sum(not truth(r["optimizer_converged_by_delta"]) for r in members)
     if no_convergence!=int(pub["optimizer_runs_without_strict_convergence"]):
         raise ValueError("P8F_OPTIMIZER_NONCONVERGENCE_HIDDEN")
-    if sat!=14536:
-        raise ValueError("P8F_RH_SATURATION_TOTAL_MISMATCH")
+    # Prior P7C4 and P7C5 count differently at saturation:
+    # P7C4 np.isclose(f_rh,100,atol=1e-5) (default rtol 1e-5);
+    # P7C5 counts rh>=99.995. Preserve original published totals
+    # without silently rewriting either original research artifact.
+    if sat!=14520:
+        raise ValueError("P8F_P7C4_RH_SATURATION_AGGREGATE_DRIFT")
     if any(int(r["optim_iterations_accepted"])!=OPT_MAX_ITER for r in members):
         raise ValueError("P8F_EXPECTED_OPTIMIZATION_TRUNCATION_UNRECORDED")
     if any(float(r["optimizer_objective_after"])>=float(r["optimizer_objective_before"])
@@ -205,7 +209,10 @@ def validate_manifests(paths=None):
         "current_EnergyPlus_28_licensed_member_simulations_executed":False,
         "native_original_GCM_40_zip_reacquired_this_audit":False,
         "original_climate_daily_20year_windows_previously_audited":40,
-        "RH_saturation_hours_28_members":sat,
+        "P7C4_RH_near_100_hours_28_members_np_isclose":sat,
+        "P7C5_RH_ge99p995_hours_28_members":14536,
+        "P7C4_vs_P7C5_RH_saturation_count_difference":14536-sat,
+        "P7C4_vs_P7C5_RH_count_definitions_differ":True,
         "RH_source_original_8760_saturation_hours_from_previous_audit":229,
         "optimizer_not_strictly_converged_members":no_convergence,
         "optimizer_max_iterations_each":OPT_MAX_ITER,
