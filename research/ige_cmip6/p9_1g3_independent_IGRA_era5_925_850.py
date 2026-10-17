@@ -272,6 +272,24 @@ def run(out):
         "MAE_ERA5_850hPa_T_against_IGRA_C":MAE("original_IGRA_T850_C","original_ERA5_T850_C"),
         "MAE_ERA5_vs_IGRA_T_gradient_K_km":MAE("observed_925_to_850_K_km","model_925_to_850_K_km"),
         "MAE_ERA5_vs_IGRA_theta_gradient_K_km":MAE("observed_theta_gradient_K_km","model_theta_gradient_K_km"),
+        "n_original_IGRA_actual_warm_upper_than_lower_free_air":sum(
+            x["observed_warm_above_cold"] for x in paired),
+        "n_model_ERA5_warm_upper_than_lower_free_air":sum(
+            x["model_warm_above_cold"] for x in paired),
+        "n_original_IGRA_theta_stable_above5_K_km":sum(
+            x["observed_theta_stable"] for x in paired),
+        "n_model_ERA5_theta_stable_above5_K_km":sum(
+            x["model_theta_stable"] for x in paired),
+        "theta_stability_threshold_confusion_counts":{
+            "both_IGRA_and_ERA5_stable":sum(
+                x["observed_theta_stable"] and x["model_theta_stable"] for x in paired),
+            "IGRA_only_stable":sum(
+                x["observed_theta_stable"] and not x["model_theta_stable"] for x in paired),
+            "ERA5_only_stable":sum(
+                not x["observed_theta_stable"] and x["model_theta_stable"] for x in paired),
+            "neither_stable":sum(
+                not x["observed_theta_stable"] and not x["model_theta_stable"] for x in paired),
+        },
         "ERA5_vs_IGRA_temperature_gradient_sign_agreement_fraction":
             sum(x["observed_warm_above_cold"]==x["model_warm_above_cold"] for x in paired)/len(paired),
         "ERA5_vs_IGRA_theta_above5_threshold_agreement_fraction":
