@@ -1,0 +1,56 @@
+name: IGE P9.1D native ERA5 orography and independent DEM qualification
+
+on:
+  push:
+    branches: ['research/ige-p9-1d-native-orography-dem-20261017']
+    paths:
+      - 'research/ige_cmip6/p9_1d_native_orography_dem.py'
+      - 'research/ige_cmip6/test_p9_1d_native_orography_dem.py'
+      - 'research/ige_cmip6/p9_1d_independent_station_correction.py'
+      - 'research/ige_cmip6/test_p9_1d_independent_station_correction.py'
+      - '.github/workflows/ige-p9-1d-orography-dem.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native_geopotential_original_source_and_independent_dem:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install research-only ARCO Google native ERA5 and numerical packages
+        run: |
+          python -m pip install 'numpy>=1.26,<3' 'xarray>=2024.6,<2027' 'zarr>=2.18,<3' 'gcsfs>=2024.6,<2027'
+      - name: Independent physical native grid and source semantics regressions
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1d_native_orography_dem.py' -v
+      - name: Download native reduced Gaussian ERA5 surface geopotential and original independent SRTM DEM points
+        run: |
+          python research/ige_cmip6/p9_1d_native_orography_dem.py --out outputs/p9_1d_terrain
+      - name: Verify native ORIGINAL GRIB and OpenMeteo height are never silently equated
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('outputs/p9_1d_terrain/p9_1d_original_native_N320_independent_dem.json')
+          a=json.loads(p.read_text())
+          assert a['genuinely_read_original_native_N320_geopotential'] is True
+          assert a['independently_queried_DEM'] is True
+          assert len(a['sites'])==3
+          assert not a['0p25_open_meteo_exact_cell_orography_qualified']
+          assert not a['production_epw_ready']
+          print('N320 original ERA5 geopotential and independent DEM PASS; 0.25 regridding qualification blocked')
+          PY
+      - name: Archive original-source SHA and terrain aggregates, not original grid tiles
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p9-1d-original-era5-native-n320-and-independent-srtm-dem
+          path: outputs/p9_1d_terrain/p9_1d_original_native_N320_independent_dem.json
+          retention-days: 30
+          if-no-files-found: warn
