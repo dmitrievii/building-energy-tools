@@ -1,0 +1,59 @@
+name: IGE P8.4B2 source-only directional suitability and independent joint wind holdout
+
+on:
+  push:
+    branches: ['research/ige-p8-4b2-joint-wind-20261017']
+    paths:
+      - 'research/ige_cmip6/p8_4b2_joint_wind.py'
+      - 'research/ige_cmip6/test_p8_4b2_joint_wind.py'
+      - '.github/workflows/ige-p8-4b2-joint-wind.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  physical_and_independence_contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Scientific dependencies
+        run: python -m pip install 'numpy>=1.26,<3' 'pillow>=10,<13'
+      - name: Registered donor-source independence and coverage contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_4b2_joint_wind.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_4b_full_census_wind.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3d_wind_terrain_donors.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3a_wind_spatial.py' -v
+
+  frozen_original_2024_2025_full_census_holdout:
+    needs: physical_and_independence_contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Scientific runtime
+        run: python -m pip install 'numpy>=1.26,<3' 'pillow>=10,<13'
+      - name: Full catalog original SwissMetNet 2023 donor character and 2024-2025 joint test
+        run: |
+          mkdir -p "$RUNNER_TEMP/ige_p8_4b2_original"
+          python research/ige_cmip6/p8_4b2_joint_wind.py --out "$RUNNER_TEMP/ige_p8_4b2_original"
+      - name: Export only source hashes and model-level/year/site aggregates
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-4b2-original-2023-training-2024-2025-joint-wind-aggregates
+          path: ${{ runner.temp }}/ige_p8_4b2_original/p8_4b2_joint_wind_2024_2025_original_aggregates.json
+          if-no-files-found: warn
+          retention-days: 30
