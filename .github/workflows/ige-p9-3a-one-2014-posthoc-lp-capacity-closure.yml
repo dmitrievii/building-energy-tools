@@ -1,0 +1,57 @@
+name: IGE P9.3A one posthoc fixed-P T-shape LP physical infeasibility source classification
+on:
+  push:
+    branches: ['research/ige-p9-3-physical-pressure-temperature-vapour-20261018']
+    paths:
+      - '.github/workflows/ige-p9-3a-one-2014-posthoc-lp-capacity-closure.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  fixed_original_P_and_native_T_q_source_infeasibility_certificate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 27
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install SciPy HiGHS linprog for convex q_sat upper certificates (no generator fitting)
+        run: python -m pip install 'numpy>=1.26,<3' 'scipy>=1.12,<2'
+      - name: Test LP upper bound math on controlled source-independent profiles
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3a_2014_fixed_pressure_temperature_lp_diagnosis.py' -v
+      - name: Download original registered NASA daily source, same 2014 year after frozen holdout
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          name: ige-p6-CanESM5-historical-1995-2014
+          path: inputs/p93a-posthoc-original
+      - name: Verify unchanged NASA source byte SHA and prepare canonical source
+        run: |
+          python - <<'PY'
+          import hashlib,json,zipfile
+          from pathlib import Path
+          root=Path('inputs/p93a-posthoc-original')
+          need=('joint_daily_raw.csv','source_provenance.json','quality_report.json')
+          if not all((root/f).is_file() for f in need):raise ValueError('P93A_ORIGINAL_SOURCE_MISSING')
+          registered=json.loads(Path('research/ige_cmip6/p7c3_expected_daily_source_shas.json').read_text())['source_sha256']['CanESM5_historical-1995-2014']
+          digest=hashlib.sha256((root/'joint_daily_raw.csv').read_bytes()).hexdigest()
+          if digest!=registered:raise ValueError('P93A_ORIGINAL_NATIVE_SOURCE_SHA_CHANGED')
+          target=Path('inputs/p93a-posthoc-canonical');target.mkdir(parents=True,exist_ok=True)
+          with zipfile.ZipFile(target/'IGE_P7C3_SRC_CanESM5_historical-1995-2014.zip','w',zipfile.ZIP_DEFLATED) as z:
+              for file in sorted(root.iterdir()):
+                  if file.is_file():z.write(file,file.name)
+          print('P93A_ORIGINAL_CANESM5_SHA_PASS',digest,flush=True)
+          PY
+      - name: One posthoc physical impossibility classification over all original donors for 15 frozen blocked 2014 dates
+        run: python -u research/ige_cmip6/p9_3a_2014_fixed_pressure_temperature_lp_diagnosis.py --original-canesm5-registered-zip inputs/p93a-posthoc-canonical/IGE_P7C3_SRC_CanESM5_historical-1995-2014.zip --out outputs/p93a-2014-posthoc
+      - name: Archive source provenance and mathematical diagnostic only, not original daily/hourly values
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p93a-2014-15-source-blocked-days-fixedP-T-saturation-LP-posthoc-certificate
+          path: outputs/p93a-2014-posthoc/*.json
+          if-no-files-found: warn
+          retention-days: 30
