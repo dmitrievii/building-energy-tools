@@ -1,0 +1,59 @@
+name: IGE P8.4B full Swiss station census and independent 2022-2025 wind spatial holdout
+
+on:
+  push:
+    branches: ['research/ige-p8-4b-full-census-20261017']
+    paths:
+      - 'research/ige_cmip6/p8_4b_full_census_wind.py'
+      - 'research/ige_cmip6/test_p8_4b_full_census_wind.py'
+      - '.github/workflows/ige-p8-4b-full-census-wind.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  frozen_selection_and_physics_contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install immutable Python scientific dependencies
+        run: python -m pip install 'numpy>=1.26,<3' 'pillow>=10,<13'
+      - name: Verify donor census, target exclusion, region block and bootstrap contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_4b_full_census_wind.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3d_wind_terrain_donors.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3a_wind_spatial.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_3b_wind_direction_qc.py' -v
+
+  original_159_station_catalog_census_2022_and_2025:
+    needs: frozen_selection_and_physics_contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install scientific runtime
+        run: python -m pip install 'numpy>=1.26,<3' 'pillow>=10,<13'
+      - name: Full MeteoSwiss OGD catalog 2022 and 2025 annual independent wind scores
+        run: |
+          mkdir -p "$RUNNER_TEMP/ige_p8_4b_science"
+          python research/ige_cmip6/p8_4b_full_census_wind.py --out "$RUNNER_TEMP/ige_p8_4b_science"
+      - name: Upload only derived metrics and source SHA-256 (no original observations or DEM tiles)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-4b-original-full-census-2022-2025-aggregates
+          path: ${{ runner.temp }}/ige_p8_4b_science/p8_4b_full_census_2022_2025_aggregates.json
+          if-no-files-found: warn
+          retention-days: 30
