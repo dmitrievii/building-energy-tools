@@ -63,7 +63,8 @@ class TestFinalGeneratorAudit(unittest.TestCase):
 
     def test_preregistered_production_gates_are_red_even_if_manifest_is_green(self):
         out=f.release_gates(f.source_matrix(),f.validate_manifests(),{
-            "all_public_EPWs_structurally_verified":True})
+            "all_public_EPWs_structurally_verified":True,
+            "all_public_EPWs_complete_noncalm_direction":False})
         self.assertTrue(out["research_aggregate_technical_audit_pass"])
         self.assertFalse(out["operational_release_ready"])
         self.assertFalse(out["production_epw_ready"])
