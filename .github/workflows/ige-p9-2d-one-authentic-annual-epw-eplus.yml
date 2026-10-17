@@ -1,0 +1,162 @@
+name: IGE P9.2D one frozen original annual CanESM5 2013 joint EPW CET and actual EnergyPlus
+on:
+  push:
+    branches: ['research/ige-p9-2d-integrated-epw-qualification-20261018']
+    paths:
+      - '.github/workflows/ige-p9-2d-one-authentic-annual-epw-eplus.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  offline_contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: EPW fixed-CET 8760x35 readback and original cross-year boundary contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p9_2d_annual_cet_epw_export.py' -v
+      - name: P9.2C physical donor and bounded humidity contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p9_2c_physical_donor_and_humidity.py' -v
+      - name: P9.2B original daily conservation contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p9_2b_cmip6_daily_joint_regimes.py' -v
+  original_365_day_canesm5_2013_full_annual_weather:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Read frozen immutable NASA original CanESM5 historical P6 source
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          name: ige-p6-CanESM5-historical-1995-2014
+          path: inputs/p9_2d_original_P6
+      - name: Verify registered original NASA P6 daily source SHA and canonical audit ZIP
+        run: |
+          python - <<'PY'
+          import hashlib,json,zipfile
+          from pathlib import Path
+          src=Path("inputs/p9_2d_original_P6")
+          files=("joint_daily_raw.csv","quality_report.json","source_provenance.json")
+          if not all((src/f).exists() for f in files):
+              raise ValueError("P92D_ORIGINAL_GCM_ARCHIVE_INCOMPLETE")
+          sha=hashlib.sha256((src/"joint_daily_raw.csv").read_bytes()).hexdigest()
+          expected=json.loads(Path("research/ige_cmip6/p7c3_expected_daily_source_shas.json").read_text())["source_sha256"]["CanESM5_historical-1995-2014"]
+          if sha!=expected:raise ValueError("P92D_ORIGINAL_GCM_SHA_MISMATCH")
+          out=Path("inputs/p9_2d_original")
+          out.mkdir(parents=True,exist_ok=True)
+          with zipfile.ZipFile(out/"IGE_P7C3_SRC_CanESM5_historical-1995-2014.zip","w",zipfile.ZIP_DEFLATED) as z:
+              for file in sorted(src.iterdir()):
+                  if file.is_file():z.write(file,file.name)
+          print("P92D_ORIGINAL_REGISTERED_NASA_SOURCE_VERIFIED",sha,flush=True)
+          PY
+      - name: Retrieve original full ERA5 hourly 2019+2020 12-field source and reconstruct all 365+boundary CanESM5 native daily constraints
+        run: |
+          python -u research/ige_cmip6/p9_2d_original_canesm5_2013_annual_source_epw_pilot.py \
+             --canonical-original-canesm5-zip inputs/p9_2d_original/IGE_P7C3_SRC_CanESM5_historical-1995-2014.zip \
+             --out outputs/p92d-annual
+      - name: Store true original daily census and genuine research 8760 EPW only when all 366 UTC source days pass
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p92d-graz-2013-original-canesm5-annual-epw-physical-gates
+          path: outputs/p92d-annual/
+          if-no-files-found: warn
+          retention-days: 20
+
+  real_energyplus_26_2_only_if_full_original_research_epw:
+    needs: [original_365_day_canesm5_2013_full_annual_weather,offline_contracts]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 42
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download completed source-stage artifact from this one workflow
+        uses: actions/download-artifact@v4
+        with:
+          name: ige-p92d-graz-2013-original-canesm5-annual-epw-physical-gates
+          path: inputs/p92d-annual
+      - name: Check genuine original source 8760 EPW presence without silently creating missing weather
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("inputs/p92d-annual/p9_2d_annual_original_CanESM5_2013_epw_physics_census.json")
+          o=json.loads(p.read_text())
+          has_epw=bool(o.get("epw_file"))
+          if has_epw!=o["full_original_native_source_daily_hard_conservation_qualified"]:
+              raise ValueError("P92D_SOURCE_HARD_CLOSURE_OR_EPW_DISAGREEMENT")
+          if has_epw:
+              assert (p.parent/o["epw_file"]).is_file()
+              with open("P92D_EPW_PRESENT","w") as f:f.write("TRUE")
+          print("P92D_SOURCE_YEAR_FULL_EPW",has_epw,flush=True)
+          PY
+      - name: Download audited public P7B4 2013 research EPW baseline; not private Meteonorm
+        if: ${{ hashFiles('P92D_EPW_PRESENT') != '' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: ige-p7b4-integrated-2013-canesm5-m2-research-epw
+          repository: dmitrievii/building-energy-tools
+          run-id: 38171672579
+          github-token: ${{ github.token }}
+          path: inputs/p7b4_public
+      - name: Install original verified EnergyPlus 26.2 binary and actual 1ZoneUncontrolled fixture
+        if: ${{ hashFiles('P92D_EPW_PRESENT') != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p tools_cache
+          URL='https://github.com/NatLabRockies/EnergyPlus/releases/download/v26.2.0/EnergyPlus-26.2.0-4bd7a1f26f-Linux-Ubuntu24.04-x86_64.tar.gz'
+          curl --fail --show-error --location --retry 4 --retry-delay 3 -o tools_cache/energyplus.tar.gz "$URL"
+          expected='b848da8236482a2171a67d7eab00c82162105b653ffab3ae3b6c2217c433a8a1'
+          actual=$(sha256sum tools_cache/energyplus.tar.gz | awk '{print $1}')
+          if [[ "$actual" != "$expected" ]]; then exit 1; fi
+          mkdir -p tools_cache/EnergyPlus
+          tar xzf tools_cache/energyplus.tar.gz -C tools_cache/EnergyPlus
+          BIN=$(find -L "$PWD/tools_cache/EnergyPlus" -maxdepth 5 -type f \( -name energyplus -o -name EnergyPlus \) -print -quit)
+          if [[ -z "$BIN" ]]; then exit 1; fi
+          chmod +x "$BIN"
+          "$BIN" --version
+          echo "ENERGYPLUS_BIN=$BIN" >> "$GITHUB_ENV"
+          curl --fail --location --retry 3 -o tools_cache/official_1ZoneUncontrolled.idf \
+            https://raw.githubusercontent.com/NatLabRockies/EnergyPlus/v26.2.0/testfiles/1ZoneUncontrolled.idf
+          python research/ige_cmip6/p7c5_energyplus_benchmark.py build \
+            --official-idf tools_cache/official_1ZoneUncontrolled.idf \
+            --out tools_cache/p92d_one_zone_ideal_loads.idf
+      - name: Real EnergyPlus head-to-head only for complete physically checked source EPW
+        if: ${{ hashFiles('P92D_EPW_PRESENT') != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p inputs/p92d_eplus_comparison
+          cp inputs/p92d-annual/*.epw inputs/p92d_eplus_comparison/
+          cp inputs/p7b4_public/Graz_CanESM5_2013_IGE_P7B4_M2_SOLAR_INTEGRATED_RESEARCH_ONLY.epw inputs/p92d_eplus_comparison/
+          python research/ige_cmip6/p7c5_energyplus_benchmark.py run \
+            --energyplus "$ENERGYPLUS_BIN" --idf tools_cache/p92d_one_zone_ideal_loads.idf \
+            --weather-dir inputs/p92d_eplus_comparison --out outputs/p92d_eplus
+      - name: Unexecuted EnergyPlus is explicitly blocked if source year is incomplete
+        if: ${{ hashFiles('P92D_EPW_PRESENT') == '' }}
+        run: |
+          mkdir -p outputs/p92d_eplus
+          echo '{"p9_2d_real_energyplus_executed":false,"reason":"ORIGINAL_366_NATIVE_DAYS_NOT_ALL_PHYSICALLY_QUALIFIED_OR_NO_8760_EPW","no_proxy_energyplus_results_invented":true,"production_epw_ready":false}' > outputs/p92d_eplus/p92d_energyplus_NOT_EXECUTED_source_blocked.json
+          echo 'P92D_EPLUS_NOT_EXECUTED_REAL_SOURCE_GATE_BLOCKED'
+      - name: Archive real output or honest nonexecution indicator
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p92d-genuine-EnergyPlus-or-explicit-original-annual-source-blocker
+          path: |
+            outputs/p92d_eplus/*.json
+            outputs/p92d_eplus/*.csv
+            outputs/p92d_eplus/**/eplusout.err
+          retention-days: 20
+          if-no-files-found: warn
