@@ -149,7 +149,7 @@ class WindBaselineContracts(unittest.TestCase):
 
     def test_complete_8760_UTC_clock_and_month_balance(self):
         series=sample_8760()
-        r=c.compare_one_state(series,ratios(1.15),"ACCESS-CM2",ens.WINDOWS[0])
+        r=c.compare_one_state(series,ratios(1.5),"ACCESS-CM2",ens.WINDOWS[0])
         self.assertEqual(r["n_identical_original_valid_hour_pairs"],8760)
         self.assertEqual(len(r["monthly"]),12)
         self.assertEqual(len(r["seasons"]),4)
