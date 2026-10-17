@@ -1,0 +1,62 @@
+name: IGE P9.2B single independent original 28-day humidity and solar causal audit
+on:
+  push:
+    branches: ['research/ige-p9-2-joint-hourly-regimes-20261017']
+    paths:
+      - '.github/workflows/ige-p9-2b-once-humidity-solar-cause.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  reconstruct_only_original_frozen_28_day_sources:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download same canonical 2013 P6 original daily archive
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          name: ige-p6-CanESM5-historical-1995-2014
+          path: inputs/p6hist
+      - name: Download same canonical SSP245 2050 P6 original daily archive
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          name: ige-p6-CanESM5-ssp245-2040-2059
+          path: inputs/p6future
+      - name: Authenticate original sources, no source content modification
+        run: |
+          python - <<'PY'
+          import hashlib,json,zipfile
+          from pathlib import Path
+          src=(("historical-1995-2014","p6hist"),("ssp245-2040-2059","p6future"))
+          expected=json.loads(Path('research/ige_cmip6/p7c3_expected_daily_source_shas.json').read_text())["source_sha256"]
+          dest=Path('inputs/p9_2b_original_CMIP6');dest.mkdir(parents=True,exist_ok=True)
+          for name,folder in src:
+              root=Path('inputs')/folder
+              wanted=("joint_daily_raw.csv","source_provenance.json","quality_report.json")
+              if not all((root/k).is_file() for k in wanted):raise ValueError("P92B_SOURCE_INCOMPLETE")
+              blob=(root/"joint_daily_raw.csv").read_bytes()
+              assert hashlib.sha256(blob).hexdigest()==expected["CanESM5_"+name]
+              with zipfile.ZipFile(dest/f'IGE_P7C3_SRC_CanESM5_{name}.zip','w',zipfile.ZIP_DEFLATED) as z:
+                  for f in sorted(root.iterdir()):
+                      if f.is_file():z.write(f,f.name)
+              print("P92B_VERIFIED_ORIGINAL_CMIP6",name,hashlib.sha256(blob).hexdigest(),flush=True)
+          PY
+      - name: One frozen-day cause identification and physical humidity RH feasibility audit; unchanged generator
+        run: python -u research/ige_cmip6/p9_2b_original_source_humidity_solar_cause_audit.py --canonical-archive-dir inputs/p9_2b_original_CMIP6 --out outputs/p92b-diagnostic
+      - name: Save only diagnostic aggregate and blocked day, no original hourly data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p92b-frozen-28-days-causal-RH-solar-source-audit
+          path: outputs/p92b-diagnostic/*.json
+          if-no-files-found: warn
+          retention-days: 30
