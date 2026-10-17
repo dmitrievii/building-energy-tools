@@ -1,0 +1,106 @@
+name: IGE P9.1E ERA5 native-to-regular geophysical mapping and 2021 new-site holdout
+
+on:
+  push:
+    branches: ['research/ige-p9-1e-regular-orography-spatial-generalization-20261017']
+    paths:
+      - 'research/ige_cmip6/p9_1e_regular_grid_orography.py'
+      - 'research/ige_cmip6/p9_1e_2021_new_lowland_station_holdout.py'
+      - 'research/ige_cmip6/test_p9_1e_regular_grid_mapping_holdout.py'
+      - '.github/workflows/ige-p9-1e-regular-orography-spatial.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  exact_grid_and_spatial_physics_contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install 'numpy>=1.26,<3'
+      - name: Fixed exact-coordinate/grid/source/2021 new-site and physical lapse scientific contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1e_regular_grid_mapping_holdout.py' -v
+
+  genuine_regular_025_ARCO_geopotential_source_mapping:
+    needs: exact_grid_and_spatial_physics_contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install ARCO v3 source read runtime + native N320 v2 support
+        run: |
+          python -m pip install 'numpy>=1.26,<3' 'xarray==2025.9.0' 'zarr>=3.1,<4' 'gcsfs>=2025.7,<2027'
+      - name: Real ERA5 ARCO original 0.25 surface geopotential and independent native N320
+        run: |
+          python research/ige_cmip6/p9_1e_regular_grid_orography.py --out outputs/p9_1e_mapping
+      - name: Require real source values and location-not-internal-provider equivalence distinction
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          d=json.loads(Path('outputs/p9_1e_mapping/p9_1e_actual_regular_025_selected_grid_mapping.json').read_text())
+          assert d['n_all_grid_source_points']>=9
+          assert d['actual_original_ERA5_025_geopotential_values_read'] is True
+          assert d['same_selected_025_coordinate_as_source_verified'] is True
+          assert d['exact_provider_internal_OpenMeteo_grid_height_verified'] is False
+          assert d['independent_global_station_weather_skill_validated'] is False
+          assert d['production_epw_ready'] is False
+          print('P9.1E real ARCO regular geopotential from exact Open-Meteo returned grid-center PASS')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ige-p9-1e-original-arco-regular-native-orography-five-global-geometries
+          path: outputs/p9_1e_mapping/p9_1e_actual_regular_025_selected_grid_mapping.json
+          retention-days: 30
+          if-no-files-found: warn
+
+  six_new_lowland_sites_original_2021_station_holdout:
+    needs: genuine_regular_025_ARCO_geopotential_source_mapping
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install 'numpy>=1.26,<3'
+      - uses: actions/download-artifact@v4
+        with:
+          name: ige-p9-1e-original-arco-regular-native-orography-five-global-geometries
+          path: outputs/p9_1e_mapping
+      - name: Actual 2021 winter/summer original GeoSphere QC at six pre-registered NEW lowland targets
+        run: |
+          python research/ige_cmip6/p9_1e_2021_new_lowland_station_holdout.py \
+            --mapping outputs/p9_1e_mapping/p9_1e_actual_regular_025_selected_grid_mapping.json \
+            --out outputs/p9_1e_holdout
+      - name: Scientific QA of all registered independent site-season cases, no target tuning
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          j=json.loads(Path('outputs/p9_1e_holdout/p9_1e_new_lowland_2021_station_holdout.json').read_text())
+          assert j['n_target_geographies']==6
+          assert j['n_original_station_seasons_scored']>=8
+          assert j['n_original_QC_paired_hours']>=8*120
+          assert j['no_target_hourly_data_used_for_spatial_site_selection'] is True
+          assert j['ARCO_OpenMeteo_same_internal_orography_algorithm_confirmed'] is False
+          assert j['separate_independent_extra_Austria_station_skill_qualified'] is False
+          assert j['production_epw_ready'] is False
+          print('P9.1E new source-based 2021 six-target 0.25 versus native physically fixed lapse holdout measured')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ige-p9-1e-six-new-lowland-2021-ERA5-regular-orography-QC-holdout
+          path: outputs/p9_1e_holdout/p9_1e_new_lowland_2021_station_holdout.json
+          retention-days: 30
+          if-no-files-found: warn
