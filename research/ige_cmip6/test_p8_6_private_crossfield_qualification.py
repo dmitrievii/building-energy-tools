@@ -171,6 +171,31 @@ class TestPrivateSourceCrossfield(unittest.TestCase):
         self.assertEqual(p.run_lengths([True,True,False,True])["maximum_consecutive_hours"],2)
         self.assertEqual(p.run_lengths([True]*75)["episodes_ge72h"],1)
 
+    def test_original_calm_promotion_is_physical_blocker(self):
+        b=rows();out=copy.deepcopy(b)
+        b[1][21]="0.4";out[1][21]="0.6"
+        result=p.diagnose(out,b)
+        self.assertFalse(result["critical_physics_pass"])
+        self.assertEqual(result["critical_physics_failures"][
+            "source_calm_direction_promoted_to_noncalm_unqualified"],1)
+
+    def test_change_in_hourly_rain_occurrence_is_blocker(self):
+        b=rows();out=copy.deepcopy(b)
+        out[10][33]="1.1"
+        result=p.diagnose(out,b)
+        self.assertEqual(result["critical_physics_failures"][
+            "historical_rain_event_occurrence_changed"],1)
+
+    def test_exact_28_member_archive_has_no_surplus_or_duplicate(self):
+        with tempfile.TemporaryDirectory() as temp:
+            archive=Path(temp)/"inputs.zip"
+            names={f"real_{i:02d}.epw" for i in range(28)}
+            with zipfile.ZipFile(archive,"w") as z:
+                for n in sorted(names):z.writestr("original/"+n,b"source")
+            self.assertTrue(p.audit_collection(archive,names)["exact_expected_member_EPWs"])
+            with self.assertRaisesRegex(ValueError,"EXACTLY_28_REGISTERED"):
+                p.audit_collection(archive,names-{"real_01.epw"})
+
     def test_public_research_smoke_never_licenses_private_source(self):
         with tempfile.TemporaryDirectory() as temp:
             source=Path(temp)/"synthetic.epw"
