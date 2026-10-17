@@ -54,7 +54,11 @@ def actual_native_geo(sites):
         if "time" in var.dims:var=var.isel(time=0)
         z=np.asarray(var.values,dtype=np.float64)
         if z.ndim!=1 or len(z)<200000 or not np.isfinite(z).all():
-            raise ValueError("P9D_BAD_N320_GEOPOTENTIAL_ARRAY")
+            raise ValueError("P9D_BAD_N320_GEOPOTENTIAL_ARRAY dims="
+                             +str(var.dims)+" shape="+str(z.shape)
+                             +" finite="+str(int(np.isfinite(z).sum()))
+                             +" total="+str(z.size)
+                             +" attrs="+str(dict(var.attrs)))
         if "latitude" not in ds or "longitude" not in ds:
             raise ValueError("P9D_NATIVE_LATLON_NOT_EXPOSED")
         lats=np.asarray(ds["latitude"].values,float)
