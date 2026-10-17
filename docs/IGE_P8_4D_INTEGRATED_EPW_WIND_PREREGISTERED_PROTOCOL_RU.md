@@ -1,0 +1,32 @@
+# IGE P8.4D — Integrated EPW Wind Qualification (preregistered, 2026-10-17)
+
+**Source branch:** P8.4C verified `7400ca38825d6723e4ec2f4057db17682f9b9a59`. No production changes. Wind Closure and P8.4C are frozen; no donor retuning.
+
+## Evidence tiers and data provenance
+
+- **Tier 1 — Structural/physical EPW qualification**: input 8 header+8760 rows+35 fields, strict 365-day/no-DST labels and month alignment, 0–360° meteorological FROM and sentinel 999 handling, nonnegative finite source wind speeds, preserve source missing wind status, wind rose, calm threshold 0.5m/s crossing and new-noncalm inherited calm-angle hazard. Hourly source scalar speed transform exactly 0.001m/s as original P7C.1, 384 registered scalar CMIP6 change signals, 8 GCMs/4 periods.
+- **Tier 2 — Public research EPW fixture**: load actually archived P7B.5 EPW `Graz_CanESM5_2013_IGE_P7B5_WIND_ANALOGUE_RESEARCH_ONLY.epw`, original [P7B.5 run 38174920762](https://github.com/dmitrievii/building-energy-tools/actions/runs/38174920762), derived from preexisting public P7B.4 synthetic solar/thermodynamics; hourly direction is GeoSphere original QC **analogue**, NOT contemporaneously observed with EPW speed. Check original source SHA and P7B.5 published aggregate status, never describe it as genuine site-measured full EPW.
+- **Tier 3 — Authenticated proprietary Meteonorm 8.2**: `Graz-hour_contemporary_seed1.epw` and 28 preexisting P7C.4 EPWs audited locally in P7C.5, but absent from accessible public CI. **Do not reproduce, publish, or pretend to requalify 28 licensed EPWs in this branch.** Supply a guarded separate CLI `--base --future-dir --provenance` for local user-authorized reexecution, requiring registered exact source SHA or explicit provenance. Public CI must say `authentic_meteonorm_executed=false`.
+- **Tier 4 — Real EnergyPlus**: official tagged EnergyPlus v26.2.0 Linux x86-64 release SHA256 `b848da8236482a2171a67d7eab00c82162105b653ffab3ae3b6c2217c433a8a1`. Use official upstream `1ZoneUncontrolled.idf` with existing P7C5 heating/cooling/ideal loads. For wind-sensitive case, replace its existing infiltration coefficient vector from constant `A=1,B=C=D=0` with explicit illustrative `A=0.10,B=0,C=0.20,D=0` for `ZoneInfiltration:DesignFlowRate`. This is a fixed **sensitivity coefficient**, not calibrated real envelope leakage; compare same weather `0.5×/1.0×/1.5×` wind-only counterfactuals with identical nonwind EPW columns. Check explicit hourly `Zone Infiltration Volume Flow Rate` (not just HVAC annual load) from SQL, nonzero wind sensitivity, and EnergyPlus no severe/fatal. Also a fixed-infiltration negative control `A=1,C=0` run two weather files verifies weather perturbation does not spuriously change loads under a wind-independent model. No local opening-angle, AirflowNetwork or wind-pressure coefficient validated.
+- **Natural ventilation**: a separate *explicit research exploratory EnergyPlus* `ZoneVentilation:DesignFlowRate` wind-responsive comparison may be included only with separately correct input syntax and actual output variable; it is NOT equivalent to natural cross ventilation (requires pressure coefficients and airflow network). Do not call the infiltration case "validated natural ventilation." If no correct EPlus case is available, flag `natural_ventilation_simulation_executed=false`.
+
+## Frozen 32-scenario wind qualification rules
+
+- The entire 32-member GCM wind-only portfolio can be constructed from P7B.5 research fixture using the same previously registered monthly factors. Include all eight wind-only models *in the wind research output*; IPSL EPW remains blocked by humidity `huss`, so none of these wind-only derived members is a true future 35-field CMIP6 EPW.
+- EPW field 20 (direction) must retain exact numeric/sentinel status, 21 scales to 0.001m/s; compare all other **34** columns byte-for-byte string-equivalent (including timestamp and header except added provenance allowed in standalone research metadata, not file body).
+- Noncalm direction absent or newly noncalm from unqualified source-calm hour is a **physical exposure blocker**, even if the source stored numeric `dd` when calm. Report counts and threshold-crossings. Preserve 999 for missing, never substitute 0/180.
+- For month `m`, calculated `mean(vfuture,m)` agrees with `mean(vbase,m)*GCM_m` within 0.001m/s on same hours.
+- Aggregate annual speed mean, calm share, high wind share, sectors (16, FROM), calm crossings, sector L1 change, persistence, 4 seasonal comparisons, and source vs derived column SHA. Repeatability / no inconsistent time grids across scenarios.
+- For **scientific wind-only baseline PASS**, all 32 satisfy physics/math/calendar/direction invariance and provenance. For **operational site exposure PASS**, no missing noncalm azimuth, no promoted originally calm direction, and independent native wind pressure/wind rose validation required; a research wind-only PASS does NOT imply operational PASS.
+
+## Real EnergyPlus paired sensitivity gates
+
+- Wind-only perturbation `base*,0.5/1.0/1.5` of public research source speeds; other EPW fields exactly unchanged.
+- Wind-dependent infiltration simulation **must** produce nonzero monotonic annual infiltration actual flow with increased source speeds; use SQLite extracted hourly exact original output `Zone Infiltration Volume Flow Rate` (check named output exists), reference zone heating/cooling energies as exploratory, no severe/fatal logs.
+- Same EPW pairs with constant infiltration `A=1,C=0` are negative controls; heating/cooling expected invariant to wind-only changes **under this sealed model**, modulo numerical tolerance and any preexisting wind-dependent external convection effects. Don't impose strict zero energy delta without checking actual EPlus exterior convection sensitivity.
+- Pinned executable checksum and official model provenance, no use of placeholder Python load proxy as EnergyPlus.
+- **Do not claim** complete 28 licensed-EPW audit/validation, actual future direction, or physical natural-ventilation applicability in public CI. A long running or blocked native EnergyPlus test must remain an explicit `NOT_VALIDATED`, not silently pass.
+
+## Decision
+
+`P8.4D_RESEARCH_WIND_EPW_STRUCTURE` and `P8.4D_ENERGYPLUS_WIND_SENSITIVITY` evaluated independently; `production_epw_ready=false` until approved actual end-to-end licensed EPW and wind-sensitive application checks. Do not merge into main without permission.
