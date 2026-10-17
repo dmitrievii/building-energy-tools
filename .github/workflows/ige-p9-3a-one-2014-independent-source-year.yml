@@ -1,9 +1,6 @@
 name: IGE P9.3A original 2014 unchanged cohort verified canonical weather content not HTTP envelope
+# Research annual physics test complete. Only explicit manual reruns.
 on:
-  push:
-    branches: ['research/ige-p9-3-physical-pressure-temperature-vapour-20261018']
-    paths:
-      - '.github/workflows/ige-p9-3a-one-2014-independent-source-year.yml'
   workflow_dispatch:
 permissions:
   contents: read

@@ -1,9 +1,6 @@
 name: IGE P9.3A one-shot offline joint pressure temperature water-vapour contracts
+# Research annual physics test complete. Only explicit manual reruns.
 on:
-  push:
-    branches: ['research/ige-p9-3-physical-pressure-temperature-vapour-20261018']
-    paths:
-      - '.github/workflows/ige-p9-3a-once-pressure-temperature-water-contracts.yml'
   workflow_dispatch:
 permissions:
   contents: read
