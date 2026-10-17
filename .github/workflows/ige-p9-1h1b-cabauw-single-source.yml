@@ -1,0 +1,32 @@
+name: IGE P9.1H1B single original KNMI Cabauw 2018 source probe
+
+on:
+  push:
+    branches: ['research/ige-p9-1h-near-surface-inversion-20261017']
+    paths:
+      - '.github/workflows/ige-p9-1h1b-cabauw-single-source.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  original_2018_KNMI_manual_QC_LB1_two_months_only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install 'numpy>=1.26,<3' 'xarray>=2025.1,<2027' 'h5netcdf>=1.4,<2'
+      - name: Single original official KNMI LB1 Jan/Jul 2018 source; no 2021; no fallback station or monthly substitution
+        run: python -u research/ige_cmip6/p9_1h1b_KNMI_cabauw_original_2018.py
+      - name: Archive original provenance and variable metadata only, not source sensor values
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p9h1b-cabauw-2018-original-LB1-source-provenance
+          path: outputs/p9h1b/*.json
+          retention-days: 30
+          if-no-files-found: warn
