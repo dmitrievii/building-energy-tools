@@ -1,0 +1,89 @@
+name: IGE P9.1A verified global historical ERA5 source backbone
+
+on:
+  push:
+    branches: ['research/ige-p9-1-global-historical-backbone-20261017']
+    paths:
+      - 'research/ige_cmip6/p9_1a_global_historical_backbone.py'
+      - 'research/ige_cmip6/test_p9_1a_global_historical_backbone.py'
+      - '.github/workflows/ige-p9-1a-global-historical-backbone.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  immutable_ERA5_source_spatial_hourly_contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: UTC source semantics, selected cell, no hidden downscaling, source unit guards
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1a_global_historical_backbone.py' -v
+
+  original_ERA5_five_world_climates_and_leap_year:
+    needs: immutable_ERA5_source_spatial_hourly_contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    env:
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Original provider complete-year 2023 source, five independent locations, source-native without elevation bias correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p outputs/p9_1a_global
+          python research/ige_cmip6/p9_1a_global_historical_backbone.py \
+            --lat 47.0707 --lon 15.4395 --start 2023-01-01 --end 2023-12-31 \
+            --name graz_2023 --out outputs/p9_1a_global
+          python research/ige_cmip6/p9_1a_global_historical_backbone.py \
+            --lat 1.3521 --lon 103.8198 --start 2023-01-01 --end 2023-12-31 \
+            --name singapore_2023 --out outputs/p9_1a_global
+          python research/ige_cmip6/p9_1a_global_historical_backbone.py \
+            --lat -16.5000 --lon -68.1500 --start 2023-01-01 --end 2023-12-31 \
+            --name lapaz_2023 --out outputs/p9_1a_global
+      - name: Reanalysis original source and 2024 leap-year climate pilots
+        shell: bash
+        run: |
+          set -euo pipefail
+          python research/ige_cmip6/p9_1a_global_historical_backbone.py \
+            --lat 64.1466 --lon -21.9426 --start 2023-01-01 --end 2023-12-31 \
+            --name reykjavik_2023 --out outputs/p9_1a_global
+          python research/ige_cmip6/p9_1a_global_historical_backbone.py \
+            --lat 24.7136 --lon 46.6753 --start 2023-01-01 --end 2023-12-31 \
+            --name riyadh_2023 --out outputs/p9_1a_global
+          python research/ige_cmip6/p9_1a_global_historical_backbone.py \
+            --lat 47.0707 --lon 15.4395 --start 2024-01-01 --end 2024-12-31 \
+            --name graz_2024_leap --out outputs/p9_1a_global
+      - name: Reconcile real original reanalysis provider reports and conservative science status
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          files=list(Path('outputs/p9_1a_global').glob('*.json'))
+          assert len(files)==6, (len(files),[x.name for x in files])
+          parsed=[json.loads(p.read_text()) for p in files]
+          assert sum(p['meta']['n_received_hourly_rows'] for p in parsed)==5*8760+8784
+          assert all(p['source_QC_decision']=='P9_1A_SOURCE_QC_PASS' for p in parsed)
+          assert all(p['source_scope']=='OPEN_METEO_DERIVED_ERA5_0p25_DEG_NOT_NATIVE_CDS_ERA5' for p in parsed)
+          assert all(p['meta']['provider_statistical_elevation_downscaling_disabled'] for p in parsed)
+          assert all(not p['target_site_weather_skill_independently_validated'] for p in parsed)
+          assert all(not p['production_epw_ready'] for p in parsed)
+          print('P9.1A six original fixed ERA5 source payloads PASS; no global site skill claims')
+          PY
+      - name: Export only 6 geolocated source checksum/aggregate reports (no hourly original source redistribution)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p9-1a-five-global-ERA5-climates-plus-leap-year-source-audit
+          path: outputs/p9_1a_global/*.json
+          if-no-files-found: warn
+          retention-days: 30
