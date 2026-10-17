@@ -1,4 +1,4 @@
-name: IGE P9.2C original 2025 AT DE CH observations and physically qualified joint weather
+name: IGE P9.2C corrected independent 2025 station source deps and physical weather closure
 on:
   push:
     branches: ['research/ige-p9-2c-physical-donor-holdout-20261018']
@@ -83,6 +83,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Install numpy required by pre-existing MeteoSwiss source metadata module
+        run: python -m pip install 'numpy>=1.26,<3'
       - name: Genuine original station Geosphere DWD MeteoSwiss 2025 vs ERA5 and generated analogues
         run: python -u research/ige_cmip6/p9_2c_original_AT_DE_CH_2025_observation_validation.py --out outputs/p92c-observed
       - name: Archive original-source QC metrics and explicitly blocked station-season-variable cells; no original hourly sensor records
