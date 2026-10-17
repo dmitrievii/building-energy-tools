@@ -1,0 +1,125 @@
+name: IGE P8.5 final independent EPW generator evidence and release audit
+
+on:
+  push:
+    branches: ['research/ige-p8-5-final-epw-generator-audit-20261017']
+    paths:
+      - 'research/ige_cmip6/p8_5_final_epw_generator_audit.py'
+      - 'research/ige_cmip6/test_p8_5_final_epw_generator_audit.py'
+      - '.github/workflows/ige-p8-5-final-generator-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  frozen_climate_generator_provenance_contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install scientific dependencies
+        run: python -m pip install 'numpy>=1.26,<3' 'pillow>=10,<13'
+      - name: Final frozen source/model/humidity/illumination and no-false-release contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_5_final_epw_generator_audit.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7c4_hourly_ensemble.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p7c5b_solar_illuminance.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p8_4d_epw_wind_qualification.py' -v
+      - name: Verify original published source/physico-chemical audit history is not labeled production
+        run: |
+          python - <<'PY'
+          import csv,json
+          from pathlib import Path
+          r=Path('research/ige_cmip6/results')
+          p=json.loads((r/'p7c4_public_aggregated_science_summary.json').read_text())
+          assert p['n_generated_hourly_epws']==28 and p['n_blocked_missing_huss']==4
+          assert p['production_epw_ready'] is False
+          assert p['original_meteonorm_epw_in_public_github'] is False
+          assert p['full_generated_hourly_epw_in_public_github'] is False
+          phot=json.loads((r/'p7c5b_photometric_science_audit.json').read_text())
+          assert phot['n']==28 and phot['solar_luminous_model_independently_validated'] is False
+          print('Prior P7C.4/P7C.5B nonproduction original study provenance remains explicit')
+          PY
+
+  original_public_EPWs_and_cross_model_closure:
+    needs: frozen_climate_generator_provenance_contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Scientific runtime
+        run: python -m pip install 'numpy>=1.26,<3' 'pillow>=10,<13'
+      - name: Retrieve immutable P7B4 ORIGINAL public synthetic baseline, not licensed Meteonorm
+        uses: actions/download-artifact@v4
+        with:
+          name: ige-p7b4-integrated-2013-canesm5-m2-research-epw
+          repository: dmitrievii/building-energy-tools
+          run-id: 38171672579
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: original_public/p7b4
+      - name: Retrieve immutable P7C1 FOUR original research EPWs, not 28 licensed
+        uses: actions/download-artifact@v4
+        with:
+          name: ige-p7c1-canesm5-four-future-epw-morphs-research
+          repository: dmitrievii/building-energy-tools
+          run-id: 38178867655
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: original_public/p7c1
+      - name: Verify official original immutable source and exact prior P7C1 research provenance
+        run: |
+          python - <<'PY'
+          import json,hashlib
+          from pathlib import Path
+          b=Path('original_public/p7b4/Graz_CanESM5_2013_IGE_P7B4_M2_SOLAR_INTEGRATED_RESEARCH_ONLY.epw')
+          h=hashlib.sha256(b.read_bytes()).hexdigest()
+          assert h=='2e45abbcba52c49e51e3811676ba37167bc8700f697e13032ee103ff8f3f7012'
+          q=json.loads(Path('original_public/p7c1/p7c1_source_science_audit.json').read_text())
+          assert q['baseline']['baseline_epw_sha256']==h
+          assert q['baseline_type']=='SYNTHETIC_P7B4_CANESM5_2013_NOT_METEONORM_CONTEMPORARY'
+          assert q['output_file_count']==4 and q['production_epw_ready'] is False
+          assert q['baseline']['baseline_missing_wind_direction_hours']==8760
+          p7c1=list(Path('original_public/p7c1').glob('*.epw'))
+          assert len(p7c1)==4
+          print('P7B4 original SHA + P7C1 synthetic provenance PASS, not licensed Meteonorm')
+          PY
+      - name: Recheck five genuinely archived public EPW byte files and consolidated full generator evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          p7b4='original_public/p7b4/Graz_CanESM5_2013_IGE_P7B4_M2_SOLAR_INTEGRATED_RESEARCH_ONLY.epw'
+          mapfile -t epws < <(find original_public/p7c1 -name '*.epw' -type f | sort)
+          test ${#epws[@]} -eq 4
+          cmd=(python research/ige_cmip6/p8_5_final_epw_generator_audit.py --out outputs/p8_5_final_generator --public-epw "$p7b4")
+          for path in "${epws[@]}"; do cmd+=(--public-epw "$path"); done
+          "${cmd[@]}"
+      - name: Check technical audit PASS and operational release BLOCKED by actual evidence
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          a=json.loads(Path('outputs/p8_5_final_generator/ige_p8_5_final_generator_audit_aggregates.json').read_text())
+          g=a['scientific_and_operational_gate_decisions']
+          assert a['genuinely_reloaded_public_hourly_epws']['public_original_research_epw_count']==5
+          assert g['research_aggregate_technical_audit_pass'] is True
+          assert g['operational_release_ready'] is False
+          assert g['production_epw_ready'] is False and a['production_epw_ready'] is False
+          assert a['published_seven_model_28_epw_source_chain']['original_28_licensed_EPW_bytes_currently_rehashed'] is False
+          assert a['published_seven_model_28_epw_source_chain']['registered_GCM_blocked_members']==4
+          print('P8.5 archival research technical PASS, operational EPW production BLOCKED')
+          PY
+      - name: Archive only scientific aggregate audit, no raw EPW and no licensed originals
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p8-5-final-epw-generator-holistic-research-audit
+          path: outputs/p8_5_final_generator/ige_p8_5_final_generator_audit_aggregates.json
+          retention-days: 45
+          if-no-files-found: warn
