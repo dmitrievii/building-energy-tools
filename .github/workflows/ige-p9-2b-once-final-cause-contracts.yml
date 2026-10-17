@@ -1,9 +1,6 @@
 name: IGE P9.2B one-time physical source-cause diagnostic contracts
+# Archived complete scientific verification. Explicit manual reruns only.
 on:
-  push:
-    branches: ['research/ige-p9-2-joint-hourly-regimes-20261017']
-    paths:
-      - '.github/workflows/ige-p9-2b-once-final-cause-contracts.yml'
   workflow_dispatch:
 permissions:
   contents: read

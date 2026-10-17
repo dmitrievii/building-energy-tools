@@ -1,0 +1,31 @@
+{
+  "phase": "P9_2B_TARGETED_CAUSAL_AUDIT_VERIFIED",
+  "run": 39074556142,
+  "artifact": 12116034257,
+  "verified_original_source_authentic": true,
+  "original_CMIP6_daily_source_hashes": {
+    "historical": "77ec2e5637eb487c3cedde4e0b660b31f8bd2606198e766255d75a985d61dfef",
+    "ssp245_2040_2059": "5cdc6bad425127a8d7a232a2cfd1c649306821f1e0ea8376b90839a8472d97b3"
+  },
+  "registered_days": 28,
+  "unchanged_solver_pass": 27,
+  "unchanged_solver_blocked": 1,
+  "blocked_date": "2013-07-10",
+  "blocked_donor_date": "2019-07-12",
+  "blocked_cause": "NATIVE_HUSS_EXCEEDS_SELECTED_ERA5_DONOR_MORPHED_T_AND_P_QSAT_CAPACITY",
+  "blocked_huss_kgkg": 0.017746828496456146,
+  "mean_qsat_capacity_kgkg": 0.017741544479858564,
+  "q_capacity_excess_g_kg": 0.005284016597582181,
+  "blocked_source_daily_ghi_kwhm2": 6.17273583984375,
+  "frozen_donor_supported_ghi_capacity_kwhm2": 12.47890512030337,
+  "solar_blocked_count": 0,
+  "rh_target_above_exact_KKT_supremum_count": 7,
+  "rh_source_joint_feasible_witness_count": 15,
+  "rh_unclassified_by_bracketing_count": 6,
+  "accepted_source_days_with_abs_hurs_mismatch_over_5pp": 7,
+  "diagnostic_formula": "RH_h = 100*(p_h*q_h/(eps+(1-eps)*q_h))/e_sat(T_h); sum(q_h)=24*huss; 0<=q_h<=q_sat(T_h,p_h)",
+  "no_model_parameter_fitting": true,
+  "no_new_regions_or_stations": true,
+  "not_a_validation_of_independent_observations": true,
+  "production_epw_ready": false
+}
