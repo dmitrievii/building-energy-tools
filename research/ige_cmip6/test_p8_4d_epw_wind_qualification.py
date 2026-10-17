@@ -138,7 +138,7 @@ class P8DWindContracts(unittest.TestCase):
         self.assertLess(r["maximum_monthly_speed_balance_mps"],.001)
         # This test uses original real previously registered ratio values.
         b,_=d.monthly_scalar_wind_morph(headers(),a,"CanESM5","ssp245-2040-2059",ratio)
-        self.assertEqual(a[0][20],"999")
+        self.assertEqual(float(a[0][20]),999.)
         self.assertTrue(r["wind_direction_preserved_exactly"])
         self.assertTrue(r["nonwind_34_epw_fields_preserved_exactly"])
         self.assertEqual(r["model"],"CanESM5")
