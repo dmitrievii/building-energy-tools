@@ -77,7 +77,7 @@ def chord_upper_q_mean(donor,target):
        "native_daily_huss_kgkg":native["huss"],
        "baseline_mean_qsat_kgkg":baseline,
        "LP_upper_mean_qsat_kgkg":lp_upper,
-       "huss_exceeds_proved_LP_temperature_pressure_capacity":native["huss"]>lp_upper+TOL,
+       "huss_exceeds_proved_LP_temperature_pressure_capacity":bool(native["huss"]>float(lp_upper)+TOL),
        "LP_upper_deficit_g_kg":(native["huss"]-lp_upper)*1000,
        "assumed_original_hourly_P_is_fixed":True,
        "T_hourly_native_min_mean_max_and_2C_bound_fixed":True}
@@ -118,6 +118,8 @@ def run(gcm_source,out):
                          for x in certificates)
         n_notest=sum(x["status"]!="CERTIFIED_UPPER_BOUND_UNDER_FIXED_DONOR_PRESSURE"
                      for x in certificates)
+        if n_cert+n_unresolved+n_notest!=len(eligible):
+            raise ValueError("P93A_LP_CLASSIFICATION_NOT_EXHAUSTIVE_SOURCE_DONORS")
         m={"date":d,"original_native_huss_kgkg":float(day["huss"]),
            "n_native_monthly_same_wet_dry_donors":len(eligible),
            "n_donors_proved_upper_bound_insufficient":n_cert,

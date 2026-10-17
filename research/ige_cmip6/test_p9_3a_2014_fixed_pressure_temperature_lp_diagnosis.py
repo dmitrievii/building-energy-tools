@@ -11,8 +11,10 @@ class P93ACapacityLP(unittest.TestCase):
  def test_source_q_above_even_LP_upper_is_certifiably_impossible_within_bounds(self):
   t=target();t["huss"]=.08
   got=chord_upper_q_mean(donor(),t)
+  self.assertIs(type(got["huss_exceeds_proved_LP_temperature_pressure_capacity"]),bool)
   self.assertTrue(got["huss_exceeds_proved_LP_temperature_pressure_capacity"])
  def test_original_synthetic_target_q_feasible_stays_not_proved_impossible(self):
   got=chord_upper_q_mean(donor(),target())
+  self.assertIs(type(got["huss_exceeds_proved_LP_temperature_pressure_capacity"]),bool)
   self.assertFalse(got["huss_exceeds_proved_LP_temperature_pressure_capacity"])
 if __name__=="__main__":unittest.main()

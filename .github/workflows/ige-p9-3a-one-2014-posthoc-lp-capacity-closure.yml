@@ -1,4 +1,4 @@
-name: IGE P9.3A one posthoc fixed-P T-shape LP physical infeasibility source classification
+name: IGE P9.3A corrected original source LP certificate exhaustive donor classification
 on:
   push:
     branches: ['research/ige-p9-3-physical-pressure-temperature-vapour-20261018']
