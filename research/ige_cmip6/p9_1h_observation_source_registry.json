@@ -1,0 +1,84 @@
+{
+  "phase": "P9.1H1",
+  "frozen_on_utc_date": "2026-10-17",
+  "qualification": "CANDIDATE_METADATA_ONLY; NO ORIGINAL MEASURED PROFILE FILE AUDITED",
+  "no_model_skill_claim": true,
+  "production_epw_ready": false,
+  "sources": [
+    {
+      "id": "KNMI_CABAUW_LB1",
+      "region": "NL_lowland_grassland",
+      "site": "Cabauw",
+      "provider": "KNMI",
+      "dataset": "cesar_tower_meteo_lb1_t10/v1.3",
+      "source_url": "https://dataplatform.knmi.nl/dataset/cesar-tower-meteo-lb1-t10-v1-3",
+      "nominal_temperature_heights_m_agl": [2, 10, 20, 40, 80, 140, 200],
+      "original_cadence_minutes": 10,
+      "original_format": "NetCDF",
+      "license": "CC-BY-4.0",
+      "original_observation_QC": "provider_manually_validated; actual_month_coverage_and_native_QC_to_be_verified",
+      "access_status": "KNMI_open_data_API_key_needed",
+      "source_original_bytes_verified": false,
+      "role": "primary_flatland_reference",
+      "data_use_warning": "Use LB1 validated, not LC1 gap-filled, unless LC1 is explicitly excluded from observed-skill score."
+    },
+    {
+      "id": "SMEAR_II_HYYTIALA",
+      "region": "FI_boreal_forest",
+      "site": "Hyytiälä",
+      "provider": "University_of_Helsinki",
+      "source_url": "https://smear.avaa.csc.fi/",
+      "api_schema_url": "https://smear-backend.2.rahtiapp.fi/q/openapi",
+      "variable_names_documented": ["T42", "T84", "T168", "T336", "T504", "T672"],
+      "nominal_temperature_heights_m_agl": [4.2, 8.4, 16.8, 33.6, 50.4, 67.2],
+      "original_cadence_minutes": 1,
+      "native_timestamp_semantics": "local_standard_time_UTC_plus_2_no_DST",
+      "native_missing_sentinel": -999,
+      "original_observation_QC": "online_database_quality_updates; QC_tier_to_be_verified",
+      "access_status": "public_api_documented; actual_payload_not_yet_read",
+      "source_original_bytes_verified": false,
+      "role": "primary_forest_stratification",
+      "data_use_warning": "The 4.2 m level lies below canopy at this site. Never treat forest canopy stratification as valley cold-air pooling."
+    },
+    {
+      "id": "ARM_SGP_TWR",
+      "region": "US_continental_plains",
+      "site": "Southern Great Plains Central Facility",
+      "provider": "DOE_ARM",
+      "source_url": "https://www.arm.gov/capabilities/instruments/twr",
+      "catalog_url": "https://catalog.data.gov/dataset/sixty-meter-tower-1-min-average-temp-humidity-vapor-press-at-25-m-height",
+      "nominal_temperature_heights_m_agl": [25, 60],
+      "original_cadence_minutes": 1,
+      "original_observation_QC": "to_be_verified",
+      "access_status": "public_catalog; temporal_availability_native_variables_and_access_not_yet_verified",
+      "source_original_bytes_verified": false,
+      "role": "candidate_continental_holdout"
+    },
+    {
+      "id": "DWD_LINDENBERG_RAO",
+      "region": "DE_lowland",
+      "site": "Lindenberg-Falkenberg",
+      "provider": "DWD_via_UHH_ICDC",
+      "source_url": "https://www.cen.uni-hamburg.de/en/icdc/data/atmosphere/samd-ltl-datasets/samd-lt-rao/sups-rao-mett00-l1-any.html",
+      "native_fields": ["ta", "ta_flag"],
+      "provider_quality_good_flag": 5,
+      "time_coverage_years": [2013, 2014, 2015, 2016, 2017],
+      "original_cadence_minutes": 10,
+      "access_status": "ICDC_access_constraints; NOT_ELIGIBLE_for_2018_or_2021 frozen windows",
+      "source_original_bytes_verified": false,
+      "role": "supplemental_not_strict_holdout"
+    }
+  ],
+  "frozen_windows_utc": {
+    "development": [["2018-01-10","2018-01-16"],["2018-07-10","2018-07-16"]],
+    "untouched_temporal_holdout": [["2021-01-10","2021-01-16"],["2021-07-10","2021-07-16"]]
+  },
+  "policy": {
+    "score_original_sensor_only": true,
+    "no_gapfilled_or_ERA5_assimilated_as_observation": true,
+    "source_qc_missing_unknown_means_BLOCKED": true,
+    "exclude_unsupported_time_windows_without_substitution": true,
+    "no_site_or_date_selection_by_model_error": true,
+    "holdout_blind_until_model_and_thresholds_frozen": true
+  }
+}

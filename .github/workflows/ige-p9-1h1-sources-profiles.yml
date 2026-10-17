@@ -1,0 +1,62 @@
+name: IGE P9.1H1 source registry and canonical near-surface profile QC
+
+on:
+  push:
+    branches: ['research/ige-p9-1h-near-surface-inversion-20261017']
+    paths:
+      - 'docs/IGE_P9_1H_NEAR_SURFACE_INVERSION_CROSSREGIONAL_PREREG_RU.md'
+      - 'research/ige_cmip6/p9_1h*'
+      - '.github/workflows/ige-p9-1h1-sources-profiles.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  frozen_original_source_registry_and_synthetic_contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate that discovery registry has truthful scientific qualification flags
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          x=json.loads(Path('research/ige_cmip6/p9_1h_observation_source_registry.json').read_text())
+          assert x['phase']=='P9.1H1'
+          assert x['no_model_skill_claim'] is True
+          assert x['production_epw_ready'] is False
+          assert len(x['sources'])==4
+          assert all(s['source_original_bytes_verified'] is False for s in x['sources'])
+          assert x['policy']['no_gapfilled_or_ERA5_assimilated_as_observation'] is True
+          assert x['policy']['holdout_blind_until_model_and_thresholds_frozen'] is True
+          print('SOURCE METADATA INVENTORY REGISTERED; ORIGINAL OBSERVATION QUALIFICATION OPEN')
+          PY
+      - name: H1 canonical measured tower profile synchronization / QC scientific contracts (synthetic only)
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1h1_canonical_tower_profiles.py' -v
+
+  external_SmartSMEAR_authentic_API_schema_probe_not_sensor_validation:
+    needs: frozen_original_source_registry_and_synthetic_contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install 'PyYAML>=6.0,<7'
+      - name: Fetch original University of Helsinki SmartSMEAR API OpenAPI document and resolve source schema
+        run: |
+          python -u research/ige_cmip6/p9_1h1_smartsmear_source_schema.py --out outputs/p9h1/smartsmear_schema_audit.json
+      - name: Preserve metadata-only audit; do not archive or synthesize observations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p9h1-SmartSMEAR-real-upstream-API-schema-audit-NOT-sensor-data
+          path: outputs/p9h1/*.json
+          if-no-files-found: warn
+          retention-days: 30
