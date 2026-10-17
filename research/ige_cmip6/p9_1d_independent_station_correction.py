@@ -24,12 +24,12 @@ METHODS=("L0_RAW_ERA5_GRID","P0_PROVIDER_SITE_ELEVATION",
          "L1_ERA5_N320_FIXED_LAPSE_PROXY","L2_BOUNDED_FIXED_LAPSE_PROXY",
          "L3_CONDITIONED_NIGHT_VALLEY_GUARD_PROXY")
 
-def score_pair(times,predictions,observations):
+def score_pair(times,predictions,observations,min_pairs=MIN_QC_HOURS):
     if not times or len(times)!=len(predictions):
         raise ValueError("P9D_TARGET_PREDICTION_HOURLY_SAMPLE_MISMATCH")
     sample=[(float(p),float(observations[t])) for t,p in zip(times,predictions)
             if t in observations and p is not None]
-    if len(sample)<MIN_QC_HOURS:
+    if len(sample)<min_pairs:
         raise ValueError("P9D_INSUFFICIENT_ORIGINAL_QC_OBSERVED_PAIRS")
     differences=[p-o for p,o in sample]
     return {
