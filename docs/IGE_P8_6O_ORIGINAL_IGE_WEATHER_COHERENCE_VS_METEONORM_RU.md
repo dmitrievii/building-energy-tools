@@ -1,5 +1,7 @@
 # IGE P8.6O — Применение P8.6N к оригинальным исследовательским EPW IGE
 
+**Верификация CI:** [GitHub Actions #39041814846](https://github.com/dmitrievii/building-energy-tools/actions/runs/39041814846), вычислительный SHA `d64e259b4127772215b4745fe6b81c6db654e032`: 2/2 jobs SUCCESS, 6/6 new contract tests PASS; [original six-EPW aggregate #12104213077](https://github.com/dmitrievii/building-energy-tools/actions/runs/39041814846/artifacts/12104213077), JSON SHA256 `e0fad804514f4e60792b4b0f66296b9a6634fe4f6a96b268774bf28ad7b5ec48`, ZIP CRC passed. CI original-hourly results independently match local Meteonorm-comparison calculations. Original earlier CI #39041783743 failed one synthetic control-sample test because other same-hour dry dates had zero rather than expected constant; synthetic fixture alone corrected, weather metric unchanged.
+
 **Статус (17.10.2026):** `EARLY_IGE_RESEARCH_WEATHER_COUPLING_WEAK` / `CLOUD_MISSING_BLOCKER` / `P7C5B_28_NOT_VERIFIED` / `PRODUCTION_EPW_READY=false`.
 
 ## Исходные данные и воспроизводимость
@@ -17,11 +19,11 @@
 | Признак | IGE P7B.4 / P7B.5 | IGE P7C.1 четыре будущих сценария | Meteonorm Graz Contemporary (среднее 3 seed) |
 |---|---:|---:|---:|
 | Относительная влажность, п.п. | **+4.0959** | **+3.7580…+4.0805** | **+15.6581** |
-| Абсолютное влагосодержание, г/кг | +0.5065 | +0.5736…+0.7156 | не приводится здесь |
+| Абсолютное влагосодержание, г/кг | +0.5065 | +0.5736…+0.7156 | **+2.1186** |
 | Solar clearness Kt | **−0.03297** | **−0.03318…−0.03298** | **−0.30169** |
 | Доля рассеянного излучения DHI/GHI | **+0.05592** | **+0.05611…+0.05669** | **+0.42216** |
 | Эффективная εsky | **+0.01617** | **+0.01620…+0.01638** | **+0.07900** |
-| Δоблачность | **НЕТ ДАННЫХ** | **НЕТ ДАННЫХ** | +5.05 десятых (среднее Graz P8.6N) |
+| Δоблачность | **НЕТ ДАННЫХ** | **НЕТ ДАННЫХ** | **+4.727** десятых (три Contemporary seed Graz) |
 
 **Знаки физически правдоподобны**, но IGE rain/dry-контрасты RH/KT/diffuse/ε существенно слабее Meteonorm. Эти значения **не** являются accuracy ranking: synthetic research baseline IGE отличается от Meteonorm, GCM-поколения различаются (CMIP6/SSP против CMIP5/RCP), ни тот ни другой генератор не проверен здесь независимыми измерениями.
 
