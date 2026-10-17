@@ -1,4 +1,6 @@
-name: IGE P9.1H4 single original AT DE CH 2022 four-method benchmark
+name: IGE P9.1H4 source-schema-corrected final AT DE CH comparison
+# Corrections: AT source IDs, CH documented hourly decade paths and UTC end-time.
+# One rerun for the same frozen cohort and same untuned model; no new sites or years.
 on:
   push:
     branches: ['research/ige-p9-1h-near-surface-inversion-20261017']
