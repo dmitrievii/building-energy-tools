@@ -7,6 +7,8 @@ on:
       - 'research/ige_cmip6/p9_1e_regular_grid_orography.py'
       - 'research/ige_cmip6/p9_1e_2021_new_lowland_station_holdout.py'
       - 'research/ige_cmip6/test_p9_1e_regular_grid_mapping_holdout.py'
+      - 'research/ige_cmip6/p9_1e2_source_available_2020_geographic_holdout.py'
+      - 'research/ige_cmip6/test_p9_1e2_source_available_2020_holdout.py'
       - '.github/workflows/ige-p9-1e-regular-orography-spatial.yml'
   workflow_dispatch:
 
@@ -24,7 +26,9 @@ jobs:
           python-version: '3.11'
       - run: python -m pip install 'numpy>=1.26,<3'
       - name: Fixed exact-coordinate/grid/source/2021 new-site and physical lapse scientific contracts
-        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1e_regular_grid_mapping_holdout.py' -v
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1e_regular_grid_mapping_holdout.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1e2_source_available_2020_holdout.py' -v
 
   genuine_regular_025_ARCO_geopotential_source_mapping:
     needs: exact_grid_and_spatial_physics_contracts
@@ -81,7 +85,7 @@ jobs:
         run: |
           python research/ige_cmip6/p9_1e_2021_new_lowland_station_holdout.py \
             --mapping outputs/p9_1e_mapping/p9_1e_actual_regular_025_selected_grid_mapping.json \
-            --out outputs/p9_1e_holdout
+            --out outputs/p9_1e_holdout --record-blocked
       - name: Scientific QA of all registered independent site-season cases, no target tuning
         run: |
           python - <<'PY'
@@ -89,18 +93,64 @@ jobs:
           import json
           j=json.loads(Path('outputs/p9_1e_holdout/p9_1e_new_lowland_2021_station_holdout.json').read_text())
           assert j['n_target_geographies']==6
-          assert j['n_original_station_seasons_scored']>=8
-          assert j['n_original_QC_paired_hours']>=8*120
+          assert j['n_original_station_seasons_scored']==2
+          assert j['n_original_QC_paired_hours']==336
+          assert j['original_E1_source_QC_qualification_pass'] is False
+          assert j['initial_E1_frozen_cohort_any_substitution_performed'] is False
           assert j['no_target_hourly_data_used_for_spatial_site_selection'] is True
           assert j['ARCO_OpenMeteo_same_internal_orography_algorithm_confirmed'] is False
           assert j['separate_independent_extra_Austria_station_skill_qualified'] is False
           assert j['production_epw_ready'] is False
-          print('P9.1E new source-based 2021 six-target 0.25 versus native physically fixed lapse holdout measured')
+          print('P9.1E1 ORIGINAL frozen cohort scientifically BLOCKED: 2/12 site seasons observed; no source replacement or false claim')
           PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: ige-p9-1e-six-new-lowland-2021-ERA5-regular-orography-QC-holdout
           path: outputs/p9_1e_holdout/p9_1e_new_lowland_2021_station_holdout.json
+          retention-days: 30
+          if-no-files-found: warn
+
+  posthoc_preregistered_2021_QC_cohort_2020_new_station_holdout:
+    needs: genuine_regular_025_ARCO_geopotential_source_mapping
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install source-matched ARCO regular v3 and native N320 v2
+        run: |
+          python -m pip install 'numpy>=1.26,<3' 'xarray==2025.9.0' 'zarr>=3.1,<4' 'gcsfs>=2025.7,<2027'
+      - name: Freeze alternate stations based on original 2021 source QC availability only then evaluate separate 2020 holdout
+        run: |
+          python research/ige_cmip6/p9_1e2_source_available_2020_geographic_holdout.py --out outputs/p9_1e2
+      - name: Verify exploratory followup never retroactively validates failed original E1
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          f=Path('outputs/p9_1e2/p9_1e2_separate_2020_original_lowland_holdout.json')
+          x=json.loads(f.read_text())
+          assert x['E1_failed_original_holdout_source_completeness_remains_failed'] is True
+          assert x['n_six_geographic_targets']==6
+          assert x['n_2020_real_original_station_seasons_scored']>=8
+          assert x['n_2020_original_QC_paired_hours']>=8*120
+          assert x['station_selection_based_only_on_original_geography_and_2021_QC_availability']
+          assert x['this_followup_exploratory_not_confirmatory_original_E1']
+          assert x['native_vs_regular_exact_ERA5_provider_equivalence_unproven']
+          assert x['global_site_skill_validated'] is False
+          assert x['production_epw_ready'] is False
+          print('P9.1E2 source-availability-biased EXPLORATORY, 2020 original holdout computed; E1 remains BLOCKED')
+          PY
+      - name: Archive QC cohort evidence and 2020 weather errors only, no hourly station or reanalysis records
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p9-1e2-2020-exploratory-new-lowland-ERA5-orography-holdout
+          path: |
+            outputs/p9_1e2/p9_1e2_2021_source_eligibility_pre_holdout.json
+            outputs/p9_1e2/p9_1e2_separate_2020_original_lowland_holdout.json
           retention-days: 30
           if-no-files-found: warn
