@@ -1,0 +1,115 @@
+{
+  "phase": "IGE_P9_2B_AUDITED_ORIGINAL_CMIP6_SOURCE_CLOSURE",
+  "provenance": {
+    "git_run": 39070382922,
+    "job": 117506579016,
+    "artifact": 12114544242,
+    "registered_source_historical_original_daily_sha256": "77ec2e5637eb487c3cedde4e0b660b31f8bd2606198e766255d75a985d61dfef",
+    "registered_source_future_original_daily_sha256": "5cdc6bad425127a8d7a232a2cfd1c649306821f1e0ea8376b90839a8472d97b3"
+  },
+  "registered_original_target_days": 28,
+  "successfully_hard_conserved_days": 27,
+  "physical_source_blocked_days": 1,
+  "rejected_original_day": "2013-07-10",
+  "rejection_code": "P92B_DAILY_TOTAL_EXCEEDS_PHYSICAL_HOURLY_CAPACITY",
+  "cause_solar_or_saturation_not_isolated_by_first_pilot": true,
+  "weighted_mean_abs_hurs_mismatch_pp": 3.3746926491819322,
+  "hard_native_constraints": [
+    "tas_c",
+    "tasmin_c",
+    "tasmax_c",
+    "pr_mm_day",
+    "rsds_kwh_m2_day",
+    "rlds_kwh_m2_day",
+    "sfcWind",
+    "huss"
+  ],
+  "original_scenario_season_results": [
+    {
+      "scenario": "historical",
+      "season": "January",
+      "status": "ALL_SEVEN_ORIGINAL_CMIP6_DAILY_CONSTRAINTS_CONSERVED",
+      "n_conserved": 7,
+      "n_blocked": 0,
+      "soft_HURS_mismatch_mean_pp": 3.385365604135621,
+      "soft_HURS_max_pp": 6.924370979401047,
+      "hard_abs_max": {
+        "tas_c": 8.881784197001252e-16,
+        "tasmin_c": 0,
+        "tasmax_c": 0,
+        "pr_mm_day": 5.551115123125783e-17,
+        "rsds_kwh_m2_day": 0,
+        "rlds_kwh_m2_day": 1.7763568394002505e-15,
+        "sfcWind": 4.440892098500626e-16,
+        "huss": 1.3010426069826053e-18
+      },
+      "blocked_reason_codes": {}
+    },
+    {
+      "scenario": "historical",
+      "season": "July",
+      "status": "PARTIALLY_CONSERVED_PHYSICAL_SOURCE_BLOCKED",
+      "n_conserved": 6,
+      "n_blocked": 1,
+      "soft_HURS_mismatch_mean_pp": 4.811832662681366,
+      "soft_HURS_max_pp": 7.527300856002071,
+      "hard_abs_max": {
+        "tas_c": 0,
+        "tasmin_c": 0,
+        "tasmax_c": 0,
+        "pr_mm_day": 1.7763568394002505e-15,
+        "rsds_kwh_m2_day": 0,
+        "rlds_kwh_m2_day": 3.552713678800501e-15,
+        "sfcWind": 2.220446049250313e-16,
+        "huss": 3.469446951953614e-18
+      },
+      "blocked_reason_codes": {
+        "P92B_DAILY_TOTAL_EXCEEDS_PHYSICAL_HOURLY_CAPACITY": 1
+      }
+    },
+    {
+      "scenario": "ssp245",
+      "season": "January",
+      "status": "ALL_SEVEN_ORIGINAL_CMIP6_DAILY_CONSTRAINTS_CONSERVED",
+      "n_conserved": 7,
+      "n_blocked": 0,
+      "soft_HURS_mismatch_mean_pp": 3.604287574379419,
+      "soft_HURS_max_pp": 10.712212975548795,
+      "hard_abs_max": {
+        "tas_c": 4.440892098500626e-16,
+        "tasmin_c": 0,
+        "tasmax_c": 0,
+        "pr_mm_day": 2.220446049250313e-16,
+        "rsds_kwh_m2_day": 0,
+        "rlds_kwh_m2_day": 2.6645352591003757e-15,
+        "sfcWind": 4.440892098500626e-16,
+        "huss": 8.673617379884035e-19
+      },
+      "blocked_reason_codes": {}
+    },
+    {
+      "scenario": "ssp245",
+      "season": "July",
+      "status": "ALL_SEVEN_ORIGINAL_CMIP6_DAILY_CONSTRAINTS_CONSERVED",
+      "n_conserved": 7,
+      "n_blocked": 0,
+      "soft_HURS_mismatch_mean_pp": 1.9025904717455282,
+      "soft_HURS_max_pp": 3.6025064369287634,
+      "hard_abs_max": {
+        "tas_c": 0,
+        "tasmin_c": 0,
+        "tasmax_c": 0,
+        "pr_mm_day": 1.7763568394002505e-15,
+        "rsds_kwh_m2_day": 8.881784197001252e-16,
+        "rlds_kwh_m2_day": 3.552713678800501e-15,
+        "sfcWind": 0,
+        "huss": 3.469446951953614e-18
+      },
+      "blocked_reason_codes": {}
+    }
+  ],
+  "authentic_P6_CanESM5_daily_provenance": true,
+  "independent_station_climate_skill_validated": false,
+  "production_epw_ready": false,
+  "worldwide_validation_deferred": true
+}

@@ -1,9 +1,6 @@
 name: IGE P9.2B one-time offline daily CMIP6 physics contracts
+# Original one-shot scientific run completed; future reruns require explicit manual dispatch.
 on:
-  push:
-    branches: ['research/ige-p9-2-joint-hourly-regimes-20261017']
-    paths:
-      - '.github/workflows/ige-p9-2b-one-time-physics-contracts.yml'
   workflow_dispatch:
 permissions:
   contents: read
