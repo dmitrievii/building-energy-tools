@@ -60,7 +60,7 @@ def observed_AT():
                "quality_tier":"GeoSphere_original_tl_flag_qualified",
                "qc_histogram":{"accepted":len(values[sid])},
                "observed_original_source_SHA256":digest}
-    return sites,o
+    return {site["id"]:site for site in sites.values()},o
 
 def observed_DE():
     listing=dwd.get_original(dwd.ROOT,maximum=1500000)
@@ -161,48 +161,59 @@ def observed_CH():
     sites=original_swiss_station_metadata(); files=fixed_CH_assets()
     observed={}
     for sid in SITES["CH"]:
-        candidates=files[sid]
-        if len(candidates)!=1:raise ValueError("CH_ORIGINAL_SINGLE_HOURLY_HIST_CSV_UNAVAILABLE_"+
-                                              str(sid)+":"+str(candidates[:3]))
-        raw,sha=swiss.fetch(candidates[0],max_bytes=150*1024*1024)
-        rows,cols=swiss.decode_csv(raw)
-        stampfield=swiss.pick_col(cols,"reference_timestamp","time","timestamp")
-        tempfield=swiss.pick_col(cols,"tre200h0")
-        if not stampfield or not tempfield:
-            raise ValueError("CH_TRE200H0_OR_TIMESTAMPS_NOT_PROVEN_ORIGINAL_"+str(cols[:25]))
-        flagcol=swiss.pick_col(cols,"tre200h0_qc","tre200h0_flag")
-        # MeteoSwiss hourly reference_timestamp is UTC interval END (2018+).
-        # Nominal ERA5 hourly model timestamp is not proof of equivalent averaging.
-        vals={name:{} for name,_,_ in PERIODS}
-        native_flags=Counter()
-        expected={name:set(fixed_times(start)) for name,start,end in PERIODS}
-        idfield=swiss.pick_col(cols,"station_abbr","station")
-        for row in rows:
-            if idfield and (row.get(idfield) or "").strip().upper()!=sid:
-                raise ValueError("CH_HISTORICAL_CSV_FOREIGN_STATION_CODE")
-            try:t=swiss_timestamp(row[stampfield])
-            except (ValueError,TypeError):continue
-            name=next((a for a in expected if t in expected[a]),None)
-            if name is None:continue
-            if t in vals[name]:raise ValueError("CH_ORIGINAL_DUPLICATE_HOUR")
-            native=(row[tempfield] or "").strip()
-            if not native or native in ("-","-9999","NaN"):continue
-            value=float(native)
-            if not math.isfinite(value) or not -90<value<65:continue
-            if flagcol:
-                flag=str(row.get(flagcol,""))
-                native_flags[flag]+=1
-                # No published independent meaning of numeric QC flag -> no auto-accept.
-                if flag not in ("",):continue
-            vals[name][t]=value
-        for name,_,_ in PERIODS:
-            observed[(f"CH_{sid}",name)]={"series":vals[name],
-                "quality_tier":"MeteoSwiss_original_published_OGD_hourly_no_explicit_QC_flag"+
-                               ("_unqualified_flag_semantics" if flagcol else ""),
-                "qc_histogram":{"original_published_rows":len(vals[name]),"native_flags":dict(native_flags)},
-                "reference_timestamp_UTC_is_end_of_observed_hour":True,
-                "model_ERA5_timestamp_represents_instantaneous_nominal_hour":True,
-                "observed_original_source_SHA256":sha}
+        try:
+            candidates=files[sid]
+            if len(candidates)!=1:raise ValueError("CH_ORIGINAL_SINGLE_HOURLY_HIST_CSV_UNAVAILABLE")
+            raw,sha=swiss.fetch(candidates[0],max_bytes=150*1024*1024)
+            rows,cols=swiss.decode_csv(raw)
+            stampfield=swiss.pick_col(cols,"reference_timestamp","time","timestamp")
+            tempfield=swiss.pick_col(cols,"tre200h0")
+            if not stampfield or not tempfield:
+                raise ValueError("CH_TRE200H0_OR_TIMESTAMPS_NOT_PROVEN_ORIGINAL_"+str(cols[:25]))
+            flagcol=swiss.pick_col(cols,"tre200h0_qc","tre200h0_flag")
+            idfield=swiss.pick_col(cols,"station_abbr","station")
+            vals={name:{} for name,_,_ in PERIODS}
+            native_flags=Counter()
+            expected={name:set(fixed_times(start)) for name,start,end in PERIODS}
+            for row in rows:
+                if idfield and (row.get(idfield) or "").strip().upper()!=sid:
+                    raise ValueError("CH_HISTORICAL_CSV_FOREIGN_STATION_CODE")
+                try:t=swiss_timestamp(row[stampfield])
+                except (ValueError,TypeError):continue
+                name=next((a for a in expected if t in expected[a]),None)
+                if name is None:continue
+                if t in vals[name]:raise ValueError("CH_ORIGINAL_DUPLICATE_HOUR")
+                native=(row[tempfield] or "").strip()
+                if not native or native in ("-","-9999","NaN"):continue
+                value=float(native)
+                if not math.isfinite(value) or not -90<value<65:continue
+                if flagcol:
+                    flag=str(row.get(flagcol,""))
+                    native_flags[flag]+=1
+                    # Unknown original QC flag meaning: accept only empty flag.
+                    if flag not in ("",):continue
+                vals[name][t]=value
+            for name,_,_ in PERIODS:
+                observed[(f"CH_{sid}",name)]={"series":vals[name],
+                    "quality_tier":"MeteoSwiss_original_published_OGD_hourly_no_explicit_QC_flag"+
+                                   ("_unqualified_flag_semantics" if flagcol else ""),
+                    "qc_histogram":{"original_published_rows":len(vals[name]),
+                                    "native_flags":dict(native_flags)},
+                    "reference_timestamp_UTC_is_end_of_observed_hour":True,
+                    "model_ERA5_timestamp_represents_instantaneous_nominal_hour":True,
+                    "observed_original_source_SHA256":sha}
+            print("REGIONAL_CH_SOURCE",sid,{"2022_winter":len(vals["winter"]),
+                    "2022_summer":len(vals["summer"])},flush=True)
+        except Exception as e:
+            # Fail closed for this preregistered site, but do not erase valid
+            # original measured source data at other Swiss stations.
+            reason=f"{type(e).__name__}: {e}"[:380]
+            for name,_,_ in PERIODS:
+                observed[(f"CH_{sid}",name)]={"series":{},
+                    "quality_tier":"ORIGINAL_CH_STATION_SOURCE_BLOCKED",
+                    "qc_histogram":{"source_blocked_reason":reason},
+                    "observed_original_source_SHA256":None}
+            print("REGIONAL_CH_SOURCE_BLOCKED",sid,reason,flush=True)
     return {r["id"]:r for r in sites.values()},observed
 
 def site_season_score(obs,times,pred):
@@ -328,7 +339,8 @@ def benchmark(out):
                 if sid not in original_sites or original is None:
                     row["reason"]=report["providers"][country].get("reason","NO_REAL_ORIGINAL_SOURCE")
                 elif len(original["series"])<MIN_QC:
-                    row["reason"]="INSUFFICIENT_ORIGINAL_OBS_96H"
+                    row["reason"]=original.get("qc_histogram",{}).get("source_blocked_reason",
+                        "INSUFFICIENT_ORIGINAL_OBS_96H")
                 elif sid not in terrain_by or sid not in arco_by:
                     row["reason"]="SRTM_OR_ARCO_OROGRAPHY_UNAVAILABLE"
                 else:
