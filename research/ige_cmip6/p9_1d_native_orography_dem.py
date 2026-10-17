@@ -137,6 +137,14 @@ def run(out):
     info=station.extract_metadata(metadata)
     sites=[info[i] for i in station.IDS]
     dem=independent_dem(sites)
+    # Archive valid independent DEM evidence even if independent native ERA5
+    # original source proves unavailable; never fabricate native field values.
+    (out/"p9_1d_independent_original_dem_only.json").write_text(
+        json.dumps({"phase":"P9_1D_INDEPENDENT_DEM_ONLY",
+                    "independent_dem":dem,
+                    "native_N320_original_geopotential_verified":False,
+                    "production_epw_ready":False},
+                   indent=2,ensure_ascii=False)+"\n")
     native=actual_native_geo(sites)
     byid={a["station_id"]:a for a in native["sites"]}
     combined=[]
