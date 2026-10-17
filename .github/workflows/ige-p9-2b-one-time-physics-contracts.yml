@@ -1,0 +1,22 @@
+name: IGE P9.2B one-time offline daily CMIP6 physics contracts
+on:
+  push:
+    branches: ['research/ige-p9-2-joint-hourly-regimes-20261017']
+    paths:
+      - '.github/workflows/ige-p9-2b-one-time-physics-contracts.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  hard_daily_physics_and_source_failclosed:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check CMIP6 hard daily closure and original donor source contracts; offline synthetic fixtures only
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_2b_cmip6_daily_joint_regimes.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_2a_joint_weather_regimes.py' -v
