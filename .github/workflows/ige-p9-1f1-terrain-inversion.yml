@@ -1,0 +1,82 @@
+name: IGE P9.1F1 original terrain cold-air susceptibility and 2019 heldout weather verification
+
+on:
+  push:
+    branches: ['research/ige-p9-1f-physically-conditioned-terrain-inversion-20261017']
+    paths:
+      - 'research/ige_cmip6/p9_1f1_terrain_inversion_2019_holdout.py'
+      - 'research/ige_cmip6/test_p9_1f1_terrain_inversion_2019_holdout.py'
+      - '.github/workflows/ige-p9-1f1-terrain-inversion.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  physical_inversion_regime_and_original_source_contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Exact frozen January-July-October 2019 scientific 18-contract test suite
+        run: |
+          python -m pip install 'numpy>=1.26,<3'
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1f1_terrain_inversion_2019_holdout.py' -v
+
+  original_2019_9_station_ERA5_ARCO_SRTM_GeoSphere_holdout:
+    needs: physical_inversion_regime_and_original_source_contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Reproducible ERA5 ARCO regular-grid and SRTM independent terrain runtime
+        run: |
+          python -m pip install 'numpy>=1.26,<3' 'xarray==2025.9.0' 'zarr>=3.1,<4' 'gcsfs>=2025.7,<2027'
+      - name: Original 9-station untouched 2019 × winter/summer/autumn source and physical cold pool variants
+        run: |
+          python research/ige_cmip6/p9_1f1_terrain_inversion_2019_holdout.py --out outputs/p9_1f1_2019
+      - name: Distinguish genuine meteorological station skill from source susceptibility scores
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json,math,statistics
+          folder=Path('outputs/p9_1f1_2019')
+          o=json.loads((folder/'p9_1f1_2019_original_station_physically_conditioned_result.json').read_text())
+          source=json.loads((folder/'p9_1f1_frozen_pre2019_terrain_geopotential.json').read_text())
+          assert o['n_predeclared_original_stations']==9
+          assert o['n_predeclared_station_seasons']==27
+          assert o['n_QC_qualified_station_seasons']>=18
+          assert o['n_original_QC_paired_hours']>=18*120
+          assert len({m['station_id'] for m in o['members']})==9
+          assert len(source['terrain_by_station'])==9
+          assert len(source['real_regular_z_by_station'])==9
+          assert source['physically_conditional_parameters_registered_before_observed_2019']
+          assert o['no_target_station_observation_fitted_to_physical_hyperparameters'] is True
+          assert o['inversion_status']=='SOURCE_CONDITIONED_COLD_POOL_SUSCEPTIBILITY_ONLY_NOT_MEASURED_INVERSION'
+          assert o['google_ARCO_open_meteo_same_regrid_processing_independently_proven'] is False
+          assert o['worldwide_new_region_weather_skill_qualified'] is False
+          assert o['production_epw_ready'] is False
+          eligible=[r for r in o['members']
+                    if r['source_QC_status']=='REAL_OBSERVATIONAL_HOLDOUT_SCORED']
+          assert any(x['station_id']==48 and x['season']=='winter_2019' for x in eligible)
+          for model,original_macro in o['method_2019_equal_station_season_macro_MAE_C'].items():
+              scores=[r['by_method'][model]['MAE_C'] for r in eligible]
+              assert math.isclose(statistics.fmean(scores),original_macro,abs_tol=1e-10)
+              assert all(r['by_method'][model]['n_original_QC_observation_matched']>=120
+                         for r in eligible)
+          print('IGE P9.1F original independent 2019 site-season source physics evaluated; no global EPW release')
+          print(o['method_2019_equal_station_season_macro_MAE_C'])
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ige-p9-1f1-original-2019-terrain-and-conditional-cold-pool-QC
+          path: outputs/p9_1f1_2019/*.json
+          if-no-files-found: warn
+          retention-days: 30
