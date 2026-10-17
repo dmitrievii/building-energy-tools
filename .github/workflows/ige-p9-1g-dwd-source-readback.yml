@@ -1,0 +1,45 @@
+name: IGE P9.1G independent Germany DWD original QC10 source-only readback
+
+on:
+  push:
+    branches: ['research/ige-p9-1g-era5-vertical-stability-dwd-20261017']
+    paths:
+      - 'research/ige_cmip6/p9_1g_original_DWD_source_readback.py'
+      - '.github/workflows/ige-p9-1g-dwd-source-readback.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  independent_original_DWD_Germany_2019_source_readback:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Direct public DWD archived historical originals for four independent German stations
+        run: |
+          python -u research/ige_cmip6/p9_1g_original_DWD_source_readback.py --out outputs/p9_1g_original_DWD
+      - name: Verify all original independent sites and QN9=10 station-observation source availability
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          a=json.loads(Path('outputs/p9_1g_original_DWD/p9_1g_DWD_original_2019_independent_source_readback.json').read_text())
+          assert a['n_original_frozen_German_source_sites']==4
+          assert a['n_frozen_site_seasons']==8
+          assert a['all_stations_available_with_strict_QC10'] is True
+          assert a['n_orig_QC10_hours']>=8*120
+          assert a['production_epw_ready'] is False
+          print('P9.1G independently original DWD source QC10 and site coords PASS')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ige-p9-1g-independent-DWD-Germany-four-sites-2019-original-QC10-source-readback
+          path: outputs/p9_1g_original_DWD/*.json
+          if-no-files-found: warn
+          retention-days: 30
