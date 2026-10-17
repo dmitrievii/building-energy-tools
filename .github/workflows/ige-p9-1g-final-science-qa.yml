@@ -1,0 +1,110 @@
+name: IGE P9.1G final independent original-source scientific closure and bias re-score
+
+on:
+  push:
+    branches: ['research/ige-p9-1g-era5-vertical-stability-dwd-20261017']
+    paths:
+      - '.github/workflows/ige-p9-1g-final-science-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  independently_qualify_DWD_QN3_IGRA_B_and_ERA5_pressure_vertical_science:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run 29 frozen original source and independent pressure-level physical contracts
+        run: |
+          python -m pip install 'numpy>=1.26,<3'
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1g_era5_dwd_pressure_source_contracts.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1g3_independent_original_IGRA_pressure_contracts.py' -v
+      - uses: actions/download-artifact@v4
+        with:
+          repository: dmitrievii/building-energy-tools
+          run-id: 39057001755
+          name: ige-p9-1g2-QN3-Germany-2019-original-ERA5-pressure-subsample
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: original/g2
+      - uses: actions/download-artifact@v4
+        with:
+          repository: dmitrievii/building-energy-tools
+          run-id: 39057001755
+          name: ige-p9-1g2-original-DWD-Germany-QN3-not-QN10-source-proof
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: original/dwd
+      - uses: actions/download-artifact@v4
+        with:
+          repository: dmitrievii/building-energy-tools
+          run-id: 39057499780
+          name: ige-p9-1g3-original-NOAA-IGRA-2019-Lindenberg-ERA5-pressure-level-validation
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: original/g3
+      - name: Re-score all eight true DWD source quality cases, 112 actual ERA5 pressure levels and 28 true original IGRA profiles
+        run: |
+          python - <<'PY'
+          import json,math,statistics
+          from pathlib import Path
+          dwd=json.loads(Path('original/dwd/p9_1g2_original_German_DWD_QN3_2019_source.json').read_text())
+          g2=json.loads(Path('original/g2/p9_1g2_DWD_QN3_2019_ARCO_pressure_exploratory.json').read_text())
+          raw=json.loads(Path('original/g2/p9_1g_germany_original_DWD_hourly_baseline_only.json').read_text())
+          g3=json.loads(Path('original/g3/p9_1g3_independent_original_IGRA_vs_ERA5_pressure_skill.json').read_text())
+          sondes=json.loads(Path('original/g3/p9_1g3_original_IGRA_sounding_source_only.json').read_text())
+          assert dwd['P9G1_original_strict_QN10_remains_BLOCKED'] is True
+          assert dwd['n_original_sites']==4 and dwd['n_site_seasons']==8
+          assert dwd['n_qualified_QN3_hours']==1344
+          assert all(r['original_QN9']=={'3':168} for r in dwd['records'])
+          assert raw['n_original_2019_DWD_site_seasons_QC10_qualified']==8
+          assert raw['source_DWD_QN_level_G2_auto_checked_not_fully_completed'] is True
+          assert g2['P9G2_exploratory_DWD_QN3_automatically_checked_not_QN10_fully_complete'] is True
+          assert g2['P9G1_QN10_strict_source_qualification_stays_blocked_in_G2'] is True
+          assert g2['original_DWD_source_quality_QN_levels']==[3]
+          assert g2['n_full_hour_DWD_QC10_qualified_seasons']==8
+          assert g2['n_original_DWD_qual_hour_pairs']==1344
+          assert g2['n_ERA5_pressure_original_2019_source_times']==112
+          assert g2['n_ERA5_pressure_original_above_grid_profiles']==112
+          assert g2['n_source_free_air_T_warm_over_cold_profiles']==6
+          assert g2['n_source_theta_stability_guard_hours']==1
+          assert all(not m['n_source_T_vertical_inversion_guard_hours'] for m in g2['members'])
+          for method,report in g2['full_hour_regional_macro_MAE_C'].items():
+              scores=[r['full_168h_original_DWD_QC_baseline_metrics'][method]['MAE_C']
+                      for r in g2['members']]
+              assert math.isclose(statistics.fmean(scores),report,abs_tol=1e-10)
+          for method,report in g2['pressure_subsample_regional_macro_MAE_C'].items():
+              scores=[r['pressure_SUBSAMPLE_14h_original_DWD_QC_metrics'][method]['MAE_C']
+                      for r in g2['members']]
+              assert math.isclose(statistics.fmean(scores),report,abs_tol=1e-10)
+          assert g2['insufficient_pressure_subsample_to_calibrate_or_qualify_hourly_inversion_model'] is True
+          assert not g2['global_arbitrary_location_weather_skill_qualified']
+          assert not g2['production_epw_ready']
+          assert g3['n_predeclared_2019_00_12UTC_slots']==28
+          assert g3['n_paired_true_original_IGRA_and_ARCO_soundings']==28
+          assert sondes['source_original_IGRA_925_850']['original_IGRA_T925_T850_QA_flags']=={'B':56}
+          assert g3['source_IGRA']['source_zip_sha256']
+          assert g3['n_original_IGRA_actual_warm_upper_than_lower_free_air']==1
+          assert g3['n_model_ERA5_warm_upper_than_lower_free_air']==1
+          assert g3['n_original_IGRA_theta_stable_above5_K_km']==12
+          assert g3['n_model_ERA5_theta_stable_above5_K_km']==11
+          confusion=g3['theta_stability_threshold_confusion_counts']
+          assert confusion=={
+              'both_IGRA_and_ERA5_stable':9,'IGRA_only_stable':3,
+              'ERA5_only_stable':2,'neither_stable':14}
+          assert math.isclose(g3['ERA5_vs_IGRA_theta_above5_threshold_agreement_fraction'],23/28)
+          for metric in ['MAE_ERA5_925hPa_T_against_IGRA_C',
+                         'MAE_ERA5_850hPa_T_against_IGRA_C',
+                         'MAE_ERA5_vs_IGRA_T_gradient_K_km',
+                         'MAE_ERA5_vs_IGRA_theta_gradient_K_km']:
+              assert 0<=g3[metric]<20 and math.isfinite(g3[metric])
+          assert g3['independent_IGRA_did_not_fit_ERA5_pressure_or_site_temperature'] is True
+          assert g3['radiosonde_nominal_UTC_vs_actual_launch_and_level_time_not_harmonized']
+          assert g3['this_is_free_air_vertical_skill_not_surface_cold_air_pool_validation']
+          assert g3['production_epw_ready'] is False
+          print('IGE P9.1G scientific QC PASS: 29 model contracts, 1344 real DWD QN3 source hours, 112 genuine ERA5 profiles and 28 independent IGRA B radiosondes')
+          print('IMPORTANT original QN10 gate remains BLOCKED; pressure guard switches only one 00/12UTC sample, not production ready')
+          PY
