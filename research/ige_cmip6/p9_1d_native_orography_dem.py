@@ -41,7 +41,7 @@ def actual_native_geo(sites):
     mapper=gcsfs.GCSFileSystem(token="anon").get_mapper(NATIVE)
     ds=xr.open_zarr(mapper,consolidated=None,chunks=None)
     try:
-        candidates=[name for name in ("geopotential","geopotential_at_surface")
+        candidates=[name for name in ("geopotential","geopotential_at_surface","z")
                     if name in ds.data_vars and "values" in ds[name].dims
                     and len(ds[name].dims)<=2]
         if len(candidates)!=1:
