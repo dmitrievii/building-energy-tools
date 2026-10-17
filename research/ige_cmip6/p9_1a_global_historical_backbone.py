@@ -17,6 +17,7 @@ import hashlib
 import json
 import math
 import statistics
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -90,18 +91,31 @@ def get_original_source(url,timeout=60):
     if (parsed.scheme!="https" or parsed.hostname!="archive-api.open-meteo.com"
             or parsed.path!="/v1/archive" or parsed.port is not None):
         raise ValueError("P9_1_SOURCE_HOST_NOT_ALLOWLISTED")
-    with _no_redirect_opener().open(
-        urllib.request.Request(url,headers={
-            "User-Agent":"IGE-independent-P9.1A-research/0.1",
-            "Accept":"application/json",
-        }),timeout=timeout) as fp:
-        size=fp.headers.get("Content-Length")
-        if size and int(size)>LIMIT_BYTES:
-            raise ValueError("P9_1_SOURCE_RESPONSE_TOO_LARGE")
-        data=fp.read(LIMIT_BYTES+1)
-        if len(data)>LIMIT_BYTES:
-            raise ValueError("P9_1_SOURCE_RESPONSE_TOO_LARGE")
-    return data
+    request=urllib.request.Request(url,headers={
+        "User-Agent":"IGE-independent-P9.1A-research/0.1",
+        "Accept":"application/json",
+    })
+    for attempt in range(4):
+        try:
+            with _no_redirect_opener().open(request,timeout=timeout) as fp:
+                size=fp.headers.get("Content-Length")
+                if size and int(size)>LIMIT_BYTES:
+                    raise ValueError("P9_1_SOURCE_RESPONSE_TOO_LARGE")
+                data=fp.read(LIMIT_BYTES+1)
+                if len(data)>LIMIT_BYTES:
+                    raise ValueError("P9_1_SOURCE_RESPONSE_TOO_LARGE")
+            return data
+        except urllib.error.HTTPError as exc:
+            # Never turn missing/unauthorized science into silent fallback.
+            if exc.code not in (429,500,502,503,504) or attempt==3:
+                raise
+        except (TimeoutError,urllib.error.URLError,ConnectionError):
+            if attempt==3:raise
+        wait=min(8,2**(attempt+1))
+        print(f"P9_1A_TRANSIENT_SOURCE_FETCH_RETRY {attempt+1}/3 wait_s={wait}",
+              flush=True)
+        time.sleep(wait)
+    raise RuntimeError("P9_1_SOURCE_UNAVAILABLE_NO_FALLBACK")
 
 
 def parse_source(original_bytes,latitude,longitude,start,end):
