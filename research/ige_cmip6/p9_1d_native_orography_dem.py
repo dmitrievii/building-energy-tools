@@ -51,14 +51,25 @@ def actual_native_geo(sites):
         unit=var.attrs.get("units","")
         if not is_geopotential_unit(unit):
             raise ValueError("P9D_WRONG_NATIVE_Z_UNIT "+str(unit))
-        if "time" in var.dims:var=var.isel(time=0)
-        z=np.asarray(var.values,dtype=np.float64)
-        if z.ndim!=1 or len(z)<200000 or not np.isfinite(z).all():
-            raise ValueError("P9D_BAD_N320_GEOPOTENTIAL_ARRAY dims="
-                             +str(var.dims)+" shape="+str(z.shape)
-                             +" finite="+str(int(np.isfinite(z).sum()))
-                             +" total="+str(z.size)
-                             +" attrs="+str(dict(var.attrs)))
+        # The earliest first stored time is missing for some ARCO fields;
+        # explicitly inspect two frozen 2022 dates. No interpolation.
+        candidates=[]
+        if "time" in var.dims:
+            for when in ("2022-01-10T00:00:00","2022-07-10T00:00:00"):
+                sample=var.sel(time=np.datetime64(when))
+                candidate=np.asarray(sample.values,dtype=np.float64)
+                candidates.append((when,candidate))
+        else:
+            candidates=[("static",np.asarray(var.values,dtype=np.float64))]
+        valid=[(when,x) for when,x in candidates if
+               x.ndim==1 and len(x)>=200000 and np.isfinite(x).all()]
+        if not valid:
+            raise ValueError("P9D_NATIVE_N320_SURFACE_Z_UNAVAILABLE_AT_FIXED_TIMES "+
+                             str([(t,x.shape,int(np.isfinite(x).sum()))
+                                  for t,x in candidates]))
+        if len(valid)>1 and not np.allclose(valid[0][1],valid[1][1],atol=1e-6,rtol=0):
+            raise ValueError("P9D_N320_GEOPOTENTIAL_IS_NOT_STATIC_BETWEEN_SEASONS")
+        sample_time,z=valid[0]
         if "latitude" not in ds or "longitude" not in ds:
             raise ValueError("P9D_NATIVE_LATLON_NOT_EXPOSED")
         lats=np.asarray(ds["latitude"].values,float)
@@ -78,6 +89,8 @@ def actual_native_geo(sites):
         return {"source_uri":NATIVE,
                 "native_N320_surface_geopotential_field":name,
                 "actual_source_z_units":unit,"native_gaussian_grid_size":len(z),
+                "native_N320_source_sample_time":sample_time,
+                "native_N320_valid_sample_count":len(valid),
                 "native_N320_array_values_sha256":hashlib.sha256(
                     z.astype("<f8").tobytes()).hexdigest(),
                 "original_ECMWF_CDS_GRIB_file_bytes_verifed":False,
