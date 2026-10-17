@@ -81,7 +81,7 @@ def parse_original_metadata(original):
     return sites
 
 
-def parse_original_zip(raw,sid):
+def parse_original_zip(raw,sid,accepted_QN_levels=QC_FINAL):
     with zipfile.ZipFile(io.BytesIO(raw)) as z:
         bad=z.testzip()
         if bad:raise ValueError("P9G_DWD_SOURCE_ZIP_CRC_INVALID_"+bad)
@@ -116,7 +116,7 @@ def parse_original_zip(raw,sid):
         qc=int(raw_QC) if raw_QC else -999
         flags[season][timestamp]=qc
         val=float(row.get("TT_TU","-999").strip())
-        if qc not in QC_FINAL or val<=-999 or not -80<val<65:
+        if qc not in accepted_QN_levels or val<=-999 or not -80<val<65:
             continue
         per_year[season][dt.datetime.strptime(timestamp,"%Y%m%d%H")
                          .strftime("%Y-%m-%dT%H:%M")]=val
@@ -132,7 +132,9 @@ def parse_original_zip(raw,sid):
     }
 
 
-def retrieve_all():
+def retrieve_all(accepted_QN_levels=QC_FINAL):
+    if frozenset(accepted_QN_levels) not in (frozenset((10,)),frozenset((3,))):
+        raise ValueError('P9G_DWD_SOURCE_QN_LEVEL_NOT_PREREGISTERED')
     listing=get_original(ROOT,maximum=1500000)
     metadata=get_original(ROOT+"TU_Stundenwerte_Beschreibung_Stationen.txt",maximum=1200000)
     sites=parse_original_metadata(metadata)
@@ -140,15 +142,18 @@ def retrieve_all():
     source={}
     for sid in STATION_IDS:
         raw=get_original(ROOT+paths[sid])
-        source[sid]=parse_original_zip(raw,sid)
+        source[sid]=parse_original_zip(raw,sid,accepted_QN_levels)
         print("P9G_DWD_ORIGINAL_SOURCE",json.dumps({
             "id":sid,"name":LABELS[sid],"archive":paths[sid],
-            "QC_final_10_hours":source[sid]["QC_accepted_original_source_hours"],
+            "accepted_QN_levels":sorted(accepted_QN_levels),
+            "accepted_QN_source_hours":source[sid]["QC_accepted_original_source_hours"],
             "QN_9_histograms":source[sid]["original_QC_histograms"]}),flush=True)
     return sites,source,{
         "historical_original_directory_SHA256":hashlib.sha256(listing).hexdigest(),
         "original_station_geography_metadata_SHA256":hashlib.sha256(metadata).hexdigest(),
         "historical_2019_ZIP_pinned_ID_archive_paths":paths,
-        "source_DWD_QN_9_acceptance_only_final_QC_10":True,
+        "source_DWD_QN_9_allowed_levels":sorted(accepted_QN_levels),
+        "original_P9G1_QN10_strict_gate_is_never_retroactively_changed":True,
+        "source_DWD_historical_QN3_is_only_automatically_checked":3 in accepted_QN_levels,
         "no_2019_station_temperature_values_are_published":True,
     }
