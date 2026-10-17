@@ -270,6 +270,14 @@ def real_public_epw_probe(files):
     return {
         "public_original_research_epw_count":len(seen),
         "all_public_EPWs_structurally_verified":True,
+        "public_research_EPWs_with_noncalm_direction_absent":sum(
+            x["noncalm_missing_direction_hours"]>0 for x in seen),
+        "public_research_EPWs_with_noncalm_direction_present_all_hours":sum(
+            x["noncalm_missing_direction_hours"]==0 for x in seen),
+        "total_public_research_noncalm_missing_direction_site_hours":sum(
+            x["noncalm_missing_direction_hours"] for x in seen),
+        "all_public_EPWs_complete_noncalm_direction":all(
+            x["noncalm_missing_direction_hours"]==0 for x in seen),
         "not_any_authentic_licensed_original_Meteonorm":True,
         "site_azimuth_missing_cannot_be_imputed":True,
         "members":seen,
@@ -283,6 +291,8 @@ def release_gates(source, manifests,public_probe=None):
         "registered_climate_signal_matrix_pass":source["n_original_GCM_monthly_signals"]==384,
         "source_to_research_member_manifest_bijection_pass":manifests["manifest_consistency_pass"],
         "public_8760_35_EPW_readback_pass":bool(public_probe and public_probe["all_public_EPWs_structurally_verified"]),
+        "all_archived_public_EPWs_noncalm_directions_complete":bool(
+            public_probe and public_probe["all_public_EPWs_complete_noncalm_direction"]),
         "all_expected_32_full_EPW_humidity_members_available":manifests["registered_GCM_blocked_members"]==0,
         "humidity_optimizer_strictly_converged_all_28":manifests["optimizer_not_strictly_converged_members"]==0,
         "humidity_saturation_distribution_independently_qualified":False,
