@@ -39,6 +39,22 @@ def file_sha(data):
     return hashlib.sha256(data).hexdigest()
 
 
+def audit_collection(source,expected):
+    """Required exact EPW basenames, no unregistered scenario files."""
+    src=Path(source)
+    if src.is_dir():
+        actual=[p.name for p in src.glob("*.epw") if p.is_file()]
+    elif src.is_file() and src.suffix.lower()==".zip":
+        with zipfile.ZipFile(src) as z:
+            actual=[Path(i.filename).name for i in z.infolist()
+                    if not i.is_dir() and Path(i.filename).suffix.lower()==".epw"]
+    else:
+        raise ValueError("P8_6_PRIVATE_SOURCE_MISSING_OR_NOT_DIRECTORY_OR_ZIP")
+    if len(actual)!=len(expected) or set(actual)!=set(expected):
+        raise ValueError("P8_6_PRIVATE_EXPECTED_EXACTLY_28_REGISTERED_EPW_MEMBERS")
+    return {"exact_expected_member_EPWs":True,"n_epws":len(actual)}
+
+
 def member_bytes(source,name):
     """Only read user-local bytes; archive paths cannot escape or be ambiguous."""
     source=Path(source)
@@ -262,6 +278,14 @@ def diagnose(rows,reference=None,location=None):
             (float(r[33])>0)==(float(b[33])>0) for b,r in zip(reference,rows))
         count["baseline_calm_promoted_with_inherited_direction"]=sum(
             float(b[21])<CALM_MPS<=float(r[21]) for b,r in zip(reference,rows))
+        if count["baseline_calm_promoted_with_inherited_direction"]:
+            hard["source_calm_direction_promoted_to_noncalm_unqualified"]=(
+                count["baseline_calm_promoted_with_inherited_direction"])
+        count["historical_precipitation_occurrence_changed_hours"]=sum(
+            (float(r[33])>0)!=(float(b[33])>0) for b,r in zip(reference,rows))
+        if count["historical_precipitation_occurrence_changed_hours"]:
+            hard["historical_rain_event_occurrence_changed"]=(
+                count["historical_precipitation_occurrence_changed_hours"])
     bymonth={}
     for m in range(1,13):
         values=month[m]
@@ -333,6 +357,8 @@ def verify_original_bundle(baseline,raw_dir,corrected_dir,out):
         raise ValueError("P8_6_REQUIRED_28_ORIGINAL_AND_28_CORRECTED_SOURCES")
     if {m["EPW_sha256"] for m in original}!={m["source_p7c4_sha256"] for m in corrected}:
         raise ValueError("P8_6_P7C5B_P7C4_SOURCE_SHA_BIJECTION_FAILED")
+    audit_collection(raw_dir,{m["EPW_filename"] for m in original})
+    audit_collection(corrected_dir,{m["filename"] for m in corrected})
     signal=read_registered_ratios()
     base_diag=diagnose(base)
     all_result=[]
