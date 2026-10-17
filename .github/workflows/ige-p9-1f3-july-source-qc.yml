@@ -1,0 +1,52 @@
+name: IGE P9.1F3 original GeoSphere 2019 July source QC failure forensic
+
+on:
+  push:
+    branches: ['research/ige-p9-1f-physically-conditioned-terrain-inversion-20261017']
+    paths:
+      - 'research/ige_cmip6/p9_1f3_2019_july_original_station_source_qc.py'
+      - 'research/ige_cmip6/test_p9_1f3_2019_july_original_station_source_qc.py'
+      - '.github/workflows/ige-p9-1f3-july-source-qc.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  original_2019_missing_source_QC_diagnosis:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install 'numpy>=1.26,<3'
+      - name: Strict original station QC-source six test contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1f3_2019_july_original_station_source_qc.py' -v
+      - name: Exactly nine stations and five original source periods, no climate imputation
+        run: |
+          python research/ige_cmip6/p9_1f3_2019_july_original_station_source_qc.py --out outputs/p9_1f3
+      - name: July 2019 original source gap is forensic, not retrospective correction
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          j=json.loads(Path('outputs/p9_1f3/p9_1f3_original_2019_july_source_QC_forensic.json').read_text())
+          assert len(j['registered_stations'])==9
+          assert len(j['periods'])==5
+          assert j['n_original_ERA5_temperature_prediction_scores_recomputed']==0
+          assert j['original_P9F1_2019_July_QC_qualification_unchanged'] is False
+          assert j['no_override_of_original_QC_flags'] is True
+          assert j['source_report_contains_no_original_hourly_station_temperature_values'] is True
+          assert j['production_epw_ready'] is False
+          print('P9.1F3 source flag forensic original provider-only, no retrospective change')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ige-p9-1f3-original-2019-summer-nine-station-QC-flag-source-forensics
+          path: outputs/p9_1f3/p9_1f3_original_2019_july_source_QC_forensic.json
+          retention-days: 30
+          if-no-files-found: warn
