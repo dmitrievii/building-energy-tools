@@ -25,10 +25,11 @@ jobs:
           python-version: '3.11'
       - name: Install research-only ARCO Google native ERA5 and numerical packages
         run: |
-          python -m pip install 'numpy>=1.26,<3' 'xarray>=2024.6,<2027' 'zarr>=2.18,<3' 'gcsfs>=2024.6,<2027'
+          python -m pip install 'numpy>=1.26,<3' 'xarray==2024.11.0' 'zarr>=2.18,<3' 'gcsfs>=2024.6,<2027'
       - name: Independent physical native grid and source semantics regressions
         run: |
           python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1d_native_orography_dem.py' -v
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1d_independent_station_correction.py' -v
       - name: Download native reduced Gaussian ERA5 surface geopotential and original independent SRTM DEM points
         run: |
           python research/ige_cmip6/p9_1d_native_orography_dem.py --out outputs/p9_1d_terrain
@@ -46,6 +47,34 @@ jobs:
           assert not a['production_epw_ready']
           print('N320 original ERA5 geopotential and independent DEM PASS; 0.25 regridding qualification blocked')
           PY
+      - name: True observed 2022 independent-year spatial physics ablation from native N320 and independent DEM
+        run: |
+          python research/ige_cmip6/p9_1d_independent_station_correction.py \
+            --terrain-json outputs/p9_1d_terrain/p9_1d_original_native_N320_independent_dem.json \
+            --out outputs/p9_1d_terrain
+      - name: Verify 2022 heldout original QC samples, native grid provenance and blocked global release
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('outputs/p9_1d_terrain/p9_1d_2022_native_height_source_conditioned_holdout.json')
+          x=json.loads(p.read_text())
+          assert x['n_site_seasons']==6
+          assert x['n_paired_qualified_hours']>=720
+          assert x['no_target_observation_fitting'] is True
+          assert x['native_0p25_cell_geopotential_height_not_validated'] is True
+          assert x['site_spatial_method_qualified_for_global_production'] is False
+          assert x['production_epw_ready'] is False
+          print('P9.1D 2022 original station holdout PASS: candidates evaluated, independent spatial qualification blocked')
+          PY
+      - name: Archive research-only native-height method holdout, never raw station/ERA5 records
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p9-1d-2022-original-three-station-conditioned-lapse-holdout
+          path: outputs/p9_1d_terrain/p9_1d_2022_native_height_source_conditioned_holdout.json
+          retention-days: 30
+          if-no-files-found: warn
       - name: Archive original-source SHA and terrain aggregates, not original grid tiles
         if: always()
         uses: actions/upload-artifact@v4
