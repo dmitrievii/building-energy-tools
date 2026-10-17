@@ -1,0 +1,13 @@
+# IGE P9.1B — Geographical skill feasibility: independent Austrian GeoSphere station holdouts
+
+**Pre-registered 17 October 2026, before downloading test-period comparison observations.** P9.1A establishes source 12-variable ERA5 availability; P9.1B tests actual **ERA5 grid-cell-to-observed-station** 2m temperature residuals on independent original GeoSphere Austria quality-controlled hourly thermometry, not against model-produced proxies or Meteonorm.
+
+**Frozen stations** (previously registered P8.1D, not selected to optimize P9.1): (30 Graz Universität), (39 Innsbruck), (196 Patscherkofel high mountain). Obtain **native station coordinates and station altitude** independently from GeoSphere `klima-v2-1h/metadata`; verify station IDs. Do not inject observed target hourly values into estimates or choose best model cell by error.
+
+**Two separated seasons**: 2023-01-10..2023-01-16 and 2023-07-10..2023-07-16, **168 UTC hours** each, 3 stations; target observation `tl` °C with provider QC `tl_flag`, only originally documented accepted classes `{10,11,12,20,21,22}`, minimum 120 QC-accepted paired hours per station-season. Source provenance: original GeoSphere URL, timestamp axis/timezone, metadata SHA, original period-response SHA, Open-Meteo model-source response SHA and returned grid center+distance. Do not publish raw station series.
+
+**All stations** evaluated with identical fixed ERA5 Open-Meteo source parameters: `models=era5, elevation=nan, cell_selection=nearest, timezone=GMT`; no independent DEM verified, do NOT apply fixed lapse-rate correction as if it were validated. Source original hourly field and observed `tl` may have different temporal averaging windows: treat MAE as **comparative model/site discrepancy with timestamp caution**, not a definitive interpolation objective until support is reconciled.
+
+**Scoring:** paired UTC MAE, RMSE, bias, n, source cell distance, station elevation, selected source cell coordinates, diurnal hot/cold errors; source completeness, exact UTC timestamps, native observations QC. Check whether Innsbruck and Patscherkofel select the same ERA5 grid cell (independent finding; no preregistered assumption). Only scientifically safe conclusions: **source coverage PASS if UTC/QC enough**, real station mismatch reported; **global site skill remains NOT QUALIFIED** even if small residuals in this 3-station two-week Austrian pilot.
+
+**Hard failure:** missing real station metadata/flag/data, insufficient independently QC-accepted pairs, invalid source schema, time misalignment or source errors. **No tuned parameters, no best-of-many model selection on held-out test.**
