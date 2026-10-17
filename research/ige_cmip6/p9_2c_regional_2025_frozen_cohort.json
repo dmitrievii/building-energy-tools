@@ -1,0 +1,75 @@
+{
+  "phase": "P9.2C_FROZEN_ORIGINAL_STATION_HOLDOUT",
+  "date": "2026-10-18",
+  "regions": [
+    "AT",
+    "DE",
+    "CH"
+  ],
+  "sites": [
+    {
+      "country": "AT",
+      "id": 30,
+      "name": "Graz",
+      "source": "GeoSphere klima-v2-1h"
+    },
+    {
+      "country": "DE",
+      "id": 3730,
+      "name": "Oberstdorf",
+      "source": "DWD CDC hourly TU"
+    },
+    {
+      "country": "CH",
+      "id": "DAV",
+      "name": "Davos",
+      "source": "MeteoSwiss hourly SwissMetNet"
+    }
+  ],
+  "evaluation_UTC_windows": [
+    [
+      "2025-01-10",
+      "2025-01-16"
+    ],
+    [
+      "2025-07-10",
+      "2025-07-16"
+    ]
+  ],
+  "donor_years": [
+    2019,
+    2020
+  ],
+  "comparison_modes": [
+    "ERA5_2025_original_unadjusted",
+    "P9.2A_2019_2020_donor_day_baseline",
+    "P9.2C_physical_donor_conditioned_on_ERA5_2025_daily_reanalysis_constraints"
+  ],
+  "conditional_target_note": "2025 ERA5 daily targets are retrospective reanalysis forcing, not station observations and not independent climate forecasts, not original NASA CMIP6 futures",
+  "hourly_observables": [
+    "T2m_native_QC",
+    "RH2m_native_QC_if_available"
+  ],
+  "other_weather_variables": "NOT_INDEPENDENTLY_VALIDATED_UNLESS_ACTUAL_NATIVE_SOURCE_WITH_QC",
+  "outcome_blind_selection": true,
+  "fixed_seed": 7313,
+  "source_qc_policy": "Exclude missing/flagged per original provider; DWD QN9=3 separately marked lower quality vs QN10; Swiss published OGD historical timestamps UTC end-hour must test both nominal and one-hour shift without selecting best",
+  "scoring": [
+    "matched_QC_hours",
+    "MAE_C_temperature",
+    "RMSE_C_temperature",
+    "bias_C_temperature",
+    "MAE_pp_RH",
+    "RMSE_pp_RH",
+    "bias_pp_RH",
+    "wet_persistence_diagnostic_only_ERA5",
+    "blocked_source_rows",
+    "blocked_generations",
+    "native_daily_constraint_residuals"
+  ],
+  "min_temperature_qc_hours": 96,
+  "min_rh_qc_hours": 96,
+  "seed_policy": "one predefined seed, no reruns for favorable weather skill",
+  "main_merge": false,
+  "worldwide_publication_validation_deferred": true
+}
