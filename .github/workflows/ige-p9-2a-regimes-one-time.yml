@@ -1,0 +1,30 @@
+name: IGE P9.2A single joint weather regime original ERA5 three-country pilot
+on:
+  push:
+    branches: ['research/ige-p9-2-joint-hourly-regimes-20261017']
+    paths:
+      - '.github/workflows/ige-p9-2a-regimes-one-time.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original_era5_2019_2020_training_2022_independent_year:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify physical field gates, original vectors, seeded reproducibility, UTC and no target-year leakage
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p9_2a_joint_weather_regimes.py' -v
+      - name: One genuine-source pilot AT Graz, DE Oberstdorf, CH Davos; ERA5 via Open-Meteo fixed 2019+2020 vs 2022
+        run: python -u research/ige_cmip6/p9_2a_real_era5_at_de_ch_pilot.py --out outputs/p92a
+      - name: Save source SHA and genuine-source aggregated regime metrics, no 12-variable original hourly rows
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p92a-regional-2019-2020-to-2022-original-ERA5-joint-regimes
+          path: outputs/p92a/*.json
+          if-no-files-found: warn
+          retention-days: 30
