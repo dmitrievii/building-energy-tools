@@ -1,17 +1,10 @@
-name: IGE P9.1H23 single physical-candidate contract check
-
+name: IGE P9.1H23 first physical candidate historical contract replay
 on:
-  push:
-    branches: ['research/ige-p9-1h-near-surface-inversion-20261017']
-    paths:
-      - '.github/workflows/ige-p9-1h23-one-time-physics-check.yml'
   workflow_dispatch:
-
 permissions:
   contents: read
-
 jobs:
-  physically_constrained_candidate_contracts:
+  exploratory_frozen_original_model_contracts:
     runs-on: ubuntu-24.04
     timeout-minutes: 8
     steps:
@@ -19,5 +12,4 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: UTC solar geometry, bounded cooling, terrain and missing-source fallback; zero external API calls
-        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1h23_physical_inversion_candidate.py' -v
+      - run: python -m unittest discover -s research/ige_cmip6 -p 'test_p9_1h23_physical_inversion_candidate.py' -v
