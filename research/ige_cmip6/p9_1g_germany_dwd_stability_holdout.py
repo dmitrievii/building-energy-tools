@@ -31,9 +31,12 @@ def scores(real_obs,series,available_timestamps,minimum=1):
             "bias_C":statistics.fmean(diffs)}
 
 
-def run(out):
+def run(out,accepted_QN_levels=dwd.QC_FINAL):
+    if frozenset(accepted_QN_levels) not in (frozenset((3,)),frozenset((10,))):
+        raise ValueError("P9G_UNREGISTERED_ORIGINAL_DWD_QUALITY_LEVEL")
+    G2_SOURCE_QN3=frozenset(accepted_QN_levels)==frozenset((3,))
     folder=Path(out);folder.mkdir(parents=True,exist_ok=True)
-    stations,original_observed,metadata=dwd.retrieve_all()
+    stations,original_observed,metadata=dwd.retrieve_all(accepted_QN_levels)
     sites=[stations[sid] for sid in dwd.STATION_IDS]
     weather={};cells=[];n_original=0
     # Freeze weather grid centers & real z before pressure + observed 2019 scoring.
@@ -134,6 +137,8 @@ def run(out):
               "original_DWD_source_archives_pinned":metadata,
               "source_DWD_hourly_raw_temperature_not_uploaded":True,
               "pressure_level_ERA5_stability_verified_at_this_stage":False,
+              "source_DWD_QN_level_G2_auto_checked_not_fully_completed":G2_SOURCE_QN3,
+              "P9G1_strict_QN10_original_scientific_gate_stays_blocked":G2_SOURCE_QN3,
               "production_epw_ready":False,
               "members":baseline_rows}
     (folder/"p9_1g_germany_original_DWD_hourly_baseline_only.json").write_text(
@@ -232,6 +237,8 @@ def run(out):
     summary={
         "phase":"IGE_P9_1G_ERA5_3D_VERTICAL_STABILITY_GERMANY_DWD_2019_ORIGINAL_HOLDOUT",
         "n_predeclared_new_region_DWD_sites":4,
+        "P9G2_exploratory_DWD_QN3_automatically_checked_not_QN10_fully_complete":G2_SOURCE_QN3,
+        "P9G1_QN10_strict_source_qualification_stays_blocked_in_G2":G2_SOURCE_QN3,
         "n_predeclared_DWD_site_seasons":8,
         "n_full_hour_DWD_QC10_qualified_seasons":len(eligible),
         "n_original_DWD_qual_hour_pairs":sum(
@@ -255,7 +262,9 @@ def run(out):
         "production_epw_ready":False,
         "members":members,
     }
-    (folder/"p9_1g_2019_real_DWD_ERA5_ARCO_vertical_holdout_results.json").write_text(
+    (folder/("p9_1g2_DWD_QN3_2019_ARCO_pressure_exploratory.json"
+             if G2_SOURCE_QN3 else
+             "p9_1g_2019_real_DWD_ERA5_ARCO_vertical_holdout_results.json")).write_text(
         json.dumps(summary,indent=2,ensure_ascii=False)+"\n")
     print("P9G_ORIGINAL_SOURCE_SUMMARY",json.dumps({
         "qualified":len(eligible),"total":8,
@@ -270,4 +279,7 @@ def run(out):
 
 if __name__=="__main__":
     cli=argparse.ArgumentParser();cli.add_argument("--out",required=True)
-    run(cli.parse_args().out)
+    cli.add_argument("--exploratory-DWD-QN3",action="store_true",
+                     help="Separate registered G2 historical auto-checked QN=3, NOT original strict QN10.")
+    args=cli.parse_args()
+    run(args.out,frozenset((3,)) if args.exploratory_DWD_QN3 else dwd.QC_FINAL)
