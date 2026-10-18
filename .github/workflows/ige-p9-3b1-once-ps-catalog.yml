@@ -1,0 +1,30 @@
+name: IGE P9.3B1 one original CanESM5 daily ps exact-source discovery
+on:
+  push:
+    branches: ['research/ige-p9-3b1-canesm5-native-ps-recovery-20261018']
+    paths:
+      - '.github/workflows/ige-p9-3b1-once-ps-catalog.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original_ps_immutable_catalog_identity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check strict original CMIP identity contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3b1_canesm5_ps_discovery.py' -v
+      - name: Probe one original Pangeo CMIP6 ESGF mirror catalog, exact CanESM5 ps day historical r1i1p1f1 gn
+        run: python -u research/ige_cmip6/p9_3b1_canesm5_ps_discovery.py --out outputs/p93b1
+      - name: Archive exact source provenance and catalog SHA, not pressure measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p93b1-original-canesm5-ps-day-source-catalog-frozen
+          path: outputs/p93b1/*.json
+          if-no-files-found: warn
+          retention-days: 30
