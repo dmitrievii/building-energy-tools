@@ -1,4 +1,4 @@
-name: IGE P9.3B1 one original CanESM5 daily ps exact-source discovery
+name: IGE P9.3B1 streaming full original CanESM5 ps source catalog original identity
 on:
   push:
     branches: ['research/ige-p9-3b1-canesm5-native-ps-recovery-20261018']
