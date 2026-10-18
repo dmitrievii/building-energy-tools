@@ -31,35 +31,53 @@ BLOCKED_2014=("2014-01-31","2014-02-09","2014-02-10","2014-04-19","2014-04-20","
 "2014-05-07","2014-05-13","2014-05-15","2014-05-16","2014-06-11","2014-06-12","2014-06-15","2014-12-02","2014-12-16")
 
 def query_esgf():
+    """Check exact day and independent all-frequency ps discovery.
+
+    ESGF indexes use variant_label (sometimes member_id), hence a single
+    overly restrictive member_id-only query can produce a false zero.
+    Exact dataset identity is checked in returned doc, not inferred.
+    """
     results=[]
+    def single(value,desired):
+        if isinstance(value,(list,tuple)):
+            return desired in value
+        return str(value)==desired
     for url in PORTALS:
-        args={**EXACT,"format":"application/solr+json","limit":20,"latest":"true"}
-        requested=url+"?"+urllib.parse.urlencode(args)
-        info={"endpoint":url,"query_identity":EXACT,"query_url":requested}
-        try:
-            req=urllib.request.Request(requested,headers={"User-Agent":"IGE-P9.3B1-Original-CanESM5-ps-audit/1.0"})
-            with urllib.request.urlopen(req,timeout=22) as resp:
-                data=resp.read(3_500_000)
-                if resp.read(1):raise ValueError("P93B1_ESGF_RESULT_TOO_LARGE")
-            raw=json.loads(data)
-            docs=raw.get("response",{}).get("docs",[])
-            qualified=[d for d in docs if (str(d.get("source_id",""))=="CanESM5"
-                and str(d.get("experiment_id",""))=="historical"
-                and str(d.get("table_id",""))=="day"
-                and str(d.get("variable_id",""))=="ps"
-                and (d.get("variant_label") or d.get("member_id"))=="r1i1p1f1"
-                and str(d.get("grid_label",""))=="gn")]
-            info.update({"status":"ESGF_JSON_RESPONSE","raw_response_sha256":hashlib.sha256(data).hexdigest(),
-                "n_total_matches_reported":raw.get("response",{}).get("numFound"),
-                "n_qualified_dataset_docs":len(qualified),
-                "datasets":[{"id":d.get("id"),"dataset_id":d.get("dataset_id"),
-                     "data_node":d.get("data_node"),"version":d.get("version")}
-                    for d in qualified[:15]]})
-        except Exception as exc:
-            info["status"]="ESGF_API_UNAVAILABLE_OR_NONJSON"
-            info["error"]=f"{type(exc).__name__}: {exc}"[:300]
-        print("P93B1_ESGF_PROVIDER_QUERY",json.dumps({k:v for k,v in info.items() if k!="query_identity"}),flush=True)
-        results.append(info)
+        for mode in ("day_variant_label","all_ps_frequencies_variant_label"):
+            args={**EXACT}
+            args.pop("member_id",None)
+            args["variant_label"]="r1i1p1f1"
+            if mode=="all_ps_frequencies_variant_label":
+                args.pop("table_id",None)
+            args.update({"format":"application/solr+json","limit":200,"latest":"true"})
+            requested=url+"?"+urllib.parse.urlencode(args)
+            info={"endpoint":url,"query_mode":mode,"query_url":requested}
+            try:
+                req=urllib.request.Request(requested,headers={"User-Agent":"IGE-P9.3B1-Original-CanESM5-ps-audit/1.1"})
+                with urllib.request.urlopen(req,timeout=25) as resp:
+                    data=resp.read(6_000_000)
+                    if resp.read(1):raise ValueError("P93B1_ESGF_RESULT_TOO_LARGE")
+                raw=json.loads(data)
+                docs=raw.get("response",{}).get("docs",[])
+                qualified=[d for d in docs if single(d.get("source_id",""),"CanESM5")
+                    and single(d.get("experiment_id",""),"historical")
+                    and single(d.get("variable_id",""),"ps")
+                    and (single(d.get("variant_label",""),"r1i1p1f1") or
+                         single(d.get("member_id",""),"r1i1p1f1"))
+                    and single(d.get("grid_label",""),"gn")]
+                info.update({"status":"ESGF_JSON_RESPONSE","raw_response_sha256":hashlib.sha256(data).hexdigest(),
+                    "n_total_matches_reported":raw.get("response",{}).get("numFound"),
+                    "n_qualified_dataset_docs":len(qualified),
+                    "n_qualified_exact_daily":sum(single(d.get("table_id",""),"day") for d in qualified),
+                    "datasets":[{"id":d.get("id"),"dataset_id":d.get("dataset_id"),
+                         "table_id":d.get("table_id"),"data_node":d.get("data_node"),
+                         "version":d.get("version")} for d in qualified[:60]]})
+            except Exception as exc:
+                info["status"]="ESGF_API_UNAVAILABLE_OR_NONJSON"
+                info["error"]=f"{type(exc).__name__}: {exc}"[:300]
+            print("P93B1_ESGF_PROVIDER_QUERY",json.dumps({
+                k:v for k,v in info.items() if k not in ("datasets",)}),flush=True)
+            results.append(info)
     return results
 
 def _native_monthly_pressure():
@@ -187,8 +205,13 @@ def run(out,original_nex_zip):
         print("P93B1_ORIGINAL_MONTHLY_SOURCE_FAILED",result["monthly_source_blocker"],flush=True)
     # Direct ESGF dataset discovery: metadata only, independent of Pangeo.
     qualified=[d for item in result["ESGF_independent_discovery"]
-        for d in item.get("datasets",[])]
+        for d in item.get("datasets",[])
+        if d.get("table_id")=="day"]
     result["native_day_ps_identified_from_original_ESGF"]=bool(qualified)
+    result["ESGF_qualified_other_ps_frequency_candidates"]=[
+        {"endpoint":item["endpoint"],"dataset":d}
+        for item in result["ESGF_independent_discovery"]
+        for d in item.get("datasets",[]) if d.get("table_id")!="day"][:50]
     result["native_day_ps_recovered"]=False # no data read at daily frequency
     (out/"p9_3b1_original_pressure_provenance_and_crossvariable_diagnosis.json").write_text(
         json.dumps(result,ensure_ascii=False,indent=2,allow_nan=False)+"\n")

@@ -1,4 +1,4 @@
-name: IGE P9.3B1 native CanESM5 Amon pressure and independent ESGF day ps audit
+name: IGE P9.3B1 corrected ESGF variant_label day and all-frequency original pressure audit
 on:
   push:
     branches: ['research/ige-p9-3b1-canesm5-native-ps-recovery-20261018']
