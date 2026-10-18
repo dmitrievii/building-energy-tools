@@ -1,0 +1,60 @@
+name: IGE P9.3B1 native CanESM5 Amon pressure and independent ESGF day ps audit
+on:
+  push:
+    branches: ['research/ige-p9-3b1-canesm5-native-ps-recovery-20261018']
+    paths:
+      - '.github/workflows/ige-p9-3b1-once-esgf-and-native-monthly.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  CMIP6_native_pressure_esgf_and_Pangeo_original_model_crossvariable_audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install xarray and original read-only GCS CMIP6 Zarr reader
+        run: python -m pip install 'numpy>=1.26,<3' 'xarray>=2024.2,<2026' 'zarr>=2.16,<3' 'gcsfs>=2024.2,<2026' 'cftime>=1.6,<2' 'dask[array]>=2024.2,<2026'
+      - name: Check native source strict CMIP6 identity contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3b1_esgf_native_monthly_pressure_audit.py' -v
+      - name: Original registered NASA historical 1995–2014 daily source, unmodified
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          name: ige-p6-CanESM5-historical-1995-2014
+          path: inputs/p93b1-NEX
+      - name: Verify original NASA daily immutable CSV SHA and archive P7C3 canonical
+        run: |
+          python - <<'PY'
+          import hashlib,json,zipfile
+          from pathlib import Path
+          root=Path("inputs/p93b1-NEX")
+          needed=("joint_daily_raw.csv","source_provenance.json","quality_report.json")
+          assert all((root/f).is_file() for f in needed)
+          registered=json.loads(Path("research/ige_cmip6/p7c3_expected_daily_source_shas.json").read_text())["source_sha256"]["CanESM5_historical-1995-2014"]
+          sha=hashlib.sha256((root/"joint_daily_raw.csv").read_bytes()).hexdigest()
+          assert sha==registered,"P93B1_NASA_ORIGINAL_DAILY_BYTES_CHANGED"
+          dst=Path("inputs/p93b1-canonical");dst.mkdir(parents=True,exist_ok=True)
+          with zipfile.ZipFile(dst/"IGE_P7C3_SRC_CanESM5_historical-1995-2014.zip","w",zipfile.ZIP_DEFLATED) as z:
+              for p in sorted(root.iterdir()):
+                  if p.is_file():z.write(p,p.name)
+          print("P93B1_ORIGINAL_NEX_DAILY_SHA_VERIFIED",sha,flush=True)
+          PY
+      - name: Independently query ESGF, read EXACT original CanESM5 native Amon ps zarr, and compare 2013/2014 NEX daily without pressure fitting
+        run: |
+          python -u research/ige_cmip6/p9_3b1_esgf_native_monthly_pressure_audit.py \
+          --original-NEX-registered-archive inputs/p93b1-canonical/IGE_P7C3_SRC_CanESM5_historical-1995-2014.zip \
+          --out outputs/p93b1-multi
+      - name: Original source identity, annual pressure diagnostics and explicit DAILY ps blocker only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p93b1-original-CMIP6-native-Amon-ps-and-ESGF-day-source-status
+          path: outputs/p93b1-multi/*.json
+          if-no-files-found: warn
+          retention-days: 30
