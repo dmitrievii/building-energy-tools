@@ -1,9 +1,6 @@
 name: IGE P9.3B1 streaming full original CanESM5 ps source catalog original identity
+# Archived source-recovery audit. Repeat only by explicit manual dispatch.
 on:
-  push:
-    branches: ['research/ige-p9-3b1-canesm5-native-ps-recovery-20261018']
-    paths:
-      - '.github/workflows/ige-p9-3b1-once-ps-catalog.yml'
   workflow_dispatch:
 permissions:
   contents: read

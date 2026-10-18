@@ -1,0 +1,64 @@
+{
+  "phase": "IGE_P9_3B1_ORIGINAL_MODEL_CANESM5_PRESSURE_SOURCE_AUDIT_FINAL",
+  "source_catalog_run": 39163882013,
+  "source_catalog_artifact": 12149558523,
+  "original_model_pressure_and_ESGF_final_run": 39164378032,
+  "original_model_pressure_and_ESGF_final_artifact": 12150470017,
+  "catalog_entries": 514818,
+  "catalog_bytes": 80751521,
+  "catalog_sha256": "a19a343d57f3137d11ce89e07e4c66586ed02e3d396361bf209eb7a324328b89",
+  "CMIP6_identity": {
+    "activity_id": "CMIP",
+    "institution_id": "CCCma",
+    "source_id": "CanESM5",
+    "experiment_id": "historical",
+    "variant_label": "r1i1p1f1",
+    "grid_label": "gn",
+    "variable_id": "ps"
+  },
+  "Pangeo_original_day_ps_found": false,
+  "ESGF_exact_day_ps_in_active_DKRZ_CEDA_queries": 0,
+  "ESGF_unique_monthly_ps_datasets": [
+    "Amon",
+    "AERmon"
+  ],
+  "ESGF_monthly_replicas_identified": 4,
+  "ESGF_ORNL_json_query_available": false,
+  "monthly_original_Amon_ps_retrieved": true,
+  "monthly_source_zarr": "gs://cmip6/CMIP6/CMIP/CCCma/CanESM5/historical/r1i1p1f1/Amon/ps/gn/v20190429/",
+  "monthly_source_tracking_id": "hdl:21.14100/fbafebd7-4e82-4dc0-b23f-caf1c042ce08",
+  "native_GCM_pressure_unit": "Pa",
+  "native_GCM_original_nominal_resolution_km": 500,
+  "native_GCM_nearest_cell_latlon": [
+    46.044726631101724,
+    14.0625
+  ],
+  "NASA_NEX_day_grid_latlon": [
+    46.875,
+    15.375
+  ],
+  "Graz_latlon": [
+    47.0707,
+    15.4395
+  ],
+  "nearest_native_grid_cell_to_Graz_approx_km": 155.24,
+  "year_2013_2014_original_native_CanESM5_months": 24,
+  "monthly_pressure_mean_Pa": 94339.8251953125,
+  "monthly_pressure_min_Pa": 93673.3359375,
+  "monthly_pressure_max_Pa": 95479.453125,
+  "original_NEX_daily_1995_2014_registered_SHA256": "77ec2e5637eb487c3cedde4e0b660b31f8bd2606198e766255d75a985d61dfef",
+  "NEX_2013_daily_records": 365,
+  "NEX_2014_daily_records": 365,
+  "unqualified_saturation_count_with_MONTHLY_coarse_original_ps_at_mean_T_2013": 8,
+  "unqualified_saturation_count_with_MONTHLY_coarse_original_ps_at_mean_T_2014": 20,
+  "unqualified_RH_mae_pp_2013": 5.599551075780516,
+  "unqualified_RH_mae_pp_2014": 4.694940028301683,
+  "previous_failed_NEX_days_also_proxy_above_sat_2013": 6,
+  "previous_failed_NEX_days_also_proxy_above_sat_2014": 15,
+  "monthly_P_does_not_prove_daily_ps_or_hourly_saturation": true,
+  "native_CMIP6_daily_ps_recovered": false,
+  "terrain_altitude_bias_adjusted_target_pressure_qualified": false,
+  "original_source_rain_solar_cloud_LW_station_quality_qualified": false,
+  "production_epw_ready": false,
+  "main_unchanged": true
+}
