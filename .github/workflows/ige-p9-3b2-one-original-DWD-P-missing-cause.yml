@@ -1,4 +1,4 @@
-name: IGE P9.3B2 frozen Oberstdorf original DWD P vs P0 missing-source cause verification
+name: IGE P9.3B2 corrected isolated DWD original pressure missingness audit
 on:
   push:
     branches: ['research/ige-p9-3b2-terrain-aware-pressure-stations-20261019']

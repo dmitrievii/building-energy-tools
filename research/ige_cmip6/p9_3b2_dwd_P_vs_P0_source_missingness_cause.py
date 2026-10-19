@@ -7,8 +7,18 @@ station cohort or tune model to measured pressure.
 from __future__ import annotations
 import argparse,io,zipfile,re,json,csv,collections,hashlib
 from pathlib import Path
-from p9_3b2_original_AT_DE_CH_2024_pressure_validation import (
- DWD_PRESS_ROOT,_download_DWD_pressure)
+from urllib.parse import urlsplit
+from urllib.request import Request,urlopen
+DWD_PRESS_ROOT="https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/pressure/historical/"
+def _download_DWD_pressure(url,max_bytes=9_000_000):
+ u=urlsplit(url)
+ if u.hostname!="opendata.dwd.de" or not u.path.startswith(
+     "/climate_environment/CDC/observations_germany/climate/hourly/pressure/historical/"):
+  raise ValueError("P93B2_DWD_SOURCE_HOST_INVALID")
+ with urlopen(Request(url,headers={"User-Agent":"IGE-P93B2-DWD-Pressure-Source-Causal/1.0"}),timeout=90) as response:
+  b=response.read(max_bytes+1)
+ if len(b)>max_bytes:raise ValueError("P93B2_DWD_SOURCE_OVERSIZED")
+ return b,hashlib.sha256(b).hexdigest()
 def run(out):
  out=Path(out);out.mkdir(parents=True,exist_ok=True)
  ls,source_sha=_download_DWD_pressure(DWD_PRESS_ROOT,2_000_000)
