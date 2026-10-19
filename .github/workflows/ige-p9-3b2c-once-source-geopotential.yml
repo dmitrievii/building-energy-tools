@@ -1,0 +1,30 @@
+name: IGE P9.3B2C original ARCO ERA5 surface geopotential and frozen Potsdam metadata
+on:
+  push:
+    branches: ['research/ige-p9-3b2c-native-era5-geopotential-20261019']
+    paths:
+      - '.github/workflows/ige-p9-3b2c-once-source-geopotential.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original_ERA5_z_m2s2_and_DE_station_source_metadata:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install publicly original ERA5 mirrored 0.25 degree xarray/GCS read only
+        run: python -m pip install 'numpy>=1.26,<3' 'xarray>=2024.2,<2027' 'gcsfs>=2024.2,<2027' 'zarr>=2.16,<3' 'dask[array]>=2024.2,<2027'
+      - name: Verify ARCO source GEOPOTENTIAL_AT_SURFACE (129) not geopotential-at-pressure-level and original DWD Potsdam source metadata without reading 2023 observations
+        run: python -u research/ige_cmip6/p9_3b2c_arco_original_surface_geopotential_probe.py --out outputs/p93b2c-source
+      - name: Archive source metadata original selected geopotential scalars only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p93b2c-original-ERA5-ARCO-regular-grid-z-and-frozen-DE-station-metadata
+          path: outputs/p93b2c-source/*.json
+          retention-days: 30
+          if-no-files-found: warn
