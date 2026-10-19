@@ -52,12 +52,28 @@ def run(out):
         request=urllib.request.Request(url,headers={"User-Agent":"IGE-P93B2-Swiss-header-probe/1.0","Range":"bytes=0-8000"})
         with urllib.request.urlopen(request,timeout=55) as fh:
             chunk=fh.read(8192)
-        header=chunk.splitlines()[0].decode("utf8-sig",errors="replace")
+        header=chunk.splitlines()[0].decode("utf-8-sig",errors="replace")
         r["data"]["CH"]={"status":"METADATA_AND_HOURLY_CSV_HEADER_READ","original_station_sha":sha,
             "station":station,"station_csv_url":url,"columns":header.split(";")[:180],
             "header_sample_sha":hashlib.sha256(chunk).hexdigest()}
         print("P93B2_SCHEMA_CH",json.dumps(r["data"]["CH"]),flush=True)
     except Exception as e:r["data"]["CH"]={"status":"METADATA_BLOCKED","reason":str(e)[:400]}
+    # DEM at selected 0.25-degree Open-Meteo nearest ERA5 grid coordinates,
+    # NEVER confuse station-site terrain with the grid column surface.
+    try:
+        grids={"AT":(47.0,15.5),"DE":(47.5,10.25),"CH":(46.75,9.75)}
+        pointlist="|".join(f"{la:.6f},{lo:.6f}" for la,lo in grids.values())
+        raw,sha=fetch(DEM+"?"+urllib.parse.urlencode({"locations":pointlist}),90000)
+        obj=json.loads(raw)
+        if obj.get("status")!="OK" or len(obj.get("results",[]))!=3:
+            raise ValueError("P93B2_ORIGINAL_SRTM_GRID_HEIGHT_MISSING")
+        r["ERA5_grid_center_SRTM90"]={"source":"OpenTopoData SRTM90m","sha256":sha,
+            "by_country":{country:{"requested_grid_latlon":list(grids[country]),
+                  "elevation_m":obj["results"][j]["elevation"]}
+                  for j,country in enumerate(grids)}}
+        print("P93B2_DEM_GRID",json.dumps(r["ERA5_grid_center_SRTM90"]),flush=True)
+    except Exception as e:
+        r["ERA5_grid_center_SRTM90"]={"status":"BLOCKED","reason":str(e)[:300]}
     for country,(lat,lon) in SITES.items():
         try:
             url=era.request_url(lat,lon,"2024-01-10","2024-01-10")

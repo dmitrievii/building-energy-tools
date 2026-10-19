@@ -1,4 +1,4 @@
-name: IGE P9.3B2 original pressure schema probe with Swiss dependency
+name: IGE P9.3B2 corrected Swiss original metadata and grid-centre DEM pressure geometry
 on:
   push:
     branches: ['research/ige-p9-3b2-terrain-aware-pressure-stations-20261019']
