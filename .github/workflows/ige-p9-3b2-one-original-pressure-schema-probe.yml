@@ -1,9 +1,7 @@
 name: IGE P9.3B2 corrected Swiss original metadata and grid-centre DEM pressure geometry
+# P9.3B2 original source and frozen 2024 station observations completed.
+# No automatic reruns or outcome-driven expansion; manual dispatch only.
 on:
-  push:
-    branches: ['research/ige-p9-3b2-terrain-aware-pressure-stations-20261019']
-    paths:
-      - '.github/workflows/ige-p9-3b2-one-original-pressure-schema-probe.yml'
   workflow_dispatch:
 permissions:
   contents: read

@@ -1,0 +1,100 @@
+{
+  "phase": "IGE_P9_3B2_ORIGINAL_2024_AT_DE_CH_PRESSURE_TERRAIN_HOLDOUT_FINAL",
+  "preregistered_commit": "e9ff95ec0620b9f2cc4e23480cd16cb45fea6361",
+  "metadata_original_final_run": 39232172719,
+  "physical_contract_run": 39232269153,
+  "physical_contract_tests_pass": 8,
+  "original_2024_station_pressure_ci_run": 39232747620,
+  "original_2024_pressure_artifact": 12177942533,
+  "DWD_original_missingness_cause_run": 39233374422,
+  "DWD_original_missingness_artifact": 12177448751,
+  "source_stations": {
+    "AT": {
+      "id": 30,
+      "name": "Graz Universität/Heinrichstraße",
+      "altitude_m": 366
+    },
+    "DE": {
+      "id": 3730,
+      "name": "Oberstdorf",
+      "altitude_m": 806
+    },
+    "CH": {
+      "id": "DAV",
+      "name": "Davos",
+      "altitude_m": 1594
+    }
+  },
+  "SRTM90_ERA5_grid_elevation_m": {
+    "AT": 332,
+    "DE": 862,
+    "CH": 1995
+  },
+  "OpenMeteo_response_elevation_m_not_native_geopotential_verified": {
+    "AT": 467,
+    "DE": 1182,
+    "CH": 1999
+  },
+  "original_SRTM90_grid_SHA256": "814dbcdafa7f9f9ea4f62a6219406e7fd821bb7f6a001bb174da5085bf20f1ad",
+  "registered_sites": 3,
+  "registered_seasons": [
+    "January_2024",
+    "July_2024"
+  ],
+  "nominal_original_station_pressure_hours": 1008,
+  "valid_original_station_pressure_hours": 672,
+  "scored_site_season_cells": 4,
+  "source_blocked_site_season_cells": 2,
+  "DWD_pressure_P_and_P0_historical_2024_both_empty_hours": 336,
+  "DWD_native_QN_8_for_those_hours": 3,
+  "native_Geosphere_p_QC10_total_hours": 336,
+  "published_Swiss_QFE_prestah0_hours_with_unverified_per_sample_QC": 336,
+  "methods": [
+    "B0_ERA5_NO_ELEVATION",
+    "B1_SRTM90_NOMINAL_ERA5_GRID_CENTER_HYPSOMETRIC",
+    "B2_SRTM90_FIXED_0065_LAPSE_SENSITIVITY",
+    "B3_ORIGINAL_OPENMETEO_RESPONSE_ELEVATION_SENSITIVITY_BEFORE_OBSERVATIONS"
+  ],
+  "station_season_MAE_hPa": {
+    "AT_2024Jan": [
+      12.65,
+      16.75033007526762,
+      16.75199464252427,
+      0.43562272952944714
+    ],
+    "AT_2024Jul": [
+      10.336309523809522,
+      14.054334690013544,
+      14.05570438418549,
+      0.8359162015150136
+    ],
+    "CH_2024Jan": [
+      46.64345238095238,
+      4.465904651010948,
+      4.646032455849817,
+      4.125869391387238
+    ],
+    "CH_2024Jul": [
+      36.65238095238095,
+      2.582526713008367,
+      2.4222766019807924,
+      2.9445977986701424
+    ],
+    "DE_2024Jan": null,
+    "DE_2024Jul": null
+  },
+  "macro_MAE_hPa": {
+    "B0": 26.570535714285715,
+    "B1": 9.46327403232512,
+    "B2": 9.469002021135092,
+    "B3": 2.0855015302754603
+  },
+  "B1_better_than_B0_cases": 2,
+  "B1_worse_than_B0_cases": 2,
+  "B3_better_than_B0_cases": 4,
+  "true_ERA5_geopotential_native_model_orography_not_verified": true,
+  "native_CanESM5_future_pressure_not_qualified": true,
+  "independent_3_country_pressure_validation_complete": false,
+  "EPW_engineering_release_ready": false,
+  "main_branch_not_modified": true
+}
