@@ -1,0 +1,30 @@
+name: IGE P9.3B2 one original AT DE CH 2024 absolute-pressure independent holdout
+on:
+  push:
+    branches: ['research/ige-p9-3b2-terrain-aware-pressure-stations-20261019']
+    paths:
+      - '.github/workflows/ige-p9-3b2-one-2024-original-QFE-station-holdout.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real_original_station_pressure_hydrostatic_validation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install official Swiss original CSV metadata parsing dependency
+        run: python -m pip install 'numpy>=1.26,<3'
+      - name: Retrieve REAL source station-level QFE AT DE CH in frozen January July 2024, compare unfitted ERA5 vs physically corrected source height
+        run: python -u research/ige_cmip6/p9_3b2_original_AT_DE_CH_2024_pressure_validation.py --out outputs/p93b2-original-pressure
+      - name: Save only original-source original-hour aggregates and source SHA, no hourly observations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p93b2-genuine-AT-DE-CH-2024-absolute-pressure-QC-validation
+          path: outputs/p93b2-original-pressure/*.json
+          if-no-files-found: warn
+          retention-days: 30
