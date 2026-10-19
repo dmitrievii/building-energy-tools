@@ -1,0 +1,28 @@
+name: IGE P9.3B2 frozen Oberstdorf original DWD P vs P0 missing-source cause verification
+on:
+  push:
+    branches: ['research/ige-p9-3b2-terrain-aware-pressure-stations-20261019']
+    paths:
+      - '.github/workflows/ige-p9-3b2-one-original-DWD-P-missing-cause.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  german_original_station_absolute_P_not_sealevel_P0_source_provenance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check original DWD ZIP and exact 2024 registered hour P/QC8/P0 presence without changing model or evaluating substituted P0
+        run: python -u research/ige_cmip6/p9_3b2_dwd_P_vs_P0_source_missingness_cause.py --out outputs/p93b2-DE
+      - name: Archive source original absolute pressure missingness evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p93b2-original-DWD-Oberstdorf-2024-station-P-versus-P0-missingness
+          path: outputs/p93b2-DE/*.json
+          if-no-files-found: warn
+          retention-days: 30
