@@ -1,0 +1,20 @@
+name: IGE P9.3B2 one pressure hypsometry and source-independent physical contracts
+on:
+  push:
+    branches: ['research/ige-p9-3b2-terrain-aware-pressure-stations-20261019']
+    paths:
+      - '.github/workflows/ige-p9-3b2-once-physical-hypsometry.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source_independent_hydrostatic_contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Test original pressure preservation hypsometry physics and all failure cases
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3b2_hypsometric_pressure_model.py' -v
