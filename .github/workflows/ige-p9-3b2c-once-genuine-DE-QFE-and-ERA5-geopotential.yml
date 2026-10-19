@@ -1,0 +1,30 @@
+name: IGE P9.3B2C original ERA5 surface Z and Potsdam genuine QFE 2023 independent validation
+on:
+  push:
+    branches: ['research/ige-p9-3b2c-native-era5-geopotential-20261019']
+    paths:
+      - '.github/workflows/ige-p9-3b2c-once-genuine-DE-QFE-and-ERA5-geopotential.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original_ARCO_ERA5_orography_and_DWD_QFE_new_year:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install verified remapped ERA5 surface geopotential Zarr and Swiss original source reader
+        run: python -m pip install 'numpy>=1.26,<3' 'xarray>=2024.2,<2027' 'gcsfs>=2024.2,<2027' 'zarr>=2.16,<3' 'dask[array]>=2024.2,<2027'
+      - name: One original DWD Potsdam P vs P0 pressure holdout 2023, same original ERA5 source 0.25 ARCO z/g and retrospective AT CH 2024 diagnostics
+        run: python -u research/ige_cmip6/p9_3b2c_original_geopotential_and_Potsdam_2023_pressure_validation.py --out outputs/p93b2c-full
+      - name: Store station/source SHA and summary only, no original observational hourly rows
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p93b2c-original-ERA5-z-and-independent-Potsdam-2023-QFE-physics
+          path: outputs/p93b2c-full/*.json
+          retention-days: 30
+          if-no-files-found: warn
