@@ -1,0 +1,80 @@
+{
+  "phase": "P9_3B2C_ERA5_NATIVE_REFERENCE_REGULAR_GRID_OROGRAPHY_CLOSURE",
+  "preregistered_original_source_commit": "6712543ee45006d94535b76aa468c5332c8e2961",
+  "ARCO_surface_source_CI": 39276980299,
+  "ARCO_surface_source_artifact": 12196679700,
+  "original_DE_2023_pressure_CI": 39276980182,
+  "original_DE_2023_pressure_artifact": 12198346007,
+  "ARCO_OpenMeteo_surface_p_comparison_CI": 39277745912,
+  "ARCO_OpenMeteo_p_artifact": 12197544208,
+  "physical_model_geopotential_param": 129,
+  "gravity": 9.80665,
+  "source_kind": "ORIGINAL_ERA5_DERIVED_ARCO_REGULAR_REGRID_0p25_NOT_NATIVE_CDS_ORIGINAL_GRIB",
+  "surface_z_variable": "geopotential_at_surface",
+  "do_not_use_pressure_level_geopotential": true,
+  "grids_and_height_m": {
+    "AT_Graz": {
+      "lat": 47,
+      "lon": 15.5,
+      "geopotential_m2s2": 4581.2109375,
+      "ARCO_zdivg_m": 467.15350680405646,
+      "OM_response_z_m": 467,
+      "SRTM_grid_z_m": 332
+    },
+    "CH_Davos": {
+      "lat": 46.75,
+      "lon": 9.75,
+      "geopotential_m2s2": 19606.4296875,
+      "ARCO_zdivg_m": 1999.2994230955526,
+      "OM_response_z_m": 1999,
+      "SRTM_grid_z_m": 1995
+    },
+    "DE_Oberstdorf": {
+      "lat": 47.5,
+      "lon": 10.25,
+      "geopotential_m2s2": 11590.525390625,
+      "ARCO_zdivg_m": 1181.904665775265,
+      "OM_response_z_m": 1182,
+      "SRTM_grid_z_m": 862
+    },
+    "DE_Potsdam": {
+      "lat": 52.5,
+      "lon": 13,
+      "geopotential_m2s2": 377.955078125,
+      "ARCO_zdivg_m": 38.540692094140205,
+      "OM_response_z_m": 39
+    }
+  },
+  "ARCO_z_Jan_and_Jul_2023_identical": true,
+  "max_ARCO_zdivg_vs_OM_response_rounding_error_m": 0.4593079058597951,
+  "n_ARCO_and_OM_original_p_samegrid_UTChour_pairs": 6,
+  "original_ERA5_ARCO_OpenMeteo_surface_pressure_source_MAE_hPa": 0.3275390625,
+  "original_ERA5_ARCO_OpenMeteo_surface_pressure_source_max_abs_difference_hPa": 1.061953125,
+  "six_cross_source_OM_minus_ARCO_hPa": [
+    -0.38171875,
+    -0.296875,
+    1.061953125,
+    -0.1103125,
+    -0.092421875,
+    -0.021953125
+  ],
+  "new_preregistered_DE_original_station": "DWD Potsdam 03987",
+  "new_DE_original_station_height_m": 81,
+  "new_DE_2023_original_station_measurement_hours": 0,
+  "new_DE_source_hours_in_fixed_windows": 336,
+  "new_DE_original_hourly_P_missing_or_sentinel_hours": 336,
+  "new_DE_original_hourly_sealevel_P0_missing_or_sentinel_hours": 336,
+  "new_DE_original_QN8_in_fixed_windows": 3,
+  "prior_AT_CH_2024_already_seen_B4_MAE_hPa": {
+    "AT_January": 0.421982299439935,
+    "AT_July": 0.8496440571320311,
+    "CH_January": 4.102957942031091,
+    "CH_July": 2.9727644774914856
+  },
+  "AT_CH_2024_retro_and_not_new_independent_holdout": true,
+  "original_CDS_GRIB_native_model_geometry_not_certified": true,
+  "native_CanESM5_GCM_ps_original_daily_unavailable": true,
+  "full_independent_AT_DE_CH_pressure_validation_qualified": false,
+  "production_epw_ready": false,
+  "main_branch_untouched": true
+}

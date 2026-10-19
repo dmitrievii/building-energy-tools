@@ -1,9 +1,7 @@
 name: IGE P9.3B2C select original surface geopotential distinct from pressure-level
+# P9.3B2C source reference closure and negative German P validation frozen;
+# future reruns must be explicitly manually dispatched.
 on:
-  push:
-    branches: ['research/ige-p9-3b2c-native-era5-geopotential-20261019']
-    paths:
-      - '.github/workflows/ige-p9-3b2c-once-source-geopotential.yml'
   workflow_dispatch:
 permissions:
   contents: read

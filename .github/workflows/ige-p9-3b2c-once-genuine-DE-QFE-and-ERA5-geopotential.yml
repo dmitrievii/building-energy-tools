@@ -1,9 +1,7 @@
 name: IGE P9.3B2C surface-only z and frozen Potsdam 2023 QFE
+# P9.3B2C source reference closure and negative German P validation frozen;
+# future reruns must be explicitly manually dispatched.
 on:
-  push:
-    branches: ['research/ige-p9-3b2c-native-era5-geopotential-20261019']
-    paths:
-      - '.github/workflows/ige-p9-3b2c-once-genuine-DE-QFE-and-ERA5-geopotential.yml'
   workflow_dispatch:
 permissions:
   contents: read

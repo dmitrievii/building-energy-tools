@@ -1,9 +1,7 @@
 name: IGE P9.3B2C original ERA5 same-grid surface pressure equivalence and frozen DWD P source audit
+# P9.3B2C source reference closure and negative German P validation frozen;
+# future reruns must be explicitly manually dispatched.
 on:
-  push:
-    branches: ['research/ige-p9-3b2c-native-era5-geopotential-20261019']
-    paths:
-      - '.github/workflows/ige-p9-3b2c-one-samegrid-pressure-and-DWD-causal.yml'
   workflow_dispatch:
 permissions:
   contents: read
