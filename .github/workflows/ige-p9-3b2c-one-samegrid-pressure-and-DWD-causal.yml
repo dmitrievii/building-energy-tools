@@ -1,0 +1,30 @@
+name: IGE P9.3B2C original ERA5 same-grid surface pressure equivalence and frozen DWD P source audit
+on:
+  push:
+    branches: ['research/ige-p9-3b2c-native-era5-geopotential-20261019']
+    paths:
+      - '.github/workflows/ige-p9-3b2c-one-samegrid-pressure-and-DWD-causal.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original_2023_ERA5_surface_p_cross_product_DWD_missing_source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned read-only remapped ARCO ERA5 Zarr library
+        run: python -m pip install 'numpy>=1.26,<3' 'xarray==2024.10.0' 'gcsfs>=2024.2,<2026' 'zarr==2.18.7' 'dask[array]>=2024.2,<2026'
+      - name: Original ARCO ERA5 surface pressure Pa vs original OpenMeteo surface pressure same 0.25 grid UTC (not station fitting), plus causal original DWD P/P0 missingness
+        run: python -u research/ige_cmip6/p9_3b2c_original_ARCO_OM_surface_pressure_equivalence.py --out outputs/p93b2c-srccross
+      - name: Archive source equivalent-pressure original SHA plus DWD missingness aggregates
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p93b2c-original-ERA5-surface-p-Arco-OpenMeteo-and-Potsdam-P-source
+          path: outputs/p93b2c-srccross/*.json
+          retention-days: 30
+          if-no-files-found: warn
