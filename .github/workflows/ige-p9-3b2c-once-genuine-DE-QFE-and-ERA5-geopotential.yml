@@ -1,4 +1,4 @@
-name: IGE P9.3B2C pinned original ERA5 ARCO z and frozen genuine Potsdam pressure
+name: IGE P9.3B2C surface-only z and frozen Potsdam 2023 QFE
 on:
   push:
     branches: ['research/ige-p9-3b2c-native-era5-geopotential-20261019']

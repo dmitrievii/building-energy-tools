@@ -35,17 +35,21 @@ def read_arco(points):
  import numpy as np
  ds=xr.open_zarr(ARCO,consolidated=True,chunks=None,storage_options={"token":"anon"})
  try:
+  # ERA5 Zarr legitimately has BOTH pressure-level 'geopotential'
+  # and distinct 'geopotential_at_surface' (ECMWF param129 type=surface).
+  # This is not ambiguity: select the exact source-surface variable only.
   candidates=[v for v in ds.data_vars if v in ("geopotential_at_surface","surface_geopotential","geopotential")]
-  if len(candidates)!=1 or candidates[0]!="geopotential_at_surface":
-   raise ValueError("P93B2C_ORIGINAL_SURFACE_Z_MISSING_OR_AMBIGUOUS_"+str(candidates))
-  da=ds[candidates[0]]
+  if "geopotential_at_surface" not in ds.data_vars:
+   raise ValueError("P93B2C_ORIGINAL_SURFACE_Z_MISSING_"+str(candidates))
+  da=ds["geopotential_at_surface"]
   if any(d not in ("time","latitude","longitude") for d in da.dims):
    raise ValueError("P93B2C_SURFACE_Z_IS_PRESSURE_LEVEL_OR_OTHER_DIMENSION_"+repr(da.dims))
   units=str(da.attrs.get("units","")).replace(" ","").lower()
   if units not in ("m2s-2","m**2s**-2","m^2s^-2","m2/s2","m**2/s**2","m2s^-2"):
    raise ValueError("P93B2C_GEOPOTENTIAL_UNITS_NOT_M2_S_2_"+str(da.attrs.get("units")))
-  result={"arco_dataset":ARCO,"original_ARCO_variable":candidates[0],
+  result={"arco_dataset":ARCO,"original_ARCO_variable":"geopotential_at_surface",
       "original_variable_units":da.attrs.get("units"),
+      "pressure_level_geopotential_is_separate_and_never_used":("geopotential" in candidates),
       "source_kind":"ECMWF_ERA5_DERIVED_REMAPPED_0p25_REGULAR_ZARR_NOT_NATIVE_CDS_GRIB",
       "selected_static_ERA5_surface_geopotential_as_orography":True,
       "raw_native_ERA5_CDS_geopotential_GRIB_verified":False,

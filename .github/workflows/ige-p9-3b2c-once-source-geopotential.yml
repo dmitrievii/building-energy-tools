@@ -1,4 +1,4 @@
-name: IGE P9.3B2C corrected pinned xarray zarr original geopotential source
+name: IGE P9.3B2C select original surface geopotential distinct from pressure-level
 on:
   push:
     branches: ['research/ige-p9-3b2c-native-era5-geopotential-20261019']
