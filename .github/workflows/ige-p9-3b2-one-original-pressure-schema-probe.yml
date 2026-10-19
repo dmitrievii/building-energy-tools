@@ -1,0 +1,28 @@
+name: IGE P9.3B2 source station QFE pressure field and ERA5 DEM metadata prereg probe
+on:
+  push:
+    branches: ['research/ige-p9-3b2-terrain-aware-pressure-stations-20261019']
+    paths:
+      - '.github/workflows/ige-p9-3b2-one-original-pressure-schema-probe.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native_pressure_metadata_probe_no_observation_scores:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Obtain genuine official metadata for station absolute pressure and independent geometry
+        run: python -u research/ige_cmip6/p9_3b2_station_pressure_original_metadata_probe.py --out outputs/p93b2-schema
+      - name: Archive metadata and original schema only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p93b2-original-station-pressure-QFE-schemas-before-holdout
+          path: outputs/p93b2-schema/*.json
+          retention-days: 30
+          if-no-files-found: warn
