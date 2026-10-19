@@ -1,4 +1,4 @@
-name: IGE P9.3B2 source station QFE pressure field and ERA5 DEM metadata prereg probe
+name: IGE P9.3B2 original pressure schema probe with Swiss dependency
 on:
   push:
     branches: ['research/ige-p9-3b2-terrain-aware-pressure-stations-20261019']
@@ -16,6 +16,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Install existing Swiss original-source helper dependency
+        run: python -m pip install 'numpy>=1.26,<3'
       - name: Obtain genuine official metadata for station absolute pressure and independent geometry
         run: python -u research/ige_cmip6/p9_3b2_station_pressure_original_metadata_probe.py --out outputs/p93b2-schema
       - name: Archive metadata and original schema only
