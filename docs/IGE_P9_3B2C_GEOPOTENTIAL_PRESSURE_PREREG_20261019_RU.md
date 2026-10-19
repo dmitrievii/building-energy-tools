@@ -1,0 +1,24 @@
+# P9.3B2C — Original ERA5 surface geopotential + independent German station pressure
+
+**Frozen before querying actual ERA5 geopotential or DWD 2023 station pressure, 19 October 2026.** Research branch from P9.3B2 scientific closure commit `9e17d612`, no main merge.
+
+## Source recovery and coordinate provenance
+
+**Original ERA5 physical model parameter**: `geopotential` (`z`, ECMWF parameter **129**, m² s⁻²); ERA5 reference surface elevation `H=z/g0` (`g0=9.80665` m s⁻²). The public Google ARCO ERA5 0.25° gridded field is **a remapped ECMWF ERA5-derived geophysical field**, not an original CDS native-grid GRIB with a validated source original-byte digest and not native T_L639 spectral orography. Source `gs://gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3`; discover and explicitly validate field name, units, coordinate and level ("surface" not pressure-level geopotential) before reading any value. If a surface `z` variable is unavailable, **fail-closed**; pressure-level geopotential is NOT interchangeable. Obtain only source 0.25° points matching Open-Meteo selected ERA5 cells (AT Graz 47.0°N,15.5°E; CH Davos 46.75°N,9.75°E; DE new pressure validation Potsdam choose selected grid determined independently by returned provider metadata). Derive H, record source attrs, original-selected grid and SHA of serialized selected scalars; do not mistake fine-grid ARCO field for verified Open-Meteo's internal pressure vertical datum. GCM CanESM5 `ps` (monthly coarse) does not enter this ERA5 orography exercise.
+
+**Already-seen development comparison, no claim new validation:** from P9.3B2 2024 AT Graz GeoSphere station30 / CH Davos SwissMetNet DAV: reproduce B0 uncorrected, B1 SRTM90-grid, B2 fixed 6.5K/km, B3 Open-Meteo-returned-height sensitivity; add B4 ARCO ERA5 z/g grid height under exact same hourly Open-Meteo ERA5 p,T,dewpoint. Do not fit to original measured pressure, leave 2024 fixed hours; this is **post-hoc source diagnosis** and cannot be treated as a new independent 2024 holdout. No model/seed/year selection from observed errors. Avoid re-downloading the huge Swiss original hourly asset unnecessarily if source 2024 observations from previous run cannot be reused; originally published source may be fetched for validation comparison only and explicitly labelled development.
+
+**Fresh untouched Germany validation:** single DWD station **Potsdam (station 03987)**, original `stundenwerte_P0_03987_..._hist.zip` with actual station **`P`** (not `P0`). Fix year and windows **2023-01-10..16** and **2023-07-10..16 UTC**, 168h each; 336 maximum original observations. This station/year/window is frozen before reading original P or geopotential. Use DWD official pressure station metadata for exact station lat/lon/altitude, source QC `QN_8=10` fully checked and optionally separately `QN_8=3` documented as automatic; if `P` missing, fail-closed, do not switch to different station/year or sea-level P0. No original station P used to select correction or adjust height.
+
+**Original meteorology:** Open-Meteo `models=era5`, `elevation=nan`, `cell_selection=nearest`, `timezone=GMT`; source-derived ERA5 12 fields and original provider response canonical SHA, not original CDS ERA5 GRIB. B4 uses **only z_ARCO/g0** and same already-implemented physically unfitted virtual-T hypsometry. Require exact 0.25° regular grid coordinate equality or block. Native model geopotential surface pressure vertical correspondence between providers must be identified as hypothesis, not certified by scalar similarity. No comparing sea-level QFF/QNH as measured P.
+
+## Qualification gates
+
+- Source identity, surface z units m² s⁻², selected 0.25° point and time invariance across Jan/Jul if applicable; g0 conversion. If geopotential is 3-D on pressure levels, refuse as surface orography.
+- Original DWD 2023 `P` station-level + QN8 source and 336 total possible hourly values, report missingness explicitly.
+- B0/B1/B2/B3/B4 on identical, strictly matched original station QC hours; min **96** per site-week. MAE/RMSE/bias; no post-hoc correction selection for production. Repeat 2024 AT/CH solely as already-seen diagnostics if possible.
+- Cross-source source-height differences from SRTM90, provider `response_elevation` and ARCO z/g. If ARCO does not match provider height, treat comparison as structural/provenance finding; not an excuse to fit offset.
+- Do not claim a *new independent* full AT/DE/CH holdout: DE 2023 new one-year holdout, AT/CH 2024 already seen. New site/years reserved for paper.
+- Never merge pressure model into P9.3A native CanESM5 until pressure GCM/downscaling consistency demonstrated. Annual EPW and EnergyPlus remain **BLOCKED**.
+
+Scientific references: ECMWF Parameter 129 https://codes.ecmwf.int/grib/param-db/?id=129 ; Google ARCO ERA5 https://github.com/google-research/arco-era5 (original ERA5 regridded to 0.25°).
