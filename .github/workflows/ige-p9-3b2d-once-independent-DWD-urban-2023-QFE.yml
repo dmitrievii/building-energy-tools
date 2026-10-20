@@ -1,10 +1,5 @@
 name: IGE P9.3B2D frozen original German Urban station pressure 2023 and ERA5 Z B4
 on:
-  push:
-    branches:
-      - research/ige-p9-3b2d-pressure-closure-20261020
-    paths:
-      - .github/workflows/ige-p9-3b2d-once-independent-DWD-urban-2023-QFE.yml
   workflow_dispatch:
 permissions:
   contents: read
