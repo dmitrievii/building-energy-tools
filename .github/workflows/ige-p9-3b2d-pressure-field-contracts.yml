@@ -1,0 +1,23 @@
+name: IGE P9.3B2D canonical true station pressure source semantics closure
+on:
+  push:
+    branches:
+      - research/ige-p9-3b2d-pressure-closure-20261020
+    paths:
+      - .github/workflows/ige-p9-3b2d-pressure-field-contracts.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source_typed_pressure_and_no_sealevel_fallback:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Explicit DWD/GeoSphere/SwissMetNet absolute pressure semantics and native QC contracts
+        run: python -u research/ige_cmip6/p9_3b2d_canonical_pressure_fields.py
+      - name: Original source-only DWD fixed censor test
+        run: python -u research/ige_cmip6/p9_3b2d_dwd_source_only_census.py --self-test
