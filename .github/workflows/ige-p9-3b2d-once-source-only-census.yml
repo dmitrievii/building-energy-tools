@@ -1,0 +1,31 @@
+name: IGE P9.3B2D preregistered German true P source-only availability census
+on:
+  push:
+    branches:
+      - research/ige-p9-3b2d-pressure-closure-20261020
+    paths:
+      - .github/workflows/ige-p9-3b2d-once-source-only-census.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original_DWD_source_only_census_no_model:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Synthetic source selector and calendar contracts
+        run: python -u research/ige_cmip6/p9_3b2d_dwd_source_only_census.py --self-test
+      - name: Original DWD archive P count only, never P observations or error scoring
+        run: python -u research/ige_cmip6/p9_3b2d_dwd_source_only_census.py --out outputs/p93b2d-source
+      - name: Preserve original source SHA and source-only eligibility summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p93b2d-dwd-station-true-P-source-only-census-no-values
+          path: outputs/p93b2d-source/*.json
+          retention-days: 30
+          if-no-files-found: warn
