@@ -1,0 +1,143 @@
+{
+  "base_commit": "8dc2de733b82eaa2d8269161775450a01e3df236",
+  "retrieval_date": "2026-10-20",
+  "headers": {
+    "hurs": {
+      "status": "SOURCE_METADATA_READ",
+      "variable": "hurs",
+      "url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/hurs/hurs_day_CanESM5_historical_r1i1p1f1_gn_2013_v2.0.nc.das",
+      "blocks": {
+        "lat": {
+          "long_name": "latitude",
+          "units": "degrees_north",
+          "standard_name": "latitude",
+          "axis": "Y"
+        },
+        "hurs": {
+          "standard_name": "relative_humidity",
+          "long_name": "Near-Surface Relative Humidity",
+          "units": "%",
+          "comment": "The relative humidity with respect to liquid water for T> 0 C, and with respect to ice for T<0 C.",
+          "original_name": "SRH",
+          "cell_methods": "area: time: mean",
+          "cell_measures": "area: areacella"
+        },
+        "time": {
+          "axis": "T",
+          "calendar": "365_day",
+          "units": "days since 1850-01-01 0:0:0.0",
+          "long_name": "time",
+          "standard_name": "time"
+        },
+        "lon": {
+          "long_name": "longitude",
+          "units": "degrees_east",
+          "standard_name": "longitude",
+          "axis": "X"
+        },
+        "NC_GLOBAL": {
+          "cmip6_source_id": "CanESM5",
+          "cmip6_institution_id": "CCCma",
+          "cmip6_license": "CC-BY 4.0",
+          "activity": "NEX-GDDP-CMIP6",
+          "Conventions": "CF-1.7",
+          "frequency": "day",
+          "institution": "NASA Earth Exchange, NASA Ames Research Center, Moffett Field, CA 94035",
+          "variant_label": "r1i1p1f1",
+          "product": "output",
+          "realm": "atmos",
+          "source": "BCSD",
+          "scenario": "historical",
+          "references": "BCSD method: Thrasher et al., 2012, Hydrol. Earth Syst. Sci.,16, 3309-3314. Ref period obs: latest version of the Princeton Global Meteorological Forcings (http://hydrology.princeton.edu/data.php), based on Sheffield et al., 2006, J. Climate, 19 (13), 3088-3111.",
+          "version": "2.0",
+          "title": "CANESM5, r1i1p1f1, historical, global downscaled CMIP6 climate projection data",
+          "resolution_id": "0.25 degree",
+          "external_variables": "areacella",
+          "contact": "Dr. Bridget Thrasher: bridget@climateanalyticsgroup.org, Dr. Ian Brosnan: ian.g.brosnan@nasa.gov",
+          "creation_date": "Sat Nov 16 01:16:56 PST 2024",
+          "disclaimer": "These data are considered provisional and subject to change. They are provided as is without any warranty of any kind, either express or implied, arising by law or otherwise, including but not limited to warranties of completeness, non-infringement, accuracy, merchantability, or fitness for a particular purpose. The user assumes all risk associated with the use of, or inability to use, these data.",
+          "tracking_id": "accaff96-16e3-4eb1-aa05-0d9f485a5410"
+        },
+        "DODS_EXTRA": {
+          "Unlimited_Dimension": "time"
+        }
+      },
+      "time_bounds_declared": false,
+      "sha256": "f73d357ed083cd6382734d7b3159c4999d081312fded5f454620f35bf16026c6"
+    },
+    "huss": {
+      "status": "SOURCE_METADATA_READ",
+      "variable": "huss",
+      "url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/huss/huss_day_CanESM5_historical_r1i1p1f1_gn_2013_v2.0.nc.das",
+      "blocks": {
+        "time": {
+          "axis": "T",
+          "calendar": "365_day",
+          "units": "days since 1850-01-01 0:0:0.0",
+          "long_name": "time",
+          "standard_name": "time"
+        },
+        "huss": {
+          "standard_name": "specific_humidity",
+          "long_name": "Near-Surface Specific Humidity",
+          "units": "1",
+          "comment": "Near-surface (usually, 2 meter) specific humidity.",
+          "original_name": "SQ",
+          "cell_methods": "area: time: mean",
+          "cell_measures": "area: areacella"
+        },
+        "lat": {
+          "units": "degrees_north",
+          "standard_name": "latitude",
+          "long_name": "latitude",
+          "axis": "Y"
+        },
+        "lon": {
+          "units": "degrees_east",
+          "standard_name": "longitude",
+          "long_name": "longitude",
+          "axis": "X"
+        },
+        "NC_GLOBAL": {
+          "activity": "NEX-GDDP-CMIP6",
+          "Conventions": "CF-1.7",
+          "frequency": "day",
+          "institution": "NASA Earth Exchange, NASA Ames Research Center, Moffett Field, CA 94035",
+          "variant_label": "r1i1p1f1",
+          "product": "output",
+          "realm": "atmos",
+          "source": "BCSD",
+          "scenario": "historical",
+          "references": "BCSD method: Thrasher et al., 2012, Hydrol. Earth Syst. Sci.,16, 3309-3314. Ref period obs: latest version of the Princeton Global Meteorological Forcings (http://hydrology.princeton.edu/data.php), based on Sheffield et al., 2006, J. Climate, 19 (13), 3088-3111.",
+          "version": "2.0",
+          "title": "CANESM5, r1i1p1f1, historical, global downscaled CMIP6 climate projection data",
+          "resolution_id": "0.25 degree",
+          "external_variables": "areacella",
+          "cmip6_source_id": "CanESM5",
+          "cmip6_institution_id": "CCCma",
+          "cmip6_license": "CC-BY-SA 4.0",
+          "contact": "Dr. Bridget Thrasher: bridget@climateanalyticsgroup.org, Dr. Ian Brosnan: ian.g.brosnan@nasa.gov",
+          "creation_date": "Sat Nov 16 02:08:22 PST 2024",
+          "disclaimer": "These data are considered provisional and subject to change. They are provided as is without any warranty of any kind, either express or implied, arising by law or otherwise, including but not limited to warranties of completeness, non-infringement, accuracy, merchantability, or fitness for a particular purpose. The user assumes all risk associated with the use of, or inability to use, these data.",
+          "tracking_id": "d2d72976-2d88-4e50-9298-43e2fd64b061"
+        },
+        "DODS_EXTRA": {
+          "Unlimited_Dimension": "time"
+        }
+      },
+      "time_bounds_declared": false,
+      "sha256": "9cf7d1b23dabb04bca1aee64a5170020d4d73fe692ec457f472d394fb322b3ee"
+    }
+  },
+  "temperature_operator": "DERIVED_TAS_MIDRANGE",
+  "tas_evidence": "NASA 2022 Table 1 + 730 archived 2013/2014 CSV rows, max discrepancy 1.52587890625e-05 K",
+  "rh_phase": "WATER_ICE",
+  "rh_phase_status": "CONFIRMED_IN_EXACT_NEX_V2_HEADER",
+  "time_support": "DAILY_COORDINATE_NO_BOUNDS_UTC_ASSUMED",
+  "fully_verified": false,
+  "pressure_reference": "PROVISIONAL_EXTERNAL_ERA5",
+  "source_csv_sha256": "77ec2e5637eb487c3cedde4e0b660b31f8bd2606198e766255d75a985d61dfef",
+  "tas_header_status": "SOURCE_METADATA_BLOCKED_HTTP_500_503_TWO_ATTEMPTS",
+  "native_future_daily_ps_recovered": false,
+  "production_epw_ready": false
+}

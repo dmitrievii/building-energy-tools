@@ -1,0 +1,32 @@
+{
+  "phase": "P9.3B3",
+  "base_commit": "8dc2de733b82eaa2d8269161775450a01e3df236",
+  "countries": ["AT", "DE", "CH"],
+  "validation_windows_UTC": [["2021-02-01", "2021-02-14"], ["2021-08-01", "2021-08-14"]],
+  "sites": {"AT": "GeoSphere 30", "DE": "DWD Urban 00399", "CH": "SwissMetNet DAV"},
+  "training_years": [2019, 2020],
+  "primary_seed": 7313,
+  "diagnostic_seeds": [7314, 7315, 7316, 7317],
+  "expected_station_hours_before_QC": 2016,
+  "source_minimum_coverage": 0.9,
+  "algorithm_policy": {"temperature_change_K": 2.0, "slope_min_K_h": 6.0, "max_iterations": 180, "max_repair_donors": 8},
+  "pressure_stress_Pa_not_CI": [-500, 0, 500],
+  "noninferiority_MAE_margins": {"T_K": 0.1, "RH_pp": 0.5, "derived_q_gkg": 0.05},
+  "bootstrap": {"unit": "paired_day_on_identical_hours", "repetitions": 2000, "seed": 20261020},
+  "pressure_accuracy_gate_hPa_each_cell": 2.0,
+  "pressure_B4_scientifically_qualified": false,
+  "source_missing_policy": "KEEP_BLOCKED_CELL_NO_SITE_YEAR_OR_MSL_SUBSTITUTION",
+  "known_2013_2014_use": "REGRESSION_ONLY_NO_FITTING",
+  "global_validation": "DEFERRED_UNTIL_PUBLICATION",
+  "main_merge": false,
+  "production_epw_ready": false,
+  "exposure_registry": [
+    {"stage": "P8.1-P8.2", "years": [2018, 2019, 2020], "variables": ["T", "q", "e", "RH"], "status": "PREVIOUSLY_EXAMINED"},
+    {"stage": "P8.3", "years": [2021], "variables": ["wind"], "status": "NOT_THERMODYNAMIC_SKILL_HOLDOUT"},
+    {"stage": "P9.1E", "windows": [["2021-01-10", "2021-01-16"], ["2021-07-10", "2021-07-16"]], "variables": ["T"], "sites": ["six other AT lowland targets"], "status": "PREVIOUSLY_EXAMINED_OTHER_WINDOWS"},
+    {"stage": "P9.2C", "windows": [["2025-01-10", "2025-01-16"], ["2025-07-10", "2025-07-16"]], "variables": ["T", "RH"], "status": "PREVIOUSLY_EXAMINED_NEGATIVE_RESULT"},
+    {"stage": "P9.3B2", "windows": [["2024-01-10", "2024-01-16"], ["2024-07-10", "2024-07-16"]], "variables": ["p"], "status": "PREVIOUSLY_EXAMINED"},
+    {"stage": "P9.3B2D", "windows": [["2023-01-10", "2023-01-16"], ["2023-07-10", "2023-07-16"]], "variables": ["p"], "sites": ["DWD Urban 00399"], "status": "PREVIOUSLY_EXAMINED_B4_NEGATIVE"}
+  ],
+  "exposure_scope_note": "Registry checked against relevant repository P8/P9 protocols; no claim that entire 2021 or these stations have never been downloaded. New windows, no parameter tuning against their station errors. Native QC and interval support limit scientific qualification."
+}
