@@ -23,10 +23,10 @@ SOURCES = (
 )
 WINDOWS = {"JAN_2023":("2023011000","2023011623"),
            "JUL_2023":("2023071000","2023071623")}
-CERTIFIED_CANDIDATE_P_FIELDS = ("P","PP","LUFTDRUCK_STATIONSHOEHE")
+CERTIFIED_BY_FAMILY = {"URBAN_10MIN":"P0_ST_10", "SUBDAILY_PP":"PP_TER"}
 FORBIDDEN_SEALEVEL = {"P0","PP0","QFF","QNH","LUFTDRUCK_MEERESHOEHE",
                       "LUFTDRUCK_MEERESNIVEAU"}
-QUALITY_FIELDS = ("QN_8","QUALITAETS_NIVEAU","QN_9","QN")
+QUALITY_FIELDS = ("QN_8","QN_4","QUALITAETS_NIVEAU","QN_9","QN")
 MAX_RAW = 9_000_000
 
 
@@ -82,7 +82,8 @@ def original_source_count(raw,src):
             reader=csv.DictReader(fh,delimiter=";")
             cols=[str(x or "").strip() for x in (reader.fieldnames or [])]
             keys={c.upper():c for c in cols}
-            valid_field=next((keys[x] for x in CERTIFIED_CANDIDATE_P_FIELDS if x in keys),None)
+            field_name=CERTIFIED_BY_FAMILY[src["family"]]
+            valid_field=keys.get(field_name)
             if valid_field is None:
                 return {"status":"PRESSURE_COLUMN_NOT_CERTIFIED",
                   "original_csv_fields":cols,"windows":metrics}
@@ -192,6 +193,10 @@ if __name__=="__main__":
     a=argparse.ArgumentParser()
     a.add_argument("--out",default="outputs/p93b2d-recovery")
     args=a.parse_args()
+    assert CERTIFIED_BY_FAMILY["URBAN_10MIN"]=="P0_ST_10"
+    assert CERTIFIED_BY_FAMILY["SUBDAILY_PP"]=="PP_TER"
+    assert "P" not in CERTIFIED_BY_FAMILY.values()
+    assert "PP_ST_10" not in CERTIFIED_BY_FAMILY.values()
     assert parse_time("202301100000","URBAN_10MIN")=="2023011000"
     assert parse_time("202301100010","URBAN_10MIN") is None
     assert parse_time("2023011000","SUBDAILY_PP")=="2023011000"
