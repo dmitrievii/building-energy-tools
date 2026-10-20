@@ -2,6 +2,7 @@
 """P9.3B2D preregistered source-only DWD true station-P census.
 
 Counts only; NEVER logs pressure measurements, model predictions or errors.
+DWD hourly P0 is true station pressure; P is sea-level (DWD v24.03).
 Fixed candidate order and windows are documented before source readback.
 """
 from __future__ import annotations
@@ -79,7 +80,7 @@ def archive_name(listing, sid):
 def field_counts(original_zip, sid):
     seen = {n: set() for n in WINDOWS}
     out = {n: {"native_rows": 0, "valid_QC10": 0, "valid_QC3": 0,
-               "valid_other_QC": 0, "missing_P": 0, "P0_numeric_nonzero": 0,
+               "valid_other_QC": 0, "missing_P0_station": 0, "P_sealevel_numeric": 0,
                "native_QN8_histogram": Counter()} for n in WINDOWS}
     with zipfile.ZipFile(io.BytesIO(original_zip)) as z:
         if z.testzip() is not None:
@@ -112,17 +113,17 @@ def field_counts(original_zip, sid):
                 q = (row.get("QN_8") or "").strip()
                 item["native_QN8_histogram"][q] += 1
                 try:
-                    v = float((row.get("P") or "").strip())
+                    v = float((row.get("P0") or "").strip())
                 except ValueError:
                     v = float("nan")
                 try:
-                    v0 = float((row.get("P0") or "").strip())
+                    v0 = float((row.get("P") or "").strip())
                 except ValueError:
                     v0 = float("nan")
                 if math.isfinite(v0) and 450 < v0 < 1100:
-                    item["P0_numeric_nonzero"] += 1  # never a P substitute
+                    item["P_sealevel_numeric"] += 1  # sea-level, never site-pressure substitute
                 if not (math.isfinite(v) and 450 < v < 1100):
-                    item["missing_P"] += 1
+                    item["missing_P0_station"] += 1
                 elif q == "10":
                     item["valid_QC10"] += 1
                 elif q == "3":
@@ -166,7 +167,7 @@ def run(directory):
               "pre_registered_protocol":
                 "docs/IGE_P9_3B2D_DWD_SOURCE_CENSUS_PREREG_20261020_RU.md",
               "sample_selection_before_any_error_scoring": True,
-              "pressure_P_true_station_level_not_P0": True,
+              "pressure_P0_true_station_level_NOT_P": True,
               "original_pressure_measurements_emitted": False,
               "model_pressure_called": False,
               "production_pressure_qualified": False,
@@ -197,7 +198,7 @@ def run(directory):
                 except Exception as exc:
                     info.update({"status": "SOURCE_BLOCKED",
                                  "reason": f"{type(exc).__name__}: {exc}"[:240]})
-                print("P93B2D_DWD_TRUE_P_CENSUS", sid,
+                print("P93B2D_DWD_TRUE_P0_CENSUS", sid,
                     json.dumps({"status": info["status"],
                                 "windows": info.get("windows")}), flush=True)
         result["selected_by_source_only_rule"] = choose(source)
@@ -209,7 +210,7 @@ def run(directory):
     except Exception as exc:
         result["status"] = "SOURCE_CENSUS_UNAVAILABLE"
         result["source_failure_reason"] = f"{type(exc).__name__}: {exc}"[:350]
-    (directory / "p9_3b2d_dwd_true_P_source_census.json").write_text(
+    (directory / "p9_3b2d_dwd_true_P0_station_source_census_corrected.json").write_text(
         json.dumps(result, indent=2, ensure_ascii=False, allow_nan=False) + "\n")
     print("P93B2D_CENSUS_FINAL",
           json.dumps({"status": result["status"],
