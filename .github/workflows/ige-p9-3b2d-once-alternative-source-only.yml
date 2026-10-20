@@ -1,0 +1,29 @@
+name: IGE P9.3B2D DWD true station P alternative families source-only
+on:
+  push:
+    branches:
+      - research/ige-p9-3b2d-pressure-closure-20261020
+    paths:
+      - .github/workflows/ige-p9-3b2d-once-alternative-source-only.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  DWD_10min_and_subdaily_original_source_only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Preregistered source-only schema and availability probe, no model comparisons
+        run: python -u research/ige_cmip6/p9_3b2d_alternate_dwd_source_only.py --out outputs/p93b2d-recovery
+      - name: Preserve original source-only SHA and QC availability aggregates
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p93b2d-dwd-original-10min-subdaily-source-recovery-before-model
+          path: outputs/p93b2d-recovery/*.json
+          retention-days: 30
+          if-no-files-found: warn
