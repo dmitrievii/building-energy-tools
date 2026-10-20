@@ -85,7 +85,7 @@ def synthetic_contracts():
     assert pressure_qc_tier({"QN":""},"DWD_URBAN_10MIN")=="NATIVE_QC_FIELD_EMPTY"
     assert pressure_qc_tier({"QN_8":3},"DWD_HOURLY_P0")=="DWD_QN3_AUTOMATIC"
     assert pressure_qc_tier({"QN_8":10},"DWD_HOURLY_P0")=="DWD_QN10_FINAL"
-    print("P93B2D_ORIGINAL_PRESSURE_FIELD_SEMANTICS_17_CONTRACTS_PASS")
+    print("P93B2D_ORIGINAL_PRESSURE_FIELD_SEMANTICS_CONTRACTS_PASS")
 
 
 if __name__=="__main__":
