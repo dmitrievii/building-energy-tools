@@ -175,6 +175,7 @@ def run(out):
         print("P93B2D_AMENDMENT_A_SOURCE_ONLY",json.dumps({
             "source":rec["family"],"id":rec["station_id"],"status":rec["status"],
             "eligible":rec["meets_source_coverage_threshold"],"field":rec.get("field_name"),
+            "original_csv_fields":rec.get("original_csv_fields"),
             "windows":rec.get("windows")},default=lambda x:dict(x)),flush=True)
     report["n_sources_eligible"]=sum(x["meets_source_coverage_threshold"] for x in report["sources"])
     report["status"]=("SOURCE_RECOVERY_IDENTIFIED_CANDIDATE" if report["n_sources_eligible"]
