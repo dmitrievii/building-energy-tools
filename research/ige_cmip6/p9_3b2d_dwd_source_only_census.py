@@ -154,7 +154,7 @@ def synthetic_contracts():
                           for w in WINDOWS}}})["LOWLAND"] == "03015"
     assert choose({}) == dict.fromkeys(s for s, _ in STRATA)
     assert len({id_ for _, arr in STRATA for id_ in arr}) == 6
-    assert all(len(str(k)) == 8 for bounds in WINDOWS.values() for k in bounds)
+    assert all(len(str(k)) == 10 for bounds in WINDOWS.values() for k in bounds)
     assert all(int(b[-2:]) == 23 for _, b in WINDOWS.values())
     print("P93B2D_SOURCE_ONLY_UNIT_CONTRACTS_PASS")
 
