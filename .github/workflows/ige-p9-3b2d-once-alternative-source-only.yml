@@ -5,6 +5,7 @@ on:
       - research/ige-p9-3b2d-pressure-closure-20261020
     paths:
       - .github/workflows/ige-p9-3b2d-once-alternative-source-only.yml
+      - research/ige_cmip6/p9_3b2d_alternate_dwd_source_only.py
   workflow_dispatch:
 permissions:
   contents: read
