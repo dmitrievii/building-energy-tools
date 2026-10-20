@@ -1,0 +1,31 @@
+name: IGE P9.3B2D frozen original German Urban station pressure 2023 and ERA5 Z B4
+on:
+  push:
+    branches:
+      - research/ige-p9-3b2d-pressure-closure-20261020
+    paths:
+      - .github/workflows/ige-p9-3b2d-once-independent-DWD-urban-2023-QFE.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original_DWD_urban_2023_pressure_unseen_comparison:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install source-verified ARCO 0.25-degree ERA5 geopotential reader and numerical base
+        run: python -m pip install 'numpy>=1.26,<3' 'xarray==2024.10.0' 'gcsfs>=2024.2,<2026' 'zarr==2.18.7' 'dask[array]>=2024.2,<2026'
+      - name: Frozen first true P0_ST_10 pressure observations against original ERA5 B0/B3/B4, no fitting
+        run: python -u research/ige_cmip6/p9_3b2d_original_DWD_urban_2023_pressure_holdout.py --out outputs/p93b2d-frozen
+      - name: Preserve native-source SHAs and derived aggregated pressure metrics only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p93b2d-original-DWD-urban-2023-P0-site-pressure-frozen-independent-B0-B3-B4
+          path: outputs/p93b2d-frozen/*.json
+          retention-days: 30
+          if-no-files-found: warn
