@@ -1,0 +1,50 @@
+{
+  "phase": "P9.3B3_REPAIR_20261021",
+  "parent_commit": "8cda339182a9270ef40f4a256e062a3eb4a6bd75",
+  "baseline_run": 39493440318,
+  "baseline_regression_artifact": 12297438606,
+  "baseline_station_artifact": 12298195533,
+  "baseline_regression_zip_sha256": "996ee374f33520f812186617c76089fbb63fdd6ed64951d7e2c3964d8490b5d0",
+  "countries": [
+    "AT",
+    "DE",
+    "CH"
+  ],
+  "windows": [
+    [
+      "2021-02-01",
+      "2021-02-14"
+    ],
+    [
+      "2021-08-01",
+      "2021-08-14"
+    ]
+  ],
+  "window_status": "REVEALED_IN_BASELINE_RUN_REGRESSION_ONLY_NO_RENEWED_HOLDOUT",
+  "source_values_and_prior_results_immutable": true,
+  "new_global_validation": false,
+  "closure_policy_changes": "NONE_TO_T_BOUNDS_SLOPES_SOLVER_BUDGET_OR_SOURCE_TARGETS",
+  "mathematical_change": "SOUND_VARIABLE_T_OUTER_RH_BOUNDS_ALL_ELIGIBLE_DONORS",
+  "pressure_alignment": "TARGET_DAY_GRID_REFERENCE_IDENTICAL_FOR_B3_AND_P93A_CONTROL",
+  "donor_selection_conditioning": "INDEPENDENT_DAYS_FOR_BOTH_METHODS",
+  "pressure_diagnostics_variants": [
+    "DATE_ALIGNED_ERA5_GRID",
+    "MSL_SITE_FIXED_LAPSE_PROVISIONAL",
+    "MSL_SITE_ISOTHERMAL_SENSITIVITY"
+  ],
+  "MSL_candidate_constants": {
+    "gravity_m_s2": 9.80665,
+    "Rd_J_kg_K": 287.05,
+    "lapse_K_m": 0.0065
+  },
+  "MSL_candidate_proxy": "ERA5_GRID_T_Q_AS_SITE_COLUMN_PROXIES_METADATA_STATION_HEIGHT",
+  "pressure_candidate_selection_from_observed_errors": false,
+  "pressure_B4_qualified": false,
+  "station_pressure_gate_hPa_each_cell": 2.0,
+  "production_epw_ready": false,
+  "merge_main": false,
+  "NASA_time_audit": "READ_ALL_365_COORDINATES_AND_VARIABLE_SPECIFIC_BOUNDS_WHEN_DDS_CONTAINS_THEM_2013_2014",
+  "unread_or_dangling_bounds_policy": "PARTIAL_OR_BLOCKED_NEVER_INFER_FROM_NOON_COORDINATES",
+  "independent_accuracy_after_repair": "NOT_REESTABLISHED_REVEALED_COHORT",
+  "initial_CI_trigger": "ONE_SCOPED_PROTOCOL_PUSH_NEW_REPAIR_BRANCH_THEN_MANUAL_DISPATCH"
+}

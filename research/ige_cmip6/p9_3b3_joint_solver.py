@@ -17,6 +17,7 @@ from p9_3b3_daily_feasibility import (fixed_profile_feasibility, weights_for,
 from p9_3b3_thermodynamics import (MK, epsilon_for, saturation, q_saturation,
                                   qsat_derivative, relative_humidity, state_diagnostics)
 from p9_3b3_state_validation import validate_state
+from p9_3b3_joint_bounds import joint_domain_bounds
 
 
 @dataclass(frozen=True)
@@ -206,6 +207,12 @@ def solve_day(donor_T, donor_q, target, pressure, weights=None, policy=None):
                 "certificate":{"domain":"DECLARED_T_BOUNDS_FIXED_P_RELAXING_SLOPE_AND_MEAN",
                     "upper_q_mean":upper,"source_q_mean":target.q_mean_kgkg,
                     "scope":"THIS_DONOR_AND_POLICY_ONLY","pressure_fingerprint":pressure.fingerprint},
+                "fixed_profile_diagnosis":fixed}
+    outer=joint_domain_bounds(problem.low,problem.high,problem.P,target.q_mean_kgkg,
+        target.RH_mean_pct,problem.phase,problem.policy.formulation,problem.w)
+    if outer["status"]=="CERTIFIED_INFEASIBLE":
+        return {**base,"status":"CERTIFIED_INFEASIBLE","reason":outer["reason"],
+                "certificate":{**outer,"pressure_fingerprint":pressure.fingerprint},
                 "fixed_profile_diagnosis":fixed}
     starts=[problem.x0]
     if "witness_q" in fixed:

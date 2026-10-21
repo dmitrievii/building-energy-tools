@@ -48,7 +48,7 @@ def compact_day(row):
     # Retain diagnoses, not source hourly arrays or reconstructed weather files.
     keys=("date","status","reason","donor_date","eligible_donors","fixed_exact_donors",
           "screen_codes","elapsed_seconds","policy_sha256","method","journal",
-          "global_optimality_certified","optimizer_trials","trials","certificate")
+          "global_optimality_certified","optimizer_trials","trials","certificate","pressure_time_alignment")
     d={k:row[k] for k in keys if k in row}
     if "validation" in row:
         v=row["validation"]
@@ -102,7 +102,7 @@ def run(path,out,include_reconciliation=True,legacy=True,years=(2013,2014),futur
             "source":source,"donors":provenance,"members":[],"production_epw_ready":False,
             "pressure_model_qualified":False,"operational_ready":False,
             "source_phase":"WATER_ICE_CONFIRMED_IN_NEX_HEADER",
-            "source_time_bounds":"NOT_PROVIDED_UTC_DAY_ASSUMED",
+            "source_time_bounds":"VARIABLE_SPECIFIC_BOUNDS_VALUES_NOT_VERIFIED_UTC_DAY_ASSUMED",
             "legacy_files_modified":False,"independent_accuracy":"NOT_TESTED"}
     report["legacy_28_day_pilot"]=(legacy_28_audit(path,future_path,legacy_donors)
                                   if future_path else {"status":"NOT_RUN_FUTURE_SOURCE_NOT_SUPPLIED"})

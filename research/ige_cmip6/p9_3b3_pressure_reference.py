@@ -24,6 +24,7 @@ class PressureReference:
     uncertainty_calibrated: bool = False
     native_qc: str = "NOT_CERTIFIED"
     time_support: str = "REPRESENTATIVE_NODES"
+    reference_date: str | None = None
 
     def __post_init__(self):
         object.__setattr__(self, "values_Pa", tuple(float(v) for v in self.values_Pa))
@@ -43,6 +44,9 @@ class PressureReference:
             raise ValueError("P93B3_PRESSURE_UNCERTAINTY_NOT_ESTABLISHED")
         if self.mode == "SITE_HYDROSTATIC_PROVISIONAL" and self.height_m is None:
             raise ValueError("P93B3_SITE_REFERENCE_HEIGHT_REQUIRED")
+        if self.reference_date is not None:
+            import datetime
+            datetime.date.fromisoformat(self.reference_date)
 
     @property
     def fingerprint(self):

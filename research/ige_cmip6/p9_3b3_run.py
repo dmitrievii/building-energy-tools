@@ -21,8 +21,17 @@ def run(mode,manifest,out,policy_file=None):
     started=time.monotonic()
     policy=SolverPolicy(**json.loads(Path(policy_file).read_text())) if policy_file else SolverPolicy()
     if mode=="audit-semantics":
+        from concurrent.futures import ThreadPoolExecutor
+        from p9_3b3_source_time_support import fetch_time_support
+        def audit_one(pair):
+            v,y=pair;meta=fetch_metadata(v,y)
+            return meta,fetch_time_support(meta)
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            evidence=list(pool.map(audit_one,[(v,y) for y in (2013,2014)
+                for v in ("tas","tasmin","tasmax","hurs","huss")]))
         report={"mode":mode,"source_csv":audit_csv(m["csv_path"]),
-                "metadata":[fetch_metadata(v) for v in ("tas","tasmin","tasmax","hurs","huss")],
+                "metadata":[x[0] for x in evidence],"native_time_support":[x[1] for x in evidence],
+                "all_variable_intervals_verified":all(x[1]["interval_semantics_verified"] for x in evidence),
                 "time_bounds_not_inferred":True,"production_epw_ready":False}
     elif mode in ("strict","reconcile-research"):
         targets=[DailyTarget.from_dict(t) for t in m["targets"]]
@@ -31,7 +40,9 @@ def run(mode,manifest,out,policy_file=None):
             d=dict(row);d["pressure"]=PressureReference(**d["pressure"])
             donors.append(ThermoDonor(**d))
         rows,summary=generate(targets,donors,seed=m.get("seed",7313),policy=policy,
-                              reconcile=mode=="reconcile-research",wet_by_date=m.get("wet_by_date"))
+                              reconcile=mode=="reconcile-research",wet_by_date=m.get("wet_by_date"),
+                              pressure_by_date={d:PressureReference(**p) for d,p in m["pressure_by_date"].items()}
+                              if "pressure_by_date" in m else None)
         report={"mode":mode,"days":rows,"summary":summary,
                 "independent_accuracy":"NOT_TESTED","operational_ready":False}
     elif mode=="score-frozen":

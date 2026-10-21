@@ -54,6 +54,16 @@ def protocol_guard():
     return hashlib.sha256(raw).hexdigest()
 
 
+def repair_protocol_guard():
+    raw=Path(__file__).with_name("p9_3b3_repair_protocol.json").read_bytes();p=json.loads(raw)
+    if (p["countries"]!=["AT","DE","CH"] or p["windows"]!=[[s,e] for _,s,e in PERIODS] or
+            p["baseline_run"]!=39493440318 or p["pressure_B4_qualified"] or p["production_epw_ready"] or
+            p["MSL_candidate_constants"]!={"gravity_m_s2":9.80665,"Rd_J_kg_K":287.05,"lapse_K_m":.0065} or
+            p["window_status"]!="REVEALED_IN_BASELINE_RUN_REGRESSION_ONLY_NO_RENEWED_HOLDOUT"):
+        raise ValueError("P93B3_REPAIR_PROTOCOL_DRIFT")
+    return hashlib.sha256(raw).hexdigest()
+
+
 def sha_file(p):return hashlib.sha256(Path(p).read_bytes()).hexdigest()
 
 
@@ -112,7 +122,7 @@ def observations_AT(cache):
         raise ValueError("P93B3_AT_NATIVE_UNIT_CHANGED")
     if fields.get("rf",{}).get("unit")!="%":raise ValueError("P93B3_AT_RH_UNIT_CHANGED")
     out=empty_observations("AT")
-    out["site"].update(lat=float(site["lat"]),lon=float(site["lon"]))
+    out["site"].update(lat=float(site["lat"]),lon=float(site["lon"]),height_m=float(site["altitude"]))
     out["time_support"]="PROVIDER_1H_NATIVE_SUPPORT_NOT_INDEPENDENTLY_CERTIFIED"
     out["provenance"].append({"url":base+"/metadata","sha256":hashlib.sha256(raw).hexdigest()})
     good={10,11,12,20,21,22}
@@ -169,6 +179,16 @@ def observations_DE(cache):
     out=empty_observations("DE")
     out["time_support"]="ORIGINAL_10MIN_HH00_INSTANT_NO_LAG_SELECTION"
     out["qc_tier"]="DWD_NATIVE_QN_PRESERVED_EMPTY_IS_NOT_FINAL_QC"
+    # Station geometry is source metadata only, never inferred from measured p.
+    url=("https://opendata.dwd.de/climate_environment/CDC/observations_germany/"
+         "climate_urban/10_minutes/pressure/historical/zehn_st_min_p0_Beschreibung_Stationen.txt")
+    try:
+        from p9_3b2d_original_DWD_urban_2023_pressure_holdout import parse_station_metadata
+        raw=cache.fetch(url,1_000_000);meta=parse_station_metadata(raw)
+        out["site"].update(lat=meta["lat"],lon=meta["lon"],height_m=meta["station_height_m"])
+        out["provenance"].append({"url":url,"sha256":hashlib.sha256(raw).hexdigest()})
+    except (OSError,ValueError) as exc:
+        out["metadata_blocker"]=str(exc)
     products=(("pressure",r"10minutenwerte_P0_STADT_00399_\d{8}_\d{8}_hist\.zip"),
               ("air_temperature",r"10minutenwerte_TU_STADT_00399_\d{8}_\d{8}_hist\.zip"))
     for product,pattern in products:
@@ -205,7 +225,7 @@ def observations_CH(cache):
     raw=cache.fetch(md,12_000_000);sites,_=ch.parse_meta(raw);site=sites["DAV"]
     url="https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/dav/ogd-smn_dav_h_historical_2020-2029.csv"
     b=cache.fetch(url,160_000_000)
-    out=empty_observations("CH");out["site"].update(lat=site["lat"],lon=site["lon"])
+    out=empty_observations("CH");out["site"].update(lat=site["lat"],lon=site["lon"],height_m=site["hoehe_m"])
     out["time_support"]="PRECEDING_HOUR_MEAN_END_STAMP"
     out["qc_tier"]="PUBLISHED_SOURCE_NO_COMPARABLE_PER_SAMPLE_QC"
     out["provenance"]=[{"url":md,"sha256":hashlib.sha256(raw).hexdigest()},
@@ -233,6 +253,7 @@ def observations_CH(cache):
 def preflight(cache,out):
     """Schema/coverage/QC only; no model errors or observation values exported."""
     protocol_sha=protocol_guard()
+    repair_sha=repair_protocol_guard()
     private={};summary={}
     for country,fn in (("AT",observations_AT),("DE",observations_DE),("CH",observations_CH)):
         try:o=fn(cache)
@@ -243,6 +264,7 @@ def preflight(cache,out):
     path=cache.root/"observations_PRIVATE_DO_NOT_PUBLISH.json"
     path.write_text(json.dumps(private,sort_keys=True,allow_nan=False))
     report={"stage":"SOURCE_ONLY_PREFLIGHT_NO_MODEL_SCORING","periods":PERIODS,"protocol_sha256":protocol_sha,
+            "repair_protocol_sha256":repair_sha,"previously_revealed_2021_windows":True,
             "expected_site_hours":2016,"cells":summary,"countries":["AT","DE","CH"],
             "pressure_model_qualified":False,"production_epw_ready":False}
     Path(out).write_text(json.dumps(report,indent=2,allow_nan=False)+"\n")
@@ -282,6 +304,14 @@ def _hour_predictions(days):
                            "RH2m":d["diagnostics"]["RH_source_pct"][hour],"p_hPa":d["p_Pa"][hour]/100,
                            "e_hPa":d["diagnostics"]["e_Pa"][hour]/100,"q_gkg":d["q_kgkg"][hour]*1000}
     return result
+
+
+def _assert_pressure_alignment(hourly,references):
+    if references is None:return
+    for stamp,row in hourly.items():
+        day=stamp[:10];hour=int(stamp[11:13])
+        if day not in references or abs(row["p_hPa"]*100-references[day].values_Pa[hour])>1e-7:
+            raise AssertionError("P93B3_MODEL_OR_CONTROL_DID_NOT_USE_IDENTICAL_TARGET_DAY_PRESSURE")
 
 
 def score_frozen(manifest):
@@ -388,11 +418,29 @@ def score_frozen(manifest):
             "pressure_model_qualified":False,"operational_ready":False,"production_epw_ready":False}
 
 
-def run(cache_dir,out):
+def _generate_days(targets,donors,seed,wet_by_date,policy,reconcile=False,pressure_by_date=None):
+    if pressure_by_date is None:
+        return generate(targets,donors,seed=seed,wet_by_date=wet_by_date,policy=policy,reconcile=reconcile)
+    # Equal conditioning for the unchanged control adapter: each day is an
+    # independent reconstruction, with no previous-day selection for either.
+    rows=[];summary=None
+    for t in targets:
+        r,summary=generate([t],donors,seed=seed,wet_by_date=wet_by_date,policy=policy,reconcile=reconcile,
+                           pressure_by_date={t.date:pressure_by_date[t.date]})
+        rows.extend(r)
+    return rows,{**summary,"total":len(rows),"counts":dict(Counter(r["status"] for r in rows)),
+                 "selection_conditioning":"INDEPENDENT_DAYS_NO_PREVIOUS_DAY_SELECTION"}
+
+
+def run(cache_dir,out,pressure_mode="TARGET_DAY_GRID"):
+    if pressure_mode not in ("TARGET_DAY_GRID","DONOR_GRID_LEGACY"):
+        raise ValueError("P93B3_UNREGISTERED_PRESSURE_ALIGNMENT_MODE")
+    from p9_3b3_pressure_diagnostics import (target_day_references,with_legacy_pressure,
+        source_msl,pressure_candidates,score_pressure_diagnostics)
     out=Path(out);out.mkdir(parents=True,exist_ok=False)
     cache=SourceCache(cache_dir)
     obs_path,pre=preflight(cache,out/"source_preflight.json")
-    predictions={"members":[],"blocked":[]}
+    predictions={"members":[],"blocked":[],"pressure_diagnostics":[],"pressure_diagnostic_blockers":[]}
     # Observations are never arguments of the generator; only original metadata
     # site coordinates and source availability summaries enter this stage.
     for country in ("AT","DE","CH"):
@@ -405,10 +453,18 @@ def run(cache_dir,out):
                     legacy_donors.extend(ds);donors.extend(from_legacy_day(d,frame=f"ERA5_GRID_{country}") for d in ds)
                 reference,meta=_era5(cache,site["lat"],site["lon"],start,end)
                 targets=[coherent_target(d) for d in reference]
+                pressure_refs=target_day_references(reference,meta,country) if pressure_mode=="TARGET_DAY_GRID" else None
+                try:
+                    msl,msmeta=source_msl(cache,site["lat"],site["lon"],start,end,meta)
+                    candidate=pressure_candidates(reference,site,msl,msmeta)
+                    predictions["pressure_diagnostics"].append({"country":country,"period":name,**candidate})
+                except (OSError,ValueError,KeyError) as exc:
+                    predictions["pressure_diagnostic_blockers"].append({"country":country,"period":name,"reason":str(exc)})
                 wet={d.date.isoformat():any(v["precipitation"]>0 for v in d.vectors) for d in reference}
                 for seed in SEEDS:
-                    generated,summary=generate(targets,donors,seed=seed,wet_by_date=wet,
-                                                policy=SolverPolicy(lower_bound_seconds=.25))
+                    generated,summary=_generate_days(targets,donors,seed,wet,SolverPolicy(lower_bound_seconds=.25),
+                                                     pressure_by_date=pressure_refs)
+                    _assert_pressure_alignment(_hour_predictions(generated),pressure_refs)
                     predictions["members"].append({"country":country,"period":name,"method":"B3_STRICT",
                         "seed":seed,"summary":summary,"hourly":_hour_predictions(generated),
                         "source_canonical_sha256":meta["canonical_hourly_weather_and_selected_cell_sha256"]})
@@ -416,8 +472,8 @@ def run(cache_dir,out):
                     for t,r in zip(targets,generated):
                         if r["status"]=="EXACT_DEFINED_OPERATORS":reconciled.append(r)
                         else:
-                            rr,_=generate([t],donors,seed=seed,wet_by_date=wet,reconcile=True,
-                                           policy=SolverPolicy(lower_bound_seconds=.25))
+                            rr,_=_generate_days([t],donors,seed,wet,SolverPolicy(lower_bound_seconds=.25),reconcile=True,
+                                                pressure_by_date=pressure_refs)
                             reconciled.extend(rr)
                     predictions["members"].append({"country":country,"period":name,"method":"B3_RECONCILED_RESEARCH",
                         "seed":seed,"hourly":_hour_predictions(reconciled),
@@ -436,13 +492,21 @@ def run(cache_dir,out):
                             "rsds_kwh_m2_day":sum(x["shortwave_radiation"] for x in v)/1000,
                             "rlds_kwh_m2_day":float(np.mean([.8*5.670374419e-8*(x["temperature_2m"]+273.15)**4 for x in v]))*.024,
                             "sfcWind":float(np.mean([x["wind_speed_10m"] for x in v]))})
-                    good,bad=old_generate(old_targets,legacy_donors,site["lat"],site["lon"],seed)
+                    if pressure_refs is None:
+                        good,bad=old_generate(old_targets,legacy_donors,site["lat"],site["lon"],seed)
+                    else:
+                        good=[];bad=[]
+                        for t,old_target in zip(targets,old_targets):
+                            ds=[with_legacy_pressure(d,pressure_refs[t.date]) for d in legacy_donors]
+                            g,b=old_generate([old_target],ds,site["lat"],site["lon"],seed)
+                            good.extend(g);bad.extend(b)
                     converted=[]
                     for day,lw,info in good:
                         td=from_legacy_day(day)
                         T=np.asarray(td.T_K);P=np.asarray(td.pressure.values_Pa);q=np.asarray(td.q_kgkg)
                         converted.append({"date":td.date,"T_K":list(td.T_K),"p_Pa":list(td.pressure.values_Pa),"q_kgkg":q.tolist(),
                             "diagnostics":{"RH_source_pct":[x["relative_humidity_2m"] for x in day.vectors],"e_Pa":e_from_q(q,P).tolist()}})
+                    _assert_pressure_alignment(_hour_predictions(converted),pressure_refs)
                     predictions["members"].append({"country":country,"period":name,"method":"P93A_DAILY_CONTROL",
                         "seed":seed,"hourly":_hour_predictions(converted),"blocked":len(bad),"LW_proxy_not_qualified":True})
                 rich=[]
@@ -461,10 +525,23 @@ def run(cache_dir,out):
         "periods":PERIODS,"seeds":SEEDS,"observations_path":str(obs_path.resolve()),"observations_sha256":sha_file(obs_path),
         "predictions_path":str(pp.resolve()),"predictions_sha256":sha_file(pp),
         "policy_sha256":SolverPolicy(lower_bound_seconds=.25).fingerprint,
-        "protocol_sha256":pre["protocol_sha256"]}
+        "protocol_sha256":pre["protocol_sha256"],"repair_protocol_sha256":pre.get("repair_protocol_sha256"),"pressure_mode":pressure_mode,
+        "evaluation_role":"PREVIOUSLY_REVEALED_2021_REGRESSION_AFTER_REPAIR"}
     # Write seal before scorer opens the private observations.
     seal=cache.root/"frozen_scoring_manifest.json";seal.write_text(json.dumps(manifest,sort_keys=True))
     score=score_frozen(manifest)
+    score["pressure_diagnostics"]=score_pressure_diagnostics(predictions["pressure_diagnostics"],
+        read_sealed(manifest["observations_path"],manifest["observations_sha256"]))
+    score["pressure_diagnostic_blockers"]=predictions["pressure_diagnostic_blockers"]
+    score["pressure_source_provenance"]=[{k:v for k,v in x.items() if k!="hourly"}
+                                        for x in predictions["pressure_diagnostics"]]
+    score["pressure_mode"]=pressure_mode
+    score["previously_revealed_2021_windows"]=True
+    score["evaluation_role"]=manifest["evaluation_role"]
+    score["independent_accuracy"]="NOT_REESTABLISHED_AFTER_REPAIR_REVEALED_COHORT"
+    for comparison in score["comparisons"]:
+        comparison["evidence_role"]="REVEALED_REGRESSION_DIAGNOSTIC_NO_RENEWED_HOLDOUT"
+    score["daily_selection_conditioning"]=("INDEPENDENT_DAYS_BOTH_METHODS" if pressure_mode=="TARGET_DAY_GRID" else "LEGACY_SEQUENTIAL_DAYS")
     score["blocked_generation_cells"]=predictions["blocked"]
     score["sealed_manifest_sha256"]=sha_file(seal)
     score["algorithm_commit"]=algorithm
@@ -474,5 +551,6 @@ def run(cache_dir,out):
 
 if __name__=="__main__":
     ap=argparse.ArgumentParser();ap.add_argument("--cache",required=True);ap.add_argument("--out",required=True)
-    a=ap.parse_args();result=run(a.cache,a.out)
+    ap.add_argument("--pressure-mode",choices=("TARGET_DAY_GRID","DONOR_GRID_LEGACY"),default="TARGET_DAY_GRID")
+    a=ap.parse_args();result=run(a.cache,a.out,a.pressure_mode)
     print("P93B3_AT_DE_CH",json.dumps({"cells":len(result["cells"]),"independent_accuracy":result["independent_accuracy"]}))

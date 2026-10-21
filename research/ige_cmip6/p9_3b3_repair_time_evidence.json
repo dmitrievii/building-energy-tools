@@ -1,0 +1,146 @@
+{
+  "scope": "LOCAL_NATIVE_TIME_SOURCE_AUDIT_2013_2014",
+  "all_variable_intervals_verified": false,
+  "native_time_support": [
+    {
+      "variable": "tas",
+      "year": 2013,
+      "status": "TIME_SOURCE_BLOCKED_OR_UNQUALIFIED",
+      "interval_semantics_verified": false,
+      "reason": "P93B3_TIME_COORDINATES_NOT_READ",
+      "source_responses": [],
+      "source_errors": [
+        "HTTP Error 500: Internal Server Error",
+        "HTTP Error 500: Internal Server Error"
+      ]
+    },
+    {
+      "variable": "tasmin",
+      "year": 2013,
+      "status": "TIME_SOURCE_BLOCKED_METADATA_UNAVAILABLE",
+      "interval_semantics_verified": false
+    },
+    {
+      "variable": "tasmax",
+      "year": 2013,
+      "status": "TIME_SOURCE_BLOCKED_OR_UNQUALIFIED",
+      "interval_semantics_verified": false,
+      "reason": "P93B3_TIME_COORDINATES_NOT_READ",
+      "source_responses": [],
+      "source_errors": [
+        "HTTP Error 503: Service Unavailable",
+        "HTTP Error 500: Internal Server Error"
+      ]
+    },
+    {
+      "variable": "hurs",
+      "year": 2013,
+      "status": "TIME_SOURCE_BLOCKED_METADATA_UNAVAILABLE",
+      "interval_semantics_verified": false
+    },
+    {
+      "variable": "huss",
+      "year": 2013,
+      "status": "TIME_SOURCE_BLOCKED_METADATA_UNAVAILABLE",
+      "interval_semantics_verified": false
+    },
+    {
+      "variable": "tas",
+      "year": 2014,
+      "status": "TIME_SOURCE_BLOCKED_METADATA_UNAVAILABLE",
+      "interval_semantics_verified": false
+    },
+    {
+      "variable": "tasmin",
+      "year": 2014,
+      "status": "TIME_SOURCE_BLOCKED_METADATA_UNAVAILABLE",
+      "interval_semantics_verified": false
+    },
+    {
+      "variable": "tasmax",
+      "year": 2014,
+      "calendar": "365_day",
+      "units": "days since 1850-01-01 0:0:0.0",
+      "n_time_coordinates": 365,
+      "coordinate_first": 59860.5,
+      "coordinate_last": 60224.5,
+      "coordinate_role": "DAILY_NOON_LABEL_NOT_PROOF_OF_AVERAGING_WINDOW",
+      "coordinates_sha256": "9ca4e04ac25c0df2b7641747b59bb4fa4e9b6abea92f4565c093ee80466902e7",
+      "bounds_attribute": "time_bnds",
+      "bounds_variable_in_dds": false,
+      "status": "COORDINATES_READ_INTERVAL_BOUNDS_UNRESOLVED",
+      "interval_semantics_verified": false,
+      "bounds_status": "DANGLING_ATTRIBUTE_VARIABLE_ABSENT_IN_DDS",
+      "source_responses": [
+        {
+          "url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tasmax/tasmax_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc.ascii?time%5B0%3A1%3A364%5D",
+          "sha256": "310143519f6a8cb17c1fc57152718e60388e1192fce5d38a0ec101bd690a09e3"
+        },
+        {
+          "url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tasmax/tasmax_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc.dds",
+          "sha256": "0a0917b4b9aec0bbcfaa41f32df90ffd7a5323feb1c4399e4c8d58b19cb9bbc3"
+        }
+      ],
+      "source_errors": [
+        "HTTP Error 500: Internal Server Error"
+      ]
+    },
+    {
+      "variable": "hurs",
+      "year": 2014,
+      "calendar": "365_day",
+      "units": "days since 1850-01-01 0:0:0.0",
+      "n_time_coordinates": 365,
+      "coordinate_first": 59860.5,
+      "coordinate_last": 60224.5,
+      "coordinate_role": "DAILY_NOON_LABEL_NOT_PROOF_OF_AVERAGING_WINDOW",
+      "coordinates_sha256": "9ca4e04ac25c0df2b7641747b59bb4fa4e9b6abea92f4565c093ee80466902e7",
+      "bounds_attribute": null,
+      "bounds_variable_in_dds": false,
+      "status": "COORDINATES_READ_INTERVAL_BOUNDS_UNRESOLVED",
+      "interval_semantics_verified": false,
+      "bounds_status": "NO_VARIABLE_SPECIFIC_BOUNDS_ATTRIBUTE",
+      "source_responses": [
+        {
+          "url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/hurs/hurs_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc.ascii?time%5B0%3A1%3A364%5D",
+          "sha256": "fd0c7417bac816ffa6f9e95ce9c88ee7957352d159611ad6ab073b2f3df9b685"
+        },
+        {
+          "url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/hurs/hurs_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc.dds",
+          "sha256": "3b7e0add6a2a69c446bd0c871ac89e30fc0f9ea0b47c2bb332bb1fe08cdd5f93"
+        }
+      ],
+      "source_errors": []
+    },
+    {
+      "variable": "huss",
+      "year": 2014,
+      "calendar": "365_day",
+      "units": "days since 1850-01-01 0:0:0.0",
+      "n_time_coordinates": 365,
+      "coordinate_first": 59860.5,
+      "coordinate_last": 60224.5,
+      "coordinate_role": "DAILY_NOON_LABEL_NOT_PROOF_OF_AVERAGING_WINDOW",
+      "coordinates_sha256": "9ca4e04ac25c0df2b7641747b59bb4fa4e9b6abea92f4565c093ee80466902e7",
+      "bounds_attribute": null,
+      "bounds_variable_in_dds": false,
+      "status": "COORDINATES_READ_INTERVAL_BOUNDS_UNRESOLVED",
+      "interval_semantics_verified": false,
+      "bounds_status": "NO_VARIABLE_SPECIFIC_BOUNDS_ATTRIBUTE",
+      "source_responses": [
+        {
+          "url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/huss/huss_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc.ascii?time%5B0%3A1%3A364%5D",
+          "sha256": "7f2cc859995ea0bab39d86b65459d7cac25d97749b3a3bde2c9a46a27138dfc8"
+        },
+        {
+          "url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/huss/huss_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc.dds",
+          "sha256": "3348e4c9d965dc4e4bde991b356bb9e35640e87b6a6a4388372f8a1e1b5ee618"
+        }
+      ],
+      "source_errors": []
+    }
+  ],
+  "original_source_csv_sha256": "77ec2e5637eb487c3cedde4e0b660b31f8bd2606198e766255d75a985d61dfef",
+  "source_errors_retained": true,
+  "production_epw_ready": false
+}

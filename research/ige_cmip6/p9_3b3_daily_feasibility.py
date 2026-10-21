@@ -47,10 +47,13 @@ def bounded_mean_profile(prior, caps, mean, weights=None):
     return np.clip(prior + (lo + hi)/2, 0, c)
 
 
-def upper_rh_profile(T, P, Q, phase="WATER", formulation=MK, weights=None):
+def upper_rh_profile(T, P, Q, phase="WATER", formulation=MK, weights=None, q_caps=None):
     t, p = np.asarray(T, float), np.asarray(P, float)
     w = weights_for(len(t), weights)
-    c = q_saturation(t, p, formulation)
+    # A caller may relax T and q caps independently for a rigorous outer bound.
+    c = q_saturation(t, p, formulation) if q_caps is None else np.asarray(q_caps,float)
+    if c.shape!=t.shape or not np.all(np.isfinite(c)) or np.any((c<0)|(c>=1)):
+        raise ValueError("P93B3_INVALID_RELAXED_Q_CAPS")
     if Q < 0 or Q > w @ c + 1e-12:
         raise ValueError("P93B3_Q_EXCEEDS_FIXED_T_P_CAPACITY")
     if Q == 0:

@@ -1,0 +1,121 @@
+name: IGE P9.3B3 repair pressure alignment and conditional closure certificates
+on:
+  workflow_dispatch:
+  push:
+    branches: [research/ige-p9-3b3-closure-repair-20261021]
+    paths: [research/ige_cmip6/p9_3b3_repair_protocol.json]
+permissions:
+  contents: read
+  actions: read
+env:
+  OPENBLAS_NUM_THREADS: '1'
+  OMP_NUM_THREADS: '1'
+jobs:
+  independent_mathematical_contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 scipy==1.17.0
+      - name: New independent feasibility and thermodynamic oracles
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3b3_*.py' -v
+      - name: Unchanged prior scientific code contracts
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3a*.py' -q
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_2*.py' -q
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3b2*.py' -q
+          python research/ige_cmip6/p9_3b2d_canonical_pressure_fields.py
+      - name: Analytic quadrature refinement and symmetric pressure stress, not observed climate
+        run: python research/ige_cmip6/p9_3b3_development_benchmark.py --out outputs/p93b3-math/development_benchmark.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ige-p93b3-repair-synthetic-oracles-quadrature-NOT-station-accuracy
+          path: outputs/p93b3-math/
+          retention-days: 30
+
+  source_semantics_and_unchanged_year_regressions:
+    needs: independent_mathematical_contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 scipy==1.17.0
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          name: ige-p6-CanESM5-historical-1995-2014
+          path: inputs/p93b3-original
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          name: ige-p6-CanESM5-ssp245-2040-2059
+          path: inputs/p93b3-original-future
+      - name: Preserve original CSV and build source-registered archive
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib,json,zipfile
+          p=Path('inputs/p93b3-original')
+          sha=hashlib.sha256((p/'joint_daily_raw.csv').read_bytes()).hexdigest()
+          assert sha=='77ec2e5637eb487c3cedde4e0b660b31f8bd2606198e766255d75a985d61dfef'
+          with zipfile.ZipFile('inputs/p93b3-registered.zip','w',zipfile.ZIP_DEFLATED) as z:
+              for f in sorted(p.iterdir()):
+                  if f.is_file():z.write(f,f.name)
+          future=Path('inputs/p93b3-original-future')
+          expected='5cdc6bad425127a8d7a232a2cfd1c649306821f1e0ea8376b90839a8472d97b3'
+          assert hashlib.sha256((future/'joint_daily_raw.csv').read_bytes()).hexdigest()==expected
+          with zipfile.ZipFile('inputs/p93b3-registered-future.zip','w',zipfile.ZIP_DEFLATED) as z:
+              for f in sorted(future.iterdir()):
+                  if f.is_file():z.write(f,f.name)
+          Path('inputs/p93b3-semantics-manifest.json').write_text(json.dumps({'csv_path':str(p/'joint_daily_raw.csv')}))
+          PY
+      - name: Source metadata and original tas semantics audit, no data rewrite
+        run: python research/ige_cmip6/p9_3b3_run.py --mode audit-semantics --manifest inputs/p93b3-semantics-manifest.json --out outputs/p93b3-semantics
+      - name: Two already-revealed regression years and frozen operator ablations, NOT holdout tuning
+        run: python -u research/ige_cmip6/p9_3b3_regression_audit.py --original-canesm5-registered-zip inputs/p93b3-registered.zip --original-canesm5-future-zip inputs/p93b3-registered-future.zip --out outputs/p93b3-regressions
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 39493440318
+          github-token: ${{ github.token }}
+          name: ige-p93b3-original-NASA-semantics-and-2013-2014-REGRESSIONS-not-independent-validation
+          path: inputs/p93b3-immutable-first-run
+      - name: Verify all 727 prior exact states retained and all 5 diagnoses certified across every donor
+        run: python research/ige_cmip6/p9_3b3_repair_acceptance.py --baseline inputs/p93b3-immutable-first-run/p93b3-regressions/regression_audit.json --repaired outputs/p93b3-regressions/regression_audit.json --out outputs/p93b3-repair-acceptance.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ige-p93b3-repair-original-NASA-semantics-and-2013-2014-REGRESSIONS-not-independent-validation
+          path: |
+            outputs/p93b3-semantics/
+            outputs/p93b3-regressions/
+            outputs/p93b3-repair-acceptance.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  frozen_AT_DE_CH_station_comparison:
+    needs: independent_mathematical_contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 scipy==1.17.0
+      - name: 'Revealed 2021 regression: fixed target-day pressure, same-pressure control, all pressure variants retained'
+        run: python -u research/ige_cmip6/p9_3b3_at_de_ch_validation.py --cache inputs/p93b3-private-cache --out outputs/p93b3-station-aggregate --pressure-mode TARGET_DAY_GRID
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ige-p93b3-repair-frozen-AT-DE-CH-2021-T-p-RH-station-AGGREGATES-only
+          path: outputs/p93b3-station-aggregate/
+          if-no-files-found: warn
+          retention-days: 30

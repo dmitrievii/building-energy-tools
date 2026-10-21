@@ -10,7 +10,7 @@ import json
 import math
 import random
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass,replace
 
 import numpy as np
 
@@ -19,6 +19,7 @@ from p9_3b3_joint_solver import JointProblem,SolverPolicy,affine_temperature,sol
 from p9_3b3_pressure_reference import PressureReference
 from p9_3b3_source_reconciliation import reconcile_day
 from p9_3b3_thermodynamics import MK,q_from_e,q_saturation,saturation
+from p9_3b3_joint_bounds import joint_domain_bounds
 
 
 @dataclass(frozen=True)
@@ -48,7 +49,8 @@ def from_legacy_day(day,frame="ERA5_GRID_47.0_15.5",height_m=None):
     # source RH is retained by the original reader, not enforced as an identity.
     q=tuple(q_from_e(saturation([v["dew_point_2m"]+273.15 for v in day.vectors]),p))
     ref=PressureReference(p,"OPEN_METEO_DERIVED_ERA5_DONOR",frame,height_m=height_m,
-                          source_sha256=day.original_sha256,time_support="INSTANTANEOUS_SOURCE_HOURLY_NODES")
+                          source_sha256=day.original_sha256,time_support="INSTANTANEOUS_SOURCE_HOURLY_NODES",
+                          reference_date=day.date.isoformat())
     return ThermoDonor(day.date.isoformat(),t,q,ref,any(v["precipitation"]>0 for v in day.vectors))
 
 
@@ -71,7 +73,7 @@ def _choose(candidates,target,previous,seed):
     return cand[-1]
 
 
-def generate(targets,donors,seed=7313,policy=None,reconcile=False,wet_by_date=None):
+def generate(targets,donors,seed=7313,policy=None,reconcile=False,wet_by_date=None,pressure_by_date=None):
     policy=policy or SolverPolicy()
     if len({t.date for t in targets})!=len(targets) or not targets or not donors:
         raise ValueError("P93B3_EMPTY_OR_DUPLICATE_TARGETS")
@@ -81,6 +83,14 @@ def generate(targets,donors,seed=7313,policy=None,reconcile=False,wet_by_date=No
         raise ValueError("P93B3_DUPLICATE_DONOR_DATE")
     if {d.date[:4] for d in donors}&{t.date[:4] for t in targets}:
         raise ValueError("P93B3_TARGET_YEAR_DONOR_LEAKAGE")
+    if pressure_by_date is not None:
+        if set(pressure_by_date)!={t.date for t in targets}:
+            raise ValueError("P93B3_TARGET_PRESSURE_DATES_MUST_MATCH_EXACTLY")
+        for date,p in pressure_by_date.items():
+            if not isinstance(p,PressureReference) or p.mode=="OBSERVED_SITE_VALIDATION_ONLY":
+                raise ValueError("P93B3_OBSERVATIONS_FORBIDDEN_IN_GENERATION")
+            if p.reference_date!=date:
+                raise ValueError("P93B3_TARGET_PRESSURE_TIME_REFERENCE_MISMATCH")
     output=[];previous=None;previous_date=None
     for target in targets:
         if previous_date and (dt.date.fromisoformat(target.date)-dt.date.fromisoformat(previous_date)).days!=1:
@@ -89,6 +99,8 @@ def generate(targets,donors,seed=7313,policy=None,reconcile=False,wet_by_date=No
         started=time.monotonic()
         eligible=[d for d in donors if d.date[5:7]==target.date[5:7]
                   and (wet_by_date is None or d.wet==wet_by_date[target.date])]
+        if pressure_by_date is not None:
+            eligible=[replace(d,pressure=pressure_by_date[target.date]) for d in eligible]
         exact=[];ranked=[];screen_codes={}
         if target.semantics.rh_phase=="UNKNOWN":
             output.append({"date":target.date,"status":"SOURCE_BLOCKED","reason":"SOURCE_PHASE_UNKNOWN"})
@@ -115,7 +127,19 @@ def generate(targets,donors,seed=7313,policy=None,reconcile=False,wet_by_date=No
                     "status":"EXACT_DEFINED_OPERATORS","method":"FIXED_PROFILE_Q_RH_WITNESS"}
         else:
             trials=[]
-            for _,_,d in sorted(ranked)[:8]:
+            pending=[]
+            # All donors receive cheap sound outer bounds. The eight-NLP budget
+            # applies only to non-certified candidates, never to a union proof.
+            for _,_,d in sorted(ranked):
+                bound=joint_domain_bounds(np.full(len(d.T_K),target.Tmin_K),
+                    np.full(len(d.T_K),target.Tmax_K),d.pressure.values_Pa,
+                    target.q_mean_kgkg,target.RH_mean_pct,target.semantics.rh_phase,policy.formulation)
+                if bound["status"]=="CERTIFIED_INFEASIBLE":
+                    trials.append((d,{"status":"CERTIFIED_INFEASIBLE","reason":bound["reason"],
+                        "certificate":{**bound,"domain":"FULL_SOURCE_TMIN_TMAX_RELAXING_DONOR_PRIOR",
+                            "pressure_fingerprint":d.pressure.fingerprint}}))
+                else:pending.append(d)
+            for d in pending[:8]:
                 r=solve_day(d.T_K,d.q_kgkg,target,d.pressure,policy=policy)
                 trials.append((d,r))
             success=[x for x in trials if x[1]["status"]=="EXACT_DEFINED_OPERATORS"]
@@ -140,6 +164,8 @@ def generate(targets,donors,seed=7313,policy=None,reconcile=False,wet_by_date=No
                        "screen_codes":screen_codes,"elapsed_seconds":time.monotonic()-started,
                        "policy_sha256":policy.fingerprint,"production_epw_ready":False,
                        "operational_ready":False,"pressure_model_qualified":False})
+        result["pressure_time_alignment"]=("EXTERNAL_TARGET_DAY_FIXED" if pressure_by_date is not None
+                                            else "DONOR_DATE_NOT_SYNCHRONOUS_WITH_TARGET")
         output.append(result)
         previous=result if "T_K" in result else None
     counts={}

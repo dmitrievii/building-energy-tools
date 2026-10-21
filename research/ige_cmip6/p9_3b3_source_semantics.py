@@ -21,7 +21,7 @@ class SourceSemantics:
     temperature_operator: str
     rh_phase: str
     calendar: str = "noleap"
-    time_support: str = "DAILY_COORDINATE_NO_BOUNDS_UTC_ASSUMED"
+    time_support: str = "NATIVE_AVERAGING_BOUNDS_NOT_VERIFIED_UTC_DAY_ASSUMED"
     verified: bool = False
     source: str = "NEX_GDDP_CMIP6_V2_CANESM5"
 
@@ -100,10 +100,10 @@ def fetch_metadata(variable, year=2013, attempts=2):
                         "scenario": "historical", "version": "2.0"}
             if any(g.get(k) != v for k, v in expected.items()):
                 raise ValueError("P93B3_METADATA_SOURCE_IDENTITY_MISMATCH")
-            return {"status": "SOURCE_METADATA_READ", "variable": variable, "url": url, **parsed}
+            return {"status": "SOURCE_METADATA_READ", "variable": variable, "year":year, "url": url, **parsed}
         except (OSError, ValueError, UnicodeError) as exc:
             errors.append(f"{type(exc).__name__}: {exc}")
-    return {"status": "SOURCE_METADATA_BLOCKED", "variable": variable, "url": url, "errors": errors}
+    return {"status": "SOURCE_METADATA_BLOCKED", "variable": variable, "year":year, "url": url, "errors": errors}
 
 
 def audit_csv(path, expected_sha=REGISTERED_CSV_SHA):
