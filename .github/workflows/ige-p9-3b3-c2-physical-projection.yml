@@ -1,9 +1,6 @@
 name: IGE P9.3B3 C2 physical projection and explicit correction ledger
 on:
   workflow_dispatch:
-  push:
-    branches: [research/ige-p9-3b3-c2-projection-20261021]
-    paths: [research/ige_cmip6/p9_3b3_c2_protocol.json]
 permissions:
   contents: read
   actions: read

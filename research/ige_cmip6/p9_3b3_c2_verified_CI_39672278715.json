@@ -1,0 +1,4836 @@
+{
+  "phase": "P9.3B3_C2_CI_VERIFIED_20261021",
+  "run_id": 39672278715,
+  "run_attempt": 1,
+  "run_conclusion": "success",
+  "run_url": "https://github.com/dmitrievii/building-energy-tools/actions/runs/39672278715",
+  "tested_commit": "932288eb8742ec717e5807a23f19c3a9ce9f3e4d",
+  "branch": "research/ige-p9-3b3-c2-projection-20261021",
+  "created_at_UTC": "2026-10-21T20:40:06Z",
+  "completed_at_UTC": "2026-10-21T20:49:18Z",
+  "total_workflow_wall_seconds": 552,
+  "protocol_sha256": "fff038ab3d3ccb3024704cf8443280d1c41f337d65d6d80325b0ad469e7ba89b",
+  "implementation_manifest_sha256": "ecd53422bdc6f52a8b4b9dbdc727083fed25591d0a84717a9a8a329c4717234f",
+  "implementation_file_sha256": {
+    "p9_3b3_c2_projection.py": "47a1805a2d1f01b68c8532b5120319fc103d6cfa961c852f8f20057eb5bcf532",
+    "p9_3b3_c2_run.py": "be94e1f82609014cde55e12bbf42f8cdd82c2fc5961d13df23cdf9c26df4dfb9",
+    "p9_3b3_c2_stations.py": "90782dedaf9a362ce4cc79b89f1390d22cf31528de14e5138a10fe703e026cfe",
+    "p9_3b3_c2_validation.py": "f376c8d48e6d2167b06f103fdb3cf7234512a2fb086be4bc8d6ab2615c068315",
+    "test_p9_3b3_c2_pipeline.py": "1bc36debc0df69281b8e258529a2a35cfeba5c0a13715a1b47f58950962ee0b9",
+    "test_p9_3b3_c2_projection.py": "bf090df9454fde72e7760ce9276661b57e211873ccde067e71ab1d73b96e8b68"
+  },
+  "artifacts": [
+    {
+      "artifact_id": 12380815827,
+      "purpose": "contracts",
+      "archive_sha256": "0caac6ac821829d22fbf32949f055794d62f006f2717f58cdccb7f6f65737de5",
+      "files": {
+        "c2_comparison.json": "dd22aeced0dbdca75cbca8563279a62eccb14e8417afde9e5ce42d04d5373b6e"
+      }
+    },
+    {
+      "artifact_id": 12379773807,
+      "purpose": "regressions",
+      "archive_sha256": "81c31147aa90d6be69400eec32b47b927f8b32fc355d9a94080100254bcbc918",
+      "files": {
+        "c2_comparison.json": "7e305a4e4e43777cd6c6ee86a45d03e4131853141ece1e780c81d7f9ec34f6b1"
+      }
+    },
+    {
+      "artifact_id": 12381076690,
+      "purpose": "stations",
+      "archive_sha256": "b789caab7d4c856be558b320918f924c5e3b58c07106b3db368190e6992fe893",
+      "files": {
+        "c2_comparison.json": "1cbb4d45171567f911bc71fe0c08c5ec89e443d23da701830330d00889a8b775",
+        "c2_station_correction_ledger.json": "c8bdcb6a38bc59faddbb5d112f0ce4c05e37c3db1ee6baa58cc20892132a642e",
+        "c2_station_scores.json": "e5db7aad30dff18aa9540a748af0e325909c717291fbde6c9aea05ad462fa778",
+        "c2_station_sealed_manifest.json": "137dad03e4de2c18f08ce6f5e6e24677a89f2a222a9db93465a5224b87688fb6",
+        "c2_station_source_preflight.json": "d1fbfbb09b91f6750329fc13a3064a86c45b306f3cbc5c64366b4b0fe95cc709"
+      }
+    }
+  ],
+  "job_logs": {
+    "contracts": {
+      "job_id": 119472974250,
+      "conclusion": "success",
+      "sha256": "ceb70fb7830f89be7739d1fa172d409647dae2b48fdb08dd3124328023a419e7",
+      "unittest_counts": [
+        142,
+        14,
+        50,
+        8
+      ]
+    },
+    "regressions": {
+      "job_id": 119473476780,
+      "conclusion": "success",
+      "sha256": "bb0379720c2702678b3dd56ea5fa3ed20734a91d887709cb685cc686eb27f352",
+      "unittest_counts": []
+    },
+    "stations": {
+      "job_id": 119473477155,
+      "conclusion": "success",
+      "sha256": "486ea9b273a5534f90575dba3b50a0327ab88ed19c61be2dd015c833262cb542",
+      "unittest_counts": []
+    }
+  },
+  "total_unittest_tests": 214,
+  "new_C2_tests": 40,
+  "protected_controls_unchanged": 40,
+  "DWD_absolute_pressure_contract_pass": true,
+  "source_regression_counts": {
+    "EXACT_DEFINED_OPERATORS": 727,
+    "CERTIFIED_INFEASIBLE": 5
+  },
+  "source_comparison_summary": {
+    "HARD_Q_SOFT_RH": {
+      "total": 732,
+      "counts": {
+        "EXACT_SOURCE_PRESERVED": 727,
+        "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY": 4,
+        "CERTIFIED_HARD_CONSTRAINTS_INFEASIBLE": 1
+      },
+      "physically_valid_candidates": 731,
+      "source_modified_candidates": 4,
+      "budget_status_counts": {
+        "NO_SOURCE_CORRECTION_NEEDED": 727,
+        "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED": 4,
+        "NO_VALID_CANDIDATE": 1
+      },
+      "independent_accuracy": "NOT_TESTED",
+      "operational_ready": false,
+      "huss": {
+        "count": 731,
+        "max_abs_delta": 3.469446951953614e-17,
+        "mean_abs_delta": 4.692771099513182e-18,
+        "unit": "kg/kg"
+      },
+      "hurs": {
+        "count": 731,
+        "max_abs_delta": 10.663766991201008,
+        "mean_abs_delta": 0.037348485927520464,
+        "unit": "%"
+      }
+    },
+    "HARD_RH_SOFT_Q": {
+      "total": 732,
+      "counts": {
+        "EXACT_SOURCE_PRESERVED": 727,
+        "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY": 5
+      },
+      "physically_valid_candidates": 732,
+      "source_modified_candidates": 5,
+      "budget_status_counts": {
+        "NO_SOURCE_CORRECTION_NEEDED": 727,
+        "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED": 5
+      },
+      "independent_accuracy": "NOT_TESTED",
+      "operational_ready": false,
+      "huss": {
+        "count": 732,
+        "max_abs_delta": 0.0004855300520801723,
+        "mean_abs_delta": 2.027503449830272e-06,
+        "unit": "kg/kg"
+      },
+      "hurs": {
+        "count": 732,
+        "max_abs_delta": 2.5034030912252092e-05,
+        "mean_abs_delta": 3.4199704362944195e-08,
+        "unit": "%"
+      }
+    },
+    "BOTH_SOFT": {
+      "total": 732,
+      "counts": {
+        "EXACT_SOURCE_PRESERVED": 727,
+        "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY": 5
+      },
+      "physically_valid_candidates": 732,
+      "source_modified_candidates": 5,
+      "budget_status_counts": {
+        "NO_SOURCE_CORRECTION_NEEDED": 727,
+        "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED": 5
+      },
+      "independent_accuracy": "NOT_TESTED",
+      "operational_ready": false,
+      "huss": {
+        "count": 732,
+        "max_abs_delta": 0.00043637203636634307,
+        "mean_abs_delta": 1.914124859797464e-06,
+        "unit": "kg/kg"
+      },
+      "hurs": {
+        "count": 732,
+        "max_abs_delta": 0.7230854673348404,
+        "mean_abs_delta": 0.0022163651165920686,
+        "unit": "%"
+      }
+    }
+  },
+  "source_known_incompatible_day_results": [
+    {
+      "year": 2013,
+      "date": "2013-01-08",
+      "donor_date": "2019-01-01",
+      "mode": "HARD_Q_SOFT_RH",
+      "status": "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY",
+      "source_diagnostics": {
+        "q_mean_kgkg": 0.0016019869362935424,
+        "RH_mean_pp": 60.21186828613281,
+        "Tmin_K": 270.8193359375,
+        "Tmax_K": 279.19403076171875,
+        "tas_K": 275.0066833496094,
+        "temperature_operator": "DERIVED_TAS_MIDRANGE"
+      },
+      "journal": [
+        {
+          "variable": "huss",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": null,
+          "source_value": 0.0016019869362935424,
+          "achieved_value": 0.0016019869362935422,
+          "delta": -2.168404344971009e-19,
+          "unit": "kg/kg",
+          "delta_unit": "kg/kg",
+          "correction_applied": false,
+          "hard_constraint": true,
+          "delta_divided_by_design_scale": -2.1684043449710089e-16,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "247cf7edbabd7e81e9d6f7c5c226f39148f1d9542b546574dd794b7a87eb227e"
+        },
+        {
+          "variable": "hurs",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": "WATER_ICE",
+          "source_value": 60.21186828613281,
+          "achieved_value": 49.548101294931804,
+          "delta": -10.663766991201008,
+          "unit": "%",
+          "delta_unit": "percentage_point",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": -2.132753398240202,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "247cf7edbabd7e81e9d6f7c5c226f39148f1d9542b546574dd794b7a87eb227e"
+        }
+      ],
+      "objective": {
+        "data_metric": 2.274318528852561,
+        "shape_unweighted": 0.9224280371532708,
+        "shape_weighted": 0.009224280371532709,
+        "total": 2.2835428092240937
+      },
+      "hourly_adjustment_summary": {
+        "max_T_delta_from_affine_donor_K": 1.8037804236778356,
+        "rms_T_delta_from_affine_donor_K": 1.0261144794491714,
+        "max_q_delta_from_raw_donor_gkg": 4.3980312436092
+      }
+    },
+    {
+      "year": 2013,
+      "date": "2013-01-19",
+      "donor_date": "2019-01-06",
+      "mode": "HARD_Q_SOFT_RH",
+      "status": "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY",
+      "source_diagnostics": {
+        "q_mean_kgkg": 0.0023956536315381527,
+        "RH_mean_pp": 65.11164855957031,
+        "Tmin_K": 272.85540771484375,
+        "Tmax_K": 281.38983154296875,
+        "tas_K": 277.12261962890625,
+        "temperature_operator": "DERIVED_TAS_MIDRANGE"
+      },
+      "journal": [
+        {
+          "variable": "huss",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": null,
+          "source_value": 0.0023956536315381527,
+          "achieved_value": 0.002395653631538153,
+          "delta": 4.336808689942018e-19,
+          "unit": "kg/kg",
+          "delta_unit": "kg/kg",
+          "correction_applied": false,
+          "hard_constraint": true,
+          "delta_divided_by_design_scale": 4.3368086899420177e-16,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "7d14d3ec781792817635978f8d8ac03fd510f4870bd3f1b3917f5ce5af85955a"
+        },
+        {
+          "variable": "hurs",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": "WATER_ICE",
+          "source_value": 65.11164855957031,
+          "achieved_value": 60.808795467219575,
+          "delta": -4.3028530923507375,
+          "unit": "%",
+          "delta_unit": "percentage_point",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": -0.8605706184701475,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "7d14d3ec781792817635978f8d8ac03fd510f4870bd3f1b3917f5ce5af85955a"
+        }
+      ],
+      "objective": {
+        "data_metric": 0.3702908946870473,
+        "shape_unweighted": 1.0017895973889264,
+        "shape_weighted": 0.010017895973889263,
+        "total": 0.38030879066093654
+      },
+      "hourly_adjustment_summary": {
+        "max_T_delta_from_affine_donor_K": 2.0,
+        "rms_T_delta_from_affine_donor_K": 1.2180271464546923,
+        "max_q_delta_from_raw_donor_gkg": 3.8106741535766826
+      }
+    },
+    {
+      "year": 2013,
+      "date": "2013-01-20",
+      "donor_date": "2019-01-01",
+      "mode": "HARD_Q_SOFT_RH",
+      "status": "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY",
+      "source_diagnostics": {
+        "q_mean_kgkg": 0.00215331744402647,
+        "RH_mean_pp": 61.39644241333008,
+        "Tmin_K": 272.53912353515625,
+        "Tmax_K": 281.36065673828125,
+        "tas_K": 276.94989013671875,
+        "temperature_operator": "DERIVED_TAS_MIDRANGE"
+      },
+      "journal": [
+        {
+          "variable": "huss",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": null,
+          "source_value": 0.00215331744402647,
+          "achieved_value": 0.00215331744402647,
+          "delta": 0.0,
+          "unit": "kg/kg",
+          "delta_unit": "kg/kg",
+          "correction_applied": false,
+          "hard_constraint": true,
+          "delta_divided_by_design_scale": 0.0,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "247cf7edbabd7e81e9d6f7c5c226f39148f1d9542b546574dd794b7a87eb227e"
+        },
+        {
+          "variable": "hurs",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": "WATER_ICE",
+          "source_value": 61.39644241333008,
+          "achieved_value": 57.60771406169197,
+          "delta": -3.788728351638106,
+          "unit": "%",
+          "delta_unit": "percentage_point",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": -0.7577456703276212,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "247cf7edbabd7e81e9d6f7c5c226f39148f1d9542b546574dd794b7a87eb227e"
+        }
+      ],
+      "objective": {
+        "data_metric": 0.287089250450128,
+        "shape_unweighted": 0.9036817342213034,
+        "shape_weighted": 0.009036817342213035,
+        "total": 0.296126067792341
+      },
+      "hourly_adjustment_summary": {
+        "max_T_delta_from_affine_donor_K": 1.9000225360576337,
+        "rms_T_delta_from_affine_donor_K": 1.080864381031825,
+        "max_q_delta_from_raw_donor_gkg": 4.398031243609203
+      }
+    },
+    {
+      "year": 2013,
+      "date": "2013-01-26",
+      "donor_date": "2019-01-06",
+      "mode": "HARD_Q_SOFT_RH",
+      "status": "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY",
+      "source_diagnostics": {
+        "q_mean_kgkg": 0.0017245291965082288,
+        "RH_mean_pp": 58.73958969116211,
+        "Tmin_K": 271.29388427734375,
+        "Tmax_K": 280.45697021484375,
+        "tas_K": 275.87542724609375,
+        "temperature_operator": "DERIVED_TAS_MIDRANGE"
+      },
+      "journal": [
+        {
+          "variable": "huss",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": null,
+          "source_value": 0.0017245291965082288,
+          "achieved_value": 0.0017245291965082288,
+          "delta": 0.0,
+          "unit": "kg/kg",
+          "delta_unit": "kg/kg",
+          "correction_applied": false,
+          "hard_constraint": true,
+          "delta_divided_by_design_scale": 0.0,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "7d14d3ec781792817635978f8d8ac03fd510f4870bd3f1b3917f5ce5af85955a"
+        },
+        {
+          "variable": "hurs",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": "WATER_ICE",
+          "source_value": 58.73958969116211,
+          "achieved_value": 50.19321994739834,
+          "delta": -8.54636974376377,
+          "unit": "%",
+          "delta_unit": "percentage_point",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": -1.7092739487527537,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "7d14d3ec781792817635978f8d8ac03fd510f4870bd3f1b3917f5ce5af85955a"
+        }
+      ],
+      "objective": {
+        "data_metric": 1.460808715942416,
+        "shape_unweighted": 1.228523576181294,
+        "shape_weighted": 0.012285235761812941,
+        "total": 1.4730939517042287
+      },
+      "hourly_adjustment_summary": {
+        "max_T_delta_from_affine_donor_K": 2.0,
+        "rms_T_delta_from_affine_donor_K": 1.091203777401878,
+        "max_q_delta_from_raw_donor_gkg": 3.8106741535766826
+      }
+    },
+    {
+      "year": 2013,
+      "date": "2013-01-08",
+      "donor_date": "2019-01-01",
+      "mode": "HARD_RH_SOFT_Q",
+      "status": "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY",
+      "source_diagnostics": {
+        "q_mean_kgkg": 0.0016019869362935424,
+        "RH_mean_pp": 60.21186828613281,
+        "Tmin_K": 270.8193359375,
+        "Tmax_K": 279.19403076171875,
+        "tas_K": 275.0066833496094,
+        "temperature_operator": "DERIVED_TAS_MIDRANGE"
+      },
+      "journal": [
+        {
+          "variable": "huss",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": null,
+          "source_value": 0.0016019869362935424,
+          "achieved_value": 0.0019507380239905312,
+          "delta": 0.0003487510876969888,
+          "unit": "kg/kg",
+          "delta_unit": "kg/kg",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": 0.34875108769698876,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "247cf7edbabd7e81e9d6f7c5c226f39148f1d9542b546574dd794b7a87eb227e"
+        },
+        {
+          "variable": "hurs",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": "WATER_ICE",
+          "source_value": 60.21186828613281,
+          "achieved_value": 60.21186828601805,
+          "delta": -1.1475975725261378e-10,
+          "unit": "%",
+          "delta_unit": "percentage_point",
+          "correction_applied": false,
+          "hard_constraint": true,
+          "delta_divided_by_design_scale": -2.2951951450522755e-11,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "247cf7edbabd7e81e9d6f7c5c226f39148f1d9542b546574dd794b7a87eb227e"
+        }
+      ],
+      "objective": {
+        "data_metric": 0.06081366058491645,
+        "shape_unweighted": 0.8285569602834912,
+        "shape_weighted": 0.008285569602834912,
+        "total": 0.06909923018775135
+      },
+      "hourly_adjustment_summary": {
+        "max_T_delta_from_affine_donor_K": 1.8037804236778356,
+        "rms_T_delta_from_affine_donor_K": 1.0260933085176183,
+        "max_q_delta_from_raw_donor_gkg": 4.398031243609203
+      }
+    },
+    {
+      "year": 2013,
+      "date": "2013-01-19",
+      "donor_date": "2019-01-06",
+      "mode": "HARD_RH_SOFT_Q",
+      "status": "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY",
+      "source_diagnostics": {
+        "q_mean_kgkg": 0.0023956536315381527,
+        "RH_mean_pp": 65.11164855957031,
+        "Tmin_K": 272.85540771484375,
+        "Tmax_K": 281.38983154296875,
+        "tas_K": 277.12261962890625,
+        "temperature_operator": "DERIVED_TAS_MIDRANGE"
+      },
+      "journal": [
+        {
+          "variable": "huss",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": null,
+          "source_value": 0.0023956536315381527,
+          "achieved_value": 0.002583837088318435,
+          "delta": 0.0001881834567802822,
+          "unit": "kg/kg",
+          "delta_unit": "kg/kg",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": 0.18818345678028217,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "7d14d3ec781792817635978f8d8ac03fd510f4870bd3f1b3917f5ce5af85955a"
+        },
+        {
+          "variable": "hurs",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": "WATER_ICE",
+          "source_value": 65.11164855957031,
+          "achieved_value": 65.11164855957033,
+          "delta": 1.4210854715202004e-14,
+          "unit": "%",
+          "delta_unit": "percentage_point",
+          "correction_applied": false,
+          "hard_constraint": true,
+          "delta_divided_by_design_scale": 2.842170943040401e-15,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "7d14d3ec781792817635978f8d8ac03fd510f4870bd3f1b3917f5ce5af85955a"
+        }
+      ],
+      "objective": {
+        "data_metric": 0.017706506702888168,
+        "shape_unweighted": 1.0266237997040137,
+        "shape_weighted": 0.010266237997040137,
+        "total": 0.027972744699928304
+      },
+      "hourly_adjustment_summary": {
+        "max_T_delta_from_affine_donor_K": 2.0,
+        "rms_T_delta_from_affine_donor_K": 1.2845564873674538,
+        "max_q_delta_from_raw_donor_gkg": 3.8106741535766826
+      }
+    },
+    {
+      "year": 2013,
+      "date": "2013-01-20",
+      "donor_date": "2019-01-01",
+      "mode": "HARD_RH_SOFT_Q",
+      "status": "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY",
+      "source_diagnostics": {
+        "q_mean_kgkg": 0.00215331744402647,
+        "RH_mean_pp": 61.39644241333008,
+        "Tmin_K": 272.53912353515625,
+        "Tmax_K": 281.36065673828125,
+        "tas_K": 276.94989013671875,
+        "temperature_operator": "DERIVED_TAS_MIDRANGE"
+      },
+      "journal": [
+        {
+          "variable": "huss",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": null,
+          "source_value": 0.00215331744402647,
+          "achieved_value": 0.0022968023466701155,
+          "delta": 0.0001434849026436453,
+          "unit": "kg/kg",
+          "delta_unit": "kg/kg",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": 0.1434849026436453,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "247cf7edbabd7e81e9d6f7c5c226f39148f1d9542b546574dd794b7a87eb227e"
+        },
+        {
+          "variable": "hurs",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": "WATER_ICE",
+          "source_value": 61.39644241333008,
+          "achieved_value": 61.39644241332515,
+          "delta": -4.931166586175095e-12,
+          "unit": "%",
+          "delta_unit": "percentage_point",
+          "correction_applied": false,
+          "hard_constraint": true,
+          "delta_divided_by_design_scale": -9.862333172350191e-13,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "247cf7edbabd7e81e9d6f7c5c226f39148f1d9542b546574dd794b7a87eb227e"
+        }
+      ],
+      "objective": {
+        "data_metric": 0.010293958643328185,
+        "shape_unweighted": 0.8705167019561442,
+        "shape_weighted": 0.008705167019561443,
+        "total": 0.018999125662889627
+      },
+      "hourly_adjustment_summary": {
+        "max_T_delta_from_affine_donor_K": 1.9000225360576337,
+        "rms_T_delta_from_affine_donor_K": 1.080881956025225,
+        "max_q_delta_from_raw_donor_gkg": 4.398031243609203
+      }
+    },
+    {
+      "year": 2013,
+      "date": "2013-01-26",
+      "donor_date": "2019-01-06",
+      "mode": "HARD_RH_SOFT_Q",
+      "status": "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY",
+      "source_diagnostics": {
+        "q_mean_kgkg": 0.0017245291965082288,
+        "RH_mean_pp": 58.73958969116211,
+        "Tmin_K": 271.29388427734375,
+        "Tmax_K": 280.45697021484375,
+        "tas_K": 275.87542724609375,
+        "temperature_operator": "DERIVED_TAS_MIDRANGE"
+      },
+      "journal": [
+        {
+          "variable": "huss",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": null,
+          "source_value": 0.0017245291965082288,
+          "achieved_value": 0.0020427122225794695,
+          "delta": 0.00031818302607124075,
+          "unit": "kg/kg",
+          "delta_unit": "kg/kg",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": 0.3181830260712407,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "7d14d3ec781792817635978f8d8ac03fd510f4870bd3f1b3917f5ce5af85955a"
+        },
+        {
+          "variable": "hurs",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": "WATER_ICE",
+          "source_value": 58.73958969116211,
+          "achieved_value": 58.73958969116212,
+          "delta": 7.105427357601002e-15,
+          "unit": "%",
+          "delta_unit": "percentage_point",
+          "correction_applied": false,
+          "hard_constraint": true,
+          "delta_divided_by_design_scale": 1.4210854715202005e-15,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "7d14d3ec781792817635978f8d8ac03fd510f4870bd3f1b3917f5ce5af85955a"
+        }
+      ],
+      "objective": {
+        "data_metric": 0.050620219039925946,
+        "shape_unweighted": 0.946476336030893,
+        "shape_weighted": 0.00946476336030893,
+        "total": 0.060084982400234875
+      },
+      "hourly_adjustment_summary": {
+        "max_T_delta_from_affine_donor_K": 2.0,
+        "rms_T_delta_from_affine_donor_K": 1.2443366059115453,
+        "max_q_delta_from_raw_donor_gkg": 3.810674153576681
+      }
+    },
+    {
+      "year": 2013,
+      "date": "2013-01-08",
+      "donor_date": "2019-01-01",
+      "mode": "BOTH_SOFT",
+      "status": "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY",
+      "source_diagnostics": {
+        "q_mean_kgkg": 0.0016019869362935424,
+        "RH_mean_pp": 60.21186828613281,
+        "Tmin_K": 270.8193359375,
+        "Tmax_K": 279.19403076171875,
+        "tas_K": 275.0066833496094,
+        "temperature_operator": "DERIVED_TAS_MIDRANGE"
+      },
+      "journal": [
+        {
+          "variable": "huss",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": null,
+          "source_value": 0.0016019869362935424,
+          "achieved_value": 0.001941680858566483,
+          "delta": 0.0003396939222729406,
+          "unit": "kg/kg",
+          "delta_unit": "kg/kg",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": 0.3396939222729406,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "247cf7edbabd7e81e9d6f7c5c226f39148f1d9542b546574dd794b7a87eb227e"
+        },
+        {
+          "variable": "hurs",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": "WATER_ICE",
+          "source_value": 60.21186828613281,
+          "achieved_value": 59.93444749981222,
+          "delta": -0.2774207863205902,
+          "unit": "%",
+          "delta_unit": "percentage_point",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": -0.05548415726411804,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "247cf7edbabd7e81e9d6f7c5c226f39148f1d9542b546574dd794b7a87eb227e"
+        }
+      ],
+      "objective": {
+        "data_metric": 0.05923522626824207,
+        "shape_unweighted": 0.828340181967417,
+        "shape_weighted": 0.00828340181967417,
+        "total": 0.06751862808791624
+      },
+      "hourly_adjustment_summary": {
+        "max_T_delta_from_affine_donor_K": 1.8037804236778356,
+        "rms_T_delta_from_affine_donor_K": 1.0261416406905057,
+        "max_q_delta_from_raw_donor_gkg": 4.398031243609203
+      }
+    },
+    {
+      "year": 2013,
+      "date": "2013-01-19",
+      "donor_date": "2019-01-06",
+      "mode": "BOTH_SOFT",
+      "status": "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY",
+      "source_diagnostics": {
+        "q_mean_kgkg": 0.0023956536315381527,
+        "RH_mean_pp": 65.11164855957031,
+        "Tmin_K": 272.85540771484375,
+        "Tmax_K": 281.38983154296875,
+        "tas_K": 277.12261962890625,
+        "temperature_operator": "DERIVED_TAS_MIDRANGE"
+      },
+      "journal": [
+        {
+          "variable": "huss",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": null,
+          "source_value": 0.0023956536315381527,
+          "achieved_value": 0.0025746123179034254,
+          "delta": 0.00017895868636527267,
+          "unit": "kg/kg",
+          "delta_unit": "kg/kg",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": 0.17895868636527268,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "7d14d3ec781792817635978f8d8ac03fd510f4870bd3f1b3917f5ce5af85955a"
+        },
+        {
+          "variable": "hurs",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": "WATER_ICE",
+          "source_value": 65.11164855957031,
+          "achieved_value": 64.90778966446672,
+          "delta": -0.20385889510359334,
+          "unit": "%",
+          "delta_unit": "percentage_point",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": -0.04077177902071867,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "7d14d3ec781792817635978f8d8ac03fd510f4870bd3f1b3917f5ce5af85955a"
+        }
+      ],
+      "objective": {
+        "data_metric": 0.016844274695049174,
+        "shape_unweighted": 1.0247969858177985,
+        "shape_weighted": 0.010247969858177986,
+        "total": 0.02709224455322716
+      },
+      "hourly_adjustment_summary": {
+        "max_T_delta_from_affine_donor_K": 2.0,
+        "rms_T_delta_from_affine_donor_K": 1.2845572771651594,
+        "max_q_delta_from_raw_donor_gkg": 3.810674153576682
+      }
+    },
+    {
+      "year": 2013,
+      "date": "2013-01-20",
+      "donor_date": "2019-01-01",
+      "mode": "BOTH_SOFT",
+      "status": "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY",
+      "source_diagnostics": {
+        "q_mean_kgkg": 0.00215331744402647,
+        "RH_mean_pp": 61.39644241333008,
+        "Tmin_K": 272.53912353515625,
+        "Tmax_K": 281.36065673828125,
+        "tas_K": 276.94989013671875,
+        "temperature_operator": "DERIVED_TAS_MIDRANGE"
+      },
+      "journal": [
+        {
+          "variable": "huss",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": null,
+          "source_value": 0.00215331744402647,
+          "achieved_value": 0.0022918385807144345,
+          "delta": 0.0001385211366879643,
+          "unit": "kg/kg",
+          "delta_unit": "kg/kg",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": 0.13852113668796429,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "247cf7edbabd7e81e9d6f7c5c226f39148f1d9542b546574dd794b7a87eb227e"
+        },
+        {
+          "variable": "hurs",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": "WATER_ICE",
+          "source_value": 61.39644241333008,
+          "achieved_value": 61.2640584589166,
+          "delta": -0.13238395441347706,
+          "unit": "%",
+          "delta_unit": "percentage_point",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": -0.02647679088269541,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "247cf7edbabd7e81e9d6f7c5c226f39148f1d9542b546574dd794b7a87eb227e"
+        }
+      ],
+      "objective": {
+        "data_metric": 0.009944562882385833,
+        "shape_unweighted": 0.8691108975662338,
+        "shape_weighted": 0.008691108975662339,
+        "total": 0.018635671858048174
+      },
+      "hourly_adjustment_summary": {
+        "max_T_delta_from_affine_donor_K": 1.9000225360576337,
+        "rms_T_delta_from_affine_donor_K": 1.0808410613477448,
+        "max_q_delta_from_raw_donor_gkg": 4.398031243609203
+      }
+    },
+    {
+      "year": 2013,
+      "date": "2013-01-26",
+      "donor_date": "2019-01-06",
+      "mode": "BOTH_SOFT",
+      "status": "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY",
+      "source_diagnostics": {
+        "q_mean_kgkg": 0.0017245291965082288,
+        "RH_mean_pp": 58.73958969116211,
+        "Tmin_K": 271.29388427734375,
+        "Tmax_K": 280.45697021484375,
+        "tas_K": 275.87542724609375,
+        "temperature_operator": "DERIVED_TAS_MIDRANGE"
+      },
+      "journal": [
+        {
+          "variable": "huss",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": null,
+          "source_value": 0.0017245291965082288,
+          "achieved_value": 0.0020321228121840218,
+          "delta": 0.000307593615675793,
+          "unit": "kg/kg",
+          "delta_unit": "kg/kg",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": 0.307593615675793,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "7d14d3ec781792817635978f8d8ac03fd510f4870bd3f1b3917f5ce5af85955a"
+        },
+        {
+          "variable": "hurs",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": "WATER_ICE",
+          "source_value": 58.73958969116211,
+          "achieved_value": 58.453984563053055,
+          "delta": -0.28560512810905436,
+          "unit": "%",
+          "delta_unit": "percentage_point",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": -0.05712102562181087,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "7d14d3ec781792817635978f8d8ac03fd510f4870bd3f1b3917f5ce5af85955a"
+        }
+      ],
+      "objective": {
+        "data_metric": 0.04893832198629773,
+        "shape_unweighted": 0.94572451811059,
+        "shape_weighted": 0.0094572451811059,
+        "total": 0.05839556716740363
+      },
+      "hourly_adjustment_summary": {
+        "max_T_delta_from_affine_donor_K": 2.0,
+        "rms_T_delta_from_affine_donor_K": 1.2443394364224811,
+        "max_q_delta_from_raw_donor_gkg": 3.8106741535766817
+      }
+    },
+    {
+      "year": 2014,
+      "date": "2014-12-02",
+      "donor_date": "2019-12-01",
+      "mode": "HARD_Q_SOFT_RH",
+      "status": "CERTIFIED_HARD_CONSTRAINTS_INFEASIBLE",
+      "source_diagnostics": {
+        "q_mean_kgkg": 0.00742800347507,
+        "RH_mean_pp": 93.8330307006836,
+        "Tmin_K": 278.71697998046875,
+        "Tmax_K": 282.60772705078125,
+        "tas_K": 280.662353515625,
+        "temperature_operator": "DERIVED_TAS_MIDRANGE"
+      },
+      "journal": [
+        {
+          "variable": "huss",
+          "source_value": 0.00742800347507,
+          "achieved_value": null,
+          "delta": null,
+          "unit": "kg/kg",
+          "delta_unit": "kg/kg",
+          "correction_applied": false,
+          "reason": "NO_VALIDATED_CANDIDATE_AVAILABLE"
+        },
+        {
+          "variable": "hurs",
+          "source_value": 93.8330307006836,
+          "achieved_value": null,
+          "delta": null,
+          "unit": "%",
+          "delta_unit": "percentage_point",
+          "correction_applied": false,
+          "reason": "NO_VALIDATED_CANDIDATE_AVAILABLE"
+        }
+      ],
+      "reason": "HARD_Q_ABOVE_DONOR_T_DOMAIN_CAPACITY",
+      "q_capacity_upper": 0.00732252361444074
+    },
+    {
+      "year": 2014,
+      "date": "2014-12-02",
+      "donor_date": "2019-12-01",
+      "mode": "HARD_RH_SOFT_Q",
+      "status": "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY",
+      "source_diagnostics": {
+        "q_mean_kgkg": 0.00742800347507,
+        "RH_mean_pp": 93.8330307006836,
+        "Tmin_K": 278.71697998046875,
+        "Tmax_K": 282.60772705078125,
+        "tas_K": 280.662353515625,
+        "temperature_operator": "DERIVED_TAS_MIDRANGE"
+      },
+      "journal": [
+        {
+          "variable": "huss",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": null,
+          "source_value": 0.00742800347507,
+          "achieved_value": 0.006942473422989827,
+          "delta": -0.0004855300520801723,
+          "unit": "kg/kg",
+          "delta_unit": "kg/kg",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": -0.48553005208017225,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "9c4cefee46770418d104fa591677e5df460818e593b004c2fde4e7b6dd152e2a"
+        },
+        {
+          "variable": "hurs",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": "WATER_ICE",
+          "source_value": 93.8330307006836,
+          "achieved_value": 93.83303070068355,
+          "delta": -4.263256414560601e-14,
+          "unit": "%",
+          "delta_unit": "percentage_point",
+          "correction_applied": false,
+          "hard_constraint": true,
+          "delta_divided_by_design_scale": -8.526512829121202e-15,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "9c4cefee46770418d104fa591677e5df460818e593b004c2fde4e7b6dd152e2a"
+        }
+      ],
+      "objective": {
+        "data_metric": 0.11786971573648698,
+        "shape_unweighted": 1.9949071636062503,
+        "shape_weighted": 0.019949071636062504,
+        "total": 0.1378187873725495
+      },
+      "hourly_adjustment_summary": {
+        "max_T_delta_from_affine_donor_K": 2.0,
+        "rms_T_delta_from_affine_donor_K": 1.5333576828872644,
+        "max_q_delta_from_raw_donor_gkg": 4.213662284868319
+      }
+    },
+    {
+      "year": 2014,
+      "date": "2014-12-02",
+      "donor_date": "2019-12-01",
+      "mode": "BOTH_SOFT",
+      "status": "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY",
+      "source_diagnostics": {
+        "q_mean_kgkg": 0.00742800347507,
+        "RH_mean_pp": 93.8330307006836,
+        "Tmin_K": 278.71697998046875,
+        "Tmax_K": 282.60772705078125,
+        "tas_K": 280.662353515625,
+        "temperature_operator": "DERIVED_TAS_MIDRANGE"
+      },
+      "journal": [
+        {
+          "variable": "huss",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": null,
+          "source_value": 0.00742800347507,
+          "achieved_value": 0.006991631438703657,
+          "delta": -0.00043637203636634307,
+          "unit": "kg/kg",
+          "delta_unit": "kg/kg",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": -0.4363720363663431,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "9c4cefee46770418d104fa591677e5df460818e593b004c2fde4e7b6dd152e2a"
+        },
+        {
+          "variable": "hurs",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": "WATER_ICE",
+          "source_value": 93.8330307006836,
+          "achieved_value": 94.55611616801843,
+          "delta": 0.7230854673348404,
+          "unit": "%",
+          "delta_unit": "percentage_point",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": 0.14461709346696808,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "9c4cefee46770418d104fa591677e5df460818e593b004c2fde4e7b6dd152e2a"
+        }
+      ],
+      "objective": {
+        "data_metric": 0.10566732892267185,
+        "shape_unweighted": 2.0425898201632697,
+        "shape_weighted": 0.020425898201632698,
+        "total": 0.12609322712430454
+      },
+      "hourly_adjustment_summary": {
+        "max_T_delta_from_affine_donor_K": 2.0,
+        "rms_T_delta_from_affine_donor_K": 1.5333576828872644,
+        "max_q_delta_from_raw_donor_gkg": 4.213662284868319
+      }
+    }
+  ],
+  "station_strict_counts_420_executions": {
+    "EXACT_DEFINED_OPERATORS": 415,
+    "UNRESOLVED": 5
+  },
+  "station_C2_counts_per_mode_420_executions": {
+    "HARD_Q_SOFT_RH": {
+      "EXACT_SOURCE_PRESERVED": 415,
+      "CERTIFIED_T_DOMAIN_INFEASIBLE": 5
+    },
+    "HARD_RH_SOFT_Q": {
+      "EXACT_SOURCE_PRESERVED": 415,
+      "CERTIFIED_T_DOMAIN_INFEASIBLE": 5
+    },
+    "BOTH_SOFT": {
+      "EXACT_SOURCE_PRESERVED": 415,
+      "CERTIFIED_T_DOMAIN_INFEASIBLE": 5
+    }
+  },
+  "station_unique_dates_with_failed_generation": [
+    {
+      "country": "CH",
+      "date": "2021-02-13",
+      "donor": "2019-02-04",
+      "five_seeds_not_five_independent_dates": true
+    }
+  ],
+  "station_expected_members": 126,
+  "station_generated_members": 126,
+  "station_expected_score_cells": 630,
+  "station_score_status_counts": {
+    "SCORED_REVEALED_LIMITED_DIAGNOSTIC": 630
+  },
+  "station_source_blockers": [],
+  "station_score_matched_hour_counts": {
+    "336": 420,
+    "310": 100,
+    "335": 110
+  },
+  "station_pressure_gate_counts_across_members": {
+    "FAIL_THIS_CELL": 126
+  },
+  "station_primary_seed_scores": [
+    {
+      "country": "AT",
+      "period": "winter",
+      "method": "B3_STRICT",
+      "seed": 7313,
+      "scores": {
+        "T2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.7887378881500233,
+          "RMSE": 2.374876022174751,
+          "bias": -1.0345238095237714,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "RH2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 9.143076647287524,
+          "RMSE": 13.594387246591303,
+          "bias": 1.637323531140153,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "p_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 11.030952380952382,
+          "RMSE": 11.043337250081954,
+          "bias": -11.030952380952382,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC",
+          "pressure_accuracy_gate": "FAIL_THIS_CELL"
+        },
+        "e_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.7061921712683914,
+          "RMSE": 1.0526488637328304,
+          "bias": -0.25295541593490883,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "q_gkg": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.444836939300312,
+          "RMSE": 0.6750308481518461,
+          "bias": -0.1252920683382484,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        }
+      }
+    },
+    {
+      "country": "AT",
+      "period": "winter",
+      "method": "HARD_Q_SOFT_RH",
+      "seed": 7313,
+      "scores": {
+        "T2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.7887378881500233,
+          "RMSE": 2.374876022174751,
+          "bias": -1.0345238095237714,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "RH2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 9.143076647287524,
+          "RMSE": 13.594387246591303,
+          "bias": 1.637323531140153,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "p_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 11.030952380952382,
+          "RMSE": 11.043337250081954,
+          "bias": -11.030952380952382,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC",
+          "pressure_accuracy_gate": "FAIL_THIS_CELL"
+        },
+        "e_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.7061921712683914,
+          "RMSE": 1.0526488637328304,
+          "bias": -0.25295541593490883,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "q_gkg": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.444836939300312,
+          "RMSE": 0.6750308481518461,
+          "bias": -0.1252920683382484,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        }
+      }
+    },
+    {
+      "country": "AT",
+      "period": "winter",
+      "method": "HARD_RH_SOFT_Q",
+      "seed": 7313,
+      "scores": {
+        "T2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.7887378881500233,
+          "RMSE": 2.374876022174751,
+          "bias": -1.0345238095237714,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "RH2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 9.143076647287524,
+          "RMSE": 13.594387246591303,
+          "bias": 1.637323531140153,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "p_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 11.030952380952382,
+          "RMSE": 11.043337250081954,
+          "bias": -11.030952380952382,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC",
+          "pressure_accuracy_gate": "FAIL_THIS_CELL"
+        },
+        "e_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.7061921712683914,
+          "RMSE": 1.0526488637328304,
+          "bias": -0.25295541593490883,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "q_gkg": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.444836939300312,
+          "RMSE": 0.6750308481518461,
+          "bias": -0.1252920683382484,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        }
+      }
+    },
+    {
+      "country": "AT",
+      "period": "winter",
+      "method": "BOTH_SOFT",
+      "seed": 7313,
+      "scores": {
+        "T2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.7887378881500233,
+          "RMSE": 2.374876022174751,
+          "bias": -1.0345238095237714,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "RH2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 9.143076647287524,
+          "RMSE": 13.594387246591303,
+          "bias": 1.637323531140153,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "p_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 11.030952380952382,
+          "RMSE": 11.043337250081954,
+          "bias": -11.030952380952382,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC",
+          "pressure_accuracy_gate": "FAIL_THIS_CELL"
+        },
+        "e_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.7061921712683914,
+          "RMSE": 1.0526488637328304,
+          "bias": -0.25295541593490883,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "q_gkg": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.444836939300312,
+          "RMSE": 0.6750308481518461,
+          "bias": -0.1252920683382484,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        }
+      }
+    },
+    {
+      "country": "AT",
+      "period": "winter",
+      "method": "FULL_HOURLY_ERA5_RICH_REFERENCE",
+      "seed": 7313,
+      "scores": {
+        "T2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.3208333333333335,
+          "RMSE": 1.7607154930933755,
+          "bias": -1.0345238095238094,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "RH2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 5.546101034772872,
+          "RMSE": 8.181047866080375,
+          "bias": 1.6373235311401761,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "p_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 11.030952380952382,
+          "RMSE": 11.043337250081954,
+          "bias": -11.030952380952382,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC",
+          "pressure_accuracy_gate": "FAIL_THIS_CELL"
+        },
+        "e_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.40190078523034345,
+          "RMSE": 0.531669253592778,
+          "bias": -0.2542684073226164,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "q_gkg": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.24111253519229434,
+          "RMSE": 0.3246689418362036,
+          "bias": -0.12529206833824874,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        }
+      }
+    },
+    {
+      "country": "AT",
+      "period": "summer",
+      "method": "B3_STRICT",
+      "seed": 7313,
+      "scores": {
+        "T2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.2246006082646397,
+          "RMSE": 1.6520104528356987,
+          "bias": -0.36160714285711687,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "RH2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 6.14810123264118,
+          "RMSE": 8.017690152976172,
+          "bias": 0.020143207323298447,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "p_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 9.652678571428572,
+          "RMSE": 9.677036207533005,
+          "bias": -9.652678571428572,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC",
+          "pressure_accuracy_gate": "FAIL_THIS_CELL"
+        },
+        "e_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.3409873347732693,
+          "RMSE": 1.6612966040983053,
+          "bias": -0.4352106809175068,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "q_gkg": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.8553920265553246,
+          "RMSE": 1.0569663278168913,
+          "bias": -0.1728284460879775,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        }
+      }
+    },
+    {
+      "country": "AT",
+      "period": "summer",
+      "method": "HARD_Q_SOFT_RH",
+      "seed": 7313,
+      "scores": {
+        "T2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.2246006082646397,
+          "RMSE": 1.6520104528356987,
+          "bias": -0.36160714285711687,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "RH2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 6.148101232641179,
+          "RMSE": 8.017690152976172,
+          "bias": 0.0201432073232976,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "p_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 9.652678571428572,
+          "RMSE": 9.677036207533005,
+          "bias": -9.652678571428572,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC",
+          "pressure_accuracy_gate": "FAIL_THIS_CELL"
+        },
+        "e_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.3409873347732693,
+          "RMSE": 1.6612966040983053,
+          "bias": -0.4352106809175068,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "q_gkg": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.8553920265553246,
+          "RMSE": 1.0569663278168913,
+          "bias": -0.1728284460879775,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        }
+      }
+    },
+    {
+      "country": "AT",
+      "period": "summer",
+      "method": "HARD_RH_SOFT_Q",
+      "seed": 7313,
+      "scores": {
+        "T2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.2246006082646397,
+          "RMSE": 1.6520104528356987,
+          "bias": -0.36160714285711687,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "RH2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 6.148101232641179,
+          "RMSE": 8.017690152976172,
+          "bias": 0.0201432073232976,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "p_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 9.652678571428572,
+          "RMSE": 9.677036207533005,
+          "bias": -9.652678571428572,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC",
+          "pressure_accuracy_gate": "FAIL_THIS_CELL"
+        },
+        "e_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.3409873347732693,
+          "RMSE": 1.6612966040983053,
+          "bias": -0.4352106809175068,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "q_gkg": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.8553920265553246,
+          "RMSE": 1.0569663278168913,
+          "bias": -0.1728284460879775,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        }
+      }
+    },
+    {
+      "country": "AT",
+      "period": "summer",
+      "method": "BOTH_SOFT",
+      "seed": 7313,
+      "scores": {
+        "T2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.2246006082646397,
+          "RMSE": 1.6520104528356987,
+          "bias": -0.36160714285711687,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "RH2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 6.148101232641179,
+          "RMSE": 8.017690152976172,
+          "bias": 0.0201432073232976,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "p_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 9.652678571428572,
+          "RMSE": 9.677036207533005,
+          "bias": -9.652678571428572,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC",
+          "pressure_accuracy_gate": "FAIL_THIS_CELL"
+        },
+        "e_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.3409873347732693,
+          "RMSE": 1.6612966040983053,
+          "bias": -0.4352106809175068,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "q_gkg": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.8553920265553246,
+          "RMSE": 1.0569663278168913,
+          "bias": -0.1728284460879775,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        }
+      }
+    },
+    {
+      "country": "AT",
+      "period": "summer",
+      "method": "FULL_HOURLY_ERA5_RICH_REFERENCE",
+      "seed": 7313,
+      "scores": {
+        "T2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.8407738095238085,
+          "RMSE": 1.0923843515121265,
+          "bias": -0.36160714285714174,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "RH2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 4.87290648525064,
+          "RMSE": 6.800171587276405,
+          "bias": 0.020143207322745195,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "p_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 9.652678571428572,
+          "RMSE": 9.677036207533005,
+          "bias": -9.652678571428572,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC",
+          "pressure_accuracy_gate": "FAIL_THIS_CELL"
+        },
+        "e_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.964146673938963,
+          "RMSE": 1.342801952243553,
+          "bias": -0.43541583151981844,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "q_gkg": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.6045386763747256,
+          "RMSE": 0.8409145395430196,
+          "bias": -0.1728284460879785,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        }
+      }
+    },
+    {
+      "country": "DE",
+      "period": "winter",
+      "method": "B3_STRICT",
+      "seed": 7313,
+      "scores": {
+        "T2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.9547144292925036,
+          "RMSE": 2.6316065250276455,
+          "bias": -1.5354166666666518,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "RH2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 10.274230421659894,
+          "RMSE": 12.787243021231903,
+          "bias": 4.66911048813818,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "p_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 4.133035714285711,
+          "RMSE": 4.1449014865655505,
+          "bias": 4.133035714285711,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC",
+          "pressure_accuracy_gate": "FAIL_THIS_CELL"
+        },
+        "e_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.6154763165092871,
+          "RMSE": 0.7369361649047824,
+          "bias": -0.18412843948299823,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "q_gkg": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.38274564628625657,
+          "RMSE": 0.4591698599960969,
+          "bias": -0.12315397475360935,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        }
+      }
+    },
+    {
+      "country": "DE",
+      "period": "winter",
+      "method": "HARD_Q_SOFT_RH",
+      "seed": 7313,
+      "scores": {
+        "T2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.9547144292925036,
+          "RMSE": 2.6316065250276455,
+          "bias": -1.5354166666666518,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "RH2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 10.274230421659894,
+          "RMSE": 12.787243021231903,
+          "bias": 4.6691104881381795,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "p_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 4.133035714285711,
+          "RMSE": 4.1449014865655505,
+          "bias": 4.133035714285711,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC",
+          "pressure_accuracy_gate": "FAIL_THIS_CELL"
+        },
+        "e_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.6154763165092871,
+          "RMSE": 0.7369361649047824,
+          "bias": -0.18412843948299823,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "q_gkg": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.38274564628625657,
+          "RMSE": 0.4591698599960969,
+          "bias": -0.12315397475360935,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        }
+      }
+    },
+    {
+      "country": "DE",
+      "period": "winter",
+      "method": "HARD_RH_SOFT_Q",
+      "seed": 7313,
+      "scores": {
+        "T2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.9547144292925036,
+          "RMSE": 2.6316065250276455,
+          "bias": -1.5354166666666518,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "RH2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 10.274230421659894,
+          "RMSE": 12.787243021231903,
+          "bias": 4.6691104881381795,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "p_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 4.133035714285711,
+          "RMSE": 4.1449014865655505,
+          "bias": 4.133035714285711,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC",
+          "pressure_accuracy_gate": "FAIL_THIS_CELL"
+        },
+        "e_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.6154763165092871,
+          "RMSE": 0.7369361649047824,
+          "bias": -0.18412843948299823,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "q_gkg": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.38274564628625657,
+          "RMSE": 0.4591698599960969,
+          "bias": -0.12315397475360935,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        }
+      }
+    },
+    {
+      "country": "DE",
+      "period": "winter",
+      "method": "BOTH_SOFT",
+      "seed": 7313,
+      "scores": {
+        "T2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.9547144292925036,
+          "RMSE": 2.6316065250276455,
+          "bias": -1.5354166666666518,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "RH2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 10.274230421659894,
+          "RMSE": 12.787243021231903,
+          "bias": 4.6691104881381795,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "p_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 4.133035714285711,
+          "RMSE": 4.1449014865655505,
+          "bias": 4.133035714285711,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC",
+          "pressure_accuracy_gate": "FAIL_THIS_CELL"
+        },
+        "e_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.6154763165092871,
+          "RMSE": 0.7369361649047824,
+          "bias": -0.18412843948299823,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "q_gkg": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.38274564628625657,
+          "RMSE": 0.4591698599960969,
+          "bias": -0.12315397475360935,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        }
+      }
+    },
+    {
+      "country": "DE",
+      "period": "winter",
+      "method": "FULL_HOURLY_ERA5_RICH_REFERENCE",
+      "seed": 7313,
+      "scores": {
+        "T2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.632440476190477,
+          "RMSE": 2.302799796934572,
+          "bias": -1.5354166666666675,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "RH2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 6.050281997803482,
+          "RMSE": 7.502006983184094,
+          "bias": 4.669110488137865,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "p_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 4.133035714285711,
+          "RMSE": 4.1449014865655505,
+          "bias": 4.133035714285711,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC",
+          "pressure_accuracy_gate": "FAIL_THIS_CELL"
+        },
+        "e_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.33618974369985316,
+          "RMSE": 0.46034865527798235,
+          "bias": -0.18430132649843026,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "q_gkg": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.20979302631158195,
+          "RMSE": 0.2888905806999989,
+          "bias": -0.12315397475360965,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        }
+      }
+    },
+    {
+      "country": "DE",
+      "period": "summer",
+      "method": "B3_STRICT",
+      "seed": 7313,
+      "scores": {
+        "T2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.6114843743176797,
+          "RMSE": 2.077178411897666,
+          "bias": -1.2422619047618766,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "RH2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 8.537641232767806,
+          "RMSE": 10.917248658809063,
+          "bias": 6.014735917626254,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "p_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 3.723511904761908,
+          "RMSE": 3.7308758387018925,
+          "bias": 3.723511904761908,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC",
+          "pressure_accuracy_gate": "FAIL_THIS_CELL"
+        },
+        "e_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.0599751113430798,
+          "RMSE": 1.3652208018523984,
+          "bias": 0.2002248241662528,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "q_gkg": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.6573643951172475,
+          "RMSE": 0.850223034625003,
+          "bias": 0.09187965497734256,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        }
+      }
+    },
+    {
+      "country": "DE",
+      "period": "summer",
+      "method": "HARD_Q_SOFT_RH",
+      "seed": 7313,
+      "scores": {
+        "T2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.6114843743176797,
+          "RMSE": 2.077178411897666,
+          "bias": -1.2422619047618766,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "RH2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 8.537641232767804,
+          "RMSE": 10.917248658809063,
+          "bias": 6.014735917626254,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "p_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 3.723511904761908,
+          "RMSE": 3.7308758387018925,
+          "bias": 3.723511904761908,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC",
+          "pressure_accuracy_gate": "FAIL_THIS_CELL"
+        },
+        "e_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.0599751113430798,
+          "RMSE": 1.3652208018523984,
+          "bias": 0.2002248241662528,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "q_gkg": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.6573643951172475,
+          "RMSE": 0.850223034625003,
+          "bias": 0.09187965497734256,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        }
+      }
+    },
+    {
+      "country": "DE",
+      "period": "summer",
+      "method": "HARD_RH_SOFT_Q",
+      "seed": 7313,
+      "scores": {
+        "T2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.6114843743176797,
+          "RMSE": 2.077178411897666,
+          "bias": -1.2422619047618766,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "RH2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 8.537641232767804,
+          "RMSE": 10.917248658809063,
+          "bias": 6.014735917626254,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "p_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 3.723511904761908,
+          "RMSE": 3.7308758387018925,
+          "bias": 3.723511904761908,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC",
+          "pressure_accuracy_gate": "FAIL_THIS_CELL"
+        },
+        "e_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.0599751113430798,
+          "RMSE": 1.3652208018523984,
+          "bias": 0.2002248241662528,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "q_gkg": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.6573643951172475,
+          "RMSE": 0.850223034625003,
+          "bias": 0.09187965497734256,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        }
+      }
+    },
+    {
+      "country": "DE",
+      "period": "summer",
+      "method": "BOTH_SOFT",
+      "seed": 7313,
+      "scores": {
+        "T2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.6114843743176797,
+          "RMSE": 2.077178411897666,
+          "bias": -1.2422619047618766,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "RH2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 8.537641232767804,
+          "RMSE": 10.917248658809063,
+          "bias": 6.014735917626254,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "p_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 3.723511904761908,
+          "RMSE": 3.7308758387018925,
+          "bias": 3.723511904761908,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC",
+          "pressure_accuracy_gate": "FAIL_THIS_CELL"
+        },
+        "e_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.0599751113430798,
+          "RMSE": 1.3652208018523984,
+          "bias": 0.2002248241662528,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "q_gkg": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.6573643951172475,
+          "RMSE": 0.850223034625003,
+          "bias": 0.09187965497734256,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        }
+      }
+    },
+    {
+      "country": "DE",
+      "period": "summer",
+      "method": "FULL_HOURLY_ERA5_RICH_REFERENCE",
+      "seed": 7313,
+      "scores": {
+        "T2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.4029761904761917,
+          "RMSE": 1.7967232078743474,
+          "bias": -1.2422619047619055,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "RH2m": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 7.61548042870985,
+          "RMSE": 9.604809681112402,
+          "bias": 6.014735917626183,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "p_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 3.723511904761908,
+          "RMSE": 3.7308758387018925,
+          "bias": 3.723511904761908,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC",
+          "pressure_accuracy_gate": "FAIL_THIS_CELL"
+        },
+        "e_hPa": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.753068378229272,
+          "RMSE": 0.997599744869784,
+          "bias": 0.20007442089967684,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "q_gkg": {
+          "matched_hours": 336,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.4653236616924547,
+          "RMSE": 0.6186169761801112,
+          "bias": 0.09187965497734235,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        }
+      }
+    },
+    {
+      "country": "CH",
+      "period": "winter",
+      "method": "B3_STRICT",
+      "seed": 7313,
+      "scores": {
+        "T2m": {
+          "matched_hours": 310,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 3.045496273502029,
+          "RMSE": 3.749677884800645,
+          "bias": -2.344708496377474,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "RH2m": {
+          "matched_hours": 310,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 8.70575028851397,
+          "RMSE": 11.519601953740045,
+          "bias": 1.4669522585276533,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "p_hPa": {
+          "matched_hours": 310,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 42.536935483870955,
+          "RMSE": 42.64794052055926,
+          "bias": -42.536935483870955,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC",
+          "pressure_accuracy_gate": "FAIL_THIS_CELL"
+        },
+        "e_hPa": {
+          "matched_hours": 310,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.7861211071171726,
+          "RMSE": 0.9650257835799915,
+          "bias": -0.48401913241378136,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "q_gkg": {
+          "matched_hours": 310,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.5389291945934762,
+          "RMSE": 0.6831734462427184,
+          "bias": -0.22245842531832286,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        }
+      }
+    },
+    {
+      "country": "CH",
+      "period": "winter",
+      "method": "HARD_Q_SOFT_RH",
+      "seed": 7313,
+      "scores": {
+        "T2m": {
+          "matched_hours": 310,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 3.045496273502029,
+          "RMSE": 3.749677884800645,
+          "bias": -2.344708496377474,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "RH2m": {
+          "matched_hours": 310,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 8.70575028851397,
+          "RMSE": 11.519601953740045,
+          "bias": 1.4669522585276524,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "p_hPa": {
+          "matched_hours": 310,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 42.536935483870955,
+          "RMSE": 42.64794052055926,
+          "bias": -42.536935483870955,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC",
+          "pressure_accuracy_gate": "FAIL_THIS_CELL"
+        },
+        "e_hPa": {
+          "matched_hours": 310,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.7861211071171726,
+          "RMSE": 0.9650257835799915,
+          "bias": -0.48401913241378136,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "q_gkg": {
+          "matched_hours": 310,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.5389291945934762,
+          "RMSE": 0.6831734462427184,
+          "bias": -0.22245842531832286,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        }
+      }
+    },
+    {
+      "country": "CH",
+      "period": "winter",
+      "method": "HARD_RH_SOFT_Q",
+      "seed": 7313,
+      "scores": {
+        "T2m": {
+          "matched_hours": 310,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 3.045496273502029,
+          "RMSE": 3.749677884800645,
+          "bias": -2.344708496377474,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "RH2m": {
+          "matched_hours": 310,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 8.70575028851397,
+          "RMSE": 11.519601953740045,
+          "bias": 1.4669522585276524,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "p_hPa": {
+          "matched_hours": 310,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 42.536935483870955,
+          "RMSE": 42.64794052055926,
+          "bias": -42.536935483870955,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC",
+          "pressure_accuracy_gate": "FAIL_THIS_CELL"
+        },
+        "e_hPa": {
+          "matched_hours": 310,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.7861211071171726,
+          "RMSE": 0.9650257835799915,
+          "bias": -0.48401913241378136,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "q_gkg": {
+          "matched_hours": 310,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.5389291945934762,
+          "RMSE": 0.6831734462427184,
+          "bias": -0.22245842531832286,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        }
+      }
+    },
+    {
+      "country": "CH",
+      "period": "winter",
+      "method": "BOTH_SOFT",
+      "seed": 7313,
+      "scores": {
+        "T2m": {
+          "matched_hours": 310,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 3.045496273502029,
+          "RMSE": 3.749677884800645,
+          "bias": -2.344708496377474,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "RH2m": {
+          "matched_hours": 310,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 8.70575028851397,
+          "RMSE": 11.519601953740045,
+          "bias": 1.4669522585276524,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "p_hPa": {
+          "matched_hours": 310,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 42.536935483870955,
+          "RMSE": 42.64794052055926,
+          "bias": -42.536935483870955,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC",
+          "pressure_accuracy_gate": "FAIL_THIS_CELL"
+        },
+        "e_hPa": {
+          "matched_hours": 310,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.7861211071171726,
+          "RMSE": 0.9650257835799915,
+          "bias": -0.48401913241378136,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "q_gkg": {
+          "matched_hours": 310,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.5389291945934762,
+          "RMSE": 0.6831734462427184,
+          "bias": -0.22245842531832286,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        }
+      }
+    },
+    {
+      "country": "CH",
+      "period": "winter",
+      "method": "FULL_HOURLY_ERA5_RICH_REFERENCE",
+      "seed": 7313,
+      "scores": {
+        "T2m": {
+          "matched_hours": 335,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 2.399850746268657,
+          "RMSE": 2.9305989912919155,
+          "bias": -2.2183582089552236,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "RH2m": {
+          "matched_hours": 335,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 6.846056241779092,
+          "RMSE": 9.265355904595927,
+          "bias": 0.9724923719901034,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "p_hPa": {
+          "matched_hours": 335,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 42.72746268656716,
+          "RMSE": 42.838387374361105,
+          "bias": -42.72746268656716,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC",
+          "pressure_accuracy_gate": "FAIL_THIS_CELL"
+        },
+        "e_hPa": {
+          "matched_hours": 335,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.5488885154626616,
+          "RMSE": 0.6461044916591644,
+          "bias": -0.4604360508407953,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "q_gkg": {
+          "matched_hours": 335,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.33367291220993595,
+          "RMSE": 0.40038994514866527,
+          "bias": -0.21069124848660262,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        }
+      }
+    },
+    {
+      "country": "CH",
+      "period": "summer",
+      "method": "B3_STRICT",
+      "seed": 7313,
+      "scores": {
+        "T2m": {
+          "matched_hours": 335,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 2.199177363737962,
+          "RMSE": 2.6864133017287743,
+          "bias": -1.8530352054580326,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "RH2m": {
+          "matched_hours": 335,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 6.794209883242914,
+          "RMSE": 9.115892246630475,
+          "bias": 2.215101712204496,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "p_hPa": {
+          "matched_hours": 335,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 38.30164179104477,
+          "RMSE": 38.365453696176104,
+          "bias": -38.30164179104477,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC",
+          "pressure_accuracy_gate": "FAIL_THIS_CELL"
+        },
+        "e_hPa": {
+          "matched_hours": 335,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.1803275403031048,
+          "RMSE": 1.4483683557738334,
+          "bias": -0.9478465116721234,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "q_gkg": {
+          "matched_hours": 335,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.7048935284057058,
+          "RMSE": 0.9018627147584097,
+          "bias": -0.35271274454532425,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        }
+      }
+    },
+    {
+      "country": "CH",
+      "period": "summer",
+      "method": "HARD_Q_SOFT_RH",
+      "seed": 7313,
+      "scores": {
+        "T2m": {
+          "matched_hours": 335,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 2.199177363737962,
+          "RMSE": 2.6864133017287743,
+          "bias": -1.8530352054580326,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "RH2m": {
+          "matched_hours": 335,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 6.794209883242914,
+          "RMSE": 9.115892246630473,
+          "bias": 2.215101712204495,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "p_hPa": {
+          "matched_hours": 335,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 38.30164179104477,
+          "RMSE": 38.365453696176104,
+          "bias": -38.30164179104477,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC",
+          "pressure_accuracy_gate": "FAIL_THIS_CELL"
+        },
+        "e_hPa": {
+          "matched_hours": 335,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.1803275403031048,
+          "RMSE": 1.4483683557738334,
+          "bias": -0.9478465116721234,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "q_gkg": {
+          "matched_hours": 335,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.7048935284057058,
+          "RMSE": 0.9018627147584097,
+          "bias": -0.35271274454532425,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        }
+      }
+    },
+    {
+      "country": "CH",
+      "period": "summer",
+      "method": "HARD_RH_SOFT_Q",
+      "seed": 7313,
+      "scores": {
+        "T2m": {
+          "matched_hours": 335,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 2.199177363737962,
+          "RMSE": 2.6864133017287743,
+          "bias": -1.8530352054580326,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "RH2m": {
+          "matched_hours": 335,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 6.794209883242914,
+          "RMSE": 9.115892246630473,
+          "bias": 2.215101712204495,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "p_hPa": {
+          "matched_hours": 335,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 38.30164179104477,
+          "RMSE": 38.365453696176104,
+          "bias": -38.30164179104477,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC",
+          "pressure_accuracy_gate": "FAIL_THIS_CELL"
+        },
+        "e_hPa": {
+          "matched_hours": 335,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.1803275403031048,
+          "RMSE": 1.4483683557738334,
+          "bias": -0.9478465116721234,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "q_gkg": {
+          "matched_hours": 335,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.7048935284057058,
+          "RMSE": 0.9018627147584097,
+          "bias": -0.35271274454532425,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        }
+      }
+    },
+    {
+      "country": "CH",
+      "period": "summer",
+      "method": "BOTH_SOFT",
+      "seed": 7313,
+      "scores": {
+        "T2m": {
+          "matched_hours": 335,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 2.199177363737962,
+          "RMSE": 2.6864133017287743,
+          "bias": -1.8530352054580326,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "RH2m": {
+          "matched_hours": 335,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 6.794209883242914,
+          "RMSE": 9.115892246630473,
+          "bias": 2.215101712204495,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "p_hPa": {
+          "matched_hours": 335,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 38.30164179104477,
+          "RMSE": 38.365453696176104,
+          "bias": -38.30164179104477,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC",
+          "pressure_accuracy_gate": "FAIL_THIS_CELL"
+        },
+        "e_hPa": {
+          "matched_hours": 335,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.1803275403031048,
+          "RMSE": 1.4483683557738334,
+          "bias": -0.9478465116721234,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "q_gkg": {
+          "matched_hours": 335,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.7048935284057058,
+          "RMSE": 0.9018627147584097,
+          "bias": -0.35271274454532425,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        }
+      }
+    },
+    {
+      "country": "CH",
+      "period": "summer",
+      "method": "FULL_HOURLY_ERA5_RICH_REFERENCE",
+      "seed": 7313,
+      "scores": {
+        "T2m": {
+          "matched_hours": 335,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.8817910447761197,
+          "RMSE": 2.1217952128735553,
+          "bias": -1.8528358208955231,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "RH2m": {
+          "matched_hours": 335,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 5.154633603052815,
+          "RMSE": 6.7974708736788925,
+          "bias": 2.205688522920207,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "p_hPa": {
+          "matched_hours": 335,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 38.30164179104477,
+          "RMSE": 38.365453696176104,
+          "bias": -38.30164179104477,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC",
+          "pressure_accuracy_gate": "FAIL_THIS_CELL"
+        },
+        "e_hPa": {
+          "matched_hours": 335,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 1.1105843695766737,
+          "RMSE": 1.3218763303808998,
+          "bias": -0.9487121224135706,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        },
+        "q_gkg": {
+          "matched_hours": 335,
+          "source_hours": 336,
+          "expected_hours": 336,
+          "MAE": 0.629104607015248,
+          "RMSE": 0.7804811414665044,
+          "bias": -0.3535730553777702,
+          "status": "SCORED_REVEALED_LIMITED_DIAGNOSTIC"
+        }
+      }
+    }
+  ],
+  "station_all_seed_ranges": [
+    {
+      "country": "AT",
+      "period": "winter",
+      "method": "B3_STRICT",
+      "variable": "T2m",
+      "MAE_min_across_five_seeds": 1.6729714612797857,
+      "MAE_max_across_five_seeds": 1.9149667741961414,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "winter",
+      "method": "B3_STRICT",
+      "variable": "RH2m",
+      "MAE_min_across_five_seeds": 7.583369557158909,
+      "MAE_max_across_five_seeds": 9.24550410351295,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "winter",
+      "method": "B3_STRICT",
+      "variable": "p_hPa",
+      "MAE_min_across_five_seeds": 11.030952380952382,
+      "MAE_max_across_five_seeds": 11.030952380952382,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "winter",
+      "method": "B3_STRICT",
+      "variable": "e_hPa",
+      "MAE_min_across_five_seeds": 0.5854484895281428,
+      "MAE_max_across_five_seeds": 0.7253133412771462,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "winter",
+      "method": "B3_STRICT",
+      "variable": "q_gkg",
+      "MAE_min_across_five_seeds": 0.3645870241664414,
+      "MAE_max_across_five_seeds": 0.45906122378352565,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "winter",
+      "method": "HARD_Q_SOFT_RH",
+      "variable": "T2m",
+      "MAE_min_across_five_seeds": 1.6729714612797857,
+      "MAE_max_across_five_seeds": 1.9149667741961414,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "winter",
+      "method": "HARD_Q_SOFT_RH",
+      "variable": "RH2m",
+      "MAE_min_across_five_seeds": 7.583369557158908,
+      "MAE_max_across_five_seeds": 9.24550410351295,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "winter",
+      "method": "HARD_Q_SOFT_RH",
+      "variable": "p_hPa",
+      "MAE_min_across_five_seeds": 11.030952380952382,
+      "MAE_max_across_five_seeds": 11.030952380952382,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "winter",
+      "method": "HARD_Q_SOFT_RH",
+      "variable": "e_hPa",
+      "MAE_min_across_five_seeds": 0.5854484895281428,
+      "MAE_max_across_five_seeds": 0.7253133412771462,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "winter",
+      "method": "HARD_Q_SOFT_RH",
+      "variable": "q_gkg",
+      "MAE_min_across_five_seeds": 0.3645870241664414,
+      "MAE_max_across_five_seeds": 0.45906122378352565,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "winter",
+      "method": "HARD_RH_SOFT_Q",
+      "variable": "T2m",
+      "MAE_min_across_five_seeds": 1.6729714612797857,
+      "MAE_max_across_five_seeds": 1.9149667741961414,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "winter",
+      "method": "HARD_RH_SOFT_Q",
+      "variable": "RH2m",
+      "MAE_min_across_five_seeds": 7.583369557158908,
+      "MAE_max_across_five_seeds": 9.24550410351295,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "winter",
+      "method": "HARD_RH_SOFT_Q",
+      "variable": "p_hPa",
+      "MAE_min_across_five_seeds": 11.030952380952382,
+      "MAE_max_across_five_seeds": 11.030952380952382,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "winter",
+      "method": "HARD_RH_SOFT_Q",
+      "variable": "e_hPa",
+      "MAE_min_across_five_seeds": 0.5854484895281428,
+      "MAE_max_across_five_seeds": 0.7253133412771462,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "winter",
+      "method": "HARD_RH_SOFT_Q",
+      "variable": "q_gkg",
+      "MAE_min_across_five_seeds": 0.3645870241664414,
+      "MAE_max_across_five_seeds": 0.45906122378352565,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "winter",
+      "method": "BOTH_SOFT",
+      "variable": "T2m",
+      "MAE_min_across_five_seeds": 1.6729714612797857,
+      "MAE_max_across_five_seeds": 1.9149667741961414,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "winter",
+      "method": "BOTH_SOFT",
+      "variable": "RH2m",
+      "MAE_min_across_five_seeds": 7.583369557158908,
+      "MAE_max_across_five_seeds": 9.24550410351295,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "winter",
+      "method": "BOTH_SOFT",
+      "variable": "p_hPa",
+      "MAE_min_across_five_seeds": 11.030952380952382,
+      "MAE_max_across_five_seeds": 11.030952380952382,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "winter",
+      "method": "BOTH_SOFT",
+      "variable": "e_hPa",
+      "MAE_min_across_five_seeds": 0.5854484895281428,
+      "MAE_max_across_five_seeds": 0.7253133412771462,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "winter",
+      "method": "BOTH_SOFT",
+      "variable": "q_gkg",
+      "MAE_min_across_five_seeds": 0.3645870241664414,
+      "MAE_max_across_five_seeds": 0.45906122378352565,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "summer",
+      "method": "B3_STRICT",
+      "variable": "T2m",
+      "MAE_min_across_five_seeds": 1.1708576149659375,
+      "MAE_max_across_five_seeds": 1.3953677461222016,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "summer",
+      "method": "B3_STRICT",
+      "variable": "RH2m",
+      "MAE_min_across_five_seeds": 6.14810123264118,
+      "MAE_max_across_five_seeds": 6.852551651585427,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "summer",
+      "method": "B3_STRICT",
+      "variable": "p_hPa",
+      "MAE_min_across_five_seeds": 9.652678571428572,
+      "MAE_max_across_five_seeds": 9.652678571428572,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "summer",
+      "method": "B3_STRICT",
+      "variable": "e_hPa",
+      "MAE_min_across_five_seeds": 1.3409873347732693,
+      "MAE_max_across_five_seeds": 1.4845612190123734,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "summer",
+      "method": "B3_STRICT",
+      "variable": "q_gkg",
+      "MAE_min_across_five_seeds": 0.8553920265553246,
+      "MAE_max_across_five_seeds": 0.950882624380392,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "summer",
+      "method": "HARD_Q_SOFT_RH",
+      "variable": "T2m",
+      "MAE_min_across_five_seeds": 1.1708576149659375,
+      "MAE_max_across_five_seeds": 1.3953677461222016,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "summer",
+      "method": "HARD_Q_SOFT_RH",
+      "variable": "RH2m",
+      "MAE_min_across_five_seeds": 6.148101232641179,
+      "MAE_max_across_five_seeds": 6.852551651585427,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "summer",
+      "method": "HARD_Q_SOFT_RH",
+      "variable": "p_hPa",
+      "MAE_min_across_five_seeds": 9.652678571428572,
+      "MAE_max_across_five_seeds": 9.652678571428572,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "summer",
+      "method": "HARD_Q_SOFT_RH",
+      "variable": "e_hPa",
+      "MAE_min_across_five_seeds": 1.3409873347732693,
+      "MAE_max_across_five_seeds": 1.4845612190123734,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "summer",
+      "method": "HARD_Q_SOFT_RH",
+      "variable": "q_gkg",
+      "MAE_min_across_five_seeds": 0.8553920265553246,
+      "MAE_max_across_five_seeds": 0.950882624380392,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "summer",
+      "method": "HARD_RH_SOFT_Q",
+      "variable": "T2m",
+      "MAE_min_across_five_seeds": 1.1708576149659375,
+      "MAE_max_across_five_seeds": 1.3953677461222016,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "summer",
+      "method": "HARD_RH_SOFT_Q",
+      "variable": "RH2m",
+      "MAE_min_across_five_seeds": 6.148101232641179,
+      "MAE_max_across_five_seeds": 6.852551651585427,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "summer",
+      "method": "HARD_RH_SOFT_Q",
+      "variable": "p_hPa",
+      "MAE_min_across_five_seeds": 9.652678571428572,
+      "MAE_max_across_five_seeds": 9.652678571428572,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "summer",
+      "method": "HARD_RH_SOFT_Q",
+      "variable": "e_hPa",
+      "MAE_min_across_five_seeds": 1.3409873347732693,
+      "MAE_max_across_five_seeds": 1.4845612190123734,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "summer",
+      "method": "HARD_RH_SOFT_Q",
+      "variable": "q_gkg",
+      "MAE_min_across_five_seeds": 0.8553920265553246,
+      "MAE_max_across_five_seeds": 0.950882624380392,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "summer",
+      "method": "BOTH_SOFT",
+      "variable": "T2m",
+      "MAE_min_across_five_seeds": 1.1708576149659375,
+      "MAE_max_across_five_seeds": 1.3953677461222016,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "summer",
+      "method": "BOTH_SOFT",
+      "variable": "RH2m",
+      "MAE_min_across_five_seeds": 6.148101232641179,
+      "MAE_max_across_five_seeds": 6.852551651585427,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "summer",
+      "method": "BOTH_SOFT",
+      "variable": "p_hPa",
+      "MAE_min_across_five_seeds": 9.652678571428572,
+      "MAE_max_across_five_seeds": 9.652678571428572,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "summer",
+      "method": "BOTH_SOFT",
+      "variable": "e_hPa",
+      "MAE_min_across_five_seeds": 1.3409873347732693,
+      "MAE_max_across_five_seeds": 1.4845612190123734,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "AT",
+      "period": "summer",
+      "method": "BOTH_SOFT",
+      "variable": "q_gkg",
+      "MAE_min_across_five_seeds": 0.8553920265553246,
+      "MAE_max_across_five_seeds": 0.950882624380392,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "winter",
+      "method": "B3_STRICT",
+      "variable": "T2m",
+      "MAE_min_across_five_seeds": 1.792827252300773,
+      "MAE_max_across_five_seeds": 2.0330776336541696,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "winter",
+      "method": "B3_STRICT",
+      "variable": "RH2m",
+      "MAE_min_across_five_seeds": 7.924052367150436,
+      "MAE_max_across_five_seeds": 10.274230421659894,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "winter",
+      "method": "B3_STRICT",
+      "variable": "p_hPa",
+      "MAE_min_across_five_seeds": 4.133035714285711,
+      "MAE_max_across_five_seeds": 4.133035714285711,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "winter",
+      "method": "B3_STRICT",
+      "variable": "e_hPa",
+      "MAE_min_across_five_seeds": 0.4260607793336478,
+      "MAE_max_across_five_seeds": 0.633518282443765,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "winter",
+      "method": "B3_STRICT",
+      "variable": "q_gkg",
+      "MAE_min_across_five_seeds": 0.26519743734203477,
+      "MAE_max_across_five_seeds": 0.39377041965326337,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "winter",
+      "method": "HARD_Q_SOFT_RH",
+      "variable": "T2m",
+      "MAE_min_across_five_seeds": 1.792827252300773,
+      "MAE_max_across_five_seeds": 2.0330776336541696,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "winter",
+      "method": "HARD_Q_SOFT_RH",
+      "variable": "RH2m",
+      "MAE_min_across_five_seeds": 7.924052367150436,
+      "MAE_max_across_five_seeds": 10.274230421659894,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "winter",
+      "method": "HARD_Q_SOFT_RH",
+      "variable": "p_hPa",
+      "MAE_min_across_five_seeds": 4.133035714285711,
+      "MAE_max_across_five_seeds": 4.133035714285711,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "winter",
+      "method": "HARD_Q_SOFT_RH",
+      "variable": "e_hPa",
+      "MAE_min_across_five_seeds": 0.4260607793336478,
+      "MAE_max_across_five_seeds": 0.633518282443765,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "winter",
+      "method": "HARD_Q_SOFT_RH",
+      "variable": "q_gkg",
+      "MAE_min_across_five_seeds": 0.26519743734203477,
+      "MAE_max_across_five_seeds": 0.39377041965326337,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "winter",
+      "method": "HARD_RH_SOFT_Q",
+      "variable": "T2m",
+      "MAE_min_across_five_seeds": 1.792827252300773,
+      "MAE_max_across_five_seeds": 2.0330776336541696,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "winter",
+      "method": "HARD_RH_SOFT_Q",
+      "variable": "RH2m",
+      "MAE_min_across_five_seeds": 7.924052367150436,
+      "MAE_max_across_five_seeds": 10.274230421659894,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "winter",
+      "method": "HARD_RH_SOFT_Q",
+      "variable": "p_hPa",
+      "MAE_min_across_five_seeds": 4.133035714285711,
+      "MAE_max_across_five_seeds": 4.133035714285711,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "winter",
+      "method": "HARD_RH_SOFT_Q",
+      "variable": "e_hPa",
+      "MAE_min_across_five_seeds": 0.4260607793336478,
+      "MAE_max_across_five_seeds": 0.633518282443765,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "winter",
+      "method": "HARD_RH_SOFT_Q",
+      "variable": "q_gkg",
+      "MAE_min_across_five_seeds": 0.26519743734203477,
+      "MAE_max_across_five_seeds": 0.39377041965326337,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "winter",
+      "method": "BOTH_SOFT",
+      "variable": "T2m",
+      "MAE_min_across_five_seeds": 1.792827252300773,
+      "MAE_max_across_five_seeds": 2.0330776336541696,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "winter",
+      "method": "BOTH_SOFT",
+      "variable": "RH2m",
+      "MAE_min_across_five_seeds": 7.924052367150436,
+      "MAE_max_across_five_seeds": 10.274230421659894,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "winter",
+      "method": "BOTH_SOFT",
+      "variable": "p_hPa",
+      "MAE_min_across_five_seeds": 4.133035714285711,
+      "MAE_max_across_five_seeds": 4.133035714285711,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "winter",
+      "method": "BOTH_SOFT",
+      "variable": "e_hPa",
+      "MAE_min_across_five_seeds": 0.4260607793336478,
+      "MAE_max_across_five_seeds": 0.633518282443765,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "winter",
+      "method": "BOTH_SOFT",
+      "variable": "q_gkg",
+      "MAE_min_across_five_seeds": 0.26519743734203477,
+      "MAE_max_across_five_seeds": 0.39377041965326337,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "summer",
+      "method": "B3_STRICT",
+      "variable": "T2m",
+      "MAE_min_across_five_seeds": 1.5415051485487101,
+      "MAE_max_across_five_seeds": 1.7120668604186609,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "summer",
+      "method": "B3_STRICT",
+      "variable": "RH2m",
+      "MAE_min_across_five_seeds": 8.537641232767806,
+      "MAE_max_across_five_seeds": 9.543203647964223,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "summer",
+      "method": "B3_STRICT",
+      "variable": "p_hPa",
+      "MAE_min_across_five_seeds": 3.723511904761908,
+      "MAE_max_across_five_seeds": 3.723511904761908,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "summer",
+      "method": "B3_STRICT",
+      "variable": "e_hPa",
+      "MAE_min_across_five_seeds": 1.0599751113430798,
+      "MAE_max_across_five_seeds": 1.2593915991844393,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "summer",
+      "method": "B3_STRICT",
+      "variable": "q_gkg",
+      "MAE_min_across_five_seeds": 0.6573643951172475,
+      "MAE_max_across_five_seeds": 0.7847077124401777,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "summer",
+      "method": "HARD_Q_SOFT_RH",
+      "variable": "T2m",
+      "MAE_min_across_five_seeds": 1.5415051485487101,
+      "MAE_max_across_five_seeds": 1.7120668604186609,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "summer",
+      "method": "HARD_Q_SOFT_RH",
+      "variable": "RH2m",
+      "MAE_min_across_five_seeds": 8.537641232767804,
+      "MAE_max_across_five_seeds": 9.543203647964221,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "summer",
+      "method": "HARD_Q_SOFT_RH",
+      "variable": "p_hPa",
+      "MAE_min_across_five_seeds": 3.723511904761908,
+      "MAE_max_across_five_seeds": 3.723511904761908,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "summer",
+      "method": "HARD_Q_SOFT_RH",
+      "variable": "e_hPa",
+      "MAE_min_across_five_seeds": 1.0599751113430798,
+      "MAE_max_across_five_seeds": 1.2593915991844393,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "summer",
+      "method": "HARD_Q_SOFT_RH",
+      "variable": "q_gkg",
+      "MAE_min_across_five_seeds": 0.6573643951172475,
+      "MAE_max_across_five_seeds": 0.7847077124401777,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "summer",
+      "method": "HARD_RH_SOFT_Q",
+      "variable": "T2m",
+      "MAE_min_across_five_seeds": 1.5415051485487101,
+      "MAE_max_across_five_seeds": 1.7120668604186609,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "summer",
+      "method": "HARD_RH_SOFT_Q",
+      "variable": "RH2m",
+      "MAE_min_across_five_seeds": 8.537641232767804,
+      "MAE_max_across_five_seeds": 9.543203647964221,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "summer",
+      "method": "HARD_RH_SOFT_Q",
+      "variable": "p_hPa",
+      "MAE_min_across_five_seeds": 3.723511904761908,
+      "MAE_max_across_five_seeds": 3.723511904761908,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "summer",
+      "method": "HARD_RH_SOFT_Q",
+      "variable": "e_hPa",
+      "MAE_min_across_five_seeds": 1.0599751113430798,
+      "MAE_max_across_five_seeds": 1.2593915991844393,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "summer",
+      "method": "HARD_RH_SOFT_Q",
+      "variable": "q_gkg",
+      "MAE_min_across_five_seeds": 0.6573643951172475,
+      "MAE_max_across_five_seeds": 0.7847077124401777,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "summer",
+      "method": "BOTH_SOFT",
+      "variable": "T2m",
+      "MAE_min_across_five_seeds": 1.5415051485487101,
+      "MAE_max_across_five_seeds": 1.7120668604186609,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "summer",
+      "method": "BOTH_SOFT",
+      "variable": "RH2m",
+      "MAE_min_across_five_seeds": 8.537641232767804,
+      "MAE_max_across_five_seeds": 9.543203647964221,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "summer",
+      "method": "BOTH_SOFT",
+      "variable": "p_hPa",
+      "MAE_min_across_five_seeds": 3.723511904761908,
+      "MAE_max_across_five_seeds": 3.723511904761908,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "summer",
+      "method": "BOTH_SOFT",
+      "variable": "e_hPa",
+      "MAE_min_across_five_seeds": 1.0599751113430798,
+      "MAE_max_across_five_seeds": 1.2593915991844393,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "DE",
+      "period": "summer",
+      "method": "BOTH_SOFT",
+      "variable": "q_gkg",
+      "MAE_min_across_five_seeds": 0.6573643951172475,
+      "MAE_max_across_five_seeds": 0.7847077124401777,
+      "matched_hours_each_seed": {
+        "7313": 336,
+        "7314": 336,
+        "7315": 336,
+        "7316": 336,
+        "7317": 336
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "winter",
+      "method": "B3_STRICT",
+      "variable": "T2m",
+      "MAE_min_across_five_seeds": 2.6033349613366137,
+      "MAE_max_across_five_seeds": 3.045496273502029,
+      "matched_hours_each_seed": {
+        "7313": 310,
+        "7314": 310,
+        "7315": 310,
+        "7316": 310,
+        "7317": 310
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "winter",
+      "method": "B3_STRICT",
+      "variable": "RH2m",
+      "MAE_min_across_five_seeds": 8.641013121679704,
+      "MAE_max_across_five_seeds": 9.17239024228193,
+      "matched_hours_each_seed": {
+        "7313": 310,
+        "7314": 310,
+        "7315": 310,
+        "7316": 310,
+        "7317": 310
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "winter",
+      "method": "B3_STRICT",
+      "variable": "p_hPa",
+      "MAE_min_across_five_seeds": 42.536935483870955,
+      "MAE_max_across_five_seeds": 42.536935483870955,
+      "matched_hours_each_seed": {
+        "7313": 310,
+        "7314": 310,
+        "7315": 310,
+        "7316": 310,
+        "7317": 310
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "winter",
+      "method": "B3_STRICT",
+      "variable": "e_hPa",
+      "MAE_min_across_five_seeds": 0.6550862058604774,
+      "MAE_max_across_five_seeds": 0.7861211071171726,
+      "matched_hours_each_seed": {
+        "7313": 310,
+        "7314": 310,
+        "7315": 310,
+        "7316": 310,
+        "7317": 310
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "winter",
+      "method": "B3_STRICT",
+      "variable": "q_gkg",
+      "MAE_min_across_five_seeds": 0.4264548506560236,
+      "MAE_max_across_five_seeds": 0.5389291945934762,
+      "matched_hours_each_seed": {
+        "7313": 310,
+        "7314": 310,
+        "7315": 310,
+        "7316": 310,
+        "7317": 310
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "winter",
+      "method": "HARD_Q_SOFT_RH",
+      "variable": "T2m",
+      "MAE_min_across_five_seeds": 2.6033349613366137,
+      "MAE_max_across_five_seeds": 3.045496273502029,
+      "matched_hours_each_seed": {
+        "7313": 310,
+        "7314": 310,
+        "7315": 310,
+        "7316": 310,
+        "7317": 310
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "winter",
+      "method": "HARD_Q_SOFT_RH",
+      "variable": "RH2m",
+      "MAE_min_across_five_seeds": 8.641013121679704,
+      "MAE_max_across_five_seeds": 9.17239024228193,
+      "matched_hours_each_seed": {
+        "7313": 310,
+        "7314": 310,
+        "7315": 310,
+        "7316": 310,
+        "7317": 310
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "winter",
+      "method": "HARD_Q_SOFT_RH",
+      "variable": "p_hPa",
+      "MAE_min_across_five_seeds": 42.536935483870955,
+      "MAE_max_across_five_seeds": 42.536935483870955,
+      "matched_hours_each_seed": {
+        "7313": 310,
+        "7314": 310,
+        "7315": 310,
+        "7316": 310,
+        "7317": 310
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "winter",
+      "method": "HARD_Q_SOFT_RH",
+      "variable": "e_hPa",
+      "MAE_min_across_five_seeds": 0.6550862058604774,
+      "MAE_max_across_five_seeds": 0.7861211071171726,
+      "matched_hours_each_seed": {
+        "7313": 310,
+        "7314": 310,
+        "7315": 310,
+        "7316": 310,
+        "7317": 310
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "winter",
+      "method": "HARD_Q_SOFT_RH",
+      "variable": "q_gkg",
+      "MAE_min_across_five_seeds": 0.4264548506560236,
+      "MAE_max_across_five_seeds": 0.5389291945934762,
+      "matched_hours_each_seed": {
+        "7313": 310,
+        "7314": 310,
+        "7315": 310,
+        "7316": 310,
+        "7317": 310
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "winter",
+      "method": "HARD_RH_SOFT_Q",
+      "variable": "T2m",
+      "MAE_min_across_five_seeds": 2.6033349613366137,
+      "MAE_max_across_five_seeds": 3.045496273502029,
+      "matched_hours_each_seed": {
+        "7313": 310,
+        "7314": 310,
+        "7315": 310,
+        "7316": 310,
+        "7317": 310
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "winter",
+      "method": "HARD_RH_SOFT_Q",
+      "variable": "RH2m",
+      "MAE_min_across_five_seeds": 8.641013121679704,
+      "MAE_max_across_five_seeds": 9.17239024228193,
+      "matched_hours_each_seed": {
+        "7313": 310,
+        "7314": 310,
+        "7315": 310,
+        "7316": 310,
+        "7317": 310
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "winter",
+      "method": "HARD_RH_SOFT_Q",
+      "variable": "p_hPa",
+      "MAE_min_across_five_seeds": 42.536935483870955,
+      "MAE_max_across_five_seeds": 42.536935483870955,
+      "matched_hours_each_seed": {
+        "7313": 310,
+        "7314": 310,
+        "7315": 310,
+        "7316": 310,
+        "7317": 310
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "winter",
+      "method": "HARD_RH_SOFT_Q",
+      "variable": "e_hPa",
+      "MAE_min_across_five_seeds": 0.6550862058604774,
+      "MAE_max_across_five_seeds": 0.7861211071171726,
+      "matched_hours_each_seed": {
+        "7313": 310,
+        "7314": 310,
+        "7315": 310,
+        "7316": 310,
+        "7317": 310
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "winter",
+      "method": "HARD_RH_SOFT_Q",
+      "variable": "q_gkg",
+      "MAE_min_across_five_seeds": 0.4264548506560236,
+      "MAE_max_across_five_seeds": 0.5389291945934762,
+      "matched_hours_each_seed": {
+        "7313": 310,
+        "7314": 310,
+        "7315": 310,
+        "7316": 310,
+        "7317": 310
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "winter",
+      "method": "BOTH_SOFT",
+      "variable": "T2m",
+      "MAE_min_across_five_seeds": 2.6033349613366137,
+      "MAE_max_across_five_seeds": 3.045496273502029,
+      "matched_hours_each_seed": {
+        "7313": 310,
+        "7314": 310,
+        "7315": 310,
+        "7316": 310,
+        "7317": 310
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "winter",
+      "method": "BOTH_SOFT",
+      "variable": "RH2m",
+      "MAE_min_across_five_seeds": 8.641013121679704,
+      "MAE_max_across_five_seeds": 9.17239024228193,
+      "matched_hours_each_seed": {
+        "7313": 310,
+        "7314": 310,
+        "7315": 310,
+        "7316": 310,
+        "7317": 310
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "winter",
+      "method": "BOTH_SOFT",
+      "variable": "p_hPa",
+      "MAE_min_across_five_seeds": 42.536935483870955,
+      "MAE_max_across_five_seeds": 42.536935483870955,
+      "matched_hours_each_seed": {
+        "7313": 310,
+        "7314": 310,
+        "7315": 310,
+        "7316": 310,
+        "7317": 310
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "winter",
+      "method": "BOTH_SOFT",
+      "variable": "e_hPa",
+      "MAE_min_across_five_seeds": 0.6550862058604774,
+      "MAE_max_across_five_seeds": 0.7861211071171726,
+      "matched_hours_each_seed": {
+        "7313": 310,
+        "7314": 310,
+        "7315": 310,
+        "7316": 310,
+        "7317": 310
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "winter",
+      "method": "BOTH_SOFT",
+      "variable": "q_gkg",
+      "MAE_min_across_five_seeds": 0.4264548506560236,
+      "MAE_max_across_five_seeds": 0.5389291945934762,
+      "matched_hours_each_seed": {
+        "7313": 310,
+        "7314": 310,
+        "7315": 310,
+        "7316": 310,
+        "7317": 310
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "summer",
+      "method": "B3_STRICT",
+      "variable": "T2m",
+      "MAE_min_across_five_seeds": 1.927905050513705,
+      "MAE_max_across_five_seeds": 2.2092440435238396,
+      "matched_hours_each_seed": {
+        "7313": 335,
+        "7314": 335,
+        "7315": 335,
+        "7316": 335,
+        "7317": 335
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "summer",
+      "method": "B3_STRICT",
+      "variable": "RH2m",
+      "MAE_min_across_five_seeds": 6.125720652196342,
+      "MAE_max_across_five_seeds": 6.794209883242914,
+      "matched_hours_each_seed": {
+        "7313": 335,
+        "7314": 335,
+        "7315": 335,
+        "7316": 335,
+        "7317": 335
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "summer",
+      "method": "B3_STRICT",
+      "variable": "p_hPa",
+      "MAE_min_across_five_seeds": 38.30164179104477,
+      "MAE_max_across_five_seeds": 38.30164179104477,
+      "matched_hours_each_seed": {
+        "7313": 335,
+        "7314": 335,
+        "7315": 335,
+        "7316": 335,
+        "7317": 335
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "summer",
+      "method": "B3_STRICT",
+      "variable": "e_hPa",
+      "MAE_min_across_five_seeds": 1.1434855263330337,
+      "MAE_max_across_five_seeds": 1.1803275403031048,
+      "matched_hours_each_seed": {
+        "7313": 335,
+        "7314": 335,
+        "7315": 335,
+        "7316": 335,
+        "7317": 335
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "summer",
+      "method": "B3_STRICT",
+      "variable": "q_gkg",
+      "MAE_min_across_five_seeds": 0.662510249647097,
+      "MAE_max_across_five_seeds": 0.7048935284057058,
+      "matched_hours_each_seed": {
+        "7313": 335,
+        "7314": 335,
+        "7315": 335,
+        "7316": 335,
+        "7317": 335
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "summer",
+      "method": "HARD_Q_SOFT_RH",
+      "variable": "T2m",
+      "MAE_min_across_five_seeds": 1.927905050513705,
+      "MAE_max_across_five_seeds": 2.2092440435238396,
+      "matched_hours_each_seed": {
+        "7313": 335,
+        "7314": 335,
+        "7315": 335,
+        "7316": 335,
+        "7317": 335
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "summer",
+      "method": "HARD_Q_SOFT_RH",
+      "variable": "RH2m",
+      "MAE_min_across_five_seeds": 6.125720652196339,
+      "MAE_max_across_five_seeds": 6.794209883242914,
+      "matched_hours_each_seed": {
+        "7313": 335,
+        "7314": 335,
+        "7315": 335,
+        "7316": 335,
+        "7317": 335
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "summer",
+      "method": "HARD_Q_SOFT_RH",
+      "variable": "p_hPa",
+      "MAE_min_across_five_seeds": 38.30164179104477,
+      "MAE_max_across_five_seeds": 38.30164179104477,
+      "matched_hours_each_seed": {
+        "7313": 335,
+        "7314": 335,
+        "7315": 335,
+        "7316": 335,
+        "7317": 335
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "summer",
+      "method": "HARD_Q_SOFT_RH",
+      "variable": "e_hPa",
+      "MAE_min_across_five_seeds": 1.1434855263330337,
+      "MAE_max_across_five_seeds": 1.1803275403031048,
+      "matched_hours_each_seed": {
+        "7313": 335,
+        "7314": 335,
+        "7315": 335,
+        "7316": 335,
+        "7317": 335
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "summer",
+      "method": "HARD_Q_SOFT_RH",
+      "variable": "q_gkg",
+      "MAE_min_across_five_seeds": 0.662510249647097,
+      "MAE_max_across_five_seeds": 0.7048935284057058,
+      "matched_hours_each_seed": {
+        "7313": 335,
+        "7314": 335,
+        "7315": 335,
+        "7316": 335,
+        "7317": 335
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "summer",
+      "method": "HARD_RH_SOFT_Q",
+      "variable": "T2m",
+      "MAE_min_across_five_seeds": 1.927905050513705,
+      "MAE_max_across_five_seeds": 2.2092440435238396,
+      "matched_hours_each_seed": {
+        "7313": 335,
+        "7314": 335,
+        "7315": 335,
+        "7316": 335,
+        "7317": 335
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "summer",
+      "method": "HARD_RH_SOFT_Q",
+      "variable": "RH2m",
+      "MAE_min_across_five_seeds": 6.125720652196339,
+      "MAE_max_across_five_seeds": 6.794209883242914,
+      "matched_hours_each_seed": {
+        "7313": 335,
+        "7314": 335,
+        "7315": 335,
+        "7316": 335,
+        "7317": 335
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "summer",
+      "method": "HARD_RH_SOFT_Q",
+      "variable": "p_hPa",
+      "MAE_min_across_five_seeds": 38.30164179104477,
+      "MAE_max_across_five_seeds": 38.30164179104477,
+      "matched_hours_each_seed": {
+        "7313": 335,
+        "7314": 335,
+        "7315": 335,
+        "7316": 335,
+        "7317": 335
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "summer",
+      "method": "HARD_RH_SOFT_Q",
+      "variable": "e_hPa",
+      "MAE_min_across_five_seeds": 1.1434855263330337,
+      "MAE_max_across_five_seeds": 1.1803275403031048,
+      "matched_hours_each_seed": {
+        "7313": 335,
+        "7314": 335,
+        "7315": 335,
+        "7316": 335,
+        "7317": 335
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "summer",
+      "method": "HARD_RH_SOFT_Q",
+      "variable": "q_gkg",
+      "MAE_min_across_five_seeds": 0.662510249647097,
+      "MAE_max_across_five_seeds": 0.7048935284057058,
+      "matched_hours_each_seed": {
+        "7313": 335,
+        "7314": 335,
+        "7315": 335,
+        "7316": 335,
+        "7317": 335
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "summer",
+      "method": "BOTH_SOFT",
+      "variable": "T2m",
+      "MAE_min_across_five_seeds": 1.927905050513705,
+      "MAE_max_across_five_seeds": 2.2092440435238396,
+      "matched_hours_each_seed": {
+        "7313": 335,
+        "7314": 335,
+        "7315": 335,
+        "7316": 335,
+        "7317": 335
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "summer",
+      "method": "BOTH_SOFT",
+      "variable": "RH2m",
+      "MAE_min_across_five_seeds": 6.125720652196339,
+      "MAE_max_across_five_seeds": 6.794209883242914,
+      "matched_hours_each_seed": {
+        "7313": 335,
+        "7314": 335,
+        "7315": 335,
+        "7316": 335,
+        "7317": 335
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "summer",
+      "method": "BOTH_SOFT",
+      "variable": "p_hPa",
+      "MAE_min_across_five_seeds": 38.30164179104477,
+      "MAE_max_across_five_seeds": 38.30164179104477,
+      "matched_hours_each_seed": {
+        "7313": 335,
+        "7314": 335,
+        "7315": 335,
+        "7316": 335,
+        "7317": 335
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "summer",
+      "method": "BOTH_SOFT",
+      "variable": "e_hPa",
+      "MAE_min_across_five_seeds": 1.1434855263330337,
+      "MAE_max_across_five_seeds": 1.1803275403031048,
+      "matched_hours_each_seed": {
+        "7313": 335,
+        "7314": 335,
+        "7315": 335,
+        "7316": 335,
+        "7317": 335
+      },
+      "not_independent_observational_replicates": true
+    },
+    {
+      "country": "CH",
+      "period": "summer",
+      "method": "BOTH_SOFT",
+      "variable": "q_gkg",
+      "MAE_min_across_five_seeds": 0.662510249647097,
+      "MAE_max_across_five_seeds": 0.7048935284057058,
+      "matched_hours_each_seed": {
+        "7313": 335,
+        "7314": 335,
+        "7315": 335,
+        "7316": 335,
+        "7317": 335
+      },
+      "not_independent_observational_replicates": true
+    }
+  ],
+  "paired_C2_minus_B3_rows": 450,
+  "paired_max_abs_delta_MAE": 2.6645352591003757e-15,
+  "paired_max_abs_delta_RMSE": 1.7763568394002505e-15,
+  "all_three_modes_have_same_donor_source_and_pressure": true,
+  "ledger_arithmetic_and_design_scale_checks": "PASS",
+  "ledger_day_mode_records_excluding_synthetic_pilot": 3456,
+  "physically_valid_records_excluding_synthetic_pilot": 3440,
+  "source_modified_records": 14,
+  "physical_residual_maxima": {
+    "Tmin_residual_K": 0.0,
+    "Tmax_residual_K": 0.0,
+    "tas_midrange_residual_K": 1.52587890625e-05,
+    "tas_time_mean_residual_K": 1.1368683772161603e-13,
+    "hard_q_residual_kgkg": 3.469446951953614e-17,
+    "hard_RH_residual_pp": 2.5034030912252092e-05,
+    "RH_water_max_pct": 100.00000000000205
+  },
+  "independent_CH_temperature_domain_check": {
+    "country": "CH",
+    "date": "2021-02-13",
+    "donor_date": "2019-02-04",
+    "source_canonical_weather_hashes_verified": true,
+    "target_T_time_mean_K": 259.07083333333327,
+    "affine_donor_mean_K": 256.34619047619043,
+    "simple_box_T_mean_lower_K": 254.7733333333333,
+    "simple_box_T_mean_upper_K": 257.9980952380952,
+    "LP_T_mean_lower_K": 254.77333333333328,
+    "LP_T_mean_upper_K": 257.9980952380952,
+    "target_above_T_mean_upper_K": 1.072738095238094,
+    "scope": "THIS_FROZEN_DONOR_T_PRIOR_ONLY_NO_GENERAL_ATMOSPHERIC_IMPOSSIBILITY",
+    "T_q_RH_source_consistent_before_imposing_donor_prior": true,
+    "model_parameters_changed": false,
+    "new_validation_dates_opened": false
+  },
+  "station_public_seal_consistency": "PASS_PRIVATE_PAYLOADS_NOT_DISTRIBUTED",
+  "station_seal": {
+    "frozen_before_scoring": true,
+    "countries": [
+      "AT",
+      "DE",
+      "CH"
+    ],
+    "algorithm_commit": "932288eb8742ec717e5807a23f19c3a9ce9f3e4d",
+    "protocol_sha256": "fff038ab3d3ccb3024704cf8443280d1c41f337d65d6d80325b0ad469e7ba89b",
+    "cohort_role": "REVEALED_2021_RECONSTRUCTION_DIAGNOSTIC_NOT_NEW_HOLDOUT",
+    "predictions_sha256": "4c24393829495eeffa85388881e18f6ceaf9b8963fbac6b0f0d9c7f07d797d4b",
+    "observations_sha256": "33efa32d4b3ad93c1f182c71393a2ae01188a015b31de3fca6be1cc953f4869d"
+  },
+  "synthetic_cost_pilot": {
+    "source": "50_SYNTHETIC_CASES_NO_REVEALED_YEARS_OR_STATION_VALUES",
+    "recipe_seed": 20261021,
+    "mode_selection": "CYCLE_THROUGH_THREE_MODES_NO_MODEL_SELECTION",
+    "wall_seconds": 23.374997784,
+    "process_CPU_seconds": 23.372833443,
+    "median_seconds": 0.40398974800000076,
+    "p95_seconds": 0.7251819500000052,
+    "peak_process_RSS_KiB": 84872,
+    "summary": {
+      "total": 50,
+      "counts": {
+        "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY": 50
+      },
+      "physically_valid_candidates": 50,
+      "source_modified_candidates": 50,
+      "budget_status_counts": {
+        "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED": 50
+      },
+      "independent_accuracy": "NOT_TESTED",
+      "operational_ready": false,
+      "huss": {
+        "count": 50,
+        "max_abs_delta": 0.0036334337773011685,
+        "mean_abs_delta": 0.0022349448522278946,
+        "unit": "kg/kg"
+      },
+      "hurs": {
+        "count": 50,
+        "max_abs_delta": 60.0671910453968,
+        "mean_abs_delta": 22.130750026985016,
+        "unit": "%"
+      }
+    }
+  },
+  "runtime": {
+    "contracts": {
+      "elapsed_run_wall_seconds": 23.400865765999995,
+      "elapsed_run_process_CPU_seconds": 23.392228426,
+      "peak_process_RSS_KiB": 84872,
+      "runtime": {
+        "python": "3.12.15",
+        "numpy": "2.3.5",
+        "scipy": "1.17.0",
+        "system_logical_CPUs": 4,
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1"
+      }
+    },
+    "regressions": {
+      "elapsed_run_wall_seconds": 169.12423431000002,
+      "elapsed_run_process_CPU_seconds": 179.27230729,
+      "peak_process_RSS_KiB": 231804,
+      "runtime": {
+        "python": "3.12.15",
+        "numpy": "2.3.5",
+        "scipy": "1.17.0",
+        "system_logical_CPUs": 4,
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1"
+      }
+    },
+    "stations": {
+      "elapsed_run_wall_seconds": 470.081078244,
+      "elapsed_run_process_CPU_seconds": 464.142688821,
+      "peak_process_RSS_KiB": 191724,
+      "runtime": {
+        "python": "3.12.15",
+        "numpy": "2.3.5",
+        "scipy": "1.17.0",
+        "system_logical_CPUs": 4,
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1"
+      }
+    }
+  },
+  "regression_CI_worktree_flag": {
+    "working_tree_dirty": true,
+    "downloaded_untracked_inputs_present_in_workflow": true,
+    "all_scientific_implementation_and_protected_hashes_match_tested_commit": true,
+    "dirty_flag_is_not_used_as_an_accuracy_or_integrity_pass": true
+  },
+  "claim_status": {
+    "code_correctness": "TESTED_214_TESTS_AND_LEDGER_INVARIANTS_PASS",
+    "physical_admissibility": "VALID_CANDIDATES_PASS_CONDITIONAL_DISCRETE_DONOR_MODEL",
+    "independent_accuracy": "NOT_REESTABLISHED_REVEALED_COHORT_NO_MEASURABLE_C2_GAIN_PRESSURE_FAILS",
+    "operational_ready": false
+  },
+  "source_values_modified": false,
+  "source_corrected_candidates_are_research_only": true,
+  "correction_budget_established": false,
+  "error_covariance_calibrated": false,
+  "B4_qualified": false,
+  "production_epw_ready": false,
+  "merge_main": false,
+  "scientific_interpretation": "C2 is a tested conditional source-reconciliation mechanism. This station cohort activates no soft corrections and cannot compare their accuracy. Same grid pressure fails the station accuracy gate. Davos certificate applies to one frozen donor prior, not to source weather or all atmospheric states."
+}
