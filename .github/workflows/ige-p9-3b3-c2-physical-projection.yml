@@ -1,0 +1,108 @@
+name: IGE P9.3B3 C2 physical projection and explicit correction ledger
+on:
+  workflow_dispatch:
+  push:
+    branches: [research/ige-p9-3b3-c2-projection-20261021]
+    paths: [research/ige_cmip6/p9_3b3_c2_protocol.json]
+permissions:
+  contents: read
+  actions: read
+env:
+  OPENBLAS_NUM_THREADS: '1'
+  OMP_NUM_THREADS: '1'
+jobs:
+  mathematical_contracts_and_synthetic_cost_pilot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 scipy==1.17.0
+      - name: C2 independent scalar optima, sealed scoring, and all unchanged B3 contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3b3_*.py' -v
+      - name: Earlier mathematical contracts and DWD absolute pressure semantics
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3a*.py' -q
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_2*.py' -q
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3b2*.py' -q
+          python research/ige_cmip6/p9_3b2d_canonical_pressure_fields.py
+      - name: Fifty synthetic cases, fixed dimensional metric, no station or regression fitting
+        run: python -u research/ige_cmip6/p9_3b3_c2_run.py --pilot --out outputs/c2-contracts-and-cost
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ige-p93b3-C2-code-contracts-and-50-synthetic-cost-cases-NOT-accuracy
+          path: outputs/c2-contracts-and-cost/
+          retention-days: 30
+
+  immutable_2013_2014_source_regressions:
+    needs: mathematical_contracts_and_synthetic_cost_pilot
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 scipy==1.17.0
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          name: ige-p6-CanESM5-historical-1995-2014
+          path: inputs/original-nasa
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 39530492475
+          github-token: ${{ github.token }}
+          name: ige-p93b3-repair-original-NASA-semantics-and-2013-2014-REGRESSIONS-not-independent-validation
+          path: inputs/immutable-repair
+      - name: Repack original bytes, verify registered NASA hash
+        run: |
+          python - <<'PY'
+          import hashlib,zipfile
+          from pathlib import Path
+          p=Path('inputs/original-nasa')
+          assert hashlib.sha256((p/'joint_daily_raw.csv').read_bytes()).hexdigest()=='77ec2e5637eb487c3cedde4e0b660b31f8bd2606198e766255d75a985d61dfef'
+          with zipfile.ZipFile('inputs/original-nasa.zip','w',zipfile.ZIP_DEFLATED) as z:
+              for f in sorted(p.iterdir()):
+                  if f.is_file():z.write(f,f.name)
+          PY
+      - name: Rerun all 727 exact states plus five certificates, compare three C2 modes without tuning
+        run: >-
+          python -u research/ige_cmip6/p9_3b3_c2_run.py
+          --original-canesm5-registered-zip inputs/original-nasa.zip
+          --immutable-repair-audit inputs/immutable-repair/p93b3-regressions/regression_audit.json
+          --out outputs/c2-source-regressions
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ige-p93b3-C2-original-NASA-2013-2014-correction-ledgers-REGRESSIONS-NOT-holdout
+          path: outputs/c2-source-regressions/
+          if-no-files-found: warn
+          retention-days: 30
+
+  revealed_AT_DE_CH_reconstruction_diagnostic:
+    needs: mathematical_contracts_and_synthetic_cost_pilot
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 scipy==1.17.0
+      - name: Common target-day grid pressure, sealed predictions, all 630 expected score cells
+        run: >-
+          python -u research/ige_cmip6/p9_3b3_c2_run.py
+          --stations --private-cache inputs/private-C2-cache-DO-NOT-UPLOAD
+          --out outputs/c2-AT-DE-CH-revealed-diagnostic
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ige-p93b3-C2-AT-DE-CH-2021-REVEALED-reconstruction-ledgers-and-scores-NOT-new-validation
+          path: outputs/c2-AT-DE-CH-revealed-diagnostic/
+          if-no-files-found: warn
+          retention-days: 30

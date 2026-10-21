@@ -1,0 +1,1507 @@
+{
+  "phase": "P9.3B3_C2_VERIFIED_LOCAL_IMPLEMENTATION_20261021",
+  "verification_scope": "UNCOMMITTED_RESEARCH_WORKTREE_BEFORE_REMOTE_CI_SOURCE_MANIFEST_IS_AUTHORITATIVE",
+  "parent_commit": "f49f5029632e33aaf159e07958a36a49932e9fcd",
+  "protocol_sha256": "fff038ab3d3ccb3024704cf8443280d1c41f337d65d6d80325b0ad469e7ba89b",
+  "implementation_file_sha256": {
+    "p9_3b3_c2_projection.py": "47a1805a2d1f01b68c8532b5120319fc103d6cfa961c852f8f20057eb5bcf532",
+    "p9_3b3_c2_run.py": "be94e1f82609014cde55e12bbf42f8cdd82c2fc5961d13df23cdf9c26df4dfb9",
+    "p9_3b3_c2_stations.py": "90782dedaf9a362ce4cc79b89f1390d22cf31528de14e5138a10fe703e026cfe",
+    "p9_3b3_c2_validation.py": "f376c8d48e6d2167b06f103fdb3cf7234512a2fb086be4bc8d6ab2615c068315",
+    "test_p9_3b3_c2_pipeline.py": "1bc36debc0df69281b8e258529a2a35cfeba5c0a13715a1b47f58950962ee0b9",
+    "test_p9_3b3_c2_projection.py": "bf090df9454fde72e7760ce9276661b57e211873ccde067e71ab1d73b96e8b68"
+  },
+  "implementation_manifest_sha256": "ecd53422bdc6f52a8b4b9dbdc727083fed25591d0a84717a9a8a329c4717234f",
+  "full_local_report_sha256": "6cc859cfd1fecd64a2d8b95133e57d463a323c5f6d189a538fac58cb47a6752f",
+  "checks": [
+    {
+      "pattern": "test_p9_3b3_*.py",
+      "tests": 142,
+      "exit_code": 0,
+      "elapsed_seconds": 12.214532885000153
+    },
+    {
+      "pattern": "test_p9_3a*.py",
+      "tests": 14,
+      "exit_code": 0,
+      "elapsed_seconds": 0.4994935400000031
+    },
+    {
+      "pattern": "test_p9_2*.py",
+      "tests": 50,
+      "exit_code": 0,
+      "elapsed_seconds": 0.5974185430004582
+    },
+    {
+      "pattern": "test_p9_3b2*.py",
+      "tests": 8,
+      "exit_code": 0,
+      "elapsed_seconds": 0.07348221499978536
+    },
+    {
+      "DWD_absolute_pressure_contract": 0
+    }
+  ],
+  "total_unittest_tests": 214,
+  "new_C2_tests": 40,
+  "protected_controls_unchanged": 40,
+  "runtime": {
+    "python": "3.12.14",
+    "numpy": "2.3.5",
+    "scipy": "1.17.0",
+    "system_logical_CPUs": 9,
+    "OPENBLAS_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1"
+  },
+  "elapsed_source_regression_seconds": 123.12156396400042,
+  "elapsed_run_wall_seconds": 161.51272337499995,
+  "elapsed_run_process_CPU_seconds": 159.63245085399998,
+  "peak_process_RSS_KiB": 214996,
+  "source_daily_csv_sha256": "77ec2e5637eb487c3cedde4e0b660b31f8bd2606198e766255d75a985d61dfef",
+  "donor_canonical_weather_sha256": {
+    "2019": "ac9749eb1cee4d2246b60871f1a139d8920451e30b8ed54ea134431fa0de4c29",
+    "2020": "275804a076a81c3c8ae9a572e0359ca524ef9c90627ccca2c6862805093b019c"
+  },
+  "synthetic_cost_pilot": {
+    "source": "50_SYNTHETIC_CASES_NO_REVEALED_YEARS_OR_STATION_VALUES",
+    "recipe_seed": 20261021,
+    "mode_selection": "CYCLE_THROUGH_THREE_MODES_NO_MODEL_SELECTION",
+    "wall_seconds": 22.361894089999623,
+    "process_CPU_seconds": 22.3440493,
+    "median_seconds": 0.40693055549991186,
+    "p95_seconds": 0.7407041294498864,
+    "peak_process_RSS_KiB": 62672,
+    "summary": {
+      "total": 50,
+      "counts": {
+        "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY": 50
+      },
+      "physically_valid_candidates": 50,
+      "source_modified_candidates": 50,
+      "budget_status_counts": {
+        "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED": 50
+      },
+      "independent_accuracy": "NOT_TESTED",
+      "operational_ready": false,
+      "huss": {
+        "count": 50,
+        "max_abs_delta": 0.003633433777301428,
+        "mean_abs_delta": 0.0022349448522013832,
+        "unit": "kg/kg"
+      },
+      "hurs": {
+        "count": 50,
+        "max_abs_delta": 60.06719104554976,
+        "mean_abs_delta": 22.130750028698376,
+        "unit": "%"
+      }
+    }
+  },
+  "strict_rerun_counts": {
+    "EXACT_DEFINED_OPERATORS": 727,
+    "CERTIFIED_INFEASIBLE": 5
+  },
+  "comparison_summary": {
+    "HARD_Q_SOFT_RH": {
+      "total": 732,
+      "counts": {
+        "EXACT_SOURCE_PRESERVED": 727,
+        "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY": 4,
+        "CERTIFIED_HARD_CONSTRAINTS_INFEASIBLE": 1
+      },
+      "physically_valid_candidates": 731,
+      "source_modified_candidates": 4,
+      "budget_status_counts": {
+        "NO_SOURCE_CORRECTION_NEEDED": 727,
+        "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED": 4,
+        "NO_VALID_CANDIDATE": 1
+      },
+      "independent_accuracy": "NOT_TESTED",
+      "operational_ready": false,
+      "huss": {
+        "count": 731,
+        "max_abs_delta": 3.2959746043559335e-17,
+        "mean_abs_delta": 4.648869068999405e-18,
+        "unit": "kg/kg"
+      },
+      "hurs": {
+        "count": 731,
+        "max_abs_delta": 10.663766991200816,
+        "mean_abs_delta": 0.03734848592752325,
+        "unit": "%"
+      }
+    },
+    "HARD_RH_SOFT_Q": {
+      "total": 732,
+      "counts": {
+        "EXACT_SOURCE_PRESERVED": 727,
+        "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY": 5
+      },
+      "physically_valid_candidates": 732,
+      "source_modified_candidates": 5,
+      "budget_status_counts": {
+        "NO_SOURCE_CORRECTION_NEEDED": 727,
+        "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED": 5
+      },
+      "independent_accuracy": "NOT_TESTED",
+      "operational_ready": false,
+      "huss": {
+        "count": 732,
+        "max_abs_delta": 0.00048553005208017315,
+        "mean_abs_delta": 2.027503449829764e-06,
+        "unit": "kg/kg"
+      },
+      "hurs": {
+        "count": 732,
+        "max_abs_delta": 2.5034030912252092e-05,
+        "mean_abs_delta": 3.419970341167114e-08,
+        "unit": "%"
+      }
+    },
+    "BOTH_SOFT": {
+      "total": 732,
+      "counts": {
+        "EXACT_SOURCE_PRESERVED": 727,
+        "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY": 5
+      },
+      "physically_valid_candidates": 732,
+      "source_modified_candidates": 5,
+      "budget_status_counts": {
+        "NO_SOURCE_CORRECTION_NEEDED": 727,
+        "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED": 5
+      },
+      "independent_accuracy": "NOT_TESTED",
+      "operational_ready": false,
+      "huss": {
+        "count": 732,
+        "max_abs_delta": 0.00043637203636634394,
+        "mean_abs_delta": 1.9141248596688893e-06,
+        "unit": "kg/kg"
+      },
+      "hurs": {
+        "count": 732,
+        "max_abs_delta": 0.7230854673348261,
+        "mean_abs_delta": 0.0022163651205803,
+        "unit": "%"
+      }
+    }
+  },
+  "known_incompatible_day_mode_results": [
+    {
+      "regression_year": 2013,
+      "date": "2013-01-08",
+      "donor_date": "2019-01-01",
+      "mode": "HARD_Q_SOFT_RH",
+      "status": "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY",
+      "source_diagnostics": {
+        "q_mean_kgkg": 0.0016019869362935424,
+        "RH_mean_pp": 60.21186828613281,
+        "Tmin_K": 270.8193359375,
+        "Tmax_K": 279.19403076171875,
+        "tas_K": 275.0066833496094,
+        "temperature_operator": "DERIVED_TAS_MIDRANGE"
+      },
+      "strict_stage_status": "CERTIFIED_INFEASIBLE",
+      "journal": [
+        {
+          "variable": "huss",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": null,
+          "source_value": 0.0016019869362935424,
+          "achieved_value": 0.0016019869362935456,
+          "delta": 3.2526065174565133e-18,
+          "unit": "kg/kg",
+          "delta_unit": "kg/kg",
+          "correction_applied": false,
+          "hard_constraint": true,
+          "delta_divided_by_design_scale": 3.2526065174565133e-15,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "31052d333f061a7b007e8a706fe26be00a7eaff68299683d604bf14c99465199"
+        },
+        {
+          "variable": "hurs",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": "WATER_ICE",
+          "source_value": 60.21186828613281,
+          "achieved_value": 49.548101294931996,
+          "delta": -10.663766991200816,
+          "unit": "%",
+          "delta_unit": "percentage_point",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": -2.132753398240163,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "31052d333f061a7b007e8a706fe26be00a7eaff68299683d604bf14c99465199"
+        }
+      ],
+      "validation": {
+        "physical_admissibility": "PASS_UNDER_DECLARED_DISCRETE_POLICY",
+        "q_mean_kgkg": 0.0016019869362935456,
+        "RH_source_mean_pct": 49.548101294931996,
+        "T_time_mean_K": 273.0300779553505,
+        "daily_residuals": {
+          "Tmin_K": 0.0,
+          "Tmax_K": 0.0,
+          "q_mean_kgkg": 3.2526065174565133e-18,
+          "RH_mean_pp": -10.663766991200816,
+          "tas_operator_K": 0.0
+        },
+        "RH_water_max_pct": 100.00000000001357,
+        "source_diagnostics_unchanged_within_numerical_tolerance": false,
+        "pressure_changed": false,
+        "continuous_time_qualified": false,
+        "mean_q_is_not_column_water_mass_conservation": true,
+        "independent_accuracy": "NOT_TESTED",
+        "operational_ready": false
+      },
+      "objective": {
+        "data_metric": 2.274318528852479,
+        "shape_unweighted": 0.9224280371533384,
+        "shape_weighted": 0.009224280371533385,
+        "total": 2.2835428092240124
+      },
+      "hourly_adjustment_summary": {
+        "max_T_delta_from_affine_donor_K": 1.8037804236778356,
+        "rms_T_delta_from_affine_donor_K": 1.0261144794490606,
+        "max_q_delta_from_raw_donor_gkg": 4.398031243609203
+      },
+      "selected_solver_reported_success": true,
+      "local_optimality_status": "SOLVER_STOPPING_CRITERION_ONLY",
+      "pressure_unchanged": true,
+      "source_temperature_constraints_changed": false,
+      "pressure_alignment": "REGISTERED_DONOR_PRESSURE_SENSITIVITY"
+    },
+    {
+      "regression_year": 2013,
+      "date": "2013-01-19",
+      "donor_date": "2019-01-06",
+      "mode": "HARD_Q_SOFT_RH",
+      "status": "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY",
+      "source_diagnostics": {
+        "q_mean_kgkg": 0.0023956536315381527,
+        "RH_mean_pp": 65.11164855957031,
+        "Tmin_K": 272.85540771484375,
+        "Tmax_K": 281.38983154296875,
+        "tas_K": 277.12261962890625,
+        "temperature_operator": "DERIVED_TAS_MIDRANGE"
+      },
+      "strict_stage_status": "CERTIFIED_INFEASIBLE",
+      "journal": [
+        {
+          "variable": "huss",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": null,
+          "source_value": 0.0023956536315381527,
+          "achieved_value": 0.0023956536315381544,
+          "delta": 1.734723475976807e-18,
+          "unit": "kg/kg",
+          "delta_unit": "kg/kg",
+          "correction_applied": false,
+          "hard_constraint": true,
+          "delta_divided_by_design_scale": 1.734723475976807e-15,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "1e00401562de1cbdf91e29b301fa07258e0a4367e8ecd0d14ffca12afaa1541f"
+        },
+        {
+          "variable": "hurs",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": "WATER_ICE",
+          "source_value": 65.11164855957031,
+          "achieved_value": 60.80879546721961,
+          "delta": -4.302853092350702,
+          "unit": "%",
+          "delta_unit": "percentage_point",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": -0.8605706184701404,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "1e00401562de1cbdf91e29b301fa07258e0a4367e8ecd0d14ffca12afaa1541f"
+        }
+      ],
+      "validation": {
+        "physical_admissibility": "PASS_UNDER_DECLARED_DISCRETE_POLICY",
+        "q_mean_kgkg": 0.0023956536315381544,
+        "RH_source_mean_pct": 60.80879546721961,
+        "T_time_mean_K": 275.5484532070294,
+        "daily_residuals": {
+          "Tmin_K": 0.0,
+          "Tmax_K": 0.0,
+          "q_mean_kgkg": 1.734723475976807e-18,
+          "RH_mean_pp": -4.302853092350702,
+          "tas_operator_K": 0.0
+        },
+        "RH_water_max_pct": 100.00000000000489,
+        "source_diagnostics_unchanged_within_numerical_tolerance": false,
+        "pressure_changed": false,
+        "continuous_time_qualified": false,
+        "mean_q_is_not_column_water_mass_conservation": true,
+        "independent_accuracy": "NOT_TESTED",
+        "operational_ready": false
+      },
+      "objective": {
+        "data_metric": 0.3702908946870424,
+        "shape_unweighted": 1.0017895973889295,
+        "shape_weighted": 0.010017895973889294,
+        "total": 0.3803087906609317
+      },
+      "hourly_adjustment_summary": {
+        "max_T_delta_from_affine_donor_K": 2.0,
+        "rms_T_delta_from_affine_donor_K": 1.2180271464546801,
+        "max_q_delta_from_raw_donor_gkg": 3.8106741535766826
+      },
+      "selected_solver_reported_success": true,
+      "local_optimality_status": "SOLVER_STOPPING_CRITERION_ONLY",
+      "pressure_unchanged": true,
+      "source_temperature_constraints_changed": false,
+      "pressure_alignment": "REGISTERED_DONOR_PRESSURE_SENSITIVITY"
+    },
+    {
+      "regression_year": 2013,
+      "date": "2013-01-20",
+      "donor_date": "2019-01-01",
+      "mode": "HARD_Q_SOFT_RH",
+      "status": "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY",
+      "source_diagnostics": {
+        "q_mean_kgkg": 0.00215331744402647,
+        "RH_mean_pp": 61.39644241333008,
+        "Tmin_K": 272.53912353515625,
+        "Tmax_K": 281.36065673828125,
+        "tas_K": 276.94989013671875,
+        "temperature_operator": "DERIVED_TAS_MIDRANGE"
+      },
+      "strict_stage_status": "CERTIFIED_INFEASIBLE",
+      "journal": [
+        {
+          "variable": "huss",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": null,
+          "source_value": 0.00215331744402647,
+          "achieved_value": 0.00215331744402647,
+          "delta": 0.0,
+          "unit": "kg/kg",
+          "delta_unit": "kg/kg",
+          "correction_applied": false,
+          "hard_constraint": true,
+          "delta_divided_by_design_scale": 0.0,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "31052d333f061a7b007e8a706fe26be00a7eaff68299683d604bf14c99465199"
+        },
+        {
+          "variable": "hurs",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": "WATER_ICE",
+          "source_value": 61.39644241333008,
+          "achieved_value": 57.607714061691965,
+          "delta": -3.788728351638113,
+          "unit": "%",
+          "delta_unit": "percentage_point",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": -0.7577456703276226,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "31052d333f061a7b007e8a706fe26be00a7eaff68299683d604bf14c99465199"
+        }
+      ],
+      "validation": {
+        "physical_admissibility": "PASS_UNDER_DECLARED_DISCRETE_POLICY",
+        "q_mean_kgkg": 0.00215331744402647,
+        "RH_source_mean_pct": 57.607714061691965,
+        "T_time_mean_K": 274.86785265886954,
+        "daily_residuals": {
+          "Tmin_K": 0.0,
+          "Tmax_K": 0.0,
+          "q_mean_kgkg": 0.0,
+          "RH_mean_pp": -3.788728351638113,
+          "tas_operator_K": 0.0
+        },
+        "RH_water_max_pct": 99.99999999999977,
+        "source_diagnostics_unchanged_within_numerical_tolerance": false,
+        "pressure_changed": false,
+        "continuous_time_qualified": false,
+        "mean_q_is_not_column_water_mass_conservation": true,
+        "independent_accuracy": "NOT_TESTED",
+        "operational_ready": false
+      },
+      "objective": {
+        "data_metric": 0.2870892504501291,
+        "shape_unweighted": 0.9036817342213007,
+        "shape_weighted": 0.009036817342213007,
+        "total": 0.29612606779234213
+      },
+      "hourly_adjustment_summary": {
+        "max_T_delta_from_affine_donor_K": 1.9000225360576337,
+        "rms_T_delta_from_affine_donor_K": 1.0808643810318357,
+        "max_q_delta_from_raw_donor_gkg": 4.398031243609203
+      },
+      "selected_solver_reported_success": true,
+      "local_optimality_status": "SOLVER_STOPPING_CRITERION_ONLY",
+      "pressure_unchanged": true,
+      "source_temperature_constraints_changed": false,
+      "pressure_alignment": "REGISTERED_DONOR_PRESSURE_SENSITIVITY"
+    },
+    {
+      "regression_year": 2013,
+      "date": "2013-01-26",
+      "donor_date": "2019-01-06",
+      "mode": "HARD_Q_SOFT_RH",
+      "status": "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY",
+      "source_diagnostics": {
+        "q_mean_kgkg": 0.0017245291965082288,
+        "RH_mean_pp": 58.73958969116211,
+        "Tmin_K": 271.29388427734375,
+        "Tmax_K": 280.45697021484375,
+        "tas_K": 275.87542724609375,
+        "temperature_operator": "DERIVED_TAS_MIDRANGE"
+      },
+      "strict_stage_status": "CERTIFIED_INFEASIBLE",
+      "journal": [
+        {
+          "variable": "huss",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": null,
+          "source_value": 0.0017245291965082288,
+          "achieved_value": 0.0017245291965082292,
+          "delta": 4.336808689942018e-19,
+          "unit": "kg/kg",
+          "delta_unit": "kg/kg",
+          "correction_applied": false,
+          "hard_constraint": true,
+          "delta_divided_by_design_scale": 4.3368086899420177e-16,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "1e00401562de1cbdf91e29b301fa07258e0a4367e8ecd0d14ffca12afaa1541f"
+        },
+        {
+          "variable": "hurs",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": "WATER_ICE",
+          "source_value": 58.73958969116211,
+          "achieved_value": 50.19321994739539,
+          "delta": -8.546369743766718,
+          "unit": "%",
+          "delta_unit": "percentage_point",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": -1.7092739487533435,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "1e00401562de1cbdf91e29b301fa07258e0a4367e8ecd0d14ffca12afaa1541f"
+        }
+      ],
+      "validation": {
+        "physical_admissibility": "PASS_UNDER_DECLARED_DISCRETE_POLICY",
+        "q_mean_kgkg": 0.0017245291965082292,
+        "RH_source_mean_pct": 50.19321994739539,
+        "T_time_mean_K": 274.3702378364704,
+        "daily_residuals": {
+          "Tmin_K": 0.0,
+          "Tmax_K": 0.0,
+          "q_mean_kgkg": 4.336808689942018e-19,
+          "RH_mean_pp": -8.546369743766718,
+          "tas_operator_K": 0.0
+        },
+        "RH_water_max_pct": 100.00000000000009,
+        "source_diagnostics_unchanged_within_numerical_tolerance": false,
+        "pressure_changed": false,
+        "continuous_time_qualified": false,
+        "mean_q_is_not_column_water_mass_conservation": true,
+        "independent_accuracy": "NOT_TESTED",
+        "operational_ready": false
+      },
+      "objective": {
+        "data_metric": 1.4608087159434264,
+        "shape_unweighted": 1.2285235765870912,
+        "shape_weighted": 0.012285235765870912,
+        "total": 1.4730939517092974
+      },
+      "hourly_adjustment_summary": {
+        "max_T_delta_from_affine_donor_K": 2.0,
+        "rms_T_delta_from_affine_donor_K": 1.0912041521142246,
+        "max_q_delta_from_raw_donor_gkg": 3.8106741535766755
+      },
+      "selected_solver_reported_success": true,
+      "local_optimality_status": "SOLVER_STOPPING_CRITERION_ONLY",
+      "pressure_unchanged": true,
+      "source_temperature_constraints_changed": false,
+      "pressure_alignment": "REGISTERED_DONOR_PRESSURE_SENSITIVITY"
+    },
+    {
+      "regression_year": 2013,
+      "date": "2013-01-08",
+      "donor_date": "2019-01-01",
+      "mode": "HARD_RH_SOFT_Q",
+      "status": "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY",
+      "source_diagnostics": {
+        "q_mean_kgkg": 0.0016019869362935424,
+        "RH_mean_pp": 60.21186828613281,
+        "Tmin_K": 270.8193359375,
+        "Tmax_K": 279.19403076171875,
+        "tas_K": 275.0066833496094,
+        "temperature_operator": "DERIVED_TAS_MIDRANGE"
+      },
+      "strict_stage_status": "CERTIFIED_INFEASIBLE",
+      "journal": [
+        {
+          "variable": "huss",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": null,
+          "source_value": 0.0016019869362935424,
+          "achieved_value": 0.0019507380239905218,
+          "delta": 0.00034875108769697946,
+          "unit": "kg/kg",
+          "delta_unit": "kg/kg",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": 0.34875108769697943,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "31052d333f061a7b007e8a706fe26be00a7eaff68299683d604bf14c99465199"
+        },
+        {
+          "variable": "hurs",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": "WATER_ICE",
+          "source_value": 60.21186828613281,
+          "achieved_value": 60.21186828601805,
+          "delta": -1.1475975725261378e-10,
+          "unit": "%",
+          "delta_unit": "percentage_point",
+          "correction_applied": false,
+          "hard_constraint": true,
+          "delta_divided_by_design_scale": -2.2951951450522755e-11,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "31052d333f061a7b007e8a706fe26be00a7eaff68299683d604bf14c99465199"
+        }
+      ],
+      "validation": {
+        "physical_admissibility": "PASS_UNDER_DECLARED_DISCRETE_POLICY",
+        "q_mean_kgkg": 0.0019507380239905218,
+        "RH_source_mean_pct": 60.21186828601805,
+        "T_time_mean_K": 273.03005925469904,
+        "daily_residuals": {
+          "Tmin_K": 0.0,
+          "Tmax_K": 0.0,
+          "q_mean_kgkg": 0.00034875108769697946,
+          "RH_mean_pp": -1.1475975725261378e-10,
+          "tas_operator_K": 0.0
+        },
+        "RH_water_max_pct": 100.00000000000004,
+        "source_diagnostics_unchanged_within_numerical_tolerance": false,
+        "pressure_changed": false,
+        "continuous_time_qualified": false,
+        "mean_q_is_not_column_water_mass_conservation": true,
+        "independent_accuracy": "NOT_TESTED",
+        "operational_ready": false
+      },
+      "objective": {
+        "data_metric": 0.06081366058491306,
+        "shape_unweighted": 0.8285569602838243,
+        "shape_weighted": 0.008285569602838242,
+        "total": 0.0690992301877513
+      },
+      "hourly_adjustment_summary": {
+        "max_T_delta_from_affine_donor_K": 1.8037804236778356,
+        "rms_T_delta_from_affine_donor_K": 1.026093308517526,
+        "max_q_delta_from_raw_donor_gkg": 4.398031243609203
+      },
+      "selected_solver_reported_success": true,
+      "local_optimality_status": "SOLVER_STOPPING_CRITERION_ONLY",
+      "pressure_unchanged": true,
+      "source_temperature_constraints_changed": false,
+      "pressure_alignment": "REGISTERED_DONOR_PRESSURE_SENSITIVITY"
+    },
+    {
+      "regression_year": 2013,
+      "date": "2013-01-19",
+      "donor_date": "2019-01-06",
+      "mode": "HARD_RH_SOFT_Q",
+      "status": "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY",
+      "source_diagnostics": {
+        "q_mean_kgkg": 0.0023956536315381527,
+        "RH_mean_pp": 65.11164855957031,
+        "Tmin_K": 272.85540771484375,
+        "Tmax_K": 281.38983154296875,
+        "tas_K": 277.12261962890625,
+        "temperature_operator": "DERIVED_TAS_MIDRANGE"
+      },
+      "strict_stage_status": "CERTIFIED_INFEASIBLE",
+      "journal": [
+        {
+          "variable": "huss",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": null,
+          "source_value": 0.0023956536315381527,
+          "achieved_value": 0.002583837088318435,
+          "delta": 0.0001881834567802822,
+          "unit": "kg/kg",
+          "delta_unit": "kg/kg",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": 0.18818345678028217,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "1e00401562de1cbdf91e29b301fa07258e0a4367e8ecd0d14ffca12afaa1541f"
+        },
+        {
+          "variable": "hurs",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": "WATER_ICE",
+          "source_value": 65.11164855957031,
+          "achieved_value": 65.11164855957033,
+          "delta": 1.4210854715202004e-14,
+          "unit": "%",
+          "delta_unit": "percentage_point",
+          "correction_applied": false,
+          "hard_constraint": true,
+          "delta_divided_by_design_scale": 2.842170943040401e-15,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "1e00401562de1cbdf91e29b301fa07258e0a4367e8ecd0d14ffca12afaa1541f"
+        }
+      ],
+      "validation": {
+        "physical_admissibility": "PASS_UNDER_DECLARED_DISCRETE_POLICY",
+        "q_mean_kgkg": 0.002583837088318435,
+        "RH_source_mean_pct": 65.11164855957033,
+        "T_time_mean_K": 275.4661435908766,
+        "daily_residuals": {
+          "Tmin_K": 0.0,
+          "Tmax_K": 0.0,
+          "q_mean_kgkg": 0.0001881834567802822,
+          "RH_mean_pp": 1.4210854715202004e-14,
+          "tas_operator_K": 0.0
+        },
+        "RH_water_max_pct": 100.00000000000004,
+        "source_diagnostics_unchanged_within_numerical_tolerance": false,
+        "pressure_changed": false,
+        "continuous_time_qualified": false,
+        "mean_q_is_not_column_water_mass_conservation": true,
+        "independent_accuracy": "NOT_TESTED",
+        "operational_ready": false
+      },
+      "objective": {
+        "data_metric": 0.017706506702888085,
+        "shape_unweighted": 1.0266237997040135,
+        "shape_weighted": 0.010266237997040135,
+        "total": 0.02797274469992822
+      },
+      "hourly_adjustment_summary": {
+        "max_T_delta_from_affine_donor_K": 2.0,
+        "rms_T_delta_from_affine_donor_K": 1.2845564873674566,
+        "max_q_delta_from_raw_donor_gkg": 3.8106741535766826
+      },
+      "selected_solver_reported_success": true,
+      "local_optimality_status": "SOLVER_STOPPING_CRITERION_ONLY",
+      "pressure_unchanged": true,
+      "source_temperature_constraints_changed": false,
+      "pressure_alignment": "REGISTERED_DONOR_PRESSURE_SENSITIVITY"
+    },
+    {
+      "regression_year": 2013,
+      "date": "2013-01-20",
+      "donor_date": "2019-01-01",
+      "mode": "HARD_RH_SOFT_Q",
+      "status": "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY",
+      "source_diagnostics": {
+        "q_mean_kgkg": 0.00215331744402647,
+        "RH_mean_pp": 61.39644241333008,
+        "Tmin_K": 272.53912353515625,
+        "Tmax_K": 281.36065673828125,
+        "tas_K": 276.94989013671875,
+        "temperature_operator": "DERIVED_TAS_MIDRANGE"
+      },
+      "strict_stage_status": "CERTIFIED_INFEASIBLE",
+      "journal": [
+        {
+          "variable": "huss",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": null,
+          "source_value": 0.00215331744402647,
+          "achieved_value": 0.0022968023466697894,
+          "delta": 0.00014348490264331918,
+          "unit": "kg/kg",
+          "delta_unit": "kg/kg",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": 0.14348490264331917,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "31052d333f061a7b007e8a706fe26be00a7eaff68299683d604bf14c99465199"
+        },
+        {
+          "variable": "hurs",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": "WATER_ICE",
+          "source_value": 61.39644241333008,
+          "achieved_value": 61.39644241332515,
+          "delta": -4.931166586175095e-12,
+          "unit": "%",
+          "delta_unit": "percentage_point",
+          "correction_applied": false,
+          "hard_constraint": true,
+          "delta_divided_by_design_scale": -9.862333172350191e-13,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "31052d333f061a7b007e8a706fe26be00a7eaff68299683d604bf14c99465199"
+        }
+      ],
+      "validation": {
+        "physical_admissibility": "PASS_UNDER_DECLARED_DISCRETE_POLICY",
+        "q_mean_kgkg": 0.0022968023466697894,
+        "RH_source_mean_pct": 61.39644241332515,
+        "T_time_mean_K": 274.86785604130023,
+        "daily_residuals": {
+          "Tmin_K": 0.0,
+          "Tmax_K": 0.0,
+          "q_mean_kgkg": 0.00014348490264331918,
+          "RH_mean_pp": -4.931166586175095e-12,
+          "tas_operator_K": 0.0
+        },
+        "RH_water_max_pct": 100.0,
+        "source_diagnostics_unchanged_within_numerical_tolerance": false,
+        "pressure_changed": false,
+        "continuous_time_qualified": false,
+        "mean_q_is_not_column_water_mass_conservation": true,
+        "independent_accuracy": "NOT_TESTED",
+        "operational_ready": false
+      },
+      "objective": {
+        "data_metric": 0.01029395864328139,
+        "shape_unweighted": 0.8705167019607565,
+        "shape_weighted": 0.008705167019607565,
+        "total": 0.018999125662888958
+      },
+      "hourly_adjustment_summary": {
+        "max_T_delta_from_affine_donor_K": 1.9000225360576337,
+        "rms_T_delta_from_affine_donor_K": 1.080881956025879,
+        "max_q_delta_from_raw_donor_gkg": 4.398031243609203
+      },
+      "selected_solver_reported_success": true,
+      "local_optimality_status": "SOLVER_STOPPING_CRITERION_ONLY",
+      "pressure_unchanged": true,
+      "source_temperature_constraints_changed": false,
+      "pressure_alignment": "REGISTERED_DONOR_PRESSURE_SENSITIVITY"
+    },
+    {
+      "regression_year": 2013,
+      "date": "2013-01-26",
+      "donor_date": "2019-01-06",
+      "mode": "HARD_RH_SOFT_Q",
+      "status": "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY",
+      "source_diagnostics": {
+        "q_mean_kgkg": 0.0017245291965082288,
+        "RH_mean_pp": 58.73958969116211,
+        "Tmin_K": 271.29388427734375,
+        "Tmax_K": 280.45697021484375,
+        "tas_K": 275.87542724609375,
+        "temperature_operator": "DERIVED_TAS_MIDRANGE"
+      },
+      "strict_stage_status": "CERTIFIED_INFEASIBLE",
+      "journal": [
+        {
+          "variable": "huss",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": null,
+          "source_value": 0.0017245291965082288,
+          "achieved_value": 0.002042712222579469,
+          "delta": 0.0003181830260712403,
+          "unit": "kg/kg",
+          "delta_unit": "kg/kg",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": 0.3181830260712403,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "1e00401562de1cbdf91e29b301fa07258e0a4367e8ecd0d14ffca12afaa1541f"
+        },
+        {
+          "variable": "hurs",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": "WATER_ICE",
+          "source_value": 58.73958969116211,
+          "achieved_value": 58.73958969116211,
+          "delta": 0.0,
+          "unit": "%",
+          "delta_unit": "percentage_point",
+          "correction_applied": false,
+          "hard_constraint": true,
+          "delta_divided_by_design_scale": 0.0,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "1e00401562de1cbdf91e29b301fa07258e0a4367e8ecd0d14ffca12afaa1541f"
+        }
+      ],
+      "validation": {
+        "physical_admissibility": "PASS_UNDER_DECLARED_DISCRETE_POLICY",
+        "q_mean_kgkg": 0.002042712222579469,
+        "RH_source_mean_pct": 58.73958969116211,
+        "T_time_mean_K": 274.22959753401466,
+        "daily_residuals": {
+          "Tmin_K": 0.0,
+          "Tmax_K": 0.0,
+          "q_mean_kgkg": 0.0003181830260712403,
+          "RH_mean_pp": 0.0,
+          "tas_operator_K": 0.0
+        },
+        "RH_water_max_pct": 100.00000000000003,
+        "source_diagnostics_unchanged_within_numerical_tolerance": false,
+        "pressure_changed": false,
+        "continuous_time_qualified": false,
+        "mean_q_is_not_column_water_mass_conservation": true,
+        "independent_accuracy": "NOT_TESTED",
+        "operational_ready": false
+      },
+      "objective": {
+        "data_metric": 0.0506202190399258,
+        "shape_unweighted": 0.9464763360308929,
+        "shape_weighted": 0.00946476336030893,
+        "total": 0.06008498240023473
+      },
+      "hourly_adjustment_summary": {
+        "max_T_delta_from_affine_donor_K": 2.0,
+        "rms_T_delta_from_affine_donor_K": 1.244336605911547,
+        "max_q_delta_from_raw_donor_gkg": 3.8106741535766826
+      },
+      "selected_solver_reported_success": true,
+      "local_optimality_status": "SOLVER_STOPPING_CRITERION_ONLY",
+      "pressure_unchanged": true,
+      "source_temperature_constraints_changed": false,
+      "pressure_alignment": "REGISTERED_DONOR_PRESSURE_SENSITIVITY"
+    },
+    {
+      "regression_year": 2013,
+      "date": "2013-01-08",
+      "donor_date": "2019-01-01",
+      "mode": "BOTH_SOFT",
+      "status": "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY",
+      "source_diagnostics": {
+        "q_mean_kgkg": 0.0016019869362935424,
+        "RH_mean_pp": 60.21186828613281,
+        "Tmin_K": 270.8193359375,
+        "Tmax_K": 279.19403076171875,
+        "tas_K": 275.0066833496094,
+        "temperature_operator": "DERIVED_TAS_MIDRANGE"
+      },
+      "strict_stage_status": "CERTIFIED_INFEASIBLE",
+      "journal": [
+        {
+          "variable": "huss",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": null,
+          "source_value": 0.0016019869362935424,
+          "achieved_value": 0.0019416808585664832,
+          "delta": 0.0003396939222729408,
+          "unit": "kg/kg",
+          "delta_unit": "kg/kg",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": 0.3396939222729408,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "31052d333f061a7b007e8a706fe26be00a7eaff68299683d604bf14c99465199"
+        },
+        {
+          "variable": "hurs",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": "WATER_ICE",
+          "source_value": 60.21186828613281,
+          "achieved_value": 59.93444749981222,
+          "delta": -0.2774207863205902,
+          "unit": "%",
+          "delta_unit": "percentage_point",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": -0.05548415726411804,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "31052d333f061a7b007e8a706fe26be00a7eaff68299683d604bf14c99465199"
+        }
+      ],
+      "validation": {
+        "physical_admissibility": "PASS_UNDER_DECLARED_DISCRETE_POLICY",
+        "q_mean_kgkg": 0.0019416808585664832,
+        "RH_source_mean_pct": 59.93444749981222,
+        "T_time_mean_K": 273.0300643758557,
+        "daily_residuals": {
+          "Tmin_K": 0.0,
+          "Tmax_K": 0.0,
+          "q_mean_kgkg": 0.0003396939222729408,
+          "RH_mean_pp": -0.2774207863205902,
+          "tas_operator_K": 0.0
+        },
+        "RH_water_max_pct": 100.00000000000003,
+        "source_diagnostics_unchanged_within_numerical_tolerance": false,
+        "pressure_changed": false,
+        "continuous_time_qualified": false,
+        "mean_q_is_not_column_water_mass_conservation": true,
+        "independent_accuracy": "NOT_TESTED",
+        "operational_ready": false
+      },
+      "objective": {
+        "data_metric": 0.05923522626824207,
+        "shape_unweighted": 0.8283401819674096,
+        "shape_weighted": 0.008283401819674095,
+        "total": 0.06751862808791617
+      },
+      "hourly_adjustment_summary": {
+        "max_T_delta_from_affine_donor_K": 1.8037804236778356,
+        "rms_T_delta_from_affine_donor_K": 1.0261416406904897,
+        "max_q_delta_from_raw_donor_gkg": 4.398031243609203
+      },
+      "selected_solver_reported_success": true,
+      "local_optimality_status": "SOLVER_STOPPING_CRITERION_ONLY",
+      "pressure_unchanged": true,
+      "source_temperature_constraints_changed": false,
+      "pressure_alignment": "REGISTERED_DONOR_PRESSURE_SENSITIVITY"
+    },
+    {
+      "regression_year": 2013,
+      "date": "2013-01-19",
+      "donor_date": "2019-01-06",
+      "mode": "BOTH_SOFT",
+      "status": "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY",
+      "source_diagnostics": {
+        "q_mean_kgkg": 0.0023956536315381527,
+        "RH_mean_pp": 65.11164855957031,
+        "Tmin_K": 272.85540771484375,
+        "Tmax_K": 281.38983154296875,
+        "tas_K": 277.12261962890625,
+        "temperature_operator": "DERIVED_TAS_MIDRANGE"
+      },
+      "strict_stage_status": "CERTIFIED_INFEASIBLE",
+      "journal": [
+        {
+          "variable": "huss",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": null,
+          "source_value": 0.0023956536315381527,
+          "achieved_value": 0.002574612317903423,
+          "delta": 0.0001789586863652705,
+          "unit": "kg/kg",
+          "delta_unit": "kg/kg",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": 0.1789586863652705,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "1e00401562de1cbdf91e29b301fa07258e0a4367e8ecd0d14ffca12afaa1541f"
+        },
+        {
+          "variable": "hurs",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": "WATER_ICE",
+          "source_value": 65.11164855957031,
+          "achieved_value": 64.90778966446668,
+          "delta": -0.20385889510363597,
+          "unit": "%",
+          "delta_unit": "percentage_point",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": -0.04077177902072719,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "1e00401562de1cbdf91e29b301fa07258e0a4367e8ecd0d14ffca12afaa1541f"
+        }
+      ],
+      "validation": {
+        "physical_admissibility": "PASS_UNDER_DECLARED_DISCRETE_POLICY",
+        "q_mean_kgkg": 0.002574612317903423,
+        "RH_source_mean_pct": 64.90778966446668,
+        "T_time_mean_K": 275.4660766246853,
+        "daily_residuals": {
+          "Tmin_K": 0.0,
+          "Tmax_K": 0.0,
+          "q_mean_kgkg": 0.0001789586863652705,
+          "RH_mean_pp": -0.20385889510363597,
+          "tas_operator_K": 0.0
+        },
+        "RH_water_max_pct": 100.00000000000001,
+        "source_diagnostics_unchanged_within_numerical_tolerance": false,
+        "pressure_changed": false,
+        "continuous_time_qualified": false,
+        "mean_q_is_not_column_water_mass_conservation": true,
+        "independent_accuracy": "NOT_TESTED",
+        "operational_ready": false
+      },
+      "objective": {
+        "data_metric": 0.016844274695049136,
+        "shape_unweighted": 1.024796985817798,
+        "shape_weighted": 0.010247969858177981,
+        "total": 0.02709224455322712
+      },
+      "hourly_adjustment_summary": {
+        "max_T_delta_from_affine_donor_K": 2.0,
+        "rms_T_delta_from_affine_donor_K": 1.2845572771650577,
+        "max_q_delta_from_raw_donor_gkg": 3.810674153576682
+      },
+      "selected_solver_reported_success": true,
+      "local_optimality_status": "SOLVER_STOPPING_CRITERION_ONLY",
+      "pressure_unchanged": true,
+      "source_temperature_constraints_changed": false,
+      "pressure_alignment": "REGISTERED_DONOR_PRESSURE_SENSITIVITY"
+    },
+    {
+      "regression_year": 2013,
+      "date": "2013-01-20",
+      "donor_date": "2019-01-01",
+      "mode": "BOTH_SOFT",
+      "status": "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY",
+      "source_diagnostics": {
+        "q_mean_kgkg": 0.00215331744402647,
+        "RH_mean_pp": 61.39644241333008,
+        "Tmin_K": 272.53912353515625,
+        "Tmax_K": 281.36065673828125,
+        "tas_K": 276.94989013671875,
+        "temperature_operator": "DERIVED_TAS_MIDRANGE"
+      },
+      "strict_stage_status": "CERTIFIED_INFEASIBLE",
+      "journal": [
+        {
+          "variable": "huss",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": null,
+          "source_value": 0.00215331744402647,
+          "achieved_value": 0.0022918385806203556,
+          "delta": 0.00013852113659388546,
+          "unit": "kg/kg",
+          "delta_unit": "kg/kg",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": 0.13852113659388546,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "31052d333f061a7b007e8a706fe26be00a7eaff68299683d604bf14c99465199"
+        },
+        {
+          "variable": "hurs",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": "WATER_ICE",
+          "source_value": 61.39644241333008,
+          "achieved_value": 61.26405845599655,
+          "delta": -0.1323839573335306,
+          "unit": "%",
+          "delta_unit": "percentage_point",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": -0.026476791466706118,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "31052d333f061a7b007e8a706fe26be00a7eaff68299683d604bf14c99465199"
+        }
+      ],
+      "validation": {
+        "physical_admissibility": "PASS_UNDER_DECLARED_DISCRETE_POLICY",
+        "q_mean_kgkg": 0.0022918385806203556,
+        "RH_source_mean_pct": 61.26405845599655,
+        "T_time_mean_K": 274.86782557815434,
+        "daily_residuals": {
+          "Tmin_K": 0.0,
+          "Tmax_K": 0.0,
+          "q_mean_kgkg": 0.00013852113659388546,
+          "RH_mean_pp": -0.1323839573335306,
+          "tas_operator_K": 0.0
+        },
+        "RH_water_max_pct": 100.0,
+        "source_diagnostics_unchanged_within_numerical_tolerance": false,
+        "pressure_changed": false,
+        "continuous_time_qualified": false,
+        "mean_q_is_not_column_water_mass_conservation": true,
+        "independent_accuracy": "NOT_TESTED",
+        "operational_ready": false
+      },
+      "objective": {
+        "data_metric": 0.009944562884816694,
+        "shape_unweighted": 0.8691108973233781,
+        "shape_weighted": 0.008691108973233781,
+        "total": 0.018635671858050477
+      },
+      "hourly_adjustment_summary": {
+        "max_T_delta_from_affine_donor_K": 1.9000225360576337,
+        "rms_T_delta_from_affine_donor_K": 1.0808410597670088,
+        "max_q_delta_from_raw_donor_gkg": 4.398031243609203
+      },
+      "selected_solver_reported_success": true,
+      "local_optimality_status": "SOLVER_STOPPING_CRITERION_ONLY",
+      "pressure_unchanged": true,
+      "source_temperature_constraints_changed": false,
+      "pressure_alignment": "REGISTERED_DONOR_PRESSURE_SENSITIVITY"
+    },
+    {
+      "regression_year": 2013,
+      "date": "2013-01-26",
+      "donor_date": "2019-01-06",
+      "mode": "BOTH_SOFT",
+      "status": "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY",
+      "source_diagnostics": {
+        "q_mean_kgkg": 0.0017245291965082288,
+        "RH_mean_pp": 58.73958969116211,
+        "Tmin_K": 271.29388427734375,
+        "Tmax_K": 280.45697021484375,
+        "tas_K": 275.87542724609375,
+        "temperature_operator": "DERIVED_TAS_MIDRANGE"
+      },
+      "strict_stage_status": "CERTIFIED_INFEASIBLE",
+      "journal": [
+        {
+          "variable": "huss",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": null,
+          "source_value": 0.0017245291965082288,
+          "achieved_value": 0.002032122812184022,
+          "delta": 0.00030759361567579344,
+          "unit": "kg/kg",
+          "delta_unit": "kg/kg",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": 0.3075936156757934,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "1e00401562de1cbdf91e29b301fa07258e0a4367e8ecd0d14ffca12afaa1541f"
+        },
+        {
+          "variable": "hurs",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": "WATER_ICE",
+          "source_value": 58.73958969116211,
+          "achieved_value": 58.45398456305306,
+          "delta": -0.28560512810904726,
+          "unit": "%",
+          "delta_unit": "percentage_point",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": -0.05712102562180945,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "1e00401562de1cbdf91e29b301fa07258e0a4367e8ecd0d14ffca12afaa1541f"
+        }
+      ],
+      "validation": {
+        "physical_admissibility": "PASS_UNDER_DECLARED_DISCRETE_POLICY",
+        "q_mean_kgkg": 0.002032122812184022,
+        "RH_source_mean_pct": 58.45398456305306,
+        "T_time_mean_K": 274.2296022832228,
+        "daily_residuals": {
+          "Tmin_K": 0.0,
+          "Tmax_K": 0.0,
+          "q_mean_kgkg": 0.00030759361567579344,
+          "RH_mean_pp": -0.28560512810904726,
+          "tas_operator_K": 0.0
+        },
+        "RH_water_max_pct": 100.00000000000003,
+        "source_diagnostics_unchanged_within_numerical_tolerance": false,
+        "pressure_changed": false,
+        "continuous_time_qualified": false,
+        "mean_q_is_not_column_water_mass_conservation": true,
+        "independent_accuracy": "NOT_TESTED",
+        "operational_ready": false
+      },
+      "objective": {
+        "data_metric": 0.04893832198629765,
+        "shape_unweighted": 0.9457245181105907,
+        "shape_weighted": 0.009457245181105908,
+        "total": 0.05839556716740356
+      },
+      "hourly_adjustment_summary": {
+        "max_T_delta_from_affine_donor_K": 2.0,
+        "rms_T_delta_from_affine_donor_K": 1.2443394364224838,
+        "max_q_delta_from_raw_donor_gkg": 3.8106741535766813
+      },
+      "selected_solver_reported_success": true,
+      "local_optimality_status": "SOLVER_STOPPING_CRITERION_ONLY",
+      "pressure_unchanged": true,
+      "source_temperature_constraints_changed": false,
+      "pressure_alignment": "REGISTERED_DONOR_PRESSURE_SENSITIVITY"
+    },
+    {
+      "regression_year": 2014,
+      "date": "2014-12-02",
+      "donor_date": "2019-12-01",
+      "mode": "HARD_Q_SOFT_RH",
+      "status": "CERTIFIED_HARD_CONSTRAINTS_INFEASIBLE",
+      "source_diagnostics": {
+        "q_mean_kgkg": 0.00742800347507,
+        "RH_mean_pp": 93.8330307006836,
+        "Tmin_K": 278.71697998046875,
+        "Tmax_K": 282.60772705078125,
+        "tas_K": 280.662353515625,
+        "temperature_operator": "DERIVED_TAS_MIDRANGE"
+      },
+      "strict_stage_status": "CERTIFIED_INFEASIBLE",
+      "reason": "HARD_Q_ABOVE_DONOR_T_DOMAIN_CAPACITY",
+      "q_capacity_upper": 0.007322523614440739,
+      "journal": [
+        {
+          "variable": "huss",
+          "source_value": 0.00742800347507,
+          "achieved_value": null,
+          "delta": null,
+          "unit": "kg/kg",
+          "delta_unit": "kg/kg",
+          "correction_applied": false,
+          "reason": "NO_VALIDATED_CANDIDATE_AVAILABLE"
+        },
+        {
+          "variable": "hurs",
+          "source_value": 93.8330307006836,
+          "achieved_value": null,
+          "delta": null,
+          "unit": "%",
+          "delta_unit": "percentage_point",
+          "correction_applied": false,
+          "reason": "NO_VALIDATED_CANDIDATE_AVAILABLE"
+        }
+      ],
+      "pressure_alignment": "REGISTERED_DONOR_PRESSURE_SENSITIVITY"
+    },
+    {
+      "regression_year": 2014,
+      "date": "2014-12-02",
+      "donor_date": "2019-12-01",
+      "mode": "HARD_RH_SOFT_Q",
+      "status": "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY",
+      "source_diagnostics": {
+        "q_mean_kgkg": 0.00742800347507,
+        "RH_mean_pp": 93.8330307006836,
+        "Tmin_K": 278.71697998046875,
+        "Tmax_K": 282.60772705078125,
+        "tas_K": 280.662353515625,
+        "temperature_operator": "DERIVED_TAS_MIDRANGE"
+      },
+      "strict_stage_status": "CERTIFIED_INFEASIBLE",
+      "journal": [
+        {
+          "variable": "huss",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": null,
+          "source_value": 0.00742800347507,
+          "achieved_value": 0.0069424734229898265,
+          "delta": -0.00048553005208017315,
+          "unit": "kg/kg",
+          "delta_unit": "kg/kg",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": -0.48553005208017314,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "f474c96a524d759750c5e938685fd647b35b00de6f1d9a44e2797d2b82351e7e"
+        },
+        {
+          "variable": "hurs",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": "WATER_ICE",
+          "source_value": 93.8330307006836,
+          "achieved_value": 93.83303070068355,
+          "delta": -4.263256414560601e-14,
+          "unit": "%",
+          "delta_unit": "percentage_point",
+          "correction_applied": false,
+          "hard_constraint": true,
+          "delta_divided_by_design_scale": -8.526512829121202e-15,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "f474c96a524d759750c5e938685fd647b35b00de6f1d9a44e2797d2b82351e7e"
+        }
+      ],
+      "validation": {
+        "physical_admissibility": "PASS_UNDER_DECLARED_DISCRETE_POLICY",
+        "q_mean_kgkg": 0.0069424734229898265,
+        "RH_source_mean_pct": 93.83303070068355,
+        "T_time_mean_K": 281.9015918005081,
+        "daily_residuals": {
+          "Tmin_K": 0.0,
+          "Tmax_K": 0.0,
+          "q_mean_kgkg": -0.00048553005208017315,
+          "RH_mean_pp": -4.263256414560601e-14,
+          "tas_operator_K": 0.0
+        },
+        "RH_water_max_pct": 100.00000000000003,
+        "source_diagnostics_unchanged_within_numerical_tolerance": false,
+        "pressure_changed": false,
+        "continuous_time_qualified": false,
+        "mean_q_is_not_column_water_mass_conservation": true,
+        "independent_accuracy": "NOT_TESTED",
+        "operational_ready": false
+      },
+      "objective": {
+        "data_metric": 0.11786971573648741,
+        "shape_unweighted": 1.9949071636062512,
+        "shape_weighted": 0.019949071636062514,
+        "total": 0.13781878737254993
+      },
+      "hourly_adjustment_summary": {
+        "max_T_delta_from_affine_donor_K": 2.0,
+        "rms_T_delta_from_affine_donor_K": 1.5333576828872644,
+        "max_q_delta_from_raw_donor_gkg": 4.21366228486832
+      },
+      "selected_solver_reported_success": true,
+      "local_optimality_status": "SOLVER_STOPPING_CRITERION_ONLY",
+      "pressure_unchanged": true,
+      "source_temperature_constraints_changed": false,
+      "pressure_alignment": "REGISTERED_DONOR_PRESSURE_SENSITIVITY"
+    },
+    {
+      "regression_year": 2014,
+      "date": "2014-12-02",
+      "donor_date": "2019-12-01",
+      "mode": "BOTH_SOFT",
+      "status": "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY",
+      "source_diagnostics": {
+        "q_mean_kgkg": 0.00742800347507,
+        "RH_mean_pp": 93.8330307006836,
+        "Tmin_K": 278.71697998046875,
+        "Tmax_K": 282.60772705078125,
+        "tas_K": 280.662353515625,
+        "temperature_operator": "DERIVED_TAS_MIDRANGE"
+      },
+      "strict_stage_status": "CERTIFIED_INFEASIBLE",
+      "journal": [
+        {
+          "variable": "huss",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": null,
+          "source_value": 0.00742800347507,
+          "achieved_value": 0.006991631438703656,
+          "delta": -0.00043637203636634394,
+          "unit": "kg/kg",
+          "delta_unit": "kg/kg",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": -0.4363720363663439,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "f474c96a524d759750c5e938685fd647b35b00de6f1d9a44e2797d2b82351e7e"
+        },
+        {
+          "variable": "hurs",
+          "operator": "DECLARED_DISCRETE_WEIGHTED_MEAN",
+          "operator_weights_sha256": "0c0393cb0e6d063038a7cb2599dd853c66b938bba894024ec7368b28d57cc414",
+          "phase": "WATER_ICE",
+          "source_value": 93.8330307006836,
+          "achieved_value": 94.55611616801842,
+          "delta": 0.7230854673348261,
+          "unit": "%",
+          "delta_unit": "percentage_point",
+          "correction_applied": true,
+          "hard_constraint": false,
+          "delta_divided_by_design_scale": 0.14461709346696522,
+          "design_scale_is_not_measurement_uncertainty": true,
+          "strict_stage_status": "CERTIFIED_INFEASIBLE",
+          "correction_acceptance": "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED",
+          "pressure_fingerprint": "f474c96a524d759750c5e938685fd647b35b00de6f1d9a44e2797d2b82351e7e"
+        }
+      ],
+      "validation": {
+        "physical_admissibility": "PASS_UNDER_DECLARED_DISCRETE_POLICY",
+        "q_mean_kgkg": 0.006991631438703656,
+        "RH_source_mean_pct": 94.55611616801842,
+        "T_time_mean_K": 281.9015918005081,
+        "daily_residuals": {
+          "Tmin_K": 0.0,
+          "Tmax_K": 0.0,
+          "q_mean_kgkg": -0.00043637203636634394,
+          "RH_mean_pp": 0.7230854673348261,
+          "tas_operator_K": 0.0
+        },
+        "RH_water_max_pct": 100.00000000000003,
+        "source_diagnostics_unchanged_within_numerical_tolerance": false,
+        "pressure_changed": false,
+        "continuous_time_qualified": false,
+        "mean_q_is_not_column_water_mass_conservation": true,
+        "independent_accuracy": "NOT_TESTED",
+        "operational_ready": false
+      },
+      "objective": {
+        "data_metric": 0.10566732892267185,
+        "shape_unweighted": 2.042589820163269,
+        "shape_weighted": 0.020425898201632688,
+        "total": 0.12609322712430454
+      },
+      "hourly_adjustment_summary": {
+        "max_T_delta_from_affine_donor_K": 2.0,
+        "rms_T_delta_from_affine_donor_K": 1.5333576828872644,
+        "max_q_delta_from_raw_donor_gkg": 4.21366228486832
+      },
+      "selected_solver_reported_success": true,
+      "local_optimality_status": "SOLVER_STOPPING_CRITERION_ONLY",
+      "pressure_unchanged": true,
+      "source_temperature_constraints_changed": false,
+      "pressure_alignment": "REGISTERED_DONOR_PRESSURE_SENSITIVITY"
+    }
+  ],
+  "total_records_per_mode_including_boundaries": 732,
+  "unique_dates": 731,
+  "core_year_days": 730,
+  "claim_status": {
+    "code_correctness": "SEE_TEST_LOG",
+    "physical_admissibility": "VALIDATED_CANDIDATES_CONDITIONAL_ON_DECLARED_DISCRETE_POLICY",
+    "independent_accuracy": "NOT_REESTABLISHED_NO_NEW_HOLDOUT",
+    "operational_ready": false
+  },
+  "station_diagnostic_status": "NOT_RUN_LOCALLY_PREPARED_FOR_CI",
+  "remote_CI_status": "NOT_YET_LAUNCHED_AT_LOCAL_VERIFICATION",
+  "B4_qualified": false,
+  "production_epw_ready": false,
+  "source_inputs_modified": false,
+  "main_modified": false
+}
