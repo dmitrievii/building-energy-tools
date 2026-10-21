@@ -1,0 +1,3445 @@
+{
+  "phase": "P9.3B3_P1_C1_FOUNDATION_20261021",
+  "protocol_sha256": "fc52a489c464f608b38d07ae0c285cb6f5ad4c6f0d11d463f188c960052dfee3",
+  "algorithm_commit": "d42d8713a132aa0e656dec31b17d42fd49536b51",
+  "working_tree_dirty": true,
+  "implementation_manifest_sha256": "6b990f62524997c50c9a2e1ae08fe7135956e2655ec1864ac3812c3ef5a468c8",
+  "implementation_file_sha256": {
+    "p9_3b3_compare_identified_set.py": "dbd4e08a69326d01833b232bbcac8e7e281e1c9e0a8533c18e528b4f689e30c7",
+    "p9_3b3_compare_operators.py": "3b7503eda3c2de51b53f12543e7f0b86ada0f6ae06934501c3870eb4463c6b50",
+    "p9_3b3_compare_pressure.py": "31c3a2967157433e7dd2e41232f46cfbe4828f0a5ebb6cd5128b2e3446248fdf",
+    "p9_3b3_compare_run.py": "1236ff49794c833845a1a6ea59b6220ae20303a42a7ded7e5a5e7a53727be2cf",
+    "p9_3b3_compare_vertical_frame.py": "0214d94e4b832b853dcfa2555317135df3e1bdb9879d480ecf17bf95d12982eb",
+    "test_p9_3b3_compare_foundation.py": "41c55044c241349887372a57b5f3702a4d78153b033088885c62a19613233b73",
+    "test_p9_3b3_compare_pipeline.py": "25b99d8b07469129b3805964f471ea9c9a720da5e7f9c754ebe247934116abd5"
+  },
+  "source_census_status": "COMPLETED_CONDITIONAL_BOUNDS_NOT_INDEPENDENT_VALIDATION",
+  "elapsed_source_census_seconds": 69.09319001800009,
+  "repair_comparison_counts": {
+    "PRIOR_EXACT_DOMAIN_NOT_EXCLUDED_NO_NEW_WITNESS_CLAIM": 727,
+    "PRIOR_CONDITIONAL_CERTIFICATE_REPRODUCED": 5
+  },
+  "claim_status": {
+    "code_correctness": "SEE_SEPARATE_TEST_LOG",
+    "physical_admissibility": "CONDITIONAL_ON_DECLARED_DISCRETE_MODEL",
+    "independent_accuracy": "NOT_TESTED",
+    "operational_ready": false
+  },
+  "pressure_model_qualified": false,
+  "production_epw_ready": false,
+  "B4_independent_negative_result_retained": true,
+  "source_values_modified": false,
+  "independent_holdout_opened": false,
+  "donor_provenance": [
+    {
+      "year": 2019,
+      "original_source_http_sha256": "0785fd55ea40afa06b7641602da6889103e74aa96d273deeb23b6d14b707cb80",
+      "canonical_source_weather_sha256": "ac9749eb1cee4d2246b60871f1a139d8920451e30b8ed54ea134431fa0de4c29",
+      "selected_grid_lat_lon": [
+        47.0,
+        15.5
+      ],
+      "original_era5_hourly_source_count": 8760,
+      "source_kind": "OPEN_METEO_DERIVED_ERA5_0p25_DEG_NOT_NATIVE_CDS_ERA5"
+    },
+    {
+      "year": 2020,
+      "original_source_http_sha256": "bc0a18d8dc9b5aa4970e014a4a986d80d0a532ac44d4b545d0ea4c1fe80210c7",
+      "canonical_source_weather_sha256": "275804a076a81c3c8ae9a572e0359ca524ef9c90627ccca2c6862805093b019c",
+      "selected_grid_lat_lon": [
+        47.0,
+        15.5
+      ],
+      "original_era5_hourly_source_count": 8784,
+      "source_kind": "OPEN_METEO_DERIVED_ERA5_0p25_DEG_NOT_NATIVE_CDS_ERA5"
+    }
+  ],
+  "controls": [
+    {
+      "path": "research/ige_cmip6/p7c3_expected_daily_source_shas.json",
+      "sha256": "4f97f1c51e93c32a6dd57b1caef2214dfb99a52b63b5be2f297a92ce976e1be0",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "research/ige_cmip6/p8_2e_crossyear.py",
+      "sha256": "e507cc0d42315575f71024c09082a5f3361cfb23f0b485fabef7fda694403e12",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "research/ige_cmip6/p9_2c_physical_donor_and_humidity.py",
+      "sha256": "7d1660a3f59761edfb9e45d3260b3923c0f2878af60e867719d0904fe2e84014",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "research/ige_cmip6/p9_3a_pressure_temperature_q_joint.py",
+      "sha256": "f8adf430d4fe79f5780f0c0ae61d1b226cd1bfa03dda81c6ee7599856b7efec3",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "research/ige_cmip6/p9_3b2d_canonical_pressure_fields.py",
+      "sha256": "ec716cb2acab65ca445dfed2a220c50bd0a5d8770b74be0e849dca38075c6b99",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "research/ige_cmip6/p9_3b3_at_de_ch_validation.py",
+      "sha256": "ea2d298d0685a062c2d3c49f806ee182fa78ed8fff7d12edfce52a92c1772847",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "research/ige_cmip6/p9_3b3_daily_feasibility.py",
+      "sha256": "2ce4c09e1462060de08a907b0302a0b78f6d4fccb2d75fbf85184516d3a99782",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "research/ige_cmip6/p9_3b3_development_benchmark.py",
+      "sha256": "bbd5fabb0eb2c94143841882295b7497a8e0f8227fdcdbbfeb985d76a99954f6",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "research/ige_cmip6/p9_3b3_frozen_protocol.json",
+      "sha256": "af342399a859a4739359430b356f39396f74199b2ae849064aa6bf7454ec167e",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "research/ige_cmip6/p9_3b3_generator.py",
+      "sha256": "443b42bfb991e10004487b6f1153b88466c399db9d2032b4ce5e70201d3c2537",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "research/ige_cmip6/p9_3b3_joint_bounds.py",
+      "sha256": "8808aa618cc458647f52cd25794915277d95358e108363650d64a6a1eabab02e",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "research/ige_cmip6/p9_3b3_joint_solver.py",
+      "sha256": "f5f049865eba5c7ef46405e2ed6630dfe70d29b2adf9fc73cbd4f4ec246fb478",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "research/ige_cmip6/p9_3b3_pressure_diagnostics.py",
+      "sha256": "7244a5b72be3f663fb0b07fe99e17ab322341d57d7d5c53535e665ac3ac6edc0",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "research/ige_cmip6/p9_3b3_pressure_reference.py",
+      "sha256": "1300628bf56f22ff9a7dbcb7b1ec2d6adc1bbb1d976f3a3d75b1e35399491784",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "research/ige_cmip6/p9_3b3_regression_audit.py",
+      "sha256": "8673c8b92bdc035ab37e6f8697f2337935d49d159a70e9b3fbfccce2277ec167",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "research/ige_cmip6/p9_3b3_repair_acceptance.py",
+      "sha256": "74cacf97ee7cc683d062e1000abe40c5726f74992dd547f4407f7aafeaa784d7",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "research/ige_cmip6/p9_3b3_repair_protocol.json",
+      "sha256": "734e53768e18b4ace253e54534f2bde0b7002dd2476ce3030c272da4c5c877bb",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "research/ige_cmip6/p9_3b3_repair_time_evidence.json",
+      "sha256": "adc14cf56cebb25d3c9d368af9977a2eac9f46ad7e43508a7af0d864801bf746",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "research/ige_cmip6/p9_3b3_run.py",
+      "sha256": "bc0f1316f97dff8509fbaebe31c3794084f66a87a4612421eab040ea5f1e7d7c",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "research/ige_cmip6/p9_3b3_source_reconciliation.py",
+      "sha256": "f88b362a411cb9e63b60098d26f6d6802533dfeb20dc4f18366c1ca675e5e6cf",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "research/ige_cmip6/p9_3b3_source_semantics.py",
+      "sha256": "528e2d7a4f68527ce4fb75a6fa49010ca1d58342ae39f59fb759597b196ad53e",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "research/ige_cmip6/p9_3b3_source_semantics_evidence.json",
+      "sha256": "557bb81c41126a0984274824e1aaab43335adfc254a6edd5c3a9af18a78c9363",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "research/ige_cmip6/p9_3b3_source_time_support.py",
+      "sha256": "963f018935144fa65783185a9568e22d4298bbce9b204215ed678c7d8d436ae6",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "research/ige_cmip6/p9_3b3_state_validation.py",
+      "sha256": "6fc5c6024da896de35af9b6777d3b9f1729772e3cfd708be2bf53e55ca2908f7",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "research/ige_cmip6/p9_3b3_thermodynamics.py",
+      "sha256": "f9e369fdc14051bc60a58c13a4cea2bc6ff1e564db0788e3702807849638f9fd",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "research/ige_cmip6/test_p9_3b3_feasibility.py",
+      "sha256": "67e5084315312e7667da8d2916b3b41dea11e43d1cf2b7b556f1b20ef01bb1cc",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "research/ige_cmip6/test_p9_3b3_joint_solver.py",
+      "sha256": "494fe20fb309ac4f4cff3a689fd39baa8d59ec8bb22cfb15b2527bcd517c6896",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "research/ige_cmip6/test_p9_3b3_repair.py",
+      "sha256": "57a8e8fa0943eb6aac44f151b7bd96a5a1b0a3abfc26c81557458d636c1d6dc4",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "research/ige_cmip6/test_p9_3b3_source_semantics.py",
+      "sha256": "6790e893709dcec89b5b66c21222c8b2b5c05a7a92861b8e4c072a7198fe6044",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "research/ige_cmip6/test_p9_3b3_thermodynamics.py",
+      "sha256": "d901751e90edb8f3fa6cb3cefe26996f6514caeefe8d3f77acd49955bbedcc5c",
+      "status": "UNCHANGED"
+    },
+    {
+      "path": "research/ige_cmip6/test_p9_3b3_validation_contracts.py",
+      "sha256": "fc70b4e80fd13d2ca59d56f6e1a6a7e7f3f3458219f497ed93bacc2a6750ff9f",
+      "status": "UNCHANGED"
+    }
+  ],
+  "evidence_role": "LOCAL_WORKTREE_RESULTS_BY_CONTENT_HASH_CI_PENDING",
+  "full_census_json_sha256": "742aebb48e06ec1f99247dd4ef487c9a636e67efccb321d11cf923913ac5ac40",
+  "code_tests": {
+    "new_P1_C1": 28,
+    "existing_B3": 74,
+    "prior_P93A": 14,
+    "prior_P92": 50,
+    "prior_P93B2": 8,
+    "total_unittests": 174,
+    "DWD_pressure_field_contracts": "PASS"
+  },
+  "source_original_daily_CSV_sha256": "77ec2e5637eb487c3cedde4e0b660b31f8bd2606198e766255d75a985d61dfef",
+  "metadata_audit": {
+    "stations": [
+      {
+        "country": "AT",
+        "station": "GEOSPHERE_30",
+        "known_ground_height_m": 366.0,
+        "ground_height_is_not_barometer_height": true,
+        "P1_sensor_reference_status": "SOURCE_BLOCKED",
+        "blockers": [
+          "barometer_height_not_source_verified",
+          "thermo_height_not_source_verified"
+        ],
+        "evidence": "REPAIR_39530492475_SOURCE_PREFLIGHT_GROUND_ONLY",
+        "independent_accuracy": "NOT_TESTED",
+        "pressure_model_qualified": false
+      },
+      {
+        "country": "DE",
+        "station": "DWD_URBAN_00399",
+        "known_ground_height_m": 36.0,
+        "ground_height_is_not_barometer_height": true,
+        "P1_sensor_reference_status": "SOURCE_BLOCKED",
+        "blockers": [
+          "barometer_height_not_source_verified",
+          "thermo_height_not_source_verified"
+        ],
+        "evidence": "P93B2D_AND_REPAIR_SOURCE_METADATA_GROUND_ONLY",
+        "independent_accuracy": "NOT_TESTED",
+        "pressure_model_qualified": false
+      },
+      {
+        "country": "CH",
+        "station": "METEOSWISS_DAV",
+        "known_ground_height_m": 1594.0,
+        "ground_height_is_not_barometer_height": true,
+        "P1_sensor_reference_status": "SOURCE_BLOCKED",
+        "blockers": [
+          "barometer_height_not_source_verified",
+          "thermo_height_not_source_verified"
+        ],
+        "evidence": "REPAIR_39530492475_SOURCE_PREFLIGHT_GROUND_ONLY",
+        "independent_accuracy": "NOT_TESTED",
+        "pressure_model_qualified": false
+      }
+    ],
+    "operators": [
+      {
+        "variable": "tas",
+        "method": "MIDRANGE",
+        "weights": [
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664
+        ],
+        "unit": "K",
+        "spatial_support": "NEX_GRID_POINT_SOURCE_SUPPORT_UNQUALIFIED",
+        "evidence": "REGISTERED_B3_SOURCE_AUDIT",
+        "interval": null,
+        "hypothesis": "UTC_DAY_EQUAL_DISCRETE_NODES_NOT_VERIFIED_NATIVE_INTERVAL",
+        "phase": null,
+        "independent_observation": false,
+        "fingerprint": "fe58e6cfad6b1579f73e589a7fa4a4bf51d50c9782e1c51926bbe34d4142e6c2",
+        "interval_verified": false,
+        "evaluation_scope": "DECLARED_DISCRETE_NODES_NOT_CONTINUOUS_TIME",
+        "spatial_operator_identified": false
+      },
+      {
+        "variable": "huss",
+        "method": "MEAN",
+        "weights": [
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664
+        ],
+        "unit": "kg/kg",
+        "spatial_support": "NEX_GRID_POINT_SOURCE_SUPPORT_UNQUALIFIED",
+        "evidence": "REGISTERED_B3_SOURCE_AUDIT",
+        "interval": null,
+        "hypothesis": "UTC_DAY_EQUAL_DISCRETE_NODES_NOT_VERIFIED_NATIVE_INTERVAL",
+        "phase": null,
+        "independent_observation": true,
+        "fingerprint": "471d69c5b4756da99f8d6f25e7b65b5eb919ef8bbe0d45ad46c8c4ecc41bb743",
+        "interval_verified": false,
+        "evaluation_scope": "DECLARED_DISCRETE_NODES_NOT_CONTINUOUS_TIME",
+        "spatial_operator_identified": false
+      },
+      {
+        "variable": "hurs",
+        "method": "MEAN",
+        "weights": [
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664
+        ],
+        "unit": "%",
+        "spatial_support": "NEX_GRID_POINT_SOURCE_SUPPORT_UNQUALIFIED",
+        "evidence": "REGISTERED_B3_SOURCE_AUDIT",
+        "interval": null,
+        "hypothesis": "UTC_DAY_EQUAL_DISCRETE_NODES_NOT_VERIFIED_NATIVE_INTERVAL",
+        "phase": "WATER_ICE",
+        "independent_observation": true,
+        "fingerprint": "438d7ade1fcc8992480334b98b96115263fe62c72b9eb889c632e2ed2eae9b53",
+        "interval_verified": false,
+        "evaluation_scope": "DECLARED_DISCRETE_NODES_NOT_CONTINUOUS_TIME",
+        "spatial_operator_identified": false
+      }
+    ],
+    "NASA_native_averaging_intervals": "NOT_FULLY_IDENTIFIED_NO_NEW_BOUNDS_EVIDENCE",
+    "station_RH_phase": "NOT_PROVIDER_CERTIFIED_ALL_THREE_SITES",
+    "new_station_validation_performed": false
+  },
+  "years": [
+    {
+      "year": 2013,
+      "including_boundary_records": 366,
+      "counts": {
+        "FIXED_REGISTERED_DONOR_REFERENCE": {
+          "SOME_DONOR_DOMAINS_NOT_EXCLUDED": 362,
+          "ALL_DONORS_CERTIFIED_INFEASIBLE": 4
+        },
+        "RECTANGULAR_PM500_PA_STRESS_NOT_CI": {
+          "SOME_DONOR_DOMAINS_NOT_EXCLUDED": 362,
+          "ALL_DONORS_CERTIFIED_INFEASIBLE": 4
+        }
+      }
+    },
+    {
+      "year": 2014,
+      "including_boundary_records": 366,
+      "counts": {
+        "FIXED_REGISTERED_DONOR_REFERENCE": {
+          "SOME_DONOR_DOMAINS_NOT_EXCLUDED": 365,
+          "ALL_DONORS_CERTIFIED_INFEASIBLE": 1
+        },
+        "RECTANGULAR_PM500_PA_STRESS_NOT_CI": {
+          "SOME_DONOR_DOMAINS_NOT_EXCLUDED": 366
+        }
+      }
+    }
+  ],
+  "previously_certified_days": [
+    {
+      "date": "2013-01-08",
+      "eligible_donors": 17,
+      "source_q_mean_kgkg": 0.0016019869362935424,
+      "source_RH_mean_pp": 60.21186828613281,
+      "repair_comparison": "PRIOR_CONDITIONAL_CERTIFICATE_REPRODUCED",
+      "scenarios": [
+        {
+          "name": "FIXED_REGISTERED_DONOR_REFERENCE",
+          "interpretation": "FIXED_CONDITIONAL_REFERENCE",
+          "status": "ALL_DONORS_CERTIFIED_INFEASIBLE",
+          "donor_status_counts": {
+            "CERTIFIED_INFEASIBLE": 17
+          },
+          "RH_outer_union_lower_pp": 25.667737528807027,
+          "RH_outer_union_upper_pp": 49.652359158479136,
+          "all_donor_evidence_sha256": "ecbdba560829c0bd40f4d5977f709ad9112d964d4faa5cb0dc9ff6cb23a0bd19",
+          "source_feasibility_established": false,
+          "external_pressure_uncertainty_established": false,
+          "continuous_pressure_box_covered": true,
+          "continuous_time_trajectory_certified": false,
+          "certificates": [
+            {
+              "donor_date": "2019-01-01",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "d7b33bd4a45c05d197e6c3cd8251fdc84b43552ed68acea30676f0277474c78e",
+              "RH_mean_lower_pp": 26.29322291516361,
+              "RH_mean_upper_pp": 49.6485113761733,
+              "q_mean_capacity_upper": 0.006052265445580446,
+              "separation_RH_pp": 10.56335690995951
+            },
+            {
+              "donor_date": "2019-01-02",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "07f6fbeea4c24d87450df419610a19585ea0e9898d4914c4bd8fc1682196af73",
+              "RH_mean_lower_pp": 26.243437296324284,
+              "RH_mean_upper_pp": 49.2734723810805,
+              "q_mean_capacity_upper": 0.0060842525038256184,
+              "separation_RH_pp": 10.93839590505231
+            },
+            {
+              "donor_date": "2019-01-03",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "80048b368e24e407dc1ebefda01208bdd5940cd593c2e2b6feadd4688c82b068",
+              "RH_mean_lower_pp": 26.48253646343692,
+              "RH_mean_upper_pp": 49.5634199384436,
+              "q_mean_capacity_upper": 0.0060403959684197156,
+              "separation_RH_pp": 10.648448347689211
+            },
+            {
+              "donor_date": "2019-01-04",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "43f505669ec43590f947221aaf1217e077703a885f488cb064a1778b58981847",
+              "RH_mean_lower_pp": 26.495801695702774,
+              "RH_mean_upper_pp": 49.652359158479136,
+              "q_mean_capacity_upper": 0.006031482806585179,
+              "separation_RH_pp": 10.559509127653676
+            },
+            {
+              "donor_date": "2019-01-05",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "335b5cbaeda4f2e4966654df52ae3a4289ad561ccacad552990c0d18bfd7bb40",
+              "RH_mean_lower_pp": 26.241704288936354,
+              "RH_mean_upper_pp": 49.220881886319795,
+              "q_mean_capacity_upper": 0.006090066180148761,
+              "separation_RH_pp": 10.990986399813018
+            },
+            {
+              "donor_date": "2019-01-07",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "651a1fde5969e7f6904743d854154bac6987da6d409374372868ca4d6f1d49e6",
+              "RH_mean_lower_pp": 26.49716539594979,
+              "RH_mean_upper_pp": 49.60376569682473,
+              "q_mean_capacity_upper": 0.0060356853548025405,
+              "separation_RH_pp": 10.608102589308082
+            },
+            {
+              "donor_date": "2019-01-08",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "b86da86ff622f3fec71bf8b963ff925268d19964ea9ef8e871b27a41f557babc",
+              "RH_mean_lower_pp": 25.98771472719219,
+              "RH_mean_upper_pp": 49.17314652818751,
+              "q_mean_capacity_upper": 0.006121226094561602,
+              "separation_RH_pp": 11.038721757945304
+            },
+            {
+              "donor_date": "2019-01-10",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "d2ac5c8bad906c75029de1e9e387585050f2dd4532a11c6b225d4a4a50235896",
+              "RH_mean_lower_pp": 26.056477256087796,
+              "RH_mean_upper_pp": 48.99703255880472,
+              "q_mean_capacity_upper": 0.006121072923829369,
+              "separation_RH_pp": 11.214835727328094
+            },
+            {
+              "donor_date": "2019-01-14",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "abc56203ac26e619c69cdc25494714f0015ab8427c6a2b30796e5d038f4f5306",
+              "RH_mean_lower_pp": 25.72818458827106,
+              "RH_mean_upper_pp": 48.60437015128182,
+              "q_mean_capacity_upper": 0.0061880852548622835,
+              "separation_RH_pp": 11.607498134850992
+            },
+            {
+              "donor_date": "2019-01-17",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "e649cd16607ada9d1185fe38d51f5e77e88ea953b10e1231325eef45856f8313",
+              "RH_mean_lower_pp": 26.064168079677124,
+              "RH_mean_upper_pp": 48.75132235716497,
+              "q_mean_capacity_upper": 0.006140117655464372,
+              "separation_RH_pp": 11.46054592896784
+            },
+            {
+              "donor_date": "2019-01-18",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "61e3d05438123d94a7da5de913f0f4986cf2f95a959e3e440e1acfaf6116770d",
+              "RH_mean_lower_pp": 26.118810219771326,
+              "RH_mean_upper_pp": 49.16809459861967,
+              "q_mean_capacity_upper": 0.006101865786572193,
+              "separation_RH_pp": 11.043773687513145
+            },
+            {
+              "donor_date": "2019-01-23",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "5eefe1c95e1412082988092b613ee2e08e6fa3f22def2cd20dcc1e797db99c88",
+              "RH_mean_lower_pp": 25.821823591656628,
+              "RH_mean_upper_pp": 48.34668111156204,
+              "q_mean_capacity_upper": 0.0061938354728989075,
+              "separation_RH_pp": 11.86518717457077
+            },
+            {
+              "donor_date": "2019-01-27",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "e530affbf1572705ebbe37dbcf781372b274385cba22c51541499377c39d1719",
+              "RH_mean_lower_pp": 25.721037726307053,
+              "RH_mean_upper_pp": 48.33565126443054,
+              "q_mean_capacity_upper": 0.006205822463963823,
+              "separation_RH_pp": 11.876217021702274
+            },
+            {
+              "donor_date": "2019-01-28",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "fdfed9404812af57a27aeadc355b982c7ee13a2c01cbf294df29873b7f654d94",
+              "RH_mean_lower_pp": 25.667737528807027,
+              "RH_mean_upper_pp": 48.176984736043835,
+              "q_mean_capacity_upper": 0.0062221777123550774,
+              "separation_RH_pp": 12.034883550088978
+            },
+            {
+              "donor_date": "2019-01-31",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "3f04899723da8de30eedfc703f65ac0e8a670a23664a7052497113185562ca40",
+              "RH_mean_lower_pp": 25.893049030824464,
+              "RH_mean_upper_pp": 48.408547982453335,
+              "q_mean_capacity_upper": 0.006183188131839828,
+              "separation_RH_pp": 11.803320303679477
+            },
+            {
+              "donor_date": "2020-01-18",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "ec3ab8dc516ea2a25aedee5ec06135ba2733426333c1ebcccb3d9cabaacaa9c9",
+              "RH_mean_lower_pp": 26.45823091981498,
+              "RH_mean_upper_pp": 49.46697515992484,
+              "q_mean_capacity_upper": 0.006050566423222553,
+              "separation_RH_pp": 10.74489312620797
+            },
+            {
+              "donor_date": "2020-01-28",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "054e0caf1afeda1344350ec6e78b6ebad83415509fc7051d6072bcc8b2caed55",
+              "RH_mean_lower_pp": 25.901410414999905,
+              "RH_mean_upper_pp": 48.58463994070286,
+              "q_mean_capacity_upper": 0.006167915228051949,
+              "separation_RH_pp": 11.627228345429955
+            }
+          ]
+        },
+        {
+          "name": "RECTANGULAR_PM500_PA_STRESS_NOT_CI",
+          "interpretation": "SENSITIVITY_BOX_NOT_CI",
+          "status": "ALL_DONORS_CERTIFIED_INFEASIBLE",
+          "donor_status_counts": {
+            "CERTIFIED_INFEASIBLE": 17
+          },
+          "RH_outer_union_lower_pp": 25.53039118421638,
+          "RH_outer_union_upper_pp": 49.907714152849216,
+          "all_donor_evidence_sha256": "7af9741e248a3c5b142518cd6beac6ce257ea8b244c656bbe586d2b43bef04ed",
+          "source_feasibility_established": false,
+          "external_pressure_uncertainty_established": false,
+          "continuous_pressure_box_covered": true,
+          "continuous_time_trajectory_certified": false,
+          "certificates": [
+            {
+              "donor_date": "2019-01-01",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "b7d2d2c3506da2d87af69a5098bac41b4804b3f443a2dc22ed5c00d8a063cd07",
+              "RH_mean_lower_pp": 26.15563149537553,
+              "RH_mean_upper_pp": 49.90363447654551,
+              "q_mean_capacity_upper": 0.006083813725323111,
+              "separation_RH_pp": 10.3082338095873
+            },
+            {
+              "donor_date": "2019-01-02",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "39cc61e46c8469d11cc5f8853e9d277c336cb21510497e34af0fdcd66903f7a5",
+              "RH_mean_lower_pp": 26.10597341056725,
+              "RH_mean_upper_pp": 49.528641681196824,
+              "q_mean_capacity_upper": 0.006116135409567651,
+              "separation_RH_pp": 10.683226604935989
+            },
+            {
+              "donor_date": "2019-01-03",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "f9d2b38a675a9eb75a2adae87390e043e695e8884f59b1b9aef3aa4c1bf14ab5",
+              "RH_mean_lower_pp": 26.345204640439007,
+              "RH_mean_upper_pp": 49.81880672849562,
+              "q_mean_capacity_upper": 0.006071819517737688,
+              "separation_RH_pp": 10.39306155763719
+            },
+            {
+              "donor_date": "2019-01-04",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "fead0db13772d2a6ea939174d6174c69fea999ce0730e8382e44827b16409a96",
+              "RH_mean_lower_pp": 26.358310202774703,
+              "RH_mean_upper_pp": 49.907714152849216,
+              "q_mean_capacity_upper": 0.006062813494594677,
+              "separation_RH_pp": 10.304154133283596
+            },
+            {
+              "donor_date": "2019-01-05",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "ed8f23ee56076652bf17179228944184d53092a0f08a5a0ce0d5790fdac45488",
+              "RH_mean_lower_pp": 26.104375636279805,
+              "RH_mean_upper_pp": 49.475998251739746,
+              "q_mean_capacity_upper": 0.006122010170210325,
+              "separation_RH_pp": 10.735870034393066
+            },
+            {
+              "donor_date": "2019-01-07",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "e60ffb0b6b992cd0836f4d9ce696889e701dd614d4b4f59ddddb4912b7223d38",
+              "RH_mean_lower_pp": 26.35979542953736,
+              "RH_mean_upper_pp": 49.85914680221246,
+              "q_mean_capacity_upper": 0.006067059789186425,
+              "separation_RH_pp": 10.352721483920355
+            },
+            {
+              "donor_date": "2019-01-08",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "6f4861b040e8b16ae573836f5a145a6732b597329a2e12e88a4e66eb9345c2dc",
+              "RH_mean_lower_pp": 25.850188126602667,
+              "RH_mean_upper_pp": 49.42826427671319,
+              "q_mean_capacity_upper": 0.006153499625712626,
+              "separation_RH_pp": 10.78360400941962
+            },
+            {
+              "donor_date": "2019-01-10",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "03e5369938272fffe8ad80228d879652da01054cbdde7eed8b3c0e275d38ba99",
+              "RH_mean_lower_pp": 25.919010270607895,
+              "RH_mean_upper_pp": 49.25223576915787,
+              "q_mean_capacity_upper": 0.006153344021687375,
+              "separation_RH_pp": 10.959632516974942
+            },
+            {
+              "donor_date": "2019-01-14",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "0e197b033f1d389afffa1bcffb3a15a0fb85b97730bd98f632c05c0f429434a7",
+              "RH_mean_lower_pp": 25.590750377293848,
+              "RH_mean_upper_pp": 48.85955585868704,
+              "q_mean_capacity_upper": 0.006221069294270542,
+              "separation_RH_pp": 11.352312427445774
+            },
+            {
+              "donor_date": "2019-01-17",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "e03be046e4fe538ff6428d2cfa2c79f6d9c6e6796686bd066f114bf71fa5143f",
+              "RH_mean_lower_pp": 25.926829138553185,
+              "RH_mean_upper_pp": 49.0067594130427,
+              "q_mean_capacity_upper": 0.00617259008258522,
+              "separation_RH_pp": 11.205108873090111
+            },
+            {
+              "donor_date": "2019-01-18",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "d79849867c9b87e1639b15d1559251704255280ebf4fad10d12f03c07cb9f8fd",
+              "RH_mean_lower_pp": 25.981397544802224,
+              "RH_mean_upper_pp": 49.42332448368308,
+              "q_mean_capacity_upper": 0.006133934251738016,
+              "separation_RH_pp": 10.78854380244973
+            },
+            {
+              "donor_date": "2019-01-23",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "71754a56c82afe74b5fd7319f39a2dffa5647d40cfde081d67ac9318f1abbb36",
+              "RH_mean_lower_pp": 25.68443569328379,
+              "RH_mean_upper_pp": 48.602036310418654,
+              "q_mean_capacity_upper": 0.006226880139872498,
+              "separation_RH_pp": 11.609831975714158
+            },
+            {
+              "donor_date": "2019-01-27",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "5c769e5312b2bb5ea7e88e44d6d4b10ffb454c3ca76d4cb963f4c9409f098a99",
+              "RH_mean_lower_pp": 25.583653457075677,
+              "RH_mean_upper_pp": 48.5907717446898,
+              "q_mean_capacity_upper": 0.006238995764753136,
+              "separation_RH_pp": 11.62109654144301
+            },
+            {
+              "donor_date": "2019-01-28",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "f4eb695b7c33123820782811968d32c16a42178642d91ad6b69c286b2913aea5",
+              "RH_mean_lower_pp": 25.53039118421638,
+              "RH_mean_upper_pp": 48.432185714884874,
+              "q_mean_capacity_upper": 0.006255526454130892,
+              "separation_RH_pp": 11.779682571247939
+            },
+            {
+              "donor_date": "2019-01-31",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "7b7e62b51e0c7431580ac2f280b14bb263158f981023246d50b3dfd71eceb89b",
+              "RH_mean_lower_pp": 25.75576314618022,
+              "RH_mean_upper_pp": 48.66400829939344,
+              "q_mean_capacity_upper": 0.006216118928695106,
+              "separation_RH_pp": 11.547859986739375
+            },
+            {
+              "donor_date": "2020-01-18",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "24e5a73ddca16aa8ae13e0ec33143bdbedc82e9f1f2fae5692ea6c9d0ace5474",
+              "RH_mean_lower_pp": 26.320944075283595,
+              "RH_mean_upper_pp": 49.72242862810017,
+              "q_mean_capacity_upper": 0.006082096122082181,
+              "separation_RH_pp": 10.489439658032644
+            },
+            {
+              "donor_date": "2020-01-28",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "f4c9ed546f7d8fad04675d12ca1ae41778478bddc8e3e17030a9ea31afb000e6",
+              "RH_mean_lower_pp": 25.76403742703634,
+              "RH_mean_upper_pp": 48.83987830334692,
+              "q_mean_capacity_upper": 0.006200683273015389,
+              "separation_RH_pp": 11.371989982785891
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "date": "2013-01-19",
+      "eligible_donors": 45,
+      "source_q_mean_kgkg": 0.0023956536315381527,
+      "source_RH_mean_pp": 65.11164855957031,
+      "repair_comparison": "PRIOR_CONDITIONAL_CERTIFICATE_REPRODUCED",
+      "scenarios": [
+        {
+          "name": "FIXED_REGISTERED_DONOR_REFERENCE",
+          "interpretation": "FIXED_CONDITIONAL_REFERENCE",
+          "status": "ALL_DONORS_CERTIFIED_INFEASIBLE",
+          "donor_status_counts": {
+            "CERTIFIED_INFEASIBLE": 45
+          },
+          "RH_outer_union_lower_pp": 33.18582896851521,
+          "RH_outer_union_upper_pp": 63.65117487086007,
+          "all_donor_evidence_sha256": "a25ca0631b1f24f2df4e48f788c66f5451c1c4c12bb98c822571fcf0027018f0",
+          "source_feasibility_established": false,
+          "external_pressure_uncertainty_established": false,
+          "continuous_pressure_box_covered": true,
+          "continuous_time_trajectory_certified": false,
+          "certificates": [
+            {
+              "donor_date": "2019-01-06",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "4075938756517d39a5536261f931c1dae58d9b9fef0ab4fdc6bbdc5b7468dfda",
+              "RH_mean_lower_pp": 33.77776894644877,
+              "RH_mean_upper_pp": 62.23566510862161,
+              "q_mean_capacity_upper": 0.007067587017050718,
+              "separation_RH_pp": 2.875983450948702
+            },
+            {
+              "donor_date": "2019-01-09",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "62a2b7be4950447a7aeee96598e17487e4da29ce0a52e3b9b7fbbc3940235a33",
+              "RH_mean_lower_pp": 33.33216912167752,
+              "RH_mean_upper_pp": 61.21595465203706,
+              "q_mean_capacity_upper": 0.007178441219127975,
+              "separation_RH_pp": 3.89569390753325
+            },
+            {
+              "donor_date": "2019-01-11",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "fc0f5d851d0df6554a1f5665104781b8cd3a9a9a54a0a354075d29090ca4ac4b",
+              "RH_mean_lower_pp": 33.838804803960876,
+              "RH_mean_upper_pp": 62.129518170194395,
+              "q_mean_capacity_upper": 0.007071774627637592,
+              "separation_RH_pp": 2.982130389375918
+            },
+            {
+              "donor_date": "2019-01-12",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "f692cc571de8ed3a2ca0f7e77b702688ef8a8b9be36abcfd5781460cad92a5b2",
+              "RH_mean_lower_pp": 33.66066127483618,
+              "RH_mean_upper_pp": 61.90164567900597,
+              "q_mean_capacity_upper": 0.007100939047939684,
+              "separation_RH_pp": 3.210002880564339
+            },
+            {
+              "donor_date": "2019-01-13",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "2809d39f0fb79dce37aa498a397839af48a7be0f614c2566fa67de19869a9f81",
+              "RH_mean_lower_pp": 33.18582896851521,
+              "RH_mean_upper_pp": 61.39458535800546,
+              "q_mean_capacity_upper": 0.00717473237668342,
+              "separation_RH_pp": 3.717063201564855
+            },
+            {
+              "donor_date": "2019-01-15",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "95ec6f3c846fd99fdfed71fbac769c82e9ad347ae69887c823c918e698fb6d19",
+              "RH_mean_lower_pp": 33.68262567623447,
+              "RH_mean_upper_pp": 61.87386075105173,
+              "q_mean_capacity_upper": 0.007101885055621558,
+              "separation_RH_pp": 3.2377878085185827
+            },
+            {
+              "donor_date": "2019-01-16",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "11fa15437ef27327a52a1371662d355d7ea092bf37340001bc2fc4b8e33c1258",
+              "RH_mean_lower_pp": 33.613944831529366,
+              "RH_mean_upper_pp": 61.786385269859935,
+              "q_mean_capacity_upper": 0.007113029564172921,
+              "separation_RH_pp": 3.325263289710378
+            },
+            {
+              "donor_date": "2019-01-19",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "25250169239daa852be56918c380704bcf8ae378fce24f5939efb93ecd842477",
+              "RH_mean_lower_pp": 33.80787652669455,
+              "RH_mean_upper_pp": 62.10080422958292,
+              "q_mean_capacity_upper": 0.007075650347107225,
+              "separation_RH_pp": 3.0108443299873926
+            },
+            {
+              "donor_date": "2019-01-20",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "027cb9f1f696fda8a3795cad96f3909ee5fedde1ea0a9d05d11f2efcff5058af",
+              "RH_mean_lower_pp": 33.71723671742298,
+              "RH_mean_upper_pp": 61.91518799569162,
+              "q_mean_capacity_upper": 0.0070974910729995405,
+              "separation_RH_pp": 3.196460563878695
+            },
+            {
+              "donor_date": "2019-01-21",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "811d8a21a0eafb3486e8b9d0af28a8a325da91b3f5521f0a2e412ff6c7f89883",
+              "RH_mean_lower_pp": 33.86044634535816,
+              "RH_mean_upper_pp": 62.15618836298887,
+              "q_mean_capacity_upper": 0.007068426469569634,
+              "separation_RH_pp": 2.9554601965814413
+            },
+            {
+              "donor_date": "2019-01-22",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "8b14540407c2b9853cddded29c0f9cf24a45afe458b0e4decab66a31adb9db9f",
+              "RH_mean_lower_pp": 33.47496359882925,
+              "RH_mean_upper_pp": 61.80529052094848,
+              "q_mean_capacity_upper": 0.007123919400326665,
+              "separation_RH_pp": 3.3063580386218305
+            },
+            {
+              "donor_date": "2019-01-24",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "5b67766ee8597964cb2dd9a0095efb0afb98b6d7c9a7201b6d1af5e0220aaf9d",
+              "RH_mean_lower_pp": 33.30784111389522,
+              "RH_mean_upper_pp": 61.21389827607662,
+              "q_mean_capacity_upper": 0.007179968174741605,
+              "separation_RH_pp": 3.897750283493693
+            },
+            {
+              "donor_date": "2019-01-25",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "35f64a3cab3304000116c2bccb5989656679c3e3a11c9b7350cb6e1f3e4602cc",
+              "RH_mean_lower_pp": 33.48647863896284,
+              "RH_mean_upper_pp": 61.579997411416464,
+              "q_mean_capacity_upper": 0.007137951069285017,
+              "separation_RH_pp": 3.5316511481538484
+            },
+            {
+              "donor_date": "2019-01-26",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "43fd07b15e6c737d4e18677f4c479b66a52b855a72836f9c1a639ab93162f1cd",
+              "RH_mean_lower_pp": 33.4333266677456,
+              "RH_mean_upper_pp": 61.497613961691805,
+              "q_mean_capacity_upper": 0.00714839182669735,
+              "separation_RH_pp": 3.614034597878508
+            },
+            {
+              "donor_date": "2019-01-29",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "dc4465592082dba0090ef8fdf2aa8f71dcc1a809533a7fc46c457adff0fdc5b6",
+              "RH_mean_lower_pp": 33.32238480728245,
+              "RH_mean_upper_pp": 61.30699724832145,
+              "q_mean_capacity_upper": 0.007170841144843226,
+              "separation_RH_pp": 3.804651311248861
+            },
+            {
+              "donor_date": "2019-01-30",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "8196b139ebe5d6809d143486000dc5463adf662347a07cfc509e7637e6ff207a",
+              "RH_mean_lower_pp": 33.220413881797725,
+              "RH_mean_upper_pp": 61.028680984537196,
+              "q_mean_capacity_upper": 0.007201017108425419,
+              "separation_RH_pp": 4.082967575033116
+            },
+            {
+              "donor_date": "2020-01-01",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "a9ad2853f994956ba758cf8de7dd15cd92aee244b372d46c5b7921d10947634c",
+              "RH_mean_lower_pp": 34.299565112388585,
+              "RH_mean_upper_pp": 62.96395611668922,
+              "q_mean_capacity_upper": 0.0069774013910443135,
+              "separation_RH_pp": 2.1476924428810946
+            },
+            {
+              "donor_date": "2020-01-02",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "41e4758d37682f43044639531961feb2a77266cf8454196a3821f9be29bad45a",
+              "RH_mean_lower_pp": 34.140241283117376,
+              "RH_mean_upper_pp": 62.78257909725431,
+              "q_mean_capacity_upper": 0.007000730228649906,
+              "separation_RH_pp": 2.3290694623159993
+            },
+            {
+              "donor_date": "2020-01-03",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "fc9fb53d7a990e6a8328db9fbea75edbcb89f813361773155a75c8a9ef971d58",
+              "RH_mean_lower_pp": 34.014484679950634,
+              "RH_mean_upper_pp": 62.46221596272621,
+              "q_mean_capacity_upper": 0.007034441291549106,
+              "separation_RH_pp": 2.6494325968441004
+            },
+            {
+              "donor_date": "2020-01-04",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "b2ed6393af25977a3ef6605cd1cc70561db91b08ff36419aefb4abea92f64138",
+              "RH_mean_lower_pp": 33.95895200998768,
+              "RH_mean_upper_pp": 62.32615698913982,
+              "q_mean_capacity_upper": 0.007048778840408955,
+              "separation_RH_pp": 2.7854915704304943
+            },
+            {
+              "donor_date": "2020-01-05",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "c47150363269103b2998146b6913541cdbd4c390b7eb281a98849fe20389bd5e",
+              "RH_mean_lower_pp": 34.09804263373176,
+              "RH_mean_upper_pp": 62.8751022189985,
+              "q_mean_capacity_upper": 0.006997021225697716,
+              "separation_RH_pp": 2.236546340571813
+            },
+            {
+              "donor_date": "2020-01-06",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "39bf37c7ee404a193afeaff6158513234df57cdb1ef468b7e2c57241158e7c6f",
+              "RH_mean_lower_pp": 34.15290732258311,
+              "RH_mean_upper_pp": 62.88153439952128,
+              "q_mean_capacity_upper": 0.006992752429635072,
+              "separation_RH_pp": 2.230114160049034
+            },
+            {
+              "donor_date": "2020-01-07",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "c8ac0fe1e128b527084bea880e0cb15dcc61a8f8a817268cbce6389f56067692",
+              "RH_mean_lower_pp": 34.033218570656466,
+              "RH_mean_upper_pp": 62.62562766717455,
+              "q_mean_capacity_upper": 0.007020971869917142,
+              "separation_RH_pp": 2.4860208923957643
+            },
+            {
+              "donor_date": "2020-01-08",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "79f4aa6f229dbf31f337d5d6e0aa949639771a67a6d5d095c0baf04f16a928bd",
+              "RH_mean_lower_pp": 34.19898031697472,
+              "RH_mean_upper_pp": 62.78506796296873,
+              "q_mean_capacity_upper": 0.006997614627063449,
+              "separation_RH_pp": 2.3265805966015805
+            },
+            {
+              "donor_date": "2020-01-09",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "64d88a5298d58f89c5ac666edf39e012d9008478e5e88c7f70b207a00d0f0d95",
+              "RH_mean_lower_pp": 33.91110047581308,
+              "RH_mean_upper_pp": 62.46704494291259,
+              "q_mean_capacity_upper": 0.007040903563238462,
+              "separation_RH_pp": 2.644603616657726
+            },
+            {
+              "donor_date": "2020-01-10",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "f514d86fbfc4356431c7267fbd2950e484d913a53c311eb76698401a87198b05",
+              "RH_mean_lower_pp": 33.82482624018509,
+              "RH_mean_upper_pp": 62.27519772451256,
+              "q_mean_capacity_upper": 0.007061783713083846,
+              "separation_RH_pp": 2.8364508350577537
+            },
+            {
+              "donor_date": "2020-01-11",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "e762fc150a75a53822a528fe114de983e6be58a343071b47b7e2aab531ba5782",
+              "RH_mean_lower_pp": 34.101512450353155,
+              "RH_mean_upper_pp": 62.76687605942673,
+              "q_mean_capacity_upper": 0.007004386263918168,
+              "separation_RH_pp": 2.344772500143584
+            },
+            {
+              "donor_date": "2020-01-12",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "8aefa390f8de3269ae8524d7b8e526b6e902f8a28105be177961da1ef3c0183a",
+              "RH_mean_lower_pp": 34.13724737665792,
+              "RH_mean_upper_pp": 62.734840866917715,
+              "q_mean_capacity_upper": 0.007005000935305848,
+              "separation_RH_pp": 2.376807692652598
+            },
+            {
+              "donor_date": "2020-01-13",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "f9faeac6afd97e893de00a7c77c30bc664e79583c9e09387c034168f780a7228",
+              "RH_mean_lower_pp": 33.961187525999264,
+              "RH_mean_upper_pp": 62.45031882992221,
+              "q_mean_capacity_upper": 0.007038164921288297,
+              "separation_RH_pp": 2.661329729648102
+            },
+            {
+              "donor_date": "2020-01-14",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "80ea0ef9aeaae8b9bd4082619162ede0fb5281724fe7226c4fd4144fe943641a",
+              "RH_mean_lower_pp": 33.934032019768374,
+              "RH_mean_upper_pp": 62.327022517281726,
+              "q_mean_capacity_upper": 0.007050160939455389,
+              "separation_RH_pp": 2.7846260422885862
+            },
+            {
+              "donor_date": "2020-01-15",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "4b135372905a0cadd1bee06103cbeee103af5dae52b523d9aae709c291ddb0a3",
+              "RH_mean_lower_pp": 34.024941172318314,
+              "RH_mean_upper_pp": 62.43483249616114,
+              "q_mean_capacity_upper": 0.007036349595156453,
+              "separation_RH_pp": 2.67681606340917
+            },
+            {
+              "donor_date": "2020-01-16",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "f880e1e3bbb72ab05949878a6cf2fef40d5e3a4bcc921ab98ff35f19a1d9507b",
+              "RH_mean_lower_pp": 34.178187051281455,
+              "RH_mean_upper_pp": 62.78053751699464,
+              "q_mean_capacity_upper": 0.006998882475403249,
+              "separation_RH_pp": 2.331111042575671
+            },
+            {
+              "donor_date": "2020-01-17",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "83932396eb601ed699e977c9b03ebae46c25b112651a17a1ec9ce51c1ca0aa83",
+              "RH_mean_lower_pp": 34.052766691576664,
+              "RH_mean_upper_pp": 62.55335118255155,
+              "q_mean_capacity_upper": 0.007025068007971902,
+              "separation_RH_pp": 2.5582973770187607
+            },
+            {
+              "donor_date": "2020-01-19",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "7bf3747d43bb0020f8c180172bf0af96c44902b1e22cd42d04c793479da22f04",
+              "RH_mean_lower_pp": 34.07294066678777,
+              "RH_mean_upper_pp": 62.90589040643495,
+              "q_mean_capacity_upper": 0.0070002142029915865,
+              "separation_RH_pp": 2.2057581531353634
+            },
+            {
+              "donor_date": "2020-01-20",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "7ab97930eb16260092cffb9eaab315390ec20be34cd9ea7c28543205ff2abdb4",
+              "RH_mean_lower_pp": 34.54873067653074,
+              "RH_mean_upper_pp": 63.65117487086007,
+              "q_mean_capacity_upper": 0.006909409765206854,
+              "separation_RH_pp": 1.4604736887102447
+            },
+            {
+              "donor_date": "2020-01-21",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "176a9e93d62bb7fe17dd613df466df33ee21ba29c09246f5410bf451f8dbbce5",
+              "RH_mean_lower_pp": 34.485910174231165,
+              "RH_mean_upper_pp": 63.51281049940029,
+              "q_mean_capacity_upper": 0.006924183940516173,
+              "separation_RH_pp": 1.5988380601700243
+            },
+            {
+              "donor_date": "2020-01-22",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "7043f6dd253fca4ca2c09bce4e867cb37b75c2efed2084190552a0eb17543096",
+              "RH_mean_lower_pp": 34.191645475853086,
+              "RH_mean_upper_pp": 62.84147139400265,
+              "q_mean_capacity_upper": 0.006993842009367235,
+              "separation_RH_pp": 2.2701771655676595
+            },
+            {
+              "donor_date": "2020-01-23",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "56573b50d9769004ac2e7a605a16657dd9029a09df8d69d131e4348402218f74",
+              "RH_mean_lower_pp": 34.22914972112654,
+              "RH_mean_upper_pp": 62.979979729549385,
+              "q_mean_capacity_upper": 0.006980571614332724,
+              "separation_RH_pp": 2.131668830020928
+            },
+            {
+              "donor_date": "2020-01-24",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "5cdd03fd556719ab7daecba7160daf6ea699355d1e5c58b93a9e3e892544aaaa",
+              "RH_mean_lower_pp": 33.99371777560857,
+              "RH_mean_upper_pp": 62.47832153512197,
+              "q_mean_capacity_upper": 0.007034299101213717,
+              "separation_RH_pp": 2.6333270244483415
+            },
+            {
+              "donor_date": "2020-01-25",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "6d5ea97f102ca7e62ac64b49589fa2b80c9098636dd7cc8a7579aad7f31e106d",
+              "RH_mean_lower_pp": 33.92361185467388,
+              "RH_mean_upper_pp": 62.27023459703035,
+              "q_mean_capacity_upper": 0.007055377894883504,
+              "separation_RH_pp": 2.84141396253996
+            },
+            {
+              "donor_date": "2020-01-26",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "0daa470762ecd2835d6401ed90c7a72bd4a09ee6689346cc5f6e046f5c5576e9",
+              "RH_mean_lower_pp": 33.875283213451304,
+              "RH_mean_upper_pp": 62.18267913525957,
+              "q_mean_capacity_upper": 0.0070653589033246025,
+              "separation_RH_pp": 2.9289694243107434
+            },
+            {
+              "donor_date": "2020-01-27",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "89edd71a7cfc18fb4ada0c96093d93a13be7372d7c5d7e482faf3261552de64b",
+              "RH_mean_lower_pp": 33.694399571138206,
+              "RH_mean_upper_pp": 61.98855415957798,
+              "q_mean_capacity_upper": 0.007091758748979775,
+              "separation_RH_pp": 3.1230943999923326
+            },
+            {
+              "donor_date": "2020-01-29",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "2c8f5dd01fd8fdd080b51f7db8abc385f1c524b0ec73faf5aa7c4abf1006aaef",
+              "RH_mean_lower_pp": 33.44668003450826,
+              "RH_mean_upper_pp": 61.53603224315213,
+              "q_mean_capacity_upper": 0.007145231005759441,
+              "separation_RH_pp": 3.5756163164181842
+            },
+            {
+              "donor_date": "2020-01-30",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "5c958eb296ef87f2ad50907452caf432443719fd2d3ca9148e212b72eeec7c87",
+              "RH_mean_lower_pp": 33.678715469656154,
+              "RH_mean_upper_pp": 61.94139818586298,
+              "q_mean_capacity_upper": 0.007096762222087619,
+              "separation_RH_pp": 3.170250373707333
+            },
+            {
+              "donor_date": "2020-01-31",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "40d35cb28d0214ca9b801e370311897aa8e6ea640f0e71965c5325cc7b5d0fd0",
+              "RH_mean_lower_pp": 33.586166847028935,
+              "RH_mean_upper_pp": 61.669544870493986,
+              "q_mean_capacity_upper": 0.007124847664405151,
+              "separation_RH_pp": 3.442103689076326
+            }
+          ]
+        },
+        {
+          "name": "RECTANGULAR_PM500_PA_STRESS_NOT_CI",
+          "interpretation": "SENSITIVITY_BOX_NOT_CI",
+          "status": "ALL_DONORS_CERTIFIED_INFEASIBLE",
+          "donor_status_counts": {
+            "CERTIFIED_INFEASIBLE": 45
+          },
+          "RH_outer_union_lower_pp": 33.008654099674985,
+          "RH_outer_union_upper_pp": 63.97331582190733,
+          "all_donor_evidence_sha256": "e8d5b99755d195a8bfe387d1ea495e986cce68b71e306650d9425eaea0898f1d",
+          "source_feasibility_established": false,
+          "external_pressure_uncertainty_established": false,
+          "continuous_pressure_box_covered": true,
+          "continuous_time_trajectory_certified": false,
+          "certificates": [
+            {
+              "donor_date": "2019-01-06",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "0245d84725d7565c718e0c9048e131f418e57cb071d8cb0ab38edd15ff6a7015",
+              "RH_mean_lower_pp": 33.60076570245878,
+              "RH_mean_upper_pp": 62.55774651050697,
+              "q_mean_capacity_upper": 0.007104595115750569,
+              "separation_RH_pp": 2.553902049063339
+            },
+            {
+              "donor_date": "2019-01-09",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "fb732c6a9eb6f09d5b8e45b09674d1936bd04530be42e82497d326350ca8f402",
+              "RH_mean_lower_pp": 33.155513900911416,
+              "RH_mean_upper_pp": 61.53825539386696,
+              "q_mean_capacity_upper": 0.007216622248257197,
+              "separation_RH_pp": 3.573393165703351
+            },
+            {
+              "donor_date": "2019-01-11",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "699e3941f2f81360569e46fd5384bc9885e9606b11e0f66c74e1c41eaa812274",
+              "RH_mean_lower_pp": 33.6621225569292,
+              "RH_mean_upper_pp": 62.45184850412004,
+              "q_mean_capacity_upper": 0.007108826451936652,
+              "separation_RH_pp": 2.659800055450269
+            },
+            {
+              "donor_date": "2019-01-12",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "909631fd53efa200de1b46756dc2eecdd030f35c5884a81529895551ed71b59a",
+              "RH_mean_lower_pp": 33.4837835849642,
+              "RH_mean_upper_pp": 62.22388070789927,
+              "q_mean_capacity_upper": 0.00713829801672658,
+              "separation_RH_pp": 2.887767851671043
+            },
+            {
+              "donor_date": "2019-01-13",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "b8a9b077217976f986626501309578ff0d9c65ae9f8b402918c94ed2a988fbd5",
+              "RH_mean_lower_pp": 33.008654099674985,
+              "RH_mean_upper_pp": 61.716632294896556,
+              "q_mean_capacity_upper": 0.00721287466807793,
+              "separation_RH_pp": 3.3950162646737567
+            },
+            {
+              "donor_date": "2019-01-15",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "9dcff4361f0e56f4793387c052d92f1fc20b6d103176a9bfc0b4f0c26ab3f6bf",
+              "RH_mean_lower_pp": 33.50584557892684,
+              "RH_mean_upper_pp": 62.19615689121524,
+              "q_mean_capacity_upper": 0.007139253929838543,
+              "separation_RH_pp": 2.915491668355074
+            },
+            {
+              "donor_date": "2019-01-16",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "c9937429d801dee5d21b10a3e0f340d3d7227005dc00b4a0ef996141977317d6",
+              "RH_mean_lower_pp": 33.43698800484526,
+              "RH_mean_upper_pp": 62.108635793032576,
+              "q_mean_capacity_upper": 0.00715051615340077,
+              "separation_RH_pp": 3.0030127665377364
+            },
+            {
+              "donor_date": "2019-01-19",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "6d266888194fb1785bc1f3e128d6e43482eb362f504b3c207bad5bce526ce65e",
+              "RH_mean_lower_pp": 33.631198671999044,
+              "RH_mean_upper_pp": 62.423107989909774,
+              "q_mean_capacity_upper": 0.007112742920158148,
+              "separation_RH_pp": 2.688540569660539
+            },
+            {
+              "donor_date": "2019-01-20",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "1dd7e0a8328fe9aa447572a9af3d24818b8f52e50d08fda2fef9f24035603810",
+              "RH_mean_lower_pp": 33.54060193775089,
+              "RH_mean_upper_pp": 62.23746784181062,
+              "q_mean_capacity_upper": 0.00713481361036789,
+              "separation_RH_pp": 2.8741807177596925
+            },
+            {
+              "donor_date": "2019-01-21",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "9c439e85b40de54dc07862d58c0a0fba5705aefb748ab18426d610b63c077766",
+              "RH_mean_lower_pp": 33.68376657700576,
+              "RH_mean_upper_pp": 62.47853221282868,
+              "q_mean_capacity_upper": 0.0071054431164334795,
+              "separation_RH_pp": 2.6331163467416303
+            },
+            {
+              "donor_date": "2019-01-22",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "e8f0fa51b897906f6a2a04a09acdc917014d53dad474a921617f1c2a0797ec20",
+              "RH_mean_lower_pp": 33.29805821439012,
+              "RH_mean_upper_pp": 62.12723237506634,
+              "q_mean_capacity_upper": 0.007161521645388127,
+              "separation_RH_pp": 2.9844161845039707
+            },
+            {
+              "donor_date": "2019-01-24",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "b64f3346df3f8017daed6f9721ec4c1d498d6f1a1a6b6e3c09173863ad556771",
+              "RH_mean_lower_pp": 33.13105607282148,
+              "RH_mean_upper_pp": 61.53614216479068,
+              "q_mean_capacity_upper": 0.00721816553234401,
+              "separation_RH_pp": 3.57550639477963
+            },
+            {
+              "donor_date": "2019-01-25",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "18f5e6868b1f957e59c162f46432f55c0eb2eee91f3c81a3387c80ed838b2f2a",
+              "RH_mean_lower_pp": 33.30962479066766,
+              "RH_mean_upper_pp": 61.902204145985706,
+              "q_mean_capacity_upper": 0.0071757015252122205,
+              "separation_RH_pp": 3.209444413584606
+            },
+            {
+              "donor_date": "2019-01-26",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "158a1df114cbdb4614b3b480a53ab8323ee181b3a702abbf3d0a404661f8d674",
+              "RH_mean_lower_pp": 33.25665198646069,
+              "RH_mean_upper_pp": 61.81978960453966,
+              "q_mean_capacity_upper": 0.007186253118777494,
+              "separation_RH_pp": 3.291858955030655
+            },
+            {
+              "donor_date": "2019-01-29",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "348ed05639aa4ce4691e82ca9f88579648732f530ebb176cd83e236e1c5e43aa",
+              "RH_mean_lower_pp": 33.14545143178332,
+              "RH_mean_upper_pp": 61.62921023264323,
+              "q_mean_capacity_upper": 0.0072089412586935206,
+              "separation_RH_pp": 3.482438326927081
+            },
+            {
+              "donor_date": "2019-01-30",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "296680ba54fa63b276085cda92a1df43529a503dc6980c7133848875092f6613",
+              "RH_mean_lower_pp": 33.043727275479526,
+              "RH_mean_upper_pp": 61.35096183122236,
+              "q_mean_capacity_upper": 0.007239439327427455,
+              "separation_RH_pp": 3.760686728347956
+            },
+            {
+              "donor_date": "2020-01-01",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "708955038dcbb3db1c2fed50ce302b604e59bf1d158e4bb5c0d9b6c70a238f33",
+              "RH_mean_lower_pp": 34.12287492994221,
+              "RH_mean_upper_pp": 63.28629810865552,
+              "q_mean_capacity_upper": 0.007013468366903497,
+              "separation_RH_pp": 1.8253504509147902
+            },
+            {
+              "donor_date": "2020-01-02",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "ebff2d2975f63e995eca1eb78e7056706e1b0a2633c45fdc4d7b67e8d7c00ee3",
+              "RH_mean_lower_pp": 33.96332800650194,
+              "RH_mean_upper_pp": 63.104785795312594,
+              "q_mean_capacity_upper": 0.00703703950835116,
+              "separation_RH_pp": 2.0068627642577184
+            },
+            {
+              "donor_date": "2020-01-03",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "3eadc7aca23d47c8d510dcc107ca8ef3bd2d0febd0c205d09b3d9b6399639fa7",
+              "RH_mean_lower_pp": 33.837835298987216,
+              "RH_mean_upper_pp": 62.784523991264564,
+              "q_mean_capacity_upper": 0.0070711019413151,
+              "separation_RH_pp": 2.3271245683057487
+            },
+            {
+              "donor_date": "2020-01-04",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "1c9f53779291eb2d44c4e013b5b731216e71b938108cd5c00e2ae4f5ad580dd9",
+              "RH_mean_lower_pp": 33.78227062871058,
+              "RH_mean_upper_pp": 62.64851384417495,
+              "q_mean_capacity_upper": 0.0070855894432236815,
+              "separation_RH_pp": 2.4631347153953627
+            },
+            {
+              "donor_date": "2020-01-05",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "de8e13669f0946755892e071df373926f4faaafc224757bd476cb997745cb698",
+              "RH_mean_lower_pp": 33.92074327540617,
+              "RH_mean_upper_pp": 63.197230437617485,
+              "q_mean_capacity_upper": 0.0070332922138644964,
+              "separation_RH_pp": 1.9144181219528278
+            },
+            {
+              "donor_date": "2020-01-06",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "39c16a384047eaccb2911b76bc82edc20e3cf7be37a8924c017a1ef41023beb1",
+              "RH_mean_lower_pp": 33.97602317943244,
+              "RH_mean_upper_pp": 63.2036706286082,
+              "q_mean_capacity_upper": 0.0070289788937177205,
+              "separation_RH_pp": 1.9079779309621117
+            },
+            {
+              "donor_date": "2020-01-07",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "4feffb92afbff3e59e8169e629c3156d19aabd459d9c28eef6c9a6e8f8afbe37",
+              "RH_mean_lower_pp": 33.856409017173654,
+              "RH_mean_upper_pp": 62.947732617844665,
+              "q_mean_capacity_upper": 0.007057492048243075,
+              "separation_RH_pp": 2.163915941725648
+            },
+            {
+              "donor_date": "2020-01-08",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "88bb7743a0c4fd1f53dda44852ddebb5ac7d2065de4a9b858900547f7975a69c",
+              "RH_mean_lower_pp": 34.022262547183864,
+              "RH_mean_upper_pp": 63.10739867928414,
+              "q_mean_capacity_upper": 0.007033891425406721,
+              "separation_RH_pp": 2.0042498802861743
+            },
+            {
+              "donor_date": "2020-01-09",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "b09552b1d14300ff4788b04dee73a54628b4ab7336f013c7be3d43e94f57349f",
+              "RH_mean_lower_pp": 33.73418679161385,
+              "RH_mean_upper_pp": 62.78913340371244,
+              "q_mean_capacity_upper": 0.00707763200783949,
+              "separation_RH_pp": 2.3225151558578716
+            },
+            {
+              "donor_date": "2020-01-10",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "e08deb14068af47e935172918b72e544eaccf992f8dc2b4fecae202c5fa0c2ee",
+              "RH_mean_lower_pp": 33.64808913412626,
+              "RH_mean_upper_pp": 62.5972548969458,
+              "q_mean_capacity_upper": 0.00709873085030106,
+              "separation_RH_pp": 2.5143936626245136
+            },
+            {
+              "donor_date": "2020-01-11",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "d9a140a8601f8085517de177cc68b757e9be17777905013182b62a4652a582b1",
+              "RH_mean_lower_pp": 33.924452276063384,
+              "RH_mean_upper_pp": 63.08904327195642,
+              "q_mean_capacity_upper": 0.007040733638423924,
+              "separation_RH_pp": 2.0226052876138922
+            },
+            {
+              "donor_date": "2020-01-12",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "5a469e887aa02a6e10594fe5815d34f2bf5505bfc67cf2661c0ac1b89da8452a",
+              "RH_mean_lower_pp": 33.96050209432885,
+              "RH_mean_upper_pp": 63.05709174579011,
+              "q_mean_capacity_upper": 0.007041354610443016,
+              "separation_RH_pp": 2.054556813780202
+            },
+            {
+              "donor_date": "2020-01-13",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "cafee3650644ccda7bd1f4b63fb2ec12cd4354a7e902b2e304b5c84f00a49345",
+              "RH_mean_lower_pp": 33.78449939340505,
+              "RH_mean_upper_pp": 62.77251946507007,
+              "q_mean_capacity_upper": 0.007074864567685163,
+              "separation_RH_pp": 2.339129094500244
+            },
+            {
+              "donor_date": "2020-01-14",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "5cbbacba3863adad318fae82b24652004aa573a1ad40fa724a9307c610c39953",
+              "RH_mean_lower_pp": 33.75740492964925,
+              "RH_mean_upper_pp": 62.64931271379211,
+              "q_mean_capacity_upper": 0.007086986062156211,
+              "separation_RH_pp": 2.462335845778199
+            },
+            {
+              "donor_date": "2020-01-15",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "61038a58a258a65cb09ad2dbbccda7f6b22f4f82ee4ad65bdf42fd39d5784727",
+              "RH_mean_lower_pp": 33.84832794767838,
+              "RH_mean_upper_pp": 62.75719421029061,
+              "q_mean_capacity_upper": 0.00707303015367639,
+              "separation_RH_pp": 2.354454349279699
+            },
+            {
+              "donor_date": "2020-01-16",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "c618f1297858d469f3af32b03c3d60b35cbdc21445bfee7de1c3b93c32223dd7",
+              "RH_mean_lower_pp": 34.00137942393931,
+              "RH_mean_upper_pp": 63.102839239608244,
+              "q_mean_capacity_upper": 0.007035172478068034,
+              "separation_RH_pp": 2.0088093199620687
+            },
+            {
+              "donor_date": "2020-01-17",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "d273123387cd5f7c6c612b9017d714acf3086e9fbd2ae8c07acbab848c97ed39",
+              "RH_mean_lower_pp": 33.876151288817255,
+              "RH_mean_upper_pp": 62.87561767143818,
+              "q_mean_capacity_upper": 0.007061630797514153,
+              "separation_RH_pp": 2.2360308881321345
+            },
+            {
+              "donor_date": "2020-01-19",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "b2d0d761cfc3a80b123e3df526701b195c2e8778a79daf35bd87417db1d26123",
+              "RH_mean_lower_pp": 33.89604403976208,
+              "RH_mean_upper_pp": 63.22778638657623,
+              "q_mean_capacity_upper": 0.007036518565930227,
+              "separation_RH_pp": 1.8838621729940854
+            },
+            {
+              "donor_date": "2020-01-20",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "ef69ed318e3fec1ce82118ee09c50b9350970b715d1109cc8065bcfecc2b0008",
+              "RH_mean_lower_pp": 34.37165203312235,
+              "RH_mean_upper_pp": 63.97331582190733,
+              "q_mean_capacity_upper": 0.006944775737355868,
+              "separation_RH_pp": 1.138332737662985
+            },
+            {
+              "donor_date": "2020-01-21",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "a80fdab4178fc24deeb2dcb6051628771ac9e187f26b240a8001cd9707940a55",
+              "RH_mean_lower_pp": 34.308961858490605,
+              "RH_mean_upper_pp": 63.834905206943915,
+              "q_mean_capacity_upper": 0.006959701676169577,
+              "separation_RH_pp": 1.2767433526263972
+            },
+            {
+              "donor_date": "2020-01-22",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "7d57c1e32c0d5ac0a7503b1a16c46a60efd4b96bf2619e3c3d2e500d8c137d8f",
+              "RH_mean_lower_pp": 34.01488953217793,
+              "RH_mean_upper_pp": 63.16368825983102,
+              "q_mean_capacity_upper": 0.007030079678334149,
+              "separation_RH_pp": 1.947960299739293
+            },
+            {
+              "donor_date": "2020-01-23",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "81e888a9c8b9beb9e4fe4773230280962568c5773f4c418bcac4f54b8fe770fb",
+              "RH_mean_lower_pp": 34.05214899123045,
+              "RH_mean_upper_pp": 63.30212432819015,
+              "q_mean_capacity_upper": 0.007016671609425206,
+              "separation_RH_pp": 1.8095242313801592
+            },
+            {
+              "donor_date": "2020-01-24",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "41434f0e7c2cd8836d20857393a2a6a88dc3f0364286e5dfc746c24e095e3f96",
+              "RH_mean_lower_pp": 33.81707053060057,
+              "RH_mean_upper_pp": 62.80055374737019,
+              "q_mean_capacity_upper": 0.0070709583164880584,
+              "separation_RH_pp": 2.3110948122001247
+            },
+            {
+              "donor_date": "2020-01-25",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "52831f223f5f64921d7058e32d5ad2094d62285aee7bc6d0fdf1f6eebd28ecf7",
+              "RH_mean_lower_pp": 33.74693019033089,
+              "RH_mean_upper_pp": 62.59258057544299,
+              "q_mean_capacity_upper": 0.007092257641736517,
+              "separation_RH_pp": 2.519067984127325
+            },
+            {
+              "donor_date": "2020-01-26",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "bd099e4495b556be51bacc91f0ec13b198dba4e060560f68b387dafaa982c5f3",
+              "RH_mean_lower_pp": 33.69866274627155,
+              "RH_mean_upper_pp": 62.50502493274159,
+              "q_mean_capacity_upper": 0.007102343342695097,
+              "separation_RH_pp": 2.6066236268287213
+            },
+            {
+              "donor_date": "2020-01-27",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "a974f64743c419b476b575c1464745b5dc17404e11030b69cee6d77bcc6b67ae",
+              "RH_mean_lower_pp": 33.51745808778423,
+              "RH_mean_upper_pp": 62.3107684532315,
+              "q_mean_capacity_upper": 0.007129020959527011,
+              "separation_RH_pp": 2.800880106338809
+            },
+            {
+              "donor_date": "2020-01-29",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "7b0c829669afa56f11b06a41164788d399ba7e0de9b9c22b3390e46adcb2b036",
+              "RH_mean_lower_pp": 33.26982836701083,
+              "RH_mean_upper_pp": 61.85814692822018,
+              "q_mean_capacity_upper": 0.007183058774731695,
+              "separation_RH_pp": 3.253501631350133
+            },
+            {
+              "donor_date": "2020-01-30",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "2084081938ea21256ee9edc4e10319911b6de7cffdc5d485f8341bb1dc05ab45",
+              "RH_mean_lower_pp": 33.50189607683107,
+              "RH_mean_upper_pp": 62.26359256928785,
+              "q_mean_capacity_upper": 0.007134077146848351,
+              "separation_RH_pp": 2.848055990282461
+            },
+            {
+              "donor_date": "2020-01-31",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "2aca84a1d73a9f3a215bb152de967af867788c3fb82335a3b45c955e36cae82b",
+              "RH_mean_lower_pp": 33.40947362712091,
+              "RH_mean_upper_pp": 61.99187082317317,
+              "q_mean_capacity_upper": 0.007162459198834679,
+              "separation_RH_pp": 3.1197777363971397
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "date": "2013-01-20",
+      "eligible_donors": 17,
+      "source_q_mean_kgkg": 0.00215331744402647,
+      "source_RH_mean_pp": 61.39644241333008,
+      "repair_comparison": "PRIOR_CONDITIONAL_CERTIFICATE_REPRODUCED",
+      "scenarios": [
+        {
+          "name": "FIXED_REGISTERED_DONOR_REFERENCE",
+          "interpretation": "FIXED_CONDITIONAL_REFERENCE",
+          "status": "ALL_DONORS_CERTIFIED_INFEASIBLE",
+          "donor_status_counts": {
+            "CERTIFIED_INFEASIBLE": 17
+          },
+          "RH_outer_union_lower_pp": 29.722815211650335,
+          "RH_outer_union_upper_pp": 57.80978313857992,
+          "all_donor_evidence_sha256": "a508c71e035e885fee97d8c7662853c855fe7e6b9acbac3cac52557196c3d25b",
+          "source_feasibility_established": false,
+          "external_pressure_uncertainty_established": false,
+          "continuous_pressure_box_covered": true,
+          "continuous_time_trajectory_certified": false,
+          "certificates": [
+            {
+              "donor_date": "2019-01-01",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "685c7ac55cfa5ee6584090a0bec45bc122ce365827d287113f29ab2b8d961687",
+              "RH_mean_lower_pp": 30.455294201649547,
+              "RH_mean_upper_pp": 57.78811468020189,
+              "q_mean_capacity_upper": 0.0070258717964093095,
+              "separation_RH_pp": 3.608327733128185
+            },
+            {
+              "donor_date": "2019-01-02",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "24e6e2afe5d19da12e8da2606a96ddad35398ffbbcb1c990c122b0a56b636c7a",
+              "RH_mean_lower_pp": 30.393611599346713,
+              "RH_mean_upper_pp": 57.35706519987246,
+              "q_mean_capacity_upper": 0.00706302642660745,
+              "separation_RH_pp": 4.03937721345762
+            },
+            {
+              "donor_date": "2019-01-03",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "47c1313c15efdef4ec6df51f2bbec8a0211e381cd102cda2b2a5205d826a3e8f",
+              "RH_mean_lower_pp": 30.66632152661871,
+              "RH_mean_upper_pp": 57.70895230609968,
+              "q_mean_capacity_upper": 0.0070120847090982975,
+              "separation_RH_pp": 3.6874901072303956
+            },
+            {
+              "donor_date": "2019-01-04",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "0d3acfd687670ae06d75922073c79b3b8ab808c5243254446c96de18b05efab6",
+              "RH_mean_lower_pp": 30.687007086283256,
+              "RH_mean_upper_pp": 57.80978313857992,
+              "q_mean_capacity_upper": 0.007001731658149669,
+              "separation_RH_pp": 3.5866592747501613
+            },
+            {
+              "donor_date": "2019-01-05",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "f120149520b0e88816235c2ec02aab8908f5e858da81c9b2df5cc4c2a1ea6a16",
+              "RH_mean_lower_pp": 30.387155920580547,
+              "RH_mean_upper_pp": 57.293341226352304,
+              "q_mean_capacity_upper": 0.007069779348284037,
+              "separation_RH_pp": 4.103101186977774
+            },
+            {
+              "donor_date": "2019-01-07",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "5491b1417cdd21aa01e56ea594032be5d467e4cc2f51a7a4e686ab63acad3de9",
+              "RH_mean_lower_pp": 30.684273071295443,
+              "RH_mean_upper_pp": 57.755437123017785,
+              "q_mean_capacity_upper": 0.00700661310796302,
+              "separation_RH_pp": 3.641005290312293
+            },
+            {
+              "donor_date": "2019-01-08",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "b624a1fb8f738e2a42b20e7b6b3ae4a8d3b38cc998f0bfe6a3a301d410f3137c",
+              "RH_mean_lower_pp": 30.099217805180693,
+              "RH_mean_upper_pp": 57.219325361042245,
+              "q_mean_capacity_upper": 0.0071059736717910835,
+              "separation_RH_pp": 4.177117052287834
+            },
+            {
+              "donor_date": "2019-01-10",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "cfa43bc17694ef9f839701f35e45dbf35c39ec728cf0a5e475d709ecef18d359",
+              "RH_mean_lower_pp": 30.177388768668795,
+              "RH_mean_upper_pp": 57.03663889274543,
+              "q_mean_capacity_upper": 0.007105795648012959,
+              "separation_RH_pp": 4.359803520584649
+            },
+            {
+              "donor_date": "2019-01-14",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "061892884ad6f3a4a9856a73d158d114592443a5688da98529baaed4e8bf6537",
+              "RH_mean_lower_pp": 29.795679473980005,
+              "RH_mean_upper_pp": 56.5568711956306,
+              "q_mean_capacity_upper": 0.007183635500149775,
+              "separation_RH_pp": 4.839571217699479
+            },
+            {
+              "donor_date": "2019-01-17",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "ca9ceb871847b8bc7135a9529a246cef41825cbcbc870e54e496e0e57f18570a",
+              "RH_mean_lower_pp": 30.18184574938481,
+              "RH_mean_upper_pp": 56.76636506895303,
+              "q_mean_capacity_upper": 0.0071279173659475606,
+              "separation_RH_pp": 4.6300773443770495
+            },
+            {
+              "donor_date": "2019-01-18",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "a18d9a1305e586604221c82621cab3f0b32db16c834473b2536f61ca81b53e38",
+              "RH_mean_lower_pp": 30.2485101224905,
+              "RH_mean_upper_pp": 57.23682924980317,
+              "q_mean_capacity_upper": 0.007083485338928511,
+              "separation_RH_pp": 4.159613163526906
+            },
+            {
+              "donor_date": "2019-01-23",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "6334e63a887bf4c65d78415fc7c0a06c8cd1ad8b71d1c6acadf174fc5ef99754",
+              "RH_mean_lower_pp": 29.90228180029742,
+              "RH_mean_upper_pp": 56.29032513442096,
+              "q_mean_capacity_upper": 0.007190314738661366,
+              "separation_RH_pp": 5.106117278909117
+            },
+            {
+              "donor_date": "2019-01-27",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "a0f346eba9b1979ceb611f01ce5ddeaa2abba79c496b5915a16a6314d56b4e6b",
+              "RH_mean_lower_pp": 29.785654454975518,
+              "RH_mean_upper_pp": 56.26117397843464,
+              "q_mean_capacity_upper": 0.007204238672052875,
+              "separation_RH_pp": 5.135268434895437
+            },
+            {
+              "donor_date": "2019-01-28",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "184df4e8c9a7b53b072210675f36eba79375c5a0d8280ede918202b8d231349c",
+              "RH_mean_lower_pp": 29.722815211650335,
+              "RH_mean_upper_pp": 56.08208250220952,
+              "q_mean_capacity_upper": 0.007223236707529948,
+              "separation_RH_pp": 5.314359911120555
+            },
+            {
+              "donor_date": "2019-01-31",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "44a0efd47f60a70792573deef9032e27a4131155a036593bf88cc269faebd324",
+              "RH_mean_lower_pp": 29.981789393476305,
+              "RH_mean_upper_pp": 56.368557035459226,
+              "q_mean_capacity_upper": 0.0071779469757409994,
+              "separation_RH_pp": 5.027885377870852
+            },
+            {
+              "donor_date": "2020-01-18",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "05d73f6b53e80cc014979010eed0891e838c170fe041d11edbc3fd0def19bb92",
+              "RH_mean_lower_pp": 30.636642082656326,
+              "RH_mean_upper_pp": 57.60062832218082,
+              "q_mean_capacity_upper": 0.007023898188752745,
+              "separation_RH_pp": 3.7958140911492606
+            },
+            {
+              "donor_date": "2020-01-28",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "561f9953f99fefd618ce286f6097a35061a2b0066b9d332b97655a21526729ce",
+              "RH_mean_lower_pp": 29.994496925504233,
+              "RH_mean_upper_pp": 56.55934376134865,
+              "q_mean_capacity_upper": 0.007160206317349781,
+              "separation_RH_pp": 4.837098651981428
+            }
+          ]
+        },
+        {
+          "name": "RECTANGULAR_PM500_PA_STRESS_NOT_CI",
+          "interpretation": "SENSITIVITY_BOX_NOT_CI",
+          "status": "ALL_DONORS_CERTIFIED_INFEASIBLE",
+          "donor_status_counts": {
+            "CERTIFIED_INFEASIBLE": 17
+          },
+          "RH_outer_union_lower_pp": 29.56362003419981,
+          "RH_outer_union_upper_pp": 58.10713297829132,
+          "all_donor_evidence_sha256": "3fa43b5cbdd410ff7022f750fe50bdafae575aa781bf030b237d994cf06c2e25",
+          "source_feasibility_established": false,
+          "external_pressure_uncertainty_established": false,
+          "continuous_pressure_box_covered": true,
+          "continuous_time_trajectory_certified": false,
+          "certificates": [
+            {
+              "donor_date": "2019-01-01",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "61a651edf57503c3d6710568c8abfddbcbb2aea26d56a4b794518d30a509cbb3",
+              "RH_mean_lower_pp": 30.295857643729178,
+              "RH_mean_upper_pp": 58.08513951254251,
+              "q_mean_capacity_upper": 0.007062516840071783,
+              "separation_RH_pp": 3.3113029007875667
+            },
+            {
+              "donor_date": "2019-01-02",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "0d58cbb24da4d5c70dab3f3855bc8580ad6a1c1b0ded430d991cfc8982b39a1a",
+              "RH_mean_lower_pp": 30.23431846296329,
+              "RH_mean_upper_pp": 57.65422702966296,
+              "q_mean_capacity_upper": 0.007100060386900643,
+              "separation_RH_pp": 3.7422153836671157
+            },
+            {
+              "donor_date": "2019-01-03",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "255d5d5509a5b75e641766e65f9f2118faa5b6cbd5cb2a09eb841dd36a8865af",
+              "RH_mean_lower_pp": 30.507209061209593,
+              "RH_mean_upper_pp": 58.00636255293394,
+              "q_mean_capacity_upper": 0.007048584784587138,
+              "separation_RH_pp": 3.390079860396135
+            },
+            {
+              "donor_date": "2019-01-04",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "845bb39f286aa8da81cd19a19058dcb5c332dd160d271226155fa59c8359e8f9",
+              "RH_mean_lower_pp": 30.52768753442673,
+              "RH_mean_upper_pp": 58.10713297829132,
+              "q_mean_capacity_upper": 0.007038123807041857,
+              "separation_RH_pp": 3.28930943503876
+            },
+            {
+              "donor_date": "2019-01-05",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "de33672f42bed839db1feb75e1e9e8e5d6ccdc0d62564b896a845dcafbcf2fbb",
+              "RH_mean_lower_pp": 30.228046336841114,
+              "RH_mean_upper_pp": 57.59048386023648,
+              "q_mean_capacity_upper": 0.007106884303929253,
+              "separation_RH_pp": 3.805958553093596
+            },
+            {
+              "donor_date": "2019-01-07",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "33377f2e4c36610708372e54994d8068ab02e0beb3ad89abff9e1aeb985ebe58",
+              "RH_mean_lower_pp": 30.525138185618108,
+              "RH_mean_upper_pp": 58.05283914467495,
+              "q_mean_capacity_upper": 0.007043056100314465,
+              "separation_RH_pp": 3.34360326865513
+            },
+            {
+              "donor_date": "2019-01-08",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "6d412609290b4424deeb409b1eea722819d02e83c8b25e225ff0122191783800",
+              "RH_mean_lower_pp": 29.939827867821954,
+              "RH_mean_upper_pp": 57.5163851145739,
+              "q_mean_capacity_upper": 0.007143461641567738,
+              "separation_RH_pp": 3.880057298756178
+            },
+            {
+              "donor_date": "2019-01-10",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "ab9679063422f0234df005524fea24fc39a03a4af89820923d949d3bd91fe000",
+              "RH_mean_lower_pp": 30.01802645633438,
+              "RH_mean_upper_pp": 57.33380534922768,
+              "q_mean_capacity_upper": 0.007143280787974754,
+              "separation_RH_pp": 4.062637064102397
+            },
+            {
+              "donor_date": "2019-01-14",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "416b5965002f253ff6462055a4332ae3590223fd929fe00f9a836aec3ecb8896",
+              "RH_mean_lower_pp": 29.63634661271348,
+              "RH_mean_upper_pp": 56.85400477071588,
+              "q_mean_capacity_upper": 0.007221949276099664,
+              "separation_RH_pp": 4.542437642614196
+            },
+            {
+              "donor_date": "2019-01-17",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "e1ad99e272e26a97ab763e23bf3a6052345138492c4ac4fb2f920e9d32fe9736",
+              "RH_mean_lower_pp": 30.022709364689906,
+              "RH_mean_upper_pp": 57.0638207788981,
+              "q_mean_capacity_upper": 0.007165636503722001,
+              "separation_RH_pp": 4.33262163443198
+            },
+            {
+              "donor_date": "2019-01-18",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "8757c4fda66398ef9823f5dd4fb825b7c34b362bae5a52fb00b968fcd3a43202",
+              "RH_mean_lower_pp": 30.089137959592684,
+              "RH_mean_upper_pp": 57.5340024283377,
+              "q_mean_capacity_upper": 0.0071207349670001615,
+              "separation_RH_pp": 3.8624399849923776
+            },
+            {
+              "donor_date": "2019-01-23",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "28e148312b129dcd38ae73eed230f9d052ebb4452b181e7495e9476120c01d69",
+              "RH_mean_lower_pp": 29.7431289573621,
+              "RH_mean_upper_pp": 56.58770528363936,
+              "q_mean_capacity_upper": 0.007228698979512955,
+              "separation_RH_pp": 4.808737129690719
+            },
+            {
+              "donor_date": "2019-01-27",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "7a2fd2e4538ae865a68e3fa158fba37558a389b90c0a30b89ec6506c7214f114",
+              "RH_mean_lower_pp": 29.62643837756564,
+              "RH_mean_upper_pp": 56.55824635290176,
+              "q_mean_capacity_upper": 0.007242772423423907,
+              "separation_RH_pp": 4.8381960604283165
+            },
+            {
+              "donor_date": "2019-01-28",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "d671f0d8b2c27c02c88670692b6c4031630834f90a5dbef9d556b0e5e98fe400",
+              "RH_mean_lower_pp": 29.56362003419981,
+              "RH_mean_upper_pp": 56.37925880293729,
+              "q_mean_capacity_upper": 0.00726197437304728,
+              "separation_RH_pp": 5.017183610392792
+            },
+            {
+              "donor_date": "2019-01-31",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "65b04c5263ad943dc0e2319c7e14e8728820f041e3dcfcb4fe3b943617581ec1",
+              "RH_mean_lower_pp": 29.822738688071354,
+              "RH_mean_upper_pp": 56.66603289666013,
+              "q_mean_capacity_upper": 0.007216198866667095,
+              "separation_RH_pp": 4.730409516669951
+            },
+            {
+              "donor_date": "2020-01-18",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "60497f9e69ec11c8ad4524e057808106988ab44f62d08b53e1d72ad9000a8342",
+              "RH_mean_lower_pp": 30.47759041702042,
+              "RH_mean_upper_pp": 57.89809825023867,
+              "q_mean_capacity_upper": 0.0070605216352656805,
+              "separation_RH_pp": 3.49834416309141
+            },
+            {
+              "donor_date": "2020-01-28",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "c9e5e6b17d4022af4152a5b4ae7f350fda3330d6ab2d31a7f796ca760eb711ae",
+              "RH_mean_lower_pp": 29.835276588723463,
+              "RH_mean_upper_pp": 56.856577718591005,
+              "q_mean_capacity_upper": 0.007198269044855215,
+              "separation_RH_pp": 4.539864694739073
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "date": "2013-01-26",
+      "eligible_donors": 45,
+      "source_q_mean_kgkg": 0.0017245291965082288,
+      "source_RH_mean_pp": 58.73958969116211,
+      "repair_comparison": "PRIOR_CONDITIONAL_CERTIFICATE_REPRODUCED",
+      "scenarios": [
+        {
+          "name": "FIXED_REGISTERED_DONOR_REFERENCE",
+          "interpretation": "FIXED_CONDITIONAL_REFERENCE",
+          "status": "ALL_DONORS_CERTIFIED_INFEASIBLE",
+          "donor_status_counts": {
+            "CERTIFIED_INFEASIBLE": 45
+          },
+          "RH_outer_union_lower_pp": 25.44235189598614,
+          "RH_outer_union_upper_pp": 52.19480011919084,
+          "all_donor_evidence_sha256": "f93e0f2f97a2d04fdd7afabffd72ca436c22dbe1c488f95b24b33475158e3745",
+          "source_feasibility_established": false,
+          "external_pressure_uncertainty_established": false,
+          "continuous_pressure_box_covered": true,
+          "continuous_time_trajectory_certified": false,
+          "certificates": [
+            {
+              "donor_date": "2019-01-06",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "b5b2e05019cc718888b711c43ee13021ac97b5ec799bca0326ca1dd82b29750a",
+              "RH_mean_lower_pp": 25.910515551860644,
+              "RH_mean_upper_pp": 51.03704335111809,
+              "q_mean_capacity_upper": 0.006630073371072021,
+              "separation_RH_pp": 7.702546340044016
+            },
+            {
+              "donor_date": "2019-01-09",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "fa81ba3e4f06922f3c6dace5436f437c732f2276761eadc222fd40df0e186bc8",
+              "RH_mean_lower_pp": 25.573992935251027,
+              "RH_mean_upper_pp": 50.19103481549518,
+              "q_mean_capacity_upper": 0.006734037274547001,
+              "separation_RH_pp": 8.54855487566693
+            },
+            {
+              "donor_date": "2019-01-11",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "ba01d7b6493f1ba150273ea58210da6e7f6d43720bee7d115fd5838ba7082111",
+              "RH_mean_lower_pp": 25.962507609502484,
+              "RH_mean_upper_pp": 50.93823625484197,
+              "q_mean_capacity_upper": 0.006634000722191012,
+              "separation_RH_pp": 7.8013534363201416
+            },
+            {
+              "donor_date": "2019-01-12",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "6e72c4becc05557123fa3c36e2607884a66e3b544f6c38ed9bb184f4ed0e4ce9",
+              "RH_mean_lower_pp": 25.816511696247336,
+              "RH_mean_upper_pp": 50.75584756399015,
+              "q_mean_capacity_upper": 0.006661352454537696,
+              "separation_RH_pp": 7.983742127171958
+            },
+            {
+              "donor_date": "2019-01-13",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "277d14d49264d400146fb353c90aaff529d66189c9bcce2aa95ddf7d2a4df646",
+              "RH_mean_lower_pp": 25.44235189598614,
+              "RH_mean_upper_pp": 50.34811492920222,
+              "q_mean_capacity_upper": 0.006730558936726342,
+              "separation_RH_pp": 8.391474761959891
+            },
+            {
+              "donor_date": "2019-01-15",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "10fb3b891876a229794251d2cbc33550b69228dc9befa2c6713080755f817e6c",
+              "RH_mean_lower_pp": 25.840349143461662,
+              "RH_mean_upper_pp": 50.73056775942967,
+              "q_mean_capacity_upper": 0.006662239666669263,
+              "separation_RH_pp": 8.009021931732441
+            },
+            {
+              "donor_date": "2019-01-16",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "83ba2e8c63924e4a7cb0bbac9d00fc75512c9aac3e1c2031e2f6a7ecd6325daf",
+              "RH_mean_lower_pp": 25.781710044210666,
+              "RH_mean_upper_pp": 50.66075918937181,
+              "q_mean_capacity_upper": 0.006672691482176479,
+              "separation_RH_pp": 8.0788305017903
+            },
+            {
+              "donor_date": "2019-01-19",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "5a2acab0ea6a84f0dd47942477046366514d7c7403459f5363e1d804d5347a97",
+              "RH_mean_lower_pp": 25.939756972933854,
+              "RH_mean_upper_pp": 50.916313542923774,
+              "q_mean_capacity_upper": 0.006637635553055668,
+              "separation_RH_pp": 7.823276148238335
+            },
+            {
+              "donor_date": "2019-01-20",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "53150a5c755d88de8aeaeee4a8f2f46f8a80ea9d988ed35d187e02c0ccd8d466",
+              "RH_mean_lower_pp": 25.870947376681162,
+              "RH_mean_upper_pp": 50.765627712091444,
+              "q_mean_capacity_upper": 0.006658118790926967,
+              "separation_RH_pp": 7.9739619790706655
+            },
+            {
+              "donor_date": "2019-01-21",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "84bd077214545a25fcb35bd621dd86a24753eb41cfc8c11bd2df113f52139256",
+              "RH_mean_lower_pp": 25.979875778773827,
+              "RH_mean_upper_pp": 50.959267297904105,
+              "q_mean_capacity_upper": 0.006630860661911412,
+              "separation_RH_pp": 7.780322393258004
+            },
+            {
+              "donor_date": "2019-01-22",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "b158221d0867d60b918149c6b21569d20f58a1e44791a6a27448043d959a3a1c",
+              "RH_mean_lower_pp": 25.674676595389307,
+              "RH_mean_upper_pp": 50.6904254305163,
+              "q_mean_capacity_upper": 0.006682904424990108,
+              "separation_RH_pp": 8.04916426064581
+            },
+            {
+              "donor_date": "2019-01-24",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "5c3afbbf474d46c7a972272bce8d7e87d7b6c5e68cf0aa5d3ee1f18beb6a95f0",
+              "RH_mean_lower_pp": 25.550054390900574,
+              "RH_mean_upper_pp": 50.192276129307054,
+              "q_mean_capacity_upper": 0.006735469312020277,
+              "separation_RH_pp": 8.547313561855056
+            },
+            {
+              "donor_date": "2019-01-25",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "cc5208af8b0139233b3f7a309965a94bf2f67a30ed591dfffeddb83d01893dbd",
+              "RH_mean_lower_pp": 25.69004698196431,
+              "RH_mean_upper_pp": 50.494441343356954,
+              "q_mean_capacity_upper": 0.0066960639478681645,
+              "separation_RH_pp": 8.245148347805156
+            },
+            {
+              "donor_date": "2019-01-26",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "c280b9e29bf34ccfacdd4ed94d04da5ddd61dc6a5265c0cf68a51659c553f4dc",
+              "RH_mean_lower_pp": 25.6524663800632,
+              "RH_mean_upper_pp": 50.42887207146567,
+              "q_mean_capacity_upper": 0.0067058557282535245,
+              "separation_RH_pp": 8.31071761969644
+            },
+            {
+              "donor_date": "2019-01-29",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "0c649ca809feec2adf190b8b3606bf4dd4570cba1bf3e8bc32f82fb66599fc8a",
+              "RH_mean_lower_pp": 25.555883453618698,
+              "RH_mean_upper_pp": 50.26925277841703,
+              "q_mean_capacity_upper": 0.0067269096170176155,
+              "separation_RH_pp": 8.470336912745083
+            },
+            {
+              "donor_date": "2019-01-30",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "bd6ab533b7294ffc93f71fc6623a3d16e2c3df382a401043a38edb7435a1c282",
+              "RH_mean_lower_pp": 25.48768811911509,
+              "RH_mean_upper_pp": 50.03869655311211,
+              "q_mean_capacity_upper": 0.006755209818985432,
+              "separation_RH_pp": 8.700893138049999
+            },
+            {
+              "donor_date": "2020-01-01",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "cd1945fec2ad0e85e0b46fc82cc3117ca1b91a33680c4e97ab63b12172c9ba71",
+              "RH_mean_lower_pp": 26.31720412625982,
+              "RH_mean_upper_pp": 51.62163822314552,
+              "q_mean_capacity_upper": 0.006545492743787286,
+              "separation_RH_pp": 7.117951468016592
+            },
+            {
+              "donor_date": "2020-01-02",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "66abc0f70d4e476b1dada1ed3768d6fc556eea38b3b9b11119ac721154cd3ca2",
+              "RH_mean_lower_pp": 26.190883908252996,
+              "RH_mean_upper_pp": 51.47998506038278,
+              "q_mean_capacity_upper": 0.006567371757537284,
+              "separation_RH_pp": 7.259604630779329
+            },
+            {
+              "donor_date": "2020-01-03",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "891a42573440286dc5a078faee9dc43009af480cf313d1791aaab9d4772d0019",
+              "RH_mean_lower_pp": 26.098252233312905,
+              "RH_mean_upper_pp": 51.21239285413068,
+              "q_mean_capacity_upper": 0.006598987711685313,
+              "separation_RH_pp": 7.527196837031433
+            },
+            {
+              "donor_date": "2020-01-04",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "78b3494240c435fcd27bf8cd00f0bf669c8ecd2ccc1609a3993ff61c5e62e01f",
+              "RH_mean_lower_pp": 26.05532224707683,
+              "RH_mean_upper_pp": 51.09781089415274,
+              "q_mean_capacity_upper": 0.006612434172190292,
+              "separation_RH_pp": 7.641778797009373
+            },
+            {
+              "donor_date": "2020-01-05",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "016fb91672226a2f25bda5dbcd86df3330dd704422b5cf001dabcee9b455d262",
+              "RH_mean_lower_pp": 26.14367220330397,
+              "RH_mean_upper_pp": 51.5589074938905,
+              "q_mean_capacity_upper": 0.006563893248157267,
+              "separation_RH_pp": 7.180682197271608
+            },
+            {
+              "donor_date": "2020-01-06",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "4037b86c0a5dc15e48a812c4d050965716f74e08f2cb6993efdb02f6b53f8797",
+              "RH_mean_lower_pp": 26.197283692424918,
+              "RH_mean_upper_pp": 51.56438967142792,
+              "q_mean_capacity_upper": 0.006559889754918666,
+              "separation_RH_pp": 7.175200019734191
+            },
+            {
+              "donor_date": "2020-01-07",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "675cc5f8515fc6020e54398cdc287e581c9cd6ef5a25120406d30c5342b15b33",
+              "RH_mean_lower_pp": 26.106863396966432,
+              "RH_mean_upper_pp": 51.3570090236521,
+              "q_mean_capacity_upper": 0.006586355404844644,
+              "separation_RH_pp": 7.3825806675100125
+            },
+            {
+              "donor_date": "2020-01-08",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "83cbda5871da3a03a19069a8f43a3fa36520abd65c80be0882ee01943fe1d02d",
+              "RH_mean_lower_pp": 26.23753304850714,
+              "RH_mean_upper_pp": 51.4756793054401,
+              "q_mean_capacity_upper": 0.006564449787815736,
+              "separation_RH_pp": 7.263910385722006
+            },
+            {
+              "donor_date": "2020-01-09",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "9d84e9ba3eac1db5ee7e0e295ee6a287324feab3afb0129480ab0763c373a5a9",
+              "RH_mean_lower_pp": 26.010936007264824,
+              "RH_mean_upper_pp": 51.22691333089165,
+              "q_mean_capacity_upper": 0.0066050483390844884,
+              "separation_RH_pp": 7.512676360270461
+            },
+            {
+              "donor_date": "2020-01-10",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "33b9cc8e8c83f9ff694b50e28c805392eeeca0fcd968280c9889abf189294043",
+              "RH_mean_lower_pp": 25.95123239610156,
+              "RH_mean_upper_pp": 51.071489108484265,
+              "q_mean_capacity_upper": 0.006624630758857075,
+              "separation_RH_pp": 7.668100582677845
+            },
+            {
+              "donor_date": "2020-01-11",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "027a4b01aa3bd50cbebbf2acbb5021ff559b484ae4e7c38b0ab3935b86bdb078",
+              "RH_mean_lower_pp": 26.157294273191013,
+              "RH_mean_upper_pp": 51.467968992686366,
+              "q_mean_capacity_upper": 0.006570800574444016,
+              "separation_RH_pp": 7.271620698475743
+            },
+            {
+              "donor_date": "2020-01-12",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "04c135334c3f42a999bf638c71faa7e5203cbdd02184046530f54d57f4ee7c6c",
+              "RH_mean_lower_pp": 26.18810888882909,
+              "RH_mean_upper_pp": 51.4390687690324,
+              "q_mean_capacity_upper": 0.006571377049600109,
+              "separation_RH_pp": 7.3005209221297065
+            },
+            {
+              "donor_date": "2020-01-13",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "610581e48613c2baae0ff8ed04c7b201cd0748bb9b65407e1e175c5b3f2928a0",
+              "RH_mean_lower_pp": 26.05835681959203,
+              "RH_mean_upper_pp": 51.208929844724715,
+              "q_mean_capacity_upper": 0.006602479912875449,
+              "separation_RH_pp": 7.530659846437395
+            },
+            {
+              "donor_date": "2020-01-14",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "2d190a7f5c6f31fc1e2853ec663c0b4b6aa522afdaa037b78d994f5c149bb0da",
+              "RH_mean_lower_pp": 26.037220979307342,
+              "RH_mean_upper_pp": 51.102653655958235,
+              "q_mean_capacity_upper": 0.00661373036980385,
+              "separation_RH_pp": 7.636936035203874
+            },
+            {
+              "donor_date": "2020-01-15",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "bbda8b0a7baa35d96198f6f2bdd57ba4435ae8bedef8e0334dd442ae1819128b",
+              "RH_mean_lower_pp": 26.107565234143724,
+              "RH_mean_upper_pp": 51.18660673383679,
+              "q_mean_capacity_upper": 0.0066007774152678075,
+              "separation_RH_pp": 7.5529829573253195
+            },
+            {
+              "donor_date": "2020-01-16",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "63b859312e8f6a21178fb52c11066dbfe5ea48cd4f1100ebeb0cb923bc1acdf5",
+              "RH_mean_lower_pp": 26.217749621069768,
+              "RH_mean_upper_pp": 51.47330243278353,
+              "q_mean_capacity_upper": 0.006565638841143095,
+              "separation_RH_pp": 7.266287258378583
+            },
+            {
+              "donor_date": "2020-01-17",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "74417abe78de0181732000f193922d61d13ba272b3171bf77b32041555a22bc8",
+              "RH_mean_lower_pp": 26.12881046063586,
+              "RH_mean_upper_pp": 51.28969823009671,
+              "q_mean_capacity_upper": 0.006590196975912594,
+              "separation_RH_pp": 7.449891461065398
+            },
+            {
+              "donor_date": "2020-01-19",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "95f411fdbe2f7c94e9329cc57724489f81c33b0e0c810a874c7a345dae339d18",
+              "RH_mean_lower_pp": 26.138942996440708,
+              "RH_mean_upper_pp": 51.60005977685216,
+              "q_mean_capacity_upper": 0.0065668877806834445,
+              "separation_RH_pp": 7.139529914309946
+            },
+            {
+              "donor_date": "2020-01-20",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "220490c9711b0a66c1fdf40bfae68b99b0bcaf0d18db350f1851194b5b8e2ed7",
+              "RH_mean_lower_pp": 26.494236337215373,
+              "RH_mean_upper_pp": 52.19480011919084,
+              "q_mean_capacity_upper": 0.006481726369197416,
+              "separation_RH_pp": 6.544789571971272
+            },
+            {
+              "donor_date": "2020-01-21",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "328b620507a88d48914f4869c6d30b24bec5a123d8315a6437713411117ac773",
+              "RH_mean_lower_pp": 26.452607119609738,
+              "RH_mean_upper_pp": 52.084266218159954,
+              "q_mean_capacity_upper": 0.006495582448884961,
+              "separation_RH_pp": 6.655323473002156
+            },
+            {
+              "donor_date": "2020-01-22",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "293979b29e83397af5c54203e545abcb6b317d6a6c8f2436cb2c64010cec9985",
+              "RH_mean_lower_pp": 26.22903910258174,
+              "RH_mean_upper_pp": 51.52835182897945,
+              "q_mean_capacity_upper": 0.006560911625487443,
+              "separation_RH_pp": 7.2112378621826565
+            },
+            {
+              "donor_date": "2020-01-23",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "4070b77ed97b89de5b052d6987633aaf176583a3bcabf23f876b2ae41001466e",
+              "RH_mean_lower_pp": 26.256768248601432,
+              "RH_mean_upper_pp": 51.6451833458445,
+              "q_mean_capacity_upper": 0.006548465942002436,
+              "separation_RH_pp": 7.0944063453176085
+            },
+            {
+              "donor_date": "2020-01-24",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "0b62462c598184d15e1e196ace144e2a738dd7a9608145085f24dec08a7087fb",
+              "RH_mean_lower_pp": 26.082102127066683,
+              "RH_mean_upper_pp": 51.23021820688776,
+              "q_mean_capacity_upper": 0.006598854356104831,
+              "separation_RH_pp": 7.509371484274347
+            },
+            {
+              "donor_date": "2020-01-25",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "b328c9657b77ccf293bb9cfac0adef41264683296ddd57813b7d6f0ebde30d49",
+              "RH_mean_lower_pp": 26.02647807496362,
+              "RH_mean_upper_pp": 51.05263683529983,
+              "q_mean_capacity_upper": 0.006618623085050972,
+              "separation_RH_pp": 7.68695285586228
+            },
+            {
+              "donor_date": "2020-01-26",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "16bc172fe22021bb4cc80c011e76e9bb5fdb1bd6d88d223664e44282bee5240e",
+              "RH_mean_lower_pp": 25.99321999476898,
+              "RH_mean_upper_pp": 50.980865414770406,
+              "q_mean_capacity_upper": 0.006627983752826825,
+              "separation_RH_pp": 7.758724276391703
+            },
+            {
+              "donor_date": "2020-01-27",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "94253062cb265e93e6a99cf82d46eb431beb92290eda84040c57d0792a2ca23b",
+              "RH_mean_lower_pp": 25.844262210467953,
+              "RH_mean_upper_pp": 50.828239187383936,
+              "q_mean_capacity_upper": 0.00665274275226165,
+              "separation_RH_pp": 7.9113505037781735
+            },
+            {
+              "donor_date": "2020-01-29",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "e4f7d7aec2ce39988792f11bae56034a1ffd272889925395258a9dad41b462fa",
+              "RH_mean_lower_pp": 25.657355376222895,
+              "RH_mean_upper_pp": 50.46297519045415,
+              "q_mean_capacity_upper": 0.006702891376285268,
+              "separation_RH_pp": 8.276614500707957
+            },
+            {
+              "donor_date": "2020-01-30",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "04beb728fc4a9b5b40949dac00b01d0343369986505c6c6fe84e2be52ad7af37",
+              "RH_mean_lower_pp": 25.835184689097648,
+              "RH_mean_upper_pp": 50.79106379078019,
+              "q_mean_capacity_upper": 0.006657435238110203,
+              "separation_RH_pp": 7.948525900381917
+            },
+            {
+              "donor_date": "2020-01-31",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "67e189fa9bf56fc254ed29bf8f90cfa0cc8b64f04cc96be9bc54bde6d2022475",
+              "RH_mean_lower_pp": 25.76873614235566,
+              "RH_mean_upper_pp": 50.561386516062846,
+              "q_mean_capacity_upper": 0.006683775016493459,
+              "separation_RH_pp": 8.178203175099263
+            }
+          ]
+        },
+        {
+          "name": "RECTANGULAR_PM500_PA_STRESS_NOT_CI",
+          "interpretation": "SENSITIVITY_BOX_NOT_CI",
+          "status": "ALL_DONORS_CERTIFIED_INFEASIBLE",
+          "donor_status_counts": {
+            "CERTIFIED_INFEASIBLE": 45
+          },
+          "RH_outer_union_lower_pp": 25.306422331618663,
+          "RH_outer_union_upper_pp": 52.458915918321836,
+          "all_donor_evidence_sha256": "afd4cbcb70acf649773241117773c01bc4d4474fee1790c11783be936b1521fb",
+          "source_feasibility_established": false,
+          "external_pressure_uncertainty_established": false,
+          "continuous_pressure_box_covered": true,
+          "continuous_time_trajectory_certified": false,
+          "certificates": [
+            {
+              "donor_date": "2019-01-06",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "10db0d3e5b8daae6f52e072b604435a5358e09ee34a9eecf0b1b7ec4ab13a8e5",
+              "RH_mean_lower_pp": 25.774919840727378,
+              "RH_mean_upper_pp": 51.301112707072626,
+              "q_mean_capacity_upper": 0.006664781271461701,
+              "separation_RH_pp": 7.438476984089483
+            },
+            {
+              "donor_date": "2019-01-09",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "70b505c9d2c67e5ea62bfcb6a7bf528f8c397225214ede23e661e7a323db926c",
+              "RH_mean_lower_pp": 25.438449872439282,
+              "RH_mean_upper_pp": 50.455236277632366,
+              "q_mean_capacity_upper": 0.006769844904420108,
+              "separation_RH_pp": 8.284353413529743
+            },
+            {
+              "donor_date": "2019-01-11",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "69122bd26753df4c45b8d966b6e08e3b48ddfb95f9b988f1803fdfa09ee79031",
+              "RH_mean_lower_pp": 25.826971730112113,
+              "RH_mean_upper_pp": 51.20247141828564,
+              "q_mean_capacity_upper": 0.006668749619758855,
+              "separation_RH_pp": 7.537118272876469
+            },
+            {
+              "donor_date": "2019-01-12",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "247dd465bdfff2978b8004648ef45e5ddc35d5a90b3249f099652c26b840a61c",
+              "RH_mean_lower_pp": 25.68076241807477,
+              "RH_mean_upper_pp": 51.02002412962862,
+              "q_mean_capacity_upper": 0.006696389329213079,
+              "separation_RH_pp": 7.719565561533493
+            },
+            {
+              "donor_date": "2019-01-13",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "0315cbb8f1e7facac0831ba9bb53da2e18a13530d4a2c1c8416feaf970bd34de",
+              "RH_mean_lower_pp": 25.306422331618663,
+              "RH_mean_upper_pp": 50.61218138698942,
+              "q_mean_capacity_upper": 0.0067663302460451115,
+              "separation_RH_pp": 8.12740830417269
+            },
+            {
+              "donor_date": "2019-01-15",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "3fd49440d6e55047fd282f87395438926a731cf16f50296fe10ff8157d233447",
+              "RH_mean_lower_pp": 25.704768709707807,
+              "RH_mean_upper_pp": 50.99477365246768,
+              "q_mean_capacity_upper": 0.006697285828668531,
+              "separation_RH_pp": 7.744816038694431
+            },
+            {
+              "donor_date": "2019-01-16",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "48ea02a4b62524a33944a0fc49d1e72c40b5a9b614159884ec42932a334b383e",
+              "RH_mean_lower_pp": 25.64603424856559,
+              "RH_mean_upper_pp": 50.92494415759226,
+              "q_mean_capacity_upper": 0.006707848012911402,
+              "separation_RH_pp": 7.814645533569852
+            },
+            {
+              "donor_date": "2019-01-19",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "627a24d81623145121deb616f9139ef8ab4d1dd8d379a1b120630298a8419fdf",
+              "RH_mean_lower_pp": 25.804243815607027,
+              "RH_mean_upper_pp": 51.18052078244065,
+              "q_mean_capacity_upper": 0.006672422656496619,
+              "separation_RH_pp": 7.559068908721457
+            },
+            {
+              "donor_date": "2019-01-20",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "b7f4c6344b60150ece3b60c5441a9ab35f74459ada8000d8c68d775ed6eaf169",
+              "RH_mean_lower_pp": 25.735456891747052,
+              "RH_mean_upper_pp": 51.02980537690237,
+              "q_mean_capacity_upper": 0.006693121507778982,
+              "separation_RH_pp": 7.709784314259743
+            },
+            {
+              "donor_date": "2019-01-21",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "e68e4092a7816714dbd9d12479cf0b0ea2b3a61233bf88e42e1e5dae01c0207a",
+              "RH_mean_lower_pp": 25.844374210866853,
+              "RH_mean_upper_pp": 51.22351785410568,
+              "q_mean_capacity_upper": 0.006665576577232921,
+              "separation_RH_pp": 7.51607183705643
+            },
+            {
+              "donor_date": "2019-01-22",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "87d351b74dda423a3dbe98cf7864b42b264860dbeaa5197c300c5321ac2f7a45",
+              "RH_mean_lower_pp": 25.538963667532123,
+              "RH_mean_upper_pp": 50.954408971467316,
+              "q_mean_capacity_upper": 0.0067181693933180174,
+              "separation_RH_pp": 7.785180719694793
+            },
+            {
+              "donor_date": "2019-01-24",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "f57a48be577eb622d2515ad1e7e1f39f5bdfec7fa1471b302bc5567313a30cc0",
+              "RH_mean_lower_pp": 25.414398054448057,
+              "RH_mean_upper_pp": 50.456435731593444,
+              "q_mean_capacity_upper": 0.006771292251199658,
+              "separation_RH_pp": 8.283153959568665
+            },
+            {
+              "donor_date": "2019-01-25",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "2c477215596f8abb5eb2666b43a79f800c93b99c7d44a7cb880a0a997fb8f003",
+              "RH_mean_lower_pp": 25.55451637372728,
+              "RH_mean_upper_pp": 50.758574974894714,
+              "q_mean_capacity_upper": 0.006731467877623311,
+              "separation_RH_pp": 7.981014716267396
+            },
+            {
+              "donor_date": "2019-01-26",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "38b60e51d03fab0fe9e917201ea35016db6868b5bbc9179459b46b7866ba0167",
+              "RH_mean_lower_pp": 25.51695186005196,
+              "RH_mean_upper_pp": 50.69296610752972,
+              "q_mean_capacity_upper": 0.006741363576760773,
+              "separation_RH_pp": 8.046623583632389
+            },
+            {
+              "donor_date": "2019-01-29",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "9bf4021d438e3246eb1b9f89bc1b8e27b8325f1dda8feba7c343b5a0c9897f7c",
+              "RH_mean_lower_pp": 25.4201282503254,
+              "RH_mean_upper_pp": 50.53341696847571,
+              "q_mean_capacity_upper": 0.006762641381796109,
+              "separation_RH_pp": 8.206172722686397
+            },
+            {
+              "donor_date": "2019-01-30",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "651b3483272945ac4c9fb0d0bc6dc310abb8bc5c267f5a655ecbe0192930c116",
+              "RH_mean_lower_pp": 25.352146809533835,
+              "RH_mean_upper_pp": 50.30287573312975,
+              "q_mean_capacity_upper": 0.006791243584661494,
+              "separation_RH_pp": 8.436713958032357
+            },
+            {
+              "donor_date": "2020-01-01",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "f0bbb0782df791c0460a6614323d42c3e5567f2160ec8ecf8098ffcd877902a1",
+              "RH_mean_lower_pp": 26.181710430587984,
+              "RH_mean_upper_pp": 51.885886663485984,
+              "q_mean_capacity_upper": 0.006579318245807599,
+              "separation_RH_pp": 6.853703027676126
+            },
+            {
+              "donor_date": "2020-01-02",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "ea1c4785746c17c3637e0d0bf7eb8008d9e74aa5dd5660fd8231d15fde256e63",
+              "RH_mean_lower_pp": 26.055324814650714,
+              "RH_mean_upper_pp": 51.74412874743137,
+              "q_mean_capacity_upper": 0.006601424444892076,
+              "separation_RH_pp": 6.995460943730741
+            },
+            {
+              "donor_date": "2020-01-03",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "34ff8ca8e47ae247933267e6443372d8f076a730f3e92a97a2d23f1faabb46b3",
+              "RH_mean_lower_pp": 25.96274659487659,
+              "RH_mean_upper_pp": 51.47660261482153,
+              "q_mean_capacity_upper": 0.006633369844520055,
+              "separation_RH_pp": 7.262987076340579
+            },
+            {
+              "donor_date": "2020-01-04",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "2807f3e2482af8cd7102c57ee4b36ac066c39c9077401f81e908a76a39781f5b",
+              "RH_mean_lower_pp": 25.919818683943138,
+              "RH_mean_upper_pp": 51.36207626147404,
+              "q_mean_capacity_upper": 0.006646956901011479,
+              "separation_RH_pp": 7.377513429688072
+            },
+            {
+              "donor_date": "2020-01-05",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "ec812476c80671d6aa2bd9a1eee45c5a2152208d51cc90e0b7f69523bba5d80e",
+              "RH_mean_lower_pp": 26.00782451298954,
+              "RH_mean_upper_pp": 51.82301570557411,
+              "q_mean_capacity_upper": 0.006597910033000391,
+              "separation_RH_pp": 6.916573985588002
+            },
+            {
+              "donor_date": "2020-01-06",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "fd8f6e7accd6d19bc66d057b97c80a532775af4d0fd02e6faf02055407316dd1",
+              "RH_mean_lower_pp": 26.061617013251126,
+              "RH_mean_upper_pp": 51.8284917877244,
+              "q_mean_capacity_upper": 0.0065938647938880565,
+              "separation_RH_pp": 6.911097903437707
+            },
+            {
+              "donor_date": "2020-01-07",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "8903f5592a24ed4e6497a35d24d863340191dedeafede6baf60196b25a1b7672",
+              "RH_mean_lower_pp": 25.97124723581063,
+              "RH_mean_upper_pp": 51.621056204687804,
+              "q_mean_capacity_upper": 0.0066206058313532275,
+              "separation_RH_pp": 7.1185334864743055
+            },
+            {
+              "donor_date": "2020-01-08",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "df95aa6ae7ae4bb72a447bc21881c9119a1b3c2bb2dc61d766625873c2ca20b4",
+              "RH_mean_lower_pp": 26.101963176298604,
+              "RH_mean_upper_pp": 51.73991490437286,
+              "q_mean_capacity_upper": 0.006598472020570769,
+              "separation_RH_pp": 6.9996747867892495
+            },
+            {
+              "donor_date": "2020-01-09",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "0b30f452e3904ba273cfe71af15335e01654b706a937cf01b0edcd12d21b2561",
+              "RH_mean_lower_pp": 25.875270842638336,
+              "RH_mean_upper_pp": 51.49097618365276,
+              "q_mean_capacity_upper": 0.0066394940362064754,
+              "separation_RH_pp": 7.248613507509347
+            },
+            {
+              "donor_date": "2020-01-10",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "58a3cff94a453cf442a174c4fcee46cc08aec674e49d4d2564a6765ec24d6694",
+              "RH_mean_lower_pp": 25.8156941929091,
+              "RH_mean_upper_pp": 51.3355238311127,
+              "q_mean_capacity_upper": 0.006659281501955508,
+              "separation_RH_pp": 7.404065860049407
+            },
+            {
+              "donor_date": "2020-01-11",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "d1aaf9bffb5a8af89f83c1950318250e2ebd036bebfd883f8fce75f55f7de5a8",
+              "RH_mean_lower_pp": 26.021701215202114,
+              "RH_mean_upper_pp": 51.732115232030836,
+              "q_mean_capacity_upper": 0.0066048889795947115,
+              "separation_RH_pp": 7.007474459131274
+            },
+            {
+              "donor_date": "2020-01-12",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "7af15f20b614d891ddf691929b20922dd5f0b06068f888c934aea81fc93ed4fe",
+              "RH_mean_lower_pp": 26.052507178047605,
+              "RH_mean_upper_pp": 51.70323249516696,
+              "q_mean_capacity_upper": 0.006605471362317185,
+              "separation_RH_pp": 7.036357195995151
+            },
+            {
+              "donor_date": "2020-01-13",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "1c45f15edc4f81a70f5a0267bc44d010fae5290911207f4d5ad6a222f4da32d2",
+              "RH_mean_lower_pp": 25.922869125229692,
+              "RH_mean_upper_pp": 51.473041488317875,
+              "q_mean_capacity_upper": 0.006636898608914823,
+              "separation_RH_pp": 7.266548202844234
+            },
+            {
+              "donor_date": "2020-01-14",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "b9abbd833fb8d5af0c59695fe44f37ad1e77e6ceb07cbafe666f85bd98756afa",
+              "RH_mean_lower_pp": 25.901721900142505,
+              "RH_mean_upper_pp": 51.36684310843418,
+              "q_mean_capacity_upper": 0.006648266712422953,
+              "separation_RH_pp": 7.3727465827279275
+            },
+            {
+              "donor_date": "2020-01-15",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "78cb3db8746cd8ee8a3dbac84f3a0aeb365bf8132567870e61a2dfc45f3566d9",
+              "RH_mean_lower_pp": 25.972079927778083,
+              "RH_mean_upper_pp": 51.45087763499485,
+              "q_mean_capacity_upper": 0.00663517821458806,
+              "separation_RH_pp": 7.288712056167256
+            },
+            {
+              "donor_date": "2020-01-16",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "e172b6385628cacb23dc1bd133ee0c83162a936981d5e4d9d62e5df067748ff2",
+              "RH_mean_lower_pp": 26.082119049361037,
+              "RH_mean_upper_pp": 51.73752207535973,
+              "q_mean_capacity_upper": 0.006599673454311782,
+              "separation_RH_pp": 7.002067615802382
+            },
+            {
+              "donor_date": "2020-01-17",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "f50c3d3d58bc0cc70087e24c2b30ea838f3b23c3637e439456181d907f451417",
+              "RH_mean_lower_pp": 25.993322951510944,
+              "RH_mean_upper_pp": 51.553860682866365,
+              "q_mean_capacity_upper": 0.0066244873548688184,
+              "separation_RH_pp": 7.185729008295745
+            },
+            {
+              "donor_date": "2020-01-19",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "1099f8d32305893839921d097957a24c283466f701bc79ea34f1b8872dceae1f",
+              "RH_mean_lower_pp": 26.003381270814465,
+              "RH_mean_upper_pp": 51.863908435435164,
+              "q_mean_capacity_upper": 0.006600935857730297,
+              "separation_RH_pp": 6.8756812557269456
+            },
+            {
+              "donor_date": "2020-01-20",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "230bae88aea1aa5750d2608d12bcade77dbfec952c755129a19ae8bf208f8147",
+              "RH_mean_lower_pp": 26.35846914234946,
+              "RH_mean_upper_pp": 52.458915918321836,
+              "q_mean_capacity_upper": 0.006514894602736438,
+              "separation_RH_pp": 6.280673772840274
+            },
+            {
+              "donor_date": "2020-01-21",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "c8116c1f6bf5a3b60b12f213484f904723bcb5385782fc5b3e5c6019bb37d8d5",
+              "RH_mean_lower_pp": 26.316959886878358,
+              "RH_mean_upper_pp": 52.34833482492317,
+              "q_mean_capacity_upper": 0.0065288929778962584,
+              "separation_RH_pp": 6.391254866238938
+            },
+            {
+              "donor_date": "2020-01-22",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "9df98e528db6e714e78d112792a9011b576459e8f162395eb7a298a4e8c5d177",
+              "RH_mean_lower_pp": 26.09341100271689,
+              "RH_mean_upper_pp": 51.79248395433035,
+              "q_mean_capacity_upper": 0.006594897170296717,
+              "separation_RH_pp": 6.947105736831759
+            },
+            {
+              "donor_date": "2020-01-23",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "5f7016adee659fb49c3fba91535e827c7f3838ee1bb10a73c80a235226dcfd12",
+              "RH_mean_lower_pp": 26.12117175343242,
+              "RH_mean_upper_pp": 51.90927565683613,
+              "q_mean_capacity_upper": 0.006582322402959338,
+              "separation_RH_pp": 6.83031403432598
+            },
+            {
+              "donor_date": "2020-01-24",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "79db254e35756558f5a7b24449d0c512fb8ed881f17cc2e9e8e74ab9123513a0",
+              "RH_mean_lower_pp": 25.946582848444514,
+              "RH_mean_upper_pp": 51.49434857413321,
+              "q_mean_capacity_upper": 0.006633235143921237,
+              "separation_RH_pp": 7.245241117028897
+            },
+            {
+              "donor_date": "2020-01-25",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "8f83b6263c60bda9390eede2d5bb5ec50d732076e264a670fbbed2cad509fab8",
+              "RH_mean_lower_pp": 25.89090858176741,
+              "RH_mean_upper_pp": 51.316889815651614,
+              "q_mean_capacity_upper": 0.00665321064323271,
+              "separation_RH_pp": 7.422699875510496
+            },
+            {
+              "donor_date": "2020-01-26",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "e316b493ee8f238fb5ed72bd50412c9d2a837a0b6483e6f9a7b786bfd392028c",
+              "RH_mean_lower_pp": 25.857745786594002,
+              "RH_mean_upper_pp": 51.24511818906723,
+              "q_mean_capacity_upper": 0.0066626694704933435,
+              "separation_RH_pp": 7.494471502094882
+            },
+            {
+              "donor_date": "2020-01-27",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "1bf7bb31f54b17f9ba524a7209fbf075652d5f49427e92cfd28e65e9c1f72424",
+              "RH_mean_lower_pp": 25.708559503572147,
+              "RH_mean_upper_pp": 51.09239525964135,
+              "q_mean_capacity_upper": 0.006687688906961018,
+              "separation_RH_pp": 7.647194431520759
+            },
+            {
+              "donor_date": "2020-01-29",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "3029725c09e8ee21e89a388e54b9c25e7bff1667ea1bbd975fa71e10a65232f6",
+              "RH_mean_lower_pp": 25.52176617748503,
+              "RH_mean_upper_pp": 50.727029614779845,
+              "q_mean_capacity_upper": 0.006738367793873676,
+              "separation_RH_pp": 8.012560076382265
+            },
+            {
+              "donor_date": "2020-01-30",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "3c489975dc277ece2661b76524c5c801a7d069dd48e6bfcd69f7a19acbbb2bfe",
+              "RH_mean_lower_pp": 25.699562708950666,
+              "RH_mean_upper_pp": 51.055190544671056,
+              "q_mean_capacity_upper": 0.006692430817372717,
+              "separation_RH_pp": 7.684399146491053
+            },
+            {
+              "donor_date": "2020-01-31",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_ABOVE_DOMAIN_UPPER",
+              "input_fingerprint": "eeadd17c3990f6ee11c7268e1525b049ee62502b2d16b6b05e082b595f536710",
+              "RH_mean_lower_pp": 25.633192125166225,
+              "RH_mean_upper_pp": 50.82561668987242,
+              "q_mean_capacity_upper": 0.0067190486948521064,
+              "separation_RH_pp": 7.9139730012896905
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "date": "2014-12-02",
+      "eligible_donors": 32,
+      "source_q_mean_kgkg": 0.00742800347507,
+      "source_RH_mean_pp": 93.8330307006836,
+      "repair_comparison": "PRIOR_CONDITIONAL_CERTIFICATE_REPRODUCED",
+      "scenarios": [
+        {
+          "name": "FIXED_REGISTERED_DONOR_REFERENCE",
+          "interpretation": "FIXED_CONDITIONAL_REFERENCE",
+          "status": "ALL_DONORS_CERTIFIED_INFEASIBLE",
+          "donor_status_counts": {
+            "CERTIFIED_INFEASIBLE": 32
+          },
+          "RH_outer_union_lower_pp": 93.91310814667149,
+          "RH_outer_union_upper_pp": 127.02667506378056,
+          "all_donor_evidence_sha256": "e081bec6fba8defc8b92d09c24dd93721ee914085ea3ddd61fee9581d03102c9",
+          "source_feasibility_established": false,
+          "external_pressure_uncertainty_established": false,
+          "continuous_pressure_box_covered": true,
+          "continuous_time_trajectory_certified": false,
+          "certificates": [
+            {
+              "donor_date": "2019-12-01",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "8d31fdbb55973c331746ba4e872f7bc1545487cffc07b8a408da936f8b271c10",
+              "RH_mean_lower_pp": 96.89407112854727,
+              "RH_mean_upper_pp": 126.46102949700706,
+              "q_mean_capacity_upper": 0.007665338390594472,
+              "separation_RH_pp": 3.0610404278636736
+            },
+            {
+              "donor_date": "2019-12-02",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "e8aa49a278dd108e8509afc4fbad53ecb32f93989abe6370585d1b75fde91477",
+              "RH_mean_lower_pp": 96.68126129891643,
+              "RH_mean_upper_pp": 126.20204704001897,
+              "q_mean_capacity_upper": 0.007681442266080989,
+              "separation_RH_pp": 2.8482305982328313
+            },
+            {
+              "donor_date": "2019-12-09",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "6a6854470f58b302218b6a68b4ba0834ffeb6ec610c4dcfe064067b4e25ab08f",
+              "RH_mean_lower_pp": 95.57425385801855,
+              "RH_mean_upper_pp": 124.7420784398525,
+              "q_mean_capacity_upper": 0.007771108502279275,
+              "separation_RH_pp": 1.7412231573349572
+            },
+            {
+              "donor_date": "2019-12-12",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "47b612762ca8d080ff775da4a6f3c4195e31fd3ab1e31221209d62fc4d9f010c",
+              "RH_mean_lower_pp": 95.38173067268916,
+              "RH_mean_upper_pp": 124.51516699804449,
+              "q_mean_capacity_upper": 0.0077863777468720795,
+              "separation_RH_pp": 1.548699972005565
+            },
+            {
+              "donor_date": "2019-12-13",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "b0c7039db96ab8b3895d113f1b64a034debabae15e62946e9c0a712df143c78c",
+              "RH_mean_lower_pp": 94.07051459689227,
+              "RH_mean_upper_pp": 122.84256647506366,
+              "q_mean_capacity_upper": 0.007892911310766393,
+              "separation_RH_pp": 0.23748389620867272
+            },
+            {
+              "donor_date": "2019-12-14",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "0d4c663a960798f79258f7aa1c1241a457cf7e7ede85e1bbbde76f12da72e683",
+              "RH_mean_lower_pp": 94.84367951897345,
+              "RH_mean_upper_pp": 123.86780797518827,
+              "q_mean_capacity_upper": 0.007828014062421333,
+              "separation_RH_pp": 1.0106488182898516
+            },
+            {
+              "donor_date": "2019-12-20",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "c59b815247677ed7f6822758a9ac2f5d4ef74d3e8be489ed4323b364d1b32636",
+              "RH_mean_lower_pp": 95.50123264196624,
+              "RH_mean_upper_pp": 124.71051274178784,
+              "q_mean_capacity_upper": 0.007774777421202352,
+              "separation_RH_pp": 1.6682019412826463
+            },
+            {
+              "donor_date": "2019-12-21",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "25a9c62f03852899c707317b58e631e15874f4be49bc8d07c68bc00ca12f39cd",
+              "RH_mean_lower_pp": 94.35480267703959,
+              "RH_mean_upper_pp": 123.20405049572392,
+              "q_mean_capacity_upper": 0.007870082518414914,
+              "separation_RH_pp": 0.5217719763559927
+            },
+            {
+              "donor_date": "2019-12-22",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "182b4b7a494ed66ac882101a94794fe188e66a85a8f6fbb888ec9b398314531b",
+              "RH_mean_lower_pp": 93.91310814667149,
+              "RH_mean_upper_pp": 122.584293717571,
+              "q_mean_capacity_upper": 0.007908627808881838,
+              "separation_RH_pp": 0.08007744598789657
+            },
+            {
+              "donor_date": "2019-12-23",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "9003cb4db931ddfe700451d458e805b6d413642385158223e4014cf07eea8bfa",
+              "RH_mean_lower_pp": 94.87044974766931,
+              "RH_mean_upper_pp": 123.91573389801185,
+              "q_mean_capacity_upper": 0.007825802343879125,
+              "separation_RH_pp": 1.0374190469857183
+            },
+            {
+              "donor_date": "2019-12-24",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "1a21b6f6aaecb5d536670a06cec04261eaebe0282588abc2e438d4062dd5549d",
+              "RH_mean_lower_pp": 96.09416700738511,
+              "RH_mean_upper_pp": 125.42294831167192,
+              "q_mean_capacity_upper": 0.007728928161774396,
+              "separation_RH_pp": 2.261136306701516
+            },
+            {
+              "donor_date": "2019-12-25",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "5f97d3a2c315abb642a069e5fd20ad9a0f2b07a927428a0e033ae4fa2f678aef",
+              "RH_mean_lower_pp": 96.14722053915477,
+              "RH_mean_upper_pp": 125.49698694623983,
+              "q_mean_capacity_upper": 0.007724406632908612,
+              "separation_RH_pp": 2.3141898384711794
+            },
+            {
+              "donor_date": "2019-12-27",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "860679be1894b0fbfd99a561b1848c40e59f5e953614940aca82f90b6ddedf99",
+              "RH_mean_lower_pp": 97.17141028346317,
+              "RH_mean_upper_pp": 126.82107076318817,
+              "q_mean_capacity_upper": 0.007643230476521102,
+              "separation_RH_pp": 3.338379582779581
+            },
+            {
+              "donor_date": "2020-12-01",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "63669d53843e5375d36c6aa2567d3e54998005ad74c127b43dafd5adfdd52e67",
+              "RH_mean_lower_pp": 96.80308265388895,
+              "RH_mean_upper_pp": 126.33406123237738,
+              "q_mean_capacity_upper": 0.007672697291222463,
+              "separation_RH_pp": 2.970051953205356
+            },
+            {
+              "donor_date": "2020-12-02",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "3fe994e750b924fac3792ec3d2e306fbac26345e5262954a3b1dcd7e2727153d",
+              "RH_mean_lower_pp": 96.6713971756986,
+              "RH_mean_upper_pp": 126.17198322651467,
+              "q_mean_capacity_upper": 0.0076830946742529275,
+              "separation_RH_pp": 2.8383664750150075
+            },
+            {
+              "donor_date": "2020-12-03",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "a435d99d51796a72a9f72ceeac65be83548f35814cdad0e6e46cac1897b4f017",
+              "RH_mean_lower_pp": 95.75325107354324,
+              "RH_mean_upper_pp": 124.99979905968047,
+              "q_mean_capacity_upper": 0.007755813176474841,
+              "separation_RH_pp": 1.9202203728596459
+            },
+            {
+              "donor_date": "2020-12-05",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "ff34c723a7edf7f2a95ffc941f047162563c2ae454d05915f5c054b353075250",
+              "RH_mean_lower_pp": 95.47743976097543,
+              "RH_mean_upper_pp": 124.6135027907332,
+              "q_mean_capacity_upper": 0.007779421155324052,
+              "separation_RH_pp": 1.644409060291835
+            },
+            {
+              "donor_date": "2020-12-06",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "bb341d49ca12a43548d5cff56e3b261529029c187b51b06bd8654fcf7881feb6",
+              "RH_mean_lower_pp": 95.30426900403792,
+              "RH_mean_upper_pp": 124.39912017938703,
+              "q_mean_capacity_upper": 0.007793151084483727,
+              "separation_RH_pp": 1.4712383033543261
+            },
+            {
+              "donor_date": "2020-12-07",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "c4d34714d6955e3e27845448008922a7cb7916c17e50b42bbabaff3e304766f0",
+              "RH_mean_lower_pp": 95.29522440517225,
+              "RH_mean_upper_pp": 124.39657492690125,
+              "q_mean_capacity_upper": 0.007793507224592508,
+              "separation_RH_pp": 1.462193704488655
+            },
+            {
+              "donor_date": "2020-12-08",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "b3507c47c18d2e502a51dcee282dcb0d86c6b675fb8375b3342c487b708d9c4c",
+              "RH_mean_lower_pp": 95.65310487283325,
+              "RH_mean_upper_pp": 124.83783375038637,
+              "q_mean_capacity_upper": 0.007764993758684947,
+              "separation_RH_pp": 1.8200741721496598
+            },
+            {
+              "donor_date": "2020-12-09",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "8200d3c18f510e10a395f511a79e9c1d5e3da0557268494259dfabf134cfd0b4",
+              "RH_mean_lower_pp": 95.5519104642932,
+              "RH_mean_upper_pp": 124.70198684199933,
+              "q_mean_capacity_upper": 0.007773459242194497,
+              "separation_RH_pp": 1.718879763609607
+            },
+            {
+              "donor_date": "2020-12-10",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "733073afcc6a7c88501a1b622955822708d2602056102b3240e22dcef381b544",
+              "RH_mean_lower_pp": 95.39101211685612,
+              "RH_mean_upper_pp": 124.50347322515961,
+              "q_mean_capacity_upper": 0.007786064970680943,
+              "separation_RH_pp": 1.5579814161725238
+            },
+            {
+              "donor_date": "2020-12-11",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "dbb37b48ae6f11e384d436dfb8e5e5d7160a8c9cca51b81292f5fbef76e73c08",
+              "RH_mean_lower_pp": 95.344294127317,
+              "RH_mean_upper_pp": 124.4557025396654,
+              "q_mean_capacity_upper": 0.00778973288702441,
+              "separation_RH_pp": 1.5112634266334055
+            },
+            {
+              "donor_date": "2020-12-16",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "a62d169b47af30cf80f7aff85dcbd6e9f6a84ef5beb37e9d9718de515c54475c",
+              "RH_mean_lower_pp": 96.92717567966174,
+              "RH_mean_upper_pp": 126.49256070328917,
+              "q_mean_capacity_upper": 0.007663052567069715,
+              "separation_RH_pp": 3.09414497897815
+            },
+            {
+              "donor_date": "2020-12-19",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "c7aa89476b107bcf130abff3504ca5a556dbc79cd4bde0f69cc986f0636eedba",
+              "RH_mean_lower_pp": 97.3406585913676,
+              "RH_mean_upper_pp": 127.02667506378056,
+              "q_mean_capacity_upper": 0.0076306034621235865,
+              "separation_RH_pp": 3.507627890684006
+            },
+            {
+              "donor_date": "2020-12-22",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "7fafdce43b42e2eaeedca4130619be72ad0542ad7a09a2ef30117d081c6cc249",
+              "RH_mean_lower_pp": 96.86526446155308,
+              "RH_mean_upper_pp": 126.41345007589689,
+              "q_mean_capacity_upper": 0.007667838161850272,
+              "separation_RH_pp": 3.032233760869488
+            },
+            {
+              "donor_date": "2020-12-24",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "4a770724617824837aafa5a52e4a43bc10194f92f0d29ee256ee131ec27693a2",
+              "RH_mean_lower_pp": 95.8493325038157,
+              "RH_mean_upper_pp": 125.09843751734614,
+              "q_mean_capacity_upper": 0.0077488316975266504,
+              "separation_RH_pp": 2.0163018031321087
+            },
+            {
+              "donor_date": "2020-12-25",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "881d697b302f3cc0cbd1235bd79d7e886cf76767f43e51ea06b539fcf0000faf",
+              "RH_mean_lower_pp": 96.04618858697854,
+              "RH_mean_upper_pp": 125.3727020498339,
+              "q_mean_capacity_upper": 0.007732370000843729,
+              "separation_RH_pp": 2.213157886294951
+            },
+            {
+              "donor_date": "2020-12-28",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "5072c49f3b46db4eec412e7651a22a2eaa972a6753b28d5ea68e85d7e1d56ba6",
+              "RH_mean_lower_pp": 93.93038652479002,
+              "RH_mean_upper_pp": 122.67653823883694,
+              "q_mean_capacity_upper": 0.007904565872857677,
+              "separation_RH_pp": 0.09735582410642962
+            },
+            {
+              "donor_date": "2020-12-29",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "00cddb2d1c78c2ae6056eefbfb00135dfa3a665391357d7654cf3e988eff518f",
+              "RH_mean_lower_pp": 94.43845773308351,
+              "RH_mean_upper_pp": 123.34123395100802,
+              "q_mean_capacity_upper": 0.007863056299410653,
+              "separation_RH_pp": 0.6054270323999162
+            },
+            {
+              "donor_date": "2020-12-30",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "c5d8992e6a73666d258a5a1cca177e17542a3f2ce2c36fc14e4339032efa118e",
+              "RH_mean_lower_pp": 95.17012358113753,
+              "RH_mean_upper_pp": 124.2344940938134,
+              "q_mean_capacity_upper": 0.007803623106018136,
+              "separation_RH_pp": 1.3370928804539375
+            },
+            {
+              "donor_date": "2020-12-31",
+              "status": "CERTIFIED_INFEASIBLE",
+              "reason": "RH_INTERVAL_BELOW_DOMAIN_LOWER",
+              "input_fingerprint": "613f1e44b23ae65c84bb099a4d0f9de6855813187ae1324b17788a5faf7690f9",
+              "RH_mean_lower_pp": 95.58297095085132,
+              "RH_mean_upper_pp": 124.74346209455751,
+              "q_mean_capacity_upper": 0.007770897539171294,
+              "separation_RH_pp": 1.7499402501677253
+            }
+          ]
+        },
+        {
+          "name": "RECTANGULAR_PM500_PA_STRESS_NOT_CI",
+          "interpretation": "SENSITIVITY_BOX_NOT_CI",
+          "status": "SOME_DONOR_DOMAINS_NOT_EXCLUDED",
+          "donor_status_counts": {
+            "CERTIFIED_INFEASIBLE": 29,
+            "BOUND_INCONCLUSIVE": 3
+          },
+          "RH_outer_union_lower_pp": 93.40818469513302,
+          "RH_outer_union_upper_pp": 127.68184976338479,
+          "all_donor_evidence_sha256": "8d889e7e61c8ff444dc4b588c5bbf2887e20795e668c89b04dbad959e45c4940",
+          "source_feasibility_established": false,
+          "external_pressure_uncertainty_established": false,
+          "continuous_pressure_box_covered": true,
+          "continuous_time_trajectory_certified": false
+        }
+      ]
+    }
+  ]
+}

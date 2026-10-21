@@ -1,0 +1,85 @@
+name: IGE P9.3B3 P1 sensor references and C1 conditional source bounds
+on:
+  workflow_dispatch:
+  push:
+    branches: [research/ige-p9-3b3-p1-c1-20261021]
+    paths: [research/ige_cmip6/p9_3b3_compare_protocol.json]
+permissions:
+  contents: read
+  actions: read
+env:
+  OPENBLAS_NUM_THREADS: '1'
+  OMP_NUM_THREADS: '1'
+jobs:
+  mathematical_and_frozen_control_contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 scipy==1.17.0
+      - name: New forward-state and analytic P1 C1 oracles plus unchanged B3 contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3b3_*.py' -v
+      - name: Earlier scientific contracts and DWD absolute pressure semantics
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3a*.py' -q
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_2*.py' -q
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3b2*.py' -q
+          python research/ige_cmip6/p9_3b2d_canonical_pressure_fields.py
+      - name: Immutable control hashes and honest missing sensor-height operators
+        run: python research/ige_cmip6/p9_3b3_compare_run.py --out outputs/p1-c1-metadata
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ige-p93b3-p1-c1-metadata-and-code-contracts-NOT-station-accuracy
+          path: outputs/p1-c1-metadata/
+          retention-days: 30
+
+  registered_source_C1_census:
+    needs: mathematical_and_frozen_control_contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 scipy==1.17.0
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          name: ige-p6-CanESM5-historical-1995-2014
+          path: inputs/original-nasa
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 39530492475
+          github-token: ${{ github.token }}
+          name: ige-p93b3-repair-original-NASA-semantics-and-2013-2014-REGRESSIONS-not-independent-validation
+          path: inputs/immutable-repair
+      - name: Repack original archive without changing any source bytes
+        run: |
+          python - <<'PY'
+          import hashlib,zipfile
+          from pathlib import Path
+          p=Path('inputs/original-nasa')
+          assert hashlib.sha256((p/'joint_daily_raw.csv').read_bytes()).hexdigest()=='77ec2e5637eb487c3cedde4e0b660b31f8bd2606198e766255d75a985d61dfef'
+          with zipfile.ZipFile('inputs/original-nasa.zip','w',zipfile.ZIP_DEFLATED) as z:
+              for f in sorted(p.iterdir()):
+                  if f.is_file():z.write(f,f.name)
+          PY
+      - name: All donors and both revealed years, nominal p and rectangular pressure stress, no source correction
+        run: >-
+          python -u research/ige_cmip6/p9_3b3_compare_run.py
+          --original-canesm5-registered-zip inputs/original-nasa.zip
+          --immutable-repair-audit inputs/immutable-repair/p93b3-regressions/regression_audit.json
+          --out outputs/p1-c1-source-census
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ige-p93b3-p1-c1-2013-2014-conditional-bounds-NOT-independent-validation
+          path: outputs/p1-c1-source-census/
+          if-no-files-found: warn
+          retention-days: 30

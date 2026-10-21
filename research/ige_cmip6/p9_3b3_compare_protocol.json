@@ -1,0 +1,111 @@
+{
+  "phase": "P9.3B3_P1_C1_FOUNDATION_20261021",
+  "base_commit": "d42d8713a132aa0e656dec31b17d42fd49536b51",
+  "countries": [
+    "AT",
+    "DE",
+    "CH"
+  ],
+  "years": [
+    2013,
+    2014
+  ],
+  "source_values_immutable": true,
+  "merge_main": false,
+  "new_independent_holdout": false,
+  "pressure_B4_qualified": false,
+  "source_phase": "WATER_ICE",
+  "temperature_operator": "DERIVED_TAS_MIDRANGE",
+  "native_time_bounds": "PARTIAL_NO_NEW_INTERVAL_EVIDENCE_IN_THIS_INCREMENT",
+  "baseline_repair_run": 39530492475,
+  "baseline_repair_artifact": 12315616612,
+  "baseline_repair_json_sha256": "d4ba53ebaf30f8bd730b35f63e814a648fda47b3fcd602a59e6845f325e394e7",
+  "protected_control_sha256": {
+    "research/ige_cmip6/p7c3_expected_daily_source_shas.json": "4f97f1c51e93c32a6dd57b1caef2214dfb99a52b63b5be2f297a92ce976e1be0",
+    "research/ige_cmip6/p8_2e_crossyear.py": "e507cc0d42315575f71024c09082a5f3361cfb23f0b485fabef7fda694403e12",
+    "research/ige_cmip6/p9_2c_physical_donor_and_humidity.py": "7d1660a3f59761edfb9e45d3260b3923c0f2878af60e867719d0904fe2e84014",
+    "research/ige_cmip6/p9_3a_pressure_temperature_q_joint.py": "f8adf430d4fe79f5780f0c0ae61d1b226cd1bfa03dda81c6ee7599856b7efec3",
+    "research/ige_cmip6/p9_3b2d_canonical_pressure_fields.py": "ec716cb2acab65ca445dfed2a220c50bd0a5d8770b74be0e849dca38075c6b99",
+    "research/ige_cmip6/p9_3b3_at_de_ch_validation.py": "ea2d298d0685a062c2d3c49f806ee182fa78ed8fff7d12edfce52a92c1772847",
+    "research/ige_cmip6/p9_3b3_daily_feasibility.py": "2ce4c09e1462060de08a907b0302a0b78f6d4fccb2d75fbf85184516d3a99782",
+    "research/ige_cmip6/p9_3b3_development_benchmark.py": "bbd5fabb0eb2c94143841882295b7497a8e0f8227fdcdbbfeb985d76a99954f6",
+    "research/ige_cmip6/p9_3b3_frozen_protocol.json": "af342399a859a4739359430b356f39396f74199b2ae849064aa6bf7454ec167e",
+    "research/ige_cmip6/p9_3b3_generator.py": "443b42bfb991e10004487b6f1153b88466c399db9d2032b4ce5e70201d3c2537",
+    "research/ige_cmip6/p9_3b3_joint_bounds.py": "8808aa618cc458647f52cd25794915277d95358e108363650d64a6a1eabab02e",
+    "research/ige_cmip6/p9_3b3_joint_solver.py": "f5f049865eba5c7ef46405e2ed6630dfe70d29b2adf9fc73cbd4f4ec246fb478",
+    "research/ige_cmip6/p9_3b3_pressure_diagnostics.py": "7244a5b72be3f663fb0b07fe99e17ab322341d57d7d5c53535e665ac3ac6edc0",
+    "research/ige_cmip6/p9_3b3_pressure_reference.py": "1300628bf56f22ff9a7dbcb7b1ec2d6adc1bbb1d976f3a3d75b1e35399491784",
+    "research/ige_cmip6/p9_3b3_regression_audit.py": "8673c8b92bdc035ab37e6f8697f2337935d49d159a70e9b3fbfccce2277ec167",
+    "research/ige_cmip6/p9_3b3_repair_acceptance.py": "74cacf97ee7cc683d062e1000abe40c5726f74992dd547f4407f7aafeaa784d7",
+    "research/ige_cmip6/p9_3b3_repair_protocol.json": "734e53768e18b4ace253e54534f2bde0b7002dd2476ce3030c272da4c5c877bb",
+    "research/ige_cmip6/p9_3b3_repair_time_evidence.json": "adc14cf56cebb25d3c9d368af9977a2eac9f46ad7e43508a7af0d864801bf746",
+    "research/ige_cmip6/p9_3b3_run.py": "bc0f1316f97dff8509fbaebe31c3794084f66a87a4612421eab040ea5f1e7d7c",
+    "research/ige_cmip6/p9_3b3_source_reconciliation.py": "f88b362a411cb9e63b60098d26f6d6802533dfeb20dc4f18366c1ca675e5e6cf",
+    "research/ige_cmip6/p9_3b3_source_semantics.py": "528e2d7a4f68527ce4fb75a6fa49010ca1d58342ae39f59fb759597b196ad53e",
+    "research/ige_cmip6/p9_3b3_source_semantics_evidence.json": "557bb81c41126a0984274824e1aaab43335adfc254a6edd5c3a9af18a78c9363",
+    "research/ige_cmip6/p9_3b3_source_time_support.py": "963f018935144fa65783185a9568e22d4298bbce9b204215ed678c7d8d436ae6",
+    "research/ige_cmip6/p9_3b3_state_validation.py": "6fc5c6024da896de35af9b6777d3b9f1729772e3cfd708be2bf53e55ca2908f7",
+    "research/ige_cmip6/p9_3b3_thermodynamics.py": "f9e369fdc14051bc60a58c13a4cea2bc6ff1e564db0788e3702807849638f9fd",
+    "research/ige_cmip6/test_p9_3b3_feasibility.py": "67e5084315312e7667da8d2916b3b41dea11e43d1cf2b7b556f1b20ef01bb1cc",
+    "research/ige_cmip6/test_p9_3b3_joint_solver.py": "494fe20fb309ac4f4cff3a689fd39baa8d59ec8bb22cfb15b2527bcd517c6896",
+    "research/ige_cmip6/test_p9_3b3_repair.py": "57a8e8fa0943eb6aac44f151b7bd96a5a1b0a3abfc26c81557458d636c1d6dc4",
+    "research/ige_cmip6/test_p9_3b3_source_semantics.py": "6790e893709dcec89b5b66c21222c8b2b5c05a7a92861b8e4c072a7198fe6044",
+    "research/ige_cmip6/test_p9_3b3_thermodynamics.py": "d901751e90edb8f3fa6cb3cefe26996f6514caeefe8d3f77acd49955bbedcc5c",
+    "research/ige_cmip6/test_p9_3b3_validation_contracts.py": "fc70b4e80fd13d2ca59d56f6e1a6a7e7f3f3458219f497ed93bacc2a6750ff9f"
+  },
+  "pressure_scenarios": [
+    {
+      "name": "FIXED_REGISTERED_DONOR_REFERENCE",
+      "half_width_Pa": 0,
+      "interpretation": "FIXED_CONDITIONAL_REFERENCE"
+    },
+    {
+      "name": "RECTANGULAR_PM500_PA_STRESS_NOT_CI",
+      "half_width_Pa": 500,
+      "interpretation": "SENSITIVITY_BOX_NOT_CI"
+    }
+  ],
+  "pressure_sensitivity_is_not_calibrated_uncertainty": true,
+  "q_RH_source_corrections_allowed": false,
+  "station_metadata": [
+    {
+      "country": "AT",
+      "station": "GEOSPHERE_30",
+      "ground_height_m": 366.0,
+      "barometer_coordinate": null,
+      "thermo_coordinate": null,
+      "evidence": "REPAIR_39530492475_SOURCE_PREFLIGHT_GROUND_ONLY"
+    },
+    {
+      "country": "DE",
+      "station": "DWD_URBAN_00399",
+      "ground_height_m": 36.0,
+      "barometer_coordinate": null,
+      "thermo_coordinate": null,
+      "evidence": "P93B2D_AND_REPAIR_SOURCE_METADATA_GROUND_ONLY"
+    },
+    {
+      "country": "CH",
+      "station": "METEOSWISS_DAV",
+      "ground_height_m": 1594.0,
+      "barometer_coordinate": null,
+      "thermo_coordinate": null,
+      "evidence": "REPAIR_39530492475_SOURCE_PREFLIGHT_GROUND_ONLY"
+    }
+  ],
+  "implemented_candidates": [
+    "P1_CONDITIONAL_HYDROSTATICS",
+    "C1_DISCRETE_OUTER_BOUNDS"
+  ],
+  "deferred_candidates": [
+    "P2",
+    "P3",
+    "C2",
+    "C3",
+    "J1"
+  ],
+  "initial_CI": "ONE_SCOPED_PROTOCOL_PUSH_ON_NEW_RESEARCH_BRANCH_THEN_MANUAL_ONLY_AFTER_REVIEW",
+  "independent_accuracy": "NOT_TESTED",
+  "operational_ready": false,
+  "production_epw_ready": false
+}
