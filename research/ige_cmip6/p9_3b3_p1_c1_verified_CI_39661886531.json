@@ -1,0 +1,115 @@
+{
+  "run_id": 39661886531,
+  "tested_commit": "4977db6be290e93d7ed8909ec1e7d4d20391422b",
+  "conclusion": "SUCCESS_VERIFIED_AGAINST_ARTIFACTS",
+  "jobs_passed": 2,
+  "tests_passed": 174,
+  "DWD_field_contracts": "PASS",
+  "workflow_total_seconds": 160,
+  "source_census_seconds": 102.67753898799998,
+  "protected_controls_unchanged": 31,
+  "implementation_manifest_sha256": "6b990f62524997c50c9a2e1ae08fe7135956e2655ec1864ac3812c3ef5a468c8",
+  "protocol_sha256": "fc52a489c464f608b38d07ae0c285cb6f5ad4c6f0d11d463f188c960052dfee3",
+  "source_census_json_sha256": "09102d393c81ead3e611bee99dd98855d05a22704e17c0510a90cd6b4a54afbf",
+  "metadata_json_sha256": "ac04b2ab759f25b72403684b4859fb6ed53d3c462b386b587bffd19fd03a6ecd",
+  "artifact_zip_digests": {
+    "12373198846": "74e3050c81facdd86738bcfca9819397e5fa9c00e3c4754e059d83c4fe34f296",
+    "12373008990": "6b8cb326513b0ebddf6ef16aaa77687c605dc446eb7c041d41beba850c59df92"
+  },
+  "source_targets_unchanged": true,
+  "year_records_including_boundaries": 732,
+  "unique_dates_including_boundary": 731,
+  "day_scenario_comparisons": 1464,
+  "max_CI_vs_local_RH_bound_difference_pp": 5.684341886080802e-14,
+  "repair_comparison_counts": {
+    "PRIOR_EXACT_DOMAIN_NOT_EXCLUDED_NO_NEW_WITNESS_CLAIM": 727,
+    "PRIOR_CONDITIONAL_CERTIFICATE_REPRODUCED": 5
+  },
+  "canonical_donor_weather_SHA256": {
+    "2019": "ac9749eb1cee4d2246b60871f1a139d8920451e30b8ed54ea134431fa0de4c29",
+    "2020": "275804a076a81c3c8ae9a572e0359ca524ef9c90627ccca2c6862805093b019c"
+  },
+  "certified_days": [
+    {
+      "date": "2013-01-08",
+      "target_RH_pp": 60.21186828613281,
+      "donors": 17,
+      "nominal": {
+        "status": "ALL_DONORS_CERTIFIED_INFEASIBLE",
+        "RH_outer_union_lower_pp": 25.667737528807027,
+        "RH_outer_union_upper_pp": 49.652359158479136
+      },
+      "stress": {
+        "status": "ALL_DONORS_CERTIFIED_INFEASIBLE",
+        "RH_outer_union_lower_pp": 25.53039118421638,
+        "RH_outer_union_upper_pp": 49.907714152849216
+      }
+    },
+    {
+      "date": "2013-01-19",
+      "target_RH_pp": 65.11164855957031,
+      "donors": 45,
+      "nominal": {
+        "status": "ALL_DONORS_CERTIFIED_INFEASIBLE",
+        "RH_outer_union_lower_pp": 33.18582896851521,
+        "RH_outer_union_upper_pp": 63.65117487086007
+      },
+      "stress": {
+        "status": "ALL_DONORS_CERTIFIED_INFEASIBLE",
+        "RH_outer_union_lower_pp": 33.008654099674985,
+        "RH_outer_union_upper_pp": 63.97331582190733
+      }
+    },
+    {
+      "date": "2013-01-20",
+      "target_RH_pp": 61.39644241333008,
+      "donors": 17,
+      "nominal": {
+        "status": "ALL_DONORS_CERTIFIED_INFEASIBLE",
+        "RH_outer_union_lower_pp": 29.722815211650335,
+        "RH_outer_union_upper_pp": 57.80978313857992
+      },
+      "stress": {
+        "status": "ALL_DONORS_CERTIFIED_INFEASIBLE",
+        "RH_outer_union_lower_pp": 29.56362003419981,
+        "RH_outer_union_upper_pp": 58.10713297829132
+      }
+    },
+    {
+      "date": "2013-01-26",
+      "target_RH_pp": 58.73958969116211,
+      "donors": 45,
+      "nominal": {
+        "status": "ALL_DONORS_CERTIFIED_INFEASIBLE",
+        "RH_outer_union_lower_pp": 25.44235189598614,
+        "RH_outer_union_upper_pp": 52.19480011919084
+      },
+      "stress": {
+        "status": "ALL_DONORS_CERTIFIED_INFEASIBLE",
+        "RH_outer_union_lower_pp": 25.306422331618663,
+        "RH_outer_union_upper_pp": 52.458915918321836
+      }
+    },
+    {
+      "date": "2014-12-02",
+      "target_RH_pp": 93.8330307006836,
+      "donors": 32,
+      "nominal": {
+        "status": "ALL_DONORS_CERTIFIED_INFEASIBLE",
+        "RH_outer_union_lower_pp": 93.91310814667149,
+        "RH_outer_union_upper_pp": 127.02667506378056
+      },
+      "stress": {
+        "status": "SOME_DONOR_DOMAINS_NOT_EXCLUDED",
+        "RH_outer_union_lower_pp": 93.40818469513302,
+        "RH_outer_union_upper_pp": 127.68184976338479
+      }
+    }
+  ],
+  "independent_accuracy": "NOT_TESTED",
+  "P1_station_sensor_references": "SOURCE_BLOCKED",
+  "NASA_native_time_bounds": "PARTIAL_NOT_NEWLY_VERIFIED",
+  "B4_qualified": false,
+  "operational_ready": false,
+  "production_epw_ready": false
+}

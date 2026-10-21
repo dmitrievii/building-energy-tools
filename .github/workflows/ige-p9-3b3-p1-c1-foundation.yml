@@ -1,9 +1,6 @@
 name: IGE P9.3B3 P1 sensor references and C1 conditional source bounds
 on:
   workflow_dispatch:
-  push:
-    branches: [research/ige-p9-3b3-p1-c1-20261021]
-    paths: [research/ige_cmip6/p9_3b3_compare_protocol.json]
 permissions:
   contents: read
   actions: read
