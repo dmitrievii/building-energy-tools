@@ -1,0 +1,36 @@
+name: IGE P9.3B3 NV1 one genuine native N320 source-only Graz valley surface geometry census
+on:
+  push:
+    branches: ['research/ige-p9-3b3-native-at-valley-source-only-20261022']
+    paths:
+      - '.github/workflows/ige-p9-3b3-nv1-once-genuine-Graz-geopotential-only.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  frozen_original_native_ERA5_geopotential_radii_25_50_75_100km:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install exact frozen Work native ERA5 source decoding stack
+        run: python -m pip install numpy==2.3.5 scipy==1.17.0 numcodecs==0.16.3 pyshtools==4.13.1 eccodes==2.50.0 eccodeslib==2.50.0.33
+      - name: Source-only deterministic geometrical admission tests; never read measured station pressure
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3b3_native_at_valley_source_only.py' -v
+      - name: Read true source native N320 z under original GRIB SHA, source-only radii station-barometer coverage (no observation data)
+        run: |
+          python -u research/ige_cmip6/p9_3b3_native_at_valley_source_only.py \
+            --protocol research/ige_cmip6/p9_3b3_native_completion_protocol.json \
+            --private-cache inputs/private-AT-native-surface-only-DO-NOT-UPLOAD \
+            --out outputs/p93nv-source-geometry
+      - name: Store source geometry, original SHA, numerical air-domain limitations only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-P93B3-NV1-Graz-original-N320-source-geometry-no-station-pressure
+          path: outputs/p93nv-source-geometry/*.json
+          retention-days: 30
+          if-no-files-found: warn
