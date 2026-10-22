@@ -1,0 +1,28 @@
+name: IGE P9.3B2D original DWD padded P CSV retraction audit for prior Potsdam Oberstdorf
+on:
+  push:
+    branches: ['research/ige-p9-3b2d-dwd-pressure-availability-20261022']
+    paths:
+      - '.github/workflows/ige-p9-3b2d-once-prior-P-source-correction.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  DWD_absolute_P_source_2023_2024_reaudit_not_new_independent_pressure_skill:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Correct original DWD absolute P P0 column whitespace and count old frozen 2023 2024 source data without ERA5 fit
+        run: python -u research/ige_cmip6/p9_3b2d_reaudit_prior_DWD_absolute_P_source.py --out outputs/p93b2d-prior-source-correction
+      - name: Archive transparent scientific erratum source SHA and no-new-holdout classification
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p93b2d-retrospective-DWD-P-source-padded-columns-correction
+          path: outputs/p93b2d-prior-source-correction/*.json
+          retention-days: 30
+          if-no-files-found: warn
