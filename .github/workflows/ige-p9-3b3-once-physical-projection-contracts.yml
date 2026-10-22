@@ -1,9 +1,7 @@
 name: IGE P9.3B3 one physics-first T P q exact simplex + RH bounds contracts
+# Physically verified research 2012 source / 2014 negative regression frozen.
+# Only explicit workflow_dispatch; no automatic source or research reruns.
 on:
-  push:
-    branches: ['research/ige-p9-3b3-joint-tpq-water-projection-20261022']
-    paths:
-      - '.github/workflows/ige-p9-3b3-once-physical-projection-contracts.yml'
   workflow_dispatch:
 permissions:
   contents: read

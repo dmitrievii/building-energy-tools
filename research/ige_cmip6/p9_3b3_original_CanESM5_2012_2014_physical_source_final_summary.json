@@ -1,0 +1,52 @@
+{
+  "phase": "IGE_P9_3B3_FINAL_C1_CONVEX_MASS_C2_FAILCLOSED_RH_OUTER_BOUNDS",
+  "pre_reg_commit": "98f35f8544cb8a3fec7c55fdbd6d9b455d47f57d",
+  "original_NASA_daily_SHA256": "77ec2e5637eb487c3cedde4e0b660b31f8bd2606198e766255d75a985d61dfef",
+  "original_ERA5_canonical_2019_SHA": "ac9749eb1cee4d2246b60871f1a139d8920451e30b8ed54ea134431fa0de4c29",
+  "original_ERA5_canonical_2020_SHA": "275804a076a81c3c8ae9a572e0359ca524ef9c90627ccca2c6862805093b019c",
+  "pressure_source": "EXTERNALLY_FIXED_ORIGINAL_OPENMETEO_DONOR_ERA5_NOT_NATIVE_CANESM5_PS",
+  "T_source": "EXACT_NATIVE_NEX_DAILY_MEAN_MIN_MAX_SOURCED_ERA5_HOURLY_SHAPE",
+  "q_method": "CAPPED_CONVEX_EUCLIDEAN_PROJECTION_AT_FIXED_T_P",
+  "huss_daily_hard_exact_tolerance_kgkg": 1e-10,
+  "hurs_native_imposed_hard": false,
+  "hurs_conservative_bounds_certified_necessary_only": true,
+  "C2_infeasible_native_huss_never_generates_accepted_hourly": true,
+  "source_independent_physics_tests_run": 39745918655,
+  "tests_pass": 10,
+  "original_2012_pilot_run": 39746242812,
+  "original_2012_pilot_artifact": 12411591954,
+  "original_2012_days_requested": 14,
+  "original_2012_days_C1_closed": 11,
+  "original_2012_days_C2_hard_infeasible": 3,
+  "original_2012_C1_hurs_MAE_pp": 5.262964423897359,
+  "original_2012_C1_hurs_max_abs_residual_pp": 8.02172887248254,
+  "original_2012_days_native_hurs_proven_outside_conservative_bound": 6,
+  "original_2012_C2_dates": [
+    "2012-01-10",
+    "2012-01-11",
+    "2012-01-12"
+  ],
+  "original_2012_C2_deficit_gkg": [
+    0.011404962477710537,
+    0.711937278233247,
+    0.3311326141067159
+  ],
+  "original_2012_C1_native_hurs_proven_infeasible_at_fixed_T_P_huss_dates": [
+    "2012-01-13",
+    "2012-01-14",
+    "2012-01-15",
+    "2012-01-16",
+    "2012-07-13",
+    "2012-07-14"
+  ],
+  "previous_2014_LP_known_rejection_regression_run": 39746744404,
+  "previous_2014_LP_known_rejection_regression_artifact": 12411746581,
+  "known_2014_blocks_still_C2": 15,
+  "known_2014_blocks_falsely_accepted": 0,
+  "new_GCM_native_ps_source_qualified": false,
+  "over_ice_saturation_validated": false,
+  "source_RH_joint_huss_exact_future_climate_qualified": false,
+  "annual_original_2014_full_source_weather_epw_created": false,
+  "production_epw_ready": false,
+  "main_branch_not_merged": true
+}

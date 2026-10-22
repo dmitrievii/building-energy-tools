@@ -1,9 +1,7 @@
 name: IGE P9.3B3 one retrospective 2014 original 15 blocked source physical regression
+# Physically verified research 2012 source / 2014 negative regression frozen.
+# Only explicit workflow_dispatch; no automatic source or research reruns.
 on:
-  push:
-    branches: ['research/ige-p9-3b3-joint-tpq-water-projection-20261022']
-    paths:
-      - '.github/workflows/ige-p9-3b3-once-2014-known-15-regression.yml'
   workflow_dispatch:
 permissions:
   contents: read

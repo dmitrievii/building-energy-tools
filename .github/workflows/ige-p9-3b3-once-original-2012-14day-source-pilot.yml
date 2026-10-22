@@ -1,9 +1,7 @@
 name: IGE P9.3B3 one original NASA 2012 joint q mass projection source 14 day audit
+# Physically verified research 2012 source / 2014 negative regression frozen.
+# Only explicit workflow_dispatch; no automatic source or research reruns.
 on:
-  push:
-    branches: ['research/ige-p9-3b3-joint-tpq-water-projection-20261022']
-    paths:
-      - '.github/workflows/ige-p9-3b3-once-original-2012-14day-source-pilot.yml'
   workflow_dispatch:
 permissions:
   contents: read
