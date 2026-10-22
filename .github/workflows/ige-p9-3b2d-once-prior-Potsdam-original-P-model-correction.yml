@@ -1,0 +1,30 @@
+name: IGE P9.3B2D correct prior Potsdam 2023 native absolute pressure validation parser
+on:
+  push:
+    branches: ['research/ige-p9-3b2d-dwd-pressure-availability-20261022']
+    paths:
+      - '.github/workflows/ige-p9-3b2d-once-prior-Potsdam-original-P-model-correction.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  retrospective_original_Potsdam_2023_pressure_skill_erratum:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned xarray ARCO 0.25 ERA5 geopotential surface source
+        run: python -m pip install 'numpy>=1.26,<3' 'xarray==2024.10.0' 'gcsfs>=2024.2,<2026' 'zarr==2.18.7' 'dask[array]>=2024.2,<2026'
+      - name: Re-evaluate only old preselected 2023 Potsdam Jan Jul DWD absolute P using corrected original CSV headers, ERA5 B0 B3 B4 frozen
+        run: python -u research/ige_cmip6/p9_3b2d_retrospective_Potsdam_2023_true_P_validation.py --out outputs/p93b2d-Potsdam-corrected
+      - name: Archive superseding retrospective original source pressure method comparison and SHA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p93b2d-retrospective-corrected-Potsdam-2023-absolute-P-ERA5
+          path: outputs/p93b2d-Potsdam-corrected/*.json
+          retention-days: 30
+          if-no-files-found: warn
