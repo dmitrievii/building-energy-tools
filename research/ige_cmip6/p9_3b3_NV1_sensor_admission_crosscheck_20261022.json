@@ -1,0 +1,393 @@
+{
+  "phase": "P9.3B3_NV1_INDEPENDENT_SENSOR_ADMISSION_AND_SPATIAL_SUPPORT_CROSSCHECK",
+  "source_run_id": 39765492318,
+  "source_tested_commit": "bd6f200d13a7e8888791323c28e6b73a9fefc2b7",
+  "source_release_commit": "a8f9c35878c58394a54910cd6db969bb313b6bfb",
+  "source_preregistration_commit": "27a47ca17603bd0e6969ba8f9706f922591cff31",
+  "tests_in_source_CI": 6,
+  "artifact_id": 12419308583,
+  "artifact_zip_sha256": "0bc868fc1beaf5b54ac787689898d6a90d736bde1904686922279883bdcebc09",
+  "artifact_json_sha256": "fde6ce7fee1209e36006f2dbb59f71540e42a19ca0082fbd0e96e39a77e26cb1",
+  "job_log_sha256": "70876f34d87af52a7e1130950c0404a767e07523d071bbc80f3072e0d38a7eef",
+  "source_implementation_sha256": {
+    "research/ige_cmip6/p9_3b3_native_at_valley_source_only.py": "9ae091f38470bf41971c9e2ef006ebc6003a3afc41c15c3adf3f1043d04e33b3",
+    "research/ige_cmip6/test_p9_3b3_native_at_valley_source_only.py": "c0a3081e1f76594612997a66223562b6bcb6b648a9723c39aa855489c4448fa6"
+  },
+  "source_protocol_sha256": "c450152479e34c7e89cf2dd0900f12a2e5e0af322e6933a51c8dbcd2ed48fcab",
+  "verified_Work_audit_sha256": "7f93deb1ed06b3bc70c7002d4133c1f8031d4f41259bf31bb26ab77a0303567b",
+  "source_geometry_report": {
+    "phase": "IGE_P93B3_NATIVE_GRAZ_VALLEY_SOURCE_ONLY_CENSUS_V1",
+    "base_WORK_completed_run": 39757573033,
+    "source_original_commit": "aebdc005505d2789940fe3f5f7eb14e5d31b788e",
+    "prior_incomplete_39_of_50_resolved": true,
+    "experimental_scope": "SOURCE_ONLY_GRAZ_NATIVE_OROGRAPHY_NO_PREDICTION",
+    "preregistered_control": "docs/IGE_P9_3B3_NATIVE_AT_VALLEY_SOURCE_ONLY_GEOMETRY_PREREG_20261022_RU.md",
+    "frozen_source_protocol_SHA256": "c450152479e34c7e89cf2dd0900f12a2e5e0af322e6933a51c8dbcd2ed48fcab",
+    "historically_dated_WMDR_barometer": {
+      "station": "Graz Universität",
+      "wsi": "0-20000-0-11290",
+      "lat": 47.0777777778,
+      "lon": 15.4488888889,
+      "sensor_height_MSL_m": 378.8,
+      "original_WMDR_SHA256": "d58aa5a6c37fb030d9b8a3bcd8c7c3c1cf0964a2609acf43c1408cba9f13b788",
+      "datum_verification": "APPROXIMATE_GEOID_MSL_TO_PHI_OVER_CONSTANT_G0_NOT_CERTIFIED"
+    },
+    "native_N320_total_grid_coordinates": 542080,
+    "source_native_columns_considered_within_100km": 32,
+    "original_FOUR_IMMEDIATE_NATIVE_GRID_SURFACE": [
+      {
+        "latitude": 47.35361102203147,
+        "longitude": 15.2,
+        "distance_km": 35.97347868276037,
+        "surface_H_m": 943.1441883687206
+      },
+      {
+        "latitude": 47.35361102203147,
+        "longitude": 15.6,
+        "distance_km": 32.72589832357054,
+        "surface_H_m": 839.2077532936778
+      },
+      {
+        "latitude": 47.072580762649004,
+        "longitude": 15.2,
+        "distance_km": 18.856703417243153,
+        "surface_H_m": 664.5870791950676
+      },
+      {
+        "latitude": 47.072580762649004,
+        "longitude": 15.6,
+        "distance_km": 11.457920449247878,
+        "surface_H_m": 395.1281141367611
+      }
+    ],
+    "original_control_hours": [
+      {
+        "timestamp_UTC": "2021-02-01T00:00",
+        "original_GRIB_z": {
+          "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/2021/202102_hres_zs.grb2",
+          "range": [
+            0,
+            822673
+          ],
+          "bytes": 822674,
+          "sha256": "4012e323ec8e7fb6f4e5f28c99342e82212393e4f2ee1b27170057ad33f8b278",
+          "edition": 2,
+          "paramId": 129,
+          "gridType": "sh",
+          "J": 639,
+          "K": 639,
+          "M": 639,
+          "level": 1,
+          "dataDate": 20210201,
+          "dataTime": 0,
+          "packingType": "spectral_complex",
+          "bitsPerValue": 16,
+          "typeOfLevel": "hybrid",
+          "step": 0,
+          "dataType": "an",
+          "hybrid_pv_sha256": "bdf13293abb3604cf1e972568b9bc7ac1ea447dadc21f6d38df34611fb940cb0"
+        },
+        "source_cast_GRIB_CO_z_control": {
+          "status": "ORIGINAL_GRIB_TO_CO_FLOAT32_EXACT",
+          "coefficient_count": 410240,
+          "max_abs_float32_cast_error": 7.6227717897836555e-06
+        },
+        "regridding": "SH_T639_SHTOOLS_REAL_4PI_TO_ORIGINAL_N320_PREDICTOR_ONLY",
+        "original_source_z_checksum_at_native_points": "ef1c1302dee21197c9dd5520f625c2a23cf218f585626d8287bcc1db203dc675"
+      },
+      {
+        "timestamp_UTC": "2021-08-01T00:00",
+        "original_GRIB_z": {
+          "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/2021/202108_hres_zs.grb2",
+          "range": [
+            0,
+            822673
+          ],
+          "bytes": 822674,
+          "sha256": "9e46ab5031163ce6948f84f0b6006aee5e45f44d46f317347a77635340512a22",
+          "edition": 2,
+          "paramId": 129,
+          "gridType": "sh",
+          "J": 639,
+          "K": 639,
+          "M": 639,
+          "level": 1,
+          "dataDate": 20210801,
+          "dataTime": 0,
+          "packingType": "spectral_complex",
+          "bitsPerValue": 16,
+          "typeOfLevel": "hybrid",
+          "step": 0,
+          "dataType": "an",
+          "hybrid_pv_sha256": "bdf13293abb3604cf1e972568b9bc7ac1ea447dadc21f6d38df34611fb940cb0"
+        },
+        "source_cast_GRIB_CO_z_control": {
+          "status": "ORIGINAL_GRIB_TO_CO_FLOAT32_EXACT",
+          "coefficient_count": 410240,
+          "max_abs_float32_cast_error": 7.6227717897836555e-06
+        },
+        "regridding": "SH_T639_SHTOOLS_REAL_4PI_TO_ORIGINAL_N320_PREDICTOR_ONLY",
+        "original_source_z_checksum_at_native_points": "ef1c1302dee21197c9dd5520f625c2a23cf218f585626d8287bcc1db203dc675"
+      }
+    ],
+    "max_same_surface_geopotential_height_difference_m": 0.0,
+    "new_2021_pressure_scores_produced": false,
+    "original_station_pressure_hourly_observations_read": false,
+    "observed_pressure_used_to_select_native_column": false,
+    "original_temperature_and_specific_humidity_model_columns_not_loaded": true,
+    "original_CanESM5_native_pressure_unavailable": true,
+    "new_independent_AT_DE_CH_pressure_accuracy_validation_qualified": false,
+    "B4_qualified": false,
+    "production_epw_ready": false,
+    "source_lineage": {
+      "surface_CO_z": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-surface.zarr-v2",
+      "native_reduced_gaussian_latlon_source": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2"
+    },
+    "radii": [
+      {
+        "radius_km": 25.0,
+        "n_source_native_N320_columns_inside_radius": 2,
+        "n_air_domain_reaches_barometer_height_nominal": 0,
+        "n_air_domain_reaches_2m_below_barometer_sensitivity": 0,
+        "min_source_surface_height_m": 395.1281141367611,
+        "max_source_surface_height_m": 664.5870791950676,
+        "nearest_native_grid_geometric": {
+          "latitude": 47.072580762649004,
+          "longitude": 15.6,
+          "distance_km": 11.457920449247878,
+          "native_model_surface_geopotential_height_m": 395.1281141367611,
+          "barometer_minus_surface_height_m": -16.328114136761087
+        },
+        "nearest_air_column_that_reaches_barometer": null,
+        "nearest_five_air_columns_that_reach_barometer": [],
+        "original_station_pressure_scores_accessed": false
+      },
+      {
+        "radius_km": 50.0,
+        "n_source_native_N320_columns_inside_radius": 8,
+        "n_air_domain_reaches_barometer_height_nominal": 2,
+        "n_air_domain_reaches_2m_below_barometer_sensitivity": 2,
+        "min_source_surface_height_m": 339.8640826446401,
+        "max_source_surface_height_m": 1096.3075725056794,
+        "nearest_native_grid_geometric": {
+          "latitude": 47.072580762649004,
+          "longitude": 15.6,
+          "distance_km": 11.457920449247878,
+          "native_model_surface_geopotential_height_m": 395.1281141367611,
+          "barometer_minus_surface_height_m": -16.328114136761087
+        },
+        "nearest_air_column_that_reaches_barometer": {
+          "latitude": 46.79155050131955,
+          "longitude": 15.6,
+          "distance_km": 33.83191925941602,
+          "native_model_surface_geopotential_height_m": 372.5592962276722,
+          "barometer_minus_surface_height_m": 6.240703772327834
+        },
+        "nearest_five_air_columns_that_reach_barometer": [
+          {
+            "latitude": 46.79155050131955,
+            "longitude": 15.6,
+            "distance_km": 33.83191925941602,
+            "native_model_surface_geopotential_height_m": 372.5592962276722,
+            "barometer_minus_surface_height_m": 6.240703772327834
+          },
+          {
+            "latitude": 47.072580762649004,
+            "longitude": 16.0,
+            "distance_km": 41.738449172784655,
+            "native_model_surface_geopotential_height_m": 339.8640826446401,
+            "barometer_minus_surface_height_m": 38.93591735535989
+          }
+        ],
+        "original_station_pressure_scores_accessed": false
+      },
+      {
+        "radius_km": 75.0,
+        "n_source_native_N320_columns_inside_radius": 19,
+        "n_air_domain_reaches_barometer_height_nominal": 5,
+        "n_air_domain_reaches_2m_below_barometer_sensitivity": 5,
+        "min_source_surface_height_m": 234.3595498368701,
+        "max_source_surface_height_m": 1206.172535461802,
+        "nearest_native_grid_geometric": {
+          "latitude": 47.072580762649004,
+          "longitude": 15.6,
+          "distance_km": 11.457920449247878,
+          "native_model_surface_geopotential_height_m": 395.1281141367611,
+          "barometer_minus_surface_height_m": -16.328114136761087
+        },
+        "nearest_air_column_that_reaches_barometer": {
+          "latitude": 46.79155050131955,
+          "longitude": 15.6,
+          "distance_km": 33.83191925941602,
+          "native_model_surface_geopotential_height_m": 372.5592962276722,
+          "barometer_minus_surface_height_m": 6.240703772327834
+        },
+        "nearest_five_air_columns_that_reach_barometer": [
+          {
+            "latitude": 46.79155050131955,
+            "longitude": 15.6,
+            "distance_km": 33.83191925941602,
+            "native_model_surface_geopotential_height_m": 372.5592962276722,
+            "barometer_minus_surface_height_m": 6.240703772327834
+          },
+          {
+            "latitude": 47.072580762649004,
+            "longitude": 16.0,
+            "distance_km": 41.738449172784655,
+            "native_model_surface_geopotential_height_m": 339.8640826446401,
+            "barometer_minus_surface_height_m": 38.93591735535989
+          },
+          {
+            "latitude": 46.79155050131955,
+            "longitude": 16.0,
+            "distance_km": 52.57275460684745,
+            "native_model_surface_geopotential_height_m": 234.3595498368701,
+            "barometer_minus_surface_height_m": 144.44045016312992
+          },
+          {
+            "latitude": 46.51052023808231,
+            "longitude": 15.75,
+            "distance_km": 67.1120280634791,
+            "native_model_surface_geopotential_height_m": 374.1292690837974,
+            "barometer_minus_surface_height_m": 4.670730916202615
+          },
+          {
+            "latitude": 47.072580762649004,
+            "longitude": 16.4,
+            "distance_km": 72.02760417047665,
+            "native_model_surface_geopotential_height_m": 262.66991956503597,
+            "barometer_minus_surface_height_m": 116.13008043496404
+          }
+        ],
+        "original_station_pressure_scores_accessed": false
+      },
+      {
+        "radius_km": 100.0,
+        "n_source_native_N320_columns_inside_radius": 32,
+        "n_air_domain_reaches_barometer_height_nominal": 9,
+        "n_air_domain_reaches_2m_below_barometer_sensitivity": 9,
+        "min_source_surface_height_m": 216.1343375958943,
+        "max_source_surface_height_m": 1472.8769896895678,
+        "nearest_native_grid_geometric": {
+          "latitude": 47.072580762649004,
+          "longitude": 15.6,
+          "distance_km": 11.457920449247878,
+          "native_model_surface_geopotential_height_m": 395.1281141367611,
+          "barometer_minus_surface_height_m": -16.328114136761087
+        },
+        "nearest_air_column_that_reaches_barometer": {
+          "latitude": 46.79155050131955,
+          "longitude": 15.6,
+          "distance_km": 33.83191925941602,
+          "native_model_surface_geopotential_height_m": 372.5592962276722,
+          "barometer_minus_surface_height_m": 6.240703772327834
+        },
+        "nearest_five_air_columns_that_reach_barometer": [
+          {
+            "latitude": 46.79155050131955,
+            "longitude": 15.6,
+            "distance_km": 33.83191925941602,
+            "native_model_surface_geopotential_height_m": 372.5592962276722,
+            "barometer_minus_surface_height_m": 6.240703772327834
+          },
+          {
+            "latitude": 47.072580762649004,
+            "longitude": 16.0,
+            "distance_km": 41.738449172784655,
+            "native_model_surface_geopotential_height_m": 339.8640826446401,
+            "barometer_minus_surface_height_m": 38.93591735535989
+          },
+          {
+            "latitude": 46.79155050131955,
+            "longitude": 16.0,
+            "distance_km": 52.57275460684745,
+            "native_model_surface_geopotential_height_m": 234.3595498368701,
+            "barometer_minus_surface_height_m": 144.44045016312992
+          },
+          {
+            "latitude": 46.51052023808231,
+            "longitude": 15.75,
+            "distance_km": 67.1120280634791,
+            "native_model_surface_geopotential_height_m": 374.1292690837974,
+            "barometer_minus_surface_height_m": 4.670730916202615
+          },
+          {
+            "latitude": 47.072580762649004,
+            "longitude": 16.4,
+            "distance_km": 72.02760417047665,
+            "native_model_surface_geopotential_height_m": 262.66991956503597,
+            "barometer_minus_surface_height_m": 116.13008043496404
+          }
+        ],
+        "original_station_pressure_scores_accessed": false
+      }
+    ],
+    "status": "SOURCE_ONLY_AT_LEAST_ONE_NATIVE_COLUMN_REACHES_BAROMETER_NOT_PRESSURE_QUALIFICATION",
+    "NO_STATION_PRESSURE_T_RH_VALUES_READ": true
+  },
+  "geometry_check_scope": "Scalar distances, published candidates, barometer/T/RH lower-bound admission and spatial support recomputed; full 32-point census not independently recounted because full candidate catalogue is absent from the source artifact",
+  "barometer_height_MSL_m": 378.8,
+  "thermohygrometer_height_MSL_m": 368.7,
+  "candidate_admission": [
+    {
+      "latitude": 46.79155050131955,
+      "longitude": 15.6,
+      "distance_km": 33.83191925941602,
+      "native_surface_H_m": 372.5592962276722,
+      "barometer_lower_boundary_margin_m": 6.240703772327834,
+      "thermohygrometer_lower_boundary_margin_m": -3.859296227672189,
+      "barometer_nominal_lower_boundary_pass": true,
+      "thermohygrometer_nominal_lower_boundary_pass": false,
+      "barometer_2m_buffer_pass": true,
+      "thermohygrometer_2m_buffer_pass": false,
+      "full_hourly_column_admission": "NOT_TESTED_NV1_HAS_NO_T_Q_P_PROFILES"
+    },
+    {
+      "latitude": 47.072580762649004,
+      "longitude": 16.0,
+      "distance_km": 41.738449172784655,
+      "native_surface_H_m": 339.8640826446401,
+      "barometer_lower_boundary_margin_m": 38.93591735535989,
+      "thermohygrometer_lower_boundary_margin_m": 28.835917355359868,
+      "barometer_nominal_lower_boundary_pass": true,
+      "thermohygrometer_nominal_lower_boundary_pass": true,
+      "barometer_2m_buffer_pass": true,
+      "thermohygrometer_2m_buffer_pass": true,
+      "full_hourly_column_admission": "NOT_TESTED_NV1_HAS_NO_T_Q_P_PROFILES"
+    }
+  ],
+  "count_barometer_lower_boundary_pass_within_50km": 2,
+  "count_thermohygrometer_lower_boundary_pass_among_the_two_barometer_candidates": 1,
+  "old_Work_stencil": "FOUR_BRACKETING_GRID_CELLS_TWO_LATITUDE_RINGS_AND_TWO_LONGITUDE_SIDES; NOT_FOUR_NEAREST_BY_DISTANCE",
+  "nearest_admissible_omitted_distance_km": 33.83191925941602,
+  "furthest_included_stencil_distance_km": 35.97347868276037,
+  "horizontal_support": {
+    "all_two_donors_east_of_target": true,
+    "all_two_donors_south_of_target": true,
+    "target_inside_nonnegative_weight_convex_hull": false,
+    "inverse_square_distance_weights_for_geometry_diagnostic_only": [
+      0.603491880035562,
+      0.3965081199644379
+    ],
+    "first_moment_east_north_km_local_tangent_approximation": [
+      23.45290112611643,
+      -19.436483540171043
+    ],
+    "first_moment_norm_km": 30.46006342144962,
+    "two_donor_linear_pressure_design_rank": 2,
+    "unknowns_for_unconstrained_two_dimensional_affine_field": 3,
+    "full_2D_horizontal_gradient_identified_by_two_donors": false,
+    "diagnostic_is_new_model_prediction_or_pressure_skill": false
+  },
+  "scientific_limits": [
+    "Only the surface lower boundary has been tested; hourly T/q/p and full air-domain coverage remain uncomputed",
+    "H_MSL mapped to Phi/g0 remains a conditional datum approximation; 2m buffer is a design sensitivity, not a certified uncertainty bound",
+    "Barometer and thermohygrometer must use their own coordinates, heights, admitted columns and observation operators",
+    "Regional donor transfer requires an explicit horizontal-field assumption or uncertainty interval; geometry alone gives no pressure accuracy"
+  ],
+  "new_pressure_scores_produced": false,
+  "new_independent_holdout": false,
+  "B4_qualified": false,
+  "production_epw_ready": false,
+  "source_reports_or_scientific_code_rewritten": false
+}
