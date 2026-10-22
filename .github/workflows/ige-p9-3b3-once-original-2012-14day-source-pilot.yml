@@ -1,0 +1,57 @@
+name: IGE P9.3B3 one original NASA 2012 joint q mass projection source 14 day audit
+on:
+  push:
+    branches: ['research/ige-p9-3b3-joint-tpq-water-projection-20261022']
+    paths:
+      - '.github/workflows/ige-p9-3b3-once-original-2012-14day-source-pilot.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  NASA_original_CanESM5_2012_pressure_q_hard_closure:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download existing registered original NASA CanESM5 full historical 1995 to 2014 raw daily source
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          name: ige-p6-CanESM5-historical-1995-2014
+          path: inputs/p93b3-native-CanESM5
+      - name: Verify original NASA registered exact daily source SHA and package canonical original zip
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib,json,zipfile
+          root=Path('inputs/p93b3-native-CanESM5')
+          required=('joint_daily_raw.csv','quality_report.json','source_provenance.json')
+          if not all((root/n).is_file() for n in required):
+              raise ValueError('P93B3_REGISTERED_ORIGINAL_NASA_FILE_MISSING')
+          sha=hashlib.sha256((root/'joint_daily_raw.csv').read_bytes()).hexdigest()
+          registry=json.loads(Path('research/ige_cmip6/p7c3_expected_daily_source_shas.json').read_text())['source_sha256']['CanESM5_historical-1995-2014']
+          if sha!=registry:raise ValueError('P93B3_REGISTERED_ORIGINAL_NASA_SHA_CHANGED')
+          dst=Path('inputs/p93b3-canonical');dst.mkdir(parents=True,exist_ok=True)
+          with zipfile.ZipFile(dst/'IGE_P7C3_SRC_CanESM5_historical-1995-2014.zip','w',zipfile.ZIP_DEFLATED) as z:
+              for item in sorted(root.iterdir()):
+                  if item.is_file():z.write(item,item.name)
+          print('P93B3_ORIGINAL_NASA_SOURCE_SHA_PASS',sha,flush=True)
+          PY
+      - name: Run original NASA 2012 14-day previously preregistered first original ERA5 2019 2020 same-month source donor 24h T p q physics projection
+        run: |
+          python -u research/ige_cmip6/p9_3b3_original_CanESM5_2012_14day_joint_source_pilot.py \
+           --original-canesm5-registered-zip inputs/p93b3-canonical/IGE_P7C3_SRC_CanESM5_historical-1995-2014.zip \
+           --out outputs/p93b3-original
+      - name: Save authentic original input SHA, all 14 daily physical statuses and correction ledger, not raw native data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p93b3-original-CanESM5-2012-14day-joint-T-P-q-C1-C2-ledger
+          path: outputs/p93b3-original/*.json
+          retention-days: 30
+          if-no-files-found: warn
