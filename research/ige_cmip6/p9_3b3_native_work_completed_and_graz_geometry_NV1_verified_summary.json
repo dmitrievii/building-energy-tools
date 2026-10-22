@@ -1,0 +1,97 @@
+{
+  "phase": "IGE_P93B3_WORK_NATIVE_COMPLETE_AND_NV1_GRAZ_GENUINE_N320_SOURCE_ONLY_CLOSE",
+  "native_work_base_branch": "research/ige-p9-3b3-native-completion-audit-20261022",
+  "native_work_base_sha": "aebdc005505d2789940fe3f5f7eb14e5d31b788e",
+  "native_work_run": 39757573033,
+  "native_work_profiles_expected": 50,
+  "native_work_profiles_read": 50,
+  "native_work_country_day_method_cells_expected": 24,
+  "native_work_cells_scored": 16,
+  "native_work_AT_score_cells_blocked": 8,
+  "native_work_local_automated_tests_total": 285,
+  "native_work_source_AT_station_observed_pressure_hours": 48,
+  "native_work_source_AT_hourly_pressure_prediction_hours": 0,
+  "original_NATIVE_GRAZ_WMDR_barometer_height_m": 378.8,
+  "Graz_WMDR_barometer_latlon": [
+    47.0777777778,
+    15.4488888889
+  ],
+  "native_source_Austria_prior_four_ground_height_m": [
+    395.1281141367611,
+    664.5870791950676,
+    839.2077532936778,
+    943.1441883687206
+  ],
+  "native_geometry_new_pre_registered_R_km": [
+    25,
+    50,
+    75,
+    100
+  ],
+  "new_source_original_N320_ncolumns_within_R": [
+    2,
+    8,
+    19,
+    32
+  ],
+  "new_source_nominal_air_domain_reaches_in_R": [
+    0,
+    2,
+    5,
+    9
+  ],
+  "new_source_conservative_minus2m_reaches_in_R": [
+    0,
+    2,
+    5,
+    9
+  ],
+  "new_source_nearest_eligible_native_latlon": [
+    46.79155050131955,
+    15.6
+  ],
+  "new_source_nearest_eligible_distance_km": 33.83191925941602,
+  "new_source_nearest_eligible_surface_geopotential_height_m": 372.5592962276722,
+  "new_source_second_eligible_native_latlon": [
+    47.072580762649004,
+    16
+  ],
+  "new_source_second_eligible_distance_km": 41.738449172784655,
+  "new_source_second_eligible_surface_geopotential_height_m": 339.8640826446401,
+  "new_source_GRIB_CO_float32_original_coefficients_exact_at_two_timestamps": true,
+  "new_source_native_z_h_static_JanAug_delta_m": 0,
+  "new_source_native_geometry_CI": 39765492318,
+  "new_source_geometry_artifact": 12419308583,
+  "new_source_source_only_tests_passed": 6,
+  "station_pressures_temperature_humidity_not_opened_in_new_source_only_geometry": true,
+  "native_work_results_original_station_CH_Jan_mae_hPa": {
+    "P1_isothermal": 0.9511026394506796,
+    "P1_fixed_lapse": 0.7686424999913409,
+    "P2_single": 0.856826951938201,
+    "P2_multi": 0.856826951938201
+  },
+  "native_work_results_original_station_CH_Aug_mae_hPa": {
+    "P1_isothermal": 0.261717611166617,
+    "P1_fixed_lapse": 0.30703544160918683,
+    "P2_single": 0.3375738182299271,
+    "P2_multi": 0.3375738182299271
+  },
+  "native_work_results_original_station_DE_Jan_mae_hPa": {
+    "P1_isothermal": 0.1589243325636259,
+    "P1_fixed_lapse": 0.1594543630435328,
+    "P2_single": 0.15892830306763547,
+    "P2_multi": 0.21489355691161108
+  },
+  "native_work_results_original_station_DE_Aug_mae_hPa": {
+    "P1_isothermal": 0.2685484433337418,
+    "P1_fixed_lapse": 0.26811448450165704,
+    "P2_single": 0.2678631157259588,
+    "P2_multi": 0.2863841827940693
+  },
+  "pressure_skill_AT_DE_CH_qualified": false,
+  "original_NASA_future_native_pressure_ps_available": false,
+  "B4_qualified": false,
+  "production_epw_ready": false,
+  "Work_branch_not_modified": true,
+  "main_not_merged": true
+}

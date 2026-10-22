@@ -1,9 +1,6 @@
 name: IGE P9.3B3 NV1 one genuine native N320 source-only Graz valley surface geometry census
+# Frozen original-source geometry audit; reruns explicitly manual only.
 on:
-  push:
-    branches: ['research/ige-p9-3b3-native-at-valley-source-only-20261022']
-    paths:
-      - '.github/workflows/ige-p9-3b3-nv1-once-genuine-Graz-geopotential-only.yml'
   workflow_dispatch:
 permissions:
   contents: read
