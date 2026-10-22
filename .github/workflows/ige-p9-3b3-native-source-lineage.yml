@@ -1,11 +1,6 @@
 name: IGE P9.3B3 native surface lineage sensor history and revealed pressure pilot
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - research/ige-p9-3b3-p2-source-lineage-20261022
-    paths:
-      - research/ige_cmip6/p9_3b3_native_protocol.json
 permissions:
   contents: read
   actions: read

@@ -1,0 +1,50 @@
+{
+  "phase": "P9.3B3_NATIVE_RESOURCE_COMPLETION_LOCAL_VERIFICATION_20261022",
+  "base_commit": "cca2c8e3255ef34b2498ff5d2581b59e973e510b",
+  "new_tests": 8,
+  "tests_passed": 285,
+  "test_evidence": {
+    "B3": {
+      "tests_passed": 213,
+      "log_sha256": "744784e8c96a423e23b0ad8fd3a57b7f928c8a7a3e1a91f1cf2203925e9b7172"
+    },
+    "P93A": {
+      "tests_passed": 14,
+      "log_sha256": "31e1170ab18927361d4eaffaf0761985f911bc909fae9b82380c99d55e68f2ea"
+    },
+    "P92": {
+      "tests_passed": 50,
+      "log_sha256": "d6bef7232129fe2f86c118fd2101bb70946f9144d0568545591ffe99096e57aa"
+    },
+    "B2": {
+      "tests_passed": 8,
+      "log_sha256": "090bc7523f5dd6d3499c371d202d764402d61938493e95933ef5eff4f1bcf894"
+    }
+  },
+  "canonical_DWD_pressure_semantics": "PASS_P93B2D_ORIGINAL_PRESSURE_FIELD_SEMANTICS_CONTRACTS_PASS",
+  "protected_controls_verified": 58,
+  "protected_changed_count": 0,
+  "original_native_protocol_unchanged": true,
+  "native_column_height_and_scoring_science_files_unchanged": true,
+  "independent_prior_CI_audit_reproduced_byte_identically": true,
+  "implementation_and_audit_sha256": {
+    "research/ige_cmip6/p9_3b3_native_sources.py": "5425e7174c129bb545948aa83048670f20a8fd48cbb165b1e64076c1ebcaeac2",
+    "research/ige_cmip6/p9_3b3_native_run.py": "25fff9d5e0419975abe0b5678068de2bdb23eb0f1265372e1a0c21849d84ec41",
+    "research/ige_cmip6/test_p9_3b3_native_sources.py": "bce77e07652c50e39c18ff6763718f5b24a74dd296151d927cd5ce77d0f70194",
+    "research/ige_cmip6/test_p9_3b3_native_pipeline.py": "4c29fb5ecc1119736eec9e43939947cb4037022dc24425ede1cb05b50913a033",
+    "research/ige_cmip6/p9_3b3_native_completion_protocol.json": "c450152479e34c7e89cf2dd0900f12a2e5e0af322e6933a51c8dbcd2ed48fcab",
+    ".github/workflows/ige-p9-3b3-native-source-lineage.yml": "924f993a046d436fac538890290f00ced91c3119a002925a0c2f0bbf45eb02ce",
+    ".github/workflows/ige-p9-3b3-native-completion.yml": "a9715b7618e78e0cb395ca0e833ab22e725e0d85142221a091065f69d39bcf98",
+    "research/ige_cmip6/audit_p9_3b3_native_CI_39753778078.py": "52d912a0b9437ee525d8ec32ff68935feac64cfd63a6e754894a4f30dfb2c237",
+    "research/ige_cmip6/p9_3b3_native_verified_CI_39753778078.json": "b6f361d53becf450051b925fd982a6c3d21d0b85ccdb50ba437c79fd639bdfe7",
+    "docs/IGE_P9_3B3_NATIVE_CI_AUDIT_AND_NEXT_RU_20261022.md": "e9044484b4a1a941ca1b06fc83f7dce41cc28db7eb150373e1d982c5c32597b5"
+  },
+  "full_new_source_pilot": "NOT_RUN_LOCALLY; scheduled CI must prove 50/50 source-hour completion",
+  "independent_accuracy": "NOT_QUALIFIED",
+  "B4_qualified": false,
+  "production_epw_ready": false,
+  "operational_ready": false,
+  "global_station_validation_added": false,
+  "main_changed": false,
+  "merge_performed": false
+}

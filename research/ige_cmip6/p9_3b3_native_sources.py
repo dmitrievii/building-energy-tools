@@ -53,10 +53,14 @@ class NativeCache:
             if self.cache_only:raise SourceBlocked('P93N_CACHE_ONLY_OBJECT_NOT_AVAILABLE')
             with self._lock:
                 if self.requests>=self.protocol['max_requests']:raise SourceBlocked('P93N_REQUEST_BUDGET')
-                cap=min(cap,self.protocol['max_download_bytes']-self.downloaded-self._reserved)
-                if cap<=0:raise SourceBlocked('P93N_DOWNLOAD_BUDGET')
-                self._reserved+=cap;self.requests+=1
-            reserved=cap
+                if self.downloaded+self._reserved>=self.protocol['max_download_bytes']:
+                    raise SourceBlocked('P93N_DOWNLOAD_BUDGET')
+                self.requests+=1
+            # Headers do not consume the HTTP-body byte budget. Reserving the
+            # 80 MB object ceiling before learning Content-Length can reject
+            # concurrent 1-2 MB chunks whose actual combined bodies fit.
+            # Reserve the declared body atomically before the first body read.
+            reserved=0
             headers={'User-Agent':'IGE-P9.3B3-native-source-lineage/1.0'}
             if byte_range is not None:
                 a,b=byte_range
@@ -72,10 +76,15 @@ class NativeCache:
                         raise SourceBlocked('P93N_RANGE_IGNORED_REFUSE_WHOLE_MONTH_DOWNLOAD')
                 length=int(response.headers['Content-Length']) if 'Content-Length' in response.headers else None
                 if length is not None and not 0<=length<=cap:raise SourceBlocked('P93N_OBJECT_OR_DOWNLOAD_BUDGET')
-                if length is not None:
-                    with self._lock:self._reserved-=reserved-length
-                    reserved=length
-                read_cap=cap if length is None else length
+                with self._lock:
+                    remaining=self.protocol['max_download_bytes']-self.downloaded-self._reserved
+                    if length is None:
+                        read_cap=min(cap,remaining)
+                        if read_cap<=0:raise SourceBlocked('P93N_DOWNLOAD_BUDGET')
+                    else:
+                        if length>remaining:raise SourceBlocked('P93N_DOWNLOAD_BUDGET')
+                        read_cap=length
+                    self._reserved+=read_cap;reserved=read_cap
                 parts=[];received=0
                 while received<read_cap:
                     part=response.read(min(1024*1024,read_cap-received))
@@ -83,7 +92,7 @@ class NativeCache:
                     parts.append(part);received+=len(part)
                     with self._lock:self.downloaded+=len(part);self._reserved-=len(part)
                     reserved-=len(part)
-                if received==cap and length!=cap:raise SourceBlocked('P93N_OBJECT_OR_DOWNLOAD_BUDGET')
+                if length is None and received==read_cap:raise SourceBlocked('P93N_OBJECT_OR_DOWNLOAD_BUDGET')
                 if length is not None and received!=length:raise SourceBlocked('P93N_TRUNCATED_BODY')
                 body=b''.join(parts)
             finally:

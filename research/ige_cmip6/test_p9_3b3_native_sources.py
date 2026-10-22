@@ -126,5 +126,58 @@ class NativeSupportContracts(unittest.TestCase):
             self.assertEqual(c.downloaded,sum(sizes));self.assertLessEqual(c.downloaded,64)
             self.assertEqual(c._reserved,0);self.assertLessEqual(c.requests,20)
 
+    def test_all_declared_bodies_fit_even_when_simultaneous_object_ceilings_do_not(self):
+        from concurrent.futures import ThreadPoolExecutor
+        import io
+        import threading
+        ready=threading.Barrier(6,timeout=5)
+        class Response:
+            status=200;headers={'Content-Length':'4'}
+            def __init__(self):self.body=io.BytesIO(b'abcd')
+            def geturl(self):return 'https://storage.googleapis.com/test'
+            def __enter__(self):return self
+            def __exit__(self,*args):pass
+            def read(self,n):return self.body.read(n)
+        def opened(*a,**k):ready.wait();return Response()
+        p={'max_requests':6,'max_download_bytes':24,'max_object_bytes':80,'source_timeout_seconds':1}
+        with tempfile.TemporaryDirectory() as td:
+            c=NativeCache(td,p)
+            with patch('urllib.request.urlopen',side_effect=opened):
+                with ThreadPoolExecutor(max_workers=6) as pool:
+                    bodies=list(pool.map(lambda i:c.fetch('https://storage.googleapis.com/test'+str(i)),range(6)))
+            self.assertEqual(bodies,[b'abcd']*6)
+            self.assertEqual((c.downloaded,c.requests,c._reserved),(24,6,0))
+
+    def test_declared_body_over_remaining_budget_is_rejected_before_read(self):
+        class Response:
+            status=200;headers={'Content-Length':'4'}
+            def geturl(self):return 'https://storage.googleapis.com/test'
+            def __enter__(self):return self
+            def __exit__(self,*args):pass
+            def read(self,n):raise AssertionError('body must not exceed remaining byte budget')
+        p={'max_requests':6,'max_download_bytes':3,'max_object_bytes':80,'source_timeout_seconds':1}
+        with tempfile.TemporaryDirectory() as td:
+            c=NativeCache(td,p)
+            with patch('urllib.request.urlopen',return_value=Response()):
+                with self.assertRaisesRegex(SourceBlocked,'DOWNLOAD_BUDGET'):c.fetch('https://storage.googleapis.com/test')
+            self.assertEqual((c.downloaded,c.requests,c._reserved),(0,1,0))
+
+    def test_truncated_body_counts_received_bytes_and_releases_unused_reservation(self):
+        import io
+        class Response:
+            status=200;headers={'Content-Length':'5'}
+            def __init__(self):self.body=io.BytesIO(b'abc')
+            def geturl(self):return 'https://storage.googleapis.com/test'
+            def __enter__(self):return self
+            def __exit__(self,*args):pass
+            def read(self,n):return self.body.read(n)
+        p={'max_requests':6,'max_download_bytes':10,'max_object_bytes':80,'source_timeout_seconds':1}
+        with tempfile.TemporaryDirectory() as td:
+            c=NativeCache(td,p)
+            with patch('urllib.request.urlopen',return_value=Response()):
+                with self.assertRaisesRegex(SourceBlocked,'TRUNCATED_BODY'):c.fetch('https://storage.googleapis.com/test')
+            self.assertEqual((c.downloaded,c.requests,c._reserved),(3,1,0))
+            self.assertEqual(c.records,[])
+
 
 if __name__=='__main__':unittest.main()

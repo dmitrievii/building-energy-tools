@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 from p9_3b3_native_columns import NativeColumns
 from p9_3b3_native_validation import predicted_pressure,score_pressure,score_sealed,sealed_read
-from p9_3b3_native_run import PROTOCOL,evaluate_hour,protocol_guard
+from p9_3b3_native_run import PROTOCOL,evaluate_hour,execution_summary,main,protocol_guard
 from p9_3b3_compare_vertical_frame import SourceBlocked
 from test_p9_3b3_reference_column import TIME,column
 
@@ -34,6 +34,49 @@ class NativePressureOracles(unittest.TestCase):
         for key,value in (('weights','ERROR_FITTED_WEIGHTS'),('methods',['DIFFERENT_MODEL']),
                 ('max_download_bytes',2147483649),('B4_qualified',True)):
             with self.assertRaises(ValueError):protocol_guard({**p,key:value})
+
+    def test_resource_completion_cannot_change_even_previously_unguarded_science(self):
+        import copy
+        p=json.loads(PROTOCOL.with_name('p9_3b3_native_completion_protocol.json').read_text());protocol_guard(p)
+        for key,value in (('primary_first_model_level',123),('thermo_height_AGL_m',3.),
+                ('pressure_observation_operators',{}),('station_WSI',{}),('max_download_bytes',3221225473)):
+            with self.assertRaises(ValueError):protocol_guard({**p,key:value})
+        changed=copy.deepcopy(p);changed['resource_completion']['scientific_model_changed']=True
+        with self.assertRaises(ValueError):protocol_guard(changed)
+
+    def test_complete_sources_can_have_geometric_at_blocker_and_optional_deep_failure(self):
+        stamps=[TIME];pred={TIME:{'AT':{'methods':{m:{'status':'SOURCE_BLOCKED'} for m in METHODS}}}}
+        source={'paired_surface_lineage_status':'ORIGINAL_GRIB_TO_CO_CAST_IDENTITY_CONFIRMED_AT_BOTH_CONTROL_HOURS'}
+        heights={co:{'status':'HISTORICAL_SENSOR_HEIGHT_REFERENCES_CONFIRMED_CONDITIONAL_MSL_DATUM'} for co in ('AT','DE','CH')}
+        score={'cells':[{}]*24,'observation_provenance':{co:{'status':'SOURCE_READ'} for co in heights}}
+        r=execution_summary(pred,[{'timestamp_UTC':TIME,'scope':'DEEP_DIAGNOSTIC_ONLY'}],source,heights,score,stamps,stations=True)
+        self.assertEqual(r['engineering_execution_status'],'COMPLETE_SOURCE_EXECUTION')
+        self.assertEqual(r['source_profile_hours_complete'],1)
+        self.assertFalse(r['engineering_success_is_independent_accuracy_qualification'])
+
+    def test_all_score_cells_do_not_make_a_failed_profile_complete(self):
+        source={'paired_surface_lineage_status':'ORIGINAL_GRIB_TO_CO_CAST_IDENTITY_CONFIRMED_AT_BOTH_CONTROL_HOURS'}
+        heights={co:{'status':'HISTORICAL_SENSOR_HEIGHT_REFERENCES_CONFIRMED_CONDITIONAL_MSL_DATUM'} for co in ('AT','DE','CH')}
+        score={'cells':[{}]*24,'observation_provenance':{co:{'status':'SOURCE_READ'} for co in heights}}
+        r=execution_summary({TIME:{}},[{'timestamp_UTC':TIME,'scope':'PRIMARY_PROFILE'}],source,heights,score,[TIME],stations=True)
+        self.assertEqual(r['engineering_execution_status'],'INCOMPLETE_SOURCE_EXECUTION')
+        self.assertEqual((r['source_profile_hours_complete'],r['source_profile_hours_missing_or_failed']),(0,1))
+
+    def test_observation_source_blocker_cannot_be_engineering_success(self):
+        source={'paired_surface_lineage_status':'ORIGINAL_GRIB_TO_CO_CAST_IDENTITY_CONFIRMED_AT_BOTH_CONTROL_HOURS'}
+        heights={co:{'status':'HISTORICAL_SENSOR_HEIGHT_REFERENCES_CONFIRMED_CONDITIONAL_MSL_DATUM'} for co in ('AT','DE','CH')}
+        score={'cells':[{}]*24,'observation_provenance':{co:{'status':'SOURCE_READ'} for co in heights}}
+        score['observation_provenance']['DE']={'status':'SOURCE_BLOCKED'}
+        r=execution_summary({TIME:{}},[],source,heights,score,[TIME],stations=True)
+        self.assertEqual(r['engineering_execution_status'],'INCOMPLETE_SOURCE_EXECUTION')
+        self.assertFalse(r['observation_sources_read_without_source_blocker'])
+
+    def test_cli_completion_gate_fails_after_results_saved_without_promoting_accuracy(self):
+        args=['--out','unused-output','--private-cache','unused-cache','--stations','--require-complete-sources']
+        with patch('p9_3b3_native_run.run',return_value={'engineering_execution_status':'INCOMPLETE_SOURCE_EXECUTION'}) as run:
+            self.assertEqual(main(args),1);run.assert_called_once()
+        with patch('p9_3b3_native_run.run',return_value={'engineering_execution_status':'COMPLETE_SOURCE_EXECUTION','independent_accuracy':'NOT_QUALIFIED'}):
+            self.assertEqual(main(args),0)
     def test_optional_deep_source_failure_cannot_erase_completed_primary_prediction(self):
         p={**protocol(),'source_control_hours':[TIME],'primary_first_model_level':130,'deep_diagnostic_first_model_level':109}
         class Reader:
