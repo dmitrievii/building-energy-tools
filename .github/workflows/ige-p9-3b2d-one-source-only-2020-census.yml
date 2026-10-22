@@ -1,0 +1,28 @@
+name: IGE P9.3B2D one frozen source-only 2020 DWD station-pressure availability census
+on:
+  push:
+    branches: ['research/ige-p9-3b2d-dwd-pressure-availability-20261022']
+    paths:
+      - '.github/workflows/ige-p9-3b2d-one-source-only-2020-census.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original_DWD_2020_absolute_P_availability_no_2021_observation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 32
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Strict source-only geographic preselection and 2020 original DWD station P QC census; must not read 2021 pressure values
+        run: python -u research/ige_cmip6/p9_3b2d_dwd_2020_source_pressure_census.py --out outputs/p93b2d-census
+      - name: Archive frozen station selection and original pressure availability hashes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p93b2d-2020-DWD-original-absolute-P-source-census-no-2021-values
+          path: outputs/p93b2d-census/*.json
+          retention-days: 30
+          if-no-files-found: warn
