@@ -1,0 +1,38 @@
+{
+  "run_id": 39739417052,
+  "head_sha": "bfd5ab3e748505d10b2068de3c5e09b707f76700",
+  "conclusion": "success",
+  "html_url": "https://github.com/dmitrievii/building-energy-tools/actions/runs/39739417052",
+  "log_statements": [
+    "2026-10-22T07:17:30.9564224Z Ran 179 tests in 14.893s",
+    "2026-10-22T07:17:31.5736567Z Ran 14 tests in 0.114s",
+    "2026-10-22T07:17:32.5035059Z Ran 50 tests in 0.795s",
+    "2026-10-22T07:17:32.5758861Z Ran 8 tests in 0.000s",
+    "2026-10-22T07:17:32.5941704Z P93B2D_ORIGINAL_PRESSURE_FIELD_SEMANTICS_CONTRACTS_PASS",
+    "2026-10-22T07:17:32.7622594Z Protected files: 49 changed: 0"
+  ],
+  "artifact_id": 12408856422,
+  "artifact_zip_sha256": "a30a77707202f94673aae119391d5e811173d1395c0e9ecc5d69baf5bd63da51",
+  "jobs_successful": 2,
+  "tests_passed": 251,
+  "protected_controls_verified": 49,
+  "actual_implementation_hashes_match_tested_commit": true,
+  "complete_source_hours": 2,
+  "network_bytes": 383967190,
+  "source_probe_seconds": 18.776628403000004,
+  "physical_source_reference": "NOT_QUALIFIED_CROSS_PRODUCT_GEOMETRY",
+  "independent_accuracy": "NOT_TESTED",
+  "operational_ready": false,
+  "profiles": [
+    {
+      "timestamp_UTC": "2021-02-01T00:00",
+      "max_abs_phi137_residual_m": 28.059103057024757,
+      "cross_product_necessary_condition_violations": 3
+    },
+    {
+      "timestamp_UTC": "2021-08-01T00:00",
+      "max_abs_phi137_residual_m": 28.058892363154857,
+      "cross_product_necessary_condition_violations": 2
+    }
+  ]
+}

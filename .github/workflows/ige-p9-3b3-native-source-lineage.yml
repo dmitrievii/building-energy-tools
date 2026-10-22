@@ -1,0 +1,81 @@
+name: IGE P9.3B3 native surface lineage sensor history and revealed pressure pilot
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/ige-p9-3b3-p2-source-lineage-20261022
+    paths:
+      - research/ige_cmip6/p9_3b3_native_protocol.json
+permissions:
+  contents: read
+  actions: read
+env:
+  OPENBLAS_NUM_THREADS: '1'
+  OMP_NUM_THREADS: '1'
+jobs:
+  mathematical_and_source_contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 scipy==1.17.0 numcodecs==0.16.3 pyshtools==4.13.1 eccodes==2.50.0 eccodeslib==2.50.0.33
+      - name: Independent harmonic, height history, sealed scoring and unchanged B3 C2 contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3b3_*.py' -v
+      - name: Earlier mathematics and original absolute DWD pressure
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3a*.py' -q
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_2*.py' -q
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3b2*.py' -q
+          python research/ige_cmip6/p9_3b2d_canonical_pressure_fields.py
+      - name: Frozen scientific files
+        run: |
+          python - <<'PY'
+          import json,sys
+          sys.path.insert(0,'research/ige_cmip6')
+          from p9_3b3_native_run import PROTOCOL
+          from p9_3b3_reference_run import protected_controls
+          r=protected_controls(json.loads(PROTOCOL.read_text()))
+          print('Protected files:',r['verified_count'],'changed:',r['changed_count'])
+          PY
+  native_lineage_to_sealed_pressure_pilot:
+    needs: mathematical_and_source_contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 scipy==1.17.0 numcodecs==0.16.3 pyshtools==4.13.1 eccodes==2.50.0 eccodeslib==2.50.0.33
+      - name: Original GRIB controls and historical sensor admission before revealed scores
+        run: >-
+          python -u research/ige_cmip6/p9_3b3_native_run.py --stations
+          --private-cache inputs/private-native-cache-DO-NOT-UPLOAD
+          --out outputs/native-lineage-revealed-pressure-pilot
+      - name: Separate engineering completion from scientific qualification
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          root=Path('outputs/native-lineage-revealed-pressure-pilot')
+          r=json.loads((root/'run_manifest.json').read_text())
+          s=json.loads((root/'revealed_pressure_scores.json').read_text())
+          lines=['Native P1/P2 development pilot; successful job is not independent qualification.',
+                 'Surface lineage: '+r['source_lineage_status'],
+                 'Dated sensor references: '+str(r['historical_sensor_countries_confirmed'])+' / 3',
+                 'Score cells retained: '+str(len(s['cells']))+' / '+str(s['expected_score_cells']),
+                 'Independent accuracy: '+r['independent_accuracy'],
+                 'Production EPW: false; B4 qualified: false; no merge.']
+          print('\n'.join(lines))
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:f.write('\n\n'.join(lines)+'\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ige-P93B3-native-lineage-historical-heights-REVEALED-pressure-pilot-NOT-independent-qualification
+          path: outputs/native-lineage-revealed-pressure-pilot/
+          if-no-files-found: warn
+          retention-days: 30

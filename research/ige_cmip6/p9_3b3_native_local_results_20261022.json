@@ -1,0 +1,1175 @@
+{
+  "phase": "P9.3B3_NATIVE_SOURCE_LINEAGE_SENSOR_HISTORY_AND_REVEALED_PRESSURE_PILOT_20261022",
+  "scope": "VERIFIED_SOURCE_LINEAGE_AND_METADATA_INCOMPLETE_LOCAL_PRESSURE_PILOT_CI_PENDING",
+  "base_commit": "bfd5ab3e748505d10b2068de3c5e09b707f76700",
+  "implementation_sha256": {
+    "research/ige_cmip6/p9_3b3_native_columns.py": "3cf3a90b449797239a468eb387b8aba720ad277200919ea7bb6da90ecbbf953d",
+    "research/ige_cmip6/p9_3b3_native_heights.py": "fb8f8c9805be822c710e58e8518c33d3d9ad9249dd46cdcd2f08908a0e486b5e",
+    "research/ige_cmip6/p9_3b3_native_run.py": "45bc8f0fce161c8f978c8275c7ed259f4de2f12849fa63db81759c0ec0e518b4",
+    "research/ige_cmip6/p9_3b3_native_sources.py": "61a92368d6e42fcc251e979c3dda988beb9db5c4be7287ea641c15fc00537fd6",
+    "research/ige_cmip6/p9_3b3_native_validation.py": "41017dc5caa56712310bd1e0fcccef731973814210fbbe9d10f4a7e14d87c3b4",
+    "research/ige_cmip6/test_p9_3b3_native_heights.py": "bf8c0ea4cd73334f221436e17d3d4b036c0241c4ae230b96f6844e41a39d1b3b",
+    "research/ige_cmip6/test_p9_3b3_native_pipeline.py": "c0b35f564cecfde546b3efc903f414031689a304d1959c6de8def6c2d2beb9a4",
+    "research/ige_cmip6/test_p9_3b3_native_sources.py": "caa6251f4c0a5fbe6a9653626e4c5fcda5947761123256bc42c44d3b8ed19a4a",
+    "research/ige_cmip6/p9_3b3_native_protocol.json": "5c0f3ec123db35e9329f6d511a7bf1154a140581fa6e0181d337983d0806a27c",
+    "research/ige_cmip6/p9_3b3_reference_verified_CI_39739417052.json": "98a146c8445c2737fa5617832f0d0cc48a3697054f22de6a43ebde06ee022603",
+    "docs/IGE_P9_3B3_NATIVE_LINEAGE_SENSOR_HEIGHTS_RU_20261022.md": "4e266d08eae58af89a9ef18bdff76ae9a7e53fce40c85572fb0da18830f47fe7",
+    ".github/workflows/ige-p9-3b3-native-source-lineage.yml": "04860c9dc8580cc07f573d441940826b5e1a8a9a3bb3cb6c69077a2942282535",
+    ".github/workflows/ige-p9-3b3-p1-p2-reference.yml": "71c557e8e9e6b30e35a5a51be496654834e7ac5be0068857374ab01724d348e6"
+  },
+  "protocol_sha256": "5c0f3ec123db35e9329f6d511a7bf1154a140581fa6e0181d337983d0806a27c",
+  "runtime": {
+    "python": "3.12.14",
+    "packages": {
+      "numpy": "2.3.5",
+      "scipy": "1.17.0",
+      "numcodecs": "0.16.3",
+      "pyshtools": "4.13.1",
+      "eccodes": "2.50.0",
+      "eccodeslib": "2.50.0.33"
+    }
+  },
+  "tests": {
+    "B3_all": {
+      "tests": 205,
+      "status": "PASS",
+      "seconds": 11.635,
+      "log_sha256": "da89157b5fd63518adad3b3382d8c94b43df06cfff11b356c63aa57b3754a830"
+    },
+    "P93A": {
+      "tests": 14,
+      "status": "PASS",
+      "seconds": 0.065,
+      "log_sha256": "0a91344a3336a13bb74bc7443ac52a7d6cd6db853f64f31e4f970610b0b24cf6"
+    },
+    "P92": {
+      "tests": 50,
+      "status": "PASS",
+      "seconds": 0.467,
+      "log_sha256": "5be81a3ac5caea6b040348b83f9726e1cba54c32192a15ea2888df8d9e648003"
+    },
+    "P93B2": {
+      "tests": 8,
+      "status": "PASS",
+      "seconds": 0.0,
+      "log_sha256": "090bc7523f5dd6d3499c371d202d764402d61938493e95933ef5eff4f1bcf894"
+    }
+  },
+  "total_unique_unittest_passed": 277,
+  "new_tests": 26,
+  "DWD_absolute_pressure_contract": "PASS",
+  "protected_scientific_controls": 58,
+  "protected_changes": 0,
+  "previous_CI_audit": "p9_3b3_reference_verified_CI_39739417052.json",
+  "source_lineage": {
+    "sources": {
+      "surface": {
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-surface.zarr-v2",
+        "metadata_sha256": "35fcded7b65a5d281bfcbca86b09fdb07b431aa39cc6d01f62be56be1f9d9dbc"
+      },
+      "temperature": {
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-wind.zarr-v2",
+        "metadata_sha256": "51839d3fa796bcd6a9164757cd9b4752f18c5b1b429b488ec9ca8644665c9eeb"
+      },
+      "moisture": {
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2",
+        "metadata_sha256": "e3f783780214fa2717269c81cf204aa73015e89e3a1f0b2179e68ef8204a3f29"
+      },
+      "grid_reference": {
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2",
+        "metadata_sha256": "536389b58b417f7eefda7cf820636f96dece558e6b578675695149dfaaa2bcf1"
+      }
+    },
+    "native_grid": "REDUCED_GAUSSIAN_N320",
+    "spectral_synthesis": "T639_TO_NATIVE_N320_SHTOOLS_REAL_4PI_NO_CS",
+    "GRIB_pv_sha256": "bdf13293abb3604cf1e972568b9bc7ac1ea447dadc21f6d38df34611fb940cb0",
+    "source_points": [
+      [
+        52.69318551975338,
+        13.05
+      ],
+      [
+        52.69318551975338,
+        13.5
+      ],
+      [
+        52.41215530640741,
+        13.333333333333334
+      ],
+      [
+        52.41215530640741,
+        13.777777777777779
+      ],
+      [
+        47.35361102203147,
+        15.2
+      ],
+      [
+        47.35361102203147,
+        15.6
+      ],
+      [
+        47.072580762649004,
+        9.6
+      ],
+      [
+        47.072580762649004,
+        10.0
+      ],
+      [
+        47.072580762649004,
+        15.2
+      ],
+      [
+        47.072580762649004,
+        15.6
+      ],
+      [
+        46.79155050131955,
+        9.6
+      ],
+      [
+        46.79155050131955,
+        10.0
+      ]
+    ],
+    "original_GRIB_controls": [
+      {
+        "timestamp_UTC": "2021-02-01T00:00",
+        "variable": "z",
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/2021/202102_hres_zs.grb2",
+        "range": [
+          0,
+          822673
+        ],
+        "bytes": 822674,
+        "sha256": "4012e323ec8e7fb6f4e5f28c99342e82212393e4f2ee1b27170057ad33f8b278",
+        "edition": 2,
+        "paramId": 129,
+        "gridType": "sh",
+        "J": 639,
+        "K": 639,
+        "M": 639,
+        "level": 1,
+        "dataDate": 20210201,
+        "dataTime": 0,
+        "packingType": "spectral_complex",
+        "bitsPerValue": 16,
+        "typeOfLevel": "hybrid",
+        "step": 0,
+        "dataType": "an",
+        "hybrid_pv_sha256": "bdf13293abb3604cf1e972568b9bc7ac1ea447dadc21f6d38df34611fb940cb0",
+        "status": "ORIGINAL_GRIB_TO_CO_FLOAT32_EXACT",
+        "coefficient_count": 410240,
+        "max_abs_float32_cast_error": 7.6227717897836555e-06
+      },
+      {
+        "timestamp_UTC": "2021-02-01T00:00",
+        "variable": "lnsp",
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/2021/202102_hres_lnsp.grb2",
+        "range": [
+          0,
+          822673
+        ],
+        "bytes": 822674,
+        "sha256": "c3eb2b16673c714230e43eee9a7068b4ab47b6309d59984839afc4732cd7880c",
+        "edition": 2,
+        "paramId": 152,
+        "gridType": "sh",
+        "J": 639,
+        "K": 639,
+        "M": 639,
+        "level": 1,
+        "dataDate": 20210201,
+        "dataTime": 0,
+        "packingType": "spectral_complex",
+        "bitsPerValue": 16,
+        "typeOfLevel": "hybrid",
+        "step": 0,
+        "dataType": "an",
+        "hybrid_pv_sha256": "bdf13293abb3604cf1e972568b9bc7ac1ea447dadc21f6d38df34611fb940cb0",
+        "status": "ORIGINAL_GRIB_TO_CO_FLOAT32_EXACT",
+        "coefficient_count": 410240,
+        "max_abs_float32_cast_error": 5.782167973589214e-11
+      },
+      {
+        "timestamp_UTC": "2021-08-01T00:00",
+        "variable": "z",
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/2021/202108_hres_zs.grb2",
+        "range": [
+          0,
+          822673
+        ],
+        "bytes": 822674,
+        "sha256": "9e46ab5031163ce6948f84f0b6006aee5e45f44d46f317347a77635340512a22",
+        "edition": 2,
+        "paramId": 129,
+        "gridType": "sh",
+        "J": 639,
+        "K": 639,
+        "M": 639,
+        "level": 1,
+        "dataDate": 20210801,
+        "dataTime": 0,
+        "packingType": "spectral_complex",
+        "bitsPerValue": 16,
+        "typeOfLevel": "hybrid",
+        "step": 0,
+        "dataType": "an",
+        "hybrid_pv_sha256": "bdf13293abb3604cf1e972568b9bc7ac1ea447dadc21f6d38df34611fb940cb0",
+        "status": "ORIGINAL_GRIB_TO_CO_FLOAT32_EXACT",
+        "coefficient_count": 410240,
+        "max_abs_float32_cast_error": 7.6227717897836555e-06
+      },
+      {
+        "timestamp_UTC": "2021-08-01T00:00",
+        "variable": "lnsp",
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/2021/202108_hres_lnsp.grb2",
+        "range": [
+          0,
+          822673
+        ],
+        "bytes": 822674,
+        "sha256": "8da7989ea74bb750e5667b410b5906d073d7b22588ab4bbdff178a1f5a2471ad",
+        "edition": 2,
+        "paramId": 152,
+        "gridType": "sh",
+        "J": 639,
+        "K": 639,
+        "M": 639,
+        "level": 1,
+        "dataDate": 20210801,
+        "dataTime": 0,
+        "packingType": "spectral_complex",
+        "bitsPerValue": 16,
+        "typeOfLevel": "hybrid",
+        "step": 0,
+        "dataType": "an",
+        "hybrid_pv_sha256": "bdf13293abb3604cf1e972568b9bc7ac1ea447dadc21f6d38df34611fb940cb0",
+        "status": "ORIGINAL_GRIB_TO_CO_FLOAT32_EXACT",
+        "coefficient_count": 410240,
+        "max_abs_float32_cast_error": 5.706414399168913e-11
+      }
+    ],
+    "independent_GG_diagnostics": [
+      {
+        "timestamp_UTC": "2021-02-01T00:00",
+        "max_abs_geopotential_height_delta_m": 0.07637987097636008,
+        "max_abs_surface_pressure_delta_Pa": 0.99919461843092,
+        "status": "CROSS_ENCODING_DIAGNOSTIC_NOT_STATION_ACCURACY_OR_FITTED_SOURCE_GATE",
+        "source_GG_pressure_min_distinct_increment_Pa": 1.0,
+        "correction_applied": false
+      },
+      {
+        "timestamp_UTC": "2021-08-01T00:00",
+        "max_abs_geopotential_height_delta_m": 0.07637987097636008,
+        "max_abs_surface_pressure_delta_Pa": 0.8031923030503094,
+        "status": "CROSS_ENCODING_DIAGNOSTIC_NOT_STATION_ACCURACY_OR_FITTED_SOURCE_GATE",
+        "source_GG_pressure_min_distinct_increment_Pa": 1.0,
+        "correction_applied": false
+      }
+    ],
+    "native_future_CanESM5_pressure_recovered": false,
+    "T_q_GRIB_byte_identity": "NOT_CHECKED_OR_CLAIMED",
+    "paired_surface_lineage_status": "ORIGINAL_GRIB_TO_CO_CAST_IDENTITY_CONFIRMED_AT_BOTH_CONTROL_HOURS"
+  },
+  "historical_sensor_references": {
+    "AT": {
+      "status": "HISTORICAL_SENSOR_HEIGHT_REFERENCES_CONFIRMED_CONDITIONAL_MSL_DATUM",
+      "station_id": "30",
+      "provider_metadata": {
+        "station_id": "30",
+        "latitude": 47.08,
+        "longitude": 15.448056,
+        "general_station_height_m": 366.0,
+        "barometer_height_m": null,
+        "barometer_height_status": "NOT_IN_READ_SOURCE",
+        "thermo_nominal_AGL_m": 2.0,
+        "thermo_absolute_history_status": "NOT_ESTABLISHED",
+        "height_valid_for_2021_sensor_validation": false,
+        "source": "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h/metadata",
+        "source_sha256": "0a0b37e1c3be27dcf4ac0f22ea2c6fdef037cef80f3cc48a22e8b567e0a1c55e",
+        "source_fields": {
+          "type": "COMBINED",
+          "id": 30,
+          "group_id": null,
+          "name": "Graz Universität/Heinrichstraße",
+          "state": "Steiermark",
+          "lat": 47.08,
+          "lon": 15.448056,
+          "altitude": 366.0,
+          "valid_from": "1894-01-01T00:00:00+00:00",
+          "valid_to": "2100-12-31T00:00:00+00:00",
+          "has_sunshine": true,
+          "has_global_radiation": true,
+          "is_active": true
+        },
+        "parameter_metadata": [
+          {
+            "name": "p",
+            "long_name": "Luftdruck",
+            "description": "Luftdruck in Stationsniveau, Stunden-Messwert",
+            "unit": "hPa"
+          },
+          {
+            "name": "rf",
+            "long_name": "Relative Feuchte",
+            "description": "Relative Feuchte, Stunden-Messwert",
+            "unit": "%"
+          },
+          {
+            "name": "tl",
+            "long_name": "Lufttemperatur 2m",
+            "description": "Lufttemperatur in 2m Höhe, Stunden-Messwert",
+            "unit": "°C"
+          }
+        ],
+        "status": "SOURCE_METADATA_READ_SENSOR_HISTORY_UNQUALIFIED",
+        "general_height_is_not_barometer_height": true,
+        "vertical_datum_history_status": "NATIONAL_MASL_METADATA_NOT_A_VERIFIED_ERA5_DATUM_TRANSFORMATION"
+      },
+      "historical_member": {
+        "type": "INDIVIDUAL",
+        "id": 16412,
+        "group_id": 30,
+        "name": "Graz Universität",
+        "state": "Steiermark",
+        "lat": 47.07767,
+        "lon": 15.44892,
+        "altitude": 366.7,
+        "valid_from": "1988-06-01T00:00:00+00:00",
+        "valid_to": "2026-07-01T00:00:00+00:00",
+        "has_sunshine": true,
+        "has_global_radiation": true,
+        "is_active": true
+      },
+      "source_WMDR": "https://oscar.wmo.int/surface/rest/api/wmd/download/0-20000-0-11290",
+      "source_WMDR_sha256": "624881c4b5b6a66bb3daf0e5c6b3d8708679665d1014ec55b0d49f3dc249015e",
+      "sensors": {
+        "pressure": {
+          "latitude": 47.0777777778,
+          "longitude": 15.4488888889,
+          "height_MSL_m": 378.8,
+          "equipment_geolocation_period": [
+            null,
+            null
+          ],
+          "geolocation_time_support": "INHERITS_DATED_DEPLOYMENT_UNSPECIFIED_LOCATION_PERIOD",
+          "height_origin": "INSTRUMENT_GEOSPATIAL_POSITION_MSL",
+          "role": "BAROMETER",
+          "observed_property": "http://codes.wmo.int/wmdr/ObservedVariableAtmosphere/216",
+          "deployment_period": [
+            "2002-01-01T00:00:00Z",
+            "2026-06-30T00:00:00Z"
+          ],
+          "AGL_or_reference_distance_m": 378.8,
+          "local_reference_surface": "http://codes.wmo.int/wmdr/ReferenceSurfaceType/seaSurface",
+          "AGL_added_to_absolute_altitude": false,
+          "historical_height_reference_confirmed": true,
+          "datum_transformation_verified": false,
+          "geopotential_height_approximation": "DECLARED_H_EQUALS_MSL_HEIGHT_CONSTANT_G0",
+          "source_WSI": "0-20000-0-11290",
+          "source_sha256": "624881c4b5b6a66bb3daf0e5c6b3d8708679665d1014ec55b0d49f3dc249015e"
+        },
+        "temperature": {
+          "latitude": 47.0777777778,
+          "longitude": 15.4488888889,
+          "height_MSL_m": 368.7,
+          "equipment_geolocation_period": [
+            null,
+            null
+          ],
+          "geolocation_time_support": "INHERITS_DATED_DEPLOYMENT_UNSPECIFIED_LOCATION_PERIOD",
+          "height_origin": "INSTRUMENT_GEOSPATIAL_POSITION_MSL",
+          "role": "THERMO_SENSOR",
+          "observed_property": "http://codes.wmo.int/wmdr/ObservedVariableAtmosphere/224",
+          "deployment_period": [
+            "2002-01-01T00:00:00Z",
+            "2023-06-28T00:00:00Z"
+          ],
+          "AGL_or_reference_distance_m": 2.0,
+          "local_reference_surface": "http://codes.wmo.int/wmdr/ReferenceSurfaceType/localGround",
+          "AGL_added_to_absolute_altitude": false,
+          "historical_height_reference_confirmed": true,
+          "datum_transformation_verified": false,
+          "geopotential_height_approximation": "DECLARED_H_EQUALS_MSL_HEIGHT_CONSTANT_G0",
+          "source_WSI": "0-20000-0-11290",
+          "source_sha256": "624881c4b5b6a66bb3daf0e5c6b3d8708679665d1014ec55b0d49f3dc249015e"
+        },
+        "RH_water": {
+          "latitude": 47.0777777778,
+          "longitude": 15.4488888889,
+          "height_MSL_m": 368.7,
+          "equipment_geolocation_period": [
+            null,
+            null
+          ],
+          "geolocation_time_support": "INHERITS_DATED_DEPLOYMENT_UNSPECIFIED_LOCATION_PERIOD",
+          "height_origin": "INSTRUMENT_GEOSPATIAL_POSITION_MSL",
+          "role": "THERMO_SENSOR",
+          "observed_property": "http://codes.wmo.int/wmdr/ObservedVariableAtmosphere/12249",
+          "deployment_period": [
+            "2002-01-01T00:00:00Z",
+            "2023-06-28T00:00:00Z"
+          ],
+          "AGL_or_reference_distance_m": 2.0,
+          "local_reference_surface": "http://codes.wmo.int/wmdr/ReferenceSurfaceType/localGround",
+          "AGL_added_to_absolute_altitude": false,
+          "historical_height_reference_confirmed": true,
+          "datum_transformation_verified": false,
+          "geopotential_height_approximation": "DECLARED_H_EQUALS_MSL_HEIGHT_CONSTANT_G0",
+          "source_WSI": "0-20000-0-11290",
+          "source_sha256": "624881c4b5b6a66bb3daf0e5c6b3d8708679665d1014ec55b0d49f3dc249015e"
+        }
+      },
+      "provider_to_thermo_distance_km": 0.01221372355013175,
+      "pressure_to_thermo_horizontal_distance_km": 0.0,
+      "RH_convention": "WATER_WMDR_OBSERVED_VARIABLE_12249",
+      "datum_transformation_verified": false,
+      "operational_ready": false
+    },
+    "DE": {
+      "status": "HISTORICAL_SENSOR_HEIGHT_REFERENCES_CONFIRMED_CONDITIONAL_MSL_DATUM",
+      "station_id": "00399",
+      "provider_metadata": {
+        "station_id": "00399",
+        "latitude": 52.5198,
+        "longitude": 13.4057,
+        "general_station_height_m": 35.8,
+        "barometer_height_m": null,
+        "barometer_height_status": "SEPARATE_SENSOR_HEIGHT_NOT_IN_READ_SOURCE",
+        "thermo_nominal_AGL_m": null,
+        "thermo_absolute_history_status": "NOT_ESTABLISHED",
+        "height_valid_for_2021_sensor_validation": false,
+        "source": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate_urban/10_minutes/pressure/historical/10minutenwerte_P0_STADT_00399_20150701_20241231_hist.zip",
+        "source_sha256": "8d54caa8eacdc458bf2970f830f91c5c28de25716f369c689c703252e3328352",
+        "source_fields": {
+          "Stations_id": "399",
+          "Stationshoehe": "35.80",
+          "Geogr.Breite": "52.5198",
+          "Geogr.Laenge": "13.4057",
+          "von_datum": "20150701",
+          "bis_datum": "",
+          "Stationsname": "Berlin-Alexanderplatz"
+        },
+        "parameter_metadata_sha256": "9b4de894795aeeaefbc5252d03810735e267bec18d5d5531e5878ec6a2b3c185",
+        "absolute_pressure_field": "P0_ST_10",
+        "sea_level_pressure_field": "PP_ST_10",
+        "observation_product_not_parsed_or_scored": true,
+        "status": "SOURCE_METADATA_READ_SENSOR_HISTORY_UNQUALIFIED",
+        "general_height_is_not_barometer_height": true,
+        "vertical_datum_history_status": "NATIONAL_MASL_METADATA_NOT_A_VERIFIED_ERA5_DATUM_TRANSFORMATION"
+      },
+      "historical_member": null,
+      "source_WMDR": "https://oscar.wmo.int/surface/rest/api/wmd/download/0-276-6-399",
+      "source_WMDR_sha256": "f1e4275ba59427aefa2117a6dceef532bf915d52b8d1cf5565354d97b34e7120",
+      "sensors": {
+        "pressure": {
+          "latitude": 52.520718,
+          "longitude": 13.409375,
+          "height_MSL_m": 82.5,
+          "equipment_geolocation_period": [
+            "2016-07-27T00:00:00Z",
+            null
+          ],
+          "geolocation_time_support": "EXPLICIT_LOCATION_PERIOD",
+          "height_origin": "INSTRUMENT_GEOSPATIAL_POSITION_MSL",
+          "role": "BAROMETER",
+          "observed_property": "http://codes.wmo.int/wmdr/ObservedVariableAtmosphere/216",
+          "deployment_period": [
+            "2016-07-27T00:00:00Z",
+            null
+          ],
+          "AGL_or_reference_distance_m": null,
+          "local_reference_surface": "",
+          "AGL_added_to_absolute_altitude": false,
+          "historical_height_reference_confirmed": true,
+          "datum_transformation_verified": false,
+          "geopotential_height_approximation": "DECLARED_H_EQUALS_MSL_HEIGHT_CONSTANT_G0",
+          "source_WSI": "0-276-6-399",
+          "source_sha256": "f1e4275ba59427aefa2117a6dceef532bf915d52b8d1cf5565354d97b34e7120"
+        },
+        "temperature": {
+          "latitude": 52.519805,
+          "longitude": 13.405737,
+          "height_MSL_m": 37.8,
+          "equipment_geolocation_period": [
+            "2015-07-01T00:00:00Z",
+            null
+          ],
+          "geolocation_time_support": "EXPLICIT_LOCATION_PERIOD",
+          "height_origin": "INSTRUMENT_GEOSPATIAL_POSITION_MSL",
+          "role": "THERMO_SENSOR",
+          "observed_property": "http://codes.wmo.int/wmdr/ObservedVariableAtmosphere/224",
+          "deployment_period": [
+            "2015-07-01T00:00:00Z",
+            null
+          ],
+          "AGL_or_reference_distance_m": 2.0,
+          "local_reference_surface": "http://codes.wmo.int/wmdr/ReferenceSurfaceType/naturalGround",
+          "AGL_added_to_absolute_altitude": false,
+          "historical_height_reference_confirmed": true,
+          "datum_transformation_verified": false,
+          "geopotential_height_approximation": "DECLARED_H_EQUALS_MSL_HEIGHT_CONSTANT_G0",
+          "source_WSI": "0-276-6-399",
+          "source_sha256": "f1e4275ba59427aefa2117a6dceef532bf915d52b8d1cf5565354d97b34e7120"
+        },
+        "RH_water": {
+          "latitude": 52.519805,
+          "longitude": 13.405737,
+          "height_MSL_m": 37.8,
+          "equipment_geolocation_period": [
+            "2015-07-01T00:00:00Z",
+            null
+          ],
+          "geolocation_time_support": "EXPLICIT_LOCATION_PERIOD",
+          "height_origin": "INSTRUMENT_GEOSPATIAL_POSITION_MSL",
+          "role": "THERMO_SENSOR",
+          "observed_property": "http://codes.wmo.int/wmdr/ObservedVariableAtmosphere/12249",
+          "deployment_period": [
+            "2015-07-01T00:00:00Z",
+            null
+          ],
+          "AGL_or_reference_distance_m": 2.0,
+          "local_reference_surface": "http://codes.wmo.int/wmdr/ReferenceSurfaceType/naturalGround",
+          "AGL_added_to_absolute_altitude": false,
+          "historical_height_reference_confirmed": true,
+          "datum_transformation_verified": false,
+          "geopotential_height_approximation": "DECLARED_H_EQUALS_MSL_HEIGHT_CONSTANT_G0",
+          "source_WSI": "0-276-6-399",
+          "source_sha256": "f1e4275ba59427aefa2117a6dceef532bf915d52b8d1cf5565354d97b34e7120"
+        }
+      },
+      "provider_to_thermo_distance_km": 0.0025644424920820918,
+      "pressure_to_thermo_horizontal_distance_km": 0.2662612545862114,
+      "RH_convention": "WATER_WMDR_OBSERVED_VARIABLE_12249",
+      "datum_transformation_verified": false,
+      "operational_ready": false
+    },
+    "CH": {
+      "status": "HISTORICAL_SENSOR_HEIGHT_REFERENCES_CONFIRMED_CONDITIONAL_MSL_DATUM",
+      "station_id": "DAV",
+      "provider_metadata": {
+        "station_id": "DAV",
+        "latitude": 46.812969,
+        "longitude": 9.843558,
+        "general_station_height_m": 1594.0,
+        "barometer_height_m": 1596.0,
+        "barometer_height_status": "SOURCE_CURRENT_SNAPSHOT_NOT_HISTORY",
+        "thermo_nominal_AGL_m": 2.0,
+        "thermo_absolute_history_status": "NOT_ESTABLISHED",
+        "height_valid_for_2021_sensor_validation": false,
+        "source": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/ogd-smn_meta_stations.csv",
+        "source_sha256": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+        "source_encoding": "latin1",
+        "source_fields": {
+          "station_abbr": "DAV",
+          "station_name": "Davos",
+          "station_canton": "GR",
+          "station_wigos_id": "0-20000-0-06784",
+          "station_type_de": "Automatische Wetterstationen - Messwerte",
+          "station_type_fr": "Stations météorologiques automatiques - Valeurs mesurées",
+          "station_type_it": "Stazioni meteorologiche automatiche - Valori misurati",
+          "station_type_en": "Automatic weather stations - Measurement values",
+          "station_dataowner": "MeteoSchweiz, SLF",
+          "station_data_since": "01.01.1864",
+          "station_height_masl": "1594.0",
+          "station_height_barometer_masl": "1596.0",
+          "station_coordinates_lv95_east": "2783519.0",
+          "station_coordinates_lv95_north": "1187459.0",
+          "station_coordinates_wgs84_lat": "46.812969",
+          "station_coordinates_wgs84_lon": "9.843558",
+          "station_exposition_de": "Südosthang",
+          "station_exposition_fr": "Versant sud-est",
+          "station_exposition_it": "Versante sud-orientale",
+          "station_exposition_en": "south-eastern oriented slope",
+          "station_url_de": "https://www.meteoschweiz.admin.ch/service-und-publikationen/applikationen/messwerte-und-messnetze.html#param=messnetz-automatisch&station=DAV",
+          "station_url_fr": "https://www.meteosuisse.admin.ch/services-et-publications/applications/valeurs-mesurees-et-reseaux-de-mesure.html#param=messnetz-automatisch&station=DAV",
+          "station_url_it": "https://www.meteosvizzera.admin.ch/servizi-e-pubblicazioni/applicazioni/valori-attuali-e-reti-di-misura.html#param=messnetz-automatisch&station=DAV",
+          "station_url_en": "https://www.meteoswiss.admin.ch/services-and-publications/applications/measurement-values-and-measuring-networks.html#param=messnetz-automatisch&station=DAV"
+        },
+        "status": "SOURCE_METADATA_READ_SENSOR_HISTORY_UNQUALIFIED",
+        "general_height_is_not_barometer_height": true,
+        "vertical_datum_history_status": "NATIONAL_MASL_METADATA_NOT_A_VERIFIED_ERA5_DATUM_TRANSFORMATION"
+      },
+      "historical_member": null,
+      "source_WMDR": "https://oscar.wmo.int/surface/rest/api/wmd/download/0-20000-0-06784",
+      "source_WMDR_sha256": "6f71adb3cde2a1373c02fb59c56639600e475291022d2997a5aab3b845a6b44d",
+      "sensors": {
+        "pressure": {
+          "latitude": 46.812972,
+          "longitude": 9.843547,
+          "height_MSL_m": 1595.58,
+          "equipment_geolocation_period": [
+            "2006-12-13T00:00:00Z",
+            null
+          ],
+          "geolocation_time_support": "EXPLICIT_LOCATION_PERIOD",
+          "height_origin": "INSTRUMENT_GEOSPATIAL_POSITION_MSL",
+          "role": "BAROMETER",
+          "observed_property": "http://codes.wmo.int/wmdr/ObservedVariableAtmosphere/216",
+          "deployment_period": [
+            "2006-12-13T00:00:00Z",
+            null
+          ],
+          "AGL_or_reference_distance_m": 1.42,
+          "local_reference_surface": "http://codes.wmo.int/wmdr/ReferenceSurfaceType/localGround",
+          "AGL_added_to_absolute_altitude": false,
+          "historical_height_reference_confirmed": true,
+          "datum_transformation_verified": false,
+          "geopotential_height_approximation": "DECLARED_H_EQUALS_MSL_HEIGHT_CONSTANT_G0",
+          "source_WSI": "0-20000-0-06784",
+          "source_sha256": "6f71adb3cde2a1373c02fb59c56639600e475291022d2997a5aab3b845a6b44d"
+        },
+        "temperature": {
+          "latitude": 46.812956,
+          "longitude": 9.843481,
+          "height_MSL_m": 1593.93,
+          "equipment_geolocation_period": [
+            "2006-12-13T00:00:00Z",
+            null
+          ],
+          "geolocation_time_support": "EXPLICIT_LOCATION_PERIOD",
+          "height_origin": "INSTRUMENT_GEOSPATIAL_POSITION_MSL",
+          "role": "THERMO_SENSOR",
+          "observed_property": "http://codes.wmo.int/wmdr/ObservedVariableAtmosphere/224",
+          "deployment_period": [
+            "2006-12-13T00:00:00Z",
+            null
+          ],
+          "AGL_or_reference_distance_m": 2.0,
+          "local_reference_surface": "http://codes.wmo.int/wmdr/ReferenceSurfaceType/localGround",
+          "AGL_added_to_absolute_altitude": false,
+          "historical_height_reference_confirmed": true,
+          "datum_transformation_verified": false,
+          "geopotential_height_approximation": "DECLARED_H_EQUALS_MSL_HEIGHT_CONSTANT_G0",
+          "source_WSI": "0-20000-0-06784",
+          "source_sha256": "6f71adb3cde2a1373c02fb59c56639600e475291022d2997a5aab3b845a6b44d"
+        },
+        "RH_water": {
+          "latitude": 46.812956,
+          "longitude": 9.843481,
+          "height_MSL_m": 1593.93,
+          "equipment_geolocation_period": [
+            "2006-12-13T00:00:00Z",
+            null
+          ],
+          "geolocation_time_support": "EXPLICIT_LOCATION_PERIOD",
+          "height_origin": "INSTRUMENT_GEOSPATIAL_POSITION_MSL",
+          "role": "THERMO_SENSOR",
+          "observed_property": "http://codes.wmo.int/wmdr/ObservedVariableAtmosphere/12249",
+          "deployment_period": [
+            "2006-12-13T00:00:00Z",
+            null
+          ],
+          "AGL_or_reference_distance_m": 2.0,
+          "local_reference_surface": "http://codes.wmo.int/wmdr/ReferenceSurfaceType/localGround",
+          "AGL_added_to_absolute_altitude": false,
+          "historical_height_reference_confirmed": true,
+          "datum_transformation_verified": false,
+          "geopotential_height_approximation": "DECLARED_H_EQUALS_MSL_HEIGHT_CONSTANT_G0",
+          "source_WSI": "0-20000-0-06784",
+          "source_sha256": "6f71adb3cde2a1373c02fb59c56639600e475291022d2997a5aab3b845a6b44d"
+        }
+      },
+      "provider_to_thermo_distance_km": 0.0060353620791150815,
+      "pressure_to_thermo_horizontal_distance_km": 0.005328389580725894,
+      "RH_convention": "WATER_WMDR_OBSERVED_VARIABLE_12249",
+      "datum_transformation_verified": false,
+      "operational_ready": false
+    }
+  },
+  "source_only_design_amendment": {
+    "original_first_model_level": 130,
+    "final_first_model_level": 124,
+    "reason": "NATIVE_AIR_DOMAIN_GEOMETRY_BEFORE_ANY_MATCHED_STATION_ERROR_METRIC",
+    "source_hour": "2021-01-31T23:00",
+    "CH_lowest_neighbor_surface_H_m": 1206.8191444500976,
+    "CH_preliminary_level130_top_H_m": 1414.68,
+    "CH_dated_barometer_MSL_m": 1595.58,
+    "station_error_metrics_available_at_amendment": false,
+    "no_error_driven_neighbor_or_weight_change": true
+  },
+  "local_pressure_accuracy": "NOT_EVALUABLE_INCOMPLETE_PROFILES_NETWORK_403_NO_MODEL_SKILL_CLAIM",
+  "local_attempt": {
+    "primary_profile_hours_attempted": 50,
+    "primary_source_blocker_count": 50,
+    "expected_station_hours": 144,
+    "score_cells_retained": 24,
+    "expected_score_cells": 24,
+    "matched_station_hours_across_all_method_cells": 0,
+    "cell_statuses": {
+      "INCONCLUSIVE_COVERAGE": 24
+    },
+    "observation_sources": {
+      "AT": {
+        "status": "SOURCE_BLOCKED",
+        "reason": "SourceBlocked:P93N_CACHE_ONLY_OBJECT_NOT_AVAILABLE"
+      },
+      "DE": {
+        "status": "SOURCE_READ",
+        "valid_hours": 48
+      },
+      "CH": {
+        "status": "SOURCE_BLOCKED",
+        "reason": "SourceBlocked:P93N_CACHE_ONLY_OBJECT_NOT_AVAILABLE"
+      }
+    },
+    "cache_only_mode": true,
+    "network_requests": 0,
+    "network_download_bytes": 0,
+    "wall_seconds": 3.681343762000324,
+    "peak_RSS_KiB": 283644,
+    "cost_scope": "INCOMPLETE_CACHE_ONLY_REPLAY_NOT_FULL_OR_COLD_PILOT_BENCHMARK"
+  },
+  "preliminary_interrupted_network_attempt": {
+    "scope": "PRE_FINAL_RESOURCE_GUARDS_AND_GEOMETRY_AMENDMENT_NO_ESTABLISHED_ACCURACY",
+    "network_bytes": 50291442,
+    "network_requests": 134,
+    "wall_seconds": 428.2731871339997,
+    "network_failure": "URLError:Tunnel connection failed:403 Forbidden",
+    "incomplete_primary_profile_hours": 49
+  },
+  "cached_source_objects": [
+    {
+      "url": "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h/metadata",
+      "range": null,
+      "sha256": "0a0b37e1c3be27dcf4ac0f22ea2c6fdef037cef80f3cc48a22e8b567e0a1c55e",
+      "bytes": 241148,
+      "from_cache": true
+    },
+    {
+      "url": "https://oscar.wmo.int/surface/rest/api/wmd/download/0-20000-0-11290",
+      "range": null,
+      "sha256": "624881c4b5b6a66bb3daf0e5c6b3d8708679665d1014ec55b0d49f3dc249015e",
+      "bytes": 76949,
+      "from_cache": true
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate_urban/10_minutes/pressure/historical/10minutenwerte_P0_STADT_00399_20150701_20241231_hist.zip",
+      "range": null,
+      "sha256": "8d54caa8eacdc458bf2970f830f91c5c28de25716f369c689c703252e3328352",
+      "bytes": 2170125,
+      "from_cache": true
+    },
+    {
+      "url": "https://oscar.wmo.int/surface/rest/api/wmd/download/0-276-6-399",
+      "range": null,
+      "sha256": "f1e4275ba59427aefa2117a6dceef532bf915d52b8d1cf5565354d97b34e7120",
+      "bytes": 286196,
+      "from_cache": true
+    },
+    {
+      "url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/ogd-smn_meta_stations.csv",
+      "range": null,
+      "sha256": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+      "bytes": 152759,
+      "from_cache": true
+    },
+    {
+      "url": "https://oscar.wmo.int/surface/rest/api/wmd/download/0-20000-0-06784",
+      "range": null,
+      "sha256": "6f71adb3cde2a1373c02fb59c56639600e475291022d2997a5aab3b845a6b44d",
+      "bytes": 1462381,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-surface.zarr-v2/.zmetadata",
+      "range": null,
+      "sha256": "35fcded7b65a5d281bfcbca86b09fdb07b431aa39cc6d01f62be56be1f9d9dbc",
+      "bytes": 12672,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-wind.zarr-v2/.zmetadata",
+      "range": null,
+      "sha256": "51839d3fa796bcd6a9164757cd9b4752f18c5b1b429b488ec9ca8644665c9eeb",
+      "bytes": 23216,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2/.zmetadata",
+      "range": null,
+      "sha256": "e3f783780214fa2717269c81cf204aa73015e89e3a1f0b2179e68ef8204a3f29",
+      "bytes": 65175,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2/.zmetadata",
+      "range": null,
+      "sha256": "536389b58b417f7eefda7cf820636f96dece558e6b578675695149dfaaa2bcf1",
+      "bytes": 181026,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2/latitude/0",
+      "range": null,
+      "sha256": "d99391157f50a5ed79007199c0f9db2c95ce34c82e6b0cabbbbcbc70177afd16",
+      "bytes": 35441,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2/longitude/0",
+      "range": null,
+      "sha256": "222cc52712e18176a09e52b4db5b1881c32e16d256e94d4b844ad71249c7bc7c",
+      "bytes": 111588,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2/latitude/0",
+      "range": null,
+      "sha256": "4021a3a3b6e7c355d709431ab684d0d6c2ee5de9f73dddc9b1d7918e56564a2a",
+      "bytes": 35441,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2/longitude/0",
+      "range": null,
+      "sha256": "e3abf421c3093bb648f94e774f2722ef3be70e89ec69b432a8527dabb6cc8148",
+      "bytes": 111588,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/2021/202102_hres_zs.grb2",
+      "range": [
+        0,
+        15
+      ],
+      "sha256": "0e15a5e9628d2011c8d901fa766bacece8a8bfb93f6edd86c45056b65875a665",
+      "bytes": 16,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/2021/202102_hres_zs.grb2",
+      "range": [
+        0,
+        822673
+      ],
+      "sha256": "4012e323ec8e7fb6f4e5f28c99342e82212393e4f2ee1b27170057ad33f8b278",
+      "bytes": 822674,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-surface.zarr-v2/time/0",
+      "range": null,
+      "sha256": "89403f7c33cd8203fb84d2b1d03af4b1dd94aab8eaa4f95033e6ef053d45f03b",
+      "bytes": 66192,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-surface.zarr-v2/valid_time/0",
+      "range": null,
+      "sha256": "b3dcb4878e8858a2610481b9d3167c7b1a719d2390817e2e43054edb38289269",
+      "bytes": 74083,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-surface.zarr-v2/step/0",
+      "range": null,
+      "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc",
+      "bytes": 8,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-surface.zarr-v2/z/1061424.0",
+      "range": null,
+      "sha256": "55f686d7a8faa808748dee09371d31ca81d108afd2a931e371a1afeb7d6739c8",
+      "bytes": 1571312,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/2021/202102_hres_lnsp.grb2",
+      "range": [
+        0,
+        15
+      ],
+      "sha256": "0e15a5e9628d2011c8d901fa766bacece8a8bfb93f6edd86c45056b65875a665",
+      "bytes": 16,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/2021/202102_hres_lnsp.grb2",
+      "range": [
+        0,
+        822673
+      ],
+      "sha256": "c3eb2b16673c714230e43eee9a7068b4ab47b6309d59984839afc4732cd7880c",
+      "bytes": 822674,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-surface.zarr-v2/lnsp/1061424.0",
+      "range": null,
+      "sha256": "7078b23ef357461939ae41db8ff71d7355aafd3ebe6840dbc758bc348cb8864d",
+      "bytes": 1570235,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2/time/0",
+      "range": null,
+      "sha256": "57cb7d50e2b4a67c555c97ddd8d0ee7442358f50441c41931e9f8486752a4b2a",
+      "bytes": 66192,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2/valid_time/0",
+      "range": null,
+      "sha256": "65efb345dd38a4179137d70870de174a4d1f893301cade4187cfb4c76e28cd5b",
+      "bytes": 66192,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2/step/0",
+      "range": null,
+      "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc",
+      "bytes": 8,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2/z/1061424.0",
+      "range": null,
+      "sha256": "bdc7747bdf51d046912c23ea0b8ad9439a8820dfeb0467c71e6cbe5a944a4b71",
+      "bytes": 1681600,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2/sp/1061424.0",
+      "range": null,
+      "sha256": "e2b8a0ba792f032e482e727a64f5007f6fa556f7a572e0cc2eaf67f61e4a5da6",
+      "bytes": 1017677,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/2021/202108_hres_zs.grb2",
+      "range": [
+        0,
+        15
+      ],
+      "sha256": "0e15a5e9628d2011c8d901fa766bacece8a8bfb93f6edd86c45056b65875a665",
+      "bytes": 16,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/2021/202108_hres_zs.grb2",
+      "range": [
+        0,
+        822673
+      ],
+      "sha256": "9e46ab5031163ce6948f84f0b6006aee5e45f44d46f317347a77635340512a22",
+      "bytes": 822674,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-surface.zarr-v2/z/1065768.0",
+      "range": null,
+      "sha256": "55f686d7a8faa808748dee09371d31ca81d108afd2a931e371a1afeb7d6739c8",
+      "bytes": 1571312,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/2021/202108_hres_lnsp.grb2",
+      "range": [
+        0,
+        15
+      ],
+      "sha256": "0e15a5e9628d2011c8d901fa766bacece8a8bfb93f6edd86c45056b65875a665",
+      "bytes": 16,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/raw/ERA5GRIB/HRES/Month/2021/202108_hres_lnsp.grb2",
+      "range": [
+        0,
+        822673
+      ],
+      "sha256": "8da7989ea74bb750e5667b410b5906d073d7b22588ab4bbdff178a1f5a2471ad",
+      "bytes": 822674,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-surface.zarr-v2/lnsp/1065768.0",
+      "range": null,
+      "sha256": "ef638155496ed7003a0b21a0896b6bd6bba5bb26d814137b5cf4a14809d32d15",
+      "bytes": 1573209,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2/z/1065768.0",
+      "range": null,
+      "sha256": "bdc7747bdf51d046912c23ea0b8ad9439a8820dfeb0467c71e6cbe5a944a4b71",
+      "bytes": 1681600,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2/sp/1065768.0",
+      "range": null,
+      "sha256": "92d9b075fcc3935d739c7ac881a488923c3b02842215d574f59bf888cfb4efb5",
+      "bytes": 1016464,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-wind.zarr-v2/hybrid/123",
+      "range": null,
+      "sha256": "f5824cde006898fdc404eafedb9c6c417660cef755cee1adbcc29910652c70f3",
+      "bytes": 24,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-wind.zarr-v2/hybrid/124",
+      "range": null,
+      "sha256": "3fac864fd495fc3bc814c1a23bac7fab398aac3c9eea0824fcf036a0fa8a5f07",
+      "bytes": 24,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-wind.zarr-v2/hybrid/126",
+      "range": null,
+      "sha256": "a57fc0d03ada9d37cb01cf19aec56130d9d4fc5c4e05bbdf33bde0478a285eb3",
+      "bytes": 24,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-wind.zarr-v2/hybrid/125",
+      "range": null,
+      "sha256": "4354b6f90ec958335758c276841da9143ebd73dc89edf5a5875cf238eb449fa2",
+      "bytes": 24,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-wind.zarr-v2/hybrid/127",
+      "range": null,
+      "sha256": "8015bf798a5c8e718bcf9d1b55edb559d0a464dfbd1b55be463d6973e79fd3a8",
+      "bytes": 24,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-wind.zarr-v2/hybrid/129",
+      "range": null,
+      "sha256": "b85fc8bf293a067df899000c6bd34c84cb50d9118978651325047df6d9a92209",
+      "bytes": 24,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-wind.zarr-v2/hybrid/128",
+      "range": null,
+      "sha256": "67cf82ad3cf5d0f3480bc95f0f6ffde148e0b76302a2fadf30ef80ccb207ea5c",
+      "bytes": 24,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-wind.zarr-v2/hybrid/132",
+      "range": null,
+      "sha256": "3df711b172c0538eab325497ab742f06532bbc0b5b92d6769890ab4c42fbddd8",
+      "bytes": 24,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-wind.zarr-v2/hybrid/130",
+      "range": null,
+      "sha256": "c30350d50fa06c9224d5b8491de4f4f89b12edfb992a9a65f06a31f1bd5719a2",
+      "bytes": 24,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-wind.zarr-v2/hybrid/131",
+      "range": null,
+      "sha256": "dc41afbb33fd54e7179b034d2e716c4bea80fa80cc3fb7b18b15157bb834e33c",
+      "bytes": 24,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-wind.zarr-v2/hybrid/134",
+      "range": null,
+      "sha256": "4a6234828f7a0099b23b80dfa0ea5b682d7860c31c5fc7c4c5599f67ccb35055",
+      "bytes": 24,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-wind.zarr-v2/hybrid/135",
+      "range": null,
+      "sha256": "0b64e61cf92a1b072512b8d76bfeb312786442e6dbaa3043e3426f1838c1c39b",
+      "bytes": 24,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-wind.zarr-v2/hybrid/133",
+      "range": null,
+      "sha256": "a10c132556ce5dcfed216e3266860a422ab7077dabdaea3da90c1673c688ed69",
+      "bytes": 24,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-wind.zarr-v2/hybrid/136",
+      "range": null,
+      "sha256": "9c05d36acd4df8d46abe490f513cae9391932063dd581cdf6ae1795c2e5f2650",
+      "bytes": 24,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2/hybrid/130",
+      "range": null,
+      "sha256": "c30350d50fa06c9224d5b8491de4f4f89b12edfb992a9a65f06a31f1bd5719a2",
+      "bytes": 24,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2/hybrid/129",
+      "range": null,
+      "sha256": "b85fc8bf293a067df899000c6bd34c84cb50d9118978651325047df6d9a92209",
+      "bytes": 24,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2/hybrid/131",
+      "range": null,
+      "sha256": "dc41afbb33fd54e7179b034d2e716c4bea80fa80cc3fb7b18b15157bb834e33c",
+      "bytes": 24,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2/hybrid/132",
+      "range": null,
+      "sha256": "3df711b172c0538eab325497ab742f06532bbc0b5b92d6769890ab4c42fbddd8",
+      "bytes": 24,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2/hybrid/133",
+      "range": null,
+      "sha256": "a10c132556ce5dcfed216e3266860a422ab7077dabdaea3da90c1673c688ed69",
+      "bytes": 24,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2/hybrid/134",
+      "range": null,
+      "sha256": "4a6234828f7a0099b23b80dfa0ea5b682d7860c31c5fc7c4c5599f67ccb35055",
+      "bytes": 24,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2/hybrid/135",
+      "range": null,
+      "sha256": "0b64e61cf92a1b072512b8d76bfeb312786442e6dbaa3043e3426f1838c1c39b",
+      "bytes": 24,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2/hybrid/136",
+      "range": null,
+      "sha256": "9c05d36acd4df8d46abe490f513cae9391932063dd581cdf6ae1795c2e5f2650",
+      "bytes": 24,
+      "from_cache": true
+    }
+  ],
+  "code_correctness": "LOCAL_CONTRACTS_PASS",
+  "physical_admissibility": "CONDITIONAL_HYDROSTATIC_NATIVE_AIR_ONLY_NO_VALLEY_OR_SURFACE_LAYER_EXTRAPOLATION",
+  "source_pressure_pair": "ORIGINAL_GRIB_TO_CO_COEFFICIENT_CAST_AND_HYBRID_COEFFICIENTS_CONFIRMED_AT_REGISTERED_CONTROL_HOURS",
+  "instrument_height_history": "AT_DE_CH_DATED_PRESSURE_T_RH_REFERENCES_CONFIRMED_MSL_DATUM_APPROXIMATION",
+  "independent_accuracy": "NOT_QUALIFIED_PREVIOUSLY_REVEALED_DAYS",
+  "operational_ready": false,
+  "B4_qualified": false,
+  "production_epw_ready": false,
+  "native_future_CanESM5_pressure_recovered": false,
+  "merge_main": false
+}

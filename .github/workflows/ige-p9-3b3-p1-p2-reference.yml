@@ -1,11 +1,6 @@
 name: IGE P9.3B3 P1 P2 vertical reference foundation SOURCE ONLY
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - research/ige-p9-3b3-p1-p2-reference-20261022
-    paths:
-      - research/ige_cmip6/p9_3b3_reference_protocol.json
 permissions:
   contents: read
   actions: read
