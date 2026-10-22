@@ -1,0 +1,21 @@
+# IGE P9.3B2D — DWD Station Pressure Availability Census and Reserved 2021 Validation
+
+Preregistered 22 October 2026 **BEFORE reading any German original pressure observations in source-selection year 2020 or heldout pressure in 2021**. Independent research branch derived from P9.3B2C. Scientific priority: recover original German station **absolute P**, preserve source QC, then independent pressure accuracy benchmark at an untouched station/year without retroactive station choice.
+
+## Source-only station selection (no pressure skill)
+
+- Source: official DWD CDC hourly pressure/historical archive, station header with altitude, source dates, coordinates, original `produkt_p0_stunde` with **`P`** absolute pressure in hPa and **`P0`** reduced sea-level pressure (never use P0 as P). Original quality `QN_8` must remain attached to each record.
+- Exactly eight regional anchor coordinates specified upfront: Berlin 52.5200/13.4050; Hamburg 53.5511/9.9937; Leipzig 51.3397/12.3731; Nuremberg 49.4521/11.0767; Frankfurt 50.1109/8.6821; Munich 48.1351/11.5820; Cologne 50.9375/6.9603; Hanover 52.3759/9.7320. Select the **two closest** DWD candidate stations to each anchor from station metadata, only where historical source archive covers both 2020 and 2021; deduplicate. Candidate order by geographical rank with anchor order, then ID; no reading 2021 pressure during selection. Maximum 16 candidates.
+- Frozen *availability-only* census windows: **2020-01-10..16 UTC** and **2020-07-10..16 UTC**, each 168h. Count exact station `P` nonmissing physically plausible 450..1080 hPa separately `QN_8=10` (manually/complete QC tier), `QN_8=3` (automated QC tier). Original P0 counted only to explain source completeness, **not validation**.
+- Selection must be **predefined algorithm, independent of weather-model errors**: choose first ordered candidate with at least 96 native station `P` per period with `QN_8=10`. If none, choose first ordered candidate with >=96 native `P` per period with `QN_8 in {3,10}`, labelled `AUTOMATIC_QC_ONLY`. If none, record `NO_QUALIFIED_SOURCE`, **do not** inspect 2021 observations. Never select alternate station by 2021 errors or availability.
+- Station elevation and coordinates **must** be those of original metadata, no assumed city elevations; freeze source original ZIP SHA and matching CSV headers. Source confidentiality unaffected, only counts and metrics archived.
+
+## One prospective **unseen 2021** pressure holdout
+
+- After source-only 2020 selection, read **only selected one** station's original `P` in two 2021 windows **January 10–16 and July 10–16**, no other station or year. 2021 has not been benchmarked for this pressure workstream; selection used 2020 original P completeness only.
+- Predictions: original Open-Meteo-derived ERA5 explicit `models=era5,elevation=nan,cell_selection=nearest,timezone=GMT`, source `surface_pressure`, `temperature_2m`, `dew_point_2m`. Original `surface` model elevation is independently cross-referenced against ERA5-derived 0.25° ARCO `geopotential_at_surface/9.80665` with exact selected grid center; if no equality within 1.0 m, **block B4** and record source lineage discrepancy.
+- Compare on identical original QC hours: `B0` original ERA5 grid pressure, `B3` hypsometry using Open-Meteo returned pressure-surface height, `B4` same physical hypsometry using ARCO original `z/g`. Original station measured `P` never used in formula or source vertical datum. Source P0 never used.
+- 96 originally observed `P` per site-week minimum in selected prereg QC tier; if 2021 lacks enough observations, report fail-closed; **no fallback**. Report MAE/RMSE/bias and `B4-B0`, `B4-B3`; no source tuning or choice of winner by 2021 errors.
+- All analysis limited Germany source completeness and chosen one holdout station. Prior Graz/Davos results already known; they must not be advertised as independent new 2021 data. Pressure skill does not itself prove future CanESM5 pressure consistency, or 8760 EPW production.
+
+Original source documentation: https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/pressure/historical/ . No main merge, original pressure and all failed sources retained in scientific reports.
