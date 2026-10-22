@@ -1,0 +1,41 @@
+name: IGE P9.3B2D untouched 2021 Berlin-Tempelhof original DWD P vs ERA5 z absolute pressure
+on:
+  push:
+    branches: ['research/ige-p9-3b2d-dwd-pressure-availability-20261022']
+    paths:
+      - '.github/workflows/ige-p9-3b2d-once-prespecified-2021-original-P-validation.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  independently_selected_2020_source_and_untouched_2021_station_absolute_P:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pinned original ARCO ERA5 source Zarr reader
+        run: python -m pip install 'numpy>=1.26,<3' 'xarray==2024.10.0' 'gcsfs>=2024.2,<2026' 'zarr==2.18.7' 'dask[array]>=2024.2,<2026'
+      - name: Download immutable preregistered 2020 native station-only availability census (run 39743327312), not future pressure data
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 39743327312
+          github-token: ${{ github.token }}
+          name: ige-p93b2d-2020-DWD-original-absolute-P-source-census-no-2021-values
+          path: inputs/p93b2d-2020-only
+      - name: One original 2021 independently heldout 2x168h German QFE P audit with ERA5 surface geopotential z; no station fallback
+        run: |
+          python -u research/ige_cmip6/p9_3b2d_2021_selected_germany_pressure_holdout.py \
+             --census-json inputs/p93b2d-2020-only/p9_3b2d_frozen_DWD_original_2020_pressure_source_census.json \
+             --out outputs/p93b2d-2021-pressure
+      - name: Archive original-source SHA and 2021 score aggregates only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p93b2d-2021-Germany-independent-true-QFE-P-pressure-validation
+          path: outputs/p93b2d-2021-pressure/*.json
+          retention-days: 30
+          if-no-files-found: warn
