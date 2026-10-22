@@ -1,4 +1,4 @@
-name: IGE P9.3B2D transparent original-source pressure-census errors diagnostics
+name: IGE P9.3B2D normalized original DWD P CSV column naming source census
 on:
   push:
     branches: ['research/ige-p9-3b2d-dwd-pressure-availability-20261022']
@@ -16,6 +16,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Strict original DWD P versus P0 padded-header regression test
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3b2d_original_DWD_P_csv_headers.py' -v
       - name: Strict source-only geographic preselection and 2020 original DWD station P QC census; must not read 2021 pressure values
         run: python -u research/ige_cmip6/p9_3b2d_dwd_2020_source_pressure_census.py --out outputs/p93b2d-census
       - name: Archive frozen station selection and original pressure availability hashes

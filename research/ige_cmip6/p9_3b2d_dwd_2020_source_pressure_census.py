@@ -75,8 +75,13 @@ def count_native_source(id,start,end):
   if len(members)!=1:raise ValueError("P93B2D_DWD_ORIGINAL_PRODUCT_MISSING")
   with io.TextIOWrapper(archive.open(members[0]),encoding="latin1") as fh:
    r=csv.DictReader(fh,delimiter=";")
+   original_fieldnames=list(r.fieldnames or [])
+   r.fieldnames=[name.lstrip("\ufeff").strip() if name is not None else name
+       for name in original_fieldnames]
+   if len(set(r.fieldnames))!=len(r.fieldnames):
+    raise ValueError("P93B2D_CSV_DUPLICATE_NORMALIZED_FIELD_NAME")
    if not {"STATIONS_ID","MESS_DATUM","P","P0","QN_8"}.issubset(
-          {x.strip() for x in r.fieldnames or []}):
+          set(r.fieldnames or [])):
     raise ValueError("P93B2D_ORIGINAL_P_FIELD_MISSING")
    for row in r:
     when=(row.get("MESS_DATUM") or "").strip()
