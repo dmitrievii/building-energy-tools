@@ -119,7 +119,7 @@ def run(out):
    x["source_error"]=f"{type(exc).__name__}: {exc}"[:400]
   rows.append(x)
   print("P93B2D_CENSUS_NATIVE_P_2020",json.dumps({"id":item["id"],
-    "name":item["name"],"anchor":item["anchor"],"status":x["status"],
+    "name":item["name"],"anchor":item["anchor"],"status":x["status"],"source_error":x.get("source_error"),
     "jan":x.get("periods",{}).get("January"),"jul":x.get("periods",{}).get("July")}),flush=True)
  pick10=pick(rows,"n_valid_P_QN10")
  if pick10:

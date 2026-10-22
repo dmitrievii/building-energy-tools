@@ -1,4 +1,4 @@
-name: IGE P9.3B2D canonical DWD listing duplicate href/text source-only pressure census
+name: IGE P9.3B2D transparent original-source pressure-census errors diagnostics
 on:
   push:
     branches: ['research/ige-p9-3b2d-dwd-pressure-availability-20261022']
