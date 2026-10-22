@@ -1,0 +1,20 @@
+name: IGE P9.3B3 one physics-first T P q exact simplex + RH bounds contracts
+on:
+  push:
+    branches: ['research/ige-p9-3b3-joint-tpq-water-projection-20261022']
+    paths:
+      - '.github/workflows/ige-p9-3b3-once-physical-projection-contracts.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  joint_hourly_pressure_water_mass_exact_physical_contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Source-independent exact 24h T P q RH physical maths contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3b3_joint_t_p_q_physical_projection.py' -v
