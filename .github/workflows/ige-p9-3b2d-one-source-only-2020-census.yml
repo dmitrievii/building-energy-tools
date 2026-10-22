@@ -1,4 +1,4 @@
-name: IGE P9.3B2D one frozen source-only 2020 DWD station-pressure availability census
+name: IGE P9.3B2D canonical DWD listing duplicate href/text source-only pressure census
 on:
   push:
     branches: ['research/ige-p9-3b2d-dwd-pressure-availability-20261022']

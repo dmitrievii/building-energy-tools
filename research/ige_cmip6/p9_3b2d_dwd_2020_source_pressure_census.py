@@ -47,9 +47,10 @@ def source_catalog():
  assets={}
  for id,start,end in matches:
   if id in stations and start<="20200110" and end>="20210716":
-   assets.setdefault(id,[]).append((start,end))
+   assets.setdefault(id,set()).add((start,end))
  for id,options in assets.items():
   if len(options)!=1:raise ValueError("P93B2D_DWD_SOURCE_ARCHIVE_AMBIGUOUS_"+id)
+  assets[id]=sorted(options)
  chosen=[];seen=set()
  for city,lat,lon in ANCHORS:
   ranked=sorted((distance_km(lat,lon,s["lat"],s["lon"]),s["id"]) for id,s in stations.items() if id in assets)
