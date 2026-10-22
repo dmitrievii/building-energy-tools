@@ -1,0 +1,55 @@
+name: IGE P9.3B3 one retrospective 2014 original 15 blocked source physical regression
+on:
+  push:
+    branches: ['research/ige-p9-3b3-joint-tpq-water-projection-20261022']
+    paths:
+      - '.github/workflows/ige-p9-3b3-once-2014-known-15-regression.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  previously_LP_proven_physical_blocks_not_silently_accepted:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 42
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install original P9.3A LP source import dependency (no new optimizer run)
+        run: python -m pip install 'numpy>=1.26,<3' 'scipy>=1.12,<2'
+      - name: Download immutable historical CanESM5 original P6 file
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          name: ige-p6-CanESM5-historical-1995-2014
+          path: inputs/p93b3-original
+      - name: Recreate registered source archive with correct original metadata/ZIP shape
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import zipfile,hashlib,json
+          root=Path('inputs/p93b3-original')
+          expected=json.loads(Path('research/ige_cmip6/p7c3_expected_daily_source_shas.json').read_text())['source_sha256']['CanESM5_historical-1995-2014']
+          if hashlib.sha256((root/'joint_daily_raw.csv').read_bytes()).hexdigest()!=expected:
+              raise ValueError('P93B3_RETRO_2014_ORIGINAL_NASA_SOURCE_CHANGED')
+          out=Path('inputs/p93b3-canonical');out.mkdir(exist_ok=True,parents=True)
+          with zipfile.ZipFile(out/'IGE_P7C3_SRC_CanESM5_historical-1995-2014.zip','w',zipfile.ZIP_DEFLATED) as f:
+              for p in sorted(root.iterdir()):
+                  if p.is_file():f.write(p,p.name)
+          PY
+      - name: Verify no previously certified hard infeasible 2014 GCM day now passes silently
+        run: |
+          python -u research/ige_cmip6/p9_3b3_2014_previous_15_source_blocks_regression.py \
+            --original-canesm5-registered-zip inputs/p93b3-canonical/IGE_P7C3_SRC_CanESM5_historical-1995-2014.zip \
+            --out outputs/p93b3-retro-2014
+      - name: Archive source-auditable negative regression only (previously seen cohort)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ige-p93b3-2014-original-known-15-LP-infeasible-regression
+          path: outputs/p93b3-retro-2014/*.json
+          retention-days: 30
+          if-no-files-found: warn
