@@ -1,0 +1,1046 @@
+{
+  "phase": "P9.3B3_P1_P2_REFERENCE_FOUNDATION_20261022",
+  "scope": "LOCAL_SOURCE_ONLY_FOUNDATION_NOT_P2_QUALIFICATION",
+  "base_commit": "bce1e7981ee7ecfd824e5b9d53ff8d6333aa93cb",
+  "local_run_implementation_identified_by_file_SHA_not_base_commit": true,
+  "implementation_sha256": {
+    "research/ige_cmip6/p9_3b3_reference_column.py": "6244b62e2f2769ec519dba6cadfff1395ba4689c863958b3a969792a4159abca",
+    "research/ige_cmip6/p9_3b3_reference_sources.py": "8d0ad4ce4da4dacf1cc19dfeca0e2325848e3aa8bd75f8cab80ee9683ff30c0b",
+    "research/ige_cmip6/p9_3b3_reference_run.py": "610fb5e5218df85f68ff3b2166deb3540b863908b9d9403d0bf9abb8192c1d65",
+    "research/ige_cmip6/test_p9_3b3_reference_column.py": "f50222eab1d20e842728a9ff9a42a44710f0128bd8ab9a57971fc04df5b79000",
+    "research/ige_cmip6/test_p9_3b3_reference_pipeline.py": "1c7edd45853db3a17900271b89eb9983cd71d62000b17dc1761a6e7f57562f6a",
+    "research/ige_cmip6/test_p9_3b3_reference_sources.py": "850723880634da005f62046305d9d7b728a1ea5fdeff34d6c99a1acee618886b",
+    "research/ige_cmip6/p9_3b3_reference_protocol.json": "52418155d79bc3c4c76a613909d3348ccc35ff49858b2c44ed4d3d223b12069f",
+    ".github/workflows/ige-p9-3b3-p1-p2-reference.yml": "ffd6f56d002cca2876247e89e0123f940df845c6ff3f4d88b51815bb6a168e6f",
+    "docs/IGE_P9_3B3_P1_P2_REFERENCE_RU_20261022.md": "aa7c60db83b9d8b96966027825825b5d2f84a6193c46778f38e3aaf96573a677"
+  },
+  "runtime": {
+    "python": "3.12.14",
+    "numpy": "2.3.5",
+    "numcodecs": "0.16.3",
+    "started_UTC": "2026-10-22T07:13:49Z"
+  },
+  "tests": {
+    "B3_C2_P1_P2": {
+      "tests": 179,
+      "seconds": 10.928,
+      "status": "PASS",
+      "log_sha256": "81e89c36069ec15571c1dd7c0b970b7e8d391ef04d01a2adcefc83e27beacc33"
+    },
+    "P93A": {
+      "tests": 14,
+      "seconds": 0.11,
+      "status": "PASS",
+      "log_sha256": "e057162bbeff782b99e7d083d5457880df021d9dfdb2003976236b0e9c8bb8a9"
+    },
+    "P92": {
+      "tests": 50,
+      "seconds": 0.602,
+      "status": "PASS",
+      "log_sha256": "ed107bb5f89e299edb77dacaa50198f40bae91a72b544d81193896bec3b7d049"
+    },
+    "P93B2": {
+      "tests": 8,
+      "seconds": 0.0,
+      "status": "PASS",
+      "log_sha256": "090bc7523f5dd6d3499c371d202d764402d61938493e95933ef5eff4f1bcf894"
+    }
+  },
+  "total_unittest_passed": 251,
+  "new_tests": 37,
+  "DWD_pressure_semantics_contract": "PASS",
+  "protected_controls": {
+    "verified_count": 49,
+    "changed_count": 0,
+    "expected_hashes_in": "p9_3b3_reference_protocol.json"
+  },
+  "final_full_probe_json_sha256": "d91e71bb0dfeb44faa7a8ee619ecd47f98fdc8085f4c3d51a867812196101881",
+  "station_metadata": {
+    "AT": {
+      "station_id": "30",
+      "latitude": 47.08,
+      "longitude": 15.448056,
+      "general_station_height_m": 366.0,
+      "barometer_height_m": null,
+      "barometer_height_status": "NOT_IN_READ_SOURCE",
+      "thermo_nominal_AGL_m": 2.0,
+      "thermo_absolute_history_status": "NOT_ESTABLISHED",
+      "height_valid_for_2021_sensor_validation": false,
+      "source": "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h/metadata",
+      "source_sha256": "73c5a06f18bdb2ebd67b83974337c74ffa3fd19c1d0e6d14434a3e55f6c3751d",
+      "source_fields": {
+        "type": "COMBINED",
+        "id": 30,
+        "group_id": null,
+        "name": "Graz Universität/Heinrichstraße",
+        "state": "Steiermark",
+        "lat": 47.08,
+        "lon": 15.448056,
+        "altitude": 366.0,
+        "valid_from": "1894-01-01T00:00:00+00:00",
+        "valid_to": "2100-12-31T00:00:00+00:00",
+        "has_sunshine": true,
+        "has_global_radiation": true,
+        "is_active": true
+      },
+      "parameter_metadata": [
+        {
+          "name": "p",
+          "long_name": "Luftdruck",
+          "description": "Luftdruck in Stationsniveau, Stunden-Messwert",
+          "unit": "hPa"
+        },
+        {
+          "name": "rf",
+          "long_name": "Relative Feuchte",
+          "description": "Relative Feuchte, Stunden-Messwert",
+          "unit": "%"
+        },
+        {
+          "name": "tl",
+          "long_name": "Lufttemperatur 2m",
+          "description": "Lufttemperatur in 2m Höhe, Stunden-Messwert",
+          "unit": "°C"
+        }
+      ],
+      "status": "SOURCE_METADATA_READ_SENSOR_HISTORY_UNQUALIFIED",
+      "general_height_is_not_barometer_height": true,
+      "vertical_datum_history_status": "NATIONAL_MASL_METADATA_NOT_A_VERIFIED_ERA5_DATUM_TRANSFORMATION"
+    },
+    "CH": {
+      "station_id": "DAV",
+      "latitude": 46.812969,
+      "longitude": 9.843558,
+      "general_station_height_m": 1594.0,
+      "barometer_height_m": 1596.0,
+      "barometer_height_status": "SOURCE_CURRENT_SNAPSHOT_NOT_HISTORY",
+      "thermo_nominal_AGL_m": 2.0,
+      "thermo_absolute_history_status": "NOT_ESTABLISHED",
+      "height_valid_for_2021_sensor_validation": false,
+      "source": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/ogd-smn_meta_stations.csv",
+      "source_sha256": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+      "source_encoding": "latin1",
+      "source_fields": {
+        "station_abbr": "DAV",
+        "station_name": "Davos",
+        "station_canton": "GR",
+        "station_wigos_id": "0-20000-0-06784",
+        "station_type_de": "Automatische Wetterstationen - Messwerte",
+        "station_type_fr": "Stations météorologiques automatiques - Valeurs mesurées",
+        "station_type_it": "Stazioni meteorologiche automatiche - Valori misurati",
+        "station_type_en": "Automatic weather stations - Measurement values",
+        "station_dataowner": "MeteoSchweiz, SLF",
+        "station_data_since": "01.01.1864",
+        "station_height_masl": "1594.0",
+        "station_height_barometer_masl": "1596.0",
+        "station_coordinates_lv95_east": "2783519.0",
+        "station_coordinates_lv95_north": "1187459.0",
+        "station_coordinates_wgs84_lat": "46.812969",
+        "station_coordinates_wgs84_lon": "9.843558",
+        "station_exposition_de": "Südosthang",
+        "station_exposition_fr": "Versant sud-est",
+        "station_exposition_it": "Versante sud-orientale",
+        "station_exposition_en": "south-eastern oriented slope",
+        "station_url_de": "https://www.meteoschweiz.admin.ch/service-und-publikationen/applikationen/messwerte-und-messnetze.html#param=messnetz-automatisch&station=DAV",
+        "station_url_fr": "https://www.meteosuisse.admin.ch/services-et-publications/applications/valeurs-mesurees-et-reseaux-de-mesure.html#param=messnetz-automatisch&station=DAV",
+        "station_url_it": "https://www.meteosvizzera.admin.ch/servizi-e-pubblicazioni/applicazioni/valori-attuali-e-reti-di-misura.html#param=messnetz-automatisch&station=DAV",
+        "station_url_en": "https://www.meteoswiss.admin.ch/services-and-publications/applications/measurement-values-and-measuring-networks.html#param=messnetz-automatisch&station=DAV"
+      },
+      "status": "SOURCE_METADATA_READ_SENSOR_HISTORY_UNQUALIFIED",
+      "general_height_is_not_barometer_height": true,
+      "vertical_datum_history_status": "NATIONAL_MASL_METADATA_NOT_A_VERIFIED_ERA5_DATUM_TRANSFORMATION"
+    },
+    "DE": {
+      "station_id": "00399",
+      "latitude": 52.5198,
+      "longitude": 13.4057,
+      "general_station_height_m": 35.8,
+      "barometer_height_m": null,
+      "barometer_height_status": "SEPARATE_SENSOR_HEIGHT_NOT_IN_READ_SOURCE",
+      "thermo_nominal_AGL_m": null,
+      "thermo_absolute_history_status": "NOT_ESTABLISHED",
+      "height_valid_for_2021_sensor_validation": false,
+      "source": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate_urban/10_minutes/pressure/historical/10minutenwerte_P0_STADT_00399_20150701_20241231_hist.zip",
+      "source_sha256": "8d54caa8eacdc458bf2970f830f91c5c28de25716f369c689c703252e3328352",
+      "source_fields": {
+        "Stations_id": "399",
+        "Stationshoehe": "35.80",
+        "Geogr.Breite": "52.5198",
+        "Geogr.Laenge": "13.4057",
+        "von_datum": "20150701",
+        "bis_datum": "",
+        "Stationsname": "Berlin-Alexanderplatz"
+      },
+      "parameter_metadata_sha256": "9b4de894795aeeaefbc5252d03810735e267bec18d5d5531e5878ec6a2b3c185",
+      "absolute_pressure_field": "P0_ST_10",
+      "sea_level_pressure_field": "PP_ST_10",
+      "observation_product_not_parsed_or_scored": true,
+      "status": "SOURCE_METADATA_READ_SENSOR_HISTORY_UNQUALIFIED",
+      "general_height_is_not_barometer_height": true,
+      "vertical_datum_history_status": "NATIONAL_MASL_METADATA_NOT_A_VERIFIED_ERA5_DATUM_TRANSFORMATION"
+    }
+  },
+  "profiles": [
+    {
+      "timestamp_UTC": "2021-02-01T00:00",
+      "status": "BOUNDED_SOURCE_ONLY_PROFILES_RECONSTRUCTED",
+      "source_grid_columns": 12,
+      "cross_product_bottom_geometry_violations": 3,
+      "maximum_abs_ECMWF_phi137_residual_m": 28.059103057024757,
+      "column_checks": [
+        {
+          "latitude": 46.75,
+          "longitude": 9.75,
+          "surface_geopotential_m2s2": 19606.4296875,
+          "source_full_level_137_geopotential_m2s2": 19601.650390625,
+          "ECMWF_gas_reconstructed_level_137_geopotential_m2s2": 19696.88215810254,
+          "level_137_ECMWF_reference_residual_m": 9.710937728739214,
+          "source_level_137_minus_supplied_surface_m": -0.4873526510072247,
+          "necessary_bottom_level_above_surface": "VIOLATED_FOR_THIS_CROSS_PRODUCT_COLUMN",
+          "empirical_surface_shift_or_pressure_fit_applied": false,
+          "B3_column_fingerprint": "f445fcd152ec43f6e10cff639164e63f02d56b9739ead31965c97e7253191778"
+        },
+        {
+          "latitude": 46.75,
+          "longitude": 10.0,
+          "surface_geopotential_m2s2": 21381.65625,
+          "source_full_level_137_geopotential_m2s2": 21267.845703125,
+          "ECMWF_gas_reconstructed_level_137_geopotential_m2s2": 21471.331324363808,
+          "level_137_ECMWF_reference_residual_m": 20.749758708509802,
+          "source_level_137_minus_supplied_surface_m": -11.6054459856322,
+          "necessary_bottom_level_above_surface": "VIOLATED_FOR_THIS_CROSS_PRODUCT_COLUMN",
+          "empirical_surface_shift_or_pressure_fit_applied": false,
+          "B3_column_fingerprint": "374b8ccbc5a579ec6a92db937517b273ac5154b73b8fc3ec5eaf8d6e18f9dac6"
+        },
+        {
+          "latitude": 47.0,
+          "longitude": 9.75,
+          "surface_geopotential_m2s2": 15406.7685546875,
+          "source_full_level_137_geopotential_m2s2": 15470.599609375,
+          "ECMWF_gas_reconstructed_level_137_geopotential_m2s2": 15498.289288172138,
+          "level_137_ECMWF_reference_residual_m": 2.8235614401592986,
+          "source_level_137_minus_supplied_surface_m": 6.508956135632454,
+          "necessary_bottom_level_above_surface": "PASS_NECESSARY_ONLY",
+          "empirical_surface_shift_or_pressure_fit_applied": false,
+          "B3_column_fingerprint": "3ef1ed8c45cbd2ed389df9fb20e530fd583299327b4bd0b0638b82439cc6e9ff"
+        },
+        {
+          "latitude": 47.0,
+          "longitude": 10.0,
+          "surface_geopotential_m2s2": 18247.84765625,
+          "source_full_level_137_geopotential_m2s2": 18063.310546875,
+          "ECMWF_gas_reconstructed_level_137_geopotential_m2s2": 18338.476349869172,
+          "level_137_ECMWF_reference_residual_m": 28.059103057024757,
+          "source_level_137_minus_supplied_surface_m": -18.817548232576875,
+          "necessary_bottom_level_above_surface": "VIOLATED_FOR_THIS_CROSS_PRODUCT_COLUMN",
+          "empirical_surface_shift_or_pressure_fit_applied": false,
+          "B3_column_fingerprint": "053ca2fcb2121a2eb486d34025b0c02451adf69592e73a7e077fd904331a9cf6"
+        },
+        {
+          "latitude": 47.0,
+          "longitude": 15.25,
+          "surface_geopotential_m2s2": 6238.806640625,
+          "source_full_level_137_geopotential_m2s2": 6372.14208984375,
+          "ECMWF_gas_reconstructed_level_137_geopotential_m2s2": 6330.565553180179,
+          "level_137_ECMWF_reference_residual_m": -4.2396268515314155,
+          "source_level_137_minus_supplied_surface_m": 13.596431933305462,
+          "necessary_bottom_level_above_surface": "PASS_NECESSARY_ONLY",
+          "empirical_surface_shift_or_pressure_fit_applied": false,
+          "B3_column_fingerprint": "095f059c5a9ce6f6b4f5c456e59f9289fd1e137993b7275d24d8a7d49b950ce8"
+        },
+        {
+          "latitude": 47.0,
+          "longitude": 15.5,
+          "surface_geopotential_m2s2": 4581.2109375,
+          "source_full_level_137_geopotential_m2s2": 4780.64208984375,
+          "ECMWF_gas_reconstructed_level_137_geopotential_m2s2": 4673.508935479968,
+          "level_137_ECMWF_reference_residual_m": -10.92454144522152,
+          "source_level_137_minus_supplied_surface_m": 20.336317941779303,
+          "necessary_bottom_level_above_surface": "PASS_NECESSARY_ONLY",
+          "empirical_surface_shift_or_pressure_fit_applied": false,
+          "B3_column_fingerprint": "1757bc0adbe7e2f9969ac3decf6fe5d7a8215c0ed4d149bccabcae12780a2c98"
+        },
+        {
+          "latitude": 47.25,
+          "longitude": 15.25,
+          "surface_geopotential_m2s2": 7912.56640625,
+          "source_full_level_137_geopotential_m2s2": 8046.57568359375,
+          "ECMWF_gas_reconstructed_level_137_geopotential_m2s2": 8004.081247553832,
+          "level_137_ECMWF_reference_residual_m": -4.333226539125764,
+          "source_level_137_minus_supplied_surface_m": 13.665143279687763,
+          "necessary_bottom_level_above_surface": "PASS_NECESSARY_ONLY",
+          "empirical_surface_shift_or_pressure_fit_applied": false,
+          "B3_column_fingerprint": "92dedff6b92f1ac5fc90716a980bcdaccc3df998e454ed2bd2843821f9b04022"
+        },
+        {
+          "latitude": 47.25,
+          "longitude": 15.5,
+          "surface_geopotential_m2s2": 6878.138671875,
+          "source_full_level_137_geopotential_m2s2": 6991.64990234375,
+          "ECMWF_gas_reconstructed_level_137_geopotential_m2s2": 6969.9508843572685,
+          "level_137_ECMWF_reference_residual_m": -2.212684044651489,
+          "source_level_137_minus_supplied_surface_m": 11.574924206405857,
+          "necessary_bottom_level_above_surface": "PASS_NECESSARY_ONLY",
+          "empirical_surface_shift_or_pressure_fit_applied": false,
+          "B3_column_fingerprint": "c5aebcaedcfea27dbe9be3a73be4659f17b3e686aef9efa414142b6a8be23857"
+        },
+        {
+          "latitude": 52.5,
+          "longitude": 13.25,
+          "surface_geopotential_m2s2": 377.955078125,
+          "source_full_level_137_geopotential_m2s2": 478.31787109375,
+          "ECMWF_gas_reconstructed_level_137_geopotential_m2s2": 469.3760274601786,
+          "level_137_ECMWF_reference_residual_m": -0.9118142927066235,
+          "source_level_137_minus_supplied_surface_m": 10.23415671699816,
+          "necessary_bottom_level_above_surface": "PASS_NECESSARY_ONLY",
+          "empirical_surface_shift_or_pressure_fit_applied": false,
+          "B3_column_fingerprint": "495484ae0e5d02190571135ccb14fe44bea0c2604be9ed6bb18e669a3703d6c2"
+        },
+        {
+          "latitude": 52.5,
+          "longitude": 13.5,
+          "surface_geopotential_m2s2": 492.892578125,
+          "source_full_level_137_geopotential_m2s2": 587.97021484375,
+          "ECMWF_gas_reconstructed_level_137_geopotential_m2s2": 584.3683694704715,
+          "level_137_ECMWF_reference_residual_m": -0.36728601237716035,
+          "source_level_137_minus_supplied_surface_m": 9.695220765373497,
+          "necessary_bottom_level_above_surface": "PASS_NECESSARY_ONLY",
+          "empirical_surface_shift_or_pressure_fit_applied": false,
+          "B3_column_fingerprint": "c63c194d25f361355f785211417de8b6cf17ffffc51ba768e0a4fb737e374921"
+        },
+        {
+          "latitude": 52.75,
+          "longitude": 13.25,
+          "surface_geopotential_m2s2": 497.380859375,
+          "source_full_level_137_geopotential_m2s2": 590.24755859375,
+          "ECMWF_gas_reconstructed_level_137_geopotential_m2s2": 589.055033809806,
+          "level_137_ECMWF_reference_residual_m": -0.1216036856565707,
+          "source_level_137_minus_supplied_surface_m": 9.469767883910409,
+          "necessary_bottom_level_above_surface": "PASS_NECESSARY_ONLY",
+          "empirical_surface_shift_or_pressure_fit_applied": false,
+          "B3_column_fingerprint": "8581566f2cd7a06124f61e8231668eda24e187ea06a769866dd00327bdbcb9b5"
+        },
+        {
+          "latitude": 52.75,
+          "longitude": 13.5,
+          "surface_geopotential_m2s2": 609.625,
+          "source_full_level_137_geopotential_m2s2": 698.44287109375,
+          "ECMWF_gas_reconstructed_level_137_geopotential_m2s2": 701.2722422217653,
+          "level_137_ECMWF_reference_residual_m": 0.28851556117688326,
+          "source_level_137_minus_supplied_surface_m": 9.056902315648056,
+          "necessary_bottom_level_above_surface": "PASS_NECESSARY_ONLY",
+          "empirical_surface_shift_or_pressure_fit_applied": false,
+          "B3_column_fingerprint": "a03af2a97c7e300d3bd9631d122173e09e744444fe975cde34fa3e6f08c18e03"
+        }
+      ],
+      "sites": {
+        "AT": {
+          "station_id": "30",
+          "station_sensor_qualification": "SOURCE_BLOCKED_HISTORICAL_SENSOR_HEIGHT_AND_DATUM",
+          "column_geometry": [
+            {
+              "latitude": 47.0,
+              "longitude": 15.25,
+              "distance_km": 17.446507981635396,
+              "surface_H_m": 636.1812281079676,
+              "top_H_m": 2802.1327728000565,
+              "fingerprint": "095f059c5a9ce6f6b4f5c456e59f9289fd1e137993b7275d24d8a7d49b950ce8"
+            },
+            {
+              "latitude": 47.0,
+              "longitude": 15.5,
+              "distance_km": 9.727568997637546,
+              "surface_H_m": 467.15350680405646,
+              "top_H_m": 2658.3542887882186,
+              "fingerprint": "1757bc0adbe7e2f9969ac3decf6fe5d7a8215c0ed4d149bccabcae12780a2c98"
+            },
+            {
+              "latitude": 47.25,
+              "longitude": 15.25,
+              "distance_km": 24.11477923873777,
+              "surface_H_m": 806.8572250717626,
+              "top_H_m": 2946.384632151617,
+              "fingerprint": "92dedff6b92f1ac5fc90716a980bcdaccc3df998e454ed2bd2843821f9b04022"
+            },
+            {
+              "latitude": 47.25,
+              "longitude": 15.5,
+              "distance_km": 19.306754107246554,
+              "surface_H_m": 701.3749518821412,
+              "top_H_m": 2856.882880010947,
+              "fingerprint": "c5aebcaedcfea27dbe9be3a73be4659f17b3e686aef9efa414142b6a8be23857"
+            }
+          ],
+          "cases": {
+            "general_station_height_SENSITIVITY_ONLY": {
+              "status": "SOURCE_BLOCKED",
+              "reason": "P93REF_NO_COLUMN_AIR_DOMAIN_COVERS_TARGET"
+            }
+          }
+        },
+        "CH": {
+          "station_id": "DAV",
+          "station_sensor_qualification": "SOURCE_BLOCKED_HISTORICAL_SENSOR_HEIGHT_AND_DATUM",
+          "column_geometry": [
+            {
+              "latitude": 46.75,
+              "longitude": 9.75,
+              "distance_km": 9.988796846995639,
+              "surface_H_m": 1999.2994230955526,
+              "top_H_m": 3934.248978357054,
+              "fingerprint": "f445fcd152ec43f6e10cff639164e63f02d56b9739ead31965c97e7253191778"
+            },
+            {
+              "latitude": 46.75,
+              "longitude": 10.0,
+              "distance_km": 13.817597748200612,
+              "surface_H_m": 2180.322153844585,
+              "top_H_m": 4079.439189943563,
+              "fingerprint": "374b8ccbc5a579ec6a92db937517b273ac5154b73b8fc3ec5eaf8d6e18f9dac6"
+            },
+            {
+              "latitude": 47.0,
+              "longitude": 9.75,
+              "distance_km": 21.977866854509653,
+              "surface_H_m": 1571.0531684813368,
+              "top_H_m": 3592.1561510989964,
+              "fingerprint": "3ef1ed8c45cbd2ed389df9fb20e530fd583299327b4bd0b0638b82439cc6e9ff"
+            },
+            {
+              "latitude": 47.0,
+              "longitude": 10.0,
+              "distance_km": 23.953143168381928,
+              "surface_H_m": 1860.7626107029414,
+              "top_H_m": 3825.879782758665,
+              "fingerprint": "053ca2fcb2121a2eb486d34025b0c02451adf69592e73a7e077fd904331a9cf6"
+            }
+          ],
+          "cases": {
+            "general_station_height_SENSITIVITY_ONLY": {
+              "status": "CONDITIONAL_SOURCE_ONLY_HYDROSTATIC_RESULT",
+              "pressure_Pa": 81975.40742897334,
+              "height_approximation": "DECLARED_CONSTANT_G_HEIGHT_APPROXIMATION_NOT_DATUM_TRANSFORMATION",
+              "target_phi_m2s2": 15631.800099999999,
+              "eligible_columns": 1,
+              "rejected_columns": 3,
+              "active_columns": [
+                {
+                  "latitude": 47.0,
+                  "longitude": 9.75,
+                  "weight": 1.0,
+                  "fingerprint": "3ef1ed8c45cbd2ed389df9fb20e530fd583299327b4bd0b0638b82439cc6e9ff"
+                }
+              ],
+              "target_role": "GROUND_SENSITIVITY_NOT_SENSOR",
+              "sensor_height_history_qualified": false,
+              "independent_accuracy": "NOT_TESTED",
+              "pressure_model_qualified": false
+            },
+            "current_snapshot_barometer_NOT_2021_QUALIFIED": {
+              "status": "CONDITIONAL_SOURCE_ONLY_HYDROSTATIC_RESULT",
+              "pressure_Pa": 81954.58879747661,
+              "height_approximation": "DECLARED_CONSTANT_G_HEIGHT_APPROXIMATION_NOT_DATUM_TRANSFORMATION",
+              "target_phi_m2s2": 15651.4134,
+              "eligible_columns": 1,
+              "rejected_columns": 3,
+              "active_columns": [
+                {
+                  "latitude": 47.0,
+                  "longitude": 9.75,
+                  "weight": 1.0,
+                  "fingerprint": "3ef1ed8c45cbd2ed389df9fb20e530fd583299327b4bd0b0638b82439cc6e9ff"
+                }
+              ],
+              "target_role": "BAROMETER",
+              "sensor_height_history_qualified": false,
+              "independent_accuracy": "NOT_TESTED",
+              "pressure_model_qualified": false
+            }
+          }
+        },
+        "DE": {
+          "station_id": "00399",
+          "station_sensor_qualification": "SOURCE_BLOCKED_HISTORICAL_SENSOR_HEIGHT_AND_DATUM",
+          "column_geometry": [
+            {
+              "latitude": 52.5,
+              "longitude": 13.25,
+              "distance_km": 10.764709535555328,
+              "surface_H_m": 38.540692094140205,
+              "top_H_m": 2274.42024045026,
+              "fingerprint": "495484ae0e5d02190571135ccb14fe44bea0c2604be9ed6bb18e669a3703d6c2"
+            },
+            {
+              "latitude": 52.5,
+              "longitude": 13.5,
+              "distance_km": 6.750949351377738,
+              "surface_H_m": 50.261055317055266,
+              "top_H_m": 2283.6710662655905,
+              "fingerprint": "c63c194d25f361355f785211417de8b6cf17ffffc51ba768e0a4fb737e374921"
+            },
+            {
+              "latitude": 52.75,
+              "longitude": 13.25,
+              "distance_km": 27.66968438789736,
+              "surface_H_m": 50.71873263295825,
+              "top_H_m": 2283.3225831002774,
+              "fingerprint": "8581566f2cd7a06124f61e8231668eda24e187ea06a769866dd00327bdbcb9b5"
+            },
+            {
+              "latitude": 52.75,
+              "longitude": 13.5,
+              "distance_km": 26.376277894015885,
+              "surface_H_m": 62.164449633666955,
+              "top_H_m": 2292.3562453324676,
+              "fingerprint": "a03af2a97c7e300d3bd9631d122173e09e744444fe975cde34fa3e6f08c18e03"
+            }
+          ],
+          "cases": {
+            "general_station_height_SENSITIVITY_ONLY": {
+              "status": "SOURCE_BLOCKED",
+              "reason": "P93REF_NO_COLUMN_AIR_DOMAIN_COVERS_TARGET"
+            }
+          }
+        }
+      }
+    },
+    {
+      "timestamp_UTC": "2021-08-01T00:00",
+      "status": "BOUNDED_SOURCE_ONLY_PROFILES_RECONSTRUCTED",
+      "source_grid_columns": 12,
+      "cross_product_bottom_geometry_violations": 2,
+      "maximum_abs_ECMWF_phi137_residual_m": 28.058892363154857,
+      "column_checks": [
+        {
+          "latitude": 46.75,
+          "longitude": 9.75,
+          "surface_geopotential_m2s2": 19606.4296875,
+          "source_full_level_137_geopotential_m2s2": 19607.7578125,
+          "ECMWF_gas_reconstructed_level_137_geopotential_m2s2": 19702.988798196908,
+          "level_137_ECMWF_reference_residual_m": 9.710858009300601,
+          "source_level_137_minus_supplied_surface_m": 0.1354310595361311,
+          "necessary_bottom_level_above_surface": "PASS_NECESSARY_ONLY",
+          "empirical_surface_shift_or_pressure_fit_applied": false,
+          "B3_column_fingerprint": "7693683f697ed4a2c237fe99eb76e34303856b3a69cad6bf38808da7e1e00fee"
+        },
+        {
+          "latitude": 46.75,
+          "longitude": 10.0,
+          "surface_geopotential_m2s2": 21381.65625,
+          "source_full_level_137_geopotential_m2s2": 21274.5390625,
+          "ECMWF_gas_reconstructed_level_137_geopotential_m2s2": 21478.024766017283,
+          "level_137_ECMWF_reference_residual_m": 20.749767098579298,
+          "source_level_137_minus_supplied_surface_m": -10.922913278234669,
+          "necessary_bottom_level_above_surface": "VIOLATED_FOR_THIS_CROSS_PRODUCT_COLUMN",
+          "empirical_surface_shift_or_pressure_fit_applied": false,
+          "B3_column_fingerprint": "9177e4594f55a2ecd5b8af8a78e5ebdc0e4ca7c1d39ec460ea4cfff971dc84da"
+        },
+        {
+          "latitude": 47.0,
+          "longitude": 9.75,
+          "surface_geopotential_m2s2": 15406.7685546875,
+          "source_full_level_137_geopotential_m2s2": 15476.1953125,
+          "ECMWF_gas_reconstructed_level_137_geopotential_m2s2": 15503.882520467718,
+          "level_137_ECMWF_reference_residual_m": 2.8233094856773486,
+          "source_level_137_minus_supplied_surface_m": 7.079559055589829,
+          "necessary_bottom_level_above_surface": "PASS_NECESSARY_ONLY",
+          "empirical_surface_shift_or_pressure_fit_applied": false,
+          "B3_column_fingerprint": "b649053372a755b0f75115bd47e1081800087df1ff54f793385e7008bca2c853"
+        },
+        {
+          "latitude": 47.0,
+          "longitude": 10.0,
+          "surface_geopotential_m2s2": 18247.84765625,
+          "source_full_level_137_geopotential_m2s2": 18069.36328125,
+          "ECMWF_gas_reconstructed_level_137_geopotential_m2s2": 18344.527018043133,
+          "level_137_ECMWF_reference_residual_m": 28.058892363154857,
+          "source_level_137_minus_supplied_surface_m": -18.20034109507324,
+          "necessary_bottom_level_above_surface": "VIOLATED_FOR_THIS_CROSS_PRODUCT_COLUMN",
+          "empirical_surface_shift_or_pressure_fit_applied": false,
+          "B3_column_fingerprint": "a035185d6cdec5ff9254b5299769c1a3cf83388ee91d7fa3b26968acaa0d991f"
+        },
+        {
+          "latitude": 47.0,
+          "longitude": 15.25,
+          "surface_geopotential_m2s2": 6238.806640625,
+          "source_full_level_137_geopotential_m2s2": 6380.35546875,
+          "ECMWF_gas_reconstructed_level_137_geopotential_m2s2": 6338.776665668321,
+          "level_137_ECMWF_reference_residual_m": -4.239857961860506,
+          "source_level_137_minus_supplied_surface_m": 14.433963496708866,
+          "necessary_bottom_level_above_surface": "PASS_NECESSARY_ONLY",
+          "empirical_surface_shift_or_pressure_fit_applied": false,
+          "B3_column_fingerprint": "e24924d6ddae5485a75f16824ed083b6cfc768a3a8f15f36d2a987f39c4fdc41"
+        },
+        {
+          "latitude": 47.0,
+          "longitude": 15.5,
+          "surface_geopotential_m2s2": 4581.2109375,
+          "source_full_level_137_geopotential_m2s2": 4788.78125,
+          "ECMWF_gas_reconstructed_level_137_geopotential_m2s2": 4681.646312339444,
+          "level_137_ECMWF_reference_residual_m": -10.92472329088484,
+          "source_level_137_minus_supplied_surface_m": 21.166281298914512,
+          "necessary_bottom_level_above_surface": "PASS_NECESSARY_ONLY",
+          "empirical_surface_shift_or_pressure_fit_applied": false,
+          "B3_column_fingerprint": "5756a552f6751ceac47358dc2ff2d063a565cd3bc3a95542cae70dd9a07ab26d"
+        },
+        {
+          "latitude": 47.25,
+          "longitude": 15.25,
+          "surface_geopotential_m2s2": 7912.56640625,
+          "source_full_level_137_geopotential_m2s2": 8054.2421875,
+          "ECMWF_gas_reconstructed_level_137_geopotential_m2s2": 8011.746418114004,
+          "level_137_ECMWF_reference_residual_m": -4.333362502587125,
+          "source_level_137_minus_supplied_surface_m": 14.446909112693938,
+          "necessary_bottom_level_above_surface": "PASS_NECESSARY_ONLY",
+          "empirical_surface_shift_or_pressure_fit_applied": false,
+          "B3_column_fingerprint": "7e3ef98976f58be497c6fa57055069f0257f87e02c5567f8b1f33cbbd2b9eb62"
+        },
+        {
+          "latitude": 47.25,
+          "longitude": 15.5,
+          "surface_geopotential_m2s2": 6878.138671875,
+          "source_full_level_137_geopotential_m2s2": 6999.328125,
+          "ECMWF_gas_reconstructed_level_137_geopotential_m2s2": 6977.629586476018,
+          "level_137_ECMWF_reference_residual_m": -2.2126351530830894,
+          "source_level_137_minus_supplied_surface_m": 12.357885019349116,
+          "necessary_bottom_level_above_surface": "PASS_NECESSARY_ONLY",
+          "empirical_surface_shift_or_pressure_fit_applied": false,
+          "B3_column_fingerprint": "997ee9b04aeac794cb5ba4eb11772343bceafcbda224d93c06b902998ffe767f"
+        },
+        {
+          "latitude": 52.5,
+          "longitude": 13.25,
+          "surface_geopotential_m2s2": 377.955078125,
+          "source_full_level_137_geopotential_m2s2": 486.140869140625,
+          "ECMWF_gas_reconstructed_level_137_geopotential_m2s2": 477.2002625999919,
+          "level_137_ECMWF_reference_residual_m": -0.9116881443340079,
+          "source_level_137_minus_supplied_surface_m": 11.03188051124747,
+          "necessary_bottom_level_above_surface": "PASS_NECESSARY_ONLY",
+          "empirical_surface_shift_or_pressure_fit_applied": false,
+          "B3_column_fingerprint": "081a9042126092695e154254495ec69265b0173a44f4d24455ff7d5f829d6923"
+        },
+        {
+          "latitude": 52.5,
+          "longitude": 13.5,
+          "surface_geopotential_m2s2": 492.892578125,
+          "source_full_level_137_geopotential_m2s2": 595.738525390625,
+          "ECMWF_gas_reconstructed_level_137_geopotential_m2s2": 592.1386557278446,
+          "level_137_ECMWF_reference_residual_m": -0.3670845459744568,
+          "source_level_137_minus_supplied_surface_m": 10.487367986583084,
+          "necessary_bottom_level_above_surface": "PASS_NECESSARY_ONLY",
+          "empirical_surface_shift_or_pressure_fit_applied": false,
+          "B3_column_fingerprint": "4cd06202bbb0a4f636c9705a71ed1a653c81986fe2f835c4848e40f6cd173771"
+        },
+        {
+          "latitude": 52.75,
+          "longitude": 13.25,
+          "surface_geopotential_m2s2": 497.380859375,
+          "source_full_level_137_geopotential_m2s2": 597.703369140625,
+          "ECMWF_gas_reconstructed_level_137_geopotential_m2s2": 596.5130786868293,
+          "level_137_ECMWF_reference_residual_m": -0.12137584738883135,
+          "source_level_137_minus_supplied_surface_m": 10.230048973464436,
+          "necessary_bottom_level_above_surface": "PASS_NECESSARY_ONLY",
+          "empirical_surface_shift_or_pressure_fit_applied": false,
+          "B3_column_fingerprint": "aaf19bb4007b2f851c5e2b4761690e527be5a245857ffe9e7273ffdc0ea91f0a"
+        },
+        {
+          "latitude": 52.75,
+          "longitude": 13.5,
+          "surface_geopotential_m2s2": 609.625,
+          "source_full_level_137_geopotential_m2s2": 705.918212890625,
+          "ECMWF_gas_reconstructed_level_137_geopotential_m2s2": 708.7431686880844,
+          "level_137_ECMWF_reference_residual_m": 0.2880653227615382,
+          "source_level_137_minus_supplied_surface_m": 9.819175038430556,
+          "necessary_bottom_level_above_surface": "PASS_NECESSARY_ONLY",
+          "empirical_surface_shift_or_pressure_fit_applied": false,
+          "B3_column_fingerprint": "bd40e6d56bf2c93382168d1ce25921a2fcd69a0802ec8e5cec6d2a7bfd3d812d"
+        }
+      ],
+      "sites": {
+        "AT": {
+          "station_id": "30",
+          "station_sensor_qualification": "SOURCE_BLOCKED_HISTORICAL_SENSOR_HEIGHT_AND_DATUM",
+          "column_geometry": [
+            {
+              "latitude": 47.0,
+              "longitude": 15.25,
+              "distance_km": 17.446507981635396,
+              "surface_H_m": 636.1812281079676,
+              "top_H_m": 2963.0406781713823,
+              "fingerprint": "e24924d6ddae5485a75f16824ed083b6cfc768a3a8f15f36d2a987f39c4fdc41"
+            },
+            {
+              "latitude": 47.0,
+              "longitude": 15.5,
+              "distance_km": 9.727568997637546,
+              "surface_H_m": 467.15350680405646,
+              "top_H_m": 2822.2118124031567,
+              "fingerprint": "5756a552f6751ceac47358dc2ff2d063a565cd3bc3a95542cae70dd9a07ab26d"
+            },
+            {
+              "latitude": 47.25,
+              "longitude": 15.25,
+              "distance_km": 24.11477923873777,
+              "surface_H_m": 806.8572250717626,
+              "top_H_m": 3097.3032147398994,
+              "fingerprint": "7e3ef98976f58be497c6fa57055069f0257f87e02c5567f8b1f33cbbd2b9eb62"
+            },
+            {
+              "latitude": 47.25,
+              "longitude": 15.5,
+              "distance_km": 19.306754107246554,
+              "surface_H_m": 701.3749518821412,
+              "top_H_m": 3009.971872011172,
+              "fingerprint": "997ee9b04aeac794cb5ba4eb11772343bceafcbda224d93c06b902998ffe767f"
+            }
+          ],
+          "cases": {
+            "general_station_height_SENSITIVITY_ONLY": {
+              "status": "SOURCE_BLOCKED",
+              "reason": "P93REF_NO_COLUMN_AIR_DOMAIN_COVERS_TARGET"
+            }
+          }
+        },
+        "CH": {
+          "station_id": "DAV",
+          "station_sensor_qualification": "SOURCE_BLOCKED_HISTORICAL_SENSOR_HEIGHT_AND_DATUM",
+          "column_geometry": [
+            {
+              "latitude": 46.75,
+              "longitude": 9.75,
+              "distance_km": 9.988796846995639,
+              "surface_H_m": 1999.2994230955526,
+              "top_H_m": 4050.278262071318,
+              "fingerprint": "7693683f697ed4a2c237fe99eb76e34303856b3a69cad6bf38808da7e1e00fee"
+            },
+            {
+              "latitude": 46.75,
+              "longitude": 10.0,
+              "distance_km": 13.817597748200612,
+              "surface_H_m": 2180.322153844585,
+              "top_H_m": 4197.089889833019,
+              "fingerprint": "9177e4594f55a2ecd5b8af8a78e5ebdc0e4ca7c1d39ec460ea4cfff971dc84da"
+            },
+            {
+              "latitude": 47.0,
+              "longitude": 9.75,
+              "distance_km": 21.977866854509653,
+              "surface_H_m": 1571.0531684813368,
+              "top_H_m": 3701.1931354375697,
+              "fingerprint": "b649053372a755b0f75115bd47e1081800087df1ff54f793385e7008bca2c853"
+            },
+            {
+              "latitude": 47.0,
+              "longitude": 10.0,
+              "distance_km": 23.953143168381928,
+              "surface_H_m": 1860.7626107029414,
+              "top_H_m": 3938.5646938364544,
+              "fingerprint": "a035185d6cdec5ff9254b5299769c1a3cf83388ee91d7fa3b26968acaa0d991f"
+            }
+          ],
+          "cases": {
+            "general_station_height_SENSITIVITY_ONLY": {
+              "status": "CONDITIONAL_SOURCE_ONLY_HYDROSTATIC_RESULT",
+              "pressure_Pa": 83618.74941006221,
+              "height_approximation": "DECLARED_CONSTANT_G_HEIGHT_APPROXIMATION_NOT_DATUM_TRANSFORMATION",
+              "target_phi_m2s2": 15631.800099999999,
+              "eligible_columns": 1,
+              "rejected_columns": 3,
+              "active_columns": [
+                {
+                  "latitude": 47.0,
+                  "longitude": 9.75,
+                  "weight": 1.0,
+                  "fingerprint": "b649053372a755b0f75115bd47e1081800087df1ff54f793385e7008bca2c853"
+                }
+              ],
+              "target_role": "GROUND_SENSITIVITY_NOT_SENSOR",
+              "sensor_height_history_qualified": false,
+              "independent_accuracy": "NOT_TESTED",
+              "pressure_model_qualified": false
+            },
+            "current_snapshot_barometer_NOT_2021_QUALIFIED": {
+              "status": "CONDITIONAL_SOURCE_ONLY_HYDROSTATIC_RESULT",
+              "pressure_Pa": 83598.72952601551,
+              "height_approximation": "DECLARED_CONSTANT_G_HEIGHT_APPROXIMATION_NOT_DATUM_TRANSFORMATION",
+              "target_phi_m2s2": 15651.4134,
+              "eligible_columns": 1,
+              "rejected_columns": 3,
+              "active_columns": [
+                {
+                  "latitude": 47.0,
+                  "longitude": 9.75,
+                  "weight": 1.0,
+                  "fingerprint": "b649053372a755b0f75115bd47e1081800087df1ff54f793385e7008bca2c853"
+                }
+              ],
+              "target_role": "BAROMETER",
+              "sensor_height_history_qualified": false,
+              "independent_accuracy": "NOT_TESTED",
+              "pressure_model_qualified": false
+            }
+          }
+        },
+        "DE": {
+          "station_id": "00399",
+          "station_sensor_qualification": "SOURCE_BLOCKED_HISTORICAL_SENSOR_HEIGHT_AND_DATUM",
+          "column_geometry": [
+            {
+              "latitude": 52.5,
+              "longitude": 13.25,
+              "distance_km": 10.764709535555328,
+              "surface_H_m": 38.540692094140205,
+              "top_H_m": 2414.8106507210105,
+              "fingerprint": "081a9042126092695e154254495ec69265b0173a44f4d24455ff7d5f829d6923"
+            },
+            {
+              "latitude": 52.5,
+              "longitude": 13.5,
+              "distance_km": 6.750949351377738,
+              "surface_H_m": 50.261055317055266,
+              "top_H_m": 2424.892450005488,
+              "fingerprint": "4cd06202bbb0a4f636c9705a71ed1a653c81986fe2f835c4848e40f6cd173771"
+            },
+            {
+              "latitude": 52.75,
+              "longitude": 13.25,
+              "distance_km": 27.66968438789736,
+              "surface_H_m": 50.71873263295825,
+              "top_H_m": 2423.3085727189873,
+              "fingerprint": "aaf19bb4007b2f851c5e2b4761690e527be5a245857ffe9e7273ffdc0ea91f0a"
+            },
+            {
+              "latitude": 52.75,
+              "longitude": 13.5,
+              "distance_km": 26.376277894015885,
+              "surface_H_m": 62.164449633666955,
+              "top_H_m": 2433.1665284910437,
+              "fingerprint": "bd40e6d56bf2c93382168d1ce25921a2fcd69a0802ec8e5cec6d2a7bfd3d812d"
+            }
+          ],
+          "cases": {
+            "general_station_height_SENSITIVITY_ONLY": {
+              "status": "SOURCE_BLOCKED",
+              "reason": "P93REF_NO_COLUMN_AIR_DOMAIN_COVERS_TARGET"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "maximum_same_point_residual_change_between_probe_hours_m": 0.00045023841534508335,
+  "cost": {
+    "network_downloaded_bytes_this_process": 0,
+    "network_requests_this_process": 0,
+    "unique_source_objects_accessed": 28,
+    "unique_source_object_bytes_including_cache_hits": 383967190,
+    "complete_source_hours": 2,
+    "global_field_chunk_bytes_for_accessed_profiles": 381165376,
+    "estimated_672_hours_field_bytes_if_same_compression": 128071566336.0,
+    "estimate_scope": "LINEAR_CHUNK_STORAGE_ESTIMATE_NOT_MEASURED_FULL_COHORT_RUN",
+    "objects": [
+      {
+        "url": "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h/metadata",
+        "sha256": "73c5a06f18bdb2ebd67b83974337c74ffa3fd19c1d0e6d14434a3e55f6c3751d",
+        "bytes": 241148,
+        "from_cache": true
+      },
+      {
+        "url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/ogd-smn_meta_stations.csv",
+        "sha256": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+        "bytes": 152759,
+        "from_cache": true
+      },
+      {
+        "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate_urban/10_minutes/pressure/historical/10minutenwerte_P0_STADT_00399_20150701_20241231_hist.zip",
+        "sha256": "8d54caa8eacdc458bf2970f830f91c5c28de25716f369c689c703252e3328352",
+        "bytes": 2170125,
+        "from_cache": true
+      },
+      {
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1/.zmetadata",
+        "sha256": "978cb6ff513d6f73eb025b7c3352db9bd2a9b822e05a1a56cb00a0220d188f02",
+        "bytes": 85585,
+        "from_cache": true
+      },
+      {
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3/.zmetadata",
+        "sha256": "d8987c70c16fe26563628345b13891c1dac1e2579c924fcf8eb673c0257fecd1",
+        "bytes": 132785,
+        "from_cache": true
+      },
+      {
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1/hybrid/0",
+        "sha256": "e3aedb56ef0302047337005cb58db4e70f50c64bee34984e35ae1572897164d0",
+        "bytes": 221,
+        "from_cache": true
+      },
+      {
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1/latitude/0",
+        "sha256": "ad2559188f8603a7a136eb4b81c1e96a4a78549a184b6e09def2a60a78631c25",
+        "bytes": 844,
+        "from_cache": true
+      },
+      {
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1/longitude/0",
+        "sha256": "7942ebac63ba4e69e05575019aaebe2b2ebb927b316590cac1dcfc7eb08f09ee",
+        "bytes": 1587,
+        "from_cache": true
+      },
+      {
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1/time/0",
+        "sha256": "cb6f8487203cdbeb8af0673b950dd549c23a8c1bdee21c98ce708d78adecbb58",
+        "bytes": 3585,
+        "from_cache": true
+      },
+      {
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1/time/15",
+        "sha256": "e145667309b73a2a5a348449024e646135765a7a6293e69b1f5f84ce753d7732",
+        "bytes": 3594,
+        "from_cache": true
+      },
+      {
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1/temperature/1061424.6.0.0",
+        "sha256": "727c236021a3ef5e0c5341c1200b81bc5a72feacd8b29db17b8dee8322ecceba",
+        "bytes": 41757505,
+        "from_cache": true
+      },
+      {
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1/temperature/1061424.7.0.0",
+        "sha256": "a5e9dd57c965fbfbeb0f32c49cbfc378284c5eb7a1bc7090cafbcf7e18ea9d6d",
+        "bytes": 25716529,
+        "from_cache": true
+      },
+      {
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1/specific_humidity/1061424.6.0.0",
+        "sha256": "c6f63eb2e3979354c2c417188a47b944ecc69c72ace43cf5517c1547fe978f23",
+        "bytes": 55322222,
+        "from_cache": true
+      },
+      {
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1/specific_humidity/1061424.7.0.0",
+        "sha256": "e99f1322b5740ff7fe812540029f9e4d836d43848e0998de00964a65b4b4b914",
+        "bytes": 32825956,
+        "from_cache": true
+      },
+      {
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3/latitude/0",
+        "sha256": "ad2559188f8603a7a136eb4b81c1e96a4a78549a184b6e09def2a60a78631c25",
+        "bytes": 844,
+        "from_cache": true
+      },
+      {
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3/longitude/0",
+        "sha256": "7942ebac63ba4e69e05575019aaebe2b2ebb927b316590cac1dcfc7eb08f09ee",
+        "bytes": 1587,
+        "from_cache": true
+      },
+      {
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3/time/0",
+        "sha256": "533fae2fa054bdbe47344c72eb6680f0d2d833c57f5a5cd0e818c08c652e5fb4",
+        "bytes": 3573,
+        "from_cache": true
+      },
+      {
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3/time/15",
+        "sha256": "253cab9fea3ca06ae53e47ebb0b4bc23f8d94f50525b5730585e3a2e31f16daf",
+        "bytes": 3577,
+        "from_cache": true
+      },
+      {
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3/surface_pressure/1061424.0.0",
+        "sha256": "d735002737d035102446765cf9d42f79672cfc190595dbe245b7a0168d171157",
+        "bytes": 2381562,
+        "from_cache": true
+      },
+      {
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3/geopotential_at_surface/1061424.0.0",
+        "sha256": "73c7d49a37213914fc780fc9357654482131006fa47084119978a543282592c5",
+        "bytes": 2765168,
+        "from_cache": true
+      },
+      {
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1/geopotential/1061424.7.0.0",
+        "sha256": "d29a407dcc4ab9c8b3f050664998282e8946c3b301dab3295f634c5f0bcf7b29",
+        "bytes": 29847930,
+        "from_cache": true
+      },
+      {
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1/temperature/1065768.6.0.0",
+        "sha256": "a76cfeadd56b63fcf9ec8f686c79745c24c5ff182211292ec6a765707e0fce45",
+        "bytes": 41785269,
+        "from_cache": true
+      },
+      {
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1/temperature/1065768.7.0.0",
+        "sha256": "ce923ac91c5d05a535d32212fc9e8d0ee984a6d3ba38b871f8f0f2c44ee00a66",
+        "bytes": 25560747,
+        "from_cache": true
+      },
+      {
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1/specific_humidity/1065768.6.0.0",
+        "sha256": "f82304bee1a4c9d06a4c2ada4457d252f306628eaa283e0739a5a121fd3be93b",
+        "bytes": 55295306,
+        "from_cache": true
+      },
+      {
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1/specific_humidity/1065768.7.0.0",
+        "sha256": "8958abd082a96f722fc789f9651d61ed9c925f91e0ac980bb8cb716f3681cf3c",
+        "bytes": 32910948,
+        "from_cache": true
+      },
+      {
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3/surface_pressure/1065768.0.0",
+        "sha256": "88fc66684237932d17480a26c7040347ae4911682d215921119b9bac8e2ced7a",
+        "bytes": 2373328,
+        "from_cache": true
+      },
+      {
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/ar/full_37-1h-0p25deg-chunk-1.zarr-v3/geopotential_at_surface/1065768.0.0",
+        "sha256": "73c7d49a37213914fc780fc9357654482131006fa47084119978a543282592c5",
+        "bytes": 2765168,
+        "from_cache": true
+      },
+      {
+        "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/ar/model-level-1h-0p25deg.zarr-v1/geopotential/1065768.7.0.0",
+        "sha256": "657865308eda9fdd116aaacb7d375ee916de894be3fc24fd2c660db5b56d71c6",
+        "bytes": 29857738,
+        "from_cache": true
+      }
+    ]
+  },
+  "source_transfer_measurement": {
+    "scope": "PRE_RELEASE_GUARD_VERSION_SAME_FROZEN_PROTOCOL_SAME_SOURCE_OBJECT_SHA",
+    "source_objects_identical_to_final_probe": true,
+    "network_download_bytes": 381184788,
+    "network_requests": 23,
+    "wall_seconds": 109.76533518299993,
+    "some_metadata_pre_cached": true,
+    "code_sha256": {
+      "p9_3b3_reference_column.py": "10f9a47f1e80d62be78e5700cdc7e8d4db2ff861c03bbcd0803d2aeca5b9f137",
+      "p9_3b3_reference_sources.py": "1d3f397a8e1ff3723a7c5fbde02cb9fd5fef2501c67a8d6223027ca1fd138e49",
+      "p9_3b3_reference_run.py": "72ada28794e1cb9d8e749a1aba75b731ad4e077c4ceaaf756e78d8ea107d72d4"
+    }
+  },
+  "final_warm_cache_resource_measurement": {
+    "scope": "WARM_CACHE_PROCESS_LINUX_MAXRSS_NOT_COLD_NETWORK_PEAK",
+    "peak_RSS_KiB": 244816,
+    "user_CPU_seconds": 0.704819,
+    "system_CPU_seconds": 0.49486199999999997,
+    "run_wall_seconds": 0.6373225279999133
+  },
+  "code_correctness": "LOCAL_CONTRACTS_PASS_CI_PENDING",
+  "physical_admissibility": "CONDITIONAL_HYDROSTATIC_AIR_ONLY_SEE_PER_TARGET_BLOCKERS",
+  "P2_source_reference_qualification": "NOT_ESTABLISHED_MATCHING_SURFACE_AND_LNSP_PIPELINE_REQUIRED",
+  "independent_accuracy": "NOT_TESTED_NO_STATION_SCORES_OR_NEW_HOLDOUT",
+  "operational_readiness": "NOT_READY",
+  "station_height_qualified_count": 0,
+  "B4_qualified": false,
+  "production_epw_ready": false,
+  "new_station_observation_scores": false,
+  "old_2013_2014_results_rewritten": false,
+  "temperature_donor_changed": false,
+  "native_CDS_GRIB_identity": false,
+  "native_future_CanESM5_pressure_recovered": false,
+  "merge_main": false
+}
