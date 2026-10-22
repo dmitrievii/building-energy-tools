@@ -1,0 +1,87 @@
+{
+  "phase": "IGE_P9_3B2D_ORIGINAL_DWD_P_CSV_FIX_AND_TRUE_GERMAN_2021_PROSPECTIVE_HOLDOUT",
+  "base_commit": "b793d2f0846a1efcfc3b621e36cc02127a41bfa0",
+  "prereg_commit": "c587eb040435972054badf56243ab08b7a0522c6",
+  "fixed_DWD_CSV_header_original_values": [
+    "STATIONS_ID",
+    "MESS_DATUM",
+    "QN_8",
+    "   P",
+    "  P0",
+    "eor"
+  ],
+  "source_original_header_whitespace_parser_bug_prior_study": true,
+  "previous_Potsdam_2023_station_P_source_missing_claim_invalid_and_superseded": true,
+  "previous_Oberstdorf_2024_P_missing_valid_but_P0_also_missing_claim_invalid": true,
+  "old_Oberstdorf_2024_abs_P_QN3": {
+    "January": 0,
+    "July": 0
+  },
+  "old_Oberstdorf_2024_sea_level_P0": {
+    "January": 168,
+    "July": 168
+  },
+  "old_Potsdam_2023_abs_P_QN3": {
+    "January": 168,
+    "July": 168
+  },
+  "old_Potsdam_2023_sea_level_P0": {
+    "January": 168,
+    "July": 168
+  },
+  "preregistered_station_source_selection_used_2020_only": true,
+  "selection_observed_year": 2020,
+  "source_census_stations": 16,
+  "source_2020_native_P_valid_hours": 5376,
+  "source_2020_native_QN8_class": "3 automatic",
+  "selected_station_id": "00433",
+  "selected_station": "Berlin-Tempelhof",
+  "selected_station_elevation_m": 48,
+  "selected_station_latlon": [
+    52.4676,
+    13.402
+  ],
+  "selected_source_by_2020_completeness_only": true,
+  "original_2021_measured_P_used_in_station_selection": false,
+  "independent_new_pressure_2021_2season_hours": 336,
+  "independent_original_2021_QN8_class": "3 automatic",
+  "independent_2021_B0_MAE_hPa": [
+    6.4518,
+    5.875
+  ],
+  "independent_2021_B3_MAE_hPa": [
+    6.1998,
+    5.6432
+  ],
+  "independent_2021_B4_ARCO_z_MAE_hPa": [
+    6.1669,
+    5.6129
+  ],
+  "old_Potsdam_original_2023_retro_B0_MAE_hPa": [
+    5.1321,
+    4.872
+  ],
+  "old_Potsdam_original_2023_retro_B3_MAE_hPa": [
+    10.2305,
+    9.7305
+  ],
+  "old_Potsdam_original_2023_retro_B4_MAE_hPa": [
+    10.2861,
+    9.7835
+  ],
+  "full_original_DWD_QN8_10_multi_site_benchmark_complete": false,
+  "source_only_census_run": 39743327312,
+  "source_only_census_artifact": 12409928415,
+  "independent_2021_run": 39743815919,
+  "independent_2021_artifact": 12409789640,
+  "retrospective_prior_missing_original_source_reaudit_run": 39743979768,
+  "retrospective_prior_missing_original_source_reaudit_artifact": 12409334885,
+  "retrospective_corrected_Potsdam_2023_run": 39744242445,
+  "retrospective_corrected_Potsdam_2023_artifact": 12410970729,
+  "source_ERA5_pressure_ref_ARCO_0p25_geopotential_verified": true,
+  "source_ERA5_native_CD_GRIB_metadata_not_verified": true,
+  "native_CanESM5_downscaled_ps_not_available": true,
+  "source_pressure_spatial_skill_qualified_at_three_countries": false,
+  "original_annual_EPWs_qualified": false,
+  "main_branch_not_merged": true
+}

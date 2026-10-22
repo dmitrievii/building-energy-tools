@@ -1,9 +1,7 @@
 name: IGE P9.3B2D untouched 2021 Berlin-Tempelhof original DWD P vs ERA5 z absolute pressure
+# Verified source-examination and preregistered 2021 original P pilot frozen.
+# Only manual reruns; do not auto-repeat station sampling.
 on:
-  push:
-    branches: ['research/ige-p9-3b2d-dwd-pressure-availability-20261022']
-    paths:
-      - '.github/workflows/ige-p9-3b2d-once-prespecified-2021-original-P-validation.yml'
   workflow_dispatch:
 permissions:
   contents: read

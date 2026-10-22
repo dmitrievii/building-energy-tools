@@ -1,9 +1,7 @@
 name: IGE P9.3B2D original DWD padded P CSV retraction audit for prior Potsdam Oberstdorf
+# Verified source-examination and preregistered 2021 original P pilot frozen.
+# Only manual reruns; do not auto-repeat station sampling.
 on:
-  push:
-    branches: ['research/ige-p9-3b2d-dwd-pressure-availability-20261022']
-    paths:
-      - '.github/workflows/ige-p9-3b2d-once-prior-P-source-correction.yml'
   workflow_dispatch:
 permissions:
   contents: read
