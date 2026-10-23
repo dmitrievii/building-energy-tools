@@ -1,0 +1,42 @@
+{
+  "phase": "CD2_SUPPLEMENTARY_NUMERIC_SCOPE_NOT_NEW_ACCEPTANCE",
+  "source_replay_sha256": "f25005e89f387f5069430cea419f1c2f455919718203ac943655b5047c728bc0",
+  "FD_scope": {
+    "FROZEN_C2": {
+      "trials_with_unavailable_FD": 0,
+      "trials_outside_exact_box": 0,
+      "unavailable_trials_with_exact_box_overshoot": 0,
+      "max_T_box_overshoot_K": 0.0,
+      "max_q_box_overshoot_gkg": 0.0
+    },
+    "SLSQP_SCALED_X": {
+      "trials_with_unavailable_FD": 21,
+      "trials_outside_exact_box": 21,
+      "unavailable_trials_with_exact_box_overshoot": 21,
+      "max_T_box_overshoot_K": 0.0,
+      "max_q_box_overshoot_gkg": 1.7763568394002505e-15
+    },
+    "SLSQP_SCALED_XC": {
+      "trials_with_unavailable_FD": 17,
+      "trials_outside_exact_box": 17,
+      "unavailable_trials_with_exact_box_overshoot": 17,
+      "max_T_box_overshoot_K": 0.0,
+      "max_q_box_overshoot_gkg": 1.7763568394002505e-15
+    },
+    "COBYQA_SCALED_XC": {
+      "trials_with_unavailable_FD": 22,
+      "trials_outside_exact_box": 22,
+      "unavailable_trials_with_exact_box_overshoot": 22,
+      "max_T_box_overshoot_K": 0.0,
+      "max_q_box_overshoot_gkg": 1.7763568394002505e-15
+    }
+  },
+  "SCALED_X_vs_XC": {
+    "max_F_difference": 7.038338800668953e-10,
+    "max_T_K": 0.002085121854463523,
+    "max_q_gkg": 0.0012693494428851412
+  },
+  "interpretation": "UNCHANGED_CD1_FD_REQUIRES_ALL_UNPERTURBED_COORDINATES_INSIDE_EXACT_BOX; ROUNDTRIP_Q_OVERSHOOT_BLOCKS_STENCILS; ORIGINAL_UNAVAILABLE_FIELDS_RETAINED; NO_STATES_CLIPPED",
+  "independent_accuracy": "NOT_QUALIFIED",
+  "new_thresholds_established": false
+}

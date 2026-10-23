@@ -1,0 +1,94 @@
+name: IGE P9.3B3 CD2 equivalent coordinates and independent solver
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/ige-p9-3b3-cd2-scaled-independent-20261023
+    paths:
+      - .github/workflows/ige-p9-3b3-cd2-equivalent-solvers.yml
+      - research/ige_cmip6/p9_3b3_cd2_*.py
+      - research/ige_cmip6/test_p9_3b3_cd2_*.py
+      - research/ige_cmip6/audit_p9_3b3_CD2.py
+      - research/ige_cmip6/p9_3b3_cd2_protocol.json
+permissions:
+  contents: read
+env:
+  OPENBLAS_NUM_THREADS: '1'
+  OMP_NUM_THREADS: '1'
+jobs:
+  immutable_and_mathematical_contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 scipy==1.17.0 numcodecs==0.16.3 pyshtools==4.13.1 eccodes==2.50.0 eccodeslib==2.50.0.33
+      - name: CD2 analytic oracles and all previous B3 contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3b3_*.py' -v
+      - name: Earlier mathematics and canonical absolute DWD pressure
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3a*.py' -q
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_2*.py' -q
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3b2*.py' -q
+          python research/ige_cmip6/p9_3b2d_canonical_pressure_fields.py
+      - name: Preregistration, 139 protected files and exact archived inputs
+        run: |
+          python - <<'PY'
+          import sys
+          sys.path.insert(0, 'research/ige_cmip6')
+          from p9_3b3_cd2_run import guard, load_registered_inputs
+          p = guard()
+          inputs, baseline, ci = load_registered_inputs(p)
+          assert (len(inputs), len(baseline), len(ci)) == (63, 189, 63)
+          print('Unchanged scientific controls:', len(p['protected_control_sha256']))
+          PY
+  archived_63_case_252_result_comparison:
+    needs: immutable_and_mathematical_contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 scipy==1.17.0
+      - name: Four algorithms and coordinates, exact same objective and physical starts
+        run: >-
+          python -u research/ige_cmip6/p9_3b3_cd2_run.py
+          --out outputs/CD2-equivalent-solvers
+      - name: Numerical results and four qualification levels
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          r = json.loads(Path('outputs/CD2-equivalent-solvers/CD2_summary.json').read_text())
+          assert (r['case_count'], r['method_results'], r['optimizer_trials']) == (63, 252, 396)
+          assert r['all_control_observed_unobserved_exactly_equal']
+          assert r['all_variants_identical_physical_starts']
+          lines = [
+            'Code: mathematical oracles, previous suites and 139 unchanged scientific controls.',
+            'Completeness: 63 cases / 252 method results / 396 trials, including rejected/error endpoints.',
+            'Physics: unchanged source operators, objective, prior, strict-first policy and fixed thermo-level p.',
+            'Convergence: first-order diagnostics; no local/global minimum certificate.',
+            'Budgets: 180 iterations is not equal work or an equivalent stopping criterion across algorithms.',
+            'Independent accuracy and operational readiness: NOT QUALIFIED. Correction budget NOT_ESTABLISHED.',
+            'B4 false; future native GCM pressure false; production EPW false; main not merged.',
+            'Counts and costs: ' + json.dumps(r['variants'])]
+          print('\n'.join(lines))
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f:
+            f.write('\n\n'.join(lines) + '\n')
+          PY
+      - name: Independent scalar gas-law and objective replay
+        run: >-
+          python research/ige_cmip6/audit_p9_3b3_CD2.py
+          --input outputs/CD2-equivalent-solvers
+          --out outputs/CD2-equivalent-solvers/independent_scalar_audit.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ige-P93B3-CD2-63-cases-252-results-396-trials-NOT-independent-accuracy
+          path: outputs/CD2-equivalent-solvers/
+          if-no-files-found: warn
+          retention-days: 30
