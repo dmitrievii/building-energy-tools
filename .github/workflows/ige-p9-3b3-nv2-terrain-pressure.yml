@@ -1,12 +1,6 @@
 name: IGE P9.3B3 NV2 terrain admission and paired pressure research pilot
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - research/ige-p9-3b3-nv2-terrain-pressure-20261023
-    paths:
-      - research/ige_cmip6/p9_3b3_nv2_protocol.json
-      - .github/workflows/ige-p9-3b3-nv2-terrain-pressure.yml
 permissions:
   contents: read
   actions: read
