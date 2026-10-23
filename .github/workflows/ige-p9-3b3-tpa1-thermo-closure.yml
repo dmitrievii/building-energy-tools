@@ -1,0 +1,154 @@
+name: IGE P9.3B3 TPA1 thermo pressure and unified NASA closure research
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/ige-p9-3b3-thermo-pressure-adapter-20261023
+    paths:
+      - .github/workflows/ige-p9-3b3-tpa1-thermo-closure.yml
+      - research/ige_cmip6/p9_3b3_tpa_*.py
+      - research/ige_cmip6/test_p9_3b3_tpa_*.py
+      - research/ige_cmip6/p9_3b3_tpa_protocol.json
+      - research/ige_cmip6/p9_3b3_tpa_nasa_semantics_20261023.json
+permissions:
+  contents: read
+  actions: read
+env:
+  OPENBLAS_NUM_THREADS: '1'
+  OMP_NUM_THREADS: '1'
+jobs:
+  immutable_and_mathematical_contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 scipy==1.17.0 numcodecs==0.16.3 pyshtools==4.13.1 eccodes==2.50.0 eccodeslib==2.50.0.33
+      - name: TPA independent analytic oracles and all unchanged B3 contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3b3_*.py' -v
+      - name: Earlier mathematics and canonical absolute DWD pressure
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3a*.py' -q
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_2*.py' -q
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3b2*.py' -q
+          python research/ige_cmip6/p9_3b2d_canonical_pressure_fields.py
+      - name: 109 frozen scientific files and thirty native NASA responses
+        run: |
+          python - <<'PY'
+          import sys
+          sys.path.insert(0,'research/ige_cmip6')
+          from p9_3b3_tpa_run import load_protocol,protected_controls,audit_semantics,ROOT
+          p=load_protocol()
+          print('Unchanged controls:',len(protected_controls(p)))
+          s=audit_semantics(ROOT/p['source_semantics_file'])
+          print('Native responses:',s['raw_response_count'],'fully verified:',s['fully_verified'])
+          PY
+
+  common_input_63_case_189_result_comparison:
+    needs: immutable_and_mathematical_contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 scipy==1.17.0
+      - name: Exact sealed NV2 ZIP, no new native field downloads or station observations
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p inputs
+          gh api repos/dmitrievii/building-energy-tools/actions/artifacts/12489671619/zip > inputs/sealed-nv2.zip
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          name: ige-p6-CanESM5-historical-1995-2014
+          path: inputs/original-nasa
+      - name: Repack original NASA bytes without humidity filtering
+        run: |
+          python - <<'PY'
+          import zipfile
+          from pathlib import Path
+          with zipfile.ZipFile('inputs/original-nasa.zip','w',zipfile.ZIP_DEFLATED) as z:
+              for f in sorted(Path('inputs/original-nasa').iterdir()):
+                  if f.is_file():z.write(f,f.name)
+          PY
+      - name: Fixed controls and revealed sensitivity, all five diagnostic ledgers
+        run: >-
+          python -u research/ige_cmip6/p9_3b3_tpa_run.py
+          --sealed-nv2-zip inputs/sealed-nv2.zip
+          --original-canesm5-registered-zip inputs/original-nasa.zip
+          --out outputs/TPA1-research-comparison
+      - name: Four separate qualification levels
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          r=json.loads(Path('outputs/TPA1-research-comparison/comparison_summary.json').read_text())
+          assert r['comparison_results']==189 and len(r['case_census'])==63
+          lines=['Code/contracts: see upstream test job; 109 old scientific files unchanged.',
+            'Comparison completeness: 63 cases / 189 method results, including failures.',
+            'Physical scope: conditional discrete T/q gas closure at fixed thermo-level p; no column reintegration.',
+            'NASA: explicit tas metadata conflict and unresolved native averaging bounds.',
+            'Independent accuracy: NOT ASSESSED; synthetic and previously revealed cases.',
+            'Operational readiness: NOT QUALIFIED. C2 correction budget NOT ESTABLISHED.',
+            'B4 false; native future GCM pressure false; production EPW false; main not merged.']
+          print('\n'.join(lines))
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:f.write('\n\n'.join(lines)+'\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ige-P93B3-TPA1-63-cases-189-results-NASA-operators-NOT-independent-accuracy
+          path: outputs/TPA1-research-comparison/
+          if-no-files-found: warn
+          retention-days: 30
+
+  frozen_727_exact_and_five_certificate_regressions:
+    needs: immutable_and_mathematical_contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 scipy==1.17.0
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 38072042977
+          github-token: ${{ github.token }}
+          name: ige-p6-CanESM5-historical-1995-2014
+          path: inputs/original-nasa
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 39530492475
+          github-token: ${{ github.token }}
+          name: ige-p93b3-repair-original-NASA-semantics-and-2013-2014-REGRESSIONS-not-independent-validation
+          path: inputs/immutable-repair
+      - name: Repack immutable source bytes
+        run: |
+          python - <<'PY'
+          import zipfile
+          from pathlib import Path
+          with zipfile.ZipFile('inputs/original-nasa.zip','w',zipfile.ZIP_DEFLATED) as z:
+              for f in sorted(Path('inputs/original-nasa').iterdir()):
+                  if f.is_file():z.write(f,f.name)
+          PY
+      - name: Original donors, seed and original C2 path, no reinterpretation by new pressure
+        run: >-
+          python -u research/ige_cmip6/p9_3b3_c2_run.py
+          --original-canesm5-registered-zip inputs/original-nasa.zip
+          --immutable-repair-audit inputs/immutable-repair/p93b3-regressions/regression_audit.json
+          --out outputs/TPA1-frozen-C2-regressions
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ige-P93B3-TPA1-frozen-C2-727-plus-5-REGRESSIONS-NOT-holdout
+          path: outputs/TPA1-frozen-C2-regressions/
+          if-no-files-found: warn
+          retention-days: 30
