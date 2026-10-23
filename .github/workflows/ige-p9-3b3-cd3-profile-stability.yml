@@ -1,0 +1,80 @@
+name: IGE P9.3B3 CD3 derivatives and empirical profile stability
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/ige-p9-3b3-cd3-profile-stability-20261023
+    paths:
+      - .github/workflows/ige-p9-3b3-cd3-profile-stability.yml
+      - research/ige_cmip6/p9_3b3_cd3_*.py
+      - research/ige_cmip6/test_p9_3b3_cd3_*.py
+      - research/ige_cmip6/audit_p9_3b3_CD3.py
+      - research/ige_cmip6/p9_3b3_cd3_protocol.json
+permissions:
+  contents: read
+env:
+  OPENBLAS_NUM_THREADS: '1'
+  OMP_NUM_THREADS: '1'
+jobs:
+  immutable_and_mathematical_contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 scipy==1.17.0 numcodecs==0.16.3 pyshtools==4.13.1 eccodes==2.50.0 eccodeslib==2.50.0.33
+      - name: Analytic oracles and all previous B3 contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3b3_*.py' -v
+      - name: Earlier mathematics and canonical absolute DWD pressure
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3a*.py' -q
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_2*.py' -q
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3b2*.py' -q
+          python research/ige_cmip6/p9_3b2d_canonical_pressure_fields.py
+      - name: Registered protocol and 154 immutable scientific files
+        run: |
+          PYTHONPATH=research/ige_cmip6 python -c 'from p9_3b3_cd3_run import guard; print(len(guard()["protected_control_sha256"]))'
+  archived_endpoints_and_multistart:
+    needs: immutable_and_mathematical_contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 scipy==1.17.0
+      - name: 396 archived and 396 new endpoint audits
+        run: python -u research/ige_cmip6/p9_3b3_cd3_run.py --out outputs/CD3
+      - name: Completeness and derivative acceptance fixed before replay
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          s = json.loads(Path('outputs/CD3/CD3_summary.json').read_text())
+          assert s['case_count'] == 63 and s['strict_witnesses_preserved'] == 30
+          assert s['new_trial_count'] == 396
+          assert s['derivative_check_closed'], 'Retain failed diagnostics; no threshold tuning'
+          text = json.dumps(s, ensure_ascii=False, indent=2)
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f:
+              f.write('CD3: code and branchwise derivative checks only.\n\n')
+              f.write('Empirical endpoint spreads are neither global envelopes nor independent station accuracy.\n\n')
+              f.write('```json\n'+text+'\n```\n')
+          PY
+      - name: Independent scalar objective and start basin audit
+        run: >-
+          python research/ige_cmip6/audit_p9_3b3_CD3.py --input outputs/CD3
+          --out outputs/CD3/independent_scalar_and_start_comparison.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ige-P93B3-CD3-792-endpoint-audits-NOT-independent-accuracy
+          path: outputs/CD3/
+          if-no-files-found: warn
+          retention-days: 30
