@@ -1,0 +1,1047 @@
+{
+  "contract_version": "IGE_NASA_CANESM5_V2_SEMANTICS_TPA1",
+  "scope": "SPECIFIC_REGISTERED_CANESM5_HISTORICAL_r1i1p1f1_2013_2014_NOT_ALL_NEX_MODELS",
+  "checked_on": "2026-10-23",
+  "source_csv_sha256": "77ec2e5637eb487c3cedde4e0b660b31f8bd2606198e766255d75a985d61dfef",
+  "source_paper": "https://doi.org/10.1038/s41597-022-01393-4",
+  "source_v2_technote": "https://www.nccs.nasa.gov/wp-content/uploads/2025/06/NEX-GDDP-CMIP6-v2-Tech_Note.pdf",
+  "temperature_operator": "DERIVED_TAS_MIDRANGE",
+  "temperature_resolution": "DERIVED_COMMENT_AND_ARCHIVED_730_ROW_NUMERIC_IDENTITY_WITHIN_5e-5_K; NOT_TIME_MEAN",
+  "metadata_conflict": "tas cell_methods inherits time: maximum; tas comment explicitly derived from downscaled tasmax and tasmin; preserve conflict",
+  "rh_phase": "WATER_ICE",
+  "phase_threshold_K": 273.15,
+  "phase_at_exact_threshold": "WATER_DECLARED_POLICY",
+  "q_operator": "DAILY_TIME_MEAN_SPECIFIC_HUMIDITY",
+  "RH_operator": "DAILY_TIME_MEAN_RELATIVE_HUMIDITY",
+  "source_v2_daily_RH_max_pct": 105.0,
+  "source_v2_daily_q_min_kgkg": 0.0,
+  "numerical_time_support": "24_UNIFORM_UTC_NODES_AS_DECLARED_QUADRATURE_APPROXIMATION",
+  "daily_bounds_verified": false,
+  "fully_verified": false,
+  "headers": {
+    "2013": {
+      "tas": {
+        "metadata": {
+          "variable": "tas",
+          "year": 2013,
+          "blocks": {
+            "lat": {
+              "units": "degrees_north",
+              "long_name": "Latitude"
+            },
+            "lon": {
+              "long_name": "Longitude",
+              "units": "degrees_east"
+            },
+            "time": {
+              "bounds": "time_bnds",
+              "standard_name": "time",
+              "long_name": "time",
+              "units": "days since 1850-01-01 0:0:0.0",
+              "calendar": "365_day",
+              "axis": "T"
+            },
+            "tas": {
+              "history": "2019-05-02T08:02:01Z altered by CMOR: Treated scalar dimension: 'height'. 2019-05-02T08:02:01Z altered by CMOR: Reordered dimensions, original order: lat lon time. 2019-05-02T08:02:01Z altered by CMOR: replaced missing value flag (1e+38) with standard missing value (1e+20).",
+              "cell_measures": "area: areacella",
+              "cell_methods": "area: mean time: maximum",
+              "original_name": "STMX",
+              "comment": "Near-surface (usually, 2 meter) air temperature; derived from downscaled tasmax & tasmin",
+              "coordinates": "height",
+              "units": "K",
+              "long_name": "Daily Near-Surface Air Temperature",
+              "standard_name": "air_temperature"
+            },
+            "NC_GLOBAL": {
+              "activity": "NEX-GDDP-CMIP6",
+              "Conventions": "CF-1.7",
+              "frequency": "day",
+              "institution": "NASA Earth Exchange, NASA Ames Research Center, Moffett Field, CA 94035",
+              "variant_label": "r1i1p1f1",
+              "product": "output",
+              "realm": "atmos",
+              "source": "BCSD",
+              "scenario": "historical",
+              "references": "BCSD method: Thrasher et al., 2012, Hydrol. Earth Syst. Sci.,16, 3309-3314. Ref period obs: latest version of the Princeton Global Meteorological Forcings (http://hydrology.princeton.edu/data.php), based on Sheffield et al., 2006, J. Climate, 19 (13), 3088-3111.",
+              "version": "2.0",
+              "title": "CANESM5, r1i1p1f1, historical, global downscaled CMIP6 climate projection data",
+              "resolution_id": "0.25 degree",
+              "external_variables": "areacella",
+              "cmip6_source_id": "CanESM5",
+              "cmip6_institution_id": "CCCma",
+              "cmip6_license": "CC-BY-SA 4.0",
+              "contact": "Dr. Bridget Thrasher: bridget@climateanalyticsgroup.org, Dr. Ian Brosnan: ian.g.brosnan@nasa.gov",
+              "creation_date": "Sat Nov 16 20:19:18 PST 2024",
+              "disclaimer": "These data are considered provisional and subject to change. They are provided as is without any warranty of any kind, either express or implied, arising by law or otherwise, including but not limited to warranties of completeness, non-infringement, accuracy, merchantability, or fitness for a particular purpose. The user assumes all risk associated with the use of, or inability to use, these data.",
+              "tracking_id": "caa8cc22-88fb-49a1-8a8b-1ae0485c5333"
+            },
+            "DODS_EXTRA": {
+              "Unlimited_Dimension": "time"
+            }
+          },
+          "time_bounds_declared": true,
+          "sha256": "70b4504f32d9c3a69ac99360de6820d073355f367f3f2f6728ee3d733786efde"
+        },
+        "time_support": {
+          "variable": "tas",
+          "year": 2013,
+          "calendar": "365_day",
+          "units": "days since 1850-01-01 0:0:0.0",
+          "n_time_coordinates": 365,
+          "coordinate_first": 59495.5,
+          "coordinate_last": 59859.5,
+          "coordinate_role": "DAILY_NOON_LABEL_NOT_PROOF_OF_AVERAGING_WINDOW",
+          "coordinates_sha256": "ad2465bad6f71c8c9d9f6ea399fd569d0bfb923b34ee2da95e7f5fcd31c523f5",
+          "bounds_attribute": "time_bnds",
+          "bounds_variable_in_dds": false,
+          "status": "COORDINATES_READ_INTERVAL_BOUNDS_UNRESOLVED",
+          "interval_semantics_verified": false,
+          "bounds_status": "DANGLING_ATTRIBUTE_VARIABLE_ABSENT_IN_DDS"
+        }
+      },
+      "tasmin": {
+        "metadata": {
+          "variable": "tasmin",
+          "year": 2013,
+          "blocks": {
+            "lat": {
+              "units": "degrees_north",
+              "long_name": "Latitude"
+            },
+            "tasmin": {
+              "units": "K"
+            },
+            "time": {
+              "bounds": "time_bnds",
+              "standard_name": "time",
+              "long_name": "time",
+              "units": "days since 1850-01-01 0:0:0.0",
+              "calendar": "365_day",
+              "axis": "T"
+            },
+            "lon": {
+              "long_name": "Longitude",
+              "units": "degrees_east"
+            },
+            "NC_GLOBAL": {
+              "activity": "NEX-GDDP-CMIP6",
+              "Conventions": "CF-1.7",
+              "frequency": "day",
+              "institution": "NASA Earth Exchange, NASA Ames Research Center, Moffett Field, CA 94035",
+              "variant_label": "r1i1p1f1",
+              "product": "output",
+              "realm": "atmos",
+              "source": "BCSD",
+              "scenario": "historical",
+              "references": "BCSD method: Thrasher et al., 2012, Hydrol. Earth Syst. Sci.,16, 3309-3314. Ref period obs: latest version of the Princeton Global Meteorological Forcings (http://hydrology.princeton.edu/data.php), based on Sheffield et al., 2006, J. Climate, 19 (13), 3088-3111.",
+              "version": "2.0",
+              "title": "CANESM5, r1i1p1f1, historical, global downscaled CMIP6 climate projection data",
+              "resolution_id": "0.25 degree",
+              "external_variables": "areacella",
+              "cmip6_source_id": "CanESM5",
+              "cmip6_institution_id": "CCCma",
+              "cmip6_license": "CC-BY-SA 4.0",
+              "contact": "Dr. Bridget Thrasher: bridget@climateanalyticsgroup.org, Dr. Ian Brosnan: ian.g.brosnan@nasa.gov",
+              "creation_date": "Sat Nov 16 16:57:18 PST 2024",
+              "disclaimer": "These data are considered provisional and subject to change. They are provided as is without any warranty of any kind, either express or implied, arising by law or otherwise, including but not limited to warranties of completeness, non-infringement, accuracy, merchantability, or fitness for a particular purpose. The user assumes all risk associated with the use of, or inability to use, these data.",
+              "tracking_id": "25e63c51-c656-4271-9b8f-7b1e096594d9"
+            },
+            "DODS_EXTRA": {
+              "Unlimited_Dimension": "time"
+            }
+          },
+          "time_bounds_declared": true,
+          "sha256": "1bb4f270d83dc6e9dbc0ca7d489a06374e044621072935ba1ae61fb27cd1348e"
+        },
+        "time_support": {
+          "variable": "tasmin",
+          "year": 2013,
+          "calendar": "365_day",
+          "units": "days since 1850-01-01 0:0:0.0",
+          "n_time_coordinates": 365,
+          "coordinate_first": 59495.5,
+          "coordinate_last": 59859.5,
+          "coordinate_role": "DAILY_NOON_LABEL_NOT_PROOF_OF_AVERAGING_WINDOW",
+          "coordinates_sha256": "ad2465bad6f71c8c9d9f6ea399fd569d0bfb923b34ee2da95e7f5fcd31c523f5",
+          "bounds_attribute": "time_bnds",
+          "bounds_variable_in_dds": false,
+          "status": "COORDINATES_READ_INTERVAL_BOUNDS_UNRESOLVED",
+          "interval_semantics_verified": false,
+          "bounds_status": "DANGLING_ATTRIBUTE_VARIABLE_ABSENT_IN_DDS"
+        }
+      },
+      "tasmax": {
+        "metadata": {
+          "variable": "tasmax",
+          "year": 2013,
+          "blocks": {
+            "lat": {
+              "long_name": "Latitude",
+              "units": "degrees_north"
+            },
+            "tasmax": {
+              "standard_name": "air_temperature",
+              "long_name": "Daily Maximum Near-Surface Air Temperature",
+              "units": "K",
+              "coordinates": "height",
+              "comment": "maximum near-surface (usually, 2 meter) air temperature (add cell_method attribute 'time: max')",
+              "original_name": "STMX",
+              "cell_methods": "area: mean time: maximum",
+              "cell_measures": "area: areacella",
+              "history": "2019-05-02T08:02:01Z altered by CMOR: Treated scalar dimension: 'height'. 2019-05-02T08:02:01Z altered by CMOR: Reordered dimensions, original order: lat lon time. 2019-05-02T08:02:01Z altered by CMOR: replaced missing value flag (1e+38) with standard missing value (1e+20)."
+            },
+            "time": {
+              "axis": "T",
+              "calendar": "365_day",
+              "units": "days since 1850-01-01 0:0:0.0",
+              "long_name": "time",
+              "standard_name": "time",
+              "bounds": "time_bnds"
+            },
+            "lon": {
+              "long_name": "Longitude",
+              "units": "degrees_east"
+            },
+            "NC_GLOBAL": {
+              "activity": "NEX-GDDP-CMIP6",
+              "Conventions": "CF-1.7",
+              "frequency": "day",
+              "institution": "NASA Earth Exchange, NASA Ames Research Center, Moffett Field, CA 94035",
+              "variant_label": "r1i1p1f1",
+              "product": "output",
+              "realm": "atmos",
+              "source": "BCSD",
+              "scenario": "historical",
+              "references": "BCSD method: Thrasher et al., 2012, Hydrol. Earth Syst. Sci.,16, 3309-3314. Ref period obs: latest version of the Princeton Global Meteorological Forcings (http://hydrology.princeton.edu/data.php), based on Sheffield et al., 2006, J. Climate, 19 (13), 3088-3111.",
+              "version": "2.0",
+              "title": "CANESM5, r1i1p1f1, historical, global downscaled CMIP6 climate projection data",
+              "resolution_id": "0.25 degree",
+              "external_variables": "areacella",
+              "cmip6_source_id": "CanESM5",
+              "cmip6_institution_id": "CCCma",
+              "cmip6_license": "CC-BY-SA 4.0",
+              "contact": "Dr. Bridget Thrasher: bridget@climateanalyticsgroup.org, Dr. Ian Brosnan: ian.g.brosnan@nasa.gov",
+              "creation_date": "Sat Nov 16 13:49:19 PST 2024",
+              "disclaimer": "These data are considered provisional and subject to change. They are provided as is without any warranty of any kind, either express or implied, arising by law or otherwise, including but not limited to warranties of completeness, non-infringement, accuracy, merchantability, or fitness for a particular purpose. The user assumes all risk associated with the use of, or inability to use, these data.",
+              "tracking_id": "4f808465-ec38-426b-a813-fe6499219c2d"
+            },
+            "DODS_EXTRA": {
+              "Unlimited_Dimension": "time"
+            }
+          },
+          "time_bounds_declared": true,
+          "sha256": "d399805b0b39ce0ccbcf1d47cda60d06eeaf42a65f7c35e21bcf21c52ebc1123"
+        },
+        "time_support": {
+          "variable": "tasmax",
+          "year": 2013,
+          "calendar": "365_day",
+          "units": "days since 1850-01-01 0:0:0.0",
+          "n_time_coordinates": 365,
+          "coordinate_first": 59495.5,
+          "coordinate_last": 59859.5,
+          "coordinate_role": "DAILY_NOON_LABEL_NOT_PROOF_OF_AVERAGING_WINDOW",
+          "coordinates_sha256": "ad2465bad6f71c8c9d9f6ea399fd569d0bfb923b34ee2da95e7f5fcd31c523f5",
+          "bounds_attribute": "time_bnds",
+          "bounds_variable_in_dds": false,
+          "status": "COORDINATES_READ_INTERVAL_BOUNDS_UNRESOLVED",
+          "interval_semantics_verified": false,
+          "bounds_status": "DANGLING_ATTRIBUTE_VARIABLE_ABSENT_IN_DDS"
+        }
+      },
+      "huss": {
+        "metadata": {
+          "variable": "huss",
+          "year": 2013,
+          "blocks": {
+            "time": {
+              "axis": "T",
+              "calendar": "365_day",
+              "units": "days since 1850-01-01 0:0:0.0",
+              "long_name": "time",
+              "standard_name": "time"
+            },
+            "huss": {
+              "standard_name": "specific_humidity",
+              "long_name": "Near-Surface Specific Humidity",
+              "units": "1",
+              "comment": "Near-surface (usually, 2 meter) specific humidity.",
+              "original_name": "SQ",
+              "cell_methods": "area: time: mean",
+              "cell_measures": "area: areacella"
+            },
+            "lat": {
+              "units": "degrees_north",
+              "standard_name": "latitude",
+              "long_name": "latitude",
+              "axis": "Y"
+            },
+            "lon": {
+              "units": "degrees_east",
+              "standard_name": "longitude",
+              "long_name": "longitude",
+              "axis": "X"
+            },
+            "NC_GLOBAL": {
+              "activity": "NEX-GDDP-CMIP6",
+              "Conventions": "CF-1.7",
+              "frequency": "day",
+              "institution": "NASA Earth Exchange, NASA Ames Research Center, Moffett Field, CA 94035",
+              "variant_label": "r1i1p1f1",
+              "product": "output",
+              "realm": "atmos",
+              "source": "BCSD",
+              "scenario": "historical",
+              "references": "BCSD method: Thrasher et al., 2012, Hydrol. Earth Syst. Sci.,16, 3309-3314. Ref period obs: latest version of the Princeton Global Meteorological Forcings (http://hydrology.princeton.edu/data.php), based on Sheffield et al., 2006, J. Climate, 19 (13), 3088-3111.",
+              "version": "2.0",
+              "title": "CANESM5, r1i1p1f1, historical, global downscaled CMIP6 climate projection data",
+              "resolution_id": "0.25 degree",
+              "external_variables": "areacella",
+              "cmip6_source_id": "CanESM5",
+              "cmip6_institution_id": "CCCma",
+              "cmip6_license": "CC-BY-SA 4.0",
+              "contact": "Dr. Bridget Thrasher: bridget@climateanalyticsgroup.org, Dr. Ian Brosnan: ian.g.brosnan@nasa.gov",
+              "creation_date": "Sat Nov 16 02:08:22 PST 2024",
+              "disclaimer": "These data are considered provisional and subject to change. They are provided as is without any warranty of any kind, either express or implied, arising by law or otherwise, including but not limited to warranties of completeness, non-infringement, accuracy, merchantability, or fitness for a particular purpose. The user assumes all risk associated with the use of, or inability to use, these data.",
+              "tracking_id": "d2d72976-2d88-4e50-9298-43e2fd64b061"
+            },
+            "DODS_EXTRA": {
+              "Unlimited_Dimension": "time"
+            }
+          },
+          "time_bounds_declared": false,
+          "sha256": "9cf7d1b23dabb04bca1aee64a5170020d4d73fe692ec457f472d394fb322b3ee"
+        },
+        "time_support": {
+          "variable": "huss",
+          "year": 2013,
+          "calendar": "365_day",
+          "units": "days since 1850-01-01 0:0:0.0",
+          "n_time_coordinates": 365,
+          "coordinate_first": 59495.5,
+          "coordinate_last": 59859.5,
+          "coordinate_role": "DAILY_NOON_LABEL_NOT_PROOF_OF_AVERAGING_WINDOW",
+          "coordinates_sha256": "ad2465bad6f71c8c9d9f6ea399fd569d0bfb923b34ee2da95e7f5fcd31c523f5",
+          "bounds_attribute": null,
+          "bounds_variable_in_dds": false,
+          "status": "COORDINATES_READ_INTERVAL_BOUNDS_UNRESOLVED",
+          "interval_semantics_verified": false,
+          "bounds_status": "NO_VARIABLE_SPECIFIC_BOUNDS_ATTRIBUTE"
+        }
+      },
+      "hurs": {
+        "metadata": {
+          "variable": "hurs",
+          "year": 2013,
+          "blocks": {
+            "lat": {
+              "long_name": "latitude",
+              "units": "degrees_north",
+              "standard_name": "latitude",
+              "axis": "Y"
+            },
+            "hurs": {
+              "standard_name": "relative_humidity",
+              "long_name": "Near-Surface Relative Humidity",
+              "units": "%",
+              "comment": "The relative humidity with respect to liquid water for T> 0 C, and with respect to ice for T<0 C.",
+              "original_name": "SRH",
+              "cell_methods": "area: time: mean",
+              "cell_measures": "area: areacella"
+            },
+            "time": {
+              "axis": "T",
+              "calendar": "365_day",
+              "units": "days since 1850-01-01 0:0:0.0",
+              "long_name": "time",
+              "standard_name": "time"
+            },
+            "lon": {
+              "long_name": "longitude",
+              "units": "degrees_east",
+              "standard_name": "longitude",
+              "axis": "X"
+            },
+            "NC_GLOBAL": {
+              "cmip6_source_id": "CanESM5",
+              "cmip6_institution_id": "CCCma",
+              "cmip6_license": "CC-BY 4.0",
+              "activity": "NEX-GDDP-CMIP6",
+              "Conventions": "CF-1.7",
+              "frequency": "day",
+              "institution": "NASA Earth Exchange, NASA Ames Research Center, Moffett Field, CA 94035",
+              "variant_label": "r1i1p1f1",
+              "product": "output",
+              "realm": "atmos",
+              "source": "BCSD",
+              "scenario": "historical",
+              "references": "BCSD method: Thrasher et al., 2012, Hydrol. Earth Syst. Sci.,16, 3309-3314. Ref period obs: latest version of the Princeton Global Meteorological Forcings (http://hydrology.princeton.edu/data.php), based on Sheffield et al., 2006, J. Climate, 19 (13), 3088-3111.",
+              "version": "2.0",
+              "title": "CANESM5, r1i1p1f1, historical, global downscaled CMIP6 climate projection data",
+              "resolution_id": "0.25 degree",
+              "external_variables": "areacella",
+              "contact": "Dr. Bridget Thrasher: bridget@climateanalyticsgroup.org, Dr. Ian Brosnan: ian.g.brosnan@nasa.gov",
+              "creation_date": "Sat Nov 16 01:16:56 PST 2024",
+              "disclaimer": "These data are considered provisional and subject to change. They are provided as is without any warranty of any kind, either express or implied, arising by law or otherwise, including but not limited to warranties of completeness, non-infringement, accuracy, merchantability, or fitness for a particular purpose. The user assumes all risk associated with the use of, or inability to use, these data.",
+              "tracking_id": "accaff96-16e3-4eb1-aa05-0d9f485a5410"
+            },
+            "DODS_EXTRA": {
+              "Unlimited_Dimension": "time"
+            }
+          },
+          "time_bounds_declared": false,
+          "sha256": "f73d357ed083cd6382734d7b3159c4999d081312fded5f454620f35bf16026c6"
+        },
+        "time_support": {
+          "variable": "hurs",
+          "year": 2013,
+          "calendar": "365_day",
+          "units": "days since 1850-01-01 0:0:0.0",
+          "n_time_coordinates": 365,
+          "coordinate_first": 59495.5,
+          "coordinate_last": 59859.5,
+          "coordinate_role": "DAILY_NOON_LABEL_NOT_PROOF_OF_AVERAGING_WINDOW",
+          "coordinates_sha256": "ad2465bad6f71c8c9d9f6ea399fd569d0bfb923b34ee2da95e7f5fcd31c523f5",
+          "bounds_attribute": null,
+          "bounds_variable_in_dds": false,
+          "status": "COORDINATES_READ_INTERVAL_BOUNDS_UNRESOLVED",
+          "interval_semantics_verified": false,
+          "bounds_status": "NO_VARIABLE_SPECIFIC_BOUNDS_ATTRIBUTE"
+        }
+      }
+    },
+    "2014": {
+      "tas": {
+        "metadata": {
+          "variable": "tas",
+          "year": 2014,
+          "blocks": {
+            "lat": {
+              "units": "degrees_north",
+              "long_name": "Latitude"
+            },
+            "lon": {
+              "long_name": "Longitude",
+              "units": "degrees_east"
+            },
+            "time": {
+              "bounds": "time_bnds",
+              "standard_name": "time",
+              "long_name": "time",
+              "units": "days since 1850-01-01 0:0:0.0",
+              "calendar": "365_day",
+              "axis": "T"
+            },
+            "tas": {
+              "history": "2019-05-02T08:02:01Z altered by CMOR: Treated scalar dimension: 'height'. 2019-05-02T08:02:01Z altered by CMOR: Reordered dimensions, original order: lat lon time. 2019-05-02T08:02:01Z altered by CMOR: replaced missing value flag (1e+38) with standard missing value (1e+20).",
+              "cell_measures": "area: areacella",
+              "cell_methods": "area: mean time: maximum",
+              "original_name": "STMX",
+              "comment": "Near-surface (usually, 2 meter) air temperature; derived from downscaled tasmax & tasmin",
+              "coordinates": "height",
+              "units": "K",
+              "long_name": "Daily Near-Surface Air Temperature",
+              "standard_name": "air_temperature"
+            },
+            "NC_GLOBAL": {
+              "activity": "NEX-GDDP-CMIP6",
+              "Conventions": "CF-1.7",
+              "frequency": "day",
+              "institution": "NASA Earth Exchange, NASA Ames Research Center, Moffett Field, CA 94035",
+              "variant_label": "r1i1p1f1",
+              "product": "output",
+              "realm": "atmos",
+              "source": "BCSD",
+              "scenario": "historical",
+              "references": "BCSD method: Thrasher et al., 2012, Hydrol. Earth Syst. Sci.,16, 3309-3314. Ref period obs: latest version of the Princeton Global Meteorological Forcings (http://hydrology.princeton.edu/data.php), based on Sheffield et al., 2006, J. Climate, 19 (13), 3088-3111.",
+              "version": "2.0",
+              "title": "CANESM5, r1i1p1f1, historical, global downscaled CMIP6 climate projection data",
+              "resolution_id": "0.25 degree",
+              "external_variables": "areacella",
+              "cmip6_source_id": "CanESM5",
+              "cmip6_institution_id": "CCCma",
+              "cmip6_license": "CC-BY-SA 4.0",
+              "contact": "Dr. Bridget Thrasher: bridget@climateanalyticsgroup.org, Dr. Ian Brosnan: ian.g.brosnan@nasa.gov",
+              "creation_date": "Sat Nov 16 20:19:20 PST 2024",
+              "disclaimer": "These data are considered provisional and subject to change. They are provided as is without any warranty of any kind, either express or implied, arising by law or otherwise, including but not limited to warranties of completeness, non-infringement, accuracy, merchantability, or fitness for a particular purpose. The user assumes all risk associated with the use of, or inability to use, these data.",
+              "tracking_id": "eda08ed0-43a6-48df-9a55-601157860708"
+            },
+            "DODS_EXTRA": {
+              "Unlimited_Dimension": "time"
+            }
+          },
+          "time_bounds_declared": true,
+          "sha256": "e5de3bf21f3f93735a6663a23d1addd673255bbe36504bc3fa97e2816c9c6c70"
+        },
+        "time_support": {
+          "variable": "tas",
+          "year": 2014,
+          "calendar": "365_day",
+          "units": "days since 1850-01-01 0:0:0.0",
+          "n_time_coordinates": 365,
+          "coordinate_first": 59860.5,
+          "coordinate_last": 60224.5,
+          "coordinate_role": "DAILY_NOON_LABEL_NOT_PROOF_OF_AVERAGING_WINDOW",
+          "coordinates_sha256": "9ca4e04ac25c0df2b7641747b59bb4fa4e9b6abea92f4565c093ee80466902e7",
+          "bounds_attribute": "time_bnds",
+          "bounds_variable_in_dds": false,
+          "status": "COORDINATES_READ_INTERVAL_BOUNDS_UNRESOLVED",
+          "interval_semantics_verified": false,
+          "bounds_status": "DANGLING_ATTRIBUTE_VARIABLE_ABSENT_IN_DDS"
+        }
+      },
+      "tasmin": {
+        "metadata": {
+          "variable": "tasmin",
+          "year": 2014,
+          "blocks": {
+            "lat": {
+              "units": "degrees_north",
+              "long_name": "Latitude"
+            },
+            "tasmin": {
+              "units": "K"
+            },
+            "time": {
+              "bounds": "time_bnds",
+              "standard_name": "time",
+              "long_name": "time",
+              "units": "days since 1850-01-01 0:0:0.0",
+              "calendar": "365_day",
+              "axis": "T"
+            },
+            "lon": {
+              "long_name": "Longitude",
+              "units": "degrees_east"
+            },
+            "NC_GLOBAL": {
+              "activity": "NEX-GDDP-CMIP6",
+              "Conventions": "CF-1.7",
+              "frequency": "day",
+              "institution": "NASA Earth Exchange, NASA Ames Research Center, Moffett Field, CA 94035",
+              "variant_label": "r1i1p1f1",
+              "product": "output",
+              "realm": "atmos",
+              "source": "BCSD",
+              "scenario": "historical",
+              "references": "BCSD method: Thrasher et al., 2012, Hydrol. Earth Syst. Sci.,16, 3309-3314. Ref period obs: latest version of the Princeton Global Meteorological Forcings (http://hydrology.princeton.edu/data.php), based on Sheffield et al., 2006, J. Climate, 19 (13), 3088-3111.",
+              "version": "2.0",
+              "title": "CANESM5, r1i1p1f1, historical, global downscaled CMIP6 climate projection data",
+              "resolution_id": "0.25 degree",
+              "external_variables": "areacella",
+              "cmip6_source_id": "CanESM5",
+              "cmip6_institution_id": "CCCma",
+              "cmip6_license": "CC-BY-SA 4.0",
+              "contact": "Dr. Bridget Thrasher: bridget@climateanalyticsgroup.org, Dr. Ian Brosnan: ian.g.brosnan@nasa.gov",
+              "creation_date": "Sat Nov 16 16:57:19 PST 2024",
+              "disclaimer": "These data are considered provisional and subject to change. They are provided as is without any warranty of any kind, either express or implied, arising by law or otherwise, including but not limited to warranties of completeness, non-infringement, accuracy, merchantability, or fitness for a particular purpose. The user assumes all risk associated with the use of, or inability to use, these data.",
+              "tracking_id": "c9e7d640-c2b6-4b25-b6d7-990e7d0a72ae"
+            },
+            "DODS_EXTRA": {
+              "Unlimited_Dimension": "time"
+            }
+          },
+          "time_bounds_declared": true,
+          "sha256": "667929152cc4238f9b443c2f29760c8fe9dc780cff8733cb63b05be9d5a817ee"
+        },
+        "time_support": {
+          "variable": "tasmin",
+          "year": 2014,
+          "calendar": "365_day",
+          "units": "days since 1850-01-01 0:0:0.0",
+          "n_time_coordinates": 365,
+          "coordinate_first": 59860.5,
+          "coordinate_last": 60224.5,
+          "coordinate_role": "DAILY_NOON_LABEL_NOT_PROOF_OF_AVERAGING_WINDOW",
+          "coordinates_sha256": "9ca4e04ac25c0df2b7641747b59bb4fa4e9b6abea92f4565c093ee80466902e7",
+          "bounds_attribute": "time_bnds",
+          "bounds_variable_in_dds": false,
+          "status": "COORDINATES_READ_INTERVAL_BOUNDS_UNRESOLVED",
+          "interval_semantics_verified": false,
+          "bounds_status": "DANGLING_ATTRIBUTE_VARIABLE_ABSENT_IN_DDS"
+        }
+      },
+      "tasmax": {
+        "metadata": {
+          "variable": "tasmax",
+          "year": 2014,
+          "blocks": {
+            "lat": {
+              "long_name": "Latitude",
+              "units": "degrees_north"
+            },
+            "tasmax": {
+              "standard_name": "air_temperature",
+              "long_name": "Daily Maximum Near-Surface Air Temperature",
+              "units": "K",
+              "coordinates": "height",
+              "comment": "maximum near-surface (usually, 2 meter) air temperature (add cell_method attribute 'time: max')",
+              "original_name": "STMX",
+              "cell_methods": "area: mean time: maximum",
+              "cell_measures": "area: areacella",
+              "history": "2019-05-02T08:02:01Z altered by CMOR: Treated scalar dimension: 'height'. 2019-05-02T08:02:01Z altered by CMOR: Reordered dimensions, original order: lat lon time. 2019-05-02T08:02:01Z altered by CMOR: replaced missing value flag (1e+38) with standard missing value (1e+20)."
+            },
+            "time": {
+              "axis": "T",
+              "calendar": "365_day",
+              "units": "days since 1850-01-01 0:0:0.0",
+              "long_name": "time",
+              "standard_name": "time",
+              "bounds": "time_bnds"
+            },
+            "lon": {
+              "long_name": "Longitude",
+              "units": "degrees_east"
+            },
+            "NC_GLOBAL": {
+              "activity": "NEX-GDDP-CMIP6",
+              "Conventions": "CF-1.7",
+              "frequency": "day",
+              "institution": "NASA Earth Exchange, NASA Ames Research Center, Moffett Field, CA 94035",
+              "variant_label": "r1i1p1f1",
+              "product": "output",
+              "realm": "atmos",
+              "source": "BCSD",
+              "scenario": "historical",
+              "references": "BCSD method: Thrasher et al., 2012, Hydrol. Earth Syst. Sci.,16, 3309-3314. Ref period obs: latest version of the Princeton Global Meteorological Forcings (http://hydrology.princeton.edu/data.php), based on Sheffield et al., 2006, J. Climate, 19 (13), 3088-3111.",
+              "version": "2.0",
+              "title": "CANESM5, r1i1p1f1, historical, global downscaled CMIP6 climate projection data",
+              "resolution_id": "0.25 degree",
+              "external_variables": "areacella",
+              "cmip6_source_id": "CanESM5",
+              "cmip6_institution_id": "CCCma",
+              "cmip6_license": "CC-BY-SA 4.0",
+              "contact": "Dr. Bridget Thrasher: bridget@climateanalyticsgroup.org, Dr. Ian Brosnan: ian.g.brosnan@nasa.gov",
+              "creation_date": "Sat Nov 16 13:49:20 PST 2024",
+              "disclaimer": "These data are considered provisional and subject to change. They are provided as is without any warranty of any kind, either express or implied, arising by law or otherwise, including but not limited to warranties of completeness, non-infringement, accuracy, merchantability, or fitness for a particular purpose. The user assumes all risk associated with the use of, or inability to use, these data.",
+              "tracking_id": "54c7c485-60c2-4ac4-bc80-18147a825b6b"
+            },
+            "DODS_EXTRA": {
+              "Unlimited_Dimension": "time"
+            }
+          },
+          "time_bounds_declared": true,
+          "sha256": "f6bd00a0aba63c06ab93353ce7d74802be55072aa43f26b06795a2b9cdb559b9"
+        },
+        "time_support": {
+          "variable": "tasmax",
+          "year": 2014,
+          "calendar": "365_day",
+          "units": "days since 1850-01-01 0:0:0.0",
+          "n_time_coordinates": 365,
+          "coordinate_first": 59860.5,
+          "coordinate_last": 60224.5,
+          "coordinate_role": "DAILY_NOON_LABEL_NOT_PROOF_OF_AVERAGING_WINDOW",
+          "coordinates_sha256": "9ca4e04ac25c0df2b7641747b59bb4fa4e9b6abea92f4565c093ee80466902e7",
+          "bounds_attribute": "time_bnds",
+          "bounds_variable_in_dds": false,
+          "status": "COORDINATES_READ_INTERVAL_BOUNDS_UNRESOLVED",
+          "interval_semantics_verified": false,
+          "bounds_status": "DANGLING_ATTRIBUTE_VARIABLE_ABSENT_IN_DDS"
+        }
+      },
+      "huss": {
+        "metadata": {
+          "variable": "huss",
+          "year": 2014,
+          "blocks": {
+            "time": {
+              "axis": "T",
+              "calendar": "365_day",
+              "units": "days since 1850-01-01 0:0:0.0",
+              "long_name": "time",
+              "standard_name": "time"
+            },
+            "huss": {
+              "standard_name": "specific_humidity",
+              "long_name": "Near-Surface Specific Humidity",
+              "units": "1",
+              "comment": "Near-surface (usually, 2 meter) specific humidity.",
+              "original_name": "SQ",
+              "cell_methods": "area: time: mean",
+              "cell_measures": "area: areacella"
+            },
+            "lat": {
+              "units": "degrees_north",
+              "standard_name": "latitude",
+              "long_name": "latitude",
+              "axis": "Y"
+            },
+            "lon": {
+              "units": "degrees_east",
+              "standard_name": "longitude",
+              "long_name": "longitude",
+              "axis": "X"
+            },
+            "NC_GLOBAL": {
+              "activity": "NEX-GDDP-CMIP6",
+              "Conventions": "CF-1.7",
+              "frequency": "day",
+              "institution": "NASA Earth Exchange, NASA Ames Research Center, Moffett Field, CA 94035",
+              "variant_label": "r1i1p1f1",
+              "product": "output",
+              "realm": "atmos",
+              "source": "BCSD",
+              "scenario": "historical",
+              "references": "BCSD method: Thrasher et al., 2012, Hydrol. Earth Syst. Sci.,16, 3309-3314. Ref period obs: latest version of the Princeton Global Meteorological Forcings (http://hydrology.princeton.edu/data.php), based on Sheffield et al., 2006, J. Climate, 19 (13), 3088-3111.",
+              "version": "2.0",
+              "title": "CANESM5, r1i1p1f1, historical, global downscaled CMIP6 climate projection data",
+              "resolution_id": "0.25 degree",
+              "external_variables": "areacella",
+              "cmip6_source_id": "CanESM5",
+              "cmip6_institution_id": "CCCma",
+              "cmip6_license": "CC-BY-SA 4.0",
+              "contact": "Dr. Bridget Thrasher: bridget@climateanalyticsgroup.org, Dr. Ian Brosnan: ian.g.brosnan@nasa.gov",
+              "creation_date": "Sat Nov 16 02:08:23 PST 2024",
+              "disclaimer": "These data are considered provisional and subject to change. They are provided as is without any warranty of any kind, either express or implied, arising by law or otherwise, including but not limited to warranties of completeness, non-infringement, accuracy, merchantability, or fitness for a particular purpose. The user assumes all risk associated with the use of, or inability to use, these data.",
+              "tracking_id": "4fc8583b-4d65-4e0a-807b-4435df9894eb"
+            },
+            "DODS_EXTRA": {
+              "Unlimited_Dimension": "time"
+            }
+          },
+          "time_bounds_declared": false,
+          "sha256": "7feef1174b347e2daec1bc76c35a2bdca6e7ef471280fef720b08f86b2d6c7f3"
+        },
+        "time_support": {
+          "variable": "huss",
+          "year": 2014,
+          "calendar": "365_day",
+          "units": "days since 1850-01-01 0:0:0.0",
+          "n_time_coordinates": 365,
+          "coordinate_first": 59860.5,
+          "coordinate_last": 60224.5,
+          "coordinate_role": "DAILY_NOON_LABEL_NOT_PROOF_OF_AVERAGING_WINDOW",
+          "coordinates_sha256": "9ca4e04ac25c0df2b7641747b59bb4fa4e9b6abea92f4565c093ee80466902e7",
+          "bounds_attribute": null,
+          "bounds_variable_in_dds": false,
+          "status": "COORDINATES_READ_INTERVAL_BOUNDS_UNRESOLVED",
+          "interval_semantics_verified": false,
+          "bounds_status": "NO_VARIABLE_SPECIFIC_BOUNDS_ATTRIBUTE"
+        }
+      },
+      "hurs": {
+        "metadata": {
+          "variable": "hurs",
+          "year": 2014,
+          "blocks": {
+            "lat": {
+              "long_name": "latitude",
+              "units": "degrees_north",
+              "standard_name": "latitude",
+              "axis": "Y"
+            },
+            "hurs": {
+              "standard_name": "relative_humidity",
+              "long_name": "Near-Surface Relative Humidity",
+              "units": "%",
+              "comment": "The relative humidity with respect to liquid water for T> 0 C, and with respect to ice for T<0 C.",
+              "original_name": "SRH",
+              "cell_methods": "area: time: mean",
+              "cell_measures": "area: areacella"
+            },
+            "time": {
+              "axis": "T",
+              "calendar": "365_day",
+              "units": "days since 1850-01-01 0:0:0.0",
+              "long_name": "time",
+              "standard_name": "time"
+            },
+            "lon": {
+              "long_name": "longitude",
+              "units": "degrees_east",
+              "standard_name": "longitude",
+              "axis": "X"
+            },
+            "NC_GLOBAL": {
+              "cmip6_source_id": "CanESM5",
+              "cmip6_institution_id": "CCCma",
+              "cmip6_license": "CC-BY 4.0",
+              "activity": "NEX-GDDP-CMIP6",
+              "Conventions": "CF-1.7",
+              "frequency": "day",
+              "institution": "NASA Earth Exchange, NASA Ames Research Center, Moffett Field, CA 94035",
+              "variant_label": "r1i1p1f1",
+              "product": "output",
+              "realm": "atmos",
+              "source": "BCSD",
+              "scenario": "historical",
+              "references": "BCSD method: Thrasher et al., 2012, Hydrol. Earth Syst. Sci.,16, 3309-3314. Ref period obs: latest version of the Princeton Global Meteorological Forcings (http://hydrology.princeton.edu/data.php), based on Sheffield et al., 2006, J. Climate, 19 (13), 3088-3111.",
+              "version": "2.0",
+              "title": "CANESM5, r1i1p1f1, historical, global downscaled CMIP6 climate projection data",
+              "resolution_id": "0.25 degree",
+              "external_variables": "areacella",
+              "contact": "Dr. Bridget Thrasher: bridget@climateanalyticsgroup.org, Dr. Ian Brosnan: ian.g.brosnan@nasa.gov",
+              "creation_date": "Sat Nov 16 01:16:56 PST 2024",
+              "disclaimer": "These data are considered provisional and subject to change. They are provided as is without any warranty of any kind, either express or implied, arising by law or otherwise, including but not limited to warranties of completeness, non-infringement, accuracy, merchantability, or fitness for a particular purpose. The user assumes all risk associated with the use of, or inability to use, these data.",
+              "tracking_id": "b4a6485b-a72a-47bd-b39f-65c9aece79f2"
+            },
+            "DODS_EXTRA": {
+              "Unlimited_Dimension": "time"
+            }
+          },
+          "time_bounds_declared": false,
+          "sha256": "8f64dd254f6522787ad6cc5b37ed4ebab210daf6ab4c6b60bc02f15c3e40f1e6"
+        },
+        "time_support": {
+          "variable": "hurs",
+          "year": 2014,
+          "calendar": "365_day",
+          "units": "days since 1850-01-01 0:0:0.0",
+          "n_time_coordinates": 365,
+          "coordinate_first": 59860.5,
+          "coordinate_last": 60224.5,
+          "coordinate_role": "DAILY_NOON_LABEL_NOT_PROOF_OF_AVERAGING_WINDOW",
+          "coordinates_sha256": "9ca4e04ac25c0df2b7641747b59bb4fa4e9b6abea92f4565c093ee80466902e7",
+          "bounds_attribute": null,
+          "bounds_variable_in_dds": false,
+          "status": "COORDINATES_READ_INTERVAL_BOUNDS_UNRESOLVED",
+          "interval_semantics_verified": false,
+          "bounds_status": "NO_VARIABLE_SPECIFIC_BOUNDS_ATTRIBUTE"
+        }
+      }
+    }
+  },
+  "raw_source_responses": [
+    {
+      "variable": "tas",
+      "year": 2013,
+      "kind": "das",
+      "source_url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tas/tas_day_CanESM5_historical_r1i1p1f1_gn_2013_v2.0.nc.das",
+      "sha256": "70b4504f32d9c3a69ac99360de6820d073355f367f3f2f6728ee3d733786efde",
+      "body": "Attributes {\n    lat {\n        String units \"degrees_north\";\n        String long_name \"Latitude\";\n        UInt32 _ChunkSizes 600;\n    }\n    lon {\n        String long_name \"Longitude\";\n        String units \"degrees_east\";\n        UInt32 _ChunkSizes 1440;\n    }\n    time {\n        String bounds \"time_bnds\";\n        String standard_name \"time\";\n        String long_name \"time\";\n        String units \"days since 1850-01-01 0:0:0.0\";\n        String calendar \"365_day\";\n        String axis \"T\";\n        UInt32 _ChunkSizes 365;\n    }\n    tas {\n        Float32 missing_value 1.0E20;\n        String history \"2019-05-02T08:02:01Z altered by CMOR: Treated scalar dimension: 'height'. 2019-05-02T08:02:01Z altered by CMOR: Reordered dimensions, original order: lat lon time. 2019-05-02T08:02:01Z altered by CMOR: replaced missing value flag (1e+38) with standard missing value (1e+20).\";\n        String cell_measures \"area: areacella\";\n        String cell_methods \"area: mean time: maximum\";\n        String original_name \"STMX\";\n        String comment \"Near-surface (usually, 2 meter) air temperature; derived from downscaled tasmax & tasmin\";\n        String coordinates \"height\";\n        String units \"K\";\n        String long_name \"Daily Near-Surface Air Temperature\";\n        String standard_name \"air_temperature\";\n        Float64 time 59495.5;\n        Float32 _FillValue 1.0E20;\n        UInt32 _ChunkSizes 1, 600, 1440;\n    }\n    NC_GLOBAL {\n        String activity \"NEX-GDDP-CMIP6\";\n        String Conventions \"CF-1.7\";\n        String frequency \"day\";\n        String institution \"NASA Earth Exchange, NASA Ames Research Center, Moffett Field, CA 94035\";\n        String variant_label \"r1i1p1f1\";\n        String product \"output\";\n        String realm \"atmos\";\n        String source \"BCSD\";\n        String scenario \"historical\";\n        String references \"BCSD method: Thrasher et al., 2012, Hydrol. Earth Syst. Sci.,16, 3309-3314. Ref period obs: latest version of the Princeton Global Meteorological Forcings (http://hydrology.princeton.edu/data.php), based on Sheffield et al., 2006, J. Climate, 19 (13), 3088-3111.\";\n        String version \"2.0\";\n        String title \"CANESM5, r1i1p1f1, historical, global downscaled CMIP6 climate projection data\";\n        String resolution_id \"0.25 degree\";\n        String external_variables \"areacella\";\n        String cmip6_source_id \"CanESM5\";\n        String cmip6_institution_id \"CCCma\";\n        String cmip6_license \"CC-BY-SA 4.0\";\n        String contact \"Dr. Bridget Thrasher: bridget@climateanalyticsgroup.org, Dr. Ian Brosnan: ian.g.brosnan@nasa.gov\";\n        String creation_date \"Sat Nov 16 20:19:18 PST 2024\";\n        String disclaimer \"These data are considered provisional and subject to change. They are provided as is without any warranty of any kind, either express or implied, arising by law or otherwise, including but not limited to warranties of completeness, non-infringement, accuracy, merchantability, or fitness for a particular purpose. The user assumes all risk associated with the use of, or inability to use, these data.\";\n        String tracking_id \"caa8cc22-88fb-49a1-8a8b-1ae0485c5333\";\n    }\n    DODS_EXTRA {\n        String Unlimited_Dimension \"time\";\n    }\n}\n"
+    },
+    {
+      "variable": "tas",
+      "year": 2013,
+      "kind": "dds",
+      "source_url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tas/tas_day_CanESM5_historical_r1i1p1f1_gn_2013_v2.0.nc.dds",
+      "sha256": "34058e8cfb4f9eb54a9a7dd491728cc983a0591525d5bb5eb244a9df3a31b7b5",
+      "body": "Dataset {\n    Float64 lat[lat = 600];\n    Float64 lon[lon = 1440];\n    Float64 time[time = 365];\n    Grid {\n     ARRAY:\n        Float32 tas[time = 365][lat = 600][lon = 1440];\n     MAPS:\n        Float64 time[time = 365];\n        Float64 lat[lat = 600];\n        Float64 lon[lon = 1440];\n    } tas;\n} AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tas/tas_day_CanESM5_historical_r1i1p1f1_gn_2013_v2.0.nc;\n"
+    },
+    {
+      "variable": "tas",
+      "year": 2013,
+      "kind": "time_ascii",
+      "source_url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tas/tas_day_CanESM5_historical_r1i1p1f1_gn_2013_v2.0.nc.ascii?time%5B0%3A1%3A364%5D",
+      "sha256": "d4546ad469b8ae81bb20e39e98e69d04785d79311032e9c88ecd72b37c5704fa",
+      "body": "Dataset {\n    Float64 time[time = 365];\n} AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tas/tas_day_CanESM5_historical_r1i1p1f1_gn_2013_v2.0.nc;\n---------------------------------------------\ntime[365]\n59495.5, 59496.5, 59497.5, 59498.5, 59499.5, 59500.5, 59501.5, 59502.5, 59503.5, 59504.5, 59505.5, 59506.5, 59507.5, 59508.5, 59509.5, 59510.5, 59511.5, 59512.5, 59513.5, 59514.5, 59515.5, 59516.5, 59517.5, 59518.5, 59519.5, 59520.5, 59521.5, 59522.5, 59523.5, 59524.5, 59525.5, 59526.5, 59527.5, 59528.5, 59529.5, 59530.5, 59531.5, 59532.5, 59533.5, 59534.5, 59535.5, 59536.5, 59537.5, 59538.5, 59539.5, 59540.5, 59541.5, 59542.5, 59543.5, 59544.5, 59545.5, 59546.5, 59547.5, 59548.5, 59549.5, 59550.5, 59551.5, 59552.5, 59553.5, 59554.5, 59555.5, 59556.5, 59557.5, 59558.5, 59559.5, 59560.5, 59561.5, 59562.5, 59563.5, 59564.5, 59565.5, 59566.5, 59567.5, 59568.5, 59569.5, 59570.5, 59571.5, 59572.5, 59573.5, 59574.5, 59575.5, 59576.5, 59577.5, 59578.5, 59579.5, 59580.5, 59581.5, 59582.5, 59583.5, 59584.5, 59585.5, 59586.5, 59587.5, 59588.5, 59589.5, 59590.5, 59591.5, 59592.5, 59593.5, 59594.5, 59595.5, 59596.5, 59597.5, 59598.5, 59599.5, 59600.5, 59601.5, 59602.5, 59603.5, 59604.5, 59605.5, 59606.5, 59607.5, 59608.5, 59609.5, 59610.5, 59611.5, 59612.5, 59613.5, 59614.5, 59615.5, 59616.5, 59617.5, 59618.5, 59619.5, 59620.5, 59621.5, 59622.5, 59623.5, 59624.5, 59625.5, 59626.5, 59627.5, 59628.5, 59629.5, 59630.5, 59631.5, 59632.5, 59633.5, 59634.5, 59635.5, 59636.5, 59637.5, 59638.5, 59639.5, 59640.5, 59641.5, 59642.5, 59643.5, 59644.5, 59645.5, 59646.5, 59647.5, 59648.5, 59649.5, 59650.5, 59651.5, 59652.5, 59653.5, 59654.5, 59655.5, 59656.5, 59657.5, 59658.5, 59659.5, 59660.5, 59661.5, 59662.5, 59663.5, 59664.5, 59665.5, 59666.5, 59667.5, 59668.5, 59669.5, 59670.5, 59671.5, 59672.5, 59673.5, 59674.5, 59675.5, 59676.5, 59677.5, 59678.5, 59679.5, 59680.5, 59681.5, 59682.5, 59683.5, 59684.5, 59685.5, 59686.5, 59687.5, 59688.5, 59689.5, 59690.5, 59691.5, 59692.5, 59693.5, 59694.5, 59695.5, 59696.5, 59697.5, 59698.5, 59699.5, 59700.5, 59701.5, 59702.5, 59703.5, 59704.5, 59705.5, 59706.5, 59707.5, 59708.5, 59709.5, 59710.5, 59711.5, 59712.5, 59713.5, 59714.5, 59715.5, 59716.5, 59717.5, 59718.5, 59719.5, 59720.5, 59721.5, 59722.5, 59723.5, 59724.5, 59725.5, 59726.5, 59727.5, 59728.5, 59729.5, 59730.5, 59731.5, 59732.5, 59733.5, 59734.5, 59735.5, 59736.5, 59737.5, 59738.5, 59739.5, 59740.5, 59741.5, 59742.5, 59743.5, 59744.5, 59745.5, 59746.5, 59747.5, 59748.5, 59749.5, 59750.5, 59751.5, 59752.5, 59753.5, 59754.5, 59755.5, 59756.5, 59757.5, 59758.5, 59759.5, 59760.5, 59761.5, 59762.5, 59763.5, 59764.5, 59765.5, 59766.5, 59767.5, 59768.5, 59769.5, 59770.5, 59771.5, 59772.5, 59773.5, 59774.5, 59775.5, 59776.5, 59777.5, 59778.5, 59779.5, 59780.5, 59781.5, 59782.5, 59783.5, 59784.5, 59785.5, 59786.5, 59787.5, 59788.5, 59789.5, 59790.5, 59791.5, 59792.5, 59793.5, 59794.5, 59795.5, 59796.5, 59797.5, 59798.5, 59799.5, 59800.5, 59801.5, 59802.5, 59803.5, 59804.5, 59805.5, 59806.5, 59807.5, 59808.5, 59809.5, 59810.5, 59811.5, 59812.5, 59813.5, 59814.5, 59815.5, 59816.5, 59817.5, 59818.5, 59819.5, 59820.5, 59821.5, 59822.5, 59823.5, 59824.5, 59825.5, 59826.5, 59827.5, 59828.5, 59829.5, 59830.5, 59831.5, 59832.5, 59833.5, 59834.5, 59835.5, 59836.5, 59837.5, 59838.5, 59839.5, 59840.5, 59841.5, 59842.5, 59843.5, 59844.5, 59845.5, 59846.5, 59847.5, 59848.5, 59849.5, 59850.5, 59851.5, 59852.5, 59853.5, 59854.5, 59855.5, 59856.5, 59857.5, 59858.5, 59859.5\n\n"
+    },
+    {
+      "variable": "tasmin",
+      "year": 2013,
+      "kind": "das",
+      "source_url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tasmin/tasmin_day_CanESM5_historical_r1i1p1f1_gn_2013_v2.0.nc.das",
+      "sha256": "1bb4f270d83dc6e9dbc0ca7d489a06374e044621072935ba1ae61fb27cd1348e",
+      "body": "Attributes {\n    lat {\n        String units \"degrees_north\";\n        String long_name \"Latitude\";\n        UInt32 _ChunkSizes 600;\n    }\n    tasmin {\n        Float32 _FillValue 1.0E20;\n        String units \"K\";\n        UInt32 _ChunkSizes 1, 600, 1440;\n    }\n    time {\n        String bounds \"time_bnds\";\n        String standard_name \"time\";\n        String long_name \"time\";\n        String units \"days since 1850-01-01 0:0:0.0\";\n        String calendar \"365_day\";\n        String axis \"T\";\n        UInt32 _ChunkSizes 512;\n    }\n    lon {\n        String long_name \"Longitude\";\n        String units \"degrees_east\";\n        UInt32 _ChunkSizes 1440;\n    }\n    NC_GLOBAL {\n        String activity \"NEX-GDDP-CMIP6\";\n        String Conventions \"CF-1.7\";\n        String frequency \"day\";\n        String institution \"NASA Earth Exchange, NASA Ames Research Center, Moffett Field, CA 94035\";\n        String variant_label \"r1i1p1f1\";\n        String product \"output\";\n        String realm \"atmos\";\n        String source \"BCSD\";\n        String scenario \"historical\";\n        String references \"BCSD method: Thrasher et al., 2012, Hydrol. Earth Syst. Sci.,16, 3309-3314. Ref period obs: latest version of the Princeton Global Meteorological Forcings (http://hydrology.princeton.edu/data.php), based on Sheffield et al., 2006, J. Climate, 19 (13), 3088-3111.\";\n        String version \"2.0\";\n        String title \"CANESM5, r1i1p1f1, historical, global downscaled CMIP6 climate projection data\";\n        String resolution_id \"0.25 degree\";\n        String external_variables \"areacella\";\n        String cmip6_source_id \"CanESM5\";\n        String cmip6_institution_id \"CCCma\";\n        String cmip6_license \"CC-BY-SA 4.0\";\n        String contact \"Dr. Bridget Thrasher: bridget@climateanalyticsgroup.org, Dr. Ian Brosnan: ian.g.brosnan@nasa.gov\";\n        String creation_date \"Sat Nov 16 16:57:18 PST 2024\";\n        String disclaimer \"These data are considered provisional and subject to change. They are provided as is without any warranty of any kind, either express or implied, arising by law or otherwise, including but not limited to warranties of completeness, non-infringement, accuracy, merchantability, or fitness for a particular purpose. The user assumes all risk associated with the use of, or inability to use, these data.\";\n        String tracking_id \"25e63c51-c656-4271-9b8f-7b1e096594d9\";\n    }\n    DODS_EXTRA {\n        String Unlimited_Dimension \"time\";\n    }\n}\n"
+    },
+    {
+      "variable": "tasmin",
+      "year": 2013,
+      "kind": "dds",
+      "source_url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tasmin/tasmin_day_CanESM5_historical_r1i1p1f1_gn_2013_v2.0.nc.dds",
+      "sha256": "f5dba358d0dde299ef8d497fe6f7d7d448d562860b13b8bcf3ff1f65aaa9924f",
+      "body": "Dataset {\n    Float64 lat[lat = 600];\n    Grid {\n     ARRAY:\n        Float32 tasmin[time = 365][lat = 600][lon = 1440];\n     MAPS:\n        Float64 time[time = 365];\n        Float64 lat[lat = 600];\n        Float64 lon[lon = 1440];\n    } tasmin;\n    Float64 time[time = 365];\n    Float64 lon[lon = 1440];\n} AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tasmin/tasmin_day_CanESM5_historical_r1i1p1f1_gn_2013_v2.0.nc;\n"
+    },
+    {
+      "variable": "tasmin",
+      "year": 2013,
+      "kind": "time_ascii",
+      "source_url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tasmin/tasmin_day_CanESM5_historical_r1i1p1f1_gn_2013_v2.0.nc.ascii?time%5B0%3A1%3A364%5D",
+      "sha256": "5c576a57568407d95cd4ee192f92fccb1094aba859cbe3eebc0407ebefd87cff",
+      "body": "Dataset {\n    Float64 time[time = 365];\n} AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tasmin/tasmin_day_CanESM5_historical_r1i1p1f1_gn_2013_v2.0.nc;\n---------------------------------------------\ntime[365]\n59495.5, 59496.5, 59497.5, 59498.5, 59499.5, 59500.5, 59501.5, 59502.5, 59503.5, 59504.5, 59505.5, 59506.5, 59507.5, 59508.5, 59509.5, 59510.5, 59511.5, 59512.5, 59513.5, 59514.5, 59515.5, 59516.5, 59517.5, 59518.5, 59519.5, 59520.5, 59521.5, 59522.5, 59523.5, 59524.5, 59525.5, 59526.5, 59527.5, 59528.5, 59529.5, 59530.5, 59531.5, 59532.5, 59533.5, 59534.5, 59535.5, 59536.5, 59537.5, 59538.5, 59539.5, 59540.5, 59541.5, 59542.5, 59543.5, 59544.5, 59545.5, 59546.5, 59547.5, 59548.5, 59549.5, 59550.5, 59551.5, 59552.5, 59553.5, 59554.5, 59555.5, 59556.5, 59557.5, 59558.5, 59559.5, 59560.5, 59561.5, 59562.5, 59563.5, 59564.5, 59565.5, 59566.5, 59567.5, 59568.5, 59569.5, 59570.5, 59571.5, 59572.5, 59573.5, 59574.5, 59575.5, 59576.5, 59577.5, 59578.5, 59579.5, 59580.5, 59581.5, 59582.5, 59583.5, 59584.5, 59585.5, 59586.5, 59587.5, 59588.5, 59589.5, 59590.5, 59591.5, 59592.5, 59593.5, 59594.5, 59595.5, 59596.5, 59597.5, 59598.5, 59599.5, 59600.5, 59601.5, 59602.5, 59603.5, 59604.5, 59605.5, 59606.5, 59607.5, 59608.5, 59609.5, 59610.5, 59611.5, 59612.5, 59613.5, 59614.5, 59615.5, 59616.5, 59617.5, 59618.5, 59619.5, 59620.5, 59621.5, 59622.5, 59623.5, 59624.5, 59625.5, 59626.5, 59627.5, 59628.5, 59629.5, 59630.5, 59631.5, 59632.5, 59633.5, 59634.5, 59635.5, 59636.5, 59637.5, 59638.5, 59639.5, 59640.5, 59641.5, 59642.5, 59643.5, 59644.5, 59645.5, 59646.5, 59647.5, 59648.5, 59649.5, 59650.5, 59651.5, 59652.5, 59653.5, 59654.5, 59655.5, 59656.5, 59657.5, 59658.5, 59659.5, 59660.5, 59661.5, 59662.5, 59663.5, 59664.5, 59665.5, 59666.5, 59667.5, 59668.5, 59669.5, 59670.5, 59671.5, 59672.5, 59673.5, 59674.5, 59675.5, 59676.5, 59677.5, 59678.5, 59679.5, 59680.5, 59681.5, 59682.5, 59683.5, 59684.5, 59685.5, 59686.5, 59687.5, 59688.5, 59689.5, 59690.5, 59691.5, 59692.5, 59693.5, 59694.5, 59695.5, 59696.5, 59697.5, 59698.5, 59699.5, 59700.5, 59701.5, 59702.5, 59703.5, 59704.5, 59705.5, 59706.5, 59707.5, 59708.5, 59709.5, 59710.5, 59711.5, 59712.5, 59713.5, 59714.5, 59715.5, 59716.5, 59717.5, 59718.5, 59719.5, 59720.5, 59721.5, 59722.5, 59723.5, 59724.5, 59725.5, 59726.5, 59727.5, 59728.5, 59729.5, 59730.5, 59731.5, 59732.5, 59733.5, 59734.5, 59735.5, 59736.5, 59737.5, 59738.5, 59739.5, 59740.5, 59741.5, 59742.5, 59743.5, 59744.5, 59745.5, 59746.5, 59747.5, 59748.5, 59749.5, 59750.5, 59751.5, 59752.5, 59753.5, 59754.5, 59755.5, 59756.5, 59757.5, 59758.5, 59759.5, 59760.5, 59761.5, 59762.5, 59763.5, 59764.5, 59765.5, 59766.5, 59767.5, 59768.5, 59769.5, 59770.5, 59771.5, 59772.5, 59773.5, 59774.5, 59775.5, 59776.5, 59777.5, 59778.5, 59779.5, 59780.5, 59781.5, 59782.5, 59783.5, 59784.5, 59785.5, 59786.5, 59787.5, 59788.5, 59789.5, 59790.5, 59791.5, 59792.5, 59793.5, 59794.5, 59795.5, 59796.5, 59797.5, 59798.5, 59799.5, 59800.5, 59801.5, 59802.5, 59803.5, 59804.5, 59805.5, 59806.5, 59807.5, 59808.5, 59809.5, 59810.5, 59811.5, 59812.5, 59813.5, 59814.5, 59815.5, 59816.5, 59817.5, 59818.5, 59819.5, 59820.5, 59821.5, 59822.5, 59823.5, 59824.5, 59825.5, 59826.5, 59827.5, 59828.5, 59829.5, 59830.5, 59831.5, 59832.5, 59833.5, 59834.5, 59835.5, 59836.5, 59837.5, 59838.5, 59839.5, 59840.5, 59841.5, 59842.5, 59843.5, 59844.5, 59845.5, 59846.5, 59847.5, 59848.5, 59849.5, 59850.5, 59851.5, 59852.5, 59853.5, 59854.5, 59855.5, 59856.5, 59857.5, 59858.5, 59859.5\n\n"
+    },
+    {
+      "variable": "tasmax",
+      "year": 2013,
+      "kind": "das",
+      "source_url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tasmax/tasmax_day_CanESM5_historical_r1i1p1f1_gn_2013_v2.0.nc.das",
+      "sha256": "d399805b0b39ce0ccbcf1d47cda60d06eeaf42a65f7c35e21bcf21c52ebc1123",
+      "body": "Attributes {\n    lat {\n        String long_name \"Latitude\";\n        String units \"degrees_north\";\n        UInt32 _ChunkSizes 600;\n    }\n    tasmax {\n        Float32 _FillValue 1.0E20;\n        Float64 time 59495.5;\n        String standard_name \"air_temperature\";\n        String long_name \"Daily Maximum Near-Surface Air Temperature\";\n        String units \"K\";\n        String coordinates \"height\";\n        String comment \"maximum near-surface (usually, 2 meter) air temperature (add cell_method attribute 'time: max')\";\n        String original_name \"STMX\";\n        String cell_methods \"area: mean time: maximum\";\n        String cell_measures \"area: areacella\";\n        String history \"2019-05-02T08:02:01Z altered by CMOR: Treated scalar dimension: 'height'. 2019-05-02T08:02:01Z altered by CMOR: Reordered dimensions, original order: lat lon time. 2019-05-02T08:02:01Z altered by CMOR: replaced missing value flag (1e+38) with standard missing value (1e+20).\";\n        Float32 missing_value 1.0E20;\n        UInt32 _ChunkSizes 1, 600, 1440;\n    }\n    time {\n        String axis \"T\";\n        String calendar \"365_day\";\n        String units \"days since 1850-01-01 0:0:0.0\";\n        String long_name \"time\";\n        String standard_name \"time\";\n        String bounds \"time_bnds\";\n        UInt32 _ChunkSizes 512;\n    }\n    lon {\n        String long_name \"Longitude\";\n        String units \"degrees_east\";\n        UInt32 _ChunkSizes 1440;\n    }\n    NC_GLOBAL {\n        String activity \"NEX-GDDP-CMIP6\";\n        String Conventions \"CF-1.7\";\n        String frequency \"day\";\n        String institution \"NASA Earth Exchange, NASA Ames Research Center, Moffett Field, CA 94035\";\n        String variant_label \"r1i1p1f1\";\n        String product \"output\";\n        String realm \"atmos\";\n        String source \"BCSD\";\n        String scenario \"historical\";\n        String references \"BCSD method: Thrasher et al., 2012, Hydrol. Earth Syst. Sci.,16, 3309-3314. Ref period obs: latest version of the Princeton Global Meteorological Forcings (http://hydrology.princeton.edu/data.php), based on Sheffield et al., 2006, J. Climate, 19 (13), 3088-3111.\";\n        String version \"2.0\";\n        String title \"CANESM5, r1i1p1f1, historical, global downscaled CMIP6 climate projection data\";\n        String resolution_id \"0.25 degree\";\n        String external_variables \"areacella\";\n        String cmip6_source_id \"CanESM5\";\n        String cmip6_institution_id \"CCCma\";\n        String cmip6_license \"CC-BY-SA 4.0\";\n        String contact \"Dr. Bridget Thrasher: bridget@climateanalyticsgroup.org, Dr. Ian Brosnan: ian.g.brosnan@nasa.gov\";\n        String creation_date \"Sat Nov 16 13:49:19 PST 2024\";\n        String disclaimer \"These data are considered provisional and subject to change. They are provided as is without any warranty of any kind, either express or implied, arising by law or otherwise, including but not limited to warranties of completeness, non-infringement, accuracy, merchantability, or fitness for a particular purpose. The user assumes all risk associated with the use of, or inability to use, these data.\";\n        String tracking_id \"4f808465-ec38-426b-a813-fe6499219c2d\";\n    }\n    DODS_EXTRA {\n        String Unlimited_Dimension \"time\";\n    }\n}\n"
+    },
+    {
+      "variable": "tasmax",
+      "year": 2013,
+      "kind": "dds",
+      "source_url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tasmax/tasmax_day_CanESM5_historical_r1i1p1f1_gn_2013_v2.0.nc.dds",
+      "sha256": "b05286f0b77c514ba1cfd92a693cc58479955057f77a644efc99249392ae837b",
+      "body": "Dataset {\n    Float64 lat[lat = 600];\n    Grid {\n     ARRAY:\n        Float32 tasmax[time = 365][lat = 600][lon = 1440];\n     MAPS:\n        Float64 time[time = 365];\n        Float64 lat[lat = 600];\n        Float64 lon[lon = 1440];\n    } tasmax;\n    Float64 time[time = 365];\n    Float64 lon[lon = 1440];\n} AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tasmax/tasmax_day_CanESM5_historical_r1i1p1f1_gn_2013_v2.0.nc;\n"
+    },
+    {
+      "variable": "tasmax",
+      "year": 2013,
+      "kind": "time_ascii",
+      "source_url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tasmax/tasmax_day_CanESM5_historical_r1i1p1f1_gn_2013_v2.0.nc.ascii?time%5B0%3A1%3A364%5D",
+      "sha256": "d44a6f242d44fa50343bfd9ea6d8d076a89cbfbe17ffdacea15c6cc4bfd022c9",
+      "body": "Dataset {\n    Float64 time[time = 365];\n} AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tasmax/tasmax_day_CanESM5_historical_r1i1p1f1_gn_2013_v2.0.nc;\n---------------------------------------------\ntime[365]\n59495.5, 59496.5, 59497.5, 59498.5, 59499.5, 59500.5, 59501.5, 59502.5, 59503.5, 59504.5, 59505.5, 59506.5, 59507.5, 59508.5, 59509.5, 59510.5, 59511.5, 59512.5, 59513.5, 59514.5, 59515.5, 59516.5, 59517.5, 59518.5, 59519.5, 59520.5, 59521.5, 59522.5, 59523.5, 59524.5, 59525.5, 59526.5, 59527.5, 59528.5, 59529.5, 59530.5, 59531.5, 59532.5, 59533.5, 59534.5, 59535.5, 59536.5, 59537.5, 59538.5, 59539.5, 59540.5, 59541.5, 59542.5, 59543.5, 59544.5, 59545.5, 59546.5, 59547.5, 59548.5, 59549.5, 59550.5, 59551.5, 59552.5, 59553.5, 59554.5, 59555.5, 59556.5, 59557.5, 59558.5, 59559.5, 59560.5, 59561.5, 59562.5, 59563.5, 59564.5, 59565.5, 59566.5, 59567.5, 59568.5, 59569.5, 59570.5, 59571.5, 59572.5, 59573.5, 59574.5, 59575.5, 59576.5, 59577.5, 59578.5, 59579.5, 59580.5, 59581.5, 59582.5, 59583.5, 59584.5, 59585.5, 59586.5, 59587.5, 59588.5, 59589.5, 59590.5, 59591.5, 59592.5, 59593.5, 59594.5, 59595.5, 59596.5, 59597.5, 59598.5, 59599.5, 59600.5, 59601.5, 59602.5, 59603.5, 59604.5, 59605.5, 59606.5, 59607.5, 59608.5, 59609.5, 59610.5, 59611.5, 59612.5, 59613.5, 59614.5, 59615.5, 59616.5, 59617.5, 59618.5, 59619.5, 59620.5, 59621.5, 59622.5, 59623.5, 59624.5, 59625.5, 59626.5, 59627.5, 59628.5, 59629.5, 59630.5, 59631.5, 59632.5, 59633.5, 59634.5, 59635.5, 59636.5, 59637.5, 59638.5, 59639.5, 59640.5, 59641.5, 59642.5, 59643.5, 59644.5, 59645.5, 59646.5, 59647.5, 59648.5, 59649.5, 59650.5, 59651.5, 59652.5, 59653.5, 59654.5, 59655.5, 59656.5, 59657.5, 59658.5, 59659.5, 59660.5, 59661.5, 59662.5, 59663.5, 59664.5, 59665.5, 59666.5, 59667.5, 59668.5, 59669.5, 59670.5, 59671.5, 59672.5, 59673.5, 59674.5, 59675.5, 59676.5, 59677.5, 59678.5, 59679.5, 59680.5, 59681.5, 59682.5, 59683.5, 59684.5, 59685.5, 59686.5, 59687.5, 59688.5, 59689.5, 59690.5, 59691.5, 59692.5, 59693.5, 59694.5, 59695.5, 59696.5, 59697.5, 59698.5, 59699.5, 59700.5, 59701.5, 59702.5, 59703.5, 59704.5, 59705.5, 59706.5, 59707.5, 59708.5, 59709.5, 59710.5, 59711.5, 59712.5, 59713.5, 59714.5, 59715.5, 59716.5, 59717.5, 59718.5, 59719.5, 59720.5, 59721.5, 59722.5, 59723.5, 59724.5, 59725.5, 59726.5, 59727.5, 59728.5, 59729.5, 59730.5, 59731.5, 59732.5, 59733.5, 59734.5, 59735.5, 59736.5, 59737.5, 59738.5, 59739.5, 59740.5, 59741.5, 59742.5, 59743.5, 59744.5, 59745.5, 59746.5, 59747.5, 59748.5, 59749.5, 59750.5, 59751.5, 59752.5, 59753.5, 59754.5, 59755.5, 59756.5, 59757.5, 59758.5, 59759.5, 59760.5, 59761.5, 59762.5, 59763.5, 59764.5, 59765.5, 59766.5, 59767.5, 59768.5, 59769.5, 59770.5, 59771.5, 59772.5, 59773.5, 59774.5, 59775.5, 59776.5, 59777.5, 59778.5, 59779.5, 59780.5, 59781.5, 59782.5, 59783.5, 59784.5, 59785.5, 59786.5, 59787.5, 59788.5, 59789.5, 59790.5, 59791.5, 59792.5, 59793.5, 59794.5, 59795.5, 59796.5, 59797.5, 59798.5, 59799.5, 59800.5, 59801.5, 59802.5, 59803.5, 59804.5, 59805.5, 59806.5, 59807.5, 59808.5, 59809.5, 59810.5, 59811.5, 59812.5, 59813.5, 59814.5, 59815.5, 59816.5, 59817.5, 59818.5, 59819.5, 59820.5, 59821.5, 59822.5, 59823.5, 59824.5, 59825.5, 59826.5, 59827.5, 59828.5, 59829.5, 59830.5, 59831.5, 59832.5, 59833.5, 59834.5, 59835.5, 59836.5, 59837.5, 59838.5, 59839.5, 59840.5, 59841.5, 59842.5, 59843.5, 59844.5, 59845.5, 59846.5, 59847.5, 59848.5, 59849.5, 59850.5, 59851.5, 59852.5, 59853.5, 59854.5, 59855.5, 59856.5, 59857.5, 59858.5, 59859.5\n\n"
+    },
+    {
+      "variable": "huss",
+      "year": 2013,
+      "kind": "das",
+      "source_url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/huss/huss_day_CanESM5_historical_r1i1p1f1_gn_2013_v2.0.nc.das",
+      "sha256": "9cf7d1b23dabb04bca1aee64a5170020d4d73fe692ec457f472d394fb322b3ee",
+      "body": "Attributes {\n    time {\n        String axis \"T\";\n        String calendar \"365_day\";\n        String units \"days since 1850-01-01 0:0:0.0\";\n        String long_name \"time\";\n        String standard_name \"time\";\n        UInt32 _ChunkSizes 512;\n    }\n    huss {\n        Float32 _FillValue 1.0E20;\n        String standard_name \"specific_humidity\";\n        String long_name \"Near-Surface Specific Humidity\";\n        String units \"1\";\n        String comment \"Near-surface (usually, 2 meter) specific humidity.\";\n        String original_name \"SQ\";\n        String cell_methods \"area: time: mean\";\n        String cell_measures \"area: areacella\";\n        Float32 missing_value 1.0E20;\n        UInt32 _ChunkSizes 1, 600, 1440;\n    }\n    lat {\n        String units \"degrees_north\";\n        String standard_name \"latitude\";\n        String long_name \"latitude\";\n        String axis \"Y\";\n        UInt32 _ChunkSizes 600;\n    }\n    lon {\n        String units \"degrees_east\";\n        String standard_name \"longitude\";\n        String long_name \"longitude\";\n        String axis \"X\";\n        UInt32 _ChunkSizes 1440;\n    }\n    NC_GLOBAL {\n        String activity \"NEX-GDDP-CMIP6\";\n        String Conventions \"CF-1.7\";\n        String frequency \"day\";\n        String institution \"NASA Earth Exchange, NASA Ames Research Center, Moffett Field, CA 94035\";\n        String variant_label \"r1i1p1f1\";\n        String product \"output\";\n        String realm \"atmos\";\n        String source \"BCSD\";\n        String scenario \"historical\";\n        String references \"BCSD method: Thrasher et al., 2012, Hydrol. Earth Syst. Sci.,16, 3309-3314. Ref period obs: latest version of the Princeton Global Meteorological Forcings (http://hydrology.princeton.edu/data.php), based on Sheffield et al., 2006, J. Climate, 19 (13), 3088-3111.\";\n        String version \"2.0\";\n        String title \"CANESM5, r1i1p1f1, historical, global downscaled CMIP6 climate projection data\";\n        String resolution_id \"0.25 degree\";\n        String external_variables \"areacella\";\n        String cmip6_source_id \"CanESM5\";\n        String cmip6_institution_id \"CCCma\";\n        String cmip6_license \"CC-BY-SA 4.0\";\n        String contact \"Dr. Bridget Thrasher: bridget@climateanalyticsgroup.org, Dr. Ian Brosnan: ian.g.brosnan@nasa.gov\";\n        String creation_date \"Sat Nov 16 02:08:22 PST 2024\";\n        String disclaimer \"These data are considered provisional and subject to change. They are provided as is without any warranty of any kind, either express or implied, arising by law or otherwise, including but not limited to warranties of completeness, non-infringement, accuracy, merchantability, or fitness for a particular purpose. The user assumes all risk associated with the use of, or inability to use, these data.\";\n        String tracking_id \"d2d72976-2d88-4e50-9298-43e2fd64b061\";\n    }\n    DODS_EXTRA {\n        String Unlimited_Dimension \"time\";\n    }\n}\n"
+    },
+    {
+      "variable": "huss",
+      "year": 2013,
+      "kind": "dds",
+      "source_url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/huss/huss_day_CanESM5_historical_r1i1p1f1_gn_2013_v2.0.nc.dds",
+      "sha256": "b5a327896969313f789313022525a0f8bdc7ec433cbeb75893c6bc043992de49",
+      "body": "Dataset {\n    Float64 time[time = 365];\n    Grid {\n     ARRAY:\n        Float32 huss[time = 365][lat = 600][lon = 1440];\n     MAPS:\n        Float64 time[time = 365];\n        Float64 lat[lat = 600];\n        Float64 lon[lon = 1440];\n    } huss;\n    Float64 lat[lat = 600];\n    Float64 lon[lon = 1440];\n} AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/huss/huss_day_CanESM5_historical_r1i1p1f1_gn_2013_v2.0.nc;\n"
+    },
+    {
+      "variable": "huss",
+      "year": 2013,
+      "kind": "time_ascii",
+      "source_url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/huss/huss_day_CanESM5_historical_r1i1p1f1_gn_2013_v2.0.nc.ascii?time%5B0%3A1%3A364%5D",
+      "sha256": "951c5dd4cef91f8aad46c0c3aac3599a15c802a76e859f90b7c17f396b5aad74",
+      "body": "Dataset {\n    Float64 time[time = 365];\n} AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/huss/huss_day_CanESM5_historical_r1i1p1f1_gn_2013_v2.0.nc;\n---------------------------------------------\ntime[365]\n59495.5, 59496.5, 59497.5, 59498.5, 59499.5, 59500.5, 59501.5, 59502.5, 59503.5, 59504.5, 59505.5, 59506.5, 59507.5, 59508.5, 59509.5, 59510.5, 59511.5, 59512.5, 59513.5, 59514.5, 59515.5, 59516.5, 59517.5, 59518.5, 59519.5, 59520.5, 59521.5, 59522.5, 59523.5, 59524.5, 59525.5, 59526.5, 59527.5, 59528.5, 59529.5, 59530.5, 59531.5, 59532.5, 59533.5, 59534.5, 59535.5, 59536.5, 59537.5, 59538.5, 59539.5, 59540.5, 59541.5, 59542.5, 59543.5, 59544.5, 59545.5, 59546.5, 59547.5, 59548.5, 59549.5, 59550.5, 59551.5, 59552.5, 59553.5, 59554.5, 59555.5, 59556.5, 59557.5, 59558.5, 59559.5, 59560.5, 59561.5, 59562.5, 59563.5, 59564.5, 59565.5, 59566.5, 59567.5, 59568.5, 59569.5, 59570.5, 59571.5, 59572.5, 59573.5, 59574.5, 59575.5, 59576.5, 59577.5, 59578.5, 59579.5, 59580.5, 59581.5, 59582.5, 59583.5, 59584.5, 59585.5, 59586.5, 59587.5, 59588.5, 59589.5, 59590.5, 59591.5, 59592.5, 59593.5, 59594.5, 59595.5, 59596.5, 59597.5, 59598.5, 59599.5, 59600.5, 59601.5, 59602.5, 59603.5, 59604.5, 59605.5, 59606.5, 59607.5, 59608.5, 59609.5, 59610.5, 59611.5, 59612.5, 59613.5, 59614.5, 59615.5, 59616.5, 59617.5, 59618.5, 59619.5, 59620.5, 59621.5, 59622.5, 59623.5, 59624.5, 59625.5, 59626.5, 59627.5, 59628.5, 59629.5, 59630.5, 59631.5, 59632.5, 59633.5, 59634.5, 59635.5, 59636.5, 59637.5, 59638.5, 59639.5, 59640.5, 59641.5, 59642.5, 59643.5, 59644.5, 59645.5, 59646.5, 59647.5, 59648.5, 59649.5, 59650.5, 59651.5, 59652.5, 59653.5, 59654.5, 59655.5, 59656.5, 59657.5, 59658.5, 59659.5, 59660.5, 59661.5, 59662.5, 59663.5, 59664.5, 59665.5, 59666.5, 59667.5, 59668.5, 59669.5, 59670.5, 59671.5, 59672.5, 59673.5, 59674.5, 59675.5, 59676.5, 59677.5, 59678.5, 59679.5, 59680.5, 59681.5, 59682.5, 59683.5, 59684.5, 59685.5, 59686.5, 59687.5, 59688.5, 59689.5, 59690.5, 59691.5, 59692.5, 59693.5, 59694.5, 59695.5, 59696.5, 59697.5, 59698.5, 59699.5, 59700.5, 59701.5, 59702.5, 59703.5, 59704.5, 59705.5, 59706.5, 59707.5, 59708.5, 59709.5, 59710.5, 59711.5, 59712.5, 59713.5, 59714.5, 59715.5, 59716.5, 59717.5, 59718.5, 59719.5, 59720.5, 59721.5, 59722.5, 59723.5, 59724.5, 59725.5, 59726.5, 59727.5, 59728.5, 59729.5, 59730.5, 59731.5, 59732.5, 59733.5, 59734.5, 59735.5, 59736.5, 59737.5, 59738.5, 59739.5, 59740.5, 59741.5, 59742.5, 59743.5, 59744.5, 59745.5, 59746.5, 59747.5, 59748.5, 59749.5, 59750.5, 59751.5, 59752.5, 59753.5, 59754.5, 59755.5, 59756.5, 59757.5, 59758.5, 59759.5, 59760.5, 59761.5, 59762.5, 59763.5, 59764.5, 59765.5, 59766.5, 59767.5, 59768.5, 59769.5, 59770.5, 59771.5, 59772.5, 59773.5, 59774.5, 59775.5, 59776.5, 59777.5, 59778.5, 59779.5, 59780.5, 59781.5, 59782.5, 59783.5, 59784.5, 59785.5, 59786.5, 59787.5, 59788.5, 59789.5, 59790.5, 59791.5, 59792.5, 59793.5, 59794.5, 59795.5, 59796.5, 59797.5, 59798.5, 59799.5, 59800.5, 59801.5, 59802.5, 59803.5, 59804.5, 59805.5, 59806.5, 59807.5, 59808.5, 59809.5, 59810.5, 59811.5, 59812.5, 59813.5, 59814.5, 59815.5, 59816.5, 59817.5, 59818.5, 59819.5, 59820.5, 59821.5, 59822.5, 59823.5, 59824.5, 59825.5, 59826.5, 59827.5, 59828.5, 59829.5, 59830.5, 59831.5, 59832.5, 59833.5, 59834.5, 59835.5, 59836.5, 59837.5, 59838.5, 59839.5, 59840.5, 59841.5, 59842.5, 59843.5, 59844.5, 59845.5, 59846.5, 59847.5, 59848.5, 59849.5, 59850.5, 59851.5, 59852.5, 59853.5, 59854.5, 59855.5, 59856.5, 59857.5, 59858.5, 59859.5\n\n"
+    },
+    {
+      "variable": "hurs",
+      "year": 2013,
+      "kind": "das",
+      "source_url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/hurs/hurs_day_CanESM5_historical_r1i1p1f1_gn_2013_v2.0.nc.das",
+      "sha256": "f73d357ed083cd6382734d7b3159c4999d081312fded5f454620f35bf16026c6",
+      "body": "Attributes {\n    lat {\n        String long_name \"latitude\";\n        String units \"degrees_north\";\n        String standard_name \"latitude\";\n        String axis \"Y\";\n        UInt32 _ChunkSizes 600;\n    }\n    hurs {\n        Float32 _FillValue 1.0E20;\n        String standard_name \"relative_humidity\";\n        String long_name \"Near-Surface Relative Humidity\";\n        String units \"%\";\n        String comment \"The relative humidity with respect to liquid water for T> 0 C, and with respect to ice for T<0 C.\";\n        String original_name \"SRH\";\n        String cell_methods \"area: time: mean\";\n        String cell_measures \"area: areacella\";\n        Float32 missing_value 1.0E20;\n        UInt32 _ChunkSizes 1, 600, 1440;\n    }\n    time {\n        String axis \"T\";\n        String calendar \"365_day\";\n        String units \"days since 1850-01-01 0:0:0.0\";\n        String long_name \"time\";\n        String standard_name \"time\";\n        UInt32 _ChunkSizes 512;\n    }\n    lon {\n        String long_name \"longitude\";\n        String units \"degrees_east\";\n        String standard_name \"longitude\";\n        String axis \"X\";\n        UInt32 _ChunkSizes 1440;\n    }\n    NC_GLOBAL {\n        String cmip6_source_id \"CanESM5\";\n        String cmip6_institution_id \"CCCma\";\n        String cmip6_license \"CC-BY 4.0\";\n        String activity \"NEX-GDDP-CMIP6\";\n        String Conventions \"CF-1.7\";\n        String frequency \"day\";\n        String institution \"NASA Earth Exchange, NASA Ames Research Center, Moffett Field, CA 94035\";\n        String variant_label \"r1i1p1f1\";\n        String product \"output\";\n        String realm \"atmos\";\n        String source \"BCSD\";\n        String scenario \"historical\";\n        String references \"BCSD method: Thrasher et al., 2012, Hydrol. Earth Syst. Sci.,16, 3309-3314. Ref period obs: latest version of the Princeton Global Meteorological Forcings (http://hydrology.princeton.edu/data.php), based on Sheffield et al., 2006, J. Climate, 19 (13), 3088-3111.\";\n        String version \"2.0\";\n        String title \"CANESM5, r1i1p1f1, historical, global downscaled CMIP6 climate projection data\";\n        String resolution_id \"0.25 degree\";\n        String external_variables \"areacella\";\n        String contact \"Dr. Bridget Thrasher: bridget@climateanalyticsgroup.org, Dr. Ian Brosnan: ian.g.brosnan@nasa.gov\";\n        String creation_date \"Sat Nov 16 01:16:56 PST 2024\";\n        String disclaimer \"These data are considered provisional and subject to change. They are provided as is without any warranty of any kind, either express or implied, arising by law or otherwise, including but not limited to warranties of completeness, non-infringement, accuracy, merchantability, or fitness for a particular purpose. The user assumes all risk associated with the use of, or inability to use, these data.\";\n        String tracking_id \"accaff96-16e3-4eb1-aa05-0d9f485a5410\";\n    }\n    DODS_EXTRA {\n        String Unlimited_Dimension \"time\";\n    }\n}\n"
+    },
+    {
+      "variable": "hurs",
+      "year": 2013,
+      "kind": "dds",
+      "source_url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/hurs/hurs_day_CanESM5_historical_r1i1p1f1_gn_2013_v2.0.nc.dds",
+      "sha256": "af6d5244104a8a34299ff3fdff89fafb0695e8029ff930654ca382a8ab3b119e",
+      "body": "Dataset {\n    Float64 lat[lat = 600];\n    Grid {\n     ARRAY:\n        Float32 hurs[time = 365][lat = 600][lon = 1440];\n     MAPS:\n        Float64 time[time = 365];\n        Float64 lat[lat = 600];\n        Float64 lon[lon = 1440];\n    } hurs;\n    Float64 time[time = 365];\n    Float64 lon[lon = 1440];\n} AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/hurs/hurs_day_CanESM5_historical_r1i1p1f1_gn_2013_v2.0.nc;\n"
+    },
+    {
+      "variable": "hurs",
+      "year": 2013,
+      "kind": "time_ascii",
+      "source_url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/hurs/hurs_day_CanESM5_historical_r1i1p1f1_gn_2013_v2.0.nc.ascii?time%5B0%3A1%3A364%5D",
+      "sha256": "dcedc2ceb53807c21321d1673c0b9e4a3cb8d16374c1f8cdcc06c455ddd29c12",
+      "body": "Dataset {\n    Float64 time[time = 365];\n} AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/hurs/hurs_day_CanESM5_historical_r1i1p1f1_gn_2013_v2.0.nc;\n---------------------------------------------\ntime[365]\n59495.5, 59496.5, 59497.5, 59498.5, 59499.5, 59500.5, 59501.5, 59502.5, 59503.5, 59504.5, 59505.5, 59506.5, 59507.5, 59508.5, 59509.5, 59510.5, 59511.5, 59512.5, 59513.5, 59514.5, 59515.5, 59516.5, 59517.5, 59518.5, 59519.5, 59520.5, 59521.5, 59522.5, 59523.5, 59524.5, 59525.5, 59526.5, 59527.5, 59528.5, 59529.5, 59530.5, 59531.5, 59532.5, 59533.5, 59534.5, 59535.5, 59536.5, 59537.5, 59538.5, 59539.5, 59540.5, 59541.5, 59542.5, 59543.5, 59544.5, 59545.5, 59546.5, 59547.5, 59548.5, 59549.5, 59550.5, 59551.5, 59552.5, 59553.5, 59554.5, 59555.5, 59556.5, 59557.5, 59558.5, 59559.5, 59560.5, 59561.5, 59562.5, 59563.5, 59564.5, 59565.5, 59566.5, 59567.5, 59568.5, 59569.5, 59570.5, 59571.5, 59572.5, 59573.5, 59574.5, 59575.5, 59576.5, 59577.5, 59578.5, 59579.5, 59580.5, 59581.5, 59582.5, 59583.5, 59584.5, 59585.5, 59586.5, 59587.5, 59588.5, 59589.5, 59590.5, 59591.5, 59592.5, 59593.5, 59594.5, 59595.5, 59596.5, 59597.5, 59598.5, 59599.5, 59600.5, 59601.5, 59602.5, 59603.5, 59604.5, 59605.5, 59606.5, 59607.5, 59608.5, 59609.5, 59610.5, 59611.5, 59612.5, 59613.5, 59614.5, 59615.5, 59616.5, 59617.5, 59618.5, 59619.5, 59620.5, 59621.5, 59622.5, 59623.5, 59624.5, 59625.5, 59626.5, 59627.5, 59628.5, 59629.5, 59630.5, 59631.5, 59632.5, 59633.5, 59634.5, 59635.5, 59636.5, 59637.5, 59638.5, 59639.5, 59640.5, 59641.5, 59642.5, 59643.5, 59644.5, 59645.5, 59646.5, 59647.5, 59648.5, 59649.5, 59650.5, 59651.5, 59652.5, 59653.5, 59654.5, 59655.5, 59656.5, 59657.5, 59658.5, 59659.5, 59660.5, 59661.5, 59662.5, 59663.5, 59664.5, 59665.5, 59666.5, 59667.5, 59668.5, 59669.5, 59670.5, 59671.5, 59672.5, 59673.5, 59674.5, 59675.5, 59676.5, 59677.5, 59678.5, 59679.5, 59680.5, 59681.5, 59682.5, 59683.5, 59684.5, 59685.5, 59686.5, 59687.5, 59688.5, 59689.5, 59690.5, 59691.5, 59692.5, 59693.5, 59694.5, 59695.5, 59696.5, 59697.5, 59698.5, 59699.5, 59700.5, 59701.5, 59702.5, 59703.5, 59704.5, 59705.5, 59706.5, 59707.5, 59708.5, 59709.5, 59710.5, 59711.5, 59712.5, 59713.5, 59714.5, 59715.5, 59716.5, 59717.5, 59718.5, 59719.5, 59720.5, 59721.5, 59722.5, 59723.5, 59724.5, 59725.5, 59726.5, 59727.5, 59728.5, 59729.5, 59730.5, 59731.5, 59732.5, 59733.5, 59734.5, 59735.5, 59736.5, 59737.5, 59738.5, 59739.5, 59740.5, 59741.5, 59742.5, 59743.5, 59744.5, 59745.5, 59746.5, 59747.5, 59748.5, 59749.5, 59750.5, 59751.5, 59752.5, 59753.5, 59754.5, 59755.5, 59756.5, 59757.5, 59758.5, 59759.5, 59760.5, 59761.5, 59762.5, 59763.5, 59764.5, 59765.5, 59766.5, 59767.5, 59768.5, 59769.5, 59770.5, 59771.5, 59772.5, 59773.5, 59774.5, 59775.5, 59776.5, 59777.5, 59778.5, 59779.5, 59780.5, 59781.5, 59782.5, 59783.5, 59784.5, 59785.5, 59786.5, 59787.5, 59788.5, 59789.5, 59790.5, 59791.5, 59792.5, 59793.5, 59794.5, 59795.5, 59796.5, 59797.5, 59798.5, 59799.5, 59800.5, 59801.5, 59802.5, 59803.5, 59804.5, 59805.5, 59806.5, 59807.5, 59808.5, 59809.5, 59810.5, 59811.5, 59812.5, 59813.5, 59814.5, 59815.5, 59816.5, 59817.5, 59818.5, 59819.5, 59820.5, 59821.5, 59822.5, 59823.5, 59824.5, 59825.5, 59826.5, 59827.5, 59828.5, 59829.5, 59830.5, 59831.5, 59832.5, 59833.5, 59834.5, 59835.5, 59836.5, 59837.5, 59838.5, 59839.5, 59840.5, 59841.5, 59842.5, 59843.5, 59844.5, 59845.5, 59846.5, 59847.5, 59848.5, 59849.5, 59850.5, 59851.5, 59852.5, 59853.5, 59854.5, 59855.5, 59856.5, 59857.5, 59858.5, 59859.5\n\n"
+    },
+    {
+      "variable": "tas",
+      "year": 2014,
+      "kind": "das",
+      "source_url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tas/tas_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc.das",
+      "sha256": "e5de3bf21f3f93735a6663a23d1addd673255bbe36504bc3fa97e2816c9c6c70",
+      "body": "Attributes {\n    lat {\n        String units \"degrees_north\";\n        String long_name \"Latitude\";\n        UInt32 _ChunkSizes 600;\n    }\n    lon {\n        String long_name \"Longitude\";\n        String units \"degrees_east\";\n        UInt32 _ChunkSizes 1440;\n    }\n    time {\n        String bounds \"time_bnds\";\n        String standard_name \"time\";\n        String long_name \"time\";\n        String units \"days since 1850-01-01 0:0:0.0\";\n        String calendar \"365_day\";\n        String axis \"T\";\n        UInt32 _ChunkSizes 365;\n    }\n    tas {\n        Float32 missing_value 1.0E20;\n        String history \"2019-05-02T08:02:01Z altered by CMOR: Treated scalar dimension: 'height'. 2019-05-02T08:02:01Z altered by CMOR: Reordered dimensions, original order: lat lon time. 2019-05-02T08:02:01Z altered by CMOR: replaced missing value flag (1e+38) with standard missing value (1e+20).\";\n        String cell_measures \"area: areacella\";\n        String cell_methods \"area: mean time: maximum\";\n        String original_name \"STMX\";\n        String comment \"Near-surface (usually, 2 meter) air temperature; derived from downscaled tasmax & tasmin\";\n        String coordinates \"height\";\n        String units \"K\";\n        String long_name \"Daily Near-Surface Air Temperature\";\n        String standard_name \"air_temperature\";\n        Float64 time 59860.5;\n        Float32 _FillValue 1.0E20;\n        UInt32 _ChunkSizes 1, 600, 1440;\n    }\n    NC_GLOBAL {\n        String activity \"NEX-GDDP-CMIP6\";\n        String Conventions \"CF-1.7\";\n        String frequency \"day\";\n        String institution \"NASA Earth Exchange, NASA Ames Research Center, Moffett Field, CA 94035\";\n        String variant_label \"r1i1p1f1\";\n        String product \"output\";\n        String realm \"atmos\";\n        String source \"BCSD\";\n        String scenario \"historical\";\n        String references \"BCSD method: Thrasher et al., 2012, Hydrol. Earth Syst. Sci.,16, 3309-3314. Ref period obs: latest version of the Princeton Global Meteorological Forcings (http://hydrology.princeton.edu/data.php), based on Sheffield et al., 2006, J. Climate, 19 (13), 3088-3111.\";\n        String version \"2.0\";\n        String title \"CANESM5, r1i1p1f1, historical, global downscaled CMIP6 climate projection data\";\n        String resolution_id \"0.25 degree\";\n        String external_variables \"areacella\";\n        String cmip6_source_id \"CanESM5\";\n        String cmip6_institution_id \"CCCma\";\n        String cmip6_license \"CC-BY-SA 4.0\";\n        String contact \"Dr. Bridget Thrasher: bridget@climateanalyticsgroup.org, Dr. Ian Brosnan: ian.g.brosnan@nasa.gov\";\n        String creation_date \"Sat Nov 16 20:19:20 PST 2024\";\n        String disclaimer \"These data are considered provisional and subject to change. They are provided as is without any warranty of any kind, either express or implied, arising by law or otherwise, including but not limited to warranties of completeness, non-infringement, accuracy, merchantability, or fitness for a particular purpose. The user assumes all risk associated with the use of, or inability to use, these data.\";\n        String tracking_id \"eda08ed0-43a6-48df-9a55-601157860708\";\n    }\n    DODS_EXTRA {\n        String Unlimited_Dimension \"time\";\n    }\n}\n"
+    },
+    {
+      "variable": "tas",
+      "year": 2014,
+      "kind": "dds",
+      "source_url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tas/tas_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc.dds",
+      "sha256": "ad006f7a28a56045c39f449eac7eb2e8281a5c9a4fee294b1d9172456b065aac",
+      "body": "Dataset {\n    Float64 lat[lat = 600];\n    Float64 lon[lon = 1440];\n    Float64 time[time = 365];\n    Grid {\n     ARRAY:\n        Float32 tas[time = 365][lat = 600][lon = 1440];\n     MAPS:\n        Float64 time[time = 365];\n        Float64 lat[lat = 600];\n        Float64 lon[lon = 1440];\n    } tas;\n} AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tas/tas_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc;\n"
+    },
+    {
+      "variable": "tas",
+      "year": 2014,
+      "kind": "time_ascii",
+      "source_url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tas/tas_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc.ascii?time%5B0%3A1%3A364%5D",
+      "sha256": "fa801a4091a5a008b7cbda2b1b4d4c8d469260fcd7e7a3e06850c29ac25a94e9",
+      "body": "Dataset {\n    Float64 time[time = 365];\n} AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tas/tas_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc;\n---------------------------------------------\ntime[365]\n59860.5, 59861.5, 59862.5, 59863.5, 59864.5, 59865.5, 59866.5, 59867.5, 59868.5, 59869.5, 59870.5, 59871.5, 59872.5, 59873.5, 59874.5, 59875.5, 59876.5, 59877.5, 59878.5, 59879.5, 59880.5, 59881.5, 59882.5, 59883.5, 59884.5, 59885.5, 59886.5, 59887.5, 59888.5, 59889.5, 59890.5, 59891.5, 59892.5, 59893.5, 59894.5, 59895.5, 59896.5, 59897.5, 59898.5, 59899.5, 59900.5, 59901.5, 59902.5, 59903.5, 59904.5, 59905.5, 59906.5, 59907.5, 59908.5, 59909.5, 59910.5, 59911.5, 59912.5, 59913.5, 59914.5, 59915.5, 59916.5, 59917.5, 59918.5, 59919.5, 59920.5, 59921.5, 59922.5, 59923.5, 59924.5, 59925.5, 59926.5, 59927.5, 59928.5, 59929.5, 59930.5, 59931.5, 59932.5, 59933.5, 59934.5, 59935.5, 59936.5, 59937.5, 59938.5, 59939.5, 59940.5, 59941.5, 59942.5, 59943.5, 59944.5, 59945.5, 59946.5, 59947.5, 59948.5, 59949.5, 59950.5, 59951.5, 59952.5, 59953.5, 59954.5, 59955.5, 59956.5, 59957.5, 59958.5, 59959.5, 59960.5, 59961.5, 59962.5, 59963.5, 59964.5, 59965.5, 59966.5, 59967.5, 59968.5, 59969.5, 59970.5, 59971.5, 59972.5, 59973.5, 59974.5, 59975.5, 59976.5, 59977.5, 59978.5, 59979.5, 59980.5, 59981.5, 59982.5, 59983.5, 59984.5, 59985.5, 59986.5, 59987.5, 59988.5, 59989.5, 59990.5, 59991.5, 59992.5, 59993.5, 59994.5, 59995.5, 59996.5, 59997.5, 59998.5, 59999.5, 60000.5, 60001.5, 60002.5, 60003.5, 60004.5, 60005.5, 60006.5, 60007.5, 60008.5, 60009.5, 60010.5, 60011.5, 60012.5, 60013.5, 60014.5, 60015.5, 60016.5, 60017.5, 60018.5, 60019.5, 60020.5, 60021.5, 60022.5, 60023.5, 60024.5, 60025.5, 60026.5, 60027.5, 60028.5, 60029.5, 60030.5, 60031.5, 60032.5, 60033.5, 60034.5, 60035.5, 60036.5, 60037.5, 60038.5, 60039.5, 60040.5, 60041.5, 60042.5, 60043.5, 60044.5, 60045.5, 60046.5, 60047.5, 60048.5, 60049.5, 60050.5, 60051.5, 60052.5, 60053.5, 60054.5, 60055.5, 60056.5, 60057.5, 60058.5, 60059.5, 60060.5, 60061.5, 60062.5, 60063.5, 60064.5, 60065.5, 60066.5, 60067.5, 60068.5, 60069.5, 60070.5, 60071.5, 60072.5, 60073.5, 60074.5, 60075.5, 60076.5, 60077.5, 60078.5, 60079.5, 60080.5, 60081.5, 60082.5, 60083.5, 60084.5, 60085.5, 60086.5, 60087.5, 60088.5, 60089.5, 60090.5, 60091.5, 60092.5, 60093.5, 60094.5, 60095.5, 60096.5, 60097.5, 60098.5, 60099.5, 60100.5, 60101.5, 60102.5, 60103.5, 60104.5, 60105.5, 60106.5, 60107.5, 60108.5, 60109.5, 60110.5, 60111.5, 60112.5, 60113.5, 60114.5, 60115.5, 60116.5, 60117.5, 60118.5, 60119.5, 60120.5, 60121.5, 60122.5, 60123.5, 60124.5, 60125.5, 60126.5, 60127.5, 60128.5, 60129.5, 60130.5, 60131.5, 60132.5, 60133.5, 60134.5, 60135.5, 60136.5, 60137.5, 60138.5, 60139.5, 60140.5, 60141.5, 60142.5, 60143.5, 60144.5, 60145.5, 60146.5, 60147.5, 60148.5, 60149.5, 60150.5, 60151.5, 60152.5, 60153.5, 60154.5, 60155.5, 60156.5, 60157.5, 60158.5, 60159.5, 60160.5, 60161.5, 60162.5, 60163.5, 60164.5, 60165.5, 60166.5, 60167.5, 60168.5, 60169.5, 60170.5, 60171.5, 60172.5, 60173.5, 60174.5, 60175.5, 60176.5, 60177.5, 60178.5, 60179.5, 60180.5, 60181.5, 60182.5, 60183.5, 60184.5, 60185.5, 60186.5, 60187.5, 60188.5, 60189.5, 60190.5, 60191.5, 60192.5, 60193.5, 60194.5, 60195.5, 60196.5, 60197.5, 60198.5, 60199.5, 60200.5, 60201.5, 60202.5, 60203.5, 60204.5, 60205.5, 60206.5, 60207.5, 60208.5, 60209.5, 60210.5, 60211.5, 60212.5, 60213.5, 60214.5, 60215.5, 60216.5, 60217.5, 60218.5, 60219.5, 60220.5, 60221.5, 60222.5, 60223.5, 60224.5\n\n"
+    },
+    {
+      "variable": "tasmin",
+      "year": 2014,
+      "kind": "das",
+      "source_url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tasmin/tasmin_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc.das",
+      "sha256": "667929152cc4238f9b443c2f29760c8fe9dc780cff8733cb63b05be9d5a817ee",
+      "body": "Attributes {\n    lat {\n        String units \"degrees_north\";\n        String long_name \"Latitude\";\n        UInt32 _ChunkSizes 600;\n    }\n    tasmin {\n        Float32 _FillValue 1.0E20;\n        String units \"K\";\n        UInt32 _ChunkSizes 1, 600, 1440;\n    }\n    time {\n        String bounds \"time_bnds\";\n        String standard_name \"time\";\n        String long_name \"time\";\n        String units \"days since 1850-01-01 0:0:0.0\";\n        String calendar \"365_day\";\n        String axis \"T\";\n        UInt32 _ChunkSizes 512;\n    }\n    lon {\n        String long_name \"Longitude\";\n        String units \"degrees_east\";\n        UInt32 _ChunkSizes 1440;\n    }\n    NC_GLOBAL {\n        String activity \"NEX-GDDP-CMIP6\";\n        String Conventions \"CF-1.7\";\n        String frequency \"day\";\n        String institution \"NASA Earth Exchange, NASA Ames Research Center, Moffett Field, CA 94035\";\n        String variant_label \"r1i1p1f1\";\n        String product \"output\";\n        String realm \"atmos\";\n        String source \"BCSD\";\n        String scenario \"historical\";\n        String references \"BCSD method: Thrasher et al., 2012, Hydrol. Earth Syst. Sci.,16, 3309-3314. Ref period obs: latest version of the Princeton Global Meteorological Forcings (http://hydrology.princeton.edu/data.php), based on Sheffield et al., 2006, J. Climate, 19 (13), 3088-3111.\";\n        String version \"2.0\";\n        String title \"CANESM5, r1i1p1f1, historical, global downscaled CMIP6 climate projection data\";\n        String resolution_id \"0.25 degree\";\n        String external_variables \"areacella\";\n        String cmip6_source_id \"CanESM5\";\n        String cmip6_institution_id \"CCCma\";\n        String cmip6_license \"CC-BY-SA 4.0\";\n        String contact \"Dr. Bridget Thrasher: bridget@climateanalyticsgroup.org, Dr. Ian Brosnan: ian.g.brosnan@nasa.gov\";\n        String creation_date \"Sat Nov 16 16:57:19 PST 2024\";\n        String disclaimer \"These data are considered provisional and subject to change. They are provided as is without any warranty of any kind, either express or implied, arising by law or otherwise, including but not limited to warranties of completeness, non-infringement, accuracy, merchantability, or fitness for a particular purpose. The user assumes all risk associated with the use of, or inability to use, these data.\";\n        String tracking_id \"c9e7d640-c2b6-4b25-b6d7-990e7d0a72ae\";\n    }\n    DODS_EXTRA {\n        String Unlimited_Dimension \"time\";\n    }\n}\n"
+    },
+    {
+      "variable": "tasmin",
+      "year": 2014,
+      "kind": "dds",
+      "source_url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tasmin/tasmin_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc.dds",
+      "sha256": "0df0c1ba2c910dbf27fc2e51782fa4a04eb61afdbafd095367b1c810c1b884d8",
+      "body": "Dataset {\n    Float64 lat[lat = 600];\n    Grid {\n     ARRAY:\n        Float32 tasmin[time = 365][lat = 600][lon = 1440];\n     MAPS:\n        Float64 time[time = 365];\n        Float64 lat[lat = 600];\n        Float64 lon[lon = 1440];\n    } tasmin;\n    Float64 time[time = 365];\n    Float64 lon[lon = 1440];\n} AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tasmin/tasmin_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc;\n"
+    },
+    {
+      "variable": "tasmin",
+      "year": 2014,
+      "kind": "time_ascii",
+      "source_url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tasmin/tasmin_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc.ascii?time%5B0%3A1%3A364%5D",
+      "sha256": "d68ab221857093cc9aab945512551bdef75786c3c783802b59f1335602d1181f",
+      "body": "Dataset {\n    Float64 time[time = 365];\n} AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tasmin/tasmin_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc;\n---------------------------------------------\ntime[365]\n59860.5, 59861.5, 59862.5, 59863.5, 59864.5, 59865.5, 59866.5, 59867.5, 59868.5, 59869.5, 59870.5, 59871.5, 59872.5, 59873.5, 59874.5, 59875.5, 59876.5, 59877.5, 59878.5, 59879.5, 59880.5, 59881.5, 59882.5, 59883.5, 59884.5, 59885.5, 59886.5, 59887.5, 59888.5, 59889.5, 59890.5, 59891.5, 59892.5, 59893.5, 59894.5, 59895.5, 59896.5, 59897.5, 59898.5, 59899.5, 59900.5, 59901.5, 59902.5, 59903.5, 59904.5, 59905.5, 59906.5, 59907.5, 59908.5, 59909.5, 59910.5, 59911.5, 59912.5, 59913.5, 59914.5, 59915.5, 59916.5, 59917.5, 59918.5, 59919.5, 59920.5, 59921.5, 59922.5, 59923.5, 59924.5, 59925.5, 59926.5, 59927.5, 59928.5, 59929.5, 59930.5, 59931.5, 59932.5, 59933.5, 59934.5, 59935.5, 59936.5, 59937.5, 59938.5, 59939.5, 59940.5, 59941.5, 59942.5, 59943.5, 59944.5, 59945.5, 59946.5, 59947.5, 59948.5, 59949.5, 59950.5, 59951.5, 59952.5, 59953.5, 59954.5, 59955.5, 59956.5, 59957.5, 59958.5, 59959.5, 59960.5, 59961.5, 59962.5, 59963.5, 59964.5, 59965.5, 59966.5, 59967.5, 59968.5, 59969.5, 59970.5, 59971.5, 59972.5, 59973.5, 59974.5, 59975.5, 59976.5, 59977.5, 59978.5, 59979.5, 59980.5, 59981.5, 59982.5, 59983.5, 59984.5, 59985.5, 59986.5, 59987.5, 59988.5, 59989.5, 59990.5, 59991.5, 59992.5, 59993.5, 59994.5, 59995.5, 59996.5, 59997.5, 59998.5, 59999.5, 60000.5, 60001.5, 60002.5, 60003.5, 60004.5, 60005.5, 60006.5, 60007.5, 60008.5, 60009.5, 60010.5, 60011.5, 60012.5, 60013.5, 60014.5, 60015.5, 60016.5, 60017.5, 60018.5, 60019.5, 60020.5, 60021.5, 60022.5, 60023.5, 60024.5, 60025.5, 60026.5, 60027.5, 60028.5, 60029.5, 60030.5, 60031.5, 60032.5, 60033.5, 60034.5, 60035.5, 60036.5, 60037.5, 60038.5, 60039.5, 60040.5, 60041.5, 60042.5, 60043.5, 60044.5, 60045.5, 60046.5, 60047.5, 60048.5, 60049.5, 60050.5, 60051.5, 60052.5, 60053.5, 60054.5, 60055.5, 60056.5, 60057.5, 60058.5, 60059.5, 60060.5, 60061.5, 60062.5, 60063.5, 60064.5, 60065.5, 60066.5, 60067.5, 60068.5, 60069.5, 60070.5, 60071.5, 60072.5, 60073.5, 60074.5, 60075.5, 60076.5, 60077.5, 60078.5, 60079.5, 60080.5, 60081.5, 60082.5, 60083.5, 60084.5, 60085.5, 60086.5, 60087.5, 60088.5, 60089.5, 60090.5, 60091.5, 60092.5, 60093.5, 60094.5, 60095.5, 60096.5, 60097.5, 60098.5, 60099.5, 60100.5, 60101.5, 60102.5, 60103.5, 60104.5, 60105.5, 60106.5, 60107.5, 60108.5, 60109.5, 60110.5, 60111.5, 60112.5, 60113.5, 60114.5, 60115.5, 60116.5, 60117.5, 60118.5, 60119.5, 60120.5, 60121.5, 60122.5, 60123.5, 60124.5, 60125.5, 60126.5, 60127.5, 60128.5, 60129.5, 60130.5, 60131.5, 60132.5, 60133.5, 60134.5, 60135.5, 60136.5, 60137.5, 60138.5, 60139.5, 60140.5, 60141.5, 60142.5, 60143.5, 60144.5, 60145.5, 60146.5, 60147.5, 60148.5, 60149.5, 60150.5, 60151.5, 60152.5, 60153.5, 60154.5, 60155.5, 60156.5, 60157.5, 60158.5, 60159.5, 60160.5, 60161.5, 60162.5, 60163.5, 60164.5, 60165.5, 60166.5, 60167.5, 60168.5, 60169.5, 60170.5, 60171.5, 60172.5, 60173.5, 60174.5, 60175.5, 60176.5, 60177.5, 60178.5, 60179.5, 60180.5, 60181.5, 60182.5, 60183.5, 60184.5, 60185.5, 60186.5, 60187.5, 60188.5, 60189.5, 60190.5, 60191.5, 60192.5, 60193.5, 60194.5, 60195.5, 60196.5, 60197.5, 60198.5, 60199.5, 60200.5, 60201.5, 60202.5, 60203.5, 60204.5, 60205.5, 60206.5, 60207.5, 60208.5, 60209.5, 60210.5, 60211.5, 60212.5, 60213.5, 60214.5, 60215.5, 60216.5, 60217.5, 60218.5, 60219.5, 60220.5, 60221.5, 60222.5, 60223.5, 60224.5\n\n"
+    },
+    {
+      "variable": "tasmax",
+      "year": 2014,
+      "kind": "das",
+      "source_url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tasmax/tasmax_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc.das",
+      "sha256": "f6bd00a0aba63c06ab93353ce7d74802be55072aa43f26b06795a2b9cdb559b9",
+      "body": "Attributes {\n    lat {\n        String long_name \"Latitude\";\n        String units \"degrees_north\";\n        UInt32 _ChunkSizes 600;\n    }\n    tasmax {\n        Float32 _FillValue 1.0E20;\n        Float64 time 59860.5;\n        String standard_name \"air_temperature\";\n        String long_name \"Daily Maximum Near-Surface Air Temperature\";\n        String units \"K\";\n        String coordinates \"height\";\n        String comment \"maximum near-surface (usually, 2 meter) air temperature (add cell_method attribute 'time: max')\";\n        String original_name \"STMX\";\n        String cell_methods \"area: mean time: maximum\";\n        String cell_measures \"area: areacella\";\n        String history \"2019-05-02T08:02:01Z altered by CMOR: Treated scalar dimension: 'height'. 2019-05-02T08:02:01Z altered by CMOR: Reordered dimensions, original order: lat lon time. 2019-05-02T08:02:01Z altered by CMOR: replaced missing value flag (1e+38) with standard missing value (1e+20).\";\n        Float32 missing_value 1.0E20;\n        UInt32 _ChunkSizes 1, 600, 1440;\n    }\n    time {\n        String axis \"T\";\n        String calendar \"365_day\";\n        String units \"days since 1850-01-01 0:0:0.0\";\n        String long_name \"time\";\n        String standard_name \"time\";\n        String bounds \"time_bnds\";\n        UInt32 _ChunkSizes 512;\n    }\n    lon {\n        String long_name \"Longitude\";\n        String units \"degrees_east\";\n        UInt32 _ChunkSizes 1440;\n    }\n    NC_GLOBAL {\n        String activity \"NEX-GDDP-CMIP6\";\n        String Conventions \"CF-1.7\";\n        String frequency \"day\";\n        String institution \"NASA Earth Exchange, NASA Ames Research Center, Moffett Field, CA 94035\";\n        String variant_label \"r1i1p1f1\";\n        String product \"output\";\n        String realm \"atmos\";\n        String source \"BCSD\";\n        String scenario \"historical\";\n        String references \"BCSD method: Thrasher et al., 2012, Hydrol. Earth Syst. Sci.,16, 3309-3314. Ref period obs: latest version of the Princeton Global Meteorological Forcings (http://hydrology.princeton.edu/data.php), based on Sheffield et al., 2006, J. Climate, 19 (13), 3088-3111.\";\n        String version \"2.0\";\n        String title \"CANESM5, r1i1p1f1, historical, global downscaled CMIP6 climate projection data\";\n        String resolution_id \"0.25 degree\";\n        String external_variables \"areacella\";\n        String cmip6_source_id \"CanESM5\";\n        String cmip6_institution_id \"CCCma\";\n        String cmip6_license \"CC-BY-SA 4.0\";\n        String contact \"Dr. Bridget Thrasher: bridget@climateanalyticsgroup.org, Dr. Ian Brosnan: ian.g.brosnan@nasa.gov\";\n        String creation_date \"Sat Nov 16 13:49:20 PST 2024\";\n        String disclaimer \"These data are considered provisional and subject to change. They are provided as is without any warranty of any kind, either express or implied, arising by law or otherwise, including but not limited to warranties of completeness, non-infringement, accuracy, merchantability, or fitness for a particular purpose. The user assumes all risk associated with the use of, or inability to use, these data.\";\n        String tracking_id \"54c7c485-60c2-4ac4-bc80-18147a825b6b\";\n    }\n    DODS_EXTRA {\n        String Unlimited_Dimension \"time\";\n    }\n}\n"
+    },
+    {
+      "variable": "tasmax",
+      "year": 2014,
+      "kind": "dds",
+      "source_url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tasmax/tasmax_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc.dds",
+      "sha256": "0a0917b4b9aec0bbcfaa41f32df90ffd7a5323feb1c4399e4c8d58b19cb9bbc3",
+      "body": "Dataset {\n    Float64 lat[lat = 600];\n    Grid {\n     ARRAY:\n        Float32 tasmax[time = 365][lat = 600][lon = 1440];\n     MAPS:\n        Float64 time[time = 365];\n        Float64 lat[lat = 600];\n        Float64 lon[lon = 1440];\n    } tasmax;\n    Float64 time[time = 365];\n    Float64 lon[lon = 1440];\n} AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tasmax/tasmax_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc;\n"
+    },
+    {
+      "variable": "tasmax",
+      "year": 2014,
+      "kind": "time_ascii",
+      "source_url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tasmax/tasmax_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc.ascii?time%5B0%3A1%3A364%5D",
+      "sha256": "310143519f6a8cb17c1fc57152718e60388e1192fce5d38a0ec101bd690a09e3",
+      "body": "Dataset {\n    Float64 time[time = 365];\n} AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/tasmax/tasmax_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc;\n---------------------------------------------\ntime[365]\n59860.5, 59861.5, 59862.5, 59863.5, 59864.5, 59865.5, 59866.5, 59867.5, 59868.5, 59869.5, 59870.5, 59871.5, 59872.5, 59873.5, 59874.5, 59875.5, 59876.5, 59877.5, 59878.5, 59879.5, 59880.5, 59881.5, 59882.5, 59883.5, 59884.5, 59885.5, 59886.5, 59887.5, 59888.5, 59889.5, 59890.5, 59891.5, 59892.5, 59893.5, 59894.5, 59895.5, 59896.5, 59897.5, 59898.5, 59899.5, 59900.5, 59901.5, 59902.5, 59903.5, 59904.5, 59905.5, 59906.5, 59907.5, 59908.5, 59909.5, 59910.5, 59911.5, 59912.5, 59913.5, 59914.5, 59915.5, 59916.5, 59917.5, 59918.5, 59919.5, 59920.5, 59921.5, 59922.5, 59923.5, 59924.5, 59925.5, 59926.5, 59927.5, 59928.5, 59929.5, 59930.5, 59931.5, 59932.5, 59933.5, 59934.5, 59935.5, 59936.5, 59937.5, 59938.5, 59939.5, 59940.5, 59941.5, 59942.5, 59943.5, 59944.5, 59945.5, 59946.5, 59947.5, 59948.5, 59949.5, 59950.5, 59951.5, 59952.5, 59953.5, 59954.5, 59955.5, 59956.5, 59957.5, 59958.5, 59959.5, 59960.5, 59961.5, 59962.5, 59963.5, 59964.5, 59965.5, 59966.5, 59967.5, 59968.5, 59969.5, 59970.5, 59971.5, 59972.5, 59973.5, 59974.5, 59975.5, 59976.5, 59977.5, 59978.5, 59979.5, 59980.5, 59981.5, 59982.5, 59983.5, 59984.5, 59985.5, 59986.5, 59987.5, 59988.5, 59989.5, 59990.5, 59991.5, 59992.5, 59993.5, 59994.5, 59995.5, 59996.5, 59997.5, 59998.5, 59999.5, 60000.5, 60001.5, 60002.5, 60003.5, 60004.5, 60005.5, 60006.5, 60007.5, 60008.5, 60009.5, 60010.5, 60011.5, 60012.5, 60013.5, 60014.5, 60015.5, 60016.5, 60017.5, 60018.5, 60019.5, 60020.5, 60021.5, 60022.5, 60023.5, 60024.5, 60025.5, 60026.5, 60027.5, 60028.5, 60029.5, 60030.5, 60031.5, 60032.5, 60033.5, 60034.5, 60035.5, 60036.5, 60037.5, 60038.5, 60039.5, 60040.5, 60041.5, 60042.5, 60043.5, 60044.5, 60045.5, 60046.5, 60047.5, 60048.5, 60049.5, 60050.5, 60051.5, 60052.5, 60053.5, 60054.5, 60055.5, 60056.5, 60057.5, 60058.5, 60059.5, 60060.5, 60061.5, 60062.5, 60063.5, 60064.5, 60065.5, 60066.5, 60067.5, 60068.5, 60069.5, 60070.5, 60071.5, 60072.5, 60073.5, 60074.5, 60075.5, 60076.5, 60077.5, 60078.5, 60079.5, 60080.5, 60081.5, 60082.5, 60083.5, 60084.5, 60085.5, 60086.5, 60087.5, 60088.5, 60089.5, 60090.5, 60091.5, 60092.5, 60093.5, 60094.5, 60095.5, 60096.5, 60097.5, 60098.5, 60099.5, 60100.5, 60101.5, 60102.5, 60103.5, 60104.5, 60105.5, 60106.5, 60107.5, 60108.5, 60109.5, 60110.5, 60111.5, 60112.5, 60113.5, 60114.5, 60115.5, 60116.5, 60117.5, 60118.5, 60119.5, 60120.5, 60121.5, 60122.5, 60123.5, 60124.5, 60125.5, 60126.5, 60127.5, 60128.5, 60129.5, 60130.5, 60131.5, 60132.5, 60133.5, 60134.5, 60135.5, 60136.5, 60137.5, 60138.5, 60139.5, 60140.5, 60141.5, 60142.5, 60143.5, 60144.5, 60145.5, 60146.5, 60147.5, 60148.5, 60149.5, 60150.5, 60151.5, 60152.5, 60153.5, 60154.5, 60155.5, 60156.5, 60157.5, 60158.5, 60159.5, 60160.5, 60161.5, 60162.5, 60163.5, 60164.5, 60165.5, 60166.5, 60167.5, 60168.5, 60169.5, 60170.5, 60171.5, 60172.5, 60173.5, 60174.5, 60175.5, 60176.5, 60177.5, 60178.5, 60179.5, 60180.5, 60181.5, 60182.5, 60183.5, 60184.5, 60185.5, 60186.5, 60187.5, 60188.5, 60189.5, 60190.5, 60191.5, 60192.5, 60193.5, 60194.5, 60195.5, 60196.5, 60197.5, 60198.5, 60199.5, 60200.5, 60201.5, 60202.5, 60203.5, 60204.5, 60205.5, 60206.5, 60207.5, 60208.5, 60209.5, 60210.5, 60211.5, 60212.5, 60213.5, 60214.5, 60215.5, 60216.5, 60217.5, 60218.5, 60219.5, 60220.5, 60221.5, 60222.5, 60223.5, 60224.5\n\n"
+    },
+    {
+      "variable": "huss",
+      "year": 2014,
+      "kind": "das",
+      "source_url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/huss/huss_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc.das",
+      "sha256": "7feef1174b347e2daec1bc76c35a2bdca6e7ef471280fef720b08f86b2d6c7f3",
+      "body": "Attributes {\n    time {\n        String axis \"T\";\n        String calendar \"365_day\";\n        String units \"days since 1850-01-01 0:0:0.0\";\n        String long_name \"time\";\n        String standard_name \"time\";\n        UInt32 _ChunkSizes 512;\n    }\n    huss {\n        Float32 _FillValue 1.0E20;\n        String standard_name \"specific_humidity\";\n        String long_name \"Near-Surface Specific Humidity\";\n        String units \"1\";\n        String comment \"Near-surface (usually, 2 meter) specific humidity.\";\n        String original_name \"SQ\";\n        String cell_methods \"area: time: mean\";\n        String cell_measures \"area: areacella\";\n        Float32 missing_value 1.0E20;\n        UInt32 _ChunkSizes 1, 600, 1440;\n    }\n    lat {\n        String units \"degrees_north\";\n        String standard_name \"latitude\";\n        String long_name \"latitude\";\n        String axis \"Y\";\n        UInt32 _ChunkSizes 600;\n    }\n    lon {\n        String units \"degrees_east\";\n        String standard_name \"longitude\";\n        String long_name \"longitude\";\n        String axis \"X\";\n        UInt32 _ChunkSizes 1440;\n    }\n    NC_GLOBAL {\n        String activity \"NEX-GDDP-CMIP6\";\n        String Conventions \"CF-1.7\";\n        String frequency \"day\";\n        String institution \"NASA Earth Exchange, NASA Ames Research Center, Moffett Field, CA 94035\";\n        String variant_label \"r1i1p1f1\";\n        String product \"output\";\n        String realm \"atmos\";\n        String source \"BCSD\";\n        String scenario \"historical\";\n        String references \"BCSD method: Thrasher et al., 2012, Hydrol. Earth Syst. Sci.,16, 3309-3314. Ref period obs: latest version of the Princeton Global Meteorological Forcings (http://hydrology.princeton.edu/data.php), based on Sheffield et al., 2006, J. Climate, 19 (13), 3088-3111.\";\n        String version \"2.0\";\n        String title \"CANESM5, r1i1p1f1, historical, global downscaled CMIP6 climate projection data\";\n        String resolution_id \"0.25 degree\";\n        String external_variables \"areacella\";\n        String cmip6_source_id \"CanESM5\";\n        String cmip6_institution_id \"CCCma\";\n        String cmip6_license \"CC-BY-SA 4.0\";\n        String contact \"Dr. Bridget Thrasher: bridget@climateanalyticsgroup.org, Dr. Ian Brosnan: ian.g.brosnan@nasa.gov\";\n        String creation_date \"Sat Nov 16 02:08:23 PST 2024\";\n        String disclaimer \"These data are considered provisional and subject to change. They are provided as is without any warranty of any kind, either express or implied, arising by law or otherwise, including but not limited to warranties of completeness, non-infringement, accuracy, merchantability, or fitness for a particular purpose. The user assumes all risk associated with the use of, or inability to use, these data.\";\n        String tracking_id \"4fc8583b-4d65-4e0a-807b-4435df9894eb\";\n    }\n    DODS_EXTRA {\n        String Unlimited_Dimension \"time\";\n    }\n}\n"
+    },
+    {
+      "variable": "huss",
+      "year": 2014,
+      "kind": "dds",
+      "source_url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/huss/huss_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc.dds",
+      "sha256": "3348e4c9d965dc4e4bde991b356bb9e35640e87b6a6a4388372f8a1e1b5ee618",
+      "body": "Dataset {\n    Float64 time[time = 365];\n    Grid {\n     ARRAY:\n        Float32 huss[time = 365][lat = 600][lon = 1440];\n     MAPS:\n        Float64 time[time = 365];\n        Float64 lat[lat = 600];\n        Float64 lon[lon = 1440];\n    } huss;\n    Float64 lat[lat = 600];\n    Float64 lon[lon = 1440];\n} AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/huss/huss_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc;\n"
+    },
+    {
+      "variable": "huss",
+      "year": 2014,
+      "kind": "time_ascii",
+      "source_url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/huss/huss_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc.ascii?time%5B0%3A1%3A364%5D",
+      "sha256": "7f2cc859995ea0bab39d86b65459d7cac25d97749b3a3bde2c9a46a27138dfc8",
+      "body": "Dataset {\n    Float64 time[time = 365];\n} AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/huss/huss_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc;\n---------------------------------------------\ntime[365]\n59860.5, 59861.5, 59862.5, 59863.5, 59864.5, 59865.5, 59866.5, 59867.5, 59868.5, 59869.5, 59870.5, 59871.5, 59872.5, 59873.5, 59874.5, 59875.5, 59876.5, 59877.5, 59878.5, 59879.5, 59880.5, 59881.5, 59882.5, 59883.5, 59884.5, 59885.5, 59886.5, 59887.5, 59888.5, 59889.5, 59890.5, 59891.5, 59892.5, 59893.5, 59894.5, 59895.5, 59896.5, 59897.5, 59898.5, 59899.5, 59900.5, 59901.5, 59902.5, 59903.5, 59904.5, 59905.5, 59906.5, 59907.5, 59908.5, 59909.5, 59910.5, 59911.5, 59912.5, 59913.5, 59914.5, 59915.5, 59916.5, 59917.5, 59918.5, 59919.5, 59920.5, 59921.5, 59922.5, 59923.5, 59924.5, 59925.5, 59926.5, 59927.5, 59928.5, 59929.5, 59930.5, 59931.5, 59932.5, 59933.5, 59934.5, 59935.5, 59936.5, 59937.5, 59938.5, 59939.5, 59940.5, 59941.5, 59942.5, 59943.5, 59944.5, 59945.5, 59946.5, 59947.5, 59948.5, 59949.5, 59950.5, 59951.5, 59952.5, 59953.5, 59954.5, 59955.5, 59956.5, 59957.5, 59958.5, 59959.5, 59960.5, 59961.5, 59962.5, 59963.5, 59964.5, 59965.5, 59966.5, 59967.5, 59968.5, 59969.5, 59970.5, 59971.5, 59972.5, 59973.5, 59974.5, 59975.5, 59976.5, 59977.5, 59978.5, 59979.5, 59980.5, 59981.5, 59982.5, 59983.5, 59984.5, 59985.5, 59986.5, 59987.5, 59988.5, 59989.5, 59990.5, 59991.5, 59992.5, 59993.5, 59994.5, 59995.5, 59996.5, 59997.5, 59998.5, 59999.5, 60000.5, 60001.5, 60002.5, 60003.5, 60004.5, 60005.5, 60006.5, 60007.5, 60008.5, 60009.5, 60010.5, 60011.5, 60012.5, 60013.5, 60014.5, 60015.5, 60016.5, 60017.5, 60018.5, 60019.5, 60020.5, 60021.5, 60022.5, 60023.5, 60024.5, 60025.5, 60026.5, 60027.5, 60028.5, 60029.5, 60030.5, 60031.5, 60032.5, 60033.5, 60034.5, 60035.5, 60036.5, 60037.5, 60038.5, 60039.5, 60040.5, 60041.5, 60042.5, 60043.5, 60044.5, 60045.5, 60046.5, 60047.5, 60048.5, 60049.5, 60050.5, 60051.5, 60052.5, 60053.5, 60054.5, 60055.5, 60056.5, 60057.5, 60058.5, 60059.5, 60060.5, 60061.5, 60062.5, 60063.5, 60064.5, 60065.5, 60066.5, 60067.5, 60068.5, 60069.5, 60070.5, 60071.5, 60072.5, 60073.5, 60074.5, 60075.5, 60076.5, 60077.5, 60078.5, 60079.5, 60080.5, 60081.5, 60082.5, 60083.5, 60084.5, 60085.5, 60086.5, 60087.5, 60088.5, 60089.5, 60090.5, 60091.5, 60092.5, 60093.5, 60094.5, 60095.5, 60096.5, 60097.5, 60098.5, 60099.5, 60100.5, 60101.5, 60102.5, 60103.5, 60104.5, 60105.5, 60106.5, 60107.5, 60108.5, 60109.5, 60110.5, 60111.5, 60112.5, 60113.5, 60114.5, 60115.5, 60116.5, 60117.5, 60118.5, 60119.5, 60120.5, 60121.5, 60122.5, 60123.5, 60124.5, 60125.5, 60126.5, 60127.5, 60128.5, 60129.5, 60130.5, 60131.5, 60132.5, 60133.5, 60134.5, 60135.5, 60136.5, 60137.5, 60138.5, 60139.5, 60140.5, 60141.5, 60142.5, 60143.5, 60144.5, 60145.5, 60146.5, 60147.5, 60148.5, 60149.5, 60150.5, 60151.5, 60152.5, 60153.5, 60154.5, 60155.5, 60156.5, 60157.5, 60158.5, 60159.5, 60160.5, 60161.5, 60162.5, 60163.5, 60164.5, 60165.5, 60166.5, 60167.5, 60168.5, 60169.5, 60170.5, 60171.5, 60172.5, 60173.5, 60174.5, 60175.5, 60176.5, 60177.5, 60178.5, 60179.5, 60180.5, 60181.5, 60182.5, 60183.5, 60184.5, 60185.5, 60186.5, 60187.5, 60188.5, 60189.5, 60190.5, 60191.5, 60192.5, 60193.5, 60194.5, 60195.5, 60196.5, 60197.5, 60198.5, 60199.5, 60200.5, 60201.5, 60202.5, 60203.5, 60204.5, 60205.5, 60206.5, 60207.5, 60208.5, 60209.5, 60210.5, 60211.5, 60212.5, 60213.5, 60214.5, 60215.5, 60216.5, 60217.5, 60218.5, 60219.5, 60220.5, 60221.5, 60222.5, 60223.5, 60224.5\n\n"
+    },
+    {
+      "variable": "hurs",
+      "year": 2014,
+      "kind": "das",
+      "source_url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/hurs/hurs_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc.das",
+      "sha256": "8f64dd254f6522787ad6cc5b37ed4ebab210daf6ab4c6b60bc02f15c3e40f1e6",
+      "body": "Attributes {\n    lat {\n        String long_name \"latitude\";\n        String units \"degrees_north\";\n        String standard_name \"latitude\";\n        String axis \"Y\";\n        UInt32 _ChunkSizes 600;\n    }\n    hurs {\n        Float32 _FillValue 1.0E20;\n        String standard_name \"relative_humidity\";\n        String long_name \"Near-Surface Relative Humidity\";\n        String units \"%\";\n        String comment \"The relative humidity with respect to liquid water for T> 0 C, and with respect to ice for T<0 C.\";\n        String original_name \"SRH\";\n        String cell_methods \"area: time: mean\";\n        String cell_measures \"area: areacella\";\n        Float32 missing_value 1.0E20;\n        UInt32 _ChunkSizes 1, 600, 1440;\n    }\n    time {\n        String axis \"T\";\n        String calendar \"365_day\";\n        String units \"days since 1850-01-01 0:0:0.0\";\n        String long_name \"time\";\n        String standard_name \"time\";\n        UInt32 _ChunkSizes 512;\n    }\n    lon {\n        String long_name \"longitude\";\n        String units \"degrees_east\";\n        String standard_name \"longitude\";\n        String axis \"X\";\n        UInt32 _ChunkSizes 1440;\n    }\n    NC_GLOBAL {\n        String cmip6_source_id \"CanESM5\";\n        String cmip6_institution_id \"CCCma\";\n        String cmip6_license \"CC-BY 4.0\";\n        String activity \"NEX-GDDP-CMIP6\";\n        String Conventions \"CF-1.7\";\n        String frequency \"day\";\n        String institution \"NASA Earth Exchange, NASA Ames Research Center, Moffett Field, CA 94035\";\n        String variant_label \"r1i1p1f1\";\n        String product \"output\";\n        String realm \"atmos\";\n        String source \"BCSD\";\n        String scenario \"historical\";\n        String references \"BCSD method: Thrasher et al., 2012, Hydrol. Earth Syst. Sci.,16, 3309-3314. Ref period obs: latest version of the Princeton Global Meteorological Forcings (http://hydrology.princeton.edu/data.php), based on Sheffield et al., 2006, J. Climate, 19 (13), 3088-3111.\";\n        String version \"2.0\";\n        String title \"CANESM5, r1i1p1f1, historical, global downscaled CMIP6 climate projection data\";\n        String resolution_id \"0.25 degree\";\n        String external_variables \"areacella\";\n        String contact \"Dr. Bridget Thrasher: bridget@climateanalyticsgroup.org, Dr. Ian Brosnan: ian.g.brosnan@nasa.gov\";\n        String creation_date \"Sat Nov 16 01:16:56 PST 2024\";\n        String disclaimer \"These data are considered provisional and subject to change. They are provided as is without any warranty of any kind, either express or implied, arising by law or otherwise, including but not limited to warranties of completeness, non-infringement, accuracy, merchantability, or fitness for a particular purpose. The user assumes all risk associated with the use of, or inability to use, these data.\";\n        String tracking_id \"b4a6485b-a72a-47bd-b39f-65c9aece79f2\";\n    }\n    DODS_EXTRA {\n        String Unlimited_Dimension \"time\";\n    }\n}\n"
+    },
+    {
+      "variable": "hurs",
+      "year": 2014,
+      "kind": "dds",
+      "source_url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/hurs/hurs_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc.dds",
+      "sha256": "3b7e0add6a2a69c446bd0c871ac89e30fc0f9ea0b47c2bb332bb1fe08cdd5f93",
+      "body": "Dataset {\n    Float64 lat[lat = 600];\n    Grid {\n     ARRAY:\n        Float32 hurs[time = 365][lat = 600][lon = 1440];\n     MAPS:\n        Float64 time[time = 365];\n        Float64 lat[lat = 600];\n        Float64 lon[lon = 1440];\n    } hurs;\n    Float64 time[time = 365];\n    Float64 lon[lon = 1440];\n} AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/hurs/hurs_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc;\n"
+    },
+    {
+      "variable": "hurs",
+      "year": 2014,
+      "kind": "time_ascii",
+      "source_url": "https://ds.nccs.nasa.gov/thredds/dodsC/AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/hurs/hurs_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc.ascii?time%5B0%3A1%3A364%5D",
+      "sha256": "fd0c7417bac816ffa6f9e95ce9c88ee7957352d159611ad6ab073b2f3df9b685",
+      "body": "Dataset {\n    Float64 time[time = 365];\n} AMES/NEX/GDDP-CMIP6/CanESM5/historical/r1i1p1f1/hurs/hurs_day_CanESM5_historical_r1i1p1f1_gn_2014_v2.0.nc;\n---------------------------------------------\ntime[365]\n59860.5, 59861.5, 59862.5, 59863.5, 59864.5, 59865.5, 59866.5, 59867.5, 59868.5, 59869.5, 59870.5, 59871.5, 59872.5, 59873.5, 59874.5, 59875.5, 59876.5, 59877.5, 59878.5, 59879.5, 59880.5, 59881.5, 59882.5, 59883.5, 59884.5, 59885.5, 59886.5, 59887.5, 59888.5, 59889.5, 59890.5, 59891.5, 59892.5, 59893.5, 59894.5, 59895.5, 59896.5, 59897.5, 59898.5, 59899.5, 59900.5, 59901.5, 59902.5, 59903.5, 59904.5, 59905.5, 59906.5, 59907.5, 59908.5, 59909.5, 59910.5, 59911.5, 59912.5, 59913.5, 59914.5, 59915.5, 59916.5, 59917.5, 59918.5, 59919.5, 59920.5, 59921.5, 59922.5, 59923.5, 59924.5, 59925.5, 59926.5, 59927.5, 59928.5, 59929.5, 59930.5, 59931.5, 59932.5, 59933.5, 59934.5, 59935.5, 59936.5, 59937.5, 59938.5, 59939.5, 59940.5, 59941.5, 59942.5, 59943.5, 59944.5, 59945.5, 59946.5, 59947.5, 59948.5, 59949.5, 59950.5, 59951.5, 59952.5, 59953.5, 59954.5, 59955.5, 59956.5, 59957.5, 59958.5, 59959.5, 59960.5, 59961.5, 59962.5, 59963.5, 59964.5, 59965.5, 59966.5, 59967.5, 59968.5, 59969.5, 59970.5, 59971.5, 59972.5, 59973.5, 59974.5, 59975.5, 59976.5, 59977.5, 59978.5, 59979.5, 59980.5, 59981.5, 59982.5, 59983.5, 59984.5, 59985.5, 59986.5, 59987.5, 59988.5, 59989.5, 59990.5, 59991.5, 59992.5, 59993.5, 59994.5, 59995.5, 59996.5, 59997.5, 59998.5, 59999.5, 60000.5, 60001.5, 60002.5, 60003.5, 60004.5, 60005.5, 60006.5, 60007.5, 60008.5, 60009.5, 60010.5, 60011.5, 60012.5, 60013.5, 60014.5, 60015.5, 60016.5, 60017.5, 60018.5, 60019.5, 60020.5, 60021.5, 60022.5, 60023.5, 60024.5, 60025.5, 60026.5, 60027.5, 60028.5, 60029.5, 60030.5, 60031.5, 60032.5, 60033.5, 60034.5, 60035.5, 60036.5, 60037.5, 60038.5, 60039.5, 60040.5, 60041.5, 60042.5, 60043.5, 60044.5, 60045.5, 60046.5, 60047.5, 60048.5, 60049.5, 60050.5, 60051.5, 60052.5, 60053.5, 60054.5, 60055.5, 60056.5, 60057.5, 60058.5, 60059.5, 60060.5, 60061.5, 60062.5, 60063.5, 60064.5, 60065.5, 60066.5, 60067.5, 60068.5, 60069.5, 60070.5, 60071.5, 60072.5, 60073.5, 60074.5, 60075.5, 60076.5, 60077.5, 60078.5, 60079.5, 60080.5, 60081.5, 60082.5, 60083.5, 60084.5, 60085.5, 60086.5, 60087.5, 60088.5, 60089.5, 60090.5, 60091.5, 60092.5, 60093.5, 60094.5, 60095.5, 60096.5, 60097.5, 60098.5, 60099.5, 60100.5, 60101.5, 60102.5, 60103.5, 60104.5, 60105.5, 60106.5, 60107.5, 60108.5, 60109.5, 60110.5, 60111.5, 60112.5, 60113.5, 60114.5, 60115.5, 60116.5, 60117.5, 60118.5, 60119.5, 60120.5, 60121.5, 60122.5, 60123.5, 60124.5, 60125.5, 60126.5, 60127.5, 60128.5, 60129.5, 60130.5, 60131.5, 60132.5, 60133.5, 60134.5, 60135.5, 60136.5, 60137.5, 60138.5, 60139.5, 60140.5, 60141.5, 60142.5, 60143.5, 60144.5, 60145.5, 60146.5, 60147.5, 60148.5, 60149.5, 60150.5, 60151.5, 60152.5, 60153.5, 60154.5, 60155.5, 60156.5, 60157.5, 60158.5, 60159.5, 60160.5, 60161.5, 60162.5, 60163.5, 60164.5, 60165.5, 60166.5, 60167.5, 60168.5, 60169.5, 60170.5, 60171.5, 60172.5, 60173.5, 60174.5, 60175.5, 60176.5, 60177.5, 60178.5, 60179.5, 60180.5, 60181.5, 60182.5, 60183.5, 60184.5, 60185.5, 60186.5, 60187.5, 60188.5, 60189.5, 60190.5, 60191.5, 60192.5, 60193.5, 60194.5, 60195.5, 60196.5, 60197.5, 60198.5, 60199.5, 60200.5, 60201.5, 60202.5, 60203.5, 60204.5, 60205.5, 60206.5, 60207.5, 60208.5, 60209.5, 60210.5, 60211.5, 60212.5, 60213.5, 60214.5, 60215.5, 60216.5, 60217.5, 60218.5, 60219.5, 60220.5, 60221.5, 60222.5, 60223.5, 60224.5\n\n"
+    }
+  ]
+}
