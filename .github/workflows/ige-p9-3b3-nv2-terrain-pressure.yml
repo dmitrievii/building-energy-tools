@@ -1,0 +1,90 @@
+name: IGE P9.3B3 NV2 terrain admission and paired pressure research pilot
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/ige-p9-3b3-nv2-terrain-pressure-20261023
+    paths:
+      - research/ige_cmip6/p9_3b3_nv2_protocol.json
+      - .github/workflows/ige-p9-3b3-nv2-terrain-pressure.yml
+permissions:
+  contents: read
+  actions: read
+env:
+  OPENBLAS_NUM_THREADS: '1'
+  OMP_NUM_THREADS: '1'
+jobs:
+  mathematical_and_immutable_source_contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 scipy==1.17.0 numcodecs==0.16.3 pyshtools==4.13.1 eccodes==2.50.0 eccodeslib==2.50.0.33
+      - name: NV2 analytic oracles and all previous B3 C2 contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3b3_*.py' -v
+      - name: Earlier mathematics and canonical absolute DWD fields
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3a*.py' -q
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_2*.py' -q
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3b2*.py' -q
+          python research/ige_cmip6/p9_3b2d_canonical_pressure_fields.py
+      - name: Eighty immutable scientific files and frozen NV2 protocol
+        run: |
+          python - <<'PY'
+          import json,sys
+          sys.path.insert(0,'research/ige_cmip6')
+          from p9_3b3_nv2_run import PROTOCOL,protocol_guard
+          from p9_3b3_reference_run import protected_controls
+          p=protocol_guard(json.loads(PROTOCOL.read_text()))
+          r=protected_controls(p)
+          print('Protected files:',r['verified_count'],'changed:',r['changed_count'])
+          PY
+  native_NV2_sealed_revealed_development_pilot:
+    needs: mathematical_and_immutable_source_contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 scipy==1.17.0 numcodecs==0.16.3 pyshtools==4.13.1 eccodes==2.50.0 eccodeslib==2.50.0.33
+      - name: Census and fixed donors before profiles and sealed pressure scores
+        run: >-
+          python -u research/ige_cmip6/p9_3b3_nv2_run.py --stations
+          --protocol research/ige_cmip6/p9_3b3_nv2_protocol.json
+          --private-cache inputs/private-NV2-source-cache-DO-NOT-UPLOAD
+          --out outputs/NV2-revealed-research-pressure-pilot
+      - name: Separate technical completeness from scientific and operational qualification
+        if: always()
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          root=Path('outputs/NV2-revealed-research-pressure-pilot')
+          r=json.loads((root/'run_manifest.json').read_text())
+          lines=['NV2: revealed development data, not independent qualification.',
+                 'Engineering: '+r['engineering_execution_status'],
+                 'Source hours: '+str(r['source_profile_hours_complete'])+' / '+str(r['source_profile_hours_expected']),
+                 'Dated sensors: '+str(r['historical_sensor_countries_confirmed'])+' / 3',
+                 'NV2 score cells: '+str(r['score_cells_retained'])+' / 26',
+                 'G0 score cells: '+str(r['G0_score_cells_retained'])+' / 24',
+                 'Physical scope: '+r['physical_admissibility'],
+                 'Independent accuracy: '+r['independent_accuracy'],
+                 'Operational: '+r['operational_readiness'],
+                 'B4 false; production EPW false; native future CanESM5 pressure false; no merge.']
+          print('\n'.join(lines))
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:f.write('\n\n'.join(lines)+'\n')
+          if r['score_cells_retained']!=26 or r['G0_score_cells_retained']!=24:
+              raise SystemExit('Incomplete score-cell census')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ige-P93B3-NV2-terrain-pressure-REVEALED-NOT-independent-qualification
+          path: outputs/NV2-revealed-research-pressure-pilot/
+          if-no-files-found: warn
+          retention-days: 30

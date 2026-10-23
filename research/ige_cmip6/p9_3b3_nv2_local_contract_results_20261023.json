@@ -1,0 +1,67 @@
+{
+  "phase": "NV2_LOCAL_CONTRACTS_NOT_SOURCE_PILOT_OR_INDEPENDENT_ACCURACY",
+  "protocol_sha256": "3c2101732cc310c07ce5c79f2805fe3b0cc1561e2c4da0319e4cc858e65ce363",
+  "code_sha256": {
+    "p9_3b3_nv2_columns.py": "06efbb8b53901ad4ac26b5512f9e01e6c878ae10173b29ea7bb374ca2ece28fe",
+    "p9_3b3_nv2_geometry.py": "8b02e889d135c7baf0b21d12931ed68fcc67609548456ca59cb994554f5d2959",
+    "p9_3b3_nv2_run.py": "921726359c431054c67afb678c220b1b4b3a73f9ab1a0626e86a2096444c854d",
+    "p9_3b3_nv2_validation.py": "dd2b3aac07561c42eba674e2c0436c1da28df62942b97d0b9b88c29a539824d3"
+  },
+  "suites": [
+    {
+      "pattern": "test_p9_3b3_*.py",
+      "tests": 251,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "wall_seconds": 21.052026850999937
+    },
+    {
+      "pattern": "test_p9_3a*.py",
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "wall_seconds": 0.1071005740000146
+    },
+    {
+      "pattern": "test_p9_2*.py",
+      "tests": 50,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "wall_seconds": 0.7346589780004251
+    },
+    {
+      "pattern": "test_p9_3b2*.py",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "wall_seconds": 0.00433229800000845
+    }
+  ],
+  "total_tests": 323,
+  "protected_files": 80,
+  "protected_changed": 0,
+  "source_profiles_run_locally": false,
+  "independent_accuracy_qualified": false,
+  "B4_qualified": false,
+  "production_epw_ready": false,
+  "python": "3.12.14",
+  "packages": {
+    "numpy": "2.3.5",
+    "scipy": "1.17.0",
+    "numcodecs": "0.16.3",
+    "pyshtools": "4.13.1",
+    "eccodes": "2.50.0",
+    "eccodeslib": "2.50.0.33"
+  },
+  "test_code_sha256": {
+    "test_p9_3b3_nv2_columns.py": "93b848791ea1f0f7b0f9623af7cda637244e78c7954c163ae52c3e37248124dc",
+    "test_p9_3b3_nv2_geometry.py": "f6e8b6028e2bf1656d22e3407b2b9e6dcdf18567c82e9ccc887b1416c9150f09",
+    "test_p9_3b3_nv2_pipeline.py": "2d2bd553d4eb8962b6d1af1645a29ec7d60623529ced00364d08dd28704655df"
+  },
+  "synthetic_fifty_hour_runner_tested": true,
+  "real_T_q_source_profiles_processed_locally": false
+}

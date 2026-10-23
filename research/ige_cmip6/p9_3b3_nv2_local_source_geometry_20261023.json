@@ -1,0 +1,1660 @@
+{
+  "scope": "LOCAL_SOURCE_ONLY_GEOMETRY_BEFORE_T_Q_PROFILES_OR_PRESSURE_OBSERVATIONS",
+  "protocol_sha256": "3c2101732cc310c07ce5c79f2805fe3b0cc1561e2c4da0319e4cc858e65ce363",
+  "historical_sensor_references": {
+    "AT": {
+      "status": "HISTORICAL_SENSOR_HEIGHT_REFERENCES_CONFIRMED_CONDITIONAL_MSL_DATUM",
+      "station_id": "30",
+      "provider_metadata": {
+        "station_id": "30",
+        "latitude": 47.08,
+        "longitude": 15.448056,
+        "general_station_height_m": 366.0,
+        "barometer_height_m": null,
+        "barometer_height_status": "NOT_IN_READ_SOURCE",
+        "thermo_nominal_AGL_m": 2.0,
+        "thermo_absolute_history_status": "NOT_ESTABLISHED",
+        "height_valid_for_2021_sensor_validation": false,
+        "source": "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h/metadata",
+        "source_sha256": "a3f2b7b29ea21a825a5d696a3dc3eba269610120cc861c10c80f6ea2492200c4",
+        "source_fields": {
+          "type": "COMBINED",
+          "id": 30,
+          "group_id": null,
+          "name": "Graz Universität/Heinrichstraße",
+          "state": "Steiermark",
+          "lat": 47.08,
+          "lon": 15.448056,
+          "altitude": 366.0,
+          "valid_from": "1894-01-01T00:00:00+00:00",
+          "valid_to": "2100-12-31T00:00:00+00:00",
+          "has_sunshine": true,
+          "has_global_radiation": true,
+          "is_active": true
+        },
+        "parameter_metadata": [
+          {
+            "name": "p",
+            "long_name": "Luftdruck",
+            "description": "Luftdruck in Stationsniveau, Stunden-Messwert",
+            "unit": "hPa"
+          },
+          {
+            "name": "rf",
+            "long_name": "Relative Feuchte",
+            "description": "Relative Feuchte, Stunden-Messwert",
+            "unit": "%"
+          },
+          {
+            "name": "tl",
+            "long_name": "Lufttemperatur 2m",
+            "description": "Lufttemperatur in 2m Höhe, Stunden-Messwert",
+            "unit": "°C"
+          }
+        ],
+        "status": "SOURCE_METADATA_READ_SENSOR_HISTORY_UNQUALIFIED",
+        "general_height_is_not_barometer_height": true,
+        "vertical_datum_history_status": "NATIONAL_MASL_METADATA_NOT_A_VERIFIED_ERA5_DATUM_TRANSFORMATION"
+      },
+      "historical_member": {
+        "type": "INDIVIDUAL",
+        "id": 16412,
+        "group_id": 30,
+        "name": "Graz Universität",
+        "state": "Steiermark",
+        "lat": 47.07767,
+        "lon": 15.44892,
+        "altitude": 366.7,
+        "valid_from": "1988-06-01T00:00:00+00:00",
+        "valid_to": "2026-07-01T00:00:00+00:00",
+        "has_sunshine": true,
+        "has_global_radiation": true,
+        "is_active": true
+      },
+      "source_WMDR": "https://oscar.wmo.int/surface/rest/api/wmd/download/0-20000-0-11290",
+      "source_WMDR_sha256": "936339090f8b9007db67f766733a10653c7acff4afd5d000c6ebbfca0ed73535",
+      "sensors": {
+        "pressure": {
+          "latitude": 47.0777777778,
+          "longitude": 15.4488888889,
+          "height_MSL_m": 378.8,
+          "equipment_geolocation_period": [
+            null,
+            null
+          ],
+          "geolocation_time_support": "INHERITS_DATED_DEPLOYMENT_UNSPECIFIED_LOCATION_PERIOD",
+          "height_origin": "INSTRUMENT_GEOSPATIAL_POSITION_MSL",
+          "role": "BAROMETER",
+          "observed_property": "http://codes.wmo.int/wmdr/ObservedVariableAtmosphere/216",
+          "deployment_period": [
+            "2002-01-01T00:00:00Z",
+            "2026-06-30T00:00:00Z"
+          ],
+          "AGL_or_reference_distance_m": 378.8,
+          "local_reference_surface": "http://codes.wmo.int/wmdr/ReferenceSurfaceType/seaSurface",
+          "AGL_added_to_absolute_altitude": false,
+          "historical_height_reference_confirmed": true,
+          "datum_transformation_verified": false,
+          "geopotential_height_approximation": "DECLARED_H_EQUALS_MSL_HEIGHT_CONSTANT_G0",
+          "source_WSI": "0-20000-0-11290",
+          "source_sha256": "936339090f8b9007db67f766733a10653c7acff4afd5d000c6ebbfca0ed73535"
+        },
+        "temperature": {
+          "latitude": 47.0777777778,
+          "longitude": 15.4488888889,
+          "height_MSL_m": 368.7,
+          "equipment_geolocation_period": [
+            null,
+            null
+          ],
+          "geolocation_time_support": "INHERITS_DATED_DEPLOYMENT_UNSPECIFIED_LOCATION_PERIOD",
+          "height_origin": "INSTRUMENT_GEOSPATIAL_POSITION_MSL",
+          "role": "THERMO_SENSOR",
+          "observed_property": "http://codes.wmo.int/wmdr/ObservedVariableAtmosphere/224",
+          "deployment_period": [
+            "2002-01-01T00:00:00Z",
+            "2023-06-28T00:00:00Z"
+          ],
+          "AGL_or_reference_distance_m": 2.0,
+          "local_reference_surface": "http://codes.wmo.int/wmdr/ReferenceSurfaceType/localGround",
+          "AGL_added_to_absolute_altitude": false,
+          "historical_height_reference_confirmed": true,
+          "datum_transformation_verified": false,
+          "geopotential_height_approximation": "DECLARED_H_EQUALS_MSL_HEIGHT_CONSTANT_G0",
+          "source_WSI": "0-20000-0-11290",
+          "source_sha256": "936339090f8b9007db67f766733a10653c7acff4afd5d000c6ebbfca0ed73535"
+        },
+        "RH_water": {
+          "latitude": 47.0777777778,
+          "longitude": 15.4488888889,
+          "height_MSL_m": 368.7,
+          "equipment_geolocation_period": [
+            null,
+            null
+          ],
+          "geolocation_time_support": "INHERITS_DATED_DEPLOYMENT_UNSPECIFIED_LOCATION_PERIOD",
+          "height_origin": "INSTRUMENT_GEOSPATIAL_POSITION_MSL",
+          "role": "THERMO_SENSOR",
+          "observed_property": "http://codes.wmo.int/wmdr/ObservedVariableAtmosphere/12249",
+          "deployment_period": [
+            "2002-01-01T00:00:00Z",
+            "2023-06-28T00:00:00Z"
+          ],
+          "AGL_or_reference_distance_m": 2.0,
+          "local_reference_surface": "http://codes.wmo.int/wmdr/ReferenceSurfaceType/localGround",
+          "AGL_added_to_absolute_altitude": false,
+          "historical_height_reference_confirmed": true,
+          "datum_transformation_verified": false,
+          "geopotential_height_approximation": "DECLARED_H_EQUALS_MSL_HEIGHT_CONSTANT_G0",
+          "source_WSI": "0-20000-0-11290",
+          "source_sha256": "936339090f8b9007db67f766733a10653c7acff4afd5d000c6ebbfca0ed73535"
+        }
+      },
+      "provider_to_thermo_distance_km": 0.01221372355013175,
+      "pressure_to_thermo_horizontal_distance_km": 0.0,
+      "RH_convention": "WATER_WMDR_OBSERVED_VARIABLE_12249",
+      "datum_transformation_verified": false,
+      "operational_ready": false,
+      "provider_identity_policy": "FROZEN_PREVIOUSLY_AUDITED_METADATA_NO_OBSERVATION_PRODUCT_READ",
+      "reference_refresh": "WMDR_SEMANTIC_IDENTITY_CONFIRMED",
+      "prior_WMDR_sha256": "d58aa5a6c37fb030d9b8a3bcd8c7c3c1cf0964a2609acf43c1408cba9f13b788"
+    },
+    "DE": {
+      "status": "HISTORICAL_SENSOR_HEIGHT_REFERENCES_CONFIRMED_CONDITIONAL_MSL_DATUM",
+      "station_id": "00399",
+      "provider_metadata": {
+        "station_id": "00399",
+        "latitude": 52.5198,
+        "longitude": 13.4057,
+        "general_station_height_m": 35.8,
+        "barometer_height_m": null,
+        "barometer_height_status": "SEPARATE_SENSOR_HEIGHT_NOT_IN_READ_SOURCE",
+        "thermo_nominal_AGL_m": null,
+        "thermo_absolute_history_status": "NOT_ESTABLISHED",
+        "height_valid_for_2021_sensor_validation": false,
+        "source": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate_urban/10_minutes/pressure/historical/10minutenwerte_P0_STADT_00399_20150701_20241231_hist.zip",
+        "source_sha256": "8d54caa8eacdc458bf2970f830f91c5c28de25716f369c689c703252e3328352",
+        "source_fields": {
+          "Stations_id": "399",
+          "Stationshoehe": "35.80",
+          "Geogr.Breite": "52.5198",
+          "Geogr.Laenge": "13.4057",
+          "von_datum": "20150701",
+          "bis_datum": "",
+          "Stationsname": "Berlin-Alexanderplatz"
+        },
+        "parameter_metadata_sha256": "9b4de894795aeeaefbc5252d03810735e267bec18d5d5531e5878ec6a2b3c185",
+        "absolute_pressure_field": "P0_ST_10",
+        "sea_level_pressure_field": "PP_ST_10",
+        "observation_product_not_parsed_or_scored": true,
+        "status": "SOURCE_METADATA_READ_SENSOR_HISTORY_UNQUALIFIED",
+        "general_height_is_not_barometer_height": true,
+        "vertical_datum_history_status": "NATIONAL_MASL_METADATA_NOT_A_VERIFIED_ERA5_DATUM_TRANSFORMATION"
+      },
+      "historical_member": null,
+      "source_WMDR": "https://oscar.wmo.int/surface/rest/api/wmd/download/0-276-6-399",
+      "source_WMDR_sha256": "b3fd3ce4230907ad8fc225efcf27eed10256afd0677b4b67ee4e31c0956f09d4",
+      "sensors": {
+        "pressure": {
+          "latitude": 52.520718,
+          "longitude": 13.409375,
+          "height_MSL_m": 82.5,
+          "equipment_geolocation_period": [
+            "2016-07-27T00:00:00Z",
+            null
+          ],
+          "geolocation_time_support": "EXPLICIT_LOCATION_PERIOD",
+          "height_origin": "INSTRUMENT_GEOSPATIAL_POSITION_MSL",
+          "role": "BAROMETER",
+          "observed_property": "http://codes.wmo.int/wmdr/ObservedVariableAtmosphere/216",
+          "deployment_period": [
+            "2016-07-27T00:00:00Z",
+            null
+          ],
+          "AGL_or_reference_distance_m": null,
+          "local_reference_surface": "",
+          "AGL_added_to_absolute_altitude": false,
+          "historical_height_reference_confirmed": true,
+          "datum_transformation_verified": false,
+          "geopotential_height_approximation": "DECLARED_H_EQUALS_MSL_HEIGHT_CONSTANT_G0",
+          "source_WSI": "0-276-6-399",
+          "source_sha256": "b3fd3ce4230907ad8fc225efcf27eed10256afd0677b4b67ee4e31c0956f09d4"
+        },
+        "temperature": {
+          "latitude": 52.519805,
+          "longitude": 13.405737,
+          "height_MSL_m": 37.8,
+          "equipment_geolocation_period": [
+            "2015-07-01T00:00:00Z",
+            null
+          ],
+          "geolocation_time_support": "EXPLICIT_LOCATION_PERIOD",
+          "height_origin": "INSTRUMENT_GEOSPATIAL_POSITION_MSL",
+          "role": "THERMO_SENSOR",
+          "observed_property": "http://codes.wmo.int/wmdr/ObservedVariableAtmosphere/224",
+          "deployment_period": [
+            "2015-07-01T00:00:00Z",
+            null
+          ],
+          "AGL_or_reference_distance_m": 2.0,
+          "local_reference_surface": "http://codes.wmo.int/wmdr/ReferenceSurfaceType/naturalGround",
+          "AGL_added_to_absolute_altitude": false,
+          "historical_height_reference_confirmed": true,
+          "datum_transformation_verified": false,
+          "geopotential_height_approximation": "DECLARED_H_EQUALS_MSL_HEIGHT_CONSTANT_G0",
+          "source_WSI": "0-276-6-399",
+          "source_sha256": "b3fd3ce4230907ad8fc225efcf27eed10256afd0677b4b67ee4e31c0956f09d4"
+        },
+        "RH_water": {
+          "latitude": 52.519805,
+          "longitude": 13.405737,
+          "height_MSL_m": 37.8,
+          "equipment_geolocation_period": [
+            "2015-07-01T00:00:00Z",
+            null
+          ],
+          "geolocation_time_support": "EXPLICIT_LOCATION_PERIOD",
+          "height_origin": "INSTRUMENT_GEOSPATIAL_POSITION_MSL",
+          "role": "THERMO_SENSOR",
+          "observed_property": "http://codes.wmo.int/wmdr/ObservedVariableAtmosphere/12249",
+          "deployment_period": [
+            "2015-07-01T00:00:00Z",
+            null
+          ],
+          "AGL_or_reference_distance_m": 2.0,
+          "local_reference_surface": "http://codes.wmo.int/wmdr/ReferenceSurfaceType/naturalGround",
+          "AGL_added_to_absolute_altitude": false,
+          "historical_height_reference_confirmed": true,
+          "datum_transformation_verified": false,
+          "geopotential_height_approximation": "DECLARED_H_EQUALS_MSL_HEIGHT_CONSTANT_G0",
+          "source_WSI": "0-276-6-399",
+          "source_sha256": "b3fd3ce4230907ad8fc225efcf27eed10256afd0677b4b67ee4e31c0956f09d4"
+        }
+      },
+      "provider_to_thermo_distance_km": 0.0025644424920820918,
+      "pressure_to_thermo_horizontal_distance_km": 0.2662612545862114,
+      "RH_convention": "WATER_WMDR_OBSERVED_VARIABLE_12249",
+      "datum_transformation_verified": false,
+      "operational_ready": false,
+      "provider_identity_policy": "FROZEN_PREVIOUSLY_AUDITED_METADATA_NO_OBSERVATION_PRODUCT_READ",
+      "reference_refresh": "WMDR_SEMANTIC_IDENTITY_CONFIRMED",
+      "prior_WMDR_sha256": "c3cac5b468cedbaef7a84ac6b439bce369eb05df200fecc2aa1c079970fdd4b0"
+    },
+    "CH": {
+      "status": "HISTORICAL_SENSOR_HEIGHT_REFERENCES_CONFIRMED_CONDITIONAL_MSL_DATUM",
+      "station_id": "DAV",
+      "provider_metadata": {
+        "station_id": "DAV",
+        "latitude": 46.812969,
+        "longitude": 9.843558,
+        "general_station_height_m": 1594.0,
+        "barometer_height_m": 1596.0,
+        "barometer_height_status": "SOURCE_CURRENT_SNAPSHOT_NOT_HISTORY",
+        "thermo_nominal_AGL_m": 2.0,
+        "thermo_absolute_history_status": "NOT_ESTABLISHED",
+        "height_valid_for_2021_sensor_validation": false,
+        "source": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/ogd-smn_meta_stations.csv",
+        "source_sha256": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+        "source_encoding": "latin1",
+        "source_fields": {
+          "station_abbr": "DAV",
+          "station_name": "Davos",
+          "station_canton": "GR",
+          "station_wigos_id": "0-20000-0-06784",
+          "station_type_de": "Automatische Wetterstationen - Messwerte",
+          "station_type_fr": "Stations météorologiques automatiques - Valeurs mesurées",
+          "station_type_it": "Stazioni meteorologiche automatiche - Valori misurati",
+          "station_type_en": "Automatic weather stations - Measurement values",
+          "station_dataowner": "MeteoSchweiz, SLF",
+          "station_data_since": "01.01.1864",
+          "station_height_masl": "1594.0",
+          "station_height_barometer_masl": "1596.0",
+          "station_coordinates_lv95_east": "2783519.0",
+          "station_coordinates_lv95_north": "1187459.0",
+          "station_coordinates_wgs84_lat": "46.812969",
+          "station_coordinates_wgs84_lon": "9.843558",
+          "station_exposition_de": "Südosthang",
+          "station_exposition_fr": "Versant sud-est",
+          "station_exposition_it": "Versante sud-orientale",
+          "station_exposition_en": "south-eastern oriented slope",
+          "station_url_de": "https://www.meteoschweiz.admin.ch/service-und-publikationen/applikationen/messwerte-und-messnetze.html#param=messnetz-automatisch&station=DAV",
+          "station_url_fr": "https://www.meteosuisse.admin.ch/services-et-publications/applications/valeurs-mesurees-et-reseaux-de-mesure.html#param=messnetz-automatisch&station=DAV",
+          "station_url_it": "https://www.meteosvizzera.admin.ch/servizi-e-pubblicazioni/applicazioni/valori-attuali-e-reti-di-misura.html#param=messnetz-automatisch&station=DAV",
+          "station_url_en": "https://www.meteoswiss.admin.ch/services-and-publications/applications/measurement-values-and-measuring-networks.html#param=messnetz-automatisch&station=DAV"
+        },
+        "status": "SOURCE_METADATA_READ_SENSOR_HISTORY_UNQUALIFIED",
+        "general_height_is_not_barometer_height": true,
+        "vertical_datum_history_status": "NATIONAL_MASL_METADATA_NOT_A_VERIFIED_ERA5_DATUM_TRANSFORMATION"
+      },
+      "historical_member": null,
+      "source_WMDR": "https://oscar.wmo.int/surface/rest/api/wmd/download/0-20000-0-06784",
+      "source_WMDR_sha256": "6f71adb3cde2a1373c02fb59c56639600e475291022d2997a5aab3b845a6b44d",
+      "sensors": {
+        "pressure": {
+          "latitude": 46.812972,
+          "longitude": 9.843547,
+          "height_MSL_m": 1595.58,
+          "equipment_geolocation_period": [
+            "2006-12-13T00:00:00Z",
+            null
+          ],
+          "geolocation_time_support": "EXPLICIT_LOCATION_PERIOD",
+          "height_origin": "INSTRUMENT_GEOSPATIAL_POSITION_MSL",
+          "role": "BAROMETER",
+          "observed_property": "http://codes.wmo.int/wmdr/ObservedVariableAtmosphere/216",
+          "deployment_period": [
+            "2006-12-13T00:00:00Z",
+            null
+          ],
+          "AGL_or_reference_distance_m": 1.42,
+          "local_reference_surface": "http://codes.wmo.int/wmdr/ReferenceSurfaceType/localGround",
+          "AGL_added_to_absolute_altitude": false,
+          "historical_height_reference_confirmed": true,
+          "datum_transformation_verified": false,
+          "geopotential_height_approximation": "DECLARED_H_EQUALS_MSL_HEIGHT_CONSTANT_G0",
+          "source_WSI": "0-20000-0-06784",
+          "source_sha256": "6f71adb3cde2a1373c02fb59c56639600e475291022d2997a5aab3b845a6b44d"
+        },
+        "temperature": {
+          "latitude": 46.812956,
+          "longitude": 9.843481,
+          "height_MSL_m": 1593.93,
+          "equipment_geolocation_period": [
+            "2006-12-13T00:00:00Z",
+            null
+          ],
+          "geolocation_time_support": "EXPLICIT_LOCATION_PERIOD",
+          "height_origin": "INSTRUMENT_GEOSPATIAL_POSITION_MSL",
+          "role": "THERMO_SENSOR",
+          "observed_property": "http://codes.wmo.int/wmdr/ObservedVariableAtmosphere/224",
+          "deployment_period": [
+            "2006-12-13T00:00:00Z",
+            null
+          ],
+          "AGL_or_reference_distance_m": 2.0,
+          "local_reference_surface": "http://codes.wmo.int/wmdr/ReferenceSurfaceType/localGround",
+          "AGL_added_to_absolute_altitude": false,
+          "historical_height_reference_confirmed": true,
+          "datum_transformation_verified": false,
+          "geopotential_height_approximation": "DECLARED_H_EQUALS_MSL_HEIGHT_CONSTANT_G0",
+          "source_WSI": "0-20000-0-06784",
+          "source_sha256": "6f71adb3cde2a1373c02fb59c56639600e475291022d2997a5aab3b845a6b44d"
+        },
+        "RH_water": {
+          "latitude": 46.812956,
+          "longitude": 9.843481,
+          "height_MSL_m": 1593.93,
+          "equipment_geolocation_period": [
+            "2006-12-13T00:00:00Z",
+            null
+          ],
+          "geolocation_time_support": "EXPLICIT_LOCATION_PERIOD",
+          "height_origin": "INSTRUMENT_GEOSPATIAL_POSITION_MSL",
+          "role": "THERMO_SENSOR",
+          "observed_property": "http://codes.wmo.int/wmdr/ObservedVariableAtmosphere/12249",
+          "deployment_period": [
+            "2006-12-13T00:00:00Z",
+            null
+          ],
+          "AGL_or_reference_distance_m": 2.0,
+          "local_reference_surface": "http://codes.wmo.int/wmdr/ReferenceSurfaceType/localGround",
+          "AGL_added_to_absolute_altitude": false,
+          "historical_height_reference_confirmed": true,
+          "datum_transformation_verified": false,
+          "geopotential_height_approximation": "DECLARED_H_EQUALS_MSL_HEIGHT_CONSTANT_G0",
+          "source_WSI": "0-20000-0-06784",
+          "source_sha256": "6f71adb3cde2a1373c02fb59c56639600e475291022d2997a5aab3b845a6b44d"
+        }
+      },
+      "provider_to_thermo_distance_km": 0.0060353620791150815,
+      "pressure_to_thermo_horizontal_distance_km": 0.005328389580725894,
+      "RH_convention": "WATER_WMDR_OBSERVED_VARIABLE_12249",
+      "datum_transformation_verified": false,
+      "operational_ready": false,
+      "provider_identity_policy": "FROZEN_PREVIOUSLY_AUDITED_METADATA_NO_OBSERVATION_PRODUCT_READ",
+      "reference_refresh": "WMDR_SEMANTIC_IDENTITY_CONFIRMED",
+      "prior_WMDR_sha256": "6f71adb3cde2a1373c02fb59c56639600e475291022d2997a5aab3b845a6b44d"
+    }
+  },
+  "geometry": {
+    "full_radius_catalogue": {
+      "AT": [
+        {
+          "native_index": 73688,
+          "latitude": 47.072580762649004,
+          "longitude": 15.6,
+          "surface_phi_m2s2_by_control": {
+            "2021-02-01T00:00": 3874.883120499268,
+            "2021-08-01T00:00": 3874.883120499268
+          },
+          "surface_H_m": 395.1281141367611,
+          "roles": {
+            "pressure": {
+              "distance_km": 11.45793627560166,
+              "inside_radius": true,
+              "target_minus_surface_m": -16.328114136761087,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "temperature": {
+              "distance_km": 11.45793627560166,
+              "inside_radius": true,
+              "target_minus_surface_m": -26.42811413676111,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "RH_water": {
+              "distance_km": 11.45793627560166,
+              "inside_radius": true,
+              "target_minus_surface_m": -26.42811413676111,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            }
+          }
+        },
+        {
+          "native_index": 73687,
+          "latitude": 47.072580762649004,
+          "longitude": 15.2,
+          "surface_phi_m2s2_by_control": {
+            "2021-02-01T00:00": 6517.37288018831,
+            "2021-08-01T00:00": 6517.37288018831
+          },
+          "surface_H_m": 664.5870791950676,
+          "roles": {
+            "pressure": {
+              "distance_km": 18.856729463231233,
+              "inside_radius": true,
+              "target_minus_surface_m": -285.78707919506763,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "temperature": {
+              "distance_km": 18.856729463231233,
+              "inside_radius": true,
+              "target_minus_surface_m": -295.88707919506766,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "RH_water": {
+              "distance_km": 18.856729463231233,
+              "inside_radius": true,
+              "target_minus_surface_m": -295.88707919506766,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            }
+          }
+        },
+        {
+          "native_index": 72788,
+          "latitude": 47.35361102203147,
+          "longitude": 15.6,
+          "surface_phi_m2s2_by_control": {
+            "2021-02-01T00:00": 8229.816713837445,
+            "2021-08-01T00:00": 8229.816713837445
+          },
+          "surface_H_m": 839.2077532936778,
+          "roles": {
+            "pressure": {
+              "distance_km": 32.72594352650653,
+              "inside_radius": true,
+              "target_minus_surface_m": -460.4077532936778,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "temperature": {
+              "distance_km": 32.72594352650653,
+              "inside_radius": true,
+              "target_minus_surface_m": -470.5077532936778,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "RH_water": {
+              "distance_km": 32.72594352650653,
+              "inside_radius": true,
+              "target_minus_surface_m": -470.5077532936778,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            }
+          }
+        },
+        {
+          "native_index": 74588,
+          "latitude": 46.79155050131955,
+          "longitude": 15.6,
+          "surface_phi_m2s2_by_control": {
+            "2021-02-01T00:00": 3653.558622351101,
+            "2021-08-01T00:00": 3653.558622351101
+          },
+          "surface_H_m": 372.5592962276722,
+          "roles": {
+            "pressure": {
+              "distance_km": 33.83196599005319,
+              "inside_radius": true,
+              "target_minus_surface_m": 6.240703772327834,
+              "lower_boundary_admitted": true,
+              "buffer_2m_sensitivity_admitted": true,
+              "rejection_reasons": [],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "temperature": {
+              "distance_km": 33.83196599005319,
+              "inside_radius": true,
+              "target_minus_surface_m": -3.859296227672189,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "RH_water": {
+              "distance_km": 33.83196599005319,
+              "inside_radius": true,
+              "target_minus_surface_m": -3.859296227672189,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            }
+          }
+        },
+        {
+          "native_index": 72787,
+          "latitude": 47.35361102203147,
+          "longitude": 15.2,
+          "surface_phi_m2s2_by_control": {
+            "2021-02-01T00:00": 9249.084954866114,
+            "2021-08-01T00:00": 9249.084954866114
+          },
+          "surface_H_m": 943.1441883687206,
+          "roles": {
+            "pressure": {
+              "distance_km": 35.97352837144541,
+              "inside_radius": true,
+              "target_minus_surface_m": -564.3441883687206,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "temperature": {
+              "distance_km": 35.97352837144541,
+              "inside_radius": true,
+              "target_minus_surface_m": -574.4441883687207,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "RH_water": {
+              "distance_km": 35.97352837144541,
+              "inside_radius": true,
+              "target_minus_surface_m": -574.4441883687207,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            }
+          }
+        },
+        {
+          "native_index": 74587,
+          "latitude": 46.79155050131955,
+          "longitude": 15.2,
+          "surface_phi_m2s2_by_control": {
+            "2021-02-01T00:00": 6718.033990707616,
+            "2021-08-01T00:00": 6718.033990707616
+          },
+          "surface_H_m": 685.0488179661369,
+          "roles": {
+            "pressure": {
+              "distance_km": 37.01452210519739,
+              "inside_radius": true,
+              "target_minus_surface_m": -306.24881796613687,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "temperature": {
+              "distance_km": 37.01452210519739,
+              "inside_radius": true,
+              "target_minus_surface_m": -316.3488179661369,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "RH_water": {
+              "distance_km": 37.01452210519739,
+              "inside_radius": true,
+              "target_minus_surface_m": -316.3488179661369,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            }
+          }
+        },
+        {
+          "native_index": 73689,
+          "latitude": 47.072580762649004,
+          "longitude": 16.0,
+          "surface_phi_m2s2_by_control": {
+            "2021-02-01T00:00": 3332.92810606706,
+            "2021-08-01T00:00": 3332.92810606706
+          },
+          "surface_H_m": 339.8640826446401,
+          "roles": {
+            "pressure": {
+              "distance_km": 41.738506824386086,
+              "inside_radius": true,
+              "target_minus_surface_m": 38.93591735535989,
+              "lower_boundary_admitted": true,
+              "buffer_2m_sensitivity_admitted": true,
+              "rejection_reasons": [],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "temperature": {
+              "distance_km": 41.738506824386086,
+              "inside_radius": true,
+              "target_minus_surface_m": 28.835917355359868,
+              "lower_boundary_admitted": true,
+              "buffer_2m_sensitivity_admitted": true,
+              "rejection_reasons": [],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "RH_water": {
+              "distance_km": 41.738506824386086,
+              "inside_radius": true,
+              "target_minus_surface_m": 28.835917355359868,
+              "lower_boundary_admitted": true,
+              "buffer_2m_sensitivity_admitted": true,
+              "rejection_reasons": [],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            }
+          }
+        },
+        {
+          "native_index": 73686,
+          "latitude": 47.072580762649004,
+          "longitude": 14.8,
+          "surface_phi_m2s2_by_control": {
+            "2021-02-01T00:00": 10751.10465591282,
+            "2021-08-01T00:00": 10751.10465591282
+          },
+          "surface_H_m": 1096.3075725056794,
+          "roles": {
+            "pressure": {
+              "distance_km": 49.14237395066956,
+              "inside_radius": true,
+              "target_minus_surface_m": -717.5075725056795,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "temperature": {
+              "distance_km": 49.14237395066956,
+              "inside_radius": true,
+              "target_minus_surface_m": -727.6075725056794,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "RH_water": {
+              "distance_km": 49.14237395066956,
+              "inside_radius": true,
+              "target_minus_surface_m": -727.6075725056794,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            }
+          }
+        }
+      ],
+      "DE": [
+        {
+          "native_index": 57155,
+          "latitude": 52.41215530640741,
+          "longitude": 13.333333333333334,
+          "surface_phi_m2s2_by_control": {
+            "2021-02-01T00:00": 365.72977518782545,
+            "2021-08-01T00:00": 365.72977518782545
+          },
+          "surface_H_m": 37.294058132779845,
+          "roles": {
+            "pressure": {
+              "distance_km": 13.124790599209211,
+              "inside_radius": true,
+              "target_minus_surface_m": 45.205941867220155,
+              "lower_boundary_admitted": true,
+              "buffer_2m_sensitivity_admitted": true,
+              "rejection_reasons": [],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "temperature": {
+              "distance_km": 12.936056883847632,
+              "inside_radius": true,
+              "target_minus_surface_m": 0.5059418672201517,
+              "lower_boundary_admitted": true,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "RH_water": {
+              "distance_km": 12.936056883847632,
+              "inside_radius": true,
+              "target_minus_surface_m": 0.5059418672201517,
+              "lower_boundary_admitted": true,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            }
+          }
+        },
+        {
+          "native_index": 56355,
+          "latitude": 52.69318551975338,
+          "longitude": 13.5,
+          "surface_phi_m2s2_by_control": {
+            "2021-02-01T00:00": 600.619270339294,
+            "2021-08-01T00:00": 600.619270339294
+          },
+          "surface_H_m": 61.24612077919514,
+          "roles": {
+            "pressure": {
+              "distance_km": 20.130255990332138,
+              "inside_radius": true,
+              "target_minus_surface_m": 21.253879220804862,
+              "lower_boundary_admitted": true,
+              "buffer_2m_sensitivity_admitted": true,
+              "rejection_reasons": [],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "temperature": {
+              "distance_km": 20.30269028022252,
+              "inside_radius": true,
+              "target_minus_surface_m": -23.44612077919514,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "RH_water": {
+              "distance_km": 20.30269028022252,
+              "inside_radius": true,
+              "target_minus_surface_m": -23.44612077919514,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            }
+          }
+        },
+        {
+          "native_index": 57156,
+          "latitude": 52.41215530640741,
+          "longitude": 13.777777777777779,
+          "surface_phi_m2s2_by_control": {
+            "2021-02-01T00:00": 577.4401927710853,
+            "2021-08-01T00:00": 577.4401927710853
+          },
+          "surface_H_m": 58.8825126593776,
+          "roles": {
+            "pressure": {
+              "distance_km": 27.722882350010504,
+              "inside_radius": true,
+              "target_minus_surface_m": 23.617487340622397,
+              "lower_boundary_admitted": true,
+              "buffer_2m_sensitivity_admitted": true,
+              "rejection_reasons": [],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "temperature": {
+              "distance_km": 27.90147679833715,
+              "inside_radius": true,
+              "target_minus_surface_m": -21.082512659377606,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "RH_water": {
+              "distance_km": 27.90147679833715,
+              "inside_radius": true,
+              "target_minus_surface_m": -21.082512659377606,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            }
+          }
+        },
+        {
+          "native_index": 56354,
+          "latitude": 52.69318551975338,
+          "longitude": 13.05,
+          "surface_phi_m2s2_by_control": {
+            "2021-02-01T00:00": 399.8222036746806,
+            "2021-08-01T00:00": 399.8222036746806
+          },
+          "surface_H_m": 40.77051833956352,
+          "roles": {
+            "pressure": {
+              "distance_km": 30.9302028465954,
+              "inside_radius": true,
+              "target_minus_surface_m": 41.72948166043648,
+              "lower_boundary_admitted": true,
+              "buffer_2m_sensitivity_admitted": true,
+              "rejection_reasons": [],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "temperature": {
+              "distance_km": 30.801476718504222,
+              "inside_radius": true,
+              "target_minus_surface_m": -2.970518339563526,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "RH_water": {
+              "distance_km": 30.801476718504222,
+              "inside_radius": true,
+              "target_minus_surface_m": -2.970518339563526,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            }
+          }
+        },
+        {
+          "native_index": 57154,
+          "latitude": 52.41215530640741,
+          "longitude": 12.88888888888889,
+          "surface_phi_m2s2_by_control": {
+            "2021-02-01T00:00": 370.2890513649454,
+            "2021-08-01T00:00": 370.2890513649454
+          },
+          "surface_H_m": 37.75897491650517,
+          "roles": {
+            "pressure": {
+              "distance_km": 37.268380732863626,
+              "inside_radius": true,
+              "target_minus_surface_m": 44.74102508349483,
+              "lower_boundary_admitted": true,
+              "buffer_2m_sensitivity_admitted": true,
+              "rejection_reasons": [],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "temperature": {
+              "distance_km": 37.002684127717664,
+              "inside_radius": true,
+              "target_minus_surface_m": 0.04102508349483003,
+              "lower_boundary_admitted": true,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "RH_water": {
+              "distance_km": 37.002684127717664,
+              "inside_radius": true,
+              "target_minus_surface_m": 0.04102508349483003,
+              "lower_boundary_admitted": true,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            }
+          }
+        },
+        {
+          "native_index": 56356,
+          "latitude": 52.69318551975338,
+          "longitude": 13.95,
+          "surface_phi_m2s2_by_control": {
+            "2021-02-01T00:00": 646.5039919870303,
+            "2021-08-01T00:00": 646.5039919870303
+          },
+          "surface_H_m": 65.92506023841274,
+          "roles": {
+            "pressure": {
+              "distance_km": 41.23700604934287,
+              "inside_radius": true,
+              "target_minus_surface_m": 16.57493976158726,
+              "lower_boundary_admitted": true,
+              "buffer_2m_sensitivity_admitted": true,
+              "rejection_reasons": [],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "temperature": {
+              "distance_km": 41.50204199427196,
+              "inside_radius": true,
+              "target_minus_surface_m": -28.125060238412743,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "RH_water": {
+              "distance_km": 41.50204199427196,
+              "inside_radius": true,
+              "target_minus_surface_m": -28.125060238412743,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            }
+          }
+        },
+        {
+          "native_index": 57965,
+          "latitude": 52.131125090128414,
+          "longitude": 13.333333333333334,
+          "surface_phi_m2s2_by_control": {
+            "2021-02-01T00:00": 526.8343073420383,
+            "2021-08-01T00:00": 526.8343073420383
+          },
+          "surface_H_m": 53.72214847496733,
+          "roles": {
+            "pressure": {
+              "distance_km": 43.627945782102536,
+              "inside_radius": true,
+              "target_minus_surface_m": 28.777851525032673,
+              "lower_boundary_admitted": true,
+              "buffer_2m_sensitivity_admitted": true,
+              "rejection_reasons": [],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "temperature": {
+              "distance_km": 43.498487483613154,
+              "inside_radius": true,
+              "target_minus_surface_m": -15.92214847496733,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "RH_water": {
+              "distance_km": 43.498487483613154,
+              "inside_radius": true,
+              "target_minus_surface_m": -15.92214847496733,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            }
+          }
+        }
+      ],
+      "CH": [
+        {
+          "native_index": 74574,
+          "latitude": 46.79155050131955,
+          "longitude": 10.0,
+          "surface_phi_m2s2_by_control": {
+            "2021-02-01T00:00": 21199.65979038814,
+            "2021-08-01T00:00": 21199.65979038814
+          },
+          "surface_H_m": 2161.7636797875057,
+          "roles": {
+            "pressure": {
+              "distance_km": 12.144317153237687,
+              "inside_radius": true,
+              "target_minus_surface_m": -566.1836797875058,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "temperature": {
+              "distance_km": 12.148896258905255,
+              "inside_radius": true,
+              "target_minus_surface_m": -567.8336797875056,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "RH_water": {
+              "distance_km": 12.148896258905255,
+              "inside_radius": true,
+              "target_minus_surface_m": -567.8336797875056,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            }
+          }
+        },
+        {
+          "native_index": 74573,
+          "latitude": 46.79155050131955,
+          "longitude": 9.6,
+          "surface_phi_m2s2_by_control": {
+            "2021-02-01T00:00": 17822.709327109376,
+            "2021-08-01T00:00": 17822.709327109376
+          },
+          "surface_H_m": 1817.4105660046373,
+          "roles": {
+            "pressure": {
+              "distance_km": 18.689996739437603,
+              "inside_radius": true,
+              "target_minus_surface_m": -221.83056600463738,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "temperature": {
+              "distance_km": 18.684790141656748,
+              "inside_radius": true,
+              "target_minus_surface_m": -223.48056600463724,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "RH_water": {
+              "distance_km": 18.684790141656748,
+              "inside_radius": true,
+              "target_minus_surface_m": -223.48056600463724,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            }
+          }
+        },
+        {
+          "native_index": 73674,
+          "latitude": 47.072580762649004,
+          "longitude": 10.0,
+          "surface_phi_m2s2_by_control": {
+            "2021-02-01T00:00": 17220.145245911095,
+            "2021-08-01T00:00": 17220.145245911095
+          },
+          "surface_H_m": 1755.9661297090338,
+          "roles": {
+            "pressure": {
+              "distance_km": 31.215143758205585,
+              "inside_radius": true,
+              "target_minus_surface_m": -160.38612970903387,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "temperature": {
+              "distance_km": 31.218696435576852,
+              "inside_radius": true,
+              "target_minus_surface_m": -162.03612970903373,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "RH_water": {
+              "distance_km": 31.218696435576852,
+              "inside_radius": true,
+              "target_minus_surface_m": -162.03612970903373,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            }
+          }
+        },
+        {
+          "native_index": 73673,
+          "latitude": 47.072580762649004,
+          "longitude": 9.6,
+          "surface_phi_m2s2_by_control": {
+            "2021-02-01T00:00": 11834.853105074342,
+            "2021-08-01T00:00": 11834.853105074342
+          },
+          "surface_H_m": 1206.8191589456485,
+          "roles": {
+            "pressure": {
+              "distance_km": 34.28062285335304,
+              "inside_radius": true,
+              "target_minus_surface_m": 388.76084105435143,
+              "lower_boundary_admitted": true,
+              "buffer_2m_sensitivity_admitted": true,
+              "rejection_reasons": [],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "temperature": {
+              "distance_km": 34.27942055424514,
+              "inside_radius": true,
+              "target_minus_surface_m": 387.11084105435157,
+              "lower_boundary_admitted": true,
+              "buffer_2m_sensitivity_admitted": true,
+              "rejection_reasons": [],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "RH_water": {
+              "distance_km": 34.27942055424514,
+              "inside_radius": true,
+              "target_minus_surface_m": 387.11084105435157,
+              "lower_boundary_admitted": true,
+              "buffer_2m_sensitivity_admitted": true,
+              "rejection_reasons": [],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            }
+          }
+        },
+        {
+          "native_index": 75475,
+          "latitude": 46.51052023808231,
+          "longitude": 9.75,
+          "surface_phi_m2s2_by_control": {
+            "2021-02-01T00:00": 22573.86942993677,
+            "2021-08-01T00:00": 22573.86942993677
+          },
+          "surface_H_m": 2301.8940647353347,
+          "roles": {
+            "pressure": {
+              "distance_km": 34.38048361384007,
+              "inside_radius": true,
+              "target_minus_surface_m": -706.3140647353348,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "temperature": {
+              "distance_km": 34.37769795979807,
+              "inside_radius": true,
+              "target_minus_surface_m": -707.9640647353347,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "RH_water": {
+              "distance_km": 34.37769795979807,
+              "inside_radius": true,
+              "target_minus_surface_m": -707.9640647353347,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            }
+          }
+        },
+        {
+          "native_index": 75476,
+          "latitude": 46.51052023808231,
+          "longitude": 10.125,
+          "surface_phi_m2s2_by_control": {
+            "2021-02-01T00:00": 22356.06897249763,
+            "2021-08-01T00:00": 22356.06897249763
+          },
+          "surface_H_m": 2279.6845989708645,
+          "roles": {
+            "pressure": {
+              "distance_km": 39.90468161997585,
+              "inside_radius": true,
+              "target_minus_surface_m": -684.1045989708646,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "temperature": {
+              "distance_km": 39.905895228010365,
+              "inside_radius": true,
+              "target_minus_surface_m": -685.7545989708644,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "RH_water": {
+              "distance_km": 39.905895228010365,
+              "inside_radius": true,
+              "target_minus_surface_m": -685.7545989708644,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            }
+          }
+        },
+        {
+          "native_index": 74575,
+          "latitude": 46.79155050131955,
+          "longitude": 10.4,
+          "surface_phi_m2s2_by_control": {
+            "2021-02-01T00:00": 22400.543438946162,
+            "2021-08-01T00:00": 22400.543438946162
+          },
+          "surface_H_m": 2284.219732420976,
+          "roles": {
+            "pressure": {
+              "distance_km": 42.421296936081426,
+              "inside_radius": true,
+              "target_minus_surface_m": -688.6397324209761,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "temperature": {
+              "distance_km": 42.42621901604613,
+              "inside_radius": true,
+              "target_minus_surface_m": -690.289732420976,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "RH_water": {
+              "distance_km": 42.42621901604613,
+              "inside_radius": true,
+              "target_minus_surface_m": -690.289732420976,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            }
+          }
+        },
+        {
+          "native_index": 74572,
+          "latitude": 46.79155050131955,
+          "longitude": 9.2,
+          "surface_phi_m2s2_by_control": {
+            "2021-02-01T00:00": 16997.782004385077,
+            "2021-08-01T00:00": 16997.782004385077
+          },
+          "surface_H_m": 1733.291389453593,
+          "roles": {
+            "pressure": {
+              "distance_km": 49.0413684859474,
+              "inside_radius": true,
+              "target_minus_surface_m": -137.71138945359303,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "temperature": {
+              "distance_km": 49.03627174994937,
+              "inside_radius": true,
+              "target_minus_surface_m": -139.3613894535929,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "RH_water": {
+              "distance_km": 49.03627174994937,
+              "inside_radius": true,
+              "target_minus_surface_m": -139.3613894535929,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            }
+          }
+        },
+        {
+          "native_index": 75474,
+          "latitude": 46.51052023808231,
+          "longitude": 9.375,
+          "surface_phi_m2s2_by_control": {
+            "2021-02-01T00:00": 19918.593890635737,
+            "2021-08-01T00:00": 19918.593890635737
+          },
+          "surface_H_m": 2031.1313130004373,
+          "roles": {
+            "pressure": {
+              "distance_km": 49.08733633795868,
+              "inside_radius": true,
+              "target_minus_surface_m": -435.5513130004374,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "temperature": {
+              "distance_km": 49.082452517220005,
+              "inside_radius": true,
+              "target_minus_surface_m": -437.20131300043727,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            },
+            "RH_water": {
+              "distance_km": 49.082452517220005,
+              "inside_radius": true,
+              "target_minus_surface_m": -437.20131300043727,
+              "lower_boundary_admitted": false,
+              "buffer_2m_sensitivity_admitted": false,
+              "rejection_reasons": [
+                "TARGET_BELOW_NATIVE_SURFACE"
+              ],
+              "full_air_domain_status": "TOP_AND_PROFILE_NOT_YET_CHECKED"
+            }
+          }
+        }
+      ]
+    },
+    "fixed_pressure_donor_slots": {
+      "AT": {
+        "D1": 74588,
+        "D2": 73689
+      },
+      "DE": {
+        "D1": 57155
+      },
+      "CH": {
+        "D1": 73673
+      }
+    },
+    "G0_bracketing_stencil": {
+      "AT": [
+        73687,
+        73688,
+        72787,
+        72788
+      ],
+      "DE": [
+        57155,
+        57156,
+        56354,
+        56355
+      ],
+      "CH": [
+        74573,
+        74574,
+        73673,
+        73674
+      ]
+    },
+    "roles": [
+      "pressure",
+      "temperature",
+      "RH_water"
+    ],
+    "selection_uses_T_q_or_observations": false,
+    "scope": "LOWER_BOUND_GEOMETRY_HOURLY_TOP_AND_PROFILE_NOT_YET_CHECKED"
+  },
+  "source_objects": [
+    {
+      "url": "https://oscar.wmo.int/surface/rest/api/wmd/download/0-20000-0-11290",
+      "range": null,
+      "sha256": "936339090f8b9007db67f766733a10653c7acff4afd5d000c6ebbfca0ed73535",
+      "bytes": 76949,
+      "from_cache": true
+    },
+    {
+      "url": "https://oscar.wmo.int/surface/rest/api/wmd/download/0-276-6-399",
+      "range": null,
+      "sha256": "b3fd3ce4230907ad8fc225efcf27eed10256afd0677b4b67ee4e31c0956f09d4",
+      "bytes": 286196,
+      "from_cache": true
+    },
+    {
+      "url": "https://oscar.wmo.int/surface/rest/api/wmd/download/0-20000-0-06784",
+      "range": null,
+      "sha256": "6f71adb3cde2a1373c02fb59c56639600e475291022d2997a5aab3b845a6b44d",
+      "bytes": 1462381,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-surface.zarr-v2/.zmetadata",
+      "range": null,
+      "sha256": "35fcded7b65a5d281bfcbca86b09fdb07b431aa39cc6d01f62be56be1f9d9dbc",
+      "bytes": 12672,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-wind.zarr-v2/.zmetadata",
+      "range": null,
+      "sha256": "82f08bf2b93ce115d5c84aaf5310fc393a7dec14532a35d702d3c0d46c8b815c",
+      "bytes": 23216,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2/.zmetadata",
+      "range": null,
+      "sha256": "8857cc5843ac6330bca284c1fd62357b745b7e9f0b462dac11d6d286a79856a6",
+      "bytes": 65175,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2/.zmetadata",
+      "range": null,
+      "sha256": "536389b58b417f7eefda7cf820636f96dece558e6b578675695149dfaaa2bcf1",
+      "bytes": 181026,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2/latitude/0",
+      "range": null,
+      "sha256": "d99391157f50a5ed79007199c0f9db2c95ce34c82e6b0cabbbbcbc70177afd16",
+      "bytes": 35441,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/model-level-moisture.zarr-v2/longitude/0",
+      "range": null,
+      "sha256": "222cc52712e18176a09e52b4db5b1881c32e16d256e94d4b844ad71249c7bc7c",
+      "bytes": 111588,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2/latitude/0",
+      "range": null,
+      "sha256": "4021a3a3b6e7c355d709431ab684d0d6c2ee5de9f73dddc9b1d7918e56564a2a",
+      "bytes": 35441,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-reanalysis.zarr-v2/longitude/0",
+      "range": null,
+      "sha256": "e3abf421c3093bb648f94e774f2722ef3be70e89ec69b432a8527dabb6cc8148",
+      "bytes": 111588,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-surface.zarr-v2/time/0",
+      "range": null,
+      "sha256": "89403f7c33cd8203fb84d2b1d03af4b1dd94aab8eaa4f95033e6ef053d45f03b",
+      "bytes": 66192,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-surface.zarr-v2/valid_time/0",
+      "range": null,
+      "sha256": "b3dcb4878e8858a2610481b9d3167c7b1a719d2390817e2e43054edb38289269",
+      "bytes": 74083,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-surface.zarr-v2/step/0",
+      "range": null,
+      "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc",
+      "bytes": 8,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-surface.zarr-v2/z/1061424.0",
+      "range": null,
+      "sha256": "55f686d7a8faa808748dee09371d31ca81d108afd2a931e371a1afeb7d6739c8",
+      "bytes": 1571312,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-surface.zarr-v2/z/1065768.0",
+      "range": null,
+      "sha256": "55f686d7a8faa808748dee09371d31ca81d108afd2a931e371a1afeb7d6739c8",
+      "bytes": 1571312,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-surface.zarr-v2/z/1061424.0",
+      "range": null,
+      "sha256": "55f686d7a8faa808748dee09371d31ca81d108afd2a931e371a1afeb7d6739c8",
+      "bytes": 1571312,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-surface.zarr-v2/z/1065768.0",
+      "range": null,
+      "sha256": "55f686d7a8faa808748dee09371d31ca81d108afd2a931e371a1afeb7d6739c8",
+      "bytes": 1571312,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-surface.zarr-v2/z/1061424.0",
+      "range": null,
+      "sha256": "55f686d7a8faa808748dee09371d31ca81d108afd2a931e371a1afeb7d6739c8",
+      "bytes": 1571312,
+      "from_cache": true
+    },
+    {
+      "url": "https://storage.googleapis.com/gcp-public-data-arco-era5/co/single-level-surface.zarr-v2/z/1065768.0",
+      "range": null,
+      "sha256": "55f686d7a8faa808748dee09371d31ca81d108afd2a931e371a1afeb7d6739c8",
+      "bytes": 1571312,
+      "from_cache": true
+    }
+  ],
+  "network_downloaded_bytes": 0,
+  "network_requests": 0,
+  "wall_seconds_cache_replay": 2.3563461819999247,
+  "pressure_observations_read": false,
+  "T_q_profiles_read": false,
+  "independent_accuracy_qualified": false
+}
