@@ -1,0 +1,88 @@
+name: IGE P9.3B3 CD1 frozen C2 convergence diagnostics
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/ige-p9-3b3-c2-convergence-diagnostics-20261023
+    paths:
+      - .github/workflows/ige-p9-3b3-cd1-convergence-diagnostics.yml
+      - research/ige_cmip6/p9_3b3_cd1_*.py
+      - research/ige_cmip6/test_p9_3b3_cd1_*.py
+      - research/ige_cmip6/p9_3b3_cd1_protocol.json
+permissions:
+  contents: read
+env:
+  OPENBLAS_NUM_THREADS: '1'
+  OMP_NUM_THREADS: '1'
+jobs:
+  immutable_and_mathematical_contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 scipy==1.17.0 numcodecs==0.16.3 pyshtools==4.13.1 eccodes==2.50.0 eccodeslib==2.50.0.33
+      - name: Analytic diagnostic oracles and all B3 contracts
+        run: python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3b3_*.py' -v
+      - name: Earlier mathematics and canonical absolute DWD pressure
+        run: |
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3a*.py' -q
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_2*.py' -q
+          python -m unittest discover -s research/ige_cmip6 -p 'test_p9_3b2*.py' -q
+          python research/ige_cmip6/p9_3b2d_canonical_pressure_fields.py
+      - name: 130 frozen scientific controls and preregistered archive
+        run: |
+          python - <<'PY'
+          import sys
+          sys.path.insert(0, 'research/ige_cmip6')
+          from p9_3b3_cd1_run import guard, load_inputs
+          p = guard()
+          inputs, results = load_inputs(p)
+          assert len(inputs) == 63 and len(results) == 189
+          print('Unchanged scientific controls:', len(p['protected_control_sha256']))
+          PY
+  archived_63_case_convergence_diagnostics:
+    needs: immutable_and_mathematical_contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 scipy==1.17.0
+      - name: Unchanged frozen solves and post-hoc first-order diagnostics
+        run: >-
+          python -u research/ige_cmip6/p9_3b3_cd1_run.py
+          --out outputs/CD1-convergence-diagnostics
+      - name: Keep the four qualification levels separate
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          r = json.loads(Path('outputs/CD1-convergence-diagnostics/CD1_summary.json').read_text())
+          assert r['case_count'] == 63 and r['trial_counts']['total'] == 99
+          assert r['all_observed_unobserved_outputs_exactly_equal']
+          assert not r['local_optimum_certified'] and not r['operational_ready']
+          lines = [
+            'Code: upstream contract tests and 130 frozen scientific controls.',
+            'Observation: exact same-runtime equality with unobserved frozen C2 for every case.',
+            'Physical validity: per-trial independent checks in complete journals; fixed thermo-level pressure.',
+            'Convergence: first-order residuals and branch-local finite differences, not an optimality certificate.',
+            'Independent accuracy: NOT QUALIFIED; previously revealed regressions and sensitivity controls.',
+            'Readiness: NOT QUALIFIED; correction budget NOT_ESTABLISHED; NASA time bounds unresolved.',
+            'B4 false; native future GCM pressure false; production EPW false; main not merged.',
+            'Counts: ' + json.dumps(r['trial_counts']) + '; categories: ' + json.dumps(r['category_counts'])]
+          print('\n'.join(lines))
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f:
+            f.write('\n\n'.join(lines) + '\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ige-P93B3-CD1-63-cases-99-trials-convergence-NOT-optimality-NOT-independent-accuracy
+          path: outputs/CD1-convergence-diagnostics/
+          if-no-files-found: warn
+          retention-days: 30
