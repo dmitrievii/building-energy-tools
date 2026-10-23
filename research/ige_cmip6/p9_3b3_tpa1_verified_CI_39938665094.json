@@ -1,0 +1,1134 @@
+{
+  "phase": "P9.3B3_TPA1_CI_39938665094_AUDIT",
+  "tested_commit": "d09b1dcef046e21ba7dbd174c275646132ce6409",
+  "CI": {
+    "id": 39938665094,
+    "conclusion": "success",
+    "updated_at_UTC": "2026-10-23T10:25:49Z",
+    "jobs_successful": 3,
+    "tests": [
+      288,
+      14,
+      50,
+      8
+    ],
+    "test_count": 360
+  },
+  "archive_sha256": {
+    "comparison.zip": "4cc3d680d4608483ee06a5d03a162a376ebbb6365ee158212f9edf4734393276",
+    "regression.zip": "fd0f1aa0038dfc81d5a15c4bd3311044a4829127c4242704c506142ea40b8392"
+  },
+  "comparison_file_sha256": {
+    "comparison_inputs.json": "65d37338a067eed6bf6ddea6d8000de2153a6e9f3fa1116f3aecc42f7eec00cd",
+    "comparison_results.json": "a54d6d193dafc72413effa85156c8f9bcbfb8cd29bed6b0fc2de1a4f8ebf757c",
+    "comparison_summary.json": "529c2092ffdcbfd833aa37c163d94176fe8c01a1d20e9efb49eec59780c51df2",
+    "frozen_input_audit.json": "789c5639e0fd5019fc9994d4ac786a2ed61a75149dd5426fe56041bb6d07c157",
+    "independent_numeric_audit.json": "4722ec07569ae04c067b57bcc6c3aefdc561264b44a1c59c9ace25de9ffc5ebb"
+  },
+  "regression_file_sha256": {
+    "c2_comparison.json": "798a1184b5a04d571050f135dd8a425bdb1299049d208a46a7af657d6630e916"
+  },
+  "engine_code_hashes_match_tested_sources": true,
+  "protected_scientific_files_unchanged": 109,
+  "comparison": {
+    "pressure_cases": 63,
+    "method_results": 189,
+    "status_counts": {
+      "EXACT_DEFINED_OPERATORS": 30,
+      "Q_MEAN_EXACT_RH_DIAGNOSTIC": 60,
+      "EXACT_SOURCE_PRESERVED": 30,
+      "CERTIFIED_INFEASIBLE": 36,
+      "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY": 33
+    },
+    "groups": [
+      {
+        "family": "CONTROL_Q90CAP_RH20",
+        "method": "STRICT_JOINT_T_Q_FIXED_P",
+        "planned": 18,
+        "status_counts": {
+          "CERTIFIED_INFEASIBLE": 18
+        },
+        "validated_states": 0,
+        "unchanged_daily_diagnostics": 0,
+        "max_abs_delta_q_gkg": null,
+        "max_abs_delta_RH_pp": null,
+        "max_RH_water_pct": null,
+        "no_independent_accuracy_inference": true
+      },
+      {
+        "family": "CONTROL_Q90CAP_RH20",
+        "method": "Q_ONLY_FIXED_T_P",
+        "planned": 18,
+        "status_counts": {
+          "Q_MEAN_EXACT_RH_DIAGNOSTIC": 18
+        },
+        "validated_states": 18,
+        "unchanged_daily_diagnostics": 0,
+        "max_abs_delta_q_gkg": 3.469446951953614e-15,
+        "max_abs_delta_RH_pp": 73.38604095239943,
+        "max_RH_water_pct": 96.93190422539448,
+        "no_independent_accuracy_inference": true
+      },
+      {
+        "family": "CONTROL_Q90CAP_RH20",
+        "method": "C2_BOTH_SOFT_STRICT_FIRST",
+        "planned": 18,
+        "status_counts": {
+          "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY": 18
+        },
+        "validated_states": 18,
+        "unchanged_daily_diagnostics": 0,
+        "max_abs_delta_q_gkg": 5.693181092576692,
+        "max_abs_delta_RH_pp": 23.16157010418616,
+        "max_RH_water_pct": 100.00000000000418,
+        "no_independent_accuracy_inference": true
+      },
+      {
+        "family": "CONTROL_RH60",
+        "method": "STRICT_JOINT_T_Q_FIXED_P",
+        "planned": 18,
+        "status_counts": {
+          "EXACT_DEFINED_OPERATORS": 18
+        },
+        "validated_states": 18,
+        "unchanged_daily_diagnostics": 18,
+        "max_abs_delta_q_gkg": 1.0408340855860843e-14,
+        "max_abs_delta_RH_pp": 9.600648218111019e-05,
+        "max_RH_water_pct": 100.00000000000001,
+        "no_independent_accuracy_inference": true
+      },
+      {
+        "family": "CONTROL_RH60",
+        "method": "Q_ONLY_FIXED_T_P",
+        "planned": 18,
+        "status_counts": {
+          "Q_MEAN_EXACT_RH_DIAGNOSTIC": 18
+        },
+        "validated_states": 18,
+        "unchanged_daily_diagnostics": 14,
+        "max_abs_delta_q_gkg": 3.469446951953614e-15,
+        "max_abs_delta_RH_pp": 0.01477369104029691,
+        "max_RH_water_pct": 60.012006569495114,
+        "no_independent_accuracy_inference": true
+      },
+      {
+        "family": "CONTROL_RH60",
+        "method": "C2_BOTH_SOFT_STRICT_FIRST",
+        "planned": 18,
+        "status_counts": {
+          "EXACT_SOURCE_PRESERVED": 18
+        },
+        "validated_states": 18,
+        "unchanged_daily_diagnostics": 18,
+        "max_abs_delta_q_gkg": 1.0408340855860843e-14,
+        "max_abs_delta_RH_pp": 9.600648218111019e-05,
+        "max_RH_water_pct": 100.00000000000001,
+        "no_independent_accuracy_inference": true
+      },
+      {
+        "family": "NASA_2013_2014_REVEALED_SENSITIVITY",
+        "method": "STRICT_JOINT_T_Q_FIXED_P",
+        "planned": 27,
+        "status_counts": {
+          "EXACT_DEFINED_OPERATORS": 12,
+          "CERTIFIED_INFEASIBLE": 15
+        },
+        "validated_states": 12,
+        "unchanged_daily_diagnostics": 12,
+        "max_abs_delta_q_gkg": 5.204170427930421e-15,
+        "max_abs_delta_RH_pp": 1.659330450820562e-09,
+        "max_RH_water_pct": 100.00000000000114,
+        "no_independent_accuracy_inference": true
+      },
+      {
+        "family": "NASA_2013_2014_REVEALED_SENSITIVITY",
+        "method": "Q_ONLY_FIXED_T_P",
+        "planned": 27,
+        "status_counts": {
+          "Q_MEAN_EXACT_RH_DIAGNOSTIC": 24,
+          "CERTIFIED_INFEASIBLE": 3
+        },
+        "validated_states": 24,
+        "unchanged_daily_diagnostics": 0,
+        "max_abs_delta_q_gkg": 3.469446951953614e-15,
+        "max_abs_delta_RH_pp": 23.321929418454438,
+        "max_RH_water_pct": 100.00000000000001,
+        "no_independent_accuracy_inference": true
+      },
+      {
+        "family": "NASA_2013_2014_REVEALED_SENSITIVITY",
+        "method": "C2_BOTH_SOFT_STRICT_FIRST",
+        "planned": 27,
+        "status_counts": {
+          "EXACT_SOURCE_PRESERVED": 12,
+          "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY": 15
+        },
+        "validated_states": 27,
+        "unchanged_daily_diagnostics": 12,
+        "max_abs_delta_q_gkg": 0.42279126327247113,
+        "max_abs_delta_RH_pp": 0.6268084208388416,
+        "max_RH_water_pct": 100.00000000000114,
+        "no_independent_accuracy_inference": true
+      }
+    ],
+    "all_63_pressure_trajectories_rederived_from_sealed_NV2": true,
+    "Graz_D1_thermo_block_retained": true,
+    "independent_scalar_replay": {
+      "status": "PASS_INDEPENDENT_SCALAR_REPLAY",
+      "revalidated_states": 153,
+      "all_returned_states_revalidated": true,
+      "q_only_KKT_and_objectives_replayed": 60,
+      "strict_states_reused_by_C2": 30,
+      "infeasibility_checks": [
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|AT|2021-02-01|P1_ISOTHERMAL",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 59.132884969243094,
+          "RH_mean_lower_pp": 79.1328849692431,
+          "RH_mean_upper_pp": 104.3336500341475
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|AT|2021-02-01|P1_LAPSE_0065",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 59.13298899409166,
+          "RH_mean_lower_pp": 79.13298899409166,
+          "RH_mean_upper_pp": 104.33376849869295
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|AT|2021-02-01|P2_NATIVE",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 59.132980945052864,
+          "RH_mean_lower_pp": 79.13298094505286,
+          "RH_mean_upper_pp": 104.33375675864232
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|AT|2021-08-01|P1_ISOTHERMAL",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 58.50841089735381,
+          "RH_mean_lower_pp": 78.50841089735381,
+          "RH_mean_upper_pp": 100.42255245969858
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|AT|2021-08-01|P1_LAPSE_0065",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 58.50850121415823,
+          "RH_mean_lower_pp": 78.50850121415823,
+          "RH_mean_upper_pp": 100.42265772020372
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|AT|2021-08-01|P2_NATIVE",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 58.50854710373393,
+          "RH_mean_lower_pp": 78.50854710373393,
+          "RH_mean_upper_pp": 100.42268480833356
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|DE|2021-02-01|P1_ISOTHERMAL",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 56.65070926224779,
+          "RH_mean_lower_pp": 76.65070926224779,
+          "RH_mean_upper_pp": 110.33270664222955
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|DE|2021-02-01|P1_LAPSE_0065",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 56.65070929958358,
+          "RH_mean_lower_pp": 76.65070929958358,
+          "RH_mean_upper_pp": 110.33270667812077
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|DE|2021-02-01|P2_NATIVE",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 56.65070926224779,
+          "RH_mean_lower_pp": 76.65070926224779,
+          "RH_mean_upper_pp": 110.33270664222957
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|DE|2021-08-01|P1_ISOTHERMAL",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 60.12280654909006,
+          "RH_mean_lower_pp": 80.12280654909006,
+          "RH_mean_upper_pp": 101.0246671493478
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|DE|2021-08-01|P1_LAPSE_0065",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 60.122806579573165,
+          "RH_mean_lower_pp": 80.12280657957317,
+          "RH_mean_upper_pp": 101.02466717923775
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|DE|2021-08-01|P2_NATIVE",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 60.12280654909004,
+          "RH_mean_lower_pp": 80.12280654909004,
+          "RH_mean_upper_pp": 101.0246671493478
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P1_ISOTHERMAL",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 66.66719184736162,
+          "RH_mean_lower_pp": 86.66719184736162,
+          "RH_mean_upper_pp": 94.50017366859998
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P1_LAPSE_0065",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 66.6864719288776,
+          "RH_mean_lower_pp": 86.6864719288776,
+          "RH_mean_upper_pp": 94.5209553391341
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P2_NATIVE",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 66.67765574599727,
+          "RH_mean_lower_pp": 86.67765574599727,
+          "RH_mean_upper_pp": 94.5119608789421
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-08-01|P1_ISOTHERMAL",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 58.1747493273367,
+          "RH_mean_lower_pp": 78.1747493273367,
+          "RH_mean_upper_pp": 97.89832347329063
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-08-01|P1_LAPSE_0065",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 58.19197030644882,
+          "RH_mean_lower_pp": 78.19197030644882,
+          "RH_mean_upper_pp": 97.91883143432938
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-08-01|P2_NATIVE",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 58.194000019575,
+          "RH_mean_lower_pp": 78.194000019575,
+          "RH_mean_upper_pp": 97.92352527647023
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-08|P1_ISOTHERMAL",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 11.41496860929653,
+          "RH_mean_lower_pp": 26.321583850398785,
+          "RH_mean_upper_pp": 48.79689967683628
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-08|P1_LAPSE_0065",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 11.41490820535968,
+          "RH_mean_lower_pp": 26.321617800017766,
+          "RH_mean_upper_pp": 48.79696008077313
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-08|P2_NATIVE",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 11.414867826209843,
+          "RH_mean_lower_pp": 26.321632794341888,
+          "RH_mean_upper_pp": 48.79700045992297
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-19|P1_ISOTHERMAL",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 4.275046976261777,
+          "RH_mean_lower_pp": 34.59738391684165,
+          "RH_mean_upper_pp": 60.836601583308536
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-19|P1_LAPSE_0065",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 4.274975592588305,
+          "RH_mean_lower_pp": 34.59743197468398,
+          "RH_mean_upper_pp": 60.83667296698201
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-19|P2_NATIVE",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 4.274942032365928,
+          "RH_mean_lower_pp": 34.597434465999484,
+          "RH_mean_upper_pp": 60.836706527204385
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-20|P1_ISOTHERMAL",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 5.05069734167364,
+          "RH_mean_lower_pp": 30.870593350164757,
+          "RH_mean_upper_pp": 56.34574507165644
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-20|P1_LAPSE_0065",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 5.050631836265175,
+          "RH_mean_lower_pp": 30.870635647804846,
+          "RH_mean_upper_pp": 56.3458105770649
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-20|P2_NATIVE",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 5.050591256794242,
+          "RH_mean_lower_pp": 30.87064095425612,
+          "RH_mean_upper_pp": 56.345851156535836
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-26|P1_ISOTHERMAL",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 8.450660062709233,
+          "RH_mean_lower_pp": 26.030760645516033,
+          "RH_mean_upper_pp": 50.28892962845288
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-26|P1_LAPSE_0065",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 8.450598670814074,
+          "RH_mean_lower_pp": 26.030794735033105,
+          "RH_mean_upper_pp": 50.288991020348035
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-26|P2_NATIVE",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 8.450557340940811,
+          "RH_mean_lower_pp": 26.03081057574432,
+          "RH_mean_upper_pp": 50.2890323502213
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2014-12-02|P1_ISOTHERMAL",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_BOX_Q_CAPACITY",
+          "separation_q_kgkg": 3.326527239545969e-05
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2014-12-02|P1_ISOTHERMAL",
+          "method": "Q_ONLY_FIXED_T_P",
+          "kind": "FIXED_T_Q_CAPACITY",
+          "separation_q_kgkg": 0.0007298891371062587
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2014-12-02|P1_LAPSE_0065",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_BOX_Q_CAPACITY",
+          "separation_q_kgkg": 3.3274486757958396e-05
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2014-12-02|P1_LAPSE_0065",
+          "method": "Q_ONLY_FIXED_T_P",
+          "kind": "FIXED_T_Q_CAPACITY",
+          "separation_q_kgkg": 0.0007298974771620123
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2014-12-02|P2_NATIVE",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_BOX_Q_CAPACITY",
+          "separation_q_kgkg": 3.327504629211005e-05
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2014-12-02|P2_NATIVE",
+          "method": "Q_ONLY_FIXED_T_P",
+          "kind": "FIXED_T_Q_CAPACITY",
+          "separation_q_kgkg": 0.0007298980948120858
+        }
+      ],
+      "certificate_kinds": {
+        "JOINT_T_BOX_FIXED_P_RH_DUAL": 30,
+        "JOINT_BOX_Q_CAPACITY": 3,
+        "FIXED_T_Q_CAPACITY": 3
+      },
+      "bounds_numerics": "FLOAT64_WITH_DECLARED_GUARDS_NOT_DIRECTED_ROUNDING_INTERVAL_ARITHMETIC",
+      "pressure_input_changed": false,
+      "independent_accuracy": "NOT_ASSESSED",
+      "operational_ready": false
+    },
+    "wall_seconds": 33.10239040600001,
+    "CPU_seconds": 33.086068532,
+    "peak_RSS_KiB": 129092
+  },
+  "frozen_regressions": {
+    "counts": {
+      "EXACT_DEFINED_OPERATORS": 727,
+      "CERTIFIED_INFEASIBLE": 5
+    },
+    "strict_states_reused_in_all_three_C2_modes": 727,
+    "day_mode_ledgers_checked": 2196,
+    "blocked_dates": [
+      "2013-01-08",
+      "2013-01-19",
+      "2013-01-20",
+      "2013-01-26",
+      "2014-12-02"
+    ],
+    "records_per_mode_with_boundaries": 732,
+    "unique_dates": 731,
+    "core_year_days": 730,
+    "mode_summaries": {
+      "HARD_Q_SOFT_RH": {
+        "total": 732,
+        "counts": {
+          "EXACT_SOURCE_PRESERVED": 727,
+          "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY": 4,
+          "CERTIFIED_HARD_CONSTRAINTS_INFEASIBLE": 1
+        },
+        "physically_valid_candidates": 731,
+        "source_modified_candidates": 4,
+        "budget_status_counts": {
+          "NO_SOURCE_CORRECTION_NEEDED": 727,
+          "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED": 4,
+          "NO_VALID_CANDIDATE": 1
+        },
+        "independent_accuracy": "NOT_TESTED",
+        "operational_ready": false,
+        "huss": {
+          "count": 731,
+          "max_abs_delta": 3.2959746043559335e-17,
+          "mean_abs_delta": 4.648869068999405e-18,
+          "unit": "kg/kg"
+        },
+        "hurs": {
+          "count": 731,
+          "max_abs_delta": 10.663766991200816,
+          "mean_abs_delta": 0.03734848592752325,
+          "unit": "%"
+        }
+      },
+      "HARD_RH_SOFT_Q": {
+        "total": 732,
+        "counts": {
+          "EXACT_SOURCE_PRESERVED": 727,
+          "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY": 5
+        },
+        "physically_valid_candidates": 732,
+        "source_modified_candidates": 5,
+        "budget_status_counts": {
+          "NO_SOURCE_CORRECTION_NEEDED": 727,
+          "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED": 5
+        },
+        "independent_accuracy": "NOT_TESTED",
+        "operational_ready": false,
+        "huss": {
+          "count": 732,
+          "max_abs_delta": 0.00048553005208017315,
+          "mean_abs_delta": 2.027503449829764e-06,
+          "unit": "kg/kg"
+        },
+        "hurs": {
+          "count": 732,
+          "max_abs_delta": 2.5034030912252092e-05,
+          "mean_abs_delta": 3.419970341167114e-08,
+          "unit": "%"
+        }
+      },
+      "BOTH_SOFT": {
+        "total": 732,
+        "counts": {
+          "EXACT_SOURCE_PRESERVED": 727,
+          "LOCAL_PHYSICAL_PROJECTION_RESEARCH_ONLY": 5
+        },
+        "physically_valid_candidates": 732,
+        "source_modified_candidates": 5,
+        "budget_status_counts": {
+          "NO_SOURCE_CORRECTION_NEEDED": 727,
+          "PROVISIONAL_CORRECTION_BUDGET_NOT_ESTABLISHED": 5
+        },
+        "independent_accuracy": "NOT_TESTED",
+        "operational_ready": false,
+        "huss": {
+          "count": 732,
+          "max_abs_delta": 0.00043637203636634394,
+          "mean_abs_delta": 1.9141248596688893e-06,
+          "unit": "kg/kg"
+        },
+        "hurs": {
+          "count": 732,
+          "max_abs_delta": 0.7230854673348261,
+          "mean_abs_delta": 0.0022163651205803,
+          "unit": "%"
+        }
+      }
+    },
+    "working_tree_dirty_metadata": true,
+    "code_hashes_match": true,
+    "raw_T_p_q_omitted_in_compact_regression_artifact": true,
+    "validation_scope": "CI_REGENERATED_AND_VALIDATED_STATES; AUDIT_CHECKS_LEDGERS_HASHES_DATES_DONORS_NOT_RAW_727_ARRAYS",
+    "wall_seconds": 112.93838762300001,
+    "CPU_seconds": 122.445109777,
+    "peak_RSS_KiB": 233112
+  },
+  "C2_optimizer_termination": {
+    "counts": {
+      "modified_cases": 33,
+      "trials": 99,
+      "successful_trials": 80,
+      "iteration_limit_trials": 19
+    },
+    "cases_with_no_successful_soft_trial": [
+      {
+        "case_id": "CONTROL_Q90CAP_RH20|DE|2021-08-01|P1_ISOTHERMAL",
+        "trials": [
+          {
+            "stage": "SOFT_SOURCE_PROJECTION",
+            "solver_success": false,
+            "iterations": 180,
+            "message": "Iteration limit reached"
+          },
+          {
+            "stage": "SOFT_SOURCE_PROJECTION",
+            "solver_success": false,
+            "iterations": 180,
+            "message": "Iteration limit reached"
+          },
+          {
+            "stage": "SOFT_SOURCE_PROJECTION",
+            "solver_success": false,
+            "iterations": 180,
+            "message": "Iteration limit reached"
+          }
+        ],
+        "objective": {
+          "data_metric": 24.46284649961772,
+          "shape_unweighted": 1.5618492304551783,
+          "shape_weighted": 0.015618492304551784,
+          "total": 24.47846499192227
+        }
+      },
+      {
+        "case_id": "CONTROL_Q90CAP_RH20|DE|2021-08-01|P2_NATIVE",
+        "trials": [
+          {
+            "stage": "SOFT_SOURCE_PROJECTION",
+            "solver_success": false,
+            "iterations": 180,
+            "message": "Iteration limit reached"
+          },
+          {
+            "stage": "SOFT_SOURCE_PROJECTION",
+            "solver_success": false,
+            "iterations": 180,
+            "message": "Iteration limit reached"
+          },
+          {
+            "stage": "SOFT_SOURCE_PROJECTION",
+            "solver_success": false,
+            "iterations": 180,
+            "message": "Iteration limit reached"
+          }
+        ],
+        "objective": {
+          "data_metric": 24.46284636792512,
+          "shape_unweighted": 1.5618579025602193,
+          "shape_weighted": 0.015618579025602193,
+          "total": 24.478464946950723
+        }
+      },
+      {
+        "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P1_ISOTHERMAL",
+        "trials": [
+          {
+            "stage": "SOFT_SOURCE_PROJECTION",
+            "solver_success": false,
+            "iterations": 180,
+            "message": "Iteration limit reached"
+          },
+          {
+            "stage": "SOFT_SOURCE_PROJECTION",
+            "solver_success": false,
+            "iterations": 180,
+            "message": "Iteration limit reached"
+          },
+          {
+            "stage": "SOFT_SOURCE_PROJECTION",
+            "solver_success": false,
+            "iterations": 180,
+            "message": "Iteration limit reached"
+          }
+        ],
+        "objective": {
+          "data_metric": 5.206140414269176,
+          "shape_unweighted": 0.8845540496889039,
+          "shape_weighted": 0.00884554049688904,
+          "total": 5.214985954766065
+        }
+      },
+      {
+        "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P1_LAPSE_0065",
+        "trials": [
+          {
+            "stage": "SOFT_SOURCE_PROJECTION",
+            "solver_success": false,
+            "iterations": 180,
+            "message": "Iteration limit reached"
+          },
+          {
+            "stage": "SOFT_SOURCE_PROJECTION",
+            "solver_success": false,
+            "iterations": 180,
+            "message": "Iteration limit reached"
+          },
+          {
+            "stage": "SOFT_SOURCE_PROJECTION",
+            "solver_success": false,
+            "iterations": 180,
+            "message": "Iteration limit reached"
+          }
+        ],
+        "objective": {
+          "data_metric": 5.2069662768778935,
+          "shape_unweighted": 0.884544880567272,
+          "shape_weighted": 0.00884544880567272,
+          "total": 5.215811725683566
+        }
+      },
+      {
+        "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P2_NATIVE",
+        "trials": [
+          {
+            "stage": "SOFT_SOURCE_PROJECTION",
+            "solver_success": false,
+            "iterations": 180,
+            "message": "Iteration limit reached"
+          },
+          {
+            "stage": "SOFT_SOURCE_PROJECTION",
+            "solver_success": false,
+            "iterations": 180,
+            "message": "Iteration limit reached"
+          },
+          {
+            "stage": "SOFT_SOURCE_PROJECTION",
+            "solver_success": false,
+            "iterations": 180,
+            "message": "Iteration limit reached"
+          }
+        ],
+        "objective": {
+          "data_metric": 5.206366808580134,
+          "shape_unweighted": 0.8834193508468001,
+          "shape_weighted": 0.008834193508468001,
+          "total": 5.215201002088602
+        }
+      }
+    ],
+    "physical_feasibility_does_not_establish_local_optimality": true,
+    "selected_trial_identity_not_recorded_in_frozen_C2": true
+  },
+  "original_local_vs_CI": {
+    "input_differences": {
+      "q_prior_different": 18
+    },
+    "max_prior_q_difference_kgkg": 1.734723475976807e-18,
+    "daily_targets_and_pressure_trajectories_numerically_identical": true,
+    "status_differences": [],
+    "by_method": {
+      "STRICT_JOINT_T_Q_FIXED_P": {
+        "states": 30,
+        "different_arrays": 23,
+        "max_T_K": 5.684341886080801e-13,
+        "max_p_Pa": 0.0,
+        "max_q_gkg": 8.396061623727746e-13,
+        "max_achieved_q_mean_gkg": 5.204170427930421e-15,
+        "max_achieved_RH_mean_pp": 2.1316282072803006e-13
+      },
+      "Q_ONLY_FIXED_T_P": {
+        "states": 60,
+        "different_arrays": 25,
+        "max_T_K": 0.0,
+        "max_p_Pa": 0.0,
+        "max_q_gkg": 3.469446951953614e-15,
+        "max_achieved_q_mean_gkg": 3.469446951953614e-15,
+        "max_achieved_RH_mean_pp": 2.842170943040401e-14
+      },
+      "C2_BOTH_SOFT_STRICT_FIRST": {
+        "states": 63,
+        "different_arrays": 56,
+        "max_T_K": 0.015885579203484212,
+        "max_p_Pa": 0.0,
+        "max_q_gkg": 0.03367576975272894,
+        "max_achieved_q_mean_gkg": 3.403121266731812e-05,
+        "max_achieved_RH_mean_pp": 0.00021924301556452974
+      }
+    }
+  },
+  "identical_CI_input_repeat": {
+    "scope": "POST_HOC_NUMERICAL_REPLAY_OF_ALL_PREREGISTERED_CI_INPUTS_NO_TUNING_OR_NEW_HOLDOUT",
+    "status_differences": [],
+    "method_differences": {
+      "STRICT_JOINT_T_Q_FIXED_P": {
+        "states": 30,
+        "different_arrays": 16,
+        "max_T_K": 5.684341886080801e-13,
+        "max_p_Pa": 0.0,
+        "max_q_gkg": 8.396061623727746e-13,
+        "max_achieved_q_mean_gkg": 5.204170427930421e-15,
+        "max_achieved_RH_mean_pp": 2.1316282072803006e-13,
+        "max_objective_difference": 0.0
+      },
+      "Q_ONLY_FIXED_T_P": {
+        "states": 60,
+        "different_arrays": 13,
+        "max_T_K": 0.0,
+        "max_p_Pa": 0.0,
+        "max_q_gkg": 3.469446951953614e-15,
+        "max_achieved_q_mean_gkg": 3.469446951953614e-15,
+        "max_achieved_RH_mean_pp": 2.842170943040401e-14,
+        "max_objective_difference": 0.0
+      },
+      "C2_BOTH_SOFT_STRICT_FIRST": {
+        "states": 63,
+        "different_arrays": 49,
+        "max_T_K": 0.013363616995548,
+        "max_p_Pa": 0.0,
+        "max_q_gkg": 0.026203202125611204,
+        "max_achieved_q_mean_gkg": 3.990596069325565e-05,
+        "max_achieved_RH_mean_pp": 0.0006901841226714112,
+        "max_objective_difference": 1.661421267229457e-07
+      }
+    },
+    "independent_audit": {
+      "status": "PASS_INDEPENDENT_SCALAR_REPLAY",
+      "revalidated_states": 153,
+      "all_returned_states_revalidated": true,
+      "q_only_KKT_and_objectives_replayed": 60,
+      "strict_states_reused_by_C2": 30,
+      "infeasibility_checks": [
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|AT|2021-02-01|P1_ISOTHERMAL",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 59.132884969243094,
+          "RH_mean_lower_pp": 79.1328849692431,
+          "RH_mean_upper_pp": 104.3336500341475
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|AT|2021-02-01|P1_LAPSE_0065",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 59.13298899409166,
+          "RH_mean_lower_pp": 79.13298899409166,
+          "RH_mean_upper_pp": 104.33376849869295
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|AT|2021-02-01|P2_NATIVE",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 59.132980945052864,
+          "RH_mean_lower_pp": 79.13298094505286,
+          "RH_mean_upper_pp": 104.33375675864232
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|AT|2021-08-01|P1_ISOTHERMAL",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 58.50841089735381,
+          "RH_mean_lower_pp": 78.50841089735381,
+          "RH_mean_upper_pp": 100.42255245969858
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|AT|2021-08-01|P1_LAPSE_0065",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 58.50850121415823,
+          "RH_mean_lower_pp": 78.50850121415823,
+          "RH_mean_upper_pp": 100.42265772020372
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|AT|2021-08-01|P2_NATIVE",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 58.50854710373393,
+          "RH_mean_lower_pp": 78.50854710373393,
+          "RH_mean_upper_pp": 100.42268480833356
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|DE|2021-02-01|P1_ISOTHERMAL",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 56.65070926224779,
+          "RH_mean_lower_pp": 76.65070926224779,
+          "RH_mean_upper_pp": 110.33270664222955
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|DE|2021-02-01|P1_LAPSE_0065",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 56.65070929958358,
+          "RH_mean_lower_pp": 76.65070929958358,
+          "RH_mean_upper_pp": 110.33270667812077
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|DE|2021-02-01|P2_NATIVE",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 56.65070926224779,
+          "RH_mean_lower_pp": 76.65070926224779,
+          "RH_mean_upper_pp": 110.33270664222957
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|DE|2021-08-01|P1_ISOTHERMAL",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 60.12280654909006,
+          "RH_mean_lower_pp": 80.12280654909006,
+          "RH_mean_upper_pp": 101.02466714934782
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|DE|2021-08-01|P1_LAPSE_0065",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 60.122806579573165,
+          "RH_mean_lower_pp": 80.12280657957317,
+          "RH_mean_upper_pp": 101.02466717923774
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|DE|2021-08-01|P2_NATIVE",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 60.12280654909004,
+          "RH_mean_lower_pp": 80.12280654909004,
+          "RH_mean_upper_pp": 101.0246671493478
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P1_ISOTHERMAL",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 66.66719184736162,
+          "RH_mean_lower_pp": 86.66719184736162,
+          "RH_mean_upper_pp": 94.50017366859998
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P1_LAPSE_0065",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 66.6864719288776,
+          "RH_mean_lower_pp": 86.6864719288776,
+          "RH_mean_upper_pp": 94.5209553391341
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P2_NATIVE",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 66.67765574599727,
+          "RH_mean_lower_pp": 86.67765574599727,
+          "RH_mean_upper_pp": 94.5119608789421
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-08-01|P1_ISOTHERMAL",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 58.1747493273367,
+          "RH_mean_lower_pp": 78.1747493273367,
+          "RH_mean_upper_pp": 97.89832347329063
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-08-01|P1_LAPSE_0065",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 58.19197030644882,
+          "RH_mean_lower_pp": 78.19197030644882,
+          "RH_mean_upper_pp": 97.91883143432938
+        },
+        {
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-08-01|P2_NATIVE",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 58.194000019575,
+          "RH_mean_lower_pp": 78.194000019575,
+          "RH_mean_upper_pp": 97.92352527647023
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-08|P1_ISOTHERMAL",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 11.41496860929653,
+          "RH_mean_lower_pp": 26.321583850398785,
+          "RH_mean_upper_pp": 48.79689967683628
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-08|P1_LAPSE_0065",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 11.41490820535968,
+          "RH_mean_lower_pp": 26.321617800017766,
+          "RH_mean_upper_pp": 48.79696008077313
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-08|P2_NATIVE",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 11.414867826209843,
+          "RH_mean_lower_pp": 26.321632794341888,
+          "RH_mean_upper_pp": 48.79700045992297
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-19|P1_ISOTHERMAL",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 4.275046976261777,
+          "RH_mean_lower_pp": 34.59738391684165,
+          "RH_mean_upper_pp": 60.836601583308536
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-19|P1_LAPSE_0065",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 4.274975592588305,
+          "RH_mean_lower_pp": 34.59743197468398,
+          "RH_mean_upper_pp": 60.83667296698201
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-19|P2_NATIVE",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 4.274942032365928,
+          "RH_mean_lower_pp": 34.597434465999484,
+          "RH_mean_upper_pp": 60.836706527204385
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-20|P1_ISOTHERMAL",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 5.05069734167364,
+          "RH_mean_lower_pp": 30.870593350164757,
+          "RH_mean_upper_pp": 56.34574507165644
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-20|P1_LAPSE_0065",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 5.050631836265175,
+          "RH_mean_lower_pp": 30.870635647804846,
+          "RH_mean_upper_pp": 56.3458105770649
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-20|P2_NATIVE",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 5.050591256794242,
+          "RH_mean_lower_pp": 30.87064095425612,
+          "RH_mean_upper_pp": 56.345851156535836
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-26|P1_ISOTHERMAL",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 8.450660062709233,
+          "RH_mean_lower_pp": 26.030760645516033,
+          "RH_mean_upper_pp": 50.28892962845288
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-26|P1_LAPSE_0065",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 8.450598670814074,
+          "RH_mean_lower_pp": 26.030794735033105,
+          "RH_mean_upper_pp": 50.288991020348035
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-26|P2_NATIVE",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_T_BOX_FIXED_P_RH_DUAL",
+          "separation_RH_pp": 8.450557340940811,
+          "RH_mean_lower_pp": 26.03081057574432,
+          "RH_mean_upper_pp": 50.2890323502213
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2014-12-02|P1_ISOTHERMAL",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_BOX_Q_CAPACITY",
+          "separation_q_kgkg": 3.326527239545969e-05
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2014-12-02|P1_ISOTHERMAL",
+          "method": "Q_ONLY_FIXED_T_P",
+          "kind": "FIXED_T_Q_CAPACITY",
+          "separation_q_kgkg": 0.0007298891371062587
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2014-12-02|P1_LAPSE_0065",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_BOX_Q_CAPACITY",
+          "separation_q_kgkg": 3.3274486757958396e-05
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2014-12-02|P1_LAPSE_0065",
+          "method": "Q_ONLY_FIXED_T_P",
+          "kind": "FIXED_T_Q_CAPACITY",
+          "separation_q_kgkg": 0.0007298974771620123
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2014-12-02|P2_NATIVE",
+          "method": "STRICT_JOINT_T_Q_FIXED_P",
+          "kind": "JOINT_BOX_Q_CAPACITY",
+          "separation_q_kgkg": 3.327504629211005e-05
+        },
+        {
+          "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2014-12-02|P2_NATIVE",
+          "method": "Q_ONLY_FIXED_T_P",
+          "kind": "FIXED_T_Q_CAPACITY",
+          "separation_q_kgkg": 0.0007298980948120858
+        }
+      ],
+      "certificate_kinds": {
+        "JOINT_T_BOX_FIXED_P_RH_DUAL": 30,
+        "JOINT_BOX_Q_CAPACITY": 3,
+        "FIXED_T_Q_CAPACITY": 3
+      },
+      "bounds_numerics": "FLOAT64_WITH_DECLARED_GUARDS_NOT_DIRECTED_ROUNDING_INTERVAL_ARITHMETIC",
+      "pressure_input_changed": false,
+      "independent_accuracy": "NOT_ASSESSED",
+      "operational_ready": false
+    },
+    "wall_seconds": 18.28863647399976,
+    "CPU_seconds": 18.282545744,
+    "peak_RSS_KiB": 93124,
+    "runtime": {
+      "python": "3.12.14",
+      "numpy": "2.3.5",
+      "scipy": "1.17.0",
+      "platform": "Linux-6.18.55-x86_64-with-glibc2.39"
+    },
+    "all_189_results": 189
+  },
+  "quality": {
+    "code_correctness": "PASS_IN_TESTED_SCOPE",
+    "physical_admissibility": "CONDITIONAL_DISCRETE_STATES_VALIDATED",
+    "C2_local_optimality": "NOT_ESTABLISHED_FOR_ALL_RETURNED_CANDIDATES",
+    "independent_accuracy": "NOT_QUALIFIED_NO_NEW_HOLDOUT",
+    "operational_readiness": "NOT_QUALIFIED"
+  },
+  "source_semantics_fully_verified": false,
+  "C2_correction_budget": "NOT_ESTABLISHED",
+  "hydrostatic_reintegration_after_T_q_changes": false,
+  "B4_qualified": false,
+  "native_future_CanESM5_pressure_recovered": false,
+  "new_station_observations_opened": false,
+  "engine_or_scientific_parameters_modified": false,
+  "production_epw_ready": false,
+  "merge_main": false
+}
