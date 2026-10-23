@@ -1,0 +1,871 @@
+{
+  "phase": "P9.3B3_CD3_BOUNDARY_DERIVATIVES_AND_EMPIRICAL_PROFILE_STABILITY",
+  "protocol_sha256": "3f10b653a4cc9a66cc8ef8554b9cb9ea32c2ace20c7433286f0b19cfda8b7ec4",
+  "preregistration_commit": "3a2c07fa66688a55684d118d1105392dd3f9a727",
+  "git_head": "db742478d68a6091133767966218022da9ab1fc8",
+  "code_sha256": {
+    "p9_3b3_cd3_diagnostics.py": "2386ca6004eb9e96313bd6308fa507c00c3cef7e77669c0c8449c2e5c3dec638",
+    "p9_3b3_cd3_run.py": "c98801f58ce350df9ca9e36a0903852efdc90fbd593cb3057ed8dee11c6173a0",
+    "p9_3b3_cd3_stability.py": "4a97e360748dbde2de84962abbd9b0d20a69ec8dbb4800a8aa08b067d7bc88a2"
+  },
+  "protected_files_unchanged": 154,
+  "case_count": 63,
+  "strict_witnesses_preserved": 30,
+  "archived_endpoint_FD": {
+    "endpoints": 396,
+    "diagnostic_errors": 0,
+    "reports": 792,
+    "passed_reports": 792,
+    "checked_columns": 36432,
+    "unavailable_columns": 0,
+    "base_roundoff_reports": 122,
+    "max_objective_relative_error": 8.056312492121798e-10,
+    "max_Jacobian_relative_error": 1.1222278994971191e-08
+  },
+  "new_endpoint_FD": {
+    "endpoints": 396,
+    "diagnostic_errors": 0,
+    "reports": 792,
+    "passed_reports": 792,
+    "checked_columns": 36432,
+    "unavailable_columns": 0,
+    "base_roundoff_reports": 126,
+    "max_objective_relative_error": 7.472976681910382e-10,
+    "max_Jacobian_relative_error": 1.1380865805321605e-08
+  },
+  "derivative_check_closed": true,
+  "new_trial_count": 396,
+  "new_physical_status_counts": {
+    "VALIDATED": 396
+  },
+  "new_solver_status_counts": {
+    "0": 396
+  },
+  "new_solver_success_count": 396,
+  "new_optimizer_CPU_seconds": 57.13477519900013,
+  "new_optimizer_wall_seconds": 57.144106547000206,
+  "new_nfev": 40226,
+  "empirical_profile_spreads": {
+    "SCALED_X_ONLY_ARCHIVED_CI_AND_NEW": [
+      {
+        "relative_delta": 1e-10,
+        "cases": 33,
+        "cases_with_multiple_endpoints": 30,
+        "max_T_K": {
+          "value": 0.0027276836658529646,
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-08-01|P1_ISOTHERMAL",
+          "endpoint_count": 11
+        },
+        "max_q_gkg": {
+          "value": 0.0028309896603284646,
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P1_LAPSE_0065",
+          "endpoint_count": 8
+        },
+        "max_RH_pp": {
+          "value": 0.05666359298887613,
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P1_LAPSE_0065",
+          "endpoint_count": 8
+        },
+        "max_e_Pa": {
+          "value": 0.37185779006463804,
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P1_LAPSE_0065",
+          "endpoint_count": 8
+        }
+      },
+      {
+        "relative_delta": 1e-08,
+        "cases": 33,
+        "cases_with_multiple_endpoints": 33,
+        "max_T_K": {
+          "value": 0.021533878385525895,
+          "case_id": "CONTROL_Q90CAP_RH20|AT|2021-08-01|P2_NATIVE",
+          "endpoint_count": 11
+        },
+        "max_q_gkg": {
+          "value": 0.009964561418492668,
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P1_LAPSE_0065",
+          "endpoint_count": 15
+        },
+        "max_RH_pp": {
+          "value": 0.1988817089187762,
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P1_LAPSE_0065",
+          "endpoint_count": 15
+        },
+        "max_e_Pa": {
+          "value": 1.3051716077611104,
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P1_LAPSE_0065",
+          "endpoint_count": 15
+        }
+      },
+      {
+        "relative_delta": 1e-06,
+        "cases": 33,
+        "cases_with_multiple_endpoints": 33,
+        "max_T_K": {
+          "value": 0.021533878385525895,
+          "case_id": "CONTROL_Q90CAP_RH20|AT|2021-08-01|P2_NATIVE",
+          "endpoint_count": 11
+        },
+        "max_q_gkg": {
+          "value": 0.009964561418492668,
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P1_LAPSE_0065",
+          "endpoint_count": 15
+        },
+        "max_RH_pp": {
+          "value": 0.1988817089187762,
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P1_LAPSE_0065",
+          "endpoint_count": 15
+        },
+        "max_e_Pa": {
+          "value": 1.3051716077611104,
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P1_LAPSE_0065",
+          "endpoint_count": 15
+        }
+      },
+      {
+        "relative_delta": 0.0001,
+        "cases": 33,
+        "cases_with_multiple_endpoints": 33,
+        "max_T_K": {
+          "value": 1.5006090048836995,
+          "case_id": "CONTROL_Q90CAP_RH20|AT|2021-02-01|P1_LAPSE_0065",
+          "endpoint_count": 6
+        },
+        "max_q_gkg": {
+          "value": 14.460007376305786,
+          "case_id": "CONTROL_Q90CAP_RH20|DE|2021-08-01|P1_LAPSE_0065",
+          "endpoint_count": 12
+        },
+        "max_RH_pp": {
+          "value": 93.97589667577924,
+          "case_id": "CONTROL_Q90CAP_RH20|DE|2021-08-01|P1_LAPSE_0065",
+          "endpoint_count": 12
+        },
+        "max_e_Pa": {
+          "value": 2312.416406395657,
+          "case_id": "CONTROL_Q90CAP_RH20|DE|2021-08-01|P1_LAPSE_0065",
+          "endpoint_count": 12
+        }
+      }
+    ],
+    "ALL_ARCHIVED_VARIANTS_AND_NEW_X": [
+      {
+        "relative_delta": 1e-10,
+        "cases": 33,
+        "cases_with_multiple_endpoints": 30,
+        "max_T_K": {
+          "value": 0.002956575485029589,
+          "case_id": "CONTROL_Q90CAP_RH20|AT|2021-08-01|P2_NATIVE",
+          "endpoint_count": 15
+        },
+        "max_q_gkg": {
+          "value": 0.003139790614788751,
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P1_LAPSE_0065",
+          "endpoint_count": 11
+        },
+        "max_RH_pp": {
+          "value": 0.06266654586018205,
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P1_LAPSE_0065",
+          "endpoint_count": 11
+        },
+        "max_e_Pa": {
+          "value": 0.41125248197954534,
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P1_LAPSE_0065",
+          "endpoint_count": 11
+        }
+      },
+      {
+        "relative_delta": 1e-08,
+        "cases": 33,
+        "cases_with_multiple_endpoints": 33,
+        "max_T_K": {
+          "value": 0.02886134576880295,
+          "case_id": "CONTROL_Q90CAP_RH20|DE|2021-08-01|P2_NATIVE",
+          "endpoint_count": 18
+        },
+        "max_q_gkg": {
+          "value": 0.017600423805604448,
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P2_NATIVE",
+          "endpoint_count": 18
+        },
+        "max_RH_pp": {
+          "value": 0.3522242535468365,
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P2_NATIVE",
+          "endpoint_count": 18
+        },
+        "max_e_Pa": {
+          "value": 2.3114900701197314,
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P2_NATIVE",
+          "endpoint_count": 18
+        }
+      },
+      {
+        "relative_delta": 1e-06,
+        "cases": 33,
+        "cases_with_multiple_endpoints": 33,
+        "max_T_K": {
+          "value": 0.04630778183025086,
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P2_NATIVE",
+          "endpoint_count": 21
+        },
+        "max_q_gkg": {
+          "value": 0.17454452146176358,
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P2_NATIVE",
+          "endpoint_count": 21
+        },
+        "max_RH_pp": {
+          "value": 3.4787846639716236,
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P2_NATIVE",
+          "endpoint_count": 21
+        },
+        "max_e_Pa": {
+          "value": 22.82970614851763,
+          "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P2_NATIVE",
+          "endpoint_count": 21
+        }
+      },
+      {
+        "relative_delta": 0.0001,
+        "cases": 33,
+        "cases_with_multiple_endpoints": 33,
+        "max_T_K": {
+          "value": 1.5006090048836995,
+          "case_id": "CONTROL_Q90CAP_RH20|AT|2021-02-01|P1_LAPSE_0065",
+          "endpoint_count": 6
+        },
+        "max_q_gkg": {
+          "value": 14.46242446320034,
+          "case_id": "CONTROL_Q90CAP_RH20|DE|2021-08-01|P1_LAPSE_0065",
+          "endpoint_count": 18
+        },
+        "max_RH_pp": {
+          "value": 93.99146850952113,
+          "case_id": "CONTROL_Q90CAP_RH20|DE|2021-08-01|P1_LAPSE_0065",
+          "endpoint_count": 18
+        },
+        "max_e_Pa": {
+          "value": 2312.7995744748787,
+          "case_id": "CONTROL_Q90CAP_RH20|DE|2021-08-01|P1_LAPSE_0065",
+          "endpoint_count": 18
+        }
+      }
+    ]
+  },
+  "local_optimum_certified": false,
+  "global_optimum_certified": false,
+  "independent_accuracy": "NOT_QUALIFIED",
+  "operational_ready": false,
+  "B4_qualified": false,
+  "production_epw_ready": false,
+  "C2_correction_budget": "NOT_ESTABLISHED",
+  "source_semantics_fully_verified": false,
+  "default_solver_changed": false,
+  "main_merged": false,
+  "runtime": {
+    "python": "3.12.15",
+    "numpy": "2.3.5",
+    "scipy": "1.17.0"
+  },
+  "wall_seconds": 177.89867843699997,
+  "CPU_seconds": 177.867013248,
+  "peak_RSS_KiB_Linux": 286904,
+  "run_id": 40009910484,
+  "conclusion": "SUCCESS",
+  "implementation_commit": "db742478d68a6091133767966218022da9ab1fc8",
+  "completed_at_UTC": "2026-10-23T19:19:28Z",
+  "completed_at_Europe_Vienna": "2026-10-23T21:19:28+02:00",
+  "jobs": {
+    "120607311339": "SUCCESS",
+    "120607783168": "SUCCESS"
+  },
+  "tests": {
+    "B3": 345,
+    "P9_3A": 14,
+    "P9_2": 50,
+    "P9_3B2": 8,
+    "total": 417,
+    "canonical_absolute_DWD_pressure": "PASS"
+  },
+  "artifact_id": 12525289010,
+  "source_zip_sha256": "7d755dab6410fb4856cda52d99b4e0f55350635f38ff5ac5ff04e44af00f8ff8",
+  "source_zip_bytes": 4417272,
+  "independent_scalar_audit": {
+    "audited_cases": 63,
+    "audited_endpoints": 792,
+    "max_relative_original_F_scalar_error": 1.3322676295501878e-15,
+    "original_3_vs_all_12": [
+      {
+        "case_id": "CONTROL_Q90CAP_RH20|AT|2021-02-01|P1_ISOTHERMAL",
+        "original_3_min_F": 3.050675718163027,
+        "all_12_min_F": 3.0503449837174186,
+        "improvement": 0.0003307344456082717,
+        "relative_to_max1F": 0.00010842525923255069,
+        "max_T_difference_K": 1.1985365777018728,
+        "max_q_difference_gkg": 0.65373402896793,
+        "original_ice_nodes": 14,
+        "all_12_ice_nodes": 15,
+        "changed_phase_nodes": 1,
+        "best_original_start": "ORIGINAL_0",
+        "best_all_start": "PATTERN_0_Q_0.1"
+      },
+      {
+        "case_id": "CONTROL_Q90CAP_RH20|AT|2021-02-01|P1_LAPSE_0065",
+        "original_3_min_F": 3.050678682712337,
+        "all_12_min_F": 3.050347946095175,
+        "improvement": 0.0003307366171618753,
+        "relative_to_max1F": 0.00010842586583778396,
+        "max_T_difference_K": 1.1985365994220274,
+        "max_q_difference_gkg": 0.6535032093371067,
+        "original_ice_nodes": 14,
+        "all_12_ice_nodes": 15,
+        "changed_phase_nodes": 1,
+        "best_original_start": "ORIGINAL_0",
+        "best_all_start": "PATTERN_0_Q_0.1"
+      },
+      {
+        "case_id": "CONTROL_Q90CAP_RH20|AT|2021-02-01|P2_NATIVE",
+        "original_3_min_F": 3.050680066266374,
+        "all_12_min_F": 3.0503497237334303,
+        "improvement": 0.0003303425329437282,
+        "relative_to_max1F": 0.0001082966095243041,
+        "max_T_difference_K": 1.1985366124074517,
+        "max_q_difference_gkg": 0.6552269380059731,
+        "original_ice_nodes": 14,
+        "all_12_ice_nodes": 15,
+        "changed_phase_nodes": 1,
+        "best_original_start": "ORIGINAL_1",
+        "best_all_start": "PATTERN_0_Q_0.1"
+      },
+      {
+        "case_id": "CONTROL_Q90CAP_RH20|AT|2021-08-01|P1_ISOTHERMAL",
+        "original_3_min_F": 26.953147020054388,
+        "all_12_min_F": 26.953147019859244,
+        "improvement": 1.9514345694915392e-10,
+        "relative_to_max1F": 7.240099154483557e-12,
+        "max_T_difference_K": 0.00042217094636498587,
+        "max_q_difference_gkg": 9.833668922556993e-07,
+        "original_ice_nodes": 0,
+        "all_12_ice_nodes": 0,
+        "changed_phase_nodes": 0,
+        "best_original_start": "ORIGINAL_0",
+        "best_all_start": "PATTERN_2_Q_0.9"
+      },
+      {
+        "case_id": "CONTROL_Q90CAP_RH20|AT|2021-08-01|P1_LAPSE_0065",
+        "original_3_min_F": 26.953192533226847,
+        "all_12_min_F": 26.953192533021834,
+        "improvement": 2.050128955488617e-10,
+        "relative_to_max1F": 7.606256486970483e-12,
+        "max_T_difference_K": 0.0006598337110972352,
+        "max_q_difference_gkg": 3.73153441731236e-05,
+        "original_ice_nodes": 0,
+        "all_12_ice_nodes": 0,
+        "changed_phase_nodes": 0,
+        "best_original_start": "ORIGINAL_1",
+        "best_all_start": "PATTERN_2_Q_0.5"
+      },
+      {
+        "case_id": "CONTROL_Q90CAP_RH20|AT|2021-08-01|P2_NATIVE",
+        "original_3_min_F": 26.953244908819507,
+        "all_12_min_F": 26.953244908700615,
+        "improvement": 1.1889156326105876e-10,
+        "relative_to_max1F": 4.411029679869087e-12,
+        "max_T_difference_K": 0.001200733571465662,
+        "max_q_difference_gkg": 5.045495274184908e-06,
+        "original_ice_nodes": 0,
+        "all_12_ice_nodes": 0,
+        "changed_phase_nodes": 0,
+        "best_original_start": "ORIGINAL_0",
+        "best_all_start": "PATTERN_0_Q_0.1"
+      },
+      {
+        "case_id": "CONTROL_Q90CAP_RH20|DE|2021-02-01|P1_ISOTHERMAL",
+        "original_3_min_F": 1.965500051071786,
+        "all_12_min_F": 1.9655000510212797,
+        "improvement": 5.050626583624762e-11,
+        "relative_to_max1F": 2.5696395077682353e-11,
+        "max_T_difference_K": 0.0011651475714984372,
+        "max_q_difference_gkg": 0.0003927090445887682,
+        "original_ice_nodes": 16,
+        "all_12_ice_nodes": 16,
+        "changed_phase_nodes": 0,
+        "best_original_start": "ORIGINAL_2",
+        "best_all_start": "PATTERN_0_Q_0.5"
+      },
+      {
+        "case_id": "CONTROL_Q90CAP_RH20|DE|2021-02-01|P1_LAPSE_0065",
+        "original_3_min_F": 1.9655000517047763,
+        "all_12_min_F": 1.9655000516187198,
+        "improvement": 8.605649526316483e-11,
+        "relative_to_max1F": 4.3783512085024675e-11,
+        "max_T_difference_K": 0.0009276365062191871,
+        "max_q_difference_gkg": 0.00018156663291499057,
+        "original_ice_nodes": 16,
+        "all_12_ice_nodes": 16,
+        "changed_phase_nodes": 0,
+        "best_original_start": "ORIGINAL_2",
+        "best_all_start": "PATTERN_2_Q_0.9"
+      },
+      {
+        "case_id": "CONTROL_Q90CAP_RH20|DE|2021-02-01|P2_NATIVE",
+        "original_3_min_F": 1.9655000510718588,
+        "all_12_min_F": 1.9655000510212746,
+        "improvement": 5.058420349257631e-11,
+        "relative_to_max1F": 2.5736047916301367e-11,
+        "max_T_difference_K": 0.0011651473868141693,
+        "max_q_difference_gkg": 0.00039270886314536624,
+        "original_ice_nodes": 16,
+        "all_12_ice_nodes": 16,
+        "changed_phase_nodes": 0,
+        "best_original_start": "ORIGINAL_2",
+        "best_all_start": "PATTERN_0_Q_0.5"
+      },
+      {
+        "case_id": "CONTROL_Q90CAP_RH20|DE|2021-08-01|P1_ISOTHERMAL",
+        "original_3_min_F": 24.478464912510898,
+        "all_12_min_F": 24.47846491245654,
+        "improvement": 5.4356519285647664e-11,
+        "relative_to_max1F": 2.2205852973233975e-12,
+        "max_T_difference_K": 0.0007600720957157137,
+        "max_q_difference_gkg": 5.178375610259689e-08,
+        "original_ice_nodes": 0,
+        "all_12_ice_nodes": 0,
+        "changed_phase_nodes": 0,
+        "best_original_start": "ORIGINAL_1",
+        "best_all_start": "PATTERN_1_Q_0.9"
+      },
+      {
+        "case_id": "CONTROL_Q90CAP_RH20|DE|2021-08-01|P1_LAPSE_0065",
+        "original_3_min_F": 24.478464924202466,
+        "all_12_min_F": 24.478464924202466,
+        "improvement": 0.0,
+        "relative_to_max1F": 0.0,
+        "max_T_difference_K": 0.0,
+        "max_q_difference_gkg": 0.0,
+        "original_ice_nodes": 0,
+        "all_12_ice_nodes": 0,
+        "changed_phase_nodes": 0,
+        "best_original_start": "ORIGINAL_0",
+        "best_all_start": "ORIGINAL_0"
+      },
+      {
+        "case_id": "CONTROL_Q90CAP_RH20|DE|2021-08-01|P2_NATIVE",
+        "original_3_min_F": 24.478464912486924,
+        "all_12_min_F": 24.478464912486924,
+        "improvement": 0.0,
+        "relative_to_max1F": 0.0,
+        "max_T_difference_K": 0.0,
+        "max_q_difference_gkg": 0.0,
+        "original_ice_nodes": 0,
+        "all_12_ice_nodes": 0,
+        "changed_phase_nodes": 0,
+        "best_original_start": "ORIGINAL_0",
+        "best_all_start": "ORIGINAL_0"
+      },
+      {
+        "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P1_ISOTHERMAL",
+        "original_3_min_F": 5.214985837401661,
+        "all_12_min_F": 5.2149858371321285,
+        "improvement": 2.695328404911379e-10,
+        "relative_to_max1F": 5.168429002663635e-11,
+        "max_T_difference_K": 0.0008734899509477145,
+        "max_q_difference_gkg": 0.00015644808027889812,
+        "original_ice_nodes": 3,
+        "all_12_ice_nodes": 3,
+        "changed_phase_nodes": 0,
+        "best_original_start": "ORIGINAL_1",
+        "best_all_start": "PATTERN_1_Q_0.5"
+      },
+      {
+        "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P1_LAPSE_0065",
+        "original_3_min_F": 5.215811724313319,
+        "all_12_min_F": 5.215811723867279,
+        "improvement": 4.460396496597241e-10,
+        "relative_to_max1F": 8.551682331988138e-11,
+        "max_T_difference_K": 0.0005365460552866352,
+        "max_q_difference_gkg": 0.0024647942497833288,
+        "original_ice_nodes": 3,
+        "all_12_ice_nodes": 3,
+        "changed_phase_nodes": 0,
+        "best_original_start": "ORIGINAL_1",
+        "best_all_start": "PATTERN_0_Q_0.1"
+      },
+      {
+        "case_id": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P2_NATIVE",
+        "original_3_min_F": 5.215200934587531,
+        "all_12_min_F": 5.215200934362512,
+        "improvement": 2.2501911445260703e-10,
+        "relative_to_max1F": 4.314677752298581e-11,
+        "max_T_difference_K": 0.000784528088559,
+        "max_q_difference_gkg": 0.0006743186653571098,
+        "original_ice_nodes": 3,
+        "all_12_ice_nodes": 3,
+        "changed_phase_nodes": 0,
+        "best_original_start": "ORIGINAL_1",
+        "best_all_start": "PATTERN_0_Q_0.1"
+      },
+      {
+        "case_id": "CONTROL_Q90CAP_RH20|CH|2021-08-01|P1_ISOTHERMAL",
+        "original_3_min_F": 10.577499077248373,
+        "all_12_min_F": 10.577499076368685,
+        "improvement": 8.79687434007792e-10,
+        "relative_to_max1F": 8.316591924579904e-11,
+        "max_T_difference_K": 0.0012956089154272377,
+        "max_q_difference_gkg": 4.478706725457984e-16,
+        "original_ice_nodes": 0,
+        "all_12_ice_nodes": 0,
+        "changed_phase_nodes": 0,
+        "best_original_start": "ORIGINAL_2",
+        "best_all_start": "PATTERN_0_Q_0.9"
+      },
+      {
+        "case_id": "CONTROL_Q90CAP_RH20|CH|2021-08-01|P1_LAPSE_0065",
+        "original_3_min_F": 10.579866193869979,
+        "all_12_min_F": 10.579866193340576,
+        "improvement": 5.294022997759384e-10,
+        "relative_to_max1F": 5.003865739901012e-11,
+        "max_T_difference_K": 0.0012049492600567646,
+        "max_q_difference_gkg": 1.0237041198769116e-15,
+        "original_ice_nodes": 0,
+        "all_12_ice_nodes": 0,
+        "changed_phase_nodes": 0,
+        "best_original_start": "ORIGINAL_0",
+        "best_all_start": "PATTERN_0_Q_0.1"
+      },
+      {
+        "case_id": "CONTROL_Q90CAP_RH20|CH|2021-08-01|P2_NATIVE",
+        "original_3_min_F": 10.579731705260707,
+        "all_12_min_F": 10.579731704626523,
+        "improvement": 6.34184260661641e-10,
+        "relative_to_max1F": 5.99433216613907e-11,
+        "max_T_difference_K": 0.0012108657695648617,
+        "max_q_difference_gkg": 3.506847590095674e-10,
+        "original_ice_nodes": 0,
+        "all_12_ice_nodes": 0,
+        "changed_phase_nodes": 0,
+        "best_original_start": "ORIGINAL_0",
+        "best_all_start": "PATTERN_0_Q_0.1"
+      },
+      {
+        "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-08|P1_ISOTHERMAL",
+        "original_3_min_F": 0.10333651386271367,
+        "all_12_min_F": 0.1033365138400139,
+        "improvement": 2.2699772617151837e-11,
+        "relative_to_max1F": 2.2699772617151837e-11,
+        "max_T_difference_K": 0.00023282261599888443,
+        "max_q_difference_gkg": 5.315977553445837e-07,
+        "original_ice_nodes": 14,
+        "all_12_ice_nodes": 14,
+        "changed_phase_nodes": 0,
+        "best_original_start": "ORIGINAL_2",
+        "best_all_start": "PATTERN_0_Q_0.1"
+      },
+      {
+        "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-08|P1_LAPSE_0065",
+        "original_3_min_F": 0.10333543841848535,
+        "all_12_min_F": 0.10333543839637897,
+        "improvement": 2.2106372288277498e-11,
+        "relative_to_max1F": 2.2106372288277498e-11,
+        "max_T_difference_K": 0.00023046123396852636,
+        "max_q_difference_gkg": 5.124852812629123e-07,
+        "original_ice_nodes": 14,
+        "all_12_ice_nodes": 14,
+        "changed_phase_nodes": 0,
+        "best_original_start": "ORIGINAL_2",
+        "best_all_start": "PATTERN_0_Q_0.1"
+      },
+      {
+        "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-08|P2_NATIVE",
+        "original_3_min_F": 0.10333530177237712,
+        "all_12_min_F": 0.10333530174969943,
+        "improvement": 2.2677693056749604e-11,
+        "relative_to_max1F": 2.2677693056749604e-11,
+        "max_T_difference_K": 0.00023254524614912953,
+        "max_q_difference_gkg": 5.390561233064445e-07,
+        "original_ice_nodes": 14,
+        "all_12_ice_nodes": 14,
+        "changed_phase_nodes": 0,
+        "best_original_start": "ORIGINAL_2",
+        "best_all_start": "PATTERN_0_Q_0.1"
+      },
+      {
+        "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-19|P1_ISOTHERMAL",
+        "original_3_min_F": 0.04063049578408845,
+        "all_12_min_F": 0.04063049563130286,
+        "improvement": 1.5278558973541578e-10,
+        "relative_to_max1F": 1.5278558973541578e-10,
+        "max_T_difference_K": 0.000470437434842097,
+        "max_q_difference_gkg": 0.00023265132571620092,
+        "original_ice_nodes": 10,
+        "all_12_ice_nodes": 10,
+        "changed_phase_nodes": 0,
+        "best_original_start": "ORIGINAL_0",
+        "best_all_start": "PATTERN_2_Q_0.9"
+      },
+      {
+        "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-19|P1_LAPSE_0065",
+        "original_3_min_F": 0.040629707779113775,
+        "all_12_min_F": 0.040629707739235014,
+        "improvement": 3.987876001643187e-11,
+        "relative_to_max1F": 3.987876001643187e-11,
+        "max_T_difference_K": 0.0005948804690660836,
+        "max_q_difference_gkg": 8.810420217171544e-05,
+        "original_ice_nodes": 10,
+        "all_12_ice_nodes": 10,
+        "changed_phase_nodes": 0,
+        "best_original_start": "ORIGINAL_0",
+        "best_all_start": "PATTERN_2_Q_0.1"
+      },
+      {
+        "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-19|P2_NATIVE",
+        "original_3_min_F": 0.040629637952600245,
+        "all_12_min_F": 0.04062963781457418,
+        "improvement": 1.3802606280144403e-10,
+        "relative_to_max1F": 1.3802606280144403e-10,
+        "max_T_difference_K": 0.0006080857047550126,
+        "max_q_difference_gkg": 0.00025159112093187455,
+        "original_ice_nodes": 10,
+        "all_12_ice_nodes": 10,
+        "changed_phase_nodes": 0,
+        "best_original_start": "ORIGINAL_0",
+        "best_all_start": "PATTERN_2_Q_0.5"
+      },
+      {
+        "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-20|P1_ISOTHERMAL",
+        "original_3_min_F": 0.045227309143934025,
+        "all_12_min_F": 0.04507150514870595,
+        "improvement": 0.00015580399522807653,
+        "relative_to_max1F": 0.00015580399522807653,
+        "max_T_difference_K": 1.2215700811138959,
+        "max_q_difference_gkg": 1.0237240868047788,
+        "original_ice_nodes": 10,
+        "all_12_ice_nodes": 10,
+        "changed_phase_nodes": 0,
+        "best_original_start": "ORIGINAL_1",
+        "best_all_start": "PATTERN_1_Q_0.5"
+      },
+      {
+        "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-20|P1_LAPSE_0065",
+        "original_3_min_F": 0.045226533013760596,
+        "all_12_min_F": 0.045070731274739165,
+        "improvement": 0.0001558017390214314,
+        "relative_to_max1F": 0.0001558017390214314,
+        "max_T_difference_K": 1.2215714371070021,
+        "max_q_difference_gkg": 1.0237354136152423,
+        "original_ice_nodes": 10,
+        "all_12_ice_nodes": 10,
+        "changed_phase_nodes": 0,
+        "best_original_start": "ORIGINAL_1",
+        "best_all_start": "PATTERN_1_Q_0.1"
+      },
+      {
+        "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-20|P2_NATIVE",
+        "original_3_min_F": 0.045226453252316216,
+        "all_12_min_F": 0.04507069952869874,
+        "improvement": 0.00015575372361747303,
+        "relative_to_max1F": 0.00015575372361747303,
+        "max_T_difference_K": 1.2215695900997616,
+        "max_q_difference_gkg": 1.023875521326201,
+        "original_ice_nodes": 10,
+        "all_12_ice_nodes": 10,
+        "changed_phase_nodes": 0,
+        "best_original_start": "ORIGINAL_1",
+        "best_all_start": "PATTERN_1_Q_0.5"
+      },
+      {
+        "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-26|P1_ISOTHERMAL",
+        "original_3_min_F": 0.07417604086000623,
+        "all_12_min_F": 0.07417604086000623,
+        "improvement": 0.0,
+        "relative_to_max1F": 0.0,
+        "max_T_difference_K": 0.0,
+        "max_q_difference_gkg": 0.0,
+        "original_ice_nodes": 14,
+        "all_12_ice_nodes": 14,
+        "changed_phase_nodes": 0,
+        "best_original_start": "ORIGINAL_0",
+        "best_all_start": "ORIGINAL_0"
+      },
+      {
+        "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-26|P1_LAPSE_0065",
+        "original_3_min_F": 0.07417513011696171,
+        "all_12_min_F": 0.07417513011696171,
+        "improvement": 0.0,
+        "relative_to_max1F": 0.0,
+        "max_T_difference_K": 0.0,
+        "max_q_difference_gkg": 0.0,
+        "original_ice_nodes": 14,
+        "all_12_ice_nodes": 14,
+        "changed_phase_nodes": 0,
+        "best_original_start": "ORIGINAL_0",
+        "best_all_start": "ORIGINAL_0"
+      },
+      {
+        "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-26|P2_NATIVE",
+        "original_3_min_F": 0.07417497655576595,
+        "all_12_min_F": 0.07417497653487976,
+        "improvement": 2.0886195550851028e-11,
+        "relative_to_max1F": 2.0886195550851028e-11,
+        "max_T_difference_K": 0.0004667525198556177,
+        "max_q_difference_gkg": 4.685798450643208e-07,
+        "original_ice_nodes": 14,
+        "all_12_ice_nodes": 14,
+        "changed_phase_nodes": 0,
+        "best_original_start": "ORIGINAL_0",
+        "best_all_start": "PATTERN_2_Q_0.9"
+      },
+      {
+        "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2014-12-02|P1_ISOTHERMAL",
+        "original_3_min_F": 0.10667324818703136,
+        "all_12_min_F": 0.10667324818703088,
+        "improvement": 4.85722573273506e-16,
+        "relative_to_max1F": 4.85722573273506e-16,
+        "max_T_difference_K": 0.0,
+        "max_q_difference_gkg": 1.0629984566190576e-07,
+        "original_ice_nodes": 0,
+        "all_12_ice_nodes": 0,
+        "changed_phase_nodes": 0,
+        "best_original_start": "ORIGINAL_2",
+        "best_all_start": "PATTERN_2_Q_0.1"
+      },
+      {
+        "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2014-12-02|P1_LAPSE_0065",
+        "original_3_min_F": 0.10667646369980517,
+        "all_12_min_F": 0.10667646369980484,
+        "improvement": 3.3306690738754696e-16,
+        "relative_to_max1F": 3.3306690738754696e-16,
+        "max_T_difference_K": 0.0,
+        "max_q_difference_gkg": 5.9457236009641257e-08,
+        "original_ice_nodes": 0,
+        "all_12_ice_nodes": 0,
+        "changed_phase_nodes": 0,
+        "best_original_start": "ORIGINAL_0",
+        "best_all_start": "PATTERN_1_Q_0.1"
+      },
+      {
+        "case_id": "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2014-12-02|P2_NATIVE",
+        "original_3_min_F": 0.10667652008563314,
+        "all_12_min_F": 0.10667652008563278,
+        "improvement": 3.608224830031759e-16,
+        "relative_to_max1F": 3.608224830031759e-16,
+        "max_T_difference_K": 0.0,
+        "max_q_difference_gkg": 5.948526220211914e-08,
+        "original_ice_nodes": 0,
+        "all_12_ice_nodes": 0,
+        "changed_phase_nodes": 0,
+        "best_original_start": "ORIGINAL_0",
+        "best_all_start": "PATTERN_1_Q_0.1"
+      }
+    ],
+    "cases_improved_above_1e_8_max1F": 6,
+    "max_3_vs_12_T_difference_K": 1.2215714371070021,
+    "no_global_minimum_or_accuracy_certificate": true,
+    "audit_code_sha256": "4e62d2b9703428c32e830d46472a232e8b91c7f594a3860883399fa0f1d42c67"
+  },
+  "cross_environment": {
+    "compared_new_trials": 396,
+    "initial_hash_changes": 154,
+    "max_initial_T_difference_K": 0.0,
+    "max_initial_q_difference_gkg": 5.204170427930421e-15,
+    "cross_environment_maxima": {
+      "all_individual_starts": {
+        "T_K": 0.020197634446446955,
+        "q_gkg": 0.011200834874326195,
+        "F": 1.647654990222236e-07,
+        "T_K_case": "CONTROL_Q90CAP_RH20|AT|2021-08-01|P2_NATIVE",
+        "q_gkg_case": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P2_NATIVE",
+        "F_case": "CONTROL_Q90CAP_RH20|AT|2021-08-01|P2_NATIVE"
+      },
+      "best_3": {
+        "T_K": 0.001680324253982235,
+        "q_gkg": 0.0022684147745954605,
+        "F": 7.993889994395431e-10,
+        "T_K_case": "CONTROL_Q90CAP_RH20|CH|2021-08-01|P1_ISOTHERMAL",
+        "q_gkg_case": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P1_LAPSE_0065",
+        "F_case": "CONTROL_Q90CAP_RH20|CH|2021-08-01|P2_NATIVE"
+      },
+      "best_12": {
+        "T_K": 0.001310212035718905,
+        "q_gkg": 0.000426526392995584,
+        "F": 2.809095178690768e-10,
+        "T_K_case": "CONTROL_Q90CAP_RH20|AT|2021-08-01|P2_NATIVE",
+        "q_gkg_case": "CONTROL_Q90CAP_RH20|CH|2021-02-01|P2_NATIVE",
+        "F_case": "CONTROL_Q90CAP_RH20|AT|2021-08-01|P1_LAPSE_0065"
+      }
+    },
+    "scope": "FLOAT64_AND_ALGORITHM_SENSITIVITY_NOT_INDEPENDENT_MODEL_ACCURACY"
+  },
+  "exact_archive": {
+    "path": "research/ige_cmip6/p9_3b3_cd3_CI_40009910484_exact_members.json.xz",
+    "bytes": 1870708,
+    "sha256": "91e075ad7424ba064b46865194de7e057b499763f652772aaa0ed00f9d15ded6",
+    "members": 65,
+    "member_sha256": {
+      "00_CD3_case.json": "eac09cd93aff0a855846ae81776ed24662dcd2a12061ce7a2c4d064cf41f883c",
+      "01_CD3_case.json": "417c32a69ff807a10b055a3275526f8aa293044466022eebd65964cc51f02fbb",
+      "02_CD3_case.json": "a0e6b224d2cf3e543e8ac04b81217724bad97c3ea31f88300930bf3844ecbc2f",
+      "03_CD3_case.json": "74b643aaade0c523fe0c5c4012c95f7335157511560e8976af0a17f8fa0e828c",
+      "04_CD3_case.json": "a8debfe094cbcc25154fe593f1fa3c8c523b12888963b346ae292343c43fd658",
+      "05_CD3_case.json": "21f2850c08537066cd1dd08bd8e1013ce7e1239f48c8935743ae90e7f350d93c",
+      "06_CD3_case.json": "12600d840d2ce38c340885e10d945adef0ccc7015f5332549667c819b290f35e",
+      "07_CD3_case.json": "9d4a34ffe30f5f472819c137e6702484c54a175d95b92a431688120841c932ba",
+      "08_CD3_case.json": "63a1c285093805840453d5fd36949d3cb6f7b3f8b63513d5a03090c3af2003bf",
+      "09_CD3_case.json": "0c06a051d9480b282dc8795491ed6601015baafd07220e03743dbbe6820bdbd7",
+      "10_CD3_case.json": "326c99d43afa0e7b31a902ca0138bae4014395b11386f3dc0d8927d64e9696ec",
+      "11_CD3_case.json": "56d9409c60b3a759bab2d22d4f6d4a0cbded05a370a518df500b7823d1385035",
+      "12_CD3_case.json": "4cdad48e4ed71e5672b51a7b40e41b65b13aa8fe430553ab2983853f8465732f",
+      "13_CD3_case.json": "7e8a6c64bb1d6f563862c552c4bc1934b815e89c2bc9fea8b462a0b3c68696cf",
+      "14_CD3_case.json": "762fae2020290d9f401659281fddf13cce38a7d39664ed96c4c54b081f4c5a22",
+      "15_CD3_case.json": "d91b5975ca807b9821bef95a0f3ff6eed336a553ed658fea8b50f7927d651c92",
+      "16_CD3_case.json": "a4db1320c992c8490e10dee1a532730b6d496f767d7ea3938cb946f09f59df5f",
+      "17_CD3_case.json": "54e09cc5c295d56d355cc56450b36cc5acf34e4e6ed4f0b32e6b030071e19958",
+      "18_CD3_case.json": "4d796e454aeccedc4d3c476db09f310c16cb15b83cfb54bdf0d39ec4c025965f",
+      "19_CD3_case.json": "8aa4cb1068049506dcc5514362af6ee096ad82dc0d5f698821b322a9e22d136d",
+      "20_CD3_case.json": "434f00092f7080ae0dedf920fcfed66eddb36e134324d5c6d0be39bb8a9ad2a1",
+      "21_CD3_case.json": "95541f1a7df37292b6781c7c64550eea9db73d91c6dbc15aa1cbf1d02c0f1258",
+      "22_CD3_case.json": "7ce148ff3ed6cc61256c55423bb90748478854b75038d4363d0dfdfd65be74b7",
+      "23_CD3_case.json": "62e4e1abf92423aa8f111a9946c2637e5b019eafa7566d92d48e7020c784b208",
+      "24_CD3_case.json": "8b0fcbf2a03c5b873aedeb65589f0d23a8d17fb97d5856e4a48300b5b8c6900b",
+      "25_CD3_case.json": "6a195b5bda146876c53dda992c07919feee2177b396c3ec24fd30d17a50469ae",
+      "26_CD3_case.json": "9d3d606502988cceb7aff74ee3faf68d31a6acf690ba3cae5f87f55b27460bc3",
+      "27_CD3_case.json": "4140a746d11aa779535ac6352379b531d6b514d1a0d3871fbe9bde9c8e1582aa",
+      "28_CD3_case.json": "16dd557d31b8a9ae4d89638437cd942e3cb957241716f75e26ece345924dff7b",
+      "29_CD3_case.json": "4c66e92614a91938ba6f0d05339649dea57f2826ff8afd542024d7d655028fb0",
+      "30_CD3_case.json": "5e32925398796909479c5f1ba92c58fe69146c450f719f18d9afc4c717bca469",
+      "31_CD3_case.json": "32087b1735baaed3335f34799625d1e3286cc70ae16da44180c4f4b3d3791c45",
+      "32_CD3_case.json": "f1a153a2b75c1f3f9c33062242a2316b15cf31107a4500b897084bb69160eef6",
+      "33_CD3_case.json": "a72529111a04f6cfbec33241a95ba4a39247361c6b66d7e81a701971241b826c",
+      "34_CD3_case.json": "8f6613ac61f623425b159bc1c71674aea83b8d14844f552369818f64e05a91d4",
+      "35_CD3_case.json": "046da5d45b0498b70590c3b1c048d046a4ed3b9ae2f39972c028740cd87cf746",
+      "36_CD3_case.json": "292c1a94ca877e6d799899225736517156620a29d94c52dd2c1a86317698d954",
+      "37_CD3_case.json": "325a423e9ea2f3fe379930fa3da23f7b28fd2f66e31b686aeb42a456ba44a715",
+      "38_CD3_case.json": "3905d6f41fdba33acbebb577299482a661e281d12e56c94d4b83c2246a0029b9",
+      "39_CD3_case.json": "76ce66389eef25f04a036de1569d6cec51b5aa8f6d81d9d826e2ef1d196d76d3",
+      "40_CD3_case.json": "bdf3f7c4331f65f6719f466ceaa99b6cb069a99519fd57720b65355eca804fb7",
+      "41_CD3_case.json": "b0d858881cf7e0b0cc5f5a327fb4929ea6be6189029b1c85764562d3dc7a2f1a",
+      "42_CD3_case.json": "d2a42c82fba4f2f4526ce9550e0cb18a1b4ff7c1e003cf3be22d8531a85ac1f1",
+      "43_CD3_case.json": "806dbf1bfa2ef93a2cdda8f1b9e8dbe6e4d2f2ac596be498206103848633cb0d",
+      "44_CD3_case.json": "59ca99b3f2a9f0673bb392ae5fbc753b76225ffaf77721b51ba30ec9ad53060a",
+      "45_CD3_case.json": "42fa564185a6411405795e6db49e7cb772bb4ac9b64540c854a155f48a78c85a",
+      "46_CD3_case.json": "b701ab35d4dec392e76a3f98ea9260e024219fedf92c0d37bf96b24f38cd52aa",
+      "47_CD3_case.json": "2aef305ce97e9b5b378966196c0d38cd96eae524a92bfb0d4c49b7e6ad1ab00c",
+      "48_CD3_case.json": "18fcbf43e24c3c05773fcb13a0aa9e30d6691e1ca2788a5c1ab50881ca5abbcf",
+      "49_CD3_case.json": "85a0a43616f81b8f0c919e5fa8883c325a511852625fda429da3df70551728c8",
+      "50_CD3_case.json": "870df137e06ffa5065b3313ad095ab7ccfd098edd53891524c8b7293283535c3",
+      "51_CD3_case.json": "7bcd120984dbe01eb2c601f95b12a97c4e9bc719848d0b4d92d3cea4ddb7db96",
+      "52_CD3_case.json": "294587ecda2fc85dc534f27d2306d59cb1721409e6c8a1f94d435aac59b26d14",
+      "53_CD3_case.json": "7fc2927737eb7a658d33c28f6bf27662d4b379ae39ce947da6ff167d475fd300",
+      "54_CD3_case.json": "b1be9a91ce389d690c36875ff787efe684cdca083714202ea15ffb10033bfaae",
+      "55_CD3_case.json": "0aaaae2fb42985cb452e9a8cd491f59e76f38a4d959bdc28b065e5b058ab577f",
+      "56_CD3_case.json": "06e2599ff389e1ae5ee51f801a0d2de38f8f93528f85936d22c530b49a08822d",
+      "57_CD3_case.json": "3d5407488891c17be0bd7c08b7d708a46329fb4621ca4199277187dc325f6a49",
+      "58_CD3_case.json": "8e61712cde0ca6fb7f9d1008b1db6e023f53a5b276d20ee7e6e3296a6d2d8d77",
+      "59_CD3_case.json": "2b12974c2551eb0785b0b65d092bc332d1cb8d81a46133eac11d8045ed5793ff",
+      "60_CD3_case.json": "2a71e5929c61558a9bb592823d5657c4b09d80e6cf8a001d55a08f819e5d1692",
+      "61_CD3_case.json": "f6aa48d562076963b51870ac6077042f01a5ea66bf0158d5a5b89464af32b97f",
+      "62_CD3_case.json": "f85513bd98f5d6098201018325dee7cde1705510645af0a5be199e3b08d073c3",
+      "CD3_summary.json": "0bb89088561f50ffc78682dfcecfdcf7a1a060391e259bfdbca7c00166e1bbf2",
+      "independent_scalar_and_start_comparison.json": "eaa9bfe8998dae3514c05637e5b18905840fab84e1b3996fa70458062dc84e2c"
+    }
+  }
+}

@@ -1,0 +1,400 @@
+{
+  "phase": "P9.3B3_IV1_PREREGISTERED_AT_DE_CH_SOURCE_ADMISSION_AND_CONDITIONAL_RECONSTRUCTION",
+  "algorithm_commit": "db742478d68a6091133767966218022da9ab1fc8",
+  "CD3_CI": {
+    "run_id": 40009910484,
+    "conclusion": "SUCCESS",
+    "tests_passed": 417,
+    "derivative_endpoints": 792
+  },
+  "countries": [
+    "AT",
+    "DE",
+    "CH"
+  ],
+  "windows_UTC": [
+    [
+      "2022-02-15",
+      "2022-02-28"
+    ],
+    [
+      "2022-08-15",
+      "2022-08-28"
+    ]
+  ],
+  "expected_target_days": 84,
+  "expected_site_hours_before_QC": 2016,
+  "expected_site_season_cells": 6,
+  "stations": {
+    "AT": {
+      "id": "16412",
+      "WSI": "0-20000-0-11290",
+      "role": "INDIVIDUAL_GRAZ_UNIVERSITAET_NO_COMBINED_SUBSTITUTION"
+    },
+    "DE": {
+      "id": "00399",
+      "WSI": "0-276-6-399",
+      "role": "DWD_URBAN_BERLIN_ALEXANDERPLATZ"
+    },
+    "CH": {
+      "id": "DAV",
+      "WSI": "0-20000-0-06784",
+      "role": "SWISSMETNET_DAVOS"
+    }
+  },
+  "exposure_audit": {
+    "scope": "TRACKED_P8_P9_CODE_PROTOCOLS_REPORTS_DATE_STRING_SEARCH_AND_FROZEN_REGISTRY; NOT_ALL_OPAQUE_ARCHIVES_OR_EVERY_PAST_SESSION",
+    "matched_new_2022_Feb_Aug_files": [
+      "research/ige_cmip6/p9_3b3_cd3_protocol.json"
+    ],
+    "already_revealed_2022_windows": [
+      [
+        "2022-01-10",
+        "2022-01-16"
+      ],
+      [
+        "2022-07-10",
+        "2022-07-16"
+      ]
+    ],
+    "untouched_whole_year_claim": false,
+    "no_observation_values_opened_for_this_stage": true
+  },
+  "methods": [
+    "STRICT_CLOSURE",
+    "Q_ONLY_PROJECTION",
+    "FROZEN_C2_3_STARTS",
+    "SLSQP_SCALED_X_3_STARTS",
+    "SLSQP_SCALED_X_12_STARTS"
+  ],
+  "primary_comparison": [
+    "SLSQP_SCALED_X_12_STARTS",
+    "FROZEN_C2_3_STARTS"
+  ],
+  "optimization": "FROZEN_OBJECTIVE_PHYSICS_METRIC_AND_PRIOR; 12_STARTS_EXACT_CD3_REGISTERED_DESIGN; NO_REPAIR_OR_PARAMETER_FITTING_ON_HOLDOUT",
+  "donor_design": {
+    "years": [
+      2019,
+      2020
+    ],
+    "same_month_and_wet_flag": true,
+    "windows_month_days": "SAME_15_TO_28_IN_EACH_TRAINING_YEAR",
+    "seed": 7313,
+    "selection": "p9_3b3_generator._choose(all_eligible_donor_None_pairs,target,previous=None,seed=7313); FREEZE_ONE_COMMON_DONOR_BEFORE_ANY_METHOD_FEASIBILITY_TEST",
+    "missing": "BLOCK_SHARED_TARGET_NO_DONOR_RESELECTION"
+  },
+  "reference_inputs": {
+    "source": "FROZEN_OPEN_METEO_ERA5_BACKBONE_NO_PROVIDER_ELEVATION_CORRECTION; NOT_STATION_OBSERVATIONS_NOT_NATIVE_NEX",
+    "T_e": "T2m_AND_WATER_DEWPOINT_IN_ORIGINAL_GRID_FRAME; GRID_TO_SENSOR_T_DOWNSCALING_NOT_QUALIFIED",
+    "p": "INDEPENDENT_TARGET_DAY_NATIVE_ERA5_CHAIN_AT_THERMO_HEIGHT",
+    "q": "epsilon*e/(p_thermo-(1-epsilon)*e)",
+    "daily_operators": "MIN_T_MAX_T_TAS_MIDRANGE_MEAN_q_MEAN_RH_WATER_ICE_ON_DECLARED_24_NODES",
+    "interpretation": "CONTROLLED_REFERENCE_DAILY_INPUT_RECONSTRUCTION_NOT_NATIVE_NEX_VALIDATION; NO_NEX_TIME_BOUNDS_CLAIM",
+    "nonphysical_reference": "RETAIN_BLOCKED_CASE_NO_INPUT_CLIPPING"
+  },
+  "pressure": {
+    "fixed_native_grid_indices": {
+      "AT": 73689,
+      "DE": 57155,
+      "CH": 73673
+    },
+    "AT_slot": "D2",
+    "source": "SAME_NATIVE_PHI_S_AND_LNSP_PROCESS; NATIVE_T_Q_PROFILES",
+    "p_barometer": "RECONSTRUCT_AT_DATED_BAROMETER_HEIGHT",
+    "p_thermo": "RECONSTRUCT_SEPARATELY_AT_DATED_T_RH_HEIGHT",
+    "hydrostatic_operator": "ln(p_b/p_a)=-integral_dPhi/(Rd*Tv)",
+    "underground": "BLOCK_NO_EXTRAPOLATION_OR_NEIGHBOR_SUBSTITUTION",
+    "P2_advantage_qualified": false,
+    "B4_qualified": false,
+    "pressure_research_MAE_gate_hPa_per_cell": 2.0
+  },
+  "observation_fields": {
+    "AT": {
+      "T": "tl",
+      "RH": "rf",
+      "p": "p",
+      "time_support": "STUNDEN_MESSWERT_NOT_YET_PARAMETER_SPECIFIC_INSTANT_OR_INTERVAL_CERTIFIED",
+      "QC_good_flags": [
+        10,
+        11,
+        12,
+        20,
+        21,
+        22
+      ]
+    },
+    "DE": {
+      "T": "TT_ST_10",
+      "RH": "RF_ST_10",
+      "p": "P0_ST_10",
+      "forbidden_reduced_pressure": "PP_ST_10",
+      "time_support": "HH00_NATIVE_URBAN_PARAMETER_METADATA_REQUIRED; GENERIC_DWD_TT_10_INSTANT_DOES_NOT_PROVE_ALL_URBAN_FIELDS",
+      "QC": "QN_3_PRIMARY_EMPTY_NOT_FINAL_QC; ALL_CODES_RETAINED"
+    },
+    "CH": {
+      "T": "tre200s0",
+      "RH": "ure200s0",
+      "p": "prestas0",
+      "time_support": "ORIGINAL_CURRENT_VALUES_FROM_NATIVE_10_MINUTE_FILE_AT_EXACT_HH00_UTC",
+      "forbidden_hourly_mean_substitutes": [
+        "tre200h0",
+        "ure200h0",
+        "prestah0"
+      ],
+      "QC": "PUBLISHED_PROVISIONAL_VALUES_NO_EQUIVALENT_NATIVE_PER_SAMPLE_QC_FLAG; SEPARATE_TIER"
+    }
+  },
+  "CH_source_url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/dav/ogd-smn_dav_t_historical_2020-2029.csv",
+  "CH_STAC_multihash_before_values_opened": "1220dd82c52fabcf35f7108f2e54623590a818810d9d292731deb609a2f2b11f59d0",
+  "derived_humidity": "e_FROM_COLOCATED_INSTANTANEOUS_T_RH_WATER; q_SECONDARY_PROXY_REQUIRES_MODEL_P_VERTICAL_TRANSFER_AND_DE_266m_HORIZONTAL_SEPARATION_DISCLOSED; NO_INDEPENDENT_q_SENSOR_CLAIM",
+  "primary_metrics": [
+    "T_MAE_K",
+    "RH_WATER_MAE_pp"
+  ],
+  "secondary_metrics": [
+    "RMSE",
+    "bias",
+    "paired_day_MAE_delta",
+    "physical_coverage",
+    "unresolved_counts",
+    "daily_correction_ledger",
+    "e_proxy",
+    "q_proxy",
+    "p_barometer_MAE_hPa"
+  ],
+  "statistics": {
+    "same_hours_across_all_available_methods": true,
+    "also_report_pairwise_available_hours": true,
+    "failures_stay_in_denominator": true,
+    "coverage_min_each_station_season_variable": 0.9,
+    "min_paired_hours": 303,
+    "missing": "INCONCLUSIVE_CELL_NO_STATION_DATE_OR_METHOD_SUBSTITUTION",
+    "primary_family": 12,
+    "bootstrap": "PAIRED_CIRCULAR_MOVING_DAY_BLOCKS",
+    "block_days": 3,
+    "sensitivity_block_days": [
+      2,
+      7
+    ],
+    "repetitions": 10000,
+    "seed": 20261023,
+    "family_alpha": 0.05,
+    "one_sided_upper_quantile": 0.9958333333333333,
+    "research_noninferiority_MAE_margins": {
+      "T_K": 0.1,
+      "RH_pp": 0.5
+    },
+    "margins_are": "INHERITED_RESEARCH_DECISION_SENSITIVITY_NOT_CALIBRATED_PHYSICAL_ERROR_BUDGET",
+    "qualification": "ALL_12_PRIMARY_CELLS_ADMITTED_COMPLETE_AND_UPPER_DELTA_WITHIN_MARGIN; ANY_BLOCKED_CELL_PREVENTS_ALL_COUNTRY_QUALIFICATION; NO_BEST_METHOD_SELECTION_ON_SCORES"
+  },
+  "blinding": {
+    "station_values_open_only_after": [
+      "ALGORITHM_AND_PROTOCOL_COMMITTED",
+      "EXACT_EXPOSURE_AUDIT",
+      "PARAMETER_SPECIFIC_TIME_SUPPORT",
+      "DATED_SENSOR_REFERENCE_ADMISSION",
+      "FULL_SOURCE_LINEAGE_AND_FIXED_GEOMETRY",
+      "ALL_METHOD_PREDICTIONS_AND_PRIORS_SEALED_SHA256"
+    ],
+    "forbidden_before_seal": [
+      "DOWNLOAD_STATION_PRODUCTS_FOR_SCORING",
+      "USE_STATION_p_TO_GENERATE_T_RH",
+      "SELECT_DONOR_OR_COLUMN_FROM_STATION_ERRORS"
+    ],
+    "observations_in_generation": false
+  },
+  "compute_estimate": {
+    "basis": "NV2_50_SOURCE_HOURS_2194021975_BYTES_1660_REQUESTS_185s; LINEAR_EXTRAPOLATION_NOT_GUARANTEE",
+    "native_hours_including_boundary_and_controls": 676,
+    "approx_network_GB": 29.7,
+    "max_network_bytes": 51539607552,
+    "max_requests": 30000,
+    "expected_total_minutes": [
+      45,
+      90
+    ],
+    "additional_model_reference_requests": 18,
+    "source_plan_only_until_TIME_SUPPORT_ADMITTED": true
+  },
+  "source_metadata_archive": {
+    "path": "research/ige_cmip6/p9_3b3_iv1_source_metadata_20261023.json.xz",
+    "sha256": "bc8c828bea1433bebc00f337a63b5ec7e7b79986dc8dda205f7dcaa51bf1cceb",
+    "bytes": 73536,
+    "station_values_opened": false
+  },
+  "qualification_limits": [
+    "ERA5_MAY_ASSIMILATE_STATIONS_NOT_INFORMATION_THEORETICALLY_INDEPENDENT",
+    "ONLY_NEW_REGISTERED_WINDOWS_EXTERNAL_STATION_EVALUATION",
+    "NO_CONTEMPORANEOUS_HOURLY_MAE_FOR_FREE_RUNNING_CMIP6_WEATHER",
+    "NATIVE_NEX_TIME_BOUNDS_UNRESOLVED",
+    "DATUM_MSL_AS_G0_APPROXIMATION",
+    "NO_PRODUCTION_OR_GLOBAL_QUALIFICATION"
+  ],
+  "independent_accuracy": "NOT_RUN",
+  "operational_ready": false,
+  "production_epw_ready": false,
+  "merge_main": false,
+  "protected_control_sha256": {
+    ".github/workflows/ige-p9-3b3-cd1-convergence-diagnostics.yml": "0e74d5c81261940049e6aaa8d36d6e27e3afb9479c1b2fbaa8dc7e7223b34f0f",
+    ".github/workflows/ige-p9-3b3-cd2-equivalent-solvers.yml": "312d83bf5f73e2a1b05bbc16e1b7fcbde963c142f4b2e59cdc5b49a7de26bfdc",
+    ".github/workflows/ige-p9-3b3-tpa1-thermo-closure.yml": "1a7b814eea2e1da9f9957898bb329385f8c5e053465bcd20183d7337c79c39a4",
+    "docs/IGE_P9_3B3_ALTERNATIVES_PLAN_RU_20261021.md": "7d98611bdc5b2216962e0dce7e73935ce8e84e7e9ad6e8b234d91736e963ce97",
+    "docs/IGE_P9_3B3_C2_CI_VERIFIED_20261021_RU.md": "77ee4d0e34def9686ef8b2a174506b05ae72e81e8cc900e10455610e7d5bbb58",
+    "docs/IGE_P9_3B3_C2_IMPLEMENTATION_RU_20261021.md": "b1af208e1e02eccef7298a99ec28fc792398ca56d47e9f28eab9808400566763",
+    "docs/IGE_P9_3B3_CD1_IMPLEMENTATION_AND_LOCAL_RESULTS_RU_20261023.md": "74ac8ad9aaec86271993cb20a71fd3ddfd3c160a9d8eeaff1578bc4d9e4143f4",
+    "docs/IGE_P9_3B3_CD1_PREREG_RU_20261023.md": "7d9b9984acb1d38f6eaa7d8ec35ca8409f5416f71cbdc15b7bc9467f0816b01a",
+    "docs/IGE_P9_3B3_CD2_CI_39968651863_AUDIT_RU_20261023.md": "957f4e2136e98121dc71ccb20bd840fc4d3bbf844dbca075116a05a07594d5ed",
+    "docs/IGE_P9_3B3_CD2_IMPLEMENTATION_AND_LOCAL_RESULTS_RU_20261023.md": "7e7280c00ace35344fac50b5bcbe0b7d816ae7e2befcdd5064e73cd5c664fd7e",
+    "docs/IGE_P9_3B3_CD2_PREREG_RU_20261023.md": "c0c10cd3490906f2cd5232eaa5599a3b427e139578310a66ca6e18b442143d78",
+    "docs/IGE_P9_3B3_IMPLEMENTATION_AND_FROZEN_PROTOCOL_RU.md": "97f7eb8b07eaecdc903423e33d86266eda2bac840457830bcec60d3255a5b7d1",
+    "docs/IGE_P9_3B3_NATIVE_AT_VALLEY_SOURCE_ONLY_GEOMETRY_PREREG_20261022_RU.md": "4179ad79f6c8c791cc63e6e35de89df436b2875691712dacdf484ff3df99df4a",
+    "docs/IGE_P9_3B3_NATIVE_CI_AUDIT_AND_NEXT_RU_20261022.md": "e9044484b4a1a941ca1b06fc83f7dce41cc28db7eb150373e1d982c5c32597b5",
+    "docs/IGE_P9_3B3_NATIVE_LINEAGE_SENSOR_HEIGHTS_RU_20261022.md": "4e266d08eae58af89a9ef18bdff76ae9a7e53fce40c85572fb0da18830f47fe7",
+    "docs/IGE_P9_3B3_NATIVE_WORK_CI_39757573033_AND_GRAZ_VALLEY_GEO_NV1_FINAL_RU.md": "7be7732ff39b503a1123676da99b583113714f1e9b31c34d3b37aa787658779d",
+    "docs/IGE_P9_3B3_NV2_CI_39925504607_AUDIT_RU_20261023.md": "f0bc61f2d516c629c59ef53a3104bca173d7b4239dffc1686a37950582540dc1",
+    "docs/IGE_P9_3B3_NV2_IMPLEMENTATION_RU_20261023.md": "d4b91287c7e50a244b933f14aa2e55bcb1229ad14ccc2b977db1d481bd3dcc36",
+    "docs/IGE_P9_3B3_NV2_PREREG_RU_20261023.md": "09967d9e162d21d527e6ac40af6b14da39452a3ff85c86803ffd8d4f17e6bced",
+    "docs/IGE_P9_3B3_P1_C1_CI_VERIFIED_20261021_RU.md": "8972de7987acbba2116ad9459dc186b8c7ef8c293b0a62ecec4019a78901f22d",
+    "docs/IGE_P9_3B3_P1_C1_IMPLEMENTATION_RU_20261021.md": "fcdb8e8b22993a1279ba2d69d90553054ea9562263772ab3b1eccaa9208bc664",
+    "docs/IGE_P9_3B3_P1_P2_REFERENCE_RU_20261022.md": "aa7c60db83b9d8b96966027825825b5d2f84a6193c46778f38e3aaf96573a677",
+    "docs/IGE_P9_3B3_REPAIR_DIAGNOSIS_RU_20261021.md": "0c9ecbed743420644cc8190ee17aedab196b78c6fa5843698e48171db8839b4e",
+    "docs/IGE_P9_3B3_TPA1_CI_39938665094_AUDIT_RU_20261023.md": "9419019a18c4cc8c3e9fff3a296d1e6c015068bd02b89fb69f513306c26e1255",
+    "docs/IGE_P9_3B3_TPA1_IMPLEMENTATION_AND_LOCAL_RESULTS_RU_20261023.md": "4b0170b1d27df24bde205cb254a8e8fcf67ca52cf1c127264c8116588c0b9c8c",
+    "docs/IGE_P9_3B3_TPA1_PREREG_RU_20261023.md": "e4d6be2c8b6b8ff2fc438af2603cbedcc14d11843300129fd221cc6300c73e91",
+    "docs/IGE_P9_3B3_VALIDATION_AND_INTEGRATION_ROADMAP_RU_20261023.md": "1999a3e84f250851fb613b9ece5f94e673b6a741192664f50ee1d68f65fe0688",
+    "docs/IGE_P9_3B3_WORK_NV1_INDEPENDENT_CROSSCHECK_RU_20261022.md": "f98b7ad620a34589d3f364d04603fc64bf0c09060305eec1f5f83f529f022dbe",
+    "research/ige_cmip6/audit_p9_3b3_CD2.py": "da275176a00ea5b8170a8607fb2e508c2740d7500b64e9d7636231eba3ec23a2",
+    "research/ige_cmip6/audit_p9_3b3_CD3.py": "4e62d2b9703428c32e830d46472a232e8b91c7f594a3860883399fa0f1d42c67",
+    "research/ige_cmip6/audit_p9_3b3_NV1_sensor_admission.py": "9532f830c41a1e35ceeba7fa71e754defde7d532282f2bb6473d4bca6ec3967a",
+    "research/ige_cmip6/audit_p9_3b3_NV2_CI_39925504607.py": "9b7b21899c64bc3eedf85c1a3bb2654b565171e24af42e8ca0058dcc4b031a65",
+    "research/ige_cmip6/audit_p9_3b3_TPA1_CI_39938665094.py": "52f2322aa7058c91fdb3af4bc9c4ae9741c17158a8c2c9c459a469d79af1c235",
+    "research/ige_cmip6/audit_p9_3b3_native_CI_39753778078.py": "52d912a0b9437ee525d8ec32ff68935feac64cfd63a6e754894a4f30dfb2c237",
+    "research/ige_cmip6/audit_p9_3b3_native_CI_39757573033.py": "9cbf54c42b587951fc8f84339c0bb853d215029a34413e8ced74dc5a1be8a44e",
+    "research/ige_cmip6/p7c3_expected_daily_source_shas.json": "4f97f1c51e93c32a6dd57b1caef2214dfb99a52b63b5be2f297a92ce976e1be0",
+    "research/ige_cmip6/p9_1a_global_historical_backbone.py": "fb1c9400b32b947950d4b37fd5feab393dc9d0e620064dd8a6df46a49aea48c7",
+    "research/ige_cmip6/p9_2a_joint_weather_regimes.py": "d9f0d3f3abaee6a846d2697db1cd7d935a09b0487070b90e78de9f726f4dd334",
+    "research/ige_cmip6/p9_2c_physical_donor_and_humidity.py": "7d1660a3f59761edfb9e45d3260b3923c0f2878af60e867719d0904fe2e84014",
+    "research/ige_cmip6/p9_3a_pressure_temperature_q_joint.py": "f8adf430d4fe79f5780f0c0ae61d1b226cd1bfa03dda81c6ee7599856b7efec3",
+    "research/ige_cmip6/p9_3b2d_canonical_pressure_fields.py": "ec716cb2acab65ca445dfed2a220c50bd0a5d8770b74be0e849dca38075c6b99",
+    "research/ige_cmip6/p9_3b3_NV1_sensor_admission_crosscheck_20261022.json": "ae4142b8d2b6bd58668fb00882411b472b293bbca63936ceb9f6e65b92200194",
+    "research/ige_cmip6/p9_3b3_NV2_verified_CI_39925504607.json": "62d18a44ef6ff334d667fb098230717a0f58c52582a5958e754fd937a61488a9",
+    "research/ige_cmip6/p9_3b3_at_de_ch_validation.py": "ea2d298d0685a062c2d3c49f806ee182fa78ed8fff7d12edfce52a92c1772847",
+    "research/ige_cmip6/p9_3b3_c2_projection.py": "47a1805a2d1f01b68c8532b5120319fc103d6cfa961c852f8f20057eb5bcf532",
+    "research/ige_cmip6/p9_3b3_c2_protocol.json": "ba849a07556b06934048c5db1a28f938c24d16e829ee7b6175a57fa5efc52223",
+    "research/ige_cmip6/p9_3b3_c2_run.py": "be94e1f82609014cde55e12bbf42f8cdd82c2fc5961d13df23cdf9c26df4dfb9",
+    "research/ige_cmip6/p9_3b3_c2_stations.py": "90782dedaf9a362ce4cc79b89f1390d22cf31528de14e5138a10fe703e026cfe",
+    "research/ige_cmip6/p9_3b3_c2_validation.py": "f376c8d48e6d2167b06f103fdb3cf7234512a2fb086be4bc8d6ab2615c068315",
+    "research/ige_cmip6/p9_3b3_c2_verified_CI_39672278715.json": "0565635a017ebdacae764bedfda652f3cb0c0843f6fc63fd2347a59f579fedb3",
+    "research/ige_cmip6/p9_3b3_c2_verified_local_results_20261021.json": "3885d927db9b6d80c6f5c515755ecd282ad8dee8a53f7ed546ef4a5b78a19a67",
+    "research/ige_cmip6/p9_3b3_cd1_diagnostics.py": "64221b3cd07ea1e90580e7ce11a4b0bdb94ae70f5603b479fb854a83f1983336",
+    "research/ige_cmip6/p9_3b3_cd1_protocol.json": "141fb9250c6d541d71824e76f68616e76defcac50c4103fa9a10e956daf203a7",
+    "research/ige_cmip6/p9_3b3_cd1_run.py": "742dd1d7d80d368dafddb7780ec8ba23dbc7075709a47baa2fabd014f016cc41",
+    "research/ige_cmip6/p9_3b3_cd1_verified_local_replay_20261023.json.gz": "061c3272aaa635a14fdffc6e18f6e158eece4af2a8bc616d8fe3db099abeff94",
+    "research/ige_cmip6/p9_3b3_cd1_verified_local_summary_20261023.json": "ea0727d2a4cb2e2ea70f13a8ca81711755c07bbd70af8689a0ac2c89e3873259",
+    "research/ige_cmip6/p9_3b3_cd2_CI_39968651863_exact_members.json.xz": "8143ed0fbfca6e737cda3a4af9245d95039b41b0afde1550db255b193f78d0e4",
+    "research/ige_cmip6/p9_3b3_cd2_local_comparison_20261023.png": "7245009492c7692640cabb422eb3161c5603469968aa1a891b7be31572924fa4",
+    "research/ige_cmip6/p9_3b3_cd2_protocol.json": "40e876f350848bd516c74c108ea070e7e59ee78cf8173ca1c52519dcf6e39c26",
+    "research/ige_cmip6/p9_3b3_cd2_run.py": "2fcec715450a82507b118304556591b40dbc6bf5ba1ca1e86255f51c657b323f",
+    "research/ige_cmip6/p9_3b3_cd2_solvers.py": "15e4c2f0bf230b950bb819c134a3dd420af1465db104170e854d1dfbb745825b",
+    "research/ige_cmip6/p9_3b3_cd2_supplementary_numeric_scope_20261023.json": "8d7528dd32dcbe0ca9af419c19d8d1d9685429d35dd7c71701a0104dea76cada",
+    "research/ige_cmip6/p9_3b3_cd2_verified_CI_39968651863.json": "33f22f76924a8cb9e478b511ccc3db052a0b0a0e3afb132b359e28910c491bbb",
+    "research/ige_cmip6/p9_3b3_cd2_verified_local_replay_20261023.json.xz": "f25005e89f387f5069430cea419f1c2f455919718203ac943655b5047c728bc0",
+    "research/ige_cmip6/p9_3b3_cd2_verified_local_summary_20261023.json": "bd034e8112db6605164dbeae1e30756d9ebfe643140a638e216b7742cc8a0b05",
+    "research/ige_cmip6/p9_3b3_cd3_diagnostics.py": "2386ca6004eb9e96313bd6308fa507c00c3cef7e77669c0c8449c2e5c3dec638",
+    "research/ige_cmip6/p9_3b3_cd3_protocol.json": "a891d280fb2427e36e69ef10e2192461156b8605ba27b1d7f69c122d9a9bbe88",
+    "research/ige_cmip6/p9_3b3_cd3_run.py": "c98801f58ce350df9ca9e36a0903852efdc90fbd593cb3057ed8dee11c6173a0",
+    "research/ige_cmip6/p9_3b3_cd3_stability.py": "4a97e360748dbde2de84962abbd9b0d20a69ec8dbb4800a8aa08b067d7bc88a2",
+    "research/ige_cmip6/p9_3b3_compare_identified_set.py": "dbd4e08a69326d01833b232bbcac8e7e281e1c9e0a8533c18e528b4f689e30c7",
+    "research/ige_cmip6/p9_3b3_compare_operators.py": "3b7503eda3c2de51b53f12543e7f0b86ada0f6ae06934501c3870eb4463c6b50",
+    "research/ige_cmip6/p9_3b3_compare_pressure.py": "31c3a2967157433e7dd2e41232f46cfbe4828f0a5ebb6cd5128b2e3446248fdf",
+    "research/ige_cmip6/p9_3b3_compare_protocol.json": "5110e1034e840bc5edbd7426f4cdf846a239a4476f72f88ea197d85d97dff12e",
+    "research/ige_cmip6/p9_3b3_compare_run.py": "1236ff49794c833845a1a6ea59b6220ae20303a42a7ded7e5a5e7a53727be2cf",
+    "research/ige_cmip6/p9_3b3_compare_vertical_frame.py": "0214d94e4b832b853dcfa2555317135df3e1bdb9879d480ecf17bf95d12982eb",
+    "research/ige_cmip6/p9_3b3_daily_feasibility.py": "2ce4c09e1462060de08a907b0302a0b78f6d4fccb2d75fbf85184516d3a99782",
+    "research/ige_cmip6/p9_3b3_development_benchmark.py": "bbd5fabb0eb2c94143841882295b7497a8e0f8227fdcdbbfeb985d76a99954f6",
+    "research/ige_cmip6/p9_3b3_frozen_protocol.json": "af342399a859a4739359430b356f39396f74199b2ae849064aa6bf7454ec167e",
+    "research/ige_cmip6/p9_3b3_generator.py": "443b42bfb991e10004487b6f1153b88466c399db9d2032b4ce5e70201d3c2537",
+    "research/ige_cmip6/p9_3b3_joint_bounds.py": "8808aa618cc458647f52cd25794915277d95358e108363650d64a6a1eabab02e",
+    "research/ige_cmip6/p9_3b3_joint_solver.py": "f5f049865eba5c7ef46405e2ed6630dfe70d29b2adf9fc73cbd4f4ec246fb478",
+    "research/ige_cmip6/p9_3b3_native_at_valley_source_only.py": "9ae091f38470bf41971c9e2ef006ebc6003a3afc41c15c3adf3f1043d04e33b3",
+    "research/ige_cmip6/p9_3b3_native_columns.py": "3cf3a90b449797239a468eb387b8aba720ad277200919ea7bb6da90ecbbf953d",
+    "research/ige_cmip6/p9_3b3_native_completion_local_results_20261022.json": "9da63bc5d81c5a93377f4d8e9b62dc740a2a4a054dd2e1243df4b3342d4a5ff4",
+    "research/ige_cmip6/p9_3b3_native_completion_protocol.json": "c450152479e34c7e89cf2dd0900f12a2e5e0af322e6933a51c8dbcd2ed48fcab",
+    "research/ige_cmip6/p9_3b3_native_completion_verified_CI_39757573033.json": "7f93deb1ed06b3bc70c7002d4133c1f8031d4f41259bf31bb26ab77a0303567b",
+    "research/ige_cmip6/p9_3b3_native_heights.py": "fb8f8c9805be822c710e58e8518c33d3d9ad9249dd46cdcd2f08908a0e486b5e",
+    "research/ige_cmip6/p9_3b3_native_local_results_20261022.json": "663154498375e7f02ab40af89724f224e2ff218f0730952f8021f6306b74671d",
+    "research/ige_cmip6/p9_3b3_native_protocol.json": "5c0f3ec123db35e9329f6d511a7bf1154a140581fa6e0181d337983d0806a27c",
+    "research/ige_cmip6/p9_3b3_native_run.py": "25fff9d5e0419975abe0b5678068de2bdb23eb0f1265372e1a0c21849d84ec41",
+    "research/ige_cmip6/p9_3b3_native_sources.py": "5425e7174c129bb545948aa83048670f20a8fd48cbb165b1e64076c1ebcaeac2",
+    "research/ige_cmip6/p9_3b3_native_validation.py": "41017dc5caa56712310bd1e0fcccef731973814210fbbe9d10f4a7e14d87c3b4",
+    "research/ige_cmip6/p9_3b3_native_verified_CI_39753778078.json": "b6f361d53becf450051b925fd982a6c3d21d0b85ccdb50ba437c79fd639bdfe7",
+    "research/ige_cmip6/p9_3b3_native_work_completed_and_graz_geometry_NV1_verified_summary.json": "d2a738e65f1135c5fbcdea5f1e108b60a9783f85f4f9cbbc5dddc20e0097e6ae",
+    "research/ige_cmip6/p9_3b3_nv2_columns.py": "06efbb8b53901ad4ac26b5512f9e01e6c878ae10173b29ea7bb374ca2ece28fe",
+    "research/ige_cmip6/p9_3b3_nv2_dated_sensor_references.json": "41c03f70deeb8eedd259d8785299875354a9942f7d361a2b6c9a495ad7ec6f6f",
+    "research/ige_cmip6/p9_3b3_nv2_geometry.py": "8b02e889d135c7baf0b21d12931ed68fcc67609548456ca59cb994554f5d2959",
+    "research/ige_cmip6/p9_3b3_nv2_local_contract_results_20261023.json": "f59600dd83cb7bd568dd423865d11eccd3332ff1d834a27bc0b417ba2675fd3a",
+    "research/ige_cmip6/p9_3b3_nv2_local_source_geometry_20261023.json": "d8b3f4c208a56b6b3e0374e5fc7df150fc640cccc345ce84a661f4bfb88b92c9",
+    "research/ige_cmip6/p9_3b3_nv2_protocol.json": "3c2101732cc310c07ce5c79f2805fe3b0cc1561e2c4da0319e4cc858e65ce363",
+    "research/ige_cmip6/p9_3b3_nv2_run.py": "921726359c431054c67afb678c220b1b4b3a73f9ab1a0626e86a2096444c854d",
+    "research/ige_cmip6/p9_3b3_nv2_validation.py": "dd2b3aac07561c42eba674e2c0436c1da28df62942b97d0b9b88c29a539824d3",
+    "research/ige_cmip6/p9_3b3_p1_c1_verified_CI_39661886531.json": "f9da923ee09c1898c8c12b9edb1b983c3b4361c4eb5f4f487f3b5fe740b2d701",
+    "research/ige_cmip6/p9_3b3_p1_c1_verified_local_results_20261021.json": "8ee34636081f3b5d85de43df85bb320b7e3d44d7a24ee9c5047bdf1c616e705e",
+    "research/ige_cmip6/p9_3b3_pressure_diagnostics.py": "7244a5b72be3f663fb0b07fe99e17ab322341d57d7d5c53535e665ac3ac6edc0",
+    "research/ige_cmip6/p9_3b3_pressure_reference.py": "1300628bf56f22ff9a7dbcb7b1ec2d6adc1bbb1d976f3a3d75b1e35399491784",
+    "research/ige_cmip6/p9_3b3_reference_column.py": "6244b62e2f2769ec519dba6cadfff1395ba4689c863958b3a969792a4159abca",
+    "research/ige_cmip6/p9_3b3_reference_local_results_20261022.json": "44636db3d010a782d1dda848460aea4b5a48f4d4f25e456f17ba5a89f06dd210",
+    "research/ige_cmip6/p9_3b3_reference_protocol.json": "52418155d79bc3c4c76a613909d3348ccc35ff49858b2c44ed4d3d223b12069f",
+    "research/ige_cmip6/p9_3b3_reference_run.py": "610fb5e5218df85f68ff3b2166deb3540b863908b9d9403d0bf9abb8192c1d65",
+    "research/ige_cmip6/p9_3b3_reference_sources.py": "8d0ad4ce4da4dacf1cc19dfeca0e2325848e3aa8bd75f8cab80ee9683ff30c0b",
+    "research/ige_cmip6/p9_3b3_reference_verified_CI_39739417052.json": "98a146c8445c2737fa5617832f0d0cc48a3697054f22de6a43ebde06ee022603",
+    "research/ige_cmip6/p9_3b3_regression_audit.py": "8673c8b92bdc035ab37e6f8697f2337935d49d159a70e9b3fbfccce2277ec167",
+    "research/ige_cmip6/p9_3b3_repair_acceptance.py": "74cacf97ee7cc683d062e1000abe40c5726f74992dd547f4407f7aafeaa784d7",
+    "research/ige_cmip6/p9_3b3_repair_protocol.json": "734e53768e18b4ace253e54534f2bde0b7002dd2476ce3030c272da4c5c877bb",
+    "research/ige_cmip6/p9_3b3_repair_time_evidence.json": "adc14cf56cebb25d3c9d368af9977a2eac9f46ad7e43508a7af0d864801bf746",
+    "research/ige_cmip6/p9_3b3_run.py": "bc0f1316f97dff8509fbaebe31c3794084f66a87a4612421eab040ea5f1e7d7c",
+    "research/ige_cmip6/p9_3b3_source_reconciliation.py": "f88b362a411cb9e63b60098d26f6d6802533dfeb20dc4f18366c1ca675e5e6cf",
+    "research/ige_cmip6/p9_3b3_source_semantics.py": "528e2d7a4f68527ce4fb75a6fa49010ca1d58342ae39f59fb759597b196ad53e",
+    "research/ige_cmip6/p9_3b3_source_semantics_evidence.json": "557bb81c41126a0984274824e1aaab43335adfc254a6edd5c3a9af18a78c9363",
+    "research/ige_cmip6/p9_3b3_source_time_support.py": "963f018935144fa65783185a9568e22d4298bbce9b204215ed678c7d8d436ae6",
+    "research/ige_cmip6/p9_3b3_state_validation.py": "6fc5c6024da896de35af9b6777d3b9f1729772e3cfd708be2bf53e55ca2908f7",
+    "research/ige_cmip6/p9_3b3_thermodynamics.py": "f9e369fdc14051bc60a58c13a4cea2bc6ff1e564db0788e3702807849638f9fd",
+    "research/ige_cmip6/p9_3b3_tpa1_CI_39938665094_comparison.zip": "4cc3d680d4608483ee06a5d03a162a376ebbb6365ee158212f9edf4734393276",
+    "research/ige_cmip6/p9_3b3_tpa1_CI_39938665094_frozen_regressions.zip": "fd0f1aa0038dfc81d5a15c4bd3311044a4829127c4242704c506142ea40b8392",
+    "research/ige_cmip6/p9_3b3_tpa1_verified_CI_39938665094.json": "392c76eaa21552f54f1dcad58fe3b1b21f00038a1b7138f2ab42a01061ec6b4a",
+    "research/ige_cmip6/p9_3b3_tpa1_verified_local_replay_20261023.json.gz": "9784d83affb01f89925e635289f31c5f48cea2e059bd90cdd2d6fa735a30e046",
+    "research/ige_cmip6/p9_3b3_tpa1_verified_local_summary_20261023.json": "7600b5ef2ddcaf958f2d2c9dff6d873a93960292cee30b5110ca228c6e14bb99",
+    "research/ige_cmip6/p9_3b3_tpa_audit.py": "74cd159fa4672c93b78a0ee22afe644fbcfd6fa336825f42c552a59ac3955a98",
+    "research/ige_cmip6/p9_3b3_tpa_compare.py": "44204e8257066eb22421ff7d197949fd36f37c22bb101b70e31396dbf8e812a5",
+    "research/ige_cmip6/p9_3b3_tpa_contracts.py": "b6dec492de7d16e12bb9a252b24b71f05c22b4e7abddb14857ef4ed9a2cbf644",
+    "research/ige_cmip6/p9_3b3_tpa_nasa_semantics_20261023.json": "4c6c4cec6d9ba8bf81a0041669080c97cb3145b85f2d1290e089cadba0a85e14",
+    "research/ige_cmip6/p9_3b3_tpa_pressure.py": "6ab2aae7a97eda4287faadb50d008429baa316b6fc3ecd8e4d84b629669b15cb",
+    "research/ige_cmip6/p9_3b3_tpa_protocol.json": "feb2c7e29b7ead7daf46d86cea280851b5eb9e381b6be0275c0ce3ded85c064b",
+    "research/ige_cmip6/p9_3b3_tpa_run.py": "4f330a078f2e29c754d4619578164368c7678c91042b9c1afaf8d49deeb0cb65",
+    "research/ige_cmip6/test_p9_3b3_c2_pipeline.py": "1bc36debc0df69281b8e258529a2a35cfeba5c0a13715a1b47f58950962ee0b9",
+    "research/ige_cmip6/test_p9_3b3_c2_projection.py": "bf090df9454fde72e7760ce9276661b57e211873ccde067e71ab1d73b96e8b68",
+    "research/ige_cmip6/test_p9_3b3_cd1_diagnostics.py": "cd54d92687b5d2543af54fa9261eceea9d3d533ce13633d520a8f71e1f73c66a",
+    "research/ige_cmip6/test_p9_3b3_cd2_solvers.py": "a20482f5fd3986453e8d682b97f4fd1214d46018b24c73294fb0974ad870f82a",
+    "research/ige_cmip6/test_p9_3b3_compare_foundation.py": "41c55044c241349887372a57b5f3702a4d78153b033088885c62a19613233b73",
+    "research/ige_cmip6/test_p9_3b3_compare_pipeline.py": "25b99d8b07469129b3805964f471ea9c9a720da5e7f9c754ebe247934116abd5",
+    "research/ige_cmip6/test_p9_3b3_feasibility.py": "67e5084315312e7667da8d2916b3b41dea11e43d1cf2b7b556f1b20ef01bb1cc",
+    "research/ige_cmip6/test_p9_3b3_joint_solver.py": "494fe20fb309ac4f4cff3a689fd39baa8d59ec8bb22cfb15b2527bcd517c6896",
+    "research/ige_cmip6/test_p9_3b3_native_at_valley_source_only.py": "c0a3081e1f76594612997a66223562b6bcb6b648a9723c39aa855489c4448fa6",
+    "research/ige_cmip6/test_p9_3b3_native_heights.py": "bf8c0ea4cd73334f221436e17d3d4b036c0241c4ae230b96f6844e41a39d1b3b",
+    "research/ige_cmip6/test_p9_3b3_native_pipeline.py": "4c29fb5ecc1119736eec9e43939947cb4037022dc24425ede1cb05b50913a033",
+    "research/ige_cmip6/test_p9_3b3_native_sources.py": "bce77e07652c50e39c18ff6763718f5b24a74dd296151d927cd5ce77d0f70194",
+    "research/ige_cmip6/test_p9_3b3_nv2_columns.py": "93b848791ea1f0f7b0f9623af7cda637244e78c7954c163ae52c3e37248124dc",
+    "research/ige_cmip6/test_p9_3b3_nv2_geometry.py": "f6e8b6028e2bf1656d22e3407b2b9e6dcdf18567c82e9ccc887b1416c9150f09",
+    "research/ige_cmip6/test_p9_3b3_nv2_pipeline.py": "2d2bd553d4eb8962b6d1af1645a29ec7d60623529ced00364d08dd28704655df",
+    "research/ige_cmip6/test_p9_3b3_reference_column.py": "f50222eab1d20e842728a9ff9a42a44710f0128bd8ab9a57971fc04df5b79000",
+    "research/ige_cmip6/test_p9_3b3_reference_pipeline.py": "1c7edd45853db3a17900271b89eb9983cd71d62000b17dc1761a6e7f57562f6a",
+    "research/ige_cmip6/test_p9_3b3_reference_sources.py": "850723880634da005f62046305d9d7b728a1ea5fdeff34d6c99a1acee618886b",
+    "research/ige_cmip6/test_p9_3b3_repair.py": "57a8e8fa0943eb6aac44f151b7bd96a5a1b0a3abfc26c81557458d636c1d6dc4",
+    "research/ige_cmip6/test_p9_3b3_source_semantics.py": "6790e893709dcec89b5b66c21222c8b2b5c05a7a92861b8e4c072a7198fe6044",
+    "research/ige_cmip6/test_p9_3b3_thermodynamics.py": "d901751e90edb8f3fa6cb3cefe26996f6514caeefe8d3f77acd49955bbedcc5c",
+    "research/ige_cmip6/test_p9_3b3_tpa_audit.py": "cc572b60cc620b91d8fcc1ff3f873388be1e83bc645d1101071d8e5888ef1313",
+    "research/ige_cmip6/test_p9_3b3_tpa_compare.py": "849aa19e5e5f05c923a83b05a33cdeb4da217527b41a723137a1a971c9822617",
+    "research/ige_cmip6/test_p9_3b3_tpa_contracts.py": "59b88513f24bcc1e440d3b30745c3627e571fdd290f3c8e23071d6dc8861779c",
+    "research/ige_cmip6/test_p9_3b3_tpa_pipeline.py": "e430387606ba4ec8f8fbb5828bccf07db05ccd11a27ef186466895455837933b",
+    "research/ige_cmip6/test_p9_3b3_validation_contracts.py": "fc70b4e80fd13d2ca59d56f6e1a6a7e7f3f3458219f497ed93bacc2a6750ff9f"
+  }
+}
