@@ -1,0 +1,79 @@
+name: IGE IV1 full integration artificial controls and real source gate
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/ige-p9-3b3-iv1-integration-20261024
+    paths:
+      - .github/workflows/ige-p9-3b3-iv1-integration-20261024.yml
+      - research/ige_cmip6/p9_3b3_iv1_integration*.py
+      - research/ige_cmip6/p9_3b3_iv1_integration*.json
+      - research/ige_cmip6/test_p9_3b3_iv1_integration*.py
+permissions:
+  contents: read
+env:
+  OPENBLAS_NUM_THREADS: '1'
+  OMP_NUM_THREADS: '1'
+jobs:
+  integration_without_heldout_values:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify frozen preparation is in commit ancestry
+        run: git merge-base --is-ancestor 2a5c85122f0135e783d65944bc2a30cded5a23c5 HEAD
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 scipy==1.17.0 numcodecs==0.16.3 pyshtools==4.13.1 eccodes==2.50.0 eccodeslib==2.50.0.33
+      - name: Prior P9 suite and full artificial IV1 experiment
+        run: |
+          mkdir -p outputs/IV1-integration
+          python - <<'PY'
+          import json, platform, time, unittest
+          from pathlib import Path
+          suite = unittest.TestSuite()
+          loader = unittest.TestLoader()
+          for pattern in ['test_p9_3b3_*.py', 'test_p9_3a*.py', 'test_p9_2*.py', 'test_p9_3b2*.py']:
+              suite.addTests(loader.discover('research/ige_cmip6', pattern=pattern))
+          start = time.perf_counter()
+          result = unittest.TextTestRunner(verbosity=1).run(suite)
+          assert result.testsRun == 474
+          assert result.wasSuccessful()
+          Path('outputs/IV1-integration/tests.json').write_text(json.dumps({
+              'tests_run': result.testsRun, 'status': 'PASS', 'new_integration_tests': 28,
+              'wall_seconds': time.perf_counter()-start, 'python': platform.python_version(),
+              'new_tests_use_artificial_weather_only': True,
+              'artificial_native_profile_hours': 676, 'artificial_site_days': 84,
+              'artificial_method_records': 420, 'real_2022_profiles_collected': 0,
+              'station_values_opened': False, 'independent_accuracy': 'NOT_RUN'}, indent=2)+'\n')
+          PY
+          python research/ige_cmip6/p9_3b2d_canonical_pressure_fields.py
+      - name: Replay actual blocked AT admission without any weather request
+        run: |
+          python research/ige_cmip6/p9_3b3_iv1_integration.py preflight --out outputs/IV1-integration/preflight.json
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          a = json.loads(Path('outputs/IV1-integration/preflight.json').read_text())
+          assert a == json.loads(Path('research/ige_cmip6/p9_3b3_iv1_integration_preflight_20261024.json').read_text())
+          assert a['protected_files_unchanged'] == 168
+          assert a['time_admission']['admitted_fields'] == 6
+          assert a['source_collection_status'] == 'SOURCE_BLOCKED'
+          assert a['real_2022_profiles_collected'] == 0 and not a['station_values_opened']
+          assert not a['real_heldout_predictions_sealed'] and a['independent_accuracy'] == 'NOT_RUN'
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f:
+              f.write('474 tests PASS, including 28 new integration controls.\n\n'
+                  'Artificial full chain: 676 native profile hours, 84 site-days, 420 method records, external seal, adapters, paired statistics.\n\n'
+                  'Actual source gate remains blocked: AT parameter timing not admitted. No real 2022 collection, held-out observations or accuracy claim.\n\n'
+                  '168 frozen files unchanged. B4, P2 superiority and production EPW remain unqualified.\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: IGE-IV1-integration-474-tests-NOT-station-validation
+          path: outputs/IV1-integration/
+          if-no-files-found: warn
+          retention-days: 30

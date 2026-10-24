@@ -1,0 +1,17 @@
+{
+  "tests_run": 474,
+  "status": "PASS",
+  "expected_tests": 474,
+  "prior_tests": 446,
+  "new_integration_tests": 28,
+  "wall_seconds": 124.25116412900024,
+  "python": "3.12.14",
+  "new_tests_use_artificial_weather_only": true,
+  "artificial_native_profile_hours": 676,
+  "artificial_site_days": 84,
+  "artificial_method_records": 420,
+  "real_2022_profiles_collected": 0,
+  "station_values_opened": false,
+  "independent_accuracy": "NOT_RUN",
+  "production_epw_ready": false
+}

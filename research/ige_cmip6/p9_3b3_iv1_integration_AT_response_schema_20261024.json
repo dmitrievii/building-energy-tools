@@ -1,0 +1,116 @@
+{
+  "source_url": "https://dataset.api.hub.geosphere.at/v1/openapi.json",
+  "station_values_opened": false,
+  "schema_excerpt": {
+    "StationGeoJSONFeature": {
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "Feature",
+          "title": "Type",
+          "default": "Feature"
+        },
+        "geometry": {
+          "$ref": "#/components/schemas/GeoJSONPoint"
+        },
+        "properties": {
+          "$ref": "#/components/schemas/StationGeoJSONProperties"
+        }
+      },
+      "type": "object",
+      "required": [
+        "geometry",
+        "properties"
+      ],
+      "title": "StationGeoJSONFeature"
+    },
+    "StationGeoJSONProperties": {
+      "properties": {
+        "parameters": {
+          "additionalProperties": {
+            "$ref": "#/components/schemas/GeoJSONFeatureParameter"
+          },
+          "type": "object",
+          "title": "Parameters"
+        },
+        "station": {
+          "type": "string",
+          "title": "Station"
+        }
+      },
+      "type": "object",
+      "required": [
+        "parameters",
+        "station"
+      ],
+      "title": "StationGeoJSONProperties"
+    },
+    "StationGeoJSONSerializer": {
+      "properties": {
+        "media_type": {
+          "type": "string",
+          "const": "application/json",
+          "title": "Media Type",
+          "default": "application/json"
+        },
+        "type": {
+          "type": "string",
+          "const": "FeatureCollection",
+          "title": "Type",
+          "default": "FeatureCollection"
+        },
+        "version": {
+          "type": "string",
+          "title": "Version"
+        },
+        "timestamps": {
+          "items": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "type": "array",
+          "title": "Timestamps",
+          "description": "Format: *YYYY-MM-DDThh:mm:ss±hh:mm*"
+        },
+        "features": {
+          "items": {
+            "$ref": "#/components/schemas/StationGeoJSONFeature"
+          },
+          "type": "array",
+          "title": "Features"
+        },
+        "datapoints": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Datapoints"
+        },
+        "filename": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Filename",
+          "default": "Filename"
+        }
+      },
+      "type": "object",
+      "required": [
+        "version",
+        "timestamps",
+        "features",
+        "datapoints"
+      ],
+      "title": "StationGeoJSONSerializer"
+    }
+  }
+}
