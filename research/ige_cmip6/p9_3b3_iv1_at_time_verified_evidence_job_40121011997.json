@@ -1,0 +1,42 @@
+{
+  "AT_operator_basis": "PROVIDER_BASE_SAMPLE_HOUR_SELECTION_AND_VERSION_RENAME_CHAIN_INFERENCE",
+  "B4_qualified": false,
+  "P2_superiority_established": false,
+  "artifact": {
+    "bytes": 6317,
+    "id": 12571307673,
+    "member_sha256": {
+      "preflight.json": "9aeef54a36c31299a697f925a2855340073be1e86da310d57cd8c345cde1bc14",
+      "tests.json": "6ebfa23115096ebf510737aabcc616c9214a41498d16dc58ef60419b654559c1"
+    },
+    "path": "research/ige_cmip6/p9_3b3_iv1_at_time_CI_40121011997_evidence.zip",
+    "sha256": "24c3d570ec3ff81bfc226e544c7dc65b6477f81760904f7036c44938466c20d7"
+  },
+  "code_commit": "4fbb7a5cd3f22ba5388e5934462d56ff044acaea",
+  "evidence_job_conclusion": "success",
+  "evidence_job_id": 120952332529,
+  "heldout_2022_station_values_opened": false,
+  "independent_accuracy": "NOT_RUN",
+  "instrument_filter_periods_certified": false,
+  "nominal_time_fields_admitted": 9,
+  "preflight_byte_exact_to_committed_local": true,
+  "production_epw_ready": false,
+  "protected_files_unchanged": 168,
+  "source_job_id": 120953022369,
+  "source_job_status_at_checkpoint": "IN_PROGRESS_SOURCE_COLLECTION",
+  "stage": "IV1_TIME_EVIDENCE_JOB_VERIFIED_NOT_COMPLETE_NATIVE_RUN",
+  "tested_tree": "60c36f16f664ff99f7a04849bafc99a5ebc7c5ea",
+  "tests": {
+    "heldout_2022_station_values_opened": false,
+    "independent_accuracy": "NOT_RUN",
+    "new_time_evidence_tests": 10,
+    "python": "3.12.15",
+    "real_profiles_collected_by_tests": 0,
+    "status": "PASS",
+    "tests_run": 484,
+    "wall_seconds": 135.05764586499998
+  },
+  "v1_v2_station_value_identity_checked": false,
+  "workflow_run_id": 40121011997,
+  "workflow_url": "https://github.com/dmitrievii/building-energy-tools/actions/runs/40121011997"
+}
