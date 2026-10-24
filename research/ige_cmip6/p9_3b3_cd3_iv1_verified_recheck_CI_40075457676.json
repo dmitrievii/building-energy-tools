@@ -1,0 +1,199 @@
+{
+  "phase": "CD3_IV1_RECHECK_CI_RECEIPT_20261024",
+  "run": {
+    "id": 40075457676,
+    "head_sha": "eee17031153b0125200e62a67d812babfe17fe8b",
+    "head_branch": "research/ige-p9-3b3-cd3-iv1-audit-20261024",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/dmitrievii/building-energy-tools/actions/runs/40075457676",
+    "created_at": "2026-10-24T07:46:31Z",
+    "updated_at": "2026-10-24T07:48:08Z"
+  },
+  "artifact": {
+    "id": 12552728919,
+    "name": "ige-CD3-IV1-422-contracts-read-only-recheck-NOT-accuracy",
+    "size_in_bytes": 1673,
+    "url": "https://api.github.com/repos/dmitrievii/building-energy-tools/actions/artifacts/12552728919",
+    "archive_download_url": "https://api.github.com/repos/dmitrievii/building-energy-tools/actions/artifacts/12552728919/zip",
+    "expired": false,
+    "created_at": "2026-10-24T07:48:05Z",
+    "expires_at": "2026-11-23T07:48:05Z",
+    "updated_at": "2026-10-24T07:48:05Z",
+    "digest": "sha256:0d7baebca648e8238be855a0c8fa4c46d7723732244795de44d7b947174e4b1a",
+    "workflow_run": {
+      "id": 40075457676,
+      "repository_id": 1261544200,
+      "head_repository_id": 1261544200,
+      "head_branch": "research/ige-p9-3b3-cd3-iv1-audit-20261024",
+      "head_sha": "eee17031153b0125200e62a67d812babfe17fe8b"
+    }
+  },
+  "job_id": 120817710972,
+  "tests": {
+    "run": 422,
+    "status": "PASS",
+    "wall_seconds": 14.532,
+    "DWD_absolute_pressure_contract": "PASS"
+  },
+  "artifact_member": "audit.json",
+  "artifact_member_sha256": "e517d3129f9706d50d782a41df39f5b744c779e7be97416cdf194abd3831ceba",
+  "audit": {
+    "phase": "CD3_IV1_READ_ONLY_VERIFICATION_20261024",
+    "checked_commit": "63e4eeaa969831556c4fda5d0e8700d51d79c9c9",
+    "numerical_status": "PASS",
+    "frozen_CD3_controls": 154,
+    "frozen_IV1_controls": 161,
+    "counts": {
+      "strict_witnesses": 30,
+      "FD_reports": 1584,
+      "FD_columns": 72864,
+      "validated_endpoints": 792,
+      "envelope_sets_checked": 264,
+      "new_successful_trials": 396
+    },
+    "CI_exact_members": 65,
+    "original_CI_zip_verified": null,
+    "max_scalar_F_error": 1.3322676295501878e-15,
+    "max_FD_objective_error": 8.201404937124845e-10,
+    "max_FD_Jacobian_error": 1.1380865805321605e-08,
+    "improved_pressure_cases": [
+      "CONTROL_Q90CAP_RH20|AT|2021-02-01|P1_ISOTHERMAL",
+      "CONTROL_Q90CAP_RH20|AT|2021-02-01|P1_LAPSE_0065",
+      "CONTROL_Q90CAP_RH20|AT|2021-02-01|P2_NATIVE",
+      "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-20|P1_ISOTHERMAL",
+      "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-20|P1_LAPSE_0065",
+      "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-20|P2_NATIVE"
+    ],
+    "improved_underlying_cases": [
+      "CONTROL_Q90CAP_RH20|AT|2021-02-01",
+      "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-20"
+    ],
+    "start_contract_review": {
+      "status": "WORDING_AMBIGUITY_REQUIRES_EXPLICIT_SEGMENT_LIMIT",
+      "patterns_checked": 99,
+      "different_from_slope_only_reading": 99,
+      "actual_alphas": [
+        0.9
+      ],
+      "literal_slope_only_alphas": [
+        1.0
+      ],
+      "actual_formula": "0.9*min(1,r_slope)",
+      "slope_only_reading_of_protocol": "min(1,0.9*r_slope)",
+      "no_retroactive_perfect_preregistration_claim": true
+    },
+    "IV1_raw_source_replay": {
+      "sensor_records_reparsed": [
+        {
+          "country": "AT",
+          "sensor": "pressure",
+          "height_MSL_m": 378.8,
+          "timestamps_checked": 672,
+          "raw_XML_matches_derived_record": true
+        },
+        {
+          "country": "AT",
+          "sensor": "temperature",
+          "height_MSL_m": 368.7,
+          "timestamps_checked": 672,
+          "raw_XML_matches_derived_record": true
+        },
+        {
+          "country": "AT",
+          "sensor": "RH_water",
+          "height_MSL_m": 368.7,
+          "timestamps_checked": 672,
+          "raw_XML_matches_derived_record": true
+        },
+        {
+          "country": "DE",
+          "sensor": "pressure",
+          "height_MSL_m": 82.5,
+          "timestamps_checked": 672,
+          "raw_XML_matches_derived_record": true
+        },
+        {
+          "country": "DE",
+          "sensor": "temperature",
+          "height_MSL_m": 37.8,
+          "timestamps_checked": 672,
+          "raw_XML_matches_derived_record": true
+        },
+        {
+          "country": "DE",
+          "sensor": "RH_water",
+          "height_MSL_m": 37.8,
+          "timestamps_checked": 672,
+          "raw_XML_matches_derived_record": true
+        },
+        {
+          "country": "CH",
+          "sensor": "pressure",
+          "height_MSL_m": 1595.58,
+          "timestamps_checked": 672,
+          "raw_XML_matches_derived_record": true
+        },
+        {
+          "country": "CH",
+          "sensor": "temperature",
+          "height_MSL_m": 1593.93,
+          "timestamps_checked": 672,
+          "raw_XML_matches_derived_record": true
+        },
+        {
+          "country": "CH",
+          "sensor": "RH_water",
+          "height_MSL_m": 1593.93,
+          "timestamps_checked": 672,
+          "raw_XML_matches_derived_record": true
+        }
+      ],
+      "AT_unique_historical_individual": 16412,
+      "preflight_blockers": [
+        {
+          "scope": "AT_TIME_SUPPORT",
+          "status": "SOURCE_BLOCKED",
+          "reason": "PARAMETERS_SAY_STUNDEN_MESSWERT; WMDR_TIMESTAMP_MEANING_EMPTY; DO_NOT_INFER_INSTANT_OR_HOURLY_MEAN"
+        },
+        {
+          "scope": "DE_URBAN_T_RH_TIME_SUPPORT",
+          "status": "SOURCE_BLOCKED",
+          "reason": "REQUIRE_NATIVE_URBAN_PARAMETER_METADATA; GENERIC_TT_10_INSTANT_IS_NOT_A_PROOF_FOR_ALL_URBAN_FIELDS"
+        },
+        {
+          "scope": "ALL_COUNTRIES_2022_NATIVE_PRESSURE_AND_PREDICTION_SEAL",
+          "status": "NOT_PREPARED",
+          "reason": "ONLY_2021_SOURCE_PROFILES_ARCHIVED; 2022_PHI_S_LNSP_T_Q_AND_ALL_METHOD_PREDICTIONS_NOT_SEALED"
+        }
+      ],
+      "preflight_is": "SOURCE_REGISTRATION_NOT_GENERATOR_OR_SCORER",
+      "old_preflight_height_check": "TRUSTED_HASHED_DERIVED_JSON; THIS_AUDIT_ADDS_RAW_XML_REPARSE",
+      "station_values_opened": false,
+      "station_accuracy": "NOT_RUN"
+    },
+    "optimizer_calls": 0,
+    "station_values_opened": false,
+    "independent_accuracy": "NOT_QUALIFIED",
+    "operational_ready": false,
+    "main_merged": false,
+    "audit_code_sha256": "4c2a75fa3c45febd279ac56cc3ebd34167afe29a0a82e6c99307ed1e9260618c",
+    "wall_seconds": 51.217886601
+  },
+  "comparison_with_local": {
+    "same_except_wall_seconds_and_optional_original_zip": true,
+    "local_original_zip_verified": true,
+    "CI_original_zip_verified": null,
+    "CI_still_verifies_65_saved_member_SHA256": true
+  },
+  "limitations": [
+    "START_PROTOCOL_WORDING_AMBIGUITY_RECORDED_SEPARATELY; ACTUAL_FROZEN_CODE_UNCHANGED",
+    "IV1_IS_REGISTRATION_AND_SOURCE_ONLY_PREFLIGHT; GENERATOR_SEAL_SCORER_NOT_RUN",
+    "NO_NEW_STATION_VALUES_OPENED; INDEPENDENT_ACCURACY_NOT_QUALIFIED; B4_NOT_QUALIFIED; NOT_PRODUCTION_READY"
+  ],
+  "protected_refs": {
+    "main": "2a82a77d0fe8cc87a2324b820d6c6843b6598548",
+    "research/ige-p9-3b3-cd3-profile-stability-20261023": "63e4eeaa969831556c4fda5d0e8700d51d79c9c9"
+  },
+  "merge_performed": false
+}
