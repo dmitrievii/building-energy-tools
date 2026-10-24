@@ -1,7 +1,7 @@
 """IV1 fixed-column native 2022 collector; observations are not accessible.
 
-The current AT timing gate prevents this collector from opening any network
-source. The implementation can be exercised with artificial readers in tests.
+Only admitted published-node timing and dated sensors permit network I/O.
+The implementation can also be exercised with artificial readers in tests.
 """
 from __future__ import annotations
 

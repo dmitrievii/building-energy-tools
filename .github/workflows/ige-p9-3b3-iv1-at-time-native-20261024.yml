@@ -1,0 +1,178 @@
+name: IGE IV1 AT timing evidence and blind native reconstruction
+on:
+  workflow_dispatch:
+    inputs:
+      run_model_sources:
+        description: Collect the registered model sources and seal all predictions, without station observations
+        type: boolean
+        default: false
+  push:
+    branches:
+      - research/ige-p9-3b3-iv1-at-time-evidence-20261024
+    paths:
+      - .github/workflows/ige-p9-3b3-iv1-at-time-native-20261024.yml
+      - research/ige_cmip6/p9_3b3_iv1_integration*.py
+      - research/ige_cmip6/p9_3b3_iv1_at_time_evidence_20261024.json.xz
+      - research/ige_cmip6/p9_3b3_iv1_at_time_source_request_20261024.json
+      - research/ige_cmip6/test_p9_3b3_iv1_at_time_evidence.py
+      - research/ige_cmip6/test_p9_3b3_iv1_integration.py
+permissions:
+  contents: read
+env:
+  OPENBLAS_NUM_THREADS: '1'
+  OMP_NUM_THREADS: '1'
+jobs:
+  evidence_and_regressions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: git merge-base --is-ancestor 3e43d25405f0d53d01cab635c4b91ca2dce01c67 HEAD
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 scipy==1.17.0 numcodecs==0.16.3 pyshtools==4.13.1 eccodes==2.50.0 eccodeslib==2.50.0.33
+      - name: All prior controls and new original-provider evidence tests
+        run: |
+          mkdir -p outputs/IV1-time-evidence
+          python - <<'PY'
+          import json, platform, time, unittest
+          from pathlib import Path
+          suite = unittest.TestSuite()
+          loader = unittest.TestLoader()
+          for pattern in ['test_p9_3b3_*.py', 'test_p9_3a*.py', 'test_p9_2*.py', 'test_p9_3b2*.py']:
+              suite.addTests(loader.discover('research/ige_cmip6', pattern=pattern))
+          start = time.perf_counter()
+          result = unittest.TextTestRunner(verbosity=1).run(suite)
+          assert result.testsRun == 484 and result.wasSuccessful()
+          Path('outputs/IV1-time-evidence/tests.json').write_text(json.dumps({
+              'tests_run': result.testsRun, 'status': 'PASS', 'new_time_evidence_tests': 10,
+              'wall_seconds': time.perf_counter()-start, 'python': platform.python_version(),
+              'heldout_2022_station_values_opened': False, 'real_profiles_collected_by_tests': 0,
+              'independent_accuracy': 'NOT_RUN'}, indent=2)+'\n')
+          PY
+          python research/ige_cmip6/p9_3b2d_canonical_pressure_fields.py
+      - name: Replay the new nominal published-node chain without weather requests
+        run: |
+          python research/ige_cmip6/p9_3b3_iv1_integration.py preflight --out outputs/IV1-time-evidence/preflight.json
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          a = json.loads(Path('outputs/IV1-time-evidence/preflight.json').read_text())
+          assert a == json.loads(Path('research/ige_cmip6/p9_3b3_iv1_at_time_preflight_v2_20261024.json').read_text())
+          assert a['protected_files_unchanged'] == 168
+          assert a['time_admission']['admitted_fields'] == 9
+          assert a['source_collection_status'] == 'ADMITTED_NOT_RUN'
+          assert not a['station_values_opened'] and not a['real_heldout_predictions_sealed']
+          assert a['time_admission']['instrument_filter_periods_certified'] is False
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f:
+              f.write('484 controls PASS. AT nominal operator: provider base sample on the full UTC hour, transferred through official v1/v2 rename tables.\n\n'
+                  'Sensor filter duration and numerical identity of all v1/v2 values are not certified. Original six-field admission remains unchanged as a historical result.\n\n'
+                  'This job has not collected real profiles or held-out station observations.\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: IGE-IV1-time-evidence-484-tests-NOT-station-validation
+          path: outputs/IV1-time-evidence/
+          if-no-files-found: warn
+          retention-days: 30
+
+  native_model_sources_and_all_predictions_no_observations:
+    needs: evidence_and_regressions
+    if: ${{ (github.event_name == 'push' && contains(github.event.head_commit.message, '[iv1-source]')) || (github.event_name == 'workflow_dispatch' && inputs.run_model_sources) }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 scipy==1.17.0 numcodecs==0.16.3 pyshtools==4.13.1 eccodes==2.50.0 eccodeslib==2.50.0.33
+      - name: Verify committed source request and ephemeral runner disk capacity
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, shutil, subprocess, sys
+          from pathlib import Path
+          sys.path.insert(0, 'research/ige_cmip6')
+          from p9_3b3_iv1_integration_common import CONTRACT_SHA, code_pins, integration_guard, require_time_admission
+          from p9_3b3_iv1_integration_at_time import SNAPSHOT_SHA
+          assert os.environ.get('GITHUB_ACTIONS') == 'true'
+          protocol, contract = integration_guard()
+          require_time_admission()
+          request = json.loads(Path('research/ige_cmip6/p9_3b3_iv1_at_time_source_request_20261024.json').read_text())
+          assert request['stage'] == 'MODEL_SOURCES_AND_FULL_PREDICTIONS_ONLY'
+          assert request['time_evidence_sha256'] == SNAPSHOT_SHA and request['integration_contract_sha256'] == CONTRACT_SHA
+          assert request['no_observation_downloads_in_this_workflow'] is True
+          assert request['max_network_bytes'] == protocol['compute_estimate']['max_network_bytes'] == 48*1024**3
+          assert request['max_requests'] == protocol['compute_estimate']['max_requests'] == 30000
+          # Every execution dependency must already belong to this commit.
+          for name, digest in code_pins().items():
+              raw = subprocess.check_output(['git', 'show', 'HEAD:research/ige_cmip6/'+name])
+              assert hashlib.sha256(raw).hexdigest() == digest
+          subprocess.run(['git', 'diff', '--exit-code'], check=True)
+          # These SDKs are unused on the disposable hosted Python runner.
+          subprocess.run(['sudo', 'rm', '-rf', '/usr/local/lib/android', '/usr/share/dotnet',
+              '/opt/ghc', '/usr/local/.ghcup', '/opt/hostedtoolcache/CodeQL'], check=True)
+          available = shutil.disk_usage('/tmp').free
+          assert available >= 40*1024**3, f'Less than 40 GiB available before model collection: {available}'
+          print(json.dumps({'free_disk_bytes_before_model_run': available, 'time_fields_admitted': 9,
+              'native_profile_hours': 676, 'case_count': 84, 'method_records': 420,
+              'network_ceiling_bytes': request['max_network_bytes'], 'heldout_station_values_opened': False}))
+          PY
+      - name: Collect registered native and reference model sources only
+        run: python research/ige_cmip6/p9_3b3_iv1_integration.py collect --out outputs/IV1-native/sources --private-cache /tmp/ige-iv1-native-model-private
+      - name: Freeze all common priors and generate all five methods
+        run: python research/ige_cmip6/p9_3b3_iv1_integration.py generate --sources outputs/IV1-native/sources --out outputs/IV1-native/predictions
+      - name: Preserve completeness and physical replay receipt, never score observations
+        if: always()
+        run: |
+          PYTHONPATH=research/ige_cmip6 python - <<'PY'
+          import collections, json, os
+          from pathlib import Path
+          from p9_3b3_iv1_integration import verify_predictions
+          from p9_3b3_iv1_integration_common import sha
+          out = Path('outputs/IV1-native'); out.mkdir(parents=True, exist_ok=True)
+          source_path = out/'sources/source_data.json'
+          source = json.loads(source_path.read_text()) if source_path.exists() else {}
+          seal = out/'predictions/prediction_seal.json'
+          receipt = {'stage': 'REGISTERED_BLIND_MODEL_SOURCE_AND_PREDICTION_EXECUTION',
+              'code_commit': os.environ['GITHUB_SHA'], 'run_id': int(os.environ['GITHUB_RUN_ID']),
+              'source_complete': source.get('complete', False),
+              'native_hours_read': sum(r.get('status') != 'SOURCE_BLOCKED' for r in source.get('native_hours', {}).values()),
+              'native_hours_expected': 676, 'source_failures': source.get('source_failures', []),
+              'network_bytes_accounted': source.get('network_bytes'), 'network_requests_accounted': source.get('network_requests'),
+              'source_wall_seconds': source.get('wall_seconds'),
+              'heldout_2022_station_values_opened': False, 'independent_accuracy': 'NOT_RUN',
+              'B4_qualified': False, 'P2_superiority_established': False, 'production_epw_ready': False,
+              'full_prediction_replay': 'NOT_COMPLETE', 'ready_for_next_scoring_admission': False}
+          try:
+              digest = sha(seal)
+              receipt['prediction_seal_sha256'] = digest
+              cases, barometer, protocol = verify_predictions(out/'predictions', digest)
+              receipt.update(full_prediction_replay='PASS', case_count=len(cases), method_records=len(cases)*5,
+                  physical_state_records=sum('T_K' in row for case in cases for row in case['results']),
+                  barometer_prediction_hours=sum(len(v) for v in barometer.values()),
+                  method_status_counts=dict(collections.Counter(row['status'] for case in cases for row in case['results'])),
+                  ready_for_next_scoring_admission=True)
+              (out/'prediction_seal.sha256').write_text(digest+'\n')
+          except Exception as error:
+              receipt['execution_blocker'] = type(error).__name__+':'+str(error)
+          (out/'source_run_receipt.json').write_text(json.dumps(receipt, indent=2, sort_keys=True)+'\n')
+          print(json.dumps(receipt))
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as stream:
+              stream.write('Native model execution: '+receipt['full_prediction_replay']+'. No held-out station observations or accuracy evaluation.\n\n')
+              if seal.exists(): stream.write('Prediction seal SHA-256: `'+receipt.get('prediction_seal_sha256', '')+'`. Must be committed before scoring.\n')
+          assert receipt['ready_for_next_scoring_admission'], 'Model source/prediction execution is incomplete; observations remain prohibited'
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: IGE-IV1-native-model-sources-and-predictions-NO-observations
+          path: outputs/IV1-native/
+          if-no-files-found: warn
+          retention-days: 30

@@ -1,7 +1,7 @@
 """IV1 sources -> all common priors -> five methods -> full seal -> scoring.
 
-Real collection and observations are blocked by the pinned unresolved AT
-operator. There is no CLI switch to bypass scientific source admission.
+Published-node timing is admitted through versioned provider evidence. No
+CLI switch can bypass scientific source admission or the full source seal.
 """
 from __future__ import annotations
 
@@ -225,14 +225,14 @@ def score_predictions(directory, expected_seal_sha256, output, private_cache):
     result = score_arrays(cases, barometer, observations, protocol)
     result.update(prediction_seal_sha256=expected_seal_sha256, observation_provenance=provenance,
                   station_values_opened=True, comparison_protocol_unchanged=True,
-                  parameter_time_admission='ALL_NINE_EXPLICIT_CURRENT_NODE_OPERATORS')
+                  parameter_time_admission='ALL_NINE_NOMINAL_PUBLISHED_NODE_OPERATORS_DOCUMENTED_BY_SOURCE_CHAIN')
     Path(output).parent.mkdir(parents=True, exist_ok=True)
     write_new(output, result)
     return result
 
 
 def preflight():
-    from p9_3b3_iv1_admission import admission_report
+    from p9_3b3_iv1_integration_at_time import current_admission_report
     protocol, contract = integration_guard()
     plan = execution_plan(protocol, contract)
     try:
@@ -244,7 +244,8 @@ def preflight():
         'protected_files_unchanged': len(contract['protected_sha256']), 'execution_plan': plan,
         'source_collection_status': 'SOURCE_BLOCKED' if blocked else 'ADMITTED_NOT_RUN',
         'source_blocker': blocked, 'end_to_end_code_implemented': True,
-        'time_admission': admission_report()['time_admission'],
+        'time_admission': current_admission_report()['time_admission'],
+        'counts_scope': 'THIS_PREFLIGHT_INVOCATION_NOT_A_SEARCH_FOR_PREVIOUS_EXPERIMENT_OUTPUTS',
         'physical_admissibility': 'VALIDATORS_IMPLEMENTED_REAL_COHORT_NOT_RUN',
         'real_2022_profiles_collected': 0, 'real_heldout_predictions_sealed': False,
         'real_station_scoring': 'NOT_RUN', 'station_values_opened': False,

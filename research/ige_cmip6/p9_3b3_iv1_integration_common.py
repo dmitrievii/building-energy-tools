@@ -7,7 +7,8 @@ from pathlib import Path, PurePosixPath
 import subprocess
 
 from p9_3b3_compare_vertical_frame import SourceBlocked
-from p9_3b3_iv1_admission import admission_report, source_plan
+from p9_3b3_iv1_admission import source_plan
+from p9_3b3_iv1_integration_at_time import current_admission_report
 from p9_3b3_iv1_preflight import ROOT, guard
 from p9_3b3_cd1_run import write_new
 
@@ -46,7 +47,7 @@ def execution_plan(protocol, contract):
 
 
 def require_time_admission():
-    audit = admission_report()
+    audit = current_admission_report()
     time = audit['time_admission']
     if not time['all_parameter_time_operators_admitted'] or any(
         row['status'] != 'ADMITTED' or row['operator'] != 'CURRENT_VALUE_AT_EXACT_UTC_NODE'
@@ -80,7 +81,11 @@ def code_pins():
     return {p.name: sha(p) for p in sorted(folder.glob('p9_3b3_iv1_integration*.py'))} | {
         CONTRACT.name: sha(CONTRACT),
         'p9_3b3_iv1_integration_AT_response_schema_20261024.json':
-            sha(folder/'p9_3b3_iv1_integration_AT_response_schema_20261024.json')}
+            sha(folder/'p9_3b3_iv1_integration_AT_response_schema_20261024.json'),
+        'p9_3b3_iv1_at_time_evidence_20261024.json.xz':
+            sha(folder/'p9_3b3_iv1_at_time_evidence_20261024.json.xz'),
+        'p9_3b3_iv1_at_time_source_request_20261024.json':
+            sha(folder/'p9_3b3_iv1_at_time_source_request_20261024.json')}
 
 
 def fresh_directory(path):

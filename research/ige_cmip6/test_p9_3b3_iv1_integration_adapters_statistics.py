@@ -82,6 +82,9 @@ class StationParserOracles(unittest.TestCase):
         wanted = {'2022-02-15T00:00'}
         result = obs.parse_CH(raw, wanted)
         self.assertEqual(result['values']['T_K'], {'2022-02-15T00:00': 283.15})
+        cp1252 = (header.rstrip()+';note\nDAV;15.02.2022 00:00;10;60;950;geprüft\n').encode('cp1252')
+        self.assertEqual(obs.parse_CH(cp1252, wanted)['values'], result['values'])
+        self.assertEqual(obs.parse_CH(b'\xef\xbb\xbf'+raw, wanted)['values'], result['values'])
         self.assertIn('NO_COMPARABLE_PER_SAMPLE_QC', result['quality_tier'])
         means = raw.replace(b'tre200s0', b'tre200h0').replace(b'ure200s0', b'ure200h0').replace(b'prestas0', b'prestah0')
         with self.assertRaisesRegex(ValueError, 'NO_HOURLY_MEAN'):

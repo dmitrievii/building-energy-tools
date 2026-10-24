@@ -1,0 +1,12 @@
+{
+  "tests_run": 484,
+  "status": "PASS",
+  "expected_tests": 484,
+  "previous_tests": 474,
+  "new_time_evidence_tests": 10,
+  "wall_seconds": 168.66581497200013,
+  "python": "3.12.14",
+  "heldout_2022_station_values_opened": false,
+  "real_profiles_collected_by_tests": 0,
+  "independent_accuracy": "NOT_RUN"
+}

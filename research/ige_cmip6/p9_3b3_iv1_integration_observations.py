@@ -1,7 +1,7 @@
 """Exact registered AT/DE/CH observation adapters, used only after full seal.
 
-Current AT time admission is unresolved. No values are fetched by importing
-or testing these parsers. The production entry checks admission itself too.
+No values are fetched by importing or testing these parsers. The I/O entry
+requires current time evidence and the full externally pinned prediction seal.
 """
 from __future__ import annotations
 
@@ -123,7 +123,10 @@ def parse_DE(raw, product, wanted):
 
 def parse_CH(raw, wanted):
     out = new_observations('CH')
-    reader = csv.DictReader(io.StringIO(raw.decode('utf-8-sig')), delimiter=';')
+    # MeteoSwiss ground-based CSV documentation specifies Windows-1252.
+    # A UTF-8 BOM is self-identifying; plain UTF-8 must not be assumed.
+    encoding = 'utf-8-sig' if raw.startswith(b'\xef\xbb\xbf') else 'cp1252'
+    reader = csv.DictReader(io.StringIO(raw.decode(encoding)), delimiter=';')
     required = {'station_abbr', 'reference_timestamp', 'tre200s0', 'ure200s0', 'prestas0'}
     if not required <= set(reader.fieldnames or []):
         raise ValueError('IV1_CH_CURRENT_VALUES_REQUIRED_NO_HOURLY_MEAN_SUBSTITUTION')

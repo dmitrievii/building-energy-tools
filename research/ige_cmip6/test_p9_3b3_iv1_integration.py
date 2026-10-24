@@ -1,7 +1,7 @@
 """Artificial end-to-end IV1 controls; no held-out station/model values.
 
-The real AT gate remains blocked. Happy-path readers and admission are mocked
-only in this test module; the CLI has no bypass or synthetic qualification mode.
+Happy-path readers and admission are mocked only in this test module. The
+historical unresolved gate is retained as a negative regression control.
 """
 from contextlib import ExitStack
 from copy import deepcopy
@@ -124,10 +124,11 @@ def artificial_observations(cases, barometer):
 
 
 class RealScientificGuards(unittest.TestCase):
-    def test_real_AT_gate_stops_all_IO_stages_before_network_or_outputs(self):
+    def test_unresolved_AT_evidence_stops_all_IO_stages_before_network_or_outputs(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
             with patch('urllib.request.urlopen', side_effect=AssertionError('NO_HTTP')), \
+                 patch('p9_3b3_iv1_integration_common.current_admission_report', side_effect=admission_report), \
                  patch('p9_3b3_iv1_integration_sources.IV1Columns', side_effect=AssertionError('NO_READER')):
                 for call in (lambda: sources.collect_sources(root/'source', root/'private'),
                              lambda: pipeline.generate_predictions(root/'absent', root/'predictions'),
