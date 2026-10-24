@@ -1,0 +1,56 @@
+{
+  "B4_qualified": false,
+  "CI_conclusion": "success",
+  "CI_test_receipt": {
+    "artificial_method_records": 420,
+    "artificial_native_profile_hours": 676,
+    "artificial_site_days": 84,
+    "independent_accuracy": "NOT_RUN",
+    "new_integration_tests": 28,
+    "new_tests_use_artificial_weather_only": true,
+    "python": "3.12.15",
+    "real_2022_profiles_collected": 0,
+    "station_values_opened": false,
+    "status": "PASS",
+    "tests_run": 474,
+    "wall_seconds": 103.35693506999999
+  },
+  "P2_superiority_established": false,
+  "actual_source_collection": "SOURCE_BLOCKED_AT_PARAMETER_TIME_OPERATOR",
+  "artifact": {
+    "bytes": 5880,
+    "id": 12563888582,
+    "member_sha256": {
+      "preflight.json": "01cca1e16bc63dd9396e15155b34f3082b6ab517786c96ef9f9093d60b356687",
+      "tests.json": "b3dd82e5f474aa2a6f34d0c5f05a67b2d3ab6dc960786f1ff74cbe20b9407905"
+    },
+    "name": "IGE-IV1-integration-474-tests-NOT-station-validation",
+    "path": "research/ige_cmip6/p9_3b3_iv1_integration_CI_40104524877.zip",
+    "sha256": "ccfa08489bf83c0eb0a2dd4276f1e7b41b8c86e1a7914304245a1be6c310bf92"
+  },
+  "branch": "research/ige-p9-3b3-iv1-integration-20261024",
+  "code_correctness": "474_TESTS_PASS_28_NEW_ARTIFICIAL_INTEGRATION_CONTROLS",
+  "head_sha": "3824492a7a592848adb48c44eb8a7efffc7bfa83",
+  "independent_accuracy": "NOT_RUN",
+  "job_id": 120903337696,
+  "operational_ready": false,
+  "physical_admissibility": "ARTIFICIAL_COLUMN_AND_STATE_REPLAY_PASS_REAL_COHORT_NOT_RUN",
+  "preflight_byte_exact_to_committed_local": true,
+  "production_epw_ready": false,
+  "protected_branch_heads_after": {
+    "main": "2a82a77d0fe8cc87a2324b820d6c6843b6598548",
+    "research/ige-p9-3b3-cd3-iv1-audit-20261024": "a79cdd5b259f12fbdfe1a19215361007220ac709",
+    "research/ige-p9-3b3-cd3-profile-stability-20261023": "63e4eeaa969831556c4fda5d0e8700d51d79c9c9",
+    "research/ige-p9-3b3-iv1-time-seal-20261024": "2a5c85122f0135e783d65944bc2a30cded5a23c5"
+  },
+  "protected_files_unchanged": 168,
+  "real_2022_profiles_collected": 0,
+  "real_heldout_predictions_sealed": false,
+  "run_id": 40104524877,
+  "run_updated_at_UTC": "2026-10-24T14:56:02Z",
+  "run_url": "https://github.com/dmitrievii/building-energy-tools/actions/runs/40104524877",
+  "stage": "IV1_INTEGRATION_CI_VERIFIED_SOURCE_GATE_BLOCKED",
+  "started_at_UTC": "2026-10-24T14:53:43Z",
+  "station_values_opened": false,
+  "tested_tree": "44cc32777d3ecde7d6814b62b7630e33fa682b8f"
+}
