@@ -1,0 +1,59 @@
+{
+  "schema_version": "IGE_IV1_START_CONTRACT_CLARIFICATION_20261024_v1",
+  "parent_IV1_protocol_sha256": "9480a1a4b75196ba8f88627c437ff32c79ea5838056de15e9df11ce2a016b7d0",
+  "parent_commit": "63e4eeaa969831556c4fda5d0e8700d51d79c9c9",
+  "frozen_algorithm_commit": "db742478d68a6091133767966218022da9ab1fc8",
+  "frozen_start_module_sha256": "4a97e360748dbde2de84962abbd9b0d20a69ec8dbb4800a8aa08b067d7bc88a2",
+  "purpose": "MAKE_EXISTING_EXECUTABLE_START_RECIPE_EXPLICIT_BEFORE_IV1_UNBLINDING_NO_ALGORITHM_CHANGE",
+  "CD3_wording_issue": {
+    "printed_expression": "min(1,0.9*slope_allowable_ratio)",
+    "omission": "NOT_EXPLICIT_WHETHER_slope_allowable_ratio_IS_ALREADY_LIMITED_TO_THE_UNIT_SEGMENT",
+    "actual_expression": "0.9*min(1,r_slope)",
+    "different_expression_not_executed": "min(1,0.9*r_slope)",
+    "retroactive_perfect_preregistration_claim": false
+  },
+  "explicit_recipe": {
+    "original_starts": 3,
+    "additional_starts": 9,
+    "n_total": 12,
+    "temperature_patterns": [
+      "sin(2*pi*i/n)",
+      "cos(2*pi*i/n)",
+      "PCG64.uniform(-1,1,n)"
+    ],
+    "seed": "int.from_bytes(SHA256(UTF8(20261023|case_id))[:16],little)",
+    "directional_displacement": "d_i=0.5*v_i*(upper_i-T0_i if v_i>=0 else T0_i-lower_i)",
+    "fixed_extrema": "lower_i=upper_i=T0_i so d_i=0",
+    "r_slope": "min of nonnegative allowable ratios for L>=s_i+alpha*ds_i>=-L; omit ds_i=0; no limiting rows means infinity",
+    "segment_limit": "rho=min(1,r_slope)",
+    "alpha": "0.9*rho",
+    "temperature": "T=T0+alpha*d",
+    "humidity_fractions": [
+      0.1,
+      0.5,
+      0.9
+    ],
+    "humidity": "q_i=f*q_sat_water(T_i,p_i)",
+    "unit_segment_limit_is_applied_before_safety_factor": true,
+    "IV1_case_id": "IV1|COUNTRY|YYYY-MM-DD|P2_NATIVE_THERMO"
+  },
+  "unchanged": [
+    "objective",
+    "NASA_operators",
+    "pressure",
+    "water_cap",
+    "slope_limit",
+    "prior",
+    "source_values",
+    "CD3_results",
+    "IV1_dates",
+    "stations",
+    "metrics",
+    "selection_rule",
+    "default_solver"
+  ],
+  "implementation_rule": "KEEP_THE_EXISTING_CODE_PIN; DO_NOT_SILENTLY_REPLACE_ALPHA_BY_1_OR_REWRITE_OLD_RESULTS; ANY_OTHER_RECIPE_REQUIRES_NEW_EXPERIMENT",
+  "station_values_opened": false,
+  "independent_accuracy": "NOT_RUN",
+  "main_merged": false
+}

@@ -1,0 +1,160 @@
+{
+  "phase": "CD3_IV1_READ_ONLY_VERIFICATION_20261024",
+  "checked_commit": "63e4eeaa969831556c4fda5d0e8700d51d79c9c9",
+  "numerical_status": "PASS",
+  "frozen_CD3_controls": 154,
+  "frozen_IV1_controls": 161,
+  "counts": {
+    "strict_witnesses": 30,
+    "FD_reports": 1584,
+    "FD_columns": 72864,
+    "validated_endpoints": 792,
+    "envelope_sets_checked": 264,
+    "new_successful_trials": 396
+  },
+  "CI_exact_members": 65,
+  "original_CI_zip_verified": true,
+  "max_scalar_F_error": 1.3322676295501878e-15,
+  "max_FD_objective_error": 8.201404937124845e-10,
+  "max_FD_Jacobian_error": 1.1380865805321605e-08,
+  "improved_pressure_cases": [
+    "CONTROL_Q90CAP_RH20|AT|2021-02-01|P1_ISOTHERMAL",
+    "CONTROL_Q90CAP_RH20|AT|2021-02-01|P1_LAPSE_0065",
+    "CONTROL_Q90CAP_RH20|AT|2021-02-01|P2_NATIVE",
+    "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-20|P1_ISOTHERMAL",
+    "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-20|P1_LAPSE_0065",
+    "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-20|P2_NATIVE"
+  ],
+  "improved_underlying_cases": [
+    "CONTROL_Q90CAP_RH20|AT|2021-02-01",
+    "NASA_2013_2014_REVEALED_SENSITIVITY|AT|2013-01-20"
+  ],
+  "start_contract_review": {
+    "status": "WORDING_AMBIGUITY_REQUIRES_EXPLICIT_SEGMENT_LIMIT",
+    "patterns_checked": 99,
+    "different_from_slope_only_reading": 99,
+    "actual_alphas": [
+      0.9
+    ],
+    "literal_slope_only_alphas": [
+      1.0
+    ],
+    "actual_formula": "0.9*min(1,r_slope)",
+    "slope_only_reading_of_protocol": "min(1,0.9*r_slope)",
+    "no_retroactive_perfect_preregistration_claim": true
+  },
+  "IV1_raw_source_replay": {
+    "sensor_records_reparsed": [
+      {
+        "country": "AT",
+        "sensor": "pressure",
+        "height_MSL_m": 378.8,
+        "timestamps_checked": 672,
+        "raw_XML_matches_derived_record": true
+      },
+      {
+        "country": "AT",
+        "sensor": "temperature",
+        "height_MSL_m": 368.7,
+        "timestamps_checked": 672,
+        "raw_XML_matches_derived_record": true
+      },
+      {
+        "country": "AT",
+        "sensor": "RH_water",
+        "height_MSL_m": 368.7,
+        "timestamps_checked": 672,
+        "raw_XML_matches_derived_record": true
+      },
+      {
+        "country": "DE",
+        "sensor": "pressure",
+        "height_MSL_m": 82.5,
+        "timestamps_checked": 672,
+        "raw_XML_matches_derived_record": true
+      },
+      {
+        "country": "DE",
+        "sensor": "temperature",
+        "height_MSL_m": 37.8,
+        "timestamps_checked": 672,
+        "raw_XML_matches_derived_record": true
+      },
+      {
+        "country": "DE",
+        "sensor": "RH_water",
+        "height_MSL_m": 37.8,
+        "timestamps_checked": 672,
+        "raw_XML_matches_derived_record": true
+      },
+      {
+        "country": "CH",
+        "sensor": "pressure",
+        "height_MSL_m": 1595.58,
+        "timestamps_checked": 672,
+        "raw_XML_matches_derived_record": true
+      },
+      {
+        "country": "CH",
+        "sensor": "temperature",
+        "height_MSL_m": 1593.93,
+        "timestamps_checked": 672,
+        "raw_XML_matches_derived_record": true
+      },
+      {
+        "country": "CH",
+        "sensor": "RH_water",
+        "height_MSL_m": 1593.93,
+        "timestamps_checked": 672,
+        "raw_XML_matches_derived_record": true
+      }
+    ],
+    "AT_unique_historical_individual": 16412,
+    "preflight_blockers": [
+      {
+        "scope": "AT_TIME_SUPPORT",
+        "status": "SOURCE_BLOCKED",
+        "reason": "PARAMETERS_SAY_STUNDEN_MESSWERT; WMDR_TIMESTAMP_MEANING_EMPTY; DO_NOT_INFER_INSTANT_OR_HOURLY_MEAN"
+      },
+      {
+        "scope": "DE_URBAN_T_RH_TIME_SUPPORT",
+        "status": "SOURCE_BLOCKED",
+        "reason": "REQUIRE_NATIVE_URBAN_PARAMETER_METADATA; GENERIC_TT_10_INSTANT_IS_NOT_A_PROOF_FOR_ALL_URBAN_FIELDS"
+      },
+      {
+        "scope": "ALL_COUNTRIES_2022_NATIVE_PRESSURE_AND_PREDICTION_SEAL",
+        "status": "NOT_PREPARED",
+        "reason": "ONLY_2021_SOURCE_PROFILES_ARCHIVED; 2022_PHI_S_LNSP_T_Q_AND_ALL_METHOD_PREDICTIONS_NOT_SEALED"
+      }
+    ],
+    "preflight_is": "SOURCE_REGISTRATION_NOT_GENERATOR_OR_SCORER",
+    "old_preflight_height_check": "TRUSTED_HASHED_DERIVED_JSON; THIS_AUDIT_ADDS_RAW_XML_REPARSE",
+    "station_values_opened": false,
+    "station_accuracy": "NOT_RUN"
+  },
+  "optimizer_calls": 0,
+  "station_values_opened": false,
+  "independent_accuracy": "NOT_QUALIFIED",
+  "operational_ready": false,
+  "main_merged": false,
+  "audit_code_sha256": "4c2a75fa3c45febd279ac56cc3ebd34167afe29a0a82e6c99307ed1e9260618c",
+  "wall_seconds": 72.79731046800009,
+  "tests": {
+    "local_final_snapshot_total": 422,
+    "old_CD3_CI_total": 417,
+    "new_IV1_tests_in_final_snapshot": 5,
+    "status": "PASS"
+  },
+  "original_CI_artifact": {
+    "id": 12525289010,
+    "bytes": 4417272,
+    "sha256": "7d755dab6410fb4856cda52d99b4e0f55350635f38ff5ac5ff04e44af00f8ff8",
+    "all_65_members_exact": true
+  },
+  "prospective_start_addendum": {
+    "path": "research/ige_cmip6/p9_3b3_iv1_start_contract_addendum_20261024.json",
+    "sha256": "41bb2b61c7cdccbc1b7b4c88434cc635e36d5effa1a157eccc3297459983cc28",
+    "algorithm_changed": false,
+    "retrospective_wording_ambiguity_erased": false
+  }
+}
