@@ -1,0 +1,17 @@
+{
+  "run_id": 40099958313,
+  "head_sha": "f5603aa37e669187d73a0912175e9d36136e5a15",
+  "job_id": 120889889266,
+  "conclusion": "FAILURE",
+  "tests_run": 446,
+  "errors": 1,
+  "other_tests_passed": 445,
+  "failed_test": "test_registered_controls_and_settings (test_p9_3b3_cd3_diagnostics.PhysicalAndProfileOracles)",
+  "reason": "NEW_WORKFLOW_USED_SHALLOW_CHECKOUT; PREREG_COMMIT_3a2c07fa66688a55684d118d1105392dd3f9a727_NOT_PRESENT_LOCALLY",
+  "git_exit_status": 128,
+  "remediation": "SET_FETCH_DEPTH_0_AND_CHECK_ANCESTRY_BEFORE_TESTS",
+  "scientific_code_changed_for_fix": false,
+  "protected_files_changed": 0,
+  "station_values_opened": false,
+  "independent_accuracy": "NOT_RUN"
+}

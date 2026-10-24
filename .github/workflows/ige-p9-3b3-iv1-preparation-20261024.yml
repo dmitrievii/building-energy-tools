@@ -23,6 +23,10 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify frozen preregistration is in commit ancestry
+        run: git merge-base --is-ancestor 3a2c07fa66688a55684d118d1105392dd3f9a727 HEAD
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
