@@ -1,0 +1,32 @@
+{
+  "phase": "IV1_PREPARATION_LOCAL_CONTRACTS_20261024",
+  "tests_run": 446,
+  "new_preparation_tests": 24,
+  "prior_tests": 422,
+  "status": "PASS",
+  "wall_seconds": 41.71292384000003,
+  "python": "3.12.14",
+  "numpy": "2.3.5",
+  "scipy": "1.17.0",
+  "code_sha256": {
+    "research/ige_cmip6/p9_3b3_iv1_admission.py": "ea8d7f81572c441d3ed075152aec7d25a9513b82428dceda7027f6a480c9a5e2",
+    "research/ige_cmip6/p9_3b3_iv1_component_seal.py": "bce9082ca751a7f4e4285b20acf5c796829d7d80988946620b39c0d7b80e1d29",
+    "research/ige_cmip6/p9_3b3_iv1_methods.py": "276741783ca4d52c7dc49905a2cd6e6a5eda5edf8eac33eff83e0c52da4d3d0e",
+    "research/ige_cmip6/p9_3b3_iv1_preflight.py": "5e85af9c141a5993285ff8924cdea7293dece964e22d33c2444bfdc953664cbd",
+    "research/ige_cmip6/p9_3b3_iv1_time_metadata.py": "bbd90f99eca455618cf12672c4f96e3982a7b09d039c8efc4b67c8bf0df50b00",
+    "research/ige_cmip6/test_p9_3b3_iv1_preparation.py": "054aa81db23fbb422bb6c211e87c538a105f9c68a16b96bbb45701c9b9225a83"
+  },
+  "protected_files_unchanged": 161,
+  "time_admitted_fields": 6,
+  "time_required_fields": 9,
+  "DWD_urban_time_support": "ADMITTED_OWN_PARAMETER_METADATA",
+  "AT_time_support": "SOURCE_BLOCKED_PARAMETER_OPERATOR_UNRESOLVED",
+  "synthetic_tests_are_not_heldout_predictions": true,
+  "new_2022_native_source_profiles_collected": 0,
+  "heldout_station_values_opened": false,
+  "IV1_station_scores_computed": false,
+  "independent_accuracy": "NOT_RUN",
+  "operational_ready": false,
+  "B4_qualified": false,
+  "main_merged": false
+}

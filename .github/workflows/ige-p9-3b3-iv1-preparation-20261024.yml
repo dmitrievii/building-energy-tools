@@ -1,0 +1,71 @@
+name: IGE IV1 parameter admission and five-method preparation
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/ige-p9-3b3-iv1-time-seal-20261024
+    paths:
+      - .github/workflows/ige-p9-3b3-iv1-preparation-20261024.yml
+      - research/ige_cmip6/p9_3b3_iv1_admission.py
+      - research/ige_cmip6/p9_3b3_iv1_methods.py
+      - research/ige_cmip6/p9_3b3_iv1_component_seal.py
+      - research/ige_cmip6/p9_3b3_iv1_time_metadata.py
+      - research/ige_cmip6/p9_3b3_iv1_time_metadata_20261024.json.xz
+      - research/ige_cmip6/test_p9_3b3_iv1_preparation.py
+permissions:
+  contents: read
+env:
+  OPENBLAS_NUM_THREADS: '1'
+  OMP_NUM_THREADS: '1'
+jobs:
+  contracts_and_metadata_only_no_holdout_values:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 scipy==1.17.0 numcodecs==0.16.3 pyshtools==4.13.1 eccodes==2.50.0 eccodeslib==2.50.0.33
+      - name: Full prior suite and new numerical preparation controls
+        run: |
+          mkdir -p outputs/IV1-preparation
+          python - <<'PY'
+          import json, platform, unittest
+          from pathlib import Path
+          suite = unittest.TestSuite()
+          loader = unittest.TestLoader()
+          for pattern in ['test_p9_3b3_*.py', 'test_p9_3a*.py', 'test_p9_2*.py', 'test_p9_3b2*.py']:
+              suite.addTests(loader.discover('research/ige_cmip6', pattern=pattern))
+          result = unittest.TextTestRunner(verbosity=1).run(suite)
+          assert result.testsRun == 446
+          assert result.wasSuccessful()
+          Path('outputs/IV1-preparation/tests.json').write_text(json.dumps({
+              'tests_run': result.testsRun, 'status': 'PASS', 'new_preparation_tests': 24,
+              'python': platform.python_version(), 'new_tests_use_artificial_weather_only': True,
+              'station_values_opened': False, 'independent_accuracy': 'NOT_RUN'}, indent=2)+'\n')
+          PY
+          python research/ige_cmip6/p9_3b2d_canonical_pressure_fields.py
+      - name: Replay pinned original parameter evidence and dated sensors
+        run: |
+          python research/ige_cmip6/p9_3b3_iv1_admission.py --out outputs/IV1-preparation/admission.json
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          a = json.loads(Path('outputs/IV1-preparation/admission.json').read_text())
+          assert a == json.loads(Path('research/ige_cmip6/p9_3b3_iv1_preparation_admission_20261024.json').read_text())
+          assert a['time_admission']['admitted_fields'] == 6
+          assert a['source_plan']['native_source_hour_count'] == 676
+          assert not a['ready_for_native_source_collection'] and not a['ready_to_open_observations']
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f:
+              f.write('446 tests PASS; own DWD Urban parameter metadata admits current T/RH/absolute pressure.\n\n'
+                  'AT parameter time support remains SOURCE_BLOCKED. No new native 2022 profiles, station values or scores.\n\n'
+                  'Five-method and component-seal controls use artificial weather; this is not independent accuracy or full IV1 execution.\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: IGE-IV1-preparation-446-tests-metadata-NOT-station-validation
+          path: outputs/IV1-preparation/
+          if-no-files-found: warn
+          retention-days: 30
