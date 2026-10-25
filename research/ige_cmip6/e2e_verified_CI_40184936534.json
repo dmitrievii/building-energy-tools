@@ -1,0 +1,75 @@
+{
+  "B4_qualified": false,
+  "CI_conclusion": "success",
+  "CI_job_id": 121143631649,
+  "CI_run_id": 40184936534,
+  "IV1_station_values_opened": false,
+  "P2_superiority_established": false,
+  "all_original_40_GCM_windows_reverified": false,
+  "annual_files": {
+    "historical_reference": {
+      "path": "Graz_2013_P7A_Historical_Reference_RESEARCH_ONLY.epw",
+      "records": 8760,
+      "same_as_local_weather_bytes": true,
+      "sha256": "da8a4e08e032bebbb3105b6584c319714fc85c99fc06a59d5fa1d125bf3478fc"
+    },
+    "legacy_morph": {
+      "path": "Graz_P7A_2013_CanESM5_SSP245_2040_2059_LEGACY_MORPH_REPLAY.epw",
+      "records": 8760,
+      "same_as_local_weather_bytes": true,
+      "sha256": "089850544d9a5d73a35f65a0299e67a3a9e88dc4fb635d5b37a1af346deb6e3b"
+    },
+    "monthly_q_projection": {
+      "path": "Graz_P7A_2013_CanESM5_SSP245_2040_2059_MONTHLY_Q_REPLAY.epw",
+      "records": 8760,
+      "same_as_local_weather_bytes": true,
+      "sha256": "9c52c84f8ef2f76d1e28360c3b38fe94388695debbaff0b56b230f893e1a4a6d"
+    }
+  },
+  "arbitrary_point_historical_function_complete": false,
+  "artifact": {
+    "bytes": 961001,
+    "id": 12595906177,
+    "member_sha256": {
+      "annual_replay/Graz_2013_P7A_Historical_Reference_RESEARCH_ONLY.epw": "da8a4e08e032bebbb3105b6584c319714fc85c99fc06a59d5fa1d125bf3478fc",
+      "annual_replay/Graz_P7A_2013_CanESM5_SSP245_2040_2059_LEGACY_MORPH_REPLAY.epw": "089850544d9a5d73a35f65a0299e67a3a9e88dc4fb635d5b37a1af346deb6e3b",
+      "annual_replay/Graz_P7A_2013_CanESM5_SSP245_2040_2059_MONTHLY_Q_REPLAY.epw": "9c52c84f8ef2f76d1e28360c3b38fe94388695debbaff0b56b230f893e1a4a6d",
+      "annual_replay/e2e_audit.json": "9694484ed813bb2663ea638318b6f720a1f862ac73c4fa732d60cd83057652c5",
+      "annual_replay/monthly_q_correction_ledger.json": "0cc2639543902f076c16db7e2d8b32e7c0b646fff9eb804d770cae01a50f8dae",
+      "contracts.json": "a156b443252bd43c5be1c134c3f7f90d3074d430859f0be301c11c08392ad95c"
+    },
+    "path": "research/ige_cmip6/e2e_verified_CI_40184936534_results.zip",
+    "sha256": "0c8466ff1ea1c855e7d134f06778c855977a2d3f833d2927d7a129ece2c0ac35"
+  },
+  "code_commit": "7c658e1761398562fd91f68af14222945b95ccde",
+  "contracts": {
+    "expected": 61,
+    "new_source_io_guards": 4,
+    "patterns": [
+      "test_e2e_integration_audit.py",
+      "test_p7c1_epw_morphing.py",
+      "test_p7c1b_humidity_closure.py",
+      "test_p9_1a_global_historical_backbone.py",
+      "test_p9_2d_annual_cet_epw_export.py"
+    ],
+    "python": "3.12.15",
+    "station_accuracy_validation": false,
+    "status": "PASS",
+    "tests_run": 61,
+    "wall_seconds": 0.6000825799999987
+  },
+  "current_Analyzer_import_calendar": "TYPICAL_YEAR_SOURCE_YEAR_RETAINED_REAL_CALENDAR_ADAPTER_REQUIRED",
+  "future_product_function_complete": false,
+  "historical_reference_regenerated_from_raw": false,
+  "independent_accuracy": "NOT_TESTED_BY_THIS_REPLAY",
+  "main_merged": false,
+  "new_NASA_ERA5_or_station_requests": 0,
+  "original_GCM_windows_checked": 2,
+  "production_epw_ready": false,
+  "protected_files_unchanged": 168,
+  "replay_wall_seconds": 1.6578738369999968,
+  "source_packet_sha256": "49dab390ec5d5250f79198df16e69cc3ba37a9985b66f739fde5a729db3c192d",
+  "stage": "IGE_TWO_PRODUCT_E2E_AUDIT_CI_VERIFIED_NOT_PRODUCT_RELEASE",
+  "tree_sha": "6cc0130536a96ac75fe9341221695de01cb3b786",
+  "wrapper_sha256": "06a655053ed5b2c95cd54e35917acdc530cc6e155d5bd9237fd0f1f0a6ec816f"
+}

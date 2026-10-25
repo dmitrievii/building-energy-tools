@@ -37,7 +37,7 @@
         "A",
         "B-M"
       ],
-      "current_status": "LOCAL_REPLAY_PASS_CI_PENDING",
+      "current_status": "CI_VERIFIED_PASS",
       "depends_on": [],
       "reviewable_outputs": [
         "e2e_audit.json",
@@ -190,5 +190,6 @@
     "no generator service call from current UI",
     "inheritance of future event chronology and wind direction",
     "no independently qualified global local accuracy"
-  ]
+  ],
+  "E0_verified_CI_run_id": 40184936534
 }
