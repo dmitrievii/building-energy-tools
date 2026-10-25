@@ -1,0 +1,1029 @@
+{
+  "schema": "IGE_A13_24_CASE_PREDICTION_LEDGER_v1",
+  "cases": [
+    {
+      "target_key": "AT:3202",
+      "season": "winter",
+      "reference_hours": 168,
+      "frozen_donor_slots": [
+        "AT:5000",
+        "AT:5130",
+        "AT:3315"
+      ],
+      "metadata_admitted_donors": [
+        "AT:5000"
+      ],
+      "blocked_donor_slots": [
+        "AT:5130",
+        "AT:3315"
+      ],
+      "dated_xy_distance_km": {
+        "AT:5000": 9.912584217410773
+      },
+      "strict_T2m_metadata_ready": false,
+      "source_block_reasons": [
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "hourly_QC_and_coverage_verified": false,
+      "ERA5_or_donor_weather_acquired": false,
+      "predictions_created_or_sealed": false,
+      "primary_validation_admitted": false,
+      "source_block_reasons_at_prediction": [
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "actual_B0_reference_hours": 0,
+      "actual_R1_reference_hours": 0,
+      "prediction_ledger_entry_created": true,
+      "donor_QC_and_coverage_evaluated": false,
+      "control_observations_used": false
+    },
+    {
+      "target_key": "AT:3202",
+      "season": "spring",
+      "reference_hours": 168,
+      "frozen_donor_slots": [
+        "AT:5000",
+        "AT:5130",
+        "AT:3315"
+      ],
+      "metadata_admitted_donors": [
+        "AT:5000"
+      ],
+      "blocked_donor_slots": [
+        "AT:5130",
+        "AT:3315"
+      ],
+      "dated_xy_distance_km": {
+        "AT:5000": 9.912584217410773
+      },
+      "strict_T2m_metadata_ready": false,
+      "source_block_reasons": [
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "hourly_QC_and_coverage_verified": false,
+      "ERA5_or_donor_weather_acquired": false,
+      "predictions_created_or_sealed": false,
+      "primary_validation_admitted": false,
+      "source_block_reasons_at_prediction": [
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "actual_B0_reference_hours": 0,
+      "actual_R1_reference_hours": 0,
+      "prediction_ledger_entry_created": true,
+      "donor_QC_and_coverage_evaluated": false,
+      "control_observations_used": false
+    },
+    {
+      "target_key": "AT:3202",
+      "season": "summer",
+      "reference_hours": 168,
+      "frozen_donor_slots": [
+        "AT:5000",
+        "AT:5130",
+        "AT:3315"
+      ],
+      "metadata_admitted_donors": [
+        "AT:5000"
+      ],
+      "blocked_donor_slots": [
+        "AT:5130",
+        "AT:3315"
+      ],
+      "dated_xy_distance_km": {
+        "AT:5000": 9.912584217410773
+      },
+      "strict_T2m_metadata_ready": false,
+      "source_block_reasons": [
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "hourly_QC_and_coverage_verified": false,
+      "ERA5_or_donor_weather_acquired": false,
+      "predictions_created_or_sealed": false,
+      "primary_validation_admitted": false,
+      "source_block_reasons_at_prediction": [
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "actual_B0_reference_hours": 0,
+      "actual_R1_reference_hours": 0,
+      "prediction_ledger_entry_created": true,
+      "donor_QC_and_coverage_evaluated": false,
+      "control_observations_used": false
+    },
+    {
+      "target_key": "AT:3202",
+      "season": "autumn",
+      "reference_hours": 168,
+      "frozen_donor_slots": [
+        "AT:5000",
+        "AT:5130",
+        "AT:3315"
+      ],
+      "metadata_admitted_donors": [
+        "AT:5000"
+      ],
+      "blocked_donor_slots": [
+        "AT:5130",
+        "AT:3315"
+      ],
+      "dated_xy_distance_km": {
+        "AT:5000": 9.912584217410773
+      },
+      "strict_T2m_metadata_ready": false,
+      "source_block_reasons": [
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "hourly_QC_and_coverage_verified": false,
+      "ERA5_or_donor_weather_acquired": false,
+      "predictions_created_or_sealed": false,
+      "primary_validation_admitted": false,
+      "source_block_reasons_at_prediction": [
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "actual_B0_reference_hours": 0,
+      "actual_R1_reference_hours": 0,
+      "prediction_ledger_entry_created": true,
+      "donor_QC_and_coverage_evaluated": false,
+      "control_observations_used": false
+    },
+    {
+      "target_key": "AT:6305",
+      "season": "winter",
+      "reference_hours": 168,
+      "frozen_donor_slots": [
+        "AT:6430",
+        "AT:6415",
+        "AT:6512"
+      ],
+      "metadata_admitted_donors": [
+        "AT:6415",
+        "AT:6512"
+      ],
+      "blocked_donor_slots": [
+        "AT:6430"
+      ],
+      "dated_xy_distance_km": {},
+      "strict_T2m_metadata_ready": false,
+      "source_block_reasons": [
+        "TARGET:ACTUAL_SENSOR_HEIGHT_NOT_STRICT_2M_NO_QUALIFIED_VERTICAL_TRANSFER"
+      ],
+      "hourly_QC_and_coverage_verified": false,
+      "ERA5_or_donor_weather_acquired": false,
+      "predictions_created_or_sealed": false,
+      "primary_validation_admitted": false,
+      "source_block_reasons_at_prediction": [
+        "TARGET:ACTUAL_SENSOR_HEIGHT_NOT_STRICT_2M_NO_QUALIFIED_VERTICAL_TRANSFER"
+      ],
+      "actual_B0_reference_hours": 0,
+      "actual_R1_reference_hours": 0,
+      "prediction_ledger_entry_created": true,
+      "donor_QC_and_coverage_evaluated": false,
+      "control_observations_used": false
+    },
+    {
+      "target_key": "AT:6305",
+      "season": "spring",
+      "reference_hours": 168,
+      "frozen_donor_slots": [
+        "AT:6430",
+        "AT:6415",
+        "AT:6512"
+      ],
+      "metadata_admitted_donors": [
+        "AT:6415",
+        "AT:6512"
+      ],
+      "blocked_donor_slots": [
+        "AT:6430"
+      ],
+      "dated_xy_distance_km": {},
+      "strict_T2m_metadata_ready": false,
+      "source_block_reasons": [
+        "TARGET:ACTUAL_SENSOR_HEIGHT_NOT_STRICT_2M_NO_QUALIFIED_VERTICAL_TRANSFER"
+      ],
+      "hourly_QC_and_coverage_verified": false,
+      "ERA5_or_donor_weather_acquired": false,
+      "predictions_created_or_sealed": false,
+      "primary_validation_admitted": false,
+      "source_block_reasons_at_prediction": [
+        "TARGET:ACTUAL_SENSOR_HEIGHT_NOT_STRICT_2M_NO_QUALIFIED_VERTICAL_TRANSFER"
+      ],
+      "actual_B0_reference_hours": 0,
+      "actual_R1_reference_hours": 0,
+      "prediction_ledger_entry_created": true,
+      "donor_QC_and_coverage_evaluated": false,
+      "control_observations_used": false
+    },
+    {
+      "target_key": "AT:6305",
+      "season": "summer",
+      "reference_hours": 168,
+      "frozen_donor_slots": [
+        "AT:6430",
+        "AT:6415",
+        "AT:6512"
+      ],
+      "metadata_admitted_donors": [
+        "AT:6415",
+        "AT:6512"
+      ],
+      "blocked_donor_slots": [
+        "AT:6430"
+      ],
+      "dated_xy_distance_km": {},
+      "strict_T2m_metadata_ready": false,
+      "source_block_reasons": [
+        "TARGET:ACTUAL_SENSOR_HEIGHT_NOT_STRICT_2M_NO_QUALIFIED_VERTICAL_TRANSFER"
+      ],
+      "hourly_QC_and_coverage_verified": false,
+      "ERA5_or_donor_weather_acquired": false,
+      "predictions_created_or_sealed": false,
+      "primary_validation_admitted": false,
+      "source_block_reasons_at_prediction": [
+        "TARGET:ACTUAL_SENSOR_HEIGHT_NOT_STRICT_2M_NO_QUALIFIED_VERTICAL_TRANSFER"
+      ],
+      "actual_B0_reference_hours": 0,
+      "actual_R1_reference_hours": 0,
+      "prediction_ledger_entry_created": true,
+      "donor_QC_and_coverage_evaluated": false,
+      "control_observations_used": false
+    },
+    {
+      "target_key": "AT:6305",
+      "season": "autumn",
+      "reference_hours": 168,
+      "frozen_donor_slots": [
+        "AT:6430",
+        "AT:6415",
+        "AT:6512"
+      ],
+      "metadata_admitted_donors": [
+        "AT:6415",
+        "AT:6512"
+      ],
+      "blocked_donor_slots": [
+        "AT:6430"
+      ],
+      "dated_xy_distance_km": {},
+      "strict_T2m_metadata_ready": false,
+      "source_block_reasons": [
+        "TARGET:ACTUAL_SENSOR_HEIGHT_NOT_STRICT_2M_NO_QUALIFIED_VERTICAL_TRANSFER"
+      ],
+      "hourly_QC_and_coverage_verified": false,
+      "ERA5_or_donor_weather_acquired": false,
+      "predictions_created_or_sealed": false,
+      "primary_validation_admitted": false,
+      "source_block_reasons_at_prediction": [
+        "TARGET:ACTUAL_SENSOR_HEIGHT_NOT_STRICT_2M_NO_QUALIFIED_VERTICAL_TRANSFER"
+      ],
+      "actual_B0_reference_hours": 0,
+      "actual_R1_reference_hours": 0,
+      "prediction_ledger_entry_created": true,
+      "donor_QC_and_coverage_evaluated": false,
+      "control_observations_used": false
+    },
+    {
+      "target_key": "DE:02928",
+      "season": "winter",
+      "reference_hours": 168,
+      "frozen_donor_slots": [
+        "DE:02932",
+        "DE:05750",
+        "DE:04997"
+      ],
+      "metadata_admitted_donors": [],
+      "blocked_donor_slots": [
+        "DE:02932",
+        "DE:05750",
+        "DE:04997"
+      ],
+      "dated_xy_distance_km": {},
+      "strict_T2m_metadata_ready": false,
+      "source_block_reasons": [
+        "TARGET:DWD_HOURLY_TIME_OPERATOR_UNRESOLVED",
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "hourly_QC_and_coverage_verified": false,
+      "ERA5_or_donor_weather_acquired": false,
+      "predictions_created_or_sealed": false,
+      "primary_validation_admitted": false,
+      "source_block_reasons_at_prediction": [
+        "TARGET:DWD_HOURLY_TIME_OPERATOR_UNRESOLVED",
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "actual_B0_reference_hours": 0,
+      "actual_R1_reference_hours": 0,
+      "prediction_ledger_entry_created": true,
+      "donor_QC_and_coverage_evaluated": false,
+      "control_observations_used": false
+    },
+    {
+      "target_key": "DE:02928",
+      "season": "spring",
+      "reference_hours": 168,
+      "frozen_donor_slots": [
+        "DE:02932",
+        "DE:05750",
+        "DE:04997"
+      ],
+      "metadata_admitted_donors": [],
+      "blocked_donor_slots": [
+        "DE:02932",
+        "DE:05750",
+        "DE:04997"
+      ],
+      "dated_xy_distance_km": {},
+      "strict_T2m_metadata_ready": false,
+      "source_block_reasons": [
+        "TARGET:DWD_HOURLY_TIME_OPERATOR_UNRESOLVED",
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "hourly_QC_and_coverage_verified": false,
+      "ERA5_or_donor_weather_acquired": false,
+      "predictions_created_or_sealed": false,
+      "primary_validation_admitted": false,
+      "source_block_reasons_at_prediction": [
+        "TARGET:DWD_HOURLY_TIME_OPERATOR_UNRESOLVED",
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "actual_B0_reference_hours": 0,
+      "actual_R1_reference_hours": 0,
+      "prediction_ledger_entry_created": true,
+      "donor_QC_and_coverage_evaluated": false,
+      "control_observations_used": false
+    },
+    {
+      "target_key": "DE:02928",
+      "season": "summer",
+      "reference_hours": 168,
+      "frozen_donor_slots": [
+        "DE:02932",
+        "DE:05750",
+        "DE:04997"
+      ],
+      "metadata_admitted_donors": [],
+      "blocked_donor_slots": [
+        "DE:02932",
+        "DE:05750",
+        "DE:04997"
+      ],
+      "dated_xy_distance_km": {},
+      "strict_T2m_metadata_ready": false,
+      "source_block_reasons": [
+        "TARGET:DWD_HOURLY_TIME_OPERATOR_UNRESOLVED",
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "hourly_QC_and_coverage_verified": false,
+      "ERA5_or_donor_weather_acquired": false,
+      "predictions_created_or_sealed": false,
+      "primary_validation_admitted": false,
+      "source_block_reasons_at_prediction": [
+        "TARGET:DWD_HOURLY_TIME_OPERATOR_UNRESOLVED",
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "actual_B0_reference_hours": 0,
+      "actual_R1_reference_hours": 0,
+      "prediction_ledger_entry_created": true,
+      "donor_QC_and_coverage_evaluated": false,
+      "control_observations_used": false
+    },
+    {
+      "target_key": "DE:02928",
+      "season": "autumn",
+      "reference_hours": 168,
+      "frozen_donor_slots": [
+        "DE:02932",
+        "DE:05750",
+        "DE:04997"
+      ],
+      "metadata_admitted_donors": [],
+      "blocked_donor_slots": [
+        "DE:02932",
+        "DE:05750",
+        "DE:04997"
+      ],
+      "dated_xy_distance_km": {},
+      "strict_T2m_metadata_ready": false,
+      "source_block_reasons": [
+        "TARGET:DWD_HOURLY_TIME_OPERATOR_UNRESOLVED",
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "hourly_QC_and_coverage_verified": false,
+      "ERA5_or_donor_weather_acquired": false,
+      "predictions_created_or_sealed": false,
+      "primary_validation_admitted": false,
+      "source_block_reasons_at_prediction": [
+        "TARGET:DWD_HOURLY_TIME_OPERATOR_UNRESOLVED",
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "actual_B0_reference_hours": 0,
+      "actual_R1_reference_hours": 0,
+      "prediction_ledger_entry_created": true,
+      "donor_QC_and_coverage_evaluated": false,
+      "control_observations_used": false
+    },
+    {
+      "target_key": "DE:01443",
+      "season": "winter",
+      "reference_hours": 168,
+      "frozen_donor_slots": [
+        "DE:01224",
+        "DE:00757",
+        "DE:01346"
+      ],
+      "metadata_admitted_donors": [],
+      "blocked_donor_slots": [
+        "DE:01224",
+        "DE:00757",
+        "DE:01346"
+      ],
+      "dated_xy_distance_km": {},
+      "strict_T2m_metadata_ready": false,
+      "source_block_reasons": [
+        "TARGET:DWD_HOURLY_TIME_OPERATOR_UNRESOLVED",
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "hourly_QC_and_coverage_verified": false,
+      "ERA5_or_donor_weather_acquired": false,
+      "predictions_created_or_sealed": false,
+      "primary_validation_admitted": false,
+      "source_block_reasons_at_prediction": [
+        "TARGET:DWD_HOURLY_TIME_OPERATOR_UNRESOLVED",
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "actual_B0_reference_hours": 0,
+      "actual_R1_reference_hours": 0,
+      "prediction_ledger_entry_created": true,
+      "donor_QC_and_coverage_evaluated": false,
+      "control_observations_used": false
+    },
+    {
+      "target_key": "DE:01443",
+      "season": "spring",
+      "reference_hours": 168,
+      "frozen_donor_slots": [
+        "DE:01224",
+        "DE:00757",
+        "DE:01346"
+      ],
+      "metadata_admitted_donors": [],
+      "blocked_donor_slots": [
+        "DE:01224",
+        "DE:00757",
+        "DE:01346"
+      ],
+      "dated_xy_distance_km": {},
+      "strict_T2m_metadata_ready": false,
+      "source_block_reasons": [
+        "TARGET:DWD_HOURLY_TIME_OPERATOR_UNRESOLVED",
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "hourly_QC_and_coverage_verified": false,
+      "ERA5_or_donor_weather_acquired": false,
+      "predictions_created_or_sealed": false,
+      "primary_validation_admitted": false,
+      "source_block_reasons_at_prediction": [
+        "TARGET:DWD_HOURLY_TIME_OPERATOR_UNRESOLVED",
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "actual_B0_reference_hours": 0,
+      "actual_R1_reference_hours": 0,
+      "prediction_ledger_entry_created": true,
+      "donor_QC_and_coverage_evaluated": false,
+      "control_observations_used": false
+    },
+    {
+      "target_key": "DE:01443",
+      "season": "summer",
+      "reference_hours": 168,
+      "frozen_donor_slots": [
+        "DE:01224",
+        "DE:00757",
+        "DE:01346"
+      ],
+      "metadata_admitted_donors": [],
+      "blocked_donor_slots": [
+        "DE:01224",
+        "DE:00757",
+        "DE:01346"
+      ],
+      "dated_xy_distance_km": {},
+      "strict_T2m_metadata_ready": false,
+      "source_block_reasons": [
+        "TARGET:DWD_HOURLY_TIME_OPERATOR_UNRESOLVED",
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "hourly_QC_and_coverage_verified": false,
+      "ERA5_or_donor_weather_acquired": false,
+      "predictions_created_or_sealed": false,
+      "primary_validation_admitted": false,
+      "source_block_reasons_at_prediction": [
+        "TARGET:DWD_HOURLY_TIME_OPERATOR_UNRESOLVED",
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "actual_B0_reference_hours": 0,
+      "actual_R1_reference_hours": 0,
+      "prediction_ledger_entry_created": true,
+      "donor_QC_and_coverage_evaluated": false,
+      "control_observations_used": false
+    },
+    {
+      "target_key": "DE:01443",
+      "season": "autumn",
+      "reference_hours": 168,
+      "frozen_donor_slots": [
+        "DE:01224",
+        "DE:00757",
+        "DE:01346"
+      ],
+      "metadata_admitted_donors": [],
+      "blocked_donor_slots": [
+        "DE:01224",
+        "DE:00757",
+        "DE:01346"
+      ],
+      "dated_xy_distance_km": {},
+      "strict_T2m_metadata_ready": false,
+      "source_block_reasons": [
+        "TARGET:DWD_HOURLY_TIME_OPERATOR_UNRESOLVED",
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "hourly_QC_and_coverage_verified": false,
+      "ERA5_or_donor_weather_acquired": false,
+      "predictions_created_or_sealed": false,
+      "primary_validation_admitted": false,
+      "source_block_reasons_at_prediction": [
+        "TARGET:DWD_HOURLY_TIME_OPERATOR_UNRESOLVED",
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "actual_B0_reference_hours": 0,
+      "actual_R1_reference_hours": 0,
+      "prediction_ledger_entry_created": true,
+      "donor_QC_and_coverage_evaluated": false,
+      "control_observations_used": false
+    },
+    {
+      "target_key": "CH:BAS",
+      "season": "winter",
+      "reference_hours": 168,
+      "frozen_donor_slots": [
+        "CH:MOE",
+        "CH:RUE",
+        "CH:DEM"
+      ],
+      "metadata_admitted_donors": [
+        "CH:MOE",
+        "CH:RUE",
+        "CH:DEM"
+      ],
+      "blocked_donor_slots": [],
+      "dated_xy_distance_km": {
+        "CH:MOE": 22.3579281336055,
+        "CH:RUE": 25.185226156672318,
+        "CH:DEM": 27.4403938037344
+      },
+      "strict_T2m_metadata_ready": true,
+      "source_block_reasons": [],
+      "hourly_QC_and_coverage_verified": false,
+      "ERA5_or_donor_weather_acquired": true,
+      "predictions_created_or_sealed": true,
+      "primary_validation_admitted": false,
+      "source_block_reasons_at_prediction": [],
+      "actual_B0_reference_hours": 168,
+      "actual_R1_reference_hours": 168,
+      "prediction_ledger_entry_created": true,
+      "donor_QC_and_coverage_evaluated": true,
+      "control_observations_used": false
+    },
+    {
+      "target_key": "CH:BAS",
+      "season": "spring",
+      "reference_hours": 168,
+      "frozen_donor_slots": [
+        "CH:MOE",
+        "CH:RUE",
+        "CH:DEM"
+      ],
+      "metadata_admitted_donors": [
+        "CH:MOE",
+        "CH:RUE",
+        "CH:DEM"
+      ],
+      "blocked_donor_slots": [],
+      "dated_xy_distance_km": {
+        "CH:MOE": 22.3579281336055,
+        "CH:RUE": 25.185226156672318,
+        "CH:DEM": 27.4403938037344
+      },
+      "strict_T2m_metadata_ready": true,
+      "source_block_reasons": [],
+      "hourly_QC_and_coverage_verified": false,
+      "ERA5_or_donor_weather_acquired": true,
+      "predictions_created_or_sealed": true,
+      "primary_validation_admitted": false,
+      "source_block_reasons_at_prediction": [],
+      "actual_B0_reference_hours": 168,
+      "actual_R1_reference_hours": 168,
+      "prediction_ledger_entry_created": true,
+      "donor_QC_and_coverage_evaluated": true,
+      "control_observations_used": false
+    },
+    {
+      "target_key": "CH:BAS",
+      "season": "summer",
+      "reference_hours": 168,
+      "frozen_donor_slots": [
+        "CH:MOE",
+        "CH:RUE",
+        "CH:DEM"
+      ],
+      "metadata_admitted_donors": [
+        "CH:MOE",
+        "CH:RUE",
+        "CH:DEM"
+      ],
+      "blocked_donor_slots": [],
+      "dated_xy_distance_km": {
+        "CH:MOE": 22.3579281336055,
+        "CH:RUE": 25.185226156672318,
+        "CH:DEM": 27.4403938037344
+      },
+      "strict_T2m_metadata_ready": true,
+      "source_block_reasons": [],
+      "hourly_QC_and_coverage_verified": false,
+      "ERA5_or_donor_weather_acquired": true,
+      "predictions_created_or_sealed": true,
+      "primary_validation_admitted": false,
+      "source_block_reasons_at_prediction": [],
+      "actual_B0_reference_hours": 168,
+      "actual_R1_reference_hours": 168,
+      "prediction_ledger_entry_created": true,
+      "donor_QC_and_coverage_evaluated": true,
+      "control_observations_used": false
+    },
+    {
+      "target_key": "CH:BAS",
+      "season": "autumn",
+      "reference_hours": 168,
+      "frozen_donor_slots": [
+        "CH:MOE",
+        "CH:RUE",
+        "CH:DEM"
+      ],
+      "metadata_admitted_donors": [
+        "CH:MOE",
+        "CH:RUE",
+        "CH:DEM"
+      ],
+      "blocked_donor_slots": [],
+      "dated_xy_distance_km": {
+        "CH:MOE": 22.3579281336055,
+        "CH:RUE": 25.185226156672318,
+        "CH:DEM": 27.4403938037344
+      },
+      "strict_T2m_metadata_ready": true,
+      "source_block_reasons": [],
+      "hourly_QC_and_coverage_verified": false,
+      "ERA5_or_donor_weather_acquired": true,
+      "predictions_created_or_sealed": true,
+      "primary_validation_admitted": false,
+      "source_block_reasons_at_prediction": [],
+      "actual_B0_reference_hours": 168,
+      "actual_R1_reference_hours": 168,
+      "prediction_ledger_entry_created": true,
+      "donor_QC_and_coverage_evaluated": true,
+      "control_observations_used": false
+    },
+    {
+      "target_key": "CH:ALT",
+      "season": "winter",
+      "reference_hours": 168,
+      "frozen_donor_slots": [
+        "CH:GES",
+        "CH:ENG",
+        "CH:TIT"
+      ],
+      "metadata_admitted_donors": [
+        "CH:GES",
+        "CH:ENG"
+      ],
+      "blocked_donor_slots": [
+        "CH:TIT"
+      ],
+      "dated_xy_distance_km": {
+        "CH:GES": 14.241448813893946,
+        "CH:ENG": 17.641676307852975
+      },
+      "strict_T2m_metadata_ready": true,
+      "source_block_reasons": [],
+      "hourly_QC_and_coverage_verified": false,
+      "ERA5_or_donor_weather_acquired": true,
+      "predictions_created_or_sealed": true,
+      "primary_validation_admitted": false,
+      "source_block_reasons_at_prediction": [],
+      "actual_B0_reference_hours": 168,
+      "actual_R1_reference_hours": 168,
+      "prediction_ledger_entry_created": true,
+      "donor_QC_and_coverage_evaluated": true,
+      "control_observations_used": false
+    },
+    {
+      "target_key": "CH:ALT",
+      "season": "spring",
+      "reference_hours": 168,
+      "frozen_donor_slots": [
+        "CH:GES",
+        "CH:ENG",
+        "CH:TIT"
+      ],
+      "metadata_admitted_donors": [
+        "CH:GES",
+        "CH:ENG"
+      ],
+      "blocked_donor_slots": [
+        "CH:TIT"
+      ],
+      "dated_xy_distance_km": {
+        "CH:GES": 14.241448813893946,
+        "CH:ENG": 17.641676307852975
+      },
+      "strict_T2m_metadata_ready": true,
+      "source_block_reasons": [],
+      "hourly_QC_and_coverage_verified": false,
+      "ERA5_or_donor_weather_acquired": true,
+      "predictions_created_or_sealed": true,
+      "primary_validation_admitted": false,
+      "source_block_reasons_at_prediction": [],
+      "actual_B0_reference_hours": 168,
+      "actual_R1_reference_hours": 168,
+      "prediction_ledger_entry_created": true,
+      "donor_QC_and_coverage_evaluated": true,
+      "control_observations_used": false
+    },
+    {
+      "target_key": "CH:ALT",
+      "season": "summer",
+      "reference_hours": 168,
+      "frozen_donor_slots": [
+        "CH:GES",
+        "CH:ENG",
+        "CH:TIT"
+      ],
+      "metadata_admitted_donors": [
+        "CH:GES",
+        "CH:ENG"
+      ],
+      "blocked_donor_slots": [
+        "CH:TIT"
+      ],
+      "dated_xy_distance_km": {
+        "CH:GES": 14.241448813893946,
+        "CH:ENG": 17.641676307852975
+      },
+      "strict_T2m_metadata_ready": true,
+      "source_block_reasons": [],
+      "hourly_QC_and_coverage_verified": false,
+      "ERA5_or_donor_weather_acquired": true,
+      "predictions_created_or_sealed": true,
+      "primary_validation_admitted": false,
+      "source_block_reasons_at_prediction": [],
+      "actual_B0_reference_hours": 168,
+      "actual_R1_reference_hours": 168,
+      "prediction_ledger_entry_created": true,
+      "donor_QC_and_coverage_evaluated": true,
+      "control_observations_used": false
+    },
+    {
+      "target_key": "CH:ALT",
+      "season": "autumn",
+      "reference_hours": 168,
+      "frozen_donor_slots": [
+        "CH:GES",
+        "CH:ENG",
+        "CH:TIT"
+      ],
+      "metadata_admitted_donors": [
+        "CH:GES",
+        "CH:ENG"
+      ],
+      "blocked_donor_slots": [
+        "CH:TIT"
+      ],
+      "dated_xy_distance_km": {
+        "CH:GES": 14.241448813893946,
+        "CH:ENG": 17.641676307852975
+      },
+      "strict_T2m_metadata_ready": true,
+      "source_block_reasons": [],
+      "hourly_QC_and_coverage_verified": false,
+      "ERA5_or_donor_weather_acquired": true,
+      "predictions_created_or_sealed": true,
+      "primary_validation_admitted": false,
+      "source_block_reasons_at_prediction": [],
+      "actual_B0_reference_hours": 168,
+      "actual_R1_reference_hours": 168,
+      "prediction_ledger_entry_created": true,
+      "donor_QC_and_coverage_evaluated": true,
+      "control_observations_used": false
+    }
+  ],
+  "source_diagnostics": {
+    "background_CH_ALT": {
+      "requested_xy": [
+        46.887047,
+        8.621797
+      ],
+      "returned_provider_grid_xy": [
+        47.0,
+        8.5
+      ],
+      "distance_km": 15.596177471348117,
+      "provider_elevation_unverified": 1021.0,
+      "model_request": "era5",
+      "elevation_request": "nan",
+      "cell_selection": "nearest",
+      "native_ERA5_orography_verified": false,
+      "missing_or_outside_A1_domain_hours": 0
+    },
+    "background_CH_BAS": {
+      "requested_xy": [
+        47.541064,
+        7.58355
+      ],
+      "returned_provider_grid_xy": [
+        47.5,
+        7.5
+      ],
+      "distance_km": 7.759669825173321,
+      "provider_elevation_unverified": 505.0,
+      "model_request": "era5",
+      "elevation_request": "nan",
+      "cell_selection": "nearest",
+      "native_ERA5_orography_verified": false,
+      "missing_or_outside_A1_domain_hours": 0
+    },
+    "background_CH_DEM": {
+      "requested_xy": [
+        47.351703,
+        7.349556
+      ],
+      "returned_provider_grid_xy": [
+        47.25,
+        7.25
+      ],
+      "distance_km": 13.57380122343689,
+      "provider_elevation_unverified": 659.0,
+      "model_request": "era5",
+      "elevation_request": "nan",
+      "cell_selection": "nearest",
+      "native_ERA5_orography_verified": false,
+      "missing_or_outside_A1_domain_hours": 0
+    },
+    "background_CH_ENG": {
+      "requested_xy": [
+        46.821619,
+        8.410442
+      ],
+      "returned_provider_grid_xy": [
+        46.75,
+        8.5
+      ],
+      "distance_km": 10.484077175981772,
+      "provider_elevation_unverified": 1832.0,
+      "model_request": "era5",
+      "elevation_request": "nan",
+      "cell_selection": "nearest",
+      "native_ERA5_orography_verified": false,
+      "missing_or_outside_A1_domain_hours": 0
+    },
+    "background_CH_GES": {
+      "requested_xy": [
+        46.996081,
+        8.523378
+      ],
+      "returned_provider_grid_xy": [
+        47.0,
+        8.5
+      ],
+      "distance_km": 1.8256995173298225,
+      "provider_elevation_unverified": 1021.0,
+      "model_request": "era5",
+      "elevation_request": "nan",
+      "cell_selection": "nearest",
+      "native_ERA5_orography_verified": false,
+      "missing_or_outside_A1_domain_hours": 0
+    },
+    "background_CH_MOE": {
+      "requested_xy": [
+        47.572194,
+        7.8779
+      ],
+      "returned_provider_grid_xy": [
+        47.5,
+        8.0
+      ],
+      "distance_km": 12.184417235717332,
+      "provider_elevation_unverified": 622.0,
+      "model_request": "era5",
+      "elevation_request": "nan",
+      "cell_selection": "nearest",
+      "native_ERA5_orography_verified": false,
+      "missing_or_outside_A1_domain_hours": 0
+    },
+    "background_CH_RUE": {
+      "requested_xy": [
+        47.434553,
+        7.879356
+      ],
+      "returned_provider_grid_xy": [
+        47.5,
+        8.0
+      ],
+      "distance_km": 11.627607982079533,
+      "provider_elevation_unverified": 622.0,
+      "model_request": "era5",
+      "elevation_request": "nan",
+      "cell_selection": "nearest",
+      "native_ERA5_orography_verified": false,
+      "missing_or_outside_A1_domain_hours": 0
+    },
+    "donor_CH_DEM": {
+      "original_body_sha256": "09217ab539dffeee85b4848a8a44a99c773246092940a87b38b4dc3515e5a618",
+      "derived_subset_sha256": {
+        "winter": "2b15208d298b49c0e91fa07a14f091341cc256fe3c50ed70f072a6cee85ec968",
+        "spring": "2ea26d6929af950f9c688b5b9b1f051b6fb993446f7fb9f4a84b6efad5d8e845",
+        "summer": "83cfb113c965b64fa7e101f0ba45f697421a1028ba5a8fcaf6cd96355de8a492",
+        "autumn": "6341ea7c6083a375c397fc0dc62b6d13c75d1dacd6225f756a74535b06932fa6"
+      },
+      "selected_observation_rows": {
+        "winter": 168,
+        "spring": 168,
+        "summer": 168,
+        "autumn": 168
+      }
+    },
+    "donor_CH_ENG": {
+      "original_body_sha256": "d3a7a391015482cc4f36c2770e5832e9be7bc13a46ffb5c501756d2d30b5354c",
+      "derived_subset_sha256": {
+        "winter": "e20082c2d793352fa7a464a46cff4e59310fd4510b460cfc12cc772ad3df2bb0",
+        "spring": "13e74f2e3f02b8294c3db44cf28bd7c14a6cb6e6a9065308e0f80e24848ac479",
+        "summer": "4ab98215678980995ae28b86a709e1275cc366af9a592e0d579f188fc86aa4ac",
+        "autumn": "4e3b3079a5644e348d129ff02b9fc079d4f2af85b0c7e9a0fd704d8d293382e2"
+      },
+      "selected_observation_rows": {
+        "winter": 168,
+        "spring": 168,
+        "summer": 168,
+        "autumn": 168
+      }
+    },
+    "donor_CH_GES": {
+      "original_body_sha256": "c720a5441d7d8a75be9917715f757b8201a0851d8c26edf6527a1f81c9ee1b31",
+      "derived_subset_sha256": {
+        "winter": "be1dd354f6b7917c94c793cc4a6587015374290cf7f09c9f12ec4283fc6340bf",
+        "spring": "bf78e8f75cff7031bed5b84863e684945b06bc7bda2dcf9ded689187d4adbf41",
+        "summer": "0fa0fac17d2a615751a2541bf68cb85e669d8cd578ea24a1e93b96922c0c86a3",
+        "autumn": "270f4323f1f9185083691b7492178354b8f747ffee6f5f7deaaec0df3f6e8e58"
+      },
+      "selected_observation_rows": {
+        "winter": 168,
+        "spring": 168,
+        "summer": 168,
+        "autumn": 168
+      }
+    },
+    "donor_CH_MOE": {
+      "original_body_sha256": "168e676e30361b289582df11be15393f8b7aacbe316a016bd5087a5985be76a1",
+      "derived_subset_sha256": {
+        "winter": "a9856b558a5767ed75642515a904c77a95107a389d668e91586cba312b33cf13",
+        "spring": "e0ed37b4ecfcda18a5700838ab96ba8b92b9fd6887f063ffbaf24439e7b6e960",
+        "summer": "14a37559f6110fed925b3ab978b4e58020f57f36b62bad9ddec698c6dfff300e",
+        "autumn": "71557166364916acabed34b7125e93f45dc79d14d88ad4adf9bed8e5c21258ad"
+      },
+      "selected_observation_rows": {
+        "winter": 168,
+        "spring": 168,
+        "summer": 168,
+        "autumn": 168
+      }
+    },
+    "donor_CH_RUE": {
+      "original_body_sha256": "d4028a5e6d1e79595a956d3af925e1ff182b370a4eafd6ca5a01d03b94139230",
+      "derived_subset_sha256": {
+        "winter": "a2d11b29225104af17ed2b63e69fe86f58e9c44128b0f322aa88802a434fa87b",
+        "spring": "367403606fb5452b187a8e73c2e7be81c465e34121628471aa6f415e6bb913fe",
+        "summer": "335c31e7e184e665ebc42b75cc60ba20e78b3e6e2e7acefd74b470729dbcb65c",
+        "autumn": "3000c85772e983f5e83af566b78a25d493a1f04a4864c438dea4f4d660bb1e1b"
+      },
+      "selected_observation_rows": {
+        "winter": 168,
+        "spring": 168,
+        "summer": 168,
+        "autumn": 168
+      }
+    }
+  },
+  "all_24_cases_retained": true,
+  "requested_reference_hours": 4032,
+  "actual_R1_predicted_hours": 1344,
+  "target_observation_input": false
+}

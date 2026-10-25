@@ -1,0 +1,29 @@
+{
+  "schema": "IGE_A13_ACTUAL_PREDICTION_SEAL_v1",
+  "created_UTC": "2026-10-25T21:33:24.478156+00:00",
+  "code_commit": "f60141e8c7057f1cb1bb6eaec2d5537ec8ef0485",
+  "registration_sha256": "c1bc18692f1940f3f06aafcfdc5170bf63db0addddf6c238e6f93adce6e0cfdd",
+  "code_sha256": {
+    "research/ige_cmip6/a13_prepare.py": "c62abe0b25c9f6d800b5fb4ddcd9268fe6c51911de9997a1fee6bfdf087e76d2",
+    "research/ige_cmip6/a13_acquire.py": "4c3b8882390fce0e8a859c667870ee5fd7644309ecd836531d537a1fe05d8262",
+    "research/ige_cmip6/a13_run.py": "dba20b62b368ff528ab3af73d1cf1e5b6895d87416c38c51fb5d207706c985e1",
+    "research/ige_cmip6/a13_verify.py": "4a3e88731e07f562839fef674cc522461dd41f0944e021db3f9353f94c4ecc08",
+    "tools/climate_analyzer/tests/test_ige_a13_comparison.py": "56e93b18050f5b14b82931c382767e952e5453021336a42097c0a8a2fc2d1bf9",
+    ".github/workflows/ige-a1-3-ch-temperature-20261025.yml": "59d70a43574c4041c5ee06bee5d47a8410208cba4bc9276c3f15ba1b7db137b8",
+    "research/ige_cmip6/a13_execution_registration_20261025.json": "c1bc18692f1940f3f06aafcfdc5170bf63db0addddf6c238e6f93adce6e0cfdd",
+    "tools/climate_analyzer/epw_climate_analyzer/station_reconstruction.py": "0a4330befe5dae0ab6fa313243bd4f6d39a52895b14717df826d6a77cf21ce4d",
+    "tools/climate_analyzer/epw_climate_analyzer/station_admission.py": "e556c7cf6e289fb34433c1a42389d7d93d2bb502e45611fc8cf61b557d290183"
+  },
+  "frozen_files_sha256": {
+    "a13_input_sources_20261025.zip": "c11d9df67f27fb67dbc2233c2101f628edbca8380e2d2f2a5b05e39b581aabbd",
+    "a13_predictions_20261025.csv": "79e76e256e78bfd2e9afe8ca058aefbdb89616c4cdf7f9f7aa1e533a74b34a8f",
+    "a13_case_ledger_20261025.json": "34c4ba17c81908c0eda44c541bb7fa391f99878eb5d9cb072fa1759ffe995d4c"
+  },
+  "control_observation_bodies_opened": false,
+  "target_observations_used_as_predictors": false,
+  "prediction_rows": 4032,
+  "actual_R1_predicted_hours": 1344,
+  "parent_exposure_class": "PREVIOUSLY_REVEALED_SOURCE_CONTAINERS_NOT_STRICTLY_BLIND",
+  "independent_accuracy_qualified": false,
+  "production_ready": false
+}
