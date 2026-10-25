@@ -51,7 +51,7 @@
       "product_functions": [
         "shared"
       ],
-      "current_status": "NEXT",
+      "current_status": "IMPLEMENTED_COMMON_CONTRACTS_AND_HOURLY_EXPORT_SCOPE_FINAL_CI_PENDING",
       "depends_on": [
         "E0"
       ],
@@ -68,7 +68,7 @@
       "product_functions": [
         "A"
       ],
-      "current_status": "NOT_INTEGRATED",
+      "current_status": "GRAZ_2023_REAL_SOURCE_8760_YEAR_LOCAL_PASS_FINAL_CI_PENDING",
       "depends_on": [
         "I1"
       ],
@@ -84,7 +84,7 @@
       "product_functions": [
         "B-M"
       ],
-      "current_status": "LEGACY_REPLAY_EXISTS_ADAPTATION_REQUIRED",
+      "current_status": "NEXT_AFTER_I1_A0_FINAL_CI_PHASE_AND_SIGNAL_ADAPTERS_REQUIRED",
       "depends_on": [
         "I1",
         "A0"
@@ -164,7 +164,7 @@
       "completion_criterion": "No incomplete-source unblinding, original NASA operators/objective, independent benefit before default replacement"
     }
   ],
-  "current_first_implementation": "I1_common_contracts_and_export_adapter_then_A0_background_year",
+  "current_first_implementation": "B_M1_NASA_aligned_monthly_future_year_on_I1_A0_base_then_U1",
   "minimum_B_M_temperature_policy": "MIDRANGE_NEX_TAS_INDEX_NO_IMPLICIT_TIME_MEAN_EQUALITY",
   "specific_humidity_to_mixing_ratio": "w_g_per_kg_dry_air=1000*q_kg_per_kg_moist_air/(1-q)",
   "future_pressure_policy": "DECLARED_BASELINE_PROXY_NOT_NATIVE_FUTURE_PS",
@@ -191,5 +191,24 @@
     "inheritance of future event chronology and wind direction",
     "no independently qualified global local accuracy"
   ],
-  "E0_verified_CI_run_id": 40184936534
+  "E0_verified_CI_run_id": 40184936534,
+  "I1_A0_progress": {
+    "branch": "research/ige-i1-a0-common-core-20261025",
+    "first_code_commit": "525b447cb2a6d7e05b5fa0c937dd508b1dad502f",
+    "first_CI_run": 40202130945,
+    "first_CI_status": "SUCCESS",
+    "final_local_tests": 98,
+    "source_bundle_sha256": "2575be295bc41be68ac56940524a76c5ef9f9b5010a83f20b6eec21c49dce273",
+    "historical_EPW_sha256": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635",
+    "historical_year": 2023,
+    "selected_cell": [
+      47.0,
+      15.5
+    ],
+    "local_station_accuracy_qualified": false,
+    "production_ready": false,
+    "UI_connected": false,
+    "exact_T_p_q_RH_closure_qualified": false,
+    "report": "docs/IGE_I1_A0_COMMON_CORE_AND_HISTORICAL_YEAR_RU_20261025.md"
+  }
 }

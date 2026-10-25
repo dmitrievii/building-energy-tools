@@ -262,6 +262,21 @@ class SourceAndExportTests(unittest.TestCase):
             with self.subTest(column=column), self.assertRaises(ValueError):
                 validate_epw_bytes(stream.getvalue().encode(), result)
 
+    def test_readback_detects_wrong_coordinates_or_elevation(self):
+        result = self.result()
+        payload, _ = serialize_epw(result)
+        rows = list(csv.reader(io.StringIO(payload.decode())))
+        for column, value in ((6, "0"), (7, "0"), (8, "2"), (9, "0")):
+            altered = [r.copy() for r in rows]; altered[0][column] = value
+            stream = io.StringIO(); csv.writer(stream, lineterminator="\n").writerows(altered)
+            with self.subTest(column=column), self.assertRaisesRegex(ValueError, "LOCATION_OR_STANDARD_OFFSET"):
+                validate_epw_bytes(stream.getvalue().encode(), result)
+
+    def test_negative_total_precipitation_is_not_hidden_by_zero_liquid_rain(self):
+        raw, rec = change(self.raw, self.receipts, "open_meteo", lambda x: x["hourly"]["precipitation"].__setitem__(0, -.01))
+        with self.assertRaisesRegex(ValueError, "NEGATIVE_TOTAL_PRECIPITATION"):
+            assemble_historical(self.request, raw, rec)
+
     def test_bundle_hash_and_request_are_checked_and_no_network_replay(self):
         bundle = make_source_bundle(self.request, self.raw, self.receipts)
         with tempfile.TemporaryDirectory() as d:

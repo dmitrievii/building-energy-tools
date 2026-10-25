@@ -1,0 +1,61 @@
+{
+  "status": "I1_A0_SOURCE_YEAR_AND_REGRESSION_CHECKS_PASS_NOT_INDEPENDENT_QUALIFICATION",
+  "tests": {
+    "tests_run": 98,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "status": "PASS",
+    "wall_seconds": 7.564612773000135,
+    "patterns": [
+      [
+        "tools/climate_analyzer/tests",
+        "test_ige_engine.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_canonical_climate_model.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_e2e_integration_audit.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p7c1_epw_morphing.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p7c1b_humidity_closure.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p9_1a_global_historical_backbone.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p9_2d_annual_cet_epw_export.py"
+      ]
+    ],
+    "python": "3.12.14",
+    "numpy": "1.26.4",
+    "pandas": "2.3.3"
+  },
+  "protection": {
+    "ancestor": "5481a74dabb9acf40dd745d0006d0a9bc1cea4aa",
+    "protected_files_unchanged": 168,
+    "IV1_station_values_opened": false,
+    "main_modified_or_merged": false
+  },
+  "source_bundle_sha256": "2575be295bc41be68ac56940524a76c5ef9f9b5010a83f20b6eec21c49dce273",
+  "EPW_sha256": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635",
+  "records": 8760,
+  "source_support_addresses_independently_checked_hours": 8760,
+  "weather_provider_requests_this_verification": 0,
+  "production_ready": false,
+  "independent_accuracy": "NOT_RUN",
+  "EnergyPlus_simulation": "NOT_RUN",
+  "UI_connected": false,
+  "local_station_reconstruction_complete": false,
+  "annual_manifest_sha256": "ad343cf8724c7b1a24ca938bc34664fc5da672777772eb8b5855ba889bc8d8b6"
+}

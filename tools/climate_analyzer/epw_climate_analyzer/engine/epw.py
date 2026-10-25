@@ -88,9 +88,12 @@ def validate_weather(result: ClimateResult) -> dict:
         quantization_failures = int(incompatible.sum())
         if quantization_failures:
             raise ValueError("IGE_EPW_SOURCE_T_TD_RH_QUANTIZATION_INTERVALS_INCOMPATIBLE")
-    if "total_precipitation_depth_mm" in f and np.any(
-            f["total_precipitation_depth_mm"].to_numpy() + 0.100001 < f["liquid_precipitation_depth_mm"].to_numpy()):
-        raise ValueError("IGE_EPW_LIQUID_EXCEEDS_TOTAL_PRECIPITATION")
+    if "total_precipitation_depth_mm" in f:
+        total = f["total_precipitation_depth_mm"].to_numpy()
+        if np.any(total < 0):
+            raise ValueError("IGE_NEGATIVE_TOTAL_PRECIPITATION")
+        if np.any(total + 0.100001 < f["liquid_precipitation_depth_mm"].to_numpy()):
+            raise ValueError("IGE_EPW_LIQUID_EXCEEDS_TOTAL_PRECIPITATION")
     return {
         "screen": "BOUNDS_COMPONENTS_AND_PROVIDER_ROUNDING_PASS",
         "records": len(f), "hard_failure_count": 0,
@@ -151,8 +154,10 @@ def validate_epw_bytes(payload: bytes, result: ClimateResult) -> dict:
         "HOLIDAYS/DAYLIGHT SAVINGS", "COMMENTS 1", "COMMENTS 2", "DATA PERIODS"]
     if [r[0] for r in rows[:8]] != expected_header:
         raise ValueError("IGE_EPW_READBACK_HEADER_ORDER")
-    if float(rows[0][8]) != result.request.utc_offset_minutes / 60:
-        raise ValueError("IGE_EPW_READBACK_STANDARD_OFFSET")
+    expected_location = [result.location.latitude, result.location.longitude,
+        result.request.utc_offset_minutes / 60, result.location.elevation_m]
+    if [float(v) for v in rows[0][6:10]] != expected_location:
+        raise ValueError("IGE_EPW_READBACK_LOCATION_OR_STANDARD_OFFSET")
     if (rows[4][1] == "Yes") != calendar.isleap(result.request.year):
         raise ValueError("IGE_EPW_READBACK_LEAP_HEADER")
     for i, (row, local) in enumerate(zip(records, result.request.local_starts)):

@@ -1,0 +1,284 @@
+{
+  "schema": "IGE_I1_A0_20261025_v1",
+  "request": {
+    "latitude": 47.0707,
+    "longitude": 15.4395,
+    "year": 2023,
+    "utc_offset_minutes": 60,
+    "label": "Graz",
+    "mode": "grid_background",
+    "site_elevation_m": null,
+    "site_elevation_reference": ""
+  },
+  "quality": {
+    "execution_correctness": "SOURCE_AND_CALENDAR_CHECKS_PASS",
+    "physical_admissibility": "BOUNDS_AND_SOURCE_ROUNDING_SCREEN_PASS_WITH_DECLARED_LIMITS",
+    "independent_accuracy": "NOT_INDEPENDENTLY_VALIDATED",
+    "operational_and_application_scope": "RESEARCH_GRID_BACKGROUND_CLI; UI_NOT_CONNECTED",
+    "production_ready": false
+  },
+  "sources": [
+    {
+      "id": "open_meteo",
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=47.070700&longitude=15.439500&start_date=2023-01-01&end_date=2023-12-31&hourly=temperature_2m%2Cdew_point_2m%2Crelative_humidity_2m%2Csurface_pressure%2Cprecipitation%2Crain%2Ccloud_cover%2Cshortwave_radiation%2Cdirect_radiation%2Cdiffuse_radiation%2Cdirect_normal_irradiance%2Cwind_speed_10m%2Cwind_direction_10m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&wind_speed_unit=ms&temperature_unit=celsius&precipitation_unit=mm",
+      "provider": "Open-Meteo",
+      "dataset": "fixed ERA5, provider derivatives, not native CDS GRIB",
+      "retrieved_utc": "2026-10-25T14:11:08.743701+00:00",
+      "bytes": 685916,
+      "sha256": "8a26110d12e86438218c7cc8c891402786db051ff2065e16a8d431b73a1dd336",
+      "http_attempts": 1,
+      "wall_seconds": 6.353892311999971,
+      "retry_policy": "max4; only429/5xx/connection/timeout; timeout45s; backoff2/4/8s; no fallback"
+    },
+    {
+      "id": "nasa_power",
+      "url": "https://power.larc.nasa.gov/api/temporal/hourly/point?latitude=47.070700&longitude=15.439500&start=20221231&end=20231231&parameters=ALLSKY_SFC_LW_DWN&community=SB&format=JSON&time-standard=UTC",
+      "provider": "NASA POWER",
+      "dataset": "hourly surface downwelling longwave; verify sources in response",
+      "retrieved_utc": "2026-10-25T14:11:15.000687+00:00",
+      "bytes": 173948,
+      "sha256": "2843eddefaadba0bff2117d7b9c462090cfb0e13589b9248e7ee3f4da24a898c",
+      "http_attempts": 1,
+      "wall_seconds": 6.254092270000001,
+      "retry_policy": "max4; only429/5xx/connection/timeout; timeout45s; backoff2/4/8s; no fallback"
+    }
+  ],
+  "source_bundle_sha256": "2575be295bc41be68ac56940524a76c5ef9f9b5010a83f20b6eec21c49dce273",
+  "fields": {
+    "dry_bulb_temperature_c": {
+      "unit": "°C",
+      "operator": "instant_at_interval_end",
+      "source_id": "open_meteo",
+      "vertical_reference": "2m above model surface",
+      "definition": "Provider ERA5-derived temperature_2m"
+    },
+    "dew_point_temperature_c": {
+      "unit": "°C",
+      "operator": "instant_at_interval_end",
+      "source_id": "open_meteo",
+      "vertical_reference": "2m above model surface",
+      "definition": "Provider ERA5-derived dew_point_2m"
+    },
+    "relative_humidity_pct": {
+      "unit": "%",
+      "operator": "instant_at_interval_end",
+      "source_id": "open_meteo",
+      "vertical_reference": "2m above model surface",
+      "definition": "Provider ERA5-derived relative_humidity_2m; liquid-water Magnus 17.625/243.04, integer percent; NOT NASA water/ice daily RH"
+    },
+    "atmospheric_station_pressure_pa": {
+      "unit": "Pa",
+      "operator": "instant_at_interval_end",
+      "source_id": "open_meteo",
+      "vertical_reference": "model surface or atmospheric column as provided",
+      "definition": "Provider ERA5-derived surface_pressure; absolute model-surface pressure, never sea-level-reduced pressure; not moved to 2m"
+    },
+    "total_precipitation_depth_mm": {
+      "unit": "mm",
+      "operator": "interval_amount",
+      "source_id": "open_meteo",
+      "vertical_reference": "model surface or atmospheric column as provided",
+      "definition": "Provider ERA5-derived precipitation"
+    },
+    "liquid_precipitation_depth_mm": {
+      "unit": "mm",
+      "operator": "interval_amount",
+      "source_id": "open_meteo",
+      "vertical_reference": "model surface or atmospheric column as provided",
+      "definition": "Provider ERA5-derived rain; liquid rain only, excludes snowfall; total precipitation retained separately"
+    },
+    "total_sky_cover_tenths": {
+      "unit": "tenths",
+      "operator": "instant_at_interval_end",
+      "source_id": "open_meteo",
+      "vertical_reference": "model surface or atmospheric column as provided",
+      "definition": "Provider ERA5-derived cloud_cover"
+    },
+    "global_horizontal_radiation_wh_m2": {
+      "unit": "Wh/m²",
+      "operator": "interval_energy",
+      "source_id": "open_meteo",
+      "vertical_reference": "model surface or atmospheric column as provided",
+      "definition": "Provider ERA5-derived shortwave_radiation"
+    },
+    "direct_horizontal_radiation_wh_m2": {
+      "unit": "Wh/m²",
+      "operator": "interval_energy",
+      "source_id": "open_meteo",
+      "vertical_reference": "model surface or atmospheric column as provided",
+      "definition": "Provider ERA5-derived direct_radiation"
+    },
+    "diffuse_horizontal_radiation_wh_m2": {
+      "unit": "Wh/m²",
+      "operator": "interval_energy",
+      "source_id": "open_meteo",
+      "vertical_reference": "model surface or atmospheric column as provided",
+      "definition": "Provider ERA5-derived diffuse_radiation"
+    },
+    "direct_normal_radiation_wh_m2": {
+      "unit": "Wh/m²",
+      "operator": "interval_energy",
+      "source_id": "open_meteo",
+      "vertical_reference": "model surface or atmospheric column as provided",
+      "definition": "Provider ERA5-derived direct_normal_irradiance"
+    },
+    "wind_speed_m_s": {
+      "unit": "m/s",
+      "operator": "instant_at_interval_end",
+      "source_id": "open_meteo",
+      "vertical_reference": "10m above model surface",
+      "definition": "Provider ERA5-derived wind_speed_10m"
+    },
+    "wind_direction_deg": {
+      "unit": "deg",
+      "operator": "instant_at_interval_end",
+      "source_id": "open_meteo",
+      "vertical_reference": "10m above model surface",
+      "definition": "Provider ERA5-derived wind_direction_10m"
+    },
+    "horizontal_infrared_radiation_intensity_wh_m2": {
+      "unit": "Wh/m²",
+      "operator": "interval_energy",
+      "source_id": "nasa_power",
+      "vertical_reference": "surface downward hemispheric flux",
+      "definition": "POWER original hourly longwave; separate gridded column/processing chain: SYN1DEG"
+    }
+  },
+  "diagnostics": {
+    "source_scope": "OPEN_METEO_DERIVED_ERA5_NOT_NATIVE_CDS_GRIB",
+    "requested_point": [
+      47.0707,
+      15.4395
+    ],
+    "background_cell": [
+      47.0,
+      15.5
+    ],
+    "requested_to_background_distance_km": 9.10082531971942,
+    "EPW_location_coordinates": "provider selected cell; requested point retained separately",
+    "elevation_m_provider_response_proxy": 467.0,
+    "native_model_height_verified": false,
+    "site_height_m_requested": null,
+    "site_height_used_for_weather_correction": false,
+    "provider_downscaling": "DISABLED elevation=nan; nearest cell",
+    "pressure_vertical_reference": "absolute model-surface proxy; not collocated with 2m T/RH",
+    "pressure_reduced_to_sea_level": false,
+    "pressure_adjusted_to_2m": false,
+    "POWER_reported_sources": [
+      "SYN1DEG"
+    ],
+    "POWER_geometry": {
+      "type": "Point",
+      "coordinates": [
+        15.44,
+        47.071,
+        423.64
+      ]
+    },
+    "mixed_source_cross_variable_consistency_qualified": false,
+    "specific_humidity_generated": false,
+    "humidity_definition_limit": "Provider rounded water-Magnus T/Td/RH retained; no NASA phase operator or exact T-p-q-RH closure claimed",
+    "source_row_time_support": {
+      "open_meteo": "instant at end or preceding-hour integral",
+      "nasa_power_LW": "hourly mean, label at start"
+    },
+    "IV1_station_observations_opened": false,
+    "independent_station_validation": "NOT_RUN",
+    "local_reconstruction_complete": false,
+    "future_generator_executed": false,
+    "weather_screen": {
+      "screen": "BOUNDS_COMPONENTS_AND_PROVIDER_ROUNDING_PASS",
+      "records": 8760,
+      "hard_failure_count": 0,
+      "max_GHI_minus_direct_horizontal_minus_DHI_Wh_m2": 0.0,
+      "max_abs_provider_Magnus_RH_residual_pp": 1.1209217197908146,
+      "provider_T_Td_RH_quantization_interval_failures": 0,
+      "T_Td_RH_exact_thermodynamic_closure_claimed": false,
+      "provider_values_modified": false,
+      "mixed_source_longwave_cross_field_accuracy_qualified": false
+    }
+  },
+  "EPW": {
+    "screen": "BOUNDS_COMPONENTS_AND_PROVIDER_ROUNDING_PASS",
+    "records": 8760,
+    "hard_failure_count": 0,
+    "max_GHI_minus_direct_horizontal_minus_DHI_Wh_m2": 0.0,
+    "max_abs_provider_Magnus_RH_residual_pp": 1.1209217197908146,
+    "provider_T_Td_RH_quantization_interval_failures": 0,
+    "T_Td_RH_exact_thermodynamic_closure_claimed": false,
+    "provider_values_modified": false,
+    "mixed_source_longwave_cross_field_accuracy_qualified": false,
+    "epw_format_readback": "PASS",
+    "fields_per_record": 35,
+    "headers": 8,
+    "first_row": [
+      "2023",
+      "1",
+      "1",
+      "1",
+      "60"
+    ],
+    "last_row": [
+      "2023",
+      "12",
+      "31",
+      "24",
+      "60"
+    ],
+    "leap_day_retained": false,
+    "sha256": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635",
+    "bytes": 1689078,
+    "EnergyPlus_simulation_executed": false
+  },
+  "files": {
+    "sources.zip": {
+      "sha256": "2575be295bc41be68ac56940524a76c5ef9f9b5010a83f20b6eec21c49dce273",
+      "bytes": 180553
+    },
+    "climate.epw": {
+      "sha256": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635",
+      "bytes": 1689078
+    },
+    "hourly.csv.gz": {
+      "sha256": "38015ea2aa8507a135ecc3f5e57b4af62aae9d9874b117f95deb284da83ecaae",
+      "bytes": 254662
+    },
+    "ledger.json": {
+      "sha256": "dae7497903bcccce960e60d4fa7160af1f084524028761ef03395b7ddba543ce",
+      "bytes": 5585
+    },
+    "monthly_summary.json": {
+      "sha256": "d097b1dbd0e6b9aefca5e2f6f3a3d3607850d79d29487232ce214b6d20bc5ff5",
+      "bytes": 3254
+    }
+  },
+  "documentation": {
+    "open_meteo": "https://open-meteo.com/en/docs/historical-weather-api",
+    "power_time": "https://power.larc.nasa.gov/docs/faqs/other/",
+    "power_hourly": "https://power.larc.nasa.gov/docs/services/api/temporal/hourly/",
+    "epw": "https://energyplus.net/assets/nrel_custom/pdfs/pdfs_v24.1.0/AuxiliaryPrograms.pdf",
+    "provider_RH": "https://github.com/open-meteo/open-meteo/blob/main/Sources/App/Helper/Meteorology.swift"
+  },
+  "canonical_adapter": {
+    "calendar_mode": "historical",
+    "records": 8760,
+    "first": "2023-01-01T00:00:00+01:00",
+    "last": "2023-12-31T23:00:00+01:00",
+    "state_sample_offset_minutes": 60,
+    "existing_EPW_upload_route_is_typical_year": true
+  },
+  "existing_Analyzer_EPW_import_records": 8760,
+  "weather_provider_requests_this_run": 0,
+  "weather_provider_response_bytes_this_run": 0,
+  "wall_seconds": 1.1095443589999832,
+  "implementation_sha256": {
+    "__init__.py": "7534049aa7df56f146ab99eb5d0f8abcf558db80da3e1a72bbc03b9ab12f7125",
+    "__main__.py": "9e18ba372741e31e162ee9462fe65d21f7a35211d3d3edd849ff52073d4187ee",
+    "contracts.py": "594caf89169aa9d34c8abe5738dd430748db9e69501ac9563a13e9151aeea54b",
+    "epw.py": "db99a5badc2c562b4da1904e272308f3ab8a3b8778bcb37037c0f8ea7d06e3f9",
+    "historical.py": "03ad75087c821bd111ef3057fd56ed8f375b884ce602dd826ec1383761489457"
+  },
+  "independent_station_accuracy_qualified": false,
+  "production_ready": false,
+  "IV1_station_observations_opened": false
+}
