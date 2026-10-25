@@ -1,0 +1,109 @@
+{
+  "B4_qualified": false,
+  "P2_superiority_established": false,
+  "T_field_attributes_equal": true,
+  "artifacts": [
+    {
+      "bytes": 296,
+      "id": 12593277203,
+      "path": "research/ige_cmip6/p9_3b3_iv1_recovery_CI_40178224896_controls.zip",
+      "sha256": "7e6e1063c7a514825bbadb44282874fecdba0be29a0e2f88815b114939d60f95"
+    },
+    {
+      "bytes": 662,
+      "id": 12592463960,
+      "path": "research/ige_cmip6/p9_3b3_iv1_recovery_lineage_block_CI_40178224896.zip",
+      "sha256": "3419662807b1858f30a9649be48e4d8af3bb8f067d6fb228506e05ae30d94d9e"
+    }
+  ],
+  "code_commit": "c3c71f6c27a8f22bb22a2dee3eeb24099dd4b11e",
+  "cumulative_model_source_budget": {
+    "all_source_HTTP_body_bytes_upper_bound": 29012505750,
+    "all_source_requests_upper_bound": 21389,
+    "failed_recovery_conservative_reserved_bytes": 536870912,
+    "failed_recovery_conservative_reserved_requests": 1000,
+    "failed_recovery_exact_costs_not_preserved": true,
+    "limit_bytes": 51539607552,
+    "limit_requests": 30000,
+    "observation_bytes_still_reserved": 671088640,
+    "within_total_limit_including_observation_reservation": true
+  },
+  "diagnostic_archive": {
+    "bytes": 25584,
+    "members": 13,
+    "path": "research/ige_cmip6/p9_3b3_iv1_recovery_lineage_diagnostic_20261025.json.xz",
+    "sha256": "b467040839bcb3b2d282bdc474fef5d213683eb5c782be981c6b5abd41211e27"
+  },
+  "diagnostic_control_comparisons": {
+    "field_attributes_equal": true,
+    "hybrid_pv_equal": true,
+    "raw_GRIB_controls_equal": true,
+    "sources_equal": false
+  },
+  "diagnostic_costs": {
+    "metadata_HTTP_body_bytes": 283184,
+    "metadata_requests": 5,
+    "native_control_HTTP_body_bytes": 15540285,
+    "native_control_requests": 26,
+    "native_control_wall_seconds": 132.7912907030002
+  },
+  "full_T_metadata_housekeeping_only_change_proven": false,
+  "heldout_2022_station_values_opened": false,
+  "independent_accuracy": "NOT_RUN",
+  "main_merged": false,
+  "metadata_hash_comparisons": {
+    "grid_reference": {
+      "bytes": 181026,
+      "current_sha": "536389b58b417f7eefda7cf820636f96dece558e6b578675695149dfaaa2bcf1",
+      "equal": true,
+      "old_sha": "536389b58b417f7eefda7cf820636f96dece558e6b578675695149dfaaa2bcf1"
+    },
+    "moisture": {
+      "bytes": 65175,
+      "current_sha": "1446351adfde97c19a518d342d5bc62680a7270cf87e7dd8bbf09f36dab2c67d",
+      "equal": false,
+      "old_sha": "8857cc5843ac6330bca284c1fd62357b745b7e9f0b462dac11d6d286a79856a6"
+    },
+    "surface": {
+      "bytes": 12672,
+      "current_sha": "35fcded7b65a5d281bfcbca86b09fdb07b431aa39cc6d01f62be56be1f9d9dbc",
+      "equal": true,
+      "old_sha": "35fcded7b65a5d281bfcbca86b09fdb07b431aa39cc6d01f62be56be1f9d9dbc"
+    },
+    "temperature": {
+      "bytes": 23216,
+      "current_sha": "436c2c86b11186075f35da2411d3fef8d3c0a6afa3f4099d1503e406f854d001",
+      "equal": false,
+      "old_sha": "7fdc4404573c70d18622a0cfd8c8cabf037d061f7673b23951e27c586e4f8ff2"
+    }
+  },
+  "original_IV1_T_metadata_body_recovered": false,
+  "predecessor_archive_sha256": "36a3aa0f65b9806461dbaaa3105f14efd0cb4e6904cf73eb1d525302af52a4cc",
+  "predecessor_run_id": 40121011997,
+  "production_epw_ready": false,
+  "protected_files_unchanged": 168,
+  "q_full_metadata_diff_available": true,
+  "run_id": 40178224896,
+  "source_job": {
+    "conclusion": "failure",
+    "failure_before_missing_hour_or_reference_I_O": true,
+    "id": 121124066252,
+    "new_complete_source_or_predictions_created": false,
+    "predecessor_source_replay": "PASS_675_NATIVE_HOURS_17_REFERENCE_BODIES",
+    "primary_blocker": "IV1_RECOVERY_SOURCE_METADATA_HYBRID_OR_RAW_GRIB_CHAIN_CHANGED",
+    "trailing_missing_seal_error_is_secondary": true
+  },
+  "stage": "IV1_RECOVERY_CI_AND_LINEAGE_DIAGNOSTIC_VERIFIED_NO_STATION_VALIDATION",
+  "test_job": {
+    "conclusion": "success",
+    "heldout_2022_station_values_opened": false,
+    "id": 121123448456,
+    "new_recovery_tests": 6,
+    "python": "3.12.15",
+    "recovery_tests_use_artificial_archives": true,
+    "status": "PASS",
+    "tests_run": 490,
+    "wall_seconds": 148.595729969
+  },
+  "workflow_conclusion": "failure"
+}
