@@ -1,0 +1,57 @@
+name: IGE A1.1 AT DE CH station contracts and frozen temperature evaluation design
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/ige-a1-station-admission-20261025
+    paths:
+      - .github/workflows/ige-a1-station-admission-20261025.yml
+      - tools/climate_analyzer/epw_climate_analyzer/station_reconstruction.py
+      - tools/climate_analyzer/tests/test_ige_a1_stations.py
+      - research/ige_cmip6/a1_prepare.py
+      - research/ige_cmip6/a1_verify.py
+      - research/ige_cmip6/a1_acquire_metadata.py
+      - research/ige_cmip6/a1_1_protocol_20261025.json
+      - research/ige_cmip6/a1_1_admission_20261025.json
+      - research/ige_cmip6/a1_1_metadata_sources_20261025.zip
+      - research/ige_cmip6/a1_1_DWD_description_recovery_20261025.zip
+permissions:
+  contents: read
+env:
+  OPENBLAS_NUM_THREADS: '1'
+  OMP_NUM_THREADS: '1'
+  STREAMLIT_BROWSER_GATHER_USAGE_STATS: 'false'
+jobs:
+  station_source_contracts_without_target_observations:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r tools/climate_analyzer/requirements.txt
+      - name: Original year and UI regressions, station adapters, temporal operators and residual math
+        run: python research/ige_cmip6/a1_verify.py --out outputs/a1
+      - name: Separate source preparation from accuracy and qualification
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          r=json.loads(Path('outputs/a1/verification.json').read_text())
+          assert r['targets']==6 and r['donor_slots']==18 and r['planned_target_reference_hours']==4032
+          assert r['fully_admitted_target_cells']==r['new_measured_values_read']==0
+          assert r['independent_station_accuracy_qualified'] is False and r['production_ready'] is False
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as stream:
+              stream.write(f"{r['tests']['tests_run']} checks PASS. AT/DE/CH source contracts, exact pressure aliases, separate QC tiers, disclosed hourly support and temperature-residual candidate implemented.\n\n")
+              stream.write('6 metadata-selected targets, 18 donor slots, 4032 prospective target hours. Metadata only: no new observations, no skill scores, no historical sensor geometry certification. Exposure/history/DE time gates and prediction seal remain required. Existing EPW/UI defaults and protected research unchanged.\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: IGE-A1-1-station-source-contracts-and-frozen-design-NO-OBSERVATIONS
+          path: outputs/a1/
+          if-no-files-found: warn
+          retention-days: 30

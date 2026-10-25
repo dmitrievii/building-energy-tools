@@ -1,0 +1,106 @@
+{
+  "schema": "IGE_A1_1_ADMISSION_v1",
+  "status": "CATALOGS_AND_EXPERIMENT_CONTRACT_PREPARED_NOT_VALIDATION_READY",
+  "eligible_nominal_catalog_stations": {
+    "AT": 281,
+    "DE": 498,
+    "CH": 149
+  },
+  "target_count": 6,
+  "donor_slots": 18,
+  "target_reference_hours_planned": 4032,
+  "target_measurement_values_read": 0,
+  "historical_geometries_newly_verified": 0,
+  "fully_admitted_target_cells": 0,
+  "raw_metadata_HTTP_attempts": 11,
+  "raw_metadata_bytes": 2482643,
+  "original_failed_requests": [
+    {
+      "name": "DE_TU_description.pdf",
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/air_temperature/DESCRIPTION_obsgermany-climate-hourly-air_temperature_en.pdf",
+      "status": "SOURCE_BLOCKED",
+      "http_attempts": 1,
+      "error": "HTTPError: HTTP Error 404: Not Found",
+      "wall_seconds": 4.853568585000062
+    },
+    {
+      "name": "DE_pressure_description.pdf",
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/pressure/DESCRIPTION_obsgermany-climate-hourly-pressure_en.pdf",
+      "status": "SOURCE_BLOCKED",
+      "http_attempts": 1,
+      "error": "HTTPError: HTTP Error 404: Not Found",
+      "wall_seconds": 4.159894615999974
+    }
+  ],
+  "field_contracts": {
+    "AT": {
+      "temperature": "tl",
+      "humidity": "rf",
+      "absolute_pressure": "p",
+      "time_operator": "published_nominal_node",
+      "time_basis": "prior frozen v1/v2 source chain; general field definition only, not new 2025 sensor certification",
+      "QC_primary": [
+        22
+      ],
+      "QC_secondary": [
+        12
+      ],
+      "QC_changed_or_unspecified_origin_excluded": [
+        0,
+        10,
+        11,
+        20,
+        21
+      ]
+    },
+    "DE": {
+      "temperature": "TT_TU",
+      "humidity": "RF_TU",
+      "absolute_pressure": "P0",
+      "sea_level_pressure_excluded": "P",
+      "time_operator": "unknown_for_hourly_product_until_own_parameter_metadata_read",
+      "QC_TU": "QN_9",
+      "QC_pressure": "QN_8",
+      "QC_primary": [
+        10
+      ],
+      "QC_secondary": [
+        3
+      ],
+      "urban_schema_is_separate": "P0_ST_10 absolute; PP_ST_10 reduced; not used in this hourly adapter"
+    },
+    "CH": {
+      "temperature": "tre200h0",
+      "humidity": "ure200h0",
+      "absolute_pressure": "prestah0",
+      "sea_level_pressure_excluded": [
+        "pp0qffh0",
+        "pp0qnhh0"
+      ],
+      "time_operator": "mean_six_10min_nominal_nodes",
+      "pre_2018_hourly_operator": "NOT_ADMITTED",
+      "QC": "PUBLISHED_HISTORICAL_NO_PER_ROW_FLAG; separate stratum"
+    }
+  },
+  "source_members_sha256": {
+    "AT_hourly_v2_metadata.json": "d976838d0332f4881b86c61b4700637eaef85846e9f63ef4fce198d1fa3b2eb9",
+    "DE_TU_stations.txt": "97ebe75b18cb470b34d4a50f6f145028849e0731f3665b4b55a3de998dcd0dad",
+    "DE_pressure_stations.txt": "87c7f2b7666c47b1f5589237c1542cdb672a4d42dec7ae6333912000be06e824",
+    "CH_stations.csv": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+    "CH_parameters.csv": "9fa4358356a1f856d5ba2ab8117e750ea5c742ec4c18594f16bf31e8a87fc2c0",
+    "CH_inventory.csv": "01c21ddac252d94a783fc20195d4289437a57e87cc4862b7107291210a5ae045",
+    "CH_download_documentation.html": "d0061d5588ae4ff4afb18cbba469bb1b91be31dba178516032a288bf01d8625c",
+    "DE_TU_description.pdf": "2b70224e4801da68c601bc95c145d221194ac5572b3d7ebb9a1a14abfe90d2d8",
+    "DE_pressure_description.pdf": "acd99fc5f001f236078e9169866d334f894e7717d5c2b62457470351da44bfb8"
+  },
+  "quality_axes": {
+    "execution_correctness": "METADATA_REPLAY_AND_PURE_ADAPTER_TESTS_REQUIRED",
+    "physical_admissibility": "SOURCE_UNITS_AND_PRESSURE_SEMANTICS_ONLY; FULL_WEATHER_NOT_QUALIFIED",
+    "independent_accuracy": "NOT_EVALUATED_AND_EXPOSURE_NOT_CERTIFIED",
+    "operational_and_application_scope": "RESEARCH_COMPONENTS; A0_B_M1_U1_DEFAULTS_UNCHANGED"
+  },
+  "production_ready": false,
+  "B4_qualified": false,
+  "P2_superiority_established": false,
+  "IV1_station_observations_opened": false
+}

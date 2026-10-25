@@ -1,0 +1,556 @@
+{
+  "schema": "IGE_A1_1_METADATA_AND_TEMPERATURE_PROTOCOL_v1",
+  "date": "2026-10-25",
+  "product_function": "A: local historical reconstruction; sources/validation prerequisite, not a new weather generator release",
+  "countries": [
+    "AT",
+    "DE",
+    "CH"
+  ],
+  "windows": [
+    {
+      "season": "winter",
+      "start_UTC": "2025-01-10",
+      "end_UTC": "2025-01-16"
+    },
+    {
+      "season": "spring",
+      "start_UTC": "2025-04-10",
+      "end_UTC": "2025-04-16"
+    },
+    {
+      "season": "summer",
+      "start_UTC": "2025-07-10",
+      "end_UTC": "2025-07-16"
+    },
+    {
+      "season": "autumn",
+      "start_UTC": "2025-10-10",
+      "end_UTC": "2025-10-16"
+    }
+  ],
+  "target_selection": "nearest full-2025 nominal catalog station to each fixed anchor, <=35km; no observed errors used",
+  "targets": [
+    {
+      "target": {
+        "country": "AT",
+        "station_id": "3202",
+        "name": "Linz Stadt",
+        "latitude": 48.29639,
+        "longitude": 14.28528,
+        "nominal_site_elevation_m": 262.0,
+        "source_metadata_sha256": "d976838d0332f4881b86c61b4700637eaef85846e9f63ef4fce198d1fa3b2eb9",
+        "identity_group": "AT_GROUP:56",
+        "historical_geometry_verified": false
+      },
+      "target_key": "AT:3202",
+      "anchor": {
+        "anchor": "AT_LINZ",
+        "latitude": 48.3069,
+        "longitude": 14.2858,
+        "distance_km": 1.169291465972444
+      },
+      "donors": [
+        {
+          "country": "AT",
+          "station_id": "5000",
+          "name": "Linz Hörsching Flughafen",
+          "latitude": 48.23528,
+          "longitude": 14.18806,
+          "nominal_site_elevation_m": 298.0,
+          "source_metadata_sha256": "d976838d0332f4881b86c61b4700637eaef85846e9f63ef4fce198d1fa3b2eb9",
+          "identity_group": "AT_GROUP:None",
+          "historical_geometry_verified": false,
+          "key": "AT:5000",
+          "distance_km": 9.89742007206975
+        },
+        {
+          "country": "AT",
+          "station_id": "5130",
+          "name": "Enns",
+          "latitude": 48.19583,
+          "longitude": 14.45028,
+          "nominal_site_elevation_m": 317.0,
+          "source_metadata_sha256": "d976838d0332f4881b86c61b4700637eaef85846e9f63ef4fce198d1fa3b2eb9",
+          "identity_group": "AT_GROUP:23",
+          "historical_geometry_verified": false,
+          "key": "AT:5130",
+          "distance_km": 16.562316156566506
+        },
+        {
+          "country": "AT",
+          "station_id": "3315",
+          "name": "Reichenau im Mühlkreis",
+          "latitude": 48.45917,
+          "longitude": 14.34556,
+          "nominal_site_elevation_m": 689.1,
+          "source_metadata_sha256": "d976838d0332f4881b86c61b4700637eaef85846e9f63ef4fce198d1fa3b2eb9",
+          "identity_group": "AT_GROUP:161",
+          "historical_geometry_verified": false,
+          "key": "AT:3315",
+          "distance_km": 18.639812448904095
+        }
+      ],
+      "geographic_donor_count_sufficient": true,
+      "validation_admitted": false,
+      "remaining_source_gates": [
+        "historical station/sensor geometry for the 2025 windows",
+        "registered parameter/operator evidence for the selected 2025 station",
+        "exposure audit and observation quality/coverage before primary scoring"
+      ]
+    },
+    {
+      "target": {
+        "country": "AT",
+        "station_id": "6305",
+        "name": "Salzburg Freisaal",
+        "latitude": 47.79111,
+        "longitude": 13.05417,
+        "nominal_site_elevation_m": 419.0,
+        "source_metadata_sha256": "d976838d0332f4881b86c61b4700637eaef85846e9f63ef4fce198d1fa3b2eb9",
+        "identity_group": "AT_GROUP:145",
+        "historical_geometry_verified": false
+      },
+      "target_key": "AT:6305",
+      "anchor": {
+        "anchor": "AT_SALZBURG",
+        "latitude": 47.8095,
+        "longitude": 13.055,
+        "distance_km": 2.045814212016887
+      },
+      "donors": [
+        {
+          "country": "AT",
+          "station_id": "6430",
+          "name": "Kolomansberg",
+          "latitude": 47.87772,
+          "longitude": 13.27519,
+          "nominal_site_elevation_m": 1113.1,
+          "source_metadata_sha256": "d976838d0332f4881b86c61b4700637eaef85846e9f63ef4fce198d1fa3b2eb9",
+          "identity_group": "AT_GROUP:None",
+          "historical_geometry_verified": false,
+          "key": "AT:6430",
+          "distance_km": 19.10273277135813
+        },
+        {
+          "country": "AT",
+          "station_id": "6415",
+          "name": "Mattsee",
+          "latitude": 47.97722,
+          "longitude": 13.10556,
+          "nominal_site_elevation_m": 502.0,
+          "source_metadata_sha256": "d976838d0332f4881b86c61b4700637eaef85846e9f63ef4fce198d1fa3b2eb9",
+          "identity_group": "AT_GROUP:60",
+          "historical_geometry_verified": false,
+          "key": "AT:6415",
+          "distance_km": 21.04631762496313
+        },
+        {
+          "country": "AT",
+          "station_id": "6512",
+          "name": "Mondsee",
+          "latitude": 47.85083,
+          "longitude": 13.34722,
+          "nominal_site_elevation_m": 480.5,
+          "source_metadata_sha256": "d976838d0332f4881b86c61b4700637eaef85846e9f63ef4fce198d1fa3b2eb9",
+          "identity_group": "AT_GROUP:163",
+          "historical_geometry_verified": false,
+          "key": "AT:6512",
+          "distance_km": 22.865138017220186
+        }
+      ],
+      "geographic_donor_count_sufficient": true,
+      "validation_admitted": false,
+      "remaining_source_gates": [
+        "historical station/sensor geometry for the 2025 windows",
+        "registered parameter/operator evidence for the selected 2025 station",
+        "exposure audit and observation quality/coverage before primary scoring"
+      ]
+    },
+    {
+      "target": {
+        "country": "DE",
+        "station_id": "02928",
+        "name": "Leipzig-Holzhausen",
+        "latitude": 51.3151,
+        "longitude": 12.4462,
+        "nominal_site_elevation_m": 138.0,
+        "source_metadata_sha256": "97ebe75b18cb470b34d4a50f6f145028849e0731f3665b4b55a3de998dcd0dad",
+        "identity_group": "DE_STATION:02928",
+        "historical_geometry_verified": false
+      },
+      "target_key": "DE:02928",
+      "anchor": {
+        "anchor": "DE_LEIPZIG",
+        "latitude": 51.3397,
+        "longitude": 12.3731,
+        "distance_km": 5.768900419344095
+      },
+      "donors": [
+        {
+          "country": "DE",
+          "station_id": "02932",
+          "name": "Leipzig/Halle",
+          "latitude": 51.4347,
+          "longitude": 12.2396,
+          "nominal_site_elevation_m": 131.0,
+          "source_metadata_sha256": "97ebe75b18cb470b34d4a50f6f145028849e0731f3665b4b55a3de998dcd0dad",
+          "identity_group": "DE_STATION:02932",
+          "historical_geometry_verified": false,
+          "key": "DE:02932",
+          "distance_km": 19.557632809382916
+        },
+        {
+          "country": "DE",
+          "station_id": "05750",
+          "name": "Zeitz",
+          "latitude": 51.0314,
+          "longitude": 12.1495,
+          "nominal_site_elevation_m": 264.0,
+          "source_metadata_sha256": "97ebe75b18cb470b34d4a50f6f145028849e0731f3665b4b55a3de998dcd0dad",
+          "identity_group": "DE_STATION:05750",
+          "historical_geometry_verified": false,
+          "key": "DE:05750",
+          "distance_km": 37.7226496305764
+        },
+        {
+          "country": "DE",
+          "station_id": "04997",
+          "name": "Starkenberg-Tegkwitz",
+          "latitude": 50.9771,
+          "longitude": 12.3419,
+          "nominal_site_elevation_m": 196.0,
+          "source_metadata_sha256": "97ebe75b18cb470b34d4a50f6f145028849e0731f3665b4b55a3de998dcd0dad",
+          "identity_group": "DE_STATION:04997",
+          "historical_geometry_verified": false,
+          "key": "DE:04997",
+          "distance_km": 38.28161687747358
+        }
+      ],
+      "geographic_donor_count_sufficient": true,
+      "validation_admitted": false,
+      "remaining_source_gates": [
+        "historical station/sensor geometry for the 2025 windows",
+        "station-specific temporal metadata; DE hourly operator remains unresolved",
+        "exposure audit and observation quality/coverage before primary scoring"
+      ]
+    },
+    {
+      "target": {
+        "country": "DE",
+        "station_id": "01443",
+        "name": "Freiburg",
+        "latitude": 48.0232,
+        "longitude": 7.8343,
+        "nominal_site_elevation_m": 237.0,
+        "source_metadata_sha256": "97ebe75b18cb470b34d4a50f6f145028849e0731f3665b4b55a3de998dcd0dad",
+        "identity_group": "DE_STATION:01443",
+        "historical_geometry_verified": false
+      },
+      "target_key": "DE:01443",
+      "anchor": {
+        "anchor": "DE_FREIBURG",
+        "latitude": 47.999,
+        "longitude": 7.8421,
+        "distance_km": 2.752761781264601
+      },
+      "donors": [
+        {
+          "country": "DE",
+          "station_id": "01224",
+          "name": "Emmendingen-Mundingen",
+          "latitude": 48.1378,
+          "longitude": 7.8351,
+          "nominal_site_elevation_m": 201.0,
+          "source_metadata_sha256": "97ebe75b18cb470b34d4a50f6f145028849e0731f3665b4b55a3de998dcd0dad",
+          "identity_group": "DE_STATION:01224",
+          "historical_geometry_verified": false,
+          "key": "DE:01224",
+          "distance_km": 12.74307717705861
+        },
+        {
+          "country": "DE",
+          "station_id": "00757",
+          "name": "Buchenbach",
+          "latitude": 47.9625,
+          "longitude": 7.9983,
+          "nominal_site_elevation_m": 445.0,
+          "source_metadata_sha256": "97ebe75b18cb470b34d4a50f6f145028849e0731f3665b4b55a3de998dcd0dad",
+          "identity_group": "DE_STATION:00757",
+          "historical_geometry_verified": false,
+          "key": "DE:00757",
+          "distance_km": 13.946042444872239
+        },
+        {
+          "country": "DE",
+          "station_id": "01346",
+          "name": "Feldberg/Schwarzwald",
+          "latitude": 47.8748,
+          "longitude": 8.0038,
+          "nominal_site_elevation_m": 1486.0,
+          "source_metadata_sha256": "97ebe75b18cb470b34d4a50f6f145028849e0731f3665b4b55a3de998dcd0dad",
+          "identity_group": "DE_STATION:01346",
+          "historical_geometry_verified": false,
+          "key": "DE:01346",
+          "distance_km": 20.77635388632429
+        }
+      ],
+      "geographic_donor_count_sufficient": true,
+      "validation_admitted": false,
+      "remaining_source_gates": [
+        "historical station/sensor geometry for the 2025 windows",
+        "station-specific temporal metadata; DE hourly operator remains unresolved",
+        "exposure audit and observation quality/coverage before primary scoring"
+      ]
+    },
+    {
+      "target": {
+        "country": "CH",
+        "station_id": "BAS",
+        "name": "Basel / Binningen",
+        "latitude": 47.541142,
+        "longitude": 7.583525,
+        "nominal_site_elevation_m": 316.0,
+        "source_metadata_sha256": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+        "identity_group": "CH_WIGOS:0-20000-0-06601",
+        "historical_geometry_verified": false
+      },
+      "target_key": "CH:BAS",
+      "anchor": {
+        "anchor": "CH_BASEL",
+        "latitude": 47.5596,
+        "longitude": 7.5886,
+        "distance_km": 2.0874775116732804
+      },
+      "donors": [
+        {
+          "country": "CH",
+          "station_id": "MOE",
+          "name": "Möhlin",
+          "latitude": 47.572197,
+          "longitude": 7.877911,
+          "nominal_site_elevation_m": 343.0,
+          "source_metadata_sha256": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+          "identity_group": "CH_WIGOS:0-20000-0-06641",
+          "historical_geometry_verified": false,
+          "key": "CH:MOE",
+          "distance_km": 22.359290691986512
+        },
+        {
+          "country": "CH",
+          "station_id": "RUE",
+          "name": "Rünenberg",
+          "latitude": 47.434572,
+          "longitude": 7.879414,
+          "nominal_site_elevation_m": 611.0,
+          "source_metadata_sha256": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+          "identity_group": "CH_WIGOS:0-20000-0-06645",
+          "historical_geometry_verified": false,
+          "key": "CH:RUE",
+          "distance_km": 25.19379726466966
+        },
+        {
+          "country": "CH",
+          "station_id": "DEM",
+          "name": "Delémont",
+          "latitude": 47.351706,
+          "longitude": 7.349567,
+          "nominal_site_elevation_m": 439.0,
+          "source_metadata_sha256": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+          "identity_group": "CH_WIGOS:0-20000-0-06602",
+          "historical_geometry_verified": false,
+          "key": "CH:DEM",
+          "distance_km": 27.445049440145738
+        }
+      ],
+      "geographic_donor_count_sufficient": true,
+      "validation_admitted": false,
+      "remaining_source_gates": [
+        "historical station/sensor geometry for the 2025 windows",
+        "registered parameter/operator evidence for the selected 2025 station",
+        "exposure audit and observation quality/coverage before primary scoring"
+      ]
+    },
+    {
+      "target": {
+        "country": "CH",
+        "station_id": "ALT",
+        "name": "Altdorf",
+        "latitude": 46.887069,
+        "longitude": 8.621894,
+        "nominal_site_elevation_m": 438.0,
+        "source_metadata_sha256": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+        "identity_group": "CH_WIGOS:0-20000-0-06672",
+        "historical_geometry_verified": false
+      },
+      "target_key": "CH:ALT",
+      "anchor": {
+        "anchor": "CH_ALTDORF",
+        "latitude": 46.8804,
+        "longitude": 8.6444,
+        "distance_km": 1.8642801188907927
+      },
+      "donors": [
+        {
+          "country": "CH",
+          "station_id": "GES",
+          "name": "Gersau",
+          "latitude": 46.996069,
+          "longitude": 8.523442,
+          "nominal_site_elevation_m": 521.0,
+          "source_metadata_sha256": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+          "identity_group": "CH_WIGOS:0-20000-0-06653",
+          "historical_geometry_verified": false,
+          "key": "CH:GES",
+          "distance_km": 14.239544909136516
+        },
+        {
+          "country": "CH",
+          "station_id": "ENG",
+          "name": "Engelberg",
+          "latitude": 46.821639,
+          "longitude": 8.410514,
+          "nominal_site_elevation_m": 1036.0,
+          "source_metadata_sha256": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+          "identity_group": "CH_WIGOS:0-20000-0-06655",
+          "historical_geometry_verified": false,
+          "key": "CH:ENG",
+          "distance_km": 17.643494153838084
+        },
+        {
+          "country": "CH",
+          "station_id": "TIT",
+          "name": "Titlis",
+          "latitude": 46.770608,
+          "longitude": 8.425981,
+          "nominal_site_elevation_m": 3045.0,
+          "source_metadata_sha256": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+          "identity_group": "CH_WIGOS:0-20000-0-06740",
+          "historical_geometry_verified": false,
+          "key": "CH:TIT",
+          "distance_km": 19.74447141757809
+        }
+      ],
+      "geographic_donor_count_sufficient": true,
+      "validation_admitted": false,
+      "remaining_source_gates": [
+        "historical station/sensor geometry for the 2025 windows",
+        "registered parameter/operator evidence for the selected 2025 station",
+        "exposure audit and observation quality/coverage before primary scoring"
+      ]
+    }
+  ],
+  "method": {
+    "baseline": "B0 existing ERA5-derived elevation=nan",
+    "candidate": "R1 same-time temperature residual IDW2, three nearest fixed donors, min2 QC-valid per hour",
+    "donor_radius_km": 150,
+    "all_test_targets_and_identity_aliases_excluded": true,
+    "minimum_distance_from_any_test_target_km": 5,
+    "distance_exponent": 2,
+    "lapse_or_inversion_fit": false,
+    "target_measurements_used_in_prediction": false,
+    "same_reference_operator_and_Celsius_units_required": true,
+    "unqualified_hours": "NaN and explicit ledger; no hidden B0 substitution"
+  },
+  "time_comparison": {
+    "AT": "ERA5 published hour node, internal sensor filter unknown",
+    "DE": "BLOCKED until own hourly parameter/history evidence establishes an operator",
+    "CH": "piecewise-linear ERA5 surrogate at six ten-minute reference nodes; coefficients 5/12 previous + 7/12 current",
+    "CH_mean_RH_and_mean_T_do_not_define_observed_mean_q": true,
+    "sensor_filter_or_subhour_model_path_equivalence_claimed": false
+  },
+  "observation_QC_policy": {
+    "AT": {
+      "temperature": "tl",
+      "humidity": "rf",
+      "absolute_pressure": "p",
+      "time_operator": "published_nominal_node",
+      "time_basis": "prior frozen v1/v2 source chain; general field definition only, not new 2025 sensor certification",
+      "QC_primary": [
+        22
+      ],
+      "QC_secondary": [
+        12
+      ],
+      "QC_changed_or_unspecified_origin_excluded": [
+        0,
+        10,
+        11,
+        20,
+        21
+      ]
+    },
+    "DE": {
+      "temperature": "TT_TU",
+      "humidity": "RF_TU",
+      "absolute_pressure": "P0",
+      "sea_level_pressure_excluded": "P",
+      "time_operator": "unknown_for_hourly_product_until_own_parameter_metadata_read",
+      "QC_TU": "QN_9",
+      "QC_pressure": "QN_8",
+      "QC_primary": [
+        10
+      ],
+      "QC_secondary": [
+        3
+      ],
+      "urban_schema_is_separate": "P0_ST_10 absolute; PP_ST_10 reduced; not used in this hourly adapter"
+    },
+    "CH": {
+      "temperature": "tre200h0",
+      "humidity": "ure200h0",
+      "absolute_pressure": "prestah0",
+      "sea_level_pressure_excluded": [
+        "pp0qffh0",
+        "pp0qnhh0"
+      ],
+      "time_operator": "mean_six_10min_nominal_nodes",
+      "pre_2018_hourly_operator": "NOT_ADMITTED",
+      "QC": "PUBLISHED_HISTORICAL_NO_PER_ROW_FLAG; separate stratum"
+    }
+  },
+  "requested_target_station_days": 168,
+  "requested_target_reference_hours": 4032,
+  "scoring": {
+    "primary": "paired MAE R1-B0 on exactly identical eligible reference timestamps per target/season",
+    "also_report": [
+      "RMSE",
+      "bias",
+      "coverage and SOURCE_BLOCKED cells",
+      "all-reference B0 baseline",
+      "per-country and per-quality-stratum results"
+    ],
+    "no_post_score_station_date_donor_or_QC_replacement": true,
+    "uncertainty": "resample complete 7-day target-season blocks, 10000 draws, seed20261025; disclose 8 blocks/country and limited generality",
+    "independent_qualification_gate": "not allowed until exposure + history + prediction seal and reference support checks pass",
+    "automatic_promotion_to_default_or_EPW_allowed": false
+  },
+  "exposure": {
+    "new_target_observations_read": false,
+    "IV1_observations_opened": false,
+    "prior_station_or_archive_exposure_exhaustively_audited": false,
+    "new_2025_cohort_certified_strictly_blind": false,
+    "ERA5_assimilation_independence_from_target_station_certified": false,
+    "if_previous_exposure_found": "report as revealed regression, never re-label independent; separate future cohort needs its own registration"
+  },
+  "full_weather_integration": {
+    "temperature_candidate_alone_is_not_a_complete_EPW": true,
+    "RH_phase_pressure_height_radiation_and_precipitation_qualification_remain_separate": true,
+    "A0_B_M1_and_U1_defaults_changed": false
+  },
+  "source_packets_sha256": {
+    "a1_1_metadata_sources_20261025.zip": "5c0954403e8e3572db1a0b48a4c7d01d3e4bb17052a6e6bdf9980204a210f10a",
+    "a1_1_DWD_description_recovery_20261025.zip": "95974833cc9a4e16b20e8e594570c265519012a923cb6c2dd8b9fa871b0dc8f3"
+  },
+  "cost_budget_next_stage": {
+    "distinct_catalog_sites": 24,
+    "metadata_requests_current": 11,
+    "observation_or_ERA5_requests_current": 0,
+    "prospective_ERA5_annual_requests_max": 24,
+    "prospective_observation_assets_max": 24,
+    "prospective_raw_bytes_budget": 200000000,
+    "per_station_metadata_range_requests_need_separate_plan": true
+  },
+  "physical_accuracy_or_production_qualified": false,
+  "global_validation_deferred_until_publication": true
+}

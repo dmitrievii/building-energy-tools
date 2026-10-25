@@ -117,7 +117,7 @@
       "product_functions": [
         "A"
       ],
-      "current_status": "COMPONENTS_EXIST_NOT_UNIVERSALLY_QUALIFIED",
+      "current_status": "A1_1_LOCAL_210_CHECKS_PASS_STATION_CONTRACTS_PREPARED_NO_SKILL_EVALUATION",
       "depends_on": [
         "A0"
       ],
@@ -164,7 +164,7 @@
       "completion_criterion": "No incomplete-source unblinding, original NASA operators/objective, independent benefit before default replacement"
     }
   ],
-  "current_first_implementation": "A1_AT_DE_CH_station_source_admission_and_preregistered_local_correction_policy",
+  "current_first_implementation": "A1_2_historical_station_geometry_temporal_operator_and_exposure_admission_before_prediction_seal",
   "minimum_B_M_temperature_policy": "MIDRANGE_NEX_TAS_INDEX_NO_IMPLICIT_TIME_MEAN_EQUALITY",
   "specific_humidity_to_mixing_ratio": "w_g_per_kg_dry_air=1000*q_kg_per_kg_moist_air/(1-q)",
   "future_pressure_policy": "DECLARED_BASELINE_PROXY_NOT_NATIVE_FUTURE_PS",
@@ -288,5 +288,23 @@
     "new-coordinate live transport was stubbed in UI verification, not independently acquired",
     "no independently qualified station accuracy or global local accuracy",
     "public deployment, multi-user load and actual EnergyPlus simulation not qualified"
-  ]
+  ],
+  "A1_progress": {
+    "branch": "research/ige-a1-station-admission-20261025",
+    "substage": "A1.1",
+    "tests_local": 210,
+    "metadata_only_HTTP_attempts": 11,
+    "metadata_received_bytes": 2482643,
+    "new_observation_or_weather_requests": 0,
+    "targets": 6,
+    "donor_slots": 18,
+    "prospective_target_reference_hours": 4032,
+    "fully_admitted_target_cells": 0,
+    "independent_accuracy_qualified": false,
+    "strict_blindness_certified": false,
+    "A0_B_M1_U1_defaults_changed": false,
+    "production_ready": false,
+    "protocol": "research/ige_cmip6/a1_1_protocol_20261025.json",
+    "report": "docs/IGE_A1_1_STATION_CONTRACTS_AND_VALIDATION_PREPARATION_RU_20261025.md"
+  }
 }
