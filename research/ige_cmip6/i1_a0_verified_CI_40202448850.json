@@ -1,0 +1,123 @@
+{
+  "schema": "IGE_I1_A0_VERIFIED_CI_v1",
+  "run_id": 40202448850,
+  "run_url": "https://github.com/dmitrievii/building-energy-tools/actions/runs/40202448850",
+  "tested_commit": "d81a596bd19318a6f32b57cf513d4ab07414fdc0",
+  "job_id": 121196291014,
+  "conclusion": "SUCCESS",
+  "artifact_id": 12601464844,
+  "artifact_zip_bytes": 630377,
+  "artifact_zip_sha256": "1c442b6c4ce3fe777c101c9ea9403e4b2172bac220fcecddcfb84da1027c11b0",
+  "artifact_repo_path": "research/ige_cmip6/i1_a0_verified_CI_40202448850_results.zip",
+  "members": [
+    {
+      "path": "annual/climate.epw",
+      "bytes": 1689078,
+      "sha256": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635"
+    },
+    {
+      "path": "annual/hourly.csv.gz",
+      "bytes": 254662,
+      "sha256": "38015ea2aa8507a135ecc3f5e57b4af62aae9d9874b117f95deb284da83ecaae"
+    },
+    {
+      "path": "annual/ledger.json",
+      "bytes": 5585,
+      "sha256": "dae7497903bcccce960e60d4fa7160af1f084524028761ef03395b7ddba543ce"
+    },
+    {
+      "path": "annual/manifest.json",
+      "bytes": 11696,
+      "sha256": "0d27c0b6baf7cbf43563bd230425979e1a053cfc05ae193bde3e8fd0ee9d057a"
+    },
+    {
+      "path": "annual/monthly_summary.json",
+      "bytes": 3254,
+      "sha256": "d097b1dbd0e6b9aefca5e2f6f3a3d3607850d79d29487232ce214b6d20bc5ff5"
+    },
+    {
+      "path": "annual/sources.zip",
+      "bytes": 180553,
+      "sha256": "2575be295bc41be68ac56940524a76c5ef9f9b5010a83f20b6eec21c49dce273"
+    },
+    {
+      "path": "tests.json",
+      "bytes": 791,
+      "sha256": "4e0e5e90908c15477fe3126dbe2697ac72dcc762931e5a8b48a8ad02f7cd03d8"
+    },
+    {
+      "path": "verification.json",
+      "bytes": 1762,
+      "sha256": "49f5b45310b69591b1cd470625ad3b2726eefb11542eca1937c16debd453c760"
+    }
+  ],
+  "verification": {
+    "status": "I1_A0_SOURCE_YEAR_AND_REGRESSION_CHECKS_PASS_NOT_INDEPENDENT_QUALIFICATION",
+    "tests": {
+      "tests_run": 98,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "status": "PASS",
+      "wall_seconds": 10.550780352999993,
+      "patterns": [
+        [
+          "tools/climate_analyzer/tests",
+          "test_ige_engine.py"
+        ],
+        [
+          "tools/climate_analyzer/tests",
+          "test_canonical_climate_model.py"
+        ],
+        [
+          "research/ige_cmip6",
+          "test_e2e_integration_audit.py"
+        ],
+        [
+          "research/ige_cmip6",
+          "test_p7c1_epw_morphing.py"
+        ],
+        [
+          "research/ige_cmip6",
+          "test_p7c1b_humidity_closure.py"
+        ],
+        [
+          "research/ige_cmip6",
+          "test_p9_1a_global_historical_backbone.py"
+        ],
+        [
+          "research/ige_cmip6",
+          "test_p9_2d_annual_cet_epw_export.py"
+        ]
+      ],
+      "python": "3.12.15",
+      "numpy": "1.26.4",
+      "pandas": "2.3.3"
+    },
+    "protection": {
+      "ancestor": "5481a74dabb9acf40dd745d0006d0a9bc1cea4aa",
+      "protected_files_unchanged": 168,
+      "IV1_station_values_opened": false,
+      "main_modified_or_merged": false
+    },
+    "source_bundle_sha256": "2575be295bc41be68ac56940524a76c5ef9f9b5010a83f20b6eec21c49dce273",
+    "EPW_sha256": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635",
+    "records": 8760,
+    "source_support_addresses_independently_checked_hours": 8760,
+    "weather_provider_requests_this_verification": 0,
+    "production_ready": false,
+    "independent_accuracy": "NOT_RUN",
+    "EnergyPlus_simulation": "NOT_RUN",
+    "UI_connected": false,
+    "local_station_reconstruction_complete": false,
+    "annual_manifest_sha256": "0d27c0b6baf7cbf43563bd230425979e1a053cfc05ae193bde3e8fd0ee9d057a"
+  },
+  "annual_runtime_seconds": 1.5194370889999789,
+  "local_CI_all_five_payload_file_hashes_match": true,
+  "implementation_module_hashes_match": true,
+  "main_read_only_sha": "2a82a77d0fe8cc87a2324b820d6c6843b6598548",
+  "main_modified_or_merged": false,
+  "production_ready": false,
+  "independent_station_accuracy_qualified": false,
+  "IV1_station_observations_opened": false
+}

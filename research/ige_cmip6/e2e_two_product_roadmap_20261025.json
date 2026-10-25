@@ -51,7 +51,7 @@
       "product_functions": [
         "shared"
       ],
-      "current_status": "IMPLEMENTED_COMMON_CONTRACTS_AND_HOURLY_EXPORT_SCOPE_FINAL_CI_PENDING",
+      "current_status": "CI_VERIFIED_COMMON_CONTRACTS_AND_HOURLY_EXPORT_RESEARCH_SCOPE",
       "depends_on": [
         "E0"
       ],
@@ -68,7 +68,7 @@
       "product_functions": [
         "A"
       ],
-      "current_status": "GRAZ_2023_REAL_SOURCE_8760_YEAR_LOCAL_PASS_FINAL_CI_PENDING",
+      "current_status": "CI_VERIFIED_GRAZ_2023_REAL_SOURCE_8760_GRID_BACKGROUND_YEAR",
       "depends_on": [
         "I1"
       ],
@@ -84,7 +84,7 @@
       "product_functions": [
         "B-M"
       ],
-      "current_status": "NEXT_AFTER_I1_A0_FINAL_CI_PHASE_AND_SIGNAL_ADAPTERS_REQUIRED",
+      "current_status": "NEXT_NASA_PHASE_PRESSURE_AND_MONTHLY_SIGNAL_ADAPTERS_REQUIRED",
       "depends_on": [
         "I1",
         "A0"
@@ -209,6 +209,12 @@
     "production_ready": false,
     "UI_connected": false,
     "exact_T_p_q_RH_closure_qualified": false,
-    "report": "docs/IGE_I1_A0_COMMON_CORE_AND_HISTORICAL_YEAR_RU_20261025.md"
+    "report": "docs/IGE_I1_A0_COMMON_CORE_AND_HISTORICAL_YEAR_RU_20261025.md",
+    "final_tested_commit": "d81a596bd19318a6f32b57cf513d4ab07414fdc0",
+    "final_CI_run": 40202448850,
+    "final_CI_status": "SUCCESS",
+    "final_CI_tests": 98,
+    "verified_CI_receipt": "research/ige_cmip6/i1_a0_verified_CI_40202448850.json",
+    "verified_CI_outputs": "research/ige_cmip6/i1_a0_verified_CI_40202448850_results.zip"
   }
 }
