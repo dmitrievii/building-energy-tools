@@ -84,7 +84,7 @@
       "product_functions": [
         "B-M"
       ],
-      "current_status": "ONE_FUTURE_SOURCE_YEAR_LOCAL_139_TESTS_PASS_CI_PENDING_HURS_NOT_ENFORCED",
+      "current_status": "CI_VERIFIED_ONE_RESEARCH_FUTURE_YEAR_140_TESTS_HURS_NOT_ENFORCED_NOT_QUALIFIED",
       "depends_on": [
         "I1",
         "A0"
@@ -233,13 +233,23 @@
     "pattern_year": 2023,
     "reason_for_reference_window": "COMMON_FULL_SOURCE_AVAILABILITY; PREVENT_PATTERN_YEAR_ANOMALY_OR_DOUBLE_WARMING",
     "reference_source_packet_sha256": "68f19f8e02fb00d178009ab6dbe2f4dc441f879bc870b71a98d797b05ecd1403",
-    "future_EPW_sha256": "50690e95a7fb270d96258f2e41435ca580e33b2a28950784dafcdd8c15cce288",
-    "tests_local": 139,
+    "future_EPW_sha256": "fc00e09811498c368965785ee8873bc4ca1cd01761eaebb19c759faebd0e3c28",
+    "tests_local": 140,
     "NASA_hurs_signal_enforced": false,
     "max_unforced_hurs_delta_residual_pp": 3.7359408850093985,
     "independent_accuracy_qualified": false,
     "production_ready": false,
     "UI_connected": false,
-    "report": "docs/IGE_B_M1_FUTURE_YEAR_AND_SHARED_CORE_RU_20261025.md"
+    "report": "docs/IGE_B_M1_FUTURE_YEAR_AND_SHARED_CORE_RU_20261025.md",
+    "initial_CI_run": 40206686961,
+    "initial_CI_status": "FAILED_HASH_AFTER_139_TESTS_PASS",
+    "export_fix": "FIXED_7_DECIMAL_T_TD_RH; MODEL_AND_TOLERANCES_UNCHANGED",
+    "final_tested_commit": "c6338d7d883d8228a644304088e06d681e44149a",
+    "final_CI_run": 40207423607,
+    "final_CI_status": "SUCCESS",
+    "final_CI_tests": 140,
+    "both_EPW_local_CI_byte_identical": true,
+    "verified_CI_receipt": "research/ige_cmip6/bm1_verified_CI_40207423607.json",
+    "verified_CI_outputs": "research/ige_cmip6/bm1_verified_CI_40207423607_results.zip"
   }
 }

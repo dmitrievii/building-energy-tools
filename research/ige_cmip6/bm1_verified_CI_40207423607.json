@@ -1,0 +1,209 @@
+{
+  "schema": "IGE_BM1_VERIFIED_CI_v1",
+  "run_id": 40207423607,
+  "run_url": "https://github.com/dmitrievii/building-energy-tools/actions/runs/40207423607",
+  "conclusion": "SUCCESS",
+  "tested_commit": "c6338d7d883d8228a644304088e06d681e44149a",
+  "job_id": 121211240979,
+  "artifact_id": 12604541084,
+  "artifact_sha256": "722e9c45e0b13ccd40e1c7750acb3e373c03c933f301e345a0c2d65725838603",
+  "artifact_bytes": 2415546,
+  "artifact_repo_path": "research/ige_cmip6/bm1_verified_CI_40207423607_results.zip",
+  "members": [
+    {
+      "path": "future/adjustment_ledger.json.gz",
+      "bytes": 587986,
+      "sha256": "19e059019c7349c014df517fefdbe1435888ac76cc602cb19a76f75684af751d"
+    },
+    {
+      "path": "future/climate.epw",
+      "bytes": 2150120,
+      "sha256": "fc00e09811498c368965785ee8873bc4ca1cd01761eaebb19c759faebd0e3c28"
+    },
+    {
+      "path": "future/hourly.csv.gz",
+      "bytes": 746770,
+      "sha256": "0d9f1b6137285c0b835970ce76ad7c979f395deac76037e150ae75dd4f7953ae"
+    },
+    {
+      "path": "future/manifest.json",
+      "bytes": 61484,
+      "sha256": "6c721b8839174eac6d56cfd4f5f17380299eaa40ab5a84dc97209fadaa2df22a"
+    },
+    {
+      "path": "future/monthly_signal_readback.json",
+      "bytes": 7480,
+      "sha256": "d8061d21ee4fc6c5487ef1099225c4ab7b44a205a000cbf20f5e607513baf1fe"
+    },
+    {
+      "path": "future/reference_climatology.json",
+      "bytes": 5537,
+      "sha256": "2a6576c8253818c89fc9eee2cd1d507c3a4e74e38cfb2f56f4770cde2ab22c71"
+    },
+    {
+      "path": "future/registered_protocol.json",
+      "bytes": 3085,
+      "sha256": "6fc41d9a39749578584e86466de0cfc866538df06760e3cb45e2e81c154b9bf4"
+    },
+    {
+      "path": "historical/climate.epw",
+      "bytes": 1689078,
+      "sha256": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635"
+    },
+    {
+      "path": "historical/hourly.csv.gz",
+      "bytes": 254662,
+      "sha256": "38015ea2aa8507a135ecc3f5e57b4af62aae9d9874b117f95deb284da83ecaae"
+    },
+    {
+      "path": "historical/ledger.json",
+      "bytes": 5585,
+      "sha256": "dae7497903bcccce960e60d4fa7160af1f084524028761ef03395b7ddba543ce"
+    },
+    {
+      "path": "historical/manifest.json",
+      "bytes": 12199,
+      "sha256": "d38a1c85e8c8ecfbb5e245f7017ee590cde3e090245e211a9191570b7fecdca9"
+    },
+    {
+      "path": "historical/monthly_summary.json",
+      "bytes": 3254,
+      "sha256": "d097b1dbd0e6b9aefca5e2f6f3a3d3607850d79d29487232ce214b6d20bc5ff5"
+    },
+    {
+      "path": "historical/sources.zip",
+      "bytes": 180553,
+      "sha256": "2575be295bc41be68ac56940524a76c5ef9f9b5010a83f20b6eec21c49dce273"
+    },
+    {
+      "path": "tests.json",
+      "bytes": 946,
+      "sha256": "3a72ebb33638d11a81caa0f61eadcbfb2607923fa6a251665951be983751bb84"
+    },
+    {
+      "path": "verification.json",
+      "bytes": 2475,
+      "sha256": "1cb069c577bb59a905ba7dc2255751147f721e77248f07df9cb59b734f821281"
+    }
+  ],
+  "verification": {
+    "schema": "IGE_BM1_VERIFICATION_v1",
+    "status": "TWO_ANNUAL_ROUTES_AND_CONDITIONAL_PHYSICS_PASS_NOT_QUALIFIED",
+    "tests": {
+      "tests_run": 140,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "status": "PASS",
+      "wall_seconds": 18.678621244999995,
+      "patterns": [
+        [
+          "tools/climate_analyzer/tests",
+          "test_ige_engine.py"
+        ],
+        [
+          "tools/climate_analyzer/tests",
+          "test_canonical_climate_model.py"
+        ],
+        [
+          "research/ige_cmip6",
+          "test_e2e_integration_audit.py"
+        ],
+        [
+          "research/ige_cmip6",
+          "test_p7c1_epw_morphing.py"
+        ],
+        [
+          "research/ige_cmip6",
+          "test_p7c1b_humidity_closure.py"
+        ],
+        [
+          "research/ige_cmip6",
+          "test_p9_1a_global_historical_backbone.py"
+        ],
+        [
+          "research/ige_cmip6",
+          "test_p9_2d_annual_cet_epw_export.py"
+        ],
+        [
+          "tools/climate_analyzer/tests",
+          "test_ige_bm1.py"
+        ],
+        [
+          "research/ige_cmip6",
+          "test_p9_3b3_thermodynamics.py"
+        ]
+      ],
+      "python": "3.12.15",
+      "numpy": "1.26.4",
+      "pandas": "2.3.3"
+    },
+    "protection": {
+      "ancestor": "5481a74dabb9acf40dd745d0006d0a9bc1cea4aa",
+      "protected_files_unchanged": 168,
+      "IV1_station_values_opened": false,
+      "main_modified_or_merged": false
+    },
+    "historical_EPW_sha256": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635",
+    "future_EPW_sha256": "fc00e09811498c368965785ee8873bc4ca1cd01761eaebb19c759faebd0e3c28",
+    "historical_records": 8760,
+    "future_records": 8760,
+    "reference_original_hours": 113952,
+    "reference_estimator_hours": 113880,
+    "climate_reference_window": [
+      2002,
+      2014
+    ],
+    "future_climate_window": [
+      2040,
+      2059
+    ],
+    "pattern_year": 2023,
+    "source_packets": {
+      "pattern": "2575be295bc41be68ac56940524a76c5ef9f9b5010a83f20b6eec21c49dce273",
+      "reference": "68f19f8e02fb00d178009ab6dbe2f4dc441f879bc870b71a98d797b05ecd1403",
+      "NEX": "49dab390ec5d5250f79198df16e69cc3ba37a9985b66f739fde5a729db3c192d"
+    },
+    "weather_provider_requests_this_verification": 0,
+    "NASA_hurs_signal_enforced": false,
+    "independent_station_accuracy_qualified": false,
+    "production_ready": false,
+    "UI_connected": false,
+    "actual_EnergyPlus_simulation_run": false,
+    "IV1_station_observations_opened": false,
+    "future_manifest_sha256": "6c721b8839174eac6d56cfd4f5f17380299eaa40ab5a84dc97209fadaa2df22a"
+  },
+  "source_packets_and_implementation_module_hashes_identical": true,
+  "hourly_CSV_comparison": {
+    "relative_tolerance": 1e-10,
+    "absolute_tolerance": 1e-12,
+    "per_column_max_abs_difference": {
+      "dry_bulb_temperature_c": 0.0,
+      "dew_point_temperature_c": 1.000000082740371e-10,
+      "relative_humidity_pct": 1.000017846308765e-10,
+      "atmospheric_station_pressure_pa": 1.00000761449337e-07,
+      "total_precipitation_depth_mm": 0.0,
+      "liquid_precipitation_depth_mm": 0.0,
+      "total_sky_cover_tenths": 0.0,
+      "global_horizontal_radiation_wh_m2": 0.0,
+      "direct_horizontal_radiation_wh_m2": 0.0,
+      "diffuse_horizontal_radiation_wh_m2": 0.0,
+      "direct_normal_radiation_wh_m2": 0.0,
+      "wind_speed_m_s": 0.0,
+      "wind_direction_deg": 0.0,
+      "horizontal_infrared_radiation_intensity_wh_m2": 0.0,
+      "surface_pressure_proxy_pa": 0.0,
+      "specific_humidity_kg_kg": 9.999986949615902e-14,
+      "relative_humidity_NASA_phase_pct": 1.000017846308765e-10,
+      "humidity_ratio_g_kg": 1.000088900582341e-11
+    },
+    "exact_datetime_strings": true
+  },
+  "future_assembly_seconds_CI": 5.8394091069999945,
+  "main_read_only_sha": "2a82a77d0fe8cc87a2324b820d6c6843b6598548",
+  "main_modified_or_merged": false,
+  "independent_accuracy_qualified": false,
+  "production_ready": false,
+  "IV1_station_observations_opened": false,
+  "both_EPW_files_byte_identical_local_and_CI": true
+}
