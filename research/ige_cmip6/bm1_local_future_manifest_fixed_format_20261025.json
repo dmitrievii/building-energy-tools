@@ -1,0 +1,1419 @@
+{
+  "schema": "IGE_B_M1_MONTHLY_FUTURE_v1",
+  "pattern_request": {
+    "latitude": 47.0707,
+    "longitude": 15.4395,
+    "year": 2023,
+    "utc_offset_minutes": 60,
+    "label": "Graz",
+    "mode": "grid_background",
+    "site_elevation_m": null,
+    "site_elevation_reference": ""
+  },
+  "future_request": {
+    "historical_base_sha256": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635",
+    "model": "CanESM5",
+    "member": "r1i1p1f1",
+    "scenario": "ssp245",
+    "historical_window": [
+      2002,
+      2014
+    ],
+    "future_window": [
+      2040,
+      2059
+    ],
+    "semantics_version": "IGE_BM1_CANESM5_V2_MIDRANGE_MONTHLY_v1",
+    "representative_pattern_year": 2023,
+    "method": "monthly_morph"
+  },
+  "quality": {
+    "execution_correctness": "ORIGINAL_SOURCES_CALENDAR_AND_MONTHLY_SIGNAL_READBACK_PASS",
+    "physical_admissibility": "CONDITIONAL_T_P2M_Q_WATER_RH_CLOSURE_AND_BOUNDS_PASS",
+    "independent_accuracy": "NOT_INDEPENDENTLY_VALIDATED",
+    "operational_and_application_scope": "RESEARCH_REPRESENTATIVE_FUTURE_CLI; UI_NOT_CONNECTED",
+    "production_ready": false
+  },
+  "sources": [
+    {
+      "id": "open_meteo",
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=47.070700&longitude=15.439500&start_date=2023-01-01&end_date=2023-12-31&hourly=temperature_2m%2Cdew_point_2m%2Crelative_humidity_2m%2Csurface_pressure%2Cprecipitation%2Crain%2Ccloud_cover%2Cshortwave_radiation%2Cdirect_radiation%2Cdiffuse_radiation%2Cdirect_normal_irradiance%2Cwind_speed_10m%2Cwind_direction_10m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&wind_speed_unit=ms&temperature_unit=celsius&precipitation_unit=mm",
+      "provider": "Open-Meteo",
+      "dataset": "fixed ERA5, provider derivatives, not native CDS GRIB",
+      "retrieved_utc": "2026-10-25T14:11:08.743701+00:00",
+      "bytes": 685916,
+      "sha256": "8a26110d12e86438218c7cc8c891402786db051ff2065e16a8d431b73a1dd336",
+      "http_attempts": 1,
+      "wall_seconds": 6.353892311999971,
+      "retry_policy": "max4; only429/5xx/connection/timeout; timeout45s; backoff2/4/8s; no fallback"
+    },
+    {
+      "id": "nasa_power",
+      "url": "https://power.larc.nasa.gov/api/temporal/hourly/point?latitude=47.070700&longitude=15.439500&start=20221231&end=20231231&parameters=ALLSKY_SFC_LW_DWN&community=SB&format=JSON&time-standard=UTC",
+      "provider": "NASA POWER",
+      "dataset": "hourly surface downwelling longwave; verify sources in response",
+      "retrieved_utc": "2026-10-25T14:11:15.000687+00:00",
+      "bytes": 173948,
+      "sha256": "2843eddefaadba0bff2117d7b9c462090cfb0e13589b9248e7ee3f4da24a898c",
+      "http_attempts": 1,
+      "wall_seconds": 6.254092270000001,
+      "retry_policy": "max4; only429/5xx/connection/timeout; timeout45s; backoff2/4/8s; no fallback"
+    },
+    {
+      "id": "reference_climatology",
+      "sha256": "68f19f8e02fb00d178009ab6dbe2f4dc441f879bc870b71a98d797b05ecd1403",
+      "dataset": "ERA5-derived and POWER 2002-2014 same source chain"
+    },
+    {
+      "id": "nex_gcm",
+      "sha256": "49dab390ec5d5250f79198df16e69cc3ba37a9985b66f739fde5a729db3c192d",
+      "dataset": "CanESM5 r1i1p1f1 v2.0 selected frozen daily windows"
+    },
+    {
+      "id": "bm1_morph",
+      "dataset": "IGE_B_M1_MONTHLY_FUTURE_v1",
+      "parents": [
+        "open_meteo",
+        "nasa_power",
+        "reference_climatology",
+        "nex_gcm"
+      ]
+    }
+  ],
+  "field_definitions": {
+    "dry_bulb_temperature_c": {
+      "unit": "°C",
+      "operator": "instant_at_interval_end",
+      "source_id": "bm1_morph",
+      "vertical_reference": "2m above model surface",
+      "definition": "B-M1 reference-normalized monthly morph; dry_bulb_temperature_c"
+    },
+    "dew_point_temperature_c": {
+      "unit": "°C",
+      "operator": "instant_at_interval_end",
+      "source_id": "bm1_morph",
+      "vertical_reference": "2m above model surface",
+      "definition": "Murphy-Koop water dew point from the same vapour pressure as q and water RH"
+    },
+    "relative_humidity_pct": {
+      "unit": "%",
+      "operator": "instant_at_interval_end",
+      "source_id": "bm1_morph",
+      "vertical_reference": "2m above model surface",
+      "definition": "Murphy-Koop liquid-water RH from the hourly common T-p2m-q state; never the NASA water/ice hurs target"
+    },
+    "atmospheric_station_pressure_pa": {
+      "unit": "Pa",
+      "operator": "instant_at_interval_end",
+      "source_id": "bm1_morph",
+      "vertical_reference": "2m above model surface",
+      "definition": "Conditional isothermal uniform-q hydrostatic 0-to-2m adapter; 2023 surface pressure proxy retained"
+    },
+    "total_precipitation_depth_mm": {
+      "unit": "mm",
+      "operator": "interval_amount",
+      "source_id": "bm1_morph",
+      "vertical_reference": "model surface or atmospheric column as provided",
+      "definition": "B-M1 reference-normalized monthly morph; total_precipitation_depth_mm"
+    },
+    "liquid_precipitation_depth_mm": {
+      "unit": "mm",
+      "operator": "interval_amount",
+      "source_id": "bm1_morph",
+      "vertical_reference": "model surface or atmospheric column as provided",
+      "definition": "B-M1 reference-normalized monthly morph; liquid_precipitation_depth_mm"
+    },
+    "total_sky_cover_tenths": {
+      "unit": "tenths",
+      "operator": "instant_at_interval_end",
+      "source_id": "open_meteo",
+      "vertical_reference": "model surface or atmospheric column as provided",
+      "definition": "Provider ERA5-derived cloud_cover"
+    },
+    "global_horizontal_radiation_wh_m2": {
+      "unit": "Wh/m²",
+      "operator": "interval_energy",
+      "source_id": "bm1_morph",
+      "vertical_reference": "model surface or atmospheric column as provided",
+      "definition": "B-M1 reference-normalized monthly morph; global_horizontal_radiation_wh_m2"
+    },
+    "direct_horizontal_radiation_wh_m2": {
+      "unit": "Wh/m²",
+      "operator": "interval_energy",
+      "source_id": "bm1_morph",
+      "vertical_reference": "model surface or atmospheric column as provided",
+      "definition": "B-M1 reference-normalized monthly morph; direct_horizontal_radiation_wh_m2"
+    },
+    "diffuse_horizontal_radiation_wh_m2": {
+      "unit": "Wh/m²",
+      "operator": "interval_energy",
+      "source_id": "bm1_morph",
+      "vertical_reference": "model surface or atmospheric column as provided",
+      "definition": "B-M1 reference-normalized monthly morph; diffuse_horizontal_radiation_wh_m2"
+    },
+    "direct_normal_radiation_wh_m2": {
+      "unit": "Wh/m²",
+      "operator": "interval_energy",
+      "source_id": "bm1_morph",
+      "vertical_reference": "model surface or atmospheric column as provided",
+      "definition": "B-M1 reference-normalized monthly morph; direct_normal_radiation_wh_m2"
+    },
+    "wind_speed_m_s": {
+      "unit": "m/s",
+      "operator": "instant_at_interval_end",
+      "source_id": "bm1_morph",
+      "vertical_reference": "10m above model surface",
+      "definition": "B-M1 reference-normalized monthly morph; wind_speed_m_s"
+    },
+    "wind_direction_deg": {
+      "unit": "deg",
+      "operator": "instant_at_interval_end",
+      "source_id": "open_meteo",
+      "vertical_reference": "10m above model surface",
+      "definition": "Provider ERA5-derived wind_direction_10m"
+    },
+    "horizontal_infrared_radiation_intensity_wh_m2": {
+      "unit": "Wh/m²",
+      "operator": "interval_energy",
+      "source_id": "bm1_morph",
+      "vertical_reference": "surface downward hemispheric flux",
+      "definition": "B-M1 reference-normalized monthly morph; horizontal_infrared_radiation_intensity_wh_m2"
+    },
+    "surface_pressure_proxy_pa": {
+      "unit": "Pa",
+      "operator": "instant_at_interval_end",
+      "source_id": "open_meteo",
+      "vertical_reference": "model surface or atmospheric column as provided",
+      "definition": "Unchanged 2023 absolute model-surface pressure proxy; no future GCM ps signal"
+    },
+    "specific_humidity_kg_kg": {
+      "unit": "kg/kg moist air",
+      "operator": "instant_at_interval_end",
+      "source_id": "bm1_morph",
+      "vertical_reference": "2m above model surface",
+      "definition": "Specific humidity, water mass / moist-air mass; monthly time average target"
+    },
+    "relative_humidity_NASA_phase_pct": {
+      "unit": "%",
+      "operator": "instant_at_interval_end",
+      "source_id": "bm1_morph",
+      "vertical_reference": "2m above model surface",
+      "definition": "Water RH at T>=0 C; ice RH below 0 C; diagnostic, hurs not forced"
+    },
+    "humidity_ratio_g_kg": {
+      "unit": "g/kg dry air",
+      "operator": "instant_at_interval_end",
+      "source_id": "bm1_morph",
+      "vertical_reference": "2m above model surface",
+      "definition": "1000*q/(1-q), not specific humidity"
+    }
+  },
+  "diagnostics": {
+    "reference": {
+      "reference_source_packet_sha256": "68f19f8e02fb00d178009ab6dbe2f4dc441f879bc870b71a98d797b05ecd1403",
+      "reference_years": [
+        {
+          "year": 2002,
+          "source_sha256": "54fd8b67ad9ea1240a1423900152605bd3529137a87593078e85167fcacf616d",
+          "original_hours": 8760,
+          "noleap_estimator_hours": 8760,
+          "original_data_not_deleted": true
+        },
+        {
+          "year": 2003,
+          "source_sha256": "b6e08cc48c88ae10068723b6e6a4e213ed98d3cf5fe76f33197138e340fab148",
+          "original_hours": 8760,
+          "noleap_estimator_hours": 8760,
+          "original_data_not_deleted": true
+        },
+        {
+          "year": 2004,
+          "source_sha256": "dc2aefa4150849d542faaf64fa8d5f2c379c0d5dadde00821b984bc2cb853e32",
+          "original_hours": 8784,
+          "noleap_estimator_hours": 8760,
+          "original_data_not_deleted": true
+        },
+        {
+          "year": 2005,
+          "source_sha256": "3688d70275b17565de869603c17a54a503c6ba1f03d4ff0f40ce529379f359d8",
+          "original_hours": 8760,
+          "noleap_estimator_hours": 8760,
+          "original_data_not_deleted": true
+        },
+        {
+          "year": 2006,
+          "source_sha256": "59adb519ed51eeaa39425678205bd6fb8cdccd1480aa79492a715a77ceb4ecc9",
+          "original_hours": 8760,
+          "noleap_estimator_hours": 8760,
+          "original_data_not_deleted": true
+        },
+        {
+          "year": 2007,
+          "source_sha256": "11eb1df85d20861097f698117e4aef39be17d5b1f07de5e49023accc14cfa7b3",
+          "original_hours": 8760,
+          "noleap_estimator_hours": 8760,
+          "original_data_not_deleted": true
+        },
+        {
+          "year": 2008,
+          "source_sha256": "28aee822bc31da3090baa9f5f928318926acc2c20eb7cda8f2c788180a7a7f46",
+          "original_hours": 8784,
+          "noleap_estimator_hours": 8760,
+          "original_data_not_deleted": true
+        },
+        {
+          "year": 2009,
+          "source_sha256": "91482f47c8a7eabd0d4c2d7cf77b3472b60d8ad66bd02ca97a0580c393445dce",
+          "original_hours": 8760,
+          "noleap_estimator_hours": 8760,
+          "original_data_not_deleted": true
+        },
+        {
+          "year": 2010,
+          "source_sha256": "39b5d2a5c1e23b515bbce87b8b6d0ebb3b8abd4ab2608717a394185922760fe4",
+          "original_hours": 8760,
+          "noleap_estimator_hours": 8760,
+          "original_data_not_deleted": true
+        },
+        {
+          "year": 2011,
+          "source_sha256": "41b5073ead92c5312141c68569eb547ede2e80e4676cee5d6fc5657bbdb6264b",
+          "original_hours": 8760,
+          "noleap_estimator_hours": 8760,
+          "original_data_not_deleted": true
+        },
+        {
+          "year": 2012,
+          "source_sha256": "0ce3b843c2a8478811b369cd09f360809aaf6ecfab7e556c7657485e5f55357e",
+          "original_hours": 8784,
+          "noleap_estimator_hours": 8760,
+          "original_data_not_deleted": true
+        },
+        {
+          "year": 2013,
+          "source_sha256": "76caf23ae5ed75d8424516d157b377d9901519c9f9a49623ca2ce763e6554deb",
+          "original_hours": 8760,
+          "noleap_estimator_hours": 8760,
+          "original_data_not_deleted": true
+        },
+        {
+          "year": 2014,
+          "source_sha256": "99d118cb58c24fdc09652720b1b51704c17bdc58d84b5e2e9d3a72194a11b569",
+          "original_hours": 8760,
+          "noleap_estimator_hours": 8760,
+          "original_data_not_deleted": true
+        }
+      ],
+      "noleap_estimator_total_hours": 113880,
+      "full_original_hours": 113952,
+      "source_acquisition_HTTP_attempts": 26,
+      "source_acquisition_received_bytes": 11194316,
+      "reference_window": [
+        2002,
+        2014
+      ],
+      "thirteen_year_reference_sampling_uncertainty_qualified": false,
+      "raw_monthly_signal_clock": "NASA daily UTC climatology",
+      "local_flux_clock_transfer": "MONTHLY_SEASONAL_RATIO_TRANSFER_TO_FIXED_LOCAL_STANDARD_HOURS; NOT_EXACT_NATIVE_UTC_DAILY_EQUALITIES"
+    },
+    "NEX": {
+      "historical": {
+        "archive_window": "historical-1995-2014",
+        "archive_sha256": "5490003b68cbdf0fa5394a45f8491232d2e39e25ac230f83d4e3aa8632f7496d",
+        "daily_csv_sha256": "77ec2e5637eb487c3cedde4e0b660b31f8bd2606198e766255d75a985d61dfef",
+        "archive_days_checked": 7300,
+        "max_tas_midrange_residual_K": 1.52587890625e-05,
+        "grid": [
+          46.875,
+          15.375
+        ]
+      },
+      "ssp245": {
+        "archive_window": "ssp245-2040-2059",
+        "archive_sha256": "cb9fcfa5144fc1a8d86ee057f79a3b2883ef7de2704c4881aa82dafb269819a1",
+        "daily_csv_sha256": "5cdc6bad425127a8d7a232a2cfd1c649306821f1e0ea8376b90839a8472d97b3",
+        "archive_days_checked": 7300,
+        "max_tas_midrange_residual_K": 1.52587890625e-05,
+        "grid": [
+          46.875,
+          15.375
+        ]
+      },
+      "selected_historical_window": [
+        2002,
+        2014
+      ],
+      "selected_historical_days": 4745,
+      "daily_temperature_operator": "MIDRANGE_NOT_24H_TIME_MEAN",
+      "huss_operator": "DAILY_TIME_MEAN_SPECIFIC_HUMIDITY",
+      "hurs_operator": "DAILY_TIME_MEAN_WATER_ICE_RH",
+      "raw_NetCDF_payloads_in_packet": false,
+      "daily_bounds_verified": false,
+      "time_support_policy": "24_UNIFORM_UTC_STATE_NODES_APPROXIMATION; MONTHLY_SEASONAL_TRANSFER_TO_FIXED_STANDARD_INTERVALS",
+      "fully_verified_NASA_time_bounds": false
+    },
+    "temperature_months": [
+      {
+        "month": 1,
+        "pattern_mean_midrange_c": 2.5387096774193543,
+        "reference_mean_midrange_c": -0.7053349875930521,
+        "pattern_to_reference_rebase_K": -3.2440446650124066,
+        "NEX_midrange_delta_K": 2.878951746180986,
+        "DTR_combined_scale": 1.0294543690705418,
+        "NEX_DTR_ratio": 0.86186877410557,
+        "target_midrange_c": 2.173616758587934,
+        "target_DTR_K": 6.097026521333919,
+        "actual_midrange_c": 2.1736167585879342,
+        "actual_DTR_K": 6.097026521333918,
+        "hourly_time_mean_T_c_DIAGNOSTIC_NOT_NEX_tas": 1.840842866435427
+      },
+      {
+        "month": 2,
+        "pattern_mean_midrange_c": 3.3500000000000005,
+        "reference_mean_midrange_c": 0.6601648351648352,
+        "pattern_to_reference_rebase_K": -2.6898351648351655,
+        "NEX_midrange_delta_K": 2.9191657391223282,
+        "DTR_combined_scale": 0.800512273716159,
+        "NEX_DTR_ratio": 0.9247461090068078,
+        "target_midrange_c": 3.5793305742871633,
+        "target_DTR_K": 7.690635772487385,
+        "actual_midrange_c": 3.579330574287163,
+        "actual_DTR_K": 7.690635772487384,
+        "hourly_time_mean_T_c_DIAGNOSTIC_NOT_NEX_tas": 3.0371979317749243
+      },
+      {
+        "month": 3,
+        "pattern_mean_midrange_c": 6.73709677419355,
+        "reference_mean_midrange_c": 5.357444168734491,
+        "pattern_to_reference_rebase_K": -1.379652605459059,
+        "NEX_midrange_delta_K": 2.7010326035265297,
+        "DTR_combined_scale": 0.8612830495215228,
+        "NEX_DTR_ratio": 0.9104383171072309,
+        "target_midrange_c": 8.05847677226102,
+        "target_DTR_K": 9.31019193208588,
+        "actual_midrange_c": 8.05847677226102,
+        "actual_DTR_K": 9.310191932085882,
+        "hourly_time_mean_T_c_DIAGNOSTIC_NOT_NEX_tas": 7.951163682623055
+      },
+      {
+        "month": 4,
+        "pattern_mean_midrange_c": 8.283333333333335,
+        "reference_mean_midrange_c": 10.334102564102565,
+        "pattern_to_reference_rebase_K": 2.0507692307692302,
+        "NEX_midrange_delta_K": 1.7498119921562019,
+        "DTR_combined_scale": 1.1612469333889937,
+        "NEX_DTR_ratio": 0.9970352403950614,
+        "target_midrange_c": 12.083914556258767,
+        "target_DTR_K": 10.698955079623927,
+        "actual_midrange_c": 12.083914556258765,
+        "actual_DTR_K": 10.698955079623927,
+        "hourly_time_mean_T_c_DIAGNOSTIC_NOT_NEX_tas": 12.136493236853878
+      },
+      {
+        "month": 5,
+        "pattern_mean_midrange_c": 13.980645161290324,
+        "reference_mean_midrange_c": 14.623697270471466,
+        "pattern_to_reference_rebase_K": 0.6430521091811414,
+        "NEX_midrange_delta_K": 0.647465840758521,
+        "DTR_combined_scale": 1.2402877907124643,
+        "NEX_DTR_ratio": 1.003927492203201,
+        "target_midrange_c": 15.271163111229987,
+        "target_DTR_K": 10.61846385984155,
+        "actual_midrange_c": 15.271163111229983,
+        "actual_DTR_K": 10.618463859841548,
+        "hourly_time_mean_T_c_DIAGNOSTIC_NOT_NEX_tas": 15.508218116390351
+      },
+      {
+        "month": 6,
+        "pattern_mean_midrange_c": 18.32333333333333,
+        "reference_mean_midrange_c": 18.223333333333333,
+        "pattern_to_reference_rebase_K": -0.09999999999999787,
+        "NEX_midrange_delta_K": 1.6396219380696664,
+        "DTR_combined_scale": 0.981320663344449,
+        "NEX_DTR_ratio": 0.9933043564782956,
+        "target_midrange_c": 19.862955271403,
+        "target_DTR_K": 10.428167582473677,
+        "actual_midrange_c": 19.862955271403,
+        "actual_DTR_K": 10.428167582473673,
+        "hourly_time_mean_T_c_DIAGNOSTIC_NOT_NEX_tas": 20.181203014307066
+      },
+      {
+        "month": 7,
+        "pattern_mean_midrange_c": 20.567741935483863,
+        "reference_mean_midrange_c": 19.905459057071962,
+        "pattern_to_reference_rebase_K": -0.6622828784119008,
+        "NEX_midrange_delta_K": 1.9205987442811718,
+        "DTR_combined_scale": 0.9806078878822839,
+        "NEX_DTR_ratio": 0.9795931768811909,
+        "target_midrange_c": 21.826057801353134,
+        "target_DTR_K": 10.80566627421252,
+        "actual_midrange_c": 21.826057801353137,
+        "actual_DTR_K": 10.805666274212522,
+        "hourly_time_mean_T_c_DIAGNOSTIC_NOT_NEX_tas": 21.984483968185735
+      },
+      {
+        "month": 8,
+        "pattern_mean_midrange_c": 19.914516129032254,
+        "reference_mean_midrange_c": 19.097642679900744,
+        "pattern_to_reference_rebase_K": -0.8168734491315099,
+        "NEX_midrange_delta_K": 2.89773425913922,
+        "DTR_combined_scale": 1.046447627494907,
+        "NEX_DTR_ratio": 1.027133458062043,
+        "target_midrange_c": 21.995376939039964,
+        "target_DTR_K": 10.79866438824583,
+        "actual_midrange_c": 21.99537693903997,
+        "actual_DTR_K": 10.798664388245829,
+        "hourly_time_mean_T_c_DIAGNOSTIC_NOT_NEX_tas": 22.035321982885204
+      },
+      {
+        "month": 9,
+        "pattern_mean_midrange_c": 18.038333333333334,
+        "reference_mean_midrange_c": 14.834871794871793,
+        "pattern_to_reference_rebase_K": -3.203461538461541,
+        "NEX_midrange_delta_K": 3.141745628943813,
+        "DTR_combined_scale": 0.845333906059423,
+        "NEX_DTR_ratio": 1.0302146361702351,
+        "target_midrange_c": 17.976617423815604,
+        "target_DTR_K": 10.062291261793998,
+        "actual_midrange_c": 17.9766174238156,
+        "actual_DTR_K": 10.062291261794,
+        "hourly_time_mean_T_c_DIAGNOSTIC_NOT_NEX_tas": 17.790174334534722
+      },
+      {
+        "month": 10,
+        "pattern_mean_midrange_c": 13.406451612903224,
+        "reference_mean_midrange_c": 9.907196029776674,
+        "pattern_to_reference_rebase_K": -3.4992555831265495,
+        "NEX_midrange_delta_K": 2.5643726736972745,
+        "DTR_combined_scale": 0.8440735101735073,
+        "NEX_DTR_ratio": 1.0150222088213863,
+        "target_midrange_c": 12.471568703473949,
+        "target_DTR_K": 9.284808611908579,
+        "actual_midrange_c": 12.471568703473952,
+        "actual_DTR_K": 9.284808611908582,
+        "hourly_time_mean_T_c_DIAGNOSTIC_NOT_NEX_tas": 12.200648334886
+      },
+      {
+        "month": 11,
+        "pattern_mean_midrange_c": 5.3933333333333335,
+        "reference_mean_midrange_c": 5.302948717948717,
+        "pattern_to_reference_rebase_K": -0.0903846153846164,
+        "NEX_midrange_delta_K": 1.7585405124762117,
+        "DTR_combined_scale": 0.8130484474634586,
+        "NEX_DTR_ratio": 0.977462177888495,
+        "target_midrange_c": 7.061489230424929,
+        "target_DTR_K": 6.461024995842951,
+        "actual_midrange_c": 7.061489230424929,
+        "actual_DTR_K": 6.46102499584295,
+        "hourly_time_mean_T_c_DIAGNOSTIC_NOT_NEX_tas": 6.735592311066658
+      },
+      {
+        "month": 12,
+        "pattern_mean_midrange_c": 2.3887096774193552,
+        "reference_mean_midrange_c": 0.06364764267990076,
+        "pattern_to_reference_rebase_K": -2.3250620347394544,
+        "NEX_midrange_delta_K": 3.1747618455153246,
+        "DTR_combined_scale": 0.8079328438749394,
+        "NEX_DTR_ratio": 0.9316260860720749,
+        "target_midrange_c": 3.2384094881952254,
+        "target_DTR_K": 5.517399453171764,
+        "actual_midrange_c": 3.2384094881952246,
+        "actual_DTR_K": 5.517399453171764,
+        "hourly_time_mean_T_c_DIAGNOSTIC_NOT_NEX_tas": 2.7343202057668012
+      }
+    ],
+    "monthly_signals_and_constraints": [
+      {
+        "month": 1,
+        "hours": 744,
+        "reference_mean_q_kgkg": 0.003082513024280556,
+        "NEX_huss_ratio": 1.2602971212616059,
+        "target_mean_q_kgkg": 0.0038848822907521915,
+        "actual_mean_q_kgkg": 0.003884882290752191,
+        "q_projection_lambda_kgkg": 1.4338967502672837e-05,
+        "raw_q_exceeds_saturation_hours": 84,
+        "q_projection_objective_half_sum_squared": 1.6453882949737042e-06,
+        "max_abs_hourly_q_adjustment_kgkg": 0.000573891525265411,
+        "NASA_hurs_delta_pp_DIAGNOSTIC_NOT_ENFORCED": 1.509940162071814,
+        "global_horizontal_radiation_wh_m2": {
+          "reference_mean": 56.53970223325062,
+          "NEX_ratio": 0.9620897065494576,
+          "pattern_to_reference_factor": 1.2257572836860675,
+          "combined_factor": 1.179288465362389,
+          "target_mean": 54.396265529981804,
+          "actual_mean": 54.3962655299818
+        },
+        "horizontal_infrared_radiation_intensity_wh_m2": {
+          "reference_mean": 255.56746588089334,
+          "NEX_ratio": 1.0677506229203375,
+          "pattern_to_reference_factor": 0.9600174300446475,
+          "combined_factor": 1.0250592089445538,
+          "target_mean": 272.88232089249595,
+          "actual_mean": 272.8823208924959
+        },
+        "wind_speed_m_s": {
+          "reference_mean": 1.4887386269644334,
+          "NEX_ratio": 1.0029422790586975,
+          "pattern_to_reference_factor": 0.9605265088901073,
+          "combined_factor": 0.9633526459225384,
+          "target_mean": 1.4931189114504249,
+          "actual_mean": 1.4931189114504246
+        },
+        "total_precipitation_depth_mm": {
+          "reference_mean": 0.04296939619520265,
+          "NEX_ratio": 1.2100502467836476,
+          "pattern_to_reference_factor": 0.35920484010371656,
+          "combined_factor": 0.43465590541338284,
+          "target_mean": 0.051995128470149296,
+          "actual_mean": 0.05199512847014929
+        },
+        "future_mean_NASA_phase_RH_pct_DIAGNOSTIC": 85.50763655729763,
+        "reference_mean_NASA_phase_RH_pct_DIAGNOSTIC": 82.99193097595212,
+        "actual_NASA_phase_RH_delta_pp_DIAGNOSTIC": 2.5157055813455145,
+        "unforced_NASA_hurs_delta_residual_pp": 1.0057654192737004,
+        "saturated_water_RH_hours": 98
+      },
+      {
+        "month": 2,
+        "hours": 672,
+        "reference_mean_q_kgkg": 0.0031967415751070934,
+        "NEX_huss_ratio": 1.237474446364506,
+        "target_mean_q_kgkg": 0.003955886010826049,
+        "actual_mean_q_kgkg": 0.003955886010826048,
+        "q_projection_lambda_kgkg": 1.3745453565809597e-05,
+        "raw_q_exceeds_saturation_hours": 50,
+        "q_projection_objective_half_sum_squared": 1.1112829579086543e-06,
+        "max_abs_hourly_q_adjustment_kgkg": 0.00040143782631024954,
+        "NASA_hurs_delta_pp_DIAGNOSTIC_NOT_ENFORCED": 0.8826174180586293,
+        "global_horizontal_radiation_wh_m2": {
+          "reference_mean": 89.18097527472527,
+          "NEX_ratio": 1.0061913651950163,
+          "pattern_to_reference_factor": 0.8825898410152186,
+          "combined_factor": 0.8880542770383553,
+          "target_mean": 89.73312726109882,
+          "actual_mean": 89.73312726109882
+        },
+        "horizontal_infrared_radiation_intensity_wh_m2": {
+          "reference_mean": 256.1862637362637,
+          "NEX_ratio": 1.0412473876571968,
+          "pattern_to_reference_factor": 0.9685498502833894,
+          "combined_factor": 1.0085000014233483,
+          "target_mean": 266.7532778690422,
+          "actual_mean": 266.7532778690423
+        },
+        "wind_speed_m_s": {
+          "reference_mean": 1.6607955586080585,
+          "NEX_ratio": 0.8953491635197612,
+          "pattern_to_reference_factor": 1.0281574361667223,
+          "combined_factor": 0.9205599004384971,
+          "target_mean": 1.4869919141770598,
+          "actual_mean": 1.4869919141770598
+        },
+        "total_precipitation_depth_mm": {
+          "reference_mean": 0.059283424908424906,
+          "NEX_ratio": 1.123035495874996,
+          "pattern_to_reference_factor": 2.0641689916301313,
+          "combined_factor": 2.318135047085135,
+          "target_mean": 0.06657739048920105,
+          "actual_mean": 0.06657739048920105
+        },
+        "future_mean_NASA_phase_RH_pct_DIAGNOSTIC": 79.81035376240045,
+        "reference_mean_NASA_phase_RH_pct_DIAGNOSTIC": 77.65772936736455,
+        "actual_NASA_phase_RH_delta_pp_DIAGNOSTIC": 2.1526243950359003,
+        "unforced_NASA_hurs_delta_residual_pp": 1.270006976977271,
+        "saturated_water_RH_hours": 52
+      },
+      {
+        "month": 3,
+        "hours": 744,
+        "reference_mean_q_kgkg": 0.003999576315450147,
+        "NEX_huss_ratio": 1.2015077753406347,
+        "target_mean_q_kgkg": 0.004805522041081599,
+        "actual_mean_q_kgkg": 0.0048055220410815995,
+        "q_projection_lambda_kgkg": 8.068941851691437e-06,
+        "raw_q_exceeds_saturation_hours": 14,
+        "q_projection_objective_half_sum_squared": 1.7801438838720502e-06,
+        "max_abs_hourly_q_adjustment_kgkg": 0.0007759923872002333,
+        "NASA_hurs_delta_pp_DIAGNOSTIC_NOT_ENFORCED": 0.8183575760342023,
+        "global_horizontal_radiation_wh_m2": {
+          "reference_mean": 142.11889991728702,
+          "NEX_ratio": 0.9907779047904892,
+          "pattern_to_reference_factor": 1.0395263433330209,
+          "combined_factor": 1.0299397324220092,
+          "target_mean": 140.80826589117888,
+          "actual_mean": 140.80826589117888
+        },
+        "horizontal_infrared_radiation_intensity_wh_m2": {
+          "reference_mean": 269.2491004962779,
+          "NEX_ratio": 1.0431245256634452,
+          "pattern_to_reference_factor": 0.9582634860230208,
+          "combined_factor": 0.9995881443183631,
+          "target_mean": 280.86034024048917,
+          "actual_mean": 280.86034024048917
+        },
+        "wind_speed_m_s": {
+          "reference_mean": 1.9250268817204301,
+          "NEX_ratio": 1.0366580243658037,
+          "pattern_to_reference_factor": 1.0926054484563217,
+          "combined_factor": 1.1326582056080434,
+          "target_mean": 1.9955945640553647,
+          "actual_mean": 1.9955945640553652
+        },
+        "total_precipitation_depth_mm": {
+          "reference_mean": 0.062944582299421,
+          "NEX_ratio": 1.0980197596011756,
+          "pattern_to_reference_factor": 1.107110383706128,
+          "combined_factor": 1.215629077368968,
+          "target_mean": 0.06911439512460665,
+          "actual_mean": 0.06911439512460664
+        },
+        "future_mean_NASA_phase_RH_pct_DIAGNOSTIC": 68.80396649110058,
+        "reference_mean_NASA_phase_RH_pct_DIAGNOSTIC": 69.71047059473933,
+        "actual_NASA_phase_RH_delta_pp_DIAGNOSTIC": -0.9065041036387527,
+        "unforced_NASA_hurs_delta_residual_pp": -1.724861679672955,
+        "saturated_water_RH_hours": 14
+      },
+      {
+        "month": 4,
+        "hours": 720,
+        "reference_mean_q_kgkg": 0.005542610052174741,
+        "NEX_huss_ratio": 1.1164856364141507,
+        "target_mean_q_kgkg": 0.006188244511497784,
+        "actual_mean_q_kgkg": 0.006188244511497783,
+        "q_projection_lambda_kgkg": 1.970285613060556e-07,
+        "raw_q_exceeds_saturation_hours": 4,
+        "q_projection_objective_half_sum_squared": 3.4545893157099076e-09,
+        "max_abs_hourly_q_adjustment_kgkg": 5.773765249992083e-05,
+        "NASA_hurs_delta_pp_DIAGNOSTIC_NOT_ENFORCED": -0.06976974634024202,
+        "global_horizontal_radiation_wh_m2": {
+          "reference_mean": 191.73557692307693,
+          "NEX_ratio": 1.0080324718138745,
+          "pattern_to_reference_factor": 1.118789025095755,
+          "combined_factor": 1.1277756664055087,
+          "target_mean": 193.2756875404285,
+          "actual_mean": 193.27568754042852
+        },
+        "horizontal_infrared_radiation_intensity_wh_m2": {
+          "reference_mean": 294.5678739316239,
+          "NEX_ratio": 1.0198501290671014,
+          "pattern_to_reference_factor": 0.9928649440910421,
+          "combined_factor": 1.0125734413774496,
+          "target_mean": 300.4150842481883,
+          "actual_mean": 300.4150842481883
+        },
+        "wind_speed_m_s": {
+          "reference_mean": 1.8845779914529917,
+          "NEX_ratio": 0.9188619122520848,
+          "pattern_to_reference_factor": 1.0231073733053,
+          "combined_factor": 0.9400943974745155,
+          "target_mean": 1.731666937014689,
+          "actual_mean": 1.7316669370146893
+        },
+        "total_precipitation_depth_mm": {
+          "reference_mean": 0.0681517094017094,
+          "NEX_ratio": 1.0061226564390024,
+          "pattern_to_reference_factor": 0.5316276356363031,
+          "combined_factor": 0.5348826090027833,
+          "target_mean": 0.0685689789041068,
+          "actual_mean": 0.06856897890410679
+        },
+        "future_mean_NASA_phase_RH_pct_DIAGNOSTIC": 67.07142813466228,
+        "reference_mean_NASA_phase_RH_pct_DIAGNOSTIC": 68.26343630268335,
+        "actual_NASA_phase_RH_delta_pp_DIAGNOSTIC": -1.1920081680210615,
+        "unforced_NASA_hurs_delta_residual_pp": -1.1222384216808194,
+        "saturated_water_RH_hours": 4
+      },
+      {
+        "month": 5,
+        "hours": 744,
+        "reference_mean_q_kgkg": 0.007561448589228572,
+        "NEX_huss_ratio": 1.0811183924389867,
+        "target_mean_q_kgkg": 0.008174821143296838,
+        "actual_mean_q_kgkg": 0.008174821143296838,
+        "q_projection_lambda_kgkg": 3.0629020985944652e-06,
+        "raw_q_exceeds_saturation_hours": 16,
+        "q_projection_objective_half_sum_squared": 2.1025753206216642e-07,
+        "max_abs_hourly_q_adjustment_kgkg": 0.00036931356713383774,
+        "NASA_hurs_delta_pp_DIAGNOSTIC_NOT_ENFORCED": 1.586706714772106,
+        "global_horizontal_radiation_wh_m2": {
+          "reference_mean": 221.57640612076096,
+          "NEX_ratio": 1.0233265497721322,
+          "pattern_to_reference_factor": 1.2060079605674479,
+          "combined_factor": 1.2341399652852123,
+          "target_mean": 226.7450191864671,
+          "actual_mean": 226.74501918646712
+        },
+        "horizontal_infrared_radiation_intensity_wh_m2": {
+          "reference_mean": 319.56473428453273,
+          "NEX_ratio": 1.008423542763667,
+          "pattern_to_reference_factor": 1.0030424719476747,
+          "combined_factor": 1.0114916431039,
+          "target_mean": 322.25660148953835,
+          "actual_mean": 322.25660148953835
+        },
+        "wind_speed_m_s": {
+          "reference_mean": 1.9060184036393713,
+          "NEX_ratio": 0.9669835650760421,
+          "pattern_to_reference_factor": 1.0465209088349363,
+          "combined_factor": 1.0119685193518264,
+          "target_mean": 1.843088471051746,
+          "actual_mean": 1.8430884710517457
+        },
+        "total_precipitation_depth_mm": {
+          "reference_mean": 0.12113316790736145,
+          "NEX_ratio": 1.1092265860206223,
+          "pattern_to_reference_factor": 0.6874376576893738,
+          "combined_factor": 0.7625241261407972,
+          "target_mean": 0.13436413029174535,
+          "actual_mean": 0.13436413029174532
+        },
+        "future_mean_NASA_phase_RH_pct_DIAGNOSTIC": 73.63763840805149,
+        "reference_mean_NASA_phase_RH_pct_DIAGNOSTIC": 69.61719602923917,
+        "actual_NASA_phase_RH_delta_pp_DIAGNOSTIC": 4.020442378812319,
+        "unforced_NASA_hurs_delta_residual_pp": 2.4337356640402135,
+        "saturated_water_RH_hours": 16
+      },
+      {
+        "month": 6,
+        "hours": 720,
+        "reference_mean_q_kgkg": 0.009779651771963592,
+        "NEX_huss_ratio": 1.1263618975790608,
+        "target_mean_q_kgkg": 0.011015427127531336,
+        "actual_mean_q_kgkg": 0.011015427127531336,
+        "q_projection_lambda_kgkg": 0.0,
+        "raw_q_exceeds_saturation_hours": 0,
+        "q_projection_objective_half_sum_squared": 0.0,
+        "max_abs_hourly_q_adjustment_kgkg": 0.0,
+        "NASA_hurs_delta_pp_DIAGNOSTIC_NOT_ENFORCED": 1.4095350294846867,
+        "global_horizontal_radiation_wh_m2": {
+          "reference_mean": 231.33076923076922,
+          "NEX_ratio": 0.9960979541284725,
+          "pattern_to_reference_factor": 0.9901857442000954,
+          "combined_factor": 0.986321994004894,
+          "target_mean": 230.428105957735,
+          "actual_mean": 230.42810595773497
+        },
+        "horizontal_infrared_radiation_intensity_wh_m2": {
+          "reference_mean": 340.5242916666666,
+          "NEX_ratio": 1.0279755715245427,
+          "pattern_to_reference_factor": 0.9964917587198796,
+          "combined_factor": 1.0243691851895649,
+          "target_mean": 350.0506533440317,
+          "actual_mean": 350.0506533440317
+        },
+        "wind_speed_m_s": {
+          "reference_mean": 1.6926207264957265,
+          "NEX_ratio": 0.9818971257621147,
+          "pattern_to_reference_factor": 1.1420122224608982,
+          "combined_factor": 1.1213385188195608,
+          "target_mean": 1.6619794263515364,
+          "actual_mean": 1.6619794263515366
+        },
+        "total_precipitation_depth_mm": {
+          "reference_mean": 0.13162393162393163,
+          "NEX_ratio": 1.177125908368067,
+          "pattern_to_reference_factor": 1.0168372400132057,
+          "combined_factor": 1.196945459813023,
+          "target_mean": 0.15493794007579687,
+          "actual_mean": 0.15493794007579684
+        },
+        "future_mean_NASA_phase_RH_pct_DIAGNOSTIC": 72.71896334549422,
+        "reference_mean_NASA_phase_RH_pct_DIAGNOSTIC": 71.51727969591677,
+        "actual_NASA_phase_RH_delta_pp_DIAGNOSTIC": 1.201683649577447,
+        "unforced_NASA_hurs_delta_residual_pp": -0.20785137990723968,
+        "saturated_water_RH_hours": 0
+      },
+      {
+        "month": 7,
+        "hours": 744,
+        "reference_mean_q_kgkg": 0.010524710100315008,
+        "NEX_huss_ratio": 1.1438423257375692,
+        "target_mean_q_kgkg": 0.012038608878858003,
+        "actual_mean_q_kgkg": 0.012038608878858005,
+        "q_projection_lambda_kgkg": 0.0,
+        "raw_q_exceeds_saturation_hours": 0,
+        "q_projection_objective_half_sum_squared": 0.0,
+        "max_abs_hourly_q_adjustment_kgkg": 0.0,
+        "NASA_hurs_delta_pp_DIAGNOSTIC_NOT_ENFORCED": 1.630421863773634,
+        "global_horizontal_radiation_wh_m2": {
+          "reference_mean": 231.1048387096774,
+          "NEX_ratio": 1.0072670532758001,
+          "pattern_to_reference_factor": 1.0163558445396779,
+          "combined_factor": 1.0237417566091185,
+          "target_mean": 232.78428988487582,
+          "actual_mean": 232.7842898848758
+        },
+        "horizontal_infrared_radiation_intensity_wh_m2": {
+          "reference_mean": 347.38747001654264,
+          "NEX_ratio": 1.0283807211483098,
+          "pattern_to_reference_factor": 0.98566624649832,
+          "combined_factor": 1.01364016538549,
+          "target_mean": 357.24657693349894,
+          "actual_mean": 357.24657693349894
+        },
+        "wind_speed_m_s": {
+          "reference_mean": 1.6667452440033084,
+          "NEX_ratio": 0.9302400909636239,
+          "pattern_to_reference_factor": 1.1541332416943193,
+          "combined_factor": 1.0736210117378657,
+          "target_mean": 1.550473247394825,
+          "actual_mean": 1.550473247394825
+        },
+        "total_precipitation_depth_mm": {
+          "reference_mean": 0.11367866004962779,
+          "NEX_ratio": 1.2433929153149204,
+          "pattern_to_reference_factor": 0.7204167212685099,
+          "combined_factor": 0.8957610472996689,
+          "target_mean": 0.14134724052820047,
+          "actual_mean": 0.14134724052820044
+        },
+        "future_mean_NASA_phase_RH_pct_DIAGNOSTIC": 71.10146576563827,
+        "reference_mean_NASA_phase_RH_pct_DIAGNOSTIC": 70.4240112013406,
+        "actual_NASA_phase_RH_delta_pp_DIAGNOSTIC": 0.6774545642976619,
+        "unforced_NASA_hurs_delta_residual_pp": -0.9529672994759721,
+        "saturated_water_RH_hours": 0
+      },
+      {
+        "month": 8,
+        "hours": 744,
+        "reference_mean_q_kgkg": 0.010469506484891504,
+        "NEX_huss_ratio": 1.1187470048670771,
+        "target_mean_q_kgkg": 0.01171272902240881,
+        "actual_mean_q_kgkg": 0.01171272902240881,
+        "q_projection_lambda_kgkg": 0.0,
+        "raw_q_exceeds_saturation_hours": 0,
+        "q_projection_objective_half_sum_squared": 0.0,
+        "max_abs_hourly_q_adjustment_kgkg": 0.0,
+        "NASA_hurs_delta_pp_DIAGNOSTIC_NOT_ENFORCED": -2.1237525220544455,
+        "global_horizontal_radiation_wh_m2": {
+          "reference_mean": 192.69499586435072,
+          "NEX_ratio": 1.0246129942426254,
+          "pattern_to_reference_factor": 0.9801131911554818,
+          "combined_factor": 1.0042367114865127,
+          "target_mean": 197.4377966881427,
+          "actual_mean": 197.4377966881427
+        },
+        "horizontal_infrared_radiation_intensity_wh_m2": {
+          "reference_mean": 342.7349958643507,
+          "NEX_ratio": 1.0257620464924806,
+          "pattern_to_reference_factor": 0.9804692602554815,
+          "combined_factor": 1.0057281549226313,
+          "target_mean": 351.56455076240826,
+          "actual_mean": 351.5645507624083
+        },
+        "wind_speed_m_s": {
+          "reference_mean": 1.5557495864350703,
+          "NEX_ratio": 0.944983104949682,
+          "pattern_to_reference_factor": 1.0775955352775664,
+          "combined_factor": 1.0183095748065092,
+          "target_mean": 1.4701570747135964,
+          "actual_mean": 1.4701570747135961
+        },
+        "total_precipitation_depth_mm": {
+          "reference_mean": 0.1329921422663358,
+          "NEX_ratio": 1.0627057334056174,
+          "pattern_to_reference_factor": 0.5776191117697246,
+          "combined_factor": 0.6138391418023464,
+          "target_mean": 0.1413315120843306,
+          "actual_mean": 0.1413315120843306
+        },
+        "future_mean_NASA_phase_RH_pct_DIAGNOSTIC": 68.43580635351836,
+        "reference_mean_NASA_phase_RH_pct_DIAGNOSTIC": 74.2954997605822,
+        "actual_NASA_phase_RH_delta_pp_DIAGNOSTIC": -5.859693407063844,
+        "unforced_NASA_hurs_delta_residual_pp": -3.7359408850093985,
+        "saturated_water_RH_hours": 0
+      },
+      {
+        "month": 9,
+        "hours": 720,
+        "reference_mean_q_kgkg": 0.00841708310665165,
+        "NEX_huss_ratio": 1.1353998986966882,
+        "target_mean_q_kgkg": 0.009556755306613889,
+        "actual_mean_q_kgkg": 0.009556755306613889,
+        "q_projection_lambda_kgkg": 0.0,
+        "raw_q_exceeds_saturation_hours": 0,
+        "q_projection_objective_half_sum_squared": 0.0,
+        "max_abs_hourly_q_adjustment_kgkg": 0.0,
+        "NASA_hurs_delta_pp_DIAGNOSTIC_NOT_ENFORCED": -1.3199881206414688,
+        "global_horizontal_radiation_wh_m2": {
+          "reference_mean": 144.1352564102564,
+          "NEX_ratio": 1.0047925043205492,
+          "pattern_to_reference_factor": 0.8436637016729368,
+          "combined_factor": 0.847706963608295,
+          "target_mean": 144.82602524934603,
+          "actual_mean": 144.82602524934606
+        },
+        "horizontal_infrared_radiation_intensity_wh_m2": {
+          "reference_mean": 320.1392863247863,
+          "NEX_ratio": 1.0357643420657319,
+          "pattern_to_reference_factor": 0.9949753425725901,
+          "combined_factor": 1.030559981071325,
+          "target_mean": 331.5888572695853,
+          "actual_mean": 331.5888572695853
+        },
+        "wind_speed_m_s": {
+          "reference_mean": 1.5906517094017094,
+          "NEX_ratio": 0.8874102358700641,
+          "pattern_to_reference_factor": 1.0479752120797472,
+          "combined_factor": 0.9299839301376689,
+          "target_mean": 1.4115606086272916,
+          "actual_mean": 1.4115606086272916
+        },
+        "total_precipitation_depth_mm": {
+          "reference_mean": 0.11290598290598293,
+          "NEX_ratio": 0.9634882849640016,
+          "pattern_to_reference_factor": 2.363148479427549,
+          "combined_factor": 2.2768658755589377,
+          "target_mean": 0.10878359183226037,
+          "actual_mean": 0.10878359183226037
+        },
+        "future_mean_NASA_phase_RH_pct_DIAGNOSTIC": 73.07750554841626,
+        "reference_mean_NASA_phase_RH_pct_DIAGNOSTIC": 77.80394001028314,
+        "actual_NASA_phase_RH_delta_pp_DIAGNOSTIC": -4.726434461866887,
+        "unforced_NASA_hurs_delta_residual_pp": -3.4064463412254185,
+        "saturated_water_RH_hours": 0
+      },
+      {
+        "month": 10,
+        "hours": 744,
+        "reference_mean_q_kgkg": 0.0064439798003178405,
+        "NEX_huss_ratio": 1.1251090051242556,
+        "target_mean_q_kgkg": 0.0072501797021764045,
+        "actual_mean_q_kgkg": 0.0072501797021764045,
+        "q_projection_lambda_kgkg": 9.37253304246835e-08,
+        "raw_q_exceeds_saturation_hours": 3,
+        "q_projection_objective_half_sum_squared": 8.744908819795054e-10,
+        "max_abs_hourly_q_adjustment_kgkg": 2.88823438423522e-05,
+        "NASA_hurs_delta_pp_DIAGNOSTIC_NOT_ENFORCED": -0.84367084455846,
+        "global_horizontal_radiation_wh_m2": {
+          "reference_mean": 98.05066170388751,
+          "NEX_ratio": 1.0109636324598072,
+          "pattern_to_reference_factor": 0.9128524702516745,
+          "combined_factor": 0.922860649225541,
+          "target_mean": 99.12565312124984,
+          "actual_mean": 99.12565312124985
+        },
+        "horizontal_infrared_radiation_intensity_wh_m2": {
+          "reference_mean": 294.9605572787427,
+          "NEX_ratio": 1.0259920742655662,
+          "pattern_to_reference_factor": 0.9655024500915897,
+          "combined_factor": 0.9905978614779565,
+          "target_mean": 302.6271939889446,
+          "actual_mean": 302.6271939889446
+        },
+        "wind_speed_m_s": {
+          "reference_mean": 1.4969995864350705,
+          "NEX_ratio": 0.9505429486371907,
+          "pattern_to_reference_factor": 0.9967760833991359,
+          "combined_factor": 0.9474784774452449,
+          "target_mean": 1.4229624009986468,
+          "actual_mean": 1.422962400998647
+        },
+        "total_precipitation_depth_mm": {
+          "reference_mean": 0.07578577336641852,
+          "NEX_ratio": 0.8459386172840127,
+          "pattern_to_reference_factor": 0.8124584349368209,
+          "combined_factor": 0.6872899650511872,
+          "target_mean": 0.06411011233138764,
+          "actual_mean": 0.06411011233138764
+        },
+        "future_mean_NASA_phase_RH_pct_DIAGNOSTIC": 77.86163239868645,
+        "reference_mean_NASA_phase_RH_pct_DIAGNOSTIC": 81.99912909564593,
+        "actual_NASA_phase_RH_delta_pp_DIAGNOSTIC": -4.137496696959474,
+        "unforced_NASA_hurs_delta_residual_pp": -3.2938258524010138,
+        "saturated_water_RH_hours": 3
+      },
+      {
+        "month": 11,
+        "hours": 720,
+        "reference_mean_q_kgkg": 0.0049291793868200704,
+        "NEX_huss_ratio": 1.146884206697282,
+        "target_mean_q_kgkg": 0.005653197990721732,
+        "actual_mean_q_kgkg": 0.005653197990721729,
+        "q_projection_lambda_kgkg": 2.3667334007451257e-05,
+        "raw_q_exceeds_saturation_hours": 86,
+        "q_projection_objective_half_sum_squared": 2.277949084993423e-06,
+        "max_abs_hourly_q_adjustment_kgkg": 0.0007867439587617101,
+        "NASA_hurs_delta_pp_DIAGNOSTIC_NOT_ENFORCED": 0.9923803485968108,
+        "global_horizontal_radiation_wh_m2": {
+          "reference_mean": 59.368589743589745,
+          "NEX_ratio": 0.9930700664702089,
+          "pattern_to_reference_factor": 0.8827313855812121,
+          "combined_factor": 0.8766141157544738,
+          "target_mean": 58.95716936290923,
+          "actual_mean": 58.95716936290921
+        },
+        "horizontal_infrared_radiation_intensity_wh_m2": {
+          "reference_mean": 280.5024465811966,
+          "NEX_ratio": 1.0314176466261005,
+          "pattern_to_reference_factor": 1.0051938621517829,
+          "combined_factor": 1.0367746877035926,
+          "target_mean": 289.31517332564124,
+          "actual_mean": 289.31517332564124
+        },
+        "wind_speed_m_s": {
+          "reference_mean": 1.4869797008547005,
+          "NEX_ratio": 0.959886937593244,
+          "pattern_to_reference_factor": 0.9002147352353354,
+          "combined_factor": 0.8641043653813588,
+          "target_mean": 1.4273323913167364,
+          "actual_mean": 1.4273323913167364
+        },
+        "total_precipitation_depth_mm": {
+          "reference_mean": 0.07618589743589743,
+          "NEX_ratio": 1.1970860033457638,
+          "pattern_to_reference_factor": 0.9760470845880098,
+          "combined_factor": 1.1684123035667453,
+          "target_mean": 0.09120107147284873,
+          "actual_mean": 0.09120107147284871
+        },
+        "future_mean_NASA_phase_RH_pct_DIAGNOSTIC": 85.68201373873795,
+        "reference_mean_NASA_phase_RH_pct_DIAGNOSTIC": 84.70823910093885,
+        "actual_NASA_phase_RH_delta_pp_DIAGNOSTIC": 0.9737746377990959,
+        "unforced_NASA_hurs_delta_residual_pp": -0.01860571079771489,
+        "saturated_water_RH_hours": 92
+      },
+      {
+        "month": 12,
+        "hours": 744,
+        "reference_mean_q_kgkg": 0.003377341702663213,
+        "NEX_huss_ratio": 1.2096277115920973,
+        "target_mean_q_kgkg": 0.00408532611505706,
+        "actual_mean_q_kgkg": 0.004085326115057059,
+        "q_projection_lambda_kgkg": 9.329878997567202e-08,
+        "raw_q_exceeds_saturation_hours": 3,
+        "q_projection_objective_half_sum_squared": 1.0088711937834666e-09,
+        "max_abs_hourly_q_adjustment_kgkg": 3.927054471751252e-05,
+        "NASA_hurs_delta_pp_DIAGNOSTIC_NOT_ENFORCED": -0.6392453555729531,
+        "global_horizontal_radiation_wh_m2": {
+          "reference_mean": 45.34708436724566,
+          "NEX_ratio": 1.0092172422245522,
+          "pattern_to_reference_factor": 0.939181882616451,
+          "combined_factor": 0.9478385495214378,
+          "target_mean": 45.76505942803576,
+          "actual_mean": 45.76505942803576
+        },
+        "horizontal_infrared_radiation_intensity_wh_m2": {
+          "reference_mean": 262.0521712158809,
+          "NEX_ratio": 1.0413915649747127,
+          "pattern_to_reference_factor": 0.9620891852767967,
+          "combined_factor": 1.0019115623006496,
+          "target_mean": 272.89892068752755,
+          "actual_mean": 272.89892068752755
+        },
+        "wind_speed_m_s": {
+          "reference_mean": 1.4195926385442514,
+          "NEX_ratio": 1.0369206213410997,
+          "pattern_to_reference_factor": 1.0215563774453016,
+          "combined_factor": 1.0592728736355452,
+          "target_mean": 1.4720048808105564,
+          "actual_mean": 1.4720048808105566
+        },
+        "total_precipitation_depth_mm": {
+          "reference_mean": 0.06175558312655088,
+          "NEX_ratio": 1.0033338741991074,
+          "pattern_to_reference_factor": 0.7068639053254439,
+          "combined_factor": 0.7092205006616886,
+          "target_mean": 0.061961468471787316,
+          "actual_mean": 0.06196146847178731
+        },
+        "future_mean_NASA_phase_RH_pct_DIAGNOSTIC": 83.62411888823266,
+        "reference_mean_NASA_phase_RH_pct_DIAGNOSTIC": 84.90058455280735,
+        "actual_NASA_phase_RH_delta_pp_DIAGNOSTIC": -1.2764656645746868,
+        "unforced_NASA_hurs_delta_residual_pp": -0.6372203090017337,
+        "saturated_water_RH_hours": 3
+      }
+    ],
+    "hourly_NASA_daily_constraints_enforced": false,
+    "hurs_signal_enforced": false,
+    "GCM_tas_operator": "MIDRANGE_NOT_TIME_MEAN",
+    "pressure_assumption": "2023_SURFACE_PROXY_FIXED; ISOTHERMAL_UNIFORM_Q_TWO_METRE_LAYER",
+    "pressure_accuracy_independently_qualified": false,
+    "B4_qualified": false,
+    "P2_advantage_qualified": false,
+    "pattern_is_actual_future_date_forecast": false,
+    "is_selected_TMY": false,
+    "wind_direction_inherited": true,
+    "precipitation_event_hours_and_liquid_fraction_inherited": true,
+    "future_cloud_signal_available": false,
+    "independent_DNI_DHI_future_signals_available": false,
+    "max_adjacent_RH_jump_pp_DIAGNOSTIC": 24.495033183562498,
+    "state_operator": "24_UNIFORM_UTC_STATE_NODES_APPROXIMATION; ENDPOINTS_FROM_SOURCE",
+    "saturation_bound_numerics": "DIRECTED_ROUNDING_TO_FEASIBLE_FLOAT; NO_RH_CLIP_OR_CHANGE_TO_Q_TARGET",
+    "flux_operator": "LOCAL_STANDARD_MONTHLY_SEASONAL_TRANSFER; NATIVE_NEX_DAILY_BOUNDS_NOT_VERIFIED",
+    "IV1_station_observations_opened": false,
+    "mixed_source_cross_variable_accuracy_qualified": false
+  },
+  "EPW": {
+    "screen": "BOUNDS_COMPONENTS_AND_PROVIDER_ROUNDING_PASS",
+    "records": 8760,
+    "hard_failure_count": 0,
+    "max_GHI_minus_direct_horizontal_minus_DHI_Wh_m2": 1.1368683772161603e-13,
+    "max_abs_provider_Magnus_RH_residual_pp": 0.07731282822276597,
+    "provider_T_Td_RH_quantization_interval_failures": null,
+    "T_Td_RH_exact_thermodynamic_closure_claimed": true,
+    "provider_values_modified": true,
+    "mixed_source_longwave_cross_field_accuracy_qualified": false,
+    "epw_format_readback": "PASS",
+    "fields_per_record": 35,
+    "headers": 8,
+    "first_row": [
+      "2023",
+      "1",
+      "1",
+      "1",
+      "60"
+    ],
+    "last_row": [
+      "2023",
+      "12",
+      "31",
+      "24",
+      "60"
+    ],
+    "leap_day_retained": false,
+    "sha256": "fc00e09811498c368965785ee8873bc4ca1cd01761eaebb19c759faebd0e3c28",
+    "bytes": 2150120,
+    "EnergyPlus_simulation_executed": false,
+    "numeric_serialization": {
+      "default": "10 significant decimal digits",
+      "future_T_Td_RH_only": "7 fixed decimal places",
+      "max_future_T_Td_RH_rounding_C_or_pp": 5e-08,
+      "internal_state_objective_or_physics_changed": false
+    }
+  },
+  "signal_readback": {
+    "status": "EXPORTED_MONTHLY_SIGNALS_AND_CONDITIONAL_THERMODYNAMIC_STATE_PASS",
+    "monthly_readback": [
+      {
+        "month": 1,
+        "midrange_error_K": -5.23417753583999e-10,
+        "DTR_error_K": 1.2467271659488688e-09,
+        "q_mean_error_kgkg": 6.927141152357486e-14,
+        "horizontal_infrared_radiation_intensity_wh_m2_relative_error": -3.0389973049482844e-12,
+        "global_horizontal_radiation_wh_m2_relative_error": -2.6800011301428126e-12,
+        "wind_speed_m_s_relative_error": 1.0499657573085017e-11
+      },
+      {
+        "month": 2,
+        "midrange_error_K": 7.85569342909298e-09,
+        "DTR_error_K": -1.0588143695144936e-09,
+        "q_mean_error_kgkg": 3.768270417925379e-13,
+        "horizontal_infrared_radiation_intensity_wh_m2_relative_error": -7.2319709235032725e-12,
+        "global_horizontal_radiation_wh_m2_relative_error": -1.1012909803306974e-12,
+        "wind_speed_m_s_relative_error": 7.623234420977474e-11
+      },
+      {
+        "month": 3,
+        "midrange_error_K": 1.932527027292963e-09,
+        "DTR_error_K": -3.0536231321320884e-09,
+        "q_mean_error_kgkg": 3.1505006936605184e-13,
+        "horizontal_infrared_radiation_intensity_wh_m2_relative_error": 3.6410021594017677e-13,
+        "global_horizontal_radiation_wh_m2_relative_error": -6.501286222439242e-12,
+        "wind_speed_m_s_relative_error": -1.947513182289366e-12
+      },
+      {
+        "month": 4,
+        "midrange_error_K": -1.2587673126063237e-09,
+        "DTR_error_K": 3.7094078919608364e-09,
+        "q_mean_error_kgkg": -4.1549923224248886e-13,
+        "horizontal_infrared_radiation_intensity_wh_m2_relative_error": 5.568445332367852e-12,
+        "global_horizontal_radiation_wh_m2_relative_error": 2.47783779738014e-13,
+        "wind_speed_m_s_relative_error": 1.12879851447984e-11
+      },
+      {
+        "month": 5,
+        "midrange_error_K": 4.899048278161899e-09,
+        "DTR_error_K": -1.7770318549992226e-09,
+        "q_mean_error_kgkg": 1.5918516504953573e-13,
+        "horizontal_infrared_radiation_intensity_wh_m2_relative_error": 1.5993443623145702e-12,
+        "global_horizontal_radiation_wh_m2_relative_error": 2.2791766029843623e-12,
+        "wind_speed_m_s_relative_error": 9.772746446965277e-12
+      },
+      {
+        "month": 6,
+        "midrange_error_K": -3.0696725161760696e-09,
+        "DTR_error_K": 7.526322676199015e-09,
+        "q_mean_error_kgkg": -4.1683843876594295e-13,
+        "horizontal_infrared_radiation_intensity_wh_m2_relative_error": -4.3754979645736074e-12,
+        "global_horizontal_radiation_wh_m2_relative_error": 4.790644742266676e-12,
+        "wind_speed_m_s_relative_error": 1.2482481497191306e-12
+      },
+      {
+        "month": 7,
+        "midrange_error_K": 2.5977087148021383e-10,
+        "DTR_error_K": -6.470585844908783e-09,
+        "q_mean_error_kgkg": -8.991626887500104e-13,
+        "horizontal_infrared_radiation_intensity_wh_m2_relative_error": -4.636621685285695e-13,
+        "global_horizontal_radiation_wh_m2_relative_error": -2.2322559386334153e-12,
+        "wind_speed_m_s_relative_error": 1.3566937474291904e-11
+      },
+      {
+        "month": 8,
+        "midrange_error_K": -3.3028513257704617e-10,
+        "DTR_error_K": 5.302554839659024e-09,
+        "q_mean_error_kgkg": 4.2890344054136165e-13,
+        "horizontal_infrared_radiation_intensity_wh_m2_relative_error": 7.525074844615837e-12,
+        "global_horizontal_radiation_wh_m2_relative_error": 1.4421184284360836e-12,
+        "wind_speed_m_s_relative_error": 9.768012565405005e-12
+      },
+      {
+        "month": 9,
+        "midrange_error_K": -5.482270637457987e-09,
+        "DTR_error_K": 1.5393357699622356e-09,
+        "q_mean_error_kgkg": -3.2157956852962855e-13,
+        "horizontal_infrared_radiation_intensity_wh_m2_relative_error": -3.775688696895585e-12,
+        "global_horizontal_radiation_wh_m2_relative_error": -5.920779583910875e-13,
+        "wind_speed_m_s_relative_error": -6.1103296457780985e-12
+      },
+      {
+        "month": 10,
+        "midrange_error_K": 4.5905643730748125e-09,
+        "DTR_error_K": -2.2311574809918966e-09,
+        "q_mean_error_kgkg": -4.948741069710216e-13,
+        "horizontal_infrared_radiation_intensity_wh_m2_relative_error": 4.997488765883701e-12,
+        "global_horizontal_radiation_wh_m2_relative_error": -4.0514109275060785e-13,
+        "wind_speed_m_s_relative_error": -1.2403929740591596e-12
+      },
+      {
+        "month": 11,
+        "midrange_error_K": 1.2417382677654132e-09,
+        "DTR_error_K": 7.49038164826743e-09,
+        "q_mean_error_kgkg": 3.494513706181479e-13,
+        "horizontal_infrared_radiation_intensity_wh_m2_relative_error": 6.638915965685622e-13,
+        "global_horizontal_radiation_wh_m2_relative_error": -1.299550572473938e-11,
+        "wind_speed_m_s_relative_error": -1.508369390655374e-12
+      },
+      {
+        "month": 12,
+        "midrange_error_K": 5.144515924371262e-10,
+        "DTR_error_K": 1.6669448044126511e-09,
+        "q_mean_error_kgkg": 1.5561076732728552e-13,
+        "horizontal_infrared_radiation_intensity_wh_m2_relative_error": 1.3766201577661644e-12,
+        "global_horizontal_radiation_wh_m2_relative_error": -1.8153322497901962e-11,
+        "wind_speed_m_s_relative_error": -5.16267079180781e-12
+      }
+    ],
+    "records": 8760,
+    "independent_accuracy_qualified": false,
+    "max_exported_hydrostatic_pressure_residual_Pa": 4.998044460080564e-06,
+    "max_exported_T_Td_RH_vapour_residual_Pa": 1.4842163636785699e-05,
+    "numerical_pressure_and_vapour_readback_tolerance_Pa": 0.0001,
+    "sidecar_readback": {
+      "status": "SAVED_SIDECAR_CLOCK_Q_AND_TOTAL_PRECIPITATION_PASS",
+      "months": [
+        {
+          "month": 1,
+          "q_mean_error_kgkg": -1.8908485888147197e-16,
+          "total_precipitation_mean_error_mm_per_hour": -1.729866250244072e-14
+        },
+        {
+          "month": 2,
+          "q_mean_error_kgkg": -2.1510571102112408e-16,
+          "total_precipitation_mean_error_mm_per_hour": 1.0269562977782698e-14
+        },
+        {
+          "month": 3,
+          "q_mean_error_kgkg": 8.673617379884035e-19,
+          "total_precipitation_mean_error_mm_per_hour": 2.506328478091291e-14
+        },
+        {
+          "month": 4,
+          "q_mean_error_kgkg": -4.7704895589362195e-17,
+          "total_precipitation_mean_error_mm_per_hour": 7.153999614928352e-14
+        },
+        {
+          "month": 5,
+          "q_mean_error_kgkg": 1.7867651802561113e-16,
+          "total_precipitation_mean_error_mm_per_hour": 1.176836406102666e-14
+        },
+        {
+          "month": 6,
+          "q_mean_error_kgkg": -5.724587470723463e-17,
+          "total_precipitation_mean_error_mm_per_hour": -3.300137940698278e-14
+        },
+        {
+          "month": 7,
+          "q_mean_error_kgkg": -4.874572967494828e-16,
+          "total_precipitation_mean_error_mm_per_hour": 5.2235993308613615e-14
+        },
+        {
+          "month": 8,
+          "q_mean_error_kgkg": -1.5664552988070568e-15,
+          "total_precipitation_mean_error_mm_per_hour": -1.2823075934420558e-14
+        },
+        {
+          "month": 9,
+          "q_mean_error_kgkg": -7.650130529057719e-16,
+          "total_precipitation_mean_error_mm_per_hour": -2.040034807748725e-15
+        },
+        {
+          "month": 10,
+          "q_mean_error_kgkg": 6.071532165918825e-18,
+          "total_precipitation_mean_error_mm_per_hour": -2.3120394487818885e-14
+        },
+        {
+          "month": 11,
+          "q_mean_error_kgkg": 1.4311468676808659e-16,
+          "total_precipitation_mean_error_mm_per_hour": 1.9317880628477724e-14
+        },
+        {
+          "month": 12,
+          "q_mean_error_kgkg": -1.5092094240998222e-16,
+          "total_precipitation_mean_error_mm_per_hour": 1.509903313490213e-14
+        }
+      ]
+    }
+  },
+  "source_packets": {
+    "pattern": "2575be295bc41be68ac56940524a76c5ef9f9b5010a83f20b6eec21c49dce273",
+    "reference": "68f19f8e02fb00d178009ab6dbe2f4dc441f879bc870b71a98d797b05ecd1403",
+    "NEX": "49dab390ec5d5250f79198df16e69cc3ba37a9985b66f739fde5a729db3c192d"
+  },
+  "registered_protocol_sha256": "6fc41d9a39749578584e86466de0cfc866538df06760e3cb45e2e81c154b9bf4",
+  "files": {
+    "adjustment_ledger.json.gz": {
+      "sha256": "c7e3356057f7c187930ef20d4d12e6764a5f86906f364225cff227c6f85c6c99",
+      "bytes": 587949
+    },
+    "climate.epw": {
+      "sha256": "fc00e09811498c368965785ee8873bc4ca1cd01761eaebb19c759faebd0e3c28",
+      "bytes": 2150120
+    },
+    "hourly.csv.gz": {
+      "sha256": "dbe3858ba140348dc7d15ffc5e2f15397a57380fc13b8e13ce08c0314a687d89",
+      "bytes": 746772
+    },
+    "monthly_signal_readback.json": {
+      "sha256": "944d7a15f3b1b72d84c60c41848ee4e0c4b73b261c2108606126308c16335b9d",
+      "bytes": 7485
+    },
+    "reference_climatology.json": {
+      "sha256": "b545968fc6648346f0d321077947dd783940f658f029a6f89bc283a26411f44e",
+      "bytes": 5543
+    },
+    "registered_protocol.json": {
+      "sha256": "6fc41d9a39749578584e86466de0cfc866538df06760e3cb45e2e81c154b9bf4",
+      "bytes": 3085
+    }
+  },
+  "implementation_sha256": {
+    "__init__.py": "d44104fa1d1f21375769099d09bd3cd69602816b4e2ee45e07af4f7c22867aab",
+    "__main__.py": "9093bbd2b9653af377698d2e9763c7dcbf7498d2af7e03ce241d12397f88c8c9",
+    "contracts.py": "a50568b3c30714db9689aa7ebafdce8a3d5e91866f7e666e6c95ef230d629d2e",
+    "epw.py": "d3cda336e6ea3c73ced2c404203789fd0f796cec9486ac1440658f74a484e7af",
+    "future.py": "649fdf22970aa319aa8fd4e94fa111c31c91a32e7663974eed0fb65243b23aa5",
+    "historical.py": "03ad75087c821bd111ef3057fd56ed8f375b884ce602dd826ec1383761489457",
+    "model_sources.py": "0215a8afb10ae625b74cb3f45587e21fc4c91035457978594769021653010650",
+    "thermodynamics.py": "5abfd9be1cfd50a218006d0d38516a08a107e211e4f4f8ef8afe645a0f6ea631"
+  },
+  "weather_provider_requests_this_run": 0,
+  "IV1_station_observations_opened": false,
+  "canonical_calendar_mode": "climatology",
+  "pattern_year": 2023,
+  "scenario_period_is_not_EPW_event_year": true,
+  "UI_connected": false,
+  "EnergyPlus_building_simulation_run": false,
+  "production_ready": false,
+  "wall_seconds": 4.114270301999568
+}

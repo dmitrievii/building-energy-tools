@@ -155,12 +155,25 @@ def serialize_epw(result: ClimateResult) -> tuple[bytes, dict]:
             value = values[name]
             # Sky cover is conventionally encoded in whole tenths. The
             # quantization is recorded in the export ledger, not hidden.
-            row[column] = int(round(value)) if column == 22 else format(float(value), ".10g")
+            if column == 22:
+                row[column] = int(round(value))
+            elif result.future_request is not None and column in (6, 7, 8):
+                # A fixed decimal grid removes CPU/libm differences in the
+                # last significant digits, especially for Td close to zero.
+                # Internal states/objective/targets and physical tolerances
+                # are unchanged. Historical I1/A0 bytes remain unchanged.
+                row[column] = format(float(value), ".7f")
+            else:
+                row[column] = format(float(value), ".10g")
         row[34] = 1  # measurement period is one hour, including zero-depth hours
         assert len(row) == 35
         writer.writerow(row)
     payload = stream.getvalue().encode("utf-8")
     diagnostics.update(validate_epw_bytes(payload, result))
+    diagnostics["numeric_serialization"] = {"default": "10 significant decimal digits",
+        "future_T_Td_RH_only": "7 fixed decimal places" if result.future_request is not None else None,
+        "max_future_T_Td_RH_rounding_C_or_pp": 5e-8 if result.future_request is not None else None,
+        "internal_state_objective_or_physics_changed": False}
     return payload, diagnostics
 
 

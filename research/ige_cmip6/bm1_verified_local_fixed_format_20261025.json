@@ -1,0 +1,87 @@
+{
+  "schema": "IGE_BM1_VERIFICATION_v1",
+  "status": "TWO_ANNUAL_ROUTES_AND_CONDITIONAL_PHYSICS_PASS_NOT_QUALIFIED",
+  "tests": {
+    "tests_run": 140,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "status": "PASS",
+    "wall_seconds": 12.271852399000636,
+    "patterns": [
+      [
+        "tools/climate_analyzer/tests",
+        "test_ige_engine.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_canonical_climate_model.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_e2e_integration_audit.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p7c1_epw_morphing.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p7c1b_humidity_closure.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p9_1a_global_historical_backbone.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p9_2d_annual_cet_epw_export.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_ige_bm1.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p9_3b3_thermodynamics.py"
+      ]
+    ],
+    "python": "3.12.14",
+    "numpy": "1.26.4",
+    "pandas": "2.3.3"
+  },
+  "protection": {
+    "ancestor": "5481a74dabb9acf40dd745d0006d0a9bc1cea4aa",
+    "protected_files_unchanged": 168,
+    "IV1_station_values_opened": false,
+    "main_modified_or_merged": false
+  },
+  "historical_EPW_sha256": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635",
+  "future_EPW_sha256": "fc00e09811498c368965785ee8873bc4ca1cd01761eaebb19c759faebd0e3c28",
+  "historical_records": 8760,
+  "future_records": 8760,
+  "reference_original_hours": 113952,
+  "reference_estimator_hours": 113880,
+  "climate_reference_window": [
+    2002,
+    2014
+  ],
+  "future_climate_window": [
+    2040,
+    2059
+  ],
+  "pattern_year": 2023,
+  "source_packets": {
+    "pattern": "2575be295bc41be68ac56940524a76c5ef9f9b5010a83f20b6eec21c49dce273",
+    "reference": "68f19f8e02fb00d178009ab6dbe2f4dc441f879bc870b71a98d797b05ecd1403",
+    "NEX": "49dab390ec5d5250f79198df16e69cc3ba37a9985b66f739fde5a729db3c192d"
+  },
+  "weather_provider_requests_this_verification": 0,
+  "NASA_hurs_signal_enforced": false,
+  "independent_station_accuracy_qualified": false,
+  "production_ready": false,
+  "UI_connected": false,
+  "actual_EnergyPlus_simulation_run": false,
+  "IV1_station_observations_opened": false,
+  "future_manifest_sha256": "4d08eafe943d87ea37839c3e0cc3a507d6dc555298daa5e3eb7079cd112c94be"
+}

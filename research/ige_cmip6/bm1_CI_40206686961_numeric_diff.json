@@ -1,0 +1,82 @@
+{
+  "run_id": 40206686961,
+  "commit": "d0a951c73eb7ac7c5846eab8c2472e483be3a85c",
+  "status": "FAILED_EXACT_FUTURE_FILE_HASH_COMPARISON_AFTER_139_TESTS_PASS",
+  "zip_sha256": "bc8fe05822f238058e0f8668aa07859ebc95ba84fb2dc9a385f68214647ff3d2",
+  "zip_bytes": 2430641,
+  "CI_future_sha256": "195f735ae8e0fb43af8f938d33fb525c120516f5b2e2c5754a65b9d3d8222b02",
+  "local_future_sha256": "50690e95a7fb270d96258f2e41435ca580e33b2a28950784dafcdd8c15cce288",
+  "headers_identical": true,
+  "changed_fields": {
+    "8": {
+      "count": 1,
+      "max_abs_delta": 1.000000082740371e-08,
+      "examples": [
+        {
+          "row": 3383,
+          "local": "41.07314971",
+          "CI": "41.07314972",
+          "delta": 1.000000082740371e-08
+        }
+      ]
+    },
+    "7": {
+      "count": 3,
+      "max_abs_delta": 1.000000082740371e-10,
+      "examples": [
+        {
+          "row": 7729,
+          "local": "-3.43322742e-06",
+          "CI": "-3.433227533e-06",
+          "delta": -1.129999998805112e-13
+        },
+        {
+          "row": 7943,
+          "local": "-0.001663189884",
+          "CI": "-0.001663189885",
+          "delta": -9.999999960041972e-13
+        },
+        {
+          "row": 7954,
+          "local": "0.7087665086",
+          "CI": "0.7087665087",
+          "delta": 1.000000082740371e-10
+        }
+      ]
+    }
+  },
+  "all_differences": [
+    {
+      "row": 3383,
+      "column": 8,
+      "local": "41.07314971",
+      "CI": "41.07314972",
+      "delta": 1.000000082740371e-08
+    },
+    {
+      "row": 7729,
+      "column": 7,
+      "local": "-3.43322742e-06",
+      "CI": "-3.433227533e-06",
+      "delta": -1.129999998805112e-13
+    },
+    {
+      "row": 7943,
+      "column": 7,
+      "local": "-0.001663189884",
+      "CI": "-0.001663189885",
+      "delta": -9.999999960041972e-13
+    },
+    {
+      "row": 7954,
+      "column": 7,
+      "local": "0.7087665086",
+      "CI": "0.7087665087",
+      "delta": 1.000000082740371e-10
+    }
+  ],
+  "source_packets_identical": true,
+  "implementation_module_hashes_identical": true,
+  "weather_source_or_science_changed": false,
+  "production_ready": false
+}

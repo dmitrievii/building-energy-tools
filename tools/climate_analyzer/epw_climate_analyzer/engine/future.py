@@ -340,7 +340,8 @@ def run_future(pattern_request: HistoricalRequest, future_request: FutureRequest
         signal_report["sidecar_readback"] = verify_sidecar(result, output / "hourly.csv.gz")
         ledger = json_bytes({"physical_and_definition_adjustments": list(result.adjustments),
             "transformations": list(result.transformations), "actual_water_mass_budget_claimed": False,
-            "q_constraint_is_monthly_time_mean": True, "no_arbitrary_RH_floor": True})
+            "q_constraint_is_monthly_time_mean": True, "no_arbitrary_RH_floor": True,
+            "export_quantization": epw_report["numeric_serialization"]})
         write_exclusive(output / "adjustment_ledger.json.gz", gzip.compress(ledger, mtime=0))
         write_exclusive(output / "monthly_signal_readback.json", json_bytes(signal_report))
         write_exclusive(output / "reference_climatology.json", json_bytes(reference))

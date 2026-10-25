@@ -63,7 +63,7 @@ def verify(output: Path) -> dict:
     assert hmanifest["weather_provider_requests_this_run"] == fmanifest["weather_provider_requests_this_run"] == 0
     assert not fmanifest["production_ready"] and not fmanifest["IV1_station_observations_opened"]
     assert fmanifest["signal_readback"]["sidecar_readback"]["status"] == "SAVED_SIDECAR_CLOCK_Q_AND_TOTAL_PRECIPITATION_PASS"
-    expected = RESEARCH / "bm1_verified_local_20261025.json"
+    expected = RESEARCH / "bm1_verified_local_fixed_format_20261025.json"
     if expected.is_file():
         proof = json.loads(expected.read_text())
         assert proof["historical_EPW_sha256"] == hmanifest["EPW"]["sha256"]

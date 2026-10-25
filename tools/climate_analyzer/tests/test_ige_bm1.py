@@ -242,6 +242,24 @@ class ActualSourceRegressionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "PRESSURE_OR_VAPOUR_CLOSURE_LOST"):
             verify_signals(self.result, stream.getvalue().encode())
 
+    def test_known_CI_libm_last_digit_differences_encode_to_identical_EPW(self):
+        # Actual four-cell difference in CI #40206686961 under 10-significant
+        # encoding. Keep its negative receipt; do not relax the file hash gate.
+        pairs = [(3375, RH, (41.07314971, 41.07314972)),
+            (7721, TD, (-3.43322742e-6, -3.433227533e-6)),
+            (7935, TD, (-.001663189884, -.001663189885)),
+            (7946, TD, (.7087665086, .7087665087))]
+        outputs = []
+        for variant in (0, 1):
+            frame = self.result.data.copy()
+            for i, name, values in pairs:
+                frame.iloc[i, frame.columns.get_loc(name)] = values[variant]
+            payload, report = serialize_epw(replace(self.result, data=frame))
+            self.assertEqual(report["numeric_serialization"]["future_T_Td_RH_only"], "7 fixed decimal places")
+            verify_signals(replace(self.result, data=frame), payload)
+            outputs.append(payload)
+        self.assertEqual(outputs[0], outputs[1])
+
     def test_missing_state_consistency_cannot_pass_only_range_checks(self):
         changed = self.result.data.copy(); changed[RH] *= .9
         with self.assertRaisesRegex(ValueError, "CLOSURE_FAILED"):
