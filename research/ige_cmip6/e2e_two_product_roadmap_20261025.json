@@ -101,7 +101,7 @@
         "A",
         "B-M"
       ],
-      "current_status": "LOCAL_180_TESTS_PASS_TWO_ACTUAL_STREAMLIT_ROUTES_CI_PENDING_RESEARCH_SCOPE",
+      "current_status": "CI_VERIFIED_180_TESTS_TWO_ACTUAL_STREAMLIT_ROUTES_RESEARCH_SCOPE",
       "depends_on": [
         "A0",
         "B-M1"
@@ -164,7 +164,7 @@
       "completion_criterion": "No incomplete-source unblinding, original NASA operators/objective, independent benefit before default replacement"
     }
   ],
-  "current_first_implementation": "U1_CI_verification_then_A1_AT_DE_CH_station_source_and_correction_policy",
+  "current_first_implementation": "A1_AT_DE_CH_station_source_admission_and_preregistered_local_correction_policy",
   "minimum_B_M_temperature_policy": "MIDRANGE_NEX_TAS_INDEX_NO_IMPLICIT_TIME_MEAN_EQUALITY",
   "specific_humidity_to_mixing_ratio": "w_g_per_kg_dry_air=1000*q_kg_per_kg_moist_air/(1-q)",
   "future_pressure_policy": "DECLARED_BASELINE_PROXY_NOT_NATIVE_FUTURE_PS",
@@ -179,18 +179,6 @@
     "original_freeze_windows": 40,
     "new_NASA_ERA5_station_requests": 0
   },
-  "current_legacy_limitations": [
-    "fixed Graz and CanESM5 source grid in early modules",
-    "CET/nonleap assumptions in old exporter",
-    "longwave absent in 12-field background reader",
-    "unverified provider grid elevation",
-    "legacy tas-index/time-mean mismatch",
-    "loss of monthly q signal under clipping",
-    "uploaded EPW calendar activated as typical year",
-    "no generator service call from current UI",
-    "inheritance of future event chronology and wind direction",
-    "no independently qualified global local accuracy"
-  ],
   "E0_verified_CI_run_id": 40184936534,
   "I1_A0_progress": {
     "branch": "research/ige-i1-a0-common-core-20261025",
@@ -266,6 +254,39 @@
     "public_deployment_changed": false,
     "independent_station_accuracy_qualified": false,
     "production_ready": false,
-    "report": "docs/IGE_U1_ANALYZER_TWO_CLIMATE_ROUTES_RU_20261025.md"
-  }
+    "report": "docs/IGE_U1_ANALYZER_TWO_CLIMATE_ROUTES_RU_20261025.md",
+    "final_tested_commit": "35dd7fa3afb24e6cce9d4f4941e00b178640b0a0",
+    "CI_run": 40210735103,
+    "CI_status": "SUCCESS",
+    "CI_tests": 180,
+    "CI_artifact_id": 12605596547,
+    "CI_artifact_sha256": "d96f2da266849fcf0d339a36bab2012e13089f8bb2f30f51e0d7ecaac765208f",
+    "verified_CI_receipt": "research/ige_cmip6/u1_verified_CI_40210735103.json",
+    "verified_CI_outputs": "research/ige_cmip6/u1_verified_CI_40210735103_results.zip",
+    "all_saved_hourly_numeric_values_local_CI_equal": true
+  },
+  "legacy_findings_at_E0": [
+    "fixed Graz and CanESM5 source grid in early modules",
+    "CET/nonleap assumptions in old exporter",
+    "longwave absent in 12-field background reader",
+    "unverified provider grid elevation",
+    "legacy tas-index/time-mean mismatch",
+    "loss of monthly q signal under clipping",
+    "uploaded EPW calendar activated as typical year",
+    "no generator service call from current UI",
+    "inheritance of future event chronology and wind direction",
+    "no independently qualified global local accuracy"
+  ],
+  "remaining_product_limitations": [
+    "one admitted future pilot: Graz/CanESM5/r1i1p1f1/ssp245/2040-2059, fixed 2023 pattern and 2002-2014 reference",
+    "one historical year per request, integer fixed standard UTC offsets only",
+    "historical source pressure is a model-surface proxy not collocated with 2m T/RH",
+    "unverified provider grid elevation and no local station/terrain correction",
+    "future NASA hurs monthly signal is diagnostic and not enforced",
+    "future event chronology, wind direction, cloud and precipitation phase are inherited",
+    "native NASA daily time bounds are not fully verified",
+    "new-coordinate live transport was stubbed in UI verification, not independently acquired",
+    "no independently qualified station accuracy or global local accuracy",
+    "public deployment, multi-user load and actual EnergyPlus simulation not qualified"
+  ]
 }

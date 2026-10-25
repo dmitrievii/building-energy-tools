@@ -1,0 +1,234 @@
+{
+  "schema": "IGE_U1_VERIFIED_CI_RECEIPT_v1",
+  "run_id": 40210735103,
+  "job_id": 121221198843,
+  "conclusion": "SUCCESS",
+  "code_commit": "35dd7fa3afb24e6cce9d4f4941e00b178640b0a0",
+  "code_tree": "19da2286c8b1959c541663e2c8118986466b6678",
+  "artifact_id": 12605596547,
+  "artifact_bytes": 8673994,
+  "artifact_sha256": "d96f2da266849fcf0d339a36bab2012e13089f8bb2f30f51e0d7ecaac765208f",
+  "tests": {
+    "tests_run": 180,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "status": "PASS",
+    "wall_seconds": 34.919570333000024,
+    "patterns": [
+      [
+        "tools/climate_analyzer/tests",
+        "test_ige_engine.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_canonical_climate_model.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_e2e_integration_audit.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p7c1_epw_morphing.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p7c1b_humidity_closure.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p9_1a_global_historical_backbone.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p9_2d_annual_cet_epw_export.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_ige_bm1.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p9_3b3_thermodynamics.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_ige_u1.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_startup_dependency_contract.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_source_neutral_ui_0_7_4.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_historical_psychrometric_physical_closure.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_source_parity_streamlit_rerun_reset_0_7_5_5.py"
+      ]
+    ],
+    "python": "3.12.15",
+    "numpy": "1.26.4",
+    "pandas": "2.3.3",
+    "streamlit": "1.63.0"
+  },
+  "protection": {
+    "base": "c4f98b31259cee086d046246dabd77815a051b12",
+    "protected_research_files_unchanged": 168,
+    "original_I1_A0_B_M1_engine_byte_unchanged": true,
+    "IV1_station_values_opened": false
+  },
+  "CI_code_hashes_match_local": true,
+  "verified_products": {
+    "historical": {
+      "EPW_byte_identical_to_B_M1_verified_CI_and_local": true,
+      "EPW_sha256": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635",
+      "records": 8760,
+      "fields_per_record": 35,
+      "canonical_calendar_mode": "historical",
+      "all_original_saved_state_columns_retained_exactly": [
+        "dry_bulb_temperature_c",
+        "dew_point_temperature_c",
+        "relative_humidity_pct",
+        "atmospheric_station_pressure_pa",
+        "total_precipitation_depth_mm",
+        "liquid_precipitation_depth_mm",
+        "total_sky_cover_tenths",
+        "global_horizontal_radiation_wh_m2",
+        "direct_horizontal_radiation_wh_m2",
+        "diffuse_horizontal_radiation_wh_m2",
+        "direct_normal_radiation_wh_m2",
+        "wind_speed_m_s",
+        "wind_direction_deg",
+        "horizontal_infrared_radiation_intensity_wh_m2"
+      ],
+      "local_CI_numeric_comparison": {
+        "rtol": 1e-10,
+        "atol": 1e-12,
+        "max_abs_differences": {
+          "dry_bulb_temperature_c": 0.0,
+          "dew_point_temperature_c": 0.0,
+          "relative_humidity_pct": 0.0,
+          "atmospheric_station_pressure_pa": 0.0,
+          "total_precipitation_depth_mm": 0.0,
+          "liquid_precipitation_depth_mm": 0.0,
+          "total_sky_cover_tenths": 0.0,
+          "global_horizontal_radiation_wh_m2": 0.0,
+          "direct_horizontal_radiation_wh_m2": 0.0,
+          "diffuse_horizontal_radiation_wh_m2": 0.0,
+          "direct_normal_radiation_wh_m2": 0.0,
+          "wind_speed_m_s": 0.0,
+          "wind_direction_deg": 0.0,
+          "horizontal_infrared_radiation_intensity_wh_m2": 0.0,
+          "analysis_specific_humidity_kg_kg": 0.0,
+          "humidity_ratio_g_kg": 0.0,
+          "vapor_pressure_pa": 0.0,
+          "saturation_vapor_pressure_pa": 0.0,
+          "moist_air_enthalpy_kj_kg": 0.0,
+          "specific_volume_m3_kg": 0.0,
+          "moist_air_density_kg_m3": 0.0
+        }
+      },
+      "source_and_manifest_hashes_verified": true,
+      "product_members_sha256": {
+        "analysis_state.csv.gz": "7df9f74151f852aa9a9597a6d144e6405f40a4bfdc9b752c5c6e8a7459ebb695",
+        "climate.epw": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635",
+        "hourly.csv.gz": "38015ea2aa8507a135ecc3f5e57b4af62aae9d9874b117f95deb284da83ecaae",
+        "ledger.json": "dae7497903bcccce960e60d4fa7160af1f084524028761ef03395b7ddba543ce",
+        "manifest.json": "ed2be6cc97c5b87be24eadfae70f48fc6867c1efadb3d41c6f01f2a736c68cf0",
+        "monthly_summary.json": "d097b1dbd0e6b9aefca5e2f6f3a3d3607850d79d29487232ce214b6d20bc5ff5",
+        "sources.zip": "2575be295bc41be68ac56940524a76c5ef9f9b5010a83f20b6eec21c49dce273",
+        "ui_report.json": "4735c2040353cff36b1310b378d4963420a4dbba3034dace104e54a6c1024eb6"
+      }
+    },
+    "future": {
+      "EPW_byte_identical_to_B_M1_verified_CI_and_local": true,
+      "EPW_sha256": "fc00e09811498c368965785ee8873bc4ca1cd01761eaebb19c759faebd0e3c28",
+      "records": 8760,
+      "fields_per_record": 35,
+      "canonical_calendar_mode": "climatology",
+      "all_original_saved_state_columns_retained_exactly": [
+        "dry_bulb_temperature_c",
+        "dew_point_temperature_c",
+        "relative_humidity_pct",
+        "atmospheric_station_pressure_pa",
+        "total_precipitation_depth_mm",
+        "liquid_precipitation_depth_mm",
+        "total_sky_cover_tenths",
+        "global_horizontal_radiation_wh_m2",
+        "direct_horizontal_radiation_wh_m2",
+        "diffuse_horizontal_radiation_wh_m2",
+        "direct_normal_radiation_wh_m2",
+        "wind_speed_m_s",
+        "wind_direction_deg",
+        "horizontal_infrared_radiation_intensity_wh_m2",
+        "surface_pressure_proxy_pa",
+        "specific_humidity_kg_kg",
+        "relative_humidity_NASA_phase_pct",
+        "humidity_ratio_g_kg"
+      ],
+      "local_CI_numeric_comparison": {
+        "rtol": 1e-10,
+        "atol": 1e-12,
+        "max_abs_differences": {
+          "dry_bulb_temperature_c": 0.0,
+          "dew_point_temperature_c": 0.0,
+          "relative_humidity_pct": 0.0,
+          "atmospheric_station_pressure_pa": 0.0,
+          "total_precipitation_depth_mm": 0.0,
+          "liquid_precipitation_depth_mm": 0.0,
+          "total_sky_cover_tenths": 0.0,
+          "global_horizontal_radiation_wh_m2": 0.0,
+          "direct_horizontal_radiation_wh_m2": 0.0,
+          "diffuse_horizontal_radiation_wh_m2": 0.0,
+          "direct_normal_radiation_wh_m2": 0.0,
+          "wind_speed_m_s": 0.0,
+          "wind_direction_deg": 0.0,
+          "horizontal_infrared_radiation_intensity_wh_m2": 0.0,
+          "surface_pressure_proxy_pa": 0.0,
+          "specific_humidity_kg_kg": 0.0,
+          "relative_humidity_NASA_phase_pct": 0.0,
+          "humidity_ratio_g_kg": 0.0,
+          "analysis_specific_humidity_kg_kg": 0.0,
+          "vapor_pressure_pa": 0.0,
+          "saturation_vapor_pressure_pa": 0.0,
+          "moist_air_enthalpy_kj_kg": 0.0,
+          "specific_volume_m3_kg": 0.0,
+          "moist_air_density_kg_m3": 0.0
+        }
+      },
+      "source_and_manifest_hashes_verified": true,
+      "product_members_sha256": {
+        "adjustment_ledger.json.gz": "c7e3356057f7c187930ef20d4d12e6764a5f86906f364225cff227c6f85c6c99",
+        "analysis_state.csv.gz": "2ae60f94d7af03bbad48e679b22698e1e47bb9367ab191b4be7d92f6ca05e5e9",
+        "climate.epw": "fc00e09811498c368965785ee8873bc4ca1cd01761eaebb19c759faebd0e3c28",
+        "hourly.csv.gz": "dbe3858ba140348dc7d15ffc5e2f15397a57380fc13b8e13ce08c0314a687d89",
+        "manifest.json": "c748dc7c087a14753dae0995a0c0070c10f5910170389e43a508b326c8b63fa8",
+        "monthly_signal_readback.json": "944d7a15f3b1b72d84c60c41848ee4e0c4b73b261c2108606126308c16335b9d",
+        "reference_climatology.json": "b545968fc6648346f0d321077947dd783940f658f029a6f89bc283a26411f44e",
+        "registered_protocol.json": "6fc41d9a39749578584e86466de0cfc866538df06760e3cb45e2e81c154b9bf4",
+        "source_packets/bm1_protocol_20261025.json": "6fc41d9a39749578584e86466de0cfc866538df06760e3cb45e2e81c154b9bf4",
+        "source_packets/bm1_reference_sources_2002_2014_20261025.zip": "68f19f8e02fb00d178009ab6dbe2f4dc441f879bc870b71a98d797b05ecd1403",
+        "source_packets/e2e_original_replay_inputs_20261025.zip": "49dab390ec5d5250f79198df16e69cc3ba37a9985b66f739fde5a729db3c192d",
+        "source_packets/i1_a0_graz2023_original_sources_20261025.zip": "2575be295bc41be68ac56940524a76c5ef9f9b5010a83f20b6eec21c49dce273",
+        "ui_report.json": "841fe274d20d1ad30d1a4bed27b2a3a1dc0f01da6da9d565832a1ec24542930c"
+      }
+    }
+  },
+  "UI_test_method": "streamlit.testing.v1.AppTest including runtime patch installation",
+  "new_weather_provider_requests": 0,
+  "live_provider_transport_in_UI_independently_exercised": false,
+  "browser_visual_test_performed": false,
+  "public_deployment_changed": false,
+  "production_ready": false,
+  "independent_station_accuracy_qualified": false,
+  "actual_EnergyPlus_simulation_run": false,
+  "IV1_station_values_opened": false,
+  "verification_sha256": "6d0196131536cb02cddddbeb500942b510e412570765d2d57b5cbe887e58b8a2"
+}
