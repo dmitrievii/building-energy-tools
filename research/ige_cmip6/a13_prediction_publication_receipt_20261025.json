@@ -1,0 +1,14 @@
+{
+  "schema": "IGE_A13_PREDICTION_PUBLICATION_RECEIPT_v1",
+  "sha": "67798fc0401c3cc64dfa02c9e03fd48bf2213536",
+  "tree": "9ed4dfafa6429039e23de493e191cb5de50a64d4",
+  "parents": [
+    "f60141e8c7057f1cb1bb6eaec2d5537ec8ef0485"
+  ],
+  "committer_UTC": "2026-10-25T21:35:05Z",
+  "url": "https://api.github.com/repos/dmitrievii/building-energy-tools/git/commits/67798fc0401c3cc64dfa02c9e03fd48bf2213536",
+  "GitHub_branch_ref_verified_before_control_request": true,
+  "public_branch": "refs/heads/research/ige-a1-3-ch-temperature-20261025",
+  "new_control_observation_bodies_opened_at_publication": false,
+  "verified_UTC": "2026-10-25T21:35:41.913160+00:00"
+}

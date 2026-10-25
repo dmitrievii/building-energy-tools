@@ -1,0 +1,834 @@
+{
+  "schema": "IGE_A13_REVEALED_SOURCE_TEMPERATURE_COMPARISON_v1",
+  "status": "EXPOSED_SOURCE_RESEARCH_COMPARISON_NOT_INDEPENDENT_QUALIFICATION",
+  "cases": [
+    {
+      "target_key": "AT:3202",
+      "season": "winter",
+      "quality_stratum": "SOURCE_BLOCKED",
+      "requested_hours": 168,
+      "predicted_hours": 0,
+      "observed_primary_QC_hours": 0,
+      "source_block_reasons": [
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "status": "SOURCE_BLOCKED",
+      "B0_all_reference": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "B0_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "R1_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "delta_MAE_K": null
+    },
+    {
+      "target_key": "AT:3202",
+      "season": "spring",
+      "quality_stratum": "SOURCE_BLOCKED",
+      "requested_hours": 168,
+      "predicted_hours": 0,
+      "observed_primary_QC_hours": 0,
+      "source_block_reasons": [
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "status": "SOURCE_BLOCKED",
+      "B0_all_reference": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "B0_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "R1_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "delta_MAE_K": null
+    },
+    {
+      "target_key": "AT:3202",
+      "season": "summer",
+      "quality_stratum": "SOURCE_BLOCKED",
+      "requested_hours": 168,
+      "predicted_hours": 0,
+      "observed_primary_QC_hours": 0,
+      "source_block_reasons": [
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "status": "SOURCE_BLOCKED",
+      "B0_all_reference": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "B0_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "R1_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "delta_MAE_K": null
+    },
+    {
+      "target_key": "AT:3202",
+      "season": "autumn",
+      "quality_stratum": "SOURCE_BLOCKED",
+      "requested_hours": 168,
+      "predicted_hours": 0,
+      "observed_primary_QC_hours": 0,
+      "source_block_reasons": [
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "status": "SOURCE_BLOCKED",
+      "B0_all_reference": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "B0_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "R1_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "delta_MAE_K": null
+    },
+    {
+      "target_key": "AT:6305",
+      "season": "winter",
+      "quality_stratum": "SOURCE_BLOCKED",
+      "requested_hours": 168,
+      "predicted_hours": 0,
+      "observed_primary_QC_hours": 0,
+      "source_block_reasons": [
+        "TARGET:ACTUAL_SENSOR_HEIGHT_NOT_STRICT_2M_NO_QUALIFIED_VERTICAL_TRANSFER"
+      ],
+      "status": "SOURCE_BLOCKED",
+      "B0_all_reference": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "B0_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "R1_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "delta_MAE_K": null
+    },
+    {
+      "target_key": "AT:6305",
+      "season": "spring",
+      "quality_stratum": "SOURCE_BLOCKED",
+      "requested_hours": 168,
+      "predicted_hours": 0,
+      "observed_primary_QC_hours": 0,
+      "source_block_reasons": [
+        "TARGET:ACTUAL_SENSOR_HEIGHT_NOT_STRICT_2M_NO_QUALIFIED_VERTICAL_TRANSFER"
+      ],
+      "status": "SOURCE_BLOCKED",
+      "B0_all_reference": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "B0_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "R1_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "delta_MAE_K": null
+    },
+    {
+      "target_key": "AT:6305",
+      "season": "summer",
+      "quality_stratum": "SOURCE_BLOCKED",
+      "requested_hours": 168,
+      "predicted_hours": 0,
+      "observed_primary_QC_hours": 0,
+      "source_block_reasons": [
+        "TARGET:ACTUAL_SENSOR_HEIGHT_NOT_STRICT_2M_NO_QUALIFIED_VERTICAL_TRANSFER"
+      ],
+      "status": "SOURCE_BLOCKED",
+      "B0_all_reference": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "B0_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "R1_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "delta_MAE_K": null
+    },
+    {
+      "target_key": "AT:6305",
+      "season": "autumn",
+      "quality_stratum": "SOURCE_BLOCKED",
+      "requested_hours": 168,
+      "predicted_hours": 0,
+      "observed_primary_QC_hours": 0,
+      "source_block_reasons": [
+        "TARGET:ACTUAL_SENSOR_HEIGHT_NOT_STRICT_2M_NO_QUALIFIED_VERTICAL_TRANSFER"
+      ],
+      "status": "SOURCE_BLOCKED",
+      "B0_all_reference": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "B0_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "R1_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "delta_MAE_K": null
+    },
+    {
+      "target_key": "DE:02928",
+      "season": "winter",
+      "quality_stratum": "SOURCE_BLOCKED",
+      "requested_hours": 168,
+      "predicted_hours": 0,
+      "observed_primary_QC_hours": 0,
+      "source_block_reasons": [
+        "TARGET:DWD_HOURLY_TIME_OPERATOR_UNRESOLVED",
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "status": "SOURCE_BLOCKED",
+      "B0_all_reference": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "B0_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "R1_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "delta_MAE_K": null
+    },
+    {
+      "target_key": "DE:02928",
+      "season": "spring",
+      "quality_stratum": "SOURCE_BLOCKED",
+      "requested_hours": 168,
+      "predicted_hours": 0,
+      "observed_primary_QC_hours": 0,
+      "source_block_reasons": [
+        "TARGET:DWD_HOURLY_TIME_OPERATOR_UNRESOLVED",
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "status": "SOURCE_BLOCKED",
+      "B0_all_reference": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "B0_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "R1_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "delta_MAE_K": null
+    },
+    {
+      "target_key": "DE:02928",
+      "season": "summer",
+      "quality_stratum": "SOURCE_BLOCKED",
+      "requested_hours": 168,
+      "predicted_hours": 0,
+      "observed_primary_QC_hours": 0,
+      "source_block_reasons": [
+        "TARGET:DWD_HOURLY_TIME_OPERATOR_UNRESOLVED",
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "status": "SOURCE_BLOCKED",
+      "B0_all_reference": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "B0_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "R1_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "delta_MAE_K": null
+    },
+    {
+      "target_key": "DE:02928",
+      "season": "autumn",
+      "quality_stratum": "SOURCE_BLOCKED",
+      "requested_hours": 168,
+      "predicted_hours": 0,
+      "observed_primary_QC_hours": 0,
+      "source_block_reasons": [
+        "TARGET:DWD_HOURLY_TIME_OPERATOR_UNRESOLVED",
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "status": "SOURCE_BLOCKED",
+      "B0_all_reference": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "B0_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "R1_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "delta_MAE_K": null
+    },
+    {
+      "target_key": "DE:01443",
+      "season": "winter",
+      "quality_stratum": "SOURCE_BLOCKED",
+      "requested_hours": 168,
+      "predicted_hours": 0,
+      "observed_primary_QC_hours": 0,
+      "source_block_reasons": [
+        "TARGET:DWD_HOURLY_TIME_OPERATOR_UNRESOLVED",
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "status": "SOURCE_BLOCKED",
+      "B0_all_reference": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "B0_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "R1_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "delta_MAE_K": null
+    },
+    {
+      "target_key": "DE:01443",
+      "season": "spring",
+      "quality_stratum": "SOURCE_BLOCKED",
+      "requested_hours": 168,
+      "predicted_hours": 0,
+      "observed_primary_QC_hours": 0,
+      "source_block_reasons": [
+        "TARGET:DWD_HOURLY_TIME_OPERATOR_UNRESOLVED",
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "status": "SOURCE_BLOCKED",
+      "B0_all_reference": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "B0_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "R1_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "delta_MAE_K": null
+    },
+    {
+      "target_key": "DE:01443",
+      "season": "summer",
+      "quality_stratum": "SOURCE_BLOCKED",
+      "requested_hours": 168,
+      "predicted_hours": 0,
+      "observed_primary_QC_hours": 0,
+      "source_block_reasons": [
+        "TARGET:DWD_HOURLY_TIME_OPERATOR_UNRESOLVED",
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "status": "SOURCE_BLOCKED",
+      "B0_all_reference": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "B0_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "R1_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "delta_MAE_K": null
+    },
+    {
+      "target_key": "DE:01443",
+      "season": "autumn",
+      "quality_stratum": "SOURCE_BLOCKED",
+      "requested_hours": 168,
+      "predicted_hours": 0,
+      "observed_primary_QC_hours": 0,
+      "source_block_reasons": [
+        "TARGET:DWD_HOURLY_TIME_OPERATOR_UNRESOLVED",
+        "FEWER_THAN_TWO_METADATA_ADMITTED_FROZEN_DONORS"
+      ],
+      "status": "SOURCE_BLOCKED",
+      "B0_all_reference": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "B0_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "R1_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null
+      },
+      "delta_MAE_K": null
+    },
+    {
+      "target_key": "CH:BAS",
+      "season": "winter",
+      "quality_stratum": "CH_PUBLISHED_HISTORICAL_NO_PER_ROW_QC_NOT_DWD_QN10_EQUIVALENT",
+      "requested_hours": 168,
+      "predicted_hours": 168,
+      "observed_primary_QC_hours": 168,
+      "source_block_reasons": [],
+      "status": "SCORED_EXPOSED_SOURCE",
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.1004464285714286,
+        "RMSE_K": 1.3397947665710574,
+        "bias_K": -0.7318948412690478
+      },
+      "B0_paired": {
+        "n": 168,
+        "MAE_K": 1.1004464285714286,
+        "RMSE_K": 1.3397947665710574,
+        "bias_K": -0.7318948412690478
+      },
+      "R1_paired": {
+        "n": 168,
+        "MAE_K": 0.8645248706172618,
+        "RMSE_K": 1.1028458945206865,
+        "bias_K": -0.2906666811482143
+      },
+      "delta_MAE_K": -0.2359215579541668
+    },
+    {
+      "target_key": "CH:BAS",
+      "season": "spring",
+      "quality_stratum": "CH_PUBLISHED_HISTORICAL_NO_PER_ROW_QC_NOT_DWD_QN10_EQUIVALENT",
+      "requested_hours": 168,
+      "predicted_hours": 168,
+      "observed_primary_QC_hours": 168,
+      "source_block_reasons": [],
+      "status": "SCORED_EXPOSED_SOURCE",
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.2589781746029762,
+        "RMSE_K": 1.575827683126215,
+        "bias_K": -1.186359126982738
+      },
+      "B0_paired": {
+        "n": 168,
+        "MAE_K": 1.2589781746029762,
+        "RMSE_K": 1.575827683126215,
+        "bias_K": -1.186359126982738
+      },
+      "R1_paired": {
+        "n": 168,
+        "MAE_K": 0.9698697044321429,
+        "RMSE_K": 1.1943852116455302,
+        "bias_K": -0.8301048683761905
+      },
+      "delta_MAE_K": -0.2891084701708333
+    },
+    {
+      "target_key": "CH:BAS",
+      "season": "summer",
+      "quality_stratum": "CH_PUBLISHED_HISTORICAL_NO_PER_ROW_QC_NOT_DWD_QN10_EQUIVALENT",
+      "requested_hours": 168,
+      "predicted_hours": 168,
+      "observed_primary_QC_hours": 168,
+      "source_block_reasons": [],
+      "status": "SCORED_EXPOSED_SOURCE",
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.0313988095249997,
+        "RMSE_K": 1.351021530764916,
+        "bias_K": -0.8795138888869044
+      },
+      "B0_paired": {
+        "n": 168,
+        "MAE_K": 1.0313988095249997,
+        "RMSE_K": 1.351021530764916,
+        "bias_K": -0.8795138888869044
+      },
+      "R1_paired": {
+        "n": 168,
+        "MAE_K": 0.9174107674761907,
+        "RMSE_K": 1.2048686862082616,
+        "bias_K": -0.5293932190452382
+      },
+      "delta_MAE_K": -0.11398804204880908
+    },
+    {
+      "target_key": "CH:BAS",
+      "season": "autumn",
+      "quality_stratum": "CH_PUBLISHED_HISTORICAL_NO_PER_ROW_QC_NOT_DWD_QN10_EQUIVALENT",
+      "requested_hours": 168,
+      "predicted_hours": 168,
+      "observed_primary_QC_hours": 168,
+      "source_block_reasons": [],
+      "status": "SCORED_EXPOSED_SOURCE",
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.3888888888886906,
+        "RMSE_K": 1.6511910483984304,
+        "bias_K": -1.1242063492053571
+      },
+      "B0_paired": {
+        "n": 168,
+        "MAE_K": 1.3888888888886906,
+        "RMSE_K": 1.6511910483984304,
+        "bias_K": -1.1242063492053571
+      },
+      "R1_paired": {
+        "n": 168,
+        "MAE_K": 1.2147721056136906,
+        "RMSE_K": 1.5092113806144984,
+        "bias_K": -0.6372320604815476
+      },
+      "delta_MAE_K": -0.1741167832749999
+    },
+    {
+      "target_key": "CH:ALT",
+      "season": "winter",
+      "quality_stratum": "CH_PUBLISHED_HISTORICAL_NO_PER_ROW_QC_NOT_DWD_QN10_EQUIVALENT",
+      "requested_hours": 168,
+      "predicted_hours": 168,
+      "observed_primary_QC_hours": 168,
+      "source_block_reasons": [],
+      "status": "SCORED_EXPOSED_SOURCE",
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 2.732837301585714,
+        "RMSE_K": 3.184407800880053,
+        "bias_K": -2.431150793648809
+      },
+      "B0_paired": {
+        "n": 168,
+        "MAE_K": 2.732837301585714,
+        "RMSE_K": 3.184407800880053,
+        "bias_K": -2.431150793648809
+      },
+      "R1_paired": {
+        "n": 168,
+        "MAE_K": 1.7083568206047617,
+        "RMSE_K": 2.137960436951702,
+        "bias_K": 1.0759241256714287
+      },
+      "delta_MAE_K": -1.0244804809809525
+    },
+    {
+      "target_key": "CH:ALT",
+      "season": "spring",
+      "quality_stratum": "CH_PUBLISHED_HISTORICAL_NO_PER_ROW_QC_NOT_DWD_QN10_EQUIVALENT",
+      "requested_hours": 168,
+      "predicted_hours": 168,
+      "observed_primary_QC_hours": 168,
+      "source_block_reasons": [],
+      "status": "SCORED_EXPOSED_SOURCE",
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 3.990972222222024,
+        "RMSE_K": 4.696728921933211,
+        "bias_K": -3.948809523810119
+      },
+      "B0_paired": {
+        "n": 168,
+        "MAE_K": 3.990972222222024,
+        "RMSE_K": 4.696728921933211,
+        "bias_K": -3.948809523810119
+      },
+      "R1_paired": {
+        "n": 168,
+        "MAE_K": 1.7950831554952378,
+        "RMSE_K": 2.2931144908607304,
+        "bias_K": 0.5649896295785715
+      },
+      "delta_MAE_K": -2.195889066726786
+    },
+    {
+      "target_key": "CH:ALT",
+      "season": "summer",
+      "quality_stratum": "CH_PUBLISHED_HISTORICAL_NO_PER_ROW_QC_NOT_DWD_QN10_EQUIVALENT",
+      "requested_hours": 168,
+      "predicted_hours": 168,
+      "observed_primary_QC_hours": 168,
+      "source_block_reasons": [],
+      "status": "SCORED_EXPOSED_SOURCE",
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 2.4701884920636905,
+        "RMSE_K": 2.720385804488799,
+        "bias_K": -2.4701884920636905
+      },
+      "B0_paired": {
+        "n": 168,
+        "MAE_K": 2.4701884920636905,
+        "RMSE_K": 2.720385804488799,
+        "bias_K": -2.4701884920636905
+      },
+      "R1_paired": {
+        "n": 168,
+        "MAE_K": 1.0997754361738097,
+        "RMSE_K": 1.3805657861811707,
+        "bias_K": 0.775378041645238
+      },
+      "delta_MAE_K": -1.3704130558898808
+    },
+    {
+      "target_key": "CH:ALT",
+      "season": "autumn",
+      "quality_stratum": "CH_PUBLISHED_HISTORICAL_NO_PER_ROW_QC_NOT_DWD_QN10_EQUIVALENT",
+      "requested_hours": 168,
+      "predicted_hours": 168,
+      "observed_primary_QC_hours": 168,
+      "source_block_reasons": [],
+      "status": "SCORED_EXPOSED_SOURCE",
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 2.356894841267857,
+        "RMSE_K": 2.505921640932694,
+        "bias_K": -2.3552083333309524
+      },
+      "B0_paired": {
+        "n": 168,
+        "MAE_K": 2.356894841267857,
+        "RMSE_K": 2.505921640932694,
+        "bias_K": -2.3552083333309524
+      },
+      "R1_paired": {
+        "n": 168,
+        "MAE_K": 1.0404570966958335,
+        "RMSE_K": 1.273035860060993,
+        "bias_K": -0.7528954341005952
+      },
+      "delta_MAE_K": -1.3164377445720237
+    }
+  ],
+  "pooled_CH": {
+    "B0": {
+      "n": 1344,
+      "MAE_K": 2.0413256448409225,
+      "RMSE_K": 2.615096359661729,
+      "bias_K": -1.8909164186497023
+    },
+    "R1": {
+      "n": 1344,
+      "MAE_K": 1.201281244638616,
+      "RMSE_K": 1.5703536119446815,
+      "bias_K": -0.07800005828206844
+    },
+    "delta_MAE_K": -0.8400444002023064,
+    "complete_blocks": 8,
+    "bootstrap_95pct": {
+      "lower_K": -1.359750477633259,
+      "upper_K": -0.36686742476330747,
+      "draws": 10000,
+      "seed": 20261025,
+      "unit": "whole target-season 7-day blocks; limited eight CH blocks, dependence between stations not eliminated"
+    }
+  },
+  "per_target": {
+    "CH:ALT": {
+      "B0": {
+        "n": 672,
+        "MAE_K": 2.8877232142848213,
+        "RMSE_K": 3.3867335961139835,
+        "bias_K": -2.801339285713393
+      },
+      "R1": {
+        "n": 672,
+        "MAE_K": 1.4109181272424105,
+        "RMSE_K": 1.8272815251858048,
+        "bias_K": 0.4158490906986607
+      },
+      "delta_MAE_K": -1.4768050870424108,
+      "complete_blocks": 4,
+      "bootstrap_95pct": {
+        "lower_K": -1.9760262361880956,
+        "upper_K": -1.1109636247081844,
+        "draws": 10000,
+        "seed": 20261025,
+        "unit": "whole target-season 7-day blocks; limited eight CH blocks, dependence between stations not eliminated"
+      }
+    },
+    "CH:BAS": {
+      "B0": {
+        "n": 672,
+        "MAE_K": 1.194928075397024,
+        "RMSE_K": 1.4857636048796266,
+        "bias_K": -0.9804935515860118
+      },
+      "R1": {
+        "n": 672,
+        "MAE_K": 0.9916443620348215,
+        "RMSE_K": 1.262166059126157,
+        "bias_K": -0.5718492072627976
+      },
+      "delta_MAE_K": -0.2032837133622024,
+      "complete_blocks": 4,
+      "bootstrap_95pct": {
+        "lower_K": -0.26251501406250005,
+        "upper_K": -0.14405241266190452,
+        "draws": 10000,
+        "seed": 20261025,
+        "unit": "whole target-season 7-day blocks; limited eight CH blocks, dependence between stations not eliminated"
+      }
+    }
+  },
+  "counts": {
+    "frozen_cases": 24,
+    "source_blocked_cases": 16,
+    "scored_cases": 8,
+    "paired_hours": 1344
+  },
+  "source_byte_blind": false,
+  "target_T_2025_before_this_stage_fitting_or_errors_demonstrated": false,
+  "target_T_opened_only_after_published_prediction_seal": true,
+  "independent_accuracy_qualified": false,
+  "full_weather_physical_closure_qualified": false,
+  "production_ready": false,
+  "UI_or_EPW_defaults_changed": false,
+  "IV1_observations_opened": false,
+  "AT_DE_measurements_opened": false,
+  "prediction_seal_sha256": "98b184fd262bc2d495381f66bb35046913c762a9cf6514f0d7cd3b327640d364",
+  "published_seal_commit": "67798fc0401c3cc64dfa02c9e03fd48bf2213536",
+  "control_packet_sha256": "5547049309d9cc65ce8396a473caa8515bb37531cdbb30cff9ab769d63d64cde",
+  "predictor_packet_sha256": "c11d9df67f27fb67dbc2233c2101f628edbca8380e2d2f2a5b05e39b581aabbd",
+  "code_commit": "f60141e8c7057f1cb1bb6eaec2d5537ec8ef0485",
+  "acquisition_decoded_body_bytes_cumulative": 49747141
+}

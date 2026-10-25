@@ -1,0 +1,23 @@
+{
+  "schema": "IGE_A13_POSTHOC_ERROR_DECOMPOSITION_v1",
+  "posthoc_descriptive_only_not_new_acceptance_or_tuning": true,
+  "identity": "RMSE^2 = bias^2 + mean((error-bias)^2); population denominator N",
+  "centred_RMSE_is_error_variability_not_a_complete_hourly_shape_qualification": true,
+  "groups": {
+    "CH_pooled": {
+      "B0_centred_RMSE_K": 1.8064230036170963,
+      "R1_centred_RMSE_K": 1.568415269453757,
+      "MAE_reduction_fraction": 0.4115190549461646
+    },
+    "CH:ALT": {
+      "B0_centred_RMSE_K": 1.9032768210026443,
+      "R1_centred_RMSE_K": 1.7793333881120923,
+      "MAE_reduction_fraction": 0.5114081154790173
+    },
+    "CH:BAS": {
+      "B0_centred_RMSE_K": 1.1163000872897717,
+      "R1_centred_RMSE_K": 1.1251896040059042,
+      "MAE_reduction_fraction": 0.17012213332979043
+    }
+  }
+}

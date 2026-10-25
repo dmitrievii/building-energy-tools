@@ -1,0 +1,69 @@
+{
+  "schema": "IGE_A13_REVEALED_TEMPERATURE_REGISTRY_UPDATE_v1",
+  "date": "2026-10-25",
+  "published_prediction_seal_commit": "67798fc0401c3cc64dfa02c9e03fd48bf2213536",
+  "new_target_temperature_role": "evaluation only; no fitting or method change",
+  "raw_container_byte_scope": "complete historical 2020-2029 assets, all fields exposed as bytes; numerical analysis only selected temperature/reference windows",
+  "selected_numeric_T_windows": [
+    {
+      "station_key": "CH:ALT",
+      "windows": [
+        {
+          "season": "winter",
+          "start_UTC": "2025-01-10",
+          "end_UTC": "2025-01-16"
+        },
+        {
+          "season": "spring",
+          "start_UTC": "2025-04-10",
+          "end_UTC": "2025-04-16"
+        },
+        {
+          "season": "summer",
+          "start_UTC": "2025-07-10",
+          "end_UTC": "2025-07-16"
+        },
+        {
+          "season": "autumn",
+          "start_UTC": "2025-10-10",
+          "end_UTC": "2025-10-16"
+        }
+      ],
+      "original_sha256": "2386f73a5d1d616079ceeea96e63cbd38c145e02f121c49fb5ac04c5de25f613",
+      "new_body_read_UTC": "2026-10-25T21:35:48.828849+00:00",
+      "same_original_bytes_as_prior_wind_source": true
+    },
+    {
+      "station_key": "CH:BAS",
+      "windows": [
+        {
+          "season": "winter",
+          "start_UTC": "2025-01-10",
+          "end_UTC": "2025-01-16"
+        },
+        {
+          "season": "spring",
+          "start_UTC": "2025-04-10",
+          "end_UTC": "2025-04-16"
+        },
+        {
+          "season": "summer",
+          "start_UTC": "2025-07-10",
+          "end_UTC": "2025-07-16"
+        },
+        {
+          "season": "autumn",
+          "start_UTC": "2025-10-10",
+          "end_UTC": "2025-10-16"
+        }
+      ],
+      "original_sha256": "19d5ef8c633b31e586f0090f80f0571d23664ed0afa80b33b92e73ad9104090b",
+      "new_body_read_UTC": "2026-10-25T21:35:55.322662+00:00",
+      "same_original_bytes_as_prior_wind_source": true
+    }
+  ],
+  "chronology_verified_publication_before_all_control_HTTP_attempts": true,
+  "code_and_workflow_hashes_unchanged_after_seal": true,
+  "independent_accuracy_qualified": false,
+  "IV1_observations_opened": false
+}
