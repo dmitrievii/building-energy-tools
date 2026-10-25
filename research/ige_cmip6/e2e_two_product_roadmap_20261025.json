@@ -117,14 +117,14 @@
       "product_functions": [
         "A"
       ],
-      "current_status": "A1_1_CI_VERIFIED_210_CHECKS_STATION_CONTRACTS_AND_FROZEN_DESIGN_NO_SKILL_EVALUATION",
+      "current_status": "A1_3_CI_VERIFIED_259_SEALED_CH_COMPARISON_FULL_LOCAL_YEAR_AND_INDEPENDENT_AT_DE_CH_PENDING",
       "depends_on": [
         "A0"
       ],
       "reviewable_outputs": [
-        "station correction policy",
-        "AT DE CH source adapters",
-        "paired holdout evaluation"
+        "AT DE CH source contracts and explicit source blocks",
+        "actual precontrol R1 B0 prediction seal",
+        "paired revealed-source CH comparison; independent AT DE CH pending"
       ],
       "completion_criterion": "Frozen selection before scores, spatial/temporal separation, report improvement and degradation versus same-hour ERA5"
     },
@@ -164,7 +164,7 @@
       "completion_criterion": "No incomplete-source unblinding, original NASA operators/objective, independent benefit before default replacement"
     }
   ],
-  "current_first_implementation": "A1_2_historical_station_geometry_temporal_operator_and_exposure_admission_before_prediction_seal",
+  "current_first_implementation": "A1_4_limited_CH_complete_historical_year_with_explicit_consistent_T_RH_q_p_policy_then_EPW",
   "minimum_B_M_temperature_policy": "MIDRANGE_NEX_TAS_INDEX_NO_IMPLICIT_TIME_MEAN_EQUALITY",
   "specific_humidity_to_mixing_ratio": "w_g_per_kg_dry_air=1000*q_kg_per_kg_moist_air/(1-q)",
   "future_pressure_policy": "DECLARED_BASELINE_PROXY_NOT_NATIVE_FUTURE_PS",
@@ -396,6 +396,16 @@
     "report": "docs/IGE_A1_3_CH_TEMPERATURE_COMPARISON_RU_20261025.md",
     "results": "research/ige_cmip6/a13_comparison_20261025.json",
     "exposure_registry_update": "research/ige_cmip6/a13_revealed_temperature_registry_update_20261025.json",
-    "next_product_stage": "A1.4 limited CH full historical year with a separate consistent T RH q p policy; independent AT DE CH qualification remains separate"
-  }
+    "next_product_stage": "A1.4 limited CH full historical year with a separate consistent T RH q p policy; independent AT DE CH qualification remains separate",
+    "CI_run": 40236855438,
+    "CI_status": "SUCCESS",
+    "CI_tests": 259,
+    "tested_commit": "e48cd91c8a18ef8918ff403fefbf96ef86c1f0ab",
+    "CI_artifact_id": 12615401906,
+    "CI_artifact_sha256": "b9e9bb097d613bf1e5e2a11a733c0b6f9282d37f2dda69ef0b89596db27e96d8",
+    "CI_local_predictions_all_cases_seal_scores_and_pairs_byte_exact": true,
+    "verified_CI_receipt": "research/ige_cmip6/a13_verified_CI_40236855438.json",
+    "verified_CI_outputs": "research/ige_cmip6/a13_verified_CI_40236855438_results.zip"
+  },
+  "current_execution_stage": "A1.3 completed as CI-verified revealed CH temperature comparison; A1 and V1 not qualified"
 }
