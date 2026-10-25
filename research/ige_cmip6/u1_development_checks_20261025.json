@@ -1,0 +1,18 @@
+{
+  "schema": "IGE_U1_DEVELOPMENT_CHECKS_v1",
+  "first_U1_tests": {
+    "tests": 19,
+    "failures": 1,
+    "cause": "Recomputing an existing future dry-air mixing ratio introduced a maximum 3.55271368e-15 g/kg rounding difference.",
+    "correction": "Validate existing mixing ratio against original q, then retain the source column byte-for-value.",
+    "original_weather_and_EPW_changed": false
+  },
+  "final_local_acceptance": {
+    "tests": 180,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0
+  },
+  "new_weather_or_station_values_opened": false,
+  "IV1_station_values_opened": false
+}

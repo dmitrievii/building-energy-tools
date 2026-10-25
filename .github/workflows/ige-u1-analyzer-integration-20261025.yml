@@ -1,0 +1,57 @@
+name: IGE U1 historical and future Analyzer routes with phase-aware analysis
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/ige-u1-analyzer-integration-20261025
+    paths:
+      - .github/workflows/ige-u1-analyzer-integration-20261025.yml
+      - tools/climate_analyzer/app.py
+      - tools/climate_analyzer/epw_climate_analyzer/engine_analysis.py
+      - tools/climate_analyzer/epw_climate_analyzer/engine_application.py
+      - tools/climate_analyzer/epw_climate_analyzer/engine_ui.py
+      - tools/climate_analyzer/tests/test_ige_u1.py
+      - research/ige_cmip6/u1_verify.py
+permissions:
+  contents: read
+env:
+  OPENBLAS_NUM_THREADS: '1'
+  OMP_NUM_THREADS: '1'
+  STREAMLIT_BROWSER_GATHER_USAGE_STATS: 'false'
+jobs:
+  two_real_source_years_through_actual_Streamlit_entrypoint:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r tools/climate_analyzer/requirements.txt
+      - name: Original core regressions, phase adapter, full app forms, charts and downloads
+        run: python research/ige_cmip6/u1_verify.py --out outputs/u1
+      - name: Verify unchanged EPWs and publish the separate scope axes
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          r=json.loads(Path('outputs/u1/verification.json').read_text())
+          h,f=r['products']['historical'],r['products']['future']
+          assert h['records']==f['records']==8760
+          assert h['calendar_mode']=='historical' and f['calendar_mode']=='climatology'
+          assert h['EPW_sha256']=='acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635'
+          assert f['EPW_sha256']=='fc00e09811498c368965785ee8873bc4ca1cd01761eaebb19c759faebd0e3c28'
+          assert r['new_weather_provider_requests']==0 and r['production_ready'] is False
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as stream:
+              stream.write(f"{r['tests']['tests_run']} tests PASS. Both historical and future 8760-hour products executed through the real Streamlit entrypoint using AppTest. EPW hashes unchanged.\n\n")
+              stream.write('Water-phase humidity, original hourly clock, charts, downloads, form submission and failure recovery checked. Live transport was stubbed; no public deployment or browser visual test. Independent station accuracy, NASA hurs signal, EnergyPlus and production are unqualified.\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: IGE-U1-Analyzer-two-climate-routes-RESEARCH-ONLY
+          path: outputs/u1/
+          if-no-files-found: warn
+          retention-days: 30

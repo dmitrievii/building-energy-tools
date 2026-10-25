@@ -1,0 +1,137 @@
+{
+  "schema": "IGE_U1_VERIFICATION_v1",
+  "status": "UI_ROUTES_AND_PHASE_ADAPTER_PASS_RESEARCH_SCOPE",
+  "tests": {
+    "tests_run": 180,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "status": "PASS",
+    "wall_seconds": 42.66499134300011,
+    "patterns": [
+      [
+        "tools/climate_analyzer/tests",
+        "test_ige_engine.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_canonical_climate_model.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_e2e_integration_audit.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p7c1_epw_morphing.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p7c1b_humidity_closure.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p9_1a_global_historical_backbone.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p9_2d_annual_cet_epw_export.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_ige_bm1.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p9_3b3_thermodynamics.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_ige_u1.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_startup_dependency_contract.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_source_neutral_ui_0_7_4.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_historical_psychrometric_physical_closure.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_source_parity_streamlit_rerun_reset_0_7_5_5.py"
+      ]
+    ],
+    "python": "3.12.14",
+    "numpy": "1.26.4",
+    "pandas": "2.3.3",
+    "streamlit": "1.63.0"
+  },
+  "protection": {
+    "base": "c4f98b31259cee086d046246dabd77815a051b12",
+    "protected_research_files_unchanged": 168,
+    "original_I1_A0_B_M1_engine_byte_unchanged": true,
+    "IV1_station_values_opened": false
+  },
+  "products": {
+    "historical": {
+      "records": 8760,
+      "calendar_mode": "historical",
+      "EPW_sha256": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635",
+      "zip_sha256": "665a6ed4e504289016dfc23b06fc81b25669dbe077fe38286397d9c7fb483485",
+      "zip_bytes": 1243796,
+      "wall_seconds": 1.563568576999387,
+      "UI_connected": true,
+      "weather_provider_requests_this_run": 0,
+      "quality": {
+        "execution_correctness": "COMPLETE_ENGINE_OUTPUT_HASHES_AND_UI_ADAPTER_PASS",
+        "physical_admissibility": "BOUNDS_AND_SOURCE_ROUNDING_PASS_NO_COMMON_HEIGHT_CLOSURE",
+        "independent_accuracy": "NOT_INDEPENDENTLY_VALIDATED",
+        "operational_and_application_scope": "RESEARCH_UI_GRID_BACKGROUND_YEAR"
+      },
+      "production_ready": false
+    },
+    "future": {
+      "records": 8760,
+      "calendar_mode": "climatology",
+      "EPW_sha256": "fc00e09811498c368965785ee8873bc4ca1cd01761eaebb19c759faebd0e3c28",
+      "zip_sha256": "7447a179dca529c83a7eb9babfee945652ec0dd6ae213a620ecee6ebb813e067",
+      "zip_bytes": 7411675,
+      "wall_seconds": 6.1672152539995295,
+      "UI_connected": true,
+      "weather_provider_requests_this_run": 0,
+      "quality": {
+        "execution_correctness": "COMPLETE_ENGINE_OUTPUT_HASHES_AND_UI_ADAPTER_PASS",
+        "physical_admissibility": "CONDITIONAL_WATER_T_P_Q_RH_CLOSURE_PASS",
+        "independent_accuracy": "NOT_INDEPENDENTLY_VALIDATED",
+        "operational_and_application_scope": "RESEARCH_UI_SINGLE_PILOT"
+      },
+      "production_ready": false
+    }
+  },
+  "UI_actual_entrypoint_tested": "tools/climate_analyzer/app.py",
+  "UI_test_method": "streamlit.testing.v1.AppTest including runtime patch installation",
+  "new_weather_provider_requests": 0,
+  "new_NASA_ERA5_station_acquisition": 0,
+  "live_provider_transport_in_UI_independently_exercised": false,
+  "live_request_form_and_failure_path_tested_with_stubs": true,
+  "browser_visual_test_performed": false,
+  "public_deployment_changed": false,
+  "NASA_hurs_signal_enforced": false,
+  "independent_station_accuracy_qualified": false,
+  "production_ready": false,
+  "actual_EnergyPlus_simulation_run": false,
+  "IV1_station_values_opened": false,
+  "implementation_sha256": {
+    "tools/climate_analyzer/app.py": "b8e35381fc5f818bc815b018b0aa8450bc628d57094e5c96a1b2c8fc2fa9d3cc",
+    "tools/climate_analyzer/epw_climate_analyzer/engine_analysis.py": "15fa6f66791a0a396e6a3fbcf547a18e9675060e27ed710ef5b60ea9a2d8a3ab",
+    "tools/climate_analyzer/epw_climate_analyzer/engine_application.py": "3f4e08b80b1a518f1227d08b3ae4b12dc0b878cc510f23d869f9e52ff30c7778",
+    "tools/climate_analyzer/epw_climate_analyzer/engine_ui.py": "58e8f5b91ba4684f8cd65f413b702db2db3e3bee914b66699011dcfb4dd68de0",
+    "tools/climate_analyzer/tests/test_ige_u1.py": "d85d768d050a3deace02823b242ad63296bac04a5cffae24398e503f7ad16c59",
+    "research/ige_cmip6/u1_verify.py": "34384e6cf52dacc039d26dd6022dc4d9973c4afd40ff7ed27e561befbf3183ba"
+  }
+}

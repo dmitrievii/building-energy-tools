@@ -101,7 +101,7 @@
         "A",
         "B-M"
       ],
-      "current_status": "NEXT_TWO_ROUTES_WITH_PHASE_ADAPTER_AND_VISIBLE_LIMITS",
+      "current_status": "LOCAL_180_TESTS_PASS_TWO_ACTUAL_STREAMLIT_ROUTES_CI_PENDING_RESEARCH_SCOPE",
       "depends_on": [
         "A0",
         "B-M1"
@@ -164,7 +164,7 @@
       "completion_criterion": "No incomplete-source unblinding, original NASA operators/objective, independent benefit before default replacement"
     }
   ],
-  "current_first_implementation": "U1_connect_historical_and_future_routes_with_explicit_RH_phase_adapter_and_quality_scope",
+  "current_first_implementation": "U1_CI_verification_then_A1_AT_DE_CH_station_source_and_correction_policy",
   "minimum_B_M_temperature_policy": "MIDRANGE_NEX_TAS_INDEX_NO_IMPLICIT_TIME_MEAN_EQUALITY",
   "specific_humidity_to_mixing_ratio": "w_g_per_kg_dry_air=1000*q_kg_per_kg_moist_air/(1-q)",
   "future_pressure_policy": "DECLARED_BASELINE_PROXY_NOT_NATIVE_FUTURE_PS",
@@ -251,5 +251,21 @@
     "both_EPW_local_CI_byte_identical": true,
     "verified_CI_receipt": "research/ige_cmip6/bm1_verified_CI_40207423607.json",
     "verified_CI_outputs": "research/ige_cmip6/bm1_verified_CI_40207423607_results.zip"
+  },
+  "U1_progress": {
+    "branch": "research/ige-u1-analyzer-integration-20261025",
+    "tests_local": 180,
+    "UI_connected": true,
+    "UI_test_method": "REAL_APP_ENTRYPOINT_STREAMLIT_APPTEST",
+    "historical_scope": "SAVED_GRAZ_2023_AND_SUBMITTED_LIVE_COORDINATE_REQUESTS_ONE_YEAR",
+    "future_scope": "GRAZ_CANESM5_R1I1P1F1_SSP245_2040_2059_PATTERN_2023",
+    "live_provider_transport_tested_in_UI": false,
+    "source_phase_adapter": true,
+    "original_engine_byte_unchanged": true,
+    "historical_and_future_EPW_hashes_unchanged": true,
+    "public_deployment_changed": false,
+    "independent_station_accuracy_qualified": false,
+    "production_ready": false,
+    "report": "docs/IGE_U1_ANALYZER_TWO_CLIMATE_ROUTES_RU_20261025.md"
   }
 }
