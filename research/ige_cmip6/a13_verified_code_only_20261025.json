@@ -1,0 +1,111 @@
+{
+  "schema": "IGE_A13_OFFLINE_VERIFICATION_v1",
+  "mode": "CODE_ONLY_BEFORE_NEW_WEATHER",
+  "tests": {
+    "tests_run": 259,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "status": "PASS",
+    "wall_seconds": 50.8747954090004,
+    "python": "3.12.14",
+    "numpy": "1.26.4",
+    "pandas": "2.3.3",
+    "streamlit": "1.63.0",
+    "patterns": [
+      [
+        "tools/climate_analyzer/tests",
+        "test_ige_engine.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_canonical_climate_model.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_e2e_integration_audit.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p7c1_epw_morphing.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p7c1b_humidity_closure.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p9_1a_global_historical_backbone.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p9_2d_annual_cet_epw_export.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_ige_bm1.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p9_3b3_thermodynamics.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_ige_u1.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_startup_dependency_contract.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_source_neutral_ui_0_7_4.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_historical_psychrometric_physical_closure.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_source_parity_streamlit_rerun_reset_0_7_5_5.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_ige_a1_stations.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_ige_a12_history.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_ige_a13_comparison.py"
+      ]
+    ]
+  },
+  "protection": {
+    "base": "fe2cf4a92c89087f5ba0499d8fcf706edfdbff01",
+    "protected_research_files_unchanged": 168,
+    "A1_1_A1_2_results_and_frozen_protocols_unchanged": true,
+    "existing_UI_engine_and_default_EPW_unchanged": true,
+    "IV1_observations_opened": false
+  },
+  "replay": null,
+  "code_sha256": {
+    "research/ige_cmip6/a13_prepare.py": "c62abe0b25c9f6d800b5fb4ddcd9268fe6c51911de9997a1fee6bfdf087e76d2",
+    "research/ige_cmip6/a13_acquire.py": "4c3b8882390fce0e8a859c667870ee5fd7644309ecd836531d537a1fe05d8262",
+    "research/ige_cmip6/a13_run.py": "f181306c250e275967bfc7dd783a44f7c11846d503bf7bdc7eca37c4b1506979",
+    "research/ige_cmip6/a13_verify.py": "40544c56189e75f1b8fb4277214d9d29fa0fd5a6f8170c3ac3de03f07f17737a",
+    "tools/climate_analyzer/tests/test_ige_a13_comparison.py": "7024baccd7cdc2f23eb39dc91a109e24523287ac0949da72c122ab01d7cc8a08",
+    ".github/workflows/ige-a1-3-ch-temperature-20261025.yml": "59d70a43574c4041c5ee06bee5d47a8410208cba4bc9276c3f15ba1b7db137b8",
+    "research/ige_cmip6/a13_execution_registration_20261025.json": "c1bc18692f1940f3f06aafcfdc5170bf63db0addddf6c238e6f93adce6e0cfdd",
+    "tools/climate_analyzer/epw_climate_analyzer/station_reconstruction.py": "0a4330befe5dae0ab6fa313243bd4f6d39a52895b14717df826d6a77cf21ce4d",
+    "tools/climate_analyzer/epw_climate_analyzer/station_admission.py": "e556c7cf6e289fb34433c1a42389d7d93d2bb502e45611fc8cf61b557d290183"
+  },
+  "registration_sha256": "c1bc18692f1940f3f06aafcfdc5170bf63db0addddf6c238e6f93adce6e0cfdd",
+  "new_network_requests_in_verification": 0,
+  "strict_independent_accuracy_qualified": false,
+  "full_weather_physical_closure_qualified": false,
+  "production_ready": false,
+  "existing_UI_defaults_changed": false
+}

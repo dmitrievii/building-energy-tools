@@ -1,0 +1,49 @@
+name: IGE A1.3 sealed CH temperature comparison NOT independent qualification
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/ige-a1-3-ch-temperature-20261025
+    paths:
+      - research/ige_cmip6/a13_comparison_20261025.json
+      - research/ige_cmip6/a13_control_sources_20261025.zip
+permissions:
+  contents: read
+env:
+  OPENBLAS_NUM_THREADS: '1'
+  OMP_NUM_THREADS: '1'
+  STREAMLIT_BROWSER_GATHER_USAGE_STATS: 'false'
+jobs:
+  sealed_prediction_and_paired_temperature_replay:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r tools/climate_analyzer/requirements.txt numcodecs==0.15.1 deprecated==3.0.0 wrapt==2.5.1
+      - name: Original core UI A1 regressions and sealed actual-data replay without network
+        run: python research/ige_cmip6/a13_verify.py --out outputs/a13
+      - name: Research accuracy and remaining product gates
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json,os
+          r=json.loads(Path('outputs/a13/verification.json').read_text())
+          q=r['replay'];assert q['predictions_all_24_cases_and_scores_replayed_byte_exact']
+          assert r['strict_independent_accuracy_qualified'] is False and r['production_ready'] is False
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:
+              f.write(f"{r['tests']['tests_run']} checks PASS. Frozen predictions and scores replayed from original sources.\n\n")
+              f.write(f"{q['counts']['scored_cases']}/24 cases scored, {q['counts']['paired_hours']} matched hours. CH revealed-source research, AT/DE blocks retained.\n\n")
+              f.write('Code/workflow frozen before control T, no target observation input to R1, no default/EPW promotion or independent qualification.\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: IGE-A1-3-sealed-CH-temperature-replay-EXPOSED-SOURCE-NOT-INDEPENDENT
+          path: outputs/a13/
+          if-no-files-found: warn
+          retention-days: 30
