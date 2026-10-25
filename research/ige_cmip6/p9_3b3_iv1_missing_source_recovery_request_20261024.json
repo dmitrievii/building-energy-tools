@@ -1,0 +1,21 @@
+{
+  "stage": "RESTORE_ONLY_REGISTERED_MISSING_MODEL_INPUTS_BEFORE_OBSERVATIONS",
+  "parent_commit": "00476b4496905aefc016cda2b5a98de065662009",
+  "original_source_run_id": 40121011997,
+  "original_artifact_id": 12572236442,
+  "original_artifact_sha256": "36a3aa0f65b9806461dbaaa3105f14efd0cb4e6904cf73eb1d525302af52a4cc",
+  "original_source_seal_sha256": "086d8954012a0799ac29e23e6474f37307d2a76e0301614367a36447358036ce",
+  "original_source_data_sha256": "43ed82511845d19a42783fd20f960f96a2e7dee0ee7d679297671f849f410a13",
+  "missing_native_hours": ["2022-02-18T12:00"],
+  "missing_reference_indices": [15],
+  "missing_reference_identity": {"country": "CH", "year": 2020, "start": "2020-08-15", "end": "2020-08-28"},
+  "additional_native_byte_ceiling": 536870912,
+  "additional_native_request_ceiling": 1000,
+  "network_policy": "ONE_EXPLICIT_BACKFILL_OF_THE_TWO_TLS_FAILURES_NO_HIDDEN_RETRY_OR_COHORT_REPLACEMENT",
+  "all_675_existing_native_hours_and_17_reference_bodies_preserved": true,
+  "original_incomplete_artifact_preserved": true,
+  "all_84_cases_to_be_regenerated_from_the_completed_registered_donor_pool": true,
+  "physics_objective_NASA_operators_donor_rule_and_scoring_unchanged": true,
+  "heldout_2022_station_values_opened": false,
+  "full_prediction_seal_sha_to_be_committed_before_station_scoring": true
+}

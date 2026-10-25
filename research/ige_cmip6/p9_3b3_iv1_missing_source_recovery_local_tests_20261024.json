@@ -1,0 +1,9 @@
+{
+  "tests_run": 490,
+  "expected_tests": 490,
+  "new_recovery_tests": 6,
+  "status": "PASS",
+  "wall_seconds": 186.8932348160006,
+  "python": "3.12.14",
+  "heldout_2022_station_values_opened": false
+}

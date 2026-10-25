@@ -1,0 +1,143 @@
+name: IGE IV1 restore two missing model inputs and reseal
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/ige-p9-3b3-iv1-at-time-evidence-20261024
+    paths:
+      - .github/workflows/ige-p9-3b3-iv1-missing-source-recovery-20261024.yml
+      - research/ige_cmip6/p9_3b3_iv1_missing_source_recovery.py
+      - research/ige_cmip6/p9_3b3_iv1_missing_source_recovery_request_20261024.json
+      - research/ige_cmip6/test_p9_3b3_iv1_missing_source_recovery.py
+permissions:
+  contents: read
+env:
+  OPENBLAS_NUM_THREADS: '1'
+  OMP_NUM_THREADS: '1'
+jobs:
+  recovery_and_all_previous_controls:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 scipy==1.17.0 numcodecs==0.16.3 pyshtools==4.13.1 eccodes==2.50.0 eccodeslib==2.50.0.33
+      - name: 490 controls including append-only recovery and exact failed-input census
+        run: |
+          mkdir -p outputs/IV1-recovery-contracts
+          python - <<'PY'
+          import json, platform, time, unittest
+          from pathlib import Path
+          suite = unittest.TestSuite(); loader = unittest.TestLoader()
+          for pattern in ['test_p9_3b3_*.py', 'test_p9_3a*.py', 'test_p9_2*.py', 'test_p9_3b2*.py']:
+              suite.addTests(loader.discover('research/ige_cmip6', pattern=pattern))
+          start = time.perf_counter()
+          result = unittest.TextTestRunner(verbosity=1).run(suite)
+          assert result.testsRun == 490 and result.wasSuccessful()
+          Path('outputs/IV1-recovery-contracts/tests.json').write_text(json.dumps({
+              'tests_run': 490, 'new_recovery_tests': 6, 'status': 'PASS',
+              'wall_seconds': time.perf_counter()-start, 'python': platform.python_version(),
+              'heldout_2022_station_values_opened': False, 'recovery_tests_use_artificial_archives': True}, indent=2)+'\n')
+          PY
+          python research/ige_cmip6/p9_3b2d_canonical_pressure_fields.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: IGE-IV1-recovery-490-controls-NOT-station-validation
+          path: outputs/IV1-recovery-contracts/
+          if-no-files-found: warn
+          retention-days: 30
+
+  complete_registered_sources_and_regenerate_all_predictions:
+    needs: recovery_and_all_previous_controls
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 scipy==1.17.0 numcodecs==0.16.3 pyshtools==4.13.1 eccodes==2.50.0 eccodeslib==2.50.0.33
+      - name: Authenticate and replay the original incomplete model archive
+        run: |
+          PYTHONPATH=research/ige_cmip6 python - <<'PY'
+          import json, zipfile
+          from pathlib import Path, PurePosixPath
+          from p9_3b3_iv1_integration_common import sha
+          from p9_3b3_iv1_integration_sources import verify_sources
+          from p9_3b3_iv1_missing_source_recovery import REQUEST, REQUEST_SHA, require_committed_recovery
+          assert sha(REQUEST) == REQUEST_SHA
+          request = json.loads(REQUEST.read_text()); require_committed_recovery(request)
+          archive = Path('research/ige_cmip6/p9_3b3_iv1_native_incomplete_CI_40121011997.zip')
+          assert sha(archive) == request['original_artifact_sha256']
+          out = Path('inputs/IV1-native-predecessor'); out.mkdir(parents=True)
+          with zipfile.ZipFile(archive) as z:
+              assert sum(i.file_size for i in z.infolist()) < 250000000
+              for i in z.infolist():
+                  p = PurePosixPath(i.filename)
+                  assert not p.is_absolute() and '..' not in p.parts and '\\' not in i.filename
+                  assert (i.external_attr >> 16) & 0o170000 != 0o120000
+              z.extractall(out)
+          data, columns, references = verify_sources(out/'sources')
+          assert not data['complete'] and len(columns) == 675 and len(references) == 17
+          assert data['station_values_opened'] is False
+          PY
+      - name: Fetch only the missing native hour and the missing CH donor response
+        run: python research/ige_cmip6/p9_3b3_iv1_missing_source_recovery.py --sources inputs/IV1-native-predecessor/sources --predecessor-archive research/ige_cmip6/p9_3b3_iv1_native_incomplete_CI_40121011997.zip --out outputs/IV1-native/sources --private-cache /tmp/ige-iv1-missing-model-cache
+      - name: Rebuild all registered priors and all five methods before observations
+        run: python research/ige_cmip6/p9_3b3_iv1_integration.py generate --sources outputs/IV1-native/sources --out outputs/IV1-native/predictions
+      - name: Require full source and prediction replay and preserve cumulative budgets
+        if: always()
+        run: |
+          PYTHONPATH=research/ige_cmip6 python - <<'PY'
+          import collections, json, os
+          from pathlib import Path
+          from p9_3b3_iv1_integration import verify_predictions
+          from p9_3b3_iv1_integration_common import sha
+          out = Path('outputs/IV1-native'); out.mkdir(parents=True, exist_ok=True)
+          source_path = out/'sources/source_data.json'
+          source = json.loads(source_path.read_text()) if source_path.exists() else {}
+          receipt = {'stage': 'REGISTERED_BLIND_MODEL_SOURCE_AND_PREDICTION_EXECUTION',
+              'code_commit': os.environ['GITHUB_SHA'], 'run_id': int(os.environ['GITHUB_RUN_ID']),
+              'predecessor_incomplete_run_id': 40121011997, 'source_complete': source.get('complete', False),
+              'native_hours_read': sum(r.get('status') != 'SOURCE_BLOCKED' for r in source.get('native_hours', {}).values()),
+              'native_hours_expected': 676, 'source_failures': source.get('source_failures', []),
+              'source_recovery': source.get('source_recovery'),
+              'network_bytes_accounted': source.get('network_bytes'), 'network_requests_accounted': source.get('network_requests'),
+              'network_bytes_conservative_upper_bound': source.get('network_bytes_conservative_upper_bound'),
+              'source_wall_seconds': source.get('wall_seconds'), 'heldout_2022_station_values_opened': False,
+              'independent_accuracy': 'NOT_RUN', 'B4_qualified': False, 'P2_superiority_established': False,
+              'production_epw_ready': False, 'full_prediction_replay': 'NOT_COMPLETE',
+              'ready_for_next_scoring_admission': False}
+          try:
+              digest = sha(out/'predictions/prediction_seal.json')
+              receipt['prediction_seal_sha256'] = digest
+              cases, barometer, protocol = verify_predictions(out/'predictions', digest)
+              receipt.update(full_prediction_replay='PASS', case_count=len(cases), method_records=len(cases)*5,
+                  physical_state_records=sum('T_K' in row for case in cases for row in case['results']),
+                  barometer_prediction_hours=sum(len(v) for v in barometer.values()),
+                  method_status_counts=dict(collections.Counter(row['status'] for case in cases for row in case['results'])),
+                  ready_for_next_scoring_admission=True)
+              (out/'prediction_seal.sha256').write_text(digest+'\n')
+          except Exception as error:
+              receipt['execution_blocker'] = type(error).__name__+':'+str(error)
+          (out/'source_run_receipt.json').write_text(json.dumps(receipt, indent=2, sort_keys=True)+'\n')
+          print(json.dumps(receipt))
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as stream:
+              stream.write('Append-only missing-source completion: '+receipt['full_prediction_replay']+'. No station observations or accuracy evaluation.\n\n')
+              if receipt.get('prediction_seal_sha256'): stream.write('Prediction seal SHA: `'+receipt['prediction_seal_sha256']+'`. Commit this before scoring.\n')
+          assert receipt['ready_for_next_scoring_admission'], 'Full original admission still blocks observations'
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: IGE-IV1-native-model-sources-and-predictions-NO-observations
+          path: outputs/IV1-native/
+          if-no-files-found: warn
+          retention-days: 30
