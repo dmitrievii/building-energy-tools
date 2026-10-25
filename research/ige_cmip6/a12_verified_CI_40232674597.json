@@ -1,0 +1,138 @@
+{
+  "schema": "IGE_A12_VERIFIED_GITHUB_ACTIONS_RECEIPT_v1",
+  "CI_run": 40232674597,
+  "job_id": 121287542763,
+  "run_URL": "https://github.com/dmitrievii/building-energy-tools/actions/runs/40232674597",
+  "conclusion": "success",
+  "tested_commit": "c8f86c20d0dcf890a0311ab720ad28ed5aa579af",
+  "tested_tree": "cfe9a8ec8ab666e08d0b1f17b940a5f77bc7813d",
+  "branch": "research/ige-a1-2-history-admission-20261025",
+  "artifact_id": 12613408984,
+  "artifact_bytes": 63355,
+  "artifact_file": "research/ige_cmip6/a12_verified_CI_40232674597_results.zip",
+  "artifact_sha256": "d6875b1b485240c93c7f12355df4a92dfe8c8cc0d25068ce72ce5d2e457e9c42",
+  "GitHub_artifact_digest_matched": true,
+  "artifact_member_sha256": {
+    "a12_exposure_audit_20261025.json": "0db27cd5655c05a9cf3abc783739de261106cb73f630000258ed2b94e964054a",
+    "a12_history_admission_20261025.json": "fce7cbd4531ee6d6300be3414f73a6a54fd3134eebdb4a545ca51a749886a0b8",
+    "a12_prediction_preflight_20261025.json": "04c0bb4e15dd8efdb87eb4efd64c620fd729f38a70e7f254f39c28937afe8194",
+    "tests.json": "677fd33c6d238a5660dbcdffd447728a3cef4c95ffb3040d0a20e34537720070",
+    "verification.json": "db3dbc711a1a63fa802cb00e230941b93994dc80664c54d8649968fa71867c3d"
+  },
+  "metadata_exposure_preflight_local_CI_byte_identical": true,
+  "implementation_local_CI_hash_identical": true,
+  "tests": {
+    "tests_run": 240,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "status": "PASS",
+    "wall_seconds": 35.268048464,
+    "patterns": [
+      [
+        "tools/climate_analyzer/tests",
+        "test_ige_engine.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_canonical_climate_model.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_e2e_integration_audit.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p7c1_epw_morphing.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p7c1b_humidity_closure.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p9_1a_global_historical_backbone.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p9_2d_annual_cet_epw_export.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_ige_bm1.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p9_3b3_thermodynamics.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_ige_u1.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_startup_dependency_contract.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_source_neutral_ui_0_7_4.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_historical_psychrometric_physical_closure.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_source_parity_streamlit_rerun_reset_0_7_5_5.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_ige_a1_stations.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_ige_a12_history.py"
+      ]
+    ],
+    "python": "3.12.15",
+    "numpy": "1.26.4",
+    "pandas": "2.3.3",
+    "streamlit": "1.63.0"
+  },
+  "counts": {
+    "frozen_targets": 6,
+    "frozen_donor_slots": 18,
+    "distinct_sites": 24,
+    "target_season_cases": 24,
+    "dated_actual_sensor_geometries": 21,
+    "strict_2m_geometries": 18,
+    "metadata_ready_cases": 8,
+    "metadata_ready_prospective_reference_hours": 1344,
+    "primary_validation_admitted_cases": 0,
+    "new_target_measurements_read": 0,
+    "new_weather_requests": 0
+  },
+  "protection": {
+    "base": "ae6f4ae406fd1adf72eaf4da23d898e1d54059ff",
+    "protected_research_files_unchanged": 168,
+    "A1_1_protocol_and_metadata_replay_byte_unchanged": true,
+    "existing_core_UI_and_defaults_byte_unchanged": true,
+    "IV1_observations_opened": false
+  },
+  "old_product_EPW_sha256": {
+    "historical": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635",
+    "future": "fc00e09811498c368965785ee8873bc4ca1cd01761eaebb19c759faebd0e3c28"
+  },
+  "protected_remote_refs_unchanged": {
+    "main": "2a82a77d0fe8cc87a2324b820d6c6843b6598548",
+    "research/ige-a1-station-admission-20261025": "ae6f4ae406fd1adf72eaf4da23d898e1d54059ff"
+  },
+  "new_control_temperature_values_read": 0,
+  "new_weather_or_ERA5_requests": 0,
+  "actual_prediction_seal_created": false,
+  "independent_accuracy_qualified": false,
+  "strict_blindness_certified": false,
+  "production_ready": false,
+  "new_workflow_code_or_frozen_protocol_changed_after_successful_CI": false,
+  "merge_performed": false
+}

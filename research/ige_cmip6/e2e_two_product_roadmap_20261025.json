@@ -345,6 +345,16 @@
       "DWD hourly time operator",
       "strict 2m mismatch Salzburg/Feldberg/Titlis"
     ],
-    "independent_AT_DE_CH_next_gate": "separate preregistration and exposure review; preserve current frozen six targets as exposed/uncertified cases"
+    "independent_AT_DE_CH_next_gate": "separate preregistration and exposure review; preserve current frozen six targets as exposed/uncertified cases",
+    "tested_commit": "c8f86c20d0dcf890a0311ab720ad28ed5aa579af",
+    "CI_run": 40232674597,
+    "CI_status": "SUCCESS",
+    "CI_tests": 240,
+    "CI_test_wall_seconds": 35.268048464,
+    "CI_artifact_id": 12613408984,
+    "CI_artifact_sha256": "d6875b1b485240c93c7f12355df4a92dfe8c8cc0d25068ce72ce5d2e457e9c42",
+    "metadata_exposure_preflight_local_CI_byte_identical": true,
+    "verified_CI_receipt": "research/ige_cmip6/a12_verified_CI_40232674597.json",
+    "verified_CI_outputs": "research/ige_cmip6/a12_verified_CI_40232674597_results.zip"
   }
 }
