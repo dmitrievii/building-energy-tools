@@ -1,0 +1,34 @@
+{
+  "schema": "IGE_I1_A0_EXPOSURE_REGISTRY_v1",
+  "date": "2026-10-25",
+  "purpose": "INTEGRATION_AND_SOURCE_YEAR_REPLAY_NOT_INDEPENDENT_VALIDATION",
+  "request": [
+    47.0707,
+    15.4395
+  ],
+  "year": 2023,
+  "selected_ERA5_derived_cell": [
+    47.0,
+    15.5
+  ],
+  "open_meteo_received_UTC_dates": [
+    "2023-01-01",
+    "2023-12-31"
+  ],
+  "POWER_received_UTC_dates": [
+    "2022-12-31",
+    "2023-12-31"
+  ],
+  "variables": "all fields in i1_a0_original_sources and annual manifest",
+  "source_bundle_sha256": "2575be295bc41be68ac56940524a76c5ef9f9b5010a83f20b6eec21c49dce273",
+  "station_observations_opened": false,
+  "IV1_station_observations_opened": false,
+  "model_fitted_to_this_year": false,
+  "independent_validation_countries": [
+    "AT",
+    "DE",
+    "CH"
+  ],
+  "independent_accuracy_qualified": false,
+  "global_station_validation_performed": false
+}

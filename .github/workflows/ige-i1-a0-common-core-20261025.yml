@@ -1,0 +1,50 @@
+name: IGE I1 common core and A0 real historical year
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/ige-i1-a0-common-core-20261025
+    paths:
+      - .github/workflows/ige-i1-a0-common-core-20261025.yml
+      - tools/climate_analyzer/epw_climate_analyzer/engine/**
+      - tools/climate_analyzer/tests/test_ige_engine.py
+      - research/ige_cmip6/i1_a0_verify.py
+      - research/ige_cmip6/i1_a0_graz2023_original_sources_20261025.zip
+permissions:
+  contents: read
+env:
+  OPENBLAS_NUM_THREADS: '1'
+  OMP_NUM_THREADS: '1'
+jobs:
+  common_core_and_real_source_year_without_weather_network:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Use the application's pinned numeric and table dependencies
+        run: python -m pip install numpy==1.26.4 pandas==2.3.3
+      - name: Contracts, protected research, regression and full 8760-hour original-source replay
+        run: python research/ige_cmip6/i1_a0_verify.py --out outputs/i1_a0
+      - name: Report four separate readiness axes
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          r=json.loads(Path('outputs/i1_a0/verification.json').read_text())
+          m=json.loads(Path('outputs/i1_a0/annual/manifest.json').read_text())
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as stream:
+              stream.write(f"{r['tests']['tests_run']} tests PASS; 8760 source-address checks; 8760x35 real Graz-2023 background EPW.\n\n")
+              stream.write('Execution and bounded physical/source-rounding screens pass. Independent station accuracy, local height reconstruction, UI and production qualification remain open. No IV1 observations or weather network requested.\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: IGE-I1-A0-Graz-2023-original-source-year-RESEARCH-ONLY
+          path: outputs/i1_a0/
+          if-no-files-found: warn
+          retention-days: 30
