@@ -1,0 +1,26 @@
+{
+  "schema": "IGE_BM1_SOURCE_DEFINITIONS_EVIDENCE_v1",
+  "official_v2_technote_url": "https://www.nccs.nasa.gov/wp-content/uploads/2025/06/NEX-GDDP-CMIP6-v2-Tech_Note.pdf",
+  "retrieved_PDF_bytes": 3011978,
+  "retrieved_PDF_sha256": "5fbb928bb6b6731b48adbf898c0fd40531fdcd12d189fd0f2e1acc91d6f40bc1",
+  "sections_checked": [
+    "2 variables and units",
+    "4.3.1 hurs correction and upper bound105",
+    "4.3.2 huss lower bound0",
+    "4.3.7 tas recomputed after tasmax/tasmin changes",
+    "5 assumptions and limitations"
+  ],
+  "tas_midrange_admission": "ARCHIVED_CF_COMMENT_PLUS_NUMERICAL_IDENTITY_FOR_ALL_14600_DAYS_IN_BOTH_FROZEN_WINDOWS_WITHIN_5e-5_K",
+  "tas_is_hourly_time_mean": false,
+  "NASA_daily_bounds_verified": false,
+  "daily_state_quadrature": "24_UNIFORM_UTC_NODES_AS_APPROXIMATION",
+  "monthly_flux_clock_transfer": "NASA_UTC_SEASONAL_RATIOS_TO_FIXED_LOCAL_STANDARD_MONTHS; NOT_IDENTICAL_NATIVE_UTC_DAILY_OPERATOR",
+  "hurs_phase_policy": "WATER_AT_T_GE_0C_ICE_BELOW; NOT_ENFORCED_BY_BM1",
+  "huss_unit": "kg water / kg moist air",
+  "raw_upstream_NetCDF_in_portable_packet": false,
+  "weather_provider_requests_new": 26,
+  "weather_source_response_bytes_new": 11194316,
+  "auxiliary_document_requests_successful": 1,
+  "auxiliary_document_response_bytes": 3011978,
+  "scientific_accuracy_qualified": false
+}

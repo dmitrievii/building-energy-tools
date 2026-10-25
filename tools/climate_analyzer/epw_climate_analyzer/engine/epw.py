@@ -94,14 +94,27 @@ def validate_weather(result: ClimateResult) -> dict:
             raise ValueError("IGE_NEGATIVE_TOTAL_PRECIPITATION")
         if np.any(total + 0.100001 < f["liquid_precipitation_depth_mm"].to_numpy()):
             raise ValueError("IGE_EPW_LIQUID_EXCEEDS_TOTAL_PRECIPITATION")
+    exact_closure = False
+    if result.future_request is not None:
+        from .thermodynamics import e_from_q, saturation_water_pa, pressure_at_2m
+        q = f["specific_humidity_kg_kg"].to_numpy()
+        p = f["atmospheric_station_pressure_pa"].to_numpy()
+        surface = f["surface_pressure_proxy_pa"].to_numpy()
+        e = e_from_q(q, p)
+        rh_error = float(np.max(np.abs(100*e/saturation_water_pa(t)-rh)))
+        td_error = float(np.max(np.abs(saturation_water_pa(td)-e)))
+        p_error = float(np.max(np.abs(pressure_at_2m(t, q, surface)-p)))
+        if rh_error > 1e-7 or td_error > 1e-5 or p_error > 1e-7:
+            raise ValueError("BM1_FUTURE_STATE_THERMODYNAMIC_OR_PRESSURE_CLOSURE_FAILED")
+        exact_closure = True
     return {
         "screen": "BOUNDS_COMPONENTS_AND_PROVIDER_ROUNDING_PASS",
         "records": len(f), "hard_failure_count": 0,
         "max_GHI_minus_direct_horizontal_minus_DHI_Wh_m2": component_residual,
         "max_abs_provider_Magnus_RH_residual_pp": float(np.max(np.abs(residual))),
         "provider_T_Td_RH_quantization_interval_failures": quantization_failures,
-        "T_Td_RH_exact_thermodynamic_closure_claimed": False,
-        "provider_values_modified": False,
+        "T_Td_RH_exact_thermodynamic_closure_claimed": exact_closure,
+        "provider_values_modified": result.future_request is not None,
         "mixed_source_longwave_cross_field_accuracy_qualified": False,
     }
 
@@ -123,6 +136,13 @@ def serialize_epw(result: ClimateResult) -> tuple[bytes, dict]:
         ["DATA PERIODS", 1, 1, f"HISTORICAL {request.year} RESEARCH GRID BACKGROUND",
             calendar.day_name[request.local_starts[0].weekday()], "1/1", "12/31"],
     ]
+    if result.future_request is not None:
+        future = result.future_request
+        headers[0][1] = request.label + " REPRESENTATIVE FUTURE RESEARCH"
+        headers[0][4] = "IGE_BM1_" + future.model + "_" + future.scenario
+        headers[5] = ["COMMENTS 1", f"Representative {future.model} {future.scenario} {future.future_window[0]}-{future.future_window[1]}; pattern {request.year}; local reference {future.historical_window[0]}-{future.historical_window[1]}. NOT actual future event dates or TMY."]
+        headers[6] = ["COMMENTS 2", "MK water RH/Td; conditional surface pressure proxy with 2m hydrostatic adapter. Direction/cloud/precipitation phase chronology inherited. Height proxy unverified; no station accuracy or production qualification. See manifest.json."]
+        headers[7][3] = f"REPRESENTATIVE FUTURE {future.future_window[0]}-{future.future_window[1]} PATTERN {request.year}"
     stream = io.StringIO(newline="")
     writer = csv.writer(stream, lineterminator="\n")
     writer.writerows(headers)

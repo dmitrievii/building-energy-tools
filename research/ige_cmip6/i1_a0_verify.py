@@ -47,7 +47,7 @@ def protected_sources() -> dict:
             raise ValueError("I1_A0_PROTECTED_RESEARCH_FILE_CHANGED_" + name)
     changed = subprocess.check_output(["git", "diff", "--name-only", BASE, "--", "tools/climate_analyzer"], cwd=ROOT, text=True).splitlines()
     assert all(p.startswith("tools/climate_analyzer/epw_climate_analyzer/engine/") or
-        p == "tools/climate_analyzer/tests/test_ige_engine.py" for p in changed), "I1_A0_EXISTING_APP_FILE_CHANGED"
+        p in ("tools/climate_analyzer/tests/test_ige_engine.py", "tools/climate_analyzer/tests/test_ige_bm1.py") for p in changed), "I1_A0_EXISTING_APP_FILE_CHANGED"
     return {"ancestor": BASE, "protected_files_unchanged": len(contract["protected_sha256"]),
         "IV1_station_values_opened": False, "main_modified_or_merged": False}
 

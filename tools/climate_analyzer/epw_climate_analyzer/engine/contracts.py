@@ -81,7 +81,7 @@ class HistoricalRequest:
 
 @dataclass(frozen=True)
 class FutureRequest:
-    """B-M/B-D identity. No future generator is activated by this contract."""
+    """Future scenario identity, separate from the representative pattern year."""
     historical_base_sha256: str
     model: str
     member: str
@@ -144,6 +144,7 @@ class ClimateResult:
     adjustments: tuple[dict[str, Any], ...]
     quality: QualityStatus
     diagnostics: dict[str, Any]
+    future_request: FutureRequest | None = None
 
     def __post_init__(self) -> None:
         self.validate_contract()
@@ -163,6 +164,8 @@ class ClimateResult:
         source_ids = {s["id"] for s in self.sources}
         if len(source_ids) != len(self.sources) or any(f.source_id not in source_ids for f in self.fields.values()):
             raise ValueError("IGE_RESULT_SOURCE_LINEAGE_INCOMPLETE")
+        if self.future_request and self.future_request.representative_pattern_year != self.request.year:
+            raise ValueError("IGE_FUTURE_PATTERN_YEAR_AND_CLOCK_MISMATCH")
 
     def to_canonical(self) -> CanonicalClimateDataset:
         """Preserve historical dates; do not pass through typical-year EPW import.
@@ -178,6 +181,24 @@ class ClimateResult:
         frame.attrs["ige_quality_status"] = asdict(self.quality)
         frame.attrs["ige_state_sample_offset_minutes_from_row_start"] = 60
         frame.attrs["ige_RH_phase"] = "PROVIDER_MAGNUS_LIQUID_WATER_NOT_APP_ASHRAE_ICE_BELOW_ZERO"
+        if self.future_request is not None:
+            future = self.future_request
+            frame.attrs["ige_RH_phase"] = "MURPHY_KOOP_LIQUID_WATER_NOT_APP_ASHRAE_ICE_BELOW_ZERO"
+            frame.attrs["ige_future_request"] = asdict(future)
+            frame.attrs["ige_UI_humidity_phase_adapter_required"] = True
+            return CanonicalClimateDataset(
+                climate_id=f"ige-future-{future.model}-{future.scenario}-{future.future_window}-{self.request.year}",
+                display_name=f"{self.request.label} {future.model} {future.scenario} {future.future_window}; pattern {self.request.year}",
+                data=frame, location=self.location,
+                temporal=ClimateTemporalMetadata(60, "climatology", str(self.request.standard_timezone),
+                    "interval_start", (self.request.year,), self.request.year),
+                provenance=ClimateProvenance("IGE / NASA NEX-GDDP-CMIP6", "monthly climate morph with separate local reference",
+                    "IGE engine", "representative future research sequence", notes=(
+                        "Pattern calendar is not an actual future weather forecast or a selected TMY.",
+                        "All source windows, operators, phase and pressure assumptions are in the field definitions and manifest.",
+                        "Liquid-water RH requires an explicit adapter before the existing app water/ice psychrometric calculations.",
+                    )),
+            )
         return CanonicalClimateDataset(
             climate_id=f"ige-background-{self.request.year}-{self.request.latitude}-{self.request.longitude}",
             display_name=f"{self.request.label} {self.request.year} — research grid background",

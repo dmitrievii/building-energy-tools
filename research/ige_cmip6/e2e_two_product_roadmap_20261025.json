@@ -84,7 +84,7 @@
       "product_functions": [
         "B-M"
       ],
-      "current_status": "NEXT_NASA_PHASE_PRESSURE_AND_MONTHLY_SIGNAL_ADAPTERS_REQUIRED",
+      "current_status": "ONE_FUTURE_SOURCE_YEAR_LOCAL_139_TESTS_PASS_CI_PENDING_HURS_NOT_ENFORCED",
       "depends_on": [
         "I1",
         "A0"
@@ -101,7 +101,7 @@
         "A",
         "B-M"
       ],
-      "current_status": "NOT_INTEGRATED",
+      "current_status": "NEXT_TWO_ROUTES_WITH_PHASE_ADAPTER_AND_VISIBLE_LIMITS",
       "depends_on": [
         "A0",
         "B-M1"
@@ -164,7 +164,7 @@
       "completion_criterion": "No incomplete-source unblinding, original NASA operators/objective, independent benefit before default replacement"
     }
   ],
-  "current_first_implementation": "B_M1_NASA_aligned_monthly_future_year_on_I1_A0_base_then_U1",
+  "current_first_implementation": "U1_connect_historical_and_future_routes_with_explicit_RH_phase_adapter_and_quality_scope",
   "minimum_B_M_temperature_policy": "MIDRANGE_NEX_TAS_INDEX_NO_IMPLICIT_TIME_MEAN_EQUALITY",
   "specific_humidity_to_mixing_ratio": "w_g_per_kg_dry_air=1000*q_kg_per_kg_moist_air/(1-q)",
   "future_pressure_policy": "DECLARED_BASELINE_PROXY_NOT_NATIVE_FUTURE_PS",
@@ -216,5 +216,30 @@
     "final_CI_tests": 98,
     "verified_CI_receipt": "research/ige_cmip6/i1_a0_verified_CI_40202448850.json",
     "verified_CI_outputs": "research/ige_cmip6/i1_a0_verified_CI_40202448850_results.zip"
+  },
+  "B_M1_progress": {
+    "branch": "research/ige-b-m1-future-year-20261025",
+    "model": "CanESM5",
+    "member": "r1i1p1f1",
+    "scenario": "ssp245",
+    "historical_reference_window": [
+      2002,
+      2014
+    ],
+    "future_window": [
+      2040,
+      2059
+    ],
+    "pattern_year": 2023,
+    "reason_for_reference_window": "COMMON_FULL_SOURCE_AVAILABILITY; PREVENT_PATTERN_YEAR_ANOMALY_OR_DOUBLE_WARMING",
+    "reference_source_packet_sha256": "68f19f8e02fb00d178009ab6dbe2f4dc441f879bc870b71a98d797b05ecd1403",
+    "future_EPW_sha256": "50690e95a7fb270d96258f2e41435ca580e33b2a28950784dafcdd8c15cce288",
+    "tests_local": 139,
+    "NASA_hurs_signal_enforced": false,
+    "max_unforced_hurs_delta_residual_pp": 3.7359408850093985,
+    "independent_accuracy_qualified": false,
+    "production_ready": false,
+    "UI_connected": false,
+    "report": "docs/IGE_B_M1_FUTURE_YEAR_AND_SHARED_CORE_RU_20261025.md"
   }
 }

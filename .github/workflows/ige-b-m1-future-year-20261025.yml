@@ -1,0 +1,56 @@
+name: IGE B-M1 reference-normalized future year and shared-core regression
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/ige-b-m1-future-year-20261025
+    paths:
+      - .github/workflows/ige-b-m1-future-year-20261025.yml
+      - tools/climate_analyzer/epw_climate_analyzer/engine/**
+      - tools/climate_analyzer/tests/test_ige_bm1.py
+      - research/ige_cmip6/bm1_verify.py
+      - research/ige_cmip6/i1_a0_verify.py
+      - research/ige_cmip6/bm1_protocol_20261025.json
+      - research/ige_cmip6/bm1_reference_sources_2002_2014_20261025.zip
+permissions:
+  contents: read
+env:
+  OPENBLAS_NUM_THREADS: '1'
+  OMP_NUM_THREADS: '1'
+jobs:
+  historical_and_future_source_years_without_weather_network:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==1.26.4 pandas==2.3.3
+      - name: Mathematical contracts, old regressions, source reference and two annual routes
+        run: python research/ige_cmip6/bm1_verify.py --out outputs/bm1
+      - name: Read the actual EPW/CSV signal checks and publish scope
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          root=Path('outputs/bm1'); r=json.loads((root/'verification.json').read_text())
+          m=json.loads((root/'future/manifest.json').read_text())
+          assert r['historical_records']==r['future_records']==8760
+          assert r['NASA_hurs_signal_enforced'] is False and r['production_ready'] is False
+          assert r['reference_original_hours']==113952 and r['reference_estimator_hours']==113880
+          assert m['canonical_calendar_mode']=='climatology'
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as stream:
+              stream.write(f"{r['tests']['tests_run']} tests PASS. Historical and representative future EPW: 8760x35 each.\n\n")
+              stream.write('Pattern 2023 is normalized against the same 2002-2014 reference used for CanESM5 SSP245 changes to 2040-2059. Monthly midrange/DTR/q/flux/wind/total-precipitation targets verified after serialization.\n\n')
+              stream.write('Conditional two-metre hydrostatic and water-RH closure; hurs change is diagnostic. Stations, independent accuracy, UI, actual EnergyPlus and production remain unqualified. No IV1 values or weather network opened.\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: IGE-BM1-historical-and-representative-future-years-RESEARCH-ONLY
+          path: outputs/bm1/
+          if-no-files-found: warn
+          retention-days: 30

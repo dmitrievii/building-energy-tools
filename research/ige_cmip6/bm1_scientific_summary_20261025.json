@@ -1,0 +1,36 @@
+{
+  "schema": "IGE_BM1_SCIENTIFIC_SUMMARY_v1",
+  "reference_window": [
+    2002,
+    2014
+  ],
+  "future_window": [
+    2040,
+    2059
+  ],
+  "pattern_year": 2023,
+  "reference_hourly_T_sample_mean_c": 9.72991306638567,
+  "future_hourly_T_sample_mean_c": 12.06096000783198,
+  "future_hourly_T_min_c": -7.586414001,
+  "future_hourly_T_max_c": 35.13247623,
+  "pattern_hourly_T_sample_mean_c": 10.966917808219177,
+  "future_GHI_kWh_m2": 1253.905681156951,
+  "future_liquid_rain_mm": 794.15864197454,
+  "future_total_precipitation_mm": 843.8365922067944,
+  "raw_q_saturation_hours": 260,
+  "water_saturated_output_hours": 282,
+  "max_unforced_NASA_hurs_delta_residual_pp": 3.7359408850093985,
+  "max_serialized_q_mean_residual_kgkg": 1.4728149255738288e-13,
+  "max_serialized_midrange_residual_K": 4.303366551994259e-10,
+  "max_serialized_DTR_residual_K": 6.261942075980187e-10,
+  "max_serialized_hydrostatic_pressure_residual_Pa": 4.997855285182595e-06,
+  "max_serialized_vapour_pressure_residual_Pa": 1.3914882401877549e-06,
+  "NASA_hurs_signal_enforced": false,
+  "independent_accuracy_qualified": false,
+  "production_ready": false,
+  "future_EPW_sha256": "50690e95a7fb270d96258f2e41435ca580e33b2a28950784dafcdd8c15cce288",
+  "future_assembly_seconds": 4.542632209000658,
+  "reference_annual_mean_midrange_c": 9.8495468914647,
+  "future_annual_mean_midrange_c": 12.180398102289008,
+  "NEX_annual_midrange_delta_K": 2.3308512108243082
+}
