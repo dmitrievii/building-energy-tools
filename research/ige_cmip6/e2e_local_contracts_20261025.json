@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "tests_run": 61,
+  "new_boundary_controls": 4,
+  "patterns": [
+    "test_e2e_integration_audit.py",
+    "test_p7c1_epw_morphing.py",
+    "test_p7c1b_humidity_closure.py",
+    "test_p9_1a_global_historical_backbone.py",
+    "test_p9_2d_annual_cet_epw_export.py"
+  ],
+  "wall_seconds": 0.5399518980000266,
+  "python": "3.12.14",
+  "qualification_scope": "COMPONENT_AND_IO_CONTRACTS_NOT_STATION_ACCURACY"
+}

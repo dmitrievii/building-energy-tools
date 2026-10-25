@@ -1,0 +1,83 @@
+name: IGE two-product integration audit and archived annual replay
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/ige-e2e-integration-audit-20261025
+    paths:
+      - .github/workflows/ige-e2e-integration-audit-20261025.yml
+      - research/ige_cmip6/e2e_integration_audit.py
+      - research/ige_cmip6/test_e2e_integration_audit.py
+      - research/ige_cmip6/e2e_original_replay_inputs_20261025.zip
+permissions:
+  contents: read
+env:
+  OPENBLAS_NUM_THREADS: '1'
+  OMP_NUM_THREADS: '1'
+jobs:
+  source_replay_and_application_import_without_unblinding:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install numpy==2.3.5 pandas==3.1.0
+      - name: Existing relevant component contracts and four new source I/O guards
+        run: |
+          mkdir -p outputs/e2e
+          python - <<'PY'
+          import json, platform, time, unittest
+          from pathlib import Path
+          suite=unittest.TestSuite(); loader=unittest.TestLoader()
+          patterns=['test_e2e_integration_audit.py','test_p7c1_epw_morphing.py','test_p7c1b_humidity_closure.py',
+              'test_p9_1a_global_historical_backbone.py','test_p9_2d_annual_cet_epw_export.py']
+          for pattern in patterns:
+              suite.addTests(loader.discover('research/ige_cmip6',pattern=pattern))
+          start=time.perf_counter(); result=unittest.TextTestRunner(verbosity=1).run(suite)
+          receipt={'tests_run':result.testsRun,'expected':61,'status':'PASS' if result.wasSuccessful() else 'FAIL',
+              'patterns':patterns,'new_source_io_guards':4,'wall_seconds':time.perf_counter()-start,
+              'python':platform.python_version(),'station_accuracy_validation':False}
+          Path('outputs/e2e/contracts.json').write_text(json.dumps(receipt,indent=2)+'\n')
+          assert result.testsRun==61 and result.wasSuccessful()
+          PY
+      - name: Replay one historical reference and two annual future variants with original archived sources
+        run: python research/ige_cmip6/e2e_integration_audit.py --out outputs/e2e/annual_replay
+      - name: Separate source replay, physics, application import and scientific readiness
+        run: |
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          root=Path('outputs/e2e/annual_replay')
+          result=json.loads((root/'e2e_audit.json').read_text())
+          local=json.loads(Path('research/ige_cmip6/e2e_verified_local_replay_20261025.json').read_text())
+          assert result['protected_files_unchanged']==168
+          assert result['audit_wrapper_committed_at_execution'] is True
+          assert result['audit_wrapper_sha256']==local['audit_wrapper_sha256']
+          assert result['observations_or_weather_provider_network_requests']==0
+          assert result['registered_2022_IV1_station_values_opened'] is False
+          for key in ('historical_reference','legacy_morph','monthly_q_projection'):
+              row=result[key]
+              assert row['records']==8760 and row['sha256']==local[key]['sha256']
+              assert hashlib.sha256((root/row['path']).read_bytes()).hexdigest()==row['sha256']
+              assert row['app_import']['records']==8760 and row['app_import']['calendar_mode']=='typical_year'
+          assert result['monthly_q_projection']['status']=='PHYSICAL_AND_MONTHLY_MASS_CONTRACTS_PASS_NOT_QUALIFIED'
+          assert max(abs(r['mean_q_error_kgkg']) for r in result['monthly_q_projection']['monthly_q'])<1e-9
+          assert result['production_epw_ready'] is False and result['historical_arbitrary_point_function_complete'] is False
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as stream:
+              stream.write('Three annual files read by the existing Analyzer importer; unchanged historical reference plus two future research replays.\n\n'
+                  'Original source hashes verified. No new NASA/ERA5/station requests. Product integration, historical calendar activation, independent station accuracy and production readiness remain separate open gates.\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: IGE-E2E-three-annual-files-and-audit-NOT-production
+          path: |
+            outputs/e2e/contracts.json
+            outputs/e2e/annual_replay/*.epw
+            outputs/e2e/annual_replay/*.json
+          if-no-files-found: warn
+          retention-days: 30

@@ -1,0 +1,560 @@
+{
+  "audit_wrapper_committed_at_execution": false,
+  "audit_wrapper_sha256": "06a655053ed5b2c95cd54e35917acdc530cc6e155d5bd9237fd0f1f0a6ec816f",
+  "base_commit": "931a267fbe398155e9833b44d708f79c677d961a",
+  "execution_commit": "931a267fbe398155e9833b44d708f79c677d961a",
+  "future_pressure": "UNCHANGED_BASELINE_PROXY_NO_NATIVE_FUTURE_PS",
+  "future_product_function_complete": false,
+  "historical_arbitrary_point_function_complete": false,
+  "historical_reference": {
+    "app_import": {
+      "Streamlit_runtime_or_browser_test": false,
+      "calendar_mode": "typical_year",
+      "historical_real_calendar_activation": false,
+      "pandas_version": "3.1.0",
+      "parser": "EXISTING_ANALYZER_parse_epw_AND_canonical_from_epw",
+      "plotting_years": [
+        2026
+      ],
+      "records": 8760,
+      "source_years": [
+        2013
+      ]
+    },
+    "byte_exact_archived_readback": true,
+    "calendar_year": 2013,
+    "path": "Graz_2013_P7A_Historical_Reference_RESEARCH_ONLY.epw",
+    "records": 8760,
+    "regenerated_from_weather_provider_or_station_raw": false,
+    "sha256": "da8a4e08e032bebbb3105b6584c319714fc85c99fc06a59d5fa1d125bf3478fc",
+    "source": "ORIGINAL_P7A_MULTISOURCE_REFERENCE_NOT_ARBITRARY_POINT_OUTPUT"
+  },
+  "independent_station_accuracy_newly_qualified": false,
+  "legacy_morph": {
+    "app_import": {
+      "Streamlit_runtime_or_browser_test": false,
+      "calendar_mode": "typical_year",
+      "historical_real_calendar_activation": false,
+      "pandas_version": "3.1.0",
+      "parser": "EXISTING_ANALYZER_parse_epw_AND_canonical_from_epw",
+      "plotting_years": [
+        2026
+      ],
+      "records": 8760,
+      "source_years": [
+        2013
+      ]
+    },
+    "independent_accuracy": "NOT_TESTED",
+    "monthly_q": [
+      {
+        "actual_mean_q_kgkg": 0.00441735560029085,
+        "mean_q_error_kgkg": -1.778077017077493e-05,
+        "month": 1,
+        "target_mean_q_kgkg": 0.004435136370461625
+      },
+      {
+        "actual_mean_q_kgkg": 0.004208032089756758,
+        "mean_q_error_kgkg": -4.0788332439704704e-06,
+        "month": 2,
+        "target_mean_q_kgkg": 0.004212110923000729
+      },
+      {
+        "actual_mean_q_kgkg": 0.00446071525392439,
+        "mean_q_error_kgkg": -7.555737122858864e-06,
+        "month": 3,
+        "target_mean_q_kgkg": 0.0044682709910472485
+      },
+      {
+        "actual_mean_q_kgkg": 0.006511286039077937,
+        "mean_q_error_kgkg": -5.175154181815834e-09,
+        "month": 4,
+        "target_mean_q_kgkg": 0.006511291214232119
+      },
+      {
+        "actual_mean_q_kgkg": 0.008181066075856487,
+        "mean_q_error_kgkg": -2.5539547327060877e-06,
+        "month": 5,
+        "target_mean_q_kgkg": 0.008183620030589193
+      },
+      {
+        "actual_mean_q_kgkg": 0.010121311620217106,
+        "mean_q_error_kgkg": 3.3781587399102154e-09,
+        "month": 6,
+        "target_mean_q_kgkg": 0.010121308242058367
+      },
+      {
+        "actual_mean_q_kgkg": 0.011308092474889411,
+        "mean_q_error_kgkg": 9.432917231750196e-10,
+        "month": 7,
+        "target_mean_q_kgkg": 0.011308091531597687
+      },
+      {
+        "actual_mean_q_kgkg": 0.010870931515549038,
+        "mean_q_error_kgkg": 1.1001748496293853e-08,
+        "month": 8,
+        "target_mean_q_kgkg": 0.010870920513800541
+      },
+      {
+        "actual_mean_q_kgkg": 0.009273827112261114,
+        "mean_q_error_kgkg": 4.5081341491988875e-09,
+        "month": 9,
+        "target_mean_q_kgkg": 0.009273822604126965
+      },
+      {
+        "actual_mean_q_kgkg": 0.007984034733059978,
+        "mean_q_error_kgkg": -7.630468697738526e-09,
+        "month": 10,
+        "target_mean_q_kgkg": 0.007984042363528676
+      },
+      {
+        "actual_mean_q_kgkg": 0.005851061890835854,
+        "mean_q_error_kgkg": -1.5021765387579585e-06,
+        "month": 11,
+        "target_mean_q_kgkg": 0.005852564067374611
+      },
+      {
+        "actual_mean_q_kgkg": 0.004658636555018959,
+        "mean_q_error_kgkg": -1.4789261058906906e-07,
+        "month": 12,
+        "target_mean_q_kgkg": 0.004658784447629548
+      }
+    ],
+    "numerical": {
+      "baseline_mean_q": 0.006366576104392951,
+      "future_actual_mean_q": 0.007339326995630507,
+      "max_daily_GHI_residual_kwh_m2": 8.881784197001252e-16,
+      "max_hourly_GHI_DNI_DHI_residual_kwh_m2": 0.0,
+      "max_hourly_T_shift_C": 8.670708298584618,
+      "missing_hours_by_epw_column": {
+        "20": 0,
+        "22": 8760,
+        "23": 8760,
+        "24": 8760,
+        "28": 8760
+      },
+      "moisture_saturation_clipping_hours": 222,
+      "precipitation_occurrence_inherited_unchanged": true,
+      "rh_pressure_consistency_checked": true,
+      "wind_direction_inherited_unchanged": true
+    },
+    "path": "Graz_P7A_2013_CanESM5_SSP245_2040_2059_LEGACY_MORPH_REPLAY.epw",
+    "records": 8760,
+    "sha256": "089850544d9a5d73a35f65a0299e67a3a9e88dc4fb635d5b37a1af346deb6e3b"
+  },
+  "module_inventory": {
+    "A_humidity": {
+      "functions": [
+        "metadata_candidates",
+        "coverage",
+        "closest_eligible_donors",
+        "physical_donor_distance_report"
+      ],
+      "path": "research/ige_cmip6/p8_2f_station_selection.py",
+      "sha256": "83347e81d9d855074ee2c003c7575cf222e929178636f3f0118511030cd0e7e8"
+    },
+    "A_orography": {
+      "functions": [
+        "is_geopotential_unit",
+        "nearest_n320",
+        "actual_native_geo",
+        "independent_dem",
+        "run"
+      ],
+      "path": "research/ige_cmip6/p9_1d_native_orography_dem.py",
+      "sha256": "4d0087c7bedc3d4ea3ca1f7245e456ae4a70c2ffb55518189f54b64e63449cbb"
+    },
+    "A_reference": {
+      "functions": [
+        "as_utc",
+        "station_input",
+        "load_solar",
+        "original_power_met",
+        "power_url",
+        "get_meteorology",
+        "dewpoint_c",
+        "finite_range",
+        "choose_source",
+        "make_rows",
+        "write_epw",
+        "run"
+      ],
+      "path": "research/ige_cmip6/p7a_historical_epw_reference.py",
+      "sha256": "f8bd2196c2aca1a2a302fac8d582bc22d82b903577a8a74b2ca46c11618263db"
+    },
+    "A_source": {
+      "functions": [
+        "haversine",
+        "validate_request",
+        "request_url",
+        "_no_redirect_opener",
+        "get_original_source",
+        "parse_source",
+        "statistics_and_coherence",
+        "grouped_month_hour",
+        "_weighted",
+        "run"
+      ],
+      "path": "research/ige_cmip6/p9_1a_global_historical_backbone.py",
+      "sha256": "fb1c9400b32b947950d4b37fd5feab393dc9d0e620064dd8a6df46a49aea48c7"
+    },
+    "A_temperature": {
+      "functions": [
+        "haversine",
+        "valid",
+        "predict",
+        "compute",
+        "aggregates",
+        "station_aggregates",
+        "confidence_by_station",
+        "save_csv",
+        "site_report",
+        "load",
+        "run"
+      ],
+      "path": "research/ige_cmip6/p8_1_spatial_holdout.py",
+      "sha256": "2754a0bbe0d1e8e3aebad5633e09599dc7312d8e806552a19334dbbe62544e5e"
+    },
+    "A_wind": {
+      "functions": [
+        "exposure_category",
+        "station_exposures",
+        "altitude_and_exposure_weights",
+        "physical_correction",
+        "frozen_selection",
+        "load_swiss_year",
+        "external_donor_predictions",
+        "build_predictions",
+        "paired_site_rows",
+        "summarize",
+        "moving_block_delta_ci",
+        "phase_f2",
+        "main"
+      ],
+      "path": "research/ige_cmip6/p8_3f2_physical_era5.py",
+      "sha256": "cad0939e7246c3d6a524772e192fc032641bef725b6831a42cc0ba27ff1c9969"
+    },
+    "B_annual_joint": {
+      "functions": [
+        "original_gcm",
+        "original_era5_year",
+        "run"
+      ],
+      "path": "research/ige_cmip6/p9_2d_original_canesm5_2013_annual_source_epw_pilot.py",
+      "sha256": "bd5d7a2e5cf617f921000061e6505d488a612c25d2fd4c9df3239c9c6b96311c"
+    },
+    "B_daily_joint": {
+      "functions": [
+        "sat_pa",
+        "q_of_e",
+        "e_of_q",
+        "qsat",
+        "dewpoint_of_q",
+        "native_target",
+        "source_hourly_mean_temperature",
+        "select_donor",
+        "distribute_exact",
+        "geometry",
+        "new_day",
+        "generate",
+        "summarize"
+      ],
+      "path": "research/ige_cmip6/p9_2b_cmip6_daily_joint_regime_solver.py",
+      "sha256": "c7fe878db10c296bced7bc35be311750e131e221899b986fd3200c5e2fdc7df3"
+    },
+    "B_ensemble": {
+      "functions": [
+        "validate_baseline",
+        "verify_daily_sources",
+        "preflight",
+        "build_signal",
+        "climate_ratio",
+        "can_morph_moisture",
+        "verify_hourly",
+        "run"
+      ],
+      "path": "research/ige_cmip6/p7c4_hourly_ensemble.py",
+      "sha256": "7dbab6e8b88a6c4153bda25d7d41a67568a897db4c7d80fcda3009d1bb8e86d9"
+    },
+    "B_monthly_q": {
+      "functions": [
+        "minimum_adjustment_projection",
+        "load_monthly_ratios",
+        "check_baseline_provenance",
+        "hourly_redistribution",
+        "read_source_manifest",
+        "run",
+        "main"
+      ],
+      "path": "research/ige_cmip6/p7c1b_humidity_closure.py",
+      "sha256": "e18f8a4b049ebcabb9e2c712a50c4117574e48e3094116005aa894beb8a86368"
+    },
+    "B_morph": {
+      "functions": [
+        "sha",
+        "mean",
+        "quantile",
+        "verify_model_dir",
+        "read_epw",
+        "monthly_signals",
+        "saturation_pa",
+        "q_from_rh",
+        "rh_from_q",
+        "dewpoint_from_rh",
+        "solarcos",
+        "solar_geometry",
+        "project_solar",
+        "erbs_diffuse_fraction",
+        "split_ghi",
+        "daily_delta_by_quantile",
+        "morph_epw",
+        "write_epw",
+        "write_csv",
+        "run"
+      ],
+      "path": "research/ige_cmip6/p7c1_epw_morphing.py",
+      "sha256": "c9d9f9c0a8de9d9355ad615d684ebc8fa39ce4052d807e460705647120c75adf"
+    },
+    "research_C2": {
+      "functions": [
+        "_base_report",
+        "_package",
+        "project_day"
+      ],
+      "path": "research/ige_cmip6/p9_3b3_c2_projection.py",
+      "sha256": "47a1805a2d1f01b68c8532b5120319fc103d6cfa961c852f8f20057eb5bcf532"
+    },
+    "research_IV1": {
+      "functions": [
+        "native_day",
+        "reference_days",
+        "prepare_inputs",
+        "input_records",
+        "blocked_case",
+        "generate_predictions",
+        "verify_predictions",
+        "score_predictions",
+        "preflight",
+        "main"
+      ],
+      "path": "research/ige_cmip6/p9_3b3_iv1_integration.py",
+      "sha256": "24353d746bc458a779288c2a394c5608b32de70ae23d31b9223c80671e47f086"
+    },
+    "shared_EPW": {
+      "functions": [
+        "timestamp_rows",
+        "epw_header",
+        "make_record",
+        "raw_series_to_epw",
+        "readback"
+      ],
+      "path": "research/ige_cmip6/p9_2d_annual_cet_epw_export.py",
+      "sha256": "1d61a8a3672a66964ccb6ce7a8c7105eb48f5be6cdca55c445f62ef5e7a97339"
+    },
+    "shared_pressure": {
+      "functions": [
+        "original_absolute_station_pressure",
+        "pressure_qc_tier",
+        "synthetic_contracts"
+      ],
+      "path": "research/ige_cmip6/p9_3b2d_canonical_pressure_fields.py",
+      "sha256": "ec716cb2acab65ca445dfed2a220c50bd0a5d8770b74be0e849dca38075c6b99"
+    }
+  },
+  "monthly_q_projection": {
+    "app_import": {
+      "Streamlit_runtime_or_browser_test": false,
+      "calendar_mode": "typical_year",
+      "historical_real_calendar_activation": false,
+      "pandas_version": "3.1.0",
+      "parser": "EXISTING_ANALYZER_parse_epw_AND_canonical_from_epw",
+      "plotting_years": [
+        2026
+      ],
+      "records": 8760,
+      "source_years": [
+        2013
+      ]
+    },
+    "independent_accuracy": "NOT_TESTED",
+    "monthly_q": [
+      {
+        "actual_mean_q_kgkg": 0.004435136370468216,
+        "mean_q_error_kgkg": 6.590828283562572e-15,
+        "month": 1,
+        "target_mean_q_kgkg": 0.004435136370461625
+      },
+      {
+        "actual_mean_q_kgkg": 0.004212110923004951,
+        "mean_q_error_kgkg": 4.222754493547159e-15,
+        "month": 2,
+        "target_mean_q_kgkg": 0.004212110923000729
+      },
+      {
+        "actual_mean_q_kgkg": 0.0044682709910484775,
+        "mean_q_error_kgkg": 1.2293940390609308e-15,
+        "month": 3,
+        "target_mean_q_kgkg": 0.0044682709910472485
+      },
+      {
+        "actual_mean_q_kgkg": 0.0065112912142352855,
+        "mean_q_error_kgkg": 3.1670220072986685e-15,
+        "month": 4,
+        "target_mean_q_kgkg": 0.006511291214232119
+      },
+      {
+        "actual_mean_q_kgkg": 0.008183620030577002,
+        "mean_q_error_kgkg": -1.2190488850413589e-14,
+        "month": 5,
+        "target_mean_q_kgkg": 0.008183620030589193
+      },
+      {
+        "actual_mean_q_kgkg": 0.01012130824207903,
+        "mean_q_error_kgkg": 2.066358875095949e-14,
+        "month": 6,
+        "target_mean_q_kgkg": 0.010121308242058367
+      },
+      {
+        "actual_mean_q_kgkg": 0.011308091531572334,
+        "mean_q_error_kgkg": -2.535409345136685e-14,
+        "month": 7,
+        "target_mean_q_kgkg": 0.011308091531597687
+      },
+      {
+        "actual_mean_q_kgkg": 0.01087092051375088,
+        "mean_q_error_kgkg": -4.9662072869148485e-14,
+        "month": 8,
+        "target_mean_q_kgkg": 0.010870920513800541
+      },
+      {
+        "actual_mean_q_kgkg": 0.00927382260413102,
+        "mean_q_error_kgkg": 4.0561063381473596e-15,
+        "month": 9,
+        "target_mean_q_kgkg": 0.009273822604126965
+      },
+      {
+        "actual_mean_q_kgkg": 0.007984042363520549,
+        "mean_q_error_kgkg": -8.127387581819931e-15,
+        "month": 10,
+        "target_mean_q_kgkg": 0.007984042363528676
+      },
+      {
+        "actual_mean_q_kgkg": 0.005852564067381067,
+        "mean_q_error_kgkg": 6.455184332667304e-15,
+        "month": 11,
+        "target_mean_q_kgkg": 0.005852564067374611
+      },
+      {
+        "actual_mean_q_kgkg": 0.004658784447625252,
+        "mean_q_error_kgkg": -4.296626175554766e-15,
+        "month": 12,
+        "target_mean_q_kgkg": 0.004658784447629548
+      }
+    ],
+    "numerical": {
+      "RH_above_100_hours": 0,
+      "after_RH_100_hours": 227,
+      "daily_q_targets_not_enforced": true,
+      "humidity_validation_independent_observations": false,
+      "max_absolute_hourly_RH_adjustment_pp": 0.697162483933198,
+      "max_daily_mean_q_reallocation_kg_kg": 0.00023234905417003916,
+      "max_month_q_mean_residual_kg_kg": 2.3875763970433476e-18,
+      "mean_adjusted_hourly_q_kg_kg": 0.007342146694208417,
+      "mean_prior_hourly_q_kg_kg": 0.0073393295804142795,
+      "mean_target_hourly_q_kg_kg": 0.007342146694208417,
+      "minimum_L2_adjustment_q_bounded_monthly_in_kg_kg": true,
+      "monthly_q_closed": true,
+      "monthly_q_targets_are_GCM_climatological_not_daily_model_event_targets": true,
+      "new_RH_jump_above_20pp_hours": 58,
+      "new_RH_max_adjacent_jump_pp": 44.928442424283325,
+      "old_RH_jump_above_20pp_hours": 58,
+      "raw_saturation_hours": 222,
+      "source_wind_direction_changed": false
+    },
+    "path": "Graz_P7A_2013_CanESM5_SSP245_2040_2059_MONTHLY_Q_REPLAY.epw",
+    "records": 8760,
+    "sha256": "9c52c84f8ef2f76d1e28360c3b38fe94388695debbaff0b56b230f893e1a4a6d",
+    "status": "PHYSICAL_AND_MONTHLY_MASS_CONTRACTS_PASS_NOT_QUALIFIED"
+  },
+  "observations_or_weather_provider_network_requests": 0,
+  "original_sources": {
+    "historical-1995-2014": {
+      "grid_lat_lon": [
+        46.875,
+        15.375
+      ],
+      "model": "CanESM5",
+      "native_calendar": "noleap",
+      "original_source_sha256": {
+        "joint_daily_raw.csv": "77ec2e5637eb487c3cedde4e0b660b31f8bd2606198e766255d75a985d61dfef",
+        "model_annual.csv": "3ac8b285603ef0127dc34e8fb7fe97aba5141c64965fee593afd440b03852124",
+        "model_monthly.csv": "95bb2afa63c5b54b5e052a40808bcaad4c7b4a4eeb61c93aae9c315f2ebace22",
+        "model_monthly_climatology.csv": "3b1bc29e79667e9f2d0fbc4d7925c533d5c324186155c44922810665f0c3fcd3"
+      },
+      "quality_status": "PASS",
+      "window": "historical-1995-2014"
+    },
+    "ssp245-2040-2059": {
+      "grid_lat_lon": [
+        46.875,
+        15.375
+      ],
+      "model": "CanESM5",
+      "native_calendar": "noleap",
+      "original_source_sha256": {
+        "joint_daily_raw.csv": "5cdc6bad425127a8d7a232a2cfd1c649306821f1e0ea8376b90839a8472d97b3",
+        "model_annual.csv": "8ca379d9b1abb93a90b093b8f3846c3f853dbc0dafc3fc8e37b4fca38a435031",
+        "model_monthly.csv": "053a8f046b8cb7bb97e30f7e55a9048795e79a3fa3bed3c4953c2a8c3bc94369",
+        "model_monthly_climatology.csv": "2cd11678b82b3c43df566599ae514ca1ed17b95e92b6729206323d86f2ad4faa"
+      },
+      "quality_status": "PASS",
+      "window": "ssp245-2040-2059"
+    }
+  },
+  "production_epw_ready": false,
+  "protected_files_unchanged": 168,
+  "python": "3.12.14",
+  "registered_2022_IV1_station_values_opened": false,
+  "selection": {
+    "attribution": "NASA NEX-GDDP-CMIP6 v2; GeoSphere Austria; NASA POWER. Original source descriptions and URLs retained in original provenance. No licence grant or independent accuracy claim added.",
+    "base_code_commit": "931a267fbe398155e9833b44d708f79c677d961a",
+    "future_window": "ssp245-2040-2059",
+    "historical_portable_library_id": "libfile_31d59f77b8848191ab592ab9c1d62683",
+    "historical_reference_year": 2013,
+    "historical_window": "historical-1995-2014",
+    "member": "r1i1p1f1",
+    "members": {
+      "IGE_P7A_GRAZ_2013_PORTABLE_RESEARCH_FREEZE.zip": {
+        "bytes": 545498,
+        "sha256": "2bda61d9bacd4a91918e2e3a6dd9e3e263f5bb14758c618247f5561c3e4631a7"
+      },
+      "model_window_sources/IGE_FREEZE_NEX_CanESM5-historical-1995-2014.zip": {
+        "bytes": 890758,
+        "sha256": "5490003b68cbdf0fa5394a45f8491232d2e39e25ac230f83d4e3aa8632f7496d"
+      },
+      "model_window_sources/IGE_FREEZE_NEX_CanESM5-ssp245-2040-2059.zip": {
+        "bytes": 887433,
+        "sha256": "cb9fcfa5144fc1a8d86ee057f79a3b2883ef7de2704c4881aa82dafb269819a1"
+      },
+      "original_p6_freeze_manifest.json": {
+        "bytes": 145749,
+        "sha256": "52526fadb40d2ba70f1d9e42ad8d33e3a6a80c3393ff17a5fbde80b14de446d0"
+      }
+    },
+    "new_2022_IV1_station_values_opened": false,
+    "not_complete_original_freeze": true,
+    "original_derived_daily_CSV_QA_and_provenance_included": true,
+    "original_freeze_model_windows": 40,
+    "purpose": "REGRESSION_AND_INTEGRATION_AUDIT_NOT_NEW_INDEPENDENT_VALIDATION",
+    "raw_upstream_NetCDF_payloads_included": false,
+    "schema": "IGE_E2E_ARCHIVED_REPLAY_INPUT_SELECTION_v1",
+    "selected_GCM_windows": 2,
+    "selected_model": "CanESM5",
+    "source_freeze_library_id": "libfile_96b680ef193c8191a909a8ec9d68bff4",
+    "source_freeze_sha256": "2c3ceecaf83aa3ff2b3e19d109d866111f1145eb5fe48ac6a4fdd010b27a22d7"
+  },
+  "source_packet_sha256": "49dab390ec5d5250f79198df16e69cc3ba37a9985b66f739fde5a729db3c192d",
+  "stage": "IGE_E2E_INTEGRATION_AUDIT_ARCHIVED_GRAZ_REPLAY",
+  "temperature_estimand_limit": "LEGACY_TAS_SIGNAL_IS_APPLIED_TO_HOURLY_MEAN_BUT_NEX_TAS_IS_DERIVED_MIDRANGE_REQUIRES_EXPLICIT_MVP_POLICY",
+  "wall_seconds": 2.0362215049999577
+}

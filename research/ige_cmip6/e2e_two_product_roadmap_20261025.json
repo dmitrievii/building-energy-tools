@@ -1,0 +1,194 @@
+{
+  "schema": "IGE_TWO_PRODUCT_ROADMAP_v1",
+  "as_of": "2026-10-25",
+  "base_commit": "931a267fbe398155e9833b44d708f79c677d961a",
+  "main_commit_read_only": "2a82a77d0fe8cc87a2324b820d6c6843b6598548",
+  "priority_order": [
+    "E0",
+    "I1",
+    "A0",
+    "B-M1",
+    "U1",
+    "A1",
+    "V1",
+    "B-D1"
+  ],
+  "research_B_D_is_not_dependency_of_A_or_B_M_UI": true,
+  "global_station_validation_before_publication": false,
+  "independent_station_validation_countries": [
+    "AT",
+    "DE",
+    "CH"
+  ],
+  "2013_2014_usage": "REVEALED_REGRESSION_ONLY_NO_FITTING",
+  "IV1_station_values_opened": false,
+  "production_ready": false,
+  "four_status_axes": [
+    "execution_correctness",
+    "physical_admissibility",
+    "independent_accuracy",
+    "operational_and_application_scope"
+  ],
+  "milestones": [
+    {
+      "id": "E0",
+      "product_functions": [
+        "shared",
+        "A",
+        "B-M"
+      ],
+      "current_status": "LOCAL_REPLAY_PASS_CI_PENDING",
+      "depends_on": [],
+      "reviewable_outputs": [
+        "e2e_audit.json",
+        "three annual EPW files",
+        "source and capability inventory"
+      ],
+      "completion_criterion": "Verified input hashes, 8760x35 outputs, actual Analyzer importer, explicit open gates"
+    },
+    {
+      "id": "I1",
+      "product_functions": [
+        "shared"
+      ],
+      "current_status": "NEXT",
+      "depends_on": [
+        "E0"
+      ],
+      "reviewable_outputs": [
+        "HistoricalRequest",
+        "FutureRequest",
+        "ClimateResult",
+        "generic EPW exporter"
+      ],
+      "completion_criterion": "One callable route, explicit temporal/physical/source semantics, boundary and leap tests, immutable ledger"
+    },
+    {
+      "id": "A0",
+      "product_functions": [
+        "A"
+      ],
+      "current_status": "NOT_INTEGRATED",
+      "depends_on": [
+        "I1"
+      ],
+      "reviewable_outputs": [
+        "ERA5-derived background hourly dataset",
+        "annual EPW",
+        "source/quality manifest"
+      ],
+      "completion_criterion": "Full real source calendar, documented longwave, grid/site-height distinction, no silent missing fill"
+    },
+    {
+      "id": "B-M1",
+      "product_functions": [
+        "B-M"
+      ],
+      "current_status": "LEGACY_REPLAY_EXISTS_ADAPTATION_REQUIRED",
+      "depends_on": [
+        "I1",
+        "A0"
+      ],
+      "reviewable_outputs": [
+        "one model/member/SSP/period future research EPW",
+        "monthly signal/correction report"
+      ],
+      "completion_criterion": "Consistent midrange estimand, declared monthly conservation, feasible humidity, physical validation and inherited-event disclosure"
+    },
+    {
+      "id": "U1",
+      "product_functions": [
+        "A",
+        "B-M"
+      ],
+      "current_status": "NOT_INTEGRATED",
+      "depends_on": [
+        "A0",
+        "B-M1"
+      ],
+      "reviewable_outputs": [
+        "two Analyzer user routes",
+        "download EPW and report"
+      ],
+      "completion_criterion": "Both routes execute from the UI with progress and correct historical versus representative calendars"
+    },
+    {
+      "id": "A1",
+      "product_functions": [
+        "A"
+      ],
+      "current_status": "COMPONENTS_EXIST_NOT_UNIVERSALLY_QUALIFIED",
+      "depends_on": [
+        "A0"
+      ],
+      "reviewable_outputs": [
+        "station correction policy",
+        "AT DE CH source adapters",
+        "paired holdout evaluation"
+      ],
+      "completion_criterion": "Frozen selection before scores, spatial/temporal separation, report improvement and degradation versus same-hour ERA5"
+    },
+    {
+      "id": "V1",
+      "product_functions": [
+        "A",
+        "B-M"
+      ],
+      "current_status": "NOT_RUN",
+      "depends_on": [
+        "U1",
+        "A1",
+        "B-M1"
+      ],
+      "reviewable_outputs": [
+        "independent AT DE CH metrics",
+        "actual EnergyPlus results",
+        "bounded-release capability statement"
+      ],
+      "completion_criterion": "Preregistered exposure-aware cohort, actual output files, separate execution/physics/accuracy/operation gates"
+    },
+    {
+      "id": "B-D1",
+      "product_functions": [
+        "B-D"
+      ],
+      "current_status": "RESEARCH_ONLY",
+      "depends_on": [
+        "I1"
+      ],
+      "reviewable_outputs": [
+        "version-aware IV1 source bundle",
+        "independent comparison",
+        "annual daily-joint generation"
+      ],
+      "completion_criterion": "No incomplete-source unblinding, original NASA operators/objective, independent benefit before default replacement"
+    }
+  ],
+  "current_first_implementation": "I1_common_contracts_and_export_adapter_then_A0_background_year",
+  "minimum_B_M_temperature_policy": "MIDRANGE_NEX_TAS_INDEX_NO_IMPLICIT_TIME_MEAN_EQUALITY",
+  "specific_humidity_to_mixing_ratio": "w_g_per_kg_dry_air=1000*q_kg_per_kg_moist_air/(1-q)",
+  "future_pressure_policy": "DECLARED_BASELINE_PROXY_NOT_NATIVE_FUTURE_PS",
+  "historical_calendar_policy": "REAL_UTC_AND_FIXED_LOCAL_STANDARD_EXPORT_NO_DST",
+  "future_calendar_policy": "REPRESENTATIVE_BASE_PATTERN_YEAR_SEPARATE_FROM_GCM_WINDOW_NOT_DATE_FORECAST",
+  "input_restoration": {
+    "old_P6_actions_query_returned_artifacts": 0,
+    "original_data_recovered": true,
+    "packet": "research/ige_cmip6/e2e_original_replay_inputs_20261025.zip",
+    "sha256": "49dab390ec5d5250f79198df16e69cc3ba37a9985b66f739fde5a729db3c192d",
+    "selected_GCM_windows": 2,
+    "original_freeze_windows": 40,
+    "new_NASA_ERA5_station_requests": 0
+  },
+  "current_legacy_limitations": [
+    "fixed Graz and CanESM5 source grid in early modules",
+    "CET/nonleap assumptions in old exporter",
+    "longwave absent in 12-field background reader",
+    "unverified provider grid elevation",
+    "legacy tas-index/time-mean mismatch",
+    "loss of monthly q signal under clipping",
+    "uploaded EPW calendar activated as typical year",
+    "no generator service call from current UI",
+    "inheritance of future event chronology and wind direction",
+    "no independently qualified global local accuracy"
+  ]
+}
