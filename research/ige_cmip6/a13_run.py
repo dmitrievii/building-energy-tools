@@ -169,6 +169,10 @@ def make_predictions(input_path):
                     if "weight__"+donor in ledger: frame["weight_"+str(i)] = ledger["weight__"+donor].to_numpy()
         cases.append({**case, "source_block_reasons_at_prediction": reasons,
             "actual_B0_reference_hours": int(frame["B0_C"].notna().sum()), "actual_R1_reference_hours": int(frame["prediction_admitted"].sum()),
+            "ERA5_or_donor_weather_acquired": key in models,
+            "predictions_created_or_sealed": bool(frame["B0_C"].notna().any()),
+            "prediction_ledger_entry_created": True,
+            "donor_QC_and_coverage_evaluated": case["strict_T2m_metadata_ready"] and key in models,
             "control_observations_used": False})
         frames.append(frame)
     combined = pd.concat(frames, ignore_index=True)

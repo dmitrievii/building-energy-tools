@@ -64,7 +64,7 @@ def verify(output, *, code_only=False):
             "prediction_seal_sha256": sha256(seal_raw).hexdigest(), "published_seal_commit": comparison["published_seal_commit"],
             "predictions_all_24_cases_and_scores_replayed_byte_exact": True, "code_and_workflow_unchanged_since_precontrol_seal": True,
             "decoded_weather_body_bytes_inputs_plus_controls": comparison["acquisition_decoded_body_bytes_cumulative"]}
-    receipt = {"schema": "IGE_A13_OFFLINE_VERIFICATION_v1", "mode": "CODE_ONLY_BEFORE_NEW_WEATHER" if code_only else "EXPOSED_SOURCE_PREDICTION_AND_SCORE_REPLAY",
+    receipt = {"schema": "IGE_A13_OFFLINE_VERIFICATION_v1", "mode": "SYNTHETIC_AND_LEGACY_CHECKS_NO_NEW_WEATHER_READ" if code_only else "EXPOSED_SOURCE_PREDICTION_AND_SCORE_REPLAY",
         "tests": tests, "protection": guard, "replay": replay, "code_sha256": code_hashes(),
         "registration_sha256": sha256(json_bytes(plan)).hexdigest(), "new_network_requests_in_verification": 0,
         "strict_independent_accuracy_qualified": False, "full_weather_physical_closure_qualified": False,

@@ -143,6 +143,10 @@ class PredictionPipelineTests(unittest.TestCase):
         np.testing.assert_allclose(p.loc[p.prediction_admitted, "R1_C"], 2., atol=1e-10)
         self.assertTrue(p.loc[~p.prediction_admitted, "R1_C"].isna().all())
         self.assertFalse(self.ledger["target_observation_input"])
+        for case in self.ledger["cases"]:
+            self.assertTrue(case["prediction_ledger_entry_created"])
+            self.assertEqual(case["predictions_created_or_sealed"], case["actual_B0_reference_hours"] > 0)
+            self.assertEqual(case["ERA5_or_donor_weather_acquired"], case["target_key"].startswith("CH:"))
 
     def test_third_ALT_slot_stays_TIT_with_zero_weight_not_replaced(self):
         p = self.p[self.p.target_key == "CH:ALT"]
