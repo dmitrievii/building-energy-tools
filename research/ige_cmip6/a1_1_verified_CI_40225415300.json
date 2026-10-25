@@ -1,0 +1,111 @@
+{
+  "schema": "IGE_A1_1_VERIFIED_CI_RECEIPT_v1",
+  "run_id": 40225415300,
+  "job_id": 121265622223,
+  "code_commit": "69eb396a58f3ddae395e6894b603c7c32b2728ce",
+  "code_tree": "019a2ef1648370d0fbb372e9c3664af5fa20cd66",
+  "conclusion": "SUCCESS",
+  "artifact_id": 12611002251,
+  "artifact_bytes": 8819,
+  "artifact_sha256": "c6cc49d35a77d19f2e4167df4451706fd408eac66f354142c21eaf6e87a54c5e",
+  "member_sha256": {
+    "registered_protocol.json": "a8a5c3a5898f58058ce1fd2c86e85002fc46249a9e367d1d76e4f8a0fbd05ec4",
+    "source_admission.json": "523e745671505ec9425c3c1c1b204f8a99801f30fc31e471b85aa89497b13949",
+    "tests.json": "783a5b1fcab7d0050360979744fbf3a18c5ca0137441b24a410b93162278c1d9",
+    "verification.json": "701c9c2775aa5af1df55d6347823067ef7c84f75ec0739fc0849420f9f682c8c"
+  },
+  "tests": {
+    "tests_run": 210,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "status": "PASS",
+    "wall_seconds": 39.67946533,
+    "python": "3.12.15",
+    "numpy": "1.26.4",
+    "pandas": "2.3.3",
+    "streamlit": "1.63.0",
+    "patterns": [
+      [
+        "tools/climate_analyzer/tests",
+        "test_ige_engine.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_canonical_climate_model.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_e2e_integration_audit.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p7c1_epw_morphing.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p7c1b_humidity_closure.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p9_1a_global_historical_backbone.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p9_2d_annual_cet_epw_export.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_ige_bm1.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p9_3b3_thermodynamics.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_ige_u1.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_startup_dependency_contract.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_source_neutral_ui_0_7_4.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_historical_psychrometric_physical_closure.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_source_parity_streamlit_rerun_reset_0_7_5_5.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_ige_a1_stations.py"
+      ]
+    ]
+  },
+  "protection": {
+    "base": "8d9456e1085ff33827fdb7304922b3ff2639ea9b",
+    "protected_research_files_unchanged": 168,
+    "original_engine_UI_and_existing_tests_changed": false,
+    "IV1_observations_opened": false
+  },
+  "protocol_and_admission_local_CI_byte_exact": true,
+  "implementation_hashes_match_local": true,
+  "catalog_counts": {
+    "AT": 281,
+    "DE": 498,
+    "CH": 149
+  },
+  "planned_target_reference_hours": 4032,
+  "new_station_values_opened": false,
+  "strict_blindness_certified": false,
+  "independent_accuracy_qualified": false,
+  "UI_defaults_changed": false,
+  "production_ready": false,
+  "IV1_observations_opened": false
+}

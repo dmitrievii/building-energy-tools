@@ -117,7 +117,7 @@
       "product_functions": [
         "A"
       ],
-      "current_status": "A1_1_LOCAL_210_CHECKS_PASS_STATION_CONTRACTS_PREPARED_NO_SKILL_EVALUATION",
+      "current_status": "A1_1_CI_VERIFIED_210_CHECKS_STATION_CONTRACTS_AND_FROZEN_DESIGN_NO_SKILL_EVALUATION",
       "depends_on": [
         "A0"
       ],
@@ -305,6 +305,14 @@
     "A0_B_M1_U1_defaults_changed": false,
     "production_ready": false,
     "protocol": "research/ige_cmip6/a1_1_protocol_20261025.json",
-    "report": "docs/IGE_A1_1_STATION_CONTRACTS_AND_VALIDATION_PREPARATION_RU_20261025.md"
+    "report": "docs/IGE_A1_1_STATION_CONTRACTS_AND_VALIDATION_PREPARATION_RU_20261025.md",
+    "CI_run": 40225415300,
+    "CI_status": "SUCCESS",
+    "CI_tests": 210,
+    "tested_commit": "69eb396a58f3ddae395e6894b603c7c32b2728ce",
+    "protocol_sha256": "a8a5c3a5898f58058ce1fd2c86e85002fc46249a9e367d1d76e4f8a0fbd05ec4",
+    "verified_CI_receipt": "research/ige_cmip6/a1_1_verified_CI_40225415300.json",
+    "verified_CI_outputs": "research/ige_cmip6/a1_1_verified_CI_40225415300_results.zip",
+    "metadata_and_protocol_local_CI_byte_exact": true
   }
 }
