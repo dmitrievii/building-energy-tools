@@ -1,0 +1,31 @@
+{
+  "schema": "IGE_A12_PREDICTION_PREFLIGHT_v1",
+  "frozen_protocol_sha256": "a8a5c3a5898f58058ce1fd2c86e85002fc46249a9e367d1d76e4f8a0fbd05ec4",
+  "all_24_frozen_cases_retained_in_ledger": true,
+  "metadata_ready_targets": [
+    "CH:ALT",
+    "CH:BAS"
+  ],
+  "metadata_ready_donor_sources": [
+    "CH:DEM",
+    "CH:ENG",
+    "CH:GES",
+    "CH:MOE",
+    "CH:RUE"
+  ],
+  "max_distinct_background_source_points_for_this_subset": 7,
+  "source_byte_exposure_class": "PREVIOUSLY_REVEALED_CONTAINERS; no strict untouched-source claim",
+  "new_observation_or_background_requests_made": 0,
+  "predictions_or_actual_prediction_seal_created": false,
+  "strict_independent_validation_authorized_by_this_preflight": false,
+  "independent_accuracy_qualified": false,
+  "next_steps_in_order": [
+    "Retain blocked AT/DE/height cases; do not reselect donors, dates or QC after errors",
+    "Acquire only admitted donor T/QC and background inputs under frozen 24-asset/200MB limits; log original hashes and all failures",
+    "Generate frozen R1/B0 predictions without target-observation input; retain NaNs and all 24 case rows",
+    "Publish actual prediction files plus immutable input/code/operator/QC hashes before opening target T",
+    "Only after that seal, read target T and score matching times as exposed-source research evaluation, not independent certification",
+    "A new independent qualification needs a separate prospective registered cohort/exposure check; no replacement of this frozen cohort"
+  ],
+  "full_year_local_weather_or_EPW_promotion_allowed": false
+}

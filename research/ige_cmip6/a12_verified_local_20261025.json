@@ -1,0 +1,132 @@
+{
+  "schema": "IGE_A12_VERIFICATION_v1",
+  "status": "SOURCE_ADMISSION_AND_EXPOSURE_AUDIT_PASS_WITH_EXPLICIT_SCIENTIFIC_BLOCKS",
+  "tests": {
+    "tests_run": 240,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "status": "PASS",
+    "wall_seconds": 42.90334685000016,
+    "patterns": [
+      [
+        "tools/climate_analyzer/tests",
+        "test_ige_engine.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_canonical_climate_model.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_e2e_integration_audit.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p7c1_epw_morphing.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p7c1b_humidity_closure.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p9_1a_global_historical_backbone.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p9_2d_annual_cet_epw_export.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_ige_bm1.py"
+      ],
+      [
+        "research/ige_cmip6",
+        "test_p9_3b3_thermodynamics.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_ige_u1.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_startup_dependency_contract.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_source_neutral_ui_0_7_4.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_historical_psychrometric_physical_closure.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_source_parity_streamlit_rerun_reset_0_7_5_5.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_ige_a1_stations.py"
+      ],
+      [
+        "tools/climate_analyzer/tests",
+        "test_ige_a12_history.py"
+      ]
+    ],
+    "python": "3.12.14",
+    "numpy": "1.26.4",
+    "pandas": "2.3.3",
+    "streamlit": "1.63.0"
+  },
+  "protection": {
+    "base": "ae6f4ae406fd1adf72eaf4da23d898e1d54059ff",
+    "protected_research_files_unchanged": 168,
+    "A1_1_protocol_and_metadata_replay_byte_unchanged": true,
+    "existing_core_UI_and_defaults_byte_unchanged": true,
+    "IV1_observations_opened": false
+  },
+  "counts": {
+    "frozen_targets": 6,
+    "frozen_donor_slots": 18,
+    "distinct_sites": 24,
+    "target_season_cases": 24,
+    "dated_actual_sensor_geometries": 21,
+    "strict_2m_geometries": 18,
+    "metadata_ready_cases": 8,
+    "metadata_ready_prospective_reference_hours": 1344,
+    "primary_validation_admitted_cases": 0,
+    "new_target_measurements_read": 0,
+    "new_weather_requests": 0
+  },
+  "old_product_EPW_sha256": {
+    "historical": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635",
+    "future": "fc00e09811498c368965785ee8873bc4ca1cd01761eaebb19c759faebd0e3c28"
+  },
+  "history_packet_sha256": "fba7e6a447dd70b155fafce712a40c7bb2fac498aa6facf2dbdc665c5f699f83",
+  "history_packet_file": "a12_history_sources_20261025.zip",
+  "frozen_protocol_sha256": "a8a5c3a5898f58058ce1fd2c86e85002fc46249a9e367d1d76e4f8a0fbd05ec4",
+  "actual_prediction_seal_created": false,
+  "new_target_temperature_or_weather_observation_requests": 0,
+  "new_ERA5_requests": 0,
+  "station_observation_tests_are_synthetic": true,
+  "strict_blindness_certified": false,
+  "independent_accuracy_qualified": false,
+  "physical_full_weather_qualified": false,
+  "production_ready": false,
+  "quality_axes": {
+    "code": "OFFLINE_ACCEPTANCE_REQUIRED",
+    "physical": "ACTUAL_SOURCE_TEMPERATURE_SUPPORT_ONLY; no complete weather-state or datum qualification",
+    "independent_accuracy": "UNASSESSED; exposure audit and actual prediction seal still required",
+    "operation": "RESEARCH_PREFLIGHT; no UI/default/EPW promotion"
+  },
+  "implementation_sha256": {
+    "research/ige_cmip6/a12_acquire_history.py": "0c140010c371f0fb72aa0f7c71ffee68b1a62ab103e6dba3058008b2f94fe832",
+    "research/ige_cmip6/a12_exposure_audit.py": "d425692b711eab0d6f8a69a6365cb9f3baa879760437c67a451df9eab8f1918b",
+    "research/ige_cmip6/a12_metadata_zip.py": "3dc7a53b9f8e52dd84e5bfe366e54659d8eca723f8876e98f3abe9c42fa8c998",
+    "research/ige_cmip6/a12_prepare_history.py": "25ab906003fe82e8f56237e1440b6b0f540564644c0c9956320af2bd94ab2d5f",
+    "research/ige_cmip6/a12_verify.py": "ca8f0de71e1faa07a4d25454e06d4d73702c94fb65c416120cb3304e30ba5405",
+    "tools/climate_analyzer/epw_climate_analyzer/station_admission.py": "e556c7cf6e289fb34433c1a42389d7d93d2bb502e45611fc8cf61b557d290183",
+    "tools/climate_analyzer/tests/test_ige_a12_history.py": "909ee6b541a66afedb8dd5ca021eb2c8807dbf95711f3a3d0b81517357b40f20"
+  }
+}

@@ -314,5 +314,37 @@
     "verified_CI_receipt": "research/ige_cmip6/a1_1_verified_CI_40225415300.json",
     "verified_CI_outputs": "research/ige_cmip6/a1_1_verified_CI_40225415300_results.zip",
     "metadata_and_protocol_local_CI_byte_exact": true
+  },
+  "A1_2_progress": {
+    "branch": "research/ige-a1-2-history-admission-20261025",
+    "tests_local": 240,
+    "local_test_wall_seconds": 42.90334685000016,
+    "actual_dated_sensor_geometries": 21,
+    "strict_2m_geometries": 18,
+    "metadata_ready_cases": 8,
+    "metadata_ready_prospective_hours": 1344,
+    "primary_validation_admitted_cases": 0,
+    "frozen_target_season_cases_retained": 24,
+    "frozen_donor_slots_retained": 18,
+    "new_target_observations_or_weather_requests": 0,
+    "actual_prediction_seal_created": false,
+    "CH_target_source_container_prior_exposure_confirmed": true,
+    "CH_target_T_2025_fit_or_score_leakage_demonstrated": false,
+    "strict_blindness_certified": false,
+    "independent_accuracy_qualified": false,
+    "production_ready": false,
+    "A0_B_M1_U1_defaults_and_EPW_unchanged": true,
+    "A1_1_frozen_protocol_byte_unchanged": true,
+    "counts_file": "research/ige_cmip6/a12_history_admission_20261025.json",
+    "exposure_audit": "research/ige_cmip6/a12_exposure_audit_20261025.json",
+    "prediction_preflight": "research/ige_cmip6/a12_prediction_preflight_20261025.json",
+    "report": "docs/IGE_A1_2_DATED_SOURCE_ADMISSION_AND_EXPOSURE_AUDIT_RU_20261025.md",
+    "next_compute": "REAL_CH_R1_B0_PREDICTION_SEAL_BEFORE_TARGET_T_THEN_EXPOSED_SOURCE_RESEARCH_COMPARISON",
+    "remaining_source_blocks": [
+      "three AT donor historical identities",
+      "DWD hourly time operator",
+      "strict 2m mismatch Salzburg/Feldberg/Titlis"
+    ],
+    "independent_AT_DE_CH_next_gate": "separate preregistration and exposure review; preserve current frozen six targets as exposed/uncertified cases"
   }
 }

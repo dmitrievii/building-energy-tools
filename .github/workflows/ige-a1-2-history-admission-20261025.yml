@@ -1,0 +1,54 @@
+name: IGE A1.2 dated sensor admission and exposure audit NO NEW CONTROL OBSERVATIONS
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/ige-a1-2-history-admission-20261025
+    paths:
+      - .github/workflows/ige-a1-2-history-admission-20261025.yml
+      - research/ige_cmip6/a12_*
+      - tools/climate_analyzer/epw_climate_analyzer/station_admission.py
+      - tools/climate_analyzer/tests/test_ige_a12_history.py
+permissions:
+  contents: read
+env:
+  OPENBLAS_NUM_THREADS: '1'
+  OMP_NUM_THREADS: '1'
+  STREAMLIT_BROWSER_GATHER_USAGE_STATS: 'false'
+jobs:
+  historical_metadata_and_revealed_source_preflight:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r tools/climate_analyzer/requirements.txt numcodecs==0.15.1 deprecated==3.0.0 wrapt==2.5.1
+      - name: Replay original metadata, preserve 210 regressions, test admission against synthetic observations
+        run: python research/ige_cmip6/a12_verify.py --out outputs/a12
+      - name: Separate source readiness from independent accuracy and a real prediction seal
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          r=json.loads(Path('outputs/a12/verification.json').read_text())
+          c=r['counts']
+          assert c['dated_actual_sensor_geometries']==21 and c['strict_2m_geometries']==18
+          assert c['metadata_ready_cases']==8 and c['primary_validation_admitted_cases']==0
+          assert r['actual_prediction_seal_created'] is False and r['independent_accuracy_qualified'] is False
+          assert r['new_target_temperature_or_weather_observation_requests']==r['new_ERA5_requests']==0
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as stream:
+              stream.write(f"{r['tests']['tests_run']} checks PASS; 210 earlier core/UI/A1 regressions retained.\n\n")
+              stream.write('24 sites: 21 dated actual geometries, 18 strict 2m. Eight CH cases metadata-ready, AT/DE explicitly blocked. Prior CH hourly-container exposure confirmed from old wind provenance; no T2025 fitting/skill leakage demonstrated, no strict untouched-source qualification.\n\n')
+              stream.write('No new control T, ERA5 requests, actual prediction seal, independent accuracy, full weather or production qualification. Existing EPW/UI and protected research unchanged.\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: IGE-A1-2-dated-source-admission-and-exposure-NO-NEW-CONTROL-OBSERVATIONS
+          path: outputs/a12/
+          if-no-files-found: warn
+          retention-days: 30
