@@ -1,0 +1,80 @@
+name: IGE V1 restore controls and complete frozen scientific validation
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/ige-v1-time-admission-preregistration-20261026
+    paths:
+      - .github/workflows/ige-v1-recovery-source-results-20261026.yml
+      - research/ige_cmip6/recover_v1_sources_20261026.py
+      - research/ige_cmip6/v1_initial_local_score_summary_20261026.json
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: ige-v1-recovery-20261026
+  cancel-in-progress: false
+env:
+  PYTHONPATH: tools/climate_analyzer:research/ige_cmip6
+  OPENBLAS_NUM_THREADS: '1'
+  OMP_NUM_THREADS: '1'
+  STREAMLIT_BROWSER_GATHER_USAGE_STATS: 'false'
+jobs:
+  recover_frozen_controls_test_and_preserve:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r tools/climate_analyzer/requirements.txt numcodecs==0.15.1 deprecated==3.0.0 wrapt==2.5.1
+      - name: Compile recovery transport and reporting helper
+        run: python -m py_compile research/ige_cmip6/recover_v1_sources_20261026.py
+      - name: Reacquire identical registered controls and replay unchanged science
+        id: science
+        run: python research/ige_cmip6/recover_v1_sources_20261026.py --out outputs/recovery
+      - uses: actions/upload-artifact@v4
+        id: evidence
+        if: always()
+        with:
+          name: IGE-V1-recovered-controls-and-350-checks
+          path: outputs/recovery/
+          if-no-files-found: warn
+          retention-days: 30
+      - uses: actions/download-artifact@v4
+        if: steps.science.outcome == 'success'
+        with:
+          artifact-ids: ${{ steps.evidence.outputs.artifact-id }}
+          path: outputs/roundtrip/
+          merge-multiple: true
+      - name: Verify actual downloaded files and prepare durable branch results
+        if: steps.science.outcome == 'success'
+        env:
+          V1_ARTIFACT_ID: ${{ steps.evidence.outputs.artifact-id }}
+          V1_ARTIFACT_SHA256: ${{ steps.evidence.outputs.artifact-digest }}
+        run: python research/ige_cmip6/recover_v1_sources_20261026.py --out outputs/recovery --roundtrip outputs/roundtrip
+      - name: Preserve results on the research branch only
+        if: steps.science.outcome == 'success'
+        shell: bash
+        run: |
+          test "$GITHUB_REF" = 'refs/heads/research/ige-v1-time-admission-preregistration-20261026'
+          git fetch origin research/ige-v1-time-admission-preregistration-20261026
+          test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'research(V1): preserve recovered controls and verified temperature scores [skip ci]'
+          git push origin HEAD:refs/heads/research/ige-v1-time-admission-preregistration-20261026
+      - name: Publish scientific scope in job summary
+        if: steps.science.outcome == 'success'
+        run: |
+          python - <<'PY'
+          import os,json
+          from pathlib import Path
+          r=json.loads(Path('research/ige_cmip6/v1_recovery_receipt_20261026.json').read_text())
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:
+              f.write(f"{r['total_unique_tests']} checks PASS. DE/CH hourly-error holdout, AT controls unopened.\n\n")
+              f.write('R1 improves two sites and worsens two. Numerical summaries compared; identity of the unavailable first raw control packet is not certified. No default, production or regional accuracy promotion.\n')
+          PY

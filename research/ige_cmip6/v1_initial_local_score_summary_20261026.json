@@ -1,0 +1,231 @@
+{
+  "schema": "IGE_V1_INITIAL_LOCAL_SCORE_SUMMARY_BEFORE_RUNTIME_LOSS_v1",
+  "registration_commit": "8fdc0341f1b660f4e56abec726381ae5a2dcc8a1",
+  "prediction_seal_commit": "4d993d64db8cbf7cab2f84b111fc1899445be431",
+  "initial_control_packet_sha256": "b85f06538bb3b3f8cedc5542477bdd440dad522e3d856333d3507349ee76eb9d",
+  "initial_control_body_bytes": 170457666,
+  "initial_input_body_bytes": 73406351,
+  "initial_cumulative_weather_body_bytes": 243864017,
+  "initial_control_HTTP_requests": 6,
+  "initial_locally_skipped_AT_attempts": 2,
+  "initial_packet_preservation_status": "local runtime unavailable before control packet publication; initial raw body identity cannot be certified from this summary",
+  "counts": {
+    "registered_cases": 24,
+    "admitted_primary_cases": 16,
+    "source_blocked_cases": 8,
+    "partial_cases": 0,
+    "paired_primary_hours": 2688,
+    "requested_primary_hours": 4032
+  },
+  "per_country": {
+    "DE": {
+      "B0_MAE_K": 1.28058036,
+      "R1_MAE_K": 1.19513581,
+      "delta_MAE_K": -0.08544455
+    },
+    "CH": {
+      "B0_MAE_K": 4.01966146,
+      "R1_MAE_K": 3.01461309,
+      "delta_MAE_K": -1.00504836
+    }
+  },
+  "per_target": {
+    "DE:01270": {
+      "B0_MAE_K": 1.21205357,
+      "R1_MAE_K": 1.51483412,
+      "B0_bias_K": -0.22574405,
+      "R1_bias_K": -0.35575163,
+      "B0_centred_RMSE_K": 1.67072332,
+      "R1_centred_RMSE_K": 2.01979714
+    },
+    "DE:00232": {
+      "B0_MAE_K": 1.34910714,
+      "R1_MAE_K": 0.8754375,
+      "B0_bias_K": 1.08125,
+      "R1_bias_K": 0.29568936,
+      "B0_centred_RMSE_K": 1.4244066,
+      "R1_centred_RMSE_K": 1.1286454
+    },
+    "CH:STG": {
+      "B0_MAE_K": 1.77775298,
+      "R1_MAE_K": 2.02905514,
+      "B0_bias_K": 0.12296627,
+      "R1_bias_K": 0.75265622,
+      "B0_centred_RMSE_K": 2.23190378,
+      "R1_centred_RMSE_K": 2.23881945
+    },
+    "CH:SCU": {
+      "B0_MAE_K": 6.26156994,
+      "R1_MAE_K": 4.00017105,
+      "B0_bias_K": -6.26156994,
+      "R1_bias_K": -3.99000159,
+      "B0_centred_RMSE_K": 2.0359442,
+      "R1_centred_RMSE_K": 1.63402297
+    }
+  },
+  "primary_cases": [
+    [
+      "DE:01270",
+      "winter",
+      1.1172619,
+      1.10503952
+    ],
+    [
+      "DE:01270",
+      "spring",
+      0.77797619,
+      1.10844928
+    ],
+    [
+      "DE:01270",
+      "summer",
+      0.90892857,
+      1.3320781
+    ],
+    [
+      "DE:01270",
+      "autumn",
+      2.04404762,
+      2.51376957
+    ],
+    [
+      "DE:00232",
+      "winter",
+      0.76964286,
+      0.49579808
+    ],
+    [
+      "DE:00232",
+      "spring",
+      1.24107143,
+      0.84438641
+    ],
+    [
+      "DE:00232",
+      "summer",
+      1.67916667,
+      1.11544003
+    ],
+    [
+      "DE:00232",
+      "autumn",
+      1.70654762,
+      1.04612549
+    ],
+    [
+      "CH:STG",
+      "winter",
+      1.36964286,
+      1.89715874
+    ],
+    [
+      "CH:STG",
+      "spring",
+      1.44781746,
+      1.84129097
+    ],
+    [
+      "CH:STG",
+      "summer",
+      1.59980159,
+      2.12073003
+    ],
+    [
+      "CH:STG",
+      "autumn",
+      2.69375,
+      2.25704082
+    ],
+    [
+      "CH:SCU",
+      "winter",
+      6.18030754,
+      3.76709055
+    ],
+    [
+      "CH:SCU",
+      "spring",
+      6.26364087,
+      3.70296237
+    ],
+    [
+      "CH:SCU",
+      "summer",
+      6.79335317,
+      4.2113099
+    ],
+    [
+      "CH:SCU",
+      "autumn",
+      5.80897817,
+      4.31932138
+    ]
+  ],
+  "secondary_CH": [
+    [
+      "CH:STG",
+      "winter",
+      1.4125,
+      1.95289933,
+      0.02539683,
+      5.33756783
+    ],
+    [
+      "CH:STG",
+      "spring",
+      1.44583333,
+      1.8914698,
+      0.02490079,
+      7.9852484
+    ],
+    [
+      "CH:STG",
+      "summer",
+      1.6125,
+      2.17914827,
+      0.02619048,
+      5.93102907
+    ],
+    [
+      "CH:STG",
+      "autumn",
+      2.72380952,
+      2.42018083,
+      0.02291667,
+      6.21952846
+    ],
+    [
+      "CH:SCU",
+      "winter",
+      6.16964286,
+      3.7607683,
+      0.02628968,
+      4.60154586
+    ],
+    [
+      "CH:SCU",
+      "spring",
+      6.22440476,
+      3.67026774,
+      0.02480159,
+      3.73169162
+    ],
+    [
+      "CH:SCU",
+      "summer",
+      6.7202381,
+      4.1308349,
+      0.02271825,
+      6.02246089
+    ],
+    [
+      "CH:SCU",
+      "autumn",
+      5.80654762,
+      4.31647322,
+      0.02509921,
+      5.28077009
+    ]
+  ],
+  "summary_use": "drift diagnostic only; no fitting or selection by these errors; original raw packet/CSV equivalence not claimed"
+}
