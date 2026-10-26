@@ -1,0 +1,12 @@
+{
+  "schema": "IGE_A14_PUBLISHED_REGISTRATION_RECEIPT_v1",
+  "branch": "research/ige-a1-4-local-historical-year-20261026",
+  "published_commit": "a3e04ca2961cd27fbc3e4b05d98c5e344e0a879a",
+  "GitHub_commit_date_UTC": "2026-10-26T12:01:34Z",
+  "publication_verified_by_GitHub_API": true,
+  "trusted_timestamp_claimed": false,
+  "tests_before_new_weather": 279,
+  "new_annual_weather_numeric_values_opened_at_registration": false,
+  "A13_revealed_source_exposure_retained": true,
+  "independent_accuracy_qualified": false
+}

@@ -1,0 +1,24 @@
+{
+  "schema": "IGE_A14_OUTPUT_METADATA_ONLY_AMENDMENT_v1",
+  "parent_registration_commit": "a3e04ca2961cd27fbc3e4b05d98c5e344e0a879a",
+  "reason": "Initial eight-decimal JSON reporting printed sub-micro tolerances as 0. Preserve small nonzero metadata on two-significant-digit output grid. No model change.",
+  "original_new_source_packet_sha256": "d81b4da31ae99b97403d5e25ce331902018762cdd439b6fc71a9045eab9d9a79",
+  "initial_reporting_evidence": "a14_initial_metadata_rounding_v0_20261026.json",
+  "weather_state_equations_objective_donors_and_acceptance_thresholds_changed": false,
+  "allowed_code_changes": {
+    "research/ige_cmip6/a14_run.py": {
+      "original_sha256": "31b8495cfab9b8e9c150c3ca788a12a791549a43fa121dca3798f070c5054791",
+      "current_sha256": "61628b71061f9c3c381fb776d30d3c4897d742f9c72bb15f06e5efed0c9bc58b"
+    },
+    "research/ige_cmip6/a14_acquire.py": {
+      "original_sha256": "3edcf60e6055208ea1b8e900f8dccce4ac090dcc754ef02dbb01b4cba44d51a2",
+      "current_sha256": "964954e994dbe75a502eb6c34be29057dfa52c3807d98053996a8dbbab09f72f"
+    },
+    "tools/climate_analyzer/tests/test_ige_a14_station_year.py": {
+      "original_sha256": "50293942cacf89d0a259349ad2dd8a9a02a4b710ce39d1da1973ea487b5b4946",
+      "current_sha256": "b0a0c792b45c51fd5bfdfeb964693652356b91ff63c3a16a0cb01dcbabbe586a"
+    }
+  },
+  "target_annual_observations_opened": false,
+  "all_weather_EPWs_and_hourly_CSV_must_remain_byte_identical": true
+}

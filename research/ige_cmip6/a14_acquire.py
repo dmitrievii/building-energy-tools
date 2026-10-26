@@ -21,10 +21,21 @@ from epw_climate_analyzer.engine.epw import write_exclusive
 
 def publication_gate(commit):
     if not re.fullmatch(r"[0-9a-f]{40}",commit):raise ValueError("A14_PUBLISHED_REGISTRATION_COMMIT_REQUIRED")
+    original={};changed={}
     for name in ["research/ige_cmip6/"+REGISTRATION,*code_hashes()]:
-        if subprocess.check_output(["git","show",commit+":"+name],cwd=ROOT)!=(ROOT/name).read_bytes():
-            raise ValueError("A14_PUBLISHED_CODE_OR_REGISTRATION_CHANGED:"+name)
-    return {"commit":commit,"code_sha256":code_hashes(),"registration_sha256":sha256((R/REGISTRATION).read_bytes()).hexdigest()}
+        raw=subprocess.check_output(["git","show",commit+":"+name],cwd=ROOT)
+        digest=sha256(raw).hexdigest()
+        if name in code_hashes():original[name]=digest
+        if raw!=(ROOT/name).read_bytes():changed[name]={"original_sha256":digest,"current_sha256":sha256((ROOT/name).read_bytes()).hexdigest()}
+    if changed:
+        amendment=json.loads((R/"a14_metadata_serialization_amendment_20261026.json").read_text())
+        if (amendment["parent_registration_commit"]!=commit or amendment["allowed_code_changes"]!=changed
+                or amendment["weather_state_equations_objective_donors_and_acceptance_thresholds_changed"] is not False
+                or set(changed)!={"research/ige_cmip6/a14_run.py","research/ige_cmip6/a14_acquire.py",
+                    "tools/climate_analyzer/tests/test_ige_a14_station_year.py"}
+                or sha256((R/SOURCES).read_bytes()).hexdigest()!=amendment["original_new_source_packet_sha256"]):
+            raise ValueError("A14_UNREGISTERED_POSTDATA_CODE_CHANGE")
+    return {"commit":commit,"code_sha256":original,"registration_sha256":sha256((R/REGISTRATION).read_bytes()).hexdigest()}
 
 
 def collect(output,commit):

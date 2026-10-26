@@ -1,0 +1,53 @@
+{
+  "schema": "IGE_A14_OFFLINE_VERIFICATION_v1",
+  "tests": {
+    "tests_run": 280,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "status": "PASS",
+    "wall_seconds": 58.698098887000015,
+    "python": "3.12.14",
+    "numpy": "1.26.4",
+    "pandas": "2.3.3",
+    "streamlit": "1.63.0"
+  },
+  "protection": {
+    "parent_commit": "3ba27b7b618820d9f714c312a0fec5ae989c37f6",
+    "protected_research_files_unchanged": 168,
+    "old_engine_UI_A1_protocols_sources_scores_and_existing_EPW_unchanged": true,
+    "IV1_observations_opened": false,
+    "main_or_merge_used": false
+  },
+  "replay": {
+    "original_source_replay_byte_exact": true,
+    "target_years": 2,
+    "records_per_year": 8760,
+    "bundle_sha256": "21a10349e47c595b43a1a1f7aa884ae91cff951f556e4912e33c69f3186d5e65",
+    "source_packet_sha256": "d81b4da31ae99b97403d5e25ce331902018762cdd439b6fc71a9045eab9d9a79",
+    "replay_wall_seconds": 13.032812584000112,
+    "R1_admitted_hours": {
+      "CH:BAS": 8760,
+      "CH:ALT": 8760
+    },
+    "q_projection_hours": {
+      "CH:BAS": 83,
+      "CH:ALT": 5
+    }
+  },
+  "registration_sha256": "a59d0a9ce4daf4c9385bf2ede9f1dad7a29a0a990d3229b707c49880f1411566",
+  "code_sha256": {
+    "research/ige_cmip6/a14_prepare.py": "19380b6863d0b4fcbf07a4ed62df9d6e8d5c023d4fe19162ff0964fb525c8eaa",
+    "research/ige_cmip6/a14_acquire.py": "964954e994dbe75a502eb6c34be29057dfa52c3807d98053996a8dbbab09f72f",
+    "research/ige_cmip6/a14_run.py": "61628b71061f9c3c381fb776d30d3c4897d742f9c72bb15f06e5efed0c9bc58b",
+    "research/ige_cmip6/a14_verify.py": "7b91efd09fc2ed98bd0cfba7c44a8de7bf57b449b98f9c3b466eba4a3ebbaa6e",
+    "tools/climate_analyzer/epw_climate_analyzer/engine/station_year.py": "1474d1a5e95b1b65afd5165e70e0b4be687db2afff215765d4e1b36cc08a4e39",
+    "tools/climate_analyzer/tests/test_ige_a14_station_year.py": "b0a0c792b45c51fd5bfdfeb964693652356b91ff63c3a16a0cb01dcbabbe586a",
+    ".github/workflows/ige-a1-4-local-year-20261026.yml": "033ef6b6bad8851517a65d144b2c8ebec7f1a1e1691489cac5bbbe1bb13208ee"
+  },
+  "new_network_requests_during_verification": 0,
+  "physical_scope": "CONDITIONAL_T_P_Q_RH_ONLY",
+  "independent_accuracy_qualified": false,
+  "production_ready": false,
+  "existing_UI_defaults_changed": false
+}

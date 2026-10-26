@@ -12,7 +12,7 @@ import pandas as pd
 ROOT=Path(__file__).resolve().parents[3]
 sys.path.insert(0,str(ROOT/"research/ige_cmip6"))
 from a14_prepare import build_registration,FIRST,ANCHOR,LAST
-from a14_run import annual_donor_subset,csv_bytes
+from a14_run import annual_donor_subset,csv_bytes,rounded
 from test_ige_engine import fixture
 from epw_climate_analyzer.engine.contracts import HistoricalRequest
 from epw_climate_analyzer.engine.historical import assemble_historical
@@ -163,6 +163,12 @@ class FullResearchYearTests(unittest.TestCase):
 
 
 class SourceAdmissionTests(unittest.TestCase):
+    def test_output_tolerances_do_not_round_to_an_exact_zero_claim(self):
+        printed=rounded({"bound":1e-11,"export_error":4.9234567e-8,"ordinary_statistic":1.2345678912})
+        self.assertEqual(printed["bound"],1e-11)
+        self.assertEqual(printed["export_error"],4.9e-8)
+        self.assertEqual(printed["ordinary_statistic"],1.23456789)
+
     def test_geometry_rechecked_for_entire_spinup_and_export_support(self):
         p=build_registration()
         self.assertEqual(len(p["full_support_admission"]),7)

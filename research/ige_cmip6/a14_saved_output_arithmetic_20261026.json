@@ -1,0 +1,27 @@
+{
+  "schema": "IGE_A14_SAVED_OUTPUT_SCALAR_ARITHMETIC_AUDIT_v1",
+  "scope": "POSTHOC_OUTPUT_ARITHMETIC_ONLY_NOT_INDEPENDENT_METEOROLOGICAL_VALIDATION",
+  "all_weather_EPWs_and_CSV_byte_identical_to_initial_build": true,
+  "targets": {
+    "CH:BAS": {
+      "rows": 8760,
+      "max_RH_residual_pp_after_CSV": 3.9028122955642175e-09,
+      "max_Td_vapour_residual_pa_after_CSV": 6.529489837703295e-08,
+      "max_conditional_p_residual_pa_after_CSV": 5.529727786779404e-10,
+      "max_pointwise_q_projection_residual_kg_kg": 0.0,
+      "logged_projection_hours": 83,
+      "weather_and_CSV_hashes_verified": true
+    },
+    "CH:ALT": {
+      "rows": 8760,
+      "max_RH_residual_pp_after_CSV": 3.6409772974366206e-09,
+      "max_Td_vapour_residual_pa_after_CSV": 6.217078407644294e-08,
+      "max_conditional_p_residual_pa_after_CSV": 5.529727786779404e-10,
+      "max_pointwise_q_projection_residual_kg_kg": 0.0,
+      "logged_projection_hours": 5,
+      "weather_and_CSV_hashes_verified": true
+    }
+  },
+  "new_observation_requests": 0,
+  "independent_accuracy_qualified": false
+}

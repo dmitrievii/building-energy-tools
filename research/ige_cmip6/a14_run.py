@@ -85,7 +85,9 @@ def rounded(obj):
     if isinstance(obj,dict):return {k:rounded(v) for k,v in obj.items()}
     if isinstance(obj,list):return [rounded(v) for v in obj]
     if isinstance(obj,(float,np.floating)):
-        value=round(float(obj),8)
+        # Keep sub-micro diagnostic tolerances nonzero. This is output-only;
+        # all state equations and acceptance checks precede serialization.
+        value=(float(format(float(obj),".2g")) if 0<abs(float(obj))<1e-6 else round(float(obj),8))
         return 0.0 if value==0 else value
     if isinstance(obj,np.integer):return int(obj)
     return obj
