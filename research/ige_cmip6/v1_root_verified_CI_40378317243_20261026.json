@@ -1,0 +1,83 @@
+{
+  "schema": "IGE_V1_ROOT_REVIEW_OF_REMOTE_RESULTS_AND_ARTIFACT_v1",
+  "review_date": "2026-10-26",
+  "repository": "dmitrievii/building-energy-tools",
+  "branch": "research/ige-v1-time-admission-preregistration-20261026",
+  "reviewed_results_commit": "06ae1b2b010afb753348ff85f7f25dc1d6f0368f",
+  "tested_commit": "a0ba1aeb428701989bc7d107697ceba1b1ef279d",
+  "registration_commit": "8fdc0341f1b660f4e56abec726381ae5a2dcc8a1",
+  "prediction_seal_commit": "4d993d64db8cbf7cab2f84b111fc1899445be431",
+  "CI_run": 40378317243,
+  "CI_status": "completed",
+  "CI_conclusion": "success",
+  "total_unique_tests": 350,
+  "artifact": {
+    "id": 12678300741,
+    "name": "IGE-V1-recovered-controls-and-350-checks",
+    "expected_archive_sha256": "4540bb8639271fecfb68a93e2ed78e37a801e0500f52d582714b87d0680c9d0c",
+    "size_in_bytes_from_GitHub": 65049546,
+    "actual_download_via_GitHub_connector_completed": true,
+    "runner_roundtrip_member_hashes_verified": 53,
+    "runner_artifact_roundtrip_verified": true,
+    "independent_root_binary_digest_computed": false,
+    "external_download_limit": "connector returns a reusable downloaded file reference without a byte digest; local runtime unavailable, so external root byte hashing was not performed"
+  },
+  "initial_local_control_raw_identity_certified": false,
+  "initial_numeric_summary_fields_compared": 124,
+  "all_available_initial_numeric_summaries_match": true,
+  "current_control_packet_sha256": "14bd36166deaaeea182099af46ad1f3206a239f2ecd4eb4f3d5354dabe6ffa99",
+  "global_weather_body_bytes_including_original_and_recovery": 414321683,
+  "controls": {
+    "actual_received_DE_CH_assets": 6,
+    "AT_body_requests": 0,
+    "AT_control_bytes": 0,
+    "all24_registered_cases_retained": true,
+    "admitted_cases": 16,
+    "paired_primary_hours": 2688
+  },
+  "old_branches_and_main": [
+    {
+      "branch": "main",
+      "sha": "2a82a77d0fe8cc87a2324b820d6c6843b6598548",
+      "expected": "2a82a77d0fe8cc87a2324b820d6c6843b6598548",
+      "unchanged": true
+    },
+    {
+      "branch": "research/ige-a1-5-local-year-ui-20261026",
+      "sha": "040a7473727336d45c9ac1151709ccbaf8b6e245",
+      "expected": "040a7473727336d45c9ac1151709ccbaf8b6e245",
+      "unchanged": true
+    },
+    {
+      "branch": "research/ige-a1-4-local-historical-year-20261026",
+      "sha": "fb1b77a12a1dd525506d14ffc546988dbc39efb7",
+      "expected": "fb1b77a12a1dd525506d14ffc546988dbc39efb7",
+      "unchanged": true
+    }
+  ],
+  "reviewed_change_scope": {
+    "base": "4d993d64db8cbf7cab2f84b111fc1899445be431",
+    "ahead_commits": 2,
+    "changed_files": 23,
+    "only_modified_existing_files": [
+      "docs/IGE_CLIMATE_ENGINE_TWO_PRODUCT_ROADMAP_RU_20261025.md",
+      "research/ige_cmip6/e2e_two_product_roadmap_20261025.json"
+    ],
+    "frozen_scientific_code_protocols_and_previous_results_modified": false
+  },
+  "interpretation": {
+    "R1_improves_sites": [
+      "DE:00232",
+      "CH:SCU"
+    ],
+    "R1_worsens_sites": [
+      "DE:01270",
+      "CH:STG"
+    ],
+    "R1_default_promoted": false,
+    "strict_global_raw_byte_blindness_certified": false,
+    "independent_regional_full_weather_accuracy_qualified": false,
+    "full_AT_DE_CH_V1_complete": false,
+    "production_ready": false
+  }
+}
