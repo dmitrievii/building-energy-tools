@@ -1,0 +1,297 @@
+{
+  "schema": "IGE_A15_ACTUAL_UI_ARTIFACT_COMPARISON_v1",
+  "CI_run": 40360537552,
+  "artifact_sha256": "cb3b504ac2012c467a953eb23f269370a70c8f5084eaff181c5f2d5f46ed125b",
+  "artifact_bytes": 16142027,
+  "artifact_members": 17,
+  "CI_tests": {
+    "tests_run": 300,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "status": "PASS",
+    "wall_seconds": 127.15337855700001,
+    "python": "3.12.15",
+    "numpy": "1.26.4",
+    "pandas": "2.3.3",
+    "streamlit": "1.63.0"
+  },
+  "code_sha256": {
+    "tools/climate_analyzer/epw_climate_analyzer/engine_analysis.py": "38526c0e257bb409fd1b3c06de7f179efc1f8b7e52117c08845ad6bef3d1931d",
+    "tools/climate_analyzer/epw_climate_analyzer/engine_ui.py": "1ecbd13c37df885bf9daa32c71d5e2eedb7bf4f6b932858ff546c80323b16623",
+    "tools/climate_analyzer/epw_climate_analyzer/engine_station_product.py": "42fedce8a9ab52ac783c992b7bdf2e2bc51651e3416f83bcc60c12c51ffffed6",
+    "tools/climate_analyzer/epw_climate_analyzer/engine_psychrometrics.py": "342a24f5b012f3723f8f68acb2a50980563e1ed52a88d58537945840bdecb8c6",
+    "tools/climate_analyzer/tests/test_ige_a15.py": "8f799c3d1481302f4f076a202f46d6d50f7e1368c8d31f35e8c9839a0b049cd9",
+    "research/ige_cmip6/a15_verify.py": "c032aa6d0d3f03e86ec9777990ed9e7c0296f5aea924b75fb6ac30bdc50d5647",
+    ".github/workflows/ige-a1-5-local-year-ui-20261026.yml": "34d99043be9980acef9270c03dee5f4e337341eeb6c835b70c2d7edd37228f0e",
+    "research/ige_cmip6/a15_replay_audit.py": "11889f86876e94f2d04d08a4a047258c51b8f15c03b5d88ab7f461d9c0bf69ae"
+  },
+  "parent_source_replay_byte_exact": false,
+  "parent_source_replay_numerically_compatible": true,
+  "CPU_AVX512_SKX": false,
+  "products": {
+    "CH_BAS": {
+      "byte_exact_root_files": [
+        "climate.epw",
+        "hourly.csv.gz",
+        "source_references.json",
+        "ui_report.json"
+      ],
+      "all_six_original_snapshot_members_byte_exact": true,
+      "all_original_weather_and_q_values_preserved": true,
+      "UI_archive_different_members": [
+        "analysis_state.csv.gz"
+      ],
+      "derived_analysis_different_cells": {
+        "saturation_vapor_pressure_pa": 8
+      },
+      "max_derived_difference": {
+        "saturation_vapor_pressure_pa": "1E-8"
+      },
+      "derived_difference_within_one_12_significant_digit_cell": true
+    },
+    "CH_ALT": {
+      "byte_exact_root_files": [
+        "climate.epw",
+        "hourly.csv.gz",
+        "source_references.json",
+        "ui_report.json"
+      ],
+      "all_six_original_snapshot_members_byte_exact": true,
+      "all_original_weather_and_q_values_preserved": true,
+      "UI_archive_different_members": [
+        "analysis_state.csv.gz"
+      ],
+      "derived_analysis_different_cells": {
+        "saturation_vapor_pressure_pa": 4
+      },
+      "max_derived_difference": {
+        "saturation_vapor_pressure_pa": "1E-8"
+      },
+      "derived_difference_within_one_12_significant_digit_cell": true
+    }
+  },
+  "independent_accuracy_qualified": false,
+  "production_ready": false,
+  "artifact": {
+    "id": 12668715574,
+    "name": "IGE-A1-5-saved-CH-UI-products-RESEARCH-NOT-INDEPENDENT",
+    "size_in_bytes": 16142027,
+    "url": "https://api.github.com/repos/dmitrievii/building-energy-tools/actions/artifacts/12668715574",
+    "archive_download_url": "https://api.github.com/repos/dmitrievii/building-energy-tools/actions/artifacts/12668715574/zip",
+    "expired": false,
+    "created_at": "2026-10-26T16:38:44Z",
+    "expires_at": "2026-11-25T16:38:41Z",
+    "updated_at": "2026-10-26T16:38:44Z",
+    "digest": "sha256:cb3b504ac2012c467a953eb23f269370a70c8f5084eaff181c5f2d5f46ed125b",
+    "workflow_run": {
+      "id": 40360537552,
+      "repository_id": 1261544200,
+      "head_repository_id": 1261544200,
+      "head_branch": "research/ige-a1-5-local-year-ui-20261026",
+      "head_sha": "71493a069c785e43d37a01ee4caaa6b322704da7"
+    }
+  },
+  "run_id": 40360537552,
+  "run_url": "https://github.com/dmitrievii/building-energy-tools/actions/runs/40360537552",
+  "status": "completed",
+  "conclusion": "success",
+  "tested_commit": "71493a069c785e43d37a01ee4caaa6b322704da7",
+  "started": "2026-10-26T16:35:14Z",
+  "finished": "2026-10-26T16:38:48Z",
+  "jobs": [
+    {
+      "id": 121704443022,
+      "name": "saved_station_year_UI_and_immutable_source_regression",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40360537552,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run python -m pip install -r tools/climate_analyzer/requirements.txt numcodecs==0.15.1 deprecated==3.0.0 wrapt==2.5.1",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Actual app routes, saved water psychrometrics and unchanged parent original-source replay without network",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "UI behaviour and scientific limits remain separate",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        }
+      ]
+    }
+  ],
+  "guards": {
+    "main": "2a82a77d0fe8cc87a2324b820d6c6843b6598548",
+    "A14": "fb1b77a12a1dd525506d14ffc546988dbc39efb7"
+  },
+  "parent_source_replay": {
+    "schema": "IGE_A15_SOURCE_REPLAY_PORTABILITY_AUDIT_v1",
+    "byte_exact": false,
+    "numerical_quantization_compatibility": true,
+    "frozen_ZIP_sha256": "21a10349e47c595b43a1a1f7aa884ae91cff951f556e4912e33c69f3186d5e65",
+    "replayed_ZIP_sha256": "2debd527c2f5f0313e3b25c9263ef363a400eff41c6fad871d5436b1287174fe",
+    "targets": {
+      "CH:BAS": {
+        "states": {
+          "different_cells": 72,
+          "max_absolute_differences": {
+            "atmospheric_station_pressure_pa": "1E-9",
+            "specific_humidity_kg_kg": "1E-15",
+            "relative_humidity_pct": "1E-9"
+          }
+        },
+        "ledger": {
+          "different_cells": 5608,
+          "max_absolute_differences": {
+            "RH_before_q_projection_pct": "2.145E-12",
+            "output_atmospheric_station_pressure_pa": "1E-9",
+            "saturation_q_upper_kg_kg": "1E-15",
+            "delta_atmospheric_station_pressure_pa": "1E-9",
+            "background_conditional_p2m_pa": "1E-9",
+            "inferred_background_q_kg_kg": "1E-15",
+            "projected_q_kg_kg": "1E-15",
+            "delta_q_kg_kg": "1E-15",
+            "output_relative_humidity_pct": "1E-9",
+            "delta_relative_humidity_pct": "1E-9",
+            "delta_mixing_ratio_kg_kg_dry_air": "1E-15"
+          }
+        },
+        "physical_residuals_frozen_and_replay": [
+          {
+            "RH_pp": 3.9028122955642175e-09,
+            "Td_vapour_pa": 6.529489837703295e-08,
+            "conditional_p_pa": 5.529727786779404e-10,
+            "preprojection_RH_pp": 3.5225014016759815e-09
+          },
+          {
+            "RH_pp": 3.9028122955642175e-09,
+            "Td_vapour_pa": 6.529489837703295e-08,
+            "conditional_p_pa": 5.529727786779404e-10,
+            "preprojection_RH_pp": 3.5235530049249064e-09
+          }
+        ],
+        "different_EPWs_cells": 0,
+        "T_donor_and_mean_inverse_ledgers_byte_exact": true
+      },
+      "CH:ALT": {
+        "states": {
+          "different_cells": 63,
+          "max_absolute_differences": {
+            "atmospheric_station_pressure_pa": "1E-9",
+            "specific_humidity_kg_kg": "1E-15",
+            "relative_humidity_pct": "1E-9"
+          }
+        },
+        "ledger": {
+          "different_cells": 5546,
+          "max_absolute_differences": {
+            "RH_before_q_projection_pct": "1.677E-12",
+            "output_atmospheric_station_pressure_pa": "1E-9",
+            "saturation_q_upper_kg_kg": "1E-15",
+            "background_conditional_p2m_pa": "1E-9",
+            "delta_atmospheric_station_pressure_pa": "1E-9",
+            "inferred_background_q_kg_kg": "1E-15",
+            "projected_q_kg_kg": "1E-15",
+            "output_relative_humidity_pct": "1E-9",
+            "delta_relative_humidity_pct": "1E-9"
+          }
+        },
+        "physical_residuals_frozen_and_replay": [
+          {
+            "RH_pp": 3.6409772974366206e-09,
+            "Td_vapour_pa": 6.217078407644294e-08,
+            "conditional_p_pa": 5.529727786779404e-10,
+            "preprojection_RH_pp": 3.5717562241188716e-09
+          },
+          {
+            "RH_pp": 3.6409772974366206e-09,
+            "Td_vapour_pa": 6.217078407644294e-08,
+            "conditional_p_pa": 5.529727786779404e-10,
+            "preprojection_RH_pp": 3.5717278024094412e-09
+          }
+        ],
+        "different_EPWs_cells": 1,
+        "T_donor_and_mean_inverse_ledgers_byte_exact": true
+      }
+    },
+    "original_physical_tolerances_changed": false,
+    "source_T_donors_operators_or_objective_changed": false,
+    "UI_uses_replayed_values": false,
+    "portable_bitwise_parent_recalculation_qualified": false,
+    "two_complete_years": true,
+    "snapshot_sha256": "21a10349e47c595b43a1a1f7aa884ae91cff951f556e4912e33c69f3186d5e65",
+    "wall_seconds": 25.790650833,
+    "UI_service_performs_this_reconstruction": false
+  },
+  "all_12_original_snapshot_members_directly_compared_to_frozen_bundle": true,
+  "original_artifact_manifest": "a15_verified_CI_40360537552_artifact_manifest.json",
+  "original_artifact_parts": [
+    {
+      "file": "a15_verified_CI_40360537552_results.zip.part001",
+      "bytes": 5500000,
+      "sha256": "271280b99f6597caa4c79b08295d8ed461adba8f3e10d17de635878418cf0765"
+    },
+    {
+      "file": "a15_verified_CI_40360537552_results.zip.part002",
+      "bytes": 5500000,
+      "sha256": "7ee731bdd1930ab717b2fbb25b588a1b1e4bdc5faf3c253142c28954cbb15287"
+    },
+    {
+      "file": "a15_verified_CI_40360537552_results.zip.part003",
+      "bytes": 5142027,
+      "sha256": "f155fb24f9b86e8a38f807ad67813b9ed5ef55ad3cc115d6d9b1e7e8f201b4f4"
+    }
+  ],
+  "original_artifact_reassembled_and_SHA_verified": true
+}

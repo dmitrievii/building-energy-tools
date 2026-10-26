@@ -117,7 +117,7 @@
       "product_functions": [
         "A"
       ],
-      "current_status": "A1_5_LOCAL_UI_300_PASS_TWO_SAVED_CH_YEARS_CPU_PORTABILITY_AUDITED_FINAL_CI_PENDING",
+      "current_status": "A1_5_CI_VERIFIED_300_SAVED_CH_2025_UI; GENERAL_LOCAL_RECONSTRUCTION_AND_INDEPENDENT_QUALIFICATION_OPEN",
       "depends_on": [
         "A0"
       ],
@@ -407,7 +407,7 @@
     "verified_CI_receipt": "research/ige_cmip6/a13_verified_CI_40236855438.json",
     "verified_CI_outputs": "research/ige_cmip6/a13_verified_CI_40236855438_results.zip"
   },
-  "current_execution_stage": "A1.5 read-only CH historical UI locally verified 300 checks; CPU portability audited separately; final CI pending; independent accuracy and generality remain open",
+  "current_execution_stage": "A1.5 CI-verified saved CH historical UI, 300 local/CI PASS, original weather bytes preserved; CPU numerical replay audited; A1 generality and V1 remain open",
   "A1_4_progress": {
     "branch": "research/ige-a1-4-local-historical-year-20261026",
     "registration_commit": "a3e04ca2961cd27fbc3e4b05d98c5e344e0a879a",
@@ -495,12 +495,24 @@
     "report": "docs/IGE_A1_5_LOCAL_HISTORICAL_UI_RU_20261026.md",
     "contract": "research/ige_cmip6/a15_ui_integration_contract_20261026.json",
     "verified_local_receipt": "research/ige_cmip6/a15_verified_local_UI_20261026.json",
-    "CI_status": "FINAL_RUN_PENDING_AFTER_CPU_PORTABILITY_DIAGNOSIS",
+    "CI_status": "SUCCESS",
     "parent_original_source_replay_portable_bitwise_qualified": false,
     "parent_original_source_replay_numerical_compatibility": true,
     "CPU_portability_amendment": "research/ige_cmip6/a15_CPU_portability_amendment_20261026.json",
     "CPU_diagnostic_CI": 40358122554,
     "verified_local_final_receipt": "research/ige_cmip6/a15_verified_local_UI_final_20261026.json",
-    "parent_original_source_replay_byte_exact_on_initial_local": true
+    "parent_original_source_replay_byte_exact_on_initial_local": true,
+    "CI_run": 40360537552,
+    "CI_tests": 300,
+    "tested_commit": "71493a069c785e43d37a01ee4caaa6b322704da7",
+    "CI_artifact_id": 12668715574,
+    "CI_artifact_sha256": "cb3b504ac2012c467a953eb23f269370a70c8f5084eaff181c5f2d5f46ed125b",
+    "all_12_original_snapshot_files_byte_exact": true,
+    "CI_local_original_EPWs_and_CSVs_byte_exact": true,
+    "parent_source_replay_portable_bitwise_qualified": false,
+    "parent_source_replay_numerical_compatibility": true,
+    "derived_analysis_CPU_variation": "12 saturation-vapour-pressure cells, max 1e-8 Pa, one 12-significant-digit output cell; original weather/q unchanged",
+    "verified_CI_receipt": "research/ige_cmip6/a15_verified_CI_40360537552.json",
+    "verified_CI_artifact": "research/ige_cmip6/a15_verified_CI_40360537552_artifact_manifest.json"
   }
 }

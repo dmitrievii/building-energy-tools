@@ -1,0 +1,25 @@
+{
+  "schema": "IGE_ORIGINAL_GITHUB_ARTIFACT_PARTS_v1",
+  "artifact_id": 12668715574,
+  "original_file": "a15_verified_CI_40360537552_results.zip",
+  "original_bytes": 16142027,
+  "original_sha256": "cb3b504ac2012c467a953eb23f269370a70c8f5084eaff181c5f2d5f46ed125b",
+  "parts": [
+    {
+      "file": "a15_verified_CI_40360537552_results.zip.part001",
+      "bytes": 5500000,
+      "sha256": "271280b99f6597caa4c79b08295d8ed461adba8f3e10d17de635878418cf0765"
+    },
+    {
+      "file": "a15_verified_CI_40360537552_results.zip.part002",
+      "bytes": 5500000,
+      "sha256": "7ee731bdd1930ab717b2fbb25b588a1b1e4bdc5faf3c253142c28954cbb15287"
+    },
+    {
+      "file": "a15_verified_CI_40360537552_results.zip.part003",
+      "bytes": 5142027,
+      "sha256": "f155fb24f9b86e8a38f807ad67813b9ed5ef55ad3cc115d6d9b1e7e8f201b4f4"
+    }
+  ],
+  "operation": "concatenate part bytes in listed order; no re-compression or content changes"
+}
