@@ -1,0 +1,94 @@
+{
+  "schema": "IGE_A15_ACTUAL_UI_AND_SNAPSHOT_VERIFICATION_v1",
+  "tests": {
+    "tests_run": 297,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "status": "PASS",
+    "wall_seconds": 89.5697701380002,
+    "python": "3.12.14",
+    "numpy": "1.26.4",
+    "pandas": "2.3.3",
+    "streamlit": "1.63.0"
+  },
+  "protection": {
+    "parent_commit": "fb1b77a12a1dd525506d14ffc546988dbc39efb7",
+    "protected_P9_research_files_unchanged": 168,
+    "existing_scientific_results_original_core_A14_sources_and_EPWs_unchanged": true,
+    "UI_files_modified": [
+      "tools/climate_analyzer/epw_climate_analyzer/engine_analysis.py",
+      "tools/climate_analyzer/epw_climate_analyzer/engine_ui.py"
+    ],
+    "app_entrypoint_byte_unchanged": true,
+    "main_or_merge_used": false,
+    "IV1_control_observations_opened": false
+  },
+  "parent_original_source_replay": {
+    "byte_exact": true,
+    "two_complete_years": true,
+    "snapshot_sha256": "21a10349e47c595b43a1a1f7aa884ae91cff951f556e4912e33c69f3186d5e65",
+    "wall_seconds": 13.826584674999822,
+    "UI_service_performs_this_reconstruction": false
+  },
+  "products": {
+    "CH:BAS": {
+      "rows": 8760,
+      "calendar_mode": "historical",
+      "EPW_sha256": "b7cc31ac7cf6a71329f85a7d60f41fe2ea43be86692f8f012cc2b02009c378e1",
+      "UI_archive_sha256": "a7ad8b295aeaa8f3f65ee46a5999d1c637b472ebc24b3e6d9008c26e57f962fe",
+      "UI_archive_bytes": 4060425,
+      "wall_seconds": 1.7321628469999268,
+      "original_snapshot_product_sha256": {
+        "weather.epw": "b7cc31ac7cf6a71329f85a7d60f41fe2ea43be86692f8f012cc2b02009c378e1",
+        "hourly_states.csv": "6df287aa0f3b6f80b83b32e9568b906feff29d4411de0b9eabd4fbce323546f7",
+        "temperature_mean_inverse_ledger.csv": "43cf0cad11c522f628d8e2bdd8aee7eae0f84442f69976c96f2adbb079cb77ae",
+        "R1_donor_admission_ledger.csv": "9a78666c112858bc4edb4e13d57297f6c9c6b855e5661f74df355d597867536a",
+        "humidity_pressure_adjustment_ledger.csv": "60e7b069433d20a7a6a17e5419327538d81236f9814771c2206781dc5e47a385"
+      },
+      "weather_provider_requests_this_run": 0,
+      "UI_connected": true,
+      "production_ready": false
+    },
+    "CH:ALT": {
+      "rows": 8760,
+      "calendar_mode": "historical",
+      "EPW_sha256": "53a0a904ec7141d26d9941e1ed5dbf473a8cd461c8bb86e5a6f091da450ff538",
+      "UI_archive_sha256": "ef3341fa1fd86a6e09895b66a0effa012ab1aab21f2464a3fa59c97a95e9a637",
+      "UI_archive_bytes": 4025967,
+      "wall_seconds": 1.7734779849999995,
+      "original_snapshot_product_sha256": {
+        "weather.epw": "53a0a904ec7141d26d9941e1ed5dbf473a8cd461c8bb86e5a6f091da450ff538",
+        "hourly_states.csv": "5b9fbc8a01b40072aae98442a550bc80e38d5f322cf1891ba6274c2832d3e4af",
+        "temperature_mean_inverse_ledger.csv": "c39302e715aeaeea04d4891c18780fc9daee5a16b4d41d2c218242afe8d77f58",
+        "R1_donor_admission_ledger.csv": "be476797ed2571342b8e7aa776174ad142c7161d7e239daa4c8abdbff55f3634",
+        "humidity_pressure_adjustment_ledger.csv": "cd8296912323e64dd2410a86ffcd48f8342650fbbfac7bbeef19dbc3465c28f7"
+      },
+      "weather_provider_requests_this_run": 0,
+      "UI_connected": true,
+      "production_ready": false
+    }
+  },
+  "code_sha256": {
+    "tools/climate_analyzer/epw_climate_analyzer/engine_analysis.py": "38526c0e257bb409fd1b3c06de7f179efc1f8b7e52117c08845ad6bef3d1931d",
+    "tools/climate_analyzer/epw_climate_analyzer/engine_ui.py": "1ecbd13c37df885bf9daa32c71d5e2eedb7bf4f6b932858ff546c80323b16623",
+    "tools/climate_analyzer/epw_climate_analyzer/engine_station_product.py": "42fedce8a9ab52ac783c992b7bdf2e2bc51651e3416f83bcc60c12c51ffffed6",
+    "tools/climate_analyzer/epw_climate_analyzer/engine_psychrometrics.py": "342a24f5b012f3723f8f68acb2a50980563e1ed52a88d58537945840bdecb8c6",
+    "tools/climate_analyzer/tests/test_ige_a15.py": "f826008d7566ed5d8a914267ab747b41791f2ad7d81aa6c104d5800d70b2ae29",
+    "research/ige_cmip6/a15_verify.py": "4a545874293eae7938297786f6d9bacd948c7a1511f1431b5555ab679242ddb7",
+    ".github/workflows/ige-a1-5-local-year-ui-20261026.yml": "1c5a14e92a19cb4523d8bd34bb4c787957aa851b86e255f1189abf4b52dc4135"
+  },
+  "contract_sha256": "b365612f9302a43e217c228f7d1bd1c2bfb51b0b4448c22097f4906188f3f7c1",
+  "actual_app_entrypoint": "tools/climate_analyzer/app.py",
+  "UI_test_method": "streamlit.testing.v1.AppTest",
+  "browser_visual_test_performed": false,
+  "public_deployment_changed": false,
+  "new_NASA_ERA5_station_or_control_acquisition": 0,
+  "UI_snapshot_values_modified": false,
+  "independent_accuracy_qualified": false,
+  "instantaneous_T_accuracy_qualified": false,
+  "local_pressure_accuracy_qualified": false,
+  "full_weather_cross_field_accuracy_qualified": false,
+  "production_ready": false,
+  "existing_Graz_historical_and_future_EPWs_unchanged": true
+}

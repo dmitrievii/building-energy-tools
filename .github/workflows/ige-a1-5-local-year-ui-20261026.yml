@@ -1,0 +1,54 @@
+name: IGE A1.5 saved CH historical UI and liquid-water psychrometrics RESEARCH
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/ige-a1-5-local-year-ui-20261026
+    paths:
+      - tools/climate_analyzer/epw_climate_analyzer/engine_analysis.py
+      - tools/climate_analyzer/epw_climate_analyzer/engine_ui.py
+      - tools/climate_analyzer/epw_climate_analyzer/engine_station_product.py
+      - tools/climate_analyzer/epw_climate_analyzer/engine_psychrometrics.py
+      - tools/climate_analyzer/tests/test_ige_a15.py
+      - research/ige_cmip6/a15_verify.py
+      - research/ige_cmip6/a15_ui_integration_contract_20261026.json
+      - .github/workflows/ige-a1-5-local-year-ui-20261026.yml
+permissions:
+  contents: read
+env:
+  OPENBLAS_NUM_THREADS: '1'
+  OMP_NUM_THREADS: '1'
+  STREAMLIT_BROWSER_GATHER_USAGE_STATS: 'false'
+jobs:
+  saved_station_year_UI_and_immutable_source_regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r tools/climate_analyzer/requirements.txt numcodecs==0.15.1 deprecated==3.0.0 wrapt==2.5.1
+      - name: Actual app routes, saved water psychrometrics and unchanged parent original-source replay without network
+        run: python research/ige_cmip6/a15_verify.py --out outputs/a15
+      - name: UI behaviour and scientific limits remain separate
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json,os
+          r=json.loads(Path('outputs/a15/verification.json').read_text())
+          assert r['parent_original_source_replay']['byte_exact']
+          assert not r['independent_accuracy_qualified'] and not r['production_ready']
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:
+              f.write(f"{r['tests']['tests_run']} checks PASS. Real Streamlit entrypoint exercised for both saved CH 2025 years.\n\n")
+              f.write('Original EPW/CSV bytes and hourly calendar preserved; q-based MK liquid-water analysis and separately labelled isobaric guide curves. No new weather/control requests or scientific/default promotion.\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: IGE-A1-5-saved-CH-UI-products-RESEARCH-NOT-INDEPENDENT
+          path: outputs/a15/
+          if-no-files-found: warn
+          retention-days: 30

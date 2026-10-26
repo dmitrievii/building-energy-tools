@@ -117,7 +117,7 @@
       "product_functions": [
         "A"
       ],
-      "current_status": "A1_4_CI_VERIFIED_280_TWO_CH_8760_RESEARCH_YEARS_NOT_INDEPENDENTLY_QUALIFIED",
+      "current_status": "A1_5_LOCAL_UI_297_TESTS_PASS_TWO_SAVED_CH_2025_YEARS_CI_PENDING_GENERALITY_AND_INDEPENDENT_QUALIFICATION_OPEN",
       "depends_on": [
         "A0"
       ],
@@ -164,7 +164,7 @@
       "completion_criterion": "No incomplete-source unblinding, original NASA operators/objective, independent benefit before default replacement"
     }
   ],
-  "current_first_implementation": "A1.5_LIMITED_LOCAL_HISTORICAL_UI_WITH_MK_WATER_PHASE; TIME_FORM_AND_INDEPENDENT_AT_DE_CH_QUALIFICATION_REMAIN",
+  "current_first_implementation": "V1_AT_DE_CH_SOURCE_TIME_OPERATOR_ADMISSION_AND_PREREGISTERED_TIME_FORM_VALIDATION; FUTURE_LOCAL_MULTIYEAR_REFERENCE_REMAINS_SEPARATE",
   "minimum_B_M_temperature_policy": "MIDRANGE_NEX_TAS_INDEX_NO_IMPLICIT_TIME_MEAN_EQUALITY",
   "specific_humidity_to_mixing_ratio": "w_g_per_kg_dry_air=1000*q_kg_per_kg_moist_air/(1-q)",
   "future_pressure_policy": "DECLARED_BASELINE_PROXY_NOT_NATIVE_FUTURE_PS",
@@ -281,7 +281,7 @@
     "one admitted future pilot: Graz/CanESM5/r1i1p1f1/ssp245/2040-2059, fixed 2023 pattern and 2002-2014 reference",
     "one historical year per request, integer fixed standard UTC offsets only",
     "historical source pressure is a model-surface proxy not collocated with 2m T/RH",
-    "unverified provider grid elevation and no local station/terrain correction",
+    "unverified provider grid elevation; arbitrary-coordinate mode remains grid background; saved CH2025 corrects station temperature with conditional humidity only, without a general terrain/pressure transfer",
     "future NASA hurs monthly signal is diagnostic and not enforced",
     "future event chronology, wind direction, cloud and precipitation phase are inherited",
     "native NASA daily time bounds are not fully verified",
@@ -407,7 +407,7 @@
     "verified_CI_receipt": "research/ige_cmip6/a13_verified_CI_40236855438.json",
     "verified_CI_outputs": "research/ige_cmip6/a13_verified_CI_40236855438_results.zip"
   },
-  "current_execution_stage": "A1.4 CI-verified two complete CH research years; local and CI 280 PASS; A1 and V1 not independently qualified",
+  "current_execution_stage": "A1.5 saved CH 2025 read-only local historical UI locally verified 297 tests; final CI pending; A1 generality and V1 independent accuracy remain open",
   "A1_4_progress": {
     "branch": "research/ige-a1-4-local-historical-year-20261026",
     "registration_commit": "a3e04ca2961cd27fbc3e4b05d98c5e344e0a879a",
@@ -462,5 +462,40 @@
     "CI_local_byte_identical_file_count": 14,
     "verified_CI_receipt": "research/ige_cmip6/a14_verified_CI_40320819869.json",
     "verified_CI_original_artifact": "research/ige_cmip6/a14_verified_CI_40320819869_results.zip"
+  },
+  "A1_5_progress": {
+    "branch": "research/ige-a1-5-local-year-ui-20261026",
+    "parent_commit": "fb1b77a12a1dd525506d14ffc546988dbc39efb7",
+    "tests_local": 297,
+    "local_test_wall_seconds": 89.5697701380002,
+    "UI_connected": true,
+    "actual_app_entrypoint_tested": "tools/climate_analyzer/app.py",
+    "UI_test_method": "streamlit.testing.v1.AppTest",
+    "admitted_sites": [
+      "CH:BAS",
+      "CH:ALT"
+    ],
+    "historical_year": 2025,
+    "records_each": 8760,
+    "snapshot_read_only": true,
+    "original_A14_EPWs_and_all_selected_snapshot_members_unchanged": true,
+    "parent_original_source_replay_byte_exact": true,
+    "q_authority_preserved": true,
+    "phase": "MURPHY_KOOP_LIQUID_WATER_ABOVE_AND_BELOW_ZERO",
+    "psychrometric_chart_points": "ORIGINAL_T_AND_W; PER_HOUR_PRESSURE_RETAINED",
+    "guide_curve_pressure": "SEPARATE_VISIBLE_CONSTANT; POINTS_NOT_MOVED",
+    "arbitrary_location_local_reconstruction_implemented": false,
+    "new_source_mode_is_default": false,
+    "new_weather_or_control_acquisition": 0,
+    "old_Graz_historical_and_future_EPWs_unchanged": true,
+    "public_deployment_changed": false,
+    "independent_accuracy_qualified": false,
+    "instantaneous_T_accuracy_qualified": false,
+    "local_pressure_accuracy_qualified": false,
+    "production_ready": false,
+    "report": "docs/IGE_A1_5_LOCAL_HISTORICAL_UI_RU_20261026.md",
+    "contract": "research/ige_cmip6/a15_ui_integration_contract_20261026.json",
+    "verified_local_receipt": "research/ige_cmip6/a15_verified_local_UI_20261026.json",
+    "CI_status": "PENDING"
   }
 }

@@ -2,7 +2,7 @@
 
 This is a presentation adapter. It never repairs, re-dates, re-saturates or
 re-exports weather. Historical rounded water-Magnus RH is authoritative for
-derived vapour; future q and its conditional 2 m pressure are authoritative.
+derived vapour; future and admitted saved station-year q are authoritative.
 """
 from __future__ import annotations
 
@@ -13,6 +13,8 @@ from .climate_model import CanonicalClimateDataset
 from .engine.thermodynamics import RD, RV, EPSILON, e_from_q, q_from_e, saturation_water_pa
 
 UI_CONTRACT = "IGE_U1_SOURCE_PHASE_AND_PATTERN_CALENDAR_v1"
+STATION_UI_CONTRACT = "IGE_A15_PINNED_CH_STATION_YEAR_UI_v1"
+STATION_BUNDLE_SHA = "21a10349e47c595b43a1a1f7aa884ae91cff951f556e4912e33c69f3186d5e65"
 T, TD, RH, P = ("dry_bulb_temperature_c", "dew_point_temperature_c",
     "relative_humidity_pct", "atmospheric_station_pressure_pa")
 Q = "specific_humidity_kg_kg"
@@ -57,6 +59,31 @@ def prepare_engine_analysis_frame(dataset: CanonicalClimateDataset) -> pd.DataFr
             raise ValueError("IGE_U1_FUTURE_STATE_CLOSURE_CHANGED")
         definition = "Murphy-Koop liquid water; vapour from original q and conditional p2m"
         pressure_scope = "conditional two-metre hydrostatic pressure from historical surface-pressure proxy"
+    elif (dataset.temporal.calendar_mode == "historical"
+            and phase == "MURPHY_KOOP_LIQUID_WATER_NOT_APP_ASHRAE_ICE_BELOW_ZERO"):
+        proof = data.attrs.get("ige_station_ui_admission", {})
+        if (proof.get("contract") != STATION_UI_CONTRACT or proof.get("bundle_sha256") != STATION_BUNDLE_SHA
+                or proof.get("station_key") not in ("CH:BAS", "CH:ALT")
+                or data.attrs.get("ige_station_year_contract") != "IGE_A14_CONDITIONAL_LOCAL_T_YEAR_v1"
+                or Q not in data or "surface_pressure_proxy_pa" not in data):
+            raise ValueError("IGE_A15_SAVED_STATION_Q_PHASE_OR_ADMISSION_MISSING")
+        expected = pd.date_range("2024-12-31T23:00:00Z", periods=8760, freq="h")
+        if (not data.index.tz_convert("UTC").equals(expected)
+                or str(data.index.tz) != "UTC+01:00"
+                or dataset.temporal.source_years != (2025,)):
+            raise ValueError("IGE_A15_SAVED_2025_FIXED_CET_CALENDAR_CHANGED")
+        from .engine.thermodynamics import pressure_at_2m
+        q = data[Q].to_numpy(dtype=float)
+        e = e_from_q(q, p)
+        sat = saturation_water_pa(t)
+        surface = data["surface_pressure_proxy_pa"].to_numpy(dtype=float)
+        if (np.max(np.abs(100 * e / sat - rh)) > 1e-7
+                or np.max(np.abs(saturation_water_pa(td) - e)) > 1e-5
+                or np.max(np.abs(pressure_at_2m(t, q, surface) - p)) > 1e-7):
+            raise ValueError("IGE_A15_SAVED_CONDITIONAL_STATE_CLOSURE_CHANGED")
+        definition = "Murphy-Koop liquid water; vapour from unchanged saved A1.4 q and conditional p2m"
+        pressure_scope = "conditional model-surface plus 2m proxy; pressure at the actual station height is not qualified"
+        data["specific_humidity_g_kg_moist_air"] = 1000 * q
     elif dataset.temporal.calendar_mode == "historical":
         if phase != "PROVIDER_MAGNUS_LIQUID_WATER_NOT_APP_ASHRAE_ICE_BELOW_ZERO":
             raise ValueError("IGE_U1_HISTORICAL_WATER_PHASE_MISSING")
@@ -90,6 +117,14 @@ def prepare_engine_analysis_frame(dataset: CanonicalClimateDataset) -> pd.DataFr
         "legacy_ASHRAE_psychrometric_chart_used": False,
         "independent_station_accuracy_qualified": False,
     }
+    if data.attrs.get("ige_station_ui_admission", {}).get("contract") == STATION_UI_CONTRACT:
+        data.attrs["ige_ui_analysis"].update({
+            "station_year_contract": STATION_UI_CONTRACT,
+            "q_authority": "unchanged saved inferred/projected q; not a station humidity observation",
+            "specific_q_unit": "kg/kg moist air; displayed separately in g/kg moist air",
+            "mixing_ratio_unit": "g/kg dry air; w=1000*q/(1-q)",
+            "instantaneous_T_accuracy_qualified": False, "local_pressure_accuracy_qualified": False,
+        })
     return data
 
 

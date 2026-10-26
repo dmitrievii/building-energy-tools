@@ -1,0 +1,89 @@
+{
+  "schema": "IGE_A15_SAVED_CH_UI_INTEGRATION_CONTRACT_v1",
+  "date": "2026-10-26",
+  "parent_commit": "fb1b77a12a1dd525506d14ffc546988dbc39efb7",
+  "admitted_station_keys": [
+    "CH:BAS",
+    "CH:ALT"
+  ],
+  "historical_year": 2025,
+  "fixed_local_standard_UTC_offset_minutes": 60,
+  "snapshot_file": "a14_CH_2025_research_years_20261026.zip",
+  "snapshot_sha256": "21a10349e47c595b43a1a1f7aa884ae91cff951f556e4912e33c69f3186d5e65",
+  "existing_UI_files_allowed_to_change": [
+    "tools/climate_analyzer/epw_climate_analyzer/engine_analysis.py",
+    "tools/climate_analyzer/epw_climate_analyzer/engine_ui.py"
+  ],
+  "protected_parent_sha256": {
+    "research/ige_cmip6/a14_CH_2025_research_years_20261026.zip": "21a10349e47c595b43a1a1f7aa884ae91cff951f556e4912e33c69f3186d5e65",
+    "research/ige_cmip6/a14_acquire.py": "964954e994dbe75a502eb6c34be29057dfa52c3807d98053996a8dbbab09f72f",
+    "research/ige_cmip6/a14_initial_metadata_rounding_v0_20261026.json": "9b703570bf43c77a09a99a0ca5c20f1b131fe538969845aa7898d68cac4121ad",
+    "research/ige_cmip6/a14_metadata_serialization_amendment_20261026.json": "00cc503849e93db15f304f61c96ff89bec9e9e68bd1ec9e041d5bafec81c2f2d",
+    "research/ige_cmip6/a14_original_sources_20261026.zip": "d81b4da31ae99b97403d5e25ce331902018762cdd439b6fc71a9045eab9d9a79",
+    "research/ige_cmip6/a14_prepare.py": "19380b6863d0b4fcbf07a4ed62df9d6e8d5c023d4fe19162ff0964fb525c8eaa",
+    "research/ige_cmip6/a14_registration_20261026.json": "a59d0a9ce4daf4c9385bf2ede9f1dad7a29a0a990d3229b707c49880f1411566",
+    "research/ige_cmip6/a14_registration_publication_receipt_20261026.json": "85be999e0fb42b72c7143b716147a5c9a976dff52c9ef94ee750349ca90bd46b",
+    "research/ige_cmip6/a14_results_20261026.json": "c0cd15cc5fbc29c29bc69b80b544c515fa91bc0a3430a4483c01fcfe3982cd81",
+    "research/ige_cmip6/a14_run.py": "61628b71061f9c3c381fb776d30d3c4897d742f9c72bb15f06e5efed0c9bc58b",
+    "research/ige_cmip6/a14_saved_output_arithmetic_20261026.json": "baca442d14297b0f0558d0498f2939b5f8e3a905e95ae0743757422b4025a2a6",
+    "research/ige_cmip6/a14_verified_CI_40320819869.json": "76fa9666ec0afceb3871888057976d7d76e1b0806b3c03432d73dda840b6c436",
+    "research/ige_cmip6/a14_verified_CI_40320819869_results.zip": "87f68048126cebc57e363b7c538ee976e0e46e82462a5b0ec7383003e9b5867f",
+    "research/ige_cmip6/a14_verified_local_replay_20261026.json": "f22fa84daf36d0d72514020409adde6bba99a61f245e018b79a98e55b49f2550",
+    "research/ige_cmip6/a14_verified_predata_code_checks_20261026.json": "9c158c4c39262a93ecaaeec69264759a1c0b8ce518099ede1f21d3dd9b5ba96e",
+    "research/ige_cmip6/a14_verify.py": "7b91efd09fc2ed98bd0cfba7c44a8de7bf57b449b98f9c3b466eba4a3ebbaa6e",
+    "tools/climate_analyzer/app.py": "b8e35381fc5f818bc815b018b0aa8450bc628d57094e5c96a1b2c8fc2fa9d3cc",
+    "tools/climate_analyzer/epw_climate_analyzer/engine/__init__.py": "d44104fa1d1f21375769099d09bd3cd69602816b4e2ee45e07af4f7c22867aab",
+    "tools/climate_analyzer/epw_climate_analyzer/engine/__main__.py": "9093bbd2b9653af377698d2e9763c7dcbf7498d2af7e03ce241d12397f88c8c9",
+    "tools/climate_analyzer/epw_climate_analyzer/engine/contracts.py": "a50568b3c30714db9689aa7ebafdce8a3d5e91866f7e666e6c95ef230d629d2e",
+    "tools/climate_analyzer/epw_climate_analyzer/engine/epw.py": "d3cda336e6ea3c73ced2c404203789fd0f796cec9486ac1440658f74a484e7af",
+    "tools/climate_analyzer/epw_climate_analyzer/engine/future.py": "649fdf22970aa319aa8fd4e94fa111c31c91a32e7663974eed0fb65243b23aa5",
+    "tools/climate_analyzer/epw_climate_analyzer/engine/historical.py": "03ad75087c821bd111ef3057fd56ed8f375b884ce602dd826ec1383761489457",
+    "tools/climate_analyzer/epw_climate_analyzer/engine/model_sources.py": "0215a8afb10ae625b74cb3f45587e21fc4c91035457978594769021653010650",
+    "tools/climate_analyzer/epw_climate_analyzer/engine/station_year.py": "1474d1a5e95b1b65afd5165e70e0b4be687db2afff215765d4e1b36cc08a4e39",
+    "tools/climate_analyzer/epw_climate_analyzer/engine/thermodynamics.py": "5abfd9be1cfd50a218006d0d38516a08a107e211e4f4f8ef8afe645a0f6ea631",
+    "tools/climate_analyzer/epw_climate_analyzer/engine_application.py": "3f4e08b80b1a518f1227d08b3ae4b12dc0b878cc510f23d869f9e52ff30c7778"
+  },
+  "new_weather_or_control_acquisition_allowed": false,
+  "scientific_methods_and_defaults_changed": false,
+  "new_source_mode_is_default": false,
+  "UI_service_policy": "read-only SHA-pinned saved year; no resaturation, temperature inversion or EPW regeneration",
+  "q_authority": "original saved inferred/projected q, never recomputed from RH for analysis",
+  "phase": "Murphy-Koop liquid water above/below zero; no ice clipping or RH floor",
+  "pressure": "unchanged conditional model-surface plus2m proxy; actual local pressure accuracy unqualified",
+  "psychrometric_points": "original endpoint T and 1000*q/(1-q); per-hour original pressure and water RH retained",
+  "psychrometric_guides": "water saturation at a separate user-visible constant reference pressure; never move state points to that pressure",
+  "source_downloads": "six selected original snapshot members plus unchanged EPW, original UTC CSV gzip, separate analysis/report and immutable source references; provider raw bodies linked separately",
+  "acceptance": [
+    "old 280 tests plus real-app saved-mode tests pass without network",
+    "original A14 source replay reproduces its full-year bundle byte-for-byte",
+    "all four old/current historical/future EPW hashes unchanged",
+    "all selected original snapshot members retained byte-for-byte",
+    "real 2025 fixed-CET calendar and q authority preserved in every admitted view",
+    "complete downloads remain unchanged by filters/guide pressure or reruns",
+    "bad/incomplete snapshot blocks publication and keeps last complete result",
+    "four qualification axes visible; no accuracy or production promotion"
+  ],
+  "expected_cost": {
+    "new_provider_requests": 0,
+    "saved_product_load_expected_seconds": [
+      0.1,
+      3
+    ],
+    "local_test_expected_seconds": [
+      60,
+      180
+    ],
+    "original_source_regression_expected_seconds": [
+      10,
+      30
+    ],
+    "CI_expected_minutes": [
+      2,
+      8
+    ]
+  },
+  "independent_accuracy_qualified": false,
+  "production_ready": false,
+  "public_deployment_changed": false,
+  "global_validation_deferred": true
+}
