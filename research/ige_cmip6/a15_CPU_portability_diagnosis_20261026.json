@@ -1,0 +1,95 @@
+{
+  "schema": "IGE_A15_SOURCE_REPLAY_PORTABILITY_AUDIT_v1",
+  "byte_exact": false,
+  "numerical_quantization_compatibility": true,
+  "frozen_ZIP_sha256": "21a10349e47c595b43a1a1f7aa884ae91cff951f556e4912e33c69f3186d5e65",
+  "replayed_ZIP_sha256": "2debd527c2f5f0313e3b25c9263ef363a400eff41c6fad871d5436b1287174fe",
+  "targets": {
+    "CH:BAS": {
+      "states": {
+        "different_cells": 72,
+        "max_absolute_differences": {
+          "atmospheric_station_pressure_pa": "1E-9",
+          "specific_humidity_kg_kg": "1E-15",
+          "relative_humidity_pct": "1E-9"
+        }
+      },
+      "ledger": {
+        "different_cells": 5608,
+        "max_absolute_differences": {
+          "RH_before_q_projection_pct": "2.145E-12",
+          "output_atmospheric_station_pressure_pa": "1E-9",
+          "saturation_q_upper_kg_kg": "1E-15",
+          "delta_atmospheric_station_pressure_pa": "1E-9",
+          "background_conditional_p2m_pa": "1E-9",
+          "inferred_background_q_kg_kg": "1E-15",
+          "projected_q_kg_kg": "1E-15",
+          "delta_q_kg_kg": "1E-15",
+          "output_relative_humidity_pct": "1E-9",
+          "delta_relative_humidity_pct": "1E-9",
+          "delta_mixing_ratio_kg_kg_dry_air": "1E-15"
+        }
+      },
+      "physical_residuals_frozen_and_replay": [
+        {
+          "RH_pp": 3.9028122955642175e-09,
+          "Td_vapour_pa": 6.529444362968206e-08,
+          "conditional_p_pa": 5.529727786779404e-10,
+          "preprojection_RH_pp": 3.5225014016759815e-09
+        },
+        {
+          "RH_pp": 3.9028122955642175e-09,
+          "Td_vapour_pa": 6.529444362968206e-08,
+          "conditional_p_pa": 5.675246939063072e-10,
+          "preprojection_RH_pp": 3.5235530049249064e-09
+        }
+      ],
+      "different_EPWs_cells": 0,
+      "T_donor_and_mean_inverse_ledgers_byte_exact": true
+    },
+    "CH:ALT": {
+      "states": {
+        "different_cells": 63,
+        "max_absolute_differences": {
+          "atmospheric_station_pressure_pa": "1E-9",
+          "specific_humidity_kg_kg": "1E-15",
+          "relative_humidity_pct": "1E-9"
+        }
+      },
+      "ledger": {
+        "different_cells": 5546,
+        "max_absolute_differences": {
+          "RH_before_q_projection_pct": "1.677E-12",
+          "output_atmospheric_station_pressure_pa": "1E-9",
+          "saturation_q_upper_kg_kg": "1E-15",
+          "background_conditional_p2m_pa": "1E-9",
+          "delta_atmospheric_station_pressure_pa": "1E-9",
+          "inferred_background_q_kg_kg": "1E-15",
+          "projected_q_kg_kg": "1E-15",
+          "output_relative_humidity_pct": "1E-9",
+          "delta_relative_humidity_pct": "1E-9"
+        }
+      },
+      "physical_residuals_frozen_and_replay": [
+        {
+          "RH_pp": 3.6409772974366206e-09,
+          "Td_vapour_pa": 6.21705567027675e-08,
+          "conditional_p_pa": 5.529727786779404e-10,
+          "preprojection_RH_pp": 3.5717420132641564e-09
+        },
+        {
+          "RH_pp": 3.6409772974366206e-09,
+          "Td_vapour_pa": 6.21705567027675e-08,
+          "conditional_p_pa": 5.529727786779404e-10,
+          "preprojection_RH_pp": 3.571713591554726e-09
+        }
+      ],
+      "different_EPWs_cells": 1,
+      "T_donor_and_mean_inverse_ledgers_byte_exact": true
+    }
+  },
+  "original_physical_tolerances_changed": false,
+  "source_T_donors_operators_or_objective_changed": false,
+  "UI_uses_replayed_values": false,
+  "portable_bitwise_parent_recalculation_qualified": false
+}

@@ -117,7 +117,7 @@
       "product_functions": [
         "A"
       ],
-      "current_status": "A1_5_LOCAL_UI_297_TESTS_PASS_TWO_SAVED_CH_2025_YEARS_CI_PENDING_GENERALITY_AND_INDEPENDENT_QUALIFICATION_OPEN",
+      "current_status": "A1_5_LOCAL_UI_300_PASS_TWO_SAVED_CH_YEARS_CPU_PORTABILITY_AUDITED_FINAL_CI_PENDING",
       "depends_on": [
         "A0"
       ],
@@ -407,7 +407,7 @@
     "verified_CI_receipt": "research/ige_cmip6/a13_verified_CI_40236855438.json",
     "verified_CI_outputs": "research/ige_cmip6/a13_verified_CI_40236855438_results.zip"
   },
-  "current_execution_stage": "A1.5 saved CH 2025 read-only local historical UI locally verified 297 tests; final CI pending; A1 generality and V1 independent accuracy remain open",
+  "current_execution_stage": "A1.5 read-only CH historical UI locally verified 300 checks; CPU portability audited separately; final CI pending; independent accuracy and generality remain open",
   "A1_4_progress": {
     "branch": "research/ige-a1-4-local-historical-year-20261026",
     "registration_commit": "a3e04ca2961cd27fbc3e4b05d98c5e344e0a879a",
@@ -466,8 +466,8 @@
   "A1_5_progress": {
     "branch": "research/ige-a1-5-local-year-ui-20261026",
     "parent_commit": "fb1b77a12a1dd525506d14ffc546988dbc39efb7",
-    "tests_local": 297,
-    "local_test_wall_seconds": 89.5697701380002,
+    "tests_local": 300,
+    "local_test_wall_seconds": 85.61534155700019,
     "UI_connected": true,
     "actual_app_entrypoint_tested": "tools/climate_analyzer/app.py",
     "UI_test_method": "streamlit.testing.v1.AppTest",
@@ -479,7 +479,6 @@
     "records_each": 8760,
     "snapshot_read_only": true,
     "original_A14_EPWs_and_all_selected_snapshot_members_unchanged": true,
-    "parent_original_source_replay_byte_exact": true,
     "q_authority_preserved": true,
     "phase": "MURPHY_KOOP_LIQUID_WATER_ABOVE_AND_BELOW_ZERO",
     "psychrometric_chart_points": "ORIGINAL_T_AND_W; PER_HOUR_PRESSURE_RETAINED",
@@ -496,6 +495,12 @@
     "report": "docs/IGE_A1_5_LOCAL_HISTORICAL_UI_RU_20261026.md",
     "contract": "research/ige_cmip6/a15_ui_integration_contract_20261026.json",
     "verified_local_receipt": "research/ige_cmip6/a15_verified_local_UI_20261026.json",
-    "CI_status": "PENDING"
+    "CI_status": "FINAL_RUN_PENDING_AFTER_CPU_PORTABILITY_DIAGNOSIS",
+    "parent_original_source_replay_portable_bitwise_qualified": false,
+    "parent_original_source_replay_numerical_compatibility": true,
+    "CPU_portability_amendment": "research/ige_cmip6/a15_CPU_portability_amendment_20261026.json",
+    "CPU_diagnostic_CI": 40358122554,
+    "verified_local_final_receipt": "research/ige_cmip6/a15_verified_local_UI_final_20261026.json",
+    "parent_original_source_replay_byte_exact_on_initial_local": true
   }
 }

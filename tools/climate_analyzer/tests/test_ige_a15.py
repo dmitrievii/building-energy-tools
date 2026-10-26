@@ -7,6 +7,7 @@ from hashlib import sha256
 import io
 import json
 from pathlib import Path
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -22,6 +23,8 @@ from epw_climate_analyzer.engine.thermodynamics import saturation_nasa_phase_pa,
 from epw_climate_analyzer.engine_psychrometrics import station_psychrometric_figure
 
 APP=Path(__file__).resolve().parents[1]/"app.py"
+sys.path.insert(0,str(Path(__file__).resolve().parents[3]/"research/ige_cmip6"))
+from a15_replay_audit import check_cell,compare_csv,audit_replay
 
 
 class SavedProductTests(unittest.TestCase):
@@ -178,6 +181,29 @@ class WaterChartTests(unittest.TestCase):
         self.assertEqual(len(station_psychrometric_figure(january,95000).data[-1].x),744)
         for frame,p in ((self.data.iloc[:0],95000),(self.data,float("nan")),(self.data,1000)):
             with self.assertRaises(ValueError):station_psychrometric_figure(frame,p)
+
+
+class PortabilityAuditTests(unittest.TestCase):
+    def test_adjacent_decimal_cells_are_compatible_but_two_grid_steps_fail(self):
+        self.assertEqual(str(check_cell("0.003000000000000","0.003000000000001",15)),"1E-15")
+        with self.assertRaisesRegex(ValueError,"DISJOINT"):check_cell("0.003000000000000","0.003000000000002",15)
+        with self.assertRaisesRegex(ValueError,"GRID_CHANGED"):check_cell("1.000000000","1.0000000010",9)
+
+    def test_source_clock_and_unadjusted_weather_cannot_use_numeric_tolerance(self):
+        a=b"time,wind_speed_m_s\n2025-01-01T00:00Z,1.000000000\n"
+        b=b"time,wind_speed_m_s\n2025-01-01T00:00Z,1.000000001\n"
+        with self.assertRaisesRegex(ValueError,"UNADJUSTED_WEATHER_CHANGED"):compare_csv(a,b,"states")
+
+    def test_original_CPU_variant_fixture_has_exact_T_and_unchanged_physical_gates(self):
+        original=(service.RESEARCH/service.BUNDLE_NAME).read_bytes()
+        raw=(service.RESEARCH/"a15_diagnostic_CI_40358122554.zip").read_bytes()
+        self.assertEqual(sha256(raw).hexdigest(),"058d540af23ace1e7368a325c5721b7d21e8a02097bfc02e1c25c65aa7b23832")
+        with zipfile.ZipFile(io.BytesIO(raw)) as z:variant=z.read("parent_replay_actual.zip")
+        result=audit_replay(original,variant)
+        self.assertFalse(result["byte_exact"])
+        self.assertTrue(result["numerical_quantization_compatibility"])
+        self.assertFalse(result["original_physical_tolerances_changed"])
+        for v in result["targets"].values():self.assertTrue(v["T_donor_and_mean_inverse_ledgers_byte_exact"])
 
 
 class ActualStationRouteTests(unittest.TestCase):

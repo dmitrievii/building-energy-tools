@@ -1,0 +1,34 @@
+{
+  "schema": "IGE_A15_CPU_PORTABILITY_AMENDMENT_v1",
+  "original_contract_sha256": "b365612f9302a43e217c228f7d1bd1c2bfb51b0b4448c22097f4906188f3f7c1",
+  "original_contract_unchanged": true,
+  "failed_initial_CI": 40356925637,
+  "diagnostic_CI": 40358122554,
+  "diagnostic_original_artifact_sha256": "058d540af23ace1e7368a325c5721b7d21e8a02097bfc02e1c25c65aa7b23832",
+  "controlled_experiment": "disable AVX512 NumPy CPU dispatch only; original source inputs and code unchanged",
+  "disabled_AVX512_local_replay_matches_CI_bytes": true,
+  "disabled_CPU_features": [
+    "AVX512F",
+    "AVX512CD",
+    "AVX512_SKX",
+    "AVX512_CLX",
+    "AVX512_CNL",
+    "AVX512_ICL",
+    "AVX512_SPR"
+  ],
+  "controlled_replay_ZIP_sha256": "2debd527c2f5f0313e3b25c9263ef363a400eff41c6fad871d5436b1287174fe",
+  "UI_frozen_snapshot_byte_identity_required": true,
+  "source_T_donors_operators_or_objective_changed": false,
+  "original_physical_tolerances_changed": false,
+  "changed_gate": "parent full source regeneration is checked by exact input/T/decision identity, printed quantization cells for derived states, original physical residuals and exact non-hash scientific metadata; portable ZIP identity is explicitly unqualified",
+  "parent_derived_state_grids": {
+    "p_Pa": 1e-09,
+    "q_kg_kg": 1e-15,
+    "RH_pp": 1e-09,
+    "Td_C": 1e-09,
+    "EPW_derived_states": 1e-07
+  },
+  "preprojection_RH_diagnostic": "old name-based writer printed 15 places; recheck both against q0/T/ps at unchanged 1e-7 pp RH algebra tolerance",
+  "no_reference_weather_or_archived_results_rewritten": true,
+  "independent_accuracy_or_production_qualified": false
+}

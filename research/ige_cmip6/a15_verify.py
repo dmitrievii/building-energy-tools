@@ -24,6 +24,7 @@ from epw_climate_analyzer.engine.historical import json_bytes
 from epw_climate_analyzer.engine.epw import write_exclusive
 from a14_run import build as replay_A14
 from a14_verify import bundle as A14_bundle
+from a15_replay_audit import audit_replay
 from u1_verify import PATTERNS
 
 BASE="fb1b77a12a1dd525506d14ffc546988dbc39efb7"
@@ -35,7 +36,7 @@ LIVING={"docs/IGE_CLIMATE_ENGINE_TWO_PRODUCT_ROADMAP_RU_20261025.md",
 CODE=[*sorted(APP_MODIFIED),"tools/climate_analyzer/epw_climate_analyzer/engine_station_product.py",
     "tools/climate_analyzer/epw_climate_analyzer/engine_psychrometrics.py",
     "tools/climate_analyzer/tests/test_ige_a15.py","research/ige_cmip6/a15_verify.py",
-    ".github/workflows/ige-a1-5-local-year-ui-20261026.yml"]
+    ".github/workflows/ige-a1-5-local-year-ui-20261026.yml","research/ige_cmip6/a15_replay_audit.py"]
 
 
 def code_hashes():
@@ -49,6 +50,12 @@ def contract():
             or protocol["existing_UI_files_allowed_to_change"]!=sorted(APP_MODIFIED)
             or protocol["new_weather_or_control_acquisition_allowed"] is not False):
         raise ValueError("A15_CONTRACT_CHANGED")
+    amendment=json.loads((R/"a15_CPU_portability_amendment_20261026.json").read_text())
+    if (amendment["original_contract_sha256"]!=sha256((R/CONTRACT).read_bytes()).hexdigest()
+            or amendment["original_physical_tolerances_changed"] is not False
+            or amendment["UI_frozen_snapshot_byte_identity_required"] is not True
+            or amendment["source_T_donors_operators_or_objective_changed"] is not False):
+        raise ValueError("A15_PORTABILITY_AMENDMENT_CHANGED")
     return protocol
 
 
@@ -104,8 +111,9 @@ def verify(output):
             "differing_members":[n for n,h in members.items() if h["expected_sha256"]!=h["replayed_sha256"]]}
         write_exclusive(output/"parent_replay_member_audit.json",json_bytes(audit))
         write_exclusive(output/"parent_replay_actual.zip",replay)
-        if replay!=expected:raise ValueError("A15_PARENT_YEAR_REPLAY_CHANGED; retained member audit and actual replay ZIP")
-    parent_replay={"byte_exact":True,"two_complete_years":True,"snapshot_sha256":sha256(replay).hexdigest(),
+        numerical=audit_replay(expected,replay)
+        write_exclusive(output/"parent_replay_numerical_audit.json",json_bytes(numerical))
+    parent_replay={**numerical,"two_complete_years":True,"snapshot_sha256":STATION_BUNDLE_SHA,
         "wall_seconds":time.monotonic()-start,"UI_service_performs_this_reconstruction":False}
     products={}
     for key in CATALOG:
@@ -123,6 +131,8 @@ def verify(output):
     result={"schema":"IGE_A15_ACTUAL_UI_AND_SNAPSHOT_VERIFICATION_v1","tests":tests,"protection":guard,
         "parent_original_source_replay":parent_replay,"products":products,"code_sha256":code_hashes(),
         "contract_sha256":sha256((R/CONTRACT).read_bytes()).hexdigest(),
+        "portability_amendment_sha256":sha256((R/"a15_CPU_portability_amendment_20261026.json").read_bytes()).hexdigest(),
+        "numerical_backend":{"numpy_CPU_features":np.core._multiarray_umath.__cpu_features__},
         "actual_app_entrypoint":"tools/climate_analyzer/app.py","UI_test_method":"streamlit.testing.v1.AppTest",
         "browser_visual_test_performed":False,"public_deployment_changed":False,
         "new_NASA_ERA5_station_or_control_acquisition":0,"UI_snapshot_values_modified":False,
