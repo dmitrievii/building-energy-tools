@@ -1,0 +1,49 @@
+name: IGE A1.4 two CH historical research years NOT independent qualification
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/ige-a1-4-local-historical-year-20261026
+    paths:
+      - research/ige_cmip6/a14_results_20261026.json
+      - research/ige_cmip6/a14_original_sources_20261026.zip
+      - research/ige_cmip6/a14_CH_2025_research_years_20261026.zip
+permissions:
+  contents: read
+env:
+  OPENBLAS_NUM_THREADS: '1'
+  OMP_NUM_THREADS: '1'
+  STREAMLIT_BROWSER_GATHER_USAGE_STATS: 'false'
+jobs:
+  full_year_original_source_replay:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r tools/climate_analyzer/requirements.txt numcodecs==0.15.1 deprecated==3.0.0 wrapt==2.5.1
+      - name: Old core UI A1 regressions and full original-source year replay without network
+        run: python research/ige_cmip6/a14_verify.py --out outputs/a14
+      - name: Explicit research qualification axes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json,os
+          r=json.loads(Path('outputs/a14/verification.json').read_text())
+          assert r['replay']['original_source_replay_byte_exact']
+          assert not r['independent_accuracy_qualified'] and not r['production_ready']
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:
+              f.write(f"{r['tests']['tests_run']} checks PASS; 2 x 8760 x 35 research EPWs replayed from originals.\n\n")
+              f.write('Full temporal inverse and explicit humidity adjustment ledgers. Conditional algebraic state closure only; no independent local pressure/full-weather accuracy or production qualification.\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: IGE-A1-4-two-CH-research-years-NOT-INDEPENDENT
+          path: outputs/a14/
+          if-no-files-found: warn
+          retention-days: 30

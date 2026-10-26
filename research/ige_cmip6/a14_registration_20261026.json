@@ -1,0 +1,799 @@
+{
+  "schema": "IGE_A14_LIMITED_CH_YEAR_REGISTRATION_v1",
+  "date": "2026-10-26",
+  "parent_commit": "3ba27b7b618820d9f714c312a0fec5ae989c37f6",
+  "product_function": "A historical local temperature year and research EPW",
+  "targets": {
+    "CH:BAS": {
+      "target_key": "CH:BAS",
+      "season": "winter",
+      "reference_hours": 168,
+      "frozen_donor_slots": [
+        "CH:MOE",
+        "CH:RUE",
+        "CH:DEM"
+      ],
+      "metadata_admitted_donors": [
+        "CH:MOE",
+        "CH:RUE",
+        "CH:DEM"
+      ],
+      "blocked_donor_slots": [],
+      "dated_xy_distance_km": {
+        "CH:MOE": 22.3579281336055,
+        "CH:RUE": 25.185226156672318,
+        "CH:DEM": 27.4403938037344
+      },
+      "strict_T2m_metadata_ready": true,
+      "source_block_reasons": [],
+      "hourly_QC_and_coverage_verified": false,
+      "ERA5_or_donor_weather_acquired": false,
+      "predictions_created_or_sealed": false,
+      "primary_validation_admitted": false
+    },
+    "CH:ALT": {
+      "target_key": "CH:ALT",
+      "season": "winter",
+      "reference_hours": 168,
+      "frozen_donor_slots": [
+        "CH:GES",
+        "CH:ENG",
+        "CH:TIT"
+      ],
+      "metadata_admitted_donors": [
+        "CH:GES",
+        "CH:ENG"
+      ],
+      "blocked_donor_slots": [
+        "CH:TIT"
+      ],
+      "dated_xy_distance_km": {
+        "CH:GES": 14.241448813893946,
+        "CH:ENG": 17.641676307852975
+      },
+      "strict_T2m_metadata_ready": true,
+      "source_block_reasons": [],
+      "hourly_QC_and_coverage_verified": false,
+      "ERA5_or_donor_weather_acquired": false,
+      "predictions_created_or_sealed": false,
+      "primary_validation_admitted": false
+    }
+  },
+  "full_support_admission": {
+    "CH:ALT": {
+      "station_key": "CH:ALT",
+      "season": "A14_FULL_SUPPORT_WITH_SPINUP",
+      "frozen_station": {
+        "country": "CH",
+        "station_id": "ALT",
+        "name": "Altdorf",
+        "latitude": 46.887069,
+        "longitude": 8.621894,
+        "nominal_site_elevation_m": 438.0,
+        "source_metadata_sha256": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+        "identity_group": "CH_WIGOS:0-20000-0-06672",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "CH_WIGOS:0-20000-0-06672",
+      "reference_first_UTC": "2024-12-29T00:00:00+00:00",
+      "reference_last_UTC": "2025-12-31T23:00:00+00:00",
+      "actual_nominal_sample_support_first_UTC": "2024-12-28T23:10:00+00:00",
+      "time_contract": {
+        "operator": "mean_six_10min_nominal_nodes",
+        "true_sensor_filter_known": false,
+        "basis": "A1.1 source hourly six ten-minute nodes H-50,...,H; 5/12 previous + 7/12 current model surrogate"
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 46.887047,
+        "longitude": 8.621797,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "channel_selection": "UNIQUE_DATED_EXACT_2M_LOCAL_GROUND_CHANNEL; separate 5cm channels excluded",
+        "geospatial_z_as_reported_m": 437.86,
+        "height_origin": "WMDR_EQUIPMENT_GEOPOSITION_Z_AS_REPORTED_AGL_NOT_ADDED_AGAIN",
+        "deployment_period_half_open": [
+          "2008-12-08T00:00:00Z",
+          null
+        ],
+        "location_period_half_open": [
+          "2008-12-08T00:00:00Z",
+          null
+        ],
+        "location_time_support": "EXPLICIT_LOCATION_PERIOD",
+        "source_WSI": "0-20000-0-06672",
+        "parser_geometry_check_bounds_UTC": [
+          "2024-12-28T23:00:00+00:00",
+          "2025-12-31T23:00:00+00:00"
+        ],
+        "datum_transformation_verified": false,
+        "equipment_z_to_model_orography_transformation_qualified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "CH_ALT_WMDR.xml": "99ceb78371ac6d907821d7510d49b2cd9f2bf04fb694af4355c8ae8f9cc7b6a6",
+        "A1.1/CH_parameters.csv": "9fa4358356a1f856d5ba2ab8117e750ea5c742ec4c18594f16bf31e8a87fc2c0",
+        "A1.1/CH_download_documentation.html": "d0061d5588ae4ff4afb18cbba469bb1b91be31dba178516032a288bf01d8625c"
+      },
+      "nominal_to_dated_sensor_distance_km": 0.007766816465869669
+    },
+    "CH:BAS": {
+      "station_key": "CH:BAS",
+      "season": "A14_FULL_SUPPORT_WITH_SPINUP",
+      "frozen_station": {
+        "country": "CH",
+        "station_id": "BAS",
+        "name": "Basel / Binningen",
+        "latitude": 47.541142,
+        "longitude": 7.583525,
+        "nominal_site_elevation_m": 316.0,
+        "source_metadata_sha256": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+        "identity_group": "CH_WIGOS:0-20000-0-06601",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "CH_WIGOS:0-20000-0-06601",
+      "reference_first_UTC": "2024-12-29T00:00:00+00:00",
+      "reference_last_UTC": "2025-12-31T23:00:00+00:00",
+      "actual_nominal_sample_support_first_UTC": "2024-12-28T23:10:00+00:00",
+      "time_contract": {
+        "operator": "mean_six_10min_nominal_nodes",
+        "true_sensor_filter_known": false,
+        "basis": "A1.1 source hourly six ten-minute nodes H-50,...,H; 5/12 previous + 7/12 current model surrogate"
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 47.541064,
+        "longitude": 7.58355,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "channel_selection": "UNIQUE_DATED_EXACT_2M_LOCAL_GROUND_CHANNEL; separate 5cm channels excluded",
+        "geospatial_z_as_reported_m": 316.17,
+        "height_origin": "WMDR_EQUIPMENT_GEOPOSITION_Z_AS_REPORTED_AGL_NOT_ADDED_AGAIN",
+        "deployment_period_half_open": [
+          "2009-12-09T00:00:00Z",
+          null
+        ],
+        "location_period_half_open": [
+          "2009-12-09T00:00:00Z",
+          null
+        ],
+        "location_time_support": "EXPLICIT_LOCATION_PERIOD",
+        "source_WSI": "0-20000-0-06601",
+        "parser_geometry_check_bounds_UTC": [
+          "2024-12-28T23:00:00+00:00",
+          "2025-12-31T23:00:00+00:00"
+        ],
+        "datum_transformation_verified": false,
+        "equipment_z_to_model_orography_transformation_qualified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "CH_BAS_WMDR.xml": "e9297faca74417702cf68d0adfd0e5ac192bd5daca72a004e957cdc8deb3bc06",
+        "A1.1/CH_parameters.csv": "9fa4358356a1f856d5ba2ab8117e750ea5c742ec4c18594f16bf31e8a87fc2c0",
+        "A1.1/CH_download_documentation.html": "d0061d5588ae4ff4afb18cbba469bb1b91be31dba178516032a288bf01d8625c"
+      },
+      "nominal_to_dated_sensor_distance_km": 0.008873896613504585
+    },
+    "CH:DEM": {
+      "station_key": "CH:DEM",
+      "season": "A14_FULL_SUPPORT_WITH_SPINUP",
+      "frozen_station": {
+        "country": "CH",
+        "station_id": "DEM",
+        "name": "Delémont",
+        "latitude": 47.351706,
+        "longitude": 7.349567,
+        "nominal_site_elevation_m": 439.0,
+        "source_metadata_sha256": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+        "identity_group": "CH_WIGOS:0-20000-0-06602",
+        "historical_geometry_verified": false,
+        "key": "CH:DEM",
+        "distance_km": 27.445049440145738
+      },
+      "resolved_identity_group": "CH_WIGOS:0-20000-0-06602",
+      "reference_first_UTC": "2024-12-29T00:00:00+00:00",
+      "reference_last_UTC": "2025-12-31T23:00:00+00:00",
+      "actual_nominal_sample_support_first_UTC": "2024-12-28T23:10:00+00:00",
+      "time_contract": {
+        "operator": "mean_six_10min_nominal_nodes",
+        "true_sensor_filter_known": false,
+        "basis": "A1.1 source hourly six ten-minute nodes H-50,...,H; 5/12 previous + 7/12 current model surrogate"
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 47.351703,
+        "longitude": 7.349556,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "channel_selection": "UNIQUE_DATED_EXACT_2M_LOCAL_GROUND_CHANNEL; separate 5cm channels excluded",
+        "geospatial_z_as_reported_m": 439.0,
+        "height_origin": "WMDR_EQUIPMENT_GEOPOSITION_Z_AS_REPORTED_AGL_NOT_ADDED_AGAIN",
+        "deployment_period_half_open": [
+          "2012-08-29T00:00:00Z",
+          null
+        ],
+        "location_period_half_open": [
+          "2012-08-29T00:00:00Z",
+          null
+        ],
+        "location_time_support": "EXPLICIT_LOCATION_PERIOD",
+        "source_WSI": "0-20000-0-06602",
+        "parser_geometry_check_bounds_UTC": [
+          "2024-12-28T23:00:00+00:00",
+          "2025-12-31T23:00:00+00:00"
+        ],
+        "datum_transformation_verified": false,
+        "equipment_z_to_model_orography_transformation_qualified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "CH_DEM_WMDR.xml": "6bf666e2aee1a6b6304317429b8bf6941ee10b61b5b90847e3bab177c6bc8a66",
+        "A1.1/CH_parameters.csv": "9fa4358356a1f856d5ba2ab8117e750ea5c742ec4c18594f16bf31e8a87fc2c0",
+        "A1.1/CH_download_documentation.html": "d0061d5588ae4ff4afb18cbba469bb1b91be31dba178516032a288bf01d8625c"
+      },
+      "nominal_to_dated_sensor_distance_km": 0.0008932983567940286
+    },
+    "CH:ENG": {
+      "station_key": "CH:ENG",
+      "season": "A14_FULL_SUPPORT_WITH_SPINUP",
+      "frozen_station": {
+        "country": "CH",
+        "station_id": "ENG",
+        "name": "Engelberg",
+        "latitude": 46.821639,
+        "longitude": 8.410514,
+        "nominal_site_elevation_m": 1036.0,
+        "source_metadata_sha256": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+        "identity_group": "CH_WIGOS:0-20000-0-06655",
+        "historical_geometry_verified": false,
+        "key": "CH:ENG",
+        "distance_km": 17.643494153838084
+      },
+      "resolved_identity_group": "CH_WIGOS:0-20000-0-06655",
+      "reference_first_UTC": "2024-12-29T00:00:00+00:00",
+      "reference_last_UTC": "2025-12-31T23:00:00+00:00",
+      "actual_nominal_sample_support_first_UTC": "2024-12-28T23:10:00+00:00",
+      "time_contract": {
+        "operator": "mean_six_10min_nominal_nodes",
+        "true_sensor_filter_known": false,
+        "basis": "A1.1 source hourly six ten-minute nodes H-50,...,H; 5/12 previous + 7/12 current model surrogate"
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 46.821619,
+        "longitude": 8.410442,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "channel_selection": "UNIQUE_DATED_EXACT_2M_LOCAL_GROUND_CHANNEL; separate 5cm channels excluded",
+        "geospatial_z_as_reported_m": 1034.65,
+        "height_origin": "WMDR_EQUIPMENT_GEOPOSITION_Z_AS_REPORTED_AGL_NOT_ADDED_AGAIN",
+        "deployment_period_half_open": [
+          "2006-12-14T00:00:00Z",
+          null
+        ],
+        "location_period_half_open": [
+          "2006-12-14T00:00:00Z",
+          null
+        ],
+        "location_time_support": "EXPLICIT_LOCATION_PERIOD",
+        "source_WSI": "0-20000-0-06655",
+        "parser_geometry_check_bounds_UTC": [
+          "2024-12-28T23:00:00+00:00",
+          "2025-12-31T23:00:00+00:00"
+        ],
+        "datum_transformation_verified": false,
+        "equipment_z_to_model_orography_transformation_qualified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "CH_ENG_WMDR.xml": "4494193d044317b066dea142ca9e1079b06aa298bea421a7c26d44b62562d914",
+        "A1.1/CH_parameters.csv": "9fa4358356a1f856d5ba2ab8117e750ea5c742ec4c18594f16bf31e8a87fc2c0",
+        "A1.1/CH_download_documentation.html": "d0061d5588ae4ff4afb18cbba469bb1b91be31dba178516032a288bf01d8625c"
+      },
+      "nominal_to_dated_sensor_distance_km": 0.005912490466978837
+    },
+    "CH:GES": {
+      "station_key": "CH:GES",
+      "season": "A14_FULL_SUPPORT_WITH_SPINUP",
+      "frozen_station": {
+        "country": "CH",
+        "station_id": "GES",
+        "name": "Gersau",
+        "latitude": 46.996069,
+        "longitude": 8.523442,
+        "nominal_site_elevation_m": 521.0,
+        "source_metadata_sha256": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+        "identity_group": "CH_WIGOS:0-20000-0-06653",
+        "historical_geometry_verified": false,
+        "key": "CH:GES",
+        "distance_km": 14.239544909136516
+      },
+      "resolved_identity_group": "CH_WIGOS:0-20000-0-06653",
+      "reference_first_UTC": "2024-12-29T00:00:00+00:00",
+      "reference_last_UTC": "2025-12-31T23:00:00+00:00",
+      "actual_nominal_sample_support_first_UTC": "2024-12-28T23:10:00+00:00",
+      "time_contract": {
+        "operator": "mean_six_10min_nominal_nodes",
+        "true_sensor_filter_known": false,
+        "basis": "A1.1 source hourly six ten-minute nodes H-50,...,H; 5/12 previous + 7/12 current model surrogate"
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 46.996081,
+        "longitude": 8.523378,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "channel_selection": "UNIQUE_DATED_EXACT_2M_LOCAL_GROUND_CHANNEL; separate 5cm channels excluded",
+        "geospatial_z_as_reported_m": 519.6,
+        "height_origin": "WMDR_EQUIPMENT_GEOPOSITION_Z_AS_REPORTED_AGL_NOT_ADDED_AGAIN",
+        "deployment_period_half_open": [
+          "2015-03-10T00:00:00Z",
+          null
+        ],
+        "location_period_half_open": [
+          "2015-03-10T00:00:00Z",
+          null
+        ],
+        "location_time_support": "EXPLICIT_LOCATION_PERIOD",
+        "source_WSI": "0-20000-0-06653",
+        "parser_geometry_check_bounds_UTC": [
+          "2024-12-28T23:00:00+00:00",
+          "2025-12-31T23:00:00+00:00"
+        ],
+        "datum_transformation_verified": false,
+        "equipment_z_to_model_orography_transformation_qualified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "CH_GES_WMDR.xml": "4a11b30b5f475a7c2fb12570afb02dfc34124c5f491ff530a934ee57ef4f7baf",
+        "A1.1/CH_parameters.csv": "9fa4358356a1f856d5ba2ab8117e750ea5c742ec4c18594f16bf31e8a87fc2c0",
+        "A1.1/CH_download_documentation.html": "d0061d5588ae4ff4afb18cbba469bb1b91be31dba178516032a288bf01d8625c"
+      },
+      "nominal_to_dated_sensor_distance_km": 0.005033850519063786
+    },
+    "CH:MOE": {
+      "station_key": "CH:MOE",
+      "season": "A14_FULL_SUPPORT_WITH_SPINUP",
+      "frozen_station": {
+        "country": "CH",
+        "station_id": "MOE",
+        "name": "Möhlin",
+        "latitude": 47.572197,
+        "longitude": 7.877911,
+        "nominal_site_elevation_m": 343.0,
+        "source_metadata_sha256": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+        "identity_group": "CH_WIGOS:0-20000-0-06641",
+        "historical_geometry_verified": false,
+        "key": "CH:MOE",
+        "distance_km": 22.359290691986512
+      },
+      "resolved_identity_group": "CH_WIGOS:0-20000-0-06641",
+      "reference_first_UTC": "2024-12-29T00:00:00+00:00",
+      "reference_last_UTC": "2025-12-31T23:00:00+00:00",
+      "actual_nominal_sample_support_first_UTC": "2024-12-28T23:10:00+00:00",
+      "time_contract": {
+        "operator": "mean_six_10min_nominal_nodes",
+        "true_sensor_filter_known": false,
+        "basis": "A1.1 source hourly six ten-minute nodes H-50,...,H; 5/12 previous + 7/12 current model surrogate"
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 47.572194,
+        "longitude": 7.8779,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "channel_selection": "UNIQUE_DATED_EXACT_2M_LOCAL_GROUND_CHANNEL; separate 5cm channels excluded",
+        "geospatial_z_as_reported_m": 344.0,
+        "height_origin": "WMDR_EQUIPMENT_GEOPOSITION_Z_AS_REPORTED_AGL_NOT_ADDED_AGAIN",
+        "deployment_period_half_open": [
+          "2010-09-09T00:00:00Z",
+          null
+        ],
+        "location_period_half_open": [
+          "2010-09-09T00:00:00Z",
+          null
+        ],
+        "location_time_support": "EXPLICIT_LOCATION_PERIOD",
+        "source_WSI": "0-20000-0-06641",
+        "parser_geometry_check_bounds_UTC": [
+          "2024-12-28T23:00:00+00:00",
+          "2025-12-31T23:00:00+00:00"
+        ],
+        "datum_transformation_verified": false,
+        "equipment_z_to_model_orography_transformation_qualified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "CH_MOE_WMDR.xml": "1fe980ef5cb22fcbe221f39b28adf1183f8415cd02e2d35dddf6a903d4bd3f94",
+        "A1.1/CH_parameters.csv": "9fa4358356a1f856d5ba2ab8117e750ea5c742ec4c18594f16bf31e8a87fc2c0",
+        "A1.1/CH_download_documentation.html": "d0061d5588ae4ff4afb18cbba469bb1b91be31dba178516032a288bf01d8625c"
+      },
+      "nominal_to_dated_sensor_distance_km": 0.0008900819362339718
+    },
+    "CH:RUE": {
+      "station_key": "CH:RUE",
+      "season": "A14_FULL_SUPPORT_WITH_SPINUP",
+      "frozen_station": {
+        "country": "CH",
+        "station_id": "RUE",
+        "name": "Rünenberg",
+        "latitude": 47.434572,
+        "longitude": 7.879414,
+        "nominal_site_elevation_m": 611.0,
+        "source_metadata_sha256": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+        "identity_group": "CH_WIGOS:0-20000-0-06645",
+        "historical_geometry_verified": false,
+        "key": "CH:RUE",
+        "distance_km": 25.19379726466966
+      },
+      "resolved_identity_group": "CH_WIGOS:0-20000-0-06645",
+      "reference_first_UTC": "2024-12-29T00:00:00+00:00",
+      "reference_last_UTC": "2025-12-31T23:00:00+00:00",
+      "actual_nominal_sample_support_first_UTC": "2024-12-28T23:10:00+00:00",
+      "time_contract": {
+        "operator": "mean_six_10min_nominal_nodes",
+        "true_sensor_filter_known": false,
+        "basis": "A1.1 source hourly six ten-minute nodes H-50,...,H; 5/12 previous + 7/12 current model surrogate"
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 47.434553,
+        "longitude": 7.879356,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "channel_selection": "UNIQUE_DATED_EXACT_2M_LOCAL_GROUND_CHANNEL; separate 5cm channels excluded",
+        "geospatial_z_as_reported_m": 611.19,
+        "height_origin": "WMDR_EQUIPMENT_GEOPOSITION_Z_AS_REPORTED_AGL_NOT_ADDED_AGAIN",
+        "deployment_period_half_open": [
+          "2006-08-09T00:00:00Z",
+          null
+        ],
+        "location_period_half_open": [
+          "2006-08-09T00:00:00Z",
+          null
+        ],
+        "location_time_support": "EXPLICIT_LOCATION_PERIOD",
+        "source_WSI": "0-20000-0-06645",
+        "parser_geometry_check_bounds_UTC": [
+          "2024-12-28T23:00:00+00:00",
+          "2025-12-31T23:00:00+00:00"
+        ],
+        "datum_transformation_verified": false,
+        "equipment_z_to_model_orography_transformation_qualified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "CH_RUE_WMDR.xml": "9f410357300d5e26663e90d47daf5feae52c79129d89873b52fa43541b444b6c",
+        "A1.1/CH_parameters.csv": "9fa4358356a1f856d5ba2ab8117e750ea5c742ec4c18594f16bf31e8a87fc2c0",
+        "A1.1/CH_download_documentation.html": "d0061d5588ae4ff4afb18cbba469bb1b91be31dba178516032a288bf01d8625c"
+      },
+      "nominal_to_dated_sensor_distance_km": 0.004847170163120319
+    }
+  },
+  "reference_first_UTC": "2024-12-29T00:00:00+00:00",
+  "reference_last_UTC": "2025-12-31T23:00:00+00:00",
+  "background_anchor_UTC": "2024-12-28T23:00:00+00:00",
+  "spinup_hours": 72,
+  "new_source_plan": [
+    {
+      "id": "prefix_CH_ALT",
+      "kind": "temperature_prefix",
+      "station_key": "CH:ALT",
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=46.887047&longitude=8.621797&start_date=2024-12-28&end_date=2024-12-31&hourly=temperature_2m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&temperature_unit=celsius",
+      "parameters": {
+        "latitude": "46.887047",
+        "longitude": "8.621797",
+        "start_date": "2024-12-28",
+        "end_date": "2024-12-31",
+        "hourly": "temperature_2m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "temperature_unit": "celsius"
+      },
+      "member": "prefix_CH_ALT.json",
+      "max_body_bytes": 1000000
+    },
+    {
+      "id": "prefix_CH_BAS",
+      "kind": "temperature_prefix",
+      "station_key": "CH:BAS",
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=47.541064&longitude=7.583550&start_date=2024-12-28&end_date=2024-12-31&hourly=temperature_2m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&temperature_unit=celsius",
+      "parameters": {
+        "latitude": "47.541064",
+        "longitude": "7.583550",
+        "start_date": "2024-12-28",
+        "end_date": "2024-12-31",
+        "hourly": "temperature_2m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "temperature_unit": "celsius"
+      },
+      "member": "prefix_CH_BAS.json",
+      "max_body_bytes": 1000000
+    },
+    {
+      "id": "prefix_CH_DEM",
+      "kind": "temperature_prefix",
+      "station_key": "CH:DEM",
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=47.351703&longitude=7.349556&start_date=2024-12-28&end_date=2024-12-31&hourly=temperature_2m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&temperature_unit=celsius",
+      "parameters": {
+        "latitude": "47.351703",
+        "longitude": "7.349556",
+        "start_date": "2024-12-28",
+        "end_date": "2024-12-31",
+        "hourly": "temperature_2m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "temperature_unit": "celsius"
+      },
+      "member": "prefix_CH_DEM.json",
+      "max_body_bytes": 1000000
+    },
+    {
+      "id": "prefix_CH_ENG",
+      "kind": "temperature_prefix",
+      "station_key": "CH:ENG",
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=46.821619&longitude=8.410442&start_date=2024-12-28&end_date=2024-12-31&hourly=temperature_2m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&temperature_unit=celsius",
+      "parameters": {
+        "latitude": "46.821619",
+        "longitude": "8.410442",
+        "start_date": "2024-12-28",
+        "end_date": "2024-12-31",
+        "hourly": "temperature_2m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "temperature_unit": "celsius"
+      },
+      "member": "prefix_CH_ENG.json",
+      "max_body_bytes": 1000000
+    },
+    {
+      "id": "prefix_CH_GES",
+      "kind": "temperature_prefix",
+      "station_key": "CH:GES",
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=46.996081&longitude=8.523378&start_date=2024-12-28&end_date=2024-12-31&hourly=temperature_2m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&temperature_unit=celsius",
+      "parameters": {
+        "latitude": "46.996081",
+        "longitude": "8.523378",
+        "start_date": "2024-12-28",
+        "end_date": "2024-12-31",
+        "hourly": "temperature_2m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "temperature_unit": "celsius"
+      },
+      "member": "prefix_CH_GES.json",
+      "max_body_bytes": 1000000
+    },
+    {
+      "id": "prefix_CH_MOE",
+      "kind": "temperature_prefix",
+      "station_key": "CH:MOE",
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=47.572194&longitude=7.877900&start_date=2024-12-28&end_date=2024-12-31&hourly=temperature_2m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&temperature_unit=celsius",
+      "parameters": {
+        "latitude": "47.572194",
+        "longitude": "7.877900",
+        "start_date": "2024-12-28",
+        "end_date": "2024-12-31",
+        "hourly": "temperature_2m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "temperature_unit": "celsius"
+      },
+      "member": "prefix_CH_MOE.json",
+      "max_body_bytes": 1000000
+    },
+    {
+      "id": "prefix_CH_RUE",
+      "kind": "temperature_prefix",
+      "station_key": "CH:RUE",
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=47.434553&longitude=7.879356&start_date=2024-12-28&end_date=2024-12-31&hourly=temperature_2m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&temperature_unit=celsius",
+      "parameters": {
+        "latitude": "47.434553",
+        "longitude": "7.879356",
+        "start_date": "2024-12-28",
+        "end_date": "2024-12-31",
+        "hourly": "temperature_2m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "temperature_unit": "celsius"
+      },
+      "member": "prefix_CH_RUE.json",
+      "max_body_bytes": 1000000
+    },
+    {
+      "id": "open_meteo_CH_BAS",
+      "kind": "open_meteo",
+      "station_key": "CH:BAS",
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=47.541064&longitude=7.583550&start_date=2025-01-01&end_date=2025-12-31&hourly=temperature_2m%2Cdew_point_2m%2Crelative_humidity_2m%2Csurface_pressure%2Cprecipitation%2Crain%2Ccloud_cover%2Cshortwave_radiation%2Cdirect_radiation%2Cdiffuse_radiation%2Cdirect_normal_irradiance%2Cwind_speed_10m%2Cwind_direction_10m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&wind_speed_unit=ms&temperature_unit=celsius&precipitation_unit=mm",
+      "parameters": {
+        "latitude": "47.541064",
+        "longitude": "7.583550",
+        "start_date": "2025-01-01",
+        "end_date": "2025-12-31",
+        "hourly": "temperature_2m,dew_point_2m,relative_humidity_2m,surface_pressure,precipitation,rain,cloud_cover,shortwave_radiation,direct_radiation,diffuse_radiation,direct_normal_irradiance,wind_speed_10m,wind_direction_10m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "wind_speed_unit": "ms",
+        "temperature_unit": "celsius",
+        "precipitation_unit": "mm"
+      },
+      "provider": "Open-Meteo",
+      "dataset": "fixed ERA5, provider derivatives, not native CDS GRIB",
+      "member": "open_meteo_CH_BAS.json",
+      "max_body_bytes": 16777216
+    },
+    {
+      "id": "nasa_power_CH_BAS",
+      "kind": "nasa_power",
+      "station_key": "CH:BAS",
+      "url": "https://power.larc.nasa.gov/api/temporal/hourly/point?latitude=47.541064&longitude=7.583550&start=20241231&end=20251231&parameters=ALLSKY_SFC_LW_DWN&community=SB&format=JSON&time-standard=UTC",
+      "parameters": {
+        "latitude": "47.541064",
+        "longitude": "7.583550",
+        "start": "20241231",
+        "end": "20251231",
+        "parameters": "ALLSKY_SFC_LW_DWN",
+        "community": "SB",
+        "format": "JSON",
+        "time-standard": "UTC"
+      },
+      "provider": "NASA POWER",
+      "dataset": "hourly surface downwelling longwave; verify sources in response",
+      "member": "nasa_power_CH_BAS.json",
+      "max_body_bytes": 16777216
+    },
+    {
+      "id": "open_meteo_CH_ALT",
+      "kind": "open_meteo",
+      "station_key": "CH:ALT",
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=46.887047&longitude=8.621797&start_date=2025-01-01&end_date=2025-12-31&hourly=temperature_2m%2Cdew_point_2m%2Crelative_humidity_2m%2Csurface_pressure%2Cprecipitation%2Crain%2Ccloud_cover%2Cshortwave_radiation%2Cdirect_radiation%2Cdiffuse_radiation%2Cdirect_normal_irradiance%2Cwind_speed_10m%2Cwind_direction_10m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&wind_speed_unit=ms&temperature_unit=celsius&precipitation_unit=mm",
+      "parameters": {
+        "latitude": "46.887047",
+        "longitude": "8.621797",
+        "start_date": "2025-01-01",
+        "end_date": "2025-12-31",
+        "hourly": "temperature_2m,dew_point_2m,relative_humidity_2m,surface_pressure,precipitation,rain,cloud_cover,shortwave_radiation,direct_radiation,diffuse_radiation,direct_normal_irradiance,wind_speed_10m,wind_direction_10m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "wind_speed_unit": "ms",
+        "temperature_unit": "celsius",
+        "precipitation_unit": "mm"
+      },
+      "provider": "Open-Meteo",
+      "dataset": "fixed ERA5, provider derivatives, not native CDS GRIB",
+      "member": "open_meteo_CH_ALT.json",
+      "max_body_bytes": 16777216
+    },
+    {
+      "id": "nasa_power_CH_ALT",
+      "kind": "nasa_power",
+      "station_key": "CH:ALT",
+      "url": "https://power.larc.nasa.gov/api/temporal/hourly/point?latitude=46.887047&longitude=8.621797&start=20241231&end=20251231&parameters=ALLSKY_SFC_LW_DWN&community=SB&format=JSON&time-standard=UTC",
+      "parameters": {
+        "latitude": "46.887047",
+        "longitude": "8.621797",
+        "start": "20241231",
+        "end": "20251231",
+        "parameters": "ALLSKY_SFC_LW_DWN",
+        "community": "SB",
+        "format": "JSON",
+        "time-standard": "UTC"
+      },
+      "provider": "NASA POWER",
+      "dataset": "hourly surface downwelling longwave; verify sources in response",
+      "member": "nasa_power_CH_ALT.json",
+      "max_body_bytes": 16777216
+    }
+  ],
+  "reused_predictor_packet": "a13_input_sources_20261025.zip",
+  "reused_predictor_packet_sha256": "c11d9df67f27fb67dbc2233c2101f628edbca8380e2d2f2a5b05e39b581aabbd",
+  "source_budget": {
+    "max_decoded_body_bytes_all_attempts": 200000000,
+    "assets": 11,
+    "attempts_per_asset": 3,
+    "timeout_seconds": 45,
+    "parallel_downloads": 1,
+    "new_station_observation_requests": 0,
+    "alternate_source_model_or_station_allowed": false
+  },
+  "temperature_policy": {
+    "R1": "UNCHANGED_A1_1_IDW2_MIN2_PRIMARY_QC_DONORS",
+    "blocked_donor_slots": "retain CH:TIT blocked; never replace",
+    "raw_missing_R1": "NaN retained and admission ledger; product selects B0 MEAN explicitly",
+    "inverse": "delta_H=(12*(selected_mean_H-A(B0)_H)-5*delta_(H-1))/7; anchor delta=0",
+    "operator": "A(T)_H=(5*T_(H-1)+7*T_H)/12 under disclosed linear subhourly path",
+    "inverse_frequency_gain_max": 6,
+    "anchor_sensitivity_factor_at_first_export": 2.1510643143565624e-11,
+    "smoothing_fitting_target_observations_or_new_lapse_rate": false,
+    "instantaneous_T_accuracy_qualified": false
+  },
+  "humidity_policy": {
+    "source_vapour": "provider rounded T/RH liquid-water Magnus 17.625/243.04; Td diagnostic only",
+    "source_q": "implicit q(e,p2) with p2=ps*exp[-2g/(Rd*Tv(T0,q))]",
+    "projection": "argmin 0.5*(q-q0)^2 subject to 0<=q<=coupled_qsat(T,ps); q*=min(q0,qsat)",
+    "output_phase": "Murphy-Koop liquid water below and above zero; historical, no NEX daily constraint",
+    "pressure": "original absolute model-surface proxy, conditional 2m adapter; no site-height transfer",
+    "atmospheric_mass_latent_heat_or_precipitation_flux_conserved": false,
+    "zero_source_RH": "fail; no arbitrary humidity floor"
+  },
+  "missing_background_or_physical_failure": "FAIL_WITH_EXPLICIT_BLOCK; no source substitution or relaxed limits",
+  "regression": "A1.3 already revealed 1344 paired temperatures only; compare means, no annual target T opening",
+  "acceptance": [
+    "2 complete 8760x35 EPWs and exact UTC/fixed-CET clock",
+    "full-support dated strict 2m temperature geometry for all seven admitted sensors",
+    "R1 matches frozen A1.3 on all 1344 reference hours to CSV quantization",
+    "mean inverse internal error <=1e-11 K; export error <=5.1e-8 K",
+    "separate raw-R1 coverage, explicit fallback and full hourly humidity adjustment ledgers",
+    "conditional internal RH<=1e-7 pp; vapour<=1e-5 Pa; pressure<=1e-7 Pa residual",
+    "EPW readback closure compatible with seven-decimal rounding intervals",
+    "prior 259 tests and new meaningful tests pass; old engine/UI/EPWs/science unchanged",
+    "offline original-source replay matches local/CI output bytes"
+  ],
+  "independent_accuracy_qualified": false,
+  "full_weather_cross_field_accuracy_qualified": false,
+  "UI_connected": false,
+  "production_ready": false,
+  "global_validation_deferred": true,
+  "expected_cost": {
+    "new_assets": 11,
+    "original_body_budget_MB": 200,
+    "source_requests_expected_seconds": [
+      30,
+      300
+    ],
+    "offline_build_expected_seconds": [
+      5,
+      90
+    ],
+    "tests_expected_seconds": [
+      40,
+      150
+    ],
+    "CI_expected_minutes": [
+      2,
+      8
+    ]
+  }
+}
