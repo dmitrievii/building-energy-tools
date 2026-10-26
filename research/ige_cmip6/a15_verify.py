@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 from hashlib import sha256
+import io
 import json
 from pathlib import Path
 import platform
@@ -12,6 +13,7 @@ import tempfile
 import time
 import unittest
 from unittest.mock import patch
+import zipfile
 
 ROOT=Path(__file__).resolve().parents[2]
 R=ROOT/"research/ige_cmip6"
@@ -92,7 +94,17 @@ def verify(output):
         parent_output=Path(temporary)/"year"
         replay_A14(parent_output)
         replay=A14_bundle(parent_output)
-        if replay!=(R/BUNDLE_NAME).read_bytes():raise ValueError("A15_PARENT_YEAR_REPLAY_CHANGED")
+        expected=(R/BUNDLE_NAME).read_bytes()
+        with zipfile.ZipFile(io.BytesIO(replay)) as actual,zipfile.ZipFile(io.BytesIO(expected)) as frozen:
+            names=sorted(set(actual.namelist())|set(frozen.namelist()))
+            members={n:{"expected_sha256":sha256(frozen.read(n)).hexdigest() if n in frozen.namelist() else None,
+                "replayed_sha256":sha256(actual.read(n)).hexdigest() if n in actual.namelist() else None} for n in names}
+        audit={"expected_ZIP_sha256":sha256(expected).hexdigest(),"replayed_ZIP_sha256":sha256(replay).hexdigest(),
+            "ZIP_bytes_identical":replay==expected,"members":members,
+            "differing_members":[n for n,h in members.items() if h["expected_sha256"]!=h["replayed_sha256"]]}
+        write_exclusive(output/"parent_replay_member_audit.json",json_bytes(audit))
+        write_exclusive(output/"parent_replay_actual.zip",replay)
+        if replay!=expected:raise ValueError("A15_PARENT_YEAR_REPLAY_CHANGED; retained member audit and actual replay ZIP")
     parent_replay={"byte_exact":True,"two_complete_years":True,"snapshot_sha256":sha256(replay).hexdigest(),
         "wall_seconds":time.monotonic()-start,"UI_service_performs_this_reconstruction":False}
     products={}
