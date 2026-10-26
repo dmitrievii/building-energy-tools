@@ -1,0 +1,57 @@
+{
+  "accuracy_report_produced": false,
+  "actual_EnergyPlus_run": false,
+  "actual_source_replay": {},
+  "independent_regional_full_weather_accuracy_qualified": false,
+  "method_code_sha256": {
+    ".github/workflows/ige-v1-time-admission-20261026.yml": "6bf0f6859ff1496d36c706015fc3ad284b4505ecc751c59d88069583c07d7851",
+    "research/ige_cmip6/v1_acquire.py": "18d223e5c7b9d78a58b7528f3febed1e85317c363dc2aa32b6f3681e2e319653",
+    "research/ige_cmip6/v1_acquire_metadata.py": "c7c0ffcfff9dc41dcf55f89eaa2c37c5ff834f9ef676710cedba4be3f9fb6b06",
+    "research/ige_cmip6/v1_exposure_audit_20261026.json": "1f2c1888a0f8d08a7f555982f24c79f539312b28dc86ed4fba97619e476b8585",
+    "research/ige_cmip6/v1_metadata_sources_20261026.zip": "d9d867cf24c4f24a89375033e3e6e93cc33f5e2110149ff4b89938e815d0221d",
+    "research/ige_cmip6/v1_prepare.py": "44a601f20a196c7d47e1088070cd065978246582cecc84523e12f664232257ab",
+    "research/ige_cmip6/v1_registration_20261026.json": "468c8cf09dd4c0c2eb29be4c4c3bbe5073625cddcf3a42377d652e69416aaa1b",
+    "research/ige_cmip6/v1_run.py": "2595d7cdd38c920a67dd8803504f00798fda755a44055f2d9a47e331a81b6efe",
+    "research/ige_cmip6/v1_time_admission.py": "5061ae30fb4c3a543f2d1327539c3e056f03f6149bb531921b37d392c3bbf828",
+    "research/ige_cmip6/v1_time_geometry_admission_20261026.json": "9fd2ea3324512f40762018b7c9eff7c8148139c3b238c7bf84d817fe7735a3ad",
+    "research/ige_cmip6/v1_verify.py": "aba6a30f308e412a0b770df53322a7f228d3af2c07b36a8005245cdd7bbdb1d4",
+    "tools/climate_analyzer/epw_climate_analyzer/engine/station_year.py": "1474d1a5e95b1b65afd5165e70e0b4be687db2afff215765d4e1b36cc08a4e39",
+    "tools/climate_analyzer/epw_climate_analyzer/station_admission.py": "e556c7cf6e289fb34433c1a42389d7d93d2bb502e45611fc8cf61b557d290183",
+    "tools/climate_analyzer/epw_climate_analyzer/station_reconstruction.py": "0a4330befe5dae0ab6fa313243bd4f6d39a52895b14717df826d6a77cf21ce4d",
+    "tools/climate_analyzer/tests/test_ige_v1.py": "50dcd12046c8c8806516f96cac3b7cb7f7315280932672ea1ee2d9c1fbc8b087"
+  },
+  "network_used_by_verifier": false,
+  "new_station_or_model_requests_at_check": 0,
+  "parent_A1_5_tests": 300,
+  "parent_verification_sha256": "8b9d02c3d21d4179d96c9a58eb9c682408a59453ce49bbdc038f273db71f2f23",
+  "production_ready": false,
+  "protection": {
+    "IV1_2022_values_opened": false,
+    "existing_engine_UI_and_scientific_results_byte_unchanged": true,
+    "main_or_merge_used": false,
+    "only_existing_file_exceptions": [
+      "docs/IGE_CLIMATE_ENGINE_TWO_PRODUCT_ROADMAP_RU_20261025.md",
+      "research/ige_cmip6/e2e_two_product_roadmap_20261025.json"
+    ],
+    "parent_commit": "040a7473727336d45c9ac1151709ccbaf8b6e245",
+    "station_scope": [
+      "AT",
+      "DE",
+      "CH"
+    ]
+  },
+  "registration_metadata_cases_ready": 24,
+  "schema": "IGE_V1_OFFLINE_VERIFICATION_v1",
+  "stage": "registration",
+  "tests": {
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "status": "PASS",
+    "synthetic_control_values_only": true,
+    "tests_run": 42,
+    "wall_seconds": 6.785999394998726
+  },
+  "total_tests": 342,
+  "wall_seconds": 112.66288763899956
+}

@@ -1,0 +1,1029 @@
+{
+  "schema": "IGE_V1_PREREGISTERED_TEMPERATURE_TIME_FORM_VALIDATION_v1",
+  "date": "2026-10-26",
+  "parent_commit": "040a7473727336d45c9ac1151709ccbaf8b6e245",
+  "countries": [
+    "AT",
+    "DE",
+    "CH"
+  ],
+  "target_keys": [
+    "AT:5609",
+    "AT:20123",
+    "DE:01270",
+    "DE:00232",
+    "CH:STG",
+    "CH:SCU"
+  ],
+  "windows": [
+    {
+      "season": "winter",
+      "start_UTC": "2018-01-10T00:00:00Z",
+      "end_UTC": "2018-01-16T23:00:00Z"
+    },
+    {
+      "season": "spring",
+      "start_UTC": "2018-04-10T00:00:00Z",
+      "end_UTC": "2018-04-16T23:00:00Z"
+    },
+    {
+      "season": "summer",
+      "start_UTC": "2018-07-10T00:00:00Z",
+      "end_UTC": "2018-07-16T23:00:00Z"
+    },
+    {
+      "season": "autumn",
+      "start_UTC": "2018-10-10T00:00:00Z",
+      "end_UTC": "2018-10-16T23:00:00Z"
+    }
+  ],
+  "targets": "six fixed new hourly-error targets chosen for geography and exposure, not meteorological error; no post-score replacement",
+  "groups": [
+    {
+      "target_key": "AT:5609",
+      "target_name": "St. Pölten Landhaus",
+      "donors": [
+        "AT:5625",
+        "AT:3805",
+        "AT:3702"
+      ],
+      "metadata_ready": true,
+      "donor_selection": "first three metadata-admitted in fixed nominal-distance candidate order; no weather availability selection",
+      "candidate_order": [
+        "AT:5625",
+        "AT:5413",
+        "AT:5735",
+        "AT:3805",
+        "AT:3702",
+        "AT:5701",
+        "AT:3811",
+        "AT:5412"
+      ]
+    },
+    {
+      "target_key": "AT:20123",
+      "target_name": "Villach Stadt",
+      "donors": [
+        "AT:20105",
+        "AT:20270",
+        "AT:20220"
+      ],
+      "metadata_ready": true,
+      "donor_selection": "first three metadata-admitted in fixed nominal-distance candidate order; no weather availability selection",
+      "candidate_order": [
+        "AT:20101",
+        "AT:20105",
+        "AT:20002",
+        "AT:20021",
+        "AT:20011",
+        "AT:20270",
+        "AT:20220",
+        "AT:19911"
+      ]
+    },
+    {
+      "target_key": "DE:01270",
+      "target_name": "Erfurt-Weimar",
+      "donors": [
+        "DE:00896",
+        "DE:00379",
+        "DE:05424"
+      ],
+      "metadata_ready": true,
+      "donor_selection": "first three metadata-admitted in fixed nominal-distance candidate order; no weather availability selection",
+      "candidate_order": [
+        "DE:00896",
+        "DE:00379",
+        "DE:05424",
+        "DE:03204"
+      ]
+    },
+    {
+      "target_key": "DE:00232",
+      "target_name": "Augsburg",
+      "donors": [
+        "DE:06346",
+        "DE:00983"
+      ],
+      "metadata_ready": true,
+      "donor_selection": "first three metadata-admitted in fixed nominal-distance candidate order; no weather availability selection",
+      "candidate_order": [
+        "DE:00142",
+        "DE:06346",
+        "DE:00983",
+        "DE:07319"
+      ]
+    },
+    {
+      "target_key": "CH:STG",
+      "target_name": "St. Gallen",
+      "donors": [
+        "CH:ARH",
+        "CH:OBR"
+      ],
+      "metadata_ready": true,
+      "donor_selection": "first three metadata-admitted in fixed nominal-distance candidate order; no weather availability selection",
+      "candidate_order": [
+        "CH:BIZ",
+        "CH:ARH",
+        "CH:OBR",
+        "CH:SAE"
+      ]
+    },
+    {
+      "target_key": "CH:SCU",
+      "target_name": "Scuol",
+      "donors": [
+        "CH:BUF",
+        "CH:SMM",
+        "CH:DAV"
+      ],
+      "metadata_ready": true,
+      "donor_selection": "first three metadata-admitted in fixed nominal-distance candidate order; no weather availability selection",
+      "candidate_order": [
+        "CH:BUF",
+        "CH:SMM",
+        "CH:DAV",
+        "CH:WFJ"
+      ]
+    }
+  ],
+  "cases": 24,
+  "requested_primary_reference_hours": 4032,
+  "temperature_scope_only": true,
+  "source_time_geometry_admission_sha256": "9fd2ea3324512f40762018b7c9eff7c8148139c3b238c7bf84d817fe7735a3ad",
+  "exposure_audit_sha256": "1f2c1888a0f8d08a7f555982f24c79f539312b28dc86ed4fba97619e476b8585",
+  "metadata_packet_sha256": "d9d867cf24c4f24a89375033e3e6e93cc33f5e2110149ff4b89938e815d0221d",
+  "operators": {
+    "AT": {
+      "country": "AT",
+      "product": "klima-v2-1h",
+      "field": "tl",
+      "published_operator": "published_nominal_node",
+      "nominal_offsets_minutes": [
+        0
+      ],
+      "model_node_weights": [
+        0.0,
+        1.0
+      ],
+      "source_QC_stratum": "AT_MANUAL_ORIGINAL_22_PRIMARY; AUTO_ORIGINAL_12_SECONDARY",
+      "inference": true,
+      "instrument_filter_period_certified": false
+    },
+    "DE": {
+      "country": "DE",
+      "product": "climate-10_minutes-air_temperature",
+      "field": "TT_10",
+      "published_operator": "published_nominal_node",
+      "nominal_offsets_minutes": [
+        0
+      ],
+      "model_node_weights": [
+        0.0,
+        1.0
+      ],
+      "source_QC_stratum": "DE_10MIN_QN3_AUTOMATIC_CONTROL_AND_CORRECTION_NOT_HOURLY_QN10",
+      "inference": false,
+      "instrument_filter_period_certified": false
+    },
+    "CH": {
+      "country": "CH",
+      "product": "ogd-smn-h",
+      "field": "tre200h0",
+      "published_operator": "mean_six_10min_nominal_nodes",
+      "nominal_offsets_minutes": [
+        -50,
+        -40,
+        -30,
+        -20,
+        -10,
+        0
+      ],
+      "model_node_weights": [
+        0.4166666666666667,
+        0.5833333333333334
+      ],
+      "source_QC_stratum": "CH_PUBLISHED_HISTORICAL_NO_PER_ROW_FLAG",
+      "inference": false,
+      "instrument_filter_period_certified": false
+    }
+  },
+  "method": {
+    "B0": "ERA5-derived Open-Meteo elevation=nan nearest-cell published hourly T, no vertical correction",
+    "R1": "unchanged A1 residual IDW2; first3 metadata-admitted fixed donors; min2 native-primary-QC donors per hour",
+    "target_observations_or_target_monthly_weather_used_in_predictor": false,
+    "distance_exponent": 2,
+    "minimum_distance_km": 5,
+    "maximum_distance_km": 150,
+    "lapse_inversion_or_bias_fit": false,
+    "target_aliases_excluded_from_all_donors": true,
+    "primary_missing": "raw R1 NaN with explicit ledger, no B0 fill",
+    "CH_hourly_model_operator": "5/12 previous + 7/12 current; linear subhourly surrogate, not true continuous hourly average"
+  },
+  "secondary_CH_endpoint_test": {
+    "field": "tre200s0 at HH:00, original t historical product, new controls after seal",
+    "method": "unchanged A1.4 reconstruct_nodes; delta_H=(12 b_H-5 delta_Hminus1)/7; initial delta=0",
+    "predictor_spinup_hours": 72,
+    "maximum_frequency_gain": 6,
+    "sensitivity_assumption": "20 K initial correction error; bound20*(5/7)^73 at first scored endpoint; not a proved atmospheric bound",
+    "eligible_endpoint": "current plus preceding72 raw R1 means all primary-QC admitted; fallback-derived endpoints excluded from paired accuracy",
+    "diagnostics": [
+      "B0/R1 endpoint MAE RMSE bias centred RMSE",
+      "maximum and p99 hour-to-hour T increments",
+      "published h minus six original t nominal-node mean; require all six t samples; no claim of identical historical QC"
+    ],
+    "counts_not_added_to_primary_independent_sample_size": true,
+    "model_filter_equivalence_certified": false
+  },
+  "scoring": {
+    "primary": "paired MAE R1 minus B0, same eligible reference hours, per country and per station-season",
+    "report": [
+      "RMSE",
+      "bias",
+      "centred RMSE",
+      "all-reference B0",
+      "missing and rejected QCs",
+      "coverage",
+      "all24 cases including failures"
+    ],
+    "case_admission_minimum_paired_hours": 160,
+    "requested_hours_per_case": 168,
+    "partial_cases": "descriptive metrics retained but excluded from admitted-country block estimate; no replacement",
+    "resampling": {
+      "draws": 10000,
+      "seed": 20261026,
+      "unit": "four synchronous season-week blocks per country, both stations together",
+      "interval": "2.5/97.5 percentiles, descriptive sensitivity only; four seasonal blocks are not a population-confidence guarantee",
+      "station_and_same_weather_dependence_respected": true
+    },
+    "benefit_rule": "country paired delta_MAE<0 and descriptive resampling upper<0; report each country, never select a winner by pooled countries",
+    "six_sites_one_year_cannot_qualify_regional_or_global_accuracy": true,
+    "automatic_default_or_EPW_promotion": false
+  },
+  "QC": {
+    "AT": {
+      "primary": [
+        22
+      ],
+      "secondary": [
+        12
+      ],
+      "secondary_not_substitute_for_primary": true
+    },
+    "DE": {
+      "primary": [
+        3
+      ],
+      "product": "TT_10 historical",
+      "not_equivalent_to_hourly_QN10": true
+    },
+    "CH": {
+      "primary": "PUBLISHED_HISTORICAL_NO_ROW_QC",
+      "not_equivalent_to_AT_or_DE_quality": true
+    },
+    "temperature_domain_C": [
+      -80,
+      65
+    ],
+    "new_field_or_flag_schema": "fail closed",
+    "AT_integer_code_encoding": "JSON22 and22.0 represent the same native22; fractional/boolean QC rejected, never rounded"
+  },
+  "inputs": [
+    {
+      "id": "background_AT_20105",
+      "station_key": "AT:20105",
+      "kind": "model_background",
+      "role": "background",
+      "parameters": {
+        "latitude": "46.727778",
+        "longitude": "13.852500",
+        "start_date": "2018-01-01",
+        "end_date": "2018-12-31",
+        "hourly": "temperature_2m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "temperature_unit": "celsius"
+      },
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=46.727778&longitude=13.852500&start_date=2018-01-01&end_date=2018-12-31&hourly=temperature_2m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&temperature_unit=celsius",
+      "member": "background_AT_20105.json",
+      "max_body_bytes": 2000000
+    },
+    {
+      "id": "background_AT_20123",
+      "station_key": "AT:20123",
+      "kind": "model_background",
+      "role": "background",
+      "parameters": {
+        "latitude": "46.618056",
+        "longitude": "13.873889",
+        "start_date": "2018-01-01",
+        "end_date": "2018-12-31",
+        "hourly": "temperature_2m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "temperature_unit": "celsius"
+      },
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=46.618056&longitude=13.873889&start_date=2018-01-01&end_date=2018-12-31&hourly=temperature_2m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&temperature_unit=celsius",
+      "member": "background_AT_20123.json",
+      "max_body_bytes": 2000000
+    },
+    {
+      "id": "background_AT_20220",
+      "station_key": "AT:20220",
+      "kind": "model_background",
+      "role": "background",
+      "parameters": {
+        "latitude": "46.630833",
+        "longitude": "14.165278",
+        "start_date": "2018-01-01",
+        "end_date": "2018-12-31",
+        "hourly": "temperature_2m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "temperature_unit": "celsius"
+      },
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=46.630833&longitude=14.165278&start_date=2018-01-01&end_date=2018-12-31&hourly=temperature_2m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&temperature_unit=celsius",
+      "member": "background_AT_20220.json",
+      "max_body_bytes": 2000000
+    },
+    {
+      "id": "background_AT_20270",
+      "station_key": "AT:20270",
+      "kind": "model_background",
+      "role": "background",
+      "parameters": {
+        "latitude": "46.721944",
+        "longitude": "14.096944",
+        "start_date": "2018-01-01",
+        "end_date": "2018-12-31",
+        "hourly": "temperature_2m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "temperature_unit": "celsius"
+      },
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=46.721944&longitude=14.096944&start_date=2018-01-01&end_date=2018-12-31&hourly=temperature_2m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&temperature_unit=celsius",
+      "member": "background_AT_20270.json",
+      "max_body_bytes": 2000000
+    },
+    {
+      "id": "background_AT_3702",
+      "station_key": "AT:3702",
+      "kind": "model_background",
+      "role": "background",
+      "parameters": {
+        "latitude": "48.334444",
+        "longitude": "15.339167",
+        "start_date": "2018-01-01",
+        "end_date": "2018-12-31",
+        "hourly": "temperature_2m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "temperature_unit": "celsius"
+      },
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=48.334444&longitude=15.339167&start_date=2018-01-01&end_date=2018-12-31&hourly=temperature_2m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&temperature_unit=celsius",
+      "member": "background_AT_3702.json",
+      "max_body_bytes": 2000000
+    },
+    {
+      "id": "background_AT_3805",
+      "station_key": "AT:3805",
+      "kind": "model_background",
+      "role": "background",
+      "parameters": {
+        "latitude": "48.418333",
+        "longitude": "15.621389",
+        "start_date": "2018-01-01",
+        "end_date": "2018-12-31",
+        "hourly": "temperature_2m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "temperature_unit": "celsius"
+      },
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=48.418333&longitude=15.621389&start_date=2018-01-01&end_date=2018-12-31&hourly=temperature_2m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&temperature_unit=celsius",
+      "member": "background_AT_3805.json",
+      "max_body_bytes": 2000000
+    },
+    {
+      "id": "background_AT_5609",
+      "station_key": "AT:5609",
+      "kind": "model_background",
+      "role": "background",
+      "parameters": {
+        "latitude": "48.199722",
+        "longitude": "15.631111",
+        "start_date": "2018-01-01",
+        "end_date": "2018-12-31",
+        "hourly": "temperature_2m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "temperature_unit": "celsius"
+      },
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=48.199722&longitude=15.631111&start_date=2018-01-01&end_date=2018-12-31&hourly=temperature_2m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&temperature_unit=celsius",
+      "member": "background_AT_5609.json",
+      "max_body_bytes": 2000000
+    },
+    {
+      "id": "background_AT_5625",
+      "station_key": "AT:5625",
+      "kind": "model_background",
+      "role": "background",
+      "parameters": {
+        "latitude": "48.028056",
+        "longitude": "15.587500",
+        "start_date": "2018-01-01",
+        "end_date": "2018-12-31",
+        "hourly": "temperature_2m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "temperature_unit": "celsius"
+      },
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=48.028056&longitude=15.587500&start_date=2018-01-01&end_date=2018-12-31&hourly=temperature_2m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&temperature_unit=celsius",
+      "member": "background_AT_5625.json",
+      "max_body_bytes": 2000000
+    },
+    {
+      "id": "background_CH_ARH",
+      "station_key": "CH:ARH",
+      "kind": "model_background",
+      "role": "background",
+      "parameters": {
+        "latitude": "47.483675",
+        "longitude": "9.566797",
+        "start_date": "2018-01-01",
+        "end_date": "2018-12-31",
+        "hourly": "temperature_2m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "temperature_unit": "celsius"
+      },
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=47.483675&longitude=9.566797&start_date=2018-01-01&end_date=2018-12-31&hourly=temperature_2m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&temperature_unit=celsius",
+      "member": "background_CH_ARH.json",
+      "max_body_bytes": 2000000
+    },
+    {
+      "id": "background_CH_BUF",
+      "station_key": "CH:BUF",
+      "kind": "model_background",
+      "role": "background",
+      "parameters": {
+        "latitude": "46.648139",
+        "longitude": "10.267183",
+        "start_date": "2018-01-01",
+        "end_date": "2018-12-31",
+        "hourly": "temperature_2m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "temperature_unit": "celsius"
+      },
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=46.648139&longitude=10.267183&start_date=2018-01-01&end_date=2018-12-31&hourly=temperature_2m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&temperature_unit=celsius",
+      "member": "background_CH_BUF.json",
+      "max_body_bytes": 2000000
+    },
+    {
+      "id": "background_CH_DAV",
+      "station_key": "CH:DAV",
+      "kind": "model_background",
+      "role": "background",
+      "parameters": {
+        "latitude": "46.812956",
+        "longitude": "9.843481",
+        "start_date": "2018-01-01",
+        "end_date": "2018-12-31",
+        "hourly": "temperature_2m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "temperature_unit": "celsius"
+      },
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=46.812956&longitude=9.843481&start_date=2018-01-01&end_date=2018-12-31&hourly=temperature_2m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&temperature_unit=celsius",
+      "member": "background_CH_DAV.json",
+      "max_body_bytes": 2000000
+    },
+    {
+      "id": "background_CH_OBR",
+      "station_key": "CH:OBR",
+      "kind": "model_background",
+      "role": "background",
+      "parameters": {
+        "latitude": "47.376608",
+        "longitude": "9.612703",
+        "start_date": "2018-01-01",
+        "end_date": "2018-12-31",
+        "hourly": "temperature_2m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "temperature_unit": "celsius"
+      },
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=47.376608&longitude=9.612703&start_date=2018-01-01&end_date=2018-12-31&hourly=temperature_2m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&temperature_unit=celsius",
+      "member": "background_CH_OBR.json",
+      "max_body_bytes": 2000000
+    },
+    {
+      "id": "background_CH_SCU",
+      "station_key": "CH:SCU",
+      "kind": "model_background",
+      "role": "background",
+      "parameters": {
+        "latitude": "46.793272",
+        "longitude": "10.283192",
+        "start_date": "2018-01-01",
+        "end_date": "2018-12-31",
+        "hourly": "temperature_2m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "temperature_unit": "celsius"
+      },
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=46.793272&longitude=10.283192&start_date=2018-01-01&end_date=2018-12-31&hourly=temperature_2m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&temperature_unit=celsius",
+      "member": "background_CH_SCU.json",
+      "max_body_bytes": 2000000
+    },
+    {
+      "id": "background_CH_SMM",
+      "station_key": "CH:SMM",
+      "kind": "model_background",
+      "role": "background",
+      "parameters": {
+        "latitude": "46.602200",
+        "longitude": "10.426289",
+        "start_date": "2018-01-01",
+        "end_date": "2018-12-31",
+        "hourly": "temperature_2m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "temperature_unit": "celsius"
+      },
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=46.602200&longitude=10.426289&start_date=2018-01-01&end_date=2018-12-31&hourly=temperature_2m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&temperature_unit=celsius",
+      "member": "background_CH_SMM.json",
+      "max_body_bytes": 2000000
+    },
+    {
+      "id": "background_CH_STG",
+      "station_key": "CH:STG",
+      "kind": "model_background",
+      "role": "background",
+      "parameters": {
+        "latitude": "47.425458",
+        "longitude": "9.398453",
+        "start_date": "2018-01-01",
+        "end_date": "2018-12-31",
+        "hourly": "temperature_2m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "temperature_unit": "celsius"
+      },
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=47.425458&longitude=9.398453&start_date=2018-01-01&end_date=2018-12-31&hourly=temperature_2m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&temperature_unit=celsius",
+      "member": "background_CH_STG.json",
+      "max_body_bytes": 2000000
+    },
+    {
+      "id": "background_DE_00232",
+      "station_key": "DE:00232",
+      "kind": "model_background",
+      "role": "background",
+      "parameters": {
+        "latitude": "48.425300",
+        "longitude": "10.941700",
+        "start_date": "2018-01-01",
+        "end_date": "2018-12-31",
+        "hourly": "temperature_2m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "temperature_unit": "celsius"
+      },
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=48.425300&longitude=10.941700&start_date=2018-01-01&end_date=2018-12-31&hourly=temperature_2m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&temperature_unit=celsius",
+      "member": "background_DE_00232.json",
+      "max_body_bytes": 2000000
+    },
+    {
+      "id": "background_DE_00379",
+      "station_key": "DE:00379",
+      "kind": "model_background",
+      "role": "background",
+      "parameters": {
+        "latitude": "50.907500",
+        "longitude": "11.266500",
+        "start_date": "2018-01-01",
+        "end_date": "2018-12-31",
+        "hourly": "temperature_2m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "temperature_unit": "celsius"
+      },
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=50.907500&longitude=11.266500&start_date=2018-01-01&end_date=2018-12-31&hourly=temperature_2m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&temperature_unit=celsius",
+      "member": "background_DE_00379.json",
+      "max_body_bytes": 2000000
+    },
+    {
+      "id": "background_DE_00896",
+      "station_key": "DE:00896",
+      "kind": "model_background",
+      "role": "background",
+      "parameters": {
+        "latitude": "51.077800",
+        "longitude": "10.861900",
+        "start_date": "2018-01-01",
+        "end_date": "2018-12-31",
+        "hourly": "temperature_2m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "temperature_unit": "celsius"
+      },
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=51.077800&longitude=10.861900&start_date=2018-01-01&end_date=2018-12-31&hourly=temperature_2m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&temperature_unit=celsius",
+      "member": "background_DE_00896.json",
+      "max_body_bytes": 2000000
+    },
+    {
+      "id": "background_DE_00983",
+      "station_key": "DE:00983",
+      "kind": "model_background",
+      "role": "background",
+      "parameters": {
+        "latitude": "48.556200",
+        "longitude": "10.560000",
+        "start_date": "2018-01-01",
+        "end_date": "2018-12-31",
+        "hourly": "temperature_2m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "temperature_unit": "celsius"
+      },
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=48.556200&longitude=10.560000&start_date=2018-01-01&end_date=2018-12-31&hourly=temperature_2m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&temperature_unit=celsius",
+      "member": "background_DE_00983.json",
+      "max_body_bytes": 2000000
+    },
+    {
+      "id": "background_DE_01270",
+      "station_key": "DE:01270",
+      "kind": "model_background",
+      "role": "background",
+      "parameters": {
+        "latitude": "50.982900",
+        "longitude": "10.960800",
+        "start_date": "2018-01-01",
+        "end_date": "2018-12-31",
+        "hourly": "temperature_2m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "temperature_unit": "celsius"
+      },
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=50.982900&longitude=10.960800&start_date=2018-01-01&end_date=2018-12-31&hourly=temperature_2m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&temperature_unit=celsius",
+      "member": "background_DE_01270.json",
+      "max_body_bytes": 2000000
+    },
+    {
+      "id": "background_DE_05424",
+      "station_key": "DE:05424",
+      "kind": "model_background",
+      "role": "background",
+      "parameters": {
+        "latitude": "51.017700",
+        "longitude": "11.354400",
+        "start_date": "2018-01-01",
+        "end_date": "2018-12-31",
+        "hourly": "temperature_2m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "temperature_unit": "celsius"
+      },
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=51.017700&longitude=11.354400&start_date=2018-01-01&end_date=2018-12-31&hourly=temperature_2m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&temperature_unit=celsius",
+      "member": "background_DE_05424.json",
+      "max_body_bytes": 2000000
+    },
+    {
+      "id": "background_DE_06346",
+      "station_key": "DE:06346",
+      "kind": "model_background",
+      "role": "background",
+      "parameters": {
+        "latitude": "48.207000",
+        "longitude": "11.203500",
+        "start_date": "2018-01-01",
+        "end_date": "2018-12-31",
+        "hourly": "temperature_2m",
+        "models": "era5",
+        "elevation": "nan",
+        "cell_selection": "nearest",
+        "timezone": "GMT",
+        "timeformat": "iso8601",
+        "temperature_unit": "celsius"
+      },
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=48.207000&longitude=11.203500&start_date=2018-01-01&end_date=2018-12-31&hourly=temperature_2m&models=era5&elevation=nan&cell_selection=nearest&timezone=GMT&timeformat=iso8601&temperature_unit=celsius",
+      "member": "background_DE_06346.json",
+      "max_body_bytes": 2000000
+    },
+    {
+      "id": "donor_AT_20105",
+      "station_key": "AT:20105",
+      "kind": "station_temperature",
+      "role": "donor",
+      "url": "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h?station_ids=20105&parameters=tl%2Ctl_flag&output_format=geojson&start=2018-01-07T00%3A00%3A00Z&end=2018-10-16T23%3A00%3A00Z",
+      "member": "donor_AT_20105.json",
+      "max_body_bytes": 2000000
+    },
+    {
+      "id": "donor_AT_20220",
+      "station_key": "AT:20220",
+      "kind": "station_temperature",
+      "role": "donor",
+      "url": "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h?station_ids=20220&parameters=tl%2Ctl_flag&output_format=geojson&start=2018-01-07T00%3A00%3A00Z&end=2018-10-16T23%3A00%3A00Z",
+      "member": "donor_AT_20220.json",
+      "max_body_bytes": 2000000
+    },
+    {
+      "id": "donor_AT_20270",
+      "station_key": "AT:20270",
+      "kind": "station_temperature",
+      "role": "donor",
+      "url": "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h?station_ids=20270&parameters=tl%2Ctl_flag&output_format=geojson&start=2018-01-07T00%3A00%3A00Z&end=2018-10-16T23%3A00%3A00Z",
+      "member": "donor_AT_20270.json",
+      "max_body_bytes": 2000000
+    },
+    {
+      "id": "donor_AT_3702",
+      "station_key": "AT:3702",
+      "kind": "station_temperature",
+      "role": "donor",
+      "url": "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h?station_ids=3702&parameters=tl%2Ctl_flag&output_format=geojson&start=2018-01-07T00%3A00%3A00Z&end=2018-10-16T23%3A00%3A00Z",
+      "member": "donor_AT_3702.json",
+      "max_body_bytes": 2000000
+    },
+    {
+      "id": "donor_AT_3805",
+      "station_key": "AT:3805",
+      "kind": "station_temperature",
+      "role": "donor",
+      "url": "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h?station_ids=3805&parameters=tl%2Ctl_flag&output_format=geojson&start=2018-01-07T00%3A00%3A00Z&end=2018-10-16T23%3A00%3A00Z",
+      "member": "donor_AT_3805.json",
+      "max_body_bytes": 2000000
+    },
+    {
+      "id": "donor_AT_5625",
+      "station_key": "AT:5625",
+      "kind": "station_temperature",
+      "role": "donor",
+      "url": "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h?station_ids=5625&parameters=tl%2Ctl_flag&output_format=geojson&start=2018-01-07T00%3A00%3A00Z&end=2018-10-16T23%3A00%3A00Z",
+      "member": "donor_AT_5625.json",
+      "max_body_bytes": 2000000
+    },
+    {
+      "id": "donor_CH_ARH",
+      "station_key": "CH:ARH",
+      "kind": "station_temperature",
+      "role": "donor",
+      "url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/arh/ogd-smn_arh_h_historical_2010-2019.csv",
+      "member": "donor_CH_ARH.csv",
+      "max_body_bytes": 45000000
+    },
+    {
+      "id": "donor_CH_BUF",
+      "station_key": "CH:BUF",
+      "kind": "station_temperature",
+      "role": "donor",
+      "url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/buf/ogd-smn_buf_h_historical_2010-2019.csv",
+      "member": "donor_CH_BUF.csv",
+      "max_body_bytes": 45000000
+    },
+    {
+      "id": "donor_CH_DAV",
+      "station_key": "CH:DAV",
+      "kind": "station_temperature",
+      "role": "donor",
+      "url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/dav/ogd-smn_dav_h_historical_2010-2019.csv",
+      "member": "donor_CH_DAV.csv",
+      "max_body_bytes": 45000000
+    },
+    {
+      "id": "donor_CH_OBR",
+      "station_key": "CH:OBR",
+      "kind": "station_temperature",
+      "role": "donor",
+      "url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/obr/ogd-smn_obr_h_historical_2010-2019.csv",
+      "member": "donor_CH_OBR.csv",
+      "max_body_bytes": 45000000
+    },
+    {
+      "id": "donor_CH_SMM",
+      "station_key": "CH:SMM",
+      "kind": "station_temperature",
+      "role": "donor",
+      "url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/smm/ogd-smn_smm_h_historical_2010-2019.csv",
+      "member": "donor_CH_SMM.csv",
+      "max_body_bytes": 45000000
+    },
+    {
+      "id": "donor_DE_00379",
+      "station_key": "DE:00379",
+      "kind": "station_temperature",
+      "role": "donor",
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/air_temperature/historical/10minutenwerte_TU_00379_20170901_20191231_hist.zip",
+      "member": "donor_DE_00379.zip",
+      "max_body_bytes": 10000000
+    },
+    {
+      "id": "donor_DE_00896",
+      "station_key": "DE:00896",
+      "kind": "station_temperature",
+      "role": "donor",
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/air_temperature/historical/10minutenwerte_TU_00896_20100101_20191231_hist.zip",
+      "member": "donor_DE_00896.zip",
+      "max_body_bytes": 10000000
+    },
+    {
+      "id": "donor_DE_00983",
+      "station_key": "DE:00983",
+      "kind": "station_temperature",
+      "role": "donor",
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/air_temperature/historical/10minutenwerte_TU_00983_20100101_20191231_hist.zip",
+      "member": "donor_DE_00983.zip",
+      "max_body_bytes": 10000000
+    },
+    {
+      "id": "donor_DE_05424",
+      "station_key": "DE:05424",
+      "kind": "station_temperature",
+      "role": "donor",
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/air_temperature/historical/10minutenwerte_TU_05424_20100101_20191231_hist.zip",
+      "member": "donor_DE_05424.zip",
+      "max_body_bytes": 10000000
+    },
+    {
+      "id": "donor_DE_06346",
+      "station_key": "DE:06346",
+      "kind": "station_temperature",
+      "role": "donor",
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/air_temperature/historical/10minutenwerte_TU_06346_20100101_20191231_hist.zip",
+      "member": "donor_DE_06346.zip",
+      "max_body_bytes": 10000000
+    }
+  ],
+  "controls": [
+    {
+      "id": "control_AT_20123",
+      "station_key": "AT:20123",
+      "kind": "station_temperature",
+      "role": "control",
+      "url": "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h?station_ids=20123&parameters=tl%2Ctl_flag&output_format=geojson&start=2018-01-07T00%3A00%3A00Z&end=2018-10-16T23%3A00%3A00Z",
+      "member": "control_AT_20123.json",
+      "max_body_bytes": 2000000
+    },
+    {
+      "id": "control_AT_5609",
+      "station_key": "AT:5609",
+      "kind": "station_temperature",
+      "role": "control",
+      "url": "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h?station_ids=5609&parameters=tl%2Ctl_flag&output_format=geojson&start=2018-01-07T00%3A00%3A00Z&end=2018-10-16T23%3A00%3A00Z",
+      "member": "control_AT_5609.json",
+      "max_body_bytes": 2000000
+    },
+    {
+      "id": "control_CH_SCU",
+      "station_key": "CH:SCU",
+      "kind": "station_temperature",
+      "role": "control",
+      "url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/scu/ogd-smn_scu_h_historical_2010-2019.csv",
+      "member": "control_CH_SCU.csv",
+      "max_body_bytes": 45000000
+    },
+    {
+      "id": "control_CH_STG",
+      "station_key": "CH:STG",
+      "kind": "station_temperature",
+      "role": "control",
+      "url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/stg/ogd-smn_stg_h_historical_2010-2019.csv",
+      "member": "control_CH_STG.csv",
+      "max_body_bytes": 45000000
+    },
+    {
+      "id": "control_DE_00232",
+      "station_key": "DE:00232",
+      "kind": "station_temperature",
+      "role": "control",
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/air_temperature/historical/10minutenwerte_TU_00232_20100101_20191231_hist.zip",
+      "member": "control_DE_00232.zip",
+      "max_body_bytes": 10000000
+    },
+    {
+      "id": "control_DE_01270",
+      "station_key": "DE:01270",
+      "kind": "station_temperature",
+      "role": "control",
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/air_temperature/historical/10minutenwerte_TU_01270_20100101_20191231_hist.zip",
+      "member": "control_DE_01270.zip",
+      "max_body_bytes": 10000000
+    },
+    {
+      "id": "endpoint_CH_SCU",
+      "station_key": "CH:SCU",
+      "kind": "station_endpoint_temperature",
+      "role": "control",
+      "url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/scu/ogd-smn_scu_t_historical_2010-2019.csv",
+      "member": "endpoint_CH_SCU.csv",
+      "max_body_bytes": 260000000
+    },
+    {
+      "id": "endpoint_CH_STG",
+      "station_key": "CH:STG",
+      "kind": "station_endpoint_temperature",
+      "role": "control",
+      "url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/stg/ogd-smn_stg_t_historical_2010-2019.csv",
+      "member": "endpoint_CH_STG.csv",
+      "max_body_bytes": 260000000
+    }
+  ],
+  "source_budget": {
+    "max_decoded_body_bytes_all_attempts_inputs_plus_controls": 900000000,
+    "attempts_per_asset": 3,
+    "timeout_seconds": 45,
+    "parallel_downloads": 1,
+    "max_assets": 46,
+    "no_source_station_date_model_or_QC_substitution": true,
+    "max_uncompressed_DE_observation_member_bytes": 150000000
+  },
+  "seals": {
+    "registration": "publish protocol, metadata, admission, exposure and executable method before predictor acquisition",
+    "predictions": "publish actual predictions/ledger/code/input hashes before any control body, including CH t",
+    "control_gate": "exact published git commit and remote branch receipt required; no method/QC/time/selection changes after opening controls"
+  },
+  "serialization": {
+    "prediction_CSV_decimals": 10,
+    "score_JSON_decimals": 8,
+    "portable_replay": "non-numeric cells exact; numeric CSV within1.1e-10; score floats within1.1e-8; original source and sealed bytes always hash-exact",
+    "these_printed_digit_tolerances_are_not_station_accuracy_thresholds": true
+  },
+  "exposure_claim": "new hourly-error holdout relative to frozen R1, with bounded exposure audit and disclosed coarse-product exposure",
+  "strict_raw_byte_unseen_global_certification": false,
+  "ERA5_station_assimilation_independence_certified": false,
+  "pressure_RH_q_accuracy_qualified_by_this_test": false,
+  "NASA_future_event_accuracy_qualified_by_this_test": false,
+  "EnergyPlus_test_in_this_temperature_stage": false,
+  "IV1_2022_values_opened": false,
+  "production_ready": false,
+  "protected_core_sha256": {
+    "tools/climate_analyzer/epw_climate_analyzer/station_reconstruction.py": "0a4330befe5dae0ab6fa313243bd4f6d39a52895b14717df826d6a77cf21ce4d",
+    "tools/climate_analyzer/epw_climate_analyzer/station_admission.py": "e556c7cf6e289fb34433c1a42389d7d93d2bb502e45611fc8cf61b557d290183",
+    "tools/climate_analyzer/epw_climate_analyzer/engine/station_year.py": "1474d1a5e95b1b65afd5165e70e0b4be687db2afff215765d4e1b36cc08a4e39"
+  }
+}

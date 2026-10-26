@@ -1,0 +1,2894 @@
+{
+  "schema": "IGE_V1_TIME_AND_DATED_T2M_ADMISSION_v1",
+  "parent_commit": "040a7473727336d45c9ac1151709ccbaf8b6e245",
+  "metadata_packet_sha256": "d9d867cf24c4f24a89375033e3e6e93cc33f5e2110149ff4b89938e815d0221d",
+  "time_support": "four registered weeks plus 72h predictor spinup; h support starts 50min earlier",
+  "records": {
+    "AT:5609": {
+      "station_key": "AT:5609",
+      "frozen_station": {
+        "country": "AT",
+        "station_id": "5609",
+        "name": "St. Pölten Landhaus",
+        "latitude": 48.19972,
+        "longitude": 15.63111,
+        "nominal_site_elevation_m": 273.6,
+        "source_metadata_sha256": "d976838d0332f4881b86c61b4700637eaef85846e9f63ef4fce198d1fa3b2eb9",
+        "identity_group": "AT_GROUP:93",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "AT_GROUP:93",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "published_nominal_node",
+        "definition": {
+          "country": "AT",
+          "product": "klima-v2-1h",
+          "field": "tl",
+          "published_operator": "published_nominal_node",
+          "nominal_offsets_minutes": [
+            0
+          ],
+          "model_node_weights": [
+            0.0,
+            1.0
+          ],
+          "source_QC_stratum": "AT_MANUAL_ORIGINAL_22_PRIMARY; AUTO_ORIGINAL_12_SECONDARY",
+          "inference": true,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 48.1997222222,
+        "longitude": 15.6311111111,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "channel_selection": "UNIQUE_DATED_EXACT_2M_LOCAL_GROUND_CHANNEL; separate 5cm channels excluded",
+        "geospatial_z_as_reported_m": 275.6,
+        "height_origin": "WMDR_EQUIPMENT_GEOPOSITION_Z_AS_REPORTED_AGL_NOT_ADDED_AGAIN",
+        "deployment_period_half_open": [
+          "2016-04-29T00:00:00Z",
+          null
+        ],
+        "location_period_half_open": [
+          null,
+          null
+        ],
+        "location_time_support": "INHERITS_DATED_DEPLOYMENT_UNSPECIFIED_LOCATION_PERIOD",
+        "source_WSI": "0-20000-0-11389",
+        "parser_geometry_check_bounds_UTC": [
+          "2018-01-07T00:00:00+00:00",
+          "2018-10-16T23:00:00+00:00"
+        ],
+        "datum_transformation_verified": false,
+        "equipment_z_to_model_orography_transformation_qualified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "AT_WMDR_5609.xml": "1d97a4236b0315ce4dbda9f1cd1709f39ecd4faecd63cce55e895849c2799a36"
+      }
+    },
+    "AT:5625": {
+      "station_key": "AT:5625",
+      "frozen_station": {
+        "country": "AT",
+        "station_id": "5625",
+        "name": "Lilienfeld-Tarschberg",
+        "latitude": 48.02806,
+        "longitude": 15.5875,
+        "nominal_site_elevation_m": 696.0,
+        "source_metadata_sha256": "d976838d0332f4881b86c61b4700637eaef85846e9f63ef4fce198d1fa3b2eb9",
+        "identity_group": "AT_STATION:5625",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "AT_STATION:5625",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "published_nominal_node",
+        "definition": {
+          "country": "AT",
+          "product": "klima-v2-1h",
+          "field": "tl",
+          "published_operator": "published_nominal_node",
+          "nominal_offsets_minutes": [
+            0
+          ],
+          "model_node_weights": [
+            0.0,
+            1.0
+          ],
+          "source_QC_stratum": "AT_MANUAL_ORIGINAL_22_PRIMARY; AUTO_ORIGINAL_12_SECONDARY",
+          "inference": true,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 48.0280555556,
+        "longitude": 15.5875,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "channel_selection": "UNIQUE_DATED_EXACT_2M_LOCAL_GROUND_CHANNEL; separate 5cm channels excluded",
+        "geospatial_z_as_reported_m": 698.0,
+        "height_origin": "WMDR_EQUIPMENT_GEOPOSITION_Z_AS_REPORTED_AGL_NOT_ADDED_AGAIN",
+        "deployment_period_half_open": [
+          "2016-04-29T00:00:00Z",
+          null
+        ],
+        "location_period_half_open": [
+          null,
+          null
+        ],
+        "location_time_support": "INHERITS_DATED_DEPLOYMENT_UNSPECIFIED_LOCATION_PERIOD",
+        "source_WSI": "0-20000-0-11078",
+        "parser_geometry_check_bounds_UTC": [
+          "2018-01-07T00:00:00+00:00",
+          "2018-10-16T23:00:00+00:00"
+        ],
+        "datum_transformation_verified": false,
+        "equipment_z_to_model_orography_transformation_qualified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "AT_WMDR_5625.xml": "7715449864fee0d5dc7ec8ec63da09761e4ef5de6928aa8e8a5fc543e01d556a"
+      }
+    },
+    "AT:5413": {
+      "station_key": "AT:5413",
+      "frozen_station": {
+        "country": "AT",
+        "station_id": "5413",
+        "name": "Melk",
+        "latitude": 48.20972,
+        "longitude": 15.33139,
+        "nominal_site_elevation_m": 307.0,
+        "source_metadata_sha256": "d976838d0332f4881b86c61b4700637eaef85846e9f63ef4fce198d1fa3b2eb9",
+        "identity_group": "AT_GROUP:189",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "AT_GROUP:189",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "published_nominal_node",
+        "definition": {
+          "country": "AT",
+          "product": "klima-v2-1h",
+          "field": "tl",
+          "published_operator": "published_nominal_node",
+          "nominal_offsets_minutes": [
+            0
+          ],
+          "model_node_weights": [
+            0.0,
+            1.0
+          ],
+          "source_QC_stratum": "AT_MANUAL_ORIGINAL_22_PRIMARY; AUTO_ORIGINAL_12_SECONDARY",
+          "inference": true,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "SOURCE_BLOCKED",
+      "geometry": null,
+      "strict_2m_compatible": false,
+      "temperature_source_eligible": false,
+      "source_block_reasons": [
+        "KeyError:'5413'"
+      ],
+      "source_evidence_sha256": {}
+    },
+    "AT:5735": {
+      "station_key": "AT:5735",
+      "frozen_station": {
+        "country": "AT",
+        "station_id": "5735",
+        "name": "Buchberg",
+        "latitude": 48.21362,
+        "longitude": 15.94495,
+        "nominal_site_elevation_m": 460.3,
+        "source_metadata_sha256": "d976838d0332f4881b86c61b4700637eaef85846e9f63ef4fce198d1fa3b2eb9",
+        "identity_group": "AT_STATION:5735",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "AT_STATION:5735",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "published_nominal_node",
+        "definition": {
+          "country": "AT",
+          "product": "klima-v2-1h",
+          "field": "tl",
+          "published_operator": "published_nominal_node",
+          "nominal_offsets_minutes": [
+            0
+          ],
+          "model_node_weights": [
+            0.0,
+            1.0
+          ],
+          "source_QC_stratum": "AT_MANUAL_ORIGINAL_22_PRIMARY; AUTO_ORIGINAL_12_SECONDARY",
+          "inference": true,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "SOURCE_BLOCKED",
+      "geometry": null,
+      "strict_2m_compatible": false,
+      "temperature_source_eligible": false,
+      "source_block_reasons": [
+        "KeyError:'5735'"
+      ],
+      "source_evidence_sha256": {}
+    },
+    "AT:3805": {
+      "station_key": "AT:3805",
+      "frozen_station": {
+        "country": "AT",
+        "station_id": "3805",
+        "name": "Krems",
+        "latitude": 48.41861,
+        "longitude": 15.62222,
+        "nominal_site_elevation_m": 202.0,
+        "source_metadata_sha256": "d976838d0332f4881b86c61b4700637eaef85846e9f63ef4fce198d1fa3b2eb9",
+        "identity_group": "AT_GROUP:46",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "AT_GROUP:46",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "published_nominal_node",
+        "definition": {
+          "country": "AT",
+          "product": "klima-v2-1h",
+          "field": "tl",
+          "published_operator": "published_nominal_node",
+          "nominal_offsets_minutes": [
+            0
+          ],
+          "model_node_weights": [
+            0.0,
+            1.0
+          ],
+          "source_QC_stratum": "AT_MANUAL_ORIGINAL_22_PRIMARY; AUTO_ORIGINAL_12_SECONDARY",
+          "inference": true,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 48.4183333333,
+        "longitude": 15.6213888889,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "channel_selection": "UNIQUE_DATED_EXACT_2M_LOCAL_GROUND_CHANNEL; separate 5cm channels excluded",
+        "geospatial_z_as_reported_m": 205.1,
+        "height_origin": "WMDR_EQUIPMENT_GEOPOSITION_Z_AS_REPORTED_AGL_NOT_ADDED_AGAIN",
+        "deployment_period_half_open": [
+          "2016-04-29T00:00:00Z",
+          null
+        ],
+        "location_period_half_open": [
+          null,
+          null
+        ],
+        "location_time_support": "INHERITS_DATED_DEPLOYMENT_UNSPECIFIED_LOCATION_PERIOD",
+        "source_WSI": "0-20000-0-11070",
+        "parser_geometry_check_bounds_UTC": [
+          "2018-01-07T00:00:00+00:00",
+          "2018-10-16T23:00:00+00:00"
+        ],
+        "datum_transformation_verified": false,
+        "equipment_z_to_model_orography_transformation_qualified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "AT_WMDR_3805.xml": "042ee9b624784335386102c3e315f2e67c77043b84ed17966c62eacde70c6009"
+      }
+    },
+    "AT:3702": {
+      "station_key": "AT:3702",
+      "frozen_station": {
+        "country": "AT",
+        "station_id": "3702",
+        "name": "Jauerling Gipfel",
+        "latitude": 48.33447,
+        "longitude": 15.33911,
+        "nominal_site_elevation_m": 955.0,
+        "source_metadata_sha256": "d976838d0332f4881b86c61b4700637eaef85846e9f63ef4fce198d1fa3b2eb9",
+        "identity_group": "AT_GROUP:193",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "AT_GROUP:193",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "published_nominal_node",
+        "definition": {
+          "country": "AT",
+          "product": "klima-v2-1h",
+          "field": "tl",
+          "published_operator": "published_nominal_node",
+          "nominal_offsets_minutes": [
+            0
+          ],
+          "model_node_weights": [
+            0.0,
+            1.0
+          ],
+          "source_QC_stratum": "AT_MANUAL_ORIGINAL_22_PRIMARY; AUTO_ORIGINAL_12_SECONDARY",
+          "inference": true,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 48.3344444444,
+        "longitude": 15.3391666667,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "channel_selection": "UNIQUE_DATED_EXACT_2M_LOCAL_GROUND_CHANNEL; separate 5cm channels excluded",
+        "geospatial_z_as_reported_m": 957.0,
+        "height_origin": "WMDR_EQUIPMENT_GEOPOSITION_Z_AS_REPORTED_AGL_NOT_ADDED_AGAIN",
+        "deployment_period_half_open": [
+          "2016-04-29T00:00:00Z",
+          null
+        ],
+        "location_period_half_open": [
+          null,
+          null
+        ],
+        "location_time_support": "INHERITS_DATED_DEPLOYMENT_UNSPECIFIED_LOCATION_PERIOD",
+        "source_WSI": "0-20000-0-11024",
+        "parser_geometry_check_bounds_UTC": [
+          "2018-01-07T00:00:00+00:00",
+          "2018-10-16T23:00:00+00:00"
+        ],
+        "datum_transformation_verified": false,
+        "equipment_z_to_model_orography_transformation_qualified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "AT_WMDR_3702_11024.xml": "4a5f313c58f098684e90d3bbc14d6cb84dc9414e9ae1dbcb6fb2164bfde8b83e"
+      }
+    },
+    "AT:5701": {
+      "station_key": "AT:5701",
+      "frozen_station": {
+        "country": "AT",
+        "station_id": "5701",
+        "name": "Klausen Leopoldsdorf",
+        "latitude": 48.08864,
+        "longitude": 16.00161,
+        "nominal_site_elevation_m": 389.0,
+        "source_metadata_sha256": "d976838d0332f4881b86c61b4700637eaef85846e9f63ef4fce198d1fa3b2eb9",
+        "identity_group": "AT_GROUP:278",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "AT_GROUP:278",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "published_nominal_node",
+        "definition": {
+          "country": "AT",
+          "product": "klima-v2-1h",
+          "field": "tl",
+          "published_operator": "published_nominal_node",
+          "nominal_offsets_minutes": [
+            0
+          ],
+          "model_node_weights": [
+            0.0,
+            1.0
+          ],
+          "source_QC_stratum": "AT_MANUAL_ORIGINAL_22_PRIMARY; AUTO_ORIGINAL_12_SECONDARY",
+          "inference": true,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "SOURCE_BLOCKED",
+      "geometry": null,
+      "strict_2m_compatible": false,
+      "temperature_source_eligible": false,
+      "source_block_reasons": [
+        "KeyError:'5701'"
+      ],
+      "source_evidence_sha256": {}
+    },
+    "AT:3811": {
+      "station_key": "AT:3811",
+      "frozen_station": {
+        "country": "AT",
+        "station_id": "3811",
+        "name": "Langenlois",
+        "latitude": 48.4725,
+        "longitude": 15.69722,
+        "nominal_site_elevation_m": 207.0,
+        "source_metadata_sha256": "d976838d0332f4881b86c61b4700637eaef85846e9f63ef4fce198d1fa3b2eb9",
+        "identity_group": "AT_GROUP:52",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "AT_GROUP:52",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "published_nominal_node",
+        "definition": {
+          "country": "AT",
+          "product": "klima-v2-1h",
+          "field": "tl",
+          "published_operator": "published_nominal_node",
+          "nominal_offsets_minutes": [
+            0
+          ],
+          "model_node_weights": [
+            0.0,
+            1.0
+          ],
+          "source_QC_stratum": "AT_MANUAL_ORIGINAL_22_PRIMARY; AUTO_ORIGINAL_12_SECONDARY",
+          "inference": true,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 48.4725,
+        "longitude": 15.6975,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "channel_selection": "UNIQUE_DATED_EXACT_2M_LOCAL_GROUND_CHANNEL; separate 5cm channels excluded",
+        "geospatial_z_as_reported_m": 208.9,
+        "height_origin": "WMDR_EQUIPMENT_GEOPOSITION_Z_AS_REPORTED_AGL_NOT_ADDED_AGAIN",
+        "deployment_period_half_open": [
+          "2016-04-29T00:00:00Z",
+          null
+        ],
+        "location_period_half_open": [
+          null,
+          null
+        ],
+        "location_time_support": "INHERITS_DATED_DEPLOYMENT_UNSPECIFIED_LOCATION_PERIOD",
+        "source_WSI": "0-20000-0-11075",
+        "parser_geometry_check_bounds_UTC": [
+          "2018-01-07T00:00:00+00:00",
+          "2018-10-16T23:00:00+00:00"
+        ],
+        "datum_transformation_verified": false,
+        "equipment_z_to_model_orography_transformation_qualified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "AT_WMDR_3811.xml": "42fe284099042a12eaff161f9591d5a846ecf73b450b607e3fe0c0d130e74bfa"
+      }
+    },
+    "AT:5412": {
+      "station_key": "AT:5412",
+      "frozen_station": {
+        "country": "AT",
+        "station_id": "5412",
+        "name": "Oberndorf an der Melk",
+        "latitude": 48.06239,
+        "longitude": 15.21381,
+        "nominal_site_elevation_m": 295.1,
+        "source_metadata_sha256": "d976838d0332f4881b86c61b4700637eaef85846e9f63ef4fce198d1fa3b2eb9",
+        "identity_group": "AT_GROUP:155",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "AT_GROUP:155",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "published_nominal_node",
+        "definition": {
+          "country": "AT",
+          "product": "klima-v2-1h",
+          "field": "tl",
+          "published_operator": "published_nominal_node",
+          "nominal_offsets_minutes": [
+            0
+          ],
+          "model_node_weights": [
+            0.0,
+            1.0
+          ],
+          "source_QC_stratum": "AT_MANUAL_ORIGINAL_22_PRIMARY; AUTO_ORIGINAL_12_SECONDARY",
+          "inference": true,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "SOURCE_BLOCKED",
+      "geometry": null,
+      "strict_2m_compatible": false,
+      "temperature_source_eligible": false,
+      "source_block_reasons": [
+        "KeyError:'5412'"
+      ],
+      "source_evidence_sha256": {}
+    },
+    "AT:20123": {
+      "station_key": "AT:20123",
+      "frozen_station": {
+        "country": "AT",
+        "station_id": "20123",
+        "name": "Villach Stadt",
+        "latitude": 46.61806,
+        "longitude": 13.87389,
+        "nominal_site_elevation_m": 493.0,
+        "source_metadata_sha256": "d976838d0332f4881b86c61b4700637eaef85846e9f63ef4fce198d1fa3b2eb9",
+        "identity_group": "AT_GROUP:100",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "AT_GROUP:100",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "published_nominal_node",
+        "definition": {
+          "country": "AT",
+          "product": "klima-v2-1h",
+          "field": "tl",
+          "published_operator": "published_nominal_node",
+          "nominal_offsets_minutes": [
+            0
+          ],
+          "model_node_weights": [
+            0.0,
+            1.0
+          ],
+          "source_QC_stratum": "AT_MANUAL_ORIGINAL_22_PRIMARY; AUTO_ORIGINAL_12_SECONDARY",
+          "inference": true,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 46.6180555556,
+        "longitude": 13.8738888889,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "channel_selection": "UNIQUE_DATED_EXACT_2M_LOCAL_GROUND_CHANNEL; separate 5cm channels excluded",
+        "geospatial_z_as_reported_m": 495.0,
+        "height_origin": "WMDR_EQUIPMENT_GEOPOSITION_Z_AS_REPORTED_AGL_NOT_ADDED_AGAIN",
+        "deployment_period_half_open": [
+          "2016-04-29T00:00:00Z",
+          null
+        ],
+        "location_period_half_open": [
+          null,
+          null
+        ],
+        "location_time_support": "INHERITS_DATED_DEPLOYMENT_UNSPECIFIED_LOCATION_PERIOD",
+        "source_WSI": "0-20000-0-11213",
+        "parser_geometry_check_bounds_UTC": [
+          "2018-01-07T00:00:00+00:00",
+          "2018-10-16T23:00:00+00:00"
+        ],
+        "datum_transformation_verified": false,
+        "equipment_z_to_model_orography_transformation_qualified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "AT_WMDR_20123.xml": "62f23bfb5e7422fc1c1ac970eec88a4f2c908524afc3b3816f9069155b69c84a"
+      }
+    },
+    "AT:20101": {
+      "station_key": "AT:20101",
+      "frozen_station": {
+        "country": "AT",
+        "station_id": "20101",
+        "name": "Kanzelhöhe",
+        "latitude": 46.67722,
+        "longitude": 13.90194,
+        "nominal_site_elevation_m": 1520.0,
+        "source_metadata_sha256": "d976838d0332f4881b86c61b4700637eaef85846e9f63ef4fce198d1fa3b2eb9",
+        "identity_group": "AT_GROUP:122",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "AT_GROUP:122",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "published_nominal_node",
+        "definition": {
+          "country": "AT",
+          "product": "klima-v2-1h",
+          "field": "tl",
+          "published_operator": "published_nominal_node",
+          "nominal_offsets_minutes": [
+            0
+          ],
+          "model_node_weights": [
+            0.0,
+            1.0
+          ],
+          "source_QC_stratum": "AT_MANUAL_ORIGINAL_22_PRIMARY; AUTO_ORIGINAL_12_SECONDARY",
+          "inference": true,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "SOURCE_BLOCKED",
+      "geometry": null,
+      "strict_2m_compatible": false,
+      "temperature_source_eligible": false,
+      "source_block_reasons": [
+        "KeyError:'20101'"
+      ],
+      "source_evidence_sha256": {}
+    },
+    "AT:20105": {
+      "station_key": "AT:20105",
+      "frozen_station": {
+        "country": "AT",
+        "station_id": "20105",
+        "name": "Arriach",
+        "latitude": 46.72769,
+        "longitude": 13.85244,
+        "nominal_site_elevation_m": 890.2,
+        "source_metadata_sha256": "d976838d0332f4881b86c61b4700637eaef85846e9f63ef4fce198d1fa3b2eb9",
+        "identity_group": "AT_STATION:20105",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "AT_STATION:20105",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "published_nominal_node",
+        "definition": {
+          "country": "AT",
+          "product": "klima-v2-1h",
+          "field": "tl",
+          "published_operator": "published_nominal_node",
+          "nominal_offsets_minutes": [
+            0
+          ],
+          "model_node_weights": [
+            0.0,
+            1.0
+          ],
+          "source_QC_stratum": "AT_MANUAL_ORIGINAL_22_PRIMARY; AUTO_ORIGINAL_12_SECONDARY",
+          "inference": true,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 46.7277777778,
+        "longitude": 13.8525,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "channel_selection": "UNIQUE_DATED_EXACT_2M_LOCAL_GROUND_CHANNEL; separate 5cm channels excluded",
+        "geospatial_z_as_reported_m": 892.2,
+        "height_origin": "WMDR_EQUIPMENT_GEOPOSITION_Z_AS_REPORTED_AGL_NOT_ADDED_AGAIN",
+        "deployment_period_half_open": [
+          "2016-04-29T00:00:00Z",
+          null
+        ],
+        "location_period_half_open": [
+          null,
+          null
+        ],
+        "location_time_support": "INHERITS_DATED_DEPLOYMENT_UNSPECIFIED_LOCATION_PERIOD",
+        "source_WSI": "0-20000-0-11275",
+        "parser_geometry_check_bounds_UTC": [
+          "2018-01-07T00:00:00+00:00",
+          "2018-10-16T23:00:00+00:00"
+        ],
+        "datum_transformation_verified": false,
+        "equipment_z_to_model_orography_transformation_qualified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "AT_WMDR_20105.xml": "c78b9a8ac205150854cdedc2304c392132c28a6b850d12c64d1ef19b8cb91823"
+      }
+    },
+    "AT:20002": {
+      "station_key": "AT:20002",
+      "frozen_station": {
+        "country": "AT",
+        "station_id": "20002",
+        "name": "Bad Bleiberg",
+        "latitude": 46.62528,
+        "longitude": 13.68444,
+        "nominal_site_elevation_m": 908.7,
+        "source_metadata_sha256": "d976838d0332f4881b86c61b4700637eaef85846e9f63ef4fce198d1fa3b2eb9",
+        "identity_group": "AT_GROUP:6",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "AT_GROUP:6",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "published_nominal_node",
+        "definition": {
+          "country": "AT",
+          "product": "klima-v2-1h",
+          "field": "tl",
+          "published_operator": "published_nominal_node",
+          "nominal_offsets_minutes": [
+            0
+          ],
+          "model_node_weights": [
+            0.0,
+            1.0
+          ],
+          "source_QC_stratum": "AT_MANUAL_ORIGINAL_22_PRIMARY; AUTO_ORIGINAL_12_SECONDARY",
+          "inference": true,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "SOURCE_BLOCKED",
+      "geometry": null,
+      "strict_2m_compatible": false,
+      "temperature_source_eligible": false,
+      "source_block_reasons": [
+        "KeyError:'20002'"
+      ],
+      "source_evidence_sha256": {}
+    },
+    "AT:20021": {
+      "station_key": "AT:20021",
+      "frozen_station": {
+        "country": "AT",
+        "station_id": "20021",
+        "name": "Villacher Alpe",
+        "latitude": 46.60361,
+        "longitude": 13.67278,
+        "nominal_site_elevation_m": 2117.0,
+        "source_metadata_sha256": "d976838d0332f4881b86c61b4700637eaef85846e9f63ef4fce198d1fa3b2eb9",
+        "identity_group": "AT_STATION:20021",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "AT_STATION:20021",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "published_nominal_node",
+        "definition": {
+          "country": "AT",
+          "product": "klima-v2-1h",
+          "field": "tl",
+          "published_operator": "published_nominal_node",
+          "nominal_offsets_minutes": [
+            0
+          ],
+          "model_node_weights": [
+            0.0,
+            1.0
+          ],
+          "source_QC_stratum": "AT_MANUAL_ORIGINAL_22_PRIMARY; AUTO_ORIGINAL_12_SECONDARY",
+          "inference": true,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "SOURCE_BLOCKED",
+      "geometry": null,
+      "strict_2m_compatible": false,
+      "temperature_source_eligible": false,
+      "source_block_reasons": [
+        "KeyError:'20021'"
+      ],
+      "source_evidence_sha256": {}
+    },
+    "AT:20011": {
+      "station_key": "AT:20011",
+      "frozen_station": {
+        "country": "AT",
+        "station_id": "20011",
+        "name": "Fresach",
+        "latitude": 46.71528,
+        "longitude": 13.68528,
+        "nominal_site_elevation_m": 683.0,
+        "source_metadata_sha256": "d976838d0332f4881b86c61b4700637eaef85846e9f63ef4fce198d1fa3b2eb9",
+        "identity_group": "AT_GROUP:203",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "AT_GROUP:203",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "published_nominal_node",
+        "definition": {
+          "country": "AT",
+          "product": "klima-v2-1h",
+          "field": "tl",
+          "published_operator": "published_nominal_node",
+          "nominal_offsets_minutes": [
+            0
+          ],
+          "model_node_weights": [
+            0.0,
+            1.0
+          ],
+          "source_QC_stratum": "AT_MANUAL_ORIGINAL_22_PRIMARY; AUTO_ORIGINAL_12_SECONDARY",
+          "inference": true,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "SOURCE_BLOCKED",
+      "geometry": null,
+      "strict_2m_compatible": false,
+      "temperature_source_eligible": false,
+      "source_block_reasons": [
+        "KeyError:'20011'"
+      ],
+      "source_evidence_sha256": {}
+    },
+    "AT:20270": {
+      "station_key": "AT:20270",
+      "frozen_station": {
+        "country": "AT",
+        "station_id": "20270",
+        "name": "Feldkirchen",
+        "latitude": 46.72194,
+        "longitude": 14.09694,
+        "nominal_site_elevation_m": 546.4,
+        "source_metadata_sha256": "d976838d0332f4881b86c61b4700637eaef85846e9f63ef4fce198d1fa3b2eb9",
+        "identity_group": "AT_STATION:20270",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "AT_STATION:20270",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "published_nominal_node",
+        "definition": {
+          "country": "AT",
+          "product": "klima-v2-1h",
+          "field": "tl",
+          "published_operator": "published_nominal_node",
+          "nominal_offsets_minutes": [
+            0
+          ],
+          "model_node_weights": [
+            0.0,
+            1.0
+          ],
+          "source_QC_stratum": "AT_MANUAL_ORIGINAL_22_PRIMARY; AUTO_ORIGINAL_12_SECONDARY",
+          "inference": true,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 46.7219444444,
+        "longitude": 14.0969444444,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "channel_selection": "UNIQUE_DATED_EXACT_2M_LOCAL_GROUND_CHANNEL; separate 5cm channels excluded",
+        "geospatial_z_as_reported_m": 548.4,
+        "height_origin": "WMDR_EQUIPMENT_GEOPOSITION_Z_AS_REPORTED_AGL_NOT_ADDED_AGAIN",
+        "deployment_period_half_open": [
+          "2016-04-29T00:00:00Z",
+          null
+        ],
+        "location_period_half_open": [
+          null,
+          null
+        ],
+        "location_time_support": "INHERITS_DATED_DEPLOYMENT_UNSPECIFIED_LOCATION_PERIOD",
+        "source_WSI": "0-20000-0-11227",
+        "parser_geometry_check_bounds_UTC": [
+          "2018-01-07T00:00:00+00:00",
+          "2018-10-16T23:00:00+00:00"
+        ],
+        "datum_transformation_verified": false,
+        "equipment_z_to_model_orography_transformation_qualified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "AT_WMDR_20270_11227.xml": "9eb2184a9a0a109cacd96891fa40707db125c43b0c4b0e8189b983b80ae43792"
+      }
+    },
+    "AT:20220": {
+      "station_key": "AT:20220",
+      "frozen_station": {
+        "country": "AT",
+        "station_id": "20220",
+        "name": "Pörtschach",
+        "latitude": 46.63083,
+        "longitude": 14.16528,
+        "nominal_site_elevation_m": 450.0,
+        "source_metadata_sha256": "d976838d0332f4881b86c61b4700637eaef85846e9f63ef4fce198d1fa3b2eb9",
+        "identity_group": "AT_GROUP:198",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "AT_GROUP:198",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "published_nominal_node",
+        "definition": {
+          "country": "AT",
+          "product": "klima-v2-1h",
+          "field": "tl",
+          "published_operator": "published_nominal_node",
+          "nominal_offsets_minutes": [
+            0
+          ],
+          "model_node_weights": [
+            0.0,
+            1.0
+          ],
+          "source_QC_stratum": "AT_MANUAL_ORIGINAL_22_PRIMARY; AUTO_ORIGINAL_12_SECONDARY",
+          "inference": true,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 46.6308333333,
+        "longitude": 14.1652777778,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "channel_selection": "UNIQUE_DATED_EXACT_2M_LOCAL_GROUND_CHANNEL; separate 5cm channels excluded",
+        "geospatial_z_as_reported_m": 452.3,
+        "height_origin": "WMDR_EQUIPMENT_GEOPOSITION_Z_AS_REPORTED_AGL_NOT_ADDED_AGAIN",
+        "deployment_period_half_open": [
+          "2016-04-29T00:00:00Z",
+          null
+        ],
+        "location_period_half_open": [
+          null,
+          null
+        ],
+        "location_time_support": "INHERITS_DATED_DEPLOYMENT_UNSPECIFIED_LOCATION_PERIOD",
+        "source_WSI": "0-20000-0-11278",
+        "parser_geometry_check_bounds_UTC": [
+          "2018-01-07T00:00:00+00:00",
+          "2018-10-16T23:00:00+00:00"
+        ],
+        "datum_transformation_verified": false,
+        "equipment_z_to_model_orography_transformation_qualified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "AT_WMDR_20220_11278.xml": "97db5aed4c0567cb404a6f8e1f2e7ed357482ad6641a5191269388e19a439dca"
+      }
+    },
+    "AT:19911": {
+      "station_key": "AT:19911",
+      "frozen_station": {
+        "country": "AT",
+        "station_id": "19911",
+        "name": "Hermagor",
+        "latitude": 46.60972,
+        "longitude": 13.49222,
+        "nominal_site_elevation_m": 561.6,
+        "source_metadata_sha256": "d976838d0332f4881b86c61b4700637eaef85846e9f63ef4fce198d1fa3b2eb9",
+        "identity_group": "AT_STATION:19911",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "AT_STATION:19911",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "published_nominal_node",
+        "definition": {
+          "country": "AT",
+          "product": "klima-v2-1h",
+          "field": "tl",
+          "published_operator": "published_nominal_node",
+          "nominal_offsets_minutes": [
+            0
+          ],
+          "model_node_weights": [
+            0.0,
+            1.0
+          ],
+          "source_QC_stratum": "AT_MANUAL_ORIGINAL_22_PRIMARY; AUTO_ORIGINAL_12_SECONDARY",
+          "inference": true,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "SOURCE_BLOCKED",
+      "geometry": null,
+      "strict_2m_compatible": false,
+      "temperature_source_eligible": false,
+      "source_block_reasons": [
+        "KeyError:'19911'"
+      ],
+      "source_evidence_sha256": {}
+    },
+    "DE:01270": {
+      "station_key": "DE:01270",
+      "frozen_station": {
+        "country": "DE",
+        "station_id": "01270",
+        "name": "Erfurt-Weimar",
+        "latitude": 50.9827,
+        "longitude": 10.9613,
+        "nominal_site_elevation_m": 317.0,
+        "source_metadata_sha256": "1ffd26151e690dc3546fb12641e8b65562cd2c4e34de910d3d1ae45da52e3995",
+        "identity_group": "DE_STATION:01270",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "DE_STATION:01270",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "published_nominal_node",
+        "definition": {
+          "country": "DE",
+          "product": "climate-10_minutes-air_temperature",
+          "field": "TT_10",
+          "published_operator": "published_nominal_node",
+          "nominal_offsets_minutes": [
+            0
+          ],
+          "model_node_weights": [
+            0.0,
+            1.0
+          ],
+          "source_QC_stratum": "DE_10MIN_QN3_AUTOMATIC_CONTROL_AND_CORRECTION_NOT_HOURLY_QN10",
+          "inference": false,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 50.9829,
+        "longitude": 10.9608,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "site_altitude_as_reported_m": 316.0,
+        "geospatial_z_as_reported_m": 318.0,
+        "height_origin": "DWD_DATED_GROUND_PLUS_SEPARATE_SENSOR_AGL",
+        "deployment_period_inclusive_dates": [
+          "20110321",
+          "20230626"
+        ],
+        "geography_period_inclusive_dates": [
+          "19950215",
+          "20230628"
+        ],
+        "device_type": "PT 100 (Luft)",
+        "parameter_row": {
+          "Stations_ID": "1270",
+          "Von_Datum": "20081010",
+          "Bis_Datum": "20261026",
+          "Stationsname": "Erfurt-Weimar",
+          "Parameter": "TT_10",
+          "Parameterbeschreibung": "momentane Lufttemperatur in 2m Hoehe",
+          "Einheit": "°C",
+          "Datenquelle (Strukturversion=SV)": "aus Messnetz2000",
+          "Zusatz-Info": "HHMM UTC",
+          "Besonderheiten": "",
+          "Literaturhinweis": "",
+          "eor": "eor",
+          "": ""
+        },
+        "datum_transformation_verified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "Metadaten_Geographie_01270.txt": "8e04703e243beca4045d6ffa8c69fb52638a7519ac53072c96abecd23f6bca2b",
+        "Metadaten_Geraete_Lufttemperatur_01270.txt": "eaf418f1ef9d82b56b91bade53d945ceb84fc98ce70b8decb677bc9b9af5ddd8",
+        "Metadaten_Parameter_01270.txt": "7c540b1b6a8865e8571ebc63f799320cef488d3b2f5a6fc1c36082ed47d0799a",
+        "DE_10min_meta_01270.zip": "323ee4c2c28d25b9f4b15cb6731acd9613e70733b6eea2c1ba5779b0d11ec4ee"
+      }
+    },
+    "DE:00896": {
+      "station_key": "DE:00896",
+      "frozen_station": {
+        "country": "DE",
+        "station_id": "00896",
+        "name": "Dachwig",
+        "latitude": 51.0778,
+        "longitude": 10.8619,
+        "nominal_site_elevation_m": 170.0,
+        "source_metadata_sha256": "1ffd26151e690dc3546fb12641e8b65562cd2c4e34de910d3d1ae45da52e3995",
+        "identity_group": "DE_STATION:00896",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "DE_STATION:00896",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "published_nominal_node",
+        "definition": {
+          "country": "DE",
+          "product": "climate-10_minutes-air_temperature",
+          "field": "TT_10",
+          "published_operator": "published_nominal_node",
+          "nominal_offsets_minutes": [
+            0
+          ],
+          "model_node_weights": [
+            0.0,
+            1.0
+          ],
+          "source_QC_stratum": "DE_10MIN_QN3_AUTOMATIC_CONTROL_AND_CORRECTION_NOT_HOURLY_QN10",
+          "inference": false,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 51.0778,
+        "longitude": 10.8619,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "site_altitude_as_reported_m": 170.0,
+        "geospatial_z_as_reported_m": 172.0,
+        "height_origin": "DWD_DATED_GROUND_PLUS_SEPARATE_SENSOR_AGL",
+        "deployment_period_inclusive_dates": [
+          "20040801",
+          "20261025"
+        ],
+        "geography_period_inclusive_dates": [
+          "19791219",
+          ""
+        ],
+        "device_type": "PT 100 (Luft)",
+        "parameter_row": {
+          "Stations_ID": "896",
+          "Von_Datum": "20030611",
+          "Bis_Datum": "20261026",
+          "Stationsname": "Dachwig",
+          "Parameter": "TT_10",
+          "Parameterbeschreibung": "momentane Lufttemperatur in 2m Hoehe",
+          "Einheit": "°C",
+          "Datenquelle (Strukturversion=SV)": "aus Messnetz2000",
+          "Zusatz-Info": "HHMM UTC",
+          "Besonderheiten": "",
+          "Literaturhinweis": "",
+          "eor": "eor",
+          "": ""
+        },
+        "datum_transformation_verified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "Metadaten_Geographie_00896.txt": "a0a1465bcf70fd7d503ac94fc849acab7e407adcdbeccad543177ddc8732a106",
+        "Metadaten_Geraete_Lufttemperatur_00896.txt": "bff5ccaca5a7ed49cf392d59944ddace9cbc13bba569e881e7231bb3a7e7ac6c",
+        "Metadaten_Parameter_00896.txt": "84df83bc9c116f979017226ed3eb092cb13bd528e1e6385294d05781a2615491",
+        "DE_10min_meta_00896.zip": "b0be9b772db6de1a6ea5e440c966d57959776f2e7697bcb744f1c0529c947f26"
+      }
+    },
+    "DE:00379": {
+      "station_key": "DE:00379",
+      "frozen_station": {
+        "country": "DE",
+        "station_id": "00379",
+        "name": "Berka, Bad (Flugplatz)",
+        "latitude": 50.9075,
+        "longitude": 11.2665,
+        "nominal_site_elevation_m": 304.0,
+        "source_metadata_sha256": "1ffd26151e690dc3546fb12641e8b65562cd2c4e34de910d3d1ae45da52e3995",
+        "identity_group": "DE_STATION:00379",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "DE_STATION:00379",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "published_nominal_node",
+        "definition": {
+          "country": "DE",
+          "product": "climate-10_minutes-air_temperature",
+          "field": "TT_10",
+          "published_operator": "published_nominal_node",
+          "nominal_offsets_minutes": [
+            0
+          ],
+          "model_node_weights": [
+            0.0,
+            1.0
+          ],
+          "source_QC_stratum": "DE_10MIN_QN3_AUTOMATIC_CONTROL_AND_CORRECTION_NOT_HOURLY_QN10",
+          "inference": false,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 50.9075,
+        "longitude": 11.2665,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "site_altitude_as_reported_m": 304.0,
+        "geospatial_z_as_reported_m": 306.0,
+        "height_origin": "DWD_DATED_GROUND_PLUS_SEPARATE_SENSOR_AGL",
+        "deployment_period_inclusive_dates": [
+          "20170901",
+          "20261025"
+        ],
+        "geography_period_inclusive_dates": [
+          "20160708",
+          ""
+        ],
+        "device_type": "PT 100 (Luft)",
+        "parameter_row": {
+          "Stations_ID": "379",
+          "Von_Datum": "20170807",
+          "Bis_Datum": "20261026",
+          "Stationsname": "Berka, Bad (Flugplatz)",
+          "Parameter": "TT_10",
+          "Parameterbeschreibung": "momentane Lufttemperatur in 2m Hoehe",
+          "Einheit": "°C",
+          "Datenquelle (Strukturversion=SV)": "aus Messnetz2000",
+          "Zusatz-Info": "HHMM UTC",
+          "Besonderheiten": "",
+          "Literaturhinweis": "",
+          "eor": "eor",
+          "": ""
+        },
+        "datum_transformation_verified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "Metadaten_Geographie_00379.txt": "3585881476a5825099c1feace1b7dad9086e4feaed2e1ea4a0fee8fb6754274a",
+        "Metadaten_Geraete_Lufttemperatur_00379.txt": "2e893b81627c8400e2ffae2ce08bc91e94fbb48a73dd47ca3f19ad55cb9b610c",
+        "Metadaten_Parameter_00379.txt": "b4efa54209c0fc331de0570e0fdcdd8200e4ba33006a988e108ad94e3cee556c",
+        "DE_10min_meta_00379.zip": "06faf58cbd580ff6d0d722783f5421865a63ec6f76b62b1f20f98c709e6bab20"
+      }
+    },
+    "DE:05424": {
+      "station_key": "DE:05424",
+      "frozen_station": {
+        "country": "DE",
+        "station_id": "05424",
+        "name": "Weimar-Schöndorf",
+        "latitude": 51.0177,
+        "longitude": 11.3544,
+        "nominal_site_elevation_m": 328.0,
+        "source_metadata_sha256": "1ffd26151e690dc3546fb12641e8b65562cd2c4e34de910d3d1ae45da52e3995",
+        "identity_group": "DE_STATION:05424",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "DE_STATION:05424",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "published_nominal_node",
+        "definition": {
+          "country": "DE",
+          "product": "climate-10_minutes-air_temperature",
+          "field": "TT_10",
+          "published_operator": "published_nominal_node",
+          "nominal_offsets_minutes": [
+            0
+          ],
+          "model_node_weights": [
+            0.0,
+            1.0
+          ],
+          "source_QC_stratum": "DE_10MIN_QN3_AUTOMATIC_CONTROL_AND_CORRECTION_NOT_HOURLY_QN10",
+          "inference": false,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 51.0177,
+        "longitude": 11.3544,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "site_altitude_as_reported_m": 328.01,
+        "geospatial_z_as_reported_m": 330.01,
+        "height_origin": "DWD_DATED_GROUND_PLUS_SEPARATE_SENSOR_AGL",
+        "deployment_period_inclusive_dates": [
+          "20070601",
+          "20261025"
+        ],
+        "geography_period_inclusive_dates": [
+          "20070601",
+          ""
+        ],
+        "device_type": "PT 100 (Luft)",
+        "parameter_row": {
+          "Stations_ID": "5424",
+          "Von_Datum": "20070504",
+          "Bis_Datum": "20261026",
+          "Stationsname": "Weimar-Schöndorf",
+          "Parameter": "TT_10",
+          "Parameterbeschreibung": "momentane Lufttemperatur in 2m Hoehe",
+          "Einheit": "°C",
+          "Datenquelle (Strukturversion=SV)": "aus Messnetz2000",
+          "Zusatz-Info": "HHMM UTC",
+          "Besonderheiten": "",
+          "Literaturhinweis": "",
+          "eor": "eor",
+          "": ""
+        },
+        "datum_transformation_verified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "Metadaten_Geographie_05424.txt": "2601534224d6ca0fc04f3d95cf2a932b837e86f50f23b653e2eed1dcc70fe824",
+        "Metadaten_Geraete_Lufttemperatur_05424.txt": "97ff971ea5c913b15fab9f4f61547c86b092c72e40d22074c9f6b876e3155a86",
+        "Metadaten_Parameter_05424.txt": "5bbe0d2182f1ae874be7de6fcdd45e33c50555b78db8a353c9dca7b859313aa3",
+        "DE_10min_meta_05424.zip": "0daa5551fce5b00e045ef7a46b9ee46e0af4ec2a0e5e3eed90835cdf2ddcadc7"
+      }
+    },
+    "DE:03204": {
+      "station_key": "DE:03204",
+      "frozen_station": {
+        "country": "DE",
+        "station_id": "03204",
+        "name": "Martinroda",
+        "latitude": 50.7335,
+        "longitude": 10.8815,
+        "nominal_site_elevation_m": 429.0,
+        "source_metadata_sha256": "1ffd26151e690dc3546fb12641e8b65562cd2c4e34de910d3d1ae45da52e3995",
+        "identity_group": "DE_STATION:03204",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "DE_STATION:03204",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "published_nominal_node",
+        "definition": {
+          "country": "DE",
+          "product": "climate-10_minutes-air_temperature",
+          "field": "TT_10",
+          "published_operator": "published_nominal_node",
+          "nominal_offsets_minutes": [
+            0
+          ],
+          "model_node_weights": [
+            0.0,
+            1.0
+          ],
+          "source_QC_stratum": "DE_10MIN_QN3_AUTOMATIC_CONTROL_AND_CORRECTION_NOT_HOURLY_QN10",
+          "inference": false,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 50.7335,
+        "longitude": 10.8815,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "site_altitude_as_reported_m": 429.0,
+        "geospatial_z_as_reported_m": 431.0,
+        "height_origin": "DWD_DATED_GROUND_PLUS_SEPARATE_SENSOR_AGL",
+        "deployment_period_inclusive_dates": [
+          "20080701",
+          "20261025"
+        ],
+        "geography_period_inclusive_dates": [
+          "19821101",
+          ""
+        ],
+        "device_type": "PT 100 (Luft)",
+        "parameter_row": {
+          "Stations_ID": "3204",
+          "Von_Datum": "20080529",
+          "Bis_Datum": "20261026",
+          "Stationsname": "Martinroda",
+          "Parameter": "TT_10",
+          "Parameterbeschreibung": "momentane Lufttemperatur in 2m Hoehe",
+          "Einheit": "°C",
+          "Datenquelle (Strukturversion=SV)": "aus Messnetz2000",
+          "Zusatz-Info": "HHMM UTC",
+          "Besonderheiten": "",
+          "Literaturhinweis": "",
+          "eor": "eor",
+          "": ""
+        },
+        "datum_transformation_verified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "Metadaten_Geographie_03204.txt": "6922a7c82b14777399f650613c36eb07f4c2fe9b6779c2f74a2e4d1b5d9c32b8",
+        "Metadaten_Geraete_Lufttemperatur_03204.txt": "eecfe4851b7b7cab751dce96dbf0d1e9c0469776905851aa403012cd098d1322",
+        "Metadaten_Parameter_03204.txt": "cdecef46551af6708ab79a74a17c714dd13688bf6d9d23dbdcd7a484a22b6d0f",
+        "DE_10min_meta_03204.zip": "7bfad7ec50ad241d9ee3c5e9b6a5899fa71e02ddc2a7383747369dd7fcfde234"
+      }
+    },
+    "DE:00232": {
+      "station_key": "DE:00232",
+      "frozen_station": {
+        "country": "DE",
+        "station_id": "00232",
+        "name": "Augsburg",
+        "latitude": 48.4253,
+        "longitude": 10.9417,
+        "nominal_site_elevation_m": 462.0,
+        "source_metadata_sha256": "1ffd26151e690dc3546fb12641e8b65562cd2c4e34de910d3d1ae45da52e3995",
+        "identity_group": "DE_STATION:00232",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "DE_STATION:00232",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "published_nominal_node",
+        "definition": {
+          "country": "DE",
+          "product": "climate-10_minutes-air_temperature",
+          "field": "TT_10",
+          "published_operator": "published_nominal_node",
+          "nominal_offsets_minutes": [
+            0
+          ],
+          "model_node_weights": [
+            0.0,
+            1.0
+          ],
+          "source_QC_stratum": "DE_10MIN_QN3_AUTOMATIC_CONTROL_AND_CORRECTION_NOT_HOURLY_QN10",
+          "inference": false,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 48.4253,
+        "longitude": 10.9417,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "site_altitude_as_reported_m": 461.53,
+        "geospatial_z_as_reported_m": 463.53,
+        "height_origin": "DWD_DATED_GROUND_PLUS_SEPARATE_SENSOR_AGL",
+        "deployment_period_inclusive_dates": [
+          "20061215",
+          "20261025"
+        ],
+        "geography_period_inclusive_dates": [
+          "20100310",
+          "20190313"
+        ],
+        "device_type": "PT 100 (Luft)",
+        "parameter_row": {
+          "Stations_ID": "232",
+          "Von_Datum": "20061213",
+          "Bis_Datum": "20261026",
+          "Stationsname": "Augsburg",
+          "Parameter": "TT_10",
+          "Parameterbeschreibung": "momentane Lufttemperatur in 2m Hoehe",
+          "Einheit": "°C",
+          "Datenquelle (Strukturversion=SV)": "aus Messnetz2000",
+          "Zusatz-Info": "HHMM UTC",
+          "Besonderheiten": "",
+          "Literaturhinweis": "",
+          "eor": "eor",
+          "": ""
+        },
+        "datum_transformation_verified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "Metadaten_Geographie_00232.txt": "e473fac39e2609fed68357b19a25964e7ebf564b0672ef1d3102500edf5236a8",
+        "Metadaten_Geraete_Lufttemperatur_00232.txt": "70b787cc603b337509b57fb6d36a46fa1da8e4a1d4775f3dc6e69b57453b06e0",
+        "Metadaten_Parameter_00232.txt": "67cd9baec70f9be2f0ca5a190db34572f3a88250ad161fc8f93f21ca52be6cd1",
+        "DE_10min_meta_00232.zip": "7a3ff891e25a156f1647136e8838cdc9d06fbb4b0a74484b8b1d1f9e78ef4871"
+      }
+    },
+    "DE:00142": {
+      "station_key": "DE:00142",
+      "frozen_station": {
+        "country": "DE",
+        "station_id": "00142",
+        "name": "Altomünster-Pipinsried",
+        "latitude": 48.4075,
+        "longitude": 11.2946,
+        "nominal_site_elevation_m": 495.0,
+        "source_metadata_sha256": "1ffd26151e690dc3546fb12641e8b65562cd2c4e34de910d3d1ae45da52e3995",
+        "identity_group": "DE_STATION:00142",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "DE_STATION:00142",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "published_nominal_node",
+        "definition": {
+          "country": "DE",
+          "product": "climate-10_minutes-air_temperature",
+          "field": "TT_10",
+          "published_operator": "published_nominal_node",
+          "nominal_offsets_minutes": [
+            0
+          ],
+          "model_node_weights": [
+            0.0,
+            1.0
+          ],
+          "source_QC_stratum": "DE_10MIN_QN3_AUTOMATIC_CONTROL_AND_CORRECTION_NOT_HOURLY_QN10",
+          "inference": false,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "SOURCE_BLOCKED",
+      "geometry": null,
+      "strict_2m_compatible": false,
+      "temperature_source_eligible": false,
+      "source_block_reasons": [
+        "ValueError:V1_DATED_SOURCE_IDENTITY_SEPARATION_OVER_500M"
+      ],
+      "source_evidence_sha256": {}
+    },
+    "DE:06346": {
+      "station_key": "DE:06346",
+      "frozen_station": {
+        "country": "DE",
+        "station_id": "06346",
+        "name": "Maisach-Galgen",
+        "latitude": 48.207,
+        "longitude": 11.2035,
+        "nominal_site_elevation_m": 531.0,
+        "source_metadata_sha256": "1ffd26151e690dc3546fb12641e8b65562cd2c4e34de910d3d1ae45da52e3995",
+        "identity_group": "DE_STATION:06346",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "DE_STATION:06346",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "published_nominal_node",
+        "definition": {
+          "country": "DE",
+          "product": "climate-10_minutes-air_temperature",
+          "field": "TT_10",
+          "published_operator": "published_nominal_node",
+          "nominal_offsets_minutes": [
+            0
+          ],
+          "model_node_weights": [
+            0.0,
+            1.0
+          ],
+          "source_QC_stratum": "DE_10MIN_QN3_AUTOMATIC_CONTROL_AND_CORRECTION_NOT_HOURLY_QN10",
+          "inference": false,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 48.207,
+        "longitude": 11.2035,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "site_altitude_as_reported_m": 531.0,
+        "geospatial_z_as_reported_m": 533.0,
+        "height_origin": "DWD_DATED_GROUND_PLUS_SEPARATE_SENSOR_AGL",
+        "deployment_period_inclusive_dates": [
+          "20050201",
+          "20261025"
+        ],
+        "geography_period_inclusive_dates": [
+          "20040907",
+          ""
+        ],
+        "device_type": "PT 100 (Luft)",
+        "parameter_row": {
+          "Stations_ID": "6346",
+          "Von_Datum": "20041126",
+          "Bis_Datum": "20261026",
+          "Stationsname": "Maisach-Galgen",
+          "Parameter": "TT_10",
+          "Parameterbeschreibung": "momentane Lufttemperatur in 2m Hoehe",
+          "Einheit": "°C",
+          "Datenquelle (Strukturversion=SV)": "aus Messnetz2000",
+          "Zusatz-Info": "HHMM UTC",
+          "Besonderheiten": "",
+          "Literaturhinweis": "",
+          "eor": "eor",
+          "": ""
+        },
+        "datum_transformation_verified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "Metadaten_Geographie_06346.txt": "7ff55f10d2588f6c1710b14f4edc876750e9924e706fa67070f467db8d325119",
+        "Metadaten_Geraete_Lufttemperatur_06346.txt": "af72dd8e78427cd178604ea745f22be61e390c7ba0488afdeb282e34767d82ca",
+        "Metadaten_Parameter_06346.txt": "1c9174d0a840f1ef7de9b645678287f0e601682623027750685d610edb6ae4c2",
+        "DE_10min_meta_06346.zip": "9553dc56baa0c2ed37a87282174fac44707e834e2ca654f57ddeb83e94334580"
+      }
+    },
+    "DE:00983": {
+      "station_key": "DE:00983",
+      "frozen_station": {
+        "country": "DE",
+        "station_id": "00983",
+        "name": "Dillingen/Donau-Fristingen",
+        "latitude": 48.5562,
+        "longitude": 10.56,
+        "nominal_site_elevation_m": 419.0,
+        "source_metadata_sha256": "1ffd26151e690dc3546fb12641e8b65562cd2c4e34de910d3d1ae45da52e3995",
+        "identity_group": "DE_STATION:00983",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "DE_STATION:00983",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "published_nominal_node",
+        "definition": {
+          "country": "DE",
+          "product": "climate-10_minutes-air_temperature",
+          "field": "TT_10",
+          "published_operator": "published_nominal_node",
+          "nominal_offsets_minutes": [
+            0
+          ],
+          "model_node_weights": [
+            0.0,
+            1.0
+          ],
+          "source_QC_stratum": "DE_10MIN_QN3_AUTOMATIC_CONTROL_AND_CORRECTION_NOT_HOURLY_QN10",
+          "inference": false,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 48.5562,
+        "longitude": 10.56,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "site_altitude_as_reported_m": 418.5,
+        "geospatial_z_as_reported_m": 420.5,
+        "height_origin": "DWD_DATED_GROUND_PLUS_SEPARATE_SENSOR_AGL",
+        "deployment_period_inclusive_dates": [
+          "20061201",
+          "20261025"
+        ],
+        "geography_period_inclusive_dates": [
+          "20060802",
+          ""
+        ],
+        "device_type": "PT 100 (Luft)",
+        "parameter_row": {
+          "Stations_ID": "983",
+          "Von_Datum": "20061004",
+          "Bis_Datum": "20261026",
+          "Stationsname": "Dillingen/Donau-Fristingen",
+          "Parameter": "TT_10",
+          "Parameterbeschreibung": "momentane Lufttemperatur in 2m Hoehe",
+          "Einheit": "°C",
+          "Datenquelle (Strukturversion=SV)": "aus Messnetz2000",
+          "Zusatz-Info": "HHMM UTC",
+          "Besonderheiten": "",
+          "Literaturhinweis": "",
+          "eor": "eor",
+          "": ""
+        },
+        "datum_transformation_verified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "Metadaten_Geographie_00983.txt": "06e44b9ed082b7a94fd128d82e160ef8d23277cd06e9feebf2cf06ef163d9e0d",
+        "Metadaten_Geraete_Lufttemperatur_00983.txt": "d6d52b49aa7a428497a3a0bdc544e6a83b642b9654fe4064348c7cb2a5614992",
+        "Metadaten_Parameter_00983.txt": "282386cdf3fc49fd9aab34451308ef6795ccefe1cee336fcc95a8e8f9e31e9f6",
+        "DE_10min_meta_00983.zip": "3b51605370f5512b74c92b361728228971128dcd5b66b664b699120144ca5fe1"
+      }
+    },
+    "DE:07319": {
+      "station_key": "DE:07319",
+      "frozen_station": {
+        "country": "DE",
+        "station_id": "07319",
+        "name": "Donauwörth-Osterweiler",
+        "latitude": 48.7374,
+        "longitude": 10.7393,
+        "nominal_site_elevation_m": 435.0,
+        "source_metadata_sha256": "1ffd26151e690dc3546fb12641e8b65562cd2c4e34de910d3d1ae45da52e3995",
+        "identity_group": "DE_STATION:07319",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "DE_STATION:07319",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "published_nominal_node",
+        "definition": {
+          "country": "DE",
+          "product": "climate-10_minutes-air_temperature",
+          "field": "TT_10",
+          "published_operator": "published_nominal_node",
+          "nominal_offsets_minutes": [
+            0
+          ],
+          "model_node_weights": [
+            0.0,
+            1.0
+          ],
+          "source_QC_stratum": "DE_10MIN_QN3_AUTOMATIC_CONTROL_AND_CORRECTION_NOT_HOURLY_QN10",
+          "inference": false,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "SOURCE_BLOCKED",
+      "geometry": null,
+      "strict_2m_compatible": false,
+      "temperature_source_eligible": false,
+      "source_block_reasons": [
+        "ValueError:A12_DWD_METADATA_PERIOD_CROSSES_REQUEST_SUPPORT"
+      ],
+      "source_evidence_sha256": {}
+    },
+    "CH:STG": {
+      "station_key": "CH:STG",
+      "frozen_station": {
+        "country": "CH",
+        "station_id": "STG",
+        "name": "St. Gallen",
+        "latitude": 47.425475,
+        "longitude": 9.398528,
+        "nominal_site_elevation_m": 776.0,
+        "source_metadata_sha256": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+        "identity_group": "CH_WIGOS:0-20000-0-06681",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "CH_WIGOS:0-20000-0-06681",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "mean_six_10min_nominal_nodes",
+        "definition": {
+          "country": "CH",
+          "product": "ogd-smn-h",
+          "field": "tre200h0",
+          "published_operator": "mean_six_10min_nominal_nodes",
+          "nominal_offsets_minutes": [
+            -50,
+            -40,
+            -30,
+            -20,
+            -10,
+            0
+          ],
+          "model_node_weights": [
+            0.4166666666666667,
+            0.5833333333333334
+          ],
+          "source_QC_stratum": "CH_PUBLISHED_HISTORICAL_NO_PER_ROW_FLAG",
+          "inference": false,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 47.425458,
+        "longitude": 9.398453,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "channel_selection": "UNIQUE_DATED_EXACT_2M_LOCAL_GROUND_CHANNEL; separate 5cm channels excluded",
+        "geospatial_z_as_reported_m": 775.6,
+        "height_origin": "WMDR_EQUIPMENT_GEOPOSITION_Z_AS_REPORTED_AGL_NOT_ADDED_AGAIN",
+        "deployment_period_half_open": [
+          "2008-01-23T00:00:00Z",
+          null
+        ],
+        "location_period_half_open": [
+          "2008-01-23T00:00:00Z",
+          null
+        ],
+        "location_time_support": "EXPLICIT_LOCATION_PERIOD",
+        "source_WSI": "0-20000-0-06681",
+        "parser_geometry_check_bounds_UTC": [
+          "2018-01-06T23:00:00+00:00",
+          "2018-10-16T23:00:00+00:00"
+        ],
+        "datum_transformation_verified": false,
+        "equipment_z_to_model_orography_transformation_qualified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "CH_WMDR_STG.xml": "24a9792346767cc13054abacedf70eeb351b813340c86319c6c2cd9fb85b7f44"
+      }
+    },
+    "CH:BIZ": {
+      "station_key": "CH:BIZ",
+      "frozen_station": {
+        "country": "CH",
+        "station_id": "BIZ",
+        "name": "Bischofszell / Sitterdorf",
+        "latitude": 47.508828,
+        "longitude": 9.266797,
+        "nominal_site_elevation_m": 507.0,
+        "source_metadata_sha256": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+        "identity_group": "CH_WIGOS:0-20000-0-06678",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "CH_WIGOS:0-20000-0-06678",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "mean_six_10min_nominal_nodes",
+        "definition": {
+          "country": "CH",
+          "product": "ogd-smn-h",
+          "field": "tre200h0",
+          "published_operator": "mean_six_10min_nominal_nodes",
+          "nominal_offsets_minutes": [
+            -50,
+            -40,
+            -30,
+            -20,
+            -10,
+            0
+          ],
+          "model_node_weights": [
+            0.4166666666666667,
+            0.5833333333333334
+          ],
+          "source_QC_stratum": "CH_PUBLISHED_HISTORICAL_NO_PER_ROW_FLAG",
+          "inference": false,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "SOURCE_BLOCKED",
+      "geometry": null,
+      "strict_2m_compatible": false,
+      "temperature_source_eligible": false,
+      "source_block_reasons": [
+        "ValueError:V1_DATED_SOURCE_IDENTITY_SEPARATION_OVER_500M"
+      ],
+      "source_evidence_sha256": {}
+    },
+    "CH:ARH": {
+      "station_key": "CH:ARH",
+      "frozen_station": {
+        "country": "CH",
+        "station_id": "ARH",
+        "name": "Altenrhein",
+        "latitude": 47.483631,
+        "longitude": 9.56685,
+        "nominal_site_elevation_m": 398.0,
+        "source_metadata_sha256": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+        "identity_group": "CH_WIGOS:0-20000-0-06690",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "CH_WIGOS:0-20000-0-06690",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "mean_six_10min_nominal_nodes",
+        "definition": {
+          "country": "CH",
+          "product": "ogd-smn-h",
+          "field": "tre200h0",
+          "published_operator": "mean_six_10min_nominal_nodes",
+          "nominal_offsets_minutes": [
+            -50,
+            -40,
+            -30,
+            -20,
+            -10,
+            0
+          ],
+          "model_node_weights": [
+            0.4166666666666667,
+            0.5833333333333334
+          ],
+          "source_QC_stratum": "CH_PUBLISHED_HISTORICAL_NO_PER_ROW_FLAG",
+          "inference": false,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 47.483675,
+        "longitude": 9.566797,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "channel_selection": "UNIQUE_DATED_EXACT_2M_LOCAL_GROUND_CHANNEL; separate 5cm channels excluded",
+        "geospatial_z_as_reported_m": 398.0,
+        "height_origin": "WMDR_EQUIPMENT_GEOPOSITION_Z_AS_REPORTED_AGL_NOT_ADDED_AGAIN",
+        "deployment_period_half_open": [
+          "2014-02-01T00:00:00Z",
+          null
+        ],
+        "location_period_half_open": [
+          "2014-02-01T00:00:00Z",
+          null
+        ],
+        "location_time_support": "EXPLICIT_LOCATION_PERIOD",
+        "source_WSI": "0-20000-0-06690",
+        "parser_geometry_check_bounds_UTC": [
+          "2018-01-06T23:00:00+00:00",
+          "2018-10-16T23:00:00+00:00"
+        ],
+        "datum_transformation_verified": false,
+        "equipment_z_to_model_orography_transformation_qualified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "CH_WMDR_ARH.xml": "e164e22a5d3a172c9a70ad88a93a2ad347dd6cd1a2751a1cbe6bf8d6d8b6ff9b"
+      }
+    },
+    "CH:OBR": {
+      "station_key": "CH:OBR",
+      "frozen_station": {
+        "country": "CH",
+        "station_id": "OBR",
+        "name": "Oberriet / Kriessern",
+        "latitude": 47.376608,
+        "longitude": 9.612706,
+        "nominal_site_elevation_m": 409.0,
+        "source_metadata_sha256": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+        "identity_group": "CH_WIGOS:0-20000-0-06649",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "CH_WIGOS:0-20000-0-06649",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "mean_six_10min_nominal_nodes",
+        "definition": {
+          "country": "CH",
+          "product": "ogd-smn-h",
+          "field": "tre200h0",
+          "published_operator": "mean_six_10min_nominal_nodes",
+          "nominal_offsets_minutes": [
+            -50,
+            -40,
+            -30,
+            -20,
+            -10,
+            0
+          ],
+          "model_node_weights": [
+            0.4166666666666667,
+            0.5833333333333334
+          ],
+          "source_QC_stratum": "CH_PUBLISHED_HISTORICAL_NO_PER_ROW_FLAG",
+          "inference": false,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 47.376608,
+        "longitude": 9.612703,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "channel_selection": "UNIQUE_DATED_EXACT_2M_LOCAL_GROUND_CHANNEL; separate 5cm channels excluded",
+        "geospatial_z_as_reported_m": 409.0,
+        "height_origin": "WMDR_EQUIPMENT_GEOPOSITION_Z_AS_REPORTED_AGL_NOT_ADDED_AGAIN",
+        "deployment_period_half_open": [
+          "2015-06-01T00:00:00Z",
+          null
+        ],
+        "location_period_half_open": [
+          "2015-06-01T00:00:00Z",
+          null
+        ],
+        "location_time_support": "EXPLICIT_LOCATION_PERIOD",
+        "source_WSI": "0-20000-0-06649",
+        "parser_geometry_check_bounds_UTC": [
+          "2018-01-06T23:00:00+00:00",
+          "2018-10-16T23:00:00+00:00"
+        ],
+        "datum_transformation_verified": false,
+        "equipment_z_to_model_orography_transformation_qualified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "CH_WMDR_OBR.xml": "208aac4344a7fd753c002db1bd553999942c5b3665fe7b947d7d3eef4e7d1e73"
+      }
+    },
+    "CH:SAE": {
+      "station_key": "CH:SAE",
+      "frozen_station": {
+        "country": "CH",
+        "station_id": "SAE",
+        "name": "Säntis",
+        "latitude": 47.249447,
+        "longitude": 9.343469,
+        "nominal_site_elevation_m": 2501.0,
+        "source_metadata_sha256": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+        "identity_group": "CH_WIGOS:0-20000-0-06680",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "CH_WIGOS:0-20000-0-06680",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "mean_six_10min_nominal_nodes",
+        "definition": {
+          "country": "CH",
+          "product": "ogd-smn-h",
+          "field": "tre200h0",
+          "published_operator": "mean_six_10min_nominal_nodes",
+          "nominal_offsets_minutes": [
+            -50,
+            -40,
+            -30,
+            -20,
+            -10,
+            0
+          ],
+          "model_node_weights": [
+            0.4166666666666667,
+            0.5833333333333334
+          ],
+          "source_QC_stratum": "CH_PUBLISHED_HISTORICAL_NO_PER_ROW_FLAG",
+          "inference": false,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 47.249442,
+        "longitude": 9.34335,
+        "AGL_m": 2.52,
+        "local_reference_surface": "localGround",
+        "channel_selection": "NO_EXACT_2M_CHANNEL; unique actual height reported, no strict T2m admission",
+        "geospatial_z_as_reported_m": 2501.66,
+        "height_origin": "WMDR_EQUIPMENT_GEOPOSITION_Z_AS_REPORTED_AGL_NOT_ADDED_AGAIN",
+        "deployment_period_half_open": [
+          "2005-11-30T00:00:00Z",
+          null
+        ],
+        "location_period_half_open": [
+          "2005-11-30T00:00:00Z",
+          null
+        ],
+        "location_time_support": "EXPLICIT_LOCATION_PERIOD",
+        "source_WSI": "0-20000-0-06680",
+        "parser_geometry_check_bounds_UTC": [
+          "2018-01-06T23:00:00+00:00",
+          "2018-10-16T23:00:00+00:00"
+        ],
+        "datum_transformation_verified": false,
+        "equipment_z_to_model_orography_transformation_qualified": false
+      },
+      "strict_2m_compatible": false,
+      "temperature_source_eligible": false,
+      "source_block_reasons": [
+        "ValueError:V1_STRICT_DATED_2M_REQUIRED"
+      ],
+      "source_evidence_sha256": {
+        "CH_WMDR_SAE.xml": "81d580c499c5344233c1608679d6be7e5550921b7555ff7ab0d96d64d9705a02"
+      }
+    },
+    "CH:SCU": {
+      "station_key": "CH:SCU",
+      "frozen_station": {
+        "country": "CH",
+        "station_id": "SCU",
+        "name": "Scuol",
+        "latitude": 46.793275,
+        "longitude": 10.283267,
+        "nominal_site_elevation_m": 1304.0,
+        "source_metadata_sha256": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+        "identity_group": "CH_WIGOS:0-20000-0-06798",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "CH_WIGOS:0-20000-0-06798",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "mean_six_10min_nominal_nodes",
+        "definition": {
+          "country": "CH",
+          "product": "ogd-smn-h",
+          "field": "tre200h0",
+          "published_operator": "mean_six_10min_nominal_nodes",
+          "nominal_offsets_minutes": [
+            -50,
+            -40,
+            -30,
+            -20,
+            -10,
+            0
+          ],
+          "model_node_weights": [
+            0.4166666666666667,
+            0.5833333333333334
+          ],
+          "source_QC_stratum": "CH_PUBLISHED_HISTORICAL_NO_PER_ROW_FLAG",
+          "inference": false,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 46.793272,
+        "longitude": 10.283192,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "channel_selection": "UNIQUE_DATED_EXACT_2M_LOCAL_GROUND_CHANNEL; separate 5cm channels excluded",
+        "geospatial_z_as_reported_m": 1304.41,
+        "height_origin": "WMDR_EQUIPMENT_GEOPOSITION_Z_AS_REPORTED_AGL_NOT_ADDED_AGAIN",
+        "deployment_period_half_open": [
+          "2006-02-24T00:00:00Z",
+          null
+        ],
+        "location_period_half_open": [
+          "2006-02-24T00:00:00Z",
+          null
+        ],
+        "location_time_support": "EXPLICIT_LOCATION_PERIOD",
+        "source_WSI": "0-20000-0-06798",
+        "parser_geometry_check_bounds_UTC": [
+          "2018-01-06T23:00:00+00:00",
+          "2018-10-16T23:00:00+00:00"
+        ],
+        "datum_transformation_verified": false,
+        "equipment_z_to_model_orography_transformation_qualified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "CH_WMDR_SCU.xml": "628554b93bfeec2ef3c2e19d0b5850ad0befc0026f5c2cfee205f1984e58b095"
+      }
+    },
+    "CH:BUF": {
+      "station_key": "CH:BUF",
+      "frozen_station": {
+        "country": "CH",
+        "station_id": "BUF",
+        "name": "Buffalora",
+        "latitude": 46.648408,
+        "longitude": 10.2672,
+        "nominal_site_elevation_m": 1971.0,
+        "source_metadata_sha256": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+        "identity_group": "CH_WIGOS:0-20000-0-06778",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "CH_WIGOS:0-20000-0-06778",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "mean_six_10min_nominal_nodes",
+        "definition": {
+          "country": "CH",
+          "product": "ogd-smn-h",
+          "field": "tre200h0",
+          "published_operator": "mean_six_10min_nominal_nodes",
+          "nominal_offsets_minutes": [
+            -50,
+            -40,
+            -30,
+            -20,
+            -10,
+            0
+          ],
+          "model_node_weights": [
+            0.4166666666666667,
+            0.5833333333333334
+          ],
+          "source_QC_stratum": "CH_PUBLISHED_HISTORICAL_NO_PER_ROW_FLAG",
+          "inference": false,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 46.648139,
+        "longitude": 10.267183,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "channel_selection": "UNIQUE_DATED_EXACT_2M_LOCAL_GROUND_CHANNEL; separate 5cm channels excluded",
+        "geospatial_z_as_reported_m": 1968.0,
+        "height_origin": "WMDR_EQUIPMENT_GEOPOSITION_Z_AS_REPORTED_AGL_NOT_ADDED_AGAIN",
+        "deployment_period_half_open": [
+          "2010-11-18T00:00:00Z",
+          null
+        ],
+        "location_period_half_open": [
+          "2010-11-18T00:00:00Z",
+          null
+        ],
+        "location_time_support": "EXPLICIT_LOCATION_PERIOD",
+        "source_WSI": "0-20000-0-06778",
+        "parser_geometry_check_bounds_UTC": [
+          "2018-01-06T23:00:00+00:00",
+          "2018-10-16T23:00:00+00:00"
+        ],
+        "datum_transformation_verified": false,
+        "equipment_z_to_model_orography_transformation_qualified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "CH_WMDR_BUF.xml": "e8e072edf3b69ba0705be1cbb60de2d9824f029b7b0d35ced6675e3e97c8120b"
+      }
+    },
+    "CH:SMM": {
+      "station_key": "CH:SMM",
+      "frozen_station": {
+        "country": "CH",
+        "station_id": "SMM",
+        "name": "Sta. Maria, Val Müstair",
+        "latitude": 46.602256,
+        "longitude": 10.426314,
+        "nominal_site_elevation_m": 1386.0,
+        "source_metadata_sha256": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+        "identity_group": "CH_WIGOS:0-20000-0-06796",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "CH_WIGOS:0-20000-0-06796",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "mean_six_10min_nominal_nodes",
+        "definition": {
+          "country": "CH",
+          "product": "ogd-smn-h",
+          "field": "tre200h0",
+          "published_operator": "mean_six_10min_nominal_nodes",
+          "nominal_offsets_minutes": [
+            -50,
+            -40,
+            -30,
+            -20,
+            -10,
+            0
+          ],
+          "model_node_weights": [
+            0.4166666666666667,
+            0.5833333333333334
+          ],
+          "source_QC_stratum": "CH_PUBLISHED_HISTORICAL_NO_PER_ROW_FLAG",
+          "inference": false,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 46.6022,
+        "longitude": 10.426289,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "channel_selection": "UNIQUE_DATED_EXACT_2M_LOCAL_GROUND_CHANNEL; separate 5cm channels excluded",
+        "geospatial_z_as_reported_m": 1383.0,
+        "height_origin": "WMDR_EQUIPMENT_GEOPOSITION_Z_AS_REPORTED_AGL_NOT_ADDED_AGAIN",
+        "deployment_period_half_open": [
+          "2011-12-15T00:00:00Z",
+          null
+        ],
+        "location_period_half_open": [
+          "2011-12-15T00:00:00Z",
+          null
+        ],
+        "location_time_support": "EXPLICIT_LOCATION_PERIOD",
+        "source_WSI": "0-20000-0-06796",
+        "parser_geometry_check_bounds_UTC": [
+          "2018-01-06T23:00:00+00:00",
+          "2018-10-16T23:00:00+00:00"
+        ],
+        "datum_transformation_verified": false,
+        "equipment_z_to_model_orography_transformation_qualified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "CH_WMDR_SMM.xml": "cd585b3109899f2fbe33cc5a70176d20910cecea726f4749ad8bbfbebd7310c5"
+      }
+    },
+    "CH:DAV": {
+      "station_key": "CH:DAV",
+      "frozen_station": {
+        "country": "CH",
+        "station_id": "DAV",
+        "name": "Davos",
+        "latitude": 46.812969,
+        "longitude": 9.843558,
+        "nominal_site_elevation_m": 1594.0,
+        "source_metadata_sha256": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+        "identity_group": "CH_WIGOS:0-20000-0-06784",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "CH_WIGOS:0-20000-0-06784",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "mean_six_10min_nominal_nodes",
+        "definition": {
+          "country": "CH",
+          "product": "ogd-smn-h",
+          "field": "tre200h0",
+          "published_operator": "mean_six_10min_nominal_nodes",
+          "nominal_offsets_minutes": [
+            -50,
+            -40,
+            -30,
+            -20,
+            -10,
+            0
+          ],
+          "model_node_weights": [
+            0.4166666666666667,
+            0.5833333333333334
+          ],
+          "source_QC_stratum": "CH_PUBLISHED_HISTORICAL_NO_PER_ROW_FLAG",
+          "inference": false,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 46.812956,
+        "longitude": 9.843481,
+        "AGL_m": 2.0,
+        "local_reference_surface": "localGround",
+        "channel_selection": "UNIQUE_DATED_EXACT_2M_LOCAL_GROUND_CHANNEL; separate 5cm channels excluded",
+        "geospatial_z_as_reported_m": 1593.93,
+        "height_origin": "WMDR_EQUIPMENT_GEOPOSITION_Z_AS_REPORTED_AGL_NOT_ADDED_AGAIN",
+        "deployment_period_half_open": [
+          "2006-12-13T00:00:00Z",
+          null
+        ],
+        "location_period_half_open": [
+          "2006-12-13T00:00:00Z",
+          null
+        ],
+        "location_time_support": "EXPLICIT_LOCATION_PERIOD",
+        "source_WSI": "0-20000-0-06784",
+        "parser_geometry_check_bounds_UTC": [
+          "2018-01-06T23:00:00+00:00",
+          "2018-10-16T23:00:00+00:00"
+        ],
+        "datum_transformation_verified": false,
+        "equipment_z_to_model_orography_transformation_qualified": false
+      },
+      "strict_2m_compatible": true,
+      "temperature_source_eligible": true,
+      "source_block_reasons": [],
+      "source_evidence_sha256": {
+        "CH_WMDR_DAV.xml": "6f71adb3cde2a1373c02fb59c56639600e475291022d2997a5aab3b845a6b44d"
+      }
+    },
+    "CH:WFJ": {
+      "station_key": "CH:WFJ",
+      "frozen_station": {
+        "country": "CH",
+        "station_id": "WFJ",
+        "name": "Weissfluhjoch",
+        "latitude": 46.833342,
+        "longitude": 9.806397,
+        "nominal_site_elevation_m": 2691.0,
+        "source_metadata_sha256": "b0025fb9909f28d536e90983337525697c27b75a607d1724f2d411ef3477ab59",
+        "identity_group": "CH_WIGOS:0-20000-0-06780",
+        "historical_geometry_verified": false
+      },
+      "resolved_identity_group": "CH_WIGOS:0-20000-0-06780",
+      "reference_first_UTC": "2018-01-07T00:00:00+00:00",
+      "reference_last_UTC": "2018-10-16T23:00:00+00:00",
+      "time_contract": {
+        "operator": "mean_six_10min_nominal_nodes",
+        "definition": {
+          "country": "CH",
+          "product": "ogd-smn-h",
+          "field": "tre200h0",
+          "published_operator": "mean_six_10min_nominal_nodes",
+          "nominal_offsets_minutes": [
+            -50,
+            -40,
+            -30,
+            -20,
+            -10,
+            0
+          ],
+          "model_node_weights": [
+            0.4166666666666667,
+            0.5833333333333334
+          ],
+          "source_QC_stratum": "CH_PUBLISHED_HISTORICAL_NO_PER_ROW_FLAG",
+          "inference": false,
+          "instrument_filter_period_certified": false
+        },
+        "true_sensor_filter_known": false
+      },
+      "geometry_status": "DATED_TEMPERATURE_SENSOR_CONFIRMED",
+      "geometry": {
+        "latitude": 46.833328,
+        "longitude": 9.806383,
+        "AGL_m": 2.5,
+        "local_reference_surface": "localGround",
+        "channel_selection": "NO_EXACT_2M_CHANNEL; unique actual height reported, no strict T2m admission",
+        "geospatial_z_as_reported_m": 2691.24,
+        "height_origin": "WMDR_EQUIPMENT_GEOPOSITION_Z_AS_REPORTED_AGL_NOT_ADDED_AGAIN",
+        "deployment_period_half_open": [
+          "2007-10-30T00:00:00Z",
+          null
+        ],
+        "location_period_half_open": [
+          "2007-10-30T00:00:00Z",
+          null
+        ],
+        "location_time_support": "EXPLICIT_LOCATION_PERIOD",
+        "source_WSI": "0-20000-0-06780",
+        "parser_geometry_check_bounds_UTC": [
+          "2018-01-06T23:00:00+00:00",
+          "2018-10-16T23:00:00+00:00"
+        ],
+        "datum_transformation_verified": false,
+        "equipment_z_to_model_orography_transformation_qualified": false
+      },
+      "strict_2m_compatible": false,
+      "temperature_source_eligible": false,
+      "source_block_reasons": [
+        "ValueError:V1_STRICT_DATED_2M_REQUIRED"
+      ],
+      "source_evidence_sha256": {
+        "CH_WMDR_WFJ.xml": "83f2264c54a7319c0fa2a9d4c26d340db8018329d0094c508245b5ee83d1f46d"
+      }
+    }
+  },
+  "groups": [
+    {
+      "target_key": "AT:5609",
+      "target_name": "St. Pölten Landhaus",
+      "donors": [
+        "AT:5625",
+        "AT:3805",
+        "AT:3702"
+      ],
+      "metadata_ready": true,
+      "donor_selection": "first three metadata-admitted in fixed nominal-distance candidate order; no weather availability selection",
+      "candidate_order": [
+        "AT:5625",
+        "AT:5413",
+        "AT:5735",
+        "AT:3805",
+        "AT:3702",
+        "AT:5701",
+        "AT:3811",
+        "AT:5412"
+      ]
+    },
+    {
+      "target_key": "AT:20123",
+      "target_name": "Villach Stadt",
+      "donors": [
+        "AT:20105",
+        "AT:20270",
+        "AT:20220"
+      ],
+      "metadata_ready": true,
+      "donor_selection": "first three metadata-admitted in fixed nominal-distance candidate order; no weather availability selection",
+      "candidate_order": [
+        "AT:20101",
+        "AT:20105",
+        "AT:20002",
+        "AT:20021",
+        "AT:20011",
+        "AT:20270",
+        "AT:20220",
+        "AT:19911"
+      ]
+    },
+    {
+      "target_key": "DE:01270",
+      "target_name": "Erfurt-Weimar",
+      "donors": [
+        "DE:00896",
+        "DE:00379",
+        "DE:05424"
+      ],
+      "metadata_ready": true,
+      "donor_selection": "first three metadata-admitted in fixed nominal-distance candidate order; no weather availability selection",
+      "candidate_order": [
+        "DE:00896",
+        "DE:00379",
+        "DE:05424",
+        "DE:03204"
+      ]
+    },
+    {
+      "target_key": "DE:00232",
+      "target_name": "Augsburg",
+      "donors": [
+        "DE:06346",
+        "DE:00983"
+      ],
+      "metadata_ready": true,
+      "donor_selection": "first three metadata-admitted in fixed nominal-distance candidate order; no weather availability selection",
+      "candidate_order": [
+        "DE:00142",
+        "DE:06346",
+        "DE:00983",
+        "DE:07319"
+      ]
+    },
+    {
+      "target_key": "CH:STG",
+      "target_name": "St. Gallen",
+      "donors": [
+        "CH:ARH",
+        "CH:OBR"
+      ],
+      "metadata_ready": true,
+      "donor_selection": "first three metadata-admitted in fixed nominal-distance candidate order; no weather availability selection",
+      "candidate_order": [
+        "CH:BIZ",
+        "CH:ARH",
+        "CH:OBR",
+        "CH:SAE"
+      ]
+    },
+    {
+      "target_key": "CH:SCU",
+      "target_name": "Scuol",
+      "donors": [
+        "CH:BUF",
+        "CH:SMM",
+        "CH:DAV"
+      ],
+      "metadata_ready": true,
+      "donor_selection": "first three metadata-admitted in fixed nominal-distance candidate order; no weather availability selection",
+      "candidate_order": [
+        "CH:BUF",
+        "CH:SMM",
+        "CH:DAV",
+        "CH:WFJ"
+      ]
+    }
+  ],
+  "metadata_candidate_audit": [
+    {
+      "target_key": "AT:5609",
+      "candidate_key": "AT:5625",
+      "nominal_distance_km": 19.36034661370688,
+      "admitted": true,
+      "selected": true,
+      "reason": []
+    },
+    {
+      "target_key": "AT:5609",
+      "candidate_key": "AT:5413",
+      "nominal_distance_km": 22.2395110182814,
+      "admitted": false,
+      "selected": false,
+      "reason": [
+        "KeyError:'5413'"
+      ]
+    },
+    {
+      "target_key": "AT:5609",
+      "candidate_key": "AT:5735",
+      "nominal_distance_km": 23.308517494807557,
+      "admitted": false,
+      "selected": false,
+      "reason": [
+        "KeyError:'5735'"
+      ]
+    },
+    {
+      "target_key": "AT:5609",
+      "candidate_key": "AT:3805",
+      "nominal_distance_km": 24.34833598092897,
+      "admitted": true,
+      "selected": true,
+      "reason": []
+    },
+    {
+      "target_key": "AT:5609",
+      "candidate_key": "AT:3702",
+      "nominal_distance_km": 26.298970459984666,
+      "admitted": true,
+      "selected": true,
+      "reason": []
+    },
+    {
+      "target_key": "AT:5609",
+      "candidate_key": "AT:5701",
+      "nominal_distance_km": 30.136884672757674,
+      "admitted": false,
+      "selected": false,
+      "reason": [
+        "KeyError:'5701'"
+      ]
+    },
+    {
+      "target_key": "AT:5609",
+      "candidate_key": "AT:3811",
+      "nominal_distance_km": 30.722873016475877,
+      "admitted": true,
+      "selected": false,
+      "reason": []
+    },
+    {
+      "target_key": "AT:5609",
+      "candidate_key": "AT:5412",
+      "nominal_distance_km": 34.52983206670368,
+      "admitted": false,
+      "selected": false,
+      "reason": [
+        "KeyError:'5412'"
+      ]
+    },
+    {
+      "target_key": "AT:20123",
+      "candidate_key": "AT:20101",
+      "nominal_distance_km": 6.917980807964451,
+      "admitted": false,
+      "selected": false,
+      "reason": [
+        "KeyError:'20101'"
+      ]
+    },
+    {
+      "target_key": "AT:20123",
+      "candidate_key": "AT:20105",
+      "nominal_distance_km": 12.299667767292837,
+      "admitted": true,
+      "selected": true,
+      "reason": []
+    },
+    {
+      "target_key": "AT:20123",
+      "candidate_key": "AT:20002",
+      "nominal_distance_km": 14.49056560113675,
+      "admitted": false,
+      "selected": false,
+      "reason": [
+        "KeyError:'20002'"
+      ]
+    },
+    {
+      "target_key": "AT:20123",
+      "candidate_key": "AT:20021",
+      "nominal_distance_km": 15.445657536134215,
+      "admitted": false,
+      "selected": false,
+      "reason": [
+        "KeyError:'20021'"
+      ]
+    },
+    {
+      "target_key": "AT:20123",
+      "candidate_key": "AT:20011",
+      "nominal_distance_km": 17.99996619103357,
+      "admitted": false,
+      "selected": false,
+      "reason": [
+        "KeyError:'20011'"
+      ]
+    },
+    {
+      "target_key": "AT:20123",
+      "candidate_key": "AT:20270",
+      "nominal_distance_km": 20.56877187399731,
+      "admitted": true,
+      "selected": true,
+      "reason": []
+    },
+    {
+      "target_key": "AT:20123",
+      "candidate_key": "AT:20220",
+      "nominal_distance_km": 22.29758413805634,
+      "admitted": true,
+      "selected": true,
+      "reason": []
+    },
+    {
+      "target_key": "AT:20123",
+      "candidate_key": "AT:19911",
+      "nominal_distance_km": 29.16707600584667,
+      "admitted": false,
+      "selected": false,
+      "reason": [
+        "KeyError:'19911'"
+      ]
+    },
+    {
+      "target_key": "DE:01270",
+      "candidate_key": "DE:00896",
+      "nominal_distance_km": 12.65472588250848,
+      "admitted": true,
+      "selected": true,
+      "reason": []
+    },
+    {
+      "target_key": "DE:01270",
+      "candidate_key": "DE:00379",
+      "nominal_distance_km": 22.95915891581529,
+      "admitted": true,
+      "selected": true,
+      "reason": []
+    },
+    {
+      "target_key": "DE:01270",
+      "candidate_key": "DE:05424",
+      "nominal_distance_km": 27.781841235511283,
+      "admitted": true,
+      "selected": true,
+      "reason": []
+    },
+    {
+      "target_key": "DE:01270",
+      "candidate_key": "DE:03204",
+      "nominal_distance_km": 28.27021995337575,
+      "admitted": true,
+      "selected": false,
+      "reason": []
+    },
+    {
+      "target_key": "DE:00232",
+      "candidate_key": "DE:00142",
+      "nominal_distance_km": 26.11959825935903,
+      "admitted": false,
+      "selected": false,
+      "reason": [
+        "ValueError:V1_DATED_SOURCE_IDENTITY_SEPARATION_OVER_500M"
+      ]
+    },
+    {
+      "target_key": "DE:00232",
+      "candidate_key": "DE:06346",
+      "nominal_distance_km": 31.048336001488945,
+      "admitted": true,
+      "selected": true,
+      "reason": []
+    },
+    {
+      "target_key": "DE:00232",
+      "candidate_key": "DE:00983",
+      "nominal_distance_km": 31.67152118870384,
+      "admitted": true,
+      "selected": true,
+      "reason": []
+    },
+    {
+      "target_key": "DE:00232",
+      "candidate_key": "DE:07319",
+      "nominal_distance_km": 37.76293466257647,
+      "admitted": false,
+      "selected": false,
+      "reason": [
+        "ValueError:A12_DWD_METADATA_PERIOD_CROSSES_REQUEST_SUPPORT"
+      ]
+    },
+    {
+      "target_key": "CH:STG",
+      "candidate_key": "CH:BIZ",
+      "nominal_distance_km": 13.563021242555509,
+      "admitted": false,
+      "selected": false,
+      "reason": [
+        "ValueError:V1_DATED_SOURCE_IDENTITY_SEPARATION_OVER_500M"
+      ]
+    },
+    {
+      "target_key": "CH:STG",
+      "candidate_key": "CH:ARH",
+      "nominal_distance_km": 14.212080226501174,
+      "admitted": true,
+      "selected": true,
+      "reason": []
+    },
+    {
+      "target_key": "CH:STG",
+      "candidate_key": "CH:OBR",
+      "nominal_distance_km": 17.011005866427684,
+      "admitted": true,
+      "selected": true,
+      "reason": []
+    },
+    {
+      "target_key": "CH:STG",
+      "candidate_key": "CH:SAE",
+      "nominal_distance_km": 20.008309457437587,
+      "admitted": false,
+      "selected": false,
+      "reason": [
+        "ValueError:V1_STRICT_DATED_2M_REQUIRED"
+      ]
+    },
+    {
+      "target_key": "CH:SCU",
+      "candidate_key": "CH:BUF",
+      "nominal_distance_km": 16.154970899925047,
+      "admitted": true,
+      "selected": true,
+      "reason": []
+    },
+    {
+      "target_key": "CH:SCU",
+      "candidate_key": "CH:SMM",
+      "nominal_distance_km": 23.878048031792343,
+      "admitted": true,
+      "selected": true,
+      "reason": []
+    },
+    {
+      "target_key": "CH:SCU",
+      "candidate_key": "CH:DAV",
+      "nominal_distance_km": 33.53942329800793,
+      "admitted": true,
+      "selected": true,
+      "reason": []
+    },
+    {
+      "target_key": "CH:SCU",
+      "candidate_key": "CH:WFJ",
+      "nominal_distance_km": 36.56189323342478,
+      "admitted": false,
+      "selected": false,
+      "reason": [
+        "ValueError:V1_STRICT_DATED_2M_REQUIRED"
+      ]
+    }
+  ],
+  "ready_cases": 24,
+  "all_cases_retained": 24,
+  "new_station_measurement_or_model_requests": 0,
+  "independent_accuracy_qualified": false,
+  "old_DWD_TT_TU_operator_admission_changed": false,
+  "production_ready": false
+}

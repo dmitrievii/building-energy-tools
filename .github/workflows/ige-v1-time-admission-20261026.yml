@@ -1,0 +1,58 @@
+name: IGE V1 time admission and preregistered AT DE CH temperature validation RESEARCH
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/ige-v1-time-admission-preregistration-20261026
+    paths:
+      - research/ige_cmip6/v1_*.py
+      - research/ige_cmip6/v1_registration_20261026.json
+      - research/ige_cmip6/v1_results_20261026.json
+      - tools/climate_analyzer/tests/test_ige_v1.py
+      - .github/workflows/ige-v1-time-admission-20261026.yml
+permissions:
+  contents: read
+env:
+  OPENBLAS_NUM_THREADS: '1'
+  OMP_NUM_THREADS: '1'
+  STREAMLIT_BROWSER_GATHER_USAGE_STATS: 'false'
+  PYTHONPATH: tools/climate_analyzer:research/ige_cmip6
+jobs:
+  offline_time_admission_and_registered_source_replay:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r tools/climate_analyzer/requirements.txt numcodecs==0.15.1 deprecated==3.0.0 wrapt==2.5.1
+      - name: Offline immutable parent, nominal operators and actual source replay
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from v1_verify import verify
+          stage='results' if Path('research/ige_cmip6/v1_results_20261026.json').exists() else 'registration'
+          verify(Path('outputs/v1'),stage)
+          PY
+      - name: Keep the four scientific status axes distinct
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json,os
+          r=json.loads(Path('outputs/v1/v1_verification.json').read_text())
+          assert not r['production_ready']
+          assert not r['independent_regional_full_weather_accuracy_qualified']
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:
+              f.write(f"{r['total_tests']} checks PASS; V1 stage: {r['stage']}.\n\n")
+              f.write('AT/DE/CH temperature admission and bounded hourly-error holdout only. Code correctness, physical support, measured accuracy and operation remain separate; no default or production promotion.\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: IGE-V1-AT-DE-CH-temperature-time-form-RESEARCH
+          path: outputs/v1/
+          if-no-files-found: warn
+          retention-days: 30
