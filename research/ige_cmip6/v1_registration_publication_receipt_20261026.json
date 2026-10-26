@@ -1,0 +1,19 @@
+{
+  "branch": "research/ige-v1-time-admission-preregistration-20261026",
+  "confirmed_before_control_bodies": true,
+  "confirmed_before_predictor_acquisition": true,
+  "external_trusted_timestamp_claimed": false,
+  "registration_commit": "8fdc0341f1b660f4e56abec726381ae5a2dcc8a1",
+  "remote_ref_result": {
+    "node_id": "REF_kwDOSzGjCNoAQnJlZnMvaGVhZHMvcmVzZWFyY2gvaWdlLXYxLXRpbWUtYWRtaXNzaW9uLXByZXJlZ2lzdHJhdGlvbi0yMDI2MTAyNg",
+    "object": {
+      "sha": "8fdc0341f1b660f4e56abec726381ae5a2dcc8a1",
+      "type": "commit",
+      "url": "https://api.github.com/repos/dmitrievii/building-energy-tools/git/commits/8fdc0341f1b660f4e56abec726381ae5a2dcc8a1"
+    },
+    "ref": "refs/heads/research/ige-v1-time-admission-preregistration-20261026",
+    "url": "https://api.github.com/repos/dmitrievii/building-energy-tools/git/refs/heads/research/ige-v1-time-admission-preregistration-20261026"
+  },
+  "repository": "dmitrievii/building-energy-tools",
+  "schema": "IGE_V1_REGISTRATION_PUBLICATION_RECEIPT_v1"
+}

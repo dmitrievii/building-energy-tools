@@ -1,0 +1,38 @@
+{
+  "schema": "IGE_V1_BITWISE_ORIGINAL_PACKET_PARTS_v1",
+  "packet_name": "v1_input_sources_20261026.zip",
+  "bytes": 32056428,
+  "sha256": "687ec18f5d22c79478b47275d2cf29a8af9eebcdcdfb360b64b750248584f893",
+  "parts": [
+    {
+      "name": "v1_input_sources_20261026.zip.part001",
+      "bytes": 5500000,
+      "sha256": "9b5bfc18899a34fa34e40c758684a2804806fb1356b670b60719cbcd04f0b4d7"
+    },
+    {
+      "name": "v1_input_sources_20261026.zip.part002",
+      "bytes": 5500000,
+      "sha256": "a7cfe8d44745b293f89adc51c53eb7855dee962ca4962da3f54dcef7a293a082"
+    },
+    {
+      "name": "v1_input_sources_20261026.zip.part003",
+      "bytes": 5500000,
+      "sha256": "208f7ae10d5b7d660d26169f8ee3ac29795452f31b1fe366b540ccd64e43df84"
+    },
+    {
+      "name": "v1_input_sources_20261026.zip.part004",
+      "bytes": 5500000,
+      "sha256": "ec77bd1fd925d9d526954bf338a0bb1c9eca1092f1a40383b913dab7c7e45478"
+    },
+    {
+      "name": "v1_input_sources_20261026.zip.part005",
+      "bytes": 5500000,
+      "sha256": "8d87f1852b80aae98ea7a1ca2d62381e9ec5b6a91d76b7626bae01e1d79cf9c3"
+    },
+    {
+      "name": "v1_input_sources_20261026.zip.part006",
+      "bytes": 4556428,
+      "sha256": "d164a87b09de1d37b5b96229d202de06a1d2240426e884248e5d503a3b979007"
+    }
+  ]
+}

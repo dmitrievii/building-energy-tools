@@ -1,0 +1,80 @@
+{
+  "schema": "IGE_V1_AVAILABILITY_ONLY_PRECONTROL_ADDENDUM_v1",
+  "date": "2026-10-26",
+  "registration_commit": "8fdc0341f1b660f4e56abec726381ae5a2dcc8a1",
+  "registration_sha256": "468c8cf09dd4c0c2eb29be4c4c3bbe5073625cddcf3a42377d652e69416aaa1b",
+  "prediction_ledger_sha256": "d216fbb46cdc3b053481b6ac70c21baf2d55393017a5493d0ce6e48d088669c7",
+  "gate_module_sha256": "d7c94c56b6a657d84e463aa7bf4122b2b3e2b11a07a7950ff1f43f38701c8f99",
+  "reason": "All six AT donor records have nativeQC10, automatically checked without original-status certification. Zero primaryAT R1 predictions; do not open control T solely to manufacture a complete-country score.",
+  "donor_QC_counts": {
+    "AT:20105": {
+      "10": 6792
+    },
+    "AT:20220": {
+      "10": 6792
+    },
+    "AT:20270": {
+      "10": 6792
+    },
+    "AT:3702": {
+      "10": 6792
+    },
+    "AT:3805": {
+      "10": 6792
+    },
+    "AT:5625": {
+      "10": 6792
+    }
+  },
+  "source_admission": {
+    "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h?station_ids=20123&parameters=tl%2Ctl_flag&output_format=geojson&start=2018-01-07T00%3A00%3A00Z&end=2018-10-16T23%3A00%3A00Z": {
+      "target_key": "AT:20123",
+      "open": false,
+      "reason": "NO_REGISTERED_CASE_HAS_160_PRIMARY_R1_FORECASTS; leave control body unopened"
+    },
+    "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h?station_ids=5609&parameters=tl%2Ctl_flag&output_format=geojson&start=2018-01-07T00%3A00%3A00Z&end=2018-10-16T23%3A00%3A00Z": {
+      "target_key": "AT:5609",
+      "open": false,
+      "reason": "NO_REGISTERED_CASE_HAS_160_PRIMARY_R1_FORECASTS; leave control body unopened"
+    },
+    "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/scu/ogd-smn_scu_h_historical_2010-2019.csv": {
+      "target_key": "CH:SCU",
+      "open": true,
+      "reason": null
+    },
+    "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/stg/ogd-smn_stg_h_historical_2010-2019.csv": {
+      "target_key": "CH:STG",
+      "open": true,
+      "reason": null
+    },
+    "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/air_temperature/historical/10minutenwerte_TU_00232_20100101_20191231_hist.zip": {
+      "target_key": "DE:00232",
+      "open": true,
+      "reason": null
+    },
+    "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/air_temperature/historical/10minutenwerte_TU_01270_20100101_20191231_hist.zip": {
+      "target_key": "DE:01270",
+      "open": true,
+      "reason": null
+    },
+    "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/scu/ogd-smn_scu_t_historical_2010-2019.csv": {
+      "target_key": "CH:SCU",
+      "open": true,
+      "reason": null
+    },
+    "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/stg/ogd-smn_stg_t_historical_2010-2019.csv": {
+      "target_key": "CH:STG",
+      "open": true,
+      "reason": null
+    }
+  },
+  "control_bodies_already_opened": false,
+  "primary_QC_or_method_changed": false,
+  "source_operator_geometry_and_donor_selection_changed": false,
+  "registered_stations_dates_and_all24_cases_retained": true,
+  "no_replacement": true,
+  "AT_control_hourly_values_and_errors_remain_unread": true,
+  "scientific_scope": "availability-driven gate after predictor acquisition, before all controls; original registration remains unchanged",
+  "cost_semantics": "original collector HTTP_attempts_this_phase counts acquisition attempts; two local zero-byte skips are disclosed separately; actual HTTP6 if all admitted assets succeed",
+  "input_original_packet_sha256": "687ec18f5d22c79478b47275d2cf29a8af9eebcdcdfb360b64b750248584f893"
+}

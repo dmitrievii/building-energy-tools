@@ -1,0 +1,10 @@
+{
+  "schema": "IGE_V1_CONTROL_GATE_VERIFICATION_v1",
+  "tests_run": 8,
+  "status": "PASS",
+  "gate_module_sha256": "d7c94c56b6a657d84e463aa7bf4122b2b3e2b11a07a7950ff1f43f38701c8f99",
+  "addendum_sha256": "fd6f357bbb7d32907015b6d6ad47ff64cce8d6b532aebc05071a7f681a9244b8",
+  "AT_controls_unopened": true,
+  "original_primary_QC_unchanged": true,
+  "production_ready": false
+}

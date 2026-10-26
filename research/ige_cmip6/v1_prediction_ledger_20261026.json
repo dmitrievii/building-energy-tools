@@ -1,0 +1,765 @@
+{
+  "schema": "IGE_V1_PRECONTROL_PREDICTION_LEDGER_v1",
+  "cases": [
+    {
+      "target_key": "AT:5609",
+      "country": "AT",
+      "season": "winter",
+      "metadata_ready": true,
+      "requested_hours": 168,
+      "frozen_donors": [
+        "AT:5625",
+        "AT:3805",
+        "AT:3702"
+      ],
+      "B0_reference_hours": 168,
+      "R1_predicted_hours": 0,
+      "endpoint_eligible_hours": 0,
+      "source_block_reasons": [],
+      "control_values_read": false
+    },
+    {
+      "target_key": "AT:5609",
+      "country": "AT",
+      "season": "spring",
+      "metadata_ready": true,
+      "requested_hours": 168,
+      "frozen_donors": [
+        "AT:5625",
+        "AT:3805",
+        "AT:3702"
+      ],
+      "B0_reference_hours": 168,
+      "R1_predicted_hours": 0,
+      "endpoint_eligible_hours": 0,
+      "source_block_reasons": [],
+      "control_values_read": false
+    },
+    {
+      "target_key": "AT:5609",
+      "country": "AT",
+      "season": "summer",
+      "metadata_ready": true,
+      "requested_hours": 168,
+      "frozen_donors": [
+        "AT:5625",
+        "AT:3805",
+        "AT:3702"
+      ],
+      "B0_reference_hours": 168,
+      "R1_predicted_hours": 0,
+      "endpoint_eligible_hours": 0,
+      "source_block_reasons": [],
+      "control_values_read": false
+    },
+    {
+      "target_key": "AT:5609",
+      "country": "AT",
+      "season": "autumn",
+      "metadata_ready": true,
+      "requested_hours": 168,
+      "frozen_donors": [
+        "AT:5625",
+        "AT:3805",
+        "AT:3702"
+      ],
+      "B0_reference_hours": 168,
+      "R1_predicted_hours": 0,
+      "endpoint_eligible_hours": 0,
+      "source_block_reasons": [],
+      "control_values_read": false
+    },
+    {
+      "target_key": "AT:20123",
+      "country": "AT",
+      "season": "winter",
+      "metadata_ready": true,
+      "requested_hours": 168,
+      "frozen_donors": [
+        "AT:20105",
+        "AT:20270",
+        "AT:20220"
+      ],
+      "B0_reference_hours": 168,
+      "R1_predicted_hours": 0,
+      "endpoint_eligible_hours": 0,
+      "source_block_reasons": [],
+      "control_values_read": false
+    },
+    {
+      "target_key": "AT:20123",
+      "country": "AT",
+      "season": "spring",
+      "metadata_ready": true,
+      "requested_hours": 168,
+      "frozen_donors": [
+        "AT:20105",
+        "AT:20270",
+        "AT:20220"
+      ],
+      "B0_reference_hours": 168,
+      "R1_predicted_hours": 0,
+      "endpoint_eligible_hours": 0,
+      "source_block_reasons": [],
+      "control_values_read": false
+    },
+    {
+      "target_key": "AT:20123",
+      "country": "AT",
+      "season": "summer",
+      "metadata_ready": true,
+      "requested_hours": 168,
+      "frozen_donors": [
+        "AT:20105",
+        "AT:20270",
+        "AT:20220"
+      ],
+      "B0_reference_hours": 168,
+      "R1_predicted_hours": 0,
+      "endpoint_eligible_hours": 0,
+      "source_block_reasons": [],
+      "control_values_read": false
+    },
+    {
+      "target_key": "AT:20123",
+      "country": "AT",
+      "season": "autumn",
+      "metadata_ready": true,
+      "requested_hours": 168,
+      "frozen_donors": [
+        "AT:20105",
+        "AT:20270",
+        "AT:20220"
+      ],
+      "B0_reference_hours": 168,
+      "R1_predicted_hours": 0,
+      "endpoint_eligible_hours": 0,
+      "source_block_reasons": [],
+      "control_values_read": false
+    },
+    {
+      "target_key": "DE:01270",
+      "country": "DE",
+      "season": "winter",
+      "metadata_ready": true,
+      "requested_hours": 168,
+      "frozen_donors": [
+        "DE:00896",
+        "DE:00379",
+        "DE:05424"
+      ],
+      "B0_reference_hours": 168,
+      "R1_predicted_hours": 168,
+      "endpoint_eligible_hours": 0,
+      "source_block_reasons": [],
+      "control_values_read": false
+    },
+    {
+      "target_key": "DE:01270",
+      "country": "DE",
+      "season": "spring",
+      "metadata_ready": true,
+      "requested_hours": 168,
+      "frozen_donors": [
+        "DE:00896",
+        "DE:00379",
+        "DE:05424"
+      ],
+      "B0_reference_hours": 168,
+      "R1_predicted_hours": 168,
+      "endpoint_eligible_hours": 0,
+      "source_block_reasons": [],
+      "control_values_read": false
+    },
+    {
+      "target_key": "DE:01270",
+      "country": "DE",
+      "season": "summer",
+      "metadata_ready": true,
+      "requested_hours": 168,
+      "frozen_donors": [
+        "DE:00896",
+        "DE:00379",
+        "DE:05424"
+      ],
+      "B0_reference_hours": 168,
+      "R1_predicted_hours": 168,
+      "endpoint_eligible_hours": 0,
+      "source_block_reasons": [],
+      "control_values_read": false
+    },
+    {
+      "target_key": "DE:01270",
+      "country": "DE",
+      "season": "autumn",
+      "metadata_ready": true,
+      "requested_hours": 168,
+      "frozen_donors": [
+        "DE:00896",
+        "DE:00379",
+        "DE:05424"
+      ],
+      "B0_reference_hours": 168,
+      "R1_predicted_hours": 168,
+      "endpoint_eligible_hours": 0,
+      "source_block_reasons": [],
+      "control_values_read": false
+    },
+    {
+      "target_key": "DE:00232",
+      "country": "DE",
+      "season": "winter",
+      "metadata_ready": true,
+      "requested_hours": 168,
+      "frozen_donors": [
+        "DE:06346",
+        "DE:00983"
+      ],
+      "B0_reference_hours": 168,
+      "R1_predicted_hours": 168,
+      "endpoint_eligible_hours": 0,
+      "source_block_reasons": [],
+      "control_values_read": false
+    },
+    {
+      "target_key": "DE:00232",
+      "country": "DE",
+      "season": "spring",
+      "metadata_ready": true,
+      "requested_hours": 168,
+      "frozen_donors": [
+        "DE:06346",
+        "DE:00983"
+      ],
+      "B0_reference_hours": 168,
+      "R1_predicted_hours": 168,
+      "endpoint_eligible_hours": 0,
+      "source_block_reasons": [],
+      "control_values_read": false
+    },
+    {
+      "target_key": "DE:00232",
+      "country": "DE",
+      "season": "summer",
+      "metadata_ready": true,
+      "requested_hours": 168,
+      "frozen_donors": [
+        "DE:06346",
+        "DE:00983"
+      ],
+      "B0_reference_hours": 168,
+      "R1_predicted_hours": 168,
+      "endpoint_eligible_hours": 0,
+      "source_block_reasons": [],
+      "control_values_read": false
+    },
+    {
+      "target_key": "DE:00232",
+      "country": "DE",
+      "season": "autumn",
+      "metadata_ready": true,
+      "requested_hours": 168,
+      "frozen_donors": [
+        "DE:06346",
+        "DE:00983"
+      ],
+      "B0_reference_hours": 168,
+      "R1_predicted_hours": 168,
+      "endpoint_eligible_hours": 0,
+      "source_block_reasons": [],
+      "control_values_read": false
+    },
+    {
+      "target_key": "CH:STG",
+      "country": "CH",
+      "season": "winter",
+      "metadata_ready": true,
+      "requested_hours": 168,
+      "frozen_donors": [
+        "CH:ARH",
+        "CH:OBR"
+      ],
+      "B0_reference_hours": 168,
+      "R1_predicted_hours": 168,
+      "endpoint_eligible_hours": 168,
+      "source_block_reasons": [],
+      "control_values_read": false
+    },
+    {
+      "target_key": "CH:STG",
+      "country": "CH",
+      "season": "spring",
+      "metadata_ready": true,
+      "requested_hours": 168,
+      "frozen_donors": [
+        "CH:ARH",
+        "CH:OBR"
+      ],
+      "B0_reference_hours": 168,
+      "R1_predicted_hours": 168,
+      "endpoint_eligible_hours": 168,
+      "source_block_reasons": [],
+      "control_values_read": false
+    },
+    {
+      "target_key": "CH:STG",
+      "country": "CH",
+      "season": "summer",
+      "metadata_ready": true,
+      "requested_hours": 168,
+      "frozen_donors": [
+        "CH:ARH",
+        "CH:OBR"
+      ],
+      "B0_reference_hours": 168,
+      "R1_predicted_hours": 168,
+      "endpoint_eligible_hours": 168,
+      "source_block_reasons": [],
+      "control_values_read": false
+    },
+    {
+      "target_key": "CH:STG",
+      "country": "CH",
+      "season": "autumn",
+      "metadata_ready": true,
+      "requested_hours": 168,
+      "frozen_donors": [
+        "CH:ARH",
+        "CH:OBR"
+      ],
+      "B0_reference_hours": 168,
+      "R1_predicted_hours": 168,
+      "endpoint_eligible_hours": 168,
+      "source_block_reasons": [],
+      "control_values_read": false
+    },
+    {
+      "target_key": "CH:SCU",
+      "country": "CH",
+      "season": "winter",
+      "metadata_ready": true,
+      "requested_hours": 168,
+      "frozen_donors": [
+        "CH:BUF",
+        "CH:SMM",
+        "CH:DAV"
+      ],
+      "B0_reference_hours": 168,
+      "R1_predicted_hours": 168,
+      "endpoint_eligible_hours": 168,
+      "source_block_reasons": [],
+      "control_values_read": false
+    },
+    {
+      "target_key": "CH:SCU",
+      "country": "CH",
+      "season": "spring",
+      "metadata_ready": true,
+      "requested_hours": 168,
+      "frozen_donors": [
+        "CH:BUF",
+        "CH:SMM",
+        "CH:DAV"
+      ],
+      "B0_reference_hours": 168,
+      "R1_predicted_hours": 168,
+      "endpoint_eligible_hours": 168,
+      "source_block_reasons": [],
+      "control_values_read": false
+    },
+    {
+      "target_key": "CH:SCU",
+      "country": "CH",
+      "season": "summer",
+      "metadata_ready": true,
+      "requested_hours": 168,
+      "frozen_donors": [
+        "CH:BUF",
+        "CH:SMM",
+        "CH:DAV"
+      ],
+      "B0_reference_hours": 168,
+      "R1_predicted_hours": 168,
+      "endpoint_eligible_hours": 168,
+      "source_block_reasons": [],
+      "control_values_read": false
+    },
+    {
+      "target_key": "CH:SCU",
+      "country": "CH",
+      "season": "autumn",
+      "metadata_ready": true,
+      "requested_hours": 168,
+      "frozen_donors": [
+        "CH:BUF",
+        "CH:SMM",
+        "CH:DAV"
+      ],
+      "B0_reference_hours": 168,
+      "R1_predicted_hours": 168,
+      "endpoint_eligible_hours": 168,
+      "source_block_reasons": [],
+      "control_values_read": false
+    }
+  ],
+  "source_diagnostics": {
+    "background_AT_20105": {
+      "requested_xy": [
+        46.727778,
+        13.8525
+      ],
+      "returned_xy": [
+        46.75,
+        13.75
+      ],
+      "grid_separation_km": 8.1924927706816,
+      "provider_elevation_unverified": 1185.0,
+      "model": "era5",
+      "elevation_request": "nan",
+      "native_orography_and_vertical_transfer_qualified": false,
+      "missing_or_out_of_domain_hours": 0
+    },
+    "background_AT_20123": {
+      "requested_xy": [
+        46.618056,
+        13.873889
+      ],
+      "returned_xy": [
+        46.5,
+        13.75
+      ],
+      "grid_separation_km": 16.187942057905083,
+      "provider_elevation_unverified": 1084.0,
+      "model": "era5",
+      "elevation_request": "nan",
+      "native_orography_and_vertical_transfer_qualified": false,
+      "missing_or_out_of_domain_hours": 0
+    },
+    "background_AT_20220": {
+      "requested_xy": [
+        46.630833,
+        14.165278
+      ],
+      "returned_xy": [
+        46.75,
+        14.25
+      ],
+      "grid_separation_km": 14.742463998867112,
+      "provider_elevation_unverified": 898.0,
+      "model": "era5",
+      "elevation_request": "nan",
+      "native_orography_and_vertical_transfer_qualified": false,
+      "missing_or_out_of_domain_hours": 0
+    },
+    "background_AT_20270": {
+      "requested_xy": [
+        46.721944,
+        14.096944
+      ],
+      "returned_xy": [
+        46.75,
+        14.0
+      ],
+      "grid_separation_km": 8.019639254753974,
+      "provider_elevation_unverified": 1024.0,
+      "model": "era5",
+      "elevation_request": "nan",
+      "native_orography_and_vertical_transfer_qualified": false,
+      "missing_or_out_of_domain_hours": 0
+    },
+    "background_AT_3702": {
+      "requested_xy": [
+        48.334444,
+        15.339167
+      ],
+      "returned_xy": [
+        48.25,
+        15.25
+      ],
+      "grid_separation_km": 11.475357554174984,
+      "provider_elevation_unverified": 456.0,
+      "model": "era5",
+      "elevation_request": "nan",
+      "native_orography_and_vertical_transfer_qualified": false,
+      "missing_or_out_of_domain_hours": 0
+    },
+    "background_AT_3805": {
+      "requested_xy": [
+        48.418333,
+        15.621389
+      ],
+      "returned_xy": [
+        48.5,
+        15.5
+      ],
+      "grid_separation_km": 12.750946307496722,
+      "provider_elevation_unverified": 478.0,
+      "model": "era5",
+      "elevation_request": "nan",
+      "native_orography_and_vertical_transfer_qualified": false,
+      "missing_or_out_of_domain_hours": 0
+    },
+    "background_AT_5609": {
+      "requested_xy": [
+        48.199722,
+        15.631111
+      ],
+      "returned_xy": [
+        48.25,
+        15.75
+      ],
+      "grid_separation_km": 10.431774807990921,
+      "provider_elevation_unverified": 329.0,
+      "model": "era5",
+      "elevation_request": "nan",
+      "native_orography_and_vertical_transfer_qualified": false,
+      "missing_or_out_of_domain_hours": 0
+    },
+    "background_AT_5625": {
+      "requested_xy": [
+        48.028056,
+        15.5875
+      ],
+      "returned_xy": [
+        48.0,
+        15.5
+      ],
+      "grid_separation_km": 7.217613971496488,
+      "provider_elevation_unverified": 653.0,
+      "model": "era5",
+      "elevation_request": "nan",
+      "native_orography_and_vertical_transfer_qualified": false,
+      "missing_or_out_of_domain_hours": 0
+    },
+    "background_CH_ARH": {
+      "requested_xy": [
+        47.483675,
+        9.566797
+      ],
+      "returned_xy": [
+        47.5,
+        9.5
+      ],
+      "grid_separation_km": 5.336917263855972,
+      "provider_elevation_unverified": 612.0,
+      "model": "era5",
+      "elevation_request": "nan",
+      "native_orography_and_vertical_transfer_qualified": false,
+      "missing_or_out_of_domain_hours": 0
+    },
+    "background_CH_BUF": {
+      "requested_xy": [
+        46.648139,
+        10.267183
+      ],
+      "returned_xy": [
+        46.75,
+        10.25
+      ],
+      "grid_separation_km": 11.401975939315625,
+      "provider_elevation_unverified": 2250.0,
+      "model": "era5",
+      "elevation_request": "nan",
+      "native_orography_and_vertical_transfer_qualified": false,
+      "missing_or_out_of_domain_hours": 0
+    },
+    "background_CH_DAV": {
+      "requested_xy": [
+        46.812956,
+        9.843481
+      ],
+      "returned_xy": [
+        46.75,
+        9.75
+      ],
+      "grid_separation_km": 9.983589342098854,
+      "provider_elevation_unverified": 1999.0,
+      "model": "era5",
+      "elevation_request": "nan",
+      "native_orography_and_vertical_transfer_qualified": false,
+      "missing_or_out_of_domain_hours": 0
+    },
+    "background_CH_OBR": {
+      "requested_xy": [
+        47.376608,
+        9.612703
+      ],
+      "returned_xy": [
+        47.5,
+        9.5
+      ],
+      "grid_separation_km": 16.127734373715708,
+      "provider_elevation_unverified": 612.0,
+      "model": "era5",
+      "elevation_request": "nan",
+      "native_orography_and_vertical_transfer_qualified": false,
+      "missing_or_out_of_domain_hours": 0
+    },
+    "background_CH_SCU": {
+      "requested_xy": [
+        46.793272,
+        10.283192
+      ],
+      "returned_xy": [
+        46.75,
+        10.25
+      ],
+      "grid_separation_km": 5.435232811060074,
+      "provider_elevation_unverified": 2250.0,
+      "model": "era5",
+      "elevation_request": "nan",
+      "native_orography_and_vertical_transfer_qualified": false,
+      "missing_or_out_of_domain_hours": 0
+    },
+    "background_CH_SMM": {
+      "requested_xy": [
+        46.6022,
+        10.426289
+      ],
+      "returned_xy": [
+        46.5,
+        10.5
+      ],
+      "grid_separation_km": 12.685228609493599,
+      "provider_elevation_unverified": 2416.0,
+      "model": "era5",
+      "elevation_request": "nan",
+      "native_orography_and_vertical_transfer_qualified": false,
+      "missing_or_out_of_domain_hours": 0
+    },
+    "background_CH_STG": {
+      "requested_xy": [
+        47.425458,
+        9.398453
+      ],
+      "returned_xy": [
+        47.5,
+        9.5
+      ],
+      "grid_separation_km": 11.268452038199392,
+      "provider_elevation_unverified": 612.0,
+      "model": "era5",
+      "elevation_request": "nan",
+      "native_orography_and_vertical_transfer_qualified": false,
+      "missing_or_out_of_domain_hours": 0
+    },
+    "background_DE_00232": {
+      "requested_xy": [
+        48.4253,
+        10.9417
+      ],
+      "returned_xy": [
+        48.5,
+        11.0
+      ],
+      "grid_separation_km": 9.352691799569843,
+      "provider_elevation_unverified": 473.0,
+      "model": "era5",
+      "elevation_request": "nan",
+      "native_orography_and_vertical_transfer_qualified": false,
+      "missing_or_out_of_domain_hours": 0
+    },
+    "background_DE_00379": {
+      "requested_xy": [
+        50.9075,
+        11.2665
+      ],
+      "returned_xy": [
+        51.0,
+        11.25
+      ],
+      "grid_separation_km": 10.350263581924573,
+      "provider_elevation_unverified": 229.0,
+      "model": "era5",
+      "elevation_request": "nan",
+      "native_orography_and_vertical_transfer_qualified": false,
+      "missing_or_out_of_domain_hours": 0
+    },
+    "background_DE_00896": {
+      "requested_xy": [
+        51.0778,
+        10.8619
+      ],
+      "returned_xy": [
+        51.0,
+        10.75
+      ],
+      "grid_separation_km": 11.664146871496017,
+      "provider_elevation_unverified": 305.0,
+      "model": "era5",
+      "elevation_request": "nan",
+      "native_orography_and_vertical_transfer_qualified": false,
+      "missing_or_out_of_domain_hours": 0
+    },
+    "background_DE_00983": {
+      "requested_xy": [
+        48.5562,
+        10.56
+      ],
+      "returned_xy": [
+        48.5,
+        10.5
+      ],
+      "grid_separation_km": 7.6533475095175785,
+      "provider_elevation_unverified": 476.0,
+      "model": "era5",
+      "elevation_request": "nan",
+      "native_orography_and_vertical_transfer_qualified": false,
+      "missing_or_out_of_domain_hours": 0
+    },
+    "background_DE_01270": {
+      "requested_xy": [
+        50.9829,
+        10.9608
+      ],
+      "returned_xy": [
+        51.0,
+        11.0
+      ],
+      "grid_separation_km": 3.338092352427088,
+      "provider_elevation_unverified": 268.0,
+      "model": "era5",
+      "elevation_request": "nan",
+      "native_orography_and_vertical_transfer_qualified": false,
+      "missing_or_out_of_domain_hours": 0
+    },
+    "background_DE_05424": {
+      "requested_xy": [
+        51.0177,
+        11.3544
+      ],
+      "returned_xy": [
+        51.0,
+        11.25
+      ],
+      "grid_separation_km": 7.564745575151788,
+      "provider_elevation_unverified": 229.0,
+      "model": "era5",
+      "elevation_request": "nan",
+      "native_orography_and_vertical_transfer_qualified": false,
+      "missing_or_out_of_domain_hours": 0
+    },
+    "background_DE_06346": {
+      "requested_xy": [
+        48.207,
+        11.2035
+      ],
+      "returned_xy": [
+        48.25,
+        11.25
+      ],
+      "grid_separation_km": 5.892852876727783,
+      "provider_elevation_unverified": 516.0,
+      "model": "era5",
+      "elevation_request": "nan",
+      "native_orography_and_vertical_transfer_qualified": false,
+      "missing_or_out_of_domain_hours": 0
+    }
+  },
+  "requested_reference_hours": 4032,
+  "predicted_primary_hours": 2688,
+  "endpoint_eligible_hours": 1344,
+  "all24_cases_retained": true,
+  "control_observation_input": false,
+  "input_original_packet_sha256": "687ec18f5d22c79478b47275d2cf29a8af9eebcdcdfb360b64b750248584f893"
+}
