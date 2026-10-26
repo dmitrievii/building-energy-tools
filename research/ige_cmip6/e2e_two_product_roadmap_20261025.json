@@ -117,7 +117,7 @@
       "product_functions": [
         "A"
       ],
-      "current_status": "A1_4_TWO_CH_8760_RESEARCH_YEARS_LOCAL_280_PASS_FINAL_CI_PENDING_NOT_INDEPENDENTLY_QUALIFIED",
+      "current_status": "A1_4_CI_VERIFIED_280_TWO_CH_8760_RESEARCH_YEARS_NOT_INDEPENDENTLY_QUALIFIED",
       "depends_on": [
         "A0"
       ],
@@ -164,7 +164,7 @@
       "completion_criterion": "No incomplete-source unblinding, original NASA operators/objective, independent benefit before default replacement"
     }
   ],
-  "current_first_implementation": "NEXT_LOCAL_HISTORICAL_UI_ROUTE_WITH_MK_WATER_PHASE_AND_EXPLICIT_LIMITED_SCOPE; TIME_FORM_AND_INDEPENDENT_AT_DE_CH_QUALIFICATION_REMAIN",
+  "current_first_implementation": "A1.5_LIMITED_LOCAL_HISTORICAL_UI_WITH_MK_WATER_PHASE; TIME_FORM_AND_INDEPENDENT_AT_DE_CH_QUALIFICATION_REMAIN",
   "minimum_B_M_temperature_policy": "MIDRANGE_NEX_TAS_INDEX_NO_IMPLICIT_TIME_MEAN_EQUALITY",
   "specific_humidity_to_mixing_ratio": "w_g_per_kg_dry_air=1000*q_kg_per_kg_moist_air/(1-q)",
   "future_pressure_policy": "DECLARED_BASELINE_PROXY_NOT_NATIVE_FUTURE_PS",
@@ -407,7 +407,7 @@
     "verified_CI_receipt": "research/ige_cmip6/a13_verified_CI_40236855438.json",
     "verified_CI_outputs": "research/ige_cmip6/a13_verified_CI_40236855438_results.zip"
   },
-  "current_execution_stage": "A1.4 two complete CH research years assembled; final CI pending; no independent qualification or default promotion",
+  "current_execution_stage": "A1.4 CI-verified two complete CH research years; local and CI 280 PASS; A1 and V1 not independently qualified",
   "A1_4_progress": {
     "branch": "research/ige-a1-4-local-historical-year-20261026",
     "registration_commit": "a3e04ca2961cd27fbc3e4b05d98c5e344e0a879a",
@@ -445,11 +445,22 @@
     "report": "docs/IGE_A1_4_CH_HISTORICAL_YEAR_RU_20261026.md",
     "results": "research/ige_cmip6/a14_results_20261026.json",
     "research_year_bundle": "research/ige_cmip6/a14_CH_2025_research_years_20261026.zip",
-    "CI_status": "PENDING",
+    "CI_status": "SUCCESS",
     "tests_local": 280,
     "local_test_wall_seconds": 58.698098887000015,
     "local_original_source_replay_seconds": 13.032812584000112,
     "local_replay_byte_identical": true,
-    "bundle_sha256": "21a10349e47c595b43a1a1f7aa884ae91cff951f556e4912e33c69f3186d5e65"
+    "bundle_sha256": "21a10349e47c595b43a1a1f7aa884ae91cff951f556e4912e33c69f3186d5e65",
+    "CI_run": 40320819869,
+    "CI_tests": 280,
+    "tested_commit": "ecd5e50f7ddf9fe76004184241587655bfd66f84",
+    "CI_test_wall_seconds": 60.16027692099999,
+    "CI_replay_wall_seconds": 15.233270118000007,
+    "CI_artifact_id": 12649455645,
+    "CI_artifact_sha256": "87f68048126cebc57e363b7c538ee976e0e46e82462a5b0ec7383003e9b5867f",
+    "CI_local_products_byte_identical": true,
+    "CI_local_byte_identical_file_count": 14,
+    "verified_CI_receipt": "research/ige_cmip6/a14_verified_CI_40320819869.json",
+    "verified_CI_original_artifact": "research/ige_cmip6/a14_verified_CI_40320819869_results.zip"
   }
 }

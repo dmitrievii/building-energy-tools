@@ -1,0 +1,196 @@
+{
+  "schema": "IGE_A14_ACTUAL_CI_ARTIFACT_VERIFICATION_v1",
+  "run_id": 40320819869,
+  "run_url": "https://github.com/dmitrievii/building-energy-tools/actions/runs/40320819869",
+  "status": "completed",
+  "conclusion": "success",
+  "tested_commit": "ecd5e50f7ddf9fe76004184241587655bfd66f84",
+  "run_started_at": "2026-10-26T12:12:59Z",
+  "updated_at": "2026-10-26T12:15:01Z",
+  "artifact": {
+    "id": 12649455645,
+    "name": "IGE-A1-4-two-CH-research-years-NOT-INDEPENDENT",
+    "size_in_bytes": 8939880,
+    "url": "https://api.github.com/repos/dmitrievii/building-energy-tools/actions/artifacts/12649455645",
+    "archive_download_url": "https://api.github.com/repos/dmitrievii/building-energy-tools/actions/artifacts/12649455645/zip",
+    "expired": false,
+    "created_at": "2026-10-26T12:14:57Z",
+    "expires_at": "2026-11-25T12:14:55Z",
+    "updated_at": "2026-10-26T12:14:57Z",
+    "digest": "sha256:87f68048126cebc57e363b7c538ee976e0e46e82462a5b0ec7383003e9b5867f",
+    "workflow_run": {
+      "id": 40320819869,
+      "repository_id": 1261544200,
+      "head_repository_id": 1261544200,
+      "head_branch": "research/ige-a1-4-local-historical-year-20261026",
+      "head_sha": "ecd5e50f7ddf9fe76004184241587655bfd66f84"
+    }
+  },
+  "jobs": [
+    {
+      "id": 121564995308,
+      "name": "full_year_original_source_replay",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40320819869,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run python -m pip install -r tools/climate_analyzer/requirements.txt numcodecs==0.15.1 deprecated==3.0.0 wrapt==2.5.1",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Old core UI A1 regressions and full original-source year replay without network",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Explicit research qualification axes",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        }
+      ]
+    }
+  ],
+  "main_sha_read_only": "2a82a77d0fe8cc87a2324b820d6c6843b6598548",
+  "A13_branch_sha_unchanged": "3ba27b7b618820d9f714c312a0fec5ae989c37f6",
+  "original_artifact_file": "a14_verified_CI_40320819869_results.zip",
+  "artifact_member_count": 16,
+  "byte_identical_local_CI_products": {
+    "a14_CH_2025_research_years_20261026.zip": "21a10349e47c595b43a1a1f7aa884ae91cff951f556e4912e33c69f3186d5e65",
+    "years/CH_ALT_2025/R1_donor_admission_ledger.csv": "be476797ed2571342b8e7aa776174ad142c7161d7e239daa4c8abdbff55f3634",
+    "years/CH_ALT_2025/hourly_states.csv": "5b9fbc8a01b40072aae98442a550bc80e38d5f322cf1891ba6274c2832d3e4af",
+    "years/CH_ALT_2025/humidity_pressure_adjustment_ledger.csv": "cd8296912323e64dd2410a86ffcd48f8342650fbbfac7bbeef19dbc3465c28f7",
+    "years/CH_ALT_2025/manifest.json": "9255bceaf22cc07bc967914d5b854401f69ac2a8510dd148bc1f35e3461ec0a7",
+    "years/CH_ALT_2025/temperature_mean_inverse_ledger.csv": "c39302e715aeaeea04d4891c18780fc9daee5a16b4d41d2c218242afe8d77f58",
+    "years/CH_ALT_2025/weather.epw": "53a0a904ec7141d26d9941e1ed5dbf473a8cd461c8bb86e5a6f091da450ff538",
+    "years/CH_BAS_2025/R1_donor_admission_ledger.csv": "9a78666c112858bc4edb4e13d57297f6c9c6b855e5661f74df355d597867536a",
+    "years/CH_BAS_2025/hourly_states.csv": "6df287aa0f3b6f80b83b32e9568b906feff29d4411de0b9eabd4fbce323546f7",
+    "years/CH_BAS_2025/humidity_pressure_adjustment_ledger.csv": "60e7b069433d20a7a6a17e5419327538d81236f9814771c2206781dc5e47a385",
+    "years/CH_BAS_2025/manifest.json": "b03973108e518b77a3585bf04c77c0e6341856bd7d13b37d1c128d2c7187a902",
+    "years/CH_BAS_2025/temperature_mean_inverse_ledger.csv": "43cf0cad11c522f628d8e2bdd8aee7eae0f84442f69976c96f2adbb079cb77ae",
+    "years/CH_BAS_2025/weather.epw": "b7cc31ac7cf6a71329f85a7d60f41fe2ea43be86692f8f012cc2b02009c378e1",
+    "years/a14_results_20261026.json": "c0cd15cc5fbc29c29bc69b80b544c515fa91bc0a3430a4483c01fcfe3982cd81"
+  },
+  "product_files_byte_identical_count": 14,
+  "CI_tests": {
+    "tests_run": 280,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "status": "PASS",
+    "wall_seconds": 60.16027692099999,
+    "python": "3.12.15",
+    "numpy": "1.26.4",
+    "pandas": "2.3.3",
+    "streamlit": "1.63.0"
+  },
+  "CI_verification": {
+    "schema": "IGE_A14_OFFLINE_VERIFICATION_v1",
+    "tests": {
+      "tests_run": 280,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "status": "PASS",
+      "wall_seconds": 60.16027692099999,
+      "python": "3.12.15",
+      "numpy": "1.26.4",
+      "pandas": "2.3.3",
+      "streamlit": "1.63.0"
+    },
+    "protection": {
+      "parent_commit": "3ba27b7b618820d9f714c312a0fec5ae989c37f6",
+      "protected_research_files_unchanged": 168,
+      "old_engine_UI_A1_protocols_sources_scores_and_existing_EPW_unchanged": true,
+      "IV1_observations_opened": false,
+      "main_or_merge_used": false
+    },
+    "replay": {
+      "original_source_replay_byte_exact": true,
+      "target_years": 2,
+      "records_per_year": 8760,
+      "bundle_sha256": "21a10349e47c595b43a1a1f7aa884ae91cff951f556e4912e33c69f3186d5e65",
+      "source_packet_sha256": "d81b4da31ae99b97403d5e25ce331902018762cdd439b6fc71a9045eab9d9a79",
+      "replay_wall_seconds": 15.233270118000007,
+      "R1_admitted_hours": {
+        "CH:BAS": 8760,
+        "CH:ALT": 8760
+      },
+      "q_projection_hours": {
+        "CH:BAS": 83,
+        "CH:ALT": 5
+      }
+    },
+    "registration_sha256": "a59d0a9ce4daf4c9385bf2ede9f1dad7a29a0a990d3229b707c49880f1411566",
+    "code_sha256": {
+      "research/ige_cmip6/a14_prepare.py": "19380b6863d0b4fcbf07a4ed62df9d6e8d5c023d4fe19162ff0964fb525c8eaa",
+      "research/ige_cmip6/a14_acquire.py": "964954e994dbe75a502eb6c34be29057dfa52c3807d98053996a8dbbab09f72f",
+      "research/ige_cmip6/a14_run.py": "61628b71061f9c3c381fb776d30d3c4897d742f9c72bb15f06e5efed0c9bc58b",
+      "research/ige_cmip6/a14_verify.py": "7b91efd09fc2ed98bd0cfba7c44a8de7bf57b449b98f9c3b466eba4a3ebbaa6e",
+      "tools/climate_analyzer/epw_climate_analyzer/engine/station_year.py": "1474d1a5e95b1b65afd5165e70e0b4be687db2afff215765d4e1b36cc08a4e39",
+      "tools/climate_analyzer/tests/test_ige_a14_station_year.py": "b0a0c792b45c51fd5bfdfeb964693652356b91ff63c3a16a0cb01dcbabbe586a",
+      ".github/workflows/ige-a1-4-local-year-20261026.yml": "033ef6b6bad8851517a65d144b2c8ebec7f1a1e1691489cac5bbbe1bb13208ee"
+    },
+    "new_network_requests_during_verification": 0,
+    "physical_scope": "CONDITIONAL_T_P_Q_RH_ONLY",
+    "independent_accuracy_qualified": false,
+    "production_ready": false,
+    "existing_UI_defaults_changed": false
+  },
+  "source_scientific_method_changed_by_metadata_amendment": false,
+  "original_registered_279_predata_tests_passed": true,
+  "final_280_local_CI_tests_passed": true,
+  "old_engine_UI_existing_EPWs_and_168_research_files_unchanged": true,
+  "strict_independent_accuracy_qualified": false,
+  "pressure_local_accuracy_qualified": false,
+  "full_weather_cross_field_accuracy_qualified": false,
+  "production_ready": false,
+  "merge_performed": false
+}
