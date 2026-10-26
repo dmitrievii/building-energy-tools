@@ -1,0 +1,1383 @@
+{
+  "schema": "IGE_V1_PREREGISTERED_HOURLY_ERROR_VALIDATION_RESULTS_v1",
+  "status": "LIMITED_NEW_HOURLY_ERROR_HOLDOUT_WITH_EXPOSURE_DISCLOSURE",
+  "cases": [
+    {
+      "target_key": "AT:5609",
+      "country": "AT",
+      "season": "winter",
+      "requested_hours": 168,
+      "prediction_hours": 0,
+      "control_primary_QC_hours": 0,
+      "paired_hours": 0,
+      "status": "SOURCE_BLOCKED",
+      "source_block_reasons": [
+        "CONTROL:KeyError:('AT:5609', 'station_temperature')"
+      ],
+      "B0_all_reference": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "B0_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "R1_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "delta_MAE_K": null,
+      "admitted_for_country_block_estimate": false
+    },
+    {
+      "target_key": "AT:5609",
+      "country": "AT",
+      "season": "spring",
+      "requested_hours": 168,
+      "prediction_hours": 0,
+      "control_primary_QC_hours": 0,
+      "paired_hours": 0,
+      "status": "SOURCE_BLOCKED",
+      "source_block_reasons": [
+        "CONTROL:KeyError:('AT:5609', 'station_temperature')"
+      ],
+      "B0_all_reference": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "B0_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "R1_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "delta_MAE_K": null,
+      "admitted_for_country_block_estimate": false
+    },
+    {
+      "target_key": "AT:5609",
+      "country": "AT",
+      "season": "summer",
+      "requested_hours": 168,
+      "prediction_hours": 0,
+      "control_primary_QC_hours": 0,
+      "paired_hours": 0,
+      "status": "SOURCE_BLOCKED",
+      "source_block_reasons": [
+        "CONTROL:KeyError:('AT:5609', 'station_temperature')"
+      ],
+      "B0_all_reference": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "B0_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "R1_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "delta_MAE_K": null,
+      "admitted_for_country_block_estimate": false
+    },
+    {
+      "target_key": "AT:5609",
+      "country": "AT",
+      "season": "autumn",
+      "requested_hours": 168,
+      "prediction_hours": 0,
+      "control_primary_QC_hours": 0,
+      "paired_hours": 0,
+      "status": "SOURCE_BLOCKED",
+      "source_block_reasons": [
+        "CONTROL:KeyError:('AT:5609', 'station_temperature')"
+      ],
+      "B0_all_reference": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "B0_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "R1_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "delta_MAE_K": null,
+      "admitted_for_country_block_estimate": false
+    },
+    {
+      "target_key": "AT:20123",
+      "country": "AT",
+      "season": "winter",
+      "requested_hours": 168,
+      "prediction_hours": 0,
+      "control_primary_QC_hours": 0,
+      "paired_hours": 0,
+      "status": "SOURCE_BLOCKED",
+      "source_block_reasons": [
+        "CONTROL:KeyError:('AT:20123', 'station_temperature')"
+      ],
+      "B0_all_reference": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "B0_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "R1_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "delta_MAE_K": null,
+      "admitted_for_country_block_estimate": false
+    },
+    {
+      "target_key": "AT:20123",
+      "country": "AT",
+      "season": "spring",
+      "requested_hours": 168,
+      "prediction_hours": 0,
+      "control_primary_QC_hours": 0,
+      "paired_hours": 0,
+      "status": "SOURCE_BLOCKED",
+      "source_block_reasons": [
+        "CONTROL:KeyError:('AT:20123', 'station_temperature')"
+      ],
+      "B0_all_reference": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "B0_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "R1_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "delta_MAE_K": null,
+      "admitted_for_country_block_estimate": false
+    },
+    {
+      "target_key": "AT:20123",
+      "country": "AT",
+      "season": "summer",
+      "requested_hours": 168,
+      "prediction_hours": 0,
+      "control_primary_QC_hours": 0,
+      "paired_hours": 0,
+      "status": "SOURCE_BLOCKED",
+      "source_block_reasons": [
+        "CONTROL:KeyError:('AT:20123', 'station_temperature')"
+      ],
+      "B0_all_reference": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "B0_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "R1_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "delta_MAE_K": null,
+      "admitted_for_country_block_estimate": false
+    },
+    {
+      "target_key": "AT:20123",
+      "country": "AT",
+      "season": "autumn",
+      "requested_hours": 168,
+      "prediction_hours": 0,
+      "control_primary_QC_hours": 0,
+      "paired_hours": 0,
+      "status": "SOURCE_BLOCKED",
+      "source_block_reasons": [
+        "CONTROL:KeyError:('AT:20123', 'station_temperature')"
+      ],
+      "B0_all_reference": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "B0_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "R1_paired": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "delta_MAE_K": null,
+      "admitted_for_country_block_estimate": false
+    },
+    {
+      "target_key": "DE:01270",
+      "country": "DE",
+      "season": "winter",
+      "requested_hours": 168,
+      "prediction_hours": 168,
+      "control_primary_QC_hours": 168,
+      "paired_hours": 168,
+      "status": "ADMITTED_HOURLY_ERROR_HOLDOUT",
+      "source_block_reasons": [],
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.1172619,
+        "RMSE_K": 1.53845547,
+        "bias_K": -0.3577381,
+        "centred_RMSE_K": 1.49628496
+      },
+      "B0_paired": {
+        "n": 168,
+        "MAE_K": 1.1172619,
+        "RMSE_K": 1.53845547,
+        "bias_K": -0.3577381,
+        "centred_RMSE_K": 1.49628496
+      },
+      "R1_paired": {
+        "n": 168,
+        "MAE_K": 1.10503952,
+        "RMSE_K": 1.48462114,
+        "bias_K": -0.08143449,
+        "centred_RMSE_K": 1.48238603
+      },
+      "delta_MAE_K": -0.01222239,
+      "admitted_for_country_block_estimate": true
+    },
+    {
+      "target_key": "DE:01270",
+      "country": "DE",
+      "season": "spring",
+      "requested_hours": 168,
+      "prediction_hours": 168,
+      "control_primary_QC_hours": 168,
+      "paired_hours": 168,
+      "status": "ADMITTED_HOURLY_ERROR_HOLDOUT",
+      "source_block_reasons": [],
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 0.77797619,
+        "RMSE_K": 1.02582719,
+        "bias_K": -0.03988095,
+        "centred_RMSE_K": 1.02505168
+      },
+      "B0_paired": {
+        "n": 168,
+        "MAE_K": 0.77797619,
+        "RMSE_K": 1.02582719,
+        "bias_K": -0.03988095,
+        "centred_RMSE_K": 1.02505168
+      },
+      "R1_paired": {
+        "n": 168,
+        "MAE_K": 1.10844928,
+        "RMSE_K": 1.33634157,
+        "bias_K": 0.11254441,
+        "centred_RMSE_K": 1.33159399
+      },
+      "delta_MAE_K": 0.33047309,
+      "admitted_for_country_block_estimate": true
+    },
+    {
+      "target_key": "DE:01270",
+      "country": "DE",
+      "season": "summer",
+      "requested_hours": 168,
+      "prediction_hours": 168,
+      "control_primary_QC_hours": 168,
+      "paired_hours": 168,
+      "status": "ADMITTED_HOURLY_ERROR_HOLDOUT",
+      "source_block_reasons": [],
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 0.90892857,
+        "RMSE_K": 1.26925644,
+        "bias_K": 0.29702381,
+        "centred_RMSE_K": 1.23401327
+      },
+      "B0_paired": {
+        "n": 168,
+        "MAE_K": 0.90892857,
+        "RMSE_K": 1.26925644,
+        "bias_K": 0.29702381,
+        "centred_RMSE_K": 1.23401327
+      },
+      "R1_paired": {
+        "n": 168,
+        "MAE_K": 1.3320781,
+        "RMSE_K": 1.60500492,
+        "bias_K": 0.52980195,
+        "centred_RMSE_K": 1.51504148
+      },
+      "delta_MAE_K": 0.42314953,
+      "admitted_for_country_block_estimate": true
+    },
+    {
+      "target_key": "DE:01270",
+      "country": "DE",
+      "season": "autumn",
+      "requested_hours": 168,
+      "prediction_hours": 168,
+      "control_primary_QC_hours": 168,
+      "paired_hours": 168,
+      "status": "ADMITTED_HOURLY_ERROR_HOLDOUT",
+      "source_block_reasons": [],
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 2.04404762,
+        "RMSE_K": 2.51772289,
+        "bias_K": -0.80238095,
+        "centred_RMSE_K": 2.38644367
+      },
+      "B0_paired": {
+        "n": 168,
+        "MAE_K": 2.04404762,
+        "RMSE_K": 2.51772289,
+        "bias_K": -0.80238095,
+        "centred_RMSE_K": 2.38644367
+      },
+      "R1_paired": {
+        "n": 168,
+        "MAE_K": 2.51376957,
+        "RMSE_K": 3.20290639,
+        "bias_K": -1.9839184,
+        "centred_RMSE_K": 2.51449342
+      },
+      "delta_MAE_K": 0.46972195,
+      "admitted_for_country_block_estimate": true
+    },
+    {
+      "target_key": "DE:00232",
+      "country": "DE",
+      "season": "winter",
+      "requested_hours": 168,
+      "prediction_hours": 168,
+      "control_primary_QC_hours": 168,
+      "paired_hours": 168,
+      "status": "ADMITTED_HOURLY_ERROR_HOLDOUT",
+      "source_block_reasons": [],
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 0.76964286,
+        "RMSE_K": 1.01333372,
+        "bias_K": 0.58630952,
+        "centred_RMSE_K": 0.8264904
+      },
+      "B0_paired": {
+        "n": 168,
+        "MAE_K": 0.76964286,
+        "RMSE_K": 1.01333372,
+        "bias_K": 0.58630952,
+        "centred_RMSE_K": 0.8264904
+      },
+      "R1_paired": {
+        "n": 168,
+        "MAE_K": 0.49579808,
+        "RMSE_K": 0.67917881,
+        "bias_K": 0.01359154,
+        "centred_RMSE_K": 0.6790428
+      },
+      "delta_MAE_K": -0.27384478,
+      "admitted_for_country_block_estimate": true
+    },
+    {
+      "target_key": "DE:00232",
+      "country": "DE",
+      "season": "spring",
+      "requested_hours": 168,
+      "prediction_hours": 168,
+      "control_primary_QC_hours": 168,
+      "paired_hours": 168,
+      "status": "ADMITTED_HOURLY_ERROR_HOLDOUT",
+      "source_block_reasons": [],
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.24107143,
+        "RMSE_K": 1.53396079,
+        "bias_K": 0.96369048,
+        "centred_RMSE_K": 1.19345565
+      },
+      "B0_paired": {
+        "n": 168,
+        "MAE_K": 1.24107143,
+        "RMSE_K": 1.53396079,
+        "bias_K": 0.96369048,
+        "centred_RMSE_K": 1.19345565
+      },
+      "R1_paired": {
+        "n": 168,
+        "MAE_K": 0.84438641,
+        "RMSE_K": 1.0925297,
+        "bias_K": 0.30831798,
+        "centred_RMSE_K": 1.04812269
+      },
+      "delta_MAE_K": -0.39668502,
+      "admitted_for_country_block_estimate": true
+    },
+    {
+      "target_key": "DE:00232",
+      "country": "DE",
+      "season": "summer",
+      "requested_hours": 168,
+      "prediction_hours": 168,
+      "control_primary_QC_hours": 168,
+      "paired_hours": 168,
+      "status": "ADMITTED_HOURLY_ERROR_HOLDOUT",
+      "source_block_reasons": [],
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.67916667,
+        "RMSE_K": 2.1766756,
+        "bias_K": 1.32916667,
+        "centred_RMSE_K": 1.72372638
+      },
+      "B0_paired": {
+        "n": 168,
+        "MAE_K": 1.67916667,
+        "RMSE_K": 2.1766756,
+        "bias_K": 1.32916667,
+        "centred_RMSE_K": 1.72372638
+      },
+      "R1_paired": {
+        "n": 168,
+        "MAE_K": 1.11544003,
+        "RMSE_K": 1.41459626,
+        "bias_K": 0.84030584,
+        "centred_RMSE_K": 1.13796691
+      },
+      "delta_MAE_K": -0.56372664,
+      "admitted_for_country_block_estimate": true
+    },
+    {
+      "target_key": "DE:00232",
+      "country": "DE",
+      "season": "autumn",
+      "requested_hours": 168,
+      "prediction_hours": 168,
+      "control_primary_QC_hours": 168,
+      "paired_hours": 168,
+      "status": "ADMITTED_HOURLY_ERROR_HOLDOUT",
+      "source_block_reasons": [],
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.70654762,
+        "RMSE_K": 2.16202341,
+        "bias_K": 1.44583333,
+        "centred_RMSE_K": 1.60745489
+      },
+      "B0_paired": {
+        "n": 168,
+        "MAE_K": 1.70654762,
+        "RMSE_K": 2.16202341,
+        "bias_K": 1.44583333,
+        "centred_RMSE_K": 1.60745489
+      },
+      "R1_paired": {
+        "n": 168,
+        "MAE_K": 1.04612549,
+        "RMSE_K": 1.33757352,
+        "bias_K": 0.02054208,
+        "centred_RMSE_K": 1.33741577
+      },
+      "delta_MAE_K": -0.66042213,
+      "admitted_for_country_block_estimate": true
+    },
+    {
+      "target_key": "CH:STG",
+      "country": "CH",
+      "season": "winter",
+      "requested_hours": 168,
+      "prediction_hours": 168,
+      "control_primary_QC_hours": 168,
+      "paired_hours": 168,
+      "status": "ADMITTED_HOURLY_ERROR_HOLDOUT",
+      "source_block_reasons": [],
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.36964286,
+        "RMSE_K": 1.63962134,
+        "bias_K": 0.64414683,
+        "centred_RMSE_K": 1.50779077
+      },
+      "B0_paired": {
+        "n": 168,
+        "MAE_K": 1.36964286,
+        "RMSE_K": 1.63962134,
+        "bias_K": 0.64414683,
+        "centred_RMSE_K": 1.50779077
+      },
+      "R1_paired": {
+        "n": 168,
+        "MAE_K": 1.89715874,
+        "RMSE_K": 2.17180527,
+        "bias_K": 1.05423554,
+        "centred_RMSE_K": 1.89876949
+      },
+      "delta_MAE_K": 0.52751588,
+      "admitted_for_country_block_estimate": true
+    },
+    {
+      "target_key": "CH:STG",
+      "country": "CH",
+      "season": "spring",
+      "requested_hours": 168,
+      "prediction_hours": 168,
+      "control_primary_QC_hours": 168,
+      "paired_hours": 168,
+      "status": "ADMITTED_HOURLY_ERROR_HOLDOUT",
+      "source_block_reasons": [],
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.44781746,
+        "RMSE_K": 1.77955392,
+        "bias_K": 0.07579365,
+        "centred_RMSE_K": 1.77793911
+      },
+      "B0_paired": {
+        "n": 168,
+        "MAE_K": 1.44781746,
+        "RMSE_K": 1.77955392,
+        "bias_K": 0.07579365,
+        "centred_RMSE_K": 1.77793911
+      },
+      "R1_paired": {
+        "n": 168,
+        "MAE_K": 1.84129097,
+        "RMSE_K": 2.1734228,
+        "bias_K": 0.55375963,
+        "centred_RMSE_K": 2.10169382
+      },
+      "delta_MAE_K": 0.39347351,
+      "admitted_for_country_block_estimate": true
+    },
+    {
+      "target_key": "CH:STG",
+      "country": "CH",
+      "season": "summer",
+      "requested_hours": 168,
+      "prediction_hours": 168,
+      "control_primary_QC_hours": 168,
+      "paired_hours": 168,
+      "status": "ADMITTED_HOURLY_ERROR_HOLDOUT",
+      "source_block_reasons": [],
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.59980159,
+        "RMSE_K": 1.85571743,
+        "bias_K": 1.53194444,
+        "centred_RMSE_K": 1.04729814
+      },
+      "B0_paired": {
+        "n": 168,
+        "MAE_K": 1.59980159,
+        "RMSE_K": 1.85571743,
+        "bias_K": 1.53194444,
+        "centred_RMSE_K": 1.04729814
+      },
+      "R1_paired": {
+        "n": 168,
+        "MAE_K": 2.12073003,
+        "RMSE_K": 2.3392156,
+        "bias_K": 1.96243998,
+        "centred_RMSE_K": 1.27309031
+      },
+      "delta_MAE_K": 0.52092844,
+      "admitted_for_country_block_estimate": true
+    },
+    {
+      "target_key": "CH:STG",
+      "country": "CH",
+      "season": "autumn",
+      "requested_hours": 168,
+      "prediction_hours": 168,
+      "control_primary_QC_hours": 168,
+      "paired_hours": 168,
+      "status": "ADMITTED_HOURLY_ERROR_HOLDOUT",
+      "source_block_reasons": [],
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 2.69375,
+        "RMSE_K": 3.26912881,
+        "bias_K": -1.76001984,
+        "centred_RMSE_K": 2.75491077
+      },
+      "B0_paired": {
+        "n": 168,
+        "MAE_K": 2.69375,
+        "RMSE_K": 3.26912881,
+        "bias_K": -1.76001984,
+        "centred_RMSE_K": 2.75491077
+      },
+      "R1_paired": {
+        "n": 168,
+        "MAE_K": 2.25704082,
+        "RMSE_K": 2.72080526,
+        "bias_K": -0.55981026,
+        "centred_RMSE_K": 2.66259154
+      },
+      "delta_MAE_K": -0.43670918,
+      "admitted_for_country_block_estimate": true
+    },
+    {
+      "target_key": "CH:SCU",
+      "country": "CH",
+      "season": "winter",
+      "requested_hours": 168,
+      "prediction_hours": 168,
+      "control_primary_QC_hours": 168,
+      "paired_hours": 168,
+      "status": "ADMITTED_HOURLY_ERROR_HOLDOUT",
+      "source_block_reasons": [],
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 6.18030754,
+        "RMSE_K": 6.39596062,
+        "bias_K": -6.18030754,
+        "centred_RMSE_K": 1.6468488
+      },
+      "B0_paired": {
+        "n": 168,
+        "MAE_K": 6.18030754,
+        "RMSE_K": 6.39596062,
+        "bias_K": -6.18030754,
+        "centred_RMSE_K": 1.6468488
+      },
+      "R1_paired": {
+        "n": 168,
+        "MAE_K": 3.76709055,
+        "RMSE_K": 4.22071404,
+        "bias_K": -3.72641269,
+        "centred_RMSE_K": 1.98198776
+      },
+      "delta_MAE_K": -2.41321699,
+      "admitted_for_country_block_estimate": true
+    },
+    {
+      "target_key": "CH:SCU",
+      "country": "CH",
+      "season": "spring",
+      "requested_hours": 168,
+      "prediction_hours": 168,
+      "control_primary_QC_hours": 168,
+      "paired_hours": 168,
+      "status": "ADMITTED_HOURLY_ERROR_HOLDOUT",
+      "source_block_reasons": [],
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 6.26364087,
+        "RMSE_K": 6.63220193,
+        "bias_K": -6.26364087,
+        "centred_RMSE_K": 2.18011592
+      },
+      "B0_paired": {
+        "n": 168,
+        "MAE_K": 6.26364087,
+        "RMSE_K": 6.63220193,
+        "bias_K": -6.26364087,
+        "centred_RMSE_K": 2.18011592
+      },
+      "R1_paired": {
+        "n": 168,
+        "MAE_K": 3.70296237,
+        "RMSE_K": 3.9814946,
+        "bias_K": -3.70296237,
+        "centred_RMSE_K": 1.46299997
+      },
+      "delta_MAE_K": -2.5606785,
+      "admitted_for_country_block_estimate": true
+    },
+    {
+      "target_key": "CH:SCU",
+      "country": "CH",
+      "season": "summer",
+      "requested_hours": 168,
+      "prediction_hours": 168,
+      "control_primary_QC_hours": 168,
+      "paired_hours": 168,
+      "status": "ADMITTED_HOURLY_ERROR_HOLDOUT",
+      "source_block_reasons": [],
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 6.79335317,
+        "RMSE_K": 7.14192701,
+        "bias_K": -6.79335317,
+        "centred_RMSE_K": 2.20396779
+      },
+      "B0_paired": {
+        "n": 168,
+        "MAE_K": 6.79335317,
+        "RMSE_K": 7.14192701,
+        "bias_K": -6.79335317,
+        "centred_RMSE_K": 2.20396779
+      },
+      "R1_paired": {
+        "n": 168,
+        "MAE_K": 4.2113099,
+        "RMSE_K": 4.44463898,
+        "bias_K": -4.2113099,
+        "centred_RMSE_K": 1.42115606
+      },
+      "delta_MAE_K": -2.58204327,
+      "admitted_for_country_block_estimate": true
+    },
+    {
+      "target_key": "CH:SCU",
+      "country": "CH",
+      "season": "autumn",
+      "requested_hours": 168,
+      "prediction_hours": 168,
+      "control_primary_QC_hours": 168,
+      "paired_hours": 168,
+      "status": "ADMITTED_HOURLY_ERROR_HOLDOUT",
+      "source_block_reasons": [],
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 5.80897817,
+        "RMSE_K": 6.12435887,
+        "bias_K": -5.80897817,
+        "centred_RMSE_K": 1.9399856
+      },
+      "B0_paired": {
+        "n": 168,
+        "MAE_K": 5.80897817,
+        "RMSE_K": 6.12435887,
+        "bias_K": -5.80897817,
+        "centred_RMSE_K": 1.9399856
+      },
+      "R1_paired": {
+        "n": 168,
+        "MAE_K": 4.31932138,
+        "RMSE_K": 4.57591882,
+        "bias_K": -4.31932138,
+        "centred_RMSE_K": 1.51079312
+      },
+      "delta_MAE_K": -1.48965679,
+      "admitted_for_country_block_estimate": true
+    }
+  ],
+  "per_country": {
+    "AT": {
+      "B0": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "R1": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "delta_MAE_K": null,
+      "season_blocks": 0,
+      "resampling_95pct_descriptive": null,
+      "admitted_cases": 0,
+      "registered_cases": 8,
+      "benefit_demonstrated_in_registered_cohort": false,
+      "independent_regional_or_global_accuracy_qualified": false
+    },
+    "DE": {
+      "B0": {
+        "n": 1344,
+        "MAE_K": 1.28058036,
+        "RMSE_K": 1.73785968,
+        "bias_K": 0.42775298,
+        "centred_RMSE_K": 1.68439415
+      },
+      "R1": {
+        "n": 1344,
+        "MAE_K": 1.19513581,
+        "RMSE_K": 1.66844424,
+        "bias_K": -0.03003114,
+        "centred_RMSE_K": 1.66817394
+      },
+      "delta_MAE_K": -0.08544455,
+      "season_blocks": 4,
+      "resampling_95pct_descriptive": {
+        "lower_K": -0.12484733,
+        "upper_K": -0.04866699,
+        "draws": 10000,
+        "seed": 20261026,
+        "unit": "synchronous season-week across both country stations",
+        "population_confidence_guarantee": false
+      },
+      "admitted_cases": 8,
+      "registered_cases": 8,
+      "benefit_demonstrated_in_registered_cohort": true,
+      "independent_regional_or_global_accuracy_qualified": false
+    },
+    "CH": {
+      "B0": {
+        "n": 1344,
+        "MAE_K": 4.01966146,
+        "RMSE_K": 4.91674903,
+        "bias_K": -3.06930184,
+        "centred_RMSE_K": 3.84106851
+      },
+      "R1": {
+        "n": 1344,
+        "MAE_K": 3.01461309,
+        "RMSE_K": 3.47627298,
+        "bias_K": -1.61867268,
+        "centred_RMSE_K": 3.07642204
+      },
+      "delta_MAE_K": -1.00504836,
+      "season_blocks": 4,
+      "resampling_95pct_descriptive": {
+        "lower_K": -1.05707996,
+        "upper_K": -0.95301677,
+        "draws": 10000,
+        "seed": 20261026,
+        "unit": "synchronous season-week across both country stations",
+        "population_confidence_guarantee": false
+      },
+      "admitted_cases": 8,
+      "registered_cases": 8,
+      "benefit_demonstrated_in_registered_cohort": true,
+      "independent_regional_or_global_accuracy_qualified": false
+    }
+  },
+  "per_target": {
+    "AT:5609": {
+      "B0": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "R1": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "delta_MAE_K": null,
+      "season_blocks": 0,
+      "resampling_95pct_descriptive": null
+    },
+    "AT:20123": {
+      "B0": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "R1": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "delta_MAE_K": null,
+      "season_blocks": 0,
+      "resampling_95pct_descriptive": null
+    },
+    "DE:01270": {
+      "B0": {
+        "n": 672,
+        "MAE_K": 1.21205357,
+        "RMSE_K": 1.68590533,
+        "bias_K": -0.22574405,
+        "centred_RMSE_K": 1.67072332
+      },
+      "R1": {
+        "n": 672,
+        "MAE_K": 1.51483412,
+        "RMSE_K": 2.05088754,
+        "bias_K": -0.35575163,
+        "centred_RMSE_K": 2.01979714
+      },
+      "delta_MAE_K": 0.30278055,
+      "season_blocks": 4,
+      "resampling_95pct_descriptive": {
+        "lower_K": 0.09662059,
+        "upper_K": 0.44643574,
+        "draws": 10000,
+        "seed": 20261026,
+        "unit": "synchronous season-week across both country stations",
+        "population_confidence_guarantee": false
+      }
+    },
+    "DE:00232": {
+      "B0": {
+        "n": 672,
+        "MAE_K": 1.34910714,
+        "RMSE_K": 1.78830526,
+        "bias_K": 1.08125,
+        "centred_RMSE_K": 1.4244066
+      },
+      "R1": {
+        "n": 672,
+        "MAE_K": 0.8754375,
+        "RMSE_K": 1.16673589,
+        "bias_K": 0.29568936,
+        "centred_RMSE_K": 1.1286454
+      },
+      "delta_MAE_K": -0.47366964,
+      "season_blocks": 4,
+      "resampling_95pct_descriptive": {
+        "lower_K": -0.61207438,
+        "upper_K": -0.3352649,
+        "draws": 10000,
+        "seed": 20261026,
+        "unit": "synchronous season-week across both country stations",
+        "population_confidence_guarantee": false
+      }
+    },
+    "CH:STG": {
+      "B0": {
+        "n": 672,
+        "MAE_K": 1.77775298,
+        "RMSE_K": 2.23528861,
+        "bias_K": 0.12296627,
+        "centred_RMSE_K": 2.23190378
+      },
+      "R1": {
+        "n": 672,
+        "MAE_K": 2.02905514,
+        "RMSE_K": 2.36194918,
+        "bias_K": 0.75265622,
+        "centred_RMSE_K": 2.23881945
+      },
+      "delta_MAE_K": 0.25130216,
+      "season_blocks": 4,
+      "resampling_95pct_descriptive": {
+        "lower_K": -0.19729978,
+        "upper_K": 0.52422216,
+        "draws": 10000,
+        "seed": 20261026,
+        "unit": "synchronous season-week across both country stations",
+        "population_confidence_guarantee": false
+      }
+    },
+    "CH:SCU": {
+      "B0": {
+        "n": 672,
+        "MAE_K": 6.26156994,
+        "RMSE_K": 6.58424839,
+        "bias_K": -6.26156994,
+        "centred_RMSE_K": 2.0359442
+      },
+      "R1": {
+        "n": 672,
+        "MAE_K": 4.00017105,
+        "RMSE_K": 4.3116289,
+        "bias_K": -3.99000159,
+        "centred_RMSE_K": 1.63402297
+      },
+      "delta_MAE_K": -2.26139889,
+      "season_blocks": 4,
+      "resampling_95pct_descriptive": {
+        "lower_K": -2.57136089,
+        "upper_K": -1.75741222,
+        "draws": 10000,
+        "seed": 20261026,
+        "unit": "synchronous season-week across both country stations",
+        "population_confidence_guarantee": false
+      }
+    }
+  },
+  "secondary_CH_endpoint_cases": [
+    {
+      "target_key": "CH:STG",
+      "season": "winter",
+      "status": "SCORED_SECONDARY_ENDPOINT_HOLDOUT",
+      "B0_endpoint": {
+        "n": 168,
+        "MAE_K": 1.4125,
+        "RMSE_K": 1.68683629,
+        "bias_K": 0.64107143,
+        "centred_RMSE_K": 1.56027052
+      },
+      "R1_endpoint": {
+        "n": 168,
+        "MAE_K": 1.95289933,
+        "RMSE_K": 2.2594369,
+        "bias_K": 1.05198583,
+        "centred_RMSE_K": 1.99959519
+      },
+      "endpoint_paired_hours": 168,
+      "same_instrument_h_t_not_independent_replicates": true,
+      "reason": null,
+      "h_minus_t_six_nominal_node_mean": {
+        "n": 168,
+        "MAE_K": 0.02539683,
+        "RMSE_K": 0.02943471,
+        "bias_K": 0.00634921,
+        "centred_RMSE_K": 0.02874178
+      },
+      "endpoint_step_diagnostics": {
+        "B0_max_K": 2.0,
+        "R1_max_K": 5.33756783,
+        "R1_p99_K": 2.68373918,
+        "step_pairs": 167,
+        "step_diagnostics_are_not_an_accuracy_test": true
+      }
+    },
+    {
+      "target_key": "CH:STG",
+      "season": "spring",
+      "status": "SCORED_SECONDARY_ENDPOINT_HOLDOUT",
+      "B0_endpoint": {
+        "n": 168,
+        "MAE_K": 1.44583333,
+        "RMSE_K": 1.79617649,
+        "bias_K": 0.11488095,
+        "centred_RMSE_K": 1.79249892
+      },
+      "R1_endpoint": {
+        "n": 168,
+        "MAE_K": 1.8914698,
+        "RMSE_K": 2.27936542,
+        "bias_K": 0.59639954,
+        "centred_RMSE_K": 2.19995779
+      },
+      "endpoint_paired_hours": 168,
+      "same_instrument_h_t_not_independent_replicates": true,
+      "reason": null,
+      "h_minus_t_six_nominal_node_mean": {
+        "n": 168,
+        "MAE_K": 0.02490079,
+        "RMSE_K": 0.02901035,
+        "bias_K": 0.00625,
+        "centred_RMSE_K": 0.0283291
+      },
+      "endpoint_step_diagnostics": {
+        "B0_max_K": 3.1,
+        "R1_max_K": 7.9852484,
+        "R1_p99_K": 5.20342038,
+        "step_pairs": 167,
+        "step_diagnostics_are_not_an_accuracy_test": true
+      }
+    },
+    {
+      "target_key": "CH:STG",
+      "season": "summer",
+      "status": "SCORED_SECONDARY_ENDPOINT_HOLDOUT",
+      "B0_endpoint": {
+        "n": 168,
+        "MAE_K": 1.6125,
+        "RMSE_K": 1.86679953,
+        "bias_K": 1.53988095,
+        "centred_RMSE_K": 1.05532323
+      },
+      "R1_endpoint": {
+        "n": 168,
+        "MAE_K": 2.17914827,
+        "RMSE_K": 2.40932035,
+        "bias_K": 1.97019103,
+        "centred_RMSE_K": 1.38678471
+      },
+      "endpoint_paired_hours": 168,
+      "same_instrument_h_t_not_independent_replicates": true,
+      "reason": null,
+      "h_minus_t_six_nominal_node_mean": {
+        "n": 168,
+        "MAE_K": 0.02619048,
+        "RMSE_K": 0.03075333,
+        "bias_K": 0.0077381,
+        "centred_RMSE_K": 0.02976389
+      },
+      "endpoint_step_diagnostics": {
+        "B0_max_K": 2.5,
+        "R1_max_K": 5.93102907,
+        "R1_p99_K": 5.09501464,
+        "step_pairs": 167,
+        "step_diagnostics_are_not_an_accuracy_test": true
+      }
+    },
+    {
+      "target_key": "CH:STG",
+      "season": "autumn",
+      "status": "SCORED_SECONDARY_ENDPOINT_HOLDOUT",
+      "B0_endpoint": {
+        "n": 168,
+        "MAE_K": 2.72380952,
+        "RMSE_K": 3.30708115,
+        "bias_K": -1.76071429,
+        "centred_RMSE_K": 2.79940546
+      },
+      "R1_endpoint": {
+        "n": 168,
+        "MAE_K": 2.42018083,
+        "RMSE_K": 2.88789555,
+        "bias_K": -0.56053734,
+        "centred_RMSE_K": 2.83297345
+      },
+      "endpoint_paired_hours": 168,
+      "same_instrument_h_t_not_independent_replicates": true,
+      "reason": null,
+      "h_minus_t_six_nominal_node_mean": {
+        "n": 168,
+        "MAE_K": 0.02291667,
+        "RMSE_K": 0.0277877,
+        "bias_K": 0.00744048,
+        "centred_RMSE_K": 0.02677303
+      },
+      "endpoint_step_diagnostics": {
+        "B0_max_K": 3.3,
+        "R1_max_K": 6.21952846,
+        "R1_p99_K": 5.52233365,
+        "step_pairs": 167,
+        "step_diagnostics_are_not_an_accuracy_test": true
+      }
+    },
+    {
+      "target_key": "CH:SCU",
+      "season": "winter",
+      "status": "SCORED_SECONDARY_ENDPOINT_HOLDOUT",
+      "B0_endpoint": {
+        "n": 168,
+        "MAE_K": 6.16964286,
+        "RMSE_K": 6.40039526,
+        "bias_K": -6.16964286,
+        "centred_RMSE_K": 1.70310497
+      },
+      "R1_endpoint": {
+        "n": 168,
+        "MAE_K": 3.7607683,
+        "RMSE_K": 4.23713074,
+        "bias_K": -3.70869821,
+        "centred_RMSE_K": 2.04910577
+      },
+      "endpoint_paired_hours": 168,
+      "same_instrument_h_t_not_independent_replicates": true,
+      "reason": null,
+      "h_minus_t_six_nominal_node_mean": {
+        "n": 168,
+        "MAE_K": 0.02628968,
+        "RMSE_K": 0.03051043,
+        "bias_K": -0.00863095,
+        "centred_RMSE_K": 0.02926419
+      },
+      "endpoint_step_diagnostics": {
+        "B0_max_K": 4.3,
+        "R1_max_K": 4.60154586,
+        "R1_p99_K": 4.0568983,
+        "step_pairs": 167,
+        "step_diagnostics_are_not_an_accuracy_test": true
+      }
+    },
+    {
+      "target_key": "CH:SCU",
+      "season": "spring",
+      "status": "SCORED_SECONDARY_ENDPOINT_HOLDOUT",
+      "B0_endpoint": {
+        "n": 168,
+        "MAE_K": 6.22440476,
+        "RMSE_K": 6.61518365,
+        "bias_K": -6.22440476,
+        "centred_RMSE_K": 2.23996431
+      },
+      "R1_endpoint": {
+        "n": 168,
+        "MAE_K": 3.67026774,
+        "RMSE_K": 3.98850055,
+        "bias_K": -3.67026774,
+        "centred_RMSE_K": 1.56117629
+      },
+      "endpoint_paired_hours": 168,
+      "same_instrument_h_t_not_independent_replicates": true,
+      "reason": null,
+      "h_minus_t_six_nominal_node_mean": {
+        "n": 168,
+        "MAE_K": 0.02480159,
+        "RMSE_K": 0.03015612,
+        "bias_K": 0.00952381,
+        "centred_RMSE_K": 0.02861273
+      },
+      "endpoint_step_diagnostics": {
+        "B0_max_K": 2.4,
+        "R1_max_K": 3.73169162,
+        "R1_p99_K": 3.46959089,
+        "step_pairs": 167,
+        "step_diagnostics_are_not_an_accuracy_test": true
+      }
+    },
+    {
+      "target_key": "CH:SCU",
+      "season": "summer",
+      "status": "SCORED_SECONDARY_ENDPOINT_HOLDOUT",
+      "B0_endpoint": {
+        "n": 168,
+        "MAE_K": 6.7202381,
+        "RMSE_K": 7.10867177,
+        "bias_K": -6.7202381,
+        "centred_RMSE_K": 2.31767431
+      },
+      "R1_endpoint": {
+        "n": 168,
+        "MAE_K": 4.1308349,
+        "RMSE_K": 4.44332323,
+        "bias_K": -4.12923651,
+        "centred_RMSE_K": 1.64089219
+      },
+      "endpoint_paired_hours": 168,
+      "same_instrument_h_t_not_independent_replicates": true,
+      "reason": null,
+      "h_minus_t_six_nominal_node_mean": {
+        "n": 168,
+        "MAE_K": 0.02271825,
+        "RMSE_K": 0.02766844,
+        "bias_K": 0.01041667,
+        "centred_RMSE_K": 0.0256327
+      },
+      "endpoint_step_diagnostics": {
+        "B0_max_K": 3.1,
+        "R1_max_K": 6.02246089,
+        "R1_p99_K": 4.70190407,
+        "step_pairs": 167,
+        "step_diagnostics_are_not_an_accuracy_test": true
+      }
+    },
+    {
+      "target_key": "CH:SCU",
+      "season": "autumn",
+      "status": "SCORED_SECONDARY_ENDPOINT_HOLDOUT",
+      "B0_endpoint": {
+        "n": 168,
+        "MAE_K": 5.80654762,
+        "RMSE_K": 6.14233456,
+        "bias_K": -5.80654762,
+        "centred_RMSE_K": 2.00306729
+      },
+      "R1_endpoint": {
+        "n": 168,
+        "MAE_K": 4.31647322,
+        "RMSE_K": 4.5938607,
+        "bias_K": -4.31262362,
+        "centred_RMSE_K": 1.58266663
+      },
+      "endpoint_paired_hours": 168,
+      "same_instrument_h_t_not_independent_replicates": true,
+      "reason": null,
+      "h_minus_t_six_nominal_node_mean": {
+        "n": 168,
+        "MAE_K": 0.02509921,
+        "RMSE_K": 0.03012869,
+        "bias_K": 0.00922619,
+        "centred_RMSE_K": 0.02868127
+      },
+      "endpoint_step_diagnostics": {
+        "B0_max_K": 3.6,
+        "R1_max_K": 5.28077009,
+        "R1_p99_K": 4.77317122,
+        "step_pairs": 167,
+        "step_diagnostics_are_not_an_accuracy_test": true
+      }
+    }
+  ],
+  "counts": {
+    "registered_cases": 24,
+    "admitted_primary_cases": 16,
+    "source_blocked_cases": 8,
+    "partial_cases": 0,
+    "paired_primary_hours": 2688,
+    "requested_primary_hours": 4032
+  },
+  "source_costs": {
+    "control_HTTP_attempts": 8,
+    "cumulative_decoded_body_bytes": 243864017,
+    "original_control_packet_sha256": "14bd36166deaaeea182099af46ad1f3206a239f2ecd4eb4f3d5354dabe6ffa99"
+  },
+  "target_values_read_only_after_published_actual_prediction_seal": true,
+  "strict_global_raw_byte_blindness_certified": false,
+  "independence_from_ERA5_station_assimilation_certified": false,
+  "four_axes": {
+    "execution_correctness": "requires offline replay and CI, reported separately",
+    "physical_admissibility": "T range/operator/dated2m only; existing full-weather conditional closure unchanged",
+    "independent_accuracy": "new hourly-error cohort assessment only; prior coarse products and bounded audit disclosed; no regional full-weather qualification",
+    "operational_readiness": "research only; EnergyPlus, general coordinates, future local multiyear reference and production remain open"
+  },
+  "pressure_RH_q_or_future_NASA_accuracy_qualified": false,
+  "production_ready": false,
+  "UI_EPW_defaults_changed": false,
+  "IV1_2022_observations_opened": false
+}

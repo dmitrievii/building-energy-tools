@@ -1,0 +1,15 @@
+{
+  "schema": "IGE_V1_ACTUAL_CONTROL_SOURCE_GATE_v1",
+  "published_seal_commit": "4d993d64db8cbf7cab2f84b111fc1899445be431",
+  "addendum_sha256": "fd6f357bbb7d32907015b6d6ad47ff64cce8d6b532aebc05071a7f681a9244b8",
+  "actual_control_HTTP_requests": 6,
+  "locally_blocked_control_attempts": 2,
+  "locally_blocked_URLs": [
+    "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h?station_ids=20123&parameters=tl%2Ctl_flag&output_format=geojson&start=2018-01-07T00%3A00%3A00Z&end=2018-10-16T23%3A00%3A00Z",
+    "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h?station_ids=5609&parameters=tl%2Ctl_flag&output_format=geojson&start=2018-01-07T00%3A00%3A00Z&end=2018-10-16T23%3A00%3A00Z"
+  ],
+  "AT_control_bodies_opened": false,
+  "original_collector_HTTP_attempts_field_counts_acquisition_attempts_including_local_skips": 8,
+  "all24_registered_cases_retained": true,
+  "primary_QC_or_method_changed": false
+}

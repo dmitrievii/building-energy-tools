@@ -134,7 +134,7 @@
         "A",
         "B-M"
       ],
-      "current_status": "NOT_RUN",
+      "current_status": "CI_VERIFIED_TIME_ADMISSION_AND_DE_CH_HOURLY_ERROR_HOLDOUT; AT_QC_BLOCKED_UNOPENED; ENERGYPLUS_AND_FULL_WEATHER_RELEASE_OPEN",
       "depends_on": [
         "U1",
         "A1",
@@ -407,7 +407,7 @@
     "verified_CI_receipt": "research/ige_cmip6/a13_verified_CI_40236855438.json",
     "verified_CI_outputs": "research/ige_cmip6/a13_verified_CI_40236855438_results.zip"
   },
-  "current_execution_stage": "A1.5 CI-verified saved CH historical UI, 300 local/CI PASS, original weather bytes preserved; CPU numerical replay audited; A1 generality and V1 remain open",
+  "current_execution_stage": "V1 source and temperature validation: DE/CH 16 cases / 2688 hours; R1 worsens 2 of 4 sites; AT primary QC blocked and unopened; full V1 remains open",
   "A1_4_progress": {
     "branch": "research/ige-a1-4-local-historical-year-20261026",
     "registration_commit": "a3e04ca2961cd27fbc3e4b05d98c5e344e0a879a",
@@ -514,5 +514,36 @@
     "derived_analysis_CPU_variation": "12 saturation-vapour-pressure cells, max 1e-8 Pa, one 12-significant-digit output cell; original weather/q unchanged",
     "verified_CI_receipt": "research/ige_cmip6/a15_verified_CI_40360537552.json",
     "verified_CI_artifact": "research/ige_cmip6/a15_verified_CI_40360537552_artifact_manifest.json"
+  },
+  "V1_progress": {
+    "schema": "IGE_V1_VERIFIED_CI_AND_ARTIFACT_v1",
+    "CI_run": 40378317243,
+    "CI_url": "https://github.com/dmitrievii/building-energy-tools/actions/runs/40378317243",
+    "tested_commit": "a0ba1aeb428701989bc7d107697ceba1b1ef279d",
+    "total_unique_tests": 350,
+    "status": "PASS",
+    "artifact_id": 12678300741,
+    "artifact_sha256": "4540bb8639271fecfb68a93e2ed78e37a801e0500f52d582714b87d0680c9d0c",
+    "artifact_download_roundtrip_verified": true,
+    "artifact_member_files_verified": 53,
+    "source_and_metrics_replay": true,
+    "initial_summary_matches": true,
+    "raw_identity_with_first_local_packet_certified": false,
+    "AT_control_bodies_unopened": true,
+    "all24_cases_retained": true,
+    "paired_primary_hours": 2688,
+    "independent_regional_full_weather_accuracy_qualified": false,
+    "production_ready": false,
+    "registration_commit": "8fdc0341f1b660f4e56abec726381ae5a2dcc8a1",
+    "prediction_seal_commit": "4d993d64db8cbf7cab2f84b111fc1899445be431",
+    "metadata_ready_cases": 24,
+    "admitted_primary_cases": 16,
+    "AT_source_blocked_cases": 8,
+    "country_aggregates_hide_two_worsened_stations": true,
+    "R1_default_promoted": false,
+    "recovered_original_control_packet_sha256": "14bd36166deaaeea182099af46ad1f3206a239f2ecd4eb4f3d5354dabe6ffa99",
+    "global_weather_body_bytes_including_initial_lost_acquisition": 414321683,
+    "report": "docs/IGE_V1_TIME_ADMISSION_AND_VALIDATION_RESULTS_RU_20261026.md",
+    "next": "AT_QC_ORIGIN_AND_SEPARATE_PREREGISTRATION; ACTUAL_ENERGYPLUS; GENERAL_CORRECTOR_APPLICABILITY"
   }
 }

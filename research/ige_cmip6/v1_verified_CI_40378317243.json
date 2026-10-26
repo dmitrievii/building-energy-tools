@@ -1,0 +1,20 @@
+{
+  "schema": "IGE_V1_VERIFIED_CI_AND_ARTIFACT_v1",
+  "CI_run": 40378317243,
+  "CI_url": "https://github.com/dmitrievii/building-energy-tools/actions/runs/40378317243",
+  "tested_commit": "a0ba1aeb428701989bc7d107697ceba1b1ef279d",
+  "total_unique_tests": 350,
+  "status": "PASS",
+  "artifact_id": 12678300741,
+  "artifact_sha256": "4540bb8639271fecfb68a93e2ed78e37a801e0500f52d582714b87d0680c9d0c",
+  "artifact_download_roundtrip_verified": true,
+  "artifact_member_files_verified": 53,
+  "source_and_metrics_replay": true,
+  "initial_summary_matches": true,
+  "raw_identity_with_first_local_packet_certified": false,
+  "AT_control_bodies_unopened": true,
+  "all24_cases_retained": true,
+  "paired_primary_hours": 2688,
+  "independent_regional_full_weather_accuracy_qualified": false,
+  "production_ready": false
+}

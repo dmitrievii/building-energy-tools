@@ -1,0 +1,53 @@
+{
+  "schema": "IGE_V1_BITWISE_ORIGINAL_PACKET_PARTS_v1",
+  "packet_name": "v1_control_sources_20261026.zip",
+  "bytes": 48284053,
+  "sha256": "14bd36166deaaeea182099af46ad1f3206a239f2ecd4eb4f3d5354dabe6ffa99",
+  "parts": [
+    {
+      "name": "v1_control_sources_20261026.zip.part001",
+      "bytes": 5500000,
+      "sha256": "829036bab0004b2c46e23fcd3e5f477930539613dafb7182fc15da39fc57b1b6"
+    },
+    {
+      "name": "v1_control_sources_20261026.zip.part002",
+      "bytes": 5500000,
+      "sha256": "03c29c1705e149e46f2f111f332400d3d1be5851ec574fad92147ee96584388b"
+    },
+    {
+      "name": "v1_control_sources_20261026.zip.part003",
+      "bytes": 5500000,
+      "sha256": "45557e6a88f0e7f920a448378e132ce9a2052899d62c353712d0a14b57ca3f56"
+    },
+    {
+      "name": "v1_control_sources_20261026.zip.part004",
+      "bytes": 5500000,
+      "sha256": "cb0051c0df419ba03a0ae35d9b301de456918496c7d91fd1cc18a6fc7d7ce8fd"
+    },
+    {
+      "name": "v1_control_sources_20261026.zip.part005",
+      "bytes": 5500000,
+      "sha256": "4f9b91309f009fd1ffe79abe004eb92fe41b9ee094436fbc8b60c97be0142756"
+    },
+    {
+      "name": "v1_control_sources_20261026.zip.part006",
+      "bytes": 5500000,
+      "sha256": "20c7bf93c268c5b3fbe0523a30f13a7ccc6651b9024d2cc0828ceb46453da059"
+    },
+    {
+      "name": "v1_control_sources_20261026.zip.part007",
+      "bytes": 5500000,
+      "sha256": "983c1c69ce953fbe380f15c7a68b2eb73be0b50497849ea230e527cadba19ab0"
+    },
+    {
+      "name": "v1_control_sources_20261026.zip.part008",
+      "bytes": 5500000,
+      "sha256": "8866df94c7425303e767f259629cc36cb762d1d1830540d210f33726fdc72ec3"
+    },
+    {
+      "name": "v1_control_sources_20261026.zip.part009",
+      "bytes": 4284053,
+      "sha256": "1f1b7935307e83a7e53da1ebf47b12b4a97325e1eda735650898db4bad4408d4"
+    }
+  ]
+}
