@@ -1,0 +1,33 @@
+{
+  "schema": "IGE_V2_M3_PREDICTOR_ONLY_EXECUTION_CONTRACT_v1",
+  "date": "2026-10-27",
+  "scientific_registration_commit": "b357b22c1d20bea9c29e3f01bd6a1b629b2a00b8",
+  "M2_verified_head": "791de09dedd25b59aa3be837724b05a84d28e8d5",
+  "scientific_registration_sha256": "8404524385d1f5c8d0af21962573c7e1d5fc00323047589829125347a334de16",
+  "execution_sha256": {
+    "research/ige_cmip6/v2_m3_execution.py": "12b1e79bb3a61bad0f4caffcf9eaad95b9fa4c093636829f3492f0dd59f27f71",
+    "tools/climate_analyzer/tests/test_ige_v2_m3_execution.py": "7383f1ff27791e65fd57c5976957d768196ecb1bf8290a029300240efcea42b3",
+    ".github/workflows/ige-v2-m3-predictors-seal-20261027.yml": "dc256ee97f8940c254d42eb6b262d344438fcacfb4b1bd74cc7db8a9187c6c2f"
+  },
+  "input_specs_sha256": "3b32e1fcf4a4c2b911b3ae8b6791dd4aa51dddb0dec3afcae1ca3ec600f38bdf",
+  "branch": "research/ige-v2-executable-preregistration-20261027",
+  "branch_policy": "Continue the same registered research branch so original M2 publication gates remain valid; old scientific files and results immutable",
+  "controls_requested_by_this_stage": 0,
+  "target_scoring_in_this_stage": false,
+  "scientific_code_QC_time_operators_estimator_objective_selection_or_budget_changed": false,
+  "new_metadata_requests": 0,
+  "cohort": {
+    "targets": 18,
+    "cases": 72,
+    "hours": 12096
+  },
+  "start_marker_published_before_weather": true,
+  "originals_published_before_prediction": true,
+  "actual_predictions_ledger_seal_published_before_controls": true,
+  "reacquisition_on_CI_rerun_forbidden": true,
+  "all_source_blocks_and_NaNs_retained_without_replacement": true,
+  "known_block": "DE:14138 no unique 2019 archive in pinned DWD index",
+  "actual_source_count_pending": true,
+  "independent_accuracy_qualified": false,
+  "production_ready": false
+}

@@ -1,0 +1,84 @@
+name: IGE V2-M3 ONCE predictor originals and actual precontrol seal
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/ige-v2-executable-preregistration-20261027
+    paths:
+      - research/ige_cmip6/v2_m3_execution.py
+      - research/ige_cmip6/v2_m3_execution_contract_20261027.json
+      - tools/climate_analyzer/tests/test_ige_v2_m3_execution.py
+      - .github/workflows/ige-v2-m3-predictors-seal-20261027.yml
+concurrency:
+  group: ige-v2-m3-once-predictor-acquisition
+  cancel-in-progress: false
+permissions:
+  contents: read
+env:
+  PYTHONPATH: tools/climate_analyzer:research/ige_cmip6
+  OPENBLAS_NUM_THREADS: '1'
+  OMP_NUM_THREADS: '1'
+jobs:
+  originals_then_predictions_no_controls:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 210
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/climate_analyzer/requirements.txt
+      - run: python -m pip install -r tools/climate_analyzer/requirements.txt numcodecs==0.15.1 deprecated==3.0.0 wrapt==2.5.1
+      - name: Offline frozen scientific verification and source-only executor tests
+        run: |
+          python research/ige_cmip6/v2_weather_verify.py --out outputs/preflight
+          python -m unittest discover -s tools/climate_analyzer/tests -p test_ige_v2_m3_execution.py -v
+      - name: Publish the acquisition claim before any new weather request
+        run: python research/ige_cmip6/v2_m3_execution.py start
+      - name: Acquire only the exact registered predictor assets within frozen budgets
+        run: python research/ige_cmip6/v2_weather_io.py --phase inputs --out outputs/source-originals --published-commit b357b22c1d20bea9c29e3f01bd6a1b629b2a00b8
+      - name: Verify original source census and prepare immutable source artifact
+        run: python research/ige_cmip6/v2_m3_execution.py prepare-inputs --source outputs/source-originals --out outputs/source-artifact
+      - uses: actions/upload-artifact@v4
+        id: original_inputs
+        with:
+          name: IGE-V2-M3-original-predictor-packet
+          path: outputs/source-artifact/
+          if-no-files-found: error
+          retention-days: 90
+      - name: Preserve original sources on research branch before prediction
+        env:
+          SOURCE_ARTIFACT_ID: ${{ steps.original_inputs.outputs.artifact-id }}
+          SOURCE_ARTIFACT_DIGEST: ${{ steps.original_inputs.outputs.artifact-digest }}
+        run: python research/ige_cmip6/v2_m3_execution.py publish-inputs --source outputs/source-artifact
+      - name: Compute all registered forecasts without target observations
+        run: |
+          python research/ige_cmip6/v2_weather_run.py --phase predict --out outputs/predictions --published-commit b357b22c1d20bea9c29e3f01bd6a1b629b2a00b8
+          python research/ige_cmip6/v2_m3_execution.py stage-predictions --source outputs/predictions
+      - name: Independent invocation replay from the original packet without source requests
+        run: python research/ige_cmip6/v2_weather_verify.py --out outputs/actual-replay --source-directory research/ige_cmip6
+      - name: Verify actual precontrol seal and prepare final artifact
+        run: python research/ige_cmip6/v2_m3_execution.py prepare-final --source outputs/actual-replay --out outputs/final-artifact
+      - uses: actions/upload-artifact@v4
+        id: actual_seal
+        with:
+          name: IGE-V2-M3-actual-predictions-weights-NaNs-and-seal
+          path: outputs/final-artifact/
+          if-no-files-found: error
+          retention-days: 90
+      - name: Publish actual forecast bytes and seal; no control phase
+        run: python research/ige_cmip6/v2_m3_execution.py publish-final --source outputs/final-artifact
+      - name: Preserve partial originals on failure without re-acquisition
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: IGE-V2-M3-failure-retained-originals-and-journals
+          path: outputs/
+          if-no-files-found: warn
+          retention-days: 90
