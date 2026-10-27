@@ -1,0 +1,143 @@
+{
+  "schema": "IGE_V1A_ROOT_VERIFIED_CI_AND_ORIGINAL_ARTIFACT_v1",
+  "date": "2026-10-27",
+  "branch": "research/ige-v1a-at-qc10-r1-admission-20261027",
+  "tested_commit": "7099282a31d761f4e8dc313c4bb51f57c1653ae1",
+  "CI_run": 40481674870,
+  "CI_URL": "https://github.com/dmitrievii/building-energy-tools/actions/runs/40481674870",
+  "CI_status": "success",
+  "CI_verification": {
+    "schema": "IGE_V1A_OFFLINE_SOURCE_AND_REGRESSION_VERIFICATION_v1",
+    "parent_V1_tests": 342,
+    "old_QC22_gate_tests": 8,
+    "new_V1A_tests": 27,
+    "total_tests": 377,
+    "status": "PASS",
+    "wall_seconds": 319.82826086700004,
+    "new_station_measurement_or_model_HTTP_requests": 0,
+    "AT_control_T_unopened": true,
+    "documentation_packet_sha256": "5bea489779ae2a4f19331e79c77a70d921f5687255c65a1f1c386092fd9fc48a",
+    "diagnostics_saved_original_source_replay_equal": true,
+    "diagnostics_numerical_replay_tolerance": 1e-12,
+    "diagnostics_sha256": "8c41f6e6d2ebb45b15d25286343bc09729a23eb0a2d43e230ed42b255e32a839",
+    "new_validation_design_sha256": "60efc5bdc4e1c3f324e8a2043ce76375fd6cdc4348b044585b53e78a378d6422",
+    "new_2019_validation_executed": false,
+    "R1_default_promotion": false,
+    "independent_accuracy_or_full_weather_qualification": false,
+    "production_ready": false
+  },
+  "local_unique_tests": 377,
+  "root_downloaded_original_artifact": true,
+  "artifact": {
+    "id": 12723890575,
+    "name": "IGE-V1A-QC10-provenance-and-R1-applicability-RESEARCH",
+    "bytes": 16701917,
+    "sha256": "2874a17efcec5932cc200c773fa6974df3f8176266e48416c902ee38d51b0501",
+    "GitHub_API_digest_equal_downloaded_ZIP": true,
+    "upload_log_digest_equal_downloaded_ZIP": true,
+    "member_files": 32,
+    "member_sha256": {
+      "frozen_V1/parent_A1_5/CH_ALT/analysis_state.csv.gz": "d1466ce3ab2fffad03273257aea8b480bc26afd128dabed85df7907ad3bcf4eb",
+      "frozen_V1/parent_A1_5/CH_ALT/climate.epw": "53a0a904ec7141d26d9941e1ed5dbf473a8cd461c8bb86e5a6f091da450ff538",
+      "frozen_V1/parent_A1_5/CH_ALT/complete_product.zip": "ef3341fa1fd86a6e09895b66a0effa012ab1aab21f2464a3fa59c97a95e9a637",
+      "frozen_V1/parent_A1_5/CH_ALT/hourly.csv.gz": "c79760a2b04d7aa1793e10b9cb5c3a9a07f13370cf5f16b874e2a67f20cde71e",
+      "frozen_V1/parent_A1_5/CH_ALT/source_references.json": "4c803dab1ea289d53e7bef16bb438441d9230782dc212da6a25c2109cc40b156",
+      "frozen_V1/parent_A1_5/CH_ALT/ui_report.json": "f2a183e750d33839a94351f53fe84f3f4a9b42eced8b0ba66f2f74dae2dd7969",
+      "frozen_V1/parent_A1_5/CH_BAS/analysis_state.csv.gz": "5c208aa1bd45934294bbc0e50eca4a104048417fdf3c29119c963bf414d25e9b",
+      "frozen_V1/parent_A1_5/CH_BAS/climate.epw": "b7cc31ac7cf6a71329f85a7d60f41fe2ea43be86692f8f012cc2b02009c378e1",
+      "frozen_V1/parent_A1_5/CH_BAS/complete_product.zip": "a7ad8b295aeaa8f3f65ee46a5999d1c637b472ebc24b3e6d9008c26e57f962fe",
+      "frozen_V1/parent_A1_5/CH_BAS/hourly.csv.gz": "52519cec712ce905e25ada0d5c5bf00cd312122d8fc390f0583c68cd5f454764",
+      "frozen_V1/parent_A1_5/CH_BAS/source_references.json": "4c803dab1ea289d53e7bef16bb438441d9230782dc212da6a25c2109cc40b156",
+      "frozen_V1/parent_A1_5/CH_BAS/ui_report.json": "c46fecc08dcb30d99fd541f4d72e0494c0bc34370fd723780f01f7adf59cd2a4",
+      "frozen_V1/parent_A1_5/parent_replay_actual.zip": "21a10349e47c595b43a1a1f7aa884ae91cff951f556e4912e33c69f3186d5e65",
+      "frozen_V1/parent_A1_5/parent_replay_member_audit.json": "c70019a7fc5979b30887e34533084387fb58609b7f9d90c4366abaf1d794d534",
+      "frozen_V1/parent_A1_5/parent_replay_numerical_audit.json": "d9a0b3fe21c55f8a4b5423f6c0119d16272268f920b2125d64cd84a61d29fec5",
+      "frozen_V1/parent_A1_5/tests.json": "5d8cdc6fb1383ca6aeaf5b8f7ec474c5357a515834b3f7408d0225aed61e250b",
+      "frozen_V1/parent_A1_5/verification.json": "6c75e780907408237b6e8924c633478a7d20f9058a265573ef4a71f0175b9fae",
+      "frozen_V1/v1_CH_inverse_profiles_20261026.csv": "b434a9cc0d3101d12844f7859caaf3fc4bc55e9316b90b7928e064a0b4447d76",
+      "frozen_V1/v1_exposure_audit_20261026.json": "1f2c1888a0f8d08a7f555982f24c79f539312b28dc86ed4fba97619e476b8585",
+      "frozen_V1/v1_metadata_sources_20261026.zip": "d9d867cf24c4f24a89375033e3e6e93cc33f5e2110149ff4b89938e815d0221d",
+      "frozen_V1/v1_paired_temperatures_20261026.csv": "b6d5496d6bbd11c13c0bede113703f60e2c820e714ad37e5d4498a0e99e3cc02",
+      "frozen_V1/v1_prediction_ledger_20261026.json": "d216fbb46cdc3b053481b6ac70c21baf2d55393017a5493d0ce6e48d088669c7",
+      "frozen_V1/v1_prediction_seal_20261026.json": "aa12da9e18387bc25677d4d6a8f5126baa9ac3cd98bf215e4f5f8267150895dc",
+      "frozen_V1/v1_predictions_20261026.csv": "18638d857bb2ab9dd10b7ae7e45e55c41ce59a1fe8d48d51ed355d2ab308f2f4",
+      "frozen_V1/v1_registration_20261026.json": "468c8cf09dd4c0c2eb29be4c4c3bbe5073625cddcf3a42377d652e69416aaa1b",
+      "frozen_V1/v1_results_20261026.json": "c4a39a17fef230ee135e2947d352b03dd27aafbbdb6f5b06fce9b3304848a5e2",
+      "frozen_V1/v1_tests.json": "2b342aae9c0b2485188e976a81bb9754171b9441e2d85b581ad2cbeb66466a32",
+      "frozen_V1/v1_time_geometry_admission_20261026.json": "9fd2ea3324512f40762018b7c9eff7c8148139c3b238c7bf84d817fe7735a3ad",
+      "frozen_V1/v1_verification.json": "d132891bd160a0b0c0289e5158e4bbb3e9a363be5b290f212315d2179fbd0ce1",
+      "old_QC22_gate/v1_control_gate_verification.json": "bc112a47509673c28e4bf4b4c1125b7be67ebb2c28d9ceb211f7719b62eec39f",
+      "v1a_qc10_r1_diagnostics.json": "8c41f6e6d2ebb45b15d25286343bc09729a23eb0a2d43e230ed42b255e32a839",
+      "v1a_verification.json": "3a42d4997629da4bcf1ac7e44c7fcdcf1f6f0aebdb6c71ab5615d02990b4cb2f"
+    }
+  },
+  "artifact_receipt_equal_CI_logs": true,
+  "original_precontrol_seal_members_byte_verified": [
+    "v1_predictions_20261026.csv",
+    "v1_CH_inverse_profiles_20261026.csv",
+    "v1_prediction_ledger_20261026.json"
+  ],
+  "V1A_diagnostics_artifact_byte_equal_published": true,
+  "frozen_V1_actual_source_replay": {
+    "predictions": {
+      "byte_identical": true,
+      "printed_digit_compatibility": true,
+      "absolute_tolerance": 1.1e-10,
+      "max_difference_by_numeric_column": {
+        "B0_C": 0,
+        "R1_C": 0,
+        "accepted_donor_count": 0,
+        "B0_endpoint_C": 0,
+        "R1_endpoint_C": 0,
+        "weight_1": 0,
+        "weight_2": 0,
+        "weight_3": 0
+      }
+    },
+    "CH_inverse_profiles": {
+      "byte_identical": true,
+      "printed_digit_compatibility": true,
+      "absolute_tolerance": 1.1e-10,
+      "max_difference_by_numeric_column": {
+        "B0_mean_C": 0,
+        "raw_R1_mean_C": 0,
+        "selected_mean_C": 0,
+        "B0_endpoint_C": 0,
+        "reconstructed_endpoint_C": 0,
+        "endpoint_delta_K": 0,
+        "mean_roundtrip_residual_K": 0
+      }
+    },
+    "pairs": {
+      "byte_identical": true,
+      "printed_digit_compatibility": true,
+      "absolute_tolerance": 1.1e-10,
+      "max_difference_by_numeric_column": {
+        "observed_C": 0,
+        "B0_C": 0,
+        "R1_C": 0
+      }
+    },
+    "scores_within_registered_printed_digits": true
+  },
+  "protected_remote_refs_unchanged": {
+    "main": "2a82a77d0fe8cc87a2324b820d6c6843b6598548",
+    "research/ige-v1-time-admission-preregistration-20261026": "98f1c64905196d9f1215a273812cf269ff68ccb5",
+    "research/ige-a1-5-local-year-ui-20261026": "040a7473727336d45c9ac1151709ccbaf8b6e245"
+  },
+  "only_existing_files_modified_from_parent_V1": [
+    "docs/IGE_CLIMATE_ENGINE_TWO_PRODUCT_ROADMAP_RU_20261025.md",
+    "research/ige_cmip6/e2e_two_product_roadmap_20261025.json"
+  ],
+  "new_weather_or_target_control_requests": 0,
+  "AT_controls_unopened": true,
+  "IV1_2022_controls_unopened": true,
+  "original_V1_AT_QC22_and_source_blocks_unchanged": true,
+  "QC10_specific_edit_or_fill_history_resolved": false,
+  "original_V1_initial_local_control_packet_identity_certified": false,
+  "independent_accuracy_qualified_by_V1A": false,
+  "concrete_2019_cohort_registered": false,
+  "R1_default_promoted": false,
+  "production_ready": false,
+  "evidence_only_followup_commit_no_scientific_code_or_design_changes": true
+}

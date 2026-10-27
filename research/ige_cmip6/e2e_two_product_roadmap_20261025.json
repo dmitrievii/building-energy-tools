@@ -190,7 +190,7 @@
     "historical_EPW_sha256": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635",
     "historical_year": 2023,
     "selected_cell": [
-      47.0,
+      47,
       15.5
     ],
     "local_station_accuracy_qualified": false,
@@ -563,10 +563,21 @@
     "production_ready": false,
     "report": "docs/IGE_V1A_AT_QC10_AND_R1_APPLICABILITY_RU_20261027.md",
     "next_design": "research/ige_cmip6/v1a_next_validation_design_20261027.json",
-    "CI_status": "PENDING",
+    "CI_status": "SUCCESS",
     "tests_local": 377,
     "local_verification_seconds": 333.5403021679999,
     "local_source_replay_equal": true,
-    "local_receipt": "research/ige_cmip6/v1a_verified_local_20261027.json"
+    "local_receipt": "research/ige_cmip6/v1a_verified_local_20261027.json",
+    "CI_tests": 377,
+    "CI_run": 40481674870,
+    "tested_commit": "7099282a31d761f4e8dc313c4bb51f57c1653ae1",
+    "CI_verification_seconds": 319.82826086700004,
+    "CI_source_replay_equal": true,
+    "artifact_id": 12723890575,
+    "artifact_sha256": "2874a17efcec5932cc200c773fa6974df3f8176266e48416c902ee38d51b0501",
+    "root_binary_artifact_digest_verified": true,
+    "artifact_member_files_hashed": 32,
+    "diagnostics_artifact_byte_equal_published": true,
+    "verified_CI_receipt": "research/ige_cmip6/v1a_verified_CI_40481674870.json"
   }
 }
