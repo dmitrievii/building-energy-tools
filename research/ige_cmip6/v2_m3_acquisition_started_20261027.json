@@ -1,0 +1,56 @@
+{
+  "schema": "IGE_V2_M3_PREWEATHER_ACQUISITION_CLAIM_v1",
+  "CI_run": 40585045772,
+  "preweather_execution_commit": "ea53ec74c1fe3afbc49049012cb23094f8dbde24",
+  "execution_contract_sha256": "2c6bc350f17eed0875ec4b9a69eea47ddadc27ec27058ef967fe22767dbf17a5",
+  "scientific_registration_gate": {
+    "commit": "b357b22c1d20bea9c29e3f01bd6a1b629b2a00b8",
+    "remote_tracking_ancestry_and_bytes_verified": true,
+    "phase": "registration",
+    "API_publication_receipt_required_separately": true,
+    "local_wallclock_is_not_trusted_external_time": true
+  },
+  "budget": {
+    "HTTP_attempts_inputs_plus_controls_max": 240,
+    "attempts_per_asset_max": 3,
+    "body_bytes_all_attempts_inputs_plus_controls_max": 2000000000,
+    "maximum_original_body_per_asset": 150000000,
+    "attempt_total_deadline_seconds": 45,
+    "reserved_control_first_attempt_slots": 18,
+    "reserved_control_first_body_caps_bytes": 342000000,
+    "workflow_job_deadline_minutes": 210,
+    "parallel_downloads": 1,
+    "retry_delays_seconds": [
+      2,
+      4
+    ],
+    "retry_only": [
+      "transport error",
+      "total deadline",
+      "HTTP429",
+      "HTTP500",
+      "HTTP502",
+      "HTTP503",
+      "HTTP504"
+    ],
+    "partial_failed_and_HTTP_error_bodies_preserved_and_counted": true,
+    "DWD_product_uncompressed_member_max": 150000000,
+    "transport_attempt_bound_seconds": 10800,
+    "backoff_bound_seconds": 480,
+    "CPU_estimate_minutes": [
+      2,
+      10
+    ],
+    "network_estimate_minutes": [
+      10,
+      45
+    ],
+    "estimates_not_measured_run": true,
+    "first_pass_prioritized_over_retries": true,
+    "budget_exhaustion": "retain every remaining asset/case as SOURCE_BLOCKED; no extension"
+  },
+  "new_weather_attempts_at_claim": 0,
+  "target_control_requests_authorized": 0,
+  "runner_UTC_clock_untrusted": "2026-10-27T21:15:29.832119+00:00",
+  "repeat_policy": "no second acquisition; recover retained originals or explicitly preregister bounded source recovery"
+}
