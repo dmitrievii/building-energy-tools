@@ -407,7 +407,7 @@
     "verified_CI_receipt": "research/ige_cmip6/a13_verified_CI_40236855438.json",
     "verified_CI_outputs": "research/ige_cmip6/a13_verified_CI_40236855438_results.zip"
   },
-  "current_execution_stage": "V2-M1 complete: 18 targets /72 cases admitted by dated metadata; no new weather or measured temperature accuracy; executable protocol not yet frozen",
+  "current_execution_stage": "V2-M2: executable 2019 preregistration before predictor weather; V2-M3 actual predictions/seal next",
   "A1_4_progress": {
     "branch": "research/ige-a1-4-local-historical-year-20261026",
     "registration_commit": "a3e04ca2961cd27fbc3e4b05d98c5e344e0a879a",
@@ -615,5 +615,24 @@
     "admission": "research/ige_cmip6/v2_metadata_admission_20261027.json",
     "root_CI_receipt": "research/ige_cmip6/v2_root_verified_CI_40493437058.json",
     "next": "freeze concrete executable 2019 source/estimator/scoring protocol, then publish actual predictions and seal before target observations"
+  },
+  "V2_M2_progress": {
+    "parent_commit": "940e6664731e0bae6c0057608aa9ad70d604f6f2",
+    "branch": "research/ige-v2-executable-preregistration-20261027",
+    "status": "EXECUTABLE_REGISTRATION_LOCAL_PASS_CI_PENDING",
+    "registered_targets": 18,
+    "registered_cases": 72,
+    "requested_reference_hours": 12096,
+    "registered_assets": 140,
+    "requestable_assets": 139,
+    "known_source_block": "donor_DE_14138 has no unique 2019 archive in pinned index; no donor replacement",
+    "tests_local": 154,
+    "CI_run": null,
+    "registration_sha256": "8404524385d1f5c8d0af21962573c7e1d5fc00323047589829125347a334de16",
+    "new_model_station_or_target_QC_requests": 0,
+    "actual_prediction_seal_published": false,
+    "new_independent_accuracy_measured": false,
+    "production_ready": false,
+    "next": "V2-M3: acquire predictor originals within frozen budgets, publish actual predictions and seal before any control bodies"
   }
 }

@@ -1,0 +1,52 @@
+name: IGE V2 executable weather preregistration OFFLINE RESEARCH
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/ige-v2-executable-preregistration-20261027
+    paths:
+      - research/ige_cmip6/v2_weather_*
+      - tools/climate_analyzer/tests/test_ige_v2_weather.py
+      - .github/workflows/ige-v2-weather-registration-20261027.yml
+permissions:
+  contents: read
+env:
+  PYTHONPATH: tools/climate_analyzer:research/ige_cmip6
+  OPENBLAS_NUM_THREADS: '1'
+  OMP_NUM_THREADS: '1'
+jobs:
+  registered_science_and_access_gates:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/climate_analyzer/requirements.txt
+      - run: python -m pip install -r tools/climate_analyzer/requirements.txt numcodecs==0.15.1 deprecated==3.0.0 wrapt==2.5.1
+      - name: Verify frozen registration, metadata, estimators, scoring and no-weather gates
+        run: python research/ige_cmip6/v2_weather_verify.py --out outputs/verified
+      - name: Write original verification artifact member census
+        if: always()
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from hashlib import sha256
+          import json
+          out=Path('outputs/verified');out.mkdir(parents=True,exist_ok=True)
+          members={p.name:sha256(p.read_bytes()).hexdigest() for p in out.iterdir() if p.is_file()}
+          (out/'artifact_member_manifest.json').write_text(json.dumps(members,indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: IGE-V2-M2-offline-executable-registration
+          path: outputs/verified/
+          retention-days: 30
+# This workflow has NO model, donor observation or target-QC acquisition step.
+# Actual sources require the published exact registration, then a separately
+# published actual prediction seal before the controls phase can run.
