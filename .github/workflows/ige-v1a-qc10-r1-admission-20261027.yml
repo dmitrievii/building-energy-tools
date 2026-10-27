@@ -1,0 +1,50 @@
+name: IGE V1A native AT QC10 provenance and R1 applicability RESEARCH
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/ige-v1a-at-qc10-r1-admission-20261027
+    paths:
+      - research/ige_cmip6/v1a_*
+      - tools/climate_analyzer/tests/test_ige_v1a.py
+      - .github/workflows/ige-v1a-qc10-r1-admission-20261027.yml
+permissions:
+  contents: read
+env:
+  OPENBLAS_NUM_THREADS: '1'
+  OMP_NUM_THREADS: '1'
+  STREAMLIT_BROWSER_GATHER_USAGE_STATS: 'false'
+  PYTHONPATH: tools/climate_analyzer:research/ige_cmip6
+jobs:
+  offline_original_source_audit_and_frozen_regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r tools/climate_analyzer/requirements.txt numcodecs==0.15.1 deprecated==3.0.0 wrapt==2.5.1
+      - name: Offline frozen V1 replay and native QC10 audit
+        run: python research/ige_cmip6/v1a_verify.py --out outputs/v1a
+      - name: Keep documentation, product accuracy and sensor accuracy separate
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          r=json.loads(Path('outputs/v1a/v1a_verification.json').read_text())
+          assert r['AT_control_T_unopened'] and not r['production_ready']
+          assert not r['new_2019_validation_executed'] and not r['R1_default_promotion']
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:
+              f.write(f"{r['total_tests']} checks PASS. Native AT QC10 provenance verified on 40752 revealed donor rows.\n\n")
+              f.write('QC10 is automatic checking with unknown originality; pointwise edits/fills and upstream spatial-QC dependency remain unresolved. New cohort is not registered or opened. No default, full-weather or production qualification.\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: IGE-V1A-QC10-provenance-and-R1-applicability-RESEARCH
+          path: outputs/v1a/
+          if-no-files-found: error
+          retention-days: 30

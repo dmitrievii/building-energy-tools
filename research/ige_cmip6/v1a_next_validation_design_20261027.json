@@ -1,0 +1,114 @@
+{
+  "schema": "IGE_V1A_NEXT_R1_VALIDATION_DESIGN_v1",
+  "date": "2026-10-27",
+  "status": "DESIGN_FROZEN_CONCRETE_COHORT_NOT_YET_REGISTERED",
+  "product_functions": ["A", "B-M historical reference only"],
+  "parent_commit": "98f1c64905196d9f1215a273812cf269ff68ccb5",
+  "original_V1_QC22_registration_unchanged": true,
+  "2018_DE_CH_results_and_all_opened_donor_containers_are_revealed": true,
+  "old_AT_2018_target_T_remains_unopened": true,
+  "new_station_measurement_requests_authorized_by_this_design_file": 0,
+  "cohort": [],
+  "cohort_file_sha256": null,
+  "actual_prediction_seal_sha256": null,
+  "countries": ["AT", "DE", "CH"],
+  "planned_year": 2019,
+  "planned_targets_per_country": 6,
+  "planned_cases": 72,
+  "planned_reference_hours": 12096,
+  "windows_UTC": [
+    ["2019-01-10T00:00:00Z", "2019-01-16T23:00:00Z"],
+    ["2019-04-10T00:00:00Z", "2019-04-16T23:00:00Z"],
+    ["2019-07-10T00:00:00Z", "2019-07-16T23:00:00Z"],
+    ["2019-10-10T00:00:00Z", "2019-10-16T23:00:00Z"]
+  ],
+  "cohort_freeze_before_weather": {
+    "catalogs_and_dated_metadata": "snapshot originals, physical identity aliases, coordinates, sensor AGL and local-ground reference; strict dated 2m",
+    "source_product_operator": "AT nominal-node inference retained; DE TT_10 HH:00; CH six nominal samples with 5/12 and 7/12 linear model surrogate since 2018",
+    "all_opened_raw_containers_count_as_exposure": true,
+    "excluded_targets": "all previous target identities, known station-error fits/scores and any prior raw target container exposure, including unused variables/years; disclose coarse-product exposure separately",
+    "relative_elevation_strata": "Within each country's metadata-admitted, exposure-admitted candidate pool, sort nominal site altitude then station key; split with numpy.array_split into 3 rank strata. These are relative ranks, not physical climate-zone classes.",
+    "target_order_within_stratum": "ascending SHA256 UTF8('IGE_V2_2019|' + station_key + '|20261027'), then station_key",
+    "targets_per_rank_stratum": 2,
+    "all_targets_globally_excluded_as_donors": true,
+    "donor_selection": "After the full target list is frozen, same-country physical identities in ascending nominal distance/key order; first 8 AT or 4 DE/CH candidates, then first 3 metadata-admitted, min 2; no replacements after weather acquisition",
+    "distance_domain_km": [5, 150],
+    "insufficient_candidates_or_donors": "retain SOURCE_BLOCKED and do not start unblinding; revise metadata-only protocol in a new version before weather, or report the blocked design",
+    "new_model_requests_before_concrete_registration_published": 0,
+    "new_control_T_or_target_QC_series_before_actual_prediction_seal_published": 0
+  },
+  "QC_strata": {
+    "AT_new_primary_product_reconstruction": {
+      "donor_codes": [10], "reference_codes": [10],
+      "label": "AUTOMATIC_CHECKED_ORIGINALITY_UNKNOWN_PROVIDER_PRODUCT",
+      "original_sensor_accuracy_claim_allowed": false,
+      "pointwise_edit_or_gap_fill_fraction_known": false,
+      "provider_spatial_QC_dependency_excluded": false,
+      "observed_V1_donor_availability_informed_this_design": true,
+      "other_native_flags": "retain counts and missing predictions; do not pool 11,12,20,21,22 with QC10 or replace the primary after scoring"
+    },
+    "AT_certified_original_substudy": "requires a separately preregistered original-status source and product-specific temporal definition; old V1 QC22 stays blocked",
+    "DE": "TT_10 native QN3, separate from standard-hourly QN10",
+    "CH": "published historical OGD with no native per-row QC; separate from AT/DE",
+    "null_unchecked_or_undocumented_codes": "not accepted"
+  },
+  "estimators": {
+    "B0": "same fixed Open-Meteo ERA5-derived background at target, elevation=nan, cell_selection=nearest, same time operator as R1; no native ERA5-orography claim",
+    "R1": "unchanged frozen A1 IDW2 donor residual estimator; min 2 accepted donors per hour; raw missing values and candidate bounds retained",
+    "G1_or_fitted_lapse_or_covariance_rule": "not a registered estimator in this design; any calibration/selection implementation requires a separate version and untouched evaluation cohort"
+  },
+  "applicability_diagnostics_not_accuracy_gates": [
+    "horizontal distances, interpolation vs extrapolation geometry",
+    "reported target and donor altitude ranges and model-site height proxies with datum/native-orography uncertainty",
+    "unique returned background cells and distinct temperature arrays; do not count shared cells as independent information",
+    "weights, effective weight count 1/sum(w^2), missingness and per-code counts; weight count is not independent sample size",
+    "leave-one-donor-out only when 3 donors allow the unchanged min-2 estimator; never replace with a one-donor rule",
+    "bias, centred error, RMSE and hourly endpoint diagnostics separately from reference-operator MAE",
+    "donor coherence or successful donor LOO does not imply target skill"
+  ],
+  "scoring": {
+    "primary": "paired MAE_R1 minus MAE_B0 at the same accepted reference hours, first per station/season and country/QC stratum",
+    "minimum_pairs_per_case": 160,
+    "requested_hours_per_case": 168,
+    "other_metrics": ["RMSE", "bias", "centred RMSE", "all-reference B0", "coverage", "all source blocks", "worst station change"],
+    "country_pilot_benefit_rule": "all 24 country cases >=160 pairs, country paired delta_MAE<0 and each of the 6 station paired delta_MAE<=0; otherwise no within-pilot uniform-benefit claim",
+    "zero_margin_meaning": "conservative observed-score decision rule, not an equivalence test, significance result, confidence guarantee or proof of no harm",
+    "pooled_country_winner": false,
+    "country_temporal_blocks": "4 synchronous week blocks across all 6 sites; keep all sites together and disclose shared-cell/donor dependencies",
+    "resampling": "if displayed: 10000 PCG64 seed 20261027 draws of the 4 synchronous week blocks, descriptive percentiles only; no p<0.05 or population CI claim",
+    "CH_endpoint_test": "not included in primary 12096 hours; register exact raw t assets, inverse/spinup/eligibility and additional bytes before any endpoint request if added",
+    "missing_R1": "no hidden B0 fill in R1 accuracy; paired and all-reference B0 reported. Any B0 fallback product is a different named strategy with separate whole-request metrics."
+  },
+  "pre_unblinding_required": [
+    "complete exact catalog/admission/exposure/cohort JSON and source URL/member manifest, or retained blocks",
+    "freeze executable code, QC and scoring; publish exact registration SHA before predictor weather",
+    "acquire originals within registered attempts/time/byte budgets; no selection by weather availability or errors",
+    "publish actual predictions/NaNs, all 72 cases, weights, code/source hashes and source-based control admission before control bodies",
+    "separate runtime data-access holdout from upstream spatial QC and reanalysis assimilation dependence",
+    "if any prior exposure discovered: retain and downgrade to revealed, no post-error replacement"
+  ],
+  "planned_compute_budget": {
+    "metadata_HTTP_attempts_max": 240,
+    "weather_HTTP_attempts_max": 240,
+    "weather_attempts_per_registered_asset_max": 3,
+    "weather_timeout_seconds": 45,
+    "decoded_weather_body_bytes_all_attempts_max": 2000000000,
+    "maximum_original_body_bytes_per_asset": 150000000,
+    "control_endpoint_10min_CH_assets_included": false,
+    "compute_estimate_CPU_minutes": [2, 10],
+    "network_estimate_minutes": [10, 45],
+    "sequential_transport_worst_case_hours_bound_metadata_plus_weather": 7.0,
+    "bound_caveat": "45s socket timeout is not a total deadline; concrete executor must enforce per-attempt elapsed deadline and global wall/byte/request limits before this bound is asserted",
+    "estimate_not_measured_new_run": true,
+    "exact_source_inventory_must_fit_before_registration": true,
+    "if_budget_insufficient": "retain block or new metadata-only design version before measurement; never expand silently"
+  },
+  "qualification": {
+    "code_correctness": "offline source/seal regression and adversarial math tests",
+    "physical_admissibility": "dated 2m and nominal time support only; full EPW physics and true instrument filters separate",
+    "independent_accuracy": "new error holdout relative to method fitting with bounded exposure audit; provider QC and reanalysis assimilation dependence disclosed",
+    "operation": "R1 stays research-only and non-default; actual EnergyPlus, full-year input completeness, multiyear historical reference and production separately",
+    "B4_P2_NASA_daily_closure_qualified_by_this_test": false,
+    "automatic_deployment_or_merge": false
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "schema": "IGE_V1A_OFFLINE_SOURCE_AND_REGRESSION_VERIFICATION_v1",
+  "parent_V1_tests": 342,
+  "old_QC22_gate_tests": 8,
+  "new_V1A_tests": 27,
+  "total_tests": 377,
+  "status": "PASS",
+  "wall_seconds": 333.5403021679999,
+  "new_station_measurement_or_model_HTTP_requests": 0,
+  "AT_control_T_unopened": true,
+  "documentation_packet_sha256": "5bea489779ae2a4f19331e79c77a70d921f5687255c65a1f1c386092fd9fc48a",
+  "diagnostics_saved_original_source_replay_equal": true,
+  "diagnostics_numerical_replay_tolerance": 1e-12,
+  "diagnostics_sha256": "8c41f6e6d2ebb45b15d25286343bc09729a23eb0a2d43e230ed42b255e32a839",
+  "new_validation_design_sha256": "60efc5bdc4e1c3f324e8a2043ce76375fd6cdc4348b044585b53e78a378d6422",
+  "new_2019_validation_executed": false,
+  "R1_default_promotion": false,
+  "independent_accuracy_or_full_weather_qualification": false,
+  "production_ready": false
+}

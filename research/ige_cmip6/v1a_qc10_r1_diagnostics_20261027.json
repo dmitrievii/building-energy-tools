@@ -1,0 +1,1161 @@
+{
+  "schema": "IGE_V1A_AT_QC10_PROVENANCE_AND_R1_DIAGNOSTICS_v1",
+  "date": "2026-10-27",
+  "protection": {
+    "parent": "98f1c64905196d9f1215a273812cf269ff68ccb5",
+    "V1_sealed_inputs_predictions_QC_gate_unchanged": true,
+    "existing_files_modified_except_living_roadmaps": false
+  },
+  "documentation": {
+    "packet_sha256": "5bea489779ae2a4f19331e79c77a70d921f5687255c65a1f1c386092fd9fc48a",
+    "packet_bytes": 265860,
+    "manifest": {
+      "schema": "IGE_V1A_DOCUMENTATION_ONLY_ORIGINALS_v1",
+      "date": "2026-10-27",
+      "new_station_measurement_requests": 0,
+      "AT_control_bodies_opened": false,
+      "attempts_per_asset": 1,
+      "actual_HTTP_requests": 7,
+      "body_bytes": 926956,
+      "earlier_documentation_probe": {
+        "HTTP_requests": 2,
+        "known_body_bytes_read": 112271,
+        "first_document_received_but_not_saved_before_failure": "AT_quality_indicators.pdf",
+        "second_legacy_URL_status": 404,
+        "error_body_read": false,
+        "station_measurement_requests": 0,
+        "first_probe_byte_identity_not_certified": true
+      },
+      "sources": {
+        "AT_quality_indicators.pdf": {
+          "url": "https://public.hub.geosphere.at/public/resources/misc/klima/DataHub-DE-Qualitaetsindikatoren.pdf",
+          "status": "ORIGINAL_BODY_RECEIVED",
+          "bytes": 112271,
+          "sha256": "bbe03708b201d9d3f918b27bc2df6f60276b5b25863a71df6d71916aa0b4fec8",
+          "retrieved_UTC": "2026-10-27T09:15:23.834551+00:00",
+          "headers": {
+            "Content-Type": "application/pdf",
+            "Content-Length": "112271",
+            "Last-Modified": "Thu, 30 Jul 2026 12:40:27 GMT",
+            "ETag": "\"40b5752d311c918852dbf06ee5170b39\""
+          }
+        },
+        "AT_quality_indicators_legacy_path.pdf": {
+          "url": "https://public.hub.geosphere.at/public/resources/misc/Qualitaetsindikatoren_in_den_Stationsdatensaetzen_der_GeoSphere_Austria.pdf",
+          "status": "SOURCE_BLOCKED",
+          "error": "HTTP Error 404: Not Found",
+          "body_bytes_read": 0,
+          "retrieved_UTC": "2026-10-27T09:15:29.909726+00:00",
+          "HTTP_status": 404
+        },
+        "AT_data_quality.pdf": {
+          "url": "https://public.hub.geosphere.at/public/resources/misc/klima/DataHub-DE-Informationen-zur-Datenqualit%C3%A4t.pdf",
+          "status": "ORIGINAL_BODY_RECEIVED",
+          "bytes": 85710,
+          "sha256": "9c50e9671f779b5a0b9ef5e4160fea22fb11ca81de98d886666ec4d53fce6a06",
+          "retrieved_UTC": "2026-10-27T09:15:36.151610+00:00",
+          "headers": {
+            "Content-Type": "application/pdf",
+            "Content-Length": "85710",
+            "Last-Modified": "Thu, 30 Jul 2026 12:40:14 GMT",
+            "ETag": "\"4295df33b655f13683db890e708613c9\""
+          }
+        },
+        "AT_hourly_metadata.json": {
+          "url": "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h/metadata",
+          "status": "ORIGINAL_BODY_RECEIVED",
+          "bytes": 241148,
+          "sha256": "21f6260bfc8ed496131e71b947921beca64959fe1b75a1b580b155d37515a420",
+          "retrieved_UTC": "2026-10-27T09:15:42.376650+00:00",
+          "headers": {
+            "Content-Type": "application/json",
+            "Content-Length": "241148",
+            "Last-Modified": null,
+            "ETag": null
+          }
+        },
+        "AT_hourly_product.html": {
+          "url": "https://data.hub.geosphere.at/de/dataset/klima-v2-1h",
+          "status": "ORIGINAL_BODY_RECEIVED",
+          "bytes": 42519,
+          "sha256": "3f5b994ee694b1475823ee71308a8f52ceb93420a6259ac423f85db16ef0b4d2",
+          "retrieved_UTC": "2026-10-27T09:15:48.976073+00:00",
+          "headers": {
+            "Content-Type": "text/html; charset=utf-8",
+            "Content-Length": "42519",
+            "Last-Modified": null,
+            "ETag": null
+          }
+        },
+        "AT_API_changelog.html": {
+          "url": "https://dataset.api.hub.geosphere.at/v1/docs/changelog.html",
+          "status": "ORIGINAL_BODY_RECEIVED",
+          "bytes": 54004,
+          "sha256": "63ca16da988c05580903bf47784204cf5ff21e9c70d5748d2ddc06195dbd97f6",
+          "retrieved_UTC": "2026-10-27T09:15:55.160166+00:00",
+          "headers": {
+            "Content-Type": "text/html; charset=UTF-8",
+            "Content-Length": "54004",
+            "Last-Modified": "Mon, 31 Aug 2026 07:26:48 GMT",
+            "ETag": "\"d2f4-65a52b99a9e00\""
+          }
+        },
+        "OpenMeteo_archive_documentation.html": {
+          "url": "https://open-meteo.com/en/docs/historical-weather-api",
+          "status": "ORIGINAL_BODY_RECEIVED",
+          "bytes": 391304,
+          "sha256": "a3505625b614bb11da2ff751ee62d94848e72de1f87f3db289efd8f3e8216a05",
+          "retrieved_UTC": "2026-10-27T09:16:01.096514+00:00",
+          "headers": {
+            "Content-Type": "text/html; charset=utf-8",
+            "Content-Length": null,
+            "Last-Modified": "Tue, 27 Oct 2026 09:16:01 GMT",
+            "ETag": null
+          }
+        }
+      },
+      "attribution": "GeoSphere Austria (CC BY 4.0 dataset/documentation) and Open-Meteo; URLs and hashes retained; no provider endorsement."
+    }
+  },
+  "frozen_input_packet_sha256": "687ec18f5d22c79478b47275d2cf29a8af9eebcdcdfb360b64b750248584f893",
+  "old_and_new_official_q21_equal": true,
+  "tl_flag_code_list_ref": "q21",
+  "QC10_meaning": {
+    "native_code": 10,
+    "verification": "automatic",
+    "originality": "unknown",
+    "specific_gap_fill_or_edit_identified": false,
+    "unchanged_instrument_measurement_certified": false
+  },
+  "AT_donor_originals": [
+    {
+      "station_key": "AT:20105",
+      "source_URL": "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h?station_ids=20105&parameters=tl%2Ctl_flag&output_format=geojson&start=2018-01-07T00%3A00%3A00Z&end=2018-10-16T23%3A00%3A00Z",
+      "original_body_sha256": "9ffc18f6017010d7f5b3d19e99f6f86cca86c4516ee54994042342346200891d",
+      "bytes": 222894,
+      "rows": 6792,
+      "native_QC_counts": {
+        "10": 6792
+      },
+      "JSON_native_flag_types": {
+        "int": 6792
+      },
+      "finite_T_rows": 6792,
+      "native_QC_preserved_after_decoder": true,
+      "T_values_and_original_SHA_preserved": true,
+      "V1_primary_QC22_accepted_hours": 0,
+      "specific_processing_history_known": false
+    },
+    {
+      "station_key": "AT:20220",
+      "source_URL": "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h?station_ids=20220&parameters=tl%2Ctl_flag&output_format=geojson&start=2018-01-07T00%3A00%3A00Z&end=2018-10-16T23%3A00%3A00Z",
+      "original_body_sha256": "d68a1ead210bb934d1516f3e90819f5046b8cebebf244d779c66862cd8753910",
+      "bytes": 222925,
+      "rows": 6792,
+      "native_QC_counts": {
+        "10": 6792
+      },
+      "JSON_native_flag_types": {
+        "int": 6792
+      },
+      "finite_T_rows": 6792,
+      "native_QC_preserved_after_decoder": true,
+      "T_values_and_original_SHA_preserved": true,
+      "V1_primary_QC22_accepted_hours": 0,
+      "specific_processing_history_known": false
+    },
+    {
+      "station_key": "AT:20270",
+      "source_URL": "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h?station_ids=20270&parameters=tl%2Ctl_flag&output_format=geojson&start=2018-01-07T00%3A00%3A00Z&end=2018-10-16T23%3A00%3A00Z",
+      "original_body_sha256": "6f381bcf4b8d0faac99e48493be23665eebd41e728c78e5e3319342e506a61bb",
+      "bytes": 222979,
+      "rows": 6792,
+      "native_QC_counts": {
+        "10": 6792
+      },
+      "JSON_native_flag_types": {
+        "int": 6792
+      },
+      "finite_T_rows": 6792,
+      "native_QC_preserved_after_decoder": true,
+      "T_values_and_original_SHA_preserved": true,
+      "V1_primary_QC22_accepted_hours": 0,
+      "specific_processing_history_known": false
+    },
+    {
+      "station_key": "AT:3702",
+      "source_URL": "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h?station_ids=3702&parameters=tl%2Ctl_flag&output_format=geojson&start=2018-01-07T00%3A00%3A00Z&end=2018-10-16T23%3A00%3A00Z",
+      "original_body_sha256": "38154bf832e266892d71aab414ca475a4023bbbe78c9edde24895f039ec6fa39",
+      "bytes": 223259,
+      "rows": 6792,
+      "native_QC_counts": {
+        "10": 6792
+      },
+      "JSON_native_flag_types": {
+        "int": 6792
+      },
+      "finite_T_rows": 6792,
+      "native_QC_preserved_after_decoder": true,
+      "T_values_and_original_SHA_preserved": true,
+      "V1_primary_QC22_accepted_hours": 0,
+      "specific_processing_history_known": false
+    },
+    {
+      "station_key": "AT:3805",
+      "source_URL": "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h?station_ids=3805&parameters=tl%2Ctl_flag&output_format=geojson&start=2018-01-07T00%3A00%3A00Z&end=2018-10-16T23%3A00%3A00Z",
+      "original_body_sha256": "2575dc23d4898d325cb0b0d7676f7c7c5da23640be9d517588707943addf8ff3",
+      "bytes": 222988,
+      "rows": 6792,
+      "native_QC_counts": {
+        "10": 6792
+      },
+      "JSON_native_flag_types": {
+        "int": 6792
+      },
+      "finite_T_rows": 6792,
+      "native_QC_preserved_after_decoder": true,
+      "T_values_and_original_SHA_preserved": true,
+      "V1_primary_QC22_accepted_hours": 0,
+      "specific_processing_history_known": false
+    },
+    {
+      "station_key": "AT:5625",
+      "source_URL": "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h?station_ids=5625&parameters=tl%2Ctl_flag&output_format=geojson&start=2018-01-07T00%3A00%3A00Z&end=2018-10-16T23%3A00%3A00Z",
+      "original_body_sha256": "45e4ef0c9656ffe7267e069cb106e07429115990b733c49854f5f1018ae86038",
+      "bytes": 223271,
+      "rows": 6792,
+      "native_QC_counts": {
+        "10": 6792
+      },
+      "JSON_native_flag_types": {
+        "int": 6792
+      },
+      "finite_T_rows": 6792,
+      "native_QC_preserved_after_decoder": true,
+      "T_values_and_original_SHA_preserved": true,
+      "V1_primary_QC22_accepted_hours": 0,
+      "specific_processing_history_known": false
+    }
+  ],
+  "groups": [
+    {
+      "target_key": "AT:5609",
+      "donors": [
+        "AT:5625",
+        "AT:3805",
+        "AT:3702"
+      ],
+      "geometry": {
+        "fixed_nominal_weights": [
+          0.4595567892406953,
+          0.2912759520498207,
+          0.24916725870948406
+        ],
+        "effective_weight_count": 2.7923722229537575,
+        "effective_weight_count_is_independent_sample_size": false,
+        "horizontal_geometry_diagnostic": "outside_donor_triangle",
+        "reported_target_height_in_donor_range": true,
+        "target_reported_grid_minus_WMDR_or_DWD_z_m": 53.39999999999998,
+        "donor_reported_grid_minus_WMDR_or_DWD_z_m": [
+          -45.0,
+          272.9,
+          -501.0
+        ],
+        "weighted_proxy_mismatch_relative_target_m": -119.42364481488671,
+        "all_provider_grid_cell_coordinates": [
+          [
+            48.25,
+            15.75
+          ],
+          [
+            48.0,
+            15.5
+          ],
+          [
+            48.5,
+            15.5
+          ],
+          [
+            48.25,
+            15.25
+          ]
+        ],
+        "unique_returned_cells_target_and_donors": 4,
+        "temperature_array_sha256_target_and_donors": [
+          "2b93f10c3f301952075260bf1dfd91dfda354b3b8fa553fdee410ec3f99d27a5",
+          "fa895314a6226248b93065531fb44b2e58b1e923d64f8e1d7985dc6706d43cde",
+          "f8995d3710f2a82057e054d256737e2f0e87c02c29bb2ddfdd0c8cbe46a3f7ea",
+          "a4357fbcb273ff895f08544fcda71ddaf908165dfe42b9d16e38f1523e5f8364"
+        ],
+        "unique_temperature_arrays_target_and_donors": 4,
+        "height_proxy_status": "REPORTED_ONLY_DATUM_AND_NATIVE_OROGRAPHY_NOT_VERIFIED",
+        "sensor_AGL_added_to_reported_WMDR_z_again": false,
+        "terrain_cause_proved": false,
+        "accuracy_admission_implied": false
+      },
+      "donor_LOO_diagnostics": [
+        {
+          "season": "winter",
+          "pseudo_target_donor": "AT:5625",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 0.9428571428571427,
+          "R1_MAE_K": 0.9640770000441637,
+          "delta_MAE_K": 0.02121985718702102
+        },
+        {
+          "season": "winter",
+          "pseudo_target_donor": "AT:3805",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 1.7107142857142856,
+          "R1_MAE_K": 4.23308317722814,
+          "delta_MAE_K": 2.522368891513855
+        },
+        {
+          "season": "winter",
+          "pseudo_target_donor": "AT:3702",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 3.2291666666666665,
+          "R1_MAE_K": 4.35179082121653,
+          "delta_MAE_K": 1.1226241545498632
+        },
+        {
+          "season": "spring",
+          "pseudo_target_donor": "AT:5625",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 1.1654761904761906,
+          "R1_MAE_K": 1.3802588514442227,
+          "delta_MAE_K": 0.2147826609680321
+        },
+        {
+          "season": "spring",
+          "pseudo_target_donor": "AT:3805",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 1.8714285714285712,
+          "R1_MAE_K": 4.213303718340547,
+          "delta_MAE_K": 2.341875146911976
+        },
+        {
+          "season": "spring",
+          "pseudo_target_donor": "AT:3702",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 3.1589285714285715,
+          "R1_MAE_K": 4.368289291690677,
+          "delta_MAE_K": 1.2093607202621053
+        },
+        {
+          "season": "summer",
+          "pseudo_target_donor": "AT:5625",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 0.7440476190476188,
+          "R1_MAE_K": 1.2547168449447055,
+          "delta_MAE_K": 0.5106692258970866
+        },
+        {
+          "season": "summer",
+          "pseudo_target_donor": "AT:3805",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 1.7470238095238095,
+          "R1_MAE_K": 3.9427200281056365,
+          "delta_MAE_K": 2.195696218581827
+        },
+        {
+          "season": "summer",
+          "pseudo_target_donor": "AT:3702",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 3.0916666666666663,
+          "R1_MAE_K": 4.06042440351876,
+          "delta_MAE_K": 0.9687577368520937
+        },
+        {
+          "season": "autumn",
+          "pseudo_target_donor": "AT:5625",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 2.1440476190476185,
+          "R1_MAE_K": 2.5921711922122532,
+          "delta_MAE_K": 0.4481235731646347
+        },
+        {
+          "season": "autumn",
+          "pseudo_target_donor": "AT:3805",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 1.471428571428571,
+          "R1_MAE_K": 3.429896796172449,
+          "delta_MAE_K": 1.958468224743878
+        },
+        {
+          "season": "autumn",
+          "pseudo_target_donor": "AT:3702",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 2.8119047619047617,
+          "R1_MAE_K": 3.126654031167605,
+          "delta_MAE_K": 0.3147492692628435
+        }
+      ],
+      "AT_mask_if_used": "QC10_ONLY_EXPLORATORY_PROVIDER_PRODUCT_NOT_V1_QC22",
+      "target_T_read": false,
+      "transferability_or_target_skill_certified": false
+    },
+    {
+      "target_key": "AT:20123",
+      "donors": [
+        "AT:20105",
+        "AT:20270",
+        "AT:20220"
+      ],
+      "geometry": {
+        "fixed_nominal_weights": [
+          0.6013762028842855,
+          0.21535342150127873,
+          0.18327037561443565
+        ],
+        "effective_weight_count": 2.2643980748852908,
+        "effective_weight_count_is_independent_sample_size": false,
+        "horizontal_geometry_diagnostic": "outside_donor_triangle",
+        "reported_target_height_in_donor_range": true,
+        "target_reported_grid_minus_WMDR_or_DWD_z_m": 589.0,
+        "donor_reported_grid_minus_WMDR_or_DWD_z_m": [
+          292.79999999999995,
+          475.6,
+          445.7
+        ],
+        "weighted_proxy_mismatch_relative_target_m": -228.81135411811908,
+        "all_provider_grid_cell_coordinates": [
+          [
+            46.5,
+            13.75
+          ],
+          [
+            46.75,
+            13.75
+          ],
+          [
+            46.75,
+            14.0
+          ],
+          [
+            46.75,
+            14.25
+          ]
+        ],
+        "unique_returned_cells_target_and_donors": 4,
+        "temperature_array_sha256_target_and_donors": [
+          "65b58c16b3d3cffd891f78367b16af7f5a79e4f51627ce105b67990c712a47b3",
+          "83ed7d67b59e16e669b169517326676d7eb4254fad2442629bb8f290ecf7349e",
+          "f2ee4861e4597dffdb92c2215fa2030832f3d56a5898f64b13336f47e68b94d2",
+          "a835cc6040c758911396b27eadd4d5ef1b10fdd22f8c660a64b1538ddaeab3f0"
+        ],
+        "unique_temperature_arrays_target_and_donors": 4,
+        "height_proxy_status": "REPORTED_ONLY_DATUM_AND_NATIVE_OROGRAPHY_NOT_VERIFIED",
+        "sensor_AGL_added_to_reported_WMDR_z_again": false,
+        "terrain_cause_proved": false,
+        "accuracy_admission_implied": false
+      },
+      "donor_LOO_diagnostics": [
+        {
+          "season": "winter",
+          "pseudo_target_donor": "AT:20105",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 2.0035714285714286,
+          "R1_MAE_K": 1.2065566248426103,
+          "delta_MAE_K": -0.7970148037288183
+        },
+        {
+          "season": "winter",
+          "pseudo_target_donor": "AT:20270",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 2.568452380952381,
+          "R1_MAE_K": 0.5757616816287405,
+          "delta_MAE_K": -1.9926906993236404
+        },
+        {
+          "season": "winter",
+          "pseudo_target_donor": "AT:20220",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 2.8595238095238096,
+          "R1_MAE_K": 0.7396827011087834,
+          "delta_MAE_K": -2.1198411084150264
+        },
+        {
+          "season": "spring",
+          "pseudo_target_donor": "AT:20105",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 0.9690476190476192,
+          "R1_MAE_K": 1.5423720944009531,
+          "delta_MAE_K": 0.573324475353334
+        },
+        {
+          "season": "spring",
+          "pseudo_target_donor": "AT:20270",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 2.3255952380952385,
+          "R1_MAE_K": 1.366055230524778,
+          "delta_MAE_K": -0.9595400075704605
+        },
+        {
+          "season": "spring",
+          "pseudo_target_donor": "AT:20220",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 1.5571428571428574,
+          "R1_MAE_K": 0.9892507355995731,
+          "delta_MAE_K": -0.5678921215432843
+        },
+        {
+          "season": "summer",
+          "pseudo_target_donor": "AT:20105",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 1.1297619047619047,
+          "R1_MAE_K": 2.0696518694128967,
+          "delta_MAE_K": 0.939889964650992
+        },
+        {
+          "season": "summer",
+          "pseudo_target_donor": "AT:20270",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 2.676190476190476,
+          "R1_MAE_K": 1.0799502488134614,
+          "delta_MAE_K": -1.5962402273770147
+        },
+        {
+          "season": "summer",
+          "pseudo_target_donor": "AT:20220",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 2.3416666666666663,
+          "R1_MAE_K": 0.7550141746153345,
+          "delta_MAE_K": -1.5866524920513319
+        },
+        {
+          "season": "autumn",
+          "pseudo_target_donor": "AT:20105",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 1.0595238095238095,
+          "R1_MAE_K": 1.0987007410948644,
+          "delta_MAE_K": 0.03917693157105484
+        },
+        {
+          "season": "autumn",
+          "pseudo_target_donor": "AT:20270",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 1.2160714285714287,
+          "R1_MAE_K": 1.6188053503069568,
+          "delta_MAE_K": 0.40273392173552813
+        },
+        {
+          "season": "autumn",
+          "pseudo_target_donor": "AT:20220",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 1.731547619047619,
+          "R1_MAE_K": 1.5287713809645729,
+          "delta_MAE_K": -0.202776238083046
+        }
+      ],
+      "AT_mask_if_used": "QC10_ONLY_EXPLORATORY_PROVIDER_PRODUCT_NOT_V1_QC22",
+      "target_T_read": false,
+      "transferability_or_target_skill_certified": false
+    },
+    {
+      "target_key": "DE:01270",
+      "donors": [
+        "DE:00896",
+        "DE:00379",
+        "DE:05424"
+      ],
+      "geometry": {
+        "fixed_nominal_weights": [
+          0.6637000967820238,
+          0.19972398795067955,
+          0.13657591526729665
+        ],
+        "effective_weight_count": 2.0038454978876565,
+        "effective_weight_count_is_independent_sample_size": false,
+        "horizontal_geometry_diagnostic": "outside_donor_triangle",
+        "reported_target_height_in_donor_range": true,
+        "target_reported_grid_minus_WMDR_or_DWD_z_m": -50.0,
+        "donor_reported_grid_minus_WMDR_or_DWD_z_m": [
+          133.0,
+          -77.0,
+          -101.00999999999999
+        ],
+        "weighted_proxy_mismatch_relative_target_m": 109.09783259865719,
+        "all_provider_grid_cell_coordinates": [
+          [
+            51.0,
+            11.0
+          ],
+          [
+            51.0,
+            10.75
+          ],
+          [
+            51.0,
+            11.25
+          ],
+          [
+            51.0,
+            11.25
+          ]
+        ],
+        "unique_returned_cells_target_and_donors": 3,
+        "temperature_array_sha256_target_and_donors": [
+          "b55c89a51e74353eff72346b87ce5ae9c2ca6e26f74ea03d03cf60a940506018",
+          "5d9d98f9156a6f49ec82a99e5a755f4d92632dae0cf9fc310e2969743a8495bf",
+          "442ef9a3b1367f82d938b23cfb6b248aafe28fb6ef765daf855bf79b7e8b0145",
+          "442ef9a3b1367f82d938b23cfb6b248aafe28fb6ef765daf855bf79b7e8b0145"
+        ],
+        "unique_temperature_arrays_target_and_donors": 3,
+        "height_proxy_status": "REPORTED_ONLY_DATUM_AND_NATIVE_OROGRAPHY_NOT_VERIFIED",
+        "sensor_AGL_added_to_reported_WMDR_z_again": false,
+        "terrain_cause_proved": false,
+        "accuracy_admission_implied": false
+      },
+      "donor_LOO_diagnostics": [
+        {
+          "season": "winter",
+          "pseudo_target_donor": "DE:00896",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 1.0410714285714286,
+          "R1_MAE_K": 1.5547005493716017,
+          "delta_MAE_K": 0.5136291208001731
+        },
+        {
+          "season": "winter",
+          "pseudo_target_donor": "DE:00379",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 0.9440476190476191,
+          "R1_MAE_K": 0.8746786494543508,
+          "delta_MAE_K": -0.06936896959326833
+        },
+        {
+          "season": "winter",
+          "pseudo_target_donor": "DE:05424",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 1.2702380952380952,
+          "R1_MAE_K": 1.0288157639561133,
+          "delta_MAE_K": -0.24142233128198187
+        },
+        {
+          "season": "spring",
+          "pseudo_target_donor": "DE:00896",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 1.4666666666666668,
+          "R1_MAE_K": 1.5437548345872412,
+          "delta_MAE_K": 0.07708816792057438
+        },
+        {
+          "season": "spring",
+          "pseudo_target_donor": "DE:00379",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 1.1982142857142857,
+          "R1_MAE_K": 0.9631377251778679,
+          "delta_MAE_K": -0.2350765605364178
+        },
+        {
+          "season": "spring",
+          "pseudo_target_donor": "DE:05424",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 0.8404761904761906,
+          "R1_MAE_K": 1.041640592362846,
+          "delta_MAE_K": 0.2011644018866554
+        },
+        {
+          "season": "summer",
+          "pseudo_target_donor": "DE:00896",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 1.4791666666666667,
+          "R1_MAE_K": 1.962719162831615,
+          "delta_MAE_K": 0.4835524961649482
+        },
+        {
+          "season": "summer",
+          "pseudo_target_donor": "DE:00379",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 1.3672619047619048,
+          "R1_MAE_K": 1.121658003600308,
+          "delta_MAE_K": -0.2456039011615967
+        },
+        {
+          "season": "summer",
+          "pseudo_target_donor": "DE:05424",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 0.9648809523809522,
+          "R1_MAE_K": 1.0992363153851126,
+          "delta_MAE_K": 0.1343553630041604
+        },
+        {
+          "season": "autumn",
+          "pseudo_target_donor": "DE:00896",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 1.7845238095238096,
+          "R1_MAE_K": 2.15500786947667,
+          "delta_MAE_K": 0.3704840599528605
+        },
+        {
+          "season": "autumn",
+          "pseudo_target_donor": "DE:00379",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 1.7720238095238094,
+          "R1_MAE_K": 2.7476968697110573,
+          "delta_MAE_K": 0.9756730601872479
+        },
+        {
+          "season": "autumn",
+          "pseudo_target_donor": "DE:05424",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 2.3232142857142852,
+          "R1_MAE_K": 3.0876922507128834,
+          "delta_MAE_K": 0.7644779649985982
+        }
+      ],
+      "AT_mask_if_used": null,
+      "target_T_read": false,
+      "transferability_or_target_skill_certified": false
+    },
+    {
+      "target_key": "DE:00232",
+      "donors": [
+        "DE:06346",
+        "DE:00983"
+      ],
+      "geometry": {
+        "fixed_nominal_weights": [
+          0.509935030111259,
+          0.490064969888741
+        ],
+        "effective_weight_count": 1.9992106730550139,
+        "effective_weight_count_is_independent_sample_size": false,
+        "horizontal_geometry_diagnostic": "two_donor_segment_not_area_support",
+        "reported_target_height_in_donor_range": true,
+        "target_reported_grid_minus_WMDR_or_DWD_z_m": 9.470000000000027,
+        "donor_reported_grid_minus_WMDR_or_DWD_z_m": [
+          -17.0,
+          55.5
+        ],
+        "weighted_proxy_mismatch_relative_target_m": 9.059710316933696,
+        "all_provider_grid_cell_coordinates": [
+          [
+            48.5,
+            11.0
+          ],
+          [
+            48.25,
+            11.25
+          ],
+          [
+            48.5,
+            10.5
+          ]
+        ],
+        "unique_returned_cells_target_and_donors": 3,
+        "temperature_array_sha256_target_and_donors": [
+          "94e3c083aa84d7ba2594edc2e9425380abc8fab9d65fd8b8b567141b71ab52a8",
+          "5b389301b9c1e398dee10ed01dce3f498fd64e3f0158206c0d786545f90cae33",
+          "efc0518e16f38aeacc1157cca6fda62afd3d17bd449a039790f7d8f34b083d17"
+        ],
+        "unique_temperature_arrays_target_and_donors": 3,
+        "height_proxy_status": "REPORTED_ONLY_DATUM_AND_NATIVE_OROGRAPHY_NOT_VERIFIED",
+        "sensor_AGL_added_to_reported_WMDR_z_again": false,
+        "terrain_cause_proved": false,
+        "accuracy_admission_implied": false
+      },
+      "donor_LOO_diagnostics": [
+        {
+          "season": "winter",
+          "status": "NOT_ESTIMABLE_WITH_TWO_DONORS_WITHOUT_CHANGING_R1"
+        },
+        {
+          "season": "spring",
+          "status": "NOT_ESTIMABLE_WITH_TWO_DONORS_WITHOUT_CHANGING_R1"
+        },
+        {
+          "season": "summer",
+          "status": "NOT_ESTIMABLE_WITH_TWO_DONORS_WITHOUT_CHANGING_R1"
+        },
+        {
+          "season": "autumn",
+          "status": "NOT_ESTIMABLE_WITH_TWO_DONORS_WITHOUT_CHANGING_R1"
+        }
+      ],
+      "AT_mask_if_used": null,
+      "target_T_read": false,
+      "transferability_or_target_skill_certified": false
+    },
+    {
+      "target_key": "CH:STG",
+      "donors": [
+        "CH:ARH",
+        "CH:OBR"
+      ],
+      "geometry": {
+        "fixed_nominal_weights": [
+          0.5889020121276964,
+          0.41109798787230356
+        ],
+        "effective_weight_count": 1.93870912427472,
+        "effective_weight_count_is_independent_sample_size": false,
+        "horizontal_geometry_diagnostic": "two_donor_segment_not_area_support",
+        "reported_target_height_in_donor_range": false,
+        "target_reported_grid_minus_WMDR_or_DWD_z_m": -163.60000000000002,
+        "donor_reported_grid_minus_WMDR_or_DWD_z_m": [
+          214.0,
+          203.0
+        ],
+        "weighted_proxy_mismatch_relative_target_m": 373.0779221334047,
+        "all_provider_grid_cell_coordinates": [
+          [
+            47.5,
+            9.5
+          ],
+          [
+            47.5,
+            9.5
+          ],
+          [
+            47.5,
+            9.5
+          ]
+        ],
+        "unique_returned_cells_target_and_donors": 1,
+        "temperature_array_sha256_target_and_donors": [
+          "6d03eebce25a91136c12dbd7465e3fc041c89dc52c41306ac754ba9124910aa8",
+          "6d03eebce25a91136c12dbd7465e3fc041c89dc52c41306ac754ba9124910aa8",
+          "6d03eebce25a91136c12dbd7465e3fc041c89dc52c41306ac754ba9124910aa8"
+        ],
+        "unique_temperature_arrays_target_and_donors": 1,
+        "height_proxy_status": "REPORTED_ONLY_DATUM_AND_NATIVE_OROGRAPHY_NOT_VERIFIED",
+        "sensor_AGL_added_to_reported_WMDR_z_again": false,
+        "terrain_cause_proved": false,
+        "accuracy_admission_implied": false
+      },
+      "donor_LOO_diagnostics": [
+        {
+          "season": "winter",
+          "status": "NOT_ESTIMABLE_WITH_TWO_DONORS_WITHOUT_CHANGING_R1"
+        },
+        {
+          "season": "spring",
+          "status": "NOT_ESTIMABLE_WITH_TWO_DONORS_WITHOUT_CHANGING_R1"
+        },
+        {
+          "season": "summer",
+          "status": "NOT_ESTIMABLE_WITH_TWO_DONORS_WITHOUT_CHANGING_R1"
+        },
+        {
+          "season": "autumn",
+          "status": "NOT_ESTIMABLE_WITH_TWO_DONORS_WITHOUT_CHANGING_R1"
+        }
+      ],
+      "AT_mask_if_used": null,
+      "target_T_read": false,
+      "transferability_or_target_skill_certified": false
+    },
+    {
+      "target_key": "CH:SCU",
+      "donors": [
+        "CH:BUF",
+        "CH:SMM",
+        "CH:DAV"
+      ],
+      "geometry": {
+        "fixed_nominal_weights": [
+          0.5910287954901646,
+          0.2713536000104054,
+          0.13761760449942995
+        ],
+        "effective_weight_count": 2.263024972817207,
+        "effective_weight_count_is_independent_sample_size": false,
+        "horizontal_geometry_diagnostic": "outside_donor_triangle",
+        "reported_target_height_in_donor_range": false,
+        "target_reported_grid_minus_WMDR_or_DWD_z_m": 945.5899999999999,
+        "donor_reported_grid_minus_WMDR_or_DWD_z_m": [
+          282.0,
+          1033.0,
+          405.06999999999994
+        ],
+        "weighted_proxy_mismatch_relative_target_m": -442.8668478064406,
+        "all_provider_grid_cell_coordinates": [
+          [
+            46.75,
+            10.25
+          ],
+          [
+            46.75,
+            10.25
+          ],
+          [
+            46.5,
+            10.5
+          ],
+          [
+            46.75,
+            9.75
+          ]
+        ],
+        "unique_returned_cells_target_and_donors": 3,
+        "temperature_array_sha256_target_and_donors": [
+          "1384d64f0ad96a46a04b54c062c39555d0edc62a6d04458546aaa6c9f8e69133",
+          "1384d64f0ad96a46a04b54c062c39555d0edc62a6d04458546aaa6c9f8e69133",
+          "5224aad441e98c00c466d0df008a24b184c7e51f133bcaaa84eebde322ae8cac",
+          "527001d5e7b8361f9bb570e6ffa418cf6586a12c7da7b05bc50e0b842ff202ef"
+        ],
+        "unique_temperature_arrays_target_and_donors": 3,
+        "height_proxy_status": "REPORTED_ONLY_DATUM_AND_NATIVE_OROGRAPHY_NOT_VERIFIED",
+        "sensor_AGL_added_to_reported_WMDR_z_again": false,
+        "terrain_cause_proved": false,
+        "accuracy_admission_implied": false
+      },
+      "donor_LOO_diagnostics": [
+        {
+          "season": "winter",
+          "pseudo_target_donor": "CH:BUF",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 2.759871031746032,
+          "R1_MAE_K": 7.0265780210468165,
+          "delta_MAE_K": 4.2667069893007845
+        },
+        {
+          "season": "winter",
+          "pseudo_target_donor": "CH:SMM",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 7.243204365079365,
+          "R1_MAE_K": 7.192516923433312,
+          "delta_MAE_K": -0.05068744164605299
+        },
+        {
+          "season": "winter",
+          "pseudo_target_donor": "CH:DAV",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 3.654563492063492,
+          "R1_MAE_K": 2.1463563071960956,
+          "delta_MAE_K": -1.5082071848673966
+        },
+        {
+          "season": "spring",
+          "pseudo_target_donor": "CH:BUF",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 1.2313988095238095,
+          "R1_MAE_K": 5.865251898017949,
+          "delta_MAE_K": 4.633853088494139
+        },
+        {
+          "season": "spring",
+          "pseudo_target_donor": "CH:SMM",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 6.935416666666667,
+          "R1_MAE_K": 6.241253857621077,
+          "delta_MAE_K": -0.69416280904559
+        },
+        {
+          "season": "spring",
+          "pseudo_target_donor": "CH:DAV",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 2.514484126984127,
+          "R1_MAE_K": 1.288056278782506,
+          "delta_MAE_K": -1.226427848201621
+        },
+        {
+          "season": "summer",
+          "pseudo_target_donor": "CH:BUF",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 2.294642857142857,
+          "R1_MAE_K": 4.096035363710682,
+          "delta_MAE_K": 1.8013925065678245
+        },
+        {
+          "season": "summer",
+          "pseudo_target_donor": "CH:SMM",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 5.729563492063493,
+          "R1_MAE_K": 4.43474123970815,
+          "delta_MAE_K": -1.2948222523553428
+        },
+        {
+          "season": "summer",
+          "pseudo_target_donor": "CH:DAV",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 2.1847222222222227,
+          "R1_MAE_K": 1.305252446910528,
+          "delta_MAE_K": -0.8794697753116947
+        },
+        {
+          "season": "autumn",
+          "pseudo_target_donor": "CH:BUF",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 1.5855654761904763,
+          "R1_MAE_K": 5.397507378686444,
+          "delta_MAE_K": 3.8119419024959678
+        },
+        {
+          "season": "autumn",
+          "pseudo_target_donor": "CH:SMM",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 5.296279761904762,
+          "R1_MAE_K": 5.561583587159587,
+          "delta_MAE_K": 0.26530382525482565
+        },
+        {
+          "season": "autumn",
+          "pseudo_target_donor": "CH:DAV",
+          "paired_hours": 168,
+          "status": "EXPLORATORY_REVEALED_DONOR_LOO",
+          "minimum_pairs_for_case": 160,
+          "case_coverage_admitted": true,
+          "B0_MAE_K": 2.4438988095238097,
+          "R1_MAE_K": 1.4452560694679373,
+          "delta_MAE_K": -0.9986427400558724
+        }
+      ],
+      "AT_mask_if_used": null,
+      "target_T_read": false,
+      "transferability_or_target_skill_certified": false
+    }
+  ],
+  "AT_control_T_opened": false,
+  "new_station_measurement_or_model_HTTP_requests": 0,
+  "new_control_packet_read": false,
+  "2018_status": "REVEALED_DIAGNOSTICS_NOT_NEW_HOLDOUT",
+  "QC10_specific_edit_fill_fraction_identified": false,
+  "R1_universal_accuracy_qualified": false,
+  "R1_default_promotion_allowed": false,
+  "physical_full_weather_qualified": false,
+  "production_ready": false
+}

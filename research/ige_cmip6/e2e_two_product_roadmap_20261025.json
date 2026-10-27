@@ -164,7 +164,7 @@
       "completion_criterion": "No incomplete-source unblinding, original NASA operators/objective, independent benefit before default replacement"
     }
   ],
-  "current_first_implementation": "V1_AT_DE_CH_SOURCE_TIME_OPERATOR_ADMISSION_AND_PREREGISTERED_TIME_FORM_VALIDATION; FUTURE_LOCAL_MULTIYEAR_REFERENCE_REMAINS_SEPARATE",
+  "current_first_implementation": "V2_METADATA_EXPOSURE_COHORT_AND_CONCRETE_PREREGISTRATION; ACTUAL_ENERGYPLUS_AND_MULTIYEAR_BASELINE_SEPARATE",
   "minimum_B_M_temperature_policy": "MIDRANGE_NEX_TAS_INDEX_NO_IMPLICIT_TIME_MEAN_EQUALITY",
   "specific_humidity_to_mixing_ratio": "w_g_per_kg_dry_air=1000*q_kg_per_kg_moist_air/(1-q)",
   "future_pressure_policy": "DECLARED_BASELINE_PROXY_NOT_NATIVE_FUTURE_PS",
@@ -407,7 +407,7 @@
     "verified_CI_receipt": "research/ige_cmip6/a13_verified_CI_40236855438.json",
     "verified_CI_outputs": "research/ige_cmip6/a13_verified_CI_40236855438_results.zip"
   },
-  "current_execution_stage": "V1 source and temperature validation: DE/CH 16 cases / 2688 hours; R1 worsens 2 of 4 sites; AT primary QC blocked and unopened; full V1 remains open",
+  "current_execution_stage": "V1A native AT QC10 provenance and revealed-donor R1 applicability diagnostics; no new target controls; V2 design fixed but concrete cohort not yet registered",
   "A1_4_progress": {
     "branch": "research/ige-a1-4-local-historical-year-20261026",
     "registration_commit": "a3e04ca2961cd27fbc3e4b05d98c5e344e0a879a",
@@ -545,5 +545,28 @@
     "global_weather_body_bytes_including_initial_lost_acquisition": 414321683,
     "report": "docs/IGE_V1_TIME_ADMISSION_AND_VALIDATION_RESULTS_RU_20261026.md",
     "next": "AT_QC_ORIGIN_AND_SEPARATE_PREREGISTRATION; ACTUAL_ENERGYPLUS; GENERAL_CORRECTOR_APPLICABILITY"
+  },
+  "V1A_progress": {
+    "date": "2026-10-27",
+    "branch": "research/ige-v1a-at-qc10-r1-admission-20261027",
+    "parent_commit": "98f1c64905196d9f1215a273812cf269ff68ccb5",
+    "native_AT_QC10_donor_rows_verified": 40752,
+    "AT_QC10_definition": "automatic checks; original status unknown; specific edit/fill lineage unresolved",
+    "old_V1_QC22_and_blocks_unchanged": true,
+    "new_station_measurement_or_model_HTTP_requests": 0,
+    "AT_control_bodies_unopened": true,
+    "reported_grid_height_and_donor_LOO_are_diagnostics_not_skill_admission": true,
+    "concrete_next_cohort_registered": false,
+    "planned_2019_reference_hours": 12096,
+    "R1_default_promoted": false,
+    "independent_accuracy_qualified_by_this_stage": false,
+    "production_ready": false,
+    "report": "docs/IGE_V1A_AT_QC10_AND_R1_APPLICABILITY_RU_20261027.md",
+    "next_design": "research/ige_cmip6/v1a_next_validation_design_20261027.json",
+    "CI_status": "PENDING",
+    "tests_local": 377,
+    "local_verification_seconds": 333.5403021679999,
+    "local_source_replay_equal": true,
+    "local_receipt": "research/ige_cmip6/v1a_verified_local_20261027.json"
   }
 }
