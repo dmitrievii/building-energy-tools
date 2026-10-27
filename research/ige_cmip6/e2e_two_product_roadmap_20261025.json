@@ -407,7 +407,7 @@
     "verified_CI_receipt": "research/ige_cmip6/a13_verified_CI_40236855438.json",
     "verified_CI_outputs": "research/ige_cmip6/a13_verified_CI_40236855438_results.zip"
   },
-  "current_execution_stage": "V2-M2: executable 2019 preregistration before predictor weather; V2-M3 actual predictions/seal next",
+  "current_execution_stage": "V2-M3 COMPLETE: originals and actual precontrol seal published; V2-M4 admitted target products and unchanged scoring next",
   "A1_4_progress": {
     "branch": "research/ige-a1-4-local-historical-year-20261026",
     "registration_commit": "a3e04ca2961cd27fbc3e4b05d98c5e344e0a879a",
@@ -639,5 +639,56 @@
     "artifact_id": 12741296925,
     "artifact_download_sha256": "f6e4befac91ddc48931bd64160ecf7fe2d74de41698378c6547377009ec39eec",
     "root_artifact_byte_verification": true
+  },
+  "V2_M3_progress": {
+    "status": "ACTUAL_PREDICTIONS_AND_SEAL_PUBLISHED_AND_ROOT_REPLAYED",
+    "CI_run": 40585045772,
+    "CI_status": "SUCCESS",
+    "preweather_execution_commit": "ea53ec74c1fe3afbc49049012cb23094f8dbde24",
+    "acquisition_claim_commit": "543735e71b55be3eb463523cb1fd7a25b3b04bc2",
+    "original_input_commit": "af32432f30b15944d2f6536a8b151274fb2a17cd",
+    "actual_prediction_seal_commit": "45dda3789542191346dba7d8a579fdd74c560894",
+    "seal_sha256": "41f495206f925bb236dc048a1587da529ef050591cd15c51327d917f5a61fbbe",
+    "registration_unchanged": true,
+    "model_originals_received": 70,
+    "donor_originals_received": 51,
+    "known_donor_block": "DE:14138",
+    "weather_HTTP_attempts": 129,
+    "weather_body_bytes_all_attempts": 261328943,
+    "requested_forecast_rows": 12096,
+    "R1_forecast_hours": 11088,
+    "retained_cases": 72,
+    "forecast_ready_cases_160h": 66,
+    "countries": {
+      "AT": {
+        "registered_cases": 24,
+        "predicted_R1_hours": 3024,
+        "cases_with_160_paired_forecasts": 18,
+        "control_targets_source_admitted": 6
+      },
+      "DE": {
+        "registered_cases": 24,
+        "predicted_R1_hours": 4032,
+        "cases_with_160_paired_forecasts": 24,
+        "control_targets_source_admitted": 6
+      },
+      "CH": {
+        "registered_cases": 24,
+        "predicted_R1_hours": 4032,
+        "cases_with_160_paired_forecasts": 24,
+        "control_targets_source_admitted": 6
+      }
+    },
+    "AT_summer_native_QC0_rows": 2688,
+    "AT_summer_values_finite": 2688,
+    "AT_summer_QC10_not_relaxed": true,
+    "AT_full24_case_pilot_gate_already_coverage_blocked": true,
+    "source_and_forecast_artifact_root_hashes_verified": true,
+    "root_original_source_and_actual_prediction_replay": "PASS",
+    "unique_preweather_tests": 161,
+    "target_control_requests": 0,
+    "new_independent_target_accuracy_measured": false,
+    "production_ready": false,
+    "next": "V2-M4: open only the18 sealed source-admitted target archives, score all72 cases under frozen M2; AT remains partial, no replacement or QC relaxation"
   }
 }

@@ -1,0 +1,204 @@
+{
+  "AT_summer_donor_original_rows": [
+    {
+      "station_key": "AT:10111",
+      "hours": 168,
+      "native_QC_counts": {
+        "0": 168
+      },
+      "finite_T_hours": 168,
+      "null_T_hours": 0,
+      "first_selected_UTC": "2019-07-10 00:00:00+00:00"
+    },
+    {
+      "station_key": "AT:11104",
+      "hours": 168,
+      "native_QC_counts": {
+        "0": 168
+      },
+      "finite_T_hours": 168,
+      "null_T_hours": 0,
+      "first_selected_UTC": "2019-07-10 00:00:00+00:00"
+    },
+    {
+      "station_key": "AT:11112",
+      "hours": 168,
+      "native_QC_counts": {
+        "0": 168
+      },
+      "finite_T_hours": 168,
+      "null_T_hours": 0,
+      "first_selected_UTC": "2019-07-10 00:00:00+00:00"
+    },
+    {
+      "station_key": "AT:13302",
+      "hours": 168,
+      "native_QC_counts": {
+        "0": 168
+      },
+      "finite_T_hours": 168,
+      "null_T_hours": 0,
+      "first_selected_UTC": "2019-07-10 00:00:00+00:00"
+    },
+    {
+      "station_key": "AT:13401",
+      "hours": 168,
+      "native_QC_counts": {
+        "0": 168
+      },
+      "finite_T_hours": 168,
+      "null_T_hours": 0,
+      "first_selected_UTC": "2019-07-10 00:00:00+00:00"
+    },
+    {
+      "station_key": "AT:14115",
+      "hours": 168,
+      "native_QC_counts": {
+        "0": 168
+      },
+      "finite_T_hours": 168,
+      "null_T_hours": 0,
+      "first_selected_UTC": "2019-07-10 00:00:00+00:00"
+    },
+    {
+      "station_key": "AT:15610",
+      "hours": 168,
+      "native_QC_counts": {
+        "0": 168
+      },
+      "finite_T_hours": 168,
+      "null_T_hours": 0,
+      "first_selected_UTC": "2019-07-10 00:00:00+00:00"
+    },
+    {
+      "station_key": "AT:15702",
+      "hours": 168,
+      "native_QC_counts": {
+        "0": 168
+      },
+      "finite_T_hours": 168,
+      "null_T_hours": 0,
+      "first_selected_UTC": "2019-07-10 00:00:00+00:00"
+    },
+    {
+      "station_key": "AT:15715",
+      "hours": 168,
+      "native_QC_counts": {
+        "0": 168
+      },
+      "finite_T_hours": 168,
+      "null_T_hours": 0,
+      "first_selected_UTC": "2019-07-10 00:00:00+00:00"
+    },
+    {
+      "station_key": "AT:18210",
+      "hours": 168,
+      "native_QC_counts": {
+        "0": 168
+      },
+      "finite_T_hours": 168,
+      "null_T_hours": 0,
+      "first_selected_UTC": "2019-07-10 00:00:00+00:00"
+    },
+    {
+      "station_key": "AT:19821",
+      "hours": 168,
+      "native_QC_counts": {
+        "0": 168
+      },
+      "finite_T_hours": 168,
+      "null_T_hours": 0,
+      "first_selected_UTC": "2019-07-10 00:00:00+00:00"
+    },
+    {
+      "station_key": "AT:4081",
+      "hours": 168,
+      "native_QC_counts": {
+        "0": 168
+      },
+      "finite_T_hours": 168,
+      "null_T_hours": 0,
+      "first_selected_UTC": "2019-07-10 00:00:00+00:00"
+    },
+    {
+      "station_key": "AT:5805",
+      "hours": 168,
+      "native_QC_counts": {
+        "0": 168
+      },
+      "finite_T_hours": 168,
+      "null_T_hours": 0,
+      "first_selected_UTC": "2019-07-10 00:00:00+00:00"
+    },
+    {
+      "station_key": "AT:5904",
+      "hours": 168,
+      "native_QC_counts": {
+        "0": 168
+      },
+      "finite_T_hours": 168,
+      "null_T_hours": 0,
+      "first_selected_UTC": "2019-07-10 00:00:00+00:00"
+    },
+    {
+      "station_key": "AT:5917",
+      "hours": 168,
+      "native_QC_counts": {
+        "0": 168
+      },
+      "finite_T_hours": 168,
+      "null_T_hours": 0,
+      "first_selected_UTC": "2019-07-10 00:00:00+00:00"
+    },
+    {
+      "station_key": "AT:5935",
+      "hours": 168,
+      "native_QC_counts": {
+        "0": 168
+      },
+      "finite_T_hours": 168,
+      "null_T_hours": 0,
+      "first_selected_UTC": "2019-07-10 00:00:00+00:00"
+    }
+  ],
+  "AT_unique_summer_donors": 16,
+  "AT_summer_source_rows": 2688,
+  "AT_summer_finite_T_hours": 2688,
+  "AT_summer_null_T_hours": 0,
+  "profile_diagnostics_not_accuracy": {
+    "AT": {
+      "B0_finite_hours": 4032,
+      "R1_finite_hours": 3024,
+      "R1_min_C": -9.7886829605,
+      "R1_max_C": 22.7115163498,
+      "abs_R1_minus_B0_p95_K": 5.064037763904999,
+      "abs_R1_minus_B0_max_K": 11.4968801126,
+      "max_within_case_hour_step_K": 4.919250003799998,
+      "R1_accepted_min_donors": 2,
+      "weights_sum_and_candidate_bounds_verified": true
+    },
+    "DE": {
+      "B0_finite_hours": 4032,
+      "R1_finite_hours": 4032,
+      "R1_min_C": -9.6140093376,
+      "R1_max_C": 26.1525948219,
+      "abs_R1_minus_B0_p95_K": 2.3799915641199996,
+      "abs_R1_minus_B0_max_K": 5.7992589273,
+      "max_within_case_hour_step_K": 5.675298293899999,
+      "R1_accepted_min_donors": 2,
+      "weights_sum_and_candidate_bounds_verified": true
+    },
+    "CH": {
+      "B0_finite_hours": 4032,
+      "R1_finite_hours": 4032,
+      "R1_min_C": -13.2473258704,
+      "R1_max_C": 28.4192379691,
+      "abs_R1_minus_B0_p95_K": 8.499337602175,
+      "abs_R1_minus_B0_max_K": 11.895706045,
+      "max_within_case_hour_step_K": 4.589104584999999,
+      "R1_accepted_min_donors": 2,
+      "weights_sum_and_candidate_bounds_verified": true
+    }
+  },
+  "control_observation_requests": 0
+}
