@@ -1,0 +1,123 @@
+{
+  "schema": "IGE_V2_WEATHER_ORIGINAL_PARTS_v1",
+  "name": "v2_weather_inputs_20261027.zip",
+  "bytes": 122961057,
+  "sha256": "f2141385a193da406ce606500c339a2d8c39e8fd38c7fab88b5745444bf761e0",
+  "parts": [
+    {
+      "name": "v2_weather_inputs_20261027.zip.part001",
+      "bytes": 5500000,
+      "sha256": "f3352a008c2a0947ea5ec4de5c8885a2d0d7ee7f933716594365c80190e7cdfc"
+    },
+    {
+      "name": "v2_weather_inputs_20261027.zip.part002",
+      "bytes": 5500000,
+      "sha256": "3cf771d83788f5377815323c49f2b6c393c1aee869820974b01a7d836bf7f81c"
+    },
+    {
+      "name": "v2_weather_inputs_20261027.zip.part003",
+      "bytes": 5500000,
+      "sha256": "2b456107875a586d03e6509da990d22d221e5a35a130391f8018a70daed4bc3d"
+    },
+    {
+      "name": "v2_weather_inputs_20261027.zip.part004",
+      "bytes": 5500000,
+      "sha256": "82f71ce47ee32c593337563f465d7d779d41183ee9e5312b64d6edefff062dd5"
+    },
+    {
+      "name": "v2_weather_inputs_20261027.zip.part005",
+      "bytes": 5500000,
+      "sha256": "aa9c5adf3dccc951a06aa996b5e4ad5d4dd7a2c700aa6db3cb810c753485da3c"
+    },
+    {
+      "name": "v2_weather_inputs_20261027.zip.part006",
+      "bytes": 5500000,
+      "sha256": "61ff3085d07221c29c4b0896ad963a66bc2adeb2db34af9ee12ce56213b4c181"
+    },
+    {
+      "name": "v2_weather_inputs_20261027.zip.part007",
+      "bytes": 5500000,
+      "sha256": "186dbf9887e9d090f4b485646413baf873c3940728cc3ed20d46ecc288c17fce"
+    },
+    {
+      "name": "v2_weather_inputs_20261027.zip.part008",
+      "bytes": 5500000,
+      "sha256": "17eac806088733306b03c503616c163c076eb20203ce4cc903f8edf66451b69a"
+    },
+    {
+      "name": "v2_weather_inputs_20261027.zip.part009",
+      "bytes": 5500000,
+      "sha256": "503daac14847663aa2b1b1941010da95ccfa70f39c2919298041bed11ac085ae"
+    },
+    {
+      "name": "v2_weather_inputs_20261027.zip.part010",
+      "bytes": 5500000,
+      "sha256": "ccd5be75ea9704068b18461d3de7f8ad47b98f645ac3b9bedd35cd498b3f5fc8"
+    },
+    {
+      "name": "v2_weather_inputs_20261027.zip.part011",
+      "bytes": 5500000,
+      "sha256": "eff139ffb8110d4377a9b2a408a973c9824cf92f8d502cbb8de4ad9a5070dbdd"
+    },
+    {
+      "name": "v2_weather_inputs_20261027.zip.part012",
+      "bytes": 5500000,
+      "sha256": "05d5acbeaa801bc0f1ec1dbef58f6a7130ab4378476cec9a24e3d4bcf78925cc"
+    },
+    {
+      "name": "v2_weather_inputs_20261027.zip.part013",
+      "bytes": 5500000,
+      "sha256": "1237be5a3c80f782400c7ee317a952c9fbf2e10a6f491d41a1d8e452cb3e98d0"
+    },
+    {
+      "name": "v2_weather_inputs_20261027.zip.part014",
+      "bytes": 5500000,
+      "sha256": "7b1acbe939dcbfe97c5b109a15bcc0e3128f760b5a4b6f1c10a47f1a5e4b1059"
+    },
+    {
+      "name": "v2_weather_inputs_20261027.zip.part015",
+      "bytes": 5500000,
+      "sha256": "44a324f23834eeb2dc84e0164d7be257ab0ba1cecdff4e07313e958aeafb37d3"
+    },
+    {
+      "name": "v2_weather_inputs_20261027.zip.part016",
+      "bytes": 5500000,
+      "sha256": "ddb0e07628a5a9e96ba836455d1caddb57786f847a37c14ca97c4ff462e9e8c1"
+    },
+    {
+      "name": "v2_weather_inputs_20261027.zip.part017",
+      "bytes": 5500000,
+      "sha256": "0b7b747a210f82e12c2f14da89323edc243984a994682d27c7ca749726dd775d"
+    },
+    {
+      "name": "v2_weather_inputs_20261027.zip.part018",
+      "bytes": 5500000,
+      "sha256": "019cf814431ea8d9b6cfecd7d1a1f1617577a8ca2d0ed3295ca8633667cc0080"
+    },
+    {
+      "name": "v2_weather_inputs_20261027.zip.part019",
+      "bytes": 5500000,
+      "sha256": "35faa6ccce695cf5b03793e40d30c3bb82e1eb04ec1a7ca5a9826a2152d42e81"
+    },
+    {
+      "name": "v2_weather_inputs_20261027.zip.part020",
+      "bytes": 5500000,
+      "sha256": "4dc97276d1c198f2f2b975ec2d1493ea9054c7fa0043697d53bdefa413d9ba51"
+    },
+    {
+      "name": "v2_weather_inputs_20261027.zip.part021",
+      "bytes": 5500000,
+      "sha256": "07a36344fc4e3c4b83b17bc635825baf4bd222e891059a8cf8963f9f35ff46c9"
+    },
+    {
+      "name": "v2_weather_inputs_20261027.zip.part022",
+      "bytes": 5500000,
+      "sha256": "79821a2341574044e1d5be2c475e007643be780d2e430a67d756941766d87c1e"
+    },
+    {
+      "name": "v2_weather_inputs_20261027.zip.part023",
+      "bytes": 1961057,
+      "sha256": "b7e3371e2d63f5ad52fb61bf23d44e9ccf3ede886b4fb643413f82cc5a8108f2"
+    }
+  ]
+}
