@@ -1,0 +1,43 @@
+{
+  "schema": "IGE_V2_M0_PREWEATHER_DISCOVERY_CLARIFICATION_v1",
+  "date": "2026-10-27",
+  "parent_commit": "8320428593cbb27418581e56fc43176d46fe6337",
+  "parent_design": "v1a_next_validation_design_20261027.json",
+  "parent_design_sha256": "60efc5bdc4e1c3f324e8a2043ce76375fd6cdc4348b044585b53e78a378d6422",
+  "old_design_rewritten": false,
+  "reason": "The parent design did not bound the historical sensor discovery frame; its 893 catalog entries cannot each receive a new history request within 240 metadata attempts.",
+  "clarification_before_any_new_weather": {
+    "catalogs": "reuse hash-pinned metadata from A1.1 and V1, filter full 2019 inventory support",
+    "exposure": "850 retained text files at the exact parent plus checked old wind aggregate; exclude explicit prior/reserved identities, conservative code-set mentions, known 2010-2019 CH container request scope, and physical aliases",
+    "global_blindness_certified": false,
+    "coarse_product_history_and_expired_manifest_limits_disclosed": true,
+    "discovery_order": "ascending SHA256 UTF8('IGE_V2_2019|' + station_key + '|20261027'), then key, after exposure exclusions",
+    "metadata_candidate_frame_cap_per_country": 18,
+    "physical_identity_aliases_deduplicated_before_frame_cap": true,
+    "frame_replenished_after_metadata_failure": false,
+    "final_targets": "after dated T2m admission within this fixed frame, split nominal-height sorted eligible sites into three array_split rank strata; choose first two by the unchanged hash order in each stratum",
+    "donors": "all 18 final targets globally excluded; original first8 AT / first4 DE CH candidate limits and first3 metadata-admitted donors, min2, distances 5-150 km",
+    "AT_WMO_identity_inference": "one name lookup (first significant normalized word), top3 WSI candidates by documented name-token/compact-name score then WSI; require unique full-period geometry within 500m, exact 2m local/natural ground; not an authoritative GeoSphere-ID/WMO crosswalk",
+    "WMO_name_ranking": "drop ST AN DER AM IN IM STADT STRANDBAD AUTOM AUTOMATISCH; score token overlap +100 for equal compact core, otherwise +10 when one compact core contains the other; keep positive scores only",
+    "measurement_QC_or_error_used_to_select": false
+  },
+  "metadata_budget": {
+    "new_HTTP_attempts_max": 240,
+    "attempts_per_unique_metadata_URL": 1,
+    "reused_pinned_original_metadata_allowed": true,
+    "per_body_bytes_max": 4000000,
+    "new_received_body_bytes_max": 50000000,
+    "oversize_probe_extra_byte_max": 1,
+    "oversize_probe_body_never_admitted": true,
+    "socket_timeout_seconds": 45,
+    "socket_timeout_is_total_wall_deadline": false,
+    "source_failures": "retain receipt and received bytes, no endpoint/station/frame substitution or weather fallback"
+  },
+  "unchanged": ["2019 and four fixed weeks", "6 targets per country, 72 planned cases, 12096 requested hours", "R1 estimator and candidate bounds", "AT QC10 product stratum, DE QN3, CH no-row-QC", "primary paired MAE and all source blocks", "code/physics/accuracy/operation separation"],
+  "stop_rule": "If any country has fewer than six dated metadata targets or a final target has fewer than two fixed metadata-admitted donors, retain the blocks and do not unblind. Any revision is a new pre-weather design version, never an error-driven replacement.",
+  "this_stage_authorizes": "bounded metadata requests and original-preserving research-branch evidence only",
+  "this_stage_new_model_observation_or_target_QC_series_requests": 0,
+  "full_executable_weather_registration_complete": false,
+  "independent_accuracy_qualified": false,
+  "production_ready": false
+}

@@ -1,0 +1,16 @@
+{
+  "schema": "IGE_V2_METADATA_ONLY_VERIFICATION_v1",
+  "status": "PASS",
+  "tests": 25,
+  "protection": {
+    "parent_commit": "8320428593cbb27418581e56fc43176d46fe6337",
+    "existing_scientific_files_unchanged": true,
+    "new_weather_requests": 0
+  },
+  "actual_metadata_source_replay": null,
+  "new_weather_or_target_QC_requests": 0,
+  "new_hourly_validation_executed": false,
+  "independent_accuracy_qualified": false,
+  "production_ready": false,
+  "wall_seconds": 4.993220903000292
+}

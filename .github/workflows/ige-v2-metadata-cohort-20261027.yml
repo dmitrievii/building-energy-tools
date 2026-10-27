@@ -1,0 +1,135 @@
+name: IGE V2 metadata exposure and dated T2m cohort RESEARCH
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/ige-v2-metadata-exposure-cohort-20261027
+    paths:
+      - research/ige_cmip6/v2_*
+      - tools/climate_analyzer/tests/test_ige_v2_metadata.py
+      - .github/workflows/ige-v2-metadata-cohort-20261027.yml
+permissions:
+  contents: read
+env:
+  PYTHONPATH: tools/climate_analyzer:research/ige_cmip6
+  OPENBLAS_NUM_THREADS: '1'
+  OMP_NUM_THREADS: '1'
+jobs:
+  frozen_frame_and_source_separation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/climate_analyzer/requirements.txt
+      - run: python -m pip install -r tools/climate_analyzer/requirements.txt numcodecs==0.15.1 deprecated==3.0.0 wrapt==2.5.1
+      - run: python research/ige_cmip6/v2_verify_metadata.py --out outputs/preflight
+      - uses: actions/upload-artifact@v4
+        with:
+          name: IGE-V2-preweather-frame-source-separation
+          path: outputs/preflight/
+          retention-days: 30
+  metadata_only_admission:
+    needs: frozen_frame_and_source_separation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/climate_analyzer/requirements.txt
+      - run: python -m pip install -r tools/climate_analyzer/requirements.txt numcodecs==0.15.1 deprecated==3.0.0 wrapt==2.5.1
+      - name: Acquire only bounded metadata and retain every source block
+        run: python research/ige_cmip6/v2_metadata.py --out outputs/metadata
+      - name: Replay actual originals without network
+        run: python research/ige_cmip6/v2_verify_metadata.py --out outputs/verified --metadata-directory outputs/metadata
+      - name: Prepare immutable artifact census
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from hashlib import sha256
+          import json,shutil
+          out=Path('outputs/metadata')
+          shutil.copyfile('outputs/verified/v2_metadata_verification.json',out/'v2_metadata_verification.json')
+          members={p.relative_to(out).as_posix():sha256(p.read_bytes()).hexdigest() for p in sorted(out.rglob('*')) if p.is_file()}
+          (out/'artifact_member_manifest.json').write_text(json.dumps(members,indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        id: original_metadata
+        if: always()
+        with:
+          name: IGE-V2-original-dated-metadata-and-admission
+          path: outputs/metadata/
+          if-no-files-found: error
+          retention-days: 30
+      - uses: actions/download-artifact@v4
+        with:
+          artifact-ids: ${{ steps.original_metadata.outputs.artifact-id }}
+          path: outputs/downloaded
+          merge-multiple: true
+      - name: Verify artifact round trip and write source-only receipt
+        env:
+          ARTIFACT_ID: ${{ steps.original_metadata.outputs.artifact-id }}
+          ARTIFACT_DIGEST: ${{ steps.original_metadata.outputs.artifact-digest }}
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from hashlib import sha256
+          import json,os
+          roots=list(Path('outputs/downloaded').rglob('artifact_member_manifest.json'))
+          assert len(roots)==1
+          manifest=json.loads(roots[0].read_text());root=roots[0].parent
+          actual={p.relative_to(root).as_posix() for p in root.rglob('*') if p.is_file()}
+          assert actual==set(manifest)|{'artifact_member_manifest.json'}
+          for name,digest in manifest.items():assert sha256((root/name).read_bytes()).hexdigest()==digest,name
+          r=json.loads((root/'v2_metadata_verification.json').read_text())
+          assert r['status']=='PASS' and r['new_weather_or_target_QC_requests']==0
+          receipt={'schema':'IGE_V2_METADATA_CI_ORIGINAL_ROUNDTRIP_v1','CI_run':int(os.environ['GITHUB_RUN_ID']),
+              'tested_commit':os.environ['GITHUB_SHA'],'tests':r['tests'],'status':'PASS',
+              'metadata_admission':r['actual_metadata_source_replay'],
+              'artifact_id':int(os.environ['ARTIFACT_ID']),'artifact_sha256':os.environ['ARTIFACT_DIGEST'],
+              'downloaded_member_files_verified':len(manifest),'member_sha256':manifest,
+              'new_weather_or_target_QC_requests':0,'independent_accuracy_qualified':False,'production_ready':False}
+          Path('outputs/metadata/v2_verified_CI_'+os.environ['GITHUB_RUN_ID']+'.json').write_text(json.dumps(receipt,indent=2)+'\n')
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:
+              f.write(str(r['tests'])+' checks PASS; actual metadata/source admission: '+str(r['actual_metadata_source_replay'])+'\n\n')
+              f.write('Metadata cohort only. No station measurements, target QC series or model data. No hourly accuracy/default/production qualification.\n')
+          print(json.dumps(receipt))
+          PY
+      - name: Preserve new originals on the fixed research branch without merge
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json,os,shutil,subprocess
+          branch='research/ige-v2-metadata-exposure-cohort-20261027'
+          assert os.environ['GITHUB_REF']=='refs/heads/'+branch
+          expected=os.environ['GITHUB_SHA']
+          remote=subprocess.check_output(['git','ls-remote','origin','refs/heads/'+branch],text=True).split()[0]
+          assert remote==expected,'Branch changed while metadata was being acquired; originals remain in artifact'
+          out=Path('outputs/metadata');research=Path('research/ige_cmip6')
+          storage=json.loads((out/'v2_dated_metadata_sources_20261027.zip.storage.json').read_text())
+          names=['v2_metadata_admission_20261027.json','v2_dated_metadata_sources_20261027.zip.storage.json',
+              'v2_verified_CI_'+os.environ['GITHUB_RUN_ID']+'.json']+[p['name'] for p in storage['parts']]
+          for name in names:
+              assert not (research/name).exists(),'Refuse to overwrite previous metadata evidence'
+              shutil.copyfile(out/name,research/name)
+          subprocess.run(['git','add','--',*[str(research/n) for n in names]],check=True)
+          changed=subprocess.check_output(['git','diff','--cached','--name-status'],text=True).splitlines()
+          assert len(changed)==len(names) and all(line.startswith('A\t') for line in changed)
+          subprocess.run(['git','config','user.name','github-actions[bot]'],check=True)
+          subprocess.run(['git','config','user.email','41898282+github-actions[bot]@users.noreply.github.com'],check=True)
+          subprocess.run(['git','commit','-m','research(V2): preserve original metadata and dated source cohort [skip ci]'],check=True)
+          subprocess.run(['git','push','origin','HEAD:refs/heads/'+branch],check=True)
+          PY
