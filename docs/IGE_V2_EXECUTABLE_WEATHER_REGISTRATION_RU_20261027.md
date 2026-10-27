@@ -196,3 +196,6 @@ CI этого этапа запускает только offline verification с
 
 **Следующий блок V2-M3:** реальные предикторные оригиналы → прогнозы/NaN/веса → replay → опубликованный actual seal.
 **После него V2-M4:** только допущенные контролы → зарегистрированное сравнение AT/DE/CH → решение об ограниченной применимости R1.
+
+
+**Проверка CI завершена:** [Actions #40520630866](https://github.com/dmitrievii/building-energy-tools/actions/runs/40520630866), точный код `b357b22c1d20bea9c29e3f01bd6a1b629b2a00b8`, SUCCESS, **154/154**. Скачан оригинальный артефакт12741296925 (1340 bytes); его SHA256 `f6e4befac91ddc48931bd64160ecf7fe2d74de41698378c6547377009ec39eec` совпал с API и логом загрузки. Единственный научный файл manifest проверен по SHA256. Повторно проверены неизменные main/V1/V1A/V2-M1 refs; регистрационный byte gate прошёл, контрольная фаза без actual seal отклонена до source I/O. Новых погодных запросов0. [Root receipt](../research/ige_cmip6/v2_weather_root_verified_CI_40520630866.json), [оригинал CI verification](../research/ige_cmip6/v2_weather_verified_CI_40520630866.json). Это завершает V2-M2, но не V2-M3/M4.

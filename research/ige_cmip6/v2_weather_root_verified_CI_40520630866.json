@@ -1,0 +1,110 @@
+{
+  "schema": "IGE_V2_M2_ROOT_VERIFIED_EXECUTABLE_REGISTRATION_v1",
+  "date": "2026-10-27",
+  "CI_run": 40520630866,
+  "CI_status": "success",
+  "tested_commit": "b357b22c1d20bea9c29e3f01bd6a1b629b2a00b8",
+  "CI_completed_UTC": "2026-10-27T14:24:46Z",
+  "protected_remote_refs": {
+    "main": "2a82a77d0fe8cc87a2324b820d6c6843b6598548",
+    "research/ige-v1-time-admission-preregistration-20261026": "98f1c64905196d9f1215a273812cf269ff68ccb5",
+    "research/ige-v1a-at-qc10-r1-admission-20261027": "8320428593cbb27418581e56fc43176d46fe6337",
+    "research/ige-v2-metadata-exposure-cohort-20261027": "940e6664731e0bae6c0057608aa9ad70d604f6f2"
+  },
+  "branch": "research/ige-v2-executable-preregistration-20261027",
+  "parent_commit": "940e6664731e0bae6c0057608aa9ad70d604f6f2",
+  "registration_sha256": "8404524385d1f5c8d0af21962573c7e1d5fc00323047589829125347a334de16",
+  "unique_tests": 154,
+  "test_counts": {
+    "A1": 30,
+    "V1": 42,
+    "V2_metadata": 26,
+    "V2_weather_new": 56
+  },
+  "artifact_id": 12741296925,
+  "artifact": {
+    "artifact_bytes": 1340,
+    "artifact_sha256": "f6e4befac91ddc48931bd64160ecf7fe2d74de41698378c6547377009ec39eec",
+    "member_sha256": {
+      "v2_weather_verification.json": "eb4c4d8bab3df3b3045d941b1300c1af3d3c3516387c8f98ae98097ce752e29e"
+    },
+    "all_manifest_members_verified": 1,
+    "actual_download_hash_equals_GitHub_API_and_CI_log": true,
+    "verification": {
+      "schema": "IGE_V2_EXECUTABLE_WEATHER_VERIFICATION_v1",
+      "status": "PASS",
+      "tests": 154,
+      "test_patterns": [
+        "test_ige_a1_stations.py",
+        "test_ige_v1.py",
+        "test_ige_v2_metadata.py",
+        "test_ige_v2_weather.py"
+      ],
+      "protection": {
+        "parent_commit": "940e6664731e0bae6c0057608aa9ad70d604f6f2",
+        "old_scientific_code_protocols_results_unchanged": true
+      },
+      "registration_sha256": "8404524385d1f5c8d0af21962573c7e1d5fc00323047589829125347a334de16",
+      "M1_metadata_source_replay": {
+        "status": "METADATA_COHORT_READY_FOR_EXECUTABLE_PREREGISTRATION",
+        "metadata_targets": 18,
+        "metadata_ready_cases": 72,
+        "source_blocks": [],
+        "metadata_packet_sha256": "47479ef3d0422106f0f74e0a90758a53b8ff2941785d20376adf1ddb43228d48",
+        "all_original_metadata_and_decisions_replayed": true,
+        "new_metadata_attempts": 177,
+        "new_model_or_observation_requests": 0,
+        "production_ready": false
+      },
+      "actual_prediction_replay": null,
+      "registered_targets": 18,
+      "registered_cases": 72,
+      "requested_reference_hours": 12096,
+      "source_inventory": {
+        "model_assets": 70,
+        "fixed_donor_identities": 52,
+        "control_assets": 18,
+        "total_registered_assets_including_blocks": 140,
+        "requestable_assets": 139,
+        "known_blocked_assets": [
+          {
+            "id": "donor_DE_14138",
+            "reason": "NO_UNIQUE_2019_ARCHIVE_IN_PINNED_DWD_INDEX; retained identity, no replacement or new discovery"
+          }
+        ],
+        "sum_one_complete_body_cap_bytes": 1494000000,
+        "new_metadata_HTTP_requests": 0
+      },
+      "new_model_observation_or_target_QC_requests": 0,
+      "actual_predictor_weather_acquired_by_this_verifier": false,
+      "independent_accuracy_measured_by_this_verification": false,
+      "production_ready": false,
+      "wall_seconds": 27.573327802999998,
+      "runtime": {
+        "pandas": "2.3.3",
+        "numpy": "1.26.4"
+      }
+    }
+  },
+  "GitHub_API_and_job_log_digests_equal_actual_download": true,
+  "API_publication_and_local_remote_tracking_exact_code_protocol_bytes_verified": true,
+  "published_code_files": 523,
+  "published_protocol_source_files": 10,
+  "published_registration_phase_gate_passed": true,
+  "control_phase_refused_due_to_missing_actual_prediction_seal_before_any_source_IO": true,
+  "targets": 18,
+  "cases": 72,
+  "requested_reference_hours": 12096,
+  "registered_assets": 140,
+  "requestable_assets": 139,
+  "known_blocked_donor_identity": "DE:14138",
+  "cohort_and_all_fixed_donors_unchanged": true,
+  "new_metadata_model_weather_station_measurement_or_target_QC_requests": 0,
+  "actual_predictor_weather_acquired": false,
+  "actual_prediction_seal_published": false,
+  "independent_measured_temperature_accuracy": false,
+  "R1_default_promoted": false,
+  "old_AT_2018_and_IV1_2022_controls_unopened": true,
+  "production_ready": false,
+  "next": "V2-M3: frozen predictor originals, actual predictions/NaNs/weights, replay and published actual seal before controls"
+}

@@ -619,7 +619,7 @@
   "V2_M2_progress": {
     "parent_commit": "940e6664731e0bae6c0057608aa9ad70d604f6f2",
     "branch": "research/ige-v2-executable-preregistration-20261027",
-    "status": "EXECUTABLE_REGISTRATION_LOCAL_PASS_CI_PENDING",
+    "status": "FROZEN_EXECUTABLE_REGISTRATION_VERIFIED_LOCAL_AND_CI",
     "registered_targets": 18,
     "registered_cases": 72,
     "requested_reference_hours": 12096,
@@ -627,12 +627,17 @@
     "requestable_assets": 139,
     "known_source_block": "donor_DE_14138 has no unique 2019 archive in pinned index; no donor replacement",
     "tests_local": 154,
-    "CI_run": null,
+    "CI_run": 40520630866,
     "registration_sha256": "8404524385d1f5c8d0af21962573c7e1d5fc00323047589829125347a334de16",
     "new_model_station_or_target_QC_requests": 0,
     "actual_prediction_seal_published": false,
     "new_independent_accuracy_measured": false,
     "production_ready": false,
-    "next": "V2-M3: acquire predictor originals within frozen budgets, publish actual predictions and seal before any control bodies"
+    "next": "V2-M3: acquire predictor originals within frozen budgets, publish actual predictions and seal before any control bodies",
+    "CI_tested_commit": "b357b22c1d20bea9c29e3f01bd6a1b629b2a00b8",
+    "CI_tests": 154,
+    "artifact_id": 12741296925,
+    "artifact_download_sha256": "f6e4befac91ddc48931bd64160ecf7fe2d74de41698378c6547377009ec39eec",
+    "root_artifact_byte_verification": true
   }
 }
