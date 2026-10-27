@@ -1,0 +1,62 @@
+{
+  "schema": "IGE_V2_EXECUTABLE_WEATHER_VERIFICATION_v1",
+  "status": "PASS",
+  "tests": 154,
+  "test_patterns": [
+    "test_ige_a1_stations.py",
+    "test_ige_v1.py",
+    "test_ige_v2_metadata.py",
+    "test_ige_v2_weather.py"
+  ],
+  "protection": {
+    "parent_commit": "940e6664731e0bae6c0057608aa9ad70d604f6f2",
+    "old_scientific_code_protocols_results_unchanged": true
+  },
+  "registration_sha256": "8404524385d1f5c8d0af21962573c7e1d5fc00323047589829125347a334de16",
+  "M1_metadata_source_replay": {
+    "status": "METADATA_COHORT_READY_FOR_EXECUTABLE_PREREGISTRATION",
+    "metadata_targets": 18,
+    "metadata_ready_cases": 72,
+    "source_blocks": [],
+    "metadata_packet_sha256": "47479ef3d0422106f0f74e0a90758a53b8ff2941785d20376adf1ddb43228d48",
+    "all_original_metadata_and_decisions_replayed": true,
+    "new_metadata_attempts": 177,
+    "new_model_or_observation_requests": 0,
+    "production_ready": false
+  },
+  "actual_prediction_replay": {
+    "all72_cases_and12096_rows_replayed": true,
+    "R1_forecast_hours": 11088,
+    "input_original_packet_sha256": "f2141385a193da406ce606500c339a2d8c39e8fd38c7fab88b5745444bf761e0",
+    "original_HTTP_attempts": 129,
+    "original_body_bytes": 261328943,
+    "new_requests_in_this_replay": 0
+  },
+  "registered_targets": 18,
+  "registered_cases": 72,
+  "requested_reference_hours": 12096,
+  "source_inventory": {
+    "model_assets": 70,
+    "fixed_donor_identities": 52,
+    "control_assets": 18,
+    "total_registered_assets_including_blocks": 140,
+    "requestable_assets": 139,
+    "known_blocked_assets": [
+      {
+        "id": "donor_DE_14138",
+        "reason": "NO_UNIQUE_2019_ARCHIVE_IN_PINNED_DWD_INDEX; retained identity, no replacement or new discovery"
+      }
+    ],
+    "sum_one_complete_body_cap_bytes": 1494000000,
+    "new_metadata_HTTP_requests": 0
+  },
+  "new_model_observation_or_target_QC_requests": 0,
+  "actual_predictor_weather_acquired_by_this_verifier": false,
+  "independent_accuracy_measured_by_this_verification": false,
+  "production_ready": false,
+  "wall_seconds": 94.07294998999998,
+  "runtime": {
+    "pandas": "2.3.3",
+    "numpy": "1.26.4"
+  }
+}

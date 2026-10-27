@@ -1,0 +1,157 @@
+{
+  "schema": "IGE_V2_M3_ACTUAL_PRECONTROL_EXECUTION_v1",
+  "CI_run": 40585045772,
+  "scientific_registration_commit": "b357b22c1d20bea9c29e3f01bd6a1b629b2a00b8",
+  "scientific_registration_sha256": "8404524385d1f5c8d0af21962573c7e1d5fc00323047589829125347a334de16",
+  "execution_contract_sha256": "2c6bc350f17eed0875ec4b9a69eea47ddadc27ec27058ef967fe22767dbf17a5",
+  "source_publication_commit": "af32432f30b15944d2f6536a8b151274fb2a17cd",
+  "source_artifact": {
+    "schema": "IGE_V2_M3_INPUT_ARTIFACT_PUBLICATION_v1",
+    "CI_run": 40585045772,
+    "artifact_id": 12772407703,
+    "artifact_sha256_from_CI_upload": "eb7610364fb571f087103b591d1143abd7814df0c4bdf782eceb659275455ffc",
+    "member_sha256": {
+      "v2_m3_input_audit_20261027.json": "f3aef37d12944d352f6fae0f9b0afa1a584d06b0173fae847d2068e81ea812ff",
+      "v2_m3_input_manifest_20261027.json": "d71faa04bede0e5aa9d411e94e47bfa75ff8a4adf348c2300281837cde51b849",
+      "v2_weather_inputs_20261027.zip.part001": "f3352a008c2a0947ea5ec4de5c8885a2d0d7ee7f933716594365c80190e7cdfc",
+      "v2_weather_inputs_20261027.zip.part002": "3cf771d83788f5377815323c49f2b6c393c1aee869820974b01a7d836bf7f81c",
+      "v2_weather_inputs_20261027.zip.part003": "2b456107875a586d03e6509da990d22d221e5a35a130391f8018a70daed4bc3d",
+      "v2_weather_inputs_20261027.zip.part004": "82f71ce47ee32c593337563f465d7d779d41183ee9e5312b64d6edefff062dd5",
+      "v2_weather_inputs_20261027.zip.part005": "aa9c5adf3dccc951a06aa996b5e4ad5d4dd7a2c700aa6db3cb810c753485da3c",
+      "v2_weather_inputs_20261027.zip.part006": "61ff3085d07221c29c4b0896ad963a66bc2adeb2db34af9ee12ce56213b4c181",
+      "v2_weather_inputs_20261027.zip.part007": "186dbf9887e9d090f4b485646413baf873c3940728cc3ed20d46ecc288c17fce",
+      "v2_weather_inputs_20261027.zip.part008": "17eac806088733306b03c503616c163c076eb20203ce4cc903f8edf66451b69a",
+      "v2_weather_inputs_20261027.zip.part009": "503daac14847663aa2b1b1941010da95ccfa70f39c2919298041bed11ac085ae",
+      "v2_weather_inputs_20261027.zip.part010": "ccd5be75ea9704068b18461d3de7f8ad47b98f645ac3b9bedd35cd498b3f5fc8",
+      "v2_weather_inputs_20261027.zip.part011": "eff139ffb8110d4377a9b2a408a973c9824cf92f8d502cbb8de4ad9a5070dbdd",
+      "v2_weather_inputs_20261027.zip.part012": "05d5acbeaa801bc0f1ec1dbef58f6a7130ab4378476cec9a24e3d4bcf78925cc",
+      "v2_weather_inputs_20261027.zip.part013": "1237be5a3c80f782400c7ee317a952c9fbf2e10a6f491d41a1d8e452cb3e98d0",
+      "v2_weather_inputs_20261027.zip.part014": "7b1acbe939dcbfe97c5b109a15bcc0e3128f760b5a4b6f1c10a47f1a5e4b1059",
+      "v2_weather_inputs_20261027.zip.part015": "44a324f23834eeb2dc84e0164d7be257ab0ba1cecdff4e07313e958aeafb37d3",
+      "v2_weather_inputs_20261027.zip.part016": "ddb0e07628a5a9e96ba836455d1caddb57786f847a37c14ca97c4ff462e9e8c1",
+      "v2_weather_inputs_20261027.zip.part017": "0b7b747a210f82e12c2f14da89323edc243984a994682d27c7ca749726dd775d",
+      "v2_weather_inputs_20261027.zip.part018": "019cf814431ea8d9b6cfecd7d1a1f1617577a8ca2d0ed3295ca8633667cc0080",
+      "v2_weather_inputs_20261027.zip.part019": "35faa6ccce695cf5b03793e40d30c3bb82e1eb04ec1a7ca5a9826a2152d42e81",
+      "v2_weather_inputs_20261027.zip.part020": "4dc97276d1c198f2f2b975ec2d1493ea9054c7fa0043697d53bdefa413d9ba51",
+      "v2_weather_inputs_20261027.zip.part021": "07a36344fc4e3c4b83b17bc635825baf4bd222e891059a8cf8963f9f35ff46c9",
+      "v2_weather_inputs_20261027.zip.part022": "79821a2341574044e1d5be2c475e007643be780d2e430a67d756941766d87c1e",
+      "v2_weather_inputs_20261027.zip.part023": "b7e3371e2d63f5ad52fb61bf23d44e9ccf3ede886b4fb643413f82cc5a8108f2",
+      "v2_weather_inputs_20261027.zip.storage.json": "2e819002366a1f3398082ad0ed63baa6ad901985799ba0ca4fc014e4d9b0a8bb"
+    },
+    "target_controls_opened": false,
+    "root_download_verification_required_separately": true
+  },
+  "original_packet_sha256": "f2141385a193da406ce606500c339a2d8c39e8fd38c7fab88b5745444bf761e0",
+  "actual_seal_sha256": "41f495206f925bb236dc048a1587da529ef050591cd15c51327d917f5a61fbbe",
+  "actual_prediction_rows": 12096,
+  "all72_cases_retained": true,
+  "R1_forecast_hours": 11088,
+  "countries": {
+    "AT": {
+      "registered_cases": 24,
+      "predicted_R1_hours": 3024,
+      "cases_with_160_paired_forecasts": 18,
+      "control_targets_source_admitted": 6
+    },
+    "DE": {
+      "registered_cases": 24,
+      "predicted_R1_hours": 4032,
+      "cases_with_160_paired_forecasts": 24,
+      "control_targets_source_admitted": 6
+    },
+    "CH": {
+      "registered_cases": 24,
+      "predicted_R1_hours": 4032,
+      "cases_with_160_paired_forecasts": 24,
+      "control_targets_source_admitted": 6
+    }
+  },
+  "control_targets_source_admission": {
+    "AT:5925": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "AT:4030": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "AT:18225": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "AT:11115": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "AT:10200": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "AT:15721": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "DE:01072": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "DE:06170": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "DE:04411": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "DE:02985": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "DE:00071": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "DE:07105": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "CH:GRO": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "CH:LUZ": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "CH:MAR": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "CH:VAB": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "CH:BIV": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "CH:CMA": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    }
+  },
+  "actual_source_replay": {
+    "all72_cases_and12096_rows_replayed": true,
+    "R1_forecast_hours": 11088,
+    "input_original_packet_sha256": "f2141385a193da406ce606500c339a2d8c39e8fd38c7fab88b5745444bf761e0",
+    "original_HTTP_attempts": 129,
+    "original_body_bytes": 261328943,
+    "new_requests_in_this_replay": 0
+  },
+  "scientific_code_QC_operator_objective_or_selection_changed": false,
+  "target_observation_or_target_QC_requests": 0,
+  "old_AT_2018_and_IV1_2022_controls_unopened": true,
+  "independent_target_accuracy_measured": false,
+  "R1_default_promoted": false,
+  "production_ready": false
+}
