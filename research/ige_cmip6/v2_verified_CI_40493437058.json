@@ -1,0 +1,32 @@
+{
+  "schema": "IGE_V2_METADATA_CI_ORIGINAL_ROUNDTRIP_v1",
+  "CI_run": 40493437058,
+  "tested_commit": "6e8eaf4ee70360f99a9234e6ab31bd5782d2fdc4",
+  "tests": 26,
+  "status": "PASS",
+  "metadata_admission": {
+    "status": "METADATA_COHORT_READY_FOR_EXECUTABLE_PREREGISTRATION",
+    "metadata_targets": 18,
+    "metadata_ready_cases": 72,
+    "source_blocks": [],
+    "metadata_packet_sha256": "47479ef3d0422106f0f74e0a90758a53b8ff2941785d20376adf1ddb43228d48",
+    "all_original_metadata_and_decisions_replayed": true,
+    "new_metadata_attempts": 177,
+    "new_model_or_observation_requests": 0,
+    "production_ready": false
+  },
+  "artifact_id": 12729556095,
+  "artifact_sha256": "da52d47e9d1520ab8a01a75228f5a01da1e935a5d667591c1598484c22516d8c",
+  "downloaded_member_files_verified": 4,
+  "member_sha256": {
+    "v2_dated_metadata_sources_20261027.zip.part001": "47479ef3d0422106f0f74e0a90758a53b8ff2941785d20376adf1ddb43228d48",
+    "v2_dated_metadata_sources_20261027.zip.storage.json": "d7335a27a215d171bfe9f1ce8348f666f4480681f9ecc9ab3e740ba7b85dc662",
+    "v2_metadata_admission_20261027.json": "570acc5eefe1b9ef6e2b32cf1c17619d02eff7d79eba3aa70c6b25d3b5cd4ea6",
+    "v2_metadata_verification.json": "09f3e83dc7606142c3ea663090c1d0802ebf6fa235d52e8066c7c0359cc80945"
+  },
+  "new_metadata_provider_requests_this_CI": 0,
+  "original_metadata_CI_run": 40490972489,
+  "new_weather_or_target_QC_requests": 0,
+  "independent_accuracy_qualified": false,
+  "production_ready": false
+}
