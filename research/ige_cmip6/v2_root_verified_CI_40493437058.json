@@ -1,0 +1,281 @@
+{
+  "schema": "IGE_V2_M1_ROOT_VERIFIED_METADATA_COHORT_v1",
+  "date": "2026-10-27",
+  "branch": "research/ige-v2-metadata-exposure-cohort-20261027",
+  "premetadata_frame_commit": "d49d72f7afb005ebae5e5392ee89290cb7a8c439",
+  "tested_offline_replay_commit": "6e8eaf4ee70360f99a9234e6ab31bd5782d2fdc4",
+  "CI_run": 40493437058,
+  "CI_status": "SUCCESS",
+  "unique_metadata_tests": 26,
+  "original_acquisition_run": 40490972489,
+  "initial_replay_failure": "tuple/list publication representation; retained initial result and original source bodies; exact JSON comparison fixes verifier only",
+  "metadata_selection_and_acquisition_code_frame_exposure_amendment_unchanged_since_premetadata_commit": true,
+  "cohort": [
+    {
+      "target_key": "AT:5925",
+      "name": "Wien Innere Stadt",
+      "donors": [
+        "AT:5904",
+        "AT:5935",
+        "AT:5917"
+      ],
+      "sensor_AGL_m": 2,
+      "height_z_as_reported_m": 179.3,
+      "identity_binding": "INFERRED_UNIQUE_WMO_NAME_AND_DATED_COORDINATES_NOT_PROVIDER_ID_CROSSWALK"
+    },
+    {
+      "target_key": "AT:4030",
+      "name": "Stockerau",
+      "donors": [
+        "AT:4081",
+        "AT:5904",
+        "AT:5805"
+      ],
+      "sensor_AGL_m": 2,
+      "height_z_as_reported_m": 205.3,
+      "identity_binding": "INFERRED_UNIQUE_WMO_NAME_AND_DATED_COORDINATES_NOT_PROVIDER_ID_CROSSWALK"
+    },
+    {
+      "target_key": "AT:18225",
+      "name": "Spittal an der Drau",
+      "donors": [
+        "AT:18210",
+        "AT:19821"
+      ],
+      "sensor_AGL_m": 2,
+      "height_z_as_reported_m": 543.7,
+      "identity_binding": "INFERRED_UNIQUE_WMO_NAME_AND_DATED_COORDINATES_NOT_PROVIDER_ID_CROSSWALK"
+    },
+    {
+      "target_key": "AT:11115",
+      "name": "Feldkirch",
+      "donors": [
+        "AT:11112",
+        "AT:14115",
+        "AT:11104"
+      ],
+      "sensor_AGL_m": 2,
+      "height_z_as_reported_m": 440.4,
+      "identity_binding": "INFERRED_UNIQUE_WMO_NAME_AND_DATED_COORDINATES_NOT_PROVIDER_ID_CROSSWALK"
+    },
+    {
+      "target_key": "AT:10200",
+      "name": "Aflenz",
+      "donors": [
+        "AT:13401",
+        "AT:13302",
+        "AT:10111"
+      ],
+      "sensor_AGL_m": 2,
+      "height_z_as_reported_m": 785.2,
+      "identity_binding": "INFERRED_UNIQUE_WMO_NAME_AND_DATED_COORDINATES_NOT_PROVIDER_ID_CROSSWALK"
+    },
+    {
+      "target_key": "AT:15721",
+      "name": "Mariapfarr",
+      "donors": [
+        "AT:15702",
+        "AT:15715",
+        "AT:15610"
+      ],
+      "sensor_AGL_m": 2,
+      "height_z_as_reported_m": 1153,
+      "identity_binding": "INFERRED_UNIQUE_WMO_NAME_AND_DATED_COORDINATES_NOT_PROVIDER_ID_CROSSWALK"
+    },
+    {
+      "target_key": "DE:01072",
+      "name": "Dürkheim, Bad",
+      "donors": [
+        "DE:05426",
+        "DE:05692",
+        "DE:05906"
+      ],
+      "sensor_AGL_m": 2,
+      "height_z_as_reported_m": 109,
+      "identity_binding": "DWD_DATED_DEVICE_GEOGRAPHY_PARAMETER"
+    },
+    {
+      "target_key": "DE:06170",
+      "name": "Neißemünde-Coschen",
+      "donors": [
+        "DE:00880",
+        "DE:14138",
+        "DE:03015"
+      ],
+      "sensor_AGL_m": 2,
+      "height_z_as_reported_m": 41,
+      "identity_binding": "DWD_DATED_DEVICE_GEOGRAPHY_PARAMETER"
+    },
+    {
+      "target_key": "DE:04411",
+      "name": "Schaafheim-Schlierbach",
+      "donors": [
+        "DE:02480",
+        "DE:00917",
+        "DE:07341"
+      ],
+      "sensor_AGL_m": 2,
+      "height_z_as_reported_m": 157,
+      "identity_binding": "DWD_DATED_DEVICE_GEOGRAPHY_PARAMETER"
+    },
+    {
+      "target_key": "DE:02985",
+      "name": "Lichtenhain-Mittelndorf",
+      "donors": [
+        "DE:06129",
+        "DE:01050",
+        "DE:01051"
+      ],
+      "sensor_AGL_m": 2,
+      "height_z_as_reported_m": 323,
+      "identity_binding": "DWD_DATED_DEVICE_GEOGRAPHY_PARAMETER"
+    },
+    {
+      "target_key": "DE:00071",
+      "name": "Albstadt-Badkap",
+      "donors": [
+        "DE:03268",
+        "DE:13965",
+        "DE:02074"
+      ],
+      "sensor_AGL_m": 2,
+      "height_z_as_reported_m": 761,
+      "identity_binding": "DWD_DATED_DEVICE_GEOGRAPHY_PARAMETER"
+    },
+    {
+      "target_key": "DE:07105",
+      "name": "Siegsdorf-Höll",
+      "donors": [
+        "DE:00856",
+        "DE:07424",
+        "DE:05111"
+      ],
+      "sensor_AGL_m": 2,
+      "height_z_as_reported_m": 720.5,
+      "identity_binding": "DWD_DATED_DEVICE_GEOGRAPHY_PARAMETER"
+    },
+    {
+      "target_key": "CH:GRO",
+      "name": "Grono",
+      "donors": [
+        "CH:BIA",
+        "CH:MAG",
+        "CH:SBE"
+      ],
+      "sensor_AGL_m": 2,
+      "height_z_as_reported_m": 323.52,
+      "identity_binding": "PROVIDER_WSI_CROSSWALK_AND_DATED_GEOMETRY"
+    },
+    {
+      "target_key": "CH:LUZ",
+      "name": "Luzern",
+      "donors": [
+        "CH:PIL",
+        "CH:GES",
+        "CH:CHZ"
+      ],
+      "sensor_AGL_m": 2,
+      "height_z_as_reported_m": 454.32,
+      "identity_binding": "PROVIDER_WSI_CROSSWALK_AND_DATED_GEOMETRY"
+    },
+    {
+      "target_key": "CH:MAR",
+      "name": "Les Marécottes",
+      "donors": [
+        "CH:EVI",
+        "CH:MOB",
+        "CH:AIG"
+      ],
+      "sensor_AGL_m": 2,
+      "height_z_as_reported_m": 990,
+      "identity_binding": "PROVIDER_WSI_CROSSWALK_AND_DATED_GEOMETRY"
+    },
+    {
+      "target_key": "CH:VAB",
+      "name": "Valbella",
+      "donors": [
+        "CH:ARO",
+        "CH:CHU",
+        "CH:AND"
+      ],
+      "sensor_AGL_m": 2,
+      "height_z_as_reported_m": 1569,
+      "identity_binding": "PROVIDER_WSI_CROSSWALK_AND_DATED_GEOMETRY"
+    },
+    {
+      "target_key": "CH:BIV",
+      "name": "Bivio",
+      "donors": [
+        "CH:SIA",
+        "CH:VIO",
+        "CH:PMA"
+      ],
+      "sensor_AGL_m": 2,
+      "height_z_as_reported_m": 1856,
+      "identity_binding": "PROVIDER_WSI_CROSSWALK_AND_DATED_GEOMETRY"
+    },
+    {
+      "target_key": "CH:CMA",
+      "name": "Crap Masegn",
+      "donors": [
+        "CH:ILZ",
+        "CH:ELM",
+        "CH:GLA"
+      ],
+      "sensor_AGL_m": 2,
+      "height_z_as_reported_m": 2480,
+      "identity_binding": "PROVIDER_WSI_CROSSWALK_AND_DATED_GEOMETRY"
+    }
+  ],
+  "metadata_target_count": 18,
+  "metadata_ready_cases": 72,
+  "planned_temperature_reference_hours": 12096,
+  "unique_donor_identities": 52,
+  "all_target_aliases_excluded_from_donors": true,
+  "original_metadata_HTTP_attempts": 177,
+  "original_metadata_body_bytes": 20878215,
+  "original_metadata_source_URLs": 180,
+  "retained_metadata_records": 134,
+  "metadata_packet_sha256": "47479ef3d0422106f0f74e0a90758a53b8ff2941785d20376adf1ddb43228d48",
+  "artifact_download_root_audit": {
+    "artifact_bytes": 925519,
+    "artifact_sha256": "da52d47e9d1520ab8a01a75228f5a01da1e935a5d667591c1598484c22516d8c",
+    "all_manifest_files_verified": 4,
+    "member_sha256": {
+      "v2_dated_metadata_sources_20261027.zip.part001": "47479ef3d0422106f0f74e0a90758a53b8ff2941785d20376adf1ddb43228d48",
+      "v2_dated_metadata_sources_20261027.zip.storage.json": "d7335a27a215d171bfe9f1ce8348f666f4480681f9ecc9ab3e740ba7b85dc662",
+      "v2_metadata_admission_20261027.json": "570acc5eefe1b9ef6e2b32cf1c17619d02eff7d79eba3aa70c6b25d3b5cd4ea6",
+      "v2_metadata_verification.json": "09f3e83dc7606142c3ea663090c1d0802ebf6fa235d52e8066c7c0359cc80945"
+    },
+    "source_HTTP_attempts_original_run": 177,
+    "source_body_bytes_original_run": 20878215,
+    "metadata_original_member_count": 180,
+    "metadata_source_URLs": 180,
+    "metadata_packet_sha256": "47479ef3d0422106f0f74e0a90758a53b8ff2941785d20376adf1ddb43228d48",
+    "metadata_targets": 18,
+    "metadata_ready_cases": 72,
+    "record_count": 134,
+    "original_artifact_download_and_root_byte_verification": true
+  },
+  "CI_artifact_roundtrip_verified": true,
+  "artifact_root_hash_equals_GitHub_API_and_CI_receipt": true,
+  "new_metadata_provider_requests_during_offline_replay": 0,
+  "original_admission_JSON_sha256": "570acc5eefe1b9ef6e2b32cf1c17619d02eff7d79eba3aa70c6b25d3b5cd4ea6",
+  "original_source_original_admission_and_selected_IDs_not_rewritten": true,
+  "source_identity_limit_AT": "inferred unique WMO name and dated <=500m coordinates; not an authoritative GeoSphere-ID/WMO crosswalk",
+  "upstream_provider_spatial_QC_and_reanalysis_assimilation_independence_certified": false,
+  "global_raw_byte_blindness_certified": false,
+  "protected_remote_refs_unchanged": {
+    "main": "2a82a77d0fe8cc87a2324b820d6c6843b6598548",
+    "research/ige-v1-time-admission-preregistration-20261026": "98f1c64905196d9f1215a273812cf269ff68ccb5",
+    "research/ige-v1a-at-qc10-r1-admission-20261027": "8320428593cbb27418581e56fc43176d46fe6337"
+  },
+  "weather_model_observation_or_target_QC_series_requests": 0,
+  "old_AT_2018_and_IV1_2022_controls_unopened": true,
+  "full_executable_weather_registration_completed": false,
+  "actual_prediction_seal_published": false,
+  "independent_temperature_accuracy_measured_by_this_stage": false,
+  "R1_default_promoted": false,
+  "production_ready": false,
+  "next_step": "freeze concrete executable 2019 source/estimator/scoring protocol, then publish actual predictions and seal before target observations"
+}

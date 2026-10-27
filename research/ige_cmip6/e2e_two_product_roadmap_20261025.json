@@ -164,7 +164,7 @@
       "completion_criterion": "No incomplete-source unblinding, original NASA operators/objective, independent benefit before default replacement"
     }
   ],
-  "current_first_implementation": "V2_METADATA_EXPOSURE_COHORT_AND_CONCRETE_PREREGISTRATION; ACTUAL_ENERGYPLUS_AND_MULTIYEAR_BASELINE_SEPARATE",
+  "current_first_implementation": "V2_EXECUTABLE_2019_WEATHER_PREREGISTRATION_AND_PREDICTION_SEAL; ENERGYPLUS_AND_MULTIYEAR_LOCAL_REFERENCE_SEPARATE",
   "minimum_B_M_temperature_policy": "MIDRANGE_NEX_TAS_INDEX_NO_IMPLICIT_TIME_MEAN_EQUALITY",
   "specific_humidity_to_mixing_ratio": "w_g_per_kg_dry_air=1000*q_kg_per_kg_moist_air/(1-q)",
   "future_pressure_policy": "DECLARED_BASELINE_PROXY_NOT_NATIVE_FUTURE_PS",
@@ -407,7 +407,7 @@
     "verified_CI_receipt": "research/ige_cmip6/a13_verified_CI_40236855438.json",
     "verified_CI_outputs": "research/ige_cmip6/a13_verified_CI_40236855438_results.zip"
   },
-  "current_execution_stage": "V1A native AT QC10 provenance and revealed-donor R1 applicability diagnostics; no new target controls; V2 design fixed but concrete cohort not yet registered",
+  "current_execution_stage": "V2-M1 complete: 18 targets /72 cases admitted by dated metadata; no new weather or measured temperature accuracy; executable protocol not yet frozen",
   "A1_4_progress": {
     "branch": "research/ige-a1-4-local-historical-year-20261026",
     "registration_commit": "a3e04ca2961cd27fbc3e4b05d98c5e344e0a879a",
@@ -579,5 +579,41 @@
     "artifact_member_files_hashed": 32,
     "diagnostics_artifact_byte_equal_published": true,
     "verified_CI_receipt": "research/ige_cmip6/v1a_verified_CI_40481674870.json"
+  },
+  "V2_M1_progress": {
+    "date": "2026-10-27",
+    "branch": "research/ige-v2-metadata-exposure-cohort-20261027",
+    "premetadata_frame_commit": "d49d72f7afb005ebae5e5392ee89290cb7a8c439",
+    "tested_commit": "6e8eaf4ee70360f99a9234e6ab31bd5782d2fdc4",
+    "CI_run": 40493437058,
+    "CI_status": "SUCCESS",
+    "unique_tests": 26,
+    "metadata_targets": 18,
+    "metadata_ready_cases": 72,
+    "planned_reference_hours": 12096,
+    "countries": [
+      "AT",
+      "DE",
+      "CH"
+    ],
+    "targets_per_country": 6,
+    "records": 134,
+    "original_metadata_HTTP_attempts": 177,
+    "original_metadata_body_bytes": 20878215,
+    "metadata_packet_sha256": "47479ef3d0422106f0f74e0a90758a53b8ff2941785d20376adf1ddb43228d48",
+    "artifact_id": 12729556095,
+    "artifact_sha256": "da52d47e9d1520ab8a01a75228f5a01da1e935a5d667591c1598484c22516d8c",
+    "root_artifact_hash_verified": true,
+    "original_cohort_and_physical_rules_unchanged_after_metadata": true,
+    "new_weather_or_target_QC_series_requests": 0,
+    "AT_and_IV1_controls_unopened": true,
+    "full_executable_weather_registration_completed": false,
+    "independent_accuracy_qualified": false,
+    "R1_default_promoted": false,
+    "production_ready": false,
+    "report": "docs/IGE_V2_METADATA_COHORT_RU_20261027.md",
+    "admission": "research/ige_cmip6/v2_metadata_admission_20261027.json",
+    "root_CI_receipt": "research/ige_cmip6/v2_root_verified_CI_40493437058.json",
+    "next": "freeze concrete executable 2019 source/estimator/scoring protocol, then publish actual predictions and seal before target observations"
   }
 }
