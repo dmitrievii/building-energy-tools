@@ -1,0 +1,32 @@
+{
+  "schema": "IGE_V2_INITIAL_CI_REPLAY_REPRESENTATION_FAILURE_v1",
+  "CI_run": 40490972489,
+  "tested_commit": "d49d72f7afb005ebae5e5392ee89290cb7a8c439",
+  "preflight_tests_passed": 25,
+  "metadata_acquisition_completed": true,
+  "metadata_targets": 18,
+  "metadata_ready_cases": 72,
+  "source_blocks": [],
+  "failure": "Python dataclass tuple fields compared directly to their published JSON list representation; numeric values and source admission unchanged",
+  "first_record_differences": [
+    "time_contract/definition/nominal_offsets_minutes: tuple vs list",
+    "time_contract/definition/model_node_weights: tuple vs list"
+  ],
+  "first_record_serialized_JSON_byte_equal": true,
+  "original_artifact_id": 12728873754,
+  "original_artifact_bytes": 987404,
+  "original_artifact_sha256": "332e17ddebf54ac7381eaed4fce773902bbdac7cdb2a56a465b3d092d40882f3",
+  "original_artifact_downloaded_and_hash_verified": true,
+  "original_artifact_member_sha256": {
+    "v2_metadata_admission_20261027.json": "570acc5eefe1b9ef6e2b32cf1c17619d02eff7d79eba3aa70c6b25d3b5cd4ea6",
+    "v2_dated_metadata_sources_20261027.zip.storage.json": "d7335a27a215d171bfe9f1ce8348f666f4480681f9ecc9ab3e740ba7b85dc662",
+    "metadata_manifest.json": "06cf2a88da046bf13fcdfa5ed8b888f9529f90b54c32cc2e268704f427e6772e",
+    "v2_dated_metadata_sources_20261027.zip.part001": "47479ef3d0422106f0f74e0a90758a53b8ff2941785d20376adf1ddb43228d48",
+    "partial_records.json": "c81bb2f75e1d7bde84e7591216580f8b24a1392910e1ae9259a5f1e9ce359323"
+  },
+  "metadata_packet_sha256": "47479ef3d0422106f0f74e0a90758a53b8ff2941785d20376adf1ddb43228d48",
+  "provider_reacquisition_required": false,
+  "new_weather_or_target_QC_requests": 0,
+  "physical_rules_estimators_QC_and_selected_stations_changed": false,
+  "production_ready": false
+}

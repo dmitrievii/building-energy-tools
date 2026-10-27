@@ -51,8 +51,16 @@ jobs:
           cache: pip
           cache-dependency-path: tools/climate_analyzer/requirements.txt
       - run: python -m pip install -r tools/climate_analyzer/requirements.txt numcodecs==0.15.1 deprecated==3.0.0 wrapt==2.5.1
-      - name: Acquire only bounded metadata and retain every source block
-        run: python research/ige_cmip6/v2_metadata.py --out outputs/metadata
+      - name: Restore retained original metadata without provider requests
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json,shutil
+          research=Path('research/ige_cmip6');out=Path('outputs/metadata');out.mkdir(parents=True)
+          storage=json.loads((research/'v2_dated_metadata_sources_20261027.zip.storage.json').read_text())
+          names=['v2_metadata_admission_20261027.json','v2_dated_metadata_sources_20261027.zip.storage.json']+[p['name'] for p in storage['parts']]
+          for name in names:shutil.copyfile(research/name,out/name)
+          PY
       - name: Replay actual originals without network
         run: python research/ige_cmip6/v2_verify_metadata.py --out outputs/verified --metadata-directory outputs/metadata
       - name: Prepare immutable artifact census
@@ -101,6 +109,7 @@ jobs:
               'metadata_admission':r['actual_metadata_source_replay'],
               'artifact_id':int(os.environ['ARTIFACT_ID']),'artifact_sha256':os.environ['ARTIFACT_DIGEST'],
               'downloaded_member_files_verified':len(manifest),'member_sha256':manifest,
+              'new_metadata_provider_requests_this_CI':0,'original_metadata_CI_run':40490972489,
               'new_weather_or_target_QC_requests':0,'independent_accuracy_qualified':False,'production_ready':False}
           Path('outputs/metadata/v2_verified_CI_'+os.environ['GITHUB_RUN_ID']+'.json').write_text(json.dumps(receipt,indent=2)+'\n')
           with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:
@@ -119,9 +128,7 @@ jobs:
           remote=subprocess.check_output(['git','ls-remote','origin','refs/heads/'+branch],text=True).split()[0]
           assert remote==expected,'Branch changed while metadata was being acquired; originals remain in artifact'
           out=Path('outputs/metadata');research=Path('research/ige_cmip6')
-          storage=json.loads((out/'v2_dated_metadata_sources_20261027.zip.storage.json').read_text())
-          names=['v2_metadata_admission_20261027.json','v2_dated_metadata_sources_20261027.zip.storage.json',
-              'v2_verified_CI_'+os.environ['GITHUB_RUN_ID']+'.json']+[p['name'] for p in storage['parts']]
+          names=['v2_verified_CI_'+os.environ['GITHUB_RUN_ID']+'.json']
           for name in names:
               assert not (research/name).exists(),'Refuse to overwrite previous metadata evidence'
               shutil.copyfile(out/name,research/name)

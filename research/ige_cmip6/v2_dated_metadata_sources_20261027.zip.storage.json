@@ -1,0 +1,13 @@
+{
+  "schema": "IGE_V2_METADATA_PACKET_PARTS_v1",
+  "packet_name": "v2_dated_metadata_sources_20261027.zip",
+  "bytes": 945431,
+  "sha256": "47479ef3d0422106f0f74e0a90758a53b8ff2941785d20376adf1ddb43228d48",
+  "parts": [
+    {
+      "name": "v2_dated_metadata_sources_20261027.zip.part001",
+      "bytes": 945431,
+      "sha256": "47479ef3d0422106f0f74e0a90758a53b8ff2941785d20376adf1ddb43228d48"
+    }
+  ]
+}

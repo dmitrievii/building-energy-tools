@@ -1,0 +1,26 @@
+{
+  "schema": "IGE_V2_METADATA_ONLY_VERIFICATION_v1",
+  "status": "PASS",
+  "tests": 26,
+  "protection": {
+    "parent_commit": "8320428593cbb27418581e56fc43176d46fe6337",
+    "existing_scientific_files_unchanged": true,
+    "new_weather_requests": 0
+  },
+  "actual_metadata_source_replay": {
+    "status": "METADATA_COHORT_READY_FOR_EXECUTABLE_PREREGISTRATION",
+    "metadata_targets": 18,
+    "metadata_ready_cases": 72,
+    "source_blocks": [],
+    "metadata_packet_sha256": "47479ef3d0422106f0f74e0a90758a53b8ff2941785d20376adf1ddb43228d48",
+    "all_original_metadata_and_decisions_replayed": true,
+    "new_metadata_attempts": 177,
+    "new_model_or_observation_requests": 0,
+    "production_ready": false
+  },
+  "new_weather_or_target_QC_requests": 0,
+  "new_hourly_validation_executed": false,
+  "independent_accuracy_qualified": false,
+  "production_ready": false,
+  "wall_seconds": 8.599519280000095
+}

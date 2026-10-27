@@ -12,6 +12,7 @@ import pandas as pd
 from v2_cohort import R, COUNTRIES, discovery, json_bytes, tie_key
 from v2_metadata import (MetadataCollector, metadata_url, validate_body, normalized_name,
     lookup_candidates, choose_targets, donor_candidates, MAX_TOTAL)
+from v2_verify_metadata import records_equal
 from v1_time_admission import operator
 from epw_climate_analyzer.station_reconstruction import StationReference
 
@@ -100,6 +101,14 @@ class MetadataEndpointTests(unittest.TestCase):
 
 
 class IdentityAndCohortTests(unittest.TestCase):
+    def test_published_JSON_arrays_equal_dataclass_tuples_but_changed_physics_fails(self):
+        live = {"time": {"offsets": (-50, -40, -30, -20, -10, 0), "weights": (5/12, 7/12)}}
+        saved = json.loads(json.dumps(live))
+        self.assertNotEqual(live, saved)
+        self.assertTrue(records_equal(live, saved))
+        saved["time"]["weights"][0] += 1e-12
+        self.assertFalse(records_equal(live, saved))
+
     def test_umlaut_and_geographic_stops_do_not_require_a_weather_lookup(self):
         self.assertEqual(normalized_name("Güssing"), ["GUESSING"])
         rows = [{"text": "ST.VEIT/GLAN (0-20000-0-11111)"}, {"text": "VEITBERG (0-20000-0-22222)"}]

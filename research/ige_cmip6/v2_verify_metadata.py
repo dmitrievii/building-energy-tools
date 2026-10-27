@@ -75,12 +75,21 @@ class ReplayCollector:
         return self.bodies[row["member"]]
 
 
+def records_equal(live, saved):
+    """Compare the exact published JSON contract, including numeric values.
+
+    Dataclass tuples become JSON arrays on publication; no numeric tolerance
+    or source-admission rule is relaxed to account for this representation.
+    """
+    return json_bytes(live) == json_bytes(saved)
+
+
 def replay(directory):
     bodies, manifest, storage = read_metadata_packet(directory)
     saved = json.loads((directory / ADMISSION).read_text())
     pool, _, _ = catalogs(); by_key = {s.key: s for s in pool}; collector = ReplayCollector(bodies, manifest)
     records = {k: metadata_record(by_key[k], collector) for k in saved["records"]}
-    if records != saved["records"]: raise ValueError("V2_DATED_GEOMETRY_OR_ADMISSION_REPLAY")
+    if not records_equal(records, saved["records"]): raise ValueError("V2_DATED_GEOMETRY_OR_ADMISSION_REPLAY")
     frame = json.loads((R / FRAME).read_text()); subset = [by_key[r["country"] + ":" + r["station_id"]] for r in frame["metadata_candidates"]]
     selected, strata, blocks = choose_targets(subset, records)
     if [s.key for s in selected] != saved["metadata_target_keys"] or strata != saved["height_rank_strata"]:
