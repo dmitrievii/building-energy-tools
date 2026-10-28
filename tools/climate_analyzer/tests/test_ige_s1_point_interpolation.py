@@ -258,6 +258,26 @@ class S1SourceTests(unittest.TestCase):
         self.assertEqual(r["negative_station_eligible"], 1)
         self.assertFalse(r["new_independent_accuracy_validation"])
 
+    def test_portable_comparison_uses_existing_precision_and_preserves_other_fields_exactly(self):
+        import csv
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("ige_s1_portability_audit", ROOT/"research/ige_cmip6/s1_replay_audit.py")
+        module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+        folder = ROOT/"research/ige_cmip6"
+        c = json.loads((folder/"s1_output_numeric_portability_contract_20261028.json").read_bytes())
+        self.assertEqual((c["absolute_tolerance_floor"], c["relative_tolerance"]), (1e-7, 1e-9))
+        with zipfile.ZipFile(folder/c["reference_archive"]) as archive: original = archive.read("climate.epw")
+        def modified(col, delta):
+            rows = list(csv.reader(io.StringIO(original.decode())))
+            rows[8][col] = format(float(rows[8][col])+delta, ".16g")
+            out = io.StringIO(newline=""); csv.writer(out, lineterminator="\n").writerows(rows)
+            return out.getvalue().encode()
+        result = module.compare_portable_epw(modified(6, 1e-8), original, c)
+        self.assertFalse(result["bitwise_same_output"])
+        self.assertEqual(result["comparison"], "PASS_EXISTING_EPW_READBACK_PRECISION")
+        with self.assertRaises(AssertionError): module.compare_portable_epw(modified(6, 1e-3), original, c)
+        with self.assertRaises(AssertionError): module.compare_portable_epw(modified(13, 1e-8), original, c)
+
     def test_actual_epw_clock_and_confirmation_required_no_tmy_relabelling(self):
         raw = self.epws[0][1]
         for r, data, confirm, error in ((self.request, raw, False, "CONFIRMATION"),
