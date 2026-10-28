@@ -407,7 +407,7 @@
     "verified_CI_receipt": "research/ige_cmip6/a13_verified_CI_40236855438.json",
     "verified_CI_outputs": "research/ige_cmip6/a13_verified_CI_40236855438_results.zip"
   },
-  "current_execution_stage": "V2-M4 COMPLETE: controls and registered errors root-verified; R1 uniform benefit fails AT/DE/CH; existing A0/B-M1 EnergyPlus validation proposed next",
+  "current_execution_stage": "I2 COMPLETE: reproducibly usable local research app; 852/852 on Linux and Windows; next H1 supported historical station/coordinate requests beyond saved examples",
   "A1_4_progress": {
     "branch": "research/ige-a1-4-local-historical-year-20261026",
     "registration_commit": "a3e04ca2961cd27fbc3e4b05d98c5e344e0a879a",
@@ -756,5 +756,52 @@
     "root_diagnostics": "research/ige_cmip6/v2_m4_root_diagnostics_20261028.json",
     "next_product_gate": "actual EnergyPlus smoke and same-building energy comparison on existing admitted A0/B-M1 EPWs, without automatic R1 correction",
     "new_corrector_requires_separate_design_and_fresh_preregistration": true
-  }
+  },
+  "I2_progress": {
+    "date": "2026-10-28",
+    "branch": "research/ige-i2-reproducible-app-20261028",
+    "status": "LOCALLY_USABLE_RESEARCH_APPLICATION_VERIFIED_ON_LINUX_AND_WINDOWS",
+    "implementation_commit": "7252879d58a8dbf1a5f841094cc6b217faed7910",
+    "CI_run": 40680771194,
+    "CI_status": "SUCCESS",
+    "unique_tests_per_platform": 852,
+    "platforms": [
+      "ubuntu-24.04",
+      "windows-2025"
+    ],
+    "locked_packages": 59,
+    "frozen_files_verified": 691,
+    "complete_annual_products": 4,
+    "rows_per_product": 8760,
+    "all4_EPW_original_bytes_identical_across_platforms": true,
+    "actual_artifacts_downloaded_and_hashed": true,
+    "source_archive_without_Git_verified": true,
+    "new_weather_or_control_requests": 0,
+    "main_or_public_deployment_changed": false,
+    "scientific_methods_changed": false,
+    "R1_default_promoted": false,
+    "production_ready": false,
+    "quickstart": "IGE_QUICKSTART.md",
+    "report": "docs/IGE_I2_REPRODUCIBLE_APPLICATION_20261028.md",
+    "root_receipt": "research/ige_cmip6/i2_root_verified_CI_40680771194.json",
+    "next_product_milestone": "H1: supported station/coordinate historical weather to EPW beyond the saved demonstrations, with declared source/QC/gap policies and bounded live AT/DE/CH source tests"
+  },
+  "next_usable_product_milestones": [
+    {
+      "id": "H1",
+      "feature": "Historical station/coordinate weather to complete EPW beyond saved examples"
+    },
+    {
+      "id": "S1",
+      "feature": "Selectable frozen P8.2F station interpolation with source/QC contracts and practical acceptance benchmark"
+    },
+    {
+      "id": "F1",
+      "feature": "CanESM5/SSP245/2040-2059 morphing for supported station and interpolated historical bases"
+    },
+    {
+      "id": "RC1",
+      "feature": "Complete workflow acceptance, actual EnergyPlus and review before deployment"
+    }
+  ]
 }

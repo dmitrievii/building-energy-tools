@@ -103,3 +103,58 @@ examples. General station interpolation, arbitrary-station/point future generati
 additional GCM/SSP combinations and real EnergyPlus qualification are later product
 milestones. A successful I2 check does not promote R1, B4, P2 or C2, and does not
 open old AT2018 or IV1 2022 controls.
+
+
+## Completed acceptance and installation status
+
+**I2 completed as a locally usable research application.** Final implementation:
+`7252879d58a8dbf1a5f841094cc6b217faed7910`.
+[CI #40680771194](https://github.com/dmitrievii/building-energy-tools/actions/runs/40680771194)
+completed SUCCESS on both operating systems, using fresh dedicated environments
+and depth-one checkouts. No implementation changes were made after this CI.
+
+| Environment | Python | Unique tests | Failures/errors/skips | Test time | Server health/page |
+|---|---|---:|---|---:|---|
+| Ubuntu 24.04 CI | 3.12.15 | 852 | 0/0/0 | 78.34 s | 200/200 |
+| Windows 2025 CI | 3.12.10 | 852 | 0/0/0 | 157.30 s | 200/200 |
+| Local source archive, no Git metadata | 3.12.14 | 852 | 0/0/0 | 105.00 s | 200/200 |
+
+There are 852 unique acceptance tests per run: 837 inherited application/science
+regressions and 15 new packaging/runtime tests. Repeating them on platforms does
+not create additional unique tests. The initial broader1025-test development run
+is separate and is not added to this count.
+
+Both CI jobs installed the same59 locked packages and verified691 frozen files.
+All four8760-hour EPWs were directly compared between the downloaded platform
+artifacts and are byte-identical to each other and the original accepted files.
+Complete ZIP metadata/reports are not claimed universally bit-identical: run
+times, paths and native numerical/display details may differ.
+
+Root downloaded both actual artifact ZIPs, verified their API/uploader digests,
+validated the exact51-file census and hashed all47 product members per platform:
+
+| Artifact | ID | Bytes | SHA256 |
+|---|---:|---:|---|
+| Ubuntu four products and checks | 12812747744 | 33,354,380 | `4e3e03efc2f970cae4da9d979652ec234cbc5972937ff1d73d9913729137cc38` |
+| Windows four products and checks | 12811624788 | 33,355,381 | `aebb7c013b23e6e91ec521d5214e034bc43d24332ced3229c4c2fbd059ec8d2d` |
+
+The documented `ige.py run` command was also started from outside the checkout:
+actual HTTP health/page200, startup about1.26s, process group stopped afterward.
+This complements AppTest and the direct Streamlit server check; it is not a
+visual browser audit or public deployment.
+
+Earlier development CI #40679262135/#40679617771/#40680370583 remain retained as
+failed attempts. They identified Git-history assumptions and Windows path/ZIP
+normalization behavior in verification code/fixtures. The final run is the release
+evidence; prior failures have not been rewritten or labelled successful.
+
+Root evidence: `i2_root_verified_CI_40680771194.json`, per-platform
+`i2_verified_CI_40680771194_ubuntu.json`/`_windows.json`, and
+`i2_verified_local_source_archive_20261028.json`.
+
+Next product milestone: H1, supported historical station/coordinate requests
+beyond the saved demonstrations. It should define source/QC/gap policies, perform
+bounded live-source checks in AT/DE/CH and return complete EPW/CSV/provenance.
+General station interpolation and generalized future morphing follow. EnergyPlus
+acceptance remains required for the resulting release; the existing P8.4 execution
+machinery should be reused. No additional pressure optimizer is a dependency.

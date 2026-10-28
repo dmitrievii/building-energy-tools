@@ -1,0 +1,141 @@
+{
+  "schema": "IGE_I2_REPRODUCIBLE_APPLICATION_v1",
+  "status": "PASS",
+  "mode": "check",
+  "environment": {
+    "status": "PASS",
+    "python": "3.12.14",
+    "platform": "linux",
+    "locked_packages": 59,
+    "verified_baseline_files": 691,
+    "baseline_commit": "cc5222a109121bc7b2a0f3fbc3a8151c4d6ed5f9",
+    "scientific_methods_changed": false,
+    "production_ready": false,
+    "new_weather_requests": 0
+  },
+  "tests": {
+    "unique_tests": 852,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "wall_seconds": 104.99697762799997,
+    "status": "PASS",
+    "failed_test_ids": [],
+    "research_acquisition_campaign_modules_outside_application_scope": [
+      "test_ige_v1.py",
+      "test_ige_v1a.py",
+      "test_ige_v2_m3_execution.py",
+      "test_ige_v2_m4.py",
+      "test_ige_v2_metadata.py",
+      "test_ige_v2_weather.py"
+    ],
+    "historical_Git_audit_classes_checked_via_frozen_receipt": [
+      "test_ige_a12_history.ExposureAuditTests"
+    ],
+    "historical_Git_wrapper_tests_replaced_by_I2_runtime_checks": [
+      "test_e2e_integration_audit.ReplayBoundaryControls.test_prior_result_directory_is_never_overwritten"
+    ],
+    "legacy_platform_fixture_tests_replaced_by_portable_fixture": [
+      "test_e2e_integration_audit.ReplayBoundaryControls.test_duplicate_and_traversing_archive_names_rejected"
+    ]
+  },
+  "products": {
+    "graz-historical-2023": {
+      "records": 8760,
+      "calendar_mode": "historical",
+      "EPW_sha256": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635",
+      "file_sha256": {
+        "monthly_summary.json": "d097b1dbd0e6b9aefca5e2f6f3a3d3607850d79d29487232ce214b6d20bc5ff5",
+        "hourly.csv.gz": "38015ea2aa8507a135ecc3f5e57b4af62aae9d9874b117f95deb284da83ecaae",
+        "climate.epw": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635",
+        "sources.zip": "2575be295bc41be68ac56940524a76c5ef9f9b5010a83f20b6eec21c49dce273",
+        "manifest.json": "6f19562a718e3147f6c3e2dc61feef30e12371473f618b95901a01fc516914fe",
+        "ledger.json": "dae7497903bcccce960e60d4fa7160af1f084524028761ef03395b7ddba543ce",
+        "ui_report.json": "5df17eb749730c03a1569d0009e2fccc6d0fcd31ed91fffba2a3226486d3cc73",
+        "analysis_state.csv.gz": "7df9f74151f852aa9a9597a6d144e6405f40a4bfdc9b752c5c6e8a7459ebb695"
+      },
+      "complete_download_sha256": "120183c6421ed85c9b497028c4af4efe6afa5ea0ba25536e561e0d2ae5e2c54b",
+      "production_ready": false,
+      "weather_requests": 0
+    },
+    "graz-future-ssp245-2040-2059": {
+      "records": 8760,
+      "calendar_mode": "climatology",
+      "EPW_sha256": "fc00e09811498c368965785ee8873bc4ca1cd01761eaebb19c759faebd0e3c28",
+      "file_sha256": {
+        "hourly.csv.gz": "dbe3858ba140348dc7d15ffc5e2f15397a57380fc13b8e13ce08c0314a687d89",
+        "reference_climatology.json": "b545968fc6648346f0d321077947dd783940f658f029a6f89bc283a26411f44e",
+        "climate.epw": "fc00e09811498c368965785ee8873bc4ca1cd01761eaebb19c759faebd0e3c28",
+        "adjustment_ledger.json.gz": "c7e3356057f7c187930ef20d4d12e6764a5f86906f364225cff227c6f85c6c99",
+        "registered_protocol.json": "6fc41d9a39749578584e86466de0cfc866538df06760e3cb45e2e81c154b9bf4",
+        "manifest.json": "d8d04a0474f00c4416665d18e0f6f464f0837565d097c65de567bb8773b0e8d0",
+        "monthly_signal_readback.json": "944d7a15f3b1b72d84c60c41848ee4e0c4b73b261c2108606126308c16335b9d",
+        "ui_report.json": "85178cd2cdd6175653580301fb33e40a0004711b1cc511575408c9d308023f81",
+        "analysis_state.csv.gz": "2ae60f94d7af03bbad48e679b22698e1e47bb9367ab191b4be7d92f6ca05e5e9",
+        "source_packets/i1_a0_graz2023_original_sources_20261025.zip": "2575be295bc41be68ac56940524a76c5ef9f9b5010a83f20b6eec21c49dce273",
+        "source_packets/bm1_reference_sources_2002_2014_20261025.zip": "68f19f8e02fb00d178009ab6dbe2f4dc441f879bc870b71a98d797b05ecd1403",
+        "source_packets/e2e_original_replay_inputs_20261025.zip": "49dab390ec5d5250f79198df16e69cc3ba37a9985b66f739fde5a729db3c192d",
+        "source_packets/bm1_protocol_20261025.json": "6fc41d9a39749578584e86466de0cfc866538df06760e3cb45e2e81c154b9bf4"
+      },
+      "complete_download_sha256": "fa8ec7ad3319aa7bba5544d43a4598cda87e6ac34716a830ba15d228b4308e4a",
+      "production_ready": false,
+      "weather_requests": 0
+    },
+    "basel-historical-2025": {
+      "records": 8760,
+      "calendar_mode": "historical",
+      "EPW_sha256": "b7cc31ac7cf6a71329f85a7d60f41fe2ea43be86692f8f012cc2b02009c378e1",
+      "file_sha256": {
+        "climate.epw": "b7cc31ac7cf6a71329f85a7d60f41fe2ea43be86692f8f012cc2b02009c378e1",
+        "hourly.csv.gz": "52519cec712ce905e25ada0d5c5bf00cd312122d8fc390f0583c68cd5f454764",
+        "analysis_state.csv.gz": "5c208aa1bd45934294bbc0e50eca4a104048417fdf3c29119c963bf414d25e9b",
+        "ui_report.json": "c46fecc08dcb30d99fd541f4d72e0494c0bc34370fd723780f01f7adf59cd2a4",
+        "source_references.json": "4c803dab1ea289d53e7bef16bb438441d9230782dc212da6a25c2109cc40b156",
+        "a14_snapshot/weather.epw": "b7cc31ac7cf6a71329f85a7d60f41fe2ea43be86692f8f012cc2b02009c378e1",
+        "a14_snapshot/hourly_states.csv": "6df287aa0f3b6f80b83b32e9568b906feff29d4411de0b9eabd4fbce323546f7",
+        "a14_snapshot/manifest.json": "b03973108e518b77a3585bf04c77c0e6341856bd7d13b37d1c128d2c7187a902",
+        "a14_snapshot/R1_donor_admission_ledger.csv": "9a78666c112858bc4edb4e13d57297f6c9c6b855e5661f74df355d597867536a",
+        "a14_snapshot/temperature_mean_inverse_ledger.csv": "43cf0cad11c522f628d8e2bdd8aee7eae0f84442f69976c96f2adbb079cb77ae",
+        "a14_snapshot/humidity_pressure_adjustment_ledger.csv": "60e7b069433d20a7a6a17e5419327538d81236f9814771c2206781dc5e47a385"
+      },
+      "complete_download_sha256": "a7ad8b295aeaa8f3f65ee46a5999d1c637b472ebc24b3e6d9008c26e57f962fe",
+      "production_ready": false,
+      "weather_requests": 0
+    },
+    "altdorf-historical-2025": {
+      "records": 8760,
+      "calendar_mode": "historical",
+      "EPW_sha256": "53a0a904ec7141d26d9941e1ed5dbf473a8cd461c8bb86e5a6f091da450ff538",
+      "file_sha256": {
+        "climate.epw": "53a0a904ec7141d26d9941e1ed5dbf473a8cd461c8bb86e5a6f091da450ff538",
+        "hourly.csv.gz": "c79760a2b04d7aa1793e10b9cb5c3a9a07f13370cf5f16b874e2a67f20cde71e",
+        "analysis_state.csv.gz": "d1466ce3ab2fffad03273257aea8b480bc26afd128dabed85df7907ad3bcf4eb",
+        "ui_report.json": "f2a183e750d33839a94351f53fe84f3f4a9b42eced8b0ba66f2f74dae2dd7969",
+        "source_references.json": "4c803dab1ea289d53e7bef16bb438441d9230782dc212da6a25c2109cc40b156",
+        "a14_snapshot/weather.epw": "53a0a904ec7141d26d9941e1ed5dbf473a8cd461c8bb86e5a6f091da450ff538",
+        "a14_snapshot/hourly_states.csv": "5b9fbc8a01b40072aae98442a550bc80e38d5f322cf1891ba6274c2832d3e4af",
+        "a14_snapshot/manifest.json": "9255bceaf22cc07bc967914d5b854401f69ac2a8510dd148bc1f35e3461ec0a7",
+        "a14_snapshot/R1_donor_admission_ledger.csv": "be476797ed2571342b8e7aa776174ad142c7161d7e239daa4c8abdbff55f3634",
+        "a14_snapshot/temperature_mean_inverse_ledger.csv": "c39302e715aeaeea04d4891c18780fc9daee5a16b4d41d2c218242afe8d77f58",
+        "a14_snapshot/humidity_pressure_adjustment_ledger.csv": "cd8296912323e64dd2410a86ffcd48f8342650fbbfac7bbeef19dbc3465c28f7"
+      },
+      "complete_download_sha256": "ef3341fa1fd86a6e09895b66a0effa012ab1aab21f2464a3fa59c97a95e9a637",
+      "production_ready": false,
+      "weather_requests": 0
+    }
+  },
+  "actual_Streamlit_server": {
+    "status": "PASS",
+    "address": "127.0.0.1",
+    "HTTP_health": 200,
+    "HTTP_page": 200,
+    "startup_seconds": 0.758095114000298,
+    "real_browser_visual_test": false
+  },
+  "new_weather_provider_requests": 0,
+  "saved_CH_products_are_loaded_not_regenerated": true,
+  "scientific_methods_or_old_results_changed": false,
+  "independent_accuracy_qualified_by_this_check": false,
+  "EnergyPlus_run": false,
+  "production_ready": false
+}

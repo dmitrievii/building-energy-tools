@@ -1,0 +1,344 @@
+{
+  "schema": "IGE_I2_ROOT_VERIFIED_APPLICATION_RELEASE_v1",
+  "date": "2026-10-28",
+  "status": "LOCALLY_USABLE_RESEARCH_APPLICATION_VERIFIED_ON_LINUX_AND_WINDOWS",
+  "branch": "research/ige-i2-reproducible-app-20261028",
+  "frozen_application_base": "cc5222a109121bc7b2a0f3fbc3a8151c4d6ed5f9",
+  "verified_implementation_commit": "7252879d58a8dbf1a5f841094cc6b217faed7910",
+  "CI_run": {
+    "id": 40680771194,
+    "html_url": "https://github.com/dmitrievii/building-energy-tools/actions/runs/40680771194",
+    "head_sha": "7252879d58a8dbf1a5f841094cc6b217faed7910",
+    "head_branch": "research/ige-i2-reproducible-app-20261028",
+    "status": "completed",
+    "conclusion": "success",
+    "created_at": "2026-10-28T11:32:41Z",
+    "run_started_at": "2026-10-28T11:32:41Z",
+    "updated_at": "2026-10-28T11:37:38Z",
+    "run_attempt": 1
+  },
+  "CI_jobs": [
+    {
+      "id": 122790605683,
+      "name": "fresh_install_and_four_products (ubuntu-24.04)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40680771194,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Fresh dedicated environment with hashed transitive and bootstrap dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Combined app regressions, original four EPWs, complete downloads and real server",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        }
+      ]
+    },
+    {
+      "id": 122790605878,
+      "name": "fresh_install_and_four_products (windows-2025)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40680771194,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Fresh dedicated environment with hashed transitive and bootstrap dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Combined app regressions, original four EPWs, complete downloads and real server",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        }
+      ]
+    }
+  ],
+  "unique_acceptance_tests_per_platform": 852,
+  "repeated_platform_and_local_runs_not_additional_unique_tests": true,
+  "new_installation_runtime_tests": 15,
+  "inherited_application_and_science_regression_tests": 837,
+  "fresh_hashed_installs_on_both_platforms": true,
+  "locked_packages": 59,
+  "baseline_files_hash_verified": 691,
+  "new_implementation_only_added_files": 11,
+  "prior_application_scientific_code_and_outputs_unchanged": true,
+  "protected_remote_refs": {
+    "main": "2a82a77d0fe8cc87a2324b820d6c6843b6598548",
+    "research/ige-v1-time-admission-preregistration-20261026": "98f1c64905196d9f1215a273812cf269ff68ccb5",
+    "research/ige-v1a-at-qc10-r1-admission-20261027": "8320428593cbb27418581e56fc43176d46fe6337",
+    "research/ige-v2-executable-preregistration-20261027": "cc5222a109121bc7b2a0f3fbc3a8151c4d6ed5f9",
+    "research/ige-v2-metadata-exposure-cohort-20261027": "940e6664731e0bae6c0057608aa9ad70d604f6f2"
+  },
+  "root_downloaded_artifacts": {
+    "ubuntu": {
+      "artifact_id": 12812747744,
+      "artifact_bytes": 33354380,
+      "artifact_sha256": "4e3e03efc2f970cae4da9d979652ec234cbc5972937ff1d73d9913729137cc38",
+      "all_archive_files": 51,
+      "product_member_files_hashed": 47,
+      "test_count": 852,
+      "server": {
+        "status": "PASS",
+        "address": "127.0.0.1",
+        "HTTP_health": 200,
+        "HTTP_page": 200,
+        "startup_seconds": 0.5157707080000478,
+        "real_browser_visual_test": false
+      },
+      "products": {
+        "graz-historical-2023": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635",
+        "graz-future-ssp245-2040-2059": "fc00e09811498c368965785ee8873bc4ca1cd01761eaebb19c759faebd0e3c28",
+        "basel-historical-2025": "b7cc31ac7cf6a71329f85a7d60f41fe2ea43be86692f8f012cc2b02009c378e1",
+        "altdorf-historical-2025": "53a0a904ec7141d26d9941e1ed5dbf473a8cd461c8bb86e5a6f091da450ff538"
+      }
+    },
+    "windows": {
+      "artifact_id": 12811624788,
+      "artifact_bytes": 33355381,
+      "artifact_sha256": "aebb7c013b23e6e91ec521d5214e034bc43d24332ced3229c4c2fbd059ec8d2d",
+      "all_archive_files": 51,
+      "product_member_files_hashed": 47,
+      "test_count": 852,
+      "server": {
+        "status": "PASS",
+        "address": "127.0.0.1",
+        "HTTP_health": 200,
+        "HTTP_page": 200,
+        "startup_seconds": 1.2030000000000882,
+        "real_browser_visual_test": false
+      },
+      "all4_EPWs_byte_identical_across_Linux_Windows": true,
+      "products": {
+        "graz-historical-2023": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635",
+        "graz-future-ssp245-2040-2059": "fc00e09811498c368965785ee8873bc4ca1cd01761eaebb19c759faebd0e3c28",
+        "basel-historical-2025": "b7cc31ac7cf6a71329f85a7d60f41fe2ea43be86692f8f012cc2b02009c378e1",
+        "altdorf-historical-2025": "53a0a904ec7141d26d9941e1ed5dbf473a8cd461c8bb86e5a6f091da450ff538"
+      }
+    }
+  },
+  "API_artifact_receipts": [
+    {
+      "id": 12812747744,
+      "name": "IGE-I2-ubuntu-24.04-four-products-and-checks",
+      "size_in_bytes": 33354380,
+      "url": "https://api.github.com/repos/dmitrievii/building-energy-tools/actions/artifacts/12812747744",
+      "archive_download_url": "https://api.github.com/repos/dmitrievii/building-energy-tools/actions/artifacts/12812747744/zip",
+      "expired": false,
+      "created_at": "2026-10-28T11:35:15Z",
+      "expires_at": "2027-01-26T11:32:41Z",
+      "updated_at": "2026-10-28T11:35:15Z",
+      "digest": "sha256:4e3e03efc2f970cae4da9d979652ec234cbc5972937ff1d73d9913729137cc38",
+      "workflow_run": {
+        "id": 40680771194,
+        "repository_id": 1261544200,
+        "head_repository_id": 1261544200,
+        "head_branch": "research/ige-i2-reproducible-app-20261028",
+        "head_sha": "7252879d58a8dbf1a5f841094cc6b217faed7910"
+      }
+    },
+    {
+      "id": 12811624788,
+      "name": "IGE-I2-windows-2025-four-products-and-checks",
+      "size_in_bytes": 33355381,
+      "url": "https://api.github.com/repos/dmitrievii/building-energy-tools/actions/artifacts/12811624788",
+      "archive_download_url": "https://api.github.com/repos/dmitrievii/building-energy-tools/actions/artifacts/12811624788/zip",
+      "expired": false,
+      "created_at": "2026-10-28T11:37:32Z",
+      "expires_at": "2027-01-26T11:32:41Z",
+      "updated_at": "2026-10-28T11:37:32Z",
+      "digest": "sha256:aebb7c013b23e6e91ec521d5214e034bc43d24332ced3229c4c2fbd059ec8d2d",
+      "workflow_run": {
+        "id": 40680771194,
+        "repository_id": 1261544200,
+        "head_repository_id": 1261544200,
+        "head_branch": "research/ige-i2-reproducible-app-20261028",
+        "head_sha": "7252879d58a8dbf1a5f841094cc6b217faed7910"
+      }
+    }
+  ],
+  "CI_log_excerpt": {
+    "ubuntu": [
+      "2026-10-28T11:33:40.6189836Z   \"locked_packages\": 59,",
+      "2026-10-28T11:33:40.6190053Z   \"verified_baseline_files\": 691,",
+      "2026-10-28T11:35:02.4457152Z {\"unique_tests\": 852, \"failures\": 0, \"errors\": 0, \"skipped\": 0, \"wall_seconds\": 78.33661400800003, \"status\": \"PASS\", \"failed_test_ids\": [], \"research_acquisition_campaign_modules_outside_application_scope\": [\"test_ige_v1.py\", \"test_ige_v1a.py\", \"test_ige_v2_m3_execution.py\", \"test_ige_v2_m4.py\", \"test_ige_v2_metadata.py\", \"test_ige_v2_weather.py\"], \"historical_Git_audit_classes_checked_via_frozen_receipt\": [\"test_ige_a12_history.ExposureAuditTests\"], \"historical_Git_wrapper_tests_replaced_by_I2_runtime_checks\": [\"test_e2e_integration_audit.ReplayBoundaryControls.test_prior_result_directory_is_never_overwritten\"], \"legacy_platform_fixture_tests_replaced_by_portable_fixture\": [\"test_e2e_integration_audit.ReplayBoundaryControls.test_duplicate_and_traversing_archive_names_rejected\"]}",
+      "2026-10-28T11:35:14.9077617Z SHA256 digest of uploaded artifact zip is 4e3e03efc2f970cae4da9d979652ec234cbc5972937ff1d73d9913729137cc38"
+    ],
+    "windows": [
+      "2026-10-28T11:34:26.7817842Z   \"locked_packages\": 59,\r",
+      "2026-10-28T11:34:26.7818149Z   \"verified_baseline_files\": 691,\r",
+      "2026-10-28T11:37:09.8673308Z {\"unique_tests\": 852, \"failures\": 0, \"errors\": 0, \"skipped\": 0, \"wall_seconds\": 157.2969999999999, \"status\": \"PASS\", \"failed_test_ids\": [], \"research_acquisition_campaign_modules_outside_application_scope\": [\"test_ige_v1.py\", \"test_ige_v1a.py\", \"test_ige_v2_m3_execution.py\", \"test_ige_v2_m4.py\", \"test_ige_v2_metadata.py\", \"test_ige_v2_weather.py\"], \"historical_Git_audit_classes_checked_via_frozen_receipt\": [\"test_ige_a12_history.ExposureAuditTests\"], \"historical_Git_wrapper_tests_replaced_by_I2_runtime_checks\": [\"test_e2e_integration_audit.ReplayBoundaryControls.test_prior_result_directory_is_never_overwritten\"], \"legacy_platform_fixture_tests_replaced_by_portable_fixture\": [\"test_e2e_integration_audit.ReplayBoundaryControls.test_duplicate_and_traversing_archive_names_rejected\"]}\r",
+      "2026-10-28T11:37:32.5619453Z SHA256 digest of uploaded artifact zip is aebb7c013b23e6e91ec521d5214e034bc43d24332ced3229c4c2fbd059ec8d2d\r"
+    ]
+  },
+  "actual_artifact_bytes_hashed_and_all_product_members_verified": true,
+  "product_member_files_hashed_per_platform": 47,
+  "all_archive_files_per_platform": 51,
+  "all4_EPWs_directly_byte_compared_between_Linux_and_Windows": true,
+  "original_EPW_sha256": {
+    "graz-historical-2023": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635",
+    "graz-future-ssp245-2040-2059": "fc00e09811498c368965785ee8873bc4ca1cd01761eaebb19c759faebd0e3c28",
+    "basel-historical-2025": "b7cc31ac7cf6a71329f85a7d60f41fe2ea43be86692f8f012cc2b02009c378e1",
+    "altdorf-historical-2025": "53a0a904ec7141d26d9941e1ed5dbf473a8cd461c8bb86e5a6f091da450ff538"
+  },
+  "source_archive_without_Git_acceptance": {
+    "status": "PASS",
+    "tests": {
+      "unique_tests": 852,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "wall_seconds": 104.99697762799997,
+      "status": "PASS",
+      "failed_test_ids": [],
+      "research_acquisition_campaign_modules_outside_application_scope": [
+        "test_ige_v1.py",
+        "test_ige_v1a.py",
+        "test_ige_v2_m3_execution.py",
+        "test_ige_v2_m4.py",
+        "test_ige_v2_metadata.py",
+        "test_ige_v2_weather.py"
+      ],
+      "historical_Git_audit_classes_checked_via_frozen_receipt": [
+        "test_ige_a12_history.ExposureAuditTests"
+      ],
+      "historical_Git_wrapper_tests_replaced_by_I2_runtime_checks": [
+        "test_e2e_integration_audit.ReplayBoundaryControls.test_prior_result_directory_is_never_overwritten"
+      ],
+      "legacy_platform_fixture_tests_replaced_by_portable_fixture": [
+        "test_e2e_integration_audit.ReplayBoundaryControls.test_duplicate_and_traversing_archive_names_rejected"
+      ]
+    },
+    "actual_server": {
+      "status": "PASS",
+      "address": "127.0.0.1",
+      "HTTP_health": 200,
+      "HTTP_page": 200,
+      "startup_seconds": 0.758095114000298,
+      "real_browser_visual_test": false
+    },
+    "reused_freshly_locked_local_environment": true
+  },
+  "actual_documented_run_command_from_outside_checkout": {
+    "status": "PASS",
+    "started_from_outside_checkout": true,
+    "actual_ige_run_command": true,
+    "health_HTTP": 200,
+    "page_HTTP": 200,
+    "startup_seconds": 1.2643209560001196,
+    "process_group_stopped": true
+  },
+  "lock_SHA256": {
+    "requirements.lock": "10c9f16ccfb97644d3dcd6f3276a7b2e7911d4763b6b880e4b8876b15b6b5138",
+    "bootstrap.lock": "fa33c42b9cc44d3801e5645dd4222af017eda1cd744cba6ebc24b8f8a01117fc",
+    "dependency_provenance.json": "559f2d657f115620261144bcb1fda9e4410c5b291e9504c41c3847f9defb63c8",
+    "baseline.json": "5d3367385110ee1d2bb27267bd49e36febca6c9efab735286d079a2eca620735"
+  },
+  "earlier_development_CI_runs_not_accepted": [
+    40679262135,
+    40679617771,
+    40680370583
+  ],
+  "earlier_failures_retained": "Git-history-dependent audit wrappers, temporary-path normalization and raw ZIP filename normalization; fixed in new packaging, no frozen scientific method changed",
+  "new_weather_provider_or_control_requests": 0,
+  "old_AT2018_and_IV1_2022_controls_opened": false,
+  "R1_default_promoted": false,
+  "independent_meteorological_accuracy_qualified_by_I2": false,
+  "actual_EnergyPlus_qualification_by_I2": false,
+  "public_deployment_changed": false,
+  "production_ready": false,
+  "next_product_milestone": "H1: supported station/coordinate historical weather to EPW beyond the saved demonstrations, with declared source/QC/gap policies and bounded live AT/DE/CH source tests"
+}

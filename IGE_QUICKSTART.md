@@ -109,3 +109,14 @@ their limitations are preserved. R1 remains experimental after V2-M4; its genera
 accuracy criterion failed. Independent regional accuracy, EnergyPlus qualification
 of these files, unrestricted production use and public deployment are separate
 milestones. This branch does not modify `main` or the public application.
+
+
+## Verified version
+
+Implementation `7252879d58a8dbf1a5f841094cc6b217faed7910` passed852/852 checks on
+both Windows and Linux, including fresh setup, all four original EPWs and a real
+local server. [CI and downloadable example artifacts](https://github.com/dmitrievii/building-energy-tools/actions/runs/40680771194).
+
+For the exact tested source without Git, download and unpack the
+[verified source ZIP](https://github.com/dmitrievii/building-energy-tools/archive/7252879d58a8dbf1a5f841094cc6b217faed7910.zip),
+then run the same setup/start commands in its root directory.
