@@ -72,6 +72,8 @@ def verify(output, contract_path):
                         'expected_hours':annual.report['expected_hours'],'numeric_hours':annual_counts,
                         'source_packet_sha256':source_contract['source_packet_sha256'],
                         'EPW_absence_correctly_enforced':True,'offline_replay':True,'new_independent_validation':False}
+        from s1_replay_audit import replay_s1_examples
+        point_summary=replay_s1_examples(output)
     with socket.socket() as reserve:
         reserve.bind(('127.0.0.1',0));port=reserve.getsockname()[1]
     with (output/'server.log').open('w') as log:
@@ -94,6 +96,7 @@ def verify(output, contract_path):
              'verified_source_files':len(expected_sources),'preflight_contract':str(contract_path),
              'saved_examples_are_offline_regressions_not_public_city_choices':True,'installed_versions':installed,
              'actual_root_Streamlit_launch_healthy':True,'weather_provider_requests':0,'H1_original_year_replay':annual_summary,
+             'S1_retained_integration_examples':point_summary,
              'test_process_peak_RSS_MiB':resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1024,
              'peak_is_test_process_not_a_multiuser_cloud_load_test':True,
              'actual_Community_Cloud_build_or_live_deployment_verified':False,
@@ -105,6 +108,6 @@ def verify(output, contract_path):
 if __name__=='__main__':
     import argparse
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--out',required=True,type=Path)
-    parser.add_argument('--contract',type=Path,default=Path('deployment/ige-h1-candidate-20261028.json'))
+    parser.add_argument('--contract',type=Path,default=Path('deployment/ige-s1-candidate-20261028.json'))
     args=parser.parse_args()
     verify(args.out,args.contract)

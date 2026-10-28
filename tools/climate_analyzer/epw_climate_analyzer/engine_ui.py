@@ -97,6 +97,12 @@ def render_engine_source(activate) -> None:
     import streamlit as st
     from .location_picker import render_point_picker
 
+    method = st.radio("Historical method", ["Grid background", "Station / EPW interpolation"],
+                      horizontal=True, key="ige_historical_method")
+    if method == "Station / EPW interpolation":
+        from .point_interpolation_ui import render_point_interpolation
+        render_point_interpolation(st)
+        return
     st.subheader("Generate a climate year")
     st.write("Select a point to request a historical gridded background and check whether a complete EPW can be assembled.")
     st.info("Source: ERA5-derived grid data via Open-Meteo, with NASA POWER longwave radiation. This is not station interpolation or a measured station year. For observations, select GeoSphere Austria.")
@@ -154,7 +160,7 @@ def render_engine_source(activate) -> None:
             activate(product.dataset)
             st.rerun()
     with st.expander("Station interpolation and future climate", expanded=False):
-        st.write("A future climate must start from your selected historical base. Transforming an uploaded EPW, a station year or an interpolated point is not available in this panel yet. These routes need compatible historical periods, source coverage and climate-model signals.")
+        st.write("Station / EPW interpolation is available under Historical method. Future climate from the selected base is the following stage; it still requires compatible historical periods, source coverage and local climate-model signals.")
 
 
 def render_engine_research_examples(activate) -> None:

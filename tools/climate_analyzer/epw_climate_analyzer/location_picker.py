@@ -70,7 +70,7 @@ def accept_map_click(state: MutableMapping, component_key: str) -> bool:
     return coordinates_edited(state)
 
 
-def render_location_map(state: MutableMapping, *, height: int = 560) -> None:
+def render_location_map(state: MutableMapping, *, height: int = 560, purpose: str = "background") -> None:
     """Render the live component; callback runs before the next widget pass."""
     import folium
     from streamlit_folium import st_folium
@@ -79,14 +79,15 @@ def render_location_map(state: MutableMapping, *, height: int = 560) -> None:
     centre = [max(-85.0, min(85.0, lat)), lon]
     fmap = folium.Map(location=centre, zoom_start=7, tiles="OpenStreetMap", control_scale=True)
     supplied_height = state[HEIGHT]
-    height_label = "height unspecified" if supplied_height is None else f"requested height {supplied_height:g} m (not applied)"
+    suffix = "used by interpolation" if purpose == "interpolation" else "not applied"
+    height_label = "height unspecified" if supplied_height is None else f"requested height {supplied_height:g} m ({suffix})"
     folium.Marker([lat, lon], tooltip=f"Selected point · {lat:.5f}°, {lon:.5f}° · {height_label}").add_to(fmap)
     key = f"ige_selected_point_map_{state[EPOCH]}"
     st_folium(fmap, height=height, use_container_width=True, returned_objects=["last_clicked"],
               center=tuple(centre), key=key, on_change=lambda: accept_map_click(state, key))
 
 
-def render_point_picker(st) -> tuple[float, float, float | None, str]:
+def render_point_picker(st, *, purpose: str = "background") -> tuple[float, float, float | None, str]:
     initialize_point(st.session_state)
     left, right = st.columns([2, 1])
     # Render the widgets before the component, so map callbacks can update their
@@ -97,16 +98,22 @@ def render_point_picker(st) -> tuple[float, float, float | None, str]:
                         on_change=lambda: coordinates_edited(st.session_state))
         st.number_input("Longitude [°]", -180.0, 180.0, format="%.5f", key=LONGITUDE,
                         on_change=lambda: coordinates_edited(st.session_state))
-        st.number_input("Site elevation [m] — optional", -500.0, 9000.0, value=None,
+        st.number_input("Site elevation [m] — required" if purpose == "interpolation" else "Site elevation [m] — optional", -500.0, 9000.0, value=None,
                         placeholder="Enter a known site elevation", key=HEIGHT)
         st.text_input("Elevation source / vertical datum", key=HEIGHT_REFERENCE,
                       placeholder="Required when elevation is supplied")
         st.caption("Moving the point clears its previous elevation. Enter elevation after choosing the point.")
-        st.info("Site elevation is recorded with the request. This background route does not apply a local height correction; the EPW keeps the source grid location and height.")
+        if purpose == "interpolation":
+            st.info("This elevation is used in the temperature, vapour-pressure and pressure corrections. Supply its source and vertical reference. Monthly regional corrections do not resolve local inversions.")
+        else:
+            st.info("Site elevation is recorded with the request. This background route does not apply a local height correction; the EPW keeps the source grid location and height.")
     with left:
         st.caption("Click the map to select a point. Editing the coordinates moves the marker. Map edits do not request weather data.")
         if st.button("Reset map", key="ige_point_reset_map"):
             st.session_state[EPOCH] += 1
-        render_location_map(st.session_state)
+        if purpose == "background":
+            render_location_map(st.session_state)
+        else:
+            render_location_map(st.session_state, purpose=purpose)
     return (float(st.session_state[LATITUDE]), float(st.session_state[LONGITUDE]),
             st.session_state[HEIGHT], str(st.session_state[HEIGHT_REFERENCE]).strip())
