@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from hashlib import sha256
 import io
 import json
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import socket
 import subprocess
 import sys
@@ -95,6 +95,32 @@ def run_tests(output):
     return receipt
 
 
+def validate_download_archive(raw, files):
+    if len(raw) > 128 * 1024**2:
+        raise ValueError('I2_DOWNLOAD_ARCHIVE_BUDGET')
+    with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+        entries = archive.infolist()
+        if len(entries) > 1000 or sum(e.file_size for e in entries) > 256 * 1024**2:
+            raise ValueError('I2_DOWNLOAD_ARCHIVE_BUDGET')
+        for entry in entries:
+            # ZipInfo.filename can be normalized on Windows. Inspect the raw
+            # original name too, before comparing or writing product members.
+            name = entry.orig_filename
+            path = PurePosixPath(name)
+            if (path.is_absolute() or '..' in path.parts or '\\' in name or '\x00' in name
+                    or ':' in name or path.as_posix() != name or name != entry.filename
+                    or entry.is_dir() or (entry.external_attr >> 16) & 0o170000 == 0o120000):
+                raise ValueError('I2_UNSAFE_OR_DUPLICATED_ARCHIVE_MEMBER')
+        names = [e.filename for e in entries]
+        if len(names) != len(set(names)):
+            raise ValueError('I2_UNSAFE_OR_DUPLICATED_ARCHIVE_MEMBER')
+        if set(names) != set(files):
+            raise ValueError('I2_COMPLETE_DOWNLOAD_MEMBER_CENSUS')
+        for name, data in files.items():
+            if archive.read(name) != data:
+                raise ValueError('I2_COMPLETE_DOWNLOAD_BYTES_CHANGED:' + name)
+
+
 def export_examples(output):
     from epw_climate_analyzer.engine_application import (pilot_historical_request, run_historical_product,
                                                        run_future_pilot_product)
@@ -114,12 +140,7 @@ def export_examples(output):
                 raise ValueError('Frozen example EPW or annual census changed: ' + key)
             if product.report['weather_provider_requests_this_run'] != 0 or product.report['production_ready']:
                 raise ValueError('Unexpected example source or scientific status: ' + key)
-            with zipfile.ZipFile(io.BytesIO(product.archive)) as z:
-                if set(z.namelist()) != set(product.files) or len(z.namelist()) != len(product.files):
-                    raise ValueError('Complete download member census changed')
-                for name, data in product.files.items():
-                    if z.read(name) != data:
-                        raise ValueError('Complete download differs from UI file: ' + name)
+            validate_download_archive(product.archive, product.files)
             folder = output / key
             folder.mkdir()
             hashes = {}

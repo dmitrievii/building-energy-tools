@@ -137,19 +137,27 @@ class RuntimeContractTests(unittest.TestCase):
             self.assertFalse(audit['targets'][key]['raw_byte_unseen_claim_allowed'])
             self.assertFalse(audit['targets'][key]['temperature_2025_prediction_errors_or_fitting_demonstrated'])
 
-    def test_legacy_archive_reader_rejects_real_unsafe_headers_on_both_platforms(self):
-        import e2e_integration_audit as audit
-        for names in (('../escape.txt',),('/absolute.txt',),('a\\b',),('same.txt','same.txt')):
-            raw=io.BytesIO()
-            with warnings.catch_warnings(),zipfile.ZipFile(raw,'w') as archive:
-                warnings.simplefilter('ignore',UserWarning)
-                for name in names:
-                    # ZipInfo(name) normalizes backslashes on Windows. Set the
-                    # actual header afterward so the adversarial input is real.
-                    info=zipfile.ZipInfo('placeholder');info.filename=name
-                    archive.writestr(info,b'ARTIFICIAL')
-            with self.assertRaisesRegex(ValueError,'UNSAFE_OR_DUPLICATED'):
-                audit.zip_bodies(raw.getvalue())
+    def test_download_guard_rejects_real_unsafe_headers_on_both_platforms(self):
+        for separator in ('/','\\'):
+            with patch.object(zipfile.os,'sep',separator):
+                for names in (('../escape.txt',),('/absolute.txt',),('a\\b',),('same.txt','same.txt')):
+                    raw=io.BytesIO()
+                    with warnings.catch_warnings(),zipfile.ZipFile(raw,'w') as archive:
+                        warnings.simplefilter('ignore',UserWarning)
+                        for name in names:
+                            info=zipfile.ZipInfo('placeholder');info.filename=name
+                            archive.writestr(info,b'ARTIFICIAL')
+                    with self.assertRaisesRegex(ValueError,'UNSAFE_OR_DUPLICATED'):
+                        verify.validate_download_archive(raw.getvalue(),{})
+
+    def test_download_guard_checks_census_and_bytes(self):
+        raw=io.BytesIO()
+        with zipfile.ZipFile(raw,'w') as archive:archive.writestr('climate.epw',b'original')
+        verify.validate_download_archive(raw.getvalue(),{'climate.epw':b'original'})
+        with self.assertRaisesRegex(ValueError,'MEMBER_CENSUS'):
+            verify.validate_download_archive(raw.getvalue(),{})
+        with self.assertRaisesRegex(ValueError,'BYTES_CHANGED'):
+            verify.validate_download_archive(raw.getvalue(),{'climate.epw':b'changed'})
 
 
 if __name__=='__main__':unittest.main()
