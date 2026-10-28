@@ -208,6 +208,10 @@ class PortabilityAuditTests(unittest.TestCase):
 
 class ActualStationRouteTests(unittest.TestCase):
     def setUp(self):
+        # The scientific examples remain regression fixtures, not public cities.
+        from epw_climate_analyzer.engine_ui import render_engine_research_examples
+        replay=patch("epw_climate_analyzer.engine_ui.render_engine_source",render_engine_research_examples)
+        replay.start();self.addCleanup(replay.stop)
         for target in ("socket.socket.connect","socket.socket.connect_ex"):
             guard=patch(target,side_effect=RuntimeError("A15_APPTEST_NO_NETWORK"));guard.start();self.addCleanup(guard.stop)
 

@@ -18,10 +18,12 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path[:0]=[str(ROOT/'tools/climate_analyzer'),str(ROOT/'research/ige_cmip6')]
 
 
-def verify(output):
+def verify(output, contract_path):
     output.mkdir(parents=True,exist_ok=False)
-    contract=json.loads((ROOT/'deployment/ige-cloud-candidate-20261028.json').read_text())
-    for path,expected in contract['copied_sha256'].items():
+    contract=json.loads((ROOT/contract_path).read_text())
+    expected_sources=contract.get('source_sha256',contract.get('copied_sha256',{}))
+    assert expected_sources,'Missing source manifest'
+    for path,expected in expected_sources.items():
         assert sha256((ROOT/path).read_bytes()).hexdigest()==expected,path
     versions={}
     for line in (ROOT/'tools/climate_analyzer/requirements-cloud-constraints.txt').read_text().splitlines():
@@ -74,7 +76,8 @@ def verify(output):
             try:process.wait(timeout=10)
             except subprocess.TimeoutExpired:process.kill();process.wait(timeout=5)
     receipt={'schema':'IGE_CLOUD_RESEARCH_BETA_PREFLIGHT_v1','status':'PASS','tests':tests,'products':products,
-             'copied_I2_files_unchanged':len(contract['copied_sha256']),'installed_versions':installed,
+             'verified_source_files':len(expected_sources),'preflight_contract':str(contract_path),
+             'saved_examples_are_offline_regressions_not_public_city_choices':True,'installed_versions':installed,
              'actual_root_Streamlit_launch_healthy':True,'weather_provider_requests':0,
              'test_process_peak_RSS_MiB':resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1024,
              'peak_is_test_process_not_a_multiuser_cloud_load_test':True,
@@ -87,4 +90,6 @@ def verify(output):
 if __name__=='__main__':
     import argparse
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--out',required=True,type=Path)
-    verify(parser.parse_args().out)
+    parser.add_argument('--contract',type=Path,default=Path('deployment/ige-source-map-candidate-20261028.json'))
+    args=parser.parse_args()
+    verify(args.out,args.contract)
