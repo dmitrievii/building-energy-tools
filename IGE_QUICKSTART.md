@@ -62,6 +62,8 @@ The acceptance suite excludes six V1/V2 acquisition/preregistration test modules
 whose Git-history gates remain in their original research workflows. No research
 test or result is modified. The application tests and relevant scientific
 regressions are counted once by test ID.
+The historical A1.2 exposure audit is checked against its frozen receipt; rebuilding
+that audit from old Git objects remains a separate research-history task.
 
 The command prints the result directory. It contains `verification.json`, test
 and server logs, and one folder per example with `climate.epw`, hourly CSV, reports

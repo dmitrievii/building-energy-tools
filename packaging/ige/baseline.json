@@ -6,6 +6,7 @@
     ".streamlit/config.toml": "3ff543622381e1ddaebe52ea0ab1e3eff0d8c2d4d9a6f0ee81b9efad334e9190",
     "research/ige_cmip6/a12_acquire_history.py": "0c140010c371f0fb72aa0f7c71ffee68b1a62ab103e6dba3058008b2f94fe832",
     "research/ige_cmip6/a12_exposure_audit.py": "d425692b711eab0d6f8a69a6365cb9f3baa879760437c67a451df9eab8f1918b",
+    "research/ige_cmip6/a12_exposure_audit_20261025.json": "0db27cd5655c05a9cf3abc783739de261106cb73f630000258ed2b94e964054a",
     "research/ige_cmip6/a12_metadata_zip.py": "3dc7a53b9f8e52dd84e5bfe366e54659d8eca723f8876e98f3abe9c42fa8c998",
     "research/ige_cmip6/a12_prepare_history.py": "25ab906003fe82e8f56237e1440b6b0f540564644c0c9956320af2bd94ab2d5f",
     "research/ige_cmip6/a12_verify.py": "ca8f0de71e1faa07a4d25454e06d4d73702c94fb65c416120cb3304e30ba5405",

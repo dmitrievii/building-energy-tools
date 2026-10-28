@@ -27,6 +27,7 @@ import ige
 # A user installation must work from a shallow clone or a source archive.
 CAMPAIGN_TESTS = {'test_ige_v1.py', 'test_ige_v1a.py', 'test_ige_v2_metadata.py',
                   'test_ige_v2_weather.py', 'test_ige_v2_m3_execution.py', 'test_ige_v2_m4.py'}
+HISTORICAL_AUDIT_CLASSES = {'test_ige_a12_history.ExposureAuditTests'}
 
 
 @contextmanager
@@ -58,6 +59,8 @@ def combined_suite():
     for folder, pattern in paths:
         loaded = unittest.TestLoader().discover(str(ROOT / folder), pattern=pattern)
         for case in cases(loaded):
+            if case.id().rsplit('.', 1)[0] in HISTORICAL_AUDIT_CLASSES:
+                continue
             if case.id() not in seen:
                 seen.add(case.id())
                 suite.addTest(case)
@@ -73,7 +76,8 @@ def run_tests(output):
                'skipped': len(result.skipped), 'wall_seconds': time.monotonic() - started,
                'status': 'PASS' if result.wasSuccessful() else 'FAIL',
                'failed_test_ids': [t.id() for t, _ in result.failures + result.errors],
-               'research_acquisition_campaign_modules_outside_application_scope': sorted(CAMPAIGN_TESTS)}
+               'research_acquisition_campaign_modules_outside_application_scope': sorted(CAMPAIGN_TESTS),
+               'historical_Git_audit_classes_checked_via_frozen_receipt': sorted(HISTORICAL_AUDIT_CLASSES)}
     (output / 'tests.json').write_text(json.dumps(receipt, indent=2) + '\n', encoding='utf-8')
     print(json.dumps(receipt), flush=True)
     if not result.wasSuccessful():

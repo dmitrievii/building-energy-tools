@@ -31,8 +31,8 @@ heads and scientific acceptance decisions are not changed.
   build isolation does not introduce an unpinned backend.
 - The dedicated `.venv/ige` environment rejects unexpected packages/version drift
   and checks `pip check`. User Python import paths are removed from child processes.
-- The baseline manifest verifies 690 inherited application/scientific/source files,
-  totalling 79,678,538 bytes. It uses file hashes, without requiring Git history.
+- The baseline manifest verifies 691 inherited application/scientific/source files,
+  totalling 79,814,201 bytes. It uses file hashes, without requiring Git history.
 - Committed source bytes are preserved across Windows/Linux line-ending settings.
 - Existing result directories are never overwritten. Failed acceptance writes a
   failure receipt; only a complete successful run writes `verification.json`.
@@ -56,10 +56,12 @@ compared with the actual download bytes.
 ## Verification
 
 The new I2 acceptance suite deduplicates test IDs across the application tests,
-relevant existing scientific regressions and 12 new installation/runtime tests.
+relevant existing scientific regressions and 13 new installation/runtime tests.
 Six V1/V2 acquisition/preregistration modules are outside this application suite:
 their historical Git-ancestry gates remain in the original research CI. Their
-tests and scientific results are preserved.
+tests and scientific results are preserved. The three A1.2 historical exposure-audit
+checks require old Git objects; I2 verifies their original frozen receipt and
+its scientific limitations instead of rebuilding that historical audit.
 
 The offline regression/export phase forbids socket connect/connect_ex. A separate
 real Streamlit process is started on loopback to check HTTP health and the page,

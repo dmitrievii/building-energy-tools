@@ -122,5 +122,17 @@ class RuntimeContractTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             with self.assertRaises(FileExistsError):verify.verify('examples',Path(directory))
 
+    def test_frozen_exposure_receipt_preserves_historical_limits_without_Git_history(self):
+        name='research/ige_cmip6/a12_exposure_audit_20261025.json'
+        manifest=ige.verify_baseline()
+        self.assertIn(name,manifest['files_sha256'])
+        audit=json.loads((ROOT/name).read_text(encoding='utf-8'))
+        self.assertFalse(audit['strict_blindness_certified'])
+        self.assertFalse(audit['independent_accuracy_qualified'])
+        self.assertFalse(audit['IV1_2022_values_opened'])
+        for key in ('CH:BAS','CH:ALT'):
+            self.assertFalse(audit['targets'][key]['raw_byte_unseen_claim_allowed'])
+            self.assertFalse(audit['targets'][key]['temperature_2025_prediction_errors_or_fitting_demonstrated'])
+
 
 if __name__=='__main__':unittest.main()
