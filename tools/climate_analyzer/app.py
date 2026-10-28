@@ -1523,7 +1523,7 @@ def render_climate_file_source() -> None:
         st.caption(APP_INDEPENDENCE_NOTICE)
     st.write(
         "Start with an EPW weather file, select a reviewed Climate.OneBuilding climate, or load measured "
-        "historical station observations from GeoSphere Austria. No building model is required."
+        "historical station observations from GeoSphere Austria, or generate a research climate year. No building model is required."
     )
 
     active = get_active_climate_file()
@@ -1544,11 +1544,16 @@ def render_climate_file_source() -> None:
     st.divider()
     source_mode = st.radio(
         "Climate source",
-        ["Upload EPW", "Find climate", "GeoSphere Austria"],
+        ["Upload EPW", "Find climate", "GeoSphere Austria", "Generate climate"],
         horizontal=True,
         label_visibility="collapsed",
         key="climate_source_mode",
     )
+
+    if source_mode == "Generate climate":
+        from epw_climate_analyzer.engine_ui import render_engine_source
+        render_engine_source(set_active_canonical_climate)
+        return
 
     if source_mode == "Upload EPW":
         st.subheader("Upload an EPW weather file")
@@ -5341,6 +5346,11 @@ def main() -> None:
         render_climate_file_source()
         return
     if active_canonical is not None:
+        from epw_climate_analyzer.engine_analysis import is_engine_dataset
+        if is_engine_dataset(active_canonical):
+            from epw_climate_analyzer.engine_ui import render_engine_analysis
+            render_engine_analysis(active_canonical, render_climate_file_source)
+            return
         render_canonical_climate_analysis(active_canonical)
         return
 
