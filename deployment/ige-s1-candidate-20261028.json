@@ -5,7 +5,7 @@
   "source_sha256": {
     "deployment/verify_ige_cloud_candidate.py": "792756ce93d5335e84158e2dd32bdd6352906f78e19fe99a6ec38bbec008a840",
     "docs/IGE_H1_STATION_YEAR_AND_EPW_ADMISSION_RU_20261028.md": "2ff22dd849ac1c23077264acc7fd8e9a691b74652c6a0340a4b984ecc808d08f",
-    "docs/IGE_S1_POINT_INTERPOLATION_AND_ACTIVE_HEIGHTS_RU_20261028.md": "09bd860fc182c489e20931bcd1d5468b64b6acc12ea6766244b7712cfbb2b7b7",
+    "docs/IGE_S1_POINT_INTERPOLATION_AND_ACTIVE_HEIGHTS_RU_20261028.md": "ecc34899e591210a73580798115a7e85c83d82d54bd2e928ac2f7d31a12531d7",
     "docs/IGE_SOURCE_WORKSPACE_AND_NEXT_PRODUCT_STAGES_RU_20261028.md": "a4ad12d03c18c8d9990f40f72749984d5e537fc2c4a44fce06d9f3988581f180",
     "research/ige_cmip6/a14_CH_2025_research_years_20261026.zip": "21a10349e47c595b43a1a1f7aa884ae91cff951f556e4912e33c69f3186d5e65",
     "research/ige_cmip6/a15_diagnostic_CI_40358122554.zip": "058d540af23ace1e7368a325c5721b7d21e8a02097bfc02e1c25c65aa7b23832",
@@ -40,7 +40,7 @@
     "tools/climate_analyzer/epw_climate_analyzer/engine/future.py": "649fdf22970aa319aa8fd4e94fa111c31c91a32e7663974eed0fb65243b23aa5",
     "tools/climate_analyzer/epw_climate_analyzer/engine/historical.py": "03ad75087c821bd111ef3057fd56ed8f375b884ce602dd826ec1383761489457",
     "tools/climate_analyzer/epw_climate_analyzer/engine/model_sources.py": "0215a8afb10ae625b74cb3f45587e21fc4c91035457978594769021653010650",
-    "tools/climate_analyzer/epw_climate_analyzer/engine/point_interpolation.py": "e70cf1b60aad8a1c92acc367e9f4f3b6e80c9e3e8b57a6caf2a3a39039637c2a",
+    "tools/climate_analyzer/epw_climate_analyzer/engine/point_interpolation.py": "b1a80a0dcf3b3eb6caac3170a563980baf0e45a2fff39f835fa39929c6df3944",
     "tools/climate_analyzer/epw_climate_analyzer/engine/station_epw_admission.py": "70e4540a569246d621eb2f60e090512df1d0d3de2971ff53db96bba194e4ba18",
     "tools/climate_analyzer/epw_climate_analyzer/engine/station_year.py": "1474d1a5e95b1b65afd5165e70e0b4be687db2afff215765d4e1b36cc08a4e39",
     "tools/climate_analyzer/epw_climate_analyzer/engine/thermodynamics.py": "5abfd9be1cfd50a218006d0d38516a08a107e211e4f4f8ef8afe645a0f6ea631",
@@ -64,7 +64,7 @@
     "tools/climate_analyzer/tests/test_ige_h1_station_year.py": "79b632f7e20fd1b24288989325bcea783a57a2b24fdada2b1e79c50838b3eac0",
     "tools/climate_analyzer/tests/test_ige_h1_station_year_ui.py": "f699c37c88cf68fcbbc2e8cb0f7a9bb45fcd83a36d38072e78ef230f0d65d1e3",
     "tools/climate_analyzer/tests/test_ige_location_workspace.py": "83c3d3ad14e0dc15d1a2516a392f75d69a889a6e01d8cbfef7b87760aa236d5f",
-    "tools/climate_analyzer/tests/test_ige_s1_point_interpolation.py": "24f7976d328ba18698152347c41199c71c147eecf3ab06a1dd2000d5659314f4",
+    "tools/climate_analyzer/tests/test_ige_s1_point_interpolation.py": "24c287b9a43fb7e10a884d78840dfaf04dbc5e249926bc8fee00f51c287a514c",
     "tools/climate_analyzer/tests/test_ige_s1_point_ui.py": "fa8f3e1e6e825dedd337ccb3cd1bbdda75556c7dab08aadd37cbe60d169ace55",
     "tools/climate_analyzer/tests/test_ige_u1.py": "35e83e43a09fd854bbea4f3fe9caabf5f4f5db5bf9f2e8d93bf184610a1d34c8"
   },

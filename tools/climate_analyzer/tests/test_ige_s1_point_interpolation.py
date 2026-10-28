@@ -187,6 +187,23 @@ class S1PhysicsTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "SHAPE"):
             reconcile_vapour(5., np.array([1, 0, 1, 1]), t, p)
 
+    def test_saturated_annual_profile_stays_within_exact_rh_export_bound(self):
+        request, donors = inputs()
+        t = np.linspace(-40., 40., len(request.utc_starts))
+        e = saturation_buck_hpa(t)
+        frame = pd.DataFrame({T: t, P: np.full(len(t), 98000.), E: e, RH: np.full(len(t), 100.)},
+                             index=request.utc_starts)
+        donors = [replace(d, data=frame.copy(), temperature_elevation_m=400., pressure_elevation_m=400.) for d in donors]
+        result = interpolate_point(request, donors)
+        self.assertEqual(result.report["status"], "POINT_YEAR_COMPLETE_RESEARCH")
+        self.assertLessEqual(float(result.hourly[RH].max()), 100.)
+        np.testing.assert_array_less(result.hourly[RH], np.nextafter(100., math.inf))
+        self.assertTrue(all(abs(row["residual_hpa"]) <= 1e-8 for row in result.report["monthly_reconciliation"]))
+        # This sample contains the actual floating-point counterexample; the
+        # fix preserves e rather than clipping humidity or lowering its mean.
+        unsafe = 100*e/e
+        self.assertTrue(np.any(unsafe > 100.))
+
     def test_infeasible_point_goal_is_blocked_without_weakening_source_constraints(self):
         request, donors = inputs()
         wet = [replace(d, monthly_vapour_hpa=(70.,)*12, monthly_origin="SYNTHETIC_IMPOSSIBLE_CONSTRAINT") for d in donors]

@@ -172,9 +172,15 @@ def hypsometric_pressure_hpa(p_hpa, t_c, dz):
 
 def reconcile_vapour(goal, shape, t, p_hpa):
     """Frozen P8.2C scalar water filling; never silently lower a monthly goal."""
-    shape = np.asarray(shape, float)
     cap = np.minimum(saturation_buck_hpa(t), .98*np.asarray(p_hpa, float))
-    if shape.shape != cap.shape or not np.isfinite(shape).all() or np.any(shape <= 0):
+    return _reconcile_capacity(goal, shape, cap)
+
+
+def _reconcile_capacity(goal, shape, cap):
+    """Same scalar root with one already evaluated physical capacity vector."""
+    shape, cap = np.asarray(shape, float), np.asarray(cap, float)
+    if (shape.shape != cap.shape or not np.isfinite(shape).all() or np.any(shape <= 0)
+            or not np.isfinite(cap).all() or np.any(cap <= 0)):
         raise ValueError("S1_INVALID_MOISTURE_SHAPE")
     if not math.isfinite(goal) or goal <= 1e-6:
         raise ValueError("S1_INVALID_MONTHLY_VAPOUR")
@@ -315,19 +321,26 @@ def interpolate_point(request: PointRequest, donors: list[PointDonor]) -> PointA
                     "source_monthly_e_hpa": float(monthly[m-1]), "monthly_origin": donor.monthly_origin})
         tt, pp, ee, means = map(np.asarray, (tt, pp, ee, means))
         t = w@tt; p_hpa = w@pp
-        e, shape, unconstrained, capacity = (np.zeros(n) for _ in range(4))
+        # Reuse this very same floating-point saturation in both the monthly
+        # cap and final RH, including SIMD/tail evaluation differences.
+        es_water = saturation_buck_hpa(t)
+        capacity = np.minimum(es_water, .98*p_hpa)
+        e, shape, unconstrained = (np.zeros(n) for _ in range(3))
         monthly_audit = []
         for m in range(1, 13):
             ix = mon == m
             goal = float(np.exp(w@(np.log(means[:, m-1])+e_rates[m-1]*np.array([
                 request.elevation_m-v[2].temperature_elevation_m for v in chosen]))))
             a = np.exp(w@np.log(ee[:, ix]/means[:, m-1, None]))
-            values, scale, cap = reconcile_vapour(goal, a, t[ix], p_hpa[ix])
+            values, scale, cap = _reconcile_capacity(goal, a, capacity[ix])
             e[ix], shape[ix], unconstrained[ix], capacity[ix] = values, a, scale*a, cap
             monthly_audit.append({"month": m, "target_e_mean_hpa": goal, "output_e_mean_hpa": float(values.mean()),
                                   "residual_hpa": float(values.mean()-goal), "scale_hpa": float(scale),
                                   "saturated_hours": int(np.sum(scale*a > cap)), "hours": int(ix.sum())})
-        rh = 100*e/saturation_buck_hpa(t)
+        # Divide first: e<=e_sw implies a floating-point ratio <=1. Computing
+        # (100*e)/e_sw can round an exactly saturated state above 100 by one
+        # ulp on another CPU. No e, monthly target or RH bound is changed.
+        rh = 100*(e/es_water)
         td = dewpoint_buck_c(e)
         if (np.any(rh > 100+1e-7) or np.any(td > t+1e-7) or np.any(e >= p_hpa)
                 or not np.isfinite(np.vstack((t, p_hpa, e, rh, td))).all()):
