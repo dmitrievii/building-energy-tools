@@ -1,7 +1,7 @@
 # Proposed update of the existing Streamlit technical beta
 
 This branch is prepared from main `2a82a77d0fe8cc87a2324b820d6c6843b6598548`.
-It backports the exact application and five required data/protocol packets from
+It backports the exact application and five required data/protocol packets plus one CPU regression fixture from
 the verified IGE I2 implementation. It does not merge the full research archive.
 
 ## Visible changes
