@@ -1,0 +1,21 @@
+{
+  "schema": "IGE_V2_M4_ORIGINAL_CONTROL_ARTIFACT_v1",
+  "CI_run": 40650289012,
+  "artifact_id": 12799258285,
+  "artifact_sha256_from_CI_upload": "4eb1fcf460ffc49df9a456cc6412eefb642ebf70b186bb826ecef94a5affab12",
+  "member_sha256": {
+    "v2_m4_control_manifest_20261028.json": "2b80339659e22a930e52a97b4443b9653148e5f36ac89f8bfe6a1e381f42d7d5",
+    "v2_m4_control_source_audit_20261028.json": "461d2d20c59df7f730c55696783aa3205f0005b3e1dfee11b57d9946b6c2f227",
+    "v2_weather_controls_20261027.zip.part001": "b5733ee141a734678518a80d6454289a2d8b03ad2cb80d4255d1d5061fbe42e9",
+    "v2_weather_controls_20261027.zip.part002": "1e25f5a72e5ddfba4e163f67b4c450c9a159d71a5e67200373d48a55915d9937",
+    "v2_weather_controls_20261027.zip.part003": "6b775d1741713206a23c385deacb5d6de2c58b9fa9d0ebd09b94f2548287a338",
+    "v2_weather_controls_20261027.zip.part004": "f0ee968a07e9bcc495b6098a8e058af8838b56564ecc19a0c2708bbfa2306d26",
+    "v2_weather_controls_20261027.zip.part005": "03abd7bc9ad85652bbcb70f6567dd8ffbf54d91596c7dd302a5aa999011bb5b2",
+    "v2_weather_controls_20261027.zip.part006": "a4e531641afebaa66d09848f22ad34e3018aca616951169178f7470082aaab88",
+    "v2_weather_controls_20261027.zip.part007": "513837e35ff32d9712b74becca3331f33b6f1980d1b32295878a99e073fa9096",
+    "v2_weather_controls_20261027.zip.part008": "45a3ddaea5e916ca8488be7785a89e9e2f47cc2dd0f6f1c8c5b2adb123a10d05",
+    "v2_weather_controls_20261027.zip.storage.json": "50d5f7313c006ab6e3957b583012bc7bb9b31d5644d8129e15ca35129559f85f"
+  },
+  "target_raw_bytes_are_revealed": true,
+  "root_actual_download_verification_required_separately": true
+}

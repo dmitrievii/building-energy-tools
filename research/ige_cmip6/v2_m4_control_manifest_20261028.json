@@ -1,0 +1,745 @@
+{
+  "schema": "IGE_V2_WEATHER_ORIGINALS_v1",
+  "phase": "controls",
+  "publication_gate": {
+    "commit": "45dda3789542191346dba7d8a579fdd74c560894",
+    "remote_tracking_ancestry_and_bytes_verified": true,
+    "phase": "predictions",
+    "API_publication_receipt_required_separately": true,
+    "local_wallclock_is_not_trusted_external_time": true
+  },
+  "registration_sha256": "8404524385d1f5c8d0af21962573c7e1d5fc00323047589829125347a334de16",
+  "sources": [
+    {
+      "spec": {
+        "id": "control_AT_5925",
+        "station_key": "AT:5925",
+        "kind": "station_temperature",
+        "role": "control",
+        "url": "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h?station_ids=5925&parameters=tl%2Ctl_flag&output_format=geojson&start=2019-01-10T00%3A00%3A00Z&end=2019-10-16T23%3A00%3A00Z",
+        "member": "control_AT_5925.json",
+        "max_body_bytes": 2000000,
+        "source_block": null,
+        "raw_container_support": "2019-01-10T00:00Z/2019-10-16T23:00Z, one individual station; intervening days exposed",
+        "raw_other_variables": false,
+        "inventory_evidence": "frozen GeoSphere v2 individual catalog/product request contract"
+      },
+      "status": "ORIGINAL_BODY_RECEIVED",
+      "reason": null,
+      "attempts": [
+        {
+          "number": 1,
+          "body_bytes_read": 219709,
+          "status": "ORIGINAL_BODY_RECEIVED",
+          "retry": false,
+          "started_UTC_runner_clock_untrusted": "2026-10-28T07:30:14.517340+00:00",
+          "HTTP_attempted": true,
+          "HTTP_status": 200,
+          "headers": {
+            "Content-Type": "application/json",
+            "Content-Length": "219709",
+            "ETag": null,
+            "Last-Modified": null
+          },
+          "elapsed_seconds": 1.8905420909999862,
+          "member": "control_AT_5925_attempt1.bin",
+          "bytes": 219709,
+          "sha256": "d7dd11007f2cf6ca65a3cebd012a90a59727f79a5dd35945109ad7881fea4907"
+        }
+      ],
+      "original_member": "control_AT_5925_attempt1.bin"
+    },
+    {
+      "spec": {
+        "id": "control_AT_4030",
+        "station_key": "AT:4030",
+        "kind": "station_temperature",
+        "role": "control",
+        "url": "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h?station_ids=4030&parameters=tl%2Ctl_flag&output_format=geojson&start=2019-01-10T00%3A00%3A00Z&end=2019-10-16T23%3A00%3A00Z",
+        "member": "control_AT_4030.json",
+        "max_body_bytes": 2000000,
+        "source_block": null,
+        "raw_container_support": "2019-01-10T00:00Z/2019-10-16T23:00Z, one individual station; intervening days exposed",
+        "raw_other_variables": false,
+        "inventory_evidence": "frozen GeoSphere v2 individual catalog/product request contract"
+      },
+      "status": "ORIGINAL_BODY_RECEIVED",
+      "reason": null,
+      "attempts": [
+        {
+          "number": 1,
+          "body_bytes_read": 219462,
+          "status": "ORIGINAL_BODY_RECEIVED",
+          "retry": false,
+          "started_UTC_runner_clock_untrusted": "2026-10-28T07:30:16.408426+00:00",
+          "HTTP_attempted": true,
+          "HTTP_status": 200,
+          "headers": {
+            "Content-Type": "application/json",
+            "Content-Length": "219462",
+            "ETag": null,
+            "Last-Modified": null
+          },
+          "elapsed_seconds": 1.9481506349999904,
+          "member": "control_AT_4030_attempt1.bin",
+          "bytes": 219462,
+          "sha256": "eeb09815419f57196f6db644fd5c01350bafa40e90efb7166f2b9c821c7f14db"
+        }
+      ],
+      "original_member": "control_AT_4030_attempt1.bin"
+    },
+    {
+      "spec": {
+        "id": "control_AT_18225",
+        "station_key": "AT:18225",
+        "kind": "station_temperature",
+        "role": "control",
+        "url": "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h?station_ids=18225&parameters=tl%2Ctl_flag&output_format=geojson&start=2019-01-10T00%3A00%3A00Z&end=2019-10-16T23%3A00%3A00Z",
+        "member": "control_AT_18225.json",
+        "max_body_bytes": 2000000,
+        "source_block": null,
+        "raw_container_support": "2019-01-10T00:00Z/2019-10-16T23:00Z, one individual station; intervening days exposed",
+        "raw_other_variables": false,
+        "inventory_evidence": "frozen GeoSphere v2 individual catalog/product request contract"
+      },
+      "status": "ORIGINAL_BODY_RECEIVED",
+      "reason": null,
+      "attempts": [
+        {
+          "number": 1,
+          "body_bytes_read": 219389,
+          "status": "ORIGINAL_BODY_RECEIVED",
+          "retry": false,
+          "started_UTC_runner_clock_untrusted": "2026-10-28T07:30:18.357052+00:00",
+          "HTTP_attempted": true,
+          "HTTP_status": 200,
+          "headers": {
+            "Content-Type": "application/json",
+            "Content-Length": "219389",
+            "ETag": null,
+            "Last-Modified": null
+          },
+          "elapsed_seconds": 1.7780139590000203,
+          "member": "control_AT_18225_attempt1.bin",
+          "bytes": 219389,
+          "sha256": "590e2e38444148a84ccfe6e33b15de34dcf9bb6bb357ba0fdf9338f1f8c92596"
+        }
+      ],
+      "original_member": "control_AT_18225_attempt1.bin"
+    },
+    {
+      "spec": {
+        "id": "control_AT_11115",
+        "station_key": "AT:11115",
+        "kind": "station_temperature",
+        "role": "control",
+        "url": "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h?station_ids=11115&parameters=tl%2Ctl_flag&output_format=geojson&start=2019-01-10T00%3A00%3A00Z&end=2019-10-16T23%3A00%3A00Z",
+        "member": "control_AT_11115.json",
+        "max_body_bytes": 2000000,
+        "source_block": null,
+        "raw_container_support": "2019-01-10T00:00Z/2019-10-16T23:00Z, one individual station; intervening days exposed",
+        "raw_other_variables": false,
+        "inventory_evidence": "frozen GeoSphere v2 individual catalog/product request contract"
+      },
+      "status": "ORIGINAL_BODY_RECEIVED",
+      "reason": null,
+      "attempts": [
+        {
+          "number": 1,
+          "body_bytes_read": 219342,
+          "status": "ORIGINAL_BODY_RECEIVED",
+          "retry": false,
+          "started_UTC_runner_clock_untrusted": "2026-10-28T07:30:20.135556+00:00",
+          "HTTP_attempted": true,
+          "HTTP_status": 200,
+          "headers": {
+            "Content-Type": "application/json",
+            "Content-Length": "219342",
+            "ETag": null,
+            "Last-Modified": null
+          },
+          "elapsed_seconds": 1.7821720949999929,
+          "member": "control_AT_11115_attempt1.bin",
+          "bytes": 219342,
+          "sha256": "ecfaf9a30d72daa4f2dd70ced9d0e140d8985c9c411f850be34a53250103a5f9"
+        }
+      ],
+      "original_member": "control_AT_11115_attempt1.bin"
+    },
+    {
+      "spec": {
+        "id": "control_AT_10200",
+        "station_key": "AT:10200",
+        "kind": "station_temperature",
+        "role": "control",
+        "url": "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h?station_ids=10200&parameters=tl%2Ctl_flag&output_format=geojson&start=2019-01-10T00%3A00%3A00Z&end=2019-10-16T23%3A00%3A00Z",
+        "member": "control_AT_10200.json",
+        "max_body_bytes": 2000000,
+        "source_block": null,
+        "raw_container_support": "2019-01-10T00:00Z/2019-10-16T23:00Z, one individual station; intervening days exposed",
+        "raw_other_variables": false,
+        "inventory_evidence": "frozen GeoSphere v2 individual catalog/product request contract"
+      },
+      "status": "ORIGINAL_BODY_RECEIVED",
+      "reason": null,
+      "attempts": [
+        {
+          "number": 1,
+          "body_bytes_read": 218948,
+          "status": "ORIGINAL_BODY_RECEIVED",
+          "retry": false,
+          "started_UTC_runner_clock_untrusted": "2026-10-28T07:30:21.918255+00:00",
+          "HTTP_attempted": true,
+          "HTTP_status": 200,
+          "headers": {
+            "Content-Type": "application/json",
+            "Content-Length": "218948",
+            "ETag": null,
+            "Last-Modified": null
+          },
+          "elapsed_seconds": 1.9275274700000011,
+          "member": "control_AT_10200_attempt1.bin",
+          "bytes": 218948,
+          "sha256": "dc3e54767cbc4c3e3fdb44d5b0abc678eabf5b4acae53670e3abfe8de5fca546"
+        }
+      ],
+      "original_member": "control_AT_10200_attempt1.bin"
+    },
+    {
+      "spec": {
+        "id": "control_AT_15721",
+        "station_key": "AT:15721",
+        "kind": "station_temperature",
+        "role": "control",
+        "url": "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h?station_ids=15721&parameters=tl%2Ctl_flag&output_format=geojson&start=2019-01-10T00%3A00%3A00Z&end=2019-10-16T23%3A00%3A00Z",
+        "member": "control_AT_15721.json",
+        "max_body_bytes": 2000000,
+        "source_block": null,
+        "raw_container_support": "2019-01-10T00:00Z/2019-10-16T23:00Z, one individual station; intervening days exposed",
+        "raw_other_variables": false,
+        "inventory_evidence": "frozen GeoSphere v2 individual catalog/product request contract"
+      },
+      "status": "ORIGINAL_BODY_RECEIVED",
+      "reason": null,
+      "attempts": [
+        {
+          "number": 1,
+          "body_bytes_read": 218896,
+          "status": "ORIGINAL_BODY_RECEIVED",
+          "retry": false,
+          "started_UTC_runner_clock_untrusted": "2026-10-28T07:30:23.846283+00:00",
+          "HTTP_attempted": true,
+          "HTTP_status": 200,
+          "headers": {
+            "Content-Type": "application/json",
+            "Content-Length": "218896",
+            "ETag": null,
+            "Last-Modified": null
+          },
+          "elapsed_seconds": 1.8762010060000023,
+          "member": "control_AT_15721_attempt1.bin",
+          "bytes": 218896,
+          "sha256": "13b5c2b721f5a08ddc8672f503f7f4dcef4af6e3ccec30daaf0c3577663039b8"
+        }
+      ],
+      "original_member": "control_AT_15721_attempt1.bin"
+    },
+    {
+      "spec": {
+        "id": "control_DE_01072",
+        "station_key": "DE:01072",
+        "kind": "station_temperature",
+        "role": "control",
+        "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/air_temperature/historical/10minutenwerte_TU_01072_20100101_20191231_hist.zip",
+        "member": "control_DE_01072.zip",
+        "max_body_bytes": 10000000,
+        "source_block": null,
+        "raw_container_support": "20100101/20191231; entire station ZIP including all variables and years counts as exposure",
+        "raw_other_variables": true,
+        "inventory_evidence": "v1_metadata_sources_20261026.zip:DE_10min_historical_index.html; SHA256=2fdc166266616b7c5d24c5934a2f8af4970dcc8de32d64c77d5ff5b65731c2ca"
+      },
+      "status": "ORIGINAL_BODY_RECEIVED",
+      "reason": null,
+      "attempts": [
+        {
+          "number": 1,
+          "body_bytes_read": 4736466,
+          "status": "ORIGINAL_BODY_RECEIVED",
+          "retry": false,
+          "started_UTC_runner_clock_untrusted": "2026-10-28T07:30:25.722937+00:00",
+          "HTTP_attempted": true,
+          "HTTP_status": 200,
+          "headers": {
+            "Content-Type": "application/zip",
+            "Content-Length": "4736466",
+            "ETag": "\"69aafa3d-4845d2\"",
+            "Last-Modified": "Fri, 06 Mar 2026 16:01:01 GMT"
+          },
+          "elapsed_seconds": 2.9185749129999863,
+          "member": "control_DE_01072_attempt1.bin",
+          "bytes": 4736466,
+          "sha256": "c4505101b468535acc8139f54c81d2477d6491dbc784e74715d81efe5326f09c"
+        }
+      ],
+      "original_member": "control_DE_01072_attempt1.bin"
+    },
+    {
+      "spec": {
+        "id": "control_DE_06170",
+        "station_key": "DE:06170",
+        "kind": "station_temperature",
+        "role": "control",
+        "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/air_temperature/historical/10minutenwerte_TU_06170_20100101_20191231_hist.zip",
+        "member": "control_DE_06170.zip",
+        "max_body_bytes": 10000000,
+        "source_block": null,
+        "raw_container_support": "20100101/20191231; entire station ZIP including all variables and years counts as exposure",
+        "raw_other_variables": true,
+        "inventory_evidence": "v1_metadata_sources_20261026.zip:DE_10min_historical_index.html; SHA256=2fdc166266616b7c5d24c5934a2f8af4970dcc8de32d64c77d5ff5b65731c2ca"
+      },
+      "status": "ORIGINAL_BODY_RECEIVED",
+      "reason": null,
+      "attempts": [
+        {
+          "number": 1,
+          "body_bytes_read": 4758659,
+          "status": "ORIGINAL_BODY_RECEIVED",
+          "retry": false,
+          "started_UTC_runner_clock_untrusted": "2026-10-28T07:30:28.647302+00:00",
+          "HTTP_attempted": true,
+          "HTTP_status": 200,
+          "headers": {
+            "Content-Type": "application/zip",
+            "Content-Length": "4758659",
+            "ETag": "\"69aafb07-489c83\"",
+            "Last-Modified": "Fri, 06 Mar 2026 16:04:23 GMT"
+          },
+          "elapsed_seconds": 1.6945234169999992,
+          "member": "control_DE_06170_attempt1.bin",
+          "bytes": 4758659,
+          "sha256": "830949a4a4ef00786ca78550f4a2dd8dc999784364654b2ff7a1e9c2d88fcf04"
+        }
+      ],
+      "original_member": "control_DE_06170_attempt1.bin"
+    },
+    {
+      "spec": {
+        "id": "control_DE_04411",
+        "station_key": "DE:04411",
+        "kind": "station_temperature",
+        "role": "control",
+        "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/air_temperature/historical/10minutenwerte_TU_04411_20100101_20191231_hist.zip",
+        "member": "control_DE_04411.zip",
+        "max_body_bytes": 10000000,
+        "source_block": null,
+        "raw_container_support": "20100101/20191231; entire station ZIP including all variables and years counts as exposure",
+        "raw_other_variables": true,
+        "inventory_evidence": "v1_metadata_sources_20261026.zip:DE_10min_historical_index.html; SHA256=2fdc166266616b7c5d24c5934a2f8af4970dcc8de32d64c77d5ff5b65731c2ca"
+      },
+      "status": "ORIGINAL_BODY_RECEIVED",
+      "reason": null,
+      "attempts": [
+        {
+          "number": 1,
+          "body_bytes_read": 4741874,
+          "status": "ORIGINAL_BODY_RECEIVED",
+          "retry": false,
+          "started_UTC_runner_clock_untrusted": "2026-10-28T07:30:30.346259+00:00",
+          "HTTP_attempted": true,
+          "HTTP_status": 200,
+          "headers": {
+            "Content-Type": "application/zip",
+            "Content-Length": "4741874",
+            "ETag": "\"69aafaba-485af2\"",
+            "Last-Modified": "Fri, 06 Mar 2026 16:03:06 GMT"
+          },
+          "elapsed_seconds": 1.6446236250000084,
+          "member": "control_DE_04411_attempt1.bin",
+          "bytes": 4741874,
+          "sha256": "558e7c2918f1a8390e4acdbf9e0e0c63517e83a78dc8b82d29587908e750f048"
+        }
+      ],
+      "original_member": "control_DE_04411_attempt1.bin"
+    },
+    {
+      "spec": {
+        "id": "control_DE_02985",
+        "station_key": "DE:02985",
+        "kind": "station_temperature",
+        "role": "control",
+        "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/air_temperature/historical/10minutenwerte_TU_02985_20100101_20191231_hist.zip",
+        "member": "control_DE_02985.zip",
+        "max_body_bytes": 10000000,
+        "source_block": null,
+        "raw_container_support": "20100101/20191231; entire station ZIP including all variables and years counts as exposure",
+        "raw_other_variables": true,
+        "inventory_evidence": "v1_metadata_sources_20261026.zip:DE_10min_historical_index.html; SHA256=2fdc166266616b7c5d24c5934a2f8af4970dcc8de32d64c77d5ff5b65731c2ca"
+      },
+      "status": "ORIGINAL_BODY_RECEIVED",
+      "reason": null,
+      "attempts": [
+        {
+          "number": 1,
+          "body_bytes_read": 5321860,
+          "status": "ORIGINAL_BODY_RECEIVED",
+          "retry": false,
+          "started_UTC_runner_clock_untrusted": "2026-10-28T07:30:31.994869+00:00",
+          "HTTP_attempted": true,
+          "HTTP_status": 200,
+          "headers": {
+            "Content-Type": "application/zip",
+            "Content-Length": "5321860",
+            "ETag": "\"69aafa7e-513484\"",
+            "Last-Modified": "Fri, 06 Mar 2026 16:02:06 GMT"
+          },
+          "elapsed_seconds": 1.84048269500002,
+          "member": "control_DE_02985_attempt1.bin",
+          "bytes": 5321860,
+          "sha256": "b50c3f893c17e384c57293301fe5f0c9438c99e188b9d8c2cba71df40bb915b4"
+        }
+      ],
+      "original_member": "control_DE_02985_attempt1.bin"
+    },
+    {
+      "spec": {
+        "id": "control_DE_00071",
+        "station_key": "DE:00071",
+        "kind": "station_temperature",
+        "role": "control",
+        "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/air_temperature/historical/10minutenwerte_TU_00071_20100101_20191231_hist.zip",
+        "member": "control_DE_00071.zip",
+        "max_body_bytes": 10000000,
+        "source_block": null,
+        "raw_container_support": "20100101/20191231; entire station ZIP including all variables and years counts as exposure",
+        "raw_other_variables": true,
+        "inventory_evidence": "v1_metadata_sources_20261026.zip:DE_10min_historical_index.html; SHA256=2fdc166266616b7c5d24c5934a2f8af4970dcc8de32d64c77d5ff5b65731c2ca"
+      },
+      "status": "ORIGINAL_BODY_RECEIVED",
+      "reason": null,
+      "attempts": [
+        {
+          "number": 1,
+          "body_bytes_read": 4706513,
+          "status": "ORIGINAL_BODY_RECEIVED",
+          "retry": false,
+          "started_UTC_runner_clock_untrusted": "2026-10-28T07:30:33.841251+00:00",
+          "HTTP_attempted": true,
+          "HTTP_status": 200,
+          "headers": {
+            "Content-Type": "application/zip",
+            "Content-Length": "4706513",
+            "ETag": "\"69aafa02-47d0d1\"",
+            "Last-Modified": "Fri, 06 Mar 2026 16:00:02 GMT"
+          },
+          "elapsed_seconds": 1.63098745100001,
+          "member": "control_DE_00071_attempt1.bin",
+          "bytes": 4706513,
+          "sha256": "33dd0a9cd85273296219b1d81bc097c65bc4dbda42b996b8c47adf06153a79b8"
+        }
+      ],
+      "original_member": "control_DE_00071_attempt1.bin"
+    },
+    {
+      "spec": {
+        "id": "control_DE_07105",
+        "station_key": "DE:07105",
+        "kind": "station_temperature",
+        "role": "control",
+        "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/10_minutes/air_temperature/historical/10minutenwerte_TU_07105_20100101_20191231_hist.zip",
+        "member": "control_DE_07105.zip",
+        "max_body_bytes": 10000000,
+        "source_block": null,
+        "raw_container_support": "20100101/20191231; entire station ZIP including all variables and years counts as exposure",
+        "raw_other_variables": true,
+        "inventory_evidence": "v1_metadata_sources_20261026.zip:DE_10min_historical_index.html; SHA256=2fdc166266616b7c5d24c5934a2f8af4970dcc8de32d64c77d5ff5b65731c2ca"
+      },
+      "status": "ORIGINAL_BODY_RECEIVED",
+      "reason": null,
+      "attempts": [
+        {
+          "number": 1,
+          "body_bytes_read": 4579505,
+          "status": "ORIGINAL_BODY_RECEIVED",
+          "retry": false,
+          "started_UTC_runner_clock_untrusted": "2026-10-28T07:30:35.476607+00:00",
+          "HTTP_attempted": true,
+          "HTTP_status": 200,
+          "headers": {
+            "Content-Type": "application/zip",
+            "Content-Length": "4579505",
+            "ETag": "\"69aafb0c-45e0b1\"",
+            "Last-Modified": "Fri, 06 Mar 2026 16:04:28 GMT"
+          },
+          "elapsed_seconds": 1.650261109000013,
+          "member": "control_DE_07105_attempt1.bin",
+          "bytes": 4579505,
+          "sha256": "5da805383dbeeaeb192f74696fc30f452a1c35f0860d9de3bf651ebe62f0416d"
+        }
+      ],
+      "original_member": "control_DE_07105_attempt1.bin"
+    },
+    {
+      "spec": {
+        "id": "control_CH_GRO",
+        "station_key": "CH:GRO",
+        "kind": "station_temperature",
+        "role": "control",
+        "url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/gro/ogd-smn_gro_h_historical_2010-2019.csv",
+        "member": "control_CH_GRO.csv",
+        "max_body_bytes": 45000000,
+        "source_block": null,
+        "raw_container_support": "2010/2019; all variables/years in whole original station h CSV count as exposure",
+        "raw_other_variables": true,
+        "inventory_evidence": "frozen provider h inventory and verified SCU/STG decade naming pattern; individual URL availability unverified, failure retained"
+      },
+      "status": "ORIGINAL_BODY_RECEIVED",
+      "reason": null,
+      "attempts": [
+        {
+          "number": 1,
+          "body_bytes_read": 8324582,
+          "status": "ORIGINAL_BODY_RECEIVED",
+          "retry": false,
+          "started_UTC_runner_clock_untrusted": "2026-10-28T07:30:37.131300+00:00",
+          "HTTP_attempted": true,
+          "HTTP_status": 200,
+          "headers": {
+            "Content-Type": "text/csv",
+            "Content-Length": "8324582",
+            "ETag": "\"dc150098d2571499a1f720b811e131ca-1\"",
+            "Last-Modified": "Wed, 18 Feb 2026 16:37:30 GMT"
+          },
+          "elapsed_seconds": 1.9086988859999963,
+          "member": "control_CH_GRO_attempt1.bin",
+          "bytes": 8324582,
+          "sha256": "d231f5329026bd771106f444820351d4900e074572b1a1e4ffdedc2850dcd6e4"
+        }
+      ],
+      "original_member": "control_CH_GRO_attempt1.bin"
+    },
+    {
+      "spec": {
+        "id": "control_CH_LUZ",
+        "station_key": "CH:LUZ",
+        "kind": "station_temperature",
+        "role": "control",
+        "url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/luz/ogd-smn_luz_h_historical_2010-2019.csv",
+        "member": "control_CH_LUZ.csv",
+        "max_body_bytes": 45000000,
+        "source_block": null,
+        "raw_container_support": "2010/2019; all variables/years in whole original station h CSV count as exposure",
+        "raw_other_variables": true,
+        "inventory_evidence": "frozen provider h inventory and verified SCU/STG decade naming pattern; individual URL availability unverified, failure retained"
+      },
+      "status": "ORIGINAL_BODY_RECEIVED",
+      "reason": null,
+      "attempts": [
+        {
+          "number": 1,
+          "body_bytes_read": 11571956,
+          "status": "ORIGINAL_BODY_RECEIVED",
+          "retry": false,
+          "started_UTC_runner_clock_untrusted": "2026-10-28T07:30:39.048938+00:00",
+          "HTTP_attempted": true,
+          "HTTP_status": 200,
+          "headers": {
+            "Content-Type": "text/csv",
+            "Content-Length": "11571956",
+            "ETag": "\"39843aeca153e35a06e9f0e06d7990a1-1\"",
+            "Last-Modified": "Wed, 18 Feb 2026 20:17:21 GMT"
+          },
+          "elapsed_seconds": 1.326573742999983,
+          "member": "control_CH_LUZ_attempt1.bin",
+          "bytes": 11571956,
+          "sha256": "95ef734fe7c89f15638349c9e167b8b0342089920f2971e51b82f5c10cb9e8fe"
+        }
+      ],
+      "original_member": "control_CH_LUZ_attempt1.bin"
+    },
+    {
+      "spec": {
+        "id": "control_CH_MAR",
+        "station_key": "CH:MAR",
+        "kind": "station_temperature",
+        "role": "control",
+        "url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/mar/ogd-smn_mar_h_historical_2010-2019.csv",
+        "member": "control_CH_MAR.csv",
+        "max_body_bytes": 45000000,
+        "source_block": null,
+        "raw_container_support": "2010/2019; all variables/years in whole original station h CSV count as exposure",
+        "raw_other_variables": true,
+        "inventory_evidence": "frozen provider h inventory and verified SCU/STG decade naming pattern; individual URL availability unverified, failure retained"
+      },
+      "status": "ORIGINAL_BODY_RECEIVED",
+      "reason": null,
+      "attempts": [
+        {
+          "number": 1,
+          "body_bytes_read": 3743366,
+          "status": "ORIGINAL_BODY_RECEIVED",
+          "retry": false,
+          "started_UTC_runner_clock_untrusted": "2026-10-28T07:30:40.387631+00:00",
+          "HTTP_attempted": true,
+          "HTTP_status": 200,
+          "headers": {
+            "Content-Type": "text/csv",
+            "Content-Length": "3743366",
+            "ETag": "\"d0dd2c193ab34c65c438ef76d831edc6-1\"",
+            "Last-Modified": "Wed, 18 Feb 2026 22:17:42 GMT"
+          },
+          "elapsed_seconds": 1.1046030010000152,
+          "member": "control_CH_MAR_attempt1.bin",
+          "bytes": 3743366,
+          "sha256": "b7478a7e1ae3a6ca042ad48ca1910011bee065b5e6d170acd9ab0043739495c8"
+        }
+      ],
+      "original_member": "control_CH_MAR_attempt1.bin"
+    },
+    {
+      "spec": {
+        "id": "control_CH_VAB",
+        "station_key": "CH:VAB",
+        "kind": "station_temperature",
+        "role": "control",
+        "url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/vab/ogd-smn_vab_h_historical_2010-2019.csv",
+        "member": "control_CH_VAB.csv",
+        "max_body_bytes": 45000000,
+        "source_block": null,
+        "raw_container_support": "2010/2019; all variables/years in whole original station h CSV count as exposure",
+        "raw_other_variables": true,
+        "inventory_evidence": "frozen provider h inventory and verified SCU/STG decade naming pattern; individual URL availability unverified, failure retained"
+      },
+      "status": "ORIGINAL_BODY_RECEIVED",
+      "reason": null,
+      "attempts": [
+        {
+          "number": 1,
+          "body_bytes_read": 9638998,
+          "status": "ORIGINAL_BODY_RECEIVED",
+          "retry": false,
+          "started_UTC_runner_clock_untrusted": "2026-10-28T07:30:41.495671+00:00",
+          "HTTP_attempted": true,
+          "HTTP_status": 200,
+          "headers": {
+            "Content-Type": "text/csv",
+            "Content-Length": "9638998",
+            "ETag": "\"8b4589b8663a3987e3761aa9e62dcb34-1\"",
+            "Last-Modified": "Thu, 19 Feb 2026 00:14:45 GMT"
+          },
+          "elapsed_seconds": 1.2192903920000049,
+          "member": "control_CH_VAB_attempt1.bin",
+          "bytes": 9638998,
+          "sha256": "6d576b254800a02d3996fef3883d8ce0f281d7d2dde60f5c89b1e6540cf459e2"
+        }
+      ],
+      "original_member": "control_CH_VAB_attempt1.bin"
+    },
+    {
+      "spec": {
+        "id": "control_CH_BIV",
+        "station_key": "CH:BIV",
+        "kind": "station_temperature",
+        "role": "control",
+        "url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/biv/ogd-smn_biv_h_historical_2010-2019.csv",
+        "member": "control_CH_BIV.csv",
+        "max_body_bytes": 45000000,
+        "source_block": null,
+        "raw_container_support": "2010/2019; all variables/years in whole original station h CSV count as exposure",
+        "raw_other_variables": true,
+        "inventory_evidence": "frozen provider h inventory and verified SCU/STG decade naming pattern; individual URL availability unverified, failure retained"
+      },
+      "status": "ORIGINAL_BODY_RECEIVED",
+      "reason": null,
+      "attempts": [
+        {
+          "number": 1,
+          "body_bytes_read": 4174398,
+          "status": "ORIGINAL_BODY_RECEIVED",
+          "retry": false,
+          "started_UTC_runner_clock_untrusted": "2026-10-28T07:30:42.723019+00:00",
+          "HTTP_attempted": true,
+          "HTTP_status": 200,
+          "headers": {
+            "Content-Type": "text/csv",
+            "Content-Length": "4174398",
+            "ETag": "\"ee415eaafedb32e0bb3af6b9bdd61c51-1\"",
+            "Last-Modified": "Wed, 18 Feb 2026 23:02:53 GMT"
+          },
+          "elapsed_seconds": 1.127602195999998,
+          "member": "control_CH_BIV_attempt1.bin",
+          "bytes": 4174398,
+          "sha256": "32647d837a458769ab6ca25ed45e20bb5fa398ff70e7ec63b3656679d10f9b48"
+        }
+      ],
+      "original_member": "control_CH_BIV_attempt1.bin"
+    },
+    {
+      "spec": {
+        "id": "control_CH_CMA",
+        "station_key": "CH:CMA",
+        "kind": "station_temperature",
+        "role": "control",
+        "url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/cma/ogd-smn_cma_h_historical_2010-2019.csv",
+        "member": "control_CH_CMA.csv",
+        "max_body_bytes": 45000000,
+        "source_block": null,
+        "raw_container_support": "2010/2019; all variables/years in whole original station h CSV count as exposure",
+        "raw_other_variables": true,
+        "inventory_evidence": "frozen provider h inventory and verified SCU/STG decade naming pattern; individual URL availability unverified, failure retained"
+      },
+      "status": "ORIGINAL_BODY_RECEIVED",
+      "reason": null,
+      "attempts": [
+        {
+          "number": 1,
+          "body_bytes_read": 10272665,
+          "status": "ORIGINAL_BODY_RECEIVED",
+          "retry": false,
+          "started_UTC_runner_clock_untrusted": "2026-10-28T07:30:43.854613+00:00",
+          "HTTP_attempted": true,
+          "HTTP_status": 200,
+          "headers": {
+            "Content-Type": "text/csv",
+            "Content-Length": "10272665",
+            "ETag": "\"aa06db40d85cb1ffa254af3bd5c8fba0-1\"",
+            "Last-Modified": "Wed, 18 Feb 2026 23:50:44 GMT"
+          },
+          "elapsed_seconds": 1.2376337519999936,
+          "member": "control_CH_CMA_attempt1.bin",
+          "bytes": 10272665,
+          "sha256": "b615ca3e2773ebbdc4749e92ae57805ba303f86844dda99eaf5d27d7d9b74a96"
+        }
+      ],
+      "original_member": "control_CH_CMA_attempt1.bin"
+    }
+  ],
+  "HTTP_attempts_phase": 18,
+  "body_bytes_phase": 77886588,
+  "cumulative_HTTP_attempts": 147,
+  "cumulative_body_bytes": 339215531,
+  "effective_phase_attempt_limit": 240,
+  "effective_phase_byte_limit": 2000000000,
+  "member_sha256": {
+    "control_AT_15721_attempt1.bin": "13b5c2b721f5a08ddc8672f503f7f4dcef4af6e3ccec30daaf0c3577663039b8",
+    "control_AT_10200_attempt1.bin": "dc3e54767cbc4c3e3fdb44d5b0abc678eabf5b4acae53670e3abfe8de5fca546",
+    "control_AT_11115_attempt1.bin": "ecfaf9a30d72daa4f2dd70ced9d0e140d8985c9c411f850be34a53250103a5f9",
+    "control_DE_02985_attempt1.bin": "b50c3f893c17e384c57293301fe5f0c9438c99e188b9d8c2cba71df40bb915b4",
+    "control_DE_07105_attempt1.bin": "5da805383dbeeaeb192f74696fc30f452a1c35f0860d9de3bf651ebe62f0416d",
+    "control_CH_MAR_attempt1.bin": "b7478a7e1ae3a6ca042ad48ca1910011bee065b5e6d170acd9ab0043739495c8",
+    "control_AT_4030_attempt1.bin": "eeb09815419f57196f6db644fd5c01350bafa40e90efb7166f2b9c821c7f14db",
+    "control_AT_18225_attempt1.bin": "590e2e38444148a84ccfe6e33b15de34dcf9bb6bb357ba0fdf9338f1f8c92596",
+    "control_CH_CMA_attempt1.bin": "b615ca3e2773ebbdc4749e92ae57805ba303f86844dda99eaf5d27d7d9b74a96",
+    "control_AT_5925_attempt1.bin": "d7dd11007f2cf6ca65a3cebd012a90a59727f79a5dd35945109ad7881fea4907",
+    "control_CH_GRO_attempt1.bin": "d231f5329026bd771106f444820351d4900e074572b1a1e4ffdedc2850dcd6e4",
+    "control_DE_06170_attempt1.bin": "830949a4a4ef00786ca78550f4a2dd8dc999784364654b2ff7a1e9c2d88fcf04",
+    "control_DE_01072_attempt1.bin": "c4505101b468535acc8139f54c81d2477d6491dbc784e74715d81efe5326f09c",
+    "control_DE_04411_attempt1.bin": "558e7c2918f1a8390e4acdbf9e0e0c63517e83a78dc8b82d29587908e750f048",
+    "control_CH_BIV_attempt1.bin": "32647d837a458769ab6ca25ed45e20bb5fa398ff70e7ec63b3656679d10f9b48",
+    "control_DE_00071_attempt1.bin": "33dd0a9cd85273296219b1d81bc097c65bc4dbda42b996b8c47adf06153a79b8",
+    "control_CH_LUZ_attempt1.bin": "95ef734fe7c89f15638349c9e167b8b0342089920f2971e51b82f5c10cb9e8fe",
+    "control_CH_VAB_attempt1.bin": "6d576b254800a02d3996fef3883d8ce0f281d7d2dde60f5c89b1e6540cf459e2"
+  },
+  "control_bodies_opened": true,
+  "raw_entire_containers_count_as_exposure": true,
+  "attribution": "GeoSphere Austria; DWD CDC; MeteoSwiss OGD; Open-Meteo / Copernicus ECMWF ERA5; exact URLs retained"
+}

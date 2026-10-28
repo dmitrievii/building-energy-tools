@@ -1,0 +1,48 @@
+{
+  "schema": "IGE_V2_WEATHER_ORIGINAL_PARTS_v1",
+  "name": "v2_weather_controls_20261027.zip",
+  "bytes": 39739776,
+  "sha256": "f00d863aac56fb924be0d16f339a22a7c2a793a29bbce283a69f8958744092e3",
+  "parts": [
+    {
+      "name": "v2_weather_controls_20261027.zip.part001",
+      "bytes": 5500000,
+      "sha256": "b5733ee141a734678518a80d6454289a2d8b03ad2cb80d4255d1d5061fbe42e9"
+    },
+    {
+      "name": "v2_weather_controls_20261027.zip.part002",
+      "bytes": 5500000,
+      "sha256": "1e25f5a72e5ddfba4e163f67b4c450c9a159d71a5e67200373d48a55915d9937"
+    },
+    {
+      "name": "v2_weather_controls_20261027.zip.part003",
+      "bytes": 5500000,
+      "sha256": "6b775d1741713206a23c385deacb5d6de2c58b9fa9d0ebd09b94f2548287a338"
+    },
+    {
+      "name": "v2_weather_controls_20261027.zip.part004",
+      "bytes": 5500000,
+      "sha256": "f0ee968a07e9bcc495b6098a8e058af8838b56564ecc19a0c2708bbfa2306d26"
+    },
+    {
+      "name": "v2_weather_controls_20261027.zip.part005",
+      "bytes": 5500000,
+      "sha256": "03abd7bc9ad85652bbcb70f6567dd8ffbf54d91596c7dd302a5aa999011bb5b2"
+    },
+    {
+      "name": "v2_weather_controls_20261027.zip.part006",
+      "bytes": 5500000,
+      "sha256": "a4e531641afebaa66d09848f22ad34e3018aca616951169178f7470082aaab88"
+    },
+    {
+      "name": "v2_weather_controls_20261027.zip.part007",
+      "bytes": 5500000,
+      "sha256": "513837e35ff32d9712b74becca3331f33b6f1980d1b32295878a99e073fa9096"
+    },
+    {
+      "name": "v2_weather_controls_20261027.zip.part008",
+      "bytes": 1239776,
+      "sha256": "45a3ddaea5e916ca8488be7785a89e9e2f47cc2dd0f6f1c8c5b2adb123a10d05"
+    }
+  ]
+}

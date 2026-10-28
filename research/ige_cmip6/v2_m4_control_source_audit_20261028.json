@@ -1,0 +1,19 @@
+{
+  "schema": "IGE_V2_M4_ACTUAL_ORIGINAL_CONTROL_AUDIT_v1",
+  "CI_run": 40650289012,
+  "packet_sha256": "f00d863aac56fb924be0d16f339a22a7c2a793a29bbce283a69f8958744092e3",
+  "packet_bytes": 39739776,
+  "registered_control_assets": 18,
+  "status_counts": {
+    "ORIGINAL_BODY_RECEIVED": 18
+  },
+  "control_HTTP_attempts": 18,
+  "control_body_bytes": 77886588,
+  "cumulative_weather_HTTP_attempts": 147,
+  "cumulative_weather_body_bytes": 339215531,
+  "source_blocks": [],
+  "all_received_target_raw_containers_are_now_revealed": true,
+  "scoring_QC_and_method_unchanged": true,
+  "new_predictor_or_metadata_requests": 0,
+  "old_AT_2018_and_IV1_2022_controls_opened": false
+}
