@@ -52,7 +52,7 @@
     "tools/climate_analyzer/epw_climate_analyzer/geosphere.py": "8f58ed1501ae74a4e740f0a4040e6b74d5b83bd6f1e0151499c4f8c8cf6c7535",
     "tools/climate_analyzer/epw_climate_analyzer/geosphere_station_year.py": "561890302aef8a4cc3585b08a5acc0a48f870feeaf1a1c00c7f986a7787fded7",
     "tools/climate_analyzer/epw_climate_analyzer/location_picker.py": "e0e32c1e91c2982d740e8c251498bf51a777475c3fb39bbd97353e90bf9da57e",
-    "tools/climate_analyzer/epw_climate_analyzer/point_interpolation.py": "c77aa2acb186fb8e1eeade1fda25c802c137ac40a88a0bc5e36e4d4ea4c82413",
+    "tools/climate_analyzer/epw_climate_analyzer/point_interpolation.py": "63141520ec9afae7b2bd64e27e42c3397391f595a2901507a99bef2e2fff2da7",
     "tools/climate_analyzer/epw_climate_analyzer/point_interpolation_ui.py": "9df3cd56e4dcfbf5f43593c2e1f2ff09fdaa05cdfefbce298babb57e57547a81",
     "tools/climate_analyzer/epw_climate_analyzer/quality_policy.py": "2e890eb1804ff087dbbd1dd952a0b237dd2c79cae3f7638d61db4b5b9fb6032b",
     "tools/climate_analyzer/epw_climate_analyzer/station_admission.py": "e556c7cf6e289fb34433c1a42389d7d93d2bb502e45611fc8cf61b557d290183",
@@ -64,7 +64,7 @@
     "tools/climate_analyzer/tests/test_ige_h1_station_year.py": "79b632f7e20fd1b24288989325bcea783a57a2b24fdada2b1e79c50838b3eac0",
     "tools/climate_analyzer/tests/test_ige_h1_station_year_ui.py": "f699c37c88cf68fcbbc2e8cb0f7a9bb45fcd83a36d38072e78ef230f0d65d1e3",
     "tools/climate_analyzer/tests/test_ige_location_workspace.py": "83c3d3ad14e0dc15d1a2516a392f75d69a889a6e01d8cbfef7b87760aa236d5f",
-    "tools/climate_analyzer/tests/test_ige_s1_point_interpolation.py": "0cd8713b95a028a050c293d827d231926eb2f8b4744ab18c3aa9cb69a068311a",
+    "tools/climate_analyzer/tests/test_ige_s1_point_interpolation.py": "24f7976d328ba18698152347c41199c71c147eecf3ab06a1dd2000d5659314f4",
     "tools/climate_analyzer/tests/test_ige_s1_point_ui.py": "fa8f3e1e6e825dedd337ccb3cd1bbdda75556c7dab08aadd37cbe60d169ace55",
     "tools/climate_analyzer/tests/test_ige_u1.py": "35e83e43a09fd854bbea4f3fe9caabf5f4f5db5bf9f2e8d93bf184610a1d34c8"
   },

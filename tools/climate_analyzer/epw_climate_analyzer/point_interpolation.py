@@ -384,14 +384,20 @@ def main():
     import argparse
     from pathlib import Path
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--request", type=Path, help="PointRequest JSON for a live GeoSphere acquisition")
-    parser.add_argument("--replay", type=Path)
+    inputs = parser.add_mutually_exclusive_group(required=True)
+    inputs.add_argument("--request", type=Path, help="PointRequest JSON for a live GeoSphere acquisition")
+    inputs.add_argument("--replay", type=Path)
     parser.add_argument("--sha256")
-    parser.add_argument("--background", action="store_true", help="Explicitly request grid background; not an offline operation")
-    parser.add_argument("--background-replay", type=Path, help="Replay the separate original background source packet without HTTP")
+    backgrounds = parser.add_mutually_exclusive_group()
+    backgrounds.add_argument("--background", action="store_true", help="Explicitly request grid background; not an offline operation")
+    backgrounds.add_argument("--background-replay", type=Path, help="Replay the separate original background source packet without HTTP")
     parser.add_argument("--background-sha256")
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
+    if bool(args.replay) != bool(args.sha256): parser.error("--replay and --sha256 must be supplied together")
+    if bool(args.background_replay) != bool(args.background_sha256):
+        parser.error("--background-replay and --background-sha256 must be supplied together")
+    if args.out.exists(): parser.error("Output already exists; choose a new directory before acquiring sources")
     if args.replay:
         packet = args.replay.read_bytes(); manifest, _ = _read_input_packet(packet, args.sha256)
         request = PointRequest(**manifest["request"])
@@ -400,9 +406,10 @@ def main():
             background_packet=args.background_replay.read_bytes() if args.background_replay else None,
             background_sha256=args.background_sha256 or "")
     else:
-        if not args.request: parser.error("Choose --request or --replay with --sha256")
         request = PointRequest(**json.loads(args.request.read_bytes()))
-        product = run_point_product(request, include_background=args.background, progress=print)
+        product = run_point_product(request, include_background=args.background or args.background_replay is not None,
+            background_packet=args.background_replay.read_bytes() if args.background_replay else None,
+            background_sha256=args.background_sha256 or "", progress=print)
     args.out.mkdir(parents=True, exist_ok=False)
     for name, body in product.files.items(): (args.out/name).write_bytes(body)
     (args.out/"point-year.zip").write_bytes(product.archive)

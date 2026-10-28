@@ -250,6 +250,19 @@ class S1SourceTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, error):
                 service.donor_from_epw(data, r, actual_year_confirmed=confirm)
 
+    def test_cli_rejects_ambiguous_sources_and_incomplete_replay_identity_before_acquisition(self):
+        from contextlib import redirect_stderr
+        cases = (["--request", "a.json", "--replay", "b.zip"],
+                 ["--replay", "b.zip"],
+                 ["--request", "a.json", "--background-replay", "b.zip"],
+                 ["--request", "a.json", "--background", "--background-replay", "b.zip"])
+        for args in cases:
+            with self.subTest(args=args), patch("sys.argv", ["ige-s1", *args, "--out", "unused-test-output"]), \
+                 patch.object(service, "run_point_product") as run, redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit) as exc: service.main()
+                self.assertEqual(exc.exception.code, 2)
+                run.assert_not_called()
+
     def test_epw_source_interpolation_has_replay_and_no_fabricated_other_fields(self):
         product = service.run_point_product(self.request, mode="EPW", epws=self.epws, actual_year_confirmed=True)
         self.assertEqual(product.report["status"], "POINT_YEAR_COMPLETE_RESEARCH")
