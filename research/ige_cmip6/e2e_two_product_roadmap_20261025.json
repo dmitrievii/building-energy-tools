@@ -407,7 +407,7 @@
     "verified_CI_receipt": "research/ige_cmip6/a13_verified_CI_40236855438.json",
     "verified_CI_outputs": "research/ige_cmip6/a13_verified_CI_40236855438_results.zip"
   },
-  "current_execution_stage": "V2-M3 COMPLETE: originals and actual precontrol seal published; V2-M4 admitted target products and unchanged scoring next",
+  "current_execution_stage": "V2-M4 COMPLETE: controls and registered errors root-verified; R1 uniform benefit fails AT/DE/CH; existing A0/B-M1 EnergyPlus validation proposed next",
   "A1_4_progress": {
     "branch": "research/ige-a1-4-local-historical-year-20261026",
     "registration_commit": "a3e04ca2961cd27fbc3e4b05d98c5e344e0a879a",
@@ -690,5 +690,71 @@
     "new_independent_target_accuracy_measured": false,
     "production_ready": false,
     "next": "V2-M4: open only the18 sealed source-admitted target archives, score all72 cases under frozen M2; AT remains partial, no replacement or QC relaxation"
+  },
+  "V2_M4_progress": {
+    "date": "2026-10-28",
+    "status": "REGISTERED_CONTROL_COMPARISON_COMPLETE_NEGATIVE_FOR_GENERAL_R1_ADMISSION",
+    "CI_run": 40650289012,
+    "CI_status": "SUCCESS",
+    "unique_tests": 167,
+    "execution_commit": "6867ad2611c5ddf3f487fb860eefe3a0c788298a",
+    "original_controls_commit": "44863992323b53bab9b242ecc5f009c75b449864",
+    "original_scores_commit": "08812875274df2023f01d0bbf17eec1c63f3fa6f",
+    "retained_cases": 72,
+    "admitted_cases": 66,
+    "paired_hours": 11088,
+    "control_originals_received": 18,
+    "control_HTTP_attempts": 18,
+    "control_body_bytes": 77886588,
+    "cumulative_weather_HTTP_attempts": 147,
+    "cumulative_weather_body_bytes": 339215531,
+    "countries": {
+      "AT": {
+        "admitted_cases": 18,
+        "registered_cases": 24,
+        "paired_hours": 3024,
+        "B0_MAE_K": 2.212698412698413,
+        "R1_MAE_K": 1.1293060029545305,
+        "delta_MAE_K": -1.0833924097438823,
+        "within_pilot_uniform_observed_benefit": false
+      },
+      "DE": {
+        "admitted_cases": 24,
+        "registered_cases": 24,
+        "paired_hours": 4032,
+        "B0_MAE_K": 0.973735119047619,
+        "R1_MAE_K": 1.0966710359875993,
+        "delta_MAE_K": 0.1229359169399803,
+        "within_pilot_uniform_observed_benefit": false
+      },
+      "CH": {
+        "admitted_cases": 24,
+        "registered_cases": 24,
+        "paired_hours": 4032,
+        "B0_MAE_K": 3.6328538359793154,
+        "R1_MAE_K": 3.731101785248909,
+        "delta_MAE_K": 0.09824794926959335,
+        "within_pilot_uniform_observed_benefit": false
+      }
+    },
+    "improved_MAE_sites": 11,
+    "worsened_MAE_sites": 7,
+    "AT_summer_target_native_QC0_rows": 1008,
+    "all16_artifact_manifest_files_equal_Git": true,
+    "root_actual_score_replay": "PASS",
+    "root_paired_arithmetic_audit": "PASS",
+    "registration_and_seal_unchanged": true,
+    "target_full_raw_containers_now_revealed": true,
+    "old_AT2018_and_IV1_controls_opened": false,
+    "R1_default_promoted": false,
+    "independent_regional_accuracy_qualified": false,
+    "full_weather_physical_closure_qualified_by_this_stage": false,
+    "production_ready": false,
+    "existing_EPW_UI_defaults_main_unchanged": true,
+    "report": "docs/IGE_V2_M4_CONTROL_VALIDATION_RU_20261028.md",
+    "root_receipt": "research/ige_cmip6/v2_m4_root_verified_CI_40650289012.json",
+    "root_diagnostics": "research/ige_cmip6/v2_m4_root_diagnostics_20261028.json",
+    "next_product_gate": "actual EnergyPlus smoke and same-building energy comparison on existing admitted A0/B-M1 EPWs, without automatic R1 correction",
+    "new_corrector_requires_separate_design_and_fresh_preregistration": true
   }
 }

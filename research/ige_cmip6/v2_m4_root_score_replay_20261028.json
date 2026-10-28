@@ -1,0 +1,21 @@
+{
+  "schema": "IGE_V2_M4_FROZEN_SOURCE_SCORE_REPLAY_v1",
+  "status": "PASS",
+  "paired_hours": 11088,
+  "all72_cases_replayed": true,
+  "new_weather_requests": 0,
+  "same_frozen_algorithm_reinvoked_not_an_independent_estimator": true,
+  "score_JSON_absolute_tolerance": 1.1e-08,
+  "paired_CSV_absolute_tolerance": 1.1e-10,
+  "independent_paired_arithmetic_aggregation_audit": {
+    "schema": "IGE_V2_M4_PAIRED_ARITHMETIC_AUDIT_v1",
+    "status": "PASS",
+    "paired_rows": 11088,
+    "all72_cases_and18_sites_checked": true,
+    "country_case_and_station_metrics_checked": true,
+    "frozen_uniform_benefit_and_descriptive_resampling_checked": true,
+    "source_or_estimator_independence_implied": false,
+    "all_reference_B0_not_recomputed_from_paired_only_CSV": true
+  },
+  "production_ready": false
+}

@@ -1,0 +1,384 @@
+{
+  "schema": "IGE_V2_M4_ROOT_VERIFIED_CI_AND_ACTUAL_CONTROL_SCORES_v1",
+  "date": "2026-10-28",
+  "branch": "research/ige-v2-executable-preregistration-20261027",
+  "verified_score_publication_commit": "08812875274df2023f01d0bbf17eec1c63f3fa6f",
+  "CI_run": {
+    "id": 40650289012,
+    "html_url": "https://github.com/dmitrievii/building-energy-tools/actions/runs/40650289012",
+    "head_sha": "6867ad2611c5ddf3f487fb860eefe3a0c788298a",
+    "head_branch": "research/ige-v2-executable-preregistration-20261027",
+    "status": "completed",
+    "conclusion": "success",
+    "created_at": "2026-10-28T07:28:21Z",
+    "run_started_at": "2026-10-28T07:28:21Z",
+    "updated_at": "2026-10-28T07:32:25Z",
+    "run_attempt": 1
+  },
+  "CI_jobs": [
+    {
+      "id": 122688532381,
+      "name": "sealed_controls_then_registered_scores",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40650289012,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run python -m pip install -r tools/climate_analyzer/requirements.txt numcodecs==0.15.1 deprecated==3.0.0 wrapt==2.5.1",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Replay frozen predictions and test control executor before opening targets",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Publish one-time control acquisition claim after exact published prediction gate",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Acquire only registered source-admitted control products within cumulative weather budget",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Verify actual control originals and cumulative budgets",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Publish original controls before any score tables",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Apply frozen M2 scorer to exactly the published predictions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Replay frozen scores without network and independently audit paired arithmetic",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Prepare all-case results and original data lineage",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Publish scores without changing method QC thresholds targets or dates",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        },
+        {
+          "name": "Retain originals and partial outputs if failure; no re-acquisition",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 16
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 31
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 32
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 33
+        }
+      ]
+    }
+  ],
+  "ordered_publication_commits_newest_first": [
+    {
+      "sha": "08812875274df2023f01d0bbf17eec1c63f3fa6f",
+      "parent": [
+        "44863992323b53bab9b242ecc5f009c75b449864"
+      ],
+      "tree": "8c221c440ec1e09a4b648eb09c86e2bb6a5763b8",
+      "date": "2026-10-28T07:32:20Z",
+      "message": "research(V2-M4): preserve frozen target error scores, all blocks and actual replay [skip ci]"
+    },
+    {
+      "sha": "44863992323b53bab9b242ecc5f009c75b449864",
+      "parent": [
+        "c0dd6f465afa78bcc21404deff9bc381773423cc"
+      ],
+      "tree": "6ce25c802d9f9bc030c7db19434146e91204559a",
+      "date": "2026-10-28T07:30:53Z",
+      "message": "research(V2-M4): preserve all original control bytes before frozen scoring [skip ci]"
+    },
+    {
+      "sha": "c0dd6f465afa78bcc21404deff9bc381773423cc",
+      "parent": [
+        "6867ad2611c5ddf3f487fb860eefe3a0c788298a"
+      ],
+      "tree": "98e9929c0fd3f43000b7ffe9c8fe975642820c56",
+      "date": "2026-10-28T07:30:09Z",
+      "message": "research(V2-M4): claim fixed control acquisition after published actual forecast seal [skip ci]"
+    },
+    {
+      "sha": "6867ad2611c5ddf3f487fb860eefe3a0c788298a",
+      "parent": [
+        "e1a8a47f46a8cca51e936abb5f90429ffce04229"
+      ],
+      "tree": "bd4a98263036f565054edf739b1d0100777613ff",
+      "date": "2026-10-28T07:28:16Z",
+      "message": "research(V2-M4): open registered controls after actual seal and apply frozen paired scoring"
+    },
+    {
+      "sha": "e1a8a47f46a8cca51e936abb5f90429ffce04229",
+      "parent": [
+        "45dda3789542191346dba7d8a579fdd74c560894"
+      ],
+      "tree": "fa74047df29d92ec2f472f9e1fc4d54b1498ea7a",
+      "date": "2026-10-27T21:38:10Z",
+      "message": "research(V2-M3): verify original artifacts, actual replay, AT QC0 gaps and precontrol seal [skip ci]"
+    }
+  ],
+  "publication_parent_chain_verified": true,
+  "precontrol_execution_published_before_claim_and_originals_before_scores": true,
+  "actual_published_prediction_seal_commit": "45dda3789542191346dba7d8a579fdd74c560894",
+  "seal_sha256": "41f495206f925bb236dc048a1587da529ef050591cd15c51327d917f5a61fbbe",
+  "registration_sha256": "8404524385d1f5c8d0af21962573c7e1d5fc00323047589829125347a334de16",
+  "frozen_scientific_code_files_hash_verified": 523,
+  "protocol_source_files_hash_verified": 10,
+  "sealed_prediction_and_input_files_hash_verified": 26,
+  "prior_M3_files_changed_in_M4_execution": 0,
+  "M4_execution_diff_only_added_files": 24,
+  "protected_remote_refs": {
+    "main": "2a82a77d0fe8cc87a2324b820d6c6843b6598548",
+    "research/ige-v1-time-admission-preregistration-20261026": "98f1c64905196d9f1215a273812cf269ff68ccb5",
+    "research/ige-v1a-at-qc10-r1-admission-20261027": "8320428593cbb27418581e56fc43176d46fe6337",
+    "research/ige-v2-metadata-exposure-cohort-20261027": "940e6664731e0bae6c0057608aa9ad70d604f6f2"
+  },
+  "unique_tests_before_controls": 167,
+  "frozen_M2_tests": 154,
+  "new_M4_synthetic_tests": 13,
+  "replays_or_old_M3_tests_not_added_to_unique_count": true,
+  "relevant_original_CI_log_excerpt": [
+    "2026-10-28T07:29:15.8661438Z Ran 154 tests in 15.240s",
+    "2026-10-28T07:29:15.8661838Z OK",
+    "2026-10-28T07:30:05.7395025Z Ran 13 tests in 7.914s",
+    "2026-10-28T07:30:05.7395498Z OK",
+    "2026-10-28T07:30:11.2553931Z    6867ad2..c0dd6f4  HEAD -> research/ige-v2-executable-preregistration-20261027",
+    "2026-10-28T07:30:16.4086854Z control_AT_5925 1 ORIGINAL_BODY_RECEIVED 219709",
+    "2026-10-28T07:30:45.1017320Z control_CH_CMA 1 ORIGINAL_BODY_RECEIVED 10272665",
+    "2026-10-28T07:30:51.6838669Z SHA256 digest of uploaded artifact zip is 4eb1fcf460ffc49df9a456cc6412eefb642ebf70b186bb826ecef94a5affab12",
+    "2026-10-28T07:30:57.8104334Z    c0dd6f4..4486399  HEAD -> research/ige-v2-executable-preregistration-20261027",
+    "2026-10-28T07:32:19.3602994Z SHA256 digest of uploaded artifact zip is 67b07721e13fcaaf93134adc5639e8ba9c476e71195227c596303994ffba9ce3",
+    "2026-10-28T07:32:21.8723719Z    4486399..0881287  HEAD -> research/ige-v2-executable-preregistration-20261027"
+  ],
+  "CI_run_and_artifact_API_evidence": [
+    {
+      "id": 12799387270,
+      "name": "IGE-V2-M4-registered-scores-pairs-and-replay",
+      "size_in_bytes": 175518,
+      "url": "https://api.github.com/repos/dmitrievii/building-energy-tools/actions/artifacts/12799387270",
+      "archive_download_url": "https://api.github.com/repos/dmitrievii/building-energy-tools/actions/artifacts/12799387270/zip",
+      "expired": false,
+      "created_at": "2026-10-28T07:32:19Z",
+      "expires_at": "2027-01-26T07:28:21Z",
+      "updated_at": "2026-10-28T07:32:19Z",
+      "digest": "sha256:67b07721e13fcaaf93134adc5639e8ba9c476e71195227c596303994ffba9ce3",
+      "workflow_run": {
+        "id": 40650289012,
+        "repository_id": 1261544200,
+        "head_repository_id": 1261544200,
+        "head_branch": "research/ige-v2-executable-preregistration-20261027",
+        "head_sha": "6867ad2611c5ddf3f487fb860eefe3a0c788298a"
+      }
+    },
+    {
+      "id": 12799258285,
+      "name": "IGE-V2-M4-original-control-packet",
+      "size_in_bytes": 39653615,
+      "url": "https://api.github.com/repos/dmitrievii/building-energy-tools/actions/artifacts/12799258285",
+      "archive_download_url": "https://api.github.com/repos/dmitrievii/building-energy-tools/actions/artifacts/12799258285/zip",
+      "expired": false,
+      "created_at": "2026-10-28T07:30:51Z",
+      "expires_at": "2027-01-26T07:28:21Z",
+      "updated_at": "2026-10-28T07:30:51Z",
+      "digest": "sha256:4eb1fcf460ffc49df9a456cc6412eefb642ebf70b186bb826ecef94a5affab12",
+      "workflow_run": {
+        "id": 40650289012,
+        "repository_id": 1261544200,
+        "head_repository_id": 1261544200,
+        "head_branch": "research/ige-v2-executable-preregistration-20261027",
+        "head_sha": "6867ad2611c5ddf3f487fb860eefe3a0c788298a"
+      }
+    }
+  ],
+  "actual_downloaded_artifacts": [
+    {
+      "id": 12799258285,
+      "expected_size": 39653615,
+      "expected_sha": "4eb1fcf460ffc49df9a456cc6412eefb642ebf70b186bb826ecef94a5affab12",
+      "name": "source",
+      "actual_size": 39653615,
+      "actual_sha256": "4eb1fcf460ffc49df9a456cc6412eefb642ebf70b186bb826ecef94a5affab12",
+      "members": [
+        "v2_m4_control_source_audit_20261028.json",
+        "v2_weather_controls_20261027.zip.part001",
+        "artifact_member_manifest.json",
+        "v2_m4_control_manifest_20261028.json",
+        "v2_weather_controls_20261027.zip.part002",
+        "v2_weather_controls_20261027.zip.part003",
+        "v2_weather_controls_20261027.zip.part004",
+        "v2_weather_controls_20261027.zip.part005",
+        "v2_weather_controls_20261027.zip.part006",
+        "v2_weather_controls_20261027.zip.part007",
+        "v2_weather_controls_20261027.zip.part008",
+        "v2_weather_controls_20261027.zip.storage.json"
+      ],
+      "manifest": {
+        "v2_m4_control_manifest_20261028.json": "2b80339659e22a930e52a97b4443b9653148e5f36ac89f8bfe6a1e381f42d7d5",
+        "v2_m4_control_source_audit_20261028.json": "461d2d20c59df7f730c55696783aa3205f0005b3e1dfee11b57d9946b6c2f227",
+        "v2_weather_controls_20261027.zip.part001": "b5733ee141a734678518a80d6454289a2d8b03ad2cb80d4255d1d5061fbe42e9",
+        "v2_weather_controls_20261027.zip.part002": "1e25f5a72e5ddfba4e163f67b4c450c9a159d71a5e67200373d48a55915d9937",
+        "v2_weather_controls_20261027.zip.part003": "6b775d1741713206a23c385deacb5d6de2c58b9fa9d0ebd09b94f2548287a338",
+        "v2_weather_controls_20261027.zip.part004": "f0ee968a07e9bcc495b6098a8e058af8838b56564ecc19a0c2708bbfa2306d26",
+        "v2_weather_controls_20261027.zip.part005": "03abd7bc9ad85652bbcb70f6567dd8ffbf54d91596c7dd302a5aa999011bb5b2",
+        "v2_weather_controls_20261027.zip.part006": "a4e531641afebaa66d09848f22ad34e3018aca616951169178f7470082aaab88",
+        "v2_weather_controls_20261027.zip.part007": "513837e35ff32d9712b74becca3331f33b6f1980d1b32295878a99e073fa9096",
+        "v2_weather_controls_20261027.zip.part008": "45a3ddaea5e916ca8488be7785a89e9e2f47cc2dd0f6f1c8c5b2adb123a10d05",
+        "v2_weather_controls_20261027.zip.storage.json": "50d5f7313c006ab6e3957b583012bc7bb9b31d5644d8129e15ca35129559f85f"
+      }
+    },
+    {
+      "id": 12799387270,
+      "expected_size": 175518,
+      "expected_sha": "67b07721e13fcaaf93134adc5639e8ba9c476e71195227c596303994ffba9ce3",
+      "name": "scores",
+      "actual_size": 175518,
+      "actual_sha256": "67b07721e13fcaaf93134adc5639e8ba9c476e71195227c596303994ffba9ce3",
+      "members": [
+        "artifact_member_manifest.json",
+        "v2_m4_paired_arithmetic_audit_20261028.json",
+        "v2_m4_actual_score_replay_20261028.json",
+        "v2_m4_actual_validation_20261028.json",
+        "v2_weather_paired_temperatures_20261027.csv",
+        "v2_weather_results_20261027.json"
+      ],
+      "manifest": {
+        "v2_m4_actual_score_replay_20261028.json": "16ba327aadd829987de64ac8d1172f4192809965b6aec4421ced13b954f1b213",
+        "v2_m4_actual_validation_20261028.json": "870b60065a2892d8fa15973e4a8ab8ecba437bee75cdc7ffeca7a5bb4f08a398",
+        "v2_m4_paired_arithmetic_audit_20261028.json": "c5cf6efadd42f5f7edfa3267ae088ca892c385067a74763976f71cdad5b5658e",
+        "v2_weather_paired_temperatures_20261027.csv": "6c9b60d227833ea4110f1c7789ed1f8faa0bde818b0ae45debe1bfc190ee220d",
+        "v2_weather_results_20261027.json": "3554511c5e3e7b2cabb6dfce552b07ecbbccdb8cb26ad5ed10f46801793fdf4e"
+      }
+    }
+  ],
+  "all16_manifest_files_hashed_and_equal_published_git_bytes": true,
+  "actual_control_source_audit": {
+    "schema": "IGE_V2_M4_ACTUAL_ORIGINAL_CONTROL_AUDIT_v1",
+    "CI_run": 40650289012,
+    "packet_sha256": "f00d863aac56fb924be0d16f339a22a7c2a793a29bbce283a69f8958744092e3",
+    "packet_bytes": 39739776,
+    "registered_control_assets": 18,
+    "status_counts": {
+      "ORIGINAL_BODY_RECEIVED": 18
+    },
+    "control_HTTP_attempts": 18,
+    "control_body_bytes": 77886588,
+    "cumulative_weather_HTTP_attempts": 147,
+    "cumulative_weather_body_bytes": 339215531,
+    "source_blocks": [],
+    "all_received_target_raw_containers_are_now_revealed": true,
+    "scoring_QC_and_method_unchanged": true,
+    "new_predictor_or_metadata_requests": 0,
+    "old_AT_2018_and_IV1_2022_controls_opened": false
+  },
+  "root_actual_scores_and_paired_arithmetic_replay": {
+    "schema": "IGE_V2_M4_FROZEN_SOURCE_SCORE_REPLAY_v1",
+    "status": "PASS",
+    "paired_hours": 11088,
+    "all72_cases_replayed": true,
+    "new_weather_requests": 0,
+    "same_frozen_algorithm_reinvoked_not_an_independent_estimator": true,
+    "score_JSON_absolute_tolerance": 1.1e-08,
+    "paired_CSV_absolute_tolerance": 1.1e-10,
+    "independent_paired_arithmetic_aggregation_audit": {
+      "schema": "IGE_V2_M4_PAIRED_ARITHMETIC_AUDIT_v1",
+      "status": "PASS",
+      "paired_rows": 11088,
+      "all72_cases_and18_sites_checked": true,
+      "country_case_and_station_metrics_checked": true,
+      "frozen_uniform_benefit_and_descriptive_resampling_checked": true,
+      "source_or_estimator_independence_implied": false,
+      "all_reference_B0_not_recomputed_from_paired_only_CSV": true
+    },
+    "production_ready": false
+  },
+  "root_replay_receipt_semantically_identical_to_CI": true,
+  "root_paired_arithmetic_receipt_byte_identical_to_CI": true,
+  "root_Python_version": "3.12.14",
+  "root_Numpy_version": "1.26.4",
+  "root_Pandas_version": "2.3.3",
+  "root_replay_new_weather_requests": 0,
+  "all72_cases_retained": true,
+  "target_raw_full_containers_now_revealed": true,
+  "old_AT2018_and_IV1_2022_controls_opened": false,
+  "registered_country_observed_benefit_rule_passed": {
+    "AT": false,
+    "DE": false,
+    "CH": false
+  },
+  "R1_default_promoted": false,
+  "regional_accuracy_qualified": false,
+  "joint_full_weather_physical_closure_qualified_by_M4": false,
+  "production_ready": false,
+  "next_product_gate": "actual EnergyPlus smoke and same-building energy comparison on existing admitted A0/B-M1 EPWs, without automatic R1 correction"
+}
