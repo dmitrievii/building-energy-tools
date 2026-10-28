@@ -1,0 +1,92 @@
+{
+  "schema": "IGE_V2_M4_PRECONTROL_ACQUISITION_CLAIM_v1",
+  "CI_run": 40650289012,
+  "precontrol_execution_commit": "6867ad2611c5ddf3f487fb860eefe3a0c788298a",
+  "execution_contract_sha256": "0ed908cafccbb10d79cb394a1f765bfe60455bf05979f60476d4fbadb389ca65",
+  "published_actual_prediction_gate": {
+    "commit": "45dda3789542191346dba7d8a579fdd74c560894",
+    "remote_tracking_ancestry_and_bytes_verified": true,
+    "phase": "predictions",
+    "API_publication_receipt_required_separately": true,
+    "local_wallclock_is_not_trusted_external_time": true
+  },
+  "source_admission": {
+    "AT:5925": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "AT:4030": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "AT:18225": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "AT:11115": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "AT:10200": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "AT:15721": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "DE:01072": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "DE:06170": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "DE:04411": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "DE:02985": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "DE:00071": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "DE:07105": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "CH:GRO": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "CH:LUZ": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "CH:MAR": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "CH:VAB": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "CH:BIV": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    },
+    "CH:CMA": {
+      "open": true,
+      "criterion": "AT_LEAST_ONE_CASE_WITH_160_PAIRED_B0_R1_FORECASTS; NO_TARGET_INPUT"
+    }
+  },
+  "prior_HTTP_attempts": 129,
+  "prior_body_bytes": 261328943,
+  "new_control_attempts_at_claim": 0,
+  "runner_UTC_untrusted": "2026-10-28T07:30:08.702601+00:00",
+  "raw_whole_containers_become_revealed_including_unscored_years_and_fields": true
+}
