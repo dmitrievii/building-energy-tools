@@ -84,7 +84,7 @@ def render_point_interpolation(st):
         if report["target_outside_horizontal_donor_hull"]:
             st.warning("The point lies outside the horizontal donor hull. The result includes spatial extrapolation; local representativeness is unqualified.")
         frame = pd.read_csv(io.BytesIO(gzip.decompress(product.files["hourly.csv.gz"])), index_col=0)
-        frame.index = pd.to_datetime(frame.index, utc=True)
+        frame.index = pd.to_datetime(frame.index, utc=True).tz_convert(r.background_request().standard_timezone)
         monthly = frame[[T, P, RH]].resample("MS").mean()
         monthly[P] /= 100
         st.dataframe(monthly.rename(columns={T: "Mean T [°C]", P: "Mean p [hPa]", RH: "Mean RH [%]"}), width="stretch")

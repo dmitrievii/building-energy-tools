@@ -80,6 +80,10 @@ class S1UITests(unittest.TestCase):
             self.assertEqual(run.call_args.args[0], self.request)
             self.assertFalse(run.call_args.kwargs["include_background"])
             self.assertEqual(len(app.download_button), 3)
+            monthly = app.dataframe[0].value
+            self.assertEqual(len(monthly), 12)
+            self.assertEqual(set(monthly.index.year), {self.request.year})
+            self.assertEqual(list(monthly.index.month), list(range(1, 13)))
             self.assertNotIn("ige_s1_download_epw", [d.key for d in app.download_button])
             app.run(); run.assert_called_once()
 
