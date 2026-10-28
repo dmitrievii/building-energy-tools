@@ -232,7 +232,8 @@ def _validate_official_url(url: str) -> str:
     return str(url).strip()
 
 
-def _bounded_get_json(url: str, *, params: Mapping[str, object] | None = None, timeout_s: int = DEFAULT_TIMEOUT_SECONDS) -> dict[str, Any]:
+def _bounded_get_json(url: str, *, params: Mapping[str, object] | None = None, timeout_s: int = DEFAULT_TIMEOUT_SECONDS,
+                      response_capture: Callable | None = None) -> dict[str, Any]:
     clean = _validate_official_url(url)
     response = requests.get(
         clean,
@@ -264,6 +265,8 @@ def _bounded_get_json(url: str, *, params: Mapping[str, object] | None = None, t
                 raise ValueError("GeoSphere response exceeds the local response-size limit.")
             chunks.append(chunk)
         payload = b"".join(chunks)
+        if response_capture is not None:
+            response_capture(clean, dict(params or {}), payload)
         try:
             decoded = response.json() if not payload else requests.models.complexjson.loads(payload.decode("utf-8"))
         except Exception as exc:
@@ -275,9 +278,11 @@ def _bounded_get_json(url: str, *, params: Mapping[str, object] | None = None, t
         response.close()
 
 
-def fetch_metadata(*, resource_id: str = GEOSPHERE_RESOURCE_ID, timeout_s: int = DEFAULT_TIMEOUT_SECONDS) -> dict[str, Any]:
+def fetch_metadata(*, resource_id: str = GEOSPHERE_RESOURCE_ID, timeout_s: int = DEFAULT_TIMEOUT_SECONDS,
+                   response_capture: Callable | None = None) -> dict[str, Any]:
     """Fetch current metadata for one supported historical resource."""
-    return _bounded_get_json(resource_spec(resource_id).metadata_endpoint, timeout_s=timeout_s)
+    extra = {} if response_capture is None else {"response_capture": response_capture}
+    return _bounded_get_json(resource_spec(resource_id).metadata_endpoint, timeout_s=timeout_s, **extra)
 
 
 def _coalesce(record: Mapping[str, Any], *keys: str, default: object = "") -> object:
@@ -416,6 +421,14 @@ def parse_parameters(metadata: Mapping[str, Any]) -> dict[str, GeoSphereParamete
 
 def _code_value_and_label(item: object) -> tuple[int | None, str]:
     if isinstance(item, Mapping):
+        # Live v2 metadata use {"key": 10, "value": "automatisch geprüft"}.
+        # Older fixtures and resources also use code/description or value/label.
+        if "key" in item:
+            try:
+                code = int(item["key"]) if item["key"] is not None else None
+            except (TypeError, ValueError):
+                code = None
+            return code, str(item.get("value") or item.get("description") or "").strip()
         raw_code = _coalesce(item, "code", "value", "id", default=None)
         try:
             code = int(raw_code) if raw_code is not None else None
@@ -791,15 +804,18 @@ def _fetch_query_with_resilience(
     root_batch_number: int = 1,
     root_batch_count: int = 1,
     completed_root_batches: int = 0,
+    response_capture: Callable | None = None,
 ) -> list[tuple[dict[str, Any], dict[str, str]]]:
     normalized_query = {str(key): str(value) for key, value in query.items()}
     last_error: BaseException | None = None
     for attempt in range(1, MAX_TRANSIENT_ATTEMPTS + 1):
         try:
+            extra = {} if response_capture is None else {"response_capture": response_capture}
             payload = _bounded_get_json(
                 resource_spec(resource_id).endpoint,
                 params=normalized_query,
                 timeout_s=timeout_s,
+                **extra,
             )
             return [(payload, normalized_query)]
         except Exception as exc:
@@ -856,6 +872,7 @@ def _fetch_query_with_resilience(
                 root_batch_number=root_batch_number,
                 root_batch_count=root_batch_count,
                 completed_root_batches=completed_root_batches,
+                **({} if response_capture is None else {"response_capture": response_capture}),
             )
         )
     return completed
@@ -870,6 +887,7 @@ def fetch_station_provider_frame(
     resource_id: str = GEOSPHERE_RESOURCE_ID,
     timeout_s: int = DEFAULT_TIMEOUT_SECONDS,
     progress_callback: GeoSphereProgressCallback | None = None,
+    response_capture: Callable | None = None,
 ) -> tuple[pd.DataFrame, tuple[str, ...]]:
     parameters = tuple(dict.fromkeys(str(item).strip() for item in provider_parameters if str(item).strip()))
     queries = plan_data_queries(station_id, start, end, parameters, resource_id=resource_id)
@@ -882,6 +900,7 @@ def fetch_station_provider_frame(
             query,
             timeout_s=timeout_s,
             resource_id=resource_id,
+            **({} if response_capture is None else {"response_capture": response_capture}),
             progress_callback=progress_callback,
             root_batch_number=batch_number,
             root_batch_count=total_batches,

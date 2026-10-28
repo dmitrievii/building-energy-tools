@@ -1327,6 +1327,10 @@ def render_geosphere_source() -> None:
             st.session_state["geosphere_selected_station_id"] = manual_id
             st.rerun()
 
+    if st.session_state.get("geosphere_resource_id") == "klima-v2-1h":
+        from epw_climate_analyzer.station_year_ui import render_station_year
+        render_station_year(st, station, metadata)
+
     today = pd.Timestamp.now(tz="UTC").date()
     parsed_from = pd.to_datetime(station.valid_from, errors="coerce")
     parsed_to = pd.to_datetime(station.valid_to, errors="coerce")
