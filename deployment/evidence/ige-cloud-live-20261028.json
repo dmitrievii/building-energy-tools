@@ -1,0 +1,107 @@
+{
+  "merged_pr": 116,
+  "main_sha": "757c96cd46636ac64eb631b300da6ccbf50fbd7c",
+  "public_url": "https://building-climate-analyzer.streamlit.app/",
+  "products": [
+    {
+      "product": "graz-historical",
+      "archive_sha256": "08740c7e258bdf7c93c2ee6050ae9b443909c04c2817f0469cb94322039df6c3",
+      "size_bytes": 1243843,
+      "epw_sha256": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635",
+      "epw_hourly_rows": 8760,
+      "calendar_mode": "historical",
+      "original_epw_match": true
+    },
+    {
+      "product": "graz-future",
+      "archive_sha256": "cb5522f1377c6d3109ce38db59e14c79fd15c234ace59bf808ad10dbbc56ee13",
+      "size_bytes": 7411819,
+      "epw_sha256": "fc00e09811498c368965785ee8873bc4ca1cd01761eaebb19c759faebd0e3c28",
+      "epw_hourly_rows": 8760,
+      "calendar_mode": "climatology",
+      "original_epw_match": true
+    },
+    {
+      "product": "basel-2025",
+      "archive_sha256": "ee32def924c96d4d3163a56532dba8704c1660582ba05f24e0be231b6248f7c4",
+      "size_bytes": 4060378,
+      "epw_sha256": "b7cc31ac7cf6a71329f85a7d60f41fe2ea43be86692f8f012cc2b02009c378e1",
+      "epw_hourly_rows": 8760,
+      "calendar_mode": "historical",
+      "original_epw_match": true
+    },
+    {
+      "product": "altdorf-2025",
+      "archive_sha256": "82a3637863a9784e249d38c5db7911008d56e100ca956eb63dca5f13a10671a5",
+      "size_bytes": 4025938,
+      "epw_sha256": "53a0a904ec7141d26d9941e1ed5dbf473a8cd461c8bb86e5a6f091da450ff538",
+      "epw_hourly_rows": 8760,
+      "calendar_mode": "historical",
+      "original_epw_match": true
+    }
+  ],
+  "source_mode": "saved packets; no new weather source request",
+  "browser_limitations": [
+    "Hourly Scattergl plot reports WebGL unsupported in this cloud browser; overview and downloads work."
+  ],
+  "scientific_qualification_changed": false,
+  "verified_at_utc": "2026-10-28T13:58:26.521662+00:00",
+  "merge_time_utc": "2026-10-28T13:41:23Z",
+  "live_runtime_build_id": "aec3b1e746c99eca9b885a4e6053e392b24c49fe4768e77552d670acb7a06da3",
+  "runtime_matches_merged_source": true,
+  "community_cloud_build_log_accessed": false,
+  "live_desktop_mobile_audit": {
+    "run_id": 40698749726,
+    "result": "success",
+    "uncaught_page_errors": 0,
+    "horizontal_overflow_px": 0,
+    "catalog_records": 98047,
+    "noncritical_wcag_violation_groups_each_viewport": 2
+  },
+  "original_epw_route": {
+    "upload_analysis_success": true,
+    "hourly_records": 8760,
+    "reported_error_level_quality_categories": 0,
+    "calendar_behavior": "Existing EPW analysis maps the file to typical-year display year 2026; engine workspace retains the historical calendar."
+  },
+  "merge_ci_runs": [
+    {
+      "id": 40698749749,
+      "name": "Climate Analyzer Psychrometric Integration",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/dmitrievii/building-energy-tools/actions/runs/40698749749"
+    },
+    {
+      "id": 40698749726,
+      "name": "Climate Analyzer Live Browser Audit",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/dmitrievii/building-energy-tools/actions/runs/40698749726"
+    },
+    {
+      "id": 40698749676,
+      "name": "Climate Analyzer CI",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/dmitrievii/building-energy-tools/actions/runs/40698749676"
+    },
+    {
+      "id": 40698749696,
+      "name": "Climate Analyzer GeoSphere Precipitation Snow Live Smoke",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/dmitrievii/building-energy-tools/actions/runs/40698749696"
+    }
+  ],
+  "limitations": [
+    "Saved examples verified; the optional live coordinate-provider route was not newly qualified.",
+    "Hourly line charts use Scattergl and reported WebGL unsupported in this cloud browser. Overview and downloads work. No rendering fix included in this merge.",
+    "Independent station accuracy and production qualification remain unchanged.",
+    "Actual Community Cloud Python setting and private build logs were not accessed; live deployed runtime fingerprint and products were verified."
+  ],
+  "screenshot": {
+    "repository_path": "deployment/evidence/ige-cloud-live-20261028.jpg",
+    "sha256": "72e134b8ea743243ad509496156179f8f36cb8989a49e606b37237e66f86477a"
+  }
+}
