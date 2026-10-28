@@ -56,12 +56,20 @@ compared with the actual download bytes.
 ## Verification
 
 The new I2 acceptance suite deduplicates test IDs across the application tests,
-relevant existing scientific regressions and 13 new installation/runtime tests.
+relevant existing scientific regressions and 14 new installation/runtime tests.
 Six V1/V2 acquisition/preregistration modules are outside this application suite:
 their historical Git-ancestry gates remain in the original research CI. Their
 tests and scientific results are preserved. The three A1.2 historical exposure-audit
 checks require old Git objects; I2 verifies their original frozen receipt and
 its scientific limitations instead of rebuilding that historical audit.
+One E0 historical audit-wrapper overwrite check also requires old Git objects;
+the I2 runtime has its own no-overwrite test. This does not remove that test from
+the original E0 research workflow or modify its earlier result.
+On Windows, the old unsafe-ZIP test fixture normalizes a backslash name before
+the archive reader sees it. I2 tests that same unchanged reader with actual
+unsafe ZIP header names on both platforms, replacing only the fixture in the
+application suite. The original research test is retained unchanged. I2 also
+normalizes both sides of its new baseline path-containment check.
 
 The offline regression/export phase forbids socket connect/connect_ex. A separate
 real Streamlit process is started on loopback to check HTTP health and the page,

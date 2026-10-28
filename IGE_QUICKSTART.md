@@ -64,6 +64,10 @@ test or result is modified. The application tests and relevant scientific
 regressions are counted once by test ID.
 The historical A1.2 exposure audit is checked against its frozen receipt; rebuilding
 that audit from old Git objects remains a separate research-history task.
+One legacy audit-wrapper overwrite test also requires Git history. The new I2
+runtime separately tests refusal to overwrite an existing output directory.
+A portable unsafe-ZIP fixture also replaces one POSIX-dependent fixture in this
+acceptance suite; the original archive reader and research tests are unchanged.
 
 The command prints the result directory. It contains `verification.json`, test
 and server logs, and one folder per example with `climate.epw`, hourly CSV, reports

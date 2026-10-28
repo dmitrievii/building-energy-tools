@@ -28,6 +28,12 @@ import ige
 CAMPAIGN_TESTS = {'test_ige_v1.py', 'test_ige_v1a.py', 'test_ige_v2_metadata.py',
                   'test_ige_v2_weather.py', 'test_ige_v2_m3_execution.py', 'test_ige_v2_m4.py'}
 HISTORICAL_AUDIT_CLASSES = {'test_ige_a12_history.ExposureAuditTests'}
+HISTORICAL_GIT_TESTS = {
+    'test_e2e_integration_audit.ReplayBoundaryControls.test_prior_result_directory_is_never_overwritten'
+}
+PLATFORM_FIXTURE_TESTS = {
+    'test_e2e_integration_audit.ReplayBoundaryControls.test_duplicate_and_traversing_archive_names_rejected'
+}
 
 
 @contextmanager
@@ -61,6 +67,8 @@ def combined_suite():
         for case in cases(loaded):
             if case.id().rsplit('.', 1)[0] in HISTORICAL_AUDIT_CLASSES:
                 continue
+            if case.id() in HISTORICAL_GIT_TESTS | PLATFORM_FIXTURE_TESTS:
+                continue
             if case.id() not in seen:
                 seen.add(case.id())
                 suite.addTest(case)
@@ -77,7 +85,9 @@ def run_tests(output):
                'status': 'PASS' if result.wasSuccessful() else 'FAIL',
                'failed_test_ids': [t.id() for t, _ in result.failures + result.errors],
                'research_acquisition_campaign_modules_outside_application_scope': sorted(CAMPAIGN_TESTS),
-               'historical_Git_audit_classes_checked_via_frozen_receipt': sorted(HISTORICAL_AUDIT_CLASSES)}
+               'historical_Git_audit_classes_checked_via_frozen_receipt': sorted(HISTORICAL_AUDIT_CLASSES),
+               'historical_Git_wrapper_tests_replaced_by_I2_runtime_checks': sorted(HISTORICAL_GIT_TESTS),
+               'legacy_platform_fixture_tests_replaced_by_portable_fixture': sorted(PLATFORM_FIXTURE_TESTS)}
     (output / 'tests.json').write_text(json.dumps(receipt, indent=2) + '\n', encoding='utf-8')
     print(json.dumps(receipt), flush=True)
     if not result.wasSuccessful():

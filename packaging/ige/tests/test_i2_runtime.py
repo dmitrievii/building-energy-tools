@@ -10,6 +10,9 @@ import tempfile
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch, Mock
+import io
+import warnings
+import zipfile
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
@@ -133,6 +136,20 @@ class RuntimeContractTests(unittest.TestCase):
         for key in ('CH:BAS','CH:ALT'):
             self.assertFalse(audit['targets'][key]['raw_byte_unseen_claim_allowed'])
             self.assertFalse(audit['targets'][key]['temperature_2025_prediction_errors_or_fitting_demonstrated'])
+
+    def test_legacy_archive_reader_rejects_real_unsafe_headers_on_both_platforms(self):
+        import e2e_integration_audit as audit
+        for names in (('../escape.txt',),('/absolute.txt',),('a\\b',),('same.txt','same.txt')):
+            raw=io.BytesIO()
+            with warnings.catch_warnings(),zipfile.ZipFile(raw,'w') as archive:
+                warnings.simplefilter('ignore',UserWarning)
+                for name in names:
+                    # ZipInfo(name) normalizes backslashes on Windows. Set the
+                    # actual header afterward so the adversarial input is real.
+                    info=zipfile.ZipInfo('placeholder');info.filename=name
+                    archive.writestr(info,b'ARTIFICIAL')
+            with self.assertRaisesRegex(ValueError,'UNSAFE_OR_DUPLICATED'):
+                audit.zip_bodies(raw.getvalue())
 
 
 if __name__=='__main__':unittest.main()

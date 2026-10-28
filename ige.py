@@ -53,7 +53,7 @@ def verify_baseline():
     manifest = json.loads((PACKAGE / 'baseline.json').read_text(encoding='utf-8'))
     for name, expected in manifest['files_sha256'].items():
         path = (ROOT / name).resolve()
-        if not path.is_relative_to(ROOT) or not path.is_file():
+        if not path.is_relative_to(ROOT.resolve()) or not path.is_file():
             raise ValueError('Required application/source file missing: ' + name)
         if sha256(path.read_bytes()).hexdigest() != expected:
             raise ValueError('Frozen application/source file changed: ' + name)
