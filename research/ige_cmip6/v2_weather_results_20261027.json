@@ -1,0 +1,3080 @@
+{
+  "schema": "IGE_V2_2019_REGISTERED_PRIMARY_REFERENCE_RESULTS_v1",
+  "cases": [
+    {
+      "target_key": "AT:5925",
+      "country": "AT",
+      "season": "winter",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 0.9464285714285714,
+        "RMSE_K": 1.161997459221876,
+        "bias_K": -0.930952380952381,
+        "centred_RMSE_K": 0.695388926887097
+      },
+      "reference_native_QC_counts": {
+        "10": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 0.9464285714285714,
+        "RMSE_K": 1.161997459221876,
+        "bias_K": -0.930952380952381,
+        "centred_RMSE_K": 0.695388926887097
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 0.6893935562065477,
+        "RMSE_K": 0.8348973059296658,
+        "bias_K": -0.6885927987946429,
+        "centred_RMSE_K": 0.47211594857277867
+      },
+      "delta_MAE_K": -0.25703501522202366
+    },
+    {
+      "target_key": "AT:5925",
+      "country": "AT",
+      "season": "spring",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.4059523809523808,
+        "RMSE_K": 1.884744519759085,
+        "bias_K": -1.3821428571428571,
+        "centred_RMSE_K": 1.281383247592571
+      },
+      "reference_native_QC_counts": {
+        "10": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 1.4059523809523808,
+        "RMSE_K": 1.884744519759085,
+        "bias_K": -1.3821428571428571,
+        "centred_RMSE_K": 1.281383247592571
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 0.8816199755208335,
+        "RMSE_K": 1.1764778731282224,
+        "bias_K": -0.7749846363101189,
+        "centred_RMSE_K": 0.8851547884091109
+      },
+      "delta_MAE_K": -0.5243324054315474
+    },
+    {
+      "target_key": "AT:5925",
+      "country": "AT",
+      "season": "summer",
+      "requested_hours": 168,
+      "forecast_hours": 0,
+      "paired_hours": 0,
+      "reference_primary_QC_hours": 0,
+      "status": "PARTIAL_DESCRIPTIVE_ONLY",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "reference_native_QC_counts": {
+        "0": 168
+      },
+      "B0": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "R1": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "delta_MAE_K": null
+    },
+    {
+      "target_key": "AT:5925",
+      "country": "AT",
+      "season": "autumn",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.6851190476190478,
+        "RMSE_K": 2.008034457112821,
+        "bias_K": -1.4636904761904763,
+        "centred_RMSE_K": 1.3747045394780937
+      },
+      "reference_native_QC_counts": {
+        "10": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 1.6851190476190478,
+        "RMSE_K": 2.008034457112821,
+        "bias_K": -1.4636904761904763,
+        "centred_RMSE_K": 1.3747045394780937
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.267639641239881,
+        "RMSE_K": 1.5836436629797717,
+        "bias_K": -1.2439249262339285,
+        "centred_RMSE_K": 0.9800908270103869
+      },
+      "delta_MAE_K": -0.4174794063791669
+    },
+    {
+      "target_key": "AT:4030",
+      "country": "AT",
+      "season": "winter",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 0.6202380952380951,
+        "RMSE_K": 0.769353470067408,
+        "bias_K": 0.475,
+        "centred_RMSE_K": 0.6052105104050671
+      },
+      "reference_native_QC_counts": {
+        "10": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 0.6202380952380951,
+        "RMSE_K": 0.769353470067408,
+        "bias_K": 0.475,
+        "centred_RMSE_K": 0.6052105104050671
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 0.8191088691315475,
+        "RMSE_K": 0.9646371750490087,
+        "bias_K": 0.6733858708232143,
+        "centred_RMSE_K": 0.6907071365363133
+      },
+      "delta_MAE_K": 0.1988707738934523
+    },
+    {
+      "target_key": "AT:4030",
+      "country": "AT",
+      "season": "spring",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 0.7553571428571428,
+        "RMSE_K": 0.9786713539527042,
+        "bias_K": -0.21845238095238098,
+        "centred_RMSE_K": 0.9539791278135256
+      },
+      "reference_native_QC_counts": {
+        "10": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 0.7553571428571428,
+        "RMSE_K": 0.9786713539527042,
+        "bias_K": -0.21845238095238098,
+        "centred_RMSE_K": 0.9539791278135256
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 0.8311589086726191,
+        "RMSE_K": 1.0795572426687834,
+        "bias_K": 0.521080913702381,
+        "centred_RMSE_K": 0.9454726445401359
+      },
+      "delta_MAE_K": 0.07580176581547626
+    },
+    {
+      "target_key": "AT:4030",
+      "country": "AT",
+      "season": "summer",
+      "requested_hours": 168,
+      "forecast_hours": 0,
+      "paired_hours": 0,
+      "reference_primary_QC_hours": 0,
+      "status": "PARTIAL_DESCRIPTIVE_ONLY",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "reference_native_QC_counts": {
+        "0": 168
+      },
+      "B0": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "R1": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "delta_MAE_K": null
+    },
+    {
+      "target_key": "AT:4030",
+      "country": "AT",
+      "season": "autumn",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 0.6642857142857143,
+        "RMSE_K": 0.8379396500601085,
+        "bias_K": -0.027380952380952384,
+        "centred_RMSE_K": 0.8374921734497398
+      },
+      "reference_native_QC_counts": {
+        "10": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 0.6642857142857143,
+        "RMSE_K": 0.8379396500601085,
+        "bias_K": -0.027380952380952384,
+        "centred_RMSE_K": 0.8374921734497398
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 0.9789478846101192,
+        "RMSE_K": 1.2964040841596098,
+        "bias_K": 0.32215959056964294,
+        "centred_RMSE_K": 1.2557375313455104
+      },
+      "delta_MAE_K": 0.3146621703244049
+    },
+    {
+      "target_key": "AT:18225",
+      "country": "AT",
+      "season": "winter",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 5.863095238095238,
+        "RMSE_K": 6.29035542943095,
+        "bias_K": -5.863095238095238,
+        "centred_RMSE_K": 2.278746510166581
+      },
+      "reference_native_QC_counts": {
+        "10": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 5.863095238095238,
+        "RMSE_K": 6.29035542943095,
+        "bias_K": -5.863095238095238,
+        "centred_RMSE_K": 2.278746510166581
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.1209885742988095,
+        "RMSE_K": 1.4787024537717843,
+        "bias_K": 0.30239576972499993,
+        "centred_RMSE_K": 1.4474521564608347
+      },
+      "delta_MAE_K": -4.742106663796429
+    },
+    {
+      "target_key": "AT:18225",
+      "country": "AT",
+      "season": "spring",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 3.888690476190476,
+        "RMSE_K": 4.043182091938407,
+        "bias_K": -3.888690476190476,
+        "centred_RMSE_K": 1.1069813950364822
+      },
+      "reference_native_QC_counts": {
+        "10": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 3.888690476190476,
+        "RMSE_K": 4.043182091938407,
+        "bias_K": -3.888690476190476,
+        "centred_RMSE_K": 1.1069813950364822
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.2528867654916667,
+        "RMSE_K": 1.4045041415756125,
+        "bias_K": -1.2469008273309523,
+        "centred_RMSE_K": 0.6464288131762342
+      },
+      "delta_MAE_K": -2.6358037106988093
+    },
+    {
+      "target_key": "AT:18225",
+      "country": "AT",
+      "season": "summer",
+      "requested_hours": 168,
+      "forecast_hours": 0,
+      "paired_hours": 0,
+      "reference_primary_QC_hours": 0,
+      "status": "PARTIAL_DESCRIPTIVE_ONLY",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "reference_native_QC_counts": {
+        "0": 168
+      },
+      "B0": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "R1": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "delta_MAE_K": null
+    },
+    {
+      "target_key": "AT:18225",
+      "country": "AT",
+      "season": "autumn",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 2.2964285714285713,
+        "RMSE_K": 2.792677500007407,
+        "bias_K": -1.9607142857142859,
+        "centred_RMSE_K": 1.9886294548868417
+      },
+      "reference_native_QC_counts": {
+        "10": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 2.2964285714285713,
+        "RMSE_K": 2.792677500007407,
+        "bias_K": -1.9607142857142859,
+        "centred_RMSE_K": 1.9886294548868417
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.2637567722815477,
+        "RMSE_K": 1.4950833638033276,
+        "bias_K": 0.6884655103279762,
+        "centred_RMSE_K": 1.3271358279431358
+      },
+      "delta_MAE_K": -1.0326717991470236
+    },
+    {
+      "target_key": "AT:11115",
+      "country": "AT",
+      "season": "winter",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 2.3416666666666663,
+        "RMSE_K": 2.6646048576888557,
+        "bias_K": -2.2785714285714285,
+        "centred_RMSE_K": 1.3813874519905727
+      },
+      "reference_native_QC_counts": {
+        "10": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 2.3416666666666663,
+        "RMSE_K": 2.6646048576888557,
+        "bias_K": -2.2785714285714285,
+        "centred_RMSE_K": 1.3813874519905727
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 0.8870523025339286,
+        "RMSE_K": 1.1040710002176355,
+        "bias_K": -0.42359594047916665,
+        "centred_RMSE_K": 1.0195779777590044
+      },
+      "delta_MAE_K": -1.4546143641327376
+    },
+    {
+      "target_key": "AT:11115",
+      "country": "AT",
+      "season": "spring",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 3.474404761904762,
+        "RMSE_K": 3.627482729439377,
+        "bias_K": -3.474404761904762,
+        "centred_RMSE_K": 1.04266125987037
+      },
+      "reference_native_QC_counts": {
+        "10": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 3.474404761904762,
+        "RMSE_K": 3.627482729439377,
+        "bias_K": -3.474404761904762,
+        "centred_RMSE_K": 1.04266125987037
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.4858436719261905,
+        "RMSE_K": 1.678510161015357,
+        "bias_K": -1.4782083865488096,
+        "centred_RMSE_K": 0.7951706273301128
+      },
+      "delta_MAE_K": -1.9885610899785717
+    },
+    {
+      "target_key": "AT:11115",
+      "country": "AT",
+      "season": "summer",
+      "requested_hours": 168,
+      "forecast_hours": 0,
+      "paired_hours": 0,
+      "reference_primary_QC_hours": 0,
+      "status": "PARTIAL_DESCRIPTIVE_ONLY",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "reference_native_QC_counts": {
+        "0": 168
+      },
+      "B0": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "R1": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "delta_MAE_K": null
+    },
+    {
+      "target_key": "AT:11115",
+      "country": "AT",
+      "season": "autumn",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 2.933928571428572,
+        "RMSE_K": 3.509705929887249,
+        "bias_K": -2.7839285714285715,
+        "centred_RMSE_K": 2.137235930698665
+      },
+      "reference_native_QC_counts": {
+        "10": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 2.933928571428572,
+        "RMSE_K": 3.509705929887249,
+        "bias_K": -2.7839285714285715,
+        "centred_RMSE_K": 2.137235930698665
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.3846406524083332,
+        "RMSE_K": 1.817971409173914,
+        "bias_K": -1.0192984405666667,
+        "centred_RMSE_K": 1.5053407367211413
+      },
+      "delta_MAE_K": -1.5492879190202387
+    },
+    {
+      "target_key": "AT:10200",
+      "country": "AT",
+      "season": "winter",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 2.6607142857142856,
+        "RMSE_K": 3.155814738964673,
+        "bias_K": -2.6547619047619047,
+        "centred_RMSE_K": 1.7062842364892228
+      },
+      "reference_native_QC_counts": {
+        "10": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 2.6607142857142856,
+        "RMSE_K": 3.155814738964673,
+        "bias_K": -2.6547619047619047,
+        "centred_RMSE_K": 1.7062842364892228
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.0824691743303572,
+        "RMSE_K": 1.398628583571767,
+        "bias_K": 0.3734402878303571,
+        "centred_RMSE_K": 1.3478517226346327
+      },
+      "delta_MAE_K": -1.5782451113839284
+    },
+    {
+      "target_key": "AT:10200",
+      "country": "AT",
+      "season": "spring",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.5458333333333332,
+        "RMSE_K": 1.7565354157165938,
+        "bias_K": -1.3696428571428574,
+        "centred_RMSE_K": 1.0997704808478075
+      },
+      "reference_native_QC_counts": {
+        "10": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 1.5458333333333332,
+        "RMSE_K": 1.7565354157165938,
+        "bias_K": -1.3696428571428574,
+        "centred_RMSE_K": 1.0997704808478075
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.0870800600041666,
+        "RMSE_K": 1.229082844538033,
+        "bias_K": 1.0551274820875,
+        "centred_RMSE_K": 0.6303575455893228
+      },
+      "delta_MAE_K": -0.4587532733291666
+    },
+    {
+      "target_key": "AT:10200",
+      "country": "AT",
+      "season": "summer",
+      "requested_hours": 168,
+      "forecast_hours": 0,
+      "paired_hours": 0,
+      "reference_primary_QC_hours": 0,
+      "status": "PARTIAL_DESCRIPTIVE_ONLY",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "reference_native_QC_counts": {
+        "0": 168
+      },
+      "B0": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "R1": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "delta_MAE_K": null
+    },
+    {
+      "target_key": "AT:10200",
+      "country": "AT",
+      "season": "autumn",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.6333333333333333,
+        "RMSE_K": 2.1559993815707217,
+        "bias_K": -0.25714285714285723,
+        "centred_RMSE_K": 2.140609932788723
+      },
+      "reference_native_QC_counts": {
+        "10": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 1.6333333333333333,
+        "RMSE_K": 2.1559993815707217,
+        "bias_K": -0.25714285714285723,
+        "centred_RMSE_K": 2.140609932788723
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.209271738127976,
+        "RMSE_K": 1.5721344743778485,
+        "bias_K": 0.8072220840339286,
+        "centred_RMSE_K": 1.3490735015466115
+      },
+      "delta_MAE_K": -0.42406159520535724
+    },
+    {
+      "target_key": "AT:15721",
+      "country": "AT",
+      "season": "winter",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 2.8940476190476194,
+        "RMSE_K": 3.525552979253582,
+        "bias_K": -2.844047619047619,
+        "centred_RMSE_K": 2.083486729046619
+      },
+      "reference_native_QC_counts": {
+        "10": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 2.8940476190476194,
+        "RMSE_K": 3.525552979253582,
+        "bias_K": -2.844047619047619,
+        "centred_RMSE_K": 2.083486729046619
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.069909413527976,
+        "RMSE_K": 1.4624852819187182,
+        "bias_K": -0.13285826335892859,
+        "centred_RMSE_K": 1.4564380802787744
+      },
+      "delta_MAE_K": -1.8241382055196433
+    },
+    {
+      "target_key": "AT:15721",
+      "country": "AT",
+      "season": "spring",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 2.355952380952381,
+        "RMSE_K": 2.6172504656604803,
+        "bias_K": -2.276190476190476,
+        "centred_RMSE_K": 1.2918811540152495
+      },
+      "reference_native_QC_counts": {
+        "10": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 2.355952380952381,
+        "RMSE_K": 2.6172504656604803,
+        "bias_K": -2.276190476190476,
+        "centred_RMSE_K": 1.2918811540152495
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.2081093981119047,
+        "RMSE_K": 1.3540004293913235,
+        "bias_K": -1.1634865112535715,
+        "centred_RMSE_K": 0.692543356709803
+      },
+      "delta_MAE_K": -1.1478429828404764
+    },
+    {
+      "target_key": "AT:15721",
+      "country": "AT",
+      "season": "summer",
+      "requested_hours": 168,
+      "forecast_hours": 0,
+      "paired_hours": 0,
+      "reference_primary_QC_hours": 0,
+      "status": "PARTIAL_DESCRIPTIVE_ONLY",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "reference_native_QC_counts": {
+        "0": 168
+      },
+      "B0": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "R1": {
+        "n": 0,
+        "MAE_K": null,
+        "RMSE_K": null,
+        "bias_K": null,
+        "centred_RMSE_K": null
+      },
+      "delta_MAE_K": null
+    },
+    {
+      "target_key": "AT:15721",
+      "country": "AT",
+      "season": "autumn",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.8630952380952381,
+        "RMSE_K": 2.305583285356286,
+        "bias_K": -0.5869047619047619,
+        "centred_RMSE_K": 2.2296316032402754
+      },
+      "reference_native_QC_counts": {
+        "10": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 1.8630952380952381,
+        "RMSE_K": 2.305583285356286,
+        "bias_K": -0.5869047619047619,
+        "centred_RMSE_K": 2.2296316032402754
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.8076306947571428,
+        "RMSE_K": 2.166937692555038,
+        "bias_K": 0.7793778115440476,
+        "centred_RMSE_K": 2.021927098163671
+      },
+      "delta_MAE_K": -0.05546454333809536
+    },
+    {
+      "target_key": "DE:01072",
+      "country": "DE",
+      "season": "winter",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.1482142857142856,
+        "RMSE_K": 1.2706625568314087,
+        "bias_K": -1.0898809523809523,
+        "centred_RMSE_K": 0.6532555724756748
+      },
+      "reference_native_QC_counts": {
+        "3": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 1.1482142857142856,
+        "RMSE_K": 1.2706625568314087,
+        "bias_K": -1.0898809523809523,
+        "centred_RMSE_K": 0.6532555724756748
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 2.4571214614321426,
+        "RMSE_K": 2.500168491719054,
+        "bias_K": -2.4394368569226192,
+        "centred_RMSE_K": 0.5477137099545903
+      },
+      "delta_MAE_K": 1.308907175717857
+    },
+    {
+      "target_key": "DE:01072",
+      "country": "DE",
+      "season": "spring",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 0.7357142857142857,
+        "RMSE_K": 0.918785430155848,
+        "bias_K": -0.4321428571428571,
+        "centred_RMSE_K": 0.8108139229731288
+      },
+      "reference_native_QC_counts": {
+        "3": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 0.7357142857142857,
+        "RMSE_K": 0.918785430155848,
+        "bias_K": -0.4321428571428571,
+        "centred_RMSE_K": 0.8108139229731288
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 0.6267637069696429,
+        "RMSE_K": 0.910224876873844,
+        "bias_K": -0.08949192047202377,
+        "centred_RMSE_K": 0.9058148390538947
+      },
+      "delta_MAE_K": -0.10895057874464276
+    },
+    {
+      "target_key": "DE:01072",
+      "country": "DE",
+      "season": "summer",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.0154761904761904,
+        "RMSE_K": 1.2904871726821396,
+        "bias_K": -0.09047619047619035,
+        "centred_RMSE_K": 1.2873116179907875
+      },
+      "reference_native_QC_counts": {
+        "3": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 1.0154761904761904,
+        "RMSE_K": 1.2904871726821396,
+        "bias_K": -0.09047619047619035,
+        "centred_RMSE_K": 1.2873116179907875
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.6744355320273807,
+        "RMSE_K": 1.890985596240727,
+        "bias_K": -1.3998277928464284,
+        "centred_RMSE_K": 1.2713412899629248
+      },
+      "delta_MAE_K": 0.6589593415511903
+    },
+    {
+      "target_key": "DE:01072",
+      "country": "DE",
+      "season": "autumn",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.2392857142857143,
+        "RMSE_K": 1.5824182819493773,
+        "bias_K": -0.16547619047619028,
+        "centred_RMSE_K": 1.5737424342735078
+      },
+      "reference_native_QC_counts": {
+        "3": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 1.2392857142857143,
+        "RMSE_K": 1.5824182819493773,
+        "bias_K": -0.16547619047619028,
+        "centred_RMSE_K": 1.5737424342735078
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.900064964192857,
+        "RMSE_K": 2.171551875679236,
+        "bias_K": -0.6426594294464285,
+        "centred_RMSE_K": 2.0742773215049133
+      },
+      "delta_MAE_K": 0.6607792499071428
+    },
+    {
+      "target_key": "DE:06170",
+      "country": "DE",
+      "season": "winter",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {
+        "donor_DE_14138": {
+          "status": "SOURCE_BLOCKED",
+          "reason": "NO_UNIQUE_2019_ARCHIVE_IN_PINNED_DWD_INDEX; retained identity, no replacement or new discovery"
+        }
+      },
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 0.36904761904761907,
+        "RMSE_K": 0.4836616290637199,
+        "bias_K": -0.13452380952380955,
+        "centred_RMSE_K": 0.4645771368672518
+      },
+      "reference_native_QC_counts": {
+        "3": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 0.36904761904761907,
+        "RMSE_K": 0.4836616290637199,
+        "bias_K": -0.13452380952380955,
+        "centred_RMSE_K": 0.4645771368672518
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 0.4546140809059524,
+        "RMSE_K": 0.604332991628752,
+        "bias_K": -0.4320067158797619,
+        "centred_RMSE_K": 0.4225973996675083
+      },
+      "delta_MAE_K": 0.08556646185833333
+    },
+    {
+      "target_key": "DE:06170",
+      "country": "DE",
+      "season": "spring",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {
+        "donor_DE_14138": {
+          "status": "SOURCE_BLOCKED",
+          "reason": "NO_UNIQUE_2019_ARCHIVE_IN_PINNED_DWD_INDEX; retained identity, no replacement or new discovery"
+        }
+      },
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 0.9398809523809523,
+        "RMSE_K": 1.4219579057462586,
+        "bias_K": 0.5886904761904762,
+        "centred_RMSE_K": 1.2943754513111394
+      },
+      "reference_native_QC_counts": {
+        "3": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 0.9398809523809523,
+        "RMSE_K": 1.4219579057462586,
+        "bias_K": 0.5886904761904762,
+        "centred_RMSE_K": 1.2943754513111394
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 0.8310383161482144,
+        "RMSE_K": 1.2199708344372844,
+        "bias_K": 0.4308814968529763,
+        "centred_RMSE_K": 1.1413456849470902
+      },
+      "delta_MAE_K": -0.10884263623273782
+    },
+    {
+      "target_key": "DE:06170",
+      "country": "DE",
+      "season": "summer",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {
+        "donor_DE_14138": {
+          "status": "SOURCE_BLOCKED",
+          "reason": "NO_UNIQUE_2019_ARCHIVE_IN_PINNED_DWD_INDEX; retained identity, no replacement or new discovery"
+        }
+      },
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 0.9869047619047618,
+        "RMSE_K": 1.3304134695650067,
+        "bias_K": 0.4321428571428573,
+        "centred_RMSE_K": 1.2582736391661424
+      },
+      "reference_native_QC_counts": {
+        "3": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 0.9869047619047618,
+        "RMSE_K": 1.3304134695650067,
+        "bias_K": 0.4321428571428573,
+        "centred_RMSE_K": 1.2582736391661424
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.0063055459119048,
+        "RMSE_K": 1.3719966181291798,
+        "bias_K": 0.3894703773523809,
+        "centred_RMSE_K": 1.3155559833480674
+      },
+      "delta_MAE_K": 0.019400784007142957
+    },
+    {
+      "target_key": "DE:06170",
+      "country": "DE",
+      "season": "autumn",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {
+        "donor_DE_14138": {
+          "status": "SOURCE_BLOCKED",
+          "reason": "NO_UNIQUE_2019_ARCHIVE_IN_PINNED_DWD_INDEX; retained identity, no replacement or new discovery"
+        }
+      },
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.2577380952380952,
+        "RMSE_K": 1.8216129691907141,
+        "bias_K": 0.8744047619047619,
+        "centred_RMSE_K": 1.5980269465444212
+      },
+      "reference_native_QC_counts": {
+        "3": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 1.2577380952380952,
+        "RMSE_K": 1.8216129691907141,
+        "bias_K": 0.8744047619047619,
+        "centred_RMSE_K": 1.5980269465444212
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.073389524620238,
+        "RMSE_K": 1.5523636071917373,
+        "bias_K": 0.7279211460142857,
+        "centred_RMSE_K": 1.3711176368636615
+      },
+      "delta_MAE_K": -0.18434857061785714
+    },
+    {
+      "target_key": "DE:04411",
+      "country": "DE",
+      "season": "winter",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 0.8232142857142858,
+        "RMSE_K": 0.9426722401667254,
+        "bias_K": -0.7601190476190476,
+        "centred_RMSE_K": 0.5575392235777358
+      },
+      "reference_native_QC_counts": {
+        "3": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 0.8232142857142858,
+        "RMSE_K": 0.9426722401667254,
+        "bias_K": -0.7601190476190476,
+        "centred_RMSE_K": 0.5575392235777358
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 0.5412430835809524,
+        "RMSE_K": 0.6516642225616449,
+        "bias_K": -0.5225873292404761,
+        "centred_RMSE_K": 0.38931830458402433
+      },
+      "delta_MAE_K": -0.2819712021333334
+    },
+    {
+      "target_key": "DE:04411",
+      "country": "DE",
+      "season": "spring",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.1142857142857143,
+        "RMSE_K": 1.44160129221442,
+        "bias_K": -0.09404761904761913,
+        "centred_RMSE_K": 1.4385302676919105
+      },
+      "reference_native_QC_counts": {
+        "3": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 1.1142857142857143,
+        "RMSE_K": 1.44160129221442,
+        "bias_K": -0.09404761904761913,
+        "centred_RMSE_K": 1.4385302676919105
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 0.7799811789517858,
+        "RMSE_K": 1.1407803586490666,
+        "bias_K": 0.37601493442321426,
+        "centred_RMSE_K": 1.0770295240940235
+      },
+      "delta_MAE_K": -0.33430453533392857
+    },
+    {
+      "target_key": "DE:04411",
+      "country": "DE",
+      "season": "summer",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.1065476190476191,
+        "RMSE_K": 1.4552654806074454,
+        "bias_K": 0.29107142857142876,
+        "centred_RMSE_K": 1.4258594048913118
+      },
+      "reference_native_QC_counts": {
+        "3": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 1.1065476190476191,
+        "RMSE_K": 1.4552654806074454,
+        "bias_K": 0.29107142857142876,
+        "centred_RMSE_K": 1.4258594048913118
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 0.6376371731398808,
+        "RMSE_K": 0.7832298045509554,
+        "bias_K": -0.018306400191071437,
+        "centred_RMSE_K": 0.7830158379298416
+      },
+      "delta_MAE_K": -0.46891044590773834
+    },
+    {
+      "target_key": "DE:04411",
+      "country": "DE",
+      "season": "autumn",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.5696428571428571,
+        "RMSE_K": 1.8822953313137962,
+        "bias_K": -0.8005952380952381,
+        "centred_RMSE_K": 1.703550110511852
+      },
+      "reference_native_QC_counts": {
+        "3": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 1.5696428571428571,
+        "RMSE_K": 1.8822953313137962,
+        "bias_K": -0.8005952380952381,
+        "centred_RMSE_K": 1.703550110511852
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.1622749123166667,
+        "RMSE_K": 1.4886649186756584,
+        "bias_K": -0.6611329815333333,
+        "centred_RMSE_K": 1.3338014922860335
+      },
+      "delta_MAE_K": -0.40736794482619043
+    },
+    {
+      "target_key": "DE:02985",
+      "country": "DE",
+      "season": "winter",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 0.38630952380952377,
+        "RMSE_K": 0.5237797610592052,
+        "bias_K": 0.09107142857142858,
+        "centred_RMSE_K": 0.5158015441942737
+      },
+      "reference_native_QC_counts": {
+        "3": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 0.38630952380952377,
+        "RMSE_K": 0.5237797610592052,
+        "bias_K": 0.09107142857142858,
+        "centred_RMSE_K": 0.5158015441942737
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.074664807389881,
+        "RMSE_K": 1.138506253466591,
+        "bias_K": 1.0257275406482145,
+        "centred_RMSE_K": 0.49404402793506136
+      },
+      "delta_MAE_K": 0.6883552835803572
+    },
+    {
+      "target_key": "DE:02985",
+      "country": "DE",
+      "season": "spring",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 0.7053571428571429,
+        "RMSE_K": 0.96753860511142,
+        "bias_K": -0.5648809523809524,
+        "centred_RMSE_K": 0.7855192308391569
+      },
+      "reference_native_QC_counts": {
+        "3": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 0.7053571428571429,
+        "RMSE_K": 0.96753860511142,
+        "bias_K": -0.5648809523809524,
+        "centred_RMSE_K": 0.7855192308391569
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.2050418181785716,
+        "RMSE_K": 1.5740671963605144,
+        "bias_K": 0.28800333145714285,
+        "centred_RMSE_K": 1.5474952729258455
+      },
+      "delta_MAE_K": 0.4996846753214287
+    },
+    {
+      "target_key": "DE:02985",
+      "country": "DE",
+      "season": "summer",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 0.8101190476190476,
+        "RMSE_K": 1.0954179458957554,
+        "bias_K": -0.0517857142857143,
+        "centred_RMSE_K": 1.0941931803783072
+      },
+      "reference_native_QC_counts": {
+        "3": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 0.8101190476190476,
+        "RMSE_K": 1.0954179458957554,
+        "bias_K": -0.0517857142857143,
+        "centred_RMSE_K": 1.0941931803783072
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.0275541601625,
+        "RMSE_K": 1.2643191770003845,
+        "bias_K": 0.6253386828839287,
+        "centred_RMSE_K": 1.0988423513042822
+      },
+      "delta_MAE_K": 0.21743511254345238
+    },
+    {
+      "target_key": "DE:02985",
+      "country": "DE",
+      "season": "autumn",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 0.8595238095238094,
+        "RMSE_K": 1.0419190170523034,
+        "bias_K": -0.2988095238095238,
+        "centred_RMSE_K": 0.9981523463760248
+      },
+      "reference_native_QC_counts": {
+        "3": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 0.8595238095238094,
+        "RMSE_K": 1.0419190170523034,
+        "bias_K": -0.2988095238095238,
+        "centred_RMSE_K": 0.9981523463760248
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.073915342472619,
+        "RMSE_K": 1.3407300686328993,
+        "bias_K": 0.6622826265678571,
+        "centred_RMSE_K": 1.1657353213670587
+      },
+      "delta_MAE_K": 0.21439153294880975
+    },
+    {
+      "target_key": "DE:00071",
+      "country": "DE",
+      "season": "winter",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 0.644047619047619,
+        "RMSE_K": 0.8816920961316101,
+        "bias_K": 0.2452380952380952,
+        "centred_RMSE_K": 0.8468997750766872
+      },
+      "reference_native_QC_counts": {
+        "3": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 0.644047619047619,
+        "RMSE_K": 0.8816920961316101,
+        "bias_K": 0.2452380952380952,
+        "centred_RMSE_K": 0.8468997750766872
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.1647795355464285,
+        "RMSE_K": 1.498584479954585,
+        "bias_K": -1.1224608947166665,
+        "centred_RMSE_K": 0.9928932386679922
+      },
+      "delta_MAE_K": 0.5207319164988096
+    },
+    {
+      "target_key": "DE:00071",
+      "country": "DE",
+      "season": "spring",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.130952380952381,
+        "RMSE_K": 1.4169887589028867,
+        "bias_K": 0.7523809523809524,
+        "centred_RMSE_K": 1.2007414564973902
+      },
+      "reference_native_QC_counts": {
+        "3": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 1.130952380952381,
+        "RMSE_K": 1.4169887589028867,
+        "bias_K": 0.7523809523809524,
+        "centred_RMSE_K": 1.2007414564973902
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 0.7113625776928572,
+        "RMSE_K": 0.8452768043395859,
+        "bias_K": -0.4979600467464285,
+        "centred_RMSE_K": 0.6830290387669012
+      },
+      "delta_MAE_K": -0.4195898032595238
+    },
+    {
+      "target_key": "DE:00071",
+      "country": "DE",
+      "season": "summer",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 0.9160714285714286,
+        "RMSE_K": 1.264746351381704,
+        "bias_K": 0.4363095238095238,
+        "centred_RMSE_K": 1.1871046006003176
+      },
+      "reference_native_QC_counts": {
+        "3": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 0.9160714285714286,
+        "RMSE_K": 1.264746351381704,
+        "bias_K": 0.4363095238095238,
+        "centred_RMSE_K": 1.1871046006003176
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.0391837892410714,
+        "RMSE_K": 1.2614157122260512,
+        "bias_K": -0.9657749323470238,
+        "centred_RMSE_K": 0.8114483218917011
+      },
+      "delta_MAE_K": 0.1231123606696427
+    },
+    {
+      "target_key": "DE:00071",
+      "country": "DE",
+      "season": "autumn",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.1339285714285714,
+        "RMSE_K": 1.436575789855864,
+        "bias_K": 0.09107142857142857,
+        "centred_RMSE_K": 1.4336861563459276
+      },
+      "reference_native_QC_counts": {
+        "3": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 1.1339285714285714,
+        "RMSE_K": 1.436575789855864,
+        "bias_K": 0.09107142857142857,
+        "centred_RMSE_K": 1.4336861563459276
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.4249006567160714,
+        "RMSE_K": 1.6736448762999503,
+        "bias_K": -1.0704681707863093,
+        "centred_RMSE_K": 1.2865399594643332
+      },
+      "delta_MAE_K": 0.29097208528749996
+    },
+    {
+      "target_key": "DE:07105",
+      "country": "DE",
+      "season": "winter",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 0.6541666666666667,
+        "RMSE_K": 0.9456353369434702,
+        "bias_K": 0.012500000000000006,
+        "centred_RMSE_K": 0.9455527169207387
+      },
+      "reference_native_QC_counts": {
+        "3": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 0.6541666666666667,
+        "RMSE_K": 0.9456353369434702,
+        "bias_K": 0.012500000000000006,
+        "centred_RMSE_K": 0.9455527169207387
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 0.7363674517089286,
+        "RMSE_K": 1.1527758557996948,
+        "bias_K": -0.18844295134107142,
+        "centred_RMSE_K": 1.137269285527656
+      },
+      "delta_MAE_K": 0.08220078504226191
+    },
+    {
+      "target_key": "DE:07105",
+      "country": "DE",
+      "season": "spring",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 0.986904761904762,
+        "RMSE_K": 1.4508207857557571,
+        "bias_K": -0.8333333333333335,
+        "centred_RMSE_K": 1.1876179974792012
+      },
+      "reference_native_QC_counts": {
+        "3": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 0.986904761904762,
+        "RMSE_K": 1.4508207857557571,
+        "bias_K": -0.8333333333333335,
+        "centred_RMSE_K": 1.1876179974792012
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.1998437819863095,
+        "RMSE_K": 1.5827003769507852,
+        "bias_K": -1.1656343897267858,
+        "centred_RMSE_K": 1.0706245619667156
+      },
+      "delta_MAE_K": 0.21293902008154753
+    },
+    {
+      "target_key": "DE:07105",
+      "country": "DE",
+      "season": "summer",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 0.6964285714285714,
+        "RMSE_K": 0.9207915849187279,
+        "bias_K": -0.13214285714285715,
+        "centred_RMSE_K": 0.9112603404973056
+      },
+      "reference_native_QC_counts": {
+        "3": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 0.6964285714285714,
+        "RMSE_K": 0.9207915849187279,
+        "bias_K": -0.13214285714285715,
+        "centred_RMSE_K": 0.9112603404973056
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 0.7075757581017859,
+        "RMSE_K": 0.9626811596888899,
+        "bias_K": -0.4430762457791666,
+        "centred_RMSE_K": 0.8546569227743875
+      },
+      "delta_MAE_K": 0.01114718667321446
+    },
+    {
+      "target_key": "DE:07105",
+      "country": "DE",
+      "season": "autumn",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 2.1398809523809526,
+        "RMSE_K": 2.5493813441882796,
+        "bias_K": -1.5767857142857142,
+        "centred_RMSE_K": 2.003270338551372
+      },
+      "reference_native_QC_counts": {
+        "3": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 2.1398809523809526,
+        "RMSE_K": 2.5493813441882796,
+        "bias_K": -1.5767857142857142,
+        "centred_RMSE_K": 2.003270338551372
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.810045704307738,
+        "RMSE_K": 2.3392420025114347,
+        "bias_K": -1.4579481547029762,
+        "centred_RMSE_K": 1.8293278340723658
+      },
+      "delta_MAE_K": -0.3298352480732145
+    },
+    {
+      "target_key": "CH:GRO",
+      "country": "CH",
+      "season": "winter",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 6.305753968258928,
+        "RMSE_K": 6.882853919376631,
+        "bias_K": -6.297817460322024,
+        "centred_RMSE_K": 2.7768999463324744
+      },
+      "reference_native_QC_counts": {
+        "PUBLISHED_NO_ROW_QC": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 6.305753968258928,
+        "RMSE_K": 6.882853919376631,
+        "bias_K": -6.297817460322024,
+        "centred_RMSE_K": 2.7768999463324744
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.7166993758285711,
+        "RMSE_K": 2.2682706951722245,
+        "bias_K": 0.2827621212964285,
+        "centred_RMSE_K": 2.2505771547176585
+      },
+      "delta_MAE_K": -4.589054592430357
+    },
+    {
+      "target_key": "CH:GRO",
+      "country": "CH",
+      "season": "spring",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 4.429315476189881,
+        "RMSE_K": 4.89159217683403,
+        "bias_K": -4.427728174602977,
+        "centred_RMSE_K": 2.079157818995684
+      },
+      "reference_native_QC_counts": {
+        "PUBLISHED_NO_ROW_QC": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 4.429315476189881,
+        "RMSE_K": 4.89159217683403,
+        "bias_K": -4.427728174602977,
+        "centred_RMSE_K": 2.079157818995684
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.329174173880357,
+        "RMSE_K": 1.649017050974736,
+        "bias_K": -0.015370492491071364,
+        "centred_RMSE_K": 1.6489454152172525
+      },
+      "delta_MAE_K": -3.100141302309524
+    },
+    {
+      "target_key": "CH:GRO",
+      "country": "CH",
+      "season": "summer",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 3.571626984126785,
+        "RMSE_K": 3.9837028494684685,
+        "bias_K": -3.4883928571446425,
+        "centred_RMSE_K": 1.923799279313055
+      },
+      "reference_native_QC_counts": {
+        "PUBLISHED_NO_ROW_QC": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 3.571626984126785,
+        "RMSE_K": 3.9837028494684685,
+        "bias_K": -3.4883928571446425,
+        "centred_RMSE_K": 1.923799279313055
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.3290887373809523,
+        "RMSE_K": 1.8919657457533259,
+        "bias_K": 1.0058755365142857,
+        "centred_RMSE_K": 1.602419666674756
+      },
+      "delta_MAE_K": -2.242538246745833
+    },
+    {
+      "target_key": "CH:GRO",
+      "country": "CH",
+      "season": "autumn",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 2.220734126985119,
+        "RMSE_K": 2.551191656669156,
+        "bias_K": -1.9803571428589286,
+        "centred_RMSE_K": 1.6083421451252016
+      },
+      "reference_native_QC_counts": {
+        "PUBLISHED_NO_ROW_QC": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 2.220734126985119,
+        "RMSE_K": 2.551191656669156,
+        "bias_K": -1.9803571428589286,
+        "centred_RMSE_K": 1.6083421451252016
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 0.8541613552345237,
+        "RMSE_K": 1.264118913607989,
+        "bias_K": 0.35657910706309515,
+        "centred_RMSE_K": 1.2127852110524466
+      },
+      "delta_MAE_K": -1.3665727717505953
+    },
+    {
+      "target_key": "CH:LUZ",
+      "country": "CH",
+      "season": "winter",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 2.152976190477381,
+        "RMSE_K": 2.342258299549105,
+        "bias_K": -2.126488095239286,
+        "centred_RMSE_K": 0.981948228071245
+      },
+      "reference_native_QC_counts": {
+        "PUBLISHED_NO_ROW_QC": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 2.152976190477381,
+        "RMSE_K": 2.342258299549105,
+        "bias_K": -2.126488095239286,
+        "centred_RMSE_K": 0.981948228071245
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 6.614528179648214,
+        "RMSE_K": 7.163769161929218,
+        "bias_K": -6.346234460472023,
+        "centred_RMSE_K": 3.3233863419899614
+      },
+      "delta_MAE_K": 4.461551989170832
+    },
+    {
+      "target_key": "CH:LUZ",
+      "country": "CH",
+      "season": "spring",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 2.400446428569048,
+        "RMSE_K": 2.5485349075998047,
+        "bias_K": -2.400446428569048,
+        "centred_RMSE_K": 0.8560882657908878
+      },
+      "reference_native_QC_counts": {
+        "PUBLISHED_NO_ROW_QC": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 2.400446428569048,
+        "RMSE_K": 2.5485349075998047,
+        "bias_K": -2.400446428569048,
+        "centred_RMSE_K": 0.8560882657908878
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 7.520202359091666,
+        "RMSE_K": 7.816362490807291,
+        "bias_K": -7.520202359091666,
+        "centred_RMSE_K": 2.1312153964372715
+      },
+      "delta_MAE_K": 5.119755930522619
+    },
+    {
+      "target_key": "CH:LUZ",
+      "country": "CH",
+      "season": "summer",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 2.517361111110714,
+        "RMSE_K": 2.674799725480147,
+        "bias_K": -2.511111111110714,
+        "centred_RMSE_K": 0.9213438875278789
+      },
+      "reference_native_QC_counts": {
+        "PUBLISHED_NO_ROW_QC": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 2.517361111110714,
+        "RMSE_K": 2.674799725480147,
+        "bias_K": -2.511111111110714,
+        "centred_RMSE_K": 0.9213438875278789
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 8.03177459412619,
+        "RMSE_K": 8.292166050515018,
+        "bias_K": -8.03177459412619,
+        "centred_RMSE_K": 2.0617018888439955
+      },
+      "delta_MAE_K": 5.514413483015476
+    },
+    {
+      "target_key": "CH:LUZ",
+      "country": "CH",
+      "season": "autumn",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.1793650793642858,
+        "RMSE_K": 1.474798490851467,
+        "bias_K": -0.8498015872988096,
+        "centred_RMSE_K": 1.2053496799029684
+      },
+      "reference_native_QC_counts": {
+        "PUBLISHED_NO_ROW_QC": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 1.1793650793642858,
+        "RMSE_K": 1.474798490851467,
+        "bias_K": -0.8498015872988096,
+        "centred_RMSE_K": 1.2053496799029684
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 3.907045616080357,
+        "RMSE_K": 4.970344830168067,
+        "bias_K": -3.059337494193452,
+        "centred_RMSE_K": 3.917241609525835
+      },
+      "delta_MAE_K": 2.727680536716071
+    },
+    {
+      "target_key": "CH:MAR",
+      "country": "CH",
+      "season": "winter",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 7.796180555555953,
+        "RMSE_K": 8.050463232054314,
+        "bias_K": -7.796180555555953,
+        "centred_RMSE_K": 2.0073681764513625
+      },
+      "reference_native_QC_counts": {
+        "PUBLISHED_NO_ROW_QC": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 7.796180555555953,
+        "RMSE_K": 8.050463232054314,
+        "bias_K": -7.796180555555953,
+        "centred_RMSE_K": 2.0073681764513625
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.5019811342583336,
+        "RMSE_K": 1.8137929857150912,
+        "bias_K": -0.4607066497369048,
+        "centred_RMSE_K": 1.7543073784025027
+      },
+      "delta_MAE_K": -6.29419942129762
+    },
+    {
+      "target_key": "CH:MAR",
+      "country": "CH",
+      "season": "spring",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 6.926835317461309,
+        "RMSE_K": 7.089035490800671,
+        "bias_K": -6.926835317461309,
+        "centred_RMSE_K": 1.5077720897410836
+      },
+      "reference_native_QC_counts": {
+        "PUBLISHED_NO_ROW_QC": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 6.926835317461309,
+        "RMSE_K": 7.089035490800671,
+        "bias_K": -6.926835317461309,
+        "centred_RMSE_K": 1.5077720897410836
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.4994787862589287,
+        "RMSE_K": 1.8951752470360819,
+        "bias_K": -0.20896497302559527,
+        "centred_RMSE_K": 1.883619615800039
+      },
+      "delta_MAE_K": -5.42735653120238
+    },
+    {
+      "target_key": "CH:MAR",
+      "country": "CH",
+      "season": "summer",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 5.021478174604167,
+        "RMSE_K": 5.3310259378112175,
+        "bias_K": -5.016319444445834,
+        "centred_RMSE_K": 1.8045433718507873
+      },
+      "reference_native_QC_counts": {
+        "PUBLISHED_NO_ROW_QC": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 5.021478174604167,
+        "RMSE_K": 5.3310259378112175,
+        "bias_K": -5.016319444445834,
+        "centred_RMSE_K": 1.8045433718507873
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.6718242323684525,
+        "RMSE_K": 2.1653759007342632,
+        "bias_K": 1.3347920696851188,
+        "centred_RMSE_K": 1.705046310862681
+      },
+      "delta_MAE_K": -3.3496539422357143
+    },
+    {
+      "target_key": "CH:MAR",
+      "country": "CH",
+      "season": "autumn",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 7.025545634920239,
+        "RMSE_K": 7.5701827858186945,
+        "bias_K": -7.005902777777381,
+        "centred_RMSE_K": 2.867924977930361
+      },
+      "reference_native_QC_counts": {
+        "PUBLISHED_NO_ROW_QC": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 7.025545634920239,
+        "RMSE_K": 7.5701827858186945,
+        "bias_K": -7.005902777777381,
+        "centred_RMSE_K": 2.867924977930361
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.8032335285380952,
+        "RMSE_K": 2.223214218106842,
+        "bias_K": -1.3312318067761904,
+        "centred_RMSE_K": 1.7805907267589083
+      },
+      "delta_MAE_K": -5.2223121063821445
+    },
+    {
+      "target_key": "CH:VAB",
+      "country": "CH",
+      "season": "winter",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.4169146825398808,
+        "RMSE_K": 2.247715348752172,
+        "bias_K": -1.1626488095267855,
+        "centred_RMSE_K": 1.923661101837339
+      },
+      "reference_native_QC_counts": {
+        "PUBLISHED_NO_ROW_QC": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 1.4169146825398808,
+        "RMSE_K": 2.247715348752172,
+        "bias_K": -1.1626488095267855,
+        "centred_RMSE_K": 1.923661101837339
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 3.0323305109380954,
+        "RMSE_K": 3.176624465059981,
+        "bias_K": 3.0323305109380954,
+        "centred_RMSE_K": 0.9465276881589471
+      },
+      "delta_MAE_K": 1.6154158283982145
+    },
+    {
+      "target_key": "CH:VAB",
+      "country": "CH",
+      "season": "spring",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.0230654761934523,
+        "RMSE_K": 1.298038399732165,
+        "bias_K": -0.6494543650827381,
+        "centred_RMSE_K": 1.1238828741707105
+      },
+      "reference_native_QC_counts": {
+        "PUBLISHED_NO_ROW_QC": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 1.0230654761934523,
+        "RMSE_K": 1.298038399732165,
+        "bias_K": -0.6494543650827381,
+        "centred_RMSE_K": 1.1238828741707105
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 3.277569786239881,
+        "RMSE_K": 3.3857968202579376,
+        "bias_K": 3.277569786239881,
+        "centred_RMSE_K": 0.8492092818594384
+      },
+      "delta_MAE_K": 2.2545043100464284
+    },
+    {
+      "target_key": "CH:VAB",
+      "country": "CH",
+      "season": "summer",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.1155257936505951,
+        "RMSE_K": 1.3752493460784292,
+        "bias_K": -0.46056547618869037,
+        "centred_RMSE_K": 1.2958357172235342
+      },
+      "reference_native_QC_counts": {
+        "PUBLISHED_NO_ROW_QC": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 1.1155257936505951,
+        "RMSE_K": 1.3752493460784292,
+        "bias_K": -0.46056547618869037,
+        "centred_RMSE_K": 1.2958357172235342
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 2.964448018854762,
+        "RMSE_K": 3.040952645079781,
+        "bias_K": 2.964448018854762,
+        "centred_RMSE_K": 0.6778207234407894
+      },
+      "delta_MAE_K": 1.848922225204167
+    },
+    {
+      "target_key": "CH:VAB",
+      "country": "CH",
+      "season": "autumn",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 3.300595238095238,
+        "RMSE_K": 3.9699068482268567,
+        "bias_K": -3.0502976190476185,
+        "centred_RMSE_K": 2.5408354568588107
+      },
+      "reference_native_QC_counts": {
+        "PUBLISHED_NO_ROW_QC": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 3.300595238095238,
+        "RMSE_K": 3.9699068482268567,
+        "bias_K": -3.0502976190476185,
+        "centred_RMSE_K": 2.5408354568588107
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 2.9550797166779756,
+        "RMSE_K": 3.2293921223187816,
+        "bias_K": 2.952562069639881,
+        "centred_RMSE_K": 1.3081860359361999
+      },
+      "delta_MAE_K": -0.3455155214172625
+    },
+    {
+      "target_key": "CH:BIV",
+      "country": "CH",
+      "season": "winter",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 3.4520833333339285,
+        "RMSE_K": 4.092657296915625,
+        "bias_K": -3.441269841270833,
+        "centred_RMSE_K": 2.2152890623023738
+      },
+      "reference_native_QC_counts": {
+        "PUBLISHED_NO_ROW_QC": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 3.4520833333339285,
+        "RMSE_K": 4.092657296915625,
+        "bias_K": -3.441269841270833,
+        "centred_RMSE_K": 2.2152890623023738
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.9779718232916665,
+        "RMSE_K": 2.574288039754899,
+        "bias_K": 0.9545712997535712,
+        "centred_RMSE_K": 2.390764008703473
+      },
+      "delta_MAE_K": -1.474111510042262
+    },
+    {
+      "target_key": "CH:BIV",
+      "country": "CH",
+      "season": "spring",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.4898809523821428,
+        "RMSE_K": 1.8660520618750924,
+        "bias_K": -1.3428571428571427,
+        "centred_RMSE_K": 1.2957179444253424
+      },
+      "reference_native_QC_counts": {
+        "PUBLISHED_NO_ROW_QC": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 1.4898809523821428,
+        "RMSE_K": 1.8660520618750924,
+        "bias_K": -1.3428571428571427,
+        "centred_RMSE_K": 1.2957179444253424
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 1.1444420825,
+        "RMSE_K": 1.4528555490537618,
+        "bias_K": 0.6251189914416666,
+        "centred_RMSE_K": 1.3114936114809181
+      },
+      "delta_MAE_K": -0.3454388698821429
+    },
+    {
+      "target_key": "CH:BIV",
+      "country": "CH",
+      "season": "summer",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 1.529960317460119,
+        "RMSE_K": 1.8200102113203487,
+        "bias_K": -1.3310515872994049,
+        "centred_RMSE_K": 1.241265016528733
+      },
+      "reference_native_QC_counts": {
+        "PUBLISHED_NO_ROW_QC": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 1.529960317460119,
+        "RMSE_K": 1.8200102113203487,
+        "bias_K": -1.3310515872994049,
+        "centred_RMSE_K": 1.241265016528733
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 0.8182698018851189,
+        "RMSE_K": 1.029077792361077,
+        "bias_K": 0.11547292699107144,
+        "centred_RMSE_K": 1.0225786550984048
+      },
+      "delta_MAE_K": -0.7116905155750002
+    },
+    {
+      "target_key": "CH:BIV",
+      "country": "CH",
+      "season": "autumn",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 4.635416666667262,
+        "RMSE_K": 5.539847162215082,
+        "bias_K": -4.533035714286309,
+        "centred_RMSE_K": 3.184571210337008
+      },
+      "reference_native_QC_counts": {
+        "PUBLISHED_NO_ROW_QC": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 4.635416666667262,
+        "RMSE_K": 5.539847162215082,
+        "bias_K": -4.533035714286309,
+        "centred_RMSE_K": 3.184571210337008
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 3.618237490896428,
+        "RMSE_K": 4.367438647837489,
+        "bias_K": -3.004774439867857,
+        "centred_RMSE_K": 3.1695190341976742
+      },
+      "delta_MAE_K": -1.017179175770834
+    },
+    {
+      "target_key": "CH:CMA",
+      "country": "CH",
+      "season": "winter",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 3.805902777780357,
+        "RMSE_K": 4.44598316307947,
+        "bias_K": 2.2692956349196427,
+        "centred_RMSE_K": 3.8232268579984603
+      },
+      "reference_native_QC_counts": {
+        "PUBLISHED_NO_ROW_QC": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 3.805902777780357,
+        "RMSE_K": 4.44598316307947,
+        "bias_K": 2.2692956349196427,
+        "centred_RMSE_K": 3.8232268579984603
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 6.192446576080952,
+        "RMSE_K": 6.870162049715229,
+        "bias_K": 5.239947280028572,
+        "centred_RMSE_K": 4.443205947496529
+      },
+      "delta_MAE_K": 2.386543798300595
+    },
+    {
+      "target_key": "CH:CMA",
+      "country": "CH",
+      "season": "spring",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 5.099156746031548,
+        "RMSE_K": 5.319107196922818,
+        "bias_K": 5.066517857143452,
+        "centred_RMSE_K": 1.6196598950405134
+      },
+      "reference_native_QC_counts": {
+        "PUBLISHED_NO_ROW_QC": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 5.099156746031548,
+        "RMSE_K": 5.319107196922818,
+        "bias_K": 5.066517857143452,
+        "centred_RMSE_K": 1.6196598950405134
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 10.389796964539286,
+        "RMSE_K": 10.618504421134668,
+        "bias_K": 10.389796964539286,
+        "centred_RMSE_K": 2.191975177164816
+      },
+      "delta_MAE_K": 5.290640218507738
+    },
+    {
+      "target_key": "CH:CMA",
+      "country": "CH",
+      "season": "summer",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 5.002926587301191,
+        "RMSE_K": 5.4133560166579615,
+        "bias_K": 4.9600694444428575,
+        "centred_RMSE_K": 2.1684405616459217
+      },
+      "reference_native_QC_counts": {
+        "PUBLISHED_NO_ROW_QC": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 5.002926587301191,
+        "RMSE_K": 5.4133560166579615,
+        "bias_K": 4.9600694444428575,
+        "centred_RMSE_K": 2.1684405616459217
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 9.350326360505951,
+        "RMSE_K": 9.653407384806465,
+        "bias_K": 9.350326360505951,
+        "centred_RMSE_K": 2.399931475909993
+      },
+      "delta_MAE_K": 4.34739977320476
+    },
+    {
+      "target_key": "CH:CMA",
+      "country": "CH",
+      "season": "autumn",
+      "requested_hours": 168,
+      "forecast_hours": 168,
+      "paired_hours": 168,
+      "reference_primary_QC_hours": 168,
+      "status": "ADMITTED_PILOT_CASE",
+      "source_blocks": {},
+      "B0_all_reference": {
+        "n": 168,
+        "MAE_K": 3.769444444444048,
+        "RMSE_K": 4.348418207358107,
+        "bias_K": 1.9022817460285715,
+        "centred_RMSE_K": 3.910251278985787
+      },
+      "reference_native_QC_counts": {
+        "PUBLISHED_NO_ROW_QC": 168
+      },
+      "B0": {
+        "n": 168,
+        "MAE_K": 3.769444444444048,
+        "RMSE_K": 4.348418207358107,
+        "bias_K": 1.9022817460285715,
+        "centred_RMSE_K": 3.910251278985787
+      },
+      "R1": {
+        "n": 168,
+        "MAE_K": 6.046331640869048,
+        "RMSE_K": 6.970691714869692,
+        "bias_K": 5.418136345385714,
+        "centred_RMSE_K": 4.385697382009308
+      },
+      "delta_MAE_K": 2.276887196425
+    }
+  ],
+  "countries": {
+    "AT": {
+      "admitted_cases": 18,
+      "registered_cases": 24,
+      "admitted_pairs": {
+        "B0": {
+          "n": 3024,
+          "MAE_K": 2.212698412698413,
+          "RMSE_K": 2.8845029282108805,
+          "bias_K": -1.876984126984127,
+          "centred_RMSE_K": 2.1902711544251265
+        },
+        "R1": {
+          "n": 3024,
+          "MAE_K": 1.1293060029545305,
+          "RMSE_K": 1.428048049628187,
+          "bias_K": -0.1471775227907077,
+          "centred_RMSE_K": 1.420443595793955
+        },
+        "delta_MAE_K": -1.0833924097438823
+      },
+      "all_available_pairs_descriptive": {
+        "B0": {
+          "n": 3024,
+          "MAE_K": 2.212698412698413,
+          "RMSE_K": 2.8845029282108805,
+          "bias_K": -1.876984126984127,
+          "centred_RMSE_K": 2.1902711544251265
+        },
+        "R1": {
+          "n": 3024,
+          "MAE_K": 1.1293060029545305,
+          "RMSE_K": 1.428048049628187,
+          "bias_K": -0.1471775227907077,
+          "centred_RMSE_K": 1.420443595793955
+        },
+        "delta_MAE_K": -1.0833924097438823
+      },
+      "stations_admitted_pairs": {
+        "AT:10200": {
+          "B0": {
+            "n": 504,
+            "MAE_K": 1.946626984126984,
+            "RMSE_K": 2.4285054846322436,
+            "bias_K": -1.4271825396825395,
+            "centred_RMSE_K": 1.964889026717332
+          },
+          "R1": {
+            "n": 504,
+            "MAE_K": 1.1262736574874999,
+            "RMSE_K": 1.406936785958415,
+            "bias_K": 0.7452632846505952,
+            "centred_RMSE_K": 1.1933372349150932
+          },
+          "delta_MAE_K": -0.8203533266394842
+        },
+        "AT:11115": {
+          "B0": {
+            "n": 504,
+            "MAE_K": 2.9166666666666665,
+            "RMSE_K": 3.2952888449161133,
+            "bias_K": -2.8456349206349207,
+            "centred_RMSE_K": 1.661713112992631
+          },
+          "R1": {
+            "n": 504,
+            "MAE_K": 1.2525122089561507,
+            "RMSE_K": 1.5643304402338996,
+            "bias_K": -0.9737009225315476,
+            "centred_RMSE_K": 1.2243513546787126
+          },
+          "delta_MAE_K": -1.6641544577105158
+        },
+        "AT:15721": {
+          "B0": {
+            "n": 504,
+            "MAE_K": 2.371031746031746,
+            "RMSE_K": 2.863287044362248,
+            "bias_K": -1.9023809523809523,
+            "centred_RMSE_K": 2.1399437867455395
+          },
+          "R1": {
+            "n": 504,
+            "MAE_K": 1.3618831687990078,
+            "RMSE_K": 1.6997842339579958,
+            "bias_K": -0.17232232102281744,
+            "centred_RMSE_K": 1.6910267471833436
+          },
+          "delta_MAE_K": -1.0091485772327382
+        },
+        "AT:18225": {
+          "B0": {
+            "n": 504,
+            "MAE_K": 4.016071428571429,
+            "RMSE_K": 4.608504474562599,
+            "bias_K": -3.904166666666667,
+            "centred_RMSE_K": 2.4486314812466943
+          },
+          "R1": {
+            "n": 504,
+            "MAE_K": 1.2125440373573413,
+            "RMSE_K": 1.45996199667608,
+            "bias_K": -0.08534651575932538,
+            "centred_RMSE_K": 1.4574652668198131
+          },
+          "delta_MAE_K": -2.8035273912140877
+        },
+        "AT:4030": {
+          "B0": {
+            "n": 504,
+            "MAE_K": 0.6799603174603175,
+            "RMSE_K": 0.866380447243057,
+            "bias_K": 0.07638888888888888,
+            "centred_RMSE_K": 0.8630062670800255
+          },
+          "R1": {
+            "n": 504,
+            "MAE_K": 0.876405220804762,
+            "RMSE_K": 1.1219970690857255,
+            "bias_K": 0.505542125031746,
+            "centred_RMSE_K": 1.001650928644977
+          },
+          "delta_MAE_K": 0.19644490334444453
+        },
+        "AT:5925": {
+          "B0": {
+            "n": 504,
+            "MAE_K": 1.3458333333333332,
+            "RMSE_K": 1.725756102983306,
+            "bias_K": -1.2589285714285714,
+            "centred_RMSE_K": 1.1803952638946598
+          },
+          "R1": {
+            "n": 504,
+            "MAE_K": 0.9462177243224207,
+            "RMSE_K": 1.236807846663459,
+            "bias_K": -0.9025007871128968,
+            "centred_RMSE_K": 0.8456866907010565
+          },
+          "delta_MAE_K": -0.39961560901091253
+        }
+      },
+      "worst_station_delta_MAE_K": 0.19644490334444453,
+      "within_pilot_uniform_observed_benefit": false,
+      "regional_or_population_accuracy_qualified": false,
+      "resampling_descriptive_only": null
+    },
+    "DE": {
+      "admitted_cases": 24,
+      "registered_cases": 24,
+      "admitted_pairs": {
+        "B0": {
+          "n": 4032,
+          "MAE_K": 0.973735119047619,
+          "RMSE_K": 1.3368322765830745,
+          "bias_K": -0.1337549603174603,
+          "centred_RMSE_K": 1.330124109361514
+        },
+        "R1": {
+          "n": 4032,
+          "MAE_K": 1.0966710359875993,
+          "RMSE_K": 1.4552674276819235,
+          "bias_K": -0.3579822948532738,
+          "centred_RMSE_K": 1.4105502340021592
+        },
+        "delta_MAE_K": 0.1229359169399803
+      },
+      "all_available_pairs_descriptive": {
+        "B0": {
+          "n": 4032,
+          "MAE_K": 0.973735119047619,
+          "RMSE_K": 1.3368322765830745,
+          "bias_K": -0.1337549603174603,
+          "centred_RMSE_K": 1.330124109361514
+        },
+        "R1": {
+          "n": 4032,
+          "MAE_K": 1.0966710359875993,
+          "RMSE_K": 1.4552674276819235,
+          "bias_K": -0.3579822948532738,
+          "centred_RMSE_K": 1.4105502340021592
+        },
+        "delta_MAE_K": 0.1229359169399803
+      },
+      "stations_admitted_pairs": {
+        "DE:00071": {
+          "B0": {
+            "n": 672,
+            "MAE_K": 0.9562499999999998,
+            "RMSE_K": 1.2697018772699586,
+            "bias_K": 0.38125,
+            "centred_RMSE_K": 1.211111594628198
+          },
+          "R1": {
+            "n": 672,
+            "MAE_K": 1.085056639799107,
+            "RMSE_K": 1.3557751556334046,
+            "bias_K": -0.914166011149107,
+            "centred_RMSE_K": 1.001212653082507
+          },
+          "delta_MAE_K": 0.12880663979910723
+        },
+        "DE:01072": {
+          "B0": {
+            "n": 672,
+            "MAE_K": 1.034672619047619,
+            "RMSE_K": 1.2872601487174962,
+            "bias_K": -0.44449404761904754,
+            "centred_RMSE_K": 1.2080826677456415
+          },
+          "R1": {
+            "n": 672,
+            "MAE_K": 1.664596416155506,
+            "RMSE_K": 1.960281605243277,
+            "bias_K": -1.142853999921875,
+            "centred_RMSE_K": 1.5926671675895532
+          },
+          "delta_MAE_K": 0.629923797107887
+        },
+        "DE:02985": {
+          "B0": {
+            "n": 672,
+            "MAE_K": 0.6903273809523809,
+            "RMSE_K": 0.9348812631508219,
+            "bias_K": -0.20610119047619047,
+            "centred_RMSE_K": 0.9118800773538005
+          },
+          "R1": {
+            "n": 672,
+            "MAE_K": 1.095294032050893,
+            "RMSE_K": 1.3388375672675994,
+            "bias_K": 0.6503380453892857,
+            "centred_RMSE_K": 1.1702762315993034
+          },
+          "delta_MAE_K": 0.40496665109851215
+        },
+        "DE:04411": {
+          "B0": {
+            "n": 672,
+            "MAE_K": 1.1534226190476191,
+            "RMSE_K": 1.468645513000718,
+            "bias_K": -0.340922619047619,
+            "centred_RMSE_K": 1.4285277073542728
+          },
+          "R1": {
+            "n": 672,
+            "MAE_K": 0.7802840869973212,
+            "RMSE_K": 1.0671947165909905,
+            "bias_K": -0.2065029441354167,
+            "centred_RMSE_K": 1.047024878970471
+          },
+          "delta_MAE_K": -0.3731385320502979
+        },
+        "DE:06170": {
+          "B0": {
+            "n": 672,
+            "MAE_K": 0.8883928571428571,
+            "RMSE_K": 1.3550061500475437,
+            "bias_K": 0.44017857142857153,
+            "centred_RMSE_K": 1.2815164813305244
+          },
+          "R1": {
+            "n": 672,
+            "MAE_K": 0.8413368668965773,
+            "RMSE_K": 1.2395316344026692,
+            "bias_K": 0.2790665760849702,
+            "centred_RMSE_K": 1.207708788904496
+          },
+          "delta_MAE_K": -0.04705599024627982
+        },
+        "DE:07105": {
+          "B0": {
+            "n": 672,
+            "MAE_K": 1.1193452380952382,
+            "RMSE_K": 1.6082839864129659,
+            "bias_K": -0.6324404761904762,
+            "centred_RMSE_K": 1.4787144501317164
+          },
+          "R1": {
+            "n": 672,
+            "MAE_K": 1.1134581740261904,
+            "RMSE_K": 1.5994249606068216,
+            "bias_K": -0.8137754353875001,
+            "centred_RMSE_K": 1.376927647108597
+          },
+          "delta_MAE_K": -0.00588706406904782
+        }
+      },
+      "worst_station_delta_MAE_K": 0.629923797107887,
+      "within_pilot_uniform_observed_benefit": false,
+      "regional_or_population_accuracy_qualified": false,
+      "resampling_descriptive_only": {
+        "lower_K": -0.009001968123611119,
+        "upper_K": 0.3106650985966268,
+        "draws": 10000,
+        "PCG64_seed": 20261027,
+        "blocks": 4,
+        "all6_stations_synchronous": true,
+        "population_CI_or_p_value": false
+      }
+    },
+    "CH": {
+      "admitted_cases": 24,
+      "registered_cases": 24,
+      "admitted_pairs": {
+        "B0": {
+          "n": 4032,
+          "MAE_K": 3.6328538359793154,
+          "RMSE_K": 4.521606756678687,
+          "bias_K": -2.1916832010588294,
+          "centred_RMSE_K": 3.954927610998573
+        },
+        "R1": {
+          "n": 4032,
+          "MAE_K": 3.731101785248909,
+          "RMSE_K": 5.030188633029813,
+          "bias_K": 0.7217371716290178,
+          "centred_RMSE_K": 4.978141534644359
+        },
+        "delta_MAE_K": 0.09824794926959335
+      },
+      "all_available_pairs_descriptive": {
+        "B0": {
+          "n": 4032,
+          "MAE_K": 3.6328538359793154,
+          "RMSE_K": 4.521606756678687,
+          "bias_K": -2.1916832010588294,
+          "centred_RMSE_K": 3.954927610998573
+        },
+        "R1": {
+          "n": 4032,
+          "MAE_K": 3.731101785248909,
+          "RMSE_K": 5.030188633029813,
+          "bias_K": 0.7217371716290178,
+          "centred_RMSE_K": 4.978141534644359
+        },
+        "delta_MAE_K": 0.09824794926959335
+      },
+      "stations_admitted_pairs": {
+        "CH:BIV": {
+          "B0": {
+            "n": 672,
+            "MAE_K": 2.776835317460863,
+            "RMSE_K": 3.6821983175013075,
+            "bias_K": -2.6620535714284226,
+            "centred_RMSE_K": 2.544023433904382
+          },
+          "R1": {
+            "n": 672,
+            "MAE_K": 1.8897302996433034,
+            "RMSE_K": 2.6865995981629234,
+            "bias_K": -0.32740280542038697,
+            "centred_RMSE_K": 2.666575482496613
+          },
+          "delta_MAE_K": -0.8871050178175597
+        },
+        "CH:CMA": {
+          "B0": {
+            "n": 672,
+            "MAE_K": 4.419357638889285,
+            "RMSE_K": 4.905935994484455,
+            "bias_K": 3.5495411706336313,
+            "centred_RMSE_K": 3.3865861069748413
+          },
+          "R1": {
+            "n": 672,
+            "MAE_K": 7.9947253854988105,
+            "RMSE_K": 8.68519688682693,
+            "bias_K": 7.599551737614881,
+            "centred_RMSE_K": 4.2046947987057095
+          },
+          "delta_MAE_K": 3.5753677466095253
+        },
+        "CH:GRO": {
+          "B0": {
+            "n": 672,
+            "MAE_K": 4.131857638890178,
+            "RMSE_K": 4.839416787224046,
+            "bias_K": -4.048573908732142,
+            "centred_RMSE_K": 2.651226913336399
+          },
+          "R1": {
+            "n": 672,
+            "MAE_K": 1.307280910581101,
+            "RMSE_K": 1.8056744025313565,
+            "bias_K": 0.40746156809568457,
+            "centred_RMSE_K": 1.7591006561541545
+          },
+          "delta_MAE_K": -2.8245767283090775
+        },
+        "CH:LUZ": {
+          "B0": {
+            "n": 672,
+            "MAE_K": 2.062537202380357,
+            "RMSE_K": 2.3081804672245543,
+            "bias_K": -1.9719618055544643,
+            "centred_RMSE_K": 1.1996098143610439
+          },
+          "R1": {
+            "n": 672,
+            "MAE_K": 6.518387687236607,
+            "RMSE_K": 7.174250078112685,
+            "bias_K": -6.239387226970833,
+            "centred_RMSE_K": 3.541173705879603
+          },
+          "delta_MAE_K": 4.455850484856249
+        },
+        "CH:MAR": {
+          "B0": {
+            "n": 672,
+            "MAE_K": 6.692509920635416,
+            "RMSE_K": 7.085052706240292,
+            "bias_K": -6.686309523810119,
+            "centred_RMSE_K": 2.343338815026326
+          },
+          "R1": {
+            "n": 672,
+            "MAE_K": 1.6191294203559525,
+            "RMSE_K": 2.031813750266045,
+            "bias_K": -0.1665278399633929,
+            "centred_RMSE_K": 2.0249779243950528
+          },
+          "delta_MAE_K": -5.073380500279463
+        },
+        "CH:VAB": {
+          "B0": {
+            "n": 672,
+            "MAE_K": 1.7140252976197918,
+            "RMSE_K": 2.469240729641552,
+            "bias_K": -1.3307415674614582,
+            "centred_RMSE_K": 2.0799703511230554
+          },
+          "R1": {
+            "n": 672,
+            "MAE_K": 3.0573570081776786,
+            "RMSE_K": 3.210565743346439,
+            "bias_K": 3.056727596418155,
+            "centred_RMSE_K": 0.981910787009372
+          },
+          "delta_MAE_K": 1.3433317105578868
+        }
+      },
+      "worst_station_delta_MAE_K": 4.455850484856249,
+      "within_pilot_uniform_observed_benefit": false,
+      "regional_or_population_accuracy_qualified": false,
+      "resampling_descriptive_only": {
+        "lower_K": -0.5700721458400304,
+        "upper_K": 0.7665680443792166,
+        "draws": 10000,
+        "PCG64_seed": 20261027,
+        "blocks": 4,
+        "all6_stations_synchronous": true,
+        "population_CI_or_p_value": false
+      }
+    }
+  },
+  "requested_reference_hours": 12096,
+  "paired_reference_hours": 11088,
+  "all72_cases_retained": true,
+  "AT_estimand": "QC10 published provider product; originality unknown",
+  "upstream_QC_assimilation_independence_certified": false,
+  "production_ready": false,
+  "automatic_R1_default_promotion": false
+}
