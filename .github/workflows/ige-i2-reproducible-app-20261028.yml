@@ -1,0 +1,44 @@
+name: IGE I2 reproducible research application
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/ige-i2-reproducible-app-20261028
+    paths:
+      - ige.py
+      - IGE_QUICKSTART.md
+      - packaging/ige/**
+      - .github/workflows/ige-i2-reproducible-app-20261028.yml
+permissions:
+  contents: read
+jobs:
+  fresh_install_and_four_products:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+      STREAMLIT_BROWSER_GATHER_USAGE_STATS: 'false'
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Fresh dedicated environment with hashed transitive and bootstrap dependencies
+        run: python ige.py setup
+      - name: Combined app regressions, original four EPWs, complete downloads and real server
+        run: python ige.py check --out outputs/i2
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: IGE-I2-${{ matrix.os }}-four-products-and-checks
+          path: outputs/i2/
+          if-no-files-found: warn
+          retention-days: 90

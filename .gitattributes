@@ -1,0 +1,3 @@
+# Scientific files and fixtures are checked against their committed SHA-256.
+# Preserve their original bytes on Windows as well as Linux; do not convert EOLs.
+* -text
