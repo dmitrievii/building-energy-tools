@@ -1,0 +1,27 @@
+{
+  "schema": "IGE_H1_S1_F1_ACTUAL_BROWSER_DOWNLOAD_VERIFICATION_v1",
+  "status": "PASS",
+  "browser_downloads_verified": 10,
+  "annual_rows_S1": 8760,
+  "annual_rows_F1": 8760,
+  "adjustment_rows_F1": 8760,
+  "S1_EPW_sha256": "855515517eb22601f5f4e6025a32ff463fc81b8055aa08168ff48442565138d2",
+  "F1_EPW_sha256": "3c49a8dabb7c2d0f49f784aa417113e5c9f83b9b4e5b68ed3073f08d275bac2a",
+  "F1_reference_comparison": {
+    "bitwise_same_EPW": true,
+    "maximum_absolute_numeric_difference_mixed_units": 0.0,
+    "comparison": "PASS_EXISTING_EPW_READBACK_PRECISION_1E_7_OR_1E_9_RELATIVE"
+  },
+  "F1_csv_state_closure": {
+    "max_RH_closure_residual_pp": 7.959215508890338e-10,
+    "max_dewpoint_vapour_residual_Pa": 1.4942088455427438e-08
+  },
+  "F1_ZIP_every_member_hash_verified": true,
+  "H1_incomplete_EPW_rejected": true,
+  "H1_temperature_numeric_hours": 4303,
+  "H1_pressure_numeric_hours": 8736,
+  "unchanged_frozen_source_files": 80,
+  "scientific_implementation_changed": false,
+  "new_independent_accuracy_qualification": false,
+  "actual_public_deployment_verified": false
+}

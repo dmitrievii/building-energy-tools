@@ -1,0 +1,58 @@
+{
+  "01-background-map-desktop.png": {
+    "sha256": "64bf50ace5fb87113a49c7a5f781d1a825089c7fd6f1f8cea3f47e0835c47ba8",
+    "bytes": 87112
+  },
+  "02-background-map-mobile.png": {
+    "sha256": "25d5da7e291dfa1b48f3bb5eec29dce305ecb00c17ffb98905a080118c5f5ab4",
+    "bytes": 48049
+  },
+  "03-s1-complete-result-desktop.png": {
+    "sha256": "38173fffe0f21ec3dc0f8683c3850ce73524b2f5d6728e77ba5ce1c2bceb6215",
+    "bytes": 92421
+  },
+  "04-f1-s1-missing-reference-blocked.png": {
+    "sha256": "6e0f128f3f2f8561c37ac88436b743334803b816f6467ca63b9e05a29c3ef94d",
+    "bytes": 91356
+  },
+  "05-f1-selected-base-form-desktop.png": {
+    "sha256": "7c44182caf2e65d14093c33c9d03b8c5869ff5fcc7db9c6859946aa78209dfcf",
+    "bytes": 98211
+  },
+  "06-f1-selected-base-form-mobile.png": {
+    "sha256": "58718ba96e1547155fc171d5c547700ccd4f9e3c274fe30062e889a7f234aee8",
+    "bytes": 44196
+  },
+  "07-f1-complete-result-and-downloads.png": {
+    "sha256": "d4cec7e8015d58aa520b5cb72c73e85074811a94d876df1f9551185808bb2311",
+    "bytes": 82646
+  },
+  "08-f1-overview-desktop.png": {
+    "sha256": "aa7a7acc4241bf2b62748568971981a1480970dcc7f556213d5ddf508a11dcdf",
+    "bytes": 133942
+  },
+  "09-f1-overview-mobile.png": {
+    "sha256": "8eb2b7566c35816bf439f6224273e0d519739ca8b6c31607e08f4b9c78755d0b",
+    "bytes": 57281
+  },
+  "10-h1-real-source-blocked-year.png": {
+    "sha256": "3a798a02947ba2c8a2068332fc2f76a40140ee2cd7d4a71be0451f178e622221",
+    "bytes": 78341
+  },
+  "11-linked-map-desktop.png": {
+    "sha256": "0171e69a97a7dfc0a63cfff72d81947bd3b5e3063c045e49f1daf3606fb7ce0e",
+    "bytes": 79298
+  },
+  "12-linked-map-mobile.png": {
+    "sha256": "0fe6cb4cb7dec7fffb7b8a9d159fd5cdc4054a7e7f7829201ce4ea87d916c172",
+    "bytes": 21140
+  },
+  "browser-acceptance.json": {
+    "sha256": "1ad0203449ef4bd09bbbe9b9613357c2c90e4694e316b7536f16ca5029d92792",
+    "bytes": 4130
+  },
+  "download-verification.json": {
+    "sha256": "2f8f025d7e6aaafb5bb97cd23d3f6427565b3a889adda1c1e13cfd9e43929c9b",
+    "bytes": 1082
+  }
+}
