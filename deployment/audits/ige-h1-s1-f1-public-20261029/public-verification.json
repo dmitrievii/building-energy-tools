@@ -1,0 +1,49 @@
+{
+  "schema": "IGE_H1_S1_F1_PUBLIC_STREAMLIT_OBSERVATION_v1",
+  "public_url": "https://building-climate-analyzer.streamlit.app/",
+  "main_commit_at_release": "b4647b232439faf8c04c86cadfde14962d2cb62f",
+  "release_PR": 121,
+  "main_tree": "8002625b4eb40d2d207279228cbfb0ab111e0804",
+  "actual_public_UI_verified": true,
+  "public_map_tiles_and_marker_rendered": true,
+  "coordinates_visible": [
+    47.0707,
+    15.4395
+  ],
+  "historical_year_generated_from_live_sources": true,
+  "NASA_source_mode_for_public_F1": "UPLOADED_UNMODIFIED_ORIGINAL_SOURCE_PACKET_REPLAY",
+  "reference": "SAME_CHAIN_GRAZ_2002_2014_ORIGINAL_SOURCES",
+  "public_historical_hours": 8760,
+  "public_future_hours": 8760,
+  "public_downloads": {
+    "historical": {
+      "bytes": 1689078,
+      "sha256": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635"
+    },
+    "future": {
+      "bytes": 2181278,
+      "sha256": "e09d6ff41a4021d6d19e73206fc7d899407fbbf5bd0c9ae0d27e672020b633fa"
+    },
+    "future_zip": {
+      "bytes": 5265952,
+      "sha256": "aae8f891a79cfb57f61588dd72f490058c8d982b7e4ee71bb121b9d6288080bc"
+    }
+  },
+  "F1_ZIP_every_member_hash_verified": true,
+  "F1_reference_comparison": {
+    "bitwise_same_EPW": false,
+    "maximum_absolute_numeric_difference_mixed_units": 1.000000082740371e-10,
+    "comparison": "PASS_EXISTING_EPW_READBACK_PRECISION_1E_7_OR_1E_9_RELATIVE"
+  },
+  "quality": {
+    "execution_correctness": "COMPLETE_YEAR_SOURCE_HASHES_STATE_AND_EXPORT_CHECKS_PASS",
+    "physical_admissibility": "CONDITIONAL_T_P_Q_WATER_RH_CLOSURE_AND_MONTHLY_TARGETS_PASS",
+    "independent_accuracy": "NOT_INDEPENDENTLY_VALIDATED",
+    "operational_and_application_scope": "RESEARCH_SELECTED_BASE_FUTURE"
+  },
+  "deployed_commit_SHA_directly_exposed_by_Streamlit": false,
+  "new_independent_accuracy_qualification": false,
+  "production_ready": false,
+  "new_CI_result": "STARTED_NOT_POLLED",
+  "new_main_CI_run": 40904006397
+}
