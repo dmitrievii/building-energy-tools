@@ -1,0 +1,26 @@
+{
+  "schema": "IGE_F1_RETAINED_INTEGRATION_EXAMPLE_v1",
+  "selected_base_EPW_sha256": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635",
+  "NASA_packet": "f1_nex_graz_original_point_sources_20261029.zip",
+  "NASA_packet_sha256": "2df672bc6cb2929ca4f59fb8eed061b46561849c0e716a7419d5c56d938b69bd",
+  "signal_request": {
+    "latitude": 47.0707,
+    "longitude": 15.4395,
+    "reference_window": [
+      2002,
+      2014
+    ],
+    "future_window": [
+      2040,
+      2059
+    ],
+    "model": "CanESM5",
+    "member": "r1i1p1f1",
+    "scenario": "ssp245"
+  },
+  "output_reference": "f1_original_output_reference_20261029.zip",
+  "output_reference_sha256": "73e97b791e959bcefcd6f606700b046d8d1bf86f547fd64101e88af4208ecee8",
+  "original_output_EPW_sha256": "3c49a8dabb7c2d0f49f784aa417113e5c9f83b9b4e5b68ed3073f08d275bac2a",
+  "independent_accuracy_qualified": false,
+  "production_ready": false
+}

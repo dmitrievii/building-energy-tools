@@ -123,6 +123,12 @@ python -m unittest discover -s tests -p 'test_*.py' -v
 
 The intended Community Cloud coordinates and post-deployment audit process are defined in `../../deployment/STREAMLIT_COMMUNITY_CLOUD.md` and `../../deployment/BROWSER_AUDIT_CHECKLIST.md`.
 
+## Selected-base future climate (F1 research mode)
+
+In **Generate climate → Future climate from selected base**, choose a completed background / full S1 point year, the currently loaded EPW, or an uploaded EPW. A declared representative base or a separate compatible local climate reference is required; an actual year is not silently treated as a climate normal. Choose CanESM5 / r1i1p1f1, SSP245 or SSP585, and admitted reference/future windows. Missing sources, incomplete years and infeasible moisture targets block export.
+
+The complete download retains source responses, the original base, monthly signals and an hourly adjustment ledger. Original NASA acquisition can take about 15 minutes; matching completed requests and uploaded original source packets can be reused. The result is a representative monthly-morphed research year with inherited cloud / event / wind-direction chronology. Independent local accuracy and production readiness remain unqualified. See [the F1 contract and offline replay instructions](../../docs/IGE_F1_SELECTED_BASE_FUTURE_RU_20261029.md).
+
 ## Catalog maintenance
 
 Catalog crawling is a maintenance task, not a public UI function. A candidate can be generated locally with:

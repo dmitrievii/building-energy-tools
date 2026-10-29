@@ -39,6 +39,19 @@ VARIABLES = {
 
 
 def _scope(st, product: EngineProduct) -> None:
+    if product.report.get("product_kind") == "F1_SELECTED_BASE_FUTURE":
+        r = product.report["future_request"]; d = product.report["diagnostics"]
+        st.info(f"{r['model']} / {r['member']} / {r['scenario']} · {r['future_window'][0]}–{r['future_window'][1]} · "
+            f"reference {r['reference_window'][0]}–{r['reference_window'][1]} · selected pattern {product.report['pattern_year']}. "
+            "Dates identify the inherited hourly pattern, not future event dates.")
+        st.caption(f"Base EPW SHA256: {product.report['base']['EPW_sha256']}")
+        st.caption(f"Water convention: {d['water_curve']}. Pressure: {d['pressure_contract']}. "
+            f"Selected base geometry and NASA source cell: {product.report['source_geometry']}")
+        st.warning("Research future climate: independent local accuracy and production readiness are not qualified. "
+            "NASA hurs is diagnostic; cloud cover, wind direction and event timing are inherited.")
+        if not d["total_precipitation_available"]:
+            st.caption("Liquid-rain proxy mode: the total-precipitation climate ratio scales liquid rain. Total precipitation and future snow are unknown.")
+        return
     future = product.report["calendar_mode"] == "climatology"
     station = product.report.get("product_kind") == "SAVED_STATION_T_RECONSTRUCTION"
     st.caption("Research generator · independent station accuracy is not qualified · production readiness is not qualified")
@@ -97,6 +110,12 @@ def render_engine_source(activate) -> None:
     import streamlit as st
     from .location_picker import render_point_picker
 
+    task = st.radio("Climate task", ["Historical climate", "Future climate from selected base"],
+                    horizontal=True, key="ige_climate_task")
+    if task == "Future climate from selected base":
+        from .future_selected_ui import render_future_source
+        render_future_source(st, activate)
+        return
     method = st.radio("Historical method", ["Grid background", "Station / EPW interpolation"],
                       horizontal=True, key="ige_historical_method")
     if method == "Station / EPW interpolation":
@@ -160,7 +179,7 @@ def render_engine_source(activate) -> None:
             activate(product.dataset)
             st.rerun()
     with st.expander("Station interpolation and future climate", expanded=False):
-        st.write("Station / EPW interpolation is available under Historical method. Future climate from the selected base is the following stage; it still requires compatible historical periods, source coverage and local climate-model signals.")
+        st.write("Station / EPW interpolation is available under Historical method. To use an admitted annual base or uploaded EPW, select Future climate from selected base above. A declared local climate reference and model-source admission are required.")
 
 
 def render_engine_research_examples(activate) -> None:

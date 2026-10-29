@@ -48,7 +48,17 @@ def prepare_engine_analysis_frame(dataset: CanonicalClimateDataset) -> pd.DataFr
     if not np.isfinite(np.stack([t, td, rh, p])).all() or np.any((rh < 0) | (rh > 100) | (p <= 0)):
         raise ValueError("IGE_U1_INVALID_STATE_NO_FALLBACK_OR_CLIPPING")
     phase = data.attrs.get("ige_RH_phase")
-    if dataset.temporal.calendar_mode == "climatology":
+    if data.attrs.get("ige_f1_contract") == "IGE_F1_SELECTED_BASE_MONTHLY_FUTURE_v1":
+        from .engine.f1 import check_state
+        from .engine.f1_base import MK, BUCK, SURFACE, COLLOCATED, water_es
+        if (dataset.temporal.calendar_mode != "climatology" or phase not in (MK, BUCK) or Q not in data
+                or data.attrs.get("ige_f1_pressure_contract") not in (SURFACE, COLLOCATED)):
+            raise ValueError("IGE_F1_ANALYSIS_STATE_CONTRACT_MISSING")
+        check_state(data, phase)
+        q = data[Q].to_numpy(dtype=float); e = e_from_q(q, p); sat = water_es(t, phase)
+        definition = phase+"; vapour from F1 q and explicitly declared pressure contract"
+        pressure_scope = data.attrs["ige_f1_pressure_contract"]
+    elif dataset.temporal.calendar_mode == "climatology":
         if phase != "MURPHY_KOOP_LIQUID_WATER_NOT_APP_ASHRAE_ICE_BELOW_ZERO" or Q not in data:
             raise ValueError("IGE_U1_FUTURE_Q_OR_WATER_PHASE_MISSING")
         q = data[Q].to_numpy(dtype=float)
@@ -139,5 +149,5 @@ def monthly_engine_summary(data: pd.DataFrame) -> pd.DataFrame:
             "Humidity ratio mean [g/kg dry air]": float(group["humidity_ratio_g_kg"].mean()),
             "GHI [kWh/m²]": float(group["global_horizontal_radiation_wh_m2"].sum()/1000),
             "Liquid rain [mm]": float(group["liquid_precipitation_depth_mm"].sum()),
-            "Total precipitation [mm]": float(group["total_precipitation_depth_mm"].sum())})
+            "Total precipitation [mm]": float(group["total_precipitation_depth_mm"].sum()) if "total_precipitation_depth_mm" in group else None})
     return pd.DataFrame(rows).set_index("Month")
