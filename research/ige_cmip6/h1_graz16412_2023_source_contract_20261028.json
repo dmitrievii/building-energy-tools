@@ -1,0 +1,24 @@
+{
+  "schema": "IGE_H1_DISCLOSED_ANNUAL_SOURCE_CHECK_v1",
+  "source_packet": "h1_graz16412_2023_original_sources_20261028.zip",
+  "source_packet_sha256": "428376132e26f6b037f731b27506c23d76705c6f89435771287c9ce3f97dfa42",
+  "request": {
+    "station_id": "16412",
+    "year": 2023,
+    "utc_offset_minutes": 60,
+    "label": "Graz Universitaet"
+  },
+  "source_scope": "One disclosed Austrian development example; not independent station accuracy validation",
+  "expected_status": "EPW_BLOCKED",
+  "expected_source_rows": 8760,
+  "expected_numeric_hours": {
+    "dry_bulb_temperature_c": 4303,
+    "relative_humidity_pct": 4303,
+    "atmospheric_station_pressure_pa": 8736,
+    "global_horizontal_radiation_wh_m2": 8760,
+    "wind_speed_m_s": 8752,
+    "wind_direction_deg": 8752
+  },
+  "protected_AT_2018_and_IV1_2022_observations_opened": false,
+  "weather_repair_or_model_tuning_performed": false
+}

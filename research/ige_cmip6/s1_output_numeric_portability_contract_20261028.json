@@ -1,0 +1,21 @@
+{
+  "schema": "IGE_S1_OUTPUT_NUMERIC_PORTABILITY_v1",
+  "original_integration_contract_sha256": "f15e50cd16c5c502115f548f134e2a751627cc4768880951ef1de69b59f542a0",
+  "reference_archive": "s1_original_point_epw_reference_20261028.zip",
+  "reference_archive_sha256": "befac52581c209dc79c0adda271582756802184b528d170ad54a0e5e9771892d",
+  "reference_EPW_sha256": "855515517eb22601f5f4e6025a32ff463fc81b8055aa08168ff48442565138d2",
+  "same_physics_and_climate_constraints": true,
+  "same_source_inputs": true,
+  "numeric_comparison_source": "existing engine/epw.py validate_epw_bytes readback tolerance",
+  "thermal_columns": [
+    6,
+    7,
+    8,
+    9
+  ],
+  "absolute_tolerance_floor": 1e-07,
+  "relative_tolerance": 1e-09,
+  "all_other_cells_and_headers": "EXACT",
+  "physical_bounds_or_independent_accuracy_criteria_relaxed": false,
+  "actual_output_SHA256_is_recorded_per_execution": true
+}

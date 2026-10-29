@@ -1,0 +1,129 @@
+{
+  "schema": "IGE_S1_FROZEN_P82F_CALIBRATION_v1",
+  "training": {
+    "station_count": 189,
+    "source_index_hash": "0991d836c0bdfc6d590837d3862b07c15b8afbcf4d7dd2cd40ca5b9ea2224eed",
+    "metadata_hash": "accd768085be66f3d2af3e9a313d521e6b3e89671501409ff739dbb0b0f58f88",
+    "source_batches": [
+      {
+        "sha256": "66791b3fe7eeaad93168e8c07e82d7416906836fe972a875e566087191d745f9",
+        "bytes": 97681,
+        "n_ids": 12
+      },
+      {
+        "sha256": "fd100988cbd129a45eb27d0c134e9b1a778e8d4e11bd1381f88f3b619a4ea99c",
+        "bytes": 97562,
+        "n_ids": 12
+      },
+      {
+        "sha256": "2f9707a4e8d245652431c8ce8cd231b6b2013e8d4906dd4bd24724dc3256c386",
+        "bytes": 97516,
+        "n_ids": 12
+      },
+      {
+        "sha256": "d533a1f4de2a65b4cc0dc5435a2364f8203325cef90d0a2e9c203dc58344fa3d",
+        "bytes": 97759,
+        "n_ids": 12
+      },
+      {
+        "sha256": "478ebb5fe933b34d2c1f26d51aa071dbf38f13f3dd311f26d946f14e01b82370",
+        "bytes": 97431,
+        "n_ids": 12
+      },
+      {
+        "sha256": "49b191f6b989bc9a9fe597c28e0abb4fc1728e8952b4b33d98bb7969bd371bab",
+        "bytes": 97408,
+        "n_ids": 12
+      },
+      {
+        "sha256": "e18aa3a4deab8f7e548141c897bfe1bdc4de3f1cda5c7ad0464d585897293a0c",
+        "bytes": 97442,
+        "n_ids": 12
+      },
+      {
+        "sha256": "285cdcf1f0b95d2a0821cb15dc5d0eabc50ab2361b226864f60e665aa6a4e28e",
+        "bytes": 97725,
+        "n_ids": 12
+      },
+      {
+        "sha256": "0464f79f0de218eba0b5b5bcb99f2c15bae998199f5b9d0b9357d5eeffaf87f1",
+        "bytes": 97567,
+        "n_ids": 12
+      },
+      {
+        "sha256": "535037428c1ead0fae25ee49c2850b70635cc9e59ad019ea973d214e326b0be5",
+        "bytes": 97401,
+        "n_ids": 12
+      },
+      {
+        "sha256": "67386406929f48c3dd7a6123b254a3cbcf07cbbb442635bfa8ef0ab13cdabb46",
+        "bytes": 97586,
+        "n_ids": 12
+      },
+      {
+        "sha256": "1c1c977968ac79d2b0ebd8e7ac4660d00b0fe1a4d3b10444e96d28f8ba3d50ef",
+        "bytes": 97706,
+        "n_ids": 12
+      },
+      {
+        "sha256": "310394c674a07fd5e9e4edbb529c9af0d5082b2c4cbf80c02fa4711c34e31b35",
+        "bytes": 96969,
+        "n_ids": 12
+      },
+      {
+        "sha256": "45fb3548760b5b58d0bd37754725940c5e569a28d3d16220054dc447e1f41ce4",
+        "bytes": 97554,
+        "n_ids": 12
+      },
+      {
+        "sha256": "f9b58f6d333196aaf3b87720ea38230d3198c1826cdec5ab14f47eabd215907c",
+        "bytes": 97701,
+        "n_ids": 12
+      },
+      {
+        "sha256": "820761a2da2bb16978913c5311c160b45b954a762eb5a48d30ff958c569839c4",
+        "bytes": 75120,
+        "n_ids": 9
+      }
+    ],
+    "trained_on": "1991-2010 GeoSphere Austria station data only",
+    "test_years_not_in_parameters": true,
+    "log_vapour_slope_m_inv": [
+      -0.00034381167198303727,
+      -0.0003696893618031671,
+      -0.00036617831146305727,
+      -0.00035831376065559984,
+      -0.00034092992884689286,
+      -0.0003307423346795075,
+      -0.0003165958059560497,
+      -0.00031937075422189086,
+      -0.0003403474729914906,
+      -0.00034590244345551215,
+      -0.000347300567878595,
+      -0.00033946139565956684
+    ],
+    "temperature_slope_K_m": [
+      -0.0025918158178962875,
+      -0.0039995823586441255,
+      -0.005385609905728577,
+      -0.006153594949982559,
+      -0.006195223516394919,
+      -0.006132281674890167,
+      -0.005938742588625475,
+      -0.005557264663632554,
+      -0.005150468561959104,
+      -0.004050513618313608,
+      -0.0037116911336134194,
+      -0.0028472542205561563
+    ]
+  },
+  "original_solver_blob_sha": "099357c4e9ba85bf397356457818fe3bd6df861f",
+  "original_selector_blob_sha": "d0107b04f81ecc1bc1e0392b3660bf44cc271e61",
+  "artifact": {
+    "run_id": 38612389803,
+    "id": 11917798058,
+    "sha256": "761437db7996502d9e1ce0badb0b4d02d725b97aee7fae6401d1631441e75158",
+    "member": "selection_provenance.json"
+  },
+  "not_retrained": true
+}

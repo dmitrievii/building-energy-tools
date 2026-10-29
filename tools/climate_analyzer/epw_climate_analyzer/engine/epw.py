@@ -34,6 +34,18 @@ EPW_FIELDS = {
     "liquid_precipitation_depth_mm": (33, "mm", "interval_amount"),
 }
 
+# Shared by export and the source-neutral annual-admission inventory.
+EPW_BOUNDS = {
+    "dry_bulb_temperature_c": (-70, 70), "dew_point_temperature_c": (-70, 70),
+    "relative_humidity_pct": (0, 100), "atmospheric_station_pressure_pa": (31000, 120000),
+    "horizontal_infrared_radiation_intensity_wh_m2": (0, 1000),
+    "global_horizontal_radiation_wh_m2": (0, 2000),
+    "direct_normal_radiation_wh_m2": (0, 2000),
+    "diffuse_horizontal_radiation_wh_m2": (0, 2000),
+    "wind_direction_deg": (0, 360), "wind_speed_m_s": (0, 90),
+    "total_sky_cover_tenths": (0, 10), "liquid_precipitation_depth_mm": (0, 998),
+}
+
 
 def validate_weather(result: ClimateResult) -> dict:
     """Fail closed on missing fields/domain violations; retain provider rounding."""
@@ -43,17 +55,7 @@ def validate_weather(result: ClimateResult) -> dict:
         if definition is None or definition.unit != unit or definition.operator != operator:
             raise ValueError(f"IGE_EPW_FIELD_UNIT_OR_OPERATOR_MISMATCH_{name}")
     f = result.data
-    bounds = {
-        "dry_bulb_temperature_c": (-70, 70), "dew_point_temperature_c": (-70, 70),
-        "relative_humidity_pct": (0, 100), "atmospheric_station_pressure_pa": (31000, 120000),
-        "horizontal_infrared_radiation_intensity_wh_m2": (0, 1000),
-        "global_horizontal_radiation_wh_m2": (0, 2000),
-        "direct_normal_radiation_wh_m2": (0, 2000),
-        "diffuse_horizontal_radiation_wh_m2": (0, 2000),
-        "wind_direction_deg": (0, 360), "wind_speed_m_s": (0, 90),
-        "total_sky_cover_tenths": (0, 10), "liquid_precipitation_depth_mm": (0, 998),
-    }
-    for name, (lo, hi) in bounds.items():
+    for name, (lo, hi) in EPW_BOUNDS.items():
         v = f[name].to_numpy(dtype=float)
         if not np.isfinite(v).all() or np.any((v < lo) | (v > hi)):
             raise ValueError(f"IGE_EPW_PHYSICAL_OR_FORMAT_DOMAIN_{name}")

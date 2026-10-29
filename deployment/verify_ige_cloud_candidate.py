@@ -18,10 +18,12 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path[:0]=[str(ROOT/'tools/climate_analyzer'),str(ROOT/'research/ige_cmip6')]
 
 
-def verify(output):
+def verify(output, contract_path):
     output.mkdir(parents=True,exist_ok=False)
-    contract=json.loads((ROOT/'deployment/ige-cloud-candidate-20261028.json').read_text())
-    for path,expected in contract['copied_sha256'].items():
+    contract=json.loads((ROOT/contract_path).read_text())
+    expected_sources=contract.get('source_sha256',contract.get('copied_sha256',{}))
+    assert expected_sources,'Missing source manifest'
+    for path,expected in expected_sources.items():
         assert sha256((ROOT/path).read_bytes()).hexdigest()==expected,path
     versions={}
     for line in (ROOT/'tools/climate_analyzer/requirements-cloud-constraints.txt').read_text().splitlines():
@@ -55,6 +57,25 @@ def verify(output):
             (output/(name+'.zip')).write_bytes(product.archive)
             products[name]={'rows':8760,'EPW_sha256':sha256(product.files['climate.epw']).hexdigest(),
                             'archive_sha256':sha256(product.archive).hexdigest(),'bytes':len(product.archive)}
+        from epw_climate_analyzer.geosphere_station_year import run_station_year
+        from epw_climate_analyzer.engine.station_epw_admission import StationYearRequest
+        source_contract=json.loads((ROOT/'research/ige_cmip6/h1_graz16412_2023_source_contract_20261028.json').read_bytes())
+        source_packet=(ROOT/'research/ige_cmip6'/source_contract['source_packet']).read_bytes()
+        annual=run_station_year(StationYearRequest(**source_contract['request']),source_packet=source_packet,
+                               expected_sha256=source_contract['source_packet_sha256'])
+        assert annual.report['status']==source_contract['expected_status']
+        assert 'climate.epw' not in annual.files
+        annual_counts={row['field']:row['numeric_hours'] for row in annual.report['fields']}
+        for field,count in source_contract['expected_numeric_hours'].items():assert annual_counts[field]==count,field
+        (output/'h1-graz16412-2023-admission.zip').write_bytes(annual.archive)
+        annual_summary={'status':annual.report['status'],'source_rows':annual.report['source_rows'],
+                        'expected_hours':annual.report['expected_hours'],'numeric_hours':annual_counts,
+                        'source_packet_sha256':source_contract['source_packet_sha256'],
+                        'EPW_absence_correctly_enforced':True,'offline_replay':True,'new_independent_validation':False}
+        from s1_replay_audit import replay_s1_examples
+        point_summary=replay_s1_examples(output)
+        from f1_replay_audit import replay_f1_example
+        _,future_summary=replay_f1_example(output)
     with socket.socket() as reserve:
         reserve.bind(('127.0.0.1',0));port=reserve.getsockname()[1]
     with (output/'server.log').open('w') as log:
@@ -74,8 +95,11 @@ def verify(output):
             try:process.wait(timeout=10)
             except subprocess.TimeoutExpired:process.kill();process.wait(timeout=5)
     receipt={'schema':'IGE_CLOUD_RESEARCH_BETA_PREFLIGHT_v1','status':'PASS','tests':tests,'products':products,
-             'copied_I2_files_unchanged':len(contract['copied_sha256']),'installed_versions':installed,
-             'actual_root_Streamlit_launch_healthy':True,'weather_provider_requests':0,
+             'verified_source_files':len(expected_sources),'preflight_contract':str(contract_path),
+             'saved_examples_are_offline_regressions_not_public_city_choices':True,'installed_versions':installed,
+             'actual_root_Streamlit_launch_healthy':True,'weather_provider_requests':0,'H1_original_year_replay':annual_summary,
+             'S1_retained_integration_examples':point_summary,
+             'F1_selected_base_future_example':future_summary,
              'test_process_peak_RSS_MiB':resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1024,
              'peak_is_test_process_not_a_multiuser_cloud_load_test':True,
              'actual_Community_Cloud_build_or_live_deployment_verified':False,
@@ -87,4 +111,6 @@ def verify(output):
 if __name__=='__main__':
     import argparse
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--out',required=True,type=Path)
-    verify(parser.parse_args().out)
+    parser.add_argument('--contract',type=Path,default=Path('deployment/ige-f1-candidate-20261029.json'))
+    args=parser.parse_args()
+    verify(args.out,args.contract)

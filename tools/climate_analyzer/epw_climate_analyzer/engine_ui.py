@@ -14,6 +14,8 @@ from .ui_contract import NAVIGATION_KEY, navigation_label
 
 PRODUCT_KEY = "ige_engine_completed_product"
 ERROR_KEY = "ige_engine_last_failure"
+REQUEST_KEY = "ige_engine_completed_request"
+ERROR_REQUEST_KEY = "ige_engine_failed_request"
 STATION_SOURCE = "Saved CH 2025 — station-temperature reconstruction"
 PAGES = ("Climate File Source", "Overview", "Temperature", "Humidity and Psychrometrics",
     "Solar and Radiation", "Wind and Ventilation", "Sky and Daylight", "Precipitation and Snow",
@@ -37,6 +39,19 @@ VARIABLES = {
 
 
 def _scope(st, product: EngineProduct) -> None:
+    if product.report.get("product_kind") == "F1_SELECTED_BASE_FUTURE":
+        r = product.report["future_request"]; d = product.report["diagnostics"]
+        st.info(f"{r['model']} / {r['member']} / {r['scenario']} · {r['future_window'][0]}–{r['future_window'][1]} · "
+            f"reference {r['reference_window'][0]}–{r['reference_window'][1]} · selected pattern {product.report['pattern_year']}. "
+            "Dates identify the inherited hourly pattern, not future event dates.")
+        st.caption(f"Base EPW SHA256: {product.report['base']['EPW_sha256']}")
+        st.caption(f"Water convention: {d['water_curve']}. Pressure: {d['pressure_contract']}. "
+            f"Selected base geometry and NASA source cell: {product.report['source_geometry']}")
+        st.warning("Research future climate: independent local accuracy and production readiness are not qualified. "
+            "NASA hurs is diagnostic; cloud cover, wind direction and event timing are inherited.")
+        if not d["total_precipitation_available"]:
+            st.caption("Liquid-rain proxy mode: the total-precipitation climate ratio scales liquid rain. Total precipitation and future snow are unknown.")
+        return
     future = product.report["calendar_mode"] == "climatology"
     station = product.report.get("product_kind") == "SAVED_STATION_T_RECONSTRUCTION"
     st.caption("Research generator · independent station accuracy is not qualified · production readiness is not qualified")
@@ -91,6 +106,84 @@ def _downloads(st, product: EngineProduct) -> None:
 
 
 def render_engine_source(activate) -> None:
+    """Public point request. Saved examples belong to the research harness."""
+    import streamlit as st
+    from .location_picker import render_point_picker
+
+    task = st.radio("Climate task", ["Historical climate", "Future climate from selected base"],
+                    horizontal=True, key="ige_climate_task")
+    if task == "Future climate from selected base":
+        from .future_selected_ui import render_future_source
+        render_future_source(st, activate)
+        return
+    method = st.radio("Historical method", ["Grid background", "Station / EPW interpolation"],
+                      horizontal=True, key="ige_historical_method")
+    if method == "Station / EPW interpolation":
+        from .point_interpolation_ui import render_point_interpolation
+        render_point_interpolation(st)
+        return
+    st.subheader("Generate a climate year")
+    st.write("Select a point to request a historical gridded background and check whether a complete EPW can be assembled.")
+    st.info("Source: ERA5-derived grid data via Open-Meteo, with NASA POWER longwave radiation. This is not station interpolation or a measured station year. For observations, select GeoSphere Austria.")
+    lat, lon, height, height_reference = render_point_picker(st)
+    left, right = st.columns(2)
+    year = left.number_input("Historical year", 2002, 2025, 2023, step=1, key="ige_year")
+    offset = right.selectbox("Standard UTC offset [hours]", list(range(-12, 13)), index=13, key="ige_offset")
+    label = st.text_input("Location label", "Selected point", max_chars=120, key="ige_point_label")
+    st.caption("2002–2025 is the current source-request window, not a guarantee of a complete year at every point. The fixed standard UTC offset has no daylight-saving changes; only whole-hour offsets are supported. Missing required weather data block export.")
+    height_ready = height is None or bool(height_reference)
+    if not height_ready:
+        st.warning("Enter the elevation source / vertical datum, or clear the optional elevation.")
+    request = None
+    try:
+        if height_ready:
+            request = HistoricalRequest(lat, lon, int(year), int(offset)*60, label=label,
+                                        site_elevation_m=height, site_elevation_reference=height_reference)
+    except ValueError as exc:
+        st.warning(str(exc))
+    st.caption("Build sends the selected coordinates and year to Open-Meteo and NASA POWER. Site elevation is retained locally in the request record.")
+    if st.button("Check data and build EPW", type="primary", key="ige_build_background", disabled=request is None):
+        st.session_state.pop(ERROR_KEY, None)
+        st.session_state.pop(ERROR_REQUEST_KEY, None)
+        try:
+            with st.status("Checking sources and assembling the complete year", expanded=True) as status:
+                def progress(message):
+                    status.update(label=message)
+                    st.write(message)
+                completed = run_historical_product(request, use_saved_pilot=False, progress=progress)
+                status.update(label="Complete year and downloads verified", state="complete", expanded=False)
+            st.session_state[PRODUCT_KEY] = completed
+            st.session_state[REQUEST_KEY] = request.to_dict()
+        except Exception as exc:
+            st.session_state[ERROR_KEY] = f"{type(exc).__name__}: {exc}"
+            st.session_state[ERROR_REQUEST_KEY] = request.to_dict()
+    error = st.session_state.get(ERROR_KEY)
+    if error:
+        failed_current = request is not None and st.session_state.get(ERROR_REQUEST_KEY) == request.to_dict()
+        st.error(("This request" if failed_current else "Previous request") + " did not produce a downloadable year: " + error)
+    product = st.session_state.get(PRODUCT_KEY)
+    if isinstance(product, EngineProduct):
+        current = request is not None and st.session_state.get(REQUEST_KEY) == request.to_dict()
+        st.divider()
+        st.subheader("Completed result" if current and not error else "Previous completed result")
+        if not current:
+            st.warning("The downloads below belong to the previous completed request. Build the current selection to obtain a new year.")
+        st.write(product.dataset.display_name)
+        st.success(f"{len(product.dataset.data):,} hourly records · complete year verified")
+        _scope(st, product)
+        requested_height = product.report.get("diagnostics", {}).get("site_height_m_requested")
+        if requested_height is not None:
+            st.caption(f"Requested site elevation: {requested_height:g} m. No weather or EPW-location height correction was applied.")
+        _downloads(st, product)
+        if st.button("Explore this generated climate", type="primary", key="ige_explore"):
+            activate(product.dataset)
+            st.rerun()
+    with st.expander("Station interpolation and future climate", expanded=False):
+        st.write("Station / EPW interpolation is available under Historical method. To use an admitted annual base or uploaded EPW, select Future climate from selected base above. A declared local climate reference and model-source admission are required.")
+
+
+def render_engine_research_examples(activate) -> None:
+    """Explicit offline regression harness; the public app does not call it."""
     import streamlit as st
 
     st.subheader("Generate a climate year")

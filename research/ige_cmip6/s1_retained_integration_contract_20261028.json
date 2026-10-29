@@ -1,0 +1,66 @@
+{
+  "schema": "IGE_S1_RETAINED_INTEGRATION_EXAMPLES_v1",
+  "examples_are_disclosed_development_not_independent_validation": true,
+  "positive": {
+    "source_kind": "ERA5_DERIVED_GRID_EPWS_NOT_STATION_OBSERVATIONS",
+    "input_file": "s1_grid_epw_original_inputs_20261028.zip",
+    "input_sha256": "fbc6c4359a11d9c9c4364feac17e50e9215300fb59f98359e6987e5433622b6a",
+    "donor_lineage_file": "s1_grid_epw_donor_original_lineage_20261028.zip",
+    "donor_lineage_sha256": "d8021fc056340eb6c19f6d26db9cdfc688c9a140007aaa4c908b27ff99c797ec",
+    "background_file": "i1_a0_graz2023_original_sources_20261025.zip",
+    "background_sha256": "2575be295bc41be68ac56940524a76c5ef9f9b5010a83f20b6eec21c49dce273",
+    "request": {
+      "latitude": 47.0707,
+      "longitude": 15.4395,
+      "elevation_m": 375.0,
+      "elevation_reference": "Disclosed integration demonstration: nominal ASL proxy, not surveyed",
+      "year": 2023,
+      "utc_offset_minutes": 60,
+      "label": "Graz S1 grid EPW integration",
+      "assume_buck_water": true,
+      "allow_nominal_height_proxy": true,
+      "excluded_station_id": ""
+    },
+    "expected_status": "POINT_YEAR_COMPLETE_RESEARCH",
+    "expected_epw_status": "ADMITTED_MIXED_SOURCE_RESEARCH",
+    "expected_epw_sha256": "855515517eb22601f5f4e6025a32ff463fc81b8055aa08168ff48442565138d2",
+    "expected_hours": 8760,
+    "expected_selected_donors": [
+      "EPW:306406f6bc9b7d29",
+      "EPW:8c24329eab1d9d87",
+      "EPW:0a40f407aa11ebbd",
+      "EPW:12832bb44494e2e4"
+    ],
+    "diagnostics": {
+      "max_abs_temperature_height_correction_K": 1.117233041549106,
+      "max_abs_pressure_height_correction_pa": 2276.641344394753,
+      "saturation_adjustment_hours": 13,
+      "max_RH_closure_pp": 0.0,
+      "max_Td_closure_hpa": 1.4210854715202004e-14,
+      "max_q_to_e_closure_pa": 9.094947017729282e-13,
+      "target_outside_horizontal_donor_hull": false
+    }
+  },
+  "negative": {
+    "input_file": "s1_geosphere_graz2023_original_inputs_20261028.zip",
+    "input_sha256": "fe7183b707af2f462613bd630f3382bd9ed6f82a031fd249bd69e376385a2034",
+    "request": {
+      "latitude": 47.0707,
+      "longitude": 15.4395,
+      "elevation_m": 375.0,
+      "elevation_reference": "User-selected demonstration height, nominal ASL proxy; not surveyed",
+      "year": 2023,
+      "utc_offset_minutes": 60,
+      "label": "Graz S1 disclosed development point",
+      "assume_buck_water": true,
+      "allow_nominal_height_proxy": true,
+      "excluded_station_id": ""
+    },
+    "expected_status": "POINT_YEAR_BLOCKED",
+    "expected_eligible_count": 1,
+    "expected_candidate_count": 20,
+    "expected_eligible_ids": [
+      "16400"
+    ]
+  }
+}

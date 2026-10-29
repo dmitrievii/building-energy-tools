@@ -1,0 +1,147 @@
+{
+  "status": "PASS",
+  "tests": {
+    "count": 763,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "seconds": 275.3118088389997
+  },
+  "products": {
+    "graz-historical": {
+      "rows": 8760,
+      "EPW_sha256": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635",
+      "archive_sha256": "9f03705ca6ccd893dfa22c2aa68c11803e09ee497212319e248fe30aab5c0eb4",
+      "bytes": 1244094
+    },
+    "graz-future": {
+      "rows": 8760,
+      "EPW_sha256": "fc00e09811498c368965785ee8873bc4ca1cd01761eaebb19c759faebd0e3c28",
+      "archive_sha256": "801f96f12afd585f60f209c01f19ed719cf11ef7c5f40115ed6e7c4300e627a3",
+      "bytes": 7411972
+    },
+    "basel-2025": {
+      "rows": 8760,
+      "EPW_sha256": "b7cc31ac7cf6a71329f85a7d60f41fe2ea43be86692f8f012cc2b02009c378e1",
+      "archive_sha256": "a7ad8b295aeaa8f3f65ee46a5999d1c637b472ebc24b3e6d9008c26e57f962fe",
+      "bytes": 4060425
+    },
+    "altdorf-2025": {
+      "rows": 8760,
+      "EPW_sha256": "53a0a904ec7141d26d9941e1ed5dbf473a8cd461c8bb86e5a6f091da450ff538",
+      "archive_sha256": "ef3341fa1fd86a6e09895b66a0effa012ab1aab21f2464a3fa59c97a95e9a637",
+      "bytes": 4025967
+    }
+  },
+  "verified_source_files": 80,
+  "preflight_contract": "deployment/ige-f1-candidate-20261029.json",
+  "actual_root_Streamlit_launch_healthy": true,
+  "weather_provider_requests": 0,
+  "H1_original_year_replay": {
+    "status": "EPW_BLOCKED",
+    "source_rows": 8760,
+    "expected_hours": 8760,
+    "numeric_hours": {
+      "dry_bulb_temperature_c": 4303,
+      "dew_point_temperature_c": 0,
+      "relative_humidity_pct": 4303,
+      "atmospheric_station_pressure_pa": 8736,
+      "horizontal_infrared_radiation_intensity_wh_m2": 0,
+      "global_horizontal_radiation_wh_m2": 8760,
+      "direct_normal_radiation_wh_m2": 0,
+      "diffuse_horizontal_radiation_wh_m2": 0,
+      "wind_direction_deg": 8752,
+      "wind_speed_m_s": 8752,
+      "total_sky_cover_tenths": 0,
+      "liquid_precipitation_depth_mm": 0
+    },
+    "source_packet_sha256": "428376132e26f6b037f731b27506c23d76705c6f89435771287c9ce3f97dfa42",
+    "EPW_absence_correctly_enforced": true,
+    "offline_replay": true,
+    "new_independent_validation": false
+  },
+  "S1_retained_integration_examples": {
+    "status": "PASS",
+    "positive_source_kind": "ERA5_DERIVED_GRID_EPWS_NOT_STATION_OBSERVATIONS",
+    "positive_hours": 8760,
+    "positive_EPW_sha256": "855515517eb22601f5f4e6025a32ff463fc81b8055aa08168ff48442565138d2",
+    "reference_original_EPW_sha256": "855515517eb22601f5f4e6025a32ff463fc81b8055aa08168ff48442565138d2",
+    "positive_numeric_comparison": {
+      "comparison": "PASS_EXISTING_EPW_READBACK_PRECISION",
+      "thermal_columns": {
+        "6": {
+          "changed_numeric_hours": 0,
+          "max_abs_difference": 0.0
+        },
+        "7": {
+          "changed_numeric_hours": 0,
+          "max_abs_difference": 0.0
+        },
+        "8": {
+          "changed_numeric_hours": 0,
+          "max_abs_difference": 0.0
+        },
+        "9": {
+          "changed_numeric_hours": 0,
+          "max_abs_difference": 0.0
+        }
+      },
+      "headers_calendar_and_nonthermal_cells_exact": true,
+      "bitwise_same_output": true
+    },
+    "four_input_EPWs_reconstructed_from_original_HTTP_bytes": [
+      "8c24329eab1d9d872f3f00f8f16b0fe184e2463147dc3d4be83d3acbcc92fc5b",
+      "306406f6bc9b7d29eb512ffebcbb3df670c23e8c8b4e4dfc5e0791381a7d08e1",
+      "12832bb44494e2e474208db19f5c8de37f577f3dbffc67655b34eafa67152cad",
+      "0a40f407aa11ebbda4d9c45150b09da877ca42d1ba37bb508ee826908f08a259"
+    ],
+    "negative_station_candidates": 20,
+    "negative_station_eligible": 1,
+    "negative_EPW_absence_correctly_enforced": true,
+    "new_independent_accuracy_validation": false
+  },
+  "F1_selected_base_future_example": {
+    "status": "PASS",
+    "hours": 8760,
+    "source_packet_sha256": "2df672bc6cb2929ca4f59fb8eed061b46561849c0e716a7419d5c56d938b69bd",
+    "output_EPW_sha256_this_execution": "3c49a8dabb7c2d0f49f784aa417113e5c9f83b9b4e5b68ed3073f08d275bac2a",
+    "original_output_EPW_sha256": "3c49a8dabb7c2d0f49f784aa417113e5c9f83b9b4e5b68ed3073f08d275bac2a",
+    "output_comparison": {
+      "bitwise_same_EPW": true,
+      "maximum_absolute_numeric_difference_mixed_units": 0.0,
+      "comparison": "PASS_EXISTING_EPW_READBACK_PRECISION_1E_7_OR_1E_9_RELATIVE"
+    },
+    "NASA_grid": [
+      47.125,
+      15.375
+    ],
+    "selected_base_geometry": {
+      "latitude": 47.0,
+      "longitude": 15.5,
+      "elevation_m": 467.0,
+      "city": "Graz GRID BACKGROUND RESEARCH",
+      "state": "",
+      "country": "",
+      "station_id": ""
+    },
+    "quality": {
+      "execution_correctness": "COMPLETE_YEAR_SOURCE_HASHES_STATE_AND_EXPORT_CHECKS_PASS",
+      "physical_admissibility": "CONDITIONAL_T_P_Q_WATER_RH_CLOSURE_AND_MONTHLY_TARGETS_PASS",
+      "independent_accuracy": "NOT_INDEPENDENTLY_VALIDATED",
+      "operational_and_application_scope": "RESEARCH_SELECTED_BASE_FUTURE"
+    },
+    "new_independent_accuracy_validation": false,
+    "production_ready": false
+  },
+  "test_process_peak_RSS_MiB": 646.9375,
+  "actual_Community_Cloud_build_or_live_deployment_verified": false,
+  "independent_accuracy_qualified": false,
+  "production_ready": false,
+  "schema": "IGE_F1_LOCAL_PREFLIGHT_RECEIPT_v1",
+  "implementation_tree_before_receipt": "161d6eaab16b91a0dd448668c6c34c1a0aa69b80",
+  "source_contract_sha256": "0104d145598f957193a26633c618409ef4cec508657ed1bc1475a1174848597d",
+  "full_local_verification_json_sha256": "14d925b7d7cb62898d9a5b2b9deee8edb18dd0ae9ce268e1d9d84e8392262f48",
+  "old_four_EPW_hashes_unchanged": true,
+  "main_at_audit": "757c96cd46636ac64eb631b300da6ccbf50fbd7c",
+  "GitHub_CI_outcome": "PENDING_NOT_POLLED"
+}

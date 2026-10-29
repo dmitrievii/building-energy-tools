@@ -91,9 +91,9 @@ def reference_climatology(packet: Path, pattern: ClimateResult, protocol_sha256:
 
 def temperature_morph(t: np.ndarray, month_by_day: np.ndarray, reference: dict, signals: dict) -> tuple[np.ndarray, list]:
     t = np.asarray(t, dtype=float)
-    if t.ndim != 1 or len(t) != 8760 or month_by_day.shape != (365,):
-        raise ValueError("BM1_TEMPERATURE_REQUIRES_COMPLETE_NONLEAP_PATTERN")
-    days = t.reshape(365, 24)
+    if t.ndim != 1 or len(t) not in (8760, 8784) or month_by_day.shape != (len(t)//24,):
+        raise ValueError("BM1_TEMPERATURE_REQUIRES_COMPLETE_ANNUAL_PATTERN")
+    days = t.reshape(-1, 24)
     centers = (days.min(axis=1)+days.max(axis=1))/2
     ranges = days.max(axis=1)-days.min(axis=1)
     output, diagnostics = np.empty_like(days), []

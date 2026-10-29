@@ -187,8 +187,11 @@ class ActualProductTests(unittest.TestCase):
 
 
 class StreamlitRouteTests(unittest.TestCase):
-    """Real app execution, with all outgoing sockets forbidden."""
+    """Preserved offline research examples through the real app router."""
     def setUp(self):
+        from epw_climate_analyzer.engine_ui import render_engine_research_examples
+        replay = patch("epw_climate_analyzer.engine_ui.render_engine_source", render_engine_research_examples)
+        replay.start(); self.addCleanup(replay.stop)
         self.stack = []
         for target in ("socket.socket.connect", "socket.socket.connect_ex"):
             guard = patch(target, side_effect=RuntimeError("U1_APPTEST_NETWORK_FORBIDDEN"))
