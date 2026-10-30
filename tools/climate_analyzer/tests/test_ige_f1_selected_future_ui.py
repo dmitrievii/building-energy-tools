@@ -103,6 +103,20 @@ class F1UITests(unittest.TestCase):
         self.assertEqual(app.session_state["ige_engine_completed_product"].report["product_kind"],"F1_SELECTED_BASE_FUTURE")
         self.assertIn(self.historical.report["engine_EPW_sha256"],app.session_state["ige_f1_base_candidates"])
 
+    def test_nasa_timeout_explains_recovery_and_exposes_a_working_retry(self):
+        app = self.app(historical=True)
+        with patch("epw_climate_analyzer.future_selected_ui.run_selected_future", side_effect=[
+                RuntimeError("F1_SOURCE_UNAVAILABLE https://ds.nccs.nasa.gov/test timed out"), self.future]) as run:
+            app.button(key="ige_f1_build").click().run(); self.clean(app)
+            self.assertTrue(any("NASA's data service did not respond" in e.value for e in app.error))
+            self.assertEqual(app.button(key="ige_f1_build").label, "Retry future climate from this base")
+            self.assertFalse(app.button(key="ige_f1_build").disabled)
+            app.button(key="ige_f1_build").click().run(); self.clean(app)
+            self.assertEqual(run.call_count, 2)
+            self.assertEqual(app.button(key="ige_f1_build").label, "Build future climate from this base")
+            self.assertEqual(len(app.error), 0)
+            self.assertEqual(len(app.download_button), 5)
+
     def test_source_packet_mode_needs_upload_and_matching_rebuild_reuses_original_packet(self):
         with patch("epw_climate_analyzer.future_selected_ui.run_selected_future",return_value=self.future) as run:
             app=self.app(historical=True)

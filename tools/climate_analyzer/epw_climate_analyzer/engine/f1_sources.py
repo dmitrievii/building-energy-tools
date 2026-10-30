@@ -13,10 +13,12 @@ from hashlib import sha256
 import io
 import json
 import math
+from pathlib import Path
 import re
 import time
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
+from urllib.error import HTTPError, URLError
 from xml.etree import ElementTree as ET
 
 import numpy as np
@@ -25,6 +27,7 @@ import pandas as pd
 from .contracts import finite_number
 from .historical import json_bytes
 from .model_sources import bounded_zip, monthly_nex_signals
+from .source_cache import OriginalSourceCache
 
 SCHEMA = "IGE_F1_NEX_ORIGINAL_POINT_SOURCES_v1"
 SEMANTICS = "F1_CANESM5_V2_VERIFIED_MIDRANGE_MONTHLY_TRANSFER_v1"
@@ -107,7 +110,12 @@ def download(url):
                 if response.status != 200 or not body or len(body) > 2*1024**2:
                     raise ValueError("F1_SOURCE_RESPONSE_SIZE_OR_STATUS")
                 return body
-        except Exception as exc:
+        except HTTPError as exc:
+            if exc.code not in (408, 429, 500, 502, 503, 504):
+                raise
+            errors.append(type(exc).__name__+": "+str(exc))
+            if attempt < 2: time.sleep(1+attempt)
+        except (URLError, TimeoutError, ConnectionError, OSError) as exc:
             errors.append(type(exc).__name__+": "+str(exc))
             if attempt < 2: time.sleep(1+attempt)
     raise RuntimeError("F1_SOURCE_UNAVAILABLE "+url+" "+str(errors))
@@ -164,30 +172,54 @@ def decode_point(raw, variable, year, request):
         "NCSS_stationAltitude_zero_is_not_orography": True}
 
 
-def acquire_nex(request, *, checkpoint=None, progress=lambda message: None, fetch=download):
-    """At most four workers; failed acquisitions keep optional local checkpoints."""
+def acquire_nex(request, *, checkpoint=None, progress=lambda message: None, fetch=None, cache=None):
+    """At most four workers; valid responses survive a partial failed request.
+
+    The exact URL includes model, member, scenario, year, variable and point.
+    Cached bytes still pass the same catalogue and daily-source admission.
+    """
     from ..geosphere_station_year import _zip
+    if cache is None and (fetch is None or checkpoint is not None):
+        cache = OriginalSourceCache(checkpoint, entry_limit=2*1024**2)
+    fetch = fetch or download
+    def response(url, validate):
+        saved = cache.get(url) if cache is not None else None
+        if saved is not None:
+            body, info = saved
+            try:
+                validate(body)
+                return body, info
+            except (ValueError, KeyError, TypeError, ET.ParseError):
+                pass
+        body = fetch(url)
+        if not body or len(body) > 2*1024**2:
+            raise ValueError("F1_SOURCE_RESPONSE_SIZE_OR_STATUS")
+        validate(body)
+        info = {"retrieved_at_utc": datetime.now(timezone.utc).isoformat()}
+        if cache is not None:
+            cache.put(url, body, info)
+        return body, info
     pairs = sorted({(scenario, var) for scenario, year, var in request.jobs})
     files, catalogs, receipts = {}, {}, []
     for scenario, var in pairs:
         progress(f"NASA source catalogue: {scenario} / {var}")
         url = catalog_url(request, scenario, var)
-        body = fetch(url); name = f"catalog_{scenario}_{var}.xml"
+        def validate_catalog(body):
+            for s, year, v in request.jobs:
+                if (s, v) == (scenario, var): catalog_path(body, request, s, year, v)
+        body, info = response(url, validate_catalog)
+        name = f"catalog_{scenario}_{var}.xml"
         files[name] = body; catalogs[scenario, var] = body
-        receipts.append({"file": name, "url": url, "sha256": sha256(body).hexdigest(), "bytes": len(body), "kind": "catalog"})
+        receipts.append({"file": name, "url": url, "sha256": sha256(body).hexdigest(), "bytes": len(body), "kind": "catalog", **info})
     def worker(job):
         scenario, year, var = job
         path = catalog_path(catalogs[scenario, var], request, scenario, year, var)
         url = subset_url(request, path, year, var)
         name = f"{scenario}_{year}_{var}.nc"
-        if checkpoint is not None and (checkpoint/name).exists(): body = (checkpoint/name).read_bytes()
-        else:
-            body = fetch(url)
+        body, info = response(url, lambda raw: decode_point(raw, var, year, request))
         _, _, metadata = decode_point(body, var, year, request)
-        if checkpoint is not None: (checkpoint/name).write_bytes(body)
         return name, body, {"file": name, "url": url, "scenario": scenario, "year": year, "variable": var,
-            "sha256": sha256(body).hexdigest(), "bytes": len(body), "kind": "subset", **metadata}
-    if checkpoint is not None: checkpoint.mkdir(parents=True, exist_ok=True)
+            "sha256": sha256(body).hexdigest(), "bytes": len(body), "kind": "subset", **metadata, **info}
     with ThreadPoolExecutor(max_workers=4) as pool:
         futures = [pool.submit(worker, job) for job in request.jobs]
         try:
@@ -201,6 +233,20 @@ def acquire_nex(request, *, checkpoint=None, progress=lambda message: None, fetc
     files["manifest.json"] = json_bytes({"schema": SCHEMA, "request": request.to_dict(),
         "receipts": sorted(receipts, key=lambda row: row["file"]), "captured_at_utc": datetime.now(timezone.utc).isoformat()})
     return _zip(files)
+
+
+def matching_saved_nex_packet(request):
+    """Reuse disclosed original bytes only for the identical complete request."""
+    path = Path(__file__).resolve().parents[4]/"research/ige_cmip6/f1_nex_graz_original_point_sources_20261029.zip"
+    if not path.is_file():
+        return None
+    body = path.read_bytes()
+    if sha256(body).hexdigest() != "2df672bc6cb2929ca4f59fb8eed061b46561849c0e716a7419d5c56d938b69bd":
+        raise ValueError("F1_SAVED_NASA_PACKET_HASH_CHANGED")
+    manifest = json.loads(bounded_zip(body, byte_limit=MAX_PACKET, member_limit=640)["manifest.json"])
+    if manifest.get("schema") == SCHEMA and manifest.get("request") == request.to_dict():
+        return body
+    return None
 
 
 def admit_nex_packet(packet, expected_sha256, request):

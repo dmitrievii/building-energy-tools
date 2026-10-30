@@ -1,0 +1,199 @@
+{
+  "schema": "IGE_CLOUD_RESEARCH_BETA_PREFLIGHT_v1",
+  "status": "PASS",
+  "tests": {
+    "count": 784,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "seconds": 317.255716869
+  },
+  "products": {
+    "graz-historical": {
+      "rows": 8760,
+      "EPW_sha256": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635",
+      "archive_sha256": "a680e1adb4bf1104cc1b317ad70ddc12f42e4d55be44c97313b07c0759b3924f",
+      "bytes": 1244147
+    },
+    "graz-future": {
+      "rows": 8760,
+      "EPW_sha256": "fc00e09811498c368965785ee8873bc4ca1cd01761eaebb19c759faebd0e3c28",
+      "archive_sha256": "1b391cbbd56e46a7680d08308f2e6b4333fd0a1b5297c2377a9053a812e69cd3",
+      "bytes": 7412027
+    },
+    "basel-2025": {
+      "rows": 8760,
+      "EPW_sha256": "b7cc31ac7cf6a71329f85a7d60f41fe2ea43be86692f8f012cc2b02009c378e1",
+      "archive_sha256": "a7ad8b295aeaa8f3f65ee46a5999d1c637b472ebc24b3e6d9008c26e57f962fe",
+      "bytes": 4060425
+    },
+    "altdorf-2025": {
+      "rows": 8760,
+      "EPW_sha256": "53a0a904ec7141d26d9941e1ed5dbf473a8cd461c8bb86e5a6f091da450ff538",
+      "archive_sha256": "ef3341fa1fd86a6e09895b66a0effa012ab1aab21f2464a3fa59c97a95e9a637",
+      "bytes": 4025967
+    }
+  },
+  "verified_source_files": 124,
+  "preflight_contract": "deployment/ige-donor-recovery-candidate-20261030.json",
+  "saved_examples_are_offline_regressions_not_public_city_choices": true,
+  "installed_versions": {
+    "itsdangerous": "2.2.0",
+    "jsonschema": "4.26.0",
+    "typing-extensions": "4.16.0",
+    "pydeck": "0.9.3",
+    "pyarrow": "25.0.1",
+    "attrs": "26.1.0",
+    "streamlit-folium": "0.27.4",
+    "xyzservices": "2026.9.1",
+    "tenacity": "9.2.1",
+    "toml": "0.10.2",
+    "pip": "26.2.2",
+    "psychrolib": "2.5.0",
+    "markupsafe": "3.0.4",
+    "jinja2": "3.1.6",
+    "charset-normalizer": "3.5.2",
+    "et-xmlfile": "2.0.0",
+    "rpds-py": "2026.9.1",
+    "tzdata": "2026.6",
+    "python-multipart": "0.0.32",
+    "pillow": "12.3.0",
+    "packaging": "26.3",
+    "watchdog": "6.0.0",
+    "httptools": "0.9.0",
+    "click": "8.5.0",
+    "referencing": "0.37.0",
+    "six": "1.17.0",
+    "starlette": "1.10.0",
+    "anyio": "4.15.1",
+    "altair": "6.3.0",
+    "h5py": "3.16.0",
+    "folium": "0.20.0",
+    "urllib3": "2.8.0",
+    "pvlib": "0.15.2",
+    "h11": "0.16.0",
+    "numpy": "1.26.4",
+    "streamlit": "1.63.0",
+    "idna": "3.20",
+    "python-dateutil": "3.0.0",
+    "narwhals": "2.28.0",
+    "plotly": "5.24.1",
+    "beautifulsoup4": "4.15.0",
+    "soupsieve": "3.0.4",
+    "certifi": "2026.10.23",
+    "pandas": "2.3.3",
+    "uvicorn": "0.54.0",
+    "jsonschema-specifications": "2025.9.1",
+    "pytz": "2026.5",
+    "openpyxl": "3.1.5",
+    "websockets": "16.1.1",
+    "requests": "2.34.2",
+    "protobuf": "7.36.2",
+    "scipy": "1.17.1",
+    "branca": "0.8.2"
+  },
+  "actual_root_Streamlit_launch_healthy": true,
+  "weather_provider_requests": 0,
+  "H1_original_year_replay": {
+    "status": "EPW_BLOCKED",
+    "source_rows": 8760,
+    "expected_hours": 8760,
+    "numeric_hours": {
+      "dry_bulb_temperature_c": 4303,
+      "dew_point_temperature_c": 0,
+      "relative_humidity_pct": 4303,
+      "atmospheric_station_pressure_pa": 8736,
+      "horizontal_infrared_radiation_intensity_wh_m2": 0,
+      "global_horizontal_radiation_wh_m2": 8760,
+      "direct_normal_radiation_wh_m2": 0,
+      "diffuse_horizontal_radiation_wh_m2": 0,
+      "wind_direction_deg": 8752,
+      "wind_speed_m_s": 8752,
+      "total_sky_cover_tenths": 0,
+      "liquid_precipitation_depth_mm": 0
+    },
+    "source_packet_sha256": "428376132e26f6b037f731b27506c23d76705c6f89435771287c9ce3f97dfa42",
+    "EPW_absence_correctly_enforced": true,
+    "offline_replay": true,
+    "new_independent_validation": false
+  },
+  "S1_retained_integration_examples": {
+    "status": "PASS",
+    "positive_source_kind": "ERA5_DERIVED_GRID_EPWS_NOT_STATION_OBSERVATIONS",
+    "positive_hours": 8760,
+    "positive_EPW_sha256": "855515517eb22601f5f4e6025a32ff463fc81b8055aa08168ff48442565138d2",
+    "reference_original_EPW_sha256": "855515517eb22601f5f4e6025a32ff463fc81b8055aa08168ff48442565138d2",
+    "positive_numeric_comparison": {
+      "comparison": "PASS_EXISTING_EPW_READBACK_PRECISION",
+      "thermal_columns": {
+        "6": {
+          "changed_numeric_hours": 0,
+          "max_abs_difference": 0.0
+        },
+        "7": {
+          "changed_numeric_hours": 0,
+          "max_abs_difference": 0.0
+        },
+        "8": {
+          "changed_numeric_hours": 0,
+          "max_abs_difference": 0.0
+        },
+        "9": {
+          "changed_numeric_hours": 0,
+          "max_abs_difference": 0.0
+        }
+      },
+      "headers_calendar_and_nonthermal_cells_exact": true,
+      "bitwise_same_output": true
+    },
+    "four_input_EPWs_reconstructed_from_original_HTTP_bytes": [
+      "8c24329eab1d9d872f3f00f8f16b0fe184e2463147dc3d4be83d3acbcc92fc5b",
+      "306406f6bc9b7d29eb512ffebcbb3df670c23e8c8b4e4dfc5e0791381a7d08e1",
+      "12832bb44494e2e474208db19f5c8de37f577f3dbffc67655b34eafa67152cad",
+      "0a40f407aa11ebbda4d9c45150b09da877ca42d1ba37bb508ee826908f08a259"
+    ],
+    "negative_station_candidates": 20,
+    "negative_station_eligible": 1,
+    "negative_EPW_absence_correctly_enforced": true,
+    "new_independent_accuracy_validation": false
+  },
+  "F1_selected_base_future_example": {
+    "status": "PASS",
+    "hours": 8760,
+    "source_packet_sha256": "2df672bc6cb2929ca4f59fb8eed061b46561849c0e716a7419d5c56d938b69bd",
+    "output_EPW_sha256_this_execution": "3c49a8dabb7c2d0f49f784aa417113e5c9f83b9b4e5b68ed3073f08d275bac2a",
+    "original_output_EPW_sha256": "3c49a8dabb7c2d0f49f784aa417113e5c9f83b9b4e5b68ed3073f08d275bac2a",
+    "output_comparison": {
+      "bitwise_same_EPW": true,
+      "maximum_absolute_numeric_difference_mixed_units": 0.0,
+      "comparison": "PASS_EXISTING_EPW_READBACK_PRECISION_1E_7_OR_1E_9_RELATIVE"
+    },
+    "NASA_grid": [
+      47.125,
+      15.375
+    ],
+    "selected_base_geometry": {
+      "latitude": 47.0,
+      "longitude": 15.5,
+      "elevation_m": 467.0,
+      "city": "Graz GRID BACKGROUND RESEARCH",
+      "state": "",
+      "country": "",
+      "station_id": ""
+    },
+    "quality": {
+      "execution_correctness": "COMPLETE_YEAR_SOURCE_HASHES_STATE_AND_EXPORT_CHECKS_PASS",
+      "physical_admissibility": "CONDITIONAL_T_P_Q_WATER_RH_CLOSURE_AND_MONTHLY_TARGETS_PASS",
+      "independent_accuracy": "NOT_INDEPENDENTLY_VALIDATED",
+      "operational_and_application_scope": "RESEARCH_SELECTED_BASE_FUTURE"
+    },
+    "new_independent_accuracy_validation": false,
+    "production_ready": false
+  },
+  "test_process_peak_RSS_MiB": 666.28125,
+  "peak_is_test_process_not_a_multiuser_cloud_load_test": true,
+  "actual_Community_Cloud_build_or_live_deployment_verified": false,
+  "publication_status_changed": false,
+  "independent_accuracy_qualified": false,
+  "production_ready": false
+}

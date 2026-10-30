@@ -55,9 +55,8 @@ def render_future_source(st, activate):
     if choice in bases:
         base, retained = bases[choice]
         st.caption("The selected completed product supplies its own pressure and water conventions; its original EPW is retained unchanged.")
-        if base.identity["source_kind"] == "IGE_H1_STATION_YEAR" and not st.checkbox(
-                "Assume Buck liquid-water RH and a collocated pressure proxy for this station year", key="ige_f1_station_assumptions"):
-            errors.append("Explicit pressure-height and water-phase assumptions are required for this station source.")
+        if base.identity["source_kind"] == "IGE_H1_STATION_YEAR":
+            st.caption("The station method uses Buck liquid-water humidity and the published pressure level as a collocated proxy. Unconfirmed sensor heights remain recorded in the source report.")
     else:
         if choice == "UPLOAD_EPW":
             upload = st.file_uploader("Base EPW", type=["epw"], key="ige_f1_base_upload")
@@ -163,8 +162,9 @@ def render_future_source(st, activate):
                 "liquid_proxy": liquid_proxy, "NASA_source_mode": source_mode, "NASA_upload_sha256": nex_sha}
         except (ValueError, TypeError) as exc: errors.append(str(exc))
     for error in errors: st.warning(error)
-    st.caption("Only Build sends requests. NASA acquisition is 9 variables × all requested years, with four workers; the first retained request took about 15 minutes. The downloaded ZIP retains the original NASA packet for reuse. A fresh background reference adds two annual source requests per reference year. Infeasible moisture targets block export.")
-    if st.button("Build future climate from this base", type="primary", key="ige_f1_build", disabled=base is None or request is None or bool(errors)):
+    st.caption("Build acquires the NASA sources for this exact request. Completed responses are saved for 24 hours on this app instance, so Retry can resume after a timeout. Matching retained original packets can be reused; other points, scenarios and periods require their own sources. A first request can take about 15 minutes. The ZIP retains all original data for reuse.")
+    retry_current = st.session_state.get("ige_f1_error", (None,))[0] == identity and identity is not None
+    if st.button("Retry future climate from this base" if retry_current else "Build future climate from this base", type="primary", key="ige_f1_build", disabled=base is None or request is None or bool(errors)):
         st.session_state.pop("ige_f1_error", None)
         try:
             previous = st.session_state.get(PRODUCT_KEY)
@@ -183,6 +183,7 @@ def render_future_source(st, activate):
             st.session_state[PRODUCT_KEY] = completed; st.session_state[REQUEST_KEY] = identity
         except Exception as exc:
             st.session_state["ige_f1_error"] = (identity, f"{type(exc).__name__}: {exc}")
+        st.rerun()
     if st.session_state.get("ige_f1_error"):
         failed, error = st.session_state["ige_f1_error"]
         if "VAPOUR_ABOVE_SATURATION" in error or "DEWPOINT_OR_RADIATION_INCONSISTENT" in error:
@@ -190,6 +191,11 @@ def render_future_source(st, activate):
                 "the base or reference has inconsistent temperature and dew point. Known ERA5-derived 0.1°C rounding is handled with an explicit adjustment log; other supersaturation needs a separate source check. "
                 "The previous completed result remains available.")
             with st.expander("Source diagnostic"):
+                st.code(error)
+        elif "F1_SOURCE_UNAVAILABLE" in error:
+            st.error(("Current request" if failed == identity else "Previous request")+" could not finish: NASA's data service did not respond. "
+                "Use Retry to resume from completed source downloads, or load a saved original NASA packet for this exact request. The previous completed climate is still available.")
+            with st.expander("NASA connection diagnostic"):
                 st.code(error)
         else:
             st.error(("Current request" if failed == identity else "Previous request")+" failed: "+error)
