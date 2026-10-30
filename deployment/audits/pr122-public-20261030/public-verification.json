@@ -1,0 +1,48 @@
+{
+  "schema": "IGE_PR122_PUBLIC_POST_MERGE_VERIFICATION_v1",
+  "PR": 122,
+  "merge_commit": "02a7ff655b558ba3c9216b9e65378a4a171b2291",
+  "main_tree": "c5b20752ae64241399f1d0a23ecbca6ecf1f673c",
+  "tested_head": "099df8c7d9bc08e3778ad0d9d0a57e45d2e3a410",
+  "all_seven_PR_workflows_passed": true,
+  "app_CI_run": 41042115436,
+  "cloud_preflight_run": 41042115441,
+  "regressions_app_and_cloud": 772,
+  "public_app_url": "https://building-climate-analyzer.streamlit.app/",
+  "public_features_observed": {
+    "automatic_elevation_m": 363.0,
+    "requested_point": [
+      47.0707,
+      15.4395
+    ],
+    "elevation_datum_field_absent": true,
+    "map_tiles_and_marker_rendered": true,
+    "ERA5_source_point": [
+      47.0,
+      15.5
+    ],
+    "historical_2023_generation_hours": 8760,
+    "actual_EPW_download_bytes": 1689078,
+    "actual_EPW_sha256": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635",
+    "EPW_identical_to_frozen_historical_reference": true,
+    "Explore_opens_established_Overview": true,
+    "canonical_moisture_panel_controls_visible": true,
+    "canonical_climate_contour_rendered": true,
+    "source_water_convention": "PROVIDER_MAGNUS_WATER"
+  },
+  "screenshots": {
+    "public-map.jpg": {
+      "bytes": 131635,
+      "sha256": "33fe4c41d6ea7a11617ce39f75c9e932818b9d466499763fa243d3d9aec038d0"
+    },
+    "public-canonical-chart.jpg": {
+      "bytes": 95934,
+      "sha256": "2338d0eae6a69ccd1ab52819cc967872da4af357691cff331758bd13412eb905"
+    }
+  },
+  "deployed_commit_SHA_exposed_by_Streamlit": false,
+  "post_merge_CI_run_started": 41046003043,
+  "post_merge_CI_status": "IN_PROGRESS_AT_INITIAL_READ; NOT_POLLED",
+  "independent_accuracy_qualified": false,
+  "production_qualified": false
+}
