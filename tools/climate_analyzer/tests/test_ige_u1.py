@@ -227,7 +227,7 @@ class StreamlitRouteTests(unittest.TestCase):
             for page in ("Temperature", "Humidity and Psychrometrics", "Solar and Radiation", "Wind and Ventilation",
                     "Sky and Daylight", "Precipitation and Snow", "Time Series and Overlay", "Data Quality"):
                 app.sidebar.radio(key="climate_analyzer_navigation").set_value(page).run(); self.clean(app)
-                if page != "Data Quality": self.assertEqual(len(app.get("plotly_chart")), 1)
+                if page != "Data Quality": self.assertGreaterEqual(len(app.get("plotly_chart")), 1)
             self.assertEqual(run_h.call_count, 1)
         app.sidebar.radio(key="climate_analyzer_navigation").set_value("Climate File Source").run(); self.clean(app)
         app.radio(key="ige_generation_mode").set_value("Future climate").run()

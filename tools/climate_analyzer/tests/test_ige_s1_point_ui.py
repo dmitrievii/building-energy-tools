@@ -28,6 +28,8 @@ class S1UITests(unittest.TestCase):
     def setUp(self):
         for name in ("socket.socket.connect", "socket.socket.connect_ex"):
             p = patch(name, side_effect=AssertionError("S1_UI_OFFLINE")); p.start(); self.addCleanup(p.stop)
+        lookup = patch("epw_climate_analyzer.site_elevation.lookup_elevation", side_effect=ValueError("OFFLINE"))
+        lookup.start(); self.addCleanup(lookup.stop)
         p = patch("epw_climate_analyzer.location_picker.render_location_map")
         self.map = p.start(); self.addCleanup(p.stop)
 
@@ -46,7 +48,7 @@ class S1UITests(unittest.TestCase):
         app.number_input(key=picker.LATITUDE).set_value(self.request.latitude).run()
         app.number_input(key=picker.LONGITUDE).set_value(self.request.longitude).run()
         app.number_input(key=picker.HEIGHT).set_value(400.).run()
-        app.text_input(key=picker.HEIGHT_REFERENCE).set_value("Synthetic datum").run()
+        app.session_state[picker.HEIGHT_REFERENCE] = self.request.elevation_reference
         app.text_input(key="ige_s1_label").set_value(self.request.label).run()
         app.checkbox(key="ige_s1_phase").check().run()
         app.checkbox(key="ige_s1_height_proxy").check().run()
@@ -60,7 +62,7 @@ class S1UITests(unittest.TestCase):
             self.ready(app)
             self.assertFalse(app.button(key="ige_s1_build").disabled)
             self.assertEqual(self.map.call_args.kwargs["purpose"], "interpolation")
-            self.assertTrue(any("used in the temperature" in e.value for e in app.info))
+            self.assertTrue(any("used in temperature" in e.value for e in app.info))
             app.run(); run.assert_not_called()
 
     def test_point_move_clears_height_and_requires_a_new_reference(self):
@@ -69,7 +71,7 @@ class S1UITests(unittest.TestCase):
             app.number_input(key=picker.LATITUDE).set_value(48.).run()
             self.assertIsNone(app.number_input(key=picker.HEIGHT).value)
             self.assertTrue(app.button(key="ige_s1_build").disabled)
-            self.assertEqual(app.text_input(key=picker.HEIGHT_REFERENCE).value, "")
+            self.assertEqual(app.session_state[picker.HEIGHT_REFERENCE], "")
             run.assert_not_called()
 
     def test_core_only_downloads_do_not_offer_epw(self):

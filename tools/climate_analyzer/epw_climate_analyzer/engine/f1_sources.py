@@ -33,6 +33,9 @@ SPECS = {"tas": ("K", 180., 350.), "tasmin": ("K", 170., 350.), "tasmax": ("K", 
     "huss": ("1", 0., 1.), "hurs": ("%", 0., 105.), "pr": ("kg m-2 s-1", 0., .05),
     "rsds": ("W m-2", 0., 1000.), "rlds": ("W m-2", 0., 1000.), "sfcWind": ("m s-1", 0., 120.)}
 MAX_PACKET = 120*1024**2
+SCENARIOS = ("ssp126", "ssp245", "ssp370", "ssp585")
+SCENARIO_LABELS = {"ssp126": "SSP1-2.6 · low emissions", "ssp245": "SSP2-4.5 · intermediate emissions",
+                   "ssp370": "SSP3-7.0 · high emissions", "ssp585": "SSP5-8.5 · very high emissions"}
 
 
 @dataclass(frozen=True)
@@ -50,7 +53,7 @@ class SignalRequest:
             raise ValueError("F1_NEX_LATITUDE_OUTSIDE_SOURCE_GRID")
         if not -180 <= finite_number(self.longitude, "LONGITUDE") <= 180:
             raise ValueError("F1_NEX_LONGITUDE_OUTSIDE_SOURCE_GRID")
-        if (self.model, self.member) != ("CanESM5", "r1i1p1f1") or self.scenario not in ("ssp245", "ssp585"):
+        if (self.model, self.member) != ("CanESM5", "r1i1p1f1") or self.scenario not in SCENARIOS:
             raise ValueError("F1_MODEL_MEMBER_SCENARIO_NOT_ADMITTED")
         for window in (self.reference_window, self.future_window):
             if (len(window) != 2 or any(type(y) is not int for y in window)

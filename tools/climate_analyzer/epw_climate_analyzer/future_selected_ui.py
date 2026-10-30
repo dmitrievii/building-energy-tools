@@ -4,7 +4,7 @@ from __future__ import annotations
 from hashlib import sha256
 
 from .engine.f1_base import admit_base, SURFACE, COLLOCATED, MK, BUCK, epw_reference
-from .engine.f1_sources import SignalRequest, admit_nex_packet, MAX_PACKET
+from .engine.f1_sources import SignalRequest, admit_nex_packet, MAX_PACKET, SCENARIOS, SCENARIO_LABELS
 from .engine_application import EngineProduct
 from .future_selected import base_from_engine, base_from_point, run_selected_future
 
@@ -45,8 +45,11 @@ def render_future_source(st, activate):
         if key == "ACTIVE_EPW": return "Currently loaded / found EPW"
         if key == "UPLOAD_EPW": return "Upload a base EPW"
         b = bases[key][0]
-        return f"{b.request.label} · {b.request.year} · {b.identity['source_kind']} · {key[:12]}"
-    choice = st.selectbox("Selected annual base", choices, format_func=label, key="ige_f1_base_choice")
+        kind = {"IGE_B0_BACKGROUND": "Grid background", "IGE_S1_INTERPOLATED_POINT": "Interpolated point",
+                "IGE_H1_STATION_YEAR": "Observed station year"}.get(b.identity["source_kind"], "EPW base")
+        return f"{b.request.label} · {b.request.year} · {kind}"
+    map_column, selection_column = st.columns([2, 1])
+    choice = selection_column.selectbox("Selected annual base", choices, format_func=label, key="ige_f1_base_choice")
     base, retained, errors = None, {}, []
     body = None
     if choice in bases:
@@ -73,10 +76,39 @@ def render_future_source(st, activate):
                 base = admit_base(body, calendar_kind="REPRESENTATIVE_YEAR" if kind.startswith("Representative") else "ACTUAL_YEAR",
                     pressure_contract=pressure_kind, water_curve=curve)
             except (ValueError, TypeError, UnicodeError) as exc: errors.append(str(exc))
+    from .climate_maps import render_source_map, grid_markers, donor_markers
+    if base is not None:
+        rounding = base.identity.get("source_rounding_admission")
+        if rounding:
+            st.warning(f"Source rounding was reconciled in {rounding['hours']} hours for future-climate calculations. "
+                       "Only the derived vapour was lowered to saturation at the original temperature; the original EPW is unchanged. The quality report retains every adjustment.")
+        provenance = base.identity.get("source_provenance", {})
+        markers = grid_markers({"source_geometry": provenance.get("geometry", {})})
+        markers += donor_markers(provenance.get("donor_admission", []))
+        signal_lat, signal_lon = base.identity["signal_site"]
+        with map_column:
+            st.caption("Same map and source colours as historical climate. The marker follows the selected annual base.")
+            render_source_map(st, signal_lat, signal_lon, base.location.elevation_m,
+                              markers, key="future_base_"+base.sha256[:12])
+        with selection_column:
+            st.write(f"Latitude: {base.location.latitude:.5f}°")
+            st.write(f"Longitude: {base.location.longitude:.5f}°")
+            st.write(f"Elevation: {base.location.elevation_m:g} m")
+            if (signal_lat, signal_lon) != (base.location.latitude, base.location.longitude):
+                st.caption(f"Selected request / NASA signal point: {signal_lat:.5f}°, {signal_lon:.5f}°. The base weather remains at the returned grid point shown in violet.")
+            st.caption("The base fixes the location and elevation. Choose or generate another historical base to change them.")
+    else:
+        with map_column:
+            st.info("Choose an admitted annual base to display its location and sources on the map.")
     cols = st.columns(2)
     cols[0].selectbox("GCM / member", ["CanESM5 / r1i1p1f1"], key="ige_f1_model")
-    scenario = cols[1].selectbox("SSP scenario", ["ssp245", "ssp585"], key="ige_f1_ssp")
-    st.caption("One source-admitted GCM/member in F1; more models require separate source and method checks.")
+    scenario = cols[1].selectbox("SSP scenario", SCENARIOS, index=1, format_func=SCENARIO_LABELS.get, key="ige_f1_ssp",
+        help="SSP describes a socioeconomic and emissions pathway. The final number is approximate radiative forcing in W/m² in 2100, not a temperature increase or a probability.")
+    st.caption("All four NASA NEX-GDDP-CMIP6 Tier-1 SSPs can be requested for CanESM5 / r1i1p1f1. Each request must pass the original-source, calendar and variable-definition checks before export. The retained full-year replay covers SSP2-4.5; the other pathways are not independently qualified by that example.")
+    with st.expander("What do the SSP scenarios mean?"):
+        st.write("SSP1-2.6: sustainability with low emissions. SSP2-4.5: an intermediate pathway. SSP3-7.0: regional rivalry with high emissions. SSP5-8.5: fossil-fuel-intensive development with very high emissions. These are alternative conditional futures; none is assigned a probability here.")
+        st.write("The number indicates approximate radiative forcing by 2100 relative to pre-industrial conditions. Local warming depends on model, location and period. SSP1-1.9 and other CMIP6 experiments are not part of the four-scenario NEX product used here.")
+        st.caption("NASA source documentation: https://www.nasa.gov/ames/earth-science/nasa-earth-exchange-nex/gddp/downscaled-climate-projections-nex-gddp-cmip6/")
     c = st.columns(4)
     r0 = int(c[0].number_input("Reference first year", 1950, 2025, 2002, key="ige_f1_ref_first"))
     r1 = int(c[1].number_input("Reference last year", 1950, 2025, 2014, key="ige_f1_ref_last"))
@@ -153,7 +185,14 @@ def render_future_source(st, activate):
             st.session_state["ige_f1_error"] = (identity, f"{type(exc).__name__}: {exc}")
     if st.session_state.get("ige_f1_error"):
         failed, error = st.session_state["ige_f1_error"]
-        st.error(("Current request" if failed == identity else "Previous request")+" failed: "+error)
+        if "VAPOUR_ABOVE_SATURATION" in error or "DEWPOINT_OR_RADIATION_INCONSISTENT" in error:
+            st.error(("Current request" if failed == identity else "Previous request")+" could not be admitted: "
+                "the base or reference has inconsistent temperature and dew point. Known ERA5-derived 0.1°C rounding is handled with an explicit adjustment log; other supersaturation needs a separate source check. "
+                "The previous completed result remains available.")
+            with st.expander("Source diagnostic"):
+                st.code(error)
+        else:
+            st.error(("Current request" if failed == identity else "Previous request")+" failed: "+error)
     product = st.session_state.get(PRODUCT_KEY)
     if not isinstance(product, EngineProduct): return
     from .engine_ui import _scope, _downloads

@@ -24,6 +24,7 @@ class F1UITests(unittest.TestCase):
     def setUp(self):
         for name in ("socket.socket.connect","socket.socket.connect_ex"):
             p=patch(name,side_effect=AssertionError("F1_UI_NO_WEATHER_NETWORK"));p.start();self.addCleanup(p.stop)
+        lookup=patch("epw_climate_analyzer.site_elevation.lookup_elevation",side_effect=ValueError("OFFLINE"));lookup.start();self.addCleanup(lookup.stop)
         p=patch("epw_climate_analyzer.location_picker.render_location_map");p.start();self.addCleanup(p.stop)
 
     def clean(self, app): self.assertEqual([e.message for e in app.exception],[])

@@ -17,7 +17,7 @@ from .engine.contracts import HistoricalRequest
 from .engine.epw import serialize_epw
 from .engine.f1 import CONTRACT, morph_selected
 from .engine.f1_base import (BaseYear, admit_base, climatology, epw_reference, SURFACE,
-    COLLOCATED, MK, BUCK)
+    COLLOCATED, MK, BUCK, PROVIDER_ROUNDING)
 from .engine.f1_sources import SignalRequest, acquire_nex, admit_nex_packet
 from .engine.historical import (json_bytes, read_source_bundle, assemble_historical,
     source_plan, fetch_original, make_source_bundle)
@@ -34,6 +34,7 @@ def base_from_engine(product):
     req = manifest["request"]
     return admit_base(product.files["climate.epw"], calendar_kind="ACTUAL_YEAR", pressure_contract=SURFACE,
         water_curve=MK, vapour_authority="DEW_POINT", source_kind="IGE_B0_BACKGROUND",
+        rounding_policy=PROVIDER_ROUNDING,
         signal_site=[req["latitude"], req["longitude"]], extras=product.dataset.data,
         provenance={"historical_request": req, "geometry": product.report["source_geometry"],
             "source_bundle_sha256": sha256(product.files["sources.zip"]).hexdigest()})
@@ -45,6 +46,7 @@ def base_from_point(product):
     return admit_base(product.files["climate.epw"], calendar_kind="ACTUAL_YEAR", pressure_contract=COLLOCATED,
         water_curve=BUCK, source_kind="IGE_S1_INTERPOLATED_POINT",
         provenance={"point_request": product.request.to_dict(), "field_sources": product.report["field_sources"],
+            "donor_admission": product.report["donor_admission"],
             "background_geometry": product.report["background_source_geometry"],
             "source_report_sha256": sha256(product.files["report.json"]).hexdigest()})
 
@@ -100,9 +102,12 @@ def background_reference(base, window, *, packet=None, expected_sha256=None, pro
             raise ValueError("F1_REFERENCE_BACKGROUND_CELL_OR_OROGRAPHY_CHANGED")
         epw, _ = serialize_epw(result)
         bases.append(admit_base(epw, calendar_kind="ACTUAL_YEAR", pressure_contract=SURFACE,
-            water_curve=MK, vapour_authority="DEW_POINT", extras=result.data, source_kind="IGE_B0_REFERENCE"))
+            water_curve=MK, vapour_authority="DEW_POINT", extras=result.data, source_kind="IGE_B0_REFERENCE",
+            rounding_policy=PROVIDER_ROUNDING))
         name = f"background_{year}.zip"; files[name] = body
         rows.append({"year": year, "source_sha256": sha256(body).hexdigest(), "original_hours": len(result.data), "estimator_hours": 8760})
+        if "source_rounding_admission" in bases[-1].identity:
+            rows[-1]["source_rounding_admission"] = bases[-1].identity["source_rounding_admission"]
     if packet is None:
         files["manifest.json"] = json_bytes({"schema": "IGE_F1_LOCAL_BACKGROUND_REFERENCE_v1", "reference_window": list(window),
             "members": {name: {"sha256": sha256(b).hexdigest(), "bytes": len(b)} for name,b in files.items()}})
@@ -241,6 +246,7 @@ def replay_selected_future(archive, expected_sha256, *, progress=lambda message:
         b = admit_base(epw, calendar_kind=metadata["calendar_kind"], pressure_contract=metadata["pressure_contract"],
             water_curve=metadata["water_curve"], vapour_authority=metadata["vapour_authority"],
             source_kind=metadata["source_kind"], signal_site=metadata["signal_site"],
+            rounding_policy=metadata.get("source_rounding_admission", {}).get("policy"),
             extras=extra, provenance=metadata["source_provenance"])
         if b.identity != metadata: raise ValueError("F1_REPLAY_BASE_IDENTITY_CHANGED")
         return b

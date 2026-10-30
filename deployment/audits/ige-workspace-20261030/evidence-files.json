@@ -1,0 +1,74 @@
+{
+  "01-background-map-desktop.png": {
+    "bytes": 87191,
+    "sha256": "6b802107fc1654175d76a555cab91d170b9486021dde19b8721fab8ea8725dc6"
+  },
+  "02-background-map-mobile.png": {
+    "bytes": 48049,
+    "sha256": "25d5da7e291dfa1b48f3bb5eec29dce305ecb00c17ffb98905a080118c5f5ab4"
+  },
+  "03-s1-complete-result-desktop.png": {
+    "bytes": 93035,
+    "sha256": "5fab5e77c7637b3e6827094d1c6a4c9aa31e03e28343bc7f1f2cd2143d82e3ad"
+  },
+  "04-f1-s1-missing-reference-blocked.png": {
+    "bytes": 92595,
+    "sha256": "691a1454165898b455dfd5f975cb5fc21565a909bc6e525d464c1417ae85e2f1"
+  },
+  "05-f1-selected-base-form-desktop.png": {
+    "bytes": 90908,
+    "sha256": "07c1dbbf0d50680e0448a5080a1fd54b9e98d5592ca6384df11248b0a5d051c0"
+  },
+  "06-f1-selected-base-form-mobile.png": {
+    "bytes": 50192,
+    "sha256": "42e6f644107af7dcc6bad0163d86645a18b1823ccd34b41d4b811012b08db099"
+  },
+  "07-f1-complete-result-and-downloads.png": {
+    "bytes": 82543,
+    "sha256": "42376b3d2022aaa499cc0e5f30f7c74aeda08a2425c6f7921fc10a9f9f146f54"
+  },
+  "08-f1-overview-desktop.png": {
+    "bytes": 130107,
+    "sha256": "f0853b69e977a4ff53f925608ab28d3dcb556a1debbfa821ff665a77aeba876d"
+  },
+  "09-f1-overview-mobile.png": {
+    "bytes": 50529,
+    "sha256": "d2d09bb38626cca945ced9b5c76cd074f2f0e2e1cf7b63bc5c34217dd45b635f"
+  },
+  "10-canonical-temperature.png": {
+    "bytes": 110459,
+    "sha256": "e2c593dc7ca4d179dc834ae4748c776ed2737f79ec8985e4f6fbb320bf9eb8d1"
+  },
+  "10-h1-real-source-blocked-year.png": {
+    "bytes": 69171,
+    "sha256": "19222e3823d6c61ed6d71154dc2792fbd2745a50549d4e2cae6ef985300eb024"
+  },
+  "11-canonical-psychrometric-points.png": {
+    "bytes": 276143,
+    "sha256": "f26ed7fcb3bfd7c8fd9879290c822970bc41aa94a17db5b0e7c3b3fe4c3f3a21"
+  },
+  "12-canonical-psychrometric-grid.png": {
+    "bytes": 216698,
+    "sha256": "182cee809a71e796b381b7e8bcc159b0e740f232c0e506482076495ee0c5643c"
+  },
+  "13-canonical-psychrometric-contour.png": {
+    "bytes": 231227,
+    "sha256": "3fca27219a9bfc126778435b4ee371043171f5a3858780dc698a0557477b3c3a"
+  },
+  "browser-acceptance.json": {
+    "bytes": 4864,
+    "sha256": "53449ce13d991d85a872398151be834d0aa6da879fc48e55433a5bd43f07f21a"
+  },
+  "download-verification.json": {
+    "bytes": 1087,
+    "sha256": "503082e3f59aa4bc9d15555def5287d907b50dee02ba50cadf763868eaecc824"
+  },
+  "elevation-source.json": {
+    "bytes": 496,
+    "sha256": "e59495d0abe87f639ef9d82fb8441c6f9b5f8ad79549e9e11d91e9b785a3da5f"
+  },
+  "verification.json": {
+    "bytes": 734,
+    "sha256": "d98d80fc1330067867cbabec498888ecd660e70c9cfff82740a2aacdf8e92f80"
+  }
+}

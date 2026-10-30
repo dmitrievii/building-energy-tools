@@ -80,7 +80,7 @@ class PointStateTests(unittest.TestCase):
         fmap = component.call_args.args[0]
         markers = [child for child in fmap._children.values() if child.__class__.__name__ == "Marker"]
         self.assertEqual([marker.location for marker in markers], [[46., 7.]])
-        self.assertEqual(component.call_args.kwargs["height"], 560)
+        self.assertEqual(component.call_args.kwargs["height"], 620)
         self.assertEqual(component.call_args.kwargs["returned_objects"], ["last_clicked"])
         key = component.call_args.kwargs["key"]
         state[key] = {"last_clicked": {"lat": 49., "lng": 10.}}
@@ -99,6 +99,8 @@ class PublicWorkspaceTests(unittest.TestCase):
             guard.start(); self.addCleanup(guard.stop)
         # AppTest cannot drive Leaflet JS. The real component payload and callback
         # are tested above; here the actual app and native Streamlit widgets run.
+        lookup = patch("epw_climate_analyzer.site_elevation.lookup_elevation", side_effect=ValueError("OFFLINE"))
+        lookup.start(); self.addCleanup(lookup.stop)
         self.map = patch("epw_climate_analyzer.location_picker.render_location_map")
         self.map_mock = self.map.start(); self.addCleanup(self.map.stop)
 
@@ -152,12 +154,11 @@ class PublicWorkspaceTests(unittest.TestCase):
             app.number_input(key=picker.LONGITUDE).set_value(16.3738).run()
             self.assertEqual(app.session_state[picker.SELECTED], (48.2082, 16.3738))
             app.number_input(key=picker.HEIGHT).set_value(180.).run()
-            self.assertTrue(app.button(key="ige_build_background").disabled)
-            app.text_input(key=picker.HEIGHT_REFERENCE).set_value("Survey; datum unverified").run()
+            self.assertNotIn(picker.HEIGHT_REFERENCE, [x.key for x in app.text_input])
             self.assertFalse(app.button(key="ige_build_background").disabled)
             app.number_input(key=picker.LATITUDE).set_value(48.3).run()
             self.assertIsNone(app.number_input(key=picker.HEIGHT).value)
-            self.assertEqual(app.text_input(key=picker.HEIGHT_REFERENCE).value, "")
+            self.assertEqual(app.session_state[picker.HEIGHT_REFERENCE], "")
             run.assert_not_called()
             self.clean(app)
 
@@ -167,7 +168,6 @@ class PublicWorkspaceTests(unittest.TestCase):
             app.number_input(key=picker.LATITUDE).set_value(46.887).run()
             app.number_input(key=picker.LONGITUDE).set_value(8.622).run()
             app.number_input(key=picker.HEIGHT).set_value(438.).run()
-            app.text_input(key=picker.HEIGHT_REFERENCE).set_value("Survey; LN02").run()
             app.number_input(key="ige_year").set_value(2024).run()
             app.button(key="ige_build_background").click().run()
             self.assertEqual(len(app.exception), 0)
@@ -176,7 +176,7 @@ class PublicWorkspaceTests(unittest.TestCase):
             request = run.call_args.args[0]
             self.assertEqual((request.latitude, request.longitude, request.year), (46.887, 8.622, 2024))
             self.assertEqual(request.site_elevation_m, 438.)
-            self.assertEqual(request.site_elevation_reference, "Survey; LN02")
+            self.assertEqual(request.site_elevation_reference, "User supplied site elevation; vertical datum unconfirmed")
             self.assertFalse(run.call_args.kwargs["use_saved_pilot"])
             self.assertEqual(len(app.download_button), 0)
 

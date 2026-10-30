@@ -1,7 +1,7 @@
-"""Bounded Streamlit workspace for historical and representative future years.
+"""Source workspace and legacy offline examples for historical/future years.
 
-The engine's water-phase states use their own analysis adapter and plots.
-The existing EPW/GeoSphere routes keep their established scientific contracts.
+The public app uses its established analysis panels with a source-phase adapter.
+The older experimental viewer below is retained for reproducible old examples.
 """
 from __future__ import annotations
 
@@ -49,6 +49,12 @@ def _scope(st, product: EngineProduct) -> None:
             f"Selected base geometry and NASA source cell: {product.report['source_geometry']}")
         st.warning("Research future climate: independent local accuracy and production readiness are not qualified. "
             "NASA hurs is diagnostic; cloud cover, wind direction and event timing are inherited.")
+        reference_rounding = sum(row.get("source_rounding_admission", {}).get("hours", 0)
+                                 for row in d.get("reference", {}).get("years", []))
+        base_rounding = product.report["base"].get("source_rounding_admission", {}).get("hours", 0)
+        if base_rounding or reference_rounding:
+            st.warning(f"Bounded source-rounding admission: {base_rounding} base hours and {reference_rounding} reference hours. "
+                       "Derived vapour was projected to saturation at the unchanged source temperature; original EPWs and provider values were retained. Every adjustment is in the quality report.")
         if not d["total_precipitation_available"]:
             st.caption("Liquid-rain proxy mode: the total-precipitation climate ratio scales liquid rain. Total precipitation and future snow are unknown.")
         return
@@ -125,15 +131,19 @@ def render_engine_source(activate) -> None:
     st.subheader("Generate a climate year")
     st.write("Select a point to request a historical gridded background and check whether a complete EPW can be assembled.")
     st.info("Source: ERA5-derived grid data via Open-Meteo, with NASA POWER longwave radiation. This is not station interpolation or a measured station year. For observations, select GeoSphere Austria.")
-    lat, lon, height, height_reference = render_point_picker(st)
+    from .climate_maps import grid_markers
+    previous = st.session_state.get(PRODUCT_KEY)
+    from .location_picker import LATITUDE, LONGITUDE
+    same_point = isinstance(previous, EngineProduct) and previous.report.get("source_geometry", {}).get("requested_point") == [st.session_state.get(LATITUDE), st.session_state.get(LONGITUDE)]
+    sources = grid_markers(previous.report) if same_point and previous.report.get("calendar_mode") == "historical" else []
+    lat, lon, height, height_reference = render_point_picker(st, sources=sources)
     left, right = st.columns(2)
     year = left.number_input("Historical year", 2002, 2025, 2023, step=1, key="ige_year")
     offset = right.selectbox("Standard UTC offset [hours]", list(range(-12, 13)), index=13, key="ige_offset")
     label = st.text_input("Location label", "Selected point", max_chars=120, key="ige_point_label")
+    st.caption("Historical year selects a real calendar year of ERA5 reanalysis delivered by Open-Meteo. ERA5 is a gridded reconstruction combining observations and a weather model, not a station measurement. NASA POWER supplies hourly downwelling longwave radiation. The EPW uses the returned ERA5 grid point and height.")
     st.caption("2002–2025 is the current source-request window, not a guarantee of a complete year at every point. The fixed standard UTC offset has no daylight-saving changes; only whole-hour offsets are supported. Missing required weather data block export.")
     height_ready = height is None or bool(height_reference)
-    if not height_ready:
-        st.warning("Enter the elevation source / vertical datum, or clear the optional elevation.")
     request = None
     try:
         if height_ready:
@@ -154,6 +164,7 @@ def render_engine_source(activate) -> None:
                 status.update(label="Complete year and downloads verified", state="complete", expanded=False)
             st.session_state[PRODUCT_KEY] = completed
             st.session_state[REQUEST_KEY] = request.to_dict()
+            st.rerun()
         except Exception as exc:
             st.session_state[ERROR_KEY] = f"{type(exc).__name__}: {exc}"
             st.session_state[ERROR_REQUEST_KEY] = request.to_dict()
@@ -171,6 +182,11 @@ def render_engine_source(activate) -> None:
         st.write(product.dataset.display_name)
         st.success(f"{len(product.dataset.data):,} hourly records · complete year verified")
         _scope(st, product)
+        with st.expander("What is this grid?", expanded=True):
+            st.write("Violet: the grid point actually returned by Open-Meteo. The selected site and this grid point may differ. ERA5 is delivered on an approximately 0.25° grid (about 28 km north–south); the map marker is a model location, not a weather station or a verified native model-cell boundary.")
+            st.write("Temperature, dew point, RH, pressure, wind, cloud, precipitation and shortwave radiation come from the ERA5-derived response. NASA POWER longwave uses a separate processing grid; its returned point metadata do not identify native cell boundaries.")
+            st.json(product.report["source_geometry"])
+            st.caption("Open-Meteo historical source: https://open-meteo.com/en/docs/historical-weather-api · NASA POWER: https://power.larc.nasa.gov/")
         requested_height = product.report.get("diagnostics", {}).get("site_height_m_requested")
         if requested_height is not None:
             st.caption(f"Requested site elevation: {requested_height:g} m. No weather or EPW-location height correction was applied.")

@@ -198,7 +198,7 @@ class F1AdmissionTests(unittest.TestCase):
             morph_selected(self.b,climatology([self.b]),signals(),r,reference_evidence={"reference_window":[2002,2014]},nex_evidence={})
 
     def test_model_point_windows_are_explicit_and_bounded(self):
-        for change in ({"model":"Other"},{"scenario":"ssp126"},{"latitude":-70},
+        for change in ({"model":"Other"},{"scenario":"ssp119"},{"latitude":-70},
             {"reference_window":(2023,2023)},{"future_window":(2000,2019)}, {"future_window":(2090,2110)}):
             with self.subTest(change=change),self.assertRaises(ValueError): SignalRequest(47.,15.,**change) if "latitude" not in change else SignalRequest(longitude=15.,**change)
         r = SignalRequest(47.,15.,(2005,2024),(2040,2059),scenario="ssp585")

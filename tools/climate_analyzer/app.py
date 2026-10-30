@@ -493,7 +493,8 @@ def set_active_canonical_climate(dataset: object) -> None:
         raise TypeError("Expected CanonicalClimateDataset for historical climate activation.")
     st.session_state["active_canonical_climate"] = dataset
     st.session_state.pop("active_climate_file", None)
-    queue_navigation(st.session_state, "Temperature")
+    from epw_climate_analyzer.engine_analysis import is_engine_dataset
+    queue_navigation(st.session_state, "Overview" if is_engine_dataset(dataset) else "Temperature")
 
 
 def get_active_climate_file() -> ClimateFilePayload | None:
@@ -5336,6 +5337,81 @@ def render_canonical_climate_analysis(dataset) -> None:
         render_canonical_data_quality(dataset, filtered_df)
 
 
+def render_generated_climate_analysis(dataset) -> None:
+    """Use the application's established chart panels and source-aware states."""
+    from epw_climate_analyzer.engine_application import EngineProduct
+    from epw_climate_analyzer.engine_ui import PRODUCT_KEY, _scope, _downloads
+    from epw_climate_analyzer.engine_display import prepare_engine_display_frame
+    from epw_climate_analyzer.epw_parser import EpwFile, EpwLocation
+
+    pages = [p for p in NAVIGATION_PAGES if p != "Compare Climates"]
+    if st.session_state.get(NAVIGATION_KEY) not in pages:
+        st.session_state[NAVIGATION_KEY] = "Overview"
+    st.sidebar.markdown("### Explore")
+    page = st.sidebar.radio("Analysis section", pages, format_func=navigation_label,
+                            key=NAVIGATION_KEY, label_visibility="collapsed")
+    if page == "Climate File Source":
+        st.session_state.setdefault("climate_source_mode", "Generate climate")
+        render_climate_file_source()
+        return
+    product = st.session_state.get(PRODUCT_KEY)
+    if not isinstance(product, EngineProduct) or product.dataset is not dataset:
+        st.error("The selected year has no matching complete output package. Return to the climate source.")
+        return
+    _ensure_analysis_dependencies(include_solar=page in ("Overview", "Solar and Radiation"), include_comparison=False)
+    try:
+        full = prepare_engine_display_frame(dataset, include_solar=page in ("Overview", "Solar and Radiation"))
+    except ValueError as exc:
+        st.error(f"The generated source states cannot be analysed safely: {exc}")
+        return
+    data = full if page == "Data Quality" else sidebar_filters(full)
+    if data.empty:
+        st.warning("The current filters remove all data.")
+        return
+    st.sidebar.markdown("### Current climate")
+    st.sidebar.write(dataset.display_name)
+    st.sidebar.caption(f"{dataset.temporal.calendar_mode} · {dataset.temporal.timezone_name} · {len(data):,} hourly records")
+    with st.expander("Sources, definitions and qualification", expanded=False):
+        _scope(st, product)
+        st.caption("Hourly states are sampled at interval end; irradiation and precipitation cover the preceding interval. Unavailable fields remain missing.")
+    st.caption("Research climate · independent local accuracy and production readiness are not qualified.")
+    active_pressure = float(full["atmospheric_station_pressure_pa"].median())
+    if page == "Overview":
+        loc = dataset.location
+        offset = full.index[0].utcoffset().total_seconds()/3600
+        epw = EpwFile(EpwLocation(loc.city, loc.state, loc.country, dataset.provenance.provider,
+            loc.station_id, loc.latitude, loc.longitude, offset, loc.elevation_m), [], full, dataset.display_name)
+        render_overview(epw, data, full, quality_issues(full))
+        _downloads(st, product)
+    elif page == "Temperature":
+        render_temperature(data, ground_source_label="Calculated from the generated air-temperature pattern")
+    elif page == "Humidity and Psychrometrics":
+        st.caption(f"RH, guide curves, distribution bins and contour masks use {full.attrs['ige_display_water_curve']}. "
+                   "Point humidity ratios keep their hourly pressure. Guides and RH-bin coordinates use the year's median pressure; the contour's physical envelope uses the lowest source pressure so valid hourly states are retained. Wet-bulb estimates and wet-bulb guides are unavailable for this source contract.")
+        render_humidity(data, pressure_pa=active_pressure)
+    elif page == "Solar and Radiation":
+        render_solar(data)
+    elif page == "Wind and Ventilation":
+        render_wind(data)
+    elif page == "Sky and Daylight":
+        render_sky_daylight(data, latitude=float(dataset.location.latitude))
+    elif page == "Precipitation and Snow":
+        render_precipitation(data)
+    elif page == "Time Series and Overlay":
+        render_time_series_overlay(data)
+    elif page == "Natural Ventilation":
+        render_natural_ventilation(data, pressure_pa=active_pressure)
+    elif page == "HVAC and Passive Design":
+        render_hvac_passive(data)
+    else:
+        st.header("Data quality and source metadata")
+        st.dataframe({"Axis": list(product.report["quality"]), "Status": list(product.report["quality"].values())},
+                     hide_index=True, width="stretch")
+        with st.expander("Source definitions, geometry and calculation report", expanded=True):
+            st.json(product.report)
+        _downloads(st, product)
+
+
 def main() -> None:
     """Run the Streamlit Climate Analyzer application."""
     st.sidebar.caption("Building Energy Tools")
@@ -5352,8 +5428,7 @@ def main() -> None:
     if active_canonical is not None:
         from epw_climate_analyzer.engine_analysis import is_engine_dataset
         if is_engine_dataset(active_canonical):
-            from epw_climate_analyzer.engine_ui import render_engine_analysis
-            render_engine_analysis(active_canonical, render_climate_file_source)
+            render_generated_climate_analysis(active_canonical)
             return
         render_canonical_climate_analysis(active_canonical)
         return

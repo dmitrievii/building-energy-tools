@@ -1,0 +1,21 @@
+{
+  "schema": "IGE_WORKSPACE_RELEASE_VERIFICATION_v1",
+  "base_commit": "b4647b232439faf8c04c86cadfde14962d2cb62f",
+  "python": "3.12.14",
+  "tests": {
+    "count": 772,
+    "failures": 0,
+    "errors": 0,
+    "seconds": 324.357,
+    "log_sha256": "7c1c4f859fe4f7f2ea68e3ebeb099c39e2177891e1ff6f62b8f0e2440160423b"
+  },
+  "original_four_EPWs_regression_checks_pass": true,
+  "S1_F1_browser_EPWs_bitwise_unchanged": true,
+  "actual_browser_downloads": 10,
+  "local_map_tiles_verified": false,
+  "public_release_changed": false,
+  "original_failed_user_packet_available": false,
+  "rounding_failure_branch_tested": "POSITIVE_AND_NEGATIVE_SYNTHETIC_CONTROLS",
+  "independent_accuracy_qualified": false,
+  "production_qualified": false
+}

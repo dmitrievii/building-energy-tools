@@ -6,6 +6,7 @@ height describes user intent only; it is not a qualified weather correction.
 from __future__ import annotations
 
 import math
+import html
 from collections.abc import MutableMapping
 
 
@@ -50,6 +51,7 @@ def coordinates_edited(state: MutableMapping) -> bool:
     state[HEIGHT] = None
     state[HEIGHT_REFERENCE] = ""
     state[EPOCH] += 1
+    state.pop("ige_point_elevation_lookup", None)
     return True
 
 
@@ -70,9 +72,11 @@ def accept_map_click(state: MutableMapping, component_key: str) -> bool:
     return coordinates_edited(state)
 
 
-def render_location_map(state: MutableMapping, *, height: int = 560, purpose: str = "background") -> None:
+def render_location_map(state: MutableMapping, *, height: int = 620, purpose: str = "background",
+                        sources: tuple | list = (), editable: bool = True, key_suffix: str = "") -> None:
     """Render the live component; callback runs before the next widget pass."""
     import folium
+    from folium.plugins import MarkerCluster
     from streamlit_folium import st_folium
 
     lat, lon = _coordinates(state[LATITUDE], state[LONGITUDE])
@@ -82,13 +86,62 @@ def render_location_map(state: MutableMapping, *, height: int = 560, purpose: st
     suffix = "used by interpolation" if purpose == "interpolation" else "not applied"
     height_label = "height unspecified" if supplied_height is None else f"requested height {supplied_height:g} m ({suffix})"
     folium.Marker([lat, lon], tooltip=f"Selected point · {lat:.5f}°, {lon:.5f}° · {height_label}").add_to(fmap)
-    key = f"ige_selected_point_map_{state[EPOCH]}"
-    st_folium(fmap, height=height, use_container_width=True, returned_objects=["last_clicked"],
-              center=tuple(centre), key=key, on_change=lambda: accept_map_click(state, key))
+    if sources:
+        cluster = MarkerCluster(name="Climate sources", disableClusteringAtZoom=8, showCoverageOnHover=False).add_to(fmap)
+        for item in sources:
+            color = "#7c3aed" if item.get("selected", False) else "#94a3b8"
+            resolution = item.get("nominal_resolution_deg")
+            if resolution is not None:
+                half = resolution/2
+                folium.Rectangle([[max(-90., item["latitude"]-half), max(-180., item["longitude"]-half)],
+                                  [min(90., item["latitude"]+half), min(180., item["longitude"]+half)]],
+                    color=color, weight=1, fill=True, fill_opacity=.08,
+                    tooltip="Nominal ERA5 delivery-cell footprint (0.25°); native model-cell boundaries are unverified").add_to(fmap)
+            folium.CircleMarker([item["latitude"], item["longitude"]], radius=7,
+                color=color, fill=True, fill_color=color, fill_opacity=.86, weight=2,
+                tooltip=html.escape(str(item["label"])),
+                popup=folium.Popup(html.escape(str(item.get("detail", item["label"]))), max_width=360)).add_to(cluster)
+            if item.get("selected"):
+                folium.PolyLine([[lat, lon], [item["latitude"], item["longitude"]]],
+                                color=color, weight=1, dash_array="4 5").add_to(fmap)
+    key = f"ige_selected_point_map_{state[EPOCH]}" + key_suffix
+    options = {"on_change": lambda: accept_map_click(state, key)} if editable else {}
+    st_folium(fmap, height=height, use_container_width=True, returned_objects=["last_clicked"] if editable else [],
+              center=tuple(centre), key=key, **options)
 
 
-def render_point_picker(st, *, purpose: str = "background") -> tuple[float, float, float | None, str]:
+def elevation_edited(state: MutableMapping) -> None:
+    from .site_elevation import MANUAL
+    state[HEIGHT_REFERENCE] = MANUAL if state[HEIGHT] is not None else ""
+
+
+def reset_elevation(state: MutableMapping) -> None:
+    state[HEIGHT] = None
+    state[HEIGHT_REFERENCE] = ""
+    state.pop("ige_point_elevation_lookup", None)
+
+
+def resolve_point_elevation(state: MutableMapping) -> None:
+    """One automatic attempt per selected point; manual edits survive reruns."""
+    from .site_elevation import lookup_elevation
+    if state[HEIGHT] is not None and not state.get(HEIGHT_REFERENCE):
+        elevation_edited(state)
+    point = (float(state[LATITUDE]), float(state[LONGITUDE]))
+    previous = state.get("ige_point_elevation_lookup", {})
+    if previous.get("point") == point or state[HEIGHT] is not None:
+        return
+    try:
+        receipt = lookup_elevation(*point)
+        state[HEIGHT] = receipt["elevation_m"]
+        state[HEIGHT_REFERENCE] = receipt["source"]
+        state["ige_point_elevation_lookup"] = {"point": point, "receipt": receipt}
+    except Exception as exc:
+        state["ige_point_elevation_lookup"] = {"point": point, "error": str(exc)}
+
+
+def render_point_picker(st, *, purpose: str = "background", sources: tuple | list = ()) -> tuple[float, float, float | None, str]:
     initialize_point(st.session_state)
+    resolve_point_elevation(st.session_state)
     left, right = st.columns([2, 1])
     # Render the widgets before the component, so map callbacks can update their
     # state before the subsequent script run. Layout still places the map left.
@@ -98,22 +151,25 @@ def render_point_picker(st, *, purpose: str = "background") -> tuple[float, floa
                         on_change=lambda: coordinates_edited(st.session_state))
         st.number_input("Longitude [°]", -180.0, 180.0, format="%.5f", key=LONGITUDE,
                         on_change=lambda: coordinates_edited(st.session_state))
-        st.number_input("Site elevation [m] — required" if purpose == "interpolation" else "Site elevation [m] — optional", -500.0, 9000.0, value=None,
-                        placeholder="Enter a known site elevation", key=HEIGHT)
-        st.text_input("Elevation source / vertical datum", key=HEIGHT_REFERENCE,
-                      placeholder="Required when elevation is supplied")
-        st.caption("Moving the point clears its previous elevation. Enter elevation after choosing the point.")
+        st.number_input("Site elevation [m]", -500.0, 9000.0, value=None,
+                        placeholder="Automatic, or enter a known elevation", key=HEIGHT,
+                        on_change=lambda: elevation_edited(st.session_state))
+        st.caption("Elevation is filled automatically from Copernicus GLO-90 via Open-Meteo. You can overwrite it.")
+        if st.session_state.get("ige_point_elevation_lookup", {}).get("error"):
+            st.caption("Automatic elevation is unavailable. Enter the height manually; no height has been assumed.")
+        st.button("Restore automatic elevation", key="ige_point_auto_elevation",
+                  on_click=lambda: reset_elevation(st.session_state))
         if purpose == "interpolation":
-            st.info("This elevation is used in the temperature, vapour-pressure and pressure corrections. Supply its source and vertical reference. Monthly regional corrections do not resolve local inversions.")
+            st.info("This elevation is used in temperature, moisture and pressure corrections. Terrain-model and sensor-height differences remain uncertain; local inversions are not resolved.")
         else:
             st.info("Site elevation is recorded with the request. This background route does not apply a local height correction; the EPW keeps the source grid location and height.")
     with left:
-        st.caption("Click the map to select a point. Editing the coordinates moves the marker. Map edits do not request weather data.")
+        st.caption("Click the map or edit coordinates to choose a point. Violet markers show selected sources; grey markers show other candidates. Moving the point refreshes terrain elevation, without requesting weather.")
         if st.button("Reset map", key="ige_point_reset_map"):
             st.session_state[EPOCH] += 1
-        if purpose == "background":
+        if not sources and purpose == "background":
             render_location_map(st.session_state)
         else:
-            render_location_map(st.session_state, purpose=purpose)
+            render_location_map(st.session_state, purpose=purpose, sources=sources)
     return (float(st.session_state[LATITUDE]), float(st.session_state[LONGITUDE]),
             st.session_state[HEIGHT], str(st.session_state[HEIGHT_REFERENCE]).strip())

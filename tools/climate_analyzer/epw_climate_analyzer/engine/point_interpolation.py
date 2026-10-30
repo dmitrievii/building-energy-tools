@@ -240,7 +240,7 @@ def qualify_donor(request, donor, *, max_distance_km=100., max_height_difference
         valid = valid[np.isfinite(valid).all(axis=1) & valid[T].between(-75, 65)]
         if len(valid):
             moisture_residual = float(np.max(np.abs(100*valid[E]/saturation_buck_hpa(valid[T])-valid[RH])))
-    return {"station_id": donor.station_id, "source_kind": donor.source_kind,
+    return {"station_id": donor.station_id, "station_name": donor.location.city, "source_kind": donor.source_kind,
             "latitude": donor.location.latitude, "longitude": donor.location.longitude,
             "source_sha256": donor.source_sha256, "distance_km": distance,
             "temperature_elevation_m": donor.temperature_elevation_m,

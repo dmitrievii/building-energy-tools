@@ -6,6 +6,7 @@ on:
     paths:
       - deployment/verify_ige_cloud_candidate.py
       - deployment/ige-cloud-candidate-20261028.json
+      - deployment/ige-workspace-candidate-20261030.json
       - tools/climate_analyzer/**
       - research/ige_cmip6/**
   workflow_dispatch:
@@ -27,7 +28,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install -r tools/climate_analyzer/requirements.txt
-      - run: python deployment/verify_ige_cloud_candidate.py --out outputs/cloud-preflight
+      - run: python deployment/verify_ige_cloud_candidate.py --contract deployment/ige-workspace-candidate-20261030.json --out outputs/cloud-preflight
       - uses: actions/upload-artifact@v4
         if: always()
         with:

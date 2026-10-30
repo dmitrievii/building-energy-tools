@@ -1,0 +1,12 @@
+[
+  {
+    "latitude": 47.0707,
+    "longitude": 15.4395,
+    "elevation_m": 363.0,
+    "source": "Copernicus DEM GLO-90 (2021), 90 m, via Open-Meteo; terrain/surface height proxy; sensor datum unconfirmed",
+    "url": "https://api.open-meteo.com/v1/elevation?latitude=47.070700&longitude=15.439500",
+    "retrieved_utc": "2026-10-30T10:22:10.539439+00:00",
+    "response_sha256": "433ed1bc63757dd45593919ade2b5a2b6c80370fadb1bac7a1badb145f26756d",
+    "response": "{\"elevation\":[363.0]}"
+  }
+]
