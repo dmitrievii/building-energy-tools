@@ -26,6 +26,7 @@ SURFACE = "SURFACE_PROXY_WITH_0_TO_2M_ADAPTER"
 COLLOCATED = "PRESSURE_AT_TRH_OR_DECLARED_COLLOCATED_PROXY"
 MK, BUCK = "MURPHY_KOOP_WATER", "BUCK_WATER"
 MAX_EPW = 12*1024**2
+PROVIDER_ROUNDING = "B0_PROVIDER_T_TD_0P1K_VAPOUR_PROJECTION_v1"
 
 
 def water_es(t, curve):
@@ -62,6 +63,18 @@ class BaseYear:
     def vapour_state(self):
         t, td, rh, p = (self.data[k].to_numpy(float) for k in (T, TD, RH, P))
         e = water_es(td, self.water_curve) if self.vapour_authority == "DEW_POINT" else rh/100*water_es(t, self.water_curve)
+        if self.identity.get("source_rounding_admission", {}).get("policy") == PROVIDER_ROUNDING:
+            # Admission below proves both 0.1 K quantisation and the upper bound.
+            # This changes the derived F1 vapour only; source T/Td/RH and EPW
+            # remain immutable. No general-purpose supersaturation repair.
+            bad = td > t+1e-10
+            if (self.vapour_authority != "DEW_POINT" or np.any(td[bad]-t[bad] > .100001)
+                    or self.water_curve != MK or not np.allclose(t[bad]*10, np.round(t[bad]*10), rtol=0, atol=1e-7)
+                    or not np.allclose(td[bad]*10, np.round(td[bad]*10), rtol=0, atol=1e-7)
+                    or int(bad.sum()) != self.identity["source_rounding_admission"]["hours"]
+                    or self.identity["source_kind"] not in ("IGE_B0_BACKGROUND", "IGE_B0_REFERENCE")):
+                raise ValueError("F1_SOURCE_ROUNDING_ADMISSION_CHANGED")
+            e = np.minimum(e, water_es(t, self.water_curve))
         if np.any(e > water_es(t, self.water_curve)+1e-7):
             raise ValueError("F1_BASE_VAPOUR_ABOVE_SATURATION_REQUIRES_SEPARATE_ADMISSION")
         if self.pressure_contract == SURFACE: return state_from_vapour(t, e, p)
@@ -70,7 +83,7 @@ class BaseYear:
 
 def admit_base(epw, *, calendar_kind, pressure_contract, water_curve,
                vapour_authority="RH", source_kind="UPLOADED_EPW", signal_site=None,
-               extras=None, provenance=None):
+               extras=None, provenance=None, rounding_policy=None):
     if len(epw) > MAX_EPW: raise ValueError("F1_BASE_EPW_SIZE_LIMIT")
     if pressure_contract not in (SURFACE, COLLOCATED) or water_curve not in (MK, BUCK) or vapour_authority not in ("RH", "DEW_POINT"):
         raise ValueError("F1_EXPLICIT_PRESSURE_AND_WATER_CONTRACT_REQUIRED")
@@ -134,6 +147,26 @@ def admit_base(epw, *, calendar_kind, pressure_contract, water_curve,
         "pattern_year": year, "original_source_years": sorted({int(r[0]) for r in records}),
         "pressure_contract": pressure_contract, "water_curve": water_curve,
         "vapour_authority": vapour_authority, "source_provenance": provenance or {}}
+    if rounding_policy is not None:
+        if (rounding_policy != PROVIDER_ROUNDING or source_kind not in ("IGE_B0_BACKGROUND", "IGE_B0_REFERENCE")
+                or vapour_authority != "DEW_POINT" or water_curve != MK):
+            raise ValueError("F1_SOURCE_ROUNDING_POLICY_ONLY_FOR_KNOWN_B0_DEWPOINT")
+        t, td = f[T].to_numpy(float), f[TD].to_numpy(float)
+        bad = td > t+1e-10
+        if bad.any():
+            if (np.any(td[bad]-t[bad] > .100001)
+                    or not np.allclose(t[bad]*10, np.round(t[bad]*10), rtol=0, atol=1e-7)
+                    or not np.allclose(td[bad]*10, np.round(td[bad]*10), rtol=0, atol=1e-7)):
+                raise ValueError("F1_B0_EXCESS_NOT_EXPLAINED_BY_0P1K_SOURCE_QUANTISATION")
+            original, admitted = water_es(td[bad], water_curve), water_es(t[bad], water_curve)
+            identity["source_rounding_admission"] = {"policy": PROVIDER_ROUNDING, "hours": int(bad.sum()),
+                "method": "minimum absolute vapour change e*=min(e_source,es(T)); fixed source T and p",
+                "maximum_Td_minus_T_K": float(np.max(td[bad]-t[bad])),
+                "original_EPW_modified": False, "independent_accuracy_qualified": False,
+                "adjustments": [{"interval_start_utc": str(f.index[i]), "source_T_C": float(t[i]),
+                    "source_Td_C": float(td[i]), "source_RH_pct": float(f[RH].iloc[i]),
+                    "source_vapour_Pa": float(a), "admitted_vapour_Pa": float(b), "delta_vapour_Pa": float(b-a)}
+                    for i, a, b in zip(np.flatnonzero(bad), original, admitted)]}
     base = BaseYear(request, ClimateLocation(lat, lon, height, label), f, epw, identity,
         pressure_contract, water_curve, vapour_authority, calendar_kind, tuple(identity["original_source_years"]))
     base.vapour_state()

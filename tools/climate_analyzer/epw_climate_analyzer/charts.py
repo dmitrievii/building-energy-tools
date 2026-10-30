@@ -8,6 +8,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.colors import sample_colorscale
 import psychrolib
+from .humidity_display import source_humidity_chart, humidity_ratio, current_water_curve
 
 from .aggregations import (
     HEATMAP_COMPARE_HOUR,
@@ -521,12 +522,14 @@ def _psychrometric_point_from_td(t_c: float, d_g_kg: float, chart_type: str) -> 
 def _humidity_ratio_from_t_rh(t_c: float, rh_pct: float, pressure_pa: float) -> float:
     """Return humidity ratio in g/kg dry air for temperature and relative humidity."""
     rh = max(0.0, min(1.0, float(rh_pct) / 100.0))
-    return psychrolib.GetHumRatioFromRelHum(float(t_c), rh, float(pressure_pa)) * 1000.0
+    return humidity_ratio(float(t_c), rh, float(pressure_pa)) * 1000.0
 
 
 def _sat_humidity_ratio_g_kg(t_c: float, pressure_pa: float) -> float:
     """Return saturated humidity ratio in g/kg dry air for a dry-bulb temperature."""
-    return psychrolib.GetSatHumRatio(float(t_c), float(pressure_pa)) * 1000.0
+    if current_water_curve() is None:
+        return psychrolib.GetSatHumRatio(float(t_c), float(pressure_pa)) * 1000.0
+    return humidity_ratio(float(t_c), 1., float(pressure_pa)) * 1000.0
 
 
 def _humidity_ratio_from_enthalpy_t(h_kj_kg: float, t_c: float) -> float:
@@ -996,6 +999,7 @@ def _point_in_polygon(x: np.ndarray, y: np.ndarray, polygon: list[tuple[float, f
     return inside
 
 
+@source_humidity_chart
 def givoni_milne_zone_table(df: pd.DataFrame) -> pd.DataFrame:
     """Return physical-duration hours for each manually mapped Givoni-Milne zone.
 
@@ -1055,6 +1059,8 @@ def _add_psychrometric_metric_layers(
 ) -> None:
     """Add selectable psychrometric metric lines to the chart."""
     layers = set(metric_layers or [])
+    if current_water_curve() is not None:
+        layers.discard("Wet-bulb temperature")
     t_min, t_max = t_range or (-10.0, 50.0)
     d_min, d_max = d_range or (0.0, 35.0)
     h_min, h_max = h_range or (-20.0, 130.0)
@@ -1316,6 +1322,7 @@ def _add_psychrometric_tile_occupancy(
     )
 
 
+@source_humidity_chart
 def psychrometric_chart(
     df: pd.DataFrame,
     chart_type: str = "T-d",

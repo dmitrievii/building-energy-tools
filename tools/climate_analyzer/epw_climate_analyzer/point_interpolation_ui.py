@@ -20,8 +20,33 @@ ERROR_REQUEST_KEY = "ige_s1_failed_identity"
 def render_point_interpolation(st):
     st.subheader("Interpolate a climate year to a point")
     st.write("Select a point and its elevation. Four nearest complete eligible donor years provide temperature, pressure and moisture, with the frozen P8.2F height equations.")
-    lat, lon, height, reference = render_point_picker(st, purpose="interpolation")
     source = st.selectbox("Interpolation inputs", ["GeoSphere Austria — real station years", "Upload synchronous actual-year EPWs"], key="ige_s1_source")
+    from .climate_maps import donor_markers, epw_markers
+    preview_uploads = st.file_uploader("Donor EPWs — same actual year and fixed UTC offset", type=["epw"], accept_multiple_files=True, key="ige_s1_epws") if source.startswith("Upload") else []
+    entries = [(file.name, file.getvalue()) for file in (preview_uploads or [])]
+    if source.startswith("GeoSphere"):
+        if st.button("Show available station locations", key="ige_s1_show_stations"):
+            from . import geosphere as geo
+            from .geosphere_station_year import RESOURCE
+            try:
+                with st.spinner("Loading station locations (metadata only)"):
+                    sites = geo.parse_stations(geo.fetch_metadata(resource_id=RESOURCE))
+                st.session_state["ige_s1_map_stations"] = [{"latitude": s.latitude, "longitude": s.longitude,
+                    "selected": False, "label": f"{s.station_id} · {s.name}",
+                    "detail": f"{s.name} · nominal height {s.elevation_m} m; annual completeness not yet checked"}
+                    for s in sites if s.station_type != "COMBINED"]
+            except Exception as exc:
+                st.warning("Station locations are unavailable: "+str(exc))
+    sources = epw_markers(entries) if source.startswith("Upload") else st.session_state.get("ige_s1_map_stations", [])
+    prior = st.session_state.get(PRODUCT_KEY)
+    if isinstance(prior, PointProduct):
+        from .location_picker import LATITUDE, LONGITUDE
+        previous_identity = st.session_state.get(REQUEST_KEY, {})
+        if ((prior.request.latitude, prior.request.longitude) == (st.session_state.get(LATITUDE), st.session_state.get(LONGITUDE))
+                and previous_identity.get("source") == source and prior.request.year == st.session_state.get("ige_s1_year", 2023)
+                and previous_identity.get("epws", []) == [sha256(body).hexdigest() for _, body in entries]):
+            sources = donor_markers(prior.report["donor_admission"])
+    lat, lon, height, reference = render_point_picker(st, purpose="interpolation", sources=sources)
     cols = st.columns(2)
     year = cols[0].number_input("Source year", 1901, 2025, 2023, step=1, key="ige_s1_year")
     offset = cols[1].selectbox("Standard UTC offset [hours]", list(range(-12, 13)), index=13, key="ige_s1_offset")
@@ -31,7 +56,7 @@ def render_point_interpolation(st):
     st.caption("The corrections are applied to the selected elevation. Sensor datums, regional lapse rates and dry-temperature pressure transfer remain conditional research approximations. No automatic R1 correction is used.")
     uploads, confirmed = [], False
     if source.startswith("Upload"):
-        uploads = st.file_uploader("Donor EPWs — same actual year and fixed UTC offset", type=["epw"], accept_multiple_files=True, key="ige_s1_epws")
+        uploads = preview_uploads or []
         confirmed = st.checkbox("These are synchronous actual-year weather files, with known chronology; they are not TMY / TRY files", key="ige_s1_actual_year")
         st.caption("Up to 20 files; 12 MiB each and 128 MiB in total. The four nearest eligible years are selected after full annual checks. Missing values are not filled.")
     else:
@@ -44,7 +69,7 @@ def render_point_interpolation(st):
         request = PointRequest(lat, lon, height, reference, int(year), int(offset)*60, label,
                                assume_buck_water=phase, allow_nominal_height_proxy=proxy)
     except (ValueError, TypeError) as exc:
-        st.caption("Enter the required elevation and its source / vertical reference to enable interpolation.")
+        st.caption("A site elevation is required to enable interpolation; automatic lookup or manual entry supplies it.")
     epws = [(file.name, file.getvalue()) for file in uploads]
     identity = {"request": request.to_dict() if request else None, "source": source,
                 "epws": [sha256(body).hexdigest() for name, body in epws], "actual_year_confirmed": confirmed,
@@ -62,6 +87,7 @@ def render_point_interpolation(st):
                 status.update(label="Point-year calculation and source report completed", state="complete", expanded=False)
             st.session_state[PRODUCT_KEY] = product
             st.session_state[REQUEST_KEY] = identity
+            st.rerun()
         except Exception as exc:
             st.session_state[ERROR_KEY] = f"{type(exc).__name__}: {exc}"
             st.session_state[ERROR_REQUEST_KEY] = identity

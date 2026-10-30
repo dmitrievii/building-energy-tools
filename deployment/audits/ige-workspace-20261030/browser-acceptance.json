@@ -1,0 +1,155 @@
+{
+  "schema": "IGE_WORKSPACE_BROWSER_ACCEPTANCE_v1",
+  "base_commit": "b4647b232439faf8c04c86cadfde14962d2cb62f",
+  "browser": "153.0.8010.0",
+  "fixture_mode": "ORIGINAL_SOURCE_OFFLINE_ACQUISITION_ONLY",
+  "screenshots": [
+    {
+      "file": "01-background-map-desktop.png",
+      "viewport": 1440,
+      "document": 1440
+    },
+    {
+      "file": "02-background-map-mobile.png",
+      "viewport": 412,
+      "document": 412
+    },
+    {
+      "file": "03-s1-complete-result-desktop.png",
+      "viewport": 1440,
+      "document": 1440
+    },
+    {
+      "file": "04-f1-s1-missing-reference-blocked.png",
+      "viewport": 1440,
+      "document": 1440
+    },
+    {
+      "file": "05-f1-selected-base-form-desktop.png",
+      "viewport": 1440,
+      "document": 1440
+    },
+    {
+      "file": "06-f1-selected-base-form-mobile.png",
+      "viewport": 412,
+      "document": 412
+    },
+    {
+      "file": "07-f1-complete-result-and-downloads.png",
+      "viewport": 1440,
+      "document": 1440
+    },
+    {
+      "file": "08-f1-overview-desktop.png",
+      "viewport": 1440,
+      "document": 1440
+    },
+    {
+      "file": "09-f1-overview-mobile.png",
+      "viewport": 412,
+      "document": 412
+    },
+    {
+      "file": "10-canonical-temperature.png",
+      "viewport": 1440,
+      "document": 1440
+    },
+    {
+      "file": "11-canonical-psychrometric-points.png",
+      "viewport": 1440,
+      "document": 1440
+    },
+    {
+      "file": "12-canonical-psychrometric-grid.png",
+      "viewport": 1440,
+      "document": 1440
+    },
+    {
+      "file": "13-canonical-psychrometric-contour.png",
+      "viewport": 1440,
+      "document": 1440
+    },
+    {
+      "file": "10-h1-real-source-blocked-year.png",
+      "viewport": 1440,
+      "document": 1440
+    }
+  ],
+  "downloads": [
+    {
+      "button": "Download interpolated research EPW",
+      "file": "downloads/s1-point.epw",
+      "bytes": 1953442,
+      "sha256": "855515517eb22601f5f4e6025a32ff463fc81b8055aa08168ff48442565138d2"
+    },
+    {
+      "button": "Download point year, sources and correction ledgers",
+      "file": "downloads/s1-point.zip",
+      "bytes": 2980703,
+      "sha256": "6b1341dd06ddbd1cb9c8d7622bd0e34df5ab6088821e06b5dd44a19fb475d404"
+    },
+    {
+      "button": "Download EPW",
+      "file": "downloads/f1-future.epw",
+      "bytes": 2181278,
+      "sha256": "3c49a8dabb7c2d0f49f784aa417113e5c9f83b9b4e5b68ed3073f08d275bac2a"
+    },
+    {
+      "button": "Download data and report ZIP",
+      "file": "downloads/f1-future.zip",
+      "bytes": 5265883,
+      "sha256": "5838d231142a40e41a3b5abf4e36b17b7eb4be656b856f93961db64a6323161b"
+    },
+    {
+      "button": "Download quality report",
+      "file": "downloads/f1-quality.json",
+      "bytes": 43367,
+      "sha256": "6d7e269381ec38aeb93da73fc964805e0f1e0184e37d9008d9d4853514903c2f"
+    },
+    {
+      "button": "Download hourly CSV (gzip)",
+      "file": "downloads/f1-hourly.csv.gz",
+      "bytes": 621699,
+      "sha256": "581f542841a041617769e74dbcd2b4b36ed9a8e2449954e6e5770fe48e449806"
+    },
+    {
+      "button": "Download all hourly adjustments",
+      "file": "downloads/f1-adjustments.csv.gz",
+      "bytes": 466987,
+      "sha256": "7413a6ae1f25b6398a3006781ad87c325ed0f5e94a9e8d7d25350e11e1fa7ca3"
+    },
+    {
+      "button": "Download station-year data and admission ZIP",
+      "file": "downloads/h1-admission.zip",
+      "bytes": 281932,
+      "sha256": "17a5d9fc9b11d6aeb71cb283d4584ef835038b57804551d359c809d325c24c71"
+    },
+    {
+      "button": "Download station-year admission JSON",
+      "file": "downloads/h1-admission.json",
+      "bytes": 16647,
+      "sha256": "28142b0f9d486c1a3ca8c313fd0349e490166a4f966f2c60582a5d65c209ec12"
+    },
+    {
+      "button": "Download missing-hour ledger (CSV gzip)",
+      "file": "downloads/h1-gaps.csv.gz",
+      "bytes": 486,
+      "sha256": "e20ac4d093c92ef80f23dd7d6d6e65f2cfbf0019498b2a7a895b13752617ed96"
+    }
+  ],
+  "checks": [
+    "Actual public generation router and linked map render",
+    "Original terrain lookup fills 363 m at Graz; manual override works without a datum field",
+    "Four original donor EPWs build 8760-hour S1 through actual widgets; EPW and source ZIP download",
+    "S1 actual-year base cannot bypass local reference requirement",
+    "F1 actual Build runs reference/source admission and monthly solvers; five HTTP downloads complete",
+    "Future Explore opens the established overview and statistics panels",
+    "Established temperature panel and all three psychrometric representations render without an exception",
+    "H1 real source correctly refuses incomplete EPW and downloads all admission/gap evidence"
+  ],
+  "independent_accuracy_qualified": false,
+  "actual_public_deployment_verified": false,
+  "status": "PASS",
+  "local_map_tiles_verified": false,
+  "map_layout_and_marker_data_verified": true
+}

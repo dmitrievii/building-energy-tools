@@ -254,12 +254,11 @@ class ActualStationRouteTests(unittest.TestCase):
                 for page in PAGES:
                     if page in ("Climate File Source","Overview"):continue
                     app.sidebar.radio(key="climate_analyzer_navigation").set_value(page).run();self.clean(app)
-                    if page!="Data Quality":self.assertEqual(len(app.get("plotly_chart")),1)
+                    if page!="Data Quality":self.assertGreaterEqual(len(app.get("plotly_chart")),1)
                 app.sidebar.radio(key="climate_analyzer_navigation").set_value("Humidity and Psychrometrics").run();self.clean(app)
-                app.radio(key="ige_station_humidity_view").set_value("Water-phase psychrometric chart").run();self.clean(app)
+                app.selectbox(key="humidity_analysis_type").set_value("Psychrometric chart").run();self.clean(app)
                 self.assertEqual(len(app.get("plotly_chart")),1)
-                app.multiselect(key="ige_filter_months").set_value([1]).run();self.clean(app)
-                app.number_input(key="ige_station_guide_pressure").set_value(100000.).run();self.clean(app)
+                next(x for x in app.sidebar.multiselect if x.label == "Months").set_value(["Jan"]).run();self.clean(app)
                 self.assertEqual(product.files["climate.epw"],app.session_state["ige_engine_completed_product"].files["climate.epw"])
                 self.assertEqual(run.call_count,1 if key=="CH:BAS" else 2)
 

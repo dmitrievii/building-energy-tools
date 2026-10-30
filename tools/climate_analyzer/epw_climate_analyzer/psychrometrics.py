@@ -288,7 +288,8 @@ def psychrometric_rh_curves(
         y_values: list[float] = []
         for t in t_values:
             try:
-                w = psychrolib.GetHumRatioFromRelHum(float(t), float(rh), pressure_pa)
+                from .humidity_display import humidity_ratio
+                w = humidity_ratio(float(t), float(rh), pressure_pa)
                 d = w * 1000.0
                 h = psychrolib.GetMoistAirEnthalpy(float(t), w) / 1000.0
             except Exception:

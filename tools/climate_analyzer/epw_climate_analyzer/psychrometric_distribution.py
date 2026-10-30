@@ -21,6 +21,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import psychrolib
+from .humidity_display import humidity_ratio, source_humidity_chart, current_water_curve, mask_pressure
 
 from .aggregations import native_interval_hours
 
@@ -182,7 +183,8 @@ def _physical_psychrometric_mask(
     flat_valid = valid.ravel()
     for idx in np.where(flat_valid)[0]:
         try:
-            flat_sat[idx] = psychrolib.GetSatHumRatio(float(flat_t[idx]), float(pressure_pa)) * 1000.0
+            flat_sat[idx] = (psychrolib.GetSatHumRatio(float(flat_t[idx]), float(pressure_pa)) if current_water_curve() is None
+                             else humidity_ratio(float(flat_t[idx]), 1., float(mask_pressure(pressure_pa)))) * 1000.0
         except Exception:
             flat_valid[idx] = False
     saturation = flat_sat.reshape(t_c.shape)
@@ -191,6 +193,7 @@ def _physical_psychrometric_mask(
     return valid & (d_g_kg <= saturation + tolerance)
 
 
+@source_humidity_chart
 def psychrometric_density_field(
     df: pd.DataFrame,
     *,
@@ -303,6 +306,7 @@ def _nearest_density_mask(coords: pd.DataFrame, field: PsychrometricDensityField
     return field.mass_hours[ix, iy] >= float(field.threshold_hours)
 
 
+@source_humidity_chart
 def add_climate_zone_traces(
     fig: go.Figure,
     df: pd.DataFrame,
