@@ -21,67 +21,81 @@ def render_point_interpolation(st):
     st.subheader("Interpolate a climate year to a point")
     st.write("Select a point and its elevation. Four nearest complete eligible donor years provide temperature, pressure and moisture, with the frozen P8.2F height equations.")
     source = st.selectbox("Interpolation inputs", ["GeoSphere Austria — real station years", "Upload synchronous actual-year EPWs"], key="ige_s1_source")
-    from .climate_maps import donor_markers, epw_markers
+    from .climate_maps import donor_markers, epw_markers, station_location_markers
     preview_uploads = st.file_uploader("Donor EPWs — same actual year and fixed UTC offset", type=["epw"], accept_multiple_files=True, key="ige_s1_epws") if source.startswith("Upload") else []
     entries = [(file.name, file.getvalue()) for file in (preview_uploads or [])]
     if source.startswith("GeoSphere"):
-        if st.button("Show available station locations", key="ige_s1_show_stations"):
-            from . import geosphere as geo
-            from .geosphere_station_year import RESOURCE
+        # Try once on entry. Rerenders and map edits must not repeatedly call a
+        # failing provider. Successful metadata are cached across sessions.
+        if "ige_s1_map_stations" not in st.session_state:
             try:
                 with st.spinner("Loading station locations (metadata only)"):
-                    sites = geo.parse_stations(geo.fetch_metadata(resource_id=RESOURCE))
-                st.session_state["ige_s1_map_stations"] = [{"latitude": s.latitude, "longitude": s.longitude,
-                    "selected": False, "label": f"{s.station_id} · {s.name}",
-                    "detail": f"{s.name} · nominal height {s.elevation_m} m; annual completeness not yet checked"}
-                    for s in sites if s.station_type != "COMBINED"]
+                    st.session_state["ige_s1_map_stations"] = station_location_markers()
+                st.session_state.pop("ige_s1_map_error", None)
             except Exception as exc:
-                st.warning("Station locations are unavailable: "+str(exc))
+                st.session_state["ige_s1_map_stations"] = []
+                st.session_state["ige_s1_map_error"] = str(exc)
+        if st.session_state.get("ige_s1_map_error"):
+            st.warning("Station locations could not be loaded. You can retry; donor-year checks remain available.")
+            st.button("Retry station locations", key="ige_s1_retry_stations",
+                      on_click=lambda: st.session_state.pop("ige_s1_map_stations", None))
     sources = epw_markers(entries) if source.startswith("Upload") else st.session_state.get("ige_s1_map_stations", [])
     prior = st.session_state.get(PRODUCT_KEY)
     if isinstance(prior, PointProduct):
-        from .location_picker import LATITUDE, LONGITUDE
+        from .location_picker import LATITUDE, LONGITUDE, HEIGHT, HEIGHT_REFERENCE
         previous_identity = st.session_state.get(REQUEST_KEY, {})
         if ((prior.request.latitude, prior.request.longitude) == (st.session_state.get(LATITUDE), st.session_state.get(LONGITUDE))
+                and prior.request.elevation_m == st.session_state.get(HEIGHT)
+                and prior.request.elevation_reference == st.session_state.get(HEIGHT_REFERENCE)
+                and prior.request.utc_offset_minutes == 60*st.session_state.get("ige_s1_offset", 1)
                 and previous_identity.get("source") == source and prior.request.year == st.session_state.get("ige_s1_year", 2023)
                 and previous_identity.get("epws", []) == [sha256(body).hexdigest() for _, body in entries]):
-            sources = donor_markers(prior.report["donor_admission"])
+            checked = donor_markers(prior.report["donor_admission"])
+            checked_points = {(r["latitude"], r["longitude"]) for r in checked}
+            sources = checked + [r for r in sources if (r["latitude"], r["longitude"]) not in checked_points]
     lat, lon, height, reference = render_point_picker(st, purpose="interpolation", sources=sources)
     cols = st.columns(2)
     year = cols[0].number_input("Source year", 1901, 2025, 2023, step=1, key="ige_s1_year")
     offset = cols[1].selectbox("Standard UTC offset [hours]", list(range(-12, 13)), index=13, key="ige_s1_offset")
     label = st.text_input("Point label", "Selected point", max_chars=120, key="ige_s1_label")
-    phase = st.checkbox("Use Buck liquid-water moisture at all temperatures (explicit source assumption)", key="ige_s1_phase")
-    proxy = st.checkbox("Use published station / EPW altitudes as sensor-height proxies where sensor elevations are unconfirmed", key="ige_s1_height_proxy")
-    st.caption("The corrections are applied to the selected elevation. Sensor datums, regional lapse rates and dry-temperature pressure transfer remain conditional research approximations. No automatic R1 correction is used.")
     uploads, confirmed = [], False
     if source.startswith("Upload"):
         uploads = preview_uploads or []
         confirmed = st.checkbox("These are synchronous actual-year weather files, with known chronology; they are not TMY / TRY files", key="ige_s1_actual_year")
         st.caption("Up to 20 files; 12 MiB each and 128 MiB in total. The four nearest eligible years are selected after full annual checks. Missing values are not filled.")
-    else:
-        st.caption("Search: up to 20 nearest single-site stations within 100 km and 1500 m height difference; stop after four complete admitted donors. Values and QC are checked using H1. No complete donor set means no fabricated year. DE/CH station-service adapters remain separate work.")
-    background = st.checkbox("Add ERA5-derived / NASA POWER background for wind, radiation, cloud and liquid rain to attempt a complete research EPW", key="ige_s1_background")
-    if background:
-        st.info("The EPW will be a mixed-source research year: T/p/moisture from station or EPW interpolation; other fields retain the background grid geometry and hourly pattern. Those other fields are not station-interpolated or height-corrected.")
+    st.caption("Temperature, pressure and moisture are interpolated to your elevation. Wind, radiation, cloud and rain use the gridded background to complete the EPW. All sources and corrections are included in the download.")
+    with st.expander("Method and output details"):
+        core_only = st.checkbox("Calculate temperature, pressure and moisture only (skip EPW export)", key="ige_s1_core_only")
+        st.write("The interpolation uses the established Buck liquid-water humidity formula at all temperatures. Published station / EPW elevations are used where individual sensor heights are unknown. These are method assumptions, not confirmed sensor metadata.")
+        st.write("Height corrections use the existing regional temperature and moisture gradients and pressure transfer. Local inversions and sensor-datum differences remain uncertain. No automatic R1 correction is used.")
+        st.write("For a complete mixed-source research EPW, wind, radiation, cloud and liquid rain retain the ERA5-derived / NASA POWER background geometry and hourly pattern; they are not station-interpolated or height-corrected.")
+        if source.startswith("GeoSphere"):
+            st.write("The map shows station locations by default; completeness is checked on Build. Search checks up to 20 nearest single-site stations within 100 km and 1500 m height difference, stopping after four complete admitted donors. Values and QC use H1. DE/CH station-service adapters remain separate work.")
+    background = not core_only
     request = None
     try:
         request = PointRequest(lat, lon, height, reference, int(year), int(offset)*60, label,
-                               assume_buck_water=phase, allow_nominal_height_proxy=proxy)
+                               assume_buck_water=True, allow_nominal_height_proxy=True)
     except (ValueError, TypeError) as exc:
-        st.caption("A site elevation is required to enable interpolation; automatic lookup or manual entry supplies it.")
+        if height is None:
+            st.caption("A site elevation is required to enable interpolation; automatic lookup or manual entry supplies it.")
+        else:
+            st.warning("Check the point label, year and clock: "+str(exc))
     epws = [(file.name, file.getvalue()) for file in uploads]
     identity = {"request": request.to_dict() if request else None, "source": source,
                 "epws": [sha256(body).hexdigest() for name, body in epws], "actual_year_confirmed": confirmed,
                 "include_background": background}
-    ready = request is not None and phase and proxy and (not source.startswith("Upload") or (len(epws) >= 4 and confirmed))
-    st.caption("Only the button below sends requests. Editing the map, fields or files does not acquire weather data. Independent accuracy and production readiness are not qualified.")
+    ready = request is not None and (not source.startswith("Upload") or (len(epws) >= 4 and confirmed))
+    if source.startswith("Upload") and not ready:
+        st.caption("To enable Build, supply a site elevation, at least four donor EPWs and confirmation that they represent the same actual year.")
+    st.caption("Station locations and terrain height load automatically. Build requests the weather and checks donor-year completeness. Independent local accuracy and production readiness are not qualified.")
     if st.button("Check donors and interpolate year", type="primary", key="ige_s1_build", disabled=not ready):
         st.session_state.pop(ERROR_KEY, None); st.session_state.pop(ERROR_REQUEST_KEY, None)
         try:
             with st.status("Checking donor years and applying height corrections", expanded=True) as status:
+                detail = st.empty()
                 def progress(message):
-                    status.update(label=str(message)); st.write(str(message))
+                    status.update(label=str(message)); detail.write(str(message))
                 product = run_point_product(request, mode="EPW" if source.startswith("Upload") else "GEOSPHERE",
                     epws=epws, actual_year_confirmed=confirmed, include_background=background, progress=progress)
                 status.update(label="Point-year calculation and source report completed", state="complete", expanded=False)
@@ -115,8 +129,11 @@ def render_point_interpolation(st):
         monthly[P] /= 100
         st.dataframe(monthly.rename(columns={T: "Mean T [°C]", P: "Mean p [hPa]", RH: "Mean RH [%]"}), width="stretch")
     else:
-        st.warning("A complete point year cannot be reconstructed from this donor set. The report lists every admission failure.")
-        st.write(report["global_blockers"])
+        admitted = sum(bool(row["eligible"]) for row in report["donor_admission"])
+        st.warning(f"A complete point year cannot be reconstructed from this donor set. {admitted} of {len(report['donor_admission'])} checked donor years passed; four complete eligible years are required. The report lists every admission failure.")
+        st.caption("Try another source year or upload synchronous donor EPWs. Grid background remains available as a separate method.")
+        with st.expander("Why this donor set was not admitted"):
+            st.write(report["global_blockers"])
     rows = report["donor_admission"]
     if rows:
         table = pd.DataFrame(rows)

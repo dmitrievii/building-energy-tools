@@ -199,7 +199,10 @@ def _acquire_stations(request, progress):
         station_request = StationYearRequest(station.station_id, request.year, request.utc_offset_minutes,
             station.name.replace(",", ";").replace("\n", " ").replace("\r", " ")[:120])
         try:
-            product = run_station_year(station_request)
+            def station_progress(event):
+                if event.get("event") in ("batch_start", "batch_complete", "retry", "split"):
+                    progress(f"{station.name}: source {event['event']} · batch {event.get('batch_number', '?')}/{event.get('total_batches', '?')}")
+            product = run_station_year(station_request, progress=station_progress)
         except Exception as exc:
             census.append({"station_id": station.station_id, "reason": "SOURCE_ACQUISITION_FAILED",
                            "detail": type(exc).__name__+": "+str(exc)})

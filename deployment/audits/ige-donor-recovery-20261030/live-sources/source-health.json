@@ -1,0 +1,75 @@
+{
+  "schema": "IGE_DONOR_RECOVERY_SOURCE_HEALTH_v1",
+  "request": {
+    "latitude": 47.0707,
+    "longitude": 15.4395,
+    "reference_window": [
+      2002,
+      2014
+    ],
+    "future_window": [
+      2040,
+      2059
+    ],
+    "model": "CanESM5",
+    "member": "r1i1p1f1",
+    "scenario": "ssp245"
+  },
+  "checked_at_utc": "2026-10-30T11:55:44.290924+00:00",
+  "independent_accuracy_qualified": false,
+  "public_deployment_of_new_code_verified": false,
+  "NASA": [
+    {
+      "variable": "pr",
+      "catalog_url": "https://ds.nccs.nasa.gov/thredds/catalog/AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/pr/catalog.xml",
+      "catalog_sha256": "fb7737f96ffb8863c397e9b9be1e49ea380f3de53b6ec4889e3c9db2515e069f",
+      "subset_url": "https://ds.nccs.nasa.gov/thredds/ncss/grid/AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/pr/pr_day_CanESM5_ssp245_r1i1p1f1_gn_2040_v2.0.nc?var=pr&latitude=47.070700&longitude=15.439500&time_start=2040-01-01T00%3A00%3A00Z&time_end=2040-12-31T23%3A59%3A59Z&accept=netcdf3&addLatLon=true",
+      "subset_sha256": "d7a9a145030f72fd88aa2897ba9e284ea921ae3bed2776f68d2cd4d6a9afc17d",
+      "daily_rows": 365,
+      "grid": [
+        47.125,
+        15.375
+      ],
+      "unit": "kg m-2 s-1",
+      "max_abs_change_from_original_values": 0.0,
+      "seconds": 17.4799673550001
+    },
+    {
+      "variable": "tas",
+      "catalog_url": "https://ds.nccs.nasa.gov/thredds/catalog/AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/catalog.xml",
+      "catalog_sha256": "eb955318cbc533f0dea61bd03c2a0ec94062a0b984e28a872e706a8a06b7cb77",
+      "subset_url": "https://ds.nccs.nasa.gov/thredds/ncss/grid/AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2040_v2.0.nc?var=tas&latitude=47.070700&longitude=15.439500&time_start=2040-01-01T00%3A00%3A00Z&time_end=2040-12-31T23%3A59%3A59Z&accept=netcdf3&addLatLon=true",
+      "subset_sha256": "e21c35937223c02cb41e2f5e064f8bc0af621c1ad6622748d14976778d806ddc",
+      "daily_rows": 365,
+      "grid": [
+        47.125,
+        15.375
+      ],
+      "unit": "K",
+      "max_abs_change_from_original_values": 0.0,
+      "seconds": 16.334327202000168
+    },
+    {
+      "variable": "huss",
+      "catalog_url": "https://ds.nccs.nasa.gov/thredds/catalog/AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/huss/catalog.xml",
+      "catalog_sha256": "f58ebd2271e9d246c32c2a136fd3e4a83dae08a382f48efd9693811f060f9bde",
+      "subset_url": "https://ds.nccs.nasa.gov/thredds/ncss/grid/AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/huss/huss_day_CanESM5_ssp245_r1i1p1f1_gn_2040_v2.0.nc?var=huss&latitude=47.070700&longitude=15.439500&time_start=2040-01-01T00%3A00%3A00Z&time_end=2040-12-31T23%3A59%3A59Z&accept=netcdf3&addLatLon=true",
+      "subset_sha256": "f88e0751451b029f8e4412d5ae36bc54988e207e41f6aec5d54021a2219a2a9d",
+      "daily_rows": 365,
+      "grid": [
+        47.125,
+        15.375
+      ],
+      "unit": "1",
+      "max_abs_change_from_original_values": 0.0,
+      "seconds": 16.529991428999892
+    }
+  ],
+  "station_metadata_source": {
+    "url": "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h/metadata",
+    "sha256": "88b38947d9b071cc0dc1a38081d7ac88f346d5d33804d4505d4f4916cb9bf906",
+    "bytes": 241148
+  },
+  "mapped_single_site_locations": 616,
+  "status": "PASS"
+}

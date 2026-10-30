@@ -1,0 +1,368 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalog xmlns="http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.2">
+  <service name="all" serviceType="compound" base="">
+    <service name="odap" serviceType="OpenDAP" base="/thredds/dodsC/" />
+    <service name="http" serviceType="HTTPServer" base="/thredds/fileServer/" />
+    <service name="ncss" serviceType="NetcdfSubset" base="/thredds/ncss/grid/" />
+    <service name="wms" serviceType="WMS" base="/thredds/wms/" />
+  </service>
+  <service name="partial" serviceType="compound" base="">
+    <service name="odap" serviceType="OpenDAP" base="/thredds/dodsC/" />
+    <service name="ncss" serviceType="NetcdfSubset" base="/thredds/ncss/grid/" />
+    <service name="wms" serviceType="WMS" base="/thredds/wms/" />
+  </service>
+  <service name="partialnoncss" serviceType="compound" base="">
+    <service name="odap" serviceType="OpenDAP" base="/thredds/dodsC/" />
+    <service name="wms" serviceType="WMS" base="/thredds/wms/" />
+  </service>
+  <dataset name="CanESM5/ssp245/r1i1p1f1/tas/">
+    <property name="DatasetScan" value="true" />
+    <metadata inherited="true">
+      <serviceName>all</serviceName>
+    </metadata>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2015_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2015_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2015_v2.0.nc">
+      <dataSize units="Mbytes">242.1</dataSize>
+      <date type="modified">2025-06-22T20:17:25.950Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2016_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2016_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2016_v2.0.nc">
+      <dataSize units="Mbytes">242.2</dataSize>
+      <date type="modified">2025-06-22T20:17:35.221Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2017_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2017_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2017_v2.0.nc">
+      <dataSize units="Mbytes">242.1</dataSize>
+      <date type="modified">2025-06-22T20:17:44.278Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2018_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2018_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2018_v2.0.nc">
+      <dataSize units="Mbytes">242.1</dataSize>
+      <date type="modified">2025-06-22T20:17:53.403Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2019_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2019_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2019_v2.0.nc">
+      <dataSize units="Mbytes">242.1</dataSize>
+      <date type="modified">2025-06-22T20:18:02.404Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2020_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2020_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2020_v2.0.nc">
+      <dataSize units="Mbytes">242.1</dataSize>
+      <date type="modified">2025-06-22T20:18:11.304Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2021_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2021_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2021_v2.0.nc">
+      <dataSize units="Mbytes">242.0</dataSize>
+      <date type="modified">2025-06-22T20:18:20.353Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2022_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2022_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2022_v2.0.nc">
+      <dataSize units="Mbytes">242.0</dataSize>
+      <date type="modified">2025-06-22T20:18:29.326Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2023_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2023_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2023_v2.0.nc">
+      <dataSize units="Mbytes">242.0</dataSize>
+      <date type="modified">2025-06-22T20:18:38.236Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2024_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2024_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2024_v2.0.nc">
+      <dataSize units="Mbytes">242.0</dataSize>
+      <date type="modified">2025-06-22T20:18:47.273Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2025_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2025_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2025_v2.0.nc">
+      <dataSize units="Mbytes">242.0</dataSize>
+      <date type="modified">2025-06-22T20:18:56.394Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2026_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2026_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2026_v2.0.nc">
+      <dataSize units="Mbytes">242.0</dataSize>
+      <date type="modified">2025-06-22T20:19:05.317Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2027_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2027_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2027_v2.0.nc">
+      <dataSize units="Mbytes">242.1</dataSize>
+      <date type="modified">2025-06-22T20:19:14.382Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2028_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2028_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2028_v2.0.nc">
+      <dataSize units="Mbytes">242.1</dataSize>
+      <date type="modified">2025-06-22T20:19:23.390Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2029_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2029_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2029_v2.0.nc">
+      <dataSize units="Mbytes">242.1</dataSize>
+      <date type="modified">2025-06-22T20:19:32.417Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2030_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2030_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2030_v2.0.nc">
+      <dataSize units="Mbytes">242.1</dataSize>
+      <date type="modified">2025-06-22T20:19:41.568Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2031_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2031_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2031_v2.0.nc">
+      <dataSize units="Mbytes">242.0</dataSize>
+      <date type="modified">2025-06-22T20:19:50.786Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2032_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2032_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2032_v2.0.nc">
+      <dataSize units="Mbytes">242.1</dataSize>
+      <date type="modified">2025-06-22T20:19:59.912Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2033_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2033_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2033_v2.0.nc">
+      <dataSize units="Mbytes">241.9</dataSize>
+      <date type="modified">2025-06-22T20:20:09.054Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2034_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2034_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2034_v2.0.nc">
+      <dataSize units="Mbytes">242.0</dataSize>
+      <date type="modified">2025-06-22T20:20:17.950Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2035_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2035_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2035_v2.0.nc">
+      <dataSize units="Mbytes">242.0</dataSize>
+      <date type="modified">2025-06-22T20:20:26.948Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2036_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2036_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2036_v2.0.nc">
+      <dataSize units="Mbytes">242.0</dataSize>
+      <date type="modified">2025-06-22T20:20:36.098Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2037_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2037_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2037_v2.0.nc">
+      <dataSize units="Mbytes">242.0</dataSize>
+      <date type="modified">2025-06-22T20:20:45.184Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2038_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2038_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2038_v2.0.nc">
+      <dataSize units="Mbytes">242.0</dataSize>
+      <date type="modified">2025-06-22T20:20:54.081Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2039_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2039_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2039_v2.0.nc">
+      <dataSize units="Mbytes">242.0</dataSize>
+      <date type="modified">2025-06-22T20:21:03.092Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2040_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2040_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2040_v2.0.nc">
+      <dataSize units="Mbytes">241.9</dataSize>
+      <date type="modified">2025-06-22T20:21:12.231Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2041_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2041_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2041_v2.0.nc">
+      <dataSize units="Mbytes">242.0</dataSize>
+      <date type="modified">2025-06-22T20:21:21.438Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2042_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2042_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2042_v2.0.nc">
+      <dataSize units="Mbytes">241.9</dataSize>
+      <date type="modified">2025-06-22T20:21:30.490Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2043_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2043_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2043_v2.0.nc">
+      <dataSize units="Mbytes">242.0</dataSize>
+      <date type="modified">2025-06-22T20:21:39.575Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2044_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2044_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2044_v2.0.nc">
+      <dataSize units="Mbytes">241.9</dataSize>
+      <date type="modified">2025-06-22T20:21:48.739Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2045_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2045_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2045_v2.0.nc">
+      <dataSize units="Mbytes">242.0</dataSize>
+      <date type="modified">2025-06-22T20:21:57.778Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2046_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2046_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2046_v2.0.nc">
+      <dataSize units="Mbytes">241.9</dataSize>
+      <date type="modified">2025-06-22T20:22:06.960Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2047_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2047_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2047_v2.0.nc">
+      <dataSize units="Mbytes">241.9</dataSize>
+      <date type="modified">2025-06-22T20:22:16.005Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2048_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2048_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2048_v2.0.nc">
+      <dataSize units="Mbytes">242.0</dataSize>
+      <date type="modified">2025-06-22T20:22:25.186Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2049_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2049_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2049_v2.0.nc">
+      <dataSize units="Mbytes">241.9</dataSize>
+      <date type="modified">2025-06-22T20:22:34.341Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2050_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2050_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2050_v2.0.nc">
+      <dataSize units="Mbytes">242.0</dataSize>
+      <date type="modified">2025-06-22T20:22:43.485Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2051_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2051_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2051_v2.0.nc">
+      <dataSize units="Mbytes">242.1</dataSize>
+      <date type="modified">2025-06-22T20:22:52.583Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2052_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2052_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2052_v2.0.nc">
+      <dataSize units="Mbytes">242.0</dataSize>
+      <date type="modified">2025-06-22T20:23:01.589Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2053_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2053_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2053_v2.0.nc">
+      <dataSize units="Mbytes">241.9</dataSize>
+      <date type="modified">2025-06-22T20:23:10.657Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2054_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2054_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2054_v2.0.nc">
+      <dataSize units="Mbytes">241.9</dataSize>
+      <date type="modified">2025-06-22T20:23:19.694Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2055_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2055_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2055_v2.0.nc">
+      <dataSize units="Mbytes">241.8</dataSize>
+      <date type="modified">2025-06-22T20:23:28.730Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2056_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2056_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2056_v2.0.nc">
+      <dataSize units="Mbytes">242.0</dataSize>
+      <date type="modified">2025-06-22T20:23:37.856Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2057_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2057_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2057_v2.0.nc">
+      <dataSize units="Mbytes">241.9</dataSize>
+      <date type="modified">2025-06-22T20:23:46.833Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2058_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2058_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2058_v2.0.nc">
+      <dataSize units="Mbytes">241.8</dataSize>
+      <date type="modified">2025-06-22T20:23:55.700Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2059_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2059_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2059_v2.0.nc">
+      <dataSize units="Mbytes">241.8</dataSize>
+      <date type="modified">2025-06-22T20:24:04.575Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2060_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2060_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2060_v2.0.nc">
+      <dataSize units="Mbytes">241.9</dataSize>
+      <date type="modified">2025-06-22T20:24:13.483Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2061_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2061_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2061_v2.0.nc">
+      <dataSize units="Mbytes">241.9</dataSize>
+      <date type="modified">2025-06-22T20:24:22.401Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2062_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2062_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2062_v2.0.nc">
+      <dataSize units="Mbytes">241.8</dataSize>
+      <date type="modified">2025-06-22T20:24:31.410Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2063_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2063_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2063_v2.0.nc">
+      <dataSize units="Mbytes">241.8</dataSize>
+      <date type="modified">2025-06-22T20:24:40.347Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2064_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2064_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2064_v2.0.nc">
+      <dataSize units="Mbytes">241.9</dataSize>
+      <date type="modified">2025-06-22T20:24:49.325Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2065_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2065_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2065_v2.0.nc">
+      <dataSize units="Mbytes">241.9</dataSize>
+      <date type="modified">2025-06-22T20:24:58.223Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2066_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2066_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2066_v2.0.nc">
+      <dataSize units="Mbytes">241.8</dataSize>
+      <date type="modified">2025-06-22T20:25:07.131Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2067_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2067_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2067_v2.0.nc">
+      <dataSize units="Mbytes">241.8</dataSize>
+      <date type="modified">2025-06-22T20:25:16.100Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2068_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2068_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2068_v2.0.nc">
+      <dataSize units="Mbytes">241.8</dataSize>
+      <date type="modified">2025-06-22T20:25:25.028Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2069_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2069_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2069_v2.0.nc">
+      <dataSize units="Mbytes">241.7</dataSize>
+      <date type="modified">2025-06-22T20:25:33.949Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2070_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2070_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2070_v2.0.nc">
+      <dataSize units="Mbytes">241.8</dataSize>
+      <date type="modified">2025-06-22T20:25:42.856Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2071_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2071_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2071_v2.0.nc">
+      <dataSize units="Mbytes">241.7</dataSize>
+      <date type="modified">2025-06-22T20:25:51.869Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2072_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2072_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2072_v2.0.nc">
+      <dataSize units="Mbytes">241.7</dataSize>
+      <date type="modified">2025-06-22T20:26:00.794Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2073_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2073_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2073_v2.0.nc">
+      <dataSize units="Mbytes">241.8</dataSize>
+      <date type="modified">2025-06-22T20:26:09.682Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2074_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2074_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2074_v2.0.nc">
+      <dataSize units="Mbytes">241.8</dataSize>
+      <date type="modified">2025-06-22T20:26:18.748Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2075_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2075_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2075_v2.0.nc">
+      <dataSize units="Mbytes">241.8</dataSize>
+      <date type="modified">2025-06-22T20:26:27.658Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2076_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2076_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2076_v2.0.nc">
+      <dataSize units="Mbytes">241.8</dataSize>
+      <date type="modified">2025-06-22T20:26:36.815Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2077_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2077_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2077_v2.0.nc">
+      <dataSize units="Mbytes">241.7</dataSize>
+      <date type="modified">2025-06-22T20:26:45.808Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2078_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2078_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2078_v2.0.nc">
+      <dataSize units="Mbytes">241.7</dataSize>
+      <date type="modified">2025-06-22T20:26:54.808Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2079_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2079_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2079_v2.0.nc">
+      <dataSize units="Mbytes">241.7</dataSize>
+      <date type="modified">2025-06-22T20:27:03.915Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2080_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2080_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2080_v2.0.nc">
+      <dataSize units="Mbytes">241.8</dataSize>
+      <date type="modified">2025-06-22T20:27:13.036Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2081_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2081_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2081_v2.0.nc">
+      <dataSize units="Mbytes">241.8</dataSize>
+      <date type="modified">2025-06-22T20:27:22.240Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2082_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2082_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2082_v2.0.nc">
+      <dataSize units="Mbytes">241.7</dataSize>
+      <date type="modified">2025-06-22T20:27:31.554Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2083_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2083_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2083_v2.0.nc">
+      <dataSize units="Mbytes">241.7</dataSize>
+      <date type="modified">2025-06-22T20:27:40.558Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2084_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2084_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2084_v2.0.nc">
+      <dataSize units="Mbytes">241.8</dataSize>
+      <date type="modified">2025-06-22T20:27:49.653Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2085_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2085_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2085_v2.0.nc">
+      <dataSize units="Mbytes">241.7</dataSize>
+      <date type="modified">2025-06-22T20:27:58.623Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2086_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2086_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2086_v2.0.nc">
+      <dataSize units="Mbytes">241.7</dataSize>
+      <date type="modified">2025-06-22T20:28:07.531Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2087_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2087_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2087_v2.0.nc">
+      <dataSize units="Mbytes">241.8</dataSize>
+      <date type="modified">2025-06-22T20:28:16.435Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2088_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2088_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2088_v2.0.nc">
+      <dataSize units="Mbytes">241.8</dataSize>
+      <date type="modified">2025-06-22T20:28:25.292Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2089_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2089_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2089_v2.0.nc">
+      <dataSize units="Mbytes">241.7</dataSize>
+      <date type="modified">2025-06-22T20:28:34.220Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2090_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2090_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2090_v2.0.nc">
+      <dataSize units="Mbytes">241.8</dataSize>
+      <date type="modified">2025-06-22T20:28:43.153Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2091_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2091_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2091_v2.0.nc">
+      <dataSize units="Mbytes">241.8</dataSize>
+      <date type="modified">2025-06-22T20:28:52.102Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2092_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2092_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2092_v2.0.nc">
+      <dataSize units="Mbytes">241.7</dataSize>
+      <date type="modified">2025-06-22T20:29:01.180Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2093_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2093_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2093_v2.0.nc">
+      <dataSize units="Mbytes">241.8</dataSize>
+      <date type="modified">2025-06-22T20:29:10.240Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2094_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2094_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2094_v2.0.nc">
+      <dataSize units="Mbytes">241.7</dataSize>
+      <date type="modified">2025-06-22T20:29:19.143Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2095_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2095_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2095_v2.0.nc">
+      <dataSize units="Mbytes">241.8</dataSize>
+      <date type="modified">2025-06-22T20:29:28.066Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2096_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2096_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2096_v2.0.nc">
+      <dataSize units="Mbytes">241.7</dataSize>
+      <date type="modified">2025-06-22T20:29:37.088Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2097_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2097_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2097_v2.0.nc">
+      <dataSize units="Mbytes">241.7</dataSize>
+      <date type="modified">2025-06-22T20:29:46.144Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2098_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2098_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2098_v2.0.nc">
+      <dataSize units="Mbytes">241.7</dataSize>
+      <date type="modified">2025-06-22T20:29:55.061Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2099_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2099_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2099_v2.0.nc">
+      <dataSize units="Mbytes">241.7</dataSize>
+      <date type="modified">2025-06-22T20:30:04.008Z</date>
+    </dataset>
+    <dataset name="tas_day_CanESM5_ssp245_r1i1p1f1_gn_2100_v2.0.nc" ID="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2100_v2.0.nc" urlPath="AMES/NEX/GDDP-CMIP6/CanESM5/ssp245/r1i1p1f1/tas/tas_day_CanESM5_ssp245_r1i1p1f1_gn_2100_v2.0.nc">
+      <dataSize units="Mbytes">241.7</dataSize>
+      <date type="modified">2025-06-22T20:30:17.198Z</date>
+    </dataset>
+  </dataset>
+</catalog>

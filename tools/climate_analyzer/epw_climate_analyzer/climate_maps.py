@@ -5,6 +5,21 @@ import csv
 import io
 import math
 
+import streamlit as st
+
+
+@st.cache_data(show_spinner=False, ttl=86400, max_entries=2)
+def station_location_markers():
+    """Metadata preview only; a marker never certifies an eligible donor year."""
+    from . import geosphere as geo
+    from .geosphere_station_year import RESOURCE
+    sites = geo.parse_stations(geo.fetch_metadata(resource_id=RESOURCE, timeout_s=12))
+    return [{"latitude": s.latitude, "longitude": s.longitude,
+             "station_id": s.station_id, "selected": False,
+             "label": f"{s.station_id} · {s.name}",
+             "detail": f"{s.name} · nominal height {s.elevation_m} m; annual completeness not yet checked"}
+            for s in sites if s.station_type != "COMBINED"]
+
 
 def donor_markers(rows):
     return [{"latitude": r["latitude"], "longitude": r["longitude"],

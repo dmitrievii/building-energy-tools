@@ -32,6 +32,10 @@ class S1UITests(unittest.TestCase):
         lookup.start(); self.addCleanup(lookup.stop)
         p = patch("epw_climate_analyzer.location_picker.render_location_map")
         self.map = p.start(); self.addCleanup(p.stop)
+        p = patch("epw_climate_analyzer.climate_maps.station_location_markers", return_value=[
+            {"latitude": 47.1, "longitude": 15.4, "station_id": "TEST", "selected": False,
+             "label": "Test metadata station", "detail": "Year completeness unchecked"}])
+        self.locations = p.start(); self.addCleanup(p.stop)
 
     def clean(self, app):
         self.assertEqual([e.message for e in app.exception], [])
@@ -50,20 +54,22 @@ class S1UITests(unittest.TestCase):
         app.number_input(key=picker.HEIGHT).set_value(400.).run()
         app.session_state[picker.HEIGHT_REFERENCE] = self.request.elevation_reference
         app.text_input(key="ige_s1_label").set_value(self.request.label).run()
-        app.checkbox(key="ige_s1_phase").check().run()
-        app.checkbox(key="ige_s1_height_proxy").check().run()
         self.clean(app)
         return app
 
-    def test_real_router_contains_map_and_height_gates_without_auto_requests(self):
+    def test_default_station_locations_and_enabled_build_without_method_checkboxes(self):
         with patch("epw_climate_analyzer.point_interpolation_ui.run_point_product") as run:
             app = self.app()
             self.assertTrue(app.button(key="ige_s1_build").disabled)
             self.ready(app)
             self.assertFalse(app.button(key="ige_s1_build").disabled)
+            self.assertEqual(len(self.map.call_args.kwargs["sources"]), 1)
+            self.assertEqual(self.map.call_args.kwargs["sources"][0]["station_id"], "TEST")
+            self.assertTrue({"ige_s1_phase", "ige_s1_height_proxy", "ige_s1_background"}.isdisjoint({x.key for x in app.checkbox}))
             self.assertEqual(self.map.call_args.kwargs["purpose"], "interpolation")
             self.assertTrue(any("used in temperature" in e.value for e in app.info))
             app.run(); run.assert_not_called()
+            self.locations.assert_called_once()
 
     def test_point_move_clears_height_and_requires_a_new_reference(self):
         with patch("epw_climate_analyzer.point_interpolation_ui.run_point_product") as run:
@@ -77,6 +83,7 @@ class S1UITests(unittest.TestCase):
     def test_core_only_downloads_do_not_offer_epw(self):
         with patch("epw_climate_analyzer.point_interpolation_ui.run_point_product", return_value=self.complete) as run:
             app = self.ready(self.app())
+            app.checkbox(key="ige_s1_core_only").check().run()
             app.button(key="ige_s1_build").click().run(); self.clean(app)
             self.assertEqual(run.call_count, 1)
             self.assertEqual(run.call_args.args[0], self.request)
@@ -99,13 +106,32 @@ class S1UITests(unittest.TestCase):
     def test_only_complete_explicit_composite_exposes_epw_download(self):
         with patch("epw_climate_analyzer.point_interpolation_ui.run_point_product", return_value=self.composite) as run:
             app = self.ready(self.app())
-            app.checkbox(key="ige_s1_background").check().run()
             run.assert_not_called()
             app.button(key="ige_s1_build").click().run(); self.clean(app)
             self.assertTrue(run.call_args.kwargs["include_background"])
             self.assertEqual(len(app.download_button), 4)
             self.assertTrue(all(d.proto.url for d in app.download_button))
-            self.assertTrue(any("mixed-source" in e.value for e in app.info))
+            self.assertTrue(any("gridded background" in e.value for e in app.caption))
+
+    def test_station_map_failure_can_retry_and_does_not_disable_a_valid_weather_request(self):
+        self.locations.side_effect = [TimeoutError("metadata timeout"), self.locations.return_value]
+        app = self.ready(self.app())
+        self.assertFalse(app.button(key="ige_s1_build").disabled)
+        self.assertEqual(self.locations.call_count, 1)
+        app.button(key="ige_s1_retry_stations").click().run()
+        self.assertEqual(self.locations.call_count, 2)
+        self.assertEqual(len(self.map.call_args.kwargs["sources"]), 1)
+        self.assertNotIn("ige_s1_retry_stations", [b.key for b in app.button])
+
+    def test_changed_elevation_cannot_show_old_donors_as_current_admitted_sources(self):
+        with patch("epw_climate_analyzer.point_interpolation_ui.run_point_product", return_value=self.complete) as run:
+            app = self.ready(self.app())
+            app.button(key="ige_s1_build").click().run(); self.clean(app)
+            self.assertEqual(sum(bool(m["selected"]) for m in self.map.call_args.kwargs["sources"]), 4)
+            app.number_input(key=picker.HEIGHT).set_value(500.).run(); self.clean(app)
+            self.assertFalse(any(m["selected"] for m in self.map.call_args.kwargs["sources"]))
+            self.assertTrue(any("previous completed point" in w.value for w in app.warning))
+            run.assert_called_once()
 
     def test_edits_and_failed_request_keep_previous_product_with_correct_label(self):
         app = self.ready(self.app())

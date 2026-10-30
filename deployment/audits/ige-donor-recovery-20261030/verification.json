@@ -1,0 +1,114 @@
+{
+  "schema": "IGE_DONOR_WORKFLOW_AND_SOURCE_RECOVERY_AUDIT_v1",
+  "status": "PASS_LOCAL",
+  "recorded_at_utc": "2026-10-30T12:10:05.658327+00:00",
+  "base_commit": "02a7ff655b558ba3c9216b9e65378a4a171b2291",
+  "branch": "fix/ige-donors-and-source-reliability-20261030",
+  "source_manifest_sha256": "f8d7f9321d5f30e98df7d7d94a06581551b80061dc5554a10dce6cffbb31a4a6",
+  "verified_source_files": 124,
+  "original_research_inputs_unchanged": 30,
+  "tests": {
+    "count": 784,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "seconds": 317.255716869
+  },
+  "pip_check": "PASS",
+  "root_Streamlit_health": "PASS",
+  "full_annual_regressions": {
+    "graz-historical": {
+      "rows": 8760,
+      "EPW_sha256": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635",
+      "archive_sha256": "a680e1adb4bf1104cc1b317ad70ddc12f42e4d55be44c97313b07c0759b3924f",
+      "bytes": 1244147
+    },
+    "graz-future": {
+      "rows": 8760,
+      "EPW_sha256": "fc00e09811498c368965785ee8873bc4ca1cd01761eaebb19c759faebd0e3c28",
+      "archive_sha256": "1b391cbbd56e46a7680d08308f2e6b4333fd0a1b5297c2377a9053a812e69cd3",
+      "bytes": 7412027
+    },
+    "basel-2025": {
+      "rows": 8760,
+      "EPW_sha256": "b7cc31ac7cf6a71329f85a7d60f41fe2ea43be86692f8f012cc2b02009c378e1",
+      "archive_sha256": "a7ad8b295aeaa8f3f65ee46a5999d1c637b472ebc24b3e6d9008c26e57f962fe",
+      "bytes": 4060425
+    },
+    "altdorf-2025": {
+      "rows": 8760,
+      "EPW_sha256": "53a0a904ec7141d26d9941e1ed5dbf473a8cd461c8bb86e5a6f091da450ff538",
+      "archive_sha256": "ef3341fa1fd86a6e09895b66a0effa012ab1aab21f2464a3fa59c97a95e9a637",
+      "bytes": 4025967
+    }
+  },
+  "S1_retained_examples": {
+    "status": "PASS",
+    "positive_source_kind": "ERA5_DERIVED_GRID_EPWS_NOT_STATION_OBSERVATIONS",
+    "positive_hours": 8760,
+    "positive_EPW_sha256": "855515517eb22601f5f4e6025a32ff463fc81b8055aa08168ff48442565138d2",
+    "reference_original_EPW_sha256": "855515517eb22601f5f4e6025a32ff463fc81b8055aa08168ff48442565138d2",
+    "positive_numeric_comparison": {
+      "comparison": "PASS_EXISTING_EPW_READBACK_PRECISION",
+      "thermal_columns": {
+        "6": {
+          "changed_numeric_hours": 0,
+          "max_abs_difference": 0.0
+        },
+        "7": {
+          "changed_numeric_hours": 0,
+          "max_abs_difference": 0.0
+        },
+        "8": {
+          "changed_numeric_hours": 0,
+          "max_abs_difference": 0.0
+        },
+        "9": {
+          "changed_numeric_hours": 0,
+          "max_abs_difference": 0.0
+        }
+      },
+      "headers_calendar_and_nonthermal_cells_exact": true,
+      "bitwise_same_output": true
+    },
+    "four_input_EPWs_reconstructed_from_original_HTTP_bytes": [
+      "8c24329eab1d9d872f3f00f8f16b0fe184e2463147dc3d4be83d3acbcc92fc5b",
+      "306406f6bc9b7d29eb512ffebcbb3df670c23e8c8b4e4dfc5e0791381a7d08e1",
+      "12832bb44494e2e474208db19f5c8de37f577f3dbffc67655b34eafa67152cad",
+      "0a40f407aa11ebbda4d9c45150b09da877ca42d1ba37bb508ee826908f08a259"
+    ],
+    "negative_station_candidates": 20,
+    "negative_station_eligible": 1,
+    "negative_EPW_absence_correctly_enforced": true,
+    "new_independent_accuracy_validation": false
+  },
+  "F1_automatic_original_reuse": {
+    "status": "PASS",
+    "rows": 8760,
+    "EPW_sha256": "3c49a8dabb7c2d0f49f784aa417113e5c9f83b9b4e5b68ed3073f08d275bac2a",
+    "fresh_weather_requests": 0,
+    "explicit_NASA_packet_supplied_by_caller": false,
+    "independent_accuracy_qualified": false,
+    "production_ready": false
+  },
+  "live_source_health": {
+    "NASA_variables": [
+      "pr",
+      "tas",
+      "huss"
+    ],
+    "daily_values_each": 365,
+    "max_difference_from_retained_v2_values": 0.0,
+    "single_site_station_locations": 616,
+    "receipt_sha256": "3ee061e3b575d2f3e193cf9220321fd8b1fdf8f8d7b588521b58254a9a754209"
+  },
+  "quality": {
+    "execution_correctness": "784_REGRESSIONS_ORIGINAL_SOURCE_REPLAYS_AND_ROOT_HEALTH_PASS",
+    "physical_admissibility": "EXISTING_CONDITIONAL_SOURCE_AND_STATE_CONTRACTS_RETAINED",
+    "independent_accuracy": "NOT_NEWLY_QUALIFIED",
+    "production_ready": false
+  },
+  "public_deployment_of_new_code_verified": false,
+  "main_modified": false,
+  "GitHub_Actions_are_separate_from_this_local_receipt": true
+}
