@@ -1,0 +1,46 @@
+{
+  "schema": "IGE_PR123_PUBLIC_DEPLOYMENT_AUDIT_v1",
+  "checked_at_utc": "2026-11-01T17:26:12.238805+00:00",
+  "PR": 123,
+  "merge_commit": "acf3c029024a745f717cad21103119fbcd913f7c",
+  "main_tree": "b5d97c9a6b67643fa67660bf47ed2431f478db2e",
+  "post_merge_CI": {
+    "run_id": 41061693469,
+    "status": "SUCCESS",
+    "tests": 784
+  },
+  "post_merge_GeoSphere_precipitation_snow_smoke": {
+    "run_id": 41061693385,
+    "status": "SUCCESS"
+  },
+  "post_merge_live_browser_audit": {
+    "run_id": 41061693374,
+    "status": "FAILURE",
+    "reason": "LIVE_RUNTIME_BUILD_DIFFERS_FROM_MAIN",
+    "expected_build": "4ff2c732b8ddf282e8c377b0f46a5c93313459d7b4f105f759b26868ff3f8efa",
+    "observed_build": "0f6ef8f117e40fa767122823ffa6be994f9f4918ed5c757b5bfd5316f620a8c3"
+  },
+  "fresh_public_browser": {
+    "url": "https://building-climate-analyzer.streamlit.app/",
+    "observed_build": "0f6ef8f117e40fa767122823ffa6be994f9f4918ed5c757b5bfd5316f620a8c3",
+    "old_show_station_locations_button_visible": true,
+    "old_Buck_checkbox_visible": true,
+    "old_sensor_height_proxy_checkbox_visible": true,
+    "old_background_checkbox_visible": true,
+    "donor_button_enabled": false,
+    "site_elevation_input_m": 859.0
+  },
+  "deployment_status": "MERGED_BUT_PUBLIC_FEATURES_STILL_OLD",
+  "stale_checkout_vs_cached_imports": "NOT_DISTINGUISHED_WITHOUT_OWNER_LOGS",
+  "authentication": {
+    "GitHub_sign_in_result": "SERVER_ERROR_500",
+    "fresh_Streamlit_owner_session_created": false,
+    "credentials_recorded": false
+  },
+  "required_next_action": "OWNER_REBOOT_APP_IN_STREAMLIT_CLOUD_THEN_VERIFY_FRESH_PUBLIC_SESSION",
+  "scientific_code_changed_in_this_audit": false,
+  "main_changed_in_this_audit": false,
+  "independent_accuracy_newly_qualified": false,
+  "public_updated_version_verified": false,
+  "screenshot_sha256": "ad4fade3de4730f87f7fcb410a68b8badfd87c482af846fbef2ea4b0cb24e728"
+}
