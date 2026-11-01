@@ -1,0 +1,1190 @@
+{
+  "schema": "IGE_F1_SELECTED_BASE_MONTHLY_FUTURE_v1",
+  "product_kind": "F1_SELECTED_BASE_FUTURE",
+  "calendar_mode": "climatology",
+  "rows": 8760,
+  "pattern_year": 2023,
+  "original_source_years": [
+    2023
+  ],
+  "future_request": {
+    "latitude": 47.0707,
+    "longitude": 15.4395,
+    "reference_window": [
+      2002,
+      2014
+    ],
+    "future_window": [
+      2040,
+      2059
+    ],
+    "model": "CanESM5",
+    "member": "r1i1p1f1",
+    "scenario": "ssp245"
+  },
+  "base": {
+    "EPW_sha256": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635",
+    "source_kind": "IGE_B0_BACKGROUND",
+    "EPW_location": [
+      47.0,
+      15.5,
+      467.0
+    ],
+    "signal_site": [
+      47.0707,
+      15.4395
+    ],
+    "calendar_kind": "ACTUAL_YEAR",
+    "pattern_year": 2023,
+    "original_source_years": [
+      2023
+    ],
+    "pressure_contract": "SURFACE_PROXY_WITH_0_TO_2M_ADAPTER",
+    "water_curve": "MURPHY_KOOP_WATER",
+    "vapour_authority": "DEW_POINT",
+    "source_provenance": {
+      "historical_request": {
+        "latitude": 47.0707,
+        "longitude": 15.4395,
+        "year": 2023,
+        "utc_offset_minutes": 60,
+        "label": "Graz",
+        "mode": "grid_background",
+        "site_elevation_m": null,
+        "site_elevation_reference": ""
+      },
+      "geometry": {
+        "requested_point": [
+          47.0707,
+          15.4395
+        ],
+        "background_cell": [
+          47.0,
+          15.5
+        ],
+        "requested_to_background_distance_km": 9.10082531971942,
+        "elevation_m_provider_response_proxy": 467.0,
+        "site_elevation_or_native_orography_verified": false,
+        "local_height_correction_applied": false
+      },
+      "source_bundle_sha256": "72cbccb2e6bfd66d3aab06b1973d09d77f5f269fe9f7a4d17e9fc768bccd26fc"
+    }
+  },
+  "diagnostics": {
+    "base": {
+      "EPW_sha256": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635",
+      "source_kind": "IGE_B0_BACKGROUND",
+      "EPW_location": [
+        47.0,
+        15.5,
+        467.0
+      ],
+      "signal_site": [
+        47.0707,
+        15.4395
+      ],
+      "calendar_kind": "ACTUAL_YEAR",
+      "pattern_year": 2023,
+      "original_source_years": [
+        2023
+      ],
+      "pressure_contract": "SURFACE_PROXY_WITH_0_TO_2M_ADAPTER",
+      "water_curve": "MURPHY_KOOP_WATER",
+      "vapour_authority": "DEW_POINT",
+      "source_provenance": {
+        "historical_request": {
+          "latitude": 47.0707,
+          "longitude": 15.4395,
+          "year": 2023,
+          "utc_offset_minutes": 60,
+          "label": "Graz",
+          "mode": "grid_background",
+          "site_elevation_m": null,
+          "site_elevation_reference": ""
+        },
+        "geometry": {
+          "requested_point": [
+            47.0707,
+            15.4395
+          ],
+          "background_cell": [
+            47.0,
+            15.5
+          ],
+          "requested_to_background_distance_km": 9.10082531971942,
+          "elevation_m_provider_response_proxy": 467.0,
+          "site_elevation_or_native_orography_verified": false,
+          "local_height_correction_applied": false
+        },
+        "source_bundle_sha256": "72cbccb2e6bfd66d3aab06b1973d09d77f5f269fe9f7a4d17e9fc768bccd26fc"
+      }
+    },
+    "reference": {
+      "kind": "SAME_CHAIN_BACKGROUND_MULTIYEAR",
+      "reference_window": [
+        2002,
+        2014
+      ],
+      "reference_source_packet_sha256": "68f19f8e02fb00d178009ab6dbe2f4dc441f879bc870b71a98d797b05ecd1403",
+      "years": [
+        {
+          "year": 2002,
+          "source_sha256": "54fd8b67ad9ea1240a1423900152605bd3529137a87593078e85167fcacf616d",
+          "original_hours": 8760,
+          "estimator_hours": 8760
+        },
+        {
+          "year": 2003,
+          "source_sha256": "b6e08cc48c88ae10068723b6e6a4e213ed98d3cf5fe76f33197138e340fab148",
+          "original_hours": 8760,
+          "estimator_hours": 8760
+        },
+        {
+          "year": 2004,
+          "source_sha256": "dc2aefa4150849d542faaf64fa8d5f2c379c0d5dadde00821b984bc2cb853e32",
+          "original_hours": 8784,
+          "estimator_hours": 8760
+        },
+        {
+          "year": 2005,
+          "source_sha256": "3688d70275b17565de869603c17a54a503c6ba1f03d4ff0f40ce529379f359d8",
+          "original_hours": 8760,
+          "estimator_hours": 8760
+        },
+        {
+          "year": 2006,
+          "source_sha256": "59adb519ed51eeaa39425678205bd6fb8cdccd1480aa79492a715a77ceb4ecc9",
+          "original_hours": 8760,
+          "estimator_hours": 8760
+        },
+        {
+          "year": 2007,
+          "source_sha256": "11eb1df85d20861097f698117e4aef39be17d5b1f07de5e49023accc14cfa7b3",
+          "original_hours": 8760,
+          "estimator_hours": 8760
+        },
+        {
+          "year": 2008,
+          "source_sha256": "28aee822bc31da3090baa9f5f928318926acc2c20eb7cda8f2c788180a7a7f46",
+          "original_hours": 8784,
+          "estimator_hours": 8760
+        },
+        {
+          "year": 2009,
+          "source_sha256": "91482f47c8a7eabd0d4c2d7cf77b3472b60d8ad66bd02ca97a0580c393445dce",
+          "original_hours": 8760,
+          "estimator_hours": 8760
+        },
+        {
+          "year": 2010,
+          "source_sha256": "39b5d2a5c1e23b515bbce87b8b6d0ebb3b8abd4ab2608717a394185922760fe4",
+          "original_hours": 8760,
+          "estimator_hours": 8760
+        },
+        {
+          "year": 2011,
+          "source_sha256": "41b5073ead92c5312141c68569eb547ede2e80e4676cee5d6fc5657bbdb6264b",
+          "original_hours": 8760,
+          "estimator_hours": 8760
+        },
+        {
+          "year": 2012,
+          "source_sha256": "0ce3b843c2a8478811b369cd09f360809aaf6ecfab7e556c7657485e5f55357e",
+          "original_hours": 8784,
+          "estimator_hours": 8760
+        },
+        {
+          "year": 2013,
+          "source_sha256": "76caf23ae5ed75d8424516d157b377d9901519c9f9a49623ca2ce763e6554deb",
+          "original_hours": 8760,
+          "estimator_hours": 8760
+        },
+        {
+          "year": 2014,
+          "source_sha256": "99d118cb58c24fdc09652720b1b51704c17bdc58d84b5e2e9d3a72194a11b569",
+          "original_hours": 8760,
+          "estimator_hours": 8760
+        }
+      ],
+      "noleap_estimator": true,
+      "leap_source_rows_preserved": true,
+      "reference_sampling_uncertainty_qualified": false
+    },
+    "NEX": {
+      "source_packet_sha256": "2df672bc6cb2929ca4f59fb8eed061b46561849c0e716a7419d5c56d938b69bd",
+      "request": {
+        "latitude": 47.0707,
+        "longitude": 15.4395,
+        "reference_window": [
+          2002,
+          2014
+        ],
+        "future_window": [
+          2040,
+          2059
+        ],
+        "model": "CanESM5",
+        "member": "r1i1p1f1",
+        "scenario": "ssp245"
+      },
+      "grid": [
+        47.125,
+        15.375
+      ],
+      "reference_daily_rows": 4745,
+      "future_daily_rows": 7300,
+      "original_responses": 315,
+      "temperature_operator": "VERIFIED_TAS_EQUALS_DAILY_MIN_MAX_MIDRANGE_NOT_HOURLY_MEAN",
+      "q_operator": "DAILY_SPECIFIC_HUMIDITY_TIME_MEAN_KG_PER_KG_MOIST_AIR",
+      "hurs_phase": "NOT_CONFIRMED_BY_POINT_SUBSET; SOURCE_PERCENT_CHANGE_DIAGNOSTIC_ONLY",
+      "reference_model_branch": "historical through 2014; selected SSP from 2015 if needed",
+      "daily_time_bounds_verified": false,
+      "hourly_NASA_daily_equalities_claimed": false,
+      "monthly_operator": "UTC daily seasonal signals transferred to fixed-local-standard monthly pattern"
+    },
+    "signal_request": {
+      "latitude": 47.0707,
+      "longitude": 15.4395,
+      "reference_window": [
+        2002,
+        2014
+      ],
+      "future_window": [
+        2040,
+        2059
+      ],
+      "model": "CanESM5",
+      "member": "r1i1p1f1",
+      "scenario": "ssp245"
+    },
+    "temperature_months": [
+      {
+        "month": 1,
+        "pattern_mean_midrange_c": 2.5387096774193543,
+        "reference_mean_midrange_c": -0.7053349875930521,
+        "pattern_to_reference_rebase_K": -3.2440446650124066,
+        "NEX_midrange_delta_K": 2.857548132960317,
+        "DTR_combined_scale": 1.0203522608020528,
+        "NEX_DTR_ratio": 0.8542484043924162,
+        "target_midrange_c": 2.1522131453672646,
+        "target_DTR_K": 6.043118551072802,
+        "actual_midrange_c": 2.1522131453672655,
+        "actual_DTR_K": 6.043118551072801,
+        "hourly_time_mean_T_c_DIAGNOSTIC_NOT_NEX_tas": 1.8223815341805802
+      },
+      {
+        "month": 2,
+        "pattern_mean_midrange_c": 3.3500000000000005,
+        "reference_mean_midrange_c": 0.6601648351648352,
+        "pattern_to_reference_rebase_K": -2.6898351648351655,
+        "NEX_midrange_delta_K": 2.964495614858774,
+        "DTR_combined_scale": 0.7913940685200405,
+        "NEX_DTR_ratio": 0.9142128229435063,
+        "target_midrange_c": 3.624660450023609,
+        "target_DTR_K": 7.603035872567532,
+        "actual_midrange_c": 3.6246604500236086,
+        "actual_DTR_K": 7.603035872567532,
+        "hourly_time_mean_T_c_DIAGNOSTIC_NOT_NEX_tas": 3.0887029491553486
+      },
+      {
+        "month": 3,
+        "pattern_mean_midrange_c": 6.73709677419355,
+        "reference_mean_midrange_c": 5.357444168734491,
+        "pattern_to_reference_rebase_K": -1.379652605459059,
+        "NEX_midrange_delta_K": 2.701968652616363,
+        "DTR_combined_scale": 0.8515663069405733,
+        "NEX_DTR_ratio": 0.9001670192242894,
+        "target_midrange_c": 8.059412821350854,
+        "target_DTR_K": 9.205157079218907,
+        "actual_midrange_c": 8.059412821350854,
+        "actual_DTR_K": 9.205157079218909,
+        "hourly_time_mean_T_c_DIAGNOSTIC_NOT_NEX_tas": 7.953310406494145
+      },
+      {
+        "month": 4,
+        "pattern_mean_midrange_c": 8.283333333333335,
+        "reference_mean_midrange_c": 10.334102564102565,
+        "pattern_to_reference_rebase_K": 2.0507692307692302,
+        "NEX_midrange_delta_K": 1.7823012523162056,
+        "DTR_combined_scale": 1.1556570041950667,
+        "NEX_DTR_ratio": 0.9922357819530976,
+        "target_midrange_c": 12.11640381641877,
+        "target_DTR_K": 10.647453198650547,
+        "actual_midrange_c": 12.11640381641877,
+        "actual_DTR_K": 10.647453198650547,
+        "hourly_time_mean_T_c_DIAGNOSTIC_NOT_NEX_tas": 12.168729397442045
+      },
+      {
+        "month": 5,
+        "pattern_mean_midrange_c": 13.980645161290324,
+        "reference_mean_midrange_c": 14.623697270471466,
+        "pattern_to_reference_rebase_K": 0.6430521091811414,
+        "NEX_midrange_delta_K": 0.6193898884889251,
+        "DTR_combined_scale": 1.2414321345886594,
+        "NEX_DTR_ratio": 1.0048537597085732,
+        "target_midrange_c": 15.24308715896039,
+        "target_DTR_K": 10.628260919994524,
+        "actual_midrange_c": 15.243087158960385,
+        "actual_DTR_K": 10.628260919994524,
+        "hourly_time_mean_T_c_DIAGNOSTIC_NOT_NEX_tas": 15.480360881458383
+      },
+      {
+        "month": 6,
+        "pattern_mean_midrange_c": 18.32333333333333,
+        "reference_mean_midrange_c": 18.223333333333333,
+        "pattern_to_reference_rebase_K": -0.09999999999999787,
+        "NEX_midrange_delta_K": 1.663528704520985,
+        "DTR_combined_scale": 0.9763452800826918,
+        "NEX_DTR_ratio": 0.9882682148238343,
+        "target_midrange_c": 19.886862037854318,
+        "target_DTR_K": 10.37529584301207,
+        "actual_midrange_c": 19.886862037854318,
+        "actual_DTR_K": 10.375295843012074,
+        "hourly_time_mean_T_c_DIAGNOSTIC_NOT_NEX_tas": 20.20349623632558
+      },
+      {
+        "month": 7,
+        "pattern_mean_midrange_c": 20.567741935483863,
+        "reference_mean_midrange_c": 19.905459057071962,
+        "pattern_to_reference_rebase_K": -0.6622828784119008,
+        "NEX_midrange_delta_K": 1.9809530745664858,
+        "DTR_combined_scale": 0.9802271469629329,
+        "NEX_DTR_ratio": 0.9792128299439852,
+        "target_midrange_c": 21.886412131638448,
+        "target_DTR_K": 10.801470754920574,
+        "actual_midrange_c": 21.88641213163846,
+        "actual_DTR_K": 10.801470754920576,
+        "hourly_time_mean_T_c_DIAGNOSTIC_NOT_NEX_tas": 22.044776786295643
+      },
+      {
+        "month": 8,
+        "pattern_mean_midrange_c": 19.914516129032254,
+        "reference_mean_midrange_c": 19.097642679900744,
+        "pattern_to_reference_rebase_K": -0.8168734491315099,
+        "NEX_midrange_delta_K": 2.91677940122543,
+        "DTR_combined_scale": 1.0480733752951474,
+        "NEX_DTR_ratio": 1.028729199612908,
+        "target_midrange_c": 22.014422081126174,
+        "target_DTR_K": 10.815441056674764,
+        "actual_midrange_c": 22.014422081126177,
+        "actual_DTR_K": 10.815441056674764,
+        "hourly_time_mean_T_c_DIAGNOSTIC_NOT_NEX_tas": 22.05442918308637
+      },
+      {
+        "month": 9,
+        "pattern_mean_midrange_c": 18.038333333333334,
+        "reference_mean_midrange_c": 14.834871794871793,
+        "pattern_to_reference_rebase_K": -3.203461538461541,
+        "NEX_midrange_delta_K": 3.1600568722455975,
+        "DTR_combined_scale": 0.8438459578099452,
+        "NEX_DTR_ratio": 1.028401262716872,
+        "target_midrange_c": 17.994928667117392,
+        "target_DTR_K": 10.044579717797713,
+        "actual_midrange_c": 17.994928667117392,
+        "actual_DTR_K": 10.044579717797713,
+        "hourly_time_mean_T_c_DIAGNOSTIC_NOT_NEX_tas": 17.808813753089307
+      },
+      {
+        "month": 10,
+        "pattern_mean_midrange_c": 13.406451612903224,
+        "reference_mean_midrange_c": 9.907196029776674,
+        "pattern_to_reference_rebase_K": -3.4992555831265495,
+        "NEX_midrange_delta_K": 2.560235588130528,
+        "DTR_combined_scale": 0.8445403390052295,
+        "NEX_DTR_ratio": 1.0155835836616165,
+        "target_midrange_c": 12.467431617907202,
+        "target_DTR_K": 9.289943729057525,
+        "actual_midrange_c": 12.467431617907206,
+        "actual_DTR_K": 9.289943729057526,
+        "hourly_time_mean_T_c_DIAGNOSTIC_NOT_NEX_tas": 12.196361412323267
+      },
+      {
+        "month": 11,
+        "pattern_mean_midrange_c": 5.3933333333333335,
+        "reference_mean_midrange_c": 5.302948717948717,
+        "pattern_to_reference_rebase_K": -0.0903846153846164,
+        "NEX_midrange_delta_K": 1.7634038406763324,
+        "DTR_combined_scale": 0.8089740533520944,
+        "NEX_DTR_ratio": 0.9725638644434661,
+        "target_midrange_c": 7.0663525586250495,
+        "target_DTR_K": 6.42864714397131,
+        "actual_midrange_c": 7.066352558625048,
+        "actual_DTR_K": 6.428647143971309,
+        "hourly_time_mean_T_c_DIAGNOSTIC_NOT_NEX_tas": 6.742088792239752
+      },
+      {
+        "month": 12,
+        "pattern_mean_midrange_c": 2.3887096774193552,
+        "reference_mean_midrange_c": 0.06364764267990076,
+        "pattern_to_reference_rebase_K": -2.3250620347394544,
+        "NEX_midrange_delta_K": 3.2386131835634595,
+        "DTR_combined_scale": 0.799116531563873,
+        "NEX_DTR_ratio": 0.9214600102723154,
+        "target_midrange_c": 3.3022608262433604,
+        "target_DTR_K": 5.45719257200232,
+        "actual_midrange_c": 3.3022608262433595,
+        "actual_DTR_K": 5.457192572002321,
+        "hourly_time_mean_T_c_DIAGNOSTIC_NOT_NEX_tas": 2.8036722591036423
+      }
+    ],
+    "monthly_signals_and_constraints": [
+      {
+        "month": 1,
+        "hours": 744,
+        "target_mean_q_kgkg": 0.0038892580545345423,
+        "actual_mean_q_kgkg": 0.003889258054534541,
+        "capacity_mean_q_kgkg": 0.004601123129524586,
+        "projection_lambda_kgkg": 1.3605947806673725e-05,
+        "projection_objective_half_squared": 1.3904468378484185e-06,
+        "projected_hours": 744,
+        "NASA_hurs_delta_pp_DIAGNOSTIC_NOT_ENFORCED": 1.485869732802314,
+        "global_horizontal_radiation_wh_m2": {
+          "target_mean": 54.45858344923033,
+          "actual_mean": 54.45858344923033,
+          "combined_factor": 1.1806394919933378,
+          "NEX_ratio": 0.9631919040635414
+        },
+        "horizontal_infrared_radiation_intensity_wh_m2": {
+          "target_mean": 272.6906219079843,
+          "actual_mean": 272.6906219079843,
+          "combined_factor": 1.0243391080278792,
+          "NEX_ratio": 1.0670005314176851
+        },
+        "wind_speed_m_s": {
+          "target_mean": 1.4919504986604224,
+          "actual_mean": 1.4919504986604222,
+          "combined_factor": 0.9625987919969424,
+          "NEX_ratio": 1.0021574449925694
+        },
+        "total_precipitation_depth_mm": {
+          "target_mean": 0.05245789225109136,
+          "actual_mean": 0.05245789225109136,
+          "combined_factor": 0.43852440263833675,
+          "NEX_ratio": 1.2208198600879585
+        }
+      },
+      {
+        "month": 2,
+        "hours": 672,
+        "target_mean_q_kgkg": 0.0039703203018274635,
+        "actual_mean_q_kgkg": 0.0039703203018274635,
+        "capacity_mean_q_kgkg": 0.005175632854175564,
+        "projection_lambda_kgkg": 1.4348208992557817e-05,
+        "projection_objective_half_squared": 1.2457835701383077e-06,
+        "projected_hours": 672,
+        "NASA_hurs_delta_pp_DIAGNOSTIC_NOT_ENFORCED": 0.8283326243306277,
+        "global_horizontal_radiation_wh_m2": {
+          "target_mean": 89.69169959425862,
+          "actual_mean": 89.69169959425861,
+          "combined_factor": 0.8876442833398397,
+          "NEX_ratio": 1.005726830391348
+        },
+        "horizontal_infrared_radiation_intensity_wh_m2": {
+          "target_mean": 267.0547344378056,
+          "actual_mean": 267.0547344378056,
+          "combined_factor": 1.0096397023202055,
+          "NEX_ratio": 1.0424240962143494
+        },
+        "wind_speed_m_s": {
+          "target_mean": 1.4870968833771265,
+          "actual_mean": 1.4870968833771265,
+          "combined_factor": 0.9206248842729358,
+          "NEX_ratio": 0.8954123676868984
+        },
+        "total_precipitation_depth_mm": {
+          "target_mean": 0.06676076606438917,
+          "actual_mean": 0.06676076606438916,
+          "combined_factor": 2.3245199375787315,
+          "NEX_ratio": 1.1261286973131952
+        }
+      },
+      {
+        "month": 3,
+        "hours": 744,
+        "target_mean_q_kgkg": 0.004815364187793069,
+        "actual_mean_q_kgkg": 0.004815364187793068,
+        "capacity_mean_q_kgkg": 0.007312751087561538,
+        "projection_lambda_kgkg": 6.755329249283435e-06,
+        "projection_objective_half_squared": 1.4005369729414346e-06,
+        "projected_hours": 744,
+        "NASA_hurs_delta_pp_DIAGNOSTIC_NOT_ENFORCED": 0.8624106603579804,
+        "global_horizontal_radiation_wh_m2": {
+          "target_mean": 140.6913200503863,
+          "actual_mean": 140.6913200503863,
+          "combined_factor": 1.0290843340033762,
+          "NEX_ratio": 0.9899550315423805
+        },
+        "horizontal_infrared_radiation_intensity_wh_m2": {
+          "target_mean": 281.14742929066,
+          "actual_mean": 281.14742929066,
+          "combined_factor": 1.0006099005786762,
+          "NEX_ratio": 1.0441907838223088
+        },
+        "wind_speed_m_s": {
+          "target_mean": 1.9978143677126368,
+          "actual_mean": 1.997814367712637,
+          "combined_factor": 1.133918120258311,
+          "NEX_ratio": 1.0378111530199283
+        },
+        "total_precipitation_depth_mm": {
+          "target_mean": 0.06948710478965886,
+          "actual_mean": 0.06948710478965886,
+          "combined_factor": 1.2221845381443543,
+          "NEX_ratio": 1.1039409946215186
+        }
+      },
+      {
+        "month": 4,
+        "hours": 720,
+        "target_mean_q_kgkg": 0.006196627147489688,
+        "actual_mean_q_kgkg": 0.006196627147489688,
+        "capacity_mean_q_kgkg": 0.009700925854983822,
+        "projection_lambda_kgkg": 1.7039939313517535e-07,
+        "projection_objective_half_squared": 2.9686159981066258e-09,
+        "projected_hours": 720,
+        "NASA_hurs_delta_pp_DIAGNOSTIC_NOT_ENFORCED": -0.1155610128549398,
+        "global_horizontal_radiation_wh_m2": {
+          "target_mean": 193.3243124884264,
+          "actual_mean": 193.32431248842641,
+          "combined_factor": 1.1280593960035254,
+          "NEX_ratio": 1.0082860760159646
+        },
+        "horizontal_infrared_radiation_intensity_wh_m2": {
+          "target_mean": 300.54050870186086,
+          "actual_mean": 300.5405087018608,
+          "combined_factor": 1.012996194685613,
+          "NEX_ratio": 1.020275920420376
+        },
+        "wind_speed_m_s": {
+          "target_mean": 1.737499038555252,
+          "actual_mean": 1.737499038555252,
+          "combined_factor": 0.9432605525050191,
+          "NEX_ratio": 0.9219565581447
+        },
+        "total_precipitation_depth_mm": {
+          "target_mean": 0.06827810190434984,
+          "actual_mean": 0.06827810190434984,
+          "combined_factor": 0.532613579318872,
+          "NEX_ratio": 1.0018545756775583
+        }
+      },
+      {
+        "month": 5,
+        "hours": 744,
+        "target_mean_q_kgkg": 0.008134979521826456,
+        "actual_mean_q_kgkg": 0.008134979521826456,
+        "capacity_mean_q_kgkg": 0.012000943143084898,
+        "projection_lambda_kgkg": 2.4907038438707306e-06,
+        "projection_objective_half_squared": 1.3066351731172052e-07,
+        "projected_hours": 744,
+        "NASA_hurs_delta_pp_DIAGNOSTIC_NOT_ENFORCED": 1.468708557526469,
+        "global_horizontal_radiation_wh_m2": {
+          "target_mean": 226.55307118493994,
+          "actual_mean": 226.5530711849399,
+          "combined_factor": 1.2330952203960357,
+          "NEX_ratio": 1.022460266195791
+        },
+        "horizontal_infrared_radiation_intensity_wh_m2": {
+          "target_mean": 322.2050734258379,
+          "actual_mean": 322.2050734258379,
+          "combined_factor": 1.011329907997226,
+          "NEX_ratio": 1.008262298238936
+        },
+        "wind_speed_m_s": {
+          "target_mean": 1.8475333877093363,
+          "actual_mean": 1.847533387709336,
+          "combined_factor": 1.0144090509916652,
+          "NEX_ratio": 0.9693156079614116
+        },
+        "total_precipitation_depth_mm": {
+          "target_mean": 0.13520246711896253,
+          "actual_mean": 0.13520246711896253,
+          "combined_factor": 0.7672817355950275,
+          "NEX_ratio": 1.1161473728018143
+        }
+      },
+      {
+        "month": 6,
+        "hours": 720,
+        "target_mean_q_kgkg": 0.011054350898156486,
+        "actual_mean_q_kgkg": 0.011054350898156486,
+        "capacity_mean_q_kgkg": 0.016069565579452157,
+        "projection_lambda_kgkg": 3.2770976351841064e-08,
+        "projection_objective_half_squared": 2.77977824896877e-10,
+        "projected_hours": 720,
+        "NASA_hurs_delta_pp_DIAGNOSTIC_NOT_ENFORCED": 1.4793771450336095,
+        "global_horizontal_radiation_wh_m2": {
+          "target_mean": 230.35028957048956,
+          "actual_mean": 230.3502895704896,
+          "combined_factor": 0.985988909575305,
+          "NEX_ratio": 0.9957615683225366
+        },
+        "horizontal_infrared_radiation_intensity_wh_m2": {
+          "target_mean": 350.34308300325773,
+          "actual_mean": 350.3430830032577,
+          "combined_factor": 1.0252249354328082,
+          "NEX_ratio": 1.028834334515561
+        },
+        "wind_speed_m_s": {
+          "target_mean": 1.6624303760677286,
+          "actual_mean": 1.6624303760677284,
+          "combined_factor": 1.1216427748643705,
+          "NEX_ratio": 0.9821635467677974
+        },
+        "total_precipitation_depth_mm": {
+          "target_mean": 0.1558936683972671,
+          "actual_mean": 0.15589366839726712,
+          "combined_factor": 1.2043287687342523,
+          "NEX_ratio": 1.1843869612000162
+        }
+      },
+      {
+        "month": 7,
+        "hours": 744,
+        "target_mean_q_kgkg": 0.012067174030350382,
+        "actual_mean_q_kgkg": 0.012067174030350384,
+        "capacity_mean_q_kgkg": 0.017902421626094685,
+        "projection_lambda_kgkg": 0.0,
+        "projection_objective_half_squared": 0.0,
+        "projected_hours": 0,
+        "NASA_hurs_delta_pp_DIAGNOSTIC_NOT_ENFORCED": 1.482154514890155,
+        "global_horizontal_radiation_wh_m2": {
+          "target_mean": 232.85958945294198,
+          "actual_mean": 232.85958945294198,
+          "combined_factor": 1.0240729100221004,
+          "NEX_ratio": 1.0075928775574836
+        },
+        "horizontal_infrared_radiation_intensity_wh_m2": {
+          "target_mean": 357.47846376453174,
+          "actual_mean": 357.47846376453174,
+          "combined_factor": 1.0142981137632643,
+          "NEX_ratio": 1.0290482375415226
+        },
+        "wind_speed_m_s": {
+          "target_mean": 1.5503556929066709,
+          "actual_mean": 1.5503556929066706,
+          "combined_factor": 1.0735396114501028,
+          "NEX_ratio": 0.9301695615959373
+        },
+        "total_precipitation_depth_mm": {
+          "target_mean": 0.13973392789884706,
+          "actual_mean": 0.13973392789884703,
+          "combined_factor": 0.8855369877064923,
+          "NEX_ratio": 1.2292010465099126
+        }
+      },
+      {
+        "month": 8,
+        "hours": 744,
+        "target_mean_q_kgkg": 0.011767908053375976,
+        "actual_mean_q_kgkg": 0.011767908053375976,
+        "capacity_mean_q_kgkg": 0.018203938239778544,
+        "projection_lambda_kgkg": 0.0,
+        "projection_objective_half_squared": 0.0,
+        "projected_hours": 0,
+        "NASA_hurs_delta_pp_DIAGNOSTIC_NOT_ENFORCED": -2.095537139286762,
+        "global_horizontal_radiation_wh_m2": {
+          "target_mean": 197.44062598510564,
+          "actual_mean": 197.4406259851057,
+          "combined_factor": 1.004251102266422,
+          "NEX_ratio": 1.0246276770160427
+        },
+        "horizontal_infrared_radiation_intensity_wh_m2": {
+          "target_mean": 351.6467405189396,
+          "actual_mean": 351.6467405189397,
+          "combined_factor": 1.0059632768995501,
+          "NEX_ratio": 1.0260018520493193
+        },
+        "wind_speed_m_s": {
+          "target_mean": 1.463308691357501,
+          "actual_mean": 1.4633086913575009,
+          "combined_factor": 1.013566017493209,
+          "NEX_ratio": 0.940581121869752
+        },
+        "total_precipitation_depth_mm": {
+          "target_mean": 0.14046214138154917,
+          "actual_mean": 0.14046214138154917,
+          "combined_factor": 0.6100632410266934,
+          "NEX_ratio": 1.0561687253691547
+        }
+      },
+      {
+        "month": 9,
+        "hours": 720,
+        "target_mean_q_kgkg": 0.009597203261083475,
+        "actual_mean_q_kgkg": 0.009597203261083475,
+        "capacity_mean_q_kgkg": 0.013635300638082699,
+        "projection_lambda_kgkg": 0.0,
+        "projection_objective_half_squared": 0.0,
+        "projected_hours": 0,
+        "NASA_hurs_delta_pp_DIAGNOSTIC_NOT_ENFORCED": -1.2350871790372508,
+        "global_horizontal_radiation_wh_m2": {
+          "target_mean": 144.92424273470357,
+          "actual_mean": 144.9242427347036,
+          "combined_factor": 0.8482818578384055,
+          "NEX_ratio": 1.005473930141016
+        },
+        "horizontal_infrared_radiation_intensity_wh_m2": {
+          "target_mean": 331.68083364414184,
+          "actual_mean": 331.68083364414184,
+          "combined_factor": 1.0308458385986332,
+          "NEX_ratio": 1.0360516431827316
+        },
+        "wind_speed_m_s": {
+          "target_mean": 1.4143730035080502,
+          "actual_mean": 1.4143730035080502,
+          "combined_factor": 0.9318368311242233,
+          "NEX_ratio": 0.889178312982191
+        },
+        "total_precipitation_depth_mm": {
+          "target_mean": 0.10827458148335838,
+          "actual_mean": 0.10827458148335835,
+          "combined_factor": 2.266212170581919,
+          "NEX_ratio": 0.9589800176800096
+        }
+      },
+      {
+        "month": 10,
+        "hours": 744,
+        "target_mean_q_kgkg": 0.007266470136561185,
+        "actual_mean_q_kgkg": 0.0072664701365611865,
+        "capacity_mean_q_kgkg": 0.009685185485977028,
+        "projection_lambda_kgkg": 1.780223635112002e-07,
+        "projection_objective_half_squared": 2.5660053699368214e-09,
+        "projected_hours": 744,
+        "NASA_hurs_delta_pp_DIAGNOSTIC_NOT_ENFORCED": -0.7432624334141309,
+        "global_horizontal_radiation_wh_m2": {
+          "target_mean": 99.07380114966688,
+          "actual_mean": 99.07380114966689,
+          "combined_factor": 0.9223779069418645,
+          "NEX_ratio": 1.0104348040900453
+        },
+        "horizontal_infrared_radiation_intensity_wh_m2": {
+          "target_mean": 302.8660167847542,
+          "actual_mean": 302.8660167847542,
+          "combined_factor": 0.9913796066598182,
+          "NEX_ratio": 1.0268017513220953
+        },
+        "wind_speed_m_s": {
+          "target_mean": 1.4144164080997579,
+          "actual_mean": 1.414416408099758,
+          "combined_factor": 0.9417881343030687,
+          "NEX_ratio": 0.9448342009686357
+        },
+        "total_precipitation_depth_mm": {
+          "target_mean": 0.06548766543011819,
+          "actual_mean": 0.06548766543011819,
+          "combined_factor": 0.7020579694525638,
+          "NEX_ratio": 0.8641155525785855
+        }
+      },
+      {
+        "month": 11,
+        "hours": 720,
+        "target_mean_q_kgkg": 0.005651826691352628,
+        "actual_mean_q_kgkg": 0.005651826691352627,
+        "capacity_mean_q_kgkg": 0.0066391175662345895,
+        "projection_lambda_kgkg": 2.337112564972858e-05,
+        "projection_objective_half_squared": 2.194069134608682e-06,
+        "projected_hours": 720,
+        "NASA_hurs_delta_pp_DIAGNOSTIC_NOT_ENFORCED": 0.9037803855309079,
+        "global_horizontal_radiation_wh_m2": {
+          "target_mean": 59.011808409569085,
+          "actual_mean": 59.01180840956908,
+          "combined_factor": 0.8774265251711907,
+          "NEX_ratio": 0.9939904024070374
+        },
+        "horizontal_infrared_radiation_intensity_wh_m2": {
+          "target_mean": 289.34394059683115,
+          "actual_mean": 289.34394059683115,
+          "combined_factor": 1.036877776588497,
+          "NEX_ratio": 1.0315202028481247
+        },
+        "wind_speed_m_s": {
+          "target_mean": 1.4256458967103083,
+          "actual_mean": 1.4256458967103078,
+          "combined_factor": 0.8630833646947127,
+          "NEX_ratio": 0.9587527629939143
+        },
+        "total_precipitation_depth_mm": {
+          "target_mean": 0.09008307400726293,
+          "actual_mean": 0.09008307400726293,
+          "combined_factor": 1.1540892043635107,
+          "NEX_ratio": 1.1824114047230136
+        }
+      },
+      {
+        "month": 12,
+        "hours": 744,
+        "target_mean_q_kgkg": 0.004109031067598201,
+        "actual_mean_q_kgkg": 0.004109031067598202,
+        "capacity_mean_q_kgkg": 0.004960890586924077,
+        "projection_lambda_kgkg": 3.315139167612592e-07,
+        "projection_objective_half_squared": 1.0350267364713101e-08,
+        "projected_hours": 744,
+        "NASA_hurs_delta_pp_DIAGNOSTIC_NOT_ENFORCED": -0.6224837385986888,
+        "global_horizontal_radiation_wh_m2": {
+          "target_mean": 45.59211855964265,
+          "actual_mean": 45.59211855964266,
+          "combined_factor": 0.9442567772283532,
+          "NEX_ratio": 1.005403526948118
+        },
+        "horizontal_infrared_radiation_intensity_wh_m2": {
+          "target_mean": 273.60286641771046,
+          "actual_mean": 273.60286641771046,
+          "combined_factor": 1.0044960040585194,
+          "NEX_ratio": 1.044077845828318
+        },
+        "wind_speed_m_s": {
+          "target_mean": 1.4764623294168098,
+          "actual_mean": 1.4764623294168093,
+          "combined_factor": 1.0624805086480247,
+          "NEX_ratio": 1.0400605704259474
+        },
+        "total_precipitation_depth_mm": {
+          "target_mean": 0.0625566557029703,
+          "actual_mean": 0.0625566557029703,
+          "combined_factor": 0.7160331052770753,
+          "NEX_ratio": 1.0129716624127383
+        }
+      }
+    ],
+    "water_curve": "MURPHY_KOOP_WATER",
+    "pressure_contract": "SURFACE_PROXY_WITH_0_TO_2M_ADAPTER",
+    "closure": {
+      "max_RH_closure_residual_pp": 0.0,
+      "max_dewpoint_vapour_residual_Pa": 3.456079866737127e-11
+    },
+    "max_pressure_contract_residual_Pa": 0.0,
+    "precipitation_signal_field": "total_precipitation_depth_mm",
+    "total_precipitation_available": true,
+    "precipitation_contract": "TOTAL_AND_INHERITED_LIQUID_FRACTION",
+    "NASA_hurs_signal_enforced": false,
+    "NASA_hurs_phase_confirmed": false,
+    "native_NASA_daily_constraints_enforced": false,
+    "GCM_pressure_signal_available": false,
+    "wind_direction_cloud_event_timing_inherited": true,
+    "future_DNI_DHI_independently_predicted": false,
+    "pattern_is_actual_future_date_forecast": false,
+    "is_selected_TMY": false,
+    "B4_qualified": false,
+    "P2_advantage_qualified": false,
+    "independent_accuracy_qualified": false,
+    "IV1_station_observations_opened": false
+  },
+  "source_geometry": {
+    "selected_base": {
+      "latitude": 47.0,
+      "longitude": 15.5,
+      "elevation_m": 467.0,
+      "city": "Graz GRID BACKGROUND RESEARCH",
+      "state": "",
+      "country": "",
+      "station_id": ""
+    },
+    "signal_site": [
+      47.0707,
+      15.4395
+    ],
+    "NASA_grid": [
+      47.125,
+      15.375
+    ]
+  },
+  "row_clock": "fixed local-standard interval start; states at hour end; no DST; pattern dates only",
+  "quality": {
+    "execution_correctness": "COMPLETE_YEAR_SOURCE_HASHES_STATE_AND_EXPORT_CHECKS_PASS",
+    "physical_admissibility": "CONDITIONAL_T_P_Q_WATER_RH_CLOSURE_AND_MONTHLY_TARGETS_PASS",
+    "independent_accuracy": "NOT_INDEPENDENTLY_VALIDATED",
+    "operational_and_application_scope": "RESEARCH_SELECTED_BASE_FUTURE"
+  },
+  "analysis_adapter": {
+    "contract": "IGE_U1_SOURCE_PHASE_AND_PATTERN_CALENDAR_v1",
+    "humidity_definition": "MURPHY_KOOP_WATER; vapour from F1 q and explicitly declared pressure contract",
+    "pressure_scope": "SURFACE_PROXY_WITH_0_TO_2M_ADAPTER",
+    "gas_constants_J_kg_K": {
+      "dry_air": 287.05,
+      "vapour": 461.5
+    },
+    "historical_q_is_display_estimate_not_source_observation": false,
+    "source_T_Td_RH_p_and_q_modified": false,
+    "calendar_or_time_support_modified": false,
+    "ice_supersaturation_clipped": false,
+    "wet_bulb_or_frost_point_inferred": false,
+    "legacy_ASHRAE_psychrometric_chart_used": false,
+    "independent_station_accuracy_qualified": false
+  },
+  "EPW": {
+    "screen": "BOUNDS_COMPONENTS_AND_PROVIDER_ROUNDING_PASS",
+    "records": 8760,
+    "hard_failure_count": 0,
+    "max_GHI_minus_direct_horizontal_minus_DHI_Wh_m2": 1.1368683772161603e-13,
+    "max_abs_provider_Magnus_RH_residual_pp": 0.07731421418402817,
+    "provider_T_Td_RH_quantization_interval_failures": null,
+    "T_Td_RH_exact_thermodynamic_closure_claimed": false,
+    "provider_values_modified": false,
+    "mixed_source_longwave_cross_field_accuracy_qualified": false,
+    "epw_format_readback": "PASS",
+    "fields_per_record": 35,
+    "headers": 8,
+    "first_row": [
+      "2023",
+      "1",
+      "1",
+      "1",
+      "60"
+    ],
+    "last_row": [
+      "2023",
+      "12",
+      "31",
+      "24",
+      "60"
+    ],
+    "leap_day_retained": false,
+    "sha256": "e09d6ff41a4021d6d19e73206fc7d899407fbbf5bd0c9ae0d27e672020b633fa",
+    "bytes": 2181278,
+    "EnergyPlus_simulation_executed": false,
+    "numeric_serialization": {
+      "default": "10 significant decimal digits",
+      "future_T_Td_RH_only": null,
+      "max_future_T_Td_RH_rounding_C_or_pp": null,
+      "internal_state_objective_or_physics_changed": false
+    },
+    "F1_monthly_EPW_readback": "PASS",
+    "monthly_readback": [
+      {
+        "month": 1,
+        "q_mean_residual_kgkg": 7.28583859910259e-17,
+        "midrange_c": 2.152213145358226,
+        "DTR_K": 6.043118550999678
+      },
+      {
+        "month": 2,
+        "q_mean_residual_kgkg": 8.673617379884035e-18,
+        "midrange_c": 3.6246604496982147,
+        "DTR_K": 7.603035871903572
+      },
+      {
+        "month": 3,
+        "q_mean_residual_kgkg": 3.587408148320037e-15,
+        "midrange_c": 8.059412821241612,
+        "DTR_K": 9.20515707900064
+      },
+      {
+        "month": 4,
+        "q_mean_residual_kgkg": 2.916850788681202e-14,
+        "midrange_c": 12.116403816333335,
+        "DTR_K": 10.647453198
+      },
+      {
+        "month": 5,
+        "q_mean_residual_kgkg": -3.80633025098831e-14,
+        "midrange_c": 15.243087159467743,
+        "DTR_K": 10.628260919774194
+      },
+      {
+        "month": 6,
+        "q_mean_residual_kgkg": -7.340308916248262e-14,
+        "midrange_c": 19.8868620375,
+        "DTR_K": 10.375295843
+      },
+      {
+        "month": 7,
+        "q_mean_residual_kgkg": -3.8958419823487134e-14,
+        "midrange_c": 21.88641213145161,
+        "DTR_K": 10.80147075580645
+      },
+      {
+        "month": 8,
+        "q_mean_residual_kgkg": -5.986530715595961e-15,
+        "midrange_c": 22.01442208075807,
+        "DTR_K": 10.815441056548384
+      },
+      {
+        "month": 9,
+        "q_mean_residual_kgkg": -2.003085197710419e-14,
+        "midrange_c": 17.994928667499998,
+        "DTR_K": 10.044579716333335
+      },
+      {
+        "month": 10,
+        "q_mean_residual_kgkg": 3.36952687973735e-14,
+        "midrange_c": 12.467431617970966,
+        "DTR_K": 9.289943729929032
+      },
+      {
+        "month": 11,
+        "q_mean_residual_kgkg": -1.573394192710964e-15,
+        "midrange_c": 7.06635255901,
+        "DTR_K": 6.42864714478
+      },
+      {
+        "month": 12,
+        "q_mean_residual_kgkg": -4.79737777281386e-15,
+        "midrange_c": 3.302260826045645,
+        "DTR_K": 5.457192571734516
+      }
+    ],
+    "max_export_dewpoint_vapour_residual_Pa": 1.4383772395376582e-06,
+    "independent_accuracy_qualified": false
+  },
+  "monthly_summary": [
+    {
+      "Month": 1,
+      "Hours": 744,
+      "T sample mean [°C]": 1.8223815342,
+      "T sample min [°C]": -4.4789693385,
+      "T sample max [°C]": 11.6459942229,
+      "RH water mean [%]": 85.4481039409,
+      "Humidity ratio mean [g/kg dry air]": 3.9051265661,
+      "GHI [kWh/m²]": 40.5171860862,
+      "Liquid rain [mm]": 23.768022623,
+      "Total precipitation [mm]": 39.0286718348
+    },
+    {
+      "Month": 2,
+      "Hours": 672,
+      "T sample mean [°C]": 3.0887029492,
+      "T sample min [°C]": -6.1234493288,
+      "T sample max [°C]": 17.3728255471,
+      "RH water mean [%]": 79.2455856022,
+      "Humidity ratio mean [g/kg dry air]": 3.9876030755,
+      "GHI [kWh/m²]": 60.2728221273,
+      "Liquid rain [mm]": 32.3108271323,
+      "Total precipitation [mm]": 44.8632347953
+    },
+    {
+      "Month": 3,
+      "Hours": 744,
+      "T sample mean [°C]": 7.9533104065,
+      "T sample min [°C]": -1.8109433558,
+      "T sample max [°C]": 22.3467145784,
+      "RH water mean [%]": 68.8851968755,
+      "Humidity ratio mean [g/kg dry air]": 4.840587519,
+      "GHI [kWh/m²]": 104.6743421175,
+      "Liquid rain [mm]": 47.5429785338,
+      "Total precipitation [mm]": 51.6984059635
+    },
+    {
+      "Month": 4,
+      "Hours": 720,
+      "T sample mean [°C]": 12.1687293974,
+      "T sample min [°C]": -1.3958721055,
+      "T sample max [°C]": 25.9359820244,
+      "RH water mean [%]": 66.993813074,
+      "Humidity ratio mean [g/kg dry air]": 6.2384758103,
+      "GHI [kWh/m²]": 139.1935049917,
+      "Liquid rain [mm]": 47.5623926332,
+      "Total precipitation [mm]": 49.1602333711
+    },
+    {
+      "Month": 5,
+      "Hours": 744,
+      "T sample mean [°C]": 15.4803608815,
+      "T sample min [°C]": 4.8293974685,
+      "T sample max [°C]": 27.7613064343,
+      "RH water mean [%]": 73.4242138425,
+      "Humidity ratio mean [g/kg dry air]": 8.2035670014,
+      "GHI [kWh/m²]": 168.5554849616,
+      "Liquid rain [mm]": 100.5906355365,
+      "Total precipitation [mm]": 100.5906355365
+    },
+    {
+      "Month": 6,
+      "Hours": 720,
+      "T sample mean [°C]": 20.2034962363,
+      "T sample min [°C]": 11.6274085677,
+      "T sample max [°C]": 35.0851171103,
+      "RH water mean [%]": 72.8625355769,
+      "Humidity ratio mean [g/kg dry air]": 11.1826013311,
+      "GHI [kWh/m²]": 165.8522084908,
+      "Liquid rain [mm]": 112.243441246,
+      "Total precipitation [mm]": 112.243441246
+    },
+    {
+      "Month": 7,
+      "Hours": 744,
+      "T sample mean [°C]": 22.0447767863,
+      "T sample min [°C]": 11.8661547847,
+      "T sample max [°C]": 32.4335064901,
+      "RH water mean [%]": 70.9997232579,
+      "Humidity ratio mean [g/kg dry air]": 12.2177923609,
+      "GHI [kWh/m²]": 173.247534553,
+      "Liquid rain [mm]": 103.9620423567,
+      "Total precipitation [mm]": 103.9620423567
+    },
+    {
+      "Month": 8,
+      "Hours": 744,
+      "T sample mean [°C]": 22.0544291831,
+      "T sample min [°C]": 9.612233837,
+      "T sample max [°C]": 35.1257190634,
+      "RH water mean [%]": 68.6812117926,
+      "Humidity ratio mean [g/kg dry air]": 11.9135958035,
+      "GHI [kWh/m²]": 146.8958257329,
+      "Liquid rain [mm]": 104.5038331879,
+      "Total precipitation [mm]": 104.5038331879
+    },
+    {
+      "Month": 9,
+      "Hours": 720,
+      "T sample mean [°C]": 17.8088137531,
+      "T sample min [°C]": 10.4043886916,
+      "T sample max [°C]": 26.936625542,
+      "RH water mean [%]": 73.2953336954,
+      "Humidity ratio mean [g/kg dry air]": 9.6924710697,
+      "GHI [kWh/m²]": 104.345454769,
+      "Liquid rain [mm]": 77.957698668,
+      "Total precipitation [mm]": 77.957698668
+    },
+    {
+      "Month": 10,
+      "Hours": 744,
+      "T sample mean [°C]": 12.1963614123,
+      "T sample min [°C]": -2.4363640519,
+      "T sample max [°C]": 24.3905713042,
+      "RH water mean [%]": 78.0364157382,
+      "Humidity ratio mean [g/kg dry air]": 7.3220793205,
+      "GHI [kWh/m²]": 73.7109080554,
+      "Liquid rain [mm]": 48.72282308,
+      "Total precipitation [mm]": 48.72282308
+    },
+    {
+      "Month": 11,
+      "Hours": 720,
+      "T sample mean [°C]": 6.7420887922,
+      "T sample min [°C]": 0.2449943787,
+      "T sample max [°C]": 18.2890444237,
+      "RH water mean [%]": 85.6185610462,
+      "Humidity ratio mean [g/kg dry air]": 5.6864907811,
+      "GHI [kWh/m²]": 42.4885020549,
+      "Liquid rain [mm]": 61.5129545926,
+      "Total precipitation [mm]": 64.8598132852
+    },
+    {
+      "Month": 12,
+      "Hours": 744,
+      "T sample mean [°C]": 2.8036722591,
+      "T sample min [°C]": -7.4116112048,
+      "T sample max [°C]": 12.270274153,
+      "RH water mean [%]": 83.4507466933,
+      "Humidity ratio mean [g/kg dry air]": 4.1266773995,
+      "GHI [kWh/m²]": 33.9205362084,
+      "Liquid rain [mm]": 33.510349327,
+      "Total precipitation [mm]": 46.542151843
+    }
+  ],
+  "base_not_modified": true,
+  "production_ready": false,
+  "EnergyPlus_building_simulation_run": false,
+  "calculation_seconds": 44.67145443199979,
+  "limitations": [
+    "Monthly seasonal signal transfer; native NASA daily time bounds not verified.",
+    "NASA tas is daily min/max midrange, not 24-hour mean; hurs phase unknown and hurs not enforced.",
+    "No future pressure signal; stated historical pressure contract retained.",
+    "Wind direction, clouds, event timing and precipitation phase are inherited; no new weather events.",
+    "Solar components scale together; target-site solar geometry and independent DNI/DHI accuracy unqualified.",
+    "Single GCM/member, declared local reference; no station-accuracy, ensemble-uncertainty or production qualification."
+  ]
+}

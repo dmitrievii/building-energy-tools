@@ -1,0 +1,160 @@
+{
+  "schema": "IGE_PR123_POST_REBOOT_PUBLIC_BROWSER_AUDIT_v1",
+  "date_utc": "2026-11-01",
+  "public_app": "https://building-climate-analyzer.streamlit.app/",
+  "main_sha": "acf3c029024a745f717cad21103119fbcd913f7c",
+  "runtime_build_sha256": "4ff2c732b8ddf282e8c377b0f46a5c93313459d7b4f105f759b26868ff3f8efa",
+  "runtime_matches_main": true,
+  "browser_observations": {
+    "station_locations_visible_as_cluster_sum": 616,
+    "OSM_tiles_loaded": true,
+    "automatic_Graz_elevation_m": 363,
+    "manual_S1_height_m": 375,
+    "donor_button_enabled_without_old_technical_checkboxes": true,
+    "old_technical_checkboxes_absent": true,
+    "future_Explore_uses_canonical_temperature_panel": true,
+    "canonical_temperature_plotly_count": 1,
+    "canonical_temperature_alerts": []
+  },
+  "downloads": {
+    "S1": {
+      "bytes": 1953442,
+      "sha256": "14b0e630a1425ba5bb99651831f2a7700ab57a39876369cb01e3dd330560ea34",
+      "hours": 8760,
+      "fields_per_record": [
+        35
+      ],
+      "unique_timestamps": 8760,
+      "complete_2023_calendar": true,
+      "location": [
+        "LOCATION",
+        "Graz S1 grid EPW integration INTERPOLATED T P MOISTURE RESEARCH",
+        "",
+        "",
+        "IGE_S1_STATIONS_OR_EPW_WITH_GRID_BACKGROUND",
+        "999999",
+        "47.0707",
+        "15.4395",
+        "1.0",
+        "375.0"
+      ],
+      "actual_browser_download": true,
+      "retained_comparison": {
+        "reference_archive": "s1_original_point_epw_reference_20261028.zip",
+        "reference_epw_sha256": "855515517eb22601f5f4e6025a32ff463fc81b8055aa08168ff48442565138d2",
+        "bitwise_equal": false,
+        "existing_precision_contract_pass": true,
+        "absolute_tolerance": 1e-07,
+        "relative_tolerance": 1e-09,
+        "headers_calendar_nonthermal_exact": true,
+        "different_cells_by_column": {
+          "8": 1
+        },
+        "max_abs_difference_by_column": {
+          "8": 1.0000007932831068e-08
+        }
+      }
+    },
+    "B0": {
+      "bytes": 1689078,
+      "sha256": "acf8e7d82be69de5fa19f76c599143559d477aa01cdb7c56414fc23c93796635",
+      "hours": 8760,
+      "fields_per_record": [
+        35
+      ],
+      "unique_timestamps": 8760,
+      "complete_2023_calendar": true,
+      "location": [
+        "LOCATION",
+        "Graz GRID BACKGROUND RESEARCH",
+        "",
+        "",
+        "IGE_ERA5_DERIVED_POWER_LW",
+        "999999",
+        "47.0",
+        "15.5",
+        "1.0",
+        "467.0"
+      ],
+      "actual_browser_download": true,
+      "retained_bitwise_match": true
+    },
+    "F1": {
+      "bytes": 2181278,
+      "sha256": "e09d6ff41a4021d6d19e73206fc7d899407fbbf5bd0c9ae0d27e672020b633fa",
+      "hours": 8760,
+      "fields_per_record": [
+        35
+      ],
+      "unique_timestamps": 8760,
+      "complete_2023_calendar": true,
+      "location": [
+        "LOCATION",
+        "Graz GRID BACKGROUND RESEARCH REPRESENTATIVE FUTURE RESEARCH",
+        "",
+        "",
+        "IGE_F1_CanESM5_ssp245",
+        "999999",
+        "47.0",
+        "15.5",
+        "1.0",
+        "467.0"
+      ],
+      "actual_browser_download": true,
+      "retained_comparison": {
+        "reference_archive": "f1_original_output_reference_20261029.zip",
+        "reference_epw_sha256": "3c49a8dabb7c2d0f49f784aa417113e5c9f83b9b4e5b68ed3073f08d275bac2a",
+        "bitwise_equal": false,
+        "existing_precision_contract_pass": true,
+        "absolute_tolerance": 1e-07,
+        "relative_tolerance": 1e-09,
+        "headers_calendar_nonthermal_exact": true,
+        "different_cells_by_column": {
+          "7": 5
+        },
+        "max_abs_difference_by_column": {
+          "7": 1.000000082740371e-10
+        }
+      }
+    }
+  },
+  "CI": {
+    "prior_post_merge_run": 41061693469,
+    "prior_tests_passed": 784,
+    "live_browser_run": 41061693374,
+    "rerun_failed_jobs_requested": true,
+    "rerun_request_success": true,
+    "rerun_result": "NOT_POLLED_PER_USER_PREFERENCE"
+  },
+  "application_code_changed": false,
+  "main_changed_by_this_audit": false,
+  "new_independent_accuracy_validation": false,
+  "production_qualification_claimed": false,
+  "F1_request": {
+    "latitude": 47.0707,
+    "longitude": 15.4395,
+    "reference_window": [
+      2002,
+      2014
+    ],
+    "future_window": [
+      2040,
+      2059
+    ],
+    "model": "CanESM5",
+    "member": "r1i1p1f1",
+    "scenario": "ssp245"
+  },
+  "F1_reference_packet_sha256": "68f19f8e02fb00d178009ab6dbe2f4dc441f879bc870b71a98d797b05ecd1403",
+  "F1_NASA_packet_sha256": "2df672bc6cb2929ca4f59fb8eed061b46561849c0e716a7419d5c56d938b69bd",
+  "F1_calculation_seconds": 44.67145443199979,
+  "F1_quality": {
+    "execution_correctness": "COMPLETE_YEAR_SOURCE_HASHES_STATE_AND_EXPORT_CHECKS_PASS",
+    "physical_admissibility": "CONDITIONAL_T_P_Q_WATER_RH_CLOSURE_AND_MONTHLY_TARGETS_PASS",
+    "independent_accuracy": "NOT_INDEPENDENTLY_VALIDATED",
+    "operational_and_application_scope": "RESEARCH_SELECTED_BASE_FUTURE"
+  },
+  "F1_exact_request_original_source_replay": true,
+  "F1_fresh_NASA_endpoint_availability_verified": false,
+  "B0_optional_requested_height_cleared_for_exact_reference_match": true
+}

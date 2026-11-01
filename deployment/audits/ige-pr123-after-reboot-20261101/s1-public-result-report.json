@@ -1,0 +1,516 @@
+{
+  "schema": "IGE_S1_POINT_INTERPOLATION_v1",
+  "method": "S1_P82F_FROZEN_EQUATIONS_HOURLY_MONTHLY_ADAPTER_v1",
+  "request": {
+    "latitude": 47.0707,
+    "longitude": 15.4395,
+    "elevation_m": 375.0,
+    "elevation_reference": "User supplied site elevation; vertical datum unconfirmed",
+    "year": 2023,
+    "utc_offset_minutes": 60,
+    "label": "Graz S1 grid EPW integration",
+    "assume_buck_water": true,
+    "allow_nominal_height_proxy": true,
+    "excluded_station_id": ""
+  },
+  "calibration_sha256": "b7efcae0840851515004f3eb820cc7b3c801695664cfa8ae0c89011bea79dfec",
+  "calibration_lineage": {
+    "schema": "IGE_S1_FROZEN_P82F_CALIBRATION_v1",
+    "training": {
+      "station_count": 189,
+      "source_index_hash": "0991d836c0bdfc6d590837d3862b07c15b8afbcf4d7dd2cd40ca5b9ea2224eed",
+      "metadata_hash": "accd768085be66f3d2af3e9a313d521e6b3e89671501409ff739dbb0b0f58f88",
+      "source_batches": [
+        {
+          "sha256": "66791b3fe7eeaad93168e8c07e82d7416906836fe972a875e566087191d745f9",
+          "bytes": 97681,
+          "n_ids": 12
+        },
+        {
+          "sha256": "fd100988cbd129a45eb27d0c134e9b1a778e8d4e11bd1381f88f3b619a4ea99c",
+          "bytes": 97562,
+          "n_ids": 12
+        },
+        {
+          "sha256": "2f9707a4e8d245652431c8ce8cd231b6b2013e8d4906dd4bd24724dc3256c386",
+          "bytes": 97516,
+          "n_ids": 12
+        },
+        {
+          "sha256": "d533a1f4de2a65b4cc0dc5435a2364f8203325cef90d0a2e9c203dc58344fa3d",
+          "bytes": 97759,
+          "n_ids": 12
+        },
+        {
+          "sha256": "478ebb5fe933b34d2c1f26d51aa071dbf38f13f3dd311f26d946f14e01b82370",
+          "bytes": 97431,
+          "n_ids": 12
+        },
+        {
+          "sha256": "49b191f6b989bc9a9fe597c28e0abb4fc1728e8952b4b33d98bb7969bd371bab",
+          "bytes": 97408,
+          "n_ids": 12
+        },
+        {
+          "sha256": "e18aa3a4deab8f7e548141c897bfe1bdc4de3f1cda5c7ad0464d585897293a0c",
+          "bytes": 97442,
+          "n_ids": 12
+        },
+        {
+          "sha256": "285cdcf1f0b95d2a0821cb15dc5d0eabc50ab2361b226864f60e665aa6a4e28e",
+          "bytes": 97725,
+          "n_ids": 12
+        },
+        {
+          "sha256": "0464f79f0de218eba0b5b5bcb99f2c15bae998199f5b9d0b9357d5eeffaf87f1",
+          "bytes": 97567,
+          "n_ids": 12
+        },
+        {
+          "sha256": "535037428c1ead0fae25ee49c2850b70635cc9e59ad019ea973d214e326b0be5",
+          "bytes": 97401,
+          "n_ids": 12
+        },
+        {
+          "sha256": "67386406929f48c3dd7a6123b254a3cbcf07cbbb442635bfa8ef0ab13cdabb46",
+          "bytes": 97586,
+          "n_ids": 12
+        },
+        {
+          "sha256": "1c1c977968ac79d2b0ebd8e7ac4660d00b0fe1a4d3b10444e96d28f8ba3d50ef",
+          "bytes": 97706,
+          "n_ids": 12
+        },
+        {
+          "sha256": "310394c674a07fd5e9e4edbb529c9af0d5082b2c4cbf80c02fa4711c34e31b35",
+          "bytes": 96969,
+          "n_ids": 12
+        },
+        {
+          "sha256": "45fb3548760b5b58d0bd37754725940c5e569a28d3d16220054dc447e1f41ce4",
+          "bytes": 97554,
+          "n_ids": 12
+        },
+        {
+          "sha256": "f9b58f6d333196aaf3b87720ea38230d3198c1826cdec5ab14f47eabd215907c",
+          "bytes": 97701,
+          "n_ids": 12
+        },
+        {
+          "sha256": "820761a2da2bb16978913c5311c160b45b954a762eb5a48d30ff958c569839c4",
+          "bytes": 75120,
+          "n_ids": 9
+        }
+      ],
+      "trained_on": "1991-2010 GeoSphere Austria station data only",
+      "test_years_not_in_parameters": true,
+      "log_vapour_slope_m_inv": [
+        -0.00034381167198303727,
+        -0.0003696893618031671,
+        -0.00036617831146305727,
+        -0.00035831376065559984,
+        -0.00034092992884689286,
+        -0.0003307423346795075,
+        -0.0003165958059560497,
+        -0.00031937075422189086,
+        -0.0003403474729914906,
+        -0.00034590244345551215,
+        -0.000347300567878595,
+        -0.00033946139565956684
+      ],
+      "temperature_slope_K_m": [
+        -0.0025918158178962875,
+        -0.0039995823586441255,
+        -0.005385609905728577,
+        -0.006153594949982559,
+        -0.006195223516394919,
+        -0.006132281674890167,
+        -0.005938742588625475,
+        -0.005557264663632554,
+        -0.005150468561959104,
+        -0.004050513618313608,
+        -0.0037116911336134194,
+        -0.0028472542205561563
+      ]
+    },
+    "original_solver_blob_sha": "099357c4e9ba85bf397356457818fe3bd6df861f",
+    "original_selector_blob_sha": "d0107b04f81ecc1bc1e0392b3660bf44cc271e61",
+    "artifact": {
+      "run_id": 38612389803,
+      "id": 11917798058,
+      "sha256": "761437db7996502d9e1ce0badb0b4d02d725b97aee7fae6401d1631441e75158",
+      "member": "selection_provenance.json"
+    },
+    "not_retrained": true
+  },
+  "operational_caps": {
+    "candidate_limit": 20,
+    "distance_km": 100,
+    "height_difference_m": 1500,
+    "caps_are_not_empirical_accuracy_qualification": true
+  },
+  "donor_admission": [
+    {
+      "station_id": "EPW:8c24329eab1d9d87",
+      "station_name": "S1 GRID BACKGROUND DONOR 0 GRID BACKGROUND RESEARCH",
+      "source_kind": "DECLARED_ACTUAL_YEAR_EPW_BUCK_DEWPOINT_ASSUMPTION",
+      "latitude": 47.0,
+      "longitude": 15.25,
+      "source_sha256": "8c24329eab1d9d872f3f00f8f16b0fe184e2463147dc3d4be83d3acbcc92fc5b",
+      "distance_km": 16.372111742237408,
+      "temperature_elevation_m": 636.0,
+      "pressure_elevation_m": 636.0,
+      "height_reference": "EPW LOCATION altitude; actual sensor heights and vertical datum unconfirmed",
+      "height_is_proxy": true,
+      "complete_in_bounds_hours": {
+        "dry_bulb_temperature_c": 8760,
+        "atmospheric_station_pressure_pa": 8760,
+        "vapor_pressure_hpa": 8760,
+        "relative_humidity_pct": 8760
+      },
+      "monthly_origin": "COMPLETE_HOURLY_SAMPLE_MEAN_NOT_PUBLISHED_MONTHLY_SERIES",
+      "max_abs_source_RH_vs_Buck_e_T_pp": 1.0946139793282015,
+      "source_RH_not_independently_enforced_after_e_is_defined": true,
+      "eligible": true,
+      "reasons": [],
+      "selected": true,
+      "weight": 0.18791302005072455
+    },
+    {
+      "station_id": "EPW:306406f6bc9b7d29",
+      "station_name": "S1 GRID BACKGROUND DONOR 1 GRID BACKGROUND RESEARCH",
+      "source_kind": "DECLARED_ACTUAL_YEAR_EPW_BUCK_DEWPOINT_ASSUMPTION",
+      "latitude": 47.0,
+      "longitude": 15.5,
+      "source_sha256": "306406f6bc9b7d29eb512ffebcbb3df670c23e8c8b4e4dfc5e0791381a7d08e1",
+      "distance_km": 9.10081274914146,
+      "temperature_elevation_m": 467.0,
+      "pressure_elevation_m": 467.0,
+      "height_reference": "EPW LOCATION altitude; actual sensor heights and vertical datum unconfirmed",
+      "height_is_proxy": true,
+      "complete_in_bounds_hours": {
+        "dry_bulb_temperature_c": 8760,
+        "atmospheric_station_pressure_pa": 8760,
+        "vapor_pressure_hpa": 8760,
+        "relative_humidity_pct": 8760
+      },
+      "monthly_origin": "COMPLETE_HOURLY_SAMPLE_MEAN_NOT_PUBLISHED_MONTHLY_SERIES",
+      "max_abs_source_RH_vs_Buck_e_T_pp": 1.1422732684375774,
+      "source_RH_not_independently_enforced_after_e_is_defined": true,
+      "eligible": true,
+      "reasons": [],
+      "selected": true,
+      "weight": 0.6081432840956903
+    },
+    {
+      "station_id": "EPW:12832bb44494e2e4",
+      "station_name": "S1 GRID BACKGROUND DONOR 2 GRID BACKGROUND RESEARCH",
+      "source_kind": "DECLARED_ACTUAL_YEAR_EPW_BUCK_DEWPOINT_ASSUMPTION",
+      "latitude": 47.25,
+      "longitude": 15.25,
+      "source_sha256": "12832bb44494e2e474208db19f5c8de37f577f3dbffc67655b34eafa67152cad",
+      "distance_km": 24.551382805438337,
+      "temperature_elevation_m": 807.0,
+      "pressure_elevation_m": 807.0,
+      "height_reference": "EPW LOCATION altitude; actual sensor heights and vertical datum unconfirmed",
+      "height_is_proxy": true,
+      "complete_in_bounds_hours": {
+        "dry_bulb_temperature_c": 8760,
+        "atmospheric_station_pressure_pa": 8760,
+        "vapor_pressure_hpa": 8760,
+        "relative_humidity_pct": 8760
+      },
+      "monthly_origin": "COMPLETE_HOURLY_SAMPLE_MEAN_NOT_PUBLISHED_MONTHLY_SERIES",
+      "max_abs_source_RH_vs_Buck_e_T_pp": 1.120158128140588,
+      "source_RH_not_independently_enforced_after_e_is_defined": true,
+      "eligible": true,
+      "reasons": [],
+      "selected": true,
+      "weight": 0.08356306419434267
+    },
+    {
+      "station_id": "EPW:0a40f407aa11ebbd",
+      "station_name": "S1 GRID BACKGROUND DONOR 3 GRID BACKGROUND RESEARCH",
+      "source_kind": "DECLARED_ACTUAL_YEAR_EPW_BUCK_DEWPOINT_ASSUMPTION",
+      "latitude": 47.25,
+      "longitude": 15.5,
+      "source_sha256": "0a40f407aa11ebbda4d9c45150b09da877ca42d1ba37bb508ee826908f08a259",
+      "distance_km": 20.455251679944478,
+      "temperature_elevation_m": 701.0,
+      "pressure_elevation_m": 701.0,
+      "height_reference": "EPW LOCATION altitude; actual sensor heights and vertical datum unconfirmed",
+      "height_is_proxy": true,
+      "complete_in_bounds_hours": {
+        "dry_bulb_temperature_c": 8760,
+        "atmospheric_station_pressure_pa": 8760,
+        "vapor_pressure_hpa": 8760,
+        "relative_humidity_pct": 8760
+      },
+      "monthly_origin": "COMPLETE_HOURLY_SAMPLE_MEAN_NOT_PUBLISHED_MONTHLY_SERIES",
+      "max_abs_source_RH_vs_Buck_e_T_pp": 1.1422732684375774,
+      "source_RH_not_independently_enforced_after_e_is_defined": true,
+      "eligible": true,
+      "reasons": [],
+      "selected": true,
+      "weight": 0.12038063165924254
+    }
+  ],
+  "global_blockers": [],
+  "selected_donors": [
+    "EPW:306406f6bc9b7d29",
+    "EPW:8c24329eab1d9d87",
+    "EPW:0a40f407aa11ebbd",
+    "EPW:12832bb44494e2e4"
+  ],
+  "target_weather_used": false,
+  "new_fit_or_tuning": false,
+  "engine_gap_fill": false,
+  "output_fields": {
+    "dry_bulb_temperature_c": {
+      "unit": "°C",
+      "definition": "height-corrected donor blend"
+    },
+    "atmospheric_station_pressure_pa": {
+      "unit": "Pa",
+      "definition": "absolute pressure; conditional dry-temperature transfer"
+    },
+    "vapor_pressure_hpa": {
+      "unit": "hPa",
+      "definition": "Buck-water vapour pressure with monthly reconciliation"
+    },
+    "relative_humidity_pct": {
+      "unit": "%",
+      "definition": "100 e / Buck liquid-water saturation at all T"
+    },
+    "dew_point_temperature_c": {
+      "unit": "°C",
+      "definition": "inverse Buck liquid-water saturation"
+    },
+    "specific_humidity_kg_kg": {
+      "unit": "kg/kg moist air",
+      "definition": "shared q(e,p) algebra; conditional on pressure height proxy"
+    }
+  },
+  "clock": {
+    "rows": "interval start UTC",
+    "states": "right endpoint / published nominal node",
+    "monthly_groups": "fixed local standard interval-start calendar",
+    "DST": false
+  },
+  "quality": {
+    "execution_correctness": "ANNUAL_INTERPOLATION_COMPLETED",
+    "physical_admissibility": "T_P_E_RH_TD_BUCK_WATER_CLOSURE_AND_MONTHLY_E_PASS",
+    "independent_accuracy": "NOT_INDEPENDENTLY_QUALIFIED_FOR_NEW_ADAPTERS",
+    "operational_and_application_scope": "RESTRICTED_RESEARCH_POINT_INTERPOLATION",
+    "production_ready": false
+  },
+  "limitations": [
+    "Monthly AT-trained regional slopes do not resolve hourly inversions or valley sheltering.",
+    "Dry-temperature pressure transfer uses source T as barometer-layer proxy; sensor collocation is not established.",
+    "Buck liquid-water phase is an explicit source interpretation, not a NASA phase definition.",
+    "Hourly-derived monthly e is not the independent published monthly e used by the accepted P8.2F experiment.",
+    "Donor spread and height envelope are diagnostics, not calibrated uncertainty or independent accuracy."
+  ],
+  "status": "POINT_YEAR_COMPLETE_RESEARCH",
+  "hours": 8760,
+  "monthly_reconciliation": [
+    {
+      "month": 1,
+      "target_e_mean_hpa": 6.158862147298809,
+      "output_e_mean_hpa": 6.158862147298808,
+      "residual_hpa": -8.881784197001252e-16,
+      "scale_hpa": 6.161677196477644,
+      "saturated_hours": 1,
+      "hours": 744
+    },
+    {
+      "month": 2,
+      "target_e_mean_hpa": 5.28786948959276,
+      "output_e_mean_hpa": 5.287869489592761,
+      "residual_hpa": 8.881784197001252e-16,
+      "scale_hpa": 5.293735187585975,
+      "saturated_hours": 0,
+      "hours": 672
+    },
+    {
+      "month": 3,
+      "target_e_mean_hpa": 6.789081297959417,
+      "output_e_mean_hpa": 6.789081297959417,
+      "residual_hpa": 0.0,
+      "scale_hpa": 6.792320671523681,
+      "saturated_hours": 0,
+      "hours": 744
+    },
+    {
+      "month": 4,
+      "target_e_mean_hpa": 8.005899227247244,
+      "output_e_mean_hpa": 8.005899227247244,
+      "residual_hpa": 0.0,
+      "scale_hpa": 8.009059430899772,
+      "saturated_hours": 0,
+      "hours": 720
+    },
+    {
+      "month": 5,
+      "target_e_mean_hpa": 12.202295920892775,
+      "output_e_mean_hpa": 12.202295920892777,
+      "residual_hpa": 1.7763568394002505e-15,
+      "scale_hpa": 12.204730406275672,
+      "saturated_hours": 0,
+      "hours": 744
+    },
+    {
+      "month": 6,
+      "target_e_mean_hpa": 15.845485247420003,
+      "output_e_mean_hpa": 15.845485247420003,
+      "residual_hpa": 0.0,
+      "scale_hpa": 15.851292871564532,
+      "saturated_hours": 0,
+      "hours": 720
+    },
+    {
+      "month": 7,
+      "target_e_mean_hpa": 18.536904932121647,
+      "output_e_mean_hpa": 18.536904932121644,
+      "residual_hpa": -3.552713678800501e-15,
+      "scale_hpa": 18.5423830982281,
+      "saturated_hours": 0,
+      "hours": 744
+    },
+    {
+      "month": 8,
+      "target_e_mean_hpa": 18.463143995815116,
+      "output_e_mean_hpa": 18.463143995815113,
+      "residual_hpa": -3.552713678800501e-15,
+      "scale_hpa": 18.468187516789442,
+      "saturated_hours": 0,
+      "hours": 744
+    },
+    {
+      "month": 9,
+      "target_e_mean_hpa": 15.857841176143223,
+      "output_e_mean_hpa": 15.857841176143221,
+      "residual_hpa": -1.7763568394002505e-15,
+      "scale_hpa": 15.86077062990871,
+      "saturated_hours": 0,
+      "hours": 720
+    },
+    {
+      "month": 10,
+      "target_e_mean_hpa": 12.525994680445976,
+      "output_e_mean_hpa": 12.52599468044597,
+      "residual_hpa": -5.329070518200751e-15,
+      "scale_hpa": 12.531609767607272,
+      "saturated_hours": 9,
+      "hours": 744
+    },
+    {
+      "month": 11,
+      "target_e_mean_hpa": 7.3753970364853645,
+      "output_e_mean_hpa": 7.375397036485364,
+      "residual_hpa": -8.881784197001252e-16,
+      "scale_hpa": 7.378514166475751,
+      "saturated_hours": 3,
+      "hours": 720
+    },
+    {
+      "month": 12,
+      "target_e_mean_hpa": 6.007838015387986,
+      "output_e_mean_hpa": 6.007838015387986,
+      "residual_hpa": 0.0,
+      "scale_hpa": 6.012607203073198,
+      "saturated_hours": 0,
+      "hours": 744
+    }
+  ],
+  "target_height_outside_donor_envelope": true,
+  "target_outside_horizontal_donor_hull": false,
+  "max_abs_temperature_height_correction_K": 1.1172330415491079,
+  "max_abs_pressure_height_correction_pa": 2276.641344394753,
+  "saturation_adjustment_hours": 13,
+  "max_RH_closure_pp": 1.4210854715202004e-14,
+  "max_q_to_e_closure_pa": 6.821210263296962e-13,
+  "max_Td_closure_hpa": 1.4210854715202004e-14,
+  "source_mode": "EPW",
+  "offline_donor_replay": false,
+  "donor_source_packet_sha256": "f1481a066f7418287d1278e606c8718a37cc8788b5c80042adfc5b8bca76db02",
+  "background_requested": true,
+  "background_status": "ADMITTED",
+  "EPW_status": "ADMITTED_MIXED_SOURCE_RESEARCH",
+  "EPW_blockers": [],
+  "future_base_status": "NOT_YET_ADMITTED_FOR_F1; local reference period and GCM signals must be admitted separately",
+  "core_calculation_seconds": 0.100186,
+  "offline_core_and_replay_make_no_weather_requests": false,
+  "donor_source_reports": [],
+  "background_source_geometry": {
+    "requested_point": [
+      47.0707,
+      15.4395
+    ],
+    "background_cell": [
+      47.0,
+      15.5
+    ],
+    "requested_to_background_distance_km": 9.10082531971942,
+    "elevation_m_provider_response_proxy": 467.0,
+    "site_elevation_or_native_orography_verified": false,
+    "local_height_correction_applied": false
+  },
+  "EPW_screen": {
+    "screen": "BOUNDS_COMPONENTS_AND_PROVIDER_ROUNDING_PASS",
+    "records": 8760,
+    "hard_failure_count": 0,
+    "max_GHI_minus_direct_horizontal_minus_DHI_Wh_m2": null,
+    "max_abs_provider_Magnus_RH_residual_pp": 0.05864464023485283,
+    "provider_T_Td_RH_quantization_interval_failures": null,
+    "T_Td_RH_exact_thermodynamic_closure_claimed": false,
+    "provider_values_modified": false,
+    "mixed_source_longwave_cross_field_accuracy_qualified": false,
+    "epw_format_readback": "PASS",
+    "fields_per_record": 35,
+    "headers": 8,
+    "first_row": [
+      "2023",
+      "1",
+      "1",
+      "1",
+      "60"
+    ],
+    "last_row": [
+      "2023",
+      "12",
+      "31",
+      "24",
+      "60"
+    ],
+    "leap_day_retained": false,
+    "sha256": "14b0e630a1425ba5bb99651831f2a7700ab57a39876369cb01e3dd330560ea34",
+    "bytes": 1953442,
+    "EnergyPlus_simulation_executed": false,
+    "numeric_serialization": {
+      "default": "10 significant decimal digits",
+      "future_T_Td_RH_only": null,
+      "max_future_T_Td_RH_rounding_C_or_pp": null,
+      "internal_state_objective_or_physics_changed": false
+    }
+  },
+  "background_EPW_sha256": "fd0f7284751e14ce87c1ce80457ea22fd8aac0c1f81a84913d75c757a16990fb",
+  "field_sources": {
+    "dry_bulb_temperature_c": "S1_P82F_DERIVED_POINT",
+    "dew_point_temperature_c": "S1_P82F_DERIVED_POINT",
+    "relative_humidity_pct": "S1_P82F_DERIVED_POINT",
+    "atmospheric_station_pressure_pa": "S1_P82F_DERIVED_POINT",
+    "horizontal_infrared_radiation_intensity_wh_m2": "UNCHANGED_GRID_BACKGROUND",
+    "global_horizontal_radiation_wh_m2": "UNCHANGED_GRID_BACKGROUND",
+    "direct_normal_radiation_wh_m2": "UNCHANGED_GRID_BACKGROUND",
+    "diffuse_horizontal_radiation_wh_m2": "UNCHANGED_GRID_BACKGROUND",
+    "wind_direction_deg": "UNCHANGED_GRID_BACKGROUND",
+    "wind_speed_m_s": "UNCHANGED_GRID_BACKGROUND",
+    "total_sky_cover_tenths": "UNCHANGED_GRID_BACKGROUND",
+    "liquid_precipitation_depth_mm": "UNCHANGED_GRID_BACKGROUND"
+  },
+  "EPW_sha256": "14b0e630a1425ba5bb99651831f2a7700ab57a39876369cb01e3dd330560ea34",
+  "total_calculation_seconds": 14.229454716999953,
+  "timing_and_acquisition_diagnostics_are_not_part_of_the_stable_weather_identity": true,
+  "selected_base_sha256": "14b0e630a1425ba5bb99651831f2a7700ab57a39876369cb01e3dd330560ea34"
+}
