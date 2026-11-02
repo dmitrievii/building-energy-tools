@@ -79,3 +79,10 @@ The generated `SYNTHETIC_DEMO_NOT_CERTIFICATION.zip` is test data, **not** a Rhi
 3. Add dedicated graphs for ventilation CO₂ mass balance, AHU psychrometrics/heat-recovery, adaptive façade and shading, lighting, and multiservice generator/source ownership when source events are available.
 4. Benchmark realistic 100+ thermal-zone archives and implement chunked Arrow/Parquet if memory bounds are reached.
 5. Deploy independent Streamlit service with independent security, upload-size, privacy and storage controls.
+
+
+## V2 — Multi-ZIP comparison
+
+Upload two to eight independent EPB Rhino Result Export ZIP archives at once. A new Compare buildings / variants section overlays thermal profiles, native national monthly indicators, and carrier ledger import versus export. Select the baseline ZIP to obtain absolute differences or percent differences; undefined percent differences are not imputed. Choose Hour, Day, Month, or Year for ISO 52016 thermal series. Optional user-entered conditioned floor areas enable kWh/m² comparisons. Zone temperatures and relative humidity require explicit zone selection and are never summed. The viewer reports differing or undocumented weather and calculation profiles and does not normalize climate, rerun calculations, or merge independent energy accounts.
+
+The upload control allows 100 MiB per ZIP; the session limits comparisons to 8 ZIPs, 240 MiB compressed, and 700 MiB uncompressed. Duplicate identical archives are ignored. The new Python module is epb_results_visualizer/multi_compare.py. Tests run through the EPB Visualizer CI GitHub Actions workflow.
