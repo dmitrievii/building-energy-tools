@@ -382,7 +382,7 @@ def main():
     st.title('IVANCALC · EPB Results Visualizer')
     st.markdown('Explore hourly EPB Rhino results and compare independent buildings or architectural design variants.')
     uploads = st.file_uploader('Upload EPB Rhino Result Export ZIP archives', type=['zip'],
-                               accept_multiple_files=True, key='epb_uploads',
+                               accept_multiple_files=True, max_upload_size=100, key='epb_uploads',
                                help='One ZIP opens individual analyses; 2–8 ZIPs enable comparative analysis.')
     if not uploads:
         st.session_state.pop('epb_bundle_cache', None)
