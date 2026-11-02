@@ -381,12 +381,6 @@ def building_power(bundle: EpbBundle, metric: str, zone_ids: list[str], cadence:
     }), pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), {}, pd.DataFrame(), {})
     if reference_months is not None:
         pseudo.hourly['month'] = reference_months
-    if metric != 'signed_load_w':
-        pseudo.hourly['signed_load_w'] = summed.to_numpy()
-        pseudo.hourly['heating_load_w'] = summed.to_numpy()
-        pseudo.hourly['cooling_load_w'] = np.zeros(len(summed))
-    else:
-        pseudo.hourly['signed_load_w'] = summed.to_numpy()
-        pseudo.hourly['heating_load_w'] = np.maximum(summed.to_numpy(), 0)
-        pseudo.hourly['cooling_load_w'] = np.maximum(-summed.to_numpy(), 0)
+    # Aggregate the selected quantity alone. Fabricated surrogate channels
+    # previously replaced building cooling with zeros.
     return aggregate_thermal(pseudo, metric, ['Building'], cadence, mode)
