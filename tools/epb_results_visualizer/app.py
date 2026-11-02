@@ -19,6 +19,8 @@ from epb_results_visualizer.charts import (
     monthly_metrics_figure, plotly_configuration,
 )
 
+from epb_results_visualizer.multi_compare import load_studies, section_comparison
+
 st.set_page_config(page_title='EPB Results Visualizer | IVANCALC', page_icon='📊', layout='wide')
 
 
@@ -378,41 +380,57 @@ def section_quality(bundle):
 
 def main():
     st.title('IVANCALC · EPB Results Visualizer')
-    st.markdown('Explore exported energy simulation results, from hourly operation to annual indicators.')
-    uploaded = st.file_uploader('Upload the ZIP produced by EPB Rhino → Result Export', type=['zip'],
-                                help='Existing evidence ZIPs and visualization schema v1 ZIPs are accepted.')
-    if uploaded is None:
-        st.info('Upload a Result Export ZIP. The site reads the evidence locally for the current Streamlit session; it does not execute Rhino.')
-        st.markdown('**Sections:** Overview · Thermal balance · Energy systems · Validation Trace · National indicators · Carrier ledger · Data quality')
+    st.markdown('Explore hourly EPB Rhino results and compare independent buildings or architectural design variants.')
+    uploads = st.file_uploader('Upload EPB Rhino Result Export ZIP archives', type=['zip'],
+                               accept_multiple_files=True, key='epb_uploads',
+                               help='One ZIP opens individual analyses; 2–8 ZIPs enable comparative analysis.')
+    if not uploads:
+        st.session_state.pop('epb_bundle_cache', None)
+        st.info('Upload one ZIP for individual results or several ZIP files to compare independent calculations.')
         return
     try:
-        bundle = _load(uploaded.getvalue())
-    except (BundleValidationError, ValueError, KeyError, RuntimeError, OSError) as e:
-        st.error(f'ZIP rejected: {e}')
+        studies = load_studies(uploads)
+    except (BundleValidationError, ValueError, KeyError, RuntimeError, OSError) as exc:
+        st.error('ZIP rejected: '+str(exc))
+        return
+    if not studies:
+        st.info('No distinct valid ZIP archives selected.')
         return
     st.sidebar.title('Analysis navigation')
-    page = st.sidebar.radio('Section',['Overview','Thermal balance','Energy systems','Validation Trace',
-                                      'National indicators','Carrier ledger','Data quality'])
+    pages = ['Overview','Thermal balance','Energy systems','Validation Trace',
+             'National indicators','Carrier ledger','Data quality']
+    if len(studies) > 1:
+        pages.insert(1,'Compare buildings / variants')
+    page = st.sidebar.radio('Section', pages, index=1 if len(studies)>1 else 0)
     settings = chart_settings()
-    for w in bundle.warnings:
-        st.sidebar.warning(w)
-    if page == 'Overview':
-        section_overview(bundle)
-    elif page == 'Thermal balance':
-        section_thermal(bundle, settings)
-    elif page == 'Energy systems':
-        section_systems(bundle, settings)
-    elif page == 'Validation Trace':
-        section_trace(bundle, settings)
-    elif page == 'National indicators':
-        section_monthly(bundle, settings)
-    elif page == 'Carrier ledger':
-        section_ledger(bundle, settings)
+    if page == 'Compare buildings / variants':
+        section_comparison(studies, settings)
     else:
-        section_quality(bundle)
+        if len(studies)>1:
+            index = st.sidebar.selectbox('Individual ZIP',range(len(studies)),
+                          format_func=lambda n:studies[n].label,key='epb_chosen_file')
+            bundle = studies[index].bundle
+        else:
+            bundle = studies[0].bundle
+        for warning in bundle.warnings:
+            st.sidebar.warning(warning)
+        if page == 'Overview':
+            section_overview(bundle)
+        elif page == 'Thermal balance':
+            section_thermal(bundle, settings)
+        elif page == 'Energy systems':
+            section_systems(bundle, settings)
+        elif page == 'Validation Trace':
+            section_trace(bundle, settings)
+        elif page == 'National indicators':
+            section_monthly(bundle, settings)
+        elif page == 'Carrier ledger':
+            section_ledger(bundle, settings)
+        else:
+            section_quality(bundle)
     st.divider()
-    st.caption('Independent research/engineering viewer. Derived visualizations do not constitute an Energieausweis. ' 
-               'No upload persistence is implemented by this application; deployment-host retention is separate.')
+    st.caption('Independent visualization only: no physical or regulatory results are recalculated. '
+               'Files are processed within the Streamlit session; hosting-provider retention is separate.')
 
 
 if __name__=='__main__':
