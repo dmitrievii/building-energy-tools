@@ -1,0 +1,5 @@
+# Mirrors the Climate Analyzer Python/Plotly/Streamlit major-version family.
+streamlit==1.63.0
+pandas==2.3.3
+numpy==1.26.4
+plotly==5.24.1
