@@ -1,0 +1,29 @@
+name: EPB Visualizer CI
+
+on:
+  push:
+    paths:
+      - 'tools/epb_results_visualizer/**'
+      - '.github/workflows/epb-visualizer-ci.yml'
+  pull_request:
+    paths:
+      - 'tools/epb_results_visualizer/**'
+      - '.github/workflows/epb-visualizer-ci.yml'
+  workflow_dispatch:
+
+jobs:
+  scientific-viewer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - name: Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install app and test dependencies
+        run: python -m pip install -r tools/epb_results_visualizer/requirements.txt pytest
+      - name: Compile Streamlit application
+        run: python -m compileall -q tools/epb_results_visualizer
+      - name: Run importer and multi-ZIP regression suite
+        run: python -m pytest -q tools/epb_results_visualizer/tests
