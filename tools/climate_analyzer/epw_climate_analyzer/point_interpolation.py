@@ -29,6 +29,7 @@ from .engine.station_epw_admission import StationYearRequest
 from . import geosphere as geo
 from .geosphere_station_year import (RESOURCE, StationYearProduct, _zip, read_sources,
     run_station_year)
+from .station_coverage import station_core_coverage
 
 MAX_INPUT_BYTES = 128*1024*1024
 MAX_EPW_BYTES = 12*1024*1024
@@ -192,7 +193,7 @@ def _acquire_stations(request, progress):
         selected.append(station)
         if len(selected) == 20: break
     donors, entries, files = [], [], {}
-    if not raw_metadata: raise ValueError("S1_ORIGINAL_METADATA_CAPTURE_MISSING")
+    if len(raw_metadata) != 1: raise ValueError("S1_EXACTLY_ONE_ORIGINAL_METADATA_CAPTURE_REQUIRED")
     files["catalog.original.json"] = raw_metadata[0]
     for station in selected:
         progress(f"Checking donor {station.station_id}: {station.name} ({len(donors)+1}/20)")
@@ -202,7 +203,8 @@ def _acquire_stations(request, progress):
             def station_progress(event):
                 if event.get("event") in ("batch_start", "batch_complete", "retry", "split"):
                     progress(f"{station.name}: source {event['event']} · batch {event.get('batch_number', '?')}/{event.get('total_batches', '?')}")
-            product = run_station_year(station_request, progress=station_progress)
+            product = run_station_year(station_request, original_metadata_body=raw_metadata[0],
+                                       progress=station_progress)
         except Exception as exc:
             census.append({"station_id": station.station_id, "reason": "SOURCE_ACQUISITION_FAILED",
                            "detail": type(exc).__name__+": "+str(exc)})
@@ -214,8 +216,12 @@ def _acquire_stations(request, progress):
         if sum(len(body) for body in files.values()) > MAX_INPUT_BYTES:
             raise ValueError("S1_ORIGINAL_SOURCE_COLLECTION_LIMIT")
         entries.append({"file": filename, "station_id": station.station_id})
-        if sum(qualify_donor(request, d)["eligible"] for d in donors) >= 4: break
+        admitted = sum(qualify_donor(request, d)["eligible"] for d in donors)
+        progress(f"{station.name}: {admitted}/4 complete core donor years admitted after {len(donors)} checks")
+        if admitted >= 4: break
     extra = {"candidate_metadata_exclusions": census,
+        "metadata_provider_responses_this_search": 1,
+        "one_original_catalogue_preserved_in_each_station_packet": True,
         "search_exhaustive_beyond_nearest_twenty_eligible_metadata_sites": False}
     files["search_census.json"] = json_bytes(extra)
     packet = _source_inputs(request, "GEOSPHERE", entries, files)
@@ -339,14 +345,24 @@ def run_point_product(request: PointRequest, *, mode="GEOSPHERE", epws=(), actua
         "adjustments.csv.gz": gzip.compress(assessment.adjustments.to_csv(index_label="interval_start_utc").encode(), mtime=0),
         "donor_months.csv": assessment.donor_months.to_csv(index=False).encode()}
     report["donor_source_reports"] = []
+    coverage = []
     for i, donor in enumerate(donors):
         if donor.source_admission:
+            row = station_core_coverage(donor.source_admission)
+            admission = next(d for d in report["donor_admission"] if d["station_id"] == donor.station_id)
+            row.update(donor_admitted=admission["eligible"], selected=admission["selected"])
+            coverage.append(row)
             name = f"source_admission_{i:02d}.json"
             gaps = f"source_missing_hours_{i:02d}.csv.gz"
             files[name] = json_bytes(donor.source_admission)
             files[gaps] = donor.source_gaps_csv_gz
             report["donor_source_reports"].append({"station_id": donor.station_id,
                                                  "admission": name, "gap_ledger": gaps})
+    report["station_core_coverage"] = coverage
+    if coverage:
+        files["station_core_coverage.csv"] = pd.DataFrame([
+            {k: v for k, v in row.items() if k != "fields"} for row in coverage
+        ]).to_csv(index=False).encode()
     if len(assessment.hourly.columns) == 0:
         report["EPW_status"] = "BLOCKED_INCOMPLETE_THERMODYNAMIC_POINT_YEAR"
         report["EPW_blockers"].extend(report["global_blockers"])

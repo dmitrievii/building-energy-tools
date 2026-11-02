@@ -1,0 +1,119 @@
+{
+  "schema": "IGE_AT_REAL_STATION_USABILITY_EXECUTION_v1",
+  "date_utc": "2026-11-02",
+  "request": {
+    "latitude": 47.0707,
+    "longitude": 15.4395,
+    "elevation_m": 375.0,
+    "elevation_reference": "Nominal site elevation proxy; common vertical datum and sensor elevations unconfirmed",
+    "year": 2021,
+    "utc_offset_minutes": 60,
+    "label": "Graz real-station usability",
+    "assume_buck_water": true,
+    "allow_nominal_height_proxy": true,
+    "excluded_station_id": ""
+  },
+  "status": "POINT_YEAR_COMPLETE_RESEARCH",
+  "EPW_status": "ADMITTED_MIXED_SOURCE_RESEARCH",
+  "rows": 8760,
+  "fields_per_record": 35,
+  "complete_calendar": true,
+  "unique_timestamps": 8760,
+  "EPW_sha256": "889294fc7bd9384d22a482564c4967a83968623ef42bb561e3d37351e2022f25",
+  "source_input_sha256": "08d937dd4ad698f7ccd5ba6fd93492a9c3119e952cc4094cfe65aaf649dc88a8",
+  "background_packet_sha256": "22818937fa346a868cfedb0bc3273d7ecaa84101cded6c37503994c0dce923ab",
+  "selected_donors": [
+    "16412",
+    "16413",
+    "16511",
+    "16411"
+  ],
+  "checked_donors": 5,
+  "metadata_provider_responses_this_search": 1,
+  "elapsed_seconds": 107.65223245099992,
+  "quality": {
+    "execution_correctness": "ANNUAL_INTERPOLATION_COMPLETED",
+    "physical_admissibility": "T_P_E_RH_TD_BUCK_WATER_CLOSURE_AND_MONTHLY_E_PASS",
+    "independent_accuracy": "NOT_INDEPENDENTLY_QUALIFIED_FOR_NEW_ADAPTERS",
+    "operational_and_application_scope": "RESTRICTED_RESEARCH_POINT_INTERPOLATION",
+    "production_ready": false
+  },
+  "physical_EPWs_screen": {
+    "screen": "BOUNDS_COMPONENTS_AND_PROVIDER_ROUNDING_PASS",
+    "records": 8760,
+    "hard_failure_count": 0,
+    "max_GHI_minus_direct_horizontal_minus_DHI_Wh_m2": null,
+    "max_abs_provider_Magnus_RH_residual_pp": 0.058643720418267264,
+    "provider_T_Td_RH_quantization_interval_failures": null,
+    "T_Td_RH_exact_thermodynamic_closure_claimed": false,
+    "provider_values_modified": false,
+    "mixed_source_longwave_cross_field_accuracy_qualified": false,
+    "epw_format_readback": "PASS",
+    "fields_per_record": 35,
+    "headers": 8,
+    "first_row": [
+      "2021",
+      "1",
+      "1",
+      "1",
+      "60"
+    ],
+    "last_row": [
+      "2021",
+      "12",
+      "31",
+      "24",
+      "60"
+    ],
+    "leap_day_retained": false,
+    "sha256": "889294fc7bd9384d22a482564c4967a83968623ef42bb561e3d37351e2022f25",
+    "bytes": 1953921,
+    "EnergyPlus_simulation_executed": false,
+    "numeric_serialization": {
+      "default": "10 significant decimal digits",
+      "future_T_Td_RH_only": null,
+      "max_future_T_Td_RH_rounding_C_or_pp": null,
+      "internal_state_objective_or_physics_changed": false
+    }
+  },
+  "field_sources": {
+    "dry_bulb_temperature_c": "S1_P82F_DERIVED_POINT",
+    "dew_point_temperature_c": "S1_P82F_DERIVED_POINT",
+    "relative_humidity_pct": "S1_P82F_DERIVED_POINT",
+    "atmospheric_station_pressure_pa": "S1_P82F_DERIVED_POINT",
+    "horizontal_infrared_radiation_intensity_wh_m2": "UNCHANGED_GRID_BACKGROUND",
+    "global_horizontal_radiation_wh_m2": "UNCHANGED_GRID_BACKGROUND",
+    "direct_normal_radiation_wh_m2": "UNCHANGED_GRID_BACKGROUND",
+    "diffuse_horizontal_radiation_wh_m2": "UNCHANGED_GRID_BACKGROUND",
+    "wind_direction_deg": "UNCHANGED_GRID_BACKGROUND",
+    "wind_speed_m_s": "UNCHANGED_GRID_BACKGROUND",
+    "total_sky_cover_tenths": "UNCHANGED_GRID_BACKGROUND",
+    "liquid_precipitation_depth_mm": "UNCHANGED_GRID_BACKGROUND"
+  },
+  "target_weather_used": false,
+  "new_fit_or_tuning": false,
+  "engine_gap_fill": false,
+  "negative_cases": {
+    "2023": {
+      "eligible": 1,
+      "checked": 20
+    },
+    "2025": {
+      "eligible": 0,
+      "checked": 20
+    }
+  },
+  "new_independent_accuracy_validation": false,
+  "production_ready": false,
+  "multiyear_local_reference_automation_completed": false,
+  "F1_point_future_qualified": false,
+  "public_app_changed": false,
+  "GitHub_CI_status": "TO_BE_LAUNCHED_NOT_POLLED",
+  "targeted_unique_test_cases_passed": 59,
+  "pinned_dependencies_check": "PASS",
+  "compile_check": "PASS",
+  "diff_whitespace_check": "PASS",
+  "offline_EPWs_bitwise_equal": true,
+  "F1_annual_base_admission": "PASS",
+  "F1_grid_reference_substitution": "REJECTED_AS_REQUIRED"
+}

@@ -1,0 +1,6 @@
+station_id,station_name,year,expected_hours,station_only_EPW_admitted,core_sources_admitted,T_admitted_hours,RH_admitted_hours,p_admitted_hours,blocker_types,donor_admitted,selected
+16412,Graz Universität,2021,8760,False,True,8760,8760,8760,[],True,True
+16413,Graz Straßgang,2021,8760,False,True,8760,8760,8760,[],True,True
+16400,Graz Thalerhof Flughafen,2021,8760,False,False,8759,8759,8760,"['MISSING_OBSERVATIONS_T', 'MISSING_OBSERVATIONS_RH']",False,False
+16511,Laßnitzhöhe,2021,8760,False,True,8760,8760,8760,[],True,True
+16411,St. Radegund,2021,8760,False,True,8760,8760,8760,[],True,True

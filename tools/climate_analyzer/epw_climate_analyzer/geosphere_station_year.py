@@ -202,11 +202,14 @@ def _parse_capture(request, captured):
 
 
 def run_station_year(request: StationYearRequest, *, source_packet: bytes | None = None,
-                     expected_sha256: str = "", progress=lambda event: None) -> StationYearProduct:
+                     expected_sha256: str = "", original_metadata_body: bytes | None = None,
+                     progress=lambda event: None) -> StationYearProduct:
     """One explicit annual request or an entirely offline, hash-pinned replay."""
     if not request.station_id.isascii() or not request.station_id.isdigit():
         raise ValueError("H1_GEOSPHERE_REQUIRES_NUMERIC_PROVIDER_ID")
     replay = source_packet is not None
+    if replay and original_metadata_body is not None:
+        raise ValueError("H1_METADATA_REUSE_LIVE_ONLY")
     captured = []
     transport_error = None
     if source_packet is None:
@@ -214,7 +217,19 @@ def run_station_year(request: StationYearRequest, *, source_packet: bytes | None
             if sum(len(item[2]) for item in captured) + len(body) > MAX_PACKET_BYTES or len(captured) >= 64:
                 raise ValueError("H1_SOURCE_COLLECTION_LIMIT")
             captured.append((url, query, body))
-        metadata = geo.fetch_metadata(resource_id=RESOURCE, response_capture=capture)
+        if original_metadata_body is None:
+            metadata = geo.fetch_metadata(resource_id=RESOURCE, response_capture=capture)
+        else:
+            # One explicitly acquired catalogue can describe every station in
+            # this search. Each annual packet still retains the same original
+            # bytes, and passes the unchanged metadata/QC admission on replay.
+            if (not isinstance(original_metadata_body, bytes) or not original_metadata_body
+                    or len(original_metadata_body) > geo.MAX_RESPONSE_BYTES):
+                raise ValueError("H1_ORIGINAL_METADATA_BYTES_REQUIRED")
+            metadata = json.loads(original_metadata_body)
+            if not isinstance(metadata, dict):
+                raise ValueError("H1_ORIGINAL_METADATA_OBJECT_REQUIRED")
+            capture(geo.resource_spec(RESOURCE).metadata_endpoint, {}, original_metadata_body)
         station = _station(metadata, request.station_id)
         today = pd.Timestamp.now(tz="UTC")
         if request.utc_ends[-1] >= today:
@@ -260,7 +275,8 @@ def run_station_year(request: StationYearRequest, *, source_packet: bytes | None
     report = dict(assessment.report)
     report["weather_provider_responses_this_run"] = 0 if replay else sum(
         url == geo.resource_spec(RESOURCE).endpoint for url, query, body in captured)
-    report["metadata_provider_responses_this_run"] = 0 if replay else 1
+    report["metadata_provider_responses_this_run"] = 0 if replay or original_metadata_body is not None else 1
+    report["original_metadata_reused_for_live_request"] = original_metadata_body is not None
     report["offline_replay"] = replay
     report["HTTP_attempts_including_failed_attempts"] = "Not counted; original successful response bodies and query identities are retained."
     report["source_responses_in_packet"] = len(captured)
