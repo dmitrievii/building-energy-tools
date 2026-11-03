@@ -169,7 +169,7 @@ def _replay_donors(request, body, digest):
     return donors, manifest
 
 
-def _acquire_stations(request, progress):
+def _acquire_stations(request, progress, required_station_ids=()):
     raw_metadata = []
     def capture(url, query, body): raw_metadata.append(body)
     metadata = geo.fetch_metadata(resource_id=RESOURCE, response_capture=capture)
@@ -177,8 +177,12 @@ def _acquire_stations(request, progress):
         distance_km(request.latitude, request.longitude, station.latitude, station.longitude), station.station_id))
     census, selected = [], []
     for station in sites:
+        if required_station_ids and station.station_id not in required_station_ids: continue
         d = distance_km(request.latitude, request.longitude, station.latitude, station.longitude)
-        if d > 100: continue
+        if d > 100:
+            if required_station_ids:
+                census.append({"station_id": station.station_id, "reason": "OUTSIDE_OPERATIONAL_RADIUS"})
+            continue
         if station.station_type == "COMBINED":
             census.append({"station_id": station.station_id, "reason": "COMBINED_SERIES_NOT_ONE_FIXED_SITE"})
             continue
@@ -192,6 +196,13 @@ def _acquire_stations(request, progress):
             continue
         selected.append(station)
         if len(selected) == 20: break
+    if required_station_ids and (len(selected) != 4 or len({station.station_id for station in selected}) != 4):
+        known = {station.station_id for station in sites}
+        for station_id in required_station_ids:
+            if station_id not in known:
+                census.append({"station_id": station_id, "reason": "STATION_NOT_IN_HOURLY_CATALOGUE"})
+        # A fixed network cannot be admitted with fewer than four metadata sites.
+        selected = []
     donors, entries, files = [], [], {}
     if len(raw_metadata) != 1: raise ValueError("S1_EXACTLY_ONE_ORIGINAL_METADATA_CAPTURE_REQUIRED")
     files["catalog.original.json"] = raw_metadata[0]
@@ -303,7 +314,7 @@ def _composite_epw(request, assessment, background):
 def run_point_product(request: PointRequest, *, mode="GEOSPHERE", epws=(), actual_year_confirmed=False,
                       input_packet=None, expected_sha256="", include_background=False, background_product=None,
                       background_packet=None, background_sha256="",
-                      progress=lambda message: None) -> PointProduct:
+                      progress=lambda message: None, required_station_ids=()) -> PointProduct:
     """One explicit request; no acquisition on edits and no implicit saved-city fallback."""
     run_started = time.monotonic()
     if not request.assume_buck_water or not request.allow_nominal_height_proxy:
@@ -311,6 +322,9 @@ def run_point_product(request: PointRequest, *, mode="GEOSPHERE", epws=(), actua
     if len(epws) > 20 or sum(len(body) for name, body in epws) > MAX_INPUT_BYTES:
         raise ValueError("S1_INPUT_LIMIT")
     replay = input_packet is not None
+    if required_station_ids and (replay or mode != "GEOSPHERE" or len(required_station_ids) != 4
+            or len(set(required_station_ids)) != 4):
+        raise ValueError("S1_FIXED_DONORS_REQUIRE_FOUR_DISTINCT_LIVE_STATIONS")
     extra = {}
     if replay:
         donors, manifest = _replay_donors(request, input_packet, expected_sha256)
@@ -318,7 +332,7 @@ def run_point_product(request: PointRequest, *, mode="GEOSPHERE", epws=(), actua
         _, input_files = _read_input_packet(input_packet, expected_sha256)
         if "search_census.json" in input_files: extra = json.loads(input_files["search_census.json"])
     elif mode == "GEOSPHERE":
-        donors, input_packet, extra = _acquire_stations(request, progress)
+        donors, input_packet, extra = _acquire_stations(request, progress, required_station_ids)
     elif mode == "EPW":
         donors, entries, raw_files = [], [], {}
         for i, (name, body) in enumerate(epws):

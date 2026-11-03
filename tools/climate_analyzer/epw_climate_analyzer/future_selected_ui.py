@@ -7,6 +7,7 @@ from .engine.f1_base import admit_base, SURFACE, COLLOCATED, MK, BUCK, epw_refer
 from .engine.f1_sources import SignalRequest, admit_nex_packet, MAX_PACKET, SCENARIOS, SCENARIO_LABELS
 from .engine_application import EngineProduct
 from .future_selected import base_from_engine, base_from_point, run_selected_future
+from .future_point_reference import POINT_LABEL, POINT_MODE, point_reference_spec
 
 PRODUCT_KEY = "ige_f1_completed_product"
 REQUEST_KEY = "ige_f1_completed_identity"
@@ -117,9 +118,18 @@ def render_future_source(st, activate):
     modes = ["Separate compatible reference EPW"]
     if base is not None and base.calendar_kind == "REPRESENTATIVE_YEAR": modes.insert(0, "Selected representative base")
     if base is not None and base.identity["source_kind"] == "IGE_B0_BACKGROUND": modes.insert(0, "Same-chain multi-year background reference")
+    if base is not None:
+        try:
+            point_reference_spec(base, (2002, 2014))
+        except (ValueError, KeyError, TypeError):
+            pass
+        else:
+            modes.insert(0, POINT_LABEL)
     mode = st.selectbox("Local climate reference", modes, key="ige_f1_reference_mode")
     reference_base, evidence = None, ""
-    if mode != "Same-chain multi-year background reference":
+    if mode == POINT_LABEL:
+        st.caption("Builds each requested year with the same four stations and background grid cell. Missing or incompatible years block the result; completed years can be reused on Retry.")
+    elif mode != "Same-chain multi-year background reference":
         evidence = st.text_input("Evidence for the local reference period (provider, file documentation or source record)", key="ige_f1_period_evidence")
         st.caption("TMY row-year labels do not establish its climatic reference period. An actual year outside the reference cannot be treated as its climate normal.")
         if mode == "Separate compatible reference EPW":
@@ -142,7 +152,9 @@ def render_future_source(st, activate):
         st.caption(f"Original EPW SHA256: {base.sha256}")
         try:
             request = SignalRequest(*base.identity["signal_site"], (r0, r1), (f0, f1), scenario=scenario)
-            if mode != "Same-chain multi-year background reference":
+            if mode == POINT_LABEL:
+                point_reference_spec(base, request.reference_window)
+            elif mode != "Same-chain multi-year background reference":
                 if reference_base is not None or mode == "Selected representative base":
                     epw_reference(base, base if mode == "Selected representative base" else reference_base,
                         request.reference_window, evidence)
@@ -162,7 +174,7 @@ def render_future_source(st, activate):
                 "liquid_proxy": liquid_proxy, "NASA_source_mode": source_mode, "NASA_upload_sha256": nex_sha}
         except (ValueError, TypeError) as exc: errors.append(str(exc))
     for error in errors: st.warning(error)
-    st.caption("Build acquires the NASA sources for this exact request. Completed responses are saved for 24 hours on this app instance, so Retry can resume after a timeout. Matching retained original packets can be reused; other points, scenarios and periods require their own sources. A first request can take about 15 minutes. The ZIP retains all original data for reuse.")
+    st.caption("Build acquires the NASA sources for this exact request. Completed responses are saved for 24 hours on this app instance, so Retry can resume after a timeout. Matching retained original packets can be reused; other points, scenarios and periods require their own sources. NASA acquisition alone can take about 15 minutes; a new station reference requires additional downloads. The ZIP retains all original data for reuse.")
     retry_current = st.session_state.get("ige_f1_error", (None,))[0] == identity and identity is not None
     if st.button("Retry future climate from this base" if retry_current else "Build future climate from this base", type="primary", key="ige_f1_build", disabled=base is None or request is None or bool(errors)):
         st.session_state.pop("ige_f1_error", None)
@@ -175,7 +187,7 @@ def render_future_source(st, activate):
                 def progress(message): status.update(label=str(message)); st.write(str(message))
                 completed = run_selected_future(base, request,
                     reference_mode={"Selected representative base": "REPRESENTATIVE_BASE", "Separate compatible reference EPW": "SEPARATE_REFERENCE_EPW",
-                        "Same-chain multi-year background reference": "BACKGROUND_REFERENCE"}[mode],
+                        "Same-chain multi-year background reference": "BACKGROUND_REFERENCE", POINT_LABEL: POINT_MODE}[mode],
                     period_evidence=evidence, reference_base=reference_base,
                     nex_packet=nex_packet, nex_packet_sha256=nex_sha,
                     allow_liquid_precipitation_proxy=liquid_proxy, retained_sources=retained, progress=progress)
@@ -191,6 +203,11 @@ def render_future_source(st, activate):
                 "the base or reference has inconsistent temperature and dew point. Known ERA5-derived 0.1°C rounding is handled with an explicit adjustment log; other supersaturation needs a separate source check. "
                 "The previous completed result remains available.")
             with st.expander("Source diagnostic"):
+                st.code(error)
+        elif "F1_POINT_REFERENCE_YEAR_BLOCKED" in error or "F1_POINT_REFERENCE_BACKGROUND_BLOCKED" in error:
+            st.error(("Current request" if failed == identity else "Previous request")+
+                " could not build the station point reference. Every year must pass the same station and background checks.")
+            with st.expander("Blocked year and source details", expanded=True):
                 st.code(error)
         elif "F1_SOURCE_UNAVAILABLE" in error:
             st.error(("Current request" if failed == identity else "Previous request")+" could not finish: NASA's data service did not respond. "
