@@ -10,6 +10,7 @@ on:
       - deployment/ige-donor-recovery-candidate-20261030.json
       - deployment/ige-at-station-candidate-20261102.json
       - deployment/ige-f1-point-reference-candidate-20261103.json
+      - deployment/ige-f1-gap-recovery-candidate-20261104.json
       - tools/climate_analyzer/**
       - research/ige_cmip6/**
   workflow_dispatch:
@@ -31,7 +32,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install -r tools/climate_analyzer/requirements.txt
-      - run: python deployment/verify_ige_cloud_candidate.py --contract deployment/ige-f1-point-reference-candidate-20261103.json --out outputs/cloud-preflight
+      - run: python deployment/verify_ige_cloud_candidate.py --contract deployment/ige-f1-gap-recovery-candidate-20261104.json --out outputs/cloud-preflight
       - uses: actions/upload-artifact@v4
         if: always()
         with:

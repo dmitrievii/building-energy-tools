@@ -26,7 +26,7 @@ from .engine.model_sources import bounded_zip, REFERENCE_PACKET_SHA
 from .engine_application import EngineProduct, RESEARCH, REFERENCE
 from .engine_analysis import UI_CONTRACT, prepare_engine_analysis_frame, monthly_engine_summary
 from .geosphere_station_year import _zip
-from .future_point_reference import POINT_MODE, point_reference, point_reference_spec
+from .future_point_reference import POINT_MODES, POINT_GAP_MODE, point_reference, point_reference_spec
 
 
 def base_from_engine(product):
@@ -162,7 +162,7 @@ def run_selected_future(base: BaseYear, request: SignalRequest, *, reference_mod
         sources["reference_admission.json"] = json_bytes(reference_base.identity)
         sources["reference_hourly.csv.gz"] = gzip.compress(reference_base.data.to_csv(
             index_label="interval_start_utc", float_format="%.17g").encode(), mtime=0)
-    elif reference_mode == POINT_MODE:
+    elif reference_mode in POINT_MODES:
         point_reference_spec(base, request.reference_window)
     elif reference_mode == "BACKGROUND_REFERENCE":
         # Reject an incompatible base before HTTP. The slow multi-year local
@@ -174,12 +174,13 @@ def run_selected_future(base: BaseYear, request: SignalRequest, *, reference_mod
             raise ValueError("F1_BACKGROUND_REFERENCE_SOURCE_WINDOW_2002_TO_2025")
     else: raise ValueError("F1_LOCAL_REFERENCE_MODE_NOT_ADMITTED")
     if not allow_liquid_precipitation_proxy and ("total_precipitation_depth_mm" not in base.data
-            or (reference_mode not in ("BACKGROUND_REFERENCE", POINT_MODE) and not all("total_precipitation_depth_mm" in ref[m] for m in range(1,13)))):
+            or (reference_mode not in ("BACKGROUND_REFERENCE", *POINT_MODES) and not all("total_precipitation_depth_mm" in ref[m] for m in range(1,13)))):
         raise ValueError("F1_TOTAL_PRECIPITATION_UNKNOWN_EXPLICIT_LIQUID_RAIN_PROXY_REQUIRED")
-    if reference_mode == POINT_MODE:
+    if reference_mode in POINT_MODES:
         # Reject incomplete station histories before requesting NASA data.
         ref, ref_evidence, packet = point_reference(base, request.reference_window,
-            packet=reference_packet, expected_sha256=reference_packet_sha256, progress=progress)
+            packet=reference_packet, expected_sha256=reference_packet_sha256, progress=progress,
+            **({"recover_gaps": True} if reference_mode == POINT_GAP_MODE else {}))
         sources["local_reference.sources.zip"] = packet
     if nex_packet is None:
         nex_packet = matching_saved_nex_packet(request)
@@ -293,7 +294,7 @@ def replay_selected_future(archive, expected_sha256, *, progress=lambda message:
     request = SignalRequest(**{**values, "reference_window": tuple(values["reference_window"]), "future_window": tuple(values["future_window"])})
     nex = sources["NASA_NEX_original.sources.zip"]
     local = sources.get("local_reference.sources.zip")
-    if manifest["reference_mode"] == POINT_MODE and local is None:
+    if manifest["reference_mode"] in POINT_MODES and local is None:
         raise ValueError("F1_POINT_REFERENCE_OFFLINE_PACKET_REQUIRED")
     reserved = {"base_admission.json", "reference_admission.json", "reference_hourly.csv.gz", "selected_base_hourly.csv.gz", "selected_base.epw", "local_reference.epw", "NASA_NEX_original.sources.zip", "local_reference.sources.zip"}
     return run_selected_future(base, request, reference_mode=manifest["reference_mode"],

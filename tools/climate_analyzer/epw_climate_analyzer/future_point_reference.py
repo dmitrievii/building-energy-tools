@@ -13,6 +13,9 @@ from .point_interpolation import run_point_product
 
 SCHEMA = "IGE_F1_LOCAL_POINT_REFERENCE_v1"
 POINT_MODE = "POINT_REFERENCE"
+POINT_GAP_MODE = "POINT_REFERENCE_GAP_RECOVERY"
+POINT_MODES = (POINT_MODE, POINT_GAP_MODE)
+POINT_GAP_LABEL = "Station point reference — experimental gap recovery"
 POINT_LABEL = "Same-chain multi-year station point reference"
 POINT_KIND = "IGE_S1_INTERPOLATED_POINT"
 LIMIT = 128 * 1024**2
@@ -58,7 +61,9 @@ def _admit_year(product, request, spec):
                    for row in report.get("station_core_coverage", []) if not row["donor_admitted"]]
         excluded = [f"{row['station_id']}: {row['reason']}"
                     for row in report.get("candidate_metadata_exclusions", [])]
-        reasons = [*report["global_blockers"], *missing, *excluded]
+        recovery = [f"{row['station_id']}: {row['reason']}" for row in
+                    report.get("gap_reconstruction", {}).get("stations", []) if row["status"] == "BLOCKED"]
+        reasons = [*report["global_blockers"], *missing, *excluded, *recovery]
         raise ValueError(f"F1_POINT_REFERENCE_YEAR_BLOCKED {request.year}: " + "; ".join(reasons))
     if report["EPW_status"] != "ADMITTED_MIXED_SOURCE_RESEARCH":
         raise ValueError(f"F1_POINT_REFERENCE_BACKGROUND_BLOCKED {request.year}: " + "; ".join(report["EPW_blockers"]))
@@ -76,11 +81,15 @@ def _admit_year(product, request, spec):
         raise ValueError(f"F1_POINT_REFERENCE_SOURCE_GEOMETRY_OR_METHOD_CHANGED {request.year}: " + ", ".join(differences))
 
 
-def point_reference(base, window, *, packet=None, expected_sha256=None, progress=lambda message: None):
+def point_reference(base, window, *, packet=None, expected_sha256=None, progress=lambda message: None, recover_gaps=False):
     """Require every requested year; retain original S1 donors and background bytes."""
     from .future_selected import base_from_point
 
+    from .station_gap_recovery import GAP_POLICY
+
     original, spec = point_reference_spec(base, window)
+    gap_policy = GAP_POLICY if recover_gaps else None
+    options = {"recover_reference_gaps": True} if recover_gaps else {}
     years = range(window[0], window[1] + 1)
     names = {f"{kind}_{year}.zip" for year in years for kind in ("station", "background")}
     cache = OriginalSourceCache() if packet is None else None
@@ -91,7 +100,7 @@ def point_reference(base, window, *, packet=None, expected_sha256=None, progress
         stored = bounded_zip(packet, byte_limit=LIMIT, member_limit=61)
         manifest = json.loads(stored["manifest.json"])
         if (manifest["schema"] != SCHEMA or manifest["base"] != spec
-                or manifest["reference_window"] != list(window)
+                or manifest["reference_window"] != list(window) or manifest.get("gap_policy") != gap_policy
                 or set(stored) != names | {"manifest.json"} or set(manifest["members"]) != names):
             raise ValueError("F1_POINT_REFERENCE_PACKET_IDENTITY_OR_CENSUS")
         for name in names:
@@ -104,16 +113,16 @@ def point_reference(base, window, *, packet=None, expected_sha256=None, progress
         req = replace(original, year=year)
         progress(f"Station point reference: checking {year} with the same four donors")
         station_name, background_name = f"station_{year}.zip", f"background_{year}.zip"
-        key = "F1_POINT_REFERENCE:"+sha256(json_bytes({"base": spec, "year": year, "schema": SCHEMA})).hexdigest()
+        key = "F1_POINT_REFERENCE:"+sha256(json_bytes({"base": spec, "year": year, "schema": SCHEMA, **({"gap_policy": gap_policy} if recover_gaps else {})})).hexdigest()
         cached = cache.get(key) if cache is not None else None
         if stored is not None or cached is not None:
             members = stored if stored is not None else bounded_zip(cached[0], byte_limit=LIMIT, member_limit=2)
             stations, background = members[station_name], members[background_name]
             product = run_point_product(req, input_packet=stations, expected_sha256=sha256(stations).hexdigest(),
-                include_background=True, background_packet=background, background_sha256=sha256(background).hexdigest())
+                include_background=True, background_packet=background, background_sha256=sha256(background).hexdigest(), **options)
         else:
             product = run_point_product(req, required_station_ids=tuple(d["station_id"] for d in spec["donors"]),
-                                        include_background=True, progress=progress)
+                                        include_background=True, progress=progress, **options)
         _admit_year(product, req, spec)
         stations, background = product.files["inputs.zip"], product.files["background.sources.zip"]
         annual = base_from_point(product)
@@ -127,11 +136,13 @@ def point_reference(base, window, *, packet=None, expected_sha256=None, progress
         if cache is not None and cached is None:
             cache.put(key, _zip({station_name: stations, background_name: background}))
         rows.append({"year": year, "original_hours": len(annual.data), "estimator_hours": 8760,
+                     **({"gap_reconstruction": product.report["gap_reconstruction"]} if recover_gaps else {}),
                      "station_packet_sha256": sha256(stations).hexdigest(),
                      "background_packet_sha256": sha256(background).hexdigest()})
     ref = {m: {k: sum(v[m][k] for v in monthly)/len(monthly) for k in monthly[0][m]} for m in range(1,13)}
     if packet is None:
         files["manifest.json"] = json_bytes({"schema": SCHEMA, "base": spec, "reference_window": list(window),
+            **({"gap_policy": gap_policy} if recover_gaps else {}),
             "members": {name: {"bytes": len(b), "sha256": sha256(b).hexdigest()} for name,b in files.items()}})
         if size + len(files["manifest.json"]) > LIMIT:
             raise ValueError("F1_POINT_REFERENCE_SOURCE_BUDGET")
@@ -139,4 +150,5 @@ def point_reference(base, window, *, packet=None, expected_sha256=None, progress
     return ref, {"kind": "SAME_CHAIN_STATION_POINT_MULTIYEAR", "reference_window": list(window),
         "reference_source_packet_sha256": sha256(packet).hexdigest(), "years": rows,
         "fixed_donors": spec["donors"], "noleap_estimator": True, "leap_source_rows_preserved": True,
+        **({"gap_policy": gap_policy} if recover_gaps else {}),
         "reference_sampling_uncertainty_qualified": False}, packet

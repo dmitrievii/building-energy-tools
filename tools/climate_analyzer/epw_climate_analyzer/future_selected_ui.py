@@ -7,7 +7,7 @@ from .engine.f1_base import admit_base, SURFACE, COLLOCATED, MK, BUCK, epw_refer
 from .engine.f1_sources import SignalRequest, admit_nex_packet, MAX_PACKET, SCENARIOS, SCENARIO_LABELS
 from .engine_application import EngineProduct
 from .future_selected import base_from_engine, base_from_point, run_selected_future
-from .future_point_reference import POINT_LABEL, POINT_MODE, point_reference_spec
+from .future_point_reference import POINT_LABEL, POINT_MODE, POINT_GAP_LABEL, POINT_GAP_MODE, point_reference_spec
 
 PRODUCT_KEY = "ige_f1_completed_product"
 REQUEST_KEY = "ige_f1_completed_identity"
@@ -124,10 +124,16 @@ def render_future_source(st, activate):
         except (ValueError, KeyError, TypeError):
             pass
         else:
-            modes.insert(0, POINT_LABEL)
+            modes[0:0] = [POINT_LABEL, POINT_GAP_LABEL]
+    reference_base_key = (choice, base.sha256 if base is not None else None, tuple(modes))
+    if st.session_state.get("ige_f1_reference_base_key") != reference_base_key:
+        st.session_state.pop("ige_f1_reference_mode", None)
+        st.session_state["ige_f1_reference_base_key"] = reference_base_key
     mode = st.selectbox("Local climate reference", modes, key="ige_f1_reference_mode")
     reference_base, evidence = None, ""
-    if mode == POINT_LABEL:
+    if mode == POINT_GAP_LABEL:
+        st.caption("Experimental. Recovers only missing observations with nearby stations and checks accuracy on comparable observed periods. Rejected quality flags and unsupported gaps still block the year.")
+    elif mode == POINT_LABEL:
         st.caption("Builds each requested year with the same four stations and background grid cell. Missing or incompatible years block the result; completed years can be reused on Retry.")
     elif mode != "Same-chain multi-year background reference":
         evidence = st.text_input("Evidence for the local reference period (provider, file documentation or source record)", key="ige_f1_period_evidence")
@@ -152,7 +158,7 @@ def render_future_source(st, activate):
         st.caption(f"Original EPW SHA256: {base.sha256}")
         try:
             request = SignalRequest(*base.identity["signal_site"], (r0, r1), (f0, f1), scenario=scenario)
-            if mode == POINT_LABEL:
+            if mode in (POINT_LABEL, POINT_GAP_LABEL):
                 point_reference_spec(base, request.reference_window)
             elif mode != "Same-chain multi-year background reference":
                 if reference_base is not None or mode == "Selected representative base":
@@ -187,7 +193,7 @@ def render_future_source(st, activate):
                 def progress(message): status.update(label=str(message)); st.write(str(message))
                 completed = run_selected_future(base, request,
                     reference_mode={"Selected representative base": "REPRESENTATIVE_BASE", "Separate compatible reference EPW": "SEPARATE_REFERENCE_EPW",
-                        "Same-chain multi-year background reference": "BACKGROUND_REFERENCE", POINT_LABEL: POINT_MODE}[mode],
+                        "Same-chain multi-year background reference": "BACKGROUND_REFERENCE", POINT_LABEL: POINT_MODE, POINT_GAP_LABEL: POINT_GAP_MODE}[mode],
                     period_evidence=evidence, reference_base=reference_base,
                     nex_packet=nex_packet, nex_packet_sha256=nex_sha,
                     allow_liquid_precipitation_proxy=liquid_proxy, retained_sources=retained, progress=progress)

@@ -10,7 +10,7 @@ from unittest.mock import patch
 from epw_climate_analyzer.engine.f1_base import admit_base, climatology
 from epw_climate_analyzer.engine.f1_sources import SignalRequest
 from epw_climate_analyzer.engine.point_interpolation import PointRequest
-from epw_climate_analyzer.future_point_reference import (POINT_MODE, STATION_KIND, _admit_year, point_reference,
+from epw_climate_analyzer.future_point_reference import (POINT_MODE, POINT_GAP_MODE, STATION_KIND, _admit_year, point_reference,
                                                         point_reference_spec)
 from epw_climate_analyzer.future_selected import base_from_point, replay_selected_future, run_selected_future
 from epw_climate_analyzer.geosphere_station_year import _zip
@@ -100,6 +100,30 @@ class PointReferenceTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "OFFLINE_PACKET_REQUIRED"):
                 replay_selected_future(archive, sha256(archive).hexdigest())
             self.assertEqual(annual.call_count, 20)
+
+    def test_recovery_mode_is_bound_to_packet_and_replayed(self):
+        from epw_climate_analyzer.station_gap_recovery import GAP_POLICY
+        r = SignalRequest(*self.base.identity["signal_site"], WINDOW, (2040, 2059))
+        def annual_product(req, **kwargs):
+            self.assertTrue(kwargs.pop("recover_reference_gaps"))
+            p = self.annual_product(req, **kwargs)
+            return SimpleNamespace(request=p.request, files=p.files,
+                report={**p.report, "gap_reconstruction": {"policy": GAP_POLICY, "stations": []}})
+        with patch(MODULE+".OriginalSourceCache") as cache, patch(MODULE+".run_point_product",
+                side_effect=annual_product) as annual, patch(
+                "epw_climate_analyzer.future_selected.admit_nex_packet",
+                return_value=(signals(), {"grid": [47.125,15.375], "source_packet_sha256": "0"*64})):
+            cache.return_value.get.return_value = None
+            future = run_selected_future(self.base,r,reference_mode=POINT_GAP_MODE,
+                nex_packet=b"synthetic model",allow_liquid_precipitation_proxy=True)
+            self.assertIn(b"experimental station gap recovery",future.files["climate.epw"])
+            packet = future.files["source_packets/local_reference.sources.zip"]
+            digest = sha256(packet).hexdigest()
+            with self.assertRaisesRegex(ValueError,"IDENTITY_OR_CENSUS"):
+                point_reference(self.base,WINDOW,packet=packet,expected_sha256=digest)
+            replay = replay_selected_future(future.archive,sha256(future.archive).hexdigest())
+            self.assertEqual(future.files["climate.epw"],replay.files["climate.epw"])
+            self.assertEqual(annual.call_count,20)
 
     def test_partial_window_fails_with_year_and_does_not_cache_blocked_year(self):
         blocked = SimpleNamespace(report={"status": "POINT_YEAR_BLOCKED", "global_blockers": ["missing station"]})

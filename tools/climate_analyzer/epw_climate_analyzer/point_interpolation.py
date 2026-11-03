@@ -275,7 +275,7 @@ def replay_background(request, packet: bytes, expected_sha256: str):
         files={"sources.zip": packet, "climate.epw": epw})
 
 
-def _composite_epw(request, assessment, background):
+def _composite_epw(request, assessment, background, *, gap_filled=False):
     """Explicit mixed-source option; no claim to interpolate all weather fields."""
     base = background.dataset
     if background.report.get("calendar_mode") != "historical": raise ValueError("S1_BACKGROUND_MUST_BE_HISTORICAL")
@@ -304,6 +304,8 @@ def _composite_epw(request, assessment, background):
     records[0][4] = "IGE_S1_STATIONS_OR_EPW_WITH_GRID_BACKGROUND"
     records[5] = ["COMMENTS 1", "S1: T/p/moisture interpolated with active height corrections. Other weather fields retain selected background, its grid geometry and chronology. See report.json and ledgers."]
     records[6] = ["COMMENTS 2", "Buck liquid water at all T; nominal height proxies explicitly accepted. Local wind/radiation/rain accuracy and target solar geometry not independently qualified. Research composite, not a fully observed station year."]
+    if gap_filled:
+        records[6][1] += " Contains reconstructed station inputs; see gap_reconstruction in report.json."
     records[7][3] = f"S1 MIXED SOURCE HISTORICAL {request.year} RESEARCH"
     stream = io.StringIO(newline=""); csv.writer(stream, lineterminator="\n").writerows(records)
     epw = stream.getvalue().encode()
@@ -314,7 +316,7 @@ def _composite_epw(request, assessment, background):
 def run_point_product(request: PointRequest, *, mode="GEOSPHERE", epws=(), actual_year_confirmed=False,
                       input_packet=None, expected_sha256="", include_background=False, background_product=None,
                       background_packet=None, background_sha256="",
-                      progress=lambda message: None, required_station_ids=()) -> PointProduct:
+                      progress=lambda message: None, required_station_ids=(), recover_reference_gaps=False) -> PointProduct:
     """One explicit request; no acquisition on edits and no implicit saved-city fallback."""
     run_started = time.monotonic()
     if not request.assume_buck_water or not request.allow_nominal_height_proxy:
@@ -344,6 +346,12 @@ def run_point_product(request: PointRequest, *, mode="GEOSPHERE", epws=(), actua
         input_packet = _source_inputs(request, "EPW", entries, raw_files)
     else:
         raise ValueError("S1_UNKNOWN_SOURCE_MODE")
+    if recover_reference_gaps:
+        if mode != "GEOSPHERE" or (not replay and not required_station_ids):
+            raise ValueError("S1_GAP_RECOVERY_REQUIRES_FIXED_GEOSPHERE_REFERENCE")
+        from .station_gap_recovery import recover_station_gaps
+        donors, gap_audit = recover_station_gaps(donors)
+        extra["gap_reconstruction"] = gap_audit
     # Admission and equations are shared by live sources and offline replay.
     started = pd.Timestamp.now(tz="UTC")
     assessment = interpolate_point(request, donors)
@@ -358,6 +366,9 @@ def run_point_product(request: PointRequest, *, mode="GEOSPHERE", epws=(), actua
         "hourly.csv.gz": gzip.compress(assessment.hourly.to_csv(index_label="interval_start_utc").encode(), mtime=0),
         "adjustments.csv.gz": gzip.compress(assessment.adjustments.to_csv(index_label="interval_start_utc").encode(), mtime=0),
         "donor_months.csv": assessment.donor_months.to_csv(index=False).encode()}
+    if recover_reference_gaps:
+        report["engine_gap_fill"] = any(row["status"] == "RECONSTRUCTED_NOT_OBSERVED"
+            and row["station_id"] in report["selected_donors"] for row in gap_audit["stations"])
     report["donor_source_reports"] = []
     coverage = []
     for i, donor in enumerate(donors):
@@ -389,7 +400,7 @@ def run_point_product(request: PointRequest, *, mode="GEOSPHERE", epws=(), actua
                 from .engine_application import run_historical_product
                 progress("Loading the explicitly selected grid background for non-thermodynamic fields")
                 background_product = run_historical_product(request.background_request(), use_saved_pilot=False, progress=progress)
-            epw, screen, geometry = _composite_epw(request, assessment, background_product)
+            epw, screen, geometry = _composite_epw(request, assessment, background_product, gap_filled=report["engine_gap_fill"])
             files["climate.epw"] = epw
             files["background.sources.zip"] = background_product.files["sources.zip"]
             files["background.epw"] = background_product.files["climate.epw"]
