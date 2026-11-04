@@ -1,0 +1,274 @@
+{
+  "schema": "IGE_AT_REAL_STATION_DEVELOPMENT_REPLAY_v1",
+  "status": "PASS",
+  "hours": 8760,
+  "checked_stations": 5,
+  "selected_donors": [
+    "16412",
+    "16413",
+    "16511",
+    "16411"
+  ],
+  "real_station_core_sources": true,
+  "point_EPW_sha256": "889294fc7bd9384d22a482564c4967a83968623ef42bb561e3d37351e2022f25",
+  "reference_EPW_sha256": "889294fc7bd9384d22a482564c4967a83968623ef42bb561e3d37351e2022f25",
+  "comparison": {
+    "comparison": "PASS_EXISTING_EPW_READBACK_PRECISION",
+    "thermal_columns": {
+      "6": {
+        "changed_numeric_hours": 0,
+        "max_abs_difference": 0.0
+      },
+      "7": {
+        "changed_numeric_hours": 0,
+        "max_abs_difference": 0.0
+      },
+      "8": {
+        "changed_numeric_hours": 0,
+        "max_abs_difference": 0.0
+      },
+      "9": {
+        "changed_numeric_hours": 0,
+        "max_abs_difference": 0.0
+      }
+    },
+    "headers_calendar_and_nonthermal_cells_exact": true,
+    "bitwise_same_output": true
+  },
+  "station_core_coverage": [
+    {
+      "station_id": "16412",
+      "station_name": "Graz Universität",
+      "year": 2021,
+      "expected_hours": 8760,
+      "station_only_EPW_admitted": false,
+      "core_sources_admitted": true,
+      "fields": {
+        "dry_bulb_temperature_c": {
+          "numeric_hours": 8760,
+          "usable_for_epw_hours": 8760,
+          "missing_value_hours": 0,
+          "out_of_bounds_hours": 0,
+          "missing_qc_hours": 0,
+          "rejected_qc_hours": 0,
+          "definition_errors": []
+        },
+        "relative_humidity_pct": {
+          "numeric_hours": 8760,
+          "usable_for_epw_hours": 8760,
+          "missing_value_hours": 0,
+          "out_of_bounds_hours": 0,
+          "missing_qc_hours": 0,
+          "rejected_qc_hours": 0,
+          "definition_errors": []
+        },
+        "atmospheric_station_pressure_pa": {
+          "numeric_hours": 8760,
+          "usable_for_epw_hours": 8760,
+          "missing_value_hours": 0,
+          "out_of_bounds_hours": 0,
+          "missing_qc_hours": 0,
+          "rejected_qc_hours": 0,
+          "definition_errors": []
+        }
+      },
+      "T_admitted_hours": 8760,
+      "RH_admitted_hours": 8760,
+      "p_admitted_hours": 8760,
+      "blocker_types": [],
+      "donor_admitted": true,
+      "selected": true
+    },
+    {
+      "station_id": "16413",
+      "station_name": "Graz Straßgang",
+      "year": 2021,
+      "expected_hours": 8760,
+      "station_only_EPW_admitted": false,
+      "core_sources_admitted": true,
+      "fields": {
+        "dry_bulb_temperature_c": {
+          "numeric_hours": 8760,
+          "usable_for_epw_hours": 8760,
+          "missing_value_hours": 0,
+          "out_of_bounds_hours": 0,
+          "missing_qc_hours": 0,
+          "rejected_qc_hours": 0,
+          "definition_errors": []
+        },
+        "relative_humidity_pct": {
+          "numeric_hours": 8760,
+          "usable_for_epw_hours": 8760,
+          "missing_value_hours": 0,
+          "out_of_bounds_hours": 0,
+          "missing_qc_hours": 0,
+          "rejected_qc_hours": 0,
+          "definition_errors": []
+        },
+        "atmospheric_station_pressure_pa": {
+          "numeric_hours": 8760,
+          "usable_for_epw_hours": 8760,
+          "missing_value_hours": 0,
+          "out_of_bounds_hours": 0,
+          "missing_qc_hours": 0,
+          "rejected_qc_hours": 0,
+          "definition_errors": []
+        }
+      },
+      "T_admitted_hours": 8760,
+      "RH_admitted_hours": 8760,
+      "p_admitted_hours": 8760,
+      "blocker_types": [],
+      "donor_admitted": true,
+      "selected": true
+    },
+    {
+      "station_id": "16400",
+      "station_name": "Graz Thalerhof Flughafen",
+      "year": 2021,
+      "expected_hours": 8760,
+      "station_only_EPW_admitted": false,
+      "core_sources_admitted": false,
+      "fields": {
+        "dry_bulb_temperature_c": {
+          "numeric_hours": 8759,
+          "usable_for_epw_hours": 8759,
+          "missing_value_hours": 1,
+          "out_of_bounds_hours": 0,
+          "missing_qc_hours": 0,
+          "rejected_qc_hours": 0,
+          "definition_errors": []
+        },
+        "relative_humidity_pct": {
+          "numeric_hours": 8759,
+          "usable_for_epw_hours": 8759,
+          "missing_value_hours": 1,
+          "out_of_bounds_hours": 0,
+          "missing_qc_hours": 0,
+          "rejected_qc_hours": 0,
+          "definition_errors": []
+        },
+        "atmospheric_station_pressure_pa": {
+          "numeric_hours": 8760,
+          "usable_for_epw_hours": 8760,
+          "missing_value_hours": 0,
+          "out_of_bounds_hours": 0,
+          "missing_qc_hours": 0,
+          "rejected_qc_hours": 0,
+          "definition_errors": []
+        }
+      },
+      "T_admitted_hours": 8759,
+      "RH_admitted_hours": 8759,
+      "p_admitted_hours": 8760,
+      "blocker_types": [
+        "MISSING_OBSERVATIONS_T",
+        "MISSING_OBSERVATIONS_RH"
+      ],
+      "donor_admitted": false,
+      "selected": false
+    },
+    {
+      "station_id": "16511",
+      "station_name": "Laßnitzhöhe",
+      "year": 2021,
+      "expected_hours": 8760,
+      "station_only_EPW_admitted": false,
+      "core_sources_admitted": true,
+      "fields": {
+        "dry_bulb_temperature_c": {
+          "numeric_hours": 8760,
+          "usable_for_epw_hours": 8760,
+          "missing_value_hours": 0,
+          "out_of_bounds_hours": 0,
+          "missing_qc_hours": 0,
+          "rejected_qc_hours": 0,
+          "definition_errors": []
+        },
+        "relative_humidity_pct": {
+          "numeric_hours": 8760,
+          "usable_for_epw_hours": 8760,
+          "missing_value_hours": 0,
+          "out_of_bounds_hours": 0,
+          "missing_qc_hours": 0,
+          "rejected_qc_hours": 0,
+          "definition_errors": []
+        },
+        "atmospheric_station_pressure_pa": {
+          "numeric_hours": 8760,
+          "usable_for_epw_hours": 8760,
+          "missing_value_hours": 0,
+          "out_of_bounds_hours": 0,
+          "missing_qc_hours": 0,
+          "rejected_qc_hours": 0,
+          "definition_errors": []
+        }
+      },
+      "T_admitted_hours": 8760,
+      "RH_admitted_hours": 8760,
+      "p_admitted_hours": 8760,
+      "blocker_types": [],
+      "donor_admitted": true,
+      "selected": true
+    },
+    {
+      "station_id": "16411",
+      "station_name": "St. Radegund",
+      "year": 2021,
+      "expected_hours": 8760,
+      "station_only_EPW_admitted": false,
+      "core_sources_admitted": true,
+      "fields": {
+        "dry_bulb_temperature_c": {
+          "numeric_hours": 8760,
+          "usable_for_epw_hours": 8760,
+          "missing_value_hours": 0,
+          "out_of_bounds_hours": 0,
+          "missing_qc_hours": 0,
+          "rejected_qc_hours": 0,
+          "definition_errors": []
+        },
+        "relative_humidity_pct": {
+          "numeric_hours": 8760,
+          "usable_for_epw_hours": 8760,
+          "missing_value_hours": 0,
+          "out_of_bounds_hours": 0,
+          "missing_qc_hours": 0,
+          "rejected_qc_hours": 0,
+          "definition_errors": []
+        },
+        "atmospheric_station_pressure_pa": {
+          "numeric_hours": 8760,
+          "usable_for_epw_hours": 8760,
+          "missing_value_hours": 0,
+          "out_of_bounds_hours": 0,
+          "missing_qc_hours": 0,
+          "rejected_qc_hours": 0,
+          "definition_errors": []
+        }
+      },
+      "T_admitted_hours": 8760,
+      "RH_admitted_hours": 8760,
+      "p_admitted_hours": 8760,
+      "blocker_types": [],
+      "donor_admitted": true,
+      "selected": true
+    }
+  ],
+  "quality": {
+    "execution_correctness": "ANNUAL_INTERPOLATION_COMPLETED",
+    "physical_admissibility": "T_P_E_RH_TD_BUCK_WATER_CLOSURE_AND_MONTHLY_E_PASS",
+    "independent_accuracy": "NOT_INDEPENDENTLY_QUALIFIED_FOR_NEW_ADAPTERS",
+    "operational_and_application_scope": "RESTRICTED_RESEARCH_POINT_INTERPOLATION",
+    "production_ready": false
+  },
+  "offline_replay": true,
+  "negative_2025": {
+    "checked_stations": 20,
+    "eligible_stations": 0,
+    "EPW_absence_correctly_enforced": true
+  },
+  "new_independent_accuracy_validation": false,
+  "engine_gap_fill": false,
+  "future_climate_or_multiyear_reference_qualified": false
+}

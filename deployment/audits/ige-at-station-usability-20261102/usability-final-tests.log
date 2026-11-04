@@ -1,0 +1,45 @@
+test_complete_station_epw_is_reported_separately (test_ige_at_station_usability.CoreCoverageTests.test_complete_station_epw_is_reported_separately) ... ok
+test_entirely_absent_measurements_and_transport_failures_are_not_partial_gaps (test_ige_at_station_usability.CoreCoverageTests.test_entirely_absent_measurements_and_transport_failures_are_not_partial_gaps) ... ok
+test_missing_values_qc_and_definitions_remain_distinct (test_ige_at_station_usability.CoreCoverageTests.test_missing_values_qc_and_definitions_remain_distinct) ... ok
+test_station_can_supply_s1_core_while_full_station_epw_is_blocked (test_ige_at_station_usability.CoreCoverageTests.test_station_can_supply_s1_core_while_full_station_epw_is_blocked) ... ok
+test_replay_rejects_metadata_override_and_live_requires_original_bytes (test_ige_at_station_usability.OriginalMetadataReuseTests.test_replay_rejects_metadata_override_and_live_requires_original_bytes) ... ok
+test_reuse_never_bypasses_changed_pressure_definition (test_ige_at_station_usability.OriginalMetadataReuseTests.test_reuse_never_bypasses_changed_pressure_definition) ... ok
+test_reused_original_bytes_replay_with_same_values_qc_and_admission (test_ige_at_station_usability.OriginalMetadataReuseTests.test_reused_original_bytes_replay_with_same_values_qc_and_admission) ... ok
+test_real_2021_station_point_replays_and_2025_missing_qc_stays_blocked (test_ige_at_station_usability.OriginalStationDevelopmentReplayTests.test_real_2021_station_point_replays_and_2025_missing_qc_stays_blocked) ... ok
+test_changed_elevation_cannot_show_old_donors_as_current_admitted_sources (test_ige_s1_point_ui.S1UITests.test_changed_elevation_cannot_show_old_donors_as_current_admitted_sources) ... 2026-11-02 12:55:23.934 WARNING streamlit.runtime.caching.cache_data_api: No runtime found, using MemoryCacheStorageManager
+2026-11-02 12:55:23.938 WARNING streamlit.runtime.caching.cache_data_api: No runtime found, using MemoryCacheStorageManager
+2026-11-02 12:55:23.939 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-11-02 12:55:26.485 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+ok
+test_core_only_downloads_do_not_offer_epw (test_ige_s1_point_ui.S1UITests.test_core_only_downloads_do_not_offer_epw) ... 2026-11-02 12:55:27.551 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-11-02 12:55:29.473 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+ok
+test_default_station_locations_and_enabled_build_without_method_checkboxes (test_ige_s1_point_ui.S1UITests.test_default_station_locations_and_enabled_build_without_method_checkboxes) ... 2026-11-02 12:55:30.986 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-11-02 12:55:33.143 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+ok
+test_edits_and_failed_request_keep_previous_product_with_correct_label (test_ige_s1_point_ui.S1UITests.test_edits_and_failed_request_keep_previous_product_with_correct_label) ... 2026-11-02 12:55:33.860 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-11-02 12:55:36.119 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+ok
+test_failed_donor_admission_displays_report_without_epw_or_fake_success (test_ige_s1_point_ui.S1UITests.test_failed_donor_admission_displays_report_without_epw_or_fake_success) ... 2026-11-02 12:55:37.794 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-11-02 12:55:39.755 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+ok
+test_only_complete_explicit_composite_exposes_epw_download (test_ige_s1_point_ui.S1UITests.test_only_complete_explicit_composite_exposes_epw_download) ... 2026-11-02 12:55:40.463 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-11-02 12:55:42.654 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+ok
+test_point_move_clears_height_and_requires_a_new_reference (test_ige_s1_point_ui.S1UITests.test_point_move_clears_height_and_requires_a_new_reference) ... 2026-11-02 12:55:43.452 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-11-02 12:55:45.673 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+ok
+test_station_coverage_counts_are_visible_without_promoting_an_incomplete_year (test_ige_s1_point_ui.S1UITests.test_station_coverage_counts_are_visible_without_promoting_an_incomplete_year) ... 2026-11-02 12:55:46.505 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-11-02 12:55:49.805 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+ok
+test_station_map_failure_can_retry_and_does_not_disable_a_valid_weather_request (test_ige_s1_point_ui.S1UITests.test_station_map_failure_can_retry_and_does_not_disable_a_valid_weather_request) ... 2026-11-02 12:55:50.622 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-11-02 12:55:53.126 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+ok
+test_upload_mode_needs_four_files_and_actual_year_confirmation (test_ige_s1_point_ui.S1UITests.test_upload_mode_needs_four_files_and_actual_year_confirmation) ... 2026-11-02 12:55:54.260 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-11-02 12:55:56.469 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 71.157s
+
+OK

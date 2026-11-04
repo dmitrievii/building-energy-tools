@@ -1,0 +1,11 @@
+test_real_point_is_a_future_base_but_grid_reference_is_not_its_local_climate (test_ige_at_station_usability.OriginalStationDevelopmentReplayTests.test_real_point_is_a_future_base_but_grid_reference_is_not_its_local_climate) ... ok
+test_original_real_station_point_offers_epw_and_displays_actual_core_counts (test_ige_s1_point_ui.S1UITests.test_original_real_station_point_offers_epw_and_displays_actual_core_counts) ... 2026-11-02 12:56:11.536 WARNING streamlit.runtime.caching.cache_data_api: No runtime found, using MemoryCacheStorageManager
+2026-11-02 12:56:11.538 WARNING streamlit.runtime.caching.cache_data_api: No runtime found, using MemoryCacheStorageManager
+2026-11-02 12:56:21.791 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-11-02 12:56:25.355 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 32.199s
+
+OK

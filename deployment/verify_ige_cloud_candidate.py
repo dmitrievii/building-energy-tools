@@ -76,6 +76,10 @@ def verify(output, contract_path):
         point_summary=replay_s1_examples(output)
         from f1_replay_audit import replay_f1_example
         _,future_summary=replay_f1_example(output)
+        if contract.get('real_station_development_pilot_implemented'):
+            from at_station_usability_replay import replay_at_station_pilot
+            at_station_summary=replay_at_station_pilot(output)
+            (output/'at-real-station-usability.json').write_text(json.dumps(at_station_summary,indent=2)+'\n')
     with socket.socket() as reserve:
         reserve.bind(('127.0.0.1',0));port=reserve.getsockname()[1]
     with (output/'server.log').open('w') as log:

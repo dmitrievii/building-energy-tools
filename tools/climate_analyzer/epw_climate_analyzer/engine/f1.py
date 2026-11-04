@@ -139,6 +139,8 @@ def morph_selected(base: BaseYear, reference, signals, signal_request, *, refere
     rows[0][4] = f"IGE_F1_{r.model}_{r.scenario}"
     rows[5] = ["COMMENTS 1", f"F1 {r.model} {r.member} {r.scenario} {r.future_window[0]}-{r.future_window[1]}; reference {r.reference_window[0]}-{r.reference_window[1]}; pattern {base.request.year}. NOT an actual future forecast or selected TMY."]
     rows[6] = ["COMMENTS 2", f"{base.water_curve}; {base.pressure_contract}. Wind direction/cloud/event timing inherited; hurs not enforced; no station accuracy qualification. See ui_report.json and adjustment_ledger.csv.gz."]
+    if reference_evidence.get("gap_policy"):
+        rows[6][1] += f" Reference allows station gap recovery up to {reference_evidence['gap_max_hours']} h; see the annual audit in ui_report.json."
     rows[7][3] = f"F1 REPRESENTATIVE FUTURE {r.future_window[0]}-{r.future_window[1]} PATTERN {base.request.year}"
     stream = io.StringIO(newline=""); csv.writer(stream, lineterminator="\n").writerows(rows)
     payload = stream.getvalue().encode()
