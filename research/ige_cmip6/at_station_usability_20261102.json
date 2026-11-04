@@ -1,0 +1,60 @@
+{
+  "schema": "IGE_AT_REAL_STATION_DISCLOSED_DEVELOPMENT_CASES_v1",
+  "base_commit": "acf3c029024a745f717cad21103119fbcd913f7c",
+  "request": {
+    "latitude": 47.0707,
+    "longitude": 15.4395,
+    "elevation_m": 375.0,
+    "elevation_reference": "Nominal site elevation proxy; common vertical datum and sensor elevations unconfirmed",
+    "year": 2021,
+    "utc_offset_minutes": 60,
+    "label": "Graz real-station usability",
+    "assume_buck_water": true,
+    "allow_nominal_height_proxy": true,
+    "excluded_station_id": ""
+  },
+  "hours": 8760,
+  "selected_donors": [
+    "16412",
+    "16413",
+    "16511",
+    "16411"
+  ],
+  "output_EPW_sha256": "889294fc7bd9384d22a482564c4967a83968623ef42bb561e3d37351e2022f25",
+  "independent_accuracy_qualified": false,
+  "production_ready": false,
+  "selection": "2021 availability explored after the preserved 2023 and 2025 failures; no model tuning or blind-validation claim",
+  "inputs": {
+    "file": "at_graz2021_original_station_inputs_20261102.zip",
+    "sha256": "08d937dd4ad698f7ccd5ba6fd93492a9c3119e952cc4094cfe65aaf649dc88a8",
+    "bytes": 510994
+  },
+  "background": {
+    "file": "at_graz2021_background_original_sources_20261102.zip",
+    "sha256": "22818937fa346a868cfedb0bc3273d7ecaa84101cded6c37503994c0dce923ab",
+    "bytes": 180767
+  },
+  "reference": {
+    "file": "at_graz2021_point_original_output_20261102.epw",
+    "sha256": "889294fc7bd9384d22a482564c4967a83968623ef42bb561e3d37351e2022f25",
+    "bytes": 1953921
+  },
+  "negative_2025": {
+    "file": "at_graz2025_original_station_inputs_20261102.zip",
+    "sha256": "17580a646752202ba4907c7d0b00d88ebecd2f12860d5b0231852cd2f94ac0b8",
+    "request": {
+      "latitude": 47.0707,
+      "longitude": 15.4395,
+      "elevation_m": 375.0,
+      "elevation_reference": "Nominal site elevation proxy; common vertical datum and sensor elevations unconfirmed",
+      "year": 2025,
+      "utc_offset_minutes": 60,
+      "label": "Graz real-station usability",
+      "assume_buck_water": true,
+      "allow_nominal_height_proxy": true,
+      "excluded_station_id": ""
+    },
+    "expected_checked": 20,
+    "expected_eligible": 0
+  }
+}

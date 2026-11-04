@@ -1,0 +1,1011 @@
+{
+  "source_commit": "56c019b63acc328c5b421bf014300f38b3e79372",
+  "source_files_git_sha": {
+    "station_gap_recovery.py": "2b155d48a8a63efc776c2b8999ded16970e3b983",
+    "engine/point_interpolation.py": "688893f7aeaa23536bc25ffa18059cdfdb402080"
+  },
+  "source_packets_sha256": {
+    "2014": "aee65a4f4d926c4fc78728205295415f0048f6ee17b31722f455e1cfa9bd92e1",
+    "2015": "3e7b0642b8b8078a2a843f28bb177270f2c3abfbbccc3efe726d78da0351a3f2",
+    "2016": "4ade92fc539d80c9af84410dc2ec7becf07307433e5b4b6ce8f000d820df222d"
+  },
+  "qualification": "DISCLOSED_DEVELOPMENT_AUDIT_NOT_INDEPENDENT_VALIDATION",
+  "analytic_controls": [
+    {
+      "hours": 2,
+      "affine_residual_exact_recovery": {
+        "dry_bulb_temperature_c": 1.7763568394002505e-15,
+        "relative_humidity_pct": 1.4210854715202004e-14,
+        "atmospheric_station_pressure_pa": 1.4551915228366852e-11
+      }
+    },
+    {
+      "hours": 6,
+      "affine_residual_exact_recovery": {
+        "dry_bulb_temperature_c": 1.7763568394002505e-15,
+        "relative_humidity_pct": 2.842170943040401e-14,
+        "atmospheric_station_pressure_pa": 1.4551915228366852e-11
+      }
+    },
+    {
+      "hours": 24,
+      "affine_residual_exact_recovery": {
+        "dry_bulb_temperature_c": 1.7763568394002505e-15,
+        "relative_humidity_pct": 1.4210854715202004e-14,
+        "atmospheric_station_pressure_pa": 1.4551915228366852e-11
+      }
+    },
+    {
+      "hours": 61,
+      "affine_residual_exact_recovery": {
+        "dry_bulb_temperature_c": 1.7763568394002505e-15,
+        "relative_humidity_pct": 2.842170943040401e-14,
+        "atmospheric_station_pressure_pa": 1.4551915228366852e-11
+      }
+    }
+  ],
+  "local_controls": [
+    {
+      "year": 2015,
+      "station": "16412",
+      "windows": [
+        "2015-04-06T09:00:00+00:00",
+        "2015-04-08T09:00:00+00:00",
+        "2015-04-05T09:00:00+00:00",
+        "2015-04-09T09:00:00+00:00",
+        "2015-04-04T09:00:00+00:00",
+        "2015-04-10T09:00:00+00:00",
+        "2015-04-03T09:00:00+00:00",
+        "2015-04-11T09:00:00+00:00",
+        "2015-04-02T09:00:00+00:00",
+        "2015-04-12T09:00:00+00:00",
+        "2015-04-01T09:00:00+00:00",
+        "2015-04-13T09:00:00+00:00"
+      ],
+      "comparison": {
+        "peer_anomaly": {
+          "dry_bulb_temperature_c": {
+            "MAE": 0.3874970810462323,
+            "max_abs": 0.980920916731467,
+            "hours": 24
+          },
+          "relative_humidity_pct": {
+            "MAE": 1.8502122730592412,
+            "max_abs": 5.301021090223955,
+            "hours": 24
+          },
+          "atmospheric_station_pressure_pa": {
+            "MAE": 9.142268913961137,
+            "max_abs": 24.10004571538593,
+            "hours": 24
+          }
+        },
+        "linear_vapour": {
+          "dry_bulb_temperature_c": {
+            "MAE": 0.6402777777777778,
+            "max_abs": 2.8000000000000007,
+            "hours": 24
+          },
+          "relative_humidity_pct": {
+            "MAE": 3.738477559898578,
+            "max_abs": 23.378905743198942,
+            "hours": 24
+          },
+          "atmospheric_station_pressure_pa": {
+            "MAE": 18.194444444442222,
+            "max_abs": 83.33333333332848,
+            "hours": 24
+          }
+        },
+        "linear_RH": {
+          "dry_bulb_temperature_c": {
+            "MAE": 0.6402777777777778,
+            "max_abs": 2.8000000000000007,
+            "hours": 24
+          },
+          "relative_humidity_pct": {
+            "MAE": 3.7777777777777786,
+            "max_abs": 23.33333333333333,
+            "hours": 24
+          },
+          "atmospheric_station_pressure_pa": {
+            "MAE": 18.194444444442222,
+            "max_abs": 83.33333333332848,
+            "hours": 24
+          }
+        }
+      }
+    },
+    {
+      "year": 2016,
+      "station": "16412",
+      "windows": [
+        "2016-08-16T04:00:00+00:00",
+        "2016-08-18T04:00:00+00:00",
+        "2016-08-15T04:00:00+00:00",
+        "2016-08-19T04:00:00+00:00",
+        "2016-08-14T04:00:00+00:00",
+        "2016-08-20T04:00:00+00:00",
+        "2016-08-13T04:00:00+00:00",
+        "2016-08-21T04:00:00+00:00",
+        "2016-08-12T04:00:00+00:00",
+        "2016-08-22T04:00:00+00:00",
+        "2016-08-11T04:00:00+00:00",
+        "2016-08-23T04:00:00+00:00"
+      ],
+      "comparison": {
+        "peer_anomaly": {
+          "dry_bulb_temperature_c": {
+            "MAE": 0.23579351767049958,
+            "max_abs": 1.2959087812284267,
+            "hours": 24
+          }
+        },
+        "linear_vapour": {
+          "dry_bulb_temperature_c": {
+            "MAE": 0.6375000000000005,
+            "max_abs": 2.033333333333333,
+            "hours": 24
+          }
+        },
+        "linear_RH": {
+          "dry_bulb_temperature_c": {
+            "MAE": 0.6375000000000005,
+            "max_abs": 2.033333333333333,
+            "hours": 24
+          }
+        }
+      }
+    }
+  ],
+  "matrix": {
+    "2": {
+      "counts": {
+        "planned": 144,
+        "complete": 140,
+        "paired_physical": 136,
+        "admitted_by_full_gate": 100
+      },
+      "physical_failures": {
+        "peer_anomaly": 4,
+        "linear_vapour": 0,
+        "linear_RH": 0
+      },
+      "physical_failure_details": [
+        {
+          "year": 2015,
+          "station": "16511",
+          "first_utc": "2015-05-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 97.4041 to 100.675"
+        },
+        {
+          "year": 2015,
+          "station": "16511",
+          "first_utc": "2015-11-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 99.0371 to 100.082"
+        },
+        {
+          "year": 2016,
+          "station": "16511",
+          "first_utc": "2016-06-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 99.3705 to 100.719"
+        },
+        {
+          "year": 2016,
+          "station": "16411",
+          "first_utc": "2016-10-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 96.4209 to 100.289"
+        }
+      ],
+      "gate_rejections_after_physical_pass": {
+        "MASKED_WINDOW_ACCURACY_OR_COUNT_GATE": 7,
+        "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct": 29
+      },
+      "comparison_on_same_physical_windows_only": {
+        "peer_anomaly": {
+          "dry_bulb_temperature_c": {
+            "MAE": 0.4772558757663087,
+            "max_abs": 2.9334824329521023,
+            "hours": 272
+          },
+          "relative_humidity_pct": {
+            "MAE": 3.0433082932190594,
+            "max_abs": 29.517942096117736,
+            "hours": 272
+          },
+          "atmospheric_station_pressure_pa": {
+            "MAE": 8.063935133302627,
+            "max_abs": 40.98169178918761,
+            "hours": 272
+          }
+        },
+        "linear_vapour": {
+          "dry_bulb_temperature_c": {
+            "MAE": 0.5944852941176471,
+            "max_abs": 3.700000000000001,
+            "hours": 272
+          },
+          "relative_humidity_pct": {
+            "MAE": 3.4711179971781867,
+            "max_abs": 22.112932333510685,
+            "hours": 272
+          },
+          "atmospheric_station_pressure_pa": {
+            "MAE": 18.786764705881335,
+            "max_abs": 80.0,
+            "hours": 272
+          }
+        },
+        "linear_RH": {
+          "dry_bulb_temperature_c": {
+            "MAE": 0.5944852941176471,
+            "max_abs": 3.700000000000001,
+            "hours": 272
+          },
+          "relative_humidity_pct": {
+            "MAE": 3.5919117647058822,
+            "max_abs": 22.33333333333333,
+            "hours": 272
+          },
+          "atmospheric_station_pressure_pa": {
+            "MAE": 18.786764705881335,
+            "max_abs": 80.0,
+            "hours": 272
+          }
+        }
+      },
+      "comparison_on_same_fully_admitted_windows_only": {
+        "peer_anomaly": {
+          "dry_bulb_temperature_c": {
+            "MAE": 0.4891815935415332,
+            "max_abs": 2.9334824329521023,
+            "hours": 200
+          },
+          "relative_humidity_pct": {
+            "MAE": 3.005970656428656,
+            "max_abs": 29.517942096117736,
+            "hours": 200
+          },
+          "atmospheric_station_pressure_pa": {
+            "MAE": 8.01537574393362,
+            "max_abs": 40.98169178918761,
+            "hours": 200
+          }
+        },
+        "linear_vapour": {
+          "dry_bulb_temperature_c": {
+            "MAE": 0.5941666666666666,
+            "max_abs": 3.700000000000001,
+            "hours": 200
+          },
+          "relative_humidity_pct": {
+            "MAE": 3.482607060953675,
+            "max_abs": 22.112932333510685,
+            "hours": 200
+          },
+          "atmospheric_station_pressure_pa": {
+            "MAE": 18.049999999999343,
+            "max_abs": 80.0,
+            "hours": 200
+          }
+        },
+        "linear_RH": {
+          "dry_bulb_temperature_c": {
+            "MAE": 0.5941666666666666,
+            "max_abs": 3.700000000000001,
+            "hours": 200
+          },
+          "relative_humidity_pct": {
+            "MAE": 3.671666666666667,
+            "max_abs": 22.33333333333333,
+            "hours": 200
+          },
+          "atmospheric_station_pressure_pa": {
+            "MAE": 18.049999999999343,
+            "max_abs": 80.0,
+            "hours": 200
+          }
+        }
+      }
+    },
+    "6": {
+      "counts": {
+        "planned": 144,
+        "complete": 140,
+        "paired_physical": 136,
+        "admitted_by_full_gate": 80
+      },
+      "physical_failures": {
+        "peer_anomaly": 4,
+        "linear_vapour": 0,
+        "linear_RH": 0
+      },
+      "physical_failure_details": [
+        {
+          "year": 2015,
+          "station": "16511",
+          "first_utc": "2015-03-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 94.9042 to 100.346"
+        },
+        {
+          "year": 2016,
+          "station": "16511",
+          "first_utc": "2016-02-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 98.8304 to 106.681"
+        },
+        {
+          "year": 2016,
+          "station": "16511",
+          "first_utc": "2016-05-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 91.0779 to 114.497"
+        },
+        {
+          "year": 2016,
+          "station": "16511",
+          "first_utc": "2016-10-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 83.5307 to 101.172"
+        }
+      ],
+      "gate_rejections_after_physical_pass": {
+        "MASKED_WINDOW_ACCURACY_OR_COUNT_GATE": 28,
+        "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct": 28
+      },
+      "comparison_on_same_physical_windows_only": {
+        "peer_anomaly": {
+          "dry_bulb_temperature_c": {
+            "MAE": 0.5154354410769038,
+            "max_abs": 3.6072380299142406,
+            "hours": 816
+          },
+          "relative_humidity_pct": {
+            "MAE": 3.265111047926151,
+            "max_abs": 30.318638353629368,
+            "hours": 816
+          },
+          "atmospheric_station_pressure_pa": {
+            "MAE": 10.362881313802134,
+            "max_abs": 60.446430299038184,
+            "hours": 816
+          }
+        },
+        "linear_vapour": {
+          "dry_bulb_temperature_c": {
+            "MAE": 1.0127626050420169,
+            "max_abs": 7.557142857142857,
+            "hours": 816
+          },
+          "relative_humidity_pct": {
+            "MAE": 5.411065827509617,
+            "max_abs": 33.01207393609378,
+            "hours": 816
+          },
+          "atmospheric_station_pressure_pa": {
+            "MAE": 45.80882352941177,
+            "max_abs": 144.28571428571013,
+            "hours": 816
+          }
+        },
+        "linear_RH": {
+          "dry_bulb_temperature_c": {
+            "MAE": 1.0127626050420169,
+            "max_abs": 7.557142857142857,
+            "hours": 816
+          },
+          "relative_humidity_pct": {
+            "MAE": 5.725315126050419,
+            "max_abs": 32.42857142857143,
+            "hours": 816
+          },
+          "atmospheric_station_pressure_pa": {
+            "MAE": 45.80882352941177,
+            "max_abs": 144.28571428571013,
+            "hours": 816
+          }
+        }
+      },
+      "comparison_on_same_fully_admitted_windows_only": {
+        "peer_anomaly": {
+          "dry_bulb_temperature_c": {
+            "MAE": 0.5120333979748535,
+            "max_abs": 3.6072380299142406,
+            "hours": 480
+          },
+          "relative_humidity_pct": {
+            "MAE": 2.9953536727764787,
+            "max_abs": 30.318638353629368,
+            "hours": 480
+          },
+          "atmospheric_station_pressure_pa": {
+            "MAE": 10.086101293434785,
+            "max_abs": 48.273359031722066,
+            "hours": 480
+          }
+        },
+        "linear_vapour": {
+          "dry_bulb_temperature_c": {
+            "MAE": 1.050029761904762,
+            "max_abs": 7.557142857142857,
+            "hours": 480
+          },
+          "relative_humidity_pct": {
+            "MAE": 5.564910086552688,
+            "max_abs": 33.01207393609378,
+            "hours": 480
+          },
+          "atmospheric_station_pressure_pa": {
+            "MAE": 44.11011904761908,
+            "max_abs": 135.71428571428987,
+            "hours": 480
+          }
+        },
+        "linear_RH": {
+          "dry_bulb_temperature_c": {
+            "MAE": 1.050029761904762,
+            "max_abs": 7.557142857142857,
+            "hours": 480
+          },
+          "relative_humidity_pct": {
+            "MAE": 5.938690476190477,
+            "max_abs": 32.42857142857143,
+            "hours": 480
+          },
+          "atmospheric_station_pressure_pa": {
+            "MAE": 44.11011904761908,
+            "max_abs": 135.71428571428987,
+            "hours": 480
+          }
+        }
+      }
+    },
+    "24": {
+      "counts": {
+        "planned": 144,
+        "complete": 140,
+        "paired_physical": 118,
+        "admitted_by_full_gate": 19
+      },
+      "physical_failures": {
+        "peer_anomaly": 22,
+        "linear_vapour": 1,
+        "linear_RH": 0
+      },
+      "physical_failure_details": [
+        {
+          "year": 2014,
+          "station": "16511",
+          "first_utc": "2014-01-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 92.8985 to 100.84"
+        },
+        {
+          "year": 2014,
+          "station": "16511",
+          "first_utc": "2014-08-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 66.7605 to 101.395"
+        },
+        {
+          "year": 2014,
+          "station": "16411",
+          "first_utc": "2014-10-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 56.4854 to 100.158"
+        },
+        {
+          "year": 2015,
+          "station": "16412",
+          "first_utc": "2015-09-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 82.1247 to 104.705"
+        },
+        {
+          "year": 2015,
+          "station": "16413",
+          "first_utc": "2015-11-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 78.9207 to 101.946"
+        },
+        {
+          "year": 2015,
+          "station": "16511",
+          "first_utc": "2015-02-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 79.6006 to 101.865"
+        },
+        {
+          "year": 2015,
+          "station": "16511",
+          "first_utc": "2015-03-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 84.5802 to 102.899"
+        },
+        {
+          "year": 2015,
+          "station": "16511",
+          "first_utc": "2015-05-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 89.3806 to 101.076"
+        },
+        {
+          "year": 2015,
+          "station": "16511",
+          "first_utc": "2015-06-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 66.9027 to 101.711"
+        },
+        {
+          "year": 2015,
+          "station": "16511",
+          "first_utc": "2015-12-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 87.3086 to 100.661"
+        },
+        {
+          "year": 2016,
+          "station": "16412",
+          "first_utc": "2016-08-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 61.0976 to 100.655"
+        },
+        {
+          "year": 2016,
+          "station": "16413",
+          "first_utc": "2016-02-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 67.5284 to 101.021"
+        },
+        {
+          "year": 2016,
+          "station": "16413",
+          "first_utc": "2016-10-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 70.2303 to 100.075"
+        },
+        {
+          "year": 2016,
+          "station": "16511",
+          "first_utc": "2016-02-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 65.9964 to 101.555"
+        },
+        {
+          "year": 2016,
+          "station": "16511",
+          "first_utc": "2016-03-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 56.8074 to 101.31"
+        },
+        {
+          "year": 2016,
+          "station": "16511",
+          "first_utc": "2016-05-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 57.8867 to 107.915"
+        },
+        {
+          "year": 2016,
+          "station": "16511",
+          "first_utc": "2016-06-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 62.9367 to 104.152"
+        },
+        {
+          "year": 2016,
+          "station": "16511",
+          "first_utc": "2016-08-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 65.8041 to 114.365"
+        },
+        {
+          "year": 2016,
+          "station": "16511",
+          "first_utc": "2016-09-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 57.2792 to 103.164"
+        },
+        {
+          "year": 2016,
+          "station": "16511",
+          "first_utc": "2016-10-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 80.699 to 105.388"
+        },
+        {
+          "year": 2016,
+          "station": "16411",
+          "first_utc": "2016-10-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 77.2357 to 103.724"
+        },
+        {
+          "year": 2016,
+          "station": "16411",
+          "first_utc": "2016-12-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 88.0121 to 103.499"
+        }
+      ],
+      "gate_rejections_after_physical_pass": {
+        "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct": 63,
+        "MASKED_WINDOW_ACCURACY_OR_COUNT_GATE": 36
+      },
+      "comparison_on_same_physical_windows_only": {
+        "peer_anomaly": {
+          "dry_bulb_temperature_c": {
+            "MAE": 0.9643067658699599,
+            "max_abs": 10.568983948611775,
+            "hours": 2832
+          },
+          "relative_humidity_pct": {
+            "MAE": 4.729923967738232,
+            "max_abs": 34.817208875121246,
+            "hours": 2832
+          },
+          "atmospheric_station_pressure_pa": {
+            "MAE": 14.144328263394378,
+            "max_abs": 133.52747514694056,
+            "hours": 2832
+          }
+        },
+        "linear_vapour": {
+          "dry_bulb_temperature_c": {
+            "MAE": 2.395247175141243,
+            "max_abs": 13.111999999999998,
+            "hours": 2832
+          },
+          "relative_humidity_pct": {
+            "MAE": 9.828626951732316,
+            "max_abs": 53.34509798259438,
+            "hours": 2832
+          },
+          "atmospheric_station_pressure_pa": {
+            "MAE": 94.08700564971748,
+            "max_abs": 580.3999999999942,
+            "hours": 2832
+          }
+        },
+        "linear_RH": {
+          "dry_bulb_temperature_c": {
+            "MAE": 2.395247175141243,
+            "max_abs": 13.111999999999998,
+            "hours": 2832
+          },
+          "relative_humidity_pct": {
+            "MAE": 9.801878531073445,
+            "max_abs": 54.36,
+            "hours": 2832
+          },
+          "atmospheric_station_pressure_pa": {
+            "MAE": 94.08700564971748,
+            "max_abs": 580.3999999999942,
+            "hours": 2832
+          }
+        }
+      },
+      "comparison_on_same_fully_admitted_windows_only": {
+        "peer_anomaly": {
+          "dry_bulb_temperature_c": {
+            "MAE": 0.5449847603185274,
+            "max_abs": 3.8596554890763333,
+            "hours": 456
+          },
+          "relative_humidity_pct": {
+            "MAE": 3.5489964188101597,
+            "max_abs": 24.994696451825355,
+            "hours": 456
+          },
+          "atmospheric_station_pressure_pa": {
+            "MAE": 9.57270685457211,
+            "max_abs": 44.76498625028762,
+            "hours": 456
+          }
+        },
+        "linear_vapour": {
+          "dry_bulb_temperature_c": {
+            "MAE": 2.479201754385965,
+            "max_abs": 13.111999999999998,
+            "hours": 456
+          },
+          "relative_humidity_pct": {
+            "MAE": 10.724887179103796,
+            "max_abs": 36.772682263295806,
+            "hours": 456
+          },
+          "atmospheric_station_pressure_pa": {
+            "MAE": 72.05263157894734,
+            "max_abs": 333.19999999998254,
+            "hours": 456
+          }
+        },
+        "linear_RH": {
+          "dry_bulb_temperature_c": {
+            "MAE": 2.479201754385965,
+            "max_abs": 13.111999999999998,
+            "hours": 456
+          },
+          "relative_humidity_pct": {
+            "MAE": 10.720789473684212,
+            "max_abs": 36.44,
+            "hours": 456
+          },
+          "atmospheric_station_pressure_pa": {
+            "MAE": 72.05263157894734,
+            "max_abs": 333.19999999998254,
+            "hours": 456
+          }
+        }
+      }
+    },
+    "61": {
+      "counts": {
+        "planned": 144,
+        "complete": 136,
+        "paired_physical": 108,
+        "admitted_by_full_gate": 6
+      },
+      "physical_failures": {
+        "peer_anomaly": 28,
+        "linear_vapour": 3,
+        "linear_RH": 0
+      },
+      "physical_failure_details": [
+        {
+          "year": 2014,
+          "station": "16413",
+          "first_utc": "2014-12-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 73.0828 to 102.525"
+        },
+        {
+          "year": 2014,
+          "station": "16511",
+          "first_utc": "2014-01-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 57.9391 to 100.582"
+        },
+        {
+          "year": 2014,
+          "station": "16511",
+          "first_utc": "2014-08-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 37.3683 to 101.396"
+        },
+        {
+          "year": 2014,
+          "station": "16511",
+          "first_utc": "2014-11-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 75.7982 to 100.539"
+        },
+        {
+          "year": 2014,
+          "station": "16411",
+          "first_utc": "2014-02-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 51.3979 to 100.175"
+        },
+        {
+          "year": 2015,
+          "station": "16413",
+          "first_utc": "2015-12-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 72.272 to 101.849"
+        },
+        {
+          "year": 2015,
+          "station": "16511",
+          "first_utc": "2015-02-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 66.7003 to 104.794"
+        },
+        {
+          "year": 2015,
+          "station": "16511",
+          "first_utc": "2015-03-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 41.163 to 101.596"
+        },
+        {
+          "year": 2015,
+          "station": "16511",
+          "first_utc": "2015-05-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 52.8361 to 100.553"
+        },
+        {
+          "year": 2015,
+          "station": "16511",
+          "first_utc": "2015-06-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 46.6697 to 107.218"
+        },
+        {
+          "year": 2015,
+          "station": "16511",
+          "first_utc": "2015-08-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 42.0463 to 109.089"
+        },
+        {
+          "year": 2015,
+          "station": "16511",
+          "first_utc": "2015-10-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 79.668 to 100.679"
+        },
+        {
+          "year": 2015,
+          "station": "16511",
+          "first_utc": "2015-12-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 74.3953 to 103.254"
+        },
+        {
+          "year": 2015,
+          "station": "16411",
+          "first_utc": "2015-02-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 64.532 to 104.104"
+        },
+        {
+          "year": 2015,
+          "station": "16411",
+          "first_utc": "2015-03-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 53.0808 to 102.393"
+        },
+        {
+          "year": 2015,
+          "station": "16411",
+          "first_utc": "2015-12-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 73.3522 to 100.812"
+        },
+        {
+          "year": 2016,
+          "station": "16413",
+          "first_utc": "2016-02-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 66.9278 to 100.875"
+        },
+        {
+          "year": 2016,
+          "station": "16413",
+          "first_utc": "2016-03-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 44.9312 to 100.415"
+        },
+        {
+          "year": 2016,
+          "station": "16413",
+          "first_utc": "2016-11-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 57.5539 to 100.913"
+        },
+        {
+          "year": 2016,
+          "station": "16511",
+          "first_utc": "2016-02-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 65.4193 to 101.08"
+        },
+        {
+          "year": 2016,
+          "station": "16511",
+          "first_utc": "2016-05-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 48.9179 to 126.12"
+        },
+        {
+          "year": 2016,
+          "station": "16511",
+          "first_utc": "2016-06-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 34.1439 to 104.378"
+        },
+        {
+          "year": 2016,
+          "station": "16511",
+          "first_utc": "2016-09-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 45.4015 to 100.598"
+        },
+        {
+          "year": 2016,
+          "station": "16511",
+          "first_utc": "2016-10-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 75.104 to 109.913"
+        },
+        {
+          "year": 2016,
+          "station": "16511",
+          "first_utc": "2016-11-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 61.978 to 101.082"
+        },
+        {
+          "year": 2016,
+          "station": "16411",
+          "first_utc": "2016-05-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 31.5307 to 103.567"
+        },
+        {
+          "year": 2016,
+          "station": "16411",
+          "first_utc": "2016-06-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 32.2266 to 104.046"
+        },
+        {
+          "year": 2016,
+          "station": "16411",
+          "first_utc": "2016-10-15T06:00:00+00:00",
+          "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 73.2623 to 107.863"
+        }
+      ],
+      "gate_rejections_after_physical_pass": {
+        "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct": 68,
+        "MASKED_WINDOW_ACCURACY_OR_COUNT_GATE": 34
+      },
+      "comparison_on_same_physical_windows_only": {
+        "peer_anomaly": {
+          "dry_bulb_temperature_c": {
+            "MAE": 0.9660865638807046,
+            "max_abs": 10.842925195716125,
+            "hours": 6588
+          },
+          "relative_humidity_pct": {
+            "MAE": 5.378424635145971,
+            "max_abs": 47.848813444545364,
+            "hours": 6588
+          },
+          "atmospheric_station_pressure_pa": {
+            "MAE": 16.486644461192874,
+            "max_abs": 154.30922502779868,
+            "hours": 6588
+          }
+        },
+        "linear_vapour": {
+          "dry_bulb_temperature_c": {
+            "MAE": 2.8124769865052786,
+            "max_abs": 15.3,
+            "hours": 6588
+          },
+          "relative_humidity_pct": {
+            "MAE": 12.560703465361012,
+            "max_abs": 61.216243611015614,
+            "hours": 6588
+          },
+          "atmospheric_station_pressure_pa": {
+            "MAE": 226.3365454296177,
+            "max_abs": 1812.9032258064544,
+            "hours": 6588
+          }
+        },
+        "linear_RH": {
+          "dry_bulb_temperature_c": {
+            "MAE": 2.8124769865052786,
+            "max_abs": 15.3,
+            "hours": 6588
+          },
+          "relative_humidity_pct": {
+            "MAE": 12.528127876686842,
+            "max_abs": 60.17741935483872,
+            "hours": 6588
+          },
+          "atmospheric_station_pressure_pa": {
+            "MAE": 226.3365454296177,
+            "max_abs": 1812.9032258064544,
+            "hours": 6588
+          }
+        }
+      },
+      "comparison_on_same_fully_admitted_windows_only": {
+        "peer_anomaly": {
+          "dry_bulb_temperature_c": {
+            "MAE": 0.874154684027752,
+            "max_abs": 6.969551661994044,
+            "hours": 366
+          },
+          "relative_humidity_pct": {
+            "MAE": 3.792915916268526,
+            "max_abs": 32.73464594367397,
+            "hours": 366
+          },
+          "atmospheric_station_pressure_pa": {
+            "MAE": 10.846302010696029,
+            "max_abs": 47.338946129137184,
+            "hours": 366
+          }
+        },
+        "linear_vapour": {
+          "dry_bulb_temperature_c": {
+            "MAE": 4.358906222457254,
+            "max_abs": 13.683870967741933,
+            "hours": 366
+          },
+          "relative_humidity_pct": {
+            "MAE": 14.479799096714157,
+            "max_abs": 56.31829765285799,
+            "hours": 366
+          },
+          "atmospheric_station_pressure_pa": {
+            "MAE": 296.3780186849991,
+            "max_abs": 812.9032258064399,
+            "hours": 366
+          }
+        },
+        "linear_RH": {
+          "dry_bulb_temperature_c": {
+            "MAE": 4.358906222457254,
+            "max_abs": 13.683870967741933,
+            "hours": 366
+          },
+          "relative_humidity_pct": {
+            "MAE": 14.977348845408073,
+            "max_abs": 57.7741935483871,
+            "hours": 366
+          },
+          "atmospheric_station_pressure_pa": {
+            "MAE": 296.3780186849991,
+            "max_abs": 812.9032258064399,
+            "hours": 366
+          }
+        }
+      }
+    }
+  }
+}

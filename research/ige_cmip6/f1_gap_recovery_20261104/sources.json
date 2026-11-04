@@ -1,0 +1,202 @@
+{
+  "2014": {
+    "sha256": "aee65a4f4d926c4fc78728205295415f0048f6ee17b31722f455e1cfa9bd92e1",
+    "request": {
+      "latitude": 47.0707,
+      "longitude": 15.4395,
+      "elevation_m": 375.0,
+      "elevation_reference": "Nominal site elevation proxy; common vertical datum and sensor elevations unconfirmed",
+      "year": 2014,
+      "utc_offset_minutes": 60,
+      "label": "Graz real-station usability",
+      "assume_buck_water": true,
+      "allow_nominal_height_proxy": true,
+      "excluded_station_id": ""
+    },
+    "observed_replay": {
+      "status": "POINT_YEAR_BLOCKED",
+      "EPW_status": "BLOCKED_INCOMPLETE_THERMODYNAMIC_POINT_YEAR",
+      "EPW_sha256": null,
+      "gap_reconstruction": {
+        "policy": "PEER_ANOMALY_MASKED_WINDOWS_V1",
+        "status": "ASSESSED",
+        "stations": [
+          {
+            "station_id": "16411",
+            "episodes": [],
+            "status": "BLOCKED",
+            "reason": "RECONSTRUCTION_OUTSIDE_PHYSICAL_BOUNDS relative_humidity_pct: 58.0325 to 113.966"
+          }
+        ]
+      }
+    }
+  },
+  "2015": {
+    "sha256": "3e7b0642b8b8078a2a843f28bb177270f2c3abfbbccc3efe726d78da0351a3f2",
+    "request": {
+      "latitude": 47.0707,
+      "longitude": 15.4395,
+      "elevation_m": 375.0,
+      "elevation_reference": "Nominal site elevation proxy; common vertical datum and sensor elevations unconfirmed",
+      "year": 2015,
+      "utc_offset_minutes": 60,
+      "label": "Graz real-station usability",
+      "assume_buck_water": true,
+      "allow_nominal_height_proxy": true,
+      "excluded_station_id": ""
+    },
+    "observed_replay": {
+      "status": "POINT_YEAR_COMPLETE_RESEARCH",
+      "EPW_status": "ADMITTED_MIXED_SOURCE_RESEARCH",
+      "EPW_sha256": "5d87fa8f7250408ab252f9566f86ac6c91c6a26c19f3792b26160939299fef93",
+      "gap_reconstruction": {
+        "policy": "PEER_ANOMALY_MASKED_WINDOWS_V1",
+        "status": "ASSESSED",
+        "stations": [
+          {
+            "station_id": "16412",
+            "episodes": [
+              {
+                "first_utc": "2015-04-07T09:00:00+00:00",
+                "hours": 2,
+                "validation": {
+                  "dry_bulb_temperature_c": {
+                    "MAE": 0.3874970810462323,
+                    "max_abs": 0.980920916731467
+                  },
+                  "relative_humidity_pct": {
+                    "MAE": 1.8502122730592407,
+                    "max_abs": 5.301021090223955
+                  },
+                  "atmospheric_station_pressure_pa": {
+                    "MAE": 9.142268913961137,
+                    "max_abs": 24.10004571538593
+                  }
+                },
+                "validation_windows_utc": [
+                  "2015-04-06T09:00:00+00:00",
+                  "2015-04-08T09:00:00+00:00",
+                  "2015-04-05T09:00:00+00:00",
+                  "2015-04-09T09:00:00+00:00",
+                  "2015-04-04T09:00:00+00:00",
+                  "2015-04-10T09:00:00+00:00",
+                  "2015-04-03T09:00:00+00:00",
+                  "2015-04-11T09:00:00+00:00",
+                  "2015-04-02T09:00:00+00:00",
+                  "2015-04-12T09:00:00+00:00",
+                  "2015-04-01T09:00:00+00:00",
+                  "2015-04-13T09:00:00+00:00"
+                ],
+                "accepted": true,
+                "estimated_values": {
+                  "dry_bulb_temperature_c": [
+                    {
+                      "utc": "2015-04-07T09:00:00+00:00",
+                      "value": 6.701429633437633
+                    },
+                    {
+                      "utc": "2015-04-07T10:00:00+00:00",
+                      "value": 8.080268676110054
+                    }
+                  ],
+                  "relative_humidity_pct": [
+                    {
+                      "utc": "2015-04-07T09:00:00+00:00",
+                      "value": 38.50518445878932
+                    },
+                    {
+                      "utc": "2015-04-07T10:00:00+00:00",
+                      "value": 34.20235424010362
+                    }
+                  ],
+                  "atmospheric_station_pressure_pa": [
+                    {
+                      "utc": "2015-04-07T09:00:00+00:00",
+                      "value": 98572.76755542254
+                    },
+                    {
+                      "utc": "2015-04-07T10:00:00+00:00",
+                      "value": 98534.19569288939
+                    }
+                  ]
+                }
+              }
+            ],
+            "status": "RECONSTRUCTED_NOT_OBSERVED"
+          }
+        ]
+      }
+    },
+    "background_sha256": "c80843bc633f8b35dbad42d6166c3efdafb008c71b61c63621fd90cfcf5e9a47"
+  },
+  "2016": {
+    "sha256": "4ade92fc539d80c9af84410dc2ec7becf07307433e5b4b6ce8f000d820df222d",
+    "request": {
+      "latitude": 47.0707,
+      "longitude": 15.4395,
+      "elevation_m": 375.0,
+      "elevation_reference": "Nominal site elevation proxy; common vertical datum and sensor elevations unconfirmed",
+      "year": 2016,
+      "utc_offset_minutes": 60,
+      "label": "Graz real-station usability",
+      "assume_buck_water": true,
+      "allow_nominal_height_proxy": true,
+      "excluded_station_id": ""
+    },
+    "observed_replay": {
+      "status": "POINT_YEAR_COMPLETE_RESEARCH",
+      "EPW_status": "ADMITTED_MIXED_SOURCE_RESEARCH",
+      "EPW_sha256": "d9042a5039f04d767b23721a7526943ea6311944f1c29965a5f2ffcda7ffec5f",
+      "gap_reconstruction": {
+        "policy": "PEER_ANOMALY_MASKED_WINDOWS_V1",
+        "status": "ASSESSED",
+        "stations": [
+          {
+            "station_id": "16412",
+            "episodes": [
+              {
+                "first_utc": "2016-08-17T04:00:00+00:00",
+                "hours": 2,
+                "validation": {
+                  "dry_bulb_temperature_c": {
+                    "MAE": 0.23579351767049958,
+                    "max_abs": 1.2959087812284267
+                  }
+                },
+                "validation_windows_utc": [
+                  "2016-08-16T04:00:00+00:00",
+                  "2016-08-18T04:00:00+00:00",
+                  "2016-08-15T04:00:00+00:00",
+                  "2016-08-19T04:00:00+00:00",
+                  "2016-08-14T04:00:00+00:00",
+                  "2016-08-20T04:00:00+00:00",
+                  "2016-08-13T04:00:00+00:00",
+                  "2016-08-21T04:00:00+00:00",
+                  "2016-08-12T04:00:00+00:00",
+                  "2016-08-22T04:00:00+00:00",
+                  "2016-08-11T04:00:00+00:00",
+                  "2016-08-23T04:00:00+00:00"
+                ],
+                "accepted": true,
+                "estimated_values": {
+                  "dry_bulb_temperature_c": [
+                    {
+                      "utc": "2016-08-17T04:00:00+00:00",
+                      "value": 16.920618519001255
+                    },
+                    {
+                      "utc": "2016-08-17T05:00:00+00:00",
+                      "value": 17.39522941600343
+                    }
+                  ]
+                }
+              }
+            ],
+            "status": "RECONSTRUCTED_NOT_OBSERVED"
+          }
+        ]
+      }
+    },
+    "background_sha256": "257fb764cf6797d3b62f9dfd996f04db178e529b8c2d7966dd376893d5509469"
+  }
+}

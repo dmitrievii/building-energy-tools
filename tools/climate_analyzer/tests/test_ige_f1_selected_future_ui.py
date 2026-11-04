@@ -57,6 +57,29 @@ class F1UITests(unittest.TestCase):
             app.number_input(key="ige_f1_future_last").set_value(2069).run()
             run.assert_not_called()
 
+    def test_real_station_point_offers_automatic_reference_without_manual_epw(self):
+        from test_ige_f1_point_reference import retained_point
+        from epw_climate_analyzer.future_point_reference import POINT_LABEL, POINT_GAP_LABEL, POINT_GAP_MODE
+        app = self.app()
+        point = retained_point()
+        app.session_state["ige_s1_point_product"] = point
+        app.run(); self.clean(app)
+        app.selectbox(key="ige_f1_base_choice").set_value(point.report["EPW_sha256"]).run()
+        self.assertIn(POINT_LABEL, app.selectbox(key="ige_f1_reference_mode").options)
+        self.assertEqual(app.selectbox(key="ige_f1_reference_mode").value, POINT_GAP_LABEL)
+        app.selectbox(key="ige_f1_reference_mode").set_value(POINT_LABEL).run()
+        self.assertEqual(app.selectbox(key="ige_f1_reference_mode").value, POINT_LABEL)
+        app.selectbox(key="ige_f1_reference_mode").set_value(POINT_GAP_LABEL).run()
+        self.assertTrue(app.button(key="ige_f1_build").disabled)
+        app.checkbox(key="ige_f1_liquid_proxy").check().run()
+        self.assertFalse(app.button(key="ige_f1_build").disabled)
+        with patch("epw_climate_analyzer.future_selected_ui.run_selected_future",
+                   side_effect=ValueError("F1_POINT_REFERENCE_YEAR_BLOCKED 2002: incomplete donor")) as run:
+            app.button(key="ige_f1_build").click().run(); self.clean(app)
+            self.assertEqual(run.call_args.kwargs["reference_mode"], POINT_GAP_MODE)
+            self.assertTrue(any("Every year must pass" in err.value for err in app.error))
+            self.assertEqual(len(app.download_button), 0)
+
     def test_active_epw_requires_source_and_period_admission(self):
         with patch("epw_climate_analyzer.future_selected_ui.run_selected_future") as run:
             app=self.app(active=True)

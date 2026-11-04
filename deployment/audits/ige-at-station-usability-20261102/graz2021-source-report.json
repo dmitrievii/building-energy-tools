@@ -1,0 +1,930 @@
+{
+  "schema": "IGE_S1_POINT_INTERPOLATION_v1",
+  "method": "S1_P82F_FROZEN_EQUATIONS_HOURLY_MONTHLY_ADAPTER_v1",
+  "request": {
+    "latitude": 47.0707,
+    "longitude": 15.4395,
+    "elevation_m": 375.0,
+    "elevation_reference": "Nominal site elevation proxy; common vertical datum and sensor elevations unconfirmed",
+    "year": 2021,
+    "utc_offset_minutes": 60,
+    "label": "Graz real-station usability",
+    "assume_buck_water": true,
+    "allow_nominal_height_proxy": true,
+    "excluded_station_id": ""
+  },
+  "calibration_sha256": "b7efcae0840851515004f3eb820cc7b3c801695664cfa8ae0c89011bea79dfec",
+  "calibration_lineage": {
+    "schema": "IGE_S1_FROZEN_P82F_CALIBRATION_v1",
+    "training": {
+      "station_count": 189,
+      "source_index_hash": "0991d836c0bdfc6d590837d3862b07c15b8afbcf4d7dd2cd40ca5b9ea2224eed",
+      "metadata_hash": "accd768085be66f3d2af3e9a313d521e6b3e89671501409ff739dbb0b0f58f88",
+      "source_batches": [
+        {
+          "sha256": "66791b3fe7eeaad93168e8c07e82d7416906836fe972a875e566087191d745f9",
+          "bytes": 97681,
+          "n_ids": 12
+        },
+        {
+          "sha256": "fd100988cbd129a45eb27d0c134e9b1a778e8d4e11bd1381f88f3b619a4ea99c",
+          "bytes": 97562,
+          "n_ids": 12
+        },
+        {
+          "sha256": "2f9707a4e8d245652431c8ce8cd231b6b2013e8d4906dd4bd24724dc3256c386",
+          "bytes": 97516,
+          "n_ids": 12
+        },
+        {
+          "sha256": "d533a1f4de2a65b4cc0dc5435a2364f8203325cef90d0a2e9c203dc58344fa3d",
+          "bytes": 97759,
+          "n_ids": 12
+        },
+        {
+          "sha256": "478ebb5fe933b34d2c1f26d51aa071dbf38f13f3dd311f26d946f14e01b82370",
+          "bytes": 97431,
+          "n_ids": 12
+        },
+        {
+          "sha256": "49b191f6b989bc9a9fe597c28e0abb4fc1728e8952b4b33d98bb7969bd371bab",
+          "bytes": 97408,
+          "n_ids": 12
+        },
+        {
+          "sha256": "e18aa3a4deab8f7e548141c897bfe1bdc4de3f1cda5c7ad0464d585897293a0c",
+          "bytes": 97442,
+          "n_ids": 12
+        },
+        {
+          "sha256": "285cdcf1f0b95d2a0821cb15dc5d0eabc50ab2361b226864f60e665aa6a4e28e",
+          "bytes": 97725,
+          "n_ids": 12
+        },
+        {
+          "sha256": "0464f79f0de218eba0b5b5bcb99f2c15bae998199f5b9d0b9357d5eeffaf87f1",
+          "bytes": 97567,
+          "n_ids": 12
+        },
+        {
+          "sha256": "535037428c1ead0fae25ee49c2850b70635cc9e59ad019ea973d214e326b0be5",
+          "bytes": 97401,
+          "n_ids": 12
+        },
+        {
+          "sha256": "67386406929f48c3dd7a6123b254a3cbcf07cbbb442635bfa8ef0ab13cdabb46",
+          "bytes": 97586,
+          "n_ids": 12
+        },
+        {
+          "sha256": "1c1c977968ac79d2b0ebd8e7ac4660d00b0fe1a4d3b10444e96d28f8ba3d50ef",
+          "bytes": 97706,
+          "n_ids": 12
+        },
+        {
+          "sha256": "310394c674a07fd5e9e4edbb529c9af0d5082b2c4cbf80c02fa4711c34e31b35",
+          "bytes": 96969,
+          "n_ids": 12
+        },
+        {
+          "sha256": "45fb3548760b5b58d0bd37754725940c5e569a28d3d16220054dc447e1f41ce4",
+          "bytes": 97554,
+          "n_ids": 12
+        },
+        {
+          "sha256": "f9b58f6d333196aaf3b87720ea38230d3198c1826cdec5ab14f47eabd215907c",
+          "bytes": 97701,
+          "n_ids": 12
+        },
+        {
+          "sha256": "820761a2da2bb16978913c5311c160b45b954a762eb5a48d30ff958c569839c4",
+          "bytes": 75120,
+          "n_ids": 9
+        }
+      ],
+      "trained_on": "1991-2010 GeoSphere Austria station data only",
+      "test_years_not_in_parameters": true,
+      "log_vapour_slope_m_inv": [
+        -0.00034381167198303727,
+        -0.0003696893618031671,
+        -0.00036617831146305727,
+        -0.00035831376065559984,
+        -0.00034092992884689286,
+        -0.0003307423346795075,
+        -0.0003165958059560497,
+        -0.00031937075422189086,
+        -0.0003403474729914906,
+        -0.00034590244345551215,
+        -0.000347300567878595,
+        -0.00033946139565956684
+      ],
+      "temperature_slope_K_m": [
+        -0.0025918158178962875,
+        -0.0039995823586441255,
+        -0.005385609905728577,
+        -0.006153594949982559,
+        -0.006195223516394919,
+        -0.006132281674890167,
+        -0.005938742588625475,
+        -0.005557264663632554,
+        -0.005150468561959104,
+        -0.004050513618313608,
+        -0.0037116911336134194,
+        -0.0028472542205561563
+      ]
+    },
+    "original_solver_blob_sha": "099357c4e9ba85bf397356457818fe3bd6df861f",
+    "original_selector_blob_sha": "d0107b04f81ecc1bc1e0392b3660bf44cc271e61",
+    "artifact": {
+      "run_id": 38612389803,
+      "id": 11917798058,
+      "sha256": "761437db7996502d9e1ce0badb0b4d02d725b97aee7fae6401d1631441e75158",
+      "member": "selection_provenance.json"
+    },
+    "not_retrained": true
+  },
+  "operational_caps": {
+    "candidate_limit": 20,
+    "distance_km": 100,
+    "height_difference_m": 1500,
+    "caps_are_not_empirical_accuracy_qualification": true
+  },
+  "donor_admission": [
+    {
+      "station_id": "16412",
+      "station_name": "Graz Universität",
+      "source_kind": "GEOSPHERE_H1_ENDPOINTS_BUCK_RH_ASSUMPTION",
+      "latitude": 47.07767,
+      "longitude": 15.44892,
+      "source_sha256": "8b90ba4d4a514c9068e48faa36f7ec0c71dfed786f793ea39e4caf7eb7aa868f",
+      "distance_km": 1.0533600953748206,
+      "temperature_elevation_m": 366.7,
+      "pressure_elevation_m": 366.7,
+      "height_reference": "GeoSphere published nominal station altitude; sensor elevations and common vertical datum unconfirmed",
+      "height_is_proxy": true,
+      "complete_in_bounds_hours": {
+        "dry_bulb_temperature_c": 8760,
+        "atmospheric_station_pressure_pa": 8760,
+        "vapor_pressure_hpa": 8760,
+        "relative_humidity_pct": 8760
+      },
+      "monthly_origin": "COMPLETE_HOURLY_SAMPLE_MEAN_NOT_PUBLISHED_MONTHLY_SERIES",
+      "max_abs_source_RH_vs_Buck_e_T_pp": 1.4210854715202004e-14,
+      "source_RH_not_independently_enforced_after_e_is_defined": true,
+      "eligible": true,
+      "reasons": [],
+      "selected": true,
+      "weight": 0.9053445807872679
+    },
+    {
+      "station_id": "16413",
+      "station_name": "Graz Straßgang",
+      "source_kind": "GEOSPHERE_H1_ENDPOINTS_BUCK_RH_ASSUMPTION",
+      "latitude": 47.04611,
+      "longitude": 15.41028,
+      "source_sha256": "8429859e52e66398fcb6dd108d3838e3dde1d3ca482a577b69d8d6838dd4f586",
+      "distance_km": 3.517917849785034,
+      "temperature_elevation_m": 356.5,
+      "pressure_elevation_m": 356.5,
+      "height_reference": "GeoSphere published nominal station altitude; sensor elevations and common vertical datum unconfirmed",
+      "height_is_proxy": true,
+      "complete_in_bounds_hours": {
+        "dry_bulb_temperature_c": 8760,
+        "atmospheric_station_pressure_pa": 8760,
+        "vapor_pressure_hpa": 8760,
+        "relative_humidity_pct": 8760
+      },
+      "monthly_origin": "COMPLETE_HOURLY_SAMPLE_MEAN_NOT_PUBLISHED_MONTHLY_SERIES",
+      "max_abs_source_RH_vs_Buck_e_T_pp": 1.4210854715202004e-14,
+      "source_RH_not_independently_enforced_after_e_is_defined": true,
+      "eligible": true,
+      "reasons": [],
+      "selected": true,
+      "weight": 0.08117013024854734
+    },
+    {
+      "station_id": "16400",
+      "station_name": "Graz Thalerhof Flughafen",
+      "source_kind": "GEOSPHERE_H1_ENDPOINTS_BUCK_RH_ASSUMPTION",
+      "latitude": 46.98056,
+      "longitude": 15.44,
+      "source_sha256": "52042db23dce80cf28a8afa501619d24c8553f1a0d5043e3e2484f0fa0340308",
+      "distance_km": 10.023182339242181,
+      "temperature_elevation_m": 340.0,
+      "pressure_elevation_m": 340.0,
+      "height_reference": "GeoSphere published nominal station altitude; sensor elevations and common vertical datum unconfirmed",
+      "height_is_proxy": true,
+      "complete_in_bounds_hours": {
+        "dry_bulb_temperature_c": 8759,
+        "atmospheric_station_pressure_pa": 8760,
+        "vapor_pressure_hpa": 8759,
+        "relative_humidity_pct": 8759
+      },
+      "monthly_origin": "COMPLETE_HOURLY_SAMPLE_MEAN_NOT_PUBLISHED_MONTHLY_SERIES",
+      "max_abs_source_RH_vs_Buck_e_T_pp": 1.4210854715202004e-14,
+      "source_RH_not_independently_enforced_after_e_is_defined": true,
+      "eligible": false,
+      "reasons": [
+        "H1_CORE_NOT_ADMITTED_dry_bulb_temperature_c",
+        "H1_CORE_NOT_ADMITTED_relative_humidity_pct",
+        "INCOMPLETE_OR_INVALID_dry_bulb_temperature_c",
+        "INCOMPLETE_OR_INVALID_vapor_pressure_hpa",
+        "INCOMPLETE_OR_INVALID_relative_humidity_pct"
+      ],
+      "selected": false
+    },
+    {
+      "station_id": "16511",
+      "station_name": "Laßnitzhöhe",
+      "source_kind": "GEOSPHERE_H1_ENDPOINTS_BUCK_RH_ASSUMPTION",
+      "latitude": 47.07361,
+      "longitude": 15.59222,
+      "source_sha256": "c81f36aa2396bdae53dda24e9b164e7fd7dcd02a15eea6e43dea34d9e7fc7927",
+      "distance_km": 11.570358081985425,
+      "temperature_elevation_m": 530.0,
+      "pressure_elevation_m": 530.0,
+      "height_reference": "GeoSphere published nominal station altitude; sensor elevations and common vertical datum unconfirmed",
+      "height_is_proxy": true,
+      "complete_in_bounds_hours": {
+        "dry_bulb_temperature_c": 8760,
+        "atmospheric_station_pressure_pa": 8760,
+        "vapor_pressure_hpa": 8760,
+        "relative_humidity_pct": 8760
+      },
+      "monthly_origin": "COMPLETE_HOURLY_SAMPLE_MEAN_NOT_PUBLISHED_MONTHLY_SERIES",
+      "max_abs_source_RH_vs_Buck_e_T_pp": 1.4210854715202004e-14,
+      "source_RH_not_independently_enforced_after_e_is_defined": true,
+      "eligible": true,
+      "reasons": [],
+      "selected": true,
+      "weight": 0.007503675257840835
+    },
+    {
+      "station_id": "16411",
+      "station_name": "St. Radegund",
+      "source_kind": "GEOSPHERE_H1_ENDPOINTS_BUCK_RH_ASSUMPTION",
+      "latitude": 47.18211,
+      "longitude": 15.48978,
+      "source_sha256": "97b4b48e09fa983e1865f5a8c8e08939d7c5848695957f61fa7ae7a82baa923c",
+      "distance_km": 12.95909380844688,
+      "temperature_elevation_m": 726.3,
+      "pressure_elevation_m": 726.3,
+      "height_reference": "GeoSphere published nominal station altitude; sensor elevations and common vertical datum unconfirmed",
+      "height_is_proxy": true,
+      "complete_in_bounds_hours": {
+        "dry_bulb_temperature_c": 8760,
+        "atmospheric_station_pressure_pa": 8760,
+        "vapor_pressure_hpa": 8760,
+        "relative_humidity_pct": 8760
+      },
+      "monthly_origin": "COMPLETE_HOURLY_SAMPLE_MEAN_NOT_PUBLISHED_MONTHLY_SERIES",
+      "max_abs_source_RH_vs_Buck_e_T_pp": 1.4210854715202004e-14,
+      "source_RH_not_independently_enforced_after_e_is_defined": true,
+      "eligible": true,
+      "reasons": [],
+      "selected": true,
+      "weight": 0.005981613706343928
+    }
+  ],
+  "global_blockers": [],
+  "selected_donors": [
+    "16412",
+    "16413",
+    "16511",
+    "16411"
+  ],
+  "target_weather_used": false,
+  "new_fit_or_tuning": false,
+  "engine_gap_fill": false,
+  "output_fields": {
+    "dry_bulb_temperature_c": {
+      "unit": "°C",
+      "definition": "height-corrected donor blend"
+    },
+    "atmospheric_station_pressure_pa": {
+      "unit": "Pa",
+      "definition": "absolute pressure; conditional dry-temperature transfer"
+    },
+    "vapor_pressure_hpa": {
+      "unit": "hPa",
+      "definition": "Buck-water vapour pressure with monthly reconciliation"
+    },
+    "relative_humidity_pct": {
+      "unit": "%",
+      "definition": "100 e / Buck liquid-water saturation at all T"
+    },
+    "dew_point_temperature_c": {
+      "unit": "°C",
+      "definition": "inverse Buck liquid-water saturation"
+    },
+    "specific_humidity_kg_kg": {
+      "unit": "kg/kg moist air",
+      "definition": "shared q(e,p) algebra; conditional on pressure height proxy"
+    }
+  },
+  "clock": {
+    "rows": "interval start UTC",
+    "states": "right endpoint / published nominal node",
+    "monthly_groups": "fixed local standard interval-start calendar",
+    "DST": false
+  },
+  "quality": {
+    "execution_correctness": "ANNUAL_INTERPOLATION_COMPLETED",
+    "physical_admissibility": "T_P_E_RH_TD_BUCK_WATER_CLOSURE_AND_MONTHLY_E_PASS",
+    "independent_accuracy": "NOT_INDEPENDENTLY_QUALIFIED_FOR_NEW_ADAPTERS",
+    "operational_and_application_scope": "RESTRICTED_RESEARCH_POINT_INTERPOLATION",
+    "production_ready": false
+  },
+  "limitations": [
+    "Monthly AT-trained regional slopes do not resolve hourly inversions or valley sheltering.",
+    "Dry-temperature pressure transfer uses source T as barometer-layer proxy; sensor collocation is not established.",
+    "Buck liquid-water phase is an explicit source interpretation, not a NASA phase definition.",
+    "Hourly-derived monthly e is not the independent published monthly e used by the accepted P8.2F experiment.",
+    "Donor spread and height envelope are diagnostics, not calibrated uncertainty or independent accuracy."
+  ],
+  "status": "POINT_YEAR_COMPLETE_RESEARCH",
+  "hours": 8760,
+  "monthly_reconciliation": [
+    {
+      "month": 1,
+      "target_e_mean_hpa": 5.272124085817337,
+      "output_e_mean_hpa": 5.272124085817337,
+      "residual_hpa": 0.0,
+      "scale_hpa": 5.272909030797461,
+      "saturated_hours": 0,
+      "hours": 744
+    },
+    {
+      "month": 2,
+      "target_e_mean_hpa": 5.768816448339795,
+      "output_e_mean_hpa": 5.768816448339795,
+      "residual_hpa": 0.0,
+      "scale_hpa": 5.769935613401598,
+      "saturated_hours": 0,
+      "hours": 672
+    },
+    {
+      "month": 3,
+      "target_e_mean_hpa": 5.576016820152121,
+      "output_e_mean_hpa": 5.576016820152121,
+      "residual_hpa": 0.0,
+      "scale_hpa": 5.577092011240513,
+      "saturated_hours": 0,
+      "hours": 744
+    },
+    {
+      "month": 4,
+      "target_e_mean_hpa": 6.499246384882259,
+      "output_e_mean_hpa": 6.49924638488226,
+      "residual_hpa": 8.881784197001252e-16,
+      "scale_hpa": 6.500845398674272,
+      "saturated_hours": 0,
+      "hours": 720
+    },
+    {
+      "month": 5,
+      "target_e_mean_hpa": 9.519969039831848,
+      "output_e_mean_hpa": 9.519969039831846,
+      "residual_hpa": -1.7763568394002505e-15,
+      "scale_hpa": 9.5215575039758,
+      "saturated_hours": 0,
+      "hours": 744
+    },
+    {
+      "month": 6,
+      "target_e_mean_hpa": 15.093376280439132,
+      "output_e_mean_hpa": 15.093376280439134,
+      "residual_hpa": 1.7763568394002505e-15,
+      "scale_hpa": 15.096575282703885,
+      "saturated_hours": 0,
+      "hours": 720
+    },
+    {
+      "month": 7,
+      "target_e_mean_hpa": 16.066735673421384,
+      "output_e_mean_hpa": 16.066735673421377,
+      "residual_hpa": -7.105427357601002e-15,
+      "scale_hpa": 16.068959035234535,
+      "saturated_hours": 0,
+      "hours": 744
+    },
+    {
+      "month": 8,
+      "target_e_mean_hpa": 15.476774009827796,
+      "output_e_mean_hpa": 15.476774009827796,
+      "residual_hpa": 0.0,
+      "scale_hpa": 15.47879026563486,
+      "saturated_hours": 0,
+      "hours": 744
+    },
+    {
+      "month": 9,
+      "target_e_mean_hpa": 12.962640172062573,
+      "output_e_mean_hpa": 12.962640172062574,
+      "residual_hpa": 1.7763568394002505e-15,
+      "scale_hpa": 12.964686874735747,
+      "saturated_hours": 0,
+      "hours": 720
+    },
+    {
+      "month": 10,
+      "target_e_mean_hpa": 9.180280661251569,
+      "output_e_mean_hpa": 9.180280661251567,
+      "residual_hpa": -1.7763568394002505e-15,
+      "scale_hpa": 9.181631655027864,
+      "saturated_hours": 0,
+      "hours": 744
+    },
+    {
+      "month": 11,
+      "target_e_mean_hpa": 7.342911046694187,
+      "output_e_mean_hpa": 7.342911046694185,
+      "residual_hpa": -1.7763568394002505e-15,
+      "scale_hpa": 7.343644264062291,
+      "saturated_hours": 0,
+      "hours": 720
+    },
+    {
+      "month": 12,
+      "target_e_mean_hpa": 5.407648339749264,
+      "output_e_mean_hpa": 5.407648339749263,
+      "residual_hpa": -8.881784197001252e-16,
+      "scale_hpa": 5.408560547169335,
+      "saturated_hours": 0,
+      "hours": 744
+    }
+  ],
+  "target_height_outside_donor_envelope": false,
+  "target_outside_horizontal_donor_hull": false,
+  "max_abs_temperature_height_correction_K": 0.03563242818665202,
+  "max_abs_pressure_height_correction_pa": 74.55303957665456,
+  "saturation_adjustment_hours": 0,
+  "max_RH_closure_pp": 1.4210854715202004e-14,
+  "max_q_to_e_closure_pa": 4.547473508864641e-13,
+  "max_Td_closure_hpa": 1.0658141036401503e-14,
+  "candidate_metadata_exclusions": [
+    {
+      "station_id": "16431",
+      "reason": "METADATA_VALIDITY_DOES_NOT_COVER_YEAR"
+    },
+    {
+      "station_id": "16430",
+      "reason": "METADATA_VALIDITY_DOES_NOT_COVER_YEAR"
+    },
+    {
+      "station_id": "16402",
+      "reason": "METADATA_VALIDITY_DOES_NOT_COVER_YEAR"
+    },
+    {
+      "station_id": "16414",
+      "reason": "METADATA_VALIDITY_DOES_NOT_COVER_YEAR"
+    },
+    {
+      "station_id": "30",
+      "reason": "COMBINED_SERIES_NOT_ONE_FIXED_SITE"
+    },
+    {
+      "station_id": "16401",
+      "reason": "METADATA_VALIDITY_DOES_NOT_COVER_YEAR"
+    },
+    {
+      "station_id": "53",
+      "reason": "COMBINED_SERIES_NOT_ONE_FIXED_SITE"
+    },
+    {
+      "station_id": "94",
+      "reason": "COMBINED_SERIES_NOT_ONE_FIXED_SITE"
+    },
+    {
+      "station_id": "86",
+      "reason": "COMBINED_SERIES_NOT_ONE_FIXED_SITE"
+    },
+    {
+      "station_id": "16420",
+      "reason": "METADATA_VALIDITY_DOES_NOT_COVER_YEAR"
+    },
+    {
+      "station_id": "16522",
+      "reason": "METADATA_VALIDITY_DOES_NOT_COVER_YEAR"
+    },
+    {
+      "station_id": "200",
+      "reason": "COMBINED_SERIES_NOT_ONE_FIXED_SITE"
+    },
+    {
+      "station_id": "16500",
+      "reason": "METADATA_VALIDITY_DOES_NOT_COVER_YEAR"
+    },
+    {
+      "station_id": "13400",
+      "reason": "METADATA_VALIDITY_DOES_NOT_COVER_YEAR"
+    },
+    {
+      "station_id": "16521",
+      "reason": "METADATA_VALIDITY_DOES_NOT_COVER_YEAR"
+    },
+    {
+      "station_id": "201",
+      "reason": "COMBINED_SERIES_NOT_ONE_FIXED_SITE"
+    },
+    {
+      "station_id": "18905",
+      "reason": "METADATA_VALIDITY_DOES_NOT_COVER_YEAR"
+    },
+    {
+      "station_id": "116",
+      "reason": "COMBINED_SERIES_NOT_ONE_FIXED_SITE"
+    },
+    {
+      "station_id": "19010",
+      "reason": "METADATA_VALIDITY_DOES_NOT_COVER_YEAR"
+    },
+    {
+      "station_id": "54",
+      "reason": "COMBINED_SERIES_NOT_ONE_FIXED_SITE"
+    },
+    {
+      "station_id": "13303",
+      "reason": "METADATA_VALIDITY_DOES_NOT_COVER_YEAR"
+    },
+    {
+      "station_id": "17",
+      "reason": "COMBINED_SERIES_NOT_ONE_FIXED_SITE"
+    },
+    {
+      "station_id": "13300",
+      "reason": "METADATA_VALIDITY_DOES_NOT_COVER_YEAR"
+    },
+    {
+      "station_id": "8",
+      "reason": "COMBINED_SERIES_NOT_ONE_FIXED_SITE"
+    },
+    {
+      "station_id": "19200",
+      "reason": "METADATA_VALIDITY_DOES_NOT_COVER_YEAR"
+    },
+    {
+      "station_id": "19201",
+      "reason": "METADATA_VALIDITY_DOES_NOT_COVER_YEAR"
+    },
+    {
+      "station_id": "71",
+      "reason": "COMBINED_SERIES_NOT_ONE_FIXED_SITE"
+    },
+    {
+      "station_id": "18800",
+      "reason": "METADATA_VALIDITY_DOES_NOT_COVER_YEAR"
+    },
+    {
+      "station_id": "13305",
+      "reason": "METADATA_VALIDITY_DOES_NOT_COVER_YEAR"
+    },
+    {
+      "station_id": "217",
+      "reason": "COMBINED_SERIES_NOT_ONE_FIXED_SITE"
+    },
+    {
+      "station_id": "13250",
+      "reason": "METADATA_VALIDITY_DOES_NOT_COVER_YEAR"
+    },
+    {
+      "station_id": "25",
+      "reason": "COMBINED_SERIES_NOT_ONE_FIXED_SITE"
+    },
+    {
+      "station_id": "154",
+      "reason": "COMBINED_SERIES_NOT_ONE_FIXED_SITE"
+    }
+  ],
+  "metadata_provider_responses_this_search": 1,
+  "one_original_catalogue_preserved_in_each_station_packet": true,
+  "search_exhaustive_beyond_nearest_twenty_eligible_metadata_sites": false,
+  "source_mode": "GEOSPHERE",
+  "offline_donor_replay": false,
+  "donor_source_packet_sha256": "08d937dd4ad698f7ccd5ba6fd93492a9c3119e952cc4094cfe65aaf649dc88a8",
+  "background_requested": true,
+  "background_status": "ADMITTED",
+  "EPW_status": "ADMITTED_MIXED_SOURCE_RESEARCH",
+  "EPW_blockers": [],
+  "future_base_status": "NOT_YET_ADMITTED_FOR_F1; local reference period and GCM signals must be admitted separately",
+  "core_calculation_seconds": 0.100848,
+  "offline_core_and_replay_make_no_weather_requests": false,
+  "donor_source_reports": [
+    {
+      "station_id": "16412",
+      "admission": "source_admission_00.json",
+      "gap_ledger": "source_missing_hours_00.csv.gz"
+    },
+    {
+      "station_id": "16413",
+      "admission": "source_admission_01.json",
+      "gap_ledger": "source_missing_hours_01.csv.gz"
+    },
+    {
+      "station_id": "16400",
+      "admission": "source_admission_02.json",
+      "gap_ledger": "source_missing_hours_02.csv.gz"
+    },
+    {
+      "station_id": "16511",
+      "admission": "source_admission_03.json",
+      "gap_ledger": "source_missing_hours_03.csv.gz"
+    },
+    {
+      "station_id": "16411",
+      "admission": "source_admission_04.json",
+      "gap_ledger": "source_missing_hours_04.csv.gz"
+    }
+  ],
+  "station_core_coverage": [
+    {
+      "station_id": "16412",
+      "station_name": "Graz Universität",
+      "year": 2021,
+      "expected_hours": 8760,
+      "station_only_EPW_admitted": false,
+      "core_sources_admitted": true,
+      "fields": {
+        "dry_bulb_temperature_c": {
+          "numeric_hours": 8760,
+          "usable_for_epw_hours": 8760,
+          "missing_value_hours": 0,
+          "out_of_bounds_hours": 0,
+          "missing_qc_hours": 0,
+          "rejected_qc_hours": 0,
+          "definition_errors": []
+        },
+        "relative_humidity_pct": {
+          "numeric_hours": 8760,
+          "usable_for_epw_hours": 8760,
+          "missing_value_hours": 0,
+          "out_of_bounds_hours": 0,
+          "missing_qc_hours": 0,
+          "rejected_qc_hours": 0,
+          "definition_errors": []
+        },
+        "atmospheric_station_pressure_pa": {
+          "numeric_hours": 8760,
+          "usable_for_epw_hours": 8760,
+          "missing_value_hours": 0,
+          "out_of_bounds_hours": 0,
+          "missing_qc_hours": 0,
+          "rejected_qc_hours": 0,
+          "definition_errors": []
+        }
+      },
+      "T_admitted_hours": 8760,
+      "RH_admitted_hours": 8760,
+      "p_admitted_hours": 8760,
+      "blocker_types": [],
+      "donor_admitted": true,
+      "selected": true
+    },
+    {
+      "station_id": "16413",
+      "station_name": "Graz Straßgang",
+      "year": 2021,
+      "expected_hours": 8760,
+      "station_only_EPW_admitted": false,
+      "core_sources_admitted": true,
+      "fields": {
+        "dry_bulb_temperature_c": {
+          "numeric_hours": 8760,
+          "usable_for_epw_hours": 8760,
+          "missing_value_hours": 0,
+          "out_of_bounds_hours": 0,
+          "missing_qc_hours": 0,
+          "rejected_qc_hours": 0,
+          "definition_errors": []
+        },
+        "relative_humidity_pct": {
+          "numeric_hours": 8760,
+          "usable_for_epw_hours": 8760,
+          "missing_value_hours": 0,
+          "out_of_bounds_hours": 0,
+          "missing_qc_hours": 0,
+          "rejected_qc_hours": 0,
+          "definition_errors": []
+        },
+        "atmospheric_station_pressure_pa": {
+          "numeric_hours": 8760,
+          "usable_for_epw_hours": 8760,
+          "missing_value_hours": 0,
+          "out_of_bounds_hours": 0,
+          "missing_qc_hours": 0,
+          "rejected_qc_hours": 0,
+          "definition_errors": []
+        }
+      },
+      "T_admitted_hours": 8760,
+      "RH_admitted_hours": 8760,
+      "p_admitted_hours": 8760,
+      "blocker_types": [],
+      "donor_admitted": true,
+      "selected": true
+    },
+    {
+      "station_id": "16400",
+      "station_name": "Graz Thalerhof Flughafen",
+      "year": 2021,
+      "expected_hours": 8760,
+      "station_only_EPW_admitted": false,
+      "core_sources_admitted": false,
+      "fields": {
+        "dry_bulb_temperature_c": {
+          "numeric_hours": 8759,
+          "usable_for_epw_hours": 8759,
+          "missing_value_hours": 1,
+          "out_of_bounds_hours": 0,
+          "missing_qc_hours": 0,
+          "rejected_qc_hours": 0,
+          "definition_errors": []
+        },
+        "relative_humidity_pct": {
+          "numeric_hours": 8759,
+          "usable_for_epw_hours": 8759,
+          "missing_value_hours": 1,
+          "out_of_bounds_hours": 0,
+          "missing_qc_hours": 0,
+          "rejected_qc_hours": 0,
+          "definition_errors": []
+        },
+        "atmospheric_station_pressure_pa": {
+          "numeric_hours": 8760,
+          "usable_for_epw_hours": 8760,
+          "missing_value_hours": 0,
+          "out_of_bounds_hours": 0,
+          "missing_qc_hours": 0,
+          "rejected_qc_hours": 0,
+          "definition_errors": []
+        }
+      },
+      "T_admitted_hours": 8759,
+      "RH_admitted_hours": 8759,
+      "p_admitted_hours": 8760,
+      "blocker_types": [
+        "MISSING_OBSERVATIONS_T",
+        "MISSING_OBSERVATIONS_RH"
+      ],
+      "donor_admitted": false,
+      "selected": false
+    },
+    {
+      "station_id": "16511",
+      "station_name": "Laßnitzhöhe",
+      "year": 2021,
+      "expected_hours": 8760,
+      "station_only_EPW_admitted": false,
+      "core_sources_admitted": true,
+      "fields": {
+        "dry_bulb_temperature_c": {
+          "numeric_hours": 8760,
+          "usable_for_epw_hours": 8760,
+          "missing_value_hours": 0,
+          "out_of_bounds_hours": 0,
+          "missing_qc_hours": 0,
+          "rejected_qc_hours": 0,
+          "definition_errors": []
+        },
+        "relative_humidity_pct": {
+          "numeric_hours": 8760,
+          "usable_for_epw_hours": 8760,
+          "missing_value_hours": 0,
+          "out_of_bounds_hours": 0,
+          "missing_qc_hours": 0,
+          "rejected_qc_hours": 0,
+          "definition_errors": []
+        },
+        "atmospheric_station_pressure_pa": {
+          "numeric_hours": 8760,
+          "usable_for_epw_hours": 8760,
+          "missing_value_hours": 0,
+          "out_of_bounds_hours": 0,
+          "missing_qc_hours": 0,
+          "rejected_qc_hours": 0,
+          "definition_errors": []
+        }
+      },
+      "T_admitted_hours": 8760,
+      "RH_admitted_hours": 8760,
+      "p_admitted_hours": 8760,
+      "blocker_types": [],
+      "donor_admitted": true,
+      "selected": true
+    },
+    {
+      "station_id": "16411",
+      "station_name": "St. Radegund",
+      "year": 2021,
+      "expected_hours": 8760,
+      "station_only_EPW_admitted": false,
+      "core_sources_admitted": true,
+      "fields": {
+        "dry_bulb_temperature_c": {
+          "numeric_hours": 8760,
+          "usable_for_epw_hours": 8760,
+          "missing_value_hours": 0,
+          "out_of_bounds_hours": 0,
+          "missing_qc_hours": 0,
+          "rejected_qc_hours": 0,
+          "definition_errors": []
+        },
+        "relative_humidity_pct": {
+          "numeric_hours": 8760,
+          "usable_for_epw_hours": 8760,
+          "missing_value_hours": 0,
+          "out_of_bounds_hours": 0,
+          "missing_qc_hours": 0,
+          "rejected_qc_hours": 0,
+          "definition_errors": []
+        },
+        "atmospheric_station_pressure_pa": {
+          "numeric_hours": 8760,
+          "usable_for_epw_hours": 8760,
+          "missing_value_hours": 0,
+          "out_of_bounds_hours": 0,
+          "missing_qc_hours": 0,
+          "rejected_qc_hours": 0,
+          "definition_errors": []
+        }
+      },
+      "T_admitted_hours": 8760,
+      "RH_admitted_hours": 8760,
+      "p_admitted_hours": 8760,
+      "blocker_types": [],
+      "donor_admitted": true,
+      "selected": true
+    }
+  ],
+  "background_source_geometry": {
+    "requested_point": [
+      47.0707,
+      15.4395
+    ],
+    "background_cell": [
+      47.0,
+      15.5
+    ],
+    "requested_to_background_distance_km": 9.10082531971942,
+    "elevation_m_provider_response_proxy": 467.0,
+    "site_elevation_or_native_orography_verified": false,
+    "local_height_correction_applied": false
+  },
+  "EPW_screen": {
+    "screen": "BOUNDS_COMPONENTS_AND_PROVIDER_ROUNDING_PASS",
+    "records": 8760,
+    "hard_failure_count": 0,
+    "max_GHI_minus_direct_horizontal_minus_DHI_Wh_m2": null,
+    "max_abs_provider_Magnus_RH_residual_pp": 0.058643720418267264,
+    "provider_T_Td_RH_quantization_interval_failures": null,
+    "T_Td_RH_exact_thermodynamic_closure_claimed": false,
+    "provider_values_modified": false,
+    "mixed_source_longwave_cross_field_accuracy_qualified": false,
+    "epw_format_readback": "PASS",
+    "fields_per_record": 35,
+    "headers": 8,
+    "first_row": [
+      "2021",
+      "1",
+      "1",
+      "1",
+      "60"
+    ],
+    "last_row": [
+      "2021",
+      "12",
+      "31",
+      "24",
+      "60"
+    ],
+    "leap_day_retained": false,
+    "sha256": "889294fc7bd9384d22a482564c4967a83968623ef42bb561e3d37351e2022f25",
+    "bytes": 1953921,
+    "EnergyPlus_simulation_executed": false,
+    "numeric_serialization": {
+      "default": "10 significant decimal digits",
+      "future_T_Td_RH_only": null,
+      "max_future_T_Td_RH_rounding_C_or_pp": null,
+      "internal_state_objective_or_physics_changed": false
+    }
+  },
+  "background_EPW_sha256": "3bae79ee41a8cdfcb77adb59c13315887c40d860ce7f018344862655fbf30143",
+  "field_sources": {
+    "dry_bulb_temperature_c": "S1_P82F_DERIVED_POINT",
+    "dew_point_temperature_c": "S1_P82F_DERIVED_POINT",
+    "relative_humidity_pct": "S1_P82F_DERIVED_POINT",
+    "atmospheric_station_pressure_pa": "S1_P82F_DERIVED_POINT",
+    "horizontal_infrared_radiation_intensity_wh_m2": "UNCHANGED_GRID_BACKGROUND",
+    "global_horizontal_radiation_wh_m2": "UNCHANGED_GRID_BACKGROUND",
+    "direct_normal_radiation_wh_m2": "UNCHANGED_GRID_BACKGROUND",
+    "diffuse_horizontal_radiation_wh_m2": "UNCHANGED_GRID_BACKGROUND",
+    "wind_direction_deg": "UNCHANGED_GRID_BACKGROUND",
+    "wind_speed_m_s": "UNCHANGED_GRID_BACKGROUND",
+    "total_sky_cover_tenths": "UNCHANGED_GRID_BACKGROUND",
+    "liquid_precipitation_depth_mm": "UNCHANGED_GRID_BACKGROUND"
+  },
+  "EPW_sha256": "889294fc7bd9384d22a482564c4967a83968623ef42bb561e3d37351e2022f25",
+  "total_calculation_seconds": 107.65223245099992,
+  "timing_and_acquisition_diagnostics_are_not_part_of_the_stable_weather_identity": true,
+  "selected_base_sha256": "889294fc7bd9384d22a482564c4967a83968623ef42bb561e3d37351e2022f25"
+}

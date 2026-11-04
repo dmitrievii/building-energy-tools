@@ -1,0 +1,10 @@
+test_original_real_station_point_offers_epw_and_displays_actual_core_counts (test_ige_s1_point_ui.S1UITests.test_original_real_station_point_offers_epw_and_displays_actual_core_counts) ... 2026-11-02 12:57:09.702 WARNING streamlit.runtime.caching.cache_data_api: No runtime found, using MemoryCacheStorageManager
+2026-11-02 12:57:09.704 WARNING streamlit.runtime.caching.cache_data_api: No runtime found, using MemoryCacheStorageManager
+2026-11-02 12:57:21.023 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-11-02 12:57:23.746 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+ok
+
+----------------------------------------------------------------------
+Ran 1 test in 25.699s
+
+OK

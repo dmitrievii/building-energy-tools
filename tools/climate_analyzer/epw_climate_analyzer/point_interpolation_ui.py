@@ -10,6 +10,7 @@ import pandas as pd
 from .engine.point_interpolation import PointRequest, T, P, RH
 from .location_picker import render_point_picker
 from .point_interpolation import PointProduct, run_point_product
+from .station_coverage import coverage_messages
 
 PRODUCT_KEY = "ige_s1_point_product"
 REQUEST_KEY = "ige_s1_completed_identity"
@@ -142,6 +143,17 @@ def render_point_interpolation(st):
                      "pressure_elevation_m": "Pressure altitude [m]", "eligible": "Admitted", "selected": "Selected", "reasons": "Admission failures"}),
                      hide_index=True, width="stretch")
         st.caption("The report includes complete per-variable hour counts. For station inputs the ZIP also contains the H1 source admission and exact missing-hour ranges for every checked station.")
+    coverage = report.get("station_core_coverage", [])
+    if coverage:
+        st.subheader("Station-year coverage")
+        st.caption("Counts below are hours admitted for temperature, humidity and absolute pressure. A station can supply these three variables even when it cannot supply a complete station-only EPW. Missing observations, rejected QC and incompatible definitions remain separate in the report.")
+        columns = {"station_name": "Station", "year": "Year", "expected_hours": "Expected hours",
+                   "T_admitted_hours": "Temperature hours", "RH_admitted_hours": "Humidity hours",
+                   "p_admitted_hours": "Pressure hours", "donor_admitted": "Donor admitted",
+                   "blocker_types": "Coverage blockers"}
+        display = [{**row, "blocker_types": coverage_messages(row["blocker_types"])} for row in coverage]
+        st.dataframe(pd.DataFrame(display)[list(columns)].rename(columns=columns),
+                     hide_index=True, width="stretch")
     stem = f"IGE_point_{r.year}_RESEARCH"
     if "climate.epw" in product.files:
         st.success("Complete mixed-source research EPW passed the existing format and bounds screen.")

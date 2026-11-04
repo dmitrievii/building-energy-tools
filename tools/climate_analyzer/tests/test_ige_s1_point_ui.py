@@ -1,6 +1,7 @@
 """Actual Streamlit source router and state changes, with offline product fixtures."""
 from dataclasses import replace
 from pathlib import Path
+import json
 import unittest
 from unittest.mock import patch
 
@@ -102,6 +103,46 @@ class S1UITests(unittest.TestCase):
             self.assertTrue(any("cannot be reconstructed" in e.value for e in app.warning))
             self.assertEqual(len(app.download_button), 3)
             self.assertEqual(len(app.success), 0)
+
+    def test_station_coverage_counts_are_visible_without_promoting_an_incomplete_year(self):
+        report = {**self.blocked.report, "station_core_coverage": [{
+            "station_name": "Synthetic coverage fixture", "year": 2023, "expected_hours": 8760,
+            "T_admitted_hours": 8759, "RH_admitted_hours": 8760, "p_admitted_hours": 0,
+            "donor_admitted": False, "blocker_types": ["MISSING_OBSERVATIONS_T", "NO_MEASUREMENTS_p"]}]}
+        product = replace(self.blocked, report=report)
+        with patch("epw_climate_analyzer.point_interpolation_ui.run_point_product", return_value=product):
+            app = self.ready(self.app());app.button(key="ige_s1_build").click().run();self.clean(app)
+            table = app.dataframe[-1].value
+            self.assertEqual(table.loc[0, "Temperature hours"], 8759)
+            self.assertEqual(table.loc[0, "Pressure hours"], 0)
+            self.assertIn("No pressure observations", table.loc[0, "Coverage blockers"])
+            self.assertTrue(any("Station-year coverage" == h.value for h in app.subheader))
+            self.assertNotIn("ige_s1_download_epw", [d.key for d in app.download_button])
+
+    def test_original_real_station_point_offers_epw_and_displays_actual_core_counts(self):
+        research = APP.parents[2] / "research/ige_cmip6"
+        c = json.loads((research / "at_station_usability_20261102.json").read_bytes())
+        from epw_climate_analyzer.engine.point_interpolation import PointRequest
+        product = service.run_point_product(PointRequest(**c["request"]),
+            input_packet=(research/c["inputs"]["file"]).read_bytes(), expected_sha256=c["inputs"]["sha256"],
+            include_background=True, background_packet=(research/c["background"]["file"]).read_bytes(),
+            background_sha256=c["background"]["sha256"])
+        with patch("epw_climate_analyzer.point_interpolation_ui.run_point_product", return_value=product) as run:
+            app = self.app()
+            for key, value in ((picker.LATITUDE, product.request.latitude),
+                               (picker.LONGITUDE, product.request.longitude),
+                               (picker.HEIGHT, product.request.elevation_m)):
+                app.number_input(key=key).set_value(value).run()
+            app.session_state[picker.HEIGHT_REFERENCE] = product.request.elevation_reference
+            app.number_input(key="ige_s1_year").set_value(2021).run()
+            app.text_input(key="ige_s1_label").set_value(product.request.label).run()
+            app.button(key="ige_s1_build").click().run();self.clean(app)
+            self.assertEqual(run.call_args.args[0], product.request)
+            self.assertIn("ige_s1_download_epw", [d.key for d in app.download_button])
+            table = app.dataframe[-1].value
+            self.assertEqual(len(table), 5)
+            self.assertEqual(int(table["Donor admitted"].sum()), 4)
+            self.assertEqual(table.loc[table["Station"] == "Graz Thalerhof Flughafen", "Temperature hours"].iloc[0], 8759)
 
     def test_only_complete_explicit_composite_exposes_epw_download(self):
         with patch("epw_climate_analyzer.point_interpolation_ui.run_point_product", return_value=self.composite) as run:

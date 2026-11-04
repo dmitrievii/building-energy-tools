@@ -29,6 +29,7 @@ from .engine.station_epw_admission import StationYearRequest
 from . import geosphere as geo
 from .geosphere_station_year import (RESOURCE, StationYearProduct, _zip, read_sources,
     run_station_year)
+from .station_coverage import station_core_coverage
 
 MAX_INPUT_BYTES = 128*1024*1024
 MAX_EPW_BYTES = 12*1024*1024
@@ -168,7 +169,7 @@ def _replay_donors(request, body, digest):
     return donors, manifest
 
 
-def _acquire_stations(request, progress):
+def _acquire_stations(request, progress, required_station_ids=()):
     raw_metadata = []
     def capture(url, query, body): raw_metadata.append(body)
     metadata = geo.fetch_metadata(resource_id=RESOURCE, response_capture=capture)
@@ -176,8 +177,12 @@ def _acquire_stations(request, progress):
         distance_km(request.latitude, request.longitude, station.latitude, station.longitude), station.station_id))
     census, selected = [], []
     for station in sites:
+        if required_station_ids and station.station_id not in required_station_ids: continue
         d = distance_km(request.latitude, request.longitude, station.latitude, station.longitude)
-        if d > 100: continue
+        if d > 100:
+            if required_station_ids:
+                census.append({"station_id": station.station_id, "reason": "OUTSIDE_OPERATIONAL_RADIUS"})
+            continue
         if station.station_type == "COMBINED":
             census.append({"station_id": station.station_id, "reason": "COMBINED_SERIES_NOT_ONE_FIXED_SITE"})
             continue
@@ -191,8 +196,15 @@ def _acquire_stations(request, progress):
             continue
         selected.append(station)
         if len(selected) == 20: break
+    if required_station_ids and (len(selected) != 4 or len({station.station_id for station in selected}) != 4):
+        known = {station.station_id for station in sites}
+        for station_id in required_station_ids:
+            if station_id not in known:
+                census.append({"station_id": station_id, "reason": "STATION_NOT_IN_HOURLY_CATALOGUE"})
+        # A fixed network cannot be admitted with fewer than four metadata sites.
+        selected = []
     donors, entries, files = [], [], {}
-    if not raw_metadata: raise ValueError("S1_ORIGINAL_METADATA_CAPTURE_MISSING")
+    if len(raw_metadata) != 1: raise ValueError("S1_EXACTLY_ONE_ORIGINAL_METADATA_CAPTURE_REQUIRED")
     files["catalog.original.json"] = raw_metadata[0]
     for station in selected:
         progress(f"Checking donor {station.station_id}: {station.name} ({len(donors)+1}/20)")
@@ -202,7 +214,8 @@ def _acquire_stations(request, progress):
             def station_progress(event):
                 if event.get("event") in ("batch_start", "batch_complete", "retry", "split"):
                     progress(f"{station.name}: source {event['event']} · batch {event.get('batch_number', '?')}/{event.get('total_batches', '?')}")
-            product = run_station_year(station_request, progress=station_progress)
+            product = run_station_year(station_request, original_metadata_body=raw_metadata[0],
+                                       progress=station_progress)
         except Exception as exc:
             census.append({"station_id": station.station_id, "reason": "SOURCE_ACQUISITION_FAILED",
                            "detail": type(exc).__name__+": "+str(exc)})
@@ -214,8 +227,12 @@ def _acquire_stations(request, progress):
         if sum(len(body) for body in files.values()) > MAX_INPUT_BYTES:
             raise ValueError("S1_ORIGINAL_SOURCE_COLLECTION_LIMIT")
         entries.append({"file": filename, "station_id": station.station_id})
-        if sum(qualify_donor(request, d)["eligible"] for d in donors) >= 4: break
+        admitted = sum(qualify_donor(request, d)["eligible"] for d in donors)
+        progress(f"{station.name}: {admitted}/4 complete core donor years admitted after {len(donors)} checks")
+        if admitted >= 4: break
     extra = {"candidate_metadata_exclusions": census,
+        "metadata_provider_responses_this_search": 1,
+        "one_original_catalogue_preserved_in_each_station_packet": True,
         "search_exhaustive_beyond_nearest_twenty_eligible_metadata_sites": False}
     files["search_census.json"] = json_bytes(extra)
     packet = _source_inputs(request, "GEOSPHERE", entries, files)
@@ -258,7 +275,7 @@ def replay_background(request, packet: bytes, expected_sha256: str):
         files={"sources.zip": packet, "climate.epw": epw})
 
 
-def _composite_epw(request, assessment, background):
+def _composite_epw(request, assessment, background, *, gap_filled=False):
     """Explicit mixed-source option; no claim to interpolate all weather fields."""
     base = background.dataset
     if background.report.get("calendar_mode") != "historical": raise ValueError("S1_BACKGROUND_MUST_BE_HISTORICAL")
@@ -287,6 +304,8 @@ def _composite_epw(request, assessment, background):
     records[0][4] = "IGE_S1_STATIONS_OR_EPW_WITH_GRID_BACKGROUND"
     records[5] = ["COMMENTS 1", "S1: T/p/moisture interpolated with active height corrections. Other weather fields retain selected background, its grid geometry and chronology. See report.json and ledgers."]
     records[6] = ["COMMENTS 2", "Buck liquid water at all T; nominal height proxies explicitly accepted. Local wind/radiation/rain accuracy and target solar geometry not independently qualified. Research composite, not a fully observed station year."]
+    if gap_filled:
+        records[6][1] += " Contains reconstructed station inputs; see gap_reconstruction in report.json."
     records[7][3] = f"S1 MIXED SOURCE HISTORICAL {request.year} RESEARCH"
     stream = io.StringIO(newline=""); csv.writer(stream, lineterminator="\n").writerows(records)
     epw = stream.getvalue().encode()
@@ -297,7 +316,7 @@ def _composite_epw(request, assessment, background):
 def run_point_product(request: PointRequest, *, mode="GEOSPHERE", epws=(), actual_year_confirmed=False,
                       input_packet=None, expected_sha256="", include_background=False, background_product=None,
                       background_packet=None, background_sha256="",
-                      progress=lambda message: None) -> PointProduct:
+                      progress=lambda message: None, required_station_ids=(), recover_reference_gaps=False) -> PointProduct:
     """One explicit request; no acquisition on edits and no implicit saved-city fallback."""
     run_started = time.monotonic()
     if not request.assume_buck_water or not request.allow_nominal_height_proxy:
@@ -305,6 +324,9 @@ def run_point_product(request: PointRequest, *, mode="GEOSPHERE", epws=(), actua
     if len(epws) > 20 or sum(len(body) for name, body in epws) > MAX_INPUT_BYTES:
         raise ValueError("S1_INPUT_LIMIT")
     replay = input_packet is not None
+    if required_station_ids and (replay or mode != "GEOSPHERE" or len(required_station_ids) != 4
+            or len(set(required_station_ids)) != 4):
+        raise ValueError("S1_FIXED_DONORS_REQUIRE_FOUR_DISTINCT_LIVE_STATIONS")
     extra = {}
     if replay:
         donors, manifest = _replay_donors(request, input_packet, expected_sha256)
@@ -312,7 +334,7 @@ def run_point_product(request: PointRequest, *, mode="GEOSPHERE", epws=(), actua
         _, input_files = _read_input_packet(input_packet, expected_sha256)
         if "search_census.json" in input_files: extra = json.loads(input_files["search_census.json"])
     elif mode == "GEOSPHERE":
-        donors, input_packet, extra = _acquire_stations(request, progress)
+        donors, input_packet, extra = _acquire_stations(request, progress, required_station_ids)
     elif mode == "EPW":
         donors, entries, raw_files = [], [], {}
         for i, (name, body) in enumerate(epws):
@@ -324,6 +346,12 @@ def run_point_product(request: PointRequest, *, mode="GEOSPHERE", epws=(), actua
         input_packet = _source_inputs(request, "EPW", entries, raw_files)
     else:
         raise ValueError("S1_UNKNOWN_SOURCE_MODE")
+    if recover_reference_gaps:
+        if mode != "GEOSPHERE" or (not replay and not required_station_ids):
+            raise ValueError("S1_GAP_RECOVERY_REQUIRES_FIXED_GEOSPHERE_REFERENCE")
+        from .station_gap_recovery import recover_station_gaps
+        donors, gap_audit = recover_station_gaps(donors)
+        extra["gap_reconstruction"] = gap_audit
     # Admission and equations are shared by live sources and offline replay.
     started = pd.Timestamp.now(tz="UTC")
     assessment = interpolate_point(request, donors)
@@ -338,15 +366,28 @@ def run_point_product(request: PointRequest, *, mode="GEOSPHERE", epws=(), actua
         "hourly.csv.gz": gzip.compress(assessment.hourly.to_csv(index_label="interval_start_utc").encode(), mtime=0),
         "adjustments.csv.gz": gzip.compress(assessment.adjustments.to_csv(index_label="interval_start_utc").encode(), mtime=0),
         "donor_months.csv": assessment.donor_months.to_csv(index=False).encode()}
+    if recover_reference_gaps:
+        report["engine_gap_fill"] = any(row["status"] == "RECONSTRUCTED_NOT_OBSERVED"
+            and row["station_id"] in report["selected_donors"] for row in gap_audit["stations"])
     report["donor_source_reports"] = []
+    coverage = []
     for i, donor in enumerate(donors):
         if donor.source_admission:
+            row = station_core_coverage(donor.source_admission)
+            admission = next(d for d in report["donor_admission"] if d["station_id"] == donor.station_id)
+            row.update(donor_admitted=admission["eligible"], selected=admission["selected"])
+            coverage.append(row)
             name = f"source_admission_{i:02d}.json"
             gaps = f"source_missing_hours_{i:02d}.csv.gz"
             files[name] = json_bytes(donor.source_admission)
             files[gaps] = donor.source_gaps_csv_gz
             report["donor_source_reports"].append({"station_id": donor.station_id,
                                                  "admission": name, "gap_ledger": gaps})
+    report["station_core_coverage"] = coverage
+    if coverage:
+        files["station_core_coverage.csv"] = pd.DataFrame([
+            {k: v for k, v in row.items() if k != "fields"} for row in coverage
+        ]).to_csv(index=False).encode()
     if len(assessment.hourly.columns) == 0:
         report["EPW_status"] = "BLOCKED_INCOMPLETE_THERMODYNAMIC_POINT_YEAR"
         report["EPW_blockers"].extend(report["global_blockers"])
@@ -359,7 +400,7 @@ def run_point_product(request: PointRequest, *, mode="GEOSPHERE", epws=(), actua
                 from .engine_application import run_historical_product
                 progress("Loading the explicitly selected grid background for non-thermodynamic fields")
                 background_product = run_historical_product(request.background_request(), use_saved_pilot=False, progress=progress)
-            epw, screen, geometry = _composite_epw(request, assessment, background_product)
+            epw, screen, geometry = _composite_epw(request, assessment, background_product, gap_filled=report["engine_gap_fill"])
             files["climate.epw"] = epw
             files["background.sources.zip"] = background_product.files["sources.zip"]
             files["background.epw"] = background_product.files["climate.epw"]

@@ -1,0 +1,78 @@
+test_complete_year_and_leap_year_have_actual_calendar_and_readback (test_ige_h1_station_year.AnnualAdmissionTests.test_complete_year_and_leap_year_have_actual_calendar_and_readback) ... ok
+test_duplicate_hour_is_ambiguous_and_outside_grid_is_not_ignored (test_ige_h1_station_year.AnnualAdmissionTests.test_duplicate_hour_is_ambiguous_and_outside_grid_is_not_ignored) ... ok
+test_every_missing_field_and_gap_is_reported_without_export_or_fill (test_ige_h1_station_year.AnnualAdmissionTests.test_every_missing_field_and_gap_is_reported_without_export_or_fill) ... ok
+test_other_provider_uses_its_own_declared_qc_codes (test_ige_h1_station_year.AnnualAdmissionTests.test_other_provider_uses_its_own_declared_qc_codes) ... ok
+test_out_of_bounds_and_inconsistent_solar_components_do_not_get_repaired (test_ige_h1_station_year.AnnualAdmissionTests.test_out_of_bounds_and_inconsistent_solar_components_do_not_get_repaired) ... ok
+test_reduced_pressure_mean_states_and_unknown_liquid_phase_are_blocked (test_ige_h1_station_year.AnnualAdmissionTests.test_reduced_pressure_mean_states_and_unknown_liquid_phase_are_blocked) ... ok
+test_reviewed_provider_codes_are_distinct_from_old_qc10_validation (test_ige_h1_station_year.AnnualAdmissionTests.test_reviewed_provider_codes_are_distinct_from_old_qc10_validation) ... /workspace/scratch/841fb33f028b/ige-at-usability-20261102/tools/climate_analyzer/tests/test_ige_h1_station_year.py:113: FutureWarning: Setting an item of incompatible dtype is deprecated and will raise an error in a future version of pandas. Value '[0, nan, 11, 12, 20, 21, 22, 3.5]' has dtype incompatible with int64, please explicitly cast to a compatible dtype first.
+  f.loc[f.index[:8], "quality_flag__tl"] = [0, np.nan, 11, 12, 20, 21, 22, 3.5]
+ok
+test_source_type_and_location_metadata_are_not_assumed (test_ige_h1_station_year.AnnualAdmissionTests.test_source_type_and_location_metadata_are_not_assumed) ... ok
+test_utc_boundaries_are_derived_from_fixed_standard_clock (test_ige_h1_station_year.AnnualAdmissionTests.test_utc_boundaries_are_derived_from_fixed_standard_clock) ... ok
+test_capture_retains_exact_original_bytes_while_preserving_the_old_decoder (test_ige_h1_station_year.GeoSphereReplayTests.test_capture_retains_exact_original_bytes_while_preserving_the_old_decoder) ... ok
+test_changed_unit_is_retained_as_native_data_and_never_converted_as_old_unit (test_ige_h1_station_year.GeoSphereReplayTests.test_changed_unit_is_retained_as_native_data_and_never_converted_as_old_unit) ... ok
+test_hourly_replay_retains_all_data_and_explains_no_epw (test_ige_h1_station_year.GeoSphereReplayTests.test_hourly_replay_retains_all_data_and_explains_no_epw) ... ok
+test_incomplete_current_or_future_year_does_not_request_measurements (test_ige_h1_station_year.GeoSphereReplayTests.test_incomplete_current_or_future_year_does_not_request_measurements) ... ok
+test_live_key_value_codebook_shape_is_parsed_without_losing_codes (test_ige_h1_station_year.GeoSphereReplayTests.test_live_key_value_codebook_shape_is_parsed_without_losing_codes) ... ok
+test_original_Graz_2023_packet_replays_exact_disclosed_coverage_without_network (test_ige_h1_station_year.GeoSphereReplayTests.test_original_Graz_2023_packet_replays_exact_disclosed_coverage_without_network) ... ok
+test_p_cannot_be_replaced_by_pred_or_a_changed_pressure_description (test_ige_h1_station_year.GeoSphereReplayTests.test_p_cannot_be_replaced_by_pred_or_a_changed_pressure_description) ... ok
+test_replay_refuses_other_year_other_station_and_tampering (test_ige_h1_station_year.GeoSphereReplayTests.test_replay_refuses_other_year_other_station_and_tampering) ... ok
+test_complete_annual_solver_matches_immutable_p82f_equations (test_ige_s1_point_interpolation.S1PhysicsTests.test_complete_annual_solver_matches_immutable_p82f_equations) ... ok
+test_explicit_phase_height_clock_and_geographic_admission (test_ige_s1_point_interpolation.S1PhysicsTests.test_explicit_phase_height_clock_and_geographic_admission) ... ok
+test_frozen_calibration_and_source_solver_identity (test_ige_s1_point_interpolation.S1PhysicsTests.test_frozen_calibration_and_source_solver_identity) ... ok
+test_height_changes_weather_and_pressure_signs_are_physical (test_ige_s1_point_interpolation.S1PhysicsTests.test_height_changes_weather_and_pressure_signs_are_physical) ... ok
+test_infeasible_point_goal_is_blocked_without_weakening_source_constraints (test_ige_s1_point_interpolation.S1PhysicsTests.test_infeasible_point_goal_is_blocked_without_weakening_source_constraints) ... ok
+test_leap_day_and_fixed_standard_clock_retained (test_ige_s1_point_interpolation.S1PhysicsTests.test_leap_day_and_fixed_standard_clock_retained) ... ok
+test_missing_nearer_donor_is_rejected_before_four_donor_selection (test_ige_s1_point_interpolation.S1PhysicsTests.test_missing_nearer_donor_is_rejected_before_four_donor_selection) ... ok
+test_no_complete_year_from_three_donors_and_no_background_request (test_ige_s1_point_interpolation.S1PhysicsTests.test_no_complete_year_from_three_donors_and_no_background_request) ... ok
+test_repeated_source_or_target_identity_cannot_inflate_donor_count (test_ige_s1_point_interpolation.S1PhysicsTests.test_repeated_source_or_target_identity_cannot_inflate_donor_count) ... ok
+test_saturated_annual_profile_stays_within_exact_rh_export_bound (test_ige_s1_point_interpolation.S1PhysicsTests.test_saturated_annual_profile_stays_within_exact_rh_export_bound) ... ok
+test_saturation_redistributes_with_exact_monthly_goal_and_ledger (test_ige_s1_point_interpolation.S1PhysicsTests.test_saturation_redistributes_with_exact_monthly_goal_and_ledger) ... ok
+test_water_curve_inverse_and_dry_pressure_are_frozen_not_new_fit (test_ige_s1_point_interpolation.S1PhysicsTests.test_water_curve_inverse_and_dry_pressure_are_frozen_not_new_fit) ... ok
+test_actual_epw_clock_and_confirmation_required_no_tmy_relabelling (test_ige_s1_point_interpolation.S1SourceTests.test_actual_epw_clock_and_confirmation_required_no_tmy_relabelling) ... ok
+test_background_failure_keeps_valid_core_and_refuses_epw (test_ige_s1_point_interpolation.S1SourceTests.test_background_failure_keeps_valid_core_and_refuses_epw) ... ok
+test_background_is_explicit_and_cannot_hide_failed_core (test_ige_s1_point_interpolation.S1SourceTests.test_background_is_explicit_and_cannot_hide_failed_core) ... ok
+test_cli_rejects_ambiguous_sources_and_incomplete_replay_identity_before_acquisition (test_ige_s1_point_interpolation.S1SourceTests.test_cli_rejects_ambiguous_sources_and_incomplete_replay_identity_before_acquisition) ... ok
+test_complete_composite_preserves_background_fields_and_changes_actual_height (test_ige_s1_point_interpolation.S1SourceTests.test_complete_composite_preserves_background_fields_and_changes_actual_height) ... ok
+test_epw_source_interpolation_has_replay_and_no_fabricated_other_fields (test_ige_s1_point_interpolation.S1SourceTests.test_epw_source_interpolation_has_replay_and_no_fabricated_other_fields) ... ok
+test_hash_and_request_tampering_fail_before_source_replay (test_ige_s1_point_interpolation.S1SourceTests.test_hash_and_request_tampering_fail_before_source_replay) ... ok
+test_original_h1_missing_weather_is_not_promoted_by_vapour_derivation (test_ige_s1_point_interpolation.S1SourceTests.test_original_h1_missing_weather_is_not_promoted_by_vapour_derivation) ... ok
+test_portable_comparison_uses_existing_precision_and_preserves_other_fields_exactly (test_ige_s1_point_interpolation.S1SourceTests.test_portable_comparison_uses_existing_precision_and_preserves_other_fields_exactly) ... ok
+test_retained_original_source_examples_and_donor_epw_lineage (test_ige_s1_point_interpolation.S1SourceTests.test_retained_original_source_examples_and_donor_epw_lineage) ... ok
+test_changed_elevation_cannot_show_old_donors_as_current_admitted_sources (test_ige_s1_point_ui.S1UITests.test_changed_elevation_cannot_show_old_donors_as_current_admitted_sources) ... 2026-11-02 12:46:45.554 WARNING streamlit.runtime.caching.cache_data_api: No runtime found, using MemoryCacheStorageManager
+2026-11-02 12:46:45.558 WARNING streamlit.runtime.caching.cache_data_api: No runtime found, using MemoryCacheStorageManager
+2026-11-02 12:46:45.559 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-11-02 12:46:48.634 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+ok
+test_core_only_downloads_do_not_offer_epw (test_ige_s1_point_ui.S1UITests.test_core_only_downloads_do_not_offer_epw) ... 2026-11-02 12:46:50.065 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-11-02 12:46:53.778 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+ok
+test_default_station_locations_and_enabled_build_without_method_checkboxes (test_ige_s1_point_ui.S1UITests.test_default_station_locations_and_enabled_build_without_method_checkboxes) ... 2026-11-02 12:46:56.359 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-11-02 12:46:59.173 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+ok
+test_edits_and_failed_request_keep_previous_product_with_correct_label (test_ige_s1_point_ui.S1UITests.test_edits_and_failed_request_keep_previous_product_with_correct_label) ... 2026-11-02 12:46:59.876 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-11-02 12:47:02.041 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+ok
+test_failed_donor_admission_displays_report_without_epw_or_fake_success (test_ige_s1_point_ui.S1UITests.test_failed_donor_admission_displays_report_without_epw_or_fake_success) ... 2026-11-02 12:47:03.728 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-11-02 12:47:06.061 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+ok
+test_only_complete_explicit_composite_exposes_epw_download (test_ige_s1_point_ui.S1UITests.test_only_complete_explicit_composite_exposes_epw_download) ... 2026-11-02 12:47:06.899 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-11-02 12:47:09.637 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+ok
+test_point_move_clears_height_and_requires_a_new_reference (test_ige_s1_point_ui.S1UITests.test_point_move_clears_height_and_requires_a_new_reference) ... 2026-11-02 12:47:10.571 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-11-02 12:47:12.982 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+ok
+test_station_coverage_counts_are_visible_without_promoting_an_incomplete_year (test_ige_s1_point_ui.S1UITests.test_station_coverage_counts_are_visible_without_promoting_an_incomplete_year) ... 2026-11-02 12:47:13.664 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-11-02 12:47:17.825 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+ok
+test_station_map_failure_can_retry_and_does_not_disable_a_valid_weather_request (test_ige_s1_point_ui.S1UITests.test_station_map_failure_can_retry_and_does_not_disable_a_valid_weather_request) ... 2026-11-02 12:47:18.873 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-11-02 12:47:21.272 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+ok
+test_upload_mode_needs_four_files_and_actual_year_confirmation (test_ige_s1_point_ui.S1UITests.test_upload_mode_needs_four_files_and_actual_year_confirmation) ... 2026-11-02 12:47:21.979 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-11-02 12:47:25.140 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+ok
+
+----------------------------------------------------------------------
+Ran 49 tests in 93.916s
+
+OK
