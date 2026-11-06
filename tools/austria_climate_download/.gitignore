@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+downloaded/
+plan*.json
+nearest*.csv
+catalog/.request_clock.json

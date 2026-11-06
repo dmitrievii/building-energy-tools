@@ -1,0 +1,17 @@
+{
+  "schema": "IGE_AT_CATALOG_v1",
+  "resource": "klima-v2-1h",
+  "source": "https://dataset.api.hub.geosphere.at/v1/station/historical/klima-v2-1h/metadata",
+  "retrieved_at_utc": "2026-11-06T21:25:40.529757+00:00",
+  "source_metadata_sha256": "7c794f011be411c523f83123a934d84524c969813924321b98e89027a5297157",
+  "station_records": 823,
+  "station_types": {
+    "COMBINED": 207,
+    "INDIVIDUAL": 616
+  },
+  "license": "CC BY 4.0",
+  "attribution": "GeoSphere Austria, klima-v2-1h, DOI 10.60669/9bdm-yq93",
+  "coordinates": "WGS84; GeoJSON uses longitude, latitude",
+  "validity_is_not_observation_completeness": true,
+  "altitude_is_not_confirmed_sensor_elevation": true
+}

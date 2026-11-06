@@ -1,0 +1,8 @@
+{
+  "start": "2025-01-01",
+  "end": "2025-01-01",
+  "station_kind": "individual",
+  "station_ids": [16412, 16413],
+  "parameters": "all",
+  "chunk_months": 3
+}

@@ -1,0 +1,310 @@
+{
+  "parameters": [
+    {
+      "name": "cglo",
+      "long_name": "Globalstrahlung Mittelwert",
+      "description": "Globalstrahlung, kalibrierter Stunden-Mittelwert",
+      "unit": "W/m²"
+    },
+    {
+      "name": "cglo_flag",
+      "long_name": "Qualitätsflag für Globalstrahlung Mittelwert",
+      "description": "Qualitätsflag für Globalstrahlung, kalibrierter Stunden-Mittelwert",
+      "unit": "code",
+      "code_list_ref": "q21"
+    },
+    {
+      "name": "dd",
+      "long_name": "Windrichtung 360° Mittelwert",
+      "description": "Windrichtung [360°], vektorieller Stunden-Mittelwert",
+      "unit": "°"
+    },
+    {
+      "name": "dd_flag",
+      "long_name": "Qualitätsflag für Windrichtung 360° Mittelwert",
+      "description": "Qualitätsflag für Windrichtung [360°], vektorieller Stunden-Mittelwert",
+      "unit": "code",
+      "code_list_ref": "q21"
+    },
+    {
+      "name": "ddx",
+      "long_name": "Windrichtung zur Spitzenböe",
+      "description": "Windrichtung der maximalen Windgeschwindigkeit (Spitzenböe), Stundenwert",
+      "unit": "°"
+    },
+    {
+      "name": "ddx_flag",
+      "long_name": "Qualitätsflag für Windrichtung zur Spitzenböe",
+      "description": "Qualitätsflag für Windrichtung der maximalen Windgeschwindigkeit (Spitzenböe), Stundenwert",
+      "unit": "code",
+      "code_list_ref": "q21"
+    },
+    {
+      "name": "ff",
+      "long_name": "Windgeschwindigkeit",
+      "description": "Windgeschwindigkeit, vektorieller Stundenmittelwert",
+      "unit": "m/s"
+    },
+    {
+      "name": "ff_flag",
+      "long_name": "Qualitätsflag für Windgeschwindigkeit",
+      "description": "Qualitätsflag für Windgeschwindigkeit, vektorieller Stundenmittelwert",
+      "unit": "code",
+      "code_list_ref": "q21"
+    },
+    {
+      "name": "ffx",
+      "long_name": "Maximale Windgeschwindigkeit (Spitzenböe)",
+      "description": "Maximale Windgeschwindigkeit (Spitzenböe), Stunden-Maximalwert",
+      "unit": "m/s"
+    },
+    {
+      "name": "ffx_flag",
+      "long_name": "Qualitätsflag für Maximale Windgeschwindigkeit (Spitzenböe)",
+      "description": "Qualitätsflag für Maximale Windgeschwindigkeit (Spitzenböe), Stunden-Maximalwert",
+      "unit": "code",
+      "code_list_ref": "q21"
+    },
+    {
+      "name": "p",
+      "long_name": "Luftdruck",
+      "description": "Luftdruck in Stationsniveau, Stunden-Messwert",
+      "unit": "hPa"
+    },
+    {
+      "name": "p_flag",
+      "long_name": "Qualitätsflag für Luftdruck",
+      "description": "Qualitätsflag für Luftdruck in Stationsniveau, Stunden-Messwert",
+      "unit": "code",
+      "code_list_ref": "q21"
+    },
+    {
+      "name": "pred",
+      "long_name": "Reduzierter Luftdruck",
+      "description": "Reduzierter Luftdruck: berechneter Stundenwert",
+      "unit": "hPa"
+    },
+    {
+      "name": "pred_flag",
+      "long_name": "Qualitätsflag für Reduzierter Luftdruck",
+      "description": "Qualitätsflag für Reduzierter Luftdruck: berechneter Stundenwert",
+      "unit": "code"
+    },
+    {
+      "name": "rf",
+      "long_name": "Relative Feuchte",
+      "description": "Relative Feuchte, Stunden-Messwert",
+      "unit": "%"
+    },
+    {
+      "name": "rf_flag",
+      "long_name": "Qualitätsflag für Relative Feuchte",
+      "description": "Qualitätsflag für Relative Feuchte, Stunden-Messwert",
+      "unit": "code",
+      "code_list_ref": "q21"
+    },
+    {
+      "name": "rr",
+      "long_name": "Niederschlag",
+      "description": "Niederschlag, Stundensumme",
+      "unit": "mm"
+    },
+    {
+      "name": "rr_flag",
+      "long_name": "Qualitätsflag für Niederschlag",
+      "description": "Qualitätsflag für Niederschlag, Stundensumme",
+      "unit": "code",
+      "code_list_ref": "q21"
+    },
+    {
+      "name": "rrm",
+      "long_name": "Niederschlagsdauer",
+      "description": "Niederschlagsdauer, Stundensumme",
+      "unit": "min",
+      "code_list_ref": "c1"
+    },
+    {
+      "name": "rrm_flag",
+      "long_name": "Qualitätsflag für Niederschlagsdauer",
+      "description": "Qualitätsflag für Niederschlagsdauer, Stundensumme",
+      "unit": "code",
+      "code_list_ref": "q21"
+    },
+    {
+      "name": "sh",
+      "long_name": "Gesamtschneehöhe, Schneepegelmessung",
+      "description": "Gesamtschneehöhe aus Schneepegelmessung, Offset korrigiert",
+      "unit": "cm"
+    },
+    {
+      "name": "sh_flag",
+      "long_name": "Qualitätsflag für Gesamtschneehöhe, Schneepegelmessung",
+      "description": "Qualitätsflag für Gesamtschneehöhe aus Schneepegelmessung, Offset korrigiert",
+      "unit": "code",
+      "code_list_ref": "q21"
+    },
+    {
+      "name": "so_h",
+      "long_name": "Sonnenscheindauer",
+      "description": "Sonnenscheindauer, Stundensumme",
+      "unit": "h"
+    },
+    {
+      "name": "so_h_flag",
+      "long_name": "Qualitätsflag für Sonnenscheindauer",
+      "description": "Qualitätsflag für Sonnenscheindauer, Stundensumme",
+      "unit": "code",
+      "code_list_ref": "q21"
+    },
+    {
+      "name": "tb10",
+      "long_name": "Erdbodentemperatur -10cm",
+      "description": "Erdbodentemperatur in 10 cm Tiefe, Stunden-Messwert",
+      "unit": "°C"
+    },
+    {
+      "name": "tb100",
+      "long_name": "Erdbodentemperatur -100cm",
+      "description": "Erdbodentemperatur in 100 cm Tiefe, Stunden-Messwert",
+      "unit": "°C"
+    },
+    {
+      "name": "tb100_flag",
+      "long_name": "Qualitätsflag für Erdbodentemperatur -100cm",
+      "description": "Qualitätsflag für Erdbodentemperatur in 100 cm Tiefe, Stunden-Messwert",
+      "unit": "code",
+      "code_list_ref": "q21"
+    },
+    {
+      "name": "tb10_flag",
+      "long_name": "Qualitätsflag für Erdbodentemperatur -10cm",
+      "description": "Qualitätsflag für Erdbodentemperatur in 10 cm Tiefe, Stunden-Messwert",
+      "unit": "code",
+      "code_list_ref": "q21"
+    },
+    {
+      "name": "tb20",
+      "long_name": "Erdbodentemperatur -20cm",
+      "description": "Erdbodentemperatur in 20 cm Tiefe, Stunden-Messwert",
+      "unit": "°C"
+    },
+    {
+      "name": "tb200",
+      "long_name": "Erdbodentemperatur -200cm",
+      "description": "Erdbodentemperatur in 200 cm Tiefe, Stunden-Messwert",
+      "unit": "°C"
+    },
+    {
+      "name": "tb200_flag",
+      "long_name": "Qualitätsflag für Erdbodentemperatur -200cm",
+      "description": "Qualitätsflag für Erdbodentemperatur in 200 cm Tiefe, Stunden-Messwert",
+      "unit": "code",
+      "code_list_ref": "q21"
+    },
+    {
+      "name": "tb20_flag",
+      "long_name": "Qualitätsflag für Erdbodentemperatur -20cm",
+      "description": "Qualitätsflag für Erdbodentemperatur in 20 cm Tiefe, Stunden-Messwert",
+      "unit": "code",
+      "code_list_ref": "q21"
+    },
+    {
+      "name": "tb50",
+      "long_name": "Erdbodentemperatur -50cm",
+      "description": "Erdbodentemperatur in 50 cm Tiefe, Stunden-Messwert",
+      "unit": "°C"
+    },
+    {
+      "name": "tb50_flag",
+      "long_name": "Qualitätsflag für Erdbodentemperatur -50cm",
+      "description": "Qualitätsflag für Erdbodentemperatur in 50 cm Tiefe, Stunden-Messwert",
+      "unit": "code",
+      "code_list_ref": "q21"
+    },
+    {
+      "name": "tl",
+      "long_name": "Lufttemperatur 2m",
+      "description": "Lufttemperatur in 2m Höhe, Stunden-Messwert",
+      "unit": "°C"
+    },
+    {
+      "name": "tl_flag",
+      "long_name": "Qualitätsflag für Lufttemperatur 2m",
+      "description": "Qualitätsflag für Lufttemperatur in 2m Höhe, Stunden-Messwert",
+      "unit": "code",
+      "code_list_ref": "q21"
+    },
+    {
+      "name": "tsmin",
+      "long_name": "Lufttemperatur 5cm Minimalwert",
+      "description": "Lufttemperatur in 5 cm Höhe, Stunden-Messwert",
+      "unit": "°C"
+    },
+    {
+      "name": "tsmin_flag",
+      "long_name": "Qualitätsflag für Lufttemperatur 5cm Minimalwert",
+      "description": "Qualitätsflag für Lufttemperatur in 5 cm Höhe, Stunden-Messwert",
+      "unit": "code",
+      "code_list_ref": "q21"
+    },
+    {
+      "name": "zeitx",
+      "long_name": "Zeitpunkt der maximalen Windgeschwindigkeit (Spitzenböe)",
+      "description": "Zeitpunkt der maximalen Windgeschwindigkeit (Spitzenböe), Stundenwert",
+      "unit": "hhmm"
+    },
+    {
+      "name": "zeitx_flag",
+      "long_name": "Qualitätsflag für Zeitpunkt der maximalen Windgeschwindigkeit (Spitzenböe)",
+      "description": "Qualitätsflag für Zeitpunkt der maximalen Windgeschwindigkeit (Spitzenböe), Stundenwert",
+      "unit": "code",
+      "code_list_ref": "q21"
+    }
+  ],
+  "code_lists": {
+    "q21": [
+      {
+        "key": null,
+        "value": "undefiniert"
+      },
+      {
+        "key": 0,
+        "value": "ungeprüfte Daten"
+      },
+      {
+        "key": 10,
+        "value": "automatisch geprüft"
+      },
+      {
+        "key": 11,
+        "value": "automatisch geprüft (verändert)"
+      },
+      {
+        "key": 12,
+        "value": "automatisch geprüft (original)"
+      },
+      {
+        "key": 20,
+        "value": "manuell geprüft (unbekannt)"
+      },
+      {
+        "key": 21,
+        "value": "manuell geprüft (verändert)"
+      },
+      {
+        "key": 22,
+        "value": "manuell geprüft (original)"
+      }
+    ],
+    "c1": [
+      {
+        "key": 0,
+        "value": "kein Niederschlag gemessen"
+      },
+      {
+        "key": 1,
+        "value": "Niederschlag gemessen"
+      }
+    ]
+  }
+}
