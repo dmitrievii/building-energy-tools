@@ -222,6 +222,13 @@ class Contracts(unittest.TestCase):
     def test_nonfinite_value_rejected(self):
         with self.assertRaises(c.SourceError): self.save(raw=modified(RAW[BER],'tre200h0','nan'))
 
+    def test_invalid_value_error_identifies_source_cell(self):
+        with self.assertRaises(c.SourceError) as caught:
+            self.save(raw=modified(RAW[BER],'tre200h0','NaN'))
+        text=str(caught.exception)
+        for token in ('station=BER','parameter=tre200h0','csv_line=2',"value='NaN'",'timestamp='):
+            self.assertIn(token,text)
+
     def test_duplicate_and_reversed_times_rejected(self):
         lines=RAW[BER].splitlines(keepends=True)
         for raw in (lines[0]+lines[1]+lines[1]+b''.join(lines[2:]),lines[0]+b''.join(reversed(lines[1:]))):
@@ -270,8 +277,61 @@ class Contracts(unittest.TestCase):
                 self.assertTrue(c.download(p,out,client)['all_transfers_complete'])
                 self.assertEqual(c.download(p,out,client)['attempted_this_invocation'],0)
                 (c.run_root(out,p)/c.artifact_paths(p['jobs'][0])[i]).write_bytes(b'corrupt')
-                self.assertEqual(c.download(p,out,client)['attempted_this_invocation'],1)
-                self.assertEqual(len(client.calls),2)
+                report=c.download(p,out,client)
+                self.assertEqual(report['attempted_this_invocation'],1)
+                self.assertEqual(len(client.calls),2 if i==0 else 1)
+                self.assertEqual(report['completed_from_saved_originals_this_invocation'],0 if i==0 else 1)
+
+    def test_saved_pinned_raw_reprocessed_without_fetch(self):
+        p=fixture_plan();job=p['jobs'][0];root=c.run_root(self.out,p)
+        c.atomic_write(root/c.artifact_paths(job)[0],gzip.compress(RAW[BER],mtime=0))
+        client=FakeClient();report=c.download(p,self.out,client)
+        self.assertEqual(client.calls,[])
+        self.assertTrue(report['all_transfers_complete'])
+        self.assertEqual(report['completed_from_saved_originals_this_invocation'],1)
+        self.assertEqual(report['source_fetches_this_invocation'],0)
+        receipt=json.loads((root/'receipts'/(job['job_id']+'.json')).read_bytes())
+        self.assertEqual(receipt['processing_origin'],'reprocessed_pinned_saved_original')
+        self.assertIsNone(receipt['retrieved_at_utc'])
+        self.assertTrue(receipt['processed_at_utc'])
+
+    def test_unpinned_saved_raw_not_trusted(self):
+        p=fixture_plan();job=p['jobs'][0];root=c.run_root(self.out,p)
+        c.atomic_write(root/c.artifact_paths(job)[0],gzip.compress(RAW[BER],mtime=0))
+        self.assertIsNone(c.saved_original(root,{**job,'provider_sha256':None}))
+
+    def test_wrong_saved_sha_causes_fresh_fetch(self):
+        p=fixture_plan();job=p['jobs'][0];root=c.run_root(self.out,p)
+        c.atomic_write(root/c.artifact_paths(job)[0],gzip.compress(b'wrong source',mtime=0))
+        client=FakeClient();report=c.download(p,self.out,client)
+        self.assertEqual(len(client.calls),1)
+        self.assertTrue(report['all_transfers_complete'])
+        self.assertEqual(report['completed_from_saved_originals_this_invocation'],0)
+
+    def test_corrupt_saved_deflate_causes_fresh_fetch(self):
+        p=fixture_plan();job=p['jobs'][0];root=c.run_root(self.out,p)
+        broken=bytearray(gzip.compress(RAW[BER],mtime=0));broken[10]=255
+        c.atomic_write(root/c.artifact_paths(job)[0],bytes(broken))
+        client=FakeClient();report=c.download(p,self.out,client)
+        self.assertEqual(len(client.calls),1)
+        self.assertTrue(report['all_transfers_complete'])
+
+    def test_saved_invalid_number_still_fails_without_redownloading_same_sha(self):
+        raw=modified(RAW[BER],'tre200h0','nan');p=fixture_plan(overrides={BER:raw});job=p['jobs'][0];root=c.run_root(self.out,p)
+        c.atomic_write(root/c.artifact_paths(job)[0],gzip.compress(raw,mtime=0))
+        client=FakeClient();report=c.download(p,self.out,client)
+        self.assertEqual(client.calls,[])
+        self.assertFalse(report['all_transfers_complete'])
+        self.assertIn('parameter=tre200h0',report['failures_this_invocation'][0]['error'])
+
+    def test_cached_raw_size_must_match_when_declared(self):
+        p,root,r=self.save();j=p['jobs'][0]
+        self.assertIsNone(c.saved_original(root,{**j,'provider_bytes':len(RAW[BER])+1}))
+
+    def test_old_full_plan_identity_loads_unchanged(self):
+        p=fixture_plan();p['version']='1.0.0';p['plan_id']=c.digest({k:v for k,v in p.items() if k!='plan_id'})
+        path=self.out/'plan.json';c.write_json(path,p)
+        self.assertEqual(c.load_plan(path)['plan_id'],p['plan_id'])
 
     def test_partial_receipt_does_not_allow_skip(self):
         p,root,r=self.save();r['artifacts'].pop()

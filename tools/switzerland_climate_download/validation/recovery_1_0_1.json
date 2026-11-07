@@ -1,0 +1,29 @@
+{
+  "tool_version": "1.0.1",
+  "original_plan_id": "0dfa3011a5de4be6cf8021dbfae5124d012720234db9a732f298a935ec78ac3e",
+  "job_id": "b19771941413ebf24399eac2",
+  "station": "GRO",
+  "source_url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/gro/ogd-smn_gro_h_historical_2020-2029.csv",
+  "raw_uncompressed_sha256": "9e4cdf7f83dece635cc58d01e8bf64865fd05ac301c6ec9467ba53ec329a8d5a",
+  "matches_original_provider_sha256": true,
+  "raw_uncompressed_bytes": 6959247,
+  "source_rows": 52608,
+  "selected_rows": 52608,
+  "native_fields": 36,
+  "annual_reports": [
+    "2020",
+    "2021",
+    "2022",
+    "2023",
+    "2024",
+    "2025"
+  ],
+  "reprocessed_saved_original": true,
+  "receipt_hashes_verify": true,
+  "raw_gzip_content_unchanged": true,
+  "network_requests_for_reprocessing": 0,
+  "failure_reported_by_user_reproduced_here": false,
+  "user_total_587_complete_confirmed": false,
+  "offline_tests_passed": 55,
+  "platform": "Python 3.12.14 Linux; user Windows failure cause not identified"
+}

@@ -24,8 +24,9 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import zlib
 
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 BASE = "https://data.geo.admin.ch/"
 API = BASE + "api/stac/v1/collections/"
 NETWORKS = {"smn": "ch.meteoschweiz.ogd-smn", "smn-precip": "ch.meteoschweiz.ogd-smn-precip"}
@@ -548,7 +549,11 @@ def parse_observations(raw, plan, job):
         previous, total = stamp, total + 1
         for name in fields:
             if name not in ("station_abbr", "reference_timestamp") and row[name].strip():
-                finite(row[name])
+                try:
+                    finite(row[name])
+                except SourceError as exc:
+                    raise SourceError("Non-finite/non-numeric observation: station=%s timestamp=%s parameter=%s csv_line=%d value=%r" %
+                        (job["station_id"], row["reference_timestamp"], name, reader.line_num, row[name][:128])) from exc
         if start <= stamp < end:
             result.append({"timestamp_utc": iso(stamp), "hour_interval_regime": interval_regime(stamp), **row})
     if not total:
@@ -629,7 +634,7 @@ def receipt_is_complete(root, job):
         return False
 
 
-def save_job(root, plan, job, raw, *, response_headers=None):
+def save_job(root, plan, job, raw, *, response_headers=None, reprocessed_original=False):
     raw_path, part_path, meta_path = artifact_paths(job)
     # Preserve the response even if it does not match the planned provider version.
     raw_sha = digest(raw)
@@ -645,14 +650,16 @@ def save_job(root, plan, job, raw, *, response_headers=None):
     end = min(parse_bound(plan["end_utc_exclusive"]), parse_bound(job["nominal_end_exclusive"]))
     reports = annual_coverages(rows, job["parameters"], start, end)
     station = next(s for s in plan["stations"] if s["network"] == job["network"] and s["station_id"] == job["station_id"])
+    origin = "reprocessed_pinned_saved_original" if reprocessed_original else "network_or_supplied_bytes"
     meta = {"source_url": job["url"], "raw_response_sha256": raw_sha, "provider_sha256": job.get("provider_sha256"),
             "raw_response_bytes": len(raw), "response_etag": (response_headers or {}).get("etag"),
             "native_fields": fields, "station_metadata": station,
             "parameter_definitions": plan["parameter_definitions"][job["network"]],
-            "coverage_by_year": reports, "source_information": info,
+            "coverage_by_year": reports, "source_information": info, "processing_origin": origin,
             "hourly_rule": "UTC reference labels retained. Pre-2018 aggregation windows differ; parameter operator must also be consulted."}
     write_json(root / meta_path, meta)
-    receipt = {"status": "complete", "retrieved_at_utc": now(), "job_sha256": digest(job),
+    receipt = {"status": "complete", "retrieved_at_utc": None if reprocessed_original else now(),
+               "processed_at_utc": now(), "processing_origin": origin, "job_sha256": digest(job),
                "raw_response_sha256": raw_sha, "provider_checksum_verified": bool(job.get("provider_sha256")),
                "source_information": info, "coverage_by_year": reports,
                "artifacts": [{"path": p, "sha256": digest((root / p).read_bytes())} for p in artifact_paths(job)],
@@ -661,13 +668,34 @@ def save_job(root, plan, job, raw, *, response_headers=None):
     return receipt
 
 
+def saved_original(root, job):
+    """Reuse incomplete raw only when its uncompressed SHA matches frozen STAC.
+
+    A local filename/mtime or unverified raw file is never sufficient provenance.
+    The size limit also bounds decompression of a damaged/untrusted local gzip.
+    """
+    expected = job.get("provider_sha256")
+    if not expected:
+        return None
+    try:
+        with gzip.open(root / artifact_paths(job)[0], "rb") as stream:
+            raw = stream.read(MAX_HTTP_BYTES + 1)
+        if len(raw) > MAX_HTTP_BYTES or digest(raw) != expected:
+            return None
+        if job.get("provider_bytes") is not None and len(raw) != job["provider_bytes"]:
+            return None
+        return raw
+    except (OSError, EOFError, ValueError, zlib.error):
+        return None
+
+
 def download(plan, output, client, *, max_jobs=None):
     if max_jobs is not None and max_jobs < 1:
         raise SourceError("max-jobs must be positive")
     root = run_root(output, plan)
     with run_lock(root):
         write_json(root / "plan.json", plan)
-        attempted, failures = 0, []
+        attempted, failures, source_fetches, cached_attempts, cached_completed = 0, [], 0, 0, 0
         for index, job in enumerate(plan["jobs"], 1):
             if receipt_is_complete(root, job):
                 continue
@@ -676,8 +704,17 @@ def download(plan, output, client, *, max_jobs=None):
             attempted += 1
             print(f"[{index}/{len(plan['jobs'])}] {job['network']} {job['station_id']} {job['filename']}", flush=True)
             try:
-                raw = client.get(job["url"])
-                receipt = save_job(root, plan, job, raw, response_headers=getattr(client, "response_headers", {}))
+                raw = saved_original(root, job)
+                cached = raw is not None
+                if cached:
+                    cached_attempts += 1
+                    print("  reprocessing saved original; frozen provider SHA256 verified", flush=True)
+                else:
+                    source_fetches += 1
+                    raw = client.get(job["url"])
+                receipt = save_job(root, plan, job, raw,
+                    response_headers={} if cached else getattr(client, "response_headers", {}), reprocessed_original=cached)
+                cached_completed += int(cached)
                 print("  selected rows: " + str(receipt["source_information"]["selected_rows"]), flush=True)
             except (OSError, ValueError, TypeError, KeyError) as e:
                 error = {"job_id": job["job_id"], "error": type(e).__name__ + ": " + str(e)}
@@ -688,7 +725,11 @@ def download(plan, output, client, *, max_jobs=None):
         completed = sum(receipt_is_complete(root, job) for job in plan["jobs"])
         result = {"plan_id": plan["plan_id"], "planned_jobs": len(plan["jobs"]), "completed_jobs": completed,
                   "remaining_jobs": len(plan["jobs"]) - completed, "attempted_this_invocation": attempted,
-                  "failures_this_invocation": failures, "all_transfers_complete": completed == len(plan["jobs"]),
+                  "failures_this_invocation": failures,
+                  "source_fetches_this_invocation": source_fetches,
+                  "attempted_from_saved_originals_this_invocation": cached_attempts,
+                  "completed_from_saved_originals_this_invocation": cached_completed,
+                  "all_transfers_complete": completed == len(plan["jobs"]),
                   "meteorological_completeness_or_epw_admission_assessed": False}
         write_json(root / "download_summary.json", result)
         return result

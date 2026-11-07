@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "1.0.1",
   "self_excluded": true,
   "files": [
     {
@@ -8,14 +8,19 @@
       "sha256": "50f6c305172240eac5117df75c216291937ca66fd25699ce1e97cbe6ef3d18cf"
     },
     {
+      "path": "CHANGELOG_1_0_1_RU.md",
+      "bytes": 4169,
+      "sha256": "f64dd0bf28b5081e1e26cea8c90f2736bb6fb43c23067370cdc4fba708ded23a"
+    },
+    {
       "path": "README_RU.md",
-      "bytes": 23971,
-      "sha256": "338b4b1e012166e0ed98f01ade55c6cdfedb64261ee46db079f7b4c66a38edad"
+      "bytes": 24466,
+      "sha256": "af5bb6cc7cca41d1e924f28380585c8a140f2348d62a7b2a3d2e8432dc08deea"
     },
     {
       "path": "VALIDATION_RU.md",
-      "bytes": 6686,
-      "sha256": "1ff26b7fedfcd860245ad4b240f4296139ebee494f7b9fd34db84af2a0ab3375"
+      "bytes": 7343,
+      "sha256": "7f43e32bc518f512379da95c36cf03f997f9c48574db9b3b6d8ba207cdd6be71"
     },
     {
       "path": "catalog/assets.csv.gz",
@@ -159,8 +164,8 @@
     },
     {
       "path": "switzerland_climate.py",
-      "bytes": 48709,
-      "sha256": "f7f2a4ffc444853529f764b2d53025f5d425078f9c53a59f332f43e9ee23fec1"
+      "bytes": 50867,
+      "sha256": "ae059c02ce5d4de16c2ab7a4bdd46920b0697fcf2ee5fdb2bf5c7b993c881b9d"
     },
     {
       "path": "tests/fixtures/provenance.json",
@@ -189,8 +194,8 @@
     },
     {
       "path": "tests/test_switzerland_climate.py",
-      "bytes": 17714,
-      "sha256": "495d8f8411990e34cbf2bfd9e874b5e51937a041a187c94d3edc8cc3dab15383"
+      "bytes": 21290,
+      "sha256": "546ec49181843dedbfed1cbbff805bcf060786ce8bc400a0bd757a5cc189894a"
     },
     {
       "path": "validation/live_coverage.csv",
@@ -206,6 +211,11 @@
       "path": "validation/nearest_bern.csv",
       "bytes": 5749,
       "sha256": "b386e9fd41ba7b88c617135e9825477f673ae2156db185311eec4c6c9f0d6602"
+    },
+    {
+      "path": "validation/recovery_1_0_1.json",
+      "bytes": 1002,
+      "sha256": "537edf955f650c822cbbfbb5775cbb6c7607fc030110536b783752620490fb24"
     },
     {
       "path": "validation/sample_csv/precip_ABE_2025.coverage.json",
@@ -271,6 +281,11 @@
       "path": "validation/unittest.log",
       "bytes": 7108,
       "sha256": "52531be8e88b867f4e7fda77665182c1a683c1d879a628fb7f5dbb444fd9b368"
+    },
+    {
+      "path": "validation/unittest_1_0_1.log",
+      "bytes": 8877,
+      "sha256": "554182bdb6ddb11361dc7f35b7fcc660c0a9874e911d808716888b2c7df95dd7"
     }
   ]
 }
