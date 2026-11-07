@@ -1,0 +1,331 @@
+{
+  "format": "IGE_EXPERIMENT_PROGRAM",
+  "schema_version": "1.0",
+  "program_id": "IGE_E0_E8_20261107_v1",
+  "created_at": "2026-11-07",
+  "language": "ru",
+  "status": "DESIGNED_NOT_FULLY_PREREGISTERED",
+  "new_scientific_runs_started": false,
+  "repository": "dmitrievii/building-energy-tools",
+  "application_reference_commit": "eb4e14d84b2e372feeba73713b18d21cde7f2207",
+  "document": "docs/IGE_EXPERIMENT_PROGRAM_RU_20261107.md",
+  "source_register": "research/ige_experiments/source_register.json",
+  "run_template": "research/ige_experiments/run_manifest.template.json",
+  "decisions": "research/ige_experiments/DECISIONS_RU.md",
+  "runner_included": false,
+  "scope": {
+    "countries": ["AT", "DE", "CH"],
+    "station_download_window": [2016, 2025],
+    "actual_cohort_years": null,
+    "tasks": ["spatial_interpolation", "daily_to_hourly_inverse", "future_climate", "gap_recovery", "building_impact", "reproduction"],
+    "inherited_families": ["E0", "E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8"]
+  },
+  "design_rules": {
+    "evaluation_unit": "physical_site_family x timestamp/support_interval x variable",
+    "full_year_required_for_hourly_research": false,
+    "per_variable_eligibility": true,
+    "control_missing_means_error_unavailable": true,
+    "automatic_and_manual_qc_in_primary_analysis": true,
+    "qc_target_and_donors_recorded_separately": true,
+    "qc_unknown_unchecked_sensitivity_strata": true,
+    "explicit_provider_reject_excluded_with_reason": true,
+    "unknown_qc_is_not_inferred_reject_or_pass": true,
+    "retain_original_values_masks_and_flags": true,
+    "same_operator_required_for_paired_observational_claim": true,
+    "verified_sensor_geometry_separate_from_station_height_proxy": true,
+    "spatial_target_family_excluded_from_donors_and_fit": true,
+    "random_hour_train_test_split_allowed": false,
+    "paired_accuracy_and_own_coverage_required": true,
+    "unobserved_predictions_excluded_from_accuracy_coverage_numerator": true,
+    "failure_and_budget_denominators_preserved": true,
+    "baseline_lineages_not_interchangeable": ["P8.2F", "S1_adapter", "R1"],
+    "legacy_registered_protocols_not_rewritten": ["IV1", "P8.3D", "P9.3B3"],
+    "acquisition_is_not_proof_of_blindness_or_training_leakage": true,
+    "more_information_is_not_pure_algorithm_improvement": true,
+    "future_weather_has_no_pointwise_observed_2050_truth": true,
+    "new_numerical_success_is_not_independent_accuracy": true
+  },
+  "information_levels": {
+    "I0": "Synchronous station observations and declared static metadata",
+    "I1": "I0 plus declared grid background, with assimilation caveat",
+    "I2": "Native vertical T/q/lnsp/geopotential and verified geometry; richer-input arm",
+    "ID": "Identical daily constraints, explicit pressure source, permitted priors"
+  },
+  "exposure_roles": ["D_DEVELOPMENT", "V_SELECTION", "C_CONFIRMATION"],
+  "exposure_events": ["ACQUIRED_ONLY", "RAW_INSPECTED", "USED_IN_FIT", "ERRORS_INSPECTED", "USED_IN_MODEL_CHOICE"],
+  "seal_requirements": [
+    "Concrete source manifests, metadata bodies and verified hashes; no substitution under old SHA",
+    "Target site-family grouping, times, variables, operators, height confidence and expected case universe fixed",
+    "D/V/C and prior disclosure recorded; inherited protocols preserve their own disclosure rules",
+    "Controls, candidates, parameters, priors, donor rules and minimum support frozen per method",
+    "All necessary hourly adapters available; annual H1 gate not silently reused",
+    "QC native semantics, rejection rules, strata and shared comparison masks fixed",
+    "For inferential claims: primary contrast, endpoint, margins, dependence, multiplicity and support rule fixed before C",
+    "Worker/RAM/time/network budgets, failure handling and expected job matrix fixed",
+    "Code/environment and random seeds recorded; NOT_APPLICABLE requires a reason",
+    "C predictions sealed before target scoring; post-C changes create an amended version"
+  ],
+  "orchestration": {
+    "mode": "sequential_scientific_waves_parallel_independent_jobs",
+    "wave_is_resource_order_not_all_branch_barrier": true,
+    "parallel_axes": ["country", "target_site_family", "time_block", "frozen_method"],
+    "preserve_within_job_temporal_dependencies": true,
+    "acquisition_separate_from_computation": true,
+    "one_coordinator": true,
+    "shared_inputs_and_fits_immutable": true,
+    "separate_outputs_per_job_and_attempt": true,
+    "profile_workers_first": [1, 2],
+    "final_worker_count": null,
+    "avoid_nested_blas_oversubscription": true,
+    "gpu_required": false,
+    "resource_budgets": null,
+    "timeout_outcome": "UNRESOLVED_BUDGET"
+  },
+  "planning_pilot": {
+    "status": "ILLUSTRATIVE_NOT_SELECTED",
+    "maximum_targets_per_country": 12,
+    "countries": 3,
+    "development_years": 2,
+    "continuous_seasonal_blocks_per_year": 4,
+    "days_per_block": 8,
+    "nominal_hourly_positions_per_variable": 55296,
+    "note": "Expected positions before missingness/operator/QC eligibility, not observed hours or independent replicates",
+    "targets_dates_and_budgets": null
+  },
+  "experiments": [
+    {
+      "id": "E0", "family": "E0", "name_ru": "Аудит входов, операторов и раскрытия", "recommended_wave": 0,
+      "status": "DESIGNED", "depends_on": [],
+      "question": "Which exact observations, source versions and operators permit reproducible comparisons?",
+      "controls": [], "candidates": [],
+      "gates": ["At least one available source chunk with actual files and metadata"],
+      "outputs": ["acquisition_manifest", "station_family_registry", "sensor_operator_registry", "hourly_availability", "exposure_ledger", "blocker_ledger"],
+      "pass_to_next": "One immutable D snapshot; do not wait for all countries or a full decade"
+    },
+    {
+      "id": "E1.0", "family": "E1", "name_ru": "Замороженные контроли и ресурсный пилот", "recommended_wave": 0,
+      "status": "DESIGNED", "depends_on": ["E0"],
+      "question": "Can prior controls be replayed under their actual contracts and with transparent hourly masks/cost?",
+      "controls": ["nearest_observed_station", "raw_geographic_IDW", "P8.2F_frozen", "S1_adapter_frozen"],
+      "candidates": ["R1_frozen_research_control"],
+      "gates": ["Frozen formula/code/parameters for each named replay", "Separate hourly adapter for new partial-hour research"],
+      "metrics": ["oracle_residual", "case_coverage", "wall_time_by_stage", "peak_RSS", "network_bytes", "cache_hits"],
+      "outputs": ["baseline_replay_report", "resource_profile", "D_V_C_design_proposal"]
+    },
+    {
+      "id": "E1.T", "family": "E1", "name_ru": "Пространственная температура", "recommended_wave": 1,
+      "status": "DESIGNED", "depends_on": ["E1.0"], "information_levels": ["I0"],
+      "question": "When do elevation or declared regime corrections improve held-out-site T over NN/IDW?",
+      "controls": ["nearest", "raw_IDW", "fixed_lapse", "frozen_monthly_lapse"],
+      "candidates": ["training_only_regional_or_regime_lapse", "previous_terrain_candidate"],
+      "changed_factor": "temperature_transfer_at_fixed_donors",
+      "gates": ["Operator-aligned T and height metadata", "Training and validation folds sealed before scoring"],
+      "metrics": ["MAE_K", "RMSE_K", "bias_K", "tail_abs_error", "own_coverage", "station_season_macro", "cost"],
+      "outputs": ["T_shortlist", "terrain_season_geometry_strata", "negative_results"]
+    },
+    {
+      "id": "E1.D", "family": "E1", "name_ru": "Доноры и разрежение сети", "recommended_wave": 1,
+      "status": "DESIGNED", "depends_on": ["E1.0"], "information_levels": ["I0"],
+      "question": "How do donor selection, count and network losses change error and coverage at fixed transfer?",
+      "controls": ["geographic_selection_fixed_pool"],
+      "candidates": ["elevation_aware_selection", "verified_terrain_selection", "donor_count_1_2_4_8_proposal"],
+      "changed_factor": "donor_selector_or_mask_at_fixed_transfer",
+      "gates": ["Shared donor universe and masks", "Method-specific rank/minimum-input requirements"],
+      "metrics": ["paired_error", "own_coverage", "error_versus_distance_dz_count", "interpolation_extrapolation_strata", "cost"],
+      "outputs": ["donor_shortlist", "network_density_curves"]
+    },
+    {
+      "id": "E2", "family": "E2", "name_ru": "Давление и вертикальная геометрия", "recommended_wave": 1,
+      "status": "DESIGNED", "depends_on": ["E1.0"], "information_levels": ["I0", "I1", "I2"],
+      "question": "Which pressure reference and vertical treatment is accurate at a verified sensor level?",
+      "controls": ["P0_date_aligned_grid", "P1_isothermal", "P1_fixed_lapse"],
+      "candidates": ["P2_native_column", "P3_training_only_residual"],
+      "gates": ["Station/barometer pressure distinguished from QFF/QNH", "Verified height/datum for strong vertical claims", "P2 requires native column and subground guard", "P3 requires independent training"],
+      "metrics": ["MAE_hPa", "RMSE_hPa", "bias_hPa", "hydrostatic_residual", "geometry_sensitivity", "own_coverage", "cost"],
+      "outputs": ["pressure_shortlist", "geometry_and_background_lineage", "source_blocked_arms"]
+    },
+    {
+      "id": "E1.H", "family": "E1", "name_ru": "Совместное состояние T–p–влага", "recommended_wave": 2,
+      "status": "DESIGNED", "depends_on": ["E1.T", "E1.D", "E2"], "information_levels": ["I0", "I1"],
+      "question": "Do e/log(e)/q transfers improve independent RH while preserving physical consistency?",
+      "controls": ["direct_RH_empirical", "frozen_P8.2F_or_S1_with_own_contract"],
+      "candidates": ["e_transfer", "log_e_transfer", "q_transfer", "limited_joint_T_p_moisture_matrix"],
+      "gates": ["Frozen T/p shortlists", "Explicit saturation/phase/zero-vapour contract", "Separate new method ID for changed partial-month normalization"],
+      "proposed_maximum_shortlist_cells": 12,
+      "metrics": ["MAE_T", "MAE_p", "MAE_e", "MAE_RH_pp", "saturation_or_physics_failure", "own_coverage", "cost"],
+      "outputs": ["joint_state_shortlist", "interaction_report"]
+    },
+    {
+      "id": "E3", "family": "E3", "name_ru": "Сохранённая независимая проверка IV1", "recommended_wave": 1,
+      "status": "LEGACY_SOURCE_BLOCKED", "depends_on": [], "information_levels": ["ID"],
+      "question": "Does registered scaled X12 meet the original noninferiority contrast against frozen C2?",
+      "controls": ["strict", "q_only", "frozen_C2"], "candidates": ["scaled_X3", "scaled_X12"],
+      "gates": ["Original source lineage or explicitly registered amended acquisition", "Do not substitute a new metadata response under an old hash", "Preserve original IV1 registration and disclosure rule"],
+      "legacy_design": {
+        "targets": ["AT:16412", "DE:00399", "CH:DAV"],
+        "utc_windows_inclusive_dates": [["2022-02-15", "2022-02-28"], ["2022-08-15", "2022-08-28"]],
+        "expected_station_days": 84, "expected_hourly_positions": 2016,
+        "expected_methods_per_day": 5, "minimum_hours_per_336_hour_cell": 303,
+        "primary_contrast": "scaled_X12_minus_frozen_C2",
+        "noninferiority_margins": {"T_K": 0.1, "RH_percentage_points": 0.5},
+        "station_season_variable_cells": 12,
+        "bootstrap": {"scheme": "paired_circular_moving_day_blocks", "replicates": 10000, "seed": 20261023, "primary_days": 3, "sensitivity_days": [2, 7], "one_sided_upper_quantile": "1 - 0.05/12"}
+      },
+      "outputs": ["lineage_report", "registered_IV1_records_or_explicit_blocker", "no_independent_accuracy_claim_before_scoring"]
+    },
+    {
+      "id": "E4.M", "family": "E4", "name_ru": "Месячный F1 на фиксированной базе", "recommended_wave": 1,
+      "status": "DESIGNED", "depends_on": ["E0"],
+      "question": "Does implemented F1 preserve declared climate signals and plausible distributions/dependence on a fixed base?",
+      "controls": ["frozen_local_base", "frozen_implemented_F1"], "candidates": ["declared_model_member_SSP_windows", "separate_artificial_temperature_stress"],
+      "gates": ["Admitted fixed local base under its own contract", "Separate hourly pattern, climate reference and GCM historical/future windows", "Actual file-level operators", "Stationary pressure explicitly declared if no same-model native future p"],
+      "metrics": ["climate_target_residual", "seasonal_distribution", "DTR", "hot_wet_dry_episode_statistics", "cross_variable_dependence", "physical_failures", "cost"],
+      "outputs": ["historical_pseudo_future_statistics", "perfect_model_signal_test", "future_signal_and_limitation_ledger"]
+    },
+    {
+      "id": "E4.D", "family": "E4", "name_ru": "Суточно-почасовая реконструкция", "recommended_wave": 2,
+      "status": "DESIGNED", "depends_on": ["E1.0"], "information_levels": ["ID"],
+      "question": "At identical daily inputs/p/priors, which fixed reconstruction has independent accuracy and transparent constraint changes?",
+      "controls": ["strict", "q_only", "frozen_C2"], "candidates": ["scaled_X3", "scaled_X12"],
+      "gates": ["Forward oracle and numerical regressions", "Operator-compatible independent target for observational scoring", "Predeclared permitted priors", "Old IV1 data keep their registered roles"],
+      "metrics": ["feasible_infeasible_unresolved_fraction", "constraint_residual", "delta_constraint_ledger", "paired_T_RH_error", "own_coverage", "cost"],
+      "outputs": ["inverse_shortlist", "physical_vs_numerical_vs_accuracy_report"]
+    },
+    {
+      "id": "E4.C1", "family": "E4", "name_ru": "Допустимое множество", "recommended_wave": 2,
+      "status": "CONDITIONAL_DESIGN", "depends_on": ["E4.D"], "information_levels": ["ID"],
+      "question": "How wide is the feasible identified set under documented input uncertainty?",
+      "controls": ["strict_feasibility"], "candidates": ["C1_identified_set"],
+      "gates": ["Documented uncertainty intervals", "No probability/CI claim without statistical assumptions"],
+      "metrics": ["set_width", "empty_set_fraction", "sensitivity", "cost"], "outputs": ["identified_set_report"]
+    },
+    {
+      "id": "E4.C3", "family": "E4", "name_ru": "Условный статистический перенос", "recommended_wave": 2,
+      "status": "CONDITIONAL_DESIGN", "depends_on": ["E4.D"], "information_levels": ["ID"],
+      "question": "Does a training-only conditional transport improve independent hourly weather and retain climate signals after projection?",
+      "controls": ["frozen_C2"], "candidates": ["C3_conditional_transport"],
+      "gates": ["Adequate independent training", "Frozen model complexity and projection", "Signal retention assessed separately"],
+      "metrics": ["hourly_error", "distribution_dependence", "climate_signal_distortion", "physical_failures", "cost"], "outputs": ["conditional_transport_report"]
+    },
+    {
+      "id": "E4.J1", "family": "E4", "name_ru": "Совместная вертикальная обратная связь", "recommended_wave": 2,
+      "status": "CONDITIONAL_DESIGN", "depends_on": ["E2", "E4.D"], "information_levels": ["I2", "ID"],
+      "question": "At the same native inputs and anchors, does joint hydrostatic feedback improve over P2+C2?",
+      "controls": ["P2_plus_C2"], "candidates": ["J1_joint_vertical_state"],
+      "gates": ["Native columns and geometry", "Identical information/anchors/prior", "Justified covariance or explicitly non-probabilistic sensitivity study"],
+      "metrics": ["hydrostatic_residual", "constraint_changes", "independent_T_RH_p_error", "identifiability", "cost"], "outputs": ["joint_vertical_report"]
+    },
+    {
+      "id": "E5.W", "family": "E5", "name_ru": "Ветер", "recommended_wave": 1,
+      "status": "DESIGNED", "depends_on": ["E1.0"], "information_levels": ["I0", "I1"],
+      "question": "Which declared donor/transfer/background treatment improves speed and non-calm direction?",
+      "controls": ["nearest", "geographic_IDW", "scalar_vector_circular_controls"],
+      "candidates": ["P8.3D_frozen_selectors", "P8.3F1_frozen_residual_background"],
+      "gates": ["Wind support and sensor/exposure metadata", "Frozen calm/direction-undefined rule", "Selector and transfer varied separately"],
+      "metrics": ["speed_MAE", "vector_error", "noncalm_circular_error", "calm_fraction", "unresolved_direction_fraction", "own_coverage", "cost"],
+      "outputs": ["wind_shortlist", "height_exposure_and_direction_limits"]
+    },
+    {
+      "id": "E5.S", "family": "E5", "name_ru": "Солнечная радиация", "recommended_wave": 1,
+      "status": "DESIGNED", "depends_on": ["E1.0"], "information_levels": ["I0", "I1"],
+      "question": "Does declared geometric/clear-sky normalization improve interval-aligned GHI over raw NN/IDW?",
+      "controls": ["nearest_GHI", "raw_IDW_GHI"], "candidates": ["declared_geometric_or_clear_sky_normalization"],
+      "gates": ["Reference time and aggregate interval alignment", "Measured versus derived components distinguished", "Additional atmospheric inputs recorded"],
+      "metrics": ["daylight_flux_MAE", "daily_monthly_energy_error", "night_violations", "low_sun_strata", "measured_DHI_GHI_error_if_available", "own_coverage", "cost"],
+      "outputs": ["solar_shortlist", "component_lineage_and_limits"]
+    },
+    {
+      "id": "E5.R", "family": "E5", "name_ru": "Осадки", "recommended_wave": 1,
+      "status": "DESIGNED", "depends_on": ["E1.0"], "information_levels": ["I0", "I1"],
+      "question": "Can occurrence and amount be estimated with correct wet/dry sequences rather than only low mean error?",
+      "controls": ["nearest_precip", "raw_IDW_precip"], "candidates": ["two_part_occurrence_amount", "declared_background_residual"],
+      "gates": ["Same precipitation accumulation interval", "Wet threshold fixed from documented contract before scoring"],
+      "metrics": ["amount_MAE", "sum_bias", "wet_precision_recall", "drizzle_frequency", "wet_dry_spell_lengths", "own_coverage", "cost"],
+      "outputs": ["precipitation_shortlist", "occurrence_and_amount_report"]
+    },
+    {
+      "id": "E5.J", "family": "E5", "name_ru": "Совместная погода", "recommended_wave": 2,
+      "status": "DESIGNED", "depends_on": ["E1.H"],
+      "conditional_dependencies": [
+        {"condition": "Claim includes wind", "requires": ["E5.W"]},
+        {"condition": "Claim includes radiation", "requires": ["E5.S"]},
+        {"condition": "Claim includes precipitation", "requires": ["E5.R"]}
+      ],
+      "question": "Do shortlisted components preserve conditional dependence, tails and episodes?",
+      "controls": ["observed_operator_compatible_joint_subsets", "frozen_assembled_baseline"],
+      "candidates": ["shortlisted_assembled_states"],
+      "gates": ["Declare jointly observed fields and coverage separately", "Missing LW is blocked, not zero", "Generator-to-generator comparison is not observed truth"],
+      "metrics": ["within_season_hour_wet_dry_differences", "correlation_and_tail_dependence", "episode_statistics", "joint_physical_failures", "joint_coverage"],
+      "outputs": ["joint_weather_report"]
+    },
+    {
+      "id": "E6", "family": "E6", "name_ru": "Пропуски", "recommended_wave": 2,
+      "status": "DESIGNED", "depends_on": ["E1.0"],
+      "question": "Does frozen two-hour peer-anomaly recovery improve independent masked episodes at transparent acceptance coverage?",
+      "controls": ["linear_T_e_p", "linear_T_RH_p", "declared_temporal_or_donor_control"],
+      "candidates": ["frozen_peer_anomaly"],
+      "gates": ["Mask target and derived truth channels", "Identical permitted context", "No donor cascade", "Retrospective versus online contract explicit"],
+      "primary_gap_hours": [1, 2], "stress_gap_hours": [6, 24, 61],
+      "operational_limits_unchanged": {"maximum_gap_hours": 2, "maximum_annual_fraction": 0.01},
+      "metrics": ["episode_acceptance", "conditional_MAE", "all_episode_coverage_and_failures", "monthly_normal_shift", "downstream_S1_F1_shift", "cost"],
+      "outputs": ["independent_gap_report", "stress_limits_report"]
+    },
+    {
+      "id": "CONFIRM.NEW", "family": "COORDINATION", "name_ru": "Запечатанный контроль новых выбранных гипотез", "recommended_wave": 3,
+      "status": "NOT_SEALED", "depends_on": ["E0", "E1.0"],
+      "conditional_dependencies": [
+        {"condition": "Joint thermodynamic spatial contrast", "requires": ["E1.H"]},
+        {"condition": "Wind contrast", "requires": ["E5.W"]},
+        {"condition": "Solar contrast", "requires": ["E5.S"]},
+        {"condition": "Precipitation contrast", "requires": ["E5.R"]},
+        {"condition": "Joint weather contrast", "requires": ["E5.J"]},
+        {"condition": "Gap recovery contrast", "requires": ["E6"]},
+        {"condition": "New inverse contrast outside IV1", "requires": ["E4.D"]},
+        {"condition": "Future signal contrast", "requires": ["E4.M"]}
+      ],
+      "question": "Do selected predeclared contrasts generalize to out-of-fit/out-of-choice sites or periods?",
+      "gates": ["All applicable seal_requirements satisfied", "No claim of never-seen raw without exposure evidence", "C opened once after candidate freeze"],
+      "new_concrete_targets_dates": null, "new_primary_contrasts": null, "new_margins_and_statistics": null,
+      "outputs": ["sealed_predictions", "complete_scoring_denominators", "confirmed_negative_or_inconclusive_claims"]
+    },
+    {
+      "id": "E7", "family": "E7", "name_ru": "Последствия для здания", "recommended_wave": 4,
+      "status": "DESIGNED", "depends_on": ["CONFIRM.NEW"],
+      "conditional_dependencies": [{"condition": "Future-building claim", "requires": ["E4.M"]}],
+      "question": "How do qualified climate changes affect energy, peaks and comfort for an unchanged actual building model?",
+      "controls": ["frozen_building_with_frozen_climate_base"], "candidates": ["one_field_group_changed", "full_climate_changed"],
+      "gates": ["Actual simulator and model files/version/hash", "Warmup/calendar/control fixed", "Actual admitted climate product for each scope"],
+      "metrics": ["energy", "peak_load", "overheating", "simulation_warnings", "field_interactions", "cost"],
+      "outputs": ["building_impact_report_or_SOURCE_BLOCKED"]
+    },
+    {
+      "id": "E8", "family": "E8", "name_ru": "Воспроизводимость и итоговый маршрут", "recommended_wave": 4,
+      "status": "DESIGNED", "depends_on": ["CONFIRM.NEW"],
+      "conditional_dependencies": [{"condition": "End-to-end building route", "requires": ["E7"]}],
+      "question": "Can a new environment reproduce each scoped route and its failures from real persisted inputs?",
+      "controls": [], "candidates": ["qualified_A0_S1_F1_routes", "explicit_partial_hour_research_route"],
+      "gates": ["Actual accessible files and hashes, not only URI", "Declared scientific and operational claim scope"],
+      "metrics": ["reproduced_cases", "missing_hidden_inputs", "hash_and_export_checks", "runtime_and_resource_cost"],
+      "outputs": ["reproduction_report", "claim_ledger", "explicit_remaining_blockers"]
+    }
+  ],
+  "statistics": {
+    "coverage_counts": ["N_calendar", "N_obs", "N_donor_ready_all", "N_donor_ready_obs", "N_pred_among_obs", "N_pred_all"],
+    "coverage_equations": {"observed": "N_obs/N_calendar", "method": "N_pred_among_obs/N_obs", "calendar_scored_prediction": "N_pred_among_obs/N_calendar", "unobserved_prediction_total": "N_pred_all recorded separately"},
+    "zero_denominator_metric": null,
+    "paired_error_unit": "same target/support/variable and common eligible cases",
+    "report_baseline_on_full_available_control": true,
+    "report_hour_pooled_and_station_season_macro": true,
+    "report_country_specific_and_equal_country_macro": true,
+    "cross_country_transfer": "Separate outer country holdout of learned coefficients; allowed synchronous local donors declared explicitly",
+    "confirmatory_sample_planning": "Independent sites/blocks and D/V variability, practical effect and uncertainty; hourly row count is not sample size",
+    "dependence_for_new_experiments": "TBD before C from D/V: paired time blocks and station-family/spatial grouping appropriate to claim",
+    "independent_hour_assumption_allowed": false,
+    "new_primary_contrasts_margins_multiplicity": null,
+    "legacy_IV1_statistics_unchanged": true
+  },
+  "quality_axes": ["code_numerics", "physics_semantics", "independent_accuracy", "operation"],
+  "outcomes": ["NOT_STARTED", "SOURCE_BLOCKED", "CAPABILITY_BLOCKED", "INFEASIBLE", "UNRESOLVED_NUMERICS", "UNRESOLVED_BUDGET", "NEGATIVE_ACCURACY", "INCONCLUSIVE", "SUPPORTED_WITHIN_SCOPE"],
+  "next_compute_package": ["E0_on_available_D_snapshot", "E1.0_replay_and_resource_pilot"],
+  "unresolved_before_confirmation": ["exact_D_V_C_cohorts_and_exposure", "hourly_adapter_readiness", "operator_and_sensor_history_gaps", "new_contrasts_margins_dependence_multiplicity", "measured_resource_budgets", "IV1_source_lineage", "long_climate_references", "native_future_pressure_if_claimed", "actual_E7_building_engine_and_model"]
+}
