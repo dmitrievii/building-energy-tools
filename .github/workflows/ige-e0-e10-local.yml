@@ -1,0 +1,27 @@
+name: IGE E0 E10 local offline tools
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/ige-e0-e10-local-20261107
+    paths:
+      - tools/ige_climate_experiments/**
+      - .github/workflows/ige-e0-e10-local.yml
+jobs:
+  native-layout-and-process-tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Offline contracts and spawned workers
+        working-directory: tools/ige_climate_experiments
+        run: python -m unittest discover -s tests -v

@@ -1,0 +1,246 @@
+{
+  "product_member": "produkt_p0_stunde_20250505_20261105_01048.txt",
+  "parameter_history": [
+    {
+      "Stations_ID": "1048",
+      "Von_Datum": "19750701",
+      "Bis_Datum": "19801231",
+      "Stationsname": "Dresden-Klotzsche",
+      "Parameter": "P",
+      "Parameterbeschreibung": "auf NN reduzierter Luftdruck",
+      "Einheit": "",
+      "Datenquelle (Strukturversion=SV)": "Daten aus SYNOP-Meldungen (FM 11 1954-1980)",
+      "Zusatz-Info": "in UTC",
+      "Besonderheiten": "",
+      "Literaturhinweis": "",
+      "eor": "eor"
+    },
+    {
+      "Stations_ID": "1048",
+      "Von_Datum": "19810101",
+      "Bis_Datum": "20010331",
+      "Stationsname": "Dresden-Klotzsche",
+      "Parameter": "P",
+      "Parameterbeschreibung": "auf NN reduzierter Luftdruck",
+      "Einheit": "",
+      "Datenquelle (Strukturversion=SV)": "Daten aus SYNOP-Meldungen (FM 12 1981-31.03.2001)",
+      "Zusatz-Info": "in UTC",
+      "Besonderheiten": "",
+      "Literaturhinweis": "",
+      "eor": "eor"
+    },
+    {
+      "Stations_ID": "1048",
+      "Von_Datum": "20010401",
+      "Bis_Datum": "20261105",
+      "Stationsname": "Dresden-Klotzsche",
+      "Parameter": "P",
+      "Parameterbeschreibung": "auf NN reduzierter Luftdruck",
+      "Einheit": "",
+      "Datenquelle (Strukturversion=SV)": "Daten aus SYNOP-Meldungen (FM 12 ab 01.04.2001 mit neuen nationalen Schlüsselgruppen)",
+      "Zusatz-Info": "in UTC",
+      "Besonderheiten": "",
+      "Literaturhinweis": "",
+      "eor": "eor"
+    },
+    {
+      "Stations_ID": "1048",
+      "Von_Datum": "19901011",
+      "Bis_Datum": "20010331",
+      "Stationsname": "Dresden-Klotzsche",
+      "Parameter": "P0",
+      "Parameterbeschreibung": "Luftdruck in Stationshoehe",
+      "Einheit": "",
+      "Datenquelle (Strukturversion=SV)": "Daten aus SYNOP-Meldungen (FM 12 1981-31.03.2001)",
+      "Zusatz-Info": "in UTC",
+      "Besonderheiten": "",
+      "Literaturhinweis": "",
+      "eor": "eor"
+    },
+    {
+      "Stations_ID": "1048",
+      "Von_Datum": "20010401",
+      "Bis_Datum": "20261105",
+      "Stationsname": "Dresden-Klotzsche",
+      "Parameter": "P0",
+      "Parameterbeschreibung": "Luftdruck in Stationshoehe",
+      "Einheit": "",
+      "Datenquelle (Strukturversion=SV)": "Daten aus SYNOP-Meldungen (FM 12 ab 01.04.2001 mit neuen nationalen Schlüsselgruppen)",
+      "Zusatz-Info": "in UTC",
+      "Besonderheiten": "",
+      "Literaturhinweis": "",
+      "eor": "eor"
+    }
+  ],
+  "geography_history": [
+    {
+      "Stations_id": "1048",
+      "Stationshoehe": "152.00",
+      "Geogr.Breite": "51.0883",
+      "Geogr.Laenge": "13.7601",
+      "von_datum": "19260501",
+      "bis_datum": "19350710",
+      "Stationsname": "Dresden-Klotzsche"
+    },
+    {
+      "Stations_id": "1048",
+      "Stationshoehe": "229.00",
+      "Geogr.Breite": "51.1246",
+      "Geogr.Laenge": "13.7639",
+      "von_datum": "19350711",
+      "bis_datum": "19560419",
+      "Stationsname": "Dresden-Klotzsche"
+    },
+    {
+      "Stations_id": "1048",
+      "Stationshoehe": "222.00",
+      "Geogr.Breite": "51.1325",
+      "Geogr.Laenge": "13.7721",
+      "von_datum": "19560420",
+      "bis_datum": "19950831",
+      "Stationsname": "Dresden-Klotzsche"
+    },
+    {
+      "Stations_id": "1048",
+      "Stationshoehe": "227.00",
+      "Geogr.Breite": "51.1280",
+      "Geogr.Laenge": "13.7543",
+      "von_datum": "19950901",
+      "bis_datum": "20120301",
+      "Stationsname": "Dresden-Klotzsche"
+    },
+    {
+      "Stations_id": "1048",
+      "Stationshoehe": "227.00",
+      "Geogr.Breite": "51.1280",
+      "Geogr.Laenge": "13.7543",
+      "von_datum": "20120302",
+      "bis_datum": "20190813",
+      "Stationsname": "Dresden-Klotzsche"
+    },
+    {
+      "Stations_id": "1048",
+      "Stationshoehe": "227.57",
+      "Geogr.Breite": "51.1278",
+      "Geogr.Laenge": "13.7543",
+      "von_datum": "20190814",
+      "bis_datum": "",
+      "Stationsname": "Dresden-Klotzsche"
+    }
+  ],
+  "members": [
+    {
+      "name": "Metadaten_Geraete_Luftdruck_Stationshoehe_01048.html",
+      "bytes": 4647,
+      "crc32": 4058398750
+    },
+    {
+      "name": "Metadaten_Geraete_Luftdruck_Stationshoehe_01048.txt",
+      "bytes": 974,
+      "crc32": 1890258560
+    },
+    {
+      "name": "Metadaten_Stationsname_Betreibername_01048.html",
+      "bytes": 2090,
+      "crc32": 546510350
+    },
+    {
+      "name": "Metadaten_Stationsname_Betreibername_01048.txt",
+      "bytes": 336,
+      "crc32": 186027413
+    },
+    {
+      "name": "Metadaten_Parameter_p0_stunde_01048.html",
+      "bytes": 4168,
+      "crc32": 139946103
+    },
+    {
+      "name": "Metadaten_Parameter_p0_stunde_01048.txt",
+      "bytes": 1024,
+      "crc32": 966872508
+    },
+    {
+      "name": "Metadaten_Geraete_Luftdruck_Reduziert_01048.html",
+      "bytes": 4643,
+      "crc32": 1612945600
+    },
+    {
+      "name": "Metadaten_Geraete_Luftdruck_Reduziert_01048.txt",
+      "bytes": 974,
+      "crc32": 411173634
+    },
+    {
+      "name": "Metadaten_Geographie_01048.txt",
+      "bytes": 505,
+      "crc32": 552172534
+    },
+    {
+      "name": "Metadaten_Fehldaten_01048_20250505_20261105.html",
+      "bytes": 2535,
+      "crc32": 3922858445
+    },
+    {
+      "name": "Metadaten_Fehldaten_01048_20250505_20261105.txt",
+      "bytes": 1005,
+      "crc32": 3752435871
+    },
+    {
+      "name": "Metadaten_Fehlwerte_01048_20250505_20261105.txt",
+      "bytes": 603,
+      "crc32": 3520785326
+    },
+    {
+      "name": "produkt_p0_stunde_20250505_20261105_01048.txt",
+      "bytes": 660043,
+      "crc32": 915610082
+    }
+  ],
+  "original_metadata_members": [
+    "Metadaten_Parameter_p0_stunde_01048.txt",
+    "Metadaten_Geographie_01048.txt"
+  ],
+  "source_url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/pressure/recent/stundenwerte_P0_01048_akt.zip",
+  "zip_sha256": "6df84e8ab8b8cbb2217c86e5e645d7e92d515d32786a4871fa3bb02efcfe8fae",
+  "native_fields": [
+    "STATIONS_ID",
+    "MESS_DATUM",
+    "QN_8",
+    "P",
+    "P0",
+    "eor"
+  ],
+  "coverage": {
+    "selected_rows": 24,
+    "expected_hourly_utc_labels": 24,
+    "distinct_full_hour_utc_labels": 24,
+    "missing_hourly_utc_labels": 0,
+    "off_full_hour_rows": 0,
+    "unresolved_time_rows": 0,
+    "time_basis_counts": {
+      "UTC": 24
+    },
+    "full_utc_hour_label_axis": true,
+    "variables": {
+      "P": {
+        "present_rows": 24,
+        "missing_rows": 0,
+        "qc_on_present": {
+          "QN_8=3": 24
+        },
+        "present_full_hour_utc_labels": 24,
+        "missing_full_hour_utc_labels": 0
+      },
+      "P0": {
+        "present_rows": 24,
+        "missing_rows": 0,
+        "qc_on_present": {
+          "QN_8=3": 24
+        },
+        "present_full_hour_utc_labels": 24,
+        "missing_full_hour_utc_labels": 0
+      }
+    },
+    "full_meteorological_year_or_epw_admission": false
+  },
+  "time_selection_for_unresolved_rows": "nominal_source_clock_bounds; not proven UTC selection"
+}

@@ -1,0 +1,111 @@
+{
+  "schema": "IGE_E0_E10_LOCAL_VALIDATION_v1",
+  "date": "2026-11-07",
+  "tool_version": "0.1.0",
+  "unit_integration_tests": {
+    "command": "python -m unittest discover -s tests -v",
+    "passed": 70,
+    "failed": 0,
+    "observed_runtime_s": 2.625,
+    "platform": "Linux, Python 3.12.14; spawn explicitly used for process checks",
+    "windows_execution": "Not locally observed; Windows and Ubuntu Python 3.10 workflow included"
+  },
+  "cached_real_source_validation": {
+    "scope": "Engineering pipeline validation on previously acquired small UTC windows; not the user full Database and not independent scientific qualification",
+    "E0_jobs": {
+      "AT": {
+        "planned_jobs": 1,
+        "verified_jobs": 1,
+        "pending_jobs": 0,
+        "quarantined_jobs": 0
+      },
+      "DE": {
+        "planned_jobs": 10,
+        "verified_jobs": 10,
+        "pending_jobs": 0,
+        "quarantined_jobs": 0
+      },
+      "CH": {
+        "planned_jobs": 3,
+        "verified_jobs": 3,
+        "pending_jobs": 0,
+        "quarantined_jobs": 0
+      }
+    },
+    "initial_fresh_artifact_hashes": 42,
+    "repeat_fresh_artifact_hashes": 0,
+    "repeat_cached_artifact_hashes": 42,
+    "unchanged_input_files_with_matching_content_mtime_ctime": 87,
+    "profiles": [
+      {
+        "workers": 1,
+        "wall_s": 0.12357191899991449,
+        "expected_jobs": 30,
+        "completed_jobs": 30,
+        "failed_jobs": 0,
+        "budget_exceeded_jobs": 0,
+        "worker_peak_rss_bytes": 24125440
+      },
+      {
+        "workers": 2,
+        "wall_s": 0.2628655489997982,
+        "expected_jobs": 30,
+        "completed_jobs": 30,
+        "failed_jobs": 0,
+        "budget_exceeded_jobs": 0,
+        "worker_peak_rss_bytes": 24125440
+      }
+    ],
+    "parallel_prediction_hashes_match": true,
+    "native_rows_scanned": 144,
+    "retained_cells_including_null_values_with_operators": 360,
+    "scored_method_case_pairs_including_repeated_methods_and_qc_modes": 384,
+    "read_counters": {
+      "native_rows_scanned": 144,
+      "unit_from_official_product_contract_cells": 24
+    },
+    "read_failures": [],
+    "exit_code": 0,
+    "legacy_replays": [
+      {
+        "method": "P8.2F_ACCEPTED_ANNUAL",
+        "status": "SOURCE_BLOCKED",
+        "reason": "Exact accepted annual T/P/e/RH, 12 monthly e inputs and cohort lineage not reconstructed by this small hourly pilot; no substitution under the old method name"
+      },
+      {
+        "method": "S1_FROZEN_ADAPTER",
+        "status": "CAPABILITY_BLOCKED",
+        "reason": "Exact frozen annual/monthly adapter and gradient/input contract not executed by these scalar controls"
+      },
+      {
+        "method": "R1_FROZEN_RESEARCH",
+        "status": "CAPABILITY_BLOCKED",
+        "reason": "Registered full R1 input/implementation replay not bundled in this scalar engineering pilot"
+      }
+    ]
+  },
+  "source_fixture_provenance": "../tests/fixtures/provenance.json",
+  "validation_profile_config": {
+    "windows": [
+      {
+        "start": "2025-01-01T00:00:00Z",
+        "end_exclusive": "2025-01-02T00:00:00Z"
+      },
+      {
+        "start": "2025-06-01T00:00:00Z",
+        "end_exclusive": "2025-06-02T00:00:00Z"
+      }
+    ],
+    "countries": [
+      "AT",
+      "DE",
+      "CH"
+    ],
+    "max_targets_per_country": 3,
+    "benchmark_workers": [
+      1,
+      2
+    ]
+  },
+  "claim_limit": "Only local engineering correctness and immutable-input behavior; P8.2F/S1/R1 full replay and user whole database audit remain pending."
+}

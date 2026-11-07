@@ -1,0 +1,31 @@
+﻿station,role,variable,qc_mode,N_calendar,N_numeric_published,N_eligible,qc_histogram
+AT:16412,target,T,primary,48,0,0,{}
+AT:16412,target,T,sensitivity_all_published,48,0,0,{}
+AT:16412,target,RH,primary,48,0,0,{}
+AT:16412,target,RH,sensitivity_all_published,48,0,0,{}
+AT:16412,target,p,primary,48,24,24,"{""automatic_state_unknown"": 24}"
+AT:16412,target,p,sensitivity_all_published,48,24,24,"{""automatic_state_unknown"": 24}"
+AT:16413,target,T,primary,48,24,24,"{""automatic_state_unknown"": 24}"
+AT:16413,target,T,sensitivity_all_published,48,24,24,"{""automatic_state_unknown"": 24}"
+AT:16413,target,RH,primary,48,24,24,"{""automatic_state_unknown"": 24}"
+AT:16413,target,RH,sensitivity_all_published,48,24,24,"{""automatic_state_unknown"": 24}"
+AT:16413,target,p,primary,48,24,24,"{""automatic_state_unknown"": 24}"
+AT:16413,target,p,sensitivity_all_published,48,24,24,"{""automatic_state_unknown"": 24}"
+CH:smn:BER,target,T,primary,48,24,24,"{""not_supplied"": 24}"
+CH:smn:BER,target,T,sensitivity_all_published,48,24,24,"{""not_supplied"": 24}"
+CH:smn:BER,target,RH,primary,48,24,24,"{""not_supplied"": 24}"
+CH:smn:BER,target,RH,sensitivity_all_published,48,24,24,"{""not_supplied"": 24}"
+CH:smn:BER,target,p,primary,48,24,24,"{""not_supplied"": 24}"
+CH:smn:BER,target,p,sensitivity_all_published,48,24,24,"{""not_supplied"": 24}"
+CH:smn:SMA,target,T,primary,48,24,24,"{""not_supplied"": 24}"
+CH:smn:SMA,target,T,sensitivity_all_published,48,24,24,"{""not_supplied"": 24}"
+CH:smn:SMA,target,RH,primary,48,24,24,"{""not_supplied"": 24}"
+CH:smn:SMA,target,RH,sensitivity_all_published,48,24,24,"{""not_supplied"": 24}"
+CH:smn:SMA,target,p,primary,48,24,24,"{""not_supplied"": 24}"
+CH:smn:SMA,target,p,sensitivity_all_published,48,24,24,"{""not_supplied"": 24}"
+DE:01048,target,T,primary,48,24,24,"{""QN_9=3"": 24}"
+DE:01048,target,T,sensitivity_all_published,48,24,24,"{""QN_9=3"": 24}"
+DE:01048,target,RH,primary,48,24,24,"{""QN_9=3"": 24}"
+DE:01048,target,RH,sensitivity_all_published,48,24,24,"{""QN_9=3"": 24}"
+DE:01048,target,p,primary,48,24,24,"{""QN_8=3"": 24}"
+DE:01048,target,p,sensitivity_all_published,48,24,24,"{""QN_8=3"": 24}"

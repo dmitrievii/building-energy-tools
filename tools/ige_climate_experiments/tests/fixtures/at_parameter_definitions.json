@@ -1,0 +1,20 @@
+{
+  "p": {
+    "name": "p",
+    "long_name": "Luftdruck",
+    "description": "Luftdruck in Stationsniveau, Stunden-Messwert",
+    "unit": "hPa"
+  },
+  "rf": {
+    "name": "rf",
+    "long_name": "Relative Feuchte",
+    "description": "Relative Feuchte, Stunden-Messwert",
+    "unit": "%"
+  },
+  "tl": {
+    "name": "tl",
+    "long_name": "Lufttemperatur 2m",
+    "description": "Lufttemperatur in 2m Höhe, Stunden-Messwert",
+    "unit": "°C"
+  }
+}

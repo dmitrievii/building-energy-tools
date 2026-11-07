@@ -1,0 +1,22 @@
+{
+  "schema": "IGE_E0_E10_SOURCE_ANCHORS_v1",
+  "created_at": "2026-11-07",
+  "program_commit": "b4dbe5013df61db010751878e1f5efebabbdd4b6",
+  "downloader_commits": {
+    "AT": "5519a4b89c5ed3ca47706f44b6e0c67ff4874368",
+    "DE": "42c62b858f2f7489cdb1152359fb2e69030e6a20",
+    "CH": "907e51f4a3e3068f66ac6dff14013b5bc2863fab"
+  },
+  "DWD_hourly_pressure": {
+    "version": "v24.03",
+    "publication_date": "2024-03-29",
+    "pdf_sha256": "acd99fc5f001f236078e9169866d334f894e7717d5c2b62457470351da44bfb8",
+    "provider_url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/pressure/DESCRIPTION_obsgermany_climate_hourly_pressure_en.pdf",
+    "frozen_pdf_url": "https://github.com/dmitrievii/building-energy-tools/blob/42c62b858f2f7489cdb1152359fb2e69030e6a20/tools/germany_climate_download/catalog/sources/acd99fc5f001f236078e9169866d334f894e7717d5c2b62457470351da44bfb8.pdf",
+    "station_pressure_field": "P0",
+    "sea_level_pressure_field": "P",
+    "pressure_unit": "hPa",
+    "fallback_rule": "Only an empty native P0 unit may use this explicit product contract; contradictory native units or reference descriptions are rejected."
+  },
+  "legacy_replay_scope": "P8.2F/S1/R1 replays are not silently replaced by new scalar controls; see per-run blocker ledger."
+}

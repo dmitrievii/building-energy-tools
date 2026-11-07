@@ -1,0 +1,41 @@
+{
+  "schema": "IGE_EXPERIMENT_EXECUTION_STATUS_v1",
+  "date": "2026-11-07",
+  "program_id": "IGE_E0_E8_20261107_v1",
+  "program_specification_commit": "b4dbe5013df61db010751878e1f5efebabbdd4b6",
+  "local_runner": "tools/ige_climate_experiments",
+  "local_runner_version": "0.1.0",
+  "layout": {
+    "database": "<root>/Database/{AT,DE,CH}",
+    "calculations": "<root>/ClimateExperiments",
+    "results": "<root>/ClimateExperiments/results/<attempt_id>",
+    "paths_relative_to": "configuration file",
+    "database_access": "read_only"
+  },
+  "E0": {
+    "implementation": "NATIVE_JOB_HASH_AUDIT_IMPLEMENTED",
+    "coverage_scope": "Receipt summaries for all verified jobs; exact per-hour parsing for selected pilot subset only",
+    "engineering_validation": "14 cached real jobs across AT/DE/CH; 42 artifact hashes; 87 input files unchanged on rerun",
+    "user_full_database_audited_here": false
+  },
+  "E1.0": {
+    "implementation": "SCALAR_ENGINEERING_CONTROLS_IMPLEMENTED",
+    "controls": ["NN_NATIVE", "IDW_NATIVE", "IDW_T_FIXED_LAPSE_PROXY"],
+    "engineering_validation": "30 jobs per profile, serial versus two spawned processes, identical prediction hashes",
+    "default_local_pilot": "D role; metadata-selected <=3 targets per country; four 48-hour windows in 2025",
+    "validation_windows": ["2025-01-01", "2025-06-01"],
+    "legacy_replays": {
+      "P8.2F_ACCEPTED_ANNUAL": "SOURCE_BLOCKED_EXACT_ANNUAL_MONTHLY_LINEAGE",
+      "S1_FROZEN_ADAPTER": "CAPABILITY_BLOCKED_EXACT_ADAPTER_CONTRACT",
+      "R1_FROZEN_RESEARCH": "CAPABILITY_BLOCKED_REGISTERED_FULL_REPLAY"
+    },
+    "full_stage_closed": false,
+    "independent_accuracy_qualified": false
+  },
+  "validation_report": "tools/ige_climate_experiments/validation/summary.json",
+  "local_tests_passed": 70,
+  "local_windows_execution_observed": false,
+  "github_workflow": ".github/workflows/ige-e0-e10-local.yml",
+  "further_scientific_experiments_started": false,
+  "next": "Run local package against user's actual Database, review E0 quarantine/pending and E1.0 denominators; then resolve legacy replay contracts before declaring full E1.0 complete"
+}
