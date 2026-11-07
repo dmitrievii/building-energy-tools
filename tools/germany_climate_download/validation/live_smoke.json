@@ -1,0 +1,498 @@
+{
+  "plan_id": "fd0f4929b41f759d24f633933eab0ca3c283a8825b0e1d928da15716d32b7879",
+  "catalog_id": "84d83c057b9e0fb0cbce61f4fb89c7d7a755267d9f4a4b6c035ecd12939c883c",
+  "jobs": [
+    {
+      "group": "air_temperature",
+      "station_id": "01048",
+      "tier": "recent",
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/air_temperature/recent/stundenwerte_TU_01048_akt.zip",
+      "zip_bytes": 81124,
+      "zip_sha256": "40ecfdf81ba2921504b0c5e9ce29b68a2278cf2736e6e60dcef4461664b2a9a5",
+      "job_id": "d659596e91598d4300f030d2",
+      "coverage": {
+        "selected_rows": 24,
+        "expected_hourly_utc_labels": 24,
+        "distinct_full_hour_utc_labels": 24,
+        "missing_hourly_utc_labels": 0,
+        "off_full_hour_rows": 0,
+        "unresolved_time_rows": 0,
+        "time_basis_counts": {
+          "UTC": 24
+        },
+        "full_utc_hour_label_axis": true,
+        "variables": {
+          "TT_TU": {
+            "present_rows": 24,
+            "missing_rows": 0,
+            "qc_on_present": {
+              "QN_9=3": 24
+            },
+            "present_full_hour_utc_labels": 24,
+            "missing_full_hour_utc_labels": 0
+          },
+          "RF_TU": {
+            "present_rows": 24,
+            "missing_rows": 0,
+            "qc_on_present": {
+              "QN_9=3": 24
+            },
+            "present_full_hour_utc_labels": 24,
+            "missing_full_hour_utc_labels": 0
+          }
+        },
+        "full_meteorological_year_or_epw_admission": false
+      }
+    },
+    {
+      "group": "cloudiness",
+      "station_id": "01048",
+      "tier": "recent",
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/cloudiness/recent/stundenwerte_N_01048_akt.zip",
+      "zip_bytes": 44946,
+      "zip_sha256": "a0725991e4ff4d1cbb4b0374975651009185d42f99690f3d49428fd1421ba4e2",
+      "job_id": "c15af26495d66b4399ec052d",
+      "coverage": {
+        "selected_rows": 24,
+        "expected_hourly_utc_labels": 24,
+        "distinct_full_hour_utc_labels": 24,
+        "missing_hourly_utc_labels": 0,
+        "off_full_hour_rows": 0,
+        "unresolved_time_rows": 0,
+        "time_basis_counts": {
+          "UTC": 24
+        },
+        "full_utc_hour_label_axis": true,
+        "variables": {
+          "V_N_I": {
+            "present_rows": 24,
+            "missing_rows": 0,
+            "qc_on_present": {
+              "QN_8=3": 24
+            },
+            "present_full_hour_utc_labels": 24,
+            "missing_full_hour_utc_labels": 0
+          },
+          "V_N": {
+            "present_rows": 24,
+            "missing_rows": 0,
+            "qc_on_present": {
+              "QN_8=3": 24
+            },
+            "present_full_hour_utc_labels": 24,
+            "missing_full_hour_utc_labels": 0
+          }
+        },
+        "full_meteorological_year_or_epw_admission": false
+      }
+    },
+    {
+      "group": "dew_point",
+      "station_id": "01048",
+      "tier": "recent",
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/dew_point/recent/stundenwerte_TD_01048_akt.zip",
+      "zip_bytes": 81918,
+      "zip_sha256": "f0f395aeb49d2a47486b59c471d3e29f718349e703b3900242010e969ffda5cd",
+      "job_id": "a39542f3eafc9fd03230e7f6",
+      "coverage": {
+        "selected_rows": 24,
+        "expected_hourly_utc_labels": 24,
+        "distinct_full_hour_utc_labels": 24,
+        "missing_hourly_utc_labels": 0,
+        "off_full_hour_rows": 0,
+        "unresolved_time_rows": 0,
+        "time_basis_counts": {
+          "UTC": 24
+        },
+        "full_utc_hour_label_axis": true,
+        "variables": {
+          "TT": {
+            "present_rows": 24,
+            "missing_rows": 0,
+            "qc_on_present": {
+              "QN_8=3": 24
+            },
+            "present_full_hour_utc_labels": 24,
+            "missing_full_hour_utc_labels": 0
+          },
+          "TD": {
+            "present_rows": 24,
+            "missing_rows": 0,
+            "qc_on_present": {
+              "QN_8=3": 24
+            },
+            "present_full_hour_utc_labels": 24,
+            "missing_full_hour_utc_labels": 0
+          }
+        },
+        "full_meteorological_year_or_epw_admission": false
+      }
+    },
+    {
+      "group": "moisture",
+      "station_id": "01048",
+      "tier": "recent",
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/moisture/recent/stundenwerte_TF_01048_akt.zip",
+      "zip_bytes": 190361,
+      "zip_sha256": "c6c0c0d90575b31505684a7e22e90a721d1692ff66539c1d2bbe223a1d118224",
+      "job_id": "acc157b28d1ffdc2e3f0bc20",
+      "coverage": {
+        "selected_rows": 24,
+        "expected_hourly_utc_labels": 24,
+        "distinct_full_hour_utc_labels": 24,
+        "missing_hourly_utc_labels": 0,
+        "off_full_hour_rows": 0,
+        "unresolved_time_rows": 0,
+        "time_basis_counts": {
+          "UTC": 24
+        },
+        "full_utc_hour_label_axis": true,
+        "variables": {
+          "ABSF_STD": {
+            "present_rows": 24,
+            "missing_rows": 0,
+            "qc_on_present": {
+              "QN_8=3": 24
+            },
+            "present_full_hour_utc_labels": 24,
+            "missing_full_hour_utc_labels": 0
+          },
+          "VP_STD": {
+            "present_rows": 24,
+            "missing_rows": 0,
+            "qc_on_present": {
+              "QN_8=3": 24
+            },
+            "present_full_hour_utc_labels": 24,
+            "missing_full_hour_utc_labels": 0
+          },
+          "TF_STD": {
+            "present_rows": 24,
+            "missing_rows": 0,
+            "qc_on_present": {
+              "QN_8=3": 24
+            },
+            "present_full_hour_utc_labels": 24,
+            "missing_full_hour_utc_labels": 0
+          },
+          "P_STD": {
+            "present_rows": 24,
+            "missing_rows": 0,
+            "qc_on_present": {
+              "QN_8=3": 24
+            },
+            "present_full_hour_utc_labels": 24,
+            "missing_full_hour_utc_labels": 0
+          },
+          "TT_STD": {
+            "present_rows": 24,
+            "missing_rows": 0,
+            "qc_on_present": {
+              "QN_8=3": 24
+            },
+            "present_full_hour_utc_labels": 24,
+            "missing_full_hour_utc_labels": 0
+          },
+          "RF_STD": {
+            "present_rows": 24,
+            "missing_rows": 0,
+            "qc_on_present": {
+              "QN_8=3": 24
+            },
+            "present_full_hour_utc_labels": 24,
+            "missing_full_hour_utc_labels": 0
+          },
+          "TD_STD": {
+            "present_rows": 24,
+            "missing_rows": 0,
+            "qc_on_present": {
+              "QN_8=3": 24
+            },
+            "present_full_hour_utc_labels": 24,
+            "missing_full_hour_utc_labels": 0
+          }
+        },
+        "full_meteorological_year_or_epw_admission": false
+      }
+    },
+    {
+      "group": "precipitation",
+      "station_id": "01048",
+      "tier": "recent",
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/precipitation/recent/stundenwerte_RR_01048_akt.zip",
+      "zip_bytes": 45107,
+      "zip_sha256": "7b78b8a833d19c50a5d36506b2323cac276687d4aa112f45c5518bb05b508286",
+      "job_id": "e27b4d2d2c2c0d83b269f0e8",
+      "coverage": {
+        "selected_rows": 24,
+        "expected_hourly_utc_labels": 24,
+        "distinct_full_hour_utc_labels": 24,
+        "missing_hourly_utc_labels": 0,
+        "off_full_hour_rows": 0,
+        "unresolved_time_rows": 0,
+        "time_basis_counts": {
+          "UTC": 24
+        },
+        "full_utc_hour_label_axis": true,
+        "variables": {
+          "R1": {
+            "present_rows": 24,
+            "missing_rows": 0,
+            "qc_on_present": {
+              "QN_8=3": 24
+            },
+            "present_full_hour_utc_labels": 24,
+            "missing_full_hour_utc_labels": 0
+          },
+          "RS_IND": {
+            "present_rows": 24,
+            "missing_rows": 0,
+            "qc_on_present": {
+              "QN_8=3": 24
+            },
+            "present_full_hour_utc_labels": 24,
+            "missing_full_hour_utc_labels": 0
+          },
+          "WRTR": {
+            "present_rows": 24,
+            "missing_rows": 0,
+            "qc_on_present": {
+              "QN_8=3": 24
+            },
+            "present_full_hour_utc_labels": 24,
+            "missing_full_hour_utc_labels": 0
+          }
+        },
+        "full_meteorological_year_or_epw_admission": false
+      }
+    },
+    {
+      "group": "pressure",
+      "station_id": "01048",
+      "tier": "recent",
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/pressure/recent/stundenwerte_P0_01048_akt.zip",
+      "zip_bytes": 83819,
+      "zip_sha256": "6df84e8ab8b8cbb2217c86e5e645d7e92d515d32786a4871fa3bb02efcfe8fae",
+      "job_id": "5744ccba823b3755382246fd",
+      "coverage": {
+        "selected_rows": 24,
+        "expected_hourly_utc_labels": 24,
+        "distinct_full_hour_utc_labels": 24,
+        "missing_hourly_utc_labels": 0,
+        "off_full_hour_rows": 0,
+        "unresolved_time_rows": 0,
+        "time_basis_counts": {
+          "UTC": 24
+        },
+        "full_utc_hour_label_axis": true,
+        "variables": {
+          "P": {
+            "present_rows": 24,
+            "missing_rows": 0,
+            "qc_on_present": {
+              "QN_8=3": 24
+            },
+            "present_full_hour_utc_labels": 24,
+            "missing_full_hour_utc_labels": 0
+          },
+          "P0": {
+            "present_rows": 24,
+            "missing_rows": 0,
+            "qc_on_present": {
+              "QN_8=3": 24
+            },
+            "present_full_hour_utc_labels": 24,
+            "missing_full_hour_utc_labels": 0
+          }
+        },
+        "full_meteorological_year_or_epw_admission": false
+      }
+    },
+    {
+      "group": "solar",
+      "station_id": "01048",
+      "tier": "row",
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/solar/stundenwerte_ST_01048_row.zip",
+      "zip_bytes": 3216748,
+      "zip_sha256": "c8e9b8b8dfd0ef07cf9289b8677aa61511930b0f4dfe1f8bf8254432e4522887",
+      "job_id": "dacd40f2ce9374b6651afff7",
+      "coverage": {
+        "selected_rows": 24,
+        "expected_hourly_utc_labels": 24,
+        "distinct_full_hour_utc_labels": 0,
+        "missing_hourly_utc_labels": 24,
+        "off_full_hour_rows": 24,
+        "unresolved_time_rows": 0,
+        "time_basis_counts": {
+          "UTC": 24
+        },
+        "full_utc_hour_label_axis": false,
+        "variables": {
+          "ATMO_LBERG": {
+            "present_rows": 24,
+            "missing_rows": 0,
+            "qc_on_present": {
+              "QN_592=1": 24
+            },
+            "present_full_hour_utc_labels": 0,
+            "missing_full_hour_utc_labels": 24
+          },
+          "FD_LBERG": {
+            "present_rows": 24,
+            "missing_rows": 0,
+            "qc_on_present": {
+              "QN_592=1": 24
+            },
+            "present_full_hour_utc_labels": 0,
+            "missing_full_hour_utc_labels": 24
+          },
+          "FG_LBERG": {
+            "present_rows": 24,
+            "missing_rows": 0,
+            "qc_on_present": {
+              "QN_592=1": 24
+            },
+            "present_full_hour_utc_labels": 0,
+            "missing_full_hour_utc_labels": 24
+          },
+          "SD_LBERG": {
+            "present_rows": 24,
+            "missing_rows": 0,
+            "qc_on_present": {
+              "QN_592=1": 24
+            },
+            "present_full_hour_utc_labels": 0,
+            "missing_full_hour_utc_labels": 24
+          },
+          "ZENIT": {
+            "present_rows": 24,
+            "missing_rows": 0,
+            "qc_on_present": {
+              "QN_592=1": 24
+            },
+            "present_full_hour_utc_labels": 0,
+            "missing_full_hour_utc_labels": 24
+          }
+        },
+        "full_meteorological_year_or_epw_admission": false
+      }
+    },
+    {
+      "group": "sun",
+      "station_id": "01048",
+      "tier": "recent",
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/sun/recent/stundenwerte_SD_01048_akt.zip",
+      "zip_bytes": 41494,
+      "zip_sha256": "3c0cb1c4bbf29150c05d58a54136bbc45e3d0e7ad6a132cbe84b4959ba736e81",
+      "job_id": "61ee17c66a001dd72c540022",
+      "coverage": {
+        "selected_rows": 18,
+        "expected_hourly_utc_labels": 24,
+        "distinct_full_hour_utc_labels": 18,
+        "missing_hourly_utc_labels": 6,
+        "off_full_hour_rows": 0,
+        "unresolved_time_rows": 0,
+        "time_basis_counts": {
+          "UTC": 18
+        },
+        "full_utc_hour_label_axis": false,
+        "variables": {
+          "SD_SO": {
+            "present_rows": 18,
+            "missing_rows": 0,
+            "qc_on_present": {
+              "QN_7=10": 18
+            },
+            "present_full_hour_utc_labels": 18,
+            "missing_full_hour_utc_labels": 6
+          }
+        },
+        "full_meteorological_year_or_epw_admission": false
+      }
+    },
+    {
+      "group": "visibility",
+      "station_id": "01048",
+      "tier": "recent",
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/visibility/recent/stundenwerte_VV_01048_akt.zip",
+      "zip_bytes": 72729,
+      "zip_sha256": "5579957374c8f2fe6b00c7b386aeb174aa0402ea6171f1786adc728a8cfda629",
+      "job_id": "7a4f64aa36c76cb23b7f9f6f",
+      "coverage": {
+        "selected_rows": 24,
+        "expected_hourly_utc_labels": 24,
+        "distinct_full_hour_utc_labels": 24,
+        "missing_hourly_utc_labels": 0,
+        "off_full_hour_rows": 0,
+        "unresolved_time_rows": 0,
+        "time_basis_counts": {
+          "UTC": 24
+        },
+        "full_utc_hour_label_axis": true,
+        "variables": {
+          "V_VV_I": {
+            "present_rows": 24,
+            "missing_rows": 0,
+            "qc_on_present": {
+              "QN_8=3": 24
+            },
+            "present_full_hour_utc_labels": 24,
+            "missing_full_hour_utc_labels": 0
+          },
+          "V_VV": {
+            "present_rows": 24,
+            "missing_rows": 0,
+            "qc_on_present": {
+              "QN_8=3": 24
+            },
+            "present_full_hour_utc_labels": 24,
+            "missing_full_hour_utc_labels": 0
+          }
+        },
+        "full_meteorological_year_or_epw_admission": false
+      }
+    },
+    {
+      "group": "wind",
+      "station_id": "01048",
+      "tier": "recent",
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/wind/recent/stundenwerte_FF_01048_akt.zip",
+      "zip_bytes": 71174,
+      "zip_sha256": "7b57591d0b66e316d9d636ed6cb1a038f4ca52be1e312b9a987422199ddb0453",
+      "job_id": "a78bd677740c5ce3e450ac44",
+      "coverage": {
+        "selected_rows": 24,
+        "expected_hourly_utc_labels": 24,
+        "distinct_full_hour_utc_labels": 24,
+        "missing_hourly_utc_labels": 0,
+        "off_full_hour_rows": 0,
+        "unresolved_time_rows": 0,
+        "time_basis_counts": {
+          "UTC": 24
+        },
+        "full_utc_hour_label_axis": true,
+        "variables": {
+          "F": {
+            "present_rows": 24,
+            "missing_rows": 0,
+            "qc_on_present": {
+              "QN_3=10": 24
+            },
+            "present_full_hour_utc_labels": 24,
+            "missing_full_hour_utc_labels": 0
+          },
+          "D": {
+            "present_rows": 24,
+            "missing_rows": 0,
+            "qc_on_present": {
+              "QN_3=10": 24
+            },
+            "present_full_hour_utc_labels": 24,
+            "missing_full_hour_utc_labels": 0
+          }
+        },
+        "full_meteorological_year_or_epw_admission": false
+      }
+    }
+  ]
+}

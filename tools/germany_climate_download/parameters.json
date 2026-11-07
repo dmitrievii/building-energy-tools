@@ -1,0 +1,32 @@
+{
+  "provider": "Deutscher Wetterdienst, Climate Data Center (CDC)",
+  "definition_scope": "Reference units from the official group descriptions. Original archive parameter history is authoritative for dates, operators and provenance; native names are retained.",
+  "group_fields": {
+    "air_temperature": {"TT_TU": ["air temperature", "degC"], "RF_TU": ["relative humidity", "%"]},
+    "dew_point": {"TT": ["air temperature", "degC"], "TD": ["dew point temperature", "degC"]},
+    "moisture": {"ABSF_STD": ["computed absolute humidity", "g/m3"], "VP_STD": ["computed vapour pressure", "hPa"], "TF_STD": ["computed wet bulb temperature", "degC"], "P_STD": ["native barometric pressure", "hPa"], "TT_STD": ["air temperature", "degC"], "RF_STD": ["relative humidity", "%"], "TD_STD": ["dew point temperature", "degC"]},
+    "pressure": {"P": ["barometric pressure reduced to sea level NN", "hPa"], "P0": ["barometric pressure at station height", "hPa"]},
+    "wind": {"F": ["wind speed; averaging operator requires dated parameter history", "m/s"], "D": ["wind direction; averaging operator requires dated parameter history", "degree"]},
+    "precipitation": {"R1": ["hourly precipitation", "mm"], "RS_IND": ["precipitation indicator", "provider code"], "WRTR": ["precipitation form", "provider code"]},
+    "cloudiness": {"V_N": ["total cloud cover", "eighths"], "V_N_I": ["cloud cover source indicator", "provider code"]},
+    "sun": {"SD_SO": ["hourly sunshine duration", "minute"]},
+    "solar": {"ATMO_LBERG": ["hourly longwave downward radiation", "J/cm2"], "FD_LBERG": ["hourly diffuse horizontal solar radiation", "J/cm2"], "FG_LBERG": ["hourly global horizontal solar radiation", "J/cm2"], "SD_LBERG": ["hourly sunshine duration", "minute"], "ZENIT": ["solar zenith angle at interval midpoint", "degree"], "MESS_DATUM_WOZ": ["secondary local true solar timestamp", "YYYYMMDDHH:mm"]},
+    "visibility": {"V_VV": ["horizontal visibility", "m"], "V_VV_I": ["visibility source indicator", "provider code"]}
+  },
+  "metadata": {
+    "STATIONS_ID": "DWD station ID, not WMO station number",
+    "MESS_DATUM": "Primary source reference timestamp, preserved; UTC assignment uses dated archive metadata",
+    "QN_*": "Native quality level codes; retained without automatic quality masking or admission",
+    "eor": "Original end-of-record marker",
+    "missing": "-999 and equivalent decimal representations; original tokens retained in exported CSV"
+  },
+  "critical_distinctions": [
+    "P0 is station pressure; P is sea-level-reduced pressure. They must not be interchanged.",
+    "P_STD is retained separately and is not automatically substituted for P0.",
+    "Moisture variables may be derived by the provider and are not independent direct measurements.",
+    "Radiation native hourly sums and minute-bearing timestamps are retained; no rounding, rebinning or conversion is performed.",
+    "Recent station coordinates do not establish historical sensor coordinates or pressure-sensor elevation."
+  ],
+  "description_url_pattern": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/{group}/DESCRIPTION_obsgermany_climate_hourly_{group}_en.pdf",
+  "license": "CC BY 4.0; Quelle: Deutscher Wetterdienst"
+}

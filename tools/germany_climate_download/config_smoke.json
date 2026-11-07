@@ -1,0 +1,8 @@
+{
+  "start": "2025-06-01",
+  "end": "2025-06-01",
+  "groups": "all",
+  "station_ids": ["01048"],
+  "tiers": ["recent", "row"],
+  "min_interval_seconds": 1.0
+}

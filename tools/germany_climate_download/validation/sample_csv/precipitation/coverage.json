@@ -1,0 +1,58 @@
+{
+  "selected_rows": 24,
+  "expected_hourly_utc_labels": 24,
+  "distinct_full_hour_utc_labels": 24,
+  "missing_hourly_utc_labels": 0,
+  "off_full_hour_rows": 0,
+  "unresolved_time_rows": 0,
+  "time_basis_counts": {
+    "UTC": 24
+  },
+  "full_utc_hour_label_axis": true,
+  "variables": {
+    "R1": {
+      "present_rows": 24,
+      "missing_rows": 0,
+      "qc_on_present": {
+        "QN_8=3": 24
+      },
+      "present_full_hour_utc_labels": 24,
+      "missing_full_hour_utc_labels": 0
+    },
+    "RS_IND": {
+      "present_rows": 24,
+      "missing_rows": 0,
+      "qc_on_present": {
+        "QN_8=3": 24
+      },
+      "present_full_hour_utc_labels": 24,
+      "missing_full_hour_utc_labels": 0
+    },
+    "WRTR": {
+      "present_rows": 24,
+      "missing_rows": 0,
+      "qc_on_present": {
+        "QN_8=3": 24
+      },
+      "present_full_hour_utc_labels": 24,
+      "missing_full_hour_utc_labels": 0
+    }
+  },
+  "full_meteorological_year_or_epw_admission": false,
+  "station_id": "01048",
+  "group": "precipitation",
+  "year": 2025,
+  "start_utc_inclusive": "2025-06-01T00:00Z",
+  "end_utc_exclusive": "2025-06-02T00:00Z",
+  "full_calendar_selection": false,
+  "duplicate_rows_removed": 0,
+  "overlap_conflicts_historical_preferred": 0,
+  "source_jobs": [
+    "e27b4d2d2c2c0d83b269f0e8"
+  ],
+  "csv_sha256": "3f6e688cd5361daecd74fbfff3cf87759353e2b49504978456b2638d260a32d7",
+  "native_missing_marker": "-999 (including equivalent decimal representation), preserved in CSV",
+  "native_units_and_parameter_history": [
+    "metadata/e27b4d2d2c2c0d83b269f0e8.json"
+  ]
+}

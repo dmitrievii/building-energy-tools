@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+downloaded/
+catalog_updated/
+plan*.json
+nearest*.csv
+*.part

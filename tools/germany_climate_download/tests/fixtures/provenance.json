@@ -1,0 +1,92 @@
+[
+  {
+    "group": "air_temperature",
+    "fixture_file": "air_temperature.zip",
+    "fixture_sha256": "791abb29749deeff3da09a8e061b3955d15d10f59cc06f878e855881d492ff08",
+    "source_url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/air_temperature/recent/stundenwerte_TU_01048_akt.zip",
+    "source_zip_bytes": 81124,
+    "source_zip_sha256": "40ecfdf81ba2921504b0c5e9ce29b68a2278cf2736e6e60dcef4461664b2a9a5",
+    "transformation": "Original ZIP members; product file restricted to source timestamp date 2025-06-01; metadata unchanged. This is a derived fixture, not an original provider ZIP."
+  },
+  {
+    "group": "dew_point",
+    "fixture_file": "dew_point.zip",
+    "fixture_sha256": "114d93435c55759174baa58068eb3cbc586970250974cd94b989eceed90144ce",
+    "source_url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/dew_point/recent/stundenwerte_TD_01048_akt.zip",
+    "source_zip_bytes": 81918,
+    "source_zip_sha256": "f0f395aeb49d2a47486b59c471d3e29f718349e703b3900242010e969ffda5cd",
+    "transformation": "Original ZIP members; product file restricted to source timestamp date 2025-06-01; metadata unchanged. This is a derived fixture, not an original provider ZIP."
+  },
+  {
+    "group": "moisture",
+    "fixture_file": "moisture.zip",
+    "fixture_sha256": "35e328c49ec759c630cff2239625f9730394f9903fb8a94c77ddd703169947a6",
+    "source_url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/moisture/recent/stundenwerte_TF_01048_akt.zip",
+    "source_zip_bytes": 190361,
+    "source_zip_sha256": "c6c0c0d90575b31505684a7e22e90a721d1692ff66539c1d2bbe223a1d118224",
+    "transformation": "Original ZIP members; product file restricted to source timestamp date 2025-06-01; metadata unchanged. This is a derived fixture, not an original provider ZIP."
+  },
+  {
+    "group": "pressure",
+    "fixture_file": "pressure.zip",
+    "fixture_sha256": "3eafa3de5eea37b1259d7f83c00ac16d591125cbdae0eae8180b2a49b6dbf648",
+    "source_url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/pressure/recent/stundenwerte_P0_01048_akt.zip",
+    "source_zip_bytes": 83819,
+    "source_zip_sha256": "6df84e8ab8b8cbb2217c86e5e645d7e92d515d32786a4871fa3bb02efcfe8fae",
+    "transformation": "Original ZIP members; product file restricted to source timestamp date 2025-06-01; metadata unchanged. This is a derived fixture, not an original provider ZIP."
+  },
+  {
+    "group": "wind",
+    "fixture_file": "wind.zip",
+    "fixture_sha256": "84afa86d35054c878b210181fc6ebdfca067cbb71868dba998b3592372850ef8",
+    "source_url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/wind/recent/stundenwerte_FF_01048_akt.zip",
+    "source_zip_bytes": 71174,
+    "source_zip_sha256": "7b57591d0b66e316d9d636ed6cb1a038f4ca52be1e312b9a987422199ddb0453",
+    "transformation": "Original ZIP members; product file restricted to source timestamp date 2025-06-01; metadata unchanged. This is a derived fixture, not an original provider ZIP."
+  },
+  {
+    "group": "precipitation",
+    "fixture_file": "precipitation.zip",
+    "fixture_sha256": "e9baecb0f301057a152680e08650d16d05eabbd0839f47c524606efe47779931",
+    "source_url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/precipitation/recent/stundenwerte_RR_01048_akt.zip",
+    "source_zip_bytes": 45107,
+    "source_zip_sha256": "7b78b8a833d19c50a5d36506b2323cac276687d4aa112f45c5518bb05b508286",
+    "transformation": "Original ZIP members; product file restricted to source timestamp date 2025-06-01; metadata unchanged. This is a derived fixture, not an original provider ZIP."
+  },
+  {
+    "group": "cloudiness",
+    "fixture_file": "cloudiness.zip",
+    "fixture_sha256": "d21bad44fdfa731df76aa783bf528b3fa69ccb949d5880a9f8a3cf1f26b3d201",
+    "source_url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/cloudiness/recent/stundenwerte_N_01048_akt.zip",
+    "source_zip_bytes": 44946,
+    "source_zip_sha256": "a0725991e4ff4d1cbb4b0374975651009185d42f99690f3d49428fd1421ba4e2",
+    "transformation": "Original ZIP members; product file restricted to source timestamp date 2025-06-01; metadata unchanged. This is a derived fixture, not an original provider ZIP."
+  },
+  {
+    "group": "sun",
+    "fixture_file": "sun.zip",
+    "fixture_sha256": "f39f148129b54bbed3144140d4f5d9d8e9b9021c25ea63c1f36e0049cf368374",
+    "source_url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/sun/recent/stundenwerte_SD_01048_akt.zip",
+    "source_zip_bytes": 41494,
+    "source_zip_sha256": "3c0cb1c4bbf29150c05d58a54136bbc45e3d0e7ad6a132cbe84b4959ba736e81",
+    "transformation": "Original ZIP members; product file restricted to source timestamp date 2025-06-01; metadata unchanged. This is a derived fixture, not an original provider ZIP."
+  },
+  {
+    "group": "solar",
+    "fixture_file": "solar.zip",
+    "fixture_sha256": "204d5c6bd37a9ef1f77108eff868a67e7c315ccf05252057bcd59ac1ebe53088",
+    "source_url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/solar/stundenwerte_ST_01048_row.zip",
+    "source_zip_bytes": 3216748,
+    "source_zip_sha256": "c8e9b8b8dfd0ef07cf9289b8677aa61511930b0f4dfe1f8bf8254432e4522887",
+    "transformation": "Original ZIP members; product file restricted to source timestamp date 2025-06-01; metadata unchanged. This is a derived fixture, not an original provider ZIP."
+  },
+  {
+    "group": "visibility",
+    "fixture_file": "visibility.zip",
+    "fixture_sha256": "7d1ba82e49733d772c9f5245b26e9f39fed5c43e763341a94c874ac9024a90b9",
+    "source_url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/visibility/recent/stundenwerte_VV_01048_akt.zip",
+    "source_zip_bytes": 72729,
+    "source_zip_sha256": "5579957374c8f2fe6b00c7b386aeb174aa0402ea6171f1786adc728a8cfda629",
+    "transformation": "Original ZIP members; product file restricted to source timestamp date 2025-06-01; metadata unchanged. This is a derived fixture, not an original provider ZIP."
+  }
+]

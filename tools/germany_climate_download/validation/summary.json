@@ -1,0 +1,63 @@
+{
+  "version": "1.0.0",
+  "recorded_at_utc": "2026-11-07T01:50:04.547677+00:00",
+  "python": "3.12.14",
+  "main_base_commit": "eb4e14d84b2e372feeba73713b18d21cde7f2207",
+  "target_branch": "research/ige-de-climate-download-20261107",
+  "catalog_id": "84d83c057b9e0fb0cbce61f4fb89c7d7a755267d9f4a4b6c035ecd12939c883c",
+  "catalog_station_ids": 2414,
+  "catalog_groups": [
+    "air_temperature",
+    "dew_point",
+    "moisture",
+    "pressure",
+    "wind",
+    "precipitation",
+    "cloudiness",
+    "sun",
+    "solar",
+    "visibility"
+  ],
+  "catalog_group_records": 14124,
+  "catalog_archive_entries": 10426,
+  "unit_tests": {
+    "count": 62,
+    "failures": 0,
+    "errors": 0,
+    "duration_seconds": 10.099,
+    "network_used": false,
+    "test_log_note": "Expected negative cases may print a download failure; the enclosing tests assert these rejections."
+  },
+  "live_smoke": {
+    "station_id": "01048",
+    "station_name": "Dresden-Klotzsche",
+    "source_timestamp_selection": "2025-06-01",
+    "plan_id": "fd0f4929b41f759d24f633933eab0ca3c283a8825b0e1d928da15716d32b7879",
+    "completed_archives": 10,
+    "zip_bytes": 3929420,
+    "exported_groups": 10,
+    "network_download_performed": true
+  },
+  "resume": {
+    "plan_id": "fd0f4929b41f759d24f633933eab0ca3c283a8825b0e1d928da15716d32b7879",
+    "planned_jobs": 10,
+    "completed_jobs": 10,
+    "remaining_jobs": 0,
+    "attempted_this_invocation": 0,
+    "failures_this_invocation": [],
+    "all_transfers_complete": true,
+    "meteorological_completeness_or_epw_admission_assessed": false
+  },
+  "full_decade_plan": {
+    "start": "2016-01-01",
+    "end": "2025-12-31",
+    "plan_id": "e13ab8aa5ab68b337ab6bcea1fffa2655f36ec3b021b429712e5c5c37e016377",
+    "station_ids": 1542,
+    "zip_archives": 4478,
+    "listing_zip_bytes": 5422207422,
+    "mass_download_performed": false
+  },
+  "qualified_result": "Acquisition, preservation, integrity, native-clock handling and export. No interpolation accuracy or EPW admission.",
+  "source_code_sha256": "88f55c425d03fa38315d15bfa1d37aca1dc189a3731a80912c3ac6e17cb1ac71",
+  "tests_sha256": "22483e6319ca87096b46c8162ed1dcb86defd975e461b2c4bc2ed163b7e3da9b"
+}

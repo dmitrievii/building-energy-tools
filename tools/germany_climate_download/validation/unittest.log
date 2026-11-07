@@ -1,0 +1,95 @@
+test_all_catalogue_outputs_match_manifest (test_germany_climate.Contracts.test_all_catalogue_outputs_match_manifest) ... ok
+test_all_catalogue_source_hashes (test_germany_climate.Contracts.test_all_catalogue_source_hashes) ... ok
+test_all_empty_parameter_not_inferred_complete (test_germany_climate.Contracts.test_all_empty_parameter_not_inferred_complete) ... ok
+test_archive_filename_and_date_interval (test_germany_climate.Contracts.test_archive_filename_and_date_interval) ... ok
+test_bad_end_of_record_rejected (test_germany_climate.Contracts.test_bad_end_of_record_rejected) ... ok
+test_conflicting_archives_in_same_tier_block_export (test_germany_climate.Contracts.test_conflicting_archives_in_same_tier_block_export) ... [1/2] pressure 01048 historical
+  selected rows: 24
+[2/2] pressure 01048 historical
+  selected rows: 24
+ok
+test_date_end_is_exclusive_next_day (test_germany_climate.Contracts.test_date_end_is_exclusive_next_day) ... ok
+test_download_resume_verifies_all_artifacts (test_germany_climate.Contracts.test_download_resume_verifies_all_artifacts) ... [1/1] pressure 01048 recent
+  selected rows: 24
+[1/1] pressure 01048 recent
+  selected rows: 24
+[1/1] pressure 01048 recent
+  selected rows: 24
+[1/1] pressure 01048 recent
+  selected rows: 24
+[1/1] pressure 01048 recent
+  selected rows: 24
+[1/1] pressure 01048 recent
+  selected rows: 24
+ok
+test_duplicate_timestamp_rejected (test_germany_climate.Contracts.test_duplicate_timestamp_rejected) ... ok
+test_duplicate_zip_member_rejected (test_germany_climate.Contracts.test_duplicate_zip_member_rejected) ... ok
+test_dwd_id_is_not_wmo_number (test_germany_climate.Contracts.test_dwd_id_is_not_wmo_number) ... ok
+test_explicit_offset_converted (test_germany_climate.Contracts.test_explicit_offset_converted) ... ok
+test_export_blocks_missing_or_corrupt_archive (test_germany_climate.Contracts.test_export_blocks_missing_or_corrupt_archive) ... [1/1] pressure 01048 recent
+  selected rows: 24
+ok
+test_export_partial_year_label (test_germany_climate.Contracts.test_export_partial_year_label) ... ok
+test_export_wrong_year_rejected (test_germany_climate.Contracts.test_export_wrong_year_rejected) ... ok
+test_failure_reported_and_lock_released (test_germany_climate.Contracts.test_failure_reported_and_lock_released) ... [1/1] pressure 01048 recent
+  FAILED: SourceError: ZIP size differs from frozen directory listing; refresh catalogue and create a new plan/output
+ok
+test_fixture_provenance (test_germany_climate.Contracts.test_fixture_provenance) ... ok
+test_fractional_user_bounds_rejected (test_germany_climate.Contracts.test_fractional_user_bounds_rejected) ... ok
+test_geojson_longitude_latitude (test_germany_climate.Contracts.test_geojson_longitude_latitude) ... ok
+test_haversine_coordinate_order (test_germany_climate.Contracts.test_haversine_coordinate_order) ... ok
+test_historical_geography_is_retained (test_germany_climate.Contracts.test_historical_geography_is_retained) ... ok
+test_historical_recent_overlap_prefers_historical (test_germany_climate.Contracts.test_historical_recent_overlap_prefers_historical) ... [1/2] pressure 01048 historical
+  selected rows: 24
+[2/2] pressure 01048 recent
+  selected rows: 24
+ok
+test_incomplete_receipt_not_skipped (test_germany_climate.Contracts.test_incomplete_receipt_not_skipped) ... ok
+test_leap_year_8784_expected_labels (test_germany_climate.Contracts.test_leap_year_8784_expected_labels) ... ok
+test_locked_run_does_not_download (test_germany_climate.Contracts.test_locked_run_does_not_download) ... ok
+test_max_jobs_limits_new_attempts (test_germany_climate.Contracts.test_max_jobs_limits_new_attempts) ... [1/2] pressure 01048 recent
+  selected rows: 24
+ok
+test_metadata_missing_rejected (test_germany_climate.Contracts.test_metadata_missing_rejected) ... ok
+test_mez_metadata_conversion_is_explicit (test_germany_climate.Contracts.test_mez_metadata_conversion_is_explicit) ... ok
+test_missing_marker_zero_and_qc_preserved (test_germany_climate.Contracts.test_missing_marker_zero_and_qc_preserved) ... ok
+test_missing_quality_column_rejected (test_germany_climate.Contracts.test_missing_quality_column_rejected) ... ok
+test_naive_user_datetime_rejected (test_germany_climate.Contracts.test_naive_user_datetime_rejected) ... ok
+test_nearest_group_date_and_exclusion (test_germany_climate.Contracts.test_nearest_group_date_and_exclusion) ... ok
+test_nearest_height_requires_elevation (test_germany_climate.Contracts.test_nearest_height_requires_elevation) ... ok
+test_nearest_invalid_geography (test_germany_climate.Contracts.test_nearest_invalid_geography) ... ok
+test_nearest_radius_filter (test_germany_climate.Contracts.test_nearest_radius_filter) ... ok
+test_nonfinite_native_value_rejected (test_germany_climate.Contracts.test_nonfinite_native_value_rejected) ... ok
+test_old_sun_woz_not_assigned_utc (test_germany_climate.Contracts.test_old_sun_woz_not_assigned_utc) ... ok
+test_packaged_catalogue_identity (test_germany_climate.Contracts.test_packaged_catalogue_identity) ... ok
+test_plan_contains_no_automatic_recent_overlap (test_germany_climate.Contracts.test_plan_contains_no_automatic_recent_overlap) ... ok
+test_plan_roundtrip_and_tamper_rejected (test_germany_climate.Contracts.test_plan_roundtrip_and_tamper_rejected) ... ok
+test_plan_unavailable_station_rejected (test_germany_climate.Contracts.test_plan_unavailable_station_rejected) ... ok
+test_plan_unknown_config_rejected (test_germany_climate.Contracts.test_plan_unknown_config_rejected) ... ok
+test_pressure_semantics_in_actual_metadata (test_germany_climate.Contracts.test_pressure_semantics_in_actual_metadata) ... ok
+test_real_dwd_fixture_air_temperature (test_germany_climate.Contracts.test_real_dwd_fixture_air_temperature) ... ok
+test_real_dwd_fixture_cloudiness (test_germany_climate.Contracts.test_real_dwd_fixture_cloudiness) ... ok
+test_real_dwd_fixture_dew_point (test_germany_climate.Contracts.test_real_dwd_fixture_dew_point) ... ok
+test_real_dwd_fixture_moisture (test_germany_climate.Contracts.test_real_dwd_fixture_moisture) ... ok
+test_real_dwd_fixture_precipitation (test_germany_climate.Contracts.test_real_dwd_fixture_precipitation) ... ok
+test_real_dwd_fixture_pressure (test_germany_climate.Contracts.test_real_dwd_fixture_pressure) ... ok
+test_real_dwd_fixture_solar (test_germany_climate.Contracts.test_real_dwd_fixture_solar) ... ok
+test_real_dwd_fixture_sun (test_germany_climate.Contracts.test_real_dwd_fixture_sun) ... ok
+test_real_dwd_fixture_visibility (test_germany_climate.Contracts.test_real_dwd_fixture_visibility) ... ok
+test_real_dwd_fixture_wind (test_germany_climate.Contracts.test_real_dwd_fixture_wind) ... ok
+test_solar_minutes_and_secondary_woz_retained (test_germany_climate.Contracts.test_solar_minutes_and_secondary_woz_retained) ... ok
+test_successful_transfer_can_have_zero_selected_rows (test_germany_climate.Contracts.test_successful_transfer_can_have_zero_selected_rows) ... [1/1] pressure 01048 recent
+  selected rows: 0
+ok
+test_sun_absent_night_rows_not_fabricated (test_germany_climate.Contracts.test_sun_absent_night_rows_not_fabricated) ... ok
+test_truncated_row_rejected (test_germany_climate.Contracts.test_truncated_row_rejected) ... ok
+test_unknown_or_conflicting_clock_not_guessed (test_germany_climate.Contracts.test_unknown_or_conflicting_clock_not_guessed) ... ok
+test_unsafe_zip_path_rejected (test_germany_climate.Contracts.test_unsafe_zip_path_rejected) ... ok
+test_untrusted_source_url_rejected (test_germany_climate.Contracts.test_untrusted_source_url_rejected) ... ok
+test_wrong_station_in_product_rejected (test_germany_climate.Contracts.test_wrong_station_in_product_rejected) ... ok
+test_zip_size_change_requires_new_snapshot (test_germany_climate.Contracts.test_zip_size_change_requires_new_snapshot) ... ok
+
+----------------------------------------------------------------------
+Ran 62 tests in 10.099s
+
+OK

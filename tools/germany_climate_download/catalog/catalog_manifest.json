@@ -1,0 +1,507 @@
+{
+  "catalog_id": "84d83c057b9e0fb0cbce61f4fb89c7d7a755267d9f4a4b6c035ecd12939c883c",
+  "created_at_utc": "2026-11-07T01:43:55.405234+00:00",
+  "station_ids": 2414,
+  "group_records": 14124,
+  "archives": 10426,
+  "sources": [
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/air_temperature/DESCRIPTION_obsgermany_climate_hourly_air_temperature_en.pdf",
+      "sha256": "2b70224e4801da68c601bc95c145d221194ac5572b3d7ebb9a1a14abfe90d2d8",
+      "path": "sources/2b70224e4801da68c601bc95c145d221194ac5572b3d7ebb9a1a14abfe90d2d8.pdf",
+      "stored_sha256": "2b70224e4801da68c601bc95c145d221194ac5572b3d7ebb9a1a14abfe90d2d8",
+      "compression": "none",
+      "retrieved_at_utc": "2026-11-07T01:43:44.607751+00:00",
+      "role": "dataset_description",
+      "bytes": 32617
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/air_temperature/historical/",
+      "sha256": "2d074a9ab5bcad7eca0188a2986dd0051575a97d4e146a4d40ef07ffbbf5001d",
+      "path": "sources/2d074a9ab5bcad7eca0188a2986dd0051575a97d4e146a4d40ef07ffbbf5001d.html.gz",
+      "stored_sha256": "77678af0850d9c47bf8cc27d5e571ed0466244233b595df8e2c3e121edc8b9b7",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:44.613595+00:00",
+      "role": "directory_listing",
+      "bytes": 99831
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/air_temperature/historical/TU_Stundenwerte_Beschreibung_Stationen.txt",
+      "sha256": "057218a16337e515c8ba5a81a0b42513ecb7734b390523e6f98ac5e937432738",
+      "path": "sources/057218a16337e515c8ba5a81a0b42513ecb7734b390523e6f98ac5e937432738.txt.gz",
+      "stored_sha256": "62d2d52425f2fafe7cadfc91d9b7a792ccc82a40d8cd06953535b707c9f3e7a7",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:44.649104+00:00",
+      "role": "station_list",
+      "bytes": 669561
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/air_temperature/recent/",
+      "sha256": "d303a031bd7ffe3654ef3f3d022c5761c94a161847b76f60aed161dd7bdd41ba",
+      "path": "sources/d303a031bd7ffe3654ef3f3d022c5761c94a161847b76f60aed161dd7bdd41ba.html.gz",
+      "stored_sha256": "784b96307a947bafc37520d0d644eea86d5095f163fbbc2e1aadbac6ace9a61a",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:45.011600+00:00",
+      "role": "directory_listing",
+      "bytes": 69362
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/air_temperature/recent/TU_Stundenwerte_Beschreibung_Stationen.txt",
+      "sha256": "057218a16337e515c8ba5a81a0b42513ecb7734b390523e6f98ac5e937432738",
+      "path": "sources/057218a16337e515c8ba5a81a0b42513ecb7734b390523e6f98ac5e937432738.txt.gz",
+      "stored_sha256": "62d2d52425f2fafe7cadfc91d9b7a792ccc82a40d8cd06953535b707c9f3e7a7",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:45.048026+00:00",
+      "role": "station_list",
+      "bytes": 669561
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/dew_point/DESCRIPTION_obsgermany_climate_hourly_dew_point_en.pdf",
+      "sha256": "313ce9ff88fb1bbe7fac2e2283327750bda0648094f6a67c2ce8d6d50af7c802",
+      "path": "sources/313ce9ff88fb1bbe7fac2e2283327750bda0648094f6a67c2ce8d6d50af7c802.pdf",
+      "stored_sha256": "313ce9ff88fb1bbe7fac2e2283327750bda0648094f6a67c2ce8d6d50af7c802",
+      "compression": "none",
+      "retrieved_at_utc": "2026-11-07T01:43:45.416742+00:00",
+      "role": "dataset_description",
+      "bytes": 31841
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/dew_point/historical/",
+      "sha256": "a69ce59ccecb775ba24421c5f7615421e718a0d5eedd6612a9f1591713e939f2",
+      "path": "sources/a69ce59ccecb775ba24421c5f7615421e718a0d5eedd6612a9f1591713e939f2.html.gz",
+      "stored_sha256": "06872d5cfb5f3dde754482f61611d85c7fe99ea65d4f27bc1155dcfad3d7b4d5",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:45.423494+00:00",
+      "role": "directory_listing",
+      "bytes": 112455
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/dew_point/historical/TD_Stundenwerte_Beschreibung_Stationen.txt",
+      "sha256": "a7ca1ebf0aa0c984cb06a50238b5fb3ab0410bf5cf749c308162051e47eb98e0",
+      "path": "sources/a7ca1ebf0aa0c984cb06a50238b5fb3ab0410bf5cf749c308162051e47eb98e0.txt.gz",
+      "stored_sha256": "6d430d653b724386817e9ea429a35e5d01a022e978ceb9b39a84a2ca8cb8ed99",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:45.470198+00:00",
+      "role": "station_list",
+      "bytes": 863949
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/dew_point/recent/",
+      "sha256": "54e66b4ebbd95e94e053611decf5bbd2043e2ae4da02d7bccc7fd2234d7d754a",
+      "path": "sources/54e66b4ebbd95e94e053611decf5bbd2043e2ae4da02d7bccc7fd2234d7d754a.html.gz",
+      "stored_sha256": "69f3fbb916b0c44dab61969a104e6b100eaf8ff4246c9023a8fbba10a25c2273",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:46.077394+00:00",
+      "role": "directory_listing",
+      "bytes": 82228
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/dew_point/recent/TD_Stundenwerte_Beschreibung_Stationen.txt",
+      "sha256": "a7ca1ebf0aa0c984cb06a50238b5fb3ab0410bf5cf749c308162051e47eb98e0",
+      "path": "sources/a7ca1ebf0aa0c984cb06a50238b5fb3ab0410bf5cf749c308162051e47eb98e0.txt.gz",
+      "stored_sha256": "6d430d653b724386817e9ea429a35e5d01a022e978ceb9b39a84a2ca8cb8ed99",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:46.127622+00:00",
+      "role": "station_list",
+      "bytes": 863949
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/moisture/DESCRIPTION_obsgermany_climate_hourly_moisture_en.pdf",
+      "sha256": "b913a796dac930c789bb34c4700e9414f5f030c2a8a541e6c69275198cae31b4",
+      "path": "sources/b913a796dac930c789bb34c4700e9414f5f030c2a8a541e6c69275198cae31b4.pdf",
+      "stored_sha256": "b913a796dac930c789bb34c4700e9414f5f030c2a8a541e6c69275198cae31b4",
+      "compression": "none",
+      "retrieved_at_utc": "2026-11-07T01:43:46.650771+00:00",
+      "role": "dataset_description",
+      "bytes": 31115
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/moisture/historical/",
+      "sha256": "ab7faf4a690dd587658b9ede9d10cf3660e6666af3204f613609cca3ac6a11ad",
+      "path": "sources/ab7faf4a690dd587658b9ede9d10cf3660e6666af3204f613609cca3ac6a11ad.html.gz",
+      "stored_sha256": "36d3a38d52b6d9bad2aafee031634cf5e7c7a05b82635e3b9aa3dda08056e3a8",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:46.657881+00:00",
+      "role": "directory_listing",
+      "bytes": 112297
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/moisture/historical/TF_Stundenwerte_Beschreibung_Stationen.txt",
+      "sha256": "d971bb8e41dc0ffb05bcd3fe78c4bf981b9b8773bcde8692a778e3c3058e0c30",
+      "path": "sources/d971bb8e41dc0ffb05bcd3fe78c4bf981b9b8773bcde8692a778e3c3058e0c30.txt.gz",
+      "stored_sha256": "3e0f2b33d8b3502bacb0d54a3033525b0013bd16039e5cb28b531184339e4475",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:46.703314+00:00",
+      "role": "station_list",
+      "bytes": 867957
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/moisture/recent/",
+      "sha256": "10219ff434eeb46d653fbcc83e32ea16e247e2f459c9bc4df1c3b6337c355dec",
+      "path": "sources/10219ff434eeb46d653fbcc83e32ea16e247e2f459c9bc4df1c3b6337c355dec.html.gz",
+      "stored_sha256": "f4ff55ec83251fa8265284bce8e531ae8d8c724d10814fe4eb34c21090ec1bdd",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:47.288547+00:00",
+      "role": "directory_listing",
+      "bytes": 82226
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/moisture/recent/TF_Stundenwerte_Beschreibung_Stationen.txt",
+      "sha256": "d971bb8e41dc0ffb05bcd3fe78c4bf981b9b8773bcde8692a778e3c3058e0c30",
+      "path": "sources/d971bb8e41dc0ffb05bcd3fe78c4bf981b9b8773bcde8692a778e3c3058e0c30.txt.gz",
+      "stored_sha256": "3e0f2b33d8b3502bacb0d54a3033525b0013bd16039e5cb28b531184339e4475",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:47.327205+00:00",
+      "role": "station_list",
+      "bytes": 867957
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/pressure/DESCRIPTION_obsgermany_climate_hourly_pressure_en.pdf",
+      "sha256": "acd99fc5f001f236078e9169866d334f894e7717d5c2b62457470351da44bfb8",
+      "path": "sources/acd99fc5f001f236078e9169866d334f894e7717d5c2b62457470351da44bfb8.pdf",
+      "stored_sha256": "acd99fc5f001f236078e9169866d334f894e7717d5c2b62457470351da44bfb8",
+      "compression": "none",
+      "retrieved_at_utc": "2026-11-07T01:43:47.850765+00:00",
+      "role": "dataset_description",
+      "bytes": 31940
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/pressure/historical/",
+      "sha256": "2e417f821123134623f8ec72e33bff390271f23861ed82baf29c3fd1cc6208bc",
+      "path": "sources/2e417f821123134623f8ec72e33bff390271f23861ed82baf29c3fd1cc6208bc.html.gz",
+      "stored_sha256": "94163d631788bbedd33ed993447d8a974be45515eec252e87b3bfa646f31870c",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:47.854070+00:00",
+      "role": "directory_listing",
+      "bytes": 49273
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/pressure/historical/P0_Stundenwerte_Beschreibung_Stationen.txt",
+      "sha256": "19ddf0d576864e5b9697fc633c9a3aa946e9f1ddadcaf6a47786c02827586eef",
+      "path": "sources/19ddf0d576864e5b9697fc633c9a3aa946e9f1ddadcaf6a47786c02827586eef.txt.gz",
+      "stored_sha256": "2318eb73fe457cd92b0090b48d4de82386560216f36c4abcd9c81ee91a641c96",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:47.872080+00:00",
+      "role": "station_list",
+      "bytes": 331887
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/pressure/recent/",
+      "sha256": "216905ff20f69e2ae95e737b340246edaf6017c98568ea83b4ff7bb2b1f9d2f5",
+      "path": "sources/216905ff20f69e2ae95e737b340246edaf6017c98568ea83b4ff7bb2b1f9d2f5.html.gz",
+      "stored_sha256": "714e296df9b043f0514dfdf27527d962df2ff26b0a64af33c871c3b1d2d047d9",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:47.970223+00:00",
+      "role": "directory_listing",
+      "bytes": 29755
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/pressure/recent/P0_Stundenwerte_Beschreibung_Stationen.txt",
+      "sha256": "19ddf0d576864e5b9697fc633c9a3aa946e9f1ddadcaf6a47786c02827586eef",
+      "path": "sources/19ddf0d576864e5b9697fc633c9a3aa946e9f1ddadcaf6a47786c02827586eef.txt.gz",
+      "stored_sha256": "2318eb73fe457cd92b0090b48d4de82386560216f36c4abcd9c81ee91a641c96",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:47.987703+00:00",
+      "role": "station_list",
+      "bytes": 331887
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/wind/DESCRIPTION_obsgermany_climate_hourly_wind_en.pdf",
+      "sha256": "e909330bf193f2daf04f0f53add748165c3c4b9ee7ec22065e9d1ac53291744b",
+      "path": "sources/e909330bf193f2daf04f0f53add748165c3c4b9ee7ec22065e9d1ac53291744b.pdf",
+      "stored_sha256": "e909330bf193f2daf04f0f53add748165c3c4b9ee7ec22065e9d1ac53291744b",
+      "compression": "none",
+      "retrieved_at_utc": "2026-11-07T01:43:48.074193+00:00",
+      "role": "dataset_description",
+      "bytes": 32423
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/wind/historical/",
+      "sha256": "0d4cc73e7a399228beafc9a33aded30970936dad97bd141c4da380486a481f5f",
+      "path": "sources/0d4cc73e7a399228beafc9a33aded30970936dad97bd141c4da380486a481f5f.html.gz",
+      "stored_sha256": "68f5bafbd96c62fdff082bdfaac16bac2e7533e5cc95dc6ce91f89cd0863ae2c",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:48.077938+00:00",
+      "role": "directory_listing",
+      "bytes": 71105
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/wind/historical/FF_Stundenwerte_Beschreibung_Stationen.txt",
+      "sha256": "8f5e4c525c8771dafcaa82fe2c5d89f3560adb530dc2e72c3c0174878405ffc3",
+      "path": "sources/8f5e4c525c8771dafcaa82fe2c5d89f3560adb530dc2e72c3c0174878405ffc3.txt.gz",
+      "stored_sha256": "01f992de8ab2433ea74ee6a9e0871d2a7a63c68d352b48e48e6342609d0f297d",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:48.103574+00:00",
+      "role": "station_list",
+      "bytes": 531285
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/wind/recent/",
+      "sha256": "5fd22cf73fdcdc136a17a3ec2a0c40c762bfb5d1a7647af23f72ae8cae4d5eb5",
+      "path": "sources/5fd22cf73fdcdc136a17a3ec2a0c40c762bfb5d1a7647af23f72ae8cae4d5eb5.html.gz",
+      "stored_sha256": "66c3c32c9f56a0d3489352a3d8a0a3819467b5d44da772bc3a0d0401dad18347",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:48.303398+00:00",
+      "role": "directory_listing",
+      "bytes": 40981
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/wind/recent/FF_Stundenwerte_Beschreibung_Stationen.txt",
+      "sha256": "8f5e4c525c8771dafcaa82fe2c5d89f3560adb530dc2e72c3c0174878405ffc3",
+      "path": "sources/8f5e4c525c8771dafcaa82fe2c5d89f3560adb530dc2e72c3c0174878405ffc3.txt.gz",
+      "stored_sha256": "01f992de8ab2433ea74ee6a9e0871d2a7a63c68d352b48e48e6342609d0f297d",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:48.325614+00:00",
+      "role": "station_list",
+      "bytes": 531285
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/precipitation/DESCRIPTION_obsgermany_climate_hourly_precipitation_en.pdf",
+      "sha256": "7ad2d2ba3a66abbc387216b069ff50fec4d3b3a224f303588d39690029e90ab9",
+      "path": "sources/7ad2d2ba3a66abbc387216b069ff50fec4d3b3a224f303588d39690029e90ab9.pdf",
+      "stored_sha256": "7ad2d2ba3a66abbc387216b069ff50fec4d3b3a224f303588d39690029e90ab9",
+      "compression": "none",
+      "retrieved_at_utc": "2026-11-07T01:43:48.533879+00:00",
+      "role": "dataset_description",
+      "bytes": 31549
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/precipitation/historical/",
+      "sha256": "e1fb08aa5ac42cebc0a821e08f0908ac55e5515b69ac7882b710555291ce2c8a",
+      "path": "sources/e1fb08aa5ac42cebc0a821e08f0908ac55e5515b69ac7882b710555291ce2c8a.html.gz",
+      "stored_sha256": "dfe666805c6992003214276d24e84b55a188bf991330ada0a03628ca733007a7",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:48.545763+00:00",
+      "role": "directory_listing",
+      "bytes": 233519
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/precipitation/historical/RR_Stundenwerte_Beschreibung_Stationen.txt",
+      "sha256": "1d15a5a7544b4bdc696ea8501db469f9c86c7796b8062fde294319f80a6313b6",
+      "path": "sources/1d15a5a7544b4bdc696ea8501db469f9c86c7796b8062fde294319f80a6313b6.txt.gz",
+      "stored_sha256": "69f395f9f7c438069bde6a42d55a3c639835e743929f423491e85af99edd7c14",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:48.636662+00:00",
+      "role": "station_list",
+      "bytes": 1862943
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/precipitation/recent/",
+      "sha256": "3f477285fd58f2ec17a09bbd5ad804a8f0b86745fd596a374cac1d35471852e9",
+      "path": "sources/3f477285fd58f2ec17a09bbd5ad804a8f0b86745fd596a374cac1d35471852e9.html.gz",
+      "stored_sha256": "fa20aa6a92b67fe36d6d08f191fb2af954a8b84cf4b1724dce412cbad412fa06",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:51.051991+00:00",
+      "role": "directory_listing",
+      "bytes": 191288
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/precipitation/recent/RR_Stundenwerte_Beschreibung_Stationen.txt",
+      "sha256": "1d15a5a7544b4bdc696ea8501db469f9c86c7796b8062fde294319f80a6313b6",
+      "path": "sources/1d15a5a7544b4bdc696ea8501db469f9c86c7796b8062fde294319f80a6313b6.txt.gz",
+      "stored_sha256": "69f395f9f7c438069bde6a42d55a3c639835e743929f423491e85af99edd7c14",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:51.152937+00:00",
+      "role": "station_list",
+      "bytes": 1862943
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/cloudiness/DESCRIPTION_obsgermany_climate_hourly_cloudiness_en.pdf",
+      "sha256": "2c1c207e8942a1b508a6ec6ba1e2ae7460be554575d2a1f0c4c9b70ba074f92d",
+      "path": "sources/2c1c207e8942a1b508a6ec6ba1e2ae7460be554575d2a1f0c4c9b70ba074f92d.pdf",
+      "stored_sha256": "2c1c207e8942a1b508a6ec6ba1e2ae7460be554575d2a1f0c4c9b70ba074f92d",
+      "compression": "none",
+      "retrieved_at_utc": "2026-11-07T01:43:53.443581+00:00",
+      "role": "dataset_description",
+      "bytes": 32557
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/cloudiness/historical/",
+      "sha256": "b2df8e8bd7bea2501d60576e59aa769bd9b2db0cb48312d23f19405392cef6df",
+      "path": "sources/b2df8e8bd7bea2501d60576e59aa769bd9b2db0cb48312d23f19405392cef6df.html.gz",
+      "stored_sha256": "81e699093c46a0246a681b6ddb700aab3a439bd1504913aca88b46df7429aa53",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:53.448972+00:00",
+      "role": "directory_listing",
+      "bytes": 92518
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/cloudiness/historical/N_Stundenwerte_Beschreibung_Stationen.txt",
+      "sha256": "99553761cfcded1dd69e5c73dcd537f5867e5297bd0cc05ee1b66c3cf6c9f560",
+      "path": "sources/99553761cfcded1dd69e5c73dcd537f5867e5297bd0cc05ee1b66c3cf6c9f560.txt.gz",
+      "stored_sha256": "be0b65552b9aefc7cb043b8335784996085525b67f11941a49eca128b3c92594",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:53.480686+00:00",
+      "role": "station_list",
+      "bytes": 604431
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/cloudiness/recent/",
+      "sha256": "61c9910a0b95895ad375f1e0c62b97a3dbeb6e14fc3b4549f11a748f8045c586",
+      "path": "sources/61c9910a0b95895ad375f1e0c62b97a3dbeb6e14fc3b4549f11a748f8045c586.html.gz",
+      "stored_sha256": "69aef5a1e278e44a84e017daf032613941a9e35337e9693b9152de047f7ed463",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:53.745270+00:00",
+      "role": "directory_listing",
+      "bytes": 28320
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/cloudiness/recent/N_Stundenwerte_Beschreibung_Stationen.txt",
+      "sha256": "99553761cfcded1dd69e5c73dcd537f5867e5297bd0cc05ee1b66c3cf6c9f560",
+      "path": "sources/99553761cfcded1dd69e5c73dcd537f5867e5297bd0cc05ee1b66c3cf6c9f560.txt.gz",
+      "stored_sha256": "be0b65552b9aefc7cb043b8335784996085525b67f11941a49eca128b3c92594",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:53.772099+00:00",
+      "role": "station_list",
+      "bytes": 604431
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/sun/DESCRIPTION_obsgermany_climate_hourly_sun_en.pdf",
+      "sha256": "951994ffe04da2bd970aa289d42b74302ea04c265540635e3f17b9106398a270",
+      "path": "sources/951994ffe04da2bd970aa289d42b74302ea04c265540635e3f17b9106398a270.pdf",
+      "stored_sha256": "951994ffe04da2bd970aa289d42b74302ea04c265540635e3f17b9106398a270",
+      "compression": "none",
+      "retrieved_at_utc": "2026-11-07T01:43:54.011829+00:00",
+      "role": "dataset_description",
+      "bytes": 31916
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/sun/historical/",
+      "sha256": "166a8cea956a139d5c7453da2d806c4287ded1a86844e2da5ebbf44589c7663f",
+      "path": "sources/166a8cea956a139d5c7453da2d806c4287ded1a86844e2da5ebbf44589c7663f.html.gz",
+      "stored_sha256": "a714581eb29ba61efde65cde21205394efe7c671b9c203909c57b1770598bdfe",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:54.017579+00:00",
+      "role": "directory_listing",
+      "bytes": 99651
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/sun/historical/SD_Stundenwerte_Beschreibung_Stationen.txt",
+      "sha256": "37e51795600f9cf979b85dceb87f3cb4165170c0b6574a9b4bb95c436103c956",
+      "path": "sources/37e51795600f9cf979b85dceb87f3cb4165170c0b6574a9b4bb95c436103c956.txt.gz",
+      "stored_sha256": "12658f2c35cdfb17f857e07c01fca6307cb32a24ddb25fec7fa5580ec4958b80",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:54.053269+00:00",
+      "role": "station_list",
+      "bytes": 708639
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/sun/recent/",
+      "sha256": "55c5f87e123d967ec40da199642dae6c4fb751dd5696c1e085018cf831fd1df5",
+      "path": "sources/55c5f87e123d967ec40da199642dae6c4fb751dd5696c1e085018cf831fd1df5.html.gz",
+      "stored_sha256": "f676e88fc12124935f20a6fe2f49046a594184a33e03a0320f92fdda7d6361a4",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:54.432687+00:00",
+      "role": "directory_listing",
+      "bytes": 28238
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/sun/recent/SD_Stundenwerte_Beschreibung_Stationen.txt",
+      "sha256": "37e51795600f9cf979b85dceb87f3cb4165170c0b6574a9b4bb95c436103c956",
+      "path": "sources/37e51795600f9cf979b85dceb87f3cb4165170c0b6574a9b4bb95c436103c956.txt.gz",
+      "stored_sha256": "12658f2c35cdfb17f857e07c01fca6307cb32a24ddb25fec7fa5580ec4958b80",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:54.464277+00:00",
+      "role": "station_list",
+      "bytes": 708639
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/solar/DESCRIPTION_obsgermany_climate_hourly_solar_en.pdf",
+      "sha256": "2a739884ec9e4a9c07334ea1fd894e2dd371c5fd3c982f234482398e51bf7b53",
+      "path": "sources/2a739884ec9e4a9c07334ea1fd894e2dd371c5fd3c982f234482398e51bf7b53.pdf",
+      "stored_sha256": "2a739884ec9e4a9c07334ea1fd894e2dd371c5fd3c982f234482398e51bf7b53",
+      "compression": "none",
+      "retrieved_at_utc": "2026-11-07T01:43:54.803525+00:00",
+      "role": "dataset_description",
+      "bytes": 32458
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/solar/",
+      "sha256": "88dfdbe7343f4505b755a01c6e821ef327c67adb936548a7a4a8231b22bf171f",
+      "path": "sources/88dfdbe7343f4505b755a01c6e821ef327c67adb936548a7a4a8231b22bf171f.html.gz",
+      "stored_sha256": "fb0ec6009710b69933683c77b1c97b7ed1f1bc0cc87787f8abcbfaa20ab82553",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:54.804309+00:00",
+      "role": "directory_listing",
+      "bytes": 8409
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/solar/ST_Stundenwerte_Beschreibung_Stationen.txt",
+      "sha256": "fd633080957d63f496b99b643890d4c859ab9c19b71a4977ff6253d8811adb6d",
+      "path": "sources/fd633080957d63f496b99b643890d4c859ab9c19b71a4977ff6253d8811adb6d.txt.gz",
+      "stored_sha256": "7f82c52ca68c8902f8c3e352d80ff94ad0ec7392a91c5108628df0bc4851980c",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:54.807593+00:00",
+      "role": "station_list",
+      "bytes": 56323
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/visibility/DESCRIPTION_obsgermany_climate_hourly_visibility_en.pdf",
+      "sha256": "5afe5571b380a4d1e012c904c5402fd0ba2d46892db40b352a3084cf0193628d",
+      "path": "sources/5afe5571b380a4d1e012c904c5402fd0ba2d46892db40b352a3084cf0193628d.pdf",
+      "stored_sha256": "5afe5571b380a4d1e012c904c5402fd0ba2d46892db40b352a3084cf0193628d",
+      "compression": "none",
+      "retrieved_at_utc": "2026-11-07T01:43:54.811796+00:00",
+      "role": "dataset_description",
+      "bytes": 32642
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/visibility/historical/",
+      "sha256": "3e88e92fc604c36deb00edb5f9f5cee86aafb3b2c64f210a74806b878ed726b1",
+      "path": "sources/3e88e92fc604c36deb00edb5f9f5cee86aafb3b2c64f210a74806b878ed726b1.html.gz",
+      "stored_sha256": "5daabda0d06b62a61d724c17ea97dd3fe9dc0e5ecd8cb6f1a17737fa780d7a7b",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:54.816719+00:00",
+      "role": "directory_listing",
+      "bytes": 93425
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/visibility/historical/VV_Stundenwerte_Beschreibung_Stationen.txt",
+      "sha256": "bcdc105f963fc18d3268c7d6590d830c6b91d7e0bd5855af5965883c3267c1d7",
+      "path": "sources/bcdc105f963fc18d3268c7d6590d830c6b91d7e0bd5855af5965883c3267c1d7.txt.gz",
+      "stored_sha256": "ad35f0eb03831a37bfcf101041b7072a176c2f418d692e07c7febe05c1efb40a",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:54.844759+00:00",
+      "role": "station_list",
+      "bytes": 609441
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/visibility/recent/",
+      "sha256": "7e460afcd9bd8db2b9fa1f7152b5de4798380446cfd8249d510a19c4dbfe89b0",
+      "path": "sources/7e460afcd9bd8db2b9fa1f7152b5de4798380446cfd8249d510a19c4dbfe89b0.html.gz",
+      "stored_sha256": "ca0937981af445efcff6febb15d413feb307dbf3821614523926bea003611e3a",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:55.131608+00:00",
+      "role": "directory_listing",
+      "bytes": 28389
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/visibility/recent/VV_Stundenwerte_Beschreibung_Stationen.txt",
+      "sha256": "bcdc105f963fc18d3268c7d6590d830c6b91d7e0bd5855af5965883c3267c1d7",
+      "path": "sources/bcdc105f963fc18d3268c7d6590d830c6b91d7e0bd5855af5965883c3267c1d7.txt.gz",
+      "stored_sha256": "ad35f0eb03831a37bfcf101041b7072a176c2f418d692e07c7febe05c1efb40a",
+      "compression": "gzip",
+      "retrieved_at_utc": "2026-11-07T01:43:55.159106+00:00",
+      "role": "station_list",
+      "bytes": 609441
+    },
+    {
+      "url": "https://opendata.dwd.de/climate_environment/CDC/Terms_of_use.pdf",
+      "sha256": "7c47afd5346c60584662d7ca007b2228bc9c3622dc1936484aa3498bbc96d1d3",
+      "path": "sources/7c47afd5346c60584662d7ca007b2228bc9c3622dc1936484aa3498bbc96d1d3.pdf",
+      "stored_sha256": "7c47afd5346c60584662d7ca007b2228bc9c3622dc1936484aa3498bbc96d1d3",
+      "compression": "none",
+      "retrieved_at_utc": "2026-11-07T01:43:55.387266+00:00",
+      "role": "terms_of_use",
+      "bytes": 61006
+    }
+  ],
+  "license": "CC BY 4.0; Quelle: Deutscher Wetterdienst",
+  "files": {
+    "catalog.json.gz": "abed4ba9b4e2af83808bacf3cf35144ea438c021b30d5b481a5ecc17a3ade336",
+    "archives.csv.gz": "199490bc253efe3f9a977bae2dcaeff8e9cc952190b8fbdf28fba5c1ee042c8c",
+    "stations.geojson": "829cfce37c9d83d49dac8705d2a167d9f6c64e49457b349c8dbf517d3715ef4f",
+    "station_groups.csv.gz": "b74b869de95b32969039f5ce2527f488a1b59a0c646f50ccb7972f1bb5ef28fa",
+    "stations.csv": "652b92e71706b7d8fed8932a39e72a27b0759ee6c336d59ab3843dada4aea1ad"
+  }
+}

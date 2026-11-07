@@ -1,0 +1,30 @@
+name: IGE Germany climate downloader
+
+on:
+  push:
+    branches: ["research/ige-de-climate-download-20261107"]
+    paths:
+      - "tools/germany_climate_download/**"
+      - ".github/workflows/ige-de-climate-downloader.yml"
+  pull_request:
+    paths:
+      - "tools/germany_climate_download/**"
+      - ".github/workflows/ige-de-climate-downloader.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-contracts:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.10", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Verify source snapshots and offline contracts
+        run: python -m unittest discover -s tools/germany_climate_download/tests -v
