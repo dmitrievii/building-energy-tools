@@ -1,0 +1,54 @@
+[
+  {
+    "network": "smn",
+    "station_id": "BER",
+    "asset_filename": "ogd-smn_ber_h_historical_2010-2019.csv",
+    "fixture": "smn_BER_transition.csv.gz",
+    "fixture_uncompressed_sha256": "6517a13ec3a4cc3adc8d8d1721d3fd1f2a29c71c25c9c95ab8154058924dce09",
+    "fixture_stored_sha256": "82e95732dba63e07a6a7e733552a7f06ed8be03b58b345950db7ba941634975a",
+    "source_url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/ber/ogd-smn_ber_h_historical_2010-2019.csv",
+    "source_sha256": "b89a9b456d231acbedec21594815590098e87f8ca237c059bcc6978df83d8968",
+    "source_bytes": 12539019,
+    "selected_rows": 48,
+    "transformation": "Derived fixture: native header and selected complete source-date rows; no value changes. Original CSV subset, not the whole provider response."
+  },
+  {
+    "network": "smn",
+    "station_id": "BER",
+    "asset_filename": "ogd-smn_ber_h_historical_2020-2029.csv",
+    "fixture": "smn_BER_day.csv.gz",
+    "fixture_uncompressed_sha256": "667e1c92e3c9b717aa8a20b168e1c7d95d91becbd3f83a240a497609d8a179a4",
+    "fixture_stored_sha256": "e5b9cd7f4dd03375f103947e4d1bec852a29b7b67b8b5602634209b95c2578d8",
+    "source_url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/ber/ogd-smn_ber_h_historical_2020-2029.csv",
+    "source_sha256": "efb0decf622589e2fdfbc0121c7026ceb18c9e15c7c1d5bb3217ecba15c79c24",
+    "source_bytes": 7574960,
+    "selected_rows": 24,
+    "transformation": "Derived fixture: native header and selected complete source-date rows; no value changes. Original CSV subset, not the whole provider response."
+  },
+  {
+    "network": "smn",
+    "station_id": "SMA",
+    "asset_filename": "ogd-smn_sma_h_historical_2020-2029.csv",
+    "fixture": "smn_SMA_day.csv.gz",
+    "fixture_uncompressed_sha256": "f68df2b20a9690a62b011f0660a9ef610cb59ac8af2d5c6de887c992d5aa1ee4",
+    "fixture_stored_sha256": "e1e5145988ca44e48560060b82eea7c158e07bf366f7d70db6b82b018c557cf5",
+    "source_url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/sma/ogd-smn_sma_h_historical_2020-2029.csv",
+    "source_sha256": "17fee315d2bb8b90815b6c9627825e135a2b5de64c7776756e53c4433f8c8906",
+    "source_bytes": 7071784,
+    "selected_rows": 24,
+    "transformation": "Derived fixture: native header and selected complete source-date rows; no value changes. Original CSV subset, not the whole provider response."
+  },
+  {
+    "network": "smn-precip",
+    "station_id": "ABE",
+    "asset_filename": "ogd-smn-precip_abe_h_historical_2020-2029.csv",
+    "fixture": "smn-precip_ABE_day.csv.gz",
+    "fixture_uncompressed_sha256": "6b3893e9b97527b2dc5a9f4c9b4c8c12ac57843a53472c95078749f548089e20",
+    "fixture_stored_sha256": "3fee4149dd8136eb9dc1847a72c3c6bf25655abb1f9f9834e5f2b7175613a2d5",
+    "source_url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn-precip/abe/ogd-smn-precip_abe_h_historical_2020-2029.csv",
+    "source_sha256": "bc54604faaa70bc82af73e5298657937057d7f7bf1aafd8e8f75ee8a45c52701",
+    "source_bytes": 913418,
+    "selected_rows": 24,
+    "transformation": "Derived fixture: native header and selected complete source-date rows; no value changes. Original CSV subset, not the whole provider response."
+  }
+]

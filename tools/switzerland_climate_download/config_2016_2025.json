@@ -1,0 +1,9 @@
+{
+  "start": "2016-01-01",
+  "end": "2025-12-31",
+  "networks": ["smn", "smn-precip"],
+  "station_ids": "all",
+  "parameters": "all",
+  "types": ["historical"],
+  "min_interval_seconds": 1.0
+}

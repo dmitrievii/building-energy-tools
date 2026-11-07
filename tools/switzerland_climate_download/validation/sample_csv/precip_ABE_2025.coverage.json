@@ -1,0 +1,38 @@
+{
+  "start_utc_inclusive": "2025-06-01T00:00Z",
+  "end_utc_exclusive": "2025-06-02T00:00Z",
+  "expected_hourly_labels": 24,
+  "present_full_hour_labels": 24,
+  "absent_full_hour_labels": 0,
+  "off_grid_rows": 0,
+  "full_label_axis": true,
+  "hour_interval_regimes": {
+    "since2018_hour_rule_for_aggregates": 24
+  },
+  "parameters": {
+    "rre150h0": {
+      "non_null_rows": 24,
+      "null_rows": 0,
+      "non_null_full_hour_labels": 24,
+      "max_missing_full_hour_run": 0,
+      "missing_full_hour_labels": 0,
+      "coverage_percent_before_qc": 100.0
+    }
+  },
+  "qc_status": "per_value_flags_not_supplied_in_this_csv",
+  "qc_filter_applied": false,
+  "gap_filling_applied": false,
+  "epw_admission_assessed": false,
+  "network": "smn-precip",
+  "station_id": "ABE",
+  "year": 2025,
+  "selected_rows": 24,
+  "calendar_year_hours": 8760,
+  "full_calendar_selection": false,
+  "duplicate_rows_removed": 0,
+  "conflicts_preferred_historical_then_recent": 0,
+  "source_jobs": [
+    "56116041d00e6676078f6e98"
+  ],
+  "file_sha256": "e0c7013aab72f9270c37541263a5735196b8300a576c472175921aacf9abfe3d"
+}

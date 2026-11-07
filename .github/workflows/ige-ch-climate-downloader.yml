@@ -1,0 +1,30 @@
+name: IGE Switzerland climate downloader
+
+on:
+  push:
+    branches: ["research/ige-ch-climate-download-20261107"]
+    paths:
+      - "tools/switzerland_climate_download/**"
+      - ".github/workflows/ige-ch-climate-downloader.yml"
+  pull_request:
+    paths:
+      - "tools/switzerland_climate_download/**"
+      - ".github/workflows/ige-ch-climate-downloader.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-contracts:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.10", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Verify snapshots and downloader contracts
+        run: python -m unittest discover -s tools/switzerland_climate_download/tests -v

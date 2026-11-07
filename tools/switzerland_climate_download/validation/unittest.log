@@ -1,0 +1,79 @@
+[1/3] smn BER ogd-smn_ber_h_historical_2020-2029.csv
+  selected rows: 24
+[2/3] smn SMA ogd-smn_sma_h_historical_2020-2029.csv
+  selected rows: 24
+[3/3] smn-precip ABE ogd-smn-precip_abe_h_historical_2020-2029.csv
+  selected rows: 24
+[1/1] smn BER ogd-smn_ber_h_historical_2020-2029.csv
+  selected rows: 0
+[1/1] smn BER ogd-smn_ber_h_historical_2020-2029.csv
+[1/2] smn BER ogd-smn_ber_h_historical_2020-2029.csv
+  selected rows: 24
+[1/1] smn BER ogd-smn_ber_h_historical_2010-2019.csv
+  selected rows: 48
+[1/1] smn BER ogd-smn_ber_h_historical_2020-2029.csv
+  selected rows: 24
+[1/1] smn BER ogd-smn_ber_h_historical_2020-2029.csv
+  selected rows: 24
+[1/1] smn BER ogd-smn_ber_h_historical_2020-2029.csv
+  selected rows: 24
+[1/1] smn BER ogd-smn_ber_h_historical_2020-2029.csv
+  selected rows: 24
+[1/1] smn BER ogd-smn_ber_h_historical_2020-2029.csv
+  selected rows: 24
+[1/1] smn BER ogd-smn_ber_h_historical_2020-2029.csv
+  selected rows: 24
+
+test_all_catalogue_source_hashes (test_switzerland_climate.Contracts.test_all_catalogue_source_hashes) ... ok
+test_audit_writes_all_stations_including_precipitation_only (test_switzerland_climate.Contracts.test_audit_writes_all_stations_including_precipitation_only) ... ok
+test_catalogue_identity_and_pagination_retained (test_switzerland_climate.Contracts.test_catalogue_identity_and_pagination_retained) ... ok
+test_catalogue_output_hashes (test_switzerland_climate.Contracts.test_catalogue_output_hashes) ... ok
+test_checksum_multihash_is_decoded (test_switzerland_climate.Contracts.test_checksum_multihash_is_decoded) ... ok
+test_duplicate_and_reversed_times_rejected (test_switzerland_climate.Contracts.test_duplicate_and_reversed_times_rejected) ... ok
+test_duplicate_header_rejected (test_switzerland_climate.Contracts.test_duplicate_header_rejected) ... ok
+test_empty_selected_window_is_successful_transfer (test_switzerland_climate.Contracts.test_empty_selected_window_is_successful_transfer) ... ok
+test_export_and_audit_block_incomplete_assets (test_switzerland_climate.Contracts.test_export_and_audit_block_incomplete_assets) ... ok
+test_export_is_partial_year_with_native_pressure_fields (test_switzerland_climate.Contracts.test_export_is_partial_year_with_native_pressure_fields) ... ok
+test_external_and_traversal_urls_rejected (test_switzerland_climate.Contracts.test_external_and_traversal_urls_rejected) ... ok
+test_failed_download_reports_failure_and_releases_lock (test_switzerland_climate.Contracts.test_failed_download_reports_failure_and_releases_lock) ...   FAILED: SourceError: Provider checksum differs from frozen STAC; refresh catalogue and create a new plan/output
+ok
+test_fixture_provenance_and_subset_label (test_switzerland_climate.Contracts.test_fixture_provenance_and_subset_label) ... ok
+test_geographic_and_barometer_heights_are_separate (test_switzerland_climate.Contracts.test_geographic_and_barometer_heights_are_separate) ... ok
+test_geojson_coordinate_order (test_switzerland_climate.Contracts.test_geojson_coordinate_order) ... ok
+test_invalid_native_date_rejected (test_switzerland_climate.Contracts.test_invalid_native_date_rejected) ... ok
+test_invalid_search_and_height_filter (test_switzerland_climate.Contracts.test_invalid_search_and_height_filter) ... ok
+test_leap_year_and_maximum_gap_include_missing_rows (test_switzerland_climate.Contracts.test_leap_year_and_maximum_gap_include_missing_rows) ... ok
+test_max_jobs_and_lock (test_switzerland_climate.Contracts.test_max_jobs_and_lock) ... ok
+test_missing_column_is_explicit_not_fabricated_measurement (test_switzerland_climate.Contracts.test_missing_column_is_explicit_not_fabricated_measurement) ... ok
+test_native_blank_and_zero_preserved (test_switzerland_climate.Contracts.test_native_blank_and_zero_preserved) ... ok
+test_native_pressure_definitions_not_merged (test_switzerland_climate.Contracts.test_native_pressure_definitions_not_merged) ... ok
+test_native_source_time_is_utc_without_dst_adjustment (test_switzerland_climate.Contracts.test_native_source_time_is_utc_without_dst_adjustment) ... ok
+test_nearest_excludes_control_station (test_switzerland_climate.Contracts.test_nearest_excludes_control_station) ... ok
+test_nearest_uses_explicit_wgs84_and_date (test_switzerland_climate.Contracts.test_nearest_uses_explicit_wgs84_and_date) ... ok
+test_nearest_uses_parameter_specific_network (test_switzerland_climate.Contracts.test_nearest_uses_parameter_specific_network) ... ok
+test_new_year_transition_audit_keeps_two_partial_years (test_switzerland_climate.Contracts.test_new_year_transition_audit_keeps_two_partial_years) ... ok
+test_no_fabricated_height_for_unlisted_stac_point (test_switzerland_climate.Contracts.test_no_fabricated_height_for_unlisted_stac_point) ... ok
+test_nonfinite_value_rejected (test_switzerland_climate.Contracts.test_nonfinite_value_rejected) ... ok
+test_partial_receipt_does_not_allow_skip (test_switzerland_climate.Contracts.test_partial_receipt_does_not_allow_skip) ... ok
+test_plan_keeps_partial_period (test_switzerland_climate.Contracts.test_plan_keeps_partial_period) ... ok
+test_plan_roundtrip_and_tamper_detection (test_switzerland_climate.Contracts.test_plan_roundtrip_and_tamper_detection) ... ok
+test_provider_checksum_mismatch_rejected (test_switzerland_climate.Contracts.test_provider_checksum_mismatch_rejected) ... ok
+test_qc_flags_not_fabricated (test_switzerland_climate.Contracts.test_qc_flags_not_fabricated) ... ok
+test_real_fixture_smn_BER_day_csv_gz (test_switzerland_climate.Contracts.test_real_fixture_smn_BER_day_csv_gz) ... ok
+test_real_fixture_smn_BER_transition_csv_gz (test_switzerland_climate.Contracts.test_real_fixture_smn_BER_transition_csv_gz) ... ok
+test_real_fixture_smn_SMA_day_csv_gz (test_switzerland_climate.Contracts.test_real_fixture_smn_SMA_day_csv_gz) ... ok
+test_real_fixture_smn_precip_ABE_day_csv_gz (test_switzerland_climate.Contracts.test_real_fixture_smn_precip_ABE_day_csv_gz) ... ok
+test_resume_verifies_raw_part_and_metadata (test_switzerland_climate.Contracts.test_resume_verifies_raw_part_and_metadata) ... ok
+test_station_id_validation (test_switzerland_climate.Contracts.test_station_id_validation) ... ok
+test_time_bounds_timezone_and_exclusive_end (test_switzerland_climate.Contracts.test_time_bounds_timezone_and_exclusive_end) ... ok
+test_transition_retains_both_physical_interval_regimes (test_switzerland_climate.Contracts.test_transition_retains_both_physical_interval_regimes) ... ok
+test_truncated_row_rejected (test_switzerland_climate.Contracts.test_truncated_row_rejected) ... ok
+test_unknown_configuration_rejected (test_switzerland_climate.Contracts.test_unknown_configuration_rejected) ... ok
+test_unknown_station_and_parameter_rejected (test_switzerland_climate.Contracts.test_unknown_station_and_parameter_rejected) ... ok
+test_unregistered_native_column_rejected (test_switzerland_climate.Contracts.test_unregistered_native_column_rejected) ... ok
+test_wrong_station_rejected (test_switzerland_climate.Contracts.test_wrong_station_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 47 tests in 1.591s
+
+OK

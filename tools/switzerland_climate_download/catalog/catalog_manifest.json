@@ -1,0 +1,201 @@
+{
+  "catalog_id": "e08cf00ea0fe3190446f04704f3dea951de0bfe0757c747b15ed4bf39e5d83f7",
+  "created_at_utc": "2026-11-07T08:31:19.467840+00:00",
+  "station_records": 301,
+  "station_table_records": 300,
+  "stations_by_network": {
+    "smn": 159,
+    "smn-precip": 142
+  },
+  "hourly_assets": 1472,
+  "hourly_inventory_records": 3569,
+  "warnings": [
+    {
+      "network": "smn",
+      "station_id": "MLJ",
+      "code": "STAC_ITEM_WITHOUT_STATION_TABLE_METADATA"
+    }
+  ],
+  "files": {
+    "catalog.json.gz": "15327baf5a18cdd1d41f593e831a6dc1d381cb326d91ef8a0712adbbfd616e3b",
+    "stations.csv": "e9fc32d00dda93178fa44f1fbe51a956be1a5db3f60a520ac8df7e4f86fbd26a",
+    "stations.geojson": "924c1f9e5630f3651926355594489ef5451ad3bb41e3d750c5f98f37f1b34370",
+    "inventory.csv.gz": "12d4d19acd99e6dbd473ebf7b157339dfb695423bc709732a84ae2888c43017f",
+    "assets.csv.gz": "2a45a45e19c4f458a6292522b9502f609f212249894ee61986bb49b19ffab2ca",
+    "parameters.json": "18f97325cee27754397b31b2dcef439e653ad5ecdbd30eda22f0dc53c9b0e48f",
+    "catalog_warnings.json": "39322ab58fa4121a725ff0ce18bd77895f96324ca6615feb45b6ab02849c3217"
+  },
+  "sources": [
+    {
+      "url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/ogd-smn_meta_stations.csv",
+      "role": "station_metadata",
+      "path": "sources/8087e755a9ec71b50313bd9be61d1159c53afb03fa34b9750fae49dcc111854b.csv.gz",
+      "sha256": "8087e755a9ec71b50313bd9be61d1159c53afb03fa34b9750fae49dcc111854b",
+      "stored_sha256": "1d1f21dba4565edcb534a5ecde7b4ca283b01fc6bf097927ebcc0decef4761d6",
+      "bytes": 151779,
+      "retrieved_at_utc": "2026-11-07T08:31:26.224646+00:00",
+      "etag": "\"c930b08e9652d5a32ce263baf3209ed2-1\""
+    },
+    {
+      "url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/ogd-smn_meta_parameters.csv",
+      "role": "parameter_metadata",
+      "path": "sources/20200981012252d767c0683045af62743c4f138b07d58fc9fb8bb906eef9f829.csv.gz",
+      "sha256": "20200981012252d767c0683045af62743c4f138b07d58fc9fb8bb906eef9f829",
+      "stored_sha256": "ddfdf9977c92b632823a9520caf9a3a70b269897e7a4037cb8564d9006e754b4",
+      "bytes": 50180,
+      "retrieved_at_utc": "2026-11-07T08:31:31.400336+00:00",
+      "etag": "\"e3366d57129dfd6013cf70b778889e66-1\""
+    },
+    {
+      "url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/ogd-smn_meta_datainventory.csv",
+      "role": "data_inventory",
+      "path": "sources/609a9cec6ced055e9eed5b16789087d787a7b78a031cffdc17b3bf06af18ff1d.csv.gz",
+      "sha256": "609a9cec6ced055e9eed5b16789087d787a7b78a031cffdc17b3bf06af18ff1d",
+      "stored_sha256": "f372b03656ce476ffabc57567d74ef31194d6fe1c5cd19c8176ac4ee0a035dd9",
+      "bytes": 927151,
+      "retrieved_at_utc": "2026-11-07T08:31:35.493447+00:00",
+      "etag": "\"c3763b03286f2482192405518bbef0cf-1\""
+    },
+    {
+      "url": "https://data.geo.admin.ch/api/stac/v1/collections/ch.meteoschweiz.ogd-smn",
+      "role": "collection_metadata",
+      "path": "sources/79f60bd6df11a47609903b870e7d9331eeb7dae0b52bc74e708f76ad1a12fde6.json.gz",
+      "sha256": "79f60bd6df11a47609903b870e7d9331eeb7dae0b52bc74e708f76ad1a12fde6",
+      "stored_sha256": "0962ba17b62cfc0a6694f6b0cccf61cf4f99f71d4d0508f7fc3e7540d5d4fd82",
+      "bytes": 3581,
+      "retrieved_at_utc": "2026-11-07T08:31:39.522281+00:00",
+      "etag": "\"1910355d-0813-4db1-b6ea-5258b6073697\""
+    },
+    {
+      "url": "https://data.geo.admin.ch/api/stac/v1/collections/ch.meteoschweiz.ogd-smn/items?limit=100",
+      "role": "stac_items_page",
+      "path": "sources/9d3fc315218cb9c384dd430467868f292e32d8417ce9beaad801c82b371e1c02.json.gz",
+      "sha256": "9d3fc315218cb9c384dd430467868f292e32d8417ce9beaad801c82b371e1c02",
+      "stored_sha256": "ef4a1520ce014df7f6fa9ee713e6c06d952d557ad591e933b654730ca6f0cf30",
+      "bytes": 567114,
+      "retrieved_at_utc": "2026-11-07T08:31:44.067007+00:00",
+      "etag": null
+    },
+    {
+      "url": "https://data.geo.admin.ch/api/stac/v1/collections/ch.meteoschweiz.ogd-smn/items?cursor=cD1tb2U%3D&limit=100",
+      "role": "stac_items_page",
+      "path": "sources/52298a63cd967c4edb137f68d20979f2390a458dbaa32d6e24ea1b2af7005f17.json.gz",
+      "sha256": "52298a63cd967c4edb137f68d20979f2390a458dbaa32d6e24ea1b2af7005f17",
+      "stored_sha256": "4fdd9d0867671a5ec59b2b16543f77c6c9ec266ad56f958af01fc88d405ce7a4",
+      "bytes": 341830,
+      "retrieved_at_utc": "2026-11-07T08:31:48.218378+00:00",
+      "etag": null
+    },
+    {
+      "url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn-precip/ogd-smn-precip_meta_stations.csv",
+      "role": "station_metadata",
+      "path": "sources/6522674dd3e335e26847099798ce311f24b1d9e1ce3adc225182775a98249c54.csv.gz",
+      "sha256": "6522674dd3e335e26847099798ce311f24b1d9e1ce3adc225182775a98249c54",
+      "stored_sha256": "47e38c9838bf7fd87fd13fb9649b16ff09606de517b826d6a668e082a7a87bad",
+      "bytes": 135460,
+      "retrieved_at_utc": "2026-11-07T08:31:53.673948+00:00",
+      "etag": "\"aa00faaaaccb890b7712be91e5ef041f-1\""
+    },
+    {
+      "url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn-precip/ogd-smn-precip_meta_parameters.csv",
+      "role": "parameter_metadata",
+      "path": "sources/b42f5d8ce516c240a154c9dc82dbcc2476ed044dddd0946957227f94b9eaf914.csv.gz",
+      "sha256": "b42f5d8ce516c240a154c9dc82dbcc2476ed044dddd0946957227f94b9eaf914",
+      "stored_sha256": "21774e3216707bb96254a11af51145583cfd9938e1cd294f9f207ff3fb4d0713",
+      "bytes": 1687,
+      "retrieved_at_utc": "2026-11-07T08:31:57.663696+00:00",
+      "etag": "\"850bee0a11fd0ae6d10b2db194d94600-1\""
+    },
+    {
+      "url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn-precip/ogd-smn-precip_meta_datainventory.csv",
+      "role": "data_inventory",
+      "path": "sources/129c20d2804a1319f48996cf79ba601628e7a53a40c706b5d29507d23826ce8b.csv.gz",
+      "sha256": "129c20d2804a1319f48996cf79ba601628e7a53a40c706b5d29507d23826ce8b",
+      "stored_sha256": "37bc5174e88c56c0b14de943e29b03b15202e0f175424d40a469366f89f0cb98",
+      "bytes": 42122,
+      "retrieved_at_utc": "2026-11-07T08:32:01.567191+00:00",
+      "etag": "\"e5e675d28d9fd3ae7e687f00f36d99f5-1\""
+    },
+    {
+      "url": "https://data.geo.admin.ch/api/stac/v1/collections/ch.meteoschweiz.ogd-smn-precip",
+      "role": "collection_metadata",
+      "path": "sources/97dfb02cf8e469420a50bd3fffc4bcc804f19297cde8214fc7165fef3ee8732c.json.gz",
+      "sha256": "97dfb02cf8e469420a50bd3fffc4bcc804f19297cde8214fc7165fef3ee8732c",
+      "stored_sha256": "f23ae0c71e86336b4bdb355c1dfa791055b50a9747dae7b592aafeacdd7d9561",
+      "bytes": 3651,
+      "retrieved_at_utc": "2026-11-07T08:32:05.335908+00:00",
+      "etag": "\"fd3c1967-2f9c-458b-91c2-b59846cedcdb\""
+    },
+    {
+      "url": "https://data.geo.admin.ch/api/stac/v1/collections/ch.meteoschweiz.ogd-smn-precip/items?limit=100",
+      "role": "stac_items_page",
+      "path": "sources/137f2a1c2bac5e2ce967e446ef6f9975468a9c5f1bad312a27144a735972351a.json.gz",
+      "sha256": "137f2a1c2bac5e2ce967e446ef6f9975468a9c5f1bad312a27144a735972351a",
+      "stored_sha256": "aed6883fc92e4676c954b3209967dae2018a88a84bbcc230099f0b7b6c074898",
+      "bytes": 508010,
+      "retrieved_at_utc": "2026-11-07T08:32:09.250213+00:00",
+      "etag": null
+    },
+    {
+      "url": "https://data.geo.admin.ch/api/stac/v1/collections/ch.meteoschweiz.ogd-smn-precip/items?cursor=cD12c2Fybw%3D%3D&limit=100",
+      "role": "stac_items_page",
+      "path": "sources/064ce5635bd9ec9056c1c0d3f0d4476126f97c9967ded3d48ef678d918da05c0.json.gz",
+      "sha256": "064ce5635bd9ec9056c1c0d3f0d4476126f97c9967ded3d48ef678d918da05c0",
+      "stored_sha256": "530cd4a242cd1eb3e656a387ecd6fac1d8c1133c4ab6f2e955e708200e8d9b76",
+      "bytes": 220153,
+      "retrieved_at_utc": "2026-11-07T08:32:14.992968+00:00",
+      "etag": null
+    },
+    {
+      "url": "https://opendatadocs.meteoswiss.ch/a-data-groundbased/a1-automatic-weather-stations",
+      "role": "provider_documentation",
+      "path": "sources/7ecc0f67099369376326a30162527a978cac950912d7ed6264ad57c7e7d5d873.html.gz",
+      "sha256": "7ecc0f67099369376326a30162527a978cac950912d7ed6264ad57c7e7d5d873",
+      "stored_sha256": "c3b1ba13766b98ccdab3f099511c9099610e5fedb2d44e702bda222b3187db15",
+      "bytes": 30905,
+      "retrieved_at_utc": "2026-11-07T08:32:20.212974+00:00",
+      "etag": "\"6aedf0ee-78b9\""
+    },
+    {
+      "url": "https://opendatadocs.meteoswiss.ch/a-data-groundbased/a2-automatic-precipitation-stations",
+      "role": "provider_documentation",
+      "path": "sources/ee6ea8502c96671085ab8d183a6e4aee24c36549f532e940b75a934839d61fab.html.gz",
+      "sha256": "ee6ea8502c96671085ab8d183a6e4aee24c36549f532e940b75a934839d61fab",
+      "stored_sha256": "84fcdb8db64c381f1c8a161a89b1065c6c546d1da0fd066f283abc6a63286ec1",
+      "bytes": 27206,
+      "retrieved_at_utc": "2026-11-07T08:32:23.987274+00:00",
+      "etag": "\"6aedf0ee-6a46\""
+    },
+    {
+      "url": "https://opendatadocs.meteoswiss.ch/general/download",
+      "role": "provider_documentation",
+      "path": "sources/61cb05f29e73801eda4d4d7bed42c85e8f9630dc9e9f0c071165225ace4e8f7a.html.gz",
+      "sha256": "61cb05f29e73801eda4d4d7bed42c85e8f9630dc9e9f0c071165225ace4e8f7a",
+      "stored_sha256": "b2d31667001942540795ccdb85e4fa295ca1726f63919009f81daac5c6a4d258",
+      "bytes": 45108,
+      "retrieved_at_utc": "2026-11-07T08:32:27.775027+00:00",
+      "etag": "\"6aedf0ee-b034\""
+    },
+    {
+      "url": "https://opendatadocs.meteoswiss.ch/general/faq",
+      "role": "provider_documentation",
+      "path": "sources/bd458273db936bba568a4f6e1490576ac11e96a346bde12748aab6ab49e9efd1.html.gz",
+      "sha256": "bd458273db936bba568a4f6e1490576ac11e96a346bde12748aab6ab49e9efd1",
+      "stored_sha256": "ec8e87d3caaf388d6b2d88aa977d1c7b0e8cd766c34a0787e39dfed92841f07b",
+      "bytes": 28105,
+      "retrieved_at_utc": "2026-11-07T08:32:31.833037+00:00",
+      "etag": "\"6aedf0ee-6dc9\""
+    },
+    {
+      "url": "https://opendatadocs.meteoswiss.ch/general/terms-of-use",
+      "role": "provider_documentation",
+      "path": "sources/05b2b4b20f4f79a8564a3e46fd323dde88b003ec86229f915aded0b7a13521b8.html.gz",
+      "sha256": "05b2b4b20f4f79a8564a3e46fd323dde88b003ec86229f915aded0b7a13521b8",
+      "stored_sha256": "ec13971482bdee1f48c3de46e0820c058a9c4f0e0056ece2ecabf6530ae3ff31",
+      "bytes": 23985,
+      "retrieved_at_utc": "2026-11-07T08:32:35.465366+00:00",
+      "etag": "\"6aedf0ee-5db1\""
+    }
+  ],
+  "license": "CC BY 4.0; Source: MeteoSwiss"
+}

@@ -1,0 +1,82 @@
+{
+  "version": "1.0.0",
+  "recorded_at_utc": "2026-11-07T08:44:16.223689+00:00",
+  "python": "3.12.14",
+  "base_main_commit": "eb4e14d84b2e372feeba73713b18d21cde7f2207",
+  "target_branch": "research/ige-ch-climate-download-20261107",
+  "catalog_id": "e08cf00ea0fe3190446f04704f3dea951de0bfe0757c747b15ed4bf39e5d83f7",
+  "catalog_station_records": 301,
+  "stations_by_network": {
+    "smn": 159,
+    "smn-precip": 142
+  },
+  "catalog_warnings": [
+    {
+      "code": "STAC_ITEM_WITHOUT_STATION_TABLE_METADATA",
+      "network": "smn",
+      "station_id": "MLJ"
+    }
+  ],
+  "hourly_assets": 1472,
+  "hourly_inventory_records": 3569,
+  "unit_tests": {
+    "count": 47,
+    "failures": 0,
+    "errors": 0,
+    "duration_seconds": 1.591,
+    "network_used": false
+  },
+  "live_download": {
+    "original_csv_files": 4,
+    "source_bytes": 28099181,
+    "provider_sha256_all_verified": true,
+    "station_records": 3,
+    "smoke_date": "2025-06-01",
+    "transition_dates": [
+      "2017-12-31",
+      "2018-01-01"
+    ]
+  },
+  "resume": {
+    "plan_id": "bacdb7ba534de58d098f48c4f6a8127769f77606aaafbeecfd446cbf48ede47f",
+    "planned_jobs": 3,
+    "completed_jobs": 3,
+    "remaining_jobs": 0,
+    "attempted_this_invocation": 0,
+    "failures_this_invocation": [],
+    "all_transfers_complete": true,
+    "meteorological_completeness_or_epw_admission_assessed": false
+  },
+  "audit": {
+    "plan_id": "bacdb7ba534de58d098f48c4f6a8127769f77606aaafbeecfd446cbf48ede47f",
+    "verified_assets": 3,
+    "station_years": 3,
+    "parameter_rows": 69,
+    "report": "validation/live_coverage.csv",
+    "partial_station_years_retained": true,
+    "network_requests": 0,
+    "quality_filter_applied": false
+  },
+  "transition_audit": {
+    "plan_id": "756f8db67d6fe15adb0b208fb1f1808a79f9f1adeeb734101f55cc205db9f550",
+    "verified_assets": 1,
+    "station_years": 2,
+    "parameter_rows": 68,
+    "report": "validation/transition_coverage.csv",
+    "partial_station_years_retained": true,
+    "network_requests": 0,
+    "quality_filter_applied": false
+  },
+  "full_decade_plan": {
+    "start": "2016-01-01",
+    "end": "2025-12-31",
+    "requests": 587,
+    "station_records": 299,
+    "provider_bytes": null,
+    "plan_id": "0dfa3011a5de4be6cf8021dbfae5124d012720234db9a732f298a935ec78ac3e",
+    "mass_download_performed": false
+  },
+  "source_code_sha256": "f7f2a4ffc444853529f764b2d53025f5d425078f9c53a59f332f43e9ee23fec1",
+  "tests_sha256": "495d8f8411990e34cbf2bfd9e874b5e51937a041a187c94d3edc8cc3dab15383",
+  "scope": "Verified acquisition, provider checksums, preservation, interval-regime labels, native fields, resume, export and offline audit; no interpolation accuracy or EPW admission."
+}

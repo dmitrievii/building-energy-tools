@@ -1,0 +1,1260 @@
+[
+  {
+    "network": "smn",
+    "station_id": "BER",
+    "url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/ber/ogd-smn_ber_h_historical_2020-2029.csv",
+    "source_sha256": "efb0decf622589e2fdfbc0121c7026ceb18c9e15c7c1d5bb3217ecba15c79c24",
+    "provider_checksum_verified": true,
+    "source_bytes": 7574960,
+    "source_information": {
+      "encoding": "cp1252",
+      "source_rows": 52608,
+      "selected_rows": 24,
+      "qc_status": "per_value_flags_not_supplied_in_this_csv",
+      "missing_selected_columns": []
+    },
+    "coverage_by_year": {
+      "2025": {
+        "start_utc_inclusive": "2025-06-01T00:00Z",
+        "end_utc_exclusive": "2025-06-02T00:00Z",
+        "expected_hourly_labels": 24,
+        "present_full_hour_labels": 24,
+        "absent_full_hour_labels": 0,
+        "off_grid_rows": 0,
+        "full_label_axis": true,
+        "hour_interval_regimes": {
+          "since2018_hour_rule_for_aggregates": 24
+        },
+        "parameters": {
+          "dkl010h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "erefaoh0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "fkl010h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "fkl010h1": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "fkl010h3": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "fu3010h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "fu3010h1": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "fu3010h3": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "fve010h0": {
+            "non_null_rows": 0,
+            "null_rows": 24,
+            "non_null_full_hour_labels": 0,
+            "max_missing_full_hour_run": 24,
+            "missing_full_hour_labels": 24,
+            "coverage_percent_before_qc": 0.0
+          },
+          "gre000h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "htoauths": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "ods000h0": {
+            "non_null_rows": 0,
+            "null_rows": 24,
+            "non_null_full_hour_labels": 0,
+            "max_missing_full_hour_run": 24,
+            "missing_full_hour_labels": 24,
+            "coverage_percent_before_qc": 0.0
+          },
+          "oli000h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "olo000h0": {
+            "non_null_rows": 0,
+            "null_rows": 24,
+            "non_null_full_hour_labels": 0,
+            "max_missing_full_hour_run": 24,
+            "missing_full_hour_labels": 24,
+            "coverage_percent_before_qc": 0.0
+          },
+          "osr000h0": {
+            "non_null_rows": 0,
+            "null_rows": 24,
+            "non_null_full_hour_labels": 0,
+            "max_missing_full_hour_run": 24,
+            "missing_full_hour_labels": 24,
+            "coverage_percent_before_qc": 0.0
+          },
+          "pp0qffh0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "pp0qnhh0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "ppz700h0": {
+            "non_null_rows": 0,
+            "null_rows": 24,
+            "non_null_full_hour_labels": 0,
+            "max_missing_full_hour_run": 24,
+            "missing_full_hour_labels": 24,
+            "coverage_percent_before_qc": 0.0
+          },
+          "ppz850h0": {
+            "non_null_rows": 0,
+            "null_rows": 24,
+            "non_null_full_hour_labels": 0,
+            "max_missing_full_hour_run": 24,
+            "missing_full_hour_labels": 24,
+            "coverage_percent_before_qc": 0.0
+          },
+          "prestah0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "pva200h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "rre150h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "sre000h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tde200h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tre005h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tre005hn": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tre200h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tre200hn": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tre200hx": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tso005hs": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tso010hs": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tso020hs": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "ure200h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "wcc006h0": {
+            "non_null_rows": 0,
+            "null_rows": 24,
+            "non_null_full_hour_labels": 0,
+            "max_missing_full_hour_run": 24,
+            "missing_full_hour_labels": 24,
+            "coverage_percent_before_qc": 0.0
+          }
+        },
+        "qc_status": "per_value_flags_not_supplied_in_this_csv",
+        "qc_filter_applied": false,
+        "gap_filling_applied": false,
+        "epw_admission_assessed": false
+      }
+    },
+    "plan_id": "bacdb7ba534de58d098f48c4f6a8127769f77606aaafbeecfd446cbf48ede47f"
+  },
+  {
+    "network": "smn",
+    "station_id": "SMA",
+    "url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/sma/ogd-smn_sma_h_historical_2020-2029.csv",
+    "source_sha256": "17fee315d2bb8b90815b6c9627825e135a2b5de64c7776756e53c4433f8c8906",
+    "provider_checksum_verified": true,
+    "source_bytes": 7071784,
+    "source_information": {
+      "encoding": "cp1252",
+      "source_rows": 52608,
+      "selected_rows": 24,
+      "qc_status": "per_value_flags_not_supplied_in_this_csv",
+      "missing_selected_columns": []
+    },
+    "coverage_by_year": {
+      "2025": {
+        "start_utc_inclusive": "2025-06-01T00:00Z",
+        "end_utc_exclusive": "2025-06-02T00:00Z",
+        "expected_hourly_labels": 24,
+        "present_full_hour_labels": 24,
+        "absent_full_hour_labels": 0,
+        "off_grid_rows": 0,
+        "full_label_axis": true,
+        "hour_interval_regimes": {
+          "since2018_hour_rule_for_aggregates": 24
+        },
+        "parameters": {
+          "dkl010h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "erefaoh0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "fkl010h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "fkl010h1": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "fkl010h3": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "fu3010h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "fu3010h1": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "fu3010h3": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "fve010h0": {
+            "non_null_rows": 0,
+            "null_rows": 24,
+            "non_null_full_hour_labels": 0,
+            "max_missing_full_hour_run": 24,
+            "missing_full_hour_labels": 24,
+            "coverage_percent_before_qc": 0.0
+          },
+          "gre000h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "htoauths": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "ods000h0": {
+            "non_null_rows": 0,
+            "null_rows": 24,
+            "non_null_full_hour_labels": 0,
+            "max_missing_full_hour_run": 24,
+            "missing_full_hour_labels": 24,
+            "coverage_percent_before_qc": 0.0
+          },
+          "oli000h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "olo000h0": {
+            "non_null_rows": 0,
+            "null_rows": 24,
+            "non_null_full_hour_labels": 0,
+            "max_missing_full_hour_run": 24,
+            "missing_full_hour_labels": 24,
+            "coverage_percent_before_qc": 0.0
+          },
+          "osr000h0": {
+            "non_null_rows": 0,
+            "null_rows": 24,
+            "non_null_full_hour_labels": 0,
+            "max_missing_full_hour_run": 24,
+            "missing_full_hour_labels": 24,
+            "coverage_percent_before_qc": 0.0
+          },
+          "pp0qffh0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "pp0qnhh0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "ppz700h0": {
+            "non_null_rows": 0,
+            "null_rows": 24,
+            "non_null_full_hour_labels": 0,
+            "max_missing_full_hour_run": 24,
+            "missing_full_hour_labels": 24,
+            "coverage_percent_before_qc": 0.0
+          },
+          "ppz850h0": {
+            "non_null_rows": 0,
+            "null_rows": 24,
+            "non_null_full_hour_labels": 0,
+            "max_missing_full_hour_run": 24,
+            "missing_full_hour_labels": 24,
+            "coverage_percent_before_qc": 0.0
+          },
+          "prestah0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "pva200h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "rre150h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "sre000h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tde200h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tre005h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tre005hn": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tre200h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tre200hn": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tre200hx": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tso005hs": {
+            "non_null_rows": 0,
+            "null_rows": 24,
+            "non_null_full_hour_labels": 0,
+            "max_missing_full_hour_run": 24,
+            "missing_full_hour_labels": 24,
+            "coverage_percent_before_qc": 0.0
+          },
+          "tso010hs": {
+            "non_null_rows": 0,
+            "null_rows": 24,
+            "non_null_full_hour_labels": 0,
+            "max_missing_full_hour_run": 24,
+            "missing_full_hour_labels": 24,
+            "coverage_percent_before_qc": 0.0
+          },
+          "tso020hs": {
+            "non_null_rows": 0,
+            "null_rows": 24,
+            "non_null_full_hour_labels": 0,
+            "max_missing_full_hour_run": 24,
+            "missing_full_hour_labels": 24,
+            "coverage_percent_before_qc": 0.0
+          },
+          "ure200h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "wcc006h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          }
+        },
+        "qc_status": "per_value_flags_not_supplied_in_this_csv",
+        "qc_filter_applied": false,
+        "gap_filling_applied": false,
+        "epw_admission_assessed": false
+      }
+    },
+    "plan_id": "bacdb7ba534de58d098f48c4f6a8127769f77606aaafbeecfd446cbf48ede47f"
+  },
+  {
+    "network": "smn-precip",
+    "station_id": "ABE",
+    "url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn-precip/abe/ogd-smn-precip_abe_h_historical_2020-2029.csv",
+    "source_sha256": "bc54604faaa70bc82af73e5298657937057d7f7bf1aafd8e8f75ee8a45c52701",
+    "provider_checksum_verified": true,
+    "source_bytes": 913418,
+    "source_information": {
+      "encoding": "cp1252",
+      "source_rows": 37701,
+      "selected_rows": 24,
+      "qc_status": "per_value_flags_not_supplied_in_this_csv",
+      "missing_selected_columns": []
+    },
+    "coverage_by_year": {
+      "2025": {
+        "start_utc_inclusive": "2025-06-01T00:00Z",
+        "end_utc_exclusive": "2025-06-02T00:00Z",
+        "expected_hourly_labels": 24,
+        "present_full_hour_labels": 24,
+        "absent_full_hour_labels": 0,
+        "off_grid_rows": 0,
+        "full_label_axis": true,
+        "hour_interval_regimes": {
+          "since2018_hour_rule_for_aggregates": 24
+        },
+        "parameters": {
+          "rre150h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          }
+        },
+        "qc_status": "per_value_flags_not_supplied_in_this_csv",
+        "qc_filter_applied": false,
+        "gap_filling_applied": false,
+        "epw_admission_assessed": false
+      }
+    },
+    "plan_id": "bacdb7ba534de58d098f48c4f6a8127769f77606aaafbeecfd446cbf48ede47f"
+  },
+  {
+    "network": "smn",
+    "station_id": "BER",
+    "url": "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/ber/ogd-smn_ber_h_historical_2010-2019.csv",
+    "source_sha256": "b89a9b456d231acbedec21594815590098e87f8ca237c059bcc6978df83d8968",
+    "provider_checksum_verified": true,
+    "source_bytes": 12539019,
+    "source_information": {
+      "encoding": "cp1252",
+      "source_rows": 87648,
+      "selected_rows": 48,
+      "qc_status": "per_value_flags_not_supplied_in_this_csv",
+      "missing_selected_columns": []
+    },
+    "coverage_by_year": {
+      "2017": {
+        "start_utc_inclusive": "2017-12-31T00:00Z",
+        "end_utc_exclusive": "2018-01-01T00:00Z",
+        "expected_hourly_labels": 24,
+        "present_full_hour_labels": 24,
+        "absent_full_hour_labels": 0,
+        "off_grid_rows": 0,
+        "full_label_axis": true,
+        "hour_interval_regimes": {
+          "pre2018_synop_rule_for_aggregates": 24
+        },
+        "parameters": {
+          "dkl010h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "erefaoh0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "fkl010h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "fkl010h1": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "fkl010h3": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "fu3010h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "fu3010h1": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "fu3010h3": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "fve010h0": {
+            "non_null_rows": 0,
+            "null_rows": 24,
+            "non_null_full_hour_labels": 0,
+            "max_missing_full_hour_run": 24,
+            "missing_full_hour_labels": 24,
+            "coverage_percent_before_qc": 0.0
+          },
+          "gre000h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "htoauths": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "ods000h0": {
+            "non_null_rows": 0,
+            "null_rows": 24,
+            "non_null_full_hour_labels": 0,
+            "max_missing_full_hour_run": 24,
+            "missing_full_hour_labels": 24,
+            "coverage_percent_before_qc": 0.0
+          },
+          "oli000h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "olo000h0": {
+            "non_null_rows": 0,
+            "null_rows": 24,
+            "non_null_full_hour_labels": 0,
+            "max_missing_full_hour_run": 24,
+            "missing_full_hour_labels": 24,
+            "coverage_percent_before_qc": 0.0
+          },
+          "osr000h0": {
+            "non_null_rows": 0,
+            "null_rows": 24,
+            "non_null_full_hour_labels": 0,
+            "max_missing_full_hour_run": 24,
+            "missing_full_hour_labels": 24,
+            "coverage_percent_before_qc": 0.0
+          },
+          "pp0qffh0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "pp0qnhh0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "ppz700h0": {
+            "non_null_rows": 0,
+            "null_rows": 24,
+            "non_null_full_hour_labels": 0,
+            "max_missing_full_hour_run": 24,
+            "missing_full_hour_labels": 24,
+            "coverage_percent_before_qc": 0.0
+          },
+          "ppz850h0": {
+            "non_null_rows": 0,
+            "null_rows": 24,
+            "non_null_full_hour_labels": 0,
+            "max_missing_full_hour_run": 24,
+            "missing_full_hour_labels": 24,
+            "coverage_percent_before_qc": 0.0
+          },
+          "prestah0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "pva200h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "rre150h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "sre000h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tde200h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tre005h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tre005hn": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tre200h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tre200hn": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tre200hx": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tso005hs": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tso010hs": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tso020hs": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "ure200h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "wcc006h0": {
+            "non_null_rows": 0,
+            "null_rows": 24,
+            "non_null_full_hour_labels": 0,
+            "max_missing_full_hour_run": 24,
+            "missing_full_hour_labels": 24,
+            "coverage_percent_before_qc": 0.0
+          }
+        },
+        "qc_status": "per_value_flags_not_supplied_in_this_csv",
+        "qc_filter_applied": false,
+        "gap_filling_applied": false,
+        "epw_admission_assessed": false
+      },
+      "2018": {
+        "start_utc_inclusive": "2018-01-01T00:00Z",
+        "end_utc_exclusive": "2018-01-02T00:00Z",
+        "expected_hourly_labels": 24,
+        "present_full_hour_labels": 24,
+        "absent_full_hour_labels": 0,
+        "off_grid_rows": 0,
+        "full_label_axis": true,
+        "hour_interval_regimes": {
+          "since2018_hour_rule_for_aggregates": 24
+        },
+        "parameters": {
+          "dkl010h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "erefaoh0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "fkl010h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "fkl010h1": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "fkl010h3": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "fu3010h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "fu3010h1": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "fu3010h3": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "fve010h0": {
+            "non_null_rows": 0,
+            "null_rows": 24,
+            "non_null_full_hour_labels": 0,
+            "max_missing_full_hour_run": 24,
+            "missing_full_hour_labels": 24,
+            "coverage_percent_before_qc": 0.0
+          },
+          "gre000h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "htoauths": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "ods000h0": {
+            "non_null_rows": 0,
+            "null_rows": 24,
+            "non_null_full_hour_labels": 0,
+            "max_missing_full_hour_run": 24,
+            "missing_full_hour_labels": 24,
+            "coverage_percent_before_qc": 0.0
+          },
+          "oli000h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "olo000h0": {
+            "non_null_rows": 0,
+            "null_rows": 24,
+            "non_null_full_hour_labels": 0,
+            "max_missing_full_hour_run": 24,
+            "missing_full_hour_labels": 24,
+            "coverage_percent_before_qc": 0.0
+          },
+          "osr000h0": {
+            "non_null_rows": 0,
+            "null_rows": 24,
+            "non_null_full_hour_labels": 0,
+            "max_missing_full_hour_run": 24,
+            "missing_full_hour_labels": 24,
+            "coverage_percent_before_qc": 0.0
+          },
+          "pp0qffh0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "pp0qnhh0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "ppz700h0": {
+            "non_null_rows": 0,
+            "null_rows": 24,
+            "non_null_full_hour_labels": 0,
+            "max_missing_full_hour_run": 24,
+            "missing_full_hour_labels": 24,
+            "coverage_percent_before_qc": 0.0
+          },
+          "ppz850h0": {
+            "non_null_rows": 0,
+            "null_rows": 24,
+            "non_null_full_hour_labels": 0,
+            "max_missing_full_hour_run": 24,
+            "missing_full_hour_labels": 24,
+            "coverage_percent_before_qc": 0.0
+          },
+          "prestah0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "pva200h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "rre150h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "sre000h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tde200h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tre005h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tre005hn": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tre200h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tre200hn": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tre200hx": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tso005hs": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tso010hs": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "tso020hs": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "ure200h0": {
+            "non_null_rows": 24,
+            "null_rows": 0,
+            "non_null_full_hour_labels": 24,
+            "max_missing_full_hour_run": 0,
+            "missing_full_hour_labels": 0,
+            "coverage_percent_before_qc": 100.0
+          },
+          "wcc006h0": {
+            "non_null_rows": 0,
+            "null_rows": 24,
+            "non_null_full_hour_labels": 0,
+            "max_missing_full_hour_run": 24,
+            "missing_full_hour_labels": 24,
+            "coverage_percent_before_qc": 0.0
+          }
+        },
+        "qc_status": "per_value_flags_not_supplied_in_this_csv",
+        "qc_filter_applied": false,
+        "gap_filling_applied": false,
+        "epw_admission_assessed": false
+      }
+    },
+    "plan_id": "756f8db67d6fe15adb0b208fb1f1808a79f9f1adeeb734101f55cc205db9f550"
+  }
+]
