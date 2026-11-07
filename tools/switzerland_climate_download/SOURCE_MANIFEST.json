@@ -3,14 +3,19 @@
   "self_excluded": true,
   "files": [
     {
+      "path": ".gitattributes",
+      "bytes": 84,
+      "sha256": "195e4b8e1d053dadecba0b523397ba2a2c2089391d4cef5eb2d63bb7ee8a28a5"
+    },
+    {
       "path": ".gitignore",
       "bytes": 116,
       "sha256": "50f6c305172240eac5117df75c216291937ca66fd25699ce1e97cbe6ef3d18cf"
     },
     {
       "path": "CHANGELOG_1_0_1_RU.md",
-      "bytes": 4169,
-      "sha256": "f64dd0bf28b5081e1e26cea8c90f2736bb6fb43c23067370cdc4fba708ded23a"
+      "bytes": 4422,
+      "sha256": "a5168b5543294acef6e51ad18c47aa9d96f5d30f5d5495e029d84833a03b8f5e"
     },
     {
       "path": "README_RU.md",

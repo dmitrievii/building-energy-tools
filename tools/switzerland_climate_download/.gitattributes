@@ -1,0 +1,2 @@
+# This package records byte-level SHA256; preserve bytes on every platform.
+* -text
