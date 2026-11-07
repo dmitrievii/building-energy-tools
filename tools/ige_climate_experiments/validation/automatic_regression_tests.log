@@ -1,0 +1,194 @@
+test_analytical_oracles (test_auto_regression.LinearTests.test_analytical_oracles) ... ok
+test_buck_reference_and_derived_assumption (test_auto_regression.LinearTests.test_buck_reference_and_derived_assumption) ... ok
+test_huber_reduces_single_outlier_influence (test_auto_regression.LinearTests.test_huber_reduces_single_outlier_influence) ... ok
+test_no_height_variation_rejected (test_auto_regression.LinearTests.test_no_height_variation_rejected) ... ok
+test_rank_deficiency_not_rescued_by_ridge (test_auto_regression.LinearTests.test_rank_deficiency_not_rescued_by_ridge) ... ok
+test_weighted_multifeature_solution (test_auto_regression.LinearTests.test_weighted_multifeature_solution) ... ok
+test_QC_sensitivity_retains_unchecked_without_calling_it_bad (test_auto_regression.NativeAndConfigTests.test_QC_sensitivity_retains_unchecked_without_calling_it_bad) ... ok
+test_config_paths_with_spaces_and_cyrillic (test_auto_regression.NativeAndConfigTests.test_config_paths_with_spaces_and_cyrillic) ... ok
+test_derived_vapour_requires_explicit_assumption (test_auto_regression.NativeAndConfigTests.test_derived_vapour_requires_explicit_assumption) ... ok
+test_native_build_preserves_QC_partial_hours_and_sources (test_auto_regression.NativeAndConfigTests.test_native_build_preserves_QC_partial_hours_and_sources) ... ok
+test_native_end_to_end_run_command (test_auto_regression.NativeAndConfigTests.test_native_end_to_end_run_command) ... ok
+test_nonfinite_optimizer_rejected (test_auto_regression.NativeAndConfigTests.test_nonfinite_optimizer_rejected) ... ok
+test_overlapping_years_rejected (test_auto_regression.NativeAndConfigTests.test_overlapping_years_rejected) ... ok
+test_too_few_completed_families_gets_readiness_failure (test_auto_regression.NativeAndConfigTests.test_too_few_completed_families_gets_readiness_failure) ... ok
+test_C_value_mutation_cannot_change_fit_or_selection (test_auto_regression.PipelineTests.test_C_value_mutation_cannot_change_fit_or_selection) ... Training T / height_idw_ols
+  ELIGIBLE
+Training T / monthly_idw_ols
+  ELIGIBLE
+Training T / height_idw_ols
+  ELIGIBLE
+Training T / monthly_idw_ols
+  ELIGIBLE
+ok
+test_all_failed_candidates_not_reported_as_best (test_auto_regression.PipelineTests.test_all_failed_candidates_not_reported_as_best) ... Training T / height_idw_ols
+  UNRESOLVED_OPTIMIZATION
+Training T / monthly_idw_ols
+  UNRESOLVED_OPTIMIZATION
+ok
+test_all_six_structures_and_four_variables_execute (test_auto_regression.PipelineTests.test_all_six_structures_and_four_variables_execute) ... Training T / height_idw_ols
+  ELIGIBLE
+Training T / seasonal_idw_ols
+  ELIGIBLE
+Training T / monthly_idw_ols
+  ELIGIBLE
+Training T / harmonic_idw_ridge
+  ELIGIBLE
+Training T / geo_gaussian_ols
+  ELIGIBLE
+Training T / seasonal_geo_gaussian_huber
+  ELIGIBLE
+Training RH / height_idw_ols
+  ELIGIBLE
+Training RH / seasonal_idw_ols
+  ELIGIBLE
+Training RH / monthly_idw_ols
+  ELIGIBLE
+Training RH / harmonic_idw_ridge
+  ELIGIBLE
+Training RH / geo_gaussian_ols
+  ELIGIBLE
+Training RH / seasonal_geo_gaussian_huber
+  ELIGIBLE
+Training p / height_idw_ols
+  ELIGIBLE
+Training p / seasonal_idw_ols
+  ELIGIBLE
+Training p / monthly_idw_ols
+  ELIGIBLE
+Training p / harmonic_idw_ridge
+  ELIGIBLE
+Training p / geo_gaussian_ols
+  ELIGIBLE
+Training p / seasonal_geo_gaussian_huber
+  ELIGIBLE
+Training log_e_water / height_idw_ols
+  ELIGIBLE
+Training log_e_water / seasonal_idw_ols
+  ELIGIBLE
+Training log_e_water / monthly_idw_ols
+  ELIGIBLE
+Training log_e_water / harmonic_idw_ridge
+  ELIGIBLE
+Training log_e_water / geo_gaussian_ols
+  ELIGIBLE
+Training log_e_water / seasonal_geo_gaussian_huber
+  ELIGIBLE
+ok
+test_fit_cli_reuses_cube_and_keeps_C_closed (test_auto_regression.PipelineTests.test_fit_cli_reuses_cube_and_keeps_C_closed) ... ok
+test_model_code_change_blocks_C (test_auto_regression.PipelineTests.test_model_code_change_blocks_C) ... Training T / height_idw_ols
+  ELIGIBLE
+Training T / monthly_idw_ols
+  ELIGIBLE
+ok
+test_selected_model_tamper_blocks_evaluation (test_auto_regression.PipelineTests.test_selected_model_tamper_blocks_evaluation) ... Training T / height_idw_ols
+  ELIGIBLE
+Training T / monthly_idw_ols
+  ELIGIBLE
+ok
+test_serial_and_spawned_models_match (test_auto_regression.PipelineTests.test_serial_and_spawned_models_match) ... Training T / height_idw_ols
+  ELIGIBLE
+Training T / monthly_idw_ols
+  ELIGIBLE
+T / monthly_idw_ols: ELIGIBLE
+T / height_idw_ols: ELIGIBLE
+ok
+test_training_and_separate_holdout_opening (test_auto_regression.PipelineTests.test_training_and_separate_holdout_opening) ... Training T / height_idw_ols
+  ELIGIBLE
+Training T / monthly_idw_ols
+  ELIGIBLE
+C evaluation: /tmp/tmp1mvuf0vl/fit/holdout_evaluations/20261107T160426_812248Z_e68664ab
+C evaluation: /tmp/tmp1mvuf0vl/fit/holdout_evaluations/20261107T160426_848581Z_3469f9ca
+ok
+test_constant_gradient_recovered_with_partial_hours (test_auto_regression.SpatialTests.test_constant_gradient_recovered_with_partial_hours) ... ok
+test_continuous_IDW_parameter_recovery_on_informative_transfer (test_auto_regression.SpatialTests.test_continuous_IDW_parameter_recovery_on_informative_transfer) ... ok
+test_cube_tampering_detected (test_auto_regression.SpatialTests.test_cube_tampering_detected) ... ok
+test_duplicate_family_has_one_donor_per_hour (test_auto_regression.SpatialTests.test_duplicate_family_has_one_donor_per_hour) ... ok
+test_equal_station_and_country_training_weights (test_auto_regression.SpatialTests.test_equal_station_and_country_training_weights) ... ok
+test_hard_evaluation_budget_and_no_fake_convergence (test_auto_regression.SpatialTests.test_hard_evaluation_budget_and_no_fake_convergence) ... ok
+test_inner_fold_never_uses_validation_family_in_fit_or_donors (test_auto_regression.SpatialTests.test_inner_fold_never_uses_validation_family_in_fit_or_donors) ... ok
+test_memory_budget_rejects_before_case_matrix (test_auto_regression.SpatialTests.test_memory_budget_rejects_before_case_matrix) ... ok
+test_missing_T_does_not_remove_pressure (test_auto_regression.SpatialTests.test_missing_T_does_not_remove_pressure) ... ok
+test_monthly_coefficients_recovered (test_auto_regression.SpatialTests.test_monthly_coefficients_recovered) ... ok
+test_optimizer_flat_weights_are_flagged (test_auto_regression.SpatialTests.test_optimizer_flat_weights_are_flagged) ... ok
+test_outer_V_donors_D_only (test_auto_regression.SpatialTests.test_outer_V_donors_D_only) ... ok
+test_physical_family_excluded_all_hours (test_auto_regression.SpatialTests.test_physical_family_excluded_all_hours) ... ok
+test_target_truth_cannot_change_donors_or_prediction (test_auto_regression.SpatialTests.test_target_truth_cannot_change_donors_or_prediction) ... ok
+test_time_and_availability_not_used_to_sample (test_auto_regression.SpatialTests.test_time_and_availability_not_used_to_sample) ... ok
+test_weights_normalized_and_neff_not_independent_N (test_auto_regression.SpatialTests.test_weights_normalized_and_neff_not_independent_N) ... ok
+test_zero_observations_have_defined_coverage (test_auto_regression.SpatialTests.test_zero_observations_have_defined_coverage) ... ok
+test_changed_native_bytes_quarantine_whole_job (test_local_experiments.AuditTests.test_changed_native_bytes_quarantine_whole_job) ... ok
+test_country_mismatch_rejected (test_local_experiments.AuditTests.test_country_mismatch_rejected) ... ok
+test_extra_receipt_artifact_rejected (test_local_experiments.AuditTests.test_extra_receipt_artifact_rejected) ... ok
+test_force_rehash_reads_everything_again (test_local_experiments.AuditTests.test_force_rehash_reads_everything_again) ... ok
+test_hash_cache_reuses_only_unchanged_files (test_local_experiments.AuditTests.test_hash_cache_reuses_only_unchanged_files) ... ok
+test_inputs_hashes_and_modification_times_unchanged (test_local_experiments.AuditTests.test_inputs_hashes_and_modification_times_unchanged) ... ok
+test_late_download_not_added_to_existing_snapshot (test_local_experiments.AuditTests.test_late_download_not_added_to_existing_snapshot) ... ok
+test_metadata_body_hash_checked (test_local_experiments.AuditTests.test_metadata_body_hash_checked) ... ok
+test_missing_countries_do_not_block_at (test_local_experiments.AuditTests.test_missing_countries_do_not_block_at) ... ok
+test_missing_csv_quarantines_job (test_local_experiments.AuditTests.test_missing_csv_quarantines_job) ... ok
+test_native_at_run_discovered_inside_repeated_at_folder (test_local_experiments.AuditTests.test_native_at_run_discovered_inside_repeated_at_folder) ... ok
+test_pending_is_not_corruption (test_local_experiments.AuditTests.test_pending_is_not_corruption) ... ok
+test_plan_hash_tampering_rejected (test_local_experiments.AuditTests.test_plan_hash_tampering_rejected) ... ok
+test_planning_copy_not_double_counted (test_local_experiments.AuditTests.test_planning_copy_not_double_counted) ... ok
+test_receipt_job_binding_required (test_local_experiments.AuditTests.test_receipt_job_binding_required) ... ok
+test_empty_database_never_reports_successful_pilot (test_local_experiments.CommandLineIntegrationTests.test_empty_database_never_reports_successful_pilot) ... ok
+test_limited_budget_is_explicit_unresolved (test_local_experiments.CommandLineIntegrationTests.test_limited_budget_is_explicit_unresolved) ... ok
+test_new_attempt_reuses_hash_cache_and_creates_new_report (test_local_experiments.CommandLineIntegrationTests.test_new_attempt_reuses_hash_cache_and_creates_new_report) ... ok
+test_serial_and_spawn_parallel_predictions_identical (test_local_experiments.CommandLineIntegrationTests.test_serial_and_spawn_parallel_predictions_identical) ... ok
+test_confirmatory_use_not_permitted (test_local_experiments.ConfigurationTests.test_confirmatory_use_not_permitted) ... ok
+test_duplicate_profiles_fail_before_computation (test_local_experiments.ConfigurationTests.test_duplicate_profiles_fail_before_computation) ... ok
+test_leap_year_axis (test_local_experiments.ConfigurationTests.test_leap_year_axis) ... ok
+test_no_results_directory_containing_database (test_local_experiments.ConfigurationTests.test_no_results_directory_containing_database) ... ok
+test_no_writes_below_database (test_local_experiments.ConfigurationTests.test_no_writes_below_database) ... ok
+test_non_hour_window_fails (test_local_experiments.ConfigurationTests.test_non_hour_window_fails) ... ok
+test_overlapping_windows_fail (test_local_experiments.ConfigurationTests.test_overlapping_windows_fail) ... ok
+test_paths_relative_to_config_not_working_directory (test_local_experiments.ConfigurationTests.test_paths_relative_to_config_not_working_directory) ... ok
+test_unknown_config_typo_fails (test_local_experiments.ConfigurationTests.test_unknown_config_typo_fails) ... ok
+test_unresolved_time_fails (test_local_experiments.ConfigurationTests.test_unresolved_time_fails) ... ok
+test_unsafe_cross_platform_paths (test_local_experiments.ConfigurationTests.test_unsafe_cross_platform_paths) ... ok
+test_actual_at_values_and_automatic_flag_preserved (test_local_experiments.NativeFixtureTests.test_actual_at_values_and_automatic_flag_preserved) ... ok
+test_actual_dwd_station_and_sea_pressure_not_swapped (test_local_experiments.NativeFixtureTests.test_actual_dwd_station_and_sea_pressure_not_swapped) ... ok
+test_actual_dwd_temperature_and_native_qn (test_local_experiments.NativeFixtureTests.test_actual_dwd_temperature_and_native_qn) ... ok
+test_actual_meteoswiss_values_with_no_invented_qc (test_local_experiments.NativeFixtureTests.test_actual_meteoswiss_values_with_no_invented_qc) ... ok
+test_each_native_fixture_retains_24_rows (test_local_experiments.NativeFixtureTests.test_each_native_fixture_retains_24_rows) ... ok
+test_fixture_fingerprints (test_local_experiments.NativeFixtureTests.test_fixture_fingerprints) ... ok
+test_constant_field_at_coincident_points (test_local_experiments.NumericalAndReportingTests.test_constant_field_at_coincident_points) ... ok
+test_distance_earth_quarter_circumference (test_local_experiments.NumericalAndReportingTests.test_distance_earth_quarter_circumference) ... ok
+test_execution_failure_keeps_expected_denominator (test_local_experiments.NumericalAndReportingTests.test_execution_failure_keeps_expected_denominator) ... ok
+test_independent_analytic_oracles (test_local_experiments.NumericalAndReportingTests.test_independent_analytic_oracles) ... ok
+test_invalid_weight_inputs_rejected (test_local_experiments.NumericalAndReportingTests.test_invalid_weight_inputs_rejected) ... ok
+test_known_error_numbers (test_local_experiments.NumericalAndReportingTests.test_known_error_numbers) ... ok
+test_zero_denominator_undefined (test_local_experiments.NumericalAndReportingTests.test_zero_denominator_undefined) ... ok
+test_zero_scored_error_metrics_undefined (test_local_experiments.NumericalAndReportingTests.test_zero_scored_error_metrics_undefined) ... ok
+test_ch_legacy_support_preserved (test_local_experiments.ReaderAndPolicyTests.test_ch_legacy_support_preserved) ... ok
+test_ch_no_fabricated_per_value_qc (test_local_experiments.ReaderAndPolicyTests.test_ch_no_fabricated_per_value_qc) ... ok
+test_ch_wrong_support_regime_fails_closed (test_local_experiments.ReaderAndPolicyTests.test_ch_wrong_support_regime_fails_closed) ... ok
+test_configuration_cannot_change_under_sealed_snapshot (test_local_experiments.ReaderAndPolicyTests.test_configuration_cannot_change_under_sealed_snapshot) ... ok
+test_de_station_pressure_not_sea_level (test_local_experiments.ReaderAndPolicyTests.test_de_station_pressure_not_sea_level) ... ok
+test_de_unknown_operator_not_silently_accepted (test_local_experiments.ReaderAndPolicyTests.test_de_unknown_operator_not_silently_accepted) ... ok
+test_donor_families_not_double_counted (test_local_experiments.ReaderAndPolicyTests.test_donor_families_not_double_counted) ... ok
+test_duplicate_timestamps_reject_whole_part (test_local_experiments.ReaderAndPolicyTests.test_duplicate_timestamps_reject_whole_part) ... ok
+test_dwd_blank_unit_uses_explicit_verified_product_contract (test_local_experiments.ReaderAndPolicyTests.test_dwd_blank_unit_uses_explicit_verified_product_contract) ... ok
+test_dwd_station_field_must_have_matching_native_reference (test_local_experiments.ReaderAndPolicyTests.test_dwd_station_field_must_have_matching_native_reference) ... ok
+test_equal_priority_conflicts_are_excluded (test_local_experiments.ReaderAndPolicyTests.test_equal_priority_conflicts_are_excluded) ... ok
+test_historical_over_recent_priority_not_a_fit (test_local_experiments.ReaderAndPolicyTests.test_historical_over_recent_priority_not_a_fit) ... ok
+test_manual_and_automatic_values_both_in_primary (test_local_experiments.ReaderAndPolicyTests.test_manual_and_automatic_values_both_in_primary) ... ok
+test_null_control_value_can_still_have_a_prediction (test_local_experiments.ReaderAndPolicyTests.test_null_control_value_can_still_have_a_prediction) ... ok
+test_one_donor_has_nn_but_not_multi_donor_idw (test_local_experiments.ReaderAndPolicyTests.test_one_donor_has_nn_but_not_multi_donor_idw) ... ok
+test_only_explicit_native_rejects_excluded (test_local_experiments.ReaderAndPolicyTests.test_only_explicit_native_rejects_excluded) ... ok
+test_partial_day_allowed_without_annual_gate (test_local_experiments.ReaderAndPolicyTests.test_partial_day_allowed_without_annual_gate) ... ok
+test_physical_diagnostic_does_not_silently_clip_raw_rh (test_local_experiments.ReaderAndPolicyTests.test_physical_diagnostic_does_not_silently_clip_raw_rh) ... ok
+test_pressure_missing_does_not_remove_temperature (test_local_experiments.ReaderAndPolicyTests.test_pressure_missing_does_not_remove_temperature) ... ok
+test_snapshot_tampering_detected (test_local_experiments.ReaderAndPolicyTests.test_snapshot_tampering_detected) ... ok
+test_source_mutation_after_audit_not_read (test_local_experiments.ReaderAndPolicyTests.test_source_mutation_after_audit_not_read) ... ok
+test_target_family_and_combined_rows_excluded (test_local_experiments.ReaderAndPolicyTests.test_target_family_and_combined_rows_excluded) ... ok
+test_target_values_do_not_enter_spatial_prediction (test_local_experiments.ReaderAndPolicyTests.test_target_values_do_not_enter_spatial_prediction) ... ok
+test_unchecked_qc_is_sensitivity_not_incorrect (test_local_experiments.ReaderAndPolicyTests.test_unchecked_qc_is_sensitivity_not_incorrect) ... ok
+test_unknown_qc_not_guessed_manual_or_bad (test_local_experiments.ReaderAndPolicyTests.test_unknown_qc_not_guessed_manual_or_bad) ... ok
+test_wrong_pressure_unit_not_guessed (test_local_experiments.ReaderAndPolicyTests.test_wrong_pressure_unit_not_guessed) ... ok
+
+----------------------------------------------------------------------
+Ran 109 tests in 8.893s
+
+OK

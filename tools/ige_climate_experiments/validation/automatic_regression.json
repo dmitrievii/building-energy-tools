@@ -1,0 +1,86 @@
+{
+  "schema": "IGE_AUTO_VALIDATION_v1",
+  "date": "2026-11-07",
+  "version": "0.1.0",
+  "scope": "Numerical/software engineering validation; synthetic transfer fields are not independent weather accuracy evidence",
+  "tests": {
+    "command": "python -m unittest discover -s tests -v",
+    "total_passed": 109,
+    "original_E0_E10_tests": 70,
+    "automatic_regression_tests": 39,
+    "failures": 0,
+    "wall_seconds": 8.893,
+    "observed_environment": {
+      "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+      "platform": "Linux-6.18.57-x86_64-with-glibc2.39",
+      "version": "0.1.0",
+      "dependencies": {
+        "numpy": "2.3.5",
+        "scipy": "1.17.0"
+      },
+      "threads": {
+        "OMP_NUM_THREADS": null,
+        "OPENBLAS_NUM_THREADS": null,
+        "MKL_NUM_THREADS": null
+      }
+    },
+    "windows_local_execution_observed": false
+  },
+  "synthetic_matrix": {
+    "reproduction_command": "python tests/validate_auto.py --out <new_empty_folder>",
+    "models": 6,
+    "variables": [
+      "T",
+      "RH",
+      "p",
+      "log_e_water"
+    ],
+    "tasks_per_profile": 24,
+    "eligible_serial": 24,
+    "eligible_spawn2": 24,
+    "selected_models_identical_serial_spawn": true,
+    "serial_wall_seconds": 1.6539800250000098,
+    "spawn2_wall_seconds": 1.5198086629998215,
+    "selected": {
+      "T": "height_idw_ols",
+      "RH": "height_idw_ols",
+      "p": "height_idw_ols",
+      "log_e_water": "harmonic_idw_ridge"
+    },
+    "known_T_coefficient_per_km": -7.3,
+    "fitted_T_coefficients": [
+      -7.300000000000003
+    ],
+    "C_panels_scored_exit_code": 0,
+    "C_truth_mutation_does_not_change_fit_or_selection": "PASS in separate test",
+    "synthetic_native_run": "15 AT sites; Jan 15 of 2020/2023/2025; CLI run; slope +40 recovered; database file hashes/mtime/ctime unchanged"
+  },
+  "continuous_parameter_recovery": {
+    "truth_eta": [
+      2.7,
+      0.5
+    ],
+    "fitted_eta": [
+      2.69999992005461,
+      0.4999999987244771
+    ],
+    "status": "CONVERGED",
+    "objective": 8.766032079843872e-15,
+    "wall_seconds": 0.47625187399989954,
+    "no_coefficient_grid": true
+  },
+  "source_fixture_validation": "Unchanged original 70 tests include real small AT/DE/CH CSV and provenance, native units/P0, QC, operators, integrity and spawn. Synthetic native fixtures test the new cube reader. A full real network fit has not been executed here.",
+  "user_full_database_fit": false,
+  "scientific_accuracy_qualified": false,
+  "github_workflow": ".github/workflows/ige-e0-e10-local.yml",
+  "ci_target_matrix": {
+    "os": [
+      "ubuntu-latest",
+      "windows-latest"
+    ],
+    "python": [
+      "3.10",
+      "3.13"
+    ]
+  }
+}

@@ -4,6 +4,11 @@
 Поддерживаются исходные структуры наших загрузчиков GeoSphere AT, DWD DE и
 MeteoSwiss CH. Интернет для расчёта не нужен.
 
+**Добавлена отдельная программа автоматического обучения:**
+[AUTO_REGRESSION_RU.md](AUTO_REGRESSION_RU.md), `ige_regression.py` и
+`RUN_AUTO_REGRESSION.bat`. Для неё нужны NumPy/SciPy; первоначальный E0/E1.0
+сохранён с прежними контролями и не требует этих библиотек.
+
 ## Размещение
 
 Распакуйте содержимое пакета в папку **ClimateExperiments рядом с Database**.
@@ -206,7 +211,7 @@ Database для первичной оценки не требуется.
 ## Проверка пакета
 
 ```bat
-python -m unittest discover -s tests -v
+python -m unittest discover -s tests -p test_local_experiments.py -v
 ```
 
 Тесты проверяют численные оракулы, реальные малые CSV, пропуски, QC, исключение

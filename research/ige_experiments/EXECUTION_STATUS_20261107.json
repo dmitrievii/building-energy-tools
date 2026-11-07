@@ -40,13 +40,23 @@
     "independent_accuracy_qualified": false
   },
   "validation_report": "tools/ige_climate_experiments/validation/summary.json",
-  "local_tests_passed": 70,
+  "local_tests_passed": 109,
   "local_windows_execution_observed": false,
   "github_workflow": ".github/workflows/ige-e0-e10-local.yml",
   "further_scientific_experiments_started": false,
-  "next": "Review a suitable actual E0 snapshot; seal new training/validation/confirmation cohorts; implement automatic linear/continuous coefficient estimation under v1.1. Legacy replay retains a separate input gate.",
+  "next": "Run the automatic program on the actual user Database, inspect source/coverage and D/V diagnostics, then separately open an appropriately declared C; expand cohorts after resource measurement. Scientific qualification and legacy full replay remain pending.",
   "automatic_calibration_policy": "research/ige_experiments/calibration_policy_v1_1.json",
-  "automatic_calibrator_implemented": false,
+  "automatic_calibrator_implemented": true,
   "new_calibration_run_started": false,
-  "legacy_replay_blocks_new_training": false
+  "legacy_replay_blocks_new_training": false,
+  "automatic_calibrator_version": "0.1.0",
+  "automatic_calibrator_cli": "tools/ige_climate_experiments/ige_regression.py",
+  "automatic_calibrator_scope": [
+    "T",
+    "RH",
+    "p",
+    "log_e_water explicitly derived from T/RH"
+  ],
+  "automatic_validation_report": "tools/ige_climate_experiments/validation/automatic_regression.json",
+  "engineering_calibration_run_started": true
 }

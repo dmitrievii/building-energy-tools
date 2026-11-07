@@ -1,3 +1,5 @@
 __pycache__/
 *.pyc
+.venv_regression/
+regression_results/
 results/

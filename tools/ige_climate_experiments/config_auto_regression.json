@@ -1,0 +1,33 @@
+{
+  "schema": "IGE_AUTO_REGRESSION_CONFIG_v1",
+  "database": "../Database",
+  "results": "./regression_results",
+  "countries": ["AT", "DE", "CH"],
+  "variables": ["T", "RH", "p", "log_e_water"],
+  "years": {"D": [2019, 2020, 2021], "V": [2023], "C": [2025]},
+  "sample_days_per_month": 2,
+  "sample_start_day": 15,
+  "sites_per_country": 24,
+  "split_seed": 20261107,
+  "split_fractions": {"D": 0.6, "V": 0.2, "C": 0.2},
+  "inner_folds": 3,
+  "qc_mode": "primary",
+  "rejected_native_qc": {"AT": [], "DE": [], "CH": []},
+  "water_vapour_assumption": "BUCK_LIQUID_WATER_EXPLICIT",
+  "co_location_km": 0.1,
+  "cases_per_partition": 12000,
+  "models": [
+    {"id": "height_idw_ols", "basis": "height", "kernel": "idw", "regression": "ols"},
+    {"id": "seasonal_idw_ols", "basis": "seasonal_height", "kernel": "idw", "regression": "ols"},
+    {"id": "monthly_idw_ols", "basis": "monthly_height", "kernel": "idw", "regression": "ols"},
+    {"id": "harmonic_idw_ridge", "basis": "harmonic_height", "kernel": "idw", "regression": "ridge"},
+    {"id": "geo_gaussian_ols", "basis": "height_geo", "kernel": "gaussian", "regression": "ols"},
+    {"id": "seasonal_geo_gaussian_huber", "basis": "seasonal_geo", "kernel": "gaussian", "regression": "huber"}
+  ],
+  "optimizer": {"max_evaluations": 300, "max_iterations": 60, "wall_seconds_per_model": 600, "starts": 2, "min_fit_cases": 100, "rank_rcond": 1e-10, "max_condition": 100000000.0},
+  "workers": 1,
+  "memory_budget_bytes": 2147483648,
+  "selection_metric": "equal_country_station_macro_MAE",
+  "final_refit": "D_PLUS_V",
+  "evaluate_holdout": false
+}
