@@ -10,8 +10,19 @@
       "name": "IGE_Climate_Scientific_Chapter_RU_v1_20261105.md",
       "library_file_id": "libfile_28b48a36d2fc8191a956db8f197196be",
       "whole_file_sha256": null,
-      "read_scope": ["lines 1-170", "lines 559-740", "lines 876-940", "heading and IV1 searches"],
-      "supports": ["Existing E0-E8 numbering", "Accepted P8.2F versus unqualified adapter distinction", "Negative R1/B4 and P1/P2 limitations", "CD2/CD3 numerical versus observational evidence", "IV1 source gate and absence of new station scoring"],
+      "read_scope": [
+        "lines 1-170",
+        "lines 559-740",
+        "lines 876-940",
+        "heading and IV1 searches"
+      ],
+      "supports": [
+        "Existing E0-E8 numbering",
+        "Accepted P8.2F versus unqualified adapter distinction",
+        "Negative R1/B4 and P1/P2 limitations",
+        "CD2/CD3 numerical versus observational evidence",
+        "IV1 source gate and absence of new station scoring"
+      ],
       "limit": "The present program cites earlier reported evidence; it does not independently reproduce it."
     },
     {
@@ -20,8 +31,13 @@
       "name": "IGE_P9_3B3_Technical_Plan_RU_20261020.md",
       "library_file_id": "libfile_3e3c31bd2ce88191903dbe67e43267b6",
       "whole_file_sha256": null,
-      "read_scope": ["lines 1-180"],
-      "supports": ["Prior registered physical/operator/source limitations", "Pressure and inverse-problem context"],
+      "read_scope": [
+        "lines 1-180"
+      ],
+      "supports": [
+        "Prior registered physical/operator/source limitations",
+        "Pressure and inverse-problem context"
+      ],
       "limit": "Not a full-file audit; operative new experiments still need actual sealed sources."
     },
     {
@@ -30,8 +46,16 @@
       "name": "IGE_P9_3B3_Mathematical_Alternatives_and_Comparison_Plan_RU_20261021.md",
       "library_file_id": "libfile_aa8acd90c0708191a2271aa01a816978",
       "whole_file_sha256": null,
-      "read_scope": ["lines 1-475"],
-      "supports": ["P0-P3, C0-C3 and J1 families", "Bounded seven-arm matrix plus one later pair", "Identified-set versus probabilistic uncertainty", "Pressure/bias/height identifiability", "No training of transport or covariance from the final test"],
+      "read_scope": [
+        "lines 1-475"
+      ],
+      "supports": [
+        "P0-P3, C0-C3 and J1 families",
+        "Bounded seven-arm matrix plus one later pair",
+        "Identified-set versus probabilistic uncertainty",
+        "Pressure/bias/height identifiability",
+        "No training of transport or covariance from the final test"
+      ],
       "limit": "Catalogued hypotheses do not establish implementation readiness."
     },
     {
@@ -40,8 +64,14 @@
       "name": "IGE_P8_3D_PHYSICAL_WIND_DONORS_PROTOCOL_RU.md",
       "library_file_id": "libfile_2cc8f52eb0a08191b69603e97adbca29",
       "whole_file_sha256": null,
-      "read_scope": ["returned protocol content within lines 1-180"],
-      "supports": ["Frozen distance/elevation/terrain selectors", "Selection versus unchanged geographic weighting", "Disclosure of old wind targets and historical coverage rules"],
+      "read_scope": [
+        "returned protocol content within lines 1-180"
+      ],
+      "supports": [
+        "Frozen distance/elevation/terrain selectors",
+        "Selection versus unchanged geographic weighting",
+        "Disclosure of old wind targets and historical coverage rules"
+      ],
       "limit": "Old annual coverage thresholds are not imported into the new hourly study; terrain is not verified aerodynamic exposure."
     },
     {
@@ -51,7 +81,12 @@
       "commit": "eb4e14d84b2e372feeba73713b18d21cde7f2207",
       "path": "docs/IGE_S1_POINT_INTERPOLATION_AND_ACTIVE_HEIGHTS_RU_20261028.md",
       "url": "https://github.com/dmitrievii/building-energy-tools/blob/eb4e14d84b2e372feeba73713b18d21cde7f2207/docs/IGE_S1_POINT_INTERPOLATION_AND_ACTIVE_HEIGHTS_RU_20261028.md",
-      "supports": ["Actual S1 annual donor contract", "Frozen distance weights and monthly gradients", "Nominal height proxies", "Distinct adapter and physical contracts"],
+      "supports": [
+        "Actual S1 annual donor contract",
+        "Frozen distance weights and monthly gradients",
+        "Nominal height proxies",
+        "Distinct adapter and physical contracts"
+      ],
       "limit": "Annual admission is not an hourly research eligibility rule."
     },
     {
@@ -61,7 +96,11 @@
       "commit": "eb4e14d84b2e372feeba73713b18d21cde7f2207",
       "path": "docs/IGE_F1_SELECTED_BASE_FUTURE_RU_20261029.md",
       "url": "https://github.com/dmitrievii/building-energy-tools/blob/eb4e14d84b2e372feeba73713b18d21cde7f2207/docs/IGE_F1_SELECTED_BASE_FUTURE_RU_20261029.md",
-      "supports": ["Implemented selected-base F1 and separate reference windows", "Midrange versus time-mean operator", "Conditional stationary pressure and moisture projection"],
+      "supports": [
+        "Implemented selected-base F1 and separate reference windows",
+        "Midrange versus time-mean operator",
+        "Conditional stationary pressure and moisture projection"
+      ],
       "limit": "Working generation does not prove long-term climate accuracy or native future pressure."
     },
     {
@@ -71,7 +110,12 @@
       "commit": "eb4e14d84b2e372feeba73713b18d21cde7f2207",
       "path": "docs/IGE_F1_GAP_METHOD_AUDIT_RU_20261104.md",
       "url": "https://github.com/dmitrievii/building-energy-tools/blob/eb4e14d84b2e372feeba73713b18d21cde7f2207/docs/IGE_F1_GAP_METHOD_AUDIT_RU_20261104.md",
-      "supports": ["Frozen four-donor peer-anomaly formula", "Retrospective bracketing and masking requirements", "Conditional MAE and acceptance limitations", "Revealed local diagnostic cohorts"],
+      "supports": [
+        "Frozen four-donor peer-anomaly formula",
+        "Retrospective bracketing and masking requirements",
+        "Conditional MAE and acceptance limitations",
+        "Revealed local diagnostic cohorts"
+      ],
       "limit": "Previously disclosed diagnostics are not independent DE/CH accuracy."
     },
     {
@@ -81,7 +125,11 @@
       "commit": "eb4e14d84b2e372feeba73713b18d21cde7f2207",
       "path": "docs/IGE_F1_TWO_HOUR_RELEASE_RU_20261104.md",
       "url": "https://github.com/dmitrievii/building-energy-tools/blob/eb4e14d84b2e372feeba73713b18d21cde7f2207/docs/IGE_F1_TWO_HOUR_RELEASE_RU_20261104.md",
-      "supports": ["Operational two-hour and one-percent limits", "Fixed original donors, no cascade and atomic year", "Release checks separate from independent accuracy"],
+      "supports": [
+        "Operational two-hour and one-percent limits",
+        "Fixed original donors, no cascade and atomic year",
+        "Release checks separate from independent accuracy"
+      ],
       "limit": "This program does not extend the operational gap allowance."
     },
     {
@@ -91,7 +139,10 @@
       "commit": "eb4e14d84b2e372feeba73713b18d21cde7f2207",
       "path": "docs/IGE_AT_REAL_STATION_USABILITY_RESULTS_20261102.md",
       "url": "https://github.com/dmitrievii/building-energy-tools/blob/eb4e14d84b2e372feeba73713b18d21cde7f2207/docs/IGE_AT_REAL_STATION_USABILITY_RESULTS_20261102.md",
-      "supports": ["Actual Graz 2021 annual integration", "Four admitted T/RH/p donors and background for other fields"],
+      "supports": [
+        "Actual Graz 2021 annual integration",
+        "Four admitted T/RH/p donors and background for other fields"
+      ],
       "limit": "Mixed EPW source integration is not independent station interpolation accuracy for every weather field."
     },
     {
@@ -101,7 +152,11 @@
       "commit": "a3b09e9e2feb7cdc6efc197cfc52cd6a5c516b95",
       "path": "docs/IGE_HOURLY_INTERPOLATION_VALIDATION_POLICY_RU_20261107.md",
       "url": "https://github.com/dmitrievii/building-energy-tools/blob/a3b09e9e2feb7cdc6efc197cfc52cd6a5c516b95/docs/IGE_HOURLY_INTERPOLATION_VALIDATION_POLICY_RU_20261107.md",
-      "supports": ["Partial-hour rather than complete-year eligibility", "Automatic QC not considered incorrect due to absence of manual review", "Target/donor QC strata and paired accuracy plus own coverage"],
+      "supports": [
+        "Partial-hour rather than complete-year eligibility",
+        "Automatic QC not considered incorrect due to absence of manual review",
+        "Target/donor QC strata and paired accuracy plus own coverage"
+      ],
       "limit": "This is the new research policy; it does not amend previously sealed IV1 without registration."
     },
     {
@@ -109,7 +164,9 @@
       "kind": "repository_tool",
       "commit": "5519a4b89c5ed3ca47706f44b6e0c67ff4874368",
       "url": "https://github.com/dmitrievii/building-energy-tools/tree/5519a4b89c5ed3ca47706f44b6e0c67ff4874368/tools/austria_climate_download",
-      "supports": ["AT acquisition and station catalog lineage"],
+      "supports": [
+        "AT acquisition and station catalog lineage"
+      ],
       "limit": "User reports 1310/1310 complete transfers; whole local dataset has not been audited here."
     },
     {
@@ -117,7 +174,9 @@
       "kind": "repository_tool",
       "commit": "42c62b858f2f7489cdb1152359fb2e69030e6a20",
       "url": "https://github.com/dmitrievii/building-energy-tools/tree/42c62b858f2f7489cdb1152359fb2e69030e6a20/tools/germany_climate_download",
-      "supports": ["DWD groups, native timestamps and QC/provenance preservation"],
+      "supports": [
+        "DWD groups, native timestamps and QC/provenance preservation"
+      ],
       "limit": "Downloader offline and live small-sample checks are acquisition checks, not method accuracy."
     },
     {
@@ -125,7 +184,9 @@
       "kind": "repository_tool",
       "commit": "907e51f4a3e3068f66ac6dff14013b5bc2863fab",
       "url": "https://github.com/dmitrievii/building-energy-tools/tree/907e51f4a3e3068f66ac6dff14013b5bc2863fab/tools/switzerland_climate_download",
-      "supports": ["MeteoSwiss SMN/SMN-precip acquisition, absent per-value QC, native operators and explicit missing station metadata"],
+      "supports": [
+        "MeteoSwiss SMN/SMN-precip acquisition, absent per-value QC, native operators and explicit missing station metadata"
+      ],
       "limit": "Present published station geometry is not verified historical sensor geometry."
     },
     {
@@ -133,18 +194,26 @@
       "kind": "user_supplied_local_run_log",
       "library_file_id": "libfile_fc4c28a3424c81918233870169a9612f",
       "name": "Вставленный текст(3).txt",
-      "supports": ["1310 completed jobs and zero remaining in reported AT plan", "16413/2025 full calendar axis with per-parameter missingness"],
+      "supports": [
+        "1310 completed jobs and zero remaining in reported AT plan",
+        "16413/2025 full calendar axis with per-parameter missingness"
+      ],
       "limit": "A transfer-completion log is not source-file re-verification in this environment or meteorological completeness."
     },
     {
       "id": "PRIMARY_BLOCKED_CV",
       "kind": "primary_research_publication",
       "title": "Cross-validation strategies for data with temporal, spatial, hierarchical, or phylogenetic structure",
-      "authors": "Roberts et al.", "year": 2017, "doi": "10.1111/ecog.02881",
+      "authors": "Roberts et al.",
+      "year": 2017,
+      "doi": "10.1111/ecog.02881",
       "url": "https://florianhartig.github.io/publications/roberts2017cross/",
       "publisher_url": "https://nsojournals.onlinelibrary.wiley.com/doi/full/10.1111/ecog.02881",
       "accessed_at": "2026-11-07",
-      "supports": ["Dependence-aware CV aligned with spatial/temporal generalization claim", "Random splitting may be optimistic; spatial blocking can cause extrapolation"],
+      "supports": [
+        "Dependence-aware CV aligned with spatial/temporal generalization claim",
+        "Random splitting may be optimistic; spatial blocking can cause extrapolation"
+      ],
       "limit": "Does not choose this project's stations, block lengths or superiority margins."
     },
     {
@@ -154,7 +223,9 @@
       "document_date": "2025-05-31",
       "url": "https://www.nccs.nasa.gov/wp-content/uploads/2025/06/NEX-GDDP-CMIP6-v2-Tech_Note.pdf",
       "accessed_at": "2026-11-07",
-      "supports": ["Product lineage and need to audit actual model/file operators and product limitations"],
+      "supports": [
+        "Product lineage and need to audit actual model/file operators and product limitations"
+      ],
       "limit": "Project-specific midrange and pressure restrictions are documented in PROJECT_F1 and are not asserted as universal properties of every model."
     },
     {
@@ -163,7 +234,10 @@
       "title": "MeteoSwiss Open Data: Download data",
       "url": "https://opendatadocs.meteoswiss.ch/general/download",
       "accessed_at": "2026-11-07",
-      "supports": ["UTC labels and native support intervals", "Hourly aggregation regime change before/since 2018"],
+      "supports": [
+        "UTC labels and native support intervals",
+        "Hourly aggregation regime change before/since 2018"
+      ],
       "limit": "No silent alignment between unlike hourly operators; source 10-minute data may be required."
     },
     {
@@ -172,31 +246,108 @@
       "title": "GeoSphere Data Hub API changelog: quality flags",
       "url": "https://dataset.api.hub.geosphere.at/v1/docs/changelog.html",
       "accessed_at": "2026-11-07",
-      "supports": ["q21 automatic/manual and original/changed/unknown distinctions; unchecked is not synonymous with incorrect"],
+      "supports": [
+        "q21 automatic/manual and original/changed/unknown distinctions; unchecked is not synonymous with incorrect"
+      ],
       "limit": "Native definitions do not justify mapping the same numbers to another provider's flags."
+    },
+    {
+      "id": "PRIMARY_NUMPY_LSTSQ",
+      "kind": "official_primary_software_documentation",
+      "title": "NumPy linear least-squares",
+      "url": "https://numpy.org/doc/stable/reference/generated/numpy.linalg.lstsq.html",
+      "accessed_at": "2026-11-07",
+      "supports": [
+        "Mathematical solver type in automatic calibration policy v1.1"
+      ],
+      "limit": "No IGE coefficient values, scientific superiority, global optimum or automatic-calibrator implementation is established by this documentation."
+    },
+    {
+      "id": "PRIMARY_SCIPY_NONLINEAR_LS",
+      "kind": "official_primary_software_documentation",
+      "title": "SciPy bounded nonlinear least-squares",
+      "url": "https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.least_squares.html",
+      "accessed_at": "2026-11-07",
+      "supports": [
+        "Mathematical solver type in automatic calibration policy v1.1"
+      ],
+      "limit": "No IGE coefficient values, scientific superiority, global optimum or automatic-calibrator implementation is established by this documentation."
+    },
+    {
+      "id": "PRIMARY_SCIPY_MINIMIZE",
+      "kind": "official_primary_software_documentation",
+      "title": "SciPy continuous scalar optimization",
+      "url": "https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html",
+      "accessed_at": "2026-11-07",
+      "supports": [
+        "Mathematical solver type in automatic calibration policy v1.1"
+      ],
+      "limit": "No IGE coefficient values, scientific superiority, global optimum or automatic-calibrator implementation is established by this documentation."
     }
   ],
   "historical_evidence": [
     {
-      "id": "P82F_ACCEPTED", "sources": ["PROJECT_SCIENTIFIC_CHAPTER"],
-      "reported": {"station_hours": 78912, "T_MAE_K": 1.093, "e_MAE_hPa": 0.554, "RH_MAE_percentage_points": 6.636},
+      "id": "P82F_ACCEPTED",
+      "sources": [
+        "PROJECT_SCIENTIFIC_CHAPTER"
+      ],
+      "reported": {
+        "station_hours": 78912,
+        "T_MAE_K": 1.093,
+        "e_MAE_hPa": 0.554,
+        "RH_MAE_percentage_points": 6.636
+      },
       "claim_limit": "Original research cohort/contract; not transferred automatically to S1 or new country/year data."
     },
     {
-      "id": "P1_P2_PILOT", "sources": ["PROJECT_SCIENTIFIC_CHAPTER"],
-      "reported": {"source_hours_processed": "50/50", "columns": 14, "station_days": 6, "unique_station_hours": 144, "complete_hours_per_day": "24/24"},
+      "id": "P1_P2_PILOT",
+      "sources": [
+        "PROJECT_SCIENTIFIC_CHAPTER"
+      ],
+      "reported": {
+        "source_hours_processed": "50/50",
+        "columns": 14,
+        "station_days": 6,
+        "unique_station_hours": 144,
+        "complete_hours_per_day": "24/24"
+      },
       "claim_limit": "No universal P2 advantage; numerical hydrostatic residual is not observational accuracy."
     },
     {
-      "id": "IV1_UNFINISHED", "sources": ["PROJECT_SCIENTIFIC_CHAPTER", "PROJECT_MATH_ALTERNATIVES"],
-      "reported": {"code_checks": "490/490", "previous_native_hours": "675/676", "previous_reference_days": "17/18", "new_prior_records": 0, "new_method_records": 0, "new_station_scoring_completed": false},
+      "id": "IV1_UNFINISHED",
+      "sources": [
+        "PROJECT_SCIENTIFIC_CHAPTER",
+        "PROJECT_MATH_ALTERNATIVES"
+      ],
+      "reported": {
+        "code_checks": "490/490",
+        "previous_native_hours": "675/676",
+        "previous_reference_days": "17/18",
+        "new_prior_records": 0,
+        "new_method_records": 0,
+        "new_station_scoring_completed": false
+      },
       "claim_limit": "Source lineage gate remains unresolved; expected new counts are 84 prior and 420 method records."
     },
     {
-      "id": "GAP_RELEASE_LIMITED", "sources": ["PROJECT_GAP_AUDIT", "PROJECT_GAP_RELEASE"],
-      "reported": {"maximum_gap_hours": 2, "maximum_annual_fraction": 0.01, "release_preflight_checks": 816},
+      "id": "GAP_RELEASE_LIMITED",
+      "sources": [
+        "PROJECT_GAP_AUDIT",
+        "PROJECT_GAP_RELEASE"
+      ],
+      "reported": {
+        "maximum_gap_hours": 2,
+        "maximum_annual_fraction": 0.01,
+        "release_preflight_checks": 816
+      },
       "claim_limit": "Operationally limited mode; no new independent station accuracy claim."
     }
   ],
-  "new_program_design_not_prior_result": ["Hourly E0-E8 orchestration", "Illustrative 36-target resource pilot", "New D/V/C cohort", "Limited 12-cell joint shortlist example", "New confirmatory contrasts and resource limits still TBD"]
+  "new_program_design_not_prior_result": [
+    "Hourly E0-E8 orchestration",
+    "Illustrative 36-target resource pilot",
+    "New D/V/C cohort",
+    "Limited 12-cell joint shortlist example",
+    "New confirmatory contrasts and resource limits still TBD"
+  ]
 }

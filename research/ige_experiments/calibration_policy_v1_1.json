@@ -1,0 +1,99 @@
+{
+  "schema": "IGE_AUTOMATIC_SPATIAL_CALIBRATION_POLICY_v1",
+  "version": "1.1",
+  "date": "2026-11-07",
+  "program_id": "IGE_E0_E8_20261107_v1",
+  "document": "docs/IGE_AUTOMATIC_SPATIAL_CALIBRATION_RU_20261107.md",
+  "status": "METHODOLOGY_ACCEPTED_IMPLEMENTATION_PENDING",
+  "authority": "Explicit user instruction: critically reassess old coefficients and estimate new coefficients automatically rather than by brute-force grids",
+  "calibrator_implemented": false,
+  "new_coefficients_estimated": false,
+  "existing_engineering_pilot_version": "0.1.0",
+  "existing_pilot_parameters_role": "FROZEN_ENGINEERING_CONTROLS",
+  "supersedes": [
+    "Manual discrete grid as the main estimator of continuous IDW/gradient coefficients",
+    "Blind inheritance of prior coefficients or donor counts as the preferred new model"
+  ],
+  "old_coefficients": {
+    "role": "HISTORICAL_COMPARATOR_WITH_TRAINING_LINEAGE",
+    "mandatory_default": false,
+    "mandatory_prior_or_regularization_center": false,
+    "sole_optimizer_initialization": false,
+    "may_remain_best_after_independent_comparison": true
+  },
+  "parameter_blocks": [
+    {
+      "id": "LINEAR_TRANSFER",
+      "examples": ["T_height_gradient", "monthly_or_fixed_basis_T_gradients", "positive_log_e_height_gradient", "linear_background_residual_terms"],
+      "condition": "Donor weights and basis fixed",
+      "estimation": "LS/WLS or an explicitly declared convex/robust regression objective",
+      "quadratic_solver": "QR/SVD or equivalent stable linear solver",
+      "checks": ["feature_rank", "conditioning", "support_by_region_regime", "fold_stability", "units_and_geometry"]
+    },
+    {
+      "id": "CONTINUOUS_WEIGHTS",
+      "examples": ["IDW_exponent", "identifiable_kernel_scale", "relative_height_terrain_anisotropy"],
+      "estimation": "bounded_continuous_optimization",
+      "preferred_coupling": "conditional linear inner fit with nonlinear outer parameters",
+      "no_exhaustive_cartesian_grid": true,
+      "optimizer_convergence_not_global_optimality_or_accuracy": true
+    },
+    {
+      "id": "NONLINEAR_OR_LIKELIHOOD",
+      "examples": ["unknown_inversion_layer_position_thickness", "joint_final_RH_objective", "kriging_covariance", "wet_hour_probability"],
+      "estimation": "model_specific_nonlinear_or_likelihood_fit",
+      "ordinary_linear_least_squares_is_universal_estimator": false
+    },
+    {
+      "id": "STRUCTURE",
+      "examples": ["integer_neighbor_count", "number_of_regimes", "monthly_vs_seasonal_basis", "model_family"],
+      "estimation": "limited_predeclared_structure_comparison_on_validation",
+      "continuous_coefficient": false
+    }
+  ],
+  "temperature_design": {
+    "response": "T_target - sum(w_i * T_i) on synchronous training examples",
+    "height_feature": "sum(w_i * (z_target - z_i))",
+    "general_feature": "phi(target,t) - sum(w_i * phi(donor_i,t))",
+    "through_origin_scalar_estimator": "sum(omega*x*y)/sum(omega*x*x), when denominator informative and model declared",
+    "global_constant_spatial_feature_contrast": "zero, coefficient unidentifiable",
+    "absolute_T_vs_height_only_is_sufficient_design": false
+  },
+  "donors": {
+    "learned_branch": "smooth_normalized_weights_on_declared_broad_compatible_pool",
+    "effective_count": "1/sum(w_i^2), a concentration diagnostic not independent sample size",
+    "historical_controls": {"candidate_cap": 20, "radius_km": 100, "height_difference_m": 1500, "donors": 4},
+    "historical_controls_are_proven_optima": false,
+    "new_pool_resource_limits_and_truncation_sensitivity": "TBD from E0/resource profile before confirmation",
+    "per_hour_per_variable_availability": true,
+    "no_target_family_or_duplicate_family_donors": true
+  },
+  "identifiability": {
+    "normalized_pure_IDW_common_distance_scale": "cancels: (d/h)^(-beta); do not fit h as an independent bandwidth",
+    "metric_scale_and_kernel_bandwidth": "require a declared normalization or fixed reference coefficient",
+    "regularization_does_not_prove_physical_identification": true,
+    "height_geometry_and_pressure_bias_not_fitted_as_independent_known_truths": true
+  },
+  "validation": {
+    "fit": "D only, with declared inner grouped folds if used",
+    "structure_selection": "V; time/spatial grouped, not random neighboring-hour split",
+    "final_refit_D_plus_V": "Only if declared before C",
+    "confirmation": "C once after model/source/statistics freeze",
+    "new_spatial_target_family_excluded_from_fit_all_periods": true,
+    "legacy_training_membership_disclosed": true,
+    "partial_year_hours_allowed": true,
+    "automatic_and_manual_QC_in_primary": true,
+    "QC_not_automatic_confidence_weight": true,
+    "paired_accuracy_own_coverage_and_failures_required": true,
+    "country_site_block_weighting_declared": true
+  },
+  "not_free_fit_parameters": ["gravity", "gas_constants", "provider_time_support", "measured_sensor_geometry", "monthly_reconciliation_lambda_determined_by_declared_constraints"],
+  "preserved_protocols": ["original_IV1", "historical_negative_results", "operational_two_hour_gap_limits"],
+  "new_training_does_not_require_legacy_replay_success": true,
+  "unresolved_before_fit": ["actual_source_snapshot", "D_V_C_manifests", "basis_and_loss", "statistical_weights", "bounds_and_regularization", "rank_and_stability_thresholds", "resource_and_starting_state_budget"],
+  "primary_solver_references": [
+    "https://numpy.org/doc/stable/reference/generated/numpy.linalg.lstsq.html",
+    "https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.least_squares.html",
+    "https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html"
+  ]
+}

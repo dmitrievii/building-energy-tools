@@ -20,10 +20,17 @@
   },
   "E1.0": {
     "implementation": "SCALAR_ENGINEERING_CONTROLS_IMPLEMENTED",
-    "controls": ["NN_NATIVE", "IDW_NATIVE", "IDW_T_FIXED_LAPSE_PROXY"],
+    "controls": [
+      "NN_NATIVE",
+      "IDW_NATIVE",
+      "IDW_T_FIXED_LAPSE_PROXY"
+    ],
     "engineering_validation": "30 jobs per profile, serial versus two spawned processes, identical prediction hashes",
     "default_local_pilot": "D role; metadata-selected <=3 targets per country; four 48-hour windows in 2025",
-    "validation_windows": ["2025-01-01", "2025-06-01"],
+    "validation_windows": [
+      "2025-01-01",
+      "2025-06-01"
+    ],
     "legacy_replays": {
       "P8.2F_ACCEPTED_ANNUAL": "SOURCE_BLOCKED_EXACT_ANNUAL_MONTHLY_LINEAGE",
       "S1_FROZEN_ADAPTER": "CAPABILITY_BLOCKED_EXACT_ADAPTER_CONTRACT",
@@ -37,5 +44,9 @@
   "local_windows_execution_observed": false,
   "github_workflow": ".github/workflows/ige-e0-e10-local.yml",
   "further_scientific_experiments_started": false,
-  "next": "Run local package against user's actual Database, review E0 quarantine/pending and E1.0 denominators; then resolve legacy replay contracts before declaring full E1.0 complete"
+  "next": "Review a suitable actual E0 snapshot; seal new training/validation/confirmation cohorts; implement automatic linear/continuous coefficient estimation under v1.1. Legacy replay retains a separate input gate.",
+  "automatic_calibration_policy": "research/ige_experiments/calibration_policy_v1_1.json",
+  "automatic_calibrator_implemented": false,
+  "new_calibration_run_started": false,
+  "legacy_replay_blocks_new_training": false
 }
