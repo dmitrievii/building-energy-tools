@@ -219,6 +219,8 @@ def select_series(payload: bytes, *, source: str, scope: str,
                 values[~good] = np.nan
                 out[q] = values
                 missing[q] = int((~good).sum())
+        out.attrs['scope'] = scope
+        out.attrs['annual_hours'] = annual
         return StreamResult(out, {q: options[q] for q in quantities},
                             scope, len(zone_ids), missing, annual, scanned)
 
@@ -237,7 +239,7 @@ def time_aggregate(frame: pd.DataFrame, units: dict[str, str],
     if frame.empty:
         return frame, units
     data = frame.copy()
-    annual = int(data.hour_index.max())
+    annual = int(frame.attrs.get('annual_hours', data.hour_index.max()))
     if annual not in (8760, 8784):
         raise BundleValidationError("Unknown annual reference calendar.")
     refyear = YEAR_8760 if annual == 8760 else YEAR_8784
