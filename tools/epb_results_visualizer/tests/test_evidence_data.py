@@ -98,3 +98,37 @@ def test_invalid_zone_rows_rejected_by_existing_limits():
     frame = data["zone_physics"]
     assert frame["value"].dtype.kind in ("f", "i")
     assert pd.api.types.is_numeric_dtype(frame["month"])
+
+
+def test_v33_epw_area_uses_agreeing_scenario_areas():
+    data = load_evidence(_archive({
+        "visualization/building.json": json.dumps({
+            "conditioned_gross_floor_area_m2": None,
+            "scenario_floor_areas": [
+                {"scenario_id": "Real_RK", "gross_floor_area_m2": 300},
+                {"scenario_id": "Real_SK", "gross_floor_area_m2": 300},
+            ],
+        }),
+    }))
+    assert building_area(data) == 300
+
+
+def test_v33_epw_area_falls_back_to_unique_zone_areas():
+    data = load_evidence(_archive({
+        "visualization/building.json": json.dumps({
+            "conditioned_gross_floor_area_m2": None,
+            "scenario_floor_areas": [],
+        }),
+    }))
+    assert building_area(data) == 300
+
+
+def test_unavailable_area_does_not_become_zero():
+    data = load_evidence(_archive({
+        "visualization/building.json": json.dumps({
+            "conditioned_gross_floor_area_m2": None,
+            "scenario_floor_areas": [],
+        }),
+        "visualization/zones.csv": "zone_id,zone_name,floor_area_m2\nz1,Office,\n",
+    }))
+    assert building_area(data) is None

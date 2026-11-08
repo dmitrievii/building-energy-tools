@@ -151,12 +151,42 @@ def orientation_summary(data: dict) -> pd.DataFrame:
 
 
 def building_area(data: dict) -> float | None:
+    """Resolve an explicit area without guessing a certification area basis.
+
+    V3.3 MONTHLY+EPW bundles may omit the top-level area but include
+    scenario_floor_areas. Use that value only if the exported scenarios agree.
+    Otherwise, use complete non-duplicated zone areas as a descriptive basis.
+    """
     building = data.get("building", {})
     try:
         value = float(building.get("conditioned_gross_floor_area_m2"))
     except (TypeError, ValueError):
-        return None
-    return value if np.isfinite(value) and value > 0 else None
+        value = float("nan")
+    if np.isfinite(value) and value > 0:
+        return value
+    scenarios = building.get("scenario_floor_areas") or []
+    if isinstance(scenarios, list) and scenarios:
+        areas = []
+        for item in scenarios:
+            try:
+                area = float(item["gross_floor_area_m2"])
+            except (TypeError, ValueError, KeyError):
+                break
+            if not np.isfinite(area) or area <= 0:
+                break
+            areas.append(area)
+        if len(areas) == len(scenarios) and np.allclose(
+            areas, areas[0], rtol=1e-8, atol=1e-6
+        ):
+            return areas[0]
+    zones = data.get("zones", pd.DataFrame())
+    if (not zones.empty and {"zone_id", "floor_area_m2"}.issubset(zones)
+            and zones.zone_id.is_unique and zones.floor_area_m2.notna().all()
+            and (zones.floor_area_m2 > 0).all()):
+        total = float(zones.floor_area_m2.sum())
+        if np.isfinite(total) and total > 0:
+            return total
+    return None
 
 
 def zone_annual_intensity(data: dict, quantity: str) -> pd.DataFrame:
