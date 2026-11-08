@@ -27,8 +27,8 @@ def load_studies(uploads) -> list[Study]:
     if len(uploads) > 8:
         raise BundleValidationError('At most eight ZIP archives can be compared.')
     sources = [(f.name, f.getvalue()) for f in uploads]
-    if sum(len(b) for _, b in sources) > 240 * 1024 * 1024:
-        raise BundleValidationError('Combined ZIP upload exceeds 240 MiB.')
+    if sum(len(b) for _, b in sources) > 800 * 1024 * 1024:
+        raise BundleValidationError('Combined ZIP upload exceeds 800 MiB; load fewer large bundles.')
     expanded = 0
     for name, payload in sources:
         try:
@@ -36,8 +36,8 @@ def load_studies(uploads) -> list[Study]:
                 expanded += sum(x.file_size for x in z.infolist())
         except (zipfile.BadZipFile, OSError) as exc:
             raise BundleValidationError(f'Invalid ZIP: {name}') from exc
-        if expanded > 700 * 1024 * 1024:
-            raise BundleValidationError('Expanded ZIP contents exceed 700 MiB.')
+        if expanded > 16 * 1024 * 1024 * 1024:
+            raise BundleValidationError('Archive manifest total exceeds 16 GiB; load fewer large bundles.')
     cache = st.session_state.setdefault('epb_bundle_cache', {})
     distinct, seen = [], set()
     for name, payload in sources:
@@ -47,7 +47,15 @@ def load_studies(uploads) -> list[Study]:
             continue
         seen.add(key)
         if key not in cache:
-            cache[key] = read_bundle(payload)
+            # Never inflate massive trace tables at upload time. Source CSVs
+            # are streamed only after a scope and quantity have been chosen.
+            with zipfile.ZipFile(BytesIO(payload)) as z:
+                large = (len(payload) > 90 * 1024 * 1024 or
+                         any(m.filename in (
+                             'visualization/validation-trace.csv',
+                             'visualization/ventilation-hourly.csv') and
+                             m.file_size > 80 * 1024 * 1024 for m in z.infolist()))
+            cache[key] = read_bundle(payload, metadata_only=large)
         distinct.append((key, Path(name).stem, cache[key]))
     st.session_state['epb_bundle_cache'] = {key: cache[key] for key in seen if key in cache}
     if len(distinct) < 2:
