@@ -20,6 +20,7 @@ from epb_results_visualizer.charts import (
 )
 
 from epb_results_visualizer.multi_compare import load_studies, section_comparison
+from epb_results_visualizer.evidence_views import render_evidence, render_evidence_compare
 
 st.set_page_config(page_title='EPB Results Visualizer | IVANCALC', page_icon='📊', layout='wide')
 
@@ -396,25 +397,42 @@ def main():
     if not studies:
         st.info('No distinct valid ZIP archives selected.')
         return
+    payloads = {hashlib.sha256(f.getvalue()).hexdigest(): f.getvalue() for f in uploads}
+    # Retain uploaded evidence only within the current Streamlit session.
+    cache = st.session_state.get('epb_v3_evidence_cache', {})
+    st.session_state['epb_v3_evidence_cache'] = {
+        key: value for key, value in cache.items() if key in payloads
+    }
     st.sidebar.title('Analysis navigation')
-    pages = ['Overview','Thermal balance','Energy systems','Validation Trace',
-             'National indicators','Carrier ledger','Data quality']
+    evidence_pages = ['Envelope & WWR', 'Windows & glazing', 'Zone physics',
+                      'Solar & gains', 'Surface physics', 'Systems & electricity',
+                      'Chart Studio', 'Evidence coverage']
+    pages = ['Overview'] + evidence_pages + [
+        'Thermal balance', 'Energy systems', 'Validation Trace',
+        'National indicators', 'Carrier ledger', 'Data quality']
     if len(studies) > 1:
-        pages.insert(1,'Compare buildings / variants')
+        pages.insert(1, 'Compare buildings / variants')
+        pages.insert(2, 'Physical evidence comparison')
     page = st.sidebar.radio('Section', pages, index=1 if len(studies)>1 else 0)
     settings = chart_settings()
     if page == 'Compare buildings / variants':
         section_comparison(studies, settings)
+    elif page == 'Physical evidence comparison':
+        render_evidence_compare(studies, payloads, settings)
     else:
         if len(studies)>1:
             index = st.sidebar.selectbox('Individual ZIP',range(len(studies)),
                           format_func=lambda n:studies[n].label,key='epb_chosen_file')
-            bundle = studies[index].bundle
+            chosen_study = studies[index]
+            bundle = chosen_study.bundle
         else:
-            bundle = studies[0].bundle
+            chosen_study = studies[0]
+            bundle = chosen_study.bundle
         for warning in bundle.warnings:
             st.sidebar.warning(warning)
-        if page == 'Overview':
+        if page in evidence_pages:
+            render_evidence(page, payloads[chosen_study.key], settings)
+        elif page == 'Overview':
             section_overview(bundle)
         elif page == 'Thermal balance':
             section_thermal(bundle, settings)
