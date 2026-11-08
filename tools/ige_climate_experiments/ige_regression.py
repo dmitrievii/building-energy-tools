@@ -24,12 +24,12 @@ def main(argv=None):
     p.add_argument("--version", action="version", version=VERSION)
     sub = p.add_subparsers(dest="command", required=True)
     default = Path(__file__).resolve().parent/"config_auto_regression.json"
-    for name in ("run", "prepare", "fit"):
+    for name in ("run", "prepare", "fit", "check-config"):
         s = sub.add_parser(name)
         s.add_argument("--config", type=Path, default=default)
         if name == "fit":
             s.add_argument("--cube", type=Path, required=True)
-        else:
+        elif name != "check-config":
             s.add_argument("--rehash", action="store_true")
     e = sub.add_parser("evaluate")
     e.add_argument("--run", type=Path, required=True)
@@ -40,16 +40,24 @@ def main(argv=None):
     try:
         from ige_local.common import log, new_run, now, write_json
         from ige_auto.config import load, native_config
-        from ige_auto.data import build
-        from ige_auto.experiment import evaluate, train
         if args.command == "self-check":
             from ige_auto.oracles import self_check
             import json
             print(json.dumps(self_check(), indent=2))
             return 0
         if args.command == "evaluate":
+            from ige_auto.experiment import evaluate
             return evaluate(args.run, args.repeat)["exit_code"]
-        c = load(args.config); root = new_run(c["results"])
+        c = load(args.config)
+        if args.command == "check-config":
+            import json
+            print(json.dumps({"configuration_valid": True,
+                              **{k: c[k] for k in ("config_source_path", "database", "results")}},
+                             ensure_ascii=False, indent=2))
+            return 0
+        from ige_auto.data import build
+        from ige_auto.experiment import evaluate, train
+        root = new_run(c["results"])
         log("IGE automatic regression " + VERSION)
         log("Database (read only): " + c["database"])
         log("Run: " + str(root)); write_json(root/"effective_config.json", c)

@@ -1,8 +1,13 @@
 # IGE — локальный аудит E0 и малый инженерный пилот E1.0
 
-Версия 0.1.0, 2026-11-07. Python 3.10+, только стандартная библиотека.
+Версия 0.1.1, 2026-11-08. Python 3.10+, только стандартная библиотека.
 Поддерживаются исходные структуры наших загрузчиков GeoSphere AT, DWD DE и
 MeteoSwiss CH. Интернет для расчёта не нужен.
+
+При ошибке `Invalid \\escape` в JSON проверьте пути: используйте `/` или
+`"database": "../Database",` при соседнем расположении папок. Проверка без
+расчёта: `python ige_experiments.py check-config --config config_E0_E10.json`.
+Подробности и установка дополнения: [WINDOWS_PATHS_RU.md](WINDOWS_PATHS_RU.md).
 
 **Добавлена отдельная программа автоматического обучения:**
 [AUTO_REGRESSION_RU.md](AUTO_REGRESSION_RU.md), `ige_regression.py` и

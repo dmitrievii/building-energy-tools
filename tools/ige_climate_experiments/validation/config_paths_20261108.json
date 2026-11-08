@@ -1,0 +1,24 @@
+{
+  "schema": "IGE_CONFIG_PATHS_VALIDATION_v1",
+  "version": "0.1.1",
+  "python_version": "3.12.14",
+  "passed_tests": 119,
+  "failed_tests": 0,
+  "wall_seconds": 9.786,
+  "command": "python -m unittest discover -s tools/ige_climate_experiments/tests -v",
+  "checks": [
+    "Both sibling program folders resolve the same Database",
+    "Absolute paths with forward slashes are accepted",
+    "Invalid backslash escape reports file, line and column without rewriting config",
+    "Legal JSON escapes producing control characters in paths are rejected",
+    "Escaped backslashes and UTF-8 BOM remain supported",
+    "Both check-config commands work with Python -S (without site packages) and create no results",
+    "Invalid run config fails before numerical imports or results writes",
+    "Native plan/receipt JSON parsing remains strict"
+  ],
+  "scientific_algorithms_modified": false,
+  "user_configurations_overwritten_by_patch": false,
+  "user_windows_filesystem_accessed": false,
+  "local_test_platform": "linux",
+  "windows_native_execution": "Delegated to the existing GitHub Actions Windows matrix; not awaited"
+}

@@ -22,7 +22,7 @@ def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--version", action="version", version=VERSION)
     sub = p.add_subparsers(dest="command", required=True)
-    for command in ("run", "audit", "pilot"):
+    for command in ("run", "audit", "pilot", "check-config"):
         s = sub.add_parser(command)
         s.add_argument("--config", type=Path, default=Path(__file__).resolve().parent / "config_E0_E10.json")
         if command in ("run", "audit"):
@@ -38,6 +38,12 @@ def main(argv=None):
     root = None
     try:
         cfg = load_config(args.config)
+        if args.command == "check-config":
+            import json
+            print(json.dumps({"configuration_valid": True,
+                              **{k: cfg[k] for k in ("config_source_path", "database", "results")}},
+                             ensure_ascii=False, indent=2))
+            return 0
         root = new_run(cfg["results"])
         log("IGE E0 + E1.0 " + VERSION)
         log("Database (read only): " + cfg["database"])

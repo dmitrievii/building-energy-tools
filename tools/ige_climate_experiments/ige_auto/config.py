@@ -5,7 +5,7 @@ import datetime as dt
 import math
 from pathlib import Path
 
-from ige_local.common import HOUR, UTC, InputError, digest, iso, read_json
+from ige_local.common import HOUR, UTC, InputError, digest, iso, read_config_json
 
 BASES = {"height", "seasonal_height", "monthly_height", "harmonic_height", "height_geo", "seasonal_geo"}
 VARIABLES = {"T", "RH", "p", "log_e_water"}
@@ -13,7 +13,7 @@ VARIABLES = {"T", "RH", "p", "log_e_water"}
 
 def load(path):
     path = Path(path).resolve()
-    c = read_json(path)
+    c = read_config_json(path)
     allowed = {"schema", "database", "results", "countries", "variables", "years", "sample_days_per_month",
                "sample_start_day", "sites_per_country", "split_seed", "split_fractions", "inner_folds", "qc_mode",
                "rejected_native_qc", "water_vapour_assumption", "co_location_km", "cases_per_partition", "models",

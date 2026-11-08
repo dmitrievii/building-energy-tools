@@ -65,6 +65,31 @@ def read_json(path):
     return json.loads(Path(path).read_text(encoding="utf-8-sig"))
 
 
+def read_config_json(path):
+    """Keep JSON strict and explain Windows path escapes before any run writes."""
+    path = Path(path)
+    hint = ('In JSON paths use /, for example "database": "../Database" or '
+            '"database": "E:/User Folder/Climate/Database". '
+            'A Windows backslash must be doubled as \\\\. '
+            'Keep a comma between fields.')
+    try:
+        config = read_json(path)
+    except json.JSONDecodeError as exc:
+        raise InputError(
+            f"Invalid JSON configuration: {path}; line {exc.lineno}, column {exc.colno}: "
+            f"{exc.msg}. {hint}") from exc
+    if not isinstance(config, dict):
+        raise InputError("Configuration must be a JSON object: " + str(path))
+    for key in ("database", "results"):
+        value = config.get(key)
+        if not isinstance(value, str) or not value.strip():
+            raise InputError(f"Configuration {path}: {key} must be a nonempty path string")
+        if any(ord(char) < 32 for char in value):
+            raise InputError(f"Configuration {path}: {key} contains a control character, "
+                             f"possibly decoded from a Windows path escape. {hint}")
+    return config
+
+
 def write_csv(path, rows, fields):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -184,7 +209,7 @@ def peak_rss_bytes():
 
 def load_config(path):
     path = Path(path).resolve()
-    cfg = read_json(path)
+    cfg = read_config_json(path)
     allowed = {"schema", "database", "results", "countries", "windows", "variables", "targets", "max_targets_per_country",
                "candidate_count", "radius_km", "max_height_difference_m", "co_location_exclusion_km", "idw_max_donors",
                "idw_min_donors", "distance_floor_km", "temperature_lapse_K_per_m", "qc_modes", "rejected_native_qc",

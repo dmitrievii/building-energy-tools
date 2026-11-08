@@ -12,6 +12,7 @@ if %errorlevel% equ 0 (
 set IGE_EXIT_CODE=%errorlevel%
 echo.
 echo IGE exit code: %IGE_EXIT_CODE%
-echo Reports are in the results folder next to this BAT file.
+echo Reports are created only after a valid configuration starts a run.
+echo If no new run path was printed, correct the configuration error above.
 pause
 exit /b %IGE_EXIT_CODE%
