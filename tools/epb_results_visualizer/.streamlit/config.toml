@@ -1,7 +1,7 @@
 [server]
 headless = true
-maxUploadSize = 100
-maxMessageSize = 100
+maxUploadSize = 512
+maxMessageSize = 512
 
 [client]
 toolbarMode = "viewer"
