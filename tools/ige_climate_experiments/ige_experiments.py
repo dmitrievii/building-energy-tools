@@ -12,7 +12,7 @@ if sys.version_info < (3, 10):
 
 from ige_local import VERSION
 from ige_local.audit import audit
-from ige_local.common import InputError, load_config, log, new_run, now, read_json, write_json
+from ige_local.common import InputError, load_config, log, new_run, now, read_json, write_json, source_audit_failed
 from ige_local.pilot import numerical_oracles, pilot
 
 
@@ -56,7 +56,7 @@ def main(argv=None):
             if Path(snapshot["database"]).resolve() != Path(cfg["database"]).resolve():
                 raise InputError("Snapshot belongs to another Database")
         e10 = pilot(snapshot, cfg, root / "E10") if args.command in ("run", "pilot") else None
-        data_errors = bool(e0 and (e0["plan_errors"] or any(c["quarantined_jobs"] for c in e0["countries"].values())))
+        data_errors = bool(e0 and source_audit_failed(e0))
         pilot_errors = bool(e10 and (not e10["profiles_prediction_hashes_consistent"] or e10["prepare"]["read_failures"]
                             or not e10["scored_method_case_pairs_first_profile"]
                             or any(x["failed_jobs"] or x["budget_exceeded_jobs"] for x in e10["profile_sizes"])))

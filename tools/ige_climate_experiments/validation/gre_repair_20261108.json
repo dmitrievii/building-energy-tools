@@ -1,0 +1,20 @@
+{
+  "schema": "IGE_GRE_REPAIR_VALIDATION_v1",
+  "component": "E0",
+  "offline_tests_passed": 127,
+  "failed_tests": 0,
+  "seconds": 18.475,
+  "user_C_evaluated": false,
+  "humidity_chain_comparison_implemented": false,
+  "scientific_regression_algorithms_modified": false,
+  "lineage_checks": [
+    "same immutable job semantics",
+    "one-to-one bindings",
+    "frozen index stored and uncompressed SHA256",
+    "bound filename, size and date",
+    "failed child cannot clear quarantine",
+    "unrelated same URL does not clear quarantine",
+    "older failed child can be resolved by another verified revision",
+    "original native statuses retained"
+  ]
+}

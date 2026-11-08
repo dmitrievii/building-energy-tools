@@ -12,7 +12,7 @@ import time
 
 import numpy as np
 
-from ige_local.common import InputError, digest, file_hash, log, now, peak_rss_bytes, read_json, write_csv, write_json
+from ige_local.common import InputError, digest, file_hash, log, now, peak_rss_bytes, read_json, write_csv, write_json, source_audit_failed
 from . import VERSION
 from .cases import Cases, inner_cases, role_cases
 from .config import data_signature
@@ -189,7 +189,7 @@ def train(cube_path, c, output):
     write_csv(output/"model_comparison.csv", comparison, ["variable", "model", "status", "selected_structure", "MAE", "RMSE", "bias", "N_scored", c["selection_metric"], "reason"])
     write_csv(output/"coefficients.csv", coefficients, ["stage", "variable", "model", "feature", "coefficient_per_km"])
     e0 = cube.meta.get("source_audit") or {}
-    e0_failed = bool(e0.get("plan_errors") or any(s["quarantined_jobs"] for s in e0.get("countries", {}).values()))
+    e0_failed = source_audit_failed(e0)
     country_gaps = {v: [country for country in c["countries"] if not r["validation"]["by_country"].get(country, {}).get("N_scored")]
                     for v, r in selected.items()}
     country_gaps = {v: x for v, x in country_gaps.items() if x}

@@ -38,7 +38,7 @@ def main(argv=None):
     args = p.parse_args(argv)
     root = None
     try:
-        from ige_local.common import log, new_run, now, write_json
+        from ige_local.common import log, new_run, now, write_json, source_audit_failed
         from ige_auto.config import load, native_config
         if args.command == "self-check":
             from ige_auto.oracles import self_check
@@ -69,7 +69,7 @@ def main(argv=None):
             cube = build(snapshot, c, root/"cube", audit_summary=report)
             if args.command == "prepare":
                 log("Prepared cube: " + str(cube))
-                return 2 if report["plan_errors"] or any(x["quarantined_jobs"] for x in report["countries"].values()) else 0
+                return 2 if source_audit_failed(report) else 0
         result = train(cube, c, root)
         log("REPORT: " + str(root/"REPORT_RU.md"))
         log("SUMMARY: " + str(root/"summary.json"))

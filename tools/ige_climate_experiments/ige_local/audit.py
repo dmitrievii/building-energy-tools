@@ -126,7 +126,7 @@ def audit(cfg, output, rehash=False):
     output.mkdir(parents=True, exist_ok=True)
     paths, notes = discover(cfg["database"], cfg["countries"])
     cache = HashCache(Path(cfg["results"]) / "state" / "source_hashes.sqlite", force=rehash)
-    jobs_ledger, coverage, snapshots, errors = [], [], [], []
+    jobs_ledger, coverage, snapshots, errors, source_plans = [], [], [], [], []
     totals = {c: collections.Counter() for c in cfg["countries"]}
     try:
         for country, path in paths:
@@ -201,13 +201,18 @@ def audit(cfg, output, rehash=False):
                 errors.append({"path": str(path), "error": "Plan changed during audit; run snapshot rejected"})
             else:
                 snapshots.append(item)
+                source_plans.append((p,path.parent))
     finally:
         cache.close()
+    from .recovery import resolve
+    recovery_resolution,replaced,lineage_errors = resolve(source_plans,jobs_ledger)
+    errors.extend(lineage_errors)
     snapshot = {"schema": "IGE_E0_SNAPSHOT_v1", "created_at_utc": now(), "database": cfg["database"],
                 "snapshot_semantics": "Only complete jobs visible during this audit; later downloads excluded",
                 "coverage_semantics": "Receipt summaries verified by artifact hashes; exact per-hour values scanned only for pilot subset",
                 "geometry_semantics": "Published metadata retained; sensor geometry not promoted to historical verification",
-                "config_sha256": digest(cfg), "runs": snapshots}
+                "config_sha256": digest(cfg), "runs": snapshots,
+                "recovery_resolution":recovery_resolution}
     snapshot["snapshot_id"] = digest(snapshot)
     write_json(output / "snapshot.json", snapshot)
     summary = {"schema": "IGE_E0_REPORT_v1", "snapshot_id": snapshot["snapshot_id"], "created_at_utc": now(),
@@ -219,12 +224,25 @@ def audit(cfg, output, rehash=False):
                "original_data_modified": False, "network_requests": 0,
                "source_checksum_reverification": "Artifact hashes; provider/raw-uncompressed checksum status is inherited, not recomputed",
                "warnings": ["Receipt coverage is not a union across overlapping plans", "Unknown sensor histories/operators remain explicit", "PENDING is expected while a downloader is active"]}
+    if recovery_resolution and "DE" in summary["countries"]:
+        s = summary["countries"]["DE"]
+        s.update(replaced)
+        s["unresolved_pending_jobs"] = s["pending_jobs"]-replaced["replaced_pending_jobs"]
+        s["unresolved_quarantined_jobs"] = s["quarantined_jobs"]-replaced["replaced_quarantined_jobs"]
+    summary["recovery_resolution"] = recovery_resolution
     write_json(output / "summary.json", summary)
-    write_csv(output / "jobs.csv", jobs_ledger, ["country", "plan_id", "job_id", "status", "error"])
+    write_csv(output / "jobs.csv", jobs_ledger, ["country", "plan_id", "job_id", "status", "error",
+              "effective_status","resolved_by_plan_id","resolved_by_job_id"])
     write_csv(output / "receipt_coverage.csv", coverage, ["country", "plan_id", "job_id", "station_id", "group", "period", "parameter", "expected_labels", "non_null", "qc_or_regime", "coverage_source"])
     lines = ["# E0 — локальный аудит", "", "Снимок: `" + snapshot["snapshot_id"] + "`.", "",
              "| Страна | Запланировано | Проверено | Ожидается | Карантин |", "|---|---:|---:|---:|---:|"]
     lines += [f"| {c} | {s['planned_jobs']} | {s['verified_jobs']} | {s['pending_jobs']} | {s['quarantined_jobs']} |" for c, s in summary["countries"].items()]
+    for pid,closed in recovery_resolution.items():
+        lines += ["", "DWD original "+pid+": resolved "+str(closed["resolved_original_jobs"])+"/"+str(closed["planned_original_jobs"])+"; remaining "+str(closed["remaining_jobs"])+"."]
+    if recovery_resolution and "DE" in summary["countries"]:
+        s=summary["countries"]["DE"]
+        lines += ["", "DE: нерешённый карантин "+str(s["unresolved_quarantined_jobs"])+
+                  "; старые версии с проверенной заменой "+str(s["replaced_quarantined_jobs"])+". Нативные ошибки выше сохранены."]
     lines += ["", "`jobs.csv` содержит причины карантина. `receipt_coverage.csv` сохраняет сводки загрузчика;",
               "они не называются заново пересчитанной почасовой полнотой. Точные маски выбранных окон",
               "создаёт E1.0. Полные годы и ручной QC не являются условиями допуска.", "",

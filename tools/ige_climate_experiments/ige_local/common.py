@@ -21,6 +21,12 @@ class InputError(ValueError):
     pass
 
 
+def source_audit_failed(report):
+    return bool(report.get("plan_errors") or any(
+        s.get("unresolved_quarantined_jobs",s.get("quarantined_jobs",0))
+        for s in report.get("countries",{}).values()))
+
+
 def canonical(value):
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"),
                       allow_nan=False).encode("utf-8")
