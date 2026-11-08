@@ -32,3 +32,8 @@ jobs:
       - name: Offline contracts and spawned workers
         working-directory: tools/ige_climate_experiments
         run: python -m unittest discover -s tests -v
+      - name: Humidity conversions and all 18 synthetic candidates
+        working-directory: tools/ige_climate_experiments
+        run: |
+          python ige_humidity.py self-check
+          python tests/validate_humidity.py

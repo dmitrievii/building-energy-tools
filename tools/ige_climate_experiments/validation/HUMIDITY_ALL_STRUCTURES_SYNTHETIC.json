@@ -1,0 +1,166 @@
+{
+  "fixture": "SYNTHETIC_NOT_OBSERVATIONS",
+  "scope": "All six production structures for each of RH/log_e/q; D/V only",
+  "real_weather_C_evaluated": false,
+  "synthetic_holdout_opened": false,
+  "requested": 18,
+  "eligible": 18,
+  "exit_code": 0,
+  "wall_seconds": 2.0884726120002597,
+  "peak_rss_bytes": 69156864,
+  "case_matrix_bytes": 1224432,
+  "python": "3.12.14",
+  "implementation_sha256": {
+    "ige_humidity.py": "cc5ef75c69e3d1adab5f152b6f8ef0e059c816c05be2d41ae4136f241655b23d",
+    "ige_hum/__init__.py": "fd302c5f1caf80b75ebaa8124a9a5f0ac285714d1318e2751e23279e7b1b7ab9",
+    "ige_hum/auxiliary.py": "c70234774d3aea96cadf7ec35fb38fb67710b0010e901aa3a17b84720e937328",
+    "ige_hum/cases.py": "f99759c078f3b8b3977386c2d0f15ea1129b389a7b7599980be40e6a9acf7b60",
+    "ige_hum/config.py": "65000c6e76340054c54f43bffc507afb99cd23e87689a702178939b9e4925d3b",
+    "ige_hum/metrics.py": "dfb152dedbc7b82cc2391539bb797828837daf8e4e5f709eb018f878e3fe4fbd",
+    "ige_hum/optimize.py": "d08ef7a537832b7816efa929bbf868e827773b8a6da487726a66598e84496996",
+    "ige_hum/physics.py": "a27c55200ba71abcf179acec089f04e92b646ea5db31486ed73a19a1979f4ded",
+    "ige_hum/study.py": "8900bdd5b644a080709e384111454c9f0d84c9d7e4fbde238caa3080366fb14f",
+    "ige_auto/__init__.py": "5143483344d458a6b12613e23e2d7e8e21967cba4a770c5c5493125bb514771c",
+    "ige_auto/cases.py": "ac448416723b16be071385415535778687c072ec96312a746db724a988fb8761",
+    "ige_auto/config.py": "266b9fd0ddb8feaf5c6f9b5b86300499d1ebdbdce77c3c72429330a059ca70f8",
+    "ige_auto/data.py": "277ff94768e8f80e7cea9a73d7de9eaf7f44524e129a77148514cfe653126780",
+    "ige_auto/experiment.py": "cb3a601a53674f3e0a80892b033465f5d47a2591b59a866772023aa638061702",
+    "ige_auto/fit.py": "ea08949eff00c027321f0fbef729ad61032f887358c0943d9768fe56fa255285",
+    "ige_auto/metrics.py": "2489b600226b4bb6545790aa7aec809caf7763ee1da70e88629d21958f35ee50",
+    "ige_auto/oracles.py": "7aef548551bc1b345fcf08202ad04c528ae95b7594d858c83aafd3ed3d3a64f0",
+    "ige_local/__init__.py": "c5ef4fceec5cdc12d3eccfa343094890d62dfee8883db4bc1dbea38f3a4f85f2",
+    "ige_local/audit.py": "35af26eb7b2dc8f81b67037c19a122c927846c7615004b939d5f69250bda964d",
+    "ige_local/common.py": "22a972d5839b3291819237309a521a9bd8f6cc841f5f88b6a2bfa4c7bc5d33d8",
+    "ige_local/pilot.py": "f1e59b0d10c95a5ecac78fb7a954f234e17feaabd1650daec84df61ebbf3e721",
+    "ige_local/readers.py": "dd55adea3cb1c9d80e1a818186cf6aa76800332b95f85d06ff1e0873836d2f1b",
+    "ige_local/recovery.py": "9c13913cf1a0d80d8dbf2d1fd75766196a8043a8862fc4d53a88dbc45a11676c"
+  },
+  "models": [
+    {
+      "coordinate": "RH",
+      "model": "geo_gaussian_ols",
+      "status": "ELIGIBLE",
+      "reason": null,
+      "optimizer_status": "CONVERGED"
+    },
+    {
+      "coordinate": "RH",
+      "model": "harmonic_idw_ridge",
+      "status": "ELIGIBLE",
+      "reason": null,
+      "optimizer_status": "CONVERGED"
+    },
+    {
+      "coordinate": "RH",
+      "model": "height_idw_ols",
+      "status": "ELIGIBLE",
+      "reason": null,
+      "optimizer_status": "CONVERGED"
+    },
+    {
+      "coordinate": "RH",
+      "model": "monthly_idw_ols",
+      "status": "ELIGIBLE",
+      "reason": null,
+      "optimizer_status": "CONVERGED"
+    },
+    {
+      "coordinate": "RH",
+      "model": "seasonal_geo_gaussian_huber",
+      "status": "ELIGIBLE",
+      "reason": null,
+      "optimizer_status": "CONVERGED"
+    },
+    {
+      "coordinate": "RH",
+      "model": "seasonal_idw_ols",
+      "status": "ELIGIBLE",
+      "reason": null,
+      "optimizer_status": "CONVERGED"
+    },
+    {
+      "coordinate": "log_e",
+      "model": "geo_gaussian_ols",
+      "status": "ELIGIBLE",
+      "reason": null,
+      "optimizer_status": "CONVERGED"
+    },
+    {
+      "coordinate": "log_e",
+      "model": "harmonic_idw_ridge",
+      "status": "ELIGIBLE",
+      "reason": null,
+      "optimizer_status": "CONVERGED"
+    },
+    {
+      "coordinate": "log_e",
+      "model": "height_idw_ols",
+      "status": "ELIGIBLE",
+      "reason": null,
+      "optimizer_status": "CONVERGED"
+    },
+    {
+      "coordinate": "log_e",
+      "model": "monthly_idw_ols",
+      "status": "ELIGIBLE",
+      "reason": null,
+      "optimizer_status": "CONVERGED"
+    },
+    {
+      "coordinate": "log_e",
+      "model": "seasonal_geo_gaussian_huber",
+      "status": "ELIGIBLE",
+      "reason": null,
+      "optimizer_status": "CONVERGED"
+    },
+    {
+      "coordinate": "log_e",
+      "model": "seasonal_idw_ols",
+      "status": "ELIGIBLE",
+      "reason": null,
+      "optimizer_status": "CONVERGED"
+    },
+    {
+      "coordinate": "q",
+      "model": "geo_gaussian_ols",
+      "status": "ELIGIBLE",
+      "reason": null,
+      "optimizer_status": "CONVERGED"
+    },
+    {
+      "coordinate": "q",
+      "model": "harmonic_idw_ridge",
+      "status": "ELIGIBLE",
+      "reason": null,
+      "optimizer_status": "CONVERGED"
+    },
+    {
+      "coordinate": "q",
+      "model": "height_idw_ols",
+      "status": "ELIGIBLE",
+      "reason": null,
+      "optimizer_status": "CONVERGED"
+    },
+    {
+      "coordinate": "q",
+      "model": "monthly_idw_ols",
+      "status": "ELIGIBLE",
+      "reason": null,
+      "optimizer_status": "CONVERGED"
+    },
+    {
+      "coordinate": "q",
+      "model": "seasonal_geo_gaussian_huber",
+      "status": "ELIGIBLE",
+      "reason": null,
+      "optimizer_status": "CONVERGED"
+    },
+    {
+      "coordinate": "q",
+      "model": "seasonal_idw_ols",
+      "status": "ELIGIBLE",
+      "reason": null,
+      "optimizer_status": "CONVERGED"
+    }
+  ]
+}

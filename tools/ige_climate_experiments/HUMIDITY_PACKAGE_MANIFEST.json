@@ -1,0 +1,31 @@
+{
+  "package": "IGE_Humidity_Comparison_v0_2_0",
+  "version": "0.2.0",
+  "package_type": "PATCH_INTO_EXISTING_REGRESSION_FOLDER",
+  "core_required": "0.1.2",
+  "source_branch": "research/ige-e0-e10-local-20261107",
+  "source_repository": "dmitrievii/building-energy-tools",
+  "preserves_existing_configuration": "config_auto_regression.json is not included",
+  "real_weather_C_evaluated": false,
+  "default_opens_C": false,
+  "sha256": {
+    "ige_humidity.py": "cc5ef75c69e3d1adab5f152b6f8ef0e059c816c05be2d41ae4136f241655b23d",
+    "config_humidity_comparison.json": "7b018f979aa9d570b384f64c29900e622a32b79fa5249378b072d224b3f407d9",
+    "RUN_HUMIDITY_COMPARISON.bat": "fbe5e3f3928d6015c96e7ba440693e60b6a76fec084ddac952e22ca3174aff63",
+    "HUMIDITY_COMPARISON_RU.md": "2c6af286abc0b5afa8fdccb400518efc0a45b67ed3cd8981dd07e02bdd577fe7",
+    "ige_hum/__init__.py": "fd302c5f1caf80b75ebaa8124a9a5f0ac285714d1318e2751e23279e7b1b7ab9",
+    "ige_hum/auxiliary.py": "c70234774d3aea96cadf7ec35fb38fb67710b0010e901aa3a17b84720e937328",
+    "ige_hum/cases.py": "f99759c078f3b8b3977386c2d0f15ea1129b389a7b7599980be40e6a9acf7b60",
+    "ige_hum/config.py": "65000c6e76340054c54f43bffc507afb99cd23e87689a702178939b9e4925d3b",
+    "ige_hum/metrics.py": "dfb152dedbc7b82cc2391539bb797828837daf8e4e5f709eb018f878e3fe4fbd",
+    "ige_hum/optimize.py": "d08ef7a537832b7816efa929bbf868e827773b8a6da487726a66598e84496996",
+    "ige_hum/physics.py": "a27c55200ba71abcf179acec089f04e92b646ea5db31486ed73a19a1979f4ded",
+    "ige_hum/study.py": "8900bdd5b644a080709e384111454c9f0d84c9d7e4fbde238caa3080366fb14f",
+    "tests/test_humidity_comparison.py": "4513c92f7e26565dff677857fdd3107ca2bc18a3cde25a8d6c3dd26a83eb20ca",
+    "tests/validate_humidity.py": "04588cebdf80cf7db02527d82f9377e15f3884f38faab0018605d5128930182e",
+    "validation/E0_ACCEPTANCE_20261108_RU.md": "b50b5f842f04492b550494983508a9f1fa0a55441a6e3aa1d7274bf52f249b32",
+    "validation/HUMIDITY_ALL_STRUCTURES_SYNTHETIC.json": "637974db77c276faf39f068b82214f63f322f7613f9557f7a325dab46a05a954",
+    "validation/HUMIDITY_VALIDATION.json": "0f89eba3c42e0cccf8b0f1dfe85ec2dbe1c33446060284c39995afa1b9ca1341",
+    "validation/HUMIDITY_VALIDATION_RU.md": "3171a5d3d8b8fb981f664c1159d91144266b31d21855b48837a4474b3273adc7"
+  }
+}

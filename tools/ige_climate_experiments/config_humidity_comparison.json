@@ -1,0 +1,18 @@
+{
+  "schema": "IGE_HUMIDITY_COMPARISON_v1",
+  "base_config": "config_auto_regression.json",
+  "cohort_anchor": "regression_results/20261108T121135_199357Z_c9244a97/cube/split.sealed.json",
+  "results": "./humidity_results",
+  "coordinates": ["RH", "log_e", "q"],
+  "primary_metric": "equal_country_station_macro_MAE_RH",
+  "workers": 1,
+  "auxiliary_optimizer": {
+    "max_evaluations": 180,
+    "max_iterations": 40,
+    "wall_seconds_per_model": 180,
+    "starts": 1,
+    "min_fit_cases": 100,
+    "rank_rcond": 1e-10,
+    "max_condition": 100000000.0
+  }
+}

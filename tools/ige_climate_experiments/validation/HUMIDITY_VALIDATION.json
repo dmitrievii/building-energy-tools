@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "date_utc": "2026-11-08",
+  "python": "3.12.14",
+  "numpy": "2.3.5",
+  "scipy": "1.17.0",
+  "unit_tests": {
+    "count": 151,
+    "seconds": 12.62,
+    "outcome": "OK",
+    "stdout_sha256": "2a6c07e91c92661ea3285f47268f8b0a8ba29f22d19e281d8bdb72f3b5610381"
+  },
+  "real_weather_new_DV_run": false,
+  "real_weather_C_evaluated": false,
+  "all_structures_fixture": "SYNTHETIC_NOT_OBSERVATIONS",
+  "core_version_required": "0.1.2",
+  "core_modified": false,
+  "scientific_accuracy_qualified": false
+}
