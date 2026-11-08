@@ -1,0 +1,30 @@
+{
+  "package": "IGE_Humidity_Recovery_v0_2_1",
+  "version": "0.2.1",
+  "type": "PATCH_INTO_EXISTING_REGRESSION_FOLDER",
+  "requires_core": "0.1.2",
+  "requires_existing_humidity": "0.2.0",
+  "branch": "research/ige-e0-e10-local-20261107",
+  "default_parent_run": "20261108T191838_341211Z_5ea72a0b",
+  "configuration_files_included": false,
+  "real_C_evaluated": false,
+  "sha256": {
+    "ige_hum/__init__.py": "7d3a1365b993c21f4629e9b1688f2ef1ac6027b5f2928b49f6d9970928c9bed5",
+    "ige_hum/auxiliary.py": "db3653f85074931259e109af9c4cf24a7e3f500b6e302a509e1e03bd492ad9f7",
+    "ige_hum/cases.py": "f99759c078f3b8b3977386c2d0f15ea1129b389a7b7599980be40e6a9acf7b60",
+    "ige_hum/config.py": "65000c6e76340054c54f43bffc507afb99cd23e87689a702178939b9e4925d3b",
+    "ige_hum/metrics.py": "dfb152dedbc7b82cc2391539bb797828837daf8e4e5f709eb018f878e3fe4fbd",
+    "ige_hum/optimize.py": "93874aed6eb6618384cc6d20f1feeb9760179ef76846bf3c310186569fe1e669",
+    "ige_hum/physics.py": "a27c55200ba71abcf179acec089f04e92b646ea5db31486ed73a19a1979f4ded",
+    "ige_hum/recovery.py": "dd01fe05abbed8dd603e445a9dee47b7e7791f6b4ff9e8da3e08b946c9edf465",
+    "ige_hum/solver.py": "42ae09dd549d561ad9f725f04f72ed420e378e57aa435f5076239220917baac5",
+    "ige_hum/study.py": "98e7b498166f6bcc3f98d62cf99e62c719a55b809fa68b470eee81d111b8aa52",
+    "ige_humidity.py": "84eed23b96da14d32919d62196187358872ce32e8eb1f10b4c03f9d94ef4dd7a",
+    "RUN_HUMIDITY_RECOVERY.bat": "571a456573f05cf3c98a5ace77208209c764b3e06b26929f8f2c5fb1384ba45d",
+    "HUMIDITY_RECOVERY_RU.md": "cb39e128e1e9cf1b16fbaeb651d60fc813c90e2e52304fffdb5b00557ed4a013",
+    "HUMIDITY_COMPARISON_RU.md": "ca55ce3622590b1f3c446013fa794729ccb4740553067c50a18c2fceaec02d87",
+    "tests/test_humidity_recovery.py": "d51df5f7f893d9c8ba9a947c7a3f7a09bc0408121a09bb67ad0fc35f0cb03d84",
+    "validation/HUMIDITY_RECOVERY_v0_2_1.json": "9a0c3d7d321c23255b9ab839dcde716aa148d88202cb93ff38830cc918cf906d",
+    "validation/HUMIDITY_RECOVERY_v0_2_1_RU.md": "89ab7bb99f569b17c499c505f92168cb251ec98c1b2488cc39575750663adc51"
+  }
+}

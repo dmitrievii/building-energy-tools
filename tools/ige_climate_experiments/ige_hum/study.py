@@ -17,6 +17,7 @@ from .config import sealed,check_cohort
 from .metrics import score,errors
 from .optimize import optimize_chain
 from .physics import restore,EPSILON
+from .solver import POLICY
 
 
 def implementation():
@@ -38,7 +39,7 @@ def create_spec(cube,h,c,anchor,root):
     spec={"schema":"IGE_HUMIDITY_RUN_v1","version":VERSION,"created_utc":now(),"configuration":h,"base_configuration":c,
           "cube_path":str(cube.path),"cube_id":cube.meta["cube_id"],"anchor":anchor,
           "implementation":implementation(),"phase_convention":"BUCK_LIQUID_WATER_EXPLICIT",
-          "epsilon":EPSILON,"execution_workers":1,"default_run_opens_C":False,
+          "epsilon":EPSILON,"execution_workers":1,"default_run_opens_C":False,"numerical_recovery_policy":POLICY,
           "environment":{"python":sys.version,"platform":platform.platform(),
              "numpy":importlib.metadata.version("numpy"),"scipy":importlib.metadata.version("scipy")},
           "protocol":{"primary":"V common RH country/station macro-MAE; failures cannot disappear from common cases",
@@ -149,17 +150,19 @@ def candidate(root,spec,c,coordinate,model,folds,train,valid,aux):
 def train(root):
     root,spec,cube=check_run(root);c=spec["base_configuration"];h=spec["configuration"];begin=time.monotonic()
     if (root/"C_OPENED.json").exists():raise InputError("Cannot resume training after C exposure")
+    if spec.get("continuation") and (Path(spec["continuation"]["parent_run"])/"C_OPENED.json").exists():
+        raise InputError("Parent C exposed; training cannot be resumed")
     if (Path(h["cohort_anchor"]).parent.parent/"C_OPENED.json").exists():raise InputError("Anchor C exposed; training cannot be resumed as confirmatory development")
     d=np.flatnonzero(cube.roles=="D");dt=np.flatnonzero(cube.time_roles=="D")
     v=np.flatnonzero(cube.roles=="V");vt=np.flatnonzero(cube.time_roles=="V")
-    auxiliary=checkpoint(root,spec,"aux_full_D",lambda:train_bundle(cube,c,d,dt,h["auxiliary_optimizer"]))
+    auxiliary=checkpoint(root,spec,"aux_full_D",lambda:train_bundle(cube,c,d,dt,h["auxiliary_optimizer"],root/"diagnostics/aux_full_D"))
     valid=HumidityCases(cube,c,[(v,vt)],d,"V_common_selection")
     aux_v=forecasts(cube,c,[(v,vt)],d,auxiliary,"V_shared_auxiliary")
     training=HumidityCases(cube,c,[(d,dt)],d,"D_humidity_fit")
     folds=[]
     for fold in range(c["inner_folds"]):
         fit=np.flatnonzero((cube.roles=="D")&(cube.folds!=fold));check=np.flatnonzero((cube.roles=="D")&(cube.folds==fold))
-        bundle=checkpoint(root,spec,"aux_inner_"+str(fold),lambda fit=fit:train_bundle(cube,c,fit,dt,h["auxiliary_optimizer"]))
+        bundle=checkpoint(root,spec,"aux_inner_"+str(fold),lambda fit=fit,fold=fold:train_bundle(cube,c,fit,dt,h["auxiliary_optimizer"],root/"diagnostics"/("aux_inner_"+str(fold))))
         held={cube.stations[s]["family"] for s in check}
         if any(held&set(x["training_families"]) for x in bundle.values()):raise InputError("Auxiliary family leakage")
         folds.append((HumidityCases(cube,c,[(fit,dt)],fit,"humidity_inner_fit_"+str(fold)),
@@ -225,6 +228,8 @@ def train(root):
         "exit_code":2 if failures else 0}
     if implementation()!=spec["implementation"]:raise InputError("Implementation changed during comparison")
     if (Path(h["cohort_anchor"]).parent.parent/"C_OPENED.json").exists():raise InputError("Anchor C exposed during training")
+    if spec.get("continuation") and (Path(spec["continuation"]["parent_run"])/"C_OPENED.json").exists():
+        raise InputError("Parent C exposed during training")
     Cube(cube.path)
     write_json(root/"summary.json",summary)
     lines=["# IGE — сравнение полных цепочек влажности", "", "Версия "+VERSION+". Код завершения: "+str(summary["exit_code"])+".", "",

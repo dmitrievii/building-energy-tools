@@ -23,6 +23,8 @@ def main(argv=None):
     for name in ("resume","evaluate"):
         p=subs.add_parser(name);p.add_argument("--run",type=Path,required=True)
         if name=="evaluate":p.add_argument("--repeat",action="store_true")
+    p=subs.add_parser("recover");p.add_argument("--run",type=Path,required=True)
+    p.add_argument("--anchor",type=Path,help="Relocated original split file; its sealed contents must be identical")
     subs.add_parser("self-check")
     args=parser.parse_args(argv);root=None
     try:
@@ -43,6 +45,12 @@ def main(argv=None):
             assert float(restore("RH",np.array([110.]),np.array([20.]),np.array([1000.]))["RH"][0])==110.
             print(json.dumps({"q_e_roundtrip":"PASS","Buck_inverse":"PASS","no_RH_clipping":"PASS","C_opened":False}));return 0
         from ige_hum.study import train,evaluate,create_spec
+        if args.command=="recover":
+            from ige_hum.recovery import fork_run
+            root=fork_run(args.run,args.anchor)
+            result=train(root)
+            log("REPORT: "+str(root/"REPORT_RU.md"));log("SUMMARY: "+str(root/"summary.json"))
+            return result["exit_code"]
         if args.command=="resume":return train(args.run)["exit_code"]
         if args.command=="evaluate":return evaluate(args.run,args.repeat)["exit_code"]
         from ige_hum.config import load

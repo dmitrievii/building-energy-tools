@@ -5,6 +5,7 @@ from scipy.optimize import minimize
 from ige_auto.cases import macro_weights
 from ige_auto.fit import BudgetReached,Unidentifiable,fit_cases,predict,robust_delta
 from .physics import restore
+from .solver import recover_search
 
 
 def optimize_chain(folds,coordinate,model,c):
@@ -52,9 +53,23 @@ def optimize_chain(folds,coordinate,model,c):
             runs.append(record)
             if result.success and np.isfinite(result.fun) and result.fun<1e29 and (best is None or result.fun<best["objective"]):best=record
         except BudgetReached as exc:runs.append({"success":False,"message":str(exc)});break
-    if best is None:return {"status":"UNRESOLVED_OPTIMIZATION","trace":trace,"runs":runs}
+    recovery={}
+    if best is None:
+        def same_objective(eta):
+            scores=[]
+            for (a,b,native,aux,mask),delta in zip(prepared,deltas):
+                fit=fit_cases(a,model,eta,opt,delta);value,_,_=predict(b,model,eta,fit)
+                rh=restore(coordinate,value,aux["T"],aux["p"],with_dewpoint=False)["RH"]
+                if not np.all(np.isfinite(rh[mask])):raise Unidentifiable("NONFINITE_COMMON_RH")
+                w=macro_weights(b,mask);err=(rh[mask]-native.values[mask,1])/100
+                scores.append(float(np.sum(w[mask]*err*err)))
+            return float(np.mean(scores))
+        recovery=recover_search({"status":"UNRESOLVED_OPTIMIZATION","trace":trace,"runs":runs,"bounds":bounds},
+                                same_objective,ftol=1e-10,gtol=1e-7)
+        if recovery["status"]!="CONVERGED":return recovery
+        best=recovery;trace=recovery["trace"]
     eta=best["eta"]
-    return {"status":"CONVERGED","eta":eta,"objective":best["objective"],"bounds":bounds,
+    return {**recovery,"status":"CONVERGED","eta":eta,"objective":best["objective"],"bounds":bounds,
             "active_bounds":[bool(abs(v-lo)<1e-5 or abs(v-hi)<1e-5) for v,(lo,hi) in zip(eta,bounds)],
             "trace":trace,"runs":runs,"wall_seconds":time.monotonic()-begin,
             "inner_cases":[{"fit":a.ledger,"check":b.ledger,"common_RH_cases":int(mask.sum())} for a,b,_,_,mask in prepared],

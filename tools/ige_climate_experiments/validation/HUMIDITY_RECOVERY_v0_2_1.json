@@ -1,0 +1,149 @@
+{
+  "version": "0.2.1",
+  "date": "2026-11-08",
+  "source_run_id": "20261108T191838_341211Z_5ea72a0b",
+  "source_archive_sha256": "11d4fe4448b76e4d8f9fe138e34e018b6a16573c33ea86e822da573b2c44a6ec",
+  "parent_spec_id": "b421ac99d3eb1b813dd799513c6b2ad7cc14cc46cd0e19f4ad9545816496eb99",
+  "cube_id": "883e3199cd68ef226090c8a2ed64ccbb32c4c395957a7ccab538919f1691b183",
+  "original_run_files_unchanged": true,
+  "unit_tests": {
+    "count": 163,
+    "seconds": 13.822,
+    "outcome": "OK"
+  },
+  "environment": {
+    "python": "3.12.14",
+    "numpy": "2.3.5",
+    "scipy": "1.17.0"
+  },
+  "exact_windows_failure_reproduced": false,
+  "failure_reason_available_in_source": false,
+  "original_limits_on_same_pressure_fold_in_Linux": {
+    "status": "CONVERGED",
+    "eta": [
+      2.2914582551234353,
+      7.0
+    ],
+    "objective": 31.607301357319102,
+    "wall_seconds": 3.684281473999363
+  },
+  "full_real_DV": {
+    "models_requested": 18,
+    "models_eligible": 18,
+    "common_calendar_cases": 6672,
+    "exit_code": 0,
+    "holdout_opened": false,
+    "wall_seconds_this_invocation": 235.57319040699986,
+    "peak_process_rss_bytes": 453808128
+  },
+  "full_real_DV_scope": "Local archive copy with identical relocated cohort; remote Windows C marker cannot be inspected; no C evaluation performed",
+  "full_real_DV_implementation": {
+    "ige_humidity.py": "84eed23b96da14d32919d62196187358872ce32e8eb1f10b4c03f9d94ef4dd7a",
+    "ige_hum/__init__.py": "7d3a1365b993c21f4629e9b1688f2ef1ac6027b5f2928b49f6d9970928c9bed5",
+    "ige_hum/auxiliary.py": "db3653f85074931259e109af9c4cf24a7e3f500b6e302a509e1e03bd492ad9f7",
+    "ige_hum/cases.py": "f99759c078f3b8b3977386c2d0f15ea1129b389a7b7599980be40e6a9acf7b60",
+    "ige_hum/config.py": "65000c6e76340054c54f43bffc507afb99cd23e87689a702178939b9e4925d3b",
+    "ige_hum/metrics.py": "dfb152dedbc7b82cc2391539bb797828837daf8e4e5f709eb018f878e3fe4fbd",
+    "ige_hum/optimize.py": "93874aed6eb6618384cc6d20f1feeb9760179ef76846bf3c310186569fe1e669",
+    "ige_hum/physics.py": "a27c55200ba71abcf179acec089f04e92b646ea5db31486ed73a19a1979f4ded",
+    "ige_hum/recovery.py": "dd01fe05abbed8dd603e445a9dee47b7e7791f6b4ff9e8da3e08b946c9edf465",
+    "ige_hum/solver.py": "d8cd798ea7ed279e4bc7082e0abc6f36cc89625c7ca0366d513791c83f855996",
+    "ige_hum/study.py": "98e7b498166f6bcc3f98d62cf99e62c719a55b809fa68b470eee81d111b8aa52",
+    "ige_auto/__init__.py": "5143483344d458a6b12613e23e2d7e8e21967cba4a770c5c5493125bb514771c",
+    "ige_auto/cases.py": "ac448416723b16be071385415535778687c072ec96312a746db724a988fb8761",
+    "ige_auto/config.py": "266b9fd0ddb8feaf5c6f9b5b86300499d1ebdbdce77c3c72429330a059ca70f8",
+    "ige_auto/data.py": "277ff94768e8f80e7cea9a73d7de9eaf7f44524e129a77148514cfe653126780",
+    "ige_auto/experiment.py": "cb3a601a53674f3e0a80892b033465f5d47a2591b59a866772023aa638061702",
+    "ige_auto/fit.py": "ea08949eff00c027321f0fbef729ad61032f887358c0943d9768fe56fa255285",
+    "ige_auto/metrics.py": "2489b600226b4bb6545790aa7aec809caf7763ee1da70e88629d21958f35ee50",
+    "ige_auto/oracles.py": "7aef548551bc1b345fcf08202ad04c528ae95b7594d858c83aafd3ed3d3a64f0",
+    "ige_local/__init__.py": "c5ef4fceec5cdc12d3eccfa343094890d62dfee8883db4bc1dbea38f3a4f85f2",
+    "ige_local/audit.py": "35af26eb7b2dc8f81b67037c19a122c927846c7615004b939d5f69250bda964d",
+    "ige_local/common.py": "22a972d5839b3291819237309a521a9bd8f6cc841f5f88b6a2bfa4c7bc5d33d8",
+    "ige_local/pilot.py": "f1e59b0d10c95a5ecac78fb7a954f234e17feaabd1650daec84df61ebbf3e721",
+    "ige_local/readers.py": "dd55adea3cb1c9d80e1a818186cf6aa76800332b95f85d06ff1e0873836d2f1b",
+    "ige_local/recovery.py": "9c13913cf1a0d80d8dbf2d1fd75766196a8043a8862fc4d53a88dbc45a11676c"
+  },
+  "normal_branch_recovery_count": 0,
+  "change_after_full_DV": "Convert fallback success from numpy.bool_ to Python bool for strict JSON; numerical objectives unchanged; separately validated on real D failure recovery and unit tests",
+  "release_implementation": {
+    "ige_humidity.py": "84eed23b96da14d32919d62196187358872ce32e8eb1f10b4c03f9d94ef4dd7a",
+    "ige_hum/__init__.py": "7d3a1365b993c21f4629e9b1688f2ef1ac6027b5f2928b49f6d9970928c9bed5",
+    "ige_hum/auxiliary.py": "db3653f85074931259e109af9c4cf24a7e3f500b6e302a509e1e03bd492ad9f7",
+    "ige_hum/cases.py": "f99759c078f3b8b3977386c2d0f15ea1129b389a7b7599980be40e6a9acf7b60",
+    "ige_hum/config.py": "65000c6e76340054c54f43bffc507afb99cd23e87689a702178939b9e4925d3b",
+    "ige_hum/metrics.py": "dfb152dedbc7b82cc2391539bb797828837daf8e4e5f709eb018f878e3fe4fbd",
+    "ige_hum/optimize.py": "93874aed6eb6618384cc6d20f1feeb9760179ef76846bf3c310186569fe1e669",
+    "ige_hum/physics.py": "a27c55200ba71abcf179acec089f04e92b646ea5db31486ed73a19a1979f4ded",
+    "ige_hum/recovery.py": "dd01fe05abbed8dd603e445a9dee47b7e7791f6b4ff9e8da3e08b946c9edf465",
+    "ige_hum/solver.py": "42ae09dd549d561ad9f725f04f72ed420e378e57aa435f5076239220917baac5",
+    "ige_hum/study.py": "98e7b498166f6bcc3f98d62cf99e62c719a55b809fa68b470eee81d111b8aa52",
+    "ige_auto/__init__.py": "5143483344d458a6b12613e23e2d7e8e21967cba4a770c5c5493125bb514771c",
+    "ige_auto/cases.py": "ac448416723b16be071385415535778687c072ec96312a746db724a988fb8761",
+    "ige_auto/config.py": "266b9fd0ddb8feaf5c6f9b5b86300499d1ebdbdce77c3c72429330a059ca70f8",
+    "ige_auto/data.py": "277ff94768e8f80e7cea9a73d7de9eaf7f44524e129a77148514cfe653126780",
+    "ige_auto/experiment.py": "cb3a601a53674f3e0a80892b033465f5d47a2591b59a866772023aa638061702",
+    "ige_auto/fit.py": "ea08949eff00c027321f0fbef729ad61032f887358c0943d9768fe56fa255285",
+    "ige_auto/metrics.py": "2489b600226b4bb6545790aa7aec809caf7763ee1da70e88629d21958f35ee50",
+    "ige_auto/oracles.py": "7aef548551bc1b345fcf08202ad04c528ae95b7594d858c83aafd3ed3d3a64f0",
+    "ige_local/__init__.py": "c5ef4fceec5cdc12d3eccfa343094890d62dfee8883db4bc1dbea38f3a4f85f2",
+    "ige_local/audit.py": "35af26eb7b2dc8f81b67037c19a122c927846c7615004b939d5f69250bda964d",
+    "ige_local/common.py": "22a972d5839b3291819237309a521a9bd8f6cc841f5f88b6a2bfa4c7bc5d33d8",
+    "ige_local/pilot.py": "f1e59b0d10c95a5ecac78fb7a954f234e17feaabd1650daec84df61ebbf3e721",
+    "ige_local/readers.py": "dd55adea3cb1c9d80e1a818186cf6aa76800332b95f85d06ff1e0873836d2f1b",
+    "ige_local/recovery.py": "9c13913cf1a0d80d8dbf2d1fd75766196a8043a8862fc4d53a88dbc45a11676c"
+  },
+  "forced_budget_recovery": {
+    "scope": "Recovery validation on real D data; original Windows failure cause is not reproduced",
+    "cube_id": "883e3199cd68ef226090c8a2ed64ccbb32c4c395957a7ccab538919f1691b183",
+    "variable": "p",
+    "outer_fold": 2,
+    "training_sites": 31,
+    "initial_status": "UNRESOLVED_OPTIMIZATION",
+    "initial_runs": [
+      {
+        "success": false,
+        "message": "STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT",
+        "objective": 44.304821633119055,
+        "eta": [
+          0.1,
+          0.04746638637716987
+        ],
+        "iterations": 1
+      }
+    ],
+    "recovered_status": "CONVERGED",
+    "recovery_attempts": [
+      {
+        "method": "L-BFGS-B_eps_1e-5",
+        "success": true,
+        "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+        "objective": 31.60730135719545,
+        "eta": [
+          2.2914682310720447,
+          7.0
+        ],
+        "iterations": 10,
+        "evaluations": 63
+      }
+    ],
+    "recovered_eta": [
+      2.2914682310720447,
+      7.0
+    ],
+    "objective": 31.60730135719545,
+    "bounds": [
+      [
+        0.1,
+        8.0
+      ],
+      [
+        -6.0,
+        7.0
+      ]
+    ],
+    "C_evaluated": false
+  },
+  "real_C_evaluated": false,
+  "scientific_accuracy_qualified": false
+}
