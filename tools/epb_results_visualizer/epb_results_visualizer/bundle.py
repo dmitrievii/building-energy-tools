@@ -20,6 +20,10 @@ MAX_COMPRESSED = 100 * 1024 * 1024
 MAX_TOTAL_UNCOMPRESSED = 650 * 1024 * 1024
 MAX_SINGLE_MEMBER = 240 * 1024 * 1024
 MAX_MEMBERS = 80
+# Large evidence bundles are metadata-validated and read strictly on demand.
+LARGE_MAX_COMPRESSED = 600 * 1024 * 1024
+LARGE_MAX_UNCOMPRESSED = 12 * 1024 * 1024 * 1024
+LARGE_MAX_SINGLE = 5 * 1024 * 1024 * 1024
 MAX_ROWS = 2_000_000
 SYSTEM_FILES = (
     'hourly-generation-physical-research.csv',
@@ -87,9 +91,12 @@ def _csv(z: zipfile.ZipFile, name: str) -> pd.DataFrame:
     return frame
 
 
-def _validate_archive(data: bytes) -> zipfile.ZipFile:
-    if len(data) > MAX_COMPRESSED:
-        raise BundleValidationError('ZIP exceeds 100 MiB upload limit.')
+def _validate_archive(data: bytes, *, selective: bool = False) -> zipfile.ZipFile:
+    compressed_limit = LARGE_MAX_COMPRESSED if selective else MAX_COMPRESSED
+    single_limit = LARGE_MAX_SINGLE if selective else MAX_SINGLE_MEMBER
+    expanded_limit = LARGE_MAX_UNCOMPRESSED if selective else MAX_TOTAL_UNCOMPRESSED
+    if len(data) > compressed_limit:
+        raise BundleValidationError(f'ZIP exceeds {compressed_limit // (1024 * 1024)} MiB limit.')
     try:
         z = zipfile.ZipFile(BytesIO(data))
     except (zipfile.BadZipFile, OSError) as e:
@@ -108,11 +115,11 @@ def _validate_archive(data: bytes) -> zipfile.ZipFile:
         seen.add(info.filename)
         if info.is_dir():
             continue
-        if info.file_size > MAX_SINGLE_MEMBER:
+        if info.file_size > single_limit:
             z.close()
             raise BundleValidationError('One archive member exceeds the size limit.')
         total += info.file_size
-        if total > MAX_TOTAL_UNCOMPRESSED:
+        if total > expanded_limit:
             z.close()
             raise BundleValidationError('ZIP exceeds maximum uncompressed size.')
     return z
@@ -209,19 +216,19 @@ def _validate_hourly(frame: pd.DataFrame) -> pd.DataFrame:
     return f.sort_values(['zone_id', 'hour_index']).reset_index(drop=True)
 
 
-def read_bundle(data: bytes) -> EpbBundle:
+def read_bundle(data: bytes, *, metadata_only: bool = False) -> EpbBundle:
     warnings: list[str] = []
-    with _validate_archive(data) as z:
+    with _validate_archive(data, selective=metadata_only) as z:
         manifest = _json(z, 'manifest.json')
         vm = _json(z, 'visualization/manifest.json')
         if vm and vm.get('schema_version') != 1:
             raise BundleValidationError('Unsupported visualization schema version.')
         if not manifest and not vm:
             raise BundleValidationError('This ZIP has no EPB result manifest.')
-        hourly = _csv(z, 'visualization/hourly-thermal.csv')
+        hourly = pd.DataFrame() if metadata_only else _csv(z, 'visualization/hourly-thermal.csv')
         tm = _csv(z, 'visualization/monthly-thermal.csv')
         meta = _json(z, 'visualization/zone-metadata.json')
-        if hourly.empty and 'result.json' in z.namelist():
+        if not metadata_only and hourly.empty and 'result.json' in z.namelist():
             raw = _member(z, 'result.json')
             assert raw is not None
             if len(raw) > 150 * 1024 * 1024:
@@ -244,7 +251,7 @@ def read_bundle(data: bytes) -> EpbBundle:
         carrier = _csv(z, 'carrier-ledger.csv')
         scenarios = _csv(z, 'scenario-summary.csv')
         systems = {n: _csv(z, n) for n in SYSTEM_FILES if n in z.namelist()}
-        trace = _csv(z, 'visualization/validation-trace.csv')
+        trace = pd.DataFrame() if metadata_only else _csv(z, 'visualization/validation-trace.csv')
         if not trace.empty:
             required = {'step','timestamp','initialization','category','quantity','scope','zone_id','object_id','numeric_value','text_value','unit'}
             if not required.issubset(trace.columns):
@@ -266,6 +273,8 @@ def read_bundle(data: bytes) -> EpbBundle:
             warnings.append('Some hourly vectors have missing steps; graphs will not fill missing values.')
         if (hrs['count'] > 8784).any():
             warnings.append('More than 8784 reporting hours detected; chronological reference-year display limited.')
+    if metadata_only:
+        warnings.append('Large ZIP: hourly and Trace tables are indexed by metadata only; select one zone or building aggregate to read them.')
     if not vm:
         warnings.append('Legacy ZIP without visualization/manifest.json; export provenance is limited.')
     return EpbBundle(manifest, vm, hourly, tm, metrics, carrier, scenarios, systems, trace, meta, warnings)
