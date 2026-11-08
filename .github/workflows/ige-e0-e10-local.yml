@@ -37,3 +37,6 @@ jobs:
         run: |
           python ige_humidity.py self-check
           python tests/validate_humidity.py
+      - name: New interpolation program, all 73 synthetic candidates
+        working-directory: tools/ige_climate_experiments
+        run: python tests/validate_next.py

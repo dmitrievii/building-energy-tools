@@ -1,0 +1,18 @@
+{
+  "schema": "IGE_INTERPOLATION_PROGRAM_v030",
+  "source_run": "humidity_results/20261108T194858_552399Z_abe8e77a",
+  "results": "./interpolation_experiments",
+  "coordinates": ["RH", "log_e", "q", "Td", "D"],
+  "supports": ["joint", "own"],
+  "stages": ["T", "p", "humidity"],
+  "workers": 1,
+  "optimizer": {
+    "max_evaluations": 300,
+    "max_iterations": 60,
+    "wall_seconds_per_model": 600,
+    "starts": 2,
+    "min_fit_cases": 100,
+    "rank_rcond": 1e-10,
+    "max_condition": 100000000.0
+  }
+}
