@@ -19,7 +19,7 @@ import pandas as pd
 MAX_COMPRESSED = 100 * 1024 * 1024
 MAX_TOTAL_UNCOMPRESSED = 650 * 1024 * 1024
 MAX_SINGLE_MEMBER = 240 * 1024 * 1024
-MAX_MEMBERS = 80
+MAX_MEMBERS = 2048
 # Large evidence bundles are metadata-validated and read strictly on demand.
 LARGE_MAX_COMPRESSED = 600 * 1024 * 1024
 LARGE_MAX_UNCOMPRESSED = 12 * 1024 * 1024 * 1024
