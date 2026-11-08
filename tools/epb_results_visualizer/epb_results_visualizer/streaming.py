@@ -62,8 +62,16 @@ def available_source_signals(payload: bytes, source: str, scope: str) -> dict[st
         raise BundleValidationError("Unknown source or scope.")
     with _validate_archive(payload, selective=True) as z:
         path = SOURCES[source]
+        if source == "thermal":
+            if scope == "building" and "visualization/building-hourly.csv" in z.namelist():
+                path = "visualization/building-hourly.csv"
+            elif scope == "zone" and "visualization/zone-index.csv" in z.namelist():
+                index = pd.read_csv(z.open("visualization/zone-index.csv"))
+                if not index.empty:
+                    path = str(index.iloc[0].hourly_thermal_path)
         if path not in z.namelist() or not z.getinfo(path).file_size:
-            return {}
+            if source not in ("trace", "ventilation") or "visualization/trace-zone-index.csv" not in z.namelist():
+                return {}
         if source == "thermal":
             with z.open(path) as f:
                 header = pd.read_csv(f, nrows=0).columns
@@ -124,6 +132,31 @@ def select_series(payload: bytes, *, source: str, scope: str,
         if scope == "zone" and zone_id not in zone_ids:
             raise BundleValidationError("Selected zone is absent in this evidence bundle.")
         path = SOURCES[source]
+        partitioned = False
+        building_summary = False
+        if scope == "building" and source == "thermal" and "visualization/building-hourly.csv" in z.namelist():
+            path = "visualization/building-hourly.csv"
+            building_summary = True
+        elif scope == "zone":
+            indexed = ("visualization/zone-index.csv" if source == "thermal"
+                       else "visualization/trace-zone-index.csv")
+            if indexed in z.namelist():
+                index = pd.read_csv(z.open(indexed))
+                key = "hourly_thermal_path" if source == "thermal" else "validation_trace_path"
+                if {"zone_id", key}.issubset(index.columns):
+                    found = index.loc[index.zone_id.astype(str) == zone_id, key]
+                    if len(found) > 1:
+                        raise BundleValidationError("Ambiguous zone partition index.")
+                    if len(found) == 1:
+                        direct = str(found.iloc[0])
+                        if not direct.startswith("visualization/zones/") or direct not in z.namelist():
+                            raise BundleValidationError("Unsafe or missing indexed zone partition.")
+                        path = direct
+                        partitioned = True
+                    elif not index.empty:
+                        raise BundleValidationError("This zone has no captured source partition.")
+        if path not in z.namelist():
+            raise BundleValidationError("The requested source table is not in the ZIP.")
         totals = {q: np.zeros(annual, dtype=np.float64) for q in quantities}
         counts = {q: np.zeros(annual, dtype=np.int64) for q in quantities}
         selections = []
@@ -131,14 +164,14 @@ def select_series(payload: bytes, *, source: str, scope: str,
         if source == "thermal":
             columns = {"zone_id", "hour_index", *quantities}
         else:
-            columns = {"step", "zone_id", "initialization", "category", "quantity",
-                       "numeric_value" if source == "trace" else "value"}
+            columns = {"step", "hour_index", "zone_id", "initialization",
+                       "category", "quantity", "numeric_value", "value"}
         with z.open(path) as f:
             for chunk in pd.read_csv(f, chunksize=CHUNK,
                                      usecols=lambda col: col in columns,
                                      low_memory=False):
                 scanned += len(chunk)
-                if scope == "zone":
+                if scope == "zone" and not partitioned:
                     chunk = chunk.loc[chunk.zone_id.astype(str) == zone_id]
                     if chunk.empty:
                         continue
@@ -161,20 +194,28 @@ def select_series(payload: bytes, *, source: str, scope: str,
                             np.add.at(totals[q], hour[good] - 1, value[good])
                             np.add.at(counts[q], hour[good] - 1, 1)
                     continue
-                # EPW source timestamps can jump between historical years. Use
-                # the trace step index, not timestamp, for reporting chronology.
-                steps = pd.to_numeric(chunk.step, errors="coerce")
-                included = (chunk.initialization.astype(str).str.lower() == "false")
-                valid = included & steps.notna() & steps.between(init, init + annual - 1)
-                chunk = chunk.loc[valid].copy()
-                if chunk.empty:
-                    continue
-                chunk["hour_index"] = (steps.loc[valid].astype("int64") - init + 1)
+                # Native EPW timestamps may jump between years. The new zone
+                # partitions already contain the consecutive reporting hour.
+                if partitioned:
+                    hour = pd.to_numeric(chunk.hour_index, errors="coerce")
+                    valid = hour.notna() & hour.between(1, annual)
+                    chunk = chunk.loc[valid].copy()
+                    if chunk.empty:
+                        continue
+                    chunk["hour_index"] = hour.loc[valid].astype("int64")
+                else:
+                    steps = pd.to_numeric(chunk.step, errors="coerce")
+                    included = (chunk.initialization.astype(str).str.lower() == "false")
+                    valid = included & steps.notna() & steps.between(init, init + annual - 1)
+                    chunk = chunk.loc[valid].copy()
+                    if chunk.empty:
+                        continue
+                    chunk["hour_index"] = (steps.loc[valid].astype("int64") - init + 1)
                 chunk["signal"] = chunk.category.astype(str) + "." + chunk.quantity.astype(str)
                 chunk = chunk[chunk.signal.isin(quantities)]
                 if chunk.empty:
                     continue
-                col = "numeric_value" if source == "trace" else "value"
+                col = "numeric_value" if partitioned or source == "trace" else "value"
                 chunk["value"] = pd.to_numeric(chunk[col], errors="coerce")
                 chunk = chunk.dropna(subset=["value"])
                 if chunk.empty:
@@ -211,7 +252,7 @@ def select_series(payload: bytes, *, source: str, scope: str,
             out = out[["hour_index", *quantities]]
             missing = {q: int(out[q].isna().sum()) for q in quantities}
         else:
-            expected = len(zone_ids)
+            expected = 1 if building_summary else len(zone_ids)
             out = pd.DataFrame({"hour_index": np.arange(1, annual + 1)})
             missing = {}
             for q in quantities:
