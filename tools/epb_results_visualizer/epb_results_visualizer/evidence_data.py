@@ -16,6 +16,10 @@ from .bundle import BundleValidationError, _validate_archive, MAX_ROWS
 
 EVIDENCE_FILES = {
     "building": "visualization/building.json",
+    "quality": "visualization/data-quality.json",
+    "zone_index": "visualization/zone-index.csv",
+    "trace_zone_index": "visualization/trace-zone-index.csv",
+    "building_hourly_present": "visualization/building-hourly.csv",
     "zones": "visualization/zones.csv",
     "surfaces": "visualization/surface-inventory.csv",
     "windows": "visualization/opening-inventory.csv",
