@@ -55,13 +55,12 @@ def _line(data: pd.DataFrame, settings: ChartSettings, key: str, unit: str,
     if data.empty:
         st.info("No source values for the selected quantity.")
         return
-    fun = px.bar if kind == "bar" else px.line
-    fig = fun(data, x="month", y="value", color="series",
-              barmode="group" if kind == "bar" else None,
-              markers=True if kind == "line" else False,
-              title=title) if kind == "line" else fun(
-                  data, x="month", y="value", color="series",
-                  barmode="group", title=title)
+    if kind == "bar":
+        fig = px.bar(data, x="month", y="value", color="series",
+                     barmode="group", title=title)
+    else:
+        fig = px.line(data, x="month", y="value", color="series",
+                      markers=True, title=title)
     fig.update_xaxes(tickvals=MONTH_AXIS, ticktext=MONTH_NAMES, title_text="Month")
     _chart(fig, settings, key, data, unit)
 
