@@ -23,6 +23,9 @@ from epb_results_visualizer.multi_compare import load_studies, section_compariso
 from epb_results_visualizer.evidence_views import render_evidence, render_evidence_compare
 from epb_results_visualizer.streaming_ui import section_streaming
 
+VISUALIZER_RELEASE = 'V3.4.1 · selective hourly/trace'
+DEPLOYMENT_SOURCE = 'building-energy-tools/main · tools/epb_results_visualizer/app.py'
+
 st.set_page_config(page_title='EPB Results Visualizer | IVANCALC', page_icon='📊', layout='wide')
 
 
@@ -381,6 +384,9 @@ def section_quality(bundle):
 
 
 def main():
+    st.sidebar.caption(f'EPB Visualizer {VISUALIZER_RELEASE}')
+    st.sidebar.caption('ZIP limits: 512 MiB per archive · 800 MiB combined')
+    st.sidebar.caption(DEPLOYMENT_SOURCE)
     st.title('IVANCALC · EPB Results Visualizer')
     st.markdown('Explore hourly EPB Rhino results and compare independent buildings or architectural design variants.')
     uploads = st.file_uploader('Upload EPB Rhino Result Export ZIP archives', type=['zip'],
