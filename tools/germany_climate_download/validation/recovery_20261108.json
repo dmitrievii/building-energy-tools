@@ -1,0 +1,423 @@
+{
+  "schema": "ige-dwd-recovery-validation-v1",
+  "checked_at_utc": "2026-11-08T09:27:29.487884+00:00",
+  "recovery_tool_version": "1.0.0",
+  "python_version": "3.12.14",
+  "native_windows_execution_tested": false,
+  "original_user_plan_id": "e13ab8aa5ab68b337ab6bcea1fffa2655f36ec3b021b429712e5c5c37e016377",
+  "user_reported_counts_not_locally_reverified": {
+    "planned": 4478,
+    "completed": 4431,
+    "remaining": 47,
+    "network_failures": 6,
+    "malformed_product_failures": 1,
+    "frozen_size_failures": 40
+  },
+  "offline_tests": {
+    "passed": 78,
+    "failed": 0,
+    "seconds": 13.432,
+    "command": "python -m unittest discover -s tools/germany_climate_download/tests -v",
+    "log": "validation/recovery_tests_20261108.log"
+  },
+  "fresh_moisture_check": {
+    "station_id": "03591",
+    "source_url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/moisture/historical/stundenwerte_TF_03591_20040601_20251231_hist.zip",
+    "bytes": 2227017,
+    "sha256": "4610a4744327bebbcdee02ac2a01d511366c57274a6fbb2ff8a191d0d8efb60e",
+    "zip_crc_passed": true,
+    "native_product_rows": 188685,
+    "misaligned_rows": 0,
+    "selected_rows_2016_2025": 87342,
+    "original_downloader_parser_passed": true,
+    "previous_user_error_reproduced": false,
+    "previous_user_error_cause_established": false
+  },
+  "fresh_solar_listing": {
+    "url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/solar/",
+    "sha256": "85b023fd1363d9b6ffe03e3577b34473c4d73fc78087d587a90538edf9293aa6",
+    "planned_archives": 42,
+    "changed_sizes": 35,
+    "comparison": [
+      {
+        "job_id": "419920213419e40f0d65712c",
+        "station": "00183",
+        "frozen": 4316370,
+        "current": 4316376,
+        "modified": "08-Nov-2026 08:35:11"
+      },
+      {
+        "job_id": "8bed5821464c0e53b05f8f91",
+        "station": "00662",
+        "frozen": 6781439,
+        "current": 6781438,
+        "modified": "08-Nov-2026 08:35:11"
+      },
+      {
+        "job_id": "0351185ea056874cb5cefb6f",
+        "station": "00691",
+        "frozen": 1758993,
+        "current": 1758997,
+        "modified": "08-Nov-2026 08:35:11"
+      },
+      {
+        "job_id": "b6e9b1c8750a6f5e090687fd",
+        "station": "00853",
+        "frozen": 4343430,
+        "current": 4343430,
+        "modified": "08-Nov-2026 08:35:12"
+      },
+      {
+        "job_id": "3db8e45596d16e0129226e63",
+        "station": "00867",
+        "frozen": 639852,
+        "current": 639853,
+        "modified": "08-Nov-2026 08:35:14"
+      },
+      {
+        "job_id": "dacd40f2ce9374b6651afff7",
+        "station": "01048",
+        "frozen": 3216748,
+        "current": 3216748,
+        "modified": "08-Nov-2026 08:35:12"
+      },
+      {
+        "job_id": "e3e7953b72018195129a7b42",
+        "station": "01303",
+        "frozen": 341858,
+        "current": 341856,
+        "modified": "08-Nov-2026 08:35:14"
+      },
+      {
+        "job_id": "fcb0de86f04b9ac81fecac79",
+        "station": "01346",
+        "frozen": 417716,
+        "current": 417714,
+        "modified": "08-Nov-2026 08:35:14"
+      },
+      {
+        "job_id": "13907e47ba69a9dc91ff6195",
+        "station": "01358",
+        "frozen": 6283520,
+        "current": 6283515,
+        "modified": "08-Nov-2026 08:35:12"
+      },
+      {
+        "job_id": "802ad0fa53d015f086fd96ce",
+        "station": "01420",
+        "frozen": 456702,
+        "current": 456704,
+        "modified": "08-Nov-2026 08:35:14"
+      },
+      {
+        "job_id": "d91d686d88657d83b0ba3d83",
+        "station": "01639",
+        "frozen": 312216,
+        "current": 312222,
+        "modified": "08-Nov-2026 08:35:14"
+      },
+      {
+        "job_id": "102893ad65e3068105d7e8b5",
+        "station": "01684",
+        "frozen": 2721586,
+        "current": 2721592,
+        "modified": "08-Nov-2026 08:35:13"
+      },
+      {
+        "job_id": "0ab4b22639153ed984d99faf",
+        "station": "01975",
+        "frozen": 2393351,
+        "current": 2393355,
+        "modified": "08-Nov-2026 08:35:13"
+      },
+      {
+        "job_id": "b3d3b71fdc398ec26e33c116",
+        "station": "02290",
+        "frozen": 7412314,
+        "current": 7412318,
+        "modified": "08-Nov-2026 08:35:13"
+      },
+      {
+        "job_id": "59a800c3c363e50b244e0980",
+        "station": "02483",
+        "frozen": 201434,
+        "current": 201433,
+        "modified": "08-Nov-2026 08:35:14"
+      },
+      {
+        "job_id": "df3fe16c9b946251d35efa0a",
+        "station": "02712",
+        "frozen": 4648257,
+        "current": 4648254,
+        "modified": "08-Nov-2026 08:35:13"
+      },
+      {
+        "job_id": "9d78c0a922609d7538afafdc",
+        "station": "02925",
+        "frozen": 643460,
+        "current": 643462,
+        "modified": "08-Nov-2026 08:35:14"
+      },
+      {
+        "job_id": "8bc406001bba9d9a92b32678",
+        "station": "02928",
+        "frozen": 950860,
+        "current": 950860,
+        "modified": "08-Nov-2026 08:35:13"
+      },
+      {
+        "job_id": "78e6b0012475a5c88a717df7",
+        "station": "02932",
+        "frozen": 838968,
+        "current": 838968,
+        "modified": "08-Nov-2026 08:35:14"
+      },
+      {
+        "job_id": "2766e4e47e61cba7607bd944",
+        "station": "03015",
+        "frozen": 4433935,
+        "current": 4433934,
+        "modified": "08-Nov-2026 08:35:14"
+      },
+      {
+        "job_id": "134220b996dc3c81249f83a5",
+        "station": "03631",
+        "frozen": 5961297,
+        "current": 5961298,
+        "modified": "08-Nov-2026 08:35:14"
+      },
+      {
+        "job_id": "ac5a36c7b7c4539c94db37c9",
+        "station": "03668",
+        "frozen": 1742746,
+        "current": 1742751,
+        "modified": "08-Nov-2026 08:35:07"
+      },
+      {
+        "job_id": "428947000297579dfe64c149",
+        "station": "03987",
+        "frozen": 8043032,
+        "current": 8043033,
+        "modified": "08-Nov-2026 08:35:07"
+      },
+      {
+        "job_id": "19df68313dd2cf3819fb943e",
+        "station": "04271",
+        "frozen": 2881757,
+        "current": 2881759,
+        "modified": "08-Nov-2026 08:35:07"
+      },
+      {
+        "job_id": "54187455ded9c1aabf7dd810",
+        "station": "04336",
+        "frozen": 4278200,
+        "current": 4278194,
+        "modified": "08-Nov-2026 08:35:07"
+      },
+      {
+        "job_id": "ed5aa11252daad81e3c0380e",
+        "station": "04393",
+        "frozen": 1297187,
+        "current": 1297191,
+        "modified": "08-Nov-2026 08:35:07"
+      },
+      {
+        "job_id": "a56cde5726a56f3ccc1f30cb",
+        "station": "04466",
+        "frozen": 4799225,
+        "current": 4799224,
+        "modified": "08-Nov-2026 08:35:08"
+      },
+      {
+        "job_id": "f4703a25d2117546aeb824ab",
+        "station": "04642",
+        "frozen": 3323808,
+        "current": 3323810,
+        "modified": "08-Nov-2026 08:35:08"
+      },
+      {
+        "job_id": "c3feee3b654988adddff66ad",
+        "station": "04928",
+        "frozen": 5040248,
+        "current": 5040248,
+        "modified": "08-Nov-2026 08:35:08"
+      },
+      {
+        "job_id": "189388f61b9ac6f295d2e94f",
+        "station": "05100",
+        "frozen": 6312562,
+        "current": 6312567,
+        "modified": "08-Nov-2026 08:35:08"
+      },
+      {
+        "job_id": "a2b8a6dc5ba86db3e7c995c9",
+        "station": "05142",
+        "frozen": 538900,
+        "current": 538896,
+        "modified": "08-Nov-2026 08:35:14"
+      },
+      {
+        "job_id": "27a8b33d9ea34d92bff73002",
+        "station": "05404",
+        "frozen": 6691314,
+        "current": 6691313,
+        "modified": "08-Nov-2026 08:35:09"
+      },
+      {
+        "job_id": "666c30e9c379db2049795e26",
+        "station": "05705",
+        "frozen": 6546039,
+        "current": 6546039,
+        "modified": "08-Nov-2026 08:35:10"
+      },
+      {
+        "job_id": "257e08d4038592d7892faaf4",
+        "station": "05779",
+        "frozen": 3468873,
+        "current": 3468872,
+        "modified": "08-Nov-2026 08:35:10"
+      },
+      {
+        "job_id": "2cd044bdc397a5482b31d03b",
+        "station": "05792",
+        "frozen": 1514813,
+        "current": 1514813,
+        "modified": "08-Nov-2026 08:35:10"
+      },
+      {
+        "job_id": "7106019b21c02e8271fb2037",
+        "station": "05856",
+        "frozen": 2904004,
+        "current": 2904002,
+        "modified": "08-Nov-2026 08:35:10"
+      },
+      {
+        "job_id": "78b7d2a176e8c8928eec832b",
+        "station": "05906",
+        "frozen": 4166863,
+        "current": 4166865,
+        "modified": "08-Nov-2026 08:35:10"
+      },
+      {
+        "job_id": "6236b0ec396c73d5da723f04",
+        "station": "06197",
+        "frozen": 530809,
+        "current": 530813,
+        "modified": "08-Nov-2026 08:35:14"
+      },
+      {
+        "job_id": "79d92f2e4bde678bc52d87b8",
+        "station": "07365",
+        "frozen": 1800610,
+        "current": 1800612,
+        "modified": "08-Nov-2026 08:35:14"
+      },
+      {
+        "job_id": "da9f872af999400551940260",
+        "station": "07370",
+        "frozen": 643793,
+        "current": 643795,
+        "modified": "08-Nov-2026 08:35:14"
+      },
+      {
+        "job_id": "40dfeea365fb42825cffe20e",
+        "station": "15000",
+        "frozen": 421023,
+        "current": 421027,
+        "modified": "08-Nov-2026 08:35:14"
+      },
+      {
+        "job_id": "e84403d4059ec82937713634",
+        "station": "15444",
+        "frozen": 418910,
+        "current": 418909,
+        "modified": "08-Nov-2026 08:35:14"
+      }
+    ]
+  },
+  "single_solar_product_comparison": {
+    "station_id": "01048",
+    "old_zip_bytes": 3216748,
+    "new_zip_bytes": 3216748,
+    "old_zip_sha256": "c8e9b8b8dfd0ef07cf9289b8677aa61511930b0f4dfe1f8bf8254432e4522887",
+    "new_zip_sha256": "20e8aa263534cca579a42066148f99e7d5a212248522838678cc5b1f2b6ec719",
+    "product_filename": "produkt_st_stunde_19960901_20260930_01048.txt",
+    "product_bytes_identical": true,
+    "product_sha256": "403ed2a382480fdc3c5446ba9732478af074cc3b7f6c434e798d323461dc8491",
+    "scope": "This single pair only; not a claim that all revised products are unchanged"
+  },
+  "bounded_live_recovery": {
+    "checked_at_utc": "2026-11-08T09:24:58.876204+00:00",
+    "full_original_plan_id": "e13ab8aa5ab68b337ab6bcea1fffa2655f36ec3b021b429712e5c5c37e016377",
+    "bounded_test_plan_id": "9a19dc25851521c2045e1dcec01d5d8e46cacef38d2fcf0094637088a429fff8",
+    "original_state_unchanged": true,
+    "original_verified_jobs": 1,
+    "recovered_jobs": 1,
+    "recovery_summary": {
+      "original_plan_id": "9a19dc25851521c2045e1dcec01d5d8e46cacef38d2fcf0094637088a429fff8",
+      "planned_original_jobs": 2,
+      "completed_in_original_run": 1,
+      "completed_via_recovery": 1,
+      "resolved_original_jobs": 2,
+      "remaining_jobs": 0,
+      "all_jobs_resolved": true,
+      "exact_original_frozen_run_complete": false,
+      "resolution_scope": "Original verified files plus explicitly versioned replacement ZIPs; original snapshot is never rewritten",
+      "recovery_plan_ids": [
+        "ad81a56d958c82aa49c954c0fedfa897cdc2c391e4fb59db5e263e41b111a81b"
+      ],
+      "warnings": [],
+      "meteorological_completeness_or_epw_admission_assessed": false,
+      "checked_at_utc": "2026-11-08T09:24:58.831610+00:00",
+      "recovery_tool_version": "1.0.0",
+      "attempted_this_invocation": 1,
+      "failures_this_invocation": []
+    },
+    "initial_source_requests": [
+      "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/solar/",
+      "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/solar/stundenwerte_ST_00183_row.zip"
+    ],
+    "repeat_source_requests": [],
+    "recovered_source_url": "https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/solar/stundenwerte_ST_00183_row.zip",
+    "old_listing_bytes": 4316370,
+    "new_listing_bytes": 4316376,
+    "recovered_zip_sha256": "88045e22d9851d757e81915b8e6ae86c72b450132964fbfd2a7aee37446f352c",
+    "recovered_selected_rows": 87672,
+    "e0_counts_across_two_native_plans": {
+      "planned_jobs": 3,
+      "verified_jobs": 2,
+      "pending_jobs": 1,
+      "quarantined_jobs": 0
+    },
+    "e0_plan_errors": [],
+    "scope": "Two-job live integration check; the user's 4478-job local run was not accessed"
+  },
+  "final_status_with_current_code": {
+    "original_plan_id": "9a19dc25851521c2045e1dcec01d5d8e46cacef38d2fcf0094637088a429fff8",
+    "planned_original_jobs": 2,
+    "completed_in_original_run": 1,
+    "completed_via_recovery": 1,
+    "resolved_original_jobs": 2,
+    "remaining_jobs": 0,
+    "all_jobs_resolved": true,
+    "exact_original_frozen_run_complete": false,
+    "resolution_scope": "Original verified files plus explicitly versioned replacement ZIPs; original snapshot is never rewritten",
+    "recovery_plan_ids": [
+      "ad81a56d958c82aa49c954c0fedfa897cdc2c391e4fb59db5e263e41b111a81b"
+    ],
+    "warnings": [],
+    "meteorological_completeness_or_epw_admission_assessed": false,
+    "checked_at_utc": "2026-11-08T09:26:11.803989+00:00",
+    "recovery_tool_version": "1.0.0",
+    "attempted_this_invocation": 0,
+    "failures_this_invocation": []
+  },
+  "core_downloader_modified": false,
+  "meteorological_completeness_or_epw_admission_assessed": false,
+  "limits": [
+    "The user's local data were not accessed",
+    "Live recovery exercised one pending ZIP and one already verified job",
+    "Files already verified in the original run are retained; this is not a simultaneous provider-wide snapshot",
+    "E0 counts native jobs across plans, while the recovery report counts unique original jobs"
+  ]
+}

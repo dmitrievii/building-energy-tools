@@ -1,0 +1,157 @@
+test_all_catalogue_outputs_match_manifest (test_germany_climate.Contracts.test_all_catalogue_outputs_match_manifest) ... ok
+test_all_catalogue_source_hashes (test_germany_climate.Contracts.test_all_catalogue_source_hashes) ... ok
+test_all_empty_parameter_not_inferred_complete (test_germany_climate.Contracts.test_all_empty_parameter_not_inferred_complete) ... ok
+test_archive_filename_and_date_interval (test_germany_climate.Contracts.test_archive_filename_and_date_interval) ... ok
+test_bad_end_of_record_rejected (test_germany_climate.Contracts.test_bad_end_of_record_rejected) ... ok
+test_conflicting_archives_in_same_tier_block_export (test_germany_climate.Contracts.test_conflicting_archives_in_same_tier_block_export) ... [1/2] pressure 01048 historical
+  selected rows: 24
+[2/2] pressure 01048 historical
+  selected rows: 24
+ok
+test_date_end_is_exclusive_next_day (test_germany_climate.Contracts.test_date_end_is_exclusive_next_day) ... ok
+test_download_resume_verifies_all_artifacts (test_germany_climate.Contracts.test_download_resume_verifies_all_artifacts) ... [1/1] pressure 01048 recent
+  selected rows: 24
+[1/1] pressure 01048 recent
+  selected rows: 24
+[1/1] pressure 01048 recent
+  selected rows: 24
+[1/1] pressure 01048 recent
+  selected rows: 24
+[1/1] pressure 01048 recent
+  selected rows: 24
+[1/1] pressure 01048 recent
+  selected rows: 24
+ok
+test_duplicate_timestamp_rejected (test_germany_climate.Contracts.test_duplicate_timestamp_rejected) ... ok
+test_duplicate_zip_member_rejected (test_germany_climate.Contracts.test_duplicate_zip_member_rejected) ... ok
+test_dwd_id_is_not_wmo_number (test_germany_climate.Contracts.test_dwd_id_is_not_wmo_number) ... ok
+test_explicit_offset_converted (test_germany_climate.Contracts.test_explicit_offset_converted) ... ok
+test_export_blocks_missing_or_corrupt_archive (test_germany_climate.Contracts.test_export_blocks_missing_or_corrupt_archive) ... [1/1] pressure 01048 recent
+  selected rows: 24
+ok
+test_export_partial_year_label (test_germany_climate.Contracts.test_export_partial_year_label) ... ok
+test_export_wrong_year_rejected (test_germany_climate.Contracts.test_export_wrong_year_rejected) ... ok
+test_failure_reported_and_lock_released (test_germany_climate.Contracts.test_failure_reported_and_lock_released) ... [1/1] pressure 01048 recent
+  FAILED: SourceError: ZIP size differs from frozen directory listing; refresh catalogue and create a new plan/output
+ok
+test_fixture_provenance (test_germany_climate.Contracts.test_fixture_provenance) ... ok
+test_fractional_user_bounds_rejected (test_germany_climate.Contracts.test_fractional_user_bounds_rejected) ... ok
+test_geojson_longitude_latitude (test_germany_climate.Contracts.test_geojson_longitude_latitude) ... ok
+test_haversine_coordinate_order (test_germany_climate.Contracts.test_haversine_coordinate_order) ... ok
+test_historical_geography_is_retained (test_germany_climate.Contracts.test_historical_geography_is_retained) ... ok
+test_historical_recent_overlap_prefers_historical (test_germany_climate.Contracts.test_historical_recent_overlap_prefers_historical) ... [1/2] pressure 01048 historical
+  selected rows: 24
+[2/2] pressure 01048 recent
+  selected rows: 24
+ok
+test_incomplete_receipt_not_skipped (test_germany_climate.Contracts.test_incomplete_receipt_not_skipped) ... ok
+test_leap_year_8784_expected_labels (test_germany_climate.Contracts.test_leap_year_8784_expected_labels) ... ok
+test_locked_run_does_not_download (test_germany_climate.Contracts.test_locked_run_does_not_download) ... ok
+test_max_jobs_limits_new_attempts (test_germany_climate.Contracts.test_max_jobs_limits_new_attempts) ... [1/2] pressure 01048 recent
+  selected rows: 24
+ok
+test_metadata_missing_rejected (test_germany_climate.Contracts.test_metadata_missing_rejected) ... ok
+test_mez_metadata_conversion_is_explicit (test_germany_climate.Contracts.test_mez_metadata_conversion_is_explicit) ... ok
+test_missing_marker_zero_and_qc_preserved (test_germany_climate.Contracts.test_missing_marker_zero_and_qc_preserved) ... ok
+test_missing_quality_column_rejected (test_germany_climate.Contracts.test_missing_quality_column_rejected) ... ok
+test_naive_user_datetime_rejected (test_germany_climate.Contracts.test_naive_user_datetime_rejected) ... ok
+test_nearest_group_date_and_exclusion (test_germany_climate.Contracts.test_nearest_group_date_and_exclusion) ... ok
+test_nearest_height_requires_elevation (test_germany_climate.Contracts.test_nearest_height_requires_elevation) ... ok
+test_nearest_invalid_geography (test_germany_climate.Contracts.test_nearest_invalid_geography) ... ok
+test_nearest_radius_filter (test_germany_climate.Contracts.test_nearest_radius_filter) ... ok
+test_nonfinite_native_value_rejected (test_germany_climate.Contracts.test_nonfinite_native_value_rejected) ... ok
+test_old_sun_woz_not_assigned_utc (test_germany_climate.Contracts.test_old_sun_woz_not_assigned_utc) ... ok
+test_packaged_catalogue_identity (test_germany_climate.Contracts.test_packaged_catalogue_identity) ... ok
+test_plan_contains_no_automatic_recent_overlap (test_germany_climate.Contracts.test_plan_contains_no_automatic_recent_overlap) ... ok
+test_plan_roundtrip_and_tamper_rejected (test_germany_climate.Contracts.test_plan_roundtrip_and_tamper_rejected) ... ok
+test_plan_unavailable_station_rejected (test_germany_climate.Contracts.test_plan_unavailable_station_rejected) ... ok
+test_plan_unknown_config_rejected (test_germany_climate.Contracts.test_plan_unknown_config_rejected) ... ok
+test_pressure_semantics_in_actual_metadata (test_germany_climate.Contracts.test_pressure_semantics_in_actual_metadata) ... ok
+test_real_dwd_fixture_air_temperature (test_germany_climate.Contracts.test_real_dwd_fixture_air_temperature) ... ok
+test_real_dwd_fixture_cloudiness (test_germany_climate.Contracts.test_real_dwd_fixture_cloudiness) ... ok
+test_real_dwd_fixture_dew_point (test_germany_climate.Contracts.test_real_dwd_fixture_dew_point) ... ok
+test_real_dwd_fixture_moisture (test_germany_climate.Contracts.test_real_dwd_fixture_moisture) ... ok
+test_real_dwd_fixture_precipitation (test_germany_climate.Contracts.test_real_dwd_fixture_precipitation) ... ok
+test_real_dwd_fixture_pressure (test_germany_climate.Contracts.test_real_dwd_fixture_pressure) ... ok
+test_real_dwd_fixture_solar (test_germany_climate.Contracts.test_real_dwd_fixture_solar) ... ok
+test_real_dwd_fixture_sun (test_germany_climate.Contracts.test_real_dwd_fixture_sun) ... ok
+test_real_dwd_fixture_visibility (test_germany_climate.Contracts.test_real_dwd_fixture_visibility) ... ok
+test_real_dwd_fixture_wind (test_germany_climate.Contracts.test_real_dwd_fixture_wind) ... ok
+test_solar_minutes_and_secondary_woz_retained (test_germany_climate.Contracts.test_solar_minutes_and_secondary_woz_retained) ... ok
+test_successful_transfer_can_have_zero_selected_rows (test_germany_climate.Contracts.test_successful_transfer_can_have_zero_selected_rows) ... [1/1] pressure 01048 recent
+  selected rows: 0
+ok
+test_sun_absent_night_rows_not_fabricated (test_germany_climate.Contracts.test_sun_absent_night_rows_not_fabricated) ... ok
+test_truncated_row_rejected (test_germany_climate.Contracts.test_truncated_row_rejected) ... ok
+test_unknown_or_conflicting_clock_not_guessed (test_germany_climate.Contracts.test_unknown_or_conflicting_clock_not_guessed) ... ok
+test_unsafe_zip_path_rejected (test_germany_climate.Contracts.test_unsafe_zip_path_rejected) ... ok
+test_untrusted_source_url_rejected (test_germany_climate.Contracts.test_untrusted_source_url_rejected) ... ok
+test_wrong_station_in_product_rejected (test_germany_climate.Contracts.test_wrong_station_in_product_rejected) ... ok
+test_zip_size_change_requires_new_snapshot (test_germany_climate.Contracts.test_zip_size_change_requires_new_snapshot) ... ok
+test_changed_index_after_planning_still_fails_strict_size_check (test_germany_recover.RecoveryTests.test_changed_index_after_planning_still_fails_strict_size_check) ... Freezing current DWD directory: https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/solar/
+New supplementary plan: /tmp/tmp872xufkw/downloaded/ead12c048e448eeddc0f/plan.json
+[1/1] solar 01048 row
+  FAILED: SourceError: ZIP size differs from frozen directory listing; refresh catalogue and create a new plan/output
+ok
+test_cli_status_with_spaces_and_cyrillic_path (test_germany_recover.RecoveryTests.test_cli_status_with_spaces_and_cyrillic_path) ... ok
+test_completed_recovery_resume_has_no_network_requests (test_germany_recover.RecoveryTests.test_completed_recovery_resume_has_no_network_requests) ... Freezing current DWD directory: https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/solar/
+New supplementary plan: /tmp/tmpka0o3o5a/downloaded/7bba88e3d5ac53dcc560/plan.json
+[1/1] solar 01048 row
+  selected rows: 24
+ok
+test_invalid_job_limit_does_not_fetch_or_create_new_plan (test_germany_recover.RecoveryTests.test_invalid_job_limit_does_not_fetch_or_create_new_plan) ... ok
+test_malformed_product_is_not_silently_skipped (test_germany_recover.RecoveryTests.test_malformed_product_is_not_silently_skipped) ... Freezing current DWD directory: https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/solar/
+New supplementary plan: /tmp/tmpb5u2onxz/downloaded/84fea2b303caa476e02d/plan.json
+[1/1] solar 01048 row
+  FAILED: SourceError: Truncated/misaligned product row
+ok
+test_missing_current_filename_is_not_guessed (test_germany_recover.RecoveryTests.test_missing_current_filename_is_not_guessed) ... Freezing current DWD directory: https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/solar/
+ok
+test_missing_original_run_does_not_start_full_download (test_germany_recover.RecoveryTests.test_missing_original_run_does_not_start_full_download) ... ok
+test_network_failure_can_be_retried_without_losing_other_results (test_germany_recover.RecoveryTests.test_network_failure_can_be_retried_without_losing_other_results) ... Freezing current DWD directory: https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/solar/
+New supplementary plan: /tmp/tmp4gakr4rh/downloaded/db80e451f4109a153670/plan.json
+[1/1] solar 01048 row
+  FAILED: ConnectionError: synthetic network error
+Freezing current DWD directory: https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/solar/
+New supplementary plan: /tmp/tmp4gakr4rh/downloaded/e4716ee8fceb9afca750/plan.json
+[1/1] solar 01048 row
+  selected rows: 24
+ok
+test_only_pending_is_fetched_and_parent_unchanged (test_germany_recover.RecoveryTests.test_only_pending_is_fetched_and_parent_unchanged) ... Freezing current DWD directory: https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/solar/
+New supplementary plan: /tmp/tmphv35yotd/downloaded/84de9ef1ef2c6039cf72/plan.json
+[1/1] solar 01048 row
+  selected rows: 24
+ok
+test_original_lock_blocks_recovery (test_germany_recover.RecoveryTests.test_original_lock_blocks_recovery) ... ok
+test_partial_recovery_next_run_fetches_only_remaining (test_germany_recover.RecoveryTests.test_partial_recovery_next_run_fetches_only_remaining) ... Freezing current DWD directory: https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/dew_point/recent/
+Freezing current DWD directory: https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/solar/
+New supplementary plan: /tmp/tmpw8b9u5kz/downloaded/f34a12ef15aa3d219b76/plan.json
+[1/2] dew_point 01048 recent
+  selected rows: 24
+Freezing current DWD directory: https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/solar/
+New supplementary plan: /tmp/tmpw8b9u5kz/downloaded/278a222754d9dec954f4/plan.json
+[1/1] solar 01048 row
+  selected rows: 24
+ok
+test_status_only_never_fetches (test_germany_recover.RecoveryTests.test_status_only_never_fetches) ... ok
+test_tampered_source_index_is_not_counted (test_germany_recover.RecoveryTests.test_tampered_source_index_is_not_counted) ... Freezing current DWD directory: https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/solar/
+New supplementary plan: /tmp/tmpyo0oxown/downloaded/6a7b26a7ecabc88bc6ec/plan.json
+[1/1] solar 01048 row
+  selected rows: 24
+ok
+test_tampered_supplementary_zip_is_not_counted (test_germany_recover.RecoveryTests.test_tampered_supplementary_zip_is_not_counted) ... Freezing current DWD directory: https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/solar/
+New supplementary plan: /tmp/tmp_cstjkxu/downloaded/fba648ad091d6fc2f556/plan.json
+[1/1] solar 01048 row
+  selected rows: 24
+ok
+test_unrelated_invalid_plan_shape_does_not_block_recovery (test_germany_recover.RecoveryTests.test_unrelated_invalid_plan_shape_does_not_block_recovery) ... ok
+test_wrong_original_job_binding_is_rejected (test_germany_recover.RecoveryTests.test_wrong_original_job_binding_is_rejected) ... Freezing current DWD directory: https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/hourly/solar/
+New supplementary plan: /tmp/tmpq8neqiq9/downloaded/ace6abc1154695e684a5/plan.json
+[1/1] solar 01048 row
+  selected rows: 24
+ok
+
+----------------------------------------------------------------------
+Ran 78 tests in 13.432s
+
+OK

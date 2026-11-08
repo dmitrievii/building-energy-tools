@@ -1,0 +1,40 @@
+{
+  "schema": "ige-dwd-recovery-package-manifest-v1",
+  "version": "1.0.0",
+  "created_at_utc": "2026-11-08T09:27:29.491188+00:00",
+  "requires_existing_file": "germany_climate.py",
+  "requires_core_version": "1.0.0",
+  "core_sha256": "88f55c425d03fa38315d15bfa1d37aca1dc189a3731a80912c3ac6e17cb1ac71",
+  "files": [
+    {
+      "path": "germany_recover.py",
+      "bytes": 11750,
+      "sha256": "67916922707ffde8f83b477fb0b89f0f8ea95bd3b1997a95203a33fbbcd87d2f"
+    },
+    {
+      "path": "RECOVERY_RU.md",
+      "bytes": 10331,
+      "sha256": "4aa4c127a9e486a2fbf99fc794abcefcee259aaa203460554a61b9843ccd7f43"
+    },
+    {
+      "path": "README_RU.md",
+      "bytes": 22712,
+      "sha256": "27af2d633d8e3ed0d62f33e1112f9c9ab56f76ad666aa7a9fee287e99e4f41e3"
+    },
+    {
+      "path": "tests/test_germany_recover.py",
+      "bytes": 9877,
+      "sha256": "60c508dd3a197d3f71554a6edd3097e9af09f71c5ebad4deecfd517132182767"
+    },
+    {
+      "path": "validation/recovery_20261108.json",
+      "bytes": 13695,
+      "sha256": "747f0fbeb10357395c85fcf6710b00b5e6856a03a6f9e150bd1d75273b771d22"
+    },
+    {
+      "path": "validation/recovery_tests_20261108.log",
+      "bytes": 13336,
+      "sha256": "6aab3f68c53877737941b28a66cdb787d4a40fbca55e50e579640dbcd0e2fdb8"
+    }
+  ]
+}
