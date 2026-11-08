@@ -116,3 +116,52 @@ profiles, year basis, and floor area basis before using differences as evidence
 of design performance. Fully glazed (WWR=100%) source facades are valid data;
 zero opaque net area is not a validation failure. The visualizer remains
 read-only and has no normative approval authority.
+
+
+
+## Selective large-ZIP hourly explorer — V3.4
+
+For EPB Rhino ISO 52016 Result Export archives containing large validation traces
+(e.g. 266 MiB ZIP, 3.67 GiB uncompressed), the importer validates ZIP metadata
+without materializing the hourly CSV, native result.json or trace CSV.
+The application upload limit is 512 MiB per file; the combined uploaded ZIP
+budget is 800 MiB and the manifest total maximum is 16 GiB. These limits
+do **not** imply that all of those bytes will be decompressed.
+
+Use **Hourly Explorer** (or **Thermal balance / Validation Trace**). Select
+*Whole building* or *One thermal zone*, an evidence source and at most four
+physical signals, then click **Read selected evidence**. Until that button is
+pressed, the large CSV is not read. The source CSV is streamed in 40,000-row
+batches. One reporting series of at most 8,760/8,784 hours per requested
+signal is retained, not all 76+ zones. Changing the selected zone replaces
+the single active series cache.
+
+The **Whole building** scope only offers additive power/flow/ventilation
+coefficients and an explicitly labeled *share of active zones* for boolean
+signals. Zone temperatures, relative humidity, setpoints and source text
+states cannot be summed. Native per-zone solver maximum-capacity limits also
+cannot be totaled as a physical building capacity. Whole-building series
+require complete, unique zone/hour coverage. If one zone's signal is absent,
+the resulting hour and any incomplete day/month/year are shown as missing,
+never as a zero or partial annual total. Heating and cooling loads are
+aggregated independently to avoid artificial cancellation.
+
+**One thermal zone** permits thermal and operative temperatures, load and
+solar heat fluxes, setpoints and numeric Trace signals. For the EPW Typical
+Meteorological Year the x-axis is based on sequential reporting-hour indices,
+not the discontinuous years in source Trace timestamps. Initialization steps
+(744 in the tested ISO 52016 bundle) are excluded. If a signal is absent,
+including CO2, actual mechanical AHU or blind actuation, it remains absent.
+
+Trace scanning of 2+ GiB compressed members is bounded-memory but still
+requires sequential decompression and can be slow on Streamlit Community
+Cloud. Long-term fastest access will require **partitioned export by zone**
+and a ready-to-use **whole-building aggregated hourly summary** in the
+EPB Rhino Result Export component. Current streaming is a compatibility
+layer for existing ZIPs, not a claim of instant random access.
+
+For multiple ZIPs, **Compare buildings / variants → Monthly thermal needs**
+compares source 12-month sums without reading hourly or Trace data; all
+zone-month observations must exist. Independent archives with different
+model/climate fingerprints remain descriptive comparisons, not controlled
+algorithm benchmarks.
