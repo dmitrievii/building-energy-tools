@@ -261,9 +261,6 @@ def time_aggregate(frame: pd.DataFrame, units: dict[str, str],
         if unit == "W":
             if power_mode == "Energy":
                 series = grouped.sum(min_count=1) / 1000
-                # Source is regular 1-hour interval. Incomplete bins stay NaN.
-                good = grouped.count() == grouped.size()
-                series = series.where(good)
                 out_units[q] = "kWh"
             elif power_mode == "Peak":
                 series = grouped.max()
@@ -273,6 +270,17 @@ def time_aggregate(frame: pd.DataFrame, units: dict[str, str],
                 out_units[q] = "W"
         else:
             series = grouped.mean()
-            out_units[q] = "%" if unit == BOOLEAN_UNIT and "building" in frame.attrs.get("scope", "") else unit
+            out_units[q] = "%" if unit == BOOLEAN_UNIT and frame.attrs.get("scope") == "building" else unit
+        # Do not claim a complete day/month/year when any reporting hour is
+        # missing, or when the user selected only part of the interval.
+        if cadence == "Hour":
+            expected = pd.Series(1, index=series.index)
+        elif cadence == "Day":
+            expected = pd.Series(24, index=series.index)
+        elif cadence == "Month":
+            expected = pd.Series(series.index.days_in_month * 24, index=series.index)
+        else:
+            expected = pd.Series(annual, index=series.index)
+        series = series.where(grouped.count() == expected)
         result[q] = result.time.map(series)
     return result, out_units
