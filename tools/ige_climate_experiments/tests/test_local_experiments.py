@@ -26,7 +26,7 @@ import ige_local.pilot as pc
 class WorkspaceTest(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(prefix="IGE User Folder Климат ")
-        self.base = Path(self.tmp.name)
+        self.base = Path(self.tmp.name).resolve()
         self.config_path = config(self.base)
         self.cfg = load_config(self.config_path)
 

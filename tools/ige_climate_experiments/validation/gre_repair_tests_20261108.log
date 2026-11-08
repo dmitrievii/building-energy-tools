@@ -97,8 +97,8 @@ test_training_and_separate_holdout_opening (test_auto_regression.PipelineTests.t
   ELIGIBLE
 Training T / monthly_idw_ols
   ELIGIBLE
-C evaluation: /tmp/tmp3gl1jfom/fit/holdout_evaluations/20261108T174909_018844Z_5569a111
-C evaluation: /tmp/tmp3gl1jfom/fit/holdout_evaluations/20261108T174909_109795Z_1a6e279b
+C evaluation: /tmp/tmpa_tejttl/fit/holdout_evaluations/20261108T175720_782483Z_a264b390
+C evaluation: /tmp/tmpa_tejttl/fit/holdout_evaluations/20261108T175720_842916Z_a44d8ab4
 ok
 test_constant_gradient_recovered_with_partial_hours (test_auto_regression.SpatialTests.test_constant_gradient_recovered_with_partial_hours) ... ok
 test_continuous_IDW_parameter_recovery_on_informative_transfer (test_auto_regression.SpatialTests.test_continuous_IDW_parameter_recovery_on_informative_transfer) ... ok
@@ -207,6 +207,6 @@ test_verified_child_resolves_but_preserves_original_error (test_recovery_lineage
 test_wrong_station_cannot_clear_original_quarantine (test_recovery_lineage.LineageTests.test_wrong_station_cannot_clear_original_quarantine) ... ok
 
 ----------------------------------------------------------------------
-Ran 127 tests in 18.475s
+Ran 127 tests in 15.416s
 
 OK

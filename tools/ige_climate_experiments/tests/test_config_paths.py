@@ -17,7 +17,7 @@ class ConfigPaths(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory(prefix="IGE User Folder Климат ")
         self.addCleanup(self.tmp.cleanup)
-        self.base = Path(self.tmp.name)
+        self.base = Path(self.tmp.name).resolve()
         self.database = self.base/"Database"
         self.database.mkdir()
         (self.database/"source.txt").write_text("immutable test input", encoding="utf-8")

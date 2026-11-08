@@ -3,7 +3,7 @@
   "component": "E0",
   "offline_tests_passed": 127,
   "failed_tests": 0,
-  "seconds": 18.475,
+  "seconds": 15.416,
   "user_C_evaluated": false,
   "humidity_chain_comparison_implemented": false,
   "scientific_regression_algorithms_modified": false,
@@ -16,5 +16,6 @@
     "unrelated same URL does not clear quarantine",
     "older failed child can be resolved by another verified revision",
     "original native statuses retained"
-  ]
+  ],
+  "windows_CI_fixture_fix": "Canonicalize temporary test directories to compare Windows short and long aliases consistently; production resolution unchanged"
 }
