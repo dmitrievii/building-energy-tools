@@ -73,6 +73,18 @@ def _coverage(data: dict, settings: ChartSettings):
     st.metric("Available evidence datasets", str(len(available)) + "/" + str(len(coverage)))
     st.caption("The viewer does not infer a physical quantity from a different one. "
                "An empty hourly table is not an hourly simulation.")
+    quality = data.get("quality", {})
+    if isinstance(quality, dict) and isinstance(quality.get("datasets"), dict):
+        details = []
+        for member, info in quality["datasets"].items():
+            if isinstance(info, dict):
+                details.append({"Dataset": member,
+                                "Present": bool(info.get("present")),
+                                "Rows": info.get("rows"),
+                                "Reason if unavailable": info.get("reason")})
+        if details:
+            st.markdown("**Native export availability and source reasons**")
+            st.dataframe(pd.DataFrame(details), hide_index=True, use_container_width=True)
     st.markdown("**Grasshopper Energy Charts parity**")
     catalog = [
         ("Thermal Need", "Monthly thermal + hourly when exported", "monthly_thermal"),
@@ -193,7 +205,7 @@ def _zone_physics(data: dict, settings: ChartSettings, *, solar: bool = False):
         return
     quantities = available_quantities(frame)
     if solar:
-        priorities = ["solar_gains_heating", "solar_gains_cooling",
+        priorities = ["solar_gains_hourly_integrated", "solar_gains_heating", "solar_gains_cooling",
                       "internal_gains_heating", "internal_gains_cooling"]
     else:
         priorities = ["heating_demand", "cooling_demand"]

@@ -132,3 +132,22 @@ def test_unavailable_area_does_not_become_zero():
         "visualization/zones.csv": "zone_id,zone_name,floor_area_m2\nz1,Office,\n",
     }))
     assert building_area(data) is None
+
+
+def test_native_data_quality_reasons_and_indexes_are_retained():
+    data = load_evidence(_archive({
+        "visualization/data-quality.json": json.dumps({
+            "extension_version": 3,
+            "datasets": {
+                "monthly-physical-surfaces.csv": {
+                    "present": False, "rows": 0, "reason": "M2_calculated_only"
+                }
+            },
+        }),
+        "visualization/zone-index.csv":
+            "zone_id,hourly_thermal_path,reporting_hours,source\n"
+            "z1,visualization/zones/hash/hourly-thermal.csv,8760,M2\n",
+    }))
+    assert data["quality"]["datasets"]["monthly-physical-surfaces.csv"]["reason"] == "M2_calculated_only"
+    assert len(data["zone_index"]) == 1
+    assert data["trace_zone_index"].empty
