@@ -1,0 +1,2177 @@
+{
+  "version": "0.3.0",
+  "spec_id": "be4e00493a4c1fffea7d31b013c791f351622e2150b37f19007bd1eaddac9cab",
+  "cube_id": "883e3199cd68ef226090c8a2ed64ccbb32c4c395957a7ccab538919f1691b183",
+  "models_requested": 73,
+  "models_recorded": 73,
+  "models_eligible": 73,
+  "failures": [],
+  "best_per_group": {
+    "T/native/T": {
+      "key": "T/native/T/hinge_height_ridge",
+      "result_id": "c91344e50e881b039523da95c2df63473dee38d3765eb9b8cbfa288164adb721",
+      "macro_MAE": 1.4107195939705521,
+      "N": 7993,
+      "fit_D": {
+        "coefficients": [
+          -4.206768607862889,
+          -1.058909885612831
+        ],
+        "feature_rms": [
+          0.6487745147973788,
+          0.4509009654112437
+        ],
+        "rank": 2,
+        "columns": 2,
+        "scaled_condition": 5.827591866380173,
+        "raw_condition": 6.240423045779273,
+        "singular_values_scaled": [
+          1.3938411370072425,
+          0.23917960779793443
+        ],
+        "fit_rows": 10783,
+        "loss": "ridge",
+        "ridge_lambda": 1.9621435351323433e-06,
+        "huber_delta": null,
+        "irls_iterations": 1,
+        "objective": "weighted_mean_squared_transfer_residual",
+        "coefficient_identifiability": "numerical_full_rank_only; no causal or physical identification claim",
+        "case_id": "d907d111646e981fc612ba57a40da9739c1b094efae4fda81f11d1fc42474e91",
+        "feature_names": [
+          "height",
+          "height_above_fitted_knot"
+        ]
+      },
+      "eta": [
+        2.650478446871398,
+        5.905370879451622,
+        -13.141473041937179,
+        1.4088000000000005
+      ]
+    },
+    "p/native/p": {
+      "key": "p/native/p/barometric_residual_idw",
+      "result_id": "09ee5dbf0f1f7dd2c266064dba753b799253234a89e83476c5829b0cd965a69f",
+      "macro_MAE": 1.3982324172615392,
+      "N": 6672,
+      "fit_D": {
+        "coefficients": [
+          0.53234974981395
+        ],
+        "feature_rms": [
+          1.0760462314530286
+        ],
+        "rank": 1,
+        "columns": 1,
+        "scaled_condition": 1.0,
+        "raw_condition": 1.0,
+        "singular_values_scaled": [
+          1.0
+        ],
+        "fit_rows": 7732,
+        "loss": "ols",
+        "ridge_lambda": null,
+        "huber_delta": null,
+        "irls_iterations": 1,
+        "objective": "weighted_mean_squared_transfer_residual",
+        "coefficient_identifiability": "numerical_full_rank_only; no causal or physical identification claim",
+        "case_id": "5f8e796ac42542ef5d32f1b25b160d52ad9ca6054a883bf32b1c6a557e7a1291",
+        "feature_names": [
+          "height_residual_after_physics"
+        ]
+      },
+      "eta": [
+        8.0,
+        4.238236326815142
+      ]
+    },
+    "humidity/joint/RH": {
+      "key": "humidity/joint/RH/monthly_idw_ols",
+      "result_id": "eac35dc2f23a88bb7a98c89e7e98151a2a747988999fdc8e1f8646bca6210ed8",
+      "macro_MAE": 8.931649535503466,
+      "N": 6672,
+      "fit_D": {
+        "coefficients": [
+          -7.939820196460328,
+          -12.359176688156326,
+          -1.750209524396595,
+          0.2709856807457518,
+          6.195474442082113,
+          3.04926921450559,
+          6.039255177581166,
+          2.4857894784505485,
+          0.12334023287778194,
+          -4.408108888185814,
+          -3.3712586569029823,
+          -8.450617360286701
+        ],
+        "feature_rms": [
+          0.2747657802381124,
+          0.27473703767720914,
+          0.2747370376772093,
+          0.27467437782428983,
+          0.2745079307023734,
+          0.2747370376772092,
+          0.27488012788913396,
+          0.2758181543533983,
+          0.27473703767720914,
+          0.2747370376772095,
+          0.27473703767720853,
+          0.2747370376772095
+        ],
+        "rank": 12,
+        "columns": 12,
+        "scaled_condition": 1.0000000000000036,
+        "raw_condition": 1.0047729901561415,
+        "singular_values_scaled": [
+          1.000000000000002,
+          1.0000000000000013,
+          1.0000000000000007,
+          0.9999999999999997,
+          0.9999999999999997,
+          0.9999999999999996,
+          0.9999999999999994,
+          0.9999999999999994,
+          0.9999999999999991,
+          0.999999999999999,
+          0.9999999999999984,
+          0.9999999999999984
+        ],
+        "fit_rows": 7730,
+        "loss": "ols",
+        "ridge_lambda": null,
+        "huber_delta": null,
+        "irls_iterations": 1,
+        "objective": "weighted_mean_squared_transfer_residual",
+        "coefficient_identifiability": "numerical_full_rank_only; no causal or physical identification claim",
+        "case_id": "dadc338506c2466406e0c23c048906358535ab89ba57357143bbed8bc2a28fd4",
+        "feature_names": [
+          "height_month_01",
+          "height_month_02",
+          "height_month_03",
+          "height_month_04",
+          "height_month_05",
+          "height_month_06",
+          "height_month_07",
+          "height_month_08",
+          "height_month_09",
+          "height_month_10",
+          "height_month_11",
+          "height_month_12"
+        ]
+      },
+      "eta": [
+        1.8333694214047864,
+        5.170657330594612
+      ]
+    },
+    "humidity/joint/log_e": {
+      "key": "humidity/joint/log_e/monthly_idw_ols",
+      "result_id": "de7e339afd47fda994ead2874420f9d58a4dfe49ee110a680914da3f6bd22d52",
+      "macro_MAE": 8.361771829856226,
+      "N": 6672,
+      "fit_D": {
+        "coefficients": [
+          -0.4722390382207888,
+          -0.5253870878408347,
+          -0.45716475840416637,
+          -0.4103766490391069,
+          -0.27934888690913734,
+          -0.3565569011401207,
+          -0.3313638983239283,
+          -0.34360829391020214,
+          -0.32382453280222284,
+          -0.45814166978360193,
+          -0.363952061992087,
+          -0.37605282256882216
+        ],
+        "feature_rms": [
+          0.26915622592286825,
+          0.2691286578533361,
+          0.26912865785333595,
+          0.2690565107075708,
+          0.2688892146737167,
+          0.26912865785333623,
+          0.2692401668518803,
+          0.27008539055142883,
+          0.2691286578533359,
+          0.2691286578533361,
+          0.26912865785333606,
+          0.26912865785333623
+        ],
+        "rank": 12,
+        "columns": 12,
+        "scaled_condition": 1.0000000000000013,
+        "raw_condition": 1.0044485825850757,
+        "singular_values_scaled": [
+          1.000000000000002,
+          1.0000000000000018,
+          1.0000000000000013,
+          1.0000000000000013,
+          1.000000000000001,
+          1.000000000000001,
+          1.0000000000000007,
+          1.0000000000000007,
+          1.0000000000000007,
+          1.0000000000000007,
+          1.0000000000000007,
+          1.0000000000000007
+        ],
+        "fit_rows": 7730,
+        "loss": "ols",
+        "ridge_lambda": null,
+        "huber_delta": null,
+        "irls_iterations": 1,
+        "objective": "weighted_mean_squared_transfer_residual",
+        "coefficient_identifiability": "numerical_full_rank_only; no causal or physical identification claim",
+        "case_id": "35823c60765f4aff0cfa343bc367ad901faa713f83e6aef0963ed788a8c3e7f3",
+        "feature_names": [
+          "height_month_01",
+          "height_month_02",
+          "height_month_03",
+          "height_month_04",
+          "height_month_05",
+          "height_month_06",
+          "height_month_07",
+          "height_month_08",
+          "height_month_09",
+          "height_month_10",
+          "height_month_11",
+          "height_month_12"
+        ]
+      },
+      "eta": [
+        1.972765622941375,
+        5.350581453118339
+      ]
+    },
+    "humidity/joint/q": {
+      "key": "humidity/joint/q/seasonal_geo_gaussian_huber",
+      "result_id": "bf16c6702ed15bdda5feb286ef3b3de2d63c9c298cc58fa6a564d4d54887ad63",
+      "macro_MAE": 8.36444464265202,
+      "N": 6672,
+      "fit_D": {
+        "coefficients": [
+          -0.0007071284849131085,
+          -0.0007106845422182455,
+          -0.001497699258866595,
+          -0.0011716560616722186,
+          -6.37386082291914e-07,
+          5.703118471063558e-07
+        ],
+        "feature_rms": [
+          0.3907124982144688,
+          0.3905828281917337,
+          0.3910770429730234,
+          0.39069458406432706,
+          136.31119865788602,
+          146.735695424098
+        ],
+        "rank": 6,
+        "columns": 6,
+        "scaled_condition": 1.8246705652519697,
+        "raw_condition": 451.4754057796554,
+        "singular_values_scaled": [
+          1.2472461412710636,
+          1.0000016684712882,
+          1.0000000000000004,
+          0.9999999999999998,
+          0.9885032552399329,
+          0.6835459315357733
+        ],
+        "fit_rows": 7730,
+        "loss": "huber",
+        "ridge_lambda": null,
+        "huber_delta": 0.0008542380100977051,
+        "irls_iterations": 9,
+        "objective": "weighted_mean_Huber_transfer_residual",
+        "coefficient_identifiability": "numerical_full_rank_only; no causal or physical identification claim",
+        "case_id": "b0d11764bfba73072108827b072ab7904bc0530af970af9bb37ce5d4261fd109",
+        "feature_names": [
+          "height_DJF",
+          "height_MAM",
+          "height_JJA",
+          "height_SON",
+          "east",
+          "north"
+        ]
+      },
+      "eta": [
+        5.321025713476498,
+        5.576039785974539
+      ]
+    },
+    "humidity/joint/Td": {
+      "key": "humidity/joint/Td/monthly_idw_ols",
+      "result_id": "8380dcf294c2fe962ab56db0f7d1fb6cd3dcf65aae887b62e41c55e5fa718d34",
+      "macro_MAE": 8.327058081372167,
+      "N": 6672,
+      "fit_D": {
+        "coefficients": [
+          -5.970186230078492,
+          -6.44503110578058,
+          -5.943099430888085,
+          -5.293242361075579,
+          -3.8267526152320674,
+          -5.097821474304977,
+          -4.781573985970102,
+          -4.985667559544633,
+          -4.696174746661585,
+          -6.1573080222672925,
+          -4.87414383442418,
+          -4.970789611803305
+        ],
+        "feature_rms": [
+          0.2712306289877055,
+          0.27120431399483963,
+          0.2712043139948396,
+          0.2711375184662604,
+          0.27097297981069296,
+          0.2712043139948399,
+          0.27133259328569925,
+          0.2722376168870727,
+          0.2712043139948395,
+          0.2712043139948396,
+          0.2712043139948395,
+          0.2712043139948395
+        ],
+        "rank": 12,
+        "columns": 12,
+        "scaled_condition": 1.0000000000000024,
+        "raw_condition": 1.0046670228052381,
+        "singular_values_scaled": [
+          1.0000000000000013,
+          1.0000000000000009,
+          1.0000000000000007,
+          1.0000000000000007,
+          1.0000000000000004,
+          1.0000000000000004,
+          1.0000000000000004,
+          1.0000000000000004,
+          1.0000000000000004,
+          1.0000000000000002,
+          0.9999999999999993,
+          0.999999999999999
+        ],
+        "fit_rows": 7730,
+        "loss": "ols",
+        "ridge_lambda": null,
+        "huber_delta": null,
+        "irls_iterations": 1,
+        "objective": "weighted_mean_squared_transfer_residual",
+        "coefficient_identifiability": "numerical_full_rank_only; no causal or physical identification claim",
+        "case_id": "685679dbf0ea58fabb37d7f4c5b7a97479b03ad8c9e85beeaad350b7d4236a89",
+        "feature_names": [
+          "height_month_01",
+          "height_month_02",
+          "height_month_03",
+          "height_month_04",
+          "height_month_05",
+          "height_month_06",
+          "height_month_07",
+          "height_month_08",
+          "height_month_09",
+          "height_month_10",
+          "height_month_11",
+          "height_month_12"
+        ]
+      },
+      "eta": [
+        1.9584328019185702,
+        5.237109396996065
+      ]
+    },
+    "humidity/joint/D": {
+      "key": "humidity/joint/D/monthly_idw_ols",
+      "result_id": "785356ef69eb648524753f06c93fefe41e23c1a9aae3b49a692c032fa7d9524f",
+      "macro_MAE": 9.089372154116473,
+      "N": 6672,
+      "fit_D": {
+        "coefficients": [
+          1.6335702501262945,
+          3.877051075512343,
+          0.3543579616837636,
+          -0.14199469584619465,
+          -1.2412783275331667,
+          -0.6287482098023537,
+          -1.1678255010591083,
+          -0.7346133516361154,
+          -0.12805407942256122,
+          0.9341537871129746,
+          0.6087630295589018,
+          1.6419158255086137
+        ],
+        "feature_rms": [
+          0.2701122944871987,
+          0.2700842138998173,
+          0.2700842138998173,
+          0.27001328342789027,
+          0.26984463343320453,
+          0.2700842138998175,
+          0.2701999274125691,
+          0.2710585035336841,
+          0.27008421389981746,
+          0.27008421389981707,
+          0.27008421389981724,
+          0.27008421389981746
+        ],
+        "rank": 12,
+        "columns": 12,
+        "scaled_condition": 1.0000000000000018,
+        "raw_condition": 1.0044984037111857,
+        "singular_values_scaled": [
+          1.0000000000000002,
+          1.0000000000000002,
+          0.9999999999999998,
+          0.9999999999999998,
+          0.9999999999999996,
+          0.9999999999999994,
+          0.9999999999999994,
+          0.9999999999999993,
+          0.9999999999999992,
+          0.9999999999999988,
+          0.9999999999999988,
+          0.9999999999999986
+        ],
+        "fit_rows": 7730,
+        "loss": "ols",
+        "ridge_lambda": null,
+        "huber_delta": null,
+        "irls_iterations": 1,
+        "objective": "weighted_mean_squared_transfer_residual",
+        "coefficient_identifiability": "numerical_full_rank_only; no causal or physical identification claim",
+        "case_id": "aa9a43e11594b62f123fbd2f497b95af05a44ea229fa0b50e28d16c13ca7d440",
+        "feature_names": [
+          "height_month_01",
+          "height_month_02",
+          "height_month_03",
+          "height_month_04",
+          "height_month_05",
+          "height_month_06",
+          "height_month_07",
+          "height_month_08",
+          "height_month_09",
+          "height_month_10",
+          "height_month_11",
+          "height_month_12"
+        ]
+      },
+      "eta": [
+        1.9380553763837234,
+        5.330526598869993
+      ]
+    },
+    "humidity/own/RH": {
+      "key": "humidity/own/RH/monthly_idw_ols",
+      "result_id": "b0d4e7ccd1b4419e67ded326bdf3c07012c045162495e3d2fb319ef329c58f9f",
+      "macro_MAE": 7.970651694944453,
+      "N": 6672,
+      "fit_D": {
+        "coefficients": [
+          -8.062784061254506,
+          -11.772618808195393,
+          -2.2640422943074183,
+          0.5962411302332544,
+          5.386780531818351,
+          3.400729349475712,
+          5.879023551833801,
+          1.1608095401366183,
+          -0.17389778418720622,
+          -4.641913546296331,
+          -3.278818982679826,
+          -9.028801961006403
+        ],
+        "feature_rms": [
+          0.20365147900823102,
+          0.2036500426265389,
+          0.20415880038352946,
+          0.20410554766664607,
+          0.20395940079743224,
+          0.20419352862453274,
+          0.20369890268557878,
+          0.20470359983457706,
+          0.20365003085469413,
+          0.2036500426265394,
+          0.20365004262653943,
+          0.2036500426265392
+        ],
+        "rank": 12,
+        "columns": 12,
+        "scaled_condition": 1.0000000000000038,
+        "raw_condition": 1.005173429021648,
+        "singular_values_scaled": [
+          1.000000000000003,
+          1.0000000000000016,
+          1.0000000000000016,
+          1.0000000000000013,
+          1.000000000000001,
+          1.0000000000000009,
+          1.0000000000000007,
+          1.0000000000000004,
+          1.0000000000000004,
+          0.9999999999999998,
+          0.9999999999999996,
+          0.9999999999999994
+        ],
+        "fit_rows": 10869,
+        "loss": "ols",
+        "ridge_lambda": null,
+        "huber_delta": null,
+        "irls_iterations": 1,
+        "objective": "weighted_mean_squared_transfer_residual",
+        "coefficient_identifiability": "numerical_full_rank_only; no causal or physical identification claim",
+        "case_id": "0767ee81c0480ea352db95a61a83cf349ed512ef831c547b1b1721df7b711a87",
+        "feature_names": [
+          "height_month_01",
+          "height_month_02",
+          "height_month_03",
+          "height_month_04",
+          "height_month_05",
+          "height_month_06",
+          "height_month_07",
+          "height_month_08",
+          "height_month_09",
+          "height_month_10",
+          "height_month_11",
+          "height_month_12"
+        ]
+      },
+      "eta": [
+        1.991727577575168,
+        5.250200326879578
+      ]
+    },
+    "humidity/own/log_e": {
+      "key": "humidity/own/log_e/harmonic_idw_ridge",
+      "result_id": "18318813e5765958ff0f984258ad3c4bd3019fcf097e22ca70a4ec7b91f01d25",
+      "macro_MAE": 8.215926448927695,
+      "N": 6672,
+      "fit_D": {
+        "coefficients": [
+          -0.35668730211159594,
+          -0.02338820729406386,
+          -0.04777513275174928
+        ],
+        "feature_rms": [
+          0.7012709940608273,
+          0.49680226180246706,
+          0.4949429459836825
+        ],
+        "rank": 3,
+        "columns": 3,
+        "scaled_condition": 1.007359306362647,
+        "raw_condition": 1.417579722634835,
+        "singular_values_scaled": [
+          1.0038124301085942,
+          0.9996950218771098,
+          0.9964790356016469
+        ],
+        "fit_rows": 10781,
+        "loss": "ridge",
+        "ridge_lambda": 0.11930498795068754,
+        "huber_delta": null,
+        "irls_iterations": 1,
+        "objective": "weighted_mean_squared_transfer_residual",
+        "coefficient_identifiability": "numerical_full_rank_only; no causal or physical identification claim",
+        "case_id": "925a9d4cd5103344145b5d47e2892a973a5b4c847c5f7eca839376a4ed3c057f",
+        "feature_names": [
+          "height",
+          "height_sin_year",
+          "height_cos_year"
+        ]
+      },
+      "eta": [
+        2.1016866294905574,
+        5.169465490681509,
+        -2.1260721406040255
+      ]
+    },
+    "humidity/own/q": {
+      "key": "humidity/own/q/seasonal_geo_gaussian_huber",
+      "result_id": "28746fda47abe67b742499afa6b2f7014bf362aad8f0228b93abe9d85b9ae6fd",
+      "macro_MAE": 8.36444464265202,
+      "N": 6672,
+      "fit_D": {
+        "coefficients": [
+          -0.0007071284849131085,
+          -0.0007106845422182455,
+          -0.001497699258866595,
+          -0.0011716560616722186,
+          -6.37386082291914e-07,
+          5.703118471063558e-07
+        ],
+        "feature_rms": [
+          0.3907124982144688,
+          0.3905828281917337,
+          0.3910770429730234,
+          0.39069458406432706,
+          136.31119865788602,
+          146.735695424098
+        ],
+        "rank": 6,
+        "columns": 6,
+        "scaled_condition": 1.8246705652519697,
+        "raw_condition": 451.4754057796554,
+        "singular_values_scaled": [
+          1.2472461412710636,
+          1.0000016684712882,
+          1.0000000000000004,
+          0.9999999999999998,
+          0.9885032552399329,
+          0.6835459315357733
+        ],
+        "fit_rows": 7730,
+        "loss": "huber",
+        "ridge_lambda": null,
+        "huber_delta": 0.0008542380100977051,
+        "irls_iterations": 9,
+        "objective": "weighted_mean_Huber_transfer_residual",
+        "coefficient_identifiability": "numerical_full_rank_only; no causal or physical identification claim",
+        "case_id": "456b1747789db2dadd766c5ee176920f94126a7dbbd732d836d26d5866c58d6e",
+        "feature_names": [
+          "height_DJF",
+          "height_MAM",
+          "height_JJA",
+          "height_SON",
+          "east",
+          "north"
+        ]
+      },
+      "eta": [
+        5.321025713476498,
+        5.576039785974539
+      ]
+    },
+    "humidity/own/Td": {
+      "key": "humidity/own/Td/harmonic_idw_ridge",
+      "result_id": "d83c543092bb9500c76594d51cfd6412182ba99a264c38e00e29ea048d41329c",
+      "macro_MAE": 8.217511502859681,
+      "N": 6672,
+      "fit_D": {
+        "coefficients": [
+          -4.85744183664627,
+          -0.096908406482094,
+          -0.3435664834428265
+        ],
+        "feature_rms": [
+          0.7096676904292605,
+          0.5027529312099687,
+          0.5008669693631553
+        ],
+        "rank": 3,
+        "columns": 3,
+        "scaled_condition": 1.0074196827609538,
+        "raw_condition": 1.4175776029675586,
+        "singular_values_scaled": [
+          1.0038121592076255,
+          0.999755086917072,
+          0.9964190459894117
+        ],
+        "fit_rows": 10781,
+        "loss": "ridge",
+        "ridge_lambda": 0.0998879038041059,
+        "huber_delta": null,
+        "irls_iterations": 1,
+        "objective": "weighted_mean_squared_transfer_residual",
+        "coefficient_identifiability": "numerical_full_rank_only; no causal or physical identification claim",
+        "case_id": "685679dbf0ea58fabb37d7f4c5b7a97479b03ad8c9e85beeaad350b7d4236a89",
+        "feature_names": [
+          "height",
+          "height_sin_year",
+          "height_cos_year"
+        ]
+      },
+      "eta": [
+        2.0306460000579376,
+        5.0495313705305795,
+        -2.3037066837007556
+      ]
+    },
+    "humidity/own/D": {
+      "key": "humidity/own/D/monthly_idw_ols",
+      "result_id": "00f6b95668eeac7c854216045d5bccbb1911cbf971fc0a725a45414fa42a19cb",
+      "macro_MAE": 8.029440302031103,
+      "N": 6672,
+      "fit_D": {
+        "coefficients": [
+          1.7062940654960792,
+          3.828687196990116,
+          0.4681122278663092,
+          -0.19054912342153021,
+          -1.1062300796466693,
+          -0.7106030040200022,
+          -1.0696043925131822,
+          -0.4371627344846377,
+          -0.03728426807050895,
+          1.0265615651643492,
+          0.5856366561876261,
+          1.7122347605314239
+        ],
+        "feature_rms": [
+          0.20295658708957115,
+          0.2029551814457615,
+          0.2034503618537039,
+          0.20339685296428012,
+          0.20324914205389594,
+          0.20347977621964985,
+          0.20300144305191214,
+          0.2039819144547522,
+          0.20295516501905006,
+          0.2029551814457609,
+          0.20295518144576102,
+          0.20295518144576158
+        ],
+        "rank": 12,
+        "columns": 12,
+        "scaled_condition": 1.0000000000000038,
+        "raw_condition": 1.0050589963335281,
+        "singular_values_scaled": [
+          1.0000000000000027,
+          1.0000000000000024,
+          1.000000000000002,
+          1.0000000000000013,
+          1.0000000000000004,
+          1.0000000000000002,
+          1.0000000000000002,
+          0.9999999999999998,
+          0.9999999999999997,
+          0.9999999999999994,
+          0.9999999999999993,
+          0.9999999999999989
+        ],
+        "fit_rows": 10781,
+        "loss": "ols",
+        "ridge_lambda": null,
+        "huber_delta": null,
+        "irls_iterations": 1,
+        "objective": "weighted_mean_squared_transfer_residual",
+        "coefficient_identifiability": "numerical_full_rank_only; no causal or physical identification claim",
+        "case_id": "aa9a43e11594b62f123fbd2f497b95af05a44ea229fa0b50e28d16c13ca7d440",
+        "feature_names": [
+          "height_month_01",
+          "height_month_02",
+          "height_month_03",
+          "height_month_04",
+          "height_month_05",
+          "height_month_06",
+          "height_month_07",
+          "height_month_08",
+          "height_month_09",
+          "height_month_10",
+          "height_month_11",
+          "height_month_12"
+        ]
+      },
+      "eta": [
+        2.010468901944185,
+        5.290591560233831
+      ]
+    }
+  },
+  "blocked_stages": {
+    "solar": "BLOCKED_INPUT_NOT_IN_CUBE",
+    "precipitation": "BLOCKED_INPUT_NOT_IN_CUBE",
+    "wind": "BLOCKED_INPUT_NOT_IN_CUBE",
+    "longwave": "BLOCKED_INPUT_NOT_IN_CUBE",
+    "snow": "BLOCKED_INPUT_NOT_IN_CUBE",
+    "terrain_and_grid_background": "BLOCKED_EXTERNAL_INPUTS_NOT_PREPARED"
+  },
+  "paired_exploratory_comparisons": {
+    "selected_T_minus_height": {
+      "difference_A_minus_B": -0.0030832444668934867,
+      "conditional_percentile_95": [
+        -0.01681787884212235,
+        0.014118687091901278
+      ],
+      "station_counts": {
+        "AT": 5,
+        "CH": 5,
+        "DE": 4
+      },
+      "resampling": "country-stratified stations; all sampled hours travel with a station",
+      "repeats": 2000,
+      "interpretation": "EXPLORATORY_POST_SELECTION_CONDITIONAL_V_ONLY; no independent significance or year-generalization claim"
+    },
+    "own_minus_joint_RH": {
+      "difference_A_minus_B": -0.9609978405590113,
+      "conditional_percentile_95": [
+        -1.6143720536029378,
+        -0.40278441063413334
+      ],
+      "station_counts": {
+        "AT": 5,
+        "CH": 5,
+        "DE": 2
+      },
+      "resampling": "country-stratified stations; all sampled hours travel with a station",
+      "repeats": 2000,
+      "interpretation": "EXPLORATORY_POST_SELECTION_CONDITIONAL_V_ONLY; no independent significance or year-generalization claim"
+    },
+    "own_minus_joint_log_e": {
+      "difference_A_minus_B": -0.1458453809285299,
+      "conditional_percentile_95": [
+        -0.6185035131433738,
+        0.3249432199085056
+      ],
+      "station_counts": {
+        "AT": 5,
+        "CH": 5,
+        "DE": 2
+      },
+      "resampling": "country-stratified stations; all sampled hours travel with a station",
+      "repeats": 2000,
+      "interpretation": "EXPLORATORY_POST_SELECTION_CONDITIONAL_V_ONLY; no independent significance or year-generalization claim"
+    },
+    "own_minus_joint_q": {
+      "difference_A_minus_B": 0.0,
+      "conditional_percentile_95": [
+        0.0,
+        0.0
+      ],
+      "station_counts": {
+        "AT": 5,
+        "CH": 5,
+        "DE": 2
+      },
+      "resampling": "country-stratified stations; all sampled hours travel with a station",
+      "repeats": 2000,
+      "interpretation": "EXPLORATORY_POST_SELECTION_CONDITIONAL_V_ONLY; no independent significance or year-generalization claim"
+    },
+    "own_minus_joint_Td": {
+      "difference_A_minus_B": -0.10954657851248684,
+      "conditional_percentile_95": [
+        -0.5835365339714975,
+        0.3545694079531314
+      ],
+      "station_counts": {
+        "AT": 5,
+        "CH": 5,
+        "DE": 2
+      },
+      "resampling": "country-stratified stations; all sampled hours travel with a station",
+      "repeats": 2000,
+      "interpretation": "EXPLORATORY_POST_SELECTION_CONDITIONAL_V_ONLY; no independent significance or year-generalization claim"
+    },
+    "own_minus_joint_D": {
+      "difference_A_minus_B": -1.0599318520853707,
+      "conditional_percentile_95": [
+        -1.7428301515812619,
+        -0.4974778263879793
+      ],
+      "station_counts": {
+        "AT": 5,
+        "CH": 5,
+        "DE": 2
+      },
+      "resampling": "country-stratified stations; all sampled hours travel with a station",
+      "repeats": 2000,
+      "interpretation": "EXPLORATORY_POST_SELECTION_CONDITIONAL_V_ONLY; no independent significance or year-generalization claim"
+    }
+  },
+  "holdout_opened": false,
+  "validation_status": "EXPLORATORY_SEQUENTIAL_V_AFTER_PRIOR_INSPECTION",
+  "scientific_accuracy_qualified": false,
+  "clipping_applied": false,
+  "full_year_gate_applied": false,
+  "source_data_modified": false,
+  "network_requests": 0,
+  "wall_seconds_this_invocation": 1803.0613971509993,
+  "cpu_seconds_this_invocation": 1800.8494742700002,
+  "peak_rss_bytes": 530046976,
+  "schema": "IGE_V030_REAL_PILOT_PUBLIC_RECORD_v1",
+  "source_commit": "2cd151ad6c45d78cad5adf8b0b0606b3bfcdbefc",
+  "run_name": "20261108T224806_675864Z_a6d6e54d",
+  "source_spec_id": "69bd744317cad951a7b6588e85aae8e5dfa2ce66362c0623945f78a64fb43947",
+  "environment": {
+    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.39",
+    "numpy": "2.3.5",
+    "scipy": "1.17.0",
+    "thread_limits": {
+      "OPENBLAS_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1"
+    }
+  },
+  "real_C_evaluated": false,
+  "local_unit_tests_passed": 186,
+  "synthetic_candidates_requested": 73,
+  "synthetic_candidates_eligible": 73,
+  "model_results": [
+    {
+      "key": "T/native/T/background_residual_idw",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 1.4252735347747931,
+      "common_calendar_cases": 7993,
+      "result_id": "7d4da0d65d5d4a5cc5b7e764def48a45c934d6025c2e2ca23ce572a80c87e60d",
+      "wall_seconds": 69.01558705000025,
+      "cpu_seconds": 68.94748918299999,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false,
+        false
+      ],
+      "prediction_array_sha256": "071d1a8b8b3c0c50b9b7037a13b2f9aa421638a9e2c5d305ee6c93479b818702"
+    },
+    {
+      "key": "T/native/T/diurnal_height_ridge",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 1.4152285618378206,
+      "common_calendar_cases": 7993,
+      "result_id": "93aad002c3eed77494c1a4b9dbe5c1d731ee293ddac566fe47c8f3e33712d643",
+      "wall_seconds": 40.794024271000126,
+      "cpu_seconds": 40.716250962000004,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false,
+        true
+      ],
+      "prediction_array_sha256": "4c92fda4857621fdcf8a5ded61083921b902209ff96c39f1560996f26e9eacd3"
+    },
+    {
+      "key": "T/native/T/height_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 1.4138028384374455,
+      "common_calendar_cases": 7993,
+      "result_id": "5aa7d23885e20c69a2e13a41979750bb1dc160eb97b67d8d3e0e95eac98499f1",
+      "wall_seconds": 13.308602589000657,
+      "cpu_seconds": 13.291220792,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "8a5c6244cd4c86e6cdccaa68fdcafb7c44ffdf23d86f4e036fef7a5a6fcd1f82"
+    },
+    {
+      "key": "T/native/T/hinge_height_ridge",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 1.4107195939705521,
+      "common_calendar_cases": 7993,
+      "result_id": "c91344e50e881b039523da95c2df63473dee38d3765eb9b8cbfa288164adb721",
+      "wall_seconds": 37.7659123200001,
+      "cpu_seconds": 37.68658279799999,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false,
+        false,
+        true
+      ],
+      "prediction_array_sha256": "4165a21ae10c37f1882cb003be7cb491ac44b9004bb8e07169fa3a404b0ace06"
+    },
+    {
+      "key": "T/native/T/idw_uncorrected",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 1.5407935499551921,
+      "common_calendar_cases": 7993,
+      "result_id": "b744a49739606d47e8095b3617f3510f190245de71ddc9b14b36e548d48005cf",
+      "wall_seconds": 8.414618193000024,
+      "cpu_seconds": 8.391923118,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "f42aca7de02b6cf8bde2bf42d2ceeb8ff9c3021f1ca12525d9b2419ac534b2b9"
+    },
+    {
+      "key": "T/native/T/local_height_shrinkage",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 1.4255382784246782,
+      "common_calendar_cases": 7993,
+      "result_id": "8b868a7160d27d03293b6f6cd41660a60e904e49ef2df4072e82d29206359f71",
+      "wall_seconds": 33.641120719000355,
+      "cpu_seconds": 33.58721993499998,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false,
+        false
+      ],
+      "prediction_array_sha256": "354d13e5de91112f4cc19e8f35d44fda6850f6a37ca787158a0cfdccdc03bd79"
+    },
+    {
+      "key": "T/native/T/monthly_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 1.4187741641646576,
+      "common_calendar_cases": 7993,
+      "result_id": "7cc715a32cc9e46890da87ce28b12458c41857db5ecec5de0eecb4abc8d48aa3",
+      "wall_seconds": 14.789298143999986,
+      "cpu_seconds": 14.745036306000003,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "588638f9e1ba59727c2d603474149905107aa71ab5699147dc29eb610161ddb8"
+    },
+    {
+      "key": "T/native/T/nearest",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 4.385687964351928,
+      "common_calendar_cases": 7993,
+      "result_id": "4f3c9159bc884e926b6eacf6ba773534098c3369d82444dba28ba987836a00c1",
+      "wall_seconds": 0.25267319199974736,
+      "cpu_seconds": 0.2526711559999999,
+      "optimization_status": "CONVERGED",
+      "active_bounds": null,
+      "prediction_array_sha256": "bb2b8be995e2ec5dd028c9947cf44f35e4e2133b6c7c97cc31005ebd6187f2d9"
+    },
+    {
+      "key": "T/native/T/seasonal_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 1.4197028430430627,
+      "common_calendar_cases": 7993,
+      "result_id": "706bab119598c294216b84c095d93cbaec8e8df9ffb9cdc90d7c635f961feb11",
+      "wall_seconds": 13.176190097000472,
+      "cpu_seconds": 13.022362422,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "53eee9f413528e1f51a9e5ce5353dbec1b970b10d3c99e444574db56d6eebb15"
+    },
+    {
+      "key": "humidity/joint/D/geo_gaussian_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 9.30184690195505,
+      "common_calendar_cases": 6672,
+      "result_id": "6df6351899244b9e061a0054facb9200b582754586a6465fc9a788bc826d9343",
+      "wall_seconds": 22.446614583000155,
+      "cpu_seconds": 22.41536497100003,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "32a21b42116d4b6601ce2d80f0cd472ef7121d696342346a54dc29ec41358149"
+    },
+    {
+      "key": "humidity/joint/D/harmonic_idw_ridge",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 9.235758504160023,
+      "common_calendar_cases": 6672,
+      "result_id": "cfc991f24f12b4931af17504d603243394d8460ffbfa9289d5739f24ea5434eb",
+      "wall_seconds": 23.270756177000294,
+      "cpu_seconds": 23.258752071000004,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false,
+        false
+      ],
+      "prediction_array_sha256": "ecd04553448a0c165ee097ca14aa6d067615b65282357720b2ce012127c582c8"
+    },
+    {
+      "key": "humidity/joint/D/height_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 9.290251414494653,
+      "common_calendar_cases": 6672,
+      "result_id": "7fed4356673d4083a33c11dfe8f19690aaf220c2c6ff270e08e67a7962ee0b6a",
+      "wall_seconds": 11.029676053999538,
+      "cpu_seconds": 11.021308916999942,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "aeb30fb25e52960a7438559d89f8d9686e2d9a78470a6d9a5fad47b3f085edca"
+    },
+    {
+      "key": "humidity/joint/D/monthly_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 9.089372154116473,
+      "common_calendar_cases": 6672,
+      "result_id": "785356ef69eb648524753f06c93fefe41e23c1a9aae3b49a692c032fa7d9524f",
+      "wall_seconds": 13.76922216300045,
+      "cpu_seconds": 13.761713937999957,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "c7edd78c1ff1aaee852fc34064b534bcfaa3966f607472ccf90e5bcce6103782"
+    },
+    {
+      "key": "humidity/joint/D/seasonal_geo_gaussian_huber",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 10.22733866296245,
+      "common_calendar_cases": 6672,
+      "result_id": "96cb7a9ead0b77ac583fef6c06d78132fe7ed7119e0059539a6a9d3044f5058c",
+      "wall_seconds": 57.0069857540002,
+      "cpu_seconds": 56.989344803999984,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "42b258cc9a5de46b10bc67bfb35caeaf8c4f17b6c6e0da86e3ff34089a68a094"
+    },
+    {
+      "key": "humidity/joint/D/seasonal_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 9.16357477919059,
+      "common_calendar_cases": 6672,
+      "result_id": "84551d52602a0f0c23473579159b27fda3b45ef974c3359b8548ffc91bab484b",
+      "wall_seconds": 11.132750401000521,
+      "cpu_seconds": 11.12520594,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "07a4646c09eaf05ab82bffaa60f3fa9e0ea58d55d859ce20752a1dd150e9c0d2"
+    },
+    {
+      "key": "humidity/joint/RH/geo_gaussian_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 9.141684516979103,
+      "common_calendar_cases": 6672,
+      "result_id": "a447852fe305bde500f609ef60423e3b1d6c5f4c2e37c498d870d2b730dd159e",
+      "wall_seconds": 23.685544768999534,
+      "cpu_seconds": 23.64426904300001,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "77da8d43f8e03e50a35f15969a3262f3746493f4a60167c66c993d1cbfcbc412"
+    },
+    {
+      "key": "humidity/joint/RH/harmonic_idw_ridge",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 9.015651790612024,
+      "common_calendar_cases": 6672,
+      "result_id": "d117a823c6860c1705a653aeee1ce18b0945c40441f70de601c798ae6d13b161",
+      "wall_seconds": 27.21069718400031,
+      "cpu_seconds": 27.160001411999986,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false,
+        false
+      ],
+      "prediction_array_sha256": "32b6fe2685881f7fa3e535d7a6ba8709607dd8b3dbb618643c3a2b0e040c8513"
+    },
+    {
+      "key": "humidity/joint/RH/height_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 9.128488808161768,
+      "common_calendar_cases": 6672,
+      "result_id": "08c1ffb72e3d05908f9040bb4f853ee7ef24e55b7aba57e5b343e4fe2533cc0f",
+      "wall_seconds": 11.81208715699995,
+      "cpu_seconds": 11.78572011,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "31a6d5b19c1ad673193102c751ba40862a269484be4ef9e0427402e1d2399d0f"
+    },
+    {
+      "key": "humidity/joint/RH/monthly_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.931649535503466,
+      "common_calendar_cases": 6672,
+      "result_id": "eac35dc2f23a88bb7a98c89e7e98151a2a747988999fdc8e1f8646bca6210ed8",
+      "wall_seconds": 13.710913834999701,
+      "cpu_seconds": 13.663065925000012,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "3f9677ad043368640c7cd8b6d9f1a1e5bb7604b51d72d608b16f5af3380321c5"
+    },
+    {
+      "key": "humidity/joint/RH/seasonal_geo_gaussian_huber",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 9.121268682167853,
+      "common_calendar_cases": 6672,
+      "result_id": "d879e0c66ef8b108ab8df7243760c57c74e7bec7e2fd79509d80981eeed5b16a",
+      "wall_seconds": 51.52681108499928,
+      "cpu_seconds": 51.436209915000006,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "63f00e6a055fe12a6bee595b82ebdffb9effc8b30c2014e927f63f2e40787a6f"
+    },
+    {
+      "key": "humidity/joint/RH/seasonal_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.982006944190577,
+      "common_calendar_cases": 6672,
+      "result_id": "ebc551ceaa7e85120a8667c789a7efb8d314eea3632efcaa32560d5d890a2906",
+      "wall_seconds": 13.369784729000457,
+      "cpu_seconds": 13.348940090999974,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "082f75b0daeb6c0f15313977da1af93484e002c172b9ded9a140d92ee14ff6a7"
+    },
+    {
+      "key": "humidity/joint/Td/geo_gaussian_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.885678051023115,
+      "common_calendar_cases": 6672,
+      "result_id": "221540ea4402b96f7573912ce544a9d9a2ba6e638014a64179da311af763ce93",
+      "wall_seconds": 13.57374335700024,
+      "cpu_seconds": 13.570055152999998,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "622102f7c02bcaf668bd5ccd5df3de88db52f8d763552056642a878abafe4ec1"
+    },
+    {
+      "key": "humidity/joint/Td/harmonic_idw_ridge",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.373387366039426,
+      "common_calendar_cases": 6672,
+      "result_id": "298d5648706e4d198485a818a50f70a5a510cc538423609d565d1acce2446691",
+      "wall_seconds": 38.71707308799978,
+      "cpu_seconds": 38.54889322100007,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false,
+        false
+      ],
+      "prediction_array_sha256": "349e0a8889c375f47fee93545a23069a5b6ac439f59bd22b386c5ea695ed1950"
+    },
+    {
+      "key": "humidity/joint/Td/height_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.387189035124075,
+      "common_calendar_cases": 6672,
+      "result_id": "3710e8874a03d05248d94a58ee6eaea134331d4920d7edb3e9ec18a696f51598",
+      "wall_seconds": 13.863270239000485,
+      "cpu_seconds": 13.86030727299999,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "12dd822bfc54d8efc0b225af852d507ca393f2da8d4e82e3eeed94d03d56f215"
+    },
+    {
+      "key": "humidity/joint/Td/monthly_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.327058081372167,
+      "common_calendar_cases": 6672,
+      "result_id": "8380dcf294c2fe962ab56db0f7d1fb6cd3dcf65aae887b62e41c55e5fa718d34",
+      "wall_seconds": 15.289115615999435,
+      "cpu_seconds": 15.219832950000068,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "0eeb647434194fa05ccfca7125e71f66c721e9d329c0dbf641c320e70225e087"
+    },
+    {
+      "key": "humidity/joint/Td/seasonal_geo_gaussian_huber",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.533809780258636,
+      "common_calendar_cases": 6672,
+      "result_id": "dd4ffd09665930f6a5e721f9651b71aa85497a2e8a3a44c10158aced8f669b58",
+      "wall_seconds": 45.20844997800032,
+      "cpu_seconds": 45.167197797000085,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "5218816a524d5640d0c91ad0486d5cdfc074887d847bda2f1caa08cfa89d684d"
+    },
+    {
+      "key": "humidity/joint/Td/seasonal_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.330472919530362,
+      "common_calendar_cases": 6672,
+      "result_id": "b4d6ab28c6d89c9c3043ba6599b4dc5ae96e903f1e1fc36b3beb6c6adec7ad78",
+      "wall_seconds": 11.702557030999742,
+      "cpu_seconds": 11.698749948,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "b3882da10ad637dc07f1b2b15bbb8c5c4815aac0d284bafd9b7d83f4cd88d809"
+    },
+    {
+      "key": "humidity/joint/log_e/geo_gaussian_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.593843943094326,
+      "common_calendar_cases": 6672,
+      "result_id": "c2d70ae3f8a4b89f9429d8486130d34b659f54be4d138877a3bd0e9beabd6d52",
+      "wall_seconds": 14.480276971000421,
+      "cpu_seconds": 14.463651320999986,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "24c9f210b3f978d4ced8acf258fb20ae0bc9d899a174daa374bc5f2d6df83277"
+    },
+    {
+      "key": "humidity/joint/log_e/harmonic_idw_ridge",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.408724836404678,
+      "common_calendar_cases": 6672,
+      "result_id": "4a56643f50447f72e04d54f92e72e3313f014600f8a7b02c737f98fce3ae70dd",
+      "wall_seconds": 30.11822716899951,
+      "cpu_seconds": 30.069861833000004,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false,
+        false
+      ],
+      "prediction_array_sha256": "381fd9958f748f927be11769498d435177f2e49f9893d9d481a4cad5f3d4a69c"
+    },
+    {
+      "key": "humidity/joint/log_e/height_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.465427464467284,
+      "common_calendar_cases": 6672,
+      "result_id": "0d87e238a896e9a0f6e9424e39f56c9b725f3e6e165ba3f9d1d45c6dad6f753b",
+      "wall_seconds": 10.491440917000546,
+      "cpu_seconds": 10.490484549999962,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "a62dc647dd546ee7a630cc9c6b7cb68b28fbba2d4c8e31508e27e7ad69828e97"
+    },
+    {
+      "key": "humidity/joint/log_e/monthly_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.361771829856226,
+      "common_calendar_cases": 6672,
+      "result_id": "de7e339afd47fda994ead2874420f9d58a4dfe49ee110a680914da3f6bd22d52",
+      "wall_seconds": 12.271308641999894,
+      "cpu_seconds": 12.261964171000045,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "892818eba4a433a9842bf7ff4e01b1c305423123800019cf1c5839db1854d66c"
+    },
+    {
+      "key": "humidity/joint/log_e/seasonal_geo_gaussian_huber",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 9.218070978972362,
+      "common_calendar_cases": 6672,
+      "result_id": "487b59716feaf8474aa84c9b7e573920dbb9941872cca69dcb86786395ae7547",
+      "wall_seconds": 59.94598990200029,
+      "cpu_seconds": 59.918639278,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "3e83c20044f49b795a743701d9203276a3102add1bbe31d4c25d7f3af0ac4c6a"
+    },
+    {
+      "key": "humidity/joint/log_e/seasonal_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.375261312306595,
+      "common_calendar_cases": 6672,
+      "result_id": "f2ed7f667a6906951e547aa659e01bd5825559f741eef40d66896b26f26233d2",
+      "wall_seconds": 11.780467903000499,
+      "cpu_seconds": 11.773117861000003,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "8b994774ef6a52a2b943e48153bc76fa69a5a5527fbd11e9aceffd25949211a5"
+    },
+    {
+      "key": "humidity/joint/q/geo_gaussian_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.408133239778344,
+      "common_calendar_cases": 6672,
+      "result_id": "390ebe652c3a4524914e49828bab1af7fedf1c3cd91b1f9bc103d6c9c271f01a",
+      "wall_seconds": 19.416262292999818,
+      "cpu_seconds": 19.408285623000097,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "269d725fd9d79c69344ac5fabdd954467314c8f445a18833d7cb079a0b7291d8"
+    },
+    {
+      "key": "humidity/joint/q/harmonic_idw_ridge",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.3796544805784,
+      "common_calendar_cases": 6672,
+      "result_id": "5fae4d0cce70a0634ce94ce8ec2cc3e36d5e010014c0af74cdaa1768dbf439b6",
+      "wall_seconds": 35.239669273999425,
+      "cpu_seconds": 35.217441635,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false,
+        false
+      ],
+      "prediction_array_sha256": "563d0c63517c6b6a082bccc9a9a5be4126466ac20ca3a80e3d3e9c1ed5af9932"
+    },
+    {
+      "key": "humidity/joint/q/height_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 9.158760797275031,
+      "common_calendar_cases": 6672,
+      "result_id": "f757438698785a3353f903b6ea5d055162bc6a0eaee9da3b51eabd20ba82c3a5",
+      "wall_seconds": 18.85749804399984,
+      "cpu_seconds": 18.829020512999932,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "38b60e23feff0fdae757e99c632fa145583cd7edeab635b81e9b0787e2eba257"
+    },
+    {
+      "key": "humidity/joint/q/monthly_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.392424140520264,
+      "common_calendar_cases": 6672,
+      "result_id": "e5b64bb4c320f85965ea2f01fe42bdd2e16e50b9b6bd0e9acc922a2d528919cd",
+      "wall_seconds": 18.01747530099965,
+      "cpu_seconds": 18.010369678000075,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "d6ca0a896cc0f03737abbaa1e9fa537a3675b2767d0bdf454b88972f8b200ea3"
+    },
+    {
+      "key": "humidity/joint/q/seasonal_geo_gaussian_huber",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.36444464265202,
+      "common_calendar_cases": 6672,
+      "result_id": "bf16c6702ed15bdda5feb286ef3b3de2d63c9c298cc58fa6a564d4d54887ad63",
+      "wall_seconds": 53.565493308999976,
+      "cpu_seconds": 53.51990114799992,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "1dba23e349e9ccd253736bf13343edddc66b853d118f74b33c7d9dbaa8b7fdd2"
+    },
+    {
+      "key": "humidity/joint/q/seasonal_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.453907807161116,
+      "common_calendar_cases": 6672,
+      "result_id": "66cf7f22e22e9644f131de8379e027f026346984f961fe8c1985dde66ddddc05",
+      "wall_seconds": 20.208407888999318,
+      "cpu_seconds": 20.197829789000025,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "d5eb6213e1d851503835fd0652ddba7abc001ec3961b3a5534db383bf13665d4"
+    },
+    {
+      "key": "humidity/own/D/geo_gaussian_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.631734729083941,
+      "common_calendar_cases": 6672,
+      "result_id": "21beb75f3595af03b680ef998c6a459493848ed365a8398b5776141bd5f6fd18",
+      "wall_seconds": 23.07554769499984,
+      "cpu_seconds": 23.066669477999994,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "23daf48ac25b965586e82c8de22295469f5b8de09a9900344a5866622eb133bd"
+    },
+    {
+      "key": "humidity/own/D/harmonic_idw_ridge",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.150649101168645,
+      "common_calendar_cases": 6672,
+      "result_id": "00f47703653a321ce44a50ac3e6f6f653bff87eeac73bbe6b378fcc0ba343035",
+      "wall_seconds": 30.90771107100045,
+      "cpu_seconds": 30.87852964700005,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false,
+        false
+      ],
+      "prediction_array_sha256": "9468e2f3e9777af717014560715135cd12fa653ba2b043afdd9560bce4d9d18d"
+    },
+    {
+      "key": "humidity/own/D/height_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.192275931963787,
+      "common_calendar_cases": 6672,
+      "result_id": "ec3cf82500bbbb5d5c6239b0919c9b27b149e30c6e496b38f88040ab2f07d935",
+      "wall_seconds": 14.658060539999497,
+      "cpu_seconds": 14.649729062000006,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "66ff4d1febae7c4a8b6715e3791d01f4b9f7818ae7aaa8233a5642b284435ebb"
+    },
+    {
+      "key": "humidity/own/D/monthly_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.029440302031103,
+      "common_calendar_cases": 6672,
+      "result_id": "00f6b95668eeac7c854216045d5bccbb1911cbf971fc0a725a45414fa42a19cb",
+      "wall_seconds": 14.353966139999102,
+      "cpu_seconds": 14.340946580000036,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "b373736138a10a5f4f60e84d78b9ef11afc81e1917f57099b75889d82ef262e1"
+    },
+    {
+      "key": "humidity/own/D/seasonal_geo_gaussian_huber",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.576639018282682,
+      "common_calendar_cases": 6672,
+      "result_id": "56f3a9e1a3d09528cce6cb3a0bd7963158f314d9f33609763d95222ac717d6d0",
+      "wall_seconds": 60.73902968400034,
+      "cpu_seconds": 60.68951133199994,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "a59220cb526f229270b6cea1dd74c76056c9200b38de6c6a060dfe5e351effc9"
+    },
+    {
+      "key": "humidity/own/D/seasonal_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.091057981947282,
+      "common_calendar_cases": 6672,
+      "result_id": "5dfb74a4b603bd24d00d71615630a4f25d7d2c6daafa3fa9cdef7a28eca761a4",
+      "wall_seconds": 14.110469686000215,
+      "cpu_seconds": 14.097991369000056,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "ad46447d87b1b581950b493170ae2431da036fe360075e4061dfa964ab35507e"
+    },
+    {
+      "key": "humidity/own/RH/geo_gaussian_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.551919790365226,
+      "common_calendar_cases": 6672,
+      "result_id": "aa1fb728f6dda9d67bf082ef96b0cbe0ca8450cbd86b942027241d3c2be87f19",
+      "wall_seconds": 22.298603085999275,
+      "cpu_seconds": 22.29045339000004,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "6fa8599fd571abf6748155b012f9c4939a76c120a254415a53d1239df481fa2b"
+    },
+    {
+      "key": "humidity/own/RH/harmonic_idw_ridge",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.019434329827247,
+      "common_calendar_cases": 6672,
+      "result_id": "0aa626faf9a8b12e9d495dc15974c96b5c79eaa8e1ca27bb453b2adf61434da5",
+      "wall_seconds": 32.15113453499907,
+      "cpu_seconds": 32.13653778599996,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false,
+        false
+      ],
+      "prediction_array_sha256": "8adbeeda3f82bb2709f0dce9c29c8568e1148a82c7b314f50c84c4f1ded243ed"
+    },
+    {
+      "key": "humidity/own/RH/height_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.095752428057997,
+      "common_calendar_cases": 6672,
+      "result_id": "66504dc3e5287474c10fe5ae0420116d702981b83c9382690fa70ea41bd532a6",
+      "wall_seconds": 13.537571130998913,
+      "cpu_seconds": 13.533551132999946,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "5600cf0d704d8bb249b39fc7b9b3e922037287a17d68c1899b0301bde03ce494"
+    },
+    {
+      "key": "humidity/own/RH/monthly_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 7.970651694944453,
+      "common_calendar_cases": 6672,
+      "result_id": "b0d4e7ccd1b4419e67ded326bdf3c07012c045162495e3d2fb319ef329c58f9f",
+      "wall_seconds": 17.60933963700154,
+      "cpu_seconds": 17.601574352999933,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "7eb33e70a29e939ad154cf586b2474558325c11c5def860ea3d4b16e9c4e5589"
+    },
+    {
+      "key": "humidity/own/RH/seasonal_geo_gaussian_huber",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.473585091437299,
+      "common_calendar_cases": 6672,
+      "result_id": "7642c8de8bc59e5f303ebf1d3d0baa4dd7b1c468d34be7b7d6a3bfb1403ca1d1",
+      "wall_seconds": 61.95569974600039,
+      "cpu_seconds": 61.85685598300006,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "d027697f1d65c769714958fb84aeaea440b6ec9a07c46ce0f932f8159dbef2d9"
+    },
+    {
+      "key": "humidity/own/RH/seasonal_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 7.998099737081074,
+      "common_calendar_cases": 6672,
+      "result_id": "f00346817b162d6cde142069229c8f9e8fec9e7331062883acb77373ade8bb45",
+      "wall_seconds": 14.978822471999592,
+      "cpu_seconds": 14.970424804999993,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "bbd237e0787622e9110071e59b3ae9deb358bf8e7c9d88df3fbe29bb2e74b6e1"
+    },
+    {
+      "key": "humidity/own/Td/geo_gaussian_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.329948442841728,
+      "common_calendar_cases": 6672,
+      "result_id": "570c418b9ab0ce94e4577f958850dcc2f5da4d3a0001eed23c021927b7359fa7",
+      "wall_seconds": 12.32881256699875,
+      "cpu_seconds": 12.323910740000201,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "6c2075119648461a7163dcd8b970e5d23a3a2d17c7a869156288b35de9d7d2f2"
+    },
+    {
+      "key": "humidity/own/Td/harmonic_idw_ridge",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.217511502859681,
+      "common_calendar_cases": 6672,
+      "result_id": "d83c543092bb9500c76594d51cfd6412182ba99a264c38e00e29ea048d41329c",
+      "wall_seconds": 37.68219724700066,
+      "cpu_seconds": 37.65803816099992,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false,
+        false
+      ],
+      "prediction_array_sha256": "fcbd0773dc1641a7fe3f9398f08e4d6f0353abf6807ca212cb9ba29e0d25f486"
+    },
+    {
+      "key": "humidity/own/Td/height_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.238693032676236,
+      "common_calendar_cases": 6672,
+      "result_id": "5c11c8ef5b241cc056e8d5ee78288bc0679e9ac666357cfdd4c0d0f198dd6108",
+      "wall_seconds": 14.505432963998828,
+      "cpu_seconds": 14.489750963999995,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "618ddaf5aeb9e5374701c11a49ef4fd068271fe5e22d01251bf6330f73723f72"
+    },
+    {
+      "key": "humidity/own/Td/monthly_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.232252904936228,
+      "common_calendar_cases": 6672,
+      "result_id": "61cba66477ae012510d247ec06eda28adfa76994f1c264869d0f3d35a37b09f6",
+      "wall_seconds": 17.479702359998555,
+      "cpu_seconds": 17.473581634000084,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "664e318e85c9e1407eb6f9967036de42b8f0e7177ecdd9cc1f23d017692517ad"
+    },
+    {
+      "key": "humidity/own/Td/seasonal_geo_gaussian_huber",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.861199285959202,
+      "common_calendar_cases": 6672,
+      "result_id": "fed2238bf40a32781e9a5a33011443600e8e13fecbe7ce4ee7e82c43afcf9660",
+      "wall_seconds": 68.86699797000074,
+      "cpu_seconds": 68.80833495599995,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "e1d7b33275a9e2dc5355124895faf57869f6c125b33605f69b302a5544ab8c54"
+    },
+    {
+      "key": "humidity/own/Td/seasonal_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.220951987512153,
+      "common_calendar_cases": 6672,
+      "result_id": "775ce3e6f5587d958ed21ba17e536c73a9b838a9677cfe3e47441a43b33faea1",
+      "wall_seconds": 16.612662847001047,
+      "cpu_seconds": 16.60868970799993,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "727127617e3d63455a2db1768ff7c6a9f9ef3692f48f94e2c07c7a07b33e9ef2"
+    },
+    {
+      "key": "humidity/own/log_e/geo_gaussian_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.364598719398188,
+      "common_calendar_cases": 6672,
+      "result_id": "3601a9efeda4e7c5233cce57a9689417c31ee8506f04d46d2f515bf6de668cfa",
+      "wall_seconds": 24.750078151000707,
+      "cpu_seconds": 24.722555907000014,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "d2e97048ef8b7daa776922c42cceb6de39ea24cddf12bf2a4620090f3655300e"
+    },
+    {
+      "key": "humidity/own/log_e/harmonic_idw_ridge",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.215926448927695,
+      "common_calendar_cases": 6672,
+      "result_id": "18318813e5765958ff0f984258ad3c4bd3019fcf097e22ca70a4ec7b91f01d25",
+      "wall_seconds": 36.9016190659986,
+      "cpu_seconds": 36.83361907900007,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false,
+        false
+      ],
+      "prediction_array_sha256": "59f49d4f4ac17de23efffee5d2e74431b9e46fbf7226280cb36bd97c1feb3ca2"
+    },
+    {
+      "key": "humidity/own/log_e/height_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.254287798711067,
+      "common_calendar_cases": 6672,
+      "result_id": "d36e3e5f16b0fa3e484559d4b095dacf8063b0dc9197b476dc2ce2dd0324de04",
+      "wall_seconds": 15.019553118001568,
+      "cpu_seconds": 15.001357469999903,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "7dc2ddde42e1fb3aa4dd69b875a3eae0f2e4281db7406b4a3a3fd45ab79d6148"
+    },
+    {
+      "key": "humidity/own/log_e/monthly_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.232069208626648,
+      "common_calendar_cases": 6672,
+      "result_id": "89d4275adae50882ea25ba225152cee65f2d3bff6a4d607ed6750e66ab133f89",
+      "wall_seconds": 13.779163348999646,
+      "cpu_seconds": 13.773373437999908,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "9a2a911d7ad3ef8b1ba1aff11c832d9272512c14051222e0c92e2d1a25a4d25e"
+    },
+    {
+      "key": "humidity/own/log_e/seasonal_geo_gaussian_huber",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.419573814285057,
+      "common_calendar_cases": 6672,
+      "result_id": "c5fec685fe6f2b648568557b41af8fdb2efde57b5511c1d1339cce4df14968c3",
+      "wall_seconds": 51.809552026001256,
+      "cpu_seconds": 51.755380938999906,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "f341cff8df2ddc7e4a4c376814fdaf580cf445ad1b05aeb917f23c8f19552b7b"
+    },
+    {
+      "key": "humidity/own/log_e/seasonal_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.227673201577481,
+      "common_calendar_cases": 6672,
+      "result_id": "7d7938aea4c8d6ba2cefc2a58751eb3f0f347e42f13071d58a6c1e696bfdaa7c",
+      "wall_seconds": 19.769413460999203,
+      "cpu_seconds": 19.73495971400007,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "cebc23e4764a108a3c7dfa0b93db93f34cbbf046e47dbd7a69b6801f7a6de575"
+    },
+    {
+      "key": "humidity/own/q/geo_gaussian_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.408133239778344,
+      "common_calendar_cases": 6672,
+      "result_id": "2960bdb6d32abcd4edd3059194c07a5e7a9a6d38409ee5be6b1e071cc8a461ce",
+      "wall_seconds": 18.76178257799984,
+      "cpu_seconds": 18.728009449999945,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "269d725fd9d79c69344ac5fabdd954467314c8f445a18833d7cb079a0b7291d8"
+    },
+    {
+      "key": "humidity/own/q/harmonic_idw_ridge",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.3796544805784,
+      "common_calendar_cases": 6672,
+      "result_id": "78bb037b84c37b4147c1e0c10a7200e7eaeb009f2564695cd675a0ea85bbe327",
+      "wall_seconds": 36.28776961099902,
+      "cpu_seconds": 36.27025528299987,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false,
+        false
+      ],
+      "prediction_array_sha256": "563d0c63517c6b6a082bccc9a9a5be4126466ac20ca3a80e3d3e9c1ed5af9932"
+    },
+    {
+      "key": "humidity/own/q/height_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 9.158760797275031,
+      "common_calendar_cases": 6672,
+      "result_id": "ebea9cdb2107d8ac01ed1525f7f3132e5b4efdf9ca33b0dbbd1e370d84bf5df0",
+      "wall_seconds": 18.250418317998992,
+      "cpu_seconds": 18.242207217999976,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "38b60e23feff0fdae757e99c632fa145583cd7edeab635b81e9b0787e2eba257"
+    },
+    {
+      "key": "humidity/own/q/monthly_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.392424140520264,
+      "common_calendar_cases": 6672,
+      "result_id": "b0ce905ad0d20cbee1914813270816e87ee41f095c3e5cb5c9286a65df8cc0ca",
+      "wall_seconds": 20.8506045719987,
+      "cpu_seconds": 20.830942671000003,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "d6ca0a896cc0f03737abbaa1e9fa537a3675b2767d0bdf454b88972f8b200ea3"
+    },
+    {
+      "key": "humidity/own/q/seasonal_geo_gaussian_huber",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.36444464265202,
+      "common_calendar_cases": 6672,
+      "result_id": "28746fda47abe67b742499afa6b2f7014bf362aad8f0228b93abe9d85b9ae6fd",
+      "wall_seconds": 42.25001501599945,
+      "cpu_seconds": 42.216515756000035,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "1dba23e349e9ccd253736bf13343edddc66b853d118f74b33c7d9dbaa8b7fdd2"
+    },
+    {
+      "key": "humidity/own/q/seasonal_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 8.453907807161116,
+      "common_calendar_cases": 6672,
+      "result_id": "b45e547f81f941ce90e8a17c1aca0bcf77eb23e689911b7909a3bd678695db1b",
+      "wall_seconds": 16.236959428000773,
+      "cpu_seconds": 16.23390646300004,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        false,
+        false
+      ],
+      "prediction_array_sha256": "d5eb6213e1d851503835fd0652ddba7abc001ec3961b3a5534db383bf13665d4"
+    },
+    {
+      "key": "p/native/p/barometric_idw",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 1.450794913803244,
+      "common_calendar_cases": 6672,
+      "result_id": "0c06644ea4a4143bfebab9d1d9d3fa18eede5f01d685ee09643866e43ccacf54",
+      "wall_seconds": 6.597574356999758,
+      "cpu_seconds": 6.586557638000016,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        true,
+        false
+      ],
+      "prediction_array_sha256": "1c9530ff5c589eb23cccca2b98d4178aa63b725d88d3859f870e1b8db5d4c178"
+    },
+    {
+      "key": "p/native/p/barometric_residual_idw",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 1.3982324172615392,
+      "common_calendar_cases": 6672,
+      "result_id": "09ee5dbf0f1f7dd2c266064dba753b799253234a89e83476c5829b0cd965a69f",
+      "wall_seconds": 11.678677492000133,
+      "cpu_seconds": 11.665167698999994,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        true,
+        false
+      ],
+      "prediction_array_sha256": "04d1efe22df83b115970709d100b04799228cb2f8fbe73e5dcdca8cef19bea45"
+    },
+    {
+      "key": "p/native/p/height_idw_ols",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 1.6901582462955318,
+      "common_calendar_cases": 6672,
+      "result_id": "c623deb464fb30271cd7127459b47af8d926b841be7c618586840fc156ea19cf",
+      "wall_seconds": 7.6572050169997965,
+      "cpu_seconds": 7.653457874999987,
+      "optimization_status": "CONVERGED",
+      "active_bounds": [
+        true,
+        true
+      ],
+      "prediction_array_sha256": "8532ffd1ebf2559e697b02bbc5e8b01b749e3d54069731e6602949872dabaffe"
+    },
+    {
+      "key": "p/native/p/nearest",
+      "status": "ELIGIBLE",
+      "primary_macro_MAE": 50.575051256613754,
+      "common_calendar_cases": 6672,
+      "result_id": "738c023a215ec7c9ac832b82fe592085934a3e5a432627e4cc37665c11cf5e0d",
+      "wall_seconds": 0.23708952400011185,
+      "cpu_seconds": 0.23701351099998647,
+      "optimization_status": "CONVERGED",
+      "active_bounds": null,
+      "prediction_array_sha256": "379d61733260910fd6dba9e56a60f72679d4f984316c307aa6ca9a24f94ca32c"
+    }
+  ],
+  "legacy_common_mask_unchanged": true,
+  "q_internal_controls": [
+    {
+      "model": "height_idw_ols",
+      "identical_logical_arrays": true,
+      "macro_MAE_delta": 0.0
+    },
+    {
+      "model": "seasonal_idw_ols",
+      "identical_logical_arrays": true,
+      "macro_MAE_delta": 0.0
+    },
+    {
+      "model": "monthly_idw_ols",
+      "identical_logical_arrays": true,
+      "macro_MAE_delta": 0.0
+    },
+    {
+      "model": "harmonic_idw_ridge",
+      "identical_logical_arrays": true,
+      "macro_MAE_delta": 0.0
+    },
+    {
+      "model": "geo_gaussian_ols",
+      "identical_logical_arrays": true,
+      "macro_MAE_delta": 0.0
+    },
+    {
+      "model": "seasonal_geo_gaussian_huber",
+      "identical_logical_arrays": true,
+      "macro_MAE_delta": 0.0
+    }
+  ],
+  "moisture_secondary_outputs": [
+    {
+      "group": "humidity/joint/RH",
+      "RH_macro_MAE_pp": 8.931649535503466,
+      "q_macro_MAE_gkg": 0.5862590421816412,
+      "e_macro_MAE_hPa": 0.8957297640280699,
+      "Td_macro_MAE_C": 1.4000814766820486,
+      "supersaturated_N": 0,
+      "negative_RH_N": 0,
+      "common_N": 6672
+    },
+    {
+      "group": "humidity/joint/log_e",
+      "RH_macro_MAE_pp": 8.361771829856226,
+      "q_macro_MAE_gkg": 0.5414650345663239,
+      "e_macro_MAE_hPa": 0.8266363052893148,
+      "Td_macro_MAE_C": 1.3014771779542336,
+      "supersaturated_N": 55,
+      "negative_RH_N": 0,
+      "common_N": 6672
+    },
+    {
+      "group": "humidity/joint/q",
+      "RH_macro_MAE_pp": 8.36444464265202,
+      "q_macro_MAE_gkg": 0.5586789267344904,
+      "e_macro_MAE_hPa": 0.8530049293294383,
+      "Td_macro_MAE_C": 1.3474791698265338,
+      "supersaturated_N": 126,
+      "negative_RH_N": 0,
+      "common_N": 6672
+    },
+    {
+      "group": "humidity/joint/Td",
+      "RH_macro_MAE_pp": 8.327058081372167,
+      "q_macro_MAE_gkg": 0.5378655117849592,
+      "e_macro_MAE_hPa": 0.8214820902887848,
+      "Td_macro_MAE_C": 1.293719430011506,
+      "supersaturated_N": 60,
+      "negative_RH_N": 0,
+      "common_N": 6672
+    },
+    {
+      "group": "humidity/joint/D",
+      "RH_macro_MAE_pp": 9.089372154116473,
+      "q_macro_MAE_gkg": 0.5850294491655768,
+      "e_macro_MAE_hPa": 0.8935279907848298,
+      "Td_macro_MAE_C": 1.3950473298041492,
+      "supersaturated_N": 0,
+      "negative_RH_N": 0,
+      "common_N": 6672
+    },
+    {
+      "group": "humidity/own/RH",
+      "RH_macro_MAE_pp": 7.970651694944453,
+      "q_macro_MAE_gkg": 0.5290750570590264,
+      "e_macro_MAE_hPa": 0.8076860060312576,
+      "Td_macro_MAE_C": 1.2668973566665165,
+      "supersaturated_N": 0,
+      "negative_RH_N": 0,
+      "common_N": 6672
+    },
+    {
+      "group": "humidity/own/log_e",
+      "RH_macro_MAE_pp": 8.215926448927695,
+      "q_macro_MAE_gkg": 0.5203024125274427,
+      "e_macro_MAE_hPa": 0.7945695484152137,
+      "Td_macro_MAE_C": 1.2339604288435486,
+      "supersaturated_N": 0,
+      "negative_RH_N": 0,
+      "common_N": 6672
+    },
+    {
+      "group": "humidity/own/q",
+      "RH_macro_MAE_pp": 8.36444464265202,
+      "q_macro_MAE_gkg": 0.5586789267344904,
+      "e_macro_MAE_hPa": 0.8530049293294383,
+      "Td_macro_MAE_C": 1.3474791698265338,
+      "supersaturated_N": 126,
+      "negative_RH_N": 0,
+      "common_N": 6672
+    },
+    {
+      "group": "humidity/own/Td",
+      "RH_macro_MAE_pp": 8.217511502859681,
+      "q_macro_MAE_gkg": 0.5195404316602728,
+      "e_macro_MAE_hPa": 0.7936173058841806,
+      "Td_macro_MAE_C": 1.2320623726227318,
+      "supersaturated_N": 0,
+      "negative_RH_N": 0,
+      "common_N": 6672
+    },
+    {
+      "group": "humidity/own/D",
+      "RH_macro_MAE_pp": 8.029440302031103,
+      "q_macro_MAE_gkg": 0.5215974127052293,
+      "e_macro_MAE_hPa": 0.7963254381840268,
+      "Td_macro_MAE_C": 1.2458810310259232,
+      "supersaturated_N": 0,
+      "negative_RH_N": 0,
+      "common_N": 6672
+    }
+  ],
+  "source_cube_reverified_after": true,
+  "cohort": {
+    "station_IDs": 74,
+    "families": 72,
+    "roles": {
+      "D": {
+        "IDs": 43,
+        "families": 42
+      },
+      "V": {
+        "IDs": 15,
+        "families": 15
+      },
+      "C": {
+        "IDs": 16,
+        "families": 15
+      }
+    },
+    "D_years": [
+      2019,
+      2020,
+      2021
+    ],
+    "V_years": [
+      2023
+    ],
+    "C_years": [
+      2025
+    ],
+    "sample_days": [
+      15,
+      16
+    ],
+    "calendar_V_cases": 8640,
+    "humidity_common_V_sites": 12
+  }
+}
