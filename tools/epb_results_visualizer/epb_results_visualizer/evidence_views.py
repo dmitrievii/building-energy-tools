@@ -212,13 +212,14 @@ def _zone_physics(data: dict, settings: ChartSettings, *, solar: bool = False):
     if not zones.empty and "zone_id" in zones and "zone_name" in zones:
         names = dict(zip(zones.zone_id.astype(str), zones.zone_name.astype(str)))
     all_zones = sorted(frame.zone_id.dropna().astype(str).unique().tolist())
-    scope = st.radio("Zone scope", ["Building (all zones)", "Selected zones"],
+    scope = st.radio("Zone scope", ["Building (all zones)", "One zone"],
                      horizontal=True, key="zg-scope-" + str(solar))
     selected = all_zones
-    if scope == "Selected zones":
-        selected = st.multiselect("Zones", all_zones, default=all_zones[:min(5,len(all_zones))],
-                                  format_func=lambda z: names.get(z, z),
-                                  key="zg-zones-" + str(solar))
+    if scope == "One zone":
+        chosen_zone = st.selectbox("Zone", all_zones,
+                                   format_func=lambda z: names.get(z, z),
+                                   key="zg-zone-" + str(solar))
+        selected = [chosen_zone]
     mode = "mean" if unit in NON_ADDITIVE_UNITS else "sum"
     if mode == "mean":
         st.caption("Dimensionless factors are shown as unweighted arithmetic means "
@@ -360,9 +361,8 @@ def _studio(data: dict, settings: ChartSettings):
                              ["Building sum", "Zone"] if "zone_id" in d else ["Building sum"])
         if group == "Zone" and "zone_id" in d:
             names = sorted(d.zone_id.dropna().astype(str).unique())
-            chosen = st.multiselect("Selected zone IDs", names,
-                                    default=names[:min(5,len(names))], key="studio-zones")
-            d = d[d.zone_id.astype(str).isin(chosen)]
+            chosen = st.selectbox("One zone ID", names, key="studio-zone")
+            d = d[d.zone_id.astype(str) == chosen]
             d["series"] = d.zone_id.astype(str) + " · " + d["series"]
         if group == "Surface class" and "surface_class" in d:
             d["series"] = d.surface_class.fillna("Other").astype(str) + " · " + d["series"]

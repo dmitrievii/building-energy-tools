@@ -78,3 +78,32 @@ def test_climate_comparability_provenance_warning():
     table,warnings=_provenance(studies)
     assert len(table)==2
     assert any('Weather is different' in msg for msg in warnings)
+
+
+def test_large_zip_monthly_needs_compare_without_hourly_tables():
+    from epb_results_visualizer.multi_compare import _monthly_needs
+    monthly = pd.DataFrame({
+        'zone_id': ['A'] * 12 + ['B'] * 12,
+        'month': list(range(1, 13)) * 2,
+        'heating_need_kwh': [100] * 12 + [50] * 12,
+        'cooling_need_kwh': [20] * 12 + [10] * 12,
+    })
+    empty_hourly = pd.DataFrame()
+    meta = {'A': {'floorAreaSquareMetres': 60},
+            'B': {'floorAreaSquareMetres': 40}}
+    bundles = [
+        SimpleNamespace(thermal_monthly=monthly, hourly=empty_hourly,
+                        zone_metadata=meta),
+        SimpleNamespace(thermal_monthly=monthly.assign(heating_need_kwh=monthly.heating_need_kwh * 2),
+                        hourly=empty_hourly, zone_metadata=meta),
+    ]
+    studies = [Study('base', 'Base', bundles[0]), Study('opt', 'Option', bundles[1])]
+    compared, unit = _monthly_needs(studies, 'heating_need_kwh', True)
+    assert unit == 'kWh/m²'
+    assert compared.groupby('series').value.sum().to_dict() == {
+        'Base': pytest.approx(18), 'Option': pytest.approx(36)}
+    partial = monthly[~((monthly.zone_id == 'B') & (monthly.month == 4))]
+    studies[1] = Study('opt','Option',SimpleNamespace(thermal_monthly=partial,
+                                       hourly=empty_hourly, zone_metadata=meta))
+    with pytest.raises(BundleValidationError, match="Incomplete"):
+        _monthly_needs(studies, 'heating_need_kwh', False)

@@ -42,7 +42,7 @@ def load_evidence(payload: bytes) -> dict:
     explicit source files listed above are read; embedded code is never executed.
     """
     result = {}
-    with _validate_archive(payload) as archive:
+    with _validate_archive(payload, selective=True) as archive:
         known = set(archive.namelist())
         for key, name in EVIDENCE_FILES.items():
             if name not in known:

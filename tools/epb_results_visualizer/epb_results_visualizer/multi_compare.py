@@ -27,8 +27,8 @@ def load_studies(uploads) -> list[Study]:
     if len(uploads) > 8:
         raise BundleValidationError('At most eight ZIP archives can be compared.')
     sources = [(f.name, f.getvalue()) for f in uploads]
-    if sum(len(b) for _, b in sources) > 240 * 1024 * 1024:
-        raise BundleValidationError('Combined ZIP upload exceeds 240 MiB.')
+    if sum(len(b) for _, b in sources) > 800 * 1024 * 1024:
+        raise BundleValidationError('Combined ZIP upload exceeds 800 MiB; load fewer large bundles.')
     expanded = 0
     for name, payload in sources:
         try:
@@ -36,8 +36,8 @@ def load_studies(uploads) -> list[Study]:
                 expanded += sum(x.file_size for x in z.infolist())
         except (zipfile.BadZipFile, OSError) as exc:
             raise BundleValidationError(f'Invalid ZIP: {name}') from exc
-        if expanded > 700 * 1024 * 1024:
-            raise BundleValidationError('Expanded ZIP contents exceed 700 MiB.')
+        if expanded > 16 * 1024 * 1024 * 1024:
+            raise BundleValidationError('Archive manifest total exceeds 16 GiB; load fewer large bundles.')
     cache = st.session_state.setdefault('epb_bundle_cache', {})
     distinct, seen = [], set()
     for name, payload in sources:
@@ -47,7 +47,15 @@ def load_studies(uploads) -> list[Study]:
             continue
         seen.add(key)
         if key not in cache:
-            cache[key] = read_bundle(payload)
+            # Never inflate massive trace tables at upload time. Source CSVs
+            # are streamed only after a scope and quantity have been chosen.
+            with zipfile.ZipFile(BytesIO(payload)) as z:
+                large = (len(payload) > 90 * 1024 * 1024 or
+                         any(m.filename in (
+                             'visualization/validation-trace.csv',
+                             'visualization/ventilation-hourly.csv') and
+                             m.file_size > 80 * 1024 * 1024 for m in z.infolist()))
+            cache[key] = read_bundle(payload, metadata_only=large)
         distinct.append((key, Path(name).stem, cache[key]))
     st.session_state['epb_bundle_cache'] = {key: cache[key] for key in seen if key in cache}
     if len(distinct) < 2:
@@ -177,6 +185,46 @@ def _graph(frame, unit, settings, title, key):
                        file_name=key+'.csv',mime='text/csv',key='export-'+key)
 
 
+
+def _monthly_needs(studies, quantity, normalize=False):
+    """Source-only whole-building comparison without loading hourly zone tables."""
+    if quantity not in ('heating_need_kwh', 'cooling_need_kwh'):
+        raise BundleValidationError("Unknown monthly thermal need.")
+    records = []
+    for study in studies:
+        frame = study.bundle.thermal_monthly
+        if frame.empty or not {'zone_id', 'month', quantity}.issubset(frame):
+            raise BundleValidationError("Missing zone-month thermal needs for " + study.label)
+        frame = frame.copy()
+        frame['month'] = pd.to_numeric(frame.month, errors='raise').astype(int)
+        frame[quantity] = pd.to_numeric(frame[quantity], errors='raise')
+        if frame[['zone_id','month']].duplicated().any():
+            raise BundleValidationError("Duplicated zone-month rows for " + study.label)
+        expected_zones = len(study.bundle.zone_metadata) or frame.zone_id.nunique()
+        completeness = frame.groupby('month').zone_id.nunique()
+        if (set(completeness.index) != set(range(1,13)) or
+                (completeness != expected_zones).any()):
+            raise BundleValidationError("Incomplete 12-month building coverage for " + study.label)
+        totals = frame.groupby('month', as_index=False)[quantity].sum(min_count=1)
+        if totals[quantity].isna().any():
+            raise BundleValidationError("Non-numeric building need for " + study.label)
+        area = study.area_m2
+        if normalize and area is None:
+            metadata = study.bundle.zone_metadata
+            source_areas = [z.get('floorAreaSquareMetres') for z in metadata.values()]
+            try:
+                area = sum(float(v) for v in source_areas)
+            except (ValueError, TypeError):
+                area = None
+        if normalize and (area is None or not math.isfinite(area) or area <= 0):
+            raise BundleValidationError("Missing positive floor area for normalized variant " + study.label)
+        totals['series'] = study.label
+        totals['value'] = totals[quantity] / area if normalize else totals[quantity]
+        totals['time'] = pd.to_datetime(dict(year=2001, month=totals.month, day=1))
+        records.append(totals[['time','series','value']])
+    return pd.concat(records, ignore_index=True), 'kWh/m²' if normalize else 'kWh'
+
+
 def section_comparison(studies, settings):
     st.subheader('Compare buildings and design variants')
     same = st.radio('Comparison scope',['Architectural variants of one building','Different buildings'],horizontal=True)
@@ -187,9 +235,13 @@ def section_comparison(studies, settings):
     if same=='Different buildings':
         st.info('Different buildings may have different use, geometry, area and climate; numerical differences do not establish design improvement.')
     baseline = st.selectbox('Baseline',[s.label for s in studies])
-    family = st.radio('Dataset',['ISO 52016 thermal','National indicators','Carrier ledger'],horizontal=True)
+    family = st.radio('Dataset', ['Monthly thermal needs','ISO 52016 thermal','National indicators','Carrier ledger'], horizontal=True)
     try:
-        if family=='ISO 52016 thermal':
+        if family=='Monthly thermal needs':
+            metric = st.selectbox('Source monthly need', ['heating_need_kwh', 'cooling_need_kwh'])
+            norm = st.checkbox('Normalize by conditioned floor area (kWh/m²)')
+            frame, unit = _monthly_needs(studies, metric, norm)
+        elif family=='ISO 52016 thermal':
             common = set(thermal_metric_columns(studies[0].bundle))
             for s in studies[1:]:
                 common &= set(thermal_metric_columns(s.bundle))
