@@ -93,6 +93,11 @@ def available_source_signals(payload: bytes, source: str, scope: str) -> dict[st
                 continue
             if scope == "building" and unit not in BUILDING_UNITS | {BOOLEAN_UNIT}:
                 continue
+            # Per-zone solver maxima are local limits, not simultaneously
+            # available installed equipment powers. Never sum them by building.
+            if scope == "building" and q in ("load.maximum_heating_w",
+                                            "load.maximum_cooling_w"):
+                continue
             result[q] = unit
         return dict(sorted(result.items()))
 
