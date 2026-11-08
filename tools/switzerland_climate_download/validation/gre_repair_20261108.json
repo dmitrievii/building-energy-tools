@@ -1,0 +1,51 @@
+{
+  "schema": "IGE_GRE_REPAIR_VALIDATION_v1",
+  "component": "CH",
+  "offline_tests_passed": 59,
+  "failed_tests": 0,
+  "seconds": 3.657,
+  "user_C_evaluated": false,
+  "humidity_chain_comparison_implemented": false,
+  "scientific_regression_algorithms_modified": false,
+  "uploaded_files_repair": {
+    "repair": {
+      "plan_id": "0dfa3011a5de4be6cf8021dbfae5124d012720234db9a732f298a935ec78ac3e",
+      "job_id": "2e8c8fd0e4f5ad1537c427af",
+      "station_id": "GRE",
+      "selected_rows": 52608,
+      "columns": 38,
+      "provider_sha256": "2f77e7cddb83d6a8578fba2300e35782538412092a4eaa7ec7ac7487c8c609d0",
+      "network_requests": 0,
+      "original_preserved": true,
+      "derived_plain_sha256": "05593277ca7274a4e14fff1fb274c90d440f5291ab2b9d598d3e669286703c6d",
+      "repair_tool_version": "1.0.0",
+      "repaired": true,
+      "already_consistent": false,
+      "backup_directory": "/workspace/scratch/cc426fabacfa/gre_fix_20261108/live/downloaded/0dfa3011a5de4be6cf80/repair_history/2e8c8fd0e4f5ad1537c427af/2026-11-08T174942.554860_0000_6750b6c2",
+      "different_plain_bytes": 1
+    },
+    "repeat": {
+      "plan_id": "0dfa3011a5de4be6cf8021dbfae5124d012720234db9a732f298a935ec78ac3e",
+      "job_id": "2e8c8fd0e4f5ad1537c427af",
+      "station_id": "GRE",
+      "selected_rows": 52608,
+      "columns": 38,
+      "provider_sha256": "2f77e7cddb83d6a8578fba2300e35782538412092a4eaa7ec7ac7487c8c609d0",
+      "network_requests": 0,
+      "original_preserved": true,
+      "derived_plain_sha256": "05593277ca7274a4e14fff1fb274c90d440f5291ab2b9d598d3e669286703c6d",
+      "repair_tool_version": "1.0.0",
+      "repaired": false,
+      "already_consistent": true
+    },
+    "uploaded_source_sha256": "13b3f0911ebab365b900147e27b497ce4f1dd57b2ee90e318e106fa325ef4a37",
+    "uploaded_part_sha256": "22c0ab1efab61e0da20d597c6c802ca16ee237b690fbd0af9ba95957657722a9",
+    "source_provider_checksum_verified": true,
+    "bad_line": 45290,
+    "timestamp_utc": "2025-03-02T00:00Z",
+    "byte_offset": 7905169,
+    "old_byte": 40,
+    "expected_byte": 44,
+    "scope": "Local repair replay with both uploaded files and the matching original frozen CH plan; user filesystem was not accessed"
+  }
+}
