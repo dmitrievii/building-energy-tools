@@ -86,3 +86,33 @@ The generated `SYNTHETIC_DEMO_NOT_CERTIFICATION.zip` is test data, **not** a Rhi
 Upload two to eight independent EPB Rhino Result Export ZIP archives at once. A new Compare buildings / variants section overlays thermal profiles, native national monthly indicators, and carrier ledger import versus export. Select the baseline ZIP to obtain absolute differences or percent differences; undefined percent differences are not imputed. Choose Hour, Day, Month, or Year for ISO 52016 thermal series. Optional user-entered conditioned floor areas enable kWh/m² comparisons. Zone temperatures and relative humidity require explicit zone selection and are never summed. The viewer reports differing or undocumented weather and calculation profiles and does not normalize climate, rerun calculations, or merge independent energy accounts.
 
 The upload control allows 100 MiB per ZIP; the session limits comparisons to 8 ZIPs, 240 MiB compressed, and 700 MiB uncompressed. Duplicate identical archives are ignored. The new Python module is epb_results_visualizer/multi_compare.py. Tests run through the EPB Visualizer CI GitHub Actions workflow.
+
+
+## V3 evidence explorer (EPB Rhino Result Export)
+
+The sidebar now includes dedicated **Envelope & WWR**, **Windows & glazing**,
+**Zone physics**, **Solar & gains**, **Surface physics**, **Systems & electricity**,
+**Chart Studio**, and **Evidence coverage** sections. With 2–8 ZIPs, the
+**Physical evidence comparison** page compares common quantities across variants.
+
+These views consume the original `visualization/zones.csv`,
+`surface-inventory.csv`, `opening-inventory.csv`, `orientation-buckets.csv`,
+`monthly-physical-zones.csv`, `monthly-physical-surfaces.csv`,
+`signal-catalog.csv`, and `monthly-metrics.csv` entries when present.
+They reuse the existing ZIP safety validation and keep decoded results in the
+per-session cache rather than a shared global cache.
+
+The monthly chart studio supports overlays, grouped bars, and quantity-by-month
+heatmaps with CSV download. Energy quantities are summed only within the same
+physical source and compatible units; utilization factors and other ratios use
+unweighted means. Surface contributions and upstream system-stage quantities
+are shown separately from final-energy postings to avoid double counting.
+Where data is missing (glazing U/g/gTot, active shading states, hourly
+temperature/CO2/AHU, hourly HVAC or validation trace), the UI reports absence
+instead of fabricating values.
+
+**Model comparison constraints:** Check weather fingerprints, calculation
+profiles, year basis, and floor area basis before using differences as evidence
+of design performance. Fully glazed (WWR=100%) source facades are valid data;
+zero opaque net area is not a validation failure. The visualizer remains
+read-only and has no normative approval authority.
