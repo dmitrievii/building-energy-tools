@@ -21,6 +21,7 @@ from epb_results_visualizer.charts import (
 
 from epb_results_visualizer.multi_compare import load_studies, section_comparison
 from epb_results_visualizer.evidence_views import render_evidence, render_evidence_compare
+from epb_results_visualizer.streaming_ui import section_streaming
 
 st.set_page_config(page_title='EPB Results Visualizer | IVANCALC', page_icon='📊', layout='wide')
 
@@ -338,7 +339,7 @@ def section_overview(bundle):
     c = st.columns(4)
     c[0].metric('Calculation status',str(m.get('isComplete','Unknown')))
     c[1].metric('Thermal zones',str(bundle.hourly.zone_id.nunique() if not bundle.hourly.empty else len(bundle.zone_metadata)))
-    c[2].metric('Hourly samples',f'{len(bundle.hourly):,}')
+    c[2].metric('Reporting hours', str(vm.get('annual_hours') or (bundle.hourly.hour_index.max() if not bundle.hourly.empty else 'Not exported')))
     c[3].metric('Captured trace records',f'{len(bundle.trace):,}')
     st.markdown('**Provenance**')
     st.json({
@@ -383,10 +384,12 @@ def main():
     st.title('IVANCALC · EPB Results Visualizer')
     st.markdown('Explore hourly EPB Rhino results and compare independent buildings or architectural design variants.')
     uploads = st.file_uploader('Upload EPB Rhino Result Export ZIP archives', type=['zip'],
-                               accept_multiple_files=True, max_upload_size=100, key='epb_uploads',
+                               accept_multiple_files=True, max_upload_size=512, key='epb_uploads',
                                help='One ZIP opens individual analyses; 2–8 ZIPs enable comparative analysis.')
     if not uploads:
         st.session_state.pop('epb_bundle_cache', None)
+        st.session_state.pop('epb_active_stream', None)
+        st.session_state.pop('epb_v3_evidence_cache', None)
         st.info('Upload one ZIP for individual results or several ZIP files to compare independent calculations.')
         return
     try:
@@ -407,7 +410,7 @@ def main():
     evidence_pages = ['Envelope & WWR', 'Windows & glazing', 'Zone physics',
                       'Solar & gains', 'Surface physics', 'Systems & electricity',
                       'Chart Studio', 'Evidence coverage']
-    pages = ['Overview'] + evidence_pages + [
+    pages = ['Overview', 'Hourly Explorer'] + evidence_pages + [
         'Thermal balance', 'Energy systems', 'Validation Trace',
         'National indicators', 'Carrier ledger', 'Data quality']
     if len(studies) > 1:
@@ -430,7 +433,10 @@ def main():
             bundle = chosen_study.bundle
         for warning in bundle.warnings:
             st.sidebar.warning(warning)
-        if page in evidence_pages:
+        if page in ('Hourly Explorer', 'Thermal balance', 'Validation Trace'):
+            section_streaming(payloads[chosen_study.key], bundle, settings,
+                              trace_only=page == 'Validation Trace')
+        elif page in evidence_pages:
             render_evidence(page, payloads[chosen_study.key], settings)
         elif page == 'Overview':
             section_overview(bundle)
