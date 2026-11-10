@@ -1,0 +1,186 @@
+test_C_is_blocked_by_family_and_year (test_full_cpu.FullCPU.test_C_is_blocked_by_family_and_year) ... ok
+test_RH_prediction_is_not_clipped (test_full_cpu.FullCPU.test_RH_prediction_is_not_clipped) ... ok
+test_all_five_humidity_routes_share_identical_reference_cases (test_full_cpu.FullCPU.test_all_five_humidity_routes_share_identical_reference_cases) ... ok
+test_all_nested_folds_exclude_families_and_years (test_full_cpu.FullCPU.test_all_nested_folds_exclude_families_and_years) ... ok
+test_analytic_buck_inverse (test_full_cpu.FullCPU.test_analytic_buck_inverse) ... ok
+test_complete_humidity_pipeline_with_nested_auxiliaries (test_full_cpu.FullCPU.test_complete_humidity_pipeline_with_nested_auxiliaries) ... CPU experiment: /tmp/tmp5fmmo9_n/humidity_pipeline/experiments/8bae3c3e8de89cd0a1d2
+  shared auxiliary height, outer fold 0: D-only nested search
+  shared auxiliary height, outer fold 1: D-only nested search
+  shared auxiliary height, outer fold 2: D-only nested search
+all/H_log_e: COMPLETE
+ok
+test_config_rejects_D_C_overlap_and_GPU_option (test_full_cpu.FullCPU.test_config_rejects_D_C_overlap_and_GPU_option) ... ok
+test_continuous_tuning_is_D_only (test_full_cpu.FullCPU.test_continuous_tuning_is_D_only) ... ok
+test_direct_RH_does_not_require_auxiliary_models (test_full_cpu.FullCPU.test_direct_RH_does_not_require_auxiliary_models) ... ok
+test_donor_excludes_target_family (test_full_cpu.FullCPU.test_donor_excludes_target_family) ... ok
+test_full_refit_checkpoints_resume_and_detect_tampering (test_full_cpu.FullCPU.test_full_refit_checkpoints_resume_and_detect_tampering) ... ok
+test_histogram_keeps_tails (test_full_cpu.FullCPU.test_histogram_keeps_tails) ... ok
+test_missing_urban_is_not_zero (test_full_cpu.FullCPU.test_missing_urban_is_not_zero) ... ok
+test_month_end_leap_and_unchecked_are_not_gated (test_full_cpu.FullCPU.test_month_end_leap_and_unchecked_are_not_gated) ... ok
+test_native_prepare_full_calendar_and_resume (test_full_cpu.FullCPU.test_native_prepare_full_calendar_and_resume) ... E0 AT: 1 planned jobs in /tmp/tmptlbgpbs_/Database/AT/AT/downloaded/e3990d2268ba72655da7
+  1/1: verified=1, pending=0, quarantined=0
+Full-hour preparation: 18 station IDs, 61368 UTC labels, 18 source parts
+  1/18 AT:100: 144 inserted cells
+  2/18 AT:101: 144 inserted cells
+  3/18 AT:102: 144 inserted cells
+  4/18 AT:103: 144 inserted cells
+  5/18 AT:104: 144 inserted cells
+  6/18 AT:105: 144 inserted cells
+  7/18 AT:106: 144 inserted cells
+  8/18 AT:107: 144 inserted cells
+  9/18 AT:108: 144 inserted cells
+  10/18 AT:109: 144 inserted cells
+  11/18 AT:110: 144 inserted cells
+  12/18 AT:111: 144 inserted cells
+  13/18 AT:112: 144 inserted cells
+  14/18 AT:113: 144 inserted cells
+  15/18 AT:114: 144 inserted cells
+  16/18 AT:115: 144 inserted cells
+  17/18 AT:116: 144 inserted cells
+  18/18 AT:117: 144 inserted cells
+E0 AT: 1 planned jobs in /tmp/tmptlbgpbs_/Database/AT/AT/downloaded/e3990d2268ba72655da7
+  1/1: verified=1, pending=0, quarantined=0
+Existing complete full-hour store verified: /tmp/tmptlbgpbs_/results/stores/1e1becbe1e200a309510
+ok
+test_nested_auxiliary_engine_executes_and_never_sees_outer_holdout (test_full_cpu.FullCPU.test_nested_auxiliary_engine_executes_and_never_sees_outer_holdout) ...   shared auxiliary height, outer fold 0: D-only nested search
+  shared auxiliary height, outer fold 1: D-only nested search
+  shared auxiliary height, outer fold 2: D-only nested search
+ok
+test_nonfinite_predictions_are_counted (test_full_cpu.FullCPU.test_nonfinite_predictions_are_counted) ... ok
+test_parallel_model_jobs_and_completed_resume (test_full_cpu.FullCPU.test_parallel_model_jobs_and_completed_resume) ... CPU experiment: /tmp/tmp5fmmo9_n/parallel_results/experiments/24e77d4a6fcb1aadf1d1
+all/T_height: COMPLETE
+all/p_height: COMPLETE
+/workspace/scratch/cc426fabacfa/cpu_v040/IGE_Climate_Experiments_CPU_v0_4_0/ige_full/plots.py:23: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp5fmmo9_n/parallel_results/experiments/24e77d4a6fcb1aadf1d1/models/all/T_height/histogram.csv' mode='r' encoding='utf-8-sig'>
+  model=root/'models'/panel/r['model']['id'];rows=list(csv.DictReader((model/'histogram.csv').open(encoding='utf-8-sig')))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/workspace/scratch/cc426fabacfa/cpu_v040/IGE_Climate_Experiments_CPU_v0_4_0/ige_full/plots.py:23: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp5fmmo9_n/parallel_results/experiments/24e77d4a6fcb1aadf1d1/models/all/p_height/histogram.csv' mode='r' encoding='utf-8-sig'>
+  model=root/'models'/panel/r['model']['id'];rows=list(csv.DictReader((model/'histogram.csv').open(encoding='utf-8-sig')))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+CPU experiment: /tmp/tmp5fmmo9_n/parallel_results/experiments/24e77d4a6fcb1aadf1d1
+all/T_height: COMPLETE
+all/p_height: COMPLETE
+ok
+test_pending_commit_rolls_back_atomically (test_full_cpu.FullCPU.test_pending_commit_rolls_back_atomically) ... ok
+test_priority_conflicts_and_better_source (test_full_cpu.FullCPU.test_priority_conflicts_and_better_source) ... ok
+test_roles_of_original_C_and_new_alias_are_preserved (test_full_cpu.FullCPU.test_roles_of_original_C_and_new_alias_are_preserved) ... ok
+test_streamed_validation_macro_matches_direct_error (test_full_cpu.FullCPU.test_streamed_validation_macro_matches_direct_error) ... ok
+test_streaming_fit_uses_all_available_hours (test_full_cpu.FullCPU.test_streaming_fit_uses_all_available_hours) ... ok
+test_urban_and_paired_baseline_share_cases (test_full_cpu.FullCPU.test_urban_and_paired_baseline_share_cases) ... ok
+test_urban_buffer_ground_scale_and_errors (test_full_cpu.FullCPU.test_urban_buffer_ground_scale_and_errors) ... ok
+test_urban_collection_resume_and_frozen_raw_bytes (test_full_cpu.FullCPU.test_urban_collection_resume_and_frozen_raw_bytes) ... Urban AT:100 impervious r=500 m: 0.0
+Urban AT:100 impervious r=2000 m: 0.0
+Urban AT:100 tree r=500 m: 0.0
+Urban AT:100 tree r=2000 m: 0.0
+Urban AT:100 water r=500 m: 0.0
+Urban AT:100 water r=2000 m: 0.0
+Urban AT:101 impervious r=500 m: 0.0
+Urban AT:101 impervious r=2000 m: 0.0
+Urban AT:101 tree r=500 m: 0.0
+Urban AT:101 tree r=2000 m: 0.0
+Urban AT:101 water r=500 m: 0.0
+Urban AT:101 water r=2000 m: 0.0
+Urban AT:102 impervious r=500 m: 0.0
+Urban AT:102 impervious r=2000 m: 0.0
+Urban AT:102 tree r=500 m: 0.0
+Urban AT:102 tree r=2000 m: 0.0
+Urban AT:102 water r=500 m: 0.0
+Urban AT:102 water r=2000 m: 0.0
+Urban AT:103 impervious r=500 m: 0.0
+Urban AT:103 impervious r=2000 m: 0.0
+Urban AT:103 tree r=500 m: 0.0
+Urban AT:103 tree r=2000 m: 0.0
+Urban AT:103 water r=500 m: 0.0
+Urban AT:103 water r=2000 m: 0.0
+Urban AT:104 impervious r=500 m: 0.0
+Urban AT:104 impervious r=2000 m: 0.0
+Urban AT:104 tree r=500 m: 0.0
+Urban AT:104 tree r=2000 m: 0.0
+Urban AT:104 water r=500 m: 0.0
+Urban AT:104 water r=2000 m: 0.0
+Urban AT:105 impervious r=500 m: 0.0
+Urban AT:105 impervious r=2000 m: 0.0
+Urban AT:105 tree r=500 m: 0.0
+Urban AT:105 tree r=2000 m: 0.0
+Urban AT:105 water r=500 m: 0.0
+Urban AT:105 water r=2000 m: 0.0
+Urban AT:106 impervious r=500 m: 0.0
+Urban AT:106 impervious r=2000 m: 0.0
+Urban AT:106 tree r=500 m: 0.0
+Urban AT:106 tree r=2000 m: 0.0
+Urban AT:106 water r=500 m: 0.0
+Urban AT:106 water r=2000 m: 0.0
+Urban AT:107 impervious r=500 m: 0.0
+Urban AT:107 impervious r=2000 m: 0.0
+Urban AT:107 tree r=500 m: 0.0
+Urban AT:107 tree r=2000 m: 0.0
+Urban AT:107 water r=500 m: 0.0
+Urban AT:107 water r=2000 m: 0.0
+Urban AT:108 impervious r=500 m: 0.0
+Urban AT:108 impervious r=2000 m: 0.0
+Urban AT:108 tree r=500 m: 0.0
+Urban AT:108 tree r=2000 m: 0.0
+Urban AT:108 water r=500 m: 0.0
+Urban AT:108 water r=2000 m: 0.0
+Urban AT:109 impervious r=500 m: 0.0
+Urban AT:109 impervious r=2000 m: 0.0
+Urban AT:109 tree r=500 m: 0.0
+Urban AT:109 tree r=2000 m: 0.0
+Urban AT:109 water r=500 m: 0.0
+Urban AT:109 water r=2000 m: 0.0
+Urban AT:110 impervious r=500 m: 0.0
+Urban AT:110 impervious r=2000 m: 0.0
+Urban AT:110 tree r=500 m: 0.0
+Urban AT:110 tree r=2000 m: 0.0
+Urban AT:110 water r=500 m: 0.0
+Urban AT:110 water r=2000 m: 0.0
+Urban AT:111 impervious r=500 m: 0.0
+Urban AT:111 impervious r=2000 m: 0.0
+Urban AT:111 tree r=500 m: 0.0
+Urban AT:111 tree r=2000 m: 0.0
+Urban AT:111 water r=500 m: 0.0
+Urban AT:111 water r=2000 m: 0.0
+Urban AT:112 impervious r=500 m: 0.0
+Urban AT:112 impervious r=2000 m: 0.0
+Urban AT:112 tree r=500 m: 0.0
+Urban AT:112 tree r=2000 m: 0.0
+Urban AT:112 water r=500 m: 0.0
+Urban AT:112 water r=2000 m: 0.0
+Urban AT:113 impervious r=500 m: 0.0
+Urban AT:113 impervious r=2000 m: 0.0
+Urban AT:113 tree r=500 m: 0.0
+Urban AT:113 tree r=2000 m: 0.0
+Urban AT:113 water r=500 m: 0.0
+Urban AT:113 water r=2000 m: 0.0
+Urban AT:114 impervious r=500 m: 0.0
+Urban AT:114 impervious r=2000 m: 0.0
+Urban AT:114 tree r=500 m: 0.0
+Urban AT:114 tree r=2000 m: 0.0
+Urban AT:114 water r=500 m: 0.0
+Urban AT:114 water r=2000 m: 0.0
+Urban AT:115 impervious r=500 m: 0.0
+Urban AT:115 impervious r=2000 m: 0.0
+Urban AT:115 tree r=500 m: 0.0
+Urban AT:115 tree r=2000 m: 0.0
+Urban AT:115 water r=500 m: 0.0
+Urban AT:115 water r=2000 m: 0.0
+Urban AT:116 impervious r=500 m: 0.0
+Urban AT:116 impervious r=2000 m: 0.0
+Urban AT:116 tree r=500 m: 0.0
+Urban AT:116 tree r=2000 m: 0.0
+Urban AT:116 water r=500 m: 0.0
+Urban AT:116 water r=2000 m: 0.0
+Urban AT:117 impervious r=500 m: 0.0
+Urban AT:117 impervious r=2000 m: 0.0
+Urban AT:117 tree r=500 m: 0.0
+Urban AT:117 tree r=2000 m: 0.0
+Urban AT:117 water r=500 m: 0.0
+Urban AT:117 water r=2000 m: 0.0
+Frozen urban features verified: bc7556c2031e324c8369db5ce8d98508412964a5050d84db81a27a99f4d40fbd
+ok
+test_urban_histograms_keep_zero_and_exclude_nodata (test_full_cpu.FullCPU.test_urban_histograms_keep_zero_and_exclude_nodata) ... ok
+test_urban_shape_and_difference (test_full_cpu.FullCPU.test_urban_shape_and_difference) ... ok
+
+----------------------------------------------------------------------
+Ran 28 tests in 16.432s
+
+OK

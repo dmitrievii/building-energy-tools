@@ -1,0 +1,208 @@
+{
+  "schema": "IGE_FULL_CPU_CONFIG_v1",
+  "database": "../Database",
+  "results": "./full_cpu_results",
+  "countries": [
+    "AT",
+    "DE",
+    "CH"
+  ],
+  "years": {
+    "D": [
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022
+    ],
+    "V": [
+      2023,
+      2024
+    ],
+    "C": [
+      2025
+    ]
+  },
+  "cohort_anchor": "auto",
+  "anchor_cube_id": "883e3199cd68ef226090c8a2ed64ccbb32c4c395957a7ccab538919f1691b183",
+  "seed": 20261110,
+  "inner_folds": 3,
+  "split_fractions": {
+    "D": 0.6,
+    "V": 0.2,
+    "C": 0.2
+  },
+  "workers": 2,
+  "memory_budget_bytes": 2147483648,
+  "batch_hours": 744,
+  "donors": {
+    "candidate_count": 64,
+    "max_donors": 12,
+    "min_donors": 2,
+    "radius_km": 250,
+    "max_height_difference_m": 2500,
+    "co_location_km": 0.1,
+    "cross_border": false
+  },
+  "tuning": {
+    "hours_per_month": 48,
+    "targets_per_country": 24,
+    "max_evaluations": 180,
+    "max_iterations": 40,
+    "starts": 2,
+    "min_fit_cases": 100,
+    "ridge_lambda": 0.0001
+  },
+  "urban": {
+    "radii_m": [
+      500,
+      2000
+    ],
+    "reference_year": 2018,
+    "minimum_valid_fraction": 0.9,
+    "seconds_between_requests": 1.0,
+    "timeout_seconds": 60
+  },
+  "qc_mode": "all_published_finite",
+  "rejected_native_qc": {
+    "AT": [],
+    "DE": [],
+    "CH": []
+  },
+  "models": [
+    {
+      "id": "T_height",
+      "coordinate": "T",
+      "basis": "height",
+      "aux_temperature_basis": "harmonic"
+    },
+    {
+      "id": "T_monthly",
+      "coordinate": "T",
+      "basis": "monthly",
+      "aux_temperature_basis": "harmonic"
+    },
+    {
+      "id": "T_harmonic",
+      "coordinate": "T",
+      "basis": "harmonic",
+      "aux_temperature_basis": "harmonic"
+    },
+    {
+      "id": "p_height",
+      "coordinate": "p",
+      "basis": "height",
+      "aux_temperature_basis": "harmonic"
+    },
+    {
+      "id": "p_monthly",
+      "coordinate": "p",
+      "basis": "monthly",
+      "aux_temperature_basis": "harmonic"
+    },
+    {
+      "id": "H_RH",
+      "coordinate": "RH",
+      "basis": "harmonic",
+      "aux_temperature_basis": "harmonic"
+    },
+    {
+      "id": "H_log_e",
+      "coordinate": "log_e",
+      "basis": "harmonic",
+      "aux_temperature_basis": "harmonic"
+    },
+    {
+      "id": "H_q",
+      "coordinate": "q",
+      "basis": "harmonic",
+      "aux_temperature_basis": "harmonic"
+    },
+    {
+      "id": "H_Td",
+      "coordinate": "Td",
+      "basis": "harmonic",
+      "aux_temperature_basis": "harmonic"
+    },
+    {
+      "id": "H_D",
+      "coordinate": "D",
+      "basis": "harmonic",
+      "aux_temperature_basis": "harmonic"
+    },
+    {
+      "id": "T_urban_static",
+      "coordinate": "T",
+      "basis": "urban_static",
+      "aux_temperature_basis": "harmonic"
+    },
+    {
+      "id": "T_urban_harmonic",
+      "coordinate": "T",
+      "basis": "urban_harmonic",
+      "aux_temperature_basis": "harmonic"
+    },
+    {
+      "id": "H_RH_urban_T_only",
+      "coordinate": "RH",
+      "basis": "harmonic",
+      "aux_temperature_basis": "urban_harmonic"
+    },
+    {
+      "id": "H_RH_urban_T_and_moisture",
+      "coordinate": "RH",
+      "basis": "urban_harmonic",
+      "aux_temperature_basis": "urban_harmonic"
+    },
+    {
+      "id": "H_log_e_urban_T_only",
+      "coordinate": "log_e",
+      "basis": "harmonic",
+      "aux_temperature_basis": "urban_harmonic"
+    },
+    {
+      "id": "H_log_e_urban_T_and_moisture",
+      "coordinate": "log_e",
+      "basis": "urban_harmonic",
+      "aux_temperature_basis": "urban_harmonic"
+    },
+    {
+      "id": "H_q_urban_T_only",
+      "coordinate": "q",
+      "basis": "harmonic",
+      "aux_temperature_basis": "urban_harmonic"
+    },
+    {
+      "id": "H_q_urban_T_and_moisture",
+      "coordinate": "q",
+      "basis": "urban_harmonic",
+      "aux_temperature_basis": "urban_harmonic"
+    },
+    {
+      "id": "H_Td_urban_T_only",
+      "coordinate": "Td",
+      "basis": "harmonic",
+      "aux_temperature_basis": "urban_harmonic"
+    },
+    {
+      "id": "H_Td_urban_T_and_moisture",
+      "coordinate": "Td",
+      "basis": "urban_harmonic",
+      "aux_temperature_basis": "urban_harmonic"
+    },
+    {
+      "id": "H_D_urban_T_only",
+      "coordinate": "D",
+      "basis": "harmonic",
+      "aux_temperature_basis": "urban_harmonic"
+    },
+    {
+      "id": "H_D_urban_T_and_moisture",
+      "coordinate": "D",
+      "basis": "urban_harmonic",
+      "aux_temperature_basis": "urban_harmonic"
+    }
+  ]
+}

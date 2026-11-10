@@ -1,0 +1,8 @@
+{
+  "tests": 28,
+  "wall_seconds": 16.432,
+  "status": "PASS",
+  "scope": "synthetic numerical contracts, actual native-layout ingestion, nested auxiliaries, process jobs, resume, source immutability, plotting",
+  "GPU_used": false,
+  "C_evaluated": false
+}

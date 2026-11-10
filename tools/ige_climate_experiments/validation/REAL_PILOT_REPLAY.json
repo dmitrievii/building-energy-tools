@@ -1,0 +1,37 @@
+{
+  "scope": "ENGINEERING_VALIDATION_ON_REAL_PROVIDED_PILOT; not full Database experiment",
+  "original_run": "20261109T075003_356622Z_2e13be42",
+  "original_cube_id": "883e3199cd68ef226090c8a2ed64ccbb32c4c395957a7ccab538919f1691b183",
+  "current_code_id": "282f2185f70020ed188b8fb0e0af505e1767c14aa3337273adc173a044ceece5",
+  "source_calendar_is_sparse": true,
+  "GPU_used": false,
+  "C_evaluated": false,
+  "models": [
+    {
+      "coordinate": "T",
+      "fit_rows": 63910,
+      "fit_stations": 38,
+      "actual_fit_cases_by_year": {
+        "2019": 21167,
+        "2020": 21431,
+        "2021": 21312
+      },
+      "V_cases": 7465,
+      "V_MAE_for_engineering_replay_only": 1.5338950318677969,
+      "reproduced_saved_D_only_tuning": true
+    },
+    {
+      "coordinate": "p",
+      "fit_rows": 39685,
+      "fit_stations": 23,
+      "actual_fit_cases_by_year": {
+        "2019": 13237,
+        "2020": 13200,
+        "2021": 13248
+      },
+      "V_cases": 5760,
+      "V_MAE_for_engineering_replay_only": 2.0963338438834973,
+      "reproduced_saved_D_only_tuning": true
+    }
+  ]
+}
