@@ -3242,7 +3242,7 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
         representation = st.radio(
             "Representation",
             ["Points", "Distribution grid", "Climate contour"],
-            index=0,
+            index=2,
             horizontal=True,
             help=(
                 "Points shows individual observations. Distribution grid restores the original 1 °C × 5 %RH frequency/metric cells. "
