@@ -156,6 +156,45 @@ def _selected_flag_names_from_state(st: Any, resource_id: str) -> tuple[str, ...
     return tuple(dict.fromkeys(str(value).strip() for value in values if str(value).strip()))
 
 
+def _install_quality_flag_query_selector(parity: Any) -> None:
+    """Replace the provider selector without capturing an earlier UI wrapper.
+
+    The GeoSphere module survives Streamlit reruns and browser sessions. Its
+    public query function may already be wrapped (including by older releases).
+    Always delegate to the independent strict validator, never the mutable
+    provider entry point. This also repairs an accumulated legacy chain on
+    the next installation without reloading GeoSphere's resource/dataclass state.
+    """
+    from . import geosphere
+    from .geosphere_query_parameters import strict_provider_parameters_with_quality_flags
+
+    st = parity.st
+
+    def selected_query_parameters(
+        metadata: Mapping[str, Any],
+        provider_parameters: Iterable[str],
+        *,
+        resource_id: str = geosphere.GEOSPHERE_RESOURCE_ID,
+    ) -> tuple[str, ...]:
+        physical = tuple(dict.fromkeys(str(item).strip() for item in provider_parameters if str(item).strip()))
+        # Let the original strict contract validate physical fields and discover
+        # which matching flags actually exist in live metadata.
+        complete = strict_provider_parameters_with_quality_flags(metadata, physical, resource_id=resource_id)
+        available_flags = {name for name in complete if name not in physical}
+        selected_flags = _selected_flag_names_from_state(st, resource_id)
+        chosen = tuple(
+            flag
+            for flag in selected_flags
+            if flag in available_flags and flag.removesuffix("_flag") in physical
+        )
+        return physical + chosen
+
+    # fetch_station_dataset resolves this helper from geosphere module globals,
+    # so the actual provider transfer now matches the UI estimate exactly.
+    geosphere.provider_parameters_with_quality_flags = selected_query_parameters
+    parity.provider_parameters_with_quality_flags = selected_query_parameters
+
+
 def install_longterm_hourly_hotfix(proxy: Any, parity: Any) -> None:
     """Install the long-term GeoSphere fixes into the already mature runtime."""
     if bool(getattr(proxy, "_LONGTERM_GEOSPHERE_HOTFIX_INSTALLED", False)):
@@ -246,32 +285,8 @@ def install_longterm_hourly_hotfix(proxy: Any, parity: Any) -> None:
     # ------------------------------------------------------------------
     # 3. Optional quality flags in the existing measured-variable table.
     # ------------------------------------------------------------------
-    original_provider_with_flags = geosphere.provider_parameters_with_quality_flags
     original_resource_selector = parity._render_geosphere_resource_selector
-
-    def selected_query_parameters(
-        metadata: Mapping[str, Any],
-        provider_parameters: Iterable[str],
-        *,
-        resource_id: str = geosphere.GEOSPHERE_RESOURCE_ID,
-    ) -> tuple[str, ...]:
-        physical = tuple(dict.fromkeys(str(item).strip() for item in provider_parameters if str(item).strip()))
-        # Let the original strict contract validate physical fields and discover
-        # which matching flags actually exist in live metadata.
-        complete = original_provider_with_flags(metadata, physical, resource_id=resource_id)
-        available_flags = {name for name in complete if name not in physical}
-        selected_flags = _selected_flag_names_from_state(st, resource_id)
-        chosen = tuple(
-            flag
-            for flag in selected_flags
-            if flag in available_flags and flag.removesuffix("_flag") in physical
-        )
-        return physical + chosen
-
-    # fetch_station_dataset resolves this helper from geosphere module globals,
-    # so the actual provider transfer now matches the UI estimate exactly.
-    geosphere.provider_parameters_with_quality_flags = selected_query_parameters
-    parity.provider_parameters_with_quality_flags = selected_query_parameters
+    _install_quality_flag_query_selector(parity)
 
     def resource_selector_with_flag_column(legacy: Any, original: Callable) -> None:
         real_data_editor = parity.st.data_editor

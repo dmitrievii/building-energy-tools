@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import unittest
+from types import SimpleNamespace
+from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
 import numpy as np
@@ -12,7 +14,11 @@ from epw_climate_analyzer.climate_model import (
     ClimateProvenance,
     ClimateTemporalMetadata,
 )
+from epw_climate_analyzer import geosphere
+from epw_climate_analyzer.geosphere_query_parameters import strict_provider_parameters_with_quality_flags
 from epw_climate_analyzer.source_parity_longterm_hotfix import (
+    QUALITY_FLAG_SELECTION_KEY,
+    _install_quality_flag_query_selector,
     chronological_aggregate_summary,
     chronological_period_total,
     populated_hour_axis_range,
@@ -22,6 +28,59 @@ from epw_climate_analyzer.temporal_filtering import CHRONOLOGICAL, TIME_BASIS_AT
 
 
 class LongTermGeoSphereHotfixTests(unittest.TestCase):
+    def test_provider_quality_selector_survives_repeated_installs_and_legacy_chain(self) -> None:
+        metadata = {"parameters": [
+            {"name": "tl", "unit": "degC"},
+            {"name": "tl_flag", "unit": "code"},
+            {"name": "rf", "unit": "%"},
+            {"name": "rf_flag", "unit": "code"},
+        ]}
+
+        def stale_provider(*args, **kwargs):
+            self.fail("A stale provider wrapper must never be called")
+
+        state = {}
+        parity = SimpleNamespace(st=SimpleNamespace(session_state=state))
+        with patch.object(geosphere, "provider_parameters_with_quality_flags", stale_provider):
+            for _ in range(1200):
+                # Same persistent GeoSphere module, fresh UI installation.
+                parity = SimpleNamespace(st=SimpleNamespace(session_state=state))
+                _install_quality_flag_query_selector(parity)
+            for resource_id in ("klima-v2-10min", "klima-v2-1h"):
+                with self.subTest(resource=resource_id):
+                    selected = ("tl", "rf", "tl")
+                    state.clear()
+                    self.assertEqual(
+                        strict_provider_parameters_with_quality_flags(
+                            metadata, selected, resource_id=resource_id,
+                        ),
+                        ("tl", "tl_flag", "rf", "rf_flag"),
+                    )
+                    for query in (geosphere.provider_parameters_with_quality_flags,
+                                  parity.provider_parameters_with_quality_flags):
+                        self.assertEqual(query(metadata, selected, resource_id=resource_id), ("tl", "rf"))
+                    state[QUALITY_FLAG_SELECTION_KEY] = {
+                        "resource_id": resource_id,
+                        "flags": ("rf_flag", "not_selected_flag", "rf_flag"),
+                    }
+                    for query in (geosphere.provider_parameters_with_quality_flags,
+                                  parity.provider_parameters_with_quality_flags):
+                        self.assertEqual(query(metadata, selected, resource_id=resource_id), ("tl", "rf", "rf_flag"))
+                    with self.assertRaisesRegex(ValueError, "Unsupported GeoSphere physical parameter"):
+                        parity.provider_parameters_with_quality_flags(
+                            metadata, ("unknown",), resource_id=resource_id,
+                        )
+                    invalid = {"parameters": [{"name": "tl_flag", "unit": "K"}]}
+                    with self.assertRaisesRegex(ValueError, "unit changed"):
+                        parity.provider_parameters_with_quality_flags(
+                            invalid, ("tl",), resource_id=resource_id,
+                        )
+                    state[QUALITY_FLAG_SELECTION_KEY]["resource_id"] = "klima-v2-1m"
+                    self.assertEqual(
+                        parity.provider_parameters_with_quality_flags(metadata, selected, resource_id=resource_id),
+                        ("tl", "rf"),
+                    )
+
     @staticmethod
     def _vienna_year() -> pd.DataFrame:
         # Exact local-civil calendar year 2024 in Vienna.  Both endpoints are CET

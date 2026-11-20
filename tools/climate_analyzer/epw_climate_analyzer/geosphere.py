@@ -526,23 +526,12 @@ def provider_parameters_with_quality_flags(
     *,
     resource_id: str = GEOSPHERE_RESOURCE_ID,
 ) -> tuple[str, ...]:
-    parameters = parse_parameters(metadata)
-    allowed = resource_spec(resource_id).field_by_provider
-    result: list[str] = []
-    for name in dict.fromkeys(str(item).strip() for item in provider_parameters if str(item).strip()):
-        if name not in allowed:
-            raise ValueError(f"Unsupported GeoSphere physical parameter: {name}")
-        result.append(name)
-        flag_name = f"{name}_flag"
-        flag = parameters.get(flag_name)
-        if flag is None:
-            continue
-        if _normalise_unit(flag.unit) != "code":
-            raise ValueError(
-                f"GeoSphere quality flag '{flag_name}' unit changed: expected 'code', got '{_normalise_unit(flag.unit)}'."
-            )
-        result.append(flag_name)
-    return tuple(result)
+    """Return physical parameters and all matching validated provider flags."""
+    from .geosphere_query_parameters import strict_provider_parameters_with_quality_flags
+
+    return strict_provider_parameters_with_quality_flags(
+        metadata, provider_parameters, resource_id=resource_id,
+    )
 
 
 CAPABILITY_RESOURCE_SUPPORTED = "resource-supported"
