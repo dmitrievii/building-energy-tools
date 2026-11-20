@@ -5,6 +5,7 @@ import pandas as pd
 
 from .engine.station_epw_admission import StationYearRequest
 from .geosphere_station_year import run_station_year
+from .source_parity_resource_bounds import hourly_request_date_bounds, hourly_station_validity_warning
 
 PRODUCT_KEY = "ige_h1_station_year_product"
 ERROR_KEY = "ige_h1_station_year_error"
@@ -32,18 +33,23 @@ def render_station_year(st, station, metadata):
     st.subheader("Full station year and EPW admission")
     st.write("Load the available hourly observations for a selected year and check every required EPW field. Incomplete or incompatible sources produce a report with missing fields and hours.")
     today = pd.Timestamp.now(tz="UTC")
-    start = pd.to_datetime(station.valid_from, utc=True, errors="coerce")
     stop = pd.to_datetime(station.valid_to, utc=True, errors="coerce")
-    source_start = pd.to_datetime(metadata.get("start_time"), utc=True, errors="coerce")
-    minimum = max(1800, int(start.year) if pd.notna(start) else 1800,
-                  int(source_start.year) if pd.notna(source_start) else 1800)
-    maximum = min(today.year, int(stop.year) if pd.notna(stop) else today.year)
-    if maximum < minimum:
-        st.warning("The station and source metadata have no overlapping historical year.")
+    try:
+        first_date, last_date = hourly_request_date_bounds(metadata, today=today.date())
+    except ValueError as exc:
+        st.warning(str(exc))
         return
+    minimum, maximum = first_date.year, last_date.year
+    default_year = min(maximum, today.year - 1, int(stop.year) if pd.notna(stop) else maximum)
     key = "ige_h1_year_" + station.station_id
     year = st.number_input("Station calendar year", minimum, maximum,
-                           min(maximum, max(minimum, today.year - 1)), step=1, key=key)
+                           max(minimum, default_year), step=1, key=key)
+    warning = hourly_station_validity_warning(
+        station, pd.Timestamp(year=int(year), month=1, day=1).date(),
+        pd.Timestamp(year=int(year), month=12, day=31).date(),
+    )
+    if warning:
+        st.warning(warning)
     st.caption(f"Selected station: {station.name} · ID {station.station_id}. Output clock: fixed CET (UTC+1), without daylight-saving shifts. Station validity is metadata, not a promise of complete parameter coverage.")
     st.caption("QC policy: provider-reviewed codes 10/11/12/20/21/22; 0 and missing flags are rejected. Reviewed values can include provider corrections or filling. This does not change the earlier QC10-only independent-validation policy.")
     st.info("This first admission profile does not fill gaps, estimate missing radiation or dew point, infer rain phase, or turn hourly-mean wind into instantaneous wind. An EPW is offered only if the complete strict input contract passes.")

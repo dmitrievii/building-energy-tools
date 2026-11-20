@@ -1335,14 +1335,32 @@ def render_geosphere_source() -> None:
     today = pd.Timestamp.now(tz="UTC").date()
     parsed_from = pd.to_datetime(station.valid_from, errors="coerce")
     parsed_to = pd.to_datetime(station.valid_to, errors="coerce")
-    min_date = parsed_from.date() if pd.notna(parsed_from) else pd.Timestamp("1900-01-01").date()
-    provider_max = parsed_to.date() if pd.notna(parsed_to) else today
-    max_date = min(provider_max, today)
-    if max_date < min_date:
-        st.error("The station validity interval does not overlap the available historical date range.")
-        return
-    default_end = max_date
-    default_start = max(min_date, (pd.Timestamp(default_end) - pd.Timedelta(days=30)).date())
+    hourly_resource = st.session_state.get("geosphere_resource_id") == "klima-v2-1h"
+    if hourly_resource:
+        from epw_climate_analyzer.source_parity_resource_bounds import (
+            hourly_request_date_bounds, hourly_station_validity_warning,
+        )
+        try:
+            min_date, max_date = hourly_request_date_bounds(metadata, today=today)
+        except ValueError as exc:
+            st.error(str(exc))
+            return
+        # Preserve station-based defaults when they are within the resource
+        # extent, but never make the station record a request-date hard limit.
+        default_end = min(max_date, max(min_date, parsed_to.date())) if pd.notna(parsed_to) else max_date
+        preferred_start = max(min_date, parsed_from.date()) if pd.notna(parsed_from) else min_date
+        default_start = max(min(preferred_start, default_end),
+                            (pd.Timestamp(default_end) - pd.Timedelta(days=30)).date())
+        st.caption("Hourly request dates use the GeoSphere resource extent. Station metadata validity is advisory; actual measurement coverage is assessed after loading.")
+    else:
+        min_date = parsed_from.date() if pd.notna(parsed_from) else pd.Timestamp("1900-01-01").date()
+        provider_max = parsed_to.date() if pd.notna(parsed_to) else today
+        max_date = min(provider_max, today)
+        if max_date < min_date:
+            st.error("The station validity interval does not overlap the available historical date range.")
+            return
+        default_end = max_date
+        default_start = max(min_date, (pd.Timestamp(default_end) - pd.Timedelta(days=30)).date())
     c1, c2 = st.columns(2)
     start_date = c1.date_input(
         "From date (UTC)", value=default_start, min_value=min_date, max_value=max_date, key="geosphere_start_date"
@@ -1353,6 +1371,10 @@ def render_geosphere_source() -> None:
     if end_date < start_date:
         st.error("GeoSphere end date must not be earlier than start date.")
         return
+    if hourly_resource:
+        warning = hourly_station_validity_warning(station, start_date, end_date)
+        if warning:
+            st.warning(warning)
     selected_days = (pd.Timestamp(end_date) - pd.Timestamp(start_date)).days + 1
 
     st.markdown("#### Measured variables to load")

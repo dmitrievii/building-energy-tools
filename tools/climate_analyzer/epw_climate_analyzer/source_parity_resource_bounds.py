@@ -15,7 +15,7 @@ returned numeric observations rather than inferred from station validity.
 from __future__ import annotations
 
 from datetime import date
-from typing import Any, Callable
+from typing import Any, Callable, Mapping
 
 import pandas as pd
 
@@ -30,6 +30,48 @@ GEOSPHERE_RESOURCE_START_UTC: dict[str, pd.Timestamp] = {
 def resource_start_date(resource_id: str) -> date | None:
     value = GEOSPHERE_RESOURCE_START_UTC.get(str(resource_id))
     return value.date() if value is not None else None
+
+
+def hourly_request_date_bounds(
+    metadata: Mapping[str, Any], *, today: date | None = None
+) -> tuple[date, date]:
+    """Return resource-level request dates, not a station coverage assertion.
+
+    Station validity can describe an individual station record or metadata
+    segment. It is useful for advising a user, but does not establish the
+    numeric coverage of the requested measurements. Only resource-wide
+    temporal bounds may limit an explicit hourly data request.
+    """
+    today = today if today is not None else pd.Timestamp.now(tz="UTC").date()
+    minimum = GEOSPHERE_RESOURCE_START_UTC["klima-v2-1h"].date()
+    start = pd.to_datetime(metadata.get("start_time"), errors="coerce", utc=True)
+    if pd.notna(start):
+        minimum = max(minimum, start.date())
+    maximum = today
+    end = pd.to_datetime(metadata.get("end_time"), errors="coerce", utc=True)
+    if pd.notna(end):
+        maximum = min(maximum, end.date())
+    if maximum < minimum:
+        raise ValueError("The hourly GeoSphere resource has no available historical date range.")
+    return minimum, maximum
+
+
+def hourly_station_validity_warning(station: Any, start: date, end: date) -> str | None:
+    """Display incomplete station metadata coverage without gating acquisition."""
+    valid_from = pd.to_datetime(station.valid_from, errors="coerce", utc=True)
+    valid_to = pd.to_datetime(station.valid_to, errors="coerce", utc=True)
+    if (pd.notna(valid_from) and start < valid_from.date()) or (
+        pd.notna(valid_to) and end > valid_to.date()
+    ):
+        first = valid_from.date().isoformat() if pd.notna(valid_from) else "unknown"
+        last = valid_to.date().isoformat() if pd.notna(valid_to) else "unknown"
+        return (
+            f"Selected interval extends outside this station record's metadata validity "
+            f"({first} through {last}). The request is allowed, but measurements may be "
+            "missing or the station may have been discontinued. Check the returned "
+            "coverage, or choose another station ID with the desired recording period."
+        )
+    return None
 
 
 def install_resource_temporal_bounds(proxy: Any, parity: Any) -> None:

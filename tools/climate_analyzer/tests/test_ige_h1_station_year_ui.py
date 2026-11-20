@@ -93,6 +93,20 @@ class StationYearUITests(unittest.TestCase):
             self.assertIn("ige_h1_download_epw", [item.key for item in app.download_button])
             self.assertEqual(len(app.download_button), 4)
 
+    def test_station_metadata_end_does_not_block_explicit_later_year_request(self):
+        script = SCRIPT.replace("2000-01-01", "1911-01-01").replace("2100-12-31", "2005-01-31")
+        with patch("epw_climate_analyzer.station_year_ui.run_station_year", return_value=self.refused) as run:
+            app = AppTest.from_string(script, default_timeout=45).run()
+            self.clean(app)
+            app.number_input(key="ige_h1_year_12345").set_value(2025).run()
+            self.clean(app)
+            self.assertEqual(app.number_input(key="ige_h1_year_12345").value, 2025)
+            self.assertTrue(any("outside this station record" in e.value for e in app.warning))
+            run.assert_not_called()
+            app.button(key="ige_h1_load_year").click().run()
+            self.clean(app)
+            self.assertEqual(run.call_args.args[0].year, 2025)
+
     def test_real_app_hourly_source_contains_the_same_annual_tool(self):
         from pathlib import Path
         import streamlit as st
