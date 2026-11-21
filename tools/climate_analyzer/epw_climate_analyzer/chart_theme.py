@@ -30,11 +30,21 @@ TEMPERATURE_COMFORT_COLORSCALE = [
     [0.70, "#f97316"],
     [1.00, "#dc2626"],
 ]
+# Sequential irradiation palette: white is a physical zero, high values
+# progress through yellow to saturated orange.
 SOLAR_COLORSCALE = [
-    [0.00, "#4c1d95"],
-    [0.45, "#f97316"],
-    [1.00, "#fef08a"],
+    [0.00, "#FFFFFF"],
+    [0.12, "#FFFDEB"],
+    [0.35, "#FFF3AE"],
+    [0.60, "#FFD84D"],
+    [0.82, "#FFAA25"],
+    [1.00, "#E66A00"],
 ]
+
+def is_irradiation_metric(column: str | None) -> bool:
+    text = str(column or "").lower()
+    return ("radiation" in text or "irradiance" in text or text.startswith("poa_")) and "illuminance" not in text
+
 ILLUMINANCE_THRESHOLD_COLOR = "#EAB308"
 ILLUMINANCE_COLUMNS = ("global_horizontal_illuminance_lux","direct_normal_illuminance_lux","diffuse_horizontal_illuminance_lux")
 ILLUMINANCE_COLORSCALE = [
@@ -340,7 +350,7 @@ def metric_colorscale(column: str | None):
         return MOIST_AIR_DENSITY_COLORSCALE
     if "illuminance" in text:
         return ILLUMINANCE_COLORSCALE
-    if "radiation" in text or "irradiance" in text:
+    if is_irradiation_metric(text):
         return SOLAR_COLORSCALE
     if "sky_cover" in text:
         return [[0.0, "rgba(255,255,255,0.0)"], [0.25, "#dbeafe"], [1.0, "#0f172a"]]

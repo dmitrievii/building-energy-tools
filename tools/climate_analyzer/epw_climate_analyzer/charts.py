@@ -27,6 +27,8 @@ from .psychrometric_distribution import add_climate_zone_traces, psychrometric_a
 from .chart_theme import (
     BINARY_SUITABILITY_COLORSCALE,
     ILLUMINANCE_COLUMNS,
+    SOLAR_COLORSCALE,
+    is_irradiation_metric,
     CLIMATE_COLORS,
     PSYCHROMETRIC_TILE_COLORSCALE,
     DEFAULT_METRIC_COLOR,
@@ -52,11 +54,6 @@ TEMPERATURE_COMFORT_COLORSCALE = [
     [0.55, "#22c55e"],
     [0.70, "#f97316"],
     [1.00, "#dc2626"],
-]
-SOLAR_COLORSCALE = [
-    [0.00, "#4c1d95"],
-    [0.45, "#f97316"],
-    [1.00, "#fef08a"],
 ]
 BINARY_BLUE_COLORSCALE = [
     [0.00, "rgba(255,255,255,0.0)"],
@@ -196,7 +193,7 @@ def _heatmap_colorscale(column: str, values=None, temperature_thresholds: tuple[
         return [[0.0, "rgba(255,255,255,0.0)"], [0.25, "#dbeafe"], [1.0, "#0f172a"]]
     if "illuminance" in column:
         return metric_colorscale(column)
-    if "radiation" in column or "irradiance" in column:
+    if is_irradiation_metric(column):
         return SOLAR_COLORSCALE
     return metric_colorscale(column) if column in ("relative_humidity_pct","humidity_ratio_g_kg","moist_air_enthalpy_kj_kg","specific_volume_m3_kg","moist_air_density_kg_m3","atmospheric_station_pressure_pa") else "Viridis"
 
@@ -450,6 +447,12 @@ def temporal_heatmap_chart(
     if column == "liquid_precipitation_depth_mm":
         # A dry interval is a meaningful precipitation state.
         zmin = 0.0
+    if is_irradiation_metric(column):
+        # Zero irradiation is white even for a daytime-only filter. Preserve
+        # all numeric cell values; do not truncate any signed derived quantity.
+        lo,hi=_finite_min_max(matrix.values)
+        if lo is not None and lo>=0.:
+            zmin,zmax=0.,max(1e-9,hi or 0.) if hi else (100. if column.endswith("_pct") else 1.)
     if column in ILLUMINANCE_COLUMNS:
         # A common absolute domain makes equal lux values equal colours
         # across all illuminance components in the selected source scope.
@@ -1788,10 +1791,13 @@ def orientation_bar_chart(data: pd.DataFrame, title: str) -> go.Figure:
 def matrix_heatmap(matrix: pd.DataFrame, title: str, x_label: str, y_label: str, color_label: str) -> go.Figure:
     """Create a generic matrix heatmap with domain-specific colour scales."""
     use_solar_scale = any(token in (title + " " + color_label).lower() for token in ["radiation", "irradiation", "solar", "kwh/m²", "wh/m²"])
+    lo,hi=_finite_min_max(matrix.values)
+    solar_bounds=dict(zmin=0.,zmax=max(1e-9,hi) if hi else 1.) if use_solar_scale and lo is not None and lo>=0. else {}
     fig = px.imshow(
         matrix,
         aspect="auto",
         color_continuous_scale=SOLAR_COLORSCALE if use_solar_scale else "Viridis",
+        **solar_bounds,
         labels=dict(x=x_label, y=y_label, color=color_label),
         title=title,
     )

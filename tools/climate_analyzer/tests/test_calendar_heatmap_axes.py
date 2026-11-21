@@ -394,6 +394,35 @@ class CalendarHeatmapTests(unittest.TestCase):
         fig=temporal_heatmap_chart(incomplete,ILLUMINANCE_COLUMNS[2],"day",HEATMAP_COMPARE_HOUR,"Mean","Illuminance","lx")
         self.assertEqual(fig.layout.coloraxis.cmax,88000.)
 
+    def test_irradiation_heatmaps_white_absolute_zero(self):
+        from epw_climate_analyzer.chart_theme import SOLAR_COLORSCALE,metric_colorscale
+        from epw_climate_analyzer.charts import temporal_heatmap_chart,matrix_heatmap
+        idx=pd.date_range("2026-07-01",periods=72,freq="h")
+        for c in ("global_horizontal_radiation_wh_m2","direct_normal_radiation_wh_m2",
+                  "diffuse_horizontal_radiation_wh_m2","global_horizontal_irradiance_w_m2",
+                  "horizontal_infrared_radiation_intensity_wh_m2","extraterrestrial_horizontal_radiation_wh_m2",
+                  "poa_global_wh_m2","poa_direct_wh_m2","poa_sky_diffuse_wh_m2",
+                  "poa_ground_diffuse_wh_m2"):
+            df=pd.DataFrame({c:np.linspace(10.,800.,len(idx))},index=idx)
+            df.iloc[2,0]=np.nan
+            self.assertEqual(metric_colorscale(c),SOLAR_COLORSCALE)
+            for period in ("day","week","month"):
+                fig=temporal_heatmap_chart(df,c,period,HEATMAP_COMPARE_HOUR,"Mean","Irradiation","Wh/m²")
+                for copy in (fig,report_figure(fig,width_pt=500,height_pt=230)):
+                    self.assertEqual(copy.layout.coloraxis.cmin,0.)
+                    self.assertGreater(copy.layout.coloraxis.cmax,0.)
+                    self.assertEqual(copy.layout.coloraxis.colorscale,tuple(tuple(v) for v in SOLAR_COLORSCALE))
+                    np.testing.assert_allclose(np.asarray(copy.data[0].z,float),temporal_heatmap_matrix(df,c,period,HEATMAP_COMPARE_HOUR,"Mean").values,equal_nan=True)
+            df[c]=0.
+            fig=temporal_heatmap_chart(df,c,"day",HEATMAP_COMPARE_HOUR,"Mean","Irradiation","Wh/m²")
+            self.assertEqual(fig.layout.coloraxis.cmin,0.)
+            self.assertGreater(fig.layout.coloraxis.cmax,0.)
+        mat=pd.DataFrame([[50.,100.],[150.,200.]])
+        fig=matrix_heatmap(mat,"Orientation–tilt irradiation","Azimuth","Tilt","kWh/m²")
+        self.assertEqual((fig.layout.coloraxis.cmin,fig.layout.coloraxis.cmax),(0.,200.))
+        self.assertEqual(fig.layout.coloraxis.colorscale,tuple(tuple(v) for v in SOLAR_COLORSCALE))
+        self.assertEqual(SOLAR_COLORSCALE[0],[0.,"#FFFFFF"])
+
     def test_snow_depth_semantic_heatmap(self):
         from epw_climate_analyzer.chart_theme import SNOW_DEPTH_COLORSCALE,metric_colorscale
         from epw_climate_analyzer.charts import temporal_heatmap_chart

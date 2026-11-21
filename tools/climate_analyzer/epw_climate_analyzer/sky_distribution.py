@@ -133,8 +133,8 @@ def cumulative_sky(df,*,mf=1,quantity="Total",model="Isotropic"):
     return p
 
 # Shared strictly nonnegative irradiation palette: exact white at zero.
-SKY_COLORSCALE=[[0.0,"#FFFFFF"],[.12,"#FFFDEB"],[.35,"#FFF3AE"],
-                [.60,"#FFD84D"],[.82,"#FFAA25"],[1.0,"#E66A00"]]
+from .chart_theme import SOLAR_COLORSCALE
+SKY_COLORSCALE=SOLAR_COLORSCALE
 
 def _add_dome_compass(fig):
     """Presentation guides in physical East/North/Up coordinates."""
