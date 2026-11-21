@@ -214,7 +214,7 @@ def report_figure(fig,*,width_pt,height_pt,font_pt=11,external_zone_legend=False
         side=bool(traces) and f.layout.showlegend is not False and w-legend_w-bar_w-40>=min(h*.72,350)
         if side and len(traces)*(px+6)+32<h-24:
             stop=max(.45,min(.85,(w-legend_w-bar_w-24)/w))
-            f.update_layout(margin=dict(l=20,r=12,t=18,b=18),
+            f.update_layout(margin=dict(l=20,r=12,t=18,b=18,autoexpand=False),
                 polar=dict(domain=dict(x=[0,stop],y=[.03,.97])),
                 legend=dict(orientation="v",xref="paper",x=min(.99,stop+(bar_w+12)/max(1,w-32)),xanchor="left",yref="paper",y=.95,yanchor="top",font=dict(size=px)))
             for bar in bars:

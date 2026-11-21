@@ -41,6 +41,20 @@ class CalendarHeatmapTests(unittest.TestCase):
         apply_calendar_heatmap_axes(solar)
         self.assertIsNone(solar.layout.xaxis.ticktext)
 
+    def test_monthly_bars_explicit_ticks_and_daily_axis_unchanged(self):
+        from epw_climate_analyzer.calendar_heatmap_axes import apply_monthly_axes
+        idx=pd.date_range("2026-01-01",periods=12,freq="MS")
+        fig=go.Figure(go.Bar(x=idx,y=np.arange(12)))
+        apply_monthly_axes(fig)
+        self.assertEqual(list(fig.layout.xaxis.ticktext),list(idx.strftime("%b")))
+        category=go.Figure(go.Bar(x=idx.strftime("%b %Y"),y=np.arange(12)))
+        apply_monthly_axes(category)
+        self.assertEqual(list(category.layout.xaxis.ticktext)[-1],"Dec")
+        self.assertEqual(str(category.data[0].x[-1]),"Dec 2026")
+        daily=go.Figure(go.Scatter(x=pd.date_range("2026-01-01",periods=30,freq="D"),y=np.arange(30)))
+        apply_monthly_axes(daily)
+        self.assertIsNone(daily.layout.xaxis.ticktext)
+
     def test_multiyear_utci_not_truncated(self):
         idx=pd.date_range("2025-12-31","2026-12-31",freq="h")
         df=pd.DataFrame(index=idx)

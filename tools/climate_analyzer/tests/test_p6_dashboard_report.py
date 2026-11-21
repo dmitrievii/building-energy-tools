@@ -149,6 +149,76 @@ else:
         pdf=r.pdf_report([first],"Graz","A4","Landscape")
         self.assertTrue(pdf.startswith(b"%PDF"))
 
+    def test_report_month_ticks_temperature_palette_and_interpretation(self):
+        from epw_climate_analyzer import p6_report_structure as s
+        from epw_climate_analyzer.charts import month_hour_heatmap
+        from epw_climate_analyzer.interpretations import variable_interpretation
+        from epw_climate_analyzer.chart_presentation import ChartPresentationSettings,apply_chart_presentation
+        idx=pd.date_range("2026-01-01","2027-01-01",freq="h",inclusive="left")
+        df=pd.DataFrame({s.T:15+12*np.sin(2*np.pi*(idx.dayofyear.to_numpy()-90)/365)+4*np.sin(2*np.pi*idx.hour.to_numpy()/24)},index=idx)
+        bounds=(17.,25.)
+        entry=next(e for e in s.CATALOG if e[0]=="temperature_heatmap")
+        fig,note=s.standard_figure(entry,df,{"temperature thresholds":list(bounds)})
+        expected=month_hour_heatmap(df,s.T,"test","°C",temperature_thresholds=bounds)
+        self.assertEqual(fig.layout.coloraxis.colorscale,expected.layout.coloraxis.colorscale)
+        self.assertIn(variable_interpretation(df,s.T,entry[2],"°C",high_threshold=25.,low_threshold=17.),note)
+        copy=s.report_figure(fig,width_pt=730,height_pt=350)
+        self.assertEqual(copy.layout.coloraxis.colorscale,expected.layout.coloraxis.colorscale)
+        bars=go.Figure(go.Bar(x=pd.date_range("2026-01-01",periods=12,freq="MS"),y=np.arange(12)))
+        apply_chart_presentation(bars,ChartPresentationSettings())
+        self.assertEqual(list(bars.layout.xaxis.ticktext),list(pd.date_range("2026-01-01",periods=12,freq="MS").strftime("%b")))
+        self.assertEqual(list(s.report_figure(bars,width_pt=730,height_pt=320).layout.xaxis.ticktext)[-1],"Dec")
+        history=go.Figure(go.Scatter(x=pd.date_range("2025-01-01",periods=24,freq="MS"),y=np.arange(24)))
+        apply_chart_presentation(history,ChartPresentationSettings())
+        self.assertIn("2025",history.layout.xaxis.ticktext[0]);self.assertIn("2026",history.layout.xaxis.ticktext[-1])
+
+    def test_psychrometric_zone_key_and_polar_static_export(self):
+        from epw_climate_analyzer import p6_report_structure as s
+        from epw_climate_analyzer.charts import psychrometric_chart
+        import plotly.io as pio
+        df=self.fixture()
+        df[s.T]=np.linspace(0,30,len(df));df[s.W]=np.linspace(2,12,len(df))
+        df[s.RH]=50.
+        df["moist_air_enthalpy_kj_kg"]=1.006*df[s.T]+df[s.W]/1000*(2501+1.86*df[s.T])
+        df["month_index"]=df.index.month;df["month_name"]=df.index.strftime("%b");df["hour_of_day"]=df.index.hour
+        psych=psychrometric_chart(df,data_mode="Points")
+        entries=s.zone_legend_entries(psych)
+        self.assertGreaterEqual(len(entries),12)
+        f=s.report_figure(psych,width_pt=730,height_pt=325,external_zone_legend=True)
+        self.assertEqual(tuple(f.layout.xaxis.domain),(0.,1.))
+        self.assertTrue(all(t.showlegend is False for t in f.data if getattr(t,"legend",None)=="legend2"))
+        self.assertNotEqual(psych.layout.xaxis.domain,f.layout.xaxis.domain)
+        self.assertEqual(len(psych.data),len(f.data))
+        self.assertTrue(f.to_image(format="png",scale=1).startswith(b"\x89PNG"))
+        item=r.snapshot(psych,{"page":"Humidity and Psychrometrics","source":"Test"},"Full interpretation")
+        html=r.printable_html([item],"Test","A4","Landscape").decode("utf-8")
+        self.assertIn("Bioclimatic zones",html)
+        for _,name,_ in entries:self.assertIn(name,html)
+        self.assertTrue(r.pdf_report([item],"Test","A4","Landscape").startswith(b"%PDF"))
+        polar=go.Figure()
+        for m in range(12):
+            polar.add_scatterpolar(theta=np.arange(0,361,10),r=np.linspace(0,90,37),name=f"Month {m+1}",mode="lines")
+        polar.add_scatterpolar(theta=[90,180,270],r=[50,60,70],mode="markers",showlegend=False,
+             marker=dict(color=[0,300,800],showscale=True,colorscale="Plasma",colorbar=dict(title="DNI [Wh/m²]")))
+        polar.update_layout(legend=dict(orientation="h",y=-.08),polar=dict(radialaxis=dict(range=[0,90])))
+        figure=s.report_figure(polar,width_pt=730,height_pt=430)
+        self.assertEqual(figure.layout.legend.orientation,"v")
+        self.assertLess(figure.layout.polar.domain.x[1],1.)
+        self.assertTrue(figure.to_image(format="png",scale=1).startswith(b"\x89PNG"))
+        self.assertEqual(polar.data[-1].marker.colorscale,figure.data[-1].marker.colorscale)
+
+    def test_map_proportions_and_coordinates(self):
+        from epw_climate_analyzer import p6_report_structure as s
+        fig=s.locator_figure({"location":"Graz.Univ, AUT","latitude":"47.08","longitude":"15.45"})
+        self.assertAlmostEqual(fig.layout.xaxis.scaleratio,np.cos(np.deg2rad(47.08)))
+        self.assertEqual(fig.layout.xaxis.scaleanchor,"y")
+        self.assertEqual(fig.data[0].fill,"toself")
+        self.assertEqual(list(fig.data[-1].x),[15.45])
+        self.assertEqual(list(fig.data[-1].y),[47.08])
+        f=s.report_figure(fig,width_pt=730,height_pt=205)
+        self.assertEqual(f.layout.xaxis.scaleanchor,"y")
+        self.assertTrue(f.to_image(format="png",scale=1).startswith(b"\x89PNG"))
+
     def test_standard_catalog_and_bulk_capture(self):
         from epw_climate_analyzer import p6_report_structure as s
         df=self.fixture();df["hour_of_day"]=df.index.hour;df["month_index"]=df.index.month

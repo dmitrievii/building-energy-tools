@@ -371,6 +371,6 @@ def make_figure(d,df,context,reference_df=None,cache=None):
     if k in ("profile","percentile","heatmap","duration","histogram","box","violin","diurnal","occurrence","amplitude","native","psychrometric","monthly_radiation","facade","tilt","sunpath_view","sky_patches","total"):
         scope=df.loc[s.gt(0)].copy() if c and k in ("histogram","duration","box","violin") and a[0]=="wet" else df
         col=c if k in ("profile","percentile","heatmap","duration","histogram","box","violin","diurnal","occurrence","amplitude","native") else ""
-        stat=base.source_interpretation(scope,d.chapter,col,cat.LABELS.get(col,""),u,thresholds=base.temperature_thresholds(context),kind=k)
+        stat=base.source_interpretation(scope,d.chapter,col,cat.LABELS.get(col,""),cat.UNITS.get(col,u),thresholds=base.temperature_thresholds(context),kind=k)
         if stat and stat not in note:note=stat+"\n\n"+note
     return f,note
