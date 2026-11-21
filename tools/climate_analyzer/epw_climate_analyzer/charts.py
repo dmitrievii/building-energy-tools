@@ -195,7 +195,7 @@ def _heatmap_colorscale(column: str, values=None, temperature_thresholds: tuple[
         return [[0.0, "rgba(255,255,255,0.0)"], [0.25, "#dbeafe"], [1.0, "#0f172a"]]
     if "radiation" in column or "irradiance" in column or "illuminance" in column:
         return SOLAR_COLORSCALE
-    return metric_colorscale(column) if column in ("relative_humidity_pct","humidity_ratio_g_kg","moist_air_enthalpy_kj_kg","specific_volume_m3_kg") else "Viridis"
+    return metric_colorscale(column) if column in ("relative_humidity_pct","humidity_ratio_g_kg","moist_air_enthalpy_kj_kg","specific_volume_m3_kg","moist_air_density_kg_m3") else "Viridis"
 
 
 def apply_common_layout(fig: go.Figure, title: str, x_label: str, y_label: str) -> go.Figure:
@@ -426,7 +426,7 @@ def temporal_heatmap_chart(
             zmin=float(np.floor(lo/10.)*10.)
             zmax=float(np.ceil(hi/10.)*10.)
             if zmin==zmax:zmax=zmin+10.
-    if column == "specific_volume_m3_kg":
+    if column in ("specific_volume_m3_kg","moist_air_density_kg_m3"):
         # Use the full selected source range rather than the reduced cell
         # extrema. Zero is not a useful display anchor for atmospheric air.
         lo,hi=_finite_min_max(pd.to_numeric(df[column],errors="coerce"))

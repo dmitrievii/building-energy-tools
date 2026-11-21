@@ -290,6 +290,28 @@ class CalendarHeatmapTests(unittest.TestCase):
         fig=temporal_heatmap_chart(constant,c,"day",HEATMAP_COMPARE_HOUR,"Mean","Specific volume","m³/kg dry air")
         self.assertLess(fig.layout.coloraxis.cmin,fig.layout.coloraxis.cmax)
 
+    def test_moist_air_density_semantic_palette_and_scope_domain(self):
+        from epw_climate_analyzer.chart_theme import MOIST_AIR_DENSITY_COLORSCALE,metric_colorscale
+        from epw_climate_analyzer.charts import temporal_heatmap_chart
+        c="moist_air_density_kg_m3"
+        self.assertEqual(metric_colorscale(c),MOIST_AIR_DENSITY_COLORSCALE)
+        idx=pd.date_range("2026-01-01",periods=72,freq="h")
+        df=pd.DataFrame({c:np.linspace(1.073,1.287,len(idx))},index=idx)
+        df.iloc[4,0]=np.nan
+        for period in ("day","week","month"):
+            for stat in ("Mean","P95"):
+                fig=temporal_heatmap_chart(df,c,period,HEATMAP_COMPARE_HOUR,stat,"Moist-air density","kg/m³")
+                self.assertAlmostEqual(fig.layout.coloraxis.cmin,1.07)
+                self.assertAlmostEqual(fig.layout.coloraxis.cmax,1.29)
+                self.assertEqual(fig.layout.coloraxis.colorscale,tuple(tuple(v) for v in MOIST_AIR_DENSITY_COLORSCALE))
+                expected=temporal_heatmap_matrix(df,c,period,HEATMAP_COMPARE_HOUR,stat)
+                np.testing.assert_allclose(np.asarray(fig.data[0].z,float),expected.values,equal_nan=True)
+                printed=report_figure(fig,width_pt=500,height_pt=230)
+                self.assertEqual(printed.layout.coloraxis.colorscale,fig.layout.coloraxis.colorscale)
+        constant=pd.DataFrame({c:1.2},index=idx)
+        fig=temporal_heatmap_chart(constant,c,"day",HEATMAP_COMPARE_HOUR,"Mean","Moist-air density","kg/m³")
+        self.assertLess(fig.layout.coloraxis.cmin,fig.layout.coloraxis.cmax)
+
     def test_multiyear_utci_not_truncated(self):
         idx=pd.date_range("2025-12-31","2026-12-31",freq="h")
         df=pd.DataFrame(index=idx)
