@@ -7,6 +7,9 @@ folium==0.20.0
 pandas==2.3.3
 numpy==1.26.4
 plotly==5.24.1
+# P6 static report rendering; legacy bundled Chromium matches Plotly 5.x.
+kaleido==0.2.1
+reportlab==4.4.4
 psychrolib==2.5.0
 pvlib==0.15.2
 pythermalcomfort==4.8.1

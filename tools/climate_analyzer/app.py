@@ -13,7 +13,7 @@ import streamlit as st
 # Streamlit can retain imported package modules across an app-script hot deploy.
 # Refresh the navigation contract only when it predates the P3 page.
 from epw_climate_analyzer import ui_contract as _navigation_contract
-if "Outdoor Thermal Comfort" not in _navigation_contract.NAVIGATION_PAGES:
+if any(page not in _navigation_contract.NAVIGATION_PAGES for page in ("Outdoor Thermal Comfort","Report")):
     import importlib
     importlib.reload(_navigation_contract)
 
@@ -1922,13 +1922,18 @@ def render_chart_export_controls(fig) -> None:
 
 def render_plot(fig, text: str) -> None:
     """Render a Plotly figure, local export control and interpretation."""
+    from epw_climate_analyzer.p6_report import INTERPRETATION_KEY
     render_chart_export_controls(fig)
-    st.plotly_chart(
-        fig,
-        use_container_width=True,
-        config={"displaylogo": False, "scrollZoom": True},
-        key=next_plot_key(),
-    )
+    st.session_state[INTERPRETATION_KEY]=text
+    try:
+        st.plotly_chart(
+            fig,
+            use_container_width=True,
+            config={"displaylogo": False, "scrollZoom": True},
+            key=next_plot_key(),
+        )
+    finally:
+        st.session_state.pop(INTERPRETATION_KEY,None)
     render_interpretation(text)
 
 
@@ -3094,6 +3099,9 @@ def render_calculated_epw_statistics(df: pd.DataFrame) -> None:
 
 def render_overview(epw, df: pd.DataFrame, full_df: pd.DataFrame, issues: list[object]) -> None:
     """Render the landing dashboard."""
+    from epw_climate_analyzer.p6_dashboard import select_overview
+    if select_overview(df,render_plot,location=f"{epw.location.city}, {epw.location.country}",source=epw.name,reference_df=full_df):
+        return
     st.header("EPW Climate Analyzer")
     st.write("Interactive climate-analysis dashboard for architecture and HVAC decision support.")
     statistics_scope = st.radio("Statistics scope", ["Full EPW file", "Current sidebar filter"], horizontal=True)
@@ -5790,6 +5798,10 @@ def render_canonical_climate_analysis(dataset) -> None:
     if page == "Climate File Source":
         render_climate_file_source()
         return
+    if page == "Report":
+        from epw_climate_analyzer.p6_report import render_report
+        render_report()
+        return
 
     with st.sidebar.expander("Advanced calculation settings", expanded=False):
         pressure_mode = st.selectbox(
@@ -5817,6 +5829,8 @@ def render_canonical_climate_analysis(dataset) -> None:
         and has_numeric_observations(dataset.data, "relative_humidity_pct")
     )
     include_psychrometrics = can_derive_psychrometrics and page in {
+        "Overview",
+        "Outdoor Thermal Comfort",
         "Temperature",
         "Humidity and Psychrometrics",
         "Wind and Ventilation",
@@ -5824,7 +5838,7 @@ def render_canonical_climate_analysis(dataset) -> None:
         "Natural Ventilation",
         "HVAC and Passive Design",
     }
-    _ensure_analysis_dependencies(include_solar=(page in ("Shading analysis","Outdoor Thermal Comfort")), include_comparison=False)
+    _ensure_analysis_dependencies(include_solar=(page in ("Overview","Shading analysis","Outdoor Thermal Comfort")), include_comparison=False)
     source_pressure = dataset.data.get("atmospheric_station_pressure_pa")
     valid_pressure = pd.to_numeric(source_pressure, errors="coerce").dropna() if source_pressure is not None else pd.Series(dtype=float)
     measured_median = (
@@ -5856,7 +5870,7 @@ def render_canonical_climate_analysis(dataset) -> None:
             full_df = prepare_historical_analysis_frame(
                 dataset,
                 include_psychrometrics=include_psychrometrics,
-                include_solar=(page in ("Shading analysis","Outdoor Thermal Comfort")),
+                include_solar=(page in ("Overview","Shading analysis","Outdoor Thermal Comfort")),
                 fallback_pressure_pa=fallback_pressure,
                 pressure_override_pa=pressure_override,
             )
@@ -5904,8 +5918,12 @@ def render_canonical_climate_analysis(dataset) -> None:
         else:
             st.caption(f"Calculation pressure: {active_pressure:,.0f} Pa")
 
+    from epw_climate_analyzer.p6_report import set_context
+    set_context(st.session_state,page=page,source=dataset.display_name,location=f"{dataset.location.city}, {dataset.location.country}",df=filtered_df,extra={"pressure mode":pressure_mode})
     if page == "Overview":
-        render_historical_overview(dataset, filtered_df, full_df)
+        from epw_climate_analyzer.p6_dashboard import select_overview
+        if not select_overview(filtered_df,render_plot,location=f"{dataset.location.city}, {dataset.location.country}",source=dataset.display_name,reference_df=full_df):
+            render_historical_overview(dataset, filtered_df, full_df)
     elif page == "Temperature":
         st.caption("Threshold conditions are evaluated on the canonical hourly analysis series. Physically incomplete source hours are absent and contribute no duration.")
         native_ground_df = apply_active_global_filter(prepare_historical_native_diagnostic_frame(dataset))
@@ -5969,6 +5987,10 @@ def render_generated_climate_analysis(dataset) -> None:
         st.session_state.setdefault("climate_source_mode", "Generate climate")
         render_climate_file_source()
         return
+    if page == "Report":
+        from epw_climate_analyzer.p6_report import render_report
+        render_report()
+        return
     product = st.session_state.get(PRODUCT_KEY)
     if not isinstance(product, EngineProduct) or product.dataset is not dataset:
         st.error("The selected year has no matching complete output package. Return to the climate source.")
@@ -5994,6 +6016,8 @@ def render_generated_climate_analysis(dataset) -> None:
         st.caption("Hourly states are sampled at interval end; irradiation and precipitation cover the preceding interval. Unavailable fields remain missing.")
     st.caption("Research climate · independent local accuracy and production readiness are not qualified.")
     active_pressure = float(full["atmospheric_station_pressure_pa"].median())
+    from epw_climate_analyzer.p6_report import set_context
+    set_context(st.session_state,page=page,source=dataset.display_name,location=f"{dataset.location.city}, {dataset.location.country}",df=data,extra={"source type":"Generated research climate"})
     if page == "Overview":
         loc = dataset.location
         offset = full.index[0].utcoffset().total_seconds()/3600
@@ -6040,6 +6064,9 @@ def main() -> None:
     st.sidebar.title(APP_NAME)
     st.sidebar.caption(APP_RELEASE_LABEL)
     apply_queued_navigation(st.session_state)
+    from epw_climate_analyzer.p6_report import CONTEXT_KEY,INTERPRETATION_KEY
+    st.session_state.pop(CONTEXT_KEY,None)
+    st.session_state.pop(INTERPRETATION_KEY,None)
     active_file = get_active_climate_file()
     active_canonical = get_active_canonical_climate()
 
@@ -6069,6 +6096,10 @@ def main() -> None:
 
     if page == "Climate File Source":
         render_climate_file_source()
+        return
+    if page == "Report":
+        from epw_climate_analyzer.p6_report import render_report
+        render_report()
         return
 
     with st.sidebar.expander("Advanced calculation settings", expanded=False):
@@ -6154,6 +6185,9 @@ def main() -> None:
         else:
             st.caption(f"Calculation pressure: {active_pressure:,.0f} Pa")
 
+    from epw_climate_analyzer.p6_report import set_context
+    set_context(st.session_state,page=page,source=epw.name,location=f"{epw.location.city}, {epw.location.country}",
+                df=filtered_df,extra={"pressure mode":pressure_mode,"custom pressure":custom_pressure})
     if page == "Overview":
         render_overview(epw, filtered_df, full_df, issues)
     elif page == "Temperature":

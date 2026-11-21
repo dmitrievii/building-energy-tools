@@ -213,6 +213,7 @@ def monthly_page_names(groups: Mapping[str, list[str]]) -> tuple[str, ...]:
             pages.append(page)
     if groups.get("Time Series and Overlay"):
         pages.append("Time Series and Overlay")
+    pages.append("Report")
     pages.append("Data Quality")
     return tuple(pages)
 
@@ -443,6 +444,10 @@ def render_monthly_canonical_analysis(legacy: Any, dataset: Any) -> None:
     if page == "Climate File Source":
         legacy.render_climate_file_source()
         return
+    if page == "Report":
+        from .p6_report import render_report
+        render_report()
+        return
 
     filtered = full if page == "Data Quality" else _monthly_sidebar_filters(legacy, full)
     if filtered.empty:
@@ -459,8 +464,12 @@ def render_monthly_canonical_analysis(legacy: Any, dataset: Any) -> None:
         st.caption("Native resolution: monthly")
         st.caption("No hourly or daily reconstruction is applied.")
 
+    from .p6_report import set_context
+    set_context(st.session_state,page=page,source=dataset.display_name,location=f"{dataset.location.city}, {dataset.location.country}",df=filtered,extra={"native resolution":"monthly","provider":dataset.provenance.provider})
     if page == "Overview":
-        _render_monthly_overview(legacy, dataset, filtered)
+        from .p6_dashboard import select_overview
+        if not select_overview(filtered,legacy.render_plot,location=f"{dataset.location.city}, {dataset.location.country}",source=dataset.display_name,monthly=True):
+            _render_monthly_overview(legacy, dataset, filtered)
         return
     if page == "Data Quality":
         _render_monthly_quality(legacy, dataset)

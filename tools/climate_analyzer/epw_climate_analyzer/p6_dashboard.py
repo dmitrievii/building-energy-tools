@@ -44,9 +44,14 @@ def select_overview(df,render,*,location,source,monthly=False,reference_df=None)
     # the active interval is multiyear, never multiply totals across years.
     years=sorted(df.index.year.unique())
     if len(years)>1:
-        year=st.selectbox("Dashboard year",years,index=len(years)-1,key="p6_dashboard_year")
+        if st.session_state.get("p6_dashboard_year") not in years:st.session_state["p6_dashboard_year"]=years[-1]
+        year=st.selectbox("Dashboard year",years,key="p6_dashboard_year")
         df=df.loc[df.index.year==year].copy()
     if df.empty:st.info("No data for dashboard.");return True
+    from .p6_report import CONTEXT_KEY,set_context
+    context=st.session_state.get(CONTEXT_KEY,{}).copy()
+    extra={k:v for k,v in context.items() if k not in ("page","source","location","first timestamp","last timestamp","selected records","native interval minutes","time basis","filter")}
+    set_context(st.session_state,page="Overview",source=source,location=location,df=df,extra={**extra,"dashboard":choice})
     st.header(choice)
     st.markdown("**"+str(location)+"**")
     st.caption(str(source)+" · "+_period(df)+f" · {len(df):,} selected records")
@@ -209,8 +214,8 @@ def design_dashboard(df,render,*,reference_df=None):
     if complete(df,T,W,"specific_volume_m3_kg"):
         if st.checkbox("Include ventilation conditioning loads",value=False,key="p6_loads"):
             flow=st.number_input("Outdoor airflow [m³/h]",min_value=0.,value=1000.,step=100.,key="p6_flow")
-            a=ventilation_loads(df,airflow=flow,heat=hi,cool=ci,w_low=4.,w_high=w_max)
             if hi<=ci and w_max>=4:
+                a=ventilation_loads(df,airflow=flow,heat=hi,cool=ci,w_low=4.,w_high=w_max)
                 fig=go.Figure()
                 for c in a:fig.add_bar(x=_monthly(a[c],"sum").index,y=_monthly(a[c],"sum"),name=c)
                 fig.update_layout(template="plotly_white",title="Ventilation conditioning loads",barmode="group",yaxis_title="kWh")

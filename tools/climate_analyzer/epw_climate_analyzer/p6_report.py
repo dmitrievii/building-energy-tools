@@ -41,7 +41,7 @@ def add_snapshot(items,item):
     return [*items,item],"Diagram added to report."
 def capture_control(st,fig,key):
     context=st.session_state.get(CONTEXT_KEY)
-    if not isinstance(context,dict) or context.get("page")=="Report":return
+    if not isinstance(context,dict) or context.get("page") in ("Report","Compare Climates"):return
     if st.button("Add to report",key="p6_capture_"+str(key),help="Save this displayed figure after global presentation settings are applied."):
         try:
             item=snapshot(fig,context,st.session_state.get(INTERPRETATION_KEY,""))
@@ -150,7 +150,7 @@ def render_report():
             with st.spinner("Rendering captured diagrams…"):
                 pdf=pdf_report(items,title,paper,orientation)
             st.session_state["_p6_pdf"]=(fingerprint,pdf)
-        except (Exception,) as exc:
+        except Exception as exc:
             st.error(str(exc))
             st.caption("The printable HTML contains all captured charts and can be opened locally, then printed to PDF in your browser.")
     cache=st.session_state.get("_p6_pdf")

@@ -51,6 +51,7 @@ NAVIGATION_PAGES = (
     "HVAC and Passive Design",
     "Outdoor Thermal Comfort",
     "Compare Climates",
+    "Report",
     "Data Quality",
 )
 
@@ -69,6 +70,7 @@ NAVIGATION_LABELS = {
     "HVAC and Passive Design": "Design — Passive strategies & HVAC",
     "Outdoor Thermal Comfort": "Design — Outdoor thermal comfort",
     "Compare Climates": "Compare — Multiple climates",
+    "Report": "Report — Climate assessment",
     "Data Quality": "Data — Quality & metadata",
 }
 

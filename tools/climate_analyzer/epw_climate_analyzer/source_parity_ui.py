@@ -845,6 +845,7 @@ def _render_canonical_analysis(legacy: Any, dataset: CanonicalClimateDataset) ->
     supported = set(available_historical_pages(dataset.data))
     supported.add("Sky and Daylight")  # geometry requires date + latitude only
     supported.add("Compare Climates")
+    supported.add("Report")
     pages = tuple(page for page in legacy.NAVIGATION_PAGES if page in supported)
     if legacy.NAVIGATION_KEY not in st.session_state or st.session_state[legacy.NAVIGATION_KEY] not in pages:
         st.session_state[legacy.NAVIGATION_KEY] = "Overview"
@@ -852,6 +853,10 @@ def _render_canonical_analysis(legacy: Any, dataset: CanonicalClimateDataset) ->
     page = st.sidebar.radio("Analysis section", pages, format_func=legacy.navigation_label, key=legacy.NAVIGATION_KEY, label_visibility="collapsed")
     if page == "Climate File Source":
         legacy.render_climate_file_source()
+        return
+    if page == "Report":
+        from .p6_report import render_report
+        render_report()
         return
 
     with st.sidebar.expander("Advanced calculation settings", expanded=False):
@@ -886,7 +891,7 @@ def _render_canonical_analysis(legacy: Any, dataset: CanonicalClimateDataset) ->
         return
 
     has_psych = _numeric(prepared_dataset.data, "dry_bulb_temperature_c") and _numeric(prepared_dataset.data, "relative_humidity_pct")
-    include_psych = has_psych and page in {"Temperature", "Humidity and Psychrometrics", "Wind and Ventilation", "Time Series and Overlay", "Natural Ventilation", "HVAC and Passive Design", "Overview"}
+    include_psych = has_psych and page in {"Temperature", "Humidity and Psychrometrics", "Wind and Ventilation", "Time Series and Overlay", "Natural Ventilation", "HVAC and Passive Design", "Outdoor Thermal Comfort", "Overview"}
     include_solar = page in {"Solar and Radiation", "Overview", "Shading analysis", "Outdoor Thermal Comfort"}
 
     # The default monthly humidity-ratio plot needs only T, RH and pressure.
@@ -983,8 +988,13 @@ def _render_canonical_analysis(legacy: Any, dataset: CanonicalClimateDataset) ->
     st.sidebar.write(f"Rows in current view: {len(filtered_df):,}")
     st.sidebar.caption(f"Analysis clock: {full_df.attrs.get('canonical_analysis_timezone_name', prepared_dataset.temporal.timezone_name)}")
 
+    from .p6_report import set_context
+    set_context(st.session_state,page=page,source=prepared_dataset.display_name,location=f"{prepared_dataset.location.city}, {prepared_dataset.location.country}",df=filtered_df,
+                extra={"provider":prepared_dataset.provenance.provider,"dataset":prepared_dataset.provenance.dataset,"pressure mode":pressure_mode,"quality policy":quality_policy})
     if page == "Overview":
-        _render_historical_overview_enhanced(legacy, legacy._source_parity_original_historical_overview, prepared_dataset, filtered_df, full_df)
+        from .p6_dashboard import select_overview
+        if not select_overview(filtered_df,legacy.render_plot,location=f"{prepared_dataset.location.city}, {prepared_dataset.location.country}",source=prepared_dataset.display_name,reference_df=full_df):
+            _render_historical_overview_enhanced(legacy, legacy._source_parity_original_historical_overview, prepared_dataset, filtered_df, full_df)
     elif page == "Temperature":
         native = prepare_historical_native_analysis_frame(
             prepared_dataset,

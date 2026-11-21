@@ -583,7 +583,11 @@ def install_global_chart_presentation(st: Any | None = None) -> None:
         setattr(st, original_attr, st.plotly_chart)
     original = getattr(st, original_attr)
 
+    capture_index = 0
+
     def global_plotly_chart(fig: Any, *args: Any, **kwargs: Any) -> Any:
+        nonlocal capture_index
+        capture_index += 1
         settings = settings_from_state(st.session_state)
         apply_chart_presentation(fig, settings)
         meta=fig.layout.meta if isinstance(fig.layout.meta,dict) else {}
@@ -601,13 +605,14 @@ def install_global_chart_presentation(st: Any | None = None) -> None:
         if settings.transparent:
             # Streamlit theme defaults must not substitute an opaque canvas.
             kwargs["theme"] = None
-        if settings.is_auto:
-            return original(fig, *args, **kwargs)
-
-        # A preset/custom canvas is intentionally deterministic. Existing
-        # use_container_width=True calls must not let browser width redefine it.
-        kwargs["use_container_width"] = False
-        return original(fig, *args, **kwargs)
+        if not settings.is_auto:
+            # A preset/custom canvas is intentionally deterministic.
+            kwargs["use_container_width"] = False
+        result=original(fig, *args, **kwargs)
+        if st.session_state.get("_p6_report_context"):
+            from .p6_report import capture_control
+            capture_control(st,fig,kwargs.get("key") or capture_index)
+        return result
 
     global_plotly_chart.__name__ = "global_plotly_chart"
     setattr(st, "plotly_chart", global_plotly_chart)
