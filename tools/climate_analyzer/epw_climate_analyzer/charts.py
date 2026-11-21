@@ -37,6 +37,8 @@ from .chart_theme import (
     DEFAULT_METRIC_COLOR,
     WIND_SPEED_COLOR_MAP,
     WIND_SPEED_LABELS,
+    WIND_SPEED_COLUMNS,
+    wind_speed_colorscale,
     metric_band_colors,
     metric_color,
     metric_colorscale,
@@ -190,7 +192,7 @@ def _heatmap_colorscale(column: str, values=None, temperature_thresholds: tuple[
         return stops
     if column in {"natural_ventilation_suitable", "night_flushing_suitable"} or "suitable" in column:
         return BINARY_SUITABILITY_COLORSCALE
-    if column in ("liquid_precipitation_depth_mm","snow_depth_cm"):
+    if column in ("liquid_precipitation_depth_mm","snow_depth_cm",*WIND_SPEED_COLUMNS):
         return metric_colorscale(column)
     if "sky_cover" in column:
         return [[0.0, "rgba(255,255,255,0.0)"], [0.25, "#dbeafe"], [1.0, "#0f172a"]]
@@ -474,6 +476,14 @@ def temporal_heatmap_chart(
         maxima=[_finite_min_max(pd.to_numeric(df[c],errors="coerce"))[1] for c in ILLUMINANCE_COLUMNS if c in df]
         _,cell_max=_finite_min_max(matrix.values)
         zmin,zmax=0.,max(1000.,float(np.ceil(max([0.,cell_max or 0.]+[v for v in maxima if v is not None])/1000.)*1000.))
+    if column in WIND_SPEED_COLUMNS:
+        # The same physical speed keeps the same colour across speed/gust
+        # and temporal reductions; the upper endpoint never clips data.
+        maxima=[_finite_min_max(pd.to_numeric(df[c],errors="coerce"))[1] for c in WIND_SPEED_COLUMNS if c in df]
+        _,cell_max=_finite_min_max(matrix.values)
+        upper=max([12.,cell_max or 0.,*[v for v in maxima if v is not None]])
+        zmin,zmax=0.,float(np.ceil(upper/2.)*2.)
+        colorscale=wind_speed_colorscale(zmax)
     if column == "snow_depth_cm":
         # Zero snow is white. Keep the same display domain over the selected
         # source scope, with a nondegenerate range even in snow-free climates.
@@ -497,7 +507,7 @@ def temporal_heatmap_chart(
     fig.update_layout(template=PLOT_TEMPLATE, margin=dict(l=40, r=20, t=70, b=45))
     from .calendar_heatmap_axes import apply_calendar_heatmap_axes
     from .calendar_heatmap_axes import set_period_axis_scope
-    if column=="snow_depth_cm":
+    if column=="snow_depth_cm" or column in WIND_SPEED_COLUMNS:
         fig.update_layout(plot_bgcolor="#F1F3F5")
         fig.update_xaxes(showgrid=False)
         fig.update_yaxes(showgrid=False)

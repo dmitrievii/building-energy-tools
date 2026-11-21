@@ -168,6 +168,17 @@ WIND_SPEED_COLORS = [
 ]
 WIND_SPEED_LABELS = ["0-1", "1-2", "2-4", "4-6", "6-8", "8-12", ">12"]
 WIND_SPEED_COLOR_MAP = dict(zip(WIND_SPEED_LABELS, WIND_SPEED_COLORS, strict=True))
+WIND_SPEED_COLUMNS = ("wind_speed_m_s","wind_gust_speed_m_s")
+# Absolute anchors borrow the wind-rose green family. Higher-speed
+# datasets retain all values with a darker green tail above 12 m/s.
+WIND_SPEED_COLORSCALE = [[0., "#FFFFFF"], [1/12, "#D1FAE5"],
+    [2/12, "#A7F3D0"], [4/12, "#6EE7B7"], [6/12, "#34D399"],
+    [8/12, "#10B981"], [1., "#064E3B"]]
+
+def wind_speed_colorscale(upper=12.):
+    upper=max(12.,float(upper))
+    if upper==12.:return WIND_SPEED_COLORSCALE
+    return [[position*12./upper,color] for position,color in WIND_SPEED_COLORSCALE]+[[1.,"#022C22"]]
 
 ORIENTATION_COLORS = {
     "north": "#2563EB",
@@ -376,6 +387,8 @@ def metric_colorscale(column: str | None):
         return SOLAR_COLORSCALE
     if "sky_cover" in text:
         return [[0.0, "rgba(255,255,255,0.0)"], [0.25, "#dbeafe"], [1.0, "#0f172a"]]
+    if text in WIND_SPEED_COLUMNS:
+        return WIND_SPEED_COLORSCALE
     if "wind" in text:
         return "Turbo"
     if "suitable" in text or "ventilation" in text:

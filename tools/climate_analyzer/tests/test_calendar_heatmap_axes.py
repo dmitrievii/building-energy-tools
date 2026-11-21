@@ -487,6 +487,30 @@ class CalendarHeatmapTests(unittest.TestCase):
         self.assertEqual(fig.layout.coloraxis.colorscale,tuple(tuple(v) for v in SOLAR_COLORSCALE))
         self.assertEqual(SOLAR_COLORSCALE[0],[0.,"#FFFFFF"])
 
+    def test_wind_speed_and_gust_green_absolute_domain(self):
+        from epw_climate_analyzer.chart_theme import WIND_SPEED_COLUMNS,WIND_SPEED_COLORSCALE,wind_speed_colorscale,metric_colorscale
+        from epw_climate_analyzer.charts import temporal_heatmap_chart
+        idx=pd.date_range("2026-01-01",periods=72,freq="h")
+        df=pd.DataFrame({WIND_SPEED_COLUMNS[0]:np.linspace(0.,7.5,len(idx)),
+                         WIND_SPEED_COLUMNS[1]:np.linspace(0.,19.3,len(idx))},index=idx)
+        df.iloc[2,0]=np.nan
+        for c in WIND_SPEED_COLUMNS:
+            self.assertEqual(metric_colorscale(c),WIND_SPEED_COLORSCALE)
+            for period in ("day","week","month"):
+                for stat in ("Mean","Maximum","P95"):
+                    fig=temporal_heatmap_chart(df,c,period,HEATMAP_COMPARE_HOUR,stat,"Wind speed","m/s")
+                    for copied in (fig,report_figure(fig,width_pt=500,height_pt=230)):
+                        self.assertEqual((copied.layout.coloraxis.cmin,copied.layout.coloraxis.cmax),(0.,20.))
+                        self.assertEqual(copied.layout.coloraxis.colorscale,tuple(tuple(v) for v in wind_speed_colorscale(20.)))
+                        np.testing.assert_allclose(np.asarray(copied.data[0].z,float),temporal_heatmap_matrix(df,c,period,HEATMAP_COMPARE_HOUR,stat).values,equal_nan=True)
+        calm=df[[WIND_SPEED_COLUMNS[0]]].copy()
+        calm.iloc[:,0]=0.
+        fig=temporal_heatmap_chart(calm,WIND_SPEED_COLUMNS[0],"day",HEATMAP_COMPARE_HOUR,"Mean","Wind speed","m/s")
+        self.assertEqual((fig.layout.coloraxis.cmin,fig.layout.coloraxis.cmax),(0.,12.))
+        self.assertEqual(fig.layout.coloraxis.colorscale[0],(0.,"#FFFFFF"))
+        self.assertEqual(metric_colorscale("wind_direction_deg"),"Turbo")
+        self.assertEqual(wind_speed_colorscale(20.)[-2],[.6,"#064E3B"])
+
     def test_snow_depth_semantic_heatmap(self):
         from epw_climate_analyzer.chart_theme import SNOW_DEPTH_COLORSCALE,metric_colorscale
         from epw_climate_analyzer.charts import temporal_heatmap_chart
