@@ -62,6 +62,29 @@ class AtlasTests(unittest.TestCase):
                     self.assertIn("coverage.csv",z.namelist())
                     self.assertIn("atlas_metadata.json",z.namelist())
                     self.assertTrue(any(n.endswith(".html" if "HTML" in mode else ".pdf") for n in z.namelist()))
+    def test_complete_html_atlas_exceeds_pdf_batch_limit(self):
+        from unittest.mock import patch
+        import plotly.graph_objects as go
+        df=self.fixture();rows=c.catalogue(df,{},c.FULL)
+        selected=[d for d in rows if d.status=="available"][:61]
+        self.assertEqual(len(selected),61)
+        selected.append(next(d for d in rows if d.kind=="not_registered"))
+        f=go.Figure(go.Scatter(x=[1,2],y=[3,4]))
+        with patch("epw_climate_analyzer.p66_export.make_figure",return_value=(f,"Interpretation")) as render:
+            data,manifest,metadata=generate_atlas(selected,df,{},mode=PDF_MODES[2])
+        self.assertEqual(render.call_count,61)
+        self.assertEqual(metadata["counts"]["generated"],61)
+        self.assertEqual(metadata["counts"]["unsupported"],1)
+        self.assertEqual(len(manifest),62)
+        with zipfile.ZipFile(io.BytesIO(data)) as z:
+            self.assertIn("index.html",z.namelist())
+            self.assertEqual(z.namelist().count("plotly.min.js"),1)
+            index=z.read("index.html").decode()
+            for name in metadata["html_files"]:
+                self.assertIn(name,index)
+                self.assertIn("src='plotly.min.js'",z.read(name).decode())
+            self.assertEqual(sum(z.read(n).count(b"Plotly.newPlot(") for n in metadata["html_files"]),61)
+
     def test_batches_cover_all_admitted_and_guard(self):
         from unittest.mock import patch
         from epw_climate_analyzer.p66_export import catalogue_batches

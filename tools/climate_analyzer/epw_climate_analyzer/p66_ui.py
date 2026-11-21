@@ -53,22 +53,30 @@ def render_atlas(df,context,reference_df=None):
     orientation=b.radio("Orientation",["Landscape","Portrait"],horizontal=True,key="p66_orientation")
     per_page=c.radio("Diagrams per PDF page",[1,2,4],index=1,horizontal=True,key="p66_panels")
     st.caption("Full 11 pt graph and body typography. Complex diagrams and long interpretations automatically receive a full page or continuation page; the requested panel count is a maximum.")
-    batch_size=st.selectbox("Diagrams per export batch",[5,10,20,30,50],index=2,key="p66_batch_size")
-    batches=catalogue_batches(selected,batch_size)
-    if not batches:return
-    numbers=list(range(1,len(batches)+1))
-    if st.session_state.get("p66_batch_number") not in numbers:st.session_state["p66_batch_number"]=1
-    batch_number=st.selectbox("Export batch",numbers,key="p66_batch_number",
-              format_func=lambda n:f"Batch {n} / {len(batches)} · diagrams {(n-1)*batch_size+1}–{min(n*batch_size,ready)}")
-    batch=batches[batch_number-1]
-    st.caption(f"Full selection: {ready:,} admitted diagrams in {len(batches)} batches. This request generates {len(batch)} diagrams only. Download each batch before generating the next; all catalogue entries remain selectable. The catalogue CSV describes the entire selection; generation outcomes describe this batch only.")
+    is_html=mode==PDF_MODES[2]
+    all_html=is_html and st.radio("HTML export scope",["All selected diagrams","Selected batch"],horizontal=True,key="p67_html_scope")=="All selected diagrams"
+    if not ready:return
+    if all_html:
+        # Include non-admitted entries in the final manifest, not in rendering.
+        batch=selected;batch_number=1;batch_count=1;batch_size=ready
+        st.caption(f"Full selection: {ready:,} admitted diagrams. One ZIP contains all generated chapter HTML files and the complete coverage manifest. Extract the ZIP before opening index.html.")
+    else:
+        batch_size=st.selectbox("Diagrams per export batch",[5,10,20,30,50],index=2,key="p66_batch_size")
+        batches=catalogue_batches(selected,batch_size)
+        batch_count=len(batches)
+        numbers=list(range(1,batch_count+1))
+        if st.session_state.get("p66_batch_number") not in numbers:st.session_state["p66_batch_number"]=1
+        batch_number=st.selectbox("Export batch",numbers,key="p66_batch_number",
+                  format_func=lambda n:f"Batch {n} / {batch_count} · diagrams {(n-1)*batch_size+1}–{min(n*batch_size,ready)}")
+        batch=batches[batch_number-1]
+        st.caption(f"Full selection: {ready:,} admitted diagrams in {batch_count} batches. This request generates {len(batch)} diagrams only. Download each batch before generating the next; all catalogue entries remain selectable. The catalogue CSV describes the entire selection; generation outcomes describe this batch only.")
     mem=container_memory()
     if mem:st.caption(f"Container memory: {mem[0]/1024**2:.0f} / {mem[1]/1024**2:.0f} MiB.")
-    st.caption("32 MiB output budget per batch. Use smaller batches if memory pressure is reported. Interactive HTML avoids Chromium image rendering.")
-    signature=hashlib.sha256(json.dumps([context,coverage,chosen,[d.id for d in batch],batch_number,batch_size,title,mode,paper,orientation,per_page],sort_keys=True,default=str).encode()).hexdigest()
+    st.caption("32 MiB output budget per download. Interactive HTML avoids Chromium image rendering. If a complete HTML export exceeds memory or size limits, select a batch or fewer chapters.")
+    signature=hashlib.sha256(json.dumps([context,coverage,chosen,[d.id for d in batch],batch_number,batch_size,title,mode,paper,orientation,per_page,"p67-html-all",all_html],sort_keys=True,default=str).encode()).hexdigest()
     if st.session_state.get("_p66_atlas_result") and st.session_state["_p66_atlas_result"][0]!=signature:
         st.session_state.pop("_p66_atlas_result",None)
-    if st.button("Generate selected batch",key="p66_generate"):
+    if st.button("Generate complete HTML atlas" if all_html else "Generate selected batch",key="p66_generate"):
         import gc
         for key in ("_p66_atlas_result","_p6_pdf","_p6_html_result"):st.session_state.pop(key,None)
         gc.collect()
@@ -80,7 +88,8 @@ def render_atlas(df,context,reference_df=None):
             data,manifest,metadata=generate_atlas(batch,prepared,{**context,"_report_osm":True},reference_df=reference_df,title=title,paper=paper,orientation=orientation,
                                   mode=mode,per_page=per_page,progress=update,coverage=coverage,render_cache_dir=session_cache_dir(st.session_state))
             metadata["batch_number"]=batch_number
-            metadata["batch_count"]=len(batches)
+            metadata["batch_count"]=batch_count
+            metadata["export_scope"]="all selected" if all_html else "selected batch"
             metadata["batch_size"]=batch_size
             st.session_state["_p66_atlas_result"]=(signature,data,manifest,metadata)
         except Exception as exc:st.error("Atlas generation not completed: "+str(exc))
@@ -93,9 +102,10 @@ def render_atlas(df,context,reference_df=None):
     elif n["generated"]:st.success(f"{n['generated']:,} diagrams generated; {n['not applicable']:,} have no qualifying observations; {n['unsupported']:,} unsupported/not registered.")
     else:st.warning("No diagrams were generated; see coverage manifest.")
     ext="pdf" if mode=="Single PDF" else "zip"
+    suffix="complete" if all_html else f"batch_{batch_number:03d}"
     if n["generated"]:
-        st.download_button("Download atlas",data=data,file_name=f"climate_diagram_atlas_batch_{batch_number:03d}.{ext}",mime="application/pdf" if ext=="pdf" else "application/zip",key="p66_download")
-    st.download_button("Download final coverage CSV",data=manifest_csv(manifest),file_name=f"atlas_coverage_batch_{batch_number:03d}.csv",mime="text/csv",key="p66_coverage_csv")
+        st.download_button("Download atlas",data=data,file_name=f"climate_diagram_atlas_{suffix}.{ext}",mime="application/pdf" if ext=="pdf" else "application/zip",key="p66_download",on_click="ignore")
+    st.download_button("Download final coverage CSV",data=manifest_csv(manifest),file_name=f"atlas_coverage_{suffix}.csv",mime="text/csv",key="p66_coverage_csv",on_click="ignore")
     st.download_button("Download atlas metadata",data=json.dumps(metadata,ensure_ascii=False,indent=2,default=str).encode(),file_name="atlas_metadata.json",mime="application/json",key="p66_meta")
     with st.expander("Generation outcomes",expanded=bool(n["failed"])):
         st.dataframe(pd.DataFrame([{"Diagram":d["title"],"Status":d["status"],"Reason":d["reason"]} for d in manifest]),hide_index=True,use_container_width=True)

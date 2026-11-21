@@ -208,10 +208,9 @@ class PdfWriter:
         self.canvas.save();return self.out.getvalue()
 
 def _html_header(title,context,chapter,df):
-    from plotly.offline import get_plotlyjs
     stats=capture_statistics(df,chapter)["chapter"]
     table="<table>"+ "".join("<tr>"+"".join("<td>"+escape(str(v))+"</td>" for v in row)+"</tr>" for row in stats)+"</table>"
-    return ("<!doctype html><html><head><meta charset='utf-8'><title>"+escape(title)+"</title><style>body{font:11pt Arial,sans-serif;margin:28px;color:#202830} h1,h2,h3{margin:10px 0} table{border-collapse:collapse;width:100%}td{padding:5px;border-bottom:1px solid #ddd}.panel{break-inside:avoid;margin:24px 0}.plot{width:100%;min-height:400px} @media print{button{display:none}} </style><script>"+get_plotlyjs()+"</script></head><body><h1>"+escape(title)+"</h1><h2>"+escape(CHAPTERS.get(chapter,chapter))+"</h2><p>"+escape(concise_context(context))+"</p>"+table)
+    return ("<!doctype html><html><head><meta charset='utf-8'><title>"+escape(title)+"</title><style>body{font:11pt Arial,sans-serif;margin:28px;color:#202830} h1,h2,h3{margin:10px 0} table{border-collapse:collapse;width:100%}td{padding:5px;border-bottom:1px solid #ddd}.panel{break-inside:avoid;margin:24px 0}.plot{width:100%;min-height:400px} @media print{button{display:none}} </style><script src='plotly.min.js'></script></head><body><h1>"+escape(title)+"</h1><h2>"+escape(CHAPTERS.get(chapter,chapter))+"</h2><p>"+escape(concise_context(context))+"</p>"+table)
 def _html_panel(d,fig,note,seq):
     zones=zone_legend_entries(fig)
     f=report_figure(fig,width_pt=780,height_pt=540 if complex_figure(fig) else 380,external_zone_legend=bool(zones))
@@ -246,7 +245,7 @@ def _generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive
     manifest=[asdict(d) for d in diagrams]
     available=[(i,d) for i,d in enumerate(diagrams) if d.status=="available"]
     if not available:raise ValueError("No supported diagrams in the selected chapters.")
-    if len(available)>MAX_BATCH:raise ValueError("Select a bounded export batch (at most 50 admitted diagrams per request). The full catalogue remains available across batches.")
+    if mode!=PDF_MODES[2] and len(available)>MAX_BATCH:raise ValueError("Select a bounded export batch (at most 50 admitted diagrams per request). The full catalogue remains available across batches.")
     groups={}
     for i,d in available:groups.setdefault(d.chapter,[]).append((i,d))
     zbuf=tempfile.TemporaryFile(mode="w+b")
@@ -255,18 +254,35 @@ def _generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive
     if mode=="Single PDF":writer=PdfWriter(title=title,paper=paper,orientation=orientation,per_page=per_page,context=context,df=df,image_renderer=image_renderer)
     processed=0
     notes={}
+    html_files=[]
+    def check_archive():
+        if zbuf.tell()>MAX_ARCHIVE_BYTES:
+            raise MemoryError("Atlas exceeds the 32 MiB download budget. Select fewer chapters or a smaller export batch.")
     try:
+        if mode==PDF_MODES[2]:
+            # One offline library per ZIP, not one compressed copy per HTML part.
+            from plotly.offline import get_plotlyjs
+            archive.writestr("plotly.min.js",get_plotlyjs())
+            check_archive()
         for chapter,entries in groups.items():
             cache={} # expensive shared kernels cached per chapter only
             if mode=="Chapter PDFs (ZIP)":writer=PdfWriter(title=title,paper=paper,orientation=orientation,per_page=per_page,context=context,df=df,image_renderer=image_renderer)
             if writer:writer.begin_chapter(chapter)
             parts=[];part_size=0;part_no=1;seq=0
+            chapter_header=_html_header(title,context,chapter,df) if mode==PDF_MODES[2] else ""
             def flush_html():
                 nonlocal parts,part_size,part_no
                 if not parts:return
-                html=_html_header(title,context,chapter,df)+"".join(parts)+"</body></html>"
-                archive.writestr(f"{slug(chapter)}-{part_no:03d}.html",html)
+                name=f"{slug(chapter)}-{part_no:03d}.html"
+                # Stream the bounded part to the disk-backed ZIP instead of
+                # materializing another copy of the entire HTML document.
+                with archive.open(name,"w") as output:
+                    output.write(chapter_header.encode("utf-8"))
+                    for panel in parts:output.write(panel.encode("utf-8"))
+                    output.write(b"</body></html>")
+                html_files.append((name,CHAPTERS.get(chapter,chapter),part_no,len(parts)))
                 parts=[];part_size=0;part_no+=1
+                check_archive()
             for i,d in entries:
                 if progress:progress(processed,len(available),d.title)
                 processed+=1
@@ -281,6 +297,7 @@ def _generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive
                         size=len(panel.encode("utf-8"))
                         if parts and part_size+size>HTML_PART_BYTES:flush_html()
                         parts.append(panel);part_size+=size
+                        del panel
                     manifest[i]["status"]="generated";manifest[i]["reason"]=""
                     notes[d.id]=note
                 except MemoryError:raise
@@ -307,6 +324,15 @@ def _generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive
                   "paper":paper,"orientation":orientation,"diagrams_per_page":per_page,"counts":dict(Counter(row["status"] for row in manifest)),
                   "calculation_notes":notes,"manifest":manifest}
         if archive:
+            if mode==PDF_MODES[2]:
+                counts=metadata["counts"]
+                links="".join(f'<li><a href="{escape(name,quote=True)}">{escape(label)} · Part {part} ({count} diagrams)</a></li>' for name,label,part,count in html_files)
+                index=("<!doctype html><html lang='en'><meta charset='utf-8'><title>"+escape(title)+"</title>"
+                    "<style>body{font:11pt Arial,sans-serif;margin:32px;max-width:850px}li{margin:7px 0}</style><h1>"+escape(title)+"</h1>"
+                    f"<p>{counts.get('generated',0)} diagrams generated from {len(available)} admitted diagrams. Full outcomes: <a href='coverage.csv'>coverage CSV</a> and <a href='atlas_metadata.json'>metadata</a>.</p><ul>"+links+"</ul></html>")
+                archive.writestr("index.html",index)
+                metadata["html_files"]=[name for name,_,_,_ in html_files]
+                check_archive()
             archive.writestr("coverage.csv",manifest_csv(manifest))
             archive.writestr("atlas_metadata.json",json.dumps(metadata,ensure_ascii=False,indent=2,default=str))
             archive.close()
