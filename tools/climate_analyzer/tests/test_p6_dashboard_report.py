@@ -53,6 +53,18 @@ class P6Tests(unittest.TestCase):
         self.assertIn("Plotly.newPlot",html)
         self.assertEqual(r._script_json("</script>"),'"\\u003c/script\\u003e"')
 
+    def test_saved_report_no_fixed_chart_count(self):
+        from unittest.mock import patch
+        entries=[]
+        for i in range(150):
+            entries,_=r.add_snapshot(entries,{"id":str(i),"figure":"{}"})
+        self.assertEqual(len(entries),150)
+        duplicate,_=r.add_snapshot(entries,entries[0])
+        self.assertEqual(len(duplicate),150)
+        with patch.object(r,"MAX_BYTES",300):
+            with self.assertRaisesRegex(ValueError,"figure-data budget"):
+                r.add_snapshot(entries,{"id":"151","figure":"{}"})
+
     def test_pdf_geometry_and_fail_closed(self):
         fig=go.Figure(go.Bar(x=["A","B"],y=[1,2]))
         item=r.snapshot(fig,{"source":"Test.epw"},"Interpretation")

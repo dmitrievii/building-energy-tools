@@ -53,7 +53,7 @@ def render_atlas(df,context,reference_df=None):
     per_page=c.radio("Diagrams per PDF page",[1,2,4],index=1,horizontal=True,key="p66_panels")
     st.caption("Full 11 pt graph and body typography. Complex diagrams and long interpretations automatically receive a full page or continuation page; the requested panel count is a maximum.")
     if ready>150:st.warning(f"{ready:,} admitted configurations. Large static PDF atlases are computationally expensive. Interactive HTML ZIP is recommended for the first complete overview, or export chapters separately.")
-    st.caption("Source-dependent exclusions and actual calculation/rendering outcomes are recorded in coverage.csv. Native historical IDF and provider-specific diagrams are excluded until an admitted source-specific adapter exists. PDF output budget: 200 MiB; the atlas does not use the 80-chart saved-report limit.")
+    st.caption("Source-dependent exclusions and actual calculation/rendering outcomes are recorded in coverage.csv. Native historical IDF and provider-specific diagrams are excluded until an admitted source-specific adapter exists. PDF output budget: 200 MiB; the atlas is independent of the saved-report figure-data budget.")
     signature=hashlib.sha256(json.dumps([context,coverage,chosen,[d.id for d in selected],title,mode,paper,orientation,per_page],sort_keys=True,default=str).encode()).hexdigest()
     if st.button("Generate selected atlas",disabled=not ready,key="p66_generate"):
         st.session_state.pop("_p66_atlas_result",None)

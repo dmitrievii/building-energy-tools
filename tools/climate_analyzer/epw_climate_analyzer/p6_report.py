@@ -13,7 +13,6 @@ import streamlit as st
 REPORT_KEY="_p6_report_items"
 CONTEXT_KEY="_p6_report_context"
 INTERPRETATION_KEY="_p6_report_interpretation"
-MAX_ITEMS=80
 MAX_BYTES=65*1024*1024
 
 def set_context(state,*,page,source,location,df=None,extra=None,site=None,source_id=None):
@@ -49,8 +48,8 @@ def snapshot(fig,context,interpretation=""):
             "captured":datetime.now(timezone.utc).isoformat(),"note":""}
 def add_snapshot(items,item):
     if any(x["id"]==item["id"] for x in items):return items,"This exact diagram is already in the report."
-    if len(items)>=MAX_ITEMS or sum(len(x["figure"].encode()) for x in items)+len(item["figure"].encode())>MAX_BYTES:
-        raise ValueError("Report capacity reached (80 charts / 65 MiB figure data). Remove entries before adding another.")
+    if sum(len(x["figure"].encode()) for x in items)+len(item["figure"].encode())>MAX_BYTES:
+        raise ValueError("Report figure-data budget reached (65 MiB). Remove entries or use the Diagram Atlas for larger exports.")
     return [*items,item],"Diagram added to report."
 CAPTURE_MESSAGE_KEY="_p6_report_capture_message"
 
