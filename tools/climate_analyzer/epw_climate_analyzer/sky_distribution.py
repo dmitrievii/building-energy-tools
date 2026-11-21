@@ -159,6 +159,32 @@ def _add_dome_compass(fig):
         text=["N","E","S","W"],mode="text",textfont=dict(color="#263B4B",size=18),
         showlegend=False,hoverinfo="skip",name="Compass labels",meta={"presentation_only_trace":True}))
 
+def _dome_point(azimuth,elevation,radius=1.):
+    """Right-handed ENU; azimuth is clockwise from geographic North."""
+    return (radius*np.cos(elevation)*np.sin(azimuth),
+            radius*np.cos(elevation)*np.cos(azimuth),
+            radius*np.sin(elevation))
+
+def _dome_patch_grid(p):
+    # True patch boundaries only, not internal triangulation diagonals.
+    # Slight radial offset prevents z-fighting with the opaque mesh.
+    x=[];y=[];z=[]
+    def add(a,e):
+        xx,yy,zz=_dome_point(np.asarray(a),np.asarray(e),1.002)
+        x.extend(xx.tolist()+[None]);y.extend(yy.tolist()+[None]);z.extend(zz.tolist()+[None])
+    for row in p.itertuples():
+        n=max(2,int(np.ceil(row.width/8)))
+        az=np.deg2rad(np.linspace(row.azimuth-row.width/2,row.azimuth+row.width/2,n+1))
+        lower,upper=np.deg2rad([row.lower,row.upper])
+        add(az,np.full_like(az,lower))
+        if row.width<360:
+            add(az,np.full_like(az,upper))
+            for a in (az[0],az[-1]):
+                e=np.linspace(lower,upper,3)
+                add(np.full_like(e,a),e)
+    return go.Scatter3d(x=x,y=y,z=z,mode="lines",line=dict(color="#A8ADB4",width=1),
+        hoverinfo="skip",showlegend=False,name="Sky patch boundaries",meta={"presentation_only_trace":True})
+
 def sky_figure(p,quantity,style="2D hemisphere",*,show_compass=True):
     col={"Direct":"direct_kwh_m2","Diffuse":"diffuse_kwh_m2","Total":"total_kwh_m2"}[quantity]
     v=p[col].to_numpy(float); upper=max(1e-9,float(v.max()))
@@ -172,8 +198,8 @@ def sky_figure(p,quantity,style="2D hemisphere",*,show_compass=True):
               radialaxis=dict(range=[0,90],tickvals=[0,15,30,45,60,75,90],ticktext=["90°","75°","60°","45°","30°","15°","0°"])),
               meta={"compass_polar":True})
     elif style=="3D dome":
-        x=[];y=[];z=[];i=[];j=[];k=[];intensity=[]
-        for row,value in zip(p.itertuples(),v):
+        x=[];y=[];z=[];i=[];j=[];k=[];intensity=[];patch_data=[]
+        for patch_id,(row,value) in enumerate(zip(p.itertuples(),v)):
             # Tessellated quadrilateral strips, including a full azimuth zenith cap.
             n=max(2,int(np.ceil(row.width/8)))
             az=np.deg2rad(np.linspace(row.azimuth-row.width/2,row.azimuth+row.width/2,n+1))
@@ -181,18 +207,33 @@ def sky_figure(p,quantity,style="2D hemisphere",*,show_compass=True):
             for a0,a1 in zip(az[:-1],az[1:]):
                 base=len(x)
                 for a,e in ((a0,el[0]),(a1,el[0]),(a1,el[1]),(a0,el[1])):
-                    x.append(np.cos(e)*np.sin(a)); y.append(np.cos(e)*np.cos(a));z.append(np.sin(e));intensity.append(value)
-                i.extend([base,base]);j.extend([base+1,base+2]);k.extend([base+2,base+3])
+                    xx,yy,zz=_dome_point(a,e)
+                    x.append(xx);y.append(yy);z.append(zz);intensity.append(value)
+                    patch_data.append([patch_id,row.azimuth,row.lower,row.upper])
+                # Azimuth increases clockwise in ENU, so azimuth-first
+                # triangles have inward normals. Reverse winding and omit
+                # the degenerate second triangle at the zenith apex.
+                i.append(base);j.append(base+2);k.append(base+1)
+                if row.upper<90.:
+                    i.append(base);j.append(base+3);k.append(base+2)
         fig=go.Figure(go.Mesh3d(x=x,y=y,z=z,i=i,j=j,k=k,intensity=intensity,colorscale=SKY_COLORSCALE,cmin=0,cmax=upper,showscale=True,colorbar=colorbar,
-               flatshading=True,lighting=dict(ambient=1,diffuse=0,specular=0),
-               hovertemplate="%{intensity:.3f} kWh/m² per patch<extra></extra>"))
+               customdata=patch_data,flatshading=True,lighting=dict(ambient=1,diffuse=0,specular=0),
+               hovertemplate="Patch %{customdata[0]} · azimuth %{customdata[1]:.1f}°<br>Elevation %{customdata[2]:.1f}–%{customdata[3]:.1f}°<br>%{intensity:.3f} kWh/m² per patch<extra></extra>"))
+        fig.add_trace(_dome_patch_grid(p))
         if show_compass:
             _add_dome_compass(fig)
-        fig.update_layout(scene=dict(aspectmode="data",dragmode="turntable",
-             xaxis=dict(title="East",range=[-1.36,1.36],showbackground=False),
-             yaxis=dict(title="North",range=[-1.36,1.36],showbackground=False),
-             zaxis=dict(title="Up",range=[-.08,1.08],showbackground=False),
-             camera=dict(up=dict(x=0,y=0,z=1),eye=dict(x=1.45,y=-1.65,z=1.35),projection=dict(type="orthographic"))))
+        # View from due South and above: east is screen-right, west left,
+        # north at the back, south at the front, as in the polar map.
+        axis=dict(showbackground=False,showgrid=False,showticklabels=False,
+                  zeroline=False,showspikes=False,showaxeslabels=False)
+        # Keep the numeric ENU axes available if the compass is hidden.
+        if not show_compass:axis.update(showticklabels=True,showgrid=True,showaxeslabels=True)
+        axis.pop("showaxeslabels",None)
+        fig.update_layout(scene=dict(aspectmode="data",dragmode="orbit",
+             xaxis=dict(title="" if show_compass else "East",range=[-1.36,1.36],**axis),
+             yaxis=dict(title="" if show_compass else "North",range=[-1.36,1.36],**axis),
+             zaxis=dict(title="" if show_compass else "Up",range=[-.08,1.08],**axis),
+             camera=dict(up=dict(x=0,y=0,z=1),eye=dict(x=0,y=-2.4,z=2.0),projection=dict(type="orthographic"))))
     else:
         raise ValueError("Unknown sky chart style.")
     fig.update_layout(template="plotly_white",title=f"Cumulative {quantity.lower()} horizontal irradiation by sky patch",height=760)

@@ -55,7 +55,8 @@ class P2Tests(unittest.TestCase):
                 self.assertGreater(labels.x[1],0)
                 self.assertLess(labels.y[2],0)
                 self.assertLess(labels.x[3],0)
-                self.assertEqual(len(sky_figure(t,"Total","3D dome",show_compass=False).data),1)
+                no_compass=sky_figure(t,"Total","3D dome",show_compass=False)
+                self.assertEqual([tr.name for tr in no_compass.data[1:]],["Sky patch boundaries"])
             iso=cumulative_sky(df,mf=mf,model="Isotropic")
             ani=cumulative_sky(df,mf=mf,model="Perez 1993 (research)")
             self.assertFalse(np.allclose(iso.diffuse_kwh_m2,ani.diffuse_kwh_m2))
@@ -63,6 +64,42 @@ class P2Tests(unittest.TestCase):
         self.assertAlmostEqual(cumulative_sky(only,quantity="Diffuse").diffuse_kwh_m2.sum(),diffuse)
         with self.assertRaises(ValueError):
             cumulative_sky(only,quantity="Total")
+
+    def test_dome_enu_orientation_winding_and_cardinal_energy(self):
+        # Independent known bearings, both patch resolutions and every component.
+        for mf in (1,2):
+            p=patches(mf)
+            for bearing,axis,sign in ((0,1,1),(90,0,1),(180,1,-1),(270,0,-1)):
+                df=fixture().iloc[:1].copy()
+                df["solar_azimuth_deg"]=float(bearing)
+                df["solar_apparent_zenith_deg"]=45.
+                df[SOURCE_FIELDS["DHI"]]=0.
+                table=cumulative_sky(df,mf=mf,quantity="Direct")
+                patch=int(np.argmax(table.direct_kwh_m2))
+                for quantity in ("Direct","Diffuse","Total"):
+                    two=sky_figure(table,quantity)
+                    three=sky_figure(table,quantity,"3D dome")
+                    mesh=three.data[0]
+                    xyz=np.column_stack([mesh.x,mesh.y,mesh.z])
+                    face=np.column_stack([mesh.i,mesh.j,mesh.k]).astype(int)
+                    vertices=xyz[face]
+                    normals=np.cross(vertices[:,1]-vertices[:,0],vertices[:,2]-vertices[:,0])
+                    self.assertTrue(np.all(np.einsum("ij,ij->i",normals,vertices.mean(axis=1))>0.))
+                    np.testing.assert_allclose(np.linalg.norm(xyz,axis=1),1.,atol=1e-12)
+                    custom=np.asarray(mesh.customdata)
+                    ids=custom[:,0].astype(int)
+                    np.testing.assert_allclose(np.asarray(mesh.intensity),np.asarray(two.data[0].marker.color)[ids])
+                    expected=xyz[ids==patch].mean(axis=0)
+                    self.assertGreater(sign*expected[axis],0.4)
+                    self.assertLess(abs(expected[1-axis]),1e-12)
+                    self.assertAlmostEqual(float(two.data[0].theta[patch]),float(bearing))
+                    cam=three.layout.scene.camera
+                    self.assertEqual(cam.eye.x,0.)
+                    self.assertLess(cam.eye.y,0.)
+                    self.assertGreater(cam.eye.z,0.)
+                    self.assertEqual(cam.up.z,1.)
+                    self.assertEqual(cam.projection.type,"orthographic")
+                    self.assertEqual(three.data[1].name,"Sky patch boundaries")
 
     def test_shading_aperture_geometry_and_energy(self):
         az=np.array([180.,180.,0.,np.nan])
@@ -139,11 +176,11 @@ class P2Tests(unittest.TestCase):
         self.assertEqual(tuple(t.name for t in rose.data),DEVICES)
         np.testing.assert_allclose(np.sum([np.asarray(t.r,dtype=float) for t in rose.data],axis=0),monthly[TOTAL_DEVICE],equal_nan=True)
         heat=shading_month_hour_heatmap(cr,REDUCTION,"Left fin")
-        self.assertEqual(np.asarray(heat.data[0].z).shape,(12,24))
+        self.assertEqual(np.asarray(heat.data[0].z).shape,(24,12))
         self.assertEqual(heat.data[0].zmax,100)
-        self.assertTrue(np.isnan(heat.data[0].z[5,1]))
-        self.assertEqual(heat.data[1].z[5,1],1.)
-        self.assertTrue(np.isnan(heat.data[1].z[5,12]))
+        self.assertTrue(np.isnan(heat.data[0].z[1,5]))
+        self.assertEqual(heat.data[1].z[1,5],1.)
+        self.assertTrue(np.isnan(heat.data[1].z[12,5]))
         multi=df.copy()
         multi.index=multi.index.where(multi.index.month!=7,multi.index+pd.DateOffset(years=1))
         with self.assertRaises(ValueError):
