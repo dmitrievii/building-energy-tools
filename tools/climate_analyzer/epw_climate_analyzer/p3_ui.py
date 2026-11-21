@@ -32,7 +32,9 @@ def outdoor_comfort(df,render):
     if len(years)>1:df=filter_year(df,st.selectbox("Analysis year",years,index=len(years)-1,key="p3_otc_year"))
     options=["Uniform radiant offset"]
     if p.complete(df,p.T,p.RH,p.V,p.GHI,p.DHI,p.DNI,p.LW,p.ZEN):options.append("Open-sky screening")
-    mode=st.selectbox("Radiation model",options,index=len(options)-1,key="p3_otc_model")
+    if st.session_state.get("p3_otc_model") not in options:
+        st.session_state["p3_otc_model"]=options[-1]
+    mode=st.selectbox("Radiation model",options,key="p3_otc_model")
     st.warning("Research candidate: UTCI requires 10 m wind and human mean radiant temperature. This simplified open-sky radiation scenario is not site-specific urban comfort.")
     wind=st.number_input("Wind conversion factor to 10 m",.1,10.,1.,.1,key="p3_otc_wind")
     st.caption("Default factor 1 assumes the source wind represents 10 m. Model-domain violations remain missing.")
@@ -47,6 +49,8 @@ def outdoor_comfort(df,render):
         kw["ground_delta"]=cols[2].number_input("Ground minus air temperature [K]",-50.,70.,0.,1.,key="p3_otc_ground")
         st.caption("Spherical-equivalent radiation: source sky longwave; ground blackbody temperature assumed; absorptivity .7, emissivity .95. Shade removes beam only.")
     choices=["UTCI heat map","Monthly thermal-stress distribution","UTCI duration curve"]+(["Sun versus shade"] if mode=="Open-sky screening" else [])+["Sensitivity analysis"]
+    if st.session_state.get("p3_otc_chart") not in choices:
+        st.session_state["p3_otc_chart"]=choices[0]
     chart=st.selectbox("Analysis type",choices,key="p3_otc_chart")
     note="UTCI equivalent temperature; missing or out-of-domain states excluded. Duration uses physical interval hours."
     if chart=="Sensitivity analysis":
@@ -86,6 +90,8 @@ def outdoor_comfort(df,render):
         render(fig,f"Paired mean open-sun minus shade UTCI: {delta:.2f} °C. "+note)
         _duration(df,common,"Paired exposure duration curves","UTCI [°C]",render,note)
     else:
+        if st.session_state.get("p3_otc_exposure") not in values.columns:
+            st.session_state["p3_otc_exposure"]=values.columns[0]
         scenario=st.selectbox("Exposure",list(values),key="p3_otc_exposure")
         if chart=="UTCI heat map":
             grid=p.annual_hour_grid(df,values[scenario])

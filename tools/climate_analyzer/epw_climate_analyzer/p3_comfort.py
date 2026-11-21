@@ -147,8 +147,10 @@ def suitability_grid(df,mask,*,axis):
                       "suitable":mask.astype(float)},index=df.index).dropna()
     if raw.empty:return pd.DataFrame(),pd.DataFrame()
     g=raw.groupby(["y","x"]).suitable.agg(["mean","count"])
-    xs=np.arange(raw.x.min(),raw.x.max()+1,2)
-    ys=np.arange(raw.y.min(),raw.y.max()+sy/2,sy)
+    # Keep observed bin coordinates only: extreme corrupt values cannot
+    # allocate arbitrarily large dense grids across unobserved ranges.
+    xs=np.sort(raw.x.unique())
+    ys=np.sort(raw.y.unique())
     return g["mean"].unstack().reindex(index=ys,columns=xs)*100,g["count"].unstack().reindex(index=ys,columns=xs)*native_interval_hours(df)
 
 def persistence(df,mask,*,night=False,end_hour=6):

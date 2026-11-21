@@ -67,4 +67,32 @@ class P3Tests(unittest.TestCase):
         self.assertAlmostEqual(h.stack().iloc[0],2.)
         self.assertEqual(p.condensation_margin(df,10.).iloc[0],0.)
 
+    def test_p3_route_contract(self):
+        import ast
+        from pathlib import Path
+        from epw_climate_analyzer.ui_contract import NAVIGATION_PAGES,navigation_label
+        from epw_climate_analyzer.historical_capabilities import available_historical_pages
+        root=Path(__file__).resolve().parents[1]
+        source=(root/"app.py").read_text(encoding="utf-8")
+        funcs={n.name:ast.get_source_segment(source,n) for n in ast.parse(source).body if isinstance(n,ast.FunctionDef)}
+        self.assertIn("Outdoor Thermal Comfort",NAVIGATION_PAGES)
+        self.assertEqual(navigation_label("Outdoor Thermal Comfort"),"Design — Outdoor thermal comfort")
+        self.assertIn("Outdoor Thermal Comfort",available_historical_pages(self.fixture()))
+        self.assertNotIn("Outdoor Thermal Comfort",available_historical_pages(self.fixture().drop(columns=[p.V])))
+        for name in ("main","render_canonical_climate_analysis","render_generated_climate_analysis"):
+            self.assertIn("render_outdoor_comfort(",funcs[name])
+            self.assertIn("attach_adaptive(",funcs[name])
+        parity=(root/"epw_climate_analyzer/source_parity_ui.py").read_text(encoding="utf-8")
+        self.assertIn("legacy.render_outdoor_comfort(filtered_df)",parity)
+        self.assertIn("attach_adaptive(full_df)",parity)
+        for name,panel in (("render_natural_ventilation","nv_sensitivity"),
+                           ("render_natural_ventilation","persistence_panel"),
+                           ("render_hvac_passive","ventilation_load_panel"),
+                           ("render_hvac_passive","adaptive_panel"),
+                           ("render_humidity","condensation_panel"),
+                           ("render_humidity","moisture_panel"),
+                           ("render_sky_daylight","illuminance_panel")):
+            self.assertIn(panel,funcs[name])
+        self.assertNotIn("fillna(1.2)",funcs["render_hvac_passive"])
+
 if __name__=="__main__":unittest.main()

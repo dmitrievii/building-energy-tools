@@ -43,7 +43,9 @@ class SourceParityAudit072Tests(unittest.TestCase):
         source = APP.read_text(encoding="utf-8")
         self.assertIn('render_natural_ventilation(filtered_df, pressure_pa=active_pressure)', source)
         self.assertIn('render_hvac_passive(filtered_df)', source)
-        self.assertIn('"Wind during natural-ventilation hours"', source)
+        self.assertIn('"Directional analysis"', source)
+        self.assertIn('"Wind during suitable hours"', source)
+        self.assertNotIn('"Wind during natural-ventilation hours"', source)
         self.assertIn("GeoSphere natural-ventilation suitability uses canonical hourly", source)
 
     def test_comparison_is_still_explicitly_epw_only(self) -> None:
