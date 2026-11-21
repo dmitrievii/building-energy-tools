@@ -33,6 +33,18 @@ install_global_chart_presentation(st)
 st.title("Chart presentation visual harness")
 st.caption("Representative production chart families rendered through the shared global presentation boundary.")
 
+if st.query_params.get("monthly") == "1":
+    from epw_climate_analyzer.monthly_radiation import monthly_radiation_chart
+    monthly = pd.DataFrame(
+        {"GHI": [34,51,94,132,173,180,189,166,109,72,38,27],
+         "DHI": [24,35,57,73,90,92,82,74,60,44,28,19],
+         "DNI": [34,41,69,95,119,120,148,135,81,58,32,29]},
+        index=pd.Index(range(1,13),name="Month"))
+    style = st.selectbox("Chart type", ["Bar chart","Line chart","Monthly rose"])
+    st.plotly_chart(monthly_radiation_chart(monthly, style=style),
+                    use_container_width=True, key="monthly_spacing_test")
+    st.stop()
+
 index = pd.date_range("2025-01-01", periods=24 * 31, freq="h")
 hours = np.arange(len(index), dtype=float)
 season = np.sin(2.0 * np.pi * hours / (24.0 * 31.0))

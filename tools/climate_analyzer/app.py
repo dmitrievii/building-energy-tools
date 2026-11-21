@@ -3643,6 +3643,7 @@ def render_monthly_radiation(df: pd.DataFrame, *, ground_albedo=None, allow_surf
     from epw_climate_analyzer.monthly_radiation import (
         SURFACE_FIELDS, SURFACE_NAMES, available_source_quantities, surface_available,
         monthly_source_irradiation, monthly_surface_irradiation, monthly_radiation_chart,
+        monthly_rose_years, monthly_rose_table,
     )
     source = available_source_quantities(df)
     if not source:
@@ -3653,7 +3654,8 @@ def render_monthly_radiation(df: pd.DataFrame, *, ground_albedo=None, allow_surf
     if allow_surface and surface_available(df):
         modes.append("Surface irradiation (POA)")
     basis = st.selectbox("Radiation basis", modes, key="monthly_radiation_basis")
-    style = st.selectbox("Chart type", ["Bar chart", "Line chart"], key="monthly_radiation_style")
+    style = st.selectbox("Chart type", ["Bar chart", "Line chart", "Monthly rose"], key="monthly_radiation_style")
+    tilt = None
     if basis == "Source radiation":
         quantities = st.multiselect("Radiation quantity", source, default=source,
                                      key="monthly_source_quantities")
@@ -3662,7 +3664,6 @@ def render_monthly_radiation(df: pd.DataFrame, *, ground_albedo=None, allow_surf
             st.info("Select at least one radiation quantity.")
             return
         monthly = monthly_source_irradiation(df, quantities)
-        fig = monthly_radiation_chart(monthly, style=style)
         explanation = "Source GHI, DHI and DNI are independent irradiation quantities and must not be added together."
     else:
         tilt = st.slider("Surface tilt [deg]", 0.0, 90.0, 90.0, 5.0,
@@ -3684,11 +3685,20 @@ def render_monthly_radiation(df: pd.DataFrame, *, ground_albedo=None, allow_surf
             st.info("Select at least one surface and one radiation quantity.")
             return
         monthly = monthly_surface_irradiation(df, surfaces, tilt, quantities, albedo=ground_albedo)
-        fig = monthly_radiation_chart(monthly, style=style, tilt_deg=tilt)
         explanation = ("Total POA is direct irradiation projected onto the receiver, plus sky-diffuse and ground-reflected irradiation. "
                        "The existing unobstructed isotropic transposition uses the active ground-albedo selection. "
                        "Only intervals with coincident admitted GHI, DNI, DHI and solar geometry contribute. "
                        "Total and individual components are shown separately, never added together in a chart stack.")
+    rose_year = None
+    if style == "Monthly rose":
+        years = monthly_rose_years(monthly)
+        if len(years) > 1:
+            rose_year = st.selectbox("Rose year", years, index=len(years) - 1,
+                                     key="monthly_radiation_rose_year")
+        monthly = monthly_rose_table(monthly, year=rose_year)
+        if len(monthly.columns) > 8:
+            st.warning("Many series make the monthly rose difficult to read. Consider fewer radiation quantities or orientations, or use the bar or line chart.")
+    fig = monthly_radiation_chart(monthly, style=style, tilt_deg=tilt)
     render_plot(fig, explanation + " Monthly values sum interval energies over the active Data filter; calendar-profile mode averages per-year monthly sums. Missing periods are not zero-filled.")
     with st.expander("Monthly irradiation values", expanded=False):
         display = monthly.copy()

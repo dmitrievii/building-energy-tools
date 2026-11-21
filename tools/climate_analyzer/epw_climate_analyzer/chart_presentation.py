@@ -10,6 +10,7 @@ patches.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 from typing import Any, Mapping, MutableMapping
 
 
@@ -144,6 +145,83 @@ def _set_colorbar_font(colorbar: Any, size: int) -> None:
     _set_font_size(getattr(title, "font", None), size)
 
 
+def _space_bottom_legends(fig: Any, settings: ChartPresentationSettings, size: int) -> None:
+    """Separate below-plot horizontal legends from scientific axis labels.
+
+    Explicitly anchored in-plot/side legends are left alone. Moving a legend
+    from negative paper coordinates to the bottom of its container decouples
+    its position from changes in the plot-area height. Reserve rows in pixels
+    for the active font and a conservative responsive-width estimate.
+    """
+    layout = fig.layout
+    if layout.showlegend is False:
+        return
+    props = getattr(layout, "_props", {}) or {}
+    bottom = []
+    for key in props:
+        if not str(key).startswith("legend"):
+            continue
+        legend = getattr(layout, key, None)
+        if legend is None or legend.orientation != "h" or legend.visible is False:
+            continue
+        y = legend.y
+        is_bottom = (legend.yref == "container" and y is not None and y <= 0.10
+                     or legend.yref != "container" and y is not None and y < 0)
+        if is_bottom:
+            bottom.append((key, legend))
+    # Multiple independently positioned bottom legends are intentional;
+    # avoid collapsing their distinct positions into one.
+    if len(bottom) != 1:
+        return
+    key, legend = bottom[0]
+    traces = [t for t in fig.data
+              if getattr(t, "showlegend", None) is not False
+              and getattr(t, "visible", None) is not False
+              and (getattr(t, "legend", None) or "legend") == key]
+    if not traces:
+        return
+
+    tick_lines = 1
+    titled = False
+    for name in props:
+        if not str(name).startswith("xaxis"):
+            continue
+        axis = getattr(layout, name, None)
+        if axis is None or axis.visible is False or axis.side == "top":
+            continue
+        axis.automargin = True
+        if axis.title.text:
+            axis.title.standoff = max(int(axis.title.standoff or 0), 14, size)
+            titled = True
+        if axis.ticktext is not None:
+            tick_lines = max(tick_lines, max((str(t).count("<br>") + 1 for t in axis.ticktext), default=1))
+    dimensions = settings.display_dimensions()
+    width = dimensions[0] if dimensions else int(layout.width or 850)
+    height = dimensions[1] if dimensions else int(layout.height or 450)
+    margin = layout.margin
+    usable_width = max(160, width - int(margin.l or 65) - int(margin.r or 35))
+    title = legend.title.text or ""
+    widths = [min(usable_width, 42 + math.ceil(len(str(t.name or "")) * size * 0.60))
+              for t in traces]
+    if title:
+        widths.insert(0, min(usable_width, 25 + math.ceil(len(title) * size * 0.60)))
+    rows, occupied = 1, 0
+    for item in widths:
+        if occupied and occupied + item > usable_width:
+            rows += 1
+            occupied = 0
+        occupied += item
+    axis_room = tick_lines * (size + 6) + (2 * size + 14 if titled else 8)
+    legend_room = rows * (size + 12) + 18
+    # Very dense legends must not consume the entire fixed canvas. Plotly's
+    # legend overflow handling remains available for those cases.
+    reserve = min(axis_room + legend_room, max(axis_room + size + 12, int(height * 0.46)))
+    margin.b = max(int(margin.b or 0), int(reserve))
+    legend.yref = "container"
+    legend.y = 0.01
+    legend.yanchor = "bottom"
+
+
 def apply_chart_presentation(fig: Any, settings: ChartPresentationSettings) -> Any:
     """Apply presentation-only layout changes to a Plotly figure in place."""
     if fig is None or not hasattr(fig, "layout"):
@@ -208,6 +286,8 @@ def apply_chart_presentation(fig: Any, settings: ChartPresentationSettings) -> A
             _set_colorbar_font(getattr(marker, "colorbar", None), size)
         if isinstance(trace_props, Mapping) and "colorbar" in trace_props:
             _set_colorbar_font(getattr(trace, "colorbar", None), size)
+
+    _space_bottom_legends(fig, settings, size)
 
     dimensions = settings.display_dimensions()
     if dimensions is None:

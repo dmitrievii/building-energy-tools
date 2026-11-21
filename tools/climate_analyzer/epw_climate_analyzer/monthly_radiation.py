@@ -122,9 +122,38 @@ def _axis_labels(index):
     return [MONTH_NAMES[int(m)-1] for m in index]
 
 
-def monthly_radiation_chart(table, *, style="Bar chart", tilt_deg=None):
-    if style not in {"Bar chart", "Line chart"}:
+def monthly_rose_years(table):
+    """Calendar profiles have no selected year; chronology retains its years."""
+    if isinstance(table.index, pd.DatetimeIndex):
+        return sorted({int(year) for year in table.index.year})
+    return []
+
+
+def monthly_rose_table(table, *, year=None):
+    """Exactly 12 ordered calendar sectors; never fold chronological years."""
+    years = monthly_rose_years(table)
+    if isinstance(table.index, pd.DatetimeIndex):
+        if not years:
+            raise ValueError("No monthly periods are available.")
+        if year is None:
+            if len(years) != 1:
+                raise ValueError("Select one calendar year for the monthly rose.")
+            year = years[0]
+        if year not in years:
+            raise ValueError("Selected rose year is unavailable.")
+        idx = pd.date_range(pd.Timestamp(year=year, month=1, day=1, tz=table.index.tz),
+                           periods=12, freq="MS", name=table.index.name)
+        return table.reindex(idx)
+    if year is not None:
+        raise ValueError("Calendar-profile monthly rose does not use a year selector.")
+    return table.reindex(pd.Index(range(1, 13), name=table.index.name))
+
+
+def monthly_radiation_chart(table, *, style="Bar chart", tilt_deg=None, rose_year=None):
+    if style not in {"Bar chart", "Line chart", "Monthly rose"}:
         raise ValueError(f"Unknown chart type: {style}")
+    if style == "Monthly rose":
+        table = monthly_rose_table(table, year=rose_year)
     surface_mode = isinstance(table.columns, pd.MultiIndex)
     surface_names = list(dict.fromkeys(c[0] for c in table.columns)) if surface_mode else []
     multiple = len(surface_names) > 1
@@ -132,7 +161,7 @@ def monthly_radiation_chart(table, *, style="Bar chart", tilt_deg=None):
     fig = go.Figure()
     dash = {"Total POA":"solid", "Direct":"dash", "Sky diffuse":"dot", "Ground-reflected":"dashdot"}
     patterns = {"Total POA":"", "Direct":"/", "Sky diffuse":".", "Ground-reflected":"x"}
-    for column in table.columns:
+    for series_index, column in enumerate(table.columns):
         if surface_mode:
             surface, quantity = column
             name = f"{surface} · {quantity}" if multiple else f"{quantity} ({surface})"
@@ -144,18 +173,52 @@ def monthly_radiation_chart(table, *, style="Bar chart", tilt_deg=None):
             name, color, pattern, line_dash = str(column), SOLAR_COMPONENT_COLORS[column], "", "solid"
         values = table[column].to_numpy(dtype=float)
         common = dict(name=name, hovertemplate="%{x}<br>%{y:,.1f} kWh/m²<extra>%{fullData.name}</extra>")
-        if style == "Bar chart":
+        if style == "Monthly rose":
+            # Plotly polar barmode has only stack/overlay. Allocate fixed,
+            # disjoint angular sub-sectors explicitly to obtain grouped bars.
+            # The radial origin is zero for every series, so totals and
+            # components are never added. All twelve slots persist if a
+            # month is missing or a legend item is hidden.
+            count = max(1, len(table.columns))
+            slot = 26.0 / count  # leave 4 degrees between adjacent months
+            center = np.arange(12, dtype=float) * 30.0
+            theta = (center - 13.0 + (series_index + 0.5) * slot) % 360.0
+            fig.add_trace(go.Barpolar(theta=theta, thetaunit="degrees", r=values,
+                width=slot * 0.90, base=0, name=name,
+                marker=dict(color=color, pattern=dict(shape=pattern),
+                            line=dict(color="white", width=0.5)),
+                customdata=list(MONTH_NAMES),
+                hovertemplate="%{customdata}<br>%{r:,.1f} kWh/m²<extra>%{fullData.name}</extra>"))
+        elif style == "Bar chart":
             fig.add_trace(go.Bar(x=x, y=values, marker=dict(color=color, pattern=dict(shape=pattern)), **common))
         else:
             fig.add_trace(go.Scatter(x=x, y=values, mode="lines+markers", connectgaps=False,
                                      line=dict(color=color, dash=line_dash, width=2.5), **common))
     title = ("Monthly surface irradiation" + (f" · tilt {tilt_deg:g}°" if tilt_deg is not None else "")
              if surface_mode else "Monthly source irradiation")
+    if style == "Monthly rose":
+        years = monthly_rose_years(table)
+        if years:
+            title += f" · {years[0]}"
+        else:
+            title += " · calendar profile"
+        fig.update_layout(height=780,
+            polar=dict(barmode="overlay", bgcolor="white",
+                radialaxis=dict(rangemode="nonnegative", tickformat=",.0f",
+                                ticksuffix=" kWh/m²", angle=90, gridcolor="#DDE3EA"),
+                angularaxis=dict(type="linear", direction="clockwise", rotation=90,
+                    tickmode="array", tickvals=list(range(0, 360, 30)),
+                    ticktext=list(MONTH_NAMES), gridcolor="#E4E8ED")),
+            margin=dict(l=70, r=70, t=80, b=145))
+    else:
+        fig.update_layout(xaxis=dict(title=dict(text="Month", standoff=18),
+                                     automargin=True, categoryorder="array", categoryarray=x),
+                          yaxis=dict(title="Irradiation [kWh/m²]", rangemode="tozero"),
+                          margin=dict(l=65, r=30, t=75, b=145))
     fig.update_layout(template="plotly_white", title=title, barmode="group",
-        xaxis=dict(title="Month", categoryorder="array", categoryarray=x),
-        yaxis=dict(title="Irradiation [kWh/m²]", rangemode="tozero"),
-        legend=dict(orientation="h", y=-0.16, x=0.5, xanchor="center"),
-        margin=dict(l=65, r=30, t=75, b=110),
+        legend=dict(orientation="h", y=0.01, yref="container", yanchor="bottom",
+                    x=0.5, xanchor="center"),
         meta={"measurement_basis": "surface" if surface_mode else "source",
-              "unit": "kWh/m²"})
+              "unit": "kWh/m²", "month_sectors": 12 if style == "Monthly rose" else None,
+              "rose_grouping": "disjoint angular sub-sectors" if style == "Monthly rose" else None})
     return fig

@@ -9,6 +9,7 @@ import pandas as pd
 from epw_climate_analyzer.monthly_radiation import (
     available_source_quantities, surface_available, monthly_source_irradiation,
     monthly_surface_irradiation, monthly_radiation_chart, SURFACE_FIELDS,
+    monthly_rose_years, monthly_rose_table, MONTH_NAMES,
 )
 from epw_climate_analyzer.solar import surface_irradiance_components
 from epw_climate_analyzer.temporal_filtering import CALENDAR_PROFILE, with_time_basis
@@ -86,6 +87,48 @@ class MonthlyRadiationTests(unittest.TestCase):
         typical=monthly_source_irradiation(with_time_basis(both,CALENDAR_PROFILE),["GHI"])
         self.assertAlmostEqual(typical.loc[1,"GHI"],.9)
 
+    def test_monthly_rose_disjoint_angular_groups_identical_values(self):
+        df = fixture()
+        for table in (monthly_source_irradiation(df, ["GHI","DHI","DNI"]),
+                      monthly_surface_irradiation(df, [("North",0.),("South",180.)],
+                                                  90., list(SURFACE_FIELDS), albedo=.2)):
+            fig = monthly_radiation_chart(table, style="Monthly rose")
+            self.assertEqual(fig.layout.polar.barmode, "overlay")
+            self.assertEqual(fig.layout.meta["month_sectors"],12)
+            self.assertEqual(tuple(fig.layout.polar.angularaxis.ticktext), MONTH_NAMES)
+            self.assertEqual(tuple(fig.layout.polar.angularaxis.tickvals), tuple(range(0,360,30)))
+            self.assertEqual(len(fig.data),len(table.columns))
+            occupied = []
+            for trace, col in zip(fig.data,table.columns):
+                self.assertEqual(trace.type,"barpolar")
+                self.assertEqual(trace.base,0)
+                self.assertEqual(tuple(trace.customdata), MONTH_NAMES)
+                self.assertEqual(len(trace.r),12)
+                np.testing.assert_allclose(trace.r,table[col],equal_nan=True)
+                offsets=(np.asarray(trace.theta)-np.arange(12)*30+180)%360-180
+                self.assertTrue(np.all(np.abs(offsets)+trace.width/2 < 15))
+                occupied.append((offsets[0]-trace.width/2, offsets[0]+trace.width/2))
+            occupied.sort()
+            self.assertTrue(all(a[1] < b[0] for a,b in zip(occupied,occupied[1:])))
+
+    def test_monthly_rose_chronological_year_and_calendar_profile(self):
+        df=fixture()
+        other=df.copy()
+        other.index=other.index+pd.DateOffset(years=1)
+        other[GHI]*=2
+        both=pd.concat([df,other])
+        t=monthly_source_irradiation(both,["GHI"])
+        self.assertEqual(monthly_rose_years(t),[2025,2026])
+        with self.assertRaisesRegex(ValueError,"Select one calendar year"):
+            monthly_radiation_chart(t,style="Monthly rose")
+        rose=monthly_radiation_chart(t,style="Monthly rose",rose_year=2026)
+        self.assertAlmostEqual(rose.data[0].r[0],1.8)
+        self.assertTrue(np.isnan(rose.data[0].r[2]))
+        self.assertIn("2026",rose.layout.title.text)
+        typical=monthly_source_irradiation(with_time_basis(both,CALENDAR_PROFILE),["GHI"])
+        self.assertAlmostEqual(monthly_radiation_chart(typical,style="Monthly rose").data[0].r[0],1.35)
+        self.assertEqual(len(monthly_rose_table(t,year=2025)),12)
+
     def test_unified_actual_widgets(self):
         from streamlit.testing.v1 import AppTest
         source=(Path(__file__).resolve().parents[1]/"app.py").read_text(encoding="utf-8")
@@ -110,6 +153,9 @@ def render_plot(fig,text):
         self.assertFalse(app.exception)
         self.assertEqual(app.selectbox(key="monthly_radiation_basis").value,"Source radiation")
         self.assertEqual(app.multiselect(key="monthly_source_quantities").value,["GHI","DHI","DNI"])
+        self.assertEqual(app.selectbox(key="monthly_radiation_style").options,["Bar chart","Line chart","Monthly rose"])
+        app.selectbox(key="monthly_radiation_style").set_value("Monthly rose").run()
+        self.assertFalse(app.exception)
         app.selectbox(key="monthly_radiation_basis").set_value("Surface irradiation (POA)").run()
         self.assertFalse(app.exception)
         self.assertEqual(app.multiselect(key="monthly_poa_orientations").value,["North","East","South","West"])

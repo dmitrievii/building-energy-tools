@@ -232,6 +232,60 @@ try {
   report.metrics.autoRestored = metrics;
   await page.screenshot({ path: `${OUT_DIR}/06-auto-restored.png`, fullPage: true });
 
+  // A separate harness route exercises the actual monthly chart factory.
+  await page.goto(TARGET_URL + '?monthly=1', { waitUntil: 'domcontentloaded' });
+  let monthlyFrame = await waitForCharts(page, 1);
+  async function monthlySpacing() {
+    monthlyFrame = await waitForCharts(page, 1);
+    return monthlyFrame.locator('.js-plotly-plot').evaluate(node => {
+      const ticks = [...node.querySelectorAll('.xtick text')];
+      const title = node.querySelector('.g-xtitle text');
+      const legend = node.querySelector('g.legend');
+      return {tickBottom: Math.max(...ticks.map(t=>t.getBoundingClientRect().bottom)),
+        titleTop:title?.getBoundingClientRect().top, titleBottom:title?.getBoundingClientRect().bottom,
+        legendTop:legend?.getBoundingClientRect().top};
+    });
+  }
+  function assertSpacing(s) {
+    if (!(s.titleTop >= s.tickBottom-1 && s.legendTop >= s.titleBottom+3))
+      throw new Error('Monthly chart axis or legend overlaps: '+JSON.stringify(s));
+  }
+  const monthlyBar = await monthlySpacing();
+  assertSpacing(monthlyBar);
+  report.metrics.monthlyBarSpacing=monthlyBar;
+  await page.screenshot({path: OUT_DIR+'/07-monthly-bar.png',fullPage:true});
+  async function chooseMonthlyStyle(index) {
+    monthlyFrame = await waitForCharts(page,1);
+    await monthlyFrame.getByRole('combobox',{name:'Chart type',exact:true}).click();
+    await page.keyboard.press('Home');
+    for (let i=0;i<index;i++) await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    await sleep(400);
+    await waitForCharts(page,1);
+  }
+  await chooseMonthlyStyle(1);
+  await page.waitForFunction(()=>document.querySelector('.js-plotly-plot')?._fullData?.[0]?.type==='scatter');
+  const monthlyLine=await monthlySpacing();
+  assertSpacing(monthlyLine);
+  report.metrics.monthlyLineSpacing=monthlyLine;
+  await chooseMonthlyStyle(2);
+  await page.waitForFunction(()=>document.querySelector('.js-plotly-plot')?._fullData?.[0]?.type==='barpolar');
+  const rose=await monthlyFrame.locator('.js-plotly-plot').evaluate(node=>({
+    sectors: Array.from(node._fullLayout.polar.angularaxis.ticktext),
+    radii:node._fullData.map(t=>Array.from(t.r)),
+    origins:node._fullData.map(t=>t.base),
+    angles:node._fullData.map(t=>Array.from(t.theta)),
+    widths:node._fullData.map(t=>t.width),
+    paths:node.querySelectorAll('.polarlayer .barlayer path').length,
+  }));
+  if (rose.sectors.length!==12 || rose.radii.length!==3 ||
+      rose.radii.some(r=>r.length!==12) || rose.origins.some(b=>b!==0) ||
+      rose.angles.some(a=>a.length!==12))
+    throw new Error('Monthly rose geometry invalid: '+JSON.stringify(rose));
+  report.metrics.monthlyRose=rose;
+  report.checks.monthlyAxisSpacingAndRose=true;
+  await page.screenshot({path:OUT_DIR+'/08-monthly-rose.png',fullPage:true});
+
   report.success = Object.values(report.checks).every(Boolean);
   if (!report.success) throw new Error(`Chart presentation browser smoke failed: ${JSON.stringify(report.checks)}`);
   await fs.writeFile(`${OUT_DIR}/report.json`, JSON.stringify(report, null, 2));

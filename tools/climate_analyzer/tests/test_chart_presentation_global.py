@@ -123,6 +123,23 @@ class GlobalChartPresentationTests(unittest.TestCase):
         self.assertEqual(marker["colorbar"]["tickfont"]["size"], 19)
         self.assertEqual(marker["colorbar"]["title"]["font"]["size"], 19)
 
+    def test_bottom_horizontal_legend_reserves_axis_and_font_dependent_space(self) -> None:
+        for size in (12,18,26):
+            fig = go.Figure([go.Bar(x=["Jan","Feb"],y=[1,2],name=n) for n in ("GHI","DHI","DNI")])
+            fig.update_layout(xaxis_title="Month", margin=dict(b=45),
+                              legend=dict(orientation="h", y=-.16))
+            apply_chart_presentation(fig, ChartPresentationSettings(font_size=size))
+            self.assertTrue(fig.layout.xaxis.automargin)
+            self.assertGreaterEqual(fig.layout.xaxis.title.standoff,size)
+            self.assertEqual(fig.layout.legend.yref,"container")
+            self.assertEqual(fig.layout.legend.yanchor,"bottom")
+            self.assertGreater(fig.layout.margin.b,45)
+            self.assertEqual(fig.layout.font.size,size)
+        fig=go.Figure(go.Scatter(x=[1,2],y=[2,3],name="Internal"))
+        fig.update_layout(legend=dict(orientation="h",y=.8))
+        apply_chart_presentation(fig,ChartPresentationSettings())
+        self.assertEqual(fig.layout.legend.y,.8)
+
     def test_auto_canvas_does_not_force_dimensions(self) -> None:
         fig = go.Figure(go.Bar(x=["A"], y=[1]))
         apply_chart_presentation(fig, ChartPresentationSettings(canvas=CANVAS_AUTO, font_size=15))
