@@ -611,7 +611,7 @@ def install_global_chart_presentation(st: Any | None = None) -> None:
         result=original(fig, *args, **kwargs)
         if st.session_state.get("_p6_report_context"):
             from .p6_report import capture_control
-            capture_control(st,fig,kwargs.get("key") or capture_index)
+            capture_control(st,fig,capture_index)
         return result
 
     global_plotly_chart.__name__ = "global_plotly_chart"

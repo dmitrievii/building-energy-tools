@@ -71,6 +71,51 @@ class P6Tests(unittest.TestCase):
         item=r.snapshot(fig,{"source":"Synthetic fixture"},"Static renderer smoke")
         self.assertTrue(r.pdf_report([item],"Smoke","A4","Landscape").startswith(b"%PDF"))
 
+    def test_real_streamlit_capture_survives_reruns_and_navigation(self):
+        from streamlit.testing.v1 import AppTest
+        script = """
+import streamlit as st
+import plotly.graph_objects as go
+from epw_climate_analyzer import p6_report as r
+from epw_climate_analyzer.chart_presentation import install_global_chart_presentation
+page=st.radio("Page",["Temperature","Report"],key="page")
+install_global_chart_presentation(st)
+if page=="Report":
+    st.session_state.pop(r.CONTEXT_KEY,None)
+    r.render_report()
+else:
+    r.set_context(st.session_state,page=page,source="Test.epw",location="Test")
+    # Mirror the production chart key: changes on every rerun.
+    st.session_state["counter"]=st.session_state.get("counter",0)+1
+    value=st.number_input("Value",value=12.,key="value")
+    fig=go.Figure(go.Scatter(x=[0,1],y=[value,value+1]))
+    fig.update_layout(title="Actual diagram")
+    st.session_state[r.INTERPRETATION_KEY]="Actual interpretation"
+    st.plotly_chart(fig,key="plot_"+str(st.session_state["counter"]))
+"""
+        app=AppTest.from_string(script,default_timeout=30).run()
+        self.assertFalse(app.exception)
+        capture=lambda a:next(b for b in a.button if b.label=="Add to report")
+        first_key=capture(app).key
+        capture(app).click().run()
+        self.assertFalse(app.exception)
+        self.assertEqual(len(app.session_state[r.REPORT_KEY]),1)
+        self.assertEqual(capture(app).key,first_key)
+        self.assertEqual(json.loads(app.session_state[r.REPORT_KEY][0]["figure"])["data"][0]["y"],[12.,13.])
+        self.assertEqual(app.session_state[r.REPORT_KEY][0]["interpretation"],"Actual interpretation")
+        capture(app).click().run()
+        self.assertEqual(len(app.session_state[r.REPORT_KEY]),1)
+        app.number_input(key="value").set_value(20.).run()
+        capture(app).click().run()
+        self.assertEqual(len(app.session_state[r.REPORT_KEY]),2)
+        app.radio(key="page").set_value("Report").run()
+        self.assertFalse(app.exception)
+        self.assertEqual(len(app.session_state[r.REPORT_KEY]),2)
+        self.assertFalse(any("Your report is empty" in x.value for x in app.info))
+        self.assertTrue(any("2 captured diagrams" in x.value for x in app.caption))
+        app.radio(key="page").set_value("Temperature").run()
+        self.assertEqual(len(app.session_state[r.REPORT_KEY]),2)
+
     def test_routes(self):
         from epw_climate_analyzer.ui_contract import NAVIGATION_PAGES
         from epw_climate_analyzer.historical_capabilities import available_historical_pages

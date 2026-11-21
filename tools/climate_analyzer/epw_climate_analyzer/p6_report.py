@@ -39,28 +39,57 @@ def add_snapshot(items,item):
     if len(items)>=MAX_ITEMS or sum(len(x["figure"].encode()) for x in items)+len(item["figure"].encode())>MAX_BYTES:
         raise ValueError("Report capacity reached (24 charts / 25 MiB figure data). Remove entries before adding another.")
     return [*items,item],"Diagram added to report."
+CAPTURE_MESSAGE_KEY="_p6_report_capture_message"
+
+def _capture_settings(state):
+    """Only explicit calculation controls, not arbitrary session content."""
+    exact={"humidity_analysis_type","wind_analysis_type","solar_facade_tilt","solar_facade_chart_type",
+           "p6_overview_view","p6_dashboard_year","global_time_basis"}
+    prefixes=("p3_","p4_","p6_nv_","p6_night_","p6_hgt_","p6_kgt_","p6_utci","p6_flow",
+              "solar_facade_","nv_directional_","canonical_compare_","shading_")
+    controls={}
+    for name,value in state.items():
+        if not isinstance(name,str) or not (name in exact or name.startswith(prefixes)):continue
+        scalar=(str,int,float,bool,type(None))
+        if isinstance(value,scalar) or isinstance(value,(list,tuple)) and all(isinstance(v,scalar) for v in value):
+            controls[name]=value
+    return json.dumps(controls,default=str,ensure_ascii=False,sort_keys=True)
+
+def save_displayed_chart(state,fig,context,interpretation,button_key):
+    """Click callback: persists prior rendered figure before the script reruns."""
+    try:
+        item=snapshot(fig,context,interpretation)
+        entries,message=add_snapshot(state.get(REPORT_KEY,[]),item)
+        state[REPORT_KEY]=entries
+        state[CAPTURE_MESSAGE_KEY]={"key":button_key,"ok":True,
+                                    "message":f"{message} {len(entries)} chart(s) in report."}
+    except Exception as exc:
+        state[CAPTURE_MESSAGE_KEY]={"key":button_key,"ok":False,"message":f"Chart not saved: {exc}"}
+
 def capture_control(st,fig,key):
     context=st.session_state.get(CONTEXT_KEY)
     if not isinstance(context,dict) or context.get("page")=="Report":return
     if context.get("page")=="Compare Climates" and "compared sources" not in context:return
-    if st.button("Add to report",key="p6_capture_"+str(key),help="Save this displayed figure after global presentation settings are applied."):
-        try:
-            # Explicitly keyed calculation controls only; do not capture
-            # arbitrary uploader objects, credentials, or whole session state.
-            exact={"humidity_analysis_type","wind_analysis_type","solar_facade_tilt","solar_facade_chart_type",
-                   "p6_overview_view","p6_dashboard_year","global_time_basis"}
-            prefixes=("p3_","p4_","p6_nv_","p6_night_","p6_hgt_","p6_kgt_","p6_utci","p6_flow",
-                      "solar_facade_","nv_directional_","canonical_compare_","shading_")
-            controls={}
-            for name,value in st.session_state.items():
-                if not isinstance(name,str) or not (name in exact or name.startswith(prefixes)):continue
-                if isinstance(value,(str,int,float,bool,type(None))) or isinstance(value,(list,tuple)) and all(isinstance(v,(str,int,float,bool,type(None))) for v in value):
-                    controls[name]=value
-            item=snapshot(fig,{**context,"keyed chart settings":json.dumps(controls,default=str,ensure_ascii=False,sort_keys=True)},st.session_state.get(INTERPRETATION_KEY,""))
-            entries,message=add_snapshot(st.session_state.get(REPORT_KEY,[]),item)
-            st.session_state[REPORT_KEY]=entries
-            st.caption(message)
-        except (ValueError,TypeError) as exc:st.warning(str(exc))
+    # The caller passes a deterministic per-render ordinal, not the app's
+    # incrementing Plotly widget key. Callback arguments belong to the chart
+    # actually displayed when the user clicks, before any rerun changes inputs.
+    button_key="p6_capture_"+str(context.get("page"))+"_"+str(key)
+    saved_context={**context,"keyed chart settings":_capture_settings(st.session_state)}
+    interpretation=st.session_state.get(INTERPRETATION_KEY,"")
+    st.button("Add to report",key=button_key,
+              on_click=save_displayed_chart,
+              args=(st.session_state,fig,saved_context,interpretation,button_key),
+              help="Save this displayed figure after global presentation settings are applied.")
+    notice=st.session_state.get(CAPTURE_MESSAGE_KEY,{})
+    if notice.get("key")==button_key:
+        if notice.get("ok"):st.success(notice["message"])
+        else:st.warning(notice["message"])
+    st.caption(f"Report: {len(st.session_state.get(REPORT_KEY,[]))} saved diagram(s).")
+
+def render_report_status(st):
+    """Visible basket count independent of the current analysis widgets."""
+    st.sidebar.caption(f"Report: {len(st.session_state.get(REPORT_KEY,[]))} saved diagram(s)")
+
 
 def _safe(value):
     return html.escape(str(value or ""),quote=True)
@@ -151,9 +180,14 @@ def render_report():
             if b.button("Move down",disabled=i==len(items)-1,key="p6_down_"+sid):
                 items[i+1],items[i]=items[i],items[i+1];st.rerun()
             if c.button("Remove",key="p6_remove_"+sid):
-                items.pop(i);st.rerun()
+                items.pop(i)
+                st.session_state.pop(CAPTURE_MESSAGE_KEY,None)
+                st.rerun()
     if st.button("Clear report",key="p6_clear_report"):
-        st.session_state[REPORT_KEY]=[];st.rerun()
+        st.session_state[REPORT_KEY]=[]
+        st.session_state.pop(CAPTURE_MESSAGE_KEY,None)
+        st.session_state.pop("_p6_pdf",None)
+        st.rerun()
     st.download_button("Download printable HTML",data=printable_html(items,title,paper,orientation),
                        file_name="climate_report.html",mime="text/html",key="p6_html")
     fingerprint=hashlib.sha256(json.dumps([items,title,paper,orientation],default=str,sort_keys=True).encode()).hexdigest()

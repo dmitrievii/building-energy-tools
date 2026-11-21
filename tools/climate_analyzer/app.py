@@ -6064,7 +6064,8 @@ def main() -> None:
     st.sidebar.title(APP_NAME)
     st.sidebar.caption(APP_RELEASE_LABEL)
     apply_queued_navigation(st.session_state)
-    from epw_climate_analyzer.p6_report import CONTEXT_KEY,INTERPRETATION_KEY
+    from epw_climate_analyzer.p6_report import CONTEXT_KEY,INTERPRETATION_KEY,render_report_status
+    render_report_status(st)
     st.session_state.pop(CONTEXT_KEY,None)
     st.session_state.pop(INTERPRETATION_KEY,None)
     active_file = get_active_climate_file()
