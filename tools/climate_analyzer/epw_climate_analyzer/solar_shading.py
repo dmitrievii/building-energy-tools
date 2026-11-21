@@ -58,21 +58,53 @@ def shading_ledger(df,*,albedo=None,**geometry):
                          "Intercepted direct":lost,"Unshaded direct":direct,
                          "Remaining direct":direct-lost,"Shaded area fraction":fraction},index=df.index)
 
+MASK_CLASSES=(
+    ("0% · unshaded", "#CBD5E1"),
+    (">0–<25% · low shade", "#B0B0B0"),
+    ("25–<50% · partial shade", "#808080"),
+    ("50–<100% · strong shade", "#454545"),
+    ("100% · full shade", "#171717"),
+)
+MASK_EXPLANATION=(
+    "The mask shows the fraction of the window opening shaded by its overhang and fins "
+    "for each possible direct-sun direction. Pale open circles mean no shading from the devices; "
+    "darker points mean a larger shaded fraction. Directions behind the façade are omitted "
+    "because they cannot directly illuminate the front of the window. Read the mask together "
+    "with the monthly sun paths; hover for azimuth, elevation and the exact sampled shaded area. "
+    "This is geometric direct-beam shading only, independent of weather, diffuse light and indoor heat gains."
+)
+
 def overlay_shading_mask(fig,*,inverted=False,technical=False,**geometry):
+    # A fixed angular sampling grid, independent of the climate observations.
+    # Include only directions incident on the front of the selected vertical plane.
+    # Keep r = zenith in both orientations; the reversed axis is managed by the
+    # canonical polar layout, not by reversing the data a second time.
     az,el=np.meshgrid(np.arange(0,360,4.),np.arange(2,90,3.))
     f=shaded_fraction(az,el,**geometry)
-    keep=f>0
-    marker=dict(color=f[keep],colorscale="Greys",cmin=0,cmax=1,
-                size=5,opacity=.45,showscale=False)
-    if technical:
-        trace=go.Scattergl(x=az[keep],y=el[keep],mode="markers",marker=marker,
-                          name="Direct shadow mask",customdata=f[keep],
-                          hovertemplate="Shaded area %{customdata:.0%}<extra></extra>")
-    else:
-        trace=go.Scatterpolargl(theta=az[keep],r=90-el[keep],mode="markers",marker=marker,
-                               name="Direct shadow mask",customdata=f[keep],
-                               hovertemplate="Shaded area %{customdata:.0%}<extra></extra>")
-    fig.add_trace(trace)
+    facade=geometry.get("facade",180.)
+    front=np.cos(np.deg2rad(az-facade))*np.cos(np.deg2rad(el))>1e-10
+    groups=(f==0,(f>0)&(f<.25),(f>=.25)&(f<.5),(f>=.5)&(f<1),f==1)
+    for index,((label,color),group) in enumerate(zip(MASK_CLASSES,groups)):
+        keep=front&group&np.isfinite(f)
+        marker=dict(color=color, size=4 if index==0 else 6,
+                    opacity=.5 if index==0 else .82,
+                    symbol="circle-open" if index==0 else "circle")
+        values=np.column_stack([az[keep],el[keep],100*f[keep]])
+        args=dict(mode="markers",marker=marker,name=label,
+                  legendgroup="direct-shading-"+str(index),showlegend=True,
+                  customdata=values,meta={"direct_sun_shading_mask":True},
+                  hovertemplate="Solar azimuth %{customdata[0]:.0f}°<br>Solar elevation %{customdata[1]:.0f}°<br>Window shaded area %{customdata[2]:.1f}%<extra></extra>")
+        # An empty class still has a legend entry, without adding a dummy
+        # physical observation, by using an explicit null coordinate.
+        if not keep.any():
+            args["customdata"]=[[None,None,None]]
+        x=az[keep] if keep.any() else [None]
+        y=el[keep] if keep.any() else [None]
+        if technical:
+            trace=go.Scattergl(x=x,y=y,**args)
+        else:
+            trace=go.Scatterpolargl(theta=x,r=90-el[keep] if keep.any() else [None],**args)
+        fig.add_trace(trace)
     return fig
 
 def thermal_overlay(fig,df,mode,*,cold=18.,warm=26.,technical=False):

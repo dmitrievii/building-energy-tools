@@ -42,8 +42,20 @@ class P2Tests(unittest.TestCase):
                 self.assertAlmostEqual(t.diffuse_kwh_m2.sum(),diffuse,places=10)
                 np.testing.assert_allclose(t.total_kwh_m2,t.direct_kwh_m2+t.diffuse_kwh_m2)
                 self.assertTrue((t.total_kwh_m2>=0).all())
-                self.assertEqual(sky_figure(t,"Total").data[0].type,"barpolar")
-                self.assertEqual(sky_figure(t,"Total","3D dome").data[0].type,"mesh3d")
+                two=sky_figure(t,"Total")
+                three=sky_figure(t,"Total","3D dome")
+                self.assertEqual(two.data[0].type,"barpolar")
+                self.assertEqual(three.data[0].type,"mesh3d")
+                self.assertEqual(two.data[0].marker.colorscale[0],(0.,"#FFFFFF"))
+                self.assertEqual(two.data[0].marker.colorscale,three.data[0].colorscale)
+                self.assertEqual(three.data[0].cmin,0)
+                labels=next(tr for tr in three.data if tr.name=="Compass labels")
+                self.assertEqual(tuple(labels.text),("N","E","S","W"))
+                self.assertGreater(labels.y[0],0)
+                self.assertGreater(labels.x[1],0)
+                self.assertLess(labels.y[2],0)
+                self.assertLess(labels.x[3],0)
+                self.assertEqual(len(sky_figure(t,"Total","3D dome",show_compass=False).data),1)
             iso=cumulative_sky(df,mf=mf,model="Isotropic")
             ani=cumulative_sky(df,mf=mf,model="Perez 1993 (research)")
             self.assertFalse(np.allclose(iso.diffuse_kwh_m2,ani.diffuse_kwh_m2))
@@ -71,6 +83,44 @@ class P2Tests(unittest.TestCase):
         fig=go.Figure()
         overlay_shading_mask(fig,overhang=1.,**opts)
         self.assertEqual(fig.data[0].type,"scatterpolargl")
+        self.assertEqual(len(fig.data),5)
+        self.assertIn("unshaded",fig.data[0].name)
+        self.assertIn("full shade",fig.data[-1].name)
+        for tr in fig.data:
+            for azm,elev,shade in tr.customdata:
+                if azm is None:continue
+                self.assertGreater(np.cos(np.deg2rad(azm-180)),0)
+                self.assertAlmostEqual(float(shaded_fraction(azm,elev,overhang=1.,**opts))*100,shade)
+        other=go.Figure()
+        overlay_shading_mask(other,inverted=True,overhang=1.,**opts)
+        self.assertEqual(fig.to_json(),other.to_json())
+        cart=go.Figure()
+        overlay_shading_mask(cart,technical=True,overhang=1.,**opts)
+        self.assertTrue(all(tr.type=="scattergl" for tr in cart.data))
+
+    def test_window_sketch_respects_geometry_and_zero_depth(self):
+        from epw_climate_analyzer.shading_sketch import window_shading_sketch
+        from epw_climate_analyzer.chart_presentation import apply_chart_presentation,ChartPresentationSettings
+        fig=window_shading_sketch(facade=135,width=2.5,height=1.8,overhang=.7,left_fin=.3,right_fin=1.2)
+        meta=fig.layout.meta["shading_geometry"]
+        self.assertEqual(meta["facade"],135)
+        self.assertEqual(meta["width"],2.5)
+        self.assertEqual(meta["left_fin"],.3)
+        fin=next(tr for tr in fig.data if tr.name=="Right fin")
+        self.assertEqual(tuple(fin.y),(0,1.2))
+        overhang=next(tr for tr in fig.data if tr.name=="Overhang projection")
+        self.assertEqual(max(overhang.y),.7)
+        text=[ann.text for ann in fig.layout.annotations]
+        for label in ("W = 2.50 m","H = 1.80 m","L = 0.30 m","R = 1.20 m","D = 0.70 m","Façade azimuth 135°"):
+            self.assertIn(label,text)
+        self.assertEqual(fig.layout.yaxis.scaleanchor,"x")
+        self.assertEqual(fig.layout.yaxis2.scaleanchor,"x2")
+        apply_chart_presentation(fig,ChartPresentationSettings(background="Transparent"))
+        self.assertEqual(fig.layout.paper_bgcolor,"rgba(0,0,0,0)")
+        empty=window_shading_sketch()
+        self.assertNotIn("Overhang projection",[tr.name for tr in empty.data])
+        self.assertNotIn("Left fin",[tr.name for tr in empty.data])
+        self.assertNotIn("Right fin",[tr.name for tr in empty.data])
 
     def test_poa_and_fraction(self):
         df=fixture()

@@ -132,13 +132,40 @@ def cumulative_sky(df,*,mf=1,quantity="Total",model="Isotropic"):
     p.attrs["selected_intervals"]=len(df)
     return p
 
-def sky_figure(p,quantity,style="2D hemisphere"):
+# Shared strictly nonnegative irradiation palette: exact white at zero.
+SKY_COLORSCALE=[[0.0,"#FFFFFF"],[.12,"#FFFDEB"],[.35,"#FFF3AE"],
+                [.60,"#FFD84D"],[.82,"#FFAA25"],[1.0,"#E66A00"]]
+
+def _add_dome_compass(fig):
+    """Presentation guides in physical East/North/Up coordinates."""
+    theta=np.linspace(0,2*np.pi,181)
+    r=1.075; z=-.025
+    opts=dict(mode="lines",showlegend=False,hoverinfo="skip",
+              meta={"presentation_only_trace":True})
+    fig.add_trace(go.Scatter3d(x=r*np.sin(theta),y=r*np.cos(theta),
+        z=np.full_like(theta,z),line=dict(color="#526170",width=3),name="Horizon compass",**opts))
+    # Four cardinal ticks on a ring outside the mesh, plus an unmistakable N arrow.
+    x=[];y=[];zz=[]
+    for a in (0,90,180,270):
+        angle=np.deg2rad(a)
+        x.extend([1.02*np.sin(angle),1.13*np.sin(angle),None])
+        y.extend([1.02*np.cos(angle),1.13*np.cos(angle),None])
+        zz.extend([z,z,None])
+    fig.add_trace(go.Scatter3d(x=x,y=y,z=zz,line=dict(color="#526170",width=4),
+        name="Cardinal ticks",**opts))
+    fig.add_trace(go.Scatter3d(x=[0,0,-.045,0,.045],y=[1.01,1.18,1.115,1.18,1.115],
+        z=[z]*5,line=dict(color="#263B4B",width=5),name="North arrow",**opts))
+    fig.add_trace(go.Scatter3d(x=[0,1.24,0,-1.24],y=[1.28,0,-1.24,0],z=[.025]*4,
+        text=["N","E","S","W"],mode="text",textfont=dict(color="#263B4B",size=18),
+        showlegend=False,hoverinfo="skip",name="Compass labels",meta={"presentation_only_trace":True}))
+
+def sky_figure(p,quantity,style="2D hemisphere",*,show_compass=True):
     col={"Direct":"direct_kwh_m2","Diffuse":"diffuse_kwh_m2","Total":"total_kwh_m2"}[quantity]
     v=p[col].to_numpy(float); upper=max(1e-9,float(v.max()))
     colorbar=dict(title="kWh/m² per patch")
     if style=="2D hemisphere":
         fig=go.Figure(go.Barpolar(theta=p.azimuth,width=p.width,base=90-p.upper,r=p.upper-p.lower,
-                      marker=dict(color=v,colorscale="Inferno",cmin=0,cmax=upper,showscale=True,colorbar=colorbar,line=dict(color="rgba(160,160,160,.5)",width=.5)),
+                      marker=dict(color=v,colorscale=SKY_COLORSCALE,cmin=0,cmax=upper,showscale=True,colorbar=colorbar,line=dict(color="rgba(160,160,160,.5)",width=.5)),
                       customdata=np.column_stack([p.lower,p.upper,v,p.solid_angle]),
                       hovertemplate="Elevation %{customdata[0]:.1f}–%{customdata[1]:.1f}°<br>%{customdata[2]:.3f} kWh/m²<extra></extra>"))
         fig.update_layout(polar=dict(barmode="overlay",angularaxis=dict(rotation=90,direction="clockwise",tickvals=[0,90,180,270],ticktext=["N","E","S","W"]),
@@ -156,11 +183,16 @@ def sky_figure(p,quantity,style="2D hemisphere"):
                 for a,e in ((a0,el[0]),(a1,el[0]),(a1,el[1]),(a0,el[1])):
                     x.append(np.cos(e)*np.sin(a)); y.append(np.cos(e)*np.cos(a));z.append(np.sin(e));intensity.append(value)
                 i.extend([base,base]);j.extend([base+1,base+2]);k.extend([base+2,base+3])
-        fig=go.Figure(go.Mesh3d(x=x,y=y,z=z,i=i,j=j,k=k,intensity=intensity,colorscale="Inferno",cmin=0,cmax=upper,showscale=True,colorbar=colorbar,
+        fig=go.Figure(go.Mesh3d(x=x,y=y,z=z,i=i,j=j,k=k,intensity=intensity,colorscale=SKY_COLORSCALE,cmin=0,cmax=upper,showscale=True,colorbar=colorbar,
                flatshading=True,lighting=dict(ambient=1,diffuse=0,specular=0),
                hovertemplate="%{intensity:.3f} kWh/m² per patch<extra></extra>"))
+        if show_compass:
+            _add_dome_compass(fig)
         fig.update_layout(scene=dict(aspectmode="data",dragmode="turntable",
-             xaxis_title="East",yaxis_title="North",zaxis_title="Up",camera=dict(up=dict(x=0,y=0,z=1))))
+             xaxis=dict(title="East",range=[-1.36,1.36],showbackground=False),
+             yaxis=dict(title="North",range=[-1.36,1.36],showbackground=False),
+             zaxis=dict(title="Up",range=[-.08,1.08],showbackground=False),
+             camera=dict(up=dict(x=0,y=0,z=1),eye=dict(x=1.45,y=-1.65,z=1.35),projection=dict(type="orthographic"))))
     else:
         raise ValueError("Unknown sky chart style.")
     fig.update_layout(template="plotly_white",title=f"Cumulative {quantity.lower()} horizontal irradiation by sky patch",height=760)

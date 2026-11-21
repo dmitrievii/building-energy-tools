@@ -3687,10 +3687,13 @@ def render_sun_path(df: pd.DataFrame) -> None:
         if colour!="None":
             thermal_overlay(fig,df,colour,cold=cold,warm=warm)
             explanation+=" Observation colours indicate outdoor temperature or temperature-based solar benefit/risk, not actual indoor loads."
-        if st.checkbox("Show geometric shading mask",value=False,key="solar_mask_enable"):
+        if st.checkbox("Show direct-sun shading mask",value=False,key="solar_mask_enable",
+                       help="Show the fraction of the window shaded by its overhang and fins for each possible sun direction."):
+            from epw_climate_analyzer.solar_shading import MASK_EXPLANATION
+            st.caption(MASK_EXPLANATION)
             geometry=_shading_geometry("sun_mask")
             overlay_shading_mask(fig,inverted=invert_zenith_axis,**geometry)
-            explanation+=" Grey sample points show directions with partial or full direct-beam shading of the selected rectangular aperture."
+            explanation+=" "+MASK_EXPLANATION
         render_plot(fig, explanation)
     elif chart_type == "Technical sun-path diagram":
         from epw_climate_analyzer.solar_shading import thermal_overlay,overlay_shading_mask
@@ -3708,9 +3711,12 @@ def render_sun_path(df: pd.DataFrame) -> None:
             if colour!="None":
                 thermal_overlay(fig,df,colour,cold=cold,warm=warm,technical=True)
                 explanation+=" Temperature-based benefit/risk is a climate indicator, not a building load."
-        if st.checkbox("Show geometric shading mask",value=False,key="technical_sun_mask"):
+        if st.checkbox("Show direct-sun shading mask",value=False,key="technical_sun_mask",
+                       help="Show the fraction of the window shaded by its overhang and fins for each possible sun direction."):
+            from epw_climate_analyzer.solar_shading import MASK_EXPLANATION
+            st.caption(MASK_EXPLANATION)
             overlay_shading_mask(fig,technical=True,**_shading_geometry("technical_mask"))
-            explanation+=" Grey points indicate partial or full shading of the aperture."
+            explanation+=" "+MASK_EXPLANATION
         render_plot(fig,explanation)
     else:
         show_cube = st.checkbox("Show cube", value=True, key="solar_sun_path_show_cube")
@@ -3851,7 +3857,12 @@ def _shading_geometry(prefix):
     overhang=c[0].number_input("Overhang depth [m]",0.,10.,.6,.1,key=prefix+"_oh")
     left=c[1].number_input("Left fin depth [m]",0.,10.,0.,.1,key=prefix+"_lf")
     right=c[2].number_input("Right fin depth [m]",0.,10.,0.,.1,key=prefix+"_rf")
-    return dict(facade=facade,width=width,height=height,overhang=overhang,left_fin=left,right_fin=right)
+    geometry=dict(facade=facade,width=width,height=height,overhang=overhang,left_fin=left,right_fin=right)
+    from epw_climate_analyzer.shading_sketch import window_shading_sketch
+    st.caption("Left/right are defined looking out from indoors. All depths project outward from the façade plane; zero depth means no device.")
+    st.plotly_chart(window_shading_sketch(**geometry),use_container_width=True,
+                    key=prefix+"_geometry_sketch",config={"displaylogo":False})
+    return geometry
 
 
 def _solar_temperature_selection(df,prefix):
@@ -3881,6 +3892,9 @@ def render_sky_radiation_distribution(df):
         return
     quantity=st.selectbox("Radiation component",options,index=options.index("Total") if "Total" in options else 0,key="sky_patch_quantity")
     style=st.selectbox("Chart type",["2D hemisphere","3D dome"],key="sky_patch_style")
+    show_compass=st.checkbox("Show compass",value=True,key="sky_dome_compass") if style=="3D dome" else True
+    if style=="3D dome":
+        st.caption("Compass bearings are fixed to the hemisphere: +X east, +Y north, +Z up. Rotate the view without changing geographic orientation.")
     resolution=st.selectbox("Sky resolution",["Tregenza 145","Reinhart 577"],key="sky_patch_resolution")
     models=["Isotropic"]
     if quantity!="Direct" and "direct_normal_radiation_wh_m2" in df and df["direct_normal_radiation_wh_m2"].notna().any():
@@ -3895,7 +3909,7 @@ def render_sky_radiation_distribution(df):
         st.info(str(exc))
         return
     st.caption(f"Complete qualifying daylight intervals: {table.attrs['valid_intervals']:,} / {table.attrs['selected_intervals']:,}. Active Data filter; no annualization.")
-    render_plot(sky_figure(table,quantity,style),
+    render_plot(sky_figure(table,quantity,style,show_compass=show_compass),
         "Each patch represents its contribution to irradiation on an unobstructed horizontal plane, not radiance or tilted-surface irradiation. Diffuse energy is normalized using projected solid angle; direct energy uses the actual solar zenith cosine. Total equals direct plus diffuse on common valid intervals. Ground radiation is excluded.")
     st.download_button("Sky patch numerical data · CSV",table.to_csv().encode("utf-8"),"sky_patch_irradiation.csv","text/csv",key="sky_patch_csv")
 

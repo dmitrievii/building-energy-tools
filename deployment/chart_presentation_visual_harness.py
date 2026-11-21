@@ -61,6 +61,15 @@ if st.query_params.get("p2") == "1":
     apply_underlay(underlay,prepare_underlay(image_bytes.getvalue()),scale=.8)
     # Direct original is appropriate here: this fixture has already passed the shared presentation boundary.
     st._climate_analyzer_original_plotly_chart(underlay,key="p2_underlay")
+    from epw_climate_analyzer.solar_shading import overlay_shading_mask
+    from epw_climate_analyzer.shading_sketch import window_shading_sketch
+    import plotly.graph_objects as go
+    geometry=dict(facade=180.,width=2.,height=1.5,overhang=.6,left_fin=.2,right_fin=.8)
+    sketch=window_shading_sketch(**geometry)
+    st.plotly_chart(sketch,key="p2_window_sketch")
+    mask=overlay_shading_mask(go.Figure(),technical=True,**geometry)
+    mask.update_layout(xaxis_title="Solar azimuth",yaxis_title="Solar elevation",title="Direct-sun shading mask")
+    st.plotly_chart(mask,key="p2_shading_mask")
     st.stop()
 
 if st.query_params.get("duration") == "1":

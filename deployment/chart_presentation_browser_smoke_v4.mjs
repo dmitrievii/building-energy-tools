@@ -403,18 +403,27 @@ try {
   await page.screenshot({path:OUT_DIR+'/10-duration-endpoints.png',fullPage:true});
 
   await page.goto(TARGET_URL+'?p2=1',{waitUntil:'domcontentloaded'});
-  const p2Frame=await waitForCharts(page,4);
+  const p2Frame=await waitForCharts(page,6);
   const p2=await p2Frame.locator('.js-plotly-plot').evaluateAll(nodes=>nodes.map(node=>({
     types:node._fullData.map(t=>t.type),patches:node._fullData[0]?.r?.length||0,
     classStack:node._fullLayout.polar?.barmode||null,
     names:node._fullData.map(t=>t.name),
     radialSum:node._fullData.reduce((sum,t)=>sum+(t.type==='barpolar'?Array.from(t.r).reduce((a,b)=>a+Number(b||0),0):0),0),
     images:node.querySelectorAll('.imagelayer image').length,
-    imageSource:node._fullLayout.images?.[0]?.source?.slice(0,22)||null
+    imageSource:node._fullLayout.images?.[0]?.source?.slice(0,22)||null,
+    scaleStart:node._fullData[0]?.marker?.colorscale?.[0]?.[1]||node._fullData[0]?.colorscale?.[0]?.[1]||null,
+    compass:node._fullData.find(t=>t.name==='Compass labels')?.text||null,
+    annotationTexts:node._fullLayout.annotations?.map(a=>a.text)||[],
+    maskClasses:node._fullData.filter(t=>t.meta?.direct_sun_shading_mask===true).map(t=>t.name)
   })));
   if(p2[0].types.length!==6||p2[0].types.some(t=>t!=='barpolar')||p2[0].classStack!=='stack'||Math.abs(p2[0].radialSum-8)>1e-8||p2[1].patches!==145||p2[2].types[0]!=='mesh3d'||
      p2[3].images<1||p2[3].imageSource!=='data:image/png;base64,')
     throw new Error('P2 chart rendering or underlay incomplete: '+JSON.stringify(p2));
+  const white=v=>v==='#FFFFFF'||v==='#ffffff'||v==='rgb(255, 255, 255)'||v==='rgb(255,255,255)';
+  if(!white(p2[1].scaleStart)||!white(p2[2].scaleStart)||JSON.stringify(p2[2].compass)!==JSON.stringify(['N','E','S','W'])||
+      !p2[4].annotationTexts.includes('D = 0.60 m')||!p2[4].annotationTexts.includes('R = 0.80 m')||
+      p2[5].maskClasses.length!==5)
+    throw new Error('Shading sketch/mask or sky palette/compass incomplete: '+JSON.stringify(p2));
   report.metrics.p2Visuals=p2;
   report.checks.p2Visuals=true;
   await page.screenshot({path:OUT_DIR+'/11-p2-directional-graphics.png',fullPage:true});
