@@ -641,6 +641,28 @@ def threshold_bar_chart(counts: pd.DataFrame, title: str, unit: str = "hours") -
     set_period_axis_scope(fig,context={"first timestamp":counts.attrs.get("period_source_first"),"last timestamp":counts.attrs.get("period_source_last")},aggregation=aggregation)
     return apply_monthly_axes(fig)
 
+PAIRED_SCATTER_COLOR = "#2563EB"
+PAIRED_SCATTER_SVG_LIMIT = 20000
+
+def paired_scatter_chart(x_values,y_values,title,x_label,y_label):
+    """Finite coincident observations; explicit colour independent of theme.
+
+    SVG avoids WebGL context exhaustion for ordinary annual datasets and
+    static reports. Larger datasets retain WebGL, without dropping records.
+    """
+    x=pd.to_numeric(x_values,errors="coerce")
+    y=pd.to_numeric(y_values,errors="coerce")
+    ok=np.isfinite(x)&np.isfinite(y)
+    if not ok.any():raise ValueError("No finite paired observations.")
+    x=x[ok];y=y[ok]
+    trace=go.Scatter if len(x)<=PAIRED_SCATTER_SVG_LIMIT else go.Scattergl
+    fig=go.Figure(trace(x=x.to_numpy(dtype=float),y=y.to_numpy(dtype=float),mode="markers",
+        marker=dict(color=PAIRED_SCATTER_COLOR,size=5 if len(x)<=500 else 4,opacity=.7 if len(x)<=500 else .55),
+        name="Paired observations",showlegend=False,
+        hovertemplate=x_label+": %{x:.2f}<br>"+y_label+": %{y:.2f}<extra></extra>"))
+    return fig.update_layout(template=PLOT_TEMPLATE,title=title,xaxis_title=x_label,yaxis_title=y_label,
+        margin=dict(l=40,r=20,t=70,b=45))
+
 def scatter_chart(
     df: pd.DataFrame,
     x: str,
@@ -652,7 +674,12 @@ def scatter_chart(
 ) -> go.Figure:
     """Create a general scatter chart for climate-variable relationships."""
     data = df[[x, y] + ([color] if color else [])].dropna()
-    fig = px.scatter(data, x=x, y=y, color=color, opacity=0.65, title=title, render_mode="webgl")
+    if color is None and not data.empty and (np.isfinite(pd.to_numeric(data[x],errors="coerce"))&np.isfinite(pd.to_numeric(data[y],errors="coerce"))).any():
+        fig=paired_scatter_chart(data[x],data[y],title,x_label,y_label)
+    else:
+        fig = px.scatter(data, x=x, y=y, color=color, opacity=0.65, title=title,
+                         render_mode="svg" if len(data)<=PAIRED_SCATTER_SVG_LIMIT else "webgl",
+                         color_discrete_sequence=[PAIRED_SCATTER_COLOR] if color is None else None)
     fig.update_layout(template=PLOT_TEMPLATE, xaxis_title=x_label, yaxis_title=y_label, margin=dict(l=40, r=20, t=70, b=45))
     lo, hi = _axis_limits_for_column(x, data[x])
     if lo is not None or hi is not None:

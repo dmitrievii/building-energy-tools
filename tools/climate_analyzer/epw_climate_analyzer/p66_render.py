@@ -372,16 +372,19 @@ def make_figure(d,df,context,reference_df=None,cache=None):
     elif k=="joint":
         y,style=a
         if style=="scatter":
-            x1=base.numeric(df,c);y1=base.numeric(df,y);ok=x1.notna()&y1.notna()
-            if not ok.any():raise NotApplicable("No paired observations.")
-            f=go.Figure(go.Scattergl(x=x1[ok],y=y1[ok],mode="markers",marker=dict(size=3,opacity=.35)))
+            x1=base.numeric(df,c);y1=base.numeric(df,y)
+            try:
+                f=ch.paired_scatter_chart(x1,y1,title,f"{cat.LABELS[c]} [{u}]",f"{cat.LABELS[y]} [{cat.UNITS[y]}]")
+            except ValueError as exc:raise NotApplicable(str(exc)) from exc
+            note+=f" {len(f.data[0].x):,} finite paired observations; no downsampling."
         else:
             values=p4.joint_density(df,c,y,bins=25)
             if values is None:raise NotApplicable("No paired observations.")
             x1,y1,z,h=values
             f=go.Figure(go.Heatmap(x=x1,y=y1,z=z,customdata=h,colorscale="Blues",colorbar=dict(title="%")))
         f.update_layout(xaxis_title=f"{cat.LABELS[c]} [{u}]",yaxis_title=f"{cat.LABELS[y]} [{cat.UNITS[y]}]")
-        note+=" Coincident observations only. Density chart displays probability mass in 25 × 25 bins."
+        note+=" Coincident observations only."
+        if style!="scatter":note+=" Density chart displays probability mass in 25 × 25 bins."
     else:raise NotApplicable("No atlas renderer registered.")
     if not len(f.data):raise NotApplicable("No plotted data.")
     # Native monthly and total bars bypass the general metric chart builders.

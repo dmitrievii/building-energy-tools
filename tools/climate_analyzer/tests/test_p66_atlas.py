@@ -265,6 +265,29 @@ class AtlasTests(unittest.TestCase):
             self.assertEqual([float(tr.y[0]) for tr in fig.data],[3.,17.])
             self.assertEqual(fig.layout.legend.orientation,"h")
 
+    def test_paired_scatter_visible_and_finite(self):
+        from epw_climate_analyzer.charts import paired_scatter_chart,PAIRED_SCATTER_COLOR,PAIRED_SCATTER_SVG_LIMIT
+        from epw_climate_analyzer.p6_report_structure import report_figure
+        df=self.fixture()
+        df.loc[df.index[0],c.T]=np.nan
+        df.loc[df.index[1],c.RH]=np.inf
+        d=next(d for d in c.catalogue(df,{},c.FULL) if d.kind=="joint" and d.column==c.T and d.args==(c.RH,"scatter"))
+        fig,note=make_figure(d,df,{})
+        for copy in (fig,report_figure(fig,width_pt=500,height_pt=230)):
+            tr=copy.data[0]
+            self.assertEqual(tr.type,"scatter")
+            self.assertEqual(tr.marker.color,PAIRED_SCATTER_COLOR)
+            self.assertGreaterEqual(tr.marker.opacity,.55)
+            np.testing.assert_allclose(tr.x,df[c.T].iloc[2:])
+            np.testing.assert_allclose(tr.y,df[c.RH].iloc[2:])
+        self.assertIn("94 finite paired observations",note)
+        x=pd.Series(np.zeros(PAIRED_SCATTER_SVG_LIMIT+1))
+        big=paired_scatter_chart(x,x,"Test","X","Y")
+        self.assertEqual(big.data[0].type,"scattergl")
+        self.assertEqual(len(big.data[0].x),len(x))
+        with self.assertRaises(ValueError):
+            paired_scatter_chart(pd.Series([np.nan]),pd.Series([1.]),"Test","X","Y")
+
     def test_core_chart_families_execute(self):
         df=self.fixture();rows=[d for d in c.catalogue(df,{},c.FULL) if d.status=="available"]
         types=("time_series","profile","percentile","heatmap","duration","histogram","box","violin","diurnal","occurrence","amplitude","total","degree","temp_threshold","temp_events","day_indicators","wind_mean","wind_classes","wetdry","rolling","cumulative","freeze_days","eligibility_map","eligibility_total","nv_special","critical_windows","correlation","joint")
