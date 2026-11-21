@@ -574,6 +574,29 @@ def build_overlay_figure(
     return fig, tables
 
 
+def build_meteogram_figure(df, series, start, end, title="Climate meteogram"):
+    """One panel per series, using exactly the existing overlay aggregation."""
+    from plotly.subplots import make_subplots
+    if not series:
+        raise ValueError("At least one series is required.")
+    fig=make_subplots(rows=len(series),cols=1,shared_xaxes=True,
+                      vertical_spacing=min(.065,.4/max(1,len(series))),
+                      subplot_titles=[s.label+" · "+s.resolution for s in series])
+    tables=[]
+    for row,spec in enumerate(series,1):
+        individual, data=build_overlay_figure(df,[spec],start,end)
+        tables.extend(data)
+        for trace in individual.data:
+            fig.add_trace(trace,row=row,col=1)
+        original_axis=individual.layout.xaxis
+        fig.update_xaxes(type=original_axis.type,range=original_axis.range,
+                         tickformat=original_axis.tickformat,row=row,col=1)
+        fig.update_yaxes(title_text=spec.unit,row=row,col=1)
+    fig.update_layout(template="plotly_white",title=title,height=max(460,240*len(series)),
+                      hovermode="x unified")
+    return fig,tables
+
+
 def combined_series_table(tables: list[pd.DataFrame]) -> pd.DataFrame:
     """Return one tidy export table for the configured overlay series."""
     if not tables:

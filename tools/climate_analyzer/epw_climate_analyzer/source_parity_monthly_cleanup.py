@@ -387,6 +387,8 @@ def _render_monthly_overview(legacy: Any, dataset: Any, filtered: pd.DataFrame) 
     st.caption(
         "Coverage is evaluated independently for each provider variable. A valid early series is retained even when another selected variable starts later."
     )
+    if hasattr(legacy,"render_climate_summary_charts"):
+        legacy.render_climate_summary_charts(filtered)
 
 
 def _render_calendar_monthly_overlay(legacy: Any, df: pd.DataFrame) -> None:

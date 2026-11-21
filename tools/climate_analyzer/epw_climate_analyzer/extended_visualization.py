@@ -1,0 +1,285 @@
+"""P1 reusable climate visualizations, preserving canonical source semantics."""
+from __future__ import annotations
+
+import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
+from .aggregations import native_interval_hours, duration_curve
+from .climate_model import aggregation_semantics_for
+from .chart_theme import metric_color, MONTH_COLORS, rgba
+from .temporal_filtering import CHRONOLOGICAL, time_basis
+from .daylight import daily_daylight_table
+
+MONTHS = ("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec")
+T = "dry_bulb_temperature_c"
+P = "liquid_precipitation_depth_mm"
+NEW_TYPES = ("Typical daily profile", "Monthly occurrence classes")
+
+
+def hourly_capable(df):
+    return (isinstance(df.index,pd.DatetimeIndex)
+            and str(df.attrs.get("canonical_native_resolution","")).lower()!="monthly"
+            and native_interval_hours(df)<=1.0)
+
+
+def compatible_types(df,column):
+    if not hourly_capable(df) or aggregation_semantics_for(column)=="circular mean" or "direction" in column:
+        return []
+    return list(NEW_TYPES)
+
+
+def _numeric(df,column):
+    return pd.to_numeric(df[column],errors="coerce").replace([np.inf,-np.inf],np.nan)
+
+
+def _hourly_values(df,column):
+    """One complete real clock hour; sums extensive intervals, means states."""
+    if not hourly_capable(df):
+        raise ValueError("Hourly or finer data are required.")
+    values=_numeric(df,column).sort_index()
+    if not values.index.is_unique:
+        raise ValueError("Duplicate timestamps are not admitted.")
+    interval=native_interval_hours(df)
+    count=int(round(1/interval))
+    if not np.isclose(count*interval,1.):
+        raise ValueError("Source cadence must divide one hour.")
+    resampled=values.resample("h")
+    semantics=aggregation_semantics_for(column)
+    if semantics=="sum":
+        hourly=resampled.sum(min_count=1)
+    elif semantics=="min":
+        hourly=resampled.min()
+    elif semantics=="max":
+        hourly=resampled.max()
+    else:
+        hourly=resampled.mean()
+    return hourly.where(resampled.count()==count)
+
+
+def diurnal_statistics(df,column,months=range(1,13)):
+    """Representative hourly profile, distribution across actual observed hours."""
+    if not compatible_types(df,column):
+        raise ValueError("Diurnal profiles require subdaily non-directional data.")
+    h=_hourly_values(df,column)
+    grouped=h.groupby([h.index.month,h.index.hour])
+    table=grouped.agg(mean="mean",median="median",min="min",max="max",count="count")
+    table["p05"]=grouped.quantile(.05)
+    table["p95"]=grouped.quantile(.95)
+    table=table.reindex(pd.MultiIndex.from_product([list(months),range(24)],names=["month","hour"]))
+    return table
+
+
+def diurnal_figure(table,column,unit,*,representation="Overlay",centre="mean",band="P05–P95"):
+    months=list(dict.fromkeys(table.index.get_level_values("month")))
+    small=representation=="Small multiples"
+    rows=(len(months)+2)//3 if small else 1
+    fig=make_subplots(rows=rows,cols=3,shared_yaxes=True,
+        subplot_titles=[MONTHS[m-1] for m in months],vertical_spacing=min(.08,.25/max(1,rows))) if small else go.Figure()
+    bounds={"Min–max":("min","max"),"P05–P95":("p05","p95")}.get(band)
+    for i,m in enumerate(months):
+        sub=table.loc[m]; color=MONTH_COLORS[m-1] if len(months)>1 else metric_color(column)
+        kw={"row":i//3+1,"col":i%3+1} if small else {}
+        if bounds:
+            low,high=bounds
+            fig.add_trace(go.Scatter(x=list(range(24)),y=sub[low],mode="lines",line=dict(width=0),showlegend=False,hoverinfo="skip",legendgroup=str(m)),**kw)
+            fig.add_trace(go.Scatter(x=list(range(24)),y=sub[high],mode="lines",line=dict(width=0),fill="tonexty",fillcolor=rgba(color,.16),showlegend=False,hoverinfo="skip",legendgroup=str(m)),**kw)
+        fig.add_trace(go.Scatter(x=list(range(24)),y=sub[centre],mode="lines+markers",name=MONTHS[m-1],
+            line=dict(color=color,width=2.5),marker=dict(size=4),connectgaps=False,
+            legendgroup=str(m),showlegend=not small,customdata=sub["count"],
+            hovertemplate="%{x}:00<br>%{y:.3g} "+unit+"<br>Observed hours: %{customdata}<extra>%{fullData.name}</extra>"),**kw)
+    fig.update_xaxes(range=[0,24],tickvals=[0,6,12,18,24],title_text="Hour")
+    fig.update_yaxes(title_text=unit)
+    fig.update_layout(template="plotly_white",title="Typical daily profile",height=max(480,rows*285) if small else 540,
+                      legend=dict(orientation="h",y=-.2,groupclick="togglegroup"))
+    return fig
+
+
+def _complete_daily(df,column,stat):
+    values=_numeric(df,column).sort_index()
+    if not values.index.is_unique:
+        raise ValueError("Duplicate timestamps are not admitted.")
+    freq=pd.Timedelta(hours=native_interval_hours(df))
+    groups=values.resample("D")
+    start=groups.size().index
+    # Local civil days can contain 23 or 25 physical hours.
+    expected=np.array([(x+pd.DateOffset(days=1)-x)/freq for x in start])
+    if stat=="Amplitude":
+        out=groups.max()-groups.min()
+    elif stat=="Total":
+        out=groups.sum(min_count=1)
+    elif stat=="Minimum":
+        out=groups.min()
+    elif stat=="Maximum":
+        out=groups.max()
+    else:
+        out=groups.mean()
+    return out.where(groups.count().to_numpy()==expected)
+
+
+def occurrence_table(df,column,edges,*,basis="Hours",daily_stat="Mean"):
+    """Disjoint value classes; missing observations do not enter denominators."""
+    if not compatible_types(df,column):
+        raise ValueError("Occurrence classes require subdaily non-directional data.")
+    edges=list(map(float,edges))
+    if not edges or not np.isfinite(edges).all() or any(b<=a for a,b in zip(edges,edges[1:])):
+        raise ValueError("Class boundaries must be finite, strictly increasing numbers.")
+    daily=basis=="Days"
+    v=_complete_daily(df,column,daily_stat) if daily else _numeric(df,column)
+    v=v.dropna()
+    limits=[-np.inf,*edges,np.inf]
+    labels=[f"< {edges[0]:g}"]+[f"{a:g} – < {b:g}" for a,b in zip(edges,edges[1:])]+[f"≥ {edges[-1]:g}"]
+    classes=pd.cut(v,limits,labels=labels,right=False)
+    keys=v.index.strftime("%Y-%m")
+    counts=pd.crosstab(keys,classes,dropna=False).reindex(columns=labels,fill_value=0)
+    counts.index=pd.Index(counts.index,name="Period")
+    if basis=="Percentage":
+        counts=100.*counts.div(counts.sum(axis=1).replace(0,np.nan),axis=0)
+    elif basis=="Hours":
+        counts=counts*native_interval_hours(df)
+    if time_basis(df)!=CHRONOLOGICAL:
+        counts=counts.groupby(counts.index.str[-2:]).mean()
+        counts.index=[MONTHS[int(m)-1] for m in counts.index]
+    return counts
+
+
+def occurrence_figure(table,unit,basis):
+    fig=go.Figure()
+    palette=["#2563EB","#0EA5E9","#059669","#EAB308","#EA580C","#DC2626"]
+    for i,c in enumerate(table):
+        fig.add_bar(x=table.index,y=table[c],name=c+" "+unit,marker_color=palette[min(len(palette)-1,int(i*len(palette)/max(1,len(table.columns))))])
+    fig.update_layout(template="plotly_white",title="Monthly occurrence classes",
+                      barmode="stack",xaxis_title="Period",yaxis_title="Observed "+basis.lower() if basis!="Percentage" else "Share of observed intervals [%]",legend=dict(orientation="h",y=-.2))
+    if basis=="Percentage":
+        fig.update_yaxes(range=[0,100])
+    return fig
+
+
+def probability_figure(df,column,unit,ascending=False):
+    v=duration_curve(df,column,ascending)
+    label="Cumulative frequency [%]" if ascending else "Exceedance frequency [%]"
+    fig=go.Figure(go.Scatter(x=v["exceedance_fraction"]*100,y=v[column],mode="lines",
+                               line=dict(color=metric_color(column))))
+    fig.update_layout(template="plotly_white",title="Empirical frequency curve",xaxis_title=label,yaxis_title=unit)
+    fig.update_xaxes(range=[0,100])
+    return fig
+
+
+def daily_amplitude(df):
+    if not hourly_capable(df):
+        raise ValueError("Daily temperature amplitude requires subdaily observations.")
+    return _complete_daily(df,T,"Amplitude")
+
+
+def climate_summary_table(df):
+    """Paired complete calendar-month T means and precipitation totals.
+
+    Average equivalent *complete* year-months with equal weight; never
+    interpret missing precipitation as zero or accumulate multiple Januaries.
+    Published monthly frames require canonical temperature and precipitation.
+    """
+    if T not in df or P not in df:
+        return pd.DataFrame()
+    v=pd.DataFrame({T:_numeric(df,T),P:_numeric(df,P).where(_numeric(df,P)>=0)})
+    v=v.sort_index()
+    if not v.index.is_unique:
+        raise ValueError("Duplicate timestamps are not admitted.")
+    if str(df.attrs.get("canonical_native_resolution","")).lower()=="monthly":
+        monthly=v.dropna()
+        if monthly.index.to_period("M").duplicated().any():
+            raise ValueError("Duplicate calendar months are not admitted.")
+    elif hourly_capable(df):
+        group=v.resample("MS")
+        monthly=group.agg({T:"mean",P:"sum"})
+        expected=np.asarray([(x+pd.offsets.MonthBegin(1)-x)/pd.Timedelta(hours=native_interval_hours(df)) for x in monthly.index])
+        complete=group.count().eq(expected,axis=0).all(axis=1)
+        monthly=monthly.loc[complete]
+    else:
+        return pd.DataFrame()
+    if monthly.empty:
+        return pd.DataFrame()
+    grouped=monthly.groupby(monthly.index.month)
+    out=grouped.mean().reindex(range(1,13))
+    out["samples"]=grouped.size().reindex(range(1,13),fill_value=0)
+    return out
+
+
+def walter_precip_scale(p):
+    a=np.asarray(p,dtype=float)
+    return np.where(a<=100.,a/2.,50.+(a-100.)/20.)
+
+
+def climate_summary_figure(table,style):
+    temp=table[T].to_numpy(dtype=float);precip=table[P].to_numpy(dtype=float)
+    if style=="Temperature–precipitation loop":
+        fig=go.Figure(go.Scatter(x=np.r_[temp,temp[0]],y=np.r_[precip,precip[0]],
+            mode="lines+markers+text",text=[*MONTHS,""],textposition="top center",connectgaps=False,
+            marker=dict(color=list(range(12))+[0],colorscale="Turbo",size=8),name="Monthly climate"))
+        fig.update_layout(xaxis_title="Mean temperature [°C]",yaxis_title="Monthly precipitation [mm]")
+    elif style=="Walter–Lieth":
+        scaled=walter_precip_scale(precip)
+        fig=go.Figure()
+        for i,m in enumerate(MONTHS):
+            if np.isfinite(temp[i]) and np.isfinite(precip[i]):
+                dry=precip[i]<2*temp[i]
+                fig.add_bar(x=[m],y=[abs(scaled[i]-temp[i])],base=[min(scaled[i],temp[i])],
+                            width=.75,marker_color="#EAB308" if dry else "#93C5FD",opacity=.35,
+                            showlegend=False,name="Dry" if dry else "Humid",hoverinfo="skip")
+        fig.add_scatter(x=list(MONTHS),y=temp,name="Temperature",mode="lines+markers",line_color="#D55E00",connectgaps=False)
+        fig.add_scatter(x=list(MONTHS),y=scaled,name="Precipitation",mode="lines+markers",line_color="#0072B2",
+                        customdata=precip,hovertemplate="%{x}<br>%{customdata:.1f} mm<extra></extra>",connectgaps=False)
+        valid=np.r_[temp[np.isfinite(temp)],scaled[np.isfinite(scaled)],0.]
+        low=min(0.,float(valid.min())-3);high=max(55.,float(valid.max())+3)
+        ticks=[0,20,40,60,80,100]+list(range(300, int(max(300.,np.nanmax(precip) if np.isfinite(precip).any() else 300.))+200,200))
+        fig.update_layout(xaxis_title="Month",yaxis=dict(title="Temperature [°C]",range=[low,high]),
+                          yaxis2=dict(title="Precipitation [mm]",overlaying="y",side="right",range=[low,high],
+                                      tickvals=walter_precip_scale(ticks),ticktext=ticks,showgrid=False))
+        # A dummy invisible trace activates the explicitly coupled right axis.
+        fig.add_scatter(x=[None],y=[None],yaxis="y2",showlegend=False,hoverinfo="skip")
+        fig.add_hline(y=50,line_dash="dot",line_color="#94A3B8")
+    else:
+        fig=make_subplots(specs=[[{"secondary_y":True}]])
+        fig.add_bar(x=list(MONTHS),y=precip,name="Precipitation",marker_color="#0072B2",secondary_y=True)
+        fig.add_scatter(x=list(MONTHS),y=temp,name="Temperature",mode="lines+markers",line_color="#D55E00",secondary_y=False)
+        fig.update_yaxes(title_text="Temperature [°C]",secondary_y=False)
+        fig.update_yaxes(title_text="Precipitation [mm]",rangemode="tozero",secondary_y=True)
+    fig.update_layout(template="plotly_white",title=style,legend=dict(orientation="h",y=-.2))
+    return fig
+
+
+def ground_depth_heatmap(profile):
+    return go.Figure(go.Heatmap(x=list(profile.columns),y=profile.index,z=profile.to_numpy(dtype=float),
+                       colorscale="RdBu_r",colorbar=dict(title="°C"),
+                       hovertemplate="%{x}<br>Depth %{y:g} m<br>%{z:.2f} °C<extra></extra>")).update_layout(
+                       template="plotly_white",title="Calculated ground temperature by depth and month",
+                       xaxis_title="Month",yaxis=dict(title="Depth [m]",autorange="reversed"))
+
+
+def daylight_envelope(index,latitude):
+    table=daily_daylight_table(pd.DatetimeIndex(index),latitude)
+    d=table["daylight_duration_h"]
+    fig=go.Figure()
+    fig.add_scatter(x=table.index,y=12-d/2,mode="lines",name="Sunrise",line_color="#D55E00")
+    fig.add_scatter(x=table.index,y=12+d/2,mode="lines",name="Sunset",line_color="#0072B2",
+                    fill="tonexty",fillcolor="rgba(245,158,11,.16)")
+    fig.update_layout(template="plotly_white",title="Ideal sunrise–sunset envelope (local apparent solar time)",
+                      xaxis_title="Date",yaxis=dict(title="Solar time [h]",range=[0,24],tickvals=[0,6,12,18,24]))
+    return fig
+
+
+def sky_distribution(df,column="total_sky_cover_tenths"):
+    # Three classes partition all valid observations on the 0–10 scale.
+    clean=df.copy()
+    clean[column]=_numeric(df,column).where(_numeric(df,column).between(0,10))
+    return occurrence_table(clean,column,[3,8],basis="Hours")
+
+
+def sunshine_hour_heatmap(df):
+    h=_hourly_values(df,"sunshine_duration_s")
+    averages=(h/3600.).groupby([h.index.month,h.index.hour]).mean().unstack().reindex(index=range(1,13),columns=range(24))
+    return go.Figure(go.Heatmap(x=list(range(24)),y=list(MONTHS),z=averages.to_numpy(),
+                      zmin=0,zmax=1,colorscale="YlOrRd",colorbar=dict(title="h/h"),
+                      hovertemplate="%{y} %{x}:00<br>%{z:.2f} sunshine h/h<extra></extra>")).update_layout(
+                      template="plotly_white",title="Mean measured sunshine duration by month and hour",
+                      xaxis=dict(title="Hour",tickvals=[0,6,12,18,23]),yaxis=dict(title="Month",autorange="reversed"))
