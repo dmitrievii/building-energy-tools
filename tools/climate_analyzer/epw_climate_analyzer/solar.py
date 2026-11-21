@@ -471,7 +471,7 @@ def orientation_tilt_matrix(
                 {
                     "tilt_deg": float(tilt),
                     "azimuth_deg": float(azimuth),
-                    "annual_kwh_m2": poa.sum() / 1000.0,
+                    "annual_kwh_m2": poa.sum(min_count=1) / 1000.0,
                 }
             )
     return pd.DataFrame(rows).pivot(index="tilt_deg", columns="azimuth_deg", values="annual_kwh_m2")

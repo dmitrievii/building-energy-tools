@@ -316,6 +316,11 @@ VARIABLES = {
     "Global horizontal radiation": ("global_horizontal_radiation_wh_m2", "Wh/m²"),
     "Direct normal radiation": ("direct_normal_radiation_wh_m2", "Wh/m²"),
     "Diffuse horizontal radiation": ("diffuse_horizontal_radiation_wh_m2", "Wh/m²"),
+    "Diffuse radiation fraction": ("diffuse_radiation_fraction_pct", "%"),
+    "Total POA": ("poa_global_wh_m2","Wh/m²"),
+    "Direct POA": ("poa_direct_wh_m2","Wh/m²"),
+    "Sky diffuse POA": ("poa_sky_diffuse_wh_m2","Wh/m²"),
+    "Ground-reflected POA": ("poa_ground_diffuse_wh_m2","Wh/m²"),
     "Global horizontal illuminance": ("global_horizontal_illuminance_lux", "lux"),
     "Direct normal illuminance": ("direct_normal_illuminance_lux", "lux"),
     "Diffuse horizontal illuminance": ("diffuse_horizontal_illuminance_lux", "lux"),
@@ -3919,13 +3924,18 @@ def render_solar(df: pd.DataFrame) -> None:
     elif chart_group == "Shading analysis":
         render_shading_analysis(df,ground_albedo)
     elif chart_group == "Radiation variable explorer":
-        render_generic_variable_page(
-            df,
-            ["Global horizontal radiation", "Direct normal radiation", "Diffuse horizontal radiation"],
-            "Global horizontal radiation",
-            "Solar radiation",
-            None,
-        )
+        from epw_climate_analyzer.surface_radiation_views import with_diffuse_fraction,poa_frame
+        basis=st.selectbox("Radiation basis",["Source radiation"]+(["Surface irradiation (POA)"] if surface_available(df) else []),key="solar_explorer_basis")
+        if basis=="Surface irradiation (POA)":
+            tilt=st.slider("Surface tilt [deg]",0.,90.,90.,5.,key="solar_explorer_tilt")
+            azimuth=st.slider("Surface azimuth [deg]",0.,359.,180.,1.,key="solar_explorer_azimuth") if tilt else 0.
+            data=poa_frame(df,tilt,azimuth,ground_albedo)
+            render_generic_variable_page(data,["Total POA","Direct POA","Sky diffuse POA","Ground-reflected POA"],"Total POA","Solar surface irradiation",None)
+            st.caption("Interval irradiation is on the selected unobstructed plane; common POA input validity and active albedo are retained.")
+        else:
+            data=with_diffuse_fraction(df)
+            render_generic_variable_page(data,["Global horizontal radiation","Direct normal radiation","Diffuse horizontal radiation","Diffuse radiation fraction"],"Global horizontal radiation","Solar radiation",None)
+            st.caption("Diffuse fraction is interval DHI/GHI × 100 for coincident positive GHI and physically admissible DHI ≤ GHI. Its mean is a mean of interval ratios, not a ratio of cumulative totals.")
     elif chart_group == "Monthly radiation":
         render_monthly_radiation(df, ground_albedo=ground_albedo)
     elif chart_group == "Sun path":
@@ -3935,7 +3945,12 @@ def render_solar(df: pd.DataFrame) -> None:
     elif chart_group == "Orientation-tilt heatmap":
         st.caption("This chart may take a few seconds because it calculates many plane-of-array irradiance variants.")
         matrix = orientation_tilt_matrix(df, albedo=ground_albedo)
-        fig = matrix_heatmap(matrix, "Annual irradiation by orientation and tilt", "Surface azimuth [deg]", "Surface tilt [deg]", "kWh/m²")
+        view=st.selectbox("Chart type",["Heat map","Orientation sensitivity curves"],key="solar_tilt_view")
+        if view=="Orientation sensitivity curves":
+            from epw_climate_analyzer.surface_radiation_views import orientation_curves
+            fig=orientation_curves(matrix)
+        else:
+            fig = matrix_heatmap(matrix, "Selected-period irradiation by orientation and tilt", "Surface azimuth [deg]", "Surface tilt [deg]", "kWh/m²")
         render_plot(fig, solar_interpretation(df))
     elif chart_group == "Cooling-risk solar hours":
         t_threshold = st.slider("Temperature threshold [°C]", 15.0, 35.0, 24.0, 0.5)
@@ -5484,8 +5499,15 @@ def render_historical_solar(df: pd.DataFrame) -> None:
     chart_group = st.selectbox("Analysis type", options, key="historical_solar_analysis")
 
     if chart_group == "Horizontal irradiance explorer":
+        from epw_climate_analyzer.surface_radiation_views import with_diffuse_fraction,FRACTION
+        fraction=with_diffuse_fraction(df)
         labels = [label for label, _, _ in specs]
+        if FRACTION in fraction and fraction[FRACTION].notna().any():
+            labels.append("Diffuse radiation fraction")
         selected = st.selectbox("Variable", labels, key="historical_solar_variable")
+        if selected=="Diffuse radiation fraction":
+            render_generic_variable_page(fraction,[selected],selected,"Solar diffuse fraction",None,fixed_variable_label=selected)
+            return
         column = next(column for label, column, _ in specs if label == selected)
         from epw_climate_analyzer.extended_visualization import compatible_types, probability_figure
         chart_type = st.selectbox("Chart type", ["Profile", "Duration curve", "Month-hour heat map", "Histogram"]+compatible_types(solar,column), key="historical_solar_chart")

@@ -143,6 +143,7 @@ def reset_state(state: MutableMapping[str, Any]) -> None:
     state[KEY_CUSTOM_HEIGHT] = DEFAULT_CUSTOM_HEIGHT
     for name, default in EXTRA_DEFAULTS.items():
         state[_key(name)] = default
+    state[_key("underlay_enabled")] = False
 
 
 def ensure_default_state(state: MutableMapping[str, Any]) -> None:
@@ -546,6 +547,16 @@ def render_presentation_sidebar(st: Any) -> None:
                 step=20,
                 key=KEY_CUSTOM_HEIGHT,
             )
+        st.checkbox("Architectural reference image",value=False,key=_key("underlay_enabled"),
+                    help="Only 2D compass polar charts; image remains local to this session.")
+        if st.session_state.get(_key("underlay_enabled")):
+            st.file_uploader("Reference plan / image",type=["png","jpg","jpeg","webp"],key=_key("underlay_file"))
+            st.slider("Reference image scale",.25,2.,1.,.05,key=_key("underlay_scale"))
+            st.slider("Reference horizontal offset",-.75,.75,0.,.025,key=_key("underlay_x"))
+            st.slider("Reference vertical offset",-.75,.75,0.,.025,key=_key("underlay_y"))
+            st.slider("Reference rotation [° clockwise]",-180,180,0,5,key=_key("underlay_rotation"))
+            st.slider("Reference opacity",.1,1.,.75,.05,key=_key("underlay_opacity"))
+            st.caption("Position, scale and rotate the plan relative to the compass chart. This is an illustration, not georeferencing.")
         st.button(
             "Reset chart appearance",
             key="chart_presentation_reset",
@@ -575,6 +586,17 @@ def install_global_chart_presentation(st: Any | None = None) -> None:
     def global_plotly_chart(fig: Any, *args: Any, **kwargs: Any) -> Any:
         settings = settings_from_state(st.session_state)
         apply_chart_presentation(fig, settings)
+        meta=fig.layout.meta if isinstance(fig.layout.meta,dict) else {}
+        upload=st.session_state.get(_key("underlay_file"))
+        if st.session_state.get(_key("underlay_enabled"),False) and upload is not None and meta.get("compass_polar"):
+            from .architectural_underlay import prepare_underlay,apply_underlay
+            try:
+                source=prepare_underlay(upload.getvalue(),st.session_state.get(_key("underlay_rotation"),0))
+                apply_underlay(fig,source,scale=st.session_state.get(_key("underlay_scale"),1.),
+                    x=st.session_state.get(_key("underlay_x"),0.),y=st.session_state.get(_key("underlay_y"),0.),
+                    opacity=st.session_state.get(_key("underlay_opacity"),.75))
+            except (ValueError,OSError) as exc:
+                st.warning(f"Reference image unavailable: {exc}")
         kwargs["config"] = merge_plotly_config(kwargs.get("config"), settings)
         if settings.transparent:
             # Streamlit theme defaults must not substitute an opaque canvas.
