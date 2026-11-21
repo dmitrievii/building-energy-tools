@@ -201,6 +201,8 @@ class PdfWriter:
         n.drawOn(self.canvas,x,y-nh)
         if self.n>=panels:self.end()
     def finish(self):
+        from .p6_static_render import release_render_worker
+        release_render_worker()
         if self.n:self.end()
         self.canvas.save();return self.out.getvalue()
 
@@ -228,7 +230,9 @@ def generate_atlas(diagrams,df,context,**kwargs):
         raise RuntimeError("Another atlas export is in progress. Try again after it finishes.")
     try:
         require_headroom()
-        return _generate_atlas(diagrams,df,context,**kwargs)
+        from .p6_static_render import render_session
+        with render_session(cache_dir=kwargs.pop("render_cache_dir",None)):
+            return _generate_atlas(diagrams,df,context,**kwargs)
     finally:
         gc.collect()
         _EXPORT_LOCK.release()

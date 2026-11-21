@@ -74,8 +74,9 @@ def render_atlas(df,context,reference_df=None):
         try:
             def update(i,n,label):
                 progress.progress(min(100,int(100*i/max(n,1))),text=f"{i:,}/{n:,} · {label}")
+            from .p6_static_render import session_cache_dir
             data,manifest,metadata=generate_atlas(batch,prepared,{**context,"_report_osm":True},reference_df=reference_df,title=title,paper=paper,orientation=orientation,
-                                  mode=mode,per_page=per_page,progress=update,coverage=coverage)
+                                  mode=mode,per_page=per_page,progress=update,coverage=coverage,render_cache_dir=session_cache_dir(st.session_state))
             metadata["batch_number"]=batch_number
             metadata["batch_count"]=len(batches)
             metadata["batch_size"]=batch_size

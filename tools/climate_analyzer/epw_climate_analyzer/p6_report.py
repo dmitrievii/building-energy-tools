@@ -181,7 +181,7 @@ def printable_html(items,title,paper,orientation,*,use_osm=False):
     css=f"""@page {{size:{paper} {orientation.lower()};margin:11.3mm}} *{{box-sizing:border-box}} body{{font:11pt Arial,sans-serif;color:#202830;margin:12px;width:{width}pt}} h1{{font-size:23pt;margin:0 0 9pt}} h2{{font-size:17pt;margin:0 0 8pt}} h3{{font-size:13pt;margin:0 0 6pt}} p{{white-space:pre-wrap;overflow-wrap:anywhere;margin:5pt 0;line-height:1.25}} table{{width:100%;border-collapse:collapse;font:inherit;margin:5pt 0}} td,th{{padding:4pt 5pt;text-align:left;border-bottom:1px solid #D7DDE1}} th{{color:#314652;background:#EEF2F4}} .sheet{{break-before:page;page-break-before:always}} .plot{{width:100%;break-inside:avoid}} .zone-key{{break-inside:avoid;margin:4pt 0}} .zone-grid{{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3pt 10pt}} .zone-swatch{{display:inline-block;width:12pt;height:7pt;border:1px dashed #39447d;margin-right:5pt}} button{{padding:8px 16px}} @media print{{button{{display:none}} body{{margin:0}}}}"""
     return ("<!doctype html><html><head><meta charset='utf-8'><title>"+_safe(title)+"</title><style>"+css+"</style><script>"+get_plotlyjs()+"</script></head><body><button onclick='window.print()'>Print / Save as PDF</button>"+"".join(pages)+"</body></html>").encode("utf-8")
 
-def pdf_report(items,title,paper,orientation,*,image_renderer=None,use_osm=False,progress=None):
+def pdf_report(items,title,paper,orientation,*,image_renderer=None,use_osm=False,progress=None,render_cache_dir=None):
     """Disk-staged static report export with one shared export owner."""
     from .p66_memory import EXPORT_LOCK,require_headroom
     import gc
@@ -189,7 +189,8 @@ def pdf_report(items,title,paper,orientation,*,image_renderer=None,use_osm=False
     if not EXPORT_LOCK.acquire(blocking=False):raise RuntimeError("Another PDF or Atlas export is already running.")
     try:
         require_headroom()
-        with tempfile.TemporaryDirectory(prefix="ige-report-") as staging:
+        from .p6_static_render import render_session
+        with render_session(cache_dir=render_cache_dir), tempfile.TemporaryDirectory(prefix="ige-report-") as staging:
             return _pdf_report(items,title,paper,orientation,image_renderer=image_renderer,use_osm=use_osm,staging=staging,progress=progress)
     finally:
         gc.collect()
@@ -331,6 +332,8 @@ def _pdf_report(items,title,paper,orientation,*,image_renderer=None,use_osm=Fals
         require_headroom()
         canvas.saveState();canvas.setFont("Helvetica",9);canvas.setFillColor(colors.HexColor("#52606D"))
         canvas.drawString(32,18,"IGE Climate Analyzer");canvas.drawRightString(page[0]-32,18,str(doc.page));canvas.restoreState()
+    from .p6_static_render import release_render_worker
+    release_render_worker()
     if progress:progress(image_number,"Assembling PDF")
     require_headroom()
     doc.build(body,onFirstPage=footer,onLaterPages=footer)
@@ -514,7 +517,8 @@ def render_report(df=None,reference_df=None):
             status=st.empty()
             try:
                 require_headroom()
-                pdf=pdf_report(included,title,paper,orientation,use_osm=True,
+                from .p6_static_render import session_cache_dir
+                pdf=pdf_report(included,title,paper,orientation,use_osm=True,render_cache_dir=session_cache_dir(st.session_state),
                                progress=lambda i,label:status.info(f"Rendering figure {i}: {label}"))
                 require_headroom()
             finally:status.empty()
