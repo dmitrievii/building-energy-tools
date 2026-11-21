@@ -3638,6 +3638,67 @@ def render_facade_orientation(df: pd.DataFrame, *, ground_albedo=None) -> None:
                          hide_index=True, use_container_width=True)
 
 
+def render_monthly_radiation(df: pd.DataFrame, *, ground_albedo=None, allow_surface: bool = True) -> None:
+    """Unified monthly source and surface irradiation, without conflating their planes."""
+    from epw_climate_analyzer.monthly_radiation import (
+        SURFACE_FIELDS, SURFACE_NAMES, available_source_quantities, surface_available,
+        monthly_source_irradiation, monthly_surface_irradiation, monthly_radiation_chart,
+    )
+    source = available_source_quantities(df)
+    if not source:
+        st.info("No solar irradiation observations are available in the selected interval.")
+        return
+
+    modes = ["Source radiation"]
+    if allow_surface and surface_available(df):
+        modes.append("Surface irradiation (POA)")
+    basis = st.selectbox("Radiation basis", modes, key="monthly_radiation_basis")
+    style = st.selectbox("Chart type", ["Bar chart", "Line chart"], key="monthly_radiation_style")
+    if basis == "Source radiation":
+        quantities = st.multiselect("Radiation quantity", source, default=source,
+                                     key="monthly_source_quantities")
+        st.caption("GHI and DHI refer to a horizontal plane; DNI refers to a plane normal to the solar beam. Surface tilt and azimuth do not change these source quantities.")
+        if not quantities:
+            st.info("Select at least one radiation quantity.")
+            return
+        monthly = monthly_source_irradiation(df, quantities)
+        fig = monthly_radiation_chart(monthly, style=style)
+        explanation = "Source GHI, DHI and DNI are independent irradiation quantities and must not be added together."
+    else:
+        tilt = st.slider("Surface tilt [deg]", 0.0, 90.0, 90.0, 5.0,
+                         key="monthly_poa_tilt", help="0° horizontal; 90° vertical.")
+        if tilt == 0:
+            surfaces = [("Horizontal", 0.)]
+            st.caption("At zero tilt, orientation has no effect.")
+        else:
+            orientations = st.multiselect("Surface orientation", [*SURFACE_NAMES, "Custom"],
+                default=["North", "East", "South", "West"], key="monthly_poa_orientations")
+            surfaces = [(name, SURFACE_NAMES[name]) for name in orientations if name != "Custom"]
+            if "Custom" in orientations:
+                azimuth = st.slider("Custom azimuth [deg]", 0.0, 359.0, 180.0, 1.0,
+                                    key="monthly_poa_azimuth", help="Clockwise from North.")
+                surfaces.append((f"Custom {azimuth:g}°", azimuth))
+        quantities = st.multiselect("Radiation quantity", list(SURFACE_FIELDS),
+                                     default=["Total POA"], key="monthly_poa_quantities")
+        if not quantities or not surfaces:
+            st.info("Select at least one surface and one radiation quantity.")
+            return
+        monthly = monthly_surface_irradiation(df, surfaces, tilt, quantities, albedo=ground_albedo)
+        fig = monthly_radiation_chart(monthly, style=style, tilt_deg=tilt)
+        explanation = ("Total POA is direct irradiation projected onto the receiver, plus sky-diffuse and ground-reflected irradiation. "
+                       "The existing unobstructed isotropic transposition uses the active ground-albedo selection. "
+                       "Only intervals with coincident admitted GHI, DNI, DHI and solar geometry contribute. "
+                       "Total and individual components are shown separately, never added together in a chart stack.")
+    render_plot(fig, explanation + " Monthly values sum interval energies over the active Data filter; calendar-profile mode averages per-year monthly sums. Missing periods are not zero-filled.")
+    with st.expander("Monthly irradiation values", expanded=False):
+        display = monthly.copy()
+        if isinstance(display.columns, pd.MultiIndex):
+            display.columns = [f"{surface} · {quantity}" for surface, quantity in display.columns]
+        if isinstance(display.index, pd.DatetimeIndex):
+            display.index = display.index.strftime("%b %Y")
+        st.dataframe(display, use_container_width=True)
+
+
 def render_solar(df: pd.DataFrame) -> None:
     """Render solar, radiation and façade-decision charts."""
     st.header("Solar, radiation and façade analysis")
@@ -3646,11 +3707,10 @@ def render_solar(df: pd.DataFrame) -> None:
         "Analysis type",
         [
             "Radiation variable explorer",
-            "Monthly radiation components",
+            "Monthly radiation",
             "Sun path",
             "Radiation by façade orientation",
             "Orientation-tilt heatmap",
-            "Monthly façade radiation",
             "Cooling-risk solar hours",
             "Solar scatter relationships",
         ],
@@ -3664,13 +3724,8 @@ def render_solar(df: pd.DataFrame) -> None:
             "Solar radiation",
             None,
         )
-    elif chart_group == "Monthly radiation components":
-        monthly = pd.DataFrame(index=range(1, 13))
-        for label in ["Global horizontal radiation", "Direct normal radiation", "Diffuse horizontal radiation"]:
-            col, _ = VARIABLES[label]
-            monthly[label] = df[col].clip(lower=0).groupby(df["month_index"]).sum() / 1000.0
-        fig = stacked_monthly_bar(monthly, "Monthly solar radiation components", "kWh/m²")
-        render_plot(fig, solar_interpretation(df))
+    elif chart_group == "Monthly radiation":
+        render_monthly_radiation(df, ground_albedo=ground_albedo)
     elif chart_group == "Sun path":
         render_sun_path(df)
     elif chart_group == "Radiation by façade orientation":
@@ -3679,11 +3734,6 @@ def render_solar(df: pd.DataFrame) -> None:
         st.caption("This chart may take a few seconds because it calculates many plane-of-array irradiance variants.")
         matrix = orientation_tilt_matrix(df, albedo=ground_albedo)
         fig = matrix_heatmap(matrix, "Annual irradiation by orientation and tilt", "Surface azimuth [deg]", "Surface tilt [deg]", "kWh/m²")
-        render_plot(fig, solar_interpretation(df))
-    elif chart_group == "Monthly façade radiation":
-        tilt = st.slider("Façade tilt [deg]", 0.0, 90.0, 90.0, 5.0)
-        monthly = monthly_orientation_radiation(df, tilt_deg=tilt, albedo=ground_albedo)
-        fig = multi_line_monthly(monthly, f"Monthly façade irradiation at {tilt:.0f}° tilt", "kWh/m²")
         render_plot(fig, solar_interpretation(df))
     elif chart_group == "Cooling-risk solar hours":
         t_threshold = st.slider("Temperature threshold [°C]", 15.0, 35.0, 24.0, 0.5)
@@ -5165,7 +5215,7 @@ def render_historical_solar(df: pd.DataFrame) -> None:
         "energy total. This page converts the hourly Wh/m² value to hourly mean irradiance [W/m²]. DNI and plane-of-array "
         "routes remain intentionally unavailable in measured historical mode."
     )
-    options: list[str] = ["Horizontal irradiance explorer", "Monthly horizontal irradiation"]
+    options: list[str] = ["Horizontal irradiance explorer", "Monthly radiation"]
     if "solar_geometry_site" in df.attrs:
         options.append("Sun path")
     has_ghi = any(source == "global_horizontal_radiation_wh_m2" for _, _, source in specs)
@@ -5195,15 +5245,8 @@ def render_historical_solar(df: pd.DataFrame) -> None:
         )
     elif chart_group == "Sun path":
         render_sun_path(df)
-    elif chart_group == "Monthly horizontal irradiation":
-        monthly = pd.DataFrame(index=range(1, 13))
-        for label, _, source in specs:
-            monthly[label] = pd.to_numeric(df[source], errors="coerce").clip(lower=0).groupby(df["month_index"]).sum(min_count=1) / 1000.0
-        fig = stacked_monthly_bar(monthly, "Measured monthly horizontal irradiation", "kWh/m²")
-        render_plot(
-            fig,
-            "Monthly irradiation sums canonical hourly interval energy [Wh/m²]. A physically incomplete source hour is absent rather than interpolated."
-        )
+    elif chart_group == "Monthly radiation":
+        render_monthly_radiation(df, allow_surface=False)
     elif chart_group == "Cooling-risk solar hours":
         t_threshold = st.slider("Temperature threshold [°C]", 15.0, 35.0, 24.0, 0.5, key="historical_solar_t_threshold")
         ghi_threshold = st.slider("Mean GHI threshold [W/m²]", 50.0, 1000.0, 300.0, 25.0, key="historical_solar_ghi_threshold")
