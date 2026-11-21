@@ -75,6 +75,34 @@ class SunPathViewTests(unittest.TestCase):
         self.assertEqual(radiation_sun_path(horizontal).layout.meta["radiation_field"],
                          "global_horizontal_radiation_wh_m2")
 
+    def test_polar_radiation_is_only_an_optional_overlay(self):
+        plain = classic_sun_path(self.frame)
+        self.assertEqual(plain.layout.title.text, "2D sun-path diagram")
+        self.assertEqual(plain.layout.meta["radiation_field"], "")
+        self.assertFalse(any(t.type == "scatterpolargl" for t in plain.data))
+        self.assertFalse(plain.layout.annotations)
+        self.assertIsNone(plain.layout.coloraxis.colorbar.title.text)
+        for field, _ in available_radiation_fields(self.frame):
+            enabled = classic_sun_path(self.frame, radiation_field=field)
+            self.assertEqual(enabled.layout.title.text, plain.layout.title.text)
+            self.assertEqual(enabled.layout.polar.to_plotly_json(), plain.layout.polar.to_plotly_json())
+            self.assertEqual(enabled.layout.legend.to_plotly_json(), plain.layout.legend.to_plotly_json())
+            reference = [t for t in enabled.data if t.legendgroup != "radiation-overlay"]
+            self.assertEqual(len(reference), len(plain.data))
+            for a, b in zip(plain.data, reference):
+                self.assertEqual(a.name, b.name)
+                self.assertEqual(a.legendgroup, b.legendgroup)
+                self.assertEqual(a.mode, b.mode)
+                self.assertEqual(a.line.to_plotly_json(), b.line.to_plotly_json())
+                np.testing.assert_allclose(a.theta, b.theta, equal_nan=True)
+                np.testing.assert_allclose(a.r, b.r, equal_nan=True)
+            self.assertEqual(enabled.layout.meta["radiation_field"], field)
+            points = next(t for t in enabled.data if t.legendgroup == "radiation-overlay")
+            self.assertEqual(len(points.r), int(self.frame["is_daylight"].sum()))
+        absent = classic_sun_path(self.frame.drop(columns=[c for c, _ in available_radiation_fields(self.frame)]))
+        self.assertFalse(absent.layout.annotations)
+        self.assertEqual(len(absent.data),len(plain.data))
+
     def test_rotatable_3d_cube_is_illustrative_and_camera_revision_stable(self):
         visible = sun_path_3d(self.frame, show_cube=True)
         hidden = sun_path_3d(self.frame, show_cube=False)
@@ -119,7 +147,7 @@ class SunPathViewTests(unittest.TestCase):
                     self.assertEqual(main[0].line.color, color)
                     self.assertEqual(main[0].line.dash, "solid" if m <= 6 else "dash")
                     self.assertTrue(all(t.legendgroup == main[0].legendgroup for t in group))
-                    if factory is radiation_sun_path:
+                    if factory in (radiation_sun_path, classic_sun_path):
                         self.assertEqual(len(group), 3)  # halo, coloured line, text
                     elif factory is not sun_path_3d:
                         self.assertEqual(len(group), 2)
@@ -178,6 +206,7 @@ import streamlit as st
 import pandas as pd
 from epw_climate_analyzer.solar import add_solar_position_for_site
 def render_plot(fig, text):
+    st.session_state["test_radiation_field"] = (fig.layout.meta or {}).get("radiation_field")
     st.plotly_chart(fig, key="test_sun_2d")
 def render_chart_export_controls(fig):
     pass
@@ -191,9 +220,22 @@ df = add_solar_position_for_site(pd.DataFrame({"direct_normal_radiation_wh_m2": 
         self.assertFalse(app.exception)
         chart = app.selectbox(key="solar_sun_path_chart_type")
         self.assertEqual(chart.label, "Chart type")
-        self.assertEqual(chart.options, ["Sun path with radiation", "Technical sun-path diagram", "2D sun-path diagram", "3D sun-path diagram"])
+        self.assertEqual(chart.options, ["2D sun-path diagram", "Technical sun-path diagram", "3D sun-path diagram"])
         self.assertNotIn("solar_sun_path_show_cube", [w.key for w in app.checkbox])
-        chart.set_value("Technical sun-path diagram").run()
+        self.assertEqual(chart.value, "2D sun-path diagram")
+        quantity = app.selectbox(key="solar_sun_path_radiation_quantity")
+        self.assertEqual(quantity.options, ["None", "DNI"])
+        self.assertEqual(quantity.value, "None")
+        self.assertEqual(app.session_state["test_radiation_field"], "")
+        self.assertNotIn("solar_path_hide_zero", [w.key for w in app.checkbox])
+        quantity.set_value("DNI").run()
+        self.assertFalse(app.exception)
+        self.assertEqual(app.session_state["test_radiation_field"], "direct_normal_radiation_wh_m2")
+        self.assertIn("solar_path_hide_zero", [w.key for w in app.checkbox])
+        app.selectbox(key="solar_sun_path_radiation_quantity").set_value("None").run()
+        self.assertFalse(app.exception)
+        self.assertEqual(app.session_state["test_radiation_field"], "")
+        app.selectbox(key="solar_sun_path_chart_type").set_value("Technical sun-path diagram").run()
         self.assertFalse(app.exception)
         self.assertNotIn("solar_sun_path_show_cube", [w.key for w in app.checkbox])
         app.selectbox(key="solar_sun_path_chart_type").set_value("2D sun-path diagram").run()
@@ -210,7 +252,7 @@ df = add_solar_position_for_site(pd.DataFrame({"direct_normal_radiation_wh_m2": 
         source = (Path(__file__).resolve().parents[1] / "app.py").read_text(encoding="utf-8")
         section = source[source.index("def render_sun_path("):source.index("def render_solar(")]
         self.assertIn('st.selectbox("Chart type", chart_types', section)
-        self.assertIn('["Sun path with radiation", "Technical sun-path diagram", "2D sun-path diagram", "3D sun-path diagram"]', section)
+        self.assertIn('["2D sun-path diagram", "Technical sun-path diagram", "3D sun-path diagram"]', section)
         self.assertIn('st.checkbox("Show cube", value=True', section)
         self.assertIn('key="solar_sun_path_3d_plot"', section)
         self.assertEqual(source.count('elif chart_group == "Sun path":'), 2)

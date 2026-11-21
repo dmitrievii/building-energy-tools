@@ -1,4 +1,4 @@
-"""One site-based astronomical reference shared by radiation, Cartesian, polar and 3D views.
+"""One site-based astronomical reference shared by Cartesian, polar (with optional radiation) and 3D views.
 
 Monthly curves use the 21st of each month at five-minute resolution. Hour lines
 use a fixed-offset clock and daily geometric positions, forming analemmas.
@@ -174,24 +174,24 @@ def _monthly_label(az, el, month):
     return float(az[i]), float(el[i])
 
 
-def _add_polar_months(fig, reference: SolarReference, *, radiation=False):
+def _add_polar_months(fig, reference: SolarReference):
     # Draw all halos before all visible coloured lines. A later month's
     # white outline must not paint over a neighbouring month's coloured path.
-    if radiation:
-        for month, (az, el) in enumerate(reference.months, 1):
-            if not len(az):
-                continue
-            fig.add_trace(go.Scatterpolar(theta=az, r=90-el, mode="lines",
-                line=dict(color="rgba(255,255,255,0.85)", width=4, dash=_month_dash(month)),
-                showlegend=False, hoverinfo="skip", connectgaps=False,
-                legendgroup=f"month-{month}", name=f"{MONTH_NAMES[month-1]} guide halo",
-                uid=f"polar-month-{month}-halo"))
+
+    for month, (az, el) in enumerate(reference.months, 1):
+        if not len(az):
+            continue
+        fig.add_trace(go.Scatterpolar(theta=az, r=90-el, mode="lines",
+            line=dict(color="rgba(255,255,255,0.85)", width=4, dash=_month_dash(month)),
+            showlegend=False, hoverinfo="skip", connectgaps=False,
+            legendgroup=f"month-{month}", name=f"{MONTH_NAMES[month-1]} guide halo",
+            uid=f"polar-month-{month}-halo"))
     for month, (az, el) in enumerate(reference.months, 1):
         if not len(az):
             continue  # polar night: no above-horizon path exists
         color = MONTH_COLORS[month-1]
         fig.add_trace(go.Scatterpolar(theta=az, r=90-el, mode="lines",
-            line=dict(color=color, width=2.6 if radiation else 2.8, dash=_month_dash(month)),
+            line=dict(color=color, width=2.8, dash=_month_dash(month)),
             name=f"{MONTH_NAMES[month-1]} 21", legendgroup=f"month-{month}",
             uid=f"polar-month-{month}-line",
             connectgaps=False, showlegend=True, customdata=el,
@@ -229,14 +229,23 @@ def _missing_reference(fig):
     return fig
 
 
-def radiation_sun_path(df: pd.DataFrame, title: str | None = None,
-                       invert_zenith_axis: bool = False, hide_zero_radiation: bool = False,
-                       radiation_field: str | None = None) -> go.Figure:
+def classic_sun_path(df: pd.DataFrame, title: str = "2D sun-path diagram", *,
+                     radiation_field: str | None = None,
+                     invert_zenith_axis: bool = False,
+                     hide_zero_radiation: bool = False) -> go.Figure:
+    """The single polar chart; only an explicit quantity enables radiation.
+
+    Monthly curves, hour curves, projection and axis labels are identical
+    with or without the measured irradiation overlay. None is deliberately
+    different from an unavailable or empty selected quantity.
+    """
     fields = dict(available_radiation_fields(df))
-    field = radiation_field or next(iter(fields), None)
+    field = radiation_field
     label = fields.get(field, "")
     fig = go.Figure()
-    if field in fields and {"solar_azimuth_deg", "solar_elevation_deg"}.issubset(df):
+    if field is None:
+        pass
+    elif field in fields and {"solar_azimuth_deg", "solar_elevation_deg"}.issubset(df):
         values = pd.to_numeric(df[field], errors="coerce")
         az = pd.to_numeric(df["solar_azimuth_deg"], errors="coerce")
         el = pd.to_numeric(df["solar_elevation_deg"], errors="coerce")
@@ -253,7 +262,9 @@ def radiation_sun_path(df: pd.DataFrame, title: str | None = None,
                         "zenith_angle_deg": "Zenith angle [deg]"},
                 render_mode="webgl", color_continuous_scale=RADIATION_COLORSCALE,
             )
-            fig.update_traces(marker=dict(size=5, opacity=0.85))
+            fig.update_traces(marker=dict(size=5, opacity=0.85),
+                              name=f"{label} irradiation", uid="polar-radiation",
+                              legendgroup="radiation-overlay", showlegend=False)
             fig.update_layout(coloraxis_colorbar=dict(title=f"{label} [Wh/m²]", len=0.76))
         else:
             fig.add_annotation(x=0.5, y=1.02, xref="paper", yref="paper",
@@ -262,39 +273,27 @@ def radiation_sun_path(df: pd.DataFrame, title: str | None = None,
         fig.add_annotation(x=0.5, y=1.02, xref="paper", yref="paper",
             text="No measured or admitted radiation quantity is available.", showarrow=False)
     reference = solar_reference(df)
-    _polar_layout(fig, title or (f"Sun path with {label}" if label else "Sun path with radiation"),
-                  invert_zenith_axis=invert_zenith_axis, zenith_labels=True)
-    # The radiation view retains its original zenith-angle convention; the
-    # separate classic view labels the same geometry by solar elevation.
+    _polar_layout(fig, title, invert_zenith_axis=invert_zenith_axis)
+    fig.update_layout(meta={"radiation_field": field or ""})
     if reference is None:
         return _missing_reference(fig)
-    _add_polar_months(fig, reference, radiation=True)
-    # Restore representative hour labels on the annual guides without a
-    # misleading connection through filtered weather points.
-    first_hour = True
-    for hour, (az, el) in enumerate(reference.hours):
-        if len(el) and np.isfinite(el).any() and np.nanmax(el) >= 3:
-            i = int(np.nanargmax(el))
-            fig.add_trace(go.Scatterpolar(theta=[az[i]], r=[90-el[i]], mode="text",
-                text=[f"{hour:02d}"], textposition="bottom center",
-                textfont=dict(color="#475569", size=10),
-                name="Hour labels" if first_hour else f"{hour:02d}:00",
-                showlegend=first_hour, legendgroup="hour-curves", hoverinfo="skip"))
-            first_hour = False
+    _add_polar_hours(fig, reference)
+    _add_polar_months(fig, reference)
     fig.update_layout(meta={"solar_reference": reference.description,
                             "radiation_field": field or ""})
     return fig
 
 
-def classic_sun_path(df: pd.DataFrame, title: str = "2D sun-path diagram") -> go.Figure:
-    fig = _polar_layout(go.Figure(), title)
-    reference = solar_reference(df)
-    if reference is None:
-        return _missing_reference(fig)
-    _add_polar_hours(fig, reference)
-    _add_polar_months(fig, reference)
-    fig.update_layout(meta={"solar_reference": reference.description})
-    return fig
+def radiation_sun_path(df: pd.DataFrame, title: str | None = None,
+                       invert_zenith_axis: bool = False, hide_zero_radiation: bool = False,
+                       radiation_field: str | None = None) -> go.Figure:
+    """Compatibility entry point for earlier programmatic radiation charts."""
+    fields = dict(available_radiation_fields(df))
+    field = radiation_field or next(iter(fields), None)
+    label = fields.get(field, "")
+    return classic_sun_path(df, title or (f"Sun path with {label}" if label else "2D sun-path diagram"),
+                            radiation_field=field, invert_zenith_axis=invert_zenith_axis,
+                            hide_zero_radiation=hide_zero_radiation)
 
 
 def _cartesian_path(azimuth, elevation):

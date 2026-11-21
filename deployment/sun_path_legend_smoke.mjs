@@ -20,7 +20,10 @@ async function readState() {
         color: t.line?.color || null, showlegend: Boolean(t.showlegend),
       });
     }
-    return {groups, dragmode: node._fullLayout.scene?.dragmode || null};
+    return {groups, dragmode: node._fullLayout.scene?.dragmode || null,
+      radiationCount: node._fullData.filter(t => t.legendgroup === 'radiation-overlay').length,
+      polarAxis: node._fullLayout.polar?.radialaxis?.ticktext || null,
+      hourTraceCount: (groups['hour-curves'] || []).length};
   });
 }
 async function waitVisibility(group, expected) {
@@ -31,6 +34,7 @@ async function waitVisibility(group, expected) {
   }, {group, expected}, {timeout: 12000});
 }
 try {
+  let polarWithRadiation;
   for (const view of ['radiation','technical','polar','3d']) {
     await page.goto(url + '?view=' + view, {waitUntil: 'domcontentloaded'});
     await page.waitForFunction(() => {
@@ -48,6 +52,19 @@ try {
       before.groups['month-'+(i+1)].find(t=>t.showlegend).color));
     assert(colors.size === 12 && !colors.has(null), view+': month palette is incomplete');
     if (view === '3d') assert(before.dragmode === 'turntable', '3d default drag mode');
+    if (view === 'radiation') {
+      assert(before.radiationCount === 1, 'expected a single irradiation overlay');
+      polarWithRadiation = before;
+    }
+    if (view === 'polar') {
+      assert(before.radiationCount === 0, 'default polar must not show radiation');
+      assert(JSON.stringify(before.polarAxis) === JSON.stringify(polarWithRadiation.polarAxis), 'polar axis differs with radiation');
+      assert(before.hourTraceCount === polarWithRadiation.hourTraceCount, 'hour curves differ with radiation');
+      for (let m=1; m<=12; m++) {
+        assert(JSON.stringify(before.groups['month-'+m]) === JSON.stringify(polarWithRadiation.groups['month-'+m]), 'month geometry legend differs with radiation');
+      }
+      report.unifiedPolarOverlay = true;
+    }
     for (const [group,name] of [['month-1','Jan 21'],['month-6','Jun 21']]) {
       const toggle = page.locator('.js-plotly-plot g.legend g.traces').filter({hasText: name}).locator('rect.legendtoggle');
       await toggle.click({timeout:15000});

@@ -3542,41 +3542,49 @@ def _solar_ground_albedo_selection(df: pd.DataFrame) -> None:
 
 
 def render_sun_path(df: pd.DataFrame) -> None:
-    """One shared chart selector for the four astronomical solar views."""
+    """One chart selector for the polar, technical and 3D solar views."""
     from epw_climate_analyzer.sun_path_views import (
-        available_radiation_fields, classic_sun_path, radiation_sun_path,
+        available_radiation_fields, classic_sun_path,
         solar_reference, sun_path_3d, technical_sun_path,
     )
 
-    chart_types = ["Sun path with radiation", "Technical sun-path diagram", "2D sun-path diagram", "3D sun-path diagram"]
+    chart_types = ["2D sun-path diagram", "Technical sun-path diagram", "3D sun-path diagram"]
+    if st.session_state.get("solar_sun_path_chart_type") == "Sun path with radiation":
+        st.session_state["solar_sun_path_chart_type"] = "2D sun-path diagram"
     chart_type = st.selectbox("Chart type", chart_types, key="solar_sun_path_chart_type")
     reference = solar_reference(df)
     if reference is not None:
         st.caption(reference.description + ". Reference paths show the full astronomical year; radiation observations follow the active Data filter.")
-    if chart_type == "Sun path with radiation":
-        fields = available_radiation_fields(df)
-        field = None
-        if len(fields) > 1:
-            labels = {column: label for column, label in fields}
-            field = st.selectbox("Radiation quantity", list(labels), format_func=labels.get,
-                                 key="solar_sun_path_radiation_field")
-        elif fields:
-            field = fields[0][0]
-        col_a, col_b = st.columns(2)
-        invert_zenith_axis = col_a.checkbox("Invert zenith-angle axis (90° → 0°)", value=False,
-                                            key="solar_path_invert")
-        hide_zero_radiation = col_b.checkbox("Hide zero radiation values", value=False,
-                                            key="solar_path_hide_zero")
-        fig = radiation_sun_path(df, radiation_field=field,
-                                 invert_zenith_axis=invert_zenith_axis,
-                                 hide_zero_radiation=hide_zero_radiation)
-        render_plot(fig, "Radiation points retain their original solar positions and interval irradiation. The monthly curves are astronomical guides, not radiation estimates.")
+    if chart_type == "2D sun-path diagram":
+        fields = {label: column for column, label in available_radiation_fields(df)}
+        quantity = st.selectbox("Radiation quantity", ["None", *fields], index=0,
+                                key="solar_sun_path_radiation_quantity")
+        field = fields.get(quantity)
+        invert_zenith_axis = st.checkbox("Invert radial axis", value=False,
+                                        key="solar_path_invert",
+                                        help="Reverse the radial scale: horizon at the centre.")
+        hide_zero_radiation = False
+        if field is not None:
+            hide_zero_radiation = st.checkbox("Hide zero radiation values", value=False,
+                                               key="solar_path_hide_zero")
+        fig = classic_sun_path(df, radiation_field=field,
+                               invert_zenith_axis=invert_zenith_axis,
+                               hide_zero_radiation=hide_zero_radiation)
+        explanation = (
+            "North is at the top and azimuth increases clockwise. Monthly paths and dotted "
+            "fixed-clock hour lines show seasonal solar geometry."
+        )
+        if not invert_zenith_axis:
+            explanation += " The horizon is the outer ring."
+        if field is not None:
+            explanation += (
+                " Radiation points retain their original solar positions and interval irradiation; "
+                "monthly and hour curves remain astronomical guides, not radiation estimates."
+            )
+        render_plot(fig, explanation)
     elif chart_type == "Technical sun-path diagram":
         render_plot(technical_sun_path(df),
                     "Cartesian solar azimuth and elevation diagram. The monthly paths use the 21st of each month, with fixed-clock hour curves and compass bearings.")
-    elif chart_type == "2D sun-path diagram":
-        render_plot(classic_sun_path(df),
-                    "North is at the top, azimuth increases clockwise, and the horizon is the outer ring. Monthly paths and dotted fixed-clock hour lines show seasonal solar geometry.")
     else:
         show_cube = st.checkbox("Show cube", value=True, key="solar_sun_path_show_cube")
         fig = sun_path_3d(df, show_cube=show_cube)
