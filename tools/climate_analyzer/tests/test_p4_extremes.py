@@ -73,6 +73,25 @@ class P4Tests(unittest.TestCase):
         self.assertAlmostEqual(a.return_period_y.max(),11.)
         with self.assertRaises(ValueError):p.empirical_idf(df.drop(idx[45]),historical_native=True)
 
+    def test_timeline_without_qualifying_events(self):
+        from epw_climate_analyzer.p4_ui import event_timeline_figure
+        df=self.fixture()
+        for stat in ("max","mean","min"):
+            daily,table=p.temperature_events(df,threshold=35.,above=True,minimum=3,stat=stat)
+            self.assertTrue(table.empty)
+            fig=event_timeline_figure(table,daily[stat],unit="days",threshold=35.,quantity=stat)
+            self.assertEqual(len(fig.data),2)
+            np.testing.assert_allclose(fig.data[0].y,[30.]*4)
+            self.assertEqual(list(fig.data[1].y),[35.,35.])
+            self.assertEqual(len(fig.layout.shapes),0)
+        # A zero-event hourly timeline keeps a source gap unconnected.
+        df=df.iloc[[0,1,3]].copy()
+        s=df[p.V]
+        table=p.events(s,threshold=5.,above=True,minimum=3,step=p.cadence(df))
+        fig=event_timeline_figure(table,s,unit="hours",threshold=5.,step=p.cadence(df))
+        self.assertTrue(np.isnan(fig.data[0].y[2]))
+        self.assertFalse(fig.data[0].connectgaps)
+
     def test_p4_route_contract(self):
         import ast
         from pathlib import Path
@@ -85,5 +104,6 @@ class P4Tests(unittest.TestCase):
             self.assertIn(token,funcs[name])
         self.assertIn("precipitation_panel(df,native_df,chart_group,render_plot)",funcs["render_precipitation"])
         self.assertIn("native_df is not None and native_liquid_available",funcs["render_precipitation"])
+        self.assertIn('["Extreme events and day indicators","Daily extremes and ranking"]',funcs["render_temperature"])
 
 if __name__=="__main__":unittest.main()

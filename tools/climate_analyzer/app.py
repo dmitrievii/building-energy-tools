@@ -3337,7 +3337,7 @@ def render_temperature(
     else:
         st.subheader("Extreme daily conditions")
         if interval_count_metrics:
-            view=st.selectbox("View",["Daily extremes and ranking","Extreme events and day indicators"],key="p4_temperature_extremes")
+            view=st.selectbox("View",["Extreme events and day indicators","Daily extremes and ranking"],key="p4_temperature_extremes")
             if view=="Extreme events and day indicators":
                 from epw_climate_analyzer.p4_ui import temperature_panel
                 temperature_panel(df,render_plot)

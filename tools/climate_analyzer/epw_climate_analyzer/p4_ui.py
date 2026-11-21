@@ -26,30 +26,55 @@ def _bars(table,title,unit,render,note):
     fig.update_layout(template="plotly_white",title=title,barmode="group",yaxis_title=unit,xaxis_title="Period")
     render(fig,note)
 
-def _events(table,render,*,key,unit,threshold,series=None,above=True,quantity="Temperature [°C]"):
-    if table.empty:st.info("No qualifying continuous events in the selected records.");return
-    st.caption(f"{len(table)} events · longest {table.duration.max():g} {unit}.")
-    style=st.selectbox("Chart type",(["Event timeline"] if series is not None else [])+["Duration and intensity","Duration distribution"],key="p4_event_chart_"+key)
+def event_timeline_figure(table,series,*,unit,threshold,above=True,quantity="Temperature [°C]",step=None):
+    """Render the actual trace and threshold even when no qualifying runs exist."""
+    if unit=="days":
+        delta=pd.DateOffset(days=1)
+    else:
+        if step is None or step<=pd.Timedelta(0):
+            raise ValueError("Interval timeline requires a positive source cadence.")
+        delta=step
+    fig=go.Figure()
+    # Preserve gaps even when the selected interval contains zero events.
+    stamps=series.index
+    breaks=[a+delta for a,b in zip(stamps[:-1],stamps[1:]) if b!=a+delta and a+delta<b]
+    plotted=series
+    if breaks:
+        plotted=pd.concat([series,pd.Series(np.nan,index=pd.DatetimeIndex(breaks))]).sort_index()
+    fig.add_scatter(x=plotted.index,y=plotted,mode="lines+markers" if len(series)==1 else "lines",
+                    name=quantity,connectgaps=False,line=dict(color="#64748B"))
+    # Use a visible trace rather than a layout-only line: the threshold also
+    # participates in y-axis autorange when it lies outside the observed range.
+    if len(stamps):
+        fig.add_scatter(x=[stamps[0],stamps[-1] if len(stamps)>1 else stamps[0]+delta],
+                        y=[threshold,threshold],mode="lines",name=f"Threshold: {threshold:g}",
+                        line=dict(dash="dash",color="#333333"))
+    shapes=[dict(type="rect",xref="x",yref="paper",y0=0,y1=1,
+                 x0=r.start,x1=r.end+delta,line=dict(width=0),
+                 fillcolor="#DD783B" if above else "#497DB7",opacity=.20,layer="below")
+            for _,r in table.iterrows()]
+    fig.update_layout(template="plotly_white",shapes=shapes,xaxis_title="Date",
+                      yaxis_title=quantity,title="Extreme-event timeline")
+    return fig
+
+def _events(table,render,*,key,unit,threshold,series=None,above=True,quantity="Temperature [°C]",step=None):
+    if table.empty:
+        if series is not None and series.notna().any():
+            st.info("No qualifying continuous events in the selected records. Observations and the selected threshold are shown below.")
+        else:
+            st.info("No valid observed states or qualifying events in the selected records.")
+        if series is None or series.empty:return
+    else:
+        st.caption(f"{len(table)} events · longest {table.duration.max():g} {unit}.")
+    choices=(["Event timeline"] if series is not None else [])
+    if not table.empty:choices+=["Duration and intensity","Duration distribution"]
+    chart_key="p4_event_chart_"+key
+    if st.session_state.get(chart_key) not in choices:
+        st.session_state[chart_key]=choices[0]
+    style=st.selectbox("Chart type",choices,key=chart_key)
     fig=go.Figure()
     if style=="Event timeline":
-        # Insert a single NaN at each absent-time boundary, avoiding dense
-        # reindexing across potentially multi-year source gaps.
-        delta=pd.Timedelta(days=1) if unit=="days" else pd.Timedelta(hours=float(table.duration.iloc[0]/table.samples.iloc[0]))
-        stamps=series.index
-        breaks=[a+pd.DateOffset(days=1) if unit=="days" else a+delta
-                for a,b in zip(stamps[:-1],stamps[1:])
-                if (b!=a+pd.DateOffset(days=1) if unit=="days" else b-a!=delta)]
-        if breaks:
-            series=pd.concat([series,pd.Series(np.nan,index=pd.DatetimeIndex(breaks))]).sort_index()
-        fig.add_scatter(x=series.index,y=series,mode="lines",name=quantity,connectgaps=False,line=dict(color="#64748B"))
-        # Build shapes once (rather than quadratic per-shape layout updates).
-        shapes=[dict(type="rect",xref="x",yref="paper",y0=0,y1=1,
-                     x0=r.start,x1=r.end+(pd.DateOffset(days=1) if unit=="days" else delta),
-                     line=dict(width=0),fillcolor="#DD783B" if above else "#497DB7",opacity=.20,layer="below")
-                for _,r in table.iterrows()]
-        fig.update_layout(shapes=shapes)
-        fig.add_hline(y=threshold,line_dash="dash",line_color="#333333")
-        fig.update_layout(xaxis_title="Date",yaxis_title=quantity,title="Extreme-event timeline")
+        fig=event_timeline_figure(table,series,unit=unit,threshold=threshold,above=above,quantity=quantity,step=step)
     elif style=="Duration and intensity":
         fig.add_scatter(x=table.duration,y=table.peak,mode="markers",marker=dict(size=9,color="#D98235" if above else "#4477AA"),
                         text=table.start.astype(str),customdata=table.excess,hovertemplate="%{text}<br>Duration %{x:g}<br>Peak %{y:.2f}<br>Integrated excess %{customdata:.2f}<extra></extra>")
@@ -76,7 +101,7 @@ def temperature_panel(df,render):
         minimum=st.number_input("Minimum consecutive days",min_value=1,max_value=60,value=3,step=1,key="p4_temp_days")
         d,a=p.temperature_events(df,threshold=threshold,above=above,minimum=minimum,stat={"Maximum":"max","Mean":"mean","Minimum":"min"}[method])
         st.caption(f"Complete days: {d['mean'].notna().sum()} of {len(d)} calendar days in the selected span.")
-        _events(a,render,key="temperature",unit="days",threshold=threshold,series=d[{"Maximum":"max","Mean":"mean","Minimum":"min"}[method]],above=above)
+        _events(a,render,key="temperature",unit="days",threshold=threshold,series=d[{"Maximum":"max","Mean":"mean","Minimum":"min"}[method]],above=above,quantity=f"Daily {method.lower()} temperature [°C]")
     except ValueError as exc:st.warning(str(exc))
 
 def persistence_panel(df,render,*,wind=False):
@@ -90,7 +115,7 @@ def persistence_panel(df,render,*,wind=False):
     try:
         s=p.valid_values(df,column,True)
         a=p.events(s,threshold=threshold,above=above,minimum=minimum,step=p.cadence(df))
-        _events(a,render,key="wind" if wind else "humidity",unit="hours",threshold=threshold,series=s,above=above,quantity=label)
+        _events(a,render,key="wind" if wind else "humidity",unit="hours",threshold=threshold,series=s,above=above,quantity=label,step=p.cadence(df))
     except ValueError as exc:st.warning(str(exc))
 
 def precipitation_panel(df,native,view,render):
