@@ -68,6 +68,19 @@ def figure_to_dataframe(fig: Any) -> pd.DataFrame:
         trace_name = _trace_name(trace, trace_index)
 
         z = getattr(trace, "z", None)
+        if trace_type in {"scatter3d", "mesh3d"}:
+            if getattr(trace, "visible", None) in (False, "legendonly"):
+                continue
+            xs = _as_list(getattr(trace, "x", None))
+            ys = _as_list(getattr(trace, "y", None))
+            zs = _as_list(z)
+            for point_index, (x, y, height) in enumerate(zip(xs, ys, zs)):
+                rows.append({
+                    "trace": trace_name, "trace_type": trace_type,
+                    "point": point_index, "x": x, "y": y, "z": height,
+                })
+            continue
+
         if z is not None:
             matrix = _as_list(z)
             if matrix and not isinstance(matrix[0], (list, tuple)):

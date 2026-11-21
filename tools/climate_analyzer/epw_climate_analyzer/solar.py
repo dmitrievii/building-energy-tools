@@ -110,6 +110,24 @@ def solar_position_times(
     return index.tz_localize("UTC")
 
 
+def solar_geometry_context(times: pd.DatetimeIndex, *, latitude: float, longitude: float,
+                           elevation_m: float | None = None) -> dict[str, float | int]:
+    """Site and reference clock only; never recalculate or modify weather."""
+    if not len(times):
+        return {}
+    first = times[0]
+    offset = first.utcoffset() or timedelta(0)
+    # Civil-time selections use a single standard offset for annual hour
+    # curves; measured points retain their original physical instants.
+    standard_offset = offset - (first.dst() or timedelta(0))
+    return {
+        "latitude": float(latitude), "longitude": float(longitude),
+        "elevation_m": float(elevation_m or 0.0),
+        "utc_offset_hours": standard_offset.total_seconds() / 3600.0,
+        "reference_year": int(times.year.max()),
+    }
+
+
 def add_solar_position_for_site(
     df: pd.DataFrame,
     *,
@@ -138,6 +156,12 @@ def add_solar_position_for_site(
     data["solar_elevation_deg"] = solpos["apparent_elevation"].to_numpy()
     data["solar_azimuth_deg"] = solpos["azimuth"].to_numpy()
     data["is_daylight"] = data["solar_elevation_deg"] > 0.0
+    # Geometry-only annual reference curves must not depend on the presence
+    # of observed weather on the 21st or on the active month/hour filter.
+    context = solar_geometry_context(times, latitude=latitude, longitude=longitude,
+                                     elevation_m=elevation_m)
+    if context:
+        data.attrs["solar_geometry_site"] = context
     _record_variable_origin(data, "solar_apparent_zenith_deg", "calculated from timestamp and site coordinates (pvlib)")
     _record_variable_origin(data, "solar_elevation_deg", "calculated from timestamp and site coordinates (pvlib)")
     _record_variable_origin(data, "solar_azimuth_deg", "calculated from timestamp and site coordinates (pvlib)")

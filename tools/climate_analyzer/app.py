@@ -449,6 +449,8 @@ def load_epw_from_bytes(
     if include_psychrometrics:
         data = add_psychrometric_properties(data, fallback_pressure_pa=fallback_pressure)
     if include_solar:
+        # The site metadata accompanies cached solar positions so all annual
+        # reference curves survive weather filtering and a Streamlit redeploy.
         data = add_solar_position(data, epw.location)
 
     issues = quality_issues(data)
@@ -3539,6 +3541,50 @@ def _solar_ground_albedo_selection(df: pd.DataFrame) -> None:
     return
 
 
+def render_sun_path(df: pd.DataFrame) -> None:
+    """One shared chart selector for the three astronomical solar views."""
+    from epw_climate_analyzer.sun_path_views import (
+        available_radiation_fields, classic_sun_path, radiation_sun_path,
+        solar_reference, sun_path_3d,
+    )
+
+    chart_types = ["Sun path with radiation", "2D sun-path diagram", "3D sun-path diagram"]
+    chart_type = st.selectbox("Chart type", chart_types, key="solar_sun_path_chart_type")
+    reference = solar_reference(df)
+    if reference is not None:
+        st.caption(reference.description + ". Reference paths show the full astronomical year; radiation observations follow the active Data filter.")
+    if chart_type == "Sun path with radiation":
+        fields = available_radiation_fields(df)
+        field = None
+        if len(fields) > 1:
+            labels = {column: label for column, label in fields}
+            field = st.selectbox("Radiation quantity", list(labels), format_func=labels.get,
+                                 key="solar_sun_path_radiation_field")
+        elif fields:
+            field = fields[0][0]
+        col_a, col_b = st.columns(2)
+        invert_zenith_axis = col_a.checkbox("Invert zenith-angle axis (90° → 0°)", value=False,
+                                            key="solar_path_invert")
+        hide_zero_radiation = col_b.checkbox("Hide zero radiation values", value=False,
+                                            key="solar_path_hide_zero")
+        fig = radiation_sun_path(df, radiation_field=field,
+                                 invert_zenith_axis=invert_zenith_axis,
+                                 hide_zero_radiation=hide_zero_radiation)
+        render_plot(fig, "Radiation points retain their original solar positions and interval irradiation. The monthly curves are astronomical guides, not radiation estimates.")
+    elif chart_type == "2D sun-path diagram":
+        render_plot(classic_sun_path(df),
+                    "North is at the top, azimuth increases clockwise, and the horizon is the outer ring. Monthly paths and dotted fixed-clock hour lines show seasonal solar geometry.")
+    else:
+        show_cube = st.checkbox("Show cube", value=True, key="solar_sun_path_show_cube")
+        fig = sun_path_3d(df, show_cube=show_cube)
+        st.caption("Drag to rotate and scroll to zoom. The cube is an illustrative volume; no shading calculation is performed.")
+        render_chart_export_controls(fig)
+        st.plotly_chart(fig, use_container_width=True,
+                        config={"displaylogo": False, "scrollZoom": True},
+                        key="solar_sun_path_3d_plot")
+        render_interpretation("The hemisphere uses East, North and Up coordinates. Monthly paths show apparent solar directions on the unit sphere.")
+
+
 def render_solar(df: pd.DataFrame) -> None:
     """Render solar, radiation and façade-decision charts."""
     st.header("Solar, radiation and façade analysis")
@@ -3548,8 +3594,7 @@ def render_solar(df: pd.DataFrame) -> None:
         [
             "Radiation variable explorer",
             "Monthly radiation components",
-            "Sun path with radiation",
-            "Sun-path diagram",
+            "Sun path",
             "Radiation by façade orientation",
             "Plane-of-array components",
             "Orientation-tilt heatmap",
@@ -3574,19 +3619,8 @@ def render_solar(df: pd.DataFrame) -> None:
             monthly[label] = df[col].clip(lower=0).groupby(df["month_index"]).sum() / 1000.0
         fig = stacked_monthly_bar(monthly, "Monthly solar radiation components", "kWh/m²")
         render_plot(fig, solar_interpretation(df))
-    elif chart_group == "Sun path with radiation":
-        col_a, col_b = st.columns(2)
-        invert_zenith_axis = col_a.checkbox("Invert zenith-angle axis (90° → 0°)", value=False)
-        hide_zero_radiation = col_b.checkbox("Hide zero radiation values", value=False)
-        fig = sun_path_chart(
-            df,
-            invert_zenith_axis=invert_zenith_axis,
-            hide_zero_radiation=hide_zero_radiation,
-        )
-        render_plot(fig, solar_interpretation(df))
-    elif chart_group == "Sun-path diagram":
-        fig = sun_position_diagram(df)
-        render_plot(fig, solar_interpretation(df))
+    elif chart_group == "Sun path":
+        render_sun_path(df)
     elif chart_group == "Radiation by façade orientation":
         tilt = st.slider("Surface tilt [deg]", 0.0, 90.0, 90.0, 5.0)
         data = orientation_annual_radiation(df, tilt_deg=tilt, albedo=ground_albedo)
@@ -5127,6 +5161,8 @@ def render_historical_solar(df: pd.DataFrame) -> None:
         "routes remain intentionally unavailable in measured historical mode."
     )
     options: list[str] = ["Horizontal irradiance explorer", "Monthly horizontal irradiation"]
+    if "solar_geometry_site" in df.attrs:
+        options.append("Sun path")
     has_ghi = any(source == "global_horizontal_radiation_wh_m2" for _, _, source in specs)
     has_temperature = has_numeric_observations(df, "dry_bulb_temperature_c")
     if has_ghi and has_temperature:
@@ -5152,6 +5188,8 @@ def render_historical_solar(df: pd.DataFrame) -> None:
             fig,
             "Values are canonical hourly mean horizontal irradiance derived from measured source intervals. Duration/frequency views use physical hours, not record counts."
         )
+    elif chart_group == "Sun path":
+        render_sun_path(df)
     elif chart_group == "Monthly horizontal irradiation":
         monthly = pd.DataFrame(index=range(1, 13))
         for label, _, source in specs:
@@ -5510,6 +5548,16 @@ def main() -> None:
         include_psychrometrics=include_psychrometrics,
         include_solar=include_solar,
     )
+
+    if include_solar and "solar_geometry_site" not in full_df.attrs:
+        # Older cached EPW frames can already contain valid solar positions but
+        # predate the reference-geometry provenance. Bind their known EPW site
+        # and fixed standard-time clock without recomputing the weather series.
+        from epw_climate_analyzer.solar import localized_times, solar_geometry_context
+        full_df.attrs["solar_geometry_site"] = solar_geometry_context(
+            localized_times(full_df, epw.location), latitude=epw.location.latitude,
+            longitude=epw.location.longitude, elevation_m=epw.location.elevation_m,
+        )
 
     if pressure_mode == "Normal pressure: 101325 Pa":
         active_pressure = DEFAULT_PRESSURE_PA
