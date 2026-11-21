@@ -268,6 +268,28 @@ class CalendarHeatmapTests(unittest.TestCase):
         manual=occurrence_table(df,c,[2.791,2.799])
         self.assertEqual(list(manual.columns),["< 2.791","2.791 – < 2.799","≥ 2.799"])
 
+    def test_specific_volume_semantic_palette_and_scope_domain(self):
+        from epw_climate_analyzer.chart_theme import SPECIFIC_VOLUME_COLORSCALE,metric_colorscale
+        from epw_climate_analyzer.charts import temporal_heatmap_chart
+        c="specific_volume_m3_kg"
+        self.assertEqual(metric_colorscale(c),SPECIFIC_VOLUME_COLORSCALE)
+        idx=pd.date_range("2026-01-01",periods=72,freq="h")
+        df=pd.DataFrame({c:np.linspace(.753,.927,len(idx))},index=idx)
+        df.iloc[4,0]=np.nan
+        for period in ("day","week","month"):
+            for stat in ("Mean","P95"):
+                fig=temporal_heatmap_chart(df,c,period,HEATMAP_COMPARE_HOUR,stat,"Specific volume","m³/kg dry air")
+                self.assertAlmostEqual(fig.layout.coloraxis.cmin,.75)
+                self.assertAlmostEqual(fig.layout.coloraxis.cmax,.93)
+                self.assertEqual(fig.layout.coloraxis.colorscale,tuple(tuple(v) for v in SPECIFIC_VOLUME_COLORSCALE))
+                expected=temporal_heatmap_matrix(df,c,period,HEATMAP_COMPARE_HOUR,stat)
+                np.testing.assert_allclose(np.asarray(fig.data[0].z,float),expected.values,equal_nan=True)
+                printed=report_figure(fig,width_pt=500,height_pt=230)
+                self.assertEqual(printed.layout.coloraxis.colorscale,fig.layout.coloraxis.colorscale)
+        constant=pd.DataFrame({c:.8},index=idx)
+        fig=temporal_heatmap_chart(constant,c,"day",HEATMAP_COMPARE_HOUR,"Mean","Specific volume","m³/kg dry air")
+        self.assertLess(fig.layout.coloraxis.cmin,fig.layout.coloraxis.cmax)
+
     def test_multiyear_utci_not_truncated(self):
         idx=pd.date_range("2025-12-31","2026-12-31",freq="h")
         df=pd.DataFrame(index=idx)

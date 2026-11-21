@@ -56,6 +56,13 @@ MOIST_AIR_ENTHALPY_COLORSCALE = [
     [0.75, "#7C3AED"],
     [1.00, "#4C1D95"],
 ]
+SPECIFIC_VOLUME_COLORSCALE = [
+    [0.00, "#F8FAFC"],
+    [0.25, "#CBD5E1"],
+    [0.50, "#94A3B8"],
+    [0.75, "#64748B"],
+    [1.00, "#1E293B"],
+]
 BINARY_SUITABILITY_COLORSCALE = [
     [0.00, "rgba(255,255,255,0.0)"],
     [0.01, "#ecfdf5"],
@@ -267,6 +274,8 @@ def metric_colorscale(column: str | None):
         return TEMPERATURE_COMFORT_COLORSCALE
     if text=="moist_air_enthalpy_kj_kg":
         return MOIST_AIR_ENTHALPY_COLORSCALE
+    if text=="specific_volume_m3_kg":
+        return SPECIFIC_VOLUME_COLORSCALE
     if "radiation" in text or "irradiance" in text or "illuminance" in text:
         return SOLAR_COLORSCALE
     if "sky_cover" in text:
