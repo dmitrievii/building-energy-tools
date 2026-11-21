@@ -68,6 +68,9 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         from .p6_dashboard import design_ledgers
         return memo("design",lambda:design_ledgers(df,reference_df=reference_df)[0])
     if k=="native":f=_line(s,title,u);note+=" Published monthly observations; no hourly reconstruction."
+    elif k=="time_series":
+        f=ch.time_series_profile_chart(df,c,a[0],title,u,a[1])
+        note+=" "+("One valid source observation per occupied interval; no statistical band." if a[1]=="Observed values" else "Representation: "+a[1]+".")
     elif k=="profile":f=ch.profile_ribbon_chart(df,c,a[0],title,u)
     elif k=="percentile":f=ch.percentile_band_chart(df,c,a[0],title,u);note+=" Central 90% of observations, not a confidence interval."
     elif k=="heatmap":
@@ -375,9 +378,9 @@ def make_figure(d,df,context,reference_df=None,cache=None):
     f.update_layout(template="plotly_white",title=title)
     from .calendar_heatmap_axes import apply_calendar_heatmap_axes,apply_monthly_axes
     apply_calendar_heatmap_axes(f);apply_monthly_axes(f)
-    if k in ("profile","percentile","heatmap","duration","histogram","box","violin","diurnal","occurrence","amplitude","native","psychrometric","monthly_radiation","facade","tilt","sunpath_view","sky_patches","total"):
+    if k in ("time_series","profile","percentile","heatmap","duration","histogram","box","violin","diurnal","occurrence","amplitude","native","psychrometric","monthly_radiation","facade","tilt","sunpath_view","sky_patches","total"):
         scope=df.loc[s.gt(0)].copy() if c and k in ("histogram","duration","box","violin") and a[0]=="wet" else df
-        col=c if k in ("profile","percentile","heatmap","duration","histogram","box","violin","diurnal","occurrence","amplitude","native") else ""
+        col=c if k in ("time_series","profile","percentile","heatmap","duration","histogram","box","violin","diurnal","occurrence","amplitude","native") else ""
         stat=base.source_interpretation(scope,d.chapter,col,cat.LABELS.get(col,""),cat.UNITS.get(col,u),thresholds=base.temperature_thresholds(context),kind=k)
         if stat and stat not in note:note=stat+"\n\n"+note
     return f,note

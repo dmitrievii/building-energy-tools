@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from . import p6_report_structure as base
 from .extended_visualization import hourly_capable,compatible_types
-from .aggregations import heatmap_scope_statistics,heatmap_has_single_observation_cells,heatmap_default_statistic,native_interval_hours
+from .aggregations import heatmap_scope_statistics,heatmap_has_single_observation_cells,heatmap_default_statistic,native_interval_hours,profile_aggregations,profile_representation_options
 from .climate_model import aggregation_semantics_for
 
 REP="Representative"; AGG="All types and aggregations"; FULL="All types, aggregations and statistics"
@@ -78,9 +78,16 @@ def catalogue(df,context,coverage=FULL):
             if monthly:
                 add(chapter,label+" · native monthly values","native",c,u)
                 continue
-            for period in periods:
-                if c!=P:add(chapter,label+" · min–mean–max · "+period,"profile",c,u,(period,))
-                if not angular:add(chapter,label+" · P05–median–P95 · "+period,"percentile",c,u,(period,))
+            profile_periods=profile_aggregations(df,c)
+            if coverage==REP:profile_periods=("Monthly",) if "Monthly" in profile_periods else profile_periods[:1]
+            for period in profile_periods:
+                options=profile_representation_options(df,c,period)
+                if "Min–mean–max" in options:
+                    add(chapter,label+" · min–mean–max · "+period,"profile",c,u,(period,))
+                    add(chapter,label+" · P05–median–P95 · "+period,"percentile",c,u,(period,))
+                else:
+                    rep=options[0]
+                    add(chapter,label+" · "+period+" time series · "+rep,"time_series",c,u,(period,rep))
             if hourly:
                 for period in (("month",) if coverage==REP else ("day","week","month")):
                     dims=("Hour of day",)

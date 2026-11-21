@@ -76,6 +76,60 @@ def _chronological_season_summary(df: pd.DataFrame, column: str) -> pd.DataFrame
     return out.dropna(how="all")
 
 
+def profile_groups(df, column, aggregation):
+    """Grouping coordinates identical to aggregate_summary outside overlay."""
+    v=pd.to_numeric(df[column],errors="coerce")
+    if aggregation=="Native":return v.groupby(np.arange(len(v)),sort=True)
+    if time_basis(df)==CALENDAR_PROFILE:
+        return v.groupby(calendar_profile_slot(pd.DatetimeIndex(df.index),aggregation),observed=False,sort=True)
+    if aggregation=="Seasonal":
+        if is_multiyear(df):
+            return v.groupby(chronological_season_start(pd.DatetimeIndex(df.index)),sort=True)
+        seasons=df["season"] if "season" in df else [season_name(m) for m in df.index.month]
+        return v.groupby(seasons,observed=False,sort=True)
+    return v.resample(RESAMPLE_RULES[aggregation])
+
+
+def profile_has_multiple_observations(df,column,aggregation):
+    """True when at least one displayed statistical bucket has multiple values."""
+    if aggregation=="Native":return False
+    from .temporal_filtering import INTERANNUAL_OVERLAY
+    if time_basis(df)==INTERANNUAL_OVERLAY:
+        if not is_multiyear(df):return False
+        from .interannual_profiles import interannual_profile_table
+        table=interannual_profile_table(df,column,aggregation)
+        return bool(not table.empty and table.dropna(subset=["value"]).groupby("calendar_bin")["real_year"].nunique().gt(1).any())
+    return bool(profile_groups(df,column,aggregation).count().gt(1).any())
+
+
+def profile_aggregations(df,column):
+    """Never create finer temporal periods than the native observations."""
+    if aggregation_semantics_for(column)=="paired max direction":return ("Native",)
+    if str(df.attrs.get("canonical_native_resolution","")).lower()=="monthly":
+        return ("Monthly","Seasonal","Annual")
+    hours=native_interval_hours(df)
+    periods=tuple(p for p,limit in (("Hourly",1),("Daily",24),("Weekly",168),("Monthly",24*28),("Seasonal",24*89),("Annual",24*365)) if hours<=limit+1e-8)
+    return (("Native",)+periods) if abs(hours-1)>1e-8 else periods
+
+
+def profile_representation_options(df,column,aggregation):
+    from .temporal_filtering import INTERANNUAL_OVERLAY
+    semantics=aggregation_semantics_for(column)
+    if aggregation=="Native":return ("Observed values",)
+    if time_basis(df)==INTERANNUAL_OVERLAY:
+        canonical={"sum":"Total","min":"Minimum","max":"Maximum","circular mean":"Circular mean"}.get(semantics,"Mean")
+        # The established overlay aggregates each year first using canonical
+        # semantics. Envelopes then describe the interannual distribution.
+        if semantics in ("circular mean","paired max direction"):return (canonical,)
+        if not profile_has_multiple_observations(df,column,aggregation):
+            return ("Yearly values",)
+        return ("Yearly values","Mean","Median","Min–mean–max","P05–median–P95")
+    if not profile_has_multiple_observations(df,column,aggregation):return ("Observed values",)
+    if semantics=="circular mean":return ("Circular mean",)
+    if semantics=="paired max direction":return ("Observed values",)
+    return ("Min–mean–max","P05–median–P95","Mean","Median")+(("Total",) if semantics=="sum" else ())
+
+
 def aggregate_summary(df: pd.DataFrame, column: str, aggregation: str) -> pd.DataFrame:
     """Aggregate a continuous variable into mean, min, max, median and percentiles.
 
@@ -98,7 +152,7 @@ def aggregate_summary(df: pd.DataFrame, column: str, aggregation: str) -> pd.Dat
         if is_multiyear(df):
             out = _chronological_season_summary(df, column)
         else:
-            grouped = df.groupby("season", observed=False)[column]
+            grouped = profile_groups(df,column,aggregation)
             out = grouped.agg(mean="mean", min="min", max="max", median="median")
             out["p05"] = grouped.quantile(0.05)
             out["p95"] = grouped.quantile(0.95)

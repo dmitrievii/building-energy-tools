@@ -21,8 +21,15 @@ class AtlasTests(unittest.TestCase):
         df=self.fixture();rows=c.catalogue(df,{},c.FULL)
         self.assertEqual(len(rows),len({d.id for d in rows}))
         temp=[d for d in rows if d.column==c.T and d.status=="available"]
+        from epw_climate_analyzer.aggregations import profile_representation_options
+        expected={p for p in c.PERIODS if "Min–mean–max" in profile_representation_options(df,c.T,p)}
         for kind in ("profile","percentile"):
-            self.assertEqual({d.args[0] for d in temp if d.kind==kind},set(c.PERIODS))
+            self.assertEqual({d.args[0] for d in temp if d.kind==kind},expected)
+        native=[d for d in temp if d.kind=="time_series" and d.args[0]=="Hourly"]
+        self.assertEqual(len(native),1)
+        fig,note=make_figure(native[0],df,{})
+        self.assertEqual(len(fig.data),1)
+        np.testing.assert_allclose(fig.data[0].y,df[c.T])
         self.assertEqual(len([d for d in temp if d.kind=="heatmap"]),13)
         self.assertEqual(len([d for d in temp if d.kind=="heatmap" and d.args[0]=="day"]),1)
         self.assertEqual(len([d for d in temp if d.kind=="diurnal"]),12)
@@ -36,7 +43,7 @@ class AtlasTests(unittest.TestCase):
         self.assertTrue(any(d.kind=="native" and d.status=="available" for d in rows))
     def test_core_chart_families_execute(self):
         df=self.fixture();rows=[d for d in c.catalogue(df,{},c.FULL) if d.status=="available"]
-        types=("profile","percentile","heatmap","duration","histogram","box","violin","diurnal","occurrence","amplitude","total","degree","temp_threshold","temp_events","day_indicators","wind_mean","wind_classes","wetdry","rolling","cumulative","freeze_days","eligibility_map","eligibility_total","nv_special","design_tail","tail_curve","critical_windows","correlation","joint")
+        types=("time_series","profile","percentile","heatmap","duration","histogram","box","violin","diurnal","occurrence","amplitude","total","degree","temp_threshold","temp_events","day_indicators","wind_mean","wind_classes","wetdry","rolling","cumulative","freeze_days","eligibility_map","eligibility_total","nv_special","design_tail","tail_curve","critical_windows","correlation","joint")
         cache={}
         for k in types:
             rows_k=[d for d in rows if d.kind==k]

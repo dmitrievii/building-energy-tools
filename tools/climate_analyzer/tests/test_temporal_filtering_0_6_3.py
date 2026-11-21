@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from epw_climate_analyzer.aggregations import aggregate_summary, aggregate_sum, calendar_matrix, threshold_count_by_period
+from epw_climate_analyzer.aggregations import aggregate_summary, aggregate_sum, calendar_matrix, threshold_count_by_period, profile_representation_options
 from epw_climate_analyzer.charts import profile_ribbon_chart, monthly_box_chart
 from epw_climate_analyzer.degree_metrics import degree_metric_table
 from epw_climate_analyzer.precipitation import aggregate_liquid_precipitation
@@ -147,3 +147,35 @@ class TemporalFiltering063Tests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ProfileAdmissionTests(unittest.TestCase):
+    def test_native_hourly_and_subhourly(self):
+        from epw_climate_analyzer.charts import time_series_profile_chart,percentile_band_chart
+        c="dry_bulb_temperature_c"
+        hourly=pd.DataFrame({c:[1.,np.nan,3.]},index=pd.date_range("2026-01-01",periods=3,freq="h"))
+        self.assertEqual(profile_representation_options(hourly,c,"Hourly"),("Observed values",))
+        for chart in (profile_ribbon_chart,percentile_band_chart):
+            f=chart(hourly,c,"Hourly","Temperature","°C")
+            self.assertEqual(len(f.data),1)
+            np.testing.assert_allclose(f.data[0].y,[1.,np.nan,3.],equal_nan=True)
+        sub=pd.DataFrame({c:[1.,3.,5.,7.,9.,11.]},index=pd.date_range("2026-01-01",periods=6,freq="10min"))
+        self.assertIn("Min–mean–max",profile_representation_options(sub,c,"Hourly"))
+        f=profile_ribbon_chart(sub,c,"Hourly","Temperature","°C")
+        self.assertEqual(len(f.data),3)
+        self.assertEqual(float(f.data[0].y[0]),11.)
+        self.assertEqual(float(f.data[1].y[0]),1.)
+        self.assertEqual(float(f.data[2].y[0]),6.)
+        f=time_series_profile_chart(sub,c,"Native","Temperature","°C","Observed values")
+        np.testing.assert_array_equal(f.data[0].y,sub[c])
+
+    def test_calendar_pooling_and_extensive_total(self):
+        from epw_climate_analyzer.charts import time_series_profile_chart
+        c="dry_bulb_temperature_c";p="liquid_precipitation_depth_mm"
+        df=pd.DataFrame({c:[2.,8.],p:[1.,4.]},index=pd.to_datetime(["2025-01-01","2026-01-01"]))
+        self.assertEqual(profile_representation_options(df,c,"Hourly"),("Observed values",))
+        df=with_time_basis(df,CALENDAR_PROFILE)
+        self.assertIn("P05–median–P95",profile_representation_options(df,c,"Hourly"))
+        self.assertIn("Total",profile_representation_options(df,p,"Hourly"))
+        f=time_series_profile_chart(df,p,"Hourly","Rain","mm","Total")
+        self.assertEqual(float(f.data[0].y[0]),2.5)

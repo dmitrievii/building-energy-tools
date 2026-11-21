@@ -18,6 +18,7 @@ from .aggregations import (
     monthly_box_data,
     native_interval_hours,
     temporal_heatmap_matrix,
+    profile_has_multiple_observations, profile_groups, period_total_series,
 )
 from .temporal_filtering import CALENDAR_PROFILE, CHRONOLOGICAL, INTERANNUAL_OVERLAY, display_period_labels, is_multiyear, time_basis
 from .interannual_profiles import interannual_minmax_figure, interannual_percentile_figure
@@ -211,6 +212,49 @@ def apply_common_layout(fig: go.Figure, title: str, x_label: str, y_label: str) 
     return fig
 
 
+def profile_line_chart(df,column,aggregation,title,unit,representation="Observed values"):
+    """One trace for direct/summary values; year traces for overlay."""
+    from .aggregations import _circular_mean_degrees
+    if aggregation!="Native" and time_basis(df)==INTERANNUAL_OVERLAY:
+        from .interannual_profiles import interannual_profile_figure
+        kind={"Mean":"mean","Median":"median"}.get(representation,"yearly")
+        return interannual_profile_figure(df,column,aggregation,title,unit,kind=kind)
+    if aggregation=="Native":
+        values=pd.to_numeric(df[column],errors="coerce").sort_index()
+        x=values.index
+    else:
+        grouped=profile_groups(df,column,aggregation)
+        if representation=="Total":
+            values=period_total_series(pd.to_numeric(df[column],errors="coerce"),df,aggregation)
+        elif representation=="Circular mean":
+            values=grouped.apply(_circular_mean_degrees)
+        elif representation=="Median":values=grouped.median()
+        else:values=grouped.mean()
+        if aggregation=="Seasonal" and time_basis(df)!=CALENDAR_PROFILE and not is_multiyear(df):
+            from .temporal_filtering import SEASON_ORDER
+            values=values.reindex(list(SEASON_ORDER))
+        if time_basis(df)==CHRONOLOGICAL and aggregation=="Hourly":x=values.index
+        else:x=display_period_labels(values.index,aggregation,time_basis(df))
+    color=metric_band_colors(column)[1]
+    fig=go.Figure(go.Scatter(x=x,y=values,mode="lines" if len(values)>48 else "lines+markers",
+              name=representation,line=dict(color=color,width=1.8),connectgaps=False,
+              hovertemplate="%{x}<br>%{y:.3g} "+unit+"<extra></extra>"))
+    fig=apply_common_layout(fig,title,"Time" if aggregation in ("Hourly","Native") else "Period",unit)
+    if aggregation=="Monthly" and (time_basis(df)==CALENDAR_PROFILE or not is_multiyear(df)):
+        fig.update_xaxes(categoryorder="array",categoryarray=MONTH_LABELS)
+    # Totals can exceed per-record physical bounds; never clip their domain.
+    if representation=="Total":return fig
+    return _apply_axis_constraints(fig,column=column,y_values=values)
+
+
+def time_series_profile_chart(df,column,aggregation,title,unit,representation):
+    if representation=="Min–mean–max":
+        return profile_ribbon_chart(df,column,aggregation,title,unit)
+    if representation=="P05–median–P95":
+        return percentile_band_chart(df,column,aggregation,title,unit)
+    return profile_line_chart(df,column,aggregation,title,unit,representation)
+
+
 def profile_ribbon_chart(
     df: pd.DataFrame,
     column: str,
@@ -225,6 +269,8 @@ def profile_ribbon_chart(
     same x-position through Plotly's unified hover. This makes the ribbon useful
     for copying exact min/mean/max values without searching separate points.
     """
+    if not extensive and aggregation=="Hourly" and not profile_has_multiple_observations(df,column,aggregation):
+        return profile_line_chart(df,column,aggregation,title,unit)
     if time_basis(df) == INTERANNUAL_OVERLAY:
         return interannual_minmax_figure(df, column, aggregation, title, unit)
 
@@ -237,7 +283,7 @@ def profile_ribbon_chart(
 
     low_color, central_color, high_color, band_fill = metric_band_colors(column)
     fig = go.Figure()
-    if aggregation == "Hourly" and time_basis(summary) == CHRONOLOGICAL:
+    if extensive and aggregation == "Hourly" and time_basis(summary) == CHRONOLOGICAL:
         x = summary.index
         fig.add_trace(
             go.Scatter(
@@ -292,6 +338,8 @@ def profile_ribbon_chart(
 
 def percentile_band_chart(df: pd.DataFrame, column: str, aggregation: str, title: str, unit: str) -> go.Figure:
     """Create a percentile-band chart using P05, median and P95."""
+    if aggregation=="Hourly" and not profile_has_multiple_observations(df,column,aggregation):
+        return profile_line_chart(df,column,aggregation,title,unit)
     if time_basis(df) == INTERANNUAL_OVERLAY:
         return interannual_percentile_figure(df, column, aggregation, title, unit)
     summary = aggregate_summary(df, column, aggregation)

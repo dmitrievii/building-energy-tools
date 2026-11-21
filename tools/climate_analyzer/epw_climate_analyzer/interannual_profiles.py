@@ -138,6 +138,15 @@ def interannual_profile_figure(
         return fig
 
     _yearly_traces(fig, table, unit)
+    if kind in ("yearly","mean","median"):
+        if kind!="yearly":
+            centre=table.groupby("calendar_bin",sort=True)["value"].agg(kind).dropna()
+            fig.add_scatter(x=centre.index,y=centre,mode="lines",name="Interannual "+kind,
+                            line=dict(color=metric_band_colors(column)[1],width=2))
+        fig.update_layout(title=title,xaxis_title="Calendar position",yaxis_title=unit,template="plotly_white",
+                          hovermode="x unified",legend_title_text="Real year / statistic",margin=dict(l=40,r=20,t=70,b=45))
+        fig.update_xaxes(tickformat="%b" if aggregation=="Monthly" else "%d %b")
+        return fig
     envelope = _envelope_table(table, kind)
     low_color, centre_color, high_color, band_fill = metric_band_colors(column)
     if not envelope.empty:

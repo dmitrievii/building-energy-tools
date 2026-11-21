@@ -2176,6 +2176,34 @@ def render_extended_variable_chart(df, column, unit, chart_type, *, key_prefix="
             "Classes are mutually exclusive; hours retain source duration, days require complete real calendar days, and percentages use valid observed intervals. Calendar-profile mode averages equivalent year-months.")
 
 
+def render_profile_controls(df,column,unit,title,scope,default="Monthly"):
+    from epw_climate_analyzer.aggregations import profile_aggregations,profile_representation_options
+    from epw_climate_analyzer.charts import time_series_profile_chart
+    from epw_climate_analyzer.temporal_filtering import INTERANNUAL_OVERLAY
+    periods=list(profile_aggregations(df,column))
+    if not periods:raise ValueError("No supported temporal aggregation.")
+    key=scope+"_aggregation"
+    if st.session_state.get(key) not in periods:st.session_state[key]=default if default in periods else periods[0]
+    aggregation=st.selectbox("Aggregation",periods,key=key,format_func=lambda p:"Native observations" if p=="Native" else p)
+    representations=profile_representation_options(df,column,aggregation)
+    if len(representations)==1:
+        representation=representations[0]
+        if representation=="Observed values":st.caption("One valid source observation per occupied interval; no statistical band is required.")
+        else:st.caption("Representation: "+representation)
+    else:
+        key=scope+"_profile_representation"
+        if st.session_state.get(key) not in representations:st.session_state[key]=representations[0]
+        representation=st.selectbox("Representation",representations,key=key)
+    if aggregation=="Native":st.caption("Native observations retain their actual timestamps and are not pooled across years.")
+    elif time_basis(df)==INTERANNUAL_OVERLAY:
+        st.caption("Each real year is aggregated separately using canonical quantity semantics. Optional envelopes describe the distribution of those yearly values.")
+    elif representation=="Total":
+        st.caption("Sum of valid source interval quantities; calendar profiles average equivalent per-year totals. No missing values are synthesized.")
+    elif representation!="Observed values":
+        st.caption("Statistics describe the source observations within each aggregation bucket, not confidence intervals.")
+    return time_series_profile_chart(df,column,aggregation,f"{title} · {aggregation} · {representation}",unit,representation)
+
+
 def render_generic_variable_page(
     df: pd.DataFrame,
     variable_labels: list[str],
@@ -2206,26 +2234,25 @@ def render_generic_variable_page(
         variable_label = st.selectbox("Variable", available_labels, index=available_labels.index(selected_default), key=variable_key)
     column, unit = VARIABLES[variable_label]
     chart_types = [
-        "Profile with min-mean-max ribbon",
-        "Middle 90% range with median",
+        "Time series / Profile",
         "Heat map",
         "Duration curve",
         "Histogram",
         "Monthly boxplot",
         "Monthly violin plot",
     ]
-    if column == "liquid_precipitation_depth_mm":
-        # Accumulated precipitation belongs to the dedicated totals analysis.
-        # A min/mean/max ribbon cannot use a period sum as its centre line while
-        # its bounds remain per-record extrema, so that chart is deliberately
-        # unavailable for this extensive variable.
-        chart_types.remove("Profile with min-mean-max ribbon")
     from epw_climate_analyzer.extended_visualization import compatible_types, probability_figure, amplitude_figure, hourly_capable
     chart_types.extend(compatible_types(df,column))
     scope = "explorer_" + title_prefix.lower().replace(" ", "_")
     if title_prefix.startswith("Temperature") and unit in ("°C","K") and hourly_capable(df):
         chart_types.append("Amplitude")
-    chart_type = st.selectbox("Chart type", chart_types, key=scope+"_chart_type")
+    chart_key=scope+"_chart_type"
+    old_type=st.session_state.get(chart_key)
+    if old_type in ("Profile with min-mean-max ribbon","Middle 90% range with median"):
+        st.session_state[scope+"_profile_representation"]="Min–mean–max" if old_type.startswith("Profile") else "P05–median–P95"
+        st.session_state[chart_key]="Time series / Profile"
+    if st.session_state.get(chart_key) not in chart_types:st.session_state[chart_key]=chart_types[0]
+    chart_type = st.selectbox("Chart type", chart_types, key=chart_key)
     if chart_type=="Amplitude":
         aggregation=st.selectbox("Aggregation",["Daily","Weekly","Monthly","Seasonal","Annual"],
                                  key=scope+"_amplitude_aggregation")
@@ -2309,18 +2336,8 @@ def render_generic_variable_page(
             temperature_thresholds=temperature_thresholds if column in TEMPERATURE_HEATMAP_COLUMNS else None,
         )
     else:
-        # Only charts that actually aggregate a time series expose the
-        # aggregation selector. Distribution and monthly-distribution charts do
-        # not need it.
-        aggregation = None
-        if chart_type in {"Profile with min-mean-max ribbon", "Middle 90% range with median"}:
-            aggregation = st.selectbox("Aggregation", ["Monthly", "Annual", "Weekly", "Daily", "Hourly", "Seasonal"], index=0,key=scope+"_aggregation")
-        # Radiation and illuminance are visualized as mean intensities in the generic explorer.
-        # Monthly/annual energy sums are available in the dedicated solar component charts.
-        if chart_type == "Profile with min-mean-max ribbon":
-            fig = profile_ribbon_chart(df, column, aggregation or "Monthly", f"{title_prefix}: {variable_label}", unit)
-        elif chart_type == "Middle 90% range with median":
-            fig = percentile_band_chart(df, column, aggregation or "Monthly", f"{title_prefix}: {variable_label} · middle 90% range with median", unit)
+        if chart_type=="Time series / Profile":
+            fig=render_profile_controls(df,column,unit,f"{title_prefix}: {variable_label}",scope)
         elif chart_type == "Duration curve":
             ascending = st.checkbox("Ascending order", value=False,key=scope+"_ascending")
             direction = "ascending" if ascending else "descending"
@@ -5742,8 +5759,7 @@ def render_historical_solar(df: pd.DataFrame) -> None:
             render_extended_variable_chart(solar,column,"W/m²",chart_type,key_prefix="historical_irradiance")
             return
         if chart_type == "Profile":
-            aggregation = st.selectbox("Aggregation", ["Hourly", "Daily", "Weekly", "Monthly", "Seasonal"], index=0, key="historical_solar_aggregation")
-            fig = profile_ribbon_chart(solar, column, aggregation, f"{selected} — {aggregation.lower()}", "W/m²")
+            fig=render_profile_controls(solar,column,"W/m²",selected,"historical_solar",default="Hourly")
         elif chart_type == "Duration curve":
             axis_representation=st.selectbox("Axis representation",["Physical hours","Probability [%]"],key="historical_solar_duration_axis")
             fig=probability_figure(solar,column,"W/m²") if axis_representation=="Probability [%]" else duration_chart(solar, column, f"{selected} duration curve", "W/m²", ascending=False)
