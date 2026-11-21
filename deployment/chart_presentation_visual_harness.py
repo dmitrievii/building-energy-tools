@@ -33,6 +33,18 @@ install_global_chart_presentation(st)
 st.title("Chart presentation visual harness")
 st.caption("Representative production chart families rendered through the shared global presentation boundary.")
 
+if st.query_params.get("duration") == "1":
+    from epw_climate_analyzer.charts import duration_chart
+    from epw_climate_analyzer.extended_visualization import probability_figure, amplitude_figure
+    for year in (2025,2024):
+        idx=pd.date_range(f"{year}-01-01",f"{year+1}-01-01",freq="h",inclusive="left")
+        data=pd.DataFrame({"dry_bulb_temperature_c":10.+12.*np.sin(np.arange(len(idx))*2*np.pi/8760)},index=idx)
+        data.attrs["canonical_native_interval_minutes"]=60
+        st.plotly_chart(duration_chart(data,"dry_bulb_temperature_c",f"Physical hours {year}","°C"),key=f"duration_{year}")
+    st.plotly_chart(probability_figure(data,"dry_bulb_temperature_c","°C"),key="probability")
+    st.plotly_chart(amplitude_figure(data,"dry_bulb_temperature_c","Monthly","Dry-bulb temperature"),key="amplitude")
+    st.stop()
+
 if st.query_params.get("monthly") == "1":
     from epw_climate_analyzer.monthly_radiation import monthly_radiation_chart
     monthly = pd.DataFrame(

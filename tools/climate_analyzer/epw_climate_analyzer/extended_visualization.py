@@ -167,7 +167,8 @@ def probability_figure(df,column,unit,ascending=False):
     fig=go.Figure(go.Scatter(x=v["exceedance_fraction"]*100,y=v[column],mode="lines",
                                line=dict(color=metric_color(column))))
     fig.update_layout(template="plotly_white",title="Empirical frequency curve",xaxis_title=label,yaxis_title=unit)
-    fig.update_xaxes(range=[0,100],tickmode="array",tickvals=[0,20,40,60,80,100],ticksuffix="%",autorangeoptions=dict(minallowed=0,maxallowed=100))
+    from .duration_axes import apply_duration_axis
+    apply_duration_axis(fig,100.,percentage=True)
     return fig
 
 
@@ -309,14 +310,14 @@ def amplitude_figure(df,column,aggregation,label):
     if basis==CALENDAR_PROFILE:
         slots=calendar_profile_slot(ranges.index,aggregation)
         ranges=ranges.groupby(slots,observed=True).mean()
-        fig.add_bar(x=display_period_labels(ranges.index,aggregation,basis),y=ranges,name=label,marker_color=metric_color(column))
+        fig.add_scatter(x=display_period_labels(ranges.index,aggregation,basis),y=ranges,name=label,mode="lines+markers",line=dict(color=metric_color(column),width=2.5),marker=dict(size=5),connectgaps=False)
     elif basis==INTERANNUAL_OVERLAY:
         for year in sorted(set(ranges.index.year)):
             v=ranges.loc[ranges.index.year==year]
             slots=calendar_profile_slot(v.index,aggregation)
             fig.add_scatter(x=display_period_labels(slots,aggregation,basis),y=v,mode="lines+markers",connectgaps=False,name=str(year))
     else:
-        fig.add_bar(x=display_period_labels(ranges.index,aggregation,basis),y=ranges,name=label,marker_color=metric_color(column))
+        fig.add_scatter(x=display_period_labels(ranges.index,aggregation,basis),y=ranges,name=label,mode="lines+markers",line=dict(color=metric_color(column),width=2.5),marker=dict(size=5),connectgaps=False)
     fig.update_layout(template="plotly_white",title=f"{aggregation} amplitude · {label}",xaxis_title="Period",yaxis_title="Amplitude [K]",legend=dict(orientation="h",y=-.2))
     fig.update_yaxes(rangemode="tozero")
     return fig

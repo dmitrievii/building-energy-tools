@@ -425,12 +425,8 @@ def duration_chart(df: pd.DataFrame, column: str, title: str, unit: str, ascendi
     if not values.empty:
         endpoint=float(values["duration_hours"].iloc[-1])
         if endpoint>0:
-            # Explicitly label the actual last observed hour, not a
-            # hard-coded 8760 for partial, leap or multi-year records.
-            ticks=np.linspace(0.,endpoint,6).tolist()
-            fig.update_xaxes(range=[0,endpoint],tickmode="array",tickvals=ticks,
-                             ticktext=[f"{v:g}" for v in ticks],
-                             autorangeoptions=dict(minallowed=0,maxallowed=endpoint))
+            from .duration_axes import apply_duration_axis
+            apply_duration_axis(fig,endpoint)
     return fig
 
 def histogram_chart(df: pd.DataFrame, column: str, title: str, unit: str, bins: int = 40) -> go.Figure:

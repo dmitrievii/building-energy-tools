@@ -375,6 +375,33 @@ try {
   report.checks.monthlyRoseLines=true;
   await page.screenshot({path:OUT_DIR+'/09-monthly-rose-lines.png',fullPage:true});
 
+  // Verify actual SVG tick labels, not just Python/Plotly layout metadata.
+  await page.goto(TARGET_URL+'?duration=1',{waitUntil:'domcontentloaded'});
+  const durationFrame=await waitForCharts(page,4);
+  const durationPlots=durationFrame.locator('.js-plotly-plot');
+  const tickReports=await durationPlots.evaluateAll(nodes=>nodes.slice(0,3).map(node=>{
+    const box=node.getBoundingClientRect();
+    return [...node.querySelectorAll('.xtick text')].map(t=>{
+      const r=t.getBoundingClientRect();
+      return {label:t.textContent,left:r.left>=box.left-1,right:r.right<=box.right+1,
+        width:r.width,height:r.height,visibility:getComputedStyle(t).visibility};
+    });
+  }));
+  const expectedTicks=[['0','1000','2000','3000','4000','5000','6000','7000','8000','8760'],
+                       ['0','1000','2000','3000','4000','5000','6000','7000','8000','8784'],
+                       ['0%','20%','40%','60%','80%','100%']];
+  for(let i=0;i<expectedTicks.length;i++){
+    const labels=tickReports[i].filter(t=>t.left&&t.right&&t.width>0&&t.height>0&&t.visibility!=='hidden').map(t=>t.label);
+    if(expectedTicks[i].some(t=>!labels.includes(t)))
+      throw new Error('Duration tick missing or clipped: '+JSON.stringify({expected:expectedTicks[i],actual:tickReports[i]}));
+  }
+  const amp=await durationPlots.nth(3).evaluate(node=>node._fullData.map(t=>({type:t.type,mode:t.mode})));
+  if(!amp.length||amp.some(t=>t.type!=='scatter'||!t.mode.includes('lines')))
+    throw new Error('Amplitude is not a line chart: '+JSON.stringify(amp));
+  report.metrics.durationEndpoints=tickReports;
+  report.checks.durationEndpointsAndAmplitude=true;
+  await page.screenshot({path:OUT_DIR+'/10-duration-endpoints.png',fullPage:true});
+
   report.success = Object.values(report.checks).every(Boolean);
   if (!report.success) throw new Error(`Chart presentation browser smoke failed: ${JSON.stringify(report.checks)}`);
   await fs.writeFile(`${OUT_DIR}/report.json`, JSON.stringify(report, null, 2));

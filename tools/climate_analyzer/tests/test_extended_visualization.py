@@ -60,14 +60,38 @@ class ExtendedTests(unittest.TestCase):
         self.assertIn("dryness",result)
         self.assertIn("No annual total",result)
         df=sample()
-        self.assertEqual(amplitude_figure(df,T,"Daily","Temperature").data[0].y[0],23.)
+        daily=amplitude_figure(df,T,"Daily","Temperature")
+        self.assertEqual(daily.data[0].y[0],23.)
+        self.assertEqual(daily.data[0].type,"scatter")
+        self.assertEqual(daily.data[0].mode,"lines+markers")
+        self.assertFalse(daily.data[0].connectgaps)
         self.assertEqual(amplitude_figure(df,T,"Monthly","Temperature").data[0].y[0],23.)
-        self.assertEqual(probability_figure(df,T,"°C").layout.xaxis.tickvals[-1],100)
+        from epw_climate_analyzer.temporal_filtering import CALENDAR_PROFILE, INTERANNUAL_OVERLAY, with_time_basis
+        for basis in (CALENDAR_PROFILE,INTERANNUAL_OVERLAY):
+            self.assertTrue(all(trace.type=="scatter" for trace in amplitude_figure(with_time_basis(df,basis),T,"Monthly","Temperature").data))
+        for ascending in (False,True):
+            probability=probability_figure(df,T,"°C",ascending=ascending)
+            self.assertEqual(probability.layout.xaxis.tickvals[-1],100)
+            self.assertEqual(probability.layout.xaxis.ticktext[-1],"100%")
+            self.assertEqual(probability.layout.xaxis.ticklabeloverflow,"allow")
+            self.assertGreater(probability.layout.xaxis.range[1],100)
+            self.assertEqual(probability.data[0].x[-1],100)
         idx=pd.date_range("2025-01-01",periods=8760,freq="h")
         annual=pd.DataFrame({T:np.arange(len(idx))},index=idx)
         fig=duration_chart(annual,T,"Duration","°C")
-        self.assertEqual(fig.layout.xaxis.tickvals[-1],8760)
+        self.assertEqual(tuple(fig.layout.xaxis.tickvals),tuple(range(0,9000,1000))+(8760,))
+        self.assertEqual(fig.layout.xaxis.ticktext[-1],"8760")
+        self.assertGreater(fig.layout.xaxis.range[1],8760)
+        self.assertEqual(fig.data[0].x[-1],8760)
+        leap_idx=pd.date_range("2024-01-01",periods=8784,freq="h")
+        leap=pd.DataFrame({T:np.arange(len(leap_idx))},index=leap_idx)
+        self.assertEqual(tuple(duration_chart(leap,T,"Duration","°C").layout.xaxis.tickvals),tuple(range(0,9000,1000))+(8784,))
         self.assertEqual(duration_chart(df,T,"Duration","°C").layout.xaxis.tickvals[-1],744)
+        from epw_climate_analyzer.duration_axes import physical_hour_ticks
+        self.assertEqual(physical_hour_ticks(8000)[-1],8000)
+        self.assertEqual(physical_hour_ticks(8000).count(8000),1)
+        self.assertEqual(physical_hour_ticks(8001)[-1],8001)
+        self.assertNotIn(8000,physical_hour_ticks(8001))
     def test_duplicate_export_buttons_and_scoped_explorers(self):
         import ast
         from pathlib import Path
