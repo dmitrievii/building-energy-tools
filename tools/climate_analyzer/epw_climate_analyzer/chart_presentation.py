@@ -60,6 +60,12 @@ KEY_BACKGROUND = "chart_presentation_background"
 KEY_EXPORT_SCALE = "chart_presentation_export_scale"
 KEY_CUSTOM_WIDTH = "chart_presentation_custom_width"
 KEY_CUSTOM_HEIGHT = "chart_presentation_custom_height"
+EXTRA_DEFAULTS = {"show_title": True, "show_legend": True, "show_grid": True,
+                  "line_scale": 1.0, "export_format": "PNG", "north_rotation": 0,
+                  "axis_title": "", "axis_min": 0.0, "axis_max": 100.0}
+
+def _key(name):
+    return "chart_presentation_" + name
 
 
 @dataclass(frozen=True)
@@ -71,6 +77,15 @@ class ChartPresentationSettings:
     custom_width: int = DEFAULT_CUSTOM_WIDTH
     custom_height: int = DEFAULT_CUSTOM_HEIGHT
     background: str = DEFAULT_BACKGROUND
+    show_title: bool = True
+    show_legend: bool = True
+    show_grid: bool = True
+    line_scale: float = 1.0
+    export_format: str = "PNG"
+    north_rotation: int = 0
+    axis_title: str = ""
+    axis_min: float = 0.0
+    axis_max: float = 100.0
 
     @property
     def transparent(self) -> bool:
@@ -114,6 +129,7 @@ def settings_from_state(state: Mapping[str, Any]) -> ChartPresentationSettings:
         export_scale=int(state.get(KEY_EXPORT_SCALE, DEFAULT_EXPORT_SCALE)),
         custom_width=int(state.get(KEY_CUSTOM_WIDTH, DEFAULT_CUSTOM_WIDTH)),
         custom_height=int(state.get(KEY_CUSTOM_HEIGHT, DEFAULT_CUSTOM_HEIGHT)),
+        **{name: state.get(_key(name), default) for name, default in EXTRA_DEFAULTS.items()},
     )
 
 
@@ -125,6 +141,8 @@ def reset_state(state: MutableMapping[str, Any]) -> None:
     state[KEY_EXPORT_SCALE] = DEFAULT_EXPORT_SCALE
     state[KEY_CUSTOM_WIDTH] = DEFAULT_CUSTOM_WIDTH
     state[KEY_CUSTOM_HEIGHT] = DEFAULT_CUSTOM_HEIGHT
+    for name, default in EXTRA_DEFAULTS.items():
+        state[_key(name)] = default
 
 
 def ensure_default_state(state: MutableMapping[str, Any]) -> None:
@@ -136,6 +154,8 @@ def ensure_default_state(state: MutableMapping[str, Any]) -> None:
     state.setdefault(KEY_EXPORT_SCALE, DEFAULT_EXPORT_SCALE)
     state.setdefault(KEY_CUSTOM_WIDTH, DEFAULT_CUSTOM_WIDTH)
     state.setdefault(KEY_CUSTOM_HEIGHT, DEFAULT_CUSTOM_HEIGHT)
+    for name, default in EXTRA_DEFAULTS.items():
+        state.setdefault(_key(name), default)
 
 
 def _set_font_size(font: Any, size: int) -> None:
@@ -282,6 +302,71 @@ def _apply_background(layout: Any, color: str, traces=()) -> None:
             item.colorbar.bgcolor = color
 
 
+def _apply_extra_presentation(fig: Any, settings: ChartPresentationSettings) -> None:
+    """Opt-in styling; scientific axes, geometry and data are not transformed."""
+    layout = fig.layout
+    if not settings.show_title:
+        layout.title.text = ""
+    if not settings.show_legend:
+        layout.showlegend = False
+    names = set(getattr(layout, "_props", {}) or {})
+    names.update(("xaxis", "yaxis"))
+    target = settings.axis_title.strip()
+    bounds_valid = (math.isfinite(settings.axis_min) and math.isfinite(settings.axis_max)
+                    and settings.axis_min < settings.axis_max)
+    for name in sorted(names):
+        item = getattr(layout, name, None)
+        if item is None:
+            continue
+        if name.startswith(("xaxis", "yaxis")):
+            if not settings.show_grid:
+                item.showgrid = False
+            # Only an explicitly matching numeric axis is eligible. Exclude
+            # date, categorical, log and aspect-constrained physical axes.
+            if (target and bounds_valid and item.title.text == target
+                and item.type in (None, "linear") and not item.scaleanchor
+                and not item.matches and item.autorange != "reversed"
+                and not any(getattr(getattr(layout,n,None),"scaleanchor",None)
+                            in (name.replace("axis",""),) for n in names
+                            if n.startswith(("xaxis","yaxis")))):
+                # Implicit axis type can be categorical or date. Inspect the
+                # actual coordinates routed to this axis before setting range.
+                coord = name[0]
+                axisref = name.replace("axis", "")
+                traces = [tr for tr in fig.data if
+                          (getattr(tr, coord+"axis",None) or coord) == axisref
+                          and getattr(tr,coord,None) is not None]
+                samples = [v for tr in traces for v in list(getattr(tr,coord))[:8] if v is not None]
+                from numbers import Real
+                if samples and all(isinstance(v,Real) for v in samples):
+                    item.range = [settings.axis_min, settings.axis_max]
+                    item.autorange = False
+        elif name.startswith("polar"):
+            if not settings.show_grid:
+                item.angularaxis.showgrid = False
+                item.radialaxis.showgrid = False
+            meta = layout.meta if isinstance(layout.meta, dict) else {}
+            # Compass rotations change presentation only. Monthly roses and
+            # other non-directional polars retain their calendar reference.
+            if settings.north_rotation and meta.get("compass_polar") is True:
+                item.angularaxis.rotation = ((item.angularaxis.rotation
+                    if item.angularaxis.rotation is not None else 90)
+                    - settings.north_rotation) % 360
+        elif name.startswith("scene") and not settings.show_grid:
+            for axis in (item.xaxis,item.yaxis,item.zaxis):
+                axis.showgrid=False
+    if settings.line_scale != 1.0:
+        for trace in fig.data:
+            props = getattr(trace, "_props", {}) or {}
+            if trace.type not in {"scatter","scattergl","scatterpolar","scatterpolargl","scatter3d"}:
+                continue
+            if "lines" not in (getattr(trace,"mode",None) or "lines"):
+                continue
+            # Retain explicit relative widths, including solar-path halos.
+            line = trace.line
+            line.width = max(0.1, min(30., float(line.width or 2.) * settings.line_scale))
+
+
 def apply_chart_presentation(fig: Any, settings: ChartPresentationSettings) -> Any:
     """Apply presentation-only layout changes to a Plotly figure in place."""
     if fig is None or not hasattr(fig, "layout"):
@@ -352,6 +437,7 @@ def apply_chart_presentation(fig: Any, settings: ChartPresentationSettings) -> A
         if isinstance(trace_props, Mapping) and "colorbar" in trace_props:
             _set_colorbar_font(getattr(trace, "colorbar", None), size)
 
+    _apply_extra_presentation(fig, settings)
     _space_bottom_legends(fig, settings, size)
 
     dimensions = settings.display_dimensions()
@@ -375,6 +461,8 @@ def merge_plotly_config(
     merged = dict(config or {})
     export_options = dict(merged.get("toImageButtonOptions") or {})
     export_options.setdefault("format", "png")
+    if settings.export_format == "SVG":
+        export_options["format"] = "svg"
     if settings.transparent and export_options["format"] not in ("png", "svg"):
         export_options["format"] = "png"
     export_options["scale"] = max(1, min(3, int(settings.export_scale)))
@@ -418,6 +506,21 @@ def render_presentation_sidebar(st: Any) -> None:
             "Chart background", BACKGROUND_OPTIONS, key=KEY_BACKGROUND,
             help="Applies globally to all charts and image exports. Transparent PNG preserves the alpha channel for architectural overlays.",
         )
+        st.checkbox("Show chart title", key=_key("show_title"))
+        st.checkbox("Show legend", key=_key("show_legend"))
+        st.checkbox("Show grid", key=_key("show_grid"))
+        st.slider("Line thickness multiplier", 0.5, 3.0, step=0.25, key=_key("line_scale"))
+        st.selectbox("Image export format", ["PNG", "SVG"],key=_key("export_format"),
+                     help="WebGL traces are rasterized inside SVG. PNG retains the full rendered scene.")
+        st.slider("Compass rotation [deg clockwise]", -180,180,step=5,key=_key("north_rotation"),
+                  help="Only compass-based polar diagrams. Physical azimuth and north labels rotate together.")
+        st.text_input("Manual numeric axis title (exact match)",key=_key("axis_title"),
+                      help="Empty = automatic. Enter the exact axis title to limit the range override to matching numeric axes.")
+        if st.session_state[_key("axis_title")]:
+            st.number_input("Axis minimum",key=_key("axis_min"))
+            st.number_input("Axis maximum",key=_key("axis_max"))
+            if st.session_state[_key("axis_min")] >= st.session_state[_key("axis_max")]:
+                st.warning("Axis minimum must be below maximum; range override ignored.")
         st.select_slider(
             "Export scale",
             options=(1, 2, 3),

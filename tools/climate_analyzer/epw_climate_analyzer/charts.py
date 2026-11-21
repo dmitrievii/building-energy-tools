@@ -1596,7 +1596,8 @@ def wind_rose_chart(
         category_orders={"speed_bin": WIND_SPEED_LABELS},
         color_discrete_map=WIND_SPEED_COLOR_MAP,
     )
-    fig.update_layout(template=PLOT_TEMPLATE, margin=dict(l=40, r=20, t=70, b=45))
+    fig.update_layout(template=PLOT_TEMPLATE, margin=dict(l=40, r=20, t=70, b=45),
+                      meta={"compass_polar": True})
     return fig
 
 

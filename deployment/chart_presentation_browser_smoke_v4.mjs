@@ -241,7 +241,12 @@ try {
     await page.keyboard.press('Enter');
     await waitForCharts(page);
     await page.waitForFunction(transparent=>[...document.querySelectorAll('.js-plotly-plot')].every(
-      node=>node._fullLayout?.paper_bgcolor===(transparent?'rgba(0,0,0,0)':'white')),
+      node=>{
+        const c=document.createElement('canvas');c.width=c.height=1;
+        const ctx=c.getContext('2d');ctx.fillStyle=node._fullLayout?.paper_bgcolor||'black';
+        ctx.fillRect(0,0,1,1);const px=ctx.getImageData(0,0,1,1).data;
+        return transparent?px[3]===0:(px[3]===255&&px[0]===255&&px[1]===255&&px[2]===255);
+      }),
       index===1);
   }
   async function exportAlpha(chartIndex) {
@@ -273,7 +278,8 @@ try {
     paper:node._fullLayout.paper_bgcolor,plot:node._fullLayout.plot_bgcolor,
     polar:node._fullLayout.polar?.bgcolor||null
   })));
-  if(backgrounds.some(x=>x.paper!=='rgba(0,0,0,0)' || (x.polar && x.polar!=='rgba(0,0,0,0)')))
+  const clearColor=v=>/^rgba\\(0,\\s*0,\\s*0,\\s*0(?:\\.0+)?\\)$/.test(v)||v==='transparent';
+  if(backgrounds.some(x=>!clearColor(x.paper) || (x.polar && !clearColor(x.polar))))
     throw new Error('Global background failed: '+JSON.stringify(backgrounds));
   const transparentLine=await exportAlpha(0);
   const transparentWind=await exportAlpha(3);

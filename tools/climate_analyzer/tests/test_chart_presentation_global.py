@@ -82,6 +82,25 @@ class GlobalChartPresentationTests(unittest.TestCase):
             result=merge_plotly_config({"toImageButtonOptions":{"format":fmt}},settings)
             self.assertEqual(result["toImageButtonOptions"]["format"],expected)
 
+    def test_additional_global_controls_preserve_data_and_limit_axis_rotation(self) -> None:
+        fig=go.Figure(go.Scatter(x=[1,2],y=[3,4],mode="lines",line=dict(width=3)))
+        fig.update_layout(title="Title",yaxis_title="Temperature [°C]",xaxis_title="Time")
+        apply_chart_presentation(fig,ChartPresentationSettings(show_title=False,show_legend=False,
+            show_grid=False,line_scale=2.,axis_title="Temperature [°C]",axis_min=-5,axis_max=40))
+        self.assertEqual(fig.layout.title.text,"")
+        self.assertFalse(fig.layout.showlegend)
+        self.assertFalse(fig.layout.xaxis.showgrid)
+        self.assertEqual(fig.data[0].line.width,6.)
+        self.assertEqual(tuple(fig.layout.yaxis.range),(-5,40))
+        self.assertEqual(tuple(fig.data[0].y),(3,4))
+        for compass in (False,True):
+            fig=go.Figure(go.Barpolar(theta=[0,90],r=[1,2]))
+            fig.update_layout(meta={"compass_polar":compass},polar=dict(angularaxis=dict(rotation=90)))
+            apply_chart_presentation(fig,ChartPresentationSettings(north_rotation=30))
+            self.assertEqual(fig.layout.polar.angularaxis.rotation,60 if compass else 90)
+        cfg=merge_plotly_config(None,ChartPresentationSettings(export_format="SVG"))
+        self.assertEqual(cfg["toImageButtonOptions"]["format"],"svg")
+
     def test_canvas_presets_have_deterministic_dimensions(self) -> None:
         self.assertEqual(
             ChartPresentationSettings(canvas=CANVAS_WIDE).base_dimensions(),

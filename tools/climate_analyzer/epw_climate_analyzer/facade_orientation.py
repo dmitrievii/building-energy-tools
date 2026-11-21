@@ -145,6 +145,7 @@ def orientation_components_chart(data: pd.DataFrame, flat: dict, *, tilt_deg: fl
     fig.update_layout(template="plotly_white", title=title,
         legend=dict(orientation="h", x=0.5, xanchor="center", y=-0.10),
         meta={"unit":"kWh/m²", "tilt_deg":float(tilt_deg),
+              "compass_polar": style == "Solar rose",
               "displayed_components":[key for key,_,_ in segments],
               "flat_roof_total_kwh_m2": float(flat[TOTAL]) if np.isfinite(flat[TOTAL]) else None})
     return fig

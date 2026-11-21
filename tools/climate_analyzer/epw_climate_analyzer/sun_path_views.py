@@ -278,13 +278,13 @@ def classic_sun_path(df: pd.DataFrame, title: str = "2D sun-path diagram", *,
             text="No measured or admitted radiation quantity is available.", showarrow=False)
     reference = solar_reference(df)
     _polar_layout(fig, title, invert_zenith_axis=invert_zenith_axis)
-    fig.update_layout(meta={"radiation_field": field or ""})
+    fig.update_layout(meta={"radiation_field": field or "", "compass_polar": True})
     if reference is None:
         return _missing_reference(fig)
     _add_polar_hours(fig, reference)
     _add_polar_months(fig, reference)
     fig.update_layout(meta={"solar_reference": reference.description,
-                            "radiation_field": field or ""})
+                            "radiation_field": field or "", "compass_polar": True})
     return fig
 
 
