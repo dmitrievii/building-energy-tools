@@ -214,11 +214,19 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         note+=" "+cat.GEO_NOTE+" Direct solar geometry, not diffuse or reflected obstruction."
     elif k=="shading_temporal":
         from .shading_temporal import temporal_shading_tables,shading_monthly_rose,shading_month_hour_heatmap
-        metric,style=a
-        result=memo(("shading",metric),lambda:temporal_shading_tables(df,geometry=cat.GEOMETRY,metric=metric))
+        metric,style,year,device=a
+        data=df.loc[df.index.year==year].copy()
+        result=memo(("shading",metric,year),lambda:temporal_shading_tables(data,geometry=cat.GEOMETRY,metric=metric))
         monthly,cells=result[:2]
-        f=shading_monthly_rose(monthly,metric) if style=="Monthly rose" else shading_month_hour_heatmap(cells,metric)
+        f=shading_monthly_rose(monthly,metric) if style=="Monthly rose" else shading_month_hour_heatmap(cells,metric,device=device)
         note+=" "+cat.GEO_NOTE+" Direct-beam-only screening."
+    elif k=="shading_irradiation":
+        from .solar_shading import shading_ledger
+        ledger=shading_ledger(df,**cat.GEOMETRY)
+        direct=ledger["Unshaded direct"]
+        intercepted=ledger[[c1 for c1 in ledger if c1.endswith(" intercepted direct")]].sum(axis=1,min_count=1)
+        f=_bars(_totals(df,pd.DataFrame({"Unshaded direct":direct/1000,"Remaining direct":(direct-intercepted)/1000,"Intercepted direct":intercepted/1000}),"Monthly"),title,"kWh/m²")
+        note+=" "+cat.GEO_NOTE+" Direct-beam ledger only; diffuse and ground terms remain unchanged."
     elif k in ("eligibility_map","eligibility_total"):
         name,period=a
         col={"nv":"Natural ventilation","night":"Night flushing","shade":"Solar protection screening"}[name]
@@ -278,9 +286,9 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         note+=" Empirical selected-sample quantiles; not certified design conditions."
     elif k=="utci":
         model,style=a
-        values,_=memo(("utci",model),lambda:p3.utci_frame(df,model="Open-sky screening" if model=="Open sun" else model))
-        if model=="Open sun":col="Open sun"
-        else:col=values.columns[0]
+        mode="Uniform radiant offset" if model=="Uniform radiant offset" else "Open-sky screening"
+        values,_=memo(("utci",mode),lambda:p3.utci_frame(df,model=mode))
+        col=model
         val=values[col]
         if not val.notna().any():raise NotApplicable("No valid UTCI states in model domain.")
         if style=="heatmap":
@@ -294,6 +302,47 @@ def make_figure(d,df,context,reference_df=None,cache=None):
                 if c1 in table:f.add_bar(x=table.index,y=table[c1],name=c1,marker_color=color)
             f.update_layout(barmode="stack",yaxis_title="Hours")
         note+=" UTCI research screening; wind assumed at 10 m, uniform MRT=T or simplified open-sky radiation. Out-of-domain states remain missing."
+    elif k=="tail_curve":
+        v=s.dropna().sort_values(ascending=not a[0])
+        if v.empty:raise NotApplicable("No valid tail observations.")
+        f=go.Figure(go.Scatter(x=np.arange(1,len(v)+1)*100/len(v),y=v,mode="lines")).update_layout(xaxis_title="Rank fraction [%]",yaxis_title=u)
+        note+=" Empirical ranks, no extrapolation."
+    elif k=="critical_windows":
+        ranked=p4.rolling_windows(df,c,72).dropna().sort_values(ascending=not a[0],kind="stable")
+        chosen=[];span=pd.Timedelta(hours=72);step=p4.cadence(df)
+        for end,value in ranked.items():
+            if all(abs(end-other[0])>=span for other in chosen):
+                chosen.append((end,value))
+                if len(chosen)==10:break
+        if not chosen:raise NotApplicable("No complete three-day windows.")
+        f=go.Figure(go.Bar(x=[str(end-span+step) for end,value in chosen],y=[value for end,value in chosen])).update_layout(xaxis_title="Window start",yaxis_title=u)
+        note+=" Ten highest/lowest nonoverlapping complete 72-hour windows, ranked by mean."
+    elif k=="utci_pair":
+        values,_=memo(("utci","Open-sky screening"),lambda:p3.utci_frame(df,model="Open-sky screening"))
+        common=values.dropna()
+        if common.empty:raise NotApplicable("No paired admitted UTCI states.")
+        table=common.resample("MS").mean();f=go.Figure()
+        for c1 in table:f.add_scatter(x=table.index,y=table[c1],mode="lines+markers",name=c1)
+        f.update_layout(yaxis_title="UTCI [°C]")
+        note+=" Paired simplified open-sky radiation; shade removes direct beam only. Not a qualified urban MRT model."
+    elif k=="utci_sensitivity":
+        axis=a[0];t=np.linspace(0,40,41);v=np.linspace(.5,10,39);delta=np.linspace(-20,50,36)
+        if axis=="Temperature–wind":
+            x,y=t,v;xx,yy=np.meshgrid(x,y);z=p3.utci_values(xx,xx,yy,np.full_like(xx,50.));xl="Air temperature [°C]";yl="10 m wind [m/s]"
+        elif axis=="Temperature–radiant offset":
+            x,y=t,delta;xx,yy=np.meshgrid(x,y);z=p3.utci_values(xx,xx+yy,np.full_like(xx,2.),np.full_like(xx,50.));xl="Air temperature [°C]";yl="Radiant offset [K]"
+        else:
+            x,y=v,delta;xx,yy=np.meshgrid(x,y);z=p3.utci_values(np.full_like(xx,30.),30.+yy,xx,np.full_like(xx,50.));xl="10 m wind [m/s]";yl="Radiant offset [K]"
+        f=go.Figure(go.Heatmap(x=x,y=y,z=z,colorscale="RdBu_r",colorbar=dict(title="UTCI [°C]"),hoverongaps=False)).update_layout(xaxis_title=xl,yaxis_title=yl)
+        note="Hypothetical controlled states: RH 50%; remaining fixed inputs T=30 °C, wind 2 m/s, MRT offset 0 K as applicable. Not occurrence frequencies."
+    elif k=="snow_calendar":
+        observed=p4.daily_stats(df,cat.S,nonnegative=True)["max"]
+        cover=observed.gt(0).astype(float).where(observed.notna())
+        if not cover.notna().any():raise NotApplicable("No complete valid daily snow observations.")
+        days=pd.date_range(cover.index.min(),cover.index.max(),freq="D")
+        z=np.asarray(cover.reindex(days),float)[None,:]
+        f=go.Figure(go.Heatmap(x=days,y=["Snow cover"],z=z,zmin=0,zmax=1,colorscale=[[0,"#FFFFFF"],[1,"#427CAD"]],hoverongaps=False,colorbar=dict(tickvals=[0,1],ticktext=["No snow","Snow"]))).update_layout(xaxis_title="Date")
+        note+=" Daily maximum snow depth >0 cm; complete observed days only."
     elif k=="correlation":
         corr,n=p4.correlation(df,list(a))
         labels=[cat.LABELS[c1] for c1 in a]

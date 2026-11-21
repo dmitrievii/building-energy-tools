@@ -245,6 +245,11 @@ def render_report(df=None,reference_df=None):
     from .p6_report_structure import (PRESETS,available_catalog,standard_figure,capture_statistics,
                                       concise_context,chapter_name,scope_key,CHAPTERS)
     st.header("Climate report")
+    mode=st.radio("Report mode",["Climate assessment","Comprehensive Diagram Atlas"],horizontal=True,key="p66_report_mode")
+    if mode=="Comprehensive Diagram Atlas":
+        from .p66_ui import render_atlas
+        render_atlas(df,st.session_state.get(CONTEXT_KEY,{}),reference_df)
+        return
     st.caption("Saved diagrams remain unchanged when the active climate or filters change. The report groups selected diagrams by chapter and opens with station and climate statistics.")
     context=st.session_state.get(CONTEXT_KEY,{})
     available=available_catalog(df,context)

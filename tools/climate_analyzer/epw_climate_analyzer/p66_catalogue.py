@@ -125,7 +125,7 @@ def catalogue(df,context,coverage=FULL):
             for style in (("timeline",) if coverage==REP else ("timeline","intensity","duration")):
                 add(TEMP,f"{'Heatwaves' if above else 'Cold spells'} · daily {stat} · {style}","temp_events",T,"°C",(stat,above,style),ok=hourly and has(T))
     add(TEMP,"Frost days and tropical nights","day_indicators",T,"days",ok=hourly and has(T))
-    for chart in ("T-d","h-d"):
+    for chart in ("T-d","i-d"):
         for mode in ("Climate zone","Points","Distribution grid"):
             add(HUM,f"Psychrometric · {chart} · {mode}","psychrometric",W,"g/kg",(chart,mode),ok=hourly and has(T,RH,W))
     for chapter,c,u,threshold,above in [(HUM,RH,"%",80.,True),(HUM,W,"g/kg",10.,True),(WIND,V,"m/s",.5,False)]:
@@ -144,8 +144,9 @@ def catalogue(df,context,coverage=FULL):
         add(SOL,f"{style} sun path · {colour}","sunpath_view",args=(style,colour),ok=site_ok and has(T,AZ,EL))
     from .sky_distribution import available_quantities
     for quantity in ("Direct","Diffuse","Total"):
-        for mf,style in itertools.product((1,) if coverage==REP else (1,2),("2D hemisphere","3D dome")):
-            add(SOL,f"Sky {quantity} · {'145' if mf==1 else '577'} patches · {style}","sky_patches",args=(quantity,mf,style),ok=quantity in available_quantities(df))
+        models=("Isotropic","Perez 1993 (research)") if coverage==FULL and quantity!="Direct" and has(N) else ("Isotropic",)
+        for mf,style,model in itertools.product((1,) if coverage==REP else (1,2),("2D hemisphere","3D dome"),models):
+            add(SOL,f"Sky {quantity} · {'145' if mf==1 else '577'} patches · {style} · {model}","sky_patches",args=(quantity,mf,style,model),ok=hourly and quantity in available_quantities(df))
     for style in ("Bar chart","Solar rose"):
         add(SOL,"Façade irradiation · "+style,"facade",args=(style,),ok=solar_ok)
     for style in ("Heat map","Orientation sensitivity curves"):
@@ -171,7 +172,7 @@ def catalogue(df,context,coverage=FULL):
     for wet in (True,False):
         for style in ("timeline","intensity","duration"):
             add(RAIN,f"{'Wet' if wet else 'Dry'} spells · {style}","wetdry",P,"mm",(wet,style),ok=hourly and has(P))
-    for hours in (1,3,6,12,24,48,72):
+    for hours in (1,3,6,12,24,48,72,168):
         add(RAIN,f"Rolling precipitation · {hours} h","rolling",P,"mm",(hours,),ok=hourly and has(P))
     add(RAIN,"Cumulative precipitation","cumulative",P,"mm",ok=hourly and has(P))
     add(RAIN,"Freeze–thaw days","freeze_days",T,"days",ok=hourly and has(T))
@@ -185,8 +186,13 @@ def catalogue(df,context,coverage=FULL):
     for style in ("Geometry","2D mask","Technical mask"):
         add(SHADE,"Window shading · "+style,"shading_mask",args=(style,),ok=site_ok)
     from .shading_temporal import ENERGY,REDUCTION,AREA
+    from .solar_shading import DEVICES,TOTAL_DEVICE
+    years=sorted(set(df.index.year))
     for metric,style in itertools.product((ENERGY,REDUCTION,AREA),("Monthly rose","Month–hour heat map")):
-        add(SHADE,f"{metric} · {style}","shading_temporal",args=(metric,style),ok=site_ok if metric==AREA else solar_ok)
+        devices=(TOTAL_DEVICE,*DEVICES) if style=="Month–hour heat map" and coverage==FULL else (TOTAL_DEVICE,)
+        for year,device in itertools.product(years[-1:] if coverage==REP else years,devices):
+            add(SHADE,f"{metric} · {style} · {year} · {device}","shading_temporal",args=(metric,style,year,device),ok=site_ok if metric==AREA else solar_ok)
+    add(SHADE,"Shaded vs unshaded reference façade irradiation","shading_irradiation",ok=solar_ok)
     for name,c,ok in [("nv",W,hourly and has(T,W)),("night",T,hourly and has(T)),("shade",G,hourly and has(T,G))]:
         for period in (("Monthly",) if coverage==REP else TOTAL_PERIODS):
             add(NV if name!="shade" else SHADE,f"{name.replace('nv','Natural ventilation').replace('night','Night flushing').replace('shade','Solar protection screening')} · {period}","eligibility_total",c,"h",(name,period),ok=ok)
@@ -196,20 +202,27 @@ def catalogue(df,context,coverage=FULL):
         add(NV,"Natural ventilation · "+style,"nv_special",args=(style,),ok=hourly and has(T,W) and (has(V) if style=="Temperature–wind suitability" else has(V,WD) if style.startswith("Directional") or style.startswith("Wind during") else True))
     add(HVAC,"Monthly passive strategy hours","passive",ok=hourly and has(T))
     add(HVAC,"Ventilation conditioning loads","vent_load",ok=hourly and has(T,W,SV))
-    add(HVAC,"Adaptive comfort temperature bands","adaptive",ok=hourly and has(T))
+    for category in ("II",) if coverage==REP else ("I","II","III"):
+        add(HVAC,"Adaptive comfort temperature bands · Category "+category,"adaptive",args=(category,),ok=hourly and has(T))
     for c in (T,W,H):
         for upper in (True,False):
-            add(HVAC,f"{LABELS[c]} · {'upper' if upper else 'lower'} design tail","design_tail",c,UNITS[c],(upper,),ok=hourly and has(c))
-    for model in ("Uniform radiant offset","Open sun"):
+            add(HVAC,f"{LABELS[c]} · {'upper' if upper else 'lower'} design quantiles","design_tail",c,UNITS[c],(upper,),ok=hourly and has(c))
+            add(HVAC,f"{LABELS[c]} · {'upper' if upper else 'lower'} observed exceedance","tail_curve",c,UNITS[c],(upper,),ok=hourly and has(c))
+            add(HVAC,f"{LABELS[c]} · {'upper' if upper else 'lower'} critical 3-day windows","critical_windows",c,UNITS[c],(upper,),ok=hourly and has(c))
+    for model in ("Uniform radiant offset","Open sun","Direct-beam shade"):
         for style in ("heatmap","duration","stress"):
             add(OTC,f"UTCI · {model} · {style}","utci",T,"°C",(model,style),ok=hourly and has(T,RH,V) and (model=="Uniform radiant offset" or has(G,D,N,Z,"horizontal_infrared_radiation_intensity_wh_m2")))
+    add(OTC,"UTCI · paired sun versus shade","utci_pair",ok=hourly and has(T,RH,V,G,D,N,Z,"horizontal_infrared_radiation_intensity_wh_m2"))
+    for axis in ("Temperature–wind","Temperature–radiant offset","Wind–radiant offset"):
+        add(OTC,"Controlled UTCI sensitivity · "+axis,"utci_sensitivity",args=(axis,),ok=hourly and has(T,RH,V))
+    add(RAIN,"Snow-cover calendar","snow_calendar",S,"",ok=hourly and has(S))
     paired=[c for c in (T,RH,W,H,V,G,P,DEW) if has(c)]
     add(REL,"Pairwise correlation matrix","correlation",args=tuple(paired),ok=len(paired)>=2)
     for x,y in itertools.combinations(paired,2):
         for style in ("scatter","density"):
             add(REL,f"{LABELS[x]} × {LABELS[y]} · {style}","joint",x,UNITS[x],(y,style),ok=hourly)
     # Explicit unavailable/non-enumerated cases remain in the audit manifest.
-    for chap,title,reason in [(TEMP,"Calculated ground-temperature depth animations","Requires EPW ground model or explicitly assigned measured profile; animation not static report."),(RAIN,"Empirical precipitation IDF","Requires independently verified native historical precipitation including ≥10 complete years."),(REL,"Critical event context viewer","Requires selected event and surrounding variables; arbitrary event combinations not enumerated."),(OTC,"Controlled UTCI sensitivity surfaces","Controlled-state scenario grid not yet registered in atlas."),(SHADE,"Plane-specific shaded irradiation and temporal device variants","Only reference geometry and aggregate temporal metrics registered."),("Compare Climates","Multi-climate comparison diagrams","Requires explicit comparison basket, not single active climate."),("Data Quality","Provider-specific diagnostic figures","Provider-specific diagnostics remain on Data Quality page.")]:
+    for chap,title,reason in [(TEMP,"Calculated ground-temperature depth animations","Requires EPW ground model or explicitly assigned measured profile; animation not static report."),(RAIN,"Empirical precipitation IDF","Requires independently verified native historical precipitation including ≥10 complete years."),(REL,"Critical event context viewer","Requires selected event and surrounding variables; arbitrary event combinations not enumerated."),("Compare Climates","Multi-climate comparison diagrams","Requires explicit comparison basket, not single active climate."),("Data Quality","Provider-specific diagnostic figures","Provider-specific diagnostics remain on Data Quality page.")]:
         add(chap,title,"not_registered",args=(title,),ok=False,reason=reason)
     ids=[d.id for d in rows]
     if len(ids)!=len(set(ids)):raise ValueError("Nonunique atlas identifiers.")
