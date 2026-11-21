@@ -281,7 +281,7 @@ def metric_colorscale(column: str | None):
         return TEMPERATURE_COMFORT_COLORSCALE
     if text=="moist_air_enthalpy_kj_kg":
         return MOIST_AIR_ENTHALPY_COLORSCALE
-    if text=="specific_volume_m3_kg":
+    if text in ("specific_volume_m3_kg","atmospheric_station_pressure_pa"):
         return SPECIFIC_VOLUME_COLORSCALE
     if text=="moist_air_density_kg_m3":
         return MOIST_AIR_DENSITY_COLORSCALE

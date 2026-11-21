@@ -312,6 +312,29 @@ class CalendarHeatmapTests(unittest.TestCase):
         fig=temporal_heatmap_chart(constant,c,"day",HEATMAP_COMPARE_HOUR,"Mean","Moist-air density","kg/m³")
         self.assertLess(fig.layout.coloraxis.cmin,fig.layout.coloraxis.cmax)
 
+    def test_station_pressure_semantic_palette_and_scope_domain(self):
+        from epw_climate_analyzer.chart_theme import SPECIFIC_VOLUME_COLORSCALE,metric_colorscale
+        from epw_climate_analyzer.charts import temporal_heatmap_chart
+        c="atmospheric_station_pressure_pa"
+        self.assertEqual(metric_colorscale(c),SPECIFIC_VOLUME_COLORSCALE)
+        idx=pd.date_range("2026-01-01",periods=72,freq="h")
+        for lower,upper in ((97323.,100487.),(73123.,75987.)):
+            df=pd.DataFrame({c:np.linspace(lower,upper,len(idx))},index=idx)
+            df.iloc[4,0]=np.nan
+            for period in ("day","week","month"):
+                for stat in ("Mean","P95"):
+                    fig=temporal_heatmap_chart(df,c,period,HEATMAP_COMPARE_HOUR,stat,"Station pressure","Pa")
+                    self.assertAlmostEqual(fig.layout.coloraxis.cmin,np.floor(lower/100.)*100.)
+                    self.assertAlmostEqual(fig.layout.coloraxis.cmax,np.ceil(upper/100.)*100.)
+                    self.assertEqual(fig.layout.coloraxis.colorscale,tuple(tuple(v) for v in SPECIFIC_VOLUME_COLORSCALE))
+                    expected=temporal_heatmap_matrix(df,c,period,HEATMAP_COMPARE_HOUR,stat)
+                    np.testing.assert_allclose(np.asarray(fig.data[0].z,float),expected.values,equal_nan=True)
+                    printed=report_figure(fig,width_pt=500,height_pt=230)
+                    self.assertEqual(printed.layout.coloraxis.colorscale,fig.layout.coloraxis.colorscale)
+        constant=pd.DataFrame({c:99000.},index=idx)
+        fig=temporal_heatmap_chart(constant,c,"day",HEATMAP_COMPARE_HOUR,"Mean","Station pressure","Pa")
+        self.assertLess(fig.layout.coloraxis.cmin,fig.layout.coloraxis.cmax)
+
     def test_multiyear_utci_not_truncated(self):
         idx=pd.date_range("2025-12-31","2026-12-31",freq="h")
         df=pd.DataFrame(index=idx)

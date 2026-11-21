@@ -195,7 +195,7 @@ def _heatmap_colorscale(column: str, values=None, temperature_thresholds: tuple[
         return [[0.0, "rgba(255,255,255,0.0)"], [0.25, "#dbeafe"], [1.0, "#0f172a"]]
     if "radiation" in column or "irradiance" in column or "illuminance" in column:
         return SOLAR_COLORSCALE
-    return metric_colorscale(column) if column in ("relative_humidity_pct","humidity_ratio_g_kg","moist_air_enthalpy_kj_kg","specific_volume_m3_kg","moist_air_density_kg_m3") else "Viridis"
+    return metric_colorscale(column) if column in ("relative_humidity_pct","humidity_ratio_g_kg","moist_air_enthalpy_kj_kg","specific_volume_m3_kg","moist_air_density_kg_m3","atmospheric_station_pressure_pa") else "Viridis"
 
 
 def apply_common_layout(fig: go.Figure, title: str, x_label: str, y_label: str) -> go.Figure:
@@ -434,6 +434,14 @@ def temporal_heatmap_chart(
             zmin=max(0.,float(np.floor(lo*100.+1e-9)/100.))
             zmax=float(np.ceil(hi*100.-1e-9)/100.)
             if zmax<=zmin:zmax=zmin+.01
+    if column == "atmospheric_station_pressure_pa":
+        # Station pressure depends on elevation; keep the selected source
+        # domain rather than a sea-level reference or a zero-based scale.
+        lo,hi=_finite_min_max(pd.to_numeric(df[column],errors="coerce"))
+        if lo is not None and hi is not None:
+            zmin=float(np.floor(lo/100.)*100.)
+            zmax=float(np.ceil(hi/100.)*100.)
+            if zmax<=zmin:zmax=zmin+100.
     if column == "liquid_precipitation_depth_mm":
         # A dry interval is a meaningful precipitation state. Keep the colour
         # domain anchored at 0 mm so zero is always rendered as white.
