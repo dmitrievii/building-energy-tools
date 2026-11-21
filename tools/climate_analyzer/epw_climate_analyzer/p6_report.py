@@ -212,6 +212,8 @@ def pdf_report(items,title,paper,orientation,*,image_renderer=None):
     def image(fig,h,label):
         try:
             f=report_figure(fig,width_pt=width,height_pt=h,external_zone_legend=bool(zone_legend_entries(fig)))
+            from .p66_memory import require_headroom
+            require_headroom()
             png=image_renderer(f) if image_renderer is not None else f.to_image(format="png",scale=2)
             raw=io.BytesIO(png)
             with PILImage.open(raw) as im:w,ih=im.size
@@ -410,18 +412,44 @@ def render_report(df=None,reference_df=None):
         st.rerun()
     included=[item for item in items if item["id"] in selected]
     if not included:st.info("Select at least one diagram to export.");return
-    st.download_button("Download printable HTML",data=printable_html(included,title,paper,orientation),
-                       file_name="climate_report.html",mime="text/html",key="p6_html")
+    # Avoid rebuilding the entire HTML report on every widget rerun.
+    from .p66_memory import require_headroom
+    import gc
+    html_key=hashlib.sha256()
+    for item in included:
+        html_key.update(item["id"].encode());html_key.update(str(item.get("note","")).encode())
+    html_key.update(json.dumps([title,paper,orientation]).encode())
+    html_signature=html_key.hexdigest()
+    if st.session_state.get("_p6_html_result") and st.session_state["_p6_html_result"][0]!=html_signature:
+        st.session_state.pop("_p6_html_result",None)
+    if st.button("Generate printable HTML",key="p6_html_generate"):
+        st.session_state.pop("_p6_html_result",None)
+        try:
+            require_headroom()
+            data=printable_html(included,title,paper,orientation)
+            require_headroom()
+            st.session_state["_p6_html_result"]=(html_signature,data)
+        except Exception as exc:st.error(str(exc))
+        finally:gc.collect()
+    html_result=st.session_state.get("_p6_html_result")
+    if html_result and html_result[0]==html_signature:
+        st.download_button("Download printable HTML",data=html_result[1],file_name="climate_report.html",mime="text/html",key="p6_html")
+        if st.button("Release HTML download",key="p6_html_release"):
+            st.session_state.pop("_p6_html_result",None);st.rerun()
     # Full machine-readable audit trail as optional independent export, not
     # printed underneath each figure.
     st.download_button("Download technical metadata",data=json.dumps([{k:v for k,v in i.items() if k!="figure"} for i in included],ensure_ascii=False,indent=2,default=str).encode("utf-8"),
                        file_name="climate_report_metadata.json",mime="application/json",key="p6_meta")
-    fingerprint=hashlib.sha256(json.dumps([included,title,paper,orientation,"layout-hf3"],default=str,sort_keys=True).encode()).hexdigest()
+    fingerprint=html_signature+"-pdf-hf4"
+    if st.session_state.get("_p6_pdf") and st.session_state["_p6_pdf"][0]!=fingerprint:
+        st.session_state.pop("_p6_pdf",None)
     if st.button("Generate PDF",key="p6_generate_pdf"):
         try:
             st.session_state.pop("_p6_pdf",None)
             with st.spinner("Rendering captured diagrams…"):
+                require_headroom()
                 pdf=pdf_report(included,title,paper,orientation)
+                require_headroom()
             st.session_state["_p6_pdf"]=(fingerprint,pdf)
         except Exception as exc:
             st.error(str(exc))
@@ -429,3 +457,5 @@ def render_report(df=None,reference_df=None):
     cache=st.session_state.get("_p6_pdf")
     if cache and cache[0]==fingerprint:
         st.download_button("Download PDF",data=cache[1],file_name="climate_report.pdf",mime="application/pdf",key="p6_pdf_download")
+        if st.button("Release PDF download",key="p6_pdf_release"):
+            st.session_state.pop("_p6_pdf",None);st.rerun()

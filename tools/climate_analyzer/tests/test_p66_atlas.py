@@ -62,6 +62,23 @@ class AtlasTests(unittest.TestCase):
                     self.assertIn("coverage.csv",z.namelist())
                     self.assertIn("atlas_metadata.json",z.namelist())
                     self.assertTrue(any(n.endswith(".html" if "HTML" in mode else ".pdf") for n in z.namelist()))
+    def test_batches_cover_all_admitted_and_guard(self):
+        from unittest.mock import patch
+        from epw_climate_analyzer.p66_export import catalogue_batches
+        from epw_climate_analyzer.p66_memory import require_headroom,MIB
+        rows=c.catalogue(self.fixture(),{},c.FULL)
+        batches=catalogue_batches(rows,20)
+        self.assertEqual([d.id for batch in batches for d in batch],
+                         [d.id for d in rows if d.status=="available"])
+        self.assertTrue(all(len(batch)<=20 for batch in batches))
+        with patch("epw_climate_analyzer.p66_memory.container_memory",return_value=(490*MIB,512*MIB)):
+            with self.assertRaisesRegex(MemoryError,"Container memory pressure"):require_headroom()
+        with patch("epw_climate_analyzer.p66_export.require_headroom",return_value=None):
+            with self.assertRaisesRegex(ValueError,"bounded export batch"):
+                generate_atlas([d for d in rows if d.status=="available"][:51],self.fixture(),{})
+        with patch("epw_climate_analyzer.p66_export.require_headroom",side_effect=MemoryError("low memory")):
+            with self.assertRaises(MemoryError):generate_atlas(batches[0],self.fixture(),{})
+
     def test_zero_event_timeline_and_distribution_status(self):
         df=self.fixture();rows=c.catalogue(df,{},c.FULL)
         timeline=next(d for d in rows if d.kind=="temp_events" and d.args==("max",True,"timeline"))

@@ -5,6 +5,10 @@ import io
 import json
 import re
 import zipfile
+import tempfile
+import gc
+import threading
+from .p66_memory import require_headroom
 from collections import Counter
 from dataclasses import asdict
 from datetime import datetime,timezone
@@ -16,8 +20,10 @@ from .p66_render import make_figure,NotApplicable
 from .p6_report_structure import CHAPTERS,concise_context,site_details,locator_figure,capture_statistics,report_figure,zone_legend_entries,complex_figure
 from .p6_report import _script_json
 
-MAX_ARCHIVE_BYTES=200*1024*1024
-HTML_PART_BYTES=16*1024*1024
+MAX_ARCHIVE_BYTES=32*1024*1024
+HTML_PART_BYTES=4*1024*1024
+MAX_BATCH=50
+_EXPORT_LOCK=threading.Lock()
 PDF_MODES=("Chapter PDFs (ZIP)","Single PDF","Interactive HTML by chapter (ZIP)")
 def slug(text):
     return re.sub(r"[^a-z0-9]+","-",text.lower()).strip("-") or "chapter"
@@ -202,7 +208,23 @@ def _html_panel(d,fig,note,seq):
     if zones:key='<p><b>Bioclimatic zones</b></p><div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">'+ "".join('<div><span style="display:inline-block;width:12px;height:9px;border:1px dashed #39447d;background:'+escape(color,quote=True)+'"></span> '+escape(name)+'</div>' for _,name,color in zones)+'</div>'
     return f'<section class="panel"><h3>{escape(d.title)}</h3><div class="plot" id="chart{seq}"></div>'+key+f'<p style="white-space:pre-wrap">{escape(note)}</p></section><script>const f{seq}={_script_json(raw)};f{seq}.layout.autosize=true;delete f{seq}.layout.width;Plotly.newPlot("chart{seq}",f{seq}.data,f{seq}.layout,{{responsive:true}});</script>'
 
-def generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive Diagram Atlas",paper="A4",orientation="Landscape",
+def catalogue_batches(diagrams,batch_size=20):
+    if not 1<=batch_size<=MAX_BATCH:raise ValueError("Batch size outside supported range.")
+    admitted=[d for d in diagrams if d.status=="available"]
+    return [admitted[i:i+batch_size] for i in range(0,len(admitted),batch_size)]
+
+def generate_atlas(diagrams,df,context,**kwargs):
+    """One bounded export per server process at a time."""
+    if not _EXPORT_LOCK.acquire(blocking=False):
+        raise RuntimeError("Another atlas export is in progress. Try again after it finishes.")
+    try:
+        require_headroom()
+        return _generate_atlas(diagrams,df,context,**kwargs)
+    finally:
+        gc.collect()
+        _EXPORT_LOCK.release()
+
+def _generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive Diagram Atlas",paper="A4",orientation="Landscape",
                    mode=PDF_MODES[0],per_page=2,progress=None,image_renderer=None,coverage=LEVELS[-1]):
     """Explicitly process every requested admitted variant; report all outcomes."""
     if mode not in PDF_MODES or paper not in ("A4","A3") or orientation not in ("Landscape","Portrait") or per_page not in (1,2,4):
@@ -210,9 +232,10 @@ def generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive 
     manifest=[asdict(d) for d in diagrams]
     available=[(i,d) for i,d in enumerate(diagrams) if d.status=="available"]
     if not available:raise ValueError("No supported diagrams in the selected chapters.")
+    if len(available)>MAX_BATCH:raise ValueError("Select a bounded export batch (at most 50 admitted diagrams per request). The full catalogue remains available across batches.")
     groups={}
     for i,d in available:groups.setdefault(d.chapter,[]).append((i,d))
-    zbuf=io.BytesIO()
+    zbuf=tempfile.TemporaryFile(mode="w+b")
     archive=zipfile.ZipFile(zbuf,"w",compression=zipfile.ZIP_DEFLATED,compresslevel=4) if mode!="Single PDF" else None
     writer=None
     if mode=="Single PDF":writer=PdfWriter(title=title,paper=paper,orientation=orientation,per_page=per_page,context=context,df=df,image_renderer=image_renderer)
@@ -233,8 +256,11 @@ def generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive 
             for i,d in entries:
                 if progress:progress(processed,len(available),d.title)
                 processed+=1
+                require_headroom()
+                fig=None
                 try:
                     fig,note=make_figure(d,df,context,reference_df,cache)
+                    require_headroom()
                     if writer:writer.add(d,fig,note)
                     else:
                         seq+=1;panel=_html_panel(d,fig,note,seq)
@@ -243,14 +269,23 @@ def generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive 
                         parts.append(panel);part_size+=size
                     manifest[i]["status"]="generated";manifest[i]["reason"]=""
                     notes[d.id]=note
+                except MemoryError:raise
                 except NotApplicable as exc:manifest[i]["status"]="not applicable";manifest[i]["reason"]=str(exc)
                 except Exception as exc:manifest[i]["status"]="failed";manifest[i]["reason"]=f"{type(exc).__name__}: {exc}"
+                finally:
+                    del fig
+                if processed%5==0:gc.collect()
+                require_headroom()
                 # Explicit memory budget; never pretend to have generated the
                 # unprocessed tail if the deployment cannot contain an atlas.
                 if zbuf.tell()>MAX_ARCHIVE_BYTES or writer and writer.out.tell()>MAX_ARCHIVE_BYTES:
-                    raise MemoryError("Atlas archive exceeds 200 MiB. Select fewer chapters or use interactive HTML parts.")
+                    raise MemoryError("Atlas batch exceeds 32 MiB. Select fewer diagrams per batch.")
             if mode=="Chapter PDFs (ZIP)":
-                archive.writestr(slug(chapter)+".pdf",writer.finish());writer=None
+                require_headroom()
+                pdf=writer.finish()
+                if len(pdf)>MAX_ARCHIVE_BYTES:raise MemoryError("Chapter PDF exceeds 32 MiB; reduce batch size.")
+                archive.writestr(slug(chapter)+".pdf",pdf);del pdf;writer=None
+                gc.collect()
             elif mode==PDF_MODES[2]:flush_html()
         if progress:progress(len(available),len(available),"Atlas complete")
         metadata={"coverage":coverage,"title":title,"created_utc":datetime.now(timezone.utc).isoformat(),"context":context,
@@ -260,9 +295,14 @@ def generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive 
             archive.writestr("coverage.csv",manifest_csv(manifest))
             archive.writestr("atlas_metadata.json",json.dumps(metadata,ensure_ascii=False,indent=2,default=str))
             archive.close()
-            output=zbuf.getvalue()
-        else:output=writer.finish()
-        if len(output)>MAX_ARCHIVE_BYTES:raise MemoryError("Atlas exceeds the 200 MiB download budget. Split into smaller chapter selections.")
+            if zbuf.tell()>MAX_ARCHIVE_BYTES:raise MemoryError("Atlas batch exceeds 32 MiB; reduce batch size.")
+            require_headroom()
+            zbuf.seek(0);output=zbuf.read()
+        else:
+            require_headroom()
+            output=writer.finish()
+        if len(output)>MAX_ARCHIVE_BYTES:raise MemoryError("Atlas batch exceeds 32 MiB; reduce batch size.")
         return output,manifest,metadata
     finally:
         if archive:archive.close()
+        zbuf.close()

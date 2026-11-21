@@ -23,3 +23,6 @@ Restore shared statistical interpretations for automatically generated charts an
 
 ## Saved-report count restriction removed
 No fixed maximum number of saved figures. The existing 65 MiB serialized figure-data budget remains as a deployment resource safeguard; Atlas generation is independent. Duplicate suppression is unchanged. Regression covers saving 150 diagrams and rejecting an entry that exceeds the byte budget.
+
+## P6 HF4 — resource-safe export recovery candidate
+Full catalogue retained; Atlas exports are divided into deterministic user-selectable 5/10/20/30/50-chart requests (default 20). Each batch has its own downloadable archive and coverage report; the full catalogue remains downloadable separately. ZIP output uses a temporary disk file, 32 MiB per download, 4 MiB HTML part target, one concurrent Atlas export per process, cgroup memory headroom checks and periodic garbage collection. Ordinary report HTML is generated on demand rather than on every rerun, and obsolete export bytes released. No fixed saved-chart count restored. Memory guard is best-effort: actual Streamlit incident requires server logs, and native rendering can still cause an abrupt OOM before the next guard. CI and cloud qualification pending.
