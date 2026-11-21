@@ -254,7 +254,7 @@ def classic_sun_path(df: pd.DataFrame, title: str = "2D sun-path diagram", *,
             keep &= values.gt(0)
         filtered = df.loc[keep].copy()
         if not filtered.empty:
-            fig = px.scatter_polar(
+            overlay = px.scatter_polar(
                 filtered.assign(zenith_angle_deg=90-el.loc[keep]),
                 theta="solar_azimuth_deg", r="zenith_angle_deg", color=field,
                 hover_data={c: True for c in ("month_index", "hour_of_day", "solar_elevation_deg") if c in filtered},
@@ -262,10 +262,14 @@ def classic_sun_path(df: pd.DataFrame, title: str = "2D sun-path diagram", *,
                         "zenith_angle_deg": "Zenith angle [deg]"},
                 render_mode="webgl", color_continuous_scale=RADIATION_COLORSCALE,
             )
-            fig.update_traces(marker=dict(size=5, opacity=0.85),
-                              name=f"{label} irradiation", uid="polar-radiation",
-                              legendgroup="radiation-overlay", showlegend=False)
-            fig.update_layout(coloraxis_colorbar=dict(title=f"{label} [Wh/m²]", len=0.76))
+            # Add only the observation trace; never import Plotly Express
+            # layout defaults that could alter the common polar projection.
+            overlay.update_traces(marker=dict(size=5, opacity=0.85),
+                                  name=f"{label} irradiation", uid="polar-radiation",
+                                  legendgroup="radiation-overlay", showlegend=False)
+            fig.add_traces(overlay.data)
+            fig.update_layout(coloraxis=dict(colorscale=RADIATION_COLORSCALE,
+                colorbar=dict(title=f"{label} [Wh/m²]", len=0.76)))
         else:
             fig.add_annotation(x=0.5, y=1.02, xref="paper", yref="paper",
                 text="No radiation samples remain in the active filter.", showarrow=False)
