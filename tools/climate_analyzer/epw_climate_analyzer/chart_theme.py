@@ -49,6 +49,20 @@ HUMIDITY_RATIO_COLORSCALE = [
     [0.75, "#0891B2"],
     [1.00, "#164E63"],
 ]
+WET_BULB_TEMPERATURE_COLORSCALE = [
+    [0.00, "#F0FDF4"],
+    [0.25, "#BBF7D0"],
+    [0.50, "#6EE7B7"],
+    [0.75, "#009E73"],
+    [1.00, "#064E3B"],
+]
+MOIST_AIR_ENTHALPY_COLORSCALE = [
+    [0.00, "#FAF5FF"],
+    [0.25, "#DDD6FE"],
+    [0.50, "#A78BFA"],
+    [0.75, "#7C3AED"],
+    [1.00, "#4C1D95"],
+]
 BINARY_SUITABILITY_COLORSCALE = [
     [0.00, "rgba(255,255,255,0.0)"],
     [0.01, "#ecfdf5"],
@@ -191,7 +205,7 @@ def metric_color(column: str | None) -> str:
 
 def metric_band_colors(column: str | None) -> tuple[str, str, str, str]:
     """Return low, central, high and translucent fill colours for a ribbon."""
-    if column and "temperature" in str(column).lower():
+    if column and "temperature" in str(column).lower() and column!="wet_bulb_temperature_c":
         return "#2563EB", METRIC_COLORS["dry_bulb_temperature_c"], "#DC2626", "rgba(107,114,128,0.16)"
     base = metric_color(column)
     return _mix_with_white(base, 0.48), base, _darken(base, 0.22), rgba(base, 0.14)
@@ -256,6 +270,10 @@ def metric_colorscale(column: str | None):
         return RELATIVE_HUMIDITY_COLORSCALE
     if text=="humidity_ratio_g_kg":
         return HUMIDITY_RATIO_COLORSCALE
+    if text=="wet_bulb_temperature_c":
+        return WET_BULB_TEMPERATURE_COLORSCALE
+    if text=="moist_air_enthalpy_kj_kg":
+        return MOIST_AIR_ENTHALPY_COLORSCALE
     if "radiation" in text or "irradiance" in text or "illuminance" in text:
         return SOLAR_COLORSCALE
     if "sky_cover" in text:

@@ -159,6 +159,8 @@ def _year_neutral_monthly(summary: pd.DataFrame, aggregation: str) -> bool:
 
 def _heatmap_colorscale(column: str, values=None, temperature_thresholds: tuple[float, float] | None = None):
     """Return a valid semantic colorscale for the selected climate variable."""
+    if column=="wet_bulb_temperature_c":
+        return metric_colorscale(column)
     if column in TEMPERATURE_HEATMAP_COLUMNS and temperature_thresholds is not None:
         heat_t, cool_t = map(float, temperature_thresholds)
         vmin, vmax = _finite_min_max(values)
@@ -195,7 +197,7 @@ def _heatmap_colorscale(column: str, values=None, temperature_thresholds: tuple[
         return [[0.0, "rgba(255,255,255,0.0)"], [0.25, "#dbeafe"], [1.0, "#0f172a"]]
     if "radiation" in column or "irradiance" in column or "illuminance" in column:
         return SOLAR_COLORSCALE
-    return metric_colorscale(column) if column in ("relative_humidity_pct","humidity_ratio_g_kg") else "Viridis"
+    return metric_colorscale(column) if column in ("relative_humidity_pct","humidity_ratio_g_kg","moist_air_enthalpy_kj_kg") else "Viridis"
 
 
 def apply_common_layout(fig: go.Figure, title: str, x_label: str, y_label: str) -> go.Figure:
@@ -418,6 +420,14 @@ def temporal_heatmap_chart(
         _,cell_max=_finite_min_max(matrix.values)
         upper=max(0.,source_max or 0.,cell_max or 0.)
         zmin,zmax=0.,max(5.,float(np.ceil(upper/5.)*5.))
+    if column == "moist_air_enthalpy_kj_kg":
+        # Enthalpy is reference-dependent and may be negative. Keep its
+        # signed source-scope domain independent of reductions of the data.
+        lo,hi=_finite_min_max(pd.to_numeric(df[column],errors="coerce"))
+        if lo is not None and hi is not None:
+            zmin=float(np.floor(lo/10.)*10.)
+            zmax=float(np.ceil(hi/10.)*10.)
+            if zmin==zmax:zmax=zmin+10.
     if column == "liquid_precipitation_depth_mm":
         # A dry interval is a meaningful precipitation state. Keep the colour
         # domain anchored at 0 mm so zero is always rendered as white.

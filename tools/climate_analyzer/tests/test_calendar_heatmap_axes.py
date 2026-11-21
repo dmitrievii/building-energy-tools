@@ -95,10 +95,15 @@ class CalendarHeatmapTests(unittest.TestCase):
         cols=("dry_bulb_temperature_c","wet_bulb_temperature_c","dew_point_temperature_c")
         df=pd.DataFrame({c:np.linspace(-5-i*3,30-i*3,48) for i,c in enumerate(cols)},index=idx)
         figs=[temporal_heatmap_chart(df,c,"day",HEATMAP_COMPARE_HOUR,"Mean",c,"°C",temperature_thresholds=(18,26)) for c in cols]
+        from epw_climate_analyzer.chart_theme import WET_BULB_TEMPERATURE_COLORSCALE,metric_band_colors,metric_color
+        self.assertEqual(figs[1].layout.coloraxis.colorscale,tuple(tuple(v) for v in WET_BULB_TEMPERATURE_COLORSCALE))
+        self.assertEqual(metric_band_colors(cols[1])[1],metric_color(cols[1]))
+        self.assertEqual(figs[2].layout.coloraxis.colorscale,figs[0].layout.coloraxis.colorscale)
         for f in figs[1:]:
-            self.assertEqual(f.layout.coloraxis.colorscale,figs[0].layout.coloraxis.colorscale)
             self.assertEqual(f.layout.coloraxis.cmin,figs[0].layout.coloraxis.cmin)
             self.assertEqual(f.layout.coloraxis.cmax,figs[0].layout.coloraxis.cmax)
+        printed=report_figure(figs[1],width_pt=500,height_pt=230)
+        self.assertEqual(printed.layout.coloraxis.colorscale,figs[1].layout.coloraxis.colorscale)
         for c,f in zip(cols,figs):
             expected=temporal_heatmap_matrix(df,c,"day",HEATMAP_COMPARE_HOUR,"Mean")
             np.testing.assert_allclose(np.asarray(f.data[0].z,float),expected.values,equal_nan=True)
@@ -221,6 +226,27 @@ class CalendarHeatmapTests(unittest.TestCase):
             fig=temporal_heatmap_chart(frame,c,"day",HEATMAP_COMPARE_HOUR,"Mean","Humidity ratio","g/kg dry air")
             self.assertEqual(fig.layout.coloraxis.cmin,0.)
             self.assertEqual(fig.layout.coloraxis.cmax,cap)
+
+    def test_enthalpy_semantic_palette_and_signed_scope_domain(self):
+        from epw_climate_analyzer.chart_theme import MOIST_AIR_ENTHALPY_COLORSCALE,metric_colorscale
+        from epw_climate_analyzer.charts import temporal_heatmap_chart
+        c="moist_air_enthalpy_kj_kg"
+        self.assertEqual(metric_colorscale(c),MOIST_AIR_ENTHALPY_COLORSCALE)
+        idx=pd.date_range("2026-01-01",periods=72,freq="h")
+        df=pd.DataFrame({c:np.linspace(-13.,67.,len(idx))},index=idx)
+        for period in ("day","week","month"):
+            for stat in ("Mean","P95"):
+                fig=temporal_heatmap_chart(df,c,period,HEATMAP_COMPARE_HOUR,stat,"Moist-air enthalpy","kJ/kg dry air")
+                self.assertEqual(fig.layout.coloraxis.cmin,-20.)
+                self.assertEqual(fig.layout.coloraxis.cmax,70.)
+                self.assertEqual(fig.layout.coloraxis.colorscale,tuple(tuple(v) for v in MOIST_AIR_ENTHALPY_COLORSCALE))
+                expected=temporal_heatmap_matrix(df,c,period,HEATMAP_COMPARE_HOUR,stat)
+                np.testing.assert_allclose(np.asarray(fig.data[0].z,float),expected.values,equal_nan=True)
+                printed=report_figure(fig,width_pt=500,height_pt=230)
+                self.assertEqual(printed.layout.coloraxis.colorscale,fig.layout.coloraxis.colorscale)
+        constant=pd.DataFrame({c:-10.},index=idx)
+        fig=temporal_heatmap_chart(constant,c,"day",HEATMAP_COMPARE_HOUR,"Mean","Enthalpy","kJ/kg dry air")
+        self.assertLess(fig.layout.coloraxis.cmin,fig.layout.coloraxis.cmax)
 
     def test_multiyear_utci_not_truncated(self):
         idx=pd.date_range("2025-12-31","2026-12-31",freq="h")
