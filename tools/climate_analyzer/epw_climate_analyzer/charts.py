@@ -193,7 +193,9 @@ def _heatmap_colorscale(column: str, values=None, temperature_thresholds: tuple[
         return metric_colorscale(column)
     if "sky_cover" in column:
         return [[0.0, "rgba(255,255,255,0.0)"], [0.25, "#dbeafe"], [1.0, "#0f172a"]]
-    if "radiation" in column or "irradiance" in column or "illuminance" in column:
+    if "illuminance" in column:
+        return metric_colorscale(column)
+    if "radiation" in column or "irradiance" in column:
         return SOLAR_COLORSCALE
     return metric_colorscale(column) if column in ("relative_humidity_pct","humidity_ratio_g_kg","moist_air_enthalpy_kj_kg","specific_volume_m3_kg","moist_air_density_kg_m3","atmospheric_station_pressure_pa") else "Viridis"
 
@@ -447,6 +449,12 @@ def temporal_heatmap_chart(
     if column == "liquid_precipitation_depth_mm":
         # A dry interval is a meaningful precipitation state.
         zmin = 0.0
+    if column in ("global_horizontal_illuminance_lux","direct_normal_illuminance_lux","diffuse_horizontal_illuminance_lux"):
+        # Zero lux is darkness, not the low end of a diverging palette.
+        # Selected source scope remains stable across aggregation/statistics.
+        _,source_max=_finite_min_max(pd.to_numeric(df[column],errors="coerce"))
+        _,cell_max=_finite_min_max(matrix.values)
+        zmin,zmax=0.,max(1000.,float(np.ceil(max(0.,source_max or 0.,cell_max or 0.)/1000.)*1000.))
     if column == "snow_depth_cm":
         # Zero snow is white. Keep the same display domain over the selected
         # source scope, with a nondegenerate range even in snow-free climates.

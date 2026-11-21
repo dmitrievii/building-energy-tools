@@ -326,6 +326,27 @@ class CalendarHeatmapTests(unittest.TestCase):
             with self.assertRaises(ValueError):occurrence_table(df,c,[0.,1.])
         self.assertEqual(occurrence_default_edges(pd.Series([0.]),"liquid_precipitation_depth_mm",basis="Days",daily_stat="Total"),[1.,5.,10.,20.])
 
+    def test_illuminance_white_zero_and_stable_source_domain(self):
+        from epw_climate_analyzer.chart_theme import ILLUMINANCE_COLORSCALE,metric_colorscale,SOLAR_COLORSCALE
+        from epw_climate_analyzer.charts import temporal_heatmap_chart
+        idx=pd.date_range("2026-01-01",periods=72,freq="h")
+        for c in ("global_horizontal_illuminance_lux","direct_normal_illuminance_lux","diffuse_horizontal_illuminance_lux"):
+            df=pd.DataFrame({c:np.linspace(0.,87321.,len(idx))},index=idx)
+            df.iloc[2,0]=np.nan
+            self.assertEqual(metric_colorscale(c),ILLUMINANCE_COLORSCALE)
+            for period in ("day","week","month"):
+                for stat in ("Mean","P95"):
+                    fig=temporal_heatmap_chart(df,c,period,HEATMAP_COMPARE_HOUR,stat,"Illuminance","lx")
+                    for copy in (fig,report_figure(fig,width_pt=500,height_pt=230)):
+                        self.assertEqual((copy.layout.coloraxis.cmin,copy.layout.coloraxis.cmax),(0.,88000.))
+                        self.assertEqual(copy.layout.coloraxis.colorscale,tuple(tuple(v) for v in ILLUMINANCE_COLORSCALE))
+                        np.testing.assert_allclose(np.asarray(copy.data[0].z,float),temporal_heatmap_matrix(df,c,period,HEATMAP_COMPARE_HOUR,stat).values,equal_nan=True)
+            df[c]=0.
+            fig=temporal_heatmap_chart(df,c,"day",HEATMAP_COMPARE_HOUR,"Mean","Illuminance","lx")
+            self.assertEqual((fig.layout.coloraxis.cmin,fig.layout.coloraxis.cmax),(0.,1000.))
+        self.assertEqual(ILLUMINANCE_COLORSCALE[0],[0.,"#FFFFFF"])
+        self.assertEqual(metric_colorscale("global_horizontal_radiation_wh_m2"),SOLAR_COLORSCALE)
+
     def test_snow_depth_semantic_heatmap(self):
         from epw_climate_analyzer.chart_theme import SNOW_DEPTH_COLORSCALE,metric_colorscale
         from epw_climate_analyzer.charts import temporal_heatmap_chart

@@ -35,6 +35,13 @@ SOLAR_COLORSCALE = [
     [0.45, "#f97316"],
     [1.00, "#fef08a"],
 ]
+ILLUMINANCE_COLORSCALE = [
+    [0.00, "#FFFFFF"],
+    [0.25, "#FEF3C7"],
+    [0.50, "#FCD34D"],
+    [0.75, "#F59E0B"],
+    [1.00, "#C2410C"],
+]
 RELATIVE_HUMIDITY_COLORSCALE = [
     [0.00, "#F5F7FF"],
     [0.25, "#BFDBFE"],
@@ -324,7 +331,9 @@ def metric_colorscale(column: str | None):
         return STATION_PRESSURE_COLORSCALE
     if text=="moist_air_density_kg_m3":
         return MOIST_AIR_DENSITY_COLORSCALE
-    if "radiation" in text or "irradiance" in text or "illuminance" in text:
+    if "illuminance" in text:
+        return ILLUMINANCE_COLORSCALE
+    if "radiation" in text or "irradiance" in text:
         return SOLAR_COLORSCALE
     if "sky_cover" in text:
         return [[0.0, "rgba(255,255,255,0.0)"], [0.25, "#dbeafe"], [1.0, "#0f172a"]]
