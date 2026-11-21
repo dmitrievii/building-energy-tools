@@ -67,7 +67,7 @@ class P2Tests(unittest.TestCase):
     def test_shading_aperture_geometry_and_energy(self):
         az=np.array([180.,180.,0.,np.nan])
         el=np.array([45.,45.,45.,45.])
-        opts=dict(facade=180.,width=2.,height=2.,samples=40)
+        opts=dict(facade=180.,width=2.,height=2.)
         f=shaded_fraction(az,el,overhang=1.,**opts)
         np.testing.assert_allclose(f[:3],[.5,.5,0.],atol=1e-12)
         self.assertTrue(np.isnan(f[-1]))
@@ -97,6 +97,91 @@ class P2Tests(unittest.TestCase):
         cart=go.Figure()
         overlay_shading_mask(cart,technical=True,overhang=1.,**opts)
         self.assertTrue(all(tr.type=="scattergl" for tr in cart.data))
+
+    def test_analytical_shading_closed_forms(self):
+        # At azimuth difference 45° and elevation atan(cos(45°)),
+        # both projected slopes relative to the façade normal are one.
+        elevation=np.rad2deg(np.arctan(np.cos(np.deg2rad(45.))))
+        opts=dict(facade=180.,width=2.,height=2.)
+        def f(o=0.,l=0.,r=0.,az=225.):
+            return float(shaded_fraction(az,elevation,overhang=o,left_fin=l,right_fin=r,**opts))
+        # Unit-depth top and sunward fin each cover 1.5 m² of a 4 m²
+        # window; total 3 m². Opposite fin contributes nothing.
+        self.assertAlmostEqual(f(o=1.),.375,places=14)
+        self.assertAlmostEqual(f(r=1.),.375,places=14)
+        self.assertAlmostEqual(f(o=1.,r=1.),.75,places=14)
+        self.assertAlmostEqual(f(o=.5,r=1.),.59375,places=14)
+        self.assertEqual(f(l=2.),0.)
+        self.assertAlmostEqual(f(l=1.,az=135.),f(r=1.),places=14)
+        self.assertAlmostEqual(f(o=2.),.5,places=14)
+        self.assertEqual(f(o=2.,r=2.),1.)
+        self.assertEqual(f(o=2.,l=2.,r=2.),1.)
+        # Due-normal sun; fractional shade not representable by old grids.
+        self.assertAlmostEqual(float(shaded_fraction(180.,45.,overhang=.137,**opts)),.0685,places=14)
+        for azm,elev in ((0,45),(270,45),(90,45),(180,0),(180,-10),(180,90)):
+            self.assertEqual(float(shaded_fraction(azm,elev,overhang=10.,left_fin=10.,right_fin=10.,**opts)),0.)
+        for azm,elev in ((np.nan,45),(180,np.nan),(180,91),(180,-91)):
+            self.assertTrue(np.isnan(shaded_fraction(azm,elev,overhang=1.,**opts)))
+        grid=shaded_fraction(np.array([[135.,180.,225.]]),np.array([[10.],[45.],[80.]]),overhang=.6,left_fin=.2,right_fin=.8,**opts)
+        self.assertEqual(grid.shape,(3,3))
+        self.assertTrue(np.all((grid>=0)&(grid<=1)))
+
+    def test_against_independent_projected_polygon_clipping(self):
+        # Independently project the four actual vertices of each device
+        # onto the glazing plane along the 3D solar direction, then clip
+        # and integrate polygons with the shoelace formula. The reference
+        # is deliberately not the production ray-exit integral.
+        def clip(poly,axis,bound,greater):
+            result=[]
+            if not len(poly):return result
+            def inside(v):return v[axis]>=bound if greater else v[axis]<=bound
+            prev=poly[-1]
+            for cur in poly:
+                a,b=inside(prev),inside(cur)
+                if a!=b:
+                    t=(bound-prev[axis])/(cur[axis]-prev[axis])
+                    result.append(prev+t*(cur-prev))
+                if b:result.append(cur)
+                prev=cur
+            return result
+        def area(poly):
+            if len(poly)<3:return 0.
+            p=np.asarray(poly)
+            return abs(np.dot(p[:,0],np.roll(p[:,1],-1))-np.dot(p[:,1],np.roll(p[:,0],-1)))/2
+        def ref(a,e,w,h,o,l,r):
+            ar,er=np.deg2rad([a,e])
+            n=np.cos(er)*np.cos(ar)
+            sx=np.cos(er)*np.sin(ar)/n
+            sy=np.sin(er)/n
+            rectangles=[
+                [(-w/2,h,0),(w/2,h,0),(w/2,h,o),(-w/2,h,o)],
+                [(-w/2,0,0),(-w/2,h,0),(-w/2,h,l),(-w/2,0,l)],
+                [(w/2,0,0),(w/2,h,0),(w/2,h,r),(w/2,0,r)],
+            ]
+            total=0.
+            for vertices in rectangles:
+                poly=[np.array([x-sx*d,y-sy*d]) for x,y,d in vertices]
+                for axis,bound,greater in ((0,-w/2,True),(0,w/2,False),(1,0,True),(1,h,False)):
+                    poly=clip(poly,axis,bound,greater)
+                total+=area(poly)
+            return min(1.,total/(w*h))
+        rng=np.random.default_rng(237)
+        for _ in range(600):
+            w,h=rng.uniform(.1,20,2)
+            o,l,r=rng.uniform(0,10,3)
+            a,e=rng.uniform(-89.9,89.9),rng.uniform(.05,89.95)
+            expected=ref(a,e,w,h,o,l,r)
+            actual=float(shaded_fraction(180+a,e,facade=180.,width=w,height=h,overhang=o,left_fin=l,right_fin=r))
+            self.assertAlmostEqual(actual,expected,places=10)
+            self.assertLessEqual(actual,float(shaded_fraction(180+a,e,width=w,height=h,overhang=o+1,left_fin=l+1,right_fin=r+1))+1e-13)
+
+    def test_sampling_selector_removed(self):
+        import ast
+        from pathlib import Path
+        source=(Path(__file__).resolve().parents[1]/"app.py").read_text(encoding="utf-8")
+        node=next(n for n in ast.parse(source).body if isinstance(n,ast.FunctionDef) and n.name=="render_shading_analysis")
+        self.assertNotIn("Area sampling per dimension",ast.get_source_segment(source,node))
+        self.assertNotIn('geometry["samples"]',ast.get_source_segment(source,node))
 
     def test_window_sketch_respects_geometry_and_zero_depth(self):
         from epw_climate_analyzer.shading_sketch import window_shading_sketch

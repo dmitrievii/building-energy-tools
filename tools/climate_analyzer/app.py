@@ -3919,7 +3919,7 @@ def render_shading_analysis(df,ground_albedo):
     from epw_climate_analyzer.solar_shading import shading_ledger
     from epw_climate_analyzer.aggregations import period_total_series
     geometry=_shading_geometry("shading_analysis")
-    geometry["samples"]=st.selectbox("Area sampling per dimension",[16,24,48],index=1,key="shade_samples")
+    st.caption("Analytical direct-beam shadow area · no spatial sampling or resolution setting.")
     data=_solar_temperature_selection(df,"shading_condition")
     if data.empty:
         st.info("No climate intervals match the selected thermal classification.")
@@ -3935,7 +3935,7 @@ def render_shading_analysis(df,ground_albedo):
         fig.add_bar(x=display_period_labels(table.index,"Monthly",time_basis(data)),y=table[c],name=c)
     fig.update_layout(template="plotly_white",title="Monthly façade irradiation and intercepted direct beam",barmode="group",xaxis_title="Period",yaxis_title="Irradiation [kWh/m²]")
     totals=ledger[cols].sum(min_count=1)/1000
-    render_plot(fig,f"Selected-period unshaded total: {totals.iloc[0]:.1f} kWh/m²; direct beam intercepted: {totals.iloc[2]:.1f} kWh/m². The model samples a rectangular vertical aperture, with opaque overhang and fins attached at its edges. Diffuse and ground-reflected components are unchanged; this is a direct-beam screening assessment, not a full shaded building-energy calculation.")
+    render_plot(fig,f"Selected-period unshaded total: {totals.iloc[0]:.1f} kWh/m²; direct beam intercepted: {totals.iloc[2]:.1f} kWh/m². The model calculates the exact geometric shaded fraction of a rectangular vertical aperture, with opaque overhang and fins attached at its edges. The two ray-exit areas are integrated analytically without double counting. Diffuse and ground-reflected components are unchanged; this is a direct-beam screening assessment, not a full shaded building-energy calculation.")
 
 
 def render_solar(df: pd.DataFrame) -> None:

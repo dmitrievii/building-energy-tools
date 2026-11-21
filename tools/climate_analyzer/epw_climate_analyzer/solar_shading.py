@@ -2,7 +2,7 @@
 
 Opaque horizontal overhang and vertical side fins begin at the aperture edges.
 No wall thickness, diffuse obstruction or ground-reflection reduction is implied.
-Area fraction is calculated by deterministic midpoint quadrature.
+Area fraction is evaluated in closed form by integrating the two disjoint ray-exit regions of the aperture.
 """
 from __future__ import annotations
 import numpy as np
@@ -10,40 +10,63 @@ import pandas as pd
 import plotly.graph_objects as go
 
 def shaded_fraction(azimuth,elevation,*,facade=180.,width=2.,height=1.5,
-                    overhang=0.,left_fin=0.,right_fin=0.,samples=24):
-    if not np.isfinite([facade,width,height,overhang,left_fin,right_fin]).all() or width<=0 or height<=0 or min(overhang,left_fin,right_fin)<0 or not 1<=samples<=100:
+                    overhang=0.,left_fin=0.,right_fin=0.):
+    """Exact area for edge-attached, zero-thickness opaque devices.
+
+    Use distances u from the sunward side and v from the top. A ray
+    reaches the top first when u >= abs(lateral)/vertical * v;
+    otherwise it reaches the sunward fin first. The two regions are
+    disjoint except for their common edge (zero area), so their exact
+    areas sum without overlap or double counting. Evaluate in normalized
+    aperture coordinates to avoid cancellation near full shading.
+    Non-front-facing and below-horizon directions return zero; missing
+    or nonphysical elevation returns NaN. No spatial grid is used.
+    """
+    if not np.isfinite([facade,width,height,overhang,left_fin,right_fin]).all() or width<=0 or height<=0 or min(overhang,left_fin,right_fin)<0:
         raise ValueError("Invalid aperture or device dimensions.")
-    az=np.deg2rad(np.asarray(azimuth,dtype=float)-facade)
-    el=np.deg2rad(np.asarray(elevation,dtype=float))
-    az,el=np.broadcast_arrays(az,el)
-    shape=az.shape
-    normal=(np.cos(el)*np.cos(az)).ravel()
-    lateral=(np.cos(el)*np.sin(az)).ravel()
-    vertical=np.sin(el).ravel()
-    out=np.full(len(normal),np.nan)
-    valid=np.isfinite(normal)&np.isfinite(lateral)&np.isfinite(vertical)
+    az,el=np.broadcast_arrays(np.asarray(azimuth,dtype=float),np.asarray(elevation,dtype=float))
+    valid=np.isfinite(az)&np.isfinite(el)&(el>=-90)&(el<=90)
+    # Avoid trigonometric warnings for invalid inputs; preserve NaN outputs.
+    rel=np.deg2rad(np.where(valid,az,0.)-facade)
+    beta=np.deg2rad(np.where(valid,el,0.))
+    normal=np.cos(beta)*np.cos(rel)
+    lateral=np.cos(beta)*np.sin(rel)
+    vertical=np.sin(beta)
+    out=np.full(az.shape,np.nan,dtype=float)
     out[valid]=0.
-    front=valid&(normal>1e-10)&(vertical>0)
-    x,y=np.meshgrid((np.arange(samples)+.5)*width/samples-width/2,
-                    (np.arange(samples)+.5)*height/samples)
-    x=x.ravel()[None,:]; y=y.ravel()[None,:]
-    for start in range(0,len(normal),256):
-        idx=np.arange(start,min(start+256,len(normal)))
-        idx=idx[front[idx]]
-        if not len(idx): continue
-        n=normal[idx,None]; l=lateral[idx,None]; z=vertical[idx,None]
-        blocked=np.zeros((len(idx),samples*samples),dtype=bool)
-        if overhang>0:
-            d=(height-y)/z
-            blocked|=(d*n<=overhang)&(np.abs(x+d*l)<=width/2)
-        for depth,sign in ((left_fin,-1),(right_fin,1)):
-            if depth<=0:continue
-            side=sign*l>1e-10
-            d=np.divide(sign*width/2-x,l,out=np.full_like(blocked,np.inf,dtype=float),where=side)
-            with np.errstate(invalid="ignore"):
-                blocked|=side&(d>=0)&(d*n<=depth)&(y+d*z<=height)
-        out[idx]=blocked.mean(axis=1)
-    return out.reshape(shape)
+    # Retain the previous grazing-incidence cutoff for numerical stability.
+    front=valid&(normal>1e-10)&(el>0)
+    if not np.any(front) or max(overhang,left_fin,right_fin)==0:
+        return out
+    n=normal[front]
+    l=np.abs(lateral[front])/width
+    z=vertical[front]/height
+    sunward_depth=np.where(lateral[front]>=0,right_fin,left_fin)
+
+    # Ray parameter at the first opposite aperture boundary, in local
+    # coordinates. A due-normal azimuth has no sunward-side exit.
+    t_side=np.divide(1.,l,out=np.full_like(l,np.inf),where=l>0)
+    t_top=1./z
+    t_limit=np.minimum(t_top,t_side)
+
+    # Top exit: integrate remaining available width over the vertical strip.
+    t_o=np.minimum(t_limit,overhang/n)
+    u_o=l*t_o
+    v_o=z*t_o
+    a_o=v_o*(1.-.5*u_o)
+
+    # Side exit: integrate remaining available height over the lateral strip.
+    t_f=np.minimum(t_limit,sunward_depth/n)
+    u_f=l*t_f
+    v_f=z*t_f
+    a_f=u_f*(1.-.5*v_f)
+
+    fraction=np.clip(a_o+a_f,0.,1.)
+    # Remove roundoff only at the exact full-shading limit. Preserve tiny
+    # positive physical shade fractions for shallow devices or low sun.
+    fraction=np.where(np.abs(fraction-1.)<=8*np.finfo(float).eps,1.,fraction)
+    out[front]=fraction
+    return out
 
 def shading_ledger(df,*,albedo=None,**geometry):
     from .runtime_module_guard import ensure_current_solar_runtime
@@ -70,12 +93,12 @@ MASK_EXPLANATION=(
     "for each possible direct-sun direction. Pale open circles mean no shading from the devices; "
     "darker points mean a larger shaded fraction. Directions behind the façade are omitted "
     "because they cannot directly illuminate the front of the window. Read the mask together "
-    "with the monthly sun paths; hover for azimuth, elevation and the exact sampled shaded area. "
+    "with the monthly sun paths; hover for azimuth, elevation and the analytically calculated shaded area. "
     "This is geometric direct-beam shading only, independent of weather, diffuse light and indoor heat gains."
 )
 
 def overlay_shading_mask(fig,*,inverted=False,technical=False,**geometry):
-    # A fixed angular sampling grid, independent of the climate observations.
+    # A fixed angular display grid; each direction is evaluated analytically.
     # Include only directions incident on the front of the selected vertical plane.
     # Keep r = zenith in both orientations; the reversed axis is managed by the
     # canonical polar layout, not by reversing the data a second time.
