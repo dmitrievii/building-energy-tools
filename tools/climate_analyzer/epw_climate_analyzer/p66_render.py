@@ -260,8 +260,11 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         mask=p3.eligibility_mask(df,natural_ventilation_condition(df))
         style=a[0]
         if style=="Persistence":
-            t=p3.persistence(df,mask);f=_bars(p3.persistence_monthly(t,2.),title,"Days")
-            note+=" Longest uninterrupted daily run ≥2 h."
+            from .p3_persistence_chart import persistence_figure
+            t=p3.persistence(df,mask);counts=p3.persistence_monthly(t,2.)
+            if counts.empty or not counts["Observed days"].notna().any():raise NotApplicable("No observed days with known suitability.")
+            f=persistence_figure(counts,title)
+            note+=" Longest uninterrupted daily run ≥2 h. Stacked categories partition observed days; the line represents their total, not an additional count. Partial days count from known observations; wholly unknown days are excluded."
         elif style=="Daily duration":
             t=p3.persistence(df,mask);v=t["Suitable hours [h]"].dropna().sort_values(ascending=False)
             f=go.Figure(go.Scatter(x=np.arange(1,len(v)+1),y=v,mode="lines")).update_layout(template="plotly_white",xaxis_title="Ranked days",yaxis_title="Suitable hours/day")

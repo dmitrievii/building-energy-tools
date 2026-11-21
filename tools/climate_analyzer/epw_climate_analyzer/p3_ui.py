@@ -146,13 +146,9 @@ def persistence_panel(df,mask,render,*,night=False):
     if not valid:
         st.info("No observed "+unit+" with known suitability.");return
     st.caption(f"{meets} of {valid} observed {unit} ({100*meets/valid:.1f}%) provide at least {threshold:g} consecutive suitable hours.")
-    fig=go.Figure()
-    for name,colour in (("Meets minimum","#21866B"),("Below minimum","#B8C0C6")):
-        fig.add_bar(x=counts.index.strftime("%Y-%m"),y=counts[name],name=name,marker_color=colour,
-            hovertemplate="%{x}<br>"+name+": %{y:.0f} "+unit+"<extra></extra>")
-    fig.update_layout(template="plotly_white",title=f"{label} availability · at least {threshold:g} uninterrupted hours",
-                      barmode="stack",xaxis_title="Month",yaxis_title=f"Observed {unit}")
-    render(fig,f"A {label.lower()} qualifies when at least one continuous suitable period reaches {threshold:g} h. For example, suitable periods 08:00–10:00 and 14:00–16:00 provide four total hours but only two consecutive hours. Unknown, rejected or missing intervals break a run. Partial observed {unit} are counted from available records only; entirely unknown {unit} are excluded.")
+    from .p3_persistence_chart import persistence_figure
+    fig=persistence_figure(counts,f"{label} availability · at least {threshold:g} uninterrupted hours",night=night)
+    render(fig,f"A {label.lower()} qualifies when at least one continuous suitable period reaches {threshold:g} h. For example, suitable periods 08:00–10:00 and 14:00–16:00 provide four total hours but only two consecutive hours. Unknown, rejected or missing intervals break a run. Partial observed {unit} are counted from available records only; entirely unknown {unit} are excluded. The line is the total observed count, not an additional category.")
     with st.expander("Detailed "+label.lower()+"-by-"+label.lower()+" results"):
         st.dataframe(table,use_container_width=True)
         st.download_button("Download continuous-period results · CSV",table.to_csv().encode("utf-8"),

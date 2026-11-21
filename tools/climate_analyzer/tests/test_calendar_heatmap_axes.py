@@ -30,7 +30,8 @@ class CalendarHeatmapTests(unittest.TestCase):
             "night_flushing_suitable":((idx.hour>=22)|(idx.hour<7)).astype(float),
             "dry_bulb_temperature_c":np.linspace(0.,25.,len(idx)),
         },index=idx)
-        ticks=[0,6,12,18,23]
+        ticks=[-.5,5.5,11.5,17.5,23.5]
+        labels=["0","6","12","18","24"]
         for column in df:
             for period in ("day","week","month"):
                 with self.subTest(column=column,period=period):
@@ -38,7 +39,8 @@ class CalendarHeatmapTests(unittest.TestCase):
                     expected=temporal_heatmap_matrix(df,column,period,HEATMAP_COMPARE_HOUR,"Mean")
                     for copy in (fig,report_figure(fig,width_pt=500,height_pt=230)):
                         self.assertEqual(list(copy.layout.yaxis.tickvals),ticks)
-                        self.assertEqual(list(copy.layout.yaxis.ticktext),list(map(str,ticks)))
+                        self.assertEqual(list(copy.layout.yaxis.ticktext),labels)
+                        self.assertEqual(list(copy.data[0].y),list(range(24)))
                         self.assertEqual(list(copy.layout.yaxis.range),[23.5,-.5])
                         np.testing.assert_allclose(np.asarray(copy.data[0].z,float),expected.values,equal_nan=True)
         legacy=go.Figure(go.Heatmap(x=["2026-01-01"],y=list(range(24)),z=np.arange(24).reshape(24,1)))

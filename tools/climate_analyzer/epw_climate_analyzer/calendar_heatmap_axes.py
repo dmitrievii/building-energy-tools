@@ -71,16 +71,18 @@ def apply_calendar_heatmap_axes(fig,*,period=None):
             if axis is None:continue
             title=str(axis.title.text or "").strip().lower()
             semantic=str(period).lower() if period and coord=="x" else title
-            # Canonical clock-hour cells: 0, 6, 12, 18, 23. Keep complete
-            # endpoint cells visible, not clipped at their centre coordinates.
+            # Hour indices 0..23 are cell centres in Plotly. Display elapsed
+            # clock boundaries 00:00..24:00 at the corresponding cell edges.
+            # Keep source coordinates and hover hour labels unchanged.
             if title in ("hour of day","analysis clock hour","clock hour","hour"):
                 try:hours=[int(v) for v in vals if float(v)==int(v)]
                 except (TypeError,ValueError,OverflowError):hours=[]
                 if len(hours)==len(vals) and hours and 0<=min(hours)<=max(hours)<=23:
-                    ticks=[0,6,12,18,23]
+                    hours_ticks=[0,6,12,18,24]
+                    ticks=[h-.5 for h in hours_ticks]
                     bounds=[23.5,-.5] if coord=="y" else [-.5,23.5]
                     axis.update(type="linear",tickmode="array",tickvals=ticks,
-                                ticktext=[str(h) for h in ticks],range=bounds,autorange=False,
+                                ticktext=[str(h) for h in hours_ticks],range=bounds,autorange=False,
                                 autorangeoptions=dict(minallowed=-.5,maxallowed=23.5),
                                 tickangle=0,automargin=True,showticklabels=True)
                     continue

@@ -102,6 +102,29 @@ class AtlasTests(unittest.TestCase):
         self.assertIsNone(fig)
         self.assertTrue(table.empty)
 
+    def test_persistence_stack_with_observed_total_line(self):
+        from epw_climate_analyzer.p3_persistence_chart import persistence_figure
+        from epw_climate_analyzer.p3_comfort import persistence_monthly
+        from epw_climate_analyzer.p6_report_structure import report_figure
+        table=pd.DataFrame({"Longest run [h]":[1.,3.,np.nan,2.]},
+                           index=pd.to_datetime(["2026-01-01","2026-01-02","2026-02-01","2026-03-01"]))
+        counts=persistence_monthly(table,2.)
+        for night in (False,True):
+            fig=persistence_figure(counts,"Persistence",night=night)
+            for f in (fig,report_figure(fig,width_pt=500,height_pt=230)):
+                self.assertEqual(f.layout.barmode,"stack")
+                self.assertEqual([tr.type for tr in f.data],["bar","bar","scatter"])
+                self.assertEqual(f.data[2].mode,"lines+markers")
+                self.assertFalse(f.data[2].connectgaps)
+                np.testing.assert_allclose(np.asarray(f.data[0].y,float)+np.asarray(f.data[1].y,float),
+                                           np.asarray(f.data[2].y,float),equal_nan=True)
+                self.assertTrue(np.isnan(np.asarray(f.data[2].y,float)[1]))
+                self.assertEqual(list(f.layout.xaxis.ticktext),["Jan","Feb","Mar"])
+        df=self.fixture();d=next(d for d in c.catalogue(df,{},c.FULL) if d.kind=="nv_special" and d.args[0]=="Persistence")
+        fig,note=make_figure(d,df,{})
+        self.assertEqual([tr.type for tr in fig.data],["bar","bar","scatter"])
+        self.assertEqual(fig.layout.barmode,"stack")
+
     def test_monthly_source_no_hourly_invention(self):
         df=self.fixture().iloc[[0]].copy();df.attrs["canonical_native_resolution"]="monthly"
         rows=c.catalogue(df,{},c.FULL)
