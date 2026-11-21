@@ -35,6 +35,7 @@ SOLAR_COLORSCALE = [
     [0.45, "#f97316"],
     [1.00, "#fef08a"],
 ]
+ILLUMINANCE_THRESHOLD_COLOR = "#EAB308"
 ILLUMINANCE_COLUMNS = ("global_horizontal_illuminance_lux","direct_normal_illuminance_lux","diffuse_horizontal_illuminance_lux")
 ILLUMINANCE_COLORSCALE = [
     [0.00, "#FFFFFF"],
@@ -252,6 +253,11 @@ def semantic_color_from_text(text: str | None) -> str:
     value = (text or "").strip().lower()
     if not value:
         return DEFAULT_METRIC_COLOR
+    # Threshold-duration charts share a yellow semantic colour, independent
+    # of the source component palette. Accept compact and spaced labels.
+    compact="".join(value.split()).replace(">=","≥")
+    if "≥300lux" in compact:
+        return ILLUMINANCE_THRESHOLD_COLOR
 
     if value in ORIENTATION_COLORS:
         return ORIENTATION_COLORS[value]

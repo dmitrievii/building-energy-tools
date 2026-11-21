@@ -220,6 +220,8 @@ def make_figure(d,df,context,reference_df=None,cache=None):
     elif k=="illumination":
         v=s.ge(300).astype(float).where(s.notna())*dt
         f=_bars(_totals(df,v.rename("≥300 lux"),a[0]),title,u)
+        from .chart_theme import ILLUMINANCE_THRESHOLD_COLOR
+        f.update_traces(marker_color=ILLUMINANCE_THRESHOLD_COLOR,selector=dict(type="bar"))
         note+=" Outdoor horizontal illuminance screening; not indoor daylight autonomy."
     elif k=="shading_mask":
         from .shading_sketch import window_shading_sketch

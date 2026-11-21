@@ -192,6 +192,22 @@ class AtlasTests(unittest.TestCase):
         rows=c.catalogue(df,{},c.FULL)
         self.assertFalse(any(d.status=="available" and d.kind in ("heatmap","duration","degree","utci","nv_special","wind_mean") for d in rows))
         self.assertTrue(any(d.kind=="native" and d.status=="available" for d in rows))
+    def test_illuminance_threshold_yellow_all_periods(self):
+        from epw_climate_analyzer.chart_theme import ILLUMINANCE_THRESHOLD_COLOR,semantic_color_from_text
+        from epw_climate_analyzer.charts import threshold_bar_chart
+        from epw_climate_analyzer.p6_report_structure import report_figure
+        df=self.fixture()
+        df[c.LUX]=np.resize([0.,299.,300.,1000.,np.nan],len(df))
+        rows=[d for d in c.catalogue(df,{},c.FULL) if d.kind=="illumination" and d.status=="available"]
+        self.assertEqual({d.args[0] for d in rows},set(c.TOTAL_PERIODS))
+        for d in rows:
+            fig,_=make_figure(d,df,{})
+            for copy in (fig,report_figure(fig,width_pt=500,height_pt=230)):
+                self.assertTrue(all(tr.marker.color==ILLUMINANCE_THRESHOLD_COLOR for tr in copy.data))
+            self.assertAlmostEqual(float(np.nansum(fig.data[0].y)),float(df[c.LUX].ge(300.).sum()))
+        self.assertEqual(semantic_color_from_text("Illuminance >= 300 lux"),ILLUMINANCE_THRESHOLD_COLOR)
+        self.assertEqual(threshold_bar_chart(pd.DataFrame({"hours":[10.]},index=["Jan"]),"Illuminance ≥ 300 lux").data[0].marker.color,ILLUMINANCE_THRESHOLD_COLOR)
+
     def test_core_chart_families_execute(self):
         df=self.fixture();rows=[d for d in c.catalogue(df,{},c.FULL) if d.status=="available"]
         types=("time_series","profile","percentile","heatmap","duration","histogram","box","violin","diurnal","occurrence","amplitude","total","degree","temp_threshold","temp_events","day_indicators","wind_mean","wind_classes","wetdry","rolling","cumulative","freeze_days","eligibility_map","eligibility_total","nv_special","critical_windows","correlation","joint")
