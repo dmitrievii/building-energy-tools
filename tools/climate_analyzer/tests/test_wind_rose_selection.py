@@ -57,6 +57,14 @@ class WindRoseSelectionTests(unittest.TestCase):
         pd.testing.assert_index_equal(select_wind_rose_period(df.drop(columns=["month_index","hour_of_day"]),
                                                              month=6,period="Day").index,df.index[[1,2]])
 
+    def test_legacy_cadence_is_inferred_before_day_night_filtering(self):
+        idx=pd.date_range("2025-06-01",periods=48,freq="h")
+        df=pd.DataFrame({"wind_speed_m_s":2.,"wind_direction_deg":180.},index=idx)
+        night=select_wind_rose_period(df,period="Night")
+        self.assertEqual(night.attrs["canonical_native_interval_minutes"],60.)
+        fig=wind_rose_chart(night)
+        self.assertAlmostEqual(sum(np.nansum(t.r) for t in fig.data),22.)
+
     def test_actual_wind_widgets_and_histogram_route(self):
         from streamlit.testing.v1 import AppTest
         source=(Path(__file__).resolve().parents[1]/"app.py").read_text(encoding="utf-8")
@@ -75,6 +83,7 @@ index=pd.to_datetime(["2025-06-01 06:00","2025-06-01 07:00","2025-07-01 19:00","
 df=pd.DataFrame({"month_index":index.month,"hour_of_day":index.hour,"wind_speed_m_s":[1.,2.,3.,4.],
                  "wind_direction_deg":[0.,90.,180.,270.],"wind_gust_speed_m_s":[5.,6.,7.,8.],
                  "wind_gust_direction_deg":[270.,180.,90.,0.]},index=index)
+df.attrs["canonical_native_interval_minutes"]=60
 def render_generic_variable_page(*args):
     st.write("Explorer")
 def wind_interpretation(df):

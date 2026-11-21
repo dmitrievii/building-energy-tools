@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import pandas as pd
 
+from .aggregations import native_interval_hours
+
 
 def _months(df: pd.DataFrame) -> pd.Series:
     if "month_index" in df:
@@ -39,4 +41,7 @@ def select_wind_rose_period(df: pd.DataFrame, *, month: int | None = None,
         mask &= valid & (day if period == "Day" else ~day)
     result = df.loc[mask.to_numpy()].copy()
     result.attrs.update(df.attrs)
+    # Preserve the cadence inferred from the parent frame before the
+    # day/night filter introduces gaps. Canonical metadata takes precedence.
+    result.attrs["canonical_native_interval_minutes"] = native_interval_hours(df) * 60.0
     return result
