@@ -2331,9 +2331,9 @@ def render_generic_variable_page(
         if column in TEMPERATURE_HEATMAP_COLUMNS:
             temperature_thresholds=temperature_thresholds or tuple(st.session_state.get("_p6_temperature_thresholds",(18.,26.)))
             if column=="dry_bulb_temperature_c":
-                st.caption("Temperature heatmap colours use the current heating and cooling thresholds: blue = cold, green = neutral band, red = hot.")
+                st.caption("Temperature heatmap colours use a common continuous blue–green–yellow–red gradient, anchored by the selected heating and cooling reference temperatures.")
             else:
-                st.caption("Same absolute temperature colour scale as dry-bulb temperature; colours indicate temperature classes, not comfort or heating/cooling demand.")
+                st.caption("Same continuous absolute temperature colour scale as dry-bulb temperature; colours indicate temperature, not comfort or heating/cooling demand.")
         fig = temporal_heatmap_chart(
             df,
             column,

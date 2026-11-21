@@ -135,6 +135,21 @@ class CalendarHeatmapTests(unittest.TestCase):
         for f in figs[1:]:
             self.assertEqual(f.layout.coloraxis.cmin,figs[0].layout.coloraxis.cmin)
             self.assertEqual(f.layout.coloraxis.cmax,figs[0].layout.coloraxis.cmax)
+        from epw_climate_analyzer.chart_theme import temperature_gradient_domain
+        lo,hi,scale=temperature_gradient_domain()
+        self.assertEqual((lo,hi),(-15.,32.))
+        self.assertEqual(figs[0].layout.coloraxis.colorscale,tuple(tuple(v) for v in scale))
+        self.assertEqual((figs[0].layout.coloraxis.cmin,figs[0].layout.coloraxis.cmax),(lo,hi))
+        self.assertTrue(all(b[0]>a[0] for a,b in zip(scale,scale[1:])))
+        self.assertEqual(scale[4][1],"#BCD1F9")
+        self.assertEqual(scale[5][1],"#5CC56B")
+        for c in cols:
+            auto=temporal_heatmap_chart(df,c,"month",HEATMAP_COMPARE_HOUR,"Mean",c,"°C")
+            self.assertEqual(auto.layout.coloraxis.colorscale,figs[0].layout.coloraxis.colorscale)
+        extreme=df.copy();extreme.loc[extreme.index[0],cols[2]]=-38.;extreme.loc[extreme.index[-1],cols[0]]=48.
+        for c in cols:
+            f=temporal_heatmap_chart(extreme,c,"day",HEATMAP_COMPARE_HOUR,"Mean",c,"°C")
+            self.assertEqual((f.layout.coloraxis.cmin,f.layout.coloraxis.cmax),(-38.,48.))
         printed=report_figure(figs[1],width_pt=500,height_pt=230)
         self.assertEqual(printed.layout.coloraxis.colorscale,figs[1].layout.coloraxis.colorscale)
         for c,f in zip(cols,figs):

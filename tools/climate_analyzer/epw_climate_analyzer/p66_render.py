@@ -77,7 +77,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         bounds=base.temperature_thresholds(context) if c in ch.TEMPERATURE_HEATMAP_COLUMNS else None
         f=ch.temporal_heatmap_chart(df,c,*a,title,u,temperature_thresholds=bounds)
         if bounds:
-            note+=f" Absolute temperature classes at {bounds[0]:g}/{bounds[1]:g} °C."
+            note+=f" Common continuous absolute temperature gradient; transition reference temperatures {bounds[0]:g}/{bounds[1]:g} °C."
             if c!=cat.T:note+=" Colours are not comfort or heating/cooling demand indicators."
         if agg.heatmap_has_single_observation_cells(df,a[0],a[1]):
             note+=" One observed value per occupied cell; no statistic required."

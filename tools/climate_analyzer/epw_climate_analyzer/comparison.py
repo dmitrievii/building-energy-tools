@@ -281,14 +281,16 @@ def heatmap_small_multiples(climates: list[ClimateDataset], column: str, row_gro
     if column in ["global_horizontal_radiation_wh_m2", "direct_normal_radiation_wh_m2", "diffuse_horizontal_radiation_wh_m2"]:
         colorscale = SOLAR_COLORSCALE
         zmin = max(0.0, float(zmin or 0.0))
-    elif column == "dry_bulb_temperature_c":
-        if temperature_thresholds is not None and zmax is not None and zmin is not None and zmax > zmin:
-            heat_t, cool_t = temperature_thresholds
-            green_start = max(0.0, min(1.0, (heat_t - zmin) / (zmax - zmin)))
-            green_end = max(green_start + 1e-6, min(1.0, (cool_t - zmin) / (zmax - zmin)))
-            colorscale = [[0.0, "#1d4ed8"], [green_start, "#22c55e"], [green_end, "#22c55e"], [1.0, "#dc2626"]]
-        else:
-            colorscale = TEMPERATURE_COLORSCALE
+    elif column in ("dry_bulb_temperature_c","dew_point_temperature_c","wet_bulb_temperature_c"):
+        from .chart_theme import temperature_gradient_domain,TEMPERATURE_HEATMAP_COLUMNS
+        extrema=[]
+        for climate in climates:
+            for c in TEMPERATURE_HEATMAP_COLUMNS:
+                if c in climate.data:
+                    v=pd.to_numeric(climate.data[c],errors="coerce").to_numpy(dtype=float)
+                    v=v[np.isfinite(v)]
+                    if len(v):extrema.extend([float(v.min()),float(v.max())])
+        zmin,zmax,colorscale=temperature_gradient_domain(min(extrema,default=None),max(extrema,default=None),temperature_thresholds or (18.,26.))
     elif column in {"natural_ventilation_suitable", "night_flushing_suitable", "nv"} or "suitable" in column:
         colorscale = BINARY_SUITABILITY_COLORSCALE
         zmin = 0.0 if zmin is None else min(0.0, float(zmin))

@@ -39,14 +39,31 @@ POA_COMPONENT_COLORS = {
     "poa_ground_diffuse_wh_m2": "#7493AA",
 }
 
-TEMPERATURE_COMFORT_COLORSCALE = [
-    [0.00, "#1d4ed8"],
-    [0.32, "#3b82f6"],
-    [0.45, "#22c55e"],
-    [0.55, "#22c55e"],
-    [0.70, "#f97316"],
-    [1.00, "#dc2626"],
-]
+TEMPERATURE_HEATMAP_COLUMNS = frozenset(("dry_bulb_temperature_c","dew_point_temperature_c","wet_bulb_temperature_c"))
+
+def temperature_gradient_domain(minimum=None,maximum=None,thresholds=(18.,26.)):
+    """Continuous absolute temperature gradient; reference anchors at 18/26 °C.
+
+    Preserve visible cold-to-hot colours under every reduction and scope.
+    The default range is -15…32 °C; extend it rather than clipping extremes.
+    The two configured thresholds shift the neutral transition together.
+    """
+    import math
+    low,high=sorted(map(float,thresholds))
+    if not math.isfinite(low) or not math.isfinite(high):raise ValueError("Temperature thresholds must be finite.")
+    # Keep the cold and hot tails independent of the data range.
+    anchors=[(low-33,"#1F2555"),(low-28,"#29357C"),(low-18,"#4259D5"),
+             (low-8,"#809BEF"),(low,"#BCD1F9"),
+             ((low+high)/2,"#5CC56B"),(high,"#E5D98B"),
+             (high+4,"#D8662E"),(high+6,"#AD3025")]
+    lo=min(anchors[0][0],float(minimum)) if minimum is not None and math.isfinite(minimum) else anchors[0][0]
+    hi=max(anchors[-1][0],float(maximum)) if maximum is not None and math.isfinite(maximum) else anchors[-1][0]
+    if lo<anchors[0][0]:anchors.insert(0,(lo,"#151936"))
+    if hi>anchors[-1][0]:anchors.append((hi,"#781C1B"))
+    scale=[[(v-lo)/(hi-lo),color] for v,color in anchors]
+    return lo,hi,scale
+
+TEMPERATURE_COMFORT_COLORSCALE = temperature_gradient_domain()[2]
 # Sequential irradiation palette: white is a physical zero, high values
 # progress through yellow to saturated orange.
 SOLAR_COLORSCALE = [

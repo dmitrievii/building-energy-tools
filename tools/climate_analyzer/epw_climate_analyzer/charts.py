@@ -26,6 +26,9 @@ from .psychrometrics import DEFAULT_PRESSURE_PA, psychrometric_rh_curves
 from .psychrometric_distribution import add_climate_zone_traces, psychrometric_axis_ranges
 from .chart_theme import (
     BINARY_SUITABILITY_COLORSCALE,
+    TEMPERATURE_HEATMAP_COLUMNS,
+    TEMPERATURE_COMFORT_COLORSCALE,
+    temperature_gradient_domain,
     ILLUMINANCE_COLUMNS,
     POA_COMPONENT_COLORS,
     SOURCE_IRRADIATION_COLORS,
@@ -54,15 +57,7 @@ psychrolib.SetUnitSystem(psychrolib.SI)
 
 PLOT_TEMPLATE = "plotly_white"
 MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-TEMPERATURE_HEATMAP_COLUMNS = frozenset(("dry_bulb_temperature_c","dew_point_temperature_c","wet_bulb_temperature_c"))
-TEMPERATURE_COMFORT_COLORSCALE = [
-    [0.00, "#1d4ed8"],
-    [0.32, "#3b82f6"],
-    [0.45, "#22c55e"],
-    [0.55, "#22c55e"],
-    [0.70, "#f97316"],
-    [1.00, "#dc2626"],
-]
+
 BINARY_BLUE_COLORSCALE = [
     [0.00, "rgba(255,255,255,0.0)"],
     [0.01, "#eff6ff"],
@@ -165,34 +160,9 @@ def _year_neutral_monthly(summary: pd.DataFrame, aggregation: str) -> bool:
 
 def _heatmap_colorscale(column: str, values=None, temperature_thresholds: tuple[float, float] | None = None):
     """Return a valid semantic colorscale for the selected climate variable."""
-    if column in TEMPERATURE_HEATMAP_COLUMNS and temperature_thresholds is not None:
-        heat_t, cool_t = map(float, temperature_thresholds)
-        vmin, vmax = _finite_min_max(values)
-        if vmin is None or vmax is None or abs(vmax - vmin) < 1e-9:
-            return TEMPERATURE_COMFORT_COLORSCALE
-        if heat_t > cool_t:
-            heat_t, cool_t = cool_t, heat_t
-        blue, green, red = "#1d4ed8", "#22c55e", "#dc2626"
-        if vmax <= heat_t:
-            return [[0.0, blue], [1.0, blue]]
-        if vmin >= cool_t:
-            return [[0.0, red], [1.0, red]]
-        if vmin >= heat_t and vmax <= cool_t:
-            return [[0.0, green], [1.0, green]]
-
-        span = vmax - vmin
-        stops: list[list[float | str]] = []
-        start_color = blue if vmin < heat_t else (green if vmin < cool_t else red)
-        stops.append([0.0, start_color])
-        if vmin < heat_t < vmax:
-            p = float(np.clip((heat_t - vmin) / span, 0.0, 1.0))
-            stops.extend([[p, blue], [p, green]])
-        if vmin < cool_t < vmax:
-            p = float(np.clip((cool_t - vmin) / span, 0.0, 1.0))
-            stops.extend([[p, green], [p, red]])
-        end_color = red if vmax > cool_t else (green if vmax > heat_t else blue)
-        stops.append([1.0, end_color])
-        return stops
+    if column in TEMPERATURE_HEATMAP_COLUMNS:
+        vmin,vmax=_finite_min_max(values)
+        return temperature_gradient_domain(vmin,vmax,temperature_thresholds or (18.,26.))[2]
     if column in {"natural_ventilation_suitable", "night_flushing_suitable"} or "suitable" in column:
         return BINARY_SUITABILITY_COLORSCALE
     if column in ("liquid_precipitation_depth_mm","snow_depth_cm",*WIND_SPEED_COLUMNS,*WIND_DIRECTION_COLUMNS):
@@ -411,11 +381,10 @@ def temporal_heatmap_chart(
         # One absolute colour domain for the three psychrometric temperatures
         # within this selected data scope, independent of the cell statistic.
         temperature_thresholds=temperature_thresholds or (18.,26.)
-        low,high=sorted(map(float,temperature_thresholds))
         limits=[_finite_min_max(pd.to_numeric(df[c],errors="coerce")) for c in TEMPERATURE_HEATMAP_COLUMNS if c in df]
-        zmin=min([low-1.]+[v[0] for v in limits if v[0] is not None]+([zmin] if zmin is not None else []))
-        zmax=max([high+1.]+[v[1] for v in limits if v[1] is not None]+([zmax] if zmax is not None else []))
-        colorscale=_heatmap_colorscale(column,[zmin,zmax],temperature_thresholds)
+        lower=min([v[0] for v in limits if v[0] is not None]+([zmin] if zmin is not None else []),default=None)
+        upper=max([v[1] for v in limits if v[1] is not None]+([zmax] if zmax is not None else []),default=None)
+        zmin,zmax,colorscale=temperature_gradient_domain(lower,upper,temperature_thresholds)
     else:colorscale = _heatmap_colorscale(column, matrix.values, temperature_thresholds)
     if column == "relative_humidity_pct":
         # Fixed physical domain, independent of climate, period and statistic.
