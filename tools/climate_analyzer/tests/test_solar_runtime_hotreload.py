@@ -73,10 +73,54 @@ class SolarRuntimeHotReloadTests(unittest.TestCase):
             "solar_module = ensure_current_solar_runtime()",
             source,
         )
-        self.assertIn(
-            "surface_irradiance_components = ensure_current_solar_runtime().surface_irradiance_components",
-            source,
-        )
+        # The unified façade renderer delegates POA calculations to a shared
+        # module. Keep checking the guard at the actual calculation boundary.
+        self.assertIn("render_facade_orientation(df, ground_albedo=ground_albedo)", source)
+        facade_source = (app_path.parent / "epw_climate_analyzer" / "facade_orientation.py").read_text(encoding="utf-8")
+        tree = ast.parse(facade_source)
+        summary = next(node for node in tree.body
+                       if isinstance(node, ast.FunctionDef) and node.name == "surface_period_summary")
+        guarded_calls = [
+            node for node in ast.walk(summary)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "surface_irradiance_components"
+            and isinstance(node.func.value, ast.Call)
+            and isinstance(node.func.value.func, ast.Name)
+            and node.func.value.func.id == "ensure_current_solar_runtime"
+        ]
+        self.assertEqual(len(guarded_calls), 1)
+
+    def test_facade_summary_refreshes_poa_callable_on_each_request(self) -> None:
+        from types import SimpleNamespace
+        from unittest.mock import Mock, patch
+
+        import pandas as pd
+        from epw_climate_analyzer.facade_orientation import surface_period_summary, TOTAL
+
+        frame = pd.DataFrame(index=pd.date_range("2025-01-01", periods=2, freq="h"))
+
+        def response(direct):
+            return pd.DataFrame({
+                "poa_direct_wh_m2": [direct, direct],
+                "poa_sky_diffuse_wh_m2": [20., 20.],
+                "poa_ground_diffuse_wh_m2": [10., 10.],
+                "poa_global_wh_m2": [direct + 30., direct + 30.],
+            }, index=frame.index)
+
+        first = Mock(return_value=response(100.))
+        second = Mock(return_value=response(200.))
+        with patch.object(runtime_module_guard, "ensure_current_solar_runtime",
+                          side_effect=[SimpleNamespace(surface_irradiance_components=first),
+                                       SimpleNamespace(surface_irradiance_components=second)]) as guard:
+            a = surface_period_summary(frame, 90., 180., albedo=.2)
+            b = surface_period_summary(frame, 90., 180., albedo=.2)
+            self.assertEqual(guard.call_count, 2)
+        first.assert_called_once_with(frame, 90., 180., albedo=.2)
+        second.assert_called_once_with(frame, 90., 180., albedo=.2)
+        self.assertAlmostEqual(a[TOTAL], .26)
+        self.assertAlmostEqual(b[TOTAL], .46)
+        self.assertEqual(b["valid_intervals"], 2)
 
 
 if __name__ == "__main__":
