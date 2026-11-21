@@ -17,9 +17,10 @@ T = "dry_bulb_temperature_c"
 P = "liquid_precipitation_depth_mm"
 SNOW = "snow_depth_cm"
 DEPTH_OCCURRENCE_COLUMNS = (P,SNOW)
-from .chart_theme import ILLUMINANCE_COLUMNS,is_irradiation_metric
+from .chart_theme import ILLUMINANCE_COLUMNS,is_irradiation_metric,WIND_SPEED_COLUMNS,WIND_SPEED_OCCURRENCE_EDGES,WIND_SPEED_COLORS
 ILLUMINANCE_OCCURRENCE_COLUMNS = ILLUMINANCE_COLUMNS
-ZERO_OCCURRENCE_COLUMNS = DEPTH_OCCURRENCE_COLUMNS + ILLUMINANCE_OCCURRENCE_COLUMNS
+ZERO_OCCURRENCE_COLUMNS = DEPTH_OCCURRENCE_COLUMNS + ILLUMINANCE_OCCURRENCE_COLUMNS + WIND_SPEED_COLUMNS
+WIND_OCCURRENCE_NOTE = ("Reference speed bands share the wind rose boundaries and upper-inclusive convention. Exact zero is separated from positive wind speeds. Negative and missing observations are excluded. These descriptive bands are not a formal Beaufort classification; daily classes refer to the selected daily statistic.")
 ILLUMINANCE_OCCURRENCE_EDGES = (100.,1000.,5000.,10000.,25000.,50000.,100000.)
 ILLUMINANCE_OCCURRENCE_NOTE = ("Zero lux is a separate class (no recorded illumination). Negative and missing observations are excluded. Positive boundaries are descriptive outdoor illuminance classes, not indoor lighting requirements, UDI thresholds or sky-condition classifications.")
 SHORTWAVE_OCCURRENCE_EDGES = (50.,100.,200.,400.,600.,800.,1000.,1200.)
@@ -229,6 +230,7 @@ def occurrence_default_edges(values,column,*,basis="Hours",daily_stat="Mean",int
         return [1.,5.,10.,20.] if basis=="Days" and daily_stat=="Total" else [.1,1.,5.,10.]
     if column==SNOW:return [1.,5.,10.,20.,50.]
     if column in ILLUMINANCE_OCCURRENCE_COLUMNS:return list(ILLUMINANCE_OCCURRENCE_EDGES)
+    if column in WIND_SPEED_COLUMNS:return list(WIND_SPEED_OCCURRENCE_EDGES)
     kind=radiation_occurrence_kind(column)
     if kind=="fraction":return list(DIFFUSE_FRACTION_EDGES)
     if kind:
@@ -278,14 +280,18 @@ def occurrence_table(df,column,edges,*,basis="Hours",daily_stat="Mean"):
     if zero_separate:
         zero=("Dry (= 0)" if column==P else "Snow-free (= 0)" if column==SNOW else
               "No recorded illumination (= 0)" if column in ILLUMINANCE_OCCURRENCE_COLUMNS else
+              "No recorded wind (= 0)" if column in WIND_SPEED_COLUMNS else
               "No diffuse fraction (= 0)" if radiation_kind=="fraction" else "No recorded radiation (= 0)")
-        labels=[zero,f"0 < x < {text[0]}"]+[f"{a} – < {b}" for a,b in zip(text,text[1:])]+[f"≥ {text[-1]}"]
+        if column in WIND_SPEED_COLUMNS:
+            labels=[zero,f"0 < x ≤ {text[0]}"]+[f"> {a} – ≤ {b}" for a,b in zip(text,text[1:])]+[f"> {text[-1]}"]
+        else:
+            labels=[zero,f"0 < x < {text[0]}"]+[f"{a} – < {b}" for a,b in zip(text,text[1:])]+[f"≥ {text[-1]}"]
     else:
         labels=[f"< {text[0]}"]+[f"{a} – < {b}" for a,b in zip(text,text[1:])]+[f"≥ {text[-1]}"]
     if v.empty:
         return pd.DataFrame(columns=labels,dtype=float)
     if zero_separate:
-        codes=np.where(v.to_numpy()==0.,0,1+np.searchsorted(edges,v.to_numpy(),side="right"))
+        codes=np.where(v.to_numpy()==0.,0,1+np.searchsorted(edges,v.to_numpy(),side="left" if column in WIND_SPEED_COLUMNS else "right"))
         classes=pd.Series(pd.Categorical.from_codes(codes,categories=labels,ordered=True),index=v.index)
     else:
         classes=pd.cut(v,[-np.inf,*edges,np.inf],labels=labels,right=False)
@@ -300,13 +306,16 @@ def occurrence_table(df,column,edges,*,basis="Hours",daily_stat="Mean"):
         counts=counts.groupby(counts.index.str[-2:]).mean()
         counts.index=[MONTHS[int(m)-1] for m in counts.index]
     counts.attrs["occurrence_column"]=column
+    counts.attrs["occurrence_edges"]=tuple(edges)
     return counts
 
 
 def occurrence_figure(table,unit,basis):
     fig=go.Figure()
     column=table.attrs.get("occurrence_column")
-    if zero_occurrence_kind(column):
+    if column in WIND_SPEED_COLUMNS and tuple(table.attrs.get("occurrence_edges",()))==WIND_SPEED_OCCURRENCE_EDGES:
+        palette=["#E5E7EB",*WIND_SPEED_COLORS]
+    elif zero_occurrence_kind(column):
         from .chart_theme import metric_colorscale
         from plotly.colors import sample_colorscale
         n=len(table.columns)

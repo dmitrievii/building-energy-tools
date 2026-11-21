@@ -107,6 +107,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         if c in ex.DEPTH_OCCURRENCE_COLUMNS:note+=" Zero is a separate dry/snow-free class. Negative or missing depths are excluded. Positive bins are descriptive depth classes, not precipitation-rate thresholds."
         if c in ex.ILLUMINANCE_OCCURRENCE_COLUMNS:note+=" "+ex.ILLUMINANCE_OCCURRENCE_NOTE
         if ex.radiation_occurrence_kind(c):note+=" "+ex.radiation_occurrence_note(c,dt,basis=a[0],daily_stat=a[1])
+        if c in ex.WIND_SPEED_COLUMNS:note+=" "+ex.WIND_OCCURRENCE_NOTE
     elif k=="amplitude":f=ex.amplitude_figure(df,c,a[0],cat.LABELS[c]);note+=" Observed max minus min, not interpolated extrema."
     elif k=="total":
         factor=1/1000 if u=="kWh/m²" else 1/60 if c=="precipitation_duration_min" else 1/3600 if c=="sunshine_duration_s" else 1

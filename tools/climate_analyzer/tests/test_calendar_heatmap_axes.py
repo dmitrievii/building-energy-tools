@@ -487,6 +487,30 @@ class CalendarHeatmapTests(unittest.TestCase):
         self.assertEqual(fig.layout.coloraxis.colorscale,tuple(tuple(v) for v in SOLAR_COLORSCALE))
         self.assertEqual(SOLAR_COLORSCALE[0],[0.,"#FFFFFF"])
 
+    def test_wind_occurrence_reference_classes_match_rose(self):
+        from epw_climate_analyzer.chart_theme import WIND_SPEED_COLUMNS,WIND_SPEED_COLORS,WIND_SPEED_OCCURRENCE_EDGES
+        from epw_climate_analyzer.extended_visualization import occurrence_default_edges,occurrence_table,occurrence_figure
+        edges=list(WIND_SPEED_OCCURRENCE_EDGES)
+        for c in WIND_SPEED_COLUMNS:
+            vals=[0.,.1,1.,1.1,2.,2.1,4.,4.1,6.,6.1,8.,8.1,12.,12.1,25.,-1.,np.nan]
+            df=pd.DataFrame({c:vals},index=pd.date_range("2026-01-01",periods=len(vals),freq="h"))
+            self.assertEqual(occurrence_default_edges(pd.Series([0.]),c),edges)
+            self.assertEqual(occurrence_default_edges(df[c],c,basis="Days",daily_stat="Maximum",interval_hours=.25),edges)
+            table=occurrence_table(df,c,edges)
+            np.testing.assert_allclose(table.iloc[0],[1.,2.,2.,2.,2.,2.,2.,2.])
+            self.assertEqual(table.sum().sum(),15.)
+            self.assertAlmostEqual(occurrence_table(df,c,edges,basis="Percentage").sum().sum(),100.)
+            fig=occurrence_figure(table,"m/s","Hours")
+            self.assertEqual([tr.marker.color for tr in fig.data],["#E5E7EB",*WIND_SPEED_COLORS])
+            self.assertEqual(fig.data[1].name,"0 < x ≤ 1 m/s")
+            self.assertEqual(fig.data[-1].name,"> 12 m/s")
+            custom=occurrence_figure(occurrence_table(df,c,[3.,7.]),"m/s","Hours")
+            self.assertEqual(len(custom.data),4)
+            sub=df.copy();sub.attrs["canonical_native_interval_minutes"]=15.
+            self.assertAlmostEqual(occurrence_table(sub,c,edges).sum().sum(),15*.25)
+            day=pd.DataFrame({c:np.repeat([0.,4.,13.,-1.],24)},index=pd.date_range("2026-01-01",periods=96,freq="h"))
+            np.testing.assert_allclose(occurrence_table(day,c,edges,basis="Days",daily_stat="Maximum").iloc[0],[1.,0.,0.,1.,0.,0.,0.,1.])
+
     def test_wind_speed_and_gust_green_absolute_domain(self):
         from epw_climate_analyzer.chart_theme import WIND_SPEED_COLUMNS,WIND_SPEED_COLORSCALE,wind_speed_colorscale,metric_colorscale
         from epw_climate_analyzer.charts import temporal_heatmap_chart

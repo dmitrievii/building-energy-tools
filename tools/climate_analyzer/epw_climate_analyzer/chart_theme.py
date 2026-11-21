@@ -169,6 +169,7 @@ WIND_SPEED_COLORS = [
 WIND_SPEED_LABELS = ["0-1", "1-2", "2-4", "4-6", "6-8", "8-12", ">12"]
 WIND_SPEED_COLOR_MAP = dict(zip(WIND_SPEED_LABELS, WIND_SPEED_COLORS, strict=True))
 WIND_SPEED_COLUMNS = ("wind_speed_m_s","wind_gust_speed_m_s")
+WIND_SPEED_OCCURRENCE_EDGES = (1.,2.,4.,6.,8.,12.)
 # Absolute anchors borrow the wind-rose green family. Higher-speed
 # datasets retain all values with a darker green tail above 12 m/s.
 WIND_SPEED_COLORSCALE = [[0., "#FFFFFF"], [1/12, "#D1FAE5"],

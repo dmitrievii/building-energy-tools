@@ -2152,7 +2152,7 @@ def render_extended_variable_chart(df, column, unit, chart_type, *, key_prefix="
         v=pd.to_numeric(df[column],errors="coerce").dropna()
         if v.empty:
             return
-        from epw_climate_analyzer.extended_visualization import occurrence_default_edges,occurrence_boundary_label,DEPTH_OCCURRENCE_COLUMNS,ILLUMINANCE_OCCURRENCE_COLUMNS,ILLUMINANCE_OCCURRENCE_NOTE,radiation_occurrence_kind,radiation_occurrence_note
+        from epw_climate_analyzer.extended_visualization import occurrence_default_edges,occurrence_boundary_label,DEPTH_OCCURRENCE_COLUMNS,ILLUMINANCE_OCCURRENCE_COLUMNS,ILLUMINANCE_OCCURRENCE_NOTE,radiation_occurrence_kind,radiation_occurrence_note,WIND_SPEED_COLUMNS,WIND_OCCURRENCE_NOTE
         basis=st.selectbox("Occurrence basis",["Hours","Days","Percentage"],key=key_prefix+"_occ_basis")
         statistic="Mean"
         if basis=="Days":
@@ -2165,8 +2165,10 @@ def render_extended_variable_chart(df, column, unit, chart_type, *, key_prefix="
         depth=column in DEPTH_OCCURRENCE_COLUMNS
         illuminance=column in ILLUMINANCE_OCCURRENCE_COLUMNS
         radiation=radiation_occurrence_kind(column)
-        edge_key=key_prefix+"_edges_"+column+("_positive_v2_"+basis+"_"+statistic if depth or illuminance else "_radiation_v1_"+basis+"_"+statistic+"_"+str(cadence) if radiation else "")
-        boundaries=st.text_input(f"Positive radiation boundaries [{unit}] (comma-separated)" if radiation else "Positive illuminance boundaries [lx] (comma-separated)" if illuminance else "Positive depth boundaries (comma-separated)" if depth else "Class boundaries (comma-separated)",value=default,key=edge_key)
+        wind=column in WIND_SPEED_COLUMNS
+        edge_key=key_prefix+"_edges_"+column+("_positive_v2_"+basis+"_"+statistic if depth or illuminance else "_wind_v1_"+basis+"_"+statistic if wind else "_radiation_v1_"+basis+"_"+statistic+"_"+str(cadence) if radiation else "")
+        boundaries=st.text_input(f"Positive radiation boundaries [{unit}] (comma-separated)" if radiation else "Positive wind speed boundaries [m/s] (comma-separated)" if wind else "Positive illuminance boundaries [lx] (comma-separated)" if illuminance else "Positive depth boundaries (comma-separated)" if depth else "Class boundaries (comma-separated)",value=default,key=edge_key)
+        if wind:st.caption(WIND_OCCURRENCE_NOTE)
         if radiation:st.caption(radiation_occurrence_note(column,cadence,basis=basis,daily_stat=statistic))
         if depth:st.caption("Zero has its own class. Negative or missing depths are excluded; positive classes describe the selected depth statistic, not precipitation rate.")
         if illuminance:st.caption(ILLUMINANCE_OCCURRENCE_NOTE)
