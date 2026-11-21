@@ -481,20 +481,23 @@ def render_report(df=None,reference_df=None):
     html_signature=html_key.hexdigest()
     if st.session_state.get("_p6_html_result") and st.session_state["_p6_html_result"][0]!=html_signature:
         st.session_state.pop("_p6_html_result",None)
-    if st.button("Generate printable HTML",key="p6_html_generate"):
-        st.session_state.pop("_p6_html_result",None)
+    # Match the PDF lifecycle: a single slot, mutually exclusive controls,
+    # rerun after generation, and no rerun on download.
+    html_slot=st.empty()
+    html_result=st.session_state.get("_p6_html_result")
+    if html_result and html_result[0]==html_signature:
+        html_slot.download_button("Download printable HTML",data=html_result[1],file_name="climate_report.html",mime="text/html",key="p6_html",on_click="ignore")
+    elif html_slot.button("Generate printable HTML",key="p6_html_generate"):
+        for key in ("_p6_html_result","_p6_pdf","_p66_atlas_result"):st.session_state.pop(key,None)
+        gc.collect()
         try:
             require_headroom()
             data=printable_html(included,title,paper,orientation,use_osm=True)
             require_headroom()
             st.session_state["_p6_html_result"]=(html_signature,data)
+            st.rerun()
         except Exception as exc:st.error(str(exc))
         finally:gc.collect()
-    html_result=st.session_state.get("_p6_html_result")
-    if html_result and html_result[0]==html_signature:
-        st.download_button("Download printable HTML",data=html_result[1],file_name="climate_report.html",mime="text/html",key="p6_html")
-        if st.button("Release HTML download",key="p6_html_release"):
-            st.session_state.pop("_p6_html_result",None);st.rerun()
     # Full machine-readable audit trail as optional independent export, not
     # printed underneath each figure.
     st.download_button("Download technical metadata",data=json.dumps([{k:v for k,v in i.items() if k!="figure"} for i in included],ensure_ascii=False,indent=2,default=str).encode("utf-8"),
