@@ -288,6 +288,35 @@ class AtlasTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             paired_scatter_chart(pd.Series([np.nan]),pd.Series([1.]),"Test","X","Y")
 
+    def test_monthly_wind_rose_panel_shared_radial_and_report_layout(self):
+        from epw_climate_analyzer.directional_climate import monthly_wind_rose_panel,directional_class_table
+        from epw_climate_analyzer.p6_report_structure import report_figure
+        df=pd.DataFrame({c.V:[1.,2.,4.,0.,8.,3.],c.WD:[0.,90.,90.,180.,270.,225.]},
+            index=pd.to_datetime(["2026-01-01 07:00","2026-01-01 08:00","2026-02-01 09:00","2026-02-01 10:00","2026-12-01 12:00","2025-01-01 08:00"]))
+        df.attrs["canonical_native_interval_minutes"]=60.
+        fig,tables=monthly_wind_rose_panel(df)
+        self.assertEqual(set(tables),{1,2,12})
+        for m,table in tables.items():
+            expected=directional_class_table(df.loc[df.index.month==m],radial="Percentage")
+            np.testing.assert_allclose(table,expected)
+            self.assertAlmostEqual(float(table.to_numpy().sum()),100.)
+        self.assertEqual(sum(tr.showlegend is True for tr in fig.data),7)
+        self.assertEqual(len(fig.layout.annotations),12)
+        self.assertIn("no data",fig.layout.annotations[2].text)
+        for copied in (fig,report_figure(fig,width_pt=500,height_pt=700),report_figure(fig,width_pt=740,height_pt=480)):
+            polars=[getattr(copied.layout,"polar" if m==1 else f"polar{m}") for m in range(1,13)]
+            self.assertEqual(len({tuple(p.domain.x)+tuple(p.domain.y) for p in polars}),12)
+            self.assertEqual(len({tuple(p.radialaxis.range) for p in polars}),1)
+            self.assertGreaterEqual(polars[0].radialaxis.range[1],100.)
+        mean,_=monthly_wind_rose_panel(df,style="Directional mean",radial="Mean wind speed")
+        valid=[tr for tr in mean.data if tr.marker.cmin is not None]
+        self.assertEqual(len({(tr.marker.cmin,tr.marker.cmax) for tr in valid}),1)
+        self.assertEqual(sum(tr.marker.showscale is True for tr in mean.data),1)
+        fixture=self.fixture()
+        d=next(d for d in c.catalogue(fixture,{},c.REP) if d.kind=="wind_panel")
+        atlas,_=make_figure(d,fixture,{})
+        self.assertEqual(len(atlas.layout.annotations),12)
+
     def test_core_chart_families_execute(self):
         df=self.fixture();rows=[d for d in c.catalogue(df,{},c.FULL) if d.status=="available"]
         types=("time_series","profile","percentile","heatmap","duration","histogram","box","violin","diurnal","occurrence","amplitude","total","degree","temp_threshold","temp_events","day_indicators","wind_mean","wind_classes","wetdry","rolling","cumulative","freeze_days","eligibility_map","eligibility_total","nv_special","critical_windows","correlation","joint")

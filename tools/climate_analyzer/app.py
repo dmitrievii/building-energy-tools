@@ -4225,7 +4225,7 @@ def render_wind(df: pd.DataFrame) -> None:
 
     from epw_climate_analyzer.wind_rose_selection import available_wind_months, select_wind_rose_period
 
-    aggregation = st.selectbox("Time aggregation", ["Annual", "Monthly"], index=0,
+    aggregation = st.selectbox("Time aggregation", ["Annual", "Monthly", "Monthly panel (12 months)"], index=0,
                                key="wind_rose_aggregation")
     month = None
     if aggregation == "Monthly":
@@ -4237,7 +4237,7 @@ def render_wind(df: pd.DataFrame) -> None:
         month_name = st.selectbox("Month", month_names, key="wind_month")
         month = MONTHS[month_name]
     else:
-        month_name = "Annual"
+        month_name = "All 12 months" if aggregation=="Monthly panel (12 months)" else "Annual"
 
     enable_daynight = st.checkbox("Day-night filter", value=False, key="wind_rose_daynight",
                                   help="Use the existing analysis-clock periods: day 07:00–19:59; night 20:00–06:59.")
@@ -4297,6 +4297,16 @@ def render_wind(df: pd.DataFrame) -> None:
             except ValueError as exc:
                 st.info(str(exc))
                 return
+        if aggregation=="Monthly panel (12 months)":
+            from epw_climate_analyzer.directional_climate import monthly_wind_rose_panel,MONTHLY_WIND_ROSE_NOTE
+            try:
+                fig,tables=monthly_wind_rose_panel(data,speed=speed_column,direction=direction_column,colour=colour,
+                    radial=radial,edges=edges,style=style,title=f"{selected_dataset} · {colour} classes · {period_label}")
+            except ValueError as exc:st.info(str(exc));return
+            render_plot(fig,MONTHLY_WIND_ROSE_NOTE)
+            with st.expander("Monthly directional class data"):
+                st.dataframe(pd.concat(tables,names=["Month","azimuth_deg"]),use_container_width=True)
+            return
         table=directional_class_table(data,speed=speed_column,direction=direction_column,quantity=colour,
                                       radial=radial,edges=edges)
         if table.attrs["valid_hours"]<=0:
@@ -4307,6 +4317,14 @@ def render_wind(df: pd.DataFrame) -> None:
         with st.expander("Directional class data"):
             st.dataframe(table,use_container_width=True)
     else:
+        if aggregation=="Monthly panel (12 months)":
+            from epw_climate_analyzer.directional_climate import monthly_wind_rose_panel,MONTHLY_WIND_ROSE_NOTE
+            try:
+                fig,tables=monthly_wind_rose_panel(data,speed=speed_column,direction=direction_column,colour=colour,
+                    radial=radial,style=style,title=f"{selected_dataset} · {radial} · {colour} · {period_label}")
+            except ValueError as exc:st.info(str(exc));return
+            render_plot(fig,MONTHLY_WIND_ROSE_NOTE)
+            return
         table=directional_table(data,speed=speed_column,direction=direction_column,radial=radial,colour=colour)
         fig=directional_figure(table,radial,colour,f"{selected_dataset} · {radial} · {period_label}")
         render_plot(fig,directional_interpretation(table,radial,colour))

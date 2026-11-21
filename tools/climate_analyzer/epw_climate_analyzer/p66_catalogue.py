@@ -168,6 +168,7 @@ def catalogue(df,context,coverage=FULL):
     for speed,direction,label in [(V,WD,"Mean wind"),("wind_gust_speed_m_s","wind_gust_direction_deg","Gust wind")]:
         if not hourly or not has(speed,direction):
             add(WIND,label+" rose","windrose",speed,"",ok=False);continue
+        add(WIND,label+" · Monthly wind rose panel (12 months)","wind_panel",speed,"%",(direction,"Percentage","Wind speed"))
         months=(0,) if coverage==REP else (0,*sorted(set(df.index.month)))
         colours=colour_options(df,speed=speed)
         for m in months:

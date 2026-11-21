@@ -185,6 +185,12 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         years=monthly_rose_years(table)
         f=monthly_radiation_chart(table,style=a[0],rose_year=years[-1] if years and a[0]=="Monthly rose" else None)
         if a[0]=="Monthly rose" and years:note+=f" Rose uses {years[-1]}."
+    elif k=="wind_panel":
+        from .directional_climate import monthly_wind_rose_panel,MONTHLY_WIND_ROSE_NOTE
+        direction,radial,colour=a
+        try:f,_=monthly_wind_rose_panel(df,speed=c,direction=direction,radial=radial,colour=colour,title=title)
+        except ValueError as exc:raise NotApplicable(str(exc)) from exc
+        note=MONTHLY_WIND_ROSE_NOTE
     elif k in ("wind_mean","wind_classes"):
         from .directional_climate import directional_table,directional_figure,directional_interpretation,directional_class_table,directional_class_figure,class_interpretation
         direction,month,radial,colour=a

@@ -155,6 +155,8 @@ def complex_figure(fig):
 def figure_height(fig,width_pt,height_pt):
     """Give scientific polar/psychrometric plots most of the printable page."""
     from .extended_visualization import diurnal_panel_rows
+    if isinstance(fig.layout.meta,dict) and fig.layout.meta.get("layout_kind")=="monthly_wind_rose_panel":
+        return height_pt*.90
     if diurnal_panel_rows(fig):
         return min(height_pt*.88,width_pt*.98)
     if complex_figure(fig):
@@ -214,6 +216,13 @@ def report_figure(fig,*,width_pt,height_pt,font_pt=11,external_zone_legend=False
             f.update_layout(legend2=dict(orientation="h",xref="container",x=.02,xanchor="left",
                             yref="container",y=.01,yanchor="bottom"))
             f.update_xaxes(domain=[0.,1.])
+    if isinstance(f.layout.meta,dict) and f.layout.meta.get("layout_kind")=="monthly_wind_rose_panel":
+        from .directional_climate import reflow_monthly_wind_roses
+        classes=f.layout.meta.get("wind_panel_classes")
+        small_font=max(9,min(12,px*.82))
+        f.update_layout(margin=dict(l=18,r=18 if classes else 96,t=12,b=68 if classes else 18),
+            legend=dict(orientation="h",xref="container",x=.5,xanchor="center",yref="container",y=.005,yanchor="bottom",font=dict(size=small_font),title=dict(font=dict(size=small_font))))
+        return reflow_monthly_wind_roses(f,columns=4 if w>h*1.12 else 3,font_size=small_font)
     polar=any(getattr(t,"type","") in ("scatterpolar","scatterpolargl","barpolar") for t in f.data)
     if polar:
         # A polar circle is height-limited. Place it at the left of the
@@ -303,6 +312,7 @@ CATALOG=[
 ("facade","Solar and Radiation","Vertical façade irradiation",G,"kWh/m²","facade"),
 ("sunpath","Solar and Radiation","Sun path",N,"Wh/m²","sunpath"),
 ("wind_rose","Wind and Ventilation","Wind rose",V,"m/s","windrose"),
+("wind_rose_panel","Wind and Ventilation","Monthly wind rose panel (12 months)",V,"%","wind_panel"),
 ("wind_speed","Wind and Ventilation","Monthly wind speed",V,"m/s","profile"),
 ("daylight","Sky and Daylight","Daylight envelope",T,"h","daylight"),
 ("rain","Precipitation and Snow","Monthly precipitation",P,"mm","total"),
@@ -325,7 +335,7 @@ def available_catalog(df,context):
     def has(*cols):
         return all(numeric(df,c).notna().any() for c in cols)
     requirements={"psychrometric":(T,RH,W),"facade":(G,D,N,"solar_apparent_zenith_deg","solar_azimuth_deg"),
-       "sunpath":(N,"solar_apparent_zenith_deg","solar_azimuth_deg"),"windrose":(V,"wind_direction_deg"),
+       "sunpath":(N,"solar_apparent_zenith_deg","solar_azimuth_deg"),"windrose":(V,"wind_direction_deg"),"wind_panel":(V,"wind_direction_deg"),
        "climograph":(T,P),"nv":(T,W),"night":(T,),"degree":(T,),"shade":(T,G),"utci":(T,RH,V)}
     out=[]
     for entry in CATALOG:
@@ -379,6 +389,9 @@ def standard_figure(entry,df,context,reference_df=None):
         fig=orientation_components_chart(a,f,tilt_deg=90.,style="Bar chart",selected=())
         note="Unobstructed vertical POA; isotropic diffuse model and default ground albedo."
     elif kind=="sunpath":fig=sun_path_chart(df);note="Solar position and direct-normal radiation for selected source records."
+    elif kind=="wind_panel":
+        from .directional_climate import monthly_wind_rose_panel,MONTHLY_WIND_ROSE_NOTE
+        fig,_=monthly_wind_rose_panel(df,title=label);note=MONTHLY_WIND_ROSE_NOTE
     elif kind=="windrose":
         from .directional_climate import directional_class_table,directional_class_figure,class_interpretation
         table=directional_class_table(df,radial="Percentage",quantity="Wind speed")

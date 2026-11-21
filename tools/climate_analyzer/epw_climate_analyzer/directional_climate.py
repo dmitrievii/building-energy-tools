@@ -261,3 +261,100 @@ def class_interpretation(table):
             f"All classes partition {total:.1f} valid non-calm hours. "
             "Missing coincident inputs and calm intervals are excluded; percentage uses the sum of all classified hours, not the hours within each individual direction. "
             "Colours indicate mutually exclusive classes, not per-direction means.")
+
+
+MONTHLY_WIND_ROSE_NOTE = ("Each month uses its valid non-calm coincident source records within the active data filter. "
+    "Percentage is normalized separately by month; hours preserve physical source duration. "
+    "Calendar months pool selected years. All panels share the radial range and colour mapping; "
+    "months without valid observations remain labelled, not interpreted as zero wind.")
+
+def monthly_wind_rose_panel(df,*,speed="wind_speed_m_s",direction="wind_direction_deg",
+                           radial="Percentage",colour="Wind speed",style="Class distribution",
+                           edges=None,title="Monthly wind roses"):
+    """Build twelve aligned polar panels using the same single-rose ledgers."""
+    from .wind_rose_selection import select_wind_rose_period
+    tables={};figures={};peaks=[];colour_values=[]
+    classes=style=="Class distribution"
+    for month in range(1,13):
+        data=select_wind_rose_period(df,month=month)
+        if data.empty:continue
+        if classes:
+            table=directional_class_table(data,speed=speed,direction=direction,quantity=colour,radial=radial,edges=edges)
+            if table.attrs["valid_hours"]<=0:continue
+            one=directional_class_figure(table,"")
+            peaks.append(float(table.sum(axis=1).max()))
+        else:
+            table=directional_table(data,speed=speed,direction=direction,radial=radial,colour=colour)
+            if not table.valid_hours.gt(0).any():continue
+            one=directional_figure(table,radial,colour,"")
+            peaks.extend(table.radius.dropna().tolist())
+            colour_values.extend(table.colour.dropna().tolist())
+        tables[month]=table;figures[month]=one
+    if not tables:raise ValueError("No valid coincident non-calm observations for any month.")
+    max_r=max([0.,*peaks])
+    # Three readable radial intervals, rounded upward, no clipping.
+    step=max_r/3 if max_r>0 else 1.
+    power=10.**np.floor(np.log10(step))
+    step=next(v*power for v in (1.,2.,2.5,5.,10.) if v*power>=step-1e-12*power)
+    upper=3*step
+    fig=go.Figure()
+    first=min(tables)
+    limits={}
+    if not classes:
+        if colour in ("Relative humidity","Natural ventilation suitability"):limits=dict(cmin=0.,cmax=100.)
+        else:
+            lo,hi=min(colour_values),max(colour_values)
+            if lo==hi:hi=lo+max(1.,abs(lo)*.01)
+            limits=dict(cmin=lo,cmax=hi)
+    month_info=[]
+    for month in range(1,13):
+        name="polar" if month==1 else f"polar{month}"
+        polar=dict(barmode="stack" if classes else "overlay",
+            angularaxis=dict(rotation=90,direction="clockwise",tickvals=ANGLES[::2],ticktext=COMPASS[::2],tickfont=dict(size=10)),
+            radialaxis=dict(range=[0.,upper],tickmode="array",tickvals=[step,2*step,upper],tickformat=".3g",tickfont=dict(size=9),angle=45))
+        fig.update_layout(**{name:polar})
+        if month not in tables:
+            fig.add_trace(go.Barpolar(subplot=name,theta=[0],r=[0.],marker_color="rgba(0,0,0,0)",showlegend=False,hoverinfo="skip"))
+            month_info.append((month,None))
+            continue
+        table=tables[month]
+        valid=float(table.attrs["valid_hours"] if classes else table.valid_hours.sum())
+        month_info.append((month,valid))
+        for tr in figures[month].data:
+            tr.subplot=name
+            tr.showlegend=bool(classes and month==first)
+            if classes:tr.legendgroup=str(tr.name)
+            else:
+                tr.marker.update(**limits,showscale=month==first)
+                if month==first:tr.marker.colorbar.update(x=1.02,y=.5,len=.76,thickness=14)
+            fig.add_trace(tr)
+    fig.update_layout(template="plotly_white",title=title,height=1180,barmode="stack" if classes else "overlay",
+        legend=dict(orientation="h",xref="container",x=.5,xanchor="center",yref="container",y=.01,yanchor="bottom",
+                    title=dict(text=f"{colour} classes · radius [{RADIAL_UNITS[radial]}]")),
+        margin=dict(l=38,r=34 if classes else 125,t=70,b=88 if classes else 35),
+        meta={"compass_polar":True,"layout_kind":"monthly_wind_rose_panel","wind_months":month_info,
+              "wind_panel_classes":classes,"wind_radial_unit":RADIAL_UNITS[radial]})
+    reflow_monthly_wind_roses(fig,columns=3)
+    return fig,tables
+
+def reflow_monthly_wind_roses(fig,*,columns=3,font_size=12):
+    """Keep all polar domains intact when laying out browser/print panels."""
+    meta=fig.layout.meta
+    if not isinstance(meta,dict) or meta.get("layout_kind")!="monthly_wind_rose_panel":return fig
+    import calendar
+    rows=12//columns
+    annotations=[]
+    for month,hours in meta["wind_months"]:
+        row,col=divmod(int(month)-1,columns)
+        x0=(col+.075)/columns;x1=(col+.925)/columns
+        y0=1-(row+.94)/rows;y1=1-(row+.22)/rows
+        name="polar" if month==1 else f"polar{month}"
+        polar=getattr(fig.layout,name)
+        polar.domain=dict(x=[x0,x1],y=[y0,y1])
+        polar.angularaxis.tickfont.size=max(8,min(11,font_size*.78))
+        polar.radialaxis.tickfont.size=max(7,min(10,font_size*.70))
+        text=calendar.month_abbr[int(month)]+(" · no data" if hours is None else f" · {hours:g} h")
+        annotations.append(dict(x=(x0+x1)/2,y=1-(row+.055)/rows,xref="paper",yref="paper",
+            text=text,showarrow=False,xanchor="center",yanchor="top",font=dict(size=max(9,font_size*.9))))
+    fig.update_layout(annotations=annotations)
+    return fig
