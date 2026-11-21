@@ -50,7 +50,7 @@ def _events(table,render,*,key,unit,threshold,series=None,above=True,quantity="T
     _show_table(table,key)
 
 def temperature_panel(df,render):
-    view=st.selectbox("Extreme-day analysis",["Heatwaves and cold spells","Frost days and tropical nights","Critical consecutive days"],key="p4_temperature_view")
+    view=st.selectbox("Extreme-day analysis",["Heatwaves, cold spells and consecutive days","Frost days and tropical nights"],key="p4_temperature_view")
     try:
         if view=="Frost days and tropical nights":
             a=p.day_indicators(df)

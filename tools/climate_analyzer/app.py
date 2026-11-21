@@ -3336,6 +3336,12 @@ def render_temperature(
         render_plot(fig, temperature_interpretation(df, heat_threshold, cool_threshold))
     else:
         st.subheader("Extreme daily conditions")
+        if interval_count_metrics:
+            view=st.selectbox("View",["Daily extremes and ranking","Extreme events and day indicators"],key="p4_temperature_extremes")
+            if view=="Extreme events and day indicators":
+                from epw_climate_analyzer.p4_ui import temperature_panel
+                temperature_panel(df,render_plot)
+                return
         daily = df["dry_bulb_temperature_c"].resample("D").agg(mean="mean", min="min", max="max")
         hottest = daily.sort_values("max", ascending=False).head(10)
         coldest = daily.sort_values("min", ascending=True).head(10)
@@ -3356,6 +3362,7 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
         from epw_climate_analyzer.p3_comfort import complete,DEW
         if complete(df,DEW):
             chart_options.append("Condensation potential")
+        chart_options.append("Humidity persistence")
     chart_group = st.selectbox("Analysis type", chart_options, key="humidity_analysis_type")
     if chart_group == "Humidity variable explorer":
         render_generic_variable_page(
@@ -3519,6 +3526,9 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
         render_interpretation(psychrometric_interpretation(report_df))
         if show_givoni:
             render_bioclimatic_report(report_df)
+    elif chart_group == "Humidity persistence":
+        from epw_climate_analyzer.p4_ui import persistence_panel
+        persistence_panel(df,render_plot)
     elif chart_group == "Condensation potential":
         from epw_climate_analyzer.p3_ui import condensation_panel
         condensation_panel(df,render_plot)
@@ -3544,6 +3554,11 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
         fig = threshold_bar_chart(counts, f"Moisture threshold hours: {mode}")
         render_plot(fig, psychrometric_interpretation(df))
     else:
+        view=st.selectbox("Representation",["Scatter","Joint probability density"],key="p4_humidity_relation")
+        if view=="Joint probability density":
+            from epw_climate_analyzer.p4_ui import multivariate_panel
+            multivariate_panel(df,render_plot,density_only=True)
+            return
         x_label = st.selectbox("X variable", ["Dry-bulb temperature", "Dew-point temperature", "Humidity ratio", "Moist-air enthalpy"])
         y_label = st.selectbox("Y variable", ["Humidity ratio", "Relative humidity", "Moist-air enthalpy", "Wet-bulb temperature"])
         x, x_unit = VARIABLES[x_label]
@@ -4126,6 +4141,8 @@ def render_wind(df: pd.DataFrame) -> None:
         options.append("Wind variable explorer")
     if paired_datasets:
         options.append("Wind rose")
+    if numeric("wind_speed_m_s"):
+        options.append("Wind persistence and calm periods")
     if not options:
         st.info("No usable wind observations are available in the selected interval.")
         return
@@ -4142,6 +4159,10 @@ def render_wind(df: pd.DataFrame) -> None:
     if chart_group == "Wind variable explorer":
         default = "Wind speed" if "Wind speed" in variable_labels else variable_labels[0]
         render_generic_variable_page(df, variable_labels, default, "Wind", None)
+        return
+    if chart_group=="Wind persistence and calm periods":
+        from epw_climate_analyzer.p4_ui import persistence_panel
+        persistence_panel(df,render_plot,wind=True)
         return
 
     dataset_labels = [item[0] for item in paired_datasets]
@@ -4273,7 +4294,9 @@ def render_precipitation(df: pd.DataFrame, native_df: pd.DataFrame | None = None
 
     options: list[str] = []
     if liquid_available:
-        options.extend(["Precipitation totals", "Annual precipitation indices", "Liquid precipitation explorer"])
+        options.extend(["Precipitation totals", "Annual precipitation indices", "Liquid precipitation explorer", "Wet and dry spells", "Precipitation accumulation"])
+        if native_df is not None and native_liquid_available:
+            options.append("Empirical IDF")
         if "dry_bulb_temperature_c" in df and pd.to_numeric(df["dry_bulb_temperature_c"],errors="coerce").notna().any():
             options.append("Temperature–precipitation diagrams")
     if native_liquid_available:
@@ -4283,13 +4306,19 @@ def render_precipitation(df: pd.DataFrame, native_df: pd.DataFrame | None = None
     if hourly_snow_available:
         options.append("Snow depth explorer")
     if native_snow_available:
-        options.extend(["Snow-cover duration", "Snow-season indices"])
+        options.extend(["Snow-cover duration", "Snow-season indices", "Snow-cover calendar"])
+    if "dry_bulb_temperature_c" in df and pd.to_numeric(df["dry_bulb_temperature_c"],errors="coerce").notna().any():
+        options.append("Freeze–thaw days")
     if not options:
         st.info("The loaded climate interval does not contain usable liquid-precipitation or snow-depth observations.")
         return
 
     chart_group = st.selectbox("Analysis type", options)
 
+    if chart_group in ("Wet and dry spells","Precipitation accumulation","Empirical IDF","Snow-cover calendar","Freeze–thaw days"):
+        from epw_climate_analyzer.p4_ui import precipitation_panel
+        precipitation_panel(df,native_df,chart_group,render_plot)
+        return
     if chart_group == "Temperature–precipitation diagrams":
         render_climate_summary_charts(df)
         return
@@ -4996,6 +5025,11 @@ def render_hvac_passive(df: pd.DataFrame) -> None:
         fig = threshold_bar_chart(counts, "Air-side economizer availability", "hours")
         render_plot(fig, hvac_interpretation(df))
     elif chart_group == "Design-day candidates":
+        view=st.selectbox("View",["Daily ranking","Statistical design conditions and sequences"],key="p4_hvac_design")
+        if view=="Statistical design conditions and sequences":
+            from epw_climate_analyzer.p4_ui import hvac_panel
+            hvac_panel(df,render_plot)
+            return
         daily_aggregation = {
             "mean_t": ("dry_bulb_temperature_c", "mean"),
             "min_t": ("dry_bulb_temperature_c", "min"),
@@ -5042,6 +5076,16 @@ def render_time_series_overlay(df: pd.DataFrame) -> None:
     st.header("Time series and overlay")
     native_minutes = native_resolution_minutes(pd.DatetimeIndex(df.index))
     native_calendar = str(df.attrs.get("canonical_native_resolution", "")).strip().lower()
+    options=["Time series overlay","Multivariate analysis"]+(["Critical event viewer"] if native_calendar!="monthly" else [])
+    view=st.selectbox("Analysis type",options,key="p4_overlay_analysis")
+    if view=="Multivariate analysis":
+        from epw_climate_analyzer.p4_ui import multivariate_panel
+        multivariate_panel(df,render_plot)
+        return
+    if view=="Critical event viewer":
+        from epw_climate_analyzer.p4_ui import event_viewer
+        event_viewer(df,render_plot)
+        return
     if native_calendar == "monthly":
         st.caption(
             "Source resolution: calendar month. Choose whole published months and overlay up to six series. "

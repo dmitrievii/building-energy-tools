@@ -62,4 +62,17 @@ class P4Tests(unittest.TestCase):
         self.assertAlmostEqual(a.return_period_y.max(),11.)
         with self.assertRaises(ValueError):p.empirical_idf(df.drop(idx[45]),historical_native=True)
 
+    def test_p4_route_contract(self):
+        import ast
+        from pathlib import Path
+        source=(Path(__file__).resolve().parents[1]/"app.py").read_text(encoding="utf-8")
+        funcs={n.name:ast.get_source_segment(source,n) for n in ast.parse(source).body if isinstance(n,ast.FunctionDef)}
+        for name,token in (("render_temperature","temperature_panel"),("render_humidity","persistence_panel"),
+                           ("render_humidity","multivariate_panel"),("render_wind","persistence_panel"),
+                           ("render_precipitation","precipitation_panel"),("render_hvac_passive","hvac_panel"),
+                           ("render_time_series_overlay","multivariate_panel"),("render_time_series_overlay","event_viewer")):
+            self.assertIn(token,funcs[name])
+        self.assertIn("precipitation_panel(df,native_df,chart_group,render_plot)",funcs["render_precipitation"])
+        self.assertIn("native_df is not None and native_liquid_available",funcs["render_precipitation"])
+
 if __name__=="__main__":unittest.main()

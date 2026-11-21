@@ -96,7 +96,7 @@ def render_plot(fig,text):
 """
         app=AppTest.from_string(script+"\n"+renderer+"\nrender_wind(df)",default_timeout=45).run()
         self.assertFalse(app.exception)
-        self.assertEqual(app.selectbox(key="wind_analysis_type").options,["Wind variable explorer","Wind rose"])
+        self.assertEqual(app.selectbox(key="wind_analysis_type").options,["Wind variable explorer","Wind rose","Wind persistence and calm periods"])
         app.selectbox(key="wind_analysis_type").set_value("Wind rose").run()
         self.assertFalse(app.exception)
         self.assertEqual(app.selectbox(key="wind_rose_aggregation").value,"Annual")
