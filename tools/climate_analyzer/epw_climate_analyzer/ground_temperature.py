@@ -258,6 +258,7 @@ def animated_profile_gif_bytes(
     duration_ms: int = 700,
     width: int = 900,
     height: int = 650,
+    transparent: bool = False,
 ) -> bytes:
     """Render a fixed-axis, infinitely looping 12-month GIF.
 
@@ -308,7 +309,8 @@ def animated_profile_gif_bytes(
     x_ticks = np.linspace(x_min, x_max, 6)
     z_ticks = np.linspace(z_min, z_max, 6)
     for month_index, month in enumerate(months, start=1):
-        image = Image.new("RGB", (int(width), int(height)), background)
+        image = Image.new("RGBA" if transparent else "RGB", (int(width), int(height)),
+                          (255, 255, 255, 0) if transparent else background)
         draw = ImageDraw.Draw(image)
         draw.text((left, 20), f"Ground-temperature profile — {month}", fill=axis, font=font)
 
@@ -358,7 +360,17 @@ def animated_profile_gif_bytes(
             x0, y0 = plot_right - 85, 35
             draw.ellipse((x0 - 4, y0 - 4, x0 + 4, y0 + 4), outline=observed, width=2)
             draw.text((x0 + 10, 29), "Observed", fill=axis, font=font)
-        frames.append(image)
+        if transparent:
+            # GIF supports single-index (binary) transparency. Reserve index
+            # 255 explicitly so none of the plotted data colours is removed.
+            alpha = image.getchannel("A")
+            palette_image = image.convert("RGB").quantize(colors=255)
+            palette = palette_image.getpalette()
+            palette_image.putpalette((palette + [255] * 768)[:768])
+            palette_image.paste(255, mask=alpha.point(lambda a: 255 if a < 128 else 0))
+            frames.append(palette_image)
+        else:
+            frames.append(image)
 
     output = BytesIO()
     frames[0].save(
@@ -370,6 +382,7 @@ def animated_profile_gif_bytes(
         loop=0,
         disposal=2,
         optimize=False,
+        **({"transparency": 255, "background": 255} if transparent else {}),
     )
     return output.getvalue()
 

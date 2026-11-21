@@ -14,6 +14,7 @@ from epw_climate_analyzer.chart_presentation import (
     ChartPresentationSettings,
     DEFAULT_FONT_SIZE, KEY_FONT, ensure_default_state, reset_state, settings_from_state,
     apply_chart_presentation,
+    BACKGROUND_TRANSPARENT, BACKGROUND_WHITE, KEY_BACKGROUND, TRANSPARENT_COLOR,
     merge_plotly_config,
 )
 
@@ -35,6 +36,51 @@ class GlobalChartPresentationTests(unittest.TestCase):
         self.assertEqual(settings_from_state(state).font_size, 14)
         reset_state(state)
         self.assertEqual(state[KEY_FONT], 18)
+
+    def test_global_background_default_reset_and_persistence(self) -> None:
+        state = {}
+        ensure_default_state(state)
+        self.assertEqual(state[KEY_BACKGROUND], BACKGROUND_WHITE)
+        state[KEY_BACKGROUND] = BACKGROUND_TRANSPARENT
+        ensure_default_state(state)
+        self.assertTrue(settings_from_state(state).transparent)
+        reset_state(state)
+        self.assertFalse(settings_from_state(state).transparent)
+        state[KEY_BACKGROUND] = "invalid"
+        self.assertEqual(settings_from_state(state).background, BACKGROUND_WHITE)
+
+    def test_background_applies_to_cartesian_polar_3d_subplots_and_legends(self) -> None:
+        from plotly.subplots import make_subplots
+        fig = make_subplots(rows=1, cols=4, specs=[[{"type":"xy"},{"type":"polar"},
+                                                    {"type":"polar"},{"type":"scene"}]])
+        fig.add_trace(go.Scatter(x=[1,2], y=[2,3], fill="tozeroy",
+                                 fillcolor="rgba(20,30,40,0.4)"), row=1,col=1)
+        fig.add_trace(go.Barpolar(theta=[0,90],r=[1,2]),row=1,col=2)
+        fig.add_trace(go.Scatterpolar(theta=[0,90],r=[2,3]),row=1,col=3)
+        fig.add_trace(go.Scatter3d(x=[0,1],y=[0,1],z=[0,1]),row=1,col=4)
+        fig.update_layout(legend=dict(bgcolor="pink"),legend2=dict(bgcolor="blue"))
+        fig.add_shape(type="rect", x0=0,x1=1,y0=0,y1=1,fillcolor="yellow")
+        for choice,color in ((BACKGROUND_TRANSPARENT,TRANSPARENT_COLOR),(BACKGROUND_WHITE,"white")):
+            apply_chart_presentation(fig, ChartPresentationSettings(background=choice))
+            self.assertEqual(fig.layout.paper_bgcolor,color)
+            self.assertEqual(fig.layout.plot_bgcolor,color)
+            self.assertEqual(fig.layout.polar.bgcolor,color)
+            self.assertEqual(fig.layout.polar2.bgcolor,color)
+            self.assertEqual(fig.layout.scene.bgcolor,color)
+            self.assertEqual(fig.layout.scene.zaxis.backgroundcolor,color)
+            self.assertEqual(fig.layout.legend.bgcolor,color)
+            self.assertEqual(fig.layout.legend2.bgcolor,color)
+            self.assertEqual(fig.data[0].fillcolor,"rgba(20,30,40,0.4)")
+            self.assertEqual(fig.layout.shapes[0].fillcolor,"yellow")
+        implicit=go.Figure(go.Barpolar(theta=[0],r=[1]))
+        apply_chart_presentation(implicit,ChartPresentationSettings(background=BACKGROUND_TRANSPARENT))
+        self.assertEqual(implicit.layout.polar.bgcolor,TRANSPARENT_COLOR)
+
+    def test_transparent_export_preserves_png_and_svg_and_rejects_jpeg(self) -> None:
+        settings=ChartPresentationSettings(background=BACKGROUND_TRANSPARENT)
+        for fmt,expected in (("jpeg","png"),("png","png"),("svg","svg")):
+            result=merge_plotly_config({"toImageButtonOptions":{"format":fmt}},settings)
+            self.assertEqual(result["toImageButtonOptions"]["format"],expected)
 
     def test_canvas_presets_have_deterministic_dimensions(self) -> None:
         self.assertEqual(

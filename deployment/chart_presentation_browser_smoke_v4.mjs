@@ -232,6 +232,62 @@ try {
   report.metrics.autoRestored = metrics;
   await page.screenshot({ path: `${OUT_DIR}/06-auto-restored.png`, fullPage: true });
 
+  // Exercise the actual exported PNG alpha channel, not just CSS or layout.
+  async function chooseBackground(index) {
+    const f=await openPresentation(page);
+    await f.getByRole('combobox',{name:'Chart background',exact:true}).click();
+    await page.keyboard.press('Home');
+    if(index===1) await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    await waitForCharts(page);
+    await page.waitForFunction(transparent=>[...document.querySelectorAll('.js-plotly-plot')].every(
+      node=>node._fullLayout?.paper_bgcolor===(transparent?'rgba(0,0,0,0)':'white')),
+      index===1);
+  }
+  async function exportAlpha(chartIndex) {
+    const f=await waitForCharts(page);
+    const plot=f.locator('.js-plotly-plot').nth(chartIndex);
+    await plot.hover();
+    const pending=page.waitForEvent('download',{timeout:30000});
+    await plot.locator('.modebar-btn[data-title*="Download plot"]').first().click();
+    const download=await pending;
+    const file=await download.path();
+    const png=await fs.readFile(file);
+    return await page.evaluate(async data=>{
+      const im=new Image();
+      im.src='data:image/png;base64,'+data;
+      await im.decode();
+      const canvas=document.createElement('canvas');
+      canvas.width=im.width;canvas.height=im.height;
+      const ctx=canvas.getContext('2d');
+      ctx.drawImage(im,0,0);
+      const pixels=ctx.getImageData(0,0,im.width,im.height).data;
+      let clear=0,opaque=0;
+      for(let i=3;i<pixels.length;i+=4){if(pixels[i]===0)clear++;if(pixels[i]===255)opaque++;}
+      return {corner:pixels[3],clear,opaque,width:im.width,height:im.height};
+    },png.toString('base64'));
+  }
+  await chooseBackground(1);
+  const bgFrame=await waitForCharts(page);
+  const backgrounds=await bgFrame.locator('.js-plotly-plot').evaluateAll(nodes=>nodes.map(node=>({
+    paper:node._fullLayout.paper_bgcolor,plot:node._fullLayout.plot_bgcolor,
+    polar:node._fullLayout.polar?.bgcolor||null
+  })));
+  if(backgrounds.some(x=>x.paper!=='rgba(0,0,0,0)' || (x.polar && x.polar!=='rgba(0,0,0,0)')))
+    throw new Error('Global background failed: '+JSON.stringify(backgrounds));
+  const transparentLine=await exportAlpha(0);
+  const transparentWind=await exportAlpha(3);
+  for(const a of [transparentLine,transparentWind]){
+    if(a.corner!==0 || a.clear<1000 || a.opaque<100)
+      throw new Error('PNG does not preserve both transparent background and foreground: '+JSON.stringify(a));
+  }
+  await chooseBackground(0);
+  const whiteWind=await exportAlpha(3);
+  if(whiteWind.corner!==255 || whiteWind.clear!==0)
+    throw new Error('White background restoration failed: '+JSON.stringify(whiteWind));
+  report.metrics.globalBackground={backgrounds,transparentLine,transparentWind,whiteWind};
+  report.checks.globalBackgroundAndPngAlpha=true;
+
   // A separate harness route exercises the actual monthly chart factory.
   await page.goto(TARGET_URL + '?monthly=1', { waitUntil: 'domcontentloaded' });
   let monthlyFrame = await waitForCharts(page, 1);

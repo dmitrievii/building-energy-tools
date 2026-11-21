@@ -74,6 +74,21 @@ class DaylightGround073Tests(unittest.TestCase):
         self.assertEqual(image.n_frames, 12)
         self.assertEqual(int(image.info.get("loop", -1)), 0)
 
+    def test_ground_gif_transparency_is_preserved_in_every_frame(self) -> None:
+        harmonic = AnnualHarmonic(mean_c=10.5,sin_c=-2.3,cos_c=-10.9,amplitude_c=11.14)
+        profile = monthly_ground_profile(harmonic,np.linspace(0.,15.,61),2.,2000.,1000.)
+        for transparent in (False,True):
+            image=Image.open(BytesIO(animated_profile_gif_bytes(
+                profile,width=640,height=480,transparent=transparent)))
+            self.assertEqual(image.n_frames,12)
+            for i in range(image.n_frames):
+                image.seek(i)
+                rgba=image.convert("RGBA")
+                self.assertEqual(rgba.getpixel((0,0))[3],0 if transparent else 255)
+                self.assertEqual(rgba.getpixel((105,100))[3],255)  # axis remains visible
+                if transparent:
+                    self.assertGreater(np.count_nonzero(np.asarray(rgba)[:,:,3]==0),1000)
+
     def test_geosphere_ground_fields_are_canonical_and_pages_are_exposed(self) -> None:
         self.assertEqual(FIELD_SPEC_BY_PROVIDER["tb10"].canonical_name, "ground_temperature_0_10m_c")
         self.assertEqual(FIELD_SPEC_BY_PROVIDER["tb20"].canonical_name, "ground_temperature_0_20m_c")

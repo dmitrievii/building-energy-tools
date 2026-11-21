@@ -40,6 +40,12 @@ CANVAS_DIMENSIONS: dict[str, tuple[int, int]] = {
     CANVAS_PORTRAIT: (900, 1200),
 }
 
+BACKGROUND_WHITE = "White"
+BACKGROUND_TRANSPARENT = "Transparent"
+BACKGROUND_OPTIONS = (BACKGROUND_WHITE, BACKGROUND_TRANSPARENT)
+DEFAULT_BACKGROUND = BACKGROUND_WHITE
+TRANSPARENT_COLOR = "rgba(0,0,0,0)"
+
 DEFAULT_CANVAS = CANVAS_AUTO
 DEFAULT_WIDTH_PERCENT = 100
 DEFAULT_FONT_SIZE = 18
@@ -50,6 +56,7 @@ DEFAULT_CUSTOM_HEIGHT = 800
 KEY_CANVAS = "chart_presentation_canvas"
 KEY_WIDTH = "chart_presentation_width_percent"
 KEY_FONT = "chart_presentation_font_size"
+KEY_BACKGROUND = "chart_presentation_background"
 KEY_EXPORT_SCALE = "chart_presentation_export_scale"
 KEY_CUSTOM_WIDTH = "chart_presentation_custom_width"
 KEY_CUSTOM_HEIGHT = "chart_presentation_custom_height"
@@ -63,6 +70,11 @@ class ChartPresentationSettings:
     export_scale: int = DEFAULT_EXPORT_SCALE
     custom_width: int = DEFAULT_CUSTOM_WIDTH
     custom_height: int = DEFAULT_CUSTOM_HEIGHT
+    background: str = DEFAULT_BACKGROUND
+
+    @property
+    def transparent(self) -> bool:
+        return self.background == BACKGROUND_TRANSPARENT
 
     @property
     def is_auto(self) -> bool:
@@ -91,8 +103,12 @@ def settings_from_state(state: Mapping[str, Any]) -> ChartPresentationSettings:
     canvas = str(state.get(KEY_CANVAS, DEFAULT_CANVAS))
     if canvas not in CANVAS_OPTIONS:
         canvas = DEFAULT_CANVAS
+    background = state.get(KEY_BACKGROUND, DEFAULT_BACKGROUND)
+    if background not in BACKGROUND_OPTIONS:
+        background = DEFAULT_BACKGROUND
     return ChartPresentationSettings(
         canvas=canvas,
+        background=background,
         width_percent=int(state.get(KEY_WIDTH, DEFAULT_WIDTH_PERCENT)),
         font_size=int(state.get(KEY_FONT, DEFAULT_FONT_SIZE)),
         export_scale=int(state.get(KEY_EXPORT_SCALE, DEFAULT_EXPORT_SCALE)),
@@ -105,6 +121,7 @@ def reset_state(state: MutableMapping[str, Any]) -> None:
     state[KEY_CANVAS] = DEFAULT_CANVAS
     state[KEY_WIDTH] = DEFAULT_WIDTH_PERCENT
     state[KEY_FONT] = DEFAULT_FONT_SIZE
+    state[KEY_BACKGROUND] = DEFAULT_BACKGROUND
     state[KEY_EXPORT_SCALE] = DEFAULT_EXPORT_SCALE
     state[KEY_CUSTOM_WIDTH] = DEFAULT_CUSTOM_WIDTH
     state[KEY_CUSTOM_HEIGHT] = DEFAULT_CUSTOM_HEIGHT
@@ -115,6 +132,7 @@ def ensure_default_state(state: MutableMapping[str, Any]) -> None:
     state.setdefault(KEY_CANVAS, DEFAULT_CANVAS)
     state.setdefault(KEY_WIDTH, DEFAULT_WIDTH_PERCENT)
     state.setdefault(KEY_FONT, DEFAULT_FONT_SIZE)
+    state.setdefault(KEY_BACKGROUND, DEFAULT_BACKGROUND)
     state.setdefault(KEY_EXPORT_SCALE, DEFAULT_EXPORT_SCALE)
     state.setdefault(KEY_CUSTOM_WIDTH, DEFAULT_CUSTOM_WIDTH)
     state.setdefault(KEY_CUSTOM_HEIGHT, DEFAULT_CUSTOM_HEIGHT)
@@ -223,6 +241,47 @@ def _space_bottom_legends(fig: Any, settings: ChartPresentationSettings, size: i
     legend.yanchor = "bottom"
 
 
+def _apply_background(layout: Any, color: str, traces=()) -> None:
+    """Change only canvas and subplot backgrounds, not analytical fills.
+
+    Discover both explicit layout subplots and implicit trace references, so
+    bare polar/3D figures and multiple subplot figures inherit the same setting.
+    """
+    layout.paper_bgcolor = color
+    layout.plot_bgcolor = color
+    names = set(getattr(layout, "_props", {}) or {})
+    names.add("legend")
+    for trace in traces:
+        props = getattr(trace, "_props", {}) or {}
+        kind = getattr(trace, "type", "")
+        if kind in {"scatterpolar", "scatterpolargl", "barpolar"}:
+            names.add(props.get("subplot") or "polar")
+        elif kind in {"scatter3d", "mesh3d", "surface", "cone", "streamtube",
+                      "volume", "isosurface"}:
+            names.add(props.get("scene") or "scene")
+        elif kind in {"scatterternary"}:
+            names.add(props.get("subplot") or "ternary")
+        if props.get("legend"):
+            names.add(props["legend"])
+        # Only modify existing colourbars; no new scales on ordinary traces.
+        if isinstance(props.get("marker"), Mapping) and "colorbar" in props["marker"]:
+            trace.marker.colorbar.bgcolor = color
+        if "colorbar" in props:
+            trace.colorbar.bgcolor = color
+    for name in sorted(names):
+        item = getattr(layout, name, None)
+        if item is None:
+            continue
+        if name.startswith(("polar", "ternary", "scene", "legend", "geo")):
+            if hasattr(item, "bgcolor"):
+                item.bgcolor = color
+            if name.startswith("scene"):
+                for axis_name in ("xaxis", "yaxis", "zaxis"):
+                    getattr(item, axis_name).backgroundcolor = color
+        elif name.startswith("coloraxis"):
+            item.colorbar.bgcolor = color
+
+
 def apply_chart_presentation(fig: Any, settings: ChartPresentationSettings) -> Any:
     """Apply presentation-only layout changes to a Plotly figure in place."""
     if fig is None or not hasattr(fig, "layout"):
@@ -235,6 +294,11 @@ def apply_chart_presentation(fig: Any, settings: ChartPresentationSettings) -> A
         return fig
 
     layout = fig.layout
+    background = TRANSPARENT_COLOR if settings.transparent else "white"
+    _apply_background(layout, background, fig.data)
+    for frame in getattr(fig, "frames", ()) or ():
+        if getattr(frame, "layout", None) is not None and frame.layout.to_plotly_json():
+            _apply_background(frame.layout, background, frame.data)
     try:
         _set_font_size(layout.title.font, size + 3)
     except Exception:
@@ -311,6 +375,8 @@ def merge_plotly_config(
     merged = dict(config or {})
     export_options = dict(merged.get("toImageButtonOptions") or {})
     export_options.setdefault("format", "png")
+    if settings.transparent and export_options["format"] not in ("png", "svg"):
+        export_options["format"] = "png"
     export_options["scale"] = max(1, min(3, int(settings.export_scale)))
     dimensions = settings.export_dimensions()
     if dimensions is not None:
@@ -347,6 +413,10 @@ def render_presentation_sidebar(st: Any) -> None:
             max_value=26,
             step=1,
             key=KEY_FONT,
+        )
+        st.selectbox(
+            "Chart background", BACKGROUND_OPTIONS, key=KEY_BACKGROUND,
+            help="Applies globally to all charts and image exports. Transparent PNG preserves the alpha channel for architectural overlays.",
         )
         st.select_slider(
             "Export scale",

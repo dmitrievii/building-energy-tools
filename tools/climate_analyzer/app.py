@@ -5156,7 +5156,11 @@ def render_ground_temperature_page(df: pd.DataFrame, *, source_label: str, nativ
         render_plot(animated_profile_figure(profile, measured if not measured.empty else None), "Interactive loop through January–December. The axes stay fixed while the calculated profile moves with seasonal phase lag and attenuation.")
     elif mode == "Looping GIF":
         gif_speed = st.slider("Frame duration [ms]", 300, 1500, 700, 100, key="ground_gif_duration")
-        gif_bytes = animated_profile_gif_bytes(profile, measured if not measured.empty else None, duration_ms=int(gif_speed))
+        from epw_climate_analyzer.chart_presentation import settings_from_state
+        gif_bytes = animated_profile_gif_bytes(
+            profile, measured if not measured.empty else None, duration_ms=int(gif_speed),
+            transparent=settings_from_state(st.session_state).transparent,
+        )
         st.image(gif_bytes, caption="Looping January–December ground-temperature profile")
         st.download_button(
             "Download GIF",
