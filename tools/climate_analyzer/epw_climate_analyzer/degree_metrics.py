@@ -252,7 +252,20 @@ def degree_metric_interpretation(
 
 
 def degree_legend_below(fig):
-    """Consistent placement in interactive charts, dashboards and exports."""
+    """Canonical degree-chart presentation, independent of trace order.
+
+    Repair legacy saved figures as well as new dashboard/Atlas figures.
+    Only named heating/cooling degree bars are recoloured; calculation
+    values, sign, grouping and unrelated traces remain untouched.
+    """
+    from .chart_theme import HEATING_COLOR, COOLING_COLOR
+    for trace in fig.data:
+        if trace.type!="bar":continue
+        name=str(trace.name or "").strip().lower()
+        if name.startswith(("heating degree","hgt","hdd")):
+            trace.marker.color=HEATING_COLOR
+        elif name.startswith(("cooling degree","kgt","cdd")):
+            trace.marker.color=COOLING_COLOR
     fig.update_layout(legend_title_text="",legend=dict(orientation="h",xref="container",x=.5,xanchor="center",yref="container",y=.01,yanchor="bottom"))
     fig.layout.margin.b=max(int(fig.layout.margin.b or 0),85)
     return fig

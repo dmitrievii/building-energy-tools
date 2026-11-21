@@ -244,6 +244,27 @@ class AtlasTests(unittest.TestCase):
         self.assertEqual(semantic_color_from_text("Illuminance >= 300 lux"),ILLUMINANCE_THRESHOLD_COLOR)
         self.assertEqual(threshold_bar_chart(pd.DataFrame({"hours":[10.]},index=["Jan"]),"Illuminance ≥ 300 lux").data[0].marker.color,ILLUMINANCE_THRESHOLD_COLOR)
 
+    def test_degree_colors_semantic_in_atlas_and_legacy_reports(self):
+        import plotly.graph_objects as go
+        from epw_climate_analyzer.chart_theme import HEATING_COLOR,COOLING_COLOR
+        from epw_climate_analyzer.degree_metrics import degree_legend_below
+        from epw_climate_analyzer.p6_report_structure import report_figure
+        df=self.fixture()
+        df[c.T]=np.repeat([5.,30.,8.,32.],24)
+        rows=[d for d in c.catalogue(df,{},c.FULL) if d.kind=="degree" and d.status=="available"]
+        self.assertEqual(len(rows),2*len(c.TOTAL_PERIODS))
+        for d in rows:
+            fig,_=make_figure(d,df,{})
+            for tr in fig.data:
+                self.assertEqual(tr.marker.color,HEATING_COLOR if tr.name.startswith("Heating") else COOLING_COLOR)
+        legacy=go.Figure()
+        legacy.add_bar(x=["Jan"],y=[3.],name="Cooling degree-days (KGT)",marker_color=HEATING_COLOR)
+        legacy.add_bar(x=["Jan"],y=[17.],name="Heating degree-days (HGT)",marker_color=COOLING_COLOR)
+        for fig in (report_figure(legacy,width_pt=500,height_pt=230),degree_legend_below(go.Figure(legacy))):
+            self.assertEqual([tr.marker.color for tr in fig.data],[COOLING_COLOR,HEATING_COLOR])
+            self.assertEqual([float(tr.y[0]) for tr in fig.data],[3.,17.])
+            self.assertEqual(fig.layout.legend.orientation,"h")
+
     def test_core_chart_families_execute(self):
         df=self.fixture();rows=[d for d in c.catalogue(df,{},c.FULL) if d.status=="available"]
         types=("time_series","profile","percentile","heatmap","duration","histogram","box","violin","diurnal","occurrence","amplitude","total","degree","temp_threshold","temp_events","day_indicators","wind_mean","wind_classes","wetdry","rolling","cumulative","freeze_days","eligibility_map","eligibility_total","nv_special","critical_windows","correlation","joint")
