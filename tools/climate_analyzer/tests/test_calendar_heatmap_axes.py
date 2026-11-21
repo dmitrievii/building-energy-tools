@@ -152,9 +152,51 @@ class CalendarHeatmapTests(unittest.TestCase):
             self.assertEqual((f.layout.coloraxis.cmin,f.layout.coloraxis.cmax),(-38.,48.))
         printed=report_figure(figs[1],width_pt=500,height_pt=230)
         self.assertEqual(printed.layout.coloraxis.colorscale,figs[1].layout.coloraxis.colorscale)
+        self.assertEqual(printed.layout.coloraxis.colorbar.tickvals,figs[1].layout.coloraxis.colorbar.tickvals)
         for c,f in zip(cols,figs):
             expected=temporal_heatmap_matrix(df,c,"day",HEATMAP_COMPARE_HOUR,"Mean")
             np.testing.assert_allclose(np.asarray(f.data[0].z,float),expected.values,equal_nan=True)
+
+    def test_absolute_temperature_family_and_ground_share_canonical_coloraxis(self):
+        from epw_climate_analyzer.chart_theme import TEMPERATURE_HEATMAP_COLUMNS,temperature_coloraxis,metric_colorscale
+        from epw_climate_analyzer.charts import temporal_heatmap_chart
+        from epw_climate_analyzer.comparison import ClimateDataset,heatmap_small_multiples
+        from epw_climate_analyzer.extended_visualization import ground_depth_heatmap
+        columns=("dry_bulb_temperature_c","dry_bulb_temperature_min_c","dry_bulb_temperature_max_c",
+                 "dew_point_temperature_c","wet_bulb_temperature_c","ground_temperature_0_10m_c",
+                 "ground_temperature_0_20m_c","ground_temperature_0_50m_c")
+        self.assertEqual(set(columns),TEMPERATURE_HEATMAP_COLUMNS)
+        idx=pd.date_range("2026-01-01",periods=48,freq="h")
+        df=pd.DataFrame({c:np.linspace(-5+i,20+i,48) for i,c in enumerate(columns)},index=idx)
+        df.loc[idx[0],columns[1]]=-38.
+        df.loc[idx[-1],columns[2]]=48.
+        df["hour_of_day"]=idx.hour
+        df["month"]=idx.month
+        df["day_of_year"]=idx.dayofyear
+        expected=temperature_coloraxis(frames=(df,),thresholds=(18.,26.))
+        def check(fig):
+            axis=fig.layout.coloraxis
+            self.assertEqual((axis.cmin,axis.cmax),(-38.,48.))
+            self.assertEqual(axis.colorscale,tuple(tuple(v) for v in expected["colorscale"]))
+            self.assertEqual(axis.colorbar.title.text,"°C")
+            self.assertEqual(axis.colorbar.tickvals,tuple(expected["colorbar"]["tickvals"]))
+            self.assertFalse(axis.cauto)
+        for column in columns:
+            for period in ("day","month"):
+                check(temporal_heatmap_chart(df,column,period,HEATMAP_COMPARE_HOUR,"Mean",column,"°C"))
+            self.assertEqual(metric_colorscale(column),metric_colorscale(columns[0]))
+        climates=[ClimateDataset("x","Example","fixture",None,df,[])]
+        check(heatmap_small_multiples(climates,columns[1],"day","Temperature","°C"))
+        check(ground_depth_heatmap(pd.DataFrame({"Jan":[5.,10.],"Feb":[8.,11.]},index=[0.,1.]),source_frames=(df,)))
+        self.assertNotIn("temperature_amplitude_k",TEMPERATURE_HEATMAP_COLUMNS)
+        equal=temperature_coloraxis(thresholds=(20.,20.))
+        self.assertTrue(all(b[0]>a[0] for a,b in zip(equal["colorscale"],equal["colorscale"][1:])))
+        # Extending the axis keeps all existing physical colour anchors unchanged.
+        base=temperature_coloraxis()
+        for position,color in base["colorscale"]:
+            temperature=base["cmin"]+position*(base["cmax"]-base["cmin"])
+            target=(temperature-expected["cmin"])/(expected["cmax"]-expected["cmin"])
+            self.assertTrue(any(abs(pos-target)<1e-10 and clr==color for pos,clr in expected["colorscale"]))
 
     def test_day_hour_statistics_only_when_cells_pool_source_records(self):
         from epw_climate_analyzer.aggregations import heatmap_scope_statistics

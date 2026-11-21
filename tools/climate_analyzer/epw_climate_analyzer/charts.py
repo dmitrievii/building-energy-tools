@@ -29,6 +29,7 @@ from .chart_theme import (
     TEMPERATURE_HEATMAP_COLUMNS,
     TEMPERATURE_COMFORT_COLORSCALE,
     temperature_gradient_domain,
+    temperature_coloraxis,
     ILLUMINANCE_COLUMNS,
     POA_COMPONENT_COLORS,
     SOURCE_IRRADIATION_COLORS,
@@ -381,10 +382,8 @@ def temporal_heatmap_chart(
         # One absolute colour domain for the three psychrometric temperatures
         # within this selected data scope, independent of the cell statistic.
         temperature_thresholds=temperature_thresholds or (18.,26.)
-        limits=[_finite_min_max(pd.to_numeric(df[c],errors="coerce")) for c in TEMPERATURE_HEATMAP_COLUMNS if c in df]
-        lower=min([v[0] for v in limits if v[0] is not None]+([zmin] if zmin is not None else []),default=None)
-        upper=max([v[1] for v in limits if v[1] is not None]+([zmax] if zmax is not None else []),default=None)
-        zmin,zmax,colorscale=temperature_gradient_domain(lower,upper,temperature_thresholds)
+        temperature_axis=temperature_coloraxis(frames=(df,),values=(matrix.values,),thresholds=temperature_thresholds)
+        zmin,zmax,colorscale=temperature_axis["cmin"],temperature_axis["cmax"],temperature_axis["colorscale"]
     else:colorscale = _heatmap_colorscale(column, matrix.values, temperature_thresholds)
     if column == "relative_humidity_pct":
         # Fixed physical domain, independent of climate, period and statistic.
@@ -483,6 +482,8 @@ def temporal_heatmap_chart(
     fig.update_layout(template=PLOT_TEMPLATE, margin=dict(l=40, r=20, t=70, b=45))
     from .calendar_heatmap_axes import apply_calendar_heatmap_axes
     from .calendar_heatmap_axes import set_period_axis_scope
+    if column in TEMPERATURE_HEATMAP_COLUMNS:
+        fig.update_coloraxes(**temperature_axis)
     if column in WIND_DIRECTION_COLUMNS:
         fig.update_coloraxes(colorbar=dict(title="Direction [°]",
             tickmode="array",tickvals=list(WIND_DIRECTION_TICKS),

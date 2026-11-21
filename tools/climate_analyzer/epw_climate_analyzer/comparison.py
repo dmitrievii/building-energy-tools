@@ -37,6 +37,9 @@ from .charts import _add_givoni_milne_overlay, _add_heat_index_overlay
 from .solar import orientation_annual_radiation, orientation_tilt_matrix, surface_irradiance_series
 from .chart_theme import (
     BINARY_SUITABILITY_COLORSCALE,
+    TEMPERATURE_HEATMAP_COLUMNS,
+    TEMPERATURE_COMFORT_COLORSCALE,
+    temperature_coloraxis,
     COOLING_COLOR,
     HEATING_COLOR,
     WIND_SPEED_COLOR_MAP,
@@ -53,7 +56,7 @@ PLOT_TEMPLATE = "plotly_white"
 MONTH_ORDER = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 ORIENTATION_ORDER = ["North", "North-East", "East", "South-East", "South", "South-West", "West", "North-West"]
 SOLAR_COLORSCALE = [[0.0, "#4c1d95"], [0.45, "#f97316"], [1.0, "#fef08a"]]
-TEMPERATURE_COLORSCALE = [[0.0, "#1d4ed8"], [0.45, "#22c55e"], [0.55, "#22c55e"], [1.0, "#dc2626"]]
+TEMPERATURE_COLORSCALE = TEMPERATURE_COMFORT_COLORSCALE
 
 
 DisplayMode = Literal["Auto", "Overlay", "Small multiples", "Difference to reference", "Ranked summary"]
@@ -281,16 +284,12 @@ def heatmap_small_multiples(climates: list[ClimateDataset], column: str, row_gro
     if column in ["global_horizontal_radiation_wh_m2", "direct_normal_radiation_wh_m2", "diffuse_horizontal_radiation_wh_m2"]:
         colorscale = SOLAR_COLORSCALE
         zmin = max(0.0, float(zmin or 0.0))
-    elif column in ("dry_bulb_temperature_c","dew_point_temperature_c","wet_bulb_temperature_c"):
-        from .chart_theme import temperature_gradient_domain,TEMPERATURE_HEATMAP_COLUMNS
-        extrema=[]
-        for climate in climates:
-            for c in TEMPERATURE_HEATMAP_COLUMNS:
-                if c in climate.data:
-                    v=pd.to_numeric(climate.data[c],errors="coerce").to_numpy(dtype=float)
-                    v=v[np.isfinite(v)]
-                    if len(v):extrema.extend([float(v.min()),float(v.max())])
-        zmin,zmax,colorscale=temperature_gradient_domain(min(extrema,default=None),max(extrema,default=None),temperature_thresholds or (18.,26.))
+    elif column in TEMPERATURE_HEATMAP_COLUMNS:
+        temperature_axis=temperature_coloraxis(
+            frames=(climate.data for climate in climates),
+            values=(matrix.values for matrix in matrices),
+            thresholds=temperature_thresholds or (18.,26.))
+        zmin,zmax,colorscale=temperature_axis["cmin"],temperature_axis["cmax"],temperature_axis["colorscale"]
     elif column in {"natural_ventilation_suitable", "night_flushing_suitable", "nv"} or "suitable" in column:
         colorscale = BINARY_SUITABILITY_COLORSCALE
         zmin = 0.0 if zmin is None else min(0.0, float(zmin))
@@ -304,6 +303,8 @@ def heatmap_small_multiples(climates: list[ClimateDataset], column: str, row_gro
             col=1,
         )
     fig.update_layout(template=PLOT_TEMPLATE, title=title, height=max(360, 260 * rows), coloraxis=dict(colorscale=colorscale, cmin=zmin, cmax=zmax, colorbar=dict(title=color_label)), margin=dict(l=40, r=20, t=70, b=45))
+    if column in TEMPERATURE_HEATMAP_COLUMNS:
+        fig.update_coloraxes(**temperature_axis)
     fig.update_xaxes(title_text=row_group.capitalize(), row=rows, col=1)
     fig.update_yaxes(title_text="Hour of day", range=[23, 0], autorangeoptions=dict(minallowed=0, maxallowed=23))
     from .calendar_heatmap_axes import apply_calendar_heatmap_axes

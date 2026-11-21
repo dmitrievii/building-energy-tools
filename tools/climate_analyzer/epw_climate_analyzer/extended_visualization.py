@@ -495,12 +495,15 @@ def amplitude_figure(df,column,aggregation,label):
     return apply_monthly_axes(fig)
 
 
-def ground_depth_heatmap(profile):
-    return go.Figure(go.Heatmap(x=list(profile.columns),y=profile.index,z=profile.to_numpy(dtype=float),
-                       colorscale="RdBu_r",colorbar=dict(title="°C"),
+def ground_depth_heatmap(profile, *, source_frames=(), temperature_thresholds=(18.,26.)):
+    from .chart_theme import temperature_coloraxis
+    values=profile.to_numpy(dtype=float)
+    axis=temperature_coloraxis(frames=source_frames,values=(values,),thresholds=temperature_thresholds)
+    return go.Figure(go.Heatmap(x=list(profile.columns),y=profile.index,z=values,
+                       coloraxis="coloraxis",
                        hovertemplate="%{x}<br>Depth %{y:g} m<br>%{z:.2f} °C<extra></extra>")).update_layout(
                        template="plotly_white",title="Calculated ground temperature by depth and month",
-                       xaxis_title="Month",yaxis=dict(title="Depth [m]",autorange="reversed"))
+                       coloraxis=axis,xaxis_title="Month",yaxis=dict(title="Depth [m]",autorange="reversed"))
 
 
 def daylight_envelope(index,latitude):

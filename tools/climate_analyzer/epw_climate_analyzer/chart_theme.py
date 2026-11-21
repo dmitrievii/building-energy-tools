@@ -39,7 +39,12 @@ POA_COMPONENT_COLORS = {
     "poa_ground_diffuse_wh_m2": "#7493AA",
 }
 
-TEMPERATURE_HEATMAP_COLUMNS = frozenset(("dry_bulb_temperature_c","dew_point_temperature_c","wet_bulb_temperature_c"))
+TEMPERATURE_HEATMAP_COLUMNS = frozenset((
+    "dry_bulb_temperature_c", "dry_bulb_temperature_min_c",
+    "dry_bulb_temperature_max_c", "dew_point_temperature_c",
+    "wet_bulb_temperature_c", "ground_temperature_0_10m_c",
+    "ground_temperature_0_20m_c", "ground_temperature_0_50m_c",
+))
 
 def temperature_gradient_domain(minimum=None,maximum=None,thresholds=(18.,26.)):
     """Continuous absolute temperature gradient; reference anchors at 18/26 °C.
@@ -51,6 +56,9 @@ def temperature_gradient_domain(minimum=None,maximum=None,thresholds=(18.,26.)):
     import math
     low,high=sorted(map(float,thresholds))
     if not math.isfinite(low) or not math.isfinite(high):raise ValueError("Temperature thresholds must be finite.")
+    # A coincident pair still needs a nonzero continuous transition.
+    if high == low:
+        low,high=low-0.05,high+0.05
     # Keep the cold and hot tails independent of the data range.
     anchors=[(low-33,"#1F2555"),(low-28,"#29357C"),(low-18,"#4259D5"),
              (low-8,"#809BEF"),(low,"#BCD1F9"),
@@ -58,10 +66,42 @@ def temperature_gradient_domain(minimum=None,maximum=None,thresholds=(18.,26.)):
              (high+4,"#D8662E"),(high+6,"#AD3025")]
     lo=min(anchors[0][0],float(minimum)) if minimum is not None and math.isfinite(minimum) else anchors[0][0]
     hi=max(anchors[-1][0],float(maximum)) if maximum is not None and math.isfinite(maximum) else anchors[-1][0]
-    if lo<anchors[0][0]:anchors.insert(0,(lo,"#151936"))
-    if hi>anchors[-1][0]:anchors.append((hi,"#781C1B"))
+    # Extend the numeric axis without changing the absolute mapping: beyond
+    # the fixed chromatic endpoints the colour saturates, not the data.
+    if lo<anchors[0][0]:anchors.insert(0,(lo,anchors[0][1]))
+    if hi>anchors[-1][0]:anchors.append((hi,anchors[-1][1]))
     scale=[[(v-lo)/(hi-lo),color] for v,color in anchors]
     return lo,hi,scale
+
+def temperature_coloraxis(*, frames=(), values=(), thresholds=(18.,26.)):
+    """Canonical absolute-temperature Plotly colour axis, including its legend.
+
+    All available absolute-temperature columns in the selected source scope
+    participate, independent of the displayed quantity or cell statistic.
+    Additional calculated values extend the bounds if necessary.
+    """
+    import math
+    import numpy as np
+    import pandas as pd
+    extrema=[]
+    def collect(raw):
+        v=np.asarray(raw,dtype=float).ravel()
+        v=v[np.isfinite(v)]
+        if v.size:
+            extrema.extend((float(v.min()),float(v.max())))
+    for frame in frames:
+        if frame is None:
+            continue
+        for column in TEMPERATURE_HEATMAP_COLUMNS:
+            if column in frame:
+                collect(pd.to_numeric(frame[column],errors="coerce").to_numpy(dtype=float))
+    for raw in values:
+        collect(raw)
+    lo,hi,scale=temperature_gradient_domain(min(extrema,default=None),max(extrema,default=None),thresholds)
+    step=5. if hi-lo<=80. else 10. if hi-lo<=160. else 20.
+    ticks=[float(i)*step for i in range(math.ceil(lo/step),math.floor(hi/step)+1)]
+    return dict(colorscale=scale,cmin=lo,cmax=hi,cauto=False,
+                colorbar=dict(title="°C",tickmode="array",tickvals=ticks,tickformat="g"))
 
 TEMPERATURE_COMFORT_COLORSCALE = temperature_gradient_domain()[2]
 # Sequential irradiation palette: white is a physical zero, high values
@@ -400,7 +440,7 @@ def metric_colorscale(column: str | None):
         return RELATIVE_HUMIDITY_COLORSCALE
     if text=="humidity_ratio_g_kg":
         return HUMIDITY_RATIO_COLORSCALE
-    if text in ("dry_bulb_temperature_c","dew_point_temperature_c","wet_bulb_temperature_c"):
+    if text in TEMPERATURE_HEATMAP_COLUMNS:
         return TEMPERATURE_COMFORT_COLORSCALE
     if text=="moist_air_enthalpy_kj_kg":
         return MOIST_AIR_ENTHALPY_COLORSCALE

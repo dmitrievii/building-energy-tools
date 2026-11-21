@@ -5688,7 +5688,7 @@ def render_ground_temperature_page(df: pd.DataFrame, *, source_label: str, nativ
         render_plot(profile_figure(profile, measured if not measured.empty else None), "Lines are calculated monthly mean profiles; open markers are measured GeoSphere shallow-soil monthly means where available.")
     elif mode == "Depth–time heatmap":
         from epw_climate_analyzer.extended_visualization import ground_depth_heatmap
-        render_plot(ground_depth_heatmap(profile), "Calculated monthly soil temperatures from the existing harmonic model; depth increases downwards. No measured deep temperatures are inferred.")
+        render_plot(ground_depth_heatmap(profile, source_frames=(df, measured_source), temperature_thresholds=tuple(st.session_state.get("_p6_temperature_thresholds",(18.,26.)))), "Calculated monthly soil temperatures from the existing harmonic model; depth increases downwards. No measured deep temperatures are inferred.")
     elif mode == "Animated monthly profile":
         render_plot(animated_profile_figure(profile, measured if not measured.empty else None), "Interactive loop through January–December. The axes stay fixed while the calculated profile moves with seasonal phase lag and attenuation.")
     elif mode == "Looping GIF":
