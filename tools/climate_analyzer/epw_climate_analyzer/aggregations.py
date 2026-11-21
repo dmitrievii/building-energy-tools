@@ -240,6 +240,28 @@ def heatmap_statistic_options(column: str) -> tuple[str, ...]:
     return HEATMAP_INTENSIVE_STATISTICS
 
 
+def heatmap_has_single_observation_cells(df, row_group, compare_across):
+    """Whether each day-hour coordinate can contain at most one source record.
+
+    Use the exact grouping coordinates of temporal_heatmap_matrix, including
+    calendar alignment, analysis-clock hour labels and repeated civil hours.
+    Do not infer uniqueness solely from the declared native resolution.
+    """
+    if str(row_group).strip().lower()!="day" or compare_across!=HEATMAP_COMPARE_HOUR:return False
+    idx=pd.DatetimeIndex(df.index)
+    if not len(idx):return False
+    hours=pd.to_numeric(df["hour_of_day"],errors="coerce").to_numpy() if "hour_of_day" in df else idx.hour
+    days=(_chronological_heatmap_period_key(idx,"day") if time_basis(df)==CHRONOLOGICAL else _heatmap_period_key(idx,"day"))
+    slots=pd.DataFrame({"day":days.to_numpy(),"hour":hours}).dropna()
+    return bool(len(slots) and not slots.duplicated().any())
+
+
+def heatmap_scope_statistics(df,column,row_group,compare_across):
+    if heatmap_has_single_observation_cells(df,row_group,compare_across):
+        return (heatmap_default_statistic(column),)
+    return heatmap_statistic_options(column)
+
+
 def heatmap_default_statistic(column: str) -> str:
     """Return the physically preferred default statistic for a canonical variable."""
     semantics = aggregation_semantics_for(column)

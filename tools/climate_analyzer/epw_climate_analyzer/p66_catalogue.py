@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from . import p6_report_structure as base
 from .extended_visualization import hourly_capable,compatible_types
-from .aggregations import heatmap_statistic_options,heatmap_default_statistic,native_interval_hours
+from .aggregations import heatmap_scope_statistics,heatmap_has_single_observation_cells,heatmap_default_statistic,native_interval_hours
 from .climate_model import aggregation_semantics_for
 
 REP="Representative"; AGG="All types and aggregations"; FULL="All types, aggregations and statistics"
@@ -83,11 +83,14 @@ def catalogue(df,context,coverage=FULL):
                 if not angular:add(chapter,label+" · P05–median–P95 · "+period,"percentile",c,u,(period,))
             if hourly:
                 for period in (("month",) if coverage==REP else ("day","week","month")):
-                    stats=heatmap_statistic_options(c) if coverage==FULL else (heatmap_default_statistic(c),)
                     dims=("Hour of day",)
                     if coverage==FULL and len(set(df.index.year))>1:dims+=("Year",)
-                    for stat,dim in itertools.product(stats,dims):
-                        add(chapter,f"{label} · {period} × {dim} · {stat}","heatmap",c,u,(period,dim,stat))
+                    for dim in dims:
+                        stats=heatmap_scope_statistics(df,c,period,dim) if coverage==FULL else (heatmap_default_statistic(c),)
+                        single=heatmap_has_single_observation_cells(df,period,dim)
+                        for stat in stats:
+                            cell_label="Observed value" if single else stat
+                            add(chapter,f"{label} · {period} × {dim} · {cell_label}","heatmap",c,u,(period,dim,stat))
             if not angular:
                 bases=("wet","all") if c==P and coverage!=REP else ("wet",) if c==P else ("all",)
                 for basis in bases:

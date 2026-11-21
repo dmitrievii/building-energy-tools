@@ -213,7 +213,10 @@ def _html_header(title,context,chapter,df):
     return ("<!doctype html><html><head><meta charset='utf-8'><title>"+escape(title)+"</title><style>body{font:11pt Arial,sans-serif;margin:28px;color:#202830} h1,h2,h3{margin:10px 0} table{border-collapse:collapse;width:100%}td{padding:5px;border-bottom:1px solid #ddd}.panel{break-inside:avoid;margin:24px 0}.plot{width:100%;min-height:400px} @media print{button{display:none}} </style><script src='plotly.min.js'></script></head><body><h1>"+escape(title)+"</h1><h2>"+escape(CHAPTERS.get(chapter,chapter))+"</h2><p>"+escape(concise_context(context))+"</p>"+table)
 def _html_panel(d,fig,note,seq):
     zones=zone_legend_entries(fig)
-    f=report_figure(fig,width_pt=780,height_pt=540 if complex_figure(fig) else 380,external_zone_legend=bool(zones))
+    from .extended_visualization import diurnal_panel_rows
+    rows=diurnal_panel_rows(fig)
+    h=max(380,rows*155) if rows else (540 if complex_figure(fig) else 380)
+    f=report_figure(fig,width_pt=780,height_pt=h,external_zone_legend=bool(zones))
     raw=json.loads(pio.to_json(f))
     key=""
     if zones:key='<p><b>Bioclimatic zones</b></p><div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">'+ "".join('<div><span style="display:inline-block;width:12px;height:9px;border:1px dashed #39447d;background:'+escape(color,quote=True)+'"></span> '+escape(name)+'</div>' for _,name,color in zones)+'</div>'

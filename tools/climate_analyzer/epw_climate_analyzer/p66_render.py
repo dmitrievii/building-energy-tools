@@ -71,10 +71,14 @@ def make_figure(d,df,context,reference_df=None,cache=None):
     elif k=="profile":f=ch.profile_ribbon_chart(df,c,a[0],title,u)
     elif k=="percentile":f=ch.percentile_band_chart(df,c,a[0],title,u);note+=" Central 90% of observations, not a confidence interval."
     elif k=="heatmap":
-        bounds=base.temperature_thresholds(context) if c==cat.T else None
+        bounds=base.temperature_thresholds(context) if c in ch.TEMPERATURE_HEATMAP_COLUMNS else None
         f=ch.temporal_heatmap_chart(df,c,*a,title,u,temperature_thresholds=bounds)
-        if bounds:note+=f" Heating/cooling thresholds {bounds[0]:g}/{bounds[1]:g} °C."
-        note+=f" Cell statistic: {a[2]}; comparison: {a[1]}."
+        if bounds:
+            note+=f" Absolute temperature classes at {bounds[0]:g}/{bounds[1]:g} °C."
+            if c!=cat.T:note+=" Colours are not comfort or heating/cooling demand indicators."
+        if agg.heatmap_has_single_observation_cells(df,a[0],a[1]):
+            note+=" One observed value per occupied cell; no statistic required."
+        else:note+=f" Cell statistic: {a[2]}; comparison: {a[1]}."
     elif k in ("duration","histogram","box","violin"):
         scope=df.loc[s.gt(0)].copy() if a[0]=="wet" else df
         if scope.empty:raise NotApplicable("No wet observations.")

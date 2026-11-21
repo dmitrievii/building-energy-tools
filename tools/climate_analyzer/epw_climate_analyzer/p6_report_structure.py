@@ -149,10 +149,14 @@ def zone_legend_entries(fig):
     return sorted(entries,key=lambda x:x[0])
 
 def complex_figure(fig):
-    return bool(zone_legend_entries(fig)) or any(getattr(t,"type","") in ("scatterpolar","scatterpolargl","barpolar","scatter3d","surface","mesh3d","cone") for t in fig.data)
+    from .extended_visualization import diurnal_panel_rows
+    return bool(diurnal_panel_rows(fig)) or bool(zone_legend_entries(fig)) or any(getattr(t,"type","") in ("scatterpolar","scatterpolargl","barpolar","scatter3d","surface","mesh3d","cone") for t in fig.data)
 
 def figure_height(fig,width_pt,height_pt):
     """Give scientific polar/psychrometric plots most of the printable page."""
+    from .extended_visualization import diurnal_panel_rows
+    if diurnal_panel_rows(fig):
+        return min(height_pt*.88,width_pt*.98)
     if complex_figure(fig):
         return min(height_pt*.83,width_pt*.92)
     return min(height_pt*.69,width_pt*.74,460.)
@@ -174,6 +178,12 @@ def report_figure(fig,*,width_pt,height_pt,font_pt=11,external_zone_legend=False
             for v in obj:restyle(v)
     restyle(raw)
     f=go.Figure(raw)
+    from .extended_visualization import diurnal_panel_rows,reflow_diurnal_panels
+    if diurnal_panel_rows(f):
+        # Mark legacy saved snapshots before stripping the report title.
+        meta=dict(f.layout.meta) if isinstance(f.layout.meta,dict) else {}
+        meta.update(layout_kind="diurnal_small_multiples",unit=f.layout.yaxis.title.text or meta.get("unit",""))
+        f.update_layout(meta=meta)
     names=[str(getattr(t,"name","") or "").lower() for t in f.data]
     if any("heating degree" in n for n in names) and any("cooling degree" in n for n in names):
         from .degree_metrics import degree_legend_below
@@ -251,7 +261,7 @@ def report_figure(fig,*,width_pt,height_pt,font_pt=11,external_zone_legend=False
             f.layout.margin.b=max(f.layout.margin.b or 0,round((rows+3)*(px+7)))
             f.layout.legend.update(yref="paper",y=1.035,yanchor="bottom")
             f.layout.margin.t=max(46,round(px*3))
-    return f
+    return reflow_diurnal_panels(f,font_size=px)
 
 def source_interpretation(df,page,column="",label="",unit="",*,thresholds=(18.,26.),kind=""):
     """Use the same interpretation functions as the analysis pages, with
@@ -343,7 +353,8 @@ def standard_figure(entry,df,context,reference_df=None):
     elif kind=="duration":
         fig=duration_chart(df,column,label,unit);note="Ranked valid source observations in descending order."
     elif kind=="heatmap":
-        bounds=temperature_thresholds(context) if column==T else None
+        from .charts import TEMPERATURE_HEATMAP_COLUMNS
+        bounds=temperature_thresholds(context) if column in TEMPERATURE_HEATMAP_COLUMNS else None
         fig=month_hour_heatmap(df,column,label,unit,temperature_thresholds=bounds)
         note="Mean observed temperature by month and hour."
         if bounds:note+=f" Temperature classes use {bounds[0]:g}/{bounds[1]:g} °C heating/cooling thresholds (blue/green/red)."

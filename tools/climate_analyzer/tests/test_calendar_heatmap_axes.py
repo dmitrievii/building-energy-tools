@@ -89,6 +89,55 @@ class CalendarHeatmapTests(unittest.TestCase):
         self.assertEqual(multi.layout.xaxis.ticktext[-1],"Dec 2026")
         self.assertTrue(all(len(v)>3 for v in multi.layout.xaxis.ticktext))
 
+    def test_psychrometric_temperature_heatmaps_share_absolute_colour_domain(self):
+        from epw_climate_analyzer.charts import TEMPERATURE_HEATMAP_COLUMNS,temporal_heatmap_chart
+        idx=pd.date_range("2026-01-01",periods=48,freq="h")
+        cols=("dry_bulb_temperature_c","wet_bulb_temperature_c","dew_point_temperature_c")
+        df=pd.DataFrame({c:np.linspace(-5-i*3,30-i*3,48) for i,c in enumerate(cols)},index=idx)
+        figs=[temporal_heatmap_chart(df,c,"day",HEATMAP_COMPARE_HOUR,"Mean",c,"°C",temperature_thresholds=(18,26)) for c in cols]
+        for f in figs[1:]:
+            self.assertEqual(f.layout.coloraxis.colorscale,figs[0].layout.coloraxis.colorscale)
+            self.assertEqual(f.layout.coloraxis.cmin,figs[0].layout.coloraxis.cmin)
+            self.assertEqual(f.layout.coloraxis.cmax,figs[0].layout.coloraxis.cmax)
+        for c,f in zip(cols,figs):
+            expected=temporal_heatmap_matrix(df,c,"day",HEATMAP_COMPARE_HOUR,"Mean")
+            np.testing.assert_allclose(np.asarray(f.data[0].z,float),expected.values,equal_nan=True)
+
+    def test_day_hour_statistics_only_when_cells_pool_source_records(self):
+        from epw_climate_analyzer.aggregations import heatmap_scope_statistics
+        from epw_climate_analyzer.temporal_filtering import TIME_BASIS_ATTR,CALENDAR_PROFILE
+        c="dry_bulb_temperature_c"
+        frame=lambda idx:pd.DataFrame({c:np.arange(len(idx),dtype=float)},index=idx)
+        hourly=frame(pd.date_range("2026-01-01",periods=48,freq="h"))
+        self.assertEqual(heatmap_scope_statistics(hourly,c,"day",HEATMAP_COMPARE_HOUR),("Mean",))
+        self.assertGreater(len(heatmap_scope_statistics(hourly,c,"month",HEATMAP_COMPARE_HOUR)),1)
+        subhourly=frame(pd.date_range("2026-01-01",periods=48,freq="10min"))
+        self.assertGreater(len(heatmap_scope_statistics(subhourly,c,"day",HEATMAP_COMPARE_HOUR)),1)
+        multi=frame(pd.DatetimeIndex(["2025-01-01","2026-01-01"]))
+        self.assertEqual(heatmap_scope_statistics(multi,c,"day",HEATMAP_COMPARE_HOUR),("Mean",))
+        multi.attrs[TIME_BASIS_ATTR]=CALENDAR_PROFILE
+        self.assertGreater(len(heatmap_scope_statistics(multi,c,"day",HEATMAP_COMPARE_HOUR)),1)
+
+    def test_diurnal_panel_reflow_at_print_size_and_legacy(self):
+        from epw_climate_analyzer.extended_visualization import diurnal_figure,diurnal_panel_rows
+        idx=pd.MultiIndex.from_product([range(1,13),range(24)],names=["month","hour"])
+        t=pd.DataFrame({k:np.full(len(idx),i) for i,k in enumerate(("mean","median","min","max","count","p05","p95"))},index=idx)
+        f=diurnal_figure(t,"dry_bulb_temperature_c","°C",representation="Small multiples")
+        self.assertEqual(diurnal_panel_rows(f),4)
+        legacy=go.Figure(f);legacy.update_layout(meta=None)
+        for chart in (f,legacy):
+            printed=report_figure(chart,width_pt=730,height_pt=330)
+            self.assertEqual(diurnal_panel_rows(printed),4)
+            for i in range(1,13):
+                suffix=str(i) if i>1 else ""
+                axis=getattr(printed.layout,"xaxis"+suffix)
+                self.assertEqual(axis.showticklabels,i>=10)
+                self.assertEqual(axis.title.text,"Hour" if i==11 else "")
+                ya=getattr(printed.layout,"yaxis"+suffix)
+                self.assertEqual(ya.showticklabels,(i-1)%3==0)
+                self.assertAlmostEqual(printed.layout.annotations[i-1].y,ya.domain[1])
+                np.testing.assert_array_equal(printed.data[i-1].y,chart.data[i-1].y)
+
     def test_multiyear_utci_not_truncated(self):
         idx=pd.date_range("2025-12-31","2026-12-31",freq="h")
         df=pd.DataFrame(index=idx)

@@ -42,6 +42,7 @@ psychrolib.SetUnitSystem(psychrolib.SI)
 
 PLOT_TEMPLATE = "plotly_white"
 MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+TEMPERATURE_HEATMAP_COLUMNS = frozenset(("dry_bulb_temperature_c","dew_point_temperature_c","wet_bulb_temperature_c"))
 TEMPERATURE_COMFORT_COLORSCALE = [
     [0.00, "#1d4ed8"],
     [0.32, "#3b82f6"],
@@ -157,7 +158,7 @@ def _year_neutral_monthly(summary: pd.DataFrame, aggregation: str) -> bool:
 
 def _heatmap_colorscale(column: str, values=None, temperature_thresholds: tuple[float, float] | None = None):
     """Return a valid semantic colorscale for the selected climate variable."""
-    if column == "dry_bulb_temperature_c" and temperature_thresholds is not None:
+    if column in TEMPERATURE_HEATMAP_COLUMNS and temperature_thresholds is not None:
         heat_t, cool_t = map(float, temperature_thresholds)
         vmin, vmax = _finite_min_max(values)
         if vmin is None or vmax is None or abs(vmax - vmin) < 1e-9:
@@ -338,8 +339,17 @@ def temporal_heatmap_chart(
         raise ValueError("No numeric observations remain for the selected heat-map configuration.")
 
     period_label = str(row_group).strip().capitalize()
-    colorscale = _heatmap_colorscale(column, matrix.values, temperature_thresholds)
     zmin, zmax = _axis_limits_for_column(column, matrix.values, pad_fraction=0.0)
+    if column in TEMPERATURE_HEATMAP_COLUMNS:
+        # One absolute colour domain for the three psychrometric temperatures
+        # within this selected data scope, independent of the cell statistic.
+        temperature_thresholds=temperature_thresholds or (18.,26.)
+        low,high=sorted(map(float,temperature_thresholds))
+        limits=[_finite_min_max(pd.to_numeric(df[c],errors="coerce")) for c in TEMPERATURE_HEATMAP_COLUMNS if c in df]
+        zmin=min([low-1.]+[v[0] for v in limits if v[0] is not None]+([zmin] if zmin is not None else []))
+        zmax=max([high+1.]+[v[1] for v in limits if v[1] is not None]+([zmax] if zmax is not None else []))
+        colorscale=_heatmap_colorscale(column,[zmin,zmax],temperature_thresholds)
+    else:colorscale = _heatmap_colorscale(column, matrix.values, temperature_thresholds)
     if column == "liquid_precipitation_depth_mm":
         # A dry interval is a meaningful precipitation state. Keep the colour
         # domain anchored at 0 mm so zero is always rendered as white.

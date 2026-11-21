@@ -446,17 +446,18 @@ def apply_chart_presentation(fig: Any, settings: ChartPresentationSettings) -> A
     apply_monthly_axes(fig)
     _space_bottom_legends(fig, settings, size)
 
+    from .extended_visualization import reflow_diurnal_panels
     dimensions = settings.display_dimensions()
     if dimensions is None:
         # Auto deliberately preserves the chart builder's responsive geometry.
-        return fig
+        return reflow_diurnal_panels(fig,font_size=size)
 
     width, height = dimensions
     try:
         fig.update_layout(width=width, height=height, autosize=False)
     except Exception:
         pass
-    return fig
+    return reflow_diurnal_panels(fig,font_size=size)
 
 
 def merge_plotly_config(

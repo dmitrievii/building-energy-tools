@@ -2265,39 +2265,48 @@ def render_generic_variable_page(
         compare_across = st.selectbox("Compare across", compare_options, index=0,key=scope+"_compare_across")
         if time_basis(df) == CHRONOLOGICAL and is_multiyear(df):
             st.caption("Chronological heat maps keep every real day, week or month in sequence across years. Switch Time basis to Calendar profile to align equivalent calendar periods and compare years directly.")
-        statistic_options = list(heatmap_statistic_options(column))
+        from epw_climate_analyzer.aggregations import heatmap_scope_statistics,heatmap_has_single_observation_cells
+        from epw_climate_analyzer.charts import TEMPERATURE_HEATMAP_COLUMNS
+        single=heatmap_has_single_observation_cells(df,heatmap_period,compare_across)
+        statistic_options = list(heatmap_scope_statistics(df,column,heatmap_period,compare_across))
         default_statistic = heatmap_default_statistic(column)
         statistic_labels = {
             "P05": "Lower 5% boundary (P05)",
             "P95": "Upper 5% boundary (P95)",
         }
-        statistic = st.selectbox(
-            "Statistic",
-            statistic_options,
-            key=scope+"_statistic",
-            index=statistic_options.index(default_statistic),
-            format_func=lambda value: statistic_labels.get(value, value),
-            help=(
-                "The statistic defines the value represented by each heat-map cell. Lower 5% boundary means only about 5% of contributing values are lower; "
-                "Upper 5% boundary means only about 5% are higher. The interval between them contains the middle 90% of observations. "
-                "Extensive canonical variables such as irradiation and precipitation default to period Total; state/intensive variables default to Mean."
-            ),
-        )
+        if single:
+            statistic=default_statistic
+            st.caption("One source observation per occupied day–hour cell; no statistical reduction is needed.")
+        elif len(statistic_options)==1:
+            statistic=statistic_options[0]
+        else:
+            statistic_key=scope+"_statistic"
+            if st.session_state.get(statistic_key) not in statistic_options:st.session_state[statistic_key]=default_statistic
+            statistic = st.selectbox(
+                "Statistic",statistic_options,key=statistic_key,
+                format_func=lambda value: statistic_labels.get(value,value),
+                help="The statistic reduces all source observations contributing to a cell. P05–P95 describes the middle 90% of observations. Extensive variables default to Total; state variables default to Mean.",
+            )
+        cell_label="Observed value" if single else statistic
         if compare_across == "Year":
             st.caption(
                 "Year comparison preserves real calendar years from the current Data filter even when the global Time basis is Calendar profile."
             )
-        if column == "dry_bulb_temperature_c":
-            st.caption("Temperature heatmap colours use the current heating and cooling thresholds: blue = cold, green = neutral band, red = hot.")
+        if column in TEMPERATURE_HEATMAP_COLUMNS:
+            temperature_thresholds=temperature_thresholds or tuple(st.session_state.get("_p6_temperature_thresholds",(18.,26.)))
+            if column=="dry_bulb_temperature_c":
+                st.caption("Temperature heatmap colours use the current heating and cooling thresholds: blue = cold, green = neutral band, red = hot.")
+            else:
+                st.caption("Same absolute temperature colour scale as dry-bulb temperature; colours indicate temperature classes, not comfort or heating/cooling demand.")
         fig = temporal_heatmap_chart(
             df,
             column,
             heatmap_period.lower(),
             compare_across,
             statistic,
-            f"{title_prefix}: {variable_label} {heatmap_period.lower()} × {compare_across.lower()} heat map · {statistic}",
+            f"{title_prefix}: {variable_label} {heatmap_period.lower()} × {compare_across.lower()} heat map · {cell_label}",
             unit,
-            temperature_thresholds=temperature_thresholds if column == "dry_bulb_temperature_c" else None,
+            temperature_thresholds=temperature_thresholds if column in TEMPERATURE_HEATMAP_COLUMNS else None,
         )
     else:
         # Only charts that actually aggregate a time series expose the
@@ -4865,8 +4874,15 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
                 "Chronological natural-ventilation heat maps keep real periods in sequence across years. "
                 "Switch Time basis to Calendar profile to compare equivalent calendar periods by year."
             )
-        statistic_options = list(heatmap_statistic_options("natural_ventilation_suitable"))
-        statistic = st.selectbox("Statistic", statistic_options, index=0, key="nv_heatmap_statistic")
+        from epw_climate_analyzer.aggregations import heatmap_scope_statistics,heatmap_has_single_observation_cells
+        single=heatmap_has_single_observation_cells(df_nv,row_group,compare_across)
+        statistic_options=list(heatmap_scope_statistics(df_nv,"natural_ventilation_suitable",row_group,compare_across))
+        if single:
+            statistic=statistic_options[0]
+            st.caption("One source observation per occupied day–hour cell; no statistical reduction is needed.")
+        else:
+            statistic=st.selectbox("Statistic",statistic_options,index=0,key="nv_heatmap_statistic")
+        cell_label="Observed value" if single else statistic
         if compare_across == "Year":
             st.caption("Year comparison preserves real calendar years from the current Data filter.")
         fig = temporal_heatmap_chart(
@@ -4875,7 +4891,7 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
             row_group.lower(),
             compare_across,
             statistic,
-            f"Natural ventilation eligibility · {row_group.lower()} × {compare_across.lower()} · {statistic}",
+            f"Natural ventilation eligibility · {row_group.lower()} × {compare_across.lower()} · {cell_label}",
             "0/1",
         )
         render_plot(fig, natural_ventilation_interpretation(df, mask))

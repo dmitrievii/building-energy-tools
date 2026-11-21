@@ -71,6 +71,65 @@ def diurnal_statistics(df,column,months=range(1,13)):
     return table
 
 
+def diurnal_panel_rows(fig):
+    """Recognize current and legacy monthly small-multiple figures."""
+    meta=fig.layout.meta
+    title=str(fig.layout.title.text or "").lower()
+    annotations=list(fig.layout.annotations or ())
+    marked=isinstance(meta,dict) and meta.get("layout_kind")=="diurnal_small_multiples"
+    if not marked and "typical daily profile" not in title:return 0
+    if not annotations or not all(a.text in MONTHS for a in annotations):return 0
+    return (len(annotations)+2)//3
+
+
+def reflow_diurnal_panels(fig,*,font_size=None):
+    """Fit physical label spacing to the actual canvas, without changing data."""
+    rows=diurnal_panel_rows(fig)
+    if not rows:return fig
+    layout=fig.layout
+    annotations=list(layout.annotations)
+    size=float(font_size or layout.font.size or 12)
+    height=float(layout.height or max(480,rows*285))
+    width=float(layout.width or 1000)
+    margin=layout.margin
+    top=max(float(margin.t or 0),size*(3.6 if layout.title.text else 1.7)+8)
+    bottom=max(size*3.2+8,45)
+    left=max(size*4.1+10,58)
+    right=max(size*.8+8,18)
+    plot_h=max(1,height-top-bottom)
+    plot_w=max(1,width-left-right)
+    gap=min(.20 if rows<=3 else .16,max(.045,(size*1.5+6)/plot_h))
+    col_gap=min(.12,max(.055,(size*2.5+8)/plot_w))
+    row_h=(1-(rows-1)*gap)/rows
+    col_w=(1-2*col_gap)/3
+    n=len(annotations)
+    unit=(layout.yaxis.title.text or (layout.meta.get("unit","") if isinstance(layout.meta,dict) else ""))
+    meta=dict(layout.meta) if isinstance(layout.meta,dict) else {}
+    meta.update(layout_kind="diurnal_small_multiples",unit=unit)
+    fig.update_layout(meta=meta,showlegend=False,margin=dict(l=left,r=right,t=top,b=bottom))
+    bottom_row_start=(rows-1)*3
+    title_index=bottom_row_start+min(1,n-bottom_row_start-1)
+    for i,a in enumerate(annotations):
+        row,col=divmod(i,3)
+        y1=1-row*(row_h+gap);y0=y1-row_h
+        x0=col*(col_w+col_gap);x1=x0+col_w
+        suffix=str(i+1) if i else ""
+        xa=getattr(layout,"xaxis"+suffix);ya=getattr(layout,"yaxis"+suffix)
+        lowest=i+3>=n
+        xa.update(domain=[x0,x1],showticklabels=lowest,tickangle=0,
+                  tickvals=[0,6,12,18,24] if plot_w*col_w>=size*13 else [0,12,24],
+                  title_text="Hour" if i==title_index else "",automargin=False)
+        ya.update(domain=[y0,y1],showticklabels=col==0,title_text=unit if col==0 else "",
+                  nticks=3 if row_h*plot_h<size*5 else 4,automargin=False)
+        a.update(x=(x0+x1)/2,y=y1,xref="paper",yref="paper",xanchor="center",yanchor="bottom",yshift=3,font=dict(size=size))
+    # Existing selected months can leave unused axes in the last row.
+    for i in range(n,rows*3):
+        suffix=str(i+1)
+        getattr(layout,"xaxis"+suffix).visible=False
+        getattr(layout,"yaxis"+suffix).visible=False
+    return fig
+
+
 def diurnal_figure(table,column,unit,*,representation="Overlay",centre="mean",band="P05–P95"):
     months=list(dict.fromkeys(table.index.get_level_values("month")))
     small=representation=="Small multiples"
@@ -96,6 +155,9 @@ def diurnal_figure(table,column,unit,*,representation="Overlay",centre="mean",ba
         fig.layout.yaxis.matches=None
     fig.update_layout(template="plotly_white",title="Typical daily profile",height=max(480,rows*285) if small else 540,
                       legend=dict(orientation="h",y=-.2,groupclick="togglegroup"))
+    if small:
+        fig.update_layout(meta={"layout_kind":"diurnal_small_multiples","unit":unit})
+        reflow_diurnal_panels(fig)
     return fig
 
 

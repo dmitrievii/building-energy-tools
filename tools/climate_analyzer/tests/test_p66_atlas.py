@@ -23,7 +23,8 @@ class AtlasTests(unittest.TestCase):
         temp=[d for d in rows if d.column==c.T and d.status=="available"]
         for kind in ("profile","percentile"):
             self.assertEqual({d.args[0] for d in temp if d.kind==kind},set(c.PERIODS))
-        self.assertEqual(len([d for d in temp if d.kind=="heatmap"]),18)
+        self.assertEqual(len([d for d in temp if d.kind=="heatmap"]),13)
+        self.assertEqual(len([d for d in temp if d.kind=="heatmap" and d.args[0]=="day"]),1)
         self.assertEqual(len([d for d in temp if d.kind=="diurnal"]),12)
         self.assertEqual(len([d for d in temp if d.kind=="duration"]),4)
         self.assertGreater(len(rows),len(c.catalogue(df,{},c.REP)))
