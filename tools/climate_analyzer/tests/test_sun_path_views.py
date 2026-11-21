@@ -139,6 +139,26 @@ class SunPathViewTests(unittest.TestCase):
         from epw_climate_analyzer.charts import sun_position_diagram
         self.assertEqual(sun_position_diagram(self.frame).layout.xaxis.title.text, fig.layout.xaxis.title.text)
 
+    def test_technical_cardinal_labels_are_part_of_axis_and_clear_of_title(self):
+        from epw_climate_analyzer.chart_presentation import (
+            ChartPresentationSettings, apply_chart_presentation,
+        )
+        for size in (12, 18, 26):
+            fig = technical_sun_path(self.frame)
+            apply_chart_presentation(fig, ChartPresentationSettings(font_size=size))
+            axis = fig.layout.xaxis
+            labels = dict(zip(axis.tickvals, axis.ticktext))
+            self.assertEqual(labels[90], "90°<br>East")
+            self.assertEqual(labels[180], "180°<br>South")
+            self.assertEqual(labels[270], "270°<br>West")
+            self.assertEqual(axis.tickfont.size, size)
+            self.assertTrue(axis.automargin)
+            self.assertGreaterEqual(axis.title.standoff, 18)
+            self.assertFalse(any(a.text in {"North", "East", "South", "West"}
+                                 for a in fig.layout.annotations))
+            self.assertEqual(fig.layout.legend.yref, "container")
+            self.assertEqual(fig.layout.legend.yanchor, "bottom")
+
     def test_no_invented_path_in_polar_night(self):
         frame = self.frame.copy()
         frame.attrs["solar_geometry_site"] = {**frame.attrs["solar_geometry_site"], "latitude": 80.0}

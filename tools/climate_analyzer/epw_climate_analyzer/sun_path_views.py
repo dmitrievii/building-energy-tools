@@ -366,14 +366,18 @@ def technical_sun_path(df: pd.DataFrame, title: str = "Technical sun-path diagra
         fig.update_layout(meta={"solar_reference": reference.description})
     else:
         _missing_reference(fig)
-    for a, name in ((0,"North"),(90,"East"),(180,"South"),(270,"West"),(360,"North")):
-        if axes[0] <= a <= axes[1]:
-            fig.add_annotation(x=a,y=0,text=name,showarrow=False,yshift=-22,
-                               font=dict(color="#111827",size=12))
+    # Put compass bearings into the axis tick text itself. Plotly lays out
+    # the two-line tick labels before the axis title, including after a
+    # change of the global font, avoiding independent overlapping annotations.
+    cardinal = {0: "North", 90: "East", 180: "South", 270: "West", 360: "North"}
+    ticks = list(range(0, 361, 10))
+    labels = [f"{a}°<br>{cardinal[a]}" if a in cardinal else f"{a}°" for a in ticks]
     fig.update_layout(template="plotly_white", title=title, height=900,
-        margin=dict(l=65,r=40,t=80,b=100), showlegend=True, legend=_month_legend(y=-0.14),
-        xaxis=dict(title="Solar azimuth [deg]", range=axes, dtick=10,
-                   gridcolor="rgba(107,114,128,0.25)", zeroline=False),
+        margin=dict(l=65,r=40,t=80,b=175), showlegend=True,
+        legend=_month_legend(y=0.01, yref="container", yanchor="bottom"),
+        xaxis=dict(title=dict(text="Solar azimuth [deg]", standoff=18),
+                   range=axes, tickmode="array", tickvals=ticks, ticktext=labels,
+                   automargin=True, gridcolor="rgba(107,114,128,0.25)", zeroline=False),
         yaxis=dict(title="Solar elevation [deg]", range=[0,ymax], dtick=10,
                    ticksuffix="°", gridcolor="rgba(107,114,128,0.25)", zeroline=False))
     return fig

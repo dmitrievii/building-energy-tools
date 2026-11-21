@@ -58,6 +58,25 @@ try {
       await toggle.click({timeout:15000});
       await waitVisibility(group,true);
     }
+    if (view === 'technical') {
+      const spacing = await page.locator('.js-plotly-plot').evaluate(node => {
+        const ticks = [...node.querySelectorAll('.xtick text')];
+        const cardinals = ticks.filter(t => /East|South|West/.test(t.textContent || ''));
+        const title = node.querySelector('.g-xtitle text');
+        const legend = node.querySelector('g.legend');
+        return {
+          cardinalCount: cardinals.length,
+          tickBottom: Math.max(...ticks.map(t => t.getBoundingClientRect().bottom)),
+          titleTop: title?.getBoundingClientRect().top,
+          titleBottom: title?.getBoundingClientRect().bottom,
+          legendTop: legend?.getBoundingClientRect().top,
+        };
+      });
+      assert(spacing.cardinalCount === 3, 'technical compass labels missing');
+      assert(spacing.titleTop >= spacing.tickBottom - 1, 'technical axis title overlaps ticks: '+JSON.stringify(spacing));
+      assert(spacing.legendTop >= spacing.titleBottom - 1, 'technical legend overlaps axis title: '+JSON.stringify(spacing));
+      report.technicalAxisSpacing = spacing;
+    }
     report[view] = {monthlyColors: colors.size, legendHideRestore: true, dragmode: before.dragmode};
     await page.screenshot({path: dir+'/'+view+'.png', fullPage:true});
   }
