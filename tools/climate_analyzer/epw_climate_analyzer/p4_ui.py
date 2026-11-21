@@ -32,9 +32,22 @@ def _events(table,render,*,key,unit,threshold,series=None,above=True,quantity="T
     style=st.selectbox("Chart type",(["Event timeline"] if series is not None else [])+["Duration and intensity","Duration distribution"],key="p4_event_chart_"+key)
     fig=go.Figure()
     if style=="Event timeline":
+        # Insert a single NaN at each absent-time boundary, avoiding dense
+        # reindexing across potentially multi-year source gaps.
+        delta=pd.Timedelta(days=1) if unit=="days" else pd.Timedelta(hours=float(table.duration.iloc[0]/table.samples.iloc[0]))
+        stamps=series.index
+        breaks=[a+pd.DateOffset(days=1) if unit=="days" else a+delta
+                for a,b in zip(stamps[:-1],stamps[1:])
+                if (b!=a+pd.DateOffset(days=1) if unit=="days" else b-a!=delta)]
+        if breaks:
+            series=pd.concat([series,pd.Series(np.nan,index=pd.DatetimeIndex(breaks))]).sort_index()
         fig.add_scatter(x=series.index,y=series,mode="lines",name=quantity,connectgaps=False,line=dict(color="#64748B"))
-        for _,r in table.iterrows():
-            fig.add_vrect(x0=r.start,x1=r.end+(pd.DateOffset(days=1) if unit=="days" else pd.Timedelta(hours=r.duration/r.samples)),line_width=0,fillcolor="#DD783B" if above else "#497DB7",opacity=.20)
+        # Build shapes once (rather than quadratic per-shape layout updates).
+        shapes=[dict(type="rect",xref="x",yref="paper",y0=0,y1=1,
+                     x0=r.start,x1=r.end+(pd.DateOffset(days=1) if unit=="days" else delta),
+                     line=dict(width=0),fillcolor="#DD783B" if above else "#497DB7",opacity=.20,layer="below")
+                for _,r in table.iterrows()]
+        fig.update_layout(shapes=shapes)
         fig.add_hline(y=threshold,line_dash="dash",line_color="#333333")
         fig.update_layout(xaxis_title="Date",yaxis_title=quantity,title="Extreme-event timeline")
     elif style=="Duration and intensity":
@@ -116,11 +129,22 @@ def precipitation_panel(df,native,view,render):
             s=s.gt(0).astype(float).where(s.notna())
             _calendar(s,render,"Snow-cover calendar","Complete days with observed snow depth >0 cm; 0 means no snow, missing days unclassified.")
         elif view=="Freeze–thaw days":
-            threshold=st.number_input("Wet-day precipitation threshold [mm]",min_value=.1,value=1.,step=.1,key="p4_freeze_wet")
-            a=p.freeze_thaw_days(df,threshold)
-            tab=a.resample("MS").sum(min_count=1)
-            _bars(tab,"Air freeze–thaw exposure days","Complete days",render,"Daily sampled minimum <0 and maximum >0 °C indicate air-temperature crossing opportunity. Wet subset additionally requires same-day precipitation ≥ threshold. Not a count of material freeze–thaw damage cycles or proof that precipitation was liquid.")
-            _show_table(tab,"freeze_thaw")
+            mode=st.selectbox("Chart type",["Daily crossing indicators","Observed freeze–thaw sequences"],key="p4_freeze_view")
+            threshold=st.number_input("Precipitation threshold [mm]",min_value=.1,value=1.,step=.1,key="p4_freeze_wet")
+            if mode=="Daily crossing indicators":
+                a=p.freeze_thaw_days(df,threshold)
+                tab=a.resample("MS").sum(min_count=1)
+                _bars(tab,"Air freeze–thaw exposure days","Complete days",render,"Daily sampled minimum <0 and maximum >0 °C indicate air-temperature crossing opportunity. Wet subset additionally requires same-day precipitation ≥ threshold. Not a count of material freeze–thaw damage cycles or proof that precipitation was liquid.")
+                _show_table(tab,"freeze_thaw")
+            else:
+                a=p.freeze_thaw_cycles(df,wet_threshold=threshold)
+                if a.empty:st.info("No complete warm–freeze–warm sequences.");return
+                a=a.set_index("Thaw timestamp",drop=False)
+                tab=pd.DataFrame({"Observed complete sequences":pd.Series(1.,index=a.index),
+                                  "Antecedent wet sequences":a["Antecedent wet at freeze"]})
+                tab=tab.resample("MS").sum(min_count=1)
+                _bars(tab,"Observed air freeze–thaw sequences","Sequences",render,"Strict warm (>0) → freeze (<0) → warm (>0) samples. Neutral samples retain state; gaps reset. Wet sequence requires complete 24-hour trailing precipitation ≥ selected threshold at the freeze sample. Unknown wet flags remain unknown. These are sampled atmospheric sequences, not material damage cycles.")
+                _show_table(a,"freeze_thaw_sequences")
     except ValueError as exc:st.warning(str(exc))
 
 def _calendar(s,render,title,note):
@@ -135,8 +159,11 @@ def _calendar(s,render,title,note):
     for i,(d,val) in enumerate(v.items()):
         w=(i+start.weekday())//7;day=d.weekday();z[day,w]=val;labels[day,w]=d.strftime("%Y-%m-%d")
     fig=go.Figure(go.Heatmap(z=z,x=list(range(1,55)),y=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],customdata=labels,zmin=0,zmax=1,colorscale=[[0,"#FFFFFF"],[1,"#427CAD"]],showscale=False,xgap=2,ygap=2,hoverongaps=False,hovertemplate="%{customdata}<br>Snow cover %{z}<extra></extra>"))
+    fig.add_heatmap(z=np.where(np.isfinite(z)| (labels==""),np.nan,1.),x=list(range(1,55)),y=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],customdata=labels,
+                    zmin=0,zmax=1,colorscale=[[0,"#D1D5DB"],[1,"#D1D5DB"]],showscale=False,xgap=2,ygap=2,hoverongaps=False,
+                    hovertemplate="%{customdata}<br>Unknown<extra></extra>")
     fig.update_layout(template="plotly_white",title=title,xaxis_title="Calendar week position",yaxis=dict(autorange="reversed"))
-    render(fig,note)
+    render(fig,note+" White = no cover, blue = snow cover, gray = unknown.")
 
 def hvac_panel(df,render):
     options={k:v for k,v in _available(df).items() if v in (p.T,p.W,p.H)}

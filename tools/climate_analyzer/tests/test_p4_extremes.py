@@ -40,6 +40,17 @@ class P4Tests(unittest.TestCase):
         self.assertEqual(p.day_indicators(df).iloc[0,0],1.)
         self.assertEqual(p.freeze_thaw_days(df).iloc[0,1],1.)
 
+    def test_freeze_thaw_cycles_observed_wet_and_gap(self):
+        df=self.fixture(30)
+        df[p.T]=2.
+        df.loc[df.index[24:27],p.T]=[-1.,0.,-2.]
+        a=p.freeze_thaw_cycles(df,wet_threshold=1.)
+        self.assertEqual(len(a),1)
+        self.assertEqual(a.iloc[0]["Freeze-to-thaw duration [h]"],3.)
+        self.assertEqual(a.iloc[0]["Minimum air temperature [°C]"],-2.)
+        self.assertEqual(a.iloc[0]["Antecedent wet at freeze"],1.)
+        self.assertTrue(p.freeze_thaw_cycles(df.drop(df.index[25])).empty)
+
     def test_design_coincident_and_probability(self):
         df=self.fixture(4);df[p.T]=[10.,20.,30.,40.];df[p.W]=[1.,2.,3.,4.]
         a=p.design_conditions(df,p.T,[25.],upper=True,coincident=[p.W])

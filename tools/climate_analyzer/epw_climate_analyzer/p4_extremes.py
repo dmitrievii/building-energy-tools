@@ -123,6 +123,39 @@ def freeze_thaw_days(df,wet_threshold=1.):
         result["Wet freeze–thaw days"]=(cross&rain.ge(wet_threshold)).astype(float).where(known&rain.notna())
     return result
 
+def freeze_thaw_cycles(df,*,freeze_below=0.,thaw_above=0.,wet_threshold=1.,antecedent_hours=24.):
+    """Observed warm→freeze→warm air-temperature sequences.
+    Strict thresholds; neutral values retain state; missing/cadence gaps reset.
+    Wet flag is a coincident antecedent-precipitation proxy, not material wetness.
+    """
+    if not np.isfinite([freeze_below,thaw_above,wet_threshold,antecedent_hours]).all() or freeze_below>thaw_above or wet_threshold<=0:
+        raise ValueError("Invalid freeze/thaw thresholds.")
+    dt=cadence(df)
+    s=valid_values(df,T)
+    rain=rolling_windows(df,P,antecedent_hours,total=True,nonnegative=True) if P in df else pd.Series(np.nan,index=df.index)
+    rows=[];prev=None;warm=False;freeze=None;wet=np.nan;lowest=np.inf
+    for stamp,value in s.items():
+        if prev is None or stamp-prev!=dt or pd.isna(value):
+            warm=False;freeze=None;wet=np.nan;lowest=np.inf
+        if pd.notna(value):
+            if value>thaw_above:
+                if freeze is not None:
+                    rows.append({"Freeze timestamp":freeze,"Thaw timestamp":stamp,
+                                 "Freeze-to-thaw duration [h]":(stamp-freeze).total_seconds()/3600,
+                                 "Minimum air temperature [°C]":lowest,
+                                 "Antecedent wet at freeze":wet})
+                warm=True;freeze=None;lowest=np.inf
+            elif warm and value<freeze_below:
+                if freeze is None:
+                    freeze=stamp
+                    rv=rain.loc[stamp]
+                    wet=float(rv>=wet_threshold) if pd.notna(rv) else np.nan
+                lowest=min(lowest,value)
+            elif freeze is not None:
+                lowest=min(lowest,value)
+        prev=stamp
+    return pd.DataFrame(rows,columns=["Freeze timestamp","Thaw timestamp","Freeze-to-thaw duration [h]","Minimum air temperature [°C]","Antecedent wet at freeze"])
+
 def complete_years(df,column):
     """Only years with every expected timestamp and a finite nonnegative value."""
     dt=cadence(df);s=valid_values(df,column,True);out=[]
