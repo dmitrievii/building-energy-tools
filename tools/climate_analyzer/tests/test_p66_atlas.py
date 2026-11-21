@@ -192,6 +192,42 @@ class AtlasTests(unittest.TestCase):
         rows=c.catalogue(df,{},c.FULL)
         self.assertFalse(any(d.status=="available" and d.kind in ("heatmap","duration","degree","utci","nv_special","wind_mean") for d in rows))
         self.assertTrue(any(d.kind=="native" and d.status=="available" for d in rows))
+    def test_source_radiation_semantic_colors_and_domains(self):
+        from epw_climate_analyzer.chart_theme import SOURCE_IRRADIATION_COLORS,SOURCE_IRRADIANCE_COLORS,SOLAR_COLORSCALE,metric_color
+        from epw_climate_analyzer.charts import temporal_heatmap_chart
+        from epw_climate_analyzer.aggregations import temporal_heatmap_matrix,HEATMAP_COMPARE_HOUR
+        from epw_climate_analyzer.extended_visualization import occurrence_default_edges,occurrence_table,occurrence_figure
+        df=self.fixture()
+        cols=list(SOURCE_IRRADIATION_COLORS)
+        for col,maximum in zip(cols,(800.,1000.,300.)):
+            df[col]=np.linspace(0.,maximum,len(df))
+        for col,maximum in zip(SOURCE_IRRADIANCE_COLORS,(80.,100.,30.)):
+            df[col]=np.linspace(0.,maximum,len(df))
+        for family in (SOURCE_IRRADIATION_COLORS,SOURCE_IRRADIANCE_COLORS):
+            for col,color in family.items():
+                self.assertEqual(metric_color(col),color)
+                fig=temporal_heatmap_chart(df,col,"month",HEATMAP_COMPARE_HOUR,"Mean","Radiation","Wh/m²" if col.endswith("_wh_m2") else "W/m²")
+                self.assertEqual(fig.layout.coloraxis.cmin,0.)
+                self.assertEqual(fig.layout.coloraxis.cmax,1000. if col.endswith("_wh_m2") else 100.)
+                self.assertEqual(fig.layout.coloraxis.colorscale,tuple(tuple(x) for x in SOLAR_COLORSCALE))
+                if col.endswith("_wh_m2"):
+                    fig=temporal_heatmap_chart(df,col,"month",HEATMAP_COMPARE_HOUR,"Total","Radiation","Wh/m²")
+                    upper=float(temporal_heatmap_matrix(df,cols[1],"month",HEATMAP_COMPARE_HOUR,"Total").max().max())
+                    self.assertEqual(fig.layout.coloraxis.cmax,upper)
+                edges=occurrence_default_edges(df[col],col)
+                self.assertEqual(edges,[50.,100.,200.,400.,600.,800.,1000.,1200.])
+                self.assertEqual(occurrence_figure(occurrence_table(df,col,edges),"Wh/m²","Hours").data[0].marker.color,"#E5E7EB")
+        rows=[d for d in c.catalogue(df,{},c.FULL) if d.kind=="total" and d.column in cols and d.status=="available"]
+        self.assertEqual({d.column for d in rows},set(cols))
+        for d in rows:
+            fig,_=make_figure(d,df,{})
+            self.assertEqual(fig.data[0].marker.color,SOURCE_IRRADIATION_COLORS[d.column])
+        monthly=df.iloc[:1].copy();monthly.attrs["canonical_native_resolution"]="monthly"
+        for col in cols:
+            d=next(d for d in c.catalogue(monthly,{},c.REP) if d.kind=="native" and d.column==col and d.status=="available")
+            fig,_=make_figure(d,monthly,{})
+            self.assertEqual(fig.data[0].line.color,SOURCE_IRRADIATION_COLORS[col])
+
     def test_illuminance_threshold_yellow_all_periods(self):
         from epw_climate_analyzer.chart_theme import ILLUMINANCE_THRESHOLD_COLOR,semantic_color_from_text
         from epw_climate_analyzer.charts import threshold_bar_chart

@@ -22,6 +22,16 @@ SOLAR_COMPONENT_COLORS = {
     "DHI": "#CA8A04",
 }
 
+SOURCE_IRRADIATION_COLORS = {
+    "global_horizontal_radiation_wh_m2": SOLAR_COMPONENT_COLORS["GHI"],
+    "direct_normal_radiation_wh_m2": SOLAR_COMPONENT_COLORS["DNI"],
+    "diffuse_horizontal_radiation_wh_m2": SOLAR_COMPONENT_COLORS["DHI"],
+}
+SOURCE_IRRADIANCE_COLORS = {
+    "global_horizontal_irradiance_w_m2": SOLAR_COMPONENT_COLORS["GHI"],
+    "direct_normal_irradiance_w_m2": SOLAR_COMPONENT_COLORS["DNI"],
+    "diffuse_horizontal_irradiance_w_m2": SOLAR_COMPONENT_COLORS["DHI"],
+}
 POA_COMPONENT_COLORS = {
     "poa_global_wh_m2": SOLAR_COMPONENT_COLORS["GHI"],
     "poa_direct_wh_m2": SOLAR_COMPONENT_COLORS["DNI"],
@@ -181,9 +191,8 @@ METRIC_COLORS = {
     "moist_air_density_kg_m3": "#475569",
     "atmospheric_station_pressure_pa": "#92734D",
     **POA_COMPONENT_COLORS,
-    "global_horizontal_radiation_wh_m2": SOLAR_COMPONENT_COLORS["GHI"],
-    "direct_normal_radiation_wh_m2": SOLAR_COMPONENT_COLORS["DNI"],
-    "diffuse_horizontal_radiation_wh_m2": SOLAR_COMPONENT_COLORS["DHI"],
+    **SOURCE_IRRADIATION_COLORS,
+    **SOURCE_IRRADIANCE_COLORS,
     "global_horizontal_illuminance_lux": "#F59E0B",
     "direct_normal_illuminance_lux": "#EA580C",
     "diffuse_horizontal_illuminance_lux": "#CA8A04",

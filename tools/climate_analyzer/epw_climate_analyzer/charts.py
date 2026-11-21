@@ -28,6 +28,8 @@ from .chart_theme import (
     BINARY_SUITABILITY_COLORSCALE,
     ILLUMINANCE_COLUMNS,
     POA_COMPONENT_COLORS,
+    SOURCE_IRRADIATION_COLORS,
+    SOURCE_IRRADIANCE_COLORS,
     SOLAR_COLORSCALE,
     is_irradiation_metric,
     CLIMATE_COLORS,
@@ -454,12 +456,12 @@ def temporal_heatmap_chart(
         lo,hi=_finite_min_max(matrix.values)
         if lo is not None and lo>=0.:
             zmin,zmax=0.,max(1e-9,hi or 0.) if hi else (100. if column.endswith("_pct") else 1.)
-    if column in POA_COMPONENT_COLORS:
-        # Compare all four components in the same selected source scope.
-        # Intensive statistics are bounded by the source extrema; totals
-        # must use aggregated cell maxima for the same period/dimension.
+    radiation_family=next((group for group in (POA_COMPONENT_COLORS,SOURCE_IRRADIATION_COLORS,SOURCE_IRRADIANCE_COLORS) if column in group),None)
+    if radiation_family is not None:
+        # Compare equivalent components in the same selected source scope,
+        # never mix W/m² and Wh/m². Totals need matching cell aggregates.
         maxima=[]
-        for c in POA_COMPONENT_COLORS:
+        for c in radiation_family:
             if c not in df:continue
             other=(matrix.values if c==column else temporal_heatmap_matrix(df,c,row_group,compare_across,statistic).values) if statistic=="Total" else pd.to_numeric(df[c],errors="coerce")
             _,hi=_finite_min_max(other)
