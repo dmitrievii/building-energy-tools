@@ -477,6 +477,7 @@ def page_derivation_flags(page: str) -> tuple[bool, bool]:
     pages_requiring_solar = {
         "Overview",
         "Solar and Radiation",
+        "Shading analysis",
         "Compare Climates",
     }
     return page in pages_requiring_psychrometrics, page in pages_requiring_solar
@@ -3632,7 +3633,7 @@ def _solar_ground_albedo_selection(df: pd.DataFrame) -> None:
     return
 
 
-def render_sun_path(df: pd.DataFrame) -> None:
+def render_sun_path(df: pd.DataFrame, *, shading_geometry=None) -> None:
     """One chart selector for the polar, technical and 3D solar views."""
     from epw_climate_analyzer.sun_path_views import (
         available_radiation_fields, classic_sun_path,
@@ -3640,9 +3641,12 @@ def render_sun_path(df: pd.DataFrame) -> None:
     )
 
     chart_types = ["2D sun-path diagram", "Technical sun-path diagram", "3D sun-path diagram"]
+    if shading_geometry is not None:
+        chart_types = chart_types[:2]
     if st.session_state.get("solar_sun_path_chart_type") == "Sun path with radiation":
         st.session_state["solar_sun_path_chart_type"] = "2D sun-path diagram"
-    chart_type = st.selectbox("Chart type", chart_types, key="solar_sun_path_chart_type")
+    chart_type = st.selectbox("Chart type", chart_types,
+                              key="shading_sun_path_chart_type" if shading_geometry is not None else "solar_sun_path_chart_type")
     reference = solar_reference(df)
     if reference is not None:
         st.caption(reference.description + ". Reference paths show the full astronomical year; radiation observations follow the active Data filter.")
@@ -3687,12 +3691,10 @@ def render_sun_path(df: pd.DataFrame) -> None:
         if colour!="None":
             thermal_overlay(fig,df,colour,cold=cold,warm=warm)
             explanation+=" Observation colours indicate outdoor temperature or temperature-based solar benefit/risk, not actual indoor loads."
-        if st.checkbox("Show direct-sun shading mask",value=False,key="solar_mask_enable",
-                       help="Show the fraction of the window shaded by its overhang and fins for each possible sun direction."):
+        if shading_geometry is not None:
             from epw_climate_analyzer.solar_shading import MASK_EXPLANATION
             st.caption(MASK_EXPLANATION)
-            geometry=_shading_geometry("sun_mask")
-            overlay_shading_mask(fig,inverted=invert_zenith_axis,**geometry)
+            overlay_shading_mask(fig,inverted=invert_zenith_axis,**shading_geometry)
             explanation+=" "+MASK_EXPLANATION
         render_plot(fig, explanation)
     elif chart_type == "Technical sun-path diagram":
@@ -3711,11 +3713,10 @@ def render_sun_path(df: pd.DataFrame) -> None:
             if colour!="None":
                 thermal_overlay(fig,df,colour,cold=cold,warm=warm,technical=True)
                 explanation+=" Temperature-based benefit/risk is a climate indicator, not a building load."
-        if st.checkbox("Show direct-sun shading mask",value=False,key="technical_sun_mask",
-                       help="Show the fraction of the window shaded by its overhang and fins for each possible sun direction."):
+        if shading_geometry is not None:
             from epw_climate_analyzer.solar_shading import MASK_EXPLANATION
             st.caption(MASK_EXPLANATION)
-            overlay_shading_mask(fig,technical=True,**_shading_geometry("technical_mask"))
+            overlay_shading_mask(fig,technical=True,**shading_geometry)
             explanation+=" "+MASK_EXPLANATION
         render_plot(fig,explanation)
     else:
@@ -3914,10 +3915,9 @@ def render_sky_radiation_distribution(df):
     st.download_button("Sky patch numerical data · CSV",table.to_csv().encode("utf-8"),"sky_patch_irradiation.csv","text/csv",key="sky_patch_csv")
 
 
-def render_shading_analysis(df,ground_albedo):
+def render_shading_analysis(df,ground_albedo,*,geometry):
     from epw_climate_analyzer.solar_shading import shading_ledger, monthly_shading_figure
     from epw_climate_analyzer.aggregations import period_total_series
-    geometry=_shading_geometry("shading_analysis")
     st.caption("Analytical direct-beam shadow area · no spatial sampling or resolution setting.")
     data=_solar_temperature_selection(df,"shading_condition")
     if data.empty:
@@ -3932,6 +3932,32 @@ def render_shading_analysis(df,ground_albedo):
     fig=monthly_shading_figure(table,display_period_labels(table.index,"Monthly",time_basis(data)))
     totals=ledger[cols].sum(min_count=1)/1000
     render_plot(fig,f"Selected-period unshaded total: {totals.iloc[0]:.1f} kWh/m²; direct beam intercepted: {totals.iloc[2]:.1f} kWh/m². The stacked bar combines remaining irradiation and intercepted direct beam; the unshaded reference line is their sum for complete intervals. The model calculates the exact geometric shaded fraction of a rectangular vertical aperture, with opaque overhang and fins attached at its edges. The two ray-exit areas are integrated analytically without double counting. Diffuse and ground-reflected components are unchanged; this is a direct-beam screening assessment, not a full shaded building-energy calculation.")
+
+
+def render_shading_design(df: pd.DataFrame) -> None:
+    """One window geometry for the analytical irradiation and sun-path mask views."""
+    from epw_climate_analyzer.monthly_radiation import surface_available
+    from epw_climate_analyzer.sun_path_views import solar_reference
+    st.header("Shading analysis")
+    options=[]
+    if surface_available(df):
+        options.append("Irradiation reduction")
+    if solar_reference(df) is not None:
+        options.append("Direct-sun shading mask")
+    if not options:
+        st.info("Shading analysis requires site solar geometry or complete paired plane-of-array radiation inputs.")
+        return
+    if st.session_state.get("shading_design_analysis") not in options:
+        st.session_state["shading_design_analysis"]=options[0]
+    view=st.selectbox("Analysis type",options,key="shading_design_analysis")
+    geometry=_shading_geometry("shading_analysis")
+    if view=="Irradiation reduction":
+        if "direct_normal_radiation_is_calculated" in df and df["direct_normal_radiation_is_calculated"].fillna(False).any():
+            st.caption("DNI includes source-derived values calculated from GHI, DHI and solar zenith; measured GHI/DHI remain unchanged.")
+        render_shading_analysis(df,_active_solar_ground_albedo(df),geometry=geometry)
+        _solar_ground_albedo_selection(df)
+    else:
+        render_sun_path(df,shading_geometry=geometry)
 
 
 def render_solar(df: pd.DataFrame) -> None:
@@ -3950,14 +3976,11 @@ def render_solar(df: pd.DataFrame) -> None:
             "Orientation-tilt heatmap",
             "Cooling-risk solar hours",
             "Solar scatter relationships",
-        ] + (["Sky radiation distribution"] if available_quantities(df) else []) +
-            (["Shading analysis"] if surface_available(df) else []),
+        ] + (["Sky radiation distribution"] if available_quantities(df) else []),
     )
 
     if chart_group == "Sky radiation distribution":
         render_sky_radiation_distribution(df)
-    elif chart_group == "Shading analysis":
-        render_shading_analysis(df,ground_albedo)
     elif chart_group == "Radiation variable explorer":
         from epw_climate_analyzer.surface_radiation_views import with_diffuse_fraction,poa_frame
         basis=st.selectbox("Radiation basis",["Source radiation"]+(["Surface irradiation (POA)"] if surface_available(df) else []),key="solar_explorer_basis")
@@ -5682,7 +5705,7 @@ def render_canonical_climate_analysis(dataset) -> None:
         "Natural Ventilation",
         "HVAC and Passive Design",
     }
-    _ensure_analysis_dependencies(include_solar=False, include_comparison=False)
+    _ensure_analysis_dependencies(include_solar=(page == "Shading analysis"), include_comparison=False)
     source_pressure = dataset.data.get("atmospheric_station_pressure_pa")
     valid_pressure = pd.to_numeric(source_pressure, errors="coerce").dropna() if source_pressure is not None else pd.Series(dtype=float)
     measured_median = (
@@ -5714,6 +5737,7 @@ def render_canonical_climate_analysis(dataset) -> None:
             full_df = prepare_historical_analysis_frame(
                 dataset,
                 include_psychrometrics=include_psychrometrics,
+                include_solar=(page == "Shading analysis"),
                 fallback_pressure_pa=fallback_pressure,
                 pressure_override_pa=pressure_override,
             )
@@ -5773,6 +5797,8 @@ def render_canonical_climate_analysis(dataset) -> None:
         render_humidity(filtered_df, pressure_pa=active_pressure)
     elif page == "Solar and Radiation":
         render_historical_solar(filtered_df)
+    elif page == "Shading analysis":
+        render_shading_design(filtered_df)
     elif page == "Sky and Daylight":
         render_sky_daylight(filtered_df, latitude=float(dataset.location.latitude))
     elif page == "Wind and Ventilation":
@@ -5823,9 +5849,9 @@ def render_generated_climate_analysis(dataset) -> None:
     if not isinstance(product, EngineProduct) or product.dataset is not dataset:
         st.error("The selected year has no matching complete output package. Return to the climate source.")
         return
-    _ensure_analysis_dependencies(include_solar=page in ("Overview", "Solar and Radiation"), include_comparison=False)
+    _ensure_analysis_dependencies(include_solar=page in ("Overview", "Solar and Radiation", "Shading analysis"), include_comparison=False)
     try:
-        full = prepare_engine_display_frame(dataset, include_solar=page in ("Overview", "Solar and Radiation"))
+        full = prepare_engine_display_frame(dataset, include_solar=page in ("Overview", "Solar and Radiation", "Shading analysis"))
     except ValueError as exc:
         st.error(f"The generated source states cannot be analysed safely: {exc}")
         return
@@ -5856,6 +5882,8 @@ def render_generated_climate_analysis(dataset) -> None:
         render_humidity(data, pressure_pa=active_pressure)
     elif page == "Solar and Radiation":
         render_solar(data)
+    elif page == "Shading analysis":
+        render_shading_design(data)
     elif page == "Wind and Ventilation":
         render_wind(data)
     elif page == "Sky and Daylight":
@@ -6002,6 +6030,8 @@ def main() -> None:
         render_humidity(filtered_df, pressure_pa=active_pressure)
     elif page == "Solar and Radiation":
         render_solar(filtered_df)
+    elif page == "Shading analysis":
+        render_shading_design(filtered_df)
     elif page == "Wind and Ventilation":
         render_wind(filtered_df)
     elif page == "Sky and Daylight":

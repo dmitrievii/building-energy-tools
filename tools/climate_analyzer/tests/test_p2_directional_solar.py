@@ -201,6 +201,30 @@ class P2Tests(unittest.TestCase):
         self.assertNotIn("Area sampling per dimension",ast.get_source_segment(source,node))
         self.assertNotIn('geometry["samples"]',ast.get_source_segment(source,node))
 
+    def test_shading_design_navigation_and_shared_geometry(self):
+        import ast
+        from pathlib import Path
+        from epw_climate_analyzer.ui_contract import NAVIGATION_PAGES,navigation_label
+        from epw_climate_analyzer.historical_capabilities import available_historical_pages
+        root=Path(__file__).resolve().parents[1]
+        source=(root/"app.py").read_text(encoding="utf-8")
+        parsed=ast.parse(source)
+        funcs={n.name:ast.get_source_segment(source,n) for n in parsed.body if isinstance(n,ast.FunctionDef)}
+        self.assertEqual(navigation_label("Shading analysis"),"Design — Shading analysis")
+        self.assertIn("Shading analysis",NAVIGATION_PAGES)
+        self.assertIn("Shading analysis",available_historical_pages(fixture()))
+        self.assertNotIn("Shading analysis",available_historical_pages(fixture().drop(columns=list(SOURCE_FIELDS.values()))))
+        self.assertNotIn('"Shading analysis"',funcs["render_solar"])
+        self.assertNotIn("_shading_geometry(",funcs["render_sun_path"])
+        self.assertEqual(funcs["render_shading_design"].count("_shading_geometry("),1)
+        self.assertIn("render_sun_path(df,shading_geometry=geometry)",funcs["render_shading_design"])
+        self.assertIn("geometry=geometry",funcs["render_shading_design"])
+        self.assertIn('"Shading analysis"',funcs["page_derivation_flags"])
+        for route in ("main","render_generated_climate_analysis","render_canonical_climate_analysis"):
+            self.assertIn("render_shading_design(",funcs[route])
+        parity=(root/"epw_climate_analyzer/source_parity_ui.py").read_text(encoding="utf-8")
+        self.assertIn("legacy.render_shading_design(filtered_df)",parity)
+
     def test_window_sketch_respects_geometry_and_zero_depth(self):
         from epw_climate_analyzer.shading_sketch import window_shading_sketch
         from epw_climate_analyzer.chart_presentation import apply_chart_presentation,ChartPresentationSettings

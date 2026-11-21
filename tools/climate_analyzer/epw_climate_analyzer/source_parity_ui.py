@@ -887,7 +887,7 @@ def _render_canonical_analysis(legacy: Any, dataset: CanonicalClimateDataset) ->
 
     has_psych = _numeric(prepared_dataset.data, "dry_bulb_temperature_c") and _numeric(prepared_dataset.data, "relative_humidity_pct")
     include_psych = has_psych and page in {"Temperature", "Humidity and Psychrometrics", "Wind and Ventilation", "Time Series and Overlay", "Natural Ventilation", "HVAC and Passive Design", "Overview"}
-    include_solar = page in {"Solar and Radiation", "Overview"}
+    include_solar = page in {"Solar and Radiation", "Overview", "Shading analysis"}
 
     # The default monthly humidity-ratio plot needs only T, RH and pressure.
     # Full hourly PsychroLib inverse wet-bulb/dew-point solving costs tens of
@@ -995,6 +995,8 @@ def _render_canonical_analysis(legacy: Any, dataset: CanonicalClimateDataset) ->
         _render_humidity_capability(legacy, legacy._source_parity_original_humidity, filtered_df, fallback_pressure)
     elif page == "Solar and Radiation":
         _render_solar_capability(legacy, legacy._source_parity_original_solar, legacy._source_parity_original_historical_solar, filtered_df)
+    elif page == "Shading analysis":
+        legacy.render_shading_design(filtered_df)
     elif page == "Sky and Daylight":
         _render_sky_with_atmosphere(legacy, legacy._source_parity_original_sky, filtered_df, latitude=float(prepared_dataset.location.latitude))
     elif page == "Wind and Ventilation":

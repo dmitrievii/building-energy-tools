@@ -30,3 +30,6 @@ The spatial sampling parameter is removed. Let n > 0 be the outward solar direct
 
 ## P2 monthly shading presentation refinement
 S-04 displays remaining irradiation (direct-only shading) and intercepted direct beam as one stacked monthly bar. The unshaded total is a dashed reference line, not a third stacked component. The physical ledger, monthly aggregation and units are unchanged. A figure regression checks series order, stacking, zero/full shade and missing months.
+
+## P2 shading design navigation
+S-03 and S-04 now live on Design — Shading analysis, using a single aperture geometry/sketch for irradiation reduction and direct-sun shading mask (2D and technical). Ordinary sun paths and unobstructed radiation views remain in Climate — Solar radiation. The geometric mask requires site reference geometry; the irradiation chart requires admitted paired POA inputs. EPW, generated and historical routes reuse the same renderers, global filters and presentation boundary. General cooling-risk climate screening and aggregate passive-strategy indicators remain in their original analytical contexts. No change to the physical shading kernel.

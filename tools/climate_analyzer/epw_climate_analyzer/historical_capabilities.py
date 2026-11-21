@@ -193,7 +193,11 @@ def available_historical_pages(df: pd.DataFrame) -> tuple[str, ...]:
         pages.append("Precipitation and Snow")
     pages.append("Time Series and Overlay")
     if has_mean_temperature and has_humidity:
-        pages.extend(["Natural Ventilation", "HVAC and Passive Design"])
+        pages.append("Natural Ventilation")
+    if has_solar:
+        pages.append("Shading analysis")
+    if has_mean_temperature and has_humidity:
+        pages.append("HVAC and Passive Design")
     pages.append("Data Quality")
     return tuple(pages)
 
