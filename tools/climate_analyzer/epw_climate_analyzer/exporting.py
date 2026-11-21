@@ -115,6 +115,15 @@ def figure_to_dataframe(fig: Any) -> pd.DataFrame:
             if not first and not second:
                 continue
             count = max(len(first), len(second))
+            # Monthly rose polylines repeat January solely to close the
+            # graphical loop. Export the twelve real monthly values once.
+            trace_meta = getattr(trace, "meta", None)
+            if (trace_type == "scatterpolar" and first_name == "theta"
+                    and isinstance(trace_meta, dict)
+                    and trace_meta.get("monthly_rose_closure_vertex") is True
+                    and len(first) == len(second) == 13
+                    and first[0] == 0 and first[-1] == 360):
+                count = 12
             for point_index in range(count):
                 rows.append(
                     {

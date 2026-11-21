@@ -41,7 +41,8 @@ if st.query_params.get("monthly") == "1":
          "DNI": [34,41,69,95,119,120,148,135,81,58,32,29]},
         index=pd.Index(range(1,13),name="Month"))
     style = st.selectbox("Chart type", ["Bar chart","Line chart","Monthly rose"])
-    st.plotly_chart(monthly_radiation_chart(monthly, style=style),
+    rose_style = st.selectbox("Rose style", ["Sectors","Lines"]) if style == "Monthly rose" else "Sectors"
+    st.plotly_chart(monthly_radiation_chart(monthly, style=style, rose_style=rose_style),
                     use_container_width=True, key="monthly_spacing_test")
     st.stop()
 

@@ -149,9 +149,12 @@ def monthly_rose_table(table, *, year=None):
     return table.reindex(pd.Index(range(1, 13), name=table.index.name))
 
 
-def monthly_radiation_chart(table, *, style="Bar chart", tilt_deg=None, rose_year=None):
+def monthly_radiation_chart(table, *, style="Bar chart", tilt_deg=None, rose_year=None,
+                            rose_style="Sectors"):
     if style not in {"Bar chart", "Line chart", "Monthly rose"}:
         raise ValueError(f"Unknown chart type: {style}")
+    if rose_style not in {"Sectors", "Lines"}:
+        raise ValueError(f"Unknown rose style: {rose_style}")
     if style == "Monthly rose":
         table = monthly_rose_table(table, year=rose_year)
     surface_mode = isinstance(table.columns, pd.MultiIndex)
@@ -161,6 +164,8 @@ def monthly_radiation_chart(table, *, style="Bar chart", tilt_deg=None, rose_yea
     fig = go.Figure()
     dash = {"Total POA":"solid", "Direct":"dash", "Sky diffuse":"dot", "Ground-reflected":"dashdot"}
     patterns = {"Total POA":"", "Direct":"/", "Sky diffuse":".", "Ground-reflected":"x"}
+    symbols = {"Total POA":"circle", "Direct":"diamond", "Sky diffuse":"square",
+               "Ground-reflected":"triangle-up", "GHI":"circle", "DHI":"square", "DNI":"diamond"}
     for column in table.columns:
         if surface_mode:
             surface, quantity = column
@@ -169,11 +174,26 @@ def monthly_radiation_chart(table, *, style="Bar chart", tilt_deg=None, rose_yea
                      if multiple else SURFACE_COLORS[quantity])
             pattern = patterns[quantity] if multiple else ""
             line_dash = dash[quantity] if multiple else "solid"
+            marker_symbol = symbols[quantity]
         else:
             name, color, pattern, line_dash = str(column), SOLAR_COMPONENT_COLORS[column], "", "solid"
+            marker_symbol = symbols[column]
         values = table[column].to_numpy(dtype=float)
         common = dict(name=name, hovertemplate="%{x}<br>%{y:,.1f} kWh/m²<extra>%{fullData.name}</extra>")
-        if style == "Monthly rose":
+        if style == "Monthly rose" and rose_style == "Lines":
+            # The thirteenth position is only a drawing vertex closing
+            # December to January. It is not another monthly observation.
+            # NaNs and connectgaps=False retain the missing-month breaks.
+            fig.add_trace(go.Scatterpolar(
+                theta=np.arange(13, dtype=float) * 30.0, thetaunit="degrees",
+                r=np.r_[values, values[0]], name=name, mode="lines+markers",
+                line=dict(color=color, dash=line_dash, width=2.8),
+                marker=dict(color=color, symbol=marker_symbol, size=[7]*12+[0]),
+                connectgaps=False, fill="none",
+                customdata=[*MONTH_NAMES, MONTH_NAMES[0]],
+                meta={"monthly_rose_closure_vertex": True},
+                hovertemplate="%{customdata}<br>%{r:,.1f} kWh/m²<extra>%{fullData.name}</extra>"))
+        elif style == "Monthly rose":
             # All quantities occupy the same month sector and zero radial
             # origin. Translucent fills and coloured outlines preserve the
             # visibility of coincident values without stacking or angular offsets.
@@ -198,9 +218,14 @@ def monthly_radiation_chart(table, *, style="Bar chart", tilt_deg=None, rose_yea
         else:
             title += " · calendar profile"
         title += " [kWh/m²]"
+        values = table.to_numpy(dtype=float)
+        finite = values[np.isfinite(values)]
+        # Common zero-based scale for lines and sectors, even when every
+        # observed value is positive or there are no finite observations.
+        upper = max(1.0, float(finite.max()) * 1.06) if finite.size else 1.0
         fig.update_layout(height=780,
             polar=dict(barmode="overlay", bgcolor="white",
-                radialaxis=dict(rangemode="nonnegative", tickformat=",.0f",
+                radialaxis=dict(range=[0, upper], rangemode="nonnegative", tickformat=",.0f",
                                 tickangle=0, angle=105, gridcolor="#DDE3EA"),
                 angularaxis=dict(type="linear", direction="clockwise", rotation=90,
                     tickmode="array", tickvals=list(range(0, 360, 30)),
@@ -216,5 +241,7 @@ def monthly_radiation_chart(table, *, style="Bar chart", tilt_deg=None, rose_yea
                     x=0.5, xanchor="center"),
         meta={"measurement_basis": "surface" if surface_mode else "source",
               "unit": "kWh/m²", "month_sectors": 12 if style == "Monthly rose" else None,
-              "rose_grouping": "overlaid month sectors" if style == "Monthly rose" else None})
+              "rose_style": rose_style if style == "Monthly rose" else None,
+              "rose_grouping": ("overlaid month sectors" if rose_style == "Sectors" else "monthly lines")
+                  if style == "Monthly rose" else None})
     return fig

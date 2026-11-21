@@ -111,6 +111,44 @@ class MonthlyRadiationTests(unittest.TestCase):
                 self.assertLess(trace.opacity,1)
                 self.assertEqual(trace.marker.line.color,trace.marker.color)
 
+    def test_rose_lines_share_values_scale_and_month_sectors_without_duplicate_export(self):
+        from epw_climate_analyzer.exporting import figure_to_dataframe
+        df = fixture()
+        for table in (monthly_source_irradiation(df, ["GHI","DHI","DNI"]),
+                      monthly_surface_irradiation(df,[("North",0.),("South",180.)],
+                                                   90.,list(SURFACE_FIELDS))):
+            sectors = monthly_radiation_chart(table, style="Monthly rose")
+            lines = monthly_radiation_chart(table, style="Monthly rose", rose_style="Lines")
+            self.assertEqual(lines.layout.meta["rose_style"],"Lines")
+            self.assertEqual(sectors.layout.meta["rose_style"],"Sectors")
+            self.assertEqual(lines.layout.polar.to_plotly_json(),sectors.layout.polar.to_plotly_json())
+            self.assertEqual(len(lines.data),len(sectors.data))
+            for line, sector, col in zip(lines.data,sectors.data,table.columns):
+                self.assertEqual(line.type,"scatterpolar")
+                self.assertEqual(line.mode,"lines+markers")
+                self.assertEqual(line.fill,"none")
+                self.assertFalse(line.connectgaps)
+                self.assertEqual(line.line.color,sector.marker.color)
+                self.assertEqual(line.name,sector.name)
+                np.testing.assert_allclose(line.theta,np.arange(13)*30)
+                np.testing.assert_allclose(line.r[:12],table[col],equal_nan=True)
+                np.testing.assert_allclose(line.r[-1],table[col].iloc[0],equal_nan=True)
+                self.assertEqual(line.marker.size[-1],0)
+                self.assertEqual(tuple(line.customdata[:12]),MONTH_NAMES)
+            exported=figure_to_dataframe(lines)
+            self.assertEqual(len(exported),12*len(table.columns))
+            self.assertNotIn(360.,exported["theta"].tolist())
+            for trace,col in zip(lines.data,table.columns):
+                np.testing.assert_allclose(exported.loc[exported["trace"]==trace.name,"r"],
+                                           table[col],equal_nan=True)
+        full=pd.DataFrame({"GHI":np.arange(1.,13.),"DHI":np.arange(1.,13.)*.5},
+                          index=pd.Index(range(1,13)))
+        lines=monthly_radiation_chart(full,style="Monthly rose",rose_style="Lines")
+        self.assertEqual(lines.data[0].r[0],lines.data[0].r[-1])
+        self.assertEqual(lines.layout.polar.radialaxis.range[0],0)
+        with self.assertRaisesRegex(ValueError,"Unknown rose style"):
+            monthly_radiation_chart(full,style="Monthly rose",rose_style="Unknown")
+
     def test_monthly_rose_chronological_year_and_calendar_profile(self):
         df=fixture()
         other=df.copy()
@@ -154,7 +192,13 @@ def render_plot(fig,text):
         self.assertEqual(app.selectbox(key="monthly_radiation_basis").value,"Source radiation")
         self.assertEqual(app.multiselect(key="monthly_source_quantities").value,["GHI","DHI","DNI"])
         self.assertEqual(app.selectbox(key="monthly_radiation_style").options,["Bar chart","Line chart","Monthly rose"])
+        self.assertNotIn("monthly_radiation_rose_style",[w.key for w in app.selectbox])
         app.selectbox(key="monthly_radiation_style").set_value("Monthly rose").run()
+        self.assertFalse(app.exception)
+        rose=app.selectbox(key="monthly_radiation_rose_style")
+        self.assertEqual(rose.options,["Sectors","Lines"])
+        self.assertEqual(rose.value,"Sectors")
+        rose.set_value("Lines").run()
         self.assertFalse(app.exception)
         app.selectbox(key="monthly_radiation_basis").set_value("Surface irradiation (POA)").run()
         self.assertFalse(app.exception)
@@ -168,6 +212,12 @@ def render_plot(fig,text):
         app.slider(key="monthly_poa_tilt").set_value(0.).run()
         self.assertFalse(app.exception)
         self.assertNotIn("monthly_poa_orientations",[w.key for w in app.multiselect])
+        self.assertEqual(app.selectbox(key="monthly_radiation_rose_style").value,"Lines")
+        app.selectbox(key="monthly_radiation_rose_style").set_value("Sectors").run()
+        self.assertFalse(app.exception)
+        app.selectbox(key="monthly_radiation_style").set_value("Line chart").run()
+        self.assertFalse(app.exception)
+        self.assertNotIn("monthly_radiation_rose_style",[w.key for w in app.selectbox])
 
 
 if __name__ == "__main__":

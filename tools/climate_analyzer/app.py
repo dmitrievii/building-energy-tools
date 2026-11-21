@@ -3655,6 +3655,10 @@ def render_monthly_radiation(df: pd.DataFrame, *, ground_albedo=None, allow_surf
         modes.append("Surface irradiation (POA)")
     basis = st.selectbox("Radiation basis", modes, key="monthly_radiation_basis")
     style = st.selectbox("Chart type", ["Bar chart", "Line chart", "Monthly rose"], key="monthly_radiation_style")
+    rose_style = "Sectors"
+    if style == "Monthly rose":
+        rose_style = st.selectbox("Rose style", ["Sectors", "Lines"], index=0,
+                                  key="monthly_radiation_rose_style")
     tilt = None
     if basis == "Source radiation":
         quantities = st.multiselect("Radiation quantity", source, default=source,
@@ -3698,7 +3702,9 @@ def render_monthly_radiation(df: pd.DataFrame, *, ground_albedo=None, allow_surf
         monthly = monthly_rose_table(monthly, year=rose_year)
         if len(monthly.columns) > 8:
             st.warning("Many series make the monthly rose difficult to read. Consider fewer radiation quantities or orientations, or use the bar or line chart.")
-    fig = monthly_radiation_chart(monthly, style=style, tilt_deg=tilt)
+        elif rose_style == "Sectors" and len(monthly.columns) > 3:
+            st.caption("Use Rose style: Lines to compare overlapping irradiation series.")
+    fig = monthly_radiation_chart(monthly, style=style, tilt_deg=tilt, rose_style=rose_style)
     render_plot(fig, explanation + " Monthly values sum interval energies over the active Data filter; calendar-profile mode averages per-year monthly sums. Missing periods are not zero-filled.")
     with st.expander("Monthly irradiation values", expanded=False):
         display = monthly.copy()

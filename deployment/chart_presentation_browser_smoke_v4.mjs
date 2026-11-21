@@ -289,6 +289,29 @@ try {
   report.metrics.monthlyRose=rose;
   report.checks.monthlyAxisSpacingAndRose=true;
   await page.screenshot({path:OUT_DIR+'/08-monthly-rose.png',fullPage:true});
+  monthlyFrame=await waitForCharts(page,1);
+  await monthlyFrame.getByRole('combobox',{name:'Rose style',exact:true}).click();
+  await page.keyboard.press('Home');
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(()=>document.querySelector('.js-plotly-plot')?._fullData?.[0]?.type==='scatterpolar');
+  monthlyFrame=await waitForCharts(page,1);
+  const lines=await monthlyFrame.locator('.js-plotly-plot').evaluate(node=>({
+    sectors:Array.from(node._fullLayout.polar.angularaxis.ticktext),
+    traces:node._fullData.map(t=>({type:t.type,r:Array.from(t.r),theta:Array.from(t.theta),
+      mode:t.mode,fill:t.fill,connectgaps:t.connectgaps})),
+    paths:node.querySelectorAll('.polarlayer .scatterlayer .js-line').length,
+  }));
+  if (JSON.stringify(lines.sectors)!==JSON.stringify(rose.sectors) ||
+      lines.traces.length!==3 || lines.paths<3 ||
+      lines.traces.some((t,i)=>t.type!=='scatterpolar' || t.mode!=='lines+markers' ||
+        t.fill!=='none' || t.connectgaps!==false || t.theta.length!==13 ||
+        t.theta.some((v,m)=>v!==m*30) || t.r.length!==13 ||
+        t.r[12]!==t.r[0] || t.r.slice(0,12).some((v,m)=>v!==rose.radii[i][m])))
+    throw new Error('Monthly rose lines differ from sector data: '+JSON.stringify(lines));
+  report.metrics.monthlyRoseLines=lines;
+  report.checks.monthlyRoseLines=true;
+  await page.screenshot({path:OUT_DIR+'/09-monthly-rose-lines.png',fullPage:true});
 
   report.success = Object.values(report.checks).every(Boolean);
   if (!report.success) throw new Error(`Chart presentation browser smoke failed: ${JSON.stringify(report.checks)}`);
