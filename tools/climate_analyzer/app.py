@@ -173,6 +173,7 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
         import importlib
         from epw_climate_analyzer import runtime_module_guard
         importlib.reload(runtime_module_guard)
+        runtime_module_guard.ensure_current_heatmap_runtime()
         runtime_module_guard.ensure_current_psychrometric_runtime()
         from epw_climate_analyzer.charts import (
             duration_chart,

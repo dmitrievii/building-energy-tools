@@ -408,3 +408,8 @@ def metric_colorscale(column: str | None):
     if "suitable" in text or "ventilation" in text:
         return BINARY_SUITABILITY_COLORSCALE
     return "Viridis"
+
+# Detect in-process modules retained from an earlier Streamlit deployment.
+from hashlib import sha256 as _runtime_sha256
+from pathlib import Path as _RuntimePath
+_RUNTIME_SOURCE_SHA256 = _runtime_sha256(_RuntimePath(__file__).read_bytes()).hexdigest()

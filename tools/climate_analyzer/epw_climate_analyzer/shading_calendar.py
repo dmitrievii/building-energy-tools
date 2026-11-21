@@ -71,7 +71,12 @@ def shading_matrix(frame,metric,period,dimension,statistic):
     return values,front
 
 def shading_calendar(frame,metric,period,dimension,statistic,*,title="",threshold=DEFAULT_THRESHOLD):
-    from .charts import temporal_heatmap_chart
+    from . import runtime_module_guard
+    # The guard itself may still be the version cached before this deploy.
+    if not hasattr(runtime_module_guard,"ensure_current_heatmap_runtime"):
+        import importlib
+        importlib.reload(runtime_module_guard)
+    temporal_heatmap_chart=runtime_module_guard.ensure_current_heatmap_runtime().temporal_heatmap_chart
     values,front=shading_matrix(frame,metric,period,dimension,statistic)
     if metric==ENERGY:
         unit="kWh/m²"

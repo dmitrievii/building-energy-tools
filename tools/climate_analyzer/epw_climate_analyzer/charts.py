@@ -1915,3 +1915,8 @@ def multi_line_monthly(df: pd.DataFrame, title: str, y_label: str) -> go.Figure:
     if year_neutral:
         fig.update_xaxes(categoryorder="array", categoryarray=MONTH_LABELS)
     return fig
+
+# Detect in-process modules retained from an earlier Streamlit deployment.
+from hashlib import sha256 as _runtime_sha256
+from pathlib import Path as _RuntimePath
+_RUNTIME_SOURCE_SHA256 = _runtime_sha256(_RuntimePath(__file__).read_bytes()).hexdigest()

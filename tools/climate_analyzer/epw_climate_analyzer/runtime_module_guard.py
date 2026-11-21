@@ -224,3 +224,24 @@ def ensure_current_psychrometric_runtime() -> tuple[ModuleType, ModuleType]:
         )
 
     return distribution, charts
+
+
+def ensure_current_heatmap_runtime() -> ModuleType:
+    """Refresh presentation dependencies before calling the heat-map API.
+
+    Do not retry a failed calculation with an older signature: a derived
+    matrix (e.g. energy-weighted shading reduction) cannot be reconstructed
+    from the source column alone.
+    """
+    theme = importlib.import_module("epw_climate_analyzer.chart_theme")
+    theme_changed = _stale_source(theme)
+    if theme_changed:
+        theme = importlib.reload(theme)
+    charts = importlib.import_module("epw_climate_analyzer.charts")
+    required = frozenset({"matrix_override"})
+    missing = _missing_callable_parameters(charts, "temporal_heatmap_chart", required)
+    if theme_changed or _stale_source(charts) or missing:
+        charts = importlib.reload(charts)
+    if _stale_source(theme) or _stale_source(charts) or _missing_callable_parameters(charts, "temporal_heatmap_chart", required):
+        raise RuntimeError("Heat-map runtime is incompatible after refresh. Restart the Streamlit worker.")
+    return charts

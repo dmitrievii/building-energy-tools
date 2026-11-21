@@ -11,6 +11,43 @@ from epw_climate_analyzer import runtime_module_guard
 
 
 class SolarRuntimeHotReloadTests(unittest.TestCase):
+    def test_heatmap_stale_signature_refresh_and_stable_reuse(self):
+        import inspect
+        from epw_climate_analyzer import charts, chart_theme
+        try:
+            def old_heatmap(df,column,row_group,compare_across,statistic,title,unit):
+                raise AssertionError("Stale heat-map API used")
+            charts.temporal_heatmap_chart=old_heatmap
+            refreshed=runtime_module_guard.ensure_current_heatmap_runtime()
+            self.assertIn("matrix_override",inspect.signature(refreshed.temporal_heatmap_chart).parameters)
+            current=refreshed.temporal_heatmap_chart
+            self.assertIs(runtime_module_guard.ensure_current_heatmap_runtime().temporal_heatmap_chart,current)
+            chart_theme._RUNTIME_SOURCE_SHA256="stale"
+            self.assertIsNot(runtime_module_guard.ensure_current_heatmap_runtime().temporal_heatmap_chart,current)
+        finally:
+            importlib.reload(chart_theme)
+            importlib.reload(charts)
+
+    def test_shading_calendar_passes_exact_derived_matrix_after_refresh(self):
+        import numpy as np
+        import pandas as pd
+        from epw_climate_analyzer import charts
+        from epw_climate_analyzer.shading_calendar import shading_calendar,shading_matrix,shading_frame,AREA,OCCURRENCE
+        idx=pd.date_range("2026-06-01",periods=48,freq="h")
+        df=pd.DataFrame({"solar_azimuth_deg":180.,"solar_apparent_zenith_deg":45.},index=idx)
+        geometry=dict(facade=180.,width=2.,height=2.,overhang=1.,left_fin=0.,right_fin=0.)
+        try:
+            def old_heatmap(df,column,row_group,compare_across,statistic,title,unit):
+                raise AssertionError("Stale heat-map API used")
+            charts.temporal_heatmap_chart=old_heatmap
+            for metric in (AREA,OCCURRENCE):
+                frame=shading_frame(df,geometry=geometry,metric=metric)
+                expected,_=shading_matrix(frame,metric,"month","Hour of day","Mean")
+                fig=shading_calendar(frame,metric,"month","Hour of day","Mean")
+                np.testing.assert_allclose(np.asarray(fig.data[0].z,float),expected.values,equal_nan=True)
+        finally:
+            importlib.reload(charts)
+
     def test_current_module_does_not_reload_on_every_rerun(self) -> None:
         solar = runtime_module_guard.ensure_current_solar_runtime()
         original = solar.surface_irradiance_components
