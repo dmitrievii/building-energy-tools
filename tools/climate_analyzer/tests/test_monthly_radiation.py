@@ -87,7 +87,7 @@ class MonthlyRadiationTests(unittest.TestCase):
         typical=monthly_source_irradiation(with_time_basis(both,CALENDAR_PROFILE),["GHI"])
         self.assertAlmostEqual(typical.loc[1,"GHI"],.9)
 
-    def test_monthly_rose_disjoint_angular_groups_identical_values(self):
+    def test_monthly_rose_overlaid_month_sectors_identical_values(self):
         df = fixture()
         for table in (monthly_source_irradiation(df, ["GHI","DHI","DNI"]),
                       monthly_surface_irradiation(df, [("North",0.),("South",180.)],
@@ -98,18 +98,18 @@ class MonthlyRadiationTests(unittest.TestCase):
             self.assertEqual(tuple(fig.layout.polar.angularaxis.ticktext), MONTH_NAMES)
             self.assertEqual(tuple(fig.layout.polar.angularaxis.tickvals), tuple(range(0,360,30)))
             self.assertEqual(len(fig.data),len(table.columns))
-            occupied = []
+            self.assertEqual(fig.layout.meta["rose_grouping"],"overlaid month sectors")
             for trace, col in zip(fig.data,table.columns):
                 self.assertEqual(trace.type,"barpolar")
                 self.assertEqual(trace.base,0)
                 self.assertEqual(tuple(trace.customdata), MONTH_NAMES)
                 self.assertEqual(len(trace.r),12)
                 np.testing.assert_allclose(trace.r,table[col],equal_nan=True)
-                offsets=(np.asarray(trace.theta)-np.arange(12)*30+180)%360-180
-                self.assertTrue(np.all(np.abs(offsets)+trace.width/2 < 15))
-                occupied.append((offsets[0]-trace.width/2, offsets[0]+trace.width/2))
-            occupied.sort()
-            self.assertTrue(all(a[1] < b[0] for a,b in zip(occupied,occupied[1:])))
+                np.testing.assert_allclose(trace.theta,np.arange(12)*30)
+                self.assertEqual(trace.width,26.)
+                self.assertGreater(trace.opacity,0)
+                self.assertLess(trace.opacity,1)
+                self.assertEqual(trace.marker.line.color,trace.marker.color)
 
     def test_monthly_rose_chronological_year_and_calendar_profile(self):
         df=fixture()

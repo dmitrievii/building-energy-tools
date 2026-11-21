@@ -3793,12 +3793,6 @@ def render_wind(df: pd.DataFrame) -> None:
         paired_datasets.append(("Mean wind", "wind_speed_m_s", "wind_direction_deg"))
     if numeric("wind_gust_speed_m_s") and numeric("wind_gust_direction_deg"):
         paired_datasets.append(("Maximum gust", "wind_gust_speed_m_s", "wind_gust_direction_deg"))
-    direction_datasets: list[tuple[str, str]] = []
-    if numeric("wind_direction_deg"):
-        direction_datasets.append(("Mean wind", "wind_direction_deg"))
-    if numeric("wind_gust_direction_deg"):
-        direction_datasets.append(("Maximum gust", "wind_gust_direction_deg"))
-
     has_nv_inputs = all(
         numeric(column)
         for column in (
@@ -3810,15 +3804,19 @@ def render_wind(df: pd.DataFrame) -> None:
     if variable_labels:
         options.append("Wind variable explorer")
     if paired_datasets:
-        options.extend(["Wind rose", "Monthly wind rose", "Day-night wind rose"])
+        options.append("Wind rose")
     if has_nv_inputs:
         options.append("Wind during natural-ventilation hours")
-    if direction_datasets:
-        options.append("Direction histogram")
     if not options:
         st.info("No usable wind observations are available in the selected interval.")
         return
 
+    old_wind_choice = st.session_state.get("wind_analysis_type")
+    if old_wind_choice in ("Monthly wind rose", "Day-night wind rose", "Direction histogram"):
+        if old_wind_choice == "Direction histogram" or "Wind rose" not in options:
+            st.session_state["wind_analysis_type"] = "Wind variable explorer" if "Wind variable explorer" in options else options[0]
+        else:
+            st.session_state["wind_analysis_type"] = "Wind rose"
     chart_group = st.selectbox("Analysis type", options, key="wind_analysis_type")
     if chart_group == "Wind variable explorer":
         default = "Wind speed" if "Wind speed" in variable_labels else variable_labels[0]
@@ -3835,21 +3833,6 @@ def render_wind(df: pd.DataFrame) -> None:
         render_plot(fig, natural_ventilation_interpretation(df, mask))
         return
 
-    if chart_group == "Direction histogram":
-        labels = [item[0] for item in direction_datasets]
-        selected = st.selectbox("Wind dataset", labels, key="wind_direction_dataset") if len(labels) > 1 else labels[0]
-        direction_column = next(column for label, column in direction_datasets if label == selected)
-        fig = histogram_chart(df, direction_column, f"{selected} direction histogram", "deg", bins=36)
-        if selected == "Maximum gust":
-            text = (
-                "Gust direction remains paired with the governing maximum gust observation; it is not independently averaged. "
-                "The histogram integrates the physical duration represented by each canonical record."
-            )
-        else:
-            text = wind_interpretation(df)
-        render_plot(fig, text)
-        return
-
     dataset_labels = [item[0] for item in paired_datasets]
     selected_dataset = (
         st.selectbox("Wind dataset", dataset_labels, key="wind_paired_dataset")
@@ -3857,42 +3840,53 @@ def render_wind(df: pd.DataFrame) -> None:
     )
     _, speed_column, direction_column = next(item for item in paired_datasets if item[0] == selected_dataset)
 
+    from epw_climate_analyzer.wind_rose_selection import available_wind_months, select_wind_rose_period
+
+    aggregation = st.selectbox("Time aggregation", ["Annual", "Monthly"], index=0,
+                               key="wind_rose_aggregation")
+    month = None
+    if aggregation == "Monthly":
+        observed = available_wind_months(df)
+        month_names = [name for name, number in MONTHS.items() if number in observed]
+        if not month_names:
+            st.info("No valid month labels are available for the selected wind observations.")
+            return
+        month_name = st.selectbox("Month", month_names, key="wind_month")
+        month = MONTHS[month_name]
+    else:
+        month_name = "Annual"
+
+    enable_daynight = st.checkbox("Day-night filter", value=False, key="wind_rose_daynight",
+                                  help="Use the existing analysis-clock periods: day 07:00–19:59; night 20:00–06:59.")
+    period = None
+    if enable_daynight:
+        period = st.radio("Period", ["Day", "Night"], horizontal=True, key="wind_daynight_period")
+        st.caption("Fixed analysis-clock hours: Day 07:00–19:59; Night 20:00–06:59. These are not astronomical sunrise/sunset periods.")
+
+    data = select_wind_rose_period(df, month=month, period=period)
+    if data.empty:
+        st.info("No records match the selected wind-rose month and day/night period.")
+        return
+
+    selected_pair = data[[speed_column, direction_column]].apply(pd.to_numeric, errors="coerce")
+    if not selected_pair.notna().all(axis=1).any():
+        st.info("No paired speed and direction observations match the selected wind-rose period.")
+        return
+
     if selected_dataset == "Maximum gust":
         interpretation = (
             "Maximum-gust visualizations use the canonical maximum gust speed together with its paired governing gust direction. "
             "The direction is never independently circular-averaged away from the gust that produced it."
         )
     else:
-        interpretation = wind_interpretation(df)
+        interpretation = wind_interpretation(data)
 
-    if chart_group == "Wind rose":
-        fig = wind_rose_chart(
-            df, f"{selected_dataset} wind rose",
-            speed_column=speed_column, direction_column=direction_column,
-        )
-    elif chart_group == "Monthly wind rose":
-        observed = sorted({int(v) for v in pd.to_numeric(df["month_index"], errors="coerce").dropna().tolist() if 1 <= int(v) <= 12})
-        month_names = [name for name, number in MONTHS.items() if number in observed]
-        if not month_names:
-            st.info("No valid month labels are available for the selected wind observations.")
-            return
-        month = st.selectbox("Month", month_names, key="wind_month")
-        data = df[df["month_index"] == MONTHS[month]]
-        fig = wind_rose_chart(
-            data, f"{selected_dataset} wind rose: {month}",
-            speed_column=speed_column, direction_column=direction_column,
-        )
-    else:
-        period = st.radio("Period", ["Day", "Night"], horizontal=True, key="wind_daynight_period")
-        if period == "Day":
-            data = df[df["hour_of_day"].between(7, 19)]
-        else:
-            data = df[(df["hour_of_day"] < 7) | (df["hour_of_day"] > 19)]
-        fig = wind_rose_chart(
-            data, f"{selected_dataset} · {period.lower()} wind rose",
-            speed_column=speed_column, direction_column=direction_column,
-        )
+    period_label = f"{month_name} · {period or 'All hours'}"
+    st.caption("Annual uses all dates remaining in the active Data filter; Monthly selects the named calendar month within that filter, including across selected years. Frequencies retain the existing physical-hour weighting.")
+    fig = wind_rose_chart(data, f"{selected_dataset} wind rose · {period_label}",
+                         speed_column=speed_column, direction_column=direction_column)
     render_plot(fig, interpretation)
+
 
 
 def render_precipitation(df: pd.DataFrame, native_df: pd.DataFrame | None = None) -> None:

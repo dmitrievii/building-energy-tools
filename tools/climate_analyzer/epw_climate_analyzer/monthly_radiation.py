@@ -161,7 +161,7 @@ def monthly_radiation_chart(table, *, style="Bar chart", tilt_deg=None, rose_yea
     fig = go.Figure()
     dash = {"Total POA":"solid", "Direct":"dash", "Sky diffuse":"dot", "Ground-reflected":"dashdot"}
     patterns = {"Total POA":"", "Direct":"/", "Sky diffuse":".", "Ground-reflected":"x"}
-    for series_index, column in enumerate(table.columns):
+    for column in table.columns:
         if surface_mode:
             surface, quantity = column
             name = f"{surface} · {quantity}" if multiple else f"{quantity} ({surface})"
@@ -174,19 +174,14 @@ def monthly_radiation_chart(table, *, style="Bar chart", tilt_deg=None, rose_yea
         values = table[column].to_numpy(dtype=float)
         common = dict(name=name, hovertemplate="%{x}<br>%{y:,.1f} kWh/m²<extra>%{fullData.name}</extra>")
         if style == "Monthly rose":
-            # Plotly polar barmode has only stack/overlay. Allocate fixed,
-            # disjoint angular sub-sectors explicitly to obtain grouped bars.
-            # The radial origin is zero for every series, so totals and
-            # components are never added. All twelve slots persist if a
-            # month is missing or a legend item is hidden.
-            count = max(1, len(table.columns))
-            slot = 26.0 / count  # leave 4 degrees between adjacent months
-            center = np.arange(12, dtype=float) * 30.0
-            theta = (center - 13.0 + (series_index + 0.5) * slot) % 360.0
+            # All quantities occupy the same month sector and zero radial
+            # origin. Translucent fills and coloured outlines preserve the
+            # visibility of coincident values without stacking or angular offsets.
+            theta = np.arange(12, dtype=float) * 30.0
             fig.add_trace(go.Barpolar(theta=theta, thetaunit="degrees", r=values,
-                width=slot * 0.90, base=0, name=name,
+                width=26.0, base=0, name=name, opacity=0.56,
                 marker=dict(color=color, pattern=dict(shape=pattern),
-                            line=dict(color="white", width=0.5)),
+                            line=dict(color=color, width=1.6)),
                 customdata=list(MONTH_NAMES),
                 hovertemplate="%{customdata}<br>%{r:,.1f} kWh/m²<extra>%{fullData.name}</extra>"))
         elif style == "Bar chart":
@@ -221,5 +216,5 @@ def monthly_radiation_chart(table, *, style="Bar chart", tilt_deg=None, rose_yea
                     x=0.5, xanchor="center"),
         meta={"measurement_basis": "surface" if surface_mode else "source",
               "unit": "kWh/m²", "month_sectors": 12 if style == "Monthly rose" else None,
-              "rose_grouping": "disjoint angular sub-sectors" if style == "Monthly rose" else None})
+              "rose_grouping": "overlaid month sectors" if style == "Monthly rose" else None})
     return fig

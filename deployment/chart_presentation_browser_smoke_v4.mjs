@@ -276,18 +276,16 @@ try {
     origins:node._fullData.map(t=>t.base),
     angles:node._fullData.map(t=>Array.from(t.theta)),
     widths:node._fullData.map(t=>t.width),
+    opacity:node._fullData.map(t=>t.opacity),
     paths:node.querySelectorAll('.polarlayer .barlayer path').length,
   }));
   if (rose.sectors.length!==12 || rose.radii.length!==3 ||
       rose.radii.some(r=>r.length!==12) || rose.origins.some(b=>b!==0) ||
       rose.angles.some(a=>a.length!==12) || rose.paths!==36)
     throw new Error('Monthly rose geometry invalid: '+JSON.stringify(rose));
-  const occupied = rose.angles.map((a,i)=>{
-    const offset = (a[0]+180)%360-180;
-    return [offset-rose.widths[i]/2,offset+rose.widths[i]/2];
-  }).sort((a,b)=>a[0]-b[0]);
-  if (occupied.some(([a,b],i)=>a<=-15 || b>=15 || (i>0 && a<=occupied[i-1][1])))
-    throw new Error('Monthly rose angular groups overlap: '+JSON.stringify(occupied));
+  if (rose.angles.some(a=>a.some((v,m)=>Math.abs(v-m*30)>1e-8)) ||
+      rose.widths.some(w=>w!==26) || rose.opacity.some(o=>!(o>0 && o<1)))
+    throw new Error('Monthly rose traces must overlap at the same month angles: '+JSON.stringify(rose));
   report.metrics.monthlyRose=rose;
   report.checks.monthlyAxisSpacingAndRose=true;
   await page.screenshot({path:OUT_DIR+'/08-monthly-rose.png',fullPage:true});
