@@ -35,6 +35,13 @@ SOLAR_COLORSCALE = [
     [0.45, "#f97316"],
     [1.00, "#fef08a"],
 ]
+RELATIVE_HUMIDITY_COLORSCALE = [
+    [0.00, "#F5F7FF"],
+    [0.25, "#BFDBFE"],
+    [0.50, "#60A5FA"],
+    [0.75, "#2563EB"],
+    [1.00, "#4338CA"],
+]
 BINARY_SUITABILITY_COLORSCALE = [
     [0.00, "rgba(255,255,255,0.0)"],
     [0.01, "#ecfdf5"],
@@ -238,6 +245,8 @@ def climate_color_map(names: Iterable[str]) -> dict[str, str]:
 def metric_colorscale(column: str | None):
     """Return a continuous colourscale suitable for the selected metric."""
     text = str(column or "").lower()
+    if text=="relative_humidity_pct":
+        return RELATIVE_HUMIDITY_COLORSCALE
     if "radiation" in text or "irradiance" in text or "illuminance" in text:
         return SOLAR_COLORSCALE
     if "sky_cover" in text:

@@ -195,7 +195,7 @@ def _heatmap_colorscale(column: str, values=None, temperature_thresholds: tuple[
         return [[0.0, "rgba(255,255,255,0.0)"], [0.25, "#dbeafe"], [1.0, "#0f172a"]]
     if "radiation" in column or "irradiance" in column or "illuminance" in column:
         return SOLAR_COLORSCALE
-    return "Viridis"
+    return metric_colorscale(column) if column=="relative_humidity_pct" else "Viridis"
 
 
 def apply_common_layout(fig: go.Figure, title: str, x_label: str, y_label: str) -> go.Figure:
@@ -407,6 +407,9 @@ def temporal_heatmap_chart(
         zmax=max([high+1.]+[v[1] for v in limits if v[1] is not None]+([zmax] if zmax is not None else []))
         colorscale=_heatmap_colorscale(column,[zmin,zmax],temperature_thresholds)
     else:colorscale = _heatmap_colorscale(column, matrix.values, temperature_thresholds)
+    if column == "relative_humidity_pct":
+        # Fixed physical domain, independent of climate, period and statistic.
+        zmin,zmax=0.,100.
     if column == "liquid_precipitation_depth_mm":
         # A dry interval is a meaningful precipitation state. Keep the colour
         # domain anchored at 0 mm so zero is always rendered as white.

@@ -178,6 +178,25 @@ class CalendarHeatmapTests(unittest.TestCase):
         apply_monthly_axes(physical)
         self.assertIsNone(physical.layout.xaxis.ticktext)
 
+    def test_relative_humidity_semantic_colour_and_fixed_domain(self):
+        from epw_climate_analyzer.chart_theme import RELATIVE_HUMIDITY_COLORSCALE,metric_colorscale
+        from epw_climate_analyzer.charts import temporal_heatmap_chart
+        c="relative_humidity_pct"
+        self.assertEqual(metric_colorscale(c),RELATIVE_HUMIDITY_COLORSCALE)
+        idx=pd.date_range("2026-01-01",periods=48,freq="h")
+        df=pd.DataFrame({c:np.linspace(35,85,48)},index=idx)
+        for period in ("day","week","month"):
+            fig=temporal_heatmap_chart(df,c,period,HEATMAP_COMPARE_HOUR,"Mean","Relative humidity","%")
+            self.assertEqual(fig.layout.coloraxis.cmin,0.)
+            self.assertEqual(fig.layout.coloraxis.cmax,100.)
+            self.assertEqual(tuple(tuple(v) for v in RELATIVE_HUMIDITY_COLORSCALE),fig.layout.coloraxis.colorscale)
+            expected=temporal_heatmap_matrix(df,c,period,HEATMAP_COMPARE_HOUR,"Mean")
+            np.testing.assert_allclose(np.asarray(fig.data[0].z,float),expected.values,equal_nan=True)
+            printed=report_figure(fig,width_pt=500,height_pt=230)
+            self.assertEqual(printed.layout.coloraxis.colorscale,fig.layout.coloraxis.colorscale)
+            self.assertEqual(printed.layout.coloraxis.cmin,0.)
+            self.assertEqual(printed.layout.coloraxis.cmax,100.)
+
     def test_multiyear_utci_not_truncated(self):
         idx=pd.date_range("2025-12-31","2026-12-31",freq="h")
         df=pd.DataFrame(index=idx)
