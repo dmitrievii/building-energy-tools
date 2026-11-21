@@ -406,10 +406,13 @@ try {
   const p2Frame=await waitForCharts(page,4);
   const p2=await p2Frame.locator('.js-plotly-plot').evaluateAll(nodes=>nodes.map(node=>({
     types:node._fullData.map(t=>t.type),patches:node._fullData[0]?.r?.length||0,
+    classStack:node._fullLayout.polar?.barmode||null,
+    names:node._fullData.map(t=>t.name),
+    radialSum:node._fullData.reduce((sum,t)=>sum+(t.type==='barpolar'?Array.from(t.r).reduce((a,b)=>a+Number(b||0),0):0),0),
     images:node.querySelectorAll('.imagelayer image').length,
     imageSource:node._fullLayout.images?.[0]?.source?.slice(0,22)||null
   })));
-  if(p2[0].types[0]!=='barpolar'||p2[1].patches!==145||p2[2].types[0]!=='mesh3d'||
+  if(p2[0].types.length!==6||p2[0].types.some(t=>t!=='barpolar')||p2[0].classStack!=='stack'||Math.abs(p2[0].radialSum-8)>1e-8||p2[1].patches!==145||p2[2].types[0]!=='mesh3d'||
      p2[3].images<1||p2[3].imageSource!=='data:image/png;base64,')
     throw new Error('P2 chart rendering or underlay incomplete: '+JSON.stringify(p2));
   report.metrics.p2Visuals=p2;

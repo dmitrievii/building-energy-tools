@@ -34,7 +34,7 @@ st.title("Chart presentation visual harness")
 st.caption("Representative production chart families rendered through the shared global presentation boundary.")
 
 if st.query_params.get("p2") == "1":
-    from epw_climate_analyzer.directional_climate import directional_table,directional_figure
+    from epw_climate_analyzer.directional_climate import directional_class_table,directional_class_figure
     from epw_climate_analyzer.sky_distribution import cumulative_sky,sky_figure
     from epw_climate_analyzer.architectural_underlay import prepare_underlay,apply_underlay
     from PIL import Image
@@ -46,7 +46,7 @@ if st.query_params.get("p2") == "1":
                       "solar_azimuth_deg":np.linspace(90.,270.,8),
                       "direct_normal_radiation_wh_m2":500.,"diffuse_horizontal_radiation_wh_m2":100.},index=idx)
     df2.attrs["canonical_native_interval_minutes"]=60.
-    rose2=directional_figure(directional_table(df2,colour="Temperature"),"Hours","Temperature","P2 Wind Wheel")
+    rose2=directional_class_figure(directional_class_table(df2,quantity="Temperature"),"P2 Temperature class Wind Wheel")
     st.plotly_chart(rose2,key="p2_rose")
     table2=cumulative_sky(df2,mf=1)
     st.plotly_chart(sky_figure(table2,"Total"),key="p2_sky2d")
@@ -54,7 +54,7 @@ if st.query_params.get("p2") == "1":
     from epw_climate_analyzer.chart_presentation import BACKGROUND_TRANSPARENT,KEY_BACKGROUND
     image_bytes=BytesIO()
     Image.new("RGB",(240,240),"#33aa77").save(image_bytes,format="PNG")
-    underlay=directional_figure(directional_table(df2,colour="Temperature"),"Hours","Temperature","P2 Architectural underlay")
+    underlay=directional_class_figure(directional_class_table(df2,quantity="Temperature"),"P2 Architectural underlay")
     # Exercise actual image layer; shared wrapper ordinarily applies this after presentation.
     from epw_climate_analyzer.chart_presentation import apply_chart_presentation,settings_from_state
     apply_chart_presentation(underlay,settings_from_state(st.session_state))

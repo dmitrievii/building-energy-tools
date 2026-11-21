@@ -124,6 +124,32 @@ def render_plot(fig,text):
         self.assertFalse(app.exception)
         self.assertEqual(app.session_state["test_hours"],4.)
 
+        # Repeat the actual Wind UI with derived EPW-style moisture states.
+        enriched = script + """
+from epw_climate_analyzer.psychrometrics import add_psychrometric_properties
+from epw_climate_analyzer.decisions import natural_ventilation_condition
+df["dry_bulb_temperature_c"]=[10.,20.,25.,35.]
+df["relative_humidity_pct"]=[60.,40.,55.,70.]
+df["atmospheric_station_pressure_pa"]=101325.
+df=add_psychrometric_properties(df)
+"""
+        app=AppTest.from_string(enriched+"\n"+renderer+"\nrender_wind(df)",default_timeout=45).run()
+        app.selectbox(key="wind_analysis_type").set_value("Wind rose").run()
+        self.assertFalse(app.exception)
+        for q in ("Temperature","Relative humidity","Absolute humidity","Enthalpy","Natural ventilation suitability","Dynamic pressure potential"):
+            self.assertIn(q,app.selectbox(key="wind_rose_colour_quantity").options)
+            app.selectbox(key="wind_rose_colour_quantity").set_value(q).run()
+            self.assertFalse(app.exception)
+            self.assertGreaterEqual(app.session_state["test_trace_count"],2)
+            self.assertAlmostEqual(app.session_state["test_hours"],4.)
+        app.selectbox(key="wind_rose_class_radial").set_value("Percentage").run()
+        self.assertFalse(app.exception)
+        self.assertAlmostEqual(app.session_state["test_hours"],100.)
+        app.selectbox(key="wind_rose_colour_quantity").set_value("Temperature").run()
+        app.text_input(key="wind_class_limits_Temperature").set_value("0, 15, 25").run()
+        self.assertFalse(app.exception)
+        self.assertEqual(app.session_state["test_trace_count"],4)
+
 
 if __name__ == "__main__":
     unittest.main()
