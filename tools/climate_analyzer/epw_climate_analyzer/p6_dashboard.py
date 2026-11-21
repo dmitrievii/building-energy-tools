@@ -9,7 +9,7 @@ from .p4_extremes import daily_stats
 from .aggregations import native_interval_hours
 from .decisions import natural_ventilation_condition,night_flushing_condition,shading_condition
 from .degree_metrics import degree_metric_table
-from .precipitation import aggregate_liquid_precipitation
+ 
 
 P="liquid_precipitation_depth_mm"
 def _period(df):
@@ -48,6 +48,8 @@ def select_overview(df,render,*,location,source,monthly=False,reference_df=None)
         year=st.selectbox("Dashboard year",years,key="p6_dashboard_year")
         df=df.loc[df.index.year==year].copy()
     if df.empty:st.info("No data for dashboard.");return True
+    df=df.copy()
+    df.attrs["climate_time_basis"]="Chronological"
     from .p6_report import CONTEXT_KEY,set_context
     context=st.session_state.get(CONTEXT_KEY,{}).copy()
     extra={k:v for k,v in context.items() if k not in ("page","source","location","first timestamp","last timestamp","selected records","native interval minutes","time basis","filter")}
@@ -55,7 +57,7 @@ def select_overview(df,render,*,location,source,monthly=False,reference_df=None)
     st.header(choice)
     st.markdown("**"+str(location)+"**")
     st.caption(str(source)+" · "+_period(df)+f" · {len(df):,} selected records")
-    st.caption("Active Data filter retained; totals are selected-period totals, not annualized. Missing values are excluded, not zero-filled.")
+    st.caption("Active Data filter retained; dashboard plots use real chronological months. Totals are selected-period totals, not annualized. Missing values are excluded, not zero-filled.")
     if choice=="Annual climate dashboard":climate_dashboard(df,render,monthly=monthly)
     else:design_dashboard(df,render,reference_df=reference_df)
     return True
@@ -68,11 +70,11 @@ def climate_metrics(df):
 
 def climate_dashboard(df,render,*,monthly=False):
     a=climate_metrics(df)
-    _cards([("Mean air temperature",_fmt(a["temperature"],"°C"),"Mean of valid selected observations."),
+    _cards([("Mean of monthly temperature values" if monthly else "Mean air temperature",_fmt(a["temperature"],"°C"),"Arithmetic mean of valid selected published monthly values." if monthly else "Mean of valid selected observations."),
             ("GHI total",_fmt(a["ghi"],"kWh/m²",0),"Horizontal irradiation, summed from source interval energy."),
             ("Mean wind speed",_fmt(a["wind"],"m/s"),"Valid speed observations."),
             ("Precipitation total",_fmt(a["precipitation"],"mm",0),"Valid selected depth records."),
-            ("Minimum / maximum sampled temperature",_fmt(a["temperature_min"],"°C")+" / "+_fmt(a["temperature_max"],"°C"),"Sample extrema, not continuous extremes."),
+            ("Minimum / maximum monthly mean" if monthly else "Minimum / maximum sampled temperature",_fmt(a["temperature_min"],"°C")+" / "+_fmt(a["temperature_max"],"°C"),"Extrema of monthly means." if monthly else "Sample extrema, not continuous extremes."),
             ("Mean relative humidity",_fmt(a["rh"],"%"),"Valid selected relative humidity."),
             ("Mean humidity ratio",_fmt(a["humidity_ratio"],"g/kg"),"Dry-air mass basis.")])
     t=_valid(df,T)
@@ -136,7 +138,9 @@ def design_ledgers(df,*,reference_df=None,t_min=16.,t_max=26.,w_max=9.,hot=26.,c
     if s.notna().any():
         # Full unfiltered reference day history, no future-day lookup.
         history=reference_df if reference_df is not None else df
-        history=history.copy()
+        start=df.index.min().normalize()-pd.DateOffset(days=1)
+        end=df.index.max().normalize()+pd.DateOffset(days=1)
+        history=history.loc[(history.index>=start)&(history.index<end)].copy()
         if "hour_of_day" not in history:history["hour_of_day"]=history.index.hour
         try:
             d=daily_stats(history,T)

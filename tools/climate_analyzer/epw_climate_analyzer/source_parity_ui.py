@@ -401,6 +401,12 @@ def _render_compare_ui(legacy: Any, active_file: Any, pressure_mode: str, custom
         st.warning("The comparison filters remove all data for at least one climate.")
         return
 
+    from .p6_report import set_context
+    compared=[{"name":c.display_name,"source":c.source,"calendar":c.calendar_mode,
+               "start":str(c.data.index.min()),"end":str(c.data.index.max()),"records":len(c.data)} for c in climates]
+    set_context(st.session_state,page="Compare Climates",source="Multiple climates",location="Multiple locations",
+                extra={"compared sources":compared,"reference":reference_name,"months":selected_months,
+                       "hour range":hour_range,"pressure mode":pressure_mode})
     metrics = climate_summary_metrics(climates)
     tabs = st.tabs([
         "Summary", "Temperature", "Humidity / Psychrometrics", "Solar", "Wind",

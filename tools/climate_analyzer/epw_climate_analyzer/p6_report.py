@@ -41,10 +41,22 @@ def add_snapshot(items,item):
     return [*items,item],"Diagram added to report."
 def capture_control(st,fig,key):
     context=st.session_state.get(CONTEXT_KEY)
-    if not isinstance(context,dict) or context.get("page") in ("Report","Compare Climates"):return
+    if not isinstance(context,dict) or context.get("page")=="Report":return
+    if context.get("page")=="Compare Climates" and "compared sources" not in context:return
     if st.button("Add to report",key="p6_capture_"+str(key),help="Save this displayed figure after global presentation settings are applied."):
         try:
-            item=snapshot(fig,context,st.session_state.get(INTERPRETATION_KEY,""))
+            # Explicitly keyed calculation controls only; do not capture
+            # arbitrary uploader objects, credentials, or whole session state.
+            exact={"humidity_analysis_type","wind_analysis_type","solar_facade_tilt","solar_facade_chart_type",
+                   "p6_overview_view","p6_dashboard_year","global_time_basis"}
+            prefixes=("p3_","p4_","p6_nv_","p6_night_","p6_hgt_","p6_kgt_","p6_utci","p6_flow",
+                      "solar_facade_","nv_directional_","canonical_compare_","shading_")
+            controls={}
+            for name,value in st.session_state.items():
+                if not isinstance(name,str) or not (name in exact or name.startswith(prefixes)):continue
+                if isinstance(value,(str,int,float,bool,type(None))) or isinstance(value,(list,tuple)) and all(isinstance(v,(str,int,float,bool,type(None))) for v in value):
+                    controls[name]=value
+            item=snapshot(fig,{**context,"keyed chart settings":json.dumps(controls,default=str,ensure_ascii=False,sort_keys=True)},st.session_state.get(INTERPRETATION_KEY,""))
             entries,message=add_snapshot(st.session_state.get(REPORT_KEY,[]),item)
             st.session_state[REPORT_KEY]=entries
             st.caption(message)
@@ -63,7 +75,7 @@ def printable_html(items,title,paper,orientation):
         fig=json.loads(item["figure"])
         # Keep captured layout/trace data; fit to printable page without
         # modifying the stored figure. JS is embedded, no remote CDN.
-        pages.append(f'<section class="sheet"><h2>{i:02d} · {_safe(item["title"])}</h2><p class="meta">{_safe(meta)}</p><div class="plot" id="figure{i}"></div><p>{_safe(item["interpretation"])}</p><p>{_safe(item.get("note",""))}</p><footer>Captured {_safe(item["captured"])} · IGE Climate Analyzer</footer></section><script>const f{i}={_script_json(fig)};Plotly.newPlot("figure{i}",f{i}.data,f{i}.layout,{{responsive:true,displayModeBar:false}});</script>')
+        pages.append(f'<section class="sheet"><h2>{i:02d} · {_safe(item["title"])}</h2><p class="meta">{_safe(meta)}</p><div class="plot" id="figure{i}"></div><p>{_safe(item["interpretation"])}</p><p>{_safe(item.get("note",""))}</p><footer>Captured {_safe(item["captured"])} · IGE Climate Analyzer</footer></section><script>const f{i}={_script_json(fig)};const e{i}=document.getElementById("figure{i}");const ratio{i}=(f{i}.layout.width||760)/(f{i}.layout.height||450);f{i}.layout.width=Math.max(320,e{i}.clientWidth);f{i}.layout.height=Math.min(650,Math.max(220,f{i}.layout.width/ratio{i}));Plotly.newPlot(e{i},f{i}.data,f{i}.layout,{{responsive:true,displayModeBar:false}});</script>')
     toc="".join(f"<li>{_safe(x['title'])}</li>" for x in items)
     css=f"""@page {{size:{paper} {orientation.lower()};margin:12mm}} body{{font:11pt Arial,sans-serif;color:#202830;margin:12px}} h1{{font-size:25pt}} h2{{font-size:16pt}} .meta,footer{{font-size:8pt;color:#586472;overflow-wrap:anywhere}} p{{white-space:pre-wrap;overflow-wrap:anywhere}} .sheet{{break-before:page;page-break-before:always}} .plot{{width:100%;min-height:250px;overflow:hidden;break-inside:avoid}} button{{padding:8px 16px}} @media print{{button{{display:none}} body{{margin:0}}}}"""
     return ("<!doctype html><html><head><meta charset='utf-8'><title>"+_safe(title)+"</title><style>"+css+"</style><script>"+get_plotlyjs()+"</script></head><body><button onclick='window.print()'>Print / Save as PDF</button><h1>"+_safe(title)+"</h1><p>IGE Climate Analyzer · archived chart snapshots</p><p>Engineering screening, not a certified regulatory calculation. Refer to each figure's source and assumptions.</p><ol>"+toc+"</ol>"+"".join(pages)+"</body></html>").encode("utf-8")
@@ -147,6 +159,7 @@ def render_report():
     fingerprint=hashlib.sha256(json.dumps([items,title,paper,orientation],default=str,sort_keys=True).encode()).hexdigest()
     if st.button("Generate PDF",key="p6_generate_pdf"):
         try:
+            st.session_state.pop("_p6_pdf",None)
             with st.spinner("Rendering captured diagrams…"):
                 pdf=pdf_report(items,title,paper,orientation)
             st.session_state["_p6_pdf"]=(fingerprint,pdf)
