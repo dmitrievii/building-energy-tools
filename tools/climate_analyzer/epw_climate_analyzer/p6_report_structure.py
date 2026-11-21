@@ -178,11 +178,13 @@ def report_figure(fig,*,width_pt,height_pt,font_pt=11,external_zone_legend=False
     if any("heating degree" in n for n in names) and any("cooling degree" in n for n in names):
         from .degree_metrics import degree_legend_below
         degree_legend_below(f)
+    # Normalize legacy snapshots while their original title is still present.
+    # In particular, pre-metadata daylight figures are recognized by title.
+    from .calendar_heatmap_axes import apply_calendar_heatmap_axes,apply_monthly_axes
+    apply_calendar_heatmap_axes(f);apply_monthly_axes(f)
     w,h=round(width_pt*96/72),round(height_pt*96/72)
     f.update_layout(width=w,height=h,autosize=False,font=dict(family="Arial",size=px),
                     paper_bgcolor="white",title_text=None,margin=dict(t=12,autoexpand=True))
-    from .calendar_heatmap_axes import apply_calendar_heatmap_axes,apply_monthly_axes
-    apply_calendar_heatmap_axes(f);apply_monthly_axes(f)
     is_map=isinstance(f.layout.meta,dict) and f.layout.meta.get("report_kind")=="station_locator"
     if is_map:
         f.update_layout(margin=dict(l=8,r=8,t=8,b=8))

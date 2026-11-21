@@ -69,6 +69,20 @@ class CalendarHeatmapTests(unittest.TestCase):
             self.assertEqual(list(copy.layout.xaxis.ticktext),expected)
             legacy=go.Figure(fig)
             legacy.update_layout(meta=None,xaxis=dict(tickmode="auto",tickvals=None,ticktext=None))
+            # Exercise a real pre-fix saved JSON snapshot directly through
+            # the print path, without normalizing the input first.
+            import plotly.io as pio
+            restored=pio.from_json(pio.to_json(legacy))
+            self.assertIsNone(restored.layout.meta)
+            self.assertIsNone(restored.layout.xaxis.ticktext)
+            printed=report_figure(restored,width_pt=500,height_pt=230)
+            self.assertEqual(list(printed.layout.xaxis.ticktext),expected)
+            self.assertEqual(printed.layout.xaxis.tickmode,"array")
+            self.assertEqual(len(printed.data[0].x),days)
+            self.assertEqual(pd.Timestamp(printed.data[0].x[-1]).date(),pd.Timestamp(f"{year}-12-31").date())
+            np.testing.assert_array_equal(printed.data[0].y,restored.data[0].y)
+            np.testing.assert_array_equal(printed.data[1].y,restored.data[1].y)
+            self.assertIsNone(restored.layout.xaxis.ticktext)
             apply_monthly_axes(legacy)
             self.assertEqual(list(legacy.layout.xaxis.ticktext),expected)
         multi=daylight_envelope(pd.date_range("2025-11-01","2026-12-31",freq="D"),47.08)
