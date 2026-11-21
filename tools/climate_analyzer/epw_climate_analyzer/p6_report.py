@@ -30,6 +30,7 @@ def set_context(state,*,page,source,location,df=None,extra=None,site=None,source
             value=getattr(site,name,None)
             if value is not None:meta[name]=str(value)
     if source_id is not None:meta["source id"]=str(source_id)
+    meta["temperature thresholds"]=list(state.get("_p6_temperature_thresholds",(18.,26.)))
     if df is not None and len(df):
         from .p6_report_structure import capture_statistics
         from .aggregations import native_interval_hours
@@ -86,7 +87,8 @@ def capture_control(st,fig,key):
     # incrementing Plotly widget key. Callback arguments belong to the chart
     # actually displayed when the user clicks, before any rerun changes inputs.
     button_key="p6_capture_"+str(context.get("page"))+"_"+str(key)
-    saved_context={**context,"keyed chart settings":_capture_settings(st.session_state)}
+    saved_context={**context,"keyed chart settings":_capture_settings(st.session_state),
+                   "temperature thresholds":list(st.session_state.get("_p6_temperature_thresholds",(18.,26.)))}
     interpretation=st.session_state.get(INTERPRETATION_KEY,"")
     displayed=st.session_state.get("_p6_displayed_charts",[])
     displayed.append((fig,saved_context,interpretation,button_key))

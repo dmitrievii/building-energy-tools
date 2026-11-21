@@ -3306,11 +3306,12 @@ def render_temperature(
 
     if chart_group in {"Temperature variable explorer", "Threshold conditions"}:
         threshold_col1, threshold_col2 = st.columns(2)
-        heat_threshold = threshold_col1.slider("Heating threshold [°C]", -5.0, 25.0, 18.0, 0.5)
-        cool_threshold = threshold_col2.slider("Cooling threshold [°C]", 15.0, 40.0, 26.0, 0.5)
+        heat_threshold = threshold_col1.slider("Heating threshold [°C]", -5.0, 25.0, float(st.session_state.get("_p6_temperature_thresholds",(18.,26.))[0]), 0.5)
+        cool_threshold = threshold_col2.slider("Cooling threshold [°C]", 15.0, 40.0, float(st.session_state.get("_p6_temperature_thresholds",(18.,26.))[1]), 0.5)
         if heat_threshold > cool_threshold:
             st.error("Heating threshold must not exceed cooling threshold.")
             return
+        st.session_state["_p6_temperature_thresholds"]=(heat_threshold,cool_threshold)
     else:
         heat_threshold = 18.0
         cool_threshold = 26.0
@@ -3527,13 +3528,12 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
             year_mode=year_mode,
             selected_years=selected_years,
         )
-        st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False, "scrollZoom": True}, key=next_plot_key("psychrometric"))
         report_df = df[df["month_index"].isin(selected_months)].copy()
         report_df.attrs.update(df.attrs)
         if selected_years and isinstance(report_df.index, pd.DatetimeIndex):
             report_df = report_df[pd.DatetimeIndex(report_df.index).year.isin(selected_years)].copy()
             report_df.attrs.update(df.attrs)
-        render_interpretation(psychrometric_interpretation(report_df))
+        render_plot(fig,psychrometric_interpretation(report_df))
         if show_givoni:
             render_bioclimatic_report(report_df)
     elif chart_group == "Humidity persistence":
@@ -3771,11 +3771,7 @@ def render_sun_path(df: pd.DataFrame, *, shading_geometry=None) -> None:
         show_cube = st.checkbox("Show cube", value=True, key="solar_sun_path_show_cube")
         fig = sun_path_3d(df, show_cube=show_cube)
         st.caption("Drag for turntable rotation (vertical axis stays upright); scroll to zoom. The cube is illustrative, without shading calculations.")
-        render_chart_export_controls(fig)
-        st.plotly_chart(fig, use_container_width=True,
-                        config={"displaylogo": False, "scrollZoom": True},
-                        key="solar_sun_path_3d_plot")
-        render_interpretation("The hemisphere uses East, North and Up coordinates. Monthly paths show apparent solar directions on the unit sphere.")
+        render_plot(fig,"The hemisphere uses East, North and Up coordinates. Monthly paths show apparent solar directions on the unit sphere.")
 
 
 def render_facade_orientation(df: pd.DataFrame, *, ground_albedo=None) -> None:
@@ -4895,9 +4891,8 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
         reasons = rejection_reasons_for_nv(df, t_min, t_max, d_max, wind_min_m_s=wind_min, wind_max_m_s=wind_max)
         fig = px.bar(reasons, x="reason", y="hours", title="Natural-ventilation rejected reasons")
         fig.update_layout(template="plotly_white", xaxis_title="Reason", yaxis_title="Hours")
-        st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False, "scrollZoom": True}, key=next_plot_key())
+        render_plot(fig,natural_ventilation_interpretation(df, mask))
         st.dataframe(reasons, hide_index=True, use_container_width=True)
-        render_interpretation(natural_ventilation_interpretation(df, mask))
     elif chart_group == "Psychrometric NV overlay":
         fig = psychrometric_chart(df, chart_type="T-d", pressure_pa=pressure_pa, show_rh_curves=True, show_comfort_zone=False)
         fig.add_shape(type="rect", x0=t_min, x1=t_max, y0=0, y1=d_max, line=dict(dash="dash"), fillcolor="rgba(0,150,0,0.08)")
@@ -5010,14 +5005,8 @@ def render_hvac_passive(df: pd.DataFrame) -> None:
                     )
 
             fig.update_layout(template="plotly_white", xaxis_title="Hours", yaxis_title="Strategy")
-            st.plotly_chart(
-                fig,
-                use_container_width=True,
-                config={"displaylogo": False, "scrollZoom": True},
-                key=next_plot_key(),
-            )
+            render_plot(fig,hvac_interpretation(df))
             st.dataframe(table, hide_index=True, use_container_width=True)
-            render_interpretation(hvac_interpretation(df))
         else:
             monthly = passive_strategy_monthly(df)
             fig = stacked_monthly_bar(monthly, "Monthly passive and HVAC strategy hours", "hours")
@@ -5321,8 +5310,7 @@ def render_data_quality(epw, df: pd.DataFrame, issues: list[object]) -> None:
         st.dataframe(issue_df, hide_index=True, use_container_width=True)
         fig = px.bar(issue_df, x="field", y="count", color="severity", title="Data-quality issue counts")
         fig.update_layout(template="plotly_white", xaxis_title="Field", yaxis_title="Count")
-        st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False, "scrollZoom": True}, key=next_plot_key())
-        render_interpretation(data_quality_interpretation(len(rows), int((issue_df["severity"] == "error").sum())))
+        render_plot(fig,data_quality_interpretation(len(rows), int((issue_df["severity"] == "error").sum())))
     else:
         render_interpretation(data_quality_interpretation(0, 0))
 

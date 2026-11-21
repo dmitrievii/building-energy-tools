@@ -104,53 +104,177 @@ def site_details(c):
     return rows
 
 def locator_figure(c):
-    """Offline Natural Earth geographic outlines; actual station coordinates."""
+    """Offline regional map, locally distance-proportional longitude/latitude."""
     try:lat=float(c.get("latitude"));lon=float(c.get("longitude"))
     except (TypeError,ValueError):return None
     if not (math.isfinite(lat) and math.isfinite(lon) and -90<=lat<=90 and -180<=lon<=180):return None
     data=json.loads((Path(__file__).parent/"p6_world_boundaries.json").read_text("utf-8"))
-    half_y=5.;half_x=min(25.,8./max(.35,math.cos(math.radians(lat))))
-    x0,x1=lon-half_x,lon+half_x;y0,y1=max(-90,lat-half_y),min(90,lat+half_y)
+    cosine=max(.08,math.cos(math.radians(lat)))
+    half_y=4.;half_x=min(60.,5.7/cosine)
+    x0,x1=lon-half_x,lon+half_x
+    y0,y1=max(-90,lat-half_y),min(90,lat+half_y)
     xs=[];ys=[]
     for ring in data["outlines"]:
         pts=[(lon+((x-lon+180)%360)-180,y) for x,y in ring]
         if max(y for x,y in pts)<y0 or min(y for x,y in pts)>y1 or max(x for x,y in pts)<x0 or min(x for x,y in pts)>x1:continue
-        last=None
-        for x,y in pts:
-            if last is not None and abs(x-last)>180:xs.append(None);ys.append(None)
-            xs.append(x);ys.append(y);last=x
+        # Do not close a polygon across the longitude discontinuity.
+        if any(abs(x-prev)>180 for (prev,_),(x,_) in zip(pts,pts[1:])):
+            continue
+        xs.extend(x for x,y in pts);ys.extend(y for x,y in pts)
         xs.append(None);ys.append(None)
-    f=go.Figure(go.Scatter(x=xs,y=ys,mode="lines",line=dict(color="#8D9A9C",width=1.1),hoverinfo="skip",showlegend=False))
+    f=go.Figure(go.Scatter(x=xs,y=ys,mode="lines",fill="toself",fillcolor="#F4F1E7",
+        line=dict(color="#9AA7A4",width=.85),hoverinfo="skip",showlegend=False))
+    for country in data.get("labels",[]):
+        name,x,y=country
+        x=lon+((x-lon+180)%360)-180
+        if x0+.15*half_x<x<x1-.15*half_x and y0+.15*half_y<y<y1-.15*half_y and math.hypot((x-lon)*cosine,y-lat)>.65:
+            f.add_annotation(x=x,y=y,text=name,showarrow=False,font=dict(size=10,color="#566760"))
     f.add_scatter(x=[lon],y=[lat],mode="markers+text",text=[str(c.get("location","Station"))],
-                  textposition="top center",marker=dict(size=12,color="#B93F37",line=dict(color="white",width=1.5)),showlegend=False)
-    f.update_layout(template="plotly_white",plot_bgcolor="#EAF1F5",title="Station location",margin=dict(l=50,r=25,t=30,b=44),
-        xaxis=dict(range=[x0,x1],title="Longitude [°]",showgrid=True,gridcolor="#D5DFE4",zeroline=False),
-        yaxis=dict(range=[y0,y1],title="Latitude [°]",showgrid=True,gridcolor="#D5DFE4",zeroline=False),height=330,width=800)
+                  textposition="top center",marker=dict(size=11,color="#B93F37",line=dict(color="white",width=1.5)),showlegend=False)
+    f.update_layout(template="plotly_white",plot_bgcolor="#DDEBF2",title="Station location",
+        meta={"report_kind":"station_locator","latitude":lat},
+        margin=dict(l=12,r=12,t=12,b=12),
+        xaxis=dict(range=[x0,x1],scaleanchor="y",scaleratio=cosine,constrain="domain",visible=False,fixedrange=True),
+        yaxis=dict(range=[y0,y1],constrain="domain",visible=False,fixedrange=True),height=440,width=650)
     return f
 
-def report_figure(fig,*,width_pt,height_pt,font_pt=11):
-    """Print-sized clone, consistent physical label and body type size."""
-    f=go.Figure(fig)
-    raw=f.to_plotly_json()
+def zone_legend_entries(fig):
+    """Lossless printed key for visible Givoni-Milne legend entries, in rank order."""
+    if fig.layout.showlegend is False or getattr(fig.layout.legend2,"visible",None) is False:return []
+    entries=[]
+    for t in fig.data:
+        if getattr(t,"legend",None)!="legend2" or getattr(t,"showlegend",None) is False or getattr(t,"visible",None) in (False,"legendonly"):continue
+        if not getattr(t,"legendgroup","").startswith("givoni_zone_"):continue
+        entries.append((getattr(t,"legendrank",1000) or 1000,str(t.name),str(getattr(t,"fillcolor",None) or "#F1F5F9")))
+    return sorted(entries,key=lambda x:x[0])
+
+def complex_figure(fig):
+    return bool(zone_legend_entries(fig)) or any(getattr(t,"type","") in ("scatterpolar","scatterpolargl","barpolar","scatter3d","surface","mesh3d","cone") for t in fig.data)
+
+def figure_height(fig,width_pt,height_pt):
+    """Give scientific polar/psychrometric plots most of the printable page."""
+    if complex_figure(fig):
+        return min(height_pt*.83,width_pt*.92)
+    return min(height_pt*.69,width_pt*.74,460.)
+
+def report_figure(fig,*,width_pt,height_pt,font_pt=11,external_zone_legend=False):
+    """Physical-size clone with chart-specific print reflow, preserving data/colors."""
+    raw=go.Figure(fig).to_plotly_json()
+    px=font_pt*96/72
     def restyle(obj):
         if isinstance(obj,dict):
             for k,v in obj.items():
                 if isinstance(v,dict) and k in ("font","tickfont","textfont","insidetextfont","outsidetextfont","uniformtext"):
-                    if k=="uniformtext":v["minsize"]=font_pt*96/72
+                    if k=="uniformtext":v["minsize"]=px
                     else:
-                        v["size"]=font_pt*96/72
+                        v["size"]=px
                         v["family"]="Arial"
                 restyle(v)
         elif isinstance(obj,(list,tuple)):
             for v in obj:restyle(v)
     restyle(raw)
     f=go.Figure(raw)
-    f.update_layout(width=round(width_pt*96/72),height=round(height_pt*96/72),autosize=False,
-                    font=dict(family="Arial",size=font_pt*96/72),paper_bgcolor="white",title_text=None)
-    f.update_xaxes(automargin=True,tickfont_size=font_pt*96/72,title_font_size=font_pt*96/72)
-    f.update_yaxes(automargin=True,tickfont_size=font_pt*96/72,title_font_size=font_pt*96/72)
-    from .calendar_heatmap_axes import apply_calendar_heatmap_axes
-    return apply_calendar_heatmap_axes(f)
+    w,h=round(width_pt*96/72),round(height_pt*96/72)
+    f.update_layout(width=w,height=h,autosize=False,font=dict(family="Arial",size=px),
+                    paper_bgcolor="white",title_text=None,margin=dict(t=12,autoexpand=True))
+    from .calendar_heatmap_axes import apply_calendar_heatmap_axes,apply_monthly_axes
+    apply_calendar_heatmap_axes(f);apply_monthly_axes(f)
+    is_map=isinstance(f.layout.meta,dict) and f.layout.meta.get("report_kind")=="station_locator"
+    if is_map:
+        f.update_layout(margin=dict(l=8,r=8,t=8,b=8))
+        return f
+    f.update_xaxes(automargin=True,tickfont_size=px,title_font_size=px)
+    f.update_yaxes(automargin=True,tickfont_size=px,title_font_size=px)
+    zones=zone_legend_entries(f)
+    if zones:
+        if external_zone_legend:
+            for t in f.data:
+                if getattr(t,"legend",None)=="legend2":t.showlegend=False
+            f.update_layout(legend2=dict(visible=False))
+            f.update_xaxes(domain=[0.,1.])
+        else:
+            # Interactive standalone figure: move the secondary legend away
+            # from the data rectangle and keep its entries visible.
+            f.update_layout(legend2=dict(orientation="h",xref="container",x=.02,xanchor="left",
+                            yref="container",y=.01,yanchor="bottom"))
+            f.update_xaxes(domain=[0.,1.])
+    polar=any(getattr(t,"type","") in ("scatterpolar","scatterpolargl","barpolar") for t in f.data)
+    if polar:
+        # A polar circle is height-limited. Place it at the left of the
+        # canvas with a compact legend to its right when width permits.
+        traces=[t for t in f.data if getattr(t,"showlegend",None) is not False and getattr(t,"visible",None) not in (False,"legendonly") and (getattr(t,"legend",None) or "legend")=="legend"]
+        max_chars=max((len(str(t.name or "")) for t in traces),default=0)
+        legend_w=max(100,round(max_chars*px*.61+58))
+        bars=[]
+        for t in f.data:
+            props=t.to_plotly_json()
+            if props.get("showscale") and "colorbar" in props:bars.append(t.colorbar)
+            if props.get("marker",{}).get("showscale"):bars.append(t.marker.colorbar)
+        bar_w=90 if bars else 0
+        side=bool(traces) and f.layout.showlegend is not False and w-legend_w-bar_w-40>=min(h*.72,350)
+        if side and len(traces)*(px+6)+32<h-24:
+            stop=max(.45,min(.85,(w-legend_w-bar_w-24)/w))
+            f.update_layout(margin=dict(l=20,r=12,t=18,b=18),
+                polar=dict(domain=dict(x=[0,stop],y=[.03,.97])),
+                legend=dict(orientation="v",xref="paper",x=min(.99,stop+(bar_w+12)/max(1,w-32)),xanchor="left",yref="paper",y=.95,yanchor="top",font=dict(size=px)))
+            for bar in bars:
+                bar.update(xref="paper",x=stop+.015,xanchor="left",y=.52,len=.70,thickness=12)
+        else:
+            f.update_layout(margin=dict(l=28,r=bar_w+20,t=18,b=72),
+                legend=dict(orientation="h",xref="container",x=.5,xanchor="center",yref="container",y=.005,yanchor="bottom"))
+            for bar in bars:bar.update(x=1.02,xanchor="left",len=.68,thickness=12)
+    else:
+        # Recompute bottom-legend reservation for the actual print canvas,
+        # not the original browser height. Axis title and legend cannot share
+        # the same negative paper-coordinate offset.
+        from .chart_presentation import ChartPresentationSettings,_space_bottom_legends
+        props=f.layout.to_plotly_json()
+        for name in props:
+            if name.startswith("legend"):
+                legend=getattr(f.layout,name)
+                if legend.orientation=="h" and (legend.y is None or legend.y<=.1):
+                    legend.update(yref="container",y=.006,yanchor="bottom",xref="container",x=.5,xanchor="center")
+        f.update_layout(margin=dict(b=max(58,round(px*4)),l=max(48,int(f.layout.margin.l or 0)),r=max(18,min(80,int(f.layout.margin.r or 0)))))
+        settings=ChartPresentationSettings(canvas="Custom",custom_width=w,custom_height=h,font_size=round(px))
+        _space_bottom_legends(f,settings,round(px))
+        if zones and not external_zone_legend:
+            # reserve the full visible zone key; externally printed PDF
+            # uses the more space-efficient document legend instead.
+            chars=sum(len(name)+7 for _,name,_ in zones)
+            rows=max(1,math.ceil(chars*px*.59/max(100,w-100)))
+            f.layout.margin.b=max(f.layout.margin.b or 0,round((rows+3)*(px+7)))
+            f.layout.legend.update(yref="paper",y=1.035,yanchor="bottom")
+            f.layout.margin.t=max(46,round(px*3))
+    return f
+
+def source_interpretation(df,page,column="",label="",unit="",*,thresholds=(18.,26.),kind=""):
+    """Use the same interpretation functions as the analysis pages, with
+    conservative capability checks (no invented unavailable variables)."""
+    from . import interpretations as i
+    from .extended_visualization import hourly_capable
+    if not hourly_capable(df):return ""
+    good=lambda *cols:all(c in df and numeric(df,c).notna().any() for c in cols)
+    if kind=="psychrometric" and good(W,"moist_air_enthalpy_kj_kg"):
+        return i.psychrometric_interpretation(df)
+    if page=="Solar and Radiation" and kind not in ("profile","percentile","duration","histogram","box","violin","heatmap","diurnal","occurrence") and good(G,D,T):
+        return i.solar_interpretation(df).replace("Annual horizontal irradiation","Selected-period horizontal irradiation")
+    if page=="Wind and Ventilation" and good(V) and not column:return i.wind_interpretation(df)
+    if page=="Sky and Daylight" and good("total_sky_cover_tenths") and not column:return i.sky_interpretation(df)
+    if page=="HVAC and Passive Design" and good(T,W) and not column:return i.hvac_interpretation(df)
+    if column and good(column) and column not in ("wind_direction_deg","wind_gust_direction_deg"):
+        # Same statistical interpretation as generic explorer; explicitly
+        # use the palette thresholds for dry-bulb temperature.
+        kw=dict(high_threshold=thresholds[1],low_threshold=thresholds[0]) if column==T else {}
+        return i.variable_interpretation(df,column,label or column,unit,**kw)
+    if page=="Temperature" and good(T):return i.temperature_interpretation(df,*thresholds)
+    return ""
+
+def temperature_thresholds(context):
+    try:
+        a,b=map(float,context.get("temperature thresholds",(18.,26.)))
+        if np.isfinite([a,b]).all() and a<=b:return a,b
+    except (ValueError,TypeError):pass
+    return 18.,26.
 
 CATALOG=[
 ("temperature_profile","Temperature","Monthly temperature profile",T,"°C","profile"),
@@ -213,7 +337,10 @@ def standard_figure(entry,df,context,reference_df=None):
     elif kind=="duration":
         fig=duration_chart(df,column,label,unit);note="Ranked valid source observations in descending order."
     elif kind=="heatmap":
-        fig=month_hour_heatmap(df,column,label,unit);note="Mean observed temperature by month and hour."
+        bounds=temperature_thresholds(context) if column==T else None
+        fig=month_hour_heatmap(df,column,label,unit,temperature_thresholds=bounds)
+        note="Mean observed temperature by month and hour."
+        if bounds:note+=f" Temperature classes use {bounds[0]:g}/{bounds[1]:g} °C heating/cooling thresholds (blue/green/red)."
     elif kind=="psychrometric":
         pressure=numeric(df,"atmospheric_station_pressure_pa").dropna()
         p=float(pressure.median()) if len(pressure) else 101325.
@@ -272,4 +399,10 @@ def standard_figure(entry,df,context,reference_df=None):
         fig.update_layout(template="plotly_white",title=label,barmode="stack",yaxis_title="Hours")
         note="UTCI screening: MRT = air temperature, source wind assumed at 10 m, invalid input domains excluded."
     else:raise ValueError("Unknown standard diagram.")
-    return fig,note
+    stat=source_interpretation(df,page,column if kind in ("profile","duration","heatmap") else "",label,unit,thresholds=temperature_thresholds(context),kind=kind)
+    if kind in ("nv","night") and c in ledger:
+        from .interpretations import natural_ventilation_interpretation
+        stat=natural_ventilation_interpretation(df,ledger[c].eq(0).where(ledger[c].notna()).eq(False)&ledger[c].notna())
+    if stat and stat not in note:note=stat+"\n\n"+note
+    from .calendar_heatmap_axes import apply_monthly_axes
+    return apply_monthly_axes(fig),note

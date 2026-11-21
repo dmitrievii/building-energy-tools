@@ -71,7 +71,9 @@ def make_figure(d,df,context,reference_df=None,cache=None):
     elif k=="profile":f=ch.profile_ribbon_chart(df,c,a[0],title,u)
     elif k=="percentile":f=ch.percentile_band_chart(df,c,a[0],title,u);note+=" Central 90% of observations, not a confidence interval."
     elif k=="heatmap":
-        f=ch.temporal_heatmap_chart(df,c,*a,title,u,temperature_thresholds=(18.,26.) if c==cat.T else None)
+        bounds=base.temperature_thresholds(context) if c==cat.T else None
+        f=ch.temporal_heatmap_chart(df,c,*a,title,u,temperature_thresholds=bounds)
+        if bounds:note+=f" Heating/cooling thresholds {bounds[0]:g}/{bounds[1]:g} °C."
         note+=f" Cell statistic: {a[2]}; comparison: {a[1]}."
     elif k in ("duration","histogram","box","violin"):
         scope=df.loc[s.gt(0)].copy() if a[0]=="wet" else df
@@ -364,6 +366,11 @@ def make_figure(d,df,context,reference_df=None,cache=None):
     else:raise NotApplicable("No atlas renderer registered.")
     if not len(f.data):raise NotApplicable("No plotted data.")
     f.update_layout(template="plotly_white",title=title)
-    from .calendar_heatmap_axes import apply_calendar_heatmap_axes
-    apply_calendar_heatmap_axes(f)
+    from .calendar_heatmap_axes import apply_calendar_heatmap_axes,apply_monthly_axes
+    apply_calendar_heatmap_axes(f);apply_monthly_axes(f)
+    if k in ("profile","percentile","heatmap","duration","histogram","box","violin","diurnal","occurrence","amplitude","native","psychrometric","monthly_radiation","facade","tilt","sunpath_view","sky_patches","total"):
+        scope=df.loc[s.gt(0)].copy() if c and k in ("histogram","duration","box","violin") and a[0]=="wet" else df
+        col=c if k in ("profile","percentile","heatmap","duration","histogram","box","violin","diurnal","occurrence","amplitude","native") else ""
+        stat=base.source_interpretation(scope,d.chapter,col,cat.LABELS.get(col,""),u,thresholds=base.temperature_thresholds(context),kind=k)
+        if stat and stat not in note:note=stat+"\n\n"+note
     return f,note

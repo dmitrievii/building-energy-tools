@@ -91,3 +91,49 @@ def apply_calendar_heatmap_axes(fig,*,period=None):
                 axis.showticklabels=True
             else:axis.showticklabels=True
     return fig
+
+_MONTH_YEAR=re.compile(r"^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[ .-]+(\d{4})$",re.I)
+
+def apply_monthly_axes(fig):
+    """Monthly bars/lines/boxes: explicit ticks for every represented month.
+    Real multiyear dates keep year labels. Do not change daily/physical axes,
+    trace values, categorical ordering, or animation frames.
+    """
+    by_axis={}
+    for trace in getattr(fig,"data",()):
+        if getattr(trace,"type","") not in ("bar","scatter","scattergl","box","violin"):continue
+        raw=getattr(trace,"x",None)
+        if raw is None or not len(raw):continue
+        ref=getattr(trace,"xaxis",None) or "x"
+        by_axis.setdefault(ref,[]).extend(v for v in raw if v is not None)
+    for ref,values in by_axis.items():
+        axis=getattr(fig.layout,"xaxis"+ref[1:],None)
+        if axis is None or not values:continue
+        vals=list(dict.fromkeys(str(v) for v in values))
+        if all(_MONTH_YEAR.match(v) for v in vals):
+            parsed=[_MONTH_YEAR.match(v) for v in vals]
+            years={m.group(2) for m in parsed}
+            axis.update(tickmode="array",tickvals=vals,ticktext=[m.group(1).title() if len(years)==1 else v for m,v in zip(parsed,vals)],
+                        automargin=True,tickangle=-45 if len(years)>1 else 0,showticklabels=True)
+            continue
+        if all(v.strip().lower() in _MONTHS for v in vals):
+            axis.update(tickmode="array",tickvals=vals,ticktext=[calendar.month_abbr[_MONTHS[v.strip().lower()]] for v in vals],automargin=True,tickangle=0,showticklabels=True)
+            continue
+        if not all(_DATE.match(v) for v in vals):continue
+        try:idx=pd.DatetimeIndex(pd.to_datetime(vals,format="mixed"))
+        except (ValueError,TypeError,OverflowError):continue
+        if idx.hasnans or not len(idx):continue
+        if idx.tz is not None:idx=idx.tz_localize(None)
+        months=idx.to_period("M")
+        # Each distinct represented month must have one date coordinate.
+        if months.has_duplicates:continue
+        title=str(axis.title.text or "").lower()
+        graph_title=str(fig.layout.title.text or "").lower()
+        contiguous=len(months)>1 and (max(months)-min(months)).n==len(months)-1
+        if not ("month" in title or "monthly" in graph_title or contiguous):continue
+        ticks=_date_ticks(vals)
+        if ticks is None:continue
+        tickvals,ticktext,kind=ticks
+        axis.update(type=kind,tickmode="array",tickvals=tickvals,ticktext=ticktext,automargin=True,
+                    tickangle=-45 if len(set(idx.year))>1 else 0,showticklabels=True)
+    return fig

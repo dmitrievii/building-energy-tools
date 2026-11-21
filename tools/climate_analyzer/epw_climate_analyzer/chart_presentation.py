@@ -441,8 +441,9 @@ def apply_chart_presentation(fig: Any, settings: ChartPresentationSettings) -> A
             _set_colorbar_font(getattr(trace, "colorbar", None), size)
 
     _apply_extra_presentation(fig, settings)
-    from .calendar_heatmap_axes import apply_calendar_heatmap_axes
+    from .calendar_heatmap_axes import apply_calendar_heatmap_axes,apply_monthly_axes
     apply_calendar_heatmap_axes(fig)
+    apply_monthly_axes(fig)
     _space_bottom_legends(fig, settings, size)
 
     dimensions = settings.display_dimensions()
