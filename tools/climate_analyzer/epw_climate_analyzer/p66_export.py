@@ -13,7 +13,7 @@ import pandas as pd
 import plotly.io as pio
 from .p66_catalogue import LEVELS
 from .p66_render import make_figure,NotApplicable
-from .p6_report_structure import CHAPTERS,concise_context,site_details,locator_figure,capture_statistics,report_figure
+from .p6_report_structure import CHAPTERS,concise_context,site_details,locator_figure,capture_statistics,report_figure,zone_legend_entries,complex_figure
 from .p6_report import _script_json
 
 MAX_ARCHIVE_BYTES=200*1024*1024
@@ -74,7 +74,7 @@ class PdfWriter:
     def img(self,fig,x,top,w,h,font=11):
         from reportlab.lib.utils import ImageReader
         from PIL import Image
-        f=report_figure(fig,width_pt=w,height_pt=h,font_pt=font)
+        f=report_figure(fig,width_pt=w,height_pt=h,font_pt=font,external_zone_legend=bool(zone_legend_entries(fig)))
         png=self.image_renderer(f) if self.image_renderer else f.to_image(format="png",scale=1.5)
         data=io.BytesIO(png)
         with Image.open(data) as im:iw,ih=im.size
@@ -99,7 +99,7 @@ class PdfWriter:
         if details:y=self.text(" · ".join(f"{a}: {v}" for a,v,_ in details),self.margin,y,self.width)-5
         loc=locator_figure(self.context)
         if loc is not None:
-            h=min(134,self.height*.27)
+            h=min(205,self.height*.36)
             try:self.img(loc,self.margin,y,self.width,h)
             except Exception as exc:
                 y=self.text("Station map rendering unavailable; coordinates above are retained.",self.margin,y,self.width)-5
@@ -114,32 +114,77 @@ class PdfWriter:
         self.stats(capture_statistics(self.df,chapter)["chapter"],y)
         self.end()
     def add(self,d,fig,note):
-        # 1/2 vertically stacked or 4 in 2x2 grid. Render before writing any
-        # new figure text so a failed static export cannot leave a false panel.
-        cols=2 if self.per_page==4 else 1
-        rows=2 if self.per_page>1 else 1
-        gap=12
-        cellw=(self.width-(cols-1)*gap)/cols
-        cellh=(self.height-20-(rows-1)*gap)/rows
-        row=self.n//cols;col=self.n%cols
-        x=self.margin+col*(cellw+gap)
-        top=self.size[1]-self.margin-20-row*(cellh+gap)
-        title_style=self.header_style if self.per_page==1 else self.body_style
-        note_style=self.body_style if self.per_page==1 else self.small_style
+        """Readability overrides panel density; full interpretations retained."""
         from reportlab.platypus import Paragraph
-        title=Paragraph(escape(d.title),title_style);_,th=title.wrap(cellw,cellh)
-        # Wrap notes at the physical cell size; compact notes remain in the
-        # manifest even when the visible block needs to be abbreviated.
-        short=note if self.per_page==1 else note[:175]+("…" if len(note)>175 else "")
-        n=Paragraph(escape(short),note_style);_,nh=n.wrap(cellw,cellh)
-        h=cellh-th-nh-12
-        if h<65:raise ValueError("Too little panel area for readable figure; choose fewer diagrams per page.")
-        self.img(fig,x,top-th-5,cellw,h,font=11 if self.per_page<4 else 8.5)
+        zones=zone_legend_entries(fig)
+        complex_chart=complex_figure(fig)
+        panels=1 if complex_chart else self.per_page
+        def geometry(panels,n):
+            cols=2 if panels==4 else 1;rows=2 if panels>1 else 1;gap=12
+            w=(self.width-(cols-1)*gap)/cols;h=(self.height-20-(rows-1)*gap)/rows
+            return self.margin+(n%cols)*(w+gap),self.size[1]-self.margin-20-(n//cols)*(h+gap),w,h
+        def paragraphs(w):
+            title=Paragraph(escape(d.title),self.header_style if panels==1 else self.body_style)
+            n=Paragraph(escape(note).replace("\n","<br/>"),self.body_style)
+            _,th=title.wrap(w,self.height);_,nh=n.wrap(w,self.height)
+            return title,n,th,nh
+        if complex_chart and self.n:self.end()
+        x,top,w,h=geometry(panels,self.n)
+        title,n,th,nh=paragraphs(w)
+        if panels>1 and (h-th-nh-12<155 or nh>h*.43):
+            if self.n:self.end()
+            panels=1;x,top,w,h=geometry(1,0);title,n,th,nh=paragraphs(w)
+        zone_h=0
+        zone_rows=[]
+        if zones:
+            for i in range(0,len(zones),2):
+                cells=[]
+                for _,name,color in zones[i:i+2]:
+                    p=Paragraph(escape(name),self.body_style);_,hh=p.wrap(w/2-22,self.height)
+                    cells.append((p,hh,color))
+                row_h=max(v[1] for v in cells)+4
+                zone_rows.append((cells,row_h));zone_h+=row_h
+            zone_h+=20
+        image_h=h-th-zone_h-nh-15
+        continued=image_h<max(155,h*.50) and panels==1
+        if continued:image_h=h-th-zone_h-12
+        if image_h<80:raise ValueError("Too little panel area for readable scientific figure. Choose A3.")
+        # Rendering before adding page text keeps failed charts absent from PDF.
+        self.img(fig,x,top-th-5,w,image_h,font=11)
         title.drawOn(self.canvas,x,top-th)
-        n.drawOn(self.canvas,x,top-th-5-h-nh-3)
+        y=top-th-5-image_h-4
+        if zone_rows:
+            from reportlab.lib.colors import HexColor
+            y=self.text("Bioclimatic zones",x,y,w,self.body_style)-3
+            for cells,rh in zone_rows:
+                for col,(para,hh,color) in enumerate(cells):
+                    xx=x+col*w/2
+                    self.canvas.setStrokeColor(HexColor("#39447d"))
+                    # Text provides the exact zone mapping; the printed
+                    # outlined key is consistent with the dashed chart polygons.
+                    self.canvas.rect(xx,y-10,11,7,stroke=1,fill=0)
+                    para.drawOn(self.canvas,xx+16,y-hh)
+                y-=rh
         if self.n==0:self.text(CHAPTERS.get(self.chapter,self.chapter),self.margin,self.size[1]-self.margin,self.width,self.small_style)
         self.n+=1
-        if self.n==self.per_page:self.end()
+        if continued:
+            self.end()
+            y=self.text(d.title+" — Interpretation",self.margin,self.size[1]-self.margin,self.width,self.header_style)-10
+            # Long explanatory text may continue on further pages; no truncation.
+            remaining=Paragraph(escape(note).replace("\n","<br/>"),self.body_style)
+            while remaining:
+                _,need=remaining.wrap(self.width,self.height)
+                if need<=y-self.margin:
+                    remaining.drawOn(self.canvas,self.margin,y-need);self.end();break
+                chunks=remaining.split(self.width,max(1,y-self.margin))
+                if not chunks:raise ValueError("Interpretation cannot fit printable page.")
+                first=chunks[0];_,hh=first.wrap(self.width,y-self.margin);first.drawOn(self.canvas,self.margin,y-hh)
+                self.end()
+                if len(chunks)<2:break
+                remaining=chunks[1];y=self.size[1]-self.margin
+            return
+        n.drawOn(self.canvas,x,y-nh)
+        if self.n>=panels:self.end()
     def finish(self):
         if self.n:self.end()
         self.canvas.save();return self.out.getvalue()
@@ -150,8 +195,12 @@ def _html_header(title,context,chapter,df):
     table="<table>"+ "".join("<tr>"+"".join("<td>"+escape(str(v))+"</td>" for v in row)+"</tr>" for row in stats)+"</table>"
     return ("<!doctype html><html><head><meta charset='utf-8'><title>"+escape(title)+"</title><style>body{font:11pt Arial,sans-serif;margin:28px;color:#202830} h1,h2,h3{margin:10px 0} table{border-collapse:collapse;width:100%}td{padding:5px;border-bottom:1px solid #ddd}.panel{break-inside:avoid;margin:24px 0}.plot{width:100%;min-height:400px} @media print{button{display:none}} </style><script>"+get_plotlyjs()+"</script></head><body><h1>"+escape(title)+"</h1><h2>"+escape(CHAPTERS.get(chapter,chapter))+"</h2><p>"+escape(concise_context(context))+"</p>"+table)
 def _html_panel(d,fig,note,seq):
-    raw=json.loads(pio.to_json(fig))
-    return f'<section class="panel"><h3>{escape(d.title)}</h3><div class="plot" id="chart{seq}"></div><p>{escape(note)}</p></section><script>const f{seq}={_script_json(raw)};f{seq}.layout.autosize=true;delete f{seq}.layout.width;Plotly.newPlot("chart{seq}",f{seq}.data,f{seq}.layout,{{responsive:true}});</script>'
+    zones=zone_legend_entries(fig)
+    f=report_figure(fig,width_pt=780,height_pt=540 if complex_figure(fig) else 380,external_zone_legend=bool(zones))
+    raw=json.loads(pio.to_json(f))
+    key=""
+    if zones:key='<p><b>Bioclimatic zones</b></p><div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">'+ "".join('<div><span style="display:inline-block;width:12px;height:9px;border:1px dashed #39447d;background:'+escape(color,quote=True)+'"></span> '+escape(name)+'</div>' for _,name,color in zones)+'</div>'
+    return f'<section class="panel"><h3>{escape(d.title)}</h3><div class="plot" id="chart{seq}"></div>'+key+f'<p style="white-space:pre-wrap">{escape(note)}</p></section><script>const f{seq}={_script_json(raw)};f{seq}.layout.autosize=true;delete f{seq}.layout.width;Plotly.newPlot("chart{seq}",f{seq}.data,f{seq}.layout,{{responsive:true}});</script>'
 
 def generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive Diagram Atlas",paper="A4",orientation="Landscape",
                    mode=PDF_MODES[0],per_page=2,progress=None,image_renderer=None,coverage=LEVELS[-1]):

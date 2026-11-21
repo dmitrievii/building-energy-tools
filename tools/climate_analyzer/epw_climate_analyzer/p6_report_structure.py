@@ -140,11 +140,11 @@ def locator_figure(c):
 
 def zone_legend_entries(fig):
     """Lossless printed key for visible Givoni-Milne legend entries, in rank order."""
-    if fig.layout.showlegend is False or getattr(fig.layout.legend2,"visible",None) is False:return []
+    if fig.layout.showlegend is False or getattr(getattr(fig.layout,"legend2",None),"visible",None) is False:return []
     entries=[]
     for t in fig.data:
         if getattr(t,"legend",None)!="legend2" or getattr(t,"showlegend",None) is False or getattr(t,"visible",None) in (False,"legendonly"):continue
-        if not getattr(t,"legendgroup","").startswith("givoni_zone_"):continue
+        if not (getattr(t,"legendgroup",None) or "").startswith("givoni_zone_"):continue
         entries.append((getattr(t,"legendrank",1000) or 1000,str(t.name),str(getattr(t,"fillcolor",None) or "#F1F5F9")))
     return sorted(entries,key=lambda x:x[0])
 
@@ -402,7 +402,7 @@ def standard_figure(entry,df,context,reference_df=None):
     stat=source_interpretation(df,page,column if kind in ("profile","duration","heatmap") else "",label,unit,thresholds=temperature_thresholds(context),kind=kind)
     if kind in ("nv","night") and c in ledger:
         from .interpretations import natural_ventilation_interpretation
-        stat=natural_ventilation_interpretation(df,ledger[c].eq(0).where(ledger[c].notna()).eq(False)&ledger[c].notna())
+        stat=natural_ventilation_interpretation(df,ledger[c].gt(0)&ledger[c].notna())
     if stat and stat not in note:note=stat+"\n\n"+note
     from .calendar_heatmap_axes import apply_monthly_axes
     return apply_monthly_axes(fig),note

@@ -134,7 +134,7 @@ def _script_json(value):
 def printable_html(items,title,paper,orientation):
     if paper not in ("A4","A3") or orientation not in ("Portrait","Landscape"):raise ValueError("Invalid paper settings.")
     from plotly.offline import get_plotlyjs
-    from .p6_report_structure import contexts,ordered_groups,concise_context,site_details,locator_figure,report_figure
+    from .p6_report_structure import contexts,ordered_groups,concise_context,site_details,locator_figure,report_figure,zone_legend_entries,figure_height,complex_figure
     from reportlab.lib.pagesizes import A4,A3,landscape
     page=A4 if paper=="A4" else A3
     if orientation=="Landscape":page=landscape(page)
@@ -144,9 +144,13 @@ def printable_html(items,title,paper,orientation):
     def plot(fig,h):
         nonlocal seq
         seq+=1
-        f=report_figure(fig,width_pt=width,height_pt=h)
+        zones=zone_legend_entries(fig)
+        f=report_figure(fig,width_pt=width,height_pt=h,external_zone_legend=bool(zones))
         raw=json.loads(pio.to_json(f))
-        return f'<div class="plot" id="figure{seq}"></div><script>const f{seq}={_script_json(raw)};Plotly.newPlot("figure{seq}",f{seq}.data,f{seq}.layout,{{responsive:false,displayModeBar:false}});</script>'
+        key=""
+        if zones:
+            key='<div class="zone-key"><b>Bioclimatic zones</b><div class="zone-grid">'+ "".join('<div><span class="zone-swatch" style="background:'+_safe(colour)+'"></span>'+_safe(name)+'</div>' for _,name,colour in zones)+'</div></div>'
+        return f'<div class="plot" id="figure{seq}"></div><script>const f{seq}={_script_json(raw)};Plotly.newPlot("figure{seq}",f{seq}.data,f{seq}.layout,{{responsive:false,displayModeBar:false}});</script>'+key
     def table(rows):
         if not rows:return "<p>Statistics unavailable for this saved scope.</p>"
         return "<table><thead><tr><th>Indicator</th><th>Selected-period statistics</th><th>Valid records</th></tr></thead><tbody>"+"".join("<tr>"+"".join("<td>"+_safe(cell)+"</td>" for cell in row)+"</tr>" for row in rows)+"</tbody></table>"
@@ -156,7 +160,7 @@ def printable_html(items,title,paper,orientation):
         section="<h1>"+_safe(title)+"</h1><h2>Climate and station overview</h2>" if idx==0 else '<section class="sheet"><h2>Additional climate / analysis period</h2>'
         section+="<p>"+_safe(concise_context(context))+"</p>"
         loc=locator_figure(context)
-        if loc is not None:section+=plot(loc,min(height*.32,170))+"<p>Station locator · Natural Earth, 1:110m · geographic context, not a street map.</p>"
+        if loc is not None:section+=plot(loc,min(height*.40,240))+"<p>Station locator · Natural Earth, 1:110m · regional geographic context.</p>"
         if site_details(context):section+="<p>"+_safe(" · ".join(f"{a}: {v}" for a,v,_ in site_details(context)))+"</p>"
         section+=table(context.get("statistics",{}).get("overview",[]))
         if idx==0:section+="<p><b>Report chapters:</b> "+_safe(" · ".join(name for name,_ in groups))+"</p>"
@@ -170,8 +174,11 @@ def printable_html(items,title,paper,orientation):
         for k,item in enumerate(entries,1):
             fig=pio.from_json(item["figure"])
             scope_line="<p>"+_safe(concise_context(item["context"]))+"</p>" if len(contexts(entries))>1 else ""
-            pages.append(f'<section class="sheet"><h3>{chapter_no}.{k} · {_safe(item["title"])}</h3>'+scope_line+plot(fig,min(height*.65,430))+"<p>"+_safe(item["interpretation"])+"</p><p>"+_safe(item.get("note",""))+"</p></section>")
-    css=f"""@page {{size:{paper} {orientation.lower()};margin:11.3mm}} *{{box-sizing:border-box}} body{{font:11pt Arial,sans-serif;color:#202830;margin:12px;width:{width}pt}} h1{{font-size:23pt;margin:0 0 9pt}} h2{{font-size:17pt;margin:0 0 8pt}} h3{{font-size:13pt;margin:0 0 6pt}} p{{white-space:pre-wrap;overflow-wrap:anywhere;margin:5pt 0;line-height:1.25}} table{{width:100%;border-collapse:collapse;font:inherit;margin:5pt 0}} td,th{{padding:4pt 5pt;text-align:left;border-bottom:1px solid #D7DDE1}} th{{color:#314652;background:#EEF2F4}} .sheet{{break-before:page;page-break-before:always}} .plot{{width:100%;break-inside:avoid}} button{{padding:8px 16px}} @media print{{button{{display:none}} body{{margin:0}}}}"""
+            zones=zone_legend_entries(fig)
+            h=figure_height(fig,width,height)
+            if zones:h=min(h,height*.60)
+            pages.append(f'<section class="sheet"><h3>{chapter_no}.{k} · {_safe(item["title"])}</h3>'+scope_line+plot(fig,h)+"<p>"+_safe(item["interpretation"])+"</p><p>"+_safe(item.get("note",""))+"</p></section>")
+    css=f"""@page {{size:{paper} {orientation.lower()};margin:11.3mm}} *{{box-sizing:border-box}} body{{font:11pt Arial,sans-serif;color:#202830;margin:12px;width:{width}pt}} h1{{font-size:23pt;margin:0 0 9pt}} h2{{font-size:17pt;margin:0 0 8pt}} h3{{font-size:13pt;margin:0 0 6pt}} p{{white-space:pre-wrap;overflow-wrap:anywhere;margin:5pt 0;line-height:1.25}} table{{width:100%;border-collapse:collapse;font:inherit;margin:5pt 0}} td,th{{padding:4pt 5pt;text-align:left;border-bottom:1px solid #D7DDE1}} th{{color:#314652;background:#EEF2F4}} .sheet{{break-before:page;page-break-before:always}} .plot{{width:100%;break-inside:avoid}} .zone-key{{break-inside:avoid;margin:4pt 0}} .zone-grid{{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3pt 10pt}} .zone-swatch{{display:inline-block;width:12pt;height:7pt;border:1px dashed #39447d;margin-right:5pt}} button{{padding:8px 16px}} @media print{{button{{display:none}} body{{margin:0}}}}"""
     return ("<!doctype html><html><head><meta charset='utf-8'><title>"+_safe(title)+"</title><style>"+css+"</style><script>"+get_plotlyjs()+"</script></head><body><button onclick='window.print()'>Print / Save as PDF</button>"+"".join(pages)+"</body></html>").encode("utf-8")
 
 def pdf_report(items,title,paper,orientation,*,image_renderer=None):
@@ -181,7 +188,7 @@ def pdf_report(items,title,paper,orientation,*,image_renderer=None):
     from reportlab.lib import colors
     from reportlab.platypus import SimpleDocTemplate,Paragraph,Spacer,PageBreak,Image,Table,TableStyle
     from PIL import Image as PILImage
-    from .p6_report_structure import contexts,ordered_groups,concise_context,site_details,locator_figure,report_figure
+    from .p6_report_structure import contexts,ordered_groups,concise_context,site_details,locator_figure,report_figure,zone_legend_entries,figure_height,complex_figure
     if paper not in ("A4","A3") or orientation not in ("Portrait","Landscape"):raise ValueError("Invalid paper settings.")
     if not items:raise ValueError("Add at least one chart.")
     page=A4 if paper=="A4" else A3
@@ -205,7 +212,7 @@ def pdf_report(items,title,paper,orientation,*,image_renderer=None):
         return t
     def image(fig,h,label):
         try:
-            f=report_figure(fig,width_pt=width,height_pt=h)
+            f=report_figure(fig,width_pt=width,height_pt=h,external_zone_legend=bool(zone_legend_entries(fig)))
             png=image_renderer(f) if image_renderer is not None else f.to_image(format="png",scale=2)
             raw=io.BytesIO(png)
             with PILImage.open(raw) as im:w,ih=im.size
@@ -213,6 +220,33 @@ def pdf_report(items,title,paper,orientation,*,image_renderer=None):
             scale=min(width/w,h/ih)
             return Image(raw,width=w*scale,height=ih*scale,hAlign="CENTER")
         except Exception as exc:raise RuntimeError(f"Static rendering failed for {label}. Use the printable HTML export. ({exc})") from exc
+    def zone_table(zones):
+        # Native text stays 11 pt, retains every visible named zone and is
+        # never placed in the Plotly scrollable legend viewport.
+        from reportlab.lib.colors import Color,HexColor
+        import re
+        def swatch(value):
+            if value.startswith("rgba("):
+                vals=[float(v) for v in re.findall(r"[0-9.]+",value)]
+                if len(vals)==4:
+                    r,g,b,a=vals
+                    return Color(1-a+a*r/255,1-a+a*g/255,1-a+a*b/255)
+            try:return HexColor(value)
+            except ValueError:return HexColor("#F1F5F9")
+        rows=[];commands=[("VALIGN",(0,0),(-1,-1),"TOP"),("TOPPADDING",(0,0),(-1,-1),1),("BOTTOMPADDING",(0,0),(-1,-1),1)]
+        for i in range(0,len(zones),2):
+            row=[]
+            for j in range(2):
+                if i+j<len(zones):
+                    _,name,colour=zones[i+j]
+                    row.extend(["",para(name.replace("<br>"," ").replace("<br/>"," "))])
+                    commands.append(("BACKGROUND",(2*j,i//2),(2*j,i//2),swatch(colour)))
+                    commands.append(("BOX",(2*j,i//2),(2*j,i//2),.45,HexColor("#39447D")))
+                else:row.extend(["",""])
+            rows.append(row)
+        table=Table(rows,colWidths=[10,width/2-10,10,width/2-10],hAlign="LEFT")
+        table.setStyle(TableStyle(commands))
+        return table
     groups=ordered_groups(items);body=[]
     for idx,context in enumerate(contexts(items)):
         if idx:body.append(PageBreak())
@@ -221,7 +255,7 @@ def pdf_report(items,title,paper,orientation,*,image_renderer=None):
                      para(concise_context(context))])
         loc=locator_figure(context)
         if loc is not None:
-            body.extend([image(loc,min(doc.height*.28,145),"station location"),para("Station locator · Natural Earth 1:110m · geographic context, not a street map.")])
+            body.extend([image(loc,min(doc.height*.37,220),"station location"),para("Station locator · Natural Earth 1:110m · regional geographic context.")])
         site=site_details(context)
         # Compact location row rather than another table.
         if site:body.append(para(" · ".join(f"{a}: {v}" for a,v,_ in site)))
@@ -234,8 +268,16 @@ def pdf_report(items,title,paper,orientation,*,image_renderer=None):
         for k,item in enumerate(entries,1):
             body.extend([PageBreak(),para(f"{chapter_no}.{k} · {item['title']}","ReportFigure")])
             if len(contexts(entries))>1:body.append(para(concise_context(item["context"])))
-            body.extend([image(pio.from_json(item["figure"]),min(doc.height*.65,430),item["title"]),Spacer(1,7)])
-            if item["interpretation"]:body.append(para(item["interpretation"]))
+            fig=pio.from_json(item["figure"])
+            zones=zone_legend_entries(fig)
+            h=figure_height(fig,width,doc.height)
+            if zones:
+                key=zone_table(zones)
+                _,key_h=key.wrap(width,doc.height)
+                h=min(h,max(150,doc.height-key_h-91))
+            body.extend([image(fig,h,item["title"]),Spacer(1,5)])
+            if zones:body.extend([para("Bioclimatic zones"),key,Spacer(1,6)])
+            if item["interpretation"]:body.extend([para("Interpretation","ReportFigure"),para(item["interpretation"])])
             if item.get("note"):body.append(para(item["note"]))
     def footer(canvas,doc):
         canvas.saveState();canvas.setFont("Helvetica",9);canvas.setFillColor(colors.HexColor("#52606D"))
@@ -375,7 +417,7 @@ def render_report(df=None,reference_df=None):
     # printed underneath each figure.
     st.download_button("Download technical metadata",data=json.dumps([{k:v for k,v in i.items() if k!="figure"} for i in included],ensure_ascii=False,indent=2,default=str).encode("utf-8"),
                        file_name="climate_report_metadata.json",mime="application/json",key="p6_meta")
-    fingerprint=hashlib.sha256(json.dumps([included,title,paper,orientation,"layout-hf2"],default=str,sort_keys=True).encode()).hexdigest()
+    fingerprint=hashlib.sha256(json.dumps([included,title,paper,orientation,"layout-hf3"],default=str,sort_keys=True).encode()).hexdigest()
     if st.button("Generate PDF",key="p6_generate_pdf"):
         try:
             st.session_state.pop("_p6_pdf",None)
