@@ -472,12 +472,14 @@ def page_derivation_flags(page: str) -> tuple[bool, bool]:
         "Time Series and Overlay",
         "Natural Ventilation",
         "HVAC and Passive Design",
+        "Outdoor Thermal Comfort",
         "Compare Climates",
     }
     pages_requiring_solar = {
         "Overview",
         "Solar and Radiation",
         "Shading analysis",
+        "Outdoor Thermal Comfort",
         "Compare Climates",
     }
     return page in pages_requiring_psychrometrics, page in pages_requiring_solar
@@ -3343,6 +3345,10 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
     chart_options = ["Humidity variable explorer", "Psychrometric chart", "Moisture thresholds", "Psychrometric scatter relationships"]
     if not interval_count_metrics:
         chart_options.remove("Moisture thresholds")
+    else:
+        from epw_climate_analyzer.p3_comfort import complete,DEW
+        if complete(df,DEW):
+            chart_options.append("Condensation potential")
     chart_group = st.selectbox("Analysis type", chart_options, key="humidity_analysis_type")
     if chart_group == "Humidity variable explorer":
         render_generic_variable_page(
@@ -3506,7 +3512,17 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
         render_interpretation(psychrometric_interpretation(report_df))
         if show_givoni:
             render_bioclimatic_report(report_df)
+    elif chart_group == "Condensation potential":
+        from epw_climate_analyzer.p3_ui import condensation_panel
+        condensation_panel(df,render_plot)
     elif chart_group == "Moisture thresholds":
+        from epw_climate_analyzer.p3_comfort import complete,W,SV
+        views=["Threshold hours"]+(["Outdoor moisture load"] if complete(df,W,SV) else [])
+        view=st.selectbox("Chart type",views,key="p3_moist_view")
+        if view=="Outdoor moisture load":
+            from epw_climate_analyzer.p3_ui import moisture_panel
+            moisture_panel(df,render_plot)
+            return
         d_low = st.slider("Dry-air threshold [g/kg]", 0.0, 8.0, 3.0, 0.25)
         d_high = st.slider("Humid-air threshold [g/kg]", 5.0, 25.0, 10.0, 0.25)
         aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0)
@@ -4470,6 +4486,8 @@ def render_sky_daylight(df: pd.DataFrame, *, latitude: float | None = None) -> N
         options.append("Clear and overcast hours")
     if has_sky and has_numeric_observations(df, "global_horizontal_radiation_wh_m2"):
         options.append("Daylight scatter")
+    if has_illuminance:
+        options.append("Outdoor illuminance availability")
     if not options:
         st.info("No sky/daylight analysis is supported by the active climate data.")
         return
@@ -4481,7 +4499,10 @@ def render_sky_daylight(df: pd.DataFrame, *, latitude: float | None = None) -> N
     )
     chart_group = st.selectbox("Analysis type", options, key="sky_daylight_analysis")
 
-    if chart_group == "Sky and daylight explorer":
+    if chart_group == "Outdoor illuminance availability":
+        from epw_climate_analyzer.p3_ui import illuminance_panel
+        illuminance_panel(df,render_plot)
+    elif chart_group == "Sky and daylight explorer":
         quantity = st.selectbox("Quantity", quantities, key="sky_daylight_quantity")
         if quantity == "Astronomical daylight duration":
             view = st.radio(
@@ -4669,6 +4690,11 @@ def render_sky_daylight(df: pd.DataFrame, *, latitude: float | None = None) -> N
         render_plot(fig, sky_interpretation(df))
 
 
+def render_outdoor_comfort(df):
+    from epw_climate_analyzer.p3_ui import outdoor_comfort
+    outdoor_comfort(df,render_plot)
+
+
 def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
     """Render natural-ventilation and night-flushing charts."""
     st.header("Natural ventilation and night flushing")
@@ -4704,6 +4730,10 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
         wind_min = st.number_input("Minimum wind speed [m/s]", value=0.5, step=0.1)
         wind_max = st.number_input("Maximum wind speed [m/s]", value=6.0, step=0.1)
 
+    if t_min>t_max or d_max<0 or (wind_filter and (wind_min<0 or wind_min>wind_max)):
+        st.warning("Check the temperature, humidity and wind limits.")
+        return
+    from epw_climate_analyzer.p3_comfort import eligibility_mask
     mask = natural_ventilation_condition(
         df,
         t_min,
@@ -4728,9 +4758,17 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
             "Rejected reasons",
             "Psychrometric NV overlay",
             "Night-flushing potential",
+            "Sensitivity analysis",
+            "Daily consecutive availability",
         ] + (["Directional analysis"] if wind_available and "wind_direction_deg" in df and df["wind_direction_deg"].notna().any() else []),
     )
-    if chart_group == "Directional analysis":
+    if chart_group == "Sensitivity analysis":
+        from epw_climate_analyzer.p3_ui import nv_sensitivity
+        nv_sensitivity(df,eligibility_mask(df,mask,wind=wind_filter),wind_available,render_plot)
+    elif chart_group == "Daily consecutive availability":
+        from epw_climate_analyzer.p3_ui import persistence_panel
+        persistence_panel(df,eligibility_mask(df,mask,wind=wind_filter),render_plot)
+    elif chart_group == "Directional analysis":
         from epw_climate_analyzer.directional_climate import (
             directional_class_table, directional_class_figure, class_interpretation,
             directional_table, directional_figure, directional_interpretation, nv_valid_mask,
@@ -4818,11 +4856,24 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
         fig.add_shape(type="rect", x0=t_min, x1=t_max, y0=0, y1=d_max, line=dict(dash="dash"), fillcolor="rgba(0,150,0,0.08)")
         render_plot(fig, natural_ventilation_interpretation(df, mask))
     else:
-        night_mask = night_flushing_condition(df)
-        df_nf = df.copy()
-        df_nf["night_flushing_suitable"] = night_mask.astype(int)
-        fig = heatmap_chart(df_nf, "night_flushing_suitable", "day", "Night-flushing potential", "0/1")
-        render_plot(fig, natural_ventilation_interpretation(df, night_mask))
+        from epw_climate_analyzer.p3_ui import persistence_panel
+        from epw_climate_analyzer.p3_comfort import numeric,T,full_daily_temperature
+        view=st.selectbox("Chart type",["Heat map","Nightly persistence"],key="p3_night_chart")
+        hot=st.number_input("Preceding hot-day threshold [°C]",value=26.,step=.5,key="p3_night_hot")
+        cool=st.number_input("Night temperature limit [°C]",value=20.,step=.5,key="p3_night_cool")
+        night_mask = night_flushing_condition(df,day_hot_threshold_c=hot,night_max_c=cool)
+        if view=="Nightly persistence":
+            days=pd.DatetimeIndex(df.index).normalize()
+            anchor=days.where(df.index.hour>6,days-pd.DateOffset(days=1))
+            complete=full_daily_temperature(df).reindex(anchor).notna().to_numpy()
+            known=numeric(df,T).notna()&complete&((df.index.hour>=22)|(df.index.hour<=6))
+            persistence_panel(df,night_mask.astype(float).where(known),render_plot,night=True)
+            st.caption("Night 22:00–06:59; complete reference temperature day is required. Global hour filters can remove that reference history.")
+        else:
+            df_nf = df.copy()
+            df_nf["night_flushing_suitable"] = night_mask.astype(int)
+            fig = heatmap_chart(df_nf, "night_flushing_suitable", "day", "Night-flushing potential", "0/1")
+            render_plot(fig, natural_ventilation_interpretation(df, night_mask))
 
 
 def render_hvac_passive(df: pd.DataFrame) -> None:
@@ -4847,6 +4898,7 @@ def render_hvac_passive(df: pd.DataFrame) -> None:
             "Economizer availability",
             "Design-day candidates",
             "Ventilation load proxy",
+            "Adaptive comfort",
         ],
     )
 
@@ -4968,47 +5020,13 @@ def render_hvac_passive(df: pd.DataFrame) -> None:
             "°C",
         )
         render_plot(fig, hvac_interpretation(df))
+    elif chart_group == "Adaptive comfort":
+        from epw_climate_analyzer.p3_ui import adaptive_panel
+        adaptive_panel(df,render_plot)
     else:
-        airflow_m3_h = st.number_input(
-            "Outdoor airflow [m³/h]",
-            min_value=1.0,
-            value=1000.0,
-            step=100.0,
-        )
-        heat_set_c = st.number_input(
-            "Heating supply target temperature [°C]",
-            value=20.0,
-            step=0.5,
-        )
-        cool_set_c = st.number_input(
-            "Cooling supply target temperature [°C]",
-            value=26.0,
-            step=0.5,
-        )
-        rho = df["moist_air_density_kg_m3"].fillna(1.2)
-        m_dot = rho * airflow_m3_h / 3600.0
-        cp = 1.006
-        proxy = df.copy()
-        proxy["ventilation_heating_kw"] = m_dot * cp * (
-            heat_set_c - proxy["dry_bulb_temperature_c"]
-        ).clip(lower=0)
-        proxy["ventilation_cooling_kw"] = m_dot * cp * (
-            proxy["dry_bulb_temperature_c"] - cool_set_c
-        ).clip(lower=0)
-        monthly = aggregate_sum(proxy, "ventilation_heating_kw", "Monthly")[["sum"]].rename(
-            columns={"sum": "Heating proxy [kWh-like]"}
-        )
-        monthly["Cooling proxy [kWh-like]"] = aggregate_sum(
-            proxy,
-            "ventilation_cooling_kw",
-            "Monthly",
-        )["sum"]
-        fig = stacked_monthly_bar(
-            monthly,
-            "Outdoor-air sensible ventilation load proxy",
-            "kW·h proxy",
-        )
-        render_plot(fig, hvac_interpretation(df))
+        from epw_climate_analyzer.p3_ui import ventilation_load_panel
+        ventilation_load_panel(df,render_plot)
+
 
 
 def render_time_series_overlay(df: pd.DataFrame) -> None:
@@ -5754,7 +5772,7 @@ def render_canonical_climate_analysis(dataset) -> None:
         "Natural Ventilation",
         "HVAC and Passive Design",
     }
-    _ensure_analysis_dependencies(include_solar=(page == "Shading analysis"), include_comparison=False)
+    _ensure_analysis_dependencies(include_solar=(page in ("Shading analysis","Outdoor Thermal Comfort")), include_comparison=False)
     source_pressure = dataset.data.get("atmospheric_station_pressure_pa")
     valid_pressure = pd.to_numeric(source_pressure, errors="coerce").dropna() if source_pressure is not None else pd.Series(dtype=float)
     measured_median = (
@@ -5786,7 +5804,7 @@ def render_canonical_climate_analysis(dataset) -> None:
             full_df = prepare_historical_analysis_frame(
                 dataset,
                 include_psychrometrics=include_psychrometrics,
-                include_solar=(page == "Shading analysis"),
+                include_solar=(page in ("Shading analysis","Outdoor Thermal Comfort")),
                 fallback_pressure_pa=fallback_pressure,
                 pressure_override_pa=pressure_override,
             )
@@ -5802,6 +5820,9 @@ def render_canonical_climate_analysis(dataset) -> None:
         filtered_df = full_df
         st.session_state["_active_filtered_export_df"] = full_df
     else:
+        if page=="HVAC and Passive Design":
+            from epw_climate_analyzer.p3_comfort import attach_adaptive
+            full_df=attach_adaptive(full_df)
         filtered_df = sidebar_filters(full_df)
     if filtered_df.empty:
         st.warning("The current filters remove all data. Adjust the date, month or hour filter.")
@@ -5848,6 +5869,8 @@ def render_canonical_climate_analysis(dataset) -> None:
         render_historical_solar(filtered_df)
     elif page == "Shading analysis":
         render_shading_design(filtered_df)
+    elif page == "Outdoor Thermal Comfort":
+        render_outdoor_comfort(filtered_df)
     elif page == "Sky and Daylight":
         render_sky_daylight(filtered_df, latitude=float(dataset.location.latitude))
     elif page == "Wind and Ventilation":
@@ -5898,12 +5921,15 @@ def render_generated_climate_analysis(dataset) -> None:
     if not isinstance(product, EngineProduct) or product.dataset is not dataset:
         st.error("The selected year has no matching complete output package. Return to the climate source.")
         return
-    _ensure_analysis_dependencies(include_solar=page in ("Overview", "Solar and Radiation", "Shading analysis"), include_comparison=False)
+    _ensure_analysis_dependencies(include_solar=page in ("Overview", "Solar and Radiation", "Shading analysis", "Outdoor Thermal Comfort"), include_comparison=False)
     try:
-        full = prepare_engine_display_frame(dataset, include_solar=page in ("Overview", "Solar and Radiation", "Shading analysis"))
+        full = prepare_engine_display_frame(dataset, include_solar=page in ("Overview", "Solar and Radiation", "Shading analysis", "Outdoor Thermal Comfort"))
     except ValueError as exc:
         st.error(f"The generated source states cannot be analysed safely: {exc}")
         return
+    if page=="HVAC and Passive Design":
+        from epw_climate_analyzer.p3_comfort import attach_adaptive
+        full=attach_adaptive(full)
     data = full if page == "Data Quality" else sidebar_filters(full)
     if data.empty:
         st.warning("The current filters remove all data.")
@@ -5933,6 +5959,8 @@ def render_generated_climate_analysis(dataset) -> None:
         render_solar(data)
     elif page == "Shading analysis":
         render_shading_design(data)
+    elif page == "Outdoor Thermal Comfort":
+        render_outdoor_comfort(data)
     elif page == "Wind and Ventilation":
         render_wind(data)
     elif page == "Sky and Daylight":
@@ -6055,6 +6083,9 @@ def main() -> None:
             else pressure_from_altitude_m(float(epw.location.elevation_m or 0.0))
         )
 
+    if page=="HVAC and Passive Design":
+        from epw_climate_analyzer.p3_comfort import attach_adaptive
+        full_df=attach_adaptive(full_df)
     filtered_df = sidebar_filters(full_df)
     if filtered_df.empty:
         st.warning("The current filters remove all data. Adjust the date, month or hour filter.")
@@ -6081,6 +6112,8 @@ def main() -> None:
         render_solar(filtered_df)
     elif page == "Shading analysis":
         render_shading_design(filtered_df)
+    elif page == "Outdoor Thermal Comfort":
+        render_outdoor_comfort(filtered_df)
     elif page == "Wind and Ventilation":
         render_wind(filtered_df)
     elif page == "Sky and Daylight":

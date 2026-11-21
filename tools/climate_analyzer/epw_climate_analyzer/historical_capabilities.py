@@ -198,6 +198,8 @@ def available_historical_pages(df: pd.DataFrame) -> tuple[str, ...]:
         pages.append("Shading analysis")
     if has_mean_temperature and has_humidity:
         pages.append("HVAC and Passive Design")
+    if has_mean_temperature and has_humidity and has_numeric_observations(df,"wind_speed_m_s"):
+        pages.append("Outdoor Thermal Comfort")
     pages.append("Data Quality")
     return tuple(pages)
 
