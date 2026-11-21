@@ -8,7 +8,8 @@ import zipfile
 import tempfile
 import gc
 import threading
-from .p66_memory import require_headroom
+from .p66_memory import require_headroom,EXPORT_LOCK as _EXPORT_LOCK
+from .p6_static_render import render_png
 from collections import Counter
 from dataclasses import asdict
 from datetime import datetime,timezone
@@ -23,7 +24,6 @@ from .p6_report import _script_json
 MAX_ARCHIVE_BYTES=32*1024*1024
 HTML_PART_BYTES=4*1024*1024
 MAX_BATCH=50
-_EXPORT_LOCK=threading.Lock()
 PDF_MODES=("Chapter PDFs (ZIP)","Single PDF","Interactive HTML by chapter (ZIP)")
 def slug(text):
     return re.sub(r"[^a-z0-9]+","-",text.lower()).strip("-") or "chapter"
@@ -81,11 +81,18 @@ class PdfWriter:
         from reportlab.lib.utils import ImageReader
         from PIL import Image
         f=report_figure(fig,width_pt=w,height_pt=h,font_pt=font,external_zone_legend=bool(zone_legend_entries(fig)))
-        png=self.image_renderer(f) if self.image_renderer else f.to_image(format="png",scale=1.5)
-        data=io.BytesIO(png)
-        with Image.open(data) as im:iw,ih=im.size
-        data.seek(0);ratio=min(w/iw,h/ih)
-        self.canvas.drawImage(ImageReader(data),x+(w-iw*ratio)/2,top-ih*ratio,width=iw*ratio,height=ih*ratio,mask="auto")
+        from pathlib import Path
+        with tempfile.TemporaryDirectory(prefix="ige-atlas-figure-") as tmp:
+            target=Path(tmp)/"figure.png"
+            if self.image_renderer:target.write_bytes(self.image_renderer(f))
+            else:render_png(f,target,scale=1.5)
+            del f
+            with Image.open(target) as im:iw,ih=im.size
+            ratio=min(w/iw,h/ih)
+            self.canvas.drawImage(str(target),x+(w-iw*ratio)/2,top-ih*ratio,width=iw*ratio,height=ih*ratio,mask="auto")
+        gc.collect()
+        require_headroom()
+
     def stats(self,rows,top):
         from reportlab.lib.colors import HexColor
         from reportlab.platypus import Table,TableStyle,Paragraph
@@ -108,6 +115,7 @@ class PdfWriter:
         if loc is not None:
             h=min(205,self.height*.36)
             try:self.img(loc,self.margin,y,self.width,h)
+            except MemoryError:raise
             except Exception as exc:
                 y=self.text("Station map rendering unavailable; coordinates above are retained.",self.margin,y,self.width)-5
             else:y-=h+4;y=self.text(attribution,self.margin,y,self.width,self.small_style)-5

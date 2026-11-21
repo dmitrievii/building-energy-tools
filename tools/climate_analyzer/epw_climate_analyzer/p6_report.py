@@ -181,20 +181,38 @@ def printable_html(items,title,paper,orientation,*,use_osm=False):
     css=f"""@page {{size:{paper} {orientation.lower()};margin:11.3mm}} *{{box-sizing:border-box}} body{{font:11pt Arial,sans-serif;color:#202830;margin:12px;width:{width}pt}} h1{{font-size:23pt;margin:0 0 9pt}} h2{{font-size:17pt;margin:0 0 8pt}} h3{{font-size:13pt;margin:0 0 6pt}} p{{white-space:pre-wrap;overflow-wrap:anywhere;margin:5pt 0;line-height:1.25}} table{{width:100%;border-collapse:collapse;font:inherit;margin:5pt 0}} td,th{{padding:4pt 5pt;text-align:left;border-bottom:1px solid #D7DDE1}} th{{color:#314652;background:#EEF2F4}} .sheet{{break-before:page;page-break-before:always}} .plot{{width:100%;break-inside:avoid}} .zone-key{{break-inside:avoid;margin:4pt 0}} .zone-grid{{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3pt 10pt}} .zone-swatch{{display:inline-block;width:12pt;height:7pt;border:1px dashed #39447d;margin-right:5pt}} button{{padding:8px 16px}} @media print{{button{{display:none}} body{{margin:0}}}}"""
     return ("<!doctype html><html><head><meta charset='utf-8'><title>"+_safe(title)+"</title><style>"+css+"</style><script>"+get_plotlyjs()+"</script></head><body><button onclick='window.print()'>Print / Save as PDF</button>"+"".join(pages)+"</body></html>").encode("utf-8")
 
-def pdf_report(items,title,paper,orientation,*,image_renderer=None,use_osm=False):
+def pdf_report(items,title,paper,orientation,*,image_renderer=None,use_osm=False,progress=None):
+    """Disk-staged static report export with one shared export owner."""
+    from .p66_memory import EXPORT_LOCK,require_headroom
+    import gc
+    import tempfile
+    if not EXPORT_LOCK.acquire(blocking=False):raise RuntimeError("Another PDF or Atlas export is already running.")
+    try:
+        require_headroom()
+        with tempfile.TemporaryDirectory(prefix="ige-report-") as staging:
+            return _pdf_report(items,title,paper,orientation,image_renderer=image_renderer,use_osm=use_osm,staging=staging,progress=progress)
+    finally:
+        gc.collect()
+        EXPORT_LOCK.release()
+
+def _pdf_report(items,title,paper,orientation,*,image_renderer=None,use_osm=False,staging,progress=None):
     """Professional chapter-organized PDF; no raw widget/diagnostic dumps."""
     from reportlab.lib.pagesizes import A4,A3,landscape
     from reportlab.lib.styles import getSampleStyleSheet,ParagraphStyle
     from reportlab.lib import colors
     from reportlab.platypus import SimpleDocTemplate,Paragraph,Spacer,PageBreak,Image,Table,TableStyle
     from PIL import Image as PILImage
+    from pathlib import Path
+    from .p6_static_render import render_png
+    from .p66_memory import require_headroom
+    import gc
     from .p6_report_structure import contexts,ordered_groups,concise_context,site_details,locator_figure,report_figure,zone_legend_entries,figure_height,complex_figure
     if paper not in ("A4","A3") or orientation not in ("Portrait","Landscape"):raise ValueError("Invalid paper settings.")
     if not items:raise ValueError("Add at least one chart.")
     page=A4 if paper=="A4" else A3
     if orientation=="Landscape":page=landscape(page)
-    out=io.BytesIO()
-    doc=SimpleDocTemplate(out,pagesize=page,rightMargin=32,leftMargin=32,topMargin=30,bottomMargin=34,title=title,author="IGE Climate Analyzer")
+    out=Path(staging)/"report.pdf"
+    doc=SimpleDocTemplate(str(out),pagesize=page,rightMargin=32,leftMargin=32,topMargin=30,bottomMargin=34,title=title,author="IGE Climate Analyzer")
     styles=getSampleStyleSheet()
     styles.add(ParagraphStyle(name="ReportBody",fontName="Helvetica",fontSize=11,leading=13.5,spaceAfter=6,splitLongWords=True))
     styles.add(ParagraphStyle(name="ReportTitle",fontName="Helvetica-Bold",fontSize=23,leading=26,spaceAfter=9))
@@ -210,17 +228,24 @@ def pdf_report(items,title,paper,orientation,*,image_renderer=None,use_osm=False
         t.setStyle(TableStyle([("BACKGROUND",(0,0),(-1,0),colors.HexColor("#EEF2F4")),("VALIGN",(0,0),(-1,-1),"TOP"),
                                 ("LINEBELOW",(0,0),(-1,-1),.4,colors.HexColor("#D7DDE1")),("TOPPADDING",(0,0),(-1,-1),3),("BOTTOMPADDING",(0,0),(-1,-1),3)]))
         return t
+    image_number=0
     def image(fig,h,label):
+        nonlocal image_number
+        image_number+=1
+        if progress:progress(image_number,label)
+        target=Path(staging)/f"figure-{image_number:06d}.png"
         try:
-            f=report_figure(fig,width_pt=width,height_pt=h,external_zone_legend=bool(zone_legend_entries(fig)))
-            from .p66_memory import require_headroom
             require_headroom()
-            png=image_renderer(f) if image_renderer is not None else f.to_image(format="png",scale=2)
-            raw=io.BytesIO(png)
-            with PILImage.open(raw) as im:w,ih=im.size
-            raw.seek(0)
+            f=report_figure(fig,width_pt=width,height_pt=h,external_zone_legend=bool(zone_legend_entries(fig)))
+            if image_renderer is not None:target.write_bytes(image_renderer(f))
+            else:render_png(f,target,scale=1.5)
+            del f
+            with PILImage.open(target) as im:w,ih=im.size
+            gc.collect()
+            require_headroom()
             scale=min(width/w,h/ih)
-            return Image(raw,width=w*scale,height=ih*scale,hAlign="CENTER")
+            return Image(str(target),width=w*scale,height=ih*scale,hAlign="CENTER",lazy=2)
+        except MemoryError:raise
         except Exception as exc:raise RuntimeError(f"Static rendering failed for {label}. Use the printable HTML export. ({exc})") from exc
     def zone_table(zones):
         # Native text stays 11 pt, retains every visible named zone and is
@@ -279,14 +304,21 @@ def pdf_report(items,title,paper,orientation,*,image_renderer=None,use_osm=False
                 _,key_h=key.wrap(width,doc.height)
                 h=min(h,max(150,doc.height-key_h-91))
             body.extend([image(fig,h,item["title"]),Spacer(1,5)])
+            del fig
             if zones:body.extend([para("Bioclimatic zones"),key,Spacer(1,6)])
             if item["interpretation"]:body.extend([para("Interpretation","ReportFigure"),para(item["interpretation"])])
             if item.get("note"):body.append(para(item["note"]))
     def footer(canvas,doc):
+        require_headroom()
         canvas.saveState();canvas.setFont("Helvetica",9);canvas.setFillColor(colors.HexColor("#52606D"))
         canvas.drawString(32,18,"IGE Climate Analyzer");canvas.drawRightString(page[0]-32,18,str(doc.page));canvas.restoreState()
+    if progress:progress(image_number,"Assembling PDF")
+    require_headroom()
     doc.build(body,onFirstPage=footer,onLaterPages=footer)
-    return out.getvalue()
+    gc.collect()
+    require_headroom()
+    if out.stat().st_size>32*1024*1024:raise MemoryError("PDF exceeds the 32 MiB download budget. Select fewer diagrams for this export.")
+    return out.read_bytes()
 
 def render_report(df=None,reference_df=None):
     from .p6_report_structure import (PRESETS,available_catalog,standard_figure,capture_statistics,
@@ -442,7 +474,7 @@ def render_report(df=None,reference_df=None):
     # printed underneath each figure.
     st.download_button("Download technical metadata",data=json.dumps([{k:v for k,v in i.items() if k!="figure"} for i in included],ensure_ascii=False,indent=2,default=str).encode("utf-8"),
                        file_name="climate_report_metadata.json",mime="application/json",key="p6_meta")
-    fingerprint=html_signature+"-pdf-hf5"
+    fingerprint=html_signature+"-pdf-hf6"
     if st.session_state.get("_p6_pdf") and st.session_state["_p6_pdf"][0]!=fingerprint:
         st.session_state.pop("_p6_pdf",None)
     # One stable control region; downloads do not trigger a full rerun.
@@ -453,10 +485,17 @@ def render_report(df=None,reference_df=None):
     elif pdf_slot.button("Generate PDF",key="p6_generate_pdf"):
         try:
             st.session_state.pop("_p6_pdf",None)
-            with st.spinner("Rendering captured diagrams…"):
+            st.session_state.pop("_p6_html_result",None)
+            st.session_state.pop("_p66_atlas_result",None)
+            html_result=None
+            gc.collect()
+            status=st.empty()
+            try:
                 require_headroom()
-                pdf=pdf_report(included,title,paper,orientation,use_osm=True)
+                pdf=pdf_report(included,title,paper,orientation,use_osm=True,
+                               progress=lambda i,label:status.info(f"Rendering figure {i}: {label}"))
                 require_headroom()
+            finally:status.empty()
             st.session_state["_p6_pdf"]=(fingerprint,pdf)
             st.rerun()
         except Exception as exc:

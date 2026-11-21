@@ -1,6 +1,9 @@
 """Conservative Linux container memory admission; no claim of OOM immunity."""
 from pathlib import Path
 import gc
+from threading import Lock
+
+EXPORT_LOCK=Lock()
 
 MIB=1024**2
 def container_memory():

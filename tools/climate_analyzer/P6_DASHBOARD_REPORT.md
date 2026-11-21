@@ -29,3 +29,6 @@ Full catalogue retained; Atlas exports are divided into deterministic user-selec
 
 ## P6 HF5 — PDF controls, OSM locator and degree-metric legends
 One stable PDF control region switches between Generate and Download; download ignores reruns. Optional cached-PDF release moved into a collapsed resource management panel. Explicit user-triggered ordinary PDF/HTML and Atlas PDF exports use a bounded station-centered OpenStreetMap raster viewport with attribution, identifying User-Agent, HTTP cache handling and Natural Earth fallback. No bulk tile prefetch. HGT/KGT legends anchored below the plot in the interactive, dashboard, preset, Atlas and legacy snapshot print paths. Network map availability and cloud browser behavior still require live confirmation.
+
+## P6 HF6 — static export isolation
+Reported cgroup pressure 3060/3072 MiB. Shared export lock, disposable Python/Kaleido renderer per chart, Linux process-group cleanup on exit, timeout or pressure, disk-staged PNG/PDF and lazy image loading in ordinary reports, per-page guard, 1.5× static render scale and 32 MiB ordinary PDF output budget. Clear previously cached HTML/Atlas results before PDF request, show figure progress. Captured data unchanged; native peak memory and live cloud still require qualification.

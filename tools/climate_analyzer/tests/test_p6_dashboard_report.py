@@ -83,6 +83,31 @@ class P6Tests(unittest.TestCase):
         item=r.snapshot(fig,{"source":"Synthetic fixture"},"Static renderer smoke")
         self.assertTrue(r.pdf_report([item],"Smoke","A4","Landscape").startswith(b"%PDF"))
 
+    def test_disk_staging_and_render_guard_cleanup(self):
+        from unittest.mock import patch
+        from epw_climate_analyzer import p6_static_render
+        from epw_climate_analyzer.p66_memory import EXPORT_LOCK
+        from tempfile import TemporaryDirectory
+        fig=go.Figure(go.Scatter(x=[1,2],y=[2,3]))
+        item=r.snapshot(fig,{"source":"Synthetic fixture"},"Static renderer smoke")
+        seen=[]
+        def staged(f,target,**kw):
+            target=Path(target);seen.append(target)
+            Image.new("RGB",(600,400),"white").save(target)
+            return target
+        with patch("epw_climate_analyzer.p6_static_render.render_png",side_effect=staged):
+            self.assertTrue(r.pdf_report([item,dict(item,id="other")],"Smoke","A4","Landscape").startswith(b"%PDF"))
+        self.assertEqual(len(seen),2)
+        self.assertTrue(all(not path.exists() for path in seen))
+        with patch("epw_climate_analyzer.p6_static_render.render_png",side_effect=MemoryError("low memory")):
+            with self.assertRaises(MemoryError):r.pdf_report([item],"Smoke","A4","Landscape")
+        self.assertTrue(EXPORT_LOCK.acquire(False));EXPORT_LOCK.release()
+        with TemporaryDirectory() as tmp:
+            target=Path(tmp)/"test.png"
+            with patch("epw_climate_analyzer.p6_static_render.require_headroom",side_effect=MemoryError("low memory")):
+                with self.assertRaises(MemoryError):p6_static_render.render_png(fig,target)
+            self.assertFalse(target.exists())
+
     def test_real_streamlit_capture_survives_reruns_and_navigation(self):
         from streamlit.testing.v1 import AppTest
         script = """
