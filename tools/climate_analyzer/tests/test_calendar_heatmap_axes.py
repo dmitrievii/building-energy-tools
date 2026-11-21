@@ -55,6 +55,26 @@ class CalendarHeatmapTests(unittest.TestCase):
         apply_monthly_axes(daily)
         self.assertIsNone(daily.layout.xaxis.ticktext)
 
+    def test_daylight_envelope_calendar_ticks(self):
+        from epw_climate_analyzer.extended_visualization import daylight_envelope
+        from epw_climate_analyzer.calendar_heatmap_axes import apply_monthly_axes
+        for year,days in [(2024,366),(2026,365)]:
+            idx=pd.date_range(f"{year}-01-01",f"{year}-12-31 23:00",freq="h")
+            fig=daylight_envelope(idx,47.08)
+            expected=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+            self.assertEqual(list(fig.layout.xaxis.ticktext),expected)
+            self.assertEqual(len(fig.data[0].x),days)
+            self.assertEqual(pd.Timestamp(fig.data[0].x[-1]).date(),pd.Timestamp(f"{year}-12-31").date())
+            copy=report_figure(fig,width_pt=500,height_pt=230)
+            self.assertEqual(list(copy.layout.xaxis.ticktext),expected)
+            legacy=go.Figure(fig)
+            legacy.update_layout(meta=None,xaxis=dict(tickmode="auto",tickvals=None,ticktext=None))
+            apply_monthly_axes(legacy)
+            self.assertEqual(list(legacy.layout.xaxis.ticktext),expected)
+        multi=daylight_envelope(pd.date_range("2025-11-01","2026-12-31",freq="D"),47.08)
+        self.assertEqual(multi.layout.xaxis.ticktext[-1],"Dec 2026")
+        self.assertTrue(all(len(v)>3 for v in multi.layout.xaxis.ticktext))
+
     def test_multiyear_utci_not_truncated(self):
         idx=pd.date_range("2025-12-31","2026-12-31",freq="h")
         df=pd.DataFrame(index=idx)

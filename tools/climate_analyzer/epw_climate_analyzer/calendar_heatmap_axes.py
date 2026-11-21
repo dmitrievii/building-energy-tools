@@ -125,6 +125,19 @@ def apply_monthly_axes(fig):
         if idx.hasnans or not len(idx):continue
         if idx.tz is not None:idx=idx.tz_localize(None)
         months=idx.to_period("M")
+        # The daily sunrise/sunset envelope uses explicit month ticks while
+        # retaining every daily sample and the actual chronological date axis.
+        # Recognize legacy saved report snapshots by their original title.
+        meta=fig.layout.meta
+        daylight=(isinstance(meta,dict) and meta.get("calendar_axis")=="daily_daylight_envelope"
+                  or str(fig.layout.title.text or "").lower().startswith("ideal sunrise–sunset envelope"))
+        if daylight:
+            ticks=_date_ticks(vals)
+            if ticks is not None:
+                tickvals,ticktext,kind=ticks
+                axis.update(type=kind,tickmode="array",tickvals=tickvals,ticktext=ticktext,
+                            automargin=True,tickangle=-45 if len(set(idx.year))>1 else 0,showticklabels=True)
+            continue
         # Each distinct represented month must have one date coordinate.
         if months.has_duplicates:continue
         title=str(axis.title.text or "").lower()

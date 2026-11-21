@@ -339,8 +339,10 @@ def daylight_envelope(index,latitude):
     fig.add_scatter(x=table.index,y=12+d/2,mode="lines",name="Sunset",line_color="#0072B2",
                     fill="tonexty",fillcolor="rgba(245,158,11,.16)")
     fig.update_layout(template="plotly_white",title="Ideal sunrise–sunset envelope (local apparent solar time)",
-                      xaxis_title="Date",yaxis=dict(title="Solar time [h]",range=[0,24],tickvals=[0,6,12,18,24]))
-    return fig
+                      xaxis_title="Date",yaxis=dict(title="Solar time [h]",range=[0,24],tickvals=[0,6,12,18,24]),
+                      meta={"calendar_axis":"daily_daylight_envelope"})
+    from .calendar_heatmap_axes import apply_monthly_axes
+    return apply_monthly_axes(fig)
 
 
 def sky_distribution(df,column="total_sky_cover_tenths"):
