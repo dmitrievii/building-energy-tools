@@ -36,6 +36,36 @@ class AtlasTests(unittest.TestCase):
         self.assertEqual(len([d for d in temp if d.kind=="duration"]),4)
         self.assertGreater(len(rows),len(c.catalogue(df,{},c.REP)))
         self.assertTrue(any(d.kind=="not_registered" for d in rows))
+    def test_adaptive_combined_categories_and_daily_axis(self):
+        from epw_climate_analyzer.p3_comfort import adaptive_bands
+        from epw_climate_analyzer.p3_adaptive_chart import adaptive_figure,adaptive_interpretation,selected_daily_bands
+        for year,n in ((2026,365),(2024,366)):
+            idx=pd.date_range(f"{year}-01-01",periods=n*24,freq="h")
+            df=pd.DataFrame({c.T:18.},index=idx)
+            df.attrs["canonical_native_interval_minutes"]=60.
+            for coverage in c.LEVELS:
+                self.assertEqual(len([d for d in c.catalogue(df,{},coverage) if d.kind=="adaptive"]),1)
+            d=next(d for d in c.catalogue(df,{},c.FULL) if d.kind=="adaptive")
+            fig,note=make_figure(d,df,{})
+            self.assertEqual(set(tr.name for tr in fig.data),{"Category I","Category II","Category III","Neutral operative temperature","Outdoor running mean"})
+            self.assertEqual(str(fig.layout.xaxis.ticktext[-1]),str(n))
+            self.assertEqual(fig.layout.legend.orientation,"h")
+            self.assertIn(f"{n-7}/{n}",note)
+            expected=adaptive_bands(df)
+            neutral=next(tr for tr in fig.data if tr.name=="Neutral operative temperature")
+            np.testing.assert_allclose(np.asarray(neutral.y,float),expected.Neutral,equal_nan=True)
+            # Noncontiguous selected dates must not be joined by a ribbon.
+            subset=df.loc[(df.index.dayofyear==10)|(df.index.dayofyear==12)]
+            table=selected_daily_bands(expected,subset)
+            f=adaptive_figure(table)
+            band=next(tr for tr in f.data if tr.name=="Category I")
+            self.assertEqual(list(band.x).count(None),2)
+            self.assertIn("2/2",adaptive_interpretation(table))
+        cold=df.copy();cold[c.T]=0.
+        f,note=make_figure(d,cold,{})
+        self.assertIn("0/366",note)
+        self.assertIn("below 10 °C: 359 days",note)
+
     def test_monthly_source_no_hourly_invention(self):
         df=self.fixture().iloc[[0]].copy();df.attrs["canonical_native_resolution"]="monthly"
         rows=c.catalogue(df,{},c.FULL)

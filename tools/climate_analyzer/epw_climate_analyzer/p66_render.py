@@ -284,13 +284,13 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         f=_bars(p3.monthly_totals(df,p3.ventilation_loads(df,airflow=1000.,heat=20.,cool=26.,w_low=4.,w_high=9.)),title,"kWh")
         note+=" 1000 m³/h outdoor-air proxy; 20–26 °C, 4–9 g/kg; no recovery or plant model."
     elif k=="adaptive":
+        from .p3_adaptive_chart import selected_daily_bands,adaptive_figure,adaptive_interpretation
         history=df if reference_df is None else reference_df
         table=memo("adaptive",lambda:p3.adaptive_bands(history))
-        table=table.reindex(pd.DatetimeIndex(df.index.normalize().unique()))
-        if not table.Neutral.notna().any():raise NotApplicable("No valid seven-day preceding running means within 10–30 °C.")
-        category=a[0] if a else "II";f=go.Figure()
-        for c1 in (category+" lower",category+" upper","Neutral","Running mean"):f.add_scatter(x=table.index,y=table[c1],name=c1,mode="lines",connectgaps=False)
-        f.update_layout(template="plotly_white",yaxis_title="Temperature [°C]");note+=" EN 16798-1 screening; category "+category+", seven previous complete days, alpha=.8; not compliance."
+        table=selected_daily_bands(table,df)
+        if not table["Running mean"].notna().any():raise NotApplicable(adaptive_interpretation(table))
+        f=adaptive_figure(table);note=adaptive_interpretation(table)
+        title="Adaptive comfort · Categories I–III"
     elif k=="design_tail":
         t=p4.design_conditions(df,c,[.4,1.,2.,5.],upper=a[0])
         if t.empty:raise NotApplicable("No valid tail observations.")

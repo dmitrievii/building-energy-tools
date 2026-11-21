@@ -175,18 +175,15 @@ def ventilation_load_panel(df,render):
     else:_duration(df,q/native_interval_hours(df),"Outdoor-air load duration","kW",render,note)
 
 def adaptive_panel(df,render):
-    keys=["p3_adaptive_"+c for c in ("Running mean","Neutral","I lower","I upper","II lower","II upper","III lower","III upper")]
+    from .p3_adaptive_chart import COLUMNS,selected_daily_bands,adaptive_figure,adaptive_interpretation
+    keys=["p3_adaptive_"+c for c in COLUMNS]
     if not all(k in df for k in keys):df=p.attach_adaptive(df)
-    cat=st.selectbox("EN 16798-1 category",["I","II","III"],index=1,key="p3_adaptive_cat")
-    a=df[keys].copy();a.columns=[k.removeprefix("p3_adaptive_") for k in keys];a=a.resample("D").first()
-    if not a.Neutral.notna().any():st.info("No in-domain running means after seven complete preceding days.");return
-    fig=go.Figure()
-    fig.add_scatter(x=a.index,y=a[cat+" lower"],mode="lines",name="Lower limit",connectgaps=False)
-    fig.add_scatter(x=a.index,y=a[cat+" upper"],mode="lines",name="Upper limit",fill="tonexty",connectgaps=False)
-    fig.add_scatter(x=a.index,y=a.Neutral,mode="lines",name="Neutral operative temperature",connectgaps=False)
-    fig.add_scatter(x=a.index,y=a["Running mean"],mode="lines",name="Outdoor running mean",line=dict(dash="dot"),connectgaps=False)
-    fig.update_layout(template="plotly_white",title="Adaptive indoor operative temperature · Category "+cat,yaxis_title="Temperature [°C]")
-    render(fig,"EN 16798-1 screening for occupant-controlled naturally ventilated spaces. Seven previous complete daily means, normalized alpha=.8, 10–30 °C domain. No elevated air speed adjustment, warm-up invention or indoor compliance claim.")
+    a=df[keys].copy();a.columns=list(COLUMNS)
+    a=a.groupby(a.index.normalize()).first()
+    a=selected_daily_bands(a,df)
+    if not a["Running mean"].notna().any():st.info(adaptive_interpretation(a));return
+    render(adaptive_figure(a),adaptive_interpretation(a))
+
 
 def condensation_panel(df,render):
     surface=st.number_input("Specified surface temperature [°C]",value=12.,step=.5,key="p3_cond_surface")
