@@ -5889,7 +5889,7 @@ def render_canonical_climate_analysis(dataset) -> None:
             from epw_climate_analyzer.p3_comfort import attach_adaptive
             full_df=attach_adaptive(full_df)
         filtered_df = sidebar_filters(full_df)
-    if filtered_df.empty:
+    if filtered_df.empty and page!="Report":
         st.warning("The current filters remove all data. Adjust the date, month or hour filter.")
         return
 
@@ -6004,7 +6004,7 @@ def render_generated_climate_analysis(dataset) -> None:
         from epw_climate_analyzer.p3_comfort import attach_adaptive
         full=attach_adaptive(full)
     data = full if page == "Data Quality" else sidebar_filters(full)
-    if data.empty:
+    if data.empty and page!="Report":
         st.warning("The current filters remove all data.")
         return
     st.sidebar.markdown("### Current climate")
@@ -6170,7 +6170,7 @@ def main() -> None:
         from epw_climate_analyzer.p3_comfort import attach_adaptive
         full_df=attach_adaptive(full_df)
     filtered_df = sidebar_filters(full_df)
-    if filtered_df.empty:
+    if filtered_df.empty and page!="Report":
         st.warning("The current filters remove all data. Adjust the date, month or hour filter.")
         return
 

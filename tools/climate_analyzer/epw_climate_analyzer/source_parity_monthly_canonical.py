@@ -446,7 +446,7 @@ def render_monthly_canonical_analysis(legacy: Any, dataset: Any) -> None:
         return
 
     filtered = full if page == "Data Quality" else _monthly_sidebar_filters(legacy, full)
-    if filtered.empty:
+    if filtered.empty and page!="Report":
         st.warning("The current Data filter removes all monthly records.")
         return
 

@@ -116,6 +116,61 @@ else:
         app.radio(key="page").set_value("Temperature").run()
         self.assertEqual(len(app.session_state[r.REPORT_KEY]),2)
 
+    def test_chapter_cover_locator_and_print_font(self):
+        from types import SimpleNamespace
+        from epw_climate_analyzer import p6_report_structure as s
+        state={};df=self.fixture()
+        site=SimpleNamespace(latitude=47.08,longitude=15.45,elevation_m=370.)
+        r.set_context(state,page="Temperature",source="Graz.epw",location="Graz.Univ, AUT",df=df,site=site,source_id="test",
+                      extra={"pressure mode":"normal"})
+        c=state[r.CONTEXT_KEY];c["keyed chart settings"]='{"PRIVATE_DIAGNOSTIC_KEY": 12}'
+        fig=go.Figure(go.Scatter(x=[1,2],y=[3,4]));fig.update_layout(title="Temperature profile",font_size=27)
+        fig.update_xaxes(tickfont_size=8)
+        first=r.snapshot(fig,c,"Climate interpretation")
+        second=r.snapshot(fig,{**c,"page":"Solar and Radiation","statistics":s.capture_statistics(df,"Solar and Radiation")},"Solar note")
+        self.assertEqual([n for n,_ in s.ordered_groups([first,second])],["Temperature","Solar radiation"])
+        locator=s.locator_figure(c)
+        self.assertEqual(list(locator.data[-1].x),[15.45])
+        self.assertEqual(list(locator.data[-1].y),[47.08])
+        f=s.report_figure(fig,width_pt=500,height_pt=250)
+        self.assertAlmostEqual(f.layout.font.size,11*96/72)
+        self.assertAlmostEqual(f.layout.xaxis.tickfont.size,11*96/72)
+        self.assertEqual(fig.layout.font.size,27)
+        output=r.printable_html([first,second],"Graz","A4","Landscape").decode("utf-8")
+        self.assertIn("Climate and station overview",output)
+        self.assertIn("Natural Earth",output)
+        self.assertIn("Air temperature",output)
+        self.assertIn("01 · Temperature",output)
+        self.assertIn("02 · Solar radiation",output)
+        self.assertIn("Climate interpretation",output)
+        self.assertNotIn("PRIVATE_DIAGNOSTIC_KEY",output)
+        self.assertNotIn("native interval minutes",output)
+        self.assertLess(output.index("Climate and station overview"),output.index("01 · Temperature"))
+        pdf=r.pdf_report([first],"Graz","A4","Landscape")
+        self.assertTrue(pdf.startswith(b"%PDF"))
+
+    def test_standard_catalog_and_bulk_capture(self):
+        from epw_climate_analyzer import p6_report_structure as s
+        df=self.fixture();df["hour_of_day"]=df.index.hour;df["month_index"]=df.index.month
+        context={"page":"Report","latitude":"47.08","longitude":"15.45"}
+        keys={x[0]:x for x in s.available_catalog(df,context)}
+        self.assertIn("temperature_profile",keys)
+        self.assertIn("nv",keys)
+        self.assertNotIn("facade",keys)
+        self.assertNotIn("wind_rose",keys)
+        for key in ("temperature_profile","temperature_duration","temperature_heatmap","humidity_profile","ghi","rain","nv","degree","daylight"):
+            fig,note=s.standard_figure(keys[key],df,context,df)
+            self.assertTrue(len(fig.data)>0,key)
+            self.assertTrue(note,key)
+        monthly=df.iloc[[0]].copy();monthly.attrs["canonical_native_resolution"]="monthly"
+        self.assertNotIn("nv",{x[0] for x in s.available_catalog(monthly,context)})
+        fig=go.Figure(go.Scatter(y=[1,2]))
+        state={"_p6_displayed_charts":[(fig,{"page":"Temperature"},"note","a"),(fig,{"page":"Wind and Ventilation"},"note","b")]}
+        r.save_all_displayed(state)
+        self.assertEqual(len(state[r.REPORT_KEY]),2)
+        r.save_all_displayed(state)
+        self.assertEqual(len(state[r.REPORT_KEY]),2)
+
     def test_routes(self):
         from epw_climate_analyzer.ui_contract import NAVIGATION_PAGES
         from epw_climate_analyzer.historical_capabilities import available_historical_pages
@@ -123,11 +178,11 @@ else:
         self.assertIn("Report",NAVIGATION_PAGES)
         self.assertIn("Report",available_historical_pages(self.fixture()))
         app=(root/"app.py").read_text("utf-8")
-        self.assertGreaterEqual(app.count("render_report()"),3)
+        self.assertGreaterEqual(app.count("        render_report("),3)
         self.assertIn("select_overview(df,render_plot",app)
         for file in ("source_parity_ui.py","source_parity_monthly_canonical.py"):
             s=(root/"epw_climate_analyzer"/file).read_text("utf-8")
-            self.assertIn("render_report()",s)
+            self.assertIn("render_report(",s)
             self.assertIn("select_overview(",s)
         s=(root/"epw_climate_analyzer/chart_presentation.py").read_text("utf-8")
         self.assertIn("capture_control(st,fig",s)

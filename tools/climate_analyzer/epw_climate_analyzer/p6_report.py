@@ -155,7 +155,7 @@ def printable_html(items,title,paper,orientation):
         section+="<p>"+_safe(concise_context(context))+"</p>"
         loc=locator_figure(context)
         if loc is not None:section+=plot(loc,min(height*.32,170))+"<p>Station locator · Natural Earth, 1:110m · geographic context, not a street map.</p>"
-        if site_details(context):section+=table(site_details(context))
+        if site_details(context):section+="<p>"+_safe(" · ".join(f"{a}: {v}" for a,v,_ in site_details(context)))+"</p>"
         section+=table(context.get("statistics",{}).get("overview",[]))
         if idx==0:section+="<p><b>Report chapters:</b> "+_safe(" · ".join(name for name,_ in groups))+"</p>"
         if idx>0:section+="</section>"
@@ -167,7 +167,8 @@ def printable_html(items,title,paper,orientation):
         pages.append("</section>")
         for k,item in enumerate(entries,1):
             fig=pio.from_json(item["figure"])
-            pages.append(f'<section class="sheet"><h3>{chapter_no}.{k} · {_safe(item["title"])}</h3><p>{_safe(concise_context(item["context"]))}</p>'+plot(fig,min(height*.65,430))+"<p>"+_safe(item["interpretation"])+"</p><p>"+_safe(item.get("note",""))+"</p></section>")
+            scope_line="<p>"+_safe(concise_context(item["context"]))+"</p>" if len(contexts(entries))>1 else ""
+            pages.append(f'<section class="sheet"><h3>{chapter_no}.{k} · {_safe(item["title"])}</h3>'+scope_line+plot(fig,min(height*.65,430))+"<p>"+_safe(item["interpretation"])+"</p><p>"+_safe(item.get("note",""))+"</p></section>")
     css=f"""@page {{size:{paper} {orientation.lower()};margin:11.3mm}} *{{box-sizing:border-box}} body{{font:11pt Arial,sans-serif;color:#202830;margin:12px;width:{width}pt}} h1{{font-size:23pt;margin:0 0 9pt}} h2{{font-size:17pt;margin:0 0 8pt}} h3{{font-size:13pt;margin:0 0 6pt}} p{{white-space:pre-wrap;overflow-wrap:anywhere;margin:5pt 0;line-height:1.25}} table{{width:100%;border-collapse:collapse;font:inherit;margin:5pt 0}} td,th{{padding:4pt 5pt;text-align:left;border-bottom:1px solid #D7DDE1}} th{{color:#314652;background:#EEF2F4}} .sheet{{break-before:page;page-break-before:always}} .plot{{width:100%;break-inside:avoid}} button{{padding:8px 16px}} @media print{{button{{display:none}} body{{margin:0}}}}"""
     return ("<!doctype html><html><head><meta charset='utf-8'><title>"+_safe(title)+"</title><style>"+css+"</style><script>"+get_plotlyjs()+"</script></head><body><button onclick='window.print()'>Print / Save as PDF</button>"+"".join(pages)+"</body></html>").encode("utf-8")
 
@@ -229,9 +230,9 @@ def pdf_report(items,title,paper,orientation,*,image_renderer=None):
         for c in contexts(entries):
             body.extend([para(concise_context(c)),stats_table(c.get("statistics",{}).get("chapter",[])),Spacer(1,7)])
         for k,item in enumerate(entries,1):
-            body.extend([PageBreak(),para(f"{chapter_no}.{k} · {item['title']}","ReportFigure"),
-                         para(concise_context(item["context"])),
-                         image(pio.from_json(item["figure"]),min(doc.height*.65,430),item["title"]),Spacer(1,7)])
+            body.extend([PageBreak(),para(f"{chapter_no}.{k} · {item['title']}","ReportFigure")])
+            if len(contexts(entries))>1:body.append(para(concise_context(item["context"])))
+            body.extend([image(pio.from_json(item["figure"]),min(doc.height*.65,430),item["title"]),Spacer(1,7)])
             if item["interpretation"]:body.append(para(item["interpretation"]))
             if item.get("note"):body.append(para(item["note"]))
     def footer(canvas,doc):
@@ -250,12 +251,17 @@ def render_report(df=None,reference_df=None):
     if available:
         with st.expander("Add standard diagrams / presets",expanded=True):
             keys={entry[0]:entry for entry in available}
-            options=["Custom selection",*PRESETS]
+            user_presets=st.session_state.get("_p6_custom_presets",{})
+            presets={**PRESETS,**user_presets}
+            options=["Custom selection",*presets]
+            if st.session_state.get("p6_catalog_preset") not in options:
+                prior=st.session_state.get("_p6_last_preset","Custom selection")
+                st.session_state["p6_catalog_preset"]=prior if prior in options else "Custom selection"
             preset=st.selectbox("Report preset",options,key="p6_catalog_preset")
             chosen_key="p6_catalog_selection"
-            current=st.session_state.get(chosen_key,[])
+            current=st.session_state.get(chosen_key,st.session_state.get("_p6_catalog_saved",[]))
             if st.session_state.get("_p6_last_preset")!=preset:
-                current=[k for k in PRESETS.get(preset,()) if k in keys]
+                current=[k for k in presets.get(preset,()) if k in keys]
                 st.session_state["_p6_last_preset"]=preset
             st.session_state[chosen_key]=[k for k in current if k in keys]
             a,b=st.columns(2)
@@ -265,7 +271,15 @@ def render_report(df=None,reference_df=None):
                 st.session_state[chosen_key]=[]
             chosen=st.multiselect("Available standard diagrams",list(keys),
                         format_func=lambda k:f"{CHAPTERS.get(keys[k][1],keys[k][1])} — {keys[k][2]}",key=chosen_key)
-            st.caption("One standard configuration per diagram. Custom variants can be added from the analysis pages. Unavailable quantities are omitted; selected-period totals are not annualized.")
+            st.session_state["_p6_catalog_saved"]=chosen
+            custom_name=st.text_input("Save custom preset as",key="p6_custom_preset_name",max_chars=60)
+            if st.button("Save preset",disabled=not chosen or not custom_name.strip(),key="p6_save_custom_preset"):
+                name=custom_name.strip()
+                if name in PRESETS or name=="Custom selection":st.warning("Choose a different preset name.")
+                else:
+                    st.session_state["_p6_custom_presets"]={**user_presets,name:tuple(chosen)}
+                    st.rerun()
+            st.caption("One standard configuration per diagram. Custom variants can be added from the analysis pages. Unavailable quantities are omitted; selected-period totals are not annualized. Custom presets are session-local.")
             if st.button("Add selected standard diagrams",disabled=not chosen,key="p6_add_standard"):
                 entries=st.session_state.get(REPORT_KEY,[]);before=len(entries);failures=[]
                 with st.spinner("Preparing selected diagrams…"):
@@ -309,14 +323,19 @@ def render_report(df=None,reference_df=None):
     ids=[item["id"] for item in items];by_id={item["id"]:item for item in items}
     selected_key="p6_report_selected"
     previous_ids=st.session_state.get("_p6_previous_ids",[])
-    current=st.session_state.get(selected_key,ids)
+    current=st.session_state.get(selected_key,st.session_state.get("_p6_saved_selection",ids))
     st.session_state[selected_key]=[id for id in ids if id in current or id not in previous_ids]
     st.session_state["_p6_previous_ids"]=ids
     a,b=st.columns(2)
     if a.button("Select all saved diagrams",key="p6_select_all_saved"):st.session_state[selected_key]=ids
     if b.button("Deselect all",key="p6_deselect_saved"):st.session_state[selected_key]=[]
     selected=st.multiselect("Diagrams included in report",ids,format_func=lambda id:f"{chapter_name(by_id[id])} — {by_id[id]['title']}",key=selected_key)
+    st.session_state["_p6_saved_selection"]=selected
     st.caption("Report chapters follow their first occurrence; diagrams within a chapter follow the saved order.")
+    preview_options=["No preview",*ids]
+    if st.session_state.get("p6_preview_choice") not in preview_options:
+        st.session_state["p6_preview_choice"]="No preview"
+    preview=st.selectbox("Preview diagram",preview_options,format_func=lambda id:id if id=="No preview" else by_id[id]["title"],key="p6_preview_choice")
     for i,item in enumerate(items):
         sid=item["id"]
         with st.expander(f"{i+1:02d} · {chapter_name(item)} — {item['title']}",expanded=False):
@@ -324,8 +343,9 @@ def render_report(df=None,reference_df=None):
             st.text_area("Additional report note",value=item.get("note",""),key="p6_note_"+sid,max_chars=3000)
             item["note"]=st.session_state.get("p6_note_"+sid,"")
             if item["interpretation"]:st.write(item["interpretation"])
-            original=getattr(st,"_climate_analyzer_original_plotly_chart",st.plotly_chart)
-            original(pio.from_json(item["figure"]),use_container_width=True,config={"displaylogo":False},key="p6_preview_"+sid)
+            if preview==sid:
+                original=getattr(st,"_climate_analyzer_original_plotly_chart",st.plotly_chart)
+                original(pio.from_json(item["figure"]),use_container_width=True,config={"displaylogo":False},key="p6_preview_"+sid)
             a,b,c=st.columns(3)
             if a.button("Move up",disabled=i==0,key="p6_up_"+sid):
                 items[i-1],items[i]=items[i],items[i-1];st.rerun()
@@ -336,6 +356,8 @@ def render_report(df=None,reference_df=None):
     if st.button("Clear report",key="p6_clear_report"):
         st.session_state[REPORT_KEY]=[]
         st.session_state.pop(CAPTURE_MESSAGE_KEY,None)
+        st.session_state.pop("_p6_previous_ids",None)
+        st.session_state.pop("_p6_saved_selection",None)
         st.session_state.pop("_p6_pdf",None)
         st.rerun()
     included=[item for item in items if item["id"] in selected]

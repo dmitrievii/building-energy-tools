@@ -84,7 +84,8 @@ def contexts(items):
 
 def concise_context(c):
     a=str(c.get("first timestamp",""));b=str(c.get("last timestamp",""))
-    period=f"{a[:10]} – {b[:10]}" if a and b else ""
+    period=(f"{a[:10]} – {b[:10]}" if a[11:16]=="00:00" and b[11:16] in ("23:00","23:50","23:59","00:00")
+            else f"{a[:16]} – {b[:16]}") if a and b else ""
     try:spec=json.loads(c.get("filter","{}"))
     except (TypeError,ValueError):spec={}
     restrictions=[]

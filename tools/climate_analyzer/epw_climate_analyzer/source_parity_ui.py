@@ -978,7 +978,7 @@ def _render_canonical_analysis(legacy: Any, dataset: CanonicalClimateDataset) ->
         st.session_state["_active_filtered_export_df"] = filtered_df
         closure_report = filtered_df.attrs.get("psychrometric_physical_closure")
 
-    if filtered_df.empty:
+    if filtered_df.empty and page!="Report":
         st.warning("The current filters remove all data. Adjust the date, month or hour filter.")
         return
 

@@ -113,9 +113,11 @@ class GeoSphereMonthlyCanonicalUiTests(unittest.TestCase):
             "Wind and Ventilation",
             "Precipitation and Snow",
             "Time Series and Overlay",
+            "Report",
             "Data Quality",
         }
         self.assertTrue(set(pages).issubset(allowed))
+        self.assertIn("Report",pages)
         self.assertIn("Temperature", pages)
         self.assertIn("Humidity and Psychrometrics", pages)
         self.assertIn("Sky and Daylight", pages)
