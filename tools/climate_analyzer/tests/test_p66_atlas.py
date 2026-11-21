@@ -150,6 +150,36 @@ class AtlasTests(unittest.TestCase):
         self.assertLess(curves.layout.yaxis.range[0],-55.)
         self.assertEqual(len(curves.layout.shapes),10)
 
+    def test_site_shading_calendar_profiles_and_occurrence(self):
+        from epw_climate_analyzer.shading_calendar import (AREA,OCCURRENCE,VALUE,EVENT,FRONT,shading_frame,shading_matrix,shading_calendar,monthly_shading_profiles,shading_statistics)
+        from epw_climate_analyzer.solar_shading import shaded_fraction
+        idx=pd.date_range("2026-07-01 12:00",periods=4,freq="h")
+        df=pd.DataFrame({"solar_azimuth_deg":[180.,180.,0.,np.nan],
+                         "solar_apparent_zenith_deg":[80.,20.,45.,45.]},index=idx)
+        geometry=dict(facade=180.,width=2.,height=1.5,overhang=.6,left_fin=0.,right_fin=0.)
+        frame=shading_frame(df,geometry=geometry,metric=AREA)
+        expected=100*shaded_fraction([180.,180.],[10.,70.],**geometry)
+        np.testing.assert_allclose(frame[VALUE].iloc[:2],expected)
+        self.assertTrue(frame[VALUE].iloc[2:].isna().all())
+        self.assertEqual(frame[FRONT].iloc[2],0.)
+        self.assertTrue(pd.isna(frame[FRONT].iloc[3]))
+        np.testing.assert_allclose(frame[EVENT].iloc[:2],100*(expected>=80))
+        for metric in (AREA,OCCURRENCE):
+            for period in ("day","week","month"):
+                values,front=shading_matrix(frame,metric,period,"Hour of day","Mean")
+                fig=shading_calendar(frame,metric,period,"Hour of day","Mean")
+                np.testing.assert_allclose(np.asarray(fig.data[0].z,float),values.values,equal_nan=True)
+                self.assertEqual((fig.layout.coloraxis.cmin,fig.layout.coloraxis.cmax),(0.,100.))
+                self.assertEqual(list(fig.layout.yaxis.ticktext),["0","6","12","18","24"])
+                self.assertEqual(np.isfinite(np.asarray(fig.data[1].z,float)).sum(),1)
+            fig,table=monthly_shading_profiles(frame,metric,[7])
+            self.assertTrue(table.iloc[14:].isna().all().all())
+            self.assertEqual(list(fig.layout.xaxis.tickvals),[0,6,12,18,24])
+        self.assertEqual(shading_statistics(frame,AREA,"day","Hour of day"),("Mean",))
+        rows=c.catalogue(df,{},c.FULL)
+        self.assertFalse(any(d.kind=="shading_mask" and d.args[0]!="Geometry" for d in rows))
+        self.assertTrue(any(d.kind=="shading_calendar" and d.args[0]==OCCURRENCE for d in rows))
+
     def test_monthly_source_no_hourly_invention(self):
         df=self.fixture().iloc[[0]].copy();df.attrs["canonical_native_resolution"]="monthly"
         rows=c.catalogue(df,{},c.FULL)

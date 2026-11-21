@@ -383,9 +383,11 @@ def temporal_heatmap_chart(
     title: str,
     unit: str,
     temperature_thresholds: tuple[float, float] | None = None,
+    *,
+    matrix_override: pd.DataFrame | None = None,
 ) -> go.Figure:
     """Create a period × comparison-dimension heatmap with an explicit cell statistic."""
-    matrix = temporal_heatmap_matrix(
+    matrix = matrix_override if matrix_override is not None else temporal_heatmap_matrix(
         df,
         column,
         row_group=row_group,

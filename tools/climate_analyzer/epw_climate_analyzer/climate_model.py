@@ -198,6 +198,8 @@ def canonical_variable(column: str) -> CanonicalVariable | None:
 
 
 def aggregation_semantics_for(column: str) -> AggregationSemantics:
+    # Internal shading ledger quantities are extensive interval energies.
+    if column in ("shading_intercepted_kwh_m2","shading_available_kwh_m2"):return "sum"
     variable = canonical_variable(column)
     return variable.aggregation if variable is not None else "mean"
 

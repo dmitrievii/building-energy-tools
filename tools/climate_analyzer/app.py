@@ -4012,38 +4012,47 @@ def render_shading_analysis(df,ground_albedo,*,geometry):
 
 
 def render_temporal_shading(df,*,geometry,has_energy):
-    from epw_climate_analyzer.shading_temporal import (
-        AREA, ENERGY, REDUCTION, DEVICES, TOTAL_DEVICE,
-        temporal_shading_tables, shading_monthly_rose, shading_month_hour_heatmap,
-    )
+    from epw_climate_analyzer.shading_temporal import AREA,ENERGY,REDUCTION,DEVICES,TOTAL_DEVICE,temporal_shading_tables,shading_monthly_rose
+    from epw_climate_analyzer.shading_calendar import (OCCURRENCE,DEFAULT_THRESHOLD,shading_frame,
+        shading_statistics,shading_calendar,monthly_shading_profiles,shading_note,shading_matrix,FIELD)
+    from epw_climate_analyzer.aggregations import heatmap_has_single_observation_cells
     data=_solar_temperature_selection(df,"shading_temporal_condition")
-    if data.empty:
-        st.info("No climate intervals match the selected thermal classification.")
-        return
-    years=available_years(data)
-    if len(years)>1:
-        year=st.selectbox("Analysis year",years,index=len(years)-1,key="shading_temporal_year")
-        data=filter_year(data,year)
-        st.caption("One source year is displayed at a time; no cross-year pooling or annualization.")
-    metrics=([ENERGY,REDUCTION] if has_energy else [])+[AREA]
-    if st.session_state.get("shading_temporal_metric") not in metrics:
-        st.session_state["shading_temporal_metric"]=metrics[0]
+    if data.empty:st.info("No climate intervals match the selected thermal classification.");return
+    metrics=[AREA,OCCURRENCE]+([ENERGY,REDUCTION] if has_energy else [])
+    if st.session_state.get("shading_temporal_metric") not in metrics:st.session_state["shading_temporal_metric"]=AREA
     metric=st.selectbox("Quantity",metrics,key="shading_temporal_metric")
-    chart=st.selectbox("Chart type",["Monthly rose","Month–hour heat map"],key="shading_temporal_chart")
-    device=st.selectbox("Shading device",[TOTAL_DEVICE,*DEVICES],key="shading_temporal_device") if chart=="Month–hour heat map" else TOTAL_DEVICE
-    monthly,cells=temporal_shading_tables(data,geometry=geometry,metric=metric)
-    if not monthly[TOTAL_DEVICE].notna().any():
-        st.info("No qualifying intervals for this quantity remain.")
-        return
-    fig=shading_monthly_rose(monthly,metric) if chart=="Monthly rose" else shading_month_hour_heatmap(cells,metric,device)
-    explanations={
-        ENERGY:"Sum of intercepted direct façade irradiation in each bin; hourly columns sum only the selected month and clock-hour records.",
-        REDUCTION:"Percentage of available unshaded direct façade irradiation intercepted, calculated as a ratio of energy sums. No direct beam means an undefined percentage.",
-        AREA:"Mean geometrically shaded window area during front-facing daylight intervals, independent of irradiance and clouds. No front-facing sun means an undefined percentage.",
-    }
-    missing_note=" Gray bins are missing or undefined; white means zero." if chart=="Month–hour heat map" else " Missing or undefined months have no bar."
-    render_plot(fig,explanations[metric]+" Contributions are assigned to the first device hit by each ray: overhang, left fin or right fin, without double counting."+missing_note+" Source analysis-clock timestamp labels are retained. Diffuse and ground-reflected irradiation are unchanged.")
-    st.download_button("Shading month–hour data · CSV",cells.to_csv().encode("utf-8"),"shading_month_hour.csv","text/csv",key="shading_temporal_csv")
+    charts=["Heat map"]+(["Monthly hourly profiles"] if metric in (AREA,OCCURRENCE) else [])+(["Monthly rose"] if metric!=OCCURRENCE else [])
+    if st.session_state.get("shading_temporal_chart") not in charts:st.session_state["shading_temporal_chart"]=charts[0]
+    chart=st.selectbox("Chart type",charts,key="shading_temporal_chart")
+    threshold=st.number_input("Minimum shaded window area [%]",1.,100.,DEFAULT_THRESHOLD,1.,key="shading_occurrence_threshold") if metric==OCCURRENCE else DEFAULT_THRESHOLD
+    device=st.selectbox("Shading device",[TOTAL_DEVICE,*DEVICES],key="shading_temporal_device") if chart!="Monthly rose" else TOTAL_DEVICE
+    note=shading_note(metric,threshold)
+    try:
+        if chart=="Monthly rose":
+            years=available_years(data)
+            if len(years)>1:data=filter_year(data,st.selectbox("Analysis year",years,index=len(years)-1,key="shading_temporal_year"))
+            monthly,cells=temporal_shading_tables(data,geometry=geometry,metric=metric)
+            if not monthly[TOTAL_DEVICE].notna().any():st.info("No qualifying intervals.");return
+            fig=shading_monthly_rose(monthly,metric);table=monthly
+        else:
+            frame=shading_frame(data,geometry=geometry,metric=metric,device=device,threshold=threshold)
+            if chart=="Monthly hourly profiles":
+                months=sorted(set(data.index.month))
+                selected=st.multiselect("Months",months,default=[m for m in (1,4,7) if m in months] or months[:3],format_func=lambda m:("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec")[m-1],key="shading_profile_months")
+                if not selected:st.info("Select months.");return
+                fig,table=monthly_shading_profiles(frame,metric,selected)
+                note+=" Equivalent month and clock-hour intervals pooled across selected years."
+            else:
+                period=st.radio("Heat-map aggregation",["Day","Week","Month"],horizontal=True,key="shading_calendar_period").lower()
+                dim=st.radio("Compare across",["Hour of day"] if time_basis(data)==CHRONOLOGICAL else ["Hour of day","Year"],horizontal=True,key="shading_calendar_dimension")
+                stats=shading_statistics(frame,metric,period,dim)
+                stat=stats[0] if len(stats)==1 else st.selectbox("Statistic",stats,key="shading_calendar_stat")
+                if heatmap_has_single_observation_cells(frame,period,dim):st.caption("One source observation per occupied cell.")
+                fig=shading_calendar(frame,metric,period,dim,stat,title=metric+" · "+device,threshold=threshold)
+                table,_=shading_matrix(frame,metric,period,dim,stat)
+        render_plot(fig,note)
+        st.download_button("Shading data · CSV",table.to_csv().encode("utf-8"),"shading_data.csv","text/csv",key="shading_temporal_csv")
+    except ValueError as exc:st.info(str(exc))
 
 
 def render_shading_design(df: pd.DataFrame) -> None:
@@ -4057,8 +4066,6 @@ def render_shading_design(df: pd.DataFrame) -> None:
         options.append("Irradiation reduction")
     if all(c in df and df[c].notna().any() for c in ("solar_azimuth_deg","solar_apparent_zenith_deg")):
         options.append("Seasonal and hourly shading")
-    if solar_reference(df) is not None:
-        options.append("Direct-sun shading mask")
     if not options:
         st.info("Shading analysis requires site solar geometry or complete paired plane-of-array radiation inputs.")
         return
@@ -4073,8 +4080,6 @@ def render_shading_design(df: pd.DataFrame) -> None:
         _solar_ground_albedo_selection(df)
     elif view=="Seasonal and hourly shading":
         render_temporal_shading(df,geometry=geometry,has_energy=has_energy)
-    else:
-        render_sun_path(df,shading_geometry=geometry)
 
 
 def render_solar(df: pd.DataFrame) -> None:

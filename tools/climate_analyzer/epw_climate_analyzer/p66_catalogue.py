@@ -193,15 +193,32 @@ def catalogue(df,context,coverage=FULL):
         add(SKY,LABELS[c]+" · monthly sky conditions","sky_conditions",c,"h",ok=hourly and has(c))
     for period in (("Monthly",) if coverage==REP else TOTAL_PERIODS):
         add(SKY,f"Illuminance ≥ 300 lux · {period}","illumination",LUX,"h",(period,),ok=hourly and has(LUX))
-    for style in ("Geometry","2D mask","Technical mask"):
-        add(SHADE,"Window shading · "+style,"shading_mask",args=(style,),ok=site_ok)
     from .shading_temporal import ENERGY,REDUCTION,AREA
     from .solar_shading import DEVICES,TOTAL_DEVICE
-    years=sorted(set(df.index.year))
-    for metric,style in itertools.product((ENERGY,REDUCTION,AREA),("Monthly rose","Month–hour heat map")):
-        devices=(TOTAL_DEVICE,*DEVICES) if style=="Month–hour heat map" and coverage==FULL else (TOTAL_DEVICE,)
-        for year,device in itertools.product(years[-1:] if coverage==REP else years,devices):
-            add(SHADE,f"{metric} · {style} · {year} · {device}","shading_temporal",args=(metric,style,year,device),ok=site_ok if metric==AREA else solar_ok)
+    from .shading_calendar import OCCURRENCE,shading_statistics,DEFAULT_THRESHOLD
+    geometry_ok=hourly and has(Z,AZ)
+    add(SHADE,"Window shading · Geometry","shading_mask",args=("Geometry",),ok=geometry_ok)
+    for metric in (AREA,OCCURRENCE,ENERGY,REDUCTION):
+        ok=geometry_ok if metric in (AREA,OCCURRENCE) else solar_ok
+        for period in (("day",) if coverage==REP else ("day","week","month")):
+            dims=("Hour of day","Year") if coverage==FULL and len(set(df.index.year))>1 else ("Hour of day",)
+            for dim in dims:
+                stats=shading_statistics(df,metric,period,dim)
+                if coverage!=FULL:stats=stats[:1]
+                for stat in stats:
+                    # All-device calendar is primary; individual-device means/totals
+                    # retained in full Atlas without multiplying every statistic.
+                    devices=(TOTAL_DEVICE,*DEVICES) if coverage==FULL and period=="month" and dim=="Hour of day" and stat==stats[0] and metric!=OCCURRENCE else (TOTAL_DEVICE,)
+                    for device in devices:
+                        label=metric+(f" ≥ {DEFAULT_THRESHOLD:g}% aperture" if metric==OCCURRENCE else "")
+                        cell="Observed value" if heatmap_has_single_observation_cells(df,period,dim) and metric!=REDUCTION else stat
+                        add(SHADE,f"{label} · {period} × {dim} · {cell} · {device}","shading_calendar",args=(metric,period,dim,stat,device),ok=ok)
+        if metric in (AREA,OCCURRENCE):
+            add(SHADE,metric+" · monthly hourly profiles","shading_profiles",args=(metric,),ok=ok)
+        if metric!=OCCURRENCE:
+            years=sorted(set(df.index.year))
+            for year in (years[-1:] if coverage==REP else years):
+                add(SHADE,f"{metric} · Monthly rose · {year}","shading_temporal",args=(metric,"Monthly rose",year,TOTAL_DEVICE),ok=ok)
     add(SHADE,"Shaded vs unshaded reference façade irradiation","shading_irradiation",ok=solar_ok)
     for name,c,ok in [("nv",W,hourly and has(T,W)),("night",T,hourly and has(T)),("shade",G,hourly and has(T,G))]:
         for period in (("Monthly",) if coverage==REP else TOTAL_PERIODS):

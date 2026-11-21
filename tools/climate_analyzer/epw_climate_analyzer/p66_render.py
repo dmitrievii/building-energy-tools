@@ -221,15 +221,19 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         f=_bars(_totals(df,v.rename("≥300 lux"),a[0]),title,u)
         note+=" Outdoor horizontal illuminance screening; not indoor daylight autonomy."
     elif k=="shading_mask":
-        from .sun_path_views import classic_sun_path,technical_sun_path
         from .shading_sketch import window_shading_sketch
-        from .solar_shading import overlay_shading_mask
-        if a[0]=="Geometry":f=window_shading_sketch(**cat.GEOMETRY)
+        f=window_shading_sketch(**cat.GEOMETRY)
+        note+=" "+cat.GEO_NOTE
+    elif k in ("shading_calendar","shading_profiles"):
+        from .shading_calendar import shading_frame,shading_calendar,monthly_shading_profiles,shading_note
+        from .solar_shading import TOTAL_DEVICE
+        metric=a[0];device=a[4] if k=="shading_calendar" else TOTAL_DEVICE
+        frame=memo(("shading_frame",metric,device),lambda:shading_frame(df,geometry=cat.GEOMETRY,metric=metric,device=device))
+        if k=="shading_calendar":
+            f=shading_calendar(frame,metric,a[1],a[2],a[3],title=title)
         else:
-            technical=a[0]=="Technical mask"
-            f=technical_sun_path(df) if technical else classic_sun_path(df)
-            overlay_shading_mask(f,technical=technical,**cat.GEOMETRY)
-        note+=" "+cat.GEO_NOTE+" Direct solar geometry, not diffuse or reflected obstruction."
+            f,_=monthly_shading_profiles(frame,metric,sorted(set(df.index.month)))
+        note+=" "+cat.GEO_NOTE+" "+shading_note(metric)
     elif k=="shading_temporal":
         from .shading_temporal import temporal_shading_tables,shading_monthly_rose,shading_month_hour_heatmap
         metric,style,year,device=a
