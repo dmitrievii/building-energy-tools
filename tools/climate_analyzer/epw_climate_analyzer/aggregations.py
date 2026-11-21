@@ -535,7 +535,11 @@ def threshold_count_by_period(
 
 def monthly_box_data(df: pd.DataFrame, column: str) -> pd.DataFrame:
     """Return rows required by Plotly monthly box and violin plots."""
-    data = df[[column, "month_name", "month_index"]].dropna().copy()
+    data = df[[column]].copy()
+    index = pd.DatetimeIndex(data.index)
+    data["month_name"] = index.strftime("%b")
+    data["month_index"] = index.month
+    data = data.dropna()
     if time_basis(df) == CHRONOLOGICAL and is_multiyear(df):
         data["period_name"] = pd.DatetimeIndex(data.index).strftime("%b %Y")
         data["period_order"] = pd.DatetimeIndex(data.index).to_period("M").astype(str)

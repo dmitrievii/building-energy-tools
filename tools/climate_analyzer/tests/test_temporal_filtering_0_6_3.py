@@ -104,7 +104,8 @@ class TemporalFiltering063Tests(unittest.TestCase):
         idx = pd.to_datetime(["2023-01-01 00:00", "2024-01-01 00:00"])
         df = with_time_basis(frame(idx, [1.0, 2.0]), CHRONOLOGICAL)
         matrix = calendar_matrix(df, "dry_bulb_temperature_c", row_group="month")
-        self.assertEqual(list(matrix.index), ["2023-01", "2024-01"])
+        self.assertEqual(list(matrix.index), list(pd.period_range("2023-01", "2024-01", freq="M").astype(str)))
+        self.assertTrue(matrix.loc["2023-02":"2023-12"].isna().all().all())
         self.assertAlmostEqual(float(matrix.loc["2023-01", 0]), 1.0)
         self.assertAlmostEqual(float(matrix.loc["2024-01", 0]), 2.0)
 

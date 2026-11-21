@@ -7,6 +7,9 @@ on:
       - 'tools/climate_analyzer/epw_climate_analyzer/p6_*.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/p66_*.py'
       - 'tools/climate_analyzer/tests/test_p66_atlas.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/aggregations.py'
+      - 'tools/climate_analyzer/tests/test_temporal_filtering_0_6_3.py'
+      - 'tools/climate_analyzer/tests/test_calendar_heatmap_axes.py'
       - 'tools/climate_analyzer/tests/test_p6_dashboard_report.py'
       - 'tools/climate_analyzer/requirements.txt'
       - '.github/workflows/climate-analyzer-p6.yml'
@@ -29,3 +32,4 @@ jobs:
       - run: python -m unittest discover -s tests -p test_p6_dashboard_report.py -v
       - run: python -m unittest discover -s tests -p test_p66_atlas.py -v
       - run: python -m unittest discover -s tests -p test_calendar_heatmap_axes.py -v
+      - run: python -m unittest discover -s tests -p test_temporal_filtering_0_6_3.py -v
