@@ -149,7 +149,8 @@ def report_figure(fig,*,width_pt,height_pt,font_pt=11):
                     font=dict(family="Arial",size=font_pt*96/72),paper_bgcolor="white",title_text=None)
     f.update_xaxes(automargin=True,tickfont_size=font_pt*96/72,title_font_size=font_pt*96/72)
     f.update_yaxes(automargin=True,tickfont_size=font_pt*96/72,title_font_size=font_pt*96/72)
-    return f
+    from .calendar_heatmap_axes import apply_calendar_heatmap_axes
+    return apply_calendar_heatmap_axes(f)
 
 CATALOG=[
 ("temperature_profile","Temperature","Monthly temperature profile",T,"°C","profile"),

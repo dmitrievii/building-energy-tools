@@ -304,7 +304,8 @@ def heatmap_small_multiples(climates: list[ClimateDataset], column: str, row_gro
     fig.update_layout(template=PLOT_TEMPLATE, title=title, height=max(360, 260 * rows), coloraxis=dict(colorscale=colorscale, cmin=zmin, cmax=zmax, colorbar=dict(title=color_label)), margin=dict(l=40, r=20, t=70, b=45))
     fig.update_xaxes(title_text=row_group.capitalize(), row=rows, col=1)
     fig.update_yaxes(title_text="Hour of day", range=[23, 0], autorangeoptions=dict(minallowed=0, maxallowed=23))
-    return fig
+    from .calendar_heatmap_axes import apply_calendar_heatmap_axes
+    return apply_calendar_heatmap_axes(fig,period=row_group)
 
 def difference_heatmap_chart(reference: ClimateDataset, target: ClimateDataset, column: str, row_group: str, title: str, color_label: str) -> go.Figure:
     """Create a heatmap of target minus reference for a selected variable."""
@@ -314,7 +315,8 @@ def difference_heatmap_chart(reference: ClimateDataset, target: ClimateDataset, 
     fig = px.imshow(diff, aspect="auto", color_continuous_scale="RdBu_r", labels=dict(x=row_group.capitalize(), y="Hour of day", color=color_label), title=title)
     fig.update_yaxes(range=[23, 0], autorangeoptions=dict(minallowed=0, maxallowed=23))
     fig.update_layout(template=PLOT_TEMPLATE, margin=dict(l=40, r=20, t=70, b=45))
-    return fig
+    from .calendar_heatmap_axes import apply_calendar_heatmap_axes
+    return apply_calendar_heatmap_axes(fig,period=row_group)
 
 def hdd_cdd_grouped_chart(metrics: pd.DataFrame) -> go.Figure:
     """Create grouped bars for annual heating and cooling degree-hours."""
@@ -849,7 +851,8 @@ def passive_strategy_calendar_small_multiples(climates: list[ClimateDataset]) ->
     fig.update_layout(template=PLOT_TEMPLATE, title="Dominant passive/HVAC strategy calendar", height=max(360, 260 * rows), coloraxis=dict(colorscale="RdBu_r", cmin=-2, cmax=2, colorbar=dict(title="Class")), margin=dict(l=40, r=20, t=70, b=45))
     fig.update_xaxes(title_text="Day of year", row=rows, col=1)
     fig.update_yaxes(title_text="Hour of day", range=[23, 0], autorangeoptions=dict(minallowed=0, maxallowed=23))
-    return fig
+    from .calendar_heatmap_axes import apply_calendar_heatmap_axes
+    return apply_calendar_heatmap_axes(fig,period="day")
 
 
 def data_quality_matrix(climates: list[ClimateDataset]) -> pd.DataFrame:

@@ -423,6 +423,22 @@ def temporal_heatmap_matrix(
         reduced = _heatmap_reduce(grouped, statistic)
 
     matrix = reduced.unstack("_x").sort_index()
+    # Preserve selected calendar slots even when an entire day/month/week
+    # contains no finite observations. Missing cells remain NaN, not zero.
+    if compare_across == HEATMAP_COMPARE_HOUR and basis == CHRONOLOGICAL and len(index):
+        start,end=index.min(),index.max()
+        if group=="day":
+            expected=pd.date_range(start.normalize(),end.normalize(),freq="D")
+            columns=expected.strftime("%Y-%m-%d")
+        elif group=="month":
+            expected=pd.period_range(start.strftime("%Y-%m"),end.strftime("%Y-%m"),freq="M")
+            columns=expected.astype(str)
+        else:
+            first=start.normalize()-pd.DateOffset(days=start.weekday())
+            last=end.normalize()-pd.DateOffset(days=end.weekday())
+            expected=pd.date_range(first,last,freq="7D")
+            columns=_chronological_heatmap_period_key(expected,"week")
+        matrix=matrix.reindex(columns=columns)
     if group == "month" and all(isinstance(value, (int, np.integer)) for value in matrix.columns):
         matrix = matrix.reindex(columns=list(range(1, 13)))
     elif (

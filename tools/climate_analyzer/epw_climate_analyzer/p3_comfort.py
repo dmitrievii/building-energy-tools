@@ -198,5 +198,6 @@ def annual_hour_grid(df,values):
     idx=pd.DatetimeIndex(df.index)
     raw=pd.DataFrame({"day":idx.normalize(),"hour":idx.hour,"value":np.asarray(values,dtype=float)})
     grid=raw.groupby(["hour","day"]).value.mean().unstack()
-    days=pd.date_range(pd.Timestamp(year=idx[0].year,month=1,day=1,tz=idx.tz),pd.Timestamp(year=idx[0].year,month=12,day=31,tz=idx.tz),freq="D")
+    # A multiyear selection must not discard every year except the first.
+    days=pd.date_range(pd.Timestamp(year=idx.min().year,month=1,day=1,tz=idx.tz),pd.Timestamp(year=idx.max().year,month=12,day=31,tz=idx.tz),freq="D")
     return grid.reindex(index=range(24),columns=days)

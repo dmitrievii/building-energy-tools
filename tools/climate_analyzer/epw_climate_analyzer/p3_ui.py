@@ -97,7 +97,8 @@ def outdoor_comfort(df,render):
             grid=p.annual_hour_grid(df,values[scenario])
             fig=go.Figure(go.Heatmap(x=grid.columns,y=grid.index,z=grid,colorscale="RdBu_r",zmid=20,colorbar=dict(title="UTCI [°C]"),hoverongaps=False))
             fig.update_layout(template="plotly_white",title="UTCI · "+scenario,xaxis_title="Date",yaxis_title="Analysis clock hour")
-            render(fig,note+" Multiple observations within an hour cell are averaged.")
+            from .calendar_heatmap_axes import apply_calendar_heatmap_axes
+            render(apply_calendar_heatmap_axes(fig),note+" Multiple observations within an hour cell are averaged.")
         else:
             tab=p.utci_class_hours(df,values[scenario]);fig=go.Figure()
             for c,color in zip(p.CLASSES,p.COLORS):fig.add_bar(x=tab.index,y=tab[c],name=c,marker_color=color)
