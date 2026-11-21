@@ -120,12 +120,15 @@ def directional_interpretation(table,radial,colour):
     valid=table.loc[table.valid_hours>0].dropna(subset=["radius"])
     if valid.empty: return "No coincident non-calm wind observations support the selected quantities."
     row=valid.loc[valid.radius.idxmax()]
-    return (f"The largest {radial.lower()} value occurs for wind from {row.direction} "
-            f"({row.radius:.2f} {RADIAL_UNITS[radial]}). The colour represents the directional mean "
-            f"of {colour.lower()}, calculated from {valid.valid_hours.sum():.1f} valid non-calm observation hours. "
-            "Missing coincident inputs and calm intervals are excluded from these directional statistics. "
-            "Rain exposure is an uncalibrated sum of interval precipitation depth times mean wind speed, not façade catch ratio or rain load. "
-            "Dynamic pressure is conditional mean ½ρv², not a design wind load or building pressure difference.")
+    text=(f"The largest {radial.lower()} value occurs for wind from {row.direction} "
+          f"({row.radius:.2f} {RADIAL_UNITS[radial]}). The colour represents the directional mean "
+          f"of {colour.lower()}, calculated from {valid.valid_hours.sum():.1f} valid non-calm observation hours. "
+          "Missing coincident inputs and calm intervals are excluded from these directional statistics.")
+    if radial=="Wind-driven rain exposure":
+        text+=" Rain exposure is an uncalibrated sum of interval precipitation depth times mean wind speed, not façade catch ratio or rain load."
+    if radial=="Dynamic pressure potential":
+        text+=" Dynamic pressure is conditional mean ½ρv², not a design wind load or building pressure difference."
+    return text
 
 def nv_valid_mask(df,mask,wind_filter=False):
     required=["dry_bulb_temperature_c","humidity_ratio_g_kg"]

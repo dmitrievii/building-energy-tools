@@ -1,0 +1,20 @@
+# P2 Directional Architectural Climate Analysis — implementation candidate
+
+## Models and navigation
+- W-01–W-07: existing Wind rose with Radial quantity and Colour mapped quantity. Default Hours/Wind speed is unchanged; every other combination uses a sector conditional mean colour and 16 directional bins. Native interval hours; paired non-calm directions only. Absolute humidity = humidity ratio / dry-air-specific volume. Rain index = sum(depth × coincident mean wind speed), no aerodynamic calibration. Dynamic pressure = conditional mean 0.5 rho v²; not a code wind load. NV suitability uses the existing condition with valid coincident inputs; occupied-hour policy, when enabled in the NV page, is part of eligibility.
+- W-08: directional speed boxplots with same period/dataset selectors; NV-05: directional suitability in Natural Ventilation, using current limits.
+- S-01–S-03: 2D and technical sun paths, temperature and threshold-based cold/intermediate/hot classifications; optional rectangular aperture direct-shadow mask. Shading geometry consists of zero-thickness horizontal overhang and side fins at opening edges. Midpoint area quadrature; sun positions are not interpolated from weather.
+- S-04: monthly unshaded POA, shaded direct-only POA and intercepted direct. Diffuse and ground components explicitly remain unchanged, so this is not a full optical shading model. Active albedo and shared POA kernel retained.
+- S-05–S-07: 145/577-patch 2D/3D sky distribution with thermal filters. Direct beam placed in its containing sky patch using actual solar cosine; diffuse normalized by exact patch projected solid angle. Values are contributions to horizontal irradiation in kWh/m² per patch, not radiance or POA. Common coincident valid daylight inputs per quantity, no ground patch. Isotropic DHI may operate without DNI; direct and total require admitted DNI. Perez (1993) research option uses published coefficients, daylight irradiance from interval energy / physical duration, relative airmass and extraterrestrial radiation. Nonnegative relative radiance and exact horizontal normalization are enforced. Brightness bounds 0.01–0.6, with intermediate clearness correction 0.2. Coefficients verified against Radiance reference table; independent numerical Radiance comparison and low-sun sensitivity qualification pending. These are not claimed to be identical to IVANCALC.
+- S-08–S-09: admitted POA components in existing variable explorer, duration and heatmap use canonical extensive quantity definitions.
+- S-10: orientation–tilt sensitivity lines in existing heatmap analysis; missing input periods not substituted by zero.
+- S-11: valid interval DHI/GHI percentage, GHI > 0, 0 ≤ DHI ≤ GHI. No clipping or inference; mean interval ratio differs from ratio of totals.
+- GP-09: optional PNG/JPEG/WebP plan image from current session; image offset, scale, rotation, opacity relative to compass polar domain; restrict to 2D directional polars; no geographic registration or 3D texture; no external upload service. UI/PNG/SVG qualification required.
+
+## References
+Perez, Seals & Michalsky, 1993, All-weather model for sky luminance distribution — preliminary configuration and validation, Solar Energy 50(3), 235–245; erratum 51(5), 423. DOI 10.1016/0038-092X(93)90017-I.
+Radiance gendaymtx reference coefficient table: https://github.com/NatLabRockies/Radiance/blob/master/src/gen/gendaymtx.c
+Radiance genskyvec patch convention: https://floyd.lbl.gov/radiance/man_html/genskyvec.1.html
+Tregenza/Reinhart MF1/MF2 count excludes ground.
+## Verification
+Numerical fixtures, energy conservation, directional weighting, missing input/geometry, direct shading analytical cases, POA consistency, reference image opt-in, browser 2D/3D trace construction and image-layer existence. Independent Perez benchmark, shading area-resolution convergence, live source/browser and export fidelity remain qualification work. No P3/P4/P5/P6 modifications.

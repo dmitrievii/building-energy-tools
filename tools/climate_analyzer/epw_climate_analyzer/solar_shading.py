@@ -11,7 +11,7 @@ import plotly.graph_objects as go
 
 def shaded_fraction(azimuth,elevation,*,facade=180.,width=2.,height=1.5,
                     overhang=0.,left_fin=0.,right_fin=0.,samples=24):
-    if width<=0 or height<=0 or min(overhang,left_fin,right_fin)<0 or not 1<=samples<=100:
+    if not np.isfinite([facade,width,height,overhang,left_fin,right_fin]).all() or width<=0 or height<=0 or min(overhang,left_fin,right_fin)<0 or not 1<=samples<=100:
         raise ValueError("Invalid aperture or device dimensions.")
     az=np.deg2rad(np.asarray(azimuth,dtype=float)-facade)
     el=np.deg2rad(np.asarray(elevation,dtype=float))

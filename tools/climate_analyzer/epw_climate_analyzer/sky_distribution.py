@@ -89,12 +89,14 @@ def available_quantities(df):
     return (["Diffuse"] if good(DHI) else [])+(["Direct"] if good(DNI) else [])+(["Total"] if good(DHI) and good(DNI) else [])
 
 def cumulative_sky(df,*,mf=1,quantity="Total",model="Isotropic"):
+    if model not in ("Isotropic","Perez 1993 (research)") or (quantity=="Direct" and model!="Isotropic"):
+        raise ValueError("Unsupported sky model/component combination.")
     if quantity not in available_quantities(df):
         raise ValueError("Required radiation and solar position not available.")
     p=patches(mf)
     z=pd.to_numeric(df[Z],errors="coerce").to_numpy(float)
     a=pd.to_numeric(df[AZ],errors="coerce").to_numpy(float)
-    valid=np.isfinite(z)&np.isfinite(a)&(z>=0)&(z<90)
+    valid=np.isfinite(z)&np.isfinite(a)&(z>=0)&(z<90)&(a>=0)&(a<=360)
     required=[]
     if quantity in ("Direct","Total") or model!="Isotropic":required.append(DNI)
     if quantity in ("Diffuse","Total"):required.append(DHI)
@@ -142,7 +144,7 @@ def sky_figure(p,quantity,style="2D hemisphere"):
         fig.update_layout(polar=dict(barmode="overlay",angularaxis=dict(rotation=90,direction="clockwise",tickvals=[0,90,180,270],ticktext=["N","E","S","W"]),
               radialaxis=dict(range=[0,90],tickvals=[0,15,30,45,60,75,90],ticktext=["90°","75°","60°","45°","30°","15°","0°"])),
               meta={"compass_polar":True})
-    else:
+    elif style=="3D dome":
         x=[];y=[];z=[];i=[];j=[];k=[];intensity=[]
         for row,value in zip(p.itertuples(),v):
             # Tessellated quadrilateral strips, including a full azimuth zenith cap.
@@ -159,5 +161,7 @@ def sky_figure(p,quantity,style="2D hemisphere"):
                hovertemplate="%{intensity:.3f} kWh/m² per patch<extra></extra>"))
         fig.update_layout(scene=dict(aspectmode="data",dragmode="turntable",
              xaxis_title="East",yaxis_title="North",zaxis_title="Up",camera=dict(up=dict(x=0,y=0,z=1))))
+    else:
+        raise ValueError("Unknown sky chart style.")
     fig.update_layout(template="plotly_white",title=f"Cumulative {quantity.lower()} horizontal irradiation by sky patch",height=760)
     return fig

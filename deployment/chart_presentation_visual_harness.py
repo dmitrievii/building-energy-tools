@@ -33,6 +33,36 @@ install_global_chart_presentation(st)
 st.title("Chart presentation visual harness")
 st.caption("Representative production chart families rendered through the shared global presentation boundary.")
 
+if st.query_params.get("p2") == "1":
+    from epw_climate_analyzer.directional_climate import directional_table,directional_figure
+    from epw_climate_analyzer.sky_distribution import cumulative_sky,sky_figure
+    from epw_climate_analyzer.architectural_underlay import prepare_underlay,apply_underlay
+    from PIL import Image
+    from io import BytesIO
+    idx=pd.date_range("2025-06-21 08:00",periods=8,freq="h")
+    df2=pd.DataFrame({"wind_speed_m_s":np.arange(1.,9.),"wind_direction_deg":np.arange(0.,360.,45.),
+                      "dry_bulb_temperature_c":np.arange(15.,31.,2.),
+                      "solar_apparent_zenith_deg":np.linspace(60.,25.,8),
+                      "solar_azimuth_deg":np.linspace(90.,270.,8),
+                      "direct_normal_radiation_wh_m2":500.,"diffuse_horizontal_radiation_wh_m2":100.},index=idx)
+    df2.attrs["canonical_native_interval_minutes"]=60.
+    rose2=directional_figure(directional_table(df2,colour="Temperature"),"Hours","Temperature","P2 Wind Wheel")
+    st.plotly_chart(rose2,key="p2_rose")
+    table2=cumulative_sky(df2,mf=1)
+    st.plotly_chart(sky_figure(table2,"Total"),key="p2_sky2d")
+    st.plotly_chart(sky_figure(table2,"Total","3D dome"),key="p2_sky3d")
+    from epw_climate_analyzer.chart_presentation import BACKGROUND_TRANSPARENT,KEY_BACKGROUND
+    image_bytes=BytesIO()
+    Image.new("RGB",(240,240),"#33aa77").save(image_bytes,format="PNG")
+    underlay=directional_figure(directional_table(df2,colour="Temperature"),"Hours","Temperature","P2 Architectural underlay")
+    # Exercise actual image layer; shared wrapper ordinarily applies this after presentation.
+    from epw_climate_analyzer.chart_presentation import apply_chart_presentation,settings_from_state
+    apply_chart_presentation(underlay,settings_from_state(st.session_state))
+    apply_underlay(underlay,prepare_underlay(image_bytes.getvalue()),scale=.8)
+    # Direct original is appropriate here: this fixture has already passed the shared presentation boundary.
+    st._climate_analyzer_original_plotly_chart(underlay,key="p2_underlay")
+    st.stop()
+
 if st.query_params.get("duration") == "1":
     from epw_climate_analyzer.charts import duration_chart
     from epw_climate_analyzer.extended_visualization import probability_figure, amplitude_figure

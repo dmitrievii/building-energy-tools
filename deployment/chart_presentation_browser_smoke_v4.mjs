@@ -402,6 +402,20 @@ try {
   report.checks.durationEndpointsAndAmplitude=true;
   await page.screenshot({path:OUT_DIR+'/10-duration-endpoints.png',fullPage:true});
 
+  await page.goto(TARGET_URL+'?p2=1',{waitUntil:'domcontentloaded'});
+  const p2Frame=await waitForCharts(page,4);
+  const p2=await p2Frame.locator('.js-plotly-plot').evaluateAll(nodes=>nodes.map(node=>({
+    types:node._fullData.map(t=>t.type),patches:node._fullData[0]?.r?.length||0,
+    images:node.querySelectorAll('.imagelayer image').length,
+    imageSource:node._fullLayout.images?.[0]?.source?.slice(0,22)||null
+  })));
+  if(p2[0].types[0]!=='barpolar'||p2[1].patches!==145||p2[2].types[0]!=='mesh3d'||
+     p2[3].images<1||p2[3].imageSource!=='data:image/png;base64,')
+    throw new Error('P2 chart rendering or underlay incomplete: '+JSON.stringify(p2));
+  report.metrics.p2Visuals=p2;
+  report.checks.p2Visuals=true;
+  await page.screenshot({path:OUT_DIR+'/11-p2-directional-graphics.png',fullPage:true});
+
   report.success = Object.values(report.checks).every(Boolean);
   if (!report.success) throw new Error(`Chart presentation browser smoke failed: ${JSON.stringify(report.checks)}`);
   await fs.writeFile(`${OUT_DIR}/report.json`, JSON.stringify(report, null, 2));

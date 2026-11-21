@@ -3692,8 +3692,25 @@ def render_sun_path(df: pd.DataFrame) -> None:
             explanation+=" Grey sample points show directions with partial or full direct-beam shading of the selected rectangular aperture."
         render_plot(fig, explanation)
     elif chart_type == "Technical sun-path diagram":
-        render_plot(technical_sun_path(df),
-                    "Cartesian solar azimuth and elevation diagram. The monthly paths use the 21st of each month, with fixed-clock hour curves and compass bearings.")
+        from epw_climate_analyzer.solar_shading import thermal_overlay,overlay_shading_mask
+        fig=technical_sun_path(df)
+        explanation="Cartesian solar azimuth and elevation diagram. The monthly paths use the 21st of each month, with fixed-clock hour curves and compass bearings."
+        if all(c in df and df[c].notna().any() for c in ("dry_bulb_temperature_c","solar_azimuth_deg","solar_elevation_deg")):
+            colour=st.selectbox("Colour mapped quantity",["None","Outdoor temperature","Solar benefit / risk"],key="technical_sun_thermal")
+            cold,warm=18.,26.
+            if colour=="Solar benefit / risk":
+                cold=st.number_input("Cold threshold [°C]",value=18.,key="technical_sun_cold")
+                warm=st.number_input("Hot threshold [°C]",value=26.,key="technical_sun_warm")
+                if cold>warm:
+                    st.warning("Cold threshold must not exceed hot threshold.")
+                    return
+            if colour!="None":
+                thermal_overlay(fig,df,colour,cold=cold,warm=warm,technical=True)
+                explanation+=" Temperature-based benefit/risk is a climate indicator, not a building load."
+        if st.checkbox("Show geometric shading mask",value=False,key="technical_sun_mask"):
+            overlay_shading_mask(fig,technical=True,**_shading_geometry("technical_mask"))
+            explanation+=" Grey points indicate partial or full shading of the aperture."
+        render_plot(fig,explanation)
     else:
         show_cube = st.checkbox("Show cube", value=True, key="solar_sun_path_show_cube")
         fig = sun_path_3d(df, show_cube=show_cube)
@@ -3883,12 +3900,19 @@ def render_sky_radiation_distribution(df):
 
 
 def render_shading_analysis(df,ground_albedo):
+    import plotly.graph_objects as go
     from epw_climate_analyzer.solar_shading import shading_ledger
     from epw_climate_analyzer.aggregations import period_total_series
     geometry=_shading_geometry("shading_analysis")
     geometry["samples"]=st.selectbox("Area sampling per dimension",[16,24,48],index=1,key="shade_samples")
     data=_solar_temperature_selection(df,"shading_condition")
+    if data.empty:
+        st.info("No climate intervals match the selected thermal classification.")
+        return
     ledger=shading_ledger(data,albedo=ground_albedo,**geometry)
+    if not ledger["Unshaded total"].notna().any():
+        st.info("No complete paired irradiation and solar coordinates remain.")
+        return
     cols=["Unshaded total","Shaded total (direct-only)","Intercepted direct"]
     table=pd.DataFrame({c:period_total_series(ledger[c],data,"Monthly")/1000 for c in cols})
     fig=go.Figure()
