@@ -57,11 +57,18 @@ MOIST_AIR_ENTHALPY_COLORSCALE = [
     [1.00, "#4C1D95"],
 ]
 SPECIFIC_VOLUME_COLORSCALE = [
-    [0.00, "#F8FAFC"],
-    [0.25, "#CBD5E1"],
-    [0.50, "#94A3B8"],
-    [0.75, "#64748B"],
-    [1.00, "#1E293B"],
+    [0.00, "#F0F6FA"],
+    [0.25, "#C4D8E6"],
+    [0.50, "#8DAFC5"],
+    [0.75, "#547C9A"],
+    [1.00, "#26465F"],
+]
+STATION_PRESSURE_COLORSCALE = [
+    [0.00, "#FAF6EF"],
+    [0.25, "#E4D5BE"],
+    [0.50, "#C5A77D"],
+    [0.75, "#92734D"],
+    [1.00, "#594027"],
 ]
 MOIST_AIR_DENSITY_COLORSCALE = [
     [0.00, "#F1F5F9"],
@@ -130,9 +137,9 @@ METRIC_COLORS = {
     "relative_humidity_pct": "#2563EB",
     "humidity_ratio_g_kg": "#0891B2",
     "moist_air_enthalpy_kj_kg": "#7C3AED",
-    "specific_volume_m3_kg": "#64748B",
+    "specific_volume_m3_kg": "#547C9A",
     "moist_air_density_kg_m3": "#475569",
-    "atmospheric_station_pressure_pa": "#64748B",
+    "atmospheric_station_pressure_pa": "#92734D",
     "global_horizontal_radiation_wh_m2": SOLAR_COMPONENT_COLORS["GHI"],
     "direct_normal_radiation_wh_m2": SOLAR_COMPONENT_COLORS["DNI"],
     "diffuse_horizontal_radiation_wh_m2": SOLAR_COMPONENT_COLORS["DHI"],
@@ -226,6 +233,18 @@ def semantic_color_from_text(text: str | None) -> str:
 
     if value in ORIENTATION_COLORS:
         return ORIENTATION_COLORS[value]
+    if value in METRIC_COLORS:
+        return METRIC_COLORS[value]
+    # These named quantities must also resolve correctly in title-driven
+    # chart builders that do not receive the canonical column identifier.
+    quantity_text = value.replace("-", " ").replace("_", " ")
+    for tokens, column in (
+        (("specific volume",), "specific_volume_m3_kg"),
+        (("moist air density", "air density"), "moist_air_density_kg_m3"),
+        (("station pressure", "atmospheric pressure", "barometric pressure"), "atmospheric_station_pressure_pa"),
+    ):
+        if any(token in quantity_text for token in tokens):
+            return METRIC_COLORS[column]
     if "global horizontal" in value or " ghi" in f" {value}" or value.startswith("ghi"):
         return SOLAR_COMPONENT_COLORS["GHI"]
     if "direct normal" in value or " dni" in f" {value}" or value.startswith("dni"):
@@ -281,8 +300,10 @@ def metric_colorscale(column: str | None):
         return TEMPERATURE_COMFORT_COLORSCALE
     if text=="moist_air_enthalpy_kj_kg":
         return MOIST_AIR_ENTHALPY_COLORSCALE
-    if text in ("specific_volume_m3_kg","atmospheric_station_pressure_pa"):
+    if text=="specific_volume_m3_kg":
         return SPECIFIC_VOLUME_COLORSCALE
+    if text=="atmospheric_station_pressure_pa":
+        return STATION_PRESSURE_COLORSCALE
     if text=="moist_air_density_kg_m3":
         return MOIST_AIR_DENSITY_COLORSCALE
     if "radiation" in text or "irradiance" in text or "illuminance" in text:

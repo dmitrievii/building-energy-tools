@@ -313,10 +313,10 @@ class CalendarHeatmapTests(unittest.TestCase):
         self.assertLess(fig.layout.coloraxis.cmin,fig.layout.coloraxis.cmax)
 
     def test_station_pressure_semantic_palette_and_scope_domain(self):
-        from epw_climate_analyzer.chart_theme import SPECIFIC_VOLUME_COLORSCALE,metric_colorscale
+        from epw_climate_analyzer.chart_theme import STATION_PRESSURE_COLORSCALE,metric_colorscale
         from epw_climate_analyzer.charts import temporal_heatmap_chart
         c="atmospheric_station_pressure_pa"
-        self.assertEqual(metric_colorscale(c),SPECIFIC_VOLUME_COLORSCALE)
+        self.assertEqual(metric_colorscale(c),STATION_PRESSURE_COLORSCALE)
         idx=pd.date_range("2026-01-01",periods=72,freq="h")
         for lower,upper in ((97323.,100487.),(73123.,75987.)):
             df=pd.DataFrame({c:np.linspace(lower,upper,len(idx))},index=idx)
@@ -326,7 +326,7 @@ class CalendarHeatmapTests(unittest.TestCase):
                     fig=temporal_heatmap_chart(df,c,period,HEATMAP_COMPARE_HOUR,stat,"Station pressure","Pa")
                     self.assertAlmostEqual(fig.layout.coloraxis.cmin,np.floor(lower/100.)*100.)
                     self.assertAlmostEqual(fig.layout.coloraxis.cmax,np.ceil(upper/100.)*100.)
-                    self.assertEqual(fig.layout.coloraxis.colorscale,tuple(tuple(v) for v in SPECIFIC_VOLUME_COLORSCALE))
+                    self.assertEqual(fig.layout.coloraxis.colorscale,tuple(tuple(v) for v in STATION_PRESSURE_COLORSCALE))
                     expected=temporal_heatmap_matrix(df,c,period,HEATMAP_COMPARE_HOUR,stat)
                     np.testing.assert_allclose(np.asarray(fig.data[0].z,float),expected.values,equal_nan=True)
                     printed=report_figure(fig,width_pt=500,height_pt=230)
@@ -334,6 +334,47 @@ class CalendarHeatmapTests(unittest.TestCase):
         constant=pd.DataFrame({c:99000.},index=idx)
         fig=temporal_heatmap_chart(constant,c,"day",HEATMAP_COMPARE_HOUR,"Mean","Station pressure","Pa")
         self.assertLess(fig.layout.coloraxis.cmin,fig.layout.coloraxis.cmax)
+
+    def test_distinct_air_property_palettes_across_chart_families(self):
+        from epw_climate_analyzer.chart_theme import (
+            metric_color, metric_band_colors, metric_colorscale, semantic_color_from_text,
+        )
+        from epw_climate_analyzer.charts import (
+            profile_line_chart, profile_ribbon_chart, percentile_band_chart,
+            duration_chart, histogram_chart, monthly_box_chart, temporal_heatmap_chart,
+        )
+        properties = (
+            ("specific_volume_m3_kg", "Specific volume", "m³/kg dry air", "#547C9A", .8),
+            ("moist_air_density_kg_m3", "Moist-air density", "kg/m³", "#475569", 1.2),
+            ("atmospheric_station_pressure_pa", "Station pressure", "Pa", "#92734D", 98000.),
+        )
+        idx=pd.date_range("2026-01-01",periods=72,freq="h")
+        palettes=[]
+        for column,title,unit,base,level in properties:
+            with self.subTest(column=column):
+                df=pd.DataFrame({column:np.linspace(level*.98,level*1.02,len(idx))},index=idx)
+                self.assertEqual(metric_color(column),base)
+                self.assertEqual(metric_band_colors(column)[1],base)
+                self.assertEqual(semantic_color_from_text(title),base)
+                self.assertEqual(semantic_color_from_text(column),base)
+                palette=metric_colorscale(column)
+                self.assertEqual(palette[3][1],base)
+                palettes.append(tuple(tuple(v) for v in palette))
+                fig=profile_line_chart(df,column,"Hourly",title,unit)
+                self.assertEqual(fig.data[0].line.color,base)
+                self.assertEqual(duration_chart(df,column,title,unit).data[0].line.color,base)
+                self.assertEqual(histogram_chart(df,column,title,unit).data[0].marker.color,base)
+                for builder in (profile_ribbon_chart,percentile_band_chart):
+                    fig=builder(df,column,"Daily",title,unit)
+                    self.assertIn(base,[trace.line.color for trace in fig.data])
+                for violin in (False,True):
+                    fig=monthly_box_chart(df,column,title,unit,violin=violin)
+                    self.assertTrue(all(trace.line.color==base for trace in fig.data))
+                fig=temporal_heatmap_chart(df,column,"day",HEATMAP_COMPARE_HOUR,"Mean",title,unit)
+                self.assertEqual(fig.layout.coloraxis.colorscale,palettes[-1])
+                printed=report_figure(fig,width_pt=500,height_pt=230)
+                self.assertEqual(printed.layout.coloraxis.colorscale,palettes[-1])
+        self.assertEqual(len(set(palettes)),3)
 
     def test_multiyear_utci_not_truncated(self):
         idx=pd.date_range("2025-12-31","2026-12-31",freq="h")
