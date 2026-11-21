@@ -428,6 +428,36 @@ class CalendarHeatmapTests(unittest.TestCase):
         df=pd.DataFrame({c:np.repeat([0.,100.,400.,-1.],24)},index=pd.date_range("2026-01-01",periods=96,freq="h"))
         self.assertEqual(occurrence_table(df,c,daily,basis="Days",daily_stat="Total").sum().sum(),3.)
 
+    def test_poa_semantic_colors_and_common_heatmap_domain(self):
+        from epw_climate_analyzer.chart_theme import POA_COMPONENT_COLORS,SOLAR_COLORSCALE,metric_color,metric_band_colors,semantic_color_from_text
+        from epw_climate_analyzer.charts import temporal_heatmap_chart,duration_chart,histogram_chart,monthly_box_chart,profile_line_chart
+        from epw_climate_analyzer.monthly_radiation import SURFACE_FIELDS,SURFACE_COLORS
+        from epw_climate_analyzer.extended_visualization import occurrence_default_edges,occurrence_table,occurrence_figure
+        idx=pd.date_range("2026-07-01",periods=72,freq="h")
+        cols=list(POA_COMPONENT_COLORS)
+        df=pd.DataFrame({c:np.linspace(0.,m,len(idx)) for c,m in zip(cols,(1000.,700.,220.,80.))},index=idx)
+        self.assertEqual(len(set(POA_COMPONENT_COLORS.values())),4)
+        labels=("Reference vertical POA","Reference direct POA","Reference sky-diffuse POA","Reference ground-reflected POA")
+        for c,label in zip(cols,labels):
+            color=POA_COMPONENT_COLORS[c]
+            self.assertEqual(metric_color(c),color)
+            self.assertEqual(semantic_color_from_text(label),color)
+            self.assertEqual(metric_band_colors(c)[1],color)
+            self.assertEqual(duration_chart(df,c,label,"Wh/m²").data[0].line.color,color)
+            self.assertEqual(histogram_chart(df,c,label,"Wh/m²").data[0].marker.color,color)
+            self.assertEqual(monthly_box_chart(df,c,label,"Wh/m²").data[0].line.color,color)
+            self.assertEqual(profile_line_chart(df,c,"Native",label,"Wh/m²").data[0].line.color,color)
+            for stat in ("Mean","Total"):
+                fig=temporal_heatmap_chart(df,c,"month",HEATMAP_COMPARE_HOUR,stat,label,"Wh/m²")
+                upper=1000. if stat=="Mean" else float(temporal_heatmap_matrix(df,cols[0],"month",HEATMAP_COMPARE_HOUR,stat).max().max())
+                self.assertEqual((fig.layout.coloraxis.cmin,fig.layout.coloraxis.cmax),(0.,upper))
+                self.assertEqual(fig.layout.coloraxis.colorscale,tuple(tuple(v) for v in SOLAR_COLORSCALE))
+            edges=occurrence_default_edges(df[c],c)
+            self.assertEqual(edges,[50.,100.,200.,400.,600.,800.,1000.,1200.])
+            fig=occurrence_figure(occurrence_table(df,c,edges),"Wh/m²","Hours")
+            self.assertEqual(fig.data[0].marker.color,"#E5E7EB")
+        self.assertEqual(SURFACE_COLORS,{label:POA_COMPONENT_COLORS[c] for label,c in SURFACE_FIELDS.items()})
+
     def test_irradiation_heatmaps_white_absolute_zero(self):
         from epw_climate_analyzer.chart_theme import SOLAR_COLORSCALE,metric_colorscale
         from epw_climate_analyzer.charts import temporal_heatmap_chart,matrix_heatmap

@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
-from .chart_theme import ORIENTATION_COLORS, SOLAR_COMPONENT_COLORS
+from .chart_theme import ORIENTATION_COLORS, POA_COMPONENT_COLORS
 
 ORIENTATIONS = (
     ("North", "N", 0.0), ("North-East", "NE", 45.0),
@@ -19,9 +19,9 @@ ORIENTATIONS = (
     ("West", "W", 270.0), ("North-West", "NW", 315.0),
 )
 COMPONENTS = (
-    ("direct_kwh_m2", "Direct", SOLAR_COMPONENT_COLORS["DNI"], "poa_direct_wh_m2"),
-    ("sky_diffuse_kwh_m2", "Sky diffuse", SOLAR_COMPONENT_COLORS["DHI"], "poa_sky_diffuse_wh_m2"),
-    ("ground_reflected_kwh_m2", "Ground-reflected", "#7493AA", "poa_ground_diffuse_wh_m2"),
+    ("direct_kwh_m2", "Direct", POA_COMPONENT_COLORS["poa_direct_wh_m2"], "poa_direct_wh_m2"),
+    ("sky_diffuse_kwh_m2", "Sky diffuse", POA_COMPONENT_COLORS["poa_sky_diffuse_wh_m2"], "poa_sky_diffuse_wh_m2"),
+    ("ground_reflected_kwh_m2", "Ground-reflected", POA_COMPONENT_COLORS["poa_ground_diffuse_wh_m2"], "poa_ground_diffuse_wh_m2"),
 )
 TOTAL = "total_kwh_m2"
 

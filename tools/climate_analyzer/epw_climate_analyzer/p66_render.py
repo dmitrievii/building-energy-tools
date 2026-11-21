@@ -384,6 +384,11 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         note+=" Coincident observations only. Density chart displays probability mass in 25 × 25 bins."
     else:raise NotApplicable("No atlas renderer registered.")
     if not len(f.data):raise NotApplicable("No plotted data.")
+    # Native monthly and total bars bypass the general metric chart builders.
+    from .chart_theme import POA_COMPONENT_COLORS
+    if c in POA_COMPONENT_COLORS:
+        if k=="native":f.update_traces(line_color=POA_COMPONENT_COLORS[c],selector=dict(type="scatter"))
+        elif k=="total":f.update_traces(marker_color=POA_COMPONENT_COLORS[c],selector=dict(type="bar"))
     f.update_layout(template="plotly_white",title=title)
     from .calendar_heatmap_axes import apply_calendar_heatmap_axes,apply_monthly_axes,set_period_axis_scope
     set_period_axis_scope(f,df)

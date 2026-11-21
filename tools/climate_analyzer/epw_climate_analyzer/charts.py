@@ -27,6 +27,7 @@ from .psychrometric_distribution import add_climate_zone_traces, psychrometric_a
 from .chart_theme import (
     BINARY_SUITABILITY_COLORSCALE,
     ILLUMINANCE_COLUMNS,
+    POA_COMPONENT_COLORS,
     SOLAR_COLORSCALE,
     is_irradiation_metric,
     CLIMATE_COLORS,
@@ -453,6 +454,18 @@ def temporal_heatmap_chart(
         lo,hi=_finite_min_max(matrix.values)
         if lo is not None and lo>=0.:
             zmin,zmax=0.,max(1e-9,hi or 0.) if hi else (100. if column.endswith("_pct") else 1.)
+    if column in POA_COMPONENT_COLORS:
+        # Compare all four components in the same selected source scope.
+        # Intensive statistics are bounded by the source extrema; totals
+        # must use aggregated cell maxima for the same period/dimension.
+        maxima=[]
+        for c in POA_COMPONENT_COLORS:
+            if c not in df:continue
+            other=(matrix.values if c==column else temporal_heatmap_matrix(df,c,row_group,compare_across,statistic).values) if statistic=="Total" else pd.to_numeric(df[c],errors="coerce")
+            _,hi=_finite_min_max(other)
+            if hi is not None:maxima.append(hi)
+        _,hi=_finite_min_max(matrix.values)
+        zmin,zmax=0.,max([1.,hi or 0.,*maxima])
     if column in ILLUMINANCE_COLUMNS:
         # A common absolute domain makes equal lux values equal colours
         # across all illuminance components in the selected source scope.

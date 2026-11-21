@@ -13,7 +13,7 @@ import plotly.graph_objects as go
 
 from .aggregations import period_total_series
 from .temporal_filtering import CALENDAR_PROFILE, time_basis
-from .chart_theme import ORIENTATION_COLORS, SOLAR_COMPONENT_COLORS
+from .chart_theme import ORIENTATION_COLORS, SOLAR_COMPONENT_COLORS, POA_COMPONENT_COLORS
 from .facade_orientation import ORIENTATIONS
 
 SOURCE_FIELDS = {
@@ -27,12 +27,7 @@ SURFACE_FIELDS = {
     "Sky diffuse": "poa_sky_diffuse_wh_m2",
     "Ground-reflected": "poa_ground_diffuse_wh_m2",
 }
-SURFACE_COLORS = {
-    "Total POA": SOLAR_COMPONENT_COLORS["GHI"],
-    "Direct": SOLAR_COMPONENT_COLORS["DNI"],
-    "Sky diffuse": SOLAR_COMPONENT_COLORS["DHI"],
-    "Ground-reflected": "#7493AA",
-}
+SURFACE_COLORS = {label:POA_COMPONENT_COLORS[column] for label,column in SURFACE_FIELDS.items()}
 SURFACE_NAMES = {name: angle for name, _, angle in ORIENTATIONS}
 MONTH_NAMES = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 

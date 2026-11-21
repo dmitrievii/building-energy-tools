@@ -22,6 +22,13 @@ SOLAR_COMPONENT_COLORS = {
     "DHI": "#CA8A04",
 }
 
+POA_COMPONENT_COLORS = {
+    "poa_global_wh_m2": SOLAR_COMPONENT_COLORS["GHI"],
+    "poa_direct_wh_m2": SOLAR_COMPONENT_COLORS["DNI"],
+    "poa_sky_diffuse_wh_m2": SOLAR_COMPONENT_COLORS["DHI"],
+    "poa_ground_diffuse_wh_m2": "#7493AA",
+}
+
 TEMPERATURE_COMFORT_COLORSCALE = [
     [0.00, "#1d4ed8"],
     [0.32, "#3b82f6"],
@@ -173,6 +180,7 @@ METRIC_COLORS = {
     "specific_volume_m3_kg": "#547C9A",
     "moist_air_density_kg_m3": "#475569",
     "atmospheric_station_pressure_pa": "#92734D",
+    **POA_COMPONENT_COLORS,
     "global_horizontal_radiation_wh_m2": SOLAR_COMPONENT_COLORS["GHI"],
     "direct_normal_radiation_wh_m2": SOLAR_COMPONENT_COLORS["DNI"],
     "diffuse_horizontal_radiation_wh_m2": SOLAR_COMPONENT_COLORS["DHI"],
@@ -276,6 +284,11 @@ def semantic_color_from_text(text: str | None) -> str:
     # These named quantities must also resolve correctly in title-driven
     # chart builders that do not receive the canonical column identifier.
     quantity_text = value.replace("-", " ").replace("_", " ")
+    if "poa" in quantity_text or "plane of array" in quantity_text:
+        if "ground" in quantity_text or "reflected" in quantity_text:return POA_COMPONENT_COLORS["poa_ground_diffuse_wh_m2"]
+        if "sky" in quantity_text or "diffuse" in quantity_text:return POA_COMPONENT_COLORS["poa_sky_diffuse_wh_m2"]
+        if "direct" in quantity_text:return POA_COMPONENT_COLORS["poa_direct_wh_m2"]
+        return POA_COMPONENT_COLORS["poa_global_wh_m2"]
     for tokens, column in (
         (("specific volume",), "specific_volume_m3_kg"),
         (("moist air density", "air density"), "moist_air_density_kg_m3"),
