@@ -97,21 +97,22 @@ def shading_month_hour_heatmap(cells,metric,device=TOTAL_DEVICE):
     """Month × hour grid: gray means missing or undefined, white means zero."""
     if device not in (*DEVICES,TOTAL_DEVICE):
         raise ValueError("Unknown shading device.")
-    z=cells[device].to_numpy(dtype=float).reshape(12,24)
-    coverage=cells["valid_hours"].to_numpy(dtype=float).reshape(12,24)
-    fig=go.Figure(go.Heatmap(z=z,x=HOURS,y=MONTHS,customdata=coverage,
+    # Canonical time orientation, including callers of the legacy API.
+    x=list(range(1,13));y=list(range(24))
+    z=cells[device].to_numpy(dtype=float).reshape(12,24).T
+    coverage=cells["valid_hours"].to_numpy(dtype=float).reshape(12,24).T
+    fig=go.Figure(go.Heatmap(z=z,x=x,y=y,customdata=coverage,
                              zmin=0,zmax=100 if metric!=ENERGY else None,
                              colorscale=[[0,"#FFFFFF"],[.25,"#FEE4A6"],[.6,"#F39B43"],[1,"#A83C16"]],
                              colorbar=dict(title=UNITS[metric]),
                              hoverongaps=False,
                              hovertemplate="%{y} · %{x}<br>"+device+": %{z:.2f} "+UNITS[metric]+
                              "<br>Valid duration: %{customdata:.1f} h<extra></extra>"))
-    fig.add_heatmap(z=np.where(np.isfinite(z),np.nan,1.),x=HOURS,y=MONTHS,
+    fig.add_heatmap(z=np.where(np.isfinite(z),np.nan,1.),x=x,y=y,
                     colorscale=[[0,"#D1D5DB"],[1,"#D1D5DB"]],zmin=0,zmax=1,
                     showscale=False,hoverongaps=False,
                     hovertemplate="%{y} · %{x}<br>Missing or undefined<extra></extra>")
     fig.update_layout(template="plotly_white",title=metric+" · "+device,
-                      xaxis_title="Hour of day (analysis clock timestamp)",
-                      yaxis_title="Month",yaxis=dict(autorange="reversed"),
-                      xaxis=dict(tickmode="array",tickvals=HOURS[::2]),height=500)
-    return fig
+                      xaxis_title="Month",yaxis_title="Hour of day",height=500)
+    from .calendar_heatmap_axes import apply_calendar_heatmap_axes
+    return apply_calendar_heatmap_axes(fig,period="month")

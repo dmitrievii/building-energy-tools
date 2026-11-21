@@ -175,6 +175,13 @@ class AtlasTests(unittest.TestCase):
             fig,table=monthly_shading_profiles(frame,metric,[7])
             self.assertTrue(table.iloc[14:].isna().all().all())
             self.assertEqual(list(fig.layout.xaxis.tickvals),[0,6,12,18,24])
+        from epw_climate_analyzer.shading_temporal import temporal_shading_tables,shading_month_hour_heatmap
+        _,cells=temporal_shading_tables(df,geometry=geometry,metric=AREA)
+        legacy=shading_month_hour_heatmap(cells,AREA)
+        self.assertEqual(np.asarray(legacy.data[0].z).shape,(24,12))
+        np.testing.assert_allclose(np.asarray(legacy.data[0].z,float),cells["All devices"].to_numpy(float).reshape(12,24).T,equal_nan=True)
+        self.assertEqual(list(legacy.layout.xaxis.ticktext),["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"])
+        self.assertEqual(list(legacy.layout.yaxis.ticktext),["0","6","12","18","24"])
         self.assertEqual(shading_statistics(frame,AREA,"day","Hour of day"),("Mean",))
         rows=c.catalogue(df,{},c.FULL)
         self.assertFalse(any(d.kind=="shading_mask" and d.args[0]!="Geometry" for d in rows))

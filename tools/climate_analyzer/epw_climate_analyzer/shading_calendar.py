@@ -85,11 +85,17 @@ def shading_calendar(frame,metric,period,dimension,statistic,*,title="",threshol
                       plot_bgcolor=MISSING,margin=dict(b=95))
     # Only known, non-incident sky states get the distinct no-exposure colour.
     # Energy zeros remain measured zeros, not masked out.
+    no_exposure=np.zeros(values.shape,dtype=bool)
     if metric!=ENERGY:
         no_exposure=(front.eq(0)&values.isna()).to_numpy()
         fig.add_heatmap(x=values.columns,y=values.index,z=np.where(no_exposure,1.,np.nan),
             colorscale=[[0,NO_EXPOSURE],[1,NO_EXPOSURE]],zmin=0,zmax=1,showscale=False,
             hoverongaps=False,hovertemplate="No front-facing daylight exposure<extra></extra>")
+    # Explicit missing cells survive user-selected background and report styling.
+    missing=values.isna().to_numpy()&~no_exposure
+    fig.add_heatmap(x=values.columns,y=values.index,z=np.where(missing,1.,np.nan),
+        colorscale=[[0,MISSING],[1,MISSING]],zmin=0,zmax=1,showscale=False,
+        hoverongaps=False,hovertemplate="Missing or undefined<extra></extra>")
     fig.add_annotation(xref="paper",yref="paper",x=0,y=-.25,xanchor="left",
         text=("Blue-grey: no direct exposure · Light grey: missing/undefined" if metric!=ENERGY else
               "White: zero intercepted energy · Light grey: missing"),showarrow=False,font=dict(size=11))
