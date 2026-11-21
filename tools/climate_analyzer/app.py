@@ -3642,9 +3642,20 @@ def render_sun_path(df: pd.DataFrame) -> None:
         st.caption(reference.description + ". Reference paths show the full astronomical year; radiation observations follow the active Data filter.")
     if chart_type == "2D sun-path diagram":
         fields = {label: column for column, label in available_radiation_fields(df)}
+        thermal_options=["Outdoor temperature","Solar benefit / risk"] if all(c in df and df[c].notna().any() for c in ("dry_bulb_temperature_c","solar_azimuth_deg","solar_elevation_deg")) else []
         quantity = st.selectbox("Radiation quantity", ["None", *fields], index=0,
                                 key="solar_sun_path_radiation_quantity")
         field = fields.get(quantity)
+        colour="None"
+        if field is None and thermal_options:
+            colour=st.selectbox("Colour mapped quantity",["None",*thermal_options],key="solar_sun_path_thermal_colour")
+        cold,warm=18.,26.
+        if colour=="Solar benefit / risk":
+            cold=st.number_input("Cold threshold [°C]",value=18.,key="sun_cold_threshold")
+            warm=st.number_input("Hot threshold [°C]",value=26.,key="sun_warm_threshold")
+            if cold>warm:
+                st.warning("Cold threshold must not exceed hot threshold.")
+                return
         invert_zenith_axis = st.checkbox("Invert radial axis", value=False,
                                         key="solar_path_invert",
                                         help="Reverse the radial scale: horizon at the centre.")
@@ -3666,6 +3677,14 @@ def render_sun_path(df: pd.DataFrame) -> None:
                 " Radiation points retain their original solar positions and interval irradiation; "
                 "monthly and hour curves remain astronomical guides, not radiation estimates."
             )
+        from epw_climate_analyzer.solar_shading import thermal_overlay,overlay_shading_mask
+        if colour!="None":
+            thermal_overlay(fig,df,colour,cold=cold,warm=warm)
+            explanation+=" Observation colours indicate outdoor temperature or temperature-based solar benefit/risk, not actual indoor loads."
+        if st.checkbox("Show geometric shading mask",value=False,key="solar_mask_enable"):
+            geometry=_shading_geometry("sun_mask")
+            overlay_shading_mask(fig,inverted=invert_zenith_axis,**geometry)
+            explanation+=" Grey sample points show directions with partial or full direct-beam shading of the selected rectangular aperture."
         render_plot(fig, explanation)
     elif chart_type == "Technical sun-path diagram":
         render_plot(technical_sun_path(df),
@@ -3800,10 +3819,87 @@ def render_monthly_radiation(df: pd.DataFrame, *, ground_albedo=None, allow_surf
         st.dataframe(display, use_container_width=True)
 
 
+def _shading_geometry(prefix):
+    cols=st.columns(3)
+    facade=cols[0].number_input("Façade azimuth [°]",0.,359.,180.,5.,key=prefix+"_az")
+    width=cols[1].number_input("Window width [m]",.1,20.,2.,.1,key=prefix+"_w")
+    height=cols[2].number_input("Window height [m]",.1,20.,1.5,.1,key=prefix+"_h")
+    c=st.columns(3)
+    overhang=c[0].number_input("Overhang depth [m]",0.,10.,.6,.1,key=prefix+"_oh")
+    left=c[1].number_input("Left fin depth [m]",0.,10.,0.,.1,key=prefix+"_lf")
+    right=c[2].number_input("Right fin depth [m]",0.,10.,0.,.1,key=prefix+"_rf")
+    return dict(facade=facade,width=width,height=height,overhang=overhang,left_fin=left,right_fin=right)
+
+
+def _solar_temperature_selection(df,prefix):
+    if "dry_bulb_temperature_c" not in df or not pd.to_numeric(df["dry_bulb_temperature_c"],errors="coerce").notna().any():
+        return df
+    selection=st.selectbox("Thermal classification",["All conditions","Cold conditions","Intermediate conditions","Hot conditions"],key=prefix+"_thermal")
+    if selection=="All conditions":return df
+    c1,c2=st.columns(2)
+    cold=c1.number_input("Cold threshold [°C]",value=18.,key=prefix+"_cold")
+    warm=c2.number_input("Hot threshold [°C]",value=26.,key=prefix+"_warm")
+    if cold>warm:
+        st.warning("Cold threshold must not exceed hot threshold.")
+        return df.iloc[:0]
+    t=pd.to_numeric(df["dry_bulb_temperature_c"],errors="coerce")
+    mask={"Cold conditions":t<cold,"Intermediate conditions":t.between(cold,warm),"Hot conditions":t>warm}[selection]
+    out=df.loc[mask].copy()
+    out.attrs.update(df.attrs)
+    out.attrs["canonical_native_interval_minutes"]=native_interval_hours(df)*60
+    return out
+
+
+def render_sky_radiation_distribution(df):
+    from epw_climate_analyzer.sky_distribution import available_quantities,cumulative_sky,sky_figure
+    options=available_quantities(df)
+    if not options:
+        st.info("Paired solar coordinates and qualified radiation inputs are unavailable.")
+        return
+    quantity=st.selectbox("Radiation component",options,index=options.index("Total") if "Total" in options else 0,key="sky_patch_quantity")
+    style=st.selectbox("Chart type",["2D hemisphere","3D dome"],key="sky_patch_style")
+    resolution=st.selectbox("Sky resolution",["Tregenza 145","Reinhart 577"],key="sky_patch_resolution")
+    models=["Isotropic"]
+    if quantity!="Direct" and "direct_normal_radiation_wh_m2" in df and df["direct_normal_radiation_wh_m2"].notna().any():
+        models.append("Perez 1993 (research)")
+    model=st.selectbox("Diffuse sky model",models,key="sky_patch_model")
+    data=_solar_temperature_selection(df,"sky_patch")
+    if model!="Isotropic":
+        st.warning("Research candidate: nonnegative, horizontally normalized Perez 1993 distribution; independent Radiance parity remains pending.")
+    try:
+        table=cumulative_sky(data,mf=1 if resolution.startswith("Tregenza") else 2,quantity=quantity,model=model)
+    except ValueError as exc:
+        st.info(str(exc))
+        return
+    st.caption(f"Complete qualifying daylight intervals: {table.attrs['valid_intervals']:,} / {table.attrs['selected_intervals']:,}. Active Data filter; no annualization.")
+    render_plot(sky_figure(table,quantity,style),
+        "Each patch represents its contribution to irradiation on an unobstructed horizontal plane, not radiance or tilted-surface irradiation. Diffuse energy is normalized using projected solid angle; direct energy uses the actual solar zenith cosine. Total equals direct plus diffuse on common valid intervals. Ground radiation is excluded.")
+    st.download_button("Sky patch numerical data · CSV",table.to_csv().encode("utf-8"),"sky_patch_irradiation.csv","text/csv",key="sky_patch_csv")
+
+
+def render_shading_analysis(df,ground_albedo):
+    from epw_climate_analyzer.solar_shading import shading_ledger
+    from epw_climate_analyzer.aggregations import period_total_series
+    geometry=_shading_geometry("shading_analysis")
+    geometry["samples"]=st.selectbox("Area sampling per dimension",[16,24,48],index=1,key="shade_samples")
+    data=_solar_temperature_selection(df,"shading_condition")
+    ledger=shading_ledger(data,albedo=ground_albedo,**geometry)
+    cols=["Unshaded total","Shaded total (direct-only)","Intercepted direct"]
+    table=pd.DataFrame({c:period_total_series(ledger[c],data,"Monthly")/1000 for c in cols})
+    fig=go.Figure()
+    for c in cols:
+        fig.add_bar(x=display_period_labels(table.index,"Monthly",time_basis(data)),y=table[c],name=c)
+    fig.update_layout(template="plotly_white",title="Monthly façade irradiation and intercepted direct beam",barmode="group",xaxis_title="Period",yaxis_title="Irradiation [kWh/m²]")
+    totals=ledger[cols].sum(min_count=1)/1000
+    render_plot(fig,f"Selected-period unshaded total: {totals.iloc[0]:.1f} kWh/m²; direct beam intercepted: {totals.iloc[2]:.1f} kWh/m². The model samples a rectangular vertical aperture, with opaque overhang and fins attached at its edges. Diffuse and ground-reflected components are unchanged; this is a direct-beam screening assessment, not a full shaded building-energy calculation.")
+
+
 def render_solar(df: pd.DataFrame) -> None:
     """Render solar, radiation and façade-decision charts."""
     st.header("Solar, radiation and façade analysis")
     ground_albedo = _active_solar_ground_albedo(df)
+    from epw_climate_analyzer.monthly_radiation import surface_available
+    from epw_climate_analyzer.sky_distribution import available_quantities
     chart_group = st.selectbox(
         "Analysis type",
         [
@@ -3814,10 +3910,15 @@ def render_solar(df: pd.DataFrame) -> None:
             "Orientation-tilt heatmap",
             "Cooling-risk solar hours",
             "Solar scatter relationships",
-        ],
+        ] + (["Sky radiation distribution"] if available_quantities(df) else []) +
+            (["Shading analysis"] if surface_available(df) else []),
     )
 
-    if chart_group == "Radiation variable explorer":
+    if chart_group == "Sky radiation distribution":
+        render_sky_radiation_distribution(df)
+    elif chart_group == "Shading analysis":
+        render_shading_analysis(df,ground_albedo)
+    elif chart_group == "Radiation variable explorer":
         render_generic_variable_page(
             df,
             ["Global horizontal radiation", "Direct normal radiation", "Diffuse horizontal radiation"],
@@ -5373,6 +5474,9 @@ def render_historical_solar(df: pd.DataFrame) -> None:
     options: list[str] = ["Horizontal irradiance explorer", "Monthly radiation"]
     if "solar_geometry_site" in df.attrs:
         options.append("Sun path")
+    from epw_climate_analyzer.sky_distribution import available_quantities
+    if available_quantities(df):
+        options.append("Sky radiation distribution")
     has_ghi = any(source == "global_horizontal_radiation_wh_m2" for _, _, source in specs)
     has_temperature = has_numeric_observations(df, "dry_bulb_temperature_c")
     if has_ghi and has_temperature:
@@ -5405,6 +5509,8 @@ def render_historical_solar(df: pd.DataFrame) -> None:
         )
     elif chart_group == "Sun path":
         render_sun_path(df)
+    elif chart_group == "Sky radiation distribution":
+        render_sky_radiation_distribution(df)
     elif chart_group == "Monthly radiation":
         render_monthly_radiation(df, allow_surface=False)
     elif chart_group == "Cooling-risk solar hours":
