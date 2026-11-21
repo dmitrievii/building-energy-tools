@@ -1,0 +1,45 @@
+name: Climate Analyzer P6.7 Rendering Qualification
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/climate_analyzer/epw_climate_analyzer/p6_static_render.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/p6_render_worker.py'
+      - 'tools/climate_analyzer/tests/benchmark_p67_render.py'
+      - '.github/workflows/climate-analyzer-p67.yml'
+permissions:
+  contents: read
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        count: ${{ github.event_name == 'workflow_dispatch' && fromJSON('[20,50,100,200]') || fromJSON('[20]') }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build pinned renderer environment
+        run: |
+          docker build -t ige-p67 - <<'EOF'
+          FROM python:3.12-bookworm
+          RUN apt-get update && apt-get install -y --no-install-recommends libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 libasound2 fonts-liberation && rm -rf /var/lib/apt/lists/*
+          RUN pip install --no-cache-dir plotly==5.24.1 kaleido==0.2.1 numpy==1.26.4 pillow==12.3.0
+          EOF
+      - name: Compare rendering backends under independent 3 GiB limits
+        run: |
+          mkdir -p "${{ github.workspace }}/p67-evidence"
+          for mode in disposable adaptive cache; do
+            docker run --rm --memory=3g --memory-swap=3g --shm-size=256m \
+              -v "${{ github.workspace }}:/repo" -w /repo/tools/climate_analyzer \
+              -e PYTHONPATH=/repo/tools/climate_analyzer \
+              ige-p67 python tests/benchmark_p67_render.py --count ${{ matrix.count }} --mode "$mode" --out /repo/p67-evidence
+          done
+      - name: Upload timings and image comparisons
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p67-${{ matrix.count }}
+          path: p67-evidence/*.json
+          if-no-files-found: warn

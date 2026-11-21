@@ -9,7 +9,7 @@ import tempfile
 import time
 from .p66_memory import require_headroom
 
-def render_disposable(fig,target,*,scale=1.5,timeout=120):
+def render_disposable(fig,target,*,scale=1.5,timeout=120,_sample=None):
     target=Path(target)
     require_headroom()
     with tempfile.TemporaryDirectory(prefix="ige-render-") as tmp:
@@ -22,6 +22,7 @@ def render_disposable(fig,target,*,scale=1.5,timeout=120):
             try:
                 deadline=time.monotonic()+timeout
                 while proc.poll() is None:
+                    if _sample is not None:_sample()
                     require_headroom()
                     if time.monotonic()>=deadline:raise TimeoutError("Static figure render timed out.")
                     time.sleep(.20)
@@ -102,7 +103,7 @@ class RenderSession:
         if value:self.peak=max(self.peak,value[0])
         return value
 
-    def reusable(self,*,after=False):
+    def reusable(self):
         # Unknown container limit or non-POSIX process-tree semantics: use
         # existing disposable mode rather than retain unbounded browser state.
         value=self.sample()
@@ -230,16 +231,18 @@ class RenderSession:
                             self.fallbacks+=1
                             _LOG.warning("P6.7 worker retry using disposable renderer: %s",type(exc).__name__)
                             self.close_worker();target.unlink(missing_ok=True)
-                            render_disposable(fig,target,scale=scale,timeout=timeout)
+                            render_disposable(fig,target,scale=scale,timeout=timeout,_sample=self.sample)
                             info["backend"]="fallback"
                     else:
                         self.close_worker()
-                        render_disposable(fig,target,scale=scale,timeout=timeout)
+                        render_disposable(fig,target,scale=scale,timeout=timeout,_sample=self.sample)
                         info["backend"]="disposable"
                     if not _valid_png(target):raise RuntimeError("Invalid PNG from report renderer")
                     self.renders+=1
                     if key is not None:self._put_cache(key,target)
+                t=time.perf_counter()
                 if not self.reusable():self.close_worker()
+                info['post_render_cleanup_s']=time.perf_counter()-t
                 require_headroom()
         except BaseException:
             self.close_worker();target.unlink(missing_ok=True)
