@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from .aggregations import native_interval_hours
+from .chart_theme import WIND_SPEED_LABELS, WIND_SPEED_COLOR_MAP
 
 METRICS={
     "Temperature":("dry_bulb_temperature_c","°C","RdBu_r"),
@@ -12,6 +13,7 @@ METRICS={
     "Absolute humidity":("_absolute_humidity","g/m³","Blues"),
     "Enthalpy":("moist_air_enthalpy_kj_kg","kJ/kg dry air","Viridis"),
     "Natural ventilation suitability":("_nv_suitable","%","Greens"),
+    "Dynamic pressure potential":("_dynamic_pressure","Pa","Viridis"),
 }
 ANGLES=np.arange(16)*22.5
 COMPASS=["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"]
@@ -34,13 +36,20 @@ def direction_rows(df,speed="wind_speed_m_s",direction="wind_direction_deg"):
     data=pd.DataFrame({"speed":v,"sector":np.floor((a+11.25)/22.5)%16*22.5},index=df.index)
     return data.loc[valid].copy()
 
-def colour_options(df,nv=False):
+def dynamic_pressure(df,speed="wind_speed_m_s"):
+    rho=numeric(df,"moist_air_density_kg_m3")
+    v=numeric(df,speed)
+    return (.5*rho*v**2).where((rho>0)&(v>=0))
+
+def colour_options(df,nv=False,speed="wind_speed_m_s"):
     result=["Wind speed"]
     for label,(c,_,_) in METRICS.items():
         if label=="Absolute humidity":
             ok=absolute_humidity(df).notna().any()
         elif label=="Natural ventilation suitability":
             ok=nv
+        elif label=="Dynamic pressure potential":
+            ok=dynamic_pressure(df,speed).notna().any()
         else:
             ok=available(df,c)
         if ok: result.append(label)
@@ -60,6 +69,7 @@ def directional_table(df,*,speed="wind_speed_m_s",direction="wind_direction_deg"
     interval=native_interval_hours(df)
     if colour=="Wind speed": val=rows["speed"]
     elif colour=="Absolute humidity": val=absolute_humidity(df).loc[rows.index]
+    elif colour=="Dynamic pressure potential": val=dynamic_pressure(df,speed).loc[rows.index]
     elif colour=="Natural ventilation suitability":
         if nv_mask is None: raise ValueError("Suitability mask required")
         val=nv_mask.reindex(rows.index).astype(float)*100
@@ -135,3 +145,119 @@ def nv_valid_mask(df,mask,wind_filter=False):
     if wind_filter: required.append("wind_speed_m_s")
     valid=pd.DataFrame({c:numeric(df,c).notna() for c in required}).all(axis=1)
     return mask.where(valid)
+
+# Fixed physical thresholds (not data-dependent quantile bins) permit
+# comparisons across months, climates and wind datasets. Editable boundaries
+# are accepted for all scalar quantities; suitability is Boolean by definition.
+CLASS_EDGES={
+    "Wind speed":(1,2,4,6,8,12),
+    "Temperature":(0,10,20,25,30),
+    "Relative humidity":(20,40,60,80),
+    "Humidity ratio":(3,6,9,12,15),
+    "Absolute humidity":(3,6,9,12,15),
+    "Enthalpy":(0,20,40,60,80),
+    "Dynamic pressure potential":(1,5,10,25,50,100),
+}
+CLASS_UNITS={"Wind speed":"m/s",**{k:v[1] for k,v in METRICS.items()}}
+CLASS_UNITS["Natural ventilation suitability"]=""
+
+def class_values(df,rows,quantity,speed,nv_mask):
+    if quantity=="Wind speed":
+        return rows.speed
+    if quantity=="Absolute humidity":
+        return absolute_humidity(df).loc[rows.index]
+    if quantity=="Dynamic pressure potential":
+        return dynamic_pressure(df,speed).loc[rows.index]
+    if quantity=="Natural ventilation suitability":
+        if nv_mask is None: raise ValueError("Suitability mask required")
+        v=nv_mask.reindex(rows.index).astype(float)
+        return v.where(v.isin([0.,1.]))
+    v=numeric(df,METRICS[quantity][0]).loc[rows.index]
+    if quantity=="Relative humidity":
+        v=v.where(v.between(0,100))
+    elif quantity=="Humidity ratio":
+        v=v.where(v>=0)
+    return v
+
+def class_boundaries(text):
+    """Parse strictly increasing finite class edges, at most 9 boundaries."""
+    try:
+        values=tuple(float(v.strip()) for v in text.split(","))
+    except (TypeError,ValueError) as exc:
+        raise ValueError("Enter comma-separated numeric class boundaries.") from exc
+    if not 1<=len(values)<=9 or not np.isfinite(values).all() or np.any(np.diff(values)<=0):
+        raise ValueError("Enter 1–9 finite, strictly increasing class boundaries.")
+    return values
+
+def directional_class_table(df,*,speed="wind_speed_m_s",direction="wind_direction_deg",
+                            quantity="Wind speed",radial="Hours",edges=None,nv_mask=None):
+    """Mutually exclusive classes; denominator is all valid paired non-calm hours."""
+    if radial not in ("Hours","Percentage"):
+        raise ValueError("Class radii must be additive observation hours or percentages.")
+    rows=direction_rows(df,speed,direction)
+    rows["value"]=class_values(df,rows,quantity,speed,nv_mask)
+    rows=rows.dropna(subset=["value"])
+    if quantity=="Natural ventilation suitability":
+        labels=["Not suitable","Suitable"]
+        rows["class"]=pd.Categorical(rows.value.map({0.:"Not suitable",1.:"Suitable"}),categories=labels,ordered=True)
+        colours=["#9CA3AF","#16834A"]
+    else:
+        edges=CLASS_EDGES[quantity] if edges is None else tuple(edges)
+        if not 1<=len(edges)<=9 or not np.isfinite(edges).all() or np.any(np.diff(edges)<=0):
+            raise ValueError("Class boundaries must be finite and strictly increasing.")
+        legacy=quantity=="Wind speed" and tuple(edges)==CLASS_EDGES["Wind speed"]
+        if legacy:
+            labels=list(WIND_SPEED_LABELS)
+            bounds=[0.,*edges,np.inf]
+            colours=[WIND_SPEED_COLOR_MAP[v] for v in labels]
+        else:
+            labels=[f"< {edges[0]:g}"]+[f"{lo:g} – < {hi:g}" for lo,hi in zip(edges[:-1],edges[1:])]+[f"≥ {edges[-1]:g}"]
+            bounds=[-np.inf,*edges,np.inf]
+            from plotly.colors import sample_colorscale
+            scale="RdBu_r" if quantity in ("Temperature","Enthalpy") else "YlGnBu" if quantity in ("Relative humidity","Humidity ratio","Absolute humidity") else "Viridis"
+            colours=sample_colorscale(scale,np.linspace(.08,.94,len(labels)).tolist())
+        rows["class"]=pd.cut(rows.value,bounds,labels=labels,right=legacy,include_lowest=legacy)
+    counts=rows.groupby(["sector","class"],observed=True).size().unstack(fill_value=0).reindex(index=ANGLES,columns=labels,fill_value=0)
+    hours=counts.astype(float)*native_interval_hours(df)
+    total=float(hours.to_numpy().sum())
+    result=hours if radial=="Hours" else hours*100/total if total>0 else hours
+    result.index.name="azimuth_deg"
+    result.attrs.update({"valid_hours":total,"class_colours":dict(zip(labels,colours)),"quantity":quantity,
+                         "radial":radial,"unit":CLASS_UNITS[quantity]})
+    return result
+
+def directional_class_figure(table,title):
+    radial=table.attrs["radial"];quantity=table.attrs["quantity"];unit=table.attrs["unit"]
+    fig=go.Figure()
+    radius_unit="h" if radial=="Hours" else "%"
+    for label in table.columns:
+        name=f"{label} {unit}".strip()
+        fig.add_trace(go.Barpolar(theta=table.index,r=table[label],width=21.,name=name,
+            marker=dict(color=table.attrs["class_colours"][label],line=dict(width=.5,color="rgba(110,110,110,.3)")),
+            customdata=COMPASS,hovertemplate="%{customdata}<br>"+name+"<br>%{r:.2f} "+radius_unit+"<extra></extra>"))
+    fig.update_layout(template="plotly_white",title=title,barmode="stack",
+        legend=dict(title=dict(text=quantity),orientation="h",y=-.17),
+        polar=dict(barmode="stack",angularaxis=dict(rotation=90,direction="clockwise",tickvals=ANGLES,ticktext=COMPASS),
+            radialaxis=dict(rangemode="nonnegative",ticksuffix=" "+radius_unit)),
+        meta={"compass_polar":True},height=730)
+    return fig
+
+def class_interpretation(table):
+    total=table.attrs["valid_hours"]
+    if total<=0:
+        return "No coincident non-calm observations support the selected class distribution."
+    direction_totals=table.sum(axis=1); sector=direction_totals.idxmax()
+    dominant=direction_totals.loc[sector]
+    class_totals=table.sum(axis=0)
+    cls=class_totals.idxmax()
+    unit=table.attrs["unit"]; radial=table.attrs["radial"]
+    share=float(class_totals.loc[cls]/class_totals.sum()*100)
+    dominant_share=float(dominant/direction_totals.sum()*100)
+    nv=""
+    if table.attrs["quantity"]=="Natural ventilation suitability":
+        nv=f" Suitable conditions account for {class_totals['Suitable']/class_totals.sum()*100:.1f}% of the classified hours."
+    return (f"Wind from {COMPASS[int(round(sector/22.5))%16]} accounts for {dominant_share:.1f}% of classified observation hours. "
+            f"The most frequent {table.attrs['quantity'].lower()} class is {cls} {unit} ({share:.1f}%).{nv} "
+            f"All classes partition {total:.1f} valid non-calm hours. "
+            "Missing coincident inputs and calm intervals are excluded; percentage uses the sum of all classified hours, not the hours within each individual direction. "
+            "Colours indicate mutually exclusive classes, not per-direction means.")

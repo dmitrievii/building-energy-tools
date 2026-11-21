@@ -468,6 +468,7 @@ def page_derivation_flags(page: str) -> tuple[bool, bool]:
         "Overview",
         "Temperature",
         "Humidity and Psychrometrics",
+        "Wind and Ventilation",
         "Time Series and Overlay",
         "Natural Ventilation",
         "HVAC and Passive Design",
@@ -4117,22 +4118,56 @@ def render_wind(df: pd.DataFrame) -> None:
     from epw_climate_analyzer.directional_climate import (
         colour_options, radial_options, directional_table, directional_figure,
         directional_speed_figure, directional_interpretation, nv_valid_mask,
+        CLASS_EDGES, directional_class_table, directional_class_figure,
+        class_boundaries, class_interpretation,
     )
     if chart_group=="Directional statistics":
         fig=directional_speed_figure(data,speed_column,direction_column,f"{selected_dataset} directional speed distribution · {period_label}")
         render_plot(fig,"Distribution of non-calm paired wind speeds within sixteen meteorological FROM-direction sectors.")
         return
-    radial=st.selectbox("Radial quantity",radial_options(data,selected_dataset=="Mean wind"),key="wind_rose_radial_quantity")
-    colour=st.selectbox("Colour mapped quantity",colour_options(data,nv=has_nv_inputs and selected_dataset=="Mean wind"),key="wind_rose_colour_quantity")
-    if radial=="Hours" and colour=="Wind speed":
-        fig = wind_rose_chart(data, f"{selected_dataset} wind rose · {period_label}",
-                             speed_column=speed_column, direction_column=direction_column)
-        render_plot(fig, interpretation)
+    exposure=[v for v in radial_options(data,selected_dataset=="Mean wind") if v in ("Wind-driven rain exposure","Dynamic pressure potential")]
+    styles=["Class distribution","Directional mean"]+(["Directional exposure"] if exposure else [])
+    style=st.selectbox("Chart type",styles,key="wind_rose_representation")
+    if style=="Class distribution":
+        radial=st.selectbox("Radial quantity",["Hours","Percentage"],key="wind_rose_class_radial")
+    elif style=="Directional exposure":
+        radial=st.selectbox("Radial quantity",exposure,key="wind_rose_exposure_radial")
     else:
-        nv_mask=None
-        if colour=="Natural ventilation suitability":
-            nv_mask=nv_valid_mask(data,natural_ventilation_condition(data))
-            st.caption("Natural ventilation uses the existing default outdoor suitability limits; the Natural Ventilation page supports adjustable thresholds.")
+        radial=st.selectbox("Radial quantity",["Hours","Percentage","Mean wind speed"],key="wind_rose_mean_radial")
+    colour=st.selectbox("Colour mapped quantity",colour_options(data,nv=has_nv_inputs and selected_dataset=="Mean wind",speed=speed_column),key="wind_rose_colour_quantity")
+    nv_mask=None
+    if colour=="Natural ventilation suitability":
+        c1,c2,c3=st.columns(3)
+        tmin=c1.number_input("Minimum outdoor temperature [°C]",value=16.,step=.5,key="wind_nv_tmin")
+        tmax=c2.number_input("Maximum outdoor temperature [°C]",value=26.,step=.5,key="wind_nv_tmax")
+        dmax=c3.number_input("Maximum humidity ratio [g/kg]",min_value=0.,value=9.,step=.5,key="wind_nv_dmax")
+        if tmin>tmax:
+            st.warning("Minimum temperature must not exceed maximum.")
+            return
+        nv_mask=nv_valid_mask(data,natural_ventilation_condition(data,tmin,tmax,dmax))
+        st.caption("Suitable means the selected temperature and humidity-ratio limits are met; actual ventilation capacity is not calculated.")
+    if style=="Class distribution":
+        edges=None
+        if colour in CLASS_EDGES:
+            default=", ".join(f"{v:g}" for v in CLASS_EDGES[colour])
+            with st.expander("Class boundaries",expanded=False):
+                text=st.text_input("Class limits (comma-separated)",value=default,key="wind_class_limits_"+colour)
+                st.caption("Fixed physical limits allow comparison across months and climates. Edit to customize.")
+            try:
+                edges=class_boundaries(text)
+            except ValueError as exc:
+                st.info(str(exc))
+                return
+        table=directional_class_table(data,speed=speed_column,direction=direction_column,quantity=colour,
+                                      radial=radial,edges=edges,nv_mask=nv_mask)
+        if table.attrs["valid_hours"]<=0:
+            st.info("No valid coincident non-calm observations remain.")
+            return
+        fig=directional_class_figure(table,f"{selected_dataset} · {colour} classes · {period_label}")
+        render_plot(fig,class_interpretation(table))
+        with st.expander("Directional class data"):
+            st.dataframe(table,use_container_width=True)
+    else:
         table=directional_table(data,speed=speed_column,direction=direction_column,radial=radial,colour=colour,nv_mask=nv_mask)
         fig=directional_figure(table,radial,colour,f"{selected_dataset} · {radial} · {period_label}")
         render_plot(fig,directional_interpretation(table,radial,colour))
@@ -4652,10 +4687,10 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
         ] + (["Directional analysis"] if wind_available and "wind_direction_deg" in df and df["wind_direction_deg"].notna().any() else []),
     )
     if chart_group == "Directional analysis":
-        from epw_climate_analyzer.directional_climate import directional_table, directional_figure, directional_interpretation, nv_valid_mask
-        table=directional_table(df,radial="Hours",colour="Natural ventilation suitability",nv_mask=nv_valid_mask(df,mask,wind_filter))
-        render_plot(directional_figure(table,"Hours","Natural ventilation suitability","Directional natural ventilation suitability"),
-                    directional_interpretation(table,"Hours","Natural ventilation suitability"))
+        from epw_climate_analyzer.directional_climate import directional_class_table, directional_class_figure, class_interpretation, nv_valid_mask
+        radial=st.selectbox("Radial quantity",["Hours","Percentage"],key="nv_directional_radial")
+        table=directional_class_table(df,radial=radial,quantity="Natural ventilation suitability",nv_mask=nv_valid_mask(df,mask,wind_filter))
+        render_plot(directional_class_figure(table,"Directional natural ventilation suitability"),class_interpretation(table))
     elif chart_group == "Heat map":
         row_group = st.radio("Heat-map aggregation", ["Day", "Week", "Month"], horizontal=True)
         compare_options = ["Hour of day"] if time_basis(df_nv) == CHRONOLOGICAL else ["Hour of day", "Year"]

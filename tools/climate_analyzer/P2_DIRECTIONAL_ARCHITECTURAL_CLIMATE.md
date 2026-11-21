@@ -18,3 +18,6 @@ Radiance genskyvec patch convention: https://floyd.lbl.gov/radiance/man_html/gen
 Tregenza/Reinhart MF1/MF2 count excludes ground.
 ## Verification
 Numerical fixtures, energy conservation, directional weighting, missing input/geometry, direct shading analytical cases, POA consistency, reference image opt-in, browser 2D/3D trace construction and image-layer existence. Independent Perez benchmark, shading area-resolution convergence, live source/browser and export fidelity remain qualification work. No P3/P4/P5/P6 modifications.
+
+## Wind Wheel class-distribution correction
+The EPW Wind page now requests the existing psychrometric engine, matching the historical source route. The Wind rose defaults to Class distribution for every colour quantity, with additive hours or global percentage. Fixed physical class thresholds are editable; conventional wind-speed class limits retained. Natural ventilation suitability uses two classes and configurable T/Humidity ratio thresholds. Dynamic pressure is a selectable class quantity in Pa as well as a conditional mean exposure indicator. Directional mean and directional exposure remain explicit alternate representations. Non-calm paired valid hours define the denominator; no mean/range values are stacked as if additive. No new psychrometric formula or fallback density is introduced.

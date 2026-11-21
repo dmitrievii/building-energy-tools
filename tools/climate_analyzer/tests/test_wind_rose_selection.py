@@ -91,6 +91,7 @@ def wind_interpretation(df):
 def render_plot(fig,text):
     st.session_state["test_hours"]=sum(sum(float(v) for v in t.r) for t in fig.data)
     st.session_state["test_title"]=fig.layout.title.text
+    st.session_state["test_trace_count"]=len(fig.data)
     st.plotly_chart(fig,key="wind_test")
 """
         app=AppTest.from_string(script+"\n"+renderer+"\nrender_wind(df)",default_timeout=45).run()
@@ -101,6 +102,8 @@ def render_plot(fig,text):
         self.assertEqual(app.selectbox(key="wind_rose_aggregation").value,"Annual")
         self.assertFalse(app.checkbox(key="wind_rose_daynight").value)
         self.assertEqual(app.session_state["test_hours"],4.)
+        self.assertEqual(app.selectbox(key="wind_rose_representation").value,"Class distribution")
+        self.assertEqual(app.session_state["test_trace_count"],7)
         app.selectbox(key="wind_rose_aggregation").set_value("Monthly").run()
         app.selectbox(key="wind_month").set_value("Jun").run()
         self.assertFalse(app.exception)
