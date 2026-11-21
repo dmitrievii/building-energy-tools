@@ -3949,6 +3949,8 @@ def render_temporal_shading(df,*,geometry,has_energy):
         data=filter_year(data,year)
         st.caption("One source year is displayed at a time; no cross-year pooling or annualization.")
     metrics=([ENERGY,REDUCTION] if has_energy else [])+[AREA]
+    if st.session_state.get("shading_temporal_metric") not in metrics:
+        st.session_state["shading_temporal_metric"]=metrics[0]
     metric=st.selectbox("Quantity",metrics,key="shading_temporal_metric")
     chart=st.selectbox("Chart type",["Monthly rose","Month–hour heat map"],key="shading_temporal_chart")
     device=st.selectbox("Shading device",[TOTAL_DEVICE,*DEVICES],key="shading_temporal_device") if chart=="Month–hour heat map" else TOTAL_DEVICE
@@ -3962,7 +3964,8 @@ def render_temporal_shading(df,*,geometry,has_energy):
         REDUCTION:"Percentage of available unshaded direct façade irradiation intercepted, calculated as a ratio of energy sums. No direct beam means an undefined percentage.",
         AREA:"Mean geometrically shaded window area during front-facing daylight intervals, independent of irradiance and clouds. No front-facing sun means an undefined percentage.",
     }
-    render_plot(fig,explanations[metric]+" Contributions are assigned to the first device hit by each ray: overhang, left fin or right fin, without double counting. Missing or undefined bins are blank. Source analysis-clock timestamp labels are retained. Diffuse and ground-reflected irradiation are unchanged.")
+    missing_note=" Gray bins are missing or undefined; white means zero." if chart=="Month–hour heat map" else " Missing or undefined months have no bar."
+    render_plot(fig,explanations[metric]+" Contributions are assigned to the first device hit by each ray: overhang, left fin or right fin, without double counting."+missing_note+" Source analysis-clock timestamp labels are retained. Diffuse and ground-reflected irradiation are unchanged.")
     st.download_button("Shading month–hour data · CSV",cells.to_csv().encode("utf-8"),"shading_month_hour.csv","text/csv",key="shading_temporal_csv")
 
 
