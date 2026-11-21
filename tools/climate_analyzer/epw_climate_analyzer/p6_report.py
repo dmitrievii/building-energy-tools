@@ -294,20 +294,39 @@ def _pdf_report(items,title,paper,orientation,*,image_renderer=None,use_osm=Fals
         for c in contexts(entries):
             body.extend([para(concise_context(c)),stats_table(c.get("statistics",{}).get("chapter",[])),Spacer(1,7)])
         for k,item in enumerate(entries,1):
-            body.extend([PageBreak(),para(f"{chapter_no}.{k} · {item['title']}","ReportFigure")])
-            if len(contexts(entries))>1:body.append(para(concise_context(item["context"])))
+            heading=f"{chapter_no}.{k} · {item['title']}"
+            before=[para(heading,"ReportFigure")]
+            if len(contexts(entries))>1:before.append(para(concise_context(item["context"])))
             fig=pio.from_json(item["figure"])
             zones=zone_legend_entries(fig)
-            h=figure_height(fig,width,doc.height)
-            if zones:
-                key=zone_table(zones)
-                _,key_h=key.wrap(width,doc.height)
-                h=min(h,max(150,doc.height-key_h-91))
-            body.extend([image(fig,h,item["title"]),Spacer(1,5)])
+            legend=[para("Bioclimatic zones"),zone_table(zones),Spacer(1,6)] if zones else []
+            explanation=[]
+            if item["interpretation"]:explanation.extend([para("Interpretation","ReportFigure"),para(item["interpretation"])])
+            if item.get("note"):explanation.append(para(item["note"]))
+            # SimpleDocTemplate's default frame has 6 pt padding on each
+            # side. Reserve all wrapped text, external legends and spacing
+            # before selecting the physical chart render size. Summing both
+            # adjacent spaces is intentionally conservative.
+            available=doc.height-12
+            def occupied(flowables):
+                return sum(f.wrap(width,available)[1]+f.getSpaceBefore()+f.getSpaceAfter()
+                           for f in flowables)
+            overhead=occupied(before+legend)+5+2
+            preferred=figure_height(fig,width,doc.height)
+            room=available-overhead
+            # If the full note would make the chart too small, keep the
+            # complete explanation on a deliberately titled continuation.
+            min_chart=min(155.,preferred)
+            continued=bool(explanation) and room-occupied(explanation)<min_chart
+            h=min(preferred,room if continued else room-occupied(explanation))
+            if h<80:raise ValueError(f"Too little printable chart area for {item['title']}. Choose A3.")
+            body.extend([PageBreak(),*before,image(fig,h,item["title"]),Spacer(1,5),*legend])
             del fig
-            if zones:body.extend([para("Bioclimatic zones"),key,Spacer(1,6)])
-            if item["interpretation"]:body.extend([para("Interpretation","ReportFigure"),para(item["interpretation"])])
-            if item.get("note"):body.append(para(item["note"]))
+            if continued:
+                body.extend([PageBreak(),para(heading+" — Interpretation","ReportFigure")])
+                if item["interpretation"]:body.append(para(item["interpretation"]))
+                if item.get("note"):body.append(para(item["note"]))
+            else:body.extend(explanation)
     def footer(canvas,doc):
         require_headroom()
         canvas.saveState();canvas.setFont("Helvetica",9);canvas.setFillColor(colors.HexColor("#52606D"))

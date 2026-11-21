@@ -78,6 +78,35 @@ class P6Tests(unittest.TestCase):
         def bad(_):raise ValueError("No render")
         with self.assertRaises(RuntimeError):r.pdf_report([item],"Test","A4","Landscape",image_renderer=bad)
 
+    def test_polar_report_keeps_full_interpretation_on_chart_page(self):
+        import re
+        fig=go.Figure(go.Barpolar(r=[2,4,6,8],theta=[0,90,180,270]))
+        fig.update_layout(title="Wind rose")
+        context={"source":"Synthetic fixture","page":"Wind"}
+        short=r.snapshot(fig,context,"Short interpretation.")
+        long=r.snapshot(fig,context,
+            ("Mean wind speed and directional distribution are based on valid observations. "*5)
+            +"\n\n"+("The frequency classes partition the observations without double counting. "*7))
+        long["note"]="Additional explanatory note. "*5
+        sizes=[]
+        def renderer(f):
+            w,h=int(f.layout.width),int(f.layout.height)
+            sizes.append(h)
+            b=io.BytesIO();Image.new("RGB",(w,h),"white").save(b,format="PNG");return b.getvalue()
+        def count_pages(pdf):
+            return len(re.findall(rb"/Type\s*/Page\b",pdf))
+        for paper in ("A4","A3"):
+            for orientation in ("Landscape","Portrait"):
+                sizes.clear()
+                p1=r.pdf_report([short],"Test",paper,orientation,image_renderer=renderer)
+                short_h=sizes[-1]
+                p2=r.pdf_report([long],"Test",paper,orientation,image_renderer=renderer)
+                self.assertGreater(count_pages(p1),0)
+                self.assertEqual(count_pages(p1),count_pages(p2),(paper,orientation))
+                self.assertLessEqual(sizes[-1],short_h)
+                if (paper,orientation)==("A4","Landscape"):
+                    self.assertLess(sizes[-1],short_h)
+
     def test_static_plotly_pdf_smoke(self):
         fig=go.Figure(go.Scatter(x=[1,2],y=[2,3]))
         item=r.snapshot(fig,{"source":"Synthetic fixture"},"Static renderer smoke")
