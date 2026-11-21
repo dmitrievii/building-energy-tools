@@ -2152,7 +2152,7 @@ def render_extended_variable_chart(df, column, unit, chart_type, *, key_prefix="
         v=pd.to_numeric(df[column],errors="coerce").dropna()
         if v.empty:
             return
-        from epw_climate_analyzer.extended_visualization import occurrence_default_edges,occurrence_boundary_label,DEPTH_OCCURRENCE_COLUMNS
+        from epw_climate_analyzer.extended_visualization import occurrence_default_edges,occurrence_boundary_label,DEPTH_OCCURRENCE_COLUMNS,ILLUMINANCE_OCCURRENCE_COLUMNS,ILLUMINANCE_OCCURRENCE_NOTE
         basis=st.selectbox("Occurrence basis",["Hours","Days","Percentage"],key=key_prefix+"_occ_basis")
         statistic="Mean"
         if basis=="Days":
@@ -2162,9 +2162,11 @@ def render_extended_variable_chart(df, column, unit, chart_type, *, key_prefix="
                                    key=key_prefix+"_day_stat")
         default=", ".join(occurrence_boundary_label(x) for x in occurrence_default_edges(v,column,basis=basis,daily_stat=statistic))
         depth=column in DEPTH_OCCURRENCE_COLUMNS
-        edge_key=key_prefix+"_edges_"+column+("_positive_v2_"+basis+"_"+statistic if depth else "")
-        boundaries=st.text_input("Positive depth boundaries (comma-separated)" if depth else "Class boundaries (comma-separated)",value=default,key=edge_key)
+        illuminance=column in ILLUMINANCE_OCCURRENCE_COLUMNS
+        edge_key=key_prefix+"_edges_"+column+("_positive_v2_"+basis+"_"+statistic if depth or illuminance else "")
+        boundaries=st.text_input("Positive illuminance boundaries [lx] (comma-separated)" if illuminance else "Positive depth boundaries (comma-separated)" if depth else "Class boundaries (comma-separated)",value=default,key=edge_key)
         if depth:st.caption("Zero has its own class. Negative or missing depths are excluded; positive classes describe the selected depth statistic, not precipitation rate.")
+        if illuminance:st.caption(ILLUMINANCE_OCCURRENCE_NOTE)
         try:
             table=occurrence_table(df,column,[float(i.strip()) for i in boundaries.split(",") if i.strip()],basis=basis,daily_stat=statistic)
         except ValueError as exc:

@@ -326,6 +326,29 @@ class CalendarHeatmapTests(unittest.TestCase):
             with self.assertRaises(ValueError):occurrence_table(df,c,[0.,1.])
         self.assertEqual(occurrence_default_edges(pd.Series([0.]),"liquid_precipitation_depth_mm",basis="Days",daily_stat="Total"),[1.,5.,10.,20.])
 
+    def test_illuminance_occurrence_fixed_classes_and_zero(self):
+        from epw_climate_analyzer.extended_visualization import occurrence_default_edges,occurrence_table,occurrence_figure,ILLUMINANCE_OCCURRENCE_COLUMNS
+        edges=[100.,1000.,5000.,10000.,25000.,50000.,100000.]
+        for c in ILLUMINANCE_OCCURRENCE_COLUMNS:
+            vals=[0.,0.,1.,*edges,-1.,np.nan]
+            df=pd.DataFrame({c:vals},index=pd.date_range("2026-01-01",periods=len(vals),freq="h"))
+            self.assertEqual(occurrence_default_edges(pd.Series([0.,0.,0.]),c),edges)
+            table=occurrence_table(df,c,edges)
+            self.assertEqual(len(table.columns),9)
+            self.assertEqual(table.iloc[0,0],2.)
+            np.testing.assert_allclose(table.iloc[0,1:],np.ones(8))
+            self.assertEqual(table.sum().sum(),len(vals)-2)
+            self.assertAlmostEqual(occurrence_table(df,c,edges,basis="Percentage").sum().sum(),100.)
+            fig=occurrence_figure(table,"lx","Hours")
+            self.assertEqual(fig.data[0].name,"No recorded illumination (= 0) lx")
+            self.assertEqual(fig.data[0].marker.color,"#E5E7EB")
+            self.assertEqual(len({x.marker.color for x in fig.data}),9)
+            with self.assertRaises(ValueError):occurrence_table(df,c,[0.,100.])
+            daily=pd.DataFrame({c:np.repeat([0.,1000.,10000.,-1.],24)},index=pd.date_range("2026-01-01",periods=96,freq="h"))
+            d=occurrence_table(daily,c,edges,basis="Days",daily_stat="Mean")
+            self.assertEqual(d.sum().sum(),3.)
+            self.assertEqual(d.iloc[0,0],1.)
+
     def test_illuminance_white_zero_and_stable_source_domain(self):
         from epw_climate_analyzer.chart_theme import ILLUMINANCE_COLORSCALE,metric_colorscale,SOLAR_COLORSCALE
         from epw_climate_analyzer.charts import temporal_heatmap_chart
