@@ -215,8 +215,6 @@ def catalogue(df,context,coverage=FULL):
     add(HVAC,"Adaptive comfort · Categories I–III","adaptive",ok=hourly and has(T))
     for c in (T,W,H):
         for upper in (True,False):
-            add(HVAC,f"{LABELS[c]} · {'upper' if upper else 'lower'} design quantiles","design_tail",c,UNITS[c],(upper,),ok=hourly and has(c))
-            add(HVAC,f"{LABELS[c]} · {'upper' if upper else 'lower'} observed exceedance","tail_curve",c,UNITS[c],(upper,),ok=hourly and has(c))
             add(HVAC,f"{LABELS[c]} · {'upper' if upper else 'lower'} critical 3-day windows","critical_windows",c,UNITS[c],(upper,),ok=hourly and has(c))
     for model in ("Uniform radiant offset","Open sun","Direct-beam shade"):
         for style in ("heatmap","duration","stress"):

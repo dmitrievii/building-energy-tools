@@ -291,11 +291,6 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         if not table["Running mean"].notna().any():raise NotApplicable(adaptive_interpretation(table))
         f=adaptive_figure(table);note=adaptive_interpretation(table)
         title="Adaptive comfort · Categories I–III"
-    elif k=="design_tail":
-        t=p4.design_conditions(df,c,[.4,1.,2.,5.],upper=a[0])
-        if t.empty:raise NotApplicable("No valid tail observations.")
-        f=go.Figure(go.Scatter(x=t["Nominal tail [%]"],y=t.Quantile,mode="lines+markers")).update_layout(template="plotly_white",xaxis_title="Nominal tail [%]",yaxis_title=u)
-        note+=" Empirical selected-sample quantiles; not certified design conditions."
     elif k=="utci":
         model,style=a
         mode="Uniform radiant offset" if model=="Uniform radiant offset" else "Open-sky screening"
@@ -314,11 +309,6 @@ def make_figure(d,df,context,reference_df=None,cache=None):
                 if c1 in table:f.add_bar(x=table.index,y=table[c1],name=c1,marker_color=color)
             f.update_layout(barmode="stack",yaxis_title="Hours")
         note+=" UTCI research screening; wind assumed at 10 m, uniform MRT=T or simplified open-sky radiation. Out-of-domain states remain missing."
-    elif k=="tail_curve":
-        v=s.dropna().sort_values(ascending=not a[0])
-        if v.empty:raise NotApplicable("No valid tail observations.")
-        f=go.Figure(go.Scatter(x=np.arange(1,len(v)+1)*100/len(v),y=v,mode="lines")).update_layout(xaxis_title="Rank fraction [%]",yaxis_title=u)
-        note+=" Empirical ranks, no extrapolation."
     elif k=="critical_windows":
         ranked=p4.rolling_windows(df,c,72).dropna().sort_values(ascending=not a[0],kind="stable")
         chosen=[];span=pd.Timedelta(hours=72);step=p4.cadence(df)

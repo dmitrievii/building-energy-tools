@@ -196,7 +196,7 @@ def hvac_panel(df,render):
     label=st.selectbox("Governing quantity",list(options),key="p4_hvac_quantity")
     column=options[label]
     upper=st.radio("Tail",["Upper (cooling / moisture)","Lower (heating)"],horizontal=True,key="p4_hvac_tail")=="Upper (cooling / moisture)"
-    view=st.selectbox("Chart type",["Statistical design conditions","Tail exceedance curve","Critical multiday sequences"],key="p4_hvac_view")
+    view=st.selectbox("Analysis type",["Statistical design conditions","Critical multiday sequences"],key="p4_hvac_view")
     st.caption("Empirical statistics of the selected records. EPW/TMY/generated data are screening only; these are not normative ASHRAE/ÖNORM station design values or inferred return periods.")
     if view=="Critical multiday sequences":
         n=st.number_input("Continuous window [days]",1,30,3,1,key="p4_hvac_window")
@@ -218,13 +218,6 @@ def hvac_panel(df,render):
     a=p.design_conditions(df,column,[.4,1.,2.,.5,1.5,5.],upper=upper,coincident=[v for v in (p.T,p.W,p.H,p.RH,p.V) if v!=column and numeric(df,v).notna().any()])
     if a.empty:st.info("No valid observations.");return
     a=a.sort_values("Nominal tail [%]")
-    if view=="Tail exceedance curve":
-        s=np.sort(p.valid_values(df,column).dropna().to_numpy())
-        if upper:s=s[::-1]
-        percent=np.arange(1,len(s)+1)*100/len(s)
-        fig=go.Figure(go.Scatter(x=percent,y=s,mode="lines",name=label))
-        fig.update_layout(template="plotly_white",title="Empirical tail exceedance curve" if upper else "Empirical lower-tail curve",xaxis_title="Rank fraction of valid observed hours [%]",yaxis_title=label)
-        render(fig,"Observed rank distribution, not an extrapolation. Ties share a physical value; nominal rank fraction differs from inclusive threshold exceedance.")
     _show_table(a,"hvac_design")
     st.caption("Quantile uses linear sample interpolation; closest actual timestamp retains coincident conditions. Tail means use the inclusive tail and report paired-hour counts. These are not standardized mean-coincident design bins.")
 

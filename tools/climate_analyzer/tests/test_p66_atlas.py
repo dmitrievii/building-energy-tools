@@ -66,6 +66,14 @@ class AtlasTests(unittest.TestCase):
         self.assertIn("0/366",note)
         self.assertIn("below 10 °C: 359 days",note)
 
+    def test_redundant_tail_diagrams_removed(self):
+        df=self.fixture()
+        for coverage in c.LEVELS:
+            rows=c.catalogue(df,{},coverage)
+            self.assertFalse(any(d.kind in ("design_tail","tail_curve") for d in rows))
+            self.assertEqual(len([d for d in rows if d.kind=="critical_windows"]),6)
+            self.assertTrue(any(d.kind=="duration" and d.column==c.T for d in rows))
+
     def test_monthly_source_no_hourly_invention(self):
         df=self.fixture().iloc[[0]].copy();df.attrs["canonical_native_resolution"]="monthly"
         rows=c.catalogue(df,{},c.FULL)
@@ -73,7 +81,7 @@ class AtlasTests(unittest.TestCase):
         self.assertTrue(any(d.kind=="native" and d.status=="available" for d in rows))
     def test_core_chart_families_execute(self):
         df=self.fixture();rows=[d for d in c.catalogue(df,{},c.FULL) if d.status=="available"]
-        types=("time_series","profile","percentile","heatmap","duration","histogram","box","violin","diurnal","occurrence","amplitude","total","degree","temp_threshold","temp_events","day_indicators","wind_mean","wind_classes","wetdry","rolling","cumulative","freeze_days","eligibility_map","eligibility_total","nv_special","design_tail","tail_curve","critical_windows","correlation","joint")
+        types=("time_series","profile","percentile","heatmap","duration","histogram","box","violin","diurnal","occurrence","amplitude","total","degree","temp_threshold","temp_events","day_indicators","wind_mean","wind_classes","wetdry","rolling","cumulative","freeze_days","eligibility_map","eligibility_total","nv_special","critical_windows","correlation","joint")
         cache={}
         for k in types:
             rows_k=[d for d in rows if d.kind==k]
