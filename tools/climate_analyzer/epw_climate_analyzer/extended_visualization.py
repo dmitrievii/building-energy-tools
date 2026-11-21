@@ -17,11 +17,40 @@ T = "dry_bulb_temperature_c"
 P = "liquid_precipitation_depth_mm"
 SNOW = "snow_depth_cm"
 DEPTH_OCCURRENCE_COLUMNS = (P,SNOW)
-from .chart_theme import ILLUMINANCE_COLUMNS
+from .chart_theme import ILLUMINANCE_COLUMNS,is_irradiation_metric
 ILLUMINANCE_OCCURRENCE_COLUMNS = ILLUMINANCE_COLUMNS
 ZERO_OCCURRENCE_COLUMNS = DEPTH_OCCURRENCE_COLUMNS + ILLUMINANCE_OCCURRENCE_COLUMNS
 ILLUMINANCE_OCCURRENCE_EDGES = (100.,1000.,5000.,10000.,25000.,50000.,100000.)
 ILLUMINANCE_OCCURRENCE_NOTE = ("Zero lux is a separate class (no recorded illumination). Negative and missing observations are excluded. Positive boundaries are descriptive outdoor illuminance classes, not indoor lighting requirements, UDI thresholds or sky-condition classifications.")
+SHORTWAVE_OCCURRENCE_EDGES = (50.,100.,200.,400.,600.,800.,1000.,1200.)
+SHORTWAVE_DAILY_EDGES = (500.,1000.,2000.,4000.,6000.,8000.,10000.,12000.)
+LONGWAVE_OCCURRENCE_EDGES = (200.,250.,300.,350.,400.,450.,500.)
+LONGWAVE_DAILY_EDGES = (4800.,6000.,7200.,8400.,9600.,10800.,12000.)
+DIFFUSE_FRACTION_EDGES = (20.,40.,60.,80.)
+
+def radiation_occurrence_kind(column):
+    if not is_irradiation_metric(column):return None
+    if column.endswith("_pct"):return "fraction"
+    if column.endswith(("_wh_m2","_w_m2")):
+        return "longwave" if any(s in column for s in ("infrared","longwave")) else "shortwave"
+    return None
+
+def radiation_occurrence_note(column,interval_hours=1.,*,basis="Hours",daily_stat="Mean"):
+    kind=radiation_occurrence_kind(column)
+    if kind is None:return ""
+    if kind=="fraction":
+        return "Diffuse fraction classes use fixed 0–100% boundaries; values outside that range are excluded. Zero fraction is not zero irradiation. Undefined ratios remain missing."
+    if column.endswith("_w_m2"):
+        units="Reference classes describe irradiance in W/m²."
+    elif basis=="Days" and daily_stat=="Total":
+        units="Reference classes describe daily integrated irradiation in Wh/m²."
+    else:
+        units=f"Reference irradiance bands are converted to Wh/m² per {interval_hours:g} h native source interval; daily mean/minimum/maximum refer to those interval quantities."
+    return units+" Zero recorded radiation is separate; negative and missing observations are excluded. Classes are descriptive, not normative or sky-condition classifications."
+
+def zero_occurrence_kind(column):
+    return column in ZERO_OCCURRENCE_COLUMNS or radiation_occurrence_kind(column) is not None
+
 NEW_TYPES = ("Typical daily profile", "Monthly occurrence classes")
 
 
@@ -190,7 +219,7 @@ def _complete_daily(df,column,stat):
     return out.where(groups.count().to_numpy()==expected)
 
 
-def occurrence_default_edges(values,column,*,basis="Hours",daily_stat="Mean"):
+def occurrence_default_edges(values,column,*,basis="Hours",daily_stat="Mean",interval_hours=1.):
     """Readable reference classes; use displayed thresholds for actual binning."""
     v=pd.to_numeric(values,errors="coerce")
     v=v[np.isfinite(v)]
@@ -200,6 +229,14 @@ def occurrence_default_edges(values,column,*,basis="Hours",daily_stat="Mean"):
         return [1.,5.,10.,20.] if basis=="Days" and daily_stat=="Total" else [.1,1.,5.,10.]
     if column==SNOW:return [1.,5.,10.,20.,50.]
     if column in ILLUMINANCE_OCCURRENCE_COLUMNS:return list(ILLUMINANCE_OCCURRENCE_EDGES)
+    kind=radiation_occurrence_kind(column)
+    if kind=="fraction":return list(DIFFUSE_FRACTION_EDGES)
+    if kind:
+        if not np.isfinite(interval_hours) or interval_hours<=0:raise ValueError("Invalid radiation source cadence.")
+        if column.endswith("_wh_m2") and basis=="Days" and daily_stat=="Total":
+            return list(LONGWAVE_DAILY_EDGES if kind=="longwave" else SHORTWAVE_DAILY_EDGES)
+        scale=interval_hours if column.endswith("_wh_m2") else 1.
+        return [float(f"{edge*scale:.10g}") for edge in (LONGWAVE_OCCURRENCE_EDGES if kind=="longwave" else SHORTWAVE_OCCURRENCE_EDGES)]
     if column==T:return [0.,15.,25.,30.]
     raw=v.quantile([.25,.5,.75]).to_numpy(dtype=float)
     if "temperature" in column:
@@ -221,20 +258,27 @@ def occurrence_table(df,column,edges,*,basis="Hours",daily_stat="Mean"):
     if not edges or not np.isfinite(edges).all() or any(b<=a for a,b in zip(edges,edges[1:])):
         raise ValueError("Class boundaries must be finite, strictly increasing numbers.")
     daily=basis=="Days"
-    zero_separate=column in ZERO_OCCURRENCE_COLUMNS
+    radiation_kind=radiation_occurrence_kind(column)
+    zero_separate=zero_occurrence_kind(column)
     if zero_separate:
         if any(e<=0 for e in edges):
             raise ValueError("Positive class boundaries are required; zero is a separate class.")
         # Reject invalid negative observations before daily aggregation.
         source=df.copy(deep=False)
         numeric=_numeric(df,column)
-        source[column]=numeric.where(numeric.ge(0))
+        valid=numeric.ge(0)
+        if radiation_kind=="fraction":
+            if any(e>100 for e in edges):raise ValueError("Diffuse fraction boundaries must not exceed 100%.")
+            valid &= numeric.le(100)
+        source[column]=numeric.where(valid)
     else:source=df
     v=_complete_daily(source,column,daily_stat) if daily else _numeric(source,column)
     v=v.dropna()
     text=[occurrence_boundary_label(x) for x in edges]
     if zero_separate:
-        zero="Dry (= 0)" if column==P else "Snow-free (= 0)" if column==SNOW else "No recorded illumination (= 0)"
+        zero=("Dry (= 0)" if column==P else "Snow-free (= 0)" if column==SNOW else
+              "No recorded illumination (= 0)" if column in ILLUMINANCE_OCCURRENCE_COLUMNS else
+              "No diffuse fraction (= 0)" if radiation_kind=="fraction" else "No recorded radiation (= 0)")
         labels=[zero,f"0 < x < {text[0]}"]+[f"{a} – < {b}" for a,b in zip(text,text[1:])]+[f"≥ {text[-1]}"]
     else:
         labels=[f"< {text[0]}"]+[f"{a} – < {b}" for a,b in zip(text,text[1:])]+[f"≥ {text[-1]}"]
@@ -262,14 +306,14 @@ def occurrence_table(df,column,edges,*,basis="Hours",daily_stat="Mean"):
 def occurrence_figure(table,unit,basis):
     fig=go.Figure()
     column=table.attrs.get("occurrence_column")
-    if column in ZERO_OCCURRENCE_COLUMNS:
+    if zero_occurrence_kind(column):
         from .chart_theme import metric_colorscale
         from plotly.colors import sample_colorscale
         n=len(table.columns)
-        palette=["#E5E7EB"]+sample_colorscale(metric_colorscale(column),np.linspace(.10 if column in ILLUMINANCE_OCCURRENCE_COLUMNS else .20,1.,max(1,n-1)).tolist())
+        palette=["#E5E7EB"]+sample_colorscale(metric_colorscale(column),np.linspace(.10 if column in ILLUMINANCE_OCCURRENCE_COLUMNS or radiation_occurrence_kind(column) else .20,1.,max(1,n-1)).tolist())
     else:palette=["#2563EB","#0EA5E9","#059669","#EAB308","#EA580C","#DC2626"]
     for i,c in enumerate(table):
-        color=palette[i] if column in ZERO_OCCURRENCE_COLUMNS else palette[min(len(palette)-1,int(i*len(palette)/max(1,len(table.columns))))]
+        color=palette[i] if zero_occurrence_kind(column) else palette[min(len(palette)-1,int(i*len(palette)/max(1,len(table.columns))))]
         fig.add_bar(x=table.index,y=table[c],name=(c+" "+unit).strip(),marker_color=color)
     fig.update_layout(template="plotly_white",title="Monthly occurrence classes",
                       barmode="stack",xaxis_title="Period",yaxis_title="Observed "+basis.lower() if basis!="Percentage" else "Share of observed intervals [%]",legend=dict(orientation="h",y=-.2))

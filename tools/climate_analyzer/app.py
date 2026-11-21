@@ -2152,7 +2152,7 @@ def render_extended_variable_chart(df, column, unit, chart_type, *, key_prefix="
         v=pd.to_numeric(df[column],errors="coerce").dropna()
         if v.empty:
             return
-        from epw_climate_analyzer.extended_visualization import occurrence_default_edges,occurrence_boundary_label,DEPTH_OCCURRENCE_COLUMNS,ILLUMINANCE_OCCURRENCE_COLUMNS,ILLUMINANCE_OCCURRENCE_NOTE
+        from epw_climate_analyzer.extended_visualization import occurrence_default_edges,occurrence_boundary_label,DEPTH_OCCURRENCE_COLUMNS,ILLUMINANCE_OCCURRENCE_COLUMNS,ILLUMINANCE_OCCURRENCE_NOTE,radiation_occurrence_kind,radiation_occurrence_note
         basis=st.selectbox("Occurrence basis",["Hours","Days","Percentage"],key=key_prefix+"_occ_basis")
         statistic="Mean"
         if basis=="Days":
@@ -2160,11 +2160,14 @@ def render_extended_variable_chart(df, column, unit, chart_type, *, key_prefix="
             extensive=aggregation_semantics_for(column)=="sum"
             statistic=st.selectbox("Daily statistic",["Total","Mean","Minimum","Maximum"] if extensive else ["Mean","Minimum","Maximum"],
                                    key=key_prefix+"_day_stat")
-        default=", ".join(occurrence_boundary_label(x) for x in occurrence_default_edges(v,column,basis=basis,daily_stat=statistic))
+        cadence=native_interval_hours(df)
+        default=", ".join(occurrence_boundary_label(x) for x in occurrence_default_edges(v,column,basis=basis,daily_stat=statistic,interval_hours=cadence))
         depth=column in DEPTH_OCCURRENCE_COLUMNS
         illuminance=column in ILLUMINANCE_OCCURRENCE_COLUMNS
-        edge_key=key_prefix+"_edges_"+column+("_positive_v2_"+basis+"_"+statistic if depth or illuminance else "")
-        boundaries=st.text_input("Positive illuminance boundaries [lx] (comma-separated)" if illuminance else "Positive depth boundaries (comma-separated)" if depth else "Class boundaries (comma-separated)",value=default,key=edge_key)
+        radiation=radiation_occurrence_kind(column)
+        edge_key=key_prefix+"_edges_"+column+("_positive_v2_"+basis+"_"+statistic if depth or illuminance else "_radiation_v1_"+basis+"_"+statistic+"_"+str(cadence) if radiation else "")
+        boundaries=st.text_input(f"Positive radiation boundaries [{unit}] (comma-separated)" if radiation else "Positive illuminance boundaries [lx] (comma-separated)" if illuminance else "Positive depth boundaries (comma-separated)" if depth else "Class boundaries (comma-separated)",value=default,key=edge_key)
+        if radiation:st.caption(radiation_occurrence_note(column,cadence,basis=basis,daily_stat=statistic))
         if depth:st.caption("Zero has its own class. Negative or missing depths are excluded; positive classes describe the selected depth statistic, not precipitation rate.")
         if illuminance:st.caption(ILLUMINANCE_OCCURRENCE_NOTE)
         try:

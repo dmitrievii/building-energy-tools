@@ -394,6 +394,40 @@ class CalendarHeatmapTests(unittest.TestCase):
         fig=temporal_heatmap_chart(incomplete,ILLUMINANCE_COLUMNS[2],"day",HEATMAP_COMPARE_HOUR,"Mean","Illuminance","lx")
         self.assertEqual(fig.layout.coloraxis.cmax,88000.)
 
+    def test_radiation_occurrence_reference_classes(self):
+        from epw_climate_analyzer.extended_visualization import occurrence_default_edges,occurrence_table,occurrence_figure
+        short=[50.,100.,200.,400.,600.,800.,1000.,1200.]
+        daily=[500.,1000.,2000.,4000.,6000.,8000.,10000.,12000.]
+        for c in ("global_horizontal_radiation_wh_m2","direct_normal_radiation_wh_m2",
+                  "diffuse_horizontal_radiation_wh_m2","poa_global_wh_m2","poa_direct_wh_m2",
+                  "poa_sky_diffuse_wh_m2","poa_ground_diffuse_wh_m2",
+                  "extraterrestrial_direct_normal_radiation_wh_m2"):
+            self.assertEqual(occurrence_default_edges(pd.Series([0.]),c),short)
+            self.assertEqual(occurrence_default_edges(pd.Series([0.]),c,interval_hours=.25),[v*.25 for v in short])
+            self.assertEqual(occurrence_default_edges(pd.Series([0.]),c,basis="Days",daily_stat="Total",interval_hours=.25),daily)
+            vals=[0.,0.,1.,*short,-1.,np.nan]
+            df=pd.DataFrame({c:vals},index=pd.date_range("2026-01-01",periods=len(vals),freq="h"))
+            tab=occurrence_table(df,c,short)
+            np.testing.assert_allclose(tab.iloc[0],[2.,*([1.]*(len(short)+1))])
+            self.assertEqual(tab.sum().sum(),len(vals)-2)
+            self.assertAlmostEqual(occurrence_table(df,c,short,basis="Percentage").sum().sum(),100.)
+            fig=occurrence_figure(tab,"Wh/m²","Hours")
+            self.assertEqual(fig.data[0].name,"No recorded radiation (= 0) Wh/m²")
+            self.assertEqual(fig.data[0].marker.color,"#E5E7EB")
+        self.assertEqual(occurrence_default_edges(pd.Series([0.]),"global_horizontal_irradiance_w_m2",interval_hours=.25),short)
+        c="horizontal_infrared_radiation_intensity_wh_m2"
+        self.assertEqual(occurrence_default_edges(pd.Series([300.]),c),[200.,250.,300.,350.,400.,450.,500.])
+        c="diffuse_radiation_fraction_pct"
+        df=pd.DataFrame({c:[0.,10.,20.,40.,60.,80.,100.,101.,-1.,np.nan]},index=pd.date_range("2026-01-01",periods=10,freq="h"))
+        edges=occurrence_default_edges(df[c],c)
+        self.assertEqual(edges,[20.,40.,60.,80.])
+        tab=occurrence_table(df,c,edges)
+        np.testing.assert_allclose(tab.iloc[0],[1.,1.,1.,1.,1.,2.])
+        self.assertEqual(tab.sum().sum(),7.)
+        c="global_horizontal_radiation_wh_m2"
+        df=pd.DataFrame({c:np.repeat([0.,100.,400.,-1.],24)},index=pd.date_range("2026-01-01",periods=96,freq="h"))
+        self.assertEqual(occurrence_table(df,c,daily,basis="Days",daily_stat="Total").sum().sum(),3.)
+
     def test_irradiation_heatmaps_white_absolute_zero(self):
         from epw_climate_analyzer.chart_theme import SOLAR_COLORSCALE,metric_colorscale
         from epw_climate_analyzer.charts import temporal_heatmap_chart,matrix_heatmap
