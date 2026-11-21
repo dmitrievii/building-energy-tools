@@ -1,0 +1,231 @@
+"""P4 chart adapters. Real chronology; existing presentation/export boundary."""
+from __future__ import annotations
+import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
+import streamlit as st
+from . import p4_extremes as p
+from .aggregations import native_interval_hours
+from .p3_comfort import numeric
+VARS={"Air temperature [°C]":p.T,"Relative humidity [%]":p.RH,"Humidity ratio [g/kg]":p.W,
+      "Enthalpy [kJ/kg dry air]":p.H,"Wind speed [m/s]":p.V,
+      "Dew point [°C]":"dew_point_temperature_c","Station pressure [Pa]":"atmospheric_station_pressure_pa",
+      "Global irradiation [Wh/m²]":"global_horizontal_radiation_wh_m2","Precipitation [mm]":p.P,
+      "Snow depth [cm]":p.SNOW}
+
+def _available(df):
+    return {k:v for k,v in VARS.items() if numeric(df,v).notna().any()}
+
+def _show_table(table,key):
+    st.dataframe(table,use_container_width=True)
+    st.download_button("Download results · CSV",table.to_csv(index=True).encode("utf-8"),key+".csv","text/csv",key="p4_csv_"+key)
+
+def _bars(table,title,unit,render,note):
+    fig=go.Figure()
+    for c in table:fig.add_bar(x=table.index,y=table[c],name=c)
+    fig.update_layout(template="plotly_white",title=title,barmode="group",yaxis_title=unit,xaxis_title="Period")
+    render(fig,note)
+
+def _events(table,render,*,key,unit,threshold,series=None,above=True,quantity="Temperature [°C]"):
+    if table.empty:st.info("No qualifying continuous events in the selected records.");return
+    st.caption(f"{len(table)} events · longest {table.duration.max():g} {unit}.")
+    style=st.selectbox("Chart type",(["Event timeline"] if series is not None else [])+["Duration and intensity","Duration distribution"],key="p4_event_chart_"+key)
+    fig=go.Figure()
+    if style=="Event timeline":
+        fig.add_scatter(x=series.index,y=series,mode="lines",name=quantity,connectgaps=False,line=dict(color="#64748B"))
+        for _,r in table.iterrows():
+            fig.add_vrect(x0=r.start,x1=r.end+(pd.DateOffset(days=1) if unit=="days" else pd.Timedelta(hours=r.duration/r.samples)),line_width=0,fillcolor="#DD783B" if above else "#497DB7",opacity=.20)
+        fig.add_hline(y=threshold,line_dash="dash",line_color="#333333")
+        fig.update_layout(xaxis_title="Date",yaxis_title=quantity,title="Extreme-event timeline")
+    elif style=="Duration and intensity":
+        fig.add_scatter(x=table.duration,y=table.peak,mode="markers",marker=dict(size=9,color="#D98235" if above else "#4477AA"),
+                        text=table.start.astype(str),customdata=table.excess,hovertemplate="%{text}<br>Duration %{x:g}<br>Peak %{y:.2f}<br>Integrated excess %{customdata:.2f}<extra></extra>")
+        fig.update_layout(title="Event duration and peak",xaxis_title="Duration ["+unit+"]",yaxis_title=quantity)
+    else:
+        d=table.duration.value_counts().sort_index()
+        fig.add_bar(x=d.index,y=d,marker_color="#4477AA")
+        fig.update_layout(title="Event duration distribution",xaxis_title="Duration ["+unit+"]",yaxis_title="Number of events")
+    fig.update_layout(template="plotly_white")
+    render(fig,"Events are maximal consecutive qualifying observed samples. Missing, excluded or nonqualifying observations terminate an event. Peak is the extreme observed value; integrated excess is the sum of exceedance or shortfall relative to the threshold times the sample duration. Selection boundaries can truncate events. These are user-defined screening thresholds, not return periods.")
+    _show_table(table,key)
+
+def temperature_panel(df,render):
+    view=st.selectbox("Extreme-day analysis",["Heatwaves and cold spells","Frost days and tropical nights","Critical consecutive days"],key="p4_temperature_view")
+    try:
+        if view=="Frost days and tropical nights":
+            a=p.day_indicators(df)
+            tab=a.resample("MS").sum(min_count=1)
+            _bars(tab,"Frost days and tropical nights","Complete days",render,"Frost day: complete-day sampled Tmin < 0 °C. Tropical-night indicator uses daily Tmin ≥ 20 °C (ETCCDI TR uses >20 °C in some conventions; this is the explicitly displayed ≥ convention). Hourly sampled minima, not continuous daily extrema. Incomplete days excluded.")
+            _show_table(tab,"temperature_days");return
+        above=st.radio("Event type",["Heat","Cold"],horizontal=True,key="p4_temp_event_type")=="Heat"
+        method=st.selectbox("Daily temperature statistic",["Maximum","Mean","Minimum"],index=0 if above else 2,key="p4_temp_stat_"+str(above))
+        threshold=st.number_input("Threshold [°C]",value=30. if above else 0.,step=.5,key="p4_temp_thresh_"+str(above))
+        minimum=st.number_input("Minimum consecutive days",min_value=1,max_value=60,value=3,step=1,key="p4_temp_days")
+        d,a=p.temperature_events(df,threshold=threshold,above=above,minimum=minimum,stat={"Maximum":"max","Mean":"mean","Minimum":"min"}[method])
+        st.caption(f"Complete days: {d['mean'].notna().sum()} of {len(d)} calendar days in the selected span.")
+        _events(a,render,key="temperature",unit="days",threshold=threshold,series=d[{"Maximum":"max","Mean":"mean","Minimum":"min"}[method]],above=above)
+    except ValueError as exc:st.warning(str(exc))
+
+def persistence_panel(df,render,*,wind=False):
+    options={"Wind speed [m/s]":p.V} if wind else {k:v for k,v in _available(df).items() if v in (p.RH,p.W)}
+    if not options:st.info("No supported coincident observations.");return
+    label=st.selectbox("Quantity",list(options),key="p4_persist_quantity_"+str(wind));column=options[label]
+    above=st.radio("Condition",["At or above threshold","At or below threshold"],index=1 if wind else 0,horizontal=True,key="p4_persist_condition_"+str(wind))=="At or above threshold"
+    default=.5 if wind else (80. if column==p.RH else 10.)
+    threshold=st.number_input("Threshold",min_value=0.,value=default,step=.5,key="p4_persist_threshold_"+str(wind)+column)
+    minimum=st.number_input("Minimum continuous duration [h]",min_value=.1,value=3.,step=.5,key="p4_persist_duration_"+str(wind))
+    try:
+        s=p.valid_values(df,column,True)
+        a=p.events(s,threshold=threshold,above=above,minimum=minimum,step=p.cadence(df))
+        _events(a,render,key="wind" if wind else "humidity",unit="hours",threshold=threshold,series=s,above=above,quantity=label)
+    except ValueError as exc:st.warning(str(exc))
+
+def precipitation_panel(df,native,view,render):
+    try:
+        if view=="Wet and dry spells":
+            threshold=st.number_input("Wet-day threshold [mm/day]",min_value=.1,value=1.,step=.1,key="p4_wet_threshold")
+            minimum=st.number_input("Minimum consecutive days",min_value=1,value=2,step=1,key="p4_wet_duration")
+            wet=st.radio("Event type",["Wet spells","Dry spells"],horizontal=True,key="p4_wet_type")=="Wet spells"
+            d,w,a=p.wet_dry_events(df,threshold,minimum)
+            _events(w if wet else a,render,key="rain",unit="days",threshold=threshold,series=d["sum"],above=wet,quantity="Daily precipitation [mm]")
+        elif view=="Precipitation accumulation":
+            choice=st.selectbox("Accumulation type",["Rolling precipitation totals","Cumulative observed blocks"],key="p4_rain_accum")
+            if choice=="Rolling precipitation totals":
+                h=st.selectbox("Duration [h]",[1,3,6,12,24,48,72,168],index=4,key="p4_rain_roll")
+                s=p.rolling_windows(native if native is not None else df,p.P,h,total=True,nonnegative=True)
+                note="Trailing complete contiguous sample window. No interpolation across missing or excluded intervals. Values are interval depth sums."
+            else:
+                s=p.cumulative_precipitation(native if native is not None else df)
+                note="Cumulative precipitation restarts after missing or excluded records; no unknown rainfall is treated as zero."
+            fig=go.Figure(go.Scatter(x=s.index,y=s,mode="lines",connectgaps=False))
+            fig.update_layout(template="plotly_white",title=choice,yaxis_title="Precipitation [mm]",xaxis_title="Timestamp");render(fig,note)
+        elif view=="Empirical IDF":
+            if native is None:st.info("Requires native historical precipitation, not EPW/generated data.");return
+            a=p.empirical_idf(native,historical_native=True)
+            if a.empty:st.info("No durations match the native cadence.");return
+            fig=go.Figure()
+            for dur,g in a.groupby("duration_h"):
+                g=g.sort_values("return_period_y")
+                fig.add_scatter(x=g.return_period_y,y=g.intensity_mm_h,mode="lines+markers",name=f"{dur:g} h",customdata=g.year,hovertemplate="T %{x:.2f} y<br>I %{y:.2f} mm/h<br>Year %{customdata}<extra></extra>")
+            fig.update_layout(template="plotly_white",title="Empirical rainfall intensity–duration–frequency",xaxis_type="log",xaxis_title="Empirical return period [years]",yaxis_title="Intensity [mm/h]")
+            render(fig,"Complete measured calendar years only (minimum ten), native cadence ≤60 min. Within-year rolling maxima; Weibull plotting positions (n+1)/rank. No fitted distribution, extrapolation, confidence interval or regulatory design rainfall. Shorter-than-native durations unavailable.")
+            _show_table(a,"empirical_idf")
+        elif view=="Snow-cover calendar":
+            data=native if native is not None else df
+            s=p.daily_stats(data,p.SNOW,nonnegative=True)["max"]
+            s=s.gt(0).astype(float).where(s.notna())
+            _calendar(s,render,"Snow-cover calendar","Complete days with observed snow depth >0 cm; 0 means no snow, missing days unclassified.")
+        elif view=="Freeze–thaw days":
+            threshold=st.number_input("Wet-day precipitation threshold [mm]",min_value=.1,value=1.,step=.1,key="p4_freeze_wet")
+            a=p.freeze_thaw_days(df,threshold)
+            tab=a.resample("MS").sum(min_count=1)
+            _bars(tab,"Air freeze–thaw exposure days","Complete days",render,"Daily sampled minimum <0 and maximum >0 °C indicate air-temperature crossing opportunity. Wet subset additionally requires same-day precipitation ≥ threshold. Not a count of material freeze–thaw damage cycles or proof that precipitation was liquid.")
+            _show_table(tab,"freeze_thaw")
+    except ValueError as exc:st.warning(str(exc))
+
+def _calendar(s,render,title,note):
+    if s.dropna().empty:st.info("No complete daily observations.");return
+    years=sorted(s.index.year.unique())
+    y=st.selectbox("Year",years,index=len(years)-1,key="p4_calendar_year_"+title)
+    sub=s.loc[s.index.year==y]
+    start=pd.Timestamp(year=int(y),month=1,day=1,tz=s.index.tz)
+    dates=pd.date_range(start,start+pd.DateOffset(years=1),freq="D",inclusive="left")
+    v=sub.reindex(dates)
+    z=np.full((7,54),np.nan);labels=np.full((7,54),"",dtype=object)
+    for i,(d,val) in enumerate(v.items()):
+        w=(i+start.weekday())//7;day=d.weekday();z[day,w]=val;labels[day,w]=d.strftime("%Y-%m-%d")
+    fig=go.Figure(go.Heatmap(z=z,x=list(range(1,55)),y=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],customdata=labels,zmin=0,zmax=1,colorscale=[[0,"#FFFFFF"],[1,"#427CAD"]],showscale=False,xgap=2,ygap=2,hoverongaps=False,hovertemplate="%{customdata}<br>Snow cover %{z}<extra></extra>"))
+    fig.update_layout(template="plotly_white",title=title,xaxis_title="Calendar week position",yaxis=dict(autorange="reversed"))
+    render(fig,note)
+
+def hvac_panel(df,render):
+    options={k:v for k,v in _available(df).items() if v in (p.T,p.W,p.H)}
+    if not options:st.info("No design-condition variables available.");return
+    label=st.selectbox("Governing quantity",list(options),key="p4_hvac_quantity")
+    column=options[label]
+    upper=st.radio("Tail",["Upper (cooling / moisture)","Lower (heating)"],horizontal=True,key="p4_hvac_tail")=="Upper (cooling / moisture)"
+    view=st.selectbox("Chart type",["Statistical design conditions","Tail exceedance curve","Critical multiday sequences"],key="p4_hvac_view")
+    st.caption("Empirical statistics of the selected records. EPW/TMY/generated data are screening only; these are not normative ASHRAE/ÖNORM station design values or inferred return periods.")
+    if view=="Critical multiday sequences":
+        n=st.number_input("Continuous window [days]",1,30,3,1,key="p4_hvac_window")
+        try:s=p.rolling_windows(df,column,24*n)
+        except ValueError as exc:st.warning(str(exc));return
+        # Greedy nonoverlapping windows; ordering by value with deterministic tie order.
+        ranked=s.dropna().sort_values(ascending=not upper,kind="stable")
+        chosen=[];span=pd.Timedelta(days=n)
+        for end,value in ranked.items():
+            if all(abs(end-e)>=span for e in [r["End"] for r in chosen]):
+                chosen.append({"Start":end-span+p.cadence(df),"End":end,"Mean":value})
+                if len(chosen)==10:break
+        a=pd.DataFrame(chosen)
+        if a.empty:st.info("No complete consecutive windows.");return
+        fig=go.Figure(go.Bar(x=a.Start.astype(str),y=a.Mean,marker_color="#D98235" if upper else "#4477AA"))
+        fig.update_layout(template="plotly_white",title=f"Most critical nonoverlapping {n}-day windows",yaxis_title=label,xaxis_title="Window start")
+        render(fig,"Ranks complete trailing fixed-duration windows by mean governing quantity; overlapping windows suppressed. No gaps bridged. Not a design weather file.")
+        _show_table(a,"hvac_sequences");return
+    a=p.design_conditions(df,column,[.4,1.,2.,.5,1.5,5.],upper=upper,coincident=[v for v in (p.T,p.W,p.H,p.RH,p.V) if v!=column and numeric(df,v).notna().any()])
+    if a.empty:st.info("No valid observations.");return
+    a=a.sort_values("Nominal tail [%]")
+    if view=="Tail exceedance curve":
+        s=np.sort(p.valid_values(df,column).dropna().to_numpy())
+        if upper:s=s[::-1]
+        percent=np.arange(1,len(s)+1)*100/len(s)
+        fig=go.Figure(go.Scatter(x=percent,y=s,mode="lines",name=label))
+        fig.update_layout(template="plotly_white",title="Empirical tail exceedance curve" if upper else "Empirical lower-tail curve",xaxis_title="Rank fraction of valid observed hours [%]",yaxis_title=label)
+        render(fig,"Observed rank distribution, not an extrapolation. Ties share a physical value; nominal rank fraction differs from inclusive threshold exceedance.")
+    _show_table(a,"hvac_design")
+    st.caption("Quantile uses linear sample interpolation; closest actual timestamp retains coincident conditions. Tail means use the inclusive tail and report paired-hour counts. These are not standardized mean-coincident design bins.")
+
+def multivariate_panel(df,render,*,density_only=False):
+    options=_available(df)
+    if len(options)<2:st.info("Two observable quantities are required.");return
+    view="Joint probability density" if density_only else st.selectbox("Multivariate analysis",["Correlation matrix","Joint probability density"],key="p4_multi_view")
+    if view=="Correlation matrix":
+        selected=st.multiselect("Quantities",list(options),default=list(options)[:min(6,len(options))],key="p4_corr_quantities")
+        if len(selected)<2:st.info("Select at least two quantities.");return
+        r,n=p.correlation(df,[options[x] for x in selected])
+        fig=go.Figure(go.Heatmap(x=selected,y=selected,z=r,customdata=n,zmin=-1,zmax=1,zmid=0,colorscale="RdBu_r",colorbar=dict(title="Pearson r"),hoverongaps=False,hovertemplate="%{y} / %{x}<br>r %{z:.3f}<br>Paired records %{customdata}<extra></extra>"))
+        fig.update_layout(template="plotly_white",title="Pairwise observed correlation")
+        render(fig,"Pairwise complete Pearson correlation, at least three coincident observations; no causal interpretation. Direction angles excluded. Each pair can have different coverage.")
+    else:
+        x=st.selectbox("X quantity",list(options),key="p4_density_x_"+str(density_only))
+        others=[k for k in options if k!=x]
+        y=st.selectbox("Y quantity",others,key="p4_density_y_"+str(density_only))
+        bins=st.slider("Bins per axis",10,60,25,5,key="p4_density_bins_"+str(density_only))
+        data=p.joint_density(df,options[x],options[y],bins=bins)
+        if data is None:st.info("No coincident valid observations.");return
+        xx,yy,z,h=data
+        fig=go.Figure(go.Heatmap(x=xx,y=yy,z=z,customdata=h,colorscale=[[0,"#FFFFFF"],[.5,"#83BCD8"],[1,"#165986"]],zmin=0,colorbar=dict(title="% of paired hours"),hovertemplate="X %{x:.2f}<br>Y %{y:.2f}<br>Probability mass %{z:.2f}%<br>Hours %{customdata:.1f}<extra></extra>"))
+        fig.update_layout(template="plotly_white",title="Observed joint probability distribution",xaxis_title=x,yaxis_title=y)
+        render(fig,"Fixed-width 2D histogram; cell probability masses sum to 100% over valid paired observations. Not probability per unit area or kernel smoothing.")
+
+def event_viewer(df,render):
+    options=_available(df)
+    if not options:st.info("No observable variables.");return
+    label=st.selectbox("Event governing quantity",list(options),key="p4_viewer_quantity")
+    s=p.valid_values(df,options[label])
+    if s.dropna().empty:st.info("No valid values.");return
+    above=st.radio("Event type",["High","Low"],horizontal=True,key="p4_viewer_direction")=="High"
+    threshold=st.number_input("Threshold",value=float(s.quantile(.95 if above else .05)),key="p4_viewer_threshold_"+label+str(above))
+    minimum=st.number_input("Minimum event duration [h]",min_value=.1,value=3.,step=.5,key="p4_viewer_min")
+    try:a=p.events(s,threshold=threshold,above=above,minimum=minimum,step=p.cadence(df))
+    except ValueError as exc:st.warning(str(exc));return
+    if a.empty:st.info("No qualifying events.");return
+    a=a.sort_values("excess",ascending=False).reset_index(drop=True)
+    i=st.selectbox("Event",list(a.index),format_func=lambda k:f"{a.loc[k,'start']} · {a.loc[k,'duration']:g} h",key="p4_viewer_event")
+    event=a.loc[i];padding=st.slider("Context before and after [h]",0,168,24,1,key="p4_viewer_pad")
+    window=df.loc[(df.index>=event.start-pd.Timedelta(hours=padding))&(df.index<=event.end+pd.Timedelta(hours=padding))]
+    chosen=st.multiselect("Coincident quantities",list(options),default=[label],key="p4_viewer_series")
+    if not chosen:return
+    from plotly.subplots import make_subplots
+    fig=make_subplots(rows=len(chosen),cols=1,shared_xaxes=True)
+    for row,name in enumerate(chosen,1):
+        series=p.valid_values(window,options[name])
+        # Insert missing cadence slots for honest visual discontinuities.
+        series=series.reindex(pd.date_range(window.index[0],window.index[-1],freq=p.cadence(df)))
+        fig.add_trace(go.Scatter(x=series.index,y=series,mode="lines",name=name,connectgaps=False),row=row,col=1)
+        fig.update_yaxes(title_text=name,row=row,col=1)
+        fig.add_vrect(x0=event.start,x1=event.end+p.cadence(df),fillcolor="#D98235",opacity=.14,line_width=0,row=row,col=1)
+    fig.update_layout(template="plotly_white",title="Critical event · coincident source conditions",height=max(350,210*len(chosen)))
+    render(fig,"All displayed quantities retain their coincident observed timestamps; missing slots are not interpolated. Event ranked by integrated excess relative to the selected threshold.")
+    _show_table(a,"critical_events")
