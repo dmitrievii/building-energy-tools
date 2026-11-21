@@ -98,6 +98,24 @@ class P2Tests(unittest.TestCase):
         overlay_shading_mask(cart,technical=True,overhang=1.,**opts)
         self.assertTrue(all(tr.type=="scattergl" for tr in cart.data))
 
+    def test_monthly_shading_figure_stacks_only_complementary_components(self):
+        from epw_climate_analyzer.solar_shading import monthly_shading_figure
+        table=pd.DataFrame({"Unshaded total":[100.,80.,np.nan,60.],
+                            "Shaded total (direct-only)":[70.,80.,np.nan,0.],
+                            "Intercepted direct":[30.,0.,np.nan,60.]})
+        labels=["Jan","Feb","Mar","Apr"]
+        fig=monthly_shading_figure(table,labels)
+        self.assertEqual(fig.layout.barmode,"stack")
+        self.assertEqual(tuple(tr.type for tr in fig.data),("bar","bar","scatter"))
+        self.assertEqual(tuple(tr.name for tr in fig.data),
+                         ("Shaded total (direct-only)","Intercepted direct","Unshaded total"))
+        for tr in fig.data:
+            self.assertEqual(tuple(tr.x),tuple(labels))
+            np.testing.assert_allclose(tr.y,table[tr.name],equal_nan=True)
+        np.testing.assert_allclose(np.asarray(fig.data[0].y)+np.asarray(fig.data[1].y),
+                                   fig.data[2].y,equal_nan=True)
+        self.assertFalse(fig.data[2].connectgaps)
+
     def test_analytical_shading_closed_forms(self):
         # At azimuth difference 45° and elevation atan(cos(45°)),
         # both projected slopes relative to the façade normal are one.

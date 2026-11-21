@@ -81,6 +81,20 @@ def shading_ledger(df,*,albedo=None,**geometry):
                          "Intercepted direct":lost,"Unshaded direct":direct,
                          "Remaining direct":direct-lost,"Shaded area fraction":fraction},index=df.index)
 
+def monthly_shading_figure(table, labels):
+    """Visualize the direct-only irradiation ledger, already in kWh/m²."""
+    fig=go.Figure()
+    for name in ("Shaded total (direct-only)", "Intercepted direct"):
+        fig.add_bar(x=labels,y=table[name],name=name)
+    fig.add_scatter(x=labels,y=table["Unshaded total"],name="Unshaded total",
+                    mode="lines+markers",line=dict(dash="dash"),connectgaps=False)
+    fig.update_layout(template="plotly_white",
+                      title="Monthly façade irradiation and intercepted direct beam",
+                      barmode="stack",xaxis_title="Period",
+                      yaxis_title="Irradiation [kWh/m²]")
+    return fig
+
+
 MASK_CLASSES=(
     ("0% · unshaded", "#CBD5E1"),
     (">0–<25% · low shade", "#B0B0B0"),

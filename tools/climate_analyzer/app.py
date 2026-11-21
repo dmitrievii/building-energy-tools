@@ -3915,8 +3915,7 @@ def render_sky_radiation_distribution(df):
 
 
 def render_shading_analysis(df,ground_albedo):
-    import plotly.graph_objects as go
-    from epw_climate_analyzer.solar_shading import shading_ledger
+    from epw_climate_analyzer.solar_shading import shading_ledger, monthly_shading_figure
     from epw_climate_analyzer.aggregations import period_total_series
     geometry=_shading_geometry("shading_analysis")
     st.caption("Analytical direct-beam shadow area · no spatial sampling or resolution setting.")
@@ -3930,12 +3929,9 @@ def render_shading_analysis(df,ground_albedo):
         return
     cols=["Unshaded total","Shaded total (direct-only)","Intercepted direct"]
     table=pd.DataFrame({c:period_total_series(ledger[c],data,"Monthly")/1000 for c in cols})
-    fig=go.Figure()
-    for c in cols:
-        fig.add_bar(x=display_period_labels(table.index,"Monthly",time_basis(data)),y=table[c],name=c)
-    fig.update_layout(template="plotly_white",title="Monthly façade irradiation and intercepted direct beam",barmode="group",xaxis_title="Period",yaxis_title="Irradiation [kWh/m²]")
+    fig=monthly_shading_figure(table,display_period_labels(table.index,"Monthly",time_basis(data)))
     totals=ledger[cols].sum(min_count=1)/1000
-    render_plot(fig,f"Selected-period unshaded total: {totals.iloc[0]:.1f} kWh/m²; direct beam intercepted: {totals.iloc[2]:.1f} kWh/m². The model calculates the exact geometric shaded fraction of a rectangular vertical aperture, with opaque overhang and fins attached at its edges. The two ray-exit areas are integrated analytically without double counting. Diffuse and ground-reflected components are unchanged; this is a direct-beam screening assessment, not a full shaded building-energy calculation.")
+    render_plot(fig,f"Selected-period unshaded total: {totals.iloc[0]:.1f} kWh/m²; direct beam intercepted: {totals.iloc[2]:.1f} kWh/m². The stacked bar combines remaining irradiation and intercepted direct beam; the unshaded reference line is their sum for complete intervals. The model calculates the exact geometric shaded fraction of a rectangular vertical aperture, with opaque overhang and fins attached at its edges. The two ray-exit areas are integrated analytically without double counting. Diffuse and ground-reflected components are unchanged; this is a direct-beam screening assessment, not a full shaded building-energy calculation.")
 
 
 def render_solar(df: pd.DataFrame) -> None:
