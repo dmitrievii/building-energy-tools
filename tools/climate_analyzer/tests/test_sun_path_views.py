@@ -12,7 +12,7 @@ from epw_climate_analyzer.exporting import figure_to_dataframe
 from epw_climate_analyzer.solar import add_solar_position_for_site
 from epw_climate_analyzer.sun_path_views import (
     MONTH_COLORS, available_radiation_fields, classic_sun_path,
-    radiation_sun_path, solar_reference, sun_direction_xyz, sun_path_3d,
+    radiation_sun_path, solar_reference, sun_direction_xyz, sun_path_3d, technical_sun_path,
 )
 
 
@@ -45,7 +45,7 @@ class SunPathViewTests(unittest.TestCase):
 
     def test_classic_polar_and_month_gradient(self):
         fig = classic_sun_path(self.frame)
-        lines = [trace for trace in fig.data if trace.mode == "lines" and trace.showlegend]
+        lines = [trace for trace in fig.data if trace.mode == "lines" and trace.showlegend and trace.legendgroup.startswith("month-")]
         self.assertEqual(len(lines), 12)
         self.assertEqual(tuple(trace.line.color for trace in lines), MONTH_COLORS)
         self.assertEqual(tuple(fig.layout.polar.radialaxis.range), (0, 90))
@@ -56,13 +56,13 @@ class SunPathViewTests(unittest.TestCase):
         frame = self.frame.copy()
         frame.loc[frame["is_daylight"], "direct_normal_radiation_wh_m2"] = 0
         fig = radiation_sun_path(frame, hide_zero_radiation=True)
-        self.assertEqual(len([trace for trace in fig.data if trace.showlegend]), 12)
+        self.assertEqual(len([trace for trace in fig.data if trace.showlegend and trace.legendgroup.startswith("month-")]), 12)
         original = radiation_sun_path(self.frame)
         points = next(trace for trace in original.data if trace.type == "scatterpolargl")
         self.assertEqual(len(points.r), int(self.frame["is_daylight"].sum()))
         self.assertTrue(np.all(np.asarray(points.marker.color) == 300))
-        geometric = [trace for trace in original.data if trace.showlegend]
-        classic = [trace for trace in classic_sun_path(self.frame).data if trace.showlegend]
+        geometric = [trace for trace in original.data if trace.showlegend and trace.legendgroup.startswith("month-")]
+        classic = [trace for trace in classic_sun_path(self.frame).data if trace.showlegend and trace.legendgroup.startswith("month-")]
         for a, b in zip(geometric, classic):
             np.testing.assert_allclose(a.theta, b.theta, equal_nan=True)
             np.testing.assert_allclose(a.r, b.r, equal_nan=True)
@@ -78,7 +78,7 @@ class SunPathViewTests(unittest.TestCase):
     def test_rotatable_3d_cube_is_illustrative_and_camera_revision_stable(self):
         visible = sun_path_3d(self.frame, show_cube=True)
         hidden = sun_path_3d(self.frame, show_cube=False)
-        self.assertEqual(visible.layout.scene.dragmode, "orbit")
+        self.assertEqual(visible.layout.scene.dragmode, "turntable")
         self.assertEqual(visible.layout.scene.uirevision, hidden.layout.scene.uirevision)
         self.assertEqual(visible.layout.scene.camera, hidden.layout.scene.camera)
         self.assertEqual(len(visible.data), len(hidden.data))
@@ -103,6 +103,41 @@ class SunPathViewTests(unittest.TestCase):
         np.testing.assert_allclose(x, [0,1,0,-1,0], atol=1e-12)
         np.testing.assert_allclose(y, [1,0,-1,0,0], atol=1e-12)
         np.testing.assert_allclose(z, [0,0,0,0,1], atol=1e-12)
+
+    def test_month_colors_and_complete_legend_groups_in_all_four_views(self):
+        for factory in (radiation_sun_path, technical_sun_path, classic_sun_path, sun_path_3d):
+            with self.subTest(view=factory.__name__):
+                fig = factory(self.frame)
+                self.assertTrue(fig.layout.showlegend)
+                self.assertEqual(fig.layout.legend.groupclick, "togglegroup")
+                self.assertEqual(fig.layout.legend.itemclick, "toggle")
+                self.assertEqual(fig.layout.legend.itemdoubleclick, "toggleothers")
+                for m, color in enumerate(MONTH_COLORS, 1):
+                    group = [t for t in fig.data if t.legendgroup == f"month-{m}"]
+                    main = [t for t in group if t.showlegend]
+                    self.assertEqual(len(main), 1)
+                    self.assertEqual(main[0].line.color, color)
+                    self.assertEqual(main[0].line.dash, "solid" if m <= 6 else "dash")
+                    self.assertTrue(all(t.legendgroup == main[0].legendgroup for t in group))
+                    if factory is radiation_sun_path:
+                        self.assertEqual(len(group), 3)  # halo, coloured line, text
+                    elif factory is not sun_path_3d:
+                        self.assertEqual(len(group), 2)
+                    else:
+                        self.assertEqual(len(group), 1)
+
+    def test_restored_technical_chart_uses_cartesian_axes_and_reference_geometry(self):
+        fig = technical_sun_path(self.frame)
+        self.assertEqual(fig.layout.xaxis.title.text, "Solar azimuth [deg]")
+        self.assertEqual(fig.layout.yaxis.title.text, "Solar elevation [deg]")
+        self.assertEqual(len([t for t in fig.data if t.showlegend and t.legendgroup.startswith("month-")]), 12)
+        for month,(az,el) in enumerate(solar_reference(self.frame).months,1):
+            trace = next(t for t in fig.data if t.legendgroup == f"month-{month}" and t.showlegend)
+            mask = np.isfinite(np.asarray(trace.y,dtype=float))
+            np.testing.assert_allclose(np.asarray(trace.y,dtype=float)[mask], el[np.isfinite(el)])
+            np.testing.assert_allclose(np.asarray(trace.x,dtype=float)[mask], az[np.isfinite(az)])
+        from epw_climate_analyzer.charts import sun_position_diagram
+        self.assertEqual(sun_position_diagram(self.frame).layout.xaxis.title.text, fig.layout.xaxis.title.text)
 
     def test_no_invented_path_in_polar_night(self):
         frame = self.frame.copy()
@@ -136,9 +171,12 @@ df = add_solar_position_for_site(pd.DataFrame({"direct_normal_radiation_wh_m2": 
         self.assertFalse(app.exception)
         chart = app.selectbox(key="solar_sun_path_chart_type")
         self.assertEqual(chart.label, "Chart type")
-        self.assertEqual(chart.options, ["Sun path with radiation", "2D sun-path diagram", "3D sun-path diagram"])
+        self.assertEqual(chart.options, ["Sun path with radiation", "Technical sun-path diagram", "2D sun-path diagram", "3D sun-path diagram"])
         self.assertNotIn("solar_sun_path_show_cube", [w.key for w in app.checkbox])
-        chart.set_value("2D sun-path diagram").run()
+        chart.set_value("Technical sun-path diagram").run()
+        self.assertFalse(app.exception)
+        self.assertNotIn("solar_sun_path_show_cube", [w.key for w in app.checkbox])
+        app.selectbox(key="solar_sun_path_chart_type").set_value("2D sun-path diagram").run()
         self.assertFalse(app.exception)
         self.assertNotIn("solar_sun_path_show_cube", [w.key for w in app.checkbox])
         app.selectbox(key="solar_sun_path_chart_type").set_value("3D sun-path diagram").run()
@@ -152,7 +190,7 @@ df = add_solar_position_for_site(pd.DataFrame({"direct_normal_radiation_wh_m2": 
         source = (Path(__file__).resolve().parents[1] / "app.py").read_text(encoding="utf-8")
         section = source[source.index("def render_sun_path("):source.index("def render_solar(")]
         self.assertIn('st.selectbox("Chart type", chart_types', section)
-        self.assertIn('["Sun path with radiation", "2D sun-path diagram", "3D sun-path diagram"]', section)
+        self.assertIn('["Sun path with radiation", "Technical sun-path diagram", "2D sun-path diagram", "3D sun-path diagram"]', section)
         self.assertIn('st.checkbox("Show cube", value=True', section)
         self.assertIn('key="solar_sun_path_3d_plot"', section)
         self.assertEqual(source.count('elif chart_group == "Sun path":'), 2)

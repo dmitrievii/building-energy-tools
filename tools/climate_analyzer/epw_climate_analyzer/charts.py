@@ -1640,10 +1640,10 @@ def sun_path_chart(
 
 
 def sun_position_diagram(df: pd.DataFrame, title: str = "Sun-path diagram") -> go.Figure:
-    """Polar astronomical view with monthly paths and fixed-clock analemmas."""
-    from .sun_path_views import classic_sun_path
+    """Technical Cartesian azimuth/elevation view, restored as a distinct chart."""
+    from .sun_path_views import technical_sun_path
 
-    return classic_sun_path(df, title=title)
+    return technical_sun_path(df, title=title)
 
 
 def orientation_bar_chart(data: pd.DataFrame, title: str) -> go.Figure:

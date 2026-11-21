@@ -3542,13 +3542,13 @@ def _solar_ground_albedo_selection(df: pd.DataFrame) -> None:
 
 
 def render_sun_path(df: pd.DataFrame) -> None:
-    """One shared chart selector for the three astronomical solar views."""
+    """One shared chart selector for the four astronomical solar views."""
     from epw_climate_analyzer.sun_path_views import (
         available_radiation_fields, classic_sun_path, radiation_sun_path,
-        solar_reference, sun_path_3d,
+        solar_reference, sun_path_3d, technical_sun_path,
     )
 
-    chart_types = ["Sun path with radiation", "2D sun-path diagram", "3D sun-path diagram"]
+    chart_types = ["Sun path with radiation", "Technical sun-path diagram", "2D sun-path diagram", "3D sun-path diagram"]
     chart_type = st.selectbox("Chart type", chart_types, key="solar_sun_path_chart_type")
     reference = solar_reference(df)
     if reference is not None:
@@ -3571,13 +3571,16 @@ def render_sun_path(df: pd.DataFrame) -> None:
                                  invert_zenith_axis=invert_zenith_axis,
                                  hide_zero_radiation=hide_zero_radiation)
         render_plot(fig, "Radiation points retain their original solar positions and interval irradiation. The monthly curves are astronomical guides, not radiation estimates.")
+    elif chart_type == "Technical sun-path diagram":
+        render_plot(technical_sun_path(df),
+                    "Cartesian solar azimuth and elevation diagram. The monthly paths use the 21st of each month, with fixed-clock hour curves and compass bearings.")
     elif chart_type == "2D sun-path diagram":
         render_plot(classic_sun_path(df),
                     "North is at the top, azimuth increases clockwise, and the horizon is the outer ring. Monthly paths and dotted fixed-clock hour lines show seasonal solar geometry.")
     else:
         show_cube = st.checkbox("Show cube", value=True, key="solar_sun_path_show_cube")
         fig = sun_path_3d(df, show_cube=show_cube)
-        st.caption("Drag to rotate and scroll to zoom. The cube is an illustrative volume; no shading calculation is performed.")
+        st.caption("Drag for turntable rotation (vertical axis stays upright); scroll to zoom. The cube is illustrative, without shading calculations.")
         render_chart_export_controls(fig)
         st.plotly_chart(fig, use_container_width=True,
                         config={"displaylogo": False, "scrollZoom": True},

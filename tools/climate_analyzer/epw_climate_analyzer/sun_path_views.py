@@ -1,4 +1,4 @@
-"""One site-based astronomical reference shared by radiation, polar and 3D views.
+"""One site-based astronomical reference shared by radiation, Cartesian, polar and 3D views.
 
 Monthly curves use the 21st of each month at five-minute resolution. Hour lines
 use a fixed-offset clock and daily geometric positions, forming analemmas.
@@ -20,9 +20,21 @@ from .solar import add_solar_position_for_site, fixed_offset_timezone, fixed_off
 # A seasonal gradient: blue winter, green shoulder season, orange summer,
 # with distinct shades for the rising and falling branches of the year.
 MONTH_COLORS = (
-    "#285A9D", "#337CC0", "#2196A6", "#329B71", "#83A83B", "#D48B12",
-    "#C86A19", "#B5A02E", "#589C48", "#278A82", "#427EB0", "#514B91",
+    "#2563EB", "#0E7490", "#059669", "#429322", "#8A9700", "#DE8A00",
+    "#D14E17", "#A96E00", "#287742", "#0D8B91", "#3559A0", "#6343A5",
 )
+
+
+def _month_dash(month: int) -> str:
+    # Similar solar declinations on either side of June can nearly coincide.
+    # Two line patterns make the two seasonal branches distinguishable.
+    return "solid" if month <= 6 else "dash"
+
+
+def _month_legend(**kwargs):
+    return dict(orientation="h", x=0.5, xanchor="center",
+                groupclick="togglegroup", itemclick="toggle",
+                itemdoubleclick="toggleothers", traceorder="normal", **kwargs)
 MONTH_NAMES = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 RADIATION_COLORSCALE = [[0.0, "#4c1d95"], [0.45, "#f97316"], [1.0, "#fef08a"]]
 RADIATION_FIELDS = (
@@ -134,7 +146,7 @@ def _polar_layout(fig, title: str, *, invert_zenith_axis: bool = False,
     fig.update_layout(
         template="plotly_white", title=title, height=760,
         margin=dict(l=40, r=40, t=75, b=70),
-        legend=dict(orientation="h", x=0.5, xanchor="center", y=-0.08),
+        showlegend=True, legend=_month_legend(y=-0.08),
         polar=dict(
             bgcolor="white",
             radialaxis=dict(range=[90, 0] if invert_zenith_axis else [0, 90],
@@ -163,19 +175,25 @@ def _monthly_label(az, el, month):
 
 
 def _add_polar_months(fig, reference: SolarReference, *, radiation=False):
+    # Draw all halos before all visible coloured lines. A later month's
+    # white outline must not paint over a neighbouring month's coloured path.
+    if radiation:
+        for month, (az, el) in enumerate(reference.months, 1):
+            if not len(az):
+                continue
+            fig.add_trace(go.Scatterpolar(theta=az, r=90-el, mode="lines",
+                line=dict(color="rgba(255,255,255,0.85)", width=4, dash=_month_dash(month)),
+                showlegend=False, hoverinfo="skip", connectgaps=False,
+                legendgroup=f"month-{month}", name=f"{MONTH_NAMES[month-1]} guide halo",
+                uid=f"polar-month-{month}-halo"))
     for month, (az, el) in enumerate(reference.months, 1):
         if not len(az):
             continue  # polar night: no above-horizon path exists
-        color = "#344054" if radiation else MONTH_COLORS[month-1]
-        # A white underlay keeps the neutral curve legible on radiation dots.
-        if radiation:
-            fig.add_trace(go.Scatterpolar(theta=az, r=90-el, mode="lines",
-                line=dict(color="rgba(255,255,255,0.92)", width=3.8),
-                showlegend=False, hoverinfo="skip", connectgaps=False,
-                legendgroup=f"month-{month}", name=f"{MONTH_NAMES[month-1]} guide halo"))
+        color = MONTH_COLORS[month-1]
         fig.add_trace(go.Scatterpolar(theta=az, r=90-el, mode="lines",
-            line=dict(color=color, width=1.5 if radiation else 2.2),
+            line=dict(color=color, width=2.6 if radiation else 2.8, dash=_month_dash(month)),
             name=f"{MONTH_NAMES[month-1]} 21", legendgroup=f"month-{month}",
+            uid=f"polar-month-{month}-line",
             connectgaps=False, showlegend=True, customdata=el,
             hovertemplate=f"{MONTH_NAMES[month-1]} 21<br>Azimuth %{{theta:.1f}}°"
                           "<br>Elevation %{customdata:.1f}°<extra></extra>"))
@@ -185,21 +203,24 @@ def _add_polar_months(fig, reference: SolarReference, *, radiation=False):
             fig.add_trace(go.Scatterpolar(theta=[a], r=[90-h], mode="text",
                 text=[MONTH_NAMES[month-1]], textposition="top center",
                 textfont=dict(color=color, size=12), showlegend=False,
-                hoverinfo="skip", legendgroup=f"month-{month}", name=f"{MONTH_NAMES[month-1]} label"))
-
+                hoverinfo="skip", legendgroup=f"month-{month}", name=f"{MONTH_NAMES[month-1]} label",
+                uid=f"polar-month-{month}-label"))
 
 def _add_polar_hours(fig, reference: SolarReference):
+    first = True
     for hour, (az, el) in enumerate(reference.hours):
         if not len(az) or not np.isfinite(el).any() or np.nanmax(el) < 2.0:
             continue
         fig.add_trace(go.Scatterpolar(theta=az, r=90-el, mode="lines",
             line=dict(color="#AAB4C2", width=1, dash="dot"),
-            name=f"{hour:02d}:00", showlegend=False, hoverinfo="skip", connectgaps=False))
+            name="Hour curves" if first else f"{hour:02d}:00", showlegend=first,
+            legendgroup="hour-curves", hoverinfo="skip", connectgaps=False))
+        first = False
         i = int(np.nanargmax(el))
         fig.add_trace(go.Scatterpolar(theta=[az[i]], r=[90-el[i]], mode="text",
             text=[f"{hour:02d}"], textposition="top center",
             textfont=dict(size=10, color="#64748B"), name=f"{hour:02d}:00 label",
-            showlegend=False, hoverinfo="skip"))
+            showlegend=False, legendgroup="hour-curves", hoverinfo="skip"))
 
 
 def _missing_reference(fig):
@@ -250,13 +271,16 @@ def radiation_sun_path(df: pd.DataFrame, title: str | None = None,
     _add_polar_months(fig, reference, radiation=True)
     # Restore representative hour labels on the annual guides without a
     # misleading connection through filtered weather points.
+    first_hour = True
     for hour, (az, el) in enumerate(reference.hours):
         if len(el) and np.isfinite(el).any() and np.nanmax(el) >= 3:
             i = int(np.nanargmax(el))
             fig.add_trace(go.Scatterpolar(theta=[az[i]], r=[90-el[i]], mode="text",
                 text=[f"{hour:02d}"], textposition="bottom center",
-                textfont=dict(color="#475569", size=10), name=f"{hour:02d}:00",
-                showlegend=False, hoverinfo="skip"))
+                textfont=dict(color="#475569", size=10),
+                name="Hour labels" if first_hour else f"{hour:02d}:00",
+                showlegend=first_hour, legendgroup="hour-curves", hoverinfo="skip"))
+            first_hour = False
     fig.update_layout(meta={"solar_reference": reference.description,
                             "radiation_field": field or ""})
     return fig
@@ -270,6 +294,88 @@ def classic_sun_path(df: pd.DataFrame, title: str = "2D sun-path diagram") -> go
     _add_polar_hours(fig, reference)
     _add_polar_months(fig, reference)
     fig.update_layout(meta={"solar_reference": reference.description})
+    return fig
+
+
+def _cartesian_path(azimuth, elevation):
+    """Split the N/0° seam instead of drawing a line across the entire plot."""
+    xs, ys = [], []
+    for a, h in zip(azimuth, elevation):
+        if xs and np.isfinite(a) and np.isfinite(xs[-1]) and abs(a-xs[-1]) > 180:
+            xs.append(np.nan)
+            ys.append(np.nan)
+        xs.append(a)
+        ys.append(h)
+    return xs, ys
+
+
+def technical_sun_path(df: pd.DataFrame, title: str = "Technical sun-path diagram") -> go.Figure:
+    """Restore the original Cartesian engineering representation.
+
+    The earlier chart's azimuth/elevation axes are retained, but its
+    first-available-day sampling is replaced by the common astronomical 21st
+    reference used by the other views. This works for incomplete weather years.
+    """
+    fig = go.Figure()
+    reference = solar_reference(df)
+    axes = [55., 305.]
+    ymax = 85.
+    if reference is not None:
+        finite_az = [a[np.isfinite(a)] for a, _ in reference.months if np.isfinite(a).any()]
+        finite_el = [h[np.isfinite(h)] for _, h in reference.months if np.isfinite(h).any()]
+        if finite_az:
+            low = min(float(np.min(a)) for a in finite_az)
+            high = max(float(np.max(a)) for a in finite_az)
+            axes = [max(0., min(55., 10*np.floor(low/10)-5)),
+                    min(360., max(305., 10*np.ceil(high/10)+5))]
+        if finite_el:
+            ymax = max(85., min(90., float(np.ceil(max(np.max(h) for h in finite_el)/5)*5)))
+        first = True
+        for hour, (az, el) in enumerate(reference.hours):
+            if not len(el) or not np.isfinite(el).any() or np.nanmax(el) < 2.0:
+                continue
+            x, y = _cartesian_path(az, el)
+            fig.add_trace(go.Scatter(x=x, y=y, mode="lines", connectgaps=False,
+                line=dict(color="#AAB4C2", width=1, dash="dot"),
+                name="Hour curves" if first else f"{hour:02d}:00", legendgroup="hour-curves",
+                showlegend=first, hoverinfo="skip"))
+            first = False
+            idx = int(np.nanargmax(el))
+            fig.add_trace(go.Scatter(x=[az[idx]], y=[el[idx]], mode="text",
+                text=[f"{hour:02d}:00"], textposition="top center",
+                textfont=dict(color="#64748B", size=10),
+                legendgroup="hour-curves", showlegend=False, hoverinfo="skip"))
+        for month, (az, el) in enumerate(reference.months, 1):
+            if not len(az):
+                continue
+            x,y = _cartesian_path(az, el)
+            color = MONTH_COLORS[month-1]
+            fig.add_trace(go.Scatter(x=x, y=y, mode="lines", connectgaps=False,
+                line=dict(color=color, width=2.8, dash=_month_dash(month)),
+                name=f"{MONTH_NAMES[month-1]} 21", legendgroup=f"month-{month}",
+                uid=f"technical-month-{month}-line", showlegend=True,
+                hovertemplate=f"{MONTH_NAMES[month-1]} 21<br>Azimuth %{{x:.1f}}°"
+                              "<br>Elevation %{y:.1f}°<extra></extra>"))
+            label = _monthly_label(az, el, month)
+            if label is not None:
+                a,h = label
+                fig.add_trace(go.Scatter(x=[a], y=[h], mode="text",
+                    text=[f"21 {MONTH_NAMES[month-1]}"], textposition="top center",
+                    textfont=dict(color=color, size=12), legendgroup=f"month-{month}",
+                    uid=f"technical-month-{month}-label", showlegend=False, hoverinfo="skip"))
+        fig.update_layout(meta={"solar_reference": reference.description})
+    else:
+        _missing_reference(fig)
+    for a, name in ((0,"North"),(90,"East"),(180,"South"),(270,"West"),(360,"North")):
+        if axes[0] <= a <= axes[1]:
+            fig.add_annotation(x=a,y=0,text=name,showarrow=False,yshift=-22,
+                               font=dict(color="#111827",size=12))
+    fig.update_layout(template="plotly_white", title=title, height=900,
+        margin=dict(l=65,r=40,t=80,b=100), showlegend=True, legend=_month_legend(y=-0.14),
+        xaxis=dict(title="Solar azimuth [deg]", range=axes, dtick=10,
+                   gridcolor="rgba(107,114,128,0.25)", zeroline=False),
+        yaxis=dict(title="Solar elevation [deg]", range=[0,ymax], dtick=10,
+                   ticksuffix="°", gridcolor="rgba(107,114,128,0.25)", zeroline=False))
     return fig
 
 
@@ -319,20 +425,24 @@ def sun_path_3d(df: pd.DataFrame, *, show_cube: bool = True, title: str = "3D su
         return fig.update_layout(title="Astronomical reference unavailable")
     fig.add_trace(_dome_grid())
     # Thin neutral hour curves add spatial context without obscuring paths.
+    first_hour = True
     for hour, (az, el) in enumerate(reference.hours):
         if not len(az):
             continue
         x, y, z = sun_direction_xyz(az, el)
         fig.add_trace(go.Scatter3d(x=x, y=y, z=z, mode="lines",
-            line=dict(color="#C6CDD7", width=1, dash="dot"), name=f"{hour:02d}:00",
-            showlegend=False, hoverinfo="skip", connectgaps=False))
+            line=dict(color="#C6CDD7", width=1, dash="dot"),
+            name="Hour curves" if first_hour else f"{hour:02d}:00",
+            legendgroup="hour-curves", showlegend=first_hour, hoverinfo="skip", connectgaps=False))
+        first_hour = False
     for month, (az, el) in enumerate(reference.months, 1):
         if not len(az):
             continue
         x, y, z = sun_direction_xyz(az, el)
         fig.add_trace(go.Scatter3d(x=x, y=y, z=z, mode="lines", connectgaps=False,
-            line=dict(color=MONTH_COLORS[month-1], width=4),
-            name=f"{MONTH_NAMES[month-1]} 21", customdata=np.column_stack((az, el)),
+            line=dict(color=MONTH_COLORS[month-1], width=5, dash=_month_dash(month)),
+            name=f"{MONTH_NAMES[month-1]} 21", legendgroup=f"month-{month}",
+            uid=f"dome-month-{month}-line", showlegend=True, customdata=np.column_stack((az, el)),
             hovertemplate=f"{MONTH_NAMES[month-1]} 21<br>Azimuth %{{customdata[0]:.1f}}°"
                           "<br>Elevation %{customdata[1]:.1f}°<extra></extra>"))
     compass_x, compass_y, compass_z = sun_direction_xyz(np.array([0.,90.,180.,270.]), np.zeros(4))
@@ -341,17 +451,17 @@ def sun_path_3d(df: pd.DataFrame, *, show_cube: bool = True, title: str = "3D su
         name="Compass", showlegend=False, hoverinfo="skip"))
     fig.add_traces(_cube_traces(show_cube))
     axis = dict(visible=False, showgrid=False, zeroline=False, showbackground=False)
-    revision = (f"sun-dome:{reference.latitude:.6f}:{reference.longitude:.6f}:"
+    revision = (f"sun-dome-turntable:{reference.latitude:.6f}:{reference.longitude:.6f}:"
                 f"{reference.year}:{reference.utc_offset_hours:g}")
     fig.update_layout(template="plotly_white", title=title, height=760,
         margin=dict(l=0,r=0,t=70,b=50),
-        legend=dict(orientation="h", x=0.5, xanchor="center", y=-0.02),
+        showlegend=True, legend=_month_legend(y=-0.02),
         uirevision=revision, meta={"solar_reference": reference.description,
             "cube_is_illustrative": True, "coordinate_system":"east,north,up"},
         scene=dict(xaxis=dict(**axis,range=[-1.15,1.15]),
             yaxis=dict(**axis,range=[-1.15,1.15]), zaxis=dict(**axis,range=[-0.05,1.10]),
             aspectmode="manual", aspectratio=dict(x=1,y=1,z=0.5),
-            dragmode="orbit", uirevision=revision,
+            dragmode="turntable", uirevision=revision,
             camera=dict(eye=dict(x=1.45,y=-1.65,z=1.08),up=dict(x=0,y=0,z=1),
                         projection=dict(type="orthographic"))))
     return fig
