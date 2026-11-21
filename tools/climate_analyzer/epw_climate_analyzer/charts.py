@@ -460,8 +460,6 @@ def temporal_heatmap_chart(
     if compare_across == "Year":
         years = [int(value) for value in matrix.index]
         fig.update_yaxes(tickmode="array", tickvals=years, ticktext=[str(year) for year in years])
-    if compare_across == HEATMAP_COMPARE_HOUR:
-        fig.update_yaxes(range=[23, 0], autorangeoptions=dict(minallowed=0, maxallowed=23))
     fig.update_layout(template=PLOT_TEMPLATE, margin=dict(l=40, r=20, t=70, b=45))
     from .calendar_heatmap_axes import apply_calendar_heatmap_axes
     from .calendar_heatmap_axes import set_period_axis_scope

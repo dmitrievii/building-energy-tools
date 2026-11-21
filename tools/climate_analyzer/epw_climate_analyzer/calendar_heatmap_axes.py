@@ -71,6 +71,19 @@ def apply_calendar_heatmap_axes(fig,*,period=None):
             if axis is None:continue
             title=str(axis.title.text or "").strip().lower()
             semantic=str(period).lower() if period and coord=="x" else title
+            # Canonical clock-hour cells: 0, 6, 12, 18, 23. Keep complete
+            # endpoint cells visible, not clipped at their centre coordinates.
+            if title in ("hour of day","analysis clock hour","clock hour","hour"):
+                try:hours=[int(v) for v in vals if float(v)==int(v)]
+                except (TypeError,ValueError,OverflowError):hours=[]
+                if len(hours)==len(vals) and hours and 0<=min(hours)<=max(hours)<=23:
+                    ticks=[0,6,12,18,23]
+                    bounds=[23.5,-.5] if coord=="y" else [-.5,23.5]
+                    axis.update(type="linear",tickmode="array",tickvals=ticks,
+                                ticktext=[str(h) for h in ticks],range=bounds,autorange=False,
+                                autorangeoptions=dict(minallowed=-.5,maxallowed=23.5),
+                                tickangle=0,automargin=True,showticklabels=True)
+                    continue
             if coord=="x" and _period_ticks(axis,vals,fig,heatmap=True):continue
             # No auto calendar interpretation for a date-looking categorical
             # label on unrelated dimensions; actual date objects are safe.

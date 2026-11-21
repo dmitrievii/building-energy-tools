@@ -22,6 +22,37 @@ class CalendarHeatmapTests(unittest.TestCase):
         self.assertEqual(list(copy.layout.xaxis.ticktext)[-1],"Dec")
         self.assertEqual(len(copy.data[0].x),365)
 
+    def test_clock_hour_axis_canonical_for_ventilation_and_other_heatmaps(self):
+        from epw_climate_analyzer.charts import temporal_heatmap_chart
+        idx=pd.date_range("2026-01-01",periods=72,freq="h")
+        df=pd.DataFrame({
+            "natural_ventilation_suitable":((idx.hour>=6)&(idx.hour<18)).astype(float),
+            "night_flushing_suitable":((idx.hour>=22)|(idx.hour<7)).astype(float),
+            "dry_bulb_temperature_c":np.linspace(0.,25.,len(idx)),
+        },index=idx)
+        ticks=[0,6,12,18,23]
+        for column in df:
+            for period in ("day","week","month"):
+                with self.subTest(column=column,period=period):
+                    fig=temporal_heatmap_chart(df,column,period,HEATMAP_COMPARE_HOUR,"Mean",column,"0/1" if "suitable" in column else "°C")
+                    expected=temporal_heatmap_matrix(df,column,period,HEATMAP_COMPARE_HOUR,"Mean")
+                    for copy in (fig,report_figure(fig,width_pt=500,height_pt=230)):
+                        self.assertEqual(list(copy.layout.yaxis.tickvals),ticks)
+                        self.assertEqual(list(copy.layout.yaxis.ticktext),list(map(str,ticks)))
+                        self.assertEqual(list(copy.layout.yaxis.range),[23.5,-.5])
+                        np.testing.assert_allclose(np.asarray(copy.data[0].z,float),expected.values,equal_nan=True)
+        legacy=go.Figure(go.Heatmap(x=["2026-01-01"],y=list(range(24)),z=np.arange(24).reshape(24,1)))
+        legacy.update_layout(yaxis_title="Hour of day")
+        printed=report_figure(legacy,width_pt=500,height_pt=230)
+        self.assertEqual(list(printed.layout.yaxis.tickvals),ticks)
+        utci=go.Figure(legacy);utci.update_layout(yaxis_title="Analysis clock hour")
+        apply_calendar_heatmap_axes(utci)
+        self.assertEqual(list(utci.layout.yaxis.tickvals),ticks)
+        physical=go.Figure(go.Heatmap(x=[10,20],y=[0,6,12],z=np.zeros((3,2))))
+        physical.update_layout(yaxis_title="Wind speed [m/s]")
+        apply_calendar_heatmap_axes(physical)
+        self.assertIsNone(physical.layout.yaxis.tickvals)
+
     def test_missing_days_not_zero_filled(self):
         idx=pd.date_range("2026-11-29","2026-12-03 23:00",freq="h")
         df=pd.DataFrame({"temperature":1.},index=idx)
