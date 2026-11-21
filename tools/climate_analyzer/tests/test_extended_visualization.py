@@ -51,6 +51,23 @@ class ExtendedTests(unittest.TestCase):
         monthly.attrs["canonical_native_resolution"]="monthly"
         self.assertFalse(compatible_types(monthly,T))
         self.assertEqual(climate_summary_table(monthly).loc[1,P],83.)
+    def test_interpretation_amplitude_and_duration_endpoints(self):
+        from epw_climate_analyzer.extended_visualization import climate_summary_interpretation, amplitude_figure
+        from epw_climate_analyzer.charts import duration_chart
+        table=pd.DataFrame({T:[25.,5.],P:[10.,80.]},index=[7,1])
+        result=climate_summary_interpretation(table,"Walter–Lieth diagram")
+        self.assertIn("Jul",result)
+        self.assertIn("dryness",result)
+        self.assertIn("No annual total",result)
+        df=sample()
+        self.assertEqual(amplitude_figure(df,T,"Daily","Temperature").data[0].y[0],23.)
+        self.assertEqual(amplitude_figure(df,T,"Monthly","Temperature").data[0].y[0],23.)
+        self.assertEqual(probability_figure(df,T,"°C").layout.xaxis.tickvals[-1],100)
+        idx=pd.date_range("2025-01-01",periods=8760,freq="h")
+        annual=pd.DataFrame({T:np.arange(len(idx))},index=idx)
+        fig=duration_chart(annual,T,"Duration","°C")
+        self.assertEqual(fig.layout.xaxis.tickvals[-1],8760)
+        self.assertEqual(duration_chart(df,T,"Duration","°C").layout.xaxis.tickvals[-1],744)
     def test_daylight_ground_and_sunshine(self):
         df=sample()
         self.assertEqual(tuple(daylight_envelope(df.index,48.).layout.yaxis.range),(0,24))

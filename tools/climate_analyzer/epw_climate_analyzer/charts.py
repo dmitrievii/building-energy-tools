@@ -421,7 +421,17 @@ def duration_chart(df: pd.DataFrame, column: str, title: str, unit: str, ascendi
     fig = px.line(values, x="duration_hours", y=column, title=title, labels={"duration_hours": "Sorted duration [h]", column: unit})
     fig.update_traces(line_color=metric_color(column), hovertemplate="Sorted duration: %{x:.2f} h<br>Value: %{y:.2f} " + unit + "<extra></extra>")
     fig.update_layout(template=PLOT_TEMPLATE, margin=dict(l=40, r=20, t=70, b=45))
-    return _apply_axis_constraints(fig, column=column, x_values=values["duration_hours"], y_values=values[column])
+    fig = _apply_axis_constraints(fig, column=column, y_values=values[column])
+    if not values.empty:
+        endpoint=float(values["duration_hours"].iloc[-1])
+        if endpoint>0:
+            # Explicitly label the actual last observed hour, not a
+            # hard-coded 8760 for partial, leap or multi-year records.
+            ticks=np.linspace(0.,endpoint,6).tolist()
+            fig.update_xaxes(range=[0,endpoint],tickmode="array",tickvals=ticks,
+                             ticktext=[f"{v:g}" for v in ticks],
+                             autorangeoptions=dict(minallowed=0,maxallowed=endpoint))
+    return fig
 
 def histogram_chart(df: pd.DataFrame, column: str, title: str, unit: str, bins: int = 40) -> go.Figure:
     """Create an interactive histogram weighted by physical source-record duration."""

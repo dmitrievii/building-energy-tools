@@ -167,7 +167,7 @@ def probability_figure(df,column,unit,ascending=False):
     fig=go.Figure(go.Scatter(x=v["exceedance_fraction"]*100,y=v[column],mode="lines",
                                line=dict(color=metric_color(column))))
     fig.update_layout(template="plotly_white",title="Empirical frequency curve",xaxis_title=label,yaxis_title=unit)
-    fig.update_xaxes(range=[0,100])
+    fig.update_xaxes(range=[0,100],tickmode="array",tickvals=[0,20,40,60,80,100],ticksuffix="%",autorangeoptions=dict(minallowed=0,maxallowed=100))
     return fig
 
 
@@ -223,7 +223,7 @@ def climate_summary_figure(table,style):
             meta={"annual_loop_closure_vertex":True},
             marker=dict(color=list(range(12))+[0],colorscale="Turbo",size=8),name="Monthly climate"))
         fig.update_layout(xaxis_title="Mean temperature [°C]",yaxis_title="Monthly precipitation [mm]")
-    elif style=="Walter–Lieth":
+    elif style in ("Walter–Lieth","Walter–Lieth diagram"):
         scaled=walter_precip_scale(precip)
         fig=go.Figure()
         for i,m in enumerate(MONTHS):
@@ -255,6 +255,70 @@ def climate_summary_figure(table,style):
         fig.update_yaxes(title_text="Temperature [°C]",secondary_y=False)
         fig.update_yaxes(title_text="Precipitation [mm]",rangemode="tozero",secondary_y=True)
     fig.update_layout(template="plotly_white",title=style,legend=dict(orientation="h",y=-.2))
+    return fig
+
+
+def climate_summary_interpretation(table, style):
+    """Data-driven climate reading; no inference of unobserved months."""
+    observed=table[[T,P]].dropna()
+    if observed.empty:
+        return "No paired monthly values are available."
+    name=lambda i: MONTHS[int(i)-1]
+    cold=observed[T].idxmin();warm=observed[T].idxmax()
+    wet=observed[P].idxmax();dry=observed[P].idxmin()
+    arid=observed[observed[P]<2*observed[T]]
+    wet_count=len(observed)-len(arid)
+    parts=[
+        f"The represented climate ranges from {observed.loc[cold,T]:.1f} °C in {name(cold)} to {observed.loc[warm,T]:.1f} °C in {name(warm)} (monthly mean temperature range {observed[T].max()-observed[T].min():.1f} K).",
+        f"Precipitation is highest in {name(wet)} ({observed.loc[wet,P]:.1f} mm) and lowest in {name(dry)} ({observed.loc[dry,P]:.1f} mm).",
+    ]
+    if len(observed)==12:
+        parts.append(f"The sum of the twelve representative monthly precipitation totals is {observed[P].sum():.0f} mm.")
+    else:
+        missing=[name(i) for i in range(1,13) if i not in observed.index]
+        parts.append("Only "+str(len(observed))+" of 12 months are supported; missing months: "+", ".join(missing)+". No annual total or full-year dryness conclusion is inferred.")
+    if len(arid):
+        parts.append("Walter–Lieth climatic dryness (P < 2T) occurs during "+", ".join(name(i) for i in arid.index)+
+                     f" ({len(arid)} of {len(observed)} represented months). During those months, planting and landscape water demand warrant particular assessment; rainfall harvesting and storage can help bridge dry periods.")
+    else:
+        parts.append(f"No Walter–Lieth dry month is identified among the {len(observed)} represented months. This does not exclude short dry spells or summertime water deficits.")
+    if observed[T].min()<0:
+        parts.append("At least one monthly mean is below freezing: freeze protection and winter drainage deserve attention. Monthly means do not establish frost-day counts.")
+    if observed.loc[warm,T]>=20:
+        parts.append("The warmest monthly mean supports assessment of summer shading and ventilation; overheating cannot be determined from monthly temperature alone.")
+    if observed.loc[warm,P] < observed[P].median():
+        parts.append("The warmest month is drier than the median represented month, suggesting a seasonal mismatch between warmth and precipitation availability.")
+    else:
+        parts.append("The warmest month has precipitation at or above the median represented month; warm-period moisture and rain protection should be considered alongside summer thermal design.")
+    parts.append("These are climatic indicators, not a water balance or a building-load prediction. The Walter–Lieth dryness criterion is empirical.")
+    return " ".join(parts)
+
+
+def amplitude_figure(df,column,aggregation,label):
+    """Observed within-period range; no synthetic intra-interval extrema."""
+    from .temporal_filtering import CALENDAR_PROFILE, INTERANNUAL_OVERLAY, calendar_profile_slot, display_period_labels, chronological_season_start
+    values=_numeric(df,column).sort_index()
+    if aggregation=="Seasonal":
+        grouped=values.groupby(chronological_season_start(values.index))
+    else:
+        rule={"Daily":"D","Weekly":"W","Monthly":"ME","Annual":"YE"}[aggregation]
+        grouped=values.resample(rule)
+    ranges=(grouped.max()-grouped.min()).where(grouped.count()>=2)
+    fig=go.Figure()
+    basis=time_basis(df)
+    if basis==CALENDAR_PROFILE:
+        slots=calendar_profile_slot(ranges.index,aggregation)
+        ranges=ranges.groupby(slots,observed=True).mean()
+        fig.add_bar(x=display_period_labels(ranges.index,aggregation,basis),y=ranges,name=label,marker_color=metric_color(column))
+    elif basis==INTERANNUAL_OVERLAY:
+        for year in sorted(set(ranges.index.year)):
+            v=ranges.loc[ranges.index.year==year]
+            slots=calendar_profile_slot(v.index,aggregation)
+            fig.add_scatter(x=display_period_labels(slots,aggregation,basis),y=v,mode="lines+markers",connectgaps=False,name=str(year))
+    else:
+        fig.add_bar(x=display_period_labels(ranges.index,aggregation,basis),y=ranges,name=label,marker_color=metric_color(column))
+    fig.update_layout(template="plotly_white",title=f"{aggregation} amplitude · {label}",xaxis_title="Period",yaxis_title="Amplitude [K]",legend=dict(orientation="h",y=-.2))
+    fig.update_yaxes(rangemode="tozero")
     return fig
 
 

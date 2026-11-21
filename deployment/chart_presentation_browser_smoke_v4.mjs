@@ -278,7 +278,7 @@ try {
     paper:node._fullLayout.paper_bgcolor,plot:node._fullLayout.plot_bgcolor,
     polar:node._fullLayout.polar?.bgcolor||null
   })));
-  const clearColor=v=>/^rgba\\(0,\\s*0,\\s*0,\\s*0(?:\\.0+)?\\)$/.test(v)||v==='transparent';
+  const clearColor=v=>String(v).replace(/\s+/g,'')==='rgba(0,0,0,0)'||v==='transparent';
   if(backgrounds.some(x=>!clearColor(x.paper) || (x.polar && !clearColor(x.polar))))
     throw new Error('Global background failed: '+JSON.stringify(backgrounds));
   const transparentLine=await exportAlpha(0);

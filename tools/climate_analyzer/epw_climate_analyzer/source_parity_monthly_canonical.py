@@ -489,7 +489,17 @@ def render_monthly_canonical_analysis(legacy: Any, dataset: Any) -> None:
         "Wind and Ventilation": "Wind variable explorer",
         "Precipitation and Snow": "Precipitation/snow variable explorer",
     }.get(page, "Variable explorer")
-    st.selectbox("Analysis type", [analysis_label], index=0, disabled=True, key=f"monthly_locked_analysis_{page}")
+    if page == "Precipitation and Snow" and all(
+        c in filtered and pd.to_numeric(filtered[c],errors="coerce").notna().any()
+        for c in ("dry_bulb_temperature_c","liquid_precipitation_depth_mm")
+    ):
+        choice=st.selectbox("Analysis type",[analysis_label,"Temperature–precipitation diagrams"],
+                            key="monthly_precipitation_diagram_analysis")
+        if choice=="Temperature–precipitation diagrams":
+            legacy.render_climate_summary_charts(filtered)
+            return
+    else:
+        st.selectbox("Analysis type", [analysis_label], index=0, disabled=True, key=f"monthly_locked_analysis_{page}")
     st.caption(
         "Native monthly source: sub-monthly analyses are unavailable. Only graph operations that remain physically meaningful for published monthly statistics are enabled."
     )

@@ -1857,6 +1857,7 @@ def render_chart_export_controls(fig) -> None:
 
     # Keep the chart itself full-width. The tiny control occupies its own row
     # immediately above the figure instead of stealing horizontal chart space.
+    export_key = next_plot_key("chart_export")
     _, export_col = st.columns([24, 1], gap="small")
     with export_col:
         with st.popover("⇩"):
@@ -1866,6 +1867,7 @@ def render_chart_export_controls(fig) -> None:
             if chart_csv:
                 st.download_button(
                     "Chart data · CSV",
+                        key=f"{export_key}_trace",
                     data=chart_csv,
                     file_name=f"{stem}.csv",
                     mime="text/csv",
@@ -1882,6 +1884,7 @@ def render_chart_export_controls(fig) -> None:
                 if hasattr(filtered, "to_csv"):
                     st.download_button(
                         "Filtered data · CSV",
+                        key=f"{export_key}_filtered",
                         data=dataframe_to_csv_bytes(filtered),
                         file_name=f"{stem}_filtered.csv",
                         mime="text/csv",
@@ -1893,6 +1896,7 @@ def render_chart_export_controls(fig) -> None:
                     source_name = safe_export_stem(active.name, default="source_weather")
                     st.download_button(
                         "Source weather · EPW",
+                        key=f"{export_key}_epw",
                         data=active.payload,
                         file_name=f"{source_name}.epw",
                         mime="application/octet-stream",
@@ -2086,16 +2090,16 @@ def metric_cards(df: pd.DataFrame) -> None:
 
 
 def render_climate_summary_charts(df: pd.DataFrame) -> None:
-    from epw_climate_analyzer.extended_visualization import climate_summary_table, climate_summary_figure
+    from epw_climate_analyzer.extended_visualization import climate_summary_table, climate_summary_figure, climate_summary_interpretation
     table=climate_summary_table(df)
     if table.empty:
+        st.info("No complete paired temperature and precipitation calendar months remain in the active Data filter.")
         return
-    st.subheader("Climate summary")
-    style=st.selectbox("Climate summary chart",["Climograph","Walter–Lieth","Temperature–precipitation loop"],
+    style=st.selectbox("Chart type",["Walter–Lieth diagram","Climograph","Temperature–precipitation loop"],
                        key="climate_summary_style")
     st.caption("Only complete paired temperature–precipitation calendar months are used. Equivalent months across years are averaged, not summed.")
     render_plot(climate_summary_figure(table,style),
-                "Walter–Lieth uses 2 mm precipitation per °C up to 100 mm and 20 mm per °C above. Climatic dryness (P < 2T) is not a soil-water balance.")
+                climate_summary_interpretation(table,style))
     with st.expander("Monthly summary data"):
         st.dataframe(table,use_container_width=True)
 
@@ -2193,11 +2197,20 @@ def render_generic_variable_page(
         # its bounds remain per-record extrema, so that chart is deliberately
         # unavailable for this extensive variable.
         chart_types.remove("Profile with min-mean-max ribbon")
-    from epw_climate_analyzer.extended_visualization import compatible_types, probability_figure
+    from epw_climate_analyzer.extended_visualization import compatible_types, probability_figure, amplitude_figure, hourly_capable
     chart_types.extend(compatible_types(df,column))
-    chart_type = st.selectbox("Chart type", chart_types)
+    scope = "explorer_" + title_prefix.lower().replace(" ", "_")
+    if title_prefix.startswith("Temperature") and unit in ("°C","K") and hourly_capable(df):
+        chart_types.append("Amplitude")
+    chart_type = st.selectbox("Chart type", chart_types, key=scope+"_chart_type")
+    if chart_type=="Amplitude":
+        aggregation=st.selectbox("Aggregation",["Daily","Weekly","Monthly","Seasonal","Annual"],
+                                 key=scope+"_amplitude_aggregation")
+        fig=amplitude_figure(df,column,aggregation,variable_label)
+        render_plot(fig, "Amplitude is the observed maximum minus minimum of the selected variable within each aggregation period [K]. At least two valid observations are required. Incomplete periods reflect the observed range, not an estimated full-period range. Calendar profiles average individual period amplitudes; interannual mode keeps years separate.")
+        return
     if chart_type in ("Typical daily profile","Monthly occurrence classes"):
-        render_extended_variable_chart(df,column,unit,chart_type)
+        render_extended_variable_chart(df,column,unit,chart_type,key_prefix=scope)
         return
     chart_df = df
     if column == "liquid_precipitation_depth_mm" and chart_type in {
@@ -2224,9 +2237,9 @@ def render_generic_variable_page(
         else:
             st.caption("Distribution includes observed dry intervals at 0 mm as well as wet intervals.")
     if chart_type == "Heat map":
-        heatmap_period = st.selectbox("Heat-map aggregation", ["Day", "Week", "Month"], index=0)
+        heatmap_period = st.selectbox("Heat-map aggregation", ["Day", "Week", "Month"], index=0,key=scope+"_heatmap_period")
         compare_options = ["Hour of day"] if time_basis(df) == CHRONOLOGICAL else ["Hour of day", "Year"]
-        compare_across = st.selectbox("Compare across", compare_options, index=0)
+        compare_across = st.selectbox("Compare across", compare_options, index=0,key=scope+"_compare_across")
         if time_basis(df) == CHRONOLOGICAL and is_multiyear(df):
             st.caption("Chronological heat maps keep every real day, week or month in sequence across years. Switch Time basis to Calendar profile to align equivalent calendar periods and compare years directly.")
         statistic_options = list(heatmap_statistic_options(column))
@@ -2238,6 +2251,7 @@ def render_generic_variable_page(
         statistic = st.selectbox(
             "Statistic",
             statistic_options,
+            key=scope+"_statistic",
             index=statistic_options.index(default_statistic),
             format_func=lambda value: statistic_labels.get(value, value),
             help=(
@@ -2268,7 +2282,7 @@ def render_generic_variable_page(
         # not need it.
         aggregation = None
         if chart_type in {"Profile with min-mean-max ribbon", "Middle 90% range with median"}:
-            aggregation = st.selectbox("Aggregation", ["Monthly", "Annual", "Weekly", "Daily", "Hourly", "Seasonal"], index=0)
+            aggregation = st.selectbox("Aggregation", ["Monthly", "Annual", "Weekly", "Daily", "Hourly", "Seasonal"], index=0,key=scope+"_aggregation")
         # Radiation and illuminance are visualized as mean intensities in the generic explorer.
         # Monthly/annual energy sums are available in the dedicated solar component charts.
         if chart_type == "Profile with min-mean-max ribbon":
@@ -2276,13 +2290,13 @@ def render_generic_variable_page(
         elif chart_type == "Middle 90% range with median":
             fig = percentile_band_chart(df, column, aggregation or "Monthly", f"{title_prefix}: {variable_label} · middle 90% range with median", unit)
         elif chart_type == "Duration curve":
-            ascending = st.checkbox("Ascending order", value=False)
+            ascending = st.checkbox("Ascending order", value=False,key=scope+"_ascending")
             direction = "ascending" if ascending else "descending"
-            axis_representation=st.selectbox("Axis representation",["Physical hours","Probability [%]"],key="duration_axis_representation")
+            axis_representation=st.selectbox("Axis representation",["Physical hours","Probability [%]"],key=scope+"_duration_axis_representation")
             fig = (probability_figure(chart_df,column,unit,ascending) if axis_representation=="Probability [%]"
                    else duration_chart(chart_df, column, f"{title_prefix}: {variable_label} {direction} duration curve", unit, ascending=ascending))
         elif chart_type == "Histogram":
-            bins = st.slider("Histogram bins", 10, 120, 40)
+            bins = st.slider("Histogram bins", 10, 120, 40,key=scope+"_bins")
             fig = histogram_chart(chart_df, column, f"{title_prefix}: {variable_label} histogram", unit, bins=bins)
         elif chart_type == "Monthly violin plot":
             fig = monthly_box_chart(chart_df, column, f"{title_prefix}: {variable_label} monthly violin plot", unit, violin=True)
@@ -3090,7 +3104,6 @@ def render_overview(epw, df: pd.DataFrame, full_df: pd.DataFrame, issues: list[o
             """
         )
 
-    render_climate_summary_charts(stats_df)
     render_calculated_epw_statistics(stats_df)
 
     issue_count = len(issues)
@@ -3277,15 +3290,6 @@ def render_temperature(
         cool_threshold = 26.0
 
     if chart_group == "Temperature variable explorer":
-        from epw_climate_analyzer.extended_visualization import hourly_capable, daily_amplitude
-        if has_air_temperature and hourly_capable(df):
-            view=st.selectbox("Temperature quantity family",["Source and psychrometric temperatures","Daily temperature amplitude"],key="temperature_quantity_family")
-            if view=="Daily temperature amplitude":
-                amplitude=daily_amplitude(df)
-                fig=px.line(amplitude.rename("amplitude").reset_index(),x=amplitude.rename("amplitude").reset_index().columns[0],y="amplitude",title="Daily temperature amplitude")
-                fig.update_layout(template="plotly_white",xaxis_title="Date",yaxis_title="Daily temperature amplitude [K]")
-                render_plot(fig,"Daily observed maximum minus minimum dry-bulb temperature; only complete calendar days are included.")
-                return
         render_generic_variable_page(
             df,
             [
@@ -4009,6 +4013,8 @@ def render_precipitation(df: pd.DataFrame, native_df: pd.DataFrame | None = None
     options: list[str] = []
     if liquid_available:
         options.extend(["Precipitation totals", "Annual precipitation indices", "Liquid precipitation explorer"])
+        if "dry_bulb_temperature_c" in df and pd.to_numeric(df["dry_bulb_temperature_c"],errors="coerce").notna().any():
+            options.append("Temperature–precipitation diagrams")
     if native_liquid_available:
         options.append("Precipitation-record occurrence")
     if duration_available:
@@ -4023,6 +4029,9 @@ def render_precipitation(df: pd.DataFrame, native_df: pd.DataFrame | None = None
 
     chart_group = st.selectbox("Analysis type", options)
 
+    if chart_group == "Temperature–precipitation diagrams":
+        render_climate_summary_charts(df)
+        return
     if chart_group == "Precipitation totals":
         aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal", "Annual"], index=0)
         totals = aggregate_liquid_precipitation(df, aggregation)
@@ -4382,7 +4391,7 @@ def render_sky_daylight(df: pd.DataFrame, *, latitude: float | None = None) -> N
     elif chart_group == "Clear and overcast hours":
         from epw_climate_analyzer.extended_visualization import hourly_capable, sky_distribution, occurrence_figure
         if has_numeric_observations(df,"total_sky_cover_tenths") and hourly_capable(df):
-            sky_view=st.selectbox("Sky condition chart",["Threshold hours","Monthly sky-condition distribution"],key="sky_condition_chart")
+            sky_view=st.selectbox("Sky condition chart",["Monthly sky-condition distribution","Threshold hours"],index=0,key="sky_condition_chart")
             if sky_view=="Monthly sky-condition distribution":
                 table=sky_distribution(df)
                 table.columns=["Clear","Intermediate","Overcast"]
@@ -5150,7 +5159,7 @@ def render_historical_overview(
             cols = st.columns(min(4, len(metric_values) - start))
             for col, (label, value) in zip(cols, metric_values[start:start + 4]):
                 col.metric(label, value)
-    render_climate_summary_charts(df)
+    
 
 
 def render_historical_wind(df: pd.DataFrame) -> None:
