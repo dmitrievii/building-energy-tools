@@ -511,6 +511,31 @@ class CalendarHeatmapTests(unittest.TestCase):
             day=pd.DataFrame({c:np.repeat([0.,4.,13.,-1.],24)},index=pd.date_range("2026-01-01",periods=96,freq="h"))
             np.testing.assert_allclose(occurrence_table(day,c,edges,basis="Days",daily_stat="Maximum").iloc[0],[1.,0.,0.,1.,0.,0.,0.,1.])
 
+    def test_wind_direction_cyclic_absolute_compass_domain(self):
+        from epw_climate_analyzer.chart_theme import WIND_DIRECTION_COLUMNS,WIND_DIRECTION_COLORSCALE,WIND_DIRECTION_TICKS,WIND_DIRECTION_LABELS,ORIENTATION_COLORS,metric_colorscale
+        from epw_climate_analyzer.charts import temporal_heatmap_chart
+        from epw_climate_analyzer.aggregations import heatmap_default_statistic
+        idx=pd.date_range("2026-01-01",periods=72,freq="h")
+        angles=np.resize([0.,45.,90.,135.,180.,225.,270.,315.,360.,359.,1.,np.nan],len(idx))
+        for col in WIND_DIRECTION_COLUMNS:
+            self.assertEqual(metric_colorscale(col),WIND_DIRECTION_COLORSCALE)
+            df=pd.DataFrame({col:angles,"wind_speed_m_s":5.,"wind_gust_speed_m_s":8.},index=idx)
+            stat=heatmap_default_statistic(col)
+            for period in ("day","week","month"):
+                fig=temporal_heatmap_chart(df,col,period,HEATMAP_COMPARE_HOUR,stat,"Wind direction","deg")
+                for copy in (fig,report_figure(fig,width_pt=500,height_pt=230)):
+                    ca=copy.layout.coloraxis
+                    self.assertEqual((ca.cmin,ca.cmax),(0.,360.))
+                    self.assertEqual(ca.colorscale,tuple(tuple(v) for v in WIND_DIRECTION_COLORSCALE))
+                    self.assertEqual(ca.colorscale[0][1],ca.colorscale[-1][1])
+                    self.assertEqual(tuple(ca.colorbar.tickvals),WIND_DIRECTION_TICKS)
+                    self.assertEqual(tuple(ca.colorbar.ticktext),tuple(f"{label} · {angle}°" for angle,label in zip(WIND_DIRECTION_TICKS,WIND_DIRECTION_LABELS)))
+                    np.testing.assert_allclose(np.asarray(copy.data[0].z,float),temporal_heatmap_matrix(df,col,period,HEATMAP_COMPARE_HOUR,stat).values,equal_nan=True)
+            df[col]=100.
+            fig=temporal_heatmap_chart(df,col,"day",HEATMAP_COMPARE_HOUR,stat,"Wind direction","deg")
+            self.assertEqual((fig.layout.coloraxis.cmin,fig.layout.coloraxis.cmax),(0.,360.))
+        self.assertEqual(WIND_DIRECTION_COLORSCALE[4],[.5,ORIENTATION_COLORS["south"]])
+
     def test_wind_speed_and_gust_green_absolute_domain(self):
         from epw_climate_analyzer.chart_theme import WIND_SPEED_COLUMNS,WIND_SPEED_COLORSCALE,wind_speed_colorscale,metric_colorscale
         from epw_climate_analyzer.charts import temporal_heatmap_chart
@@ -532,7 +557,7 @@ class CalendarHeatmapTests(unittest.TestCase):
         fig=temporal_heatmap_chart(calm,WIND_SPEED_COLUMNS[0],"day",HEATMAP_COMPARE_HOUR,"Mean","Wind speed","m/s")
         self.assertEqual((fig.layout.coloraxis.cmin,fig.layout.coloraxis.cmax),(0.,12.))
         self.assertEqual(fig.layout.coloraxis.colorscale[0],(0.,"#FFFFFF"))
-        self.assertEqual(metric_colorscale("wind_direction_deg"),"Turbo")
+        self.assertNotEqual(metric_colorscale("wind_direction_deg"),WIND_SPEED_COLORSCALE)
         self.assertEqual(wind_speed_colorscale(20.)[-2],[.6,"#064E3B"])
 
     def test_snow_depth_semantic_heatmap(self):

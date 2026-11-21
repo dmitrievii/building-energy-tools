@@ -192,6 +192,17 @@ ORIENTATION_COLORS = {
     "north-west": "#4F46E5",
 }
 
+# A direction is circular, not a scalar intensity. Geographic North has
+# the identical colour at both ends of the full compass domain.
+WIND_DIRECTION_COLUMNS = ("wind_direction_deg","wind_gust_direction_deg")
+WIND_DIRECTION_TICKS = tuple(range(0,361,45))
+WIND_DIRECTION_LABELS = ("N","NE","E","SE","S","SW","W","NW","N")
+WIND_DIRECTION_COLORSCALE = [
+    [i/8, ORIENTATION_COLORS[key]]
+    for i,key in enumerate(("north","north-east","east","south-east","south",
+                           "south-west","west","north-west","north"))
+]
+
 METRIC_COLORS = {
     "dry_bulb_temperature_c": "#D55E00",
     "dew_point_temperature_c": "#0072B2",
@@ -390,6 +401,8 @@ def metric_colorscale(column: str | None):
         return [[0.0, "rgba(255,255,255,0.0)"], [0.25, "#dbeafe"], [1.0, "#0f172a"]]
     if text in WIND_SPEED_COLUMNS:
         return WIND_SPEED_COLORSCALE
+    if text in WIND_DIRECTION_COLUMNS:
+        return WIND_DIRECTION_COLORSCALE
     if "wind" in text:
         return "Turbo"
     if "suitable" in text or "ventilation" in text:
