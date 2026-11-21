@@ -311,7 +311,8 @@ def _apply_extra_presentation(fig: Any, settings: ChartPresentationSettings) -> 
         layout.showlegend = False
     names = set(getattr(layout, "_props", {}) or {})
     names.update(("xaxis", "yaxis"))
-    target = settings.axis_title.strip()
+    meta = layout.meta if isinstance(layout.meta, dict) else {}
+    target = "" if meta.get("fixed_physical_axis_relationship") else settings.axis_title.strip()
     bounds_valid = (math.isfinite(settings.axis_min) and math.isfinite(settings.axis_max)
                     and settings.axis_min < settings.axis_max)
     for name in sorted(names):
@@ -364,7 +365,8 @@ def _apply_extra_presentation(fig: Any, settings: ChartPresentationSettings) -> 
                 continue
             # Retain explicit relative widths, including solar-path halos.
             line = trace.line
-            line.width = max(0.1, min(30., float(line.width or 2.) * settings.line_scale))
+            if line.width != 0:
+                line.width = max(0.1, min(30., float(line.width if line.width is not None else 2.) * settings.line_scale))
 
 
 def apply_chart_presentation(fig: Any, settings: ChartPresentationSettings) -> Any:
@@ -574,6 +576,9 @@ def install_global_chart_presentation(st: Any | None = None) -> None:
         settings = settings_from_state(st.session_state)
         apply_chart_presentation(fig, settings)
         kwargs["config"] = merge_plotly_config(kwargs.get("config"), settings)
+        if settings.transparent:
+            # Streamlit theme defaults must not substitute an opaque canvas.
+            kwargs["theme"] = None
         if settings.is_auto:
             return original(fig, *args, **kwargs)
 

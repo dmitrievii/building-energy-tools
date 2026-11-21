@@ -2142,6 +2142,9 @@ def render_extended_variable_chart(df, column, unit, chart_type, *, key_prefix="
         except ValueError as exc:
             st.info(str(exc))
             return
+        if table.empty:
+            st.info("No complete observations support the selected occurrence basis.")
+            return
         render_plot(occurrence_figure(table,unit,basis),
             "Classes are mutually exclusive; hours retain source duration, days require complete real calendar days, and percentages use valid observed intervals. Calendar-profile mode averages equivalent year-months.")
 
@@ -4383,7 +4386,7 @@ def render_sky_daylight(df: pd.DataFrame, *, latitude: float | None = None) -> N
             if sky_view=="Monthly sky-condition distribution":
                 table=sky_distribution(df)
                 table.columns=["Clear","Intermediate","Overcast"]
-                render_plot(occurrence_figure(table,"","Hours"),"Clear: less than 3 tenths; intermediate: 3 to less than 8 tenths; overcast: 8–10 tenths. Only valid observed sky-cover intervals contribute.")
+                render_plot(occurrence_figure(table,"","Hours"),"Clear: 0–2 tenths; intermediate: above 2 and below 8 tenths; overcast: 8–10 tenths. Only valid observed sky-cover intervals contribute.")
                 return
         aggregation = st.selectbox(
             "Aggregation",

@@ -42,6 +42,10 @@ class ExtendedTests(unittest.TestCase):
         np.testing.assert_allclose(walter_precip_scale([0,100,300]),[0,50,60])
         for style in ("Climograph","Walter–Lieth","Temperature–precipitation loop"):
             self.assertTrue(climate_summary_figure(table,style).data)
+        from epw_climate_analyzer.exporting import figure_to_dataframe
+        exported=figure_to_dataframe(climate_summary_figure(table,"Walter–Lieth"))
+        self.assertEqual(exported.loc[exported["trace"]=="Precipitation","y"].iloc[0],744.)
+        self.assertEqual(len(figure_to_dataframe(climate_summary_figure(table,"Temperature–precipitation loop"))),12)
         self.assertTrue(climate_summary_table(df.iloc[1:]).empty)
         monthly=pd.DataFrame({T:[2.],P:[83.]},index=pd.to_datetime(["2025-01-01"]))
         monthly.attrs["canonical_native_resolution"]="monthly"

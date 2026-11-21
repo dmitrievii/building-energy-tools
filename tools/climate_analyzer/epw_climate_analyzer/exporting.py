@@ -66,6 +66,9 @@ def figure_to_dataframe(fig: Any) -> pd.DataFrame:
     for trace_index, trace in enumerate(getattr(fig, "data", ())):
         trace_type = str(getattr(trace, "type", trace.__class__.__name__))
         trace_name = _trace_name(trace, trace_index)
+        meta = getattr(trace,"meta",None)
+        if isinstance(meta,dict) and meta.get("presentation_only_trace") is True:
+            continue
 
         z = getattr(trace, "z", None)
         if trace_type in {"scatter3d", "mesh3d"}:
@@ -114,7 +117,13 @@ def figure_to_dataframe(fig: Any) -> pd.DataFrame:
             second = _as_list(getattr(trace, second_name, None))
             if not first and not second:
                 continue
+            if isinstance(meta,dict) and meta.get("export_y_from_customdata") is True and second_name=="y":
+                physical=_as_list(getattr(trace,"customdata",None))
+                if len(physical)==len(second):
+                    second=physical
             count = max(len(first), len(second))
+            if isinstance(meta,dict) and meta.get("annual_loop_closure_vertex") is True and count==13:
+                count=12
             # Monthly rose polylines repeat January solely to close the
             # graphical loop. Export the twelve real monthly values once.
             trace_meta = getattr(trace, "meta", None)

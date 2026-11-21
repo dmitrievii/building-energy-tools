@@ -91,6 +91,9 @@ def diurnal_figure(table,column,unit,*,representation="Overlay",centre="mean",ba
             hovertemplate="%{x}:00<br>%{y:.3g} "+unit+"<br>Observed hours: %{customdata}<extra>%{fullData.name}</extra>"),**kw)
     fig.update_xaxes(range=[0,24],tickvals=[0,6,12,18,24],title_text="Hour")
     fig.update_yaxes(title_text=unit)
+    if small:
+        fig.update_yaxes(matches="y")
+        fig.layout.yaxis.matches=None
     fig.update_layout(template="plotly_white",title="Typical daily profile",height=max(480,rows*285) if small else 540,
                       legend=dict(orientation="h",y=-.2,groupclick="togglegroup"))
     return fig
@@ -130,6 +133,8 @@ def occurrence_table(df,column,edges,*,basis="Hours",daily_stat="Mean"):
     v=v.dropna()
     limits=[-np.inf,*edges,np.inf]
     labels=[f"< {edges[0]:g}"]+[f"{a:g} – < {b:g}" for a,b in zip(edges,edges[1:])]+[f"≥ {edges[-1]:g}"]
+    if v.empty:
+        return pd.DataFrame(columns=labels,dtype=float)
     classes=pd.cut(v,limits,labels=labels,right=False)
     keys=v.index.strftime("%Y-%m")
     counts=pd.crosstab(keys,classes,dropna=False).reindex(columns=labels,fill_value=0)
@@ -215,6 +220,7 @@ def climate_summary_figure(table,style):
     if style=="Temperature–precipitation loop":
         fig=go.Figure(go.Scatter(x=np.r_[temp,temp[0]],y=np.r_[precip,precip[0]],
             mode="lines+markers+text",text=[*MONTHS,""],textposition="top center",connectgaps=False,
+            meta={"annual_loop_closure_vertex":True},
             marker=dict(color=list(range(12))+[0],colorscale="Turbo",size=8),name="Monthly climate"))
         fig.update_layout(xaxis_title="Mean temperature [°C]",yaxis_title="Monthly precipitation [mm]")
     elif style=="Walter–Lieth":
@@ -225,10 +231,12 @@ def climate_summary_figure(table,style):
                 dry=precip[i]<2*temp[i]
                 fig.add_bar(x=[m],y=[abs(scaled[i]-temp[i])],base=[min(scaled[i],temp[i])],
                             width=.75,marker_color="#EAB308" if dry else "#93C5FD",opacity=.35,
-                            showlegend=False,name="Dry" if dry else "Humid",hoverinfo="skip")
+                            showlegend=False,name="Dry" if dry else "Humid",hoverinfo="skip",
+                            meta={"presentation_only_trace": True})
         fig.add_scatter(x=list(MONTHS),y=temp,name="Temperature",mode="lines+markers",line_color="#D55E00",connectgaps=False)
         fig.add_scatter(x=list(MONTHS),y=scaled,name="Precipitation",mode="lines+markers",line_color="#0072B2",
-                        customdata=precip,hovertemplate="%{x}<br>%{customdata:.1f} mm<extra></extra>",connectgaps=False)
+                        customdata=precip,meta={"export_y_from_customdata":True},
+                        hovertemplate="%{x}<br>%{customdata:.1f} mm<extra></extra>",connectgaps=False)
         valid=np.r_[temp[np.isfinite(temp)],scaled[np.isfinite(scaled)],0.]
         low=min(0.,float(valid.min())-3);high=max(55.,float(valid.max())+3)
         ticks=[0,20,40,60,80,100]+list(range(300, int(max(300.,np.nanmax(precip) if np.isfinite(precip).any() else 300.))+200,200))
@@ -236,8 +244,10 @@ def climate_summary_figure(table,style):
                           yaxis2=dict(title="Precipitation [mm]",overlaying="y",side="right",range=[low,high],
                                       tickvals=walter_precip_scale(ticks),ticktext=ticks,showgrid=False))
         # A dummy invisible trace activates the explicitly coupled right axis.
-        fig.add_scatter(x=[None],y=[None],yaxis="y2",showlegend=False,hoverinfo="skip")
+        fig.add_scatter(x=[None],y=[None],yaxis="y2",showlegend=False,hoverinfo="skip",
+                        meta={"presentation_only_trace":True})
         fig.add_hline(y=50,line_dash="dot",line_color="#94A3B8")
+        fig.update_layout(meta={"fixed_physical_axis_relationship": True})
     else:
         fig=make_subplots(specs=[[{"secondary_y":True}]])
         fig.add_bar(x=list(MONTHS),y=precip,name="Precipitation",marker_color="#0072B2",secondary_y=True)
@@ -272,11 +282,12 @@ def sky_distribution(df,column="total_sky_cover_tenths"):
     # Three classes partition all valid observations on the 0–10 scale.
     clean=df.copy()
     clean[column]=_numeric(df,column).where(_numeric(df,column).between(0,10))
-    return occurrence_table(clean,column,[3,8],basis="Hours")
+    return occurrence_table(clean,column,[np.nextafter(2.,np.inf),8],basis="Hours")
 
 
 def sunshine_hour_heatmap(df):
     h=_hourly_values(df,"sunshine_duration_s")
+    h=h.where(h.between(0.,3600.))
     averages=(h/3600.).groupby([h.index.month,h.index.hour]).mean().unstack().reindex(index=range(1,13),columns=range(24))
     return go.Figure(go.Heatmap(x=list(range(24)),y=list(MONTHS),z=averages.to_numpy(),
                       zmin=0,zmax=1,colorscale="YlOrRd",colorbar=dict(title="h/h"),

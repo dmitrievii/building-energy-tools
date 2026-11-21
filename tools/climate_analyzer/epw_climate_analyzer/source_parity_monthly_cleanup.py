@@ -427,6 +427,7 @@ def _render_calendar_monthly_overlay(legacy: Any, df: pd.DataFrame) -> None:
         st.info("No numeric climate variables are available for overlay.")
         return
 
+    display=st.selectbox("Display mode",["Overlaid axes","Multi-panel meteogram"],key="overlay_display_mode")
     n_series = st.slider("Number of series", min_value=1, max_value=min(6, len(available_variables)), value=min(2, len(available_variables)), step=1)
     preferred = ["Dry-bulb temperature", "Relative humidity", "Liquid precipitation depth", "Sunshine duration", "Station pressure"]
     defaults = [item for item in preferred if item in available_variables]
@@ -465,7 +466,7 @@ def _render_calendar_monthly_overlay(legacy: Any, df: pd.DataFrame) -> None:
         ))
 
     try:
-        families = timeseries.validate_unit_families(specs)
+        families = timeseries.validate_unit_families(specs) if display=="Overlaid axes" else []
     except ValueError as exc:
         st.error(str(exc) + " Remove a physical quantity or choose variables from the same unit family.")
         return
@@ -475,7 +476,10 @@ def _render_calendar_monthly_overlay(legacy: Any, df: pd.DataFrame) -> None:
         st.warning("The selected interval contains no published monthly records.")
         return
     try:
-        fig, _tables = timeseries.build_overlay_figure(df, specs, start, end, title="Climate time-series overlay")
+        if display=="Multi-panel meteogram":
+            fig,_tables=timeseries.build_meteogram_figure(df,specs,start,end)
+        else:
+            fig, _tables = timeseries.build_overlay_figure(df, specs, start, end, title="Climate time-series overlay")
     except (ValueError, KeyError) as exc:
         st.error(f"The requested overlay could not be constructed: {exc}")
         return
