@@ -12,6 +12,7 @@ from epw_climate_analyzer.chart_presentation import (
     CANVAS_SQUARE,
     CANVAS_WIDE,
     ChartPresentationSettings,
+    DEFAULT_FONT_SIZE, KEY_FONT, ensure_default_state, reset_state, settings_from_state,
     apply_chart_presentation,
     merge_plotly_config,
 )
@@ -23,6 +24,18 @@ PRESENTATION_MODULE = ROOT / "epw_climate_analyzer" / "chart_presentation.py"
 
 
 class GlobalChartPresentationTests(unittest.TestCase):
+    def test_default_font_is_18_and_existing_custom_choice_is_preserved(self) -> None:
+        self.assertEqual(DEFAULT_FONT_SIZE, 18)
+        self.assertEqual(ChartPresentationSettings().font_size, 18)
+        state = {}
+        ensure_default_state(state)
+        self.assertEqual(state[KEY_FONT], 18)
+        state[KEY_FONT] = 14
+        ensure_default_state(state)
+        self.assertEqual(settings_from_state(state).font_size, 14)
+        reset_state(state)
+        self.assertEqual(state[KEY_FONT], 18)
+
     def test_canvas_presets_have_deterministic_dimensions(self) -> None:
         self.assertEqual(
             ChartPresentationSettings(canvas=CANVAS_WIDE).base_dimensions(),

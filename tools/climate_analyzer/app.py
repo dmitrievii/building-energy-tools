@@ -3585,6 +3585,48 @@ def render_sun_path(df: pd.DataFrame) -> None:
         render_interpretation("The hemisphere uses East, North and Up coordinates. Monthly paths show apparent solar directions on the unit sphere.")
 
 
+def render_facade_orientation(df: pd.DataFrame, *, ground_albedo=None) -> None:
+    """One façade analysis with a shared component ledger and two chart styles."""
+    from epw_climate_analyzer.facade_orientation import (
+        COMPONENTS, TOTAL, orientation_period_components,
+        orientation_components_chart, surface_period_summary,
+    )
+
+    chart_type = st.selectbox("Chart type", ["Bar chart", "Solar rose"],
+                              key="solar_facade_chart_type")
+    tilt = st.slider("Surface tilt [deg]", 0.0, 90.0, 90.0, 5.0,
+                     key="solar_facade_tilt")
+    st.caption("Select irradiation components to display their contributions. With none selected, the chart shows total POA irradiation.")
+    cols = st.columns(3)
+    selected = tuple(key for col, (key, label, _, _) in zip(cols, COMPONENTS)
+                     if col.checkbox(label, value=False, key=f"solar_facade_{key}"))
+    data, flat = orientation_period_components(df, tilt_deg=tilt, albedo=ground_albedo)
+    fig = orientation_components_chart(data, flat, tilt_deg=tilt,
+                                       style=chart_type, selected=selected)
+    render_plot(fig, "Direct, sky-diffuse and ground-reflected irradiation sum to total plane-of-array (POA) irradiation. "
+                "Only selected components are stacked; the unselected contribution is not counted in the displayed stack. "
+                "The unobstructed isotropic transposition and active ground-albedo model are unchanged. "
+                "Values are sums over the active Data filter, not annualized.")
+    st.caption(f"Flat roof (0° tilt), total POA: {flat[TOTAL]:,.1f} kWh/m²"
+               if pd.notna(flat[TOTAL]) else "Flat roof (0° tilt): no complete radiation observations.")
+    st.caption(f"Complete coincident radiation/geometry intervals: {flat['valid_intervals']:,} / {flat['selected_intervals']:,}.")
+    with st.expander("Numerical irradiation components and custom orientation", expanded=False):
+        labels = {key: label + " [kWh/m²]" for key, label, _, _ in COMPONENTS}
+        labels[TOTAL] = "Total POA [kWh/m²]"
+        keys = [key for key, _, _, _ in COMPONENTS] + [TOTAL]
+        table = data[["orientation", "azimuth_deg", *keys]].copy()
+        table = table.rename(columns={"orientation":"Orientation", "azimuth_deg":"Azimuth [°]", **labels})
+        st.dataframe(table, hide_index=True, use_container_width=True)
+        if st.checkbox("Inspect custom azimuth", value=False, key="solar_facade_custom"):
+            azimuth = st.slider("Surface azimuth [deg]", 0.0, 360.0, 60.0, 5.0,
+                                key="solar_facade_custom_azimuth",
+                                help="Clockwise from North (0° N, 90° E, 180° S, 270° W).")
+            custom = surface_period_summary(df, tilt, azimuth, albedo=ground_albedo)
+            st.dataframe(pd.DataFrame({"Component": [labels[key] for key in keys],
+                                      "Irradiation [kWh/m²]": [custom[key] for key in keys]}),
+                         hide_index=True, use_container_width=True)
+
+
 def render_solar(df: pd.DataFrame) -> None:
     """Render solar, radiation and façade-decision charts."""
     st.header("Solar, radiation and façade analysis")
@@ -3596,7 +3638,6 @@ def render_solar(df: pd.DataFrame) -> None:
             "Monthly radiation components",
             "Sun path",
             "Radiation by façade orientation",
-            "Plane-of-array components",
             "Orientation-tilt heatmap",
             "Monthly façade radiation",
             "Cooling-risk solar hours",
@@ -3622,54 +3663,7 @@ def render_solar(df: pd.DataFrame) -> None:
     elif chart_group == "Sun path":
         render_sun_path(df)
     elif chart_group == "Radiation by façade orientation":
-        tilt = st.slider("Surface tilt [deg]", 0.0, 90.0, 90.0, 5.0)
-        data = orientation_annual_radiation(df, tilt_deg=tilt, albedo=ground_albedo)
-        fig = orientation_bar_chart(data, f"Annual irradiation by orientation at {tilt:.0f}° tilt")
-        render_plot(fig, solar_interpretation(df))
-    elif chart_group == "Plane-of-array components":
-        from epw_climate_analyzer.runtime_module_guard import ensure_current_solar_runtime
-
-        surface_irradiance_components = ensure_current_solar_runtime().surface_irradiance_components
-        col_a, col_b = st.columns(2)
-        tilt = col_a.slider(
-            "Surface tilt [deg]", min_value=0.0, max_value=90.0,
-            value=90.0, step=5.0, key="solar_components_tilt",
-        )
-        azimuth = col_b.slider(
-            "Surface azimuth [deg]", min_value=0.0, max_value=360.0,
-            value=60.0, step=5.0, key="solar_components_azimuth",
-            help="Clockwise from North (0° N, 90° E, 180° S, 270° W).",
-        )
-        poa = surface_irradiance_components(
-            df, tilt, azimuth, albedo=ground_albedo,
-        )
-        totals = poa.sum(min_count=1) / 1000.0
-        component_labels = {
-            "poa_direct_wh_m2": "Direct",
-            "poa_sky_diffuse_wh_m2": "Sky diffuse",
-            "poa_ground_diffuse_wh_m2": "Ground-reflected",
-            "poa_global_wh_m2": "Total POA",
-        }
-        table = pd.DataFrame({
-            "Component": [component_labels[key] for key in component_labels],
-            "Irradiation [kWh/m²]": [totals[key] for key in component_labels],
-        })
-        st.dataframe(table, hide_index=True, use_container_width=True)
-        fig = px.bar(
-            table.iloc[:3], x="Component", y="Irradiation [kWh/m²]",
-            title=f"POA components · tilt {tilt:.0f}° · azimuth {azimuth:.0f}°",
-        )
-        render_plot(
-            fig,
-            "Direct, sky-diffuse and ground-reflected contributions are shown "
-            "separately. Total POA is their sum. The model assumes isotropic, "
-            "unobstructed ground reflection and does not resolve urban shading "
-            "or actual ground view factors.",
-        )
-        st.caption(
-            f"Total POA: {totals['poa_global_wh_m2']:.1f} kWh/m² "
-            "over the currently selected period (not annualized if filtered)."
-        )
+        render_facade_orientation(df, ground_albedo=ground_albedo)
     elif chart_group == "Orientation-tilt heatmap":
         st.caption("This chart may take a few seconds because it calculates many plane-of-array irradiance variants.")
         matrix = orientation_tilt_matrix(df, albedo=ground_albedo)

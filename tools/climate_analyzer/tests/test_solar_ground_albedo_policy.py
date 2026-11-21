@@ -202,10 +202,13 @@ class GroundAlbedoContractTests(unittest.TestCase):
         self.assertIn('key="solar_ground_albedo_mode"', source)
         self.assertIn('ground_albedo = _active_solar_ground_albedo(df)', source)
         self.assertIn('_solar_ground_albedo_selection(df)', source)
-        self.assertIn("orientation_annual_radiation(df, tilt_deg=tilt, albedo=ground_albedo)", source)
+        self.assertIn("orientation_period_components(df, tilt_deg=tilt, albedo=ground_albedo)", source)
         self.assertIn("orientation_tilt_matrix(df, albedo=ground_albedo)", source)
         self.assertIn("monthly_orientation_radiation(df, tilt_deg=tilt, albedo=ground_albedo)", source)
-        self.assertIn("surface_irradiance_components(", source)
+        self.assertIn("surface_period_summary(df, tilt, azimuth, albedo=ground_albedo)", source)
+        facade = (path.parent / "epw_climate_analyzer" / "facade_orientation.py").read_text(encoding="utf-8")
+        self.assertIn("surface_irradiance_components(", facade)
+        self.assertIn("df, tilt_deg, azimuth_deg, albedo=albedo", facade)
 
 
 if __name__ == "__main__":
