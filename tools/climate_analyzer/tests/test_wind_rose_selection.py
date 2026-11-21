@@ -96,7 +96,7 @@ def render_plot(fig,text):
 """
         app=AppTest.from_string(script+"\n"+renderer+"\nrender_wind(df)",default_timeout=45).run()
         self.assertFalse(app.exception)
-        self.assertEqual(app.selectbox(key="wind_analysis_type").options,["Wind variable explorer","Wind rose","Directional statistics"])
+        self.assertEqual(app.selectbox(key="wind_analysis_type").options,["Wind variable explorer","Wind rose"])
         app.selectbox(key="wind_analysis_type").set_value("Wind rose").run()
         self.assertFalse(app.exception)
         self.assertEqual(app.selectbox(key="wind_rose_aggregation").value,"Annual")
@@ -136,7 +136,8 @@ df=add_psychrometric_properties(df)
         app=AppTest.from_string(enriched+"\n"+renderer+"\nrender_wind(df)",default_timeout=45).run()
         app.selectbox(key="wind_analysis_type").set_value("Wind rose").run()
         self.assertFalse(app.exception)
-        for q in ("Temperature","Relative humidity","Absolute humidity","Enthalpy","Natural ventilation suitability","Dynamic pressure potential"):
+        self.assertNotIn("Natural ventilation suitability",app.selectbox(key="wind_rose_colour_quantity").options)
+        for q in ("Temperature","Relative humidity","Absolute humidity","Enthalpy","Dynamic pressure potential"):
             self.assertIn(q,app.selectbox(key="wind_rose_colour_quantity").options)
             app.selectbox(key="wind_rose_colour_quantity").set_value(q).run()
             self.assertFalse(app.exception)

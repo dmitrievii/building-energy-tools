@@ -4077,7 +4077,7 @@ def render_solar(df: pd.DataFrame) -> None:
 
 def render_wind(df: pd.DataFrame) -> None:
     """Render one capability-gated wind UI for every canonical climate source."""
-    st.header("Wind and natural-ventilation wind context")
+    st.header("Wind and ventilation climate")
     st.caption(WIND_DIRECTION_FROM_NOTE)
 
     def numeric(column: str) -> bool:
@@ -4098,20 +4098,11 @@ def render_wind(df: pd.DataFrame) -> None:
         paired_datasets.append(("Mean wind", "wind_speed_m_s", "wind_direction_deg"))
     if numeric("wind_gust_speed_m_s") and numeric("wind_gust_direction_deg"):
         paired_datasets.append(("Maximum gust", "wind_gust_speed_m_s", "wind_gust_direction_deg"))
-    has_nv_inputs = all(
-        numeric(column)
-        for column in (
-            "wind_speed_m_s", "wind_direction_deg", "dry_bulb_temperature_c",
-            "relative_humidity_pct", "humidity_ratio_g_kg",
-        )
-    )
     options: list[str] = []
     if variable_labels:
         options.append("Wind variable explorer")
     if paired_datasets:
-        options.extend(["Wind rose","Directional statistics"])
-    if has_nv_inputs:
-        options.append("Wind during natural-ventilation hours")
+        options.append("Wind rose")
     if not options:
         st.info("No usable wind observations are available in the selected interval.")
         return
@@ -4122,20 +4113,12 @@ def render_wind(df: pd.DataFrame) -> None:
             st.session_state["wind_analysis_type"] = "Wind variable explorer" if "Wind variable explorer" in options else options[0]
         else:
             st.session_state["wind_analysis_type"] = "Wind rose"
+    elif old_wind_choice not in options:
+        st.session_state["wind_analysis_type"] = "Wind rose" if "Wind rose" in options and old_wind_choice is not None else options[0]
     chart_group = st.selectbox("Analysis type", options, key="wind_analysis_type")
     if chart_group == "Wind variable explorer":
         default = "Wind speed" if "Wind speed" in variable_labels else variable_labels[0]
         render_generic_variable_page(df, variable_labels, default, "Wind", None)
-        return
-
-    if chart_group == "Wind during natural-ventilation hours":
-        mask = natural_ventilation_condition(df)
-        data = df[mask]
-        if data.empty:
-            st.info("No records satisfy the active natural-ventilation suitability condition.")
-            return
-        fig = wind_rose_chart(data, "Mean wind during natural-ventilation-suitable hours")
-        render_plot(fig, natural_ventilation_interpretation(df, mask))
         return
 
     dataset_labels = [item[0] for item in paired_datasets]
@@ -4190,14 +4173,10 @@ def render_wind(df: pd.DataFrame) -> None:
     st.caption("Annual uses all dates remaining in the active Data filter; Monthly selects the named calendar month within that filter, including across selected years. Frequencies retain the existing physical-hour weighting.")
     from epw_climate_analyzer.directional_climate import (
         colour_options, radial_options, directional_table, directional_figure,
-        directional_speed_figure, directional_interpretation, nv_valid_mask,
+        directional_interpretation,
         CLASS_EDGES, directional_class_table, directional_class_figure,
         class_boundaries, class_interpretation,
     )
-    if chart_group=="Directional statistics":
-        fig=directional_speed_figure(data,speed_column,direction_column,f"{selected_dataset} directional speed distribution · {period_label}")
-        render_plot(fig,"Distribution of non-calm paired wind speeds within sixteen meteorological FROM-direction sectors.")
-        return
     exposure=[v for v in radial_options(data,selected_dataset=="Mean wind") if v in ("Wind-driven rain exposure","Dynamic pressure potential")]
     styles=["Class distribution","Directional mean"]+(["Directional exposure"] if exposure else [])
     style=st.selectbox("Chart type",styles,key="wind_rose_representation")
@@ -4207,18 +4186,10 @@ def render_wind(df: pd.DataFrame) -> None:
         radial=st.selectbox("Radial quantity",exposure,key="wind_rose_exposure_radial")
     else:
         radial=st.selectbox("Radial quantity",["Hours","Percentage","Mean wind speed"],key="wind_rose_mean_radial")
-    colour=st.selectbox("Colour mapped quantity",colour_options(data,nv=has_nv_inputs and selected_dataset=="Mean wind",speed=speed_column),key="wind_rose_colour_quantity")
-    nv_mask=None
-    if colour=="Natural ventilation suitability":
-        c1,c2,c3=st.columns(3)
-        tmin=c1.number_input("Minimum outdoor temperature [°C]",value=16.,step=.5,key="wind_nv_tmin")
-        tmax=c2.number_input("Maximum outdoor temperature [°C]",value=26.,step=.5,key="wind_nv_tmax")
-        dmax=c3.number_input("Maximum humidity ratio [g/kg]",min_value=0.,value=9.,step=.5,key="wind_nv_dmax")
-        if tmin>tmax:
-            st.warning("Minimum temperature must not exceed maximum.")
-            return
-        nv_mask=nv_valid_mask(data,natural_ventilation_condition(data,tmin,tmax,dmax))
-        st.caption("Suitable means the selected temperature and humidity-ratio limits are met; actual ventilation capacity is not calculated.")
+    colours=colour_options(data,speed=speed_column)
+    if st.session_state.get("wind_rose_colour_quantity") not in colours:
+        st.session_state["wind_rose_colour_quantity"]=colours[0]
+    colour=st.selectbox("Colour mapped quantity",colours,key="wind_rose_colour_quantity")
     if style=="Class distribution":
         edges=None
         if colour in CLASS_EDGES:
@@ -4232,7 +4203,7 @@ def render_wind(df: pd.DataFrame) -> None:
                 st.info(str(exc))
                 return
         table=directional_class_table(data,speed=speed_column,direction=direction_column,quantity=colour,
-                                      radial=radial,edges=edges,nv_mask=nv_mask)
+                                      radial=radial,edges=edges)
         if table.attrs["valid_hours"]<=0:
             st.info("No valid coincident non-calm observations remain.")
             return
@@ -4241,7 +4212,7 @@ def render_wind(df: pd.DataFrame) -> None:
         with st.expander("Directional class data"):
             st.dataframe(table,use_container_width=True)
     else:
-        table=directional_table(data,speed=speed_column,direction=direction_column,radial=radial,colour=colour,nv_mask=nv_mask)
+        table=directional_table(data,speed=speed_column,direction=direction_column,radial=radial,colour=colour)
         fig=directional_figure(table,radial,colour,f"{selected_dataset} · {radial} · {period_label}")
         render_plot(fig,directional_interpretation(table,radial,colour))
 
@@ -4760,10 +4731,48 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
         ] + (["Directional analysis"] if wind_available and "wind_direction_deg" in df and df["wind_direction_deg"].notna().any() else []),
     )
     if chart_group == "Directional analysis":
-        from epw_climate_analyzer.directional_climate import directional_class_table, directional_class_figure, class_interpretation, nv_valid_mask
+        from epw_climate_analyzer.directional_climate import (
+            directional_class_table, directional_class_figure, class_interpretation,
+            directional_table, directional_figure, directional_interpretation, nv_valid_mask,
+        )
+        from epw_climate_analyzer.wind_rose_selection import available_wind_months, select_wind_rose_period
+        view=st.selectbox("Chart type",["Suitability distribution","Wind during suitable hours","Directional suitability mean"],key="nv_directional_view")
+        month=None
+        period=None
+        aggregation=st.selectbox("Time aggregation",["Annual","Monthly"],key="nv_directional_aggregation")
+        if aggregation=="Monthly":
+            months=[name for name,number in MONTHS.items() if number in available_wind_months(df)]
+            if not months:
+                st.info("No valid months remain.")
+                return
+            month=MONTHS[st.selectbox("Month",months,key="nv_directional_month")]
+        if st.checkbox("Day-night filter",key="nv_directional_daynight"):
+            period=st.radio("Period",["Day","Night"],horizontal=True,key="nv_directional_period")
+            st.caption("Day 07:00–19:59; night 20:00–06:59 in the active analysis clock.")
+        data=select_wind_rose_period(df,month=month,period=period)
+        if data.empty:
+            st.info("No intervals remain in this period.")
+            return
+        admitted=nv_valid_mask(df,mask,wind_filter).reindex(data.index)
         radial=st.selectbox("Radial quantity",["Hours","Percentage"],key="nv_directional_radial")
-        table=directional_class_table(df,radial=radial,quantity="Natural ventilation suitability",nv_mask=nv_valid_mask(df,mask,wind_filter))
-        render_plot(directional_class_figure(table,"Directional natural ventilation suitability"),class_interpretation(table))
+        if view=="Directional suitability mean":
+            table=directional_table(data,radial=radial,colour="Natural ventilation suitability",nv_mask=admitted)
+            render_plot(directional_figure(table,radial,"Natural ventilation suitability","Directional natural ventilation suitability mean"),directional_interpretation(table,radial,"Natural ventilation suitability"))
+        else:
+            quantity="Natural ventilation suitability"
+            title="Directional natural ventilation suitability"
+            if view=="Wind during suitable hours":
+                suitable=data.loc[admitted.eq(True)].copy()
+                suitable.attrs.update(data.attrs)
+                data=suitable
+                quantity="Wind speed"
+                title="Mean wind during natural-ventilation-suitable hours"
+            table=directional_class_table(data,radial=radial,quantity=quantity,nv_mask=admitted)
+            if table.attrs["valid_hours"]<=0:
+                st.info("No valid coincident non-calm observations match the selected conditions.")
+                return
+            render_plot(directional_class_figure(table,title),class_interpretation(table))
+        st.caption("All views use the natural-ventilation limits above, including optional wind-speed and occupied-hour restrictions. Percentages use the eligible observations of the chosen view.")
     elif chart_group == "Heat map":
         row_group = st.radio("Heat-map aggregation", ["Day", "Week", "Month"], horizontal=True)
         compare_options = ["Hour of day"] if time_basis(df_nv) == CHRONOLOGICAL else ["Hour of day", "Year"]

@@ -63,6 +63,46 @@ class DirectionalTests(unittest.TestCase):
         self.assertEqual(empty.attrs["valid_hours"],0.)
         self.assertEqual(empty.shape,(16,6))
 
+    def test_nv_directional_views_share_suitability_and_duration(self):
+        from epw_climate_analyzer.wind_rose_selection import select_wind_rose_period
+        from epw_climate_analyzer.decisions import natural_ventilation_condition
+        df=pd.DataFrame({"wind_speed_m_s":[2.,3.,8.,2.,0.],
+                         "wind_direction_deg":[0.,90.,180.,270.,0.],
+                         "dry_bulb_temperature_c":[20.,30.,20.,np.nan,20.],
+                         "humidity_ratio_g_kg":[7.,7.,7.,7.,7.]},
+                        index=pd.date_range("2025-06-01 08:00",periods=5,freq="10min"))
+        df.attrs["canonical_native_interval_minutes"]=10.
+        mask=natural_ventilation_condition(df,16.,26.,9.,wind_min_m_s=.5,wind_max_m_s=6.)
+        valid=nv_valid_mask(df,mask,True)
+        data=select_wind_rose_period(df,month=6,period="Day")
+        admitted=valid.reindex(data.index)
+        table=directional_class_table(data,quantity="Natural ventilation suitability",nv_mask=admitted)
+        suitable=data.loc[admitted.eq(True)].copy()
+        suitable.attrs.update(data.attrs)
+        speed=directional_class_table(suitable,quantity="Wind speed")
+        self.assertAlmostEqual(table["Suitable"].sum(),speed.attrs["valid_hours"])
+        self.assertAlmostEqual(speed.attrs["valid_hours"],1/6)
+        mean=directional_table(data,colour="Natural ventilation suitability",nv_mask=admitted)
+        self.assertEqual(mean.loc[0.,"colour"],100.)
+        self.assertEqual(mean.loc[90.,"colour"],0.)
+        self.assertTrue(np.isnan(mean.loc[270.,"colour"]))
+
+    def test_nv_directional_navigation_is_consolidated(self):
+        import ast
+        from pathlib import Path
+        source=(Path(__file__).resolve().parents[1]/"app.py").read_text(encoding="utf-8")
+        functions={n.name:ast.get_source_segment(source,n) for n in ast.parse(source).body if isinstance(n,ast.FunctionDef)}
+        wind=functions["render_wind"]
+        self.assertNotIn('"Directional statistics"',wind)
+        self.assertNotIn('"Wind during natural-ventilation hours"',wind)
+        self.assertIn("colour_options(data,speed=speed_column)",wind)
+        nv=functions["render_natural_ventilation"]
+        self.assertIn('"Directional analysis"',nv)
+        self.assertIn('"Suitability distribution"',nv)
+        self.assertIn('"Wind during suitable hours"',nv)
+        self.assertIn('"Directional suitability mean"',nv)
+        self.assertIn("nv_valid_mask(df,mask,wind_filter)",nv)
+
     def test_epw_wind_preparation_requires_psychrometrics(self):
         import ast
         from pathlib import Path
