@@ -301,6 +301,50 @@ class CalendarHeatmapTests(unittest.TestCase):
         manual=occurrence_table(df,c,[2.791,2.799])
         self.assertEqual(list(manual.columns),["< 2.791","2.791 – < 2.799","≥ 2.799"])
 
+    def test_precipitation_and_snow_zero_separate_positive_classes(self):
+        from epw_climate_analyzer.extended_visualization import occurrence_default_edges,occurrence_table,occurrence_figure
+        for c,unit,edges in (
+            ("liquid_precipitation_depth_mm","mm",[.1,1.,5.,10.]),
+            ("snow_depth_cm","cm",[1.,5.,10.,20.,50.]),
+        ):
+            data=[0.,0.,edges[0]/2,*edges,-1.,np.nan]
+            df=pd.DataFrame({c:data},index=pd.date_range("2026-01-01",periods=len(data),freq="h"))
+            self.assertEqual(occurrence_default_edges(pd.Series([0.,0.,0.]),c),edges)
+            table=occurrence_table(df,c,edges)
+            self.assertEqual(table.iloc[0,0],2.)
+            np.testing.assert_allclose(table.iloc[0,1:],np.ones(len(edges)+1))
+            self.assertEqual(table.sum().sum(),len(data)-2)
+            percent=occurrence_table(df,c,edges,basis="Percentage")
+            self.assertAlmostEqual(percent.sum().sum(),100.)
+            fig=occurrence_figure(table,unit,"Hours")
+            self.assertIn("= 0",fig.data[0].name)
+            self.assertEqual(fig.data[0].marker.color,"#E5E7EB")
+            zero=df.copy();zero[c]=0.
+            tab=occurrence_table(zero,c,edges)
+            self.assertEqual(tab.iloc[0,0],len(zero))
+            self.assertEqual(tab.iloc[0,1:].sum(),0.)
+            with self.assertRaises(ValueError):occurrence_table(df,c,[0.,1.])
+        self.assertEqual(occurrence_default_edges(pd.Series([0.]),"liquid_precipitation_depth_mm",basis="Days",daily_stat="Total"),[1.,5.,10.,20.])
+
+    def test_snow_depth_semantic_heatmap(self):
+        from epw_climate_analyzer.chart_theme import SNOW_DEPTH_COLORSCALE,metric_colorscale
+        from epw_climate_analyzer.charts import temporal_heatmap_chart
+        c="snow_depth_cm"
+        idx=pd.date_range("2026-01-01",periods=72,freq="h")
+        df=pd.DataFrame({c:np.linspace(0.,23.,len(idx))},index=idx)
+        df.iloc[2,0]=np.nan
+        self.assertEqual(metric_colorscale(c),SNOW_DEPTH_COLORSCALE)
+        for period in ("day","week","month"):
+            fig=temporal_heatmap_chart(df,c,period,HEATMAP_COMPARE_HOUR,"Mean","Snow depth","cm")
+            for copy in (fig,report_figure(fig,width_pt=500,height_pt=230)):
+                self.assertEqual(copy.layout.coloraxis.cmin,0.)
+                self.assertEqual(copy.layout.coloraxis.cmax,25.)
+                self.assertEqual(copy.layout.coloraxis.colorscale,tuple(tuple(v) for v in SNOW_DEPTH_COLORSCALE))
+                np.testing.assert_allclose(np.asarray(copy.data[0].z,float),temporal_heatmap_matrix(df,c,period,HEATMAP_COMPARE_HOUR,"Mean").values,equal_nan=True)
+        df[c]=0.
+        fig=temporal_heatmap_chart(df,c,"day",HEATMAP_COMPARE_HOUR,"Mean","Snow depth","cm")
+        self.assertEqual((fig.layout.coloraxis.cmin,fig.layout.coloraxis.cmax),(0.,5.))
+
     def test_specific_volume_semantic_palette_and_scope_domain(self):
         from epw_climate_analyzer.chart_theme import SPECIFIC_VOLUME_COLORSCALE,metric_colorscale
         from epw_climate_analyzer.charts import temporal_heatmap_chart

@@ -15,6 +15,8 @@ from .daylight import daily_daylight_table
 MONTHS = ("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec")
 T = "dry_bulb_temperature_c"
 P = "liquid_precipitation_depth_mm"
+SNOW = "snow_depth_cm"
+DEPTH_OCCURRENCE_COLUMNS = (P,SNOW)
 NEW_TYPES = ("Typical daily profile", "Monthly occurrence classes")
 
 
@@ -183,11 +185,15 @@ def _complete_daily(df,column,stat):
     return out.where(groups.count().to_numpy()==expected)
 
 
-def occurrence_default_edges(values,column):
-    """Readable auto classes; use the displayed thresholds for actual binning."""
+def occurrence_default_edges(values,column,*,basis="Hours",daily_stat="Mean"):
+    """Readable reference classes; use displayed thresholds for actual binning."""
     v=pd.to_numeric(values,errors="coerce")
     v=v[np.isfinite(v)]
     if v.empty:return []
+    if column==P:
+        # Fixed descriptive depth bins, not rainfall-rate categories.
+        return [1.,5.,10.,20.] if basis=="Days" and daily_stat=="Total" else [.1,1.,5.,10.]
+    if column==SNOW:return [1.,5.,10.,20.,50.]
     if column==T:return [0.,15.,25.,30.]
     raw=v.quantile([.25,.5,.75]).to_numpy(dtype=float)
     if "temperature" in column:
@@ -209,14 +215,30 @@ def occurrence_table(df,column,edges,*,basis="Hours",daily_stat="Mean"):
     if not edges or not np.isfinite(edges).all() or any(b<=a for a,b in zip(edges,edges[1:])):
         raise ValueError("Class boundaries must be finite, strictly increasing numbers.")
     daily=basis=="Days"
-    v=_complete_daily(df,column,daily_stat) if daily else _numeric(df,column)
+    depth=column in DEPTH_OCCURRENCE_COLUMNS
+    if depth:
+        if any(e<=0 for e in edges):
+            raise ValueError("Positive depth boundaries are required; zero is a separate class.")
+        # Reject invalid negative depths before daily aggregation.
+        source=df.copy(deep=False)
+        numeric=_numeric(df,column)
+        source[column]=numeric.where(numeric.ge(0))
+    else:source=df
+    v=_complete_daily(source,column,daily_stat) if daily else _numeric(source,column)
     v=v.dropna()
-    limits=[-np.inf,*edges,np.inf]
     text=[occurrence_boundary_label(x) for x in edges]
-    labels=[f"< {text[0]}"]+[f"{a} – < {b}" for a,b in zip(text,text[1:])]+[f"≥ {text[-1]}"]
+    if depth:
+        zero="Dry (= 0)" if column==P else "Snow-free (= 0)"
+        labels=[zero,f"0 < x < {text[0]}"]+[f"{a} – < {b}" for a,b in zip(text,text[1:])]+[f"≥ {text[-1]}"]
+    else:
+        labels=[f"< {text[0]}"]+[f"{a} – < {b}" for a,b in zip(text,text[1:])]+[f"≥ {text[-1]}"]
     if v.empty:
         return pd.DataFrame(columns=labels,dtype=float)
-    classes=pd.cut(v,limits,labels=labels,right=False)
+    if depth:
+        codes=np.where(v.to_numpy()==0.,0,1+np.searchsorted(edges,v.to_numpy(),side="right"))
+        classes=pd.Series(pd.Categorical.from_codes(codes,categories=labels,ordered=True),index=v.index)
+    else:
+        classes=pd.cut(v,[-np.inf,*edges,np.inf],labels=labels,right=False)
     keys=v.index.strftime("%Y-%m")
     counts=pd.crosstab(keys,classes,dropna=False).reindex(columns=labels,fill_value=0)
     counts.index=pd.Index(counts.index,name="Period")
@@ -227,14 +249,22 @@ def occurrence_table(df,column,edges,*,basis="Hours",daily_stat="Mean"):
     if time_basis(df)!=CHRONOLOGICAL:
         counts=counts.groupby(counts.index.str[-2:]).mean()
         counts.index=[MONTHS[int(m)-1] for m in counts.index]
+    counts.attrs["occurrence_column"]=column
     return counts
 
 
 def occurrence_figure(table,unit,basis):
     fig=go.Figure()
-    palette=["#2563EB","#0EA5E9","#059669","#EAB308","#EA580C","#DC2626"]
+    column=table.attrs.get("occurrence_column")
+    if column in DEPTH_OCCURRENCE_COLUMNS:
+        from .chart_theme import metric_colorscale
+        from plotly.colors import sample_colorscale
+        n=len(table.columns)
+        palette=["#E5E7EB"]+sample_colorscale(metric_colorscale(column),np.linspace(.20,1.,max(1,n-1)).tolist())
+    else:palette=["#2563EB","#0EA5E9","#059669","#EAB308","#EA580C","#DC2626"]
     for i,c in enumerate(table):
-        fig.add_bar(x=table.index,y=table[c],name=c+" "+unit,marker_color=palette[min(len(palette)-1,int(i*len(palette)/max(1,len(table.columns))))])
+        color=palette[i] if column in DEPTH_OCCURRENCE_COLUMNS else palette[min(len(palette)-1,int(i*len(palette)/max(1,len(table.columns))))]
+        fig.add_bar(x=table.index,y=table[c],name=(c+" "+unit).strip(),marker_color=color)
     fig.update_layout(template="plotly_white",title="Monthly occurrence classes",
                       barmode="stack",xaxis_title="Period",yaxis_title="Observed "+basis.lower() if basis!="Percentage" else "Share of observed intervals [%]",legend=dict(orientation="h",y=-.2))
     if basis=="Percentage":

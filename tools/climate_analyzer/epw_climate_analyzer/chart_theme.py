@@ -77,6 +77,20 @@ MOIST_AIR_DENSITY_COLORSCALE = [
     [0.75, "#475569"],
     [1.00, "#0F172A"],
 ]
+PRECIPITATION_COLORSCALE = [
+    [0.00, "#ffffff"],
+    [0.08, "#eff6ff"],
+    [0.35, "#93c5fd"],
+    [0.70, "#2563eb"],
+    [1.00, "#172554"],
+]
+SNOW_DEPTH_COLORSCALE = [
+    [0.00, "#FFFFFF"],
+    [0.25, "#E0F2FE"],
+    [0.50, "#7DD3FC"],
+    [0.75, "#0284C7"],
+    [1.00, "#0C4A6E"],
+]
 BINARY_SUITABILITY_COLORSCALE = [
     [0.00, "rgba(255,255,255,0.0)"],
     [0.01, "#ecfdf5"],
@@ -292,6 +306,10 @@ def climate_color_map(names: Iterable[str]) -> dict[str, str]:
 def metric_colorscale(column: str | None):
     """Return a continuous colourscale suitable for the selected metric."""
     text = str(column or "").lower()
+    if text=="liquid_precipitation_depth_mm":
+        return PRECIPITATION_COLORSCALE
+    if text=="snow_depth_cm":
+        return SNOW_DEPTH_COLORSCALE
     if text=="relative_humidity_pct":
         return RELATIVE_HUMIDITY_COLORSCALE
     if text=="humidity_ratio_g_kg":

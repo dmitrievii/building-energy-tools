@@ -189,8 +189,8 @@ def _heatmap_colorscale(column: str, values=None, temperature_thresholds: tuple[
         return stops
     if column in {"natural_ventilation_suitable", "night_flushing_suitable"} or "suitable" in column:
         return BINARY_SUITABILITY_COLORSCALE
-    if column == "liquid_precipitation_depth_mm":
-        return PRECIPITATION_COLORSCALE
+    if column in ("liquid_precipitation_depth_mm","snow_depth_cm"):
+        return metric_colorscale(column)
     if "sky_cover" in column:
         return [[0.0, "rgba(255,255,255,0.0)"], [0.25, "#dbeafe"], [1.0, "#0f172a"]]
     if "radiation" in column or "irradiance" in column or "illuminance" in column:
@@ -443,9 +443,14 @@ def temporal_heatmap_chart(
             zmax=float(np.ceil(hi/100.)*100.)
             if zmax<=zmin:zmax=zmin+100.
     if column == "liquid_precipitation_depth_mm":
-        # A dry interval is a meaningful precipitation state. Keep the colour
-        # domain anchored at 0 mm so zero is always rendered as white.
+        # A dry interval is a meaningful precipitation state.
         zmin = 0.0
+    if column == "snow_depth_cm":
+        # Zero snow is white. Keep the same display domain over the selected
+        # source scope, with a nondegenerate range even in snow-free climates.
+        _,source_max=_finite_min_max(pd.to_numeric(df[column],errors="coerce"))
+        _,cell_max=_finite_min_max(matrix.values)
+        zmin,zmax=0.,max(5.,float(np.ceil(max(0.,source_max or 0.,cell_max or 0.)/5.)*5.))
     fig = px.imshow(
         matrix,
         aspect="auto",
@@ -463,6 +468,10 @@ def temporal_heatmap_chart(
     fig.update_layout(template=PLOT_TEMPLATE, margin=dict(l=40, r=20, t=70, b=45))
     from .calendar_heatmap_axes import apply_calendar_heatmap_axes
     from .calendar_heatmap_axes import set_period_axis_scope
+    if column=="snow_depth_cm":
+        fig.update_layout(plot_bgcolor="#F1F3F5")
+        fig.update_xaxes(showgrid=False)
+        fig.update_yaxes(showgrid=False)
     set_period_axis_scope(fig,df)
     return apply_calendar_heatmap_axes(fig,period=row_group)
 
