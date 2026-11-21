@@ -1,0 +1,52 @@
+name: Climate Analyzer Sun Path Browser Smoke
+on:
+  pull_request:
+    paths:
+      - 'tools/climate_analyzer/**'
+      - 'deployment/sun_path_legend_harness.py'
+      - 'deployment/sun_path_legend_smoke.mjs'
+      - '.github/workflows/climate-analyzer-sun-path-smoke.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/climate_analyzer/epw_climate_analyzer/sun_path_views.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/chart_presentation.py'
+      - 'deployment/sun_path_legend_harness.py'
+      - 'deployment/sun_path_legend_smoke.mjs'
+      - '.github/workflows/climate-analyzer-sun-path-smoke.yml'
+permissions:
+  contents: read
+jobs:
+  sun-path-legend-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/climate_analyzer/requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install -r tools/climate_analyzer/requirements.txt
+          npm install --no-save playwright-core@1.55.0
+      - name: Exercise month legends and 3D turntable in Streamlit
+        run: |
+          set -euo pipefail
+          streamlit run deployment/sun_path_legend_harness.py --server.headless=true --server.port=8503 >/tmp/sun-path-streamlit.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:8503/_stcore/health >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8503/_stcore/health
+          node deployment/sun_path_legend_smoke.mjs
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sun-path-browser-regression
+          path: artifacts/sun-path-smoke
+          if-no-files-found: warn
