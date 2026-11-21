@@ -4,6 +4,7 @@ from pathlib import Path
 import sys
 import unittest
 
+import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -145,8 +146,7 @@ class TemporalFiltering063Tests(unittest.TestCase):
         self.assertNotIn('if page == "Time Series and Overlay":\n        # This page owns an exact date/hour/minute viewport.', source)
 
 
-if __name__ == "__main__":
-    unittest.main()
+
 
 
 class ProfileAdmissionTests(unittest.TestCase):
@@ -179,3 +179,6 @@ class ProfileAdmissionTests(unittest.TestCase):
         self.assertIn("Total",profile_representation_options(df,p,"Hourly"))
         f=time_series_profile_chart(df,p,"Hourly","Rain","mm","Total")
         self.assertEqual(float(f.data[0].y[0]),2.5)
+
+if __name__ == "__main__":
+    unittest.main()
