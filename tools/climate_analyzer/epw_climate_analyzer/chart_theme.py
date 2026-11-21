@@ -35,6 +35,7 @@ SOLAR_COLORSCALE = [
     [0.45, "#f97316"],
     [1.00, "#fef08a"],
 ]
+ILLUMINANCE_COLUMNS = ("global_horizontal_illuminance_lux","direct_normal_illuminance_lux","diffuse_horizontal_illuminance_lux")
 ILLUMINANCE_COLORSCALE = [
     [0.00, "#FFFFFF"],
     [0.25, "#FEF3C7"],

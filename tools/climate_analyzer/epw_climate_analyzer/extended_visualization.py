@@ -17,7 +17,8 @@ T = "dry_bulb_temperature_c"
 P = "liquid_precipitation_depth_mm"
 SNOW = "snow_depth_cm"
 DEPTH_OCCURRENCE_COLUMNS = (P,SNOW)
-ILLUMINANCE_OCCURRENCE_COLUMNS = ("global_horizontal_illuminance_lux","direct_normal_illuminance_lux","diffuse_horizontal_illuminance_lux")
+from .chart_theme import ILLUMINANCE_COLUMNS
+ILLUMINANCE_OCCURRENCE_COLUMNS = ILLUMINANCE_COLUMNS
 ZERO_OCCURRENCE_COLUMNS = DEPTH_OCCURRENCE_COLUMNS + ILLUMINANCE_OCCURRENCE_COLUMNS
 ILLUMINANCE_OCCURRENCE_EDGES = (100.,1000.,5000.,10000.,25000.,50000.,100000.)
 ILLUMINANCE_OCCURRENCE_NOTE = ("Zero lux is a separate class (no recorded illumination). Negative and missing observations are excluded. Positive boundaries are descriptive outdoor illuminance classes, not indoor lighting requirements, UDI thresholds or sky-condition classifications.")

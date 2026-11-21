@@ -26,6 +26,7 @@ from .psychrometrics import DEFAULT_PRESSURE_PA, psychrometric_rh_curves
 from .psychrometric_distribution import add_climate_zone_traces, psychrometric_axis_ranges
 from .chart_theme import (
     BINARY_SUITABILITY_COLORSCALE,
+    ILLUMINANCE_COLUMNS,
     CLIMATE_COLORS,
     PSYCHROMETRIC_TILE_COLORSCALE,
     DEFAULT_METRIC_COLOR,
@@ -449,12 +450,12 @@ def temporal_heatmap_chart(
     if column == "liquid_precipitation_depth_mm":
         # A dry interval is a meaningful precipitation state.
         zmin = 0.0
-    if column in ("global_horizontal_illuminance_lux","direct_normal_illuminance_lux","diffuse_horizontal_illuminance_lux"):
-        # Zero lux is darkness, not the low end of a diverging palette.
-        # Selected source scope remains stable across aggregation/statistics.
-        _,source_max=_finite_min_max(pd.to_numeric(df[column],errors="coerce"))
+    if column in ILLUMINANCE_COLUMNS:
+        # A common absolute domain makes equal lux values equal colours
+        # across all illuminance components in the selected source scope.
+        maxima=[_finite_min_max(pd.to_numeric(df[c],errors="coerce"))[1] for c in ILLUMINANCE_COLUMNS if c in df]
         _,cell_max=_finite_min_max(matrix.values)
-        zmin,zmax=0.,max(1000.,float(np.ceil(max(0.,source_max or 0.,cell_max or 0.)/1000.)*1000.))
+        zmin,zmax=0.,max(1000.,float(np.ceil(max([0.,cell_max or 0.]+[v for v in maxima if v is not None])/1000.)*1000.))
     if column == "snow_depth_cm":
         # Zero snow is white. Keep the same display domain over the selected
         # source scope, with a nondegenerate range even in snow-free climates.

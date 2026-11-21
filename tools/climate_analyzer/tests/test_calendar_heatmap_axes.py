@@ -370,6 +370,30 @@ class CalendarHeatmapTests(unittest.TestCase):
         self.assertEqual(ILLUMINANCE_COLORSCALE[0],[0.,"#FFFFFF"])
         self.assertEqual(metric_colorscale("global_horizontal_radiation_wh_m2"),SOLAR_COLORSCALE)
 
+    def test_illuminance_common_absolute_domain_across_components(self):
+        from epw_climate_analyzer.chart_theme import ILLUMINANCE_COLUMNS,ILLUMINANCE_COLORSCALE
+        from epw_climate_analyzer.charts import temporal_heatmap_chart
+        from epw_climate_analyzer.extended_visualization import occurrence_default_edges,occurrence_table,occurrence_figure
+        idx=pd.date_range("2026-07-01",periods=72,freq="h")
+        df=pd.DataFrame({c:np.linspace(0.,m,len(idx)) for c,m in zip(ILLUMINANCE_COLUMNS,(87321.,123456.,24560.))},index=idx)
+        reference_labels=None
+        reference_colors=None
+        for c in ILLUMINANCE_COLUMNS:
+            for period in ("day","week","month"):
+                for stat in ("Mean","Maximum","P95"):
+                    fig=temporal_heatmap_chart(df,c,period,HEATMAP_COMPARE_HOUR,stat,"Illuminance","lx")
+                    self.assertEqual((fig.layout.coloraxis.cmin,fig.layout.coloraxis.cmax),(0.,124000.))
+                    self.assertEqual(fig.layout.coloraxis.colorscale,tuple(tuple(x) for x in ILLUMINANCE_COLORSCALE))
+                    np.testing.assert_allclose(np.asarray(fig.data[0].z,float),temporal_heatmap_matrix(df,c,period,HEATMAP_COMPARE_HOUR,stat).values,equal_nan=True)
+            fig=occurrence_figure(occurrence_table(df,c,occurrence_default_edges(df[c],c)),"lx","Hours")
+            labels=[tr.name for tr in fig.data];colors=[tr.marker.color for tr in fig.data]
+            if reference_labels is None:reference_labels,reference_colors=labels,colors
+            self.assertEqual(labels,reference_labels)
+            self.assertEqual(colors,reference_colors)
+        incomplete=df.drop(columns=[ILLUMINANCE_COLUMNS[1]])
+        fig=temporal_heatmap_chart(incomplete,ILLUMINANCE_COLUMNS[2],"day",HEATMAP_COMPARE_HOUR,"Mean","Illuminance","lx")
+        self.assertEqual(fig.layout.coloraxis.cmax,88000.)
+
     def test_snow_depth_semantic_heatmap(self):
         from epw_climate_analyzer.chart_theme import SNOW_DEPTH_COLORSCALE,metric_colorscale
         from epw_climate_analyzer.charts import temporal_heatmap_chart
