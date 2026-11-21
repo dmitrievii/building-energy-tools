@@ -76,9 +76,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
     elif k=="heatmap":
         bounds=base.temperature_thresholds(context) if c in ch.TEMPERATURE_HEATMAP_COLUMNS else None
         f=ch.temporal_heatmap_chart(df,c,*a,title,u,temperature_thresholds=bounds)
-        if c=="wet_bulb_temperature_c":
-            note+=" Green sequential temperature palette on the common temperature domain; not a comfort or energy-demand indicator."
-        elif bounds:
+        if bounds:
             note+=f" Absolute temperature classes at {bounds[0]:g}/{bounds[1]:g} °C."
             if c!=cat.T:note+=" Colours are not comfort or heating/cooling demand indicators."
         if agg.heatmap_has_single_observation_cells(df,a[0],a[1]):
@@ -96,11 +94,11 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         f=ex.diurnal_figure(table,c,u,representation=a[0],centre=a[1],band=a[2])
         note+=" Equivalent clock hours pooled across selected months; complete source hours only."
     elif k=="occurrence":
-        edges=[0.,15.,25.,30.] if c==cat.T else sorted(set(s.dropna().quantile([.25,.5,.75]).tolist()))
+        edges=ex.occurrence_default_edges(s,c)
         if not edges:raise NotApplicable("No valid class boundaries.")
         table=ex.occurrence_table(df,c,edges,basis=a[0],daily_stat=a[1])
         if table.empty:raise NotApplicable("No complete observations for the selected class basis.")
-        f=ex.occurrence_figure(table,u,a[0]);note+=" Reference classes: "+", ".join(f"{v:g}" for v in edges)+f" {u}. Classes are disjoint."
+        f=ex.occurrence_figure(table,u,a[0]);note+=" Reference classes: "+", ".join(ex.occurrence_boundary_label(v) for v in edges)+f" {u}. Classes are disjoint."
     elif k=="amplitude":f=ex.amplitude_figure(df,c,a[0],cat.LABELS[c]);note+=" Observed max minus min, not interpolated extrema."
     elif k=="total":
         factor=1/1000 if u=="kWh/m²" else 1/60 if c=="precipitation_duration_min" else 1/3600 if c=="sunshine_duration_s" else 1

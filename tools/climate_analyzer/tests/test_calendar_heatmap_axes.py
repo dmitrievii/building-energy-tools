@@ -95,8 +95,8 @@ class CalendarHeatmapTests(unittest.TestCase):
         cols=("dry_bulb_temperature_c","wet_bulb_temperature_c","dew_point_temperature_c")
         df=pd.DataFrame({c:np.linspace(-5-i*3,30-i*3,48) for i,c in enumerate(cols)},index=idx)
         figs=[temporal_heatmap_chart(df,c,"day",HEATMAP_COMPARE_HOUR,"Mean",c,"°C",temperature_thresholds=(18,26)) for c in cols]
-        from epw_climate_analyzer.chart_theme import WET_BULB_TEMPERATURE_COLORSCALE,metric_band_colors,metric_color
-        self.assertEqual(figs[1].layout.coloraxis.colorscale,tuple(tuple(v) for v in WET_BULB_TEMPERATURE_COLORSCALE))
+        from epw_climate_analyzer.chart_theme import metric_band_colors,metric_color
+        self.assertEqual(figs[1].layout.coloraxis.colorscale,figs[0].layout.coloraxis.colorscale)
         self.assertEqual(metric_band_colors(cols[1])[1],metric_color(cols[1]))
         self.assertEqual(figs[2].layout.coloraxis.colorscale,figs[0].layout.coloraxis.colorscale)
         for f in figs[1:]:
@@ -247,6 +247,26 @@ class CalendarHeatmapTests(unittest.TestCase):
         constant=pd.DataFrame({c:-10.},index=idx)
         fig=temporal_heatmap_chart(constant,c,"day",HEATMAP_COMPARE_HOUR,"Mean","Enthalpy","kJ/kg dry air")
         self.assertLess(fig.layout.coloraxis.cmin,fig.layout.coloraxis.cmax)
+
+    def test_occurrence_temperature_edges_round_before_classification(self):
+        from epw_climate_analyzer.extended_visualization import occurrence_default_edges,occurrence_table,occurrence_figure
+        c="wet_bulb_temperature_c"
+        source=pd.Series([2.77255,8.08763,14.6989])
+        self.assertEqual(occurrence_default_edges(source,"dry_bulb_temperature_c"),[0.,15.,25.,30.])
+        v=pd.Series([0.,2.77255,8.08763,14.6989,20.])
+        edges=occurrence_default_edges(v,c)
+        self.assertEqual(edges,[2.8,8.1,14.7])
+        df=pd.DataFrame({c:[2.79,2.8,8.09,8.1,14.69,14.7,np.nan]},index=pd.date_range("2026-01-01",periods=7,freq="h"))
+        table=occurrence_table(df,c,edges)
+        self.assertEqual(list(table.columns),["< 2.8","2.8 – < 8.1","8.1 – < 14.7","≥ 14.7"])
+        np.testing.assert_allclose(table.iloc[0],[1.,2.,2.,1.])
+        self.assertEqual(float(table.sum().sum()),6.)
+        fig=occurrence_figure(table,"°C","Hours")
+        self.assertEqual(fig.data[0].name,"< 2.8 °C")
+        constant=occurrence_default_edges(pd.Series([1.01,1.02,1.03]),c)
+        self.assertEqual(constant,[1.])
+        manual=occurrence_table(df,c,[2.791,2.799])
+        self.assertEqual(list(manual.columns),["< 2.791","2.791 – < 2.799","≥ 2.799"])
 
     def test_multiyear_utci_not_truncated(self):
         idx=pd.date_range("2025-12-31","2026-12-31",freq="h")

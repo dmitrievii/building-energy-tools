@@ -159,8 +159,6 @@ def _year_neutral_monthly(summary: pd.DataFrame, aggregation: str) -> bool:
 
 def _heatmap_colorscale(column: str, values=None, temperature_thresholds: tuple[float, float] | None = None):
     """Return a valid semantic colorscale for the selected climate variable."""
-    if column=="wet_bulb_temperature_c":
-        return metric_colorscale(column)
     if column in TEMPERATURE_HEATMAP_COLUMNS and temperature_thresholds is not None:
         heat_t, cool_t = map(float, temperature_thresholds)
         vmin, vmax = _finite_min_max(values)

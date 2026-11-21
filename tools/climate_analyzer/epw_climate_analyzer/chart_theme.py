@@ -49,13 +49,6 @@ HUMIDITY_RATIO_COLORSCALE = [
     [0.75, "#0891B2"],
     [1.00, "#164E63"],
 ]
-WET_BULB_TEMPERATURE_COLORSCALE = [
-    [0.00, "#F0FDF4"],
-    [0.25, "#BBF7D0"],
-    [0.50, "#6EE7B7"],
-    [0.75, "#009E73"],
-    [1.00, "#064E3B"],
-]
 MOIST_AIR_ENTHALPY_COLORSCALE = [
     [0.00, "#FAF5FF"],
     [0.25, "#DDD6FE"],
@@ -270,8 +263,8 @@ def metric_colorscale(column: str | None):
         return RELATIVE_HUMIDITY_COLORSCALE
     if text=="humidity_ratio_g_kg":
         return HUMIDITY_RATIO_COLORSCALE
-    if text=="wet_bulb_temperature_c":
-        return WET_BULB_TEMPERATURE_COLORSCALE
+    if text in ("dry_bulb_temperature_c","dew_point_temperature_c","wet_bulb_temperature_c"):
+        return TEMPERATURE_COMFORT_COLORSCALE
     if text=="moist_air_enthalpy_kj_kg":
         return MOIST_AIR_ENTHALPY_COLORSCALE
     if "radiation" in text or "irradiance" in text or "illuminance" in text:

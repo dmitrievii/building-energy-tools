@@ -2152,10 +2152,8 @@ def render_extended_variable_chart(df, column, unit, chart_type, *, key_prefix="
         v=pd.to_numeric(df[column],errors="coerce").dropna()
         if v.empty:
             return
-        if column=="dry_bulb_temperature_c":
-            default="0, 15, 25, 30"
-        else:
-            default=", ".join(f"{x:.4g}" for x in sorted(set(v.quantile([.25,.5,.75]).tolist())))
+        from epw_climate_analyzer.extended_visualization import occurrence_default_edges,occurrence_boundary_label
+        default=", ".join(occurrence_boundary_label(x) for x in occurrence_default_edges(v,column))
         basis=st.selectbox("Occurrence basis",["Hours","Days","Percentage"],key=key_prefix+"_occ_basis")
         statistic="Mean"
         if basis=="Days":
@@ -2323,8 +2321,6 @@ def render_generic_variable_page(
             temperature_thresholds=temperature_thresholds or tuple(st.session_state.get("_p6_temperature_thresholds",(18.,26.)))
             if column=="dry_bulb_temperature_c":
                 st.caption("Temperature heatmap colours use the current heating and cooling thresholds: blue = cold, green = neutral band, red = hot.")
-            elif column=="wet_bulb_temperature_c":
-                st.caption("Wet-bulb temperature uses its green semantic palette on the common temperature domain; colours represent temperature magnitude, not comfort or heating/cooling demand.")
             else:
                 st.caption("Same absolute temperature colour scale as dry-bulb temperature; colours indicate temperature classes, not comfort or heating/cooling demand.")
         fig = temporal_heatmap_chart(

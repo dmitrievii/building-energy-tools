@@ -183,6 +183,24 @@ def _complete_daily(df,column,stat):
     return out.where(groups.count().to_numpy()==expected)
 
 
+def occurrence_default_edges(values,column):
+    """Readable auto classes; use the displayed thresholds for actual binning."""
+    v=pd.to_numeric(values,errors="coerce")
+    v=v[np.isfinite(v)]
+    if v.empty:return []
+    if column==T:return [0.,15.,25.,30.]
+    raw=v.quantile([.25,.5,.75]).to_numpy(dtype=float)
+    if "temperature" in column:
+        return sorted(set(float(x) if x!=0 else 0. for x in np.round(raw,1)))
+    return sorted(set(float(f"{x:.4g}") for x in raw))
+
+
+def occurrence_boundary_label(value):
+    # Shortest round-trippable decimal representation. User-entered fine
+    # boundaries must not be silently rounded into a different class.
+    return np.format_float_positional(float(value) if value!=0 else 0.,unique=True,trim="-")
+
+
 def occurrence_table(df,column,edges,*,basis="Hours",daily_stat="Mean"):
     """Disjoint value classes; missing observations do not enter denominators."""
     if not compatible_types(df,column):
@@ -194,7 +212,8 @@ def occurrence_table(df,column,edges,*,basis="Hours",daily_stat="Mean"):
     v=_complete_daily(df,column,daily_stat) if daily else _numeric(df,column)
     v=v.dropna()
     limits=[-np.inf,*edges,np.inf]
-    labels=[f"< {edges[0]:g}"]+[f"{a:g} – < {b:g}" for a,b in zip(edges,edges[1:])]+[f"≥ {edges[-1]:g}"]
+    text=[occurrence_boundary_label(x) for x in edges]
+    labels=[f"< {text[0]}"]+[f"{a} – < {b}" for a,b in zip(text,text[1:])]+[f"≥ {text[-1]}"]
     if v.empty:
         return pd.DataFrame(columns=labels,dtype=float)
     classes=pd.cut(v,limits,labels=labels,right=False)
