@@ -105,23 +105,57 @@ def outdoor_comfort(df,render):
             render(fig,note+" Classes partition the valid duration.")
     st.download_button("UTCI and MRT data · CSV",pd.concat([values.add_prefix("UTCI · "),tr.add_prefix("MRT · ")],axis=1).to_csv().encode(),"outdoor_comfort.csv","text/csv",key="p3_otc_csv")
 
-def nv_sensitivity(df,mask,wind_available,render):
-    options=["Temperature × humidity ratio"]+(["Temperature × wind speed"] if wind_available else [])
-    axis=p.W if st.selectbox("Sensitivity axes",options,key="p3_nv_sens")==options[0] else p.V
-    z,h=p.suitability_grid(df,mask,axis=axis)
-    if z.empty:st.info("No coincident observations for these axes.");return
-    fig=go.Figure(go.Heatmap(x=z.columns,y=z.index,z=z,customdata=h,zmin=0,zmax=100,colorscale="RdYlGn",colorbar=dict(title="Suitable [%]"),hoverongaps=False,hovertemplate="T bin %{x}<br>Second variable bin %{y}<br>Suitable %{z:.1f}%<br>Valid %{customdata:.1f} h<extra></extra>"))
-    fig.update_layout(template="plotly_white",title="Observed ventilation suitability",xaxis_title="Air temperature [°C]",yaxis_title="Humidity ratio [g/kg]" if axis==p.W else "Wind speed [m/s]")
-    render(fig,"Fraction satisfying all configured limits within observed 2 K × 1 g/kg or 2 K × 0.5 m/s bins. Empty bins not extrapolated. Climatic suitability, not air change rate.")
+NV_SUITABILITY_SCALE=[[0,"#FFFFFF"],[.25,"#D9EEE6"],[.5,"#96D1BC"],[.75,"#47A88D"],[1,"#09634F"]]
+
+def nv_sensitivity(df,mask,wind_available,render,*,temperature_limits=None,wind_limits=None):
+    if not wind_available:
+        st.info("Wind speed is unavailable.");return
+    try:
+        z,h=p.suitability_grid(df,mask,axis=p.V)
+    except ValueError as exc:
+        st.warning(str(exc));return
+    if z.empty:st.info("No coincident observations for temperature and wind.");return
+    fig=go.Figure(go.Heatmap(x=z.columns,y=z.index,z=z,customdata=h,zmin=0,zmax=100,
+        colorscale=NV_SUITABILITY_SCALE,colorbar=dict(title="Suitable [%]",tickvals=[0,25,50,75,100]),
+        xgap=1,ygap=1,hoverongaps=False,
+        hovertemplate="Temperature bin center: %{x:.1f} °C<br>Wind-speed bin center: %{y:.2f} m/s<br>Suitable: %{z:.1f}%<br>Observed: %{customdata:.1f} h<extra></extra>"))
+    # Missing cells are visibly different from measured 0% suitability.
+    fig.add_heatmap(x=z.columns,y=z.index,z=np.where(np.isfinite(z),np.nan,1.),
+        colorscale=[[0,"#D1D5DB"],[1,"#D1D5DB"]],zmin=0,zmax=1,showscale=False,
+        xgap=1,ygap=1,hoverongaps=False,hovertemplate="No coincident observations<extra></extra>")
+    if temperature_limits is not None:
+        for value in temperature_limits:
+            fig.add_vline(x=value,line_dash="dash",line_color="#444444",line_width=1)
+    if wind_limits is not None:
+        for value in wind_limits:
+            fig.add_hline(y=value,line_dash="dash",line_color="#444444",line_width=1)
+    fig.update_layout(template="plotly_white",title="Temperature–wind ventilation suitability",
+        xaxis_title="Outdoor temperature [°C]",yaxis_title="Wind speed [m/s]",height=520)
+    render(fig,"White = 0% suitability, dark green = 100%, gray = no coincident observations. Dashed boundaries show the configured temperature limits and, when enabled, wind limits. Each 2 K × 0.5 m/s cell reports the share of observed valid hours satisfying all configured conditions, including humidity and occupancy. Hover for observed duration. Not a predicted ventilation flow rate.")
 
 def persistence_panel(df,mask,render,*,night=False):
     table=p.persistence(df,mask,night=night)
+    unit="nights" if night else "days"
+    label="Night" if night else "Day"
+    threshold=st.number_input("Required uninterrupted suitable period [h]",min_value=.5,
+        max_value=9. if night else 24.,value=2.,step=.5,key="p3_persistence_threshold_"+unit)
+    counts=p.persistence_monthly(table,threshold)
+    valid=int(counts["Observed days"].sum())
+    meets=int(counts["Meets minimum"].sum())
+    if not valid:
+        st.info("No observed "+unit+" with known suitability.");return
+    st.caption(f"{meets} of {valid} observed {unit} ({100*meets/valid:.1f}%) provide at least {threshold:g} consecutive suitable hours.")
     fig=go.Figure()
-    for c in ("Longest run [h]","Suitable hours [h]"):
-        fig.add_scatter(x=table.index,y=table[c],mode="lines",name=c,connectgaps=False)
-    fig.update_layout(template="plotly_white",title="Nightly flushing persistence" if night else "Daily consecutive ventilation availability",yaxis_title="Hours",xaxis_title="Night starting date" if night else "Date")
-    render(fig,"Longest uninterrupted run and total suitable duration. Missing timestamps, rejected or unknown intervals break a run; overnight runs may cross midnight but not the night boundary.")
-    st.dataframe(table,use_container_width=True)
+    for name,colour in (("Meets minimum","#21866B"),("Below minimum","#B8C0C6")):
+        fig.add_bar(x=counts.index.strftime("%Y-%m"),y=counts[name],name=name,marker_color=colour,
+            hovertemplate="%{x}<br>"+name+": %{y:.0f} "+unit+"<extra></extra>")
+    fig.update_layout(template="plotly_white",title=f"{label} availability · at least {threshold:g} uninterrupted hours",
+                      barmode="stack",xaxis_title="Month",yaxis_title=f"Observed {unit}")
+    render(fig,f"A {label.lower()} qualifies when at least one continuous suitable period reaches {threshold:g} h. For example, suitable periods 08:00–10:00 and 14:00–16:00 provide four total hours but only two consecutive hours. Unknown, rejected or missing intervals break a run. Partial observed {unit} are counted from available records only; entirely unknown {unit} are excluded.")
+    with st.expander("Detailed "+label.lower()+"-by-"+label.lower()+" results"):
+        st.dataframe(table,use_container_width=True)
+        st.download_button("Download continuous-period results · CSV",table.to_csv().encode("utf-8"),
+                           "continuous_ventilation_"+unit+".csv","text/csv",key="p3_persistence_csv_"+unit)
 
 def ventilation_load_panel(df,render):
     if not p.complete(df,p.T,p.W,p.SV):st.info("Temperature, humidity ratio and dry-air specific volume required.");return

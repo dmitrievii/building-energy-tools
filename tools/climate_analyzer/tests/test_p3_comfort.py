@@ -56,6 +56,27 @@ class P3Tests(unittest.TestCase):
         self.assertEqual(a.iloc[0]["Suitable hours [h]"],4.)
         self.assertEqual(a.iloc[0]["Valid hours [h]"],4.)
 
+    def test_persistence_monthly_threshold_and_unknown_days(self):
+        table=pd.DataFrame({"Longest run [h]":[2.,4.,0.,np.nan,1.]},
+            index=pd.to_datetime(["2025-06-01","2025-06-02","2025-06-03","2025-06-04","2025-08-01"]))
+        a=p.persistence_monthly(table,2.)
+        self.assertEqual(a.iloc[0]["Meets minimum"],2.)
+        self.assertEqual(a.iloc[0]["Below minimum"],1.)
+        self.assertEqual(a.iloc[0]["Observed days"],3.)
+        self.assertTrue(a.iloc[1].isna().all())
+        self.assertEqual(a.iloc[2]["Below minimum"],1.)
+
+    def test_wind_suitability_retains_empty_intervening_bins(self):
+        df=self.fixture().iloc[:2].copy()
+        df[p.T]=[10.,16.]
+        df[p.V]=[1.,3.]
+        z,h=p.suitability_grid(df,pd.Series([0.,1.],index=df.index),axis=p.V)
+        self.assertEqual(z.shape,(5,4))
+        self.assertEqual(z.iloc[0,0],0.)
+        self.assertEqual(z.iloc[-1,-1],100.)
+        self.assertTrue(np.isnan(z.iloc[1,1]))
+        self.assertAlmostEqual(h.sum().sum(),2.)
+
     def test_classes_and_suitability(self):
         df=self.fixture().iloc[:3].copy()
         a=p.utci_class_hours(df,pd.Series([9.,26.,np.nan],index=df.index))
@@ -94,5 +115,12 @@ class P3Tests(unittest.TestCase):
                            ("render_sky_daylight","illuminance_panel")):
             self.assertIn(panel,funcs[name])
         self.assertNotIn("fillna(1.2)",funcs["render_hvac_passive"])
+        self.assertIn('"Temperature–wind suitability"',funcs["render_natural_ventilation"])
+        self.assertIn('"Continuous ventilation periods"',funcs["render_natural_ventilation"])
+        self.assertNotIn('"Daily consecutive availability"',funcs["render_natural_ventilation"])
+        ui=(root/"epw_climate_analyzer/p3_ui.py").read_text(encoding="utf-8")
+        self.assertNotIn("Temperature × humidity ratio",ui)
+        self.assertIn("NV_SUITABILITY_SCALE",ui)
+        self.assertIn("importlib.reload(_navigation_contract)",source)
 
 if __name__=="__main__":unittest.main()

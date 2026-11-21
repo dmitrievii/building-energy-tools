@@ -147,10 +147,14 @@ def suitability_grid(df,mask,*,axis):
                       "suitable":mask.astype(float)},index=df.index).dropna()
     if raw.empty:return pd.DataFrame(),pd.DataFrame()
     g=raw.groupby(["y","x"]).suitable.agg(["mean","count"])
-    # Keep observed bin coordinates only: extreme corrupt values cannot
-    # allocate arbitrarily large dense grids across unobserved ranges.
-    xs=np.sort(raw.x.unique())
-    ys=np.sort(raw.y.unique())
+    # Fixed-width bins must retain empty intervening cells; otherwise Plotly
+    # stretches adjacent occupied cells across unobserved temperature/wind.
+    nx=int(round((raw.x.max()-raw.x.min())/2))+1
+    ny=int(round((raw.y.max()-raw.y.min())/sy))+1
+    if nx*ny>200000 or nx>2000 or ny>2000:
+        raise ValueError("Observed ranges are too large for a fixed-bin suitability grid. Inspect source data quality.")
+    xs=raw.x.min()+2*np.arange(nx)
+    ys=raw.y.min()+sy*np.arange(ny)
     return g["mean"].unstack().reindex(index=ys,columns=xs)*100,g["count"].unstack().reindex(index=ys,columns=xs)*native_interval_hours(df)
 
 def persistence(df,mask,*,night=False,end_hour=6):
@@ -172,6 +176,23 @@ def persistence(df,mask,*,night=False,end_hour=6):
     out=pd.DataFrame.from_dict(records,orient="index",columns=["Longest run [h]","Suitable hours [h]","Valid hours [h]"])
     out.loc[out["Valid hours [h]"]==0,["Longest run [h]","Suitable hours [h]"]]=np.nan
     return out
+
+def persistence_monthly(table,threshold):
+    """Count observed days/nights meeting a minimum uninterrupted duration.
+
+    A day with at least one known state is represented; an all-unknown day is
+    excluded. Partial days count as observed only, never as complete days.
+    """
+    if not np.isfinite(threshold) or threshold<=0:
+        raise ValueError("Minimum continuous duration must be positive.")
+    run=table["Longest run [h]"]
+    valid=run.notna()
+    met=run.ge(threshold)&valid
+    counts=pd.DataFrame({"Meets minimum":met.astype(int),
+                         "Below minimum":(valid&~met).astype(int),
+                         "Observed days":valid.astype(int)},index=table.index)
+    return counts.resample("MS").sum().where(counts.resample("MS")["Observed days"].sum().gt(0),axis=0)
+
 
 def annual_hour_grid(df,values):
     idx=pd.DatetimeIndex(df.index)

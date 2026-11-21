@@ -10,6 +10,13 @@ from uuid import uuid4
 
 import streamlit as st
 
+# Streamlit can retain imported package modules across an app-script hot deploy.
+# Refresh the navigation contract only when it predates the P3 page.
+from epw_climate_analyzer import ui_contract as _navigation_contract
+if "Outdoor Thermal Comfort" not in _navigation_contract.NAVIGATION_PAGES:
+    import importlib
+    importlib.reload(_navigation_contract)
+
 from epw_climate_analyzer.ui_contract import (
     APP_BROWSER_TITLE,
     APP_ENGINEERING_DISCLAIMER,
@@ -4758,14 +4765,15 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
             "Rejected reasons",
             "Psychrometric NV overlay",
             "Night-flushing potential",
-            "Sensitivity analysis",
-            "Daily consecutive availability",
-        ] + (["Directional analysis"] if wind_available and "wind_direction_deg" in df and df["wind_direction_deg"].notna().any() else []),
+            "Continuous ventilation periods",
+        ] + (["Temperature–wind suitability"] if wind_available else [])
+          + (["Directional analysis"] if wind_available and "wind_direction_deg" in df and df["wind_direction_deg"].notna().any() else []),
     )
-    if chart_group == "Sensitivity analysis":
+    if chart_group == "Temperature–wind suitability":
         from epw_climate_analyzer.p3_ui import nv_sensitivity
-        nv_sensitivity(df,eligibility_mask(df,mask,wind=wind_filter),wind_available,render_plot)
-    elif chart_group == "Daily consecutive availability":
+        nv_sensitivity(df,eligibility_mask(df,mask,wind=wind_filter),wind_available,render_plot,
+                       temperature_limits=(t_min,t_max),wind_limits=(wind_min,wind_max) if wind_filter else None)
+    elif chart_group == "Continuous ventilation periods":
         from epw_climate_analyzer.p3_ui import persistence_panel
         persistence_panel(df,eligibility_mask(df,mask,wind=wind_filter),render_plot)
     elif chart_group == "Directional analysis":
