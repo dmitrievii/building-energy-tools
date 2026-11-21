@@ -85,7 +85,12 @@ def make_figure(d,df,context,reference_df=None,cache=None):
     elif k in ("duration","histogram","box","violin"):
         scope=df.loc[s.gt(0)].copy() if a[0]=="wet" else df
         if scope.empty:raise NotApplicable("No wet observations.")
-        if k=="duration":f=ex.probability_figure(scope,c,u,a[1]) if a[2]=="probability" else ch.duration_chart(scope,c,title,u,ascending=a[1])
+        if k=="duration":
+            from .p4_design_charts import add_design_quantiles,supports_design_quantiles,DESIGN_NOTE
+            f=ex.probability_figure(scope,c,u,a[1]) if a[2]=="probability" else ch.duration_chart(scope,c,title,u,ascending=a[1])
+            if supports_design_quantiles(scope,c):
+                add_design_quantiles(f,scope,c,u,ascending=a[1],percentage=a[2]=="probability")
+                note+=" "+DESIGN_NOTE
         elif k=="histogram":f=ch.histogram_chart(scope,c,title,u,bins=40);note+=" Reference 40 histogram bins."
         else:f=ch.monthly_box_chart(scope,c,title,u,violin=k=="violin")
         if a[0]=="wet":note+=" Positive precipitation intervals only."
@@ -310,15 +315,10 @@ def make_figure(d,df,context,reference_df=None,cache=None):
             f.update_layout(barmode="stack",yaxis_title="Hours")
         note+=" UTCI research screening; wind assumed at 10 m, uniform MRT=T or simplified open-sky radiation. Out-of-domain states remain missing."
     elif k=="critical_windows":
-        ranked=p4.rolling_windows(df,c,72).dropna().sort_values(ascending=not a[0],kind="stable")
-        chosen=[];span=pd.Timedelta(hours=72);step=p4.cadence(df)
-        for end,value in ranked.items():
-            if all(abs(end-other[0])>=span for other in chosen):
-                chosen.append((end,value))
-                if len(chosen)==10:break
-        if not chosen:raise NotApplicable("No complete three-day windows.")
-        f=go.Figure(go.Bar(x=[str(end-span+step) for end,value in chosen],y=[value for end,value in chosen])).update_layout(xaxis_title="Window start",yaxis_title=u)
-        note+=" Ten highest/lowest nonoverlapping complete 72-hour windows, ranked by mean."
+        from .p4_design_charts import critical_windows_figure
+        f,table,detail=critical_windows_figure(df,c,u,upper=a[0])
+        if f is None:raise NotApplicable(detail)
+        note+=" "+detail
     elif k=="utci_pair":
         values,_=memo(("utci","Open-sky screening"),lambda:p3.utci_frame(df,model="Open-sky screening"))
         common=values.dropna()

@@ -200,20 +200,12 @@ def hvac_panel(df,render):
     st.caption("Empirical statistics of the selected records. EPW/TMY/generated data are screening only; these are not normative ASHRAE/ÖNORM station design values or inferred return periods.")
     if view=="Critical multiday sequences":
         n=st.number_input("Continuous window [days]",1,30,3,1,key="p4_hvac_window")
-        try:s=p.rolling_windows(df,column,24*n)
+        from .p4_design_charts import critical_windows_figure
+        unit=label.rsplit("[",1)[-1].rstrip("]")
+        try:fig,a,note=critical_windows_figure(df,column,unit,hours=24*n,upper=upper)
         except ValueError as exc:st.warning(str(exc));return
-        # Greedy nonoverlapping windows; ordering by value with deterministic tie order.
-        ranked=s.dropna().sort_values(ascending=not upper,kind="stable")
-        chosen=[];span=pd.Timedelta(days=n)
-        for end,value in ranked.items():
-            if all(abs(end-e)>=span for e in [r["End"] for r in chosen]):
-                chosen.append({"Start":end-span+p.cadence(df),"End":end,"Mean":value})
-                if len(chosen)==10:break
-        a=pd.DataFrame(chosen)
-        if a.empty:st.info("No complete consecutive windows.");return
-        fig=go.Figure(go.Bar(x=a.Start.astype(str),y=a.Mean,marker_color="#D98235" if upper else "#4477AA"))
-        fig.update_layout(template="plotly_white",title=f"Most critical nonoverlapping {n}-day windows",yaxis_title=label,xaxis_title="Window start")
-        render(fig,"Ranks complete trailing fixed-duration windows by mean governing quantity; overlapping windows suppressed. No gaps bridged. Not a design weather file.")
+        if fig is None:st.info(note);return
+        render(fig,note)
         _show_table(a,"hvac_sequences");return
     a=p.design_conditions(df,column,[.4,1.,2.,.5,1.5,5.],upper=upper,coincident=[v for v in (p.T,p.W,p.H,p.RH,p.V) if v!=column and numeric(df,v).notna().any()])
     if a.empty:st.info("No valid observations.");return

@@ -74,6 +74,34 @@ class AtlasTests(unittest.TestCase):
             self.assertEqual(len([d for d in rows if d.kind=="critical_windows"]),6)
             self.assertTrue(any(d.kind=="duration" and d.column==c.T for d in rows))
 
+    def test_design_markers_and_critical_window_chronology(self):
+        from epw_climate_analyzer.p4_extremes import design_conditions
+        from epw_climate_analyzer.p4_design_charts import critical_windows_figure
+        df=self.fixture()
+        for d in [d for d in c.catalogue(df,{},c.FULL) if d.kind=="duration" and d.column==c.T]:
+            fig,note=make_figure(d,df,{})
+            marker=next(tr for tr in fig.data if tr.name=="Design quantiles")
+            expected=design_conditions(df,c.T,[.4,1.,2.,5.],upper=not d.args[1])
+            np.testing.assert_allclose(marker.y,expected.Quantile)
+            x=expected["Nominal tail [%]"]
+            if d.args[2]=="hours":x=x*expected["Valid hours"]/100
+            np.testing.assert_allclose(marker.x,x)
+            self.assertEqual(len(fig.data[0].y),len(df))
+        for upper in (True,False):
+            fig,table,note=critical_windows_figure(df,c.T,"°C",upper=upper)
+            self.assertEqual(len(table),1)
+            self.assertEqual(table.End.iloc[0]-table.Start.iloc[0],pd.Timedelta(hours=71))
+            self.assertAlmostEqual(table.Mean.iloc[0],df.loc[table.Start.iloc[0]:table.End.iloc[0],c.T].mean())
+            cutoff=next(tr for tr in fig.data if tr.name.startswith("Selection cutoff"))
+            self.assertEqual(cutoff.line.dash,"dot")
+            np.testing.assert_allclose(cutoff.y,table.Mean.iloc[-1])
+            self.assertEqual(len(fig.layout.shapes),1)
+            self.assertTrue(all(tr.type=="scatter" for tr in fig.data))
+        broken=df.drop(df.index[48])
+        fig,table,note=critical_windows_figure(broken,c.T,"°C")
+        self.assertIsNone(fig)
+        self.assertTrue(table.empty)
+
     def test_monthly_source_no_hourly_invention(self):
         df=self.fixture().iloc[[0]].copy();df.attrs["canonical_native_resolution"]="monthly"
         rows=c.catalogue(df,{},c.FULL)
