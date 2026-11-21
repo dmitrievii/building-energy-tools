@@ -9,7 +9,7 @@ import tempfile
 import gc
 import threading
 from .p66_memory import require_headroom,EXPORT_LOCK as _EXPORT_LOCK
-from .p6_static_render import render_png
+from .p6_static_render import render_png,export_headroom,release_render_worker
 from collections import Counter
 from dataclasses import asdict
 from datetime import datetime,timezone
@@ -80,6 +80,7 @@ class PdfWriter:
     def img(self,fig,x,top,w,h,font=11):
         from reportlab.lib.utils import ImageReader
         from PIL import Image
+        export_headroom("Atlas chart preparation")
         f=report_figure(fig,width_pt=w,height_pt=h,font_pt=font,external_zone_legend=bool(zone_legend_entries(fig)))
         from pathlib import Path
         with tempfile.TemporaryDirectory(prefix="ige-atlas-figure-") as tmp:
@@ -91,7 +92,7 @@ class PdfWriter:
             ratio=min(w/iw,h/ih)
             self.canvas.drawImage(str(target),x+(w-iw*ratio)/2,top-ih*ratio,width=iw*ratio,height=ih*ratio,mask="auto")
         gc.collect()
-        require_headroom()
+        export_headroom("Atlas image embedded")
 
     def stats(self,rows,top):
         from reportlab.lib.colors import HexColor
@@ -269,11 +270,11 @@ def _generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive
             for i,d in entries:
                 if progress:progress(processed,len(available),d.title)
                 processed+=1
-                require_headroom()
+                export_headroom(f"Atlas before chart {processed}: {d.title}")
                 fig=None
                 try:
                     fig,note=make_figure(d,df,context,reference_df,cache)
-                    require_headroom()
+                    export_headroom(f"Atlas prepared chart {processed}: {d.title}")
                     if writer:writer.add(d,fig,note)
                     else:
                         seq+=1;panel=_html_panel(d,fig,note,seq)
@@ -288,13 +289,14 @@ def _generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive
                 finally:
                     del fig
                 if processed%5==0:gc.collect()
-                require_headroom()
+                export_headroom(f"Atlas after chart {processed}: {d.title}")
                 # Explicit memory budget; never pretend to have generated the
                 # unprocessed tail if the deployment cannot contain an atlas.
                 if zbuf.tell()>MAX_ARCHIVE_BYTES or writer and writer.out.tell()>MAX_ARCHIVE_BYTES:
                     raise MemoryError("Atlas batch exceeds 32 MiB. Select fewer diagrams per batch.")
             if mode=="Chapter PDFs (ZIP)":
-                require_headroom()
+                release_render_worker()
+                export_headroom(f"Atlas chapter assembly: {chapter}")
                 pdf=writer.finish()
                 if len(pdf)>MAX_ARCHIVE_BYTES:raise MemoryError("Chapter PDF exceeds 32 MiB; reduce batch size.")
                 archive.writestr(slug(chapter)+".pdf",pdf);del pdf;writer=None
@@ -312,7 +314,8 @@ def _generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive
             require_headroom()
             zbuf.seek(0);output=zbuf.read()
         else:
-            require_headroom()
+            release_render_worker()
+            export_headroom("Atlas final PDF assembly")
             output=writer.finish()
         if len(output)>MAX_ARCHIVE_BYTES:raise MemoryError("Atlas batch exceeds 32 MiB; reduce batch size.")
         return output,manifest,metadata

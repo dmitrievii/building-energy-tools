@@ -69,7 +69,9 @@ def render_atlas(df,context,reference_df=None):
     if st.session_state.get("_p66_atlas_result") and st.session_state["_p66_atlas_result"][0]!=signature:
         st.session_state.pop("_p66_atlas_result",None)
     if st.button("Generate selected batch",key="p66_generate"):
-        st.session_state.pop("_p66_atlas_result",None)
+        import gc
+        for key in ("_p66_atlas_result","_p6_pdf","_p6_html_result"):st.session_state.pop(key,None)
+        gc.collect()
         progress=st.progress(0,text="Preparing diagrams")
         try:
             def update(i,n,label):

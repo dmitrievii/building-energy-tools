@@ -204,8 +204,7 @@ def _pdf_report(items,title,paper,orientation,*,image_renderer=None,use_osm=Fals
     from reportlab.platypus import SimpleDocTemplate,Paragraph,Spacer,PageBreak,Image,Table,TableStyle
     from PIL import Image as PILImage
     from pathlib import Path
-    from .p6_static_render import render_png
-    from .p66_memory import require_headroom
+    from .p6_static_render import render_png,export_headroom
     import gc
     from .p6_report_structure import contexts,ordered_groups,concise_context,site_details,locator_figure,report_figure,zone_legend_entries,figure_height,complex_figure
     if paper not in ("A4","A3") or orientation not in ("Portrait","Landscape"):raise ValueError("Invalid paper settings.")
@@ -236,17 +235,17 @@ def _pdf_report(items,title,paper,orientation,*,image_renderer=None,use_osm=Fals
         if progress:progress(image_number,label)
         target=Path(staging)/f"figure-{image_number:06d}.png"
         try:
-            require_headroom()
+            export_headroom(f"prepare chart {image_number}: {label}")
             f=report_figure(fig,width_pt=width,height_pt=h,external_zone_legend=bool(zone_legend_entries(fig)))
             if image_renderer is not None:target.write_bytes(image_renderer(f))
             else:render_png(f,target,scale=1.5)
             del f
             with PILImage.open(target) as im:w,ih=im.size
             gc.collect()
-            require_headroom()
+            export_headroom(f"after chart {image_number}: {label}")
             scale=min(width/w,h/ih)
             return Image(str(target),width=w*scale,height=ih*scale,hAlign="CENTER",lazy=2)
-        except MemoryError:raise
+        except MemoryError as exc:raise MemoryError(f"{exc} Chart {image_number}: {label}.") from exc
         except Exception as exc:raise RuntimeError(f"Static rendering failed for {label}. Use the printable HTML export. ({exc})") from exc
     def zone_table(zones):
         # Native text stays 11 pt, retains every visible named zone and is
@@ -298,6 +297,7 @@ def _pdf_report(items,title,paper,orientation,*,image_renderer=None,use_osm=Fals
             heading=f"{chapter_no}.{k} · {item['title']}"
             before=[para(heading,"ReportFigure")]
             if len(contexts(entries))>1:before.append(para(concise_context(item["context"])))
+            export_headroom(f"load saved chart {chapter_no}.{k}: {item['title']}")
             fig=pio.from_json(item["figure"])
             zones=zone_legend_entries(fig)
             legend=[para("Bioclimatic zones"),zone_table(zones),Spacer(1,6)] if zones else []
@@ -329,16 +329,16 @@ def _pdf_report(items,title,paper,orientation,*,image_renderer=None,use_osm=Fals
                 if item.get("note"):body.append(para(item["note"]))
             else:body.extend(explanation)
     def footer(canvas,doc):
-        require_headroom()
+        export_headroom(f"PDF assembly, page {doc.page}")
         canvas.saveState();canvas.setFont("Helvetica",9);canvas.setFillColor(colors.HexColor("#52606D"))
         canvas.drawString(32,18,"IGE Climate Analyzer");canvas.drawRightString(page[0]-32,18,str(doc.page));canvas.restoreState()
     from .p6_static_render import release_render_worker
     release_render_worker()
     if progress:progress(image_number,"Assembling PDF")
-    require_headroom()
+    export_headroom("before PDF assembly")
     doc.build(body,onFirstPage=footer,onLaterPages=footer)
     gc.collect()
-    require_headroom()
+    export_headroom("after PDF assembly")
     if out.stat().st_size>32*1024*1024:raise MemoryError("PDF exceeds the 32 MiB download budget. Select fewer diagrams for this export.")
     return out.read_bytes()
 
@@ -499,7 +499,7 @@ def render_report(df=None,reference_df=None):
     # printed underneath each figure.
     st.download_button("Download technical metadata",data=json.dumps([{k:v for k,v in i.items() if k!="figure"} for i in included],ensure_ascii=False,indent=2,default=str).encode("utf-8"),
                        file_name="climate_report_metadata.json",mime="application/json",key="p6_meta")
-    fingerprint=html_signature+"-pdf-hf6"
+    fingerprint=html_signature+"-pdf-p67-hf1"
     if st.session_state.get("_p6_pdf") and st.session_state["_p6_pdf"][0]!=fingerprint:
         st.session_state.pop("_p6_pdf",None)
     # One stable control region; downloads do not trigger a full rerun.
@@ -516,19 +516,21 @@ def render_report(df=None,reference_df=None):
             gc.collect()
             status=st.empty()
             try:
-                require_headroom()
-                from .p6_static_render import session_cache_dir
+                from .p6_static_render import session_cache_dir,export_headroom
+                export_headroom("report export admission")
                 pdf=pdf_report(included,title,paper,orientation,use_osm=True,render_cache_dir=session_cache_dir(st.session_state),
                                progress=lambda i,label:status.info(f"Rendering figure {i}: {label}"))
-                require_headroom()
+                export_headroom("report download buffer")
             finally:status.empty()
             st.session_state["_p6_pdf"]=(fingerprint,pdf)
             st.rerun()
         except Exception as exc:
             st.error(str(exc))
             st.caption("The printable HTML contains all captured charts and can be opened locally, then printed to PDF in your browser.")
-    if cache and cache[0]==fingerprint:
-        with st.expander("Export memory management",expanded=False):
-            st.caption("Release the cached PDF if you no longer need this download. Saved diagrams are retained.")
-            if st.button("Clear cached PDF",key="p6_pdf_release"):
-                st.session_state.pop("_p6_pdf",None);st.rerun()
+    with st.expander("Export memory management",expanded=False):
+        st.caption("Release generated downloads and rendered image cache. Saved diagrams are retained.")
+        if st.button("Release export resources",key="p6_pdf_release"):
+            from .p6_static_render import clear_render_cache
+            for key in ("_p6_pdf","_p6_html_result","_p66_atlas_result"):st.session_state.pop(key,None)
+            clear_render_cache(st.session_state)
+            st.rerun()

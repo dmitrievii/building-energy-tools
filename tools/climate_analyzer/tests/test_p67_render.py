@@ -88,9 +88,31 @@ class RenderTests(unittest.TestCase):
                     r.render_png(self.fixture(),target)
                 self.assertEqual(s.fallbacks,1)
                 self.assertEqual(cold.call_count,1)
-                with patch.object(s,"_persistent",side_effect=MemoryError("fixture pressure")):
+                with patch.object(s,"_persistent",side_effect=MemoryError("fixture pressure")), patch.object(r,"render_recovery_headroom",side_effect=MemoryError("insufficient free memory")):
                     with self.assertRaises(MemoryError):r.render_png(self.fixture(),target)
                 self.assertFalse(target.exists())
                 self.assertEqual(cold.call_count,1)
+
+    def test_idle_worker_recycled_before_parent_guard(self):
+        from unittest.mock import Mock
+        with r.render_session(mode="adaptive") as s:
+            s.proc=Mock()
+            with patch.object(s,"reusable",return_value=False), patch.object(s,"close_worker",side_effect=lambda:setattr(s,"proc",None)) as close, patch.object(r,"require_headroom") as guard:
+                r.export_headroom("PDF chart preparation")
+                close.assert_called_once()
+                guard.assert_called_once()
+                self.assertIsNone(s.proc)
+
+    @unittest.skipUnless(os.name=="posix","persistent worker requires POSIX")
+    def test_pressure_retry_only_after_real_admission(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.object(r,"container_memory",return_value=(800*r.MIB,3072*r.MIB)), patch.object(r,"render_disposable",side_effect=self.fake) as cold:
+            target=Path(tmp)/"out.png"
+            with r.render_session(mode="adaptive") as s:
+                with patch.object(s,"_persistent",side_effect=MemoryError("fixture pressure")), patch.object(r,"render_recovery_headroom") as admit:
+                    r.render_png(self.fixture(),target)
+                admit.assert_called_once()
+                self.assertEqual(s.fallbacks,1)
+                self.assertEqual(cold.call_count,1)
+                self.assertTrue(target.is_file())
 
 if __name__=="__main__":unittest.main()

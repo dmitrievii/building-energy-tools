@@ -226,7 +226,15 @@ class RenderSession:
                 else:
                     if self.reusable():
                         try:info.update(self._persistent(source,target,scale,timeout))
-                        except MemoryError:raise
+                        except MemoryError as exc:
+                            # Abort the in-flight worker, then admit at most one
+                            # clean retry only if its memory was actually freed.
+                            self.close_worker();target.unlink(missing_ok=True)
+                            try:render_recovery_headroom()
+                            except MemoryError:raise MemoryError(f"{exc} Stage: persistent image rendering; insufficient headroom after recycling.") from exc
+                            self.fallbacks+=1
+                            render_disposable(fig,target,scale=scale,timeout=timeout,_sample=self.sample)
+                            info["backend"]="pressure_retry"
                         except Exception as exc:
                             self.fallbacks+=1
                             _LOG.warning("P6.7 worker retry using disposable renderer: %s",type(exc).__name__)
@@ -270,6 +278,34 @@ def render_session(*,cache_dir=None,mode=None,max_jobs=8,metrics=None):
 def release_render_worker():
     session=_ACTIVE.get()
     if session is not None:session.close_worker()
+
+def export_headroom(stage):
+    """Parent-side safe point: recycle idle browser before the hard guard.
+
+    Never call from a render subprocess polling loop.
+    """
+    session=_ACTIVE.get()
+    if session is not None and session.proc is not None and not session.reusable():
+        session.close_worker()
+    try:require_headroom()
+    except MemoryError as exc:
+        # Handles a memory jump between the policy sample and hard guard.
+        if session is not None and session.proc is not None:
+            session.close_worker()
+            try:require_headroom()
+            except MemoryError as again:raise MemoryError(f"{again} Stage: {stage}.") from again
+        else:raise MemoryError(f"{exc} Stage: {stage}.") from exc
+
+def clear_render_cache(state):
+    obj=state.pop("_p67_render_cache",None)
+    if obj is not None:obj.cleanup()
+
+def render_recovery_headroom():
+    """Only retry a pressure-interrupted render with substantial real headroom."""
+    require_headroom()
+    value=container_memory()
+    if value is None or value[1]-value[0]<512*MIB:
+        raise MemoryError("Insufficient memory for a safe renderer retry. Stage: static image rendering.")
 
 def render_png(fig,target,*,scale=1.5,timeout=120):
     session=_ACTIVE.get()
