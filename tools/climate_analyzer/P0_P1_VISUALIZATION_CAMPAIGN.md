@@ -16,3 +16,6 @@ P1: Overview climograph / Walter–Lieth core diagram / temperature–precipitat
 
 ## Qualification
 New regression tests exercise physical-hour sums, missing months, class closure, graphic equivalence, scale transformation and physically meaningful export, native monthly gating, and meteogram unit independence. Full CI, source and browser campaigns are mandatory before declaring production qualification.
+
+## UI feedback revision
+Temperature–precipitation diagrams are now under Precipitation and Snow, with Walter–Lieth first and a data-dependent climatic interpretation. Temperature amplitude is a variable/aggregation chart, not a separate quantity family; ranges use observed extrema of at least two valid intervals, so incomplete periods are explicitly observed ranges. Probability axes include 100%; physical duration axes label the actual endpoint, including 8760 for complete ordinary years. Sky-condition distribution is first within Clear and overcast hours. Chart-export controls use deterministic unique keys within each rerun, including repeated EPW payloads.

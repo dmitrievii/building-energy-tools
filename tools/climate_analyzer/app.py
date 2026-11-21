@@ -1867,7 +1867,7 @@ def render_chart_export_controls(fig) -> None:
             if chart_csv:
                 st.download_button(
                     "Chart data · CSV",
-                        key=f"{export_key}_trace",
+                    key=f"{export_key}_trace",
                     data=chart_csv,
                     file_name=f"{stem}.csv",
                     mime="text/csv",

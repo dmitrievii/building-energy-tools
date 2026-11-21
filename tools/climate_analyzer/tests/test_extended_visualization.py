@@ -68,6 +68,45 @@ class ExtendedTests(unittest.TestCase):
         fig=duration_chart(annual,T,"Duration","°C")
         self.assertEqual(fig.layout.xaxis.tickvals[-1],8760)
         self.assertEqual(duration_chart(df,T,"Duration","°C").layout.xaxis.tickvals[-1],744)
+    def test_duplicate_export_buttons_and_scoped_explorers(self):
+        import ast
+        from pathlib import Path
+        from streamlit.testing.v1 import AppTest
+        source=(Path(__file__).resolve().parents[1]/"app.py").read_text(encoding="utf-8")
+        tree=ast.parse(source)
+        def extract(name):
+            node=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name==name)
+            return ast.get_source_segment(source,node)
+        preamble="""
+import streamlit as st
+import pandas as pd
+import plotly.graph_objects as go
+from types import SimpleNamespace
+NAVIGATION_KEY="page"
+st.session_state[NAVIGATION_KEY]="Sky and Daylight"
+st.session_state["_active_filtered_export_df"]=pd.DataFrame({"T":[1.,2.]})
+st.session_state["_plotly_element_counter"]=0
+def get_active_climate_file():
+    return SimpleNamespace(name="test.epw",payload=b"same EPW for both charts")
+"""
+        script=preamble+"\n"+extract("next_plot_key")+"\n"+extract("render_chart_export_controls")+"""
+fig=go.Figure(go.Scatter(x=[1,2],y=[3,4]))
+fig.update_layout(title="Identical title")
+render_chart_export_controls(fig)
+render_chart_export_controls(fig)
+"""
+        app=AppTest.from_string(script,default_timeout=45).run()
+        self.assertFalse(app.exception)
+        app.run()
+        self.assertFalse(app.exception)
+        self.assertNotIn("Temperature quantity family",extract("render_temperature"))
+        self.assertIn('"Amplitude"',extract("render_generic_variable_page"))
+        self.assertIn('"Temperature–precipitation diagrams"',extract("render_precipitation"))
+        self.assertNotIn("render_climate_summary_charts",extract("render_overview"))
+        self.assertNotIn("render_climate_summary_charts",extract("render_historical_overview"))
+        self.assertIn('["Walter–Lieth diagram","Climograph","Temperature–precipitation loop"]',extract("render_climate_summary_charts"))
+        self.assertIn('["Monthly sky-condition distribution","Threshold hours"]',extract("render_sky_daylight"))
+
     def test_daylight_ground_and_sunshine(self):
         df=sample()
         self.assertEqual(tuple(daylight_envelope(df.index,48.).layout.yaxis.range),(0,24))
