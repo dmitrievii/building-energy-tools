@@ -52,6 +52,7 @@ def outdoor_comfort(df,render):
     if st.session_state.get("p3_otc_chart") not in choices:
         st.session_state["p3_otc_chart"]=choices[0]
     chart=st.selectbox("Analysis type",choices,key="p3_otc_chart")
+    from .utci_presentation import stress_heatmap,add_stress_bands,duration_figure,STRESS_NOTE
     note="UTCI equivalent temperature; missing or out-of-domain states excluded. Duration uses physical interval hours."
     if chart=="Sensitivity analysis":
         c=st.columns(3)
@@ -69,15 +70,14 @@ def outdoor_comfort(df,render):
             x,y=ta,va;xx,yy=np.meshgrid(x,y);args=(xx,xx+delta,yy,rh);xl="Air temperature [°C]";yl="10 m wind [m/s]"
         try:z=p.utci_values(*args)
         except ImportError as exc:st.error("UTCI dependency unavailable: "+str(exc));return
-        fig=go.Figure(go.Heatmap(x=x,y=y,z=z,colorscale="RdBu_r",colorbar=dict(title="UTCI [°C]"),hoverongaps=False))
-        fig.update_layout(template="plotly_white",title="Controlled UTCI sensitivity",xaxis_title=xl,yaxis_title=yl)
-        render(fig,"Hypothetical states, not frequencies. Other inputs held constant. "+note);return
+        fig=stress_heatmap(x,y,z,title="Controlled UTCI sensitivity",x_label=xl,y_label=yl)
+        render(fig,"Hypothetical states, not frequencies. Other inputs held constant. "+note+" "+STRESS_NOTE);return
     try:values,tr=p.utci_frame(df,model=mode,wind_factor=wind,**kw)
     except ImportError as exc:st.error("UTCI dependency unavailable: "+str(exc));return
     st.caption("Valid physical hours: "+", ".join(f"{c}: {v:g}" for c,v in (values.notna().sum()*native_interval_hours(df)).items()))
     if not values.notna().any().any():st.info("No admitted UTCI states.");return
     if chart=="UTCI duration curve":
-        _duration(df,values,"UTCI duration curve","UTCI [°C]",render,note)
+        render(duration_figure(values,native_interval_hours(df),"UTCI duration curve"),note+" Shaded background indicates UTCI stress classes.")
     elif chart=="Sun versus shade":
         common=values.dropna()
         if common.empty:st.info("No common admitted exposure intervals.");return
@@ -87,18 +87,16 @@ def outdoor_comfort(df,render):
             fig.add_scatter(x=a.index,y=a,mode="lines+markers",name=c)
         fig.update_layout(template="plotly_white",title="Paired monthly mean UTCI",yaxis_title="UTCI [°C]")
         delta=(common["Open sun"]-common["Direct-beam shade"]).mean()
-        render(fig,f"Paired mean open-sun minus shade UTCI: {delta:.2f} °C. "+note)
-        _duration(df,common,"Paired exposure duration curves","UTCI [°C]",render,note)
+        render(add_stress_bands(fig,common.resample("MS").mean()),f"Paired mean open-sun minus shade UTCI: {delta:.2f} °C. "+note+" Background classes describe monthly means, not hourly stress duration.")
+        render(duration_figure(common,native_interval_hours(df),"Paired exposure duration curves"),note+" Shaded background indicates UTCI stress classes.")
     else:
         if st.session_state.get("p3_otc_exposure") not in values.columns:
             st.session_state["p3_otc_exposure"]=values.columns[0]
         scenario=st.selectbox("Exposure",list(values),key="p3_otc_exposure")
         if chart=="UTCI heat map":
             grid=p.annual_hour_grid(df,values[scenario])
-            fig=go.Figure(go.Heatmap(x=grid.columns,y=grid.index,z=grid,colorscale="RdBu_r",zmid=20,colorbar=dict(title="UTCI [°C]"),hoverongaps=False))
-            fig.update_layout(template="plotly_white",title="UTCI · "+scenario,xaxis_title="Date",yaxis_title="Analysis clock hour")
-            from .calendar_heatmap_axes import apply_calendar_heatmap_axes
-            render(apply_calendar_heatmap_axes(fig),note+" Multiple observations within an hour cell are averaged.")
+            fig=stress_heatmap(grid.columns,grid.index,grid,title="UTCI · "+scenario,x_label="Date",y_label="Hour of day")
+            render(fig,note+" Multiple observations within an hour cell are averaged before classifying. "+STRESS_NOTE)
         else:
             tab=p.utci_class_hours(df,values[scenario]);fig=go.Figure()
             for c,color in zip(p.CLASSES,p.COLORS):fig.add_bar(x=tab.index,y=tab[c],name=c,marker_color=color)

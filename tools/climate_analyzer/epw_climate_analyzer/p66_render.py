@@ -307,10 +307,14 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         val=values[col]
         if not val.notna().any():raise NotApplicable("No valid UTCI states in model domain.")
         if style=="heatmap":
-            grid=p3.annual_hour_grid(df,val);f=go.Figure(go.Heatmap(x=grid.columns,y=grid.index,z=grid,colorscale="RdBu_r",zmid=20,colorbar=dict(title="°C"),hoverongaps=False))
-            f.update_layout(xaxis_title="Date",yaxis_title="Hour of day")
+            from .utci_presentation import stress_heatmap,STRESS_NOTE
+            grid=p3.annual_hour_grid(df,val)
+            f=stress_heatmap(grid.columns,grid.index,grid,title=title,x_label="Date",y_label="Hour of day")
+            note+=" Hour-cell means classified after aggregation. "+STRESS_NOTE
         elif style=="duration":
-            v=val.dropna().sort_values(ascending=False);f=go.Figure(go.Scatter(x=np.arange(1,len(v)+1)*dt,y=v,mode="lines")).update_layout(xaxis_title="Duration [h]",yaxis_title="UTCI [°C]")
+            from .utci_presentation import duration_figure
+            f=duration_figure(val.to_frame(),dt,title)
+            note+=" Shaded background indicates UTCI stress classes."
         else:
             table=p3.utci_class_hours(df,val);f=go.Figure()
             for c1,color in zip(p3.CLASSES,p3.COLORS):
@@ -329,7 +333,9 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         table=common.resample("MS").mean();f=go.Figure()
         for c1 in table:f.add_scatter(x=table.index,y=table[c1],mode="lines+markers",name=c1)
         f.update_layout(yaxis_title="UTCI [°C]")
-        note+=" Paired simplified open-sky radiation; shade removes direct beam only. Not a qualified urban MRT model."
+        from .utci_presentation import add_stress_bands
+        add_stress_bands(f,table)
+        note+=" Paired simplified open-sky radiation; shade removes direct beam only. Not a qualified urban MRT model. Background classes describe monthly means, not hourly stress duration."
     elif k=="utci_sensitivity":
         axis=a[0];t=np.linspace(0,40,41);v=np.linspace(.5,10,39);delta=np.linspace(-20,50,36)
         if axis=="Temperature–wind":
@@ -338,8 +344,9 @@ def make_figure(d,df,context,reference_df=None,cache=None):
             x,y=t,delta;xx,yy=np.meshgrid(x,y);z=p3.utci_values(xx,xx+yy,np.full_like(xx,2.),np.full_like(xx,50.));xl="Air temperature [°C]";yl="Radiant offset [K]"
         else:
             x,y=v,delta;xx,yy=np.meshgrid(x,y);z=p3.utci_values(np.full_like(xx,30.),30.+yy,xx,np.full_like(xx,50.));xl="10 m wind [m/s]";yl="Radiant offset [K]"
-        f=go.Figure(go.Heatmap(x=x,y=y,z=z,colorscale="RdBu_r",colorbar=dict(title="UTCI [°C]"),hoverongaps=False)).update_layout(xaxis_title=xl,yaxis_title=yl)
-        note="Hypothetical controlled states: RH 50%; remaining fixed inputs T=30 °C, wind 2 m/s, MRT offset 0 K as applicable. Not occurrence frequencies."
+        from .utci_presentation import stress_heatmap,STRESS_NOTE
+        f=stress_heatmap(x,y,z,title=title,x_label=xl,y_label=yl)
+        note="Hypothetical controlled states: RH 50%; remaining fixed inputs T=30 °C, wind 2 m/s, MRT offset 0 K as applicable. Not occurrence frequencies. "+STRESS_NOTE
     elif k=="snow_calendar":
         observed=p4.daily_stats(df,cat.S,nonnegative=True)["max"]
         cover=observed.gt(0).astype(float).where(observed.notna())

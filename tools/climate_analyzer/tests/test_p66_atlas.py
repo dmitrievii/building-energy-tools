@@ -125,6 +125,31 @@ class AtlasTests(unittest.TestCase):
         self.assertEqual([tr.type for tr in fig.data],["bar","bar","scatter"])
         self.assertEqual(fig.layout.barmode,"stack")
 
+    def test_utci_stress_palette_and_raw_values(self):
+        from epw_climate_analyzer.p3_comfort import EDGES,CLASSES,COLORS,utci_class_hours
+        from epw_climate_analyzer.utci_presentation import stress_heatmap,stress_codes,duration_figure
+        from epw_climate_analyzer.p6_report_structure import report_figure
+        raw=np.array([-55.,*EDGES,60.,np.nan])
+        expected=np.array([0.,*range(9),9.,np.nan])
+        np.testing.assert_allclose(stress_codes(raw),expected,equal_nan=True)
+        idx=pd.date_range("2026-01-01",periods=len(raw),freq="h")
+        df=pd.DataFrame({"test":raw},index=idx)
+        hours=utci_class_hours(df,df.test)
+        np.testing.assert_allclose(hours.sum().to_numpy(),np.bincount(expected[np.isfinite(expected)].astype(int),minlength=10))
+        fig=stress_heatmap(list(range(len(raw))),[0],raw[None,:],x_label="Physical input",y_label="Hour of day")
+        for f in (fig,report_figure(fig,width_pt=500,height_pt=230)):
+            trace=f.data[0]
+            np.testing.assert_allclose(np.asarray(trace.customdata,float),raw[None,:],equal_nan=True)
+            np.testing.assert_allclose(np.asarray(trace.z,float),expected[None,:],equal_nan=True)
+            self.assertEqual((trace.zmin,trace.zmax),(-.5,9.5))
+            self.assertEqual(len(trace.colorbar.ticktext),10)
+            self.assertEqual([trace.colorscale[i*2][1] for i in range(10)],list(COLORS))
+            self.assertEqual(list(f.layout.meta["utci_practical_range"]),[-40,46])
+        curves=duration_figure(df,1.,"Test UTCI")
+        self.assertGreater(curves.layout.yaxis.range[1],60.)
+        self.assertLess(curves.layout.yaxis.range[0],-55.)
+        self.assertEqual(len(curves.layout.shapes),10)
+
     def test_monthly_source_no_hourly_invention(self):
         df=self.fixture().iloc[[0]].copy();df.attrs["canonical_native_resolution"]="monthly"
         rows=c.catalogue(df,{},c.FULL)
