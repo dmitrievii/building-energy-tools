@@ -212,6 +212,12 @@ def apply_common_layout(fig: go.Figure, title: str, x_label: str, y_label: str) 
     return fig
 
 
+def _format_profile_period(fig,df,aggregation):
+    from .calendar_heatmap_axes import set_period_axis_scope,apply_monthly_axes
+    set_period_axis_scope(fig,df,aggregation=aggregation)
+    return apply_monthly_axes(fig)
+
+
 def profile_line_chart(df,column,aggregation,title,unit,representation="Observed values"):
     """One trace for direct/summary values; year traces for overlay."""
     from .aggregations import _circular_mean_degrees
@@ -242,6 +248,7 @@ def profile_line_chart(df,column,aggregation,title,unit,representation="Observed
     fig=apply_common_layout(fig,title,"Time" if aggregation in ("Hourly","Native") else "Period",unit)
     if aggregation=="Monthly" and (time_basis(df)==CALENDAR_PROFILE or not is_multiyear(df)):
         fig.update_xaxes(categoryorder="array",categoryarray=MONTH_LABELS)
+    _format_profile_period(fig,df,aggregation)
     # Totals can exceed per-record physical bounds; never clip their domain.
     if representation=="Total":return fig
     return _apply_axis_constraints(fig,column=column,y_values=values)
@@ -334,6 +341,7 @@ def profile_ribbon_chart(
     fig = apply_common_layout(fig, title, "Period", unit)
     if _year_neutral_monthly(summary, aggregation):
         fig.update_xaxes(categoryorder="array", categoryarray=MONTH_LABELS)
+    _format_profile_period(fig,df,aggregation)
     return _apply_axis_constraints(fig, column=column, y_values=pd.concat([summary["min"], summary[central], summary["max"]]))
 
 def percentile_band_chart(df: pd.DataFrame, column: str, aggregation: str, title: str, unit: str) -> go.Figure:
@@ -363,6 +371,7 @@ def percentile_band_chart(df: pd.DataFrame, column: str, aggregation: str, title
     fig = apply_common_layout(fig, title, "Period", unit)
     if _year_neutral_monthly(summary, aggregation):
         fig.update_xaxes(categoryorder="array", categoryarray=MONTH_LABELS)
+    _format_profile_period(fig,df,aggregation)
     return _apply_axis_constraints(fig, column=column, y_values=pd.concat([summary["p05"], summary["median"], summary["p95"]]))
 
 def temporal_heatmap_chart(
@@ -420,6 +429,8 @@ def temporal_heatmap_chart(
         fig.update_yaxes(range=[23, 0], autorangeoptions=dict(minallowed=0, maxallowed=23))
     fig.update_layout(template=PLOT_TEMPLATE, margin=dict(l=40, r=20, t=70, b=45))
     from .calendar_heatmap_axes import apply_calendar_heatmap_axes
+    from .calendar_heatmap_axes import set_period_axis_scope
+    set_period_axis_scope(fig,df)
     return apply_calendar_heatmap_axes(fig,period=row_group)
 
 
@@ -555,7 +566,9 @@ def threshold_bar_chart(counts: pd.DataFrame, title: str, unit: str = "hours") -
     if categoryarray is not None:
         fig.update_xaxes(categoryorder="array", categoryarray=categoryarray)
     fig.update_yaxes(range=[0, max(float(data[column].max()) * 1.05, 1.0)], autorangeoptions=dict(minallowed=0))
-    return fig
+    from .calendar_heatmap_axes import set_period_axis_scope,apply_monthly_axes
+    set_period_axis_scope(fig,context={"first timestamp":counts.attrs.get("period_source_first"),"last timestamp":counts.attrs.get("period_source_last")},aggregation=aggregation)
+    return apply_monthly_axes(fig)
 
 def scatter_chart(
     df: pd.DataFrame,

@@ -233,10 +233,13 @@ def display_period_labels(index: Iterable[object], aggregation: str, basis: str 
         if aggregation == "Monthly":
             return list(idx.strftime("%b %Y" if multiyear else "%b"))
         if aggregation == "Weekly":
-            if multiyear:
-                iso = idx.isocalendar()
+            iso = idx.isocalendar()
+            # ISO week-year can differ from the calendar year. Preserve
+            # unique category keys; the display formatter strips year labels
+            # using the actual source scope, not the resampled timestamps.
+            if multiyear or iso.year.nunique()>1:
                 return [f"{int(y):04d}-W{int(w):02d}" for y, w in zip(iso.year, iso.week, strict=False)]
-            return [f"W{int(stamp.isocalendar().week):02d}" for stamp in idx]
+            return [f"W{int(w):02d}" for w in iso.week]
         if aggregation == "Daily":
             if multiyear:
                 return list(idx.strftime("%d %b %Y"))

@@ -33,6 +33,9 @@ def _attach_temporal_attrs(out: pd.DataFrame, source: pd.DataFrame, aggregation:
     out.attrs.update(dict(source.attrs))
     out.attrs[TIME_BASIS_ATTR] = time_basis(source)
     out.attrs["aggregation"] = aggregation
+    if len(source):
+        out.attrs["period_source_first"]=str(source.index.min())
+        out.attrs["period_source_last"]=str(source.index.max())
     return out
 
 

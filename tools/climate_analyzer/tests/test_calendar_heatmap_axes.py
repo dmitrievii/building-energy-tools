@@ -138,6 +138,46 @@ class CalendarHeatmapTests(unittest.TestCase):
                 self.assertAlmostEqual(printed.layout.annotations[i-1].y,ya.domain[1])
                 np.testing.assert_array_equal(printed.data[i-1].y,chart.data[i-1].y)
 
+    def test_daily_profile_endpoint_and_weekly_source_year_scope(self):
+        from epw_climate_analyzer.charts import profile_ribbon_chart,percentile_band_chart,profile_line_chart
+        from epw_climate_analyzer.calendar_heatmap_axes import apply_monthly_axes,set_period_axis_scope
+        from epw_climate_analyzer.temporal_filtering import CALENDAR_PROFILE,with_time_basis
+        c="dry_bulb_temperature_c"
+        for year,days in ((2025,365),(2024,366),(2026,365)):
+            idx=pd.date_range(f"{year}-01-01",f"{year}-12-31 23:00",freq="h")
+            df=pd.DataFrame({c:np.sin(np.arange(len(idx))/24)},index=idx)
+            df["season"]="Winter"
+            for chart in (profile_ribbon_chart,percentile_band_chart,profile_line_chart):
+                daily=chart(df,c,"Daily","Temperature","°C")
+                self.assertEqual(daily.layout.xaxis.ticktext[-1],str(days))
+                self.assertEqual(daily.layout.xaxis.tickvals[-1],days)
+                self.assertEqual(len(daily.data[0].x),days)
+                printed=report_figure(daily,width_pt=500,height_pt=230)
+                self.assertEqual(printed.layout.xaxis.ticktext[-1],str(days))
+                weekly=chart(df,c,"Weekly","Temperature","°C")
+                self.assertTrue(all(str(v).startswith("W") for v in weekly.layout.xaxis.ticktext))
+                self.assertEqual(len(set(weekly.data[0].x)),len(weekly.data[0].x))
+                self.assertEqual(list(weekly.layout.xaxis.tickvals)[-1],weekly.data[0].x[-1])
+                self.assertEqual(weekly.layout.xaxis.tickangle,0)
+            f=profile_line_chart(with_time_basis(df,CALENDAR_PROFILE),c,"Daily","Temperature","°C")
+            self.assertEqual(f.layout.xaxis.ticktext[-1],str(days))
+        partial=go.Figure(go.Scatter(x=list(range(101,151)),y=list(range(50))))
+        partial.update_layout(xaxis_title="Period",title="Daily mean")
+        apply_monthly_axes(partial)
+        self.assertEqual(partial.layout.xaxis.ticktext[-1],"150")
+        legacy=go.Figure(go.Scatter(x=["2026-W51","2026-W52","2026-W53","2027-W01"],y=[1,2,3,4]))
+        legacy.update_layout(xaxis_title="Period")
+        set_period_axis_scope(legacy,context={"first timestamp":"2026-01-01","last timestamp":"2026-12-31"})
+        apply_monthly_axes(legacy)
+        self.assertEqual(list(legacy.layout.xaxis.ticktext),["W51","W52","W53","W01"])
+        multi=go.Figure(go.Bar(x=["2025-W52","2026-W01"],y=[1,2]))
+        apply_monthly_axes(multi)
+        self.assertEqual(list(multi.layout.xaxis.ticktext),["2025-W52","2026-W01"])
+        physical=go.Figure(go.Scatter(x=list(range(1,366)),y=list(range(365))))
+        physical.update_layout(xaxis_title="Sorted duration [h]")
+        apply_monthly_axes(physical)
+        self.assertIsNone(physical.layout.xaxis.ticktext)
+
     def test_multiyear_utci_not_truncated(self):
         idx=pd.date_range("2025-12-31","2026-12-31",freq="h")
         df=pd.DataFrame(index=idx)

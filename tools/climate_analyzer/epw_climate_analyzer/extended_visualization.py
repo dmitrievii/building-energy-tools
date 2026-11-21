@@ -382,7 +382,9 @@ def amplitude_figure(df,column,aggregation,label):
         fig.add_scatter(x=display_period_labels(ranges.index,aggregation,basis),y=ranges,name=label,mode="lines+markers",line=dict(color=metric_color(column),width=2.5),marker=dict(size=5),connectgaps=False)
     fig.update_layout(template="plotly_white",title=f"{aggregation} amplitude · {label}",xaxis_title="Period",yaxis_title="Amplitude [K]",legend=dict(orientation="h",y=-.2))
     fig.update_yaxes(rangemode="tozero")
-    return fig
+    from .calendar_heatmap_axes import set_period_axis_scope,apply_monthly_axes
+    set_period_axis_scope(fig,df,aggregation=aggregation)
+    return apply_monthly_axes(fig)
 
 
 def ground_depth_heatmap(profile):

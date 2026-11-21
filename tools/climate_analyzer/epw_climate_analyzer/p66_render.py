@@ -376,7 +376,8 @@ def make_figure(d,df,context,reference_df=None,cache=None):
     else:raise NotApplicable("No atlas renderer registered.")
     if not len(f.data):raise NotApplicable("No plotted data.")
     f.update_layout(template="plotly_white",title=title)
-    from .calendar_heatmap_axes import apply_calendar_heatmap_axes,apply_monthly_axes
+    from .calendar_heatmap_axes import apply_calendar_heatmap_axes,apply_monthly_axes,set_period_axis_scope
+    set_period_axis_scope(f,df)
     apply_calendar_heatmap_axes(f);apply_monthly_axes(f)
     if k in ("time_series","profile","percentile","heatmap","duration","histogram","box","violin","diurnal","occurrence","amplitude","native","psychrometric","monthly_radiation","facade","tilt","sunpath_view","sky_patches","total"):
         scope=df.loc[s.gt(0)].copy() if c and k in ("histogram","duration","box","violin") and a[0]=="wet" else df

@@ -598,6 +598,8 @@ def install_global_chart_presentation(st: Any | None = None) -> None:
         nonlocal capture_index
         capture_index += 1
         settings = settings_from_state(st.session_state)
+        from .calendar_heatmap_axes import set_period_axis_scope
+        set_period_axis_scope(fig,context=st.session_state.get("_p6_report_context"))
         apply_chart_presentation(fig, settings)
         meta=fig.layout.meta if isinstance(fig.layout.meta,dict) else {}
         upload=st.session_state.get(_key("underlay_file"))

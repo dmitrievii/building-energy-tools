@@ -173,6 +173,8 @@ def printable_html(items,title,paper,orientation,*,use_osm=False):
         pages.append("</section>")
         for k,item in enumerate(entries,1):
             fig=pio.from_json(item["figure"])
+            from .calendar_heatmap_axes import set_period_axis_scope
+            set_period_axis_scope(fig,context=item.get("context"))
             scope_line="<p>"+_safe(concise_context(item["context"]))+"</p>" if len(contexts(entries))>1 else ""
             zones=zone_legend_entries(fig)
             h=figure_height(fig,width,height)
@@ -299,6 +301,8 @@ def _pdf_report(items,title,paper,orientation,*,image_renderer=None,use_osm=Fals
             if len(contexts(entries))>1:before.append(para(concise_context(item["context"])))
             export_headroom(f"load saved chart {chapter_no}.{k}: {item['title']}")
             fig=pio.from_json(item["figure"])
+            from .calendar_heatmap_axes import set_period_axis_scope
+            set_period_axis_scope(fig,context=item.get("context"))
             zones=zone_legend_entries(fig)
             legend=[para("Bioclimatic zones"),zone_table(zones),Spacer(1,6)] if zones else []
             explanation=[]
@@ -453,6 +457,8 @@ def render_report(df=None,reference_df=None):
                 original=getattr(st,"_climate_analyzer_original_plotly_chart",st.plotly_chart)
                 from .calendar_heatmap_axes import apply_calendar_heatmap_axes,apply_monthly_axes
                 preview_fig=pio.from_json(item["figure"])
+                from .calendar_heatmap_axes import set_period_axis_scope
+                set_period_axis_scope(preview_fig,context=item.get("context"))
                 apply_calendar_heatmap_axes(preview_fig);apply_monthly_axes(preview_fig)
                 from .extended_visualization import reflow_diurnal_panels
                 reflow_diurnal_panels(preview_fig)
