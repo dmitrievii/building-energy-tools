@@ -3895,7 +3895,7 @@ def render_wind(df: pd.DataFrame) -> None:
     if variable_labels:
         options.append("Wind variable explorer")
     if paired_datasets:
-        options.append("Wind rose")
+        options.extend(["Wind rose","Directional statistics"])
     if has_nv_inputs:
         options.append("Wind during natural-ventilation hours")
     if not options:
@@ -3974,9 +3974,28 @@ def render_wind(df: pd.DataFrame) -> None:
 
     period_label = f"{month_name} · {period or 'All hours'}"
     st.caption("Annual uses all dates remaining in the active Data filter; Monthly selects the named calendar month within that filter, including across selected years. Frequencies retain the existing physical-hour weighting.")
-    fig = wind_rose_chart(data, f"{selected_dataset} wind rose · {period_label}",
-                         speed_column=speed_column, direction_column=direction_column)
-    render_plot(fig, interpretation)
+    from epw_climate_analyzer.directional_climate import (
+        colour_options, radial_options, directional_table, directional_figure,
+        directional_speed_figure, directional_interpretation, nv_valid_mask,
+    )
+    if chart_group=="Directional statistics":
+        fig=directional_speed_figure(data,speed_column,direction_column,f"{selected_dataset} directional speed distribution · {period_label}")
+        render_plot(fig,"Distribution of non-calm paired wind speeds within sixteen meteorological FROM-direction sectors.")
+        return
+    radial=st.selectbox("Radial quantity",radial_options(data,selected_dataset=="Mean wind"),key="wind_rose_radial_quantity")
+    colour=st.selectbox("Colour mapped quantity",colour_options(data,nv=has_nv_inputs and selected_dataset=="Mean wind"),key="wind_rose_colour_quantity")
+    if radial=="Hours" and colour=="Wind speed":
+        fig = wind_rose_chart(data, f"{selected_dataset} wind rose · {period_label}",
+                             speed_column=speed_column, direction_column=direction_column)
+        render_plot(fig, interpretation)
+    else:
+        nv_mask=None
+        if colour=="Natural ventilation suitability":
+            nv_mask=nv_valid_mask(data,natural_ventilation_condition(data))
+            st.caption("Natural ventilation uses the existing default outdoor suitability limits; the Natural Ventilation page supports adjustable thresholds.")
+        table=directional_table(data,speed=speed_column,direction=direction_column,radial=radial,colour=colour,nv_mask=nv_mask)
+        fig=directional_figure(table,radial,colour,f"{selected_dataset} · {radial} · {period_label}")
+        render_plot(fig,directional_interpretation(table,radial,colour))
 
 
 
@@ -4490,9 +4509,14 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
             "Rejected reasons",
             "Psychrometric NV overlay",
             "Night-flushing potential",
-        ],
+        ] + (["Directional analysis"] if wind_available and "wind_direction_deg" in df and df["wind_direction_deg"].notna().any() else []),
     )
-    if chart_group == "Heat map":
+    if chart_group == "Directional analysis":
+        from epw_climate_analyzer.directional_climate import directional_table, directional_figure, directional_interpretation, nv_valid_mask
+        table=directional_table(df,radial="Hours",colour="Natural ventilation suitability",nv_mask=nv_valid_mask(df,mask,wind_filter))
+        render_plot(directional_figure(table,"Hours","Natural ventilation suitability","Directional natural ventilation suitability"),
+                    directional_interpretation(table,"Hours","Natural ventilation suitability"))
+    elif chart_group == "Heat map":
         row_group = st.radio("Heat-map aggregation", ["Day", "Week", "Month"], horizontal=True)
         compare_options = ["Hour of day"] if time_basis(df_nv) == CHRONOLOGICAL else ["Hour of day", "Year"]
         compare_across = st.radio("Compare across", compare_options, horizontal=True)
