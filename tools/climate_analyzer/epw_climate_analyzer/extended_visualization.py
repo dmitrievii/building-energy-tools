@@ -111,8 +111,8 @@ def reflow_diurnal_panels(fig,*,font_size=None):
     title_index=bottom_row_start+min(1,n-bottom_row_start-1)
     for i,a in enumerate(annotations):
         row,col=divmod(i,3)
-        y1=1-row*(row_h+gap);y0=y1-row_h
-        x0=col*(col_w+col_gap);x1=x0+col_w
+        y1=min(1.,max(0.,1-row*(row_h+gap)));y0=max(0.,y1-row_h)
+        x0=max(0.,col*(col_w+col_gap));x1=min(1.,x0+col_w)
         suffix=str(i+1) if i else ""
         xa=getattr(layout,"xaxis"+suffix);ya=getattr(layout,"yaxis"+suffix)
         lowest=i+3>=n

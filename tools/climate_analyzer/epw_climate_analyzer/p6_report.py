@@ -454,6 +454,8 @@ def render_report(df=None,reference_df=None):
                 from .calendar_heatmap_axes import apply_calendar_heatmap_axes,apply_monthly_axes
                 preview_fig=pio.from_json(item["figure"])
                 apply_calendar_heatmap_axes(preview_fig);apply_monthly_axes(preview_fig)
+                from .extended_visualization import reflow_diurnal_panels
+                reflow_diurnal_panels(preview_fig)
                 original(preview_fig,use_container_width=True,config={"displaylogo":False},key="p6_preview_"+sid)
             a,b,c=st.columns(3)
             if a.button("Move up",disabled=i==0,key="p6_up_"+sid):
