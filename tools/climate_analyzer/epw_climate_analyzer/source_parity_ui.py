@@ -860,10 +860,6 @@ def _render_canonical_analysis(legacy: Any, dataset: CanonicalClimateDataset) ->
     if page == "Climate File Source":
         legacy.render_climate_file_source()
         return
-    if page == "Report":
-        from .p6_report import render_report
-        render_report()
-        return
 
     with st.sidebar.expander("Advanced calculation settings", expanded=False):
         pressure_mode = st.selectbox(
@@ -897,8 +893,8 @@ def _render_canonical_analysis(legacy: Any, dataset: CanonicalClimateDataset) ->
         return
 
     has_psych = _numeric(prepared_dataset.data, "dry_bulb_temperature_c") and _numeric(prepared_dataset.data, "relative_humidity_pct")
-    include_psych = has_psych and page in {"Temperature", "Humidity and Psychrometrics", "Wind and Ventilation", "Time Series and Overlay", "Natural Ventilation", "HVAC and Passive Design", "Outdoor Thermal Comfort", "Overview"}
-    include_solar = page in {"Solar and Radiation", "Overview", "Shading analysis", "Outdoor Thermal Comfort"}
+    include_psych = has_psych and page in {"Temperature", "Humidity and Psychrometrics", "Wind and Ventilation", "Time Series and Overlay", "Natural Ventilation", "HVAC and Passive Design", "Outdoor Thermal Comfort", "Overview", "Report"}
+    include_solar = page in {"Solar and Radiation", "Overview", "Shading analysis", "Outdoor Thermal Comfort", "Report"}
 
     # The default monthly humidity-ratio plot needs only T, RH and pressure.
     # Full hourly PsychroLib inverse wet-bulb/dew-point solving costs tens of
@@ -996,7 +992,12 @@ def _render_canonical_analysis(legacy: Any, dataset: CanonicalClimateDataset) ->
 
     from .p6_report import set_context
     set_context(st.session_state,page=page,source=prepared_dataset.display_name,location=f"{prepared_dataset.location.city}, {prepared_dataset.location.country}",df=filtered_df,
-                extra={"provider":prepared_dataset.provenance.provider,"dataset":prepared_dataset.provenance.dataset,"pressure mode":pressure_mode,"quality policy":quality_policy})
+                extra={"provider":prepared_dataset.provenance.provider,"dataset":prepared_dataset.provenance.dataset,"pressure mode":pressure_mode,"custom pressure":custom_pressure,"guide pressure Pa":fallback_pressure,"quality policy":quality_policy},
+                site=prepared_dataset.location,source_id=prepared_dataset.climate_id)
+    if page == "Report":
+        from .p6_report import render_report
+        render_report(filtered_df,full_df)
+        return
     if page == "Overview":
         from .p6_dashboard import select_overview
         if not select_overview(filtered_df,legacy.render_plot,location=f"{prepared_dataset.location.city}, {prepared_dataset.location.country}",source=prepared_dataset.display_name,reference_df=full_df):

@@ -52,7 +52,7 @@ def select_overview(df,render,*,location,source,monthly=False,reference_df=None)
     df.attrs["climate_time_basis"]="Chronological"
     from .p6_report import CONTEXT_KEY,set_context
     context=st.session_state.get(CONTEXT_KEY,{}).copy()
-    extra={k:v for k,v in context.items() if k not in ("page","source","location","first timestamp","last timestamp","selected records","native interval minutes","time basis","filter")}
+    extra={k:v for k,v in context.items() if k not in ("page","source","location","first timestamp","last timestamp","selected records","native interval minutes","time basis","filter","statistics")}
     set_context(st.session_state,page="Overview",source=source,location=location,df=df,extra={**extra,"dashboard":choice})
     st.header(choice)
     st.markdown("**"+str(location)+"**")

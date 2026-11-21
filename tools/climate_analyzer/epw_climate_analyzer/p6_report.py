@@ -281,17 +281,25 @@ def render_report(df=None,reference_df=None):
                 st.success(f"{len(entries)-before} new diagrams added.")
                 if failures:st.warning("Diagrams not added: "+"; ".join(failures))
     items=st.session_state.get(REPORT_KEY,[])
-    # Upgrade earlier HF1 snapshots only when current source/period/filter
-    # matches unambiguously; never replace a different captured source.
+    # Earlier snapshots lack a source fingerprint. Do not silently attribute
+    # new statistics to a potentially different uploaded file with same name.
     if df is not None and context:
         for item in items:
             c=item["context"]
-            if c.get("source id") not in (None,context.get("source id")):continue
-            fields=("source","location","first timestamp","last timestamp","selected records","filter")
+            if not c.get("source id") or c.get("source id")!=context.get("source id"):continue
+            fields=("source","location","first timestamp","last timestamp","selected records","filter","pressure mode","custom pressure","quality policy")
             if all(str(c.get(k,""))==str(context.get(k,"")) for k in fields):
-                for key in ("latitude","longitude","elevation_m","station_id","source id"):
+                for key in ("latitude","longitude","elevation_m","station_id"):
                     if key in context:c.setdefault(key,context[key])
-                if not c.get("statistics"):c["statistics"]=capture_statistics(df,c.get("page","Overview"))
+                stats=c.get("statistics",{})
+                fresh=capture_statistics(df,c.get("page","Overview"))
+                for kind in ("overview","chapter"):
+                    rows=stats.setdefault(kind,[])
+                    known={row[0] for row in rows}
+                    rows.extend(row for row in fresh[kind] if row[0] not in known)
+                c["statistics"]=stats
+    if any(not item["context"].get("statistics") for item in items):
+        st.caption("Some older saved charts have no verified captured statistics. Re-add them to include their station and chapter overview.")
     if not items:st.info("Your report is empty. Add a diagram from any analysis page or select a standard preset above.");return
     title=st.text_input("Report title",value="Climate assessment",key="p6_report_title",max_chars=160)
     a,b=st.columns(2)

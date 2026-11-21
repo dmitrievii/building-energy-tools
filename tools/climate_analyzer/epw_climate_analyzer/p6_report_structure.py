@@ -60,7 +60,7 @@ def chapter_name(item):
     return CHAPTERS.get(p,p)
 
 def scope_key(context):
-    return tuple(str(context.get(k,"")) for k in ("source id","source","location","first timestamp","last timestamp","selected records","filter"))
+    return tuple(str(context.get(k,"")) for k in ("source id","source","location","first timestamp","last timestamp","selected records","filter","pressure mode","custom pressure","quality policy"))
 
 def ordered_groups(items):
     """Preserve first occurrence of each chapter and order inside each chapter."""
@@ -72,7 +72,14 @@ def contexts(items):
     unique={}
     for item in items:
         c=item["context"];key=scope_key(c)
-        if key not in unique or not unique[key].get("statistics"):unique[key]=c
+        if key not in unique:
+            unique[key]={**c,"statistics":{"overview":[],"chapter":[]}}
+        entry=unique[key]
+        for field in ("latitude","longitude","elevation_m","station_id"):
+            if field in c:entry.setdefault(field,c[field])
+        for field in ("overview","chapter"):
+            seen={row[0] for row in entry["statistics"][field]}
+            entry["statistics"][field].extend(row for row in c.get("statistics",{}).get(field,[]) if row[0] not in seen)
     return list(unique.values())
 
 def concise_context(c):
@@ -208,6 +215,8 @@ def standard_figure(entry,df,context,reference_df=None):
     elif kind=="psychrometric":
         pressure=numeric(df,"atmospheric_station_pressure_pa").dropna()
         p=float(pressure.median()) if len(pressure) else 101325.
+        try:p=float(context["guide pressure Pa"])
+        except (ValueError,KeyError,TypeError):pass
         if "pressure mode" in context and "Normal pressure" in context["pressure mode"]:p=101325.
         if "Custom constant" in context.get("pressure mode",""):
             try:p=float(context["custom pressure"])
