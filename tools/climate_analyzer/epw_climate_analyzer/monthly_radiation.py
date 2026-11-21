@@ -202,10 +202,11 @@ def monthly_radiation_chart(table, *, style="Bar chart", tilt_deg=None, rose_yea
             title += f" · {years[0]}"
         else:
             title += " · calendar profile"
+        title += " [kWh/m²]"
         fig.update_layout(height=780,
             polar=dict(barmode="overlay", bgcolor="white",
                 radialaxis=dict(rangemode="nonnegative", tickformat=",.0f",
-                                ticksuffix=" kWh/m²", angle=90, gridcolor="#DDE3EA"),
+                                tickangle=0, angle=105, gridcolor="#DDE3EA"),
                 angularaxis=dict(type="linear", direction="clockwise", rotation=90,
                     tickmode="array", tickvals=list(range(0, 360, 30)),
                     ticktext=list(MONTH_NAMES), gridcolor="#E4E8ED")),

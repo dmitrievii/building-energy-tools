@@ -280,8 +280,14 @@ try {
   }));
   if (rose.sectors.length!==12 || rose.radii.length!==3 ||
       rose.radii.some(r=>r.length!==12) || rose.origins.some(b=>b!==0) ||
-      rose.angles.some(a=>a.length!==12))
+      rose.angles.some(a=>a.length!==12) || rose.paths!==36)
     throw new Error('Monthly rose geometry invalid: '+JSON.stringify(rose));
+  const occupied = rose.angles.map((a,i)=>{
+    const offset = (a[0]+180)%360-180;
+    return [offset-rose.widths[i]/2,offset+rose.widths[i]/2];
+  }).sort((a,b)=>a[0]-b[0]);
+  if (occupied.some(([a,b],i)=>a<=-15 || b>=15 || (i>0 && a<=occupied[i-1][1])))
+    throw new Error('Monthly rose angular groups overlap: '+JSON.stringify(occupied));
   report.metrics.monthlyRose=rose;
   report.checks.monthlyAxisSpacingAndRose=true;
   await page.screenshot({path:OUT_DIR+'/08-monthly-rose.png',fullPage:true});

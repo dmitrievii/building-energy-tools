@@ -162,11 +162,12 @@ def _space_bottom_legends(fig: Any, settings: ChartPresentationSettings, size: i
         if not str(key).startswith("legend"):
             continue
         legend = getattr(layout, key, None)
-        if legend is None or legend.orientation != "h" or legend.visible is False:
+        if legend is None or legend.orientation != "h" or getattr(legend, "visible", None) is False:
             continue
         y = legend.y
         is_bottom = (legend.yref == "container" and y is not None and y <= 0.10
-                     or legend.yref != "container" and y is not None and y < 0)
+                     or legend.yref != "container" and y is not None
+                     and (y < 0 or (y == 0 and legend.yanchor == "top")))
         if is_bottom:
             bottom.append((key, legend))
     # Multiple independently positioned bottom legends are intentional;
