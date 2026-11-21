@@ -1,0 +1,27 @@
+name: Climate Analyzer P6 Dashboard and Report Qualification
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/climate_analyzer/epw_climate_analyzer/p6_*.py'
+      - 'tools/climate_analyzer/tests/test_p6_dashboard_report.py'
+      - 'tools/climate_analyzer/requirements.txt'
+      - '.github/workflows/climate-analyzer-p6.yml'
+permissions:
+  contents: read
+jobs:
+  p6:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: tools/climate_analyzer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - run: python -m compileall -q app.py epw_climate_analyzer
+      - run: python -m unittest discover -s tests -p test_p6_dashboard_report.py -v

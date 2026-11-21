@@ -29,7 +29,7 @@ class PrecipitationSnowUiContract07Tests(unittest.TestCase):
         self.assertIn("native_snow_available", self.source)
         self.assertIn('if hourly_snow_available:\n        options.append("Snow depth explorer")', self.source)
         self.assertIn(
-            'if native_snow_available:\n        options.extend(["Snow-cover duration", "Snow-season indices"])',
+            'if native_snow_available:\n        options.extend(["Snow-cover duration", "Snow-season indices", "Snow-cover calendar"])',
             self.source,
         )
 
