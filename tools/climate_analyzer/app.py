@@ -3934,14 +3934,49 @@ def render_shading_analysis(df,ground_albedo,*,geometry):
     render_plot(fig,f"Selected-period unshaded total: {totals.iloc[0]:.1f} kWh/m²; direct beam intercepted: {totals.iloc[2]:.1f} kWh/m². The stacked bar combines remaining irradiation and intercepted direct beam; the unshaded reference line is their sum for complete intervals. The model calculates the exact geometric shaded fraction of a rectangular vertical aperture, with opaque overhang and fins attached at its edges. The two ray-exit areas are integrated analytically without double counting. Diffuse and ground-reflected components are unchanged; this is a direct-beam screening assessment, not a full shaded building-energy calculation.")
 
 
+def render_temporal_shading(df,*,geometry,has_energy):
+    from epw_climate_analyzer.shading_temporal import (
+        AREA, ENERGY, REDUCTION, DEVICES, TOTAL_DEVICE,
+        temporal_shading_tables, shading_monthly_rose, shading_month_hour_heatmap,
+    )
+    data=_solar_temperature_selection(df,"shading_temporal_condition")
+    if data.empty:
+        st.info("No climate intervals match the selected thermal classification.")
+        return
+    years=available_years(data)
+    if len(years)>1:
+        year=st.selectbox("Analysis year",years,index=len(years)-1,key="shading_temporal_year")
+        data=filter_year(data,year)
+        st.caption("One source year is displayed at a time; no cross-year pooling or annualization.")
+    metrics=([ENERGY,REDUCTION] if has_energy else [])+[AREA]
+    metric=st.selectbox("Quantity",metrics,key="shading_temporal_metric")
+    chart=st.selectbox("Chart type",["Monthly rose","Month–hour heat map"],key="shading_temporal_chart")
+    device=st.selectbox("Shading device",[TOTAL_DEVICE,*DEVICES],key="shading_temporal_device") if chart=="Month–hour heat map" else TOTAL_DEVICE
+    monthly,cells=temporal_shading_tables(data,geometry=geometry,metric=metric)
+    if not monthly[TOTAL_DEVICE].notna().any():
+        st.info("No qualifying intervals for this quantity remain.")
+        return
+    fig=shading_monthly_rose(monthly,metric) if chart=="Monthly rose" else shading_month_hour_heatmap(cells,metric,device)
+    explanations={
+        ENERGY:"Sum of intercepted direct façade irradiation in each bin; hourly columns sum only the selected month and clock-hour records.",
+        REDUCTION:"Percentage of available unshaded direct façade irradiation intercepted, calculated as a ratio of energy sums. No direct beam means an undefined percentage.",
+        AREA:"Mean geometrically shaded window area during front-facing daylight intervals, independent of irradiance and clouds. No front-facing sun means an undefined percentage.",
+    }
+    render_plot(fig,explanations[metric]+" Contributions are assigned to the first device hit by each ray: overhang, left fin or right fin, without double counting. Missing or undefined bins are blank. Source analysis-clock timestamp labels are retained. Diffuse and ground-reflected irradiation are unchanged.")
+    st.download_button("Shading month–hour data · CSV",cells.to_csv().encode("utf-8"),"shading_month_hour.csv","text/csv",key="shading_temporal_csv")
+
+
 def render_shading_design(df: pd.DataFrame) -> None:
     """One window geometry for the analytical irradiation and sun-path mask views."""
     from epw_climate_analyzer.monthly_radiation import surface_available
     from epw_climate_analyzer.sun_path_views import solar_reference
     st.header("Shading analysis")
     options=[]
-    if surface_available(df):
+    has_energy=surface_available(df)
+    if has_energy:
         options.append("Irradiation reduction")
+    if all(c in df and df[c].notna().any() for c in ("solar_azimuth_deg","solar_apparent_zenith_deg")):
+        options.append("Seasonal and hourly shading")
     if solar_reference(df) is not None:
         options.append("Direct-sun shading mask")
     if not options:
@@ -3956,6 +3991,8 @@ def render_shading_design(df: pd.DataFrame) -> None:
             st.caption("DNI includes source-derived values calculated from GHI, DHI and solar zenith; measured GHI/DHI remain unchanged.")
         render_shading_analysis(df,_active_solar_ground_albedo(df),geometry=geometry)
         _solar_ground_albedo_selection(df)
+    elif view=="Seasonal and hourly shading":
+        render_temporal_shading(df,geometry=geometry,has_energy=has_energy)
     else:
         render_sun_path(df,shading_geometry=geometry)
 

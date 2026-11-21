@@ -98,6 +98,54 @@ class P2Tests(unittest.TestCase):
         overlay_shading_mask(cart,technical=True,overhang=1.,**opts)
         self.assertTrue(all(tr.type=="scattergl" for tr in cart.data))
 
+    def test_temporal_shading_device_closure_and_month_hour_bins(self):
+        from epw_climate_analyzer.solar_shading import DEVICES, TOTAL_DEVICE, _shading_components
+        from epw_climate_analyzer.shading_temporal import (
+            ENERGY, REDUCTION, AREA, temporal_shading_tables,
+            shading_monthly_rose, shading_month_hour_heatmap,
+        )
+        geometry=dict(facade=180.,width=2.,height=2.,overhang=1.,left_fin=.5,right_fin=1.)
+        az=np.array([135.,180.,225.,0.,np.nan])
+        el=np.array([35.,45.,35.,30.,45.])
+        f,c,front=_shading_components(az,el,**geometry)
+        np.testing.assert_allclose(c.sum(axis=-1),f,equal_nan=True)
+        self.assertGreater(c[0,1],0)
+        self.assertEqual(c[0,2],0)
+        self.assertGreater(c[2,2],0)
+        self.assertEqual(c[2,1],0)
+        self.assertFalse(front[3])
+        self.assertTrue(np.isnan(c[4]).all())
+        df=fixture()
+        df.index=pd.to_datetime(["2025-01-01 08:00","2025-06-01 12:00","2025-06-01 17:00",
+                                 "2025-06-01 01:00","2025-06-02 12:00","2025-07-01 12:00"])
+        ledger=shading_ledger(df,**geometry)
+        np.testing.assert_allclose(ledger[[d+" intercepted direct" for d in DEVICES]].sum(axis=1,min_count=3),ledger["Intercepted direct"],equal_nan=True)
+        monthly,cells=temporal_shading_tables(df,geometry=geometry,metric=ENERGY)
+        self.assertAlmostEqual(monthly[TOTAL_DEVICE].sum(),ledger["Intercepted direct"].sum()/1000)
+        self.assertAlmostEqual(cells[TOTAL_DEVICE].sum(),monthly[TOTAL_DEVICE].sum())
+        self.assertTrue(np.isnan(cells.loc[(7,12),TOTAL_DEVICE]))
+        self.assertTrue(np.isnan(monthly.loc[2,TOTAL_DEVICE]))
+        self.assertEqual(cells.loc[(6,1),TOTAL_DEVICE],0.)
+        mr,cr=temporal_shading_tables(df,geometry=geometry,metric=REDUCTION)
+        expected=100*ledger.loc[ledger.index.month==6,"Intercepted direct"].sum()/ledger.loc[ledger.index.month==6,"Unshaded direct"].sum()
+        self.assertAlmostEqual(mr.loc[6,TOTAL_DEVICE],expected)
+        self.assertTrue(np.isnan(cr.loc[(6,1),TOTAL_DEVICE]))
+        ma,ca=temporal_shading_tables(df,geometry=geometry,metric=AREA)
+        self.assertTrue(np.isnan(ca.loc[(6,1),TOTAL_DEVICE]))
+        self.assertTrue(np.isfinite(ca.loc[(6,12),TOTAL_DEVICE]))
+        rose=shading_monthly_rose(monthly,ENERGY)
+        self.assertEqual(rose.layout.barmode,"stack")
+        self.assertEqual(tuple(t.name for t in rose.data),DEVICES)
+        np.testing.assert_allclose(np.sum([np.asarray(t.r,dtype=float) for t in rose.data],axis=0),monthly[TOTAL_DEVICE],equal_nan=True)
+        heat=shading_month_hour_heatmap(cr,REDUCTION,"Left fin")
+        self.assertEqual(np.asarray(heat.data[0].z).shape,(12,24))
+        self.assertEqual(heat.data[0].zmax,100)
+        self.assertTrue(np.isnan(heat.data[0].z[5,1]))
+        multi=df.copy()
+        multi.index=multi.index.where(multi.index.month!=7,multi.index+pd.DateOffset(years=1))
+        with self.assertRaises(ValueError):
+            temporal_shading_tables(multi,geometry=geometry,metric=ENERGY)
+
     def test_monthly_shading_figure_stacks_only_complementary_components(self):
         from epw_climate_analyzer.solar_shading import monthly_shading_figure
         table=pd.DataFrame({"Unshaded total":[100.,80.,np.nan,60.],

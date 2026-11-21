@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
-def shaded_fraction(azimuth,elevation,*,facade=180.,width=2.,height=1.5,
+def _shading_components(azimuth,elevation,*,facade=180.,width=2.,height=1.5,
                     overhang=0.,left_fin=0.,right_fin=0.):
     """Exact area for edge-attached, zero-thickness opaque devices.
 
@@ -34,10 +34,11 @@ def shaded_fraction(azimuth,elevation,*,facade=180.,width=2.,height=1.5,
     vertical=np.sin(beta)
     out=np.full(az.shape,np.nan,dtype=float)
     out[valid]=0.
+    components=np.repeat(out[...,None],3,axis=-1)
     # Retain the previous grazing-incidence cutoff for numerical stability.
     front=valid&(normal>1e-10)&(el>0)
     if not np.any(front) or max(overhang,left_fin,right_fin)==0:
-        return out
+        return out,components,front
     n=normal[front]
     l=np.abs(lateral[front])/width
     z=vertical[front]/height
@@ -66,20 +67,42 @@ def shaded_fraction(azimuth,elevation,*,facade=180.,width=2.,height=1.5,
     # positive physical shade fractions for shallow devices or low sun.
     fraction=np.where(np.abs(fraction-1.)<=8*np.finfo(float).eps,1.,fraction)
     out[front]=fraction
-    return out
+    # Disjoint first-hit regions: a ray is attributed to only one device.
+    # Allocate any full-shade roundoff correction to the larger contribution.
+    correction=fraction-(a_o+a_f)
+    top=a_o>=a_f
+    a_o=a_o+np.where(top,correction,0.)
+    a_f=a_f+np.where(top,0.,correction)
+    right=lateral[front]>=0
+    components[front]=np.column_stack((a_o,np.where(right,0.,a_f),np.where(right,a_f,0.)))
+    return out,components,front
+
+
+DEVICES=("Overhang","Left fin","Right fin")
+TOTAL_DEVICE="All devices"
+
+
+def shaded_fraction(azimuth,elevation,**geometry):
+    """Exact total shaded aperture fraction; unchanged direct-only semantics."""
+    return _shading_components(azimuth,elevation,**geometry)[0]
+
 
 def shading_ledger(df,*,albedo=None,**geometry):
     from .runtime_module_guard import ensure_current_solar_runtime
     facade=geometry.get("facade",180.)
     poa=ensure_current_solar_runtime().surface_irradiance_components(df,90.,facade,albedo=albedo)
     elevation=90-pd.to_numeric(df["solar_apparent_zenith_deg"],errors="coerce")
-    fraction=shaded_fraction(df["solar_azimuth_deg"],elevation,**geometry)
+    fraction,components,_=_shading_components(df["solar_azimuth_deg"],elevation,**geometry)
     direct=poa["poa_direct_wh_m2"]
     lost=direct*fraction
-    return pd.DataFrame({"Unshaded total":poa["poa_global_wh_m2"],
+    result=pd.DataFrame({"Unshaded total":poa["poa_global_wh_m2"],
                          "Shaded total (direct-only)":poa["poa_global_wh_m2"]-lost,
                          "Intercepted direct":lost,"Unshaded direct":direct,
                          "Remaining direct":direct-lost,"Shaded area fraction":fraction},index=df.index)
+    for i,device in enumerate(DEVICES):
+        result[device+" area fraction"]=components[:,i]
+        result[device+" intercepted direct"]=direct*components[:,i]
+    return result
 
 def monthly_shading_figure(table, labels):
     """Visualize the direct-only irradiation ledger, already in kWh/m²."""
