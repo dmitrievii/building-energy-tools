@@ -249,3 +249,10 @@ def degree_metric_interpretation(
         f"{cooling_notation}: indoor air {cooling_indoor_c:g} °C, cooling limit {cooling_limit_c:g} °C → {cooling:,.1f} {unit}. "
         f"{metric} are calculated from {method}.{cooling_note}"
     )
+
+
+def degree_legend_below(fig):
+    """Consistent placement in interactive charts, dashboards and exports."""
+    fig.update_layout(legend_title_text="",legend=dict(orientation="h",xref="container",x=.5,xanchor="center",yref="container",y=.01,yanchor="bottom"))
+    fig.layout.margin.b=max(int(fig.layout.margin.b or 0),85)
+    return fig

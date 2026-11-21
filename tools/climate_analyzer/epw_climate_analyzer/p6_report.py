@@ -130,7 +130,7 @@ def _safe(value):
     return html.escape(str(value or ""),quote=True)
 def _script_json(value):
     return json.dumps(value,ensure_ascii=True).replace("<","\\u003c").replace(">","\\u003e").replace("&","\\u0026")
-def printable_html(items,title,paper,orientation):
+def printable_html(items,title,paper,orientation,*,use_osm=False):
     if paper not in ("A4","A3") or orientation not in ("Portrait","Landscape"):raise ValueError("Invalid paper settings.")
     from plotly.offline import get_plotlyjs
     from .p6_report_structure import contexts,ordered_groups,concise_context,site_details,locator_figure,report_figure,zone_legend_entries,figure_height,complex_figure
@@ -158,8 +158,9 @@ def printable_html(items,title,paper,orientation):
     for idx,context in enumerate(contexts(items)):
         section="<h1>"+_safe(title)+"</h1><h2>Climate and station overview</h2>" if idx==0 else '<section class="sheet"><h2>Additional climate / analysis period</h2>'
         section+="<p>"+_safe(concise_context(context))+"</p>"
-        loc=locator_figure(context)
-        if loc is not None:section+=plot(loc,min(height*.40,240))+"<p>Station locator · Natural Earth, 1:110m · regional geographic context.</p>"
+        from .p6_osm_map import export_locator
+        loc,attribution=export_locator(context,use_osm=use_osm)
+        if loc is not None:section+=plot(loc,min(height*.40,240))+"<p>"+_safe(attribution)+"</p>"
         if site_details(context):section+="<p>"+_safe(" · ".join(f"{a}: {v}" for a,v,_ in site_details(context)))+"</p>"
         section+=table(context.get("statistics",{}).get("overview",[]))
         if idx==0:section+="<p><b>Report chapters:</b> "+_safe(" · ".join(name for name,_ in groups))+"</p>"
@@ -180,7 +181,7 @@ def printable_html(items,title,paper,orientation):
     css=f"""@page {{size:{paper} {orientation.lower()};margin:11.3mm}} *{{box-sizing:border-box}} body{{font:11pt Arial,sans-serif;color:#202830;margin:12px;width:{width}pt}} h1{{font-size:23pt;margin:0 0 9pt}} h2{{font-size:17pt;margin:0 0 8pt}} h3{{font-size:13pt;margin:0 0 6pt}} p{{white-space:pre-wrap;overflow-wrap:anywhere;margin:5pt 0;line-height:1.25}} table{{width:100%;border-collapse:collapse;font:inherit;margin:5pt 0}} td,th{{padding:4pt 5pt;text-align:left;border-bottom:1px solid #D7DDE1}} th{{color:#314652;background:#EEF2F4}} .sheet{{break-before:page;page-break-before:always}} .plot{{width:100%;break-inside:avoid}} .zone-key{{break-inside:avoid;margin:4pt 0}} .zone-grid{{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3pt 10pt}} .zone-swatch{{display:inline-block;width:12pt;height:7pt;border:1px dashed #39447d;margin-right:5pt}} button{{padding:8px 16px}} @media print{{button{{display:none}} body{{margin:0}}}}"""
     return ("<!doctype html><html><head><meta charset='utf-8'><title>"+_safe(title)+"</title><style>"+css+"</style><script>"+get_plotlyjs()+"</script></head><body><button onclick='window.print()'>Print / Save as PDF</button>"+"".join(pages)+"</body></html>").encode("utf-8")
 
-def pdf_report(items,title,paper,orientation,*,image_renderer=None):
+def pdf_report(items,title,paper,orientation,*,image_renderer=None,use_osm=False):
     """Professional chapter-organized PDF; no raw widget/diagnostic dumps."""
     from reportlab.lib.pagesizes import A4,A3,landscape
     from reportlab.lib.styles import getSampleStyleSheet,ParagraphStyle
@@ -254,9 +255,10 @@ def pdf_report(items,title,paper,orientation,*,image_renderer=None):
         if not idx:body.append(para(title,"ReportTitle"))
         body.extend([para("Climate and station overview" if idx==0 else "Additional climate / analysis period","ReportChapter"),
                      para(concise_context(context))])
-        loc=locator_figure(context)
+        from .p6_osm_map import export_locator
+        loc,attribution=export_locator(context,use_osm=use_osm)
         if loc is not None:
-            body.extend([image(loc,min(doc.height*.37,220),"station location"),para("Station locator · Natural Earth 1:110m · regional geographic context.")])
+            body.extend([image(loc,min(doc.height*.37,220),"station location"),para(attribution)])
         site=site_details(context)
         # Compact location row rather than another table.
         if site:body.append(para(" · ".join(f"{a}: {v}" for a,v,_ in site)))
@@ -426,7 +428,7 @@ def render_report(df=None,reference_df=None):
         st.session_state.pop("_p6_html_result",None)
         try:
             require_headroom()
-            data=printable_html(included,title,paper,orientation)
+            data=printable_html(included,title,paper,orientation,use_osm=True)
             require_headroom()
             st.session_state["_p6_html_result"]=(html_signature,data)
         except Exception as exc:st.error(str(exc))
@@ -440,22 +442,28 @@ def render_report(df=None,reference_df=None):
     # printed underneath each figure.
     st.download_button("Download technical metadata",data=json.dumps([{k:v for k,v in i.items() if k!="figure"} for i in included],ensure_ascii=False,indent=2,default=str).encode("utf-8"),
                        file_name="climate_report_metadata.json",mime="application/json",key="p6_meta")
-    fingerprint=html_signature+"-pdf-hf4"
+    fingerprint=html_signature+"-pdf-hf5"
     if st.session_state.get("_p6_pdf") and st.session_state["_p6_pdf"][0]!=fingerprint:
         st.session_state.pop("_p6_pdf",None)
-    if st.button("Generate PDF",key="p6_generate_pdf"):
+    # One stable control region; downloads do not trigger a full rerun.
+    pdf_slot=st.empty()
+    cache=st.session_state.get("_p6_pdf")
+    if cache and cache[0]==fingerprint:
+        pdf_slot.download_button("Download PDF",data=cache[1],file_name="climate_report.pdf",mime="application/pdf",key="p6_pdf_download",on_click="ignore")
+    elif pdf_slot.button("Generate PDF",key="p6_generate_pdf"):
         try:
             st.session_state.pop("_p6_pdf",None)
             with st.spinner("Rendering captured diagrams…"):
                 require_headroom()
-                pdf=pdf_report(included,title,paper,orientation)
+                pdf=pdf_report(included,title,paper,orientation,use_osm=True)
                 require_headroom()
             st.session_state["_p6_pdf"]=(fingerprint,pdf)
+            st.rerun()
         except Exception as exc:
             st.error(str(exc))
             st.caption("The printable HTML contains all captured charts and can be opened locally, then printed to PDF in your browser.")
-    cache=st.session_state.get("_p6_pdf")
     if cache and cache[0]==fingerprint:
-        st.download_button("Download PDF",data=cache[1],file_name="climate_report.pdf",mime="application/pdf",key="p6_pdf_download")
-        if st.button("Release PDF download",key="p6_pdf_release"):
-            st.session_state.pop("_p6_pdf",None);st.rerun()
+        with st.expander("Export memory management",expanded=False):
+            st.caption("Release the cached PDF if you no longer need this download. Saved diagrams are retained.")
+            if st.button("Clear cached PDF",key="p6_pdf_release"):
+                st.session_state.pop("_p6_pdf",None);st.rerun()

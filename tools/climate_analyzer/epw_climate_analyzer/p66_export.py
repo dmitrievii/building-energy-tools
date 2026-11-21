@@ -103,13 +103,14 @@ class PdfWriter:
         y=self.text(concise_context(self.context),self.margin,y,self.width)-5
         details=site_details(self.context)
         if details:y=self.text(" · ".join(f"{a}: {v}" for a,v,_ in details),self.margin,y,self.width)-5
-        loc=locator_figure(self.context)
+        from .p6_osm_map import export_locator
+        loc,attribution=export_locator(self.context,use_osm=bool(self.context.get("_report_osm",False)))
         if loc is not None:
             h=min(205,self.height*.36)
             try:self.img(loc,self.margin,y,self.width,h)
             except Exception as exc:
                 y=self.text("Station map rendering unavailable; coordinates above are retained.",self.margin,y,self.width)-5
-            else:y-=h+4;y=self.text("Station locator: Natural Earth, 1:110m.",self.margin,y,self.width,self.small_style)-5
+            else:y-=h+4;y=self.text(attribution,self.margin,y,self.width,self.small_style)-5
         y=self.stats(capture_statistics(self.df,"Overview")["overview"],y-4)-6
         self.text("Diagram atlas · selected source data and documented reference configurations. Coverage and omitted charts are listed in the separate manifest.",self.margin,y,self.width,self.small_style)
         self.end()

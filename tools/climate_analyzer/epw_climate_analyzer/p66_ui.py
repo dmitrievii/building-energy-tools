@@ -74,7 +74,7 @@ def render_atlas(df,context,reference_df=None):
         try:
             def update(i,n,label):
                 progress.progress(min(100,int(100*i/max(n,1))),text=f"{i:,}/{n:,} · {label}")
-            data,manifest,metadata=generate_atlas(batch,prepared,context,reference_df=reference_df,title=title,paper=paper,orientation=orientation,
+            data,manifest,metadata=generate_atlas(batch,prepared,{**context,"_report_osm":True},reference_df=reference_df,title=title,paper=paper,orientation=orientation,
                                   mode=mode,per_page=per_page,progress=update,coverage=coverage)
             metadata["batch_number"]=batch_number
             metadata["batch_count"]=len(batches)

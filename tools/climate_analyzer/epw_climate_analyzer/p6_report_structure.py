@@ -174,6 +174,10 @@ def report_figure(fig,*,width_pt,height_pt,font_pt=11,external_zone_legend=False
             for v in obj:restyle(v)
     restyle(raw)
     f=go.Figure(raw)
+    names=[str(getattr(t,"name","") or "").lower() for t in f.data]
+    if any("heating degree" in n for n in names) and any("cooling degree" in n for n in names):
+        from .degree_metrics import degree_legend_below
+        degree_legend_below(f)
     w,h=round(width_pt*96/72),round(height_pt*96/72)
     f.update_layout(width=w,height=h,autosize=False,font=dict(family="Arial",size=px),
                     paper_bgcolor="white",title_text=None,margin=dict(t=12,autoexpand=True))
@@ -389,6 +393,9 @@ def standard_figure(entry,df,context,reference_df=None):
                   "night":"22:00–06:59, cool air ≤20 °C after complete hot day ≥26 °C.",
                   "shade":"Air temperature ≥24 °C, mean GHI ≥250 W/m². Not aperture-specific shading."}[kind]
         fig.update_layout(template="plotly_white",title=label,barmode="group",yaxis_title=unit)
+        if kind=="degree":
+            from .degree_metrics import degree_legend_below
+            degree_legend_below(fig)
     elif kind=="utci":
         from .p3_comfort import utci_frame,utci_class_hours,CLASSES,COLORS
         values,_=utci_frame(df)

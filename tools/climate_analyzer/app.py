@@ -3285,6 +3285,8 @@ def render_temperature(
             legend_title_text="Indicator",
             margin=dict(l=40, r=20, t=70, b=45),
         )
+        from epw_climate_analyzer.degree_metrics import degree_legend_below
+        degree_legend_below(fig)
         fig.update_yaxes(rangemode="tozero")
         st.caption(
             "Degree-hours integrate the temperature difference at each source interval. "

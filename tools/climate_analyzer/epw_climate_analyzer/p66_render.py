@@ -108,7 +108,10 @@ def make_figure(d,df,context,reference_df=None,cache=None):
             data=daily[["mean"]].rename(columns={"mean":cat.T});data.attrs.update(df.attrs)
         result=degree_metric_table(data,metric=a[0],aggregation=a[1],heating_indoor_c=20.,heating_limit_c=12.,cooling_indoor_c=26.,cooling_limit_c=26.)
         result=result.copy();result.index=display_period_labels(result.index,a[1],time_basis(df))
-        f=_bars(result,title,u);note+=" Reference HGT 20/12, KGT 26/26. Degree-days require complete daily means; not energy demand."
+        f=_bars(result,title,u)
+        from .degree_metrics import degree_legend_below
+        degree_legend_below(f)
+        note+=" Reference HGT 20/12, KGT 26/26. Degree-days require complete daily means; not energy demand."
     elif k=="temp_threshold":
         a1=pd.DataFrame({"Below 18 °C":s.lt(18).astype(float).where(s.notna())*dt,"Above 26 °C":s.gt(26).astype(float).where(s.notna())*dt})
         f=_bars(_totals(df,a1,a[0]),title,u);note+=" Reference low/high temperature thresholds 18/26 °C."

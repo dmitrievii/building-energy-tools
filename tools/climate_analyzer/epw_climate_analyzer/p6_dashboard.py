@@ -196,6 +196,8 @@ def design_dashboard(df,render,*,reference_df=None):
         fig=go.Figure()
         for c,col in zip(degree,["#5488B6","#D98235"]):fig.add_bar(x=degree.index,y=degree[c],name=c,marker_color=col)
         fig.update_layout(template="plotly_white",barmode="group",title="Heating and cooling degree days",yaxis_title="K·d")
+        from .degree_metrics import degree_legend_below
+        degree_legend_below(fig)
         render(fig,f"HGT {hi:g}/{hl:g}; KGT {ci:g}/{cl:g}. Complete days only. The indicators are climatic temperature differences, not building energy demand.")
     for c,col in zip(ledger,["#21866B","#527FA3","#D69A24"]):
         valid=ledger[c].notna().sum()*native_interval_hours(df);total=ledger[c].sum(min_count=1)

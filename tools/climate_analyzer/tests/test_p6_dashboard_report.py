@@ -219,6 +219,33 @@ else:
         self.assertTrue(figure.to_image(format="png",scale=1).startswith(b"\x89PNG"))
         self.assertEqual(polar.data[-1].marker.colorscale,figure.data[-1].marker.colorscale)
 
+    def test_osm_viewport_and_degree_legend(self):
+        from epw_climate_analyzer.p6_osm_map import osm_figure,ATTRIBUTION,export_locator
+        from epw_climate_analyzer.p6_report_structure import report_figure
+        from epw_climate_analyzer.degree_metrics import degree_legend_below
+        from unittest.mock import patch
+        context={"latitude":"47.08","longitude":"15.45","location":"Graz"}
+        calls=[]
+        def tile(z,x,y):
+            calls.append((z,x,y));return Image.new("RGB",(256,256),"#DDE8E3")
+        f=osm_figure(context,tile_loader=tile)
+        self.assertGreater(len(calls),0)
+        self.assertLessEqual(len(calls),12)
+        self.assertEqual(f.layout.meta["map_attribution"],ATTRIBUTION)
+        self.assertEqual(f.layout.xaxis.scaleratio,1)
+        self.assertEqual(len(f.layout.images),1)
+        self.assertTrue(report_figure(f,width_pt=600,height_pt=240).to_image(format="png").startswith(b"\x89PNG"))
+        import requests
+        with patch("epw_climate_analyzer.p6_osm_map.osm_figure",side_effect=requests.ConnectionError("offline")):
+            fallback,credit=export_locator(context,use_osm=True)
+            self.assertIsNotNone(fallback)
+            self.assertIn("offline fallback",credit)
+        deg=go.Figure([go.Bar(y=[1],name="Heating degree-days (HGT)"),go.Bar(y=[2],name="Cooling degree-days (KGT)")])
+        degree_legend_below(deg)
+        self.assertEqual(deg.layout.legend.orientation,"h")
+        self.assertEqual(deg.layout.legend.yref,"container")
+        self.assertEqual(report_figure(deg,width_pt=650,height_pt=300).layout.legend.yanchor,"bottom")
+
     def test_map_proportions_and_coordinates(self):
         from epw_climate_analyzer import p6_report_structure as s
         fig=s.locator_figure({"location":"Graz.Univ, AUT","latitude":"47.08","longitude":"15.45"})
