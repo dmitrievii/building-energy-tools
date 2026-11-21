@@ -48,11 +48,23 @@ def main():
     with r.render_session(mode="disposable" if a.mode=="disposable" else "adaptive",cache_dir=cache,metrics=metrics) as s:
         for i in range(a.count):
             target=folder/f"{i:03d}.png"
-            r.render_png(figure(i),target)
-            if a.mode!="disposable":
-                diff=compare(a.out/"disposable"/target.name,target);comparisons.append(diff)
+            fig=figure(i)
+            if a.mode=="disposable":
+                # Measure the original one-shot backend directly, avoiding
+                # redundant serialization by the new session wrapper.
+                started=time.perf_counter()
+                r.render_disposable(fig,target,_sample=s.sample)
+                metrics.append({"backend":"disposable","wall_s":time.perf_counter()-started})
+                s.renders+=1
+            else:r.render_png(fig,target)
     elapsed=time.perf_counter()-t
-    result={"mode":a.mode,"count":a.count,"elapsed_s":elapsed,"sampled_peak_mib":s.peak/r.MIB,
+    sampled_render_s=sum(v["wall_s"] for v in metrics)
+    # Pixel comparison is deliberately outside the timed rendering loop.
+    if a.mode!="disposable":
+        for i in range(a.count):
+            name=f"{i:03d}.png"
+            comparisons.append(compare(a.out/"disposable"/name,folder/name))
+    result={"mode":a.mode,"count":a.count,"elapsed_s":elapsed,"render_wall_sum_s":sampled_render_s,"sampled_peak_mib":s.peak/r.MIB,
             "worker_starts":s.starts,"renders":s.renders,"cache_hits":s.hits,"fallbacks":s.fallbacks,
             "metrics":metrics,"pixel_comparisons":comparisons}
     (a.out/f"{a.mode}.json").write_text(json.dumps(result,indent=2))
