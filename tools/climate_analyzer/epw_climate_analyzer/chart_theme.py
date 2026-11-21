@@ -42,6 +42,13 @@ RELATIVE_HUMIDITY_COLORSCALE = [
     [0.75, "#2563EB"],
     [1.00, "#4338CA"],
 ]
+HUMIDITY_RATIO_COLORSCALE = [
+    [0.00, "#F0FDFF"],
+    [0.25, "#CFFAFE"],
+    [0.50, "#67E8F9"],
+    [0.75, "#0891B2"],
+    [1.00, "#164E63"],
+]
 BINARY_SUITABILITY_COLORSCALE = [
     [0.00, "rgba(255,255,255,0.0)"],
     [0.01, "#ecfdf5"],
@@ -247,6 +254,8 @@ def metric_colorscale(column: str | None):
     text = str(column or "").lower()
     if text=="relative_humidity_pct":
         return RELATIVE_HUMIDITY_COLORSCALE
+    if text=="humidity_ratio_g_kg":
+        return HUMIDITY_RATIO_COLORSCALE
     if "radiation" in text or "irradiance" in text or "illuminance" in text:
         return SOLAR_COLORSCALE
     if "sky_cover" in text:

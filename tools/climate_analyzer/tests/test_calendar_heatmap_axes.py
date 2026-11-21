@@ -197,6 +197,31 @@ class CalendarHeatmapTests(unittest.TestCase):
             self.assertEqual(printed.layout.coloraxis.cmin,0.)
             self.assertEqual(printed.layout.coloraxis.cmax,100.)
 
+    def test_humidity_ratio_colour_and_scope_domain(self):
+        from epw_climate_analyzer.chart_theme import HUMIDITY_RATIO_COLORSCALE,metric_colorscale
+        from epw_climate_analyzer.charts import temporal_heatmap_chart
+        c="humidity_ratio_g_kg"
+        self.assertEqual(metric_colorscale(c),HUMIDITY_RATIO_COLORSCALE)
+        idx=pd.date_range("2026-01-01",periods=48,freq="h")
+        df=pd.DataFrame({c:np.linspace(2,17,48)},index=idx)
+        df.iloc[4,0]=np.nan
+        for period in ("day","week","month"):
+            for stat in ("Mean","Minimum","Maximum","P95"):
+                fig=temporal_heatmap_chart(df,c,period,HEATMAP_COMPARE_HOUR,stat,"Humidity ratio","g/kg dry air")
+                expected=temporal_heatmap_matrix(df,c,period,HEATMAP_COMPARE_HOUR,stat)
+                np.testing.assert_allclose(np.asarray(fig.data[0].z,float),expected.values,equal_nan=True)
+                self.assertEqual(fig.layout.coloraxis.cmin,0.)
+                self.assertEqual(fig.layout.coloraxis.cmax,20.)
+                self.assertEqual(fig.layout.coloraxis.colorscale,tuple(tuple(v) for v in HUMIDITY_RATIO_COLORSCALE))
+                printed=report_figure(fig,width_pt=500,height_pt=230)
+                self.assertEqual(printed.layout.coloraxis.colorscale,fig.layout.coloraxis.colorscale)
+                self.assertEqual(printed.layout.coloraxis.cmax,20.)
+        for value,cap in ((0.,5.),(42.,45.)):
+            frame=pd.DataFrame({c:value},index=idx)
+            fig=temporal_heatmap_chart(frame,c,"day",HEATMAP_COMPARE_HOUR,"Mean","Humidity ratio","g/kg dry air")
+            self.assertEqual(fig.layout.coloraxis.cmin,0.)
+            self.assertEqual(fig.layout.coloraxis.cmax,cap)
+
     def test_multiyear_utci_not_truncated(self):
         idx=pd.date_range("2025-12-31","2026-12-31",freq="h")
         df=pd.DataFrame(index=idx)
