@@ -99,6 +99,14 @@ def _recover_if_idle(manager,cache,reaped):
     if result["status"]=="busy export":return
     _RECOVERY_PENDING=False
     _set(last_post_session_recovery=result)
+    # An actual zero-active-session sample, not a startup proxy. Different
+    # warmed library sets may legitimately have different steady baselines.
+    if result.get("status")=="complete" and not manager.list_active_sessions():
+        from .byte_cache import session_cache_summary
+        _set(last_idle_server_sample={"memory":result["after_trim"],
+              "captured_at_utc":result["captured_at_utc"],
+              "session_caches":session_cache_summary(),
+              "scope":"Warm process after zero-active-session recovery; not a guarantee of reclaimable RSS."})
 
 def _queue_sample(manager):
     """Event-loop-only, bounded size observations; no message content exported.

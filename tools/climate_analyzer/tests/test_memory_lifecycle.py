@@ -49,6 +49,21 @@ class MemoryLifecycleTests(unittest.TestCase):
         self.assertTrue(all(key not in state for key in m.DIAGNOSTIC_KEYS))
         self.assertIs(state["_p6_report_items"],report)
 
+    def test_reset_session_drops_only_owned_data_and_preserves_server_cache(self):
+        from epw_climate_analyzer import byte_cache as b
+        state={key:object() for key in m.PROTECTED_KEYS}
+        other={"active_climate_file":object()}
+        shared=b.pool("r12_reset_server_fixture",10000,1)
+        shared.put("public",b"shared")
+        with patch.object(b,"_session_context",return_value=(state,"reset-test",False)):
+            b.session_pool("r12_reset_private_fixture",10000,1).put("private",b"private")
+        with patch.object(m,"memory_snapshot",return_value={}),patch.object(m.gc,"collect"),patch.object(m.m,"_trim_allocator"):
+            m.reset_session(state)
+        self.assertEqual(set(state),{"_mem_r12_reset_epoch","_mem_r12_reset_notice"})
+        self.assertIsNotNone(other["active_climate_file"])
+        self.assertEqual(shared.get("public"),b"shared")
+        shared.clear()
+
     def test_recovery_probe_separates_gc_and_trim_without_clearing_state(self):
         from epw_climate_analyzer import memory_recovery as recovery
         samples=[{"process_anon":300},{"process_anon":280},{"process_anon":250}]

@@ -282,6 +282,8 @@ def reset_session(state):
         rt.media_file_mgr.clear_session_refs(ctx.session_id)
         rt.media_file_mgr.remove_orphaned_files()
         rt.dataframe_source_mgr.clear_all_for_session(ctx.session_id)
+        from .byte_cache import close_session_caches
+        close_session_caches(ctx.session_id)
     for key in list(state.keys()):state.pop(key,None)
     state["_mem_r12_reset_epoch"]=uuid4().hex
     state["_mem_r12_reset_notice"]=True

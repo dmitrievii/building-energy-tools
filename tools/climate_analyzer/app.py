@@ -691,14 +691,14 @@ def _cached_catalog_filter_options(catalog_identity: str, _catalog: pd.DataFrame
     return countries, datasets
 
 
-@bounded_cache(name="filtered_station_groups",max_bytes=16*MIB,max_entries=4,resource=True)
+@bounded_cache(name="filtered_station_groups",max_bytes=16*MIB,max_entries=4,resource=True,scope="session")
 def _cached_grouped_station_catalog(map_cache_key: str, _catalog: pd.DataFrame) -> pd.DataFrame:
     """Cache filtered physical-station grouping; the unfiltered route uses the release snapshot."""
     return grouped_station_catalog(_catalog)
 
 
 
-@bounded_cache(name="station_group_options",max_bytes=4*MIB,max_entries=4)
+@bounded_cache(name="station_group_options",max_bytes=4*MIB,max_entries=4,scope="session")
 def _cached_station_group_options(
     map_cache_key: str,
     limit: int,
@@ -708,7 +708,7 @@ def _cached_station_group_options(
     return station_group_options_from_groups(_station_groups, limit=limit)
 
 
-@bounded_cache(name="station_markers",max_bytes=8*MIB,max_entries=4)
+@bounded_cache(name="station_markers",max_bytes=8*MIB,max_entries=4,scope="session")
 def _cached_station_marker_payload(
     map_cache_key: str,
     _station_groups: pd.DataFrame,
@@ -717,7 +717,7 @@ def _cached_station_marker_payload(
     return station_marker_payload(_station_groups)
 
 
-@bounded_cache(name="station_group_rows",max_bytes=4*MIB,max_entries=64)
+@bounded_cache(name="station_group_rows",max_bytes=4*MIB,max_entries=64,scope="session")
 def _cached_catalog_rows_for_station_group(
     map_cache_key: str,
     station_group_id: str,
@@ -6172,6 +6172,12 @@ def main() -> None:
     st.sidebar.caption("Building Energy Tools")
     st.sidebar.title(APP_NAME)
     st.sidebar.caption(APP_RELEASE_LABEL)
+    from epw_climate_analyzer import session_reaper as reaper_runtime
+    if getattr(reaper_runtime,"RUNTIME_RECOVERY_SCHEMA",None)!="MEM-PERF-R12":
+        st.error("MEM-PERF R12: reboot the server to activate immediate session shutdown.")
+        st.stop()
+    # Install disconnect handling before expensive scientific initialization.
+    reaper_runtime.ensure_session_reaper()
     from epw_climate_analyzer.startup_runtime import ensure_initialized
     stages=ensure_initialized()
     deferred=[r["stage"] for r in stages if r["status"] not in ("ready","already loaded") and r["stage"] not in ("UTCI (conditional)","Folium")]

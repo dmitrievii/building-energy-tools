@@ -118,6 +118,30 @@ class ChartLifecycleTests(unittest.TestCase):
             self.assertTrue(all(ref() is None for ref in refs))
             self.assertEqual(len(cache),0)
 
+    def test_r12_disconnect_dispatches_native_close_without_storage(self):
+        from epw_climate_analyzer import byte_cache
+        victim=SimpleNamespace(_scriptrunner=None)
+        manager=Mock()
+        manager.get_active_session_info.side_effect=lambda sid:SimpleNamespace(session=victim) if sid=="a" else None
+        with patch.object(reaper,"_STATUS",{"shutdown_failures":0}),patch.object(reaper,"_RECOVERY_PENDING",False),patch.object(byte_cache,"close_session_caches") as drop:
+            reaper._close_on_disconnect(manager,"a")
+            reaper._close_on_disconnect(manager,"not-active")
+            manager.close_session.assert_called_once_with("a")
+            manager.disconnect_session.assert_not_called()
+            drop.assert_called_once_with("a")
+            self.assertEqual(reaper.reaper_summary()["closed_on_disconnect"],1)
+            self.assertTrue(reaper.reaper_summary()["allocator_recovery_pending"])
+
+    def test_r12_waits_for_actual_script_thread_exit_before_trimming(self):
+        thread=Mock()
+        thread.is_alive.return_value=True
+        manager=Mock()
+        manager.list_active_sessions.return_value=[]
+        with patch.object(reaper,"_STOPPING_THREADS",{thread}):
+            self.assertFalse(reaper._idle_for_recovery(manager,{}))
+            thread.is_alive.return_value=False
+            self.assertTrue(reaper._idle_for_recovery(manager,{}))
+
     def test_native_ttl_reaps_only_expired_disconnected_entries(self):
         from streamlit.runtime.caching.ttl_cache import TTLCache
         now=[0.]

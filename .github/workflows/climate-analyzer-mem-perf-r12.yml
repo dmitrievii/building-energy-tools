@@ -1,0 +1,59 @@
+name: Climate Analyzer MEM-PERF R12 ownership qualification
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/climate_analyzer/epw_climate_analyzer/byte_cache.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/session_reaper.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/memory_lifecycle.py'
+      - 'tools/climate_analyzer/scripts/mem_perf_r12*'
+      - '.github/workflows/climate-analyzer-mem-perf-r12.yml'
+permissions:
+  contents: read
+jobs:
+  ownership:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: tools/climate_analyzer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - run: python -m compileall -q app.py epw_climate_analyzer scripts
+      - run: python -m unittest discover -s tests -p test_byte_cache.py -v
+      - run: python -m unittest discover -s tests -p test_memory_lifecycle.py -v
+      - run: python -m unittest discover -s tests -p test_chart_lifecycle.py -v
+      - run: python -m unittest discover -s tests -p test_canonical_hourly_cache_0_6_5.py -v
+      - run: python -m unittest discover -s tests -p test_startup_dependency_contract.py -v
+  endurance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: tools/climate_analyzer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - run: npm install --no-save playwright-core@1.55.0
+      - name: Run real concurrent and sequential connections
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/mem-perf-r12
+          PYTHONPATH="$PWD" STREAMLIT_SERVER_DISCONNECTED_SESSION_TTL=0 streamlit run scripts/mem_perf_r12_fixture.py --server.headless=true --server.port=8512 > artifacts/mem-perf-r12/server.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8512/_stcore/health && break; sleep 1; done
+          node scripts/mem_perf_r12_endurance.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r12-session-qualification
+          path: tools/climate_analyzer/artifacts/mem-perf-r12/
