@@ -4,6 +4,21 @@ from unittest.mock import Mock,patch
 from epw_climate_analyzer import memory_lifecycle as m
 
 class MemoryLifecycleTests(unittest.TestCase):
+    def test_memory_stat_key_value_parsing(self):
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            (root/"memory.stat").write_text(
+                "anon 1210560512\nfile 700000000\nshmem 0\ninactive_file 600000000\ninvalid xyz\nmalformed\n",
+                encoding="utf-8")
+            with patch.object(m.m,"_memory_reading",return_value=(2841534464,3221225472,root)):
+                sample=m.memory_snapshot()
+            self.assertEqual(sample["anonymous"],1210560512)
+            self.assertEqual(sample["file"],700000000)
+            self.assertEqual(sample["inactive_file"],600000000)
+            self.assertEqual(sample["shared"],0)
+
     def test_cleanup_preserves_user_work(self):
         protected={key:object() for key in ("active_climate_file","active_canonical_climate",
             "_p6_report_items","comparison_climate_payloads","ige_engine_completed_product",

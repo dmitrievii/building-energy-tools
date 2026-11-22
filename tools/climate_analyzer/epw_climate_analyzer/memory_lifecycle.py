@@ -37,7 +37,12 @@ def memory_snapshot():
         used,cap,root=reading
         result.update(used=used,limit=cap)
         try:
-            records={k:int(v) for k,v in (root/"memory.stat").read_text().splitlines()}
+            records={}
+            for line in (root/"memory.stat").read_text().splitlines():
+                parts=line.split()
+                if len(parts)!=2:continue
+                try:records[parts[0]]=int(parts[1])
+                except ValueError:continue
             for key,aliases in (("anonymous",("anon","total_rss","rss")),
                                 ("file",("file","total_cache","cache")),
                                 ("inactive_file",("total_inactive_file","inactive_file")),
@@ -70,10 +75,26 @@ def cache_pressure(snapshot):
 def inspect_resources(state):
     """On-demand inventory, without enabling global Python allocation tracing."""
     import sys
+    import os
     import tracemalloc
     result={"memory":memory_snapshot(),"shared_caches":cache_inventory(),
             "session_resources":session_inventory(state,PROTECTED_KEYS+EXPORT_KEYS+DERIVED_KEYS+TRANSIENT_KEYS),
             "python_allocated_blocks":getattr(sys,"getallocatedblocks",lambda:None)()}
+    # Inspect module presence without importing expensive analysis libraries.
+    roots=("numpy","pandas","scipy","numba","llvmlite","pythermalcomfort","pvlib",
+           "plotly","folium","streamlit","kaleido","matplotlib","pyarrow","psychrolib",
+           "epw_climate_analyzer.historical","epw_climate_analyzer.charts")
+    loaded=tuple(sys.modules)
+    result["loaded_libraries"]={name:sum(key==name or key.startswith(name+".") for key in loaded)
+                                for name in roots}
+    try:
+        # Linux stat field 22 (starttime) follows the parenthesized comm field,
+        # which can itself contain spaces. Tail begins at field 3.
+        tail=Path("/proc/self/stat").read_text().rsplit(")",1)[1].split()
+        started=int(tail[19])/os.sysconf("SC_CLK_TCK")
+        uptime=float(Path("/proc/uptime").read_text().split()[0])
+        result["process_age_seconds"]=max(0.,uptime-started)
+    except (OSError,ValueError,IndexError,AttributeError):pass
     if tracemalloc.is_tracing():
         current,peak=tracemalloc.get_traced_memory()
         result["python_traced_bytes"]=current;result["python_traced_peak_bytes"]=peak
@@ -203,6 +224,10 @@ def render_sidebar(st):
             st.dataframe([{**r,"estimated MiB":round(r["estimated_bytes"]/m.MIB,2),"budget MiB":round(r["budget_bytes"]/m.MIB,2)} for r in inspected["shared_caches"]],hide_index=True)
             st.dataframe([{**r,"estimated MiB":round(r["estimated_bytes"]/m.MIB,2) if r["estimated_bytes"] is not None else None} for r in inspected["session_resources"]],hide_index=True)
             st.caption(f"Python allocation blocks: {inspected['python_allocated_blocks']}. Tracemalloc is not enabled by this diagnostic.")
+            if "process_age_seconds" in inspected:
+                st.caption(f"Process age at inspection: {inspected['process_age_seconds']/60:.1f} min")
+            st.caption("Loaded library module counts (not memory sizes):")
+            st.json({k:v for k,v in inspected.get("loaded_libraries",{}).items() if v},expanded=False)
             if inspected.get("process_smaps"):st.json({key:_mib(value) for key,value in inspected["process_smaps"].items()},expanded=False)
             import json
             st.download_button("Download memory inventory JSON",data=json.dumps(inspected,indent=2).encode(),file_name="memory_inventory.json",mime="application/json",key="mem_r4_inventory_download",on_click="ignore")
