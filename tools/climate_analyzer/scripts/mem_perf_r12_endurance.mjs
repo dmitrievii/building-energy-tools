@@ -53,7 +53,8 @@ try{
  // One full warmup, then explicitly test manual reset and page reload.
  const sampleUser=await open();await generate(sampleUser);
  await sampleUser.p.getByRole('button',{name:'Reset test session'}).click();
- await sampleUser.p.waitForFunction(old=>!document.body.innerText.includes(old),sampleUser.identity);
+ await sampleUser.p.waitForFunction(old=>Array.from(document.querySelectorAll('[data-testid="stText"]')).some(e=>/^Sentinel: [a-f0-9]{32}$/.test(e.innerText)&&e.innerText!==old),sampleUser.identity,{timeout:60000});
+ await marker(sampleUser.p).waitFor({timeout:60000});
  sampleUser.identity=await marker(sampleUser.p).innerText();sampleUser.measurement=0;
  const reset=await sample(sampleUser);
  if(reset.private.length||reset.aggregate.owners!==1)throw Error('Manual reset not isolated: '+JSON.stringify({private:reset.private,aggregate:reset.aggregate,reaper:reset.reaper}));
@@ -66,7 +67,7 @@ try{
  if(sampleUser.identity===original)throw Error('Old session restored on reload');
  reloadPassed=true;
  await sampleUser.ctx.close();
- state=await recover(sentinel,(state.reaper.native_closes||0)+2,1);
+ state=await recover(sentinel,(state.reaper.native_closes||0)+3,1);
  // Qualify distinct simultaneous live private owners, plus sentinel.
  for(const n of [1,2,5,10]){
    const before=state.reaper.native_closes||0;

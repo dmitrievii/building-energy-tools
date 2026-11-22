@@ -14,7 +14,8 @@ _RUNTIME_REF=None
 _INTERVAL=1.
 _QUEUE_INTERVAL=30.
 _LAST_QUEUE_SAMPLE=0.
-RUNTIME_RECOVERY_SCHEMA="MEM-PERF-R12-HF1"
+RUNTIME_RECOVERY_SCHEMA="MEM-PERF-R13"
+_RESET_TASKS=set()
 _CLOSED_REFS=[]
 _RECOVERY_PENDING=False
 _STOPPING_THREADS=weakref.WeakSet()
@@ -80,6 +81,47 @@ def _install_disconnect_policy(manager):
     manager.disconnect_session=disconnect
     manager._ige_r12_no_reconnect=True
     _set(disconnect_policy="native close; no reconnect retention; direct close instrumented")
+
+async def _restart_session(runtime,session_id):
+    """Event-loop only; destroy exactly the session owned by the caller."""
+    manager=runtime._session_mgr
+    info=manager.get_active_session_info(session_id)
+    if info is None:return
+    from streamlit.web.server.starlette.starlette_websocket import StarletteSessionClient
+    client=info.client
+    if type(client) is not StarletteSessionClient:
+        _set(last_reset_status="unsupported WebSocket client")
+        return
+    try:
+        runtime.close_session(session_id)
+        await client.aclose()
+        await client._websocket.close(code=1012,reason="Session reset")
+        with _LOCK:
+            _STATUS["native_resets"]=_STATUS.get("native_resets",0)+1
+        _set(last_reset_status="old session closed; awaiting new connection")
+    except Exception as exc:
+        with _LOCK:
+            _STATUS["reset_failures"]=_STATUS.get("reset_failures",0)+1
+        _set(last_reset_status="failed: "+type(exc).__name__)
+
+def request_native_reset():
+    """Only the current script context can request its own reset."""
+    import streamlit
+    from streamlit.runtime import Runtime
+    from streamlit.runtime.scriptrunner import get_script_run_ctx
+    ctx=get_script_run_ctx(suppress_warning=True)
+    if streamlit.__version__!="1.63.0" or ctx is None or not Runtime.exists():
+        return False
+    runtime=Runtime.instance()
+    if not getattr(runtime._session_mgr,"_ige_r12_hf1_close",False):return False
+    session_id=ctx.session_id
+    loop=runtime._get_async_objs().eventloop
+    def schedule():
+        task=loop.create_task(_restart_session(runtime,session_id))
+        _RESET_TASKS.add(task)
+        task.add_done_callback(_RESET_TASKS.discard)
+    loop.call_soon_threadsafe(schedule)
+    return True
 
 def reaper_summary():
     with _LOCK:return {**_STATUS,"allocator_recovery_pending":_RECOVERY_PENDING,

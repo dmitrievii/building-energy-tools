@@ -44,7 +44,7 @@ async function snapshot(p,stage,cycle){
  const filename=path.join(dir,String(cycle).padStart(2,'0')+'_'+stage+'.json');
  await download[0].saveAs(filename);
  const v=JSON.parse(await fs.readFile(filename,'utf8'));
- if(v.snapshot_schema!=='MEM-PERF-R12-HF1')throw Error('Wrong runtime schema');
+ if(v.snapshot_schema!=='MEM-PERF-R13')throw Error('Wrong runtime schema');
  rows.push({cycle,stage,memory:v.memory,epw:v.epw_lifecycle,session:v.session_cache_summary,
             reaper:v.session_runtime.session_reaper,processes:v.container_processes,library:v.library_footprint});
  return v;
@@ -54,8 +54,9 @@ async function nav(p,label){
  await settle(p);
 }
 async function upload(p,name,buffer){
- await p.locator('input[type=file]').first().setInputFiles({name,mimeType:'application/octet-stream',buffer});
- await p.getByRole('button',{name:'Analyze this EPW'}).click({timeout:60000});
+ const uploader=p.getByTestId('stFileUploader').filter({hasText:'Choose EPW file'});
+ await uploader.locator('input[type=file]').setInputFiles({name,mimeType:'application/octet-stream',buffer});
+ await p.getByRole('button',{name:'Analyze this EPW'}).click({timeout:90000});
  await p.locator('[data-testid="stSidebar"]').getByText('Climate — Temperature',{exact:true}).waitFor({timeout:90000});
  await settle(p);
 }
@@ -88,6 +89,9 @@ try{
    await nav(p,'Start — Climate source');
    await p.getByRole('button',{name:'Choose a different climate'}).click();
    await p.getByRole('heading',{name:'Upload an EPW weather file'}).waitFor({timeout:60000});
+   await settle(p);
+   const remove=p.getByTestId('stFileUploader').filter({hasText:'Choose EPW file'}).getByRole('button',{name:/remove|delete/i});
+   if(await remove.count()){await remove.first().click();await settle(p);}
    await upload(p,'hf1-b.epw',b);
    await snapshot(p,'epw-b',cycle);
    await graph(p,'Climate — Temperature');
@@ -106,6 +110,7 @@ try{
    lastIdle=await freshIdle(p,previous,cycle);
    if(!baseline)baseline=lastIdle;
    completed++;
+   console.log("Completed real EPW cycle",completed,"idle anon",lastIdle.memory.process_anon,"retained",JSON.stringify(lastIdle.epw_lifecycle?.alive||{}));
  }
  await ctx.close();
 }catch(e){error=String(e);console.error(error);}

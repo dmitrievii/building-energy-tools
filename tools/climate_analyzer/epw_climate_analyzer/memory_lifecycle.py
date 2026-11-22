@@ -18,7 +18,7 @@ from .byte_cache import (cache_inventory,clear_recomputable_caches,session_inven
 
 RUNTIME_MEMORY_SCHEMA="MEM-PERF-R6"
 RUNTIME_CHART_SCHEMA="MEM-PERF-R7"
-RUNTIME_INVENTORY_SCHEMA="MEM-PERF-R12-HF1"
+RUNTIME_INVENTORY_SCHEMA="MEM-PERF-R13"
 EXPORT_KEYS=("_p6_pdf","_p6_html_result","_p66_atlas_result","_utci_perf_r1_csv")
 DERIVED_KEYS=("_utci_perf_r1_result","_utci_perf_r1_sensitivity")
 TRANSIENT_KEYS=("_p6_displayed_charts","_active_filtered_export_df")
@@ -87,7 +87,7 @@ def _collect_inventory(state,process):
     import sys
     import os
     import tracemalloc
-    result={"snapshot_schema":"MEM-PERF-R12-HF1","captured_at_utc":datetime.now(timezone.utc).isoformat(),
+    result={"snapshot_schema":"MEM-PERF-R13","captured_at_utc":datetime.now(timezone.utc).isoformat(),
             "capture_phase":"on-demand; before next page rendering when called by widget callback",
             "memory":process,"shared_caches":cache_inventory(),
             "session_caches":session_cache_inventory(state),
@@ -271,7 +271,20 @@ def manual_cleanup(state):
                    disk=True,private_caches=True,diagnostics=True)
 
 def reset_session(state):
-    """Destructive, consented reset of only the current session."""
+    """Destroy the live AppSession rather than clearing a still-live widget tree."""
+    from streamlit.runtime import Runtime
+    from streamlit.runtime.scriptrunner import get_script_run_ctx
+    if Runtime.exists() and get_script_run_ctx(suppress_warning=True) is not None:
+        from .session_reaper import request_native_reset
+        import streamlit as st
+        if not request_native_reset():
+            st.error("Native session reset unavailable. Reload the page.")
+        st.stop()
+        return
+    _reset_local_state(state)
+
+def _reset_local_state(state):
+    """Standalone test/CLI fallback, with no live WebSocket."""
     from uuid import uuid4
     from streamlit.runtime import Runtime
     from streamlit.runtime.scriptrunner import get_script_run_ctx
@@ -342,7 +355,7 @@ def _render_sidebar(st):
         st.caption("Active climate data, comparison data and saved report diagrams are retained. Prepared downloads and recomputable caches are released.")
         st.button("Clean unused caches",key="mem_perf_r1_clean",
                   on_click=manual_cleanup,args=(state,))
-        st.caption("Closing or reloading the page ends the old session; no session restoration. Shared scientific libraries remain initialized.")
+        st.caption("Reset session closes the current connection and requests a fresh session without restarting the server. Shared scientific libraries remain initialized.")
         consent=st.checkbox("Confirm deletion of this session's climate data, reports and settings",key="mem_r12_reset_confirm")
         st.button("Reset session",disabled=not consent,key="mem_r12_reset",on_click=reset_session,args=(state,))
         st.caption("Manual cleanup releases only this session's disposable resources. Shared public caches may be evicted under resource pressure.")
@@ -373,11 +386,12 @@ def _render_sidebar(st):
         live_reaper=reaper_summary()
         st.caption(f"Live session maintenance: {live_reaper.get('status','unavailable')}; sweeps: {live_reaper.get('sweeps',0)}; disconnected at last sweep: {live_reaper.get('disconnected_sessions','Unavailable')}; closed immediately: {live_reaper.get('closed_on_disconnect',0)}; expired reaped (fallback): {live_reaper.get('expired_reaped',0)}.")
         st.caption(f"Active sessions: {live_reaper.get('active_sessions','Unavailable')}; WebSocket disconnect dispatches: {live_reaper.get('disconnect_events',0)}; native closes: {live_reaper.get('native_closes',0)}; closed session objects still reachable: {live_reaper.get('closed_session_refs_alive',0)}.")
+        st.caption(f"Native resets: {live_reaper.get('native_resets',0)}; reset failures: {live_reaper.get('reset_failures',0)}.")
         queue_sample=live_reaper.get("forward_queue_sample",{})
         if queue_sample.get("status")=="sampled":
             st.caption(f"Pending forward messages at last sweep: {queue_sample['pending_messages_in_sampled_sessions']}; sampled wire payload: {_mib(queue_sample['sampled_wire_bytes'])}; {queue_sample['captured_at_utc']} (not websocket backlog or RSS).")
         inspected=state.get(INVENTORY_KEY)
-        if inspected and inspected.get("snapshot_schema")!="MEM-PERF-R12-HF1":
+        if inspected and inspected.get("snapshot_schema")!="MEM-PERF-R13":
             release_inventory(state)
             inspected=None
         from .memory_recovery import recovery_summary
