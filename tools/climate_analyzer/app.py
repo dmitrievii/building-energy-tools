@@ -6177,6 +6177,10 @@ def main() -> None:
     if deferred:st.sidebar.warning("Core initialization incomplete: "+", ".join(deferred)+". Inspect memory management; reboot if headroom is insufficient.")
     from epw_climate_analyzer import p6_report as report_runtime,session_memory as session_runtime
     from epw_climate_analyzer import session_reaper as reaper_runtime
+    from epw_climate_analyzer import chart_presentation as presentation_runtime
+    if getattr(presentation_runtime,"RUNTIME_PRESENTATION_SCHEMA",None)!="MEM-PERF-R11":
+        st.error("MEM-PERF R11: reboot the app once via Manage app to activate chart presentation changes.")
+        st.stop()
     if (getattr(report_runtime,"RUNTIME_REPORT_SCHEMA",None)!="MEM-PERF-R7" or
         getattr(reaper_runtime,"RUNTIME_RECOVERY_SCHEMA",None)!="MEM-PERF-R9" or
         getattr(session_runtime,"RUNTIME_SESSION_SCHEMA",None)!="MEM-PERF-R7" or

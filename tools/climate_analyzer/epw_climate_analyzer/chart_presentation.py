@@ -14,6 +14,8 @@ import math
 from typing import Any, Mapping, MutableMapping
 
 
+RUNTIME_PRESENTATION_SCHEMA="MEM-PERF-R11"
+
 CANVAS_AUTO = "Auto"
 CANVAS_WIDE = "16:9 — Wide"
 CANVAS_PRESENTATION = "4:3 — Presentation"

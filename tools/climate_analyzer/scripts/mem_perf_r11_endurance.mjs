@@ -1,5 +1,6 @@
 import { chromium } from 'playwright-core';
 import fs from 'node:fs/promises';
+import path from 'node:path';
 const out=process.env.R11_OUTPUT || 'artifacts/mem-perf-r11/endurance.json';
 const url='http://127.0.0.1:8511';
 const cycles=50;
@@ -10,10 +11,17 @@ try {
  const sentinel=await browser.newContext();
  const page=await sentinel.newPage();
  await page.goto(url);
- await page.getByText('Sentinel: preserved',{exact:true}).waitFor({timeout:60000});
+ const marker=page.getByText(/^Sentinel: [a-f0-9]{32}$/);
+ await marker.waitFor({timeout:60000});
+ const identity=await marker.innerText();
+ let measurement=0;
  const sample=async()=>{
    await page.getByRole('button',{name:'Refresh measurement'}).click();
-   await page.locator('[data-testid="stStatusWidget"]').waitFor({state:'hidden',timeout:30000});
+   const current=++measurement;
+   await page.waitForFunction(n=>{
+      const rows=Array.from(document.querySelectorAll('[data-testid="stText"]'));
+      return rows.some(el=>{try{return el.innerText.startsWith('R11:')&&JSON.parse(el.innerText.slice(4)).measurement===n;}catch{return false;}});
+   },current,{timeout:30000});
    const text=await page.getByText(/^R11:/).innerText();
    return JSON.parse(text.slice(4));
  };
@@ -41,14 +49,14 @@ try {
       observation.reaper.disconnected_sessions!==0 ||
       observation.reaper.allocator_recovery_pending ||
       observation.reaper.shutdown_failures!==0)throw Error('Session recovery incomplete at cycle '+(i+1));
-   await page.getByText('Sentinel: preserved',{exact:true}).waitFor();
+   if(await marker.innerText()!==identity)throw Error("Active sentinel session identity changed");
  }
  await sentinel.close();
 }catch(e){error=String(e);console.error(error);}
 finally{
  await browser.close();
  const warm=rows.slice(10).map(x=>x.memory.process_anon).filter(Number.isFinite);
- await fs.mkdir(new URL('.', 'file://'+process.cwd()+'/'+out).pathname,{recursive:true});
+ await fs.mkdir(path.dirname(out),{recursive:true});
  await fs.writeFile(out,JSON.stringify({scope:'Real local browser connections on fixture; accelerated TTL; not full app endurance',cycles,completed:rows.length,error,
    warmAnonymousRangeBytes:warm.length?Math.max(...warm)-Math.min(...warm):null,
    warmFirstToLastBytes:warm.length?warm.at(-1)-warm[0]:null,rows},null,2));

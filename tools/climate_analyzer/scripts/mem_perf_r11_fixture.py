@@ -2,6 +2,7 @@
 This is NOT the full Climate Analyzer app or production configuration.
 """
 import json
+from uuid import uuid4
 import streamlit as st
 import plotly.graph_objects as go
 from epw_climate_analyzer import session_reaper as reaper,chart_lifecycle as charts
@@ -12,13 +13,13 @@ from epw_climate_analyzer.chart_presentation import apply_chart_presentation,set
 reaper._INTERVAL=.25
 reaper.ensure_session_reaper()
 charts.begin_page(st.session_state)
-st.session_state.setdefault("sentinel","preserved")
+if "sentinel" not in st.session_state:st.session_state["sentinel"]=uuid4().hex
 if st.checkbox("Generate test chart",key="generate"):
     fig=go.Figure(go.Scatter(x=list(range(8760)),y=list(range(8760))))
     apply_chart_presentation(fig,settings_from_state({}))
     charts.register_figure(st.session_state,fig,{},"","test")
     st.plotly_chart(fig,key="chart")
 st.text("Sentinel: "+st.session_state["sentinel"])
-st.button("Refresh measurement")
-st.text("R11:"+json.dumps({"memory":memory_snapshot(),"reaper":reaper.reaper_summary(),
+if st.button("Refresh measurement"):st.session_state["measurement"]=st.session_state.get("measurement",0)+1
+st.text("R11:"+json.dumps({"measurement":st.session_state.get("measurement",0),"memory":memory_snapshot(),"reaper":reaper.reaper_summary(),
                           "recovery":recovery_summary(),"charts":charts.chart_lifecycle_summary(st.session_state)}))
