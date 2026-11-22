@@ -14,7 +14,7 @@ import math
 from typing import Any, Mapping, MutableMapping
 
 
-RUNTIME_PRESENTATION_SCHEMA="MEM-PERF-R11"
+RUNTIME_PRESENTATION_SCHEMA="MEM-PERF-R11-TURNTABLE"
 
 CANVAS_AUTO = "Auto"
 CANVAS_WIDE = "16:9 — Wide"
@@ -385,6 +385,25 @@ def _apply_extra_presentation(fig: Any, settings: ChartPresentationSettings) -> 
                 line.width = max(0.1, min(30., float(line.width if line.width is not None else 2.) * settings.line_scale))
 
 
+def _apply_3d_rotation(layout: Any, traces: Any) -> None:
+    """Use upright turntable rotation for every Cartesian 3D scene.
+
+    Discover implicit scenes from trace types as well as explicit scene
+    layouts; leave 2D axes, polar plots and map interactions untouched.
+    Preserve the chart builder's camera eye, center, projection and uirevision.
+    """
+    kinds={"scatter3d","surface","mesh3d","cone","streamtube","volume","isosurface"}
+    names={name for name in (getattr(layout,"_props",{}) or {})
+           if name=="scene" or (name.startswith("scene") and name[5:].isdigit())}
+    for trace in traces:
+        if getattr(trace,"type",None) in kinds:
+            names.add((getattr(trace,"_props",{}) or {}).get("scene") or "scene")
+    for name in sorted(names):
+        scene=getattr(layout,name)
+        scene.dragmode="turntable"
+        scene.camera.up=dict(x=0,y=0,z=1)
+
+
 def apply_chart_presentation(fig: Any, settings: ChartPresentationSettings) -> Any:
     """Apply presentation-only layout changes to a Plotly figure in place."""
     if fig is None or not hasattr(fig, "layout"):
@@ -399,9 +418,11 @@ def apply_chart_presentation(fig: Any, settings: ChartPresentationSettings) -> A
     layout = fig.layout
     background = TRANSPARENT_COLOR if settings.transparent else "white"
     _apply_background(layout, background, fig.data)
+    _apply_3d_rotation(layout, fig.data)
     for frame in getattr(fig, "frames", ()) or ():
         if getattr(frame, "layout", None) is not None and frame.layout.to_plotly_json():
             _apply_background(frame.layout, background, frame.data)
+            _apply_3d_rotation(frame.layout, frame.data)
     try:
         _set_font_size(layout.title.font, size + 3)
     except Exception:

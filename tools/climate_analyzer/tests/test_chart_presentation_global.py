@@ -76,6 +76,31 @@ class GlobalChartPresentationTests(unittest.TestCase):
         apply_chart_presentation(implicit,ChartPresentationSettings(background=BACKGROUND_TRANSPARENT))
         self.assertEqual(implicit.layout.polar.bgcolor,TRANSPARENT_COLOR)
 
+    def test_turntable_is_default_for_all_3d_scenes_and_preserves_camera(self) -> None:
+        from plotly.subplots import make_subplots
+        fig=make_subplots(rows=1,cols=3,specs=[[{"type":"scene"},{"type":"scene"},{"type":"xy"}]])
+        fig.add_trace(go.Surface(z=[[0,1],[2,3]]),row=1,col=1)
+        fig.add_trace(go.Scatter3d(x=[0,1],y=[0,1],z=[0,1]),row=1,col=2)
+        fig.add_trace(go.Scatter(x=[0,1],y=[1,2]),row=1,col=3)
+        fig.update_layout(dragmode="select",scene=dict(dragmode="orbit",uirevision="dome",
+            camera=dict(eye=dict(x=2,y=-3,z=1),center=dict(x=0,y=0,z=.1),projection=dict(type="orthographic"))),
+            scene2=dict(dragmode="pan"))
+        apply_chart_presentation(fig,ChartPresentationSettings())
+        self.assertEqual(fig.layout.dragmode,"select")
+        for scene in (fig.layout.scene,fig.layout.scene2):
+            self.assertEqual(scene.dragmode,"turntable")
+            self.assertEqual(scene.camera.up.to_plotly_json(),{"x":0,"y":0,"z":1})
+        self.assertEqual(fig.layout.scene.camera.eye.to_plotly_json(),{"x":2,"y":-3,"z":1})
+        self.assertEqual(fig.layout.scene.camera.center.z,.1)
+        self.assertEqual(fig.layout.scene.camera.projection.type,"orthographic")
+        self.assertEqual(fig.layout.scene.uirevision,"dome")
+        implicit=go.Figure(go.Mesh3d(x=[0,1,0],y=[0,0,1],z=[0,1,0]))
+        apply_chart_presentation(implicit,ChartPresentationSettings())
+        self.assertEqual(implicit.layout.scene.dragmode,"turntable")
+        two_d=go.Figure(go.Scatter(x=[0,1],y=[1,2]))
+        apply_chart_presentation(two_d,ChartPresentationSettings())
+        self.assertNotIn("scene",two_d.layout.to_plotly_json())
+
     def test_transparent_export_preserves_png_and_svg_and_rejects_jpeg(self) -> None:
         settings=ChartPresentationSettings(background=BACKGROUND_TRANSPARENT)
         for fmt,expected in (("jpeg","png"),("png","png"),("svg","svg")):

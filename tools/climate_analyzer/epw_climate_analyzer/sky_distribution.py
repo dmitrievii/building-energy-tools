@@ -229,7 +229,7 @@ def sky_figure(p,quantity,style="2D hemisphere",*,show_compass=True):
         # Keep the numeric ENU axes available if the compass is hidden.
         if not show_compass:axis.update(showticklabels=True,showgrid=True,showaxeslabels=True)
         axis.pop("showaxeslabels",None)
-        fig.update_layout(scene=dict(aspectmode="data",dragmode="orbit",
+        fig.update_layout(scene=dict(aspectmode="data",dragmode="turntable",
              xaxis=dict(title="" if show_compass else "East",range=[-1.36,1.36],**axis),
              yaxis=dict(title="" if show_compass else "North",range=[-1.36,1.36],**axis),
              zaxis=dict(title="" if show_compass else "Up",range=[-.08,1.08],**axis),
