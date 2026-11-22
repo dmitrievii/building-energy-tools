@@ -292,12 +292,19 @@ def monthly_wind_rose_panel(df,*,speed="wind_speed_m_s",direction="wind_directio
         tables[month]=table;figures[month]=one
     if not tables:raise ValueError("No valid coincident non-calm observations for any month.")
     max_r=max([0.,*peaks])
-    # Percentage panels share a 0–50% radial scale by default.
-    # Expand only for an observed sector above 50%, never clip the data.
-    if radial=="Percentage":
-        upper=50. if max_r<=50.+1e-9 else 75. if max_r<=75.+1e-9 else max(100.,max_r)
-        ticks=[10.,20.,30.,40.,50.] if upper==50. else [25.,50.,75.] if upper==75. else [25.,50.,75.,100.]
+    # Hours: fit a common, compact upper bound to the largest stacked
+    # directional total over all months. Aim for five round intervals
+    # with modest headroom instead of forcing three coarse intervals.
+    if radial=="Hours":
+        target=max_r*1.05 if max_r>0 else 1.
+        rough=target/5
+        power=10.**np.floor(np.log10(rough))
+        step=next(v*power for v in (1.,2.,2.5,5.,10.) if v*power>=rough-1e-12*power)
+        count=max(1,int(np.ceil(target/step-1e-12)))
+        upper=max(count*step,max_r)
+        ticks=[i*step for i in range(1,count+1)]
     else:
+        # Restore the prior auto scaling for percentage and other units.
         step=max_r/3 if max_r>0 else 1.
         power=10.**np.floor(np.log10(step))
         step=next(v*power for v in (1.,2.,2.5,5.,10.) if v*power>=step-1e-12*power)
@@ -317,7 +324,9 @@ def monthly_wind_rose_panel(df,*,speed="wind_speed_m_s",direction="wind_directio
         name="polar" if month==1 else f"polar{month}"
         polar=dict(barmode="stack" if classes else "overlay",
             angularaxis=dict(rotation=90,direction="clockwise",tickvals=ANGLES[::2],ticktext=COMPASS[::2],tickfont=dict(size=10)),
-            radialaxis=dict(range=[0.,upper],tickmode="array",tickvals=ticks,tickformat=".3g",tickfont=dict(size=9),angle=45))
+            radialaxis=dict(range=[0.,upper],tickmode="array",tickvals=ticks,
+                ticktext=[f"{v:g}" if (len(ticks)-1-i)%2==0 or len(ticks)<=3 else "" for i,v in enumerate(ticks)],
+                tickformat=".3g",tickfont=dict(size=9),angle=45))
         fig.update_layout(**{name:polar})
         if month not in tables:
             fig.add_trace(go.Barpolar(subplot=name,theta=[0],r=[0.],marker_color="rgba(0,0,0,0)",showlegend=False,hoverinfo="skip"))
@@ -353,12 +362,12 @@ def reflow_monthly_wind_roses(fig,*,columns=3,font_size=12):
     for month,hours in meta["wind_months"]:
         row,col=divmod(int(month)-1,columns)
         x0=(col+.075)/columns;x1=(col+.925)/columns
-        y0=1-(row+.94)/rows;y1=1-(row+.22)/rows
+        y0=1-(row+.91)/rows;y1=1-(row+.18)/rows
         name="polar" if month==1 else f"polar{month}"
         polar=getattr(fig.layout,name)
         polar.domain=dict(x=[x0,x1],y=[y0,y1])
         polar.angularaxis.tickfont.size=max(8,min(11,font_size*.78))
-        polar.radialaxis.tickfont.size=max(7,min(10,font_size*.70))
+        polar.radialaxis.tickfont.size=max(7,min(9,font_size*.62))
         text=calendar.month_abbr[int(month)]+(" · no data" if hours is None else f" · {hours:g} h")
         annotations.append(dict(x=(x0+x1)/2,y=1-(row+.055)/rows,xref="paper",yref="paper",
             text=text,showarrow=False,xanchor="center",yanchor="top",font=dict(size=max(9,font_size*.9))))

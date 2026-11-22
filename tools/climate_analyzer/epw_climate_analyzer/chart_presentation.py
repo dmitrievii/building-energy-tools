@@ -448,6 +448,11 @@ def apply_chart_presentation(fig: Any, settings: ChartPresentationSettings) -> A
 
     def reflow_if_diurnal():
         meta=fig.layout.meta
+        if isinstance(meta,dict) and meta.get("layout_kind")=="monthly_wind_rose_panel":
+            from .directional_climate import reflow_monthly_wind_roses
+            width,height=fig.layout.width,fig.layout.height
+            columns=4 if width and height and width>height*1.12 else 3
+            return reflow_monthly_wind_roses(fig,columns=columns,font_size=size)
         if (isinstance(meta,dict) and meta.get("layout_kind")=="diurnal_small_multiples") or "typical daily profile" in str(fig.layout.title.text or "").lower():
             from .extended_visualization import reflow_diurnal_panels
             return reflow_diurnal_panels(fig,font_size=size)

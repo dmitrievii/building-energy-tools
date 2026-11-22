@@ -356,24 +356,30 @@ class AtlasTests(unittest.TestCase):
         atlas,_=make_figure(d,fixture,{})
         self.assertEqual(len(atlas.layout.annotations),12)
 
-    def test_monthly_wind_panel_percentage_scale_defaults_to_50(self):
+    def test_monthly_wind_panel_hours_tight_shared_radial_scale(self):
         from epw_climate_analyzer.directional_climate import monthly_wind_rose_panel
-        idx=pd.date_range("2026-01-01",periods=8,freq="h")
-        df=pd.DataFrame({c.V:[2.]*8,c.WD:[0.,0.,90.,90.,180.,180.,270.,270.]},index=idx)
+        from epw_climate_analyzer.chart_presentation import ChartPresentationSettings,apply_chart_presentation
+        from epw_climate_analyzer.p6_report_structure import report_figure
+        idx=pd.date_range("2026-01-01",periods=600,freq="h")
+        df=pd.DataFrame({c.V:2.,c.WD:np.repeat([0.,90.,180.],200)},index=idx)
+        df.attrs["canonical_native_interval_minutes"]=60.
         for style in ("Class distribution","Directional mean"):
-            for directions,upper in (([0.,0.,90.,90.,180.,180.,270.,270.],50.),
-                                     ([0.]*6+[90.]*2,75.),([0.]*8,100.)):
-                df[c.WD]=directions
-                fig,tables=monthly_wind_rose_panel(df,radial="Percentage",style=style)
+            fig,tables=monthly_wind_rose_panel(df,radial="Hours",style=style)
+            apply_chart_presentation(fig,ChartPresentationSettings(font_size=24))
+            for copy in (fig,report_figure(fig,width_pt=500,height_pt=700)):
                 for m in range(1,13):
-                    axis=getattr(fig.layout,"polar" if m==1 else f"polar{m}").radialaxis
-                    self.assertAlmostEqual(axis.range[1],upper)
-                    self.assertEqual(axis.range[0],0.)
-                    self.assertEqual(axis.tickvals[-1],upper)
-                values=tables[1]
-                self.assertAlmostEqual(float(values.to_numpy().sum() if style=="Class distribution" else values.radius.sum()),100.)
+                    axis=getattr(copy.layout,"polar" if m==1 else f"polar{m}").radialaxis
+                    self.assertEqual(tuple(axis.range),(0.,250.))
+                    self.assertEqual(tuple(axis.tickvals),(50.,100.,150.,200.,250.))
+                    self.assertEqual(tuple(axis.ticktext),("50","","150","","250"))
+                    self.assertLessEqual(axis.tickfont.size,9)
+            values=tables[1]
+            self.assertAlmostEqual(float(values.to_numpy().sum() if style=="Class distribution" else values.radius.sum()),600.)
+        df[c.WD]=0.
         fig,_=monthly_wind_rose_panel(df,radial="Hours")
-        self.assertLess(fig.layout.polar.radialaxis.range[1],50.)
+        self.assertGreaterEqual(fig.layout.polar.radialaxis.range[1],600.)
+        percentage,_=monthly_wind_rose_panel(df,radial="Percentage")
+        self.assertGreaterEqual(percentage.layout.polar.radialaxis.range[1],100.)
 
     def test_core_chart_families_execute(self):
         df=self.fixture();rows=[d for d in c.catalogue(df,{},c.FULL) if d.status=="available"]
