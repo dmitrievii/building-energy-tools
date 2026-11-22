@@ -81,3 +81,17 @@ and independent callback/fragment paths require further refactoring and
 qualification. Default production uses the existing run-local path.
 The real-app pilot has paired baseline/persistent arms, exact same EPWs,
 and a one-composition admission gate. No science formulas are changed.
+
+The paired persistent qualification additionally opens two simultaneous EPW
+sessions with distinct LOCATION headers, verifies that the second source's
+location is not displayed in the first session, and records both inventories.
+This is a limited source-isolation smoke, not all-route concurrent parity.
+
+Allocator screen run 45077713419 completed six cycles for all three arms.
+Final anonymous RSS: default 340.47 MiB; 4 arenas 272.32 MiB; 2 arenas
+252.81 MiB. These are screening measurements on separate runners, not a
+production promotion or proof of equivalent multithreaded throughput.
+R14.3 Degree pilot run 45077713490 failed at the browser option locator;
+the fragment itself has not been qualified in the real app. Full CI run
+45077713512 reported 9 failures and 1 error among 1063 tests, including
+contract tests affected by the earlier Degree-renderer extraction.

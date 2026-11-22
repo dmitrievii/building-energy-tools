@@ -160,6 +160,27 @@ try{
    completed++;
    console.log("Completed real EPW cycle",completed,"idle anon",lastIdle.memory.process_anon,"retained",JSON.stringify(lastIdle.epw_lifecycle?.alive||{}));
  }
+ if(process.env.IGE_R143_PERSISTENT_APP!==undefined){
+   // Separate from the sequential RSS drift series. Both matrix arms test
+   // the same two real users before closing their browser contexts.
+   const other=await browser.newContext({acceptDownloads:true});
+   try{
+     const q=await open(other);
+     await Promise.all([upload(p,'r143-first.epw',a),upload(q,'r143-second.epw',b)]);
+     await Promise.all([graph(p,'Climate — Temperature'),graph(q,'Climate — Temperature')]);
+     const sideA=p.getByTestId('stSidebar'),sideB=q.getByTestId('stSidebar');
+     const readA=await sideA.innerText(),readB=await sideB.innerText();
+     if(readA.includes('HF1-second-source')||!readB.includes('HF1-second-source'))
+       throw Error('Concurrent EPW location isolation failed');
+     const observedA=await snapshot(p,'concurrent-a',cycles+1);
+     const observedB=await snapshot(q,'concurrent-b',cycles+1);
+     if(observedA.session_runtime.active_sessions<2||observedB.session_runtime.active_sessions<2)
+       throw Error('Two concurrent sessions not observed');
+     if(!observedA.session_cache_summary.owners||!observedB.session_cache_summary.owners)
+       throw Error('Concurrent cache ownership not observed');
+     console.log('R143 two concurrent EPW sessions: location isolation PASS');
+   }finally{await other.close();}
+ }
  await ctx.close();
 }catch(e){error=String(e);console.error(error);}
 finally{
