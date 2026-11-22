@@ -132,6 +132,27 @@ class ChartLifecycleTests(unittest.TestCase):
             self.assertEqual(reaper.reaper_summary()["closed_on_disconnect"],1)
             self.assertTrue(reaper.reaper_summary()["allocator_recovery_pending"])
 
+    def test_hf1_also_accounts_for_direct_native_close(self):
+        from epw_climate_analyzer import byte_cache
+        class Manager:
+            def __init__(self):
+                self.info={"a":SimpleNamespace(session=SimpleNamespace(_scriptrunner=None)),
+                           "b":SimpleNamespace(session=SimpleNamespace(_scriptrunner=None))}
+                self.closed=[]
+            def get_active_session_info(self,sid):return self.info.get(sid)
+            def close_session(self,sid):
+                self.info.pop(sid,None)
+                self.closed.append(sid)
+        manager=Manager()
+        with patch.object(reaper,"_STATUS",{"shutdown_failures":0}),patch.object(reaper,"_RECOVERY_PENDING",False),patch.object(byte_cache,"close_session_caches") as drop:
+            reaper._install_disconnect_policy(manager)
+            manager.close_session("a")
+            manager.disconnect_session("b")
+            self.assertEqual(manager.closed,["a","b"])
+            self.assertEqual(reaper.reaper_summary()["native_closes"],2)
+            self.assertEqual(reaper.reaper_summary()["disconnect_events"],1)
+            self.assertEqual(drop.call_count,2)
+
     def test_r12_waits_for_actual_script_thread_exit_before_trimming(self):
         thread=Mock()
         thread.is_alive.return_value=True

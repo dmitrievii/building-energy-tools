@@ -1,0 +1,46 @@
+name: Climate Analyzer R12 HF1 real EPW lifecycle
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/climate_analyzer/epw_climate_analyzer/process_memory.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/epw_lifecycle.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/session_reaper.py'
+      - 'tools/climate_analyzer/scripts/mem_perf_r12_hf1*'
+      - '.github/workflows/climate-analyzer-mem-perf-r12-hf1.yml'
+permissions:
+  contents: read
+jobs:
+  lifecycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: tools/climate_analyzer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - run: python -m compileall -q app.py epw_climate_analyzer scripts
+      - run: python -m unittest discover -s tests -p test_chart_lifecycle.py -v
+      - run: python -m unittest discover -s tests -p test_memory_lifecycle.py -v
+      - run: npm install --no-save playwright-core@1.55.0
+      - name: Run 20 real EPW replacement and disconnect cycles
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/mem-perf-r12-hf1
+          cd ../..
+          STREAMLIT_SERVER_DISCONNECTED_SESSION_TTL=0 streamlit run tools/climate_analyzer/app.py --server.headless=true --server.port=8513 > tools/climate_analyzer/artifacts/mem-perf-r12-hf1/server.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8513/_stcore/health && break; sleep 1; done
+          cd tools/climate_analyzer
+          node scripts/mem_perf_r12_hf1_browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r12-hf1-real-epw-lifecycle
+          path: tools/climate_analyzer/artifacts/mem-perf-r12-hf1/

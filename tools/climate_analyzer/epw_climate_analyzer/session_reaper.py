@@ -143,10 +143,12 @@ def _recover_if_idle(manager,cache,reaped):
     # warmed library sets may legitimately have different steady baselines.
     if result.get("status")=="complete" and not manager.list_active_sessions():
         from .byte_cache import session_cache_summary
+        from .epw_lifecycle import lifecycle_summary
         _set(last_idle_server_sample={"memory":result["after_trim"],
               "captured_at_utc":result["captured_at_utc"],
               "session_caches":session_cache_summary(),
               "closed_session_refs_alive":sum(ref() is not None for ref in _CLOSED_REFS),
+              "epw_lifecycle":lifecycle_summary(),
               "scope":"Warm process after zero-active-session recovery; not a guarantee of reclaimable RSS."})
 
 def _queue_sample(manager):

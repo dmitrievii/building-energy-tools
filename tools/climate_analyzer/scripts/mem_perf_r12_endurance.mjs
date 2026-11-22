@@ -39,7 +39,7 @@ async function recover(s,expected,owners){
  do{
    await pause(1200);
    v=await sample(s);
-   if((v.reaper.closed_on_disconnect||0)>=expected && v.reaper.disconnected_sessions===0 &&
+   if((v.reaper.native_closes||0)>=expected && v.reaper.disconnected_sessions===0 &&
       !v.reaper.allocator_recovery_pending && v.aggregate.owners===owners &&
       v.reaper.shutdown_failures===0)return {latency_ms:performance.now()-start,...v};
  }while(performance.now()-start<20000);
@@ -56,7 +56,7 @@ try{
  await sampleUser.p.waitForFunction(old=>!document.body.innerText.includes(old),sampleUser.identity);
  sampleUser.identity=await marker(sampleUser.p).innerText();sampleUser.measurement=0;
  const reset=await sample(sampleUser);
- if(reset.private.length||reset.aggregate.owners!==1)throw Error('Manual reset not isolated');
+ if(reset.private.length||reset.aggregate.owners!==1)throw Error('Manual reset not isolated: '+JSON.stringify({private:reset.private,aggregate:reset.aggregate,reaper:reset.reaper}));
  resetPassed=true;
  const original=sampleUser.identity;
  await generate(sampleUser);
@@ -66,10 +66,10 @@ try{
  if(sampleUser.identity===original)throw Error('Old session restored on reload');
  reloadPassed=true;
  await sampleUser.ctx.close();
- state=await recover(sentinel,(state.reaper.closed_on_disconnect||0)+2,1);
+ state=await recover(sentinel,(state.reaper.native_closes||0)+2,1);
  // Qualify distinct simultaneous live private owners, plus sentinel.
  for(const n of [1,2,5,10]){
-   const before=state.reaper.closed_on_disconnect||0;
+   const before=state.reaper.native_closes||0;
    const users=await Promise.all(Array.from({length:n},()=>open()));
    try{
      await Promise.all(users.map(generate));
@@ -82,7 +82,7 @@ try{
    }finally{await Promise.all(users.map(u=>u.ctx.close()));}
  }
  for(let i=0;i<100;i++){
-   const before=state.reaper.closed_on_disconnect||0;
+   const before=state.reaper.native_closes||0;
    const u=await open();
    try{await generate(u);}finally{await u.ctx.close();}
    state=await recover(sentinel,before+1,1);
@@ -92,7 +92,7 @@ try{
  }
  // Recover with no active sessions, then read the recorded zero-session snapshot
  // via a fresh observer (observer allocations do not enter the snapshot).
- const expected=(state.reaper.closed_on_disconnect||0)+1;
+ const expected=(state.reaper.native_closes||0)+1;
  await sentinel.ctx.close();
  await pause(3000);
  const observer=await open();
