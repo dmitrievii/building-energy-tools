@@ -3259,130 +3259,15 @@ def render_temperature(
         return
 
     if chart_group == "Degree days":
-        st.caption(
-            "HGT/KGT use two independent temperatures each: the limit selects the heating/cooling period, "
-            "while the temperature difference is measured to the corresponding indoor-air reference."
-        )
-        st.markdown("**Heating degree metric (HGT)**")
-        heat_col1, heat_col2 = st.columns(2)
-        heating_indoor = heat_col1.slider(
-            "Heating indoor air temperature [°C]",
-            10.0,
-            30.0,
-            20.0,
-            0.5,
-            key="degree_heating_indoor_c",
-            help="Indoor-air reference used for the HGT temperature difference.",
-        )
-        heating_limit = heat_col2.slider(
-            "Heating limit [°C]",
-            -5.0,
-            25.0,
-            12.0,
-            0.5,
-            key="degree_heating_limit_c",
-            help="Only intervals/days with mean outdoor temperature below this limit contribute to HGT.",
-        )
-        if heating_limit > heating_indoor:
-            st.error("Heating limit must not exceed heating indoor air temperature.")
-            return
-
-        st.markdown("**Cooling degree metric (KGT)**")
-        cool_col1, cool_col2 = st.columns(2)
-        cooling_indoor = cool_col1.slider(
-            "Cooling indoor air temperature [°C]",
-            10.0,
-            30.0,
-            20.0,
-            0.5,
-            key="degree_cooling_indoor_c",
-            help="Indoor-air reference used for the KGT temperature difference.",
-        )
-        cooling_limit = cool_col2.slider(
-            "Cooling limit [°C]",
-            10.0,
-            35.0,
-            20.0,
-            0.1,
-            key="degree_cooling_limit_c",
-            help="Only intervals/days with mean outdoor temperature above this limit contribute to KGT.",
-        )
-        st.caption(
-            f"Current definitions: HGT {heating_indoor:g}/{heating_limit:g} and "
-            f"KGT {cooling_indoor:g}/{cooling_limit:g}."
-        )
-
-        method_col, aggregation_col = st.columns(2)
-        metric = method_col.radio(
-            "Degree metric",
-            ["Degree-hours", "Degree-days"],
-            horizontal=True,
-            help=(
-                "Degree-hours use every source interval. Degree-days first calculate the daily mean outdoor temperature; "
-                "they are not obtained by simply dividing degree-hours by 24."
-            ),
-        )
-        aggregation = aggregation_col.selectbox(
-            "Aggregation",
-            ["Daily", "Weekly", "Monthly", "Seasonal", "Annual"],
-            index=2,
-            key="degree_metric_aggregation",
-        )
-        table = degree_metric_table(
-            df,
-            heating_indoor_c=heating_indoor,
-            heating_limit_c=heating_limit,
-            cooling_indoor_c=cooling_indoor,
-            cooling_limit_c=cooling_limit,
-            metric=metric,
-            aggregation=aggregation,
-        )
-        unit = str(table.attrs.get("unit", "K·h" if metric == "Degree-hours" else "K·d"))
-
-        plot_data = table.reset_index()
-        plot_data = plot_data.rename(columns={plot_data.columns[0]: "Period"})
-        plot_data["Period"] = display_period_labels(table.index, aggregation, time_basis(df))
-
-        series_names = [str(column) for column in table.columns]
-        long = plot_data.melt(id_vars="Period", var_name="Series", value_name="Value")
-        fig = px.bar(
-            long,
-            x="Period",
-            y="Value",
-            color="Series",
-            barmode="group",
-            title=(
-                f"{aggregation} heating and cooling {metric.lower()} "
-                f"(HGT {heating_indoor:g}/{heating_limit:g}; KGT {cooling_indoor:g}/{cooling_limit:g})"
-            ),
-            color_discrete_map={name: metric_color(name) for name in series_names},
-        )
-        fig.update_layout(
-            template="plotly_white",
-            xaxis_title="Period",
-            yaxis_title=unit,
-            legend_title_text="Indicator",
-            margin=dict(l=40, r=20, t=70, b=45),
-        )
-        from epw_climate_analyzer.degree_metrics import degree_legend_below
-        degree_legend_below(fig)
-        fig.update_yaxes(rangemode="tozero")
-        st.caption(
-            "Degree-hours integrate the temperature difference at each source interval. "
-            "Degree-days use daily mean outdoor temperature before applying the heating/cooling base. "
-            "Heating and cooling bars are grouped because they are separate indicators, not additive components of one total."
-        )
-        render_plot(
-            fig,
-            degree_metric_interpretation(
-                table,
-                heating_indoor_c=heating_indoor,
-                heating_limit_c=heating_limit,
-                cooling_indoor_c=cooling_indoor,
-                cooling_limit_c=cooling_limit,
-                metric=metric,
-            ),
-        )
+        import os
+        # Opt-in only for the full EPW analysis, not canonical/provider or
+        # generated paths. Global navigation/filters still perform full reruns.
+        if (os.environ.get("IGE_R14_DEGREE_FRAGMENT")=="1"
+                and st.session_state.get("active_climate_file") is not None
+                and st.session_state.get("active_canonical_climate") is None):
+            st.fragment(_render_degree_days_fragment)(df)
+        else:
+            _render_temperature_degree_days(df)
         return
 
     heat_threshold, cool_threshold = 18.0, 26.0
@@ -3436,6 +3321,152 @@ def render_temperature(
         col2.dataframe(coldest, use_container_width=True)
         fig = profile_ribbon_chart(df, "dry_bulb_temperature_c", "Daily", "Daily temperature extremes", "°C")
         render_plot(fig, temperature_interpretation(df, heat_threshold, cool_threshold))
+
+
+def _render_temperature_degree_days(df):
+    st.caption(
+        "HGT/KGT use two independent temperatures each: the limit selects the heating/cooling period, "
+        "while the temperature difference is measured to the corresponding indoor-air reference."
+    )
+    st.markdown("**Heating degree metric (HGT)**")
+    heat_col1, heat_col2 = st.columns(2)
+    heating_indoor = heat_col1.slider(
+        "Heating indoor air temperature [°C]",
+        10.0,
+        30.0,
+        20.0,
+        0.5,
+        key="degree_heating_indoor_c",
+        help="Indoor-air reference used for the HGT temperature difference.",
+    )
+    heating_limit = heat_col2.slider(
+        "Heating limit [°C]",
+        -5.0,
+        25.0,
+        12.0,
+        0.5,
+        key="degree_heating_limit_c",
+        help="Only intervals/days with mean outdoor temperature below this limit contribute to HGT.",
+    )
+    if heating_limit > heating_indoor:
+        st.error("Heating limit must not exceed heating indoor air temperature.")
+        return
+
+    st.markdown("**Cooling degree metric (KGT)**")
+    cool_col1, cool_col2 = st.columns(2)
+    cooling_indoor = cool_col1.slider(
+        "Cooling indoor air temperature [°C]",
+        10.0,
+        30.0,
+        20.0,
+        0.5,
+        key="degree_cooling_indoor_c",
+        help="Indoor-air reference used for the KGT temperature difference.",
+    )
+    cooling_limit = cool_col2.slider(
+        "Cooling limit [°C]",
+        10.0,
+        35.0,
+        20.0,
+        0.1,
+        key="degree_cooling_limit_c",
+        help="Only intervals/days with mean outdoor temperature above this limit contribute to KGT.",
+    )
+    st.caption(
+        f"Current definitions: HGT {heating_indoor:g}/{heating_limit:g} and "
+        f"KGT {cooling_indoor:g}/{cooling_limit:g}."
+    )
+
+    method_col, aggregation_col = st.columns(2)
+    metric = method_col.radio(
+        "Degree metric",
+        ["Degree-hours", "Degree-days"],
+        horizontal=True,
+        help=(
+            "Degree-hours use every source interval. Degree-days first calculate the daily mean outdoor temperature; "
+            "they are not obtained by simply dividing degree-hours by 24."
+        ),
+    )
+    aggregation = aggregation_col.selectbox(
+        "Aggregation",
+        ["Daily", "Weekly", "Monthly", "Seasonal", "Annual"],
+        index=2,
+        key="degree_metric_aggregation",
+    )
+    table = degree_metric_table(
+        df,
+        heating_indoor_c=heating_indoor,
+        heating_limit_c=heating_limit,
+        cooling_indoor_c=cooling_indoor,
+        cooling_limit_c=cooling_limit,
+        metric=metric,
+        aggregation=aggregation,
+    )
+    unit = str(table.attrs.get("unit", "K·h" if metric == "Degree-hours" else "K·d"))
+
+    plot_data = table.reset_index()
+    plot_data = plot_data.rename(columns={plot_data.columns[0]: "Period"})
+    plot_data["Period"] = display_period_labels(table.index, aggregation, time_basis(df))
+
+    series_names = [str(column) for column in table.columns]
+    long = plot_data.melt(id_vars="Period", var_name="Series", value_name="Value")
+    fig = px.bar(
+        long,
+        x="Period",
+        y="Value",
+        color="Series",
+        barmode="group",
+        title=(
+            f"{aggregation} heating and cooling {metric.lower()} "
+            f"(HGT {heating_indoor:g}/{heating_limit:g}; KGT {cooling_indoor:g}/{cooling_limit:g})"
+        ),
+        color_discrete_map={name: metric_color(name) for name in series_names},
+    )
+    fig.update_layout(
+        template="plotly_white",
+        xaxis_title="Period",
+        yaxis_title=unit,
+        legend_title_text="Indicator",
+        margin=dict(l=40, r=20, t=70, b=45),
+    )
+    from epw_climate_analyzer.degree_metrics import degree_legend_below
+    degree_legend_below(fig)
+    fig.update_yaxes(rangemode="tozero")
+    st.caption(
+        "Degree-hours integrate the temperature difference at each source interval. "
+        "Degree-days use daily mean outdoor temperature before applying the heating/cooling base. "
+        "Heating and cooling bars are grouped because they are separate indicators, not additive components of one total."
+    )
+    render_plot(
+        fig,
+        degree_metric_interpretation(
+            table,
+            heating_indoor_c=heating_indoor,
+            heating_limit_c=heating_limit,
+            cooling_indoor_c=cooling_indoor,
+            cooling_limit_c=cooling_limit,
+            metric=metric,
+        ),
+    )
+    return
+
+
+def _render_degree_days_fragment(df):
+    """R14 EPW pilot: a single chart group, identical calculation renderer."""
+    from epw_climate_analyzer.chart_lifecycle import release_page
+    from epw_climate_analyzer.p6_report import INTERPRETATION_KEY
+    state=st.session_state
+    release_page(state)
+    state.pop(INTERPRETATION_KEY,None)
+    state["_mem_r2_chart_ordinal"]=0
+    state["_plotly_element_counter"]=0
+    state["_r14_degree_fragment_runs"]=state.get("_r14_degree_fragment_runs",0)+1
+    state["_active_filtered_export_df"]=df
+    try:
+        _render_temperature_degree_days(df)
+        st.caption(f"R14 degree pilot: full {state.get('_r14_full_runs',0)}; fragment {state['_r14_degree_fragment_runs']}")
+    finally:
+        state.pop("_active_filtered_export_df",None)
 
 
 def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metrics: bool = True) -> None:
@@ -6173,6 +6204,9 @@ def render_generated_climate_analysis(dataset) -> None:
 
 def main() -> None:
     """Run the Streamlit Climate Analyzer application."""
+    import os
+    if os.environ.get("IGE_R14_DEGREE_FRAGMENT")=="1":
+        st.session_state["_r14_full_runs"]=st.session_state.get("_r14_full_runs",0)+1
     st.sidebar.caption("Building Energy Tools")
     st.sidebar.title(APP_NAME)
     st.sidebar.caption(APP_RELEASE_LABEL)

@@ -128,6 +128,11 @@ def _collect_inventory(state,process):
     from .memory_recovery import allocator_snapshot, recovery_summary
     from .process_memory import container_process_inventory
     result["container_processes"]=container_process_inventory()
+    from .byte_cache import native_owner_enabled
+    result["r14_pilot"]={"native_owner":native_owner_enabled(),
+                         "degree_fragment":os.environ.get("IGE_R14_DEGREE_FRAGMENT")=="1",
+                         "full_runs":state.get("_r14_full_runs",0),
+                         "degree_fragment_runs":state.get("_r14_degree_fragment_runs",0)}
     from .runtime_loop_patch import status as runtime_loop_status
     result["runtime_loop"]=runtime_loop_status()
     if process.get("limit",0)-process.get("used",0)>256*m.MIB:

@@ -189,6 +189,27 @@ def _session_context():
     import streamlit as st
     return st.session_state,ctx.session_id,Runtime.exists()
 
+_NATIVE_OWNER_FACTORY=None
+
+def native_owner_enabled():
+    import os
+    return os.environ.get("IGE_R14_NATIVE_OWNER")=="1"
+
+def _release_native_owner(owner):
+    # Native callback can execute outside a script context. Never read other
+    # session state or remove public caches.
+    owner.clear(close=True)
+
+def _native_owner():
+    global _NATIVE_OWNER_FACTORY
+    with _REGISTRY_LOCK:
+        if _NATIVE_OWNER_FACTORY is None:
+            import streamlit as st
+            _NATIVE_OWNER_FACTORY=st.cache_resource(scope="session",max_entries=1,
+                on_release=_release_native_owner)(SessionCacheOwner)
+        factory=_NATIVE_OWNER_FACTORY
+    return factory()
+
 def session_pool(name,budget,entries,ttl=None):
     state,session_id,served=_session_context()
     if state is None:
@@ -197,7 +218,7 @@ def session_pool(name,budget,entries,ttl=None):
         return ByteLRU(name,budget,entries,ttl) if served else pool(name,budget,entries,ttl)
     owner=state.get(SESSION_CACHE_KEY)
     if not isinstance(owner,SessionCacheOwner):
-        owner=SessionCacheOwner()
+        owner=_native_owner() if served and native_owner_enabled() else SessionCacheOwner()
         state[SESSION_CACHE_KEY]=owner
         with _REGISTRY_LOCK:_SESSION_OWNERS[session_id]=owner
     return owner.pool(name,budget,entries,ttl)

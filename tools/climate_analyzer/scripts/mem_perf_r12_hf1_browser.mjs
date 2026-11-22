@@ -86,6 +86,31 @@ try{
    await upload(p,'hf1-a.epw',a);
    await snapshot(p,'epw-a',cycle);
    await graph(p,'Climate — Temperature');
+   if(process.env.IGE_R14_DEGREE_FRAGMENT==='1'){
+     const group=p.getByTestId('stSelectbox').filter({hasText:'Analysis type'});
+     await group.getByRole('combobox').click();
+     await p.getByRole('option',{name:'Degree days',exact:true}).click();
+     const marker=p.getByText(/^R14 degree pilot: full /);
+     await marker.waitFor();
+     await settle(p);
+     const parse=s=>s.match(/full (\d+); fragment (\d+)/).slice(1).map(Number);
+     const initial=parse(await marker.innerText());
+     const slider=p.getByRole('slider').first();
+     await slider.focus();
+     await slider.press('ArrowRight');
+     await p.waitForFunction(n=>Array.from(document.querySelectorAll('[data-testid="stCaptionContainer"]')).some(e=>{
+       const m=e.innerText.match(/R14 degree pilot: full (\d+); fragment (\d+)/);
+       return m&&Number(m[2])>n;
+     }),initial[1],{timeout:30000});
+     const after=parse(await marker.innerText());
+     if(after[0]!==initial[0])throw Error('Degree interaction executed full app');
+     await p.getByRole('button',{name:'Add to report',exact:true}).first().click();
+     await p.getByText(/Diagram added to report/).waitFor({timeout:30000});
+     // Keep the lifecycle fixture independent of intentionally saved report data.
+     await settle(p);
+     const pilot=await snapshot(p,'degree-fragment',cycle);
+     if(!pilot.r14_pilot.native_owner||!pilot.r14_pilot.degree_fragment)throw Error('Pilot not activated');
+   }
    await graph(p,'Climate — Wind');
    await snapshot(p,'graphs-a',cycle);
    await nav(p,'Start — Climate source');

@@ -47,3 +47,15 @@ Two matching launch targets were found in production, one no longer listening
 on TCP. No automatic termination is authorized by this evidence. Platform
 support or a controlled operator reboot is needed to establish and restore
 single-instance operation. No ongoing reboot schedule is part of R14.
+
+## R14.3 candidate implementation
+The opt-in IGE_R14_NATIVE_OWNER=1 wraps the unchanged SessionCacheOwner in
+Streamlit's session resource ownership and closes byte pools on native
+release. The prior session-state alias and byte budgets remain. The
+IGE_R14_DEGREE_FRAGMENT=1 pilot is confined to EPW Temperature / Degree days;
+full navigation and global filters still rerun. The degree formula/rendering
+body is extracted without numerical changes. Report capture and per-fragment
+export state are exercised by a dedicated real-app candidate CI workflow.
+These flags default OFF; no production migration until paired evidence is
+available. Shared compatibility wrappers still need explicit dependency
+refactoring. Do not claim stateless compatibility from this pilot.
