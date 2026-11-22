@@ -46,7 +46,8 @@ async function snapshot(p,stage,cycle){
  const v=JSON.parse(await fs.readFile(filename,'utf8'));
  if(v.snapshot_schema!=='MEM-PERF-R13-HF1')throw Error('Wrong runtime schema');
  rows.push({cycle,stage,memory:v.memory,epw:v.epw_lifecycle,session:v.session_cache_summary,
-            reaper:v.session_runtime.session_reaper,processes:v.container_processes,library:v.library_footprint});
+            reaper:v.session_runtime.session_reaper,processes:v.container_processes,library:v.library_footprint,
+            allocator:v.allocator,retiredReferences:v.retired_reference_diagnostics});
  return v;
 }
 async function nav(p,label){
@@ -65,14 +66,15 @@ async function graph(p,label){
  await p.locator('[data-testid="stPlotlyChart"]').first().waitFor({timeout:90000});
  await settle(p);
 }
-async function freshIdle(p,previous,cycle){
+async function freshIdle(p,previous,cycle,minimumCloses){
  const deadline=performance.now()+20000;
  let value;
  do{
    await pause(1200);
    value=await snapshot(p,'idle-observer',cycle);
    const idle=value.session_runtime.session_reaper.last_idle_server_sample;
-   if(idle&&idle.captured_at_utc!==previous&&idle.session_caches.owners===0&&idle.session_caches.entries===0)return idle;
+   if(idle&&idle.captured_at_utc!==previous&&idle.active_sessions===0&&
+      idle.native_closes>=minimumCloses&&idle.session_caches.owners===0&&idle.session_caches.entries===0)return idle;
  }while(performance.now()<deadline);
  throw Error('No new zero-session idle sample');
 }
@@ -109,12 +111,14 @@ try{
    await p.getByRole('heading',{name:'Upload an EPW weather file'}).waitFor({timeout:90000});
    const reload=await snapshot(p,'reload',cycle);
    if(reload.session_resources.some(r=>r.resource==='active_climate_file'))throw Error('Reload retained EPW');
+   const afterReload=reload.session_runtime.session_reaper;
+   const minimumCloses=(afterReload.native_closes||0)+1;
    await ctx.close();
    // No observer connected during native shutdown and recovery.
    await pause(3000);
    ctx=await browser.newContext({acceptDownloads:true});
    p=await open(ctx);
-   lastIdle=await freshIdle(p,previous,cycle);
+   lastIdle=await freshIdle(p,previous,cycle,minimumCloses);
    if(!baseline)baseline=lastIdle;
    const live=lastIdle.epw_lifecycle?.alive||{};
    if(Object.values(live).some(n=>n>0))throw Error('Retained EPW objects at zero sessions: '+JSON.stringify(live));

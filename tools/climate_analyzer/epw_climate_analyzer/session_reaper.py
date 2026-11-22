@@ -244,6 +244,8 @@ def _recover_if_idle(manager,cache,reaped):
         from .epw_lifecycle import lifecycle_summary
         _set(last_idle_server_sample={"memory":result["after_trim"],
               "captured_at_utc":result["captured_at_utc"],
+              "active_sessions":0,"native_closes":_STATUS.get("native_closes",0),
+              "allocator":result.get("allocator_after",{}),
               "session_caches":session_cache_summary(),
               "closed_session_refs_alive":sum(ref() is not None for ref in _CLOSED_REFS),
               "epw_lifecycle":lifecycle_summary(),

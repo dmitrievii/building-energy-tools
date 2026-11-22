@@ -29,6 +29,9 @@ async function sample(s){
 async function generate(s){
  await s.p.getByRole('button',{name:'Generate test chart'}).click();
  await s.p.locator('[data-testid="stPlotlyChart"]').waitFor({timeout:30000});
+ await s.p.waitForFunction(()=>Array.from(document.querySelectorAll('[data-testid="stText"]')).some(el=>{
+   try{return el.innerText.startsWith('R12:')&&JSON.parse(el.innerText.slice(4)).private.reduce((n,r)=>n+r.entries,0)===1;}catch{return false;}
+ }),{},{timeout:30000});
  const v=await sample(s);
  if(v.private.reduce((n,r)=>n+r.entries,0)!==1)throw Error('private cache missing');
  return v;
