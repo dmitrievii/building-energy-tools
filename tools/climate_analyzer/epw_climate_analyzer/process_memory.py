@@ -44,7 +44,11 @@ def _identity(base,uptime,app_script):
                 # target file contents or expose a raw path.
                 candidate=Path(arg)
                 if not candidate.is_absolute():candidate=(base/"cwd").resolve()/candidate
-                if candidate.resolve()==app_script:matches=True
+                resolved=candidate.resolve()
+                if resolved==app_script:matches=True
+                if resolved==app_script.parent/"scripts"/"run_managed_climate.py":
+                    matches=True
+                    streamlit=True
             result.update(argv_classification="classified",streamlit_launcher=streamlit,
                           climate_app_target=matches,
                           role_hint=("climate-analyzer-launcher" if streamlit and matches else
