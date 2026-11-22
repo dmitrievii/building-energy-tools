@@ -459,6 +459,39 @@ class AtlasTests(unittest.TestCase):
                 self.assertIn("src='plotly.min.js'",z.read(name).decode())
             self.assertEqual(sum(z.read(n).count(b"Plotly.newPlot(") for n in metadata["html_files"]),61)
 
+    def test_html_memory_guard_credits_only_reclaimable_cache(self):
+        from unittest.mock import patch
+        from tempfile import TemporaryDirectory
+        from pathlib import Path
+        from epw_climate_analyzer import p66_memory as m
+        with TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            (root/"memory.stat").write_text(f"anon {2135*m.MIB}\nfile {751*m.MIB}\nshmem 0\ninactive_file {638*m.MIB}\n")
+            with patch.object(m,"_memory_reading",return_value=(3031*m.MIB,3072*m.MIB,root)):
+                self.assertEqual(m.html_memory_headroom(),(3031*m.MIB,3072*m.MIB,319*m.MIB))
+                m.require_html_headroom()
+                with self.assertRaises(MemoryError):m.require_headroom()
+                (root/"memory.stat").write_text(f"anon {3000*m.MIB}\nfile {20*m.MIB}\ninactive_file {20*m.MIB}\nshmem 0\n")
+                with self.assertRaises(MemoryError):m.require_html_headroom("fixture")
+                (root/"memory.stat").unlink()
+                with self.assertRaises(MemoryError):m.require_html_headroom()
+
+    def test_html_panel_preserves_safe_plotly_json(self):
+        from epw_climate_analyzer.p66_export import _html_panel
+        import plotly.graph_objects as go
+        import re
+        df=self.fixture();d=next(d for d in c.catalogue(df,{},c.REP) if d.status=="available")
+        f=go.Figure(go.Scatter(x=[1,2],y=[3,4],name="</script><tag>&"))
+        panel=_html_panel(d,f,"Interpretation",1)
+        payload=re.search(r"const f1=(.*?);Plotly.newPlot",panel).group(1)
+        self.assertNotIn("</script>",payload)
+        import json
+        decoded=json.loads(payload)
+        self.assertEqual(decoded["data"][0]["name"],"</script><tag>&")
+        self.assertEqual(decoded["data"][0]["y"],[3,4])
+        self.assertTrue(decoded["layout"]["autosize"])
+        self.assertNotIn("width",decoded["layout"])
+
     def test_batches_cover_all_admitted_and_guard(self):
         from unittest.mock import patch
         from epw_climate_analyzer.p66_export import catalogue_batches

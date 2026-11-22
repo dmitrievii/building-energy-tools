@@ -8,7 +8,7 @@ import zipfile
 import tempfile
 import gc
 import threading
-from .p66_memory import require_headroom,EXPORT_LOCK as _EXPORT_LOCK
+from .p66_memory import require_headroom,require_html_headroom,EXPORT_LOCK as _EXPORT_LOCK
 from .p6_static_render import render_png,export_headroom,release_render_worker
 from collections import Counter
 from dataclasses import asdict
@@ -19,7 +19,6 @@ import plotly.io as pio
 from .p66_catalogue import LEVELS
 from .p66_render import make_figure,NotApplicable
 from .p6_report_structure import CHAPTERS,concise_context,site_details,locator_figure,capture_statistics,report_figure,zone_legend_entries,complex_figure
-from .p6_report import _script_json
 
 MAX_ARCHIVE_BYTES=32*1024*1024
 HTML_PART_BYTES=4*1024*1024
@@ -217,10 +216,14 @@ def _html_panel(d,fig,note,seq):
     rows=diurnal_panel_rows(fig)
     h=max(380,rows*155) if rows else (540 if complex_figure(fig) else 380)
     f=report_figure(fig,width_pt=780,height_pt=h,external_zone_legend=bool(zones))
-    raw=json.loads(pio.to_json(f))
+    f.update_layout(autosize=True,width=None)
+    # Plotly already provides valid compact JSON. Avoid expanding every
+    # array into Python objects and serializing the entire figure twice.
+    raw=pio.to_json(f,pretty=False).replace("<","\\u003c").replace(">","\\u003e").replace("&","\\u0026")
+    del f
     key=""
     if zones:key='<p><b>Bioclimatic zones</b></p><div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">'+ "".join('<div><span style="display:inline-block;width:12px;height:9px;border:1px dashed #39447d;background:'+escape(color,quote=True)+'"></span> '+escape(name)+'</div>' for _,name,color in zones)+'</div>'
-    return f'<section class="panel"><h3>{escape(d.title)}</h3><div class="plot" id="chart{seq}"></div>'+key+f'<p style="white-space:pre-wrap">{escape(note)}</p></section><script>const f{seq}={_script_json(raw)};f{seq}.layout.autosize=true;delete f{seq}.layout.width;Plotly.newPlot("chart{seq}",f{seq}.data,f{seq}.layout,{{responsive:true}});</script>'
+    return f'<section class="panel"><h3>{escape(d.title)}</h3><div class="plot" id="chart{seq}"></div>'+key+f'<p style="white-space:pre-wrap">{escape(note)}</p></section><script>const f{seq}={raw};Plotly.newPlot("chart{seq}",f{seq}.data,f{seq}.layout,{{responsive:true}});</script>'
 
 def catalogue_batches(diagrams,batch_size=20):
     if not 1<=batch_size<=MAX_BATCH:raise ValueError("Batch size outside supported range.")
@@ -232,9 +235,13 @@ def generate_atlas(diagrams,df,context,**kwargs):
     if not _EXPORT_LOCK.acquire(blocking=False):
         raise RuntimeError("Another atlas export is in progress. Try again after it finishes.")
     try:
+        cache_dir=kwargs.pop("render_cache_dir",None)
+        if kwargs.get("mode")==PDF_MODES[2]:
+            require_html_headroom("HTML export admission")
+            return _generate_atlas(diagrams,df,context,**kwargs)
         require_headroom()
         from .p6_static_render import render_session
-        with render_session(cache_dir=kwargs.pop("render_cache_dir",None)):
+        with render_session(cache_dir=cache_dir):
             return _generate_atlas(diagrams,df,context,**kwargs)
     finally:
         gc.collect()
@@ -256,6 +263,10 @@ def _generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive
     writer=None
     if mode=="Single PDF":writer=PdfWriter(title=title,paper=paper,orientation=orientation,per_page=per_page,context=context,df=df,image_renderer=image_renderer)
     processed=0
+    is_html=mode==PDF_MODES[2]
+    def guard(stage):
+        if is_html:require_html_headroom(stage)
+        else:export_headroom(stage)
     notes={}
     html_files=[]
     def check_archive():
@@ -289,11 +300,11 @@ def _generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive
             for i,d in entries:
                 if progress:progress(processed,len(available),d.title)
                 processed+=1
-                export_headroom(f"Atlas before chart {processed}: {d.title}")
+                guard(f"Atlas before chart {processed}: {d.title}")
                 fig=None
                 try:
                     fig,note=make_figure(d,df,context,reference_df,cache)
-                    export_headroom(f"Atlas prepared chart {processed}: {d.title}")
+                    guard(f"Atlas prepared chart {processed}: {d.title}")
                     if writer:writer.add(d,fig,note)
                     else:
                         seq+=1;panel=_html_panel(d,fig,note,seq)
@@ -308,8 +319,10 @@ def _generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive
                 except Exception as exc:manifest[i]["status"]="failed";manifest[i]["reason"]=f"{type(exc).__name__}: {exc}"
                 finally:
                     del fig
+                if is_html and (len(cache)>8 or processed%10==0):
+                    cache.clear()
                 if processed%5==0:gc.collect()
-                export_headroom(f"Atlas after chart {processed}: {d.title}")
+                guard(f"Atlas after chart {processed}: {d.title}")
                 # Explicit memory budget; never pretend to have generated the
                 # unprocessed tail if the deployment cannot contain an atlas.
                 if zbuf.tell()>MAX_ARCHIVE_BYTES or writer and writer.out.tell()>MAX_ARCHIVE_BYTES:
@@ -340,7 +353,8 @@ def _generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive
             archive.writestr("atlas_metadata.json",json.dumps(metadata,ensure_ascii=False,indent=2,default=str))
             archive.close()
             if zbuf.tell()>MAX_ARCHIVE_BYTES:raise MemoryError("Atlas batch exceeds 32 MiB; reduce batch size.")
-            require_headroom()
+            if is_html:require_html_headroom("HTML archive finalization")
+            else:require_headroom()
             zbuf.seek(0);output=zbuf.read()
         else:
             release_render_worker()

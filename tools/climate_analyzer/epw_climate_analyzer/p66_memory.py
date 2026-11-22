@@ -71,3 +71,37 @@ def require_headroom():
         used,cap=container_memory() or value
         if used+reserve>=cap:
             raise MemoryError(f"Container memory pressure: {used/MIB:.0f}/{cap/MIB:.0f} MiB used. Export stopped safely. Release previous downloads or choose a smaller batch and retry."+_pressure_details())
+
+
+def html_memory_headroom():
+    """Estimate conservative usable memory for browserless streaming export.
+
+    Credit at most half of inactive ordinary file cache, excluding shared
+    memory. Missing or malformed statistics receive no credit. This is not
+    an OOM guarantee and is deliberately not used by the PDF renderer.
+    """
+    reading=_memory_reading()
+    if reading is None:return None
+    used,cap,root=reading
+    inactive=0
+    try:
+        records={k:int(v) for k,v in (line.split() for line in (root/"memory.stat").read_text().splitlines())}
+        file_bytes=records.get("file",records.get("total_cache",records.get("cache",0)))
+        shared=records.get("shmem",records.get("total_shmem",0))
+        inactive=min(records.get("total_inactive_file",records.get("inactive_file",0)),max(0,file_bytes-shared),used)
+    except (OSError,ValueError):pass
+    credit=max(0,inactive)//2
+    return used,cap,credit
+
+def require_html_headroom(stage="HTML atlas"):
+    reading=html_memory_headroom()
+    if reading is None:return
+    used,cap,credit=reading
+    reserve=min(256*MIB,max(96*MIB,int(cap*.20)))
+    if used-credit+reserve>=cap:
+        gc.collect();_trim_allocator()
+        used,cap,credit=html_memory_headroom() or reading
+        if used-credit+reserve>=cap:
+            raise MemoryError(f"Container memory pressure: {used/MIB:.0f}/{cap/MIB:.0f} MiB used; "
+                f"conservative file-cache credit {credit/MIB:.0f} MiB. Export stopped safely. "
+                f"Release previous downloads or choose a smaller batch and retry. Stage: {stage}."+_pressure_details())
