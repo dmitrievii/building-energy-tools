@@ -9,6 +9,7 @@ from uuid import uuid4
 
 
 import streamlit as st
+from epw_climate_analyzer.byte_cache import bounded_cache,MIB
 
 # Streamlit can retain imported package modules across an app-script hot deploy.
 # Refresh the navigation contract only when it predates the P3 page.
@@ -426,7 +427,7 @@ st.markdown(
 )
 
 
-@st.cache_data(show_spinner=True, max_entries=4, ttl=3600)
+@bounded_cache(name="epw_analysis",max_bytes=32*MIB,max_entries=4,ttl=3600)
 def load_epw_from_bytes(
     file_name: str,
     payload: bytes,
@@ -555,7 +556,7 @@ def clear_active_climate_file() -> None:
 GEOSPHERE_METADATA_CACHE_TTL_SECONDS = 18 * 60 * 60
 
 
-@st.cache_data(show_spinner=False, ttl=GEOSPHERE_METADATA_CACHE_TTL_SECONDS, max_entries=2)
+@bounded_cache(name="geosphere_metadata",max_bytes=8*MIB,max_entries=2,ttl=GEOSPHERE_METADATA_CACHE_TTL_SECONDS)
 def _cached_geosphere_metadata_bundle(resource_id: str) -> tuple:
     """Cache GeoSphere metadata and its normalized station capability index.
 
@@ -598,7 +599,7 @@ def cached_geosphere_metadata() -> dict:
     return cached_geosphere_metadata_bundle()[0]
 
 
-@st.cache_resource(show_spinner=False, max_entries=1)
+@bounded_cache(name="station_catalog",max_bytes=32*MIB,max_entries=1,resource=True)
 def _cached_station_catalog_by_identity(catalog_version: str, catalog_sha256: str) -> pd.DataFrame:
     """Load one reviewed catalog snapshot under an immutable cache identity."""
     from epw_climate_analyzer.catalog_runtime import load_production_station_catalog
@@ -645,13 +646,13 @@ def _onebuilding_map_cache_key(
     return f"{catalog_identity}|q={search_text.strip().casefold()}|c={country_key}|d={dataset_key}"
 
 
-@st.cache_resource(show_spinner=False, max_entries=4)
+@bounded_cache(name="station_group_snapshot",max_bytes=16*MIB,max_entries=1,resource=True)
 def _cached_station_group_snapshot(catalog_version: str, catalog_sha256: str) -> pd.DataFrame:
     """Load the release-time physical-station snapshot once per immutable catalog identity."""
     return load_station_group_snapshot(catalog_version, catalog_sha256)
 
 
-@st.cache_resource(show_spinner=False, max_entries=4)
+@bounded_cache(name="station_filter_options",max_bytes=1*MIB,max_entries=4,resource=True)
 def _cached_catalog_filter_options(catalog_identity: str, _catalog: pd.DataFrame) -> tuple[tuple[str, ...], tuple[str, ...]]:
     """Cache stable country/dataset selector values for one reviewed catalog snapshot."""
     countries = tuple(sorted(value for value in _catalog["country"].dropna().unique().tolist() if str(value).strip()))
@@ -659,14 +660,14 @@ def _cached_catalog_filter_options(catalog_identity: str, _catalog: pd.DataFrame
     return countries, datasets
 
 
-@st.cache_resource(show_spinner=False, max_entries=8)
+@bounded_cache(name="filtered_station_groups",max_bytes=16*MIB,max_entries=4,resource=True)
 def _cached_grouped_station_catalog(map_cache_key: str, _catalog: pd.DataFrame) -> pd.DataFrame:
     """Cache filtered physical-station grouping; the unfiltered route uses the release snapshot."""
     return grouped_station_catalog(_catalog)
 
 
 
-@st.cache_data(show_spinner=False, max_entries=8)
+@bounded_cache(name="station_group_options",max_bytes=4*MIB,max_entries=4)
 def _cached_station_group_options(
     map_cache_key: str,
     limit: int,
@@ -676,7 +677,7 @@ def _cached_station_group_options(
     return station_group_options_from_groups(_station_groups, limit=limit)
 
 
-@st.cache_data(show_spinner=False, max_entries=8)
+@bounded_cache(name="station_markers",max_bytes=8*MIB,max_entries=4)
 def _cached_station_marker_payload(
     map_cache_key: str,
     _station_groups: pd.DataFrame,
@@ -685,7 +686,7 @@ def _cached_station_marker_payload(
     return station_marker_payload(_station_groups)
 
 
-@st.cache_data(show_spinner=False, max_entries=512)
+@bounded_cache(name="station_group_rows",max_bytes=4*MIB,max_entries=64)
 def _cached_catalog_rows_for_station_group(
     map_cache_key: str,
     station_group_id: str,
@@ -2048,7 +2049,7 @@ def sidebar_filters(df: pd.DataFrame) -> pd.DataFrame:
         )
     else:
         basis = CHRONOLOGICAL
-    ranged = with_time_basis(ranged, basis)
+    # Apply time-basis metadata only to the final filtered frame below.
 
     # Existing recurring month/hour controls are retained: they now refine the
     # absolute range instead of acting as the only global time filter.
@@ -2057,7 +2058,7 @@ def sidebar_filters(df: pd.DataFrame) -> pd.DataFrame:
     months = [MONTHS[m] for m in selected_month_names]
     hours = list(range(selected_hours[0], selected_hours[1] + 1))
     filtered = filter_by_months_and_hours(ranged, months=months, hours=hours)
-    filtered = with_time_basis(filtered, basis)
+    filtered = with_time_basis(filtered, basis, copy=False)
     st.session_state["_active_global_filter_spec"] = {
         "range_mode": range_mode,
         "year": selected_year_value,
@@ -2087,11 +2088,10 @@ def apply_active_global_filter(df: pd.DataFrame) -> pd.DataFrame:
     elif mode == "Custom":
         ranged = filter_datetime_range(df, start=spec.get("start"), end=spec.get("end"))
     basis = str(spec.get("basis", CHRONOLOGICAL))
-    ranged = with_time_basis(ranged, basis)
     months = [int(value) for value in spec.get("months", tuple(range(1, 13)))]
     hours = [int(value) for value in spec.get("hours", tuple(range(24)))]
     filtered = filter_by_months_and_hours(ranged, months=months, hours=hours)
-    return with_time_basis(filtered, basis)
+    return with_time_basis(filtered, basis, copy=False)
 
 
 def metric_cards(df: pd.DataFrame) -> None:
@@ -6300,4 +6300,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:main()
+    finally:
+        # Chart download preparation uses the current script run only.
+        st.session_state.pop("_active_filtered_export_df",None)

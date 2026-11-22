@@ -11,6 +11,7 @@ from pathlib import Path
 from time import monotonic
 
 from . import p66_memory as m
+from .byte_cache import cache_inventory,clear_recomputable_caches,session_inventory
 
 EXPORT_KEYS=("_p6_pdf","_p6_html_result","_p66_atlas_result","_utci_perf_r1_csv")
 DERIVED_KEYS=("_utci_perf_r1_result","_utci_perf_r1_sensitivity")
@@ -23,6 +24,10 @@ PAGE_KEY="_mem_perf_r1_page"
 PRESSURE_KEY="_mem_perf_r1_pressure_at"
 PRESSURE_FRACTION=.85
 PRESSURE_COOLDOWN_S=30.
+INVENTORY_KEY="_mem_perf_r4_inventory"
+EXPORT_CACHE_FRACTION=.72
+PROTECTED_KEYS=("active_climate_file","active_canonical_climate","comparison_climate_payloads",
+                "ige_engine_completed_product","_p6_report_items","_p6_custom_presets")
 
 def memory_snapshot():
     """Cgroup totals are shared across sessions; process RSS is separate."""
@@ -43,8 +48,10 @@ def memory_snapshot():
         except (OSError,ValueError):pass
     try:
         for line in Path("/proc/self/status").read_text().splitlines():
-            if line.startswith("VmRSS:"):
-                result["process_rss"]=int(line.split()[1])*1024;break
+            tag=line.split(":",1)[0]
+            key={"VmRSS":"process_rss","RssAnon":"process_anon","RssFile":"process_file",
+                 "RssShmem":"process_shmem","VmHWM":"process_hwm"}.get(tag)
+            if key:result[key]=int(line.split()[1])*1024
     except (OSError,ValueError,IndexError):pass
     return result
 
@@ -56,6 +63,29 @@ def pressure_high(snapshot):
                  max(0,snapshot.get("file",0)-snapshot.get("shared",0)),used)
     return (used-max(0,inactive)//2)>=PRESSURE_FRACTION*limit
 
+def cache_pressure(snapshot):
+    used,limit=snapshot.get("used"),snapshot.get("limit")
+    return bool(limit and used is not None and used>=EXPORT_CACHE_FRACTION*limit)
+
+def inspect_resources(state):
+    """On-demand inventory, without enabling global Python allocation tracing."""
+    import sys
+    import tracemalloc
+    result={"memory":memory_snapshot(),"shared_caches":cache_inventory(),
+            "session_resources":session_inventory(state,PROTECTED_KEYS+EXPORT_KEYS+DERIVED_KEYS+TRANSIENT_KEYS),
+            "python_allocated_blocks":getattr(sys,"getallocatedblocks",lambda:None)()}
+    if tracemalloc.is_tracing():
+        current,peak=tracemalloc.get_traced_memory()
+        result["python_traced_bytes"]=current;result["python_traced_peak_bytes"]=peak
+    try:
+        for line in Path("/proc/self/smaps_rollup").read_text().splitlines():
+            key=line.split(":",1)[0]
+            if key in ("Pss","Private_Clean","Private_Dirty","Shared_Clean","Shared_Dirty"):
+                result.setdefault("process_smaps",{})[key]=int(line.split()[1])*1024
+    except (OSError,ValueError,IndexError):pass
+    state[INVENTORY_KEY]=result
+    return result
+
 def _drop(state,keys):
     removed=[]
     for key in keys:
@@ -64,7 +94,7 @@ def _drop(state,keys):
             removed.append(key)
     return removed
 
-def cleanup(state,reason,*,exports=False,derived=False,transient=False,disk=False):
+def cleanup(state,reason,*,exports=False,derived=False,transient=False,disk=False,shared_caches=False):
     """Release selected owned references; sample before/after actual collection.
 
     A disk cache belongs to this session, but do not remove it while any export
@@ -89,10 +119,12 @@ def cleanup(state,reason,*,exports=False,derived=False,transient=False,disk=Fals
                         warnings.append("Private render cache cleanup failed: "+str(exc))
             finally:m.EXPORT_LOCK.release()
         else:warnings.append("Private render cache retained while an export is active.")
+    evicted=clear_recomputable_caches() if shared_caches else []
     gc.collect()
     m._trim_allocator()
     after=memory_snapshot()
-    result={"reason":reason,"before":before,"after":after,"released":removed,"warnings":warnings}
+    result={"reason":reason,"before":before,"after":after,"released":removed,"warnings":warnings,
+            "evicted_caches":evicted}
     state[LAST_KEY]=result
     return result
 
@@ -103,10 +135,12 @@ def prepare_export(state):
     Retain the image cache for reuse unless actual memory pressure warrants
     cleanup. Saved report entries and source frames are never deleted.
     """
+    snapshot=memory_snapshot()
     result=cleanup(state,"Before export",exports=True,derived=True,
-                   disk=pressure_high(memory_snapshot()))
+                   disk=cache_pressure(snapshot),shared_caches=cache_pressure(snapshot))
     state[EXPORT_PRE_KEY]=result
     state.pop(EXPORT_POST_KEY,None)
+    state.pop("_mem_perf_r4_launch_cleanup",None)
     return result
 
 def finish_export(state):
@@ -120,7 +154,7 @@ def dataset_changed(state):
                    transient=True,disk=True)
 
 def manual_cleanup(state):
-    return cleanup(state,"Manual cleanup",exports=True,derived=True,transient=True,disk=True)
+    return cleanup(state,"Manual cleanup",exports=True,derived=True,transient=True,disk=True,shared_caches=True)
 
 def begin_rerun(state,page):
     previous=state.get(PAGE_KEY)
@@ -135,7 +169,7 @@ def begin_rerun(state,page):
         state[PRESSURE_KEY]=now
         # Preserve ready downloads during routine navigation. New exports or
         # an explicit cleanup are the responsibility of the corresponding action.
-        cleanup(state,"Automatic memory pressure cleanup",derived=True,disk=True)
+        cleanup(state,"Automatic memory pressure cleanup",derived=True,disk=True,shared_caches=True)
 
 def _mib(value):
     return f"{value/m.MIB:,.0f} MiB" if value is not None else "Unavailable"
@@ -152,20 +186,39 @@ def render_sidebar(st):
             st.caption("Container memory is shared across sessions.")
         else:st.caption("Container memory limit unavailable on this host.")
         for key,label in (("anonymous","Anonymous memory"),("file","File-backed memory"),
-                          ("inactive_file","Inactive file cache"),("process_rss","Application process RSS")):
+                          ("inactive_file","Inactive file cache"),("process_rss","Application process RSS"),
+                          ("process_anon","Application anonymous RSS"),("process_file","Application file RSS"),
+                          ("process_shmem","Application shared-memory RSS"),("process_hwm","Application RSS high-water mark")):
             if key in snapshot:st.caption(f"{label}: {_mib(snapshot[key])}")
         st.caption("Active climate data, comparison data and saved report diagrams are retained. Prepared downloads and recomputable caches are released.")
         st.button("Clean unused caches",key="mem_perf_r1_clean",
                   on_click=manual_cleanup,args=(state,))
-        st.caption("Automatic cleanup before exports and under memory pressure is enabled.")
+        st.caption("Automatic cleanup before exports and under memory pressure is enabled. Registered shared recomputable caches may be evicted; active references and user work remain intact.")
+        inventory=cache_inventory()
+        st.caption(f"Registered cache payload: {_mib(sum(r['estimated_bytes'] for r in inventory))} / {_mib(sum(r['budget_bytes'] for r in inventory))} combined individual budgets.")
+        st.button("Inspect retained resources",key="mem_r4_inspect",on_click=inspect_resources,args=(state,))
+        inspected=state.get(INVENTORY_KEY)
+        if inspected:
+            st.caption("Last on-demand inventory; sizes are estimates and overlap with RSS. Session rows may overlap; unmeasurable objects are marked unavailable.")
+            st.dataframe([{**r,"estimated MiB":round(r["estimated_bytes"]/m.MIB,2),"budget MiB":round(r["budget_bytes"]/m.MIB,2)} for r in inspected["shared_caches"]],hide_index=True)
+            st.dataframe([{**r,"estimated MiB":round(r["estimated_bytes"]/m.MIB,2) if r["estimated_bytes"] is not None else None} for r in inspected["session_resources"]],hide_index=True)
+            st.caption(f"Python allocation blocks: {inspected['python_allocated_blocks']}. Tracemalloc is not enabled by this diagnostic.")
+            if inspected.get("process_smaps"):st.json({key:_mib(value) for key,value in inspected["process_smaps"].items()},expanded=False)
+            import json
+            st.download_button("Download memory inventory JSON",data=json.dumps(inspected,indent=2).encode(),file_name="memory_inventory.json",mime="application/json",key="mem_r4_inventory_download",on_click="ignore")
         result=state.get(LAST_KEY)
         if result:
             st.caption("Last cleanup: "+result["reason"])
             b,a=result["before"].get("used"),result["after"].get("used")
             if b is not None and a is not None:
                 st.caption(f"Container usage: {_mib(b)} → {_mib(a)} (net change {(a-b)/m.MIB:+,.0f} MiB; concurrent activity may affect measurement).")
-            st.caption(f"Released resource entries: {len(result['released'])}")
+            st.caption(f"Released session resource entries: {len(result['released'])}")
+            evicted=result.get("evicted_caches",[])
+            st.caption(f"Evicted shared cache entries: {sum(r['entries'] for r in evicted)}; estimated payload {_mib(sum(r['estimated_bytes'] for r in evicted))}.")
             for warning in result["warnings"]:st.caption(warning)
+        launch=state.get("_mem_perf_r4_launch_cleanup")
+        if launch:
+            st.caption(f"Pre-launch cache eviction: {_mib(launch['before'].get('used'))} → {_mib(launch['after'].get('used'))}.")
         pre,post=state.get(EXPORT_PRE_KEY),state.get(EXPORT_POST_KEY)
         if pre:
             st.caption("Most recent export lifecycle")

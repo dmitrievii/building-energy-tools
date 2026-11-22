@@ -14,6 +14,7 @@ from hashlib import sha256
 from pathlib import Path
 from threading import RLock
 import weakref
+from .byte_cache import pool,MIB,MISS,estimate_bytes
 
 import pandas as pd
 
@@ -36,26 +37,26 @@ from .solar import ensure_solar_radiation_components
 _RUNTIME_SOURCE_SHA256 = sha256(Path(__file__).read_bytes()).hexdigest()
 
 _HOURLY_CACHE_LOCK = RLock()
-_HOURLY_CACHE: dict[int, tuple[weakref.ReferenceType[CanonicalClimateDataset], pd.DataFrame]] = {}
-_NATIVE_DIAGNOSTIC_CACHE: dict[int, tuple[weakref.ReferenceType[CanonicalClimateDataset], pd.DataFrame]] = {}
+_HOURLY_CACHE=pool("historical_hourly",24*MIB,4)
+_NATIVE_DIAGNOSTIC_CACHE=pool("historical_native_diagnostics",12*MIB,2)
 
 
 def _remove_identity_cache_entry(
-    cache: dict[int, tuple[weakref.ReferenceType[CanonicalClimateDataset], pd.DataFrame]],
+    cache,
     cache_key: int,
 ) -> None:
     with _HOURLY_CACHE_LOCK:
-        current = cache.get(cache_key)
-        if current is not None and current[0]() is None:
-            cache.pop(cache_key, None)
+        cache.pop_if(cache_key,lambda current:current[0]() is None)
 
 
 def _canonical_hourly_for_dataset(dataset: CanonicalClimateDataset) -> pd.DataFrame:
     """Return cached canonical hourly physics on the original provider timeline."""
     key = id(dataset)
     with _HOURLY_CACHE_LOCK:
-        cached = _HOURLY_CACHE.get(key)
-        if cached is not None and cached[0]() is dataset:
+        with _HOURLY_CACHE.lock:
+            cached = _HOURLY_CACHE.get(key)
+            generation=_HOURLY_CACHE.generation
+        if cached is not MISS and cached[0]() is dataset:
             return cached[1]
 
     canonical_columns = list(dataset.available_canonical_variables)
@@ -71,7 +72,9 @@ def _canonical_hourly_for_dataset(dataset: CanonicalClimateDataset) -> pd.DataFr
 
     reference = weakref.ref(dataset, _remove)
     with _HOURLY_CACHE_LOCK:
-        _HOURLY_CACHE[key] = (reference, hourly)
+        try:size=estimate_bytes(hourly)
+        except (TypeError,ValueError,RecursionError):size=None
+        if size is not None:_HOURLY_CACHE.put(key,(reference,hourly),size+256,generation=generation)
     return hourly
 
 
@@ -113,8 +116,10 @@ def prepare_historical_native_diagnostic_frame(dataset: CanonicalClimateDataset)
     """
     key = id(dataset)
     with _HOURLY_CACHE_LOCK:
-        cached = _NATIVE_DIAGNOSTIC_CACHE.get(key)
-        if cached is not None and cached[0]() is dataset:
+        with _NATIVE_DIAGNOSTIC_CACHE.lock:
+            cached = _NATIVE_DIAGNOSTIC_CACHE.get(key)
+            generation=_NATIVE_DIAGNOSTIC_CACHE.generation
+        if cached is not MISS and cached[0]() is dataset:
             return cached[1]
 
     native = _calendar_frame(
@@ -138,7 +143,9 @@ def prepare_historical_native_diagnostic_frame(dataset: CanonicalClimateDataset)
 
     reference = weakref.ref(dataset, _remove)
     with _HOURLY_CACHE_LOCK:
-        _NATIVE_DIAGNOSTIC_CACHE[key] = (reference, native)
+        try:size=estimate_bytes(native)
+        except (TypeError,ValueError,RecursionError):size=None
+        if size is not None:_NATIVE_DIAGNOSTIC_CACHE.put(key,(reference,native),size+256,generation=generation)
     return native
 
 

@@ -86,7 +86,7 @@ def render_atlas(df,context,reference_df=None):
     signature=hashlib.sha256(json.dumps([context,coverage,chosen,[d.id for d in batch],batch_number,batch_size,title,mode,paper,orientation,per_page,"mem-r3-profile",all_html],sort_keys=True,default=str).encode()).hexdigest()
     if st.session_state.get("_p66_atlas_result") and st.session_state["_p66_atlas_result"][0]!=signature:
         st.session_state.pop("_p66_atlas_result",None)
-    from .memory_lifecycle import prepare_export,finish_export,cleanup
+    from .memory_lifecycle import prepare_export,finish_export,cleanup,cache_pressure,memory_snapshot
     if st.button("Generate complete HTML atlas" if all_html else "Generate selected batch",key="p66_generate",
                  on_click=prepare_export,args=(st.session_state,)):
         progress=st.progress(0,text="Preparing diagrams")
@@ -95,6 +95,12 @@ def render_atlas(df,context,reference_df=None):
                 progress.progress(min(100,int(100*i/max(n,1))),text=f"{i:,}/{n:,} · {label}")
             config=dict(reference_df=reference_df,title=title,paper=paper,orientation=orientation,
                         mode=mode,per_page=per_page,progress=update,coverage=coverage)
+            # The click callback runs before the script reruns; loading the
+            # source and catalogue may repopulate caches. Evict again at the
+            # actual export boundary, preserving the live frame references.
+            if cache_pressure(memory_snapshot()):
+                st.session_state["_mem_perf_r4_launch_cleanup"]=cleanup(
+                    st.session_state,"Immediately before Atlas launch",shared_caches=True,disk=True)
             if is_html:
                 from .atlas_isolation import isolated_html_atlas
                 data,manifest,metadata=isolated_html_atlas(batch,prepared,{**context,"_report_osm":True},**config)

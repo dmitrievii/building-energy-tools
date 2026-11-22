@@ -46,11 +46,14 @@ def filter_by_months_and_hours(
 ) -> pd.DataFrame:
     """Filter a climate DataFrame by selected months and hours of day."""
     attrs = dict(df.attrs)
-    data = df.copy()
-    if months:
-        data = data[data["month_index"].isin(months)]
+    # Combine the two masks before copying, preserving the legacy empty-list
+    # semantics and source row order. Return an independently owned frame.
+    mask=None
+    if months:mask=df["month_index"].isin(months)
     if hours:
-        data = data[data["hour_of_day"].isin(hours)]
+        hour_mask=df["hour_of_day"].isin(hours)
+        mask=hour_mask if mask is None else mask & hour_mask
+    data=df.copy() if mask is None or bool(mask.all()) else df.loc[mask]
     data.attrs.update(attrs)
     return data
 

@@ -46,12 +46,12 @@ def time_basis(df: pd.DataFrame) -> str:
     return value if value in VALID_TIME_BASES else CHRONOLOGICAL
 
 
-def with_time_basis(df: pd.DataFrame, basis: str) -> pd.DataFrame:
-    """Return a data copy carrying an explicit temporal interpretation."""
+def with_time_basis(df: pd.DataFrame, basis: str, *, copy: bool = True) -> pd.DataFrame:
+    """Attach temporal metadata; copy by default, or accept an owned frame."""
     if basis not in VALID_TIME_BASES:
         raise ValueError(f"Unsupported time basis: {basis}")
     attrs = dict(df.attrs)
-    out = df.copy()
+    out = df.copy() if copy else df
     out.attrs.update(attrs)
     out.attrs[TIME_BASIS_ATTR] = basis
     return out

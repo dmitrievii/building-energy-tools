@@ -10,6 +10,9 @@ on:
       - 'tools/climate_analyzer/epw_climate_analyzer/atlas_*.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/p3_comfort.py'
       - 'tools/climate_analyzer/tests/test_atlas_profiling.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/byte_cache.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/memory_lifecycle.py'
+      - 'tools/climate_analyzer/tests/test_byte_cache.py'
       - 'tools/climate_analyzer/tests/test_p67_render.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/aggregations.py'
       - 'tools/climate_analyzer/tests/test_temporal_filtering_0_6_3.py'
@@ -35,6 +38,8 @@ jobs:
       - run: python -m compileall -q app.py epw_climate_analyzer
       - run: python -m unittest discover -s tests -p test_p6_dashboard_report.py -v
       - run: python -m unittest discover -s tests -p test_memory_lifecycle.py -v
+      - run: python -m unittest discover -s tests -p test_byte_cache.py -v
+      - run: python -m unittest discover -s tests -p test_canonical_hourly_cache_0_6_5.py -v
       - run: python -m unittest discover -s tests -p test_peak_memory.py -v
       - run: python -m unittest discover -s tests -p test_atlas_profiling.py -v
       - run: python -m unittest discover -s tests -p test_p66_atlas.py -v
