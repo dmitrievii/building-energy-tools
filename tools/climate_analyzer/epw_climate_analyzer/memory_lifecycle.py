@@ -9,6 +9,7 @@ from __future__ import annotations
 import gc
 from pathlib import Path
 from time import monotonic
+import json
 from datetime import datetime, timezone
 
 from . import p66_memory as m
@@ -16,7 +17,7 @@ from .byte_cache import cache_inventory,clear_recomputable_caches,session_invent
 
 RUNTIME_MEMORY_SCHEMA="MEM-PERF-R6"
 RUNTIME_CHART_SCHEMA="MEM-PERF-R7"
-RUNTIME_INVENTORY_SCHEMA="MEM-PERF-R9"
+RUNTIME_INVENTORY_SCHEMA="MEM-PERF-R10"
 EXPORT_KEYS=("_p6_pdf","_p6_html_result","_p66_atlas_result","_utci_perf_r1_csv")
 DERIVED_KEYS=("_utci_perf_r1_result","_utci_perf_r1_sensitivity")
 TRANSIENT_KEYS=("_p6_displayed_charts","_active_filtered_export_df")
@@ -29,6 +30,8 @@ PRESSURE_KEY="_mem_perf_r1_pressure_at"
 PRESSURE_FRACTION=.85
 PRESSURE_COOLDOWN_S=30.
 INVENTORY_KEY="_mem_perf_r4_inventory"
+INVENTORY_BYTES_KEY="_mem_r10_inventory_bytes"
+DIAGNOSTIC_KEYS=(INVENTORY_KEY,INVENTORY_BYTES_KEY,"_mem_r5_heap_census","_mem_r5_heap_census_at")
 EXPORT_CACHE_FRACTION=.72
 PROTECTED_KEYS=("active_climate_file","active_canonical_climate","comparison_climate_payloads",
                 "canonical_comparison_climates","ige_engine_completed_product","_p6_report_items","_p6_custom_presets")
@@ -78,14 +81,14 @@ def cache_pressure(snapshot):
     used,limit=snapshot.get("used"),snapshot.get("limit")
     return bool(limit and used is not None and used>=EXPORT_CACHE_FRACTION*limit)
 
-def inspect_resources(state):
-    """On-demand inventory, without enabling global Python allocation tracing."""
+def _collect_inventory(state,process):
+    """On-demand inventory; never enable global Python allocation tracing."""
     import sys
     import os
     import tracemalloc
-    result={"snapshot_schema":"MEM-PERF-R9","captured_at_utc":datetime.now(timezone.utc).isoformat(),
+    result={"snapshot_schema":"MEM-PERF-R10","captured_at_utc":datetime.now(timezone.utc).isoformat(),
             "capture_phase":"on-demand; before next page rendering when called by widget callback",
-            "memory":memory_snapshot(),"shared_caches":cache_inventory(),
+            "memory":process,"shared_caches":cache_inventory(),
             "session_resources":session_inventory(state,PROTECTED_KEYS+EXPORT_KEYS+DERIVED_KEYS+TRANSIENT_KEYS),
             "python_allocated_blocks":getattr(sys,"getallocatedblocks",lambda:None)()}
     # Inspect module presence without importing expensive analysis libraries.
@@ -137,8 +140,30 @@ def inspect_resources(state):
         result["heap_census"]=state["_mem_r5_heap_census"]
         result["heap_census_captured_at_utc"]=state.get("_mem_r5_heap_census_at")
         result["heap_census_note"]="Separate historical measurement; not refreshed by resource inspection."
-    state[INVENTORY_KEY]=result
     return result
+
+def inspect_resources(state):
+    """One capture and one serialization per explicit refresh.
+
+    Keep diagnostic events separate from the scientific interaction history.
+    The current capture delta is embedded in its own JSON; serialization is
+    sampled afterwards and appears in the next inventory's diagnostic ledger.
+    """
+    from .startup_runtime import begin_phase,end_phase
+    release_inventory(state,include_heap=False)
+    capture=begin_phase()
+    result=_collect_inventory(state,capture[1])
+    result["diagnostic_capture"]=end_phase(capture,"inventory capture callback",diagnostic=True)
+    serialization=begin_phase()
+    payload=json.dumps(result,ensure_ascii=True,separators=(",",":")).encode("utf-8")
+    state[INVENTORY_KEY]=result
+    state[INVENTORY_BYTES_KEY]=payload
+    end_phase(serialization,"inventory JSON serialization",diagnostic=True)
+    return result
+
+def release_inventory(state,include_heap=True):
+    keys=DIAGNOSTIC_KEYS if include_heap else (INVENTORY_KEY,INVENTORY_BYTES_KEY)
+    return _drop(state,keys)
 
 def inspect_recovery(state):
     from .memory_recovery import recovery_probe
@@ -165,7 +190,7 @@ def _drop(state,keys):
             removed.append(key)
     return removed
 
-def cleanup(state,reason,*,exports=False,derived=False,transient=False,disk=False,shared_caches=False,keep_shared=()):
+def cleanup(state,reason,*,exports=False,derived=False,transient=False,disk=False,shared_caches=False,keep_shared=(),diagnostics=False):
     """Release selected owned references; sample before/after actual collection.
 
     A disk cache belongs to this session, but do not remove it while any export
@@ -174,6 +199,7 @@ def cleanup(state,reason,*,exports=False,derived=False,transient=False,disk=Fals
     """
     before=memory_snapshot()
     removed=[];warnings=[]
+    if diagnostics:removed.extend(release_inventory(state))
     if exports:removed.extend(_drop(state,EXPORT_KEYS))
     if derived:removed.extend(_drop(state,DERIVED_KEYS))
     if transient:
@@ -241,7 +267,7 @@ def manual_cleanup(state):
          (state.get("active_climate_file") is None and state.get("active_canonical_climate") is None)) and
         not cache_pressure(memory_snapshot())) else ()
     return cleanup(state,"Manual cleanup",exports=True,derived=True,transient=True,
-                   disk=True,shared_caches=True,keep_shared=keep)
+                   disk=True,shared_caches=True,keep_shared=keep,diagnostics=True)
 
 def begin_rerun(state,page):
     previous=state.get(PAGE_KEY)
@@ -262,6 +288,10 @@ def _mib(value):
     return f"{value/m.MIB:,.0f} MiB" if value is not None else "Unavailable"
 
 def render_sidebar(st):
+    from .startup_runtime import profile_diagnostic
+    return profile_diagnostic("memory sidebar rendering",_render_sidebar,st)
+
+def _render_sidebar(st):
     state=st.session_state
     with st.sidebar.expander("Memory management",expanded=False):
         snapshot=memory_snapshot()
@@ -290,8 +320,8 @@ def render_sidebar(st):
                   help="Measure garbage collection and glibc trim separately; retains all active climate data and reports.")
         st.button("Inspect Python object types",key="mem_r5_heap_inspect",on_click=inspect_heap,args=(state,),
                   help="On demand, requires substantial raw memory headroom. Counts shallow GC-tracked objects; no content is exported.")
-        from .startup_runtime import runtime_summary
-        runtime=runtime_summary()
+        from .startup_runtime import runtime_status
+        runtime=runtime_status()
         ready=sum(r["status"] in ("ready","already loaded") for r in runtime["startup"])
         st.caption(f"Library stages ready: {ready}/{len(runtime['startup'])}.")
         persistent=runtime.get("persistent_runtime",{})
@@ -300,11 +330,9 @@ def render_sidebar(st):
                             help="Detailed tables are rendered only on request, even when this expander is closed.")
         if details:
             st.caption("One-time startup library initialization")
-            st.dataframe([{"Stage":row["stage"],"Status":row["status"],"Seconds":round(row["seconds"],3),
-                           "RSS delta [MiB]":round((row["after"]["process_rss"]-row["before"]["process_rss"])/m.MIB,1)
-                           if "process_rss" in row["after"] and "process_rss" in row["before"] else None}
-                          for row in runtime["startup"]],hide_index=True)
-            st.json(persistent,expanded=False)
+            st.text("\n".join(f"{row['stage']}: {row['status']} · {row['seconds']:.3f} s · RSS delta {_mib(row['rss_delta'])}"
+                              for row in runtime["startup"]))
+            st.text("\n".join(f"{key}: {value}" for key,value in persistent.items()))
         from .session_reaper import reaper_summary
         live_reaper=reaper_summary()
         st.caption(f"Live session maintenance: {live_reaper.get('status','unavailable')}; sweeps: {live_reaper.get('sweeps',0)}; disconnected at last sweep: {live_reaper.get('disconnected_sessions','Unavailable')}; expired reaped: {live_reaper.get('expired_reaped',0)}.")
@@ -312,8 +340,8 @@ def render_sidebar(st):
         if queue_sample.get("status")=="sampled":
             st.caption(f"Pending forward messages at last sweep: {queue_sample['pending_messages_in_sampled_sessions']}; sampled wire payload: {_mib(queue_sample['sampled_wire_bytes'])}; {queue_sample['captured_at_utc']} (not websocket backlog or RSS).")
         inspected=state.get(INVENTORY_KEY)
-        if inspected and inspected.get("snapshot_schema")!="MEM-PERF-R9":
-            state.pop(INVENTORY_KEY,None)
+        if inspected and inspected.get("snapshot_schema")!="MEM-PERF-R10":
+            release_inventory(state)
             inspected=None
         from .memory_recovery import recovery_summary
         recovery=recovery_summary().get("last")
@@ -340,28 +368,22 @@ def render_sidebar(st):
             heap=inspected.get("heap_census")
             if heap:st.caption("Python object census (separate historical snapshot): "+heap["status"]+"; captured: "+str(inspected.get("heap_census_captured_at_utc") or "unknown"))
             if details:
-                st.dataframe([{**r,"estimated MiB":round(r["estimated_bytes"]/m.MIB,2),"budget MiB":round(r["budget_bytes"]/m.MIB,2)} for r in inspected["shared_caches"]],hide_index=True)
-                st.dataframe([{**r,"estimated MiB":round(r["estimated_bytes"]/m.MIB,2) if r["estimated_bytes"] is not None else None} for r in inspected["session_resources"]],hide_index=True)
-                st.caption(f"Python allocation blocks: {inspected['python_allocated_blocks']}. Tracemalloc is not enabled by this diagnostic.")
-                if "process_age_seconds" in inspected:
-                    st.caption(f"Process age at inspection: {inspected['process_age_seconds']/60:.1f} min")
-                st.caption("Loaded library module counts (not memory sizes):")
-                st.json({k:v for k,v in inspected.get("loaded_libraries",{}).items() if v},expanded=False)
-                st.json(inspected.get("session_runtime",{}),expanded=False)
-                st.json(inspected.get("chart_lifecycle",{}),expanded=False)
-                st.json(inspected.get("allocator",{}),expanded=False)
-                st.json(inspected.get("recovery",{}),expanded=False)
-                if inspected.get("process_smaps"):st.json({key:_mib(value) for key,value in inspected["process_smaps"].items()},expanded=False)
-                heap=inspected.get("heap_census")
-                if heap:
-                    if heap.get("schema")=="R5-HF2-safe-shallow-v1":
-                        st.caption(f"Shallow size available for {heap['size_measured_objects']:,} objects; unavailable for {heap['size_unavailable_objects']:,}.")
-                        st.caption(heap["scope"])
-                        if heap.get("types"):st.dataframe(heap["types"],hide_index=True)
-                    elif heap.get("types"):
-                        st.caption("Previous census size estimates are superseded; run Inspect Python object types again.")
-            import json
-            st.download_button("Download memory inventory JSON",data=json.dumps(inspected,indent=2).encode(),file_name="memory_inventory_"+inspected["captured_at_utc"].replace(":","-").replace("+","_")+".json",mime="application/json",key="mem_r4_inventory_download",on_click="ignore")
+                # Text summaries avoid Arrow/dataframe marshalling and repeated
+                # construction of nested JSON elements on each unrelated rerun.
+                st.text("\n".join(f"{r['cache']}: {r['entries']} entries, {_mib(r['estimated_bytes'])} / {_mib(r['budget_bytes'])}"
+                                   for r in inspected["shared_caches"]))
+                st.text("\n".join(f"{r['resource']}: {r['type']}, {_mib(r['estimated_bytes'])}"
+                                   for r in inspected["session_resources"]))
+                st.caption(f"Python allocation blocks: {inspected['python_allocated_blocks']}. Full diagnostic tables and histories are in the JSON download.")
+                st.text("\n".join(f"{k}: {v}" for k,v in inspected.get("loaded_libraries",{}).items() if v))
+                capture=inspected.get("diagnostic_capture",{})
+                if capture:
+                    st.caption(f"Inventory capture callback: {capture['seconds']:.3f} s; anonymous RSS {_mib(capture['before'].get('process_anon'))} → {_mib(capture['after'].get('process_anon'))}.")
+                if heap:st.caption("Complete heap census is available in the JSON download.")
+            payload=state.get(INVENTORY_BYTES_KEY)
+            if isinstance(payload,bytes):
+                st.download_button("Download memory inventory JSON",data=payload,file_name="memory_inventory_"+inspected["captured_at_utc"].replace(":","-").replace("+","_")+".json",mime="application/json",key="mem_r4_inventory_download",on_click="ignore")
+            st.button("Release memory inventory",key="mem_r10_release_inventory",on_click=release_inventory,args=(state,))
         result=state.get(LAST_KEY)
         if result:
             st.caption("Last cleanup: "+result["reason"])

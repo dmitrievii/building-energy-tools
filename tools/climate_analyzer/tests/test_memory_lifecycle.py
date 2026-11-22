@@ -6,15 +6,28 @@ from epw_climate_analyzer import memory_lifecycle as m
 class MemoryLifecycleTests(unittest.TestCase):
     def test_inventory_refresh_has_timestamp_and_preserves_separate_heap(self):
         state={"_mem_r5_heap_census":{"status":"complete"},"_mem_r5_heap_census_at":"earlier"}
-        with patch.object(m,"memory_snapshot",side_effect=[{"used":100},{"used":200}]):
+        from epw_climate_analyzer import startup_runtime as runtime
+        with patch.object(runtime,"_sample",side_effect=[{"used":100}]*4+[{"used":200}]*4):
             first=m.inspect_resources(state)
             second=m.inspect_resources(state)
-        self.assertEqual(first["snapshot_schema"],"MEM-PERF-R9")
+        self.assertEqual(first["snapshot_schema"],"MEM-PERF-R10")
         self.assertIn("captured_at_utc",first)
         self.assertEqual(first["memory"]["used"],100)
         self.assertEqual(second["memory"]["used"],200)
         self.assertIs(state[m.INVENTORY_KEY],second)
         self.assertEqual(second["heap_census_captured_at_utc"],"earlier")
+        import json
+        self.assertEqual(json.loads(state[m.INVENTORY_BYTES_KEY])["memory"]["used"],200)
+        self.assertEqual(second["diagnostic_capture"]["event"],"inventory capture callback")
+
+    def test_manual_cleanup_releases_diagnostic_downloads(self):
+        state={key:object() for key in m.DIAGNOSTIC_KEYS}
+        report=object()
+        state["_p6_report_items"]=report
+        with patch.object(m,"memory_snapshot",return_value={}),patch.object(m.gc,"collect"),patch.object(m.m,"_trim_allocator"):
+            m.manual_cleanup(state)
+        self.assertTrue(all(key not in state for key in m.DIAGNOSTIC_KEYS))
+        self.assertIs(state["_p6_report_items"],report)
 
     def test_recovery_probe_separates_gc_and_trim_without_clearing_state(self):
         from epw_climate_analyzer import memory_recovery as recovery

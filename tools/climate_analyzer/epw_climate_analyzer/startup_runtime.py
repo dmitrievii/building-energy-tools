@@ -18,9 +18,12 @@ from .p66_memory import MIB,container_memory
 
 RUNTIME_STARTUP_SCHEMA="MEM-PERF-R6"
 RUNTIME_OPTIONAL_SCHEMA="MEM-PERF-R9"
+RUNTIME_DIAGNOSTICS_SCHEMA="MEM-PERF-R10"
 _LOCK=RLock()
 _STAGES={}
 _EVENTS=deque(maxlen=64)
+_DIAGNOSTIC_EVENTS=deque(maxlen=32)
+_DIAGNOSTIC_COUNTS=Counter()
 _SCRIPT_REFS=deque(maxlen=64)
 _EVENT_COUNTS=Counter()
 _CORE_RESERVE=768*MIB
@@ -77,7 +80,15 @@ def library_footprint_snapshot(process=None):
     with _LOCK:
         baseline=deepcopy(_LIBRARY_BASELINE)
     current=_library_counts()
+    # Group Plotly lazy imports by actual package prefix, not guessed owning RSS.
+    # sys.modules keys only; no module imports, object traversal or template mutation.
+    plotly_groups=Counter()
+    for name in tuple(sys.modules):
+        if name=="plotly":plotly_groups["plotly"]+=1
+        elif name.startswith("plotly."):
+            plotly_groups[".".join(name.split(".")[:2])]+=1
     result={"baseline":baseline,"current_module_counts":current,
+            "plotly_module_groups":dict(sorted(plotly_groups.items())),
             "current_process":_sample() if process is None else dict(process),
             "scope":"Module counts are not byte estimates; RSS includes all process owners."}
     if baseline is not None:
@@ -159,11 +170,17 @@ def current_runtime_guard():
 def startup_summary():
     with _LOCK:return deepcopy(list(_STAGES.values()))
 
-def record_event(name,before,after,seconds,**counts):
+def record_event(name,before,after,seconds,*,diagnostic=False,**counts):
+    row={"event":name,"at_monotonic_seconds":monotonic(),"seconds":seconds,
+         "before":before,"after":after,**counts}
     with _LOCK:
-        _EVENT_COUNTS[name]+=1
-        _EVENTS.append({"event":name,"at_monotonic_seconds":monotonic(),"seconds":seconds,
-                        "before":before,"after":after,**counts})
+        if diagnostic:
+            _DIAGNOSTIC_COUNTS[name]+=1
+            _DIAGNOSTIC_EVENTS.append(row)
+        else:
+            _EVENT_COUNTS[name]+=1
+            _EVENTS.append(row)
+    return row
 
 def begin_script(fn):
     # Weak references do not themselves prolong previous script lifetimes.
@@ -177,29 +194,53 @@ def end_script(token,page):
 def begin_phase():
     return perf_counter(),_sample()
 
-def end_phase(token,name):
+def end_phase(token,name,*,diagnostic=False):
     start,before=token
-    record_event(name,before,_sample(),perf_counter()-start)
+    return record_event(name,before,_sample(),perf_counter()-start,diagnostic=diagnostic)
+
+def profile_diagnostic(name,fn,*args,**kwargs):
+    token=begin_phase()
+    try:return fn(*args,**kwargs)
+    finally:end_phase(token,name,diagnostic=True)
 
 def profile_install(fn,*args,**kwargs):
     start=perf_counter();before=_sample()
     try:return fn(*args,**kwargs)
     finally:record_event("source parity installation",before,_sample(),perf_counter()-start)
 
+def _persistent_stats():
+    parity=sys.modules.get("epw_climate_analyzer.source_parity_runtime")
+    stats=getattr(parity,"runtime_stats",None)
+    return stats() if callable(stats) else {
+        "baseline_builds":0,"module_reloads":0,"binding_resets":0,
+        "restored_bindings":0,"removed_bindings":0,"wrapper_compositions":0,"baseline_modules":0}
+
+def runtime_status():
+    """Small scalar-only status for every page; no history or heap copies."""
+    with _LOCK:
+        stages=[]
+        for row in _STAGES.values():
+            before=row["before"].get("process_rss")
+            after=row["after"].get("process_rss")
+            stages.append({"stage":row["stage"],"status":row["status"],"seconds":row["seconds"],
+                           "rss_delta":after-before if before is not None and after is not None else None})
+        result={"startup":stages,"event_counts":dict(_EVENT_COUNTS),
+                "diagnostic_event_counts":dict(_DIAGNOSTIC_COUNTS)}
+    result["persistent_runtime"]=_persistent_stats()
+    return result
+
 def runtime_summary():
     with _LOCK:
         result={"startup":deepcopy(list(_STAGES.values())),
                 "event_counts":dict(_EVENT_COUNTS),"recent_events":deepcopy(list(_EVENTS)),
+                "diagnostic_event_counts":dict(_DIAGNOSTIC_COUNTS),
+                "diagnostic_events":deepcopy(list(_DIAGNOSTIC_EVENTS)),
                 "recent_script_functions_tracked":len(_SCRIPT_REFS),
                 "recent_script_functions_still_alive":sum(ref() is not None for ref in _SCRIPT_REFS),
                 "gc_counts":list(gc.get_count()),"gc_stats":gc.get_stats(),
                 "notes":"Global process observations; overlapping sessions can affect deltas. Weak references cover at most 64 recent script functions, not all live sessions."}
     # Do not load the compatibility stack on the inactive source page.
-    parity=sys.modules.get("epw_climate_analyzer.source_parity_runtime")
-    stats=getattr(parity,"runtime_stats",None)
-    result["persistent_runtime"]=stats() if callable(stats) else {
-        "baseline_builds":0,"module_reloads":0,"binding_resets":0,
-        "restored_bindings":0,"removed_bindings":0,"wrapper_compositions":0,"baseline_modules":0}
+    result["persistent_runtime"]=_persistent_stats()
     return result
 
 def _census_type_name(typ):

@@ -68,6 +68,21 @@ class StartupTests(unittest.TestCase):
         self.assertTrue(u.needs_source_parity({"active_canonical_climate":object()}))
         self.assertFalse(u.needs_source_parity({"climate_source_mode":"Upload EPW"}))
         self.assertFalse(u.needs_source_parity({"climate_source_mode":"Find climate"}))
+    def test_diagnostics_ledger_separate_and_live_status_does_not_copy_history(self):
+        with patch.object(r,"_EVENTS",deque(maxlen=64)),patch.object(r,"_DIAGNOSTIC_EVENTS",deque(maxlen=32)),patch.object(r,"_EVENT_COUNTS",Counter()),patch.object(r,"_DIAGNOSTIC_COUNTS",Counter()):
+            for i in range(90):
+                r.record_event("script rerun",{}, {},0.)
+                r.record_event("sidebar",{}, {},0.,diagnostic=True)
+            with patch.object(r,"deepcopy",side_effect=AssertionError("history copied")):
+                status=r.runtime_status()
+            self.assertNotIn("recent_events",status)
+            self.assertEqual(status["event_counts"]["script rerun"],90)
+            self.assertEqual(status["diagnostic_event_counts"]["sidebar"],90)
+            summary=r.runtime_summary()
+            self.assertEqual(len(summary["recent_events"]),64)
+            self.assertEqual(len(summary["diagnostic_events"]),32)
+            self.assertTrue(all(x["event"]=="script rerun" for x in summary["recent_events"]))
+    
     def test_runtime_ledger_bounded_and_weak(self):
         import gc
         with patch.object(r,"_EVENTS",deque(maxlen=64)),patch.object(r,"_SCRIPT_REFS",deque(maxlen=64)),patch.object(r,"_EVENT_COUNTS",Counter()),patch.object(r,"_sample",return_value={}):

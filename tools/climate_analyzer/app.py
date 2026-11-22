@@ -23,9 +23,10 @@ if any(getattr(module,attribute,None)!="MEM-PERF-R6" for module,attribute in (
 )):
     st.error("Runtime ownership upgrade (MEM-PERF R6): reboot the app once via Manage app to start a consistent process. Refreshing the browser does not restart the server.")
     st.stop()
-if (getattr(_runtime_memory,"RUNTIME_INVENTORY_SCHEMA",None)!="MEM-PERF-R9" or
-    getattr(_runtime_startup,"RUNTIME_OPTIONAL_SCHEMA",None)!="MEM-PERF-R9"):
-    st.error("MEM-PERF R9: reboot the app once via Manage app to activate the updated runtime diagnostics.")
+if (getattr(_runtime_memory,"RUNTIME_INVENTORY_SCHEMA",None)!="MEM-PERF-R10" or
+    getattr(_runtime_startup,"RUNTIME_OPTIONAL_SCHEMA",None)!="MEM-PERF-R9" or
+    getattr(_runtime_startup,"RUNTIME_DIAGNOSTICS_SCHEMA",None)!="MEM-PERF-R10"):
+    st.error("MEM-PERF R10: reboot the app once via Manage app to activate the updated runtime diagnostics.")
     st.stop()
 from epw_climate_analyzer.byte_cache import bounded_cache,MIB
 
@@ -6189,19 +6190,20 @@ def main() -> None:
     st.session_state.pop(CONTEXT_KEY,None)
     st.session_state.pop(INTERPRETATION_KEY,None)
     session_runtime.ensure_session_reaper()
-    apply_queued_navigation(st.session_state)
+    from epw_climate_analyzer.startup_runtime import profile_diagnostic
+    profile_diagnostic("navigation and presentation controls",apply_queued_navigation,st.session_state)
     st.session_state["_mem_r2_chart_ordinal"]=0
     st.session_state["_plotly_element_counter"]=0
     from epw_climate_analyzer.memory_lifecycle import begin_rerun,render_sidebar
     begin_rerun(st.session_state,st.session_state.get(NAVIGATION_KEY))
-    render_report_status(st)
+    profile_diagnostic("report sidebar status",render_report_status,st)
     render_sidebar(st)
     active_file = get_active_climate_file()
     active_canonical = get_active_canonical_climate()
 
     if active_file is None and active_canonical is None:
         st.sidebar.info("Choose a climate source to start the analysis.")
-        render_climate_file_source()
+        profile_diagnostic("inactive climate source rendering",render_climate_file_source)
         return
     if active_canonical is not None:
         from epw_climate_analyzer.engine_analysis import is_engine_dataset
