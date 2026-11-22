@@ -16,6 +16,9 @@ on:
       - 'tools/climate_analyzer/epw_climate_analyzer/startup_runtime.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_runtime.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/session_memory.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/session_reaper.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/chart_lifecycle.py'
+      - 'tools/climate_analyzer/tests/test_chart_lifecycle.py'
       - 'tools/climate_analyzer/tests/test_session_memory.py'
       - 'tools/climate_analyzer/tests/test_source_parity_streamlit_rerun_reset_0_7_5_5.py'
       - 'tools/climate_analyzer/tests/test_startup_runtime.py'
@@ -47,6 +50,7 @@ jobs:
       - run: python -m unittest discover -s tests -p test_byte_cache.py -v
       - run: python -m unittest discover -s tests -p test_startup_runtime.py -v
       - run: python -m unittest discover -s tests -p test_session_memory.py -v
+      - run: python -m unittest discover -s tests -p test_chart_lifecycle.py -v
       - run: python -m unittest discover -s tests -p test_source_parity_streamlit_rerun_reset_0_7_5_5.py -v
       - run: python -m unittest discover -s tests -p test_climate_0_10_12_memory_hotfix.py -v
       - run: python -m unittest discover -s tests -p test_startup_dependency_contract.py -v

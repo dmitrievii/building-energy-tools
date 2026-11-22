@@ -2,6 +2,8 @@
 headless = true
 maxUploadSize = 10
 maxMessageSize = 50
+# Keep the standard reconnection grace period; R7 reaps only after expiry.
+disconnectedSessionTTL = 120
 
 [client]
 toolbarMode = "viewer"

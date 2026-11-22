@@ -6,6 +6,8 @@ import io
 import json
 import re
 from datetime import datetime,timezone
+from .chart_lifecycle import register_figure,begin_page
+RUNTIME_REPORT_SCHEMA="MEM-PERF-R7"
 import plotly.io as pio
 import plotly.graph_objects as go
 import streamlit as st
@@ -78,6 +80,21 @@ def save_displayed_chart(state,fig,context,interpretation,button_key):
     except Exception as exc:
         state[CAPTURE_MESSAGE_KEY]={"key":button_key,"ok":False,"message":f"Chart not saved: {exc}"}
 
+def save_chart_by_token(button_key,token):
+    """Resolve the exact prior rendered chart in the current session."""
+    state=st.session_state
+    if token!=state.get("_p6_page_token"):return
+    for fig,context,interpretation,key in state.get("_p6_displayed_charts",[]):
+        if key==button_key:
+            save_displayed_chart(state,fig,context,interpretation,key)
+            return
+    state[CAPTURE_MESSAGE_KEY]={"key":button_key,"ok":False,
+                                "message":"Chart is no longer displayed. Render it again before saving."}
+
+def save_current_page(token):
+    state=st.session_state
+    if token==state.get("_p6_page_token"):save_all_displayed(state)
+
 def capture_control(st,fig,key):
     context=st.session_state.get(CONTEXT_KEY)
     if not isinstance(context,dict) or context.get("page")=="Report":return
@@ -89,12 +106,13 @@ def capture_control(st,fig,key):
     saved_context={**context,"keyed chart settings":_capture_settings(st.session_state),
                    "temperature thresholds":list(st.session_state.get("_p6_temperature_thresholds",(18.,26.)))}
     interpretation=st.session_state.get(INTERPRETATION_KEY,"")
-    displayed=st.session_state.get("_p6_displayed_charts",[])
-    displayed.append((fig,saved_context,interpretation,button_key))
-    st.session_state["_p6_displayed_charts"]=displayed
+    state=st.session_state
+    token=state.get("_p6_page_token")
+    if token is None:token=begin_page(state)
+    register_figure(state,fig,saved_context,interpretation,button_key)
     st.button("Add to report",key=button_key,
-              on_click=save_displayed_chart,
-              args=(st.session_state,fig,saved_context,interpretation,button_key),
+              on_click=save_chart_by_token,
+              args=(button_key,token),
               help="Save this displayed figure after global presentation settings are applied.")
     notice=st.session_state.get(CAPTURE_MESSAGE_KEY,{})
     if notice.get("key")==button_key:
@@ -118,12 +136,12 @@ def render_report_status(st):
     state=st.session_state
     st.sidebar.caption(f"Report: {len(state.get(REPORT_KEY,[]))} saved diagram(s)")
     from .ui_contract import NAVIGATION_KEY
+    token=begin_page(state)
     if state.get(NAVIGATION_KEY) not in ("Report","Climate File Source"):
         st.sidebar.button("Add all displayed diagrams",key="p6_capture_all",
-                          on_click=save_all_displayed,args=(state,),
+                          on_click=save_current_page,args=(token,),
                           help="Capture every Plotly diagram on the current analysis page.")
         if state.get("_p6_bulk_notice"):st.sidebar.caption(state.pop("_p6_bulk_notice"))
-    state["_p6_displayed_charts"]=[]
 
 
 def _safe(value):

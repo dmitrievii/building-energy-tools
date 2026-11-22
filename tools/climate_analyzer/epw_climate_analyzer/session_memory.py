@@ -5,6 +5,8 @@ identifiers. Backend byte counters are optional and describe payload only,
 not allocator overhead, websocket buffers or the complete private heap.
 """
 from __future__ import annotations
+from .session_reaper import ensure_session_reaper,reaper_summary
+RUNTIME_SESSION_SCHEMA="MEM-PERF-R7"
 
 
 def _nonnegative_int(value):
@@ -34,6 +36,8 @@ def _active_count(runtime):
         manager=runtime._session_mgr
         count=getattr(manager,"num_active_sessions",None)
         if callable(count):return _nonnegative_int(count())
+        rows=manager.get_stats(("active_sessions",)).get("active_sessions",[])
+        if len(rows)==1:return _nonnegative_int(rows[0].value)
     except Exception:pass
     return None
 
@@ -63,5 +67,11 @@ def inspect_session_counters(state,known_keys=()):
         from streamlit.runtime import Runtime
         if Runtime.exists():result.update(_backend_stats(Runtime.instance()))
     except Exception:pass
-    result["limitations"]="Backend counters can be unavailable. They neither measure disconnected sessions nor attribute RSS."
+    result["session_reaper"]=reaper_summary()
+    try:
+        from streamlit.runtime import Runtime
+        if Runtime.exists():
+            result["lazy_dataframe_sources"]=_nonnegative_int(Runtime.instance().dataframe_source_mgr.get_source_count())
+    except Exception:pass
+    result["limitations"]="Backend counters can be unavailable. Session reaper counts are last event-loop observations. Payloads are not RSS or complete heap attribution."
     return result

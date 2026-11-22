@@ -14,6 +14,7 @@ from . import p66_memory as m
 from .byte_cache import cache_inventory,clear_recomputable_caches,session_inventory
 
 RUNTIME_MEMORY_SCHEMA="MEM-PERF-R6"
+RUNTIME_CHART_SCHEMA="MEM-PERF-R7"
 EXPORT_KEYS=("_p6_pdf","_p6_html_result","_p66_atlas_result","_utci_perf_r1_csv")
 DERIVED_KEYS=("_utci_perf_r1_result","_utci_perf_r1_sensitivity")
 TRANSIENT_KEYS=("_p6_displayed_charts","_active_filtered_export_df")
@@ -111,6 +112,8 @@ def inspect_resources(state):
     from .session_memory import inspect_session_counters
     result["runtime"]=runtime_summary()
     result["session_runtime"]=inspect_session_counters(state,PROTECTED_KEYS+EXPORT_KEYS+DERIVED_KEYS+TRANSIENT_KEYS)
+    from .chart_lifecycle import chart_lifecycle_summary
+    result["chart_lifecycle"]=chart_lifecycle_summary(state)
     if "_mem_r5_heap_census" in state:result["heap_census"]=state["_mem_r5_heap_census"]
     state[INVENTORY_KEY]=result
     return result
@@ -145,7 +148,12 @@ def cleanup(state,reason,*,exports=False,derived=False,transient=False,disk=Fals
     removed=[];warnings=[]
     if exports:removed.extend(_drop(state,EXPORT_KEYS))
     if derived:removed.extend(_drop(state,DERIVED_KEYS))
-    if transient:removed.extend(_drop(state,TRANSIENT_KEYS))
+    if transient:
+        from .chart_lifecycle import release_page
+        if "_p6_displayed_charts" in state:
+            release_page(state)
+            removed.append("_p6_displayed_charts")
+        removed.extend(_drop(state,tuple(key for key in TRANSIENT_KEYS if key!="_p6_displayed_charts")))
     if disk and DISK_KEY in state:
         if m.EXPORT_LOCK.acquire(blocking=False):
             try:
@@ -272,6 +280,12 @@ def render_sidebar(st):
             if counters:
                 st.caption(f"Active sessions (process-wide): {counters.get('active_sessions','Unavailable')}; current session visible keys: {counters.get('visible_keys','Unavailable')}.")
                 st.caption(f"Streamlit uploaded payloads: {_mib(counters.get('uploaded_payload_bytes'))}; media/download payloads: {_mib(counters.get('media_payload_bytes'))}.")
+            charts=inspected.get("chart_lifecycle",{})
+            if charts:
+                st.caption(f"Displayed figures: {charts['current_page_figures']}; recently retired figures still alive: {charts['retired_alive']}/{charts['retired_tracked']} (process-wide sample).")
+            reaper=counters.get("session_reaper",{})
+            if reaper:
+                st.caption(f"Disconnected sessions within reconnect window: {reaper.get('disconnected_sessions','Unavailable')}; expired sessions reaped: {reaper.get('expired_reaped',0)}.")
             heap=inspected.get("heap_census")
             if heap:st.caption("Python object census: "+heap["status"])
             if details:
@@ -282,6 +296,8 @@ def render_sidebar(st):
                     st.caption(f"Process age at inspection: {inspected['process_age_seconds']/60:.1f} min")
                 st.caption("Loaded library module counts (not memory sizes):")
                 st.json({k:v for k,v in inspected.get("loaded_libraries",{}).items() if v},expanded=False)
+                st.json(inspected.get("session_runtime",{}),expanded=False)
+                st.json(inspected.get("chart_lifecycle",{}),expanded=False)
                 if inspected.get("process_smaps"):st.json({key:_mib(value) for key,value in inspected["process_smaps"].items()},expanded=False)
                 heap=inspected.get("heap_census")
                 if heap:

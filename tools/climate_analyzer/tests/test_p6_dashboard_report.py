@@ -146,6 +146,7 @@ from epw_climate_analyzer import p6_report as r
 from epw_climate_analyzer.chart_presentation import install_global_chart_presentation
 page=st.radio("Page",["Temperature","Report"],key="page")
 install_global_chart_presentation(st)
+r.render_report_status(st)
 if page=="Report":
     st.session_state.pop(r.CONTEXT_KEY,None)
     r.render_report()

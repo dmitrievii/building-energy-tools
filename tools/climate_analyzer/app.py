@@ -6161,16 +6161,26 @@ def main() -> None:
     stages=ensure_initialized()
     deferred=[r["stage"] for r in stages if r["status"] not in ("ready","already loaded") and r["stage"]!="UTCI (conditional)"]
     if deferred:st.sidebar.warning("Core initialization incomplete: "+", ".join(deferred)+". Inspect memory management; reboot if headroom is insufficient.")
+    from epw_climate_analyzer import p6_report as report_runtime,session_memory as session_runtime
+    if (getattr(report_runtime,"RUNTIME_REPORT_SCHEMA",None)!="MEM-PERF-R7" or
+        getattr(session_runtime,"RUNTIME_SESSION_SCHEMA",None)!="MEM-PERF-R7" or
+        getattr(_runtime_memory,"RUNTIME_CHART_SCHEMA",None)!="MEM-PERF-R7"):
+        st.error("MEM-PERF R7 changes chart/session ownership. Reboot the app once via Manage app.")
+        st.stop()
+    # Click callbacks have already consumed the previous displayed page.
+    from epw_climate_analyzer.p6_report import CONTEXT_KEY,INTERPRETATION_KEY,render_report_status
+    from epw_climate_analyzer.chart_lifecycle import release_page
+    release_page(st.session_state)
+    st.session_state.pop(CONTEXT_KEY,None)
+    st.session_state.pop(INTERPRETATION_KEY,None)
+    session_runtime.ensure_session_reaper()
     apply_queued_navigation(st.session_state)
     st.session_state["_mem_r2_chart_ordinal"]=0
     st.session_state["_plotly_element_counter"]=0
-    from epw_climate_analyzer.p6_report import CONTEXT_KEY,INTERPRETATION_KEY,render_report_status
-    render_report_status(st)
     from epw_climate_analyzer.memory_lifecycle import begin_rerun,render_sidebar
     begin_rerun(st.session_state,st.session_state.get(NAVIGATION_KEY))
+    render_report_status(st)
     render_sidebar(st)
-    st.session_state.pop(CONTEXT_KEY,None)
-    st.session_state.pop(INTERPRETATION_KEY,None)
     active_file = get_active_climate_file()
     active_canonical = get_active_canonical_climate()
 
