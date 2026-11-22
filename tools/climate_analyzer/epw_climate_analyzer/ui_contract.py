@@ -94,14 +94,21 @@ def queue_navigation_reset(state: MutableMapping[str, Any]) -> None:
     state.pop(PENDING_NAVIGATION_KEY, None)
 
 
-def _install_source_parity_for_app_caller() -> None:
+def needs_source_parity(state: MutableMapping[str, Any]) -> bool:
+    """The inactive Upload EPW form has no parity-dependent charts or providers."""
+    return (state.get("active_climate_file") is not None or
+            state.get("active_canonical_climate") is not None or
+            state.get("climate_source_mode","Upload EPW")!="Upload EPW")
+
+
+def _install_source_parity_for_app_caller(state: MutableMapping[str, Any]) -> None:
     """Install source-parity and chart-presentation routing for the full app.
 
     ``app.py`` is deliberately kept as the mature source/AST contract. The
     navigation hand-off is the earliest runtime call made by ``main`` after all
     renderer functions have been defined, so it is a safe place to install the
-    new source-neutral routing and the one global Plotly presentation boundary
-    without importing pandas/numpy/plotly at module startup. Ordinary unit tests
+    source-neutral routing and global Plotly presentation boundary. R5 warms
+    scientific libraries separately, once per process. Ordinary unit tests
     of this module do not satisfy the app sentinel and therefore do not load
     either runtime layer.
     """
@@ -119,18 +126,19 @@ def _install_source_parity_for_app_caller() -> None:
         return
 
     from .chart_presentation import install_global_chart_presentation
-    from .source_parity_runtime import install_into_app_globals
 
-    # Source-parity restores a small pristine Streamlit callable surface on each
-    # rerun. Install presentation afterwards so the global Plotly boundary is the
-    # final UI renderer layer and remains independent of wrapper composition.
-    install_into_app_globals(caller_globals)
+    # Libraries are warmed once independently of the route. Do not reset and
+    # recompose the large compatibility stack for a plain inactive file form.
+    if needs_source_parity(state):
+        from .source_parity_runtime import install_into_app_globals
+        from .startup_runtime import profile_install
+        profile_install(install_into_app_globals,caller_globals)
     install_global_chart_presentation()
 
 
 def apply_queued_navigation(state: MutableMapping[str, Any]) -> None:
     """Apply queued navigation before the Streamlit navigation widget is instantiated."""
-    _install_source_parity_for_app_caller()
+    _install_source_parity_for_app_caller(state)
     reset = bool(state.pop(RESET_NAVIGATION_KEY, False))
     pending = state.pop(PENDING_NAVIGATION_KEY, None)
     if reset:

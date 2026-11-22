@@ -98,16 +98,14 @@ def _ensure_geosphere_dependencies() -> None:
 def _bind_current_solar_functions() -> None:
     """Refresh the solar module and rebind globals after a Streamlit hot deploy.
 
-    This helper is intentionally lazy: it imports the solar module only after
-    the solar analysis is requested, preserving lightweight app startup.
+    Scientific libraries are preloaded at startup. This helper binds the
+    admitted application functions without reinitializing those libraries.
     """
     global add_solar_position, monthly_orientation_radiation, orientation_annual_radiation
     global orientation_tilt_matrix, surface_irradiance_series
 
-    import importlib
-    from epw_climate_analyzer import runtime_module_guard
-    if not hasattr(runtime_module_guard, "ensure_current_solar_runtime"):
-        importlib.reload(runtime_module_guard)
+    from epw_climate_analyzer.startup_runtime import current_runtime_guard
+    runtime_module_guard=current_runtime_guard()
     current_solar = runtime_module_guard.ensure_current_solar_runtime()
     add_solar_position = current_solar.add_solar_position
     monthly_orientation_radiation = current_solar.monthly_orientation_radiation
@@ -169,11 +167,10 @@ def _ensure_analysis_dependencies(*, include_solar: bool, include_comparison: bo
             threshold_count_by_period,
         )
         # Streamlit reruns app.py without necessarily reimporting package code.
-        # Refresh the small guard itself so an already-running worker receives
-        # newly deployed psychrometric/historical source fingerprint checks.
-        import importlib
-        from epw_climate_analyzer import runtime_module_guard
-        importlib.reload(runtime_module_guard)
+        # Refresh the small guard only on actual source change, not on each
+        # script rerun. Keep its calculation-boundary contract validation.
+        from epw_climate_analyzer.startup_runtime import current_runtime_guard
+        runtime_module_guard=current_runtime_guard()
         runtime_module_guard.ensure_current_heatmap_runtime()
         runtime_module_guard.ensure_current_psychrometric_runtime()
         from epw_climate_analyzer.charts import (
@@ -1869,7 +1866,8 @@ def render_interpretation(text: str) -> None:
 def next_plot_key(prefix: str = "plot") -> str:
     """Return a unique key for Plotly elements within one Streamlit rerun."""
     st.session_state["_plotly_element_counter"] = int(st.session_state.get("_plotly_element_counter", 0)) + 1
-    return f"{prefix}_{st.session_state['_plotly_element_counter']}"
+    # Page + within-run ordinal avoids unbounded plot widget identities.
+    return f"{prefix}_{st.session_state.get(NAVIGATION_KEY,'source')}_{st.session_state['_plotly_element_counter']}"
 
 
 def render_chart_export_controls(fig) -> None:
@@ -6137,8 +6135,13 @@ def main() -> None:
     st.sidebar.caption("Building Energy Tools")
     st.sidebar.title(APP_NAME)
     st.sidebar.caption(APP_RELEASE_LABEL)
+    from epw_climate_analyzer.startup_runtime import ensure_initialized
+    stages=ensure_initialized()
+    deferred=[r["stage"] for r in stages if r["status"] not in ("ready","already loaded") and r["stage"]!="UTCI (conditional)"]
+    if deferred:st.sidebar.warning("Core initialization incomplete: "+", ".join(deferred)+". Inspect memory management; reboot if headroom is insufficient.")
     apply_queued_navigation(st.session_state)
     st.session_state["_mem_r2_chart_ordinal"]=0
+    st.session_state["_plotly_element_counter"]=0
     from epw_climate_analyzer.p6_report import CONTEXT_KEY,INTERPRETATION_KEY,render_report_status
     render_report_status(st)
     from epw_climate_analyzer.memory_lifecycle import begin_rerun,render_sidebar
@@ -6300,7 +6303,10 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    from epw_climate_analyzer.startup_runtime import begin_script,end_script
+    _r5_token=begin_script(main)
     try:main()
     finally:
         # Chart download preparation uses the current script run only.
         st.session_state.pop("_active_filtered_export_df",None)
+        end_script(_r5_token,st.session_state.get(NAVIGATION_KEY,"Climate File Source"))

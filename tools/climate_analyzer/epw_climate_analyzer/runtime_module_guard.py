@@ -18,6 +18,8 @@ from hashlib import sha256
 from pathlib import Path
 from types import ModuleType
 
+_RUNTIME_GUARD_SOURCE_SHA256=sha256(Path(__file__).read_bytes()).hexdigest()
+
 
 _REQUIRED_DISTRIBUTION_API = frozenset(
     {

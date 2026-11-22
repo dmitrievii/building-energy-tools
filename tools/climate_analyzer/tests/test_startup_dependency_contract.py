@@ -56,6 +56,11 @@ class StartupDependencyContractTests(unittest.TestCase):
         self.assertLess(upload_return, map_gate)
         self.assertLess(map_gate, find_heading)
 
+    def test_startup_library_initialization_precedes_navigation(self) -> None:
+        main=self.source.index("def main() -> None:")
+        self.assertLess(self.source.index("stages=ensure_initialized()",main),
+                        self.source.index("apply_queued_navigation(st.session_state)",main))
+
     def test_analysis_dependencies_are_loaded_before_epw_derivation(self) -> None:
         main_start = self.source.index("def main() -> None:")
         source_return = self.source.index('    if page == "Climate File Source":', main_start)

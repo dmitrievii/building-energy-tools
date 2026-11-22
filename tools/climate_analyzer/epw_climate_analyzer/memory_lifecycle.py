@@ -104,8 +104,16 @@ def inspect_resources(state):
             if key in ("Pss","Private_Clean","Private_Dirty","Shared_Clean","Shared_Dirty"):
                 result.setdefault("process_smaps",{})[key]=int(line.split()[1])*1024
     except (OSError,ValueError,IndexError):pass
+    from .startup_runtime import runtime_summary
+    result["runtime"]=runtime_summary()
+    if "_mem_r5_heap_census" in state:result["heap_census"]=state["_mem_r5_heap_census"]
     state[INVENTORY_KEY]=result
     return result
+
+def inspect_heap(state):
+    from .startup_runtime import heap_census
+    state["_mem_r5_heap_census"]=heap_census()
+    return inspect_resources(state)
 
 def _drop(state,keys):
     removed=[]
@@ -218,6 +226,16 @@ def render_sidebar(st):
         inventory=cache_inventory()
         st.caption(f"Registered cache payload: {_mib(sum(r['estimated_bytes'] for r in inventory))} / {_mib(sum(r['budget_bytes'] for r in inventory))} combined individual budgets.")
         st.button("Inspect retained resources",key="mem_r4_inspect",on_click=inspect_resources,args=(state,))
+        st.button("Inspect Python object types",key="mem_r5_heap_inspect",on_click=inspect_heap,args=(state,),
+                  help="On demand, requires substantial raw memory headroom. Counts shallow GC-tracked objects; no content is exported.")
+        from .startup_runtime import runtime_summary
+        runtime=runtime_summary()
+        st.caption("One-time startup library initialization")
+        st.dataframe([{"Stage":row["stage"],"Status":row["status"],"Seconds":round(row["seconds"],3),
+                       "RSS delta [MiB]":round((row["after"]["process_rss"]-row["before"]["process_rss"])/m.MIB,1)
+                       if "process_rss" in row["after"] and "process_rss" in row["before"] else None}
+                      for row in runtime["startup"]],hide_index=True)
+        st.caption(f"Process reruns recorded: {runtime['event_counts'].get('script rerun',0)}; parity installations: {runtime['event_counts'].get('source parity installation',0)}.")
         inspected=state.get(INVENTORY_KEY)
         if inspected:
             st.caption("Last on-demand inventory; sizes are estimates and overlap with RSS. Session rows may overlap; unmeasurable objects are marked unavailable.")
@@ -229,6 +247,10 @@ def render_sidebar(st):
             st.caption("Loaded library module counts (not memory sizes):")
             st.json({k:v for k,v in inspected.get("loaded_libraries",{}).items() if v},expanded=False)
             if inspected.get("process_smaps"):st.json({key:_mib(value) for key,value in inspected["process_smaps"].items()},expanded=False)
+            heap=inspected.get("heap_census")
+            if heap:
+                st.caption("Python object census: "+heap["status"])
+                if heap.get("types"):st.dataframe(heap["types"],hide_index=True)
             import json
             st.download_button("Download memory inventory JSON",data=json.dumps(inspected,indent=2).encode(),file_name="memory_inventory.json",mime="application/json",key="mem_r4_inventory_download",on_click="ignore")
         result=state.get(LAST_KEY)

@@ -597,11 +597,15 @@ def install_global_chart_presentation(st: Any | None = None) -> None:
         setattr(st, original_attr, st.plotly_chart)
     original = getattr(st, original_attr)
 
-    capture_index = 0
+    # Per-session ordinal; avoid a fresh process-global wrapper and a shared
+    # closure counter every rerun. The original callable remains stable.
+    st.session_state["_mem_r5_capture_index"]=0
+    if getattr(st.plotly_chart,"_ige_r5_presentation_wrapper",False):
+        return
 
     def global_plotly_chart(fig: Any, *args: Any, **kwargs: Any) -> Any:
-        nonlocal capture_index
-        capture_index += 1
+        capture_index=int(st.session_state.get("_mem_r5_capture_index",0))+1
+        st.session_state["_mem_r5_capture_index"]=capture_index
         settings = settings_from_state(st.session_state)
         from .calendar_heatmap_axes import set_period_axis_scope
         set_period_axis_scope(fig,context=st.session_state.get("_p6_report_context"))
@@ -631,4 +635,5 @@ def install_global_chart_presentation(st: Any | None = None) -> None:
         return result
 
     global_plotly_chart.__name__ = "global_plotly_chart"
+    global_plotly_chart._ige_r5_presentation_wrapper=True
     setattr(st, "plotly_chart", global_plotly_chart)

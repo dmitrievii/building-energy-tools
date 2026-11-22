@@ -58,7 +58,7 @@ class CommunityCloudMemoryHotfixTests(unittest.TestCase):
     def test_large_catalog_uses_resource_cache_not_data_cache(self) -> None:
         app = APP_PATH.read_text(encoding="utf-8")
         self.assertIn(
-            "@st.cache_resource(show_spinner=False, max_entries=1)\n"
+            '@bounded_cache(name="station_catalog",max_bytes=32*MIB,max_entries=1,resource=True)\n'
             "def _cached_station_catalog_by_identity",
             app,
         )
