@@ -7,6 +7,8 @@ on:
       - 'tools/climate_analyzer/epw_climate_analyzer/persistent_app_runtime.py'
       - 'tools/climate_analyzer/epw_climate_analyzer/source_parity_runtime.py'
       - 'tools/climate_analyzer/app.py'
+      - 'tools/climate_analyzer/scripts/mem_perf_r12_hf1_browser.mjs'
+      - 'tools/climate_analyzer/tests/test_r143_persistent_app.py'
       - '.github/workflows/climate-analyzer-r143-persistent.yml'
 permissions:
   contents: read
