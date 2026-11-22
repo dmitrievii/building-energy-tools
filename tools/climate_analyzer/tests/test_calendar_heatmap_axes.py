@@ -153,6 +153,8 @@ class CalendarHeatmapTests(unittest.TestCase):
         printed=report_figure(figs[1],width_pt=500,height_pt=230)
         self.assertEqual(printed.layout.coloraxis.colorscale,figs[1].layout.coloraxis.colorscale)
         self.assertEqual(printed.layout.coloraxis.colorbar.tickvals,figs[1].layout.coloraxis.colorbar.tickvals)
+        self.assertEqual(printed.layout.coloraxis.colorbar.ticktext,figs[1].layout.coloraxis.colorbar.ticktext)
+        self.assertEqual(printed.layout.coloraxis.colorbar.tickformat,".0f")
         for c,f in zip(cols,figs):
             expected=temporal_heatmap_matrix(df,c,"day",HEATMAP_COMPARE_HOUR,"Mean")
             np.testing.assert_allclose(np.asarray(f.data[0].z,float),expected.values,equal_nan=True)
@@ -180,6 +182,8 @@ class CalendarHeatmapTests(unittest.TestCase):
             self.assertEqual(axis.colorscale,tuple(tuple(v) for v in expected["colorscale"]))
             self.assertEqual(axis.colorbar.title.text,"°C")
             self.assertEqual(axis.colorbar.tickvals,tuple(expected["colorbar"]["tickvals"]))
+            self.assertEqual(axis.colorbar.ticktext,tuple(str(int(t)) for t in axis.colorbar.tickvals))
+            self.assertEqual(axis.colorbar.tickformat,".0f")
             self.assertFalse(axis.cauto)
         for column in columns:
             for period in ("day","month"):

@@ -101,7 +101,8 @@ def temperature_coloraxis(*, frames=(), values=(), thresholds=(18.,26.)):
     step=5. if hi-lo<=80. else 10. if hi-lo<=160. else 20.
     ticks=[float(i)*step for i in range(math.ceil(lo/step),math.floor(hi/step)+1)]
     return dict(colorscale=scale,cmin=lo,cmax=hi,cauto=False,
-                colorbar=dict(title="°C",tickmode="array",tickvals=ticks,tickformat="g"))
+                colorbar=dict(title="°C",tickmode="array",tickvals=ticks,
+                              ticktext=[str(int(t)) for t in ticks],tickformat=".0f"))
 
 TEMPERATURE_COMFORT_COLORSCALE = temperature_gradient_domain()[2]
 # Sequential irradiation palette: white is a physical zero, high values
