@@ -30,7 +30,7 @@ class OriginalAuditClosure0741Tests(unittest.TestCase):
         self.assertIn("Lower 5% boundary (P05)", self.source)
         self.assertIn("Upper 5% boundary (P95)", self.source)
         self.assertIn("Nighttime hours > 20 °C (20:00–06:59)", self.source)
-        self.assertIn('"Cooling limit [°C]",\n            10.0,\n            35.0,\n            20.0', self.source)
+        self.assertIn('"Cooling limit [°C]",\n        10.0,\n        35.0,\n        20.0', self.source)
         self.assertIn("Chronological heat maps keep every real day, week or month in sequence across years", self.source)
 
         idx = pd.date_range("2025-01-01", periods=48, freq="h")

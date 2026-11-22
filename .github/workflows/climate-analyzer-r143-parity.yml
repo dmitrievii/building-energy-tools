@@ -1,0 +1,72 @@
+name: Climate Analyzer R14.3E-F scientific parity
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/climate_analyzer/epw_climate_analyzer/r143_scientific_parity.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/persistent_app_runtime.py'
+      - 'tools/climate_analyzer/app.py'
+      - 'tools/climate_analyzer/scripts/mem_perf_r12_hf1_browser.mjs'
+      - 'tools/climate_analyzer/scripts/compare_r143_parity.py'
+      - '.github/workflows/climate-analyzer-r143-parity.yml'
+permissions:
+  contents: read
+jobs:
+  lifecycle:
+    strategy:
+      fail-fast: false
+      matrix:
+        persistent: ['0','1']
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: tools/climate_analyzer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - run: python -m compileall -q app.py epw_climate_analyzer scripts
+      - run: python -m unittest discover -s tests -p test_chart_lifecycle.py -v
+      - run: python -m unittest discover -s tests -p test_memory_lifecycle.py -v
+      - run: python -m unittest discover -s tests -p test_mem_perf_r12_hf1.py -v
+      - run: python -m unittest discover -s tests -p test_r14_native_owner.py -v
+      - run: python -m unittest discover -s tests -p test_r143_persistent_app.py -v
+      - run: npm install --no-save playwright-core@1.55.0
+      - name: Run 6 matched scientific parity cycles
+        env:
+          IGE_R143_PERSISTENT_APP: ${{ matrix.persistent }}
+          HF1_CYCLES: '6'
+          IGE_R143_PARITY: '1'
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/mem-perf-r12-hf1
+          cd ../..
+          STREAMLIT_SERVER_DISCONNECTED_SESSION_TTL=0 python tools/climate_analyzer/scripts/run_managed_climate.py --server.headless=true --server.port=8513 > tools/climate_analyzer/artifacts/mem-perf-r12-hf1/server.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8513/_stcore/health && break; sleep 1; done
+          if timeout 15 python tools/climate_analyzer/scripts/run_managed_climate.py --server.headless=true --server.port=8514 > /tmp/ige-second-launch.log 2>&1; then
+            echo "Unexpected successful duplicate launch"; exit 1
+          fi
+          grep -F "managed runtime already owns the instance lock" /tmp/ige-second-launch.log
+          cd tools/climate_analyzer
+          node scripts/mem_perf_r12_hf1_browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r143-parity-${{ matrix.persistent }}
+          path: tools/climate_analyzer/artifacts/mem-perf-r12-hf1/
+  compare:
+    needs: lifecycle
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: r143-parity-*
+          path: parity-artifacts
+      - run: python tools/climate_analyzer/scripts/compare_r143_parity.py parity-artifacts/r143-parity-0/scientific-parity.json parity-artifacts/r143-parity-1/scientific-parity.json

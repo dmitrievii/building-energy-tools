@@ -41,7 +41,7 @@ class TemporalUx074Tests(unittest.TestCase):
         self.assertIn("Lower 5% boundary (P05)", source)
         self.assertIn("Upper 5% boundary (P95)", source)
         self.assertIn("Nighttime hours > 20 °C (20:00–06:59)", source)
-        self.assertIn('"Cooling limit [°C]",\n            10.0,\n            35.0,\n            20.0', source)
+        self.assertIn('"Cooling limit [°C]",\n        10.0,\n        35.0,\n        20.0', source)
 
 
 if __name__ == "__main__":

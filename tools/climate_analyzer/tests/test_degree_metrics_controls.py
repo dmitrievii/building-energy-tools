@@ -153,9 +153,11 @@ class DegreeMetricUiContractTests(unittest.TestCase):
         source = APP.read_text(encoding="utf-8")
         tree = ast.parse(source)
         function = next(
-            node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == "render_temperature"
+            node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == "_render_temperature_degree_days"
         )
         text = ast.get_source_segment(source, function) or ""
+        route = next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name=="render_temperature")
+        self.assertIn("_render_temperature_degree_days(df)",ast.get_source_segment(source,route))
         for label in (
             "Heating indoor air temperature [°C]",
             "Heating limit [°C]",

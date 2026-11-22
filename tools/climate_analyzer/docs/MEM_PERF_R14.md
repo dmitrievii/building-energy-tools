@@ -95,3 +95,17 @@ R14.3 Degree pilot run 45077713490 failed at the browser option locator;
 the fragment itself has not been qualified in the real app. Full CI run
 45077713512 reported 9 failures and 1 error among 1063 tests, including
 contract tests affected by the earlier Degree-renderer extraction.
+
+## R14.3E-F qualification
+Run 45081448826: baseline and persistent 10/10 each, two concurrent EPW
+locations isolated, zero retained AppSessions and tracked EPW objects at all
+accepted idle gates. Persistent 300257280 bytes vs baseline 330235904 bytes
+Anonymous RSS at cycle 10 (9.08% lower); independent runners, not a latency
+or throughput guarantee. The concurrency smoke previously changed only the
+location. The new separate parity workflow uses a deliberately synthetic
++2 K dry-bulb/dew-point perturbation and compares exact digests of rendered
+Plotly arrays, layouts, context and saved report payloads across arms.
+It verifies that reset of A leaves B's displayed charts and report intact.
+Test-only serialization is excluded from the established memory screening.
+Production remains unchanged; numerical parity, fragment pilot and the
+remaining historic full-CI failures must be adjudicated before promotion.

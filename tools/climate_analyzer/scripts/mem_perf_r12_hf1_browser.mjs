@@ -10,9 +10,25 @@ const source=await fs.readFile('../../research/ige_cmip6/at_graz2021_point_origi
 const a=Buffer.from(source);
 const b=Buffer.from(source.replace(/^(LOCATION,)[^,\r\n]+/i,'$1HF1-second-source'));
 if(a.equals(b))throw Error('Second EPW payload identical');
+const parity=process.env.IGE_R143_PARITY==='1';
+// Keep original lifecycle fixture unchanged. The parity-only second source
+// is a deliberately nonphysical perturbation of dry bulb and dew point by
+// +2 K, not an observed weather file or a new scientific reference.
+const distinct=Buffer.from(b.toString().split(/\r?\n/).map((line,i)=>{
+ if(i<8||!line.trim())return line;
+ const f=line.split(',');
+ for(const k of [6,7]){
+   const t=Number(f[k]);
+   if(!Number.isFinite(t)||t>=99)throw Error('Unexpected EPW temperature in fixture');
+   f[k]=(t+2).toFixed(2);
+ }
+ return f.join(',');
+}).join('\n'));
+const second=parity?distinct:b;
 const browser=await chromium.launch({executablePath:'/usr/bin/google-chrome',headless:true,args:['--no-sandbox']});
 const url='http://127.0.0.1:8513';
 const rows=[];
+const parityRows={};
 let error=null,completed=0,baseline=null,lastIdle=null,initial=null;
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 const cycles=Number(process.env.HF1_CYCLES||20);
@@ -44,6 +60,10 @@ async function snapshot(p,stage,cycle){
  const filename=path.join(dir,String(cycle).padStart(2,'0')+'_'+stage+'.json');
  await download[0].saveAs(filename);
  const v=JSON.parse(await fs.readFile(filename,'utf8'));
+ if(parity&&v.r143_parity&&['scientific-temperature-a','scientific-wind-a','scientific-temperature-b','scientific-solar-b','concurrent-a','concurrent-b','concurrent-b-after-reset'].includes(stage)){
+   if(!v.r143_parity.displayed.length)throw Error('Missing rendered scientific figures: '+stage);
+   parityRows[cycle+':'+stage]=v.r143_parity;
+ }
  if(v.snapshot_schema!=='MEM-PERF-R13-HF2')throw Error('Wrong runtime schema');
  if(process.env.IGE_R143_PERSISTENT_APP==='1'){
    const stats=v.runtime?.persistent_runtime||{};
@@ -75,6 +95,29 @@ async function graph(p,label){
  await p.locator('[data-testid="stPlotlyChart"]').first().waitFor({timeout:90000});
  await settle(p);
 }
+async function science(p,stage,cycle){
+ // Save exact displayed figure through actual UI callback, then inspect
+ // the serialized record and displayed post-rerun figure independently.
+ const button=p.getByRole('button',{name:'Add to report',exact:true}).first();
+ await button.waitFor({timeout:60000});
+ await button.click();
+ await settle(p);
+ const v=await snapshot(p,stage,cycle);
+ if(!v.r143_parity.saved.length)throw Error('No saved report at '+stage);
+ const last=v.r143_parity.saved.at(-1);
+ if(!v.r143_parity.displayed.some(x=>x.complete===last.complete))
+   throw Error('Saved chart not identical to displayed chart at '+stage);
+ return v;
+}
+async function reset(p){
+ const consent=p.getByText("Confirm deletion of this session's climate data, reports and settings",{exact:true});
+ await consent.click();
+ await Promise.all([
+   p.waitForEvent('framenavigated',{predicate:f=>f===p.mainFrame(),timeout:60000}),
+   p.getByRole('button',{name:'Reset session',exact:true}).click()
+ ]);
+ await p.getByRole('heading',{name:'Upload an EPW weather file'}).waitFor({timeout:90000});
+}
 async function freshIdle(p,previous,cycle,minimumCloses){
  const deadline=performance.now()+20000;
  let value;
@@ -95,10 +138,13 @@ try{
    await upload(p,'hf1-a.epw',a);
    await snapshot(p,'epw-a',cycle);
    await graph(p,'Climate — Temperature');
+   if(parity)await science(p,'scientific-temperature-a',cycle);
    if(process.env.IGE_R14_DEGREE_FRAGMENT==='1'){
      const group=p.getByTestId('stSelectbox').filter({hasText:'Analysis type'});
-     await group.getByRole('combobox').click();
-     await p.getByRole('option',{name:'Degree days',exact:true}).click();
+     const combo=group.getByRole('combobox');
+     await combo.click();
+     // BaseWeb select portals may not expose role=option for every build.
+     await p.getByText('Degree days',{exact:true}).last().click({timeout:30000});
      const marker=p.getByText(/^R14 degree pilot: full /);
      await marker.waitFor();
      await settle(p);
@@ -121,6 +167,7 @@ try{
      if(!pilot.r14_pilot.native_owner||!pilot.r14_pilot.degree_fragment)throw Error('Pilot not activated');
    }
    await graph(p,'Climate — Wind');
+   if(parity)await science(p,'scientific-wind-a',cycle);
    await snapshot(p,'graphs-a',cycle);
    await nav(p,'Start — Climate source');
    await p.getByRole('button',{name:'Choose a different climate'}).click();
@@ -128,10 +175,12 @@ try{
    await settle(p);
    const remove=p.getByTestId('stFileUploader').filter({hasText:'Choose EPW file'}).getByRole('button',{name:/remove|delete/i});
    if(await remove.count()){await remove.first().click();await settle(p);}
-   await upload(p,'hf1-b.epw',b);
+   await upload(p,'hf1-b.epw',second);
    await snapshot(p,'epw-b',cycle);
    await graph(p,'Climate — Temperature');
+   if(parity)await science(p,'scientific-temperature-b',cycle);
    await graph(p,'Climate — Solar radiation');
+   if(parity)await science(p,'scientific-solar-b',cycle);
    const before=await snapshot(p,'graphs-b',cycle);
    const previous=before.session_runtime.session_reaper.last_idle_server_sample?.captured_at_utc;
    if(cycle%2===0){
@@ -166,14 +215,25 @@ try{
    const other=await browser.newContext({acceptDownloads:true});
    try{
      const q=await open(other);
-     await Promise.all([upload(p,'r143-first.epw',a),upload(q,'r143-second.epw',b)]);
+     await Promise.all([upload(p,'r143-first.epw',a),upload(q,'r143-second.epw',second)]);
      await Promise.all([graph(p,'Climate — Temperature'),graph(q,'Climate — Temperature')]);
      const sideA=p.getByTestId('stSidebar'),sideB=q.getByTestId('stSidebar');
      const readA=await sideA.innerText(),readB=await sideB.innerText();
      if(readA.includes('HF1-second-source')||!readB.includes('HF1-second-source'))
        throw Error('Concurrent EPW location isolation failed');
-     const observedA=await snapshot(p,'concurrent-a',cycles+1);
-     const observedB=await snapshot(q,'concurrent-b',cycles+1);
+     const observedA=parity?await science(p,'concurrent-a',cycles+1):await snapshot(p,'concurrent-a',cycles+1);
+     const observedB=parity?await science(q,'concurrent-b',cycles+1):await snapshot(q,'concurrent-b',cycles+1);
+     if(parity){
+       const first=observedA.r143_parity, other=observedB.r143_parity;
+       if(first.displayed[0].data===other.displayed[0].data)throw Error('Distinct EPW temperatures produced identical chart data');
+       const expectedA=parityRows['1:scientific-temperature-a'].displayed[0].data;
+       const expectedB=parityRows['1:scientific-temperature-b'].displayed[0].data;
+       if(first.displayed[0].data!==expectedA||other.displayed[0].data!==expectedB)
+         throw Error('Concurrent data differ from independent reference');
+       await reset(p);
+       const after=await snapshot(q,'concurrent-b-after-reset',cycles+1);
+       if(JSON.stringify(after.r143_parity)!==JSON.stringify(other))throw Error('Reset of A modified B chart or report');
+     }
      if(observedA.session_runtime.active_sessions<2||observedB.session_runtime.active_sessions<2)
        throw Error('Two concurrent sessions not observed');
      if(!observedA.session_cache_summary.owners||!observedB.session_cache_summary.owners)
@@ -191,6 +251,7 @@ finally{
  // Provisional CI tolerance, not a platform-independent proof of no leak.
  const warmGate=warmDrift!==null&&warmDrift<=64*1024**2;
  if(!error&&completed===cycles&&!warmGate)error='Provisional warm anonymous RSS drift gate failed';
+ if(parity)await fs.writeFile(path.join(dir,'scientific-parity.json'),JSON.stringify({schema:'R143-EF',completed,cycles,error,observations:parityRows},null,2));
  await fs.writeFile(path.join(dir,'summary.json'),JSON.stringify({schema:'R13',scope:'Real app.py, two EPW identities, native reset/reload alternating, no PDF or UTCI; second EPW changes location label only',completed,cycles,error,baseline,lastIdle,idle,warmDrift,warmGate,rows},null,2));
 }
 if(error||completed!==cycles)process.exit(1);

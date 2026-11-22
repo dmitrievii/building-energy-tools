@@ -125,6 +125,11 @@ def _collect_inventory(state,process):
     result["session_runtime"]=inspect_session_counters(state,PROTECTED_KEYS+EXPORT_KEYS+DERIVED_KEYS+TRANSIENT_KEYS)
     from .chart_lifecycle import chart_lifecycle_summary
     result["chart_lifecycle"]=chart_lifecycle_summary(state)
+    # Explicit CI-only scientific parity capture. No serialization overhead
+    # in normal memory inventories or the previously qualified RSS screen.
+    if os.environ.get("IGE_R143_PARITY")=="1":
+        from .r143_scientific_parity import evidence
+        result["r143_parity"]=evidence(state)
     from .memory_recovery import allocator_snapshot, recovery_summary
     from .process_memory import container_process_inventory
     result["container_processes"]=container_process_inventory()
