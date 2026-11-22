@@ -480,8 +480,8 @@ def render_report(df=None,reference_df=None):
     included=[item for item in items if item["id"] in selected]
     if not included:st.info("Select at least one diagram to export.");return
     # Avoid rebuilding the entire HTML report on every widget rerun.
-    from .p66_memory import require_headroom
-    import gc
+    from .p66_memory import require_html_headroom
+    from .memory_lifecycle import prepare_export,finish_export,manual_cleanup
     html_key=hashlib.sha256()
     for item in included:
         html_key.update(item["id"].encode());html_key.update(str(item.get("note","")).encode())
@@ -495,17 +495,16 @@ def render_report(df=None,reference_df=None):
     html_result=st.session_state.get("_p6_html_result")
     if html_result and html_result[0]==html_signature:
         html_slot.download_button("Download printable HTML",data=html_result[1],file_name="climate_report.html",mime="text/html",key="p6_html",on_click="ignore")
-    elif html_slot.button("Generate printable HTML",key="p6_html_generate"):
-        for key in ("_p6_html_result","_p6_pdf","_p66_atlas_result"):st.session_state.pop(key,None)
-        gc.collect()
+    elif html_slot.button("Generate printable HTML",key="p6_html_generate",
+                          on_click=prepare_export,args=(st.session_state,)):
         try:
-            require_headroom()
+            require_html_headroom("Printable report admission")
             data=printable_html(included,title,paper,orientation,use_osm=True)
-            require_headroom()
+            require_html_headroom("Printable report download buffer")
             st.session_state["_p6_html_result"]=(html_signature,data)
             st.rerun()
         except Exception as exc:st.error(str(exc))
-        finally:gc.collect()
+        finally:finish_export(st.session_state)
     # Full machine-readable audit trail as optional independent export, not
     # printed underneath each figure.
     st.download_button("Download technical metadata",data=json.dumps([{k:v for k,v in i.items() if k!="figure"} for i in included],ensure_ascii=False,indent=2,default=str).encode("utf-8"),
@@ -518,13 +517,9 @@ def render_report(df=None,reference_df=None):
     cache=st.session_state.get("_p6_pdf")
     if cache and cache[0]==fingerprint:
         pdf_slot.download_button("Download PDF",data=cache[1],file_name="climate_report.pdf",mime="application/pdf",key="p6_pdf_download",on_click="ignore")
-    elif pdf_slot.button("Generate PDF",key="p6_generate_pdf"):
+    elif pdf_slot.button("Generate PDF",key="p6_generate_pdf",
+                          on_click=prepare_export,args=(st.session_state,)):
         try:
-            st.session_state.pop("_p6_pdf",None)
-            st.session_state.pop("_p6_html_result",None)
-            st.session_state.pop("_p66_atlas_result",None)
-            html_result=None
-            gc.collect()
             status=st.empty()
             try:
                 from .p6_static_render import session_cache_dir,export_headroom
@@ -538,10 +533,7 @@ def render_report(df=None,reference_df=None):
         except Exception as exc:
             st.error(str(exc))
             st.caption("The printable HTML contains all captured charts and can be opened locally, then printed to PDF in your browser.")
+        finally:finish_export(st.session_state)
     with st.expander("Export memory management",expanded=False):
         st.caption("Release generated downloads and rendered image cache. Saved diagrams are retained.")
-        if st.button("Release export resources",key="p6_pdf_release"):
-            from .p6_static_render import clear_render_cache
-            for key in ("_p6_pdf","_p6_html_result","_p66_atlas_result"):st.session_state.pop(key,None)
-            clear_render_cache(st.session_state)
-            st.rerun()
+        st.button("Release export resources",key="p6_pdf_release",on_click=manual_cleanup,args=(st.session_state,))

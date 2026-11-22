@@ -426,7 +426,7 @@ st.markdown(
 )
 
 
-@st.cache_data(show_spinner=True)
+@st.cache_data(show_spinner=True, max_entries=4, ttl=3600)
 def load_epw_from_bytes(
     file_name: str,
     payload: bytes,
@@ -503,6 +503,8 @@ def set_active_climate_file(name: str, payload: bytes, source: str) -> None:
 
     st.session_state["active_climate_file"] = ClimateFilePayload(name=name, payload=payload, source=source)
     st.session_state.pop("active_canonical_climate", None)
+    from epw_climate_analyzer.memory_lifecycle import dataset_changed
+    dataset_changed(st.session_state)
     queue_navigation(st.session_state, "Overview")
 
 
@@ -514,6 +516,8 @@ def set_active_canonical_climate(dataset: object) -> None:
         raise TypeError("Expected CanonicalClimateDataset for historical climate activation.")
     st.session_state["active_canonical_climate"] = dataset
     st.session_state.pop("active_climate_file", None)
+    from epw_climate_analyzer.memory_lifecycle import dataset_changed
+    dataset_changed(st.session_state)
     from epw_climate_analyzer.engine_analysis import is_engine_dataset
     queue_navigation(st.session_state, "Overview" if is_engine_dataset(dataset) else "Temperature")
 
@@ -542,6 +546,8 @@ def clear_active_climate_file() -> None:
     """Remove every active climate source and reset navigation."""
     st.session_state.pop("active_climate_file", None)
     st.session_state.pop("active_canonical_climate", None)
+    from epw_climate_analyzer.memory_lifecycle import dataset_changed
+    dataset_changed(st.session_state)
     queue_navigation_reset(st.session_state)
 
 
@@ -6150,6 +6156,9 @@ def main() -> None:
     apply_queued_navigation(st.session_state)
     from epw_climate_analyzer.p6_report import CONTEXT_KEY,INTERPRETATION_KEY,render_report_status
     render_report_status(st)
+    from epw_climate_analyzer.memory_lifecycle import begin_rerun,render_sidebar
+    begin_rerun(st.session_state,st.session_state.get(NAVIGATION_KEY))
+    render_sidebar(st)
     st.session_state.pop(CONTEXT_KEY,None)
     st.session_state.pop(INTERPRETATION_KEY,None)
     active_file = get_active_climate_file()

@@ -86,10 +86,9 @@ def render_atlas(df,context,reference_df=None):
     signature=hashlib.sha256(json.dumps([context,coverage,chosen,[d.id for d in batch],batch_number,batch_size,title,mode,paper,orientation,per_page,"p67-html-all",all_html],sort_keys=True,default=str).encode()).hexdigest()
     if st.session_state.get("_p66_atlas_result") and st.session_state["_p66_atlas_result"][0]!=signature:
         st.session_state.pop("_p66_atlas_result",None)
-    if st.button("Generate complete HTML atlas" if all_html else "Generate selected batch",key="p66_generate"):
-        import gc
-        for key in ("_p66_atlas_result","_p6_pdf","_p6_html_result"):st.session_state.pop(key,None)
-        gc.collect()
+    from .memory_lifecycle import prepare_export,finish_export,cleanup
+    if st.button("Generate complete HTML atlas" if all_html else "Generate selected batch",key="p66_generate",
+                 on_click=prepare_export,args=(st.session_state,)):
         progress=st.progress(0,text="Preparing diagrams")
         try:
             def update(i,n,label):
@@ -103,7 +102,9 @@ def render_atlas(df,context,reference_df=None):
             metadata["batch_size"]=batch_size
             st.session_state["_p66_atlas_result"]=(signature,data,manifest,metadata)
         except Exception as exc:st.error("Atlas generation not completed: "+str(exc))
-        finally:progress.empty()
+        finally:
+            progress.empty()
+            finish_export(st.session_state)
     result=st.session_state.get("_p66_atlas_result")
     if not result or result[0]!=signature:return
     _,data,manifest,metadata=result
@@ -119,5 +120,7 @@ def render_atlas(df,context,reference_df=None):
     st.download_button("Download atlas metadata",data=json.dumps(metadata,ensure_ascii=False,indent=2,default=str).encode(),file_name="atlas_metadata.json",mime="application/json",key="p66_meta")
     with st.expander("Generation outcomes",expanded=bool(n["failed"])):
         st.dataframe(pd.DataFrame([{"Diagram":d["title"],"Status":d["status"],"Reason":d["reason"]} for d in manifest]),hide_index=True,use_container_width=True)
-    if st.button("Release generated atlas",key="p66_release"):
-        st.session_state.pop("_p66_atlas_result",None);st.rerun()
+    def release_atlas():
+        st.session_state.pop("_p66_atlas_result",None)
+        cleanup(st.session_state,"Atlas download released")
+    st.button("Release generated atlas",key="p66_release",on_click=release_atlas)
