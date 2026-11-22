@@ -268,6 +268,30 @@ MONTHLY_WIND_ROSE_NOTE = ("Each month uses its valid non-calm coincident source 
     "Calendar months pool selected years. All panels share the radial range and colour mapping; "
     "months without valid observations remain labelled, not interpreted as zero wind.")
 
+def compact_hour_radial_scale(max_r):
+    """Smallest readable uniform scale with at least 5% data headroom.
+
+    Search round step sizes globally, rather than rounding a prescribed
+    interval count upward. Four to eight rings keep the monthly panels
+    legible; prefer six rings only when the upper bounds are equal.
+    """
+    import math
+    max_r=float(max_r)
+    if not math.isfinite(max_r) or max_r<0:
+        raise ValueError("Radial maximum must be finite and nonnegative.")
+    target=max_r*1.05 if max_r>0 else 1.
+    magnitude=math.floor(math.log10(target))
+    candidates=[]
+    for exponent in range(magnitude-2,magnitude+1):
+        for multiplier in (1.,2.,2.5,5.,7.5):
+            step=multiplier*10.**exponent
+            count=math.ceil(target/step)
+            if 4<=count<=8:
+                candidates.append((count*step,abs(count-6),step,count))
+    upper,_,step,count=min(candidates)
+    return upper,[i*step for i in range(1,count+1)]
+
+
 def monthly_wind_rose_panel(df,*,speed="wind_speed_m_s",direction="wind_direction_deg",
                            radial="Percentage",colour="Wind speed",style="Class distribution",
                            edges=None,title="Monthly wind roses"):
@@ -292,17 +316,9 @@ def monthly_wind_rose_panel(df,*,speed="wind_speed_m_s",direction="wind_directio
         tables[month]=table;figures[month]=one
     if not tables:raise ValueError("No valid coincident non-calm observations for any month.")
     max_r=max([0.,*peaks])
-    # Hours: fit a common, compact upper bound to the largest stacked
-    # directional total over all months. Aim for five round intervals
-    # with modest headroom instead of forcing three coarse intervals.
+    # Fit the shared scale to the largest stacked directional total.
     if radial=="Hours":
-        target=max_r*1.05 if max_r>0 else 1.
-        rough=target/5
-        power=10.**np.floor(np.log10(rough))
-        step=next(v*power for v in (1.,2.,2.5,5.,10.) if v*power>=rough-1e-12*power)
-        count=max(1,int(np.ceil(target/step-1e-12)))
-        upper=max(count*step,max_r)
-        ticks=[i*step for i in range(1,count+1)]
+        upper,ticks=compact_hour_radial_scale(max_r)
     elif radial=="Percentage":
         # Fixed physical percentage domain for comparisons across months
         # and climates, regardless of the observed maximum directional share.

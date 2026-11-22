@@ -4,6 +4,32 @@ import pandas as pd
 from epw_climate_analyzer.directional_climate import *
 
 class DirectionalTests(unittest.TestCase):
+    def test_compact_hour_scale_preserves_headroom_and_readability(self):
+        upper,ticks=compact_hour_radial_scale(330.)
+        self.assertEqual(upper,350.)
+        self.assertEqual(ticks,[50.,100.,150.,200.,250.,300.,350.])
+        for peak in (0.,1/6,1.,3.,17.,49.,95.,200.,330.,345.,350.,744.,8760.,87600.):
+            upper,ticks=compact_hour_radial_scale(peak)
+            self.assertGreaterEqual(upper,peak*1.05)
+            self.assertTrue(4<=len(ticks)<=8)
+            self.assertAlmostEqual(ticks[-1],upper)
+            np.testing.assert_allclose(np.diff([0.,*ticks]),ticks[0])
+
+    def test_monthly_hour_scale_shared_for_all_panels_and_stacked_classes(self):
+        idx=pd.date_range("2025-03-01",periods=330,freq="h")
+        df=pd.DataFrame({"wind_speed_m_s":np.where(np.arange(330)%2==0,3.,5.),
+                         "wind_direction_deg":45.},index=idx)
+        df.attrs["canonical_native_interval_minutes"]=60
+        fig,tables=monthly_wind_rose_panel(df,radial="Hours")
+        self.assertAlmostEqual(tables[3].sum(axis=1).max(),330.)
+        for month in range(1,13):
+            ax=fig.layout["polar" if month==1 else f"polar{month}"].radialaxis
+            self.assertEqual(tuple(ax.range),(0.,350.))
+            self.assertEqual(tuple(ax.tickvals),(50.,100.,150.,200.,250.,300.,350.))
+        fig,_=monthly_wind_rose_panel(df,radial="Percentage")
+        self.assertEqual(tuple(fig.layout.polar3.radialaxis.range),(0.,100.))
+        self.assertEqual(tuple(fig.layout.polar3.radialaxis.tickvals),(25.,50.,75.,100.))
+
     def test_directions_units_and_missing(self):
         df=pd.DataFrame({"wind_speed_m_s":[2.,4.,0.,3.,2.],"wind_direction_deg":[360.,90.,180.,270.,np.nan],
             "dry_bulb_temperature_c":[10.,20.,30.,np.nan,15.],
