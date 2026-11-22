@@ -66,6 +66,14 @@ class PeakMemoryTests(unittest.TestCase):
         pd.testing.assert_frame_equal(df,original)
         self.assertIn("diffuse_radiation_fraction_pct",prepared)
         self.assertTrue((prepared["diffuse_radiation_fraction_pct"]==25.).all())
+    def test_launch_block_reports_composition_and_stage(self):
+        with patch.object(iso,"container_memory",side_effect=[(2410*iso.MIB,3072*iso.MIB),(2402*iso.MIB,3072*iso.MIB)]),patch.object(iso,"_rss",return_value=650*iso.MIB),patch.object(iso,"_pressure_details",return_value=" Cgroup composition: anonymous 1600 MiB."),patch.object(iso.gc,"collect"),patch.object(iso,"_trim_allocator"):
+            with self.assertRaises(MemoryError) as caught:
+                iso._admit_launch("After request serialization")
+        message=str(caught.exception)
+        for expected in ("2402/3072","768 MiB","98.0 MiB","After request serialization","2410 MiB","Parent RSS: 650 MiB","anonymous 1600 MiB","No worker started"):
+            self.assertIn(expected,message)
+
     def test_rejects_launch_without_raw_memory(self):
         df,ds=self.fixture()
         with patch.object(iso,"container_memory",return_value=(2800*iso.MIB,3072*iso.MIB)),patch.object(iso.subprocess,"Popen") as launch:

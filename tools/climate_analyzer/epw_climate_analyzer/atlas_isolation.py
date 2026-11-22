@@ -16,7 +16,7 @@ import sys
 import tempfile
 import time
 import zipfile
-from .p66_memory import EXPORT_LOCK,MIB,container_memory,require_html_headroom,_trim_allocator
+from .p66_memory import EXPORT_LOCK,MIB,container_memory,require_html_headroom,_trim_allocator,_pressure_details
 
 LAUNCH_RESERVE=768*MIB
 POLL_SECONDS=.15
@@ -24,7 +24,7 @@ TIMEOUT_SECONDS=1800
 MAX_OUTPUT=32*MIB
 MAX_STATUS=4*MIB
 
-def _admit_launch():
+def _admit_launch(stage="Before request serialization"):
     sample=container_memory()
     if sample is None:return
     used,cap=sample
@@ -32,8 +32,17 @@ def _admit_launch():
     if used+reserve>=cap:
         gc.collect();_trim_allocator()
         used,cap=container_memory() or sample
+        reserve=min(LAUNCH_RESERVE,max(384*MIB,int(cap*.30)))
         if used+reserve>=cap:
-            raise MemoryError(f"HTML worker admission blocked: {used/MIB:.0f}/{cap/MIB:.0f} MiB used; needs {reserve/MIB:.0f} MiB raw headroom. Clean caches or reboot the app.")
+            rss=_rss(os.getpid())
+            parent=f" Parent RSS: {rss/MIB:.0f} MiB." if rss else ""
+            raise MemoryError(
+                f"HTML worker admission blocked: {used/MIB:.0f}/{cap/MIB:.0f} MiB used; "
+                f"needs {reserve/MIB:.0f} MiB raw headroom. Shortfall: "
+                f"{(used+reserve-cap)/MIB:.1f} MiB (strict admission boundary). "
+                f"Stage: {stage}. Before allocator cleanup: {sample[0]/MIB:.0f} MiB."
+                +parent+_pressure_details()+
+                " No worker started. Clean unused caches or reboot the app.")
 
 def _stop(proc):
     if os.name=="posix":
@@ -71,7 +80,7 @@ def isolated_html_atlas(diagrams,df,context,*,progress=None,timeout=TIMEOUT_SECO
             log=root/"worker.log"
             with request.open("wb") as stream:
                 pickle.dump((diagrams,df,context,kwargs),stream,protocol=5)
-            _admit_launch()
+            _admit_launch("After request serialization")
             start=time.monotonic()
             baseline=container_memory()
             peak=baseline[0] if baseline else None

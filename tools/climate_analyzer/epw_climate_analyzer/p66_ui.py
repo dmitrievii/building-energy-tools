@@ -82,7 +82,7 @@ def render_atlas(df,context,reference_df=None):
         st.caption(f"Full selection: {ready:,} admitted diagrams in {batch_count} batches. This request generates {len(batch)} diagrams only. Download each batch before generating the next; all catalogue entries remain selectable. The catalogue CSV describes the entire selection; generation outcomes describe this batch only.")
     mem=container_memory()
     if mem:st.caption(f"Container memory: {mem[0]/1024**2:.0f} / {mem[1]/1024**2:.0f} MiB.")
-    st.caption("32 MiB output budget per download. HTML runs in a disposable, memory-monitored process without Chromium. If resource admission fails, clean unused caches or select a smaller batch.")
+    st.caption("32 MiB output budget per download. HTML runs in a disposable, memory-monitored process without Chromium. If worker launch admission fails, clean unused caches; smaller batches do not bypass the fixed launch reserve. Smaller batches can help with memory or size failures during generation.")
     signature=hashlib.sha256(json.dumps([context,coverage,chosen,[d.id for d in batch],batch_number,batch_size,title,mode,paper,orientation,per_page,"mem-r3-profile",all_html],sort_keys=True,default=str).encode()).hexdigest()
     if st.session_state.get("_p66_atlas_result") and st.session_state["_p66_atlas_result"][0]!=signature:
         st.session_state.pop("_p66_atlas_result",None)
