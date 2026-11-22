@@ -4290,7 +4290,6 @@ def render_wind(df: pd.DataFrame) -> None:
         interpretation = wind_interpretation(data)
 
     period_label = f"{month_name} · {period or 'All hours'}"
-    st.caption("Annual uses all dates remaining in the active Data filter; Monthly selects the named calendar month within that filter, including across selected years. Frequencies retain the existing physical-hour weighting.")
     from epw_climate_analyzer.directional_climate import (
         colour_options, radial_options, directional_table, directional_figure,
         directional_interpretation,
