@@ -1,0 +1,52 @@
+name: Climate Analyzer R14 upstream lifecycle matrix
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/climate_analyzer/scripts/r14_probe*'
+      - '.github/workflows/climate-analyzer-r14-upstream.yml'
+permissions:
+  contents: read
+jobs:
+  lifecycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        streamlit: ['1.63.0','1.67.0']
+        mode: ['native','close','close-loop']
+    defaults:
+      run:
+        working-directory: tools/climate_analyzer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install "streamlit==${{ matrix.streamlit }}"
+      - run: pip freeze > r14-dependencies.txt
+      - run: npm install --no-save playwright-core@1.55.0
+      - name: Reproduce upstream retention and verify native cache and fragment ownership
+        env:
+          R14_MODE: ${{ matrix.mode }}
+          R14_PROBE_FILE: ${{ github.workspace }}/tools/climate_analyzer/r14-sample.json
+          R14_OUTPUT: ${{ github.workspace }}/tools/climate_analyzer/r14-result.json
+          STREAMLIT_SERVER_DISCONNECTED_SESSION_TTL: '2'
+        run: |
+          set -euo pipefail
+          python scripts/r14_probe_launch.py --server.headless=true --server.port=8516 > r14-server.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 45); do curl -fsS http://127.0.0.1:8516/_stcore/health && break; sleep 1; done
+          curl -fsS http://127.0.0.1:8516/_stcore/health
+          node scripts/r14_probe_browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r14-${{ matrix.streamlit }}-${{ matrix.mode }}
+          path: |
+            tools/climate_analyzer/r14-*.json
+            tools/climate_analyzer/r14-server.log
+            tools/climate_analyzer/r14-dependencies.txt
