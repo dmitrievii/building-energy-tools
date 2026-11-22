@@ -200,13 +200,16 @@ def _release_native_owner(owner):
     # session state or remove public caches.
     owner.clear(close=True)
 
+def _create_native_owner():
+    return SessionCacheOwner()
+
 def _native_owner():
     global _NATIVE_OWNER_FACTORY
     with _REGISTRY_LOCK:
         if _NATIVE_OWNER_FACTORY is None:
             import streamlit as st
             _NATIVE_OWNER_FACTORY=st.cache_resource(scope="session",max_entries=1,
-                on_release=_release_native_owner)(SessionCacheOwner)
+                on_release=_release_native_owner)(_create_native_owner)
         factory=_NATIVE_OWNER_FACTORY
     return factory()
 

@@ -27,6 +27,7 @@ jobs:
       - run: python -m unittest discover -s tests -p test_chart_lifecycle.py -v
       - run: python -m unittest discover -s tests -p test_memory_lifecycle.py -v
       - run: python -m unittest discover -s tests -p test_mem_perf_r12_hf1.py -v
+      - run: python -m unittest discover -s tests -p test_r14_native_owner.py -v
       - run: npm install --no-save playwright-core@1.55.0
       - name: Run 6 real EPW pilot cycles
         env:

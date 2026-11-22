@@ -95,7 +95,7 @@ try{
      await settle(p);
      const parse=s=>s.match(/full (\d+); fragment (\d+)/).slice(1).map(Number);
      const initial=parse(await marker.innerText());
-     const slider=p.getByRole('slider').first();
+     const slider=p.getByTestId('stMain').getByRole('slider').first();
      await slider.focus();
      await slider.press('ArrowRight');
      await p.waitForFunction(n=>Array.from(document.querySelectorAll('[data-testid="stCaptionContainer"]')).some(e=>{

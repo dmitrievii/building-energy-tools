@@ -59,3 +59,11 @@ export state are exercised by a dedicated real-app candidate CI workflow.
 These flags default OFF; no production migration until paired evidence is
 available. Shared compatibility wrappers still need explicit dependency
 refactoring. Do not claim stateless compatibility from this pilot.
+
+## HF2 real-app baseline (run 45076668013)
+Managed launcher passed 20 EPW replacement/disconnect cycles, zero retained
+EPW objects and zero closed AppSessions at every accepted idle sample.
+Anonymous RSS MiB at cycles 1/4/10/16/20: 260.01/298.50/348.71/368.43/335.63.
+Cycle 4 to 20 drift: +37.13 MiB, within the provisional 64 MiB gate.
+This is qualification of a controlled single-process launcher, not of
+Community Cloud's direct launch nor evidence of zero drift forever.
