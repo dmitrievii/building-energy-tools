@@ -18,7 +18,7 @@ from .byte_cache import (cache_inventory,clear_recomputable_caches,session_inven
 
 RUNTIME_MEMORY_SCHEMA="MEM-PERF-R6"
 RUNTIME_CHART_SCHEMA="MEM-PERF-R7"
-RUNTIME_INVENTORY_SCHEMA="MEM-PERF-R13"
+RUNTIME_INVENTORY_SCHEMA="MEM-PERF-R13-HF1"
 EXPORT_KEYS=("_p6_pdf","_p6_html_result","_p66_atlas_result","_utci_perf_r1_csv")
 DERIVED_KEYS=("_utci_perf_r1_result","_utci_perf_r1_sensitivity")
 TRANSIENT_KEYS=("_p6_displayed_charts","_active_filtered_export_df")
@@ -87,7 +87,7 @@ def _collect_inventory(state,process):
     import sys
     import os
     import tracemalloc
-    result={"snapshot_schema":"MEM-PERF-R13","captured_at_utc":datetime.now(timezone.utc).isoformat(),
+    result={"snapshot_schema":"MEM-PERF-R13-HF1","captured_at_utc":datetime.now(timezone.utc).isoformat(),
             "capture_phase":"on-demand; before next page rendering when called by widget callback",
             "memory":process,"shared_caches":cache_inventory(),
             "session_caches":session_cache_inventory(state),
@@ -128,6 +128,9 @@ def _collect_inventory(state,process):
     from .memory_recovery import allocator_snapshot, recovery_summary
     from .process_memory import container_process_inventory
     result["container_processes"]=container_process_inventory()
+    if process.get("limit",0)-process.get("used",0)>256*m.MIB:
+        from .session_reaper import retired_reference_summary
+        result["retired_reference_diagnostics"]=retired_reference_summary()
     from .epw_lifecycle import lifecycle_summary
     result["epw_lifecycle"]=lifecycle_summary()
     result["allocator"]=allocator_snapshot()
@@ -391,11 +394,12 @@ def _render_sidebar(st):
         st.caption(f"Live session maintenance: {live_reaper.get('status','unavailable')}; sweeps: {live_reaper.get('sweeps',0)}; disconnected at last sweep: {live_reaper.get('disconnected_sessions','Unavailable')}; closed immediately: {live_reaper.get('closed_on_disconnect',0)}; expired reaped (fallback): {live_reaper.get('expired_reaped',0)}.")
         st.caption(f"Active sessions: {live_reaper.get('active_sessions','Unavailable')}; WebSocket disconnect dispatches: {live_reaper.get('disconnect_events',0)}; native closes: {live_reaper.get('native_closes',0)}; closed session objects still reachable: {live_reaper.get('closed_session_refs_alive',0)}.")
         st.caption(f"Native resets: {live_reaper.get('native_resets',0)}; reset failures: {live_reaper.get('reset_failures',0)}; retired payload cleanups: {live_reaper.get('retired_payloads_cleared',0)}.")
+        st.caption(f"Session policy: {live_reaper.get('policy_version','not verified')}; hook replacements: {live_reaper.get('policy_replacements',0)}.")
         queue_sample=live_reaper.get("forward_queue_sample",{})
         if queue_sample.get("status")=="sampled":
             st.caption(f"Pending forward messages at last sweep: {queue_sample['pending_messages_in_sampled_sessions']}; sampled wire payload: {_mib(queue_sample['sampled_wire_bytes'])}; {queue_sample['captured_at_utc']} (not websocket backlog or RSS).")
         inspected=state.get(INVENTORY_KEY)
-        if inspected and inspected.get("snapshot_schema")!="MEM-PERF-R13":
+        if inspected and inspected.get("snapshot_schema")!="MEM-PERF-R13-HF1":
             release_inventory(state)
             inspected=None
         from .memory_recovery import recovery_summary
@@ -426,7 +430,8 @@ def _render_sidebar(st):
             if processes:
                 st.caption(f"Visible cgroup processes: {processes.get('sampled',0)}; total sampled anonymous RSS: {_mib(processes.get('rss_anon_sum'))} (may overlap shared pages).")
                 if details:
-                    st.text("\n".join(f"{p['category']}: PID {p['pid']} · anonymous RSS {_mib(p.get('rss_anon'))} · PssAnon {_mib(p.get('pss_anon'))}" for p in processes.get("processes",[])[:15]))
+                    st.text("\n".join(f"{p['category']}: PID {p['pid']} · PPID {p.get('parent_pid','?')} · {p.get('role_hint','unclassified')} · {p.get('relation_to_app','unknown')} · anonymous RSS {_mib(p.get('rss_anon'))} · PssAnon {_mib(p.get('pss_anon'))}" for p in processes.get("processes",[])[:15]))
+                st.caption(f"Other Python anonymous RSS: {_mib(processes.get('other_python_anon_bytes'))}; matching climate launch targets: {len(processes.get('other_climate_app_candidates',[]))}.")
             if details:
                 # Text summaries avoid Arrow/dataframe marshalling and repeated
                 # construction of nested JSON elements on each unrelated rerun.

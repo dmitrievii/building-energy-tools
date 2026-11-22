@@ -14,7 +14,9 @@ _RUNTIME_REF=None
 _INTERVAL=1.
 _QUEUE_INTERVAL=30.
 _LAST_QUEUE_SAMPLE=0.
-RUNTIME_RECOVERY_SCHEMA="MEM-PERF-R13"
+RUNTIME_RECOVERY_SCHEMA="MEM-PERF-R13-HF1"
+_POLICY_VERSION="r13-hf1"
+_TICK_GENERATION_ATTR="_ige_reaper_generation"
 _RESET_REQUESTS=set()
 # Strong references are limited to closed sessions still awaiting their own
 # ScriptRunner termination. Store weak refs to avoid creating new owners.
@@ -44,9 +46,19 @@ def _close_on_disconnect(manager,session_id):
         _STATUS["closed_on_disconnect"]=_STATUS.get("closed_on_disconnect",0)+1
 
 def _install_disconnect_policy(manager):
-    if getattr(manager,"_ige_r12_hf1_close",False):return
+    # Instance-bound closures from older code survive importlib.reload.
+    # Replace them from the pinned class implementation, not from another
+    # wrapper. A boolean marker alone cannot establish current ownership.
+    installed=getattr(manager,"_ige_policy_version",None)
+    if (installed==_POLICY_VERSION and
+            getattr(manager.close_session,"_ige_policy_version",None)==_POLICY_VERSION and
+            getattr(manager.disconnect_session,"_ige_policy_version",None)==_POLICY_VERSION):
+        _set(policy_version=_POLICY_VERSION,policy_verified=True)
+        return
     ref=weakref.ref(manager)
-    original_close=manager.close_session
+    original_close=type(manager).close_session.__get__(manager,type(manager))
+    if installed or getattr(manager,"_ige_r12_hf1_close",False):
+        with _LOCK:_STATUS["policy_replacements"]=_STATUS.get("policy_replacements",0)+1
     def close(session_id):
         global _RECOVERY_PENDING
         current=ref()
@@ -81,6 +93,7 @@ def _install_disconnect_policy(manager):
                 _RESET_REQUESTS.discard(session_id)
                 _STATUS["native_resets"]=_STATUS.get("native_resets",0)+1
                 _STATUS["last_reset_status"]="old AppSession closed after browser reload"
+    close._ige_policy_version=_POLICY_VERSION
     manager.close_session=close
     manager._ige_r12_hf1_close=True
     def disconnect(session_id):
@@ -88,9 +101,12 @@ def _install_disconnect_policy(manager):
         if current is not None:
             with _LOCK:_STATUS["disconnect_events"]=_STATUS.get("disconnect_events",0)+1
             _close_on_disconnect(current,session_id)
+    disconnect._ige_policy_version=_POLICY_VERSION
     manager.disconnect_session=disconnect
     manager._ige_r12_no_reconnect=True
-    _set(disconnect_policy="native close; no reconnect retention; direct close instrumented")
+    manager._ige_policy_version=_POLICY_VERSION
+    _set(policy_version=_POLICY_VERSION,policy_verified=True,
+         disconnect_policy="native close; no reconnect retention; versioned direct close")
 
 def request_native_reset():
     """Record the current connection's reset, then let the browser reload.
@@ -106,7 +122,7 @@ def request_native_reset():
     if streamlit.__version__!="1.63.0" or ctx is None or not Runtime.exists():
         return False
     runtime=Runtime.instance()
-    if not getattr(runtime._session_mgr,"_ige_r12_hf1_close",False):return False
+    if getattr(runtime._session_mgr,"_ige_policy_version",None)!=_POLICY_VERSION:return False
     session_id=ctx.session_id
     loop=runtime._get_async_objs().eventloop
     def expire_request():
@@ -148,6 +164,20 @@ def _finalize_retired(manager):
             with _LOCK:_STATUS["retired_clear_failures"]=_STATUS.get("retired_clear_failures",0)+1
             _set(last_retired_clear_error=type(exc).__name__)
     _RETIRED[:]=pending
+
+def retired_reference_summary():
+    """On-demand only: bounded immediate referrer types of retired AppSessions."""
+    import gc
+    from collections import Counter
+    observations=[]
+    for ref in tuple(_CLOSED_REFS)[-8:]:
+        obj=ref()
+        if obj is None:continue
+        counts=Counter(type(owner).__module__+"."+type(owner).__name__ for owner in gc.get_referrers(obj))
+        observations.append(dict(counts.most_common(12)))
+        del obj
+    return {"sampled":len(observations),"immediate_referrer_types":observations,
+            "scope":"On-demand immediate GC-tracked referrer type counts; diagnostic frames may appear. No object contents or user IDs."}
 
 def reaper_summary():
     with _LOCK:return {**_STATUS,"allocator_recovery_pending":_RECOVERY_PENDING,
@@ -249,10 +279,10 @@ def _queue_sample(manager):
     except Exception as exc:
         return {"status":"unavailable: "+type(exc).__name__}
 
-def _tick(runtime_ref):
+def _tick(runtime_ref,generation=None):
     global _LAST_QUEUE_SAMPLE
     runtime=runtime_ref()
-    if runtime is None:return
+    if runtime is None or generation is None or getattr(runtime,_TICK_GENERATION_ATTR,None) is not generation:return
     try:
         async_objs=runtime._get_async_objs()
         if async_objs.must_stop.is_set():return
@@ -278,7 +308,7 @@ def _tick(runtime_ref):
         if now-_LAST_QUEUE_SAMPLE>=_QUEUE_INTERVAL:
             _set(forward_queue_sample=_queue_sample(manager))
             _LAST_QUEUE_SAMPLE=now
-        async_objs.eventloop.call_later(_INTERVAL,_tick,runtime_ref)
+        async_objs.eventloop.call_later(_INTERVAL,_tick,runtime_ref,generation)
     except Exception as exc:
         _set(status="unavailable: "+type(exc).__name__)
 
@@ -295,7 +325,12 @@ def ensure_session_reaper():
         with _LOCK:
             if _RUNTIME_REF is not None and _RUNTIME_REF() is runtime:return
             ref=weakref.ref(runtime)
-            loop.call_soon_threadsafe(_tick,ref)
+            # One active generation per Runtime, including after module reload.
+            generation=object()
+            def activate():
+                setattr(runtime,_TICK_GENERATION_ATTR,generation)
+                _tick(ref,generation)
+            loop.call_soon_threadsafe(activate)
             _RUNTIME_REF=ref
             _STATUS["status"]="scheduled"
     except Exception as exc:

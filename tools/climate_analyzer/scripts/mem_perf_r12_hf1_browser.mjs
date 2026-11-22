@@ -44,7 +44,7 @@ async function snapshot(p,stage,cycle){
  const filename=path.join(dir,String(cycle).padStart(2,'0')+'_'+stage+'.json');
  await download[0].saveAs(filename);
  const v=JSON.parse(await fs.readFile(filename,'utf8'));
- if(v.snapshot_schema!=='MEM-PERF-R13')throw Error('Wrong runtime schema');
+ if(v.snapshot_schema!=='MEM-PERF-R13-HF1')throw Error('Wrong runtime schema');
  rows.push({cycle,stage,memory:v.memory,epw:v.epw_lifecycle,session:v.session_cache_summary,
             reaper:v.session_runtime.session_reaper,processes:v.container_processes,library:v.library_footprint});
  return v;

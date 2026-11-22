@@ -31,7 +31,12 @@ def allocator_snapshot():
         fn.argtypes=[]
         fn.restype=Mallinfo2
         info=fn()
+        import os
+        arena_max=os.environ.get("MALLOC_ARENA_MAX","")
+        # Record only an allowlisted numeric setting, never environment contents.
         return {"status":"sampled","glibc":version().decode("ascii"),
+                "arena_max_env":int(arena_max) if arena_max.isascii() and arena_max.isdigit() and len(arena_max)<=6 else None,
+                "free_arena_fraction":float(info.fordblks/info.arena) if info.arena else None,
                 "arena_bytes":int(info.arena),"allocated_arena_bytes":int(info.uordblks),
                 "free_arena_bytes":int(info.fordblks),"mmap_bytes":int(info.hblkhd),
                 "top_releasable_bytes":int(info.keepcost),"free_chunks":int(info.ordblks),
