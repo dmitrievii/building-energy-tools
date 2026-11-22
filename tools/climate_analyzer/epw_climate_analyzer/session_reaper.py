@@ -14,7 +14,8 @@ _RUNTIME_REF=None
 _INTERVAL=1.
 _QUEUE_INTERVAL=30.
 _LAST_QUEUE_SAMPLE=0.
-RUNTIME_RECOVERY_SCHEMA="MEM-PERF-R12"
+RUNTIME_RECOVERY_SCHEMA="MEM-PERF-R12-HF1"
+_CLOSED_REFS=[]
 _RECOVERY_PENDING=False
 _STOPPING_THREADS=weakref.WeakSet()
 
@@ -26,32 +27,64 @@ def _close_on_disconnect(manager,session_id):
     runner=getattr(info.session,"_scriptrunner",None)
     thread=getattr(runner,"_script_thread",None)
     if thread is not None:_STOPPING_THREADS.add(thread)
-    from .byte_cache import close_session_caches
-    try:
-        # Native close never puts this session into reconnect storage.
+    # Direct close policy owns shutdown accounting when installed.
+    if getattr(manager,"_ige_r12_hf1_close",False) is True:
         manager.close_session(session_id)
-    except Exception as exc:
-        with _LOCK:_STATUS["shutdown_failures"]+=1
-        _set(status="shutdown failed: "+type(exc).__name__)
-        raise
-    finally:
-        close_session_caches(session_id)
-        _RECOVERY_PENDING=True
+    else:
+        from .byte_cache import close_session_caches
+        try:manager.close_session(session_id)
+        finally:
+            close_session_caches(session_id)
+            _RECOVERY_PENDING=True
     with _LOCK:
         _STATUS["closed_on_disconnect"]=_STATUS.get("closed_on_disconnect",0)+1
 
 def _install_disconnect_policy(manager):
-    if getattr(manager,"_ige_r12_no_reconnect",False):return
+    if getattr(manager,"_ige_r12_hf1_close",False):return
     ref=weakref.ref(manager)
+    original_close=manager.close_session
+    def close(session_id):
+        global _RECOVERY_PENDING
+        current=ref()
+        if current is None:return
+        info=current.get_active_session_info(session_id)
+        if info is None:return original_close(session_id)
+        session=info.session
+        runner=getattr(session,"_scriptrunner",None)
+        thread=getattr(runner,"_script_thread",None)
+        if thread is not None:
+            _STOPPING_THREADS.add(thread)
+            from streamlit.runtime.scriptrunner import get_script_run_ctx
+            ctx=get_script_run_ctx(thread,suppress_warning=True)
+            if ctx is not None:ctx._ige_session_closed=True
+        try:_CLOSED_REFS.append(weakref.ref(session))
+        except TypeError:pass
+        del _CLOSED_REFS[:-128]
+        from .byte_cache import close_session_caches
+        try:original_close(session_id)
+        except Exception as exc:
+            with _LOCK:_STATUS["shutdown_failures"]+=1
+            _set(last_shutdown_error=type(exc).__name__)
+            raise
+        finally:
+            close_session_caches(session_id)
+            _RECOVERY_PENDING=True
+        with _LOCK:_STATUS["native_closes"]=_STATUS.get("native_closes",0)+1
+    manager.close_session=close
+    manager._ige_r12_hf1_close=True
     def disconnect(session_id):
         current=ref()
-        if current is not None:_close_on_disconnect(current,session_id)
+        if current is not None:
+            with _LOCK:_STATUS["disconnect_events"]=_STATUS.get("disconnect_events",0)+1
+            _close_on_disconnect(current,session_id)
     manager.disconnect_session=disconnect
     manager._ige_r12_no_reconnect=True
-    _set(disconnect_policy="native close; no reconnect retention")
+    _set(disconnect_policy="native close; no reconnect retention; direct close instrumented")
 
 def reaper_summary():
-    with _LOCK:return {**_STATUS,"allocator_recovery_pending":_RECOVERY_PENDING}
+    with _LOCK:return {**_STATUS,"allocator_recovery_pending":_RECOVERY_PENDING,
+        "closed_session_refs_tracked":len(_CLOSED_REFS),
+        "closed_session_refs_alive":sum(ref() is not None for ref in _CLOSED_REFS)}
 
 def _set(**kw):
     with _LOCK:_STATUS.update(kw)
@@ -94,6 +127,13 @@ def _recover_if_idle(manager,cache,reaped):
         return
     if not _RECOVERY_PENDING or not _idle_for_recovery(manager,cache):
         return
+    # Only when no session can use the composed wrappers. Restore the
+    # shared pristine binding snapshot, not the scientific library imports.
+    if not manager.list_active_sessions():
+        import sys
+        parity=sys.modules.get("epw_climate_analyzer.source_parity_runtime")
+        release=getattr(parity,"release_idle_bindings",None)
+        if callable(release):release()
     from .memory_recovery import recovery_probe
     result=recovery_probe("Disconnected session resources released")
     if result["status"]=="busy export":return
@@ -106,6 +146,7 @@ def _recover_if_idle(manager,cache,reaped):
         _set(last_idle_server_sample={"memory":result["after_trim"],
               "captured_at_utc":result["captured_at_utc"],
               "session_caches":session_cache_summary(),
+              "closed_session_refs_alive":sum(ref() is not None for ref in _CLOSED_REFS),
               "scope":"Warm process after zero-active-session recovery; not a guarantee of reclaimable RSS."})
 
 def _queue_sample(manager):
@@ -155,6 +196,8 @@ def _tick(runtime_ref):
         if type(storage) is not MemorySessionStorage or type(storage._cache) is not TTLCache:
             _set(status="unsupported session storage");return
         _install_disconnect_policy(manager)
+        _set(active_sessions=len(manager.list_active_sessions()),
+             stopping_script_threads=sum(t.is_alive() for t in list(_STOPPING_THREADS)))
         reaped=_expire_storage(manager,storage._cache)
         _recover_if_idle(manager,storage._cache,reaped)
         # Do not continuously traverse message queues at the faster maintenance rate.

@@ -45,6 +45,16 @@ def restore_inactive_surface() -> None:
         restore_streamlit_surface()
 
 
+def release_idle_bindings():
+    """Release the last composed app namespace only at zero active sessions."""
+    with _RUNTIME_PATCH_LOCK:
+        from .source_parity_streamlit_surface import restore_streamlit_surface
+        restore_streamlit_surface()
+        if _baseline_current():
+            _restore_bindings()
+            _RUNTIME_STATS["idle_binding_releases"]=_RUNTIME_STATS.get("idle_binding_releases",0)+1
+
+
 def _module_token(module):
     """Detect source replacement and external importlib.reload calls.
 

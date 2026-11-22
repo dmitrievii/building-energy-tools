@@ -185,6 +185,7 @@ def _session_context():
     from streamlit.runtime.scriptrunner import get_script_run_ctx
     ctx=get_script_run_ctx(suppress_warning=True)
     if ctx is None:return None,None,Runtime.exists()
+    if getattr(ctx,"_ige_session_closed",False):return None,None,True
     import streamlit as st
     return st.session_state,ctx.session_id,Runtime.exists()
 
@@ -216,8 +217,12 @@ def close_session_caches(session_id):
 
 def session_cache_summary():
     with _REGISTRY_LOCK:owners=list(_SESSION_OWNERS.values())
+    # Closed objects can remain temporarily reachable through widget history.
+    # They are not active cache owners. Report them separately.
+    closed=sum(owner.closed for owner in owners)
+    owners=[owner for owner in owners if not owner.closed]
     rows=[row for owner in owners for row in owner.inventory()]
-    return {"owners":len(owners),"entries":sum(r["entries"] for r in rows),
+    return {"owners":len(owners),"closed_owners_still_reachable":closed,"entries":sum(r["entries"] for r in rows),
             "estimated_bytes":sum(r["estimated_bytes"] for r in rows)}
 
 def cache_inventory():

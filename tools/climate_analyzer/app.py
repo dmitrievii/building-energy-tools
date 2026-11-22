@@ -23,7 +23,7 @@ if any(getattr(module,attribute,None)!="MEM-PERF-R6" for module,attribute in (
 )):
     st.error("Runtime ownership upgrade (MEM-PERF R6): reboot the app once via Manage app to start a consistent process. Refreshing the browser does not restart the server.")
     st.stop()
-if (getattr(_runtime_memory,"RUNTIME_INVENTORY_SCHEMA",None)!="MEM-PERF-R12" or
+if (getattr(_runtime_memory,"RUNTIME_INVENTORY_SCHEMA",None)!="MEM-PERF-R12-HF1" or
     getattr(_runtime_cache,"RUNTIME_OWNERSHIP_SCHEMA",None)!="MEM-PERF-R12" or
     getattr(_runtime_startup,"RUNTIME_OPTIONAL_SCHEMA",None)!="MEM-PERF-R9" or
     getattr(_runtime_startup,"RUNTIME_DIAGNOSTICS_SCHEMA",None)!="MEM-PERF-R10"):
@@ -533,11 +533,15 @@ def set_active_climate_file(name: str, payload: bytes, source: str) -> None:
     """Store the selected EPW payload and open the summary view."""
     from epw_climate_analyzer.climate_sources import ClimateFilePayload
 
+    from epw_climate_analyzer.epw_lifecycle import track,phase_start,phase_end
+    phase=phase_start()
     st.session_state["active_climate_file"] = ClimateFilePayload(name=name, payload=payload, source=source)
+    track("active EPW payload",st.session_state["active_climate_file"])
     st.session_state.pop("active_canonical_climate", None)
     from epw_climate_analyzer.memory_lifecycle import dataset_changed
     dataset_changed(st.session_state)
     queue_navigation(st.session_state, "Overview")
+    phase_end(phase,"EPW activation and previous source cleanup")
 
 
 def set_active_canonical_climate(dataset: object) -> None:
@@ -6173,7 +6177,7 @@ def main() -> None:
     st.sidebar.title(APP_NAME)
     st.sidebar.caption(APP_RELEASE_LABEL)
     from epw_climate_analyzer import session_reaper as reaper_runtime
-    if getattr(reaper_runtime,"RUNTIME_RECOVERY_SCHEMA",None)!="MEM-PERF-R12":
+    if getattr(reaper_runtime,"RUNTIME_RECOVERY_SCHEMA",None)!="MEM-PERF-R12-HF1":
         st.error("MEM-PERF R12: reboot the server to activate immediate session shutdown.")
         st.stop()
     # Install disconnect handling before expensive scientific initialization.
@@ -6189,7 +6193,7 @@ def main() -> None:
         st.error("Reboot the app once via Manage app to activate the updated 3D chart presentation.")
         st.stop()
     if (getattr(report_runtime,"RUNTIME_REPORT_SCHEMA",None)!="MEM-PERF-R7" or
-        getattr(reaper_runtime,"RUNTIME_RECOVERY_SCHEMA",None)!="MEM-PERF-R12" or
+        getattr(reaper_runtime,"RUNTIME_RECOVERY_SCHEMA",None)!="MEM-PERF-R12-HF1" or
         getattr(session_runtime,"RUNTIME_SESSION_SCHEMA",None)!="MEM-PERF-R7" or
         getattr(_runtime_memory,"RUNTIME_CHART_SCHEMA",None)!="MEM-PERF-R7"):
         st.error("MEM-PERF R12 changes session recovery ownership. Reboot the app once via Manage app.")
@@ -6279,6 +6283,8 @@ def main() -> None:
         include_comparison=(page == "Compare Climates"),
     )
     payload = active_file.payload
+    from epw_climate_analyzer.epw_lifecycle import track, phase_start, phase_end
+    epw_phase=phase_start()
     epw, full_df, issues = load_epw_from_bytes(
         active_file.name,
         payload,
@@ -6287,6 +6293,10 @@ def main() -> None:
         include_psychrometrics=include_psychrometrics,
         include_solar=include_solar,
     )
+
+    phase_end(epw_phase,"EPW parse and derivation")
+    track("EPW parsed object",epw)
+    track("EPW analysis frame",full_df)
 
     if include_solar and "solar_geometry_site" not in full_df.attrs:
         # Older cached EPW frames can already contain valid solar positions but

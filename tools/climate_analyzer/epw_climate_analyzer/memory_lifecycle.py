@@ -18,7 +18,7 @@ from .byte_cache import (cache_inventory,clear_recomputable_caches,session_inven
 
 RUNTIME_MEMORY_SCHEMA="MEM-PERF-R6"
 RUNTIME_CHART_SCHEMA="MEM-PERF-R7"
-RUNTIME_INVENTORY_SCHEMA="MEM-PERF-R12"
+RUNTIME_INVENTORY_SCHEMA="MEM-PERF-R12-HF1"
 EXPORT_KEYS=("_p6_pdf","_p6_html_result","_p66_atlas_result","_utci_perf_r1_csv")
 DERIVED_KEYS=("_utci_perf_r1_result","_utci_perf_r1_sensitivity")
 TRANSIENT_KEYS=("_p6_displayed_charts","_active_filtered_export_df")
@@ -87,7 +87,7 @@ def _collect_inventory(state,process):
     import sys
     import os
     import tracemalloc
-    result={"snapshot_schema":"MEM-PERF-R12","captured_at_utc":datetime.now(timezone.utc).isoformat(),
+    result={"snapshot_schema":"MEM-PERF-R12-HF1","captured_at_utc":datetime.now(timezone.utc).isoformat(),
             "capture_phase":"on-demand; before next page rendering when called by widget callback",
             "memory":process,"shared_caches":cache_inventory(),
             "session_caches":session_cache_inventory(state),
@@ -126,6 +126,10 @@ def _collect_inventory(state,process):
     from .chart_lifecycle import chart_lifecycle_summary
     result["chart_lifecycle"]=chart_lifecycle_summary(state)
     from .memory_recovery import allocator_snapshot, recovery_summary
+    from .process_memory import container_process_inventory
+    result["container_processes"]=container_process_inventory()
+    from .epw_lifecycle import lifecycle_summary
+    result["epw_lifecycle"]=lifecycle_summary()
     result["allocator"]=allocator_snapshot()
     result["recovery"]=recovery_summary()
     result["raw_headroom_bytes"]=(result["memory"]["limit"]-result["memory"]["used"]
@@ -284,7 +288,13 @@ def reset_session(state):
         rt.dataframe_source_mgr.clear_all_for_session(ctx.session_id)
         from .byte_cache import close_session_caches
         close_session_caches(ctx.session_id)
-    for key in list(state.keys()):state.pop(key,None)
+        # Native SessionState.clear releases old/new widget state, not only
+        # filtered user keys. Use the current script's own safe state lock.
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+        safe=ctx.session_state
+        with safe._lock:safe._state.clear()
+    else:
+        for key in list(state.keys()):state.pop(key,None)
     state["_mem_r12_reset_epoch"]=uuid4().hex
     state["_mem_r12_reset_notice"]=True
     gc.collect()
@@ -362,11 +372,12 @@ def _render_sidebar(st):
         from .session_reaper import reaper_summary
         live_reaper=reaper_summary()
         st.caption(f"Live session maintenance: {live_reaper.get('status','unavailable')}; sweeps: {live_reaper.get('sweeps',0)}; disconnected at last sweep: {live_reaper.get('disconnected_sessions','Unavailable')}; closed immediately: {live_reaper.get('closed_on_disconnect',0)}; expired reaped (fallback): {live_reaper.get('expired_reaped',0)}.")
+        st.caption(f"Active sessions: {live_reaper.get('active_sessions','Unavailable')}; WebSocket disconnect dispatches: {live_reaper.get('disconnect_events',0)}; native closes: {live_reaper.get('native_closes',0)}; closed session objects still reachable: {live_reaper.get('closed_session_refs_alive',0)}.")
         queue_sample=live_reaper.get("forward_queue_sample",{})
         if queue_sample.get("status")=="sampled":
             st.caption(f"Pending forward messages at last sweep: {queue_sample['pending_messages_in_sampled_sessions']}; sampled wire payload: {_mib(queue_sample['sampled_wire_bytes'])}; {queue_sample['captured_at_utc']} (not websocket backlog or RSS).")
         inspected=state.get(INVENTORY_KEY)
-        if inspected and inspected.get("snapshot_schema")!="MEM-PERF-R12":
+        if inspected and inspected.get("snapshot_schema")!="MEM-PERF-R12-HF1":
             release_inventory(state)
             inspected=None
         from .memory_recovery import recovery_summary
@@ -393,6 +404,11 @@ def _render_sidebar(st):
                 st.caption(f"Disconnected sessions within reconnect window: {reaper.get('disconnected_sessions','Unavailable')}; expired sessions reaped: {reaper.get('expired_reaped',0)}.")
             heap=inspected.get("heap_census")
             if heap:st.caption("Python object census (separate historical snapshot): "+heap["status"]+"; captured: "+str(inspected.get("heap_census_captured_at_utc") or "unknown"))
+            processes=inspected.get("container_processes",{})
+            if processes:
+                st.caption(f"Visible cgroup processes: {processes.get('sampled',0)}; total sampled anonymous RSS: {_mib(processes.get('rss_anon_sum'))} (may overlap shared pages).")
+                if details:
+                    st.text("\n".join(f"{p['category']}: PID {p['pid']} · anonymous RSS {_mib(p.get('rss_anon'))} · PssAnon {_mib(p.get('pss_anon'))}" for p in processes.get("processes",[])[:15]))
             if details:
                 # Text summaries avoid Arrow/dataframe marshalling and repeated
                 # construction of nested JSON elements on each unrelated rerun.
