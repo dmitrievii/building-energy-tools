@@ -80,12 +80,17 @@ class AtlasTests(unittest.TestCase):
         df=self.fixture()
         for d in [d for d in c.catalogue(df,{},c.FULL) if d.kind=="duration" and d.column==c.T]:
             fig,note=make_figure(d,df,{})
-            marker=next(tr for tr in fig.data if tr.name=="Design quantiles")
-            expected=design_conditions(df,c.T,[.4,1.,2.,5.],upper=not d.args[1])
-            np.testing.assert_allclose(marker.y,expected.Quantile)
-            x=expected["Nominal tail [%]"]
-            if d.args[2]=="hours":x=x*expected["Valid hours"]/100
+            marker=next(tr for tr in fig.data if tr.name=="Quantiles")
+            positions=np.array([0.,.5,1.,2.,5.,95.,98.,99.,99.5,100.])
+            observed=df[c.T].to_numpy(dtype=float)
+            observed=observed[np.isfinite(observed)]
+            fractions=positions/100.
+            expected=np.quantile(observed,fractions if d.args[1] else 1.-fractions,method="linear")
+            np.testing.assert_allclose(marker.y,expected)
+            from epw_climate_analyzer.aggregations import native_interval_hours
+            x=positions if d.args[2]!="hours" else fractions*len(observed)*native_interval_hours(df)
             np.testing.assert_allclose(marker.x,x)
+            self.assertEqual(len(fig.layout.annotations),len(positions))
             self.assertEqual(len(fig.data[0].y),len(df))
         for upper in (True,False):
             fig,table,note=critical_windows_figure(df,c.T,"°C",upper=upper)
@@ -459,7 +464,7 @@ class AtlasTests(unittest.TestCase):
                 self.assertIn("src='plotly.min.js'",z.read(name).decode())
             self.assertEqual(sum(z.read(n).count(b"Plotly.newPlot(") for n in metadata["html_files"]),61)
 
-    def test_html_memory_guard_credits_only_reclaimable_cache(self):
+    def test_html_memory_guard_never_spends_reclaimable_cache_credit(self):
         from unittest.mock import patch
         from tempfile import TemporaryDirectory
         from pathlib import Path
@@ -469,8 +474,10 @@ class AtlasTests(unittest.TestCase):
             (root/"memory.stat").write_text(f"anon {2135*m.MIB}\nfile {751*m.MIB}\nshmem 0\ninactive_file {638*m.MIB}\n")
             with patch.object(m,"_memory_reading",return_value=(3031*m.MIB,3072*m.MIB,root)):
                 self.assertEqual(m.html_memory_headroom(),(3031*m.MIB,3072*m.MIB,319*m.MIB))
-                m.require_html_headroom()
+                with self.assertRaises(MemoryError):m.require_html_headroom()
                 with self.assertRaises(MemoryError):m.require_headroom()
+                with patch.object(m,"_memory_reading",return_value=(2500*m.MIB,3072*m.MIB,root)):
+                    m.require_html_headroom()
                 (root/"memory.stat").write_text(f"anon {3000*m.MIB}\nfile {20*m.MIB}\ninactive_file {20*m.MIB}\nshmem 0\n")
                 with self.assertRaises(MemoryError):m.require_html_headroom("fixture")
                 (root/"memory.stat").unlink()

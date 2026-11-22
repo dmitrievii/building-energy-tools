@@ -94,14 +94,19 @@ def html_memory_headroom():
     return used,cap,credit
 
 def require_html_headroom(stage="HTML atlas"):
+    """Admission based on raw cgroup use; file-cache credit is diagnostic only.
+
+    Community Cloud may throttle before the kernel reclaims inactive pages.
+    Keep additional headroom for transient Plotly objects and serialization.
+    """
     reading=html_memory_headroom()
     if reading is None:return
     used,cap,credit=reading
-    reserve=min(256*MIB,max(96*MIB,int(cap*.20)))
-    if used-credit+reserve>=cap:
+    reserve=min(384*MIB,max(96*MIB,int(cap*.20)))
+    if used+reserve>=cap:
         gc.collect();_trim_allocator()
         used,cap,credit=html_memory_headroom() or reading
-        if used-credit+reserve>=cap:
+        if used+reserve>=cap:
             raise MemoryError(f"Container memory pressure: {used/MIB:.0f}/{cap/MIB:.0f} MiB used; "
-                f"conservative file-cache credit {credit/MIB:.0f} MiB. Export stopped safely. "
+                f"required raw headroom {reserve/MIB:.0f} MiB. Export stopped safely. "
                 f"Release previous downloads or choose a smaller batch and retry. Stage: {stage}."+_pressure_details())
