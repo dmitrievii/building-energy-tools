@@ -3,7 +3,8 @@ import json
 from uuid import uuid4
 import streamlit as st
 from epw_climate_analyzer import session_reaper as reaper,chart_lifecycle as charts
-from epw_climate_analyzer.byte_cache import bounded_cache,session_cache_inventory,session_cache_summary
+from epw_climate_analyzer.byte_cache import session_cache_inventory,session_cache_summary
+from epw_climate_analyzer.r12_fixture_data import climate
 from epw_climate_analyzer.memory_lifecycle import memory_snapshot,reset_session
 from epw_climate_analyzer.memory_recovery import recovery_summary
 from epw_climate_analyzer.startup_runtime import ensure_initialized
@@ -13,10 +14,6 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from epw_climate_analyzer.chart_presentation import apply_chart_presentation,settings_from_state
-@bounded_cache(name="r12_fixture_private",max_bytes=8*1024**2,max_entries=2,scope="session")
-def climate(value):
-    return pd.DataFrame({"temperature":np.sin(np.arange(8760)/200)+value,
-                         "humidity":np.full(8760,65.)})
 charts.begin_page(st.session_state)
 if "sentinel" not in st.session_state:st.session_state["sentinel"]=uuid4().hex
 if st.button("Generate test chart"):st.session_state["generate"]=True

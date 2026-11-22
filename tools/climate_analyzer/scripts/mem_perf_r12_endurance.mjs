@@ -33,7 +33,7 @@ async function generate(s){
    try{return el.innerText.startsWith('R12:')&&JSON.parse(el.innerText.slice(4)).private.reduce((n,r)=>n+r.entries,0)===1;}catch{return false;}
  }),{},{timeout:30000});
  const v=await sample(s);
- if(v.private.reduce((n,r)=>n+r.entries,0)!==1)throw Error('private cache missing');
+ if(v.private.reduce((n,r)=>n+r.entries,0)!==1)throw Error('Private cache count mismatch: '+JSON.stringify({private:v.private,aggregate:v.aggregate,reaper:v.reaper}));
  return v;
 }
 async function recover(s,expected,owners){

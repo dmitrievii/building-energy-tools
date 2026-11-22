@@ -75,6 +75,11 @@ def save_displayed_chart(state,fig,context,interpretation,button_key):
         item=snapshot(fig,context,interpretation)
         entries,message=add_snapshot(state.get(REPORT_KEY,[]),item)
         state[REPORT_KEY]=entries
+        # Test-only hashes; no extra figure serialization in normal production.
+        import os
+        if os.environ.get("IGE_R143_PARITY")=="1":
+            from .r143_scientific_parity import record_capture
+            record_capture(state,fig,context,interpretation,button_key,entries,item["id"])
         state[CAPTURE_MESSAGE_KEY]={"key":button_key,"ok":True,
                                     "message":f"{message} {len(entries)} chart(s) in report."}
     except Exception as exc:
@@ -83,7 +88,9 @@ def save_displayed_chart(state,fig,context,interpretation,button_key):
 def save_chart_by_token(button_key,token):
     """Resolve the exact prior rendered chart in the current session."""
     state=st.session_state
-    if token!=state.get("_p6_page_token"):return
+    if token!=state.get("_p6_page_token"):
+        state[CAPTURE_MESSAGE_KEY]={"key":button_key,"ok":False,"message":"Chart page changed before capture. Render it again before saving."}
+        return
     for fig,context,interpretation,key in state.get("_p6_displayed_charts",[]):
         if key==button_key:
             save_displayed_chart(state,fig,context,interpretation,key)

@@ -95,17 +95,31 @@ async function graph(p,label){
  await settle(p);
 }
 async function science(p,stage,cycle){
- // Save exact displayed figure through actual UI callback, then inspect
- // the serialized record and displayed post-rerun figure independently.
+ // Identify the actual selected record, including deduplication.
+ const previous=await snapshot(p,stage+'-before',cycle);
  const button=p.getByRole('button',{name:'Add to report',exact:true}).first();
  await button.waitFor({timeout:60000});
  await button.click();
  await settle(p);
  const v=await snapshot(p,stage,cycle);
- if(!v.r143_parity.saved.length)throw Error('No saved report at '+stage);
- const last=v.r143_parity.saved.at(-1);
- if(!v.r143_parity.displayed.some(x=>x.complete===last.complete))
-   throw Error('Saved chart not identical to displayed chart at '+stage);
+ const e=v.r143_parity, capture=e.capture;
+ if(!capture||capture.sequence!==(previous.r143_parity.capture?.sequence||0)+1)
+   throw Error('Report callback not executed at '+stage);
+ if(capture.before.complete!==capture.saved.complete)
+   throw Error('Exact callback/report mismatch at '+stage+': '+JSON.stringify(capture));
+ if(capture.count!==e.saved.length||!e.saved.some(x=>x.complete===capture.saved.complete))
+   throw Error('Saved report record missing at '+stage);
+ const current=e.displayed.find(x=>x.key===capture.key);
+ if(!current)throw Error('Captured chart absent after rerun at '+stage);
+ const fields=['arrays','data','layout','figure','context','interpretation'];
+ const changed=fields.filter(k=>current[k]!==capture.before[k]);
+ const contextKeys=[...new Set([...Object.keys(current.context_fields),...Object.keys(capture.before.context_fields)])]
+   .filter(k=>current.context_fields[k]!==capture.before.context_fields[k]);
+ console.log('R143 capture '+stage+' rerun changes '+JSON.stringify({changed,contextKeys}));
+ // Exact source/saved context is mandatory. Post-rerun context changes
+ // are separately visible and must match across the two arms.
+ if(changed.some(k=>k!=='context'))
+   throw Error('Scientific rerun mismatch at '+stage+': '+JSON.stringify({changed,contextKeys,before:capture.before,after:current}));
  return v;
 }
 async function reset(p){
@@ -158,8 +172,14 @@ try{
      }),initial[1],{timeout:30000});
      const after=parse(await marker.innerText());
      if(after[0]!==initial[0])throw Error('Degree interaction executed full app');
+     const count=await p.getByText(/^Report: \d+ saved diagram\(s\)\.$/).first().innerText();
+     const priorCount=Number(count.match(/\d+/)[0]);
      await p.getByRole('button',{name:'Add to report',exact:true}).first().click();
-     await p.getByText(/Diagram added to report/).waitFor({timeout:30000});
+     await settle(p);
+     await p.waitForFunction(n=>Array.from(document.querySelectorAll('[data-testid="stCaptionContainer"]')).some(el=>{
+       const m=el.innerText.match(/^Report: (\d+) saved diagram\(s\)\.$/);
+       return m&&Number(m[1])===n+1;
+     }),priorCount,{timeout:30000});
      // Keep the lifecycle fixture independent of intentionally saved report data.
      await settle(p);
      const pilot=await snapshot(p,'degree-fragment',cycle);
@@ -251,6 +271,6 @@ finally{
  const warmGate=warmDrift!==null&&warmDrift<=64*1024**2;
  if(!error&&completed===cycles&&!warmGate)error='Provisional warm anonymous RSS drift gate failed';
  if(parity)await fs.writeFile(path.join(dir,'scientific-parity.json'),JSON.stringify({schema:'R143-EF',completed,cycles,error,observations:parityRows},null,2));
- await fs.writeFile(path.join(dir,'summary.json'),JSON.stringify({schema:'R13',scope:'Real app.py, two EPW identities, native reset/reload alternating, no PDF or UTCI; second EPW changes location label only',completed,cycles,error,baseline,lastIdle,idle,warmDrift,warmGate,rows},null,2));
+ await fs.writeFile(path.join(dir,'summary.json'),JSON.stringify({schema:'R13',scope:parity?'Real app.py, second EPW dry bulb/dew point +2 K synthetic, exact capture and concurrent reset':'Real app.py, two EPW identities, native reset/reload alternating, no PDF or UTCI; second EPW changes location label only',completed,cycles,error,baseline,lastIdle,idle,warmDrift,warmGate,rows},null,2));
 }
 if(error||completed!==cycles)process.exit(1);
