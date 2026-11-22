@@ -115,7 +115,7 @@ def inspect_resources(state):
     from .startup_runtime import runtime_summary,library_footprint_snapshot
     from .session_memory import inspect_session_counters
     result["runtime"]=runtime_summary()
-    result["library_footprint"]=library_footprint_snapshot()
+    result["library_footprint"]=library_footprint_snapshot(result["memory"])
     result["session_runtime"]=inspect_session_counters(state,PROTECTED_KEYS+EXPORT_KEYS+DERIVED_KEYS+TRANSIENT_KEYS)
     from .chart_lifecycle import chart_lifecycle_summary
     result["chart_lifecycle"]=chart_lifecycle_summary(state)

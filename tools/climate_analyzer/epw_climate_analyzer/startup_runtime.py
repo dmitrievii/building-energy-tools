@@ -72,13 +72,13 @@ def _library_counts():
     return {root:sum(name==root or name.startswith(root+".") for name in loaded)
             for root in _LIBRARY_ROOTS}
 
-def library_footprint_snapshot():
+def library_footprint_snapshot(process=None):
     """Module-count changes and whole-process RSS; not per-module byte estimates."""
     with _LOCK:
         baseline=deepcopy(_LIBRARY_BASELINE)
     current=_library_counts()
     result={"baseline":baseline,"current_module_counts":current,
-            "current_process":_sample(),
+            "current_process":_sample() if process is None else dict(process),
             "scope":"Module counts are not byte estimates; RSS includes all process owners."}
     if baseline is not None:
         result["additional_modules"]={root:current[root]-baseline["module_counts"][root]
