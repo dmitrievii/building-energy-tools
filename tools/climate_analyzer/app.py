@@ -4056,12 +4056,31 @@ def render_temporal_shading(df,*,geometry,has_energy):
                 fig,table=monthly_shading_profiles(frame,metric,selected)
                 note+=" Equivalent month and clock-hour intervals pooled across selected years."
             else:
-                period=st.radio("Heat-map aggregation",["Day","Week","Month"],horizontal=True,key="shading_calendar_period").lower()
-                dim=st.radio("Compare across",["Hour of day"] if time_basis(data)==CHRONOLOGICAL else ["Hour of day","Year"],horizontal=True,key="shading_calendar_dimension")
+                # Keep the period preference independently of the widget's
+                # lifecycle (e.g. switching metric, chart or source).
+                period_key="shading_calendar_period"
+                period_saved="_shading_calendar_period_preference"
+                periods=["Day","Week","Month"]
+                if st.session_state.get(period_key) not in periods:
+                    previous=st.session_state.get(period_saved,"Day")
+                    st.session_state[period_key]=previous if previous in periods else "Day"
+                period_label=st.radio("Heat-map aggregation",periods,horizontal=True,key=period_key)
+                st.session_state[period_saved]=period_label
+                period=period_label.lower()
+                dim_key="shading_calendar_dimension"
+                dimensions=["Hour of day"] if time_basis(data)==CHRONOLOGICAL else ["Hour of day","Year"]
+                if st.session_state.get(dim_key) not in dimensions:st.session_state[dim_key]=dimensions[0]
+                dim=st.radio("Compare across",dimensions,horizontal=True,key=dim_key)
                 stats=shading_statistics(frame,metric,period,dim)
-                stat=stats[0] if len(stats)==1 else st.selectbox("Statistic",stats,key="shading_calendar_stat")
+                stat_key="shading_calendar_stat"
+                if len(stats)==1:stat=stats[0]
+                else:
+                    if st.session_state.get(stat_key) not in stats:st.session_state[stat_key]=stats[0]
+                    stat=st.selectbox("Statistic",stats,key=stat_key)
                 if heatmap_has_single_observation_cells(frame,period,dim):st.caption("One source observation per occupied cell.")
-                fig=shading_calendar(frame,metric,period,dim,stat,title=metric+" · "+device,threshold=threshold)
+                period_title={"day":"Daily","week":"Weekly","month":"Monthly"}[period]
+                fig=shading_calendar(frame,metric,period,dim,stat,
+                                     title=metric+" · "+device+" · "+period_title,threshold=threshold)
                 table,_=shading_matrix(frame,metric,period,dim,stat)
         render_plot(fig,note)
         st.download_button("Shading data · CSV",table.to_csv().encode("utf-8"),"shading_data.csv","text/csv",key="shading_temporal_csv")

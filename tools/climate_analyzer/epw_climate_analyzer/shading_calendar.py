@@ -21,7 +21,6 @@ FRONT="shading_front_exposure"
 KNOWN="shading_observation_known"
 FIELD={AREA:VALUE,OCCURRENCE:EVENT,ENERGY:ENERGY_COLUMN,REDUCTION:ENERGY_COLUMN}
 PALETTE=[[0,"#FFF1C7"],[.25,"#D1D5DB"],[.50,"#9CA3AF"],[.75,"#52525B"],[1,"#18181B"]]
-NO_EXPOSURE="#B5C1D0"
 MISSING="#F3F4F6"
 DEFAULT_THRESHOLD=80.
 
@@ -86,24 +85,23 @@ def shading_calendar(frame,metric,period,dimension,statistic,*,title="",threshol
     # Common geometry, tick formatting, chronological and calendar profiles.
     fig=temporal_heatmap_chart(frame,FIELD[metric],period,dimension,
           "Mean" if metric==REDUCTION else statistic,title or metric,unit,matrix_override=values)
-    fig.update_layout(coloraxis=dict(colorscale=palette,cmin=0.,cmax=upper),
-                      plot_bgcolor=MISSING,margin=dict(b=95))
-    # Only known, non-incident sky states get the distinct no-exposure colour.
-    # Energy zeros remain measured zeros, not masked out.
-    no_exposure=np.zeros(values.shape,dtype=bool)
-    if metric!=ENERGY:
-        no_exposure=(front.eq(0)&values.isna()).to_numpy()
-        fig.add_heatmap(x=values.columns,y=values.index,z=np.where(no_exposure,1.,np.nan),
-            colorscale=[[0,NO_EXPOSURE],[1,NO_EXPOSURE]],zmin=0,zmax=1,showscale=False,
-            hoverongaps=False,hovertemplate="No front-facing daylight exposure<extra></extra>")
-    # Explicit missing cells survive user-selected background and report styling.
+    fig.update_layout(coloraxis=dict(colorscale=palette,cmin=0.,cmax=upper,cauto=False),
+                      plot_bgcolor="rgba(0,0,0,0)")
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(showgrid=False)
+    fig.data[0].hoverongaps=False
+    # Leave known non-incident states unpainted. The shared presentation
+    # setting supplies a white or transparent canvas. A measured zero of
+    # intercepted energy remains a valid numeric zero, not a missing value.
+    no_exposure=front.eq(0).to_numpy()
+    # Do not disguise an undefined energy ratio during valid incident
+    # daylight as a night cell. Missing/undefined incident cells remain grey.
     missing=values.isna().to_numpy()&~no_exposure
-    fig.add_heatmap(x=values.columns,y=values.index,z=np.where(missing,1.,np.nan),
-        colorscale=[[0,MISSING],[1,MISSING]],zmin=0,zmax=1,showscale=False,
-        hoverongaps=False,hovertemplate="Missing or undefined<extra></extra>")
-    fig.add_annotation(xref="paper",yref="paper",x=0,y=-.25,xanchor="left",
-        text=("Blue-grey: no direct exposure · Light grey: missing/undefined" if metric!=ENERGY else
-              "White: zero intercepted energy · Light grey: missing"),showarrow=False,font=dict(size=11))
+    if np.any(missing):
+        fig.add_heatmap(x=values.columns,y=values.index,z=np.where(missing,1.,np.nan),
+            colorscale=[[0,MISSING],[1,MISSING]],zmin=0,zmax=1,showscale=False,
+            hoverongaps=False,hovertemplate="Missing or undefined<extra></extra>")
+    # No paper-coordinate footnote: it collided with calendar axis labels.
     set_period_axis_scope(fig,frame)
     return apply_calendar_heatmap_axes(fig,period=period)
 

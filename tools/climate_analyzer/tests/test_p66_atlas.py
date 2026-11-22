@@ -171,7 +171,14 @@ class AtlasTests(unittest.TestCase):
                 np.testing.assert_allclose(np.asarray(fig.data[0].z,float),values.values,equal_nan=True)
                 self.assertEqual((fig.layout.coloraxis.cmin,fig.layout.coloraxis.cmax),(0.,100.))
                 self.assertEqual(list(fig.layout.yaxis.ticktext),["0","6","12","18","24"])
-                self.assertEqual(np.isfinite(np.asarray(fig.data[1].z,float)).sum(),1)
+                self.assertEqual(len(fig.layout.annotations),0)
+                self.assertEqual(fig.layout.plot_bgcolor,"rgba(0,0,0,0)")
+                self.assertFalse(fig.data[0].hoverongaps)
+                # Known no-exposure at 14:00 is transparent; unknown
+                # geometry at 15:00 still has a missing-value overlay.
+                missing=np.asarray(fig.data[1].z,float)
+                self.assertFalse(np.isfinite(missing[14]).any())
+                self.assertTrue(np.isfinite(missing[15]).any())
             fig,table=monthly_shading_profiles(frame,metric,[7])
             self.assertTrue(table.iloc[14:].isna().all().all())
             self.assertEqual(list(fig.layout.xaxis.tickvals),[0,6,12,18,24])
@@ -186,6 +193,38 @@ class AtlasTests(unittest.TestCase):
         rows=c.catalogue(df,{},c.FULL)
         self.assertFalse(any(d.kind=="shading_mask" and d.args[0]!="Geometry" for d in rows))
         self.assertTrue(any(d.kind=="shading_calendar" and d.args[0]==OCCURRENCE for d in rows))
+
+    def test_shading_daily_resolution_and_transparency(self):
+        from epw_climate_analyzer.shading_calendar import (
+            AREA,OCCURRENCE,FRONT,VALUE,EVENT,shading_calendar,shading_matrix)
+        from epw_climate_analyzer.temporal_filtering import TIME_BASIS_ATTR,CALENDAR_PROFILE,CHRONOLOGICAL
+        from epw_climate_analyzer.chart_presentation import ChartPresentationSettings,apply_chart_presentation
+        from epw_climate_analyzer.p6_report_structure import report_figure
+        idx=pd.date_range("2024-01-01","2025-01-01",freq="h",inclusive="left")
+        daylight=(idx.hour>=8)&(idx.hour<18)
+        frame=pd.DataFrame({FRONT:daylight.astype(float),
+                            VALUE:np.where(daylight,idx.dayofyear%100,np.nan),
+                            EVENT:np.where(daylight,100.*(idx.dayofyear%100>=80),np.nan)},
+                           index=idx)
+        frame.attrs["canonical_native_interval_minutes"]=60
+        for basis in (CALENDAR_PROFILE,CHRONOLOGICAL):
+            frame.attrs[TIME_BASIS_ATTR]=basis
+            for metric in (AREA,OCCURRENCE):
+                for period,ncols in (("day",366),("month",12)):
+                    vals,front=shading_matrix(frame,metric,period,"Hour of day","Mean")
+                    fig=shading_calendar(frame,metric,period,"Hour of day","Mean")
+                    self.assertEqual(vals.shape,(24,ncols))
+                    self.assertEqual(len(fig.data[0].x),ncols)
+                    self.assertEqual(fig.layout.xaxis.title.text,period.capitalize())
+                    self.assertEqual(len(fig.layout.annotations),0)
+                    self.assertEqual(len(fig.data),1)
+                    self.assertTrue(np.isnan(np.asarray(fig.data[0].z,float)[0]).all())
+                    np.testing.assert_allclose(np.asarray(fig.data[0].z,float),vals.values,equal_nan=True)
+                    apply_chart_presentation(fig,ChartPresentationSettings())
+                    printed=report_figure(fig,width_pt=500,height_pt=230)
+                    self.assertEqual(len(printed.data[0].x),ncols)
+                    self.assertEqual(len(printed.layout.annotations),0)
+                    self.assertEqual(len(printed.data),1)
 
     def test_monthly_source_no_hourly_invention(self):
         df=self.fixture().iloc[[0]].copy();df.attrs["canonical_native_resolution"]="monthly"
