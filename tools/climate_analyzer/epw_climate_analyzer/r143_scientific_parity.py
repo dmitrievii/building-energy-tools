@@ -9,7 +9,11 @@ def _row(figure,context,interpretation):
     graph=json.loads(figure)
     # Only transient Plotly trace UID is excluded by normal report serialization.
     # All scientific arrays, trace properties, full layout and context remain.
-    return {"data":_digest(graph.get("data",[])),"figure":_digest(graph),
+    traces=graph.get("data",[])
+    arrays=[{k:v for k,v in trace.items() if k in ("x","y","z","r","theta","values","lat","lon","open","high","low","close")}
+            for trace in traces]
+    if not any(arrays):raise ValueError("No scientific coordinate arrays in registered figure")
+    return {"arrays":_digest(arrays),"data":_digest(traces),"figure":_digest(graph),
             "complete":_digest({"figure":graph,"context":context,"interpretation":str(interpretation or "")})}
 
 def evidence(state):

@@ -35,6 +35,7 @@ jobs:
       - run: python -m unittest discover -s tests -p test_mem_perf_r12_hf1.py -v
       - run: python -m unittest discover -s tests -p test_r14_native_owner.py -v
       - run: python -m unittest discover -s tests -p test_r143_persistent_app.py -v
+      - run: python -m unittest discover -s tests -p test_r143_scientific_parity.py -v
       - run: npm install --no-save playwright-core@1.55.0
       - name: Run 6 matched scientific parity cycles
         env:

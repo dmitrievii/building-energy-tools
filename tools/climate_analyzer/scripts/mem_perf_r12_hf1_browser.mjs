@@ -14,7 +14,7 @@ const parity=process.env.IGE_R143_PARITY==='1';
 // Keep original lifecycle fixture unchanged. The parity-only second source
 // is a deliberately nonphysical perturbation of dry bulb and dew point by
 // +2 K, not an observed weather file or a new scientific reference.
-const distinct=Buffer.from(b.toString().split(/\r?\n/).map((line,i)=>{
+const second=parity?Buffer.from(b.toString().split(/\r?\n/).map((line,i)=>{
  if(i<8||!line.trim())return line;
  const f=line.split(',');
  for(const k of [6,7]){
@@ -23,8 +23,7 @@ const distinct=Buffer.from(b.toString().split(/\r?\n/).map((line,i)=>{
    f[k]=(t+2).toFixed(2);
  }
  return f.join(',');
-}).join('\n'));
-const second=parity?distinct:b;
+}).join('\n')):b;
 const browser=await chromium.launch({executablePath:'/usr/bin/google-chrome',headless:true,args:['--no-sandbox']});
 const url='http://127.0.0.1:8513';
 const rows=[];
@@ -225,10 +224,10 @@ try{
      const observedB=parity?await science(q,'concurrent-b',cycles+1):await snapshot(q,'concurrent-b',cycles+1);
      if(parity){
        const first=observedA.r143_parity, other=observedB.r143_parity;
-       if(first.displayed[0].data===other.displayed[0].data)throw Error('Distinct EPW temperatures produced identical chart data');
-       const expectedA=parityRows['1:scientific-temperature-a'].displayed[0].data;
-       const expectedB=parityRows['1:scientific-temperature-b'].displayed[0].data;
-       if(first.displayed[0].data!==expectedA||other.displayed[0].data!==expectedB)
+       if(first.displayed[0].arrays===other.displayed[0].arrays)throw Error('Distinct EPW temperatures produced identical numerical chart arrays');
+       const expectedA=parityRows['1:scientific-temperature-a'].displayed[0].arrays;
+       const expectedB=parityRows['1:scientific-temperature-b'].displayed[0].arrays;
+       if(first.displayed[0].arrays!==expectedA||other.displayed[0].arrays!==expectedB)
          throw Error('Concurrent data differ from independent reference');
        await reset(p);
        const after=await snapshot(q,'concurrent-b-after-reset',cycles+1);
