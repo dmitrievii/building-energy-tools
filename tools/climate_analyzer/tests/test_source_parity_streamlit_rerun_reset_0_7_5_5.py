@@ -69,6 +69,45 @@ class SourceParityStreamlitRerunResetTests(unittest.TestCase):
         gc.collect()
         self.assertIsNone(reference())
 
+    def test_heatmap_compatibility_guard_does_not_invalidate_warm_baseline(self) -> None:
+        from types import SimpleNamespace
+        import pandas as pd
+        from epw_climate_analyzer import charts, runtime_module_guard
+        # Exercise the actual legacy installer, followed by the same runtime
+        # guard used in app.py before its next compatibility composition.
+        runtime_module_guard.ensure_current_heatmap_runtime()
+        parity=source_parity_runtime._fresh_source_parity_ui()
+        before=source_parity_runtime.runtime_stats()
+        with patch.object(source_parity_runtime.importlib,"reload",side_effect=AssertionError("unexpected warm reload")):
+            for _ in range(100):
+                from epw_climate_analyzer.source_parity_longterm_hotfix import install_longterm_hourly_hotfix
+                proxy=SimpleNamespace(temporal_heatmap_chart=charts.temporal_heatmap_chart)
+                install_longterm_hourly_hotfix(proxy,parity)
+                self.assertIs(runtime_module_guard.ensure_current_heatmap_runtime(),charts)
+                self.assertIs(source_parity_runtime._fresh_source_parity_ui(),parity)
+        after=source_parity_runtime.runtime_stats()
+        self.assertEqual(after["baseline_builds"],before["baseline_builds"])
+        self.assertEqual(after["module_reloads"],before["module_reloads"])
+        self.assertEqual(after["binding_resets"]-before["binding_resets"],100)
+
+    def test_heatmap_wrapper_forwards_matrix_override(self) -> None:
+        from types import SimpleNamespace
+        from unittest.mock import Mock
+        import pandas as pd
+        from epw_climate_analyzer import charts
+        parity=source_parity_runtime._fresh_source_parity_ui()
+        from epw_climate_analyzer.source_parity_longterm_hotfix import install_longterm_hourly_hotfix
+        frame=pd.DataFrame({"dry_bulb_temperature_c":[20.]},index=pd.date_range("2025-01-01",periods=1,freq="h"))
+        matrix=pd.DataFrame([[99.]])
+        try:
+            with patch.object(charts,"temporal_heatmap_chart",return_value=Mock()) as original:
+                proxy=SimpleNamespace(temporal_heatmap_chart=charts.temporal_heatmap_chart)
+                install_longterm_hourly_hotfix(proxy,parity)
+                proxy.temporal_heatmap_chart(frame,"dry_bulb_temperature_c","Day","Month","Mean","Test","°C",matrix_override=matrix)
+                self.assertIs(original.call_args.kwargs["matrix_override"],matrix)
+        finally:
+            source_parity_runtime._fresh_source_parity_ui()
+
     def test_temporal_filtering_reloads_before_timeseries(self) -> None:
         imported: list[str] = []
 

@@ -25,13 +25,16 @@ _RUNTIME_PATCH_LOCK = RLock()
 _PRISTINE_MODULES = ()
 _PRISTINE_PARITY = None
 _RUNTIME_STATS = {"baseline_builds":0,"module_reloads":0,"binding_resets":0,
-                  "restored_bindings":0,"removed_bindings":0,"wrapper_compositions":0}
+                  "restored_bindings":0,"removed_bindings":0,"wrapper_compositions":0,
+                  "baseline_invalidations":0}
+_LAST_INVALIDATION=None
 
 
-def runtime_stats() -> dict[str, int]:
+def runtime_stats() -> dict[str, Any]:
     # Approximate counters only. Diagnostics must not wait for another
     # session's network request while its selector owns the patch lock.
-    return {**_RUNTIME_STATS,"baseline_modules":len(_PRISTINE_MODULES)}
+    return {**_RUNTIME_STATS,"baseline_modules":len(_PRISTINE_MODULES),
+            "last_baseline_invalidation":_LAST_INVALIDATION}
 
 
 def restore_inactive_surface() -> None:
@@ -62,11 +65,20 @@ def _snapshot(module):
 
 
 def _baseline_current():
+    global _LAST_INVALIDATION
     if not _PRISTINE_MODULES:return False
     for module,bindings,token in _PRISTINE_MODULES:
-        if sys.modules.get(module.__name__) is not module:return False
-        current=_module_token(module)
-        if current[0] is not token[0] or current[1]!=token[1]:return False
+        reason=None
+        if sys.modules.get(module.__name__) is not module:
+            reason="module replaced"
+        else:
+            current=_module_token(module)
+            if current[1]!=token[1]:reason="source file changed"
+            elif current[0] is not token[0]:reason="external reload or module spec replaced"
+        if reason is not None:
+            _RUNTIME_STATS["baseline_invalidations"]+=1
+            _LAST_INVALIDATION={"module":module.__name__,"reason":reason}
+            return False
     return True
 
 

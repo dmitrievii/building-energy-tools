@@ -9,6 +9,7 @@ from __future__ import annotations
 import gc
 from pathlib import Path
 from time import monotonic
+from datetime import datetime, timezone
 
 from . import p66_memory as m
 from .byte_cache import cache_inventory,clear_recomputable_caches,session_inventory
@@ -81,7 +82,9 @@ def inspect_resources(state):
     import sys
     import os
     import tracemalloc
-    result={"memory":memory_snapshot(),"shared_caches":cache_inventory(),
+    result={"snapshot_schema":"MEM-PERF-R8","captured_at_utc":datetime.now(timezone.utc).isoformat(),
+            "capture_phase":"on-demand; before next page rendering when called by widget callback",
+            "memory":memory_snapshot(),"shared_caches":cache_inventory(),
             "session_resources":session_inventory(state,PROTECTED_KEYS+EXPORT_KEYS+DERIVED_KEYS+TRANSIENT_KEYS),
             "python_allocated_blocks":getattr(sys,"getallocatedblocks",lambda:None)()}
     # Inspect module presence without importing expensive analysis libraries.
@@ -114,7 +117,10 @@ def inspect_resources(state):
     result["session_runtime"]=inspect_session_counters(state,PROTECTED_KEYS+EXPORT_KEYS+DERIVED_KEYS+TRANSIENT_KEYS)
     from .chart_lifecycle import chart_lifecycle_summary
     result["chart_lifecycle"]=chart_lifecycle_summary(state)
-    if "_mem_r5_heap_census" in state:result["heap_census"]=state["_mem_r5_heap_census"]
+    if "_mem_r5_heap_census" in state:
+        result["heap_census"]=state["_mem_r5_heap_census"]
+        result["heap_census_captured_at_utc"]=state.get("_mem_r5_heap_census_at")
+        result["heap_census_note"]="Separate historical measurement; not refreshed by resource inspection."
     state[INVENTORY_KEY]=result
     return result
 
@@ -127,6 +133,7 @@ def inspect_heap(state):
         # Report only the exception type, not potentially sensitive contents.
         report={"status":"failed: "+type(exc).__name__}
     state["_mem_r5_heap_census"]=report
+    state["_mem_r5_heap_census_at"]=datetime.now(timezone.utc).isoformat()
     return inspect_resources(state)
 
 def _drop(state,keys):
@@ -255,7 +262,8 @@ def render_sidebar(st):
         st.caption("Automatic cleanup before exports and under memory pressure is enabled. Registered shared recomputable caches may be evicted; active references and user work remain intact.")
         inventory=cache_inventory()
         st.caption(f"Registered cache payload: {_mib(sum(r['estimated_bytes'] for r in inventory))} / {_mib(sum(r['budget_bytes'] for r in inventory))} combined individual budgets.")
-        st.button("Inspect retained resources",key="mem_r4_inspect",on_click=inspect_resources,args=(state,))
+        st.button("Inspect retained resources (refresh snapshot)",key="mem_r4_inspect",on_click=inspect_resources,args=(state,),
+                  help="Collect a new lightweight snapshot before downloading; does not run a Python heap census.")
         st.button("Inspect Python object types",key="mem_r5_heap_inspect",on_click=inspect_heap,args=(state,),
                   help="On demand, requires substantial raw memory headroom. Counts shallow GC-tracked objects; no content is exported.")
         from .startup_runtime import runtime_summary
@@ -273,8 +281,15 @@ def render_sidebar(st):
                            if "process_rss" in row["after"] and "process_rss" in row["before"] else None}
                           for row in runtime["startup"]],hide_index=True)
             st.json(persistent,expanded=False)
+        from .session_reaper import reaper_summary
+        live_reaper=reaper_summary()
+        st.caption(f"Live session maintenance: {live_reaper.get('status','unavailable')}; sweeps: {live_reaper.get('sweeps',0)}; disconnected at last sweep: {live_reaper.get('disconnected_sessions','Unavailable')}; expired reaped: {live_reaper.get('expired_reaped',0)}.")
         inspected=state.get(INVENTORY_KEY)
+        if inspected and inspected.get("snapshot_schema")!="MEM-PERF-R8":
+            state.pop(INVENTORY_KEY,None)
+            inspected=None
         if inspected:
+            st.caption(f"Snapshot captured: {inspected['captured_at_utc']}. Current memory above is live at rerun; snapshot below is historical. Refresh before downloading.")
             st.caption("Last on-demand inventory; sizes are estimates and overlap with RSS. Session rows may overlap; unmeasurable objects are marked unavailable.")
             counters=inspected.get("session_runtime",{})
             if counters:
@@ -287,7 +302,7 @@ def render_sidebar(st):
             if reaper:
                 st.caption(f"Disconnected sessions within reconnect window: {reaper.get('disconnected_sessions','Unavailable')}; expired sessions reaped: {reaper.get('expired_reaped',0)}.")
             heap=inspected.get("heap_census")
-            if heap:st.caption("Python object census: "+heap["status"])
+            if heap:st.caption("Python object census (separate historical snapshot): "+heap["status"]+"; captured: "+str(inspected.get("heap_census_captured_at_utc") or "unknown"))
             if details:
                 st.dataframe([{**r,"estimated MiB":round(r["estimated_bytes"]/m.MIB,2),"budget MiB":round(r["budget_bytes"]/m.MIB,2)} for r in inspected["shared_caches"]],hide_index=True)
                 st.dataframe([{**r,"estimated MiB":round(r["estimated_bytes"]/m.MIB,2) if r["estimated_bytes"] is not None else None} for r in inspected["session_resources"]],hide_index=True)
@@ -308,7 +323,7 @@ def render_sidebar(st):
                     elif heap.get("types"):
                         st.caption("Previous census size estimates are superseded; run Inspect Python object types again.")
             import json
-            st.download_button("Download memory inventory JSON",data=json.dumps(inspected,indent=2).encode(),file_name="memory_inventory.json",mime="application/json",key="mem_r4_inventory_download",on_click="ignore")
+            st.download_button("Download memory inventory JSON",data=json.dumps(inspected,indent=2).encode(),file_name="memory_inventory_"+inspected["captured_at_utc"].replace(":","-").replace("+","_")+".json",mime="application/json",key="mem_r4_inventory_download",on_click="ignore")
         result=state.get(LAST_KEY)
         if result:
             st.caption("Last cleanup: "+result["reason"])

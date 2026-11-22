@@ -252,7 +252,11 @@ def install_longterm_hourly_hotfix(proxy: Any, parity: Any) -> None:
         title: str,
         unit: str,
         temperature_thresholds: tuple[float, float] | None = None,
+        *,
+        matrix_override: pd.DataFrame | None = None,
     ):
+        # Preserve the current chart API. A narrower wrapper makes the
+        # runtime guard reload charts on every following Streamlit rerun.
         fig = original_temporal_heatmap_chart(
             df,
             column,
@@ -262,6 +266,7 @@ def install_longterm_hourly_hotfix(proxy: Any, parity: Any) -> None:
             title,
             unit,
             temperature_thresholds=temperature_thresholds,
+            matrix_override=matrix_override,
         )
         if compare_across == agg.HEATMAP_COMPARE_HOUR:
             axis_range = populated_hour_axis_range(df, column)

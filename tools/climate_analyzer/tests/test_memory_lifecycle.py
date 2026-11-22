@@ -4,6 +4,18 @@ from unittest.mock import Mock,patch
 from epw_climate_analyzer import memory_lifecycle as m
 
 class MemoryLifecycleTests(unittest.TestCase):
+    def test_inventory_refresh_has_timestamp_and_preserves_separate_heap(self):
+        state={"_mem_r5_heap_census":{"status":"complete"},"_mem_r5_heap_census_at":"earlier"}
+        with patch.object(m,"memory_snapshot",side_effect=[{"used":100},{"used":200}]):
+            first=m.inspect_resources(state)
+            second=m.inspect_resources(state)
+        self.assertEqual(first["snapshot_schema"],"MEM-PERF-R8")
+        self.assertIn("captured_at_utc",first)
+        self.assertEqual(first["memory"]["used"],100)
+        self.assertEqual(second["memory"]["used"],200)
+        self.assertIs(state[m.INVENTORY_KEY],second)
+        self.assertEqual(second["heap_census_captured_at_utc"],"earlier")
+
     def test_memory_stat_key_value_parsing(self):
         import tempfile
         from pathlib import Path
