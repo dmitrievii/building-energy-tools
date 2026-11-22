@@ -1,5 +1,6 @@
 """P3 panels using the existing render_plot presentation/export boundary."""
 from __future__ import annotations
+from time import perf_counter
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -24,12 +25,30 @@ def _duration(df,series,title,unit,render,note):
     fig.update_layout(template="plotly_white",title=title,xaxis_title="Physical hours",yaxis_title=unit)
     render(fig,note)
 
+def _utci_performance_diagnostics(timing,visualization_s,csv_s=0.,setup_s=0.):
+    with st.expander("Performance diagnostics",expanded=False):
+        st.caption("Session-local cache hit." if timing["cache_hit"] else "Physical calculation executed.")
+        st.write({
+            "Selection and controls [s]":round(setup_s,4),
+            "Input fingerprint [s]":round(timing["fingerprint_s"],4),
+            "Library import / initialization [s]":round(timing["import_s"],4),
+            "Physical calculation [s]":round(timing["calculation_s"],4),
+            "Chart construction and server rendering [s]":round(visualization_s,4),
+            "CSV preparation [s]":round(csv_s,4),
+            "Retained result [MiB]":round(timing["retained_bytes"]/1024**2,3),
+        })
+        st.caption("First-use lazy numerical initialization, if applicable, is included in calculation time. Browser drawing and network latency are not measured.")
+
 def outdoor_comfort(df,render):
+    from . import utci_perf as perf
+    started=perf_counter()
     st.header("Outdoor thermal comfort · UTCI")
-    if df.empty or not p.complete(df,p.T,p.RH,p.V):
+    if df.empty:
         st.info("Coincident temperature, humidity and wind are required.");return
     years=available_years(df)
     if len(years)>1:df=filter_year(df,st.selectbox("Analysis year",years,index=len(years)-1,key="p3_otc_year"))
+    if not p.complete(df,p.T,p.RH,p.V):
+        st.info("Coincident temperature, humidity and wind are required for the selected year.");return
     options=["Uniform radiant offset"]
     if p.complete(df,p.T,p.RH,p.V,p.GHI,p.DHI,p.DNI,p.LW,p.ZEN):options.append("Open-sky screening")
     if st.session_state.get("p3_otc_model") not in options:
@@ -68,14 +87,23 @@ def outdoor_comfort(df,render):
         else:
             delta=st.number_input("Reference radiant offset [K]",-30.,70.,0.,key="p3_sens_delta")
             x,y=ta,va;xx,yy=np.meshgrid(x,y);args=(xx,xx+delta,yy,rh);xl="Air temperature [°C]";yl="10 m wind [m/s]"
-        try:z=p.utci_values(*args)
+        setup_s=perf_counter()-started
+        try:z,timing=perf.cached_sensitivity(st.session_state,*args)
         except ImportError as exc:st.error("UTCI dependency unavailable: "+str(exc));return
+        draw=perf_counter()
         fig=stress_heatmap(x,y,z,title="Controlled UTCI sensitivity",x_label=xl,y_label=yl)
-        render(fig,"Hypothetical states, not frequencies. Other inputs held constant. "+note+" "+STRESS_NOTE);return
-    try:values,tr=p.utci_frame(df,model=mode,wind_factor=wind,**kw)
+        render(fig,"Hypothetical states, not frequencies. Other inputs held constant. "+note+" "+STRESS_NOTE)
+        _utci_performance_diagnostics(timing,perf_counter()-draw,setup_s=setup_s)
+        return
+    setup_s=perf_counter()-started
+    try:values,tr,physical_key,timing=perf.cached_physical(st.session_state,df,model=mode,wind_factor=wind,**kw)
     except ImportError as exc:st.error("UTCI dependency unavailable: "+str(exc));return
+    draw=perf_counter()
     st.caption("Valid physical hours: "+", ".join(f"{c}: {v:g}" for c,v in (values.notna().sum()*native_interval_hours(df)).items()))
-    if not values.notna().any().any():st.info("No admitted UTCI states.");return
+    if not values.notna().any().any():
+        st.info("No admitted UTCI states.")
+        _utci_performance_diagnostics(timing,perf_counter()-draw,setup_s=setup_s)
+        return
     if chart=="UTCI duration curve":
         render(duration_figure(values,native_interval_hours(df),"UTCI duration curve"),note+" Shaded background indicates UTCI stress classes.")
     elif chart=="Sun versus shade":
@@ -102,7 +130,19 @@ def outdoor_comfort(df,render):
             for c,color in zip(p.CLASSES,p.COLORS):fig.add_bar(x=tab.index,y=tab[c],name=c,marker_color=color)
             fig.update_layout(template="plotly_white",title="Monthly thermal-stress duration",barmode="stack",yaxis_title="Hours")
             render(fig,note+" Classes partition the valid duration.")
-    st.download_button("UTCI and MRT data · CSV",pd.concat([values.add_prefix("UTCI · "),tr.add_prefix("MRT · ")],axis=1).to_csv().encode(),"outdoor_comfort.csv","text/csv",key="p3_otc_csv")
+    visualization_s=perf_counter()-draw
+    data,csv_s=perf.cached_csv(st.session_state,physical_key,values,tr)
+    if data is None and st.button("Prepare UTCI and MRT CSV",key="p3_otc_prepare_csv"):
+        data,csv_s=perf.cached_csv(st.session_state,physical_key,values,tr,prepare=True)
+    if data is not None:
+        st.download_button("UTCI and MRT data · CSV",data,"outdoor_comfort.csv","text/csv",
+                           key="p3_otc_csv",on_click="ignore")
+        # Release only the export bytes, not the physical calculations.
+        if st.session_state.get(perf.CSV_KEY) is not None:
+            def release_csv():
+                st.session_state.pop(perf.CSV_KEY,None)
+            st.button("Release CSV",key="p3_otc_release_csv",on_click=release_csv)
+    _utci_performance_diagnostics(timing,visualization_s,csv_s,setup_s)
 
 NV_SUITABILITY_SCALE=[[0,"#FFFFFF"],[.25,"#D9EEE6"],[.5,"#96D1BC"],[.75,"#47A88D"],[1,"#09634F"]]
 

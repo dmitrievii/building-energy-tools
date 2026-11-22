@@ -17,6 +17,69 @@ class P3Tests(unittest.TestCase):
         self.assertAlmostEqual(z[0],24.6,delta=.1)
         self.assertTrue(np.isnan(z[1:]).all())
 
+    def test_utci_session_cache_exact_parity_and_invalidation(self):
+        from unittest.mock import patch
+        from epw_climate_analyzer import utci_perf as perf
+        df=self.fixture()
+        df.loc[df.index[1],p.RH]=np.nan
+        state={}
+        kw={"model":"Open-sky screening","wind_factor":1.,"albedo":.2}
+        expected,mrt=p.utci_frame(df,**kw)
+        with patch.object(p,"utci_frame",wraps=p.utci_frame) as model:
+            first,tr,key,timing=perf.cached_physical(state,df,**kw)
+            self.assertFalse(timing["cache_hit"])
+            pd.testing.assert_frame_equal(first,expected)
+            pd.testing.assert_frame_equal(tr,mrt)
+            unrelated=df.assign(unrelated=999.)
+            second,_,key2,timing=perf.cached_physical(state,unrelated,**kw)
+            self.assertTrue(timing["cache_hit"])
+            self.assertEqual(key,key2)
+            pd.testing.assert_frame_equal(second,expected)
+            self.assertEqual(model.call_count,1)
+            self.assertIsNone(perf.cached_csv(state,key,first,tr)[0])
+            self.assertNotIn(perf.CSV_KEY,state)
+            data,_=perf.cached_csv(state,key,first,tr,prepare=True)
+            self.assertEqual(data,pd.concat([first.add_prefix("UTCI · "),tr.add_prefix("MRT · ")],axis=1).to_csv().encode())
+            self.assertIs(perf.cached_csv(state,key,first,tr)[0],data)
+            changed=df.copy();changed.loc[changed.index[0],p.DNI]+=1.
+            _,_,new_key,timing=perf.cached_physical(state,changed,**kw)
+            self.assertNotEqual(key,new_key)
+            self.assertFalse(timing["cache_hit"])
+            self.assertNotIn(perf.CSV_KEY,state)
+            self.assertEqual(model.call_count,2)
+            _,_,_,timing=perf.cached_physical(state,changed,**{**kw,"wind_factor":1.1})
+            self.assertFalse(timing["cache_hit"])
+            self.assertEqual(model.call_count,3)
+        for column in (p.T,p.RH,p.V,p.GHI,p.DHI,p.DNI,p.LW,p.ZEN):
+            changed=df.copy();changed.loc[changed.index[0],column]+=1.
+            self.assertNotEqual(perf.physical_key(changed,**kw),key)
+        changed=df.copy();changed.attrs["canonical_native_interval_minutes"]=30.
+        self.assertNotEqual(perf.physical_key(changed,**kw),key)
+        self.assertNotEqual(perf.physical_key(df.iloc[1:],**kw),key)
+        self.assertNotEqual(perf.physical_key(df,**{**kw,"albedo":.3}),key)
+        self.assertNotEqual(perf.physical_key(df,**{**kw,"model":"Uniform radiant offset"}),key)
+
+    def test_utci_cache_budgets_and_sensitivity(self):
+        from unittest.mock import patch
+        from epw_climate_analyzer import utci_perf as perf
+        df=self.fixture();state={}
+        with patch.object(perf,"MAX_RESULT_BYTES",0),patch.object(perf,"MAX_CSV_BYTES",0):
+            values,tr,key,timing=perf.cached_physical(state,df,model="Uniform radiant offset")
+            self.assertEqual(timing["retained_bytes"],0)
+            self.assertNotIn(perf.RESULT_KEY,state)
+            self.assertIsNotNone(perf.cached_csv(state,key,values,tr,prepare=True)[0])
+            self.assertNotIn(perf.CSV_KEY,state)
+        args=([25.,55.],[25.,55.],1.,50.)
+        with patch.object(p,"utci_values",wraps=p.utci_values) as model:
+            z,timing=perf.cached_sensitivity(state,*args)
+            self.assertFalse(timing["cache_hit"])
+            again,timing=perf.cached_sensitivity(state,*args)
+            self.assertTrue(timing["cache_hit"])
+            np.testing.assert_array_equal(z,again)
+            self.assertEqual(model.call_count,1)
+            perf.cached_sensitivity(state,args[0],args[1],2.,50.)
+            self.assertEqual(model.call_count,2)
+
     def test_radiation_closure(self):
         df=self.fixture();tr=p.radiant_scenarios(df)
         self.assertTrue((tr["Open sun"]>tr["Direct-beam shade"]).all())
