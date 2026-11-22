@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from .aggregations import native_interval_hours, period_total_series
 from .temporal_filtering import display_period_labels,time_basis
+from .atlas_profile import phase,utci_count
 
 T="dry_bulb_temperature_c"
 RH="relative_humidity_pct"
@@ -31,12 +32,18 @@ def complete(df,*columns):
 
 def utci_values(t,tr,v,rh):
     """Published UTCI polynomial via pinned library; reject out-of-range inputs."""
-    from pythermalcomfort.models import utci
-    t,tr,v,rh=np.broadcast_arrays(*[np.asarray(x,dtype=float) for x in (t,tr,v,rh)])
-    good=np.isfinite(t)&np.isfinite(tr)&np.isfinite(v)&np.isfinite(rh)&(rh>=0)&(rh<=100)&(v>=.5)&(v<=17)&(t>=-50)&(t<=50)&(tr-t>=-30)&(tr-t<=70)
-    out=np.full(t.shape,np.nan)
+    with phase("utci_domain"):
+        t,tr,v,rh=np.broadcast_arrays(*[np.asarray(x,dtype=float) for x in (t,tr,v,rh)])
+        good=np.isfinite(t)&np.isfinite(tr)&np.isfinite(v)&np.isfinite(rh)&(rh>=0)&(rh<=100)&(v>=.5)&(v<=17)&(t>=-50)&(t<=50)&(tr-t>=-30)&(tr-t<=70)
+        out=np.full(t.shape,np.nan)
+    utci_count("requested_states",t.size)
     if good.any():
-        out[good]=utci(tdb=t[good],tr=tr[good],v=v[good],rh=rh[good],limit_inputs=True,round_output=False).utci
+        with phase("utci_library_import"):
+            from pythermalcomfort.models import utci
+        utci_count("library_valid_states",np.count_nonzero(good))
+        utci_count("library_calls",1)
+        with phase("utci_library_evaluation"):
+            out[good]=utci(tdb=t[good],tr=tr[good],v=v[good],rh=rh[good],limit_inputs=True,round_output=False).utci
     return out
 
 def radiant_scenarios(df,*,albedo=.2,absorptivity=.7,emissivity=.95,projected_factor=.25,ground_delta=0.):
@@ -58,15 +65,34 @@ def radiant_scenarios(df,*,albedo=.2,absorptivity=.7,emissivity=.95,projected_fa
 def utci_frame(df,*,model="Uniform radiant offset",offset=0.,wind_factor=1.,**radiation):
     if not np.isfinite(wind_factor) or wind_factor<=0:
         raise ValueError("Wind factor must be positive.")
-    t=numeric(df,T);rh=numeric(df,RH);v=numeric(df,V)*wind_factor
-    if model=="Uniform radiant offset":
-        tr=pd.DataFrame({"Uniform radiant offset":t+offset},index=df.index)
-    elif model=="Open-sky screening":
-        tr=radiant_scenarios(df,**radiation)
-    else:
-        raise ValueError("Unknown radiation scenario.")
-    out=pd.DataFrame({c:utci_values(t,tr[c],v,rh) for c in tr},index=df.index)
-    out.attrs.update(df.attrs)
+    with phase("utci_input"):
+        t=numeric(df,T);rh=numeric(df,RH);v=numeric(df,V)*wind_factor
+    with phase("utci_radiation"):
+        if model=="Uniform radiant offset":
+            tr=pd.DataFrame({"Uniform radiant offset":t+offset},index=df.index)
+        elif model=="Open-sky screening":
+            tr=radiant_scenarios(df,**radiation)
+        else:
+            raise ValueError("Unknown radiation scenario.")
+    if model=="Open-sky screening":
+        # Air temperature, humidity and wind are identical in both scenarios.
+        # Reuse shade values only when the finite MRT inputs are exactly equal.
+        shade=utci_values(t,tr["Direct-beam shade"],v,rh)
+        with phase("utci_exact_reuse"):
+            a=tr["Direct-beam shade"].to_numpy(dtype=float)
+            b=tr["Open sun"].to_numpy(dtype=float)
+            same=np.isfinite(a)&np.isfinite(b)&(a==b)
+            different=~same
+            sun=shade.copy()
+            utci_count("identical_scenario_states_reused",np.count_nonzero(same))
+        if different.any():
+            sun[different]=utci_values(t.to_numpy(dtype=float)[different],b[different],
+                                       v.to_numpy(dtype=float)[different],rh.to_numpy(dtype=float)[different])
+        values={"Direct-beam shade":shade,"Open sun":sun}
+    else:values={c:utci_values(t,tr[c],v,rh) for c in tr}
+    with phase("utci_output"):
+        out=pd.DataFrame(values,index=df.index)
+        out.attrs.update(df.attrs)
     return out,tr
 
 def monthly_totals(df,ledger):

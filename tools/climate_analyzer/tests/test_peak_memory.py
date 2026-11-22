@@ -44,6 +44,8 @@ class PeakMemoryTests(unittest.TestCase):
             self.assertEqual([r["id"] for r in manifest],[d.id for d in ds])
             self.assertEqual(metadata["counts"]["generated"],len(ds))
             self.assertEqual(metadata["execution_diagnostics"]["mode"],"isolated HTML worker")
+            self.assertEqual(len(metadata["atlas_profile"]["diagrams"]),len(ds))
+            self.assertIn("worker_import_seconds",metadata["execution_diagnostics"])
             with zipfile.ZipFile(io.BytesIO(data)) as z:self.assertIsNone(z.testzip())
     def test_chart_exports_are_not_eager(self):
         import ast

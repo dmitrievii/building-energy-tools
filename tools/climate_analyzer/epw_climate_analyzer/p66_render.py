@@ -12,6 +12,7 @@ from . import p3_comfort as p3
 from . import aggregations as agg
 from .temporal_filtering import time_basis,display_period_labels
 from .climate_model import aggregation_semantics_for
+from .atlas_profile import phase
 
 class NotApplicable(ValueError):
     """Supported scientific method, but no valid qualifying state in this scope."""
@@ -53,6 +54,10 @@ def _pressure(df,context):
     p=base.numeric(df,"atmospheric_station_pressure_pa").median()
     return float(p) if np.isfinite(p) and p>0 else 101325.
 
+def _strip_atlas_attrs(values):
+    values.attrs={}
+    return values
+
 def make_figure(d,df,context,reference_df=None,cache=None):
     if d.status!="available":raise NotApplicable(d.reason)
     if cache is None:cache={}
@@ -62,8 +67,17 @@ def make_figure(d,df,context,reference_df=None,cache=None):
     dt=agg.native_interval_hours(df)
     note="Selected source records only; missing observations are not synthesized."
     def memo(key,fn):
+        if hasattr(cache,"get_or_compute"):return cache.get_or_compute(key,fn)
         if key not in cache:cache[key]=fn()
         return cache[key]
+    def utci_model(mode):
+        # Atlas charts consume only these numerical series. The original df
+        # supplies chronology, cadence and aggregation semantics. Discard
+        # unrelated source metadata and the MRT frame from the retained result.
+        def compute():
+            values,_=p3.utci_frame(df,model=mode)
+            return values.set_axis(df.index).copy(deep=False).pipe(_strip_atlas_attrs)
+        return memo(("utci",mode),compute)
     def design():
         from .p6_dashboard import design_ledgers
         return memo("design",lambda:design_ledgers(df,reference_df=reference_df)[0])
@@ -249,8 +263,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
     elif k=="shading_temporal":
         from .shading_temporal import temporal_shading_tables,shading_monthly_rose,shading_month_hour_heatmap
         metric,style,year,device=a
-        data=df.loc[df.index.year==year].copy()
-        result=memo(("shading",metric,year),lambda:temporal_shading_tables(data,geometry=cat.GEOMETRY,metric=metric))
+        result=memo(("shading",metric,year),lambda:temporal_shading_tables(df.loc[df.index.year==year].copy(),geometry=cat.GEOMETRY,metric=metric))
         monthly,cells=result[:2]
         f=shading_monthly_rose(monthly,metric) if style=="Monthly rose" else shading_month_hour_heatmap(cells,metric,device=device)
         note+=" "+cat.GEO_NOTE+" Direct-beam-only screening."
@@ -319,21 +332,22 @@ def make_figure(d,df,context,reference_df=None,cache=None):
     elif k=="utci":
         model,style=a
         mode="Uniform radiant offset" if model=="Uniform radiant offset" else "Open-sky screening"
-        values,_=memo(("utci",mode),lambda:p3.utci_frame(df,model=mode))
+        values=utci_model(mode)
         col=model
         val=values[col]
         if not val.notna().any():raise NotApplicable("No valid UTCI states in model domain.")
         if style=="heatmap":
             from .utci_presentation import stress_heatmap,STRESS_NOTE
-            grid=p3.annual_hour_grid(df,val)
-            f=stress_heatmap(grid.columns,grid.index,grid,title=title,x_label="Date",y_label="Hour of day")
+            with phase("utci_aggregation"):grid=p3.annual_hour_grid(df,val)
+            with phase("utci_plot"):f=stress_heatmap(grid.columns,grid.index,grid,title=title,x_label="Date",y_label="Hour of day")
             note+=" Hour-cell means classified after aggregation. "+STRESS_NOTE
         elif style=="duration":
             from .utci_presentation import duration_figure
-            f=duration_figure(val.to_frame(),dt,title)
+            with phase("utci_plot"):f=duration_figure(val.to_frame(),dt,title)
             note+=" Shaded background indicates UTCI stress classes."
         else:
-            table=p3.utci_class_hours(df,val);f=go.Figure()
+            with phase("utci_aggregation"):table=p3.utci_class_hours(df,val)
+            f=go.Figure()
             for c1,color in zip(p3.CLASSES,p3.COLORS):
                 if c1 in table:f.add_bar(x=table.index,y=table[c1],name=c1,marker_color=color)
             f.update_layout(barmode="stack",yaxis_title="Hours")
@@ -344,10 +358,11 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         if f is None:raise NotApplicable(detail)
         note+=" "+detail
     elif k=="utci_pair":
-        values,_=memo(("utci","Open-sky screening"),lambda:p3.utci_frame(df,model="Open-sky screening"))
+        values=utci_model("Open-sky screening")
         common=values.dropna()
         if common.empty:raise NotApplicable("No paired admitted UTCI states.")
-        table=common.resample("MS").mean();f=go.Figure()
+        with phase("utci_aggregation"):table=common.resample("MS").mean()
+        f=go.Figure()
         for c1 in table:f.add_scatter(x=table.index,y=table[c1],mode="lines+markers",name=c1)
         f.update_layout(yaxis_title="UTCI [°C]")
         from .utci_presentation import add_stress_bands
@@ -402,11 +417,16 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         elif k=="total":f.update_traces(marker_color=metric_color(c),selector=dict(type="bar"))
     f.update_layout(template="plotly_white",title=title)
     from .calendar_heatmap_axes import apply_calendar_heatmap_axes,apply_monthly_axes,set_period_axis_scope
-    set_period_axis_scope(f,df)
-    apply_calendar_heatmap_axes(f);apply_monthly_axes(f)
+    with phase("chart_axis_layout"):
+        set_period_axis_scope(f,df)
+        apply_calendar_heatmap_axes(f);apply_monthly_axes(f)
     if k in ("time_series","profile","percentile","heatmap","duration","histogram","box","violin","diurnal","occurrence","amplitude","native","psychrometric","monthly_radiation","facade","tilt","sunpath_view","sky_patches","total"):
-        scope=df.loc[s.gt(0)].copy() if c and k in ("histogram","duration","box","violin") and a[0]=="wet" else df
+        # Reuse the wet-only frame already created by distribution charts.
+        wet=bool(c and k in ("histogram","duration","box","violin") and a[0]=="wet")
+        scope=scope if wet else df
         col=c if k in ("time_series","profile","percentile","heatmap","duration","histogram","box","violin","diurnal","occurrence","amplitude","native") else ""
-        stat=base.source_interpretation(scope,d.chapter,col,cat.LABELS.get(col,""),cat.UNITS.get(col,u),thresholds=base.temperature_thresholds(context),kind=k)
+        # Same source, column, basis, thresholds and interpretation branch.
+        with phase("interpretation"):
+            stat=memo(("interpretation",d.chapter,col,k,wet),lambda:base.source_interpretation(scope,d.chapter,col,cat.LABELS.get(col,""),cat.UNITS.get(col,u),thresholds=base.temperature_thresholds(context),kind=k))
         if stat and stat not in note:note=stat+"\n\n"+note
     return f,note

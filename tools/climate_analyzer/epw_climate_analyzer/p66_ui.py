@@ -83,7 +83,7 @@ def render_atlas(df,context,reference_df=None):
     mem=container_memory()
     if mem:st.caption(f"Container memory: {mem[0]/1024**2:.0f} / {mem[1]/1024**2:.0f} MiB.")
     st.caption("32 MiB output budget per download. HTML runs in a disposable, memory-monitored process without Chromium. If resource admission fails, clean unused caches or select a smaller batch.")
-    signature=hashlib.sha256(json.dumps([context,coverage,chosen,[d.id for d in batch],batch_number,batch_size,title,mode,paper,orientation,per_page,"mem-r2-html-isolated",all_html],sort_keys=True,default=str).encode()).hexdigest()
+    signature=hashlib.sha256(json.dumps([context,coverage,chosen,[d.id for d in batch],batch_number,batch_size,title,mode,paper,orientation,per_page,"mem-r3-profile",all_html],sort_keys=True,default=str).encode()).hexdigest()
     if st.session_state.get("_p66_atlas_result") and st.session_state["_p66_atlas_result"][0]!=signature:
         st.session_state.pop("_p66_atlas_result",None)
     from .memory_lifecycle import prepare_export,finish_export,cleanup
@@ -137,6 +137,32 @@ def render_atlas(df,context,reference_df=None):
                 value=diagnostic.get(key)
                 if value is not None:st.caption(f"{label}: {value:,.0f} MiB")
             st.caption(f"Elapsed time: {diagnostic['wall_seconds']:.1f} s")
+            for key,label in (("worker_import_seconds","Worker import/setup"),("worker_request_load_seconds","Request deserialization"),
+                              ("worker_generation_seconds","Worker generation"),("outer_residual_seconds","Other worker lifecycle / transfer time")):
+                value=diagnostic.get(key)
+                if value is not None:st.caption(f"{label}: {value:.3f} s")
+    profile=metadata.get("atlas_profile")
+    if profile:
+        with st.expander("Atlas phase profiling",expanded=False):
+            st.caption("Exclusive wall time: nested stages are subtracted from their parents. Figure/analysis residual includes uninstrumented analytical and plotting operations.")
+            st.caption(f"Profiled generation scope: {profile['wall_seconds']:.3f} s; unattributed: {profile['unattributed_seconds']:.3f} s.")
+            phases=pd.DataFrame([{"Phase":key,"Seconds":value,"Calls":profile["phase_calls"].get(key,0)}
+                                 for key,value in profile["exclusive_phase_seconds"].items()]).sort_values("Seconds",ascending=False)
+            st.dataframe(phases,hide_index=True,use_container_width=True)
+            rows=[{**{key:row[key] for key in ("id","title","chapter","kind","status","wall_seconds","unattributed_seconds")},
+                   **{"phase."+key:value for key,value in row["phase_seconds"].items()}} for row in profile["diagrams"]]
+            if rows:
+                detail=pd.DataFrame(rows).sort_values("wall_seconds",ascending=False)
+                st.caption("Slowest diagrams (full table available as CSV)")
+                st.dataframe(detail[["title","kind","status","wall_seconds"]].head(20),hide_index=True,use_container_width=True)
+                st.download_button("Download Atlas phase timings CSV",data=detail.to_csv(index=False).encode("utf-8-sig"),
+                                   file_name="atlas_phase_timings.csv",mime="text/csv",key="p66_timing_csv",on_click="ignore")
+            st.caption("Shared calculation reuse (counts)")
+            st.json(profile["cache"],expanded=False)
+            st.caption("UTCI work and exact-state reuse")
+            st.json(profile["utci"],expanded=False)
+            st.caption("Estimated retained payload peaks (bytes)")
+            st.json(profile["estimated_cache_peak_bytes"],expanded=False)
     with st.expander("Generation outcomes",expanded=bool(n["failed"])):
         st.dataframe(pd.DataFrame([{"Diagram":d["title"],"Status":d["status"],"Reason":d["reason"]} for d in manifest]),hide_index=True,use_container_width=True)
     def release_atlas():

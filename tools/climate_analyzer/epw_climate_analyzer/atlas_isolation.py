@@ -116,7 +116,16 @@ def isolated_html_atlas(diagrams,df,context,*,progress=None,timeout=TIMEOUT_SECO
             require_html_headroom("HTML worker result transfer")
             after=container_memory()
             data=output.read_bytes()
-            metadata["execution_diagnostics"]={"mode":"isolated HTML worker","wall_seconds":time.monotonic()-start,
+            wall=time.monotonic()-start
+            import_s=info.get("worker_import_seconds")
+            request_s=info.get("worker_request_load_seconds")
+            generation_s=info.get("worker_generation_seconds")
+            accounted=sum(v for v in (import_s,request_s,generation_s) if v is not None)
+            metadata["execution_diagnostics"]={"mode":"isolated HTML worker","wall_seconds":wall,
+                "worker_import_seconds":import_s,
+                "worker_request_load_seconds":request_s,
+                "worker_generation_seconds":generation_s,
+                "outer_residual_seconds":max(0.,wall-accounted),
                 "sampled_container_peak_mib":peak/MIB if peak is not None else None,
                 "sampled_worker_rss_peak_mib":worker_peak/MIB if worker_peak else None,
                 "baseline_container_mib":baseline[0]/MIB if baseline else None,

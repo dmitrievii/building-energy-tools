@@ -9,6 +9,7 @@ import tempfile
 import gc
 import threading
 from pathlib import Path
+from .atlas_profile import AtlasProfiler,AtlasCache,phase
 from .p66_memory import require_headroom,require_html_headroom,EXPORT_LOCK as _EXPORT_LOCK
 from .p6_static_render import render_png,export_headroom,release_render_worker
 from collections import Counter
@@ -216,11 +217,13 @@ def _html_panel(d,fig,note,seq):
     from .extended_visualization import diurnal_panel_rows
     rows=diurnal_panel_rows(fig)
     h=max(380,rows*155) if rows else (540 if complex_figure(fig) else 380)
-    f=report_figure(fig,width_pt=780,height_pt=h,external_zone_legend=bool(zones))
-    f.update_layout(autosize=True,width=None)
+    with phase("report_layout"):
+        f=report_figure(fig,width_pt=780,height_pt=h,external_zone_legend=bool(zones))
+        f.update_layout(autosize=True,width=None)
     # Plotly already provides valid compact JSON. Avoid expanding every
     # array into Python objects and serializing the entire figure twice.
-    raw=pio.to_json(f,pretty=False).replace("<","\\u003c").replace(">","\\u003e").replace("&","\\u0026")
+    with phase("plotly_json"):
+        raw=pio.to_json(f,pretty=False).replace("<","\\u003c").replace(">","\\u003e").replace("&","\\u0026")
     del f
     key=""
     if zones:key='<p><b>Bioclimatic zones</b></p><div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">'+ "".join('<div><span style="display:inline-block;width:12px;height:9px;border:1px dashed #39447d;background:'+escape(color,quote=True)+'"></span> '+escape(name)+'</div>' for _,name,color in zones)+'</div>'
@@ -276,18 +279,22 @@ def _generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive
     def check_archive():
         if zbuf.tell()>MAX_ARCHIVE_BYTES:
             raise MemoryError("Atlas exceeds the 32 MiB download budget. Select fewer chapters or a smaller export batch.")
+    profiler=AtlasProfiler()
+    active_profile=profiler.activate()
+    active_profile.__enter__()
     try:
         if mode==PDF_MODES[2]:
-            # One offline library per ZIP, not one compressed copy per HTML part.
-            from plotly.offline import get_plotlyjs
-            archive.writestr("plotly.min.js",get_plotlyjs())
-            check_archive()
+            with phase("archive_setup"):
+                from plotly.offline import get_plotlyjs
+                archive.writestr("plotly.min.js",get_plotlyjs())
+                check_archive()
         for chapter,entries in groups.items():
-            cache={} # expensive shared kernels cached per chapter only
-            if mode=="Chapter PDFs (ZIP)":writer=PdfWriter(title=title,paper=paper,orientation=orientation,per_page=per_page,context=context,df=df,image_renderer=image_renderer)
-            if writer:writer.begin_chapter(chapter)
-            part_size=0;part_count=0;part_no=1;seq=0
-            chapter_header=_html_header(title,context,chapter,df).encode("utf-8") if is_html else b""
+            cache=AtlasCache(profiler)
+            with phase("chapter_setup"):
+                if mode=="Chapter PDFs (ZIP)":writer=PdfWriter(title=title,paper=paper,orientation=orientation,per_page=per_page,context=context,df=df,image_renderer=image_renderer)
+                if writer:writer.begin_chapter(chapter)
+                part_size=0;part_count=0;part_no=1;seq=0
+                chapter_header=_html_header(title,context,chapter,df).encode("utf-8") if is_html else b""
             def flush_html():
                 nonlocal html_output,part_size,part_count,part_no
                 if html_output is None:return
@@ -308,19 +315,26 @@ def _generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive
                 part_size+=len(panel);part_count+=1
                 check_archive()
             for i,d in entries:
-                if progress:progress(processed,len(available),d.title)
+                profiler.begin_diagram(d)
+                with phase("progress"):
+                    if progress:progress(processed,len(available),d.title)
                 processed+=1
-                guard(f"Atlas before chart {processed}: {d.title}")
+                with phase("memory_guard"):guard(f"Atlas before chart {processed}: {d.title}")
                 fig=None
                 try:
-                    fig,note=make_figure(d,df,context,reference_df,cache)
-                    guard(f"Atlas prepared chart {processed}: {d.title}")
-                    if writer:writer.add(d,fig,note)
+                    with phase("figure_and_analysis"):
+                        fig,note=make_figure(d,df,context,reference_df,cache)
+                    with phase("memory_guard"):guard(f"Atlas prepared chart {processed}: {d.title}")
+                    if writer:
+                        with phase("pdf_render_and_embed"):writer.add(d,fig,note)
                     else:
-                        seq+=1;panel=_html_panel(d,fig,note,seq).encode("utf-8")
+                        seq+=1
+                        with phase("html_panel"):
+                            panel=_html_panel(d,fig,note,seq).encode("utf-8")
                         # Fail the whole archive on I/O errors rather than
                         # return a partial HTML member as a generated diagram.
-                        try:write_panel(panel)
+                        try:
+                            with phase("archive_write"):write_panel(panel)
                         except MemoryError:raise
                         except Exception as exc:raise MemoryError("HTML archive write failed: "+str(exc)) from exc
                         finally:del panel
@@ -330,24 +344,28 @@ def _generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive
                 except NotApplicable as exc:manifest[i]["status"]="not applicable";manifest[i]["reason"]=str(exc)
                 except Exception as exc:manifest[i]["status"]="failed";manifest[i]["reason"]=f"{type(exc).__name__}: {exc}"
                 finally:
-                    del fig
-                if is_html and (len(cache)>8 or processed%10==0):
-                    cache.clear()
-                if processed%5==0:gc.collect()
-                guard(f"Atlas after chart {processed}: {d.title}")
+                    with phase("cleanup"):del fig
+                if processed%5==0:
+                    with phase("cleanup"):gc.collect()
+                with phase("memory_guard"):guard(f"Atlas after chart {processed}: {d.title}")
+                profiler.end_diagram(manifest[i]["status"])
                 # Explicit memory budget; never pretend to have generated the
                 # unprocessed tail if the deployment cannot contain an atlas.
                 if zbuf.tell()>MAX_ARCHIVE_BYTES or writer and writer.out.tell()>MAX_ARCHIVE_BYTES:
                     raise MemoryError("Atlas batch exceeds 32 MiB. Select fewer diagrams per batch.")
             if mode=="Chapter PDFs (ZIP)":
-                release_render_worker()
-                export_headroom(f"Atlas chapter assembly: {chapter}")
-                pdf=writer.finish()
-                if len(pdf)>MAX_ARCHIVE_BYTES:raise MemoryError("Chapter PDF exceeds 32 MiB; reduce batch size.")
-                archive.writestr(slug(chapter)+".pdf",pdf);del pdf;writer=None
-                gc.collect()
-            elif mode==PDF_MODES[2]:flush_html()
-        if progress:progress(len(available),len(available),"Atlas complete")
+                with phase("pdf_finalization"):
+                    release_render_worker()
+                    export_headroom(f"Atlas chapter assembly: {chapter}")
+                    pdf=writer.finish()
+                    if len(pdf)>MAX_ARCHIVE_BYTES:raise MemoryError("Chapter PDF exceeds 32 MiB; reduce batch size.")
+                    archive.writestr(slug(chapter)+".pdf",pdf);del pdf;writer=None
+                    gc.collect()
+            elif mode==PDF_MODES[2]:
+                with phase("archive_write"):flush_html()
+            with phase("cleanup"):cache.clear()
+        with phase("progress"):
+            if progress:progress(len(available),len(available),"Atlas complete")
         metadata={"coverage":coverage,"title":title,"created_utc":datetime.now(timezone.utc).isoformat(),"context":context,
                   "paper":paper,"orientation":orientation,"diagrams_per_page":per_page,"counts":dict(Counter(row["status"] for row in manifest)),
                   "calculation_notes":notes,"manifest":manifest}
@@ -358,10 +376,11 @@ def _generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive
                 index=("<!doctype html><html lang='en'><meta charset='utf-8'><title>"+escape(title)+"</title>"
                     "<style>body{font:11pt Arial,sans-serif;margin:32px;max-width:850px}li{margin:7px 0}</style><h1>"+escape(title)+"</h1>"
                     f"<p>{counts.get('generated',0)} diagrams generated from {len(available)} admitted diagrams. Full outcomes: <a href='coverage.csv'>coverage CSV</a> and <a href='atlas_metadata.json'>metadata</a>.</p><ul>"+links+"</ul></html>")
-                archive.writestr("index.html",index)
+                with phase("archive_write"):archive.writestr("index.html",index)
                 metadata["html_files"]=[name for name,_,_,_ in html_files]
                 check_archive()
-            archive.writestr("coverage.csv",manifest_csv(manifest))
+            with phase("archive_write"):archive.writestr("coverage.csv",manifest_csv(manifest))
+            metadata["atlas_profile"]=profiler.summary()
             archive.writestr("atlas_metadata.json",json.dumps(metadata,ensure_ascii=False,indent=2,default=str))
             archive.close()
             if zbuf.tell()>MAX_ARCHIVE_BYTES:raise MemoryError("Atlas batch exceeds 32 MiB; reduce batch size.")
@@ -374,10 +393,12 @@ def _generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive
         else:
             release_render_worker()
             export_headroom("Atlas final PDF assembly")
-            output=writer.finish()
+            with phase("pdf_finalization"):output=writer.finish()
+            metadata["atlas_profile"]=profiler.summary()
         if output is not None and len(output)>MAX_ARCHIVE_BYTES:raise MemoryError("Atlas batch exceeds 32 MiB; reduce batch size.")
         return output,manifest,metadata
     finally:
+        active_profile.__exit__(None,None,None)
         if html_output is not None:html_output.close()
         if archive:archive.close()
         zbuf.close()
