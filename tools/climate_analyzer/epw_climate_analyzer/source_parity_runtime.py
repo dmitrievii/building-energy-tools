@@ -29,6 +29,8 @@ _RUNTIME_STATS = {"baseline_builds":0,"module_reloads":0,"binding_resets":0,
                   "restored_bindings":0,"removed_bindings":0,"wrapper_compositions":0,
                   "baseline_invalidations":0}
 _LAST_INVALIDATION=None
+_PERSISTENT_NAMESPACE=None
+
 
 
 def runtime_stats() -> dict[str, Any]:
@@ -50,6 +52,11 @@ def release_idle_bindings():
     with _RUNTIME_PATCH_LOCK:
         from .source_parity_streamlit_surface import restore_streamlit_surface
         restore_streamlit_surface()
+        if _PERSISTENT_NAMESPACE is not None:
+            # Persistent candidate owns stable code and module bindings, not a
+            # browser script dictionary. Do not unwind half the permanent stack.
+            _RUNTIME_STATS["persistent_idle_checks"]=_RUNTIME_STATS.get("persistent_idle_checks",0)+1
+            return
         if _baseline_current():
             _restore_bindings()
             _RUNTIME_STATS["idle_binding_releases"]=_RUNTIME_STATS.get("idle_binding_releases",0)+1
@@ -398,5 +405,18 @@ def install_into_app_globals(namespace: MutableMapping[str, Any]) -> bool:
     from interleaving wrapper installation and producing a mixed selector chain.
     The same lock protects execution of each frozen GeoSphere selector.
     """
+    global _PERSISTENT_NAMESPACE
     with _RUNTIME_PATCH_LOCK:
-        return _install_into_app_globals_locked(namespace)
+        persistent=namespace.get("__name__")=="_ige_r143_persistent_app"
+        if _PERSISTENT_NAMESPACE is not None and namespace is not _PERSISTENT_NAMESPACE:
+            raise RuntimeError("Cannot switch persistent compatibility ownership inside one process")
+        if persistent and _PERSISTENT_NAMESPACE is namespace:
+            if not _baseline_current():
+                raise RuntimeError("Persistent compatibility source changed; restart the candidate runtime")
+            _RUNTIME_STATS["persistent_reuses"]=_RUNTIME_STATS.get("persistent_reuses",0)+1
+            return True
+        installed=_install_into_app_globals_locked(namespace)
+        if installed and persistent:
+            _PERSISTENT_NAMESPACE=namespace
+            _RUNTIME_STATS["persistent_compositions"]=_RUNTIME_STATS.get("persistent_compositions",0)+1
+        return installed

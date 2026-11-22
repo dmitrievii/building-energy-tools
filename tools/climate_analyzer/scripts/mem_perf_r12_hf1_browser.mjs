@@ -45,9 +45,18 @@ async function snapshot(p,stage,cycle){
  await download[0].saveAs(filename);
  const v=JSON.parse(await fs.readFile(filename,'utf8'));
  if(v.snapshot_schema!=='MEM-PERF-R13-HF2')throw Error('Wrong runtime schema');
+ if(process.env.IGE_R143_PERSISTENT_APP==='1'){
+   const stats=v.runtime?.persistent_runtime||{};
+   if((stats.wrapper_compositions||0)>1|| (stats.persistent_compositions||0)>1)
+     throw Error('Persistent compatibility recomposed: '+JSON.stringify(stats));
+   if(stage==='graphs-b'&&((stats.persistent_compositions||0)!==1||!(stats.persistent_reuses>0)))
+     throw Error('Persistent reuse not demonstrated: '+JSON.stringify(stats));
+ }
+
  rows.push({cycle,stage,memory:v.memory,epw:v.epw_lifecycle,session:v.session_cache_summary,
             reaper:v.session_runtime.session_reaper,processes:v.container_processes,library:v.library_footprint,
-            allocator:v.allocator,retiredReferences:v.retired_reference_diagnostics});
+            allocator:v.allocator,retiredReferences:v.retired_reference_diagnostics,
+            persistentRuntime:v.runtime?.persistent_runtime});
  return v;
 }
 async function nav(p,label){

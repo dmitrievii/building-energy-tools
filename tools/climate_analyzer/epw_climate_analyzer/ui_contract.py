@@ -133,7 +133,13 @@ def _install_source_parity_for_app_caller(state: MutableMapping[str, Any]) -> No
     if needs_source_parity(state):
         from .source_parity_runtime import install_into_app_globals
         from .startup_runtime import profile_install
-        profile_install(install_into_app_globals,caller_globals)
+        if (caller_globals.get("__name__")=="_ige_r143_persistent_app" and
+                caller_globals.get("_SOURCE_PARITY_RUNTIME_INSTALLED")):
+            # A reuse is not an installation. The runtime still validates its
+            # source generation before entering the shared compatibility stack.
+            install_into_app_globals(caller_globals)
+        else:
+            profile_install(install_into_app_globals,caller_globals)
     elif "epw_climate_analyzer.source_parity_runtime" in sys.modules:
         # A preceding source render may have aborted with temporary Streamlit
         # wrappers installed. Restore the surface under the selector lock,

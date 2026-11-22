@@ -425,37 +425,38 @@ WIND_DIRECTION_FROM_NOTE = (
 )
 
 
-st.set_page_config(page_title=APP_BROWSER_TITLE, layout="wide", page_icon="🌦️")
+def _render_page_shell():
+    st.set_page_config(page_title=APP_BROWSER_TITLE, layout="wide", page_icon="🌦️")
 
-# Hidden machine-readable deployment identity.  The live browser audit compares
-# this source-derived fingerprint with the exact checked-out source set before a
-# deployment is considered current.  The semantic GHI colour is included as a
-# direct visual-contract sentinel for VIS-0.1.
-_RUNTIME_GHI_COLOR = metric_color("global_horizontal_radiation_wh_m2")
-st.markdown(
-    (
-        '<span id="climate-analyzer-runtime-build" '
-        f'data-runtime-build="{html.escape(RUNTIME_BUILD_ID, quote=True)}" '
-        f'data-ghi-color="{html.escape(_RUNTIME_GHI_COLOR, quote=True)}" '
-        'aria-hidden="true" style="display:none"></span>'
-    ),
-    unsafe_allow_html=True,
-)
+    # Hidden machine-readable deployment identity.  The live browser audit compares
+    # this source-derived fingerprint with the exact checked-out source set before a
+    # deployment is considered current.  The semantic GHI colour is included as a
+    # direct visual-contract sentinel for VIS-0.1.
+    runtime_ghi_color = metric_color("global_horizontal_radiation_wh_m2")
+    st.markdown(
+        (
+            '<span id="climate-analyzer-runtime-build" '
+            f'data-runtime-build="{html.escape(RUNTIME_BUILD_ID, quote=True)}" '
+            f'data-ghi-color="{html.escape(runtime_ghi_color, quote=True)}" '
+            'aria-hidden="true" style="display:none"></span>'
+        ),
+        unsafe_allow_html=True,
+    )
 
-# Streamlit 1.63 renders the file-uploader size/type hint with a 0.6-alpha
-# foreground color that fails WCAG AA contrast on the default light background.
-# Inherit the surrounding instruction color through a stable Streamlit test id;
-# do not bind this override to generated Emotion class names.
-st.markdown(
-    """
-    <style>
-    [data-testid="stFileUploaderDropzoneInstructions"] span {
-        color: inherit !important;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+    # Streamlit 1.63 renders the file-uploader size/type hint with a 0.6-alpha
+    # foreground color that fails WCAG AA contrast on the default light background.
+    # Inherit the surrounding instruction color through a stable Streamlit test id;
+    # do not bind this override to generated Emotion class names.
+    st.markdown(
+        """
+        <style>
+        [data-testid="stFileUploaderDropzoneInstructions"] span {
+            color: inherit !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 @bounded_cache(name="epw_analysis",max_bytes=32*MIB,max_entries=4,ttl=3600,scope="session")
@@ -6414,11 +6415,20 @@ def main() -> None:
         render_data_quality(epw, filtered_df, issues)
 
 
-if __name__ == "__main__":
+def _execute_page():
+    """Per-run UI shell and transient export cleanup; no request stored globally."""
     from epw_climate_analyzer.startup_runtime import begin_script,end_script
-    _r5_token=begin_script(main)
+    _render_page_shell()
+    token=begin_script(main)
     try:main()
     finally:
-        # Chart download preparation uses the current script run only.
         st.session_state.pop("_active_filtered_export_df",None)
-        end_script(_r5_token,st.session_state.get(NAVIGATION_KEY,"Climate File Source"))
+        end_script(token,st.session_state.get(NAVIGATION_KEY,"Climate File Source"))
+
+if __name__ == "__main__":
+    import os
+    if os.environ.get("IGE_R143_PERSISTENT_APP")=="1":
+        from epw_climate_analyzer.persistent_app_runtime import execute
+        execute(__file__)
+    else:
+        _execute_page()

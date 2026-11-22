@@ -67,3 +67,17 @@ Anonymous RSS MiB at cycles 1/4/10/16/20: 260.01/298.50/348.71/368.43/335.63.
 Cycle 4 to 20 drift: +37.13 MiB, within the provisional 64 MiB gate.
 This is qualification of a controlled single-process launcher, not of
 Community Cloud's direct launch nor evidence of zero drift forever.
+
+## R14.3B-C first persistent candidate
+IGE_R143_PERSISTENT_APP=1 imports app definitions into a stable code-only
+module. Page configuration and styling are emitted per run. One initial
+compatibility composition is kept; subsequent calls validate the source
+generation and reuse it instead of restoring/recomposing 26 modules. Idle
+recovery does not undo its bindings. Legacy full runs are serialized and
+the temporary Streamlit surface is restored in finally. The candidate is
+EPW-only and mutually exclusive with the Degree fragment pilot. This is
+NOT a complete stateless compatibility-layer conversion: global mutation
+and independent callback/fragment paths require further refactoring and
+qualification. Default production uses the existing run-local path.
+The real-app pilot has paired baseline/persistent arms, exact same EPWs,
+and a one-composition admission gate. No science formulas are changed.
