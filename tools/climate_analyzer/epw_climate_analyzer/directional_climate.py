@@ -303,8 +303,12 @@ def monthly_wind_rose_panel(df,*,speed="wind_speed_m_s",direction="wind_directio
         count=max(1,int(np.ceil(target/step-1e-12)))
         upper=max(count*step,max_r)
         ticks=[i*step for i in range(1,count+1)]
+    elif radial=="Percentage":
+        # Fixed physical percentage domain for comparisons across months
+        # and climates, regardless of the observed maximum directional share.
+        upper=100.
+        ticks=[25.,50.,75.,100.]
     else:
-        # Restore the prior auto scaling for percentage and other units.
         step=max_r/3 if max_r>0 else 1.
         power=10.**np.floor(np.log10(step))
         step=next(v*power for v in (1.,2.,2.5,5.,10.) if v*power>=step-1e-12*power)

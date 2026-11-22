@@ -379,7 +379,15 @@ class AtlasTests(unittest.TestCase):
         fig,_=monthly_wind_rose_panel(df,radial="Hours")
         self.assertGreaterEqual(fig.layout.polar.radialaxis.range[1],600.)
         percentage,_=monthly_wind_rose_panel(df,radial="Percentage")
-        self.assertGreaterEqual(percentage.layout.polar.radialaxis.range[1],100.)
+        self.assertEqual(tuple(percentage.layout.polar.radialaxis.range),(0.,100.))
+        # Low directional frequencies must not shrink the percentage domain.
+        df[c.WD]=np.repeat([0.,90.,180.],200)
+        for style in ("Class distribution","Directional mean"):
+            percentage,_=monthly_wind_rose_panel(df,radial="Percentage",style=style)
+            for m in range(1,13):
+                axis=getattr(percentage.layout,"polar" if m==1 else f"polar{m}").radialaxis
+                self.assertEqual(tuple(axis.range),(0.,100.))
+                self.assertEqual(tuple(axis.tickvals),(25.,50.,75.,100.))
 
     def test_core_chart_families_execute(self):
         df=self.fixture();rows=[d for d in c.catalogue(df,{},c.FULL) if d.status=="available"]
