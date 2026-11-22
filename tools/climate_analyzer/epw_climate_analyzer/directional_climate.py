@@ -292,11 +292,17 @@ def monthly_wind_rose_panel(df,*,speed="wind_speed_m_s",direction="wind_directio
         tables[month]=table;figures[month]=one
     if not tables:raise ValueError("No valid coincident non-calm observations for any month.")
     max_r=max([0.,*peaks])
-    # Three readable radial intervals, rounded upward, no clipping.
-    step=max_r/3 if max_r>0 else 1.
-    power=10.**np.floor(np.log10(step))
-    step=next(v*power for v in (1.,2.,2.5,5.,10.) if v*power>=step-1e-12*power)
-    upper=3*step
+    # Percentage panels share a 0–50% radial scale by default.
+    # Expand only for an observed sector above 50%, never clip the data.
+    if radial=="Percentage":
+        upper=50. if max_r<=50.+1e-9 else 75. if max_r<=75.+1e-9 else max(100.,max_r)
+        ticks=[10.,20.,30.,40.,50.] if upper==50. else [25.,50.,75.] if upper==75. else [25.,50.,75.,100.]
+    else:
+        step=max_r/3 if max_r>0 else 1.
+        power=10.**np.floor(np.log10(step))
+        step=next(v*power for v in (1.,2.,2.5,5.,10.) if v*power>=step-1e-12*power)
+        upper=3*step
+        ticks=[step,2*step,upper]
     fig=go.Figure()
     first=min(tables)
     limits={}
@@ -311,7 +317,7 @@ def monthly_wind_rose_panel(df,*,speed="wind_speed_m_s",direction="wind_directio
         name="polar" if month==1 else f"polar{month}"
         polar=dict(barmode="stack" if classes else "overlay",
             angularaxis=dict(rotation=90,direction="clockwise",tickvals=ANGLES[::2],ticktext=COMPASS[::2],tickfont=dict(size=10)),
-            radialaxis=dict(range=[0.,upper],tickmode="array",tickvals=[step,2*step,upper],tickformat=".3g",tickfont=dict(size=9),angle=45))
+            radialaxis=dict(range=[0.,upper],tickmode="array",tickvals=ticks,tickformat=".3g",tickfont=dict(size=9),angle=45))
         fig.update_layout(**{name:polar})
         if month not in tables:
             fig.add_trace(go.Barpolar(subplot=name,theta=[0],r=[0.],marker_color="rgba(0,0,0,0)",showlegend=False,hoverinfo="skip"))

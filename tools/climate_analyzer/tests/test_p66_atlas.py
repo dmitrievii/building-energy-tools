@@ -356,6 +356,25 @@ class AtlasTests(unittest.TestCase):
         atlas,_=make_figure(d,fixture,{})
         self.assertEqual(len(atlas.layout.annotations),12)
 
+    def test_monthly_wind_panel_percentage_scale_defaults_to_50(self):
+        from epw_climate_analyzer.directional_climate import monthly_wind_rose_panel
+        idx=pd.date_range("2026-01-01",periods=8,freq="h")
+        df=pd.DataFrame({c.V:[2.]*8,c.WD:[0.,0.,90.,90.,180.,180.,270.,270.]},index=idx)
+        for style in ("Class distribution","Directional mean"):
+            for directions,upper in (([0.,0.,90.,90.,180.,180.,270.,270.],50.),
+                                     ([0.]*6+[90.]*2,75.),([0.]*8,100.)):
+                df[c.WD]=directions
+                fig,tables=monthly_wind_rose_panel(df,radial="Percentage",style=style)
+                for m in range(1,13):
+                    axis=getattr(fig.layout,"polar" if m==1 else f"polar{m}").radialaxis
+                    self.assertAlmostEqual(axis.range[1],upper)
+                    self.assertEqual(axis.range[0],0.)
+                    self.assertEqual(axis.tickvals[-1],upper)
+                values=tables[1]
+                self.assertAlmostEqual(float(values.to_numpy().sum() if style=="Class distribution" else values.radius.sum()),100.)
+        fig,_=monthly_wind_rose_panel(df,radial="Hours")
+        self.assertLess(fig.layout.polar.radialaxis.range[1],50.)
+
     def test_core_chart_families_execute(self):
         df=self.fixture();rows=[d for d in c.catalogue(df,{},c.FULL) if d.status=="available"]
         types=("time_series","profile","percentile","heatmap","duration","histogram","box","violin","diurnal","occurrence","amplitude","total","degree","temp_threshold","temp_events","day_indicators","wind_mean","wind_classes","wetdry","rolling","cumulative","freeze_days","eligibility_map","eligibility_total","nv_special","critical_windows","correlation","joint")
