@@ -16,6 +16,7 @@ import sys
 import weakref
 from .p66_memory import MIB,container_memory
 
+RUNTIME_STARTUP_SCHEMA="MEM-PERF-R6"
 _LOCK=RLock()
 _STAGES={}
 _EVENTS=deque(maxlen=64)
@@ -121,12 +122,19 @@ def profile_install(fn,*args,**kwargs):
 
 def runtime_summary():
     with _LOCK:
-        return {"startup":deepcopy(list(_STAGES.values())),
+        result={"startup":deepcopy(list(_STAGES.values())),
                 "event_counts":dict(_EVENT_COUNTS),"recent_events":deepcopy(list(_EVENTS)),
                 "recent_script_functions_tracked":len(_SCRIPT_REFS),
                 "recent_script_functions_still_alive":sum(ref() is not None for ref in _SCRIPT_REFS),
                 "gc_counts":list(gc.get_count()),"gc_stats":gc.get_stats(),
                 "notes":"Global process observations; overlapping sessions can affect deltas. Weak references cover at most 64 recent script functions, not all live sessions."}
+    # Do not load the compatibility stack on the inactive source page.
+    parity=sys.modules.get("epw_climate_analyzer.source_parity_runtime")
+    stats=getattr(parity,"runtime_stats",None)
+    result["persistent_runtime"]=stats() if callable(stats) else {
+        "baseline_builds":0,"module_reloads":0,"binding_resets":0,
+        "restored_bindings":0,"removed_bindings":0,"wrapper_compositions":0,"baseline_modules":0}
+    return result
 
 def _census_type_name(typ):
     # Extension types and dynamically constructed classes can have non-string

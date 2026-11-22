@@ -53,7 +53,8 @@ def install_monthly_resource(proxy: Any, parity: Any) -> None:
     original_plan = parity.plan_data_queries
     original_fetch_dataset = parity.fetch_station_dataset
 
-    @st.cache_data(show_spinner=False, ttl=18 * 60 * 60, max_entries=2)
+    from .byte_cache import bounded_cache,MIB
+    @bounded_cache(name="geosphere_monthly_metadata",max_bytes=8*MIB,max_entries=2,ttl=18*60*60,singleflight=True)
     def cached_monthly_bundle() -> tuple:
         metadata = parity.fetch_metadata(resource_id=MONTHLY_RESOURCE_ID)
         return monthly_metadata_bundle(metadata)

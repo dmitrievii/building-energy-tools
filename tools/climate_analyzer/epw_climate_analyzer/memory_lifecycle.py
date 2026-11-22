@@ -13,6 +13,7 @@ from time import monotonic
 from . import p66_memory as m
 from .byte_cache import cache_inventory,clear_recomputable_caches,session_inventory
 
+RUNTIME_MEMORY_SCHEMA="MEM-PERF-R6"
 EXPORT_KEYS=("_p6_pdf","_p6_html_result","_p66_atlas_result","_utci_perf_r1_csv")
 DERIVED_KEYS=("_utci_perf_r1_result","_utci_perf_r1_sensitivity")
 TRANSIENT_KEYS=("_p6_displayed_charts","_active_filtered_export_df")
@@ -27,7 +28,9 @@ PRESSURE_COOLDOWN_S=30.
 INVENTORY_KEY="_mem_perf_r4_inventory"
 EXPORT_CACHE_FRACTION=.72
 PROTECTED_KEYS=("active_climate_file","active_canonical_climate","comparison_climate_payloads",
-                "ige_engine_completed_product","_p6_report_items","_p6_custom_presets")
+                "canonical_comparison_climates","ige_engine_completed_product","_p6_report_items","_p6_custom_presets")
+MAP_CACHE_NAMES=("station_catalog","station_group_snapshot","station_filter_options",
+                 "filtered_station_groups","station_group_options","station_markers","station_group_rows")
 
 def memory_snapshot():
     """Cgroup totals are shared across sessions; process RSS is separate."""
@@ -105,7 +108,9 @@ def inspect_resources(state):
                 result.setdefault("process_smaps",{})[key]=int(line.split()[1])*1024
     except (OSError,ValueError,IndexError):pass
     from .startup_runtime import runtime_summary
+    from .session_memory import inspect_session_counters
     result["runtime"]=runtime_summary()
+    result["session_runtime"]=inspect_session_counters(state,PROTECTED_KEYS+EXPORT_KEYS+DERIVED_KEYS+TRANSIENT_KEYS)
     if "_mem_r5_heap_census" in state:result["heap_census"]=state["_mem_r5_heap_census"]
     state[INVENTORY_KEY]=result
     return result
@@ -129,7 +134,7 @@ def _drop(state,keys):
             removed.append(key)
     return removed
 
-def cleanup(state,reason,*,exports=False,derived=False,transient=False,disk=False,shared_caches=False):
+def cleanup(state,reason,*,exports=False,derived=False,transient=False,disk=False,shared_caches=False,keep_shared=()):
     """Release selected owned references; sample before/after actual collection.
 
     A disk cache belongs to this session, but do not remove it while any export
@@ -154,12 +159,14 @@ def cleanup(state,reason,*,exports=False,derived=False,transient=False,disk=Fals
                         warnings.append("Private render cache cleanup failed: "+str(exc))
             finally:m.EXPORT_LOCK.release()
         else:warnings.append("Private render cache retained while an export is active.")
-    evicted=clear_recomputable_caches() if shared_caches else []
+    if shared_caches:
+        evicted=clear_recomputable_caches(keep=keep_shared) if keep_shared else clear_recomputable_caches()
+    else:evicted=[]
     gc.collect()
     m._trim_allocator()
     after=memory_snapshot()
     result={"reason":reason,"before":before,"after":after,"released":removed,"warnings":warnings,
-            "evicted_caches":evicted}
+            "evicted_caches":evicted,"kept_active_cache_names":list(keep_shared)}
     state[LAST_KEY]=result
     return result
 
@@ -189,7 +196,16 @@ def dataset_changed(state):
                    transient=True,disk=True)
 
 def manual_cleanup(state):
-    return cleanup(state,"Manual cleanup",exports=True,derived=True,transient=True,disk=True,shared_caches=True)
+    # The visible OneBuilding map needs these entries on the very next rerun.
+    # Evicting and immediately rebuilding the full catalogue wastes memory and
+    # time. Under raw pressure there is no exemption; before export all caches
+    # remain evictable.
+    keep=MAP_CACHE_NAMES if (state.get("climate_source_mode")=="Find climate" and
+        (state.get("climate_analyzer_navigation") in (None,"Climate File Source") or
+         (state.get("active_climate_file") is None and state.get("active_canonical_climate") is None)) and
+        not cache_pressure(memory_snapshot())) else ()
+    return cleanup(state,"Manual cleanup",exports=True,derived=True,transient=True,
+                   disk=True,shared_caches=True,keep_shared=keep)
 
 def begin_rerun(state,page):
     previous=state.get(PAGE_KEY)
@@ -236,32 +252,45 @@ def render_sidebar(st):
                   help="On demand, requires substantial raw memory headroom. Counts shallow GC-tracked objects; no content is exported.")
         from .startup_runtime import runtime_summary
         runtime=runtime_summary()
-        st.caption("One-time startup library initialization")
-        st.dataframe([{"Stage":row["stage"],"Status":row["status"],"Seconds":round(row["seconds"],3),
-                       "RSS delta [MiB]":round((row["after"]["process_rss"]-row["before"]["process_rss"])/m.MIB,1)
-                       if "process_rss" in row["after"] and "process_rss" in row["before"] else None}
-                      for row in runtime["startup"]],hide_index=True)
-        st.caption(f"Process reruns recorded: {runtime['event_counts'].get('script rerun',0)}; parity installations: {runtime['event_counts'].get('source parity installation',0)}.")
+        ready=sum(r["status"] in ("ready","already loaded") for r in runtime["startup"])
+        st.caption(f"Library stages ready: {ready}/{len(runtime['startup'])}.")
+        persistent=runtime.get("persistent_runtime",{})
+        st.caption(f"Process reruns: {runtime['event_counts'].get('script rerun',0)}; compatibility compositions: {persistent.get('wrapper_compositions',0)}; full module resets: {persistent.get('baseline_builds',0)}.")
+        details=st.checkbox("Show detailed memory tables",value=False,key="mem_r6_detail_tables",
+                            help="Detailed tables are rendered only on request, even when this expander is closed.")
+        if details:
+            st.caption("One-time startup library initialization")
+            st.dataframe([{"Stage":row["stage"],"Status":row["status"],"Seconds":round(row["seconds"],3),
+                           "RSS delta [MiB]":round((row["after"]["process_rss"]-row["before"]["process_rss"])/m.MIB,1)
+                           if "process_rss" in row["after"] and "process_rss" in row["before"] else None}
+                          for row in runtime["startup"]],hide_index=True)
+            st.json(persistent,expanded=False)
         inspected=state.get(INVENTORY_KEY)
         if inspected:
             st.caption("Last on-demand inventory; sizes are estimates and overlap with RSS. Session rows may overlap; unmeasurable objects are marked unavailable.")
-            st.dataframe([{**r,"estimated MiB":round(r["estimated_bytes"]/m.MIB,2),"budget MiB":round(r["budget_bytes"]/m.MIB,2)} for r in inspected["shared_caches"]],hide_index=True)
-            st.dataframe([{**r,"estimated MiB":round(r["estimated_bytes"]/m.MIB,2) if r["estimated_bytes"] is not None else None} for r in inspected["session_resources"]],hide_index=True)
-            st.caption(f"Python allocation blocks: {inspected['python_allocated_blocks']}. Tracemalloc is not enabled by this diagnostic.")
-            if "process_age_seconds" in inspected:
-                st.caption(f"Process age at inspection: {inspected['process_age_seconds']/60:.1f} min")
-            st.caption("Loaded library module counts (not memory sizes):")
-            st.json({k:v for k,v in inspected.get("loaded_libraries",{}).items() if v},expanded=False)
-            if inspected.get("process_smaps"):st.json({key:_mib(value) for key,value in inspected["process_smaps"].items()},expanded=False)
+            counters=inspected.get("session_runtime",{})
+            if counters:
+                st.caption(f"Active sessions (process-wide): {counters.get('active_sessions','Unavailable')}; current session visible keys: {counters.get('visible_keys','Unavailable')}.")
+                st.caption(f"Streamlit uploaded payloads: {_mib(counters.get('uploaded_payload_bytes'))}; media/download payloads: {_mib(counters.get('media_payload_bytes'))}.")
             heap=inspected.get("heap_census")
-            if heap:
-                st.caption("Python object census: "+heap["status"])
-                if heap.get("schema")=="R5-HF2-safe-shallow-v1":
-                    st.caption(f"Shallow size available for {heap['size_measured_objects']:,} objects; unavailable for {heap['size_unavailable_objects']:,}.")
-                    st.caption(heap["scope"])
-                    if heap.get("types"):st.dataframe(heap["types"],hide_index=True)
-                elif heap.get("types"):
-                    st.caption("Previous census size estimates are superseded; run Inspect Python object types again.")
+            if heap:st.caption("Python object census: "+heap["status"])
+            if details:
+                st.dataframe([{**r,"estimated MiB":round(r["estimated_bytes"]/m.MIB,2),"budget MiB":round(r["budget_bytes"]/m.MIB,2)} for r in inspected["shared_caches"]],hide_index=True)
+                st.dataframe([{**r,"estimated MiB":round(r["estimated_bytes"]/m.MIB,2) if r["estimated_bytes"] is not None else None} for r in inspected["session_resources"]],hide_index=True)
+                st.caption(f"Python allocation blocks: {inspected['python_allocated_blocks']}. Tracemalloc is not enabled by this diagnostic.")
+                if "process_age_seconds" in inspected:
+                    st.caption(f"Process age at inspection: {inspected['process_age_seconds']/60:.1f} min")
+                st.caption("Loaded library module counts (not memory sizes):")
+                st.json({k:v for k,v in inspected.get("loaded_libraries",{}).items() if v},expanded=False)
+                if inspected.get("process_smaps"):st.json({key:_mib(value) for key,value in inspected["process_smaps"].items()},expanded=False)
+                heap=inspected.get("heap_census")
+                if heap:
+                    if heap.get("schema")=="R5-HF2-safe-shallow-v1":
+                        st.caption(f"Shallow size available for {heap['size_measured_objects']:,} objects; unavailable for {heap['size_unavailable_objects']:,}.")
+                        st.caption(heap["scope"])
+                        if heap.get("types"):st.dataframe(heap["types"],hide_index=True)
+                    elif heap.get("types"):
+                        st.caption("Previous census size estimates are superseded; run Inspect Python object types again.")
             import json
             st.download_button("Download memory inventory JSON",data=json.dumps(inspected,indent=2).encode(),file_name="memory_inventory.json",mime="application/json",key="mem_r4_inventory_download",on_click="ignore")
         result=state.get(LAST_KEY)
@@ -273,6 +302,8 @@ def render_sidebar(st):
             st.caption(f"Released session resource entries: {len(result['released'])}")
             evicted=result.get("evicted_caches",[])
             st.caption(f"Evicted shared cache entries: {sum(r['entries'] for r in evicted)}; estimated payload {_mib(sum(r['estimated_bytes'] for r in evicted))}.")
+            if result.get("kept_active_cache_names"):
+                st.caption("Active station-map caches retained to avoid immediate reconstruction.")
             for warning in result["warnings"]:st.caption(warning)
         launch=state.get("_mem_perf_r4_launch_cleanup")
         if launch:

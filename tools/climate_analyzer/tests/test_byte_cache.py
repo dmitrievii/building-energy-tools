@@ -32,6 +32,36 @@ class ByteCacheTests(unittest.TestCase):
         build(2);build(3);build(1)
         self.assertEqual(calls,[1,2,3,1])
         build.clear()
+    def test_singleflight_large_resource_only_builds_once(self):
+        from concurrent.futures import ThreadPoolExecutor
+        from threading import Event
+        started=Event();release=Event();calls=[]
+        @b.bounded_cache(name="r6_test_singleflight",max_bytes=100000,max_entries=1,resource=True,singleflight=True)
+        def build(key):
+            calls.append(key);started.set()
+            if not release.wait(5):raise RuntimeError("fixture timed out")
+            return pd.DataFrame({"v":[1.,2.]})
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            first=executor.submit(build,"same")
+            self.assertTrue(started.wait(5))
+            others=[executor.submit(build,"same") for _ in range(3)]
+            release.set()
+            values=[first.result(timeout=5)]+[f.result(timeout=5) for f in others]
+        self.assertEqual(calls,["same"])
+        self.assertTrue(all(value is values[0] for value in values))
+        self.assertEqual(build.cache_info()["builds"],1)
+        self.assertEqual(build.cache_info()["hits"],3)
+        build.clear()
+
+    def test_active_map_cleanup_preserves_needed_cache_without_protecting_under_pressure(self):
+        state={"climate_source_mode":"Find climate"}
+        with patch.object(m,"memory_snapshot",return_value={"used":1800*b.MIB,"limit":3072*b.MIB}),patch.object(m,"cleanup") as clean:
+            m.manual_cleanup(state)
+            self.assertIn("station_catalog",clean.call_args.kwargs["keep_shared"])
+        with patch.object(m,"memory_snapshot",return_value={"used":2500*b.MIB,"limit":3072*b.MIB}),patch.object(m,"cleanup") as clean:
+            m.manual_cleanup(state)
+            self.assertEqual(clean.call_args.kwargs["keep_shared"],())
+
     def test_ttl_and_resource_reference_survives_eviction(self):
         cache=b.ByteLRU("ttl",10000,2,ttl=2)
         v=np.arange(10)
@@ -51,6 +81,17 @@ class ByteCacheTests(unittest.TestCase):
         self.assertEqual(state["_p6_report_items"][0]["figure"],"data")
         self.assertIs(cache.get("x"),b.MISS)
         self.assertTrue(m.cache_pressure(sample))
+    def test_clear_except_active_map_pool(self):
+        active=b.pool("r6_test_active_map",10000,1)
+        idle=b.pool("r6_test_idle_map",10000,1)
+        active.put("station",b"active");idle.put("station",b"idle")
+        result=b.clear_recomputable_caches(keep=(active.name,))
+        self.assertEqual(active.get("station"),b"active")
+        self.assertIs(idle.get("station"),b.MISS)
+        self.assertNotIn(active.name,{r["cache"] for r in result})
+        self.assertIn(idle.name,{r["cache"] for r in result})
+        active.clear()
+
     def test_inventory_unknown_objects(self):
         rows=b.session_inventory({"known":b"payload","unknown":object()},("known","unknown"))
         self.assertGreater(rows[0]["estimated_bytes"],0)
@@ -63,7 +104,7 @@ class ByteCacheTests(unittest.TestCase):
         calls=[n for n in ast.walk(tree) if isinstance(n,ast.Call) and isinstance(n.func,ast.Name) and n.func.id=="bounded_cache"]
         self.assertEqual(len(calls),9)
         budget=sum(int(next(k.value.left.value for k in n.keywords if k.arg=="max_bytes")) for n in calls)
-        self.assertEqual(budget,121)
+        self.assertEqual(budget,137)
         self.assertNotIn("@st.cache_data",source)
         self.assertNotIn("@st.cache_resource",source)
     def test_ten_repeated_cleanup_cycles_have_bounded_retention(self):

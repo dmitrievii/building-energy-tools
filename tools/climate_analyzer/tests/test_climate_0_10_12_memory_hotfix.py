@@ -39,6 +39,13 @@ class CommunityCloudMemoryHotfixTests(unittest.TestCase):
         deep_bytes = int(self.catalog.memory_usage(index=True, deep=True).sum())
         print(f"runtime station catalog deep memory: {deep_bytes / 1024 / 1024:.1f} MiB")
         self.assertLess(deep_bytes, 128 * 1024 * 1024)
+        # Qualify the actual production catalogue using the same R6 admission
+        # estimator and entry overhead, not just the pandas deep-size number.
+        from epw_climate_analyzer.byte_cache import ByteLRU,MIB
+        pool=ByteLRU("catalogue-qualification",48*MIB,1)
+        self.assertTrue(pool.put((self.manifest.catalog_version,self.manifest.csv_sha256),self.catalog))
+        self.assertIs(pool.get((self.manifest.catalog_version,self.manifest.csv_sha256)),self.catalog)
+        self.assertLessEqual(pool.info()["estimated_bytes"],48*MIB)
 
     def test_low_cardinality_columns_are_categorical(self) -> None:
         for column in (
@@ -58,7 +65,7 @@ class CommunityCloudMemoryHotfixTests(unittest.TestCase):
     def test_large_catalog_uses_resource_cache_not_data_cache(self) -> None:
         app = APP_PATH.read_text(encoding="utf-8")
         self.assertIn(
-            '@bounded_cache(name="station_catalog",max_bytes=32*MIB,max_entries=1,resource=True)\n'
+            '@bounded_cache(name="station_catalog",max_bytes=48*MIB,max_entries=1,resource=True,singleflight=True)\n'
             "def _cached_station_catalog_by_identity",
             app,
         )

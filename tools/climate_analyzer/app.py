@@ -9,14 +9,36 @@ from uuid import uuid4
 
 
 import streamlit as st
+from epw_climate_analyzer import byte_cache as _runtime_cache
+from epw_climate_analyzer import memory_lifecycle as _runtime_memory
+from epw_climate_analyzer import startup_runtime as _runtime_startup
+
+# Do not reload the cache owner in place: existing functions can still hold
+# its old MISS sentinel and pool objects. The R6 ownership migration requires
+# one new process when an older build is already resident.
+if any(getattr(module,attribute,None)!="MEM-PERF-R6" for module,attribute in (
+    (_runtime_cache,"RUNTIME_CACHE_SCHEMA"),
+    (_runtime_memory,"RUNTIME_MEMORY_SCHEMA"),
+    (_runtime_startup,"RUNTIME_STARTUP_SCHEMA"),
+)):
+    st.error("Runtime ownership upgrade (MEM-PERF R6): reboot the app once via Manage app to start a consistent process. Refreshing the browser does not restart the server.")
+    st.stop()
 from epw_climate_analyzer.byte_cache import bounded_cache,MIB
 
 # Streamlit can retain imported package modules across an app-script hot deploy.
 # Refresh the navigation contract only when it predates the P3 page.
 from epw_climate_analyzer import ui_contract as _navigation_contract
-if any(page not in _navigation_contract.NAVIGATION_PAGES for page in ("Outdoor Thermal Comfort","Report")):
+if getattr(_navigation_contract,"RUNTIME_UI_SCHEMA",None)!="MEM-PERF-R6" or any(page not in _navigation_contract.NAVIGATION_PAGES for page in ("Outdoor Thermal Comfort","Report")):
     import importlib
     importlib.reload(_navigation_contract)
+
+# A surviving pre-R6 parity module also owns process-global mutation targets.
+# Never silently mix its old reload protocol with the new binding snapshots.
+import sys as _runtime_sys
+_loaded_parity=_runtime_sys.modules.get("epw_climate_analyzer.source_parity_runtime")
+if _loaded_parity is not None and getattr(_loaded_parity,"RUNTIME_PARITY_SCHEMA",None)!="MEM-PERF-R6":
+    st.error("Runtime ownership upgrade (MEM-PERF R6): reboot the app once via Manage app.")
+    st.stop()
 
 from epw_climate_analyzer.ui_contract import (
     APP_BROWSER_TITLE,
@@ -596,7 +618,7 @@ def cached_geosphere_metadata() -> dict:
     return cached_geosphere_metadata_bundle()[0]
 
 
-@bounded_cache(name="station_catalog",max_bytes=32*MIB,max_entries=1,resource=True)
+@bounded_cache(name="station_catalog",max_bytes=48*MIB,max_entries=1,resource=True,singleflight=True)
 def _cached_station_catalog_by_identity(catalog_version: str, catalog_sha256: str) -> pd.DataFrame:
     """Load one reviewed catalog snapshot under an immutable cache identity."""
     from epw_climate_analyzer.catalog_runtime import load_production_station_catalog

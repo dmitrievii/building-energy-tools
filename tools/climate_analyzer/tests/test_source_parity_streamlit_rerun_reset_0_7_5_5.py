@@ -35,6 +35,40 @@ class SourceParityStreamlitRerunResetTests(unittest.TestCase):
         self.assertIsNot(fresh.supported_parameter_mapping, stale_mapping)
         self.assertEqual(fresh.supported_parameter_mapping.__name__, "supported_parameter_mapping")
 
+    def test_twenty_binding_resets_preserve_pristine_function_and_class_identity(self) -> None:
+        from epw_climate_analyzer import charts,timeseries
+        parity=source_parity_runtime._fresh_source_parity_ui()
+        selector=parity._render_geosphere_resource_selector
+        chart=charts.profile_ribbon_chart
+        overlay=timeseries.build_overlay_figure
+        before=source_parity_runtime.runtime_stats()
+        with patch.object(source_parity_runtime.importlib,"reload",side_effect=AssertionError("unexpected warm reload")):
+            for _ in range(20):
+                parity._render_geosphere_resource_selector=lambda *a,**k:None
+                charts.profile_ribbon_chart=lambda *a,**k:None
+                charts._R6_TEST_PATCHED=True
+                self.assertIs(source_parity_runtime._fresh_source_parity_ui(),parity)
+                self.assertIs(parity._render_geosphere_resource_selector,selector)
+                self.assertIs(charts.profile_ribbon_chart,chart)
+                self.assertIs(timeseries.build_overlay_figure,overlay)
+                self.assertFalse(hasattr(charts,"_R6_TEST_PATCHED"))
+        after=source_parity_runtime.runtime_stats()
+        self.assertEqual(after["module_reloads"],before["module_reloads"])
+        self.assertEqual(after["binding_resets"]-before["binding_resets"],20)
+
+    def test_binding_reset_releases_session_specific_wrapper_reference(self) -> None:
+        import gc,weakref
+        parity=source_parity_runtime._fresh_source_parity_ui()
+        class SessionObject:pass
+        payload=SessionObject()
+        reference=weakref.ref(payload)
+        parity._render_geosphere_resource_selector=lambda *args,_payload=payload: _payload
+        del payload
+        self.assertIsNotNone(reference())
+        source_parity_runtime._fresh_source_parity_ui()
+        gc.collect()
+        self.assertIsNone(reference())
+
     def test_temporal_filtering_reloads_before_timeseries(self) -> None:
         imported: list[str] = []
 

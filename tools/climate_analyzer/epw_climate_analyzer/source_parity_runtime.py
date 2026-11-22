@@ -1,14 +1,16 @@
-"""Lazy runtime installer for Climate Analyzer source parity.
+"""MEM-PERF R6: persistent pristine module bindings and run-local UI wrappers.
 
-The mature Streamlit entrypoint intentionally remains the source-of-truth UI
-module because regression and deployment contracts inspect its source/AST. This
-module is imported only from the navigation hand-off at runtime, after all app
-functions are defined. Heavy scientific/UI dependencies therefore remain lazy.
+Scientific libraries and pristine application functions survive normal reruns.
+The legacy compatibility layer still composes fresh wrappers around each
+app-script namespace; no process-global cache of user/session namespaces is
+introduced. Only the explicitly listed mutation targets are reset.
 """
 
 from __future__ import annotations
 
 import importlib
+import sys
+from pathlib import Path
 from threading import RLock
 from typing import Any, MutableMapping
 
@@ -18,7 +20,85 @@ from typing import Any, MutableMapping
 # reloads and composes several package modules, so installation and selector
 # execution must not overlap across sessions. RLock is used because the frozen
 # selector can re-enter helper paths in the same thread.
+RUNTIME_PARITY_SCHEMA = "MEM-PERF-R6"
 _RUNTIME_PATCH_LOCK = RLock()
+_PRISTINE_MODULES = ()
+_PRISTINE_PARITY = None
+_RUNTIME_STATS = {"baseline_builds":0,"module_reloads":0,"binding_resets":0,
+                  "restored_bindings":0,"removed_bindings":0,"wrapper_compositions":0}
+
+
+def runtime_stats() -> dict[str, int]:
+    # Approximate counters only. Diagnostics must not wait for another
+    # session's network request while its selector owns the patch lock.
+    return {**_RUNTIME_STATS,"baseline_modules":len(_PRISTINE_MODULES)}
+
+
+def restore_inactive_surface() -> None:
+    """Restore a previously imported Streamlit surface without composing UI."""
+    with _RUNTIME_PATCH_LOCK:
+        from .source_parity_streamlit_surface import restore_streamlit_surface
+        restore_streamlit_surface()
+
+
+def _module_token(module):
+    """Detect source replacement and external importlib.reload calls.
+
+    File metadata is checked on ordinary reruns. External reload changes the
+    module spec; do not overlay the old function snapshot on a new module.
+    """
+    path=getattr(module,"__file__",None)
+    try:
+        stat=Path(path).stat()
+        disk=(stat.st_mtime_ns,stat.st_size,stat.st_ino)
+    except (OSError,ValueError,TypeError):
+        disk=None
+    return (getattr(module,"__spec__",None),disk)
+
+
+def _snapshot(module):
+    return (module,{key:value for key,value in vars(module).items()
+                    if not key.startswith("__")},_module_token(module))
+
+
+def _baseline_current():
+    if not _PRISTINE_MODULES:return False
+    for module,bindings,token in _PRISTINE_MODULES:
+        if sys.modules.get(module.__name__) is not module:return False
+        current=_module_token(module)
+        if current[0] is not token[0] or current[1]!=token[1]:return False
+    return True
+
+
+def _restore_bindings():
+    restored=removed=0
+    for module,bindings,token in _PRISTINE_MODULES:
+        namespace=vars(module)
+        for key in tuple(namespace):
+            if not key.startswith("__") and key not in bindings:
+                namespace.pop(key,None)
+                removed+=1
+        for key,value in bindings.items():
+            if key not in namespace or namespace[key] is not value:
+                namespace[key]=value
+                restored+=1
+    _RUNTIME_STATS["binding_resets"]+=1
+    _RUNTIME_STATS["restored_bindings"]+=restored
+    _RUNTIME_STATS["removed_bindings"]+=removed
+
+
+def _drop_legacy_patch_markers(module):
+    """One-time migration of flags that importlib.reload does not delete."""
+    try:namespace=vars(module)
+    except TypeError:return
+    for key,value in tuple(namespace.items()):
+        if (key.startswith("_") and type(value) is bool and
+            any(key.endswith(suffix) for suffix in ("_INSTALLED","_PATCHED","_INSTALLED_V1","_INSTALLED_V2"))):
+            namespace.pop(key,None)
+    for key in ("_source_parity_unfixed_analysis_clock",
+                "_source_parity_unfixed_quality_policy",
+                "_source_parity_unrestricted_native_analysis"):
+        namespace.pop(key,None)
 
 
 class _GlobalsProxy:
@@ -56,17 +136,11 @@ def looks_like_climate_analyzer_app(namespace: MutableMapping[str, Any]) -> bool
     return required.issubset(namespace)
 
 
-def _reset_persistent_source_parity_modules() -> None:
-    """Reset modules whose callables are mutated by runtime patch installers.
+def _reset_persistent_source_parity_modules() -> tuple:
+    """Cold/revision-change reset of the explicit compatibility mutation set.
 
-    Streamlit reruns ``app.py`` with fresh script globals but keeps imported
-    package modules alive. Reload every persistent mutation target before the
-    patch chain is composed again; otherwise monthly/chart wrappers accumulate
-    even when ``source_parity_ui`` itself is reloaded.
-
-    Pure request-state value objects are deliberately not reloaded here. Reloading
-    them would create a second dataclass identity during a test/app process even
-    though their schema is unchanged, breaking deterministic request snapshots.
+    Ordinary reruns use the persistent binding snapshot instead. Pure
+    request-state value objects are not reloaded.
     """
     module_names = (
         "aggregations",
@@ -96,9 +170,14 @@ def _reset_persistent_source_parity_modules() -> None:
         "source_parity_monthly_surface_guard",
     )
     package = __package__ or "epw_climate_analyzer"
+    modules=[]
     for name in module_names:
         module = importlib.import_module(f"{package}.{name}")
-        importlib.reload(module)
+        _drop_legacy_patch_markers(module)
+        module=importlib.reload(module)
+        modules.append(module)
+        _RUNTIME_STATS["module_reloads"]+=1
+    return tuple(modules)
 
 
 def _fresh_source_parity_ui() -> Any:
@@ -112,11 +191,26 @@ def _fresh_source_parity_ui() -> Any:
     """
     from .source_parity_streamlit_surface import restore_streamlit_surface
 
-    restore_streamlit_surface()
-    _reset_persistent_source_parity_modules()
-    from . import source_parity_ui as parity
-
-    return importlib.reload(parity)
+    global _PRISTINE_MODULES,_PRISTINE_PARITY
+    with _RUNTIME_PATCH_LOCK:
+        restore_streamlit_surface()
+        if _baseline_current():
+            _restore_bindings()
+            return _PRISTINE_PARITY
+        # If an external reload or a deployment changed the source, rebuild
+        # once from disk using the original ordered cold-reset path. Publish
+        # the snapshot only after all imports succeed.
+        _PRISTINE_MODULES=()
+        _PRISTINE_PARITY=None
+        modules=_reset_persistent_source_parity_modules()
+        from . import source_parity_ui as parity
+        _drop_legacy_patch_markers(parity)
+        parity=importlib.reload(parity)
+        _RUNTIME_STATS["module_reloads"]+=1
+        _PRISTINE_MODULES=tuple(_snapshot(module) for module in (*modules,parity))
+        _PRISTINE_PARITY=parity
+        _RUNTIME_STATS["baseline_builds"]+=1
+        return parity
 
 
 def _freeze_session_geosphere_selector(proxy: Any, parity: Any) -> None:
@@ -269,6 +363,7 @@ def _install_into_app_globals_locked(namespace: MutableMapping[str, Any]) -> boo
     _freeze_session_geosphere_selector(proxy, parity)
 
     namespace["_SOURCE_PARITY_RUNTIME_INSTALLED"] = True
+    _RUNTIME_STATS["wrapper_compositions"]+=1
     return True
 
 

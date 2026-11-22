@@ -48,6 +48,7 @@ class StartupTests(unittest.TestCase):
         self.assertTrue(u.needs_source_parity({"climate_source_mode":"GeoSphere Austria"}))
         self.assertTrue(u.needs_source_parity({"active_canonical_climate":object()}))
         self.assertFalse(u.needs_source_parity({"climate_source_mode":"Upload EPW"}))
+        self.assertFalse(u.needs_source_parity({"climate_source_mode":"Find climate"}))
     def test_runtime_ledger_bounded_and_weak(self):
         import gc
         with patch.object(r,"_EVENTS",deque(maxlen=64)),patch.object(r,"_SCRIPT_REFS",deque(maxlen=64)),patch.object(r,"_EVENT_COUNTS",Counter()),patch.object(r,"_sample",return_value={}):

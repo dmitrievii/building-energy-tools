@@ -6,6 +6,7 @@ Budgets apply to estimated retained payloads, not total process RSS.
 """
 from __future__ import annotations
 from collections import OrderedDict
+from contextlib import nullcontext
 from dataclasses import fields,is_dataclass
 from functools import wraps
 from hashlib import sha256
@@ -18,6 +19,7 @@ import sys
 import datetime
 from enum import Enum
 MIB=1024**2
+RUNTIME_CACHE_SCHEMA="MEM-PERF-R6"
 MISS=object()
 _REGISTRY={}
 _REGISTRY_LOCK=RLock()
@@ -60,8 +62,10 @@ class ByteLRU:
     def __init__(self,name,budget,entries,ttl=None):
         if budget<=0 or entries<=0:raise ValueError("Positive cache limits required.")
         self.name=name;self.budget=int(budget);self.entries=int(entries);self.ttl=ttl
-        self.lock=RLock();self.data=OrderedDict();self.used=0
+        self.lock=RLock();self.build_lock=RLock();self.data=OrderedDict();self.used=0
         self.hits=0;self.misses=0;self.evictions=0;self.rejected=0;self.generation=0
+        self.rejected_oversize=0;self.rejected_unknown=0
+        self.last_rejected_bytes=None;self.builds=0;self.build_seconds=0.
 
     def _drop(self,key):
         entry=self.data.pop(key,None)
@@ -81,6 +85,18 @@ class ByteLRU:
                 self.misses+=1;return MISS
             self.hits+=1;self.data.move_to_end(key);return entry[0]
 
+    def _reject(self,size):
+        with self.lock:
+            self.rejected+=1
+            self.last_rejected_bytes=size
+            if size is None:self.rejected_unknown+=1
+            else:self.rejected_oversize+=1
+
+    def record_build(self,seconds):
+        with self.lock:
+            self.builds+=1
+            self.build_seconds+=seconds
+
     def put(self,key,value,size=None,*,generation=None):
         if size is None:
             try:size=estimate_bytes(value)
@@ -90,7 +106,7 @@ class ByteLRU:
             self._expire(monotonic())
             if size is not None:size=int(size)+sys.getsizeof(key)+192
             if size is None or size>self.budget:
-                self.rejected+=1;return False
+                self._reject(size);return False
             self._drop(key)
             while self.data and (self.used+size>self.budget or len(self.data)>=self.entries):
                 self._drop(next(iter(self.data)));self.evictions+=1
@@ -113,7 +129,11 @@ class ByteLRU:
             self._expire(monotonic())
             return {"cache":self.name,"entries":len(self.data),"estimated_bytes":self.used,
                     "budget_bytes":self.budget,"hits":self.hits,"misses":self.misses,
-                    "evictions":self.evictions,"not_retained":self.rejected}
+                    "evictions":self.evictions,"not_retained":self.rejected,
+                    "rejected_oversize":self.rejected_oversize,
+                    "rejected_unknown":self.rejected_unknown,
+                    "last_rejected_bytes":self.last_rejected_bytes,
+                    "builds":self.builds,"build_seconds":self.build_seconds}
 
 def pool(name,budget,entries,ttl=None):
     with _REGISTRY_LOCK:
@@ -126,16 +146,18 @@ def cache_inventory():
     with _REGISTRY_LOCK:items=list(_REGISTRY.values())
     return [item.info() for item in items]
 
-def clear_recomputable_caches():
-    """Only registered recomputable objects; never clear arbitrary Streamlit state."""
+def clear_recomputable_caches(*,keep=()):
+    """Clear registered recomputable objects except explicitly active pools."""
+    keep=frozenset(keep)
     with _REGISTRY_LOCK:items=list(_REGISTRY.values())
     result=[]
     for item in items:
+        if item.name in keep:continue
         n,size=item.clear()
         if n:result.append({"cache":item.name,"entries":n,"estimated_bytes":size})
     return result
 
-def bounded_cache(*,name,max_bytes,max_entries,ttl=None,resource=False):
+def bounded_cache(*,name,max_bytes,max_entries,ttl=None,resource=False,singleflight=False):
     """Stable across script reruns; consistent argument binding, underscore exclusions.
 
     Only trusted internal function results are serialized. No uploaded pickle
@@ -151,22 +173,29 @@ def bounded_cache(*,name,max_bytes,max_entries,ttl=None,resource=False):
             try:
                 key=sha256(revision+pickle.dumps(tuple((n,v) for n,v in bound.arguments.items() if not n.startswith("_")),protocol=5)).digest()
             except (TypeError,ValueError,pickle.PickleError):return fn(*args,**kwargs)
-            with cache.lock:
-                hit=cache.get(key)
-                generation=cache.generation
-            if hit is not MISS:return hit if resource else pickle.loads(hit)
-            value=fn(*args,**kwargs)
-            if resource:cache.put(key,value,generation=generation)
-            else:
-                try:estimated=estimate_bytes(value)
-                except (TypeError,ValueError,RecursionError):estimated=None
-                if estimated is not None and estimated>max_bytes:
-                    with cache.lock:cache.rejected+=1
-                    return value
-                try:stored=pickle.dumps(value,protocol=5)
-                except (TypeError,ValueError,pickle.PickleError):return value
-                cache.put(key,stored,sys.getsizeof(stored),generation=generation)
-            return value
+            # Opt-in singleflight prevents simultaneous builds of a large
+            # shared resource across browser sessions; cache hits remain cheap.
+            with (cache.build_lock if singleflight else nullcontext()):
+                with cache.lock:
+                    hit=cache.get(key)
+                    generation=cache.generation
+                if hit is not MISS:return hit if resource else pickle.loads(hit)
+                started=monotonic()
+                try:value=fn(*args,**kwargs)
+                finally:cache.record_build(monotonic()-started)
+                if resource:cache.put(key,value,generation=generation)
+                else:
+                    try:estimated=estimate_bytes(value)
+                    except (TypeError,ValueError,RecursionError):estimated=None
+                    if estimated is not None and estimated>max_bytes:
+                        cache._reject(estimated)
+                        return value
+                    try:stored=pickle.dumps(value,protocol=5)
+                    except (TypeError,ValueError,pickle.PickleError):
+                        cache._reject(None)
+                        return value
+                    cache.put(key,stored,sys.getsizeof(stored),generation=generation)
+                return value
         wrapped.clear=cache.clear
         wrapped.cache_info=cache.info
         return wrapped

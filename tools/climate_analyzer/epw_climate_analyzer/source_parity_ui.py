@@ -16,6 +16,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+from .byte_cache import bounded_cache,MIB
 from .analysis_clock import LOCAL_CIVIL_TIME, LOCAL_STANDARD_TIME, SOURCE_TIME, UTC_TIME, add_calendar_columns
 from .climate_model import CANONICAL_VARIABLES, CanonicalClimateDataset, aggregation_semantics_for, canonical_from_epw
 from .comparison_engine import (
@@ -87,7 +88,7 @@ _COMPARISON_BASKET_KEY = "canonical_comparison_climates"
 _GEOSPHERE_RESOURCE_KEY = "geosphere_resource_id"
 
 
-@st.cache_data(show_spinner=False, ttl=18 * 60 * 60, max_entries=4)
+@bounded_cache(name="geosphere_parity_metadata",max_bytes=12*MIB,max_entries=4,ttl=18*60*60,singleflight=True)
 def _cached_geosphere_resource_bundle(resource_id: str) -> tuple:
     metadata = fetch_metadata(resource_id=resource_id)
     return (

@@ -20,6 +20,7 @@ from .release_info import (
 )
 
 
+RUNTIME_UI_SCHEMA = "MEM-PERF-R6"
 PUBLIC_UX_STAGE = "WEB-0.7"
 APP_NAME = TOOL_NAME
 APP_BROWSER_TITLE = f"{TOOL_NAME} | {PROJECT_NAME}"
@@ -95,10 +96,10 @@ def queue_navigation_reset(state: MutableMapping[str, Any]) -> None:
 
 
 def needs_source_parity(state: MutableMapping[str, Any]) -> bool:
-    """The inactive Upload EPW form has no parity-dependent charts or providers."""
+    """Inactive Upload EPW and OneBuilding map do not require GeoSphere parity."""
     return (state.get("active_climate_file") is not None or
             state.get("active_canonical_climate") is not None or
-            state.get("climate_source_mode","Upload EPW")!="Upload EPW")
+            state.get("climate_source_mode","Upload EPW") not in ("Upload EPW","Find climate"))
 
 
 def _install_source_parity_for_app_caller(state: MutableMapping[str, Any]) -> None:
@@ -133,6 +134,13 @@ def _install_source_parity_for_app_caller(state: MutableMapping[str, Any]) -> No
         from .source_parity_runtime import install_into_app_globals
         from .startup_runtime import profile_install
         profile_install(install_into_app_globals,caller_globals)
+    elif "epw_climate_analyzer.source_parity_runtime" in sys.modules:
+        # A preceding source render may have aborted with temporary Streamlit
+        # wrappers installed. Restore the surface under the selector lock,
+        # without loading or composing parity on an idle upload/map route.
+        runtime=sys.modules["epw_climate_analyzer.source_parity_runtime"]
+        restore=getattr(runtime,"restore_inactive_surface",None)
+        if callable(restore):restore()
     install_global_chart_presentation()
 
 
