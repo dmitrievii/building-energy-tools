@@ -112,7 +112,13 @@ def inspect_resources(state):
 
 def inspect_heap(state):
     from .startup_runtime import heap_census
-    state["_mem_r5_heap_census"]=heap_census()
+    try:
+        report=heap_census()
+    except Exception as exc:
+        # Diagnostics must never prevent use of the application.
+        # Report only the exception type, not potentially sensitive contents.
+        report={"status":"failed: "+type(exc).__name__}
+    state["_mem_r5_heap_census"]=report
     return inspect_resources(state)
 
 def _drop(state,keys):

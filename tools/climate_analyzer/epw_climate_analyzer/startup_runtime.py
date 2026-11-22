@@ -127,6 +127,17 @@ def runtime_summary():
                 "gc_counts":list(gc.get_count()),"gc_stats":gc.get_stats(),
                 "notes":"Global process observations; overlapping sessions can affect deltas. Weak references cover at most 64 recent script functions, not all live sessions."}
 
+def _census_type_name(typ):
+    # Extension types and dynamically constructed classes can have non-string
+    # or missing metadata. Never stringify arbitrary metadata objects.
+    def metadata(key):
+        try:value=type.__getattribute__(typ,key)
+        except Exception:return None
+        return value[:240] if type(value) is str and value else None
+    module=metadata("__module__") or "<unknown module>"
+    name=metadata("__qualname__") or metadata("__name__") or "<unknown type>"
+    return module+"."+name
+
 def heap_census():
     """On demand only; bounded output and conservative admission.
 
@@ -144,13 +155,12 @@ def heap_census():
         try:
             for obj in objects:
                 typ=type(obj)
-                module=getattr(typ,"__module__","")
-                name=module+"."+getattr(typ,"__qualname__",typ.__name__)
+                name=_census_type_name(typ)
                 counts[name]+=1
                 # Avoid arbitrary user/library __sizeof__ implementations.
                 try:
-                    size=sys.getsizeof(obj) if typ in (list,dict,tuple,set,frozenset,bytes,str) else object.__sizeof__(obj)
-                except (TypeError,AttributeError):size=0
+                    size=sys.getsizeof(obj) if any(typ is basic for basic in (list,dict,tuple,set,frozenset,bytes,str)) else object.__sizeof__(obj)
+                except Exception:size=0
                 sizes[name]+=size
             if objects:del obj
         finally:del objects

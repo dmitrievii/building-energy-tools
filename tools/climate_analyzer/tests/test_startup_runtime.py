@@ -65,6 +65,28 @@ class StartupTests(unittest.TestCase):
         with patch.object(r,"container_memory",return_value=(2900*r.MIB,3072*r.MIB)),patch.object(r.gc,"get_objects") as scan:
             self.assertIn("blocked",r.heap_census()["status"])
             scan.assert_not_called()
+    def test_census_handles_non_string_type_module(self):
+        class AbsentModule:pass
+        class NumericModule:pass
+        class ArbitraryModule:pass
+        AbsentModule.__module__=None
+        NumericModule.__module__=123
+        ArbitraryModule.__module__=object()
+        objects=[AbsentModule(),NumericModule(),ArbitraryModule(),[]]
+        with patch.object(r,"container_memory",return_value=None),patch.object(r,"_sample",return_value={}),patch.object(r.gc,"get_objects",side_effect=[objects,[],[]]):
+            result=r.heap_census()
+        self.assertEqual(result["status"],"complete")
+        self.assertEqual(result["tracked_objects"],4)
+        self.assertEqual(sum(row["count"] for row in result["types"] if row["type"].startswith("<unknown module>.")),3)
+
+    def test_census_failure_does_not_interrupt_application(self):
+        from epw_climate_analyzer import memory_lifecycle as lifecycle
+        state={}
+        with patch.object(r,"heap_census",side_effect=TypeError("private diagnostic")),patch.object(lifecycle,"inspect_resources",return_value={"ok":True}):
+            result=lifecycle.inspect_heap(state)
+        self.assertEqual(result,{"ok":True})
+        self.assertEqual(state["_mem_r5_heap_census"],{"status":"failed: TypeError"})
+
     def test_census_returns_counts_not_object_contents(self):
         with patch.object(r,"container_memory",return_value=None),patch.object(r,"_sample",return_value={}),patch.object(r.gc,"get_objects",side_effect=[[[],{"private_marker":"secret"}],[],[]]):
             report=r.heap_census()
