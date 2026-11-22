@@ -17,9 +17,13 @@ import marshal
 import pickle
 import sys
 import datetime
+import weakref
 from enum import Enum
 MIB=1024**2
 RUNTIME_CACHE_SCHEMA="MEM-PERF-R6"
+RUNTIME_OWNERSHIP_SCHEMA="MEM-PERF-R12"
+SESSION_CACHE_KEY="_mem_r12_session_cache_owner"
+_SESSION_OWNERS=weakref.WeakValueDictionary()
 MISS=object()
 _REGISTRY={}
 _REGISTRY_LOCK=RLock()
@@ -142,6 +146,80 @@ def pool(name,budget,entries,ttl=None):
             current=ByteLRU(name,budget,entries,ttl);_REGISTRY[name]=current
         return current
 
+class SessionCacheOwner:
+    """Session state owns all private pools; registry contains weak refs only."""
+    def __init__(self):
+        self.pools={}
+        self.closed=False
+        self.lock=RLock()
+
+    def pool(self,name,budget,entries,ttl):
+        with self.lock:
+            if self.closed:
+                # A stopped script may still unwind inside a numerical call.
+                # Its new temporary results must not be retained.
+                return ByteLRU(name,budget,entries,ttl)
+            current=self.pools.get(name)
+            if current is None or (current.budget,current.entries,current.ttl)!=(budget,entries,ttl):
+                if current is not None:current.clear()
+                current=ByteLRU(name,budget,entries,ttl)
+                self.pools[name]=current
+            return current
+
+    def inventory(self):
+        with self.lock:return [p.info() for p in self.pools.values()]
+
+    def clear(self,*,close=False):
+        with self.lock:
+            if close:self.closed=True
+            result=[]
+            for p in self.pools.values():
+                n,size=p.clear() # invalidates in-flight generations
+                if n:result.append({"cache":p.name,"entries":n,"estimated_bytes":size,"owner":"session"})
+            self.pools.clear()
+            return result
+
+def _session_context():
+    """Never create a process cache for private data in a server worker."""
+    from streamlit.runtime import Runtime
+    from streamlit.runtime.scriptrunner import get_script_run_ctx
+    ctx=get_script_run_ctx(suppress_warning=True)
+    if ctx is None:return None,None,Runtime.exists()
+    import streamlit as st
+    return st.session_state,ctx.session_id,Runtime.exists()
+
+def session_pool(name,budget,entries,ttl=None):
+    state,session_id,served=_session_context()
+    if state is None:
+        # Standalone CLI / tests retain their historical cache contract.
+        # A server thread with no script context is intentionally uncached.
+        return ByteLRU(name,budget,entries,ttl) if served else pool(name,budget,entries,ttl)
+    owner=state.get(SESSION_CACHE_KEY)
+    if not isinstance(owner,SessionCacheOwner):
+        owner=SessionCacheOwner()
+        state[SESSION_CACHE_KEY]=owner
+        with _REGISTRY_LOCK:_SESSION_OWNERS[session_id]=owner
+    return owner.pool(name,budget,entries,ttl)
+
+def session_cache_inventory(state):
+    owner=state.get(SESSION_CACHE_KEY)
+    return owner.inventory() if isinstance(owner,SessionCacheOwner) else []
+
+def clear_session_caches(state,*,close=False):
+    owner=state.get(SESSION_CACHE_KEY)
+    if not isinstance(owner,SessionCacheOwner):return []
+    return owner.clear(close=close)
+
+def close_session_caches(session_id):
+    with _REGISTRY_LOCK:owner=_SESSION_OWNERS.pop(session_id,None)
+    return owner.clear(close=True) if owner is not None else []
+
+def session_cache_summary():
+    with _REGISTRY_LOCK:owners=list(_SESSION_OWNERS.values())
+    rows=[row for owner in owners for row in owner.inventory()]
+    return {"owners":len(owners),"entries":sum(r["entries"] for r in rows),
+            "estimated_bytes":sum(r["estimated_bytes"] for r in rows)}
+
 def cache_inventory():
     with _REGISTRY_LOCK:items=list(_REGISTRY.values())
     return [item.info() for item in items]
@@ -157,14 +235,19 @@ def clear_recomputable_caches(*,keep=()):
         if n:result.append({"cache":item.name,"entries":n,"estimated_bytes":size})
     return result
 
-def bounded_cache(*,name,max_bytes,max_entries,ttl=None,resource=False,singleflight=False):
+def bounded_cache(*,name,max_bytes,max_entries,ttl=None,resource=False,singleflight=False,scope="server"):
     """Stable across script reruns; consistent argument binding, underscore exclusions.
 
     Only trusted internal function results are serialized. No uploaded pickle
     data is deserialized. Uncacheable results are returned without retention.
     """
+    if scope not in ("server","session"):raise ValueError("Unknown cache ownership scope")
+    def resolve():
+        factory=session_pool if scope=="session" else pool
+        return factory(name,max_bytes,max_entries,ttl)
     def decorate(fn):
-        cache=pool(name,max_bytes,max_entries,ttl)
+        # Only public server caches are registered at import time.
+        if scope=="server":resolve()
         sig=signature(fn)
         revision=sha256(marshal.dumps(fn.__code__)).digest()
         @wraps(fn)
@@ -173,6 +256,7 @@ def bounded_cache(*,name,max_bytes,max_entries,ttl=None,resource=False,singlefli
             try:
                 key=sha256(revision+pickle.dumps(tuple((n,v) for n,v in bound.arguments.items() if not n.startswith("_")),protocol=5)).digest()
             except (TypeError,ValueError,pickle.PickleError):return fn(*args,**kwargs)
+            cache=resolve()
             # Opt-in singleflight prevents simultaneous builds of a large
             # shared resource across browser sessions; cache hits remain cheap.
             with (cache.build_lock if singleflight else nullcontext()):
@@ -196,8 +280,8 @@ def bounded_cache(*,name,max_bytes,max_entries,ttl=None,resource=False,singlefli
                         return value
                     cache.put(key,stored,sys.getsizeof(stored),generation=generation)
                 return value
-        wrapped.clear=cache.clear
-        wrapped.cache_info=cache.info
+        wrapped.clear=lambda:resolve().clear()
+        wrapped.cache_info=lambda:resolve().info()
         return wrapped
     return decorate
 

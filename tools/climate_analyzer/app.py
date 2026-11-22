@@ -23,10 +23,11 @@ if any(getattr(module,attribute,None)!="MEM-PERF-R6" for module,attribute in (
 )):
     st.error("Runtime ownership upgrade (MEM-PERF R6): reboot the app once via Manage app to start a consistent process. Refreshing the browser does not restart the server.")
     st.stop()
-if (getattr(_runtime_memory,"RUNTIME_INVENTORY_SCHEMA",None)!="MEM-PERF-R10" or
+if (getattr(_runtime_memory,"RUNTIME_INVENTORY_SCHEMA",None)!="MEM-PERF-R12" or
+    getattr(_runtime_cache,"RUNTIME_OWNERSHIP_SCHEMA",None)!="MEM-PERF-R12" or
     getattr(_runtime_startup,"RUNTIME_OPTIONAL_SCHEMA",None)!="MEM-PERF-R9" or
     getattr(_runtime_startup,"RUNTIME_DIAGNOSTICS_SCHEMA",None)!="MEM-PERF-R10"):
-    st.error("MEM-PERF R10: reboot the app once via Manage app to activate the updated runtime diagnostics.")
+    st.error("MEM-PERF R12: reboot the app once via Manage app to activate session ownership.")
     st.stop()
 from epw_climate_analyzer.byte_cache import bounded_cache,MIB
 
@@ -457,7 +458,7 @@ st.markdown(
 )
 
 
-@bounded_cache(name="epw_analysis",max_bytes=32*MIB,max_entries=4,ttl=3600)
+@bounded_cache(name="epw_analysis",max_bytes=32*MIB,max_entries=4,ttl=3600,scope="session")
 def load_epw_from_bytes(
     file_name: str,
     payload: bytes,
@@ -1643,7 +1644,7 @@ def render_climate_file_source() -> None:
     if source_mode == "Upload EPW":
         st.subheader("Upload an EPW weather file")
         st.write("Use an EnergyPlus Weather (EPW) file that you already have. The file is processed for the current session.")
-        local_file = st.file_uploader("Choose EPW file", type=["epw"], key="local_epw_upload")
+        local_file = st.file_uploader("Choose EPW file", type=["epw"], key="local_epw_upload"+st.session_state.get("_mem_r12_reset_epoch",""))
         if local_file is not None:
             st.write(f"Selected file: `{local_file.name}`")
             if st.button("Analyze this EPW", type="primary"):
@@ -6182,10 +6183,10 @@ def main() -> None:
         st.error("MEM-PERF R11: reboot the app once via Manage app to activate chart presentation changes.")
         st.stop()
     if (getattr(report_runtime,"RUNTIME_REPORT_SCHEMA",None)!="MEM-PERF-R7" or
-        getattr(reaper_runtime,"RUNTIME_RECOVERY_SCHEMA",None)!="MEM-PERF-R9" or
+        getattr(reaper_runtime,"RUNTIME_RECOVERY_SCHEMA",None)!="MEM-PERF-R12" or
         getattr(session_runtime,"RUNTIME_SESSION_SCHEMA",None)!="MEM-PERF-R7" or
         getattr(_runtime_memory,"RUNTIME_CHART_SCHEMA",None)!="MEM-PERF-R7"):
-        st.error("MEM-PERF R9 changes session recovery ownership. Reboot the app once via Manage app.")
+        st.error("MEM-PERF R12 changes session recovery ownership. Reboot the app once via Manage app.")
         st.stop()
     # Click callbacks have already consumed the previous displayed page.
     from epw_climate_analyzer.p6_report import CONTEXT_KEY,INTERPRETATION_KEY,render_report_status
@@ -6208,6 +6209,8 @@ def main() -> None:
     begin_rerun(st.session_state,st.session_state.get(NAVIGATION_KEY))
     profile_diagnostic("report sidebar status",render_report_status,st)
     render_sidebar(st)
+    if st.session_state.pop("_mem_r12_reset_notice",False):
+        st.success("Session reset. Shared scientific runtime retained.")
     active_file = get_active_climate_file()
     active_canonical = get_active_canonical_climate()
 

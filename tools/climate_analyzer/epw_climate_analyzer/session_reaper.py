@@ -1,8 +1,7 @@
-"""R7: Streamlit 1.63 expired-disconnect maintenance.
+"""R12: close disconnected sessions on the pinned Streamlit event loop.
 
-Use only the pinned backend's native TTL expiration on the runtime event
-loop. Do not enumerate active session content or shorten reconnection TTL.
-Unsupported versions/hosts fail closed. No global state clearing.
+No reconnection retention. Native close_session owns shutdown, uploads,
+media and Streamlit caches. Never close a different active session.
 """
 from threading import RLock
 from datetime import datetime, timezone
@@ -12,9 +11,44 @@ _LOCK=RLock()
 _STATUS={"status":"not started","expired_reaped":0,"shutdown_failures":0,
          "sweeps":0,"disconnected_sessions":None}
 _RUNTIME_REF=None
-_INTERVAL=30.
-RUNTIME_RECOVERY_SCHEMA="MEM-PERF-R9"
+_INTERVAL=1.
+_QUEUE_INTERVAL=30.
+_LAST_QUEUE_SAMPLE=0.
+RUNTIME_RECOVERY_SCHEMA="MEM-PERF-R12"
 _RECOVERY_PENDING=False
+_STOPPING_THREADS=weakref.WeakSet()
+
+def _close_on_disconnect(manager,session_id):
+    """Called only by Runtime.disconnect_session after its client check."""
+    global _RECOVERY_PENDING
+    info=manager.get_active_session_info(session_id)
+    if info is None:return
+    runner=getattr(info.session,"_scriptrunner",None)
+    thread=getattr(runner,"_script_thread",None)
+    if thread is not None:_STOPPING_THREADS.add(thread)
+    from .byte_cache import close_session_caches
+    try:
+        # Native close never puts this session into reconnect storage.
+        manager.close_session(session_id)
+    except Exception as exc:
+        with _LOCK:_STATUS["shutdown_failures"]+=1
+        _set(status="shutdown failed: "+type(exc).__name__)
+        raise
+    finally:
+        close_session_caches(session_id)
+        _RECOVERY_PENDING=True
+    with _LOCK:
+        _STATUS["closed_on_disconnect"]=_STATUS.get("closed_on_disconnect",0)+1
+
+def _install_disconnect_policy(manager):
+    if getattr(manager,"_ige_r12_no_reconnect",False):return
+    ref=weakref.ref(manager)
+    def disconnect(session_id):
+        current=ref()
+        if current is not None:_close_on_disconnect(current,session_id)
+    manager.disconnect_session=disconnect
+    manager._ige_r12_no_reconnect=True
+    _set(disconnect_policy="native close; no reconnect retention")
 
 def reaper_summary():
     with _LOCK:return {**_STATUS,"allocator_recovery_pending":_RECOVERY_PENDING}
@@ -45,6 +79,7 @@ def _idle_for_recovery(manager,cache):
     # Only between scripts, after disconnected-session TTL entries expire.
     try:
         return (not any(True for _ in cache) and
+                not any(thread.is_alive() for thread in list(_STOPPING_THREADS)) and
                 all(info.session._scriptrunner is None and
                     info.session._browser_queue.is_empty()
                     for info in manager.list_active_sessions()))
@@ -60,7 +95,7 @@ def _recover_if_idle(manager,cache,reaped):
     if not _RECOVERY_PENDING or not _idle_for_recovery(manager,cache):
         return
     from .memory_recovery import recovery_probe
-    result=recovery_probe("Expired disconnected sessions")
+    result=recovery_probe("Disconnected session resources released")
     if result["status"]=="busy export":return
     _RECOVERY_PENDING=False
     _set(last_post_session_recovery=result)
@@ -96,6 +131,7 @@ def _queue_sample(manager):
         return {"status":"unavailable: "+type(exc).__name__}
 
 def _tick(runtime_ref):
+    global _LAST_QUEUE_SAMPLE
     runtime=runtime_ref()
     if runtime is None:return
     try:
@@ -110,9 +146,15 @@ def _tick(runtime_ref):
         storage=manager._session_storage
         if type(storage) is not MemorySessionStorage or type(storage._cache) is not TTLCache:
             _set(status="unsupported session storage");return
+        _install_disconnect_policy(manager)
         reaped=_expire_storage(manager,storage._cache)
         _recover_if_idle(manager,storage._cache,reaped)
-        _set(forward_queue_sample=_queue_sample(manager))
+        # Do not continuously traverse message queues at the faster maintenance rate.
+        from time import monotonic
+        now=monotonic()
+        if now-_LAST_QUEUE_SAMPLE>=_QUEUE_INTERVAL:
+            _set(forward_queue_sample=_queue_sample(manager))
+            _LAST_QUEUE_SAMPLE=now
         async_objs.eventloop.call_later(_INTERVAL,_tick,runtime_ref)
     except Exception as exc:
         _set(status="unavailable: "+type(exc).__name__)

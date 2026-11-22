@@ -37,8 +37,13 @@ from .solar import ensure_solar_radiation_components
 _RUNTIME_SOURCE_SHA256 = sha256(Path(__file__).read_bytes()).hexdigest()
 
 _HOURLY_CACHE_LOCK = RLock()
-_HOURLY_CACHE=pool("historical_hourly",24*MIB,4)
-_NATIVE_DIAGNOSTIC_CACHE=pool("historical_native_diagnostics",12*MIB,2)
+from .byte_cache import session_pool
+
+def _hourly_cache():
+    return session_pool("historical_hourly",24*MIB,4)
+
+def _native_cache():
+    return session_pool("historical_native_diagnostics",12*MIB,2)
 
 
 def _remove_identity_cache_entry(
@@ -52,10 +57,11 @@ def _remove_identity_cache_entry(
 def _canonical_hourly_for_dataset(dataset: CanonicalClimateDataset) -> pd.DataFrame:
     """Return cached canonical hourly physics on the original provider timeline."""
     key = id(dataset)
+    cache=_hourly_cache()
     with _HOURLY_CACHE_LOCK:
-        with _HOURLY_CACHE.lock:
-            cached = _HOURLY_CACHE.get(key)
-            generation=_HOURLY_CACHE.generation
+        with cache.lock:
+            cached = cache.get(key)
+            generation=cache.generation
         if cached is not MISS and cached[0]() is dataset:
             return cached[1]
 
@@ -67,22 +73,24 @@ def _canonical_hourly_for_dataset(dataset: CanonicalClimateDataset) -> pd.DataFr
         source_interval_minutes=dataset.temporal.native_interval_minutes,
     )
 
+    cache_ref=weakref.ref(cache)
     def _remove(_reference, *, cache_key: int = key) -> None:
-        _remove_identity_cache_entry(_HOURLY_CACHE, cache_key)
+        owned=cache_ref()
+        if owned is not None:_remove_identity_cache_entry(owned, cache_key)
 
     reference = weakref.ref(dataset, _remove)
     with _HOURLY_CACHE_LOCK:
         try:size=estimate_bytes(hourly)
         except (TypeError,ValueError,RecursionError):size=None
-        if size is not None:_HOURLY_CACHE.put(key,(reference,hourly),size+256,generation=generation)
+        if size is not None:cache.put(key,(reference,hourly),size+256,generation=generation)
     return hourly
 
 
 def clear_historical_hourly_cache() -> None:
     """Clear process-local historical identity caches (primarily for tests)."""
     with _HOURLY_CACHE_LOCK:
-        _HOURLY_CACHE.clear()
-        _NATIVE_DIAGNOSTIC_CACHE.clear()
+        _hourly_cache().clear()
+        _native_cache().clear()
 
 
 def add_historical_calendar_columns(df: pd.DataFrame) -> pd.DataFrame:
@@ -115,10 +123,11 @@ def prepare_historical_native_diagnostic_frame(dataset: CanonicalClimateDataset)
     still be audited as the actual provider timestamp rather than relabelled.
     """
     key = id(dataset)
+    cache=_native_cache()
     with _HOURLY_CACHE_LOCK:
-        with _NATIVE_DIAGNOSTIC_CACHE.lock:
-            cached = _NATIVE_DIAGNOSTIC_CACHE.get(key)
-            generation=_NATIVE_DIAGNOSTIC_CACHE.generation
+        with cache.lock:
+            cached = cache.get(key)
+            generation=cache.generation
         if cached is not MISS and cached[0]() is dataset:
             return cached[1]
 
@@ -138,14 +147,16 @@ def prepare_historical_native_diagnostic_frame(dataset: CanonicalClimateDataset)
     native.attrs["canonical_timezone_name"] = dataset.temporal.timezone_name
     native.attrs["canonical_source_rows"] = int(len(dataset.data))
 
+    cache_ref=weakref.ref(cache)
     def _remove(_reference, *, cache_key: int = key) -> None:
-        _remove_identity_cache_entry(_NATIVE_DIAGNOSTIC_CACHE, cache_key)
+        owned=cache_ref()
+        if owned is not None:_remove_identity_cache_entry(owned, cache_key)
 
     reference = weakref.ref(dataset, _remove)
     with _HOURLY_CACHE_LOCK:
         try:size=estimate_bytes(native)
         except (TypeError,ValueError,RecursionError):size=None
-        if size is not None:_NATIVE_DIAGNOSTIC_CACHE.put(key,(reference,native),size+256,generation=generation)
+        if size is not None:cache.put(key,(reference,native),size+256,generation=generation)
     return native
 
 

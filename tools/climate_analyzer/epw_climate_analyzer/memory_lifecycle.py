@@ -13,11 +13,12 @@ import json
 from datetime import datetime, timezone
 
 from . import p66_memory as m
-from .byte_cache import cache_inventory,clear_recomputable_caches,session_inventory
+from .byte_cache import (cache_inventory,clear_recomputable_caches,session_inventory,
+                         session_cache_inventory,clear_session_caches,session_cache_summary,SESSION_CACHE_KEY)
 
 RUNTIME_MEMORY_SCHEMA="MEM-PERF-R6"
 RUNTIME_CHART_SCHEMA="MEM-PERF-R7"
-RUNTIME_INVENTORY_SCHEMA="MEM-PERF-R10"
+RUNTIME_INVENTORY_SCHEMA="MEM-PERF-R12"
 EXPORT_KEYS=("_p6_pdf","_p6_html_result","_p66_atlas_result","_utci_perf_r1_csv")
 DERIVED_KEYS=("_utci_perf_r1_result","_utci_perf_r1_sensitivity")
 TRANSIENT_KEYS=("_p6_displayed_charts","_active_filtered_export_df")
@@ -86,9 +87,11 @@ def _collect_inventory(state,process):
     import sys
     import os
     import tracemalloc
-    result={"snapshot_schema":"MEM-PERF-R10","captured_at_utc":datetime.now(timezone.utc).isoformat(),
+    result={"snapshot_schema":"MEM-PERF-R12","captured_at_utc":datetime.now(timezone.utc).isoformat(),
             "capture_phase":"on-demand; before next page rendering when called by widget callback",
             "memory":process,"shared_caches":cache_inventory(),
+            "session_caches":session_cache_inventory(state),
+            "session_cache_summary":session_cache_summary(),
             "session_resources":session_inventory(state,PROTECTED_KEYS+EXPORT_KEYS+DERIVED_KEYS+TRANSIENT_KEYS),
             "python_allocated_blocks":getattr(sys,"getallocatedblocks",lambda:None)()}
     # Inspect module presence without importing expensive analysis libraries.
@@ -190,7 +193,7 @@ def _drop(state,keys):
             removed.append(key)
     return removed
 
-def cleanup(state,reason,*,exports=False,derived=False,transient=False,disk=False,shared_caches=False,keep_shared=(),diagnostics=False):
+def cleanup(state,reason,*,exports=False,derived=False,transient=False,disk=False,shared_caches=False,keep_shared=(),diagnostics=False,private_caches=False):
     """Release selected owned references; sample before/after actual collection.
 
     A disk cache belongs to this session, but do not remove it while any export
@@ -224,6 +227,7 @@ def cleanup(state,reason,*,exports=False,derived=False,transient=False,disk=Fals
     if shared_caches:
         evicted=clear_recomputable_caches(keep=keep_shared) if keep_shared else clear_recomputable_caches()
     else:evicted=[]
+    if private_caches:evicted.extend(clear_session_caches(state))
     gc.collect()
     m._trim_allocator()
     after=memory_snapshot()
@@ -241,7 +245,7 @@ def prepare_export(state):
     """
     snapshot=memory_snapshot()
     result=cleanup(state,"Before export",exports=True,derived=True,
-                   disk=cache_pressure(snapshot),shared_caches=cache_pressure(snapshot))
+                   disk=cache_pressure(snapshot),shared_caches=cache_pressure(snapshot),private_caches=cache_pressure(snapshot))
     state[EXPORT_PRE_KEY]=result
     state.pop(EXPORT_POST_KEY,None)
     state.pop("_mem_perf_r4_launch_cleanup",None)
@@ -255,19 +259,34 @@ def finish_export(state):
 
 def dataset_changed(state):
     return cleanup(state,"Climate source changed",exports=True,derived=True,
-                   transient=True,disk=True)
+                   transient=True,disk=True,private_caches=True)
 
 def manual_cleanup(state):
-    # The visible OneBuilding map needs these entries on the very next rerun.
-    # Evicting and immediately rebuilding the full catalogue wastes memory and
-    # time. Under raw pressure there is no exemption; before export all caches
-    # remain evictable.
-    keep=MAP_CACHE_NAMES if (state.get("climate_source_mode")=="Find climate" and
-        (state.get("climate_analyzer_navigation") in (None,"Climate File Source") or
-         (state.get("active_climate_file") is None and state.get("active_canonical_climate") is None)) and
-        not cache_pressure(memory_snapshot())) else ()
+    # Private user action never evicts shared server catalogue/metadata.
     return cleanup(state,"Manual cleanup",exports=True,derived=True,transient=True,
-                   disk=True,shared_caches=True,keep_shared=keep,diagnostics=True)
+                   disk=True,private_caches=True,diagnostics=True)
+
+def reset_session(state):
+    """Destructive, consented reset of only the current session."""
+    from uuid import uuid4
+    from streamlit.runtime import Runtime
+    from streamlit.runtime.scriptrunner import get_script_run_ctx
+    # Callback runs before the next script body; no active chart construction.
+    cleanup(state,"Reset session",exports=True,derived=True,transient=True,
+            disk=True,private_caches=True,diagnostics=True)
+    clear_session_caches(state,close=True)
+    ctx=get_script_run_ctx(suppress_warning=True)
+    if ctx is not None and Runtime.exists():
+        rt=Runtime.instance()
+        rt.uploaded_file_mgr.remove_session_files(ctx.session_id)
+        rt.media_file_mgr.clear_session_refs(ctx.session_id)
+        rt.media_file_mgr.remove_orphaned_files()
+        rt.dataframe_source_mgr.clear_all_for_session(ctx.session_id)
+    for key in list(state.keys()):state.pop(key,None)
+    state["_mem_r12_reset_epoch"]=uuid4().hex
+    state["_mem_r12_reset_notice"]=True
+    gc.collect()
+    m._trim_allocator()
 
 def begin_rerun(state,page):
     previous=state.get(PAGE_KEY)
@@ -282,7 +301,7 @@ def begin_rerun(state,page):
         state[PRESSURE_KEY]=now
         # Preserve ready downloads during routine navigation. New exports or
         # an explicit cleanup are the responsibility of the corresponding action.
-        cleanup(state,"Automatic memory pressure cleanup",derived=True,disk=True,shared_caches=True)
+        cleanup(state,"Automatic memory pressure cleanup",derived=True,disk=True,shared_caches=True,private_caches=True)
 
 def _mib(value):
     return f"{value/m.MIB:,.0f} MiB" if value is not None else "Unavailable"
@@ -311,9 +330,14 @@ def _render_sidebar(st):
         st.caption("Active climate data, comparison data and saved report diagrams are retained. Prepared downloads and recomputable caches are released.")
         st.button("Clean unused caches",key="mem_perf_r1_clean",
                   on_click=manual_cleanup,args=(state,))
-        st.caption("Automatic cleanup before exports and under memory pressure is enabled. Registered shared recomputable caches may be evicted; active references and user work remain intact.")
+        st.caption("Closing or reloading the page ends the old session; no session restoration. Shared scientific libraries remain initialized.")
+        consent=st.checkbox("Confirm deletion of this session's climate data, reports and settings",key="mem_r12_reset_confirm")
+        st.button("Reset session",disabled=not consent,key="mem_r12_reset",on_click=reset_session,args=(state,))
+        st.caption("Manual cleanup releases only this session's disposable resources. Shared public caches may be evicted under resource pressure.")
         inventory=cache_inventory()
-        st.caption(f"Registered cache payload: {_mib(sum(r['estimated_bytes'] for r in inventory))} / {_mib(sum(r['budget_bytes'] for r in inventory))} combined individual budgets.")
+        private=session_cache_inventory(state)
+        st.caption(f"Session cache payload: {_mib(sum(r['estimated_bytes'] for r in private))} / {_mib(sum(r['budget_bytes'] for r in private))} registered budgets.")
+        st.caption(f"Shared server cache payload: {_mib(sum(r['estimated_bytes'] for r in inventory))} / {_mib(sum(r['budget_bytes'] for r in inventory))} registered budgets.")
         st.button("Inspect retained resources (refresh snapshot)",key="mem_r4_inspect",on_click=inspect_resources,args=(state,),
                   help="Collect a new lightweight snapshot before downloading; does not run a Python heap census.")
         st.button("Measure allocator recovery",key="mem_r9_recovery",on_click=inspect_recovery,args=(state,),
@@ -335,12 +359,12 @@ def _render_sidebar(st):
             st.text("\n".join(f"{key}: {value}" for key,value in persistent.items()))
         from .session_reaper import reaper_summary
         live_reaper=reaper_summary()
-        st.caption(f"Live session maintenance: {live_reaper.get('status','unavailable')}; sweeps: {live_reaper.get('sweeps',0)}; disconnected at last sweep: {live_reaper.get('disconnected_sessions','Unavailable')}; expired reaped: {live_reaper.get('expired_reaped',0)}.")
+        st.caption(f"Live session maintenance: {live_reaper.get('status','unavailable')}; sweeps: {live_reaper.get('sweeps',0)}; disconnected at last sweep: {live_reaper.get('disconnected_sessions','Unavailable')}; closed immediately: {live_reaper.get('closed_on_disconnect',0)}; expired reaped (fallback): {live_reaper.get('expired_reaped',0)}.")
         queue_sample=live_reaper.get("forward_queue_sample",{})
         if queue_sample.get("status")=="sampled":
             st.caption(f"Pending forward messages at last sweep: {queue_sample['pending_messages_in_sampled_sessions']}; sampled wire payload: {_mib(queue_sample['sampled_wire_bytes'])}; {queue_sample['captured_at_utc']} (not websocket backlog or RSS).")
         inspected=state.get(INVENTORY_KEY)
-        if inspected and inspected.get("snapshot_schema")!="MEM-PERF-R10":
+        if inspected and inspected.get("snapshot_schema")!="MEM-PERF-R12":
             release_inventory(state)
             inspected=None
         from .memory_recovery import recovery_summary

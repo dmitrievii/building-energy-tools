@@ -53,14 +53,42 @@ class ByteCacheTests(unittest.TestCase):
         self.assertEqual(build.cache_info()["hits"],3)
         build.clear()
 
-    def test_active_map_cleanup_preserves_needed_cache_without_protecting_under_pressure(self):
+    def test_manual_cleanup_never_evicts_shared_server_caches(self):
         state={"climate_source_mode":"Find climate"}
-        with patch.object(m,"memory_snapshot",return_value={"used":1800*b.MIB,"limit":3072*b.MIB}),patch.object(m,"cleanup") as clean:
-            m.manual_cleanup(state)
-            self.assertIn("station_catalog",clean.call_args.kwargs["keep_shared"])
-        with patch.object(m,"memory_snapshot",return_value={"used":2500*b.MIB,"limit":3072*b.MIB}),patch.object(m,"cleanup") as clean:
-            m.manual_cleanup(state)
-            self.assertEqual(clean.call_args.kwargs["keep_shared"],())
+        for used in (1800,2500):
+            with patch.object(m,"memory_snapshot",return_value={"used":used*b.MIB,"limit":3072*b.MIB}),patch.object(m,"cleanup") as clean:
+                m.manual_cleanup(state)
+                self.assertTrue(clean.call_args.kwargs["private_caches"])
+                self.assertFalse(clean.call_args.kwargs.get("shared_caches",False))
+
+    def test_session_cache_ownership_and_inflight_generation(self):
+        a,bstate={},{}
+        @b.bounded_cache(name="r12_private_fixture",max_bytes=10000,max_entries=2,scope="session")
+        def payload(value):
+            return [value]
+        with patch.object(b,"_session_context",return_value=(a,"a",True)):
+            self.assertEqual(payload(1),[1])
+            owner=a[b.SESSION_CACHE_KEY]
+            cache=owner.pools["r12_private_fixture"]
+            generation=cache.generation
+        with patch.object(b,"_session_context",return_value=(bstate,"b",True)):
+            self.assertEqual(payload(2),[2])
+        self.assertEqual(b.session_cache_inventory(a)[0]["entries"],1)
+        self.assertEqual(b.session_cache_inventory(bstate)[0]["entries"],1)
+        b.close_session_caches("a")
+        self.assertTrue(owner.closed)
+        self.assertFalse(cache.put("late",b"late",generation=generation))
+        self.assertEqual(b.session_cache_inventory(a),[])
+        self.assertEqual(b.session_cache_inventory(bstate)[0]["entries"],1)
+        self.assertNotIn("r12_private_fixture",{r["cache"] for r in b.cache_inventory()})
+        b.close_session_caches("b")
+
+    def test_server_thread_without_context_does_not_retain_private_cache(self):
+        with patch.object(b,"_session_context",return_value=(None,None,True)):
+            a=b.session_pool("r12_no_context",10000,2)
+            a.put("key",b"data")
+            self.assertIs(b.session_pool("r12_no_context",10000,2).get("key"),b.MISS)
+        self.assertNotIn("r12_no_context",{r["cache"] for r in b.cache_inventory()})
 
     def test_ttl_and_resource_reference_survives_eviction(self):
         cache=b.ByteLRU("ttl",10000,2,ttl=2)
