@@ -1,0 +1,59 @@
+name: Climate Analyzer MEM-PERF R11 qualification
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/climate_analyzer/epw_climate_analyzer/chart_presentation.py'
+      - 'tools/climate_analyzer/scripts/mem_perf_r11*'
+      - '.github/workflows/climate-analyzer-mem-perf-r11.yml'
+permissions:
+  contents: read
+jobs:
+  footprint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: tools/climate_analyzer
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - run: python scripts/mem_perf_r11_profile.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r11-library-profile
+          path: tools/climate_analyzer/artifacts/mem-perf-r11/
+  endurance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: tools/climate_analyzer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - run: npm install --no-save playwright-core@1.55.0
+      - name: Run 50 sequential real browser sessions
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/mem-perf-r11
+          PYTHONPATH="$PWD" STREAMLIT_SERVER_DISCONNECTED_SESSION_TTL=2 streamlit run scripts/mem_perf_r11_fixture.py --server.headless=true --server.port=8511 > artifacts/mem-perf-r11/server.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8511/_stcore/health && break; sleep 1; done
+          node scripts/mem_perf_r11_endurance.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r11-browser-endurance
+          path: tools/climate_analyzer/artifacts/mem-perf-r11/

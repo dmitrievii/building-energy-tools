@@ -290,6 +290,10 @@ def _apply_background(layout: Any, color: str, traces=()) -> None:
         if "colorbar" in props:
             trace.colorbar.bgcolor = color
     for name in sorted(names):
+        # Plotly compound getters can lazily instantiate objects/validators.
+        # Do not access layout properties this pass cannot modify.
+        if not name.startswith(("polar", "ternary", "scene", "legend", "geo", "coloraxis")):
+            continue
         item = getattr(layout, name, None)
         if item is None:
             continue
@@ -317,6 +321,14 @@ def _apply_extra_presentation(fig: Any, settings: ChartPresentationSettings) -> 
     bounds_valid = (math.isfinite(settings.axis_min) and math.isfinite(settings.axis_max)
                     and settings.axis_min < settings.axis_max)
     for name in sorted(names):
+        if not name.startswith(("xaxis", "yaxis", "polar", "scene")):
+            continue
+        # Default grid and no explicit range/rotation require no access.
+        if settings.show_grid and not (
+            (target and bounds_valid and name.startswith(("xaxis", "yaxis")))
+            or (settings.north_rotation and meta.get("compass_polar") is True and name.startswith("polar"))
+        ):
+            continue
         item = getattr(layout, name, None)
         if item is None:
             continue
@@ -338,7 +350,8 @@ def _apply_extra_presentation(fig: Any, settings: ChartPresentationSettings) -> 
                 traces = [tr for tr in fig.data if
                           (getattr(tr, coord+"axis",None) or coord) == axisref
                           and getattr(tr,coord,None) is not None]
-                samples = [v for tr in traces for v in list(getattr(tr,coord))[:8] if v is not None]
+                from itertools import islice
+                samples = [v for tr in traces for v in islice(getattr(tr,coord),8) if v is not None]
                 from numbers import Real
                 if samples and all(isinstance(v,Real) for v in samples):
                     item.range = [settings.axis_min, settings.axis_max]
@@ -401,6 +414,8 @@ def apply_chart_presentation(fig: Any, settings: ChartPresentationSettings) -> A
     # font, but explicit tick/title fonts need to be updated as well.
     for name in getattr(layout, "_props", {}):
         name_text = str(name)
+        if not name_text.startswith(("legend", "xaxis", "yaxis", "polar", "scene", "coloraxis")):
+            continue
         item = getattr(layout, name, None)
         if item is None:
             continue
