@@ -47,8 +47,11 @@ def physical_key(df,*,model,wind_factor=1.,**parameters):
 def _preload():
     # Import timing includes first-use module and eager numerical initialization.
     # Lazy compilation, if any, remains part of the subsequent calculation time.
-    from pythermalcomfort.models import utci
-    return utci
+    from .startup_runtime import optional_import
+    def load():
+        from pythermalcomfort.models import utci
+        return utci
+    return optional_import("UTCI (conditional)",load)
 
 def cached_physical(state,df,*,model,wind_factor=1.,**parameters):
     started=perf_counter()

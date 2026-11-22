@@ -9,12 +9,28 @@ class MemoryLifecycleTests(unittest.TestCase):
         with patch.object(m,"memory_snapshot",side_effect=[{"used":100},{"used":200}]):
             first=m.inspect_resources(state)
             second=m.inspect_resources(state)
-        self.assertEqual(first["snapshot_schema"],"MEM-PERF-R8")
+        self.assertEqual(first["snapshot_schema"],"MEM-PERF-R9")
         self.assertIn("captured_at_utc",first)
         self.assertEqual(first["memory"]["used"],100)
         self.assertEqual(second["memory"]["used"],200)
         self.assertIs(state[m.INVENTORY_KEY],second)
         self.assertEqual(second["heap_census_captured_at_utc"],"earlier")
+
+    def test_recovery_probe_separates_gc_and_trim_without_clearing_state(self):
+        from epw_climate_analyzer import memory_recovery as recovery
+        samples=[{"process_anon":300},{"process_anon":280},{"process_anon":250}]
+        with patch.object(m,"memory_snapshot",side_effect=samples),patch.object(recovery,"allocator_snapshot",return_value={"status":"unavailable"}),patch.object(recovery.gc,"collect",return_value=7),patch.object(m.m,"_trim_allocator",return_value=True),patch.object(recovery,"_LAST",None),patch.object(recovery,"_COUNT",0):
+            result=recovery.recovery_probe("test")
+            self.assertEqual(result["status"],"complete")
+            self.assertEqual(result["collected_objects"],7)
+            self.assertEqual(result["before"]["process_anon"],300)
+            self.assertEqual(result["after_gc"]["process_anon"],280)
+            self.assertEqual(result["after_trim"]["process_anon"],250)
+            self.assertTrue(result["trim_reported_release"])
+        self.assertTrue(m.m.EXPORT_LOCK.acquire(blocking=False))
+        try:
+            self.assertEqual(recovery.recovery_probe("busy")["status"],"busy export")
+        finally:m.m.EXPORT_LOCK.release()
 
     def test_memory_stat_key_value_parsing(self):
         import tempfile

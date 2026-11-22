@@ -23,6 +23,18 @@ class StartupTests(unittest.TestCase):
             self.assertEqual(third[1]["status"],"ready")
             warm.assert_called_once_with("utci")
             self.assertEqual(load.call_count,2)
+    def test_real_optional_stages_defer_until_demand(self):
+        stages=(("Folium",("ige_test_folium",),None,768*r.MIB),
+                ("UTCI (conditional)",("ige_test_utci",),"utci",1536*r.MIB))
+        with patch.object(r,"_STAGES",{}),patch.object(r,"STAGES",stages),patch.object(r,"_sample",return_value={}),patch.object(r,"import_module") as load:
+            rows=r.ensure_initialized()
+            self.assertEqual([x["status"] for x in rows],["deferred (on demand)"]*2)
+            load.assert_not_called()
+            self.assertEqual(r.optional_import("Folium",lambda:42),42)
+            self.assertEqual(r.startup_summary()[0]["status"],"ready")
+            self.assertEqual(r.ensure_initialized()[0]["status"],"ready")
+            load.assert_not_called()
+
     def test_low_headroom_defers_new_core_import(self):
         with patch.object(r,"_STAGES",{}),patch.object(r,"STAGES",(("core",("ige_fixture_core",),None,768*r.MIB),)),patch.object(r,"_sample",return_value={}),patch.object(r,"container_memory",return_value=(2900*r.MIB,3072*r.MIB)),patch.object(r,"import_module") as load:
             self.assertEqual(r.ensure_initialized()[0]["status"],"deferred (raw headroom)")

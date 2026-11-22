@@ -16,7 +16,7 @@ from .byte_cache import cache_inventory,clear_recomputable_caches,session_invent
 
 RUNTIME_MEMORY_SCHEMA="MEM-PERF-R6"
 RUNTIME_CHART_SCHEMA="MEM-PERF-R7"
-RUNTIME_INVENTORY_SCHEMA="MEM-PERF-R8"
+RUNTIME_INVENTORY_SCHEMA="MEM-PERF-R9"
 EXPORT_KEYS=("_p6_pdf","_p6_html_result","_p66_atlas_result","_utci_perf_r1_csv")
 DERIVED_KEYS=("_utci_perf_r1_result","_utci_perf_r1_sensitivity")
 TRANSIENT_KEYS=("_p6_displayed_charts","_active_filtered_export_df")
@@ -83,7 +83,7 @@ def inspect_resources(state):
     import sys
     import os
     import tracemalloc
-    result={"snapshot_schema":"MEM-PERF-R8","captured_at_utc":datetime.now(timezone.utc).isoformat(),
+    result={"snapshot_schema":"MEM-PERF-R9","captured_at_utc":datetime.now(timezone.utc).isoformat(),
             "capture_phase":"on-demand; before next page rendering when called by widget callback",
             "memory":memory_snapshot(),"shared_caches":cache_inventory(),
             "session_resources":session_inventory(state,PROTECTED_KEYS+EXPORT_KEYS+DERIVED_KEYS+TRANSIENT_KEYS),
@@ -118,12 +118,22 @@ def inspect_resources(state):
     result["session_runtime"]=inspect_session_counters(state,PROTECTED_KEYS+EXPORT_KEYS+DERIVED_KEYS+TRANSIENT_KEYS)
     from .chart_lifecycle import chart_lifecycle_summary
     result["chart_lifecycle"]=chart_lifecycle_summary(state)
+    from .memory_recovery import allocator_snapshot, recovery_summary
+    result["allocator"]=allocator_snapshot()
+    result["recovery"]=recovery_summary()
+    result["raw_headroom_bytes"]=(result["memory"]["limit"]-result["memory"]["used"]
+        if "limit" in result["memory"] and "used" in result["memory"] else None)
     if "_mem_r5_heap_census" in state:
         result["heap_census"]=state["_mem_r5_heap_census"]
         result["heap_census_captured_at_utc"]=state.get("_mem_r5_heap_census_at")
         result["heap_census_note"]="Separate historical measurement; not refreshed by resource inspection."
     state[INVENTORY_KEY]=result
     return result
+
+def inspect_recovery(state):
+    from .memory_recovery import recovery_probe
+    recovery_probe("Manual allocator recovery probe")
+    return inspect_resources(state)
 
 def inspect_heap(state):
     from .startup_runtime import heap_census
@@ -265,6 +275,8 @@ def render_sidebar(st):
         st.caption(f"Registered cache payload: {_mib(sum(r['estimated_bytes'] for r in inventory))} / {_mib(sum(r['budget_bytes'] for r in inventory))} combined individual budgets.")
         st.button("Inspect retained resources (refresh snapshot)",key="mem_r4_inspect",on_click=inspect_resources,args=(state,),
                   help="Collect a new lightweight snapshot before downloading; does not run a Python heap census.")
+        st.button("Measure allocator recovery",key="mem_r9_recovery",on_click=inspect_recovery,args=(state,),
+                  help="Measure garbage collection and glibc trim separately; retains all active climate data and reports.")
         st.button("Inspect Python object types",key="mem_r5_heap_inspect",on_click=inspect_heap,args=(state,),
                   help="On demand, requires substantial raw memory headroom. Counts shallow GC-tracked objects; no content is exported.")
         from .startup_runtime import runtime_summary
@@ -289,9 +301,18 @@ def render_sidebar(st):
         if queue_sample.get("status")=="sampled":
             st.caption(f"Pending forward messages at last sweep: {queue_sample['pending_messages_in_sampled_sessions']}; sampled wire payload: {_mib(queue_sample['sampled_wire_bytes'])}; {queue_sample['captured_at_utc']} (not websocket backlog or RSS).")
         inspected=state.get(INVENTORY_KEY)
-        if inspected and inspected.get("snapshot_schema")!="MEM-PERF-R8":
+        if inspected and inspected.get("snapshot_schema")!="MEM-PERF-R9":
             state.pop(INVENTORY_KEY,None)
             inspected=None
+        from .memory_recovery import recovery_summary
+        recovery=recovery_summary().get("last")
+        if recovery:
+            st.caption(f"Last allocator recovery: {recovery['reason']}; {recovery['status']}.")
+            if recovery.get("status")=="complete":
+                before=recovery["before"].get("process_anon")
+                after=recovery["after_trim"].get("process_anon")
+                if before is not None and after is not None:
+                    st.caption(f"Application anonymous RSS: {_mib(before)} → {_mib(after)}.")
         if inspected:
             st.caption(f"Snapshot captured: {inspected['captured_at_utc']}. Current memory above is live at rerun; snapshot below is historical. Refresh before downloading.")
             st.caption("Last on-demand inventory; sizes are estimates and overlap with RSS. Session rows may overlap; unmeasurable objects are marked unavailable.")
@@ -317,6 +338,8 @@ def render_sidebar(st):
                 st.json({k:v for k,v in inspected.get("loaded_libraries",{}).items() if v},expanded=False)
                 st.json(inspected.get("session_runtime",{}),expanded=False)
                 st.json(inspected.get("chart_lifecycle",{}),expanded=False)
+                st.json(inspected.get("allocator",{}),expanded=False)
+                st.json(inspected.get("recovery",{}),expanded=False)
                 if inspected.get("process_smaps"):st.json({key:_mib(value) for key,value in inspected["process_smaps"].items()},expanded=False)
                 heap=inspected.get("heap_census")
                 if heap:

@@ -17,6 +17,7 @@ import weakref
 from .p66_memory import MIB,container_memory
 
 RUNTIME_STARTUP_SCHEMA="MEM-PERF-R6"
+RUNTIME_OPTIONAL_SCHEMA="MEM-PERF-R9"
 _LOCK=RLock()
 _STAGES={}
 _EVENTS=deque(maxlen=64)
@@ -60,13 +61,23 @@ def _warmup(name):
         result=model(tdb=[25.],tr=[25.],v=[1.],rh=[50.],limit_inputs=True,round_output=False)
         if not 24.<float(result.utci[0])<26.:raise RuntimeError("UTCI startup reference check failed.")
 
+_OPTIONAL_STAGES=frozenset(("Folium","UTCI (conditional)"))
+
 def ensure_initialized():
+    """Preload core stacks once; optional map and UTCI stacks are demand-owned."""
     with _LOCK:
         for label,modules,warmup,reserve in STAGES:
             previous=_STAGES.get(label)
             if previous and previous["status"] in ("ready","already loaded","failed"):continue
             before=_sample()
             loaded=all(name in sys.modules for name in modules)
+            if label in _OPTIONAL_STAGES:
+                if loaded:
+                    _STAGES[label]={"stage":label,"status":"already loaded","seconds":0.,"before":before,"after":before,
+                                    "note":"Imported outside startup; no proactive warmup."}
+                elif previous is None:
+                    _STAGES[label]={"stage":label,"status":"deferred (on demand)","seconds":0.,"before":before,"after":before}
+                continue
             if loaded and warmup is None:
                 _STAGES[label]={"stage":label,"status":"already loaded","seconds":0.,"before":before,"after":before}
                 continue
@@ -85,6 +96,24 @@ def ensure_initialized():
             if error:row["error"]=error
             _STAGES[label]=row
         return deepcopy(list(_STAGES.values()))
+
+def optional_import(label,loader):
+    """Profile the first real optional import; no speculative compilation."""
+    with _LOCK:
+        previous=_STAGES.get(label)
+        if previous and previous["status"] in ("ready","already loaded"):
+            return loader()
+        before=_sample()
+        start=perf_counter()
+        try:
+            result=loader()
+        except Exception:
+            _STAGES[label]={"stage":label,"status":"failed","seconds":perf_counter()-start,
+                            "before":before,"after":_sample()}
+            raise
+        _STAGES[label]={"stage":label,"status":"ready","seconds":perf_counter()-start,
+                        "before":before,"after":_sample(),"note":"First demand import; lazy kernels may initialize later."}
+        return result
 
 def current_runtime_guard():
     """Reload the small compatibility guard only when disk source changes."""

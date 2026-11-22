@@ -13,6 +13,8 @@ _STATUS={"status":"not started","expired_reaped":0,"shutdown_failures":0,
          "sweeps":0,"disconnected_sessions":None}
 _RUNTIME_REF=None
 _INTERVAL=30.
+RUNTIME_RECOVERY_SCHEMA="MEM-PERF-R9"
+_RECOVERY_PENDING=False
 
 def reaper_summary():
     with _LOCK:return dict(_STATUS)
@@ -37,6 +39,31 @@ def _expire_storage(manager,cache):
         # Count still-valid entries without another expiring operation.
         _STATUS["disconnected_sessions"]=sum(1 for _ in cache)
         _STATUS["status"]="running"
+    return reaped
+
+def _idle_for_recovery(manager,cache):
+    # Only between scripts, after disconnected-session TTL entries expire.
+    try:
+        return (not any(True for _ in cache) and
+                all(info.session._scriptrunner is None and
+                    info.session._browser_queue.is_empty()
+                    for info in manager.list_active_sessions()))
+    except Exception:
+        return False
+
+def _recover_if_idle(manager,cache,reaped):
+    global _RECOVERY_PENDING
+    # Delay a sweep after shutdown; release expired references first.
+    if reaped:
+        _RECOVERY_PENDING=True
+        return
+    if not _RECOVERY_PENDING or not _idle_for_recovery(manager,cache):
+        return
+    from .memory_recovery import recovery_probe
+    result=recovery_probe("Expired disconnected sessions")
+    if result["status"]=="busy export":return
+    _RECOVERY_PENDING=False
+    _set(last_post_session_recovery=result)
 
 def _queue_sample(manager):
     """Event-loop-only, bounded size observations; no message content exported.
@@ -83,7 +110,8 @@ def _tick(runtime_ref):
         storage=manager._session_storage
         if type(storage) is not MemorySessionStorage or type(storage._cache) is not TTLCache:
             _set(status="unsupported session storage");return
-        _expire_storage(manager,storage._cache)
+        reaped=_expire_storage(manager,storage._cache)
+        _recover_if_idle(manager,storage._cache,reaped)
         _set(forward_queue_sample=_queue_sample(manager))
         async_objs.eventloop.call_later(_INTERVAL,_tick,runtime_ref)
     except Exception as exc:

@@ -71,6 +71,24 @@ class ChartLifecycleTests(unittest.TestCase):
         self.assertEqual(len(queue),150)
         self.assertEqual(sample["sampled_wire_bytes"],sum(msg.ByteSize() for msg in queue._queue[:128]))
 
+    def test_post_session_recovery_waits_for_idle_next_sweep(self):
+        from epw_climate_analyzer import memory_recovery
+        session=SimpleNamespace(_scriptrunner=object(),_browser_queue=Mock())
+        session._browser_queue.is_empty.return_value=True
+        manager=SimpleNamespace(list_active_sessions=lambda:[SimpleNamespace(session=session)])
+        with patch.object(reaper,"_RECOVERY_PENDING",False),patch.object(reaper,"_STATUS",{}),patch.object(memory_recovery,"recovery_probe",return_value={"status":"complete"}) as probe:
+            reaper._recover_if_idle(manager,{},1)
+            probe.assert_not_called()
+            reaper._recover_if_idle(manager,{},0)
+            probe.assert_not_called()
+            session._scriptrunner=None
+            reaper._recover_if_idle(manager,{"valid":object()},0)
+            probe.assert_not_called()
+            reaper._recover_if_idle(manager,{},0)
+            probe.assert_called_once()
+            reaper._recover_if_idle(manager,{},0)
+            probe.assert_called_once()
+
     def test_native_ttl_reaps_only_expired_disconnected_entries(self):
         from streamlit.runtime.caching.ttl_cache import TTLCache
         now=[0.]

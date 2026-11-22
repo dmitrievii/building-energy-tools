@@ -52,13 +52,13 @@ def _trim_allocator():
     # Linux/glibc may retain freed Python/native heap pages. This is best-effort
     # and the hard guard always re-reads actual cgroup use afterwards.
     import sys
-    if sys.platform!="linux":return
+    if sys.platform!="linux":return None
     try:
         import ctypes
         trim=ctypes.CDLL(None).malloc_trim
         trim.argtypes=[ctypes.c_size_t];trim.restype=ctypes.c_int
-        trim(0)
-    except (AttributeError,OSError):pass
+        return bool(trim(0))
+    except (AttributeError,OSError):return None
 
 def require_headroom():
     value=container_memory()

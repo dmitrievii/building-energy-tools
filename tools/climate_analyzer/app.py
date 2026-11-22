@@ -23,8 +23,9 @@ if any(getattr(module,attribute,None)!="MEM-PERF-R6" for module,attribute in (
 )):
     st.error("Runtime ownership upgrade (MEM-PERF R6): reboot the app once via Manage app to start a consistent process. Refreshing the browser does not restart the server.")
     st.stop()
-if getattr(_runtime_memory,"RUNTIME_INVENTORY_SCHEMA",None)!="MEM-PERF-R8":
-    st.error("MEM-PERF R8: reboot the app once via Manage app to activate the updated runtime diagnostics.")
+if (getattr(_runtime_memory,"RUNTIME_INVENTORY_SCHEMA",None)!="MEM-PERF-R9" or
+    getattr(_runtime_startup,"RUNTIME_OPTIONAL_SCHEMA",None)!="MEM-PERF-R9"):
+    st.error("MEM-PERF R9: reboot the app once via Manage app to activate the updated runtime diagnostics.")
     st.stop()
 from epw_climate_analyzer.byte_cache import bounded_cache,MIB
 
@@ -84,6 +85,9 @@ def _ensure_map_dependencies() -> None:
         return
 
     import pandas as pd
+    from epw_climate_analyzer.startup_runtime import optional_import
+    from importlib import import_module
+    optional_import("Folium",lambda:import_module("streamlit_folium"))
     import folium
     from folium.plugins import FastMarkerCluster, MarkerCluster
     from streamlit_folium import st_folium
@@ -6168,7 +6172,7 @@ def main() -> None:
     st.sidebar.caption(APP_RELEASE_LABEL)
     from epw_climate_analyzer.startup_runtime import ensure_initialized
     stages=ensure_initialized()
-    deferred=[r["stage"] for r in stages if r["status"] not in ("ready","already loaded") and r["stage"]!="UTCI (conditional)"]
+    deferred=[r["stage"] for r in stages if r["status"] not in ("ready","already loaded") and r["stage"] not in ("UTCI (conditional)","Folium")]
     if deferred:st.sidebar.warning("Core initialization incomplete: "+", ".join(deferred)+". Inspect memory management; reboot if headroom is insufficient.")
     from epw_climate_analyzer import p6_report as report_runtime,session_memory as session_runtime
     if (getattr(report_runtime,"RUNTIME_REPORT_SCHEMA",None)!="MEM-PERF-R7" or
