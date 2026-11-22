@@ -16,6 +16,7 @@ from .byte_cache import cache_inventory,clear_recomputable_caches,session_invent
 
 RUNTIME_MEMORY_SCHEMA="MEM-PERF-R6"
 RUNTIME_CHART_SCHEMA="MEM-PERF-R7"
+RUNTIME_INVENTORY_SCHEMA="MEM-PERF-R8"
 EXPORT_KEYS=("_p6_pdf","_p6_html_result","_p66_atlas_result","_utci_perf_r1_csv")
 DERIVED_KEYS=("_utci_perf_r1_result","_utci_perf_r1_sensitivity")
 TRANSIENT_KEYS=("_p6_displayed_charts","_active_filtered_export_df")
@@ -284,6 +285,9 @@ def render_sidebar(st):
         from .session_reaper import reaper_summary
         live_reaper=reaper_summary()
         st.caption(f"Live session maintenance: {live_reaper.get('status','unavailable')}; sweeps: {live_reaper.get('sweeps',0)}; disconnected at last sweep: {live_reaper.get('disconnected_sessions','Unavailable')}; expired reaped: {live_reaper.get('expired_reaped',0)}.")
+        queue_sample=live_reaper.get("forward_queue_sample",{})
+        if queue_sample.get("status")=="sampled":
+            st.caption(f"Pending forward messages at last sweep: {queue_sample['pending_messages_in_sampled_sessions']}; sampled wire payload: {_mib(queue_sample['sampled_wire_bytes'])}; {queue_sample['captured_at_utc']} (not websocket backlog or RSS).")
         inspected=state.get(INVENTORY_KEY)
         if inspected and inspected.get("snapshot_schema")!="MEM-PERF-R8":
             state.pop(INVENTORY_KEY,None)

@@ -5,6 +5,7 @@ loop. Do not enumerate active session content or shorten reconnection TTL.
 Unsupported versions/hosts fail closed. No global state clearing.
 """
 from threading import RLock
+from datetime import datetime, timezone
 import weakref
 
 _LOCK=RLock()
@@ -37,6 +38,36 @@ def _expire_storage(manager,cache):
         _STATUS["disconnected_sessions"]=sum(1 for _ in cache)
         _STATUS["status"]="running"
 
+def _queue_sample(manager):
+    """Event-loop-only, bounded size observations; no message content exported.
+
+    This is pending ForwardMsg protobuf wire size, not resident memory or
+    in-flight websocket data. Never flush or mutate any client queue.
+    """
+    try:
+        from streamlit.runtime.forward_msg_queue import ForwardMsgQueue
+        sessions=manager.list_active_sessions()
+        total=sampled=wire_bytes=0
+        limited=len(sessions)>16
+        for info in sessions[:16]:
+            queue=info.session._browser_queue
+            if type(queue) is not ForwardMsgQueue:
+                return {"status":"unsupported forward queue"}
+            messages=queue._queue
+            total+=len(messages)
+            budget=128-sampled
+            if len(messages)>budget:limited=True
+            for msg in messages[:budget]:
+                wire_bytes+=msg.ByteSize()
+                sampled+=1
+        return {"status":"sampled","captured_at_utc":datetime.now(timezone.utc).isoformat(),
+                "active_sessions_sampled":min(len(sessions),16),
+                "pending_messages_in_sampled_sessions":total,"messages_sized":sampled,
+                "sampled_wire_bytes":wire_bytes,"limited":limited,
+                "scope":"Pending active-session forward queues only; excludes websocket buffers, disconnected queues and allocator overhead."}
+    except Exception as exc:
+        return {"status":"unavailable: "+type(exc).__name__}
+
 def _tick(runtime_ref):
     runtime=runtime_ref()
     if runtime is None:return
@@ -53,6 +84,7 @@ def _tick(runtime_ref):
         if type(storage) is not MemorySessionStorage or type(storage._cache) is not TTLCache:
             _set(status="unsupported session storage");return
         _expire_storage(manager,storage._cache)
+        _set(forward_queue_sample=_queue_sample(manager))
         async_objs.eventloop.call_later(_INTERVAL,_tick,runtime_ref)
     except Exception as exc:
         _set(status="unavailable: "+type(exc).__name__)

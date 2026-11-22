@@ -53,6 +53,24 @@ class ChartLifecycleTests(unittest.TestCase):
         c.release_page(a)
         self.assertEqual(len(b[c.DISPLAYED]),1)
 
+    def test_forward_queue_sampling_is_bounded_and_read_only(self):
+        from streamlit.runtime.forward_msg_queue import ForwardMsgQueue
+        from streamlit.proto.ForwardMsg_pb2 import ForwardMsg
+        queue=ForwardMsgQueue()
+        for _ in range(150):
+            msg=ForwardMsg()
+            msg.script_finished=ForwardMsg.FINISHED_SUCCESSFULLY
+            queue.enqueue(msg)
+        manager=SimpleNamespace(list_active_sessions=lambda:[SimpleNamespace(
+            session=SimpleNamespace(_browser_queue=queue))])
+        sample=reaper._queue_sample(manager)
+        self.assertEqual(sample["status"],"sampled")
+        self.assertEqual(sample["pending_messages_in_sampled_sessions"],150)
+        self.assertEqual(sample["messages_sized"],128)
+        self.assertTrue(sample["limited"])
+        self.assertEqual(len(queue),150)
+        self.assertEqual(sample["sampled_wire_bytes"],sum(msg.ByteSize() for msg in queue._queue[:128]))
+
     def test_native_ttl_reaps_only_expired_disconnected_entries(self):
         from streamlit.runtime.caching.ttl_cache import TTLCache
         now=[0.]

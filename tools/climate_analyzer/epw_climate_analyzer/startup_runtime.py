@@ -115,6 +115,13 @@ def end_script(token,page):
     start,before=token
     record_event("script rerun",before,_sample(),perf_counter()-start,page=str(page)[:80])
 
+def begin_phase():
+    return perf_counter(),_sample()
+
+def end_phase(token,name):
+    start,before=token
+    record_event(name,before,_sample(),perf_counter()-start)
+
 def profile_install(fn,*args,**kwargs):
     start=perf_counter();before=_sample()
     try:return fn(*args,**kwargs)

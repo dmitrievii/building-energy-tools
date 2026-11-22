@@ -21,6 +21,7 @@ from typing import Any, MutableMapping
 # execution must not overlap across sessions. RLock is used because the frozen
 # selector can re-enter helper paths in the same thread.
 RUNTIME_PARITY_SCHEMA = "MEM-PERF-R6"
+RUNTIME_INVALIDATION_SCHEMA = "MEM-PERF-R8"
 _RUNTIME_PATCH_LOCK = RLock()
 _PRISTINE_MODULES = ()
 _PRISTINE_PARITY = None

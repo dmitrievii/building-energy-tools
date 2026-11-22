@@ -23,6 +23,9 @@ if any(getattr(module,attribute,None)!="MEM-PERF-R6" for module,attribute in (
 )):
     st.error("Runtime ownership upgrade (MEM-PERF R6): reboot the app once via Manage app to start a consistent process. Refreshing the browser does not restart the server.")
     st.stop()
+if getattr(_runtime_memory,"RUNTIME_INVENTORY_SCHEMA",None)!="MEM-PERF-R8":
+    st.error("MEM-PERF R8: reboot the app once via Manage app to activate the updated runtime diagnostics.")
+    st.stop()
 from epw_climate_analyzer.byte_cache import bounded_cache,MIB
 
 # Streamlit can retain imported package modules across an app-script hot deploy.
@@ -36,8 +39,11 @@ if getattr(_navigation_contract,"RUNTIME_UI_SCHEMA",None)!="MEM-PERF-R6" or any(
 # Never silently mix its old reload protocol with the new binding snapshots.
 import sys as _runtime_sys
 _loaded_parity=_runtime_sys.modules.get("epw_climate_analyzer.source_parity_runtime")
-if _loaded_parity is not None and getattr(_loaded_parity,"RUNTIME_PARITY_SCHEMA",None)!="MEM-PERF-R6":
-    st.error("Runtime ownership upgrade (MEM-PERF R6): reboot the app once via Manage app.")
+if _loaded_parity is not None and (
+    getattr(_loaded_parity,"RUNTIME_PARITY_SCHEMA",None)!="MEM-PERF-R6" or
+    getattr(_loaded_parity,"RUNTIME_INVALIDATION_SCHEMA",None)!="MEM-PERF-R8"):
+
+    st.error("Runtime ownership upgrade (MEM-PERF R8): reboot the app once via Manage app.")
     st.stop()
 
 from epw_climate_analyzer.ui_contract import (
@@ -1937,8 +1943,10 @@ def render_chart_export_controls(fig) -> None:
 def render_plot(fig, text: str) -> None:
     """Render a Plotly figure, local export control and interpretation."""
     from epw_climate_analyzer.p6_report import INTERPRETATION_KEY
+    from epw_climate_analyzer.startup_runtime import begin_phase,end_phase
     render_chart_export_controls(fig)
     st.session_state[INTERPRETATION_KEY]=text
+    phase=begin_phase()
     try:
         st.plotly_chart(
             fig,
@@ -1948,6 +1956,7 @@ def render_plot(fig, text: str) -> None:
         )
     finally:
         st.session_state.pop(INTERPRETATION_KEY,None)
+        end_phase(phase,"chart presentation and enqueue")
     render_interpretation(text)
 
 
