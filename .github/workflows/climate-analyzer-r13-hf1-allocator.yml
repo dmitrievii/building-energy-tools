@@ -36,9 +36,9 @@ jobs:
           cd ../..
           unset MALLOC_ARENA_MAX
           if [ "$ARENA_MODE" = default ]; then
-            STREAMLIT_SERVER_DISCONNECTED_SESSION_TTL=0 streamlit run tools/climate_analyzer/app.py --server.headless=true --server.port=8513 > tools/climate_analyzer/artifacts/mem-perf-r12-hf1/server.log 2>&1 &
+            STREAMLIT_SERVER_DISCONNECTED_SESSION_TTL=0 python tools/climate_analyzer/scripts/run_managed_climate.py --server.headless=true --server.port=8513 > tools/climate_analyzer/artifacts/mem-perf-r12-hf1/server.log 2>&1 &
           else
-            MALLOC_ARENA_MAX="$ARENA_MODE" STREAMLIT_SERVER_DISCONNECTED_SESSION_TTL=0 streamlit run tools/climate_analyzer/app.py --server.headless=true --server.port=8513 > tools/climate_analyzer/artifacts/mem-perf-r12-hf1/server.log 2>&1 &
+            MALLOC_ARENA_MAX="$ARENA_MODE" STREAMLIT_SERVER_DISCONNECTED_SESSION_TTL=0 python tools/climate_analyzer/scripts/run_managed_climate.py --server.headless=true --server.port=8513 > tools/climate_analyzer/artifacts/mem-perf-r12-hf1/server.log 2>&1 &
           fi
           pid=$!
           trap 'kill "$pid" 2>/dev/null || true' EXIT

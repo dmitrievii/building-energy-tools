@@ -128,6 +128,8 @@ def _collect_inventory(state,process):
     from .memory_recovery import allocator_snapshot, recovery_summary
     from .process_memory import container_process_inventory
     result["container_processes"]=container_process_inventory()
+    from .runtime_loop_patch import status as runtime_loop_status
+    result["runtime_loop"]=runtime_loop_status()
     if process.get("limit",0)-process.get("used",0)>256*m.MIB:
         from .session_reaper import retired_reference_summary
         result["retired_reference_diagnostics"]=retired_reference_summary()

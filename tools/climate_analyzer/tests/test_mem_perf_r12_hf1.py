@@ -61,6 +61,20 @@ class HF1Tests(unittest.TestCase):
             self.assertEqual(reaper.reaper_summary()["policy_replacements"],1)
             self.assertTrue(reaper.reaper_summary()["policy_verified"])
 
+    def test_runtime_loop_patch_releases_last_iteration_locals(self):
+        from epw_climate_analyzer.runtime_loop_patch import patched_source
+        from streamlit.runtime.runtime import Runtime
+        import inspect,ast,textwrap
+        source=textwrap.dedent(inspect.getsource(Runtime._loop_coroutine))
+        original=ast.parse(source)
+        fixed=ast.parse(patched_source(source))
+        assign=[node for node in ast.walk(fixed) if isinstance(node,ast.Assign)
+                and {t.id for t in node.targets if isinstance(t,ast.Name)}=={"active_session_info","msg_list","msg"}]
+        self.assertEqual(len(assign),1)
+        self.assertIsNone(assign[0].value.value)
+        self.assertGreater(len(list(ast.walk(fixed))),len(list(ast.walk(original))))
+        with self.assertRaises(RuntimeError):patched_source("async def f(): pass")
+
     def test_orphan_assessment_never_authorizes_signal(self):
         current={"start_ticks":200}
         row={"app":False,"streamlit_launcher":True,"climate_app_target":True,

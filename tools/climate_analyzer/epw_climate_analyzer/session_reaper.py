@@ -158,6 +158,7 @@ def _finalize_retired(manager):
             session.session_state.clear()
             session._browser_queue.clear()
             session._client_state.Clear()
+            session._fragment_storage.clear()
             for task in tuple(session._background_tasks):task.cancel()
             with _LOCK:_STATUS["retired_payloads_cleared"]=_STATUS.get("retired_payloads_cleared",0)+1
         except Exception as exc:
