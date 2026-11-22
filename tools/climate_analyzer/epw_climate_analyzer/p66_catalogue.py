@@ -49,12 +49,12 @@ def prepare_frame(df):
     """Add only physically admitted reference derived fields, never alter source."""
     from .surface_radiation_views import with_diffuse_fraction,poa_frame
     from .monthly_radiation import surface_available
-    out=df.copy()
-    if hourly_capable(out):
-        if all(c in out for c in (G,D)):
-            out=with_diffuse_fraction(out)
-        if surface_available(out):
-            out=poa_frame(out,90.,180.)
+    if not hourly_capable(df):return df
+    # Both builders create their own result frames; do not duplicate a source
+    # before either builder, and never write into the input.
+    if all(c in df for c in (G,D)):out=with_diffuse_fraction(df)
+    else:out=df
+    if surface_available(out):out=poa_frame(out,90.,180.,copy=out is df)
     return out
 
 def catalogue(df,context,coverage=FULL):

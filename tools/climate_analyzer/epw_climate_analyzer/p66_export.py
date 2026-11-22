@@ -8,6 +8,7 @@ import zipfile
 import tempfile
 import gc
 import threading
+from pathlib import Path
 from .p66_memory import require_headroom,require_html_headroom,EXPORT_LOCK as _EXPORT_LOCK
 from .p6_static_render import render_png,export_headroom,release_render_worker
 from collections import Counter
@@ -248,7 +249,7 @@ def generate_atlas(diagrams,df,context,**kwargs):
         _EXPORT_LOCK.release()
 
 def _generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive Diagram Atlas",paper="A4",orientation="Landscape",
-                   mode=PDF_MODES[0],per_page=2,progress=None,image_renderer=None,coverage=LEVELS[-1]):
+                   mode=PDF_MODES[0],per_page=2,progress=None,image_renderer=None,coverage=LEVELS[-1],output_path=None):
     """Explicitly process every requested admitted variant; report all outcomes."""
     if mode not in PDF_MODES or paper not in ("A4","A3") or orientation not in ("Landscape","Portrait") or per_page not in (1,2,4):
         raise ValueError("Invalid atlas output configuration.")
@@ -258,7 +259,9 @@ def _generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive
     if mode!=PDF_MODES[2] and len(available)>MAX_BATCH:raise ValueError("Select a bounded export batch (at most 50 admitted diagrams per request). The full catalogue remains available across batches.")
     groups={}
     for i,d in available:groups.setdefault(d.chapter,[]).append((i,d))
-    zbuf=tempfile.TemporaryFile(mode="w+b")
+    if output_path is not None and mode!=PDF_MODES[2]:
+        raise ValueError("Direct file output is supported for HTML only.")
+    zbuf=Path(output_path).open("w+b") if output_path is not None else tempfile.TemporaryFile(mode="w+b")
     archive=zipfile.ZipFile(zbuf,"w",compression=zipfile.ZIP_DEFLATED,compresslevel=4) if mode!="Single PDF" else None
     writer=None
     if mode=="Single PDF":writer=PdfWriter(title=title,paper=paper,orientation=orientation,per_page=per_page,context=context,df=df,image_renderer=image_renderer)
@@ -269,6 +272,7 @@ def _generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive
         else:export_headroom(stage)
     notes={}
     html_files=[]
+    html_output=None
     def check_archive():
         if zbuf.tell()>MAX_ARCHIVE_BYTES:
             raise MemoryError("Atlas exceeds the 32 MiB download budget. Select fewer chapters or a smaller export batch.")
@@ -282,20 +286,26 @@ def _generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive
             cache={} # expensive shared kernels cached per chapter only
             if mode=="Chapter PDFs (ZIP)":writer=PdfWriter(title=title,paper=paper,orientation=orientation,per_page=per_page,context=context,df=df,image_renderer=image_renderer)
             if writer:writer.begin_chapter(chapter)
-            parts=[];part_size=0;part_no=1;seq=0
-            chapter_header=_html_header(title,context,chapter,df) if mode==PDF_MODES[2] else ""
+            part_size=0;part_count=0;part_no=1;seq=0
+            chapter_header=_html_header(title,context,chapter,df).encode("utf-8") if is_html else b""
             def flush_html():
-                nonlocal parts,part_size,part_no
-                if not parts:return
+                nonlocal html_output,part_size,part_count,part_no
+                if html_output is None:return
+                try:html_output.write(b"</body></html>")
+                finally:
+                    html_output.close();html_output=None
                 name=f"{slug(chapter)}-{part_no:03d}.html"
-                # Stream the bounded part to the disk-backed ZIP instead of
-                # materializing another copy of the entire HTML document.
-                with archive.open(name,"w") as output:
-                    output.write(chapter_header.encode("utf-8"))
-                    for panel in parts:output.write(panel.encode("utf-8"))
-                    output.write(b"</body></html>")
-                html_files.append((name,CHAPTERS.get(chapter,chapter),part_no,len(parts)))
-                parts=[];part_size=0;part_no+=1
+                html_files.append((name,CHAPTERS.get(chapter,chapter),part_no,part_count))
+                part_size=0;part_count=0;part_no+=1
+                check_archive()
+            def write_panel(panel):
+                nonlocal html_output,part_size,part_count
+                if part_count and part_size+len(panel)>HTML_PART_BYTES:flush_html()
+                if html_output is None:
+                    html_output=archive.open(f"{slug(chapter)}-{part_no:03d}.html","w")
+                    html_output.write(chapter_header)
+                html_output.write(panel)
+                part_size+=len(panel);part_count+=1
                 check_archive()
             for i,d in entries:
                 if progress:progress(processed,len(available),d.title)
@@ -307,11 +317,13 @@ def _generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive
                     guard(f"Atlas prepared chart {processed}: {d.title}")
                     if writer:writer.add(d,fig,note)
                     else:
-                        seq+=1;panel=_html_panel(d,fig,note,seq)
-                        size=len(panel.encode("utf-8"))
-                        if parts and part_size+size>HTML_PART_BYTES:flush_html()
-                        parts.append(panel);part_size+=size
-                        del panel
+                        seq+=1;panel=_html_panel(d,fig,note,seq).encode("utf-8")
+                        # Fail the whole archive on I/O errors rather than
+                        # return a partial HTML member as a generated diagram.
+                        try:write_panel(panel)
+                        except MemoryError:raise
+                        except Exception as exc:raise MemoryError("HTML archive write failed: "+str(exc)) from exc
+                        finally:del panel
                     manifest[i]["status"]="generated";manifest[i]["reason"]=""
                     notes[d.id]=note
                 except MemoryError:raise
@@ -355,13 +367,17 @@ def _generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive
             if zbuf.tell()>MAX_ARCHIVE_BYTES:raise MemoryError("Atlas batch exceeds 32 MiB; reduce batch size.")
             if is_html:require_html_headroom("HTML archive finalization")
             else:require_headroom()
-            zbuf.seek(0);output=zbuf.read()
+            if output_path is None:
+                zbuf.seek(0);output=zbuf.read()
+            else:
+                zbuf.flush();output=None
         else:
             release_render_worker()
             export_headroom("Atlas final PDF assembly")
             output=writer.finish()
-        if len(output)>MAX_ARCHIVE_BYTES:raise MemoryError("Atlas batch exceeds 32 MiB; reduce batch size.")
+        if output is not None and len(output)>MAX_ARCHIVE_BYTES:raise MemoryError("Atlas batch exceeds 32 MiB; reduce batch size.")
         return output,manifest,metadata
     finally:
+        if html_output is not None:html_output.close()
         if archive:archive.close()
         zbuf.close()

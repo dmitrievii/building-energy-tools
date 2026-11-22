@@ -17,10 +17,10 @@ def with_diffuse_fraction(df):
         out[FRACTION]=(100*d/g).where(np.isfinite(g)&np.isfinite(d)&(g>0)&(d>=0)&(d<=g))
     return out
 
-def poa_frame(df,tilt,azimuth,albedo=None):
+def poa_frame(df,tilt,azimuth,albedo=None,*,copy=True):
     if not surface_available(df): raise ValueError("Surface radiation requires coincident GHI, DNI, DHI and solar geometry.")
     data=ensure_current_solar_runtime().surface_irradiance_components(df,tilt,azimuth,albedo=albedo)
-    out=df.copy()
+    out=df.copy() if copy else df
     for c in SURFACE_FIELDS.values():out[c]=data[c]
     out.attrs.update(df.attrs)
     return out

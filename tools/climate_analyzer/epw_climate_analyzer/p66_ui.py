@@ -82,8 +82,8 @@ def render_atlas(df,context,reference_df=None):
         st.caption(f"Full selection: {ready:,} admitted diagrams in {batch_count} batches. This request generates {len(batch)} diagrams only. Download each batch before generating the next; all catalogue entries remain selectable. The catalogue CSV describes the entire selection; generation outcomes describe this batch only.")
     mem=container_memory()
     if mem:st.caption(f"Container memory: {mem[0]/1024**2:.0f} / {mem[1]/1024**2:.0f} MiB.")
-    st.caption("32 MiB output budget per download. Interactive HTML avoids Chromium image rendering. If a complete HTML export exceeds memory or size limits, select a batch or fewer chapters.")
-    signature=hashlib.sha256(json.dumps([context,coverage,chosen,[d.id for d in batch],batch_number,batch_size,title,mode,paper,orientation,per_page,"p67-html-all",all_html],sort_keys=True,default=str).encode()).hexdigest()
+    st.caption("32 MiB output budget per download. HTML runs in a disposable, memory-monitored process without Chromium. If resource admission fails, clean unused caches or select a smaller batch.")
+    signature=hashlib.sha256(json.dumps([context,coverage,chosen,[d.id for d in batch],batch_number,batch_size,title,mode,paper,orientation,per_page,"mem-r2-html-isolated",all_html],sort_keys=True,default=str).encode()).hexdigest()
     if st.session_state.get("_p66_atlas_result") and st.session_state["_p66_atlas_result"][0]!=signature:
         st.session_state.pop("_p66_atlas_result",None)
     from .memory_lifecycle import prepare_export,finish_export,cleanup
@@ -93,9 +93,15 @@ def render_atlas(df,context,reference_df=None):
         try:
             def update(i,n,label):
                 progress.progress(min(100,int(100*i/max(n,1))),text=f"{i:,}/{n:,} · {label}")
-            from .p6_static_render import session_cache_dir
-            data,manifest,metadata=generate_atlas(batch,prepared,{**context,"_report_osm":True},reference_df=reference_df,title=title,paper=paper,orientation=orientation,
-                                  mode=mode,per_page=per_page,progress=update,coverage=coverage,render_cache_dir=session_cache_dir(st.session_state))
+            config=dict(reference_df=reference_df,title=title,paper=paper,orientation=orientation,
+                        mode=mode,per_page=per_page,progress=update,coverage=coverage)
+            if is_html:
+                from .atlas_isolation import isolated_html_atlas
+                data,manifest,metadata=isolated_html_atlas(batch,prepared,{**context,"_report_osm":True},**config)
+            else:
+                from .p6_static_render import session_cache_dir
+                data,manifest,metadata=generate_atlas(batch,prepared,{**context,"_report_osm":True},
+                                  **config,render_cache_dir=session_cache_dir(st.session_state))
             metadata["batch_number"]=batch_number
             metadata["batch_count"]=batch_count
             metadata["export_scope"]="all selected" if all_html else "selected batch"
@@ -118,6 +124,19 @@ def render_atlas(df,context,reference_df=None):
         st.download_button("Download atlas",data=data,file_name=f"climate_diagram_atlas_{suffix}.{ext}",mime="application/pdf" if ext=="pdf" else "application/zip",key="p66_download",on_click="ignore")
     st.download_button("Download final coverage CSV",data=manifest_csv(manifest),file_name=f"atlas_coverage_{suffix}.csv",mime="text/csv",key="p66_coverage_csv",on_click="ignore")
     st.download_button("Download atlas metadata",data=json.dumps(metadata,ensure_ascii=False,indent=2,default=str).encode(),file_name="atlas_metadata.json",mime="application/json",key="p66_meta")
+    diagnostic=metadata.get("execution_diagnostics")
+    if diagnostic:
+        with st.expander("Export execution diagnostics",expanded=False):
+            st.caption("Sampled memory; short-lived peaks between samples may be missed. Container memory is shared.")
+            for key,label in (("baseline_container_mib","Container before worker"),
+                              ("sampled_container_peak_mib","Container sampled peak"),
+                              ("sampled_worker_rss_peak_mib","Worker sampled RSS peak"),
+                              ("container_after_worker_exit_mib","Container after worker exit"),
+                              ("parent_rss_before_mib","Parent RSS before worker"),
+                              ("parent_rss_after_transfer_mib","Parent RSS after download transfer")):
+                value=diagnostic.get(key)
+                if value is not None:st.caption(f"{label}: {value:,.0f} MiB")
+            st.caption(f"Elapsed time: {diagnostic['wall_seconds']:.1f} s")
     with st.expander("Generation outcomes",expanded=bool(n["failed"])):
         st.dataframe(pd.DataFrame([{"Diagram":d["title"],"Status":d["status"],"Reason":d["reason"]} for d in manifest]),hide_index=True,use_container_width=True)
     def release_atlas():

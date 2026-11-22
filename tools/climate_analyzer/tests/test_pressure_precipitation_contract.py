@@ -108,10 +108,22 @@ class PressureAndPrecipitationContractTests(unittest.TestCase):
             if isinstance(node, ast.FunctionDef) and node.name == "render_generic_variable_page"
         )
         source = ast.get_source_segment(self.source, function) or ""
-        self.assertIn('if column == "liquid_precipitation_depth_mm":', source)
-        self.assertIn('chart_types.remove("Profile with min-mean-max ribbon")', source)
-        self.assertNotIn('extensive = column == "liquid_precipitation_depth_mm"', source)
-        self.assertNotIn('extensive=extensive', source)
+        self.assertIn('if column == "liquid_precipitation_depth_mm" and chart_type in', source)
+        self.assertIn("render_profile_controls(df,column,unit",source)
+        self.assertNotIn("extensive=extensive",source)
+        # The consolidated explorer allows interval statistics and totals as
+        # separate representations. A ribbon must use interval mean, not total.
+        from epw_climate_analyzer.charts import time_series_profile_chart
+        from epw_climate_analyzer.aggregations import profile_representation_options
+        df=self._fixture();column="liquid_precipitation_depth_mm"
+        options=profile_representation_options(df,column,"Monthly")
+        self.assertIn("Total",options)
+        self.assertIn("Min–mean–max",options)
+        ribbon=time_series_profile_chart(df,column,"Monthly","test","mm","Min–mean–max")
+        self.assertEqual({t.name for t in ribbon.data},{"Minimum","Mean","Maximum"})
+        np.testing.assert_allclose(next(t.y for t in ribbon.data if t.name=="Mean"),[1.5,2.])
+        total=time_series_profile_chart(df,column,"Monthly","test","mm","Total")
+        np.testing.assert_allclose(total.data[0].y,[3.,4.])
 
     def test_precipitation_page_uses_chart_first_layout_without_kpi_strip(self) -> None:
         function = next(

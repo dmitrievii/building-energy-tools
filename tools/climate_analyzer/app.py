@@ -1872,61 +1872,45 @@ def next_plot_key(prefix: str = "plot") -> str:
 
 
 def render_chart_export_controls(fig) -> None:
-    """Render a compact local export control without reducing chart width."""
+    """Prepare only the explicitly requested download, never during chart rendering."""
     from epw_climate_analyzer.exporting import (
-        dataframe_to_csv_bytes,
-        figure_export_stem,
-        figure_to_csv_bytes,
-        safe_export_stem,
+        dataframe_to_csv_bytes,figure_export_stem,figure_to_csv_bytes,safe_export_stem,
     )
-
-    # Keep the chart itself full-width. The tiny control occupies its own row
-    # immediately above the figure instead of stealing horizontal chart space.
-    export_key = next_plot_key("chart_export")
+    from epw_climate_analyzer.p66_memory import require_html_headroom
+    # Stable within a rerun, unlike the legacy monotonically increasing plot key.
+    ordinal=int(st.session_state.get("_mem_r2_chart_ordinal",0))+1
+    st.session_state["_mem_r2_chart_ordinal"]=ordinal
+    export_key=f"mem_r2_export_{st.session_state.get(NAVIGATION_KEY)}_{ordinal}"
     _, export_col = st.columns([24, 1], gap="small")
     with export_col:
         with st.popover("⇩"):
             st.caption("Export this chart")
-            stem = figure_export_stem(fig)
-            chart_csv = figure_to_csv_bytes(fig)
-            if chart_csv:
-                st.download_button(
-                    "Chart data · CSV",
-                    key=f"{export_key}_trace",
-                    data=chart_csv,
-                    file_name=f"{stem}.csv",
-                    mime="text/csv",
-                    use_container_width=True,
-                )
-            else:
-                st.caption("No tabular trace data are available for this figure.")
-
-            # A comparison figure can combine several independent EPW files, so
-            # offering one arbitrary active source/filtered table there would be
-            # misleading. Its trace-level CSV remains available above.
-            if st.session_state.get(NAVIGATION_KEY) != "Compare Climates":
-                filtered = st.session_state.get("_active_filtered_export_df")
-                if hasattr(filtered, "to_csv"):
-                    st.download_button(
-                        "Filtered data · CSV",
-                        key=f"{export_key}_filtered",
-                        data=dataframe_to_csv_bytes(filtered),
-                        file_name=f"{stem}_filtered.csv",
-                        mime="text/csv",
-                        use_container_width=True,
-                    )
-
-                active = get_active_climate_file()
-                if active is not None:
-                    source_name = safe_export_stem(active.name, default="source_weather")
-                    st.download_button(
-                        "Source weather · EPW",
-                        key=f"{export_key}_epw",
-                        data=active.payload,
-                        file_name=f"{source_name}.epw",
-                        mime="application/octet-stream",
-                        use_container_width=True,
-                    )
+            stem=figure_export_stem(fig)
+            options=["Chart data · CSV"]
+            filtered=None;active=None
+            if st.session_state.get(NAVIGATION_KEY)!="Compare Climates":
+                filtered=st.session_state.get("_active_filtered_export_df")
+                if hasattr(filtered,"to_csv"):options.append("Filtered data · CSV")
+                active=get_active_climate_file()
+                if active is not None:options.append("Source weather · EPW")
+            choice=st.selectbox("Export type",options,key=export_key+"_type",label_visibility="collapsed")
+            if st.button("Prepare download",key=export_key+"_prepare"):
+                try:
+                    require_html_headroom("Chart download preparation")
+                    if choice=="Chart data · CSV":
+                        payload=figure_to_csv_bytes(fig);filename=f"{stem}.csv";mime="text/csv"
+                    elif choice=="Filtered data · CSV":
+                        payload=dataframe_to_csv_bytes(filtered);filename=f"{stem}_filtered.csv";mime="text/csv"
+                    else:
+                        payload=active.payload
+                        filename=safe_export_stem(active.name,default="source_weather")+".epw"
+                        mime="application/octet-stream"
+                    if not payload:st.info("No tabular trace data are available for this figure.")
+                    else:
+                        require_html_headroom("Chart download buffer")
+                        st.download_button("Download",data=payload,file_name=filename,mime=mime,
+                                           key=export_key+"_download",on_click="ignore")
+                except Exception as exc:st.error(str(exc))
 
 
 def render_plot(fig, text: str) -> None:
@@ -6154,6 +6138,7 @@ def main() -> None:
     st.sidebar.title(APP_NAME)
     st.sidebar.caption(APP_RELEASE_LABEL)
     apply_queued_navigation(st.session_state)
+    st.session_state["_mem_r2_chart_ordinal"]=0
     from epw_climate_analyzer.p6_report import CONTEXT_KEY,INTERPRETATION_KEY,render_report_status
     render_report_status(st)
     from epw_climate_analyzer.memory_lifecycle import begin_rerun,render_sidebar

@@ -173,8 +173,11 @@ def figure_to_csv_bytes(fig: Any) -> bytes:
 
 def dataframe_to_csv_bytes(df: pd.DataFrame) -> bytes:
     """Return the currently filtered analysis dataframe as UTF-8 CSV bytes."""
-    out = df.copy()
-    if not isinstance(out.index, pd.RangeIndex):
-        index_name = out.index.name or "timestamp"
-        out = out.reset_index(names=index_name)
-    return out.to_csv(index=False).encode("utf-8-sig")
+    if isinstance(df.index,pd.RangeIndex):
+        return df.to_csv(index=False).encode("utf-8-sig")
+    # Preserve the previous reset_index naming/collision contract. For
+    # ordinary single-level climate indices write directly without a full copy.
+    index_name=df.index.name or "timestamp"
+    if isinstance(df.index,pd.MultiIndex) or index_name in df.columns:
+        return df.reset_index(names=index_name).to_csv(index=False).encode("utf-8-sig")
+    return df.to_csv(index=True,index_label=index_name).encode("utf-8-sig")
