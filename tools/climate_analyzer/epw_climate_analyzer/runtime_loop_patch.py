@@ -4,21 +4,21 @@ Never mutate a suspended coroutine frame or patch an already running Runtime.
 The normal managed deployment calls this before constructing Runtime.
 """
 import inspect
-import textwrap
 
-_MARKER="        # Yield briefly between session message flushing cycles.\n"
-_BEFORE="        for active_session_info in self._session_mgr.list_active_sessions():\n"
+def class_source(source):
+    """Keep original method indentation and multiline literal contents intact."""
+    if not source.startswith("    async def _loop_coroutine("):
+        raise RuntimeError("Unsupported Streamlit runtime method source")
+    return "class _RuntimeLoopPatch:\n"+source
 
 def patched_source(source):
-    # Exact anchors in the dedented 1.63.0 implementation.
-    marker="                # Yield briefly between session message flushing cycles.\n"
-    before="                for active_session_info in self._session_mgr.list_active_sessions():\n"
-    # Dedented method has 16 spaces at the flush branch. Fail closed if upstream
-    # has changed rather than applying an approximate transformation.
+    # Match the original 1.63.0 class-method indentation exactly.
+    marker="                    # Yield briefly between session message flushing cycles.\n"
+    before="                    for active_session_info in self._session_mgr.list_active_sessions():\n"
     if source.count(marker)!=1 or source.count(before)!=1 or source.index(before)>source.index(marker):
         raise RuntimeError("Unsupported Streamlit runtime loop source")
-    return source.replace(marker,
-        "                active_session_info = msg_list = msg = None\n"+marker,1)
+    return class_source(source.replace(marker,
+        "                    active_session_info = msg_list = msg = None\n"+marker,1))
 
 def install_before_runtime():
     import streamlit
@@ -27,11 +27,11 @@ def install_before_runtime():
         raise RuntimeError("Runtime loop correction requires fresh Streamlit 1.63.0")
     old=Runtime._loop_coroutine
     if getattr(old,"_ige_hf2_loop",False):return
-    source=textwrap.dedent(inspect.getsource(old))
+    source=inspect.getsource(old)
     # The source remains in the pinned dependency; no user code interpolated.
     namespace={}
     exec(compile(patched_source(source),inspect.getsourcefile(old) or "<streamlit-runtime>","exec"),old.__globals__,namespace)
-    replacement=namespace["_loop_coroutine"]
+    replacement=namespace["_RuntimeLoopPatch"]._loop_coroutine
     replacement.__qualname__=old.__qualname__
     replacement._ige_hf2_loop=True
     Runtime._loop_coroutine=replacement

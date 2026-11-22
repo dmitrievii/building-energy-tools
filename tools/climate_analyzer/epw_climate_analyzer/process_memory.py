@@ -90,6 +90,10 @@ def socket_inventory(pid,*,max_fds=2048,max_rows=20000):
                     inodes.add(target[8:-1])
     except OSError:return {"status":"unavailable: fd access"}
     found=set();listeners=[];established=0;other_tcp=0;udp=0;unix=0
+    tcp_states={}
+    state_names={"01":"ESTABLISHED","02":"SYN_SENT","03":"SYN_RECV","04":"FIN_WAIT1",
+                 "05":"FIN_WAIT2","06":"TIME_WAIT","07":"CLOSE","08":"CLOSE_WAIT",
+                 "09":"LAST_ACK","0A":"LISTEN","0B":"CLOSING","0C":"NEW_SYN_RECV"}
     try:
         for name in ("tcp","tcp6","udp","udp6","unix"):
             with (base/"net"/name).open() as f:
@@ -102,13 +106,15 @@ def socket_inventory(pid,*,max_fds=2048,max_rows=20000):
                     found.add(inode)
                     if name=="unix":unix+=1
                     elif name.startswith("udp"):udp+=1
-                    elif fields[3]=="0A":
-                        listeners.append(int(fields[1].rsplit(":",1)[1],16))
-                    elif fields[3]=="01":established+=1
-                    else:other_tcp+=1
+                    else:
+                        state=state_names.get(fields[3],"UNKNOWN")
+                        tcp_states[state]=tcp_states.get(state,0)+1
+                        if state=="LISTEN":listeners.append(int(fields[1].rsplit(":",1)[1],16))
+                        elif state=="ESTABLISHED":established+=1
+                        else:other_tcp+=1
     except (OSError,IndexError,ValueError):return {"status":"partial: network table unavailable"}
     return {"status":"sampled","socket_fds_unique":len(inodes),"tcp_listen_ports":sorted(set(listeners)),
-            "tcp_established":established,"tcp_other":other_tcp,"udp":udp,"unix":unix,
+            "tcp_established":established,"tcp_other":other_tcp,"tcp_states":tcp_states,"udp":udp,"unix":unix,
             "unclassified_sockets":len(inodes-found),
             "scope":"FD/socket snapshot; no user-session or routing guarantee."}
 

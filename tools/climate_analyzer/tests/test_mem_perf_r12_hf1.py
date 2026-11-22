@@ -62,12 +62,13 @@ class HF1Tests(unittest.TestCase):
             self.assertTrue(reaper.reaper_summary()["policy_verified"])
 
     def test_runtime_loop_patch_releases_last_iteration_locals(self):
-        from epw_climate_analyzer.runtime_loop_patch import patched_source
+        from epw_climate_analyzer.runtime_loop_patch import class_source,patched_source
         from streamlit.runtime.runtime import Runtime
-        import inspect,ast,textwrap
-        source=textwrap.dedent(inspect.getsource(Runtime._loop_coroutine))
-        original=ast.parse(source)
+        import inspect,ast
+        source=inspect.getsource(Runtime._loop_coroutine)
+        original=ast.parse(class_source(source))
         fixed=ast.parse(patched_source(source))
+        compile(patched_source(source),"<test-runtime>","exec")
         assign=[node for node in ast.walk(fixed) if isinstance(node,ast.Assign)
                 and {t.id for t in node.targets if isinstance(t,ast.Name)}=={"active_session_info","msg_list","msg"}]
         self.assertEqual(len(assign),1)
