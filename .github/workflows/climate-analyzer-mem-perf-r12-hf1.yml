@@ -27,6 +27,7 @@ jobs:
       - run: python -m compileall -q app.py epw_climate_analyzer scripts
       - run: python -m unittest discover -s tests -p test_chart_lifecycle.py -v
       - run: python -m unittest discover -s tests -p test_memory_lifecycle.py -v
+      - run: python -m unittest discover -s tests -p test_mem_perf_r12_hf1.py -v
       - run: npm install --no-save playwright-core@1.55.0
       - name: Run 20 real EPW replacement and disconnect cycles
         run: |

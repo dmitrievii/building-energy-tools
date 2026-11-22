@@ -279,6 +279,10 @@ def reset_session(state):
         import streamlit as st
         if not request_native_reset():
             st.error("Native session reset unavailable. Reload the page.")
+        else:
+            # A fixed, trusted script; never interpolate user content. The
+            # full document reload clears browser widget state as well.
+            st.html("<script>window.location.reload();</script>",unsafe_allow_javascript=True)
         st.stop()
         return
     _reset_local_state(state)
@@ -386,7 +390,7 @@ def _render_sidebar(st):
         live_reaper=reaper_summary()
         st.caption(f"Live session maintenance: {live_reaper.get('status','unavailable')}; sweeps: {live_reaper.get('sweeps',0)}; disconnected at last sweep: {live_reaper.get('disconnected_sessions','Unavailable')}; closed immediately: {live_reaper.get('closed_on_disconnect',0)}; expired reaped (fallback): {live_reaper.get('expired_reaped',0)}.")
         st.caption(f"Active sessions: {live_reaper.get('active_sessions','Unavailable')}; WebSocket disconnect dispatches: {live_reaper.get('disconnect_events',0)}; native closes: {live_reaper.get('native_closes',0)}; closed session objects still reachable: {live_reaper.get('closed_session_refs_alive',0)}.")
-        st.caption(f"Native resets: {live_reaper.get('native_resets',0)}; reset failures: {live_reaper.get('reset_failures',0)}.")
+        st.caption(f"Native resets: {live_reaper.get('native_resets',0)}; reset failures: {live_reaper.get('reset_failures',0)}; retired payload cleanups: {live_reaper.get('retired_payloads_cleared',0)}.")
         queue_sample=live_reaper.get("forward_queue_sample",{})
         if queue_sample.get("status")=="sampled":
             st.caption(f"Pending forward messages at last sweep: {queue_sample['pending_messages_in_sampled_sessions']}; sampled wire payload: {_mib(queue_sample['sampled_wire_bytes'])}; {queue_sample['captured_at_utc']} (not websocket backlog or RSS).")

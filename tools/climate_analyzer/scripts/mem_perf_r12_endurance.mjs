@@ -52,12 +52,16 @@ try{
  if(!state.reaper.disconnect_policy?.includes('native close'))throw Error('No disconnect policy');
  // One full warmup, then explicitly test manual reset and page reload.
  const sampleUser=await open();await generate(sampleUser);
- await sampleUser.p.getByRole('button',{name:'Reset test session'}).click();
+ await Promise.all([
+   sampleUser.p.waitForEvent('framenavigated',{predicate:frame=>frame===sampleUser.p.mainFrame(),timeout:60000}),
+   sampleUser.p.getByRole('button',{name:'Reset test session'}).click()
+ ]);
  await sampleUser.p.waitForFunction(old=>Array.from(document.querySelectorAll('[data-testid="stText"]')).some(e=>/^Sentinel: [a-f0-9]{32}$/.test(e.innerText)&&e.innerText!==old),sampleUser.identity,{timeout:60000});
  await marker(sampleUser.p).waitFor({timeout:60000});
  sampleUser.identity=await marker(sampleUser.p).innerText();sampleUser.measurement=0;
  const reset=await sample(sampleUser);
  if(reset.private.length||reset.aggregate.owners!==1)throw Error('Manual reset not isolated: '+JSON.stringify({private:reset.private,aggregate:reset.aggregate,reaper:reset.reaper}));
+ if((reset.reaper.native_resets||0)<1)throw Error('No native reset recorded');
  resetPassed=true;
  const original=sampleUser.identity;
  await generate(sampleUser);

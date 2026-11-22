@@ -98,7 +98,14 @@ try{
    await graph(p,'Climate — Solar radiation');
    const before=await snapshot(p,'graphs-b',cycle);
    const previous=before.session_runtime.session_reaper.last_idle_server_sample?.captured_at_utc;
-   await p.reload();
+   if(cycle%2===0){
+     const consent=p.getByText("Confirm deletion of this session's climate data, reports and settings",{exact:true});
+     await consent.click();
+     await Promise.all([
+       p.waitForEvent('framenavigated',{predicate:f=>f===p.mainFrame(),timeout:60000}),
+       p.getByRole('button',{name:'Reset session',exact:true}).click()
+     ]);
+   }else await p.reload();
    await p.getByRole('heading',{name:'Upload an EPW weather file'}).waitFor({timeout:90000});
    const reload=await snapshot(p,'reload',cycle);
    if(reload.session_resources.some(r=>r.resource==='active_climate_file'))throw Error('Reload retained EPW');
@@ -109,6 +116,9 @@ try{
    p=await open(ctx);
    lastIdle=await freshIdle(p,previous,cycle);
    if(!baseline)baseline=lastIdle;
+   const live=lastIdle.epw_lifecycle?.alive||{};
+   if(Object.values(live).some(n=>n>0))throw Error('Retained EPW objects at zero sessions: '+JSON.stringify(live));
+   if(lastIdle.closed_session_refs_alive!==0)throw Error('Closed AppSessions still reachable: '+lastIdle.closed_session_refs_alive);
    completed++;
    console.log("Completed real EPW cycle",completed,"idle anon",lastIdle.memory.process_anon,"retained",JSON.stringify(lastIdle.epw_lifecycle?.alive||{}));
  }
@@ -116,7 +126,12 @@ try{
 }catch(e){error=String(e);console.error(error);}
 finally{
  await browser.close();
- const idle=rows.filter(r=>r.stage==='idle-observer').map(r=>r.reaper.last_idle_server_sample).filter(Boolean);
- await fs.writeFile(path.join(dir,'summary.json'),JSON.stringify({schema:'R12-HF1',scope:'Real app.py, two EPW identities, no PDF or UTCI; second EPW changes location label only',completed,cycles,error,baseline,lastIdle,idle,rows},null,2));
+ const idle=[...new Map(rows.filter(r=>r.stage==='idle-observer').map(r=>r.reaper.last_idle_server_sample).filter(Boolean).map(x=>[x.captured_at_utc,x])).values()];
+ const warm=idle.slice(3).map(x=>x.memory.process_anon).filter(Number.isFinite);
+ const warmDrift=warm.length>=2?warm.at(-1)-warm[0]:null;
+ // Provisional CI tolerance, not a platform-independent proof of no leak.
+ const warmGate=warmDrift!==null&&warmDrift<=64*1024**2;
+ if(!error&&completed===cycles&&!warmGate)error='Provisional warm anonymous RSS drift gate failed';
+ await fs.writeFile(path.join(dir,'summary.json'),JSON.stringify({schema:'R13',scope:'Real app.py, two EPW identities, native reset/reload alternating, no PDF or UTCI; second EPW changes location label only',completed,cycles,error,baseline,lastIdle,idle,warmDrift,warmGate,rows},null,2));
 }
 if(error||completed!==cycles)process.exit(1);

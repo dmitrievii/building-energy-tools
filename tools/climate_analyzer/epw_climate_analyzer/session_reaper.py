@@ -15,7 +15,10 @@ _INTERVAL=1.
 _QUEUE_INTERVAL=30.
 _LAST_QUEUE_SAMPLE=0.
 RUNTIME_RECOVERY_SCHEMA="MEM-PERF-R13"
-_RESET_TASKS=set()
+_RESET_REQUESTS=set()
+# Strong references are limited to closed sessions still awaiting their own
+# ScriptRunner termination. Store weak refs to avoid creating new owners.
+_RETIRED=[]
 _CLOSED_REFS=[]
 _RECOVERY_PENDING=False
 _STOPPING_THREADS=weakref.WeakSet()
@@ -61,6 +64,8 @@ def _install_disconnect_policy(manager):
         try:_CLOSED_REFS.append(weakref.ref(session))
         except TypeError:pass
         del _CLOSED_REFS[:-128]
+        try:_RETIRED.append((weakref.ref(session),weakref.ref(thread) if thread is not None else None))
+        except TypeError:pass
         from .byte_cache import close_session_caches
         try:original_close(session_id)
         except Exception as exc:
@@ -70,7 +75,12 @@ def _install_disconnect_policy(manager):
         finally:
             close_session_caches(session_id)
             _RECOVERY_PENDING=True
-        with _LOCK:_STATUS["native_closes"]=_STATUS.get("native_closes",0)+1
+        with _LOCK:
+            _STATUS["native_closes"]=_STATUS.get("native_closes",0)+1
+            if session_id in _RESET_REQUESTS:
+                _RESET_REQUESTS.discard(session_id)
+                _STATUS["native_resets"]=_STATUS.get("native_resets",0)+1
+                _STATUS["last_reset_status"]="old AppSession closed after browser reload"
     manager.close_session=close
     manager._ige_r12_hf1_close=True
     def disconnect(session_id):
@@ -82,30 +92,13 @@ def _install_disconnect_policy(manager):
     manager._ige_r12_no_reconnect=True
     _set(disconnect_policy="native close; no reconnect retention; direct close instrumented")
 
-async def _restart_session(runtime,session_id):
-    """Event-loop only; destroy exactly the session owned by the caller."""
-    manager=runtime._session_mgr
-    info=manager.get_active_session_info(session_id)
-    if info is None:return
-    from streamlit.web.server.starlette.starlette_websocket import StarletteSessionClient
-    client=info.client
-    if type(client) is not StarletteSessionClient:
-        _set(last_reset_status="unsupported WebSocket client")
-        return
-    try:
-        runtime.close_session(session_id)
-        await client.aclose()
-        await client._websocket.close(code=1012,reason="Session reset")
-        with _LOCK:
-            _STATUS["native_resets"]=_STATUS.get("native_resets",0)+1
-        _set(last_reset_status="old session closed; awaiting new connection")
-    except Exception as exc:
-        with _LOCK:
-            _STATUS["reset_failures"]=_STATUS.get("reset_failures",0)+1
-        _set(last_reset_status="failed: "+type(exc).__name__)
-
 def request_native_reset():
-    """Only the current script context can request its own reset."""
+    """Record the current connection's reset, then let the browser reload.
+
+    Streamlit's WS reconnect can replay browser widget state or omit a rerun.
+    A real document reload prevents both cases. The existing native disconnect
+    policy destroys the old AppSession, never the server. No user-provided JS.
+    """
     import streamlit
     from streamlit.runtime import Runtime
     from streamlit.runtime.scriptrunner import get_script_run_ctx
@@ -116,12 +109,45 @@ def request_native_reset():
     if not getattr(runtime._session_mgr,"_ige_r12_hf1_close",False):return False
     session_id=ctx.session_id
     loop=runtime._get_async_objs().eventloop
-    def schedule():
-        task=loop.create_task(_restart_session(runtime,session_id))
-        _RESET_TASKS.add(task)
-        task.add_done_callback(_RESET_TASKS.discard)
-    loop.call_soon_threadsafe(schedule)
+    def expire_request():
+        if session_id in _RESET_REQUESTS:
+            _RESET_REQUESTS.discard(session_id)
+            with _LOCK:_STATUS["reset_failures"]=_STATUS.get("reset_failures",0)+1
+            _set(last_reset_status="browser reload not observed; reload manually")
+    def mark():
+        if not runtime._session_mgr.is_active_session(session_id):return
+        _RESET_REQUESTS.add(session_id)
+        with _LOCK:_STATUS["reset_requests"]=_STATUS.get("reset_requests",0)+1
+        loop.call_later(15.,expire_request)
+    loop.call_soon_threadsafe(mark)
     return True
+
+def _finalize_retired(manager):
+    """Only clear native payloads once their closed session has stopped."""
+    from streamlit.runtime.app_session import AppSessionState
+    pending=[]
+    for session_ref,thread_ref in _RETIRED:
+        session=session_ref()
+        thread=thread_ref() if thread_ref is not None else None
+        if session is None:continue
+        if thread is not None and thread.is_alive():
+            pending.append((session_ref,thread_ref));continue
+        if manager.is_active_session(session.id):
+            continue
+        if session._state is not AppSessionState.SHUTDOWN_REQUESTED or session._scriptrunner is not None:
+            pending.append((session_ref,thread_ref));continue
+        # Native shutdown already cleared user-upload/media caches; purge
+        # only the dead session's retained widget state and pending messages.
+        try:
+            session.session_state.clear()
+            session._browser_queue.clear()
+            session._client_state.Clear()
+            for task in tuple(session._background_tasks):task.cancel()
+            with _LOCK:_STATUS["retired_payloads_cleared"]=_STATUS.get("retired_payloads_cleared",0)+1
+        except Exception as exc:
+            with _LOCK:_STATUS["retired_clear_failures"]=_STATUS.get("retired_clear_failures",0)+1
+            _set(last_retired_clear_error=type(exc).__name__)
+    _RETIRED[:]=pending
 
 def reaper_summary():
     with _LOCK:return {**_STATUS,"allocator_recovery_pending":_RECOVERY_PENDING,
@@ -167,7 +193,7 @@ def _recover_if_idle(manager,cache,reaped):
     if reaped:
         _RECOVERY_PENDING=True
         return
-    if not _RECOVERY_PENDING or not _idle_for_recovery(manager,cache):
+    if not _RECOVERY_PENDING or _RETIRED or not _idle_for_recovery(manager,cache):
         return
     # Only when no session can use the composed wrappers. Restore the
     # shared pristine binding snapshot, not the scientific library imports.
@@ -240,7 +266,9 @@ def _tick(runtime_ref):
         if type(storage) is not MemorySessionStorage or type(storage._cache) is not TTLCache:
             _set(status="unsupported session storage");return
         _install_disconnect_policy(manager)
+        _finalize_retired(manager)
         _set(active_sessions=len(manager.list_active_sessions()),
+             pending_retired_finalization=len(_RETIRED),
              stopping_script_threads=sum(t.is_alive() for t in list(_STOPPING_THREADS)))
         reaped=_expire_storage(manager,storage._cache)
         _recover_if_idle(manager,storage._cache,reaped)
