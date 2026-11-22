@@ -11,6 +11,30 @@ from epw_climate_analyzer.p3_comfort import annual_hour_grid
 from epw_climate_analyzer.chart_presentation import ChartPresentationSettings,apply_chart_presentation
 
 class CalendarHeatmapTests(unittest.TestCase):
+    def test_temperature_threshold_widgets_are_scoped_to_consuming_charts(self):
+        import ast
+        from pathlib import Path
+        tree=ast.parse((Path(__file__).resolve().parents[1]/"app.py").read_text(encoding="utf-8"))
+        funcs={n.name:n for n in tree.body if isinstance(n,ast.FunctionDef)}
+        def guards(node, ancestors=()):
+            if isinstance(node,ast.Call) and isinstance(node.func,ast.Attribute) and node.func.attr=="slider" and node.args and isinstance(node.args[0],ast.Constant):
+                yield node.args[0].value,ancestors
+            if isinstance(node,ast.If):
+                condition=ast.unparse(node.test)
+                for child in node.body:yield from guards(child,ancestors+(condition,))
+                for child in node.orelse:yield from guards(child,ancestors)
+            else:
+                for child in ast.iter_child_nodes(node):yield from guards(child,ancestors)
+        explorer=dict(guards(funcs["render_generic_variable_page"]))
+        for label in ("Lower colour reference [°C]","Upper colour reference [°C]"):
+            self.assertIn("chart_type == 'Heat map'",explorer[label])
+            self.assertIn("column in TEMPERATURE_HEATMAP_COLUMNS",explorer[label])
+        temperature=dict(guards(funcs["render_temperature"]))
+        self.assertIn("mode == 'Below heating threshold'",temperature["Heating threshold [°C]"])
+        self.assertIn("mode == 'Above cooling threshold'",temperature["Cooling threshold [°C]"])
+        self.assertNotIn("Heating threshold [°C]",explorer)
+        self.assertNotIn("Cooling threshold [°C]",explorer)
+
     def test_full_year_december_labels_and_values(self):
         idx=pd.date_range("2026-01-01","2027-01-01",freq="h",inclusive="left")
         df=pd.DataFrame({"night_flushing_suitable":(idx.month==12).astype(float)},index=idx)

@@ -2330,10 +2330,18 @@ def render_generic_variable_page(
             )
         if column in TEMPERATURE_HEATMAP_COLUMNS:
             temperature_thresholds=temperature_thresholds or tuple(st.session_state.get("_p6_temperature_thresholds",(18.,26.)))
-            if column=="dry_bulb_temperature_c":
-                st.caption("Temperature heatmap colours use a common continuous blue–green–yellow–red gradient, anchored by the selected heating and cooling reference temperatures.")
-            else:
-                st.caption("Same continuous absolute temperature colour scale as dry-bulb temperature; colours indicate temperature, not comfort or heating/cooling demand.")
+            if title_prefix == "Temperature":
+                with st.expander("Temperature colour scale",expanded=False):
+                    left,right=st.columns(2)
+                    lower=left.slider("Lower colour reference [°C]",-5.,25.,float(temperature_thresholds[0]),.5,key=scope+"_colour_reference_lower")
+                    upper=right.slider("Upper colour reference [°C]",15.,40.,float(temperature_thresholds[1]),.5,key=scope+"_colour_reference_upper")
+                    if lower>upper:
+                        st.error("Lower colour reference must not exceed upper colour reference.")
+                        return
+                    temperature_thresholds=(lower,upper)
+                    st.session_state["_p6_temperature_thresholds"]=temperature_thresholds
+                    st.caption("These reference values adjust the common colour mapping only; they do not change the observed temperatures or imply heating/cooling demand.")
+            st.caption("Common continuous absolute temperature colour scale; colours indicate temperature, not comfort or heating/cooling demand.")
         fig = temporal_heatmap_chart(
             df,
             column,
@@ -3348,17 +3356,7 @@ def render_temperature(
         )
         return
 
-    if chart_group in {"Temperature variable explorer", "Threshold conditions"}:
-        threshold_col1, threshold_col2 = st.columns(2)
-        heat_threshold = threshold_col1.slider("Heating threshold [°C]", -5.0, 25.0, float(st.session_state.get("_p6_temperature_thresholds",(18.,26.))[0]), 0.5)
-        cool_threshold = threshold_col2.slider("Cooling threshold [°C]", 15.0, 40.0, float(st.session_state.get("_p6_temperature_thresholds",(18.,26.))[1]), 0.5)
-        if heat_threshold > cool_threshold:
-            st.error("Heating threshold must not exceed cooling threshold.")
-            return
-        st.session_state["_p6_temperature_thresholds"]=(heat_threshold,cool_threshold)
-    else:
-        heat_threshold = 18.0
-        cool_threshold = 26.0
+    heat_threshold, cool_threshold = 18.0, 26.0
 
     if chart_group == "Temperature variable explorer":
         render_generic_variable_page(
@@ -3372,23 +3370,27 @@ def render_temperature(
             ],
             "Dry-bulb temperature",
             "Temperature",
-            lambda data, column, label, unit: variable_interpretation(data, column, label, unit, high_threshold=cool_threshold, low_threshold=heat_threshold),
-            temperature_thresholds=(heat_threshold, cool_threshold),
         )
     elif chart_group == "Threshold conditions":
         aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0)
         mode = st.radio("Condition", ["Below heating threshold", "Above cooling threshold", "Frost hours (Tdry < 0 °C)", "Nighttime hours > 20 °C (20:00–06:59)"])
         if mode == "Below heating threshold":
+            heat_threshold = st.slider("Heating threshold [°C]",-5.,25.,18.,.5,key="temperature_condition_heating")
             condition = df["dry_bulb_temperature_c"] < heat_threshold
+            detail = f"Only observations strictly below {heat_threshold:g} °C qualify."
         elif mode == "Above cooling threshold":
+            cool_threshold = st.slider("Cooling threshold [°C]",15.,40.,26.,.5,key="temperature_condition_cooling")
             condition = df["dry_bulb_temperature_c"] > cool_threshold
+            detail = f"Only observations strictly above {cool_threshold:g} °C qualify."
         elif mode == "Frost hours (Tdry < 0 °C)":
             condition = df["dry_bulb_temperature_c"] < 0.0
+            detail = "Only observations strictly below 0 °C qualify."
         else:
             condition = (df["hour_of_day"].isin(list(range(20, 24)) + list(range(0, 7)))) & (df["dry_bulb_temperature_c"] > 20.0)
+            detail = "Only observations above 20 °C between 20:00 and 06:59 qualify."
         counts = threshold_count_by_period(df, condition, aggregation, label="hours")
         fig = threshold_bar_chart(counts, f"Temperature threshold hours: {mode}")
-        render_plot(fig, temperature_interpretation(df, heat_threshold, cool_threshold))
+        render_plot(fig, detail+" "+variable_interpretation(df,"dry_bulb_temperature_c","outdoor temperature","°C"))
     else:
         st.subheader("Extreme daily conditions")
         if interval_count_metrics:
