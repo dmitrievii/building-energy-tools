@@ -10,6 +10,7 @@ from copy import deepcopy
 from importlib import import_module,reload
 from threading import RLock
 from time import monotonic,perf_counter
+from types import FunctionType,ModuleType,BuiltinFunctionType,CellType,MappingProxyType
 import gc
 import sys
 import weakref
@@ -138,17 +139,36 @@ def _census_type_name(typ):
     name=metadata("__qualname__") or metadata("__name__") or "<unknown type>"
     return module+"."+name
 
+# Exact types only: no subclass __sizeof__ hooks and no direct call to
+# object.__sizeof__ on arbitrary variable-sized or extension objects.
+_CENSUS_MEASURABLE_TYPES=(list,dict,tuple,set,frozenset,bytes,str,bytearray,int,float,
+                          bool,type(None),type,FunctionType,ModuleType,
+                          BuiltinFunctionType,CellType,MappingProxyType)
+
+def _safe_census_size(obj,bound):
+    typ=type(obj)
+    if not any(typ is basic for basic in _CENSUS_MEASURABLE_TYPES):return None
+    try:
+        size=sys.getsizeof(obj)
+        if type(size) is int and 0<=size<=bound:return size
+    except Exception:pass
+    return None
+
 def heap_census():
     """On demand only; bounded output and conservative admission.
 
     gc.get_objects creates a temporary list per generation. Never run this
     expensive diagnostic automatically or with little raw memory headroom.
-    Sizes are shallow GC-tracked objects only, excluding most numeric/native
-    buffers and untracked strings. No object contents or identities returned.
+    Sizes cover only an explicit allowlist of exact Python builtin types.
+    Other objects are counted but not assigned bytes. No object contents or
+    identities are returned; the result is not a heap or RSS reconciliation.
     """
     if not _ready(_CENSUS_RESERVE):return {"status":"blocked: insufficient raw headroom"}
-    counts=Counter();sizes=Counter()
+    counts=Counter();sizes=Counter();measured=Counter()
     start=perf_counter();before=_sample()
+    # Reject nonsensical size results even for allowlisted objects.
+    # At most the container limit (or a 1 GiB diagnostic ceiling when unknown).
+    bound=before.get("limit") or 1024*MIB
     for generation in (0,1,2):
         if not _ready(_CENSUS_RESERVE):return {"status":"stopped: insufficient raw headroom"}
         objects=gc.get_objects(generation=generation)
@@ -157,15 +177,20 @@ def heap_census():
                 typ=type(obj)
                 name=_census_type_name(typ)
                 counts[name]+=1
-                # Avoid arbitrary user/library __sizeof__ implementations.
-                try:
-                    size=sys.getsizeof(obj) if any(typ is basic for basic in (list,dict,tuple,set,frozenset,bytes,str)) else object.__sizeof__(obj)
-                except Exception:size=0
-                sizes[name]+=size
+                size=_safe_census_size(obj,bound)
+                if size is not None:
+                    sizes[name]+=size
+                    measured[name]+=1
             if objects:del obj
         finally:del objects
     top=set(name for name,_ in counts.most_common(25))|set(name for name,_ in sizes.most_common(25))
-    return {"status":"complete","seconds":perf_counter()-start,"before":before,"after":_sample(),
-            "tracked_objects":sum(counts.values()),"shallow_bytes":sum(sizes.values()),
-            "types":[{"type":name,"count":counts[name],"shallow_bytes":sizes[name]} for name in sorted(top,key=lambda n:(-sizes[n],n))],
-            "scope":"GC-tracked objects only; shallow sizes, no native allocation or retainer graph attribution."}
+    total=sum(counts.values());measured_total=sum(measured.values())
+    return {"status":"complete","schema":"R5-HF2-safe-shallow-v1","seconds":perf_counter()-start,
+            "before":before,"after":_sample(),"tracked_objects":total,
+            "size_measured_objects":measured_total,"size_unavailable_objects":total-measured_total,
+            "shallow_bytes":sum(sizes.values()),
+            "types":[{"type":name,"count":counts[name],"size_measured_count":measured[name],
+                      "size_unavailable_count":counts[name]-measured[name],
+                      "shallow_bytes":sizes[name] if measured[name] else None}
+                     for name in sorted(top,key=lambda n:(-sizes[n],n))],
+            "scope":"GC-tracked objects; shallow bytes of allowlisted exact types only. Unmeasured objects are not zero-byte objects. No native allocation or retainer graph attribution."}

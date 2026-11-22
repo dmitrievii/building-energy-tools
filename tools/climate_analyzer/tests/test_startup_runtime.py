@@ -87,6 +87,31 @@ class StartupTests(unittest.TestCase):
         self.assertEqual(result,{"ok":True})
         self.assertEqual(state["_mem_r5_heap_census"],{"status":"failed: TypeError"})
 
+    def test_census_async_generator_and_arbitrary_size_hooks_are_not_measured(self):
+        import asyncio
+        async def async_objects():
+            yield 1
+        generator=async_objects()
+        class Dangerous:
+            def __sizeof__(self):
+                raise AssertionError("Arbitrary size hook must not execute")
+        objects=[generator,Dangerous(),{},[],()]
+        try:
+            with patch.object(r,"container_memory",return_value=None),patch.object(r,"_sample",return_value={}),patch.object(r.gc,"get_objects",side_effect=[objects,[],[]]):
+                report=r.heap_census()
+            self.assertEqual(report["tracked_objects"],5)
+            self.assertEqual(report["size_measured_objects"],3)
+            self.assertEqual(report["size_unavailable_objects"],2)
+            self.assertEqual(report["shallow_bytes"],sum(__import__("sys").getsizeof(o) for o in objects[2:]))
+            async_row=next(row for row in report["types"] if row["type"]=="builtins.async_generator")
+            self.assertIsNone(async_row["shallow_bytes"])
+        finally:
+            asyncio.run(generator.aclose())
+
+    def test_census_rejects_impossible_size_even_for_supported_type(self):
+        with patch.object(r.sys,"getsizeof",return_value=1119122127661464):
+            self.assertIsNone(r._safe_census_size([],3072*r.MIB))
+
     def test_census_returns_counts_not_object_contents(self):
         with patch.object(r,"container_memory",return_value=None),patch.object(r,"_sample",return_value={}),patch.object(r.gc,"get_objects",side_effect=[[[],{"private_marker":"secret"}],[],[]]):
             report=r.heap_census()

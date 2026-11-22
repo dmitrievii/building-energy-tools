@@ -256,7 +256,12 @@ def render_sidebar(st):
             heap=inspected.get("heap_census")
             if heap:
                 st.caption("Python object census: "+heap["status"])
-                if heap.get("types"):st.dataframe(heap["types"],hide_index=True)
+                if heap.get("schema")=="R5-HF2-safe-shallow-v1":
+                    st.caption(f"Shallow size available for {heap['size_measured_objects']:,} objects; unavailable for {heap['size_unavailable_objects']:,}.")
+                    st.caption(heap["scope"])
+                    if heap.get("types"):st.dataframe(heap["types"],hide_index=True)
+                elif heap.get("types"):
+                    st.caption("Previous census size estimates are superseded; run Inspect Python object types again.")
             import json
             st.download_button("Download memory inventory JSON",data=json.dumps(inspected,indent=2).encode(),file_name="memory_inventory.json",mime="application/json",key="mem_r4_inventory_download",on_click="ignore")
         result=state.get(LAST_KEY)
