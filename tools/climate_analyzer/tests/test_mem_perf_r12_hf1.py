@@ -60,3 +60,15 @@ class HF1Tests(unittest.TestCase):
             self.assertEqual(manager.closed,["test"])
             self.assertEqual(reaper.reaper_summary()["policy_replacements"],1)
             self.assertTrue(reaper.reaper_summary()["policy_verified"])
+
+    def test_orphan_assessment_never_authorizes_signal(self):
+        current={"start_ticks":200}
+        row={"app":False,"streamlit_launcher":True,"climate_app_target":True,
+             "parent_pid":1,"start_ticks":100,"sockets":{"status":"sampled","tcp_listen_ports":[8501]}}
+        self.assertTrue(p._orphan_assessment(row,current).startswith("review:"))
+        row["sockets"]["tcp_established"]=1
+        self.assertTrue(p._orphan_assessment(row,current).startswith("blocked:"))
+        row["sockets"]={"status":"partial"}
+        self.assertTrue(p._orphan_assessment(row,current).startswith("blocked:"))
+        row["sockets"]={"status":"sampled"}
+        self.assertIn("operator verification required",p._orphan_assessment(row,current))

@@ -44,7 +44,7 @@ async function snapshot(p,stage,cycle){
  const filename=path.join(dir,String(cycle).padStart(2,'0')+'_'+stage+'.json');
  await download[0].saveAs(filename);
  const v=JSON.parse(await fs.readFile(filename,'utf8'));
- if(v.snapshot_schema!=='MEM-PERF-R13-HF1')throw Error('Wrong runtime schema');
+ if(v.snapshot_schema!=='MEM-PERF-R13-HF2')throw Error('Wrong runtime schema');
  rows.push({cycle,stage,memory:v.memory,epw:v.epw_lifecycle,session:v.session_cache_summary,
             reaper:v.session_runtime.session_reaper,processes:v.container_processes,library:v.library_footprint,
             allocator:v.allocator,retiredReferences:v.retired_reference_diagnostics});
@@ -122,7 +122,7 @@ try{
    if(!baseline)baseline=lastIdle;
    const live=lastIdle.epw_lifecycle?.alive||{};
    if(Object.values(live).some(n=>n>0))throw Error('Retained EPW objects at zero sessions: '+JSON.stringify(live));
-   if(lastIdle.closed_session_refs_alive!==0)throw Error('Closed AppSessions still reachable: '+lastIdle.closed_session_refs_alive);
+   if(lastIdle.closed_session_refs_alive!==0)throw Error('Closed AppSessions still reachable: '+lastIdle.closed_session_refs_alive+' '+JSON.stringify(lastIdle.retired_reference_diagnostics));
    completed++;
    console.log("Completed real EPW cycle",completed,"idle anon",lastIdle.memory.process_anon,"retained",JSON.stringify(lastIdle.epw_lifecycle?.alive||{}));
  }

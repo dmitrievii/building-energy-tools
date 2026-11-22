@@ -14,8 +14,8 @@ _RUNTIME_REF=None
 _INTERVAL=1.
 _QUEUE_INTERVAL=30.
 _LAST_QUEUE_SAMPLE=0.
-RUNTIME_RECOVERY_SCHEMA="MEM-PERF-R13-HF1"
-_POLICY_VERSION="r13-hf1"
+RUNTIME_RECOVERY_SCHEMA="MEM-PERF-R13-HF2"
+_POLICY_VERSION="r13-hf2"
 _TICK_GENERATION_ATTR="_ige_reaper_generation"
 _RESET_REQUESTS=set()
 # Strong references are limited to closed sessions still awaiting their own
@@ -173,8 +173,24 @@ def retired_reference_summary():
     for ref in tuple(_CLOSED_REFS)[-8:]:
         obj=ref()
         if obj is None:continue
-        counts=Counter(type(owner).__module__+"."+type(owner).__name__ for owner in gc.get_referrers(obj))
-        observations.append(dict(counts.most_common(12)))
+        owners=gc.get_referrers(obj)
+        counts=Counter(type(owner).__module__+"."+type(owner).__name__ for owner in owners)
+        links=[]
+        # Distinguish Runtime._loop_coroutine's last ActiveSessionInfo from
+        # actual user payload retention. Inspect only types, never values.
+        import types
+        for owner in owners[:24]:
+            if type(owner).__name__!="ActiveSessionInfo":continue
+            parents=gc.get_referrers(owner)
+            for parent in parents[:24]:
+                if isinstance(parent,types.CoroutineType):
+                    links.append({"owner":"ActiveSessionInfo","coroutine":parent.cr_code.co_name,
+                                  "module":parent.cr_frame.f_globals.get("__name__","") if parent.cr_frame else ""})
+                elif isinstance(parent,types.FrameType):
+                    links.append({"owner":"ActiveSessionInfo","frame":parent.f_code.co_name})
+            del parents
+        observations.append({"types":dict(counts.most_common(12)),"runtime_links":links})
+        del owners,counts
         del obj
     return {"sampled":len(observations),"immediate_referrer_types":observations,
             "scope":"On-demand immediate GC-tracked referrer type counts; diagnostic frames may appear. No object contents or user IDs."}
@@ -248,6 +264,7 @@ def _recover_if_idle(manager,cache,reaped):
               "allocator":result.get("allocator_after",{}),
               "session_caches":session_cache_summary(),
               "closed_session_refs_alive":sum(ref() is not None for ref in _CLOSED_REFS),
+              "retired_reference_diagnostics":retired_reference_summary() if sum(ref() is not None for ref in _CLOSED_REFS) else {"sampled":0},
               "epw_lifecycle":lifecycle_summary(),
               "scope":"Warm process after zero-active-session recovery; not a guarantee of reclaimable RSS."})
 

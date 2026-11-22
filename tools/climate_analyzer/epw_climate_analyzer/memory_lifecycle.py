@@ -18,7 +18,7 @@ from .byte_cache import (cache_inventory,clear_recomputable_caches,session_inven
 
 RUNTIME_MEMORY_SCHEMA="MEM-PERF-R6"
 RUNTIME_CHART_SCHEMA="MEM-PERF-R7"
-RUNTIME_INVENTORY_SCHEMA="MEM-PERF-R13-HF1"
+RUNTIME_INVENTORY_SCHEMA="MEM-PERF-R13-HF2"
 EXPORT_KEYS=("_p6_pdf","_p6_html_result","_p66_atlas_result","_utci_perf_r1_csv")
 DERIVED_KEYS=("_utci_perf_r1_result","_utci_perf_r1_sensitivity")
 TRANSIENT_KEYS=("_p6_displayed_charts","_active_filtered_export_df")
@@ -87,7 +87,7 @@ def _collect_inventory(state,process):
     import sys
     import os
     import tracemalloc
-    result={"snapshot_schema":"MEM-PERF-R13-HF1","captured_at_utc":datetime.now(timezone.utc).isoformat(),
+    result={"snapshot_schema":"MEM-PERF-R13-HF2","captured_at_utc":datetime.now(timezone.utc).isoformat(),
             "capture_phase":"on-demand; before next page rendering when called by widget callback",
             "memory":process,"shared_caches":cache_inventory(),
             "session_caches":session_cache_inventory(state),
@@ -399,7 +399,7 @@ def _render_sidebar(st):
         if queue_sample.get("status")=="sampled":
             st.caption(f"Pending forward messages at last sweep: {queue_sample['pending_messages_in_sampled_sessions']}; sampled wire payload: {_mib(queue_sample['sampled_wire_bytes'])}; {queue_sample['captured_at_utc']} (not websocket backlog or RSS).")
         inspected=state.get(INVENTORY_KEY)
-        if inspected and inspected.get("snapshot_schema")!="MEM-PERF-R13-HF1":
+        if inspected and inspected.get("snapshot_schema")!="MEM-PERF-R13-HF2":
             release_inventory(state)
             inspected=None
         from .memory_recovery import recovery_summary
@@ -432,6 +432,10 @@ def _render_sidebar(st):
                 if details:
                     st.text("\n".join(f"{p['category']}: PID {p['pid']} · PPID {p.get('parent_pid','?')} · {p.get('role_hint','unclassified')} · {p.get('relation_to_app','unknown')} · anonymous RSS {_mib(p.get('rss_anon'))} · PssAnon {_mib(p.get('pss_anon'))}" for p in processes.get("processes",[])[:15]))
                 st.caption(f"Other Python anonymous RSS: {_mib(processes.get('other_python_anon_bytes'))}; matching climate launch targets: {len(processes.get('other_climate_app_candidates',[]))}.")
+                for p in processes.get("processes",[]):
+                    if not p.get("app") and p.get("climate_app_target"):
+                        st.caption(f"PID {p['pid']}: {p.get('orphan_assessment','unknown')}; listener ports {p.get('sockets',{}).get('tcp_listen_ports','unknown')}; established TCP {p.get('sockets',{}).get('tcp_established','unknown')}.")
+                st.caption("Process checks are read-only. No process termination from this public interface.")
             if details:
                 # Text summaries avoid Arrow/dataframe marshalling and repeated
                 # construction of nested JSON elements on each unrelated rerun.

@@ -72,6 +72,55 @@ def _relationships(rows):
             "sibling" if parent is not None and parent==current.get("parent_pid") else "other/unknown")
         if row["app"]:row["role_hint"]="current-app"
 
+def socket_inventory(pid,*,max_fds=2048,max_rows=20000):
+    """Read-only FD inode correlation. No endpoint addresses, remote ports or payload."""
+    base=Path("/proc")/str(pid)
+    inodes=set()
+    try:
+        with os.scandir(base/"fd") as entries:
+            for i,entry in enumerate(entries):
+                if i>=max_fds:return {"status":"partial: fd limit"}
+                try:target=os.readlink(entry.path)
+                except OSError:return {"status":"partial: fd changed or inaccessible"}
+                if target.startswith("socket:[") and target.endswith("]"):
+                    inodes.add(target[8:-1])
+    except OSError:return {"status":"unavailable: fd access"}
+    found=set();listeners=[];established=0;other_tcp=0;udp=0;unix=0
+    try:
+        for name in ("tcp","tcp6","udp","udp6","unix"):
+            with (base/"net"/name).open() as f:
+                next(f,None)
+                for i,line in enumerate(f):
+                    if i>=max_rows:return {"status":"partial: network table limit"}
+                    fields=line.split()
+                    inode=fields[6] if name=="unix" else fields[9]
+                    if inode not in inodes:continue
+                    found.add(inode)
+                    if name=="unix":unix+=1
+                    elif name.startswith("udp"):udp+=1
+                    elif fields[3]=="0A":
+                        listeners.append(int(fields[1].rsplit(":",1)[1],16))
+                    elif fields[3]=="01":established+=1
+                    else:other_tcp+=1
+    except (OSError,IndexError,ValueError):return {"status":"partial: network table unavailable"}
+    return {"status":"sampled","socket_fds_unique":len(inodes),"tcp_listen_ports":sorted(set(listeners)),
+            "tcp_established":established,"tcp_other":other_tcp,"udp":udp,"unix":unix,
+            "unclassified_sockets":len(inodes-found),
+            "scope":"FD/socket snapshot; no user-session or routing guarantee."}
+
+def _orphan_assessment(row,current):
+    if row.get("app") or not (row.get("streamlit_launcher") and row.get("climate_app_target")):
+        return "not-candidate"
+    if row.get("parent_pid")!=1 or not row.get("start_ticks",0)<current.get("start_ticks",0):
+        return "blocked: ancestry or age"
+    sockets=row.get("sockets",{})
+    if sockets.get("status")!="sampled":return "blocked: incomplete socket evidence"
+    if any(sockets.get(k,0) for k in ("tcp_established","tcp_other","udp","unclassified_sockets")):
+        return "blocked: network activity or unknown sockets"
+    if sockets.get("tcp_listen_ports") or sockets.get("unix"):
+        return "review: older reparented listener; routing/ownership not proved"
+    return "review: older reparented process with no observed sockets; operator verification required"
+
 def container_process_inventory(*,max_groups=64,max_pids=128,max_smaps=24):
     reading=_memory_reading()
     if reading is None:return {"status":"unavailable: no finite cgroup"}
@@ -106,6 +155,11 @@ def container_process_inventory(*,max_groups=64,max_pids=128,max_smaps=24):
             rows.append(row)
         except (OSError,ValueError):errors+=1
     _relationships(rows)
+    current=next((row for row in rows if row["app"]),{})
+    for row in rows:
+        if row["app"] or row.get("climate_app_target"):
+            row["sockets"]=socket_inventory(row["pid"])
+            row["orphan_assessment"]=_orphan_assessment(row,current)
     rows.sort(key=lambda p:p.get("rss_anon",0),reverse=True)
     for row in rows[:max_smaps]:
         try:row.update(_read_kb(Path("/proc")/str(row["pid"])/"smaps_rollup",

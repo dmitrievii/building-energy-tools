@@ -23,7 +23,7 @@ if any(getattr(module,attribute,None)!="MEM-PERF-R6" for module,attribute in (
 )):
     st.error("Runtime ownership upgrade (MEM-PERF R6): reboot the app once via Manage app to start a consistent process. Refreshing the browser does not restart the server.")
     st.stop()
-if (getattr(_runtime_memory,"RUNTIME_INVENTORY_SCHEMA",None)!="MEM-PERF-R13-HF1" or
+if (getattr(_runtime_memory,"RUNTIME_INVENTORY_SCHEMA",None)!="MEM-PERF-R13-HF2" or
     getattr(_runtime_cache,"RUNTIME_OWNERSHIP_SCHEMA",None)!="MEM-PERF-R12" or
     getattr(_runtime_startup,"RUNTIME_OPTIONAL_SCHEMA",None)!="MEM-PERF-R9" or
     getattr(_runtime_startup,"RUNTIME_DIAGNOSTICS_SCHEMA",None)!="MEM-PERF-R10"):
@@ -6177,8 +6177,8 @@ def main() -> None:
     st.sidebar.title(APP_NAME)
     st.sidebar.caption(APP_RELEASE_LABEL)
     from epw_climate_analyzer import session_reaper as reaper_runtime
-    if getattr(reaper_runtime,"RUNTIME_RECOVERY_SCHEMA",None)!="MEM-PERF-R13-HF1":
-        st.error("MEM-PERF R13 HF1: session shutdown module version mismatch; reload or restart once to activate the new policy.")
+    if getattr(reaper_runtime,"RUNTIME_RECOVERY_SCHEMA",None)!="MEM-PERF-R13-HF2":
+        st.error("MEM-PERF R13 HF2: session shutdown module version mismatch; reload or restart once to activate the new policy.")
         st.stop()
     # Install disconnect handling before expensive scientific initialization.
     reaper_runtime.ensure_session_reaper()
@@ -6193,7 +6193,7 @@ def main() -> None:
         st.error("Reboot the app once via Manage app to activate the updated 3D chart presentation.")
         st.stop()
     if (getattr(report_runtime,"RUNTIME_REPORT_SCHEMA",None)!="MEM-PERF-R7" or
-        getattr(reaper_runtime,"RUNTIME_RECOVERY_SCHEMA",None)!="MEM-PERF-R13-HF1" or
+        getattr(reaper_runtime,"RUNTIME_RECOVERY_SCHEMA",None)!="MEM-PERF-R13-HF2" or
         getattr(session_runtime,"RUNTIME_SESSION_SCHEMA",None)!="MEM-PERF-R7" or
         getattr(_runtime_memory,"RUNTIME_CHART_SCHEMA",None)!="MEM-PERF-R7"):
         st.error("MEM-PERF R12 changes session recovery ownership. Reboot the app once via Manage app.")

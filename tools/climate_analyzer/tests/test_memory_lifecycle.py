@@ -10,7 +10,7 @@ class MemoryLifecycleTests(unittest.TestCase):
         with patch.object(runtime,"_sample",side_effect=[{"used":100}]*4+[{"used":200}]*4):
             first=m.inspect_resources(state)
             second=m.inspect_resources(state)
-        self.assertEqual(first["snapshot_schema"],"MEM-PERF-R13-HF1")
+        self.assertEqual(first["snapshot_schema"],"MEM-PERF-R13-HF2")
         self.assertIn("captured_at_utc",first)
         self.assertEqual(first["memory"]["used"],100)
         self.assertEqual(second["memory"]["used"],200)
@@ -24,7 +24,7 @@ class MemoryLifecycleTests(unittest.TestCase):
         import json
         from types import SimpleNamespace
         from epw_climate_analyzer import startup_runtime as runtime
-        snapshot={"snapshot_schema":"MEM-PERF-R13-HF1","captured_at_utc":"2026-11-22T15:00:00+00:00",
+        snapshot={"snapshot_schema":"MEM-PERF-R13-HF2","captured_at_utc":"2026-11-22T15:00:00+00:00",
                   "shared_caches":[],"session_resources":[],"python_allocated_blocks":10}
         payload=json.dumps(snapshot).encode()
         state={m.INVENTORY_KEY:snapshot,m.INVENTORY_BYTES_KEY:payload}
