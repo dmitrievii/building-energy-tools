@@ -61,6 +61,13 @@ class StartupDependencyContractTests(unittest.TestCase):
         self.assertLess(self.source.index("stages=ensure_initialized()",main),
                         self.source.index("apply_queued_navigation(st.session_state)",main))
 
+    def test_navigation_keeps_direct_app_caller_for_compatibility_installation(self) -> None:
+        main=next(n for n in self.tree.body if isinstance(n,ast.FunctionDef) and n.name=="main")
+        calls=[n for n in ast.walk(main) if isinstance(n,ast.Call) and
+               isinstance(n.func,ast.Name) and n.func.id=="apply_queued_navigation"]
+        self.assertEqual(len(calls),1)
+        self.assertEqual(ast.unparse(calls[0]),"apply_queued_navigation(st.session_state)")
+
     def test_analysis_dependencies_are_loaded_before_epw_derivation(self) -> None:
         main_start = self.source.index("def main() -> None:")
         source_return = self.source.index('    if page == "Climate File Source":', main_start)

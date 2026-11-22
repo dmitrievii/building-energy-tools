@@ -20,6 +20,26 @@ class MemoryLifecycleTests(unittest.TestCase):
         self.assertEqual(json.loads(state[m.INVENTORY_BYTES_KEY])["memory"]["used"],200)
         self.assertEqual(second["diagnostic_capture"]["event"],"inventory capture callback")
 
+    def test_sidebar_reuses_inventory_payload_and_does_not_build_tables(self):
+        import json
+        from types import SimpleNamespace
+        from epw_climate_analyzer import startup_runtime as runtime
+        snapshot={"snapshot_schema":"MEM-PERF-R10","captured_at_utc":"2026-11-22T15:00:00+00:00",
+                  "shared_caches":[],"session_resources":[],"python_allocated_blocks":10}
+        payload=json.dumps(snapshot).encode()
+        state={m.INVENTORY_KEY:snapshot,m.INVENTORY_BYTES_KEY:payload}
+        from unittest.mock import MagicMock
+        ui=MagicMock()
+        ui.session_state=state
+        ui.checkbox.return_value=True
+        status={"startup":[],"event_counts":{},"persistent_runtime":{}}
+        with patch.object(m,"memory_snapshot",return_value={}),patch.object(runtime,"runtime_status",return_value=status),patch.object(m.json,"dumps",side_effect=AssertionError("unexpected serialization")):
+            for _ in range(20):m._render_sidebar(ui)
+        self.assertEqual(ui.download_button.call_count,20)
+        self.assertTrue(all(call.kwargs["data"] is payload for call in ui.download_button.call_args_list))
+        ui.dataframe.assert_not_called()
+        ui.json.assert_not_called()
+
     def test_manual_cleanup_releases_diagnostic_downloads(self):
         state={key:object() for key in m.DIAGNOSTIC_KEYS}
         report=object()

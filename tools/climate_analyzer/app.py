@@ -6190,8 +6190,14 @@ def main() -> None:
     st.session_state.pop(CONTEXT_KEY,None)
     st.session_state.pop(INTERPRETATION_KEY,None)
     session_runtime.ensure_session_reaper()
-    from epw_climate_analyzer.startup_runtime import profile_diagnostic
-    profile_diagnostic("navigation and presentation controls",apply_queued_navigation,st.session_state)
+    from epw_climate_analyzer.startup_runtime import profile_diagnostic,begin_phase,end_phase
+    phase=begin_phase()
+    try:
+        # The navigation compatibility installer deliberately inspects its
+        # direct caller's app globals. Never interpose a profiling frame.
+        apply_queued_navigation(st.session_state)
+    finally:
+        end_phase(phase,"navigation and presentation controls",diagnostic=True)
     st.session_state["_mem_r2_chart_ordinal"]=0
     st.session_state["_plotly_element_counter"]=0
     from epw_climate_analyzer.memory_lifecycle import begin_rerun,render_sidebar
