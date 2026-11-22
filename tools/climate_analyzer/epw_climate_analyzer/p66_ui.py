@@ -11,16 +11,22 @@ from .p66_export import generate_atlas,manifest_csv,PDF_MODES,catalogue_batches
 from .p66_memory import container_memory
 from .p6_report_structure import CHAPTERS,concise_context
 
+def atlas_duration_context(context,state):
+    """Inherit the last valid explorer preference without creating widgets."""
+    from .p4_design_charts import DESIGN_PERCENTAGES,DURATION_QUANTILE_STATE,parse_duration_percentages
+    try:
+        percentages=parse_duration_percentages(state.get(DURATION_QUANTILE_STATE,DESIGN_PERCENTAGES))
+    except ValueError:
+        percentages=DESIGN_PERCENTAGES
+    return {**context,"duration quantile percentages":list(percentages)}
+
 def render_atlas(df,context,reference_df=None):
     st.subheader("Comprehensive Diagram Atlas")
     st.caption("Independent of the curated report basket. Enumerate supported diagrams, their discrete aggregations and statistics. Reference values are fixed for continuous settings; no unlimited parameter sweep.")
     if df is None or df.empty:
         st.info("Load climate data and select a nonempty Data filter.");return
     st.caption(concise_context(context))
-    from .p4_design_charts import duration_quantile_controls
-    percentages=duration_quantile_controls(st)
-    if percentages is None:return
-    context={**context,"duration quantile percentages":list(percentages)}
+    context=atlas_duration_context(context,st.session_state)
     coverage=st.radio("Coverage",LEVELS,index=2,key="p66_coverage")
     try:
         prepared=prepare_frame(df)

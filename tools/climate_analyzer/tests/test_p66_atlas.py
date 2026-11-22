@@ -389,6 +389,24 @@ class AtlasTests(unittest.TestCase):
                 self.assertEqual(tuple(axis.range),(0.,100.))
                 self.assertEqual(tuple(axis.tickvals),(25.,50.,75.,100.))
 
+    def test_atlas_inherits_duration_quantiles_without_widgets(self):
+        from epw_climate_analyzer.p66_ui import atlas_duration_context
+        from epw_climate_analyzer.p4_design_charts import DESIGN_PERCENTAGES,DURATION_QUANTILE_STATE
+        from pathlib import Path
+        import ast
+        context={"source":"fixture"}
+        for state,expected in (({},DESIGN_PERCENTAGES),
+                               ({DURATION_QUANTILE_STATE:[0.,.4,99.,100.]},(0.,.4,99.,100.)),
+                               ({DURATION_QUANTILE_STATE:[]},()),
+                               ({DURATION_QUANTILE_STATE:[-1.]},DESIGN_PERCENTAGES)):
+            result=atlas_duration_context(context,state)
+            self.assertEqual(result["duration quantile percentages"],list(expected))
+            self.assertEqual(result["source"],"fixture")
+            self.assertNotIn("duration quantile percentages",context)
+        source=(Path(__file__).resolve().parents[1]/"epw_climate_analyzer/p66_ui.py").read_text(encoding="utf-8")
+        node=next(n for n in ast.parse(source).body if isinstance(n,ast.FunctionDef) and n.name=="render_atlas")
+        self.assertNotIn("duration_quantile_controls",ast.unparse(node))
+
     def test_core_chart_families_execute(self):
         df=self.fixture();rows=[d for d in c.catalogue(df,{},c.FULL) if d.status=="available"]
         types=("time_series","profile","percentile","heatmap","duration","histogram","box","violin","diurnal","occurrence","amplitude","total","degree","temp_threshold","temp_events","day_indicators","wind_mean","wind_classes","wetdry","rolling","cumulative","freeze_days","eligibility_map","eligibility_total","nv_special","critical_windows","correlation","joint")
