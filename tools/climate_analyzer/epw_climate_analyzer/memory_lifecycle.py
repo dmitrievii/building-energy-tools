@@ -112,9 +112,10 @@ def inspect_resources(state):
             if key in ("Pss","Private_Clean","Private_Dirty","Shared_Clean","Shared_Dirty"):
                 result.setdefault("process_smaps",{})[key]=int(line.split()[1])*1024
     except (OSError,ValueError,IndexError):pass
-    from .startup_runtime import runtime_summary
+    from .startup_runtime import runtime_summary,library_footprint_snapshot
     from .session_memory import inspect_session_counters
     result["runtime"]=runtime_summary()
+    result["library_footprint"]=library_footprint_snapshot()
     result["session_runtime"]=inspect_session_counters(state,PROTECTED_KEYS+EXPORT_KEYS+DERIVED_KEYS+TRANSIENT_KEYS)
     from .chart_lifecycle import chart_lifecycle_summary
     result["chart_lifecycle"]=chart_lifecycle_summary(state)
@@ -123,6 +124,15 @@ def inspect_resources(state):
     result["recovery"]=recovery_summary()
     result["raw_headroom_bytes"]=(result["memory"]["limit"]-result["memory"]["used"]
         if "limit" in result["memory"] and "used" in result["memory"] else None)
+    reading=result["memory"]
+    if reading.get("limit") and "used" in reading:
+        inactive=min(reading.get("inactive_file",0),max(0,reading.get("file",0)-reading.get("shared",0)),reading["used"])
+        result["admission_diagnostics"]={"raw_headroom_bytes":result["raw_headroom_bytes"],
+            "inactive_ordinary_file_bytes":max(0,inactive),
+            "usage_less_inactive_file_bytes":reading["used"]-max(0,inactive),
+            "pdf_parent_reserve_bytes":min(192*m.MIB,max(64*m.MIB,int(reading["limit"]*.20))),
+            "html_parent_reserve_bytes":min(384*m.MIB,max(96*m.MIB,int(reading["limit"]*.20))),
+            "scope":"Diagnostic only; export admission still uses raw cgroup usage. Child renderers have additional guards."}
     if "_mem_r5_heap_census" in state:
         result["heap_census"]=state["_mem_r5_heap_census"]
         result["heap_census_captured_at_utc"]=state.get("_mem_r5_heap_census_at")
@@ -261,6 +271,7 @@ def render_sidebar(st):
             st.progress(min(1.,max(0.,used/limit)))
             if pressure_high(snapshot):st.warning("High container memory pressure")
             st.caption("Container memory is shared across sessions.")
+            st.caption(f"Raw unallocated headroom: {_mib(max(0,limit-used))}; usage less inactive file cache: {_mib(used-min(used,snapshot.get('inactive_file',0)))} (diagnostic only; not an admission credit).")
         else:st.caption("Container memory limit unavailable on this host.")
         for key,label in (("anonymous","Anonymous memory"),("file","File-backed memory"),
                           ("inactive_file","Inactive file cache"),("process_rss","Application process RSS"),

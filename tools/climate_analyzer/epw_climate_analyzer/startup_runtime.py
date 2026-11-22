@@ -26,6 +26,10 @@ _EVENT_COUNTS=Counter()
 _CORE_RESERVE=768*MIB
 _UTCI_RESERVE=1536*MIB
 _CENSUS_RESERVE=768*MIB
+_LIBRARY_BASELINE=None
+_LIBRARY_ROOTS=("numpy","pandas","scipy","numba","llvmlite","pythermalcomfort","pvlib",
+                "plotly","folium","streamlit","kaleido","matplotlib","pyarrow","psychrolib",
+                "epw_climate_analyzer")
 
 # Order exposes the marginal initialization cost of the principal stacks.
 STAGES=(
@@ -63,14 +67,35 @@ def _warmup(name):
 
 _OPTIONAL_STAGES=frozenset(("Folium","UTCI (conditional)"))
 
+def _library_counts():
+    loaded=tuple(sys.modules)
+    return {root:sum(name==root or name.startswith(root+".") for name in loaded)
+            for root in _LIBRARY_ROOTS}
+
+def library_footprint_snapshot():
+    """Module-count changes and whole-process RSS; not per-module byte estimates."""
+    with _LOCK:
+        baseline=deepcopy(_LIBRARY_BASELINE)
+    current=_library_counts()
+    result={"baseline":baseline,"current_module_counts":current,
+            "current_process":_sample(),
+            "scope":"Module counts are not byte estimates; RSS includes all process owners."}
+    if baseline is not None:
+        result["additional_modules"]={root:current[root]-baseline["module_counts"][root]
+                                      for root in _LIBRARY_ROOTS}
+    return result
+
 def ensure_initialized():
     """Preload core stacks once; optional map and UTCI stacks are demand-owned."""
+    global _LIBRARY_BASELINE
     with _LOCK:
         for label,modules,warmup,reserve in STAGES:
             previous=_STAGES.get(label)
             if previous and previous["status"] in ("ready","already loaded","failed"):continue
-            before=_sample()
             loaded=all(name in sys.modules for name in modules)
+            if label in _OPTIONAL_STAGES and previous is not None and not loaded:
+                continue
+            before=_sample()
             if label in _OPTIONAL_STAGES:
                 if loaded:
                     _STAGES[label]={"stage":label,"status":"already loaded","seconds":0.,"before":before,"after":before,
@@ -95,6 +120,11 @@ def ensure_initialized():
             row={"stage":label,"status":status,"seconds":perf_counter()-start,"before":before,"after":after}
             if error:row["error"]=error
             _STAGES[label]=row
+        if (_LIBRARY_BASELINE is None and all(
+            _STAGES.get(label,{}).get("status") in ("ready","already loaded")
+            for label,*_ in STAGES if label not in _OPTIONAL_STAGES)):
+            _LIBRARY_BASELINE={"module_counts":_library_counts(),"process":_sample(),
+                               "at_monotonic_seconds":monotonic()}
         return deepcopy(list(_STAGES.values()))
 
 def optional_import(label,loader):

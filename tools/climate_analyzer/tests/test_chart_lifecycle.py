@@ -89,6 +89,35 @@ class ChartLifecycleTests(unittest.TestCase):
             reaper._recover_if_idle(manager,{},0)
             probe.assert_called_once()
 
+    def test_twenty_expiration_recovery_cycles_preserve_active_session(self):
+        from epw_climate_analyzer import memory_recovery
+        from streamlit.runtime.caching.ttl_cache import TTLCache
+        now=[0.]
+        cache=TTLCache(maxsize=8,ttl=120,timer=lambda:now[0])
+        active=SimpleNamespace(_scriptrunner=None,_browser_queue=Mock())
+        active._browser_queue.is_empty.return_value=True
+        manager=Mock()
+        manager.list_active_sessions.return_value=[SimpleNamespace(session=active)]
+        manager.is_active_session.return_value=False
+        refs=[]
+        with patch.object(reaper,"_RECOVERY_PENDING",False),patch.object(reaper,"_STATUS",{"expired_reaped":0,"shutdown_failures":0,"sweeps":0}),patch.object(memory_recovery,"recovery_probe",return_value={"status":"complete"}) as probe:
+            for i in range(20):
+                disconnected=Mock()
+                refs.append(weakref.ref(disconnected))
+                cache[str(i)]=SimpleNamespace(session=disconnected)
+                now[0]+=121
+                count=reaper._expire_storage(manager,cache)
+                self.assertEqual(count,1)
+                disconnected.shutdown.assert_called_once()
+                del disconnected
+                reaper._recover_if_idle(manager,cache,count)
+                reaper._recover_if_idle(manager,cache,0)
+            gc.collect()
+            self.assertEqual(probe.call_count,20)
+            self.assertEqual(reaper.reaper_summary()["expired_reaped"],20)
+            self.assertTrue(all(ref() is None for ref in refs))
+            self.assertEqual(len(cache),0)
+
     def test_native_ttl_reaps_only_expired_disconnected_entries(self):
         from streamlit.runtime.caching.ttl_cache import TTLCache
         now=[0.]

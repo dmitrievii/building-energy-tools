@@ -17,7 +17,7 @@ RUNTIME_RECOVERY_SCHEMA="MEM-PERF-R9"
 _RECOVERY_PENDING=False
 
 def reaper_summary():
-    with _LOCK:return dict(_STATUS)
+    with _LOCK:return {**_STATUS,"allocator_recovery_pending":_RECOVERY_PENDING}
 
 def _set(**kw):
     with _LOCK:_STATUS.update(kw)

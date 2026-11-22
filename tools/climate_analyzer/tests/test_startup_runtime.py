@@ -23,6 +23,13 @@ class StartupTests(unittest.TestCase):
             self.assertEqual(third[1]["status"],"ready")
             warm.assert_called_once_with("utci")
             self.assertEqual(load.call_count,2)
+    def test_library_footprint_compares_counts_not_estimated_bytes(self):
+        with patch.object(r,"_LIBRARY_BASELINE",{"module_counts":{root:1 for root in r._LIBRARY_ROOTS},"process":{"process_rss":100}}),patch.object(r,"_library_counts",return_value={root:2 for root in r._LIBRARY_ROOTS}),patch.object(r,"_sample",return_value={"process_rss":200}):
+            report=r.library_footprint_snapshot()
+        self.assertEqual(report["additional_modules"]["plotly"],1)
+        self.assertEqual(report["current_process"]["process_rss"],200)
+        self.assertIn("not byte estimates",report["scope"])
+
     def test_real_optional_stages_defer_until_demand(self):
         stages=(("Folium",("ige_test_folium",),None,768*r.MIB),
                 ("UTCI (conditional)",("ige_test_utci",),"utci",1536*r.MIB))

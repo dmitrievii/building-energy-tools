@@ -6175,10 +6175,12 @@ def main() -> None:
     deferred=[r["stage"] for r in stages if r["status"] not in ("ready","already loaded") and r["stage"] not in ("UTCI (conditional)","Folium")]
     if deferred:st.sidebar.warning("Core initialization incomplete: "+", ".join(deferred)+". Inspect memory management; reboot if headroom is insufficient.")
     from epw_climate_analyzer import p6_report as report_runtime,session_memory as session_runtime
+    from epw_climate_analyzer import session_reaper as reaper_runtime
     if (getattr(report_runtime,"RUNTIME_REPORT_SCHEMA",None)!="MEM-PERF-R7" or
+        getattr(reaper_runtime,"RUNTIME_RECOVERY_SCHEMA",None)!="MEM-PERF-R9" or
         getattr(session_runtime,"RUNTIME_SESSION_SCHEMA",None)!="MEM-PERF-R7" or
         getattr(_runtime_memory,"RUNTIME_CHART_SCHEMA",None)!="MEM-PERF-R7"):
-        st.error("MEM-PERF R7 changes chart/session ownership. Reboot the app once via Manage app.")
+        st.error("MEM-PERF R9 changes session recovery ownership. Reboot the app once via Manage app.")
         st.stop()
     # Click callbacks have already consumed the previous displayed page.
     from epw_climate_analyzer.p6_report import CONTEXT_KEY,INTERPRETATION_KEY,render_report_status
