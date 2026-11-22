@@ -8,40 +8,127 @@ from .chart_theme import metric_color
 from .calendar_heatmap_axes import set_period_axis_scope,_day_positions,_bounded_positions
 
 DESIGN_COLUMNS=(p.T,p.W,p.H)
-DESIGN_PERCENTAGES=(.4,1.,2.,5.)
+# Duration-curve positions, not the separate normative-design screen defaults.
+DESIGN_PERCENTAGES=(0.,.5,1.,2.,5.,95.,98.,99.,99.5,100.)
+DURATION_QUANTILE_STATE="p4_duration_curve_percentages"
+
+def parse_duration_percentages(raw):
+    """Validate editable percent positions; blank deliberately disables markers."""
+    if isinstance(raw,str):
+        raw=raw.strip()
+        if not raw:return ()
+        parts=[part.strip().removesuffix("%").strip() for part in raw.replace(";",",").split(",")]
+    else:
+        parts=raw
+    try:
+        values=tuple(float(part) for part in parts)
+    except (TypeError,ValueError):
+        raise ValueError("Enter comma-separated percentages, for example 0, 0.4, 1, 95, 100.") from None
+    if any(not np.isfinite(v) or not 0<=v<=100 for v in values):
+        raise ValueError("Each percentage must be a finite number from 0 to 100.")
+    return tuple(sorted(set(values)))
+
+def duration_quantile_controls(st):
+    key="p4_duration_curve_percentages_input"
+    if key not in st.session_state:
+        current=st.session_state.get(DURATION_QUANTILE_STATE,DESIGN_PERCENTAGES)
+        st.session_state[key]=", ".join(f"{v:g}" for v in current)
+    raw=st.text_input("Quantile positions [%]",key=key,
+        help="Edit, add or delete comma-separated percentages. Empty = no markers. "
+             "Positions are measured from the left of the sorted curve.")
+    try:
+        values=parse_duration_percentages(raw)
+    except ValueError as exc:
+        st.error(str(exc))
+        return None
+    st.session_state[DURATION_QUANTILE_STATE]=list(values)
+    if st.button("Reset quantile positions",key="p4_duration_quantile_reset",
+                 on_click=_reset_duration_quantiles,args=(st.session_state,key)):
+        pass
+    return values
+
+def _reset_duration_quantiles(state,key):
+    state[key]=", ".join(f"{v:g}" for v in DESIGN_PERCENTAGES)
+    state[DURATION_QUANTILE_STATE]=list(DESIGN_PERCENTAGES)
 
 def supports_design_quantiles(df,column):
-    return (column in DESIGN_COLUMNS and isinstance(df.index,pd.DatetimeIndex)
-            and df.index.is_monotonic_increasing and not df.index.has_duplicates
-            and str(df.attrs.get("canonical_native_resolution","")).lower()!="monthly"
-            and 0<p.native_interval_hours(df)<=1.)
+    # Same observation basis as the ordinary duration curve. No normative
+    # station-design qualification is implied by these descriptive markers.
+    return (column in df and pd.api.types.is_numeric_dtype(df[column])
+            and np.isfinite(df[column].to_numpy(dtype=float,na_value=np.nan)).any())
 
-def add_design_quantiles(fig,df,column,unit,*,ascending=False,percentage=False):
-    """Retain original rank coordinates; mark interpolated sample quantiles separately."""
-    if not supports_design_quantiles(df,column):return fig
-    table=p.design_conditions(df,column,DESIGN_PERCENTAGES,upper=not ascending)
+def duration_quantile_table(df,column,percentages=DESIGN_PERCENTAGES,*,ascending=False):
+    positions=parse_duration_percentages(percentages)
+    columns=["Position [%]","Quantile","Equivalent hours","Actual inclusive tail [%]"]
+    if not positions or not supports_design_quantiles(df,column):
+        return pd.DataFrame(columns=columns)
+    values=df[column].to_numpy(dtype=float,na_value=np.nan)
+    values=values[np.isfinite(values)]
+    fractions=np.asarray(positions)/100.
+    quantiles=np.quantile(values,fractions if ascending else 1.-fractions,method="linear")
+    hours=fractions*len(values)*p.native_interval_hours(df)
+    actual=[100.*np.mean(values<=v if ascending else values>=v) for v in quantiles]
+    return pd.DataFrame(dict(zip(columns,[positions,quantiles,hours,actual])))
+
+def add_design_quantiles(fig,df,column,unit,*,ascending=False,percentage=False,percentages=DESIGN_PERCENTAGES):
+    """Both sorted tails and custom positions, with leader-line callouts."""
+    table=duration_quantile_table(df,column,percentages,ascending=ascending)
     if table.empty:return fig
-    pct=table["Nominal tail [%]"].to_numpy()
-    hours=pct*table["Valid hours"].to_numpy()/100.
+    pct=table["Position [%]"].to_numpy(dtype=float)
+    hours=table["Equivalent hours"].to_numpy(dtype=float)
+    y=table.Quantile.to_numpy(dtype=float)
     x=pct if percentage else hours
     custom=np.column_stack([pct,hours,table["Actual inclusive tail [%]"].to_numpy()])
-    fig.add_scatter(x=x,y=table.Quantile,mode="markers",name="Design quantiles",
-                    marker=dict(symbol="diamond",size=8,color=metric_color(column),
-                                line=dict(color="#FFFFFF",width=1.2)),
+    color=metric_color(column)
+    fig.add_scatter(x=x,y=y,mode="markers",name="Quantiles",showlegend=False,
+                    marker=dict(symbol="diamond",size=7,color=color,line=dict(color="#FFFFFF",width=1.)),
                     customdata=custom,
-                    hovertemplate="Nominal tail: %{customdata[0]:g}%<br>Equivalent hours: %{customdata[1]:.1f}<br>Design quantile: %{y:.2f} "+unit+"<br>Actual inclusive tail: %{customdata[2]:.2f}%<extra></extra>")
-    # Put values in a compact static note, not four overlapping point texts.
-    text="Design quantiles: "+" · ".join(f"{q:g}%: {v:.2f} {unit}" for q,v in zip(pct,table.Quantile))
-    fig.add_annotation(xref="paper",yref="paper",x=0,y=1.02,xanchor="left",yanchor="bottom",
-                       text=text,showarrow=False,font=dict(size=10),align="left")
-    fig.update_layout(margin=dict(t=max(100,int(fig.layout.margin.t or 0))),
-                      legend=dict(orientation="h",x=0,y=-.22))
+                    hovertemplate="Curve position: %{customdata[0]:g}%<br>Equivalent hours: %{customdata[1]:.1f}<br>Quantile: %{y:.2f} "+unit+"<br>Actual inclusive tail: %{customdata[2]:.2f}%<extra></extra>")
+    values=df[column].to_numpy(dtype=float,na_value=np.nan)
+    values=values[np.isfinite(values)]
+    total=100. if percentage else len(values)*p.native_interval_hours(df)
+    if not np.isfinite(total) or total<=0:return fig
+    lo,hi=float(values.min()),float(values.max())
+    span=hi-lo or max(1.,abs(lo)*.1)
+    # Respect constrained physical axes where possible, e.g. 0–100% RH.
+    current=fig.layout.yaxis.range
+    if current and all(v is not None and np.isfinite(v) for v in current):
+        bottom,top=map(float,current)
+    else:
+        bottom,top=lo-.05*span,hi+.05*span
+    if top<=bottom:bottom,top=lo-.5*span,hi+.5*span
+    span=top-bottom
+    for side,indices in (("left",np.flatnonzero(pct<=50)),("right",np.flatnonzero(pct>50))):
+        if not len(indices):continue
+        # Spread text vertically in small stacks; leaders preserve exact
+        # point coordinates even if neighbouring extremes nearly coincide.
+        order=sorted(indices,key=lambda i:(-y[i],i))
+        n=len(order)
+        spacing=min(.085,.8/max(n-1,1))
+        preferred=float(np.mean(y[order]))
+        centre=float(np.clip(preferred,bottom+(.10+(n-1)*spacing/2)*span,
+                            top-(.10+(n-1)*spacing/2)*span))
+        for j,i in enumerate(order):
+            target=centre+((n-1)/2-j)*spacing*span
+            label=f"{pct[i]:g}%: {y[i]:.2f} {unit}"
+            fig.add_annotation(x=float(x[i]),y=float(y[i]),xref="x",yref="y",
+                ax=total*(.17 if side=="left" else .83),ay=float(target),
+                axref="x",ayref="y",xanchor="left" if side=="left" else "right",
+                text=label,showarrow=True,arrowhead=0,arrowwidth=.8,arrowcolor="#64748B",
+                bgcolor="rgba(255,255,255,0.88)",borderpad=2,
+                font=dict(size=11,color="#334155"),align="left")
+    # Increase the interactive height for long custom lists without changing
+    # chart coordinates, duration ticks, or the numerical sample.
+    max_stack=max(int(np.sum(pct<=50)),int(np.sum(pct>50)))
+    if max_stack>5:
+        fig.update_layout(height=max(int(fig.layout.height or 450),100+max_stack*31))
     return fig
 
-DESIGN_NOTE=("Design markers are linearly interpolated empirical sample quantiles at nominal "
-             "0.4%, 1%, 2% and 5% upper or lower tail fractions. They need not fall exactly on "
-             "the discrete ranked curve. Equivalent hours use valid observed duration; "
-             "these are not certified normative station design conditions.")
+DESIGN_NOTE=("Markers are linearly interpolated empirical sample quantiles at the selected "
+             "positions on the sorted curve (descending: exceedance; ascending: cumulative "
+             "frequency). 0% and 100% are the observed endpoints. Equivalent hours use valid "
+             "observed duration. Interpolated markers may differ from discrete rank points; "
+             "these are descriptive, not certified normative station design conditions.")
 
 def critical_windows_figure(df,column,unit,*,hours=72,upper=True,limit=10):
     """Rank complete nonoverlapping windows; plot chronology and the actual ranking cutoff."""

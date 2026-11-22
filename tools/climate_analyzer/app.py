@@ -2353,10 +2353,13 @@ def render_generic_variable_page(
             axis_representation=st.selectbox("Axis representation",["Physical hours","Probability [%]"],key=scope+"_duration_axis_representation")
             fig = (probability_figure(chart_df,column,unit,ascending) if axis_representation=="Probability [%]"
                    else duration_chart(chart_df, column, f"{title_prefix}: {variable_label} {direction} duration curve", unit, ascending=ascending))
-            from epw_climate_analyzer.p4_design_charts import add_design_quantiles,supports_design_quantiles,DESIGN_NOTE
-            if supports_design_quantiles(chart_df,column) and st.checkbox("Show design quantiles (0.4%, 1%, 2%, 5%)",value=True,key=scope+"_design_quantiles"):
-                add_design_quantiles(fig,chart_df,column,unit,ascending=ascending,percentage=axis_representation=="Probability [%]")
-                st.caption(DESIGN_NOTE)
+            from epw_climate_analyzer.p4_design_charts import add_design_quantiles,supports_design_quantiles,duration_quantile_controls,DESIGN_NOTE
+            if supports_design_quantiles(chart_df,column):
+                percentages=duration_quantile_controls(st)
+                if percentages:
+                    add_design_quantiles(fig,chart_df,column,unit,ascending=ascending,
+                                         percentage=axis_representation=="Probability [%]",percentages=percentages)
+                    st.caption(DESIGN_NOTE)
         elif chart_type == "Histogram":
             bins = st.slider("Histogram bins", 10, 120, 40,key=scope+"_bins")
             fig = histogram_chart(chart_df, column, f"{title_prefix}: {variable_label} histogram", unit, bins=bins)

@@ -51,6 +51,41 @@ class P4Tests(unittest.TestCase):
         self.assertEqual(a.iloc[0]["Antecedent wet at freeze"],1.)
         self.assertTrue(p.freeze_thaw_cycles(df.drop(df.index[25])).empty)
 
+    def test_duration_quantile_positions_and_callouts(self):
+        from epw_climate_analyzer.p4_design_charts import (
+            DESIGN_PERCENTAGES,parse_duration_percentages,duration_quantile_table,add_design_quantiles)
+        from epw_climate_analyzer.charts import duration_chart
+        from epw_climate_analyzer.extended_visualization import probability_figure
+        df=self.fixture(5)
+        df[p.T]=[10.,20.,30.,40.,np.nan]
+        self.assertEqual(DESIGN_PERCENTAGES,(0.,.5,1.,2.,5.,95.,98.,99.,99.5,100.))
+        self.assertEqual(parse_duration_percentages("100,0.4%, 0, 0.4, 95"),(0.,.4,95.,100.))
+        self.assertEqual(parse_duration_percentages(""),())
+        for bad in ("-1","101","nan","inf","foo","1,,2"):
+            with self.assertRaises(ValueError):parse_duration_percentages(bad)
+        for ascending in (False,True):
+            table=duration_quantile_table(df,p.T,(0.,25.,100.),ascending=ascending)
+            self.assertEqual(table["Equivalent hours"].tolist(),[0.,1.,4.])
+            self.assertEqual(table.Quantile.tolist(),[10.,17.5,40.] if ascending else [40.,32.5,10.])
+            for probability in (False,True):
+                fig=probability_figure(df,p.T,"°C",ascending) if probability else duration_chart(df,p.T,"Duration","°C",ascending)
+                before=list(fig.data[0].y)
+                add_design_quantiles(fig,df,p.T,"°C",ascending=ascending,percentage=probability,percentages=(0.,25.,100.))
+                self.assertEqual(list(fig.data[0].y),before)
+                self.assertEqual(list(fig.data[-1].x),[0.,25.,100.] if probability else [0.,1.,4.])
+                self.assertEqual(len(fig.layout.annotations),3)
+                self.assertEqual({(ann.x,ann.y) for ann in fig.layout.annotations},
+                                 set(zip(fig.data[-1].x,fig.data[-1].y)))
+                for ann in fig.layout.annotations:
+                    self.assertTrue(ann.showarrow)
+                    self.assertEqual((ann.xref,ann.yref),("x","y"))
+        empty=duration_chart(df,p.T,"Duration","°C")
+        add_design_quantiles(empty,df,p.T,"°C",percentages=())
+        self.assertEqual(len(empty.data),1)
+        self.assertEqual(len(empty.layout.annotations),0)
+        # Generic duration curves use the same descriptive statistics.
+        self.assertEqual(len(duration_quantile_table(df,p.P,(0.,100.))),2)
+
     def test_design_coincident_and_probability(self):
         df=self.fixture(4);df[p.T]=[10.,20.,30.,40.];df[p.W]=[1.,2.,3.,4.]
         a=p.design_conditions(df,p.T,[25.],upper=True,coincident=[p.W])

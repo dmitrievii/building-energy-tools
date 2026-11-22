@@ -86,10 +86,11 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         scope=df.loc[s.gt(0)].copy() if a[0]=="wet" else df
         if scope.empty:raise NotApplicable("No wet observations.")
         if k=="duration":
-            from .p4_design_charts import add_design_quantiles,supports_design_quantiles,DESIGN_NOTE
+            from .p4_design_charts import add_design_quantiles,supports_design_quantiles,DESIGN_NOTE,DESIGN_PERCENTAGES
             f=ex.probability_figure(scope,c,u,a[1]) if a[2]=="probability" else ch.duration_chart(scope,c,title,u,ascending=a[1])
-            if supports_design_quantiles(scope,c):
-                add_design_quantiles(f,scope,c,u,ascending=a[1],percentage=a[2]=="probability")
+            percentages=context.get("duration quantile percentages",DESIGN_PERCENTAGES)
+            if percentages and supports_design_quantiles(scope,c):
+                add_design_quantiles(f,scope,c,u,ascending=a[1],percentage=a[2]=="probability",percentages=percentages)
                 note+=" "+DESIGN_NOTE
         elif k=="histogram":f=ch.histogram_chart(scope,c,title,u,bins=40);note+=" Reference 40 histogram bins."
         else:f=ch.monthly_box_chart(scope,c,title,u,violin=k=="violin")

@@ -17,6 +17,10 @@ def render_atlas(df,context,reference_df=None):
     if df is None or df.empty:
         st.info("Load climate data and select a nonempty Data filter.");return
     st.caption(concise_context(context))
+    from .p4_design_charts import duration_quantile_controls
+    percentages=duration_quantile_controls(st)
+    if percentages is None:return
+    context={**context,"duration quantile percentages":list(percentages)}
     coverage=st.radio("Coverage",LEVELS,index=2,key="p66_coverage")
     try:
         prepared=prepare_frame(df)
