@@ -38,7 +38,7 @@ class TemperatureR21Tests(unittest.TestCase):
     def test_duration_is_climate_screen_only(self):
         fig = go.Figure(go.Scatter(x=[1, 2], y=[26., 10.]))
         value = temperature_figure_interpretation(self.df, fig, "duration")
-        self.assertIn("without preserving chronology", value)
+        self.assertIn("ranks", value)
         self.assertIn("P05", value)
         self.assertIn("seasonal envelope and passive-control priorities", value)
 
