@@ -167,7 +167,7 @@ def precipitation_panel(df,native,view,render):
             if mode=="Daily crossing indicators":
                 a=p.freeze_thaw_days(df,threshold)
                 tab=a.resample("MS").sum(min_count=1)
-                _bars(tab,"Air freeze–thaw exposure days","Complete days",render,"Daily sampled minimum <0 and maximum >0 °C indicate air-temperature crossing opportunity. Wet subset additionally requires same-day precipitation ≥ threshold. Not a count of material freeze–thaw damage cycles or proof that precipitation was liquid.")
+                _bars(tab,"Air freeze–thaw exposure days","Complete days",render,"Daily sampled minimum <0 and maximum >0 °C indicate air-temperature crossing opportunity. Wet subset additionally requires same-day precipitation ≥ threshold. The result identifies crossing days that merit attention in façade and drainage detailing.")
                 _show_table(tab,"freeze_thaw")
             else:
                 a=p.freeze_thaw_cycles(df,wet_threshold=threshold)
