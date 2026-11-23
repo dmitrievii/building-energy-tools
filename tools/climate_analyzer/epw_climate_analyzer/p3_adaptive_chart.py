@@ -71,7 +71,10 @@ def adaptive_interpretation(table):
           f"insufficient preceding observations: {unknown} days. ")
     if valid:
         note+=f"Neutral indoor operative temperature ranges from {neutral.min():.1f} to {neutral.max():.1f} °C. "
-    note+=("Category I is the narrowest band, II intermediate, III the widest. "
-           "Blank bands mean the model is not applicable or the required history is missing, not that indoor comfort fails. "
-           "EN 16798-1 screening for occupant-controlled naturally ventilated spaces: seven previous complete daily means, normalized alpha=0.8, 10–30 °C domain. Outdoor running mean is a model input, not indoor temperature. No elevated air-speed adjustment or indoor compliance claim. Chronological daily model states are retained even when the general time basis pools years.")
+    note+=("Category I defines the narrowest indoor operative-temperature band, II an intermediate band and III the widest band. "
+           "Visible bands indicate days with a valid seven-day outdoor running mean in the 10–30 °C applicability domain. "
+           "EN 16798-1 adaptive screening uses seven preceding complete daily means and normalized alpha=0.8. "
+           "The outdoor running mean determines the climate-dependent indoor operative-temperature bounds. "
+           "An indoor assessment combines those bounds with operative temperature, occupant window control and relevant air-speed effects. "
+           "Daily chronology is preserved for multi-year weather records.")
     return note
