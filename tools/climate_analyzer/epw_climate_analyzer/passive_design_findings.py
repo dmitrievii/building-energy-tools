@@ -152,3 +152,27 @@ def night_flushing_interpretation(
         + " These periods inform operable-opening schedules and the potential "
         "for precooling exposed thermal mass."
     )
+
+
+def monthly_strategy_matrix(table: pd.DataFrame, title: str):
+    """Plot independent strategy-hour totals by period without stacking them."""
+    import plotly.graph_objects as go
+
+    if table.empty:
+        raise ValueError("The selected period contains no strategy observations.")
+    labels = [str(period) for period in table.index]
+    fig = go.Figure(go.Heatmap(
+        x=labels,
+        y=[str(name) for name in table.columns],
+        z=table.to_numpy(dtype=float).T,
+        colorscale="YlGnBu",
+        colorbar={"title": "Hours"},
+        hovertemplate="%{y}<br>Period: %{x}<br>Screen hours: %{z:,.1f} h<extra></extra>",
+    ))
+    fig.update_layout(
+        title=title, template="plotly_white", xaxis_title="Month",
+        yaxis_title="Strategy screening criterion",
+        height=max(390, 38 * len(table.columns) + 150),
+        margin={"l": 125, "r": 24, "t": 55, "b": 60},
+    )
+    return fig
