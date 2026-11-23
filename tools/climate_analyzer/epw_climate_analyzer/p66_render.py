@@ -307,8 +307,10 @@ def make_figure(d,df,context,reference_df=None,cache=None):
             reasons=pd.Series({"Too cold":df[cat.T].lt(16).sum()*dt,"Too hot":df[cat.T].gt(26).sum()*dt,"Too humid":df[cat.W].gt(9).sum()*dt},name="Hours")
             f=_bars(reasons,title,"h");note+=" Rejection reasons can overlap."
         elif style=="Directional suitability":
-            t=directional_table(df,radial="Hours",colour="Natural ventilation suitability",nv_mask=mask)
-            f=directional_figure(t,"Hours","Natural ventilation suitability",title)
+            from .directional_climate import directional_interpretation
+            t=directional_table(df,radial="Eligible hours",colour="Natural ventilation suitability",nv_mask=mask)
+            f=directional_figure(t,"Eligible hours","Natural ventilation suitability",title+" · Strict-screen eligible hours")
+            note+=" "+directional_interpretation(t,"Eligible hours","Natural ventilation suitability")
         else:
             view=df.loc[mask.eq(1)].copy()
             if view.empty:raise NotApplicable("No suitable ventilation hours.")
