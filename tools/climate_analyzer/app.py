@@ -2235,7 +2235,12 @@ def render_extended_variable_chart(df, column, unit, chart_type, *, key_prefix="
         if depth:st.caption("Zero has its own class. Negative or missing depths are excluded; positive classes describe the selected depth statistic, not precipitation rate.")
         if illuminance:st.caption(ILLUMINANCE_OCCURRENCE_NOTE)
         try:
-            table=occurrence_table(df,column,[float(i.strip()) for i in boundaries.split(",") if i.strip()],basis=basis,daily_stat=statistic)
+            class_edges=[float(i.strip()) for i in boundaries.split(",") if i.strip()]
+            if column=="diffuse_radiation_fraction_pct" and basis=="Days":
+                from epw_climate_analyzer.solar_findings import diffuse_fraction_daily_occurrence
+                table=diffuse_fraction_daily_occurrence(df,class_edges,daily_stat=statistic)
+            else:
+                table=occurrence_table(df,column,class_edges,basis=basis,daily_stat=statistic)
         except ValueError as exc:
             st.info(str(exc))
             return
@@ -2260,6 +2265,8 @@ def render_extended_variable_chart(df, column, unit, chart_type, *, key_prefix="
                 plane=df.attrs.get("r24_solar_plane","reference vertical south-facing plane"))
         else:
             note="Classes are mutually exclusive; hours retain source duration, days require complete real calendar days, and percentages use valid observed intervals. Calendar-profile mode averages equivalent year-months."
+        if column=="diffuse_radiation_fraction_pct" and basis=="Days":
+            note+=" The daily fraction statistic is computed only over valid positive-GHI intervals on complete real days. It is not the ratio of the day's summed DHI/GHI. Undefined nighttime fractions do not invalidate the day; missing daytime ratios do."
         render_plot(fig,note)
 
 
