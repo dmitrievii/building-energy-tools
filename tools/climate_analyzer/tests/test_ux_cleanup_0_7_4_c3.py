@@ -33,7 +33,7 @@ class UxCleanup074C3Tests(unittest.TestCase):
         self.assertIn('"Relative sunshine duration"', block)
         self.assertIn("sum(min_count=1)", block)
         self.assertIn("fixed_variable_label=quantity", block)
-        self.assertIn("it is never converted into sky cover, illuminance or DNI", block)
+        self.assertIn("describe complementary observed conditions", block)
 
     def test_natural_ventilation_removes_redundant_month_hour_route(self) -> None:
         block = function_block(self.source, "render_natural_ventilation", "render_hvac_passive")
