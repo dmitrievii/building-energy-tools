@@ -230,3 +230,23 @@ def orientation_shading_interpretation(table,*,cold_c=18.,hot_c=26.):
             "These orientation contrasts identify which façade deserves "
             "priority for summer shading and where winter solar admission "
             "should be evaluated before selecting fixed device depths.")
+
+
+
+def shading_cells_interpretation(cells,metric,*,device="All devices",year=None):
+    from .shading_temporal import UNITS
+    if cells is None or cells.empty or device not in cells:
+        return "No month–hour shading observations are present."
+    v=pd.to_numeric(cells[device],errors="coerce").dropna()
+    if v.empty:return "No month–hour shading observations meet the selected criterion."
+    cell=v.idxmax()
+    month,hour=int(cell[0]),int(cell[1])
+    from calendar import month_name
+    prefix=f"{year} " if year is not None else ""
+    return (f"Peak {device.lower()} {metric.lower()} occurs in "
+            f"{prefix}{month_name[month]} at {hour:02d}:00 "
+            f"({_f(v.max())} {UNITS.get(metric,'%')}). "
+            f"The average across occupied month–hour cells is {_f(v.mean())} "
+            f"{UNITS.get(metric,'%')}. "
+            "The calendar distinguishes the strongest shading periods from "
+            "times of low incident direct radiation.")
