@@ -317,6 +317,9 @@ CATALOG=[
 ("wind_rose_panel","Wind and Ventilation","Monthly wind rose panel (12 months)",V,"%","wind_panel"),
 ("wind_speed","Wind and Ventilation","Monthly wind speed",V,"m/s","profile"),
 ("daylight","Sky and Daylight","Daylight envelope",T,"h","daylight"),
+("sky_cover","Sky and Daylight","Monthly sky-cover conditions","total_sky_cover_tenths","h","sky_conditions"),
+("exterior_light","Sky and Daylight","Exterior daylight availability","global_horizontal_illuminance_lux","h","illumination"),
+("sunshine_ratio","Sky and Daylight","Sunshine share of astronomical daylight","sunshine_duration_s","%","relative_sunshine"),
 ("rain","Precipitation and Snow","Monthly precipitation",P,"mm","total"),
 ("climograph","Precipitation and Snow","Walter–Lieth diagram",P,"mm","climograph"),
 ("snow","Precipitation and Snow","Monthly snow depth","snow_depth_cm","cm","profile"),
@@ -325,9 +328,9 @@ CATALOG=[
 ("degree","HVAC and Passive Design","Heating and cooling degree days",T,"K·d","degree"),
 ("shade","Shading analysis","Solar protection screening",G,"h","shade"),
 ("utci","Outdoor Thermal Comfort","Monthly UTCI stress",T,"h","utci")]
-PRESETS={"Architectural climate study":("temperature_profile","temperature_heatmap","psychrometric","ghi","facade","solar_exposure","sunpath","wind_rose","wind_orientation","daylight","climograph","nv","night","shade"),
-"Climate overview":("temperature_profile","humidity_profile","ghi","wind_rose","rain","climograph"),
-"Passive design":("temperature_heatmap","psychrometric","facade","solar_exposure","wind_rose","wind_orientation","nv","night","shade","utci"),
+PRESETS={"Architectural climate study":("temperature_profile","temperature_heatmap","psychrometric","ghi","facade","solar_exposure","sunpath","wind_rose","wind_orientation","daylight","sky_cover","exterior_light","climograph","nv","night","shade"),
+"Climate overview":("temperature_profile","humidity_profile","ghi","wind_rose","sky_cover","rain","climograph"),
+"Passive design":("temperature_heatmap","psychrometric","facade","solar_exposure","wind_rose","wind_orientation","sky_cover","exterior_light","nv","night","shade","utci"),
 "HVAC & engineering":("temperature_profile","temperature_duration","humidity_ratio","psychrometric","wind_speed","degree","nv","night","utci"),
 "All standard diagrams":tuple(x[0] for x in CATALOG)}
 
@@ -336,7 +339,10 @@ def available_catalog(df,context):
     monthly=str(df.attrs.get("canonical_native_resolution","")).lower()=="monthly"
     def has(*cols):
         return all(numeric(df,c).notna().any() for c in cols)
-    requirements={"psychrometric":(T,RH,W),"facade":(G,D,N,"solar_apparent_zenith_deg","solar_azimuth_deg"),
+    requirements={"psychrometric":(T,RH,W),"sky_conditions":("total_sky_cover_tenths",),
+       "illumination":("global_horizontal_illuminance_lux",),
+       "relative_sunshine":("sunshine_duration_s",),
+       "facade":(G,D,N,"solar_apparent_zenith_deg","solar_azimuth_deg"),
        "facade_temperature":(G,D,N,"solar_apparent_zenith_deg","solar_azimuth_deg",T),
        "sunpath":(N,"solar_apparent_zenith_deg","solar_azimuth_deg"),"windrose":(V,"wind_direction_deg"),"wind_panel":(V,"wind_direction_deg"),"wind_orientation":(V,"wind_direction_deg"),
        "climograph":(T,P),"nv":(T,W),"night":(T,),"degree":(T,),"shade":(T,G),"utci":(T,RH,V)}
@@ -344,9 +350,10 @@ def available_catalog(df,context):
     for entry in CATALOG:
         id,page,label,c,u,kind=entry
         if monthly and kind not in ("profile","total","climograph"):continue
-        if kind=="daylight":
-            try:ok=math.isfinite(float(context.get("latitude")))
-            except (ValueError,TypeError):ok=False
+        if kind in ("daylight","relative_sunshine"):
+            try:latitude_ok=math.isfinite(float(context.get("latitude")))
+            except (ValueError,TypeError):latitude_ok=False
+            ok=latitude_ok and (kind=="daylight" or has("sunshine_duration_s"))
         else:ok=has(*requirements.get(kind,(c,)))
         if ok:out.append(entry)
     return out
@@ -417,7 +424,34 @@ def standard_figure(entry,df,context,reference_df=None):
         fig=directional_class_figure(table,label);note=class_interpretation(table)
     elif kind=="daylight":
         from .extended_visualization import daylight_envelope
-        fig=daylight_envelope(df.index,float(context["latitude"]));note="Geometric sunrise/sunset envelope; ideal horizon and apparent solar time."
+        fig=daylight_envelope(df.index,float(context["latitude"]))
+        note="Sunrise–sunset envelope calculated for the represented latitude and calendar dates."
+    elif kind=="sky_conditions":
+        from .extended_visualization import sky_distribution,occurrence_figure
+        table=sky_distribution(df)
+        table.columns=["Clear","Intermediate","Overcast"]
+        fig=occurrence_figure(table,"","Hours")
+        fig.update_layout(title=label)
+        note="Observed total sky-cover intervals grouped into clear (0–2), intermediate (above 2 and below 8), and overcast (8–10 tenths) conditions."
+    elif kind=="illumination":
+        from .aggregations import threshold_count_by_period
+        from .sky_findings import illuminance_interpretation
+        light=numeric(df,column)
+        counts=threshold_count_by_period(df,light.ge(10000.)&light.notna(),"Monthly",label="hours")
+        fig=go.Figure(go.Bar(x=counts.index,y=counts["hours"]))
+        fig.update_layout(template="plotly_white",title=label,
+            xaxis_title="Month",yaxis_title="Hours ≥10,000 lux")
+        note=illuminance_interpretation(df,column,threshold_lux=10000.)
+    elif kind=="relative_sunshine":
+        from .daylight import monthly_daylight_sunshine_summary
+        from .sky_findings import sunshine_interpretation
+        table=monthly_daylight_sunshine_summary(df,float(context["latitude"]))
+        if "relative_sunshine_pct" not in table or not table.relative_sunshine_pct.notna().any():
+            raise ValueError("Complete sunshine days and site latitude are required.")
+        fig=go.Figure(go.Bar(x=table["month"],y=table["relative_sunshine_pct"]))
+        fig.update_layout(template="plotly_white",title=label,
+            xaxis_title="Month",yaxis_title="Measured sunshine / astronomical daylight [%]")
+        note=sunshine_interpretation(df,latitude=float(context["latitude"]),kind="relative_sunshine")
     elif kind=="climograph":
         from .extended_visualization import climate_summary_table,climate_summary_figure,climate_summary_interpretation
         table=climate_summary_table(df);fig=climate_summary_figure(table,"Walter–Lieth diagram");note=climate_summary_interpretation(table,"Walter–Lieth diagram")
@@ -467,6 +501,10 @@ def standard_figure(entry,df,context,reference_df=None):
         from .wind_findings import wind_figure_interpretation
         stat="" if kind=="wind_orientation" else wind_figure_interpretation(
             df,fig,kind,column=column,title=label)
+    elif page=="Sky and Daylight":
+        from .sky_findings import sky_figure_interpretation
+        stat=sky_figure_interpretation(df,fig,kind,column=column,title=label,
+                                      latitude=context.get("latitude"))
     else:
         stat=source_interpretation(df,page,column if kind in ("profile","duration","heatmap") else "",label,unit,thresholds=temperature_thresholds(context),kind=kind)
     if kind in ("nv","night") and c in ledger:
