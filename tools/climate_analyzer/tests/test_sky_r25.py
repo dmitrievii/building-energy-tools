@@ -138,7 +138,7 @@ class SkyDaylightR25Tests(unittest.TestCase):
         note=illuminance_interpretation(df,GLOBAL,threshold_lux=10000.)
         self.assertIn("24 h",note)
         self.assertIn("50.0%",note)
-        self.assertIn("lighting",note)
+        self.assertIn("electric-light dimming",note)
 
     def test_figures_interpret_chart_specific_months_and_extrema(self):
         df=self.sample()
