@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from .aggregations import threshold_count_by_period
+from .aggregations import native_interval_hours, threshold_count_by_period
 
 
 def add_degree_metrics(
@@ -87,7 +87,19 @@ def night_flushing_condition(
         is_night = hour.between(start, end)
 
     cool_enough = df["dry_bulb_temperature_c"] <= night_max_c
-    daily_max = df["dry_bulb_temperature_c"].resample("D").max()
+    # A preceding hot day must be completely observed. A partial day with
+    # one hot reading must not qualify the following night.
+    observed_t = pd.to_numeric(df["dry_bulb_temperature_c"], errors="coerce")
+    daily_max = observed_t.resample("D").max()
+    daily_observed_hours = observed_t.resample("D").count() * native_interval_hours(df)
+    expected_hours = pd.Series(
+        [(day + pd.DateOffset(days=1) - day).total_seconds() / 3600
+         for day in daily_max.index],
+        index=daily_max.index, dtype=float,
+    )
+    daily_max = daily_max.where(
+        (daily_observed_hours - expected_hours).abs() <= 1e-7
+    )
     normalized_days = pd.DatetimeIndex(df.index).normalize()
 
     current_day_max = pd.Series(
