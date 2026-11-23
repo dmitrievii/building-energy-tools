@@ -227,7 +227,8 @@ def install_geosphere_request_form(parity: Any) -> None:
         real_form_submit_button = st.form_submit_button
         real_dg_date_input = DeltaGenerator.date_input
         request_form = GeoSphereRequestForm(st)
-        fragment_factory = getattr(st, "fragment", None)
+        from .persistent_app_runtime import extended_full_runs
+        fragment_factory = None if extended_full_runs() else getattr(st, "fragment", None)
 
         def _render_date_widget(delta: DeltaGenerator, label: str, args: tuple[Any, ...], kwargs: dict[str, Any]):
             return real_dg_date_input(delta, label, *args, **kwargs)

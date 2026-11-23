@@ -38,6 +38,11 @@ def load_app(path):
         _MODULE,_TOKEN=module,token
         return module
 
+def extended_full_runs():
+    """Separate opt-in source candidate; never implicitly enable provider fragments."""
+    return (os.environ.get("IGE_R143_PERSISTENT_APP")=="1" and
+            os.environ.get("IGE_R144B_EXTENDED")=="1")
+
 def execute(path):
     # Explicit independent qualification: no Degree-days fragment experiment
     # while the full-run serialization boundary is under test.
@@ -50,9 +55,12 @@ def execute(path):
         app=load_app(path)
         # Restrict this candidate to EPW, not provider fragments. Source mode
         # changes are still full reruns, and default production remains intact.
-        if (st.session_state.get("active_canonical_climate") is not None or
-                st.session_state.get("climate_source_mode","Upload EPW") not in ("Upload EPW",)):
+        mode=st.session_state.get("climate_source_mode","Upload EPW")
+        if not extended_full_runs() and (st.session_state.get("active_canonical_climate") is not None or mode!="Upload EPW"):
             st.error("R14.3 persistent pilot supports uploaded EPW only. Disable pilot for other sources.")
+            st.stop()
+        if extended_full_runs() and mode not in ("Upload EPW","GeoSphere Austria","Generate climate","Find climate"):
+            st.error("Source mode not admitted by the extended candidate.")
             st.stop()
         try:app._execute_page()
         finally:restore_streamlit_surface()
@@ -60,4 +68,5 @@ def execute(path):
 def status():
     return {"enabled":os.environ.get("IGE_R143_PERSISTENT_APP")=="1",
             "module_loaded":_MODULE is not None,
-            "scope":"Experimental EPW-only shared code module; serialized full runs, not general fragment/callback isolation."}
+            "extended_full_runs":extended_full_runs(),
+            "scope":"Experimental shared code module; serialized full runs, not general fragment/callback isolation."}

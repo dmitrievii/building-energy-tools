@@ -1,0 +1,7 @@
+# R14.4B1–B4 candidate admission and regression recovery
+
+Separate opt-in IGE_R144B_EXTENDED=1 requires IGE_R143_PERSISTENT_APP=1. Existing EPW-only guard remains when the new flag is absent. Provider date and monthly request fragments are explicitly rendered as full runs only in the candidate. Full-run serialization is not evidence of callback/fragment concurrency safety. No production settings changed. 10-minute, hourly and monthly are GeoSphere provider resources; daily is an analysis aggregation, not a separate provider resource in this adapter.
+
+Resolve the frozen metadata transport via module lookup; preserve provider network and cache policy. Canonical state profile and percentile envelopes use year-first aggregation rather than obsolete per-year envelope renderer; retain extensive=True legacy compatibility. Five stale UI assertions updated to actual rendering/semantic contracts. No test removed. Full CI must pass independently.
+
+Offline AppTest fixture route coverage and exact Report comparison; hourly station-year and future historical-base replay tests; local Playwright with actual provider probe plus unchanged live browser audit on the checked-out build, separate from cloud deployment. Offline fixture injection is not provider acquisition. Both runtime arms tested without altering allocator. Remaining deployment fingerprint, accessibility issues, broader comparison/multiuser/fragment qualification and real cloud memory are separate gates. No automatic promotion.

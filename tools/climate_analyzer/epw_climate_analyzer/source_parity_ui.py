@@ -54,7 +54,6 @@ from .geosphere import (
     GEOSPHERE_STANDARD_UTC_OFFSET_HOURS,
     available_resource_specs,
     estimate_request_datapoints,
-    fetch_metadata,
     fetch_station_dataset,
     parse_parameters,
     parse_stations,
@@ -86,6 +85,12 @@ from .solar import variable_origin
 
 _COMPARISON_BASKET_KEY = "canonical_comparison_climates"
 _GEOSPHERE_RESOURCE_KEY = "geosphere_resource_id"
+
+
+def fetch_metadata(*args, **kwargs):
+    """Resolve provider transport at call time, not from a frozen binding snapshot."""
+    from . import geosphere
+    return geosphere.fetch_metadata(*args, **kwargs)
 
 
 @bounded_cache(name="geosphere_parity_metadata",max_bytes=12*MIB,max_entries=4,ttl=18*60*60,singleflight=True)

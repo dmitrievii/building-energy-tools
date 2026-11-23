@@ -254,7 +254,11 @@ df = add_solar_position_for_site(pd.DataFrame({"direct_normal_radiation_wh_m2": 
         self.assertIn('st.selectbox("Chart type", chart_types', section)
         self.assertIn('["2D sun-path diagram", "Technical sun-path diagram", "3D sun-path diagram"]', section)
         self.assertIn('st.checkbox("Show cube", value=True', section)
-        self.assertIn('key="solar_sun_path_3d_plot"', section)
+        self.assertIn("fig = sun_path_3d(df, show_cube=show_cube)",section)
+        self.assertIn('render_plot(fig,"The hemisphere uses East, North and Up coordinates.',section)
+        renderer=source[source.index("def render_plot("):source.index("def render_plot(",0)+1400]
+        self.assertIn("st.plotly_chart(",renderer)
+        self.assertIn("key=next_plot_key()",renderer)
         self.assertEqual(source.count('elif chart_group == "Sun path":'), 2)
 
 

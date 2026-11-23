@@ -167,11 +167,22 @@ class InterannualHeatmap064UiContractTests(unittest.TestCase):
         self.assertIn('compare_options = ["Hour of day"] if time_basis(df) == CHRONOLOGICAL else ["Hour of day", "Year"]', self.source)
         self.assertIn('st.selectbox("Compare across", compare_options', self.source)
         self.assertIn("Chronological heat maps keep every real day, week or month in sequence across years", self.source)
-        self.assertIn('"Statistic",\n            statistic_options', self.source)
+        self.assertRegex(self.source,r'"Statistic",\s*statistic_options')
         self.assertIn("temporal_heatmap_chart(", self.source)
 
     def test_annual_is_exposed_in_generic_profile_aggregation(self) -> None:
-        self.assertIn('["Monthly", "Annual", "Weekly", "Daily", "Hourly", "Seasonal"]', self.source)
+        from epw_climate_analyzer.aggregations import profile_aggregations
+        hourly=pd.DataFrame({"dry_bulb_temperature_c":[10.,11.,12.]},
+                            index=pd.date_range("2025-01-01",periods=3,freq="h"))
+        hourly.attrs["canonical_native_interval_minutes"]=60
+        self.assertEqual(set(profile_aggregations(hourly,"dry_bulb_temperature_c")),
+                         {"Hourly","Daily","Weekly","Monthly","Seasonal","Annual"})
+        monthly=hourly.copy()
+        monthly.attrs["canonical_native_resolution"]="monthly"
+        self.assertEqual(profile_aggregations(monthly,"dry_bulb_temperature_c"),
+                         ("Monthly","Seasonal","Annual"))
+        self.assertIn("periods=list(profile_aggregations(df,column))",self.source)
+        self.assertIn('st.selectbox("Aggregation",periods',self.source)
 
     def test_natural_ventilation_heatmap_uses_same_dimensions(self) -> None:
         self.assertIn('row_group = st.radio("Heat-map aggregation", ["Day", "Week", "Month"]', self.source)

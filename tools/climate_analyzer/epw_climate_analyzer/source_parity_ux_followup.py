@@ -508,7 +508,10 @@ def _patch_charts(st: Any) -> None:
         unit: str,
         extensive: bool = False,
     ) -> go.Figure:
-        if temporal_filtering.time_basis(df) != INTERANNUAL_OVERLAY or not temporal_filtering.is_multiyear(df):
+        # The canonical profile engine already aggregates each real year first
+        # and adds the selected cross-year envelope. Only retain the original
+        # legacy extensive=True contract; do not override the canonical state path.
+        if not extensive or temporal_filtering.time_basis(df) != INTERANNUAL_OVERLAY or not temporal_filtering.is_multiyear(df):
             return original_profile(df, column, aggregation, title, unit, extensive=extensive)
         highlight = st.session_state.get(_HIGHLIGHT_KEY)
         try:
@@ -532,21 +535,8 @@ def _patch_charts(st: Any) -> None:
         title: str,
         unit: str,
     ) -> go.Figure:
-        if temporal_filtering.time_basis(df) != INTERANNUAL_OVERLAY or not temporal_filtering.is_multiyear(df):
-            return original_percentile(df, column, aggregation, title, unit)
-        highlight = st.session_state.get(_HIGHLIGHT_KEY)
-        try:
-            highlight = int(highlight) if highlight is not None else None
-        except (TypeError, ValueError):
-            highlight = None
-        return _interannual_percentile_chart(
-            df,
-            column,
-            aggregation,
-            title,
-            unit,
-            highlight_year=highlight,
-        )
+        # Cross-year P05/median/P95 must use canonical yearly quantities.
+        return original_percentile(df, column, aggregation, title, unit)
 
     charts.profile_ribbon_chart = profile_ribbon_chart
     charts.percentile_band_chart = percentile_band_chart

@@ -11,21 +11,24 @@ class Climate0105RegressionTests(unittest.TestCase):
         source = (ROOT / "app.py").read_text(encoding="utf-8")
         tree = ast.parse(source)
         fn = next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == "render_humidity")
-        calls = []
-        for node in ast.walk(fn):
-            if not isinstance(node, ast.Call):
-                continue
-            func = node.func
-            if not (isinstance(func, ast.Attribute) and func.attr == "plotly_chart"):
-                continue
-            if not any(isinstance(kw.value, ast.Call) and isinstance(kw.value.func, ast.Name) and kw.value.func.id == "next_plot_key" and kw.value.args and isinstance(kw.value.args[0], ast.Constant) and kw.value.args[0].value == "psychrometric" for kw in node.keywords if kw.arg == "key"):
-                continue
-            calls.append(node)
-        self.assertEqual(len(calls), 1)
-        width_kw = next((kw for kw in calls[0].keywords if kw.arg == "use_container_width"), None)
-        self.assertIsNotNone(width_kw)
-        self.assertIsInstance(width_kw.value, ast.Constant)
-        self.assertIs(width_kw.value.value, True)
+        def named_call(node, name):
+            return isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == name
+        # The primary psychrometric chart now uses the common render_plot path
+        # (which owns Report capture and container-width layout).
+        builds=[n for n in ast.walk(fn) if named_call(n,"psychrometric_chart")]
+        self.assertEqual(len(builds),1)
+        calls=[n for n in ast.walk(fn) if named_call(n,"render_plot") and n.args and
+               isinstance(n.args[0],ast.Name) and n.args[0].id=="fig" and
+               len(n.args)>1 and named_call(n.args[1],"psychrometric_interpretation")]
+        self.assertTrue(any(isinstance(n.args[1].args[0],ast.Name) and
+                            n.args[1].args[0].id=="report_df" for n in calls))
+        renderer=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=="render_plot")
+        plots=[n for n in ast.walk(renderer) if isinstance(n,ast.Call) and
+               isinstance(n.func,ast.Attribute) and n.func.attr=="plotly_chart"]
+        self.assertEqual(len(plots),1)
+        width=next((kw.value for kw in plots[0].keywords if kw.arg=="use_container_width"),None)
+        self.assertIsInstance(width,ast.Constant)
+        self.assertIs(width.value,True)
 
     def test_no_fixed_width_primary_psychrometric_render_remains(self):
         source = (ROOT / "app.py").read_text(encoding="utf-8")

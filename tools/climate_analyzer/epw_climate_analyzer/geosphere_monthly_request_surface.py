@@ -281,7 +281,8 @@ def install_monthly_request_surface(parity: Any) -> None:
     """Stop the monthly legacy tail at its first date widget and render a fragment."""
     previous = parity._render_geosphere_resource_selector
     st = parity.st
-    fragment_factory = getattr(st, "fragment", None)
+    from .persistent_app_runtime import extended_full_runs
+    fragment_factory = None if extended_full_runs() else getattr(st, "fragment", None)
 
     def render_surface(legacy: Any) -> None:
         bundle = _station_and_bundle(legacy, st)

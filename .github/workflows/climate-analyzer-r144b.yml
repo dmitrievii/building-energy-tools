@@ -1,0 +1,119 @@
+name: Climate Analyzer R14.4B extended source and regression qualification
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/climate-analyzer-r144b.yml'
+      - 'tools/climate_analyzer/scripts/r144b_source_qualification.py'
+      - 'tools/climate_analyzer/epw_climate_analyzer/persistent_app_runtime.py'
+permissions:
+  contents: read
+jobs:
+  regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: tools/climate_analyzer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - run: python -m compileall -q app.py epw_climate_analyzer scripts
+      - name: Targeted scientific and UI regression suite
+        run: |
+          set -euo pipefail
+          for suite in test_climate_0_10_5_regressions test_interannual_heatmaps_0_6_4 test_interannual_overlay_profiles test_interannual_year_highlight test_ige_h1_station_year_ui test_p2_directional_solar test_sun_path_views test_geosphere_unified_request_form test_geosphere_monthly_request_surface; do
+            python -m unittest discover -s tests -p "$suite.py" -v
+          done
+  sources:
+    strategy:
+      fail-fast: false
+      matrix:
+        persistent: ['0','1']
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: tools/climate_analyzer
+    env:
+      IGE_R143_PERSISTENT_APP: ${{ matrix.persistent }}
+      IGE_R144B_EXTENDED: '1'
+      IGE_R143_PARITY: '1'
+      PYTHONPATH: .:tests
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - name: Offline canonical chart and Report parity
+        run: |
+          set -euo pipefail
+          for kind in ten-minute hourly monthly; do
+            python scripts/r144b_source_qualification.py "$kind" "artifacts/r144b/$kind.json"
+          done
+      - name: Real app hourly provider selector and annual station tool (offline fixture)
+        if: always()
+        run: python -m unittest test_ige_h1_station_year_ui.StationYearUITests.test_real_app_hourly_source_contains_the_same_annual_tool -v
+      - name: Generated future route and previous historical base (offline replay)
+        if: always()
+        run: python -m unittest test_ige_f1_selected_future_ui.F1UITests.test_future_explore_uses_common_analysis_and_keeps_original_base_available -v
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r144b-sources-${{ matrix.persistent }}
+          path: tools/climate_analyzer/artifacts/r144b/
+  compare:
+    needs: sources
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: r144b-sources-*
+          path: evidence
+      - run: python tools/climate_analyzer/scripts/compare_r144b_sources.py evidence/r144b-sources-0 evidence/r144b-sources-1
+  local-browser:
+    strategy:
+      fail-fast: false
+      matrix:
+        persistent: ['0','1']
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      TARGET_URL: http://127.0.0.1:8513/
+      CHROME_PATH: /usr/bin/google-chrome
+      IGE_R143_PERSISTENT_APP: ${{ matrix.persistent }}
+      IGE_R144B_EXTENDED: '1'
+      PYTHONPATH: tools/climate_analyzer
+      GEOSPHERE_SMOKE_FIXTURE: artifacts/r144b-provider/provider-fixture.json
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r tools/climate_analyzer/requirements.txt
+      - run: npm install --no-save playwright-core@1.55.0 axe-core@4.10.3
+      - name: Local checked-out source browser and provider audit
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/r144b-provider artifacts/r144b-browser
+          python tools/climate_analyzer/scripts/run_managed_climate.py --server.headless=true --server.port=8513 > artifacts/r144b-browser/server.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 60); do curl -fsS http://127.0.0.1:8513/_stcore/health && break; sleep 1; done
+          status=0
+          AUDIT_OUTPUT_DIR=artifacts/r144b-browser node deployment/live_browser_audit.mjs || status=1
+          python deployment/geosphere_precip_snow_provider_probe.py --output "$GEOSPHERE_SMOKE_FIXTURE" --timeout 60 && AUDIT_OUTPUT_DIR=artifacts/r144b-provider node deployment/pr83_precip_snow_live_smoke.mjs || status=1
+          exit "$status"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r144b-browser-${{ matrix.persistent }}
+          path: |
+            artifacts/r144b-browser/
+            artifacts/r144b-provider/

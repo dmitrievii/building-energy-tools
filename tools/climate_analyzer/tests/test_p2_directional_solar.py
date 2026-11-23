@@ -305,7 +305,11 @@ class P2Tests(unittest.TestCase):
         self.assertNotIn('"Shading analysis"',funcs["render_solar"])
         self.assertNotIn("_shading_geometry(",funcs["render_sun_path"])
         self.assertEqual(funcs["render_shading_design"].count("_shading_geometry("),1)
-        self.assertIn("render_sun_path(df,shading_geometry=geometry)",funcs["render_shading_design"])
+        self.assertIn('options.append("Seasonal and hourly shading")',funcs["render_shading_design"])
+        self.assertIn("render_temporal_shading(df,geometry=geometry,has_energy=has_energy)",funcs["render_shading_design"])
+        self.assertIn("render_shading_analysis(df,_active_solar_ground_albedo(df),geometry=geometry)",funcs["render_shading_design"])
+        self.assertIn("shading_frame(data,geometry=geometry",funcs["render_temporal_shading"])
+        self.assertIn("shading_calendar(frame,metric",funcs["render_temporal_shading"])
         self.assertIn("geometry=geometry",funcs["render_shading_design"])
         self.assertIn('"Shading analysis"',funcs["page_derivation_flags"])
         for route in ("main","render_generated_climate_analysis","render_canonical_climate_analysis"):
