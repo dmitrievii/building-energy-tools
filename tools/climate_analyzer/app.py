@@ -4200,7 +4200,8 @@ def render_shading_analysis(df,ground_albedo,*,geometry):
     table=pd.DataFrame({c:period_total_series(ledger[c],data,"Monthly")/1000 for c in cols})
     fig=monthly_shading_figure(table,display_period_labels(table.index,"Monthly",time_basis(data)))
     totals=ledger[cols].sum(min_count=1)/1000
-    render_plot(fig,f"Selected-period unshaded total: {totals.iloc[0]:.1f} kWh/m²; direct beam intercepted: {totals.iloc[2]:.1f} kWh/m². The stacked bar combines remaining irradiation and intercepted direct beam; the unshaded reference line is their sum for complete intervals. The model calculates the exact geometric shaded fraction of a rectangular vertical aperture, with opaque overhang and fins attached at its edges. The two ray-exit areas are integrated analytically without double counting. Diffuse and ground-reflected components are unchanged; the intercepted direct-beam energy identifies the seasonal solar protection effect of the specified overhang and fins.")
+    from epw_climate_analyzer.shading_findings import shading_ledger_interpretation
+    render_plot(fig,shading_ledger_interpretation(ledger,data,geometry=geometry))
 
 
 def render_temporal_shading(df,*,geometry,has_energy):
@@ -4261,7 +4262,15 @@ def render_temporal_shading(df,*,geometry,has_energy):
                 fig=shading_calendar(frame,metric,period,dim,stat,
                                      title=metric+" · "+device+" · "+period_title,threshold=threshold)
                 table,_=shading_matrix(frame,metric,period,dim,stat)
-        render_plot(fig,note)
+        from epw_climate_analyzer.shading_findings import (
+            shading_temporal_interpretation,shading_monthly_interpretation)
+        if chart=="Monthly rose":
+            interpretation=shading_monthly_interpretation(monthly,metric,
+                                                           year=data.index.year[0])
+        else:
+            interpretation=shading_temporal_interpretation(
+                frame,metric,device=device,threshold=threshold)
+        render_plot(fig,interpretation)
         st.download_button("Shading data · CSV",table.to_csv().encode("utf-8"),"shading_data.csv","text/csv",key="shading_temporal_csv")
     except ValueError as exc:st.info(str(exc))
 
@@ -4275,8 +4284,10 @@ def render_shading_design(df: pd.DataFrame) -> None:
     has_energy=surface_available(df)
     if has_energy:
         options.append("Irradiation reduction")
+        options.append("Façade orientation comparison")
     if all(c in df and df[c].notna().any() for c in ("solar_azimuth_deg","solar_apparent_zenith_deg")):
         options.append("Seasonal and hourly shading")
+        options.append("Geometric shading mask")
     if not options:
         st.info("Shading analysis requires site solar geometry or complete paired plane-of-array radiation inputs.")
         return
@@ -4291,6 +4302,39 @@ def render_shading_design(df: pd.DataFrame) -> None:
         _solar_ground_albedo_selection(df)
     elif view=="Seasonal and hourly shading":
         render_temporal_shading(df,geometry=geometry,has_energy=has_energy)
+    elif view=="Geometric shading mask":
+        from epw_climate_analyzer.shading_findings import shading_mask_interpretation
+        st.caption(shading_mask_interpretation(geometry))
+        render_sun_path(df,shading_geometry=geometry)
+    elif view=="Façade orientation comparison":
+        from epw_climate_analyzer.shading_findings import (
+            orientation_shading_table,orientation_shading_figure,
+            orientation_shading_interpretation)
+        st.caption("The selected dimensions are applied to all eight vertical façade azimuths. "
+                   "Outdoor-temperature categories show when direct-beam interception occurs.")
+        cols=st.columns(2)
+        cold=cols[0].number_input("Cold outdoor temperature [°C]",value=18.,
+                                 step=.5,key="r27_shading_cold")
+        hot=cols[1].number_input("Hot outdoor temperature [°C]",value=26.,
+                                step=.5,key="r27_shading_hot")
+        if cold>hot:
+            st.warning("Cold threshold must not exceed hot threshold.");return
+        try:
+            table=orientation_shading_table(
+                df,geometry=geometry,albedo=_active_solar_ground_albedo(df),
+                cold_c=cold,hot_c=hot)
+        except ValueError as exc:
+            st.info(str(exc));return
+        if table.empty:
+            st.info("The selected period has no complete façade irradiation observations.");return
+        fig=orientation_shading_figure(table,cold_c=cold,hot_c=hot)
+        render_plot(fig,orientation_shading_interpretation(
+            table,cold_c=cold,hot_c=hot))
+        with st.expander("Numerical shading results for eight orientations",expanded=False):
+            st.dataframe(table,hide_index=True,use_container_width=True)
+        st.download_button("Façade shading comparison · CSV",
+            table.to_csv(index=False).encode("utf-8"),
+            "facade_shading_orientation.csv","text/csv",key="r27_shading_orientation_csv")
 
 
 def render_solar(df: pd.DataFrame) -> None:
