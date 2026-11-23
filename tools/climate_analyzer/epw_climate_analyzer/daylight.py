@@ -49,31 +49,39 @@ def daily_daylight_table(index: pd.DatetimeIndex, latitude_deg: float) -> pd.Dat
     return table
 
 
-def _complete_daily_sunshine_hours(series: pd.Series) -> pd.Series:
-    """Return measured sunshine [h/day] only for fully observed calendar days.
+def _complete_daily_sunshine_hours(
+    series: pd.Series, *, interval_hours: float | None = None
+) -> pd.Series:
+    """Measured sunshine per complete civil day at source-declared cadence.
 
-    Missing source/canonical intervals are not silently converted to zero. The
-    active frame can also be hour-filtered by the global Data filter; such
-    partial days therefore do not qualify for a full-day sunshine ratio.
+    A daily ratio requires every expected source interval, including observed
+    zero-sunshine intervals. Each interval contribution is bounded by its
+    actual recording duration. Partial selections retain their native cadence.
     """
     values = pd.to_numeric(series, errors="coerce")
-    if not isinstance(values.index, pd.DatetimeIndex) or len(values.index) < 2:
+    if not isinstance(values.index, pd.DatetimeIndex) or values.empty:
         return pd.Series(dtype=float)
+    if not values.index.is_unique:
+        raise ValueError("Sunshine observations require unique source timestamps.")
     ordered = values.sort_index()
-    deltas = ordered.index.to_series().diff().dropna().dt.total_seconds() / 60.0
-    positive = deltas[deltas > 0]
-    if positive.empty:
-        return pd.Series(dtype=float)
-    interval_minutes = float(positive.median())
-    expected_per_day = int(round(24.0 * 60.0 / interval_minutes))
-    if expected_per_day <= 0:
-        return pd.Series(dtype=float)
-    grouped = ordered.groupby(ordered.index.normalize())
-    counts = grouped.count()
-    sums_h = grouped.sum(min_count=1) / 3600.0
-    complete = counts == expected_per_day
+    if interval_hours is None:
+        positive = ordered.index.to_series().diff().dropna().dt.total_seconds().div(3600.)
+        positive = positive[positive > 0]
+        interval_hours = float(positive.median()) if not positive.empty else 1.
+    dt = float(interval_hours)
+    if not np.isfinite(dt) or dt <= 0 or dt > 24:
+        raise ValueError("Sunshine cadence must be positive and at most one day.")
+    # Reject negative values and sunshine that exceeds the record's duration.
+    admissible = ordered.where(ordered.ge(0) & ordered.le(dt*3600. + 1e-6))
+    groups = admissible.groupby(admissible.index.normalize())
+    counts = groups.count()
+    sums_h = groups.sum(min_count=1) / 3600.
+    expected = pd.Series({
+        day: (day + pd.DateOffset(days=1) - day).total_seconds() / (dt*3600.)
+        for day in counts.index
+    })
+    complete = counts.eq(expected)
     return sums_h.where(complete).dropna()
-
 
 def monthly_daylight_sunshine_summary(
     df: pd.DataFrame,
@@ -95,7 +103,8 @@ def monthly_daylight_sunshine_summary(
         represented_days=("daylight_duration_h", "size"),
     )
     if sunshine_column in df.columns:
-        complete_daily_sunshine = _complete_daily_sunshine_hours(df[sunshine_column])
+        from .aggregations import native_interval_hours
+        complete_daily_sunshine = _complete_daily_sunshine_hours(df[sunshine_column], interval_hours=native_interval_hours(df))
         if not complete_daily_sunshine.empty:
             monthly_sunshine = complete_daily_sunshine.groupby(complete_daily_sunshine.index.month).agg(["mean", "sum", "count"])
             summary["mean_sunshine_h"] = monthly_sunshine["mean"]
