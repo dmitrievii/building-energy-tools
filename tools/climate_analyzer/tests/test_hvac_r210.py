@@ -19,7 +19,7 @@ class HVACR210Tests(unittest.TestCase):
         t=np.tile([10.,22.,30.,32.],n//4+1)[:n]
         w=np.tile([3.,8.,12.,16.],n//4+1)[:n]
         df=pd.DataFrame({
-            p3.T:t,p3.W:w,p3.H:1.006*t+w/1000*(2501+1.86*t),
+            p3.T:t,p3.W:w,p4.H:1.006*t+w/1000*(2501+1.86*t),
             p3.SV:.8,p3.RH:60.,p3.V:1.5,
             "hour_of_day":idx.hour,"month_index":idx.month,
         },index=idx)
@@ -77,7 +77,7 @@ class HVACR210Tests(unittest.TestCase):
         df=self.fixture(96).iloc[:6].copy()
         df.index=pd.date_range("2026-06-01",periods=6,freq="30min")
         df.attrs["canonical_native_interval_minutes"]=30.
-        df.loc[df.index[0],p3.H]=np.nan
+        df.loc[df.index[0],p4.H]=np.nan
         steps=h.economizer_stages(df)
         self.assertEqual(steps.Hours.iloc[0],2.5)
         self.assertLessEqual(steps.Hours.iloc[2],steps.Hours.iloc[1])
@@ -94,13 +94,13 @@ class HVACR210Tests(unittest.TestCase):
         candidates=h.candidate_day_table(partial,quantity=p3.T,ranking="Hottest days")
         self.assertEqual(len(candidates),3)
         self.assertNotIn(pd.Timestamp("2026-06-01"),candidates.index)
-        self.assertEqual(len(h.candidate_day_table(df,quantity=p3.H,ranking="Highest enthalpy days")),4)
+        self.assertEqual(len(h.candidate_day_table(df,quantity=p4.H,ranking="Highest enthalpy days")),4)
         self.assertEqual(len(h.candidate_day_table(df,quantity=p3.W,ranking="Most humid days")),4)
 
     def test_empirical_design_tail_and_coincidence(self):
         df=self.fixture()
         table=p4.design_conditions(df,p3.T,[.4,1.,2.,5.],upper=True,
-                                   coincident=[p3.W,p3.H])
+                                   coincident=[p3.W,p4.H])
         self.assertEqual(len(table),4)
         fig=h.design_quantile_figure(table,quantity="Air temperature",unit="°C",upper=True)
         self.assertEqual(list(fig.data[0].x),[.4,1.,2.,5.])
