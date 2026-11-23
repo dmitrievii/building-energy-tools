@@ -255,4 +255,7 @@ def illuminance_panel(df,render):
     fig=go.Figure()
     for c in tab:fig.add_bar(x=tab.index,y=tab[c],name=c)
     fig.update_layout(template="plotly_white",title=f"{label} illuminance availability · {threshold:g} lux",barmode="stack",yaxis_title="%" if view.endswith("percentage") else "Hours")
-    render(fig,"Outdoor source illuminance only. Denominator includes all valid selected intervals, including night. No irradiance-to-lux conversion or indoor daylight autonomy.")
+    from .sky_findings import illuminance_interpretation
+    note=illuminance_interpretation(df,column=columns[label],threshold_lux=threshold)
+    note+=" Percentages include all valid selected intervals, including dark hours, and show the seasonal frequency of the requested exterior-light level."
+    render(fig,note)
