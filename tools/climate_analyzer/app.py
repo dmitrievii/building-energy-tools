@@ -4346,7 +4346,9 @@ def render_wind(df: pd.DataFrame) -> None:
     if numeric("wind_speed_m_s"):
         options.append("Wind persistence and calm periods")
     if numeric("wind_speed_m_s") and numeric("wind_direction_deg"):
-        options.append("Climate-responsive ventilation orientation")
+        from epw_climate_analyzer.extended_visualization import hourly_capable
+        if hourly_capable(df):
+            options.append("Climate-responsive ventilation orientation")
     if not options:
         st.info("No usable wind observations are available in the selected interval.")
         return
