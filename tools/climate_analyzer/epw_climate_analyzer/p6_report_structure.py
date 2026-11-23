@@ -362,7 +362,7 @@ def standard_figure(entry,df,context,reference_df=None):
             fig=go.Figure(go.Scatter(x=s.index,y=s,mode="lines+markers",connectgaps=False))
             fig.update_layout(template="plotly_white",title=label,yaxis_title=unit)
         else:fig=profile_ribbon_chart(df,column,"Monthly",label,unit)
-        note="Observed monthly values; missing records excluded. Range describes source samples, not certified design conditions."
+        note="Monthly values summarize the observed source samples; their range identifies seasonal variability."
     elif kind=="duration":
         fig=duration_chart(df,column,label,unit);note="Ranked valid source observations in descending order."
     elif kind=="heatmap":
@@ -380,7 +380,7 @@ def standard_figure(entry,df,context,reference_df=None):
         if "Custom constant" in context.get("pressure mode",""):
             try:p=float(context["custom pressure"])
             except (ValueError,KeyError):pass
-        fig=psychrometric_chart(df,pressure_pa=p,data_mode="Climate zone");note=f"T–d distribution, reference guide pressure {p:.0f} Pa. Guides are reference conditions, not individual building comfort."
+        fig=psychrometric_chart(df,pressure_pa=p,data_mode="Climate zone");note=f"T–d distribution, reference guide pressure {p:.0f} Pa. Reference guides help relate seasonal moisture and temperature combinations to candidate passive strategies."
     elif kind=="total":
         x=s.resample("MS").sum(min_count=1)/(1000 if column==G else 1)
         fig=go.Figure(go.Bar(x=x.index,y=x,marker_color="#D6A23D" if column==G else "#5488B6"))
@@ -428,7 +428,7 @@ def standard_figure(entry,df,context,reference_df=None):
         if kind=="degree":
             if degree.empty or not degree.notna().any().any():raise ValueError("No complete valid daily temperature observations.")
             for c in degree:fig.add_bar(x=degree.index,y=degree[c],name=c)
-            note="HGT 20/12; KGT 26/26, complete daily mean observations. Selected period, not building energy demand."
+            note="HGT 20/12; KGT 26/26, complete daily mean observations. Selected-period degree-day totals express the duration and intensity of outdoor temperature exposure."
         else:
             c={"nv":"Natural ventilation","night":"Night flushing","shade":"Solar protection screening"}[kind]
             if c not in ledger or not ledger[c].notna().any():raise ValueError("No valid candidate hours.")
@@ -436,7 +436,7 @@ def standard_figure(entry,df,context,reference_df=None):
             fig.add_bar(x=a.index,y=a,marker_color="#21866B")
             note={"nv":"16–26 °C, humidity ratio ≤9 g/kg. No wind or occupancy restriction.",
                   "night":"22:00–06:59, cool air ≤20 °C after complete hot day ≥26 °C.",
-                  "shade":"Air temperature ≥24 °C, mean GHI ≥250 W/m². Not aperture-specific shading."}[kind]
+                  "shade":"Air temperature ≥24 °C, mean GHI ≥250 W/m². The combined temperature and horizontal-irradiance screen identifies periods for evaluating façade solar protection."}[kind]
         fig.update_layout(template="plotly_white",title=label,barmode="group",yaxis_title=unit)
         if kind=="degree":
             from .degree_metrics import degree_legend_below
