@@ -163,20 +163,64 @@ def illuminance_interpretation(df,column=GLOBAL,threshold_lux=10000.,kind="illum
     return cond
 
 
-def sky_joint_interpretation(df):
-    """Support design insights using coincident sky cover and illuminance."""
+def sky_light_table(df,threshold_lux=3000.):
+    """Monthly bright exterior-light hours for clear, mixed and overcast sky."""
+    if not isinstance(df.index,pd.DatetimeIndex):
+        raise ValueError("Sky and daylight combinations require dated observations.")
+    s=_numeric(df,TOTAL)
+    lux=_numeric(df,GLOBAL)
+    paired=s.notna() & lux.notna()
+    bright=lux.ge(float(threshold_lux)) & paired
+    dt=float(native_interval_hours(df))
+    classes={
+        "Clear 0–2 tenths":s.le(2),
+        "Intermediate >2–<8":s.gt(2)&s.lt(8),
+        "Overcast 8–10 tenths":s.ge(8),
+    }
+    rows=pd.DataFrame({label:(mask&bright).astype(float)*dt
+                       for label,mask in classes.items()},index=df.index)
+    rows["Valid paired hours"]=paired.astype(float)*dt
+    rows["Bright exterior hours"]=bright.astype(float)*dt
+    summary=rows.groupby(rows.index.month).sum(min_count=1)
+    summary.index.name="Month"
+    return summary
+
+
+def sky_joint_interpretation(df,threshold_lux=3000.):
+    """Interpret coincident sky cover and available exterior illumination."""
     s=_numeric(df,TOTAL)
     light=_numeric(df,GLOBAL)
     paired=pd.DataFrame({"sky":s,"lux":light},index=df.index).dropna()
     if paired.empty:return "Sky-cover and exterior-illuminance observations can be compared when both are available."
     overcast=paired.sky.ge(8)
-    bright=paired.lux.ge(3000)
+    bright=paired.lux.ge(float(threshold_lux))
     n=int((overcast&bright).sum())
-    return (f"Overcast sky (≥8 tenths) coincides with global horizontal illuminance "
-            f"≥3,000 lux during {_fmt_hours(n*native_interval_hours(df))} h "
-            f"({100*n/len(paired):.1f}% of {len(paired):,} coincident observations). "
-            "This indicates periods when diffuse-sky light can support daylight access "
-            "through appropriately oriented and sized apertures.")
+    clear=int((paired.sky.le(2)&bright).sum())
+    return (f"Global horizontal illuminance ≥{float(threshold_lux):,.0f} lux coincides with "
+            f"overcast sky (8–10 tenths) for {_fmt_hours(n*native_interval_hours(df))} h "
+            f"and clear sky (0–2 tenths) for {_fmt_hours(clear*native_interval_hours(df))} h. "
+            "Bright overcast periods support diffuse-daylight admission; bright clear periods "
+            "indicate opportunities for daylight access alongside glare and direct-sun control.")
+
+
+def sky_radiation_scatter_interpretation(df):
+    """Describe irradiance contrasts on matched daylight source records."""
+    s=_numeric(df,TOTAL)
+    ghi=_numeric(df,GHI)
+    dt=float(native_interval_hours(df))
+    paired=pd.DataFrame({"sky":s,"ghi":ghi/dt},index=df.index).dropna()
+    paired=paired.loc[paired.ghi.gt(0)]
+    if paired.empty:
+        return "Coincident daytime sky cover and positive global horizontal irradiance provide the basis for cloud–radiation comparison."
+    clear=paired.loc[paired.sky.le(2),"ghi"]
+    overcast=paired.loc[paired.sky.ge(8),"ghi"]
+    descriptions=[]
+    if not clear.empty:descriptions.append(f"clear sky: {_fmt(clear.mean())} W/m² across {len(clear):,} intervals")
+    if not overcast.empty:descriptions.append(f"overcast sky: {_fmt(overcast.mean())} W/m² across {len(overcast):,} intervals")
+    return (f"Across {len(paired):,} coincident positive-GHI daylight observations, "
+            +"; ".join(descriptions)+". "
+            "Sky-cover and horizontal-irradiance pairs reveal how cloud conditions influence "
+            "the available solar and daylight resource across the observed solar positions.")
 
 
 def sky_figure_interpretation(df,fig,kind,*,column="",title="",args=(),latitude=None):
@@ -192,7 +236,9 @@ def sky_figure_interpretation(df,fig,kind,*,column="",title="",args=(),latitude=
     if kind=="illumination":
         return illuminance_interpretation(df,column or GLOBAL,threshold_lux=(float(args[0]) if args and isinstance(args[0],(int,float)) else 300.))
     if kind=="sky_scatter":
-        return sky_joint_interpretation(df)
+        return sky_radiation_scatter_interpretation(df)
+    if kind=="sky_joint":
+        return sky_joint_interpretation(df,threshold_lux=(float(args[0]) if args else 3000.))
     if not column:
         return sky_joint_interpretation(df)
     v=_numeric(df,column).dropna()
