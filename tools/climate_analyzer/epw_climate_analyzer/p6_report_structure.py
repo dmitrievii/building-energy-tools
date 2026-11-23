@@ -312,6 +312,7 @@ CATALOG=[
 ("facade","Solar and Radiation","Vertical façade irradiation",G,"kWh/m²","facade"),
 ("sunpath","Solar and Radiation","Sun path",N,"Wh/m²","sunpath"),
 ("wind_rose","Wind and Ventilation","Wind rose",V,"m/s","windrose"),
+("wind_orientation","Wind and Ventilation","Seasonal windward/exhaust orientation screening",V,"%","wind_orientation"),
 ("wind_rose_panel","Wind and Ventilation","Monthly wind rose panel (12 months)",V,"%","wind_panel"),
 ("wind_speed","Wind and Ventilation","Monthly wind speed",V,"m/s","profile"),
 ("daylight","Sky and Daylight","Daylight envelope",T,"h","daylight"),
@@ -323,9 +324,9 @@ CATALOG=[
 ("degree","HVAC and Passive Design","Heating and cooling degree days",T,"K·d","degree"),
 ("shade","Shading analysis","Solar protection screening",G,"h","shade"),
 ("utci","Outdoor Thermal Comfort","Monthly UTCI stress",T,"h","utci")]
-PRESETS={"Architectural climate study":("temperature_profile","temperature_heatmap","psychrometric","ghi","facade","sunpath","wind_rose","daylight","climograph","nv","night","shade"),
+PRESETS={"Architectural climate study":("temperature_profile","temperature_heatmap","psychrometric","ghi","facade","sunpath","wind_rose","wind_orientation","daylight","climograph","nv","night","shade"),
 "Climate overview":("temperature_profile","humidity_profile","ghi","wind_rose","rain","climograph"),
-"Passive design":("temperature_heatmap","psychrometric","facade","wind_rose","nv","night","shade","utci"),
+"Passive design":("temperature_heatmap","psychrometric","facade","wind_rose","wind_orientation","nv","night","shade","utci"),
 "HVAC & engineering":("temperature_profile","temperature_duration","humidity_ratio","psychrometric","wind_speed","degree","nv","night","utci"),
 "All standard diagrams":tuple(x[0] for x in CATALOG)}
 
@@ -335,7 +336,7 @@ def available_catalog(df,context):
     def has(*cols):
         return all(numeric(df,c).notna().any() for c in cols)
     requirements={"psychrometric":(T,RH,W),"facade":(G,D,N,"solar_apparent_zenith_deg","solar_azimuth_deg"),
-       "sunpath":(N,"solar_apparent_zenith_deg","solar_azimuth_deg"),"windrose":(V,"wind_direction_deg"),"wind_panel":(V,"wind_direction_deg"),
+       "sunpath":(N,"solar_apparent_zenith_deg","solar_azimuth_deg"),"windrose":(V,"wind_direction_deg"),"wind_panel":(V,"wind_direction_deg"),"wind_orientation":(V,"wind_direction_deg"),
        "climograph":(T,P),"nv":(T,W),"night":(T,),"degree":(T,),"shade":(T,G),"utci":(T,RH,V)}
     out=[]
     for entry in CATALOG:
@@ -389,6 +390,12 @@ def standard_figure(entry,df,context,reference_df=None):
         fig=orientation_components_chart(a,f,tilt_deg=90.,style="Bar chart",selected=())
         note="Unobstructed vertical POA; isotropic diffuse model and default ground albedo."
     elif kind=="sunpath":fig=sun_path_chart(df);note="Solar position and direct-normal radiation for selected source records."
+    elif kind=="wind_orientation":
+        from .wind_findings import wind_opportunity,wind_opportunity_figure,wind_design_interpretation
+        summary,sectors=wind_opportunity(df,min_speed_m_s=.5)
+        fig=wind_opportunity_figure(summary,sectors)
+        note=wind_design_interpretation(df,min_speed_m_s=.5)
+        note+=" Reference station wind >0.5 m/s; no temperature, humidity or precipitation restriction. No building pressure model."
     elif kind=="wind_panel":
         from .directional_climate import monthly_wind_rose_panel,MONTHLY_WIND_ROSE_NOTE
         fig,_=monthly_wind_rose_panel(df,title=label);note=MONTHLY_WIND_ROSE_NOTE
@@ -439,6 +446,10 @@ def standard_figure(entry,df,context,reference_df=None):
     elif page=="Humidity and Psychrometrics":
         from .humidity_findings import humidity_figure_interpretation
         stat=humidity_figure_interpretation(
+            df,fig,kind,column=column,title=label)
+    elif page=="Wind and Ventilation":
+        from .wind_findings import wind_figure_interpretation
+        stat="" if kind=="wind_orientation" else wind_figure_interpretation(
             df,fig,kind,column=column,title=label)
     else:
         stat=source_interpretation(df,page,column if kind in ("profile","duration","heatmap") else "",label,unit,thresholds=temperature_thresholds(context),kind=kind)
