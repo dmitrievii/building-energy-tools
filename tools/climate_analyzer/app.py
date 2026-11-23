@@ -5349,7 +5349,7 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
                    "In suitability-distribution and directional-mean views, percent radii describe all classified non-calm wind observations; "
                    "colour or class encodes screening suitability. The eligible-hour view uses only admitted screen hours as its radial magnitude. "
                    "The wind-during-suitable-hours view instead conditions the wind distribution on admitted observations. "
-                   "None establishes actual indoor cross-flow or thermal comfort.")
+                   "These sectors describe screened weather opportunities for façade openings; opening area, pressure coefficients and interior flow paths determine the resulting airflow.")
     elif chart_group == "Heat map":
         row_group = st.radio("Heat-map aggregation", ["Day", "Week", "Month"], horizontal=True)
         compare_options = ["Hour of day"] if time_basis(df_nv) == CHRONOLOGICAL else ["Hour of day", "Year"]
@@ -5379,27 +5379,37 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
             f"Natural ventilation eligibility · {row_group.lower()} × {compare_across.lower()} · {cell_label}",
             "0/1",
         )
-        render_plot(fig, natural_ventilation_interpretation(df, mask))
+        render_plot(fig, natural_ventilation_interpretation(
+            df, mask, t_min_c=t_min, t_max_c=t_max, d_max_g_kg=d_max,
+        ))
     elif chart_group == "Suitable hours by aggregation":
         aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0)
         counts = threshold_count_by_period(df, mask, aggregation, label="suitable_hours")
         fig = threshold_bar_chart(counts, "Natural-ventilation suitable hours", "hours")
-        render_plot(fig, natural_ventilation_interpretation(df, mask))
+        render_plot(fig, natural_ventilation_interpretation(
+            df, mask, t_min_c=t_min, t_max_c=t_max, d_max_g_kg=d_max,
+        ))
 
     elif chart_group == "Daily suitable-hours duration curve":
         daily = df_nv["natural_ventilation_suitable"].resample("D").sum().to_frame("suitable_hours")
         fig = duration_chart(daily, "suitable_hours", "Daily natural-ventilation suitable-hours duration curve", "hours/day", ascending=False)
-        render_plot(fig, natural_ventilation_interpretation(df, mask))
+        render_plot(fig, natural_ventilation_interpretation(
+            df, mask, t_min_c=t_min, t_max_c=t_max, d_max_g_kg=d_max,
+        ))
     elif chart_group == "Rejected reasons":
         reasons = rejection_reasons_for_nv(df, t_min, t_max, d_max, wind_min_m_s=wind_min, wind_max_m_s=wind_max)
         fig = px.bar(reasons, x="reason", y="hours", title="Natural-ventilation rejected reasons")
         fig.update_layout(template="plotly_white", xaxis_title="Reason", yaxis_title="Hours")
-        render_plot(fig,natural_ventilation_interpretation(df, mask))
+        render_plot(fig,natural_ventilation_interpretation(
+            df, mask, t_min_c=t_min, t_max_c=t_max, d_max_g_kg=d_max,
+        ))
         st.dataframe(reasons, hide_index=True, use_container_width=True)
     elif chart_group == "Psychrometric NV overlay":
         fig = psychrometric_chart(df, chart_type="T-d", pressure_pa=pressure_pa, show_rh_curves=True, show_comfort_zone=False)
         fig.add_shape(type="rect", x0=t_min, x1=t_max, y0=0, y1=d_max, line=dict(dash="dash"), fillcolor="rgba(0,150,0,0.08)")
-        render_plot(fig, natural_ventilation_interpretation(df, mask))
+        render_plot(fig, natural_ventilation_interpretation(
+            df, mask, t_min_c=t_min, t_max_c=t_max, d_max_g_kg=d_max,
+        ))
     else:
         from epw_climate_analyzer.p3_ui import persistence_panel
         from epw_climate_analyzer.p3_comfort import numeric,T,full_daily_temperature
