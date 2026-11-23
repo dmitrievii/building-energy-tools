@@ -224,6 +224,13 @@ def make_figure(d,df,context,reference_df=None,cache=None):
             table=directional_table(data,speed=c,direction=direction,radial=radial,colour=colour)
             if not table.valid_hours.gt(0).any():raise NotApplicable("No coincident non-calm observation hours.")
             f=directional_figure(table,radial,colour,title);note=directional_interpretation(table,radial,colour)
+    elif k=="wind_rain":
+        from .directional_climate import directional_table,directional_figure,directional_interpretation
+        radial="Wind-driven rain exposure"
+        table=directional_table(df,radial=radial,colour="Wind speed")
+        if not table.radius.notna().any():raise NotApplicable("No coincident wind and precipitation observations.")
+        f=directional_figure(table,radial,"Wind speed",title)
+        note=directional_interpretation(table,radial,"Wind speed")
     elif k=="wetdry":
         wet,style=a;daily,wet_e,dry_e=memo("wetdry",lambda:p4.wet_dry_events(df))
         ev=wet_e if wet else dry_e
