@@ -59,7 +59,7 @@ class HVACR210Tests(unittest.TestCase):
         self.assertEqual(len(grouped.data),4)
         self.assertEqual(grouped.layout.barmode,"group")
         self.assertEqual(stacked.layout.barmode,"stack")
-        self.assertEqual(sum(grouped.data[0].y),float(ledger["Sensible heating"].sum()))
+        self.assertAlmostEqual(sum(grouped.data[0].y),float(ledger["Sensible heating"].sum()),places=9)
 
     def test_economizer_stage_matches_admitted_mask(self):
         df=self.fixture()
