@@ -39,7 +39,7 @@ class HumidityR22Tests(unittest.TestCase):
         self.assertIn("moisture content versus enthalpy",note)
         self.assertIn("smoothed",note)
         self.assertIn("candidate passive strategies",note)
-        self.assertIn("overlapping",note)
+        self.assertIn("overlap of zones",note)
 
     def test_plot_specific_profile_uses_actual_shown_values(self):
         fig=go.Figure()
