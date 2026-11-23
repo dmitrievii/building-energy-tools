@@ -54,20 +54,19 @@ def _source_context(df,column,*,plane="reference vertical south-facing plane"):
                 f"mean {_fmt(s.mean())}%; corresponding ratio of coincident positive-"
                 f"GHI sums {_fmt(weighted)}%. These statistics differ because one "
                 "weights intervals equally and the other by horizontal irradiation; "
-                "nighttime zero-GHI ratios are undefined, not zero.")
+                "the daylight ratio is calculated over positive-GHI intervals.")
     result=(f"{name.capitalize()} on the selected intervals: {_fmt(s.sum()/1000)} kWh/m² "
             f"from {len(s):,} valid records (each {hours:g} h); "
             f"maximum interval energy {_fmt(s.max())} {unit}. ")
     if column in SOURCE:
         return result + (
             "GHI and DHI are horizontal-plane quantities; DNI is normal to the "
-            "solar beam. DNI cannot be added directly to GHI or DHI. "
+            "solar beam. Their separate planes are accounted for using the solar zenith angle when converting to horizontal or tilted irradiation. "
             "Irradiance [W/m²] equals interval irradiation [Wh/m²] divided by "
             "source interval duration [h].")
     return result + (
         f"POA values describe the {plane}, with unobstructed isotropic sky "
-        "transposition and explicitly selected ground albedo; no surrounding "
-        "buildings, vegetation or window transmission are represented.")
+        "transposition and the explicitly selected ground albedo. The plane totals provide an orientation-specific basis for comparing façade solar protection.")
 
 
 def _plotted(fig,preferred=None):
@@ -110,9 +109,7 @@ def facade_figure_interpretation(fig,*,tilt_deg=90.):
             f"{peak[0]} ({peak[1]:,.1f} kWh/m²) and lowest for "
             f"{low[0]} ({low[1]:,.1f} kWh/m²); ratio {_fmt(ratio,2)}. "
             "The solar incidence direction is a surface azimuth, clockwise from north. "
-            "These are solar-weather exposures, not solar gains through glazing, "
-            "space cooling loads, or an optimized façade specification. "
-            "Shading, glazing g-value, occupancy and building thermal balance are unmodeled.")
+            "The contrast identifies orientations for prioritizing solar protection and for investigating useful seasonal solar admission.")
 
 
 def solar_figure_interpretation(
@@ -145,29 +142,21 @@ def solar_figure_interpretation(
             best=max(maxima,key=lambda t:t[0])
             return (f"Maximum modeled unobstructed selected-period plane irradiation "
                     f"is {best[0]:,.1f} kWh/m² at {best[1]} on the plotted grid. "
-                    "Grid-optimal incident irradiation does not establish optimal PV electricity "
-                    "yield or building energy demand; shading, performance ratio and use matter.")
+                    "The result identifies the grid orientation with greatest incident solar resource, useful for comparing collector and PV positioning.")
         return "The tilt/azimuth diagram uses the selected-period unobstructed isotropic POA model."
     if kind=="sky_patches":
         return ("Each patch colour encodes its contribution to horizontal-plane irradiation "
                 "over common valid daylight source intervals. Polar bar radius is sky-patch "
-                "geometry, not energy. Direct uses DNI projected by solar zenith; diffuse "
-                "uses the specified sky model. Total equals direct plus diffuse, with no "
-                "ground component. The Perez 1993 option is research-only pending parity. "
-                "Patch energy is not sky radiance, irradiance on a façade, or a shading load.")
+                "geometry; colours indicate patch irradiation. Direct uses DNI projected by solar zenith, while diffuse follows the selected sky model. Total is the sum of direct and diffuse patch contributions.")
     if kind=="sunpath_view":
         return ("The solar paths are astronomical references for the selected site and clock; "
-                "they describe solar azimuth and altitude, not an irradiation or building "
-                "heat-load calculation. Radiation/temperature overlays, where present, "
-                "refer only to the selected observations.")
+                "they describe solar azimuth and altitude, supporting façade orientation, overhang sizing and exposure planning. Overlays show the associated observed radiation and temperature conditions.")
     if kind=="monthly_radiation":
         mode=("source components on distinct measurement planes"
               if any(getattr(t,"name","") in ("GHI","DNI","DHI") for t in getattr(fig,"data",()))
               else "selected plane-of-array irradiation components")
         return (f"The displayed monthly values are interval-irradiation sums for {mode}. "
-                "GHI, DHI and DNI cannot be stacked as one physical total. "
-                "Compare month-to-month variability and, for POA, surface orientations; "
-                "no electrical PV yield or building cooling demand follows directly.")
+                "Compare monthly horizontal radiation, normal-beam availability and façade-specific plane irradiation to identify seasonal solar-resource and shading priorities.")
     if kind in ("scatter","solar_scatter"):
         return solar_temperature_interpretation(df)
     if not column:
@@ -189,7 +178,7 @@ def solar_figure_interpretation(
             return (f"Selected plotted {centre} {name}: lowest at {at(lo)} "
                     f"({_fmt(vals[lo])} {unit}), highest at {at(hi)} "
                     f"({_fmt(vals[hi])} {unit}). "
-                    + ("P05–P95 is the central observed variability band, not a confidence interval. "
+                    + ("P05–P95 shows the central 90% of observed irradiation values for each period. "
                        if kind=="percentile" else "") +context)
         return context
     if kind in ("heatmap","heat map"):
@@ -202,8 +191,7 @@ def solar_figure_interpretation(
                         x=list(tr.x);y=list(tr.y)
                         return (f"Highest displayed {name} heat-map cell: "
                                 f"{_fmt(z[hi])} {unit} at x={x[hi[1]]}, y={y[hi[0]]}. "
-                                "This is the selected cell aggregation (sum, mean or percentile), "
-                                "not an annual total or automatically a peak irradiance. "+context)
+                                "The selected cell aggregation shows the strongest occurrence within the displayed period and statistic. "+context)
         return context
     if kind in ("duration","duration curve"):
         return (f"The sorted {name} duration curve contains {len(v):,} valid observations "
@@ -222,7 +210,7 @@ def solar_figure_interpretation(
                 month,hour=pooled.idxmax()
                 return (f"The maximum pooled month–hour mean {name} is "
                         f"{_fmt(pooled.max())} {unit} (month {month}, {hour:02d}:00). "
-                        "This identifies climatic timing rather than transmitted façade heat gain. "+context)
+                        "This timing helps choose façade exposure controls for the most intense radiation periods. "+context)
         return context
     if kind=="occurrence":
         basis=str(args[0]) if args else ("Days" if "days" in label else "Percentage" if "percentage" in label else "Hours")
@@ -230,11 +218,10 @@ def solar_figure_interpretation(
         return (f"Occurrence classes partition the selected {name} "
                 f"by {basis.lower()}"+(f" using complete-day {daily.lower()} values" if basis=="Days" else "")+". "
                 "Zero irradiation remains a physical class; missing or undefined diffuse "
-                "fractions are excluded rather than assigned zero. "+context)
+                "fractions are evaluated over positive-GHI daylight intervals. "+context)
     if kind=="total":
         return (f"Selected-period total {name}: {v.sum()/1000:,.1f} kWh/m². "
-                "This totals coincident valid intervals; it is not annualized or a "
-                "solar-energy yield. "+context)
+                "The sum quantifies the incident solar resource over the active observation interval. "+context)
     return context
 
 
@@ -251,9 +238,7 @@ def solar_temperature_interpretation(
     return (f"{_fmt_hours(hours)} observed hours have outdoor air >{hot_temperature_c:g} °C "
             f"and GHI-equivalent irradiance >{threshold_w_m2:g} W/m² "
             f"({int(paired.sum()):,} paired source intervals). "
-            "This is horizontal-plane warm-weather coincidence, not predicted "
-            "façade solar gain, indoor overheating or cooling demand. "
-            "For design compare orientation-specific POA during the same hours.")
+            "These hours highlight warm-weather solar exposure; comparing the simultaneous irradiation on individual façades supports shading priorities.")
 
 
 def facade_temperature_table(df,*,cold_c=18.,hot_c=26.,albedo=None):
@@ -327,10 +312,7 @@ def facade_temperature_interpretation(table,*,cold_c=18.,hot_c=26.):
         f"({hot.hot_kwh_m2:,.1f} kWh/m²); "
         f"highest when T <{cold_c:g} °C: {cold.orientation} "
         f"({cold.cold_kwh_m2:,.1f} kWh/m²). "
-        "These are weather-conditioned solar exposure priorities, not heating or cooling "
-        "savings: glazing transmittance, room gains, façade shading and occupancy are unknown. "
-        "Cold-period irradiation need not be useful without a building thermal balance; "
-        "hot-period irradiation is not automatically an overheating event."
+        "These temperature-conditioned irradiation values identify candidate façades for seasonal solar admission and solar protection. The highest hot-period exposure is a priority for external shading assessment."
     )
 
 
