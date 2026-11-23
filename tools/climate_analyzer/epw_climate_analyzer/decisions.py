@@ -41,7 +41,10 @@ def natural_ventilation_condition(
     """
     condition = df["dry_bulb_temperature_c"].between(t_min_c, t_max_c)
     if "humidity_ratio_g_kg" in df.columns:
-        condition &= df["humidity_ratio_g_kg"] <= d_max_g_kg
+        moisture = pd.to_numeric(df["humidity_ratio_g_kg"], errors="coerce")
+        condition &= moisture.between(0.0, d_max_g_kg)
+    else:
+        condition &= False  # A moisture-qualified screen requires moisture observations.
     if rh_max_pct is not None:
         condition &= df["relative_humidity_pct"] <= rh_max_pct
     if wind_min_m_s is not None:
@@ -255,7 +258,10 @@ def rejection_reasons_for_nv(
     reasons = {
         "Too cold": df["dry_bulb_temperature_c"] < t_min_c,
         "Too hot": df["dry_bulb_temperature_c"] > t_max_c,
-        "Too humid": df["humidity_ratio_g_kg"] > d_max_g_kg,
+        "Too humid": pd.to_numeric(
+            df.get("humidity_ratio_g_kg", pd.Series(index=df.index, dtype=float)),
+            errors="coerce",
+        ) > d_max_g_kg,
     }
     if wind_min_m_s is not None:
         reasons["Wind too weak"] = df["wind_speed_m_s"] < wind_min_m_s
