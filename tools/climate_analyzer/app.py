@@ -2211,6 +2211,10 @@ def render_extended_variable_chart(df, column, unit, chart_type, *, key_prefix="
             from epw_climate_analyzer.sky_findings import sky_figure_interpretation
             subset=df.loc[df.index.month.isin([MONTHS[m] for m in months])]
             note=sky_figure_interpretation(subset,fig,"diurnal",column=column)
+        elif key_prefix.startswith(("explorer_precipitation","explorer_snow_cover")):
+            from epw_climate_analyzer.precipitation_findings import precipitation_figure_interpretation
+            subset=df.loc[df.index.month.isin([MONTHS[m] for m in months])]
+            note=precipitation_figure_interpretation(subset,fig,"diurnal",column=column)
         else:
             note="Profiles pool equivalent calendar-month clock hours across selected years. Only complete source hours contribute; extensive values are summed within each hour. Missing observations remain gaps."
         render_plot(fig,note)
@@ -2271,6 +2275,10 @@ def render_extended_variable_chart(df, column, unit, chart_type, *, key_prefix="
             from epw_climate_analyzer.sky_findings import sky_figure_interpretation
             note=sky_figure_interpretation(df,fig,"occurrence",column=column,
                 title=f"Sky & daylight occurrence · {basis} · {statistic}",args=(basis,statistic))
+        elif key_prefix.startswith(("explorer_precipitation","explorer_snow_cover")):
+            from epw_climate_analyzer.precipitation_findings import precipitation_figure_interpretation
+            note=precipitation_figure_interpretation(df,fig,"occurrence",column=column,
+                title=f"{column} occurrence · {basis} · {statistic}",args=(basis,statistic))
         else:
             note="Classes are mutually exclusive; hours retain source duration, days require complete real calendar days, and percentages use valid observed intervals. Calendar-profile mode averages equivalent year-months."
         if column=="diffuse_radiation_fraction_pct" and basis=="Days":
@@ -2494,6 +2502,9 @@ def render_generic_variable_page(
     elif title_prefix in ("Sky cover","Illuminance"):
         from epw_climate_analyzer.sky_findings import sky_figure_interpretation
         text=sky_figure_interpretation(chart_df,fig,chart_type,column=column)
+    elif title_prefix in ("Precipitation","Snow cover"):
+        from epw_climate_analyzer.precipitation_findings import precipitation_figure_interpretation
+        text=precipitation_figure_interpretation(chart_df,fig,chart_type,column=column)
     elif interpretation_factory:
         text = interpretation_factory(chart_df, column, variable_label.lower(), unit)
     else:
@@ -4657,7 +4668,7 @@ def render_precipitation(df: pd.DataFrame, native_df: pd.DataFrame | None = None
 
     options: list[str] = []
     if liquid_available:
-        options.extend(["Precipitation totals", "Annual precipitation indices", "Liquid precipitation explorer", "Wet and dry spells", "Precipitation accumulation"])
+        options.extend(["Precipitation totals", "Annual precipitation indices", "Precipitation-day severity", "Liquid precipitation explorer", "Wet and dry spells", "Precipitation accumulation"])
         if native_df is not None and native_liquid_available:
             options.append("Empirical IDF")
         if "dry_bulb_temperature_c" in df and pd.to_numeric(df["dry_bulb_temperature_c"],errors="coerce").notna().any():
@@ -4703,6 +4714,19 @@ def render_precipitation(df: pd.DataFrame, native_df: pd.DataFrame | None = None
             fig,
             "Precipitation depth is interval-extensive. Period totals sum the canonical analysis intervals; period totals are based on valid observations.",
         )
+    elif chart_group == "Precipitation-day severity":
+        from epw_climate_analyzer.precipitation_findings import (
+            rain_day_classes,rain_day_classes_figure,rainfall_summary,
+        )
+        table=rain_day_classes(df)
+        if table.empty:
+            st.info("Daily severity requires complete calendar days of precipitation observations.")
+            return
+        fig=rain_day_classes_figure(table)
+        render_plot(fig,rainfall_summary(df))
+        with st.expander("Daily severity counts by month",expanded=False):
+            st.dataframe(table,use_container_width=True)
+        return
     elif chart_group == "Annual precipitation indices":
         table = annual_precipitation_indices(df)
         if native_liquid_available:
