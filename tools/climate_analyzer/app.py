@@ -3981,8 +3981,10 @@ def render_facade_orientation(df: pd.DataFrame, *, ground_albedo=None) -> None:
     data, flat = orientation_period_components(df, tilt_deg=tilt, albedo=ground_albedo)
     fig = orientation_components_chart(data, flat, tilt_deg=tilt,
                                        style=chart_type, selected=selected)
-    render_plot(fig, "Direct, sky-diffuse and ground-reflected irradiation sum to total plane-of-array (POA) irradiation. "
-                "Only selected components are stacked; the unselected contribution is not counted in the displayed stack. "
+    from epw_climate_analyzer.solar_findings import facade_figure_interpretation
+    render_plot(fig,facade_figure_interpretation(fig,tilt_deg=tilt)+"\n\n"
+                "Direct, sky-diffuse and ground-reflected irradiation sum to total plane-of-array (POA) irradiation. "
+                "Only selected components are stacked; unselected contributions are omitted from the displayed stack, not from the total in the interpretation. "
                 "The unobstructed isotropic transposition and active ground-albedo model are unchanged. "
                 "Values are sums over the active Data filter, not annualized.")
     st.caption(f"Flat roof (0° tilt), total POA: {flat[TOTAL]:,.1f} kWh/m²"
@@ -4072,7 +4074,11 @@ def render_monthly_radiation(df: pd.DataFrame, *, ground_albedo=None, allow_surf
         elif rose_style == "Sectors" and len(monthly.columns) > 3:
             st.caption("Use Rose style: Lines to compare overlapping irradiation series.")
     fig = monthly_radiation_chart(monthly, style=style, tilt_deg=tilt, rose_style=rose_style)
-    render_plot(fig, explanation + " Monthly values sum interval energies over the active Data filter; calendar-profile mode averages per-year monthly sums. Missing periods are not zero-filled.")
+    from epw_climate_analyzer.solar_findings import solar_figure_interpretation
+    render_plot(fig,solar_figure_interpretation(df,fig,"monthly_radiation",
+                title="Monthly source irradiation" if basis=="Source radiation" else "Monthly surface POA")+
+                "\n\n"+explanation +
+                " Monthly values sum interval energies over the active Data filter; calendar-profile mode averages per-year monthly sums. Missing periods are not zero-filled.")
     with st.expander("Monthly irradiation values", expanded=False):
         display = monthly.copy()
         if isinstance(display.columns, pd.MultiIndex):
@@ -4143,8 +4149,10 @@ def render_sky_radiation_distribution(df):
         st.info(str(exc))
         return
     st.caption(f"Complete qualifying daylight intervals: {table.attrs['valid_intervals']:,} / {table.attrs['selected_intervals']:,}. Active Data filter; no annualization.")
-    render_plot(sky_figure(table,quantity,style,show_compass=show_compass),
-        "Each patch represents its contribution to irradiation on an unobstructed horizontal plane, not radiance or tilted-surface irradiation. Diffuse energy is normalized using projected solid angle; direct energy uses the actual solar zenith cosine. Total equals direct plus diffuse on common valid intervals. Ground radiation is excluded.")
+    from epw_climate_analyzer.solar_findings import solar_figure_interpretation
+    fig=sky_figure(table,quantity,style,show_compass=show_compass)
+    render_plot(fig,solar_figure_interpretation(data,fig,"sky_patches",title=f"Sky {quantity} · {model}")+
+        "\n\nEach patch represents its contribution to irradiation on an unobstructed horizontal plane, not radiance or tilted-surface irradiation. Diffuse energy is normalized using projected solid angle; direct energy uses the actual solar zenith cosine. Total equals direct plus diffuse on common valid intervals. Ground radiation is excluded.")
     st.download_button("Sky patch numerical data · CSV",table.to_csv().encode("utf-8"),"sky_patch_irradiation.csv","text/csv",key="sky_patch_csv")
 
 
@@ -4285,6 +4293,7 @@ def render_solar(df: pd.DataFrame) -> None:
             tilt=st.slider("Surface tilt [deg]",0.,90.,90.,5.,key="solar_explorer_tilt")
             azimuth=st.slider("Surface azimuth [deg]",0.,359.,180.,1.,key="solar_explorer_azimuth") if tilt else 0.
             data=poa_frame(df,tilt,azimuth,ground_albedo)
+            data.attrs["r24_solar_plane"]=f"selected plane (tilt {tilt:g}°, surface azimuth {azimuth:g}°)"
             render_generic_variable_page(data,["Total POA","Direct POA","Sky diffuse POA","Ground-reflected POA"],"Total POA","Solar surface irradiation",None)
             st.caption("Interval irradiation is on the selected unobstructed plane; common POA input validity and active albedo are retained.")
         else:
