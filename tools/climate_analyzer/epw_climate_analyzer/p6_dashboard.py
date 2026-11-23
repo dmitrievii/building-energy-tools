@@ -202,7 +202,7 @@ def design_dashboard(df,render,*,reference_df=None):
     for c,col in zip(ledger,["#21866B","#527FA3","#D69A24"]):
         valid=ledger[c].notna().sum()*native_interval_hours(df);total=ledger[c].sum(min_count=1)
         note=f"{total:.0f} of {valid:.0f} valid candidate hours satisfy the configured criterion." if valid else "No valid candidate hours."
-        if c=="Natural ventilation":note+=f" Temperature {t_min:g}–{t_max:g} °C, humidity ratio ≤{w_max:g} g/kg. No airflow prediction."
+        if c=="Natural ventilation":note+=f" Temperature {t_min:g}–{t_max:g} °C, humidity ratio ≤{w_max:g} g/kg. The result shows periods matching the configured outdoor-air criteria."
         elif c=="Night flushing":note+=f" Night ≤{cool:g} °C following a complete day reaching {hot:g} °C. No building heat-storage model."
         else:note+=" Climatic screening highlights the months when horizontal solar exposure and warm outdoor air coincide."
         _bar(_monthly(ledger[c],"sum"),c+" · monthly availability","Hours",col,render,note)
