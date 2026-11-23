@@ -80,7 +80,7 @@ def _complete_daily_sunshine_hours(
         day: (day + pd.DateOffset(days=1) - day).total_seconds() / (dt*3600.)
         for day in counts.index
     })
-    complete = counts.eq(expected)
+    complete = pd.Series(np.isclose(counts.to_numpy(), expected.to_numpy(), atol=1e-6, rtol=0.), index=counts.index)
     return sums_h.where(complete).dropna()
 
 def monthly_daylight_sunshine_summary(
