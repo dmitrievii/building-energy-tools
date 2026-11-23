@@ -5453,7 +5453,7 @@ def render_hvac_passive(df: pd.DataFrame) -> None:
     if chart_group == "Passive strategy summary":
         view = st.radio(
             "View",
-            ["Annual totals", "Monthly stacked bars"],
+            ["Annual totals", "Monthly strategy matrix"],
             horizontal=True,
             key="passive_strategy_view",
         )
@@ -5514,9 +5514,15 @@ def render_hvac_passive(df: pd.DataFrame) -> None:
             render_plot(fig,hvac_interpretation(df))
             st.dataframe(table, hide_index=True, use_container_width=True)
         else:
+            from epw_climate_analyzer.passive_design_findings import monthly_strategy_matrix
             monthly = passive_strategy_monthly(df)
-            fig = stacked_monthly_bar(monthly, "Monthly passive and HVAC strategy hours", "hours")
-            render_plot(fig, hvac_interpretation(df))
+            fig = monthly_strategy_matrix(monthly, "Monthly passive and HVAC strategy screens")
+            render_plot(
+                fig,
+                hvac_interpretation(df)
+                + " Each matrix cell is the independently screened duration for one "
+                  "strategy. Coincident strategies remain visible in separate rows.",
+            )
     elif chart_group == "Economizer availability":
         h_return = st.slider("Return-air enthalpy limit [kJ/kg]", 30.0, 80.0, 50.0, 1.0)
         mask = economizer_condition(df, return_air_enthalpy_kj_kg=h_return)
