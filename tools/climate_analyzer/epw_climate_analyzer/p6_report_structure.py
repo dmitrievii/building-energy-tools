@@ -310,6 +310,7 @@ CATALOG=[
 ("psychrometric","Humidity and Psychrometrics","Psychrometric distribution",W,"g/kg","psychrometric"),
 ("ghi","Solar and Radiation","Monthly horizontal irradiation",G,"kWh/m²","total"),
 ("facade","Solar and Radiation","Vertical façade irradiation",G,"kWh/m²","facade"),
+("solar_exposure","Solar and Radiation","Façade solar exposure by outdoor temperature",G,"kWh/m²","facade_temperature"),
 ("sunpath","Solar and Radiation","Sun path",N,"Wh/m²","sunpath"),
 ("wind_rose","Wind and Ventilation","Wind rose",V,"m/s","windrose"),
 ("wind_orientation","Wind and Ventilation","Seasonal windward/exhaust orientation screening",V,"%","wind_orientation"),
@@ -324,9 +325,9 @@ CATALOG=[
 ("degree","HVAC and Passive Design","Heating and cooling degree days",T,"K·d","degree"),
 ("shade","Shading analysis","Solar protection screening",G,"h","shade"),
 ("utci","Outdoor Thermal Comfort","Monthly UTCI stress",T,"h","utci")]
-PRESETS={"Architectural climate study":("temperature_profile","temperature_heatmap","psychrometric","ghi","facade","sunpath","wind_rose","wind_orientation","daylight","climograph","nv","night","shade"),
+PRESETS={"Architectural climate study":("temperature_profile","temperature_heatmap","psychrometric","ghi","facade","solar_exposure","sunpath","wind_rose","wind_orientation","daylight","climograph","nv","night","shade"),
 "Climate overview":("temperature_profile","humidity_profile","ghi","wind_rose","rain","climograph"),
-"Passive design":("temperature_heatmap","psychrometric","facade","wind_rose","wind_orientation","nv","night","shade","utci"),
+"Passive design":("temperature_heatmap","psychrometric","facade","solar_exposure","wind_rose","wind_orientation","nv","night","shade","utci"),
 "HVAC & engineering":("temperature_profile","temperature_duration","humidity_ratio","psychrometric","wind_speed","degree","nv","night","utci"),
 "All standard diagrams":tuple(x[0] for x in CATALOG)}
 
@@ -336,6 +337,7 @@ def available_catalog(df,context):
     def has(*cols):
         return all(numeric(df,c).notna().any() for c in cols)
     requirements={"psychrometric":(T,RH,W),"facade":(G,D,N,"solar_apparent_zenith_deg","solar_azimuth_deg"),
+       "facade_temperature":(G,D,N,"solar_apparent_zenith_deg","solar_azimuth_deg",T),
        "sunpath":(N,"solar_apparent_zenith_deg","solar_azimuth_deg"),"windrose":(V,"wind_direction_deg"),"wind_panel":(V,"wind_direction_deg"),"wind_orientation":(V,"wind_direction_deg"),
        "climograph":(T,P),"nv":(T,W),"night":(T,),"degree":(T,),"shade":(T,G),"utci":(T,RH,V)}
     out=[]
@@ -384,6 +386,16 @@ def standard_figure(entry,df,context,reference_df=None):
         fig=go.Figure(go.Bar(x=x.index,y=x,marker_color="#D6A23D" if column==G else "#5488B6"))
         fig.update_layout(template="plotly_white",title=label,yaxis_title=unit)
         note="Observed selected-period totals; incomplete periods may underestimate the total."
+    elif kind=="facade_temperature":
+        from .solar_findings import facade_temperature_table,facade_temperature_figure,facade_temperature_interpretation
+        from .extended_visualization import hourly_capable
+        if not hourly_capable(df):
+            raise ValueError("Façade solar–temperature exposure requires subdaily observations.")
+        lo,hi=temperature_thresholds(context)
+        table=facade_temperature_table(df,cold_c=lo,hot_c=hi)
+        fig=facade_temperature_figure(table,cold_c=lo,hot_c=hi)
+        note=facade_temperature_interpretation(table,cold_c=lo,hot_c=hi)
+        note+=" Model: unobstructed isotropic POA, default ground albedo 0.20."
     elif kind=="facade":
         from .facade_orientation import orientation_period_components,orientation_components_chart
         a,f=orientation_period_components(df,tilt_deg=90.)
@@ -446,6 +458,10 @@ def standard_figure(entry,df,context,reference_df=None):
     elif page=="Humidity and Psychrometrics":
         from .humidity_findings import humidity_figure_interpretation
         stat=humidity_figure_interpretation(
+            df,fig,kind,column=column,title=label)
+    elif page=="Solar and Radiation":
+        from .solar_findings import solar_figure_interpretation
+        stat="" if kind=="facade_temperature" else solar_figure_interpretation(
             df,fig,kind,column=column,title=label)
     elif page=="Wind and Ventilation":
         from .wind_findings import wind_figure_interpretation
