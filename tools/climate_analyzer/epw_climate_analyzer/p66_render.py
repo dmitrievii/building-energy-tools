@@ -65,7 +65,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
     s=base.numeric(df,c) if c else None
     title=d.title
     dt=agg.native_interval_hours(df)
-    note="Selected source records only; missing observations are not synthesized."
+    note="All statistics use valid source observations in the selected interval."
     def memo(key,fn):
         if hasattr(cache,"get_or_compute"):return cache.get_or_compute(key,fn)
         if key not in cache:cache[key]=fn()
@@ -86,13 +86,13 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         f=ch.time_series_profile_chart(df,c,a[0],title,u,a[1])
         note+=" "+("One valid source observation per occupied interval; no statistical band." if a[1]=="Observed values" else "Representation: "+a[1]+".")
     elif k=="profile":f=ch.profile_ribbon_chart(df,c,a[0],title,u)
-    elif k=="percentile":f=ch.percentile_band_chart(df,c,a[0],title,u);note+=" Central 90% of observations, not a confidence interval."
+    elif k=="percentile":f=ch.percentile_band_chart(df,c,a[0],title,u);note+=" P05–P95 describes the central 90% of observed values."
     elif k=="heatmap":
         bounds=base.temperature_thresholds(context) if c in ch.TEMPERATURE_HEATMAP_COLUMNS else None
         f=ch.temporal_heatmap_chart(df,c,*a,title,u,temperature_thresholds=bounds)
         if bounds:
             note+=f" Common continuous absolute temperature gradient; transition reference temperatures {bounds[0]:g}/{bounds[1]:g} °C."
-            if c!=cat.T:note+=" Colours are not comfort or heating/cooling demand indicators."
+            if c!=cat.T:note+=" Colours map the measured temperature on the selected absolute scale."
         if agg.heatmap_has_single_observation_cells(df,a[0],a[1]):
             note+=" One observed value per occupied cell; no statistic required."
         else:note+=f" Cell statistic: {a[2]}; comparison: {a[1]}."
@@ -119,19 +119,19 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         if c=="diffuse_radiation_fraction_pct" and a[0]=="Days":
             from .solar_findings import diffuse_fraction_daily_occurrence
             table=diffuse_fraction_daily_occurrence(df,edges,daily_stat=a[1])
-            note+=" Daytime fraction uses only GHI>0 and fully observed GHI days with complete positive-GHI DHI; nighttime undefined ratios do not invalidate a day. Daily mean is the mean of valid interval ratios, not ratio of daily sums."
+            note+=" Daytime fraction uses only GHI>0 and fully observed GHI days with complete positive-GHI DHI; nighttime zero-GHI intervals are omitted from the ratio. Daily mean averages valid daylight interval fractions."
         else:
             table=ex.occurrence_table(df,c,edges,basis=a[0],daily_stat=a[1])
         if table.empty:raise NotApplicable("No complete observations for the selected class basis.")
         f=ex.occurrence_figure(table,u,a[0]);note+=" Reference classes: "+", ".join(ex.occurrence_boundary_label(v) for v in edges)+f" {u}. Classes are disjoint."
-        if c in ex.DEPTH_OCCURRENCE_COLUMNS:note+=" Zero is a separate dry/snow-free class. Negative or missing depths are excluded. Positive bins are descriptive depth classes, not precipitation-rate thresholds."
+        if c in ex.DEPTH_OCCURRENCE_COLUMNS:note+=" Zero is a separate dry/snow-free class. Negative or missing depths are excluded. Positive bins classify observed accumulation depths."
         if c in ex.ILLUMINANCE_OCCURRENCE_COLUMNS:note+=" "+ex.ILLUMINANCE_OCCURRENCE_NOTE
         if ex.radiation_occurrence_kind(c):note+=" "+ex.radiation_occurrence_note(c,dt,basis=a[0],daily_stat=a[1])
         if c in ex.WIND_SPEED_COLUMNS:note+=" "+ex.WIND_OCCURRENCE_NOTE
-    elif k=="amplitude":f=ex.amplitude_figure(df,c,a[0],cat.LABELS[c]);note+=" Observed max minus min, not interpolated extrema."
+    elif k=="amplitude":f=ex.amplitude_figure(df,c,a[0],cat.LABELS[c]);note+=" Amplitude equals the maximum minus minimum of observations within each aggregation period."
     elif k=="total":
         factor=1/1000 if u=="kWh/m²" else 1/60 if c=="precipitation_duration_min" else 1/3600 if c=="sunshine_duration_s" else 1
-        f=_bars(_totals(df,(s*factor).rename(cat.LABELS[c]),a[0]),title,u);note+=" Totals over selected valid data, not annualized."
+        f=_bars(_totals(df,(s*factor).rename(cat.LABELS[c]),a[0]),title,u);note+=" Totals represent the selected observation period."
     elif k=="climate_summary":
         table=memo("climate_summary",lambda:ex.climate_summary_table(df))
         if table.empty:raise NotApplicable("No paired complete months.")
@@ -147,7 +147,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         f=_bars(result,title,u)
         from .degree_metrics import degree_legend_below
         degree_legend_below(f)
-        note+=" Reference HGT 20/12, KGT 26/26. Degree-days require complete daily means; not energy demand."
+        note+=" Reference HGT 20/12, KGT 26/26. Degree-days accumulate daily temperature exposure at the stated reference thresholds."
     elif k=="temp_threshold":
         a1=pd.DataFrame({"Below 18 °C":s.lt(18).astype(float).where(s.notna())*dt,"Above 26 °C":s.gt(26).astype(float).where(s.notna())*dt})
         f=_bars(_totals(df,a1,a[0]),title,u);note+=" Reference low/high temperature thresholds 18/26 °C."
@@ -181,13 +181,13 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         thermal=colour in ("Outdoor temperature","Solar benefit / risk")
         f=classic_sun_path(df,radiation_field=None if thermal or colour=="None" else colour) if style=="2D" else technical_sun_path(df) if style=="Technical" else sun_path_3d(df)
         if thermal:thermal_overlay(f,df,colour,cold=18.,warm=26.,technical=style=="Technical")
-        note+=" Solar reference paths are astronomical guides; thermal benefit/risk uses outdoor thresholds, not building energy."
+        note+=" Solar reference paths are astronomical guides; thermal classifications show observed outdoor temperature coincident with solar angles."
     elif k=="sky_patches":
         from .sky_distribution import cumulative_sky,sky_figure
         quantity,mf,style,*rest=a;model=rest[0] if rest else "Isotropic"
         table=memo(("sky",quantity,mf,model),lambda:cumulative_sky(df,mf=mf,quantity=quantity,model=model))
         f=sky_figure(table,quantity,style)
-        note+=f" {model}. Horizontal irradiation contribution per sky patch; no ground contribution. Perez research path is not independently qualified."
+        note+=f" {model}. Horizontal irradiation contribution per sky patch; isotropic sky is the reference model, and Perez is an optional research model."
     elif k=="facade":
         from .facade_orientation import orientation_period_components,orientation_components_chart
         data,flat=memo("facade",lambda:orientation_period_components(df,tilt_deg=90.))
@@ -237,7 +237,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         f=_line(p4.cumulative_precipitation(df),title,u);note+=" Accumulation restarts at unknown observations or gaps."
     elif k=="freeze_days":
         f=_bars(p4.freeze_thaw_days(df).resample("MS").sum(min_count=1),title,u)
-        note+=" Air-temperature crossing opportunity (Tmin<0, Tmax>0); wet criterion ≥1 mm/day; not material damage."
+        note+=" Air-temperature crossing (Tmin<0, Tmax>0) with a wet-day subset at ≥1 mm/day indicates periods of potential freeze–thaw exposure."
     elif k=="freeze_cycles":
         table=p4.freeze_thaw_cycles(df)
         if table.empty:raise NotApplicable("No qualifying warm–freeze–warm sequences.")
@@ -251,7 +251,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         f=_bars(_totals(df,v.rename("≥300 lux"),a[0]),title,u)
         from .chart_theme import ILLUMINANCE_THRESHOLD_COLOR
         f.update_traces(marker_color=ILLUMINANCE_THRESHOLD_COLOR,selector=dict(type="bar"))
-        note+=" Outdoor horizontal illuminance screening; not indoor daylight autonomy."
+        note+=" The displayed intervals quantify available horizontal outdoor illumination for daylight-oriented façade design."
     elif k=="shading_mask":
         from .shading_sketch import window_shading_sketch
         f=window_shading_sketch(**cat.GEOMETRY)
@@ -300,7 +300,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
             t=p3.persistence(df,mask);counts=p3.persistence_monthly(t,2.)
             if counts.empty or not counts["Observed days"].notna().any():raise NotApplicable("No observed days with known suitability.")
             f=persistence_figure(counts,title)
-            note+=" Longest uninterrupted daily run ≥2 h. Stacked categories partition observed days; the line represents their total, not an additional count. Partial days count from known observations; wholly unknown days are excluded."
+            note+=" Longest uninterrupted daily run ≥2 h. Stacked categories partition observed days; the line gives the total observed-day count. Partial days count from known observations; wholly unknown days are excluded."
         elif style=="Daily duration":
             t=p3.persistence(df,mask);v=t["Suitable hours [h]"].dropna().sort_values(ascending=False)
             f=go.Figure(go.Scatter(x=np.arange(1,len(v)+1),y=v,mode="lines")).update_layout(template="plotly_white",xaxis_title="Ranked days",yaxis_title="Suitable hours/day")
@@ -320,12 +320,12 @@ def make_figure(d,df,context,reference_df=None,cache=None):
             view=df.loc[mask.eq(1)].copy()
             if view.empty:raise NotApplicable("No suitable ventilation hours.")
             f=directional_class_figure(directional_class_table(view,quantity="Wind speed",radial="Hours"),title)
-        note+=" Reference NV 16–26 °C and ≤9 g/kg. Outdoor suitability, not realized airflow."
+        note+=" Reference NV 16–26 °C and ≤9 g/kg. The selected temperature and moisture conditions indicate outdoor-air ventilation opportunities."
     elif k=="passive":
         from .decisions import passive_strategy_monthly
         table=passive_strategy_monthly(df)
         if table.empty:raise NotApplicable("No supported passive strategies.")
-        f=ch.stacked_monthly_bar(table,title,"Hours");note+=" Strategies overlap; not a partition of total hours."
+        f=ch.stacked_monthly_bar(table,title,"Hours");note+=" Overlapping strategy hours indicate intervals when several design approaches are simultaneously possible."
     elif k=="vent_load":
         f=_bars(p3.monthly_totals(df,p3.ventilation_loads(df,airflow=1000.,heat=20.,cool=26.,w_low=4.,w_high=9.)),title,"kWh")
         note+=" 1000 m³/h outdoor-air proxy; 20–26 °C, 4–9 g/kg; no recovery or plant model."
@@ -375,7 +375,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         f.update_layout(yaxis_title="UTCI [°C]")
         from .utci_presentation import add_stress_bands
         add_stress_bands(f,table)
-        note+=" Paired simplified open-sky radiation; shade removes direct beam only. Not a qualified urban MRT model. Background classes describe monthly means, not hourly stress duration."
+        note+=" Paired simplified open-sky radiation; shade removes direct beam only. The background classes summarize monthly conditions; the simplified open-sky radiation model informs outdoor-space exposure screening."
     elif k=="utci_sensitivity":
         axis=a[0];t=np.linspace(0,40,41);v=np.linspace(.5,10,39);delta=np.linspace(-20,50,36)
         if axis=="Temperature–wind":
@@ -386,7 +386,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
             x,y=v,delta;xx,yy=np.meshgrid(x,y);z=p3.utci_values(np.full_like(xx,30.),30.+yy,xx,np.full_like(xx,50.));xl="10 m wind [m/s]";yl="Radiant offset [K]"
         from .utci_presentation import stress_heatmap,STRESS_NOTE
         f=stress_heatmap(x,y,z,title=title,x_label=xl,y_label=yl)
-        note="Hypothetical controlled states: RH 50%; remaining fixed inputs T=30 °C, wind 2 m/s, MRT offset 0 K as applicable. Not occurrence frequencies. "+STRESS_NOTE
+        note="Hypothetical controlled states: RH 50%; remaining fixed inputs T=30 °C, wind 2 m/s, MRT offset 0 K as applicable. The chart compares prescribed conditions. "+STRESS_NOTE
     elif k=="snow_calendar":
         observed=p4.daily_stats(df,cat.S,nonnegative=True)["max"]
         cover=observed.gt(0).astype(float).where(observed.notna())
