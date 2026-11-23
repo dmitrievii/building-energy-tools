@@ -60,13 +60,20 @@ def chapter_name(item):
     return CHAPTERS.get(p,p)
 
 def scope_key(context):
-    return tuple(str(context.get(k,"")) for k in ("source id","source","location","first timestamp","last timestamp","selected records","filter","pressure mode","custom pressure","quality policy"))
+    return tuple(str(context.get(k,"")) for k in (
+        "source id","source","location","first timestamp","last timestamp",
+        "selected records","native interval minutes","time basis","filter",
+        "pressure mode","custom pressure","quality policy",
+        "temperature thresholds",
+    ))
 
 def ordered_groups(items):
-    """Preserve first occurrence of each chapter and order inside each chapter."""
+    """Follow the scientific report chapter sequence; retain saved order within each."""
     groups={}
     for item in items:groups.setdefault(chapter_name(item),[]).append(item)
-    return list(groups.items())
+    chapter_order=list(dict.fromkeys(CHAPTERS.values()))
+    ordered=[(c,groups[c]) for c in chapter_order if c in groups]
+    return ordered+[(c,entries) for c,entries in groups.items() if c not in chapter_order]
 
 def contexts(items):
     unique={}
@@ -329,14 +336,20 @@ CATALOG=[
 ("nv","Natural Ventilation","Monthly natural ventilation suitability",W,"h","nv"),
 ("night","Natural Ventilation","Night-flushing availability",T,"h","night"),
 ("degree","HVAC and Passive Design","Heating and cooling degree days",T,"K·d","degree"),
+("hvac_energy","HVAC and Passive Design","Outdoor-air conditioning · reference energy",T,"kWh","hvac_energy"),
+("hvac_economizer","HVAC and Passive Design","Air-side economizer · climatic screening",H,"h","hvac_economizer"),
+("hvac_design_hot","HVAC and Passive Design","Dry-bulb temperature · upper-tail design conditions",T,"°C","hvac_design_hot"),
+("hvac_design_cold","HVAC and Passive Design","Dry-bulb temperature · lower-tail design conditions",T,"°C","hvac_design_cold"),
+("hvac_critical","HVAC and Passive Design","Persistent hot-weather sequences · 72 hours",T,"°C","hvac_critical"),
 ("shade","Shading analysis","Solar protection screening",G,"h","shade"),
 ("shading_energy","Shading analysis","Reference window · monthly direct interception",G,"kWh/m²","shading_ledger"),
 ("shading_orientation","Shading analysis","Shading performance across eight façades",G,"kWh/m²","shading_orientation"),
-("utci","Outdoor Thermal Comfort","Monthly UTCI stress",T,"h","utci")]
+("utci","Outdoor Thermal Comfort","Monthly UTCI stress",T,"h","utci"),
+("utci_shading","Outdoor Thermal Comfort","Outdoor thermal exposure · direct-beam shade benefit",T,"K","utci_shading")]
 PRESETS={"Architectural climate study":("temperature_profile","temperature_heatmap","psychrometric","ghi","facade","solar_exposure","sunpath","wind_rose","wind_orientation","daylight","sky_cover","exterior_light","rain","rain_severity","rain_wind","snow_cover","climograph","nv","night","shade","shading_energy","shading_orientation"),
 "Climate overview":("temperature_profile","humidity_profile","ghi","wind_rose","sky_cover","rain","rain_severity","rain_wind","climograph"),
-"Passive design":("temperature_heatmap","psychrometric","facade","solar_exposure","wind_rose","wind_orientation","sky_cover","exterior_light","nv","night","shade","shading_energy","shading_orientation","utci"),
-"HVAC & engineering":("temperature_profile","temperature_duration","humidity_ratio","psychrometric","wind_speed","degree","nv","night","utci"),
+"Passive design":("temperature_heatmap","psychrometric","facade","solar_exposure","wind_rose","wind_orientation","sky_cover","exterior_light","nv","night","shade","shading_energy","shading_orientation","utci","utci_shading"),
+"HVAC & engineering":("temperature_profile","temperature_duration","humidity_ratio","psychrometric","wind_speed","degree","hvac_energy","hvac_economizer","hvac_design_hot","hvac_design_cold","hvac_critical","nv","night","utci"),
 "All standard diagrams":tuple(x[0] for x in CATALOG)}
 
 def available_catalog(df,context):
@@ -353,6 +366,11 @@ def available_catalog(df,context):
        "facade_temperature":(G,D,N,"solar_apparent_zenith_deg","solar_azimuth_deg",T),
        "sunpath":(N,"solar_apparent_zenith_deg","solar_azimuth_deg"),"windrose":(V,"wind_direction_deg"),"wind_panel":(V,"wind_direction_deg"),"wind_orientation":(V,"wind_direction_deg"),
        "climograph":(T,P),"rain_days":(P,),"wind_rain":(P,V,"wind_direction_deg"),
+       "hvac_energy":(T,W,"specific_volume_m3_kg"),
+       "hvac_economizer":(T,H),
+       "hvac_design_hot":(T,),"hvac_design_cold":(T,),"hvac_critical":(T,),
+       "utci_shading":(T,RH,V,G,D,N,"solar_apparent_zenith_deg",
+                        "horizontal_infrared_radiation_intensity_wh_m2"),
        "snow_hours":("snow_depth_cm",),
        "nv":(T,W),"night":(T,),"degree":(T,),"shade":(T,G),"utci":(T,RH,V)}
     out=[]
