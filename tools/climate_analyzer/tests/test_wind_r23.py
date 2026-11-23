@@ -121,7 +121,7 @@ class WindR23Tests(unittest.TestCase):
                                 colour="Natural ventilation suitability",nv_mask=mask)
         self.assertAlmostEqual(float(table.radius.sum()),0.)
         note=directional_interpretation(table,"Eligible hours","Natural ventilation suitability")
-        self.assertIn("Zero wind-direction hours",note)
+        self.assertIn("zero eligible wind-direction hours",note)
         self.assertIn("Seasonal wind availability",note)
 
     def test_monthly_aggregates_do_not_generate_invented_hour_counts(self):
