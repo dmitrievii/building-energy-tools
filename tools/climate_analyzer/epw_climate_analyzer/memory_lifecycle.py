@@ -357,6 +357,7 @@ def render_sidebar(st):
     return profile_diagnostic("memory sidebar rendering",_render_sidebar,st)
 
 def _render_sidebar(st):
+    """Compact summary, with detailed diagnostics explicitly opt-in."""
     state=st.session_state
     with st.sidebar.expander("Memory management",expanded=False):
         snapshot=memory_snapshot()
@@ -364,136 +365,99 @@ def _render_sidebar(st):
         if used is not None and limit:
             st.write(f"Container: {_mib(used)} / {_mib(limit)}")
             st.progress(min(1.,max(0.,used/limit)))
-            if pressure_high(snapshot):st.warning("High container memory pressure")
-            st.caption("Container memory is shared across sessions.")
-            st.caption(f"Raw unallocated headroom: {_mib(max(0,limit-used))}; usage less inactive file cache: {_mib(used-min(used,snapshot.get('inactive_file',0)))} (diagnostic only; not an admission credit).")
-        else:st.caption("Container memory limit unavailable on this host.")
-        for key,label in (("anonymous","Anonymous memory"),("file","File-backed memory"),
-                          ("inactive_file","Inactive file cache"),("process_rss","Application process RSS"),
-                          ("process_anon","Application anonymous RSS"),("process_file","Application file RSS"),
-                          ("process_shmem","Application shared-memory RSS"),("process_hwm","Application RSS high-water mark")):
-            if key in snapshot:st.caption(f"{label}: {_mib(snapshot[key])}")
-        st.caption("Active climate data, comparison data and saved report diagrams are retained. Prepared downloads and recomputable caches are released.")
+            if pressure_high(snapshot):
+                st.warning("High container memory pressure")
+        else:
+            st.caption("Container memory unavailable")
+        st.caption(f"App RAM: {_mib(snapshot.get('process_anon'))} anonymous RSS")
+
         st.button("Clean unused caches",key="mem_perf_r1_clean",
-                  on_click=manual_cleanup,args=(state,))
-        st.caption("Reset session closes the current connection and requests a fresh session without restarting the server. Shared scientific libraries remain initialized.")
-        consent=st.checkbox("Confirm deletion of this session's climate data, reports and settings",key="mem_r12_reset_confirm")
-        st.button("Reset session",disabled=not consent,key="mem_r12_reset",on_click=reset_session,args=(state,))
-        st.caption("Manual cleanup releases only this session's disposable resources. Shared public caches may be evicted under resource pressure.")
-        inventory=cache_inventory()
-        private=session_cache_inventory(state)
-        st.caption(f"Session cache payload: {_mib(sum(r['estimated_bytes'] for r in private))} / {_mib(sum(r['budget_bytes'] for r in private))} registered budgets.")
-        st.caption(f"Shared server cache payload: {_mib(sum(r['estimated_bytes'] for r in inventory))} / {_mib(sum(r['budget_bytes'] for r in inventory))} registered budgets.")
-        st.button("Inspect retained resources (refresh snapshot)",key="mem_r4_inspect",on_click=inspect_resources,args=(state,),
-                  help="Collect a new lightweight snapshot before downloading; does not run a Python heap census.")
-        st.button("Measure allocator recovery",key="mem_r9_recovery",on_click=inspect_recovery,args=(state,),
-                  help="Measure garbage collection and glibc trim separately; retains all active climate data and reports.")
-        st.button("Inspect Python object types",key="mem_r5_heap_inspect",on_click=inspect_heap,args=(state,),
-                  help="On demand, requires substantial raw memory headroom. Counts shallow GC-tracked objects; no content is exported.")
-        from .startup_runtime import runtime_status
-        runtime=runtime_status()
-        ready=sum(r["status"] in ("ready","already loaded") for r in runtime["startup"])
-        st.caption(f"Library stages ready: {ready}/{len(runtime['startup'])}.")
-        persistent=runtime.get("persistent_runtime",{})
-        st.caption(f"Process reruns: {runtime['event_counts'].get('script rerun',0)}; compatibility compositions: {persistent.get('wrapper_compositions',0)}; full module resets: {persistent.get('baseline_builds',0)}.")
-        details=st.checkbox("Show detailed memory tables",value=False,key="mem_r6_detail_tables",
-                            help="Detailed tables are rendered only on request, even when this expander is closed.")
-        if details:
-            st.caption("One-time startup library initialization")
-            st.text("\n".join(f"{row['stage']}: {row['status']} · {row['seconds']:.3f} s · RSS delta {_mib(row['rss_delta'])}"
-                              for row in runtime["startup"]))
-            st.text("\n".join(f"{key}: {value}" for key,value in persistent.items()))
-        from .session_reaper import reaper_summary
-        live_reaper=reaper_summary()
-        st.caption(f"Live session maintenance: {live_reaper.get('status','unavailable')}; sweeps: {live_reaper.get('sweeps',0)}; disconnected at last sweep: {live_reaper.get('disconnected_sessions','Unavailable')}; closed immediately: {live_reaper.get('closed_on_disconnect',0)}; expired reaped (fallback): {live_reaper.get('expired_reaped',0)}.")
-        st.caption(f"Active sessions: {live_reaper.get('active_sessions','Unavailable')}; WebSocket disconnect dispatches: {live_reaper.get('disconnect_events',0)}; native closes: {live_reaper.get('native_closes',0)}; closed session objects still reachable: {live_reaper.get('closed_session_refs_alive',0)}.")
-        st.caption(f"Native resets: {live_reaper.get('native_resets',0)}; reset failures: {live_reaper.get('reset_failures',0)}; retired payload cleanups: {live_reaper.get('retired_payloads_cleared',0)}.")
-        st.caption(f"Session policy: {live_reaper.get('policy_version','not verified')}; hook replacements: {live_reaper.get('policy_replacements',0)}.")
-        queue_sample=live_reaper.get("forward_queue_sample",{})
-        if queue_sample.get("status")=="sampled":
-            st.caption(f"Pending forward messages at last sweep: {queue_sample['pending_messages_in_sampled_sessions']}; sampled wire payload: {_mib(queue_sample['sampled_wire_bytes'])}; {queue_sample['captured_at_utc']} (not websocket backlog or RSS).")
+                  on_click=manual_cleanup,args=(state,),
+                  help="Release disposable resources. Climate data and saved report diagrams are preserved.")
+        consent=st.checkbox("Confirm session reset (deletes climate data and reports)",
+                            key="mem_r12_reset_confirm")
+        st.button("Reset session",disabled=not consent,key="mem_r12_reset",
+                  on_click=reset_session,args=(state,),
+                  help="Close the current session without restarting the application server.")
+        st.button("Inspect retained resources (refresh snapshot)",key="mem_r4_inspect",
+                  on_click=inspect_resources,args=(state,),
+                  help="Collect detailed metrics for the downloadable inventory.")
+
         inspected=state.get(INVENTORY_KEY)
-        if inspected and inspected.get("snapshot_schema")!="MEM-PERF-R13-HF2":
+        if inspected and inspected.get("snapshot_schema")!=RUNTIME_INVENTORY_SCHEMA:
             release_inventory(state)
             inspected=None
-        from .memory_recovery import recovery_summary
-        recovery=recovery_summary().get("last")
-        if recovery:
-            st.caption(f"Last allocator recovery: {recovery['reason']}; {recovery['status']}.")
-            if recovery.get("status")=="complete":
-                before=recovery["before"].get("process_anon")
-                after=recovery["after_trim"].get("process_anon")
-                if before is not None and after is not None:
-                    st.caption(f"Application anonymous RSS: {_mib(before)} → {_mib(after)}.")
         if inspected:
-            st.caption(f"Snapshot captured: {inspected['captured_at_utc']}. Current memory above is live at rerun; snapshot below is historical. Refresh before downloading.")
-            st.caption("Last on-demand inventory; sizes are estimates and overlap with RSS. Session rows may overlap; unmeasurable objects are marked unavailable.")
-            counters=inspected.get("session_runtime",{})
-            if counters:
-                st.caption(f"Active sessions (process-wide): {counters.get('active_sessions','Unavailable')}; current session visible keys: {counters.get('visible_keys','Unavailable')}.")
-                st.caption(f"Streamlit uploaded payloads: {_mib(counters.get('uploaded_payload_bytes'))}; media/download payloads: {_mib(counters.get('media_payload_bytes'))}.")
-            charts=inspected.get("chart_lifecycle",{})
-            if charts:
-                st.caption(f"Displayed figures: {charts['current_page_figures']}; recently retired figures still alive: {charts['retired_alive']}/{charts['retired_tracked']} (process-wide sample).")
-            reaper=counters.get("session_reaper",{})
-            if reaper:
-                st.caption(f"Disconnected sessions within reconnect window: {reaper.get('disconnected_sessions','Unavailable')}; expired sessions reaped: {reaper.get('expired_reaped',0)}.")
-            heap=inspected.get("heap_census")
-            if heap:st.caption("Python object census (separate historical snapshot): "+heap["status"]+"; captured: "+str(inspected.get("heap_census_captured_at_utc") or "unknown"))
-            processes=inspected.get("container_processes",{})
-            if processes:
-                st.caption(f"Visible cgroup processes: {processes.get('sampled',0)}; total sampled anonymous RSS: {_mib(processes.get('rss_anon_sum'))} (may overlap shared pages).")
-                if details:
-                    st.text("\n".join(f"{p['category']}: PID {p['pid']} · PPID {p.get('parent_pid','?')} · {p.get('role_hint','unclassified')} · {p.get('relation_to_app','unknown')} · anonymous RSS {_mib(p.get('rss_anon'))} · PssAnon {_mib(p.get('pss_anon'))}" for p in processes.get("processes",[])[:15]))
-                st.caption(f"Other Python anonymous RSS: {_mib(processes.get('other_python_anon_bytes'))}; matching climate launch targets: {len(processes.get('other_climate_app_candidates',[]))}.")
-                for p in processes.get("processes",[]):
-                    if not p.get("app") and p.get("climate_app_target"):
-                        st.caption(f"PID {p['pid']}: {p.get('orphan_assessment','unknown')}; listener ports {p.get('sockets',{}).get('tcp_listen_ports','unknown')}; established TCP {p.get('sockets',{}).get('tcp_established','unknown')}.")
-                st.caption("Process checks are read-only. No process termination from this public interface.")
-            ownership=inspected.get("cloud_memory_ownership",{})
-            if ownership:
-                candidates=ownership["processes"]["other_matching_targets"]
-                if candidates:
-                    st.warning(f"{len(candidates)} other matching Climate Analyzer launch target(s); sampled anonymous RSS {_mib(ownership['processes']['other_matching_anon_bytes'])}. Platform ownership unresolved. Do not terminate from this application.")
-                allocator=ownership["allocator"]
-                st.caption(f"Allocator admission: {allocator['classification']}; reported free arena space {_mib(allocator.get('free_arena_bytes'))}. Free arena space is not necessarily reclaimable RSS.")
-                st.caption("Allocator startup evidence and process ownership are separate gates. Neither is a guarantee of total container memory recovery.")
-            if details:
-                # Text summaries avoid Arrow/dataframe marshalling and repeated
-                # construction of nested JSON elements on each unrelated rerun.
-                st.text("\n".join(f"{r['cache']}: {r['entries']} entries, {_mib(r['estimated_bytes'])} / {_mib(r['budget_bytes'])}"
-                                   for r in inspected["shared_caches"]))
-                st.text("\n".join(f"{r['resource']}: {r['type']}, {_mib(r['estimated_bytes'])}"
-                                   for r in inspected["session_resources"]))
-                st.caption(f"Python allocation blocks: {inspected['python_allocated_blocks']}. Full diagnostic tables and histories are in the JSON download.")
-                st.text("\n".join(f"{k}: {v}" for k,v in inspected.get("loaded_libraries",{}).items() if v))
-                capture=inspected.get("diagnostic_capture",{})
-                if capture:
-                    st.caption(f"Inventory capture callback: {capture['seconds']:.3f} s; anonymous RSS {_mib(capture['before'].get('process_anon'))} → {_mib(capture['after'].get('process_anon'))}.")
-                if heap:st.caption("Complete heap census is available in the JSON download.")
+            st.caption(f"Snapshot captured: {inspected['captured_at_utc']}")
+            candidates=inspected.get("cloud_memory_ownership",{}).get("processes",{}).get("other_matching_targets",[])
+            if candidates:
+                st.warning(f"{len(candidates)} other Climate Analyzer process(es) found; platform ownership unresolved.")
             payload=state.get(INVENTORY_BYTES_KEY)
             if isinstance(payload,bytes):
-                st.download_button("Download memory inventory JSON",data=payload,file_name="memory_inventory_"+inspected["captured_at_utc"].replace(":","-").replace("+","_")+".json",mime="application/json",key="mem_r4_inventory_download",on_click="ignore")
-            st.button("Release memory inventory",key="mem_r10_release_inventory",on_click=release_inventory,args=(state,))
+                st.download_button("Download memory inventory JSON",data=payload,
+                                   file_name="memory_inventory_"+inspected["captured_at_utc"].replace(":","-").replace("+","_")+".json",
+                                   mime="application/json",key="mem_r4_inventory_download",on_click="ignore")
+            st.button("Release memory inventory",key="mem_r10_release_inventory",
+                      on_click=release_inventory,args=(state,))
         result=state.get(LAST_KEY)
         if result:
-            st.caption("Last cleanup: "+result["reason"])
             b,a=result["before"].get("used"),result["after"].get("used")
-            if b is not None and a is not None:
-                st.caption(f"Container usage: {_mib(b)} → {_mib(a)} (net change {(a-b)/m.MIB:+,.0f} MiB; concurrent activity may affect measurement).")
-            st.caption(f"Released session resource entries: {len(result['released'])}")
-            evicted=result.get("evicted_caches",[])
-            st.caption(f"Evicted shared cache entries: {sum(r['entries'] for r in evicted)}; estimated payload {_mib(sum(r['estimated_bytes'] for r in evicted))}.")
-            if result.get("kept_active_cache_names"):
-                st.caption("Active station-map caches retained to avoid immediate reconstruction.")
-            for warning in result["warnings"]:st.caption(warning)
-        launch=state.get("_mem_perf_r4_launch_cleanup")
-        if launch:
-            st.caption(f"Pre-launch cache eviction: {_mib(launch['before'].get('used'))} → {_mib(launch['after'].get('used'))}.")
-        pre,post=state.get(EXPORT_PRE_KEY),state.get(EXPORT_POST_KEY)
-        if pre:
-            st.caption("Most recent export lifecycle")
-            for label,record,phase in (("Before cleanup",pre,"before"),("After cleanup",pre,"after"),
-                                       ("After export",post,"after")):
-                if record:
-                    st.caption(f"{label}: {_mib(record[phase].get('used'))}")
+            delta=f"; container {_mib(b)} → {_mib(a)}" if b is not None and a is not None else ""
+            st.caption(f"Last cleanup: {result['reason']}{delta}")
+
+        advanced=st.checkbox("Advanced diagnostics",key="mem_r6_detail_tables",value=False,
+                             help="Additional measurements and technical counters; the full evidence remains in the JSON.")
+        if advanced:
+            _render_memory_diagnostics(st,snapshot,state,inspected)
+
+
+def _render_memory_diagnostics(st,snapshot,state,inspected):
+    """On-demand UI only; all raw diagnostic evidence remains in the JSON."""
+    used,limit=snapshot.get("used"),snapshot.get("limit")
+    if used is not None and limit:
+        st.caption(f"Raw headroom: {_mib(max(0,limit-used))}; usage excluding inactive file cache: {_mib(used-min(used,snapshot.get('inactive_file',0)))} (diagnostic).")
+    for key,label in (("anonymous","Container anonymous"),("file","File-backed"),
+                      ("inactive_file","Inactive file cache"),("process_rss","Application RSS"),
+                      ("process_file","Application file RSS"),("process_hwm","Peak application RSS")):
+        if key in snapshot:
+            st.caption(f"{label}: {_mib(snapshot[key])}")
+    inventory=cache_inventory()
+    private=session_cache_inventory(state)
+    st.caption(f"Session cache: {_mib(sum(x['estimated_bytes'] for x in private))}; shared cache: {_mib(sum(x['estimated_bytes'] for x in inventory))}.")
+    st.button("Measure allocator recovery",key="mem_r9_recovery",on_click=inspect_recovery,args=(state,),
+              help="Run a separate garbage collection and allocator trim measurement.")
+    st.button("Inspect Python object types",key="mem_r5_heap_inspect",on_click=inspect_heap,args=(state,),
+              help="Count shallow object types when raw memory headroom permits.")
+    from .startup_runtime import runtime_status
+    runtime=runtime_status()
+    persistent=runtime.get("persistent_runtime",{})
+    st.caption(f"Library stages: {sum(row['status'] in ('ready','already loaded') for row in runtime['startup'])}/{len(runtime['startup'])}; reruns: {runtime['event_counts'].get('script rerun',0)}; compositions: {persistent.get('wrapper_compositions',0)}.")
+    st.text("\n".join(f"{row['stage']}: {row['status']} · {row['seconds']:.3f} s · RSS delta {_mib(row['rss_delta'])}" for row in runtime["startup"]))
+    from .session_reaper import reaper_summary
+    reaper=reaper_summary()
+    st.caption(f"Sessions: {reaper.get('active_sessions','Unavailable')}; native closes: {reaper.get('native_closes',0)}; closed references alive: {reaper.get('closed_session_refs_alive',0)}.")
+    from .memory_recovery import recovery_summary
+    recovery=recovery_summary().get("last")
+    if recovery:
+        st.caption(f"Last allocator recovery: {recovery.get('status','unknown')} · {recovery.get('reason','unknown')}")
+    if inspected:
+        processes=inspected.get("container_processes",{})
+        st.caption(f"Snapshot process count: {processes.get('sampled','Unavailable')}; sampled anonymous RSS: {_mib(processes.get('rss_anon_sum'))}.")
+        for p in processes.get("processes",[])[:15]:
+            st.caption(f"PID {p['pid']}: {p.get('role_hint','unclassified')} · anon {_mib(p.get('rss_anon'))}.")
+        ownership=inspected.get("cloud_memory_ownership",{})
+        a=ownership.get("allocator",{})
+        if a:
+            st.caption(f"Allocator admission: {a.get('classification','Unavailable')}; free arena: {_mib(a.get('free_arena_bytes'))} (not guaranteed reclaimable).")
+        charts=inspected.get("chart_lifecycle",{})
+        if charts:
+            st.caption(f"Displayed figures: {charts.get('current_page_figures','Unavailable')}; retired still alive: {charts.get('retired_alive','Unavailable')}.")
+        st.caption(f"Python blocks: {inspected.get('python_allocated_blocks','Unavailable')}. More details in JSON.")
+    launch=state.get("_mem_perf_r4_launch_cleanup")
+    if launch:
+        st.caption(f"Pre-export cache cleanup: {_mib(launch['before'].get('used'))} → {_mib(launch['after'].get('used'))}.")
+    pre,post=state.get(EXPORT_PRE_KEY),state.get(EXPORT_POST_KEY)
+    if pre:
+        for label,record,phase in (("Before cleanup",pre,"before"),("After cleanup",pre,"after"),("After export",post,"after")):
+            if record:
+                st.caption(f"{label}: {_mib(record[phase].get('used'))}")
