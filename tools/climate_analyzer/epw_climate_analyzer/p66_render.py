@@ -205,7 +205,8 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         direction,radial,colour=a
         try:f,_=monthly_wind_rose_panel(df,speed=c,direction=direction,radial=radial,colour=colour,title=title)
         except ValueError as exc:raise NotApplicable(str(exc)) from exc
-        note=MONTHLY_WIND_ROSE_NOTE
+        from .wind_findings import wind_figure_interpretation
+        note=wind_figure_interpretation(df,f,"wind_panel",column=c,title=title)+"\n\n"+MONTHLY_WIND_ROSE_NOTE
     elif k in ("wind_mean","wind_classes"):
         from .directional_climate import directional_table,directional_figure,directional_interpretation,directional_class_table,directional_class_figure,class_interpretation
         direction,month,radial,colour=a
@@ -426,7 +427,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         scope=scope if wet else df
         col=c if k in ("time_series","profile","percentile","heatmap","duration","histogram","box","violin","diurnal","occurrence","amplitude","native") else ""
         # Non-temperature pages retain their existing interpretation contract.
-        if d.chapter not in (cat.TEMP, cat.HUM):
+        if d.chapter not in (cat.TEMP, cat.HUM, cat.WIND):
             with phase("interpretation"):
                 stat=memo(("interpretation",d.chapter,col,k,wet),lambda:base.source_interpretation(scope,d.chapter,col,cat.LABELS.get(col,""),cat.UNITS.get(col,u),thresholds=base.temperature_thresholds(context),kind=k))
             if stat and stat not in note:note=stat+"\n\n"+note
@@ -442,5 +443,10 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         with phase("interpretation"):
             stat=humidity_figure_interpretation(
                 df,f,k,column=c,title=title,args=a)
+        if stat and stat not in note:note=stat+"\n\n"+note
+    if d.chapter == cat.WIND and k not in ("wind_mean","wind_classes","wind_panel"):
+        from .wind_findings import wind_figure_interpretation
+        with phase("interpretation"):
+            stat=wind_figure_interpretation(df,f,k,column=c,title=title,args=a)
         if stat and stat not in note:note=stat+"\n\n"+note
     return f,note
