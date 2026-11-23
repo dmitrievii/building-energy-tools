@@ -65,7 +65,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
     s=base.numeric(df,c) if c else None
     title=d.title
     dt=agg.native_interval_hours(df)
-    note="All statistics use valid source observations in the selected interval."
+    note=""
     def memo(key,fn):
         if hasattr(cache,"get_or_compute"):return cache.get_or_compute(key,fn)
         if key not in cache:cache[key]=fn()
@@ -81,10 +81,10 @@ def make_figure(d,df,context,reference_df=None,cache=None):
     def design():
         from .p6_dashboard import design_ledgers
         return memo("design",lambda:design_ledgers(df,reference_df=reference_df)[0])
-    if k=="native":f=_line(s,title,u);note+=" Published monthly observations; no hourly reconstruction."
+    if k=="native":f=_line(s,title,u);note+=" Published monthly observations at their original reporting resolution."
     elif k=="time_series":
         f=ch.time_series_profile_chart(df,c,a[0],title,u,a[1])
-        note+=" "+("One valid source observation per occupied interval; no statistical band." if a[1]=="Observed values" else "Representation: "+a[1]+".")
+        note+=" "+("Each plotted point represents its source observation at the corresponding timestamp." if a[1]=="Observed values" else "Statistical representation: "+a[1]+".")
     elif k=="profile":f=ch.profile_ribbon_chart(df,c,a[0],title,u)
     elif k=="percentile":f=ch.percentile_band_chart(df,c,a[0],title,u);note+=" P05–P95 describes the central 90% of observed values."
     elif k=="heatmap":
@@ -94,7 +94,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
             note+=f" Common continuous absolute temperature gradient; transition reference temperatures {bounds[0]:g}/{bounds[1]:g} °C."
             if c!=cat.T:note+=" Colours map the measured temperature on the selected absolute scale."
         if agg.heatmap_has_single_observation_cells(df,a[0],a[1]):
-            note+=" One observed value per occupied cell; no statistic required."
+            note+=" Each occupied calendar cell displays the single corresponding source observation."
         else:note+=f" Cell statistic: {a[2]}; comparison: {a[1]}."
     elif k in ("duration","histogram","box","violin"):
         scope=df.loc[s.gt(0)].copy() if a[0]=="wet" else df
@@ -173,7 +173,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         note+=" Assumed constant surface temperature 15 °C; negative margin indicates possible condensation."
     elif k=="moisture":
         f=_bars(p3.monthly_totals(df,p3.moisture_loads(df,airflow=1000.,target=9.)),title,u)
-        note+=" Outdoor air flow 1000 m³/h, target 9 g/kg dry air; no building moisture balance."
+        note+=" Reference 1,000 m³/h outdoor airflow conditioned to a 9 g/kg humidity-ratio threshold; monthly bars quantify the associated moisture transfer."
     elif k=="sunpath_view":
         from .sun_path_views import classic_sun_path,technical_sun_path,sun_path_3d
         from .solar_shading import thermal_overlay
@@ -540,4 +540,4 @@ def make_figure(d,df,context,reference_df=None,cache=None):
             stat=precipitation_figure_interpretation(
                 df,f,k,column=c,title=title,args=a)
         if stat and stat not in note:note=stat+"\n\n"+note
-    return f,note
+    return f,note.strip()
