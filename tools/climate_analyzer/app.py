@@ -5260,6 +5260,7 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
     chart_group = st.selectbox(
         "Analysis type",
         [
+            "Climate screening stages",
             "Heat map",
             "Suitable hours by aggregation",
             "Daily suitable-hours duration curve",
@@ -5270,7 +5271,28 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
         ] + (["Temperature–wind suitability"] if wind_available else [])
           + (["Directional analysis"] if wind_available and "wind_direction_deg" in df and df["wind_direction_deg"].notna().any() else []),
     )
-    if chart_group == "Temperature–wind suitability":
+    if chart_group == "Climate screening stages":
+        from epw_climate_analyzer.passive_design_findings import (
+            ventilation_screen_stages, ventilation_screen_interpretation,
+        )
+        stages = ventilation_screen_stages(
+            df, t_min_c=t_min, t_max_c=t_max, d_max_g_kg=d_max,
+            wind_min_m_s=wind_min, wind_max_m_s=wind_max,
+            occupied_only=occupied_only, occupied_start_hour=occupied_start,
+            occupied_end_hour=occupied_end, weekdays_only=weekdays_only,
+        )
+        fig = px.bar(
+            stages, x="screen", y="hours", text="hours",
+            title="Outdoor-air screening stages",
+            labels={"screen": "Active screening criterion", "hours": "Observed hours"},
+        )
+        fig.update_traces(texttemplate="%{text:,.1f}", textposition="outside")
+        fig.update_layout(template="plotly_white", yaxis_rangemode="tozero")
+        render_plot(fig, ventilation_screen_interpretation(
+            df, stages, t_min_c=t_min, t_max_c=t_max, d_max_g_kg=d_max,
+        ))
+        st.dataframe(stages, hide_index=True, use_container_width=True)
+    elif chart_group == "Temperature–wind suitability":
         from epw_climate_analyzer.p3_ui import nv_sensitivity
         nv_sensitivity(df,eligibility_mask(df,mask,wind=wind_filter),wind_available,render_plot,
                        temperature_limits=(t_min,t_max),wind_limits=(wind_min,wind_max) if wind_filter else None)
@@ -5396,7 +5418,10 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
             df_nf = df.copy()
             df_nf["night_flushing_suitable"] = night_mask.astype(int)
             fig = heatmap_chart(df_nf, "night_flushing_suitable", "day", "Night-flushing potential", "0/1")
-            render_plot(fig, natural_ventilation_interpretation(df, night_mask))
+            from epw_climate_analyzer.passive_design_findings import night_flushing_interpretation
+            render_plot(fig, night_flushing_interpretation(
+                df, night_mask, hot_day_c=hot, night_max_c=cool,
+            ))
 
 
 def render_hvac_passive(df: pd.DataFrame) -> None:
