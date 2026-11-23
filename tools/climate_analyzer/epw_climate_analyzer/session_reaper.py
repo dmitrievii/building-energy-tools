@@ -70,9 +70,17 @@ def _install_disconnect_policy(manager):
         thread=getattr(runner,"_script_thread",None)
         if thread is not None:
             _STOPPING_THREADS.add(thread)
-            from streamlit.runtime.scriptrunner import get_script_run_ctx
-            ctx=get_script_run_ctx(thread,suppress_warning=True)
-            if ctx is not None:ctx._ige_session_closed=True
+            # Streamlit 1.63's get_script_run_ctx(suppress_warning=False)
+            # only accesses the *current* thread. We are on the runtime
+            # event-loop thread, not the target ScriptRunner thread.
+            # Passing thread as a positional argument raises TypeError and
+            # interrupts native websocket disconnect handling.
+            from streamlit.runtime.scriptrunner_utils.script_run_context_attr import (
+                SCRIPT_RUN_CONTEXT_ATTR_NAME,
+            )
+            ctx=getattr(thread,SCRIPT_RUN_CONTEXT_ATTR_NAME,None)
+            if ctx is not None and getattr(ctx,"session_id",None)==session_id:
+                ctx._ige_session_closed=True
         try:_CLOSED_REFS.append(weakref.ref(session))
         except TypeError:pass
         del _CLOSED_REFS[:-128]
