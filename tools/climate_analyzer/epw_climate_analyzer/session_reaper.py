@@ -248,7 +248,10 @@ def _recover_if_idle(manager,cache,reaped):
         import sys
         parity=sys.modules.get("epw_climate_analyzer.source_parity_runtime")
         release=getattr(parity,"release_idle_bindings",None)
-        if callable(release):release()
+        if callable(release) and release() is False:
+            # Keep recovery pending; never wait on a script-owned lock from
+            # the Streamlit asyncio thread. Next maintenance tick retries.
+            return
     from .memory_recovery import recovery_probe
     result=recovery_probe("Disconnected session resources released")
     if result["status"]=="busy export":return

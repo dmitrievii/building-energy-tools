@@ -63,7 +63,14 @@ class GeoSphereDateFragmentIsolationTests(unittest.TestCase):
 
     def test_fragment_fallback_preserves_non_streamlit_test_doubles(self) -> None:
         source = self._source()
-        self.assertIn('fragment_factory = getattr(st, "fragment", None)', source)
+        self.assertIn('fragment_factory = None if extended_full_runs() else getattr(st, "fragment", None)', source)
+        from epw_climate_analyzer.persistent_app_runtime import extended_full_runs
+        from unittest.mock import patch
+        for flags, expected in (({},False),({"IGE_R143_PERSISTENT_APP":"1"},False),
+                                ({"IGE_R144B_EXTENDED":"1"},False),
+                                ({"IGE_R143_PERSISTENT_APP":"1","IGE_R144B_EXTENDED":"1"},True)):
+            with patch.dict("os.environ",flags,clear=True):
+                self.assertEqual(extended_full_runs(),expected)
         self.assertIn("if callable(fragment_factory):", source)
         self.assertIn("render_start_date = _render_date_widget", source)
         self.assertIn("render_end_date = _render_date_widget", source)

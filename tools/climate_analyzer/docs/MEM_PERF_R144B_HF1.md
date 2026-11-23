@@ -1,0 +1,11 @@
+# R14.4B HF1 — allocator-first strategy
+
+R14.4A completed 80/80 lifecycle cycles and 81/81 scientific pair observations. A2 (baseline + startup arena limit 2) is preferred for the next production candidate, not promoted: median anonymous RSS 253.3 MiB vs A0 304.0 (-16.7%); A3 249.1 MiB, with higher peak RSS and drift than A2. Same-runner timing difference <1%; independent replication still absent. Persistent remains a research candidate.
+
+HF1: remove event-loop blocking acquisition of compatibility lock during idle recovery and preserve pending retry on contention. This is a demonstrated lock hazard, not a proven attribution for every previous browser failure; add six immediate reconnects, signal-triggered thread stacks and server log tail on failure. Retain original live fingerprint gate. Fix replay import path and remaining fragment fallback test. Compare available canonical artifacts independently of unrelated replay failure. Add A2 to all extended source and browser gates; verify allocator env before child process exec.
+
+Community Cloud executes streamlit run; secrets/environment configuration does not document when glibc receives variables relative to exec. Memory inventory now separately reports numeric startup environment (Linux /proc/self/environ), current environment and glibc arena tunable. Never expose arbitrary environment or claim an observed environment value proves allocator internals. No runtime mallopt (glibc documents MT-Unsafe init const), no os.environ late assignment as optimization, no exec/restart of platform server, no public flag change. Next stage must confirm process-start configuration on platform or use a supported managed launch environment. Cloud secrets alone not evidence. Existing allocator mallinfo2 partial counters remain unchanged.
+
+References: https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/file-organization ; https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/secrets-management ; https://sourceware.org/glibc/manual/latest/html_node/Malloc-Tunable-Parameters.html ; https://sourceware.org/glibc/manual/latest/html_node/Memory-Allocation-Tunables.html .
+
+Full CI and source/browser parity remain gates. No production setting has been changed.

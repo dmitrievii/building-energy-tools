@@ -48,18 +48,27 @@ def restore_inactive_surface() -> None:
 
 
 def release_idle_bindings():
-    """Release the last composed app namespace only at zero active sessions."""
-    with _RUNTIME_PATCH_LOCK:
+    """Try idle binding recovery without ever blocking the runtime event loop.
+
+    A script may own the compatibility lock while waiting for a WebSocket/
+    event-loop operation. Even a zero-session observation is not a license
+    to wait for that lock. False means the caller must defer recovery.
+    """
+    if not _RUNTIME_PATCH_LOCK.acquire(blocking=False):
+        _RUNTIME_STATS["idle_binding_deferrals"]=_RUNTIME_STATS.get("idle_binding_deferrals",0)+1
+        return False
+    try:
         from .source_parity_streamlit_surface import restore_streamlit_surface
         restore_streamlit_surface()
         if _PERSISTENT_NAMESPACE is not None:
-            # Persistent candidate owns stable code and module bindings, not a
-            # browser script dictionary. Do not unwind half the permanent stack.
             _RUNTIME_STATS["persistent_idle_checks"]=_RUNTIME_STATS.get("persistent_idle_checks",0)+1
-            return
+            return True
         if _baseline_current():
             _restore_bindings()
             _RUNTIME_STATS["idle_binding_releases"]=_RUNTIME_STATS.get("idle_binding_releases",0)+1
+        return True
+    finally:
+        _RUNTIME_PATCH_LOCK.release()
 
 
 def _module_token(module):

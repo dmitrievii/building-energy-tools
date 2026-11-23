@@ -11,6 +11,44 @@ _LOCK=Lock()
 _LAST=None
 _COUNT=0
 
+def _numeric_limit(value):
+    return int(value) if isinstance(value,str) and value.isascii() and value.isdigit() and len(value)<=6 else None
+
+def _arena_origin(initial,current):
+    """Only return allowlisted numeric allocator settings, never raw environment."""
+    if initial is None:
+        return {"arena_max_exec_env":None,"arena_tunable_exec":None,
+                "arena_setting_origin":"exec environment unavailable"}
+    values={}
+    for entry in initial.split(b"\0"):
+        key,sep,value=entry.partition(b"=")
+        if sep and key in (b"MALLOC_ARENA_MAX",b"GLIBC_TUNABLES"):
+            values[key]=value.decode("ascii",errors="replace")
+    initial_limit=_numeric_limit(values.get(b"MALLOC_ARENA_MAX"))
+    tunables=[v.split("=",1)[1] for v in values.get(b"GLIBC_TUNABLES","").split(":")
+              if v.startswith("glibc.malloc.arena_max=")]
+    tunable=_numeric_limit(tunables[-1]) if tunables else None
+    if tunables:
+        origin="exec glibc tunable present; allocator application not independently verified"
+    elif initial_limit is not None:
+        origin="exec environment requested; allocator application not independently verified"
+    elif current is not None:
+        origin="runtime environment only; startup application NOT established"
+    else:
+        origin="no explicit exec arena limit observed"
+    return {"arena_max_exec_env":initial_limit,"arena_tunable_exec":tunable,"arena_setting_origin":origin}
+
+def allocator_origin():
+    import os
+    from pathlib import Path
+    current=_numeric_limit(os.environ.get("MALLOC_ARENA_MAX"))
+    try:
+        with Path("/proc/self/environ").open("rb") as file:
+            initial=file.read(2*1024**2+1)
+        if len(initial)>2*1024**2 or (initial and not initial.endswith(b"\0")):initial=None
+    except OSError:initial=None
+    return _arena_origin(initial,current)
+
 def allocator_snapshot():
     """glibc mallinfo2 counters, not a complete Python/native heap census.
 
@@ -35,7 +73,7 @@ def allocator_snapshot():
         arena_max=os.environ.get("MALLOC_ARENA_MAX","")
         # Record only an allowlisted numeric setting, never environment contents.
         return {"status":"sampled","glibc":version().decode("ascii"),
-                "arena_max_env":int(arena_max) if arena_max.isascii() and arena_max.isdigit() and len(arena_max)<=6 else None,
+                "arena_max_env":_numeric_limit(arena_max),**allocator_origin(),
                 "free_arena_fraction":float(info.fordblks/info.arena) if info.arena else None,
                 "arena_bytes":int(info.arena),"allocated_arena_bytes":int(info.uordblks),
                 "free_arena_bytes":int(info.fordblks),"mmap_bytes":int(info.hblkhd),

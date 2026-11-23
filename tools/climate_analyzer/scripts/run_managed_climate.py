@@ -7,6 +7,12 @@ import fcntl
 import tempfile
 
 def main():
+    # CI-only, process-local evidence for a stalled browser initialization.
+    # Do not register signals in platform-owned production processes.
+    if os.environ.get("IGE_R144B_THREAD_DIAGNOSTICS")=="1":
+        import faulthandler
+        import signal
+        faulthandler.register(signal.SIGUSR1,all_threads=True)
     app=Path(__file__).resolve().parents[1]/"app.py"
     sys.path.insert(0,str(app.parent))
     # Stable per app and UID; keep the FD open for the entire server lifetime.

@@ -26,14 +26,23 @@ jobs:
       - name: Targeted scientific and UI regression suite
         run: |
           set -euo pipefail
-          for suite in test_climate_0_10_5_regressions test_interannual_heatmaps_0_6_4 test_interannual_overlay_profiles test_interannual_year_highlight test_ige_h1_station_year_ui test_p2_directional_solar test_sun_path_views test_geosphere_unified_request_form test_geosphere_monthly_request_surface; do
+          for suite in test_climate_0_10_5_regressions test_interannual_heatmaps_0_6_4 test_interannual_overlay_profiles test_interannual_year_highlight test_ige_h1_station_year_ui test_p2_directional_solar test_sun_path_views test_geosphere_unified_request_form test_geosphere_monthly_request_surface test_geosphere_date_fragment_isolation test_r144b_hf1; do
             python -m unittest discover -s tests -p "$suite.py" -v
           done
   sources:
     strategy:
       fail-fast: false
       matrix:
-        persistent: ['0','1']
+        include:
+          - arm: A0
+            persistent: '0'
+            arena: default
+          - arm: A1
+            persistent: '1'
+            arena: default
+          - arm: A2
+            persistent: '0'
+            arena: '2'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     defaults:
@@ -41,9 +50,10 @@ jobs:
         working-directory: tools/climate_analyzer
     env:
       IGE_R143_PERSISTENT_APP: ${{ matrix.persistent }}
+      ARENA_MODE: ${{ matrix.arena }}
       IGE_R144B_EXTENDED: '1'
       IGE_R143_PARITY: '1'
-      PYTHONPATH: .:tests
+      PYTHONPATH: .:tests:../../research/ige_cmip6
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -53,22 +63,31 @@ jobs:
       - name: Offline canonical chart and Report parity
         run: |
           set -euo pipefail
+          unset MALLOC_ARENA_MAX GLIBC_TUNABLES
+          if [ "$ARENA_MODE" = 2 ]; then export MALLOC_ARENA_MAX=2; fi
           for kind in ten-minute hourly monthly; do
             python scripts/r144b_source_qualification.py "$kind" "artifacts/r144b/$kind.json"
           done
       - name: Real app hourly provider selector and annual station tool (offline fixture)
         if: always()
-        run: python -m unittest test_ige_h1_station_year_ui.StationYearUITests.test_real_app_hourly_source_contains_the_same_annual_tool -v
+        run: |
+          unset MALLOC_ARENA_MAX GLIBC_TUNABLES
+          if [ "$ARENA_MODE" = 2 ]; then export MALLOC_ARENA_MAX=2; fi
+          python -m unittest test_ige_h1_station_year_ui.StationYearUITests.test_real_app_hourly_source_contains_the_same_annual_tool -v
       - name: Generated future route and previous historical base (offline replay)
         if: always()
-        run: python -m unittest test_ige_f1_selected_future_ui.F1UITests.test_future_explore_uses_common_analysis_and_keeps_original_base_available -v
+        run: |
+          unset MALLOC_ARENA_MAX GLIBC_TUNABLES
+          if [ "$ARENA_MODE" = 2 ]; then export MALLOC_ARENA_MAX=2; fi
+          python -m unittest test_ige_f1_selected_future_ui.F1UITests.test_future_explore_uses_common_analysis_and_keeps_original_base_available -v
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: r144b-sources-${{ matrix.persistent }}
+          name: r144b-sources-${{ matrix.arm }}
           path: tools/climate_analyzer/artifacts/r144b/
   compare:
     needs: sources
+    if: always()
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -76,19 +95,31 @@ jobs:
         with:
           pattern: r144b-sources-*
           path: evidence
-      - run: python tools/climate_analyzer/scripts/compare_r144b_sources.py evidence/r144b-sources-0 evidence/r144b-sources-1
+      - run: python tools/climate_analyzer/scripts/compare_r144b_sources.py evidence/r144b-sources-A0 evidence/r144b-sources-A1
+      - run: python tools/climate_analyzer/scripts/compare_r144b_sources.py evidence/r144b-sources-A0 evidence/r144b-sources-A2
   local-browser:
     strategy:
       fail-fast: false
       matrix:
-        persistent: ['0','1']
+        include:
+          - arm: A0
+            persistent: '0'
+            arena: default
+          - arm: A1
+            persistent: '1'
+            arena: default
+          - arm: A2
+            persistent: '0'
+            arena: '2'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
       TARGET_URL: http://127.0.0.1:8513/
       CHROME_PATH: /usr/bin/google-chrome
       IGE_R143_PERSISTENT_APP: ${{ matrix.persistent }}
+      ARENA_MODE: ${{ matrix.arena }}
       IGE_R144B_EXTENDED: '1'
+      IGE_R144B_THREAD_DIAGNOSTICS: '1'
       PYTHONPATH: tools/climate_analyzer
       GEOSPHERE_SMOKE_FIXTURE: artifacts/r144b-provider/provider-fixture.json
     steps:
@@ -102,18 +133,31 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p artifacts/r144b-provider artifacts/r144b-browser
+          unset MALLOC_ARENA_MAX GLIBC_TUNABLES
+          if [ "$ARENA_MODE" = 2 ]; then export MALLOC_ARENA_MAX=2; fi
           python tools/climate_analyzer/scripts/run_managed_climate.py --server.headless=true --server.port=8513 > artifacts/r144b-browser/server.log 2>&1 &
           pid=$!
-          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          trap 'kill "$pid" 2>/dev/null || true; tail -n 180 artifacts/r144b-browser/server.log' EXIT
           for i in $(seq 1 60); do curl -fsS http://127.0.0.1:8513/_stcore/health && break; sleep 1; done
+          curl -fsS http://127.0.0.1:8513/_stcore/health
+          # Verify process exec environment, not merely the shell setting.
+          python - "$pid" "$ARENA_MODE" <<'PY'
+          import sys
+          from pathlib import Path
+          env=Path(f"/proc/{sys.argv[1]}/environ").read_bytes().split(b"\0")
+          actual=[e for e in env if e.startswith(b"MALLOC_ARENA_MAX=")]
+          assert actual==([b"MALLOC_ARENA_MAX=2"] if sys.argv[2]=="2" else []), "Wrong exec allocator setting"
+          print("Verified exec allocator mode:",sys.argv[2])
+          PY
           status=0
-          AUDIT_OUTPUT_DIR=artifacts/r144b-browser node deployment/live_browser_audit.mjs || status=1
-          python deployment/geosphere_precip_snow_provider_probe.py --output "$GEOSPHERE_SMOKE_FIXTURE" --timeout 60 && AUDIT_OUTPUT_DIR=artifacts/r144b-provider node deployment/pr83_precip_snow_live_smoke.mjs || status=1
+          node deployment/r144b_reconnect_smoke.mjs || { status=1; kill -USR1 "$pid" 2>/dev/null || true; }
+          AUDIT_OUTPUT_DIR=artifacts/r144b-browser node deployment/live_browser_audit.mjs || { status=1; kill -USR1 "$pid" 2>/dev/null || true; }
+          python deployment/geosphere_precip_snow_provider_probe.py --output "$GEOSPHERE_SMOKE_FIXTURE" --timeout 60 && AUDIT_OUTPUT_DIR=artifacts/r144b-provider node deployment/pr83_precip_snow_live_smoke.mjs || { status=1; kill -USR1 "$pid" 2>/dev/null || true; }
           exit "$status"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: r144b-browser-${{ matrix.persistent }}
+          name: r144b-browser-${{ matrix.arm }}
           path: |
             artifacts/r144b-browser/
             artifacts/r144b-provider/
