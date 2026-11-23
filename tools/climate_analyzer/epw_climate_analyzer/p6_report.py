@@ -1,6 +1,7 @@
 """Session-local report snapshots and self-contained print/PDF output."""
 from __future__ import annotations
 import hashlib
+from copy import deepcopy
 import html
 import io
 import json
@@ -46,7 +47,7 @@ def set_context(state,*,page,source,location,df=None,extra=None,site=None,source
 def snapshot(fig,context,interpretation=""):
     title=str(fig.layout.title.text or "Untitled diagram")
     payload=pio.to_json(fig,validate=True,remove_uids=True)
-    meta=dict(context)
+    meta=deepcopy(context)
     return {"id":hashlib.sha256((payload+json.dumps(meta,sort_keys=True,default=str)+str(interpretation)).encode()).hexdigest(),
             "title":title,"figure":payload,"context":meta,"interpretation":str(interpretation or ""),
             "captured":datetime.now(timezone.utc).isoformat(),"note":""}
@@ -394,7 +395,7 @@ def render_report(df=None,reference_df=None):
         from .p66_ui import render_atlas
         render_atlas(df,st.session_state.get(CONTEXT_KEY,{}),reference_df)
         return
-    st.caption("Saved diagrams remain unchanged when the active climate or filters change. The report groups selected diagrams by chapter and opens with station and climate statistics.")
+    st.caption("Captured charts, their interpretations and cross-chapter climatic findings are frozen to each source and filter scope. Chapters follow the scientific report sequence.")
     context=st.session_state.get(CONTEXT_KEY,{})
     available=available_catalog(df,context)
     if available:
@@ -483,7 +484,7 @@ def render_report(df=None,reference_df=None):
     if b.button("Deselect all",key="p6_deselect_saved"):st.session_state[selected_key]=[]
     selected=st.multiselect("Diagrams included in report",ids,format_func=lambda id:f"{chapter_name(by_id[id])} — {by_id[id]['title']}",key=selected_key)
     st.session_state["_p6_saved_selection"]=selected
-    st.caption("Report chapters follow their first occurrence; diagrams within a chapter follow the saved order.")
+    st.caption("Report chapters follow the scientific climate sequence; diagrams within each chapter retain their saved order.")
     preview_options=["No preview",*ids]
     if st.session_state.get("p6_preview_choice") not in preview_options:
         st.session_state["p6_preview_choice"]="No preview"
