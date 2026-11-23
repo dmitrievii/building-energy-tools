@@ -390,6 +390,8 @@ def diffuse_fraction_daily_occurrence(df,edges,*,daily_stat="Mean"):
         table=table.groupby(table.index.str[-2:]).mean()
         table.index=[MONTHS[int(m)-1] for m in table.index]
     table.attrs.update({
+        "occurrence_column":FRACTION,
+        "occurrence_edges":tuple(edges),
         "daylight_ratio_definition":"DHI/GHI for GHI>0, daytime source measurements",
         "daily_statistic":daily_stat,
         "complete_real_days_required":True,
