@@ -66,7 +66,9 @@ def temperature_figure_interpretation(df, fig, kind, *, column="dry_bulb_tempera
         if series.empty:
             return "Selected temperature profile reflects only valid observations. " + climate
         lo, hi = int(series.idxmin()), int(series.idxmax())
-        at = lambda idx: str(x[idx]) if idx < len(x) else f"point {idx+1}"
+        at = lambda idx: (f"day-of-year {x[idx]}" if "daily" in lower_name and idx < len(x)
+                          and isinstance(x[idx], (int, float, np.integer, np.floating))
+                          else str(x[idx]) if idx < len(x) else f"point {idx+1}")
         envelope = ("The P05–P95 band describes source variability, not a confidence interval. "
                     if kind == "percentile" or "p05" in lower_name else
                     "The min–max band describes observed extremes within each plotted period. "
@@ -126,7 +128,9 @@ def temperature_figure_interpretation(df, fig, kind, *, column="dry_bulb_tempera
         if series.empty:
             return "Amplitude is max minus min for each selected period; it is not necessarily the daily range."
         max_at = int(series.idxmax())
-        label = str(x[max_at]) if max_at < len(x) else "selected period"
+        label = (f"day-of-year {x[max_at]}" if "daily" in lower_name and max_at < len(x)
+                 and isinstance(x[max_at], (int, float, np.integer, np.floating))
+                 else str(x[max_at]) if max_at < len(x) else "selected period")
         scale = ("daily" if "daily" in lower_name else "weekly" if "weekly" in lower_name else
                  "monthly" if "monthly" in lower_name else "seasonal" if "seasonal" in lower_name else
                  "annual" if "annual" in lower_name else "selected-period")
