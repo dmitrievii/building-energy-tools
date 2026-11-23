@@ -436,6 +436,10 @@ def standard_figure(entry,df,context,reference_df=None):
         from .temperature_findings import temperature_figure_interpretation
         stat=temperature_figure_interpretation(
             df,fig,kind,column=column or T,thresholds=temperature_thresholds(context))
+    elif page=="Humidity and Psychrometrics":
+        from .humidity_findings import humidity_figure_interpretation
+        stat=humidity_figure_interpretation(
+            df,fig,kind,column=column,title=label)
     else:
         stat=source_interpretation(df,page,column if kind in ("profile","duration","heatmap") else "",label,unit,thresholds=temperature_thresholds(context),kind=kind)
     if kind in ("nv","night") and c in ledger:
