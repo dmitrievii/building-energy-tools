@@ -358,8 +358,19 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         f=monthly_strategy_matrix(table,title)
         note+=" Each row presents an independent monthly screening duration. Simultaneous temperature, moisture, ventilation and solar-control conditions appear in their respective strategy rows."
     elif k=="vent_load":
-        f=_bars(p3.monthly_totals(df,p3.ventilation_loads(df,airflow=1000.,heat=20.,cool=26.,w_low=4.,w_high=9.)),title,"kWh")
-        note+=" 1000 m³/h outdoor-air proxy; 20–26 °C, 4–9 g/kg; no recovery or plant model."
+        from .hvac_findings import conditioning_monthly_figure,conditioning_interpretation
+        ledger=memo("hvac_ref_energy",lambda:p3.ventilation_loads(
+            df,airflow=1000.,heat=20.,cool=26.,w_low=4.,w_high=9.,
+        ))
+        f=conditioning_monthly_figure(df,ledger,grouped=True,title=title)
+        note=conditioning_interpretation(
+            df,ledger,airflow=1000.,heat=20.,cool=26.,w_low=4.,w_high=9.,
+        )
+    elif k=="economizer_stages":
+        from .hvac_findings import economizer_stages,economizer_stages_figure,economizer_interpretation
+        steps=economizer_stages(df,h_return=50.)
+        f=economizer_stages_figure(steps)
+        note=economizer_interpretation(df,h_return=50.)
     elif k=="adaptive":
         from .p3_adaptive_chart import selected_daily_bands,adaptive_figure,adaptive_interpretation
         history=df if reference_df is None else reference_df
@@ -395,9 +406,15 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         note+=" The meteorological wind is interpreted at 10 m; MRT follows the selected uniform or spherical-equivalent radiation scenario."
     elif k=="critical_windows":
         from .p4_design_charts import critical_windows_figure
+        from .hvac_findings import critical_window_interpretation
         f,table,detail=critical_windows_figure(df,c,u,upper=a[0])
         if f is None:raise NotApplicable(detail)
-        note+=" "+detail
+        quantity={"dry_bulb_temperature_c":"Air temperature",
+                  "humidity_ratio_g_kg":"Humidity ratio",
+                  "moist_air_enthalpy_kj_kg":"Moist-air enthalpy"}.get(c,c)
+        note=critical_window_interpretation(
+            table,quantity=quantity,unit=u,upper=a[0],hours=72,
+        )+" "+detail
     elif k in ("utci_pair","utci_pair_delta","utci_pair_stress","utci_pair_mrt"):
         from .utci_findings import (
             paired_monthly_figure,paired_delta_figure,paired_threshold_figure,
