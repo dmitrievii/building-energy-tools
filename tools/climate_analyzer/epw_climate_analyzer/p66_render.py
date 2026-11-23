@@ -421,7 +421,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         else:
             radiation=memo("utci_mrt",lambda:p3.radiant_scenarios(df))
             if radiation.empty:raise NotApplicable("Missing longwave and shortwave radiation inputs.")
-            radiation=radiation.loc[common.index]
+            radiation=radiation.where(values[["Open sun","Direct-beam shade"]].notna().all(axis=1))
             f=mrt_monthly_figure(radiation)
             note+=" Monthly MRT curves show the assumed sky, ground and solar-beam environment from which the two UTCI series are evaluated."
     elif k=="utci_sensitivity":
