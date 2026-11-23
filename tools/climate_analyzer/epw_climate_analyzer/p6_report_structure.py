@@ -80,8 +80,11 @@ def contexts(items):
     for item in items:
         c=item["context"];key=scope_key(c)
         if key not in unique:
-            unique[key]={**c,"statistics":{"overview":[],"chapter":[]}}
+            unique[key]={**c,"statistics":{"overview":[],"chapter":[]},
+                         "cross-chapter synthesis":c.get("cross-chapter synthesis",{})}
         entry=unique[key]
+        if not entry.get("cross-chapter synthesis") and c.get("cross-chapter synthesis"):
+            entry["cross-chapter synthesis"]=c["cross-chapter synthesis"]
         for field in ("latitude","longitude","elevation_m","station_id"):
             if field in c:entry.setdefault(field,c[field])
         for field in ("overview","chapter"):
