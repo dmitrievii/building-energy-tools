@@ -50,7 +50,7 @@ def wind_opportunity(
 ):
     """Monthly climatic exposure and candidate windward/leeward axes.
 
-    A wind threshold is illustrative and user configurable. Any optional
+    A wind threshold is configurable by the user. Any optional
     weather screening variable must have a valid observation. A missing
     rainfall/humidity/temperature column never silently passes a screen.
     Month rows pool the selected source years; no annualization is implied.
