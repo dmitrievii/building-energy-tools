@@ -4710,10 +4710,8 @@ def render_precipitation(df: pd.DataFrame, native_df: pd.DataFrame | None = None
         )
         fig.update_traces(marker_color=metric_color("liquid_precipitation_depth_mm"))
         fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Precipitation [mm]")
-        render_plot(
-            fig,
-            "Precipitation depth is interval-extensive. Period totals sum the canonical analysis intervals; period totals are based on valid observations.",
-        )
+        from epw_climate_analyzer.precipitation_findings import rainfall_summary
+        render_plot(fig,rainfall_summary(df))
     elif chart_group == "Precipitation-day severity":
         from epw_climate_analyzer.precipitation_findings import (
             rain_day_classes,rain_day_classes_figure,rainfall_summary,
@@ -4739,7 +4737,8 @@ def render_precipitation(df: pd.DataFrame, native_df: pd.DataFrame | None = None
         source_minutes = float(source_df.attrs.get("canonical_native_interval_minutes", native_interval_hours(source_df) * 60.0))
         st.caption(
             "Wet day ≥ 1 mm/day; heavy day ≥ 10 mm/day; very heavy day ≥ 20 mm/day; dry spell = consecutive observed daily totals < 1 mm/day. "
-            "A fully unobserved day breaks a dry spell and is never treated as zero precipitation. All values respect the active Data filter."
+            "Daily event indices use complete source-cadence calendar days, and missing or partly selected days interrupt dry spells. "
+            "Annual observed precipitation totals sum available valid intervals; the table reports complete and incomplete-day coverage."
         )
         display = table.copy()
         if "max_native_interval_mm" in display.columns:
@@ -4755,6 +4754,8 @@ def render_precipitation(df: pd.DataFrame, native_df: pd.DataFrame | None = None
             "very_heavy_days_ge_20mm": "Very heavy days ≥ 20 mm [d]",
             "max_daily_precipitation_mm": "Maximum daily precipitation [mm]",
             "longest_dry_spell_days": "Longest dry spell [d]",
+            "valid_daily_totals": "Complete observed days [d]",
+            "incomplete_or_missing_days": "Incomplete or missing days [d]",
         }
         if "max_native_interval_mm" in table.columns:
             metric_labels["max_native_interval_mm"] = f"Maximum native {source_minutes:g}-min precipitation [mm]"
@@ -4763,7 +4764,8 @@ def render_precipitation(df: pd.DataFrame, native_df: pd.DataFrame | None = None
         metric = st.selectbox("Trend metric", list(metric_labels), format_func=lambda key: metric_labels[key])
         fig = px.line(table, x="year", y=metric, markers=True, title=metric_labels[metric])
         fig.update_layout(template="plotly_white", xaxis_title="Year", yaxis_title=metric_labels[metric])
-        render_plot(fig, "Annual indices preserve real source years even when Calendar profile is selected; the Data filter still limits which months/hours contribute before the annual index is calculated.")
+        from epw_climate_analyzer.precipitation_findings import rainfall_summary
+        render_plot(fig,rainfall_summary(df)+" Annual day-based indices use complete observed calendar days.")
     elif chart_group == "Precipitation-record occurrence":
         threshold = st.number_input("Source-record precipitation threshold [mm]", min_value=0.0, value=0.1, step=0.1)
         aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal", "Annual"], index=0)
@@ -4786,10 +4788,12 @@ def render_precipitation(df: pd.DataFrame, native_df: pd.DataFrame | None = None
         )
         fig.update_traces(marker_color=metric_color("liquid_precipitation_depth_mm"))
         fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Source records meeting threshold")
-        render_plot(
-            fig,
-            f"Counts provider/source records at the active native cadence ({source_minutes:g} min here). This is deliberately a record-occurrence metric, not rainfall duration.",
-        )
+        from epw_climate_analyzer.precipitation_findings import rainfall_summary
+        qualifying=pd.to_numeric(source_df["liquid_precipitation_depth_mm"],errors="coerce").ge(threshold).sum()
+        render_plot(fig,f"{int(qualifying):,} recorded source intervals reach {threshold:g} mm "
+                    f"at the {source_minutes:g}-min native cadence. "
+                    "The monthly distribution identifies the timing of repeated wet intervals. "
+                    +rainfall_summary(source_df))
     elif chart_group == "Measured precipitation duration":
         aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal", "Annual"], index=0)
         duration = aggregate_precipitation_duration(df, aggregation)
@@ -4807,10 +4811,8 @@ def render_precipitation(df: pd.DataFrame, native_df: pd.DataFrame | None = None
         )
         fig.update_traces(marker_color=metric_color("liquid_precipitation_depth_mm"))
         fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Measured precipitation duration [h]")
-        render_plot(
-            fig,
-            "Duration is taken only from the independent measured precipitation-duration field (GeoSphere rrm where available) and summed. It is never inferred from precipitation depth rr.",
-        )
+        from epw_climate_analyzer.precipitation_findings import measured_duration_summary
+        render_plot(fig,measured_duration_summary(df))
     elif chart_group == "Liquid precipitation explorer":
         render_generic_variable_page(
             df,
@@ -4836,10 +4838,8 @@ def render_precipitation(df: pd.DataFrame, native_df: pd.DataFrame | None = None
         )
         fig.update_traces(marker_color=metric_color("snow_depth_cm"))
         fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Observed snow-cover hours")
-        render_plot(
-            fig,
-            f"Snow depth is a state variable. Duration is integrated from the source-state cadence ({source_minutes:g} min here): each valid record with snow depth > 0 cm contributes exactly one source interval; missing timestamps contribute no duration.",
-        )
+        from epw_climate_analyzer.precipitation_findings import snow_summary
+        render_plot(fig,snow_summary(source_df)+f" Native snow observations use {source_minutes:g}-minute intervals.")
     else:
         table = snow_season_indices(source_df)
         if table.empty:
@@ -4862,7 +4862,8 @@ def render_precipitation(df: pd.DataFrame, native_df: pd.DataFrame | None = None
         metric = st.selectbox("Trend metric", list(metric_labels), format_func=lambda key: metric_labels[key], key="snow_season_trend_metric")
         fig = px.line(table, x="season_start_year", y=metric, markers=True, title=metric_labels[metric])
         fig.update_layout(template="plotly_white", xaxis_title="Snow season start year", yaxis_title=metric_labels[metric])
-        render_plot(fig, "Snow-season trends are calculated from provider/source snow-depth states after the active global Data filter is replayed at native cadence.")
+        from epw_climate_analyzer.precipitation_findings import snow_summary
+        render_plot(fig,snow_summary(source_df)+" Seasonal classes group snow observations into July–June climate seasons.")
 
 def render_sky_daylight(df: pd.DataFrame, *, latitude: float | None = None) -> None:
     """Render source-neutral sky, daylight and measured-sunshine diagnostics."""
