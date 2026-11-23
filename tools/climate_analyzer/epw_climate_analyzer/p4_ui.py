@@ -116,7 +116,10 @@ def persistence_panel(df,render,*,wind=False):
         s=p.valid_values(df,column,True)
         a=p.events(s,threshold=threshold,above=above,minimum=minimum,step=p.cadence(df))
         extra=""
-        if not wind:
+        if wind:
+            from .wind_findings import wind_figure_interpretation
+            extra=wind_figure_interpretation(df,None,"persistence",column=column,args=(threshold,above))
+        else:
             from .humidity_findings import humidity_figure_interpretation
             extra=humidity_figure_interpretation(
                 df,None,"persistence",column=column,args=(threshold,above,""))
