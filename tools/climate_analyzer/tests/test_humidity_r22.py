@@ -54,7 +54,7 @@ class HumidityR22Tests(unittest.TestCase):
         note=explain(self.df,fig,"heatmap",column=DP)
         self.assertIn("14.0 °C",note)
         self.assertIn("25.0 °C",note)
-        self.assertIn("displayed aggregation",note)
+        self.assertIn("strongest and weakest periods",note)
 
     def test_illustrative_thresholds_do_not_require_full_air_conditioning(self):
         note=explain(self.df,go.Figure(),"threshold",column=W,args=(9.,">"))
