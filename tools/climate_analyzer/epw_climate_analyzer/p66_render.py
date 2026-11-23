@@ -305,7 +305,18 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         else:
             data=df.copy();data["atlas_suitable"]=ledger[col]/dt
             f=ch.heatmap_chart(data,"atlas_suitable",period,title,"0/1")
-        note+=" "+{"nv":"16–26 °C, humidity ratio ≤9 g/kg; outdoor-air suitability screen.","night":"22:00–06:59, ≤20 °C after complete day ≥26 °C.","shade":"T≥24 °C and GHI≥250 W/m². This monthly warm-weather solar screen identifies the timing of prospective façade protection demand."}[name]
+        if name=="nv":
+            from .passive_design_findings import ventilation_screen_stages,ventilation_screen_interpretation
+            stages=ventilation_screen_stages(df)
+            note+=" "+ventilation_screen_interpretation(
+                df,stages,t_min_c=16.,t_max_c=26.,d_max_g_kg=9.)
+        elif name=="night":
+            from .decisions import night_flushing_condition
+            from .passive_design_findings import night_flushing_interpretation
+            note+=" "+night_flushing_interpretation(
+                df,night_flushing_condition(df),hot_day_c=26.,night_max_c=20.)
+        else:
+            note+=" T≥24 °C and GHI≥250 W/m². This warm-weather solar screen identifies the seasonal timing of façade protection opportunities."
     elif k=="nv_special":
         from .decisions import natural_ventilation_condition
         from .directional_climate import directional_table,directional_figure,directional_class_table,directional_class_figure
@@ -336,7 +347,9 @@ def make_figure(d,df,context,reference_df=None,cache=None):
             view=df.loc[mask.eq(1)].copy()
             if view.empty:raise NotApplicable("No suitable ventilation hours.")
             f=directional_class_figure(directional_class_table(view,quantity="Wind speed",radial="Hours"),title)
-        note+=" Reference NV 16–26 °C and ≤9 g/kg. The selected temperature and moisture conditions indicate outdoor-air ventilation opportunities."
+        from .passive_design_findings import ventilation_screen_stages,ventilation_screen_interpretation
+        note+=" "+ventilation_screen_interpretation(
+            df,ventilation_screen_stages(df),t_min_c=16.,t_max_c=26.,d_max_g_kg=9.)
     elif k=="passive":
         from .decisions import passive_strategy_monthly
         table=passive_strategy_monthly(df)
