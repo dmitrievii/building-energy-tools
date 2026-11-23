@@ -170,7 +170,7 @@ def nv_sensitivity(df,mask,wind_available,render,*,temperature_limits=None,wind_
             fig.add_hline(y=value,line_dash="dash",line_color="#444444",line_width=1)
     fig.update_layout(template="plotly_white",title="Temperature–wind ventilation suitability",
         xaxis_title="Outdoor temperature [°C]",yaxis_title="Wind speed [m/s]",height=520)
-    render(fig,"White = 0% suitability, dark green = 100%, gray = no coincident observations. Dashed boundaries show the configured temperature limits and, when enabled, wind limits. Each 2 K × 0.5 m/s cell reports the share of observed valid hours satisfying all configured conditions, including humidity and occupancy. Hover for observed duration. Not a predicted ventilation flow rate.")
+    render(fig,"White = 0% suitability, dark green = 100%, gray = no coincident observations. Dashed boundaries show the configured temperature limits and, when enabled, wind limits. Each 2 K × 0.5 m/s cell reports the share of observed valid hours satisfying all configured conditions, including humidity and occupancy. Hover for observed duration. Ventilation flow design uses opening areas, façade pressure coefficients, stack height and flow-path resistance.")
 
 def persistence_panel(df,mask,render,*,night=False):
     table=p.persistence(df,mask,night=night)
@@ -186,7 +186,7 @@ def persistence_panel(df,mask,render,*,night=False):
     st.caption(f"{meets} of {valid} observed {unit} ({100*meets/valid:.1f}%) provide at least {threshold:g} consecutive suitable hours.")
     from .p3_persistence_chart import persistence_figure
     fig=persistence_figure(counts,f"{label} availability · at least {threshold:g} uninterrupted hours",night=night)
-    render(fig,f"A {label.lower()} qualifies when at least one continuous suitable period reaches {threshold:g} h. For example, suitable periods 08:00–10:00 and 14:00–16:00 provide four total hours but only two consecutive hours. Unknown, rejected or missing intervals break a run. Partial observed {unit} are counted from available records only; entirely unknown {unit} are excluded. The line is the total observed count, not an additional category.")
+    render(fig,f"A {label.lower()} qualifies when at least one continuous suitable period reaches {threshold:g} h. For example, suitable periods 08:00–10:00 and 14:00–16:00 provide four total hours but only two consecutive hours. Unknown, rejected or missing intervals break a run. Partial observed {unit} are counted from available records only; entirely unknown {unit} are excluded. The line reports the total observed day count, while the stacked bars resolve the qualifying and shorter-duration days.")
     with st.expander("Detailed "+label.lower()+"-by-"+label.lower()+" results"):
         st.dataframe(table,use_container_width=True)
         st.download_button("Download continuous-period results · CSV",table.to_csv().encode("utf-8"),
