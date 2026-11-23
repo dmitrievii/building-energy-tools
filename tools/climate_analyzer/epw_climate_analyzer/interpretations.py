@@ -120,7 +120,7 @@ def temperature_interpretation(df: pd.DataFrame, heat_threshold: float, cool_thr
         f"There are {_fmt_hours(cold_hours)} hours below {heat_threshold:g} °C and {_fmt_hours(hot_hours)} hours above {cool_threshold:g} °C. "
         f"The average daily temperature amplitude is {_fmt(amplitude)} K. "
         f"Complete 20:00–06:59 overnight periods with sampled night minimum ≥20 °C: {tropical_nights:,}. "
-        "This overnight indicator is distinct from the daily-minimum tropical-night chart."
+        "The overnight duration indicates how frequently prolonged warm nights occur."
         + _interannual_mean_sentence(df, "dry_bulb_temperature_c", "outdoor temperature", "°C")
     )
 
@@ -135,7 +135,7 @@ def degree_day_interpretation(df: pd.DataFrame) -> str:
     return (
         f"The selected thresholds produce {hdd:,.0f} K·d of heating and {cdd:,.0f} K·d of cooling "
         "as hourly-derived degree-day equivalents (degree-hours / 24). "
-        "This is not the daily-mean HGT/KGT degree-day method; the two cannot be interchanged. "
+        "The hourly-derived degree-day equivalents integrate the temperature difference for each observed hour. "
         f"On this simplified hourly-derived basis the climate is {dominant}."
     )
 
@@ -157,7 +157,7 @@ def natural_ventilation_interpretation(df: pd.DataFrame, mask: pd.Series) -> str
     return (
         f"Natural ventilation is suitable for {_fmt_hours(hours)} hours ({share:.1f}% of the selected period). "
         f"The strongest month is {best_month} with {_fmt_hours(best_hours)} suitable hours. "
-        f"If this indicator is low during occupied hours, the design should rely on mechanical ventilation, night flushing or hybrid control rather than manual window opening alone."
+        f"The strongest suitable months indicate when operable openings may be most useful; shorter suitable periods encourage fan-assisted and hybrid operating modes."
     )
 
 
@@ -173,7 +173,7 @@ def solar_interpretation(df: pd.DataFrame) -> str:
     )
     diffuse_share = df["diffuse_horizontal_radiation_wh_m2"].sum() / max(df["global_horizontal_radiation_wh_m2"].sum(), 1)
     return (
-        f"Annual horizontal irradiation is approximately {annual:,.0f} kWh/m². "
+        f"Selected-period horizontal irradiation is approximately {annual:,.0f} kWh/m². "
         f"The diffuse fraction is about {diffuse_share * 100:.1f}% of GHI. "
         f"There are {_fmt_hours(sunny_hot)} hours with GHI above 300 Wh/m² and outdoor temperature above 24 °C; these hours are relevant for solar shading and cooling-risk assessment."
     )
@@ -190,7 +190,7 @@ def wind_interpretation(df: pd.DataFrame) -> str:
     return (
         f"Mean wind speed is {_fmt(mean)} m/s. "
         f"There are {_fmt_hours(calm)} calm hours below 1 m/s and {_fmt_hours(strong)} strong-wind hours above 8 m/s. "
-        f"The wind rose should be checked together with natural-ventilation eligibility, because frequent wind alone does not guarantee usable ventilation hours."
+        f"Combining the wind rose with outdoor temperature and humidity identifies promising seasonal cross-ventilation periods."
     )
 
 
