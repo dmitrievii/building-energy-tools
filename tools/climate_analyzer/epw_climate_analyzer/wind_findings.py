@@ -72,6 +72,9 @@ def wind_opportunity(
         raise ValueError("Humidity ratio cap must be >= 0 g/kg dry air.")
     if not isinstance(df.index,pd.DatetimeIndex):
         raise ValueError("Wind orientation screening requires dated climate observations.")
+    from .extended_visualization import hourly_capable
+    if not hourly_capable(df):
+        raise ValueError("Wind orientation hours require subdaily observations at <=1-hour cadence, not monthly aggregates.")
     dt=float(native_interval_hours(df))
     if not np.isfinite(dt) or dt<=0:
         raise ValueError("Native source interval must be positive.")
@@ -247,6 +250,15 @@ def _plotted(fig, preferred=None):
 def wind_figure_interpretation(df,fig,kind,*,column=SPEED,title="",args=()):
     """Kind-specific evidence for scalar and circular wind plots."""
     kind=str(kind).lower()
+    if str(df.attrs.get("canonical_native_resolution","")).lower()=="monthly":
+        from .interpretations import variable_interpretation
+        available=_numeric(df,column).dropna()
+        if available.empty:return "No numeric monthly wind observations are available."
+        return (f"{len(available):,} native monthly wind observations are represented; "
+                f"range {_fmt(available.min())}–{_fmt(available.max())}. "
+                "Hourly calm frequencies, wind-driven ventilation duration and "
+                "windward/exhaust seasonal opportunity hours cannot be reconstructed "
+                "from monthly aggregated observations.")
     label=str(title or getattr(getattr(getattr(fig,"layout",None),"title",None),"text","") or "")
     lower_label=label.lower()
     args=tuple(args or ())
