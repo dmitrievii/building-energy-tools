@@ -341,7 +341,9 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         from .decisions import passive_strategy_monthly
         table=passive_strategy_monthly(df)
         if table.empty:raise NotApplicable("No supported passive strategies.")
-        f=ch.stacked_monthly_bar(table,title,"Hours");note+=" Overlapping strategy hours indicate intervals when several design approaches are simultaneously possible."
+        from .passive_design_findings import monthly_strategy_matrix
+        f=monthly_strategy_matrix(table,title)
+        note+=" Each row presents an independent monthly screening duration. Simultaneous temperature, moisture, ventilation and solar-control conditions appear in their respective strategy rows."
     elif k=="vent_load":
         f=_bars(p3.monthly_totals(df,p3.ventilation_loads(df,airflow=1000.,heat=20.,cool=26.,w_low=4.,w_high=9.)),title,"kWh")
         note+=" 1000 m³/h outdoor-air proxy; 20–26 °C, 4–9 g/kg; no recovery or plant model."
