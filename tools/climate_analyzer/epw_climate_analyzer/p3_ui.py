@@ -224,7 +224,8 @@ def condensation_panel(df,render):
     margin=p.condensation_margin(df,surface)
     if not margin.notna().any():st.info("No dew-point data.");return
     chart=st.selectbox("Chart type",["Monthly exposure hours","Dew-point margin duration"],key="p3_cond_chart")
-    note="Potential saturation when assumed surface temperature is at or below outdoor-air dew point. No construction surface response, frost/condensate mass or interstitial condensation prediction."
+    from .humidity_findings import humidity_figure_interpretation
+    note=humidity_figure_interpretation(df,None,"condensation",surface_c=surface)
     if chart=="Monthly exposure hours":_monthly(df,pd.DataFrame({"At or below dew point":margin.le(0).astype(float).where(margin.notna())*native_interval_hours(df)}),"Condensation potential","Hours",render,note)
     else:_duration(df,pd.DataFrame({"Surface minus dew point":margin}),"Surface-temperature margin","K",render,note)
 
@@ -233,7 +234,9 @@ def moisture_panel(df,render):
     target=st.number_input("Target humidity ratio [g/kg]",0.,40.,9.,.5,key="p3_moist_target")
     q=p.moisture_loads(df,airflow=flow,target=target)
     if not q.notna().any().any():st.info("Humidity ratio and dry-air specific volume are required.");return
-    note="Water mass added or removed to reach target; actual-volume flow and source dry-air specific volume. No indoor generation or equipment model."
+    from .humidity_findings import humidity_figure_interpretation
+    note=humidity_figure_interpretation(
+        df,None,"moisture",airflow_m3_h=flow,target_g_kg=target)
     if st.selectbox("Chart type",["Monthly water mass","Moisture-load duration"],key="p3_moist_chart")=="Monthly water mass":
         _monthly(df,q,"Outdoor-air moisture load","kg water",render,note)
     else:_duration(df,q/native_interval_hours(df),"Outdoor-air moisture-load duration","kg water/h",render,note)
