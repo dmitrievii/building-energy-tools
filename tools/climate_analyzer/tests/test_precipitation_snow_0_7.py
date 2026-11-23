@@ -56,7 +56,7 @@ class PrecipitationSnow07Tests(unittest.TestCase):
             },
             index=index,
         )
-        frame.attrs["canonical_native_interval_minutes"] = 60
+        frame.attrs["canonical_native_interval_minutes"] = 1440
         table = annual_precipitation_indices(frame)
         self.assertEqual(len(table), 1)
         row = table.iloc[0]
