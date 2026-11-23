@@ -2196,6 +2196,11 @@ def render_extended_variable_chart(df, column, unit, chart_type, *, key_prefix="
             subset=df.loc[df.index.month.isin([MONTHS[m] for m in months])]
             note=humidity_figure_interpretation(subset,fig,"diurnal",column=column,title=f"Typical daily profile · {centre} · {band}")
             note+=" Equivalent calendar-month clock hours are pooled; missing observations remain gaps."
+        elif key_prefix.startswith("explorer_wind"):
+            from epw_climate_analyzer.wind_findings import wind_figure_interpretation
+            subset=df.loc[df.index.month.isin([MONTHS[m] for m in months])]
+            note=wind_figure_interpretation(subset,fig,"diurnal",column=column)
+            note+=" Equivalent calendar-month clock hours are pooled; missing observations remain gaps."
         else:
             note="Profiles pool equivalent calendar-month clock hours across selected years. Only complete source hours contribute; extensive values are summed within each hour. Missing observations remain gaps."
         render_plot(fig,note)
@@ -2238,6 +2243,9 @@ def render_extended_variable_chart(df, column, unit, chart_type, *, key_prefix="
         elif key_prefix.startswith("explorer_humidity"):
             from epw_climate_analyzer.humidity_findings import humidity_figure_interpretation
             note=humidity_figure_interpretation(df,fig,"occurrence",column=column,title=f"Humidity occurrence · {basis} · {statistic}",args=(basis,statistic))
+        elif key_prefix.startswith("explorer_wind"):
+            from epw_climate_analyzer.wind_findings import wind_figure_interpretation
+            note=wind_figure_interpretation(df,fig,"occurrence",column=column,title=f"Wind occurrence · {basis} · {statistic}")
         else:
             note="Classes are mutually exclusive; hours retain source duration, days require complete real calendar days, and percentages use valid observed intervals. Calendar-profile mode averages equivalent year-months."
         render_plot(fig,note)
@@ -2448,6 +2456,9 @@ def render_generic_variable_page(
     elif title_prefix == "Humidity":
         from epw_climate_analyzer.humidity_findings import humidity_figure_interpretation
         text=humidity_figure_interpretation(chart_df,fig,chart_type,column=column)
+    elif title_prefix == "Wind":
+        from epw_climate_analyzer.wind_findings import wind_figure_interpretation
+        text=wind_figure_interpretation(chart_df,fig,chart_type,column=column)
     elif interpretation_factory:
         text = interpretation_factory(chart_df, column, variable_label.lower(), unit)
     else:
