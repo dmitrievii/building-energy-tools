@@ -126,7 +126,7 @@ def wet_dry_interpretation(df,*,wet=True,threshold=1.,minimum=1):
     if selected.empty:return f"The selected series contains zero continuous {label} spells at the {threshold:g} mm/day boundary."
     longest=selected.loc[selected.duration.idxmax()]
     total=float(selected.duration.sum())
-    return (f"{len(selected):,} observed {label} spells span {_fmt_hours(total*24.)} h in total; "
+    return (f"{len(selected):,} observed {label} spells encompass {int(total)} complete days in total; "
             f"the longest lasts {int(longest.duration)} consecutive complete days "
             f"({longest.start.strftime('%d %b')}–{longest.end.strftime('%d %b')}). "
             +("Persistent wet spells guide moisture-safe façade junctions, "
@@ -170,7 +170,7 @@ def freeze_interpretation(df,kind="freeze_days",*,wet_threshold=1.):
             "complete rainfall and temperature observations also reach "
             f"the {wet_threshold:g} mm/day wet criterion. "
             "These crossings identify seasons for examining moisture-sensitive "
-            "facade assemblies, drains, joints and paved surfaces.")
+            "façade assemblies, drains, joints and paved surfaces.")
 
 
 def rain_day_classes(df):
