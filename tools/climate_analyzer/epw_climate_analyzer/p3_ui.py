@@ -54,25 +54,37 @@ def outdoor_comfort(df,render):
     if st.session_state.get("p3_otc_model") not in options:
         st.session_state["p3_otc_model"]=options[-1]
     mode=st.selectbox("Radiation model",options,key="p3_otc_model")
-    st.warning("Research candidate: UTCI requires 10 m wind and human mean radiant temperature. This simplified open-sky radiation scenario is not site-specific urban comfort.")
+    st.caption(
+        "UTCI combines air temperature, humidity, 10 m wind speed and human-equivalent "
+        "mean radiant temperature. The selected radiation model determines the radiant "
+        "exposure scenario used in the calculation."
+    )
     wind=st.number_input("Wind conversion factor to 10 m",.1,10.,1.,.1,key="p3_otc_wind")
     st.caption("Default factor 1 assumes the source wind represents 10 m. Model-domain violations remain missing.")
     kw={}
     if mode==options[0]:
         kw["offset"]=st.number_input("Mean radiant temperature minus air temperature [K]",-30.,70.,0.,1.,key="p3_otc_offset")
-        st.caption("User-specified radiant scenario, not measured MRT.")
+        st.caption("The chosen temperature offset defines an equivalent radiant environment over the selected period.")
     else:
         cols=st.columns(3)
         kw["albedo"]=cols[0].number_input("Ground reflectance",0.,1.,.2,.05,key="p3_otc_albedo")
         kw["projected_factor"]=cols[1].number_input("Beam projected-area factor",0.,1.,.25,.01,key="p3_otc_fp")
         kw["ground_delta"]=cols[2].number_input("Ground minus air temperature [K]",-50.,70.,0.,1.,key="p3_otc_ground")
-        st.caption("Spherical-equivalent radiation: source sky longwave; ground blackbody temperature assumed; absorptivity .7, emissivity .95. Shade removes beam only.")
+        st.caption(
+            "Spherical-equivalent MRT model: measured sky longwave, ground emission at the "
+            "specified temperature, assumed absorptivity 0.70 and emissivity 0.95. "
+            "The shade scenario intercepts direct solar beam while retaining sky and ground exchange."
+        )
     choices=["UTCI heat map","Monthly thermal-stress distribution","UTCI duration curve"]+(["Sun versus shade"] if mode=="Open-sky screening" else [])+["Sensitivity analysis"]
     if st.session_state.get("p3_otc_chart") not in choices:
         st.session_state["p3_otc_chart"]=choices[0]
     chart=st.selectbox("Analysis type",choices,key="p3_otc_chart")
     from .utci_presentation import stress_heatmap,add_stress_bands,duration_figure,STRESS_NOTE
-    note="UTCI equivalent temperature; missing or out-of-domain states excluded. Duration uses physical interval hours."
+    from .utci_findings import (
+        paired_exposure_interpretation,utci_distribution_interpretation,
+        paired_monthly_figure,paired_delta_figure,paired_threshold_figure,mrt_monthly_figure,
+    )
+    note="UTCI equivalent temperature evaluated for the selected weather and radiation scenario. Duration uses physical observation hours."
     if chart=="Sensitivity analysis":
         c=st.columns(3)
         t=c[0].number_input("Reference air temperature [°C]",-50.,50.,30.,key="p3_sens_t")
@@ -92,31 +104,54 @@ def outdoor_comfort(df,render):
         except ImportError as exc:st.error("UTCI dependency unavailable: "+str(exc));return
         draw=perf_counter()
         fig=stress_heatmap(x,y,z,title="Controlled UTCI sensitivity",x_label=xl,y_label=yl)
-        render(fig,"Hypothetical states, not frequencies. Other inputs held constant. "+note+" "+STRESS_NOTE)
+        render(fig,"The controlled sensitivity grid compares UTCI across prescribed inputs while the other environmental variables remain fixed. Each cell represents one model state. "+STRESS_NOTE)
         _utci_performance_diagnostics(timing,perf_counter()-draw,setup_s=setup_s)
         return
     setup_s=perf_counter()-started
     try:values,tr,physical_key,timing=perf.cached_physical(st.session_state,df,model=mode,wind_factor=wind,**kw)
     except ImportError as exc:st.error("UTCI dependency unavailable: "+str(exc));return
     draw=perf_counter()
-    st.caption("Valid physical hours: "+", ".join(f"{c}: {v:g}" for c,v in (values.notna().sum()*native_interval_hours(df)).items()))
+    st.caption(
+        "Valid UTCI evaluation hours: " + ", ".join(
+            f"{c}: {v:g} ({100*v/max(len(df)*native_interval_hours(df),1):.1f}% of period)"
+            for c,v in (values.notna().sum()*native_interval_hours(df)).items()
+        )
+    )
     if not values.notna().any().any():
         st.info("No admitted UTCI states.")
         _utci_performance_diagnostics(timing,perf_counter()-draw,setup_s=setup_s)
         return
     if chart=="UTCI duration curve":
-        render(duration_figure(values,native_interval_hours(df),"UTCI duration curve"),note+" Shaded background indicates UTCI stress classes.")
+        descriptions=" ".join(utci_distribution_interpretation(df,values,c) for c in values)
+        render(duration_figure(values,native_interval_hours(df),"UTCI duration curve"),
+               descriptions+" Background shading identifies UTCI stress categories.")
     elif chart=="Sun versus shade":
-        common=values.dropna()
-        if common.empty:st.info("No common admitted exposure intervals.");return
-        fig=go.Figure()
-        for c in common:
-            a=common[c].resample("MS").mean()
-            fig.add_scatter(x=a.index,y=a,mode="lines+markers",name=c)
-        fig.update_layout(template="plotly_white",title="Paired monthly mean UTCI",yaxis_title="UTCI [°C]")
-        delta=(common["Open sun"]-common["Direct-beam shade"]).mean()
-        render(add_stress_bands(fig,common.resample("MS").mean()),f"Paired mean open-sun minus shade UTCI: {delta:.2f} °C. "+note+" Background classes describe monthly means, not hourly stress duration.")
-        render(duration_figure(common,native_interval_hours(df),"Paired exposure duration curves"),note+" Shaded background indicates UTCI stress classes.")
+        common=values.dropna(subset=["Open sun","Direct-beam shade"])
+        if common.empty:
+            st.info("No common admitted exposure intervals.")
+            return
+        comparison=st.selectbox(
+            "Comparison view",
+            ["Monthly mean UTCI","Monthly UTCI reduction","Heat-stress exposure",
+             "Duration curves","Mean radiant temperature"],
+            key="p3_otc_pair_view",
+        )
+        finding=paired_exposure_interpretation(df,values)
+        if comparison=="Monthly mean UTCI":
+            fig=paired_monthly_figure(df,common)
+            render(add_stress_bands(fig,common.resample("MS").mean()),
+                   finding+" Background bands indicate the thermal-stress classification of the monthly mean UTCI.")
+        elif comparison=="Monthly UTCI reduction":
+            render(paired_delta_figure(df,common),finding)
+        elif comparison=="Heat-stress exposure":
+            render(paired_threshold_figure(df,common),
+                   finding+" Threshold categories overlap by definition: hours >38 °C are included in hours >32 °C.")
+        elif comparison=="Duration curves":
+            render(duration_figure(common,native_interval_hours(df),"Paired exposure duration curves"),
+                   finding+" Each line is independently ranked across the same set of valid hours.")
+        else:
+            render(mrt_monthly_figure(tr),
+                   finding+" MRT represents the combined shortwave and longwave radiation environment of the two exposure scenarios.")
     else:
         if st.session_state.get("p3_otc_exposure") not in values.columns:
             st.session_state["p3_otc_exposure"]=values.columns[0]
@@ -124,12 +159,14 @@ def outdoor_comfort(df,render):
         if chart=="UTCI heat map":
             grid=p.annual_hour_grid(df,values[scenario])
             fig=stress_heatmap(grid.columns,grid.index,grid,title="UTCI · "+scenario,x_label="Date",y_label="Hour of day")
-            render(fig,note+" Multiple observations within an hour cell are averaged before classifying. "+STRESS_NOTE)
+            render(fig,utci_distribution_interpretation(df,values,scenario)+
+                   " Each calendar cell presents its mean evaluated UTCI with categorical stress colouring. "+STRESS_NOTE)
         else:
             tab=p.utci_class_hours(df,values[scenario]);fig=go.Figure()
             for c,color in zip(p.CLASSES,p.COLORS):fig.add_bar(x=tab.index,y=tab[c],name=c,marker_color=color)
             fig.update_layout(template="plotly_white",title="Monthly thermal-stress duration",barmode="stack",yaxis_title="Hours")
-            render(fig,note+" Classes partition the valid duration.")
+            render(fig,utci_distribution_interpretation(df,values,scenario)+
+                   " Stacked monthly classes partition the valid observed UTCI duration.")
     visualization_s=perf_counter()-draw
     data,csv_s=perf.cached_csv(st.session_state,physical_key,values,tr)
     if data is None and st.button("Prepare UTCI and MRT CSV",key="p3_otc_prepare_csv"):
