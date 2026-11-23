@@ -132,8 +132,10 @@ class CrossChapterR211Tests(unittest.TestCase):
         for key in ("nv","night","utci","utci_shading","hvac_energy",
                     "hvac_economizer","hvac_design_hot","hvac_design_cold","hvac_critical"):
             self.assertIn(key,keys)
-        for preset in ("Passive design","HVAC & engineering"):
+        for preset in ("Architectural climate study","Passive design","HVAC & engineering"):
             self.assertIn(preset,structure.PRESETS)
+        for key in ("utci","utci_shading","hvac_energy","hvac_economizer","hvac_design_hot"):
+            self.assertIn(key,structure.PRESETS["Architectural climate study"])
 
     def test_standard_night_interpretation_is_its_own_physical_screen(self):
         df=climate_fixture()
