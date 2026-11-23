@@ -321,6 +321,8 @@ CATALOG=[
 ("exterior_light","Sky and Daylight","Exterior daylight availability","global_horizontal_illuminance_lux","h","illumination"),
 ("sunshine_ratio","Sky and Daylight","Sunshine share of astronomical daylight","sunshine_duration_s","%","relative_sunshine"),
 ("rain","Precipitation and Snow","Monthly precipitation",P,"mm","total"),
+("rain_severity","Precipitation and Snow","Monthly precipitation-day severity",P,"days","rain_days"),
+("snow_cover","Precipitation and Snow","Observed snow-cover hours","snow_depth_cm","h","snow_hours"),
 ("climograph","Precipitation and Snow","Walter–Lieth diagram",P,"mm","climograph"),
 ("snow","Precipitation and Snow","Monthly snow depth","snow_depth_cm","cm","profile"),
 ("nv","Natural Ventilation","Monthly natural ventilation suitability",W,"h","nv"),
@@ -328,8 +330,8 @@ CATALOG=[
 ("degree","HVAC and Passive Design","Heating and cooling degree days",T,"K·d","degree"),
 ("shade","Shading analysis","Solar protection screening",G,"h","shade"),
 ("utci","Outdoor Thermal Comfort","Monthly UTCI stress",T,"h","utci")]
-PRESETS={"Architectural climate study":("temperature_profile","temperature_heatmap","psychrometric","ghi","facade","solar_exposure","sunpath","wind_rose","wind_orientation","daylight","sky_cover","exterior_light","climograph","nv","night","shade"),
-"Climate overview":("temperature_profile","humidity_profile","ghi","wind_rose","sky_cover","rain","climograph"),
+PRESETS={"Architectural climate study":("temperature_profile","temperature_heatmap","psychrometric","ghi","facade","solar_exposure","sunpath","wind_rose","wind_orientation","daylight","sky_cover","exterior_light","rain","rain_severity","snow_cover","climograph","nv","night","shade"),
+"Climate overview":("temperature_profile","humidity_profile","ghi","wind_rose","sky_cover","rain","rain_severity","climograph"),
 "Passive design":("temperature_heatmap","psychrometric","facade","solar_exposure","wind_rose","wind_orientation","sky_cover","exterior_light","nv","night","shade","utci"),
 "HVAC & engineering":("temperature_profile","temperature_duration","humidity_ratio","psychrometric","wind_speed","degree","nv","night","utci"),
 "All standard diagrams":tuple(x[0] for x in CATALOG)}
@@ -345,7 +347,8 @@ def available_catalog(df,context):
        "facade":(G,D,N,"solar_apparent_zenith_deg","solar_azimuth_deg"),
        "facade_temperature":(G,D,N,"solar_apparent_zenith_deg","solar_azimuth_deg",T),
        "sunpath":(N,"solar_apparent_zenith_deg","solar_azimuth_deg"),"windrose":(V,"wind_direction_deg"),"wind_panel":(V,"wind_direction_deg"),"wind_orientation":(V,"wind_direction_deg"),
-       "climograph":(T,P),"nv":(T,W),"night":(T,),"degree":(T,),"shade":(T,G),"utci":(T,RH,V)}
+       "climograph":(T,P),"rain_days":(P,),"snow_hours":("snow_depth_cm",),
+       "nv":(T,W),"night":(T,),"degree":(T,),"shade":(T,G),"utci":(T,RH,V)}
     out=[]
     for entry in CATALOG:
         id,page,label,c,u,kind=entry
@@ -359,6 +362,11 @@ def available_catalog(df,context):
                 from .aggregations import native_interval_hours
                 ok=has("sunshine_duration_s") and not _complete_daily_sunshine_hours(
                     df["sunshine_duration_s"],interval_hours=native_interval_hours(df)).empty
+        elif kind=="rain_days":
+            from .precipitation import complete_daily_precipitation
+            ok=has(P) and complete_daily_precipitation(df).notna().any()
+        elif kind=="snow_hours":
+            ok=has("snow_depth_cm") and numeric(df,"snow_depth_cm").gt(0).any()
         else:ok=has(*requirements.get(kind,(c,)))
         if ok:out.append(entry)
     return out
@@ -393,6 +401,20 @@ def standard_figure(entry,df,context,reference_df=None):
             try:p=float(context["custom pressure"])
             except (ValueError,KeyError):pass
         fig=psychrometric_chart(df,pressure_pa=p,data_mode="Climate zone");note=f"T–d distribution, reference guide pressure {p:.0f} Pa. Reference guides help relate seasonal moisture and temperature combinations to candidate passive strategies."
+    elif kind=="rain_days":
+        from .precipitation_findings import rain_day_classes,rain_day_classes_figure
+        table=rain_day_classes(df)
+        if table.empty:raise ValueError("No complete precipitation days support the severity chart.")
+        fig=rain_day_classes_figure(table)
+        note="Disjoint daily precipitation classes: 1–<10, 10–<20 and ≥20 mm on complete observed calendar days."
+    elif kind=="snow_hours":
+        from .aggregations import native_interval_hours
+        snow=numeric(df,"snow_depth_cm")
+        mask=snow.gt(0).astype(float).where(snow.notna())*native_interval_hours(df)
+        monthly=mask.resample("MS").sum(min_count=1)
+        fig=go.Figure(go.Bar(x=monthly.index,y=monthly,marker_color="#5488B6"))
+        fig.update_layout(template="plotly_white",title=label,xaxis_title="Month",yaxis_title="Observed snow-cover hours")
+        note="Observed snow-depth records above 0 cm, integrated at the active source cadence."
     elif kind=="total":
         x=s.resample("MS").sum(min_count=1)/(1000 if column==G else 1)
         fig=go.Figure(go.Bar(x=x.index,y=x,marker_color="#D6A23D" if column==G else "#5488B6"))
@@ -510,6 +532,10 @@ def standard_figure(entry,df,context,reference_df=None):
         from .sky_findings import sky_figure_interpretation
         stat=sky_figure_interpretation(df,fig,kind,column=column,title=label,
                                       latitude=context.get("latitude"))
+    elif page=="Precipitation and Snow":
+        from .precipitation_findings import precipitation_figure_interpretation
+        mapped_kind="rain_days" if kind=="rain_days" else kind
+        stat=precipitation_figure_interpretation(df,fig,mapped_kind,column=column,title=label)
     else:
         stat=source_interpretation(df,page,column if kind in ("profile","duration","heatmap") else "",label,unit,thresholds=temperature_thresholds(context),kind=kind)
     if kind in ("nv","night") and c in ledger:
