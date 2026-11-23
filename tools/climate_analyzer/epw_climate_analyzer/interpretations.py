@@ -163,8 +163,14 @@ def natural_ventilation_interpretation(
             "The seasonal distribution informs operable-opening and hybrid-mode schedules."
         )
     else:
-        t = pd.to_numeric(df.get("dry_bulb_temperature_c"), errors="coerce")
-        w = pd.to_numeric(df.get("humidity_ratio_g_kg"), errors="coerce")
+        t = pd.to_numeric(
+            df.get("dry_bulb_temperature_c", pd.Series(index=df.index, dtype=float)),
+            errors="coerce",
+        )
+        w = pd.to_numeric(
+            df.get("humidity_ratio_g_kg", pd.Series(index=df.index, dtype=float)),
+            errors="coerce",
+        )
         thermal_hours = _duration_hours_from_count(
             df, int(t.between(t_min_c, t_max_c).sum())
         )
