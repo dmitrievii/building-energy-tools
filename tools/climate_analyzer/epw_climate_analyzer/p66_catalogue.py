@@ -232,6 +232,8 @@ def catalogue(df,context,coverage=FULL):
         add(NV,"Natural ventilation · "+style,"nv_special",args=(style,),ok=hourly and has(T,W) and (has(V) if style=="Temperature–wind suitability" else has(V,WD) if style.startswith("Directional") or style.startswith("Wind during") else True))
     add(HVAC,"Monthly passive strategy hours","passive",ok=hourly and has(T))
     add(HVAC,"Ventilation conditioning loads","vent_load",ok=hourly and has(T,W,SV))
+    add(HVAC,"Air-side economizer · temperature and enthalpy screening",
+        "economizer_stages",ok=hourly and has(T,H))
     add(HVAC,"Adaptive comfort · Categories I–III","adaptive",ok=hourly and has(T))
     for c in (T,W,H):
         for upper in (True,False):
