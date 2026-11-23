@@ -239,7 +239,11 @@ def catalogue(df,context,coverage=FULL):
     for model in ("Uniform radiant offset","Open sun","Direct-beam shade"):
         for style in ("heatmap","duration","stress"):
             add(OTC,f"UTCI · {model} · {style}","utci",T,"°C",(model,style),ok=hourly and has(T,RH,V) and (model=="Uniform radiant offset" or has(G,D,N,Z,"horizontal_infrared_radiation_intensity_wh_m2")))
-    add(OTC,"UTCI · paired sun versus shade","utci_pair",ok=hourly and has(T,RH,V,G,D,N,Z,"horizontal_infrared_radiation_intensity_wh_m2"))
+    pair_ok=hourly and has(T,RH,V,G,D,N,Z,"horizontal_infrared_radiation_intensity_wh_m2")
+    add(OTC,"UTCI · paired sun versus shade","utci_pair",ok=pair_ok)
+    add(OTC,"UTCI · monthly direct-beam shading benefit","utci_pair_delta",ok=pair_ok)
+    add(OTC,"UTCI · paired heat-stress exposure","utci_pair_stress",ok=pair_ok)
+    add(OTC,"Mean radiant temperature · sun and shade","utci_pair_mrt",ok=pair_ok)
     for axis in ("Temperature–wind","Temperature–radiant offset","Wind–radiant offset"):
         add(OTC,"Controlled UTCI sensitivity · "+axis,"utci_sensitivity",args=(axis,),ok=hourly and has(T,RH,V))
     add(RAIN,"Snow-cover calendar","snow_calendar",S,"",ok=hourly and has(S))
