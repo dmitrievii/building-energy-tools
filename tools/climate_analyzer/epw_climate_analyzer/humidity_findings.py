@@ -179,7 +179,7 @@ def humidity_figure_interpretation(
         return (
             f"At constant actual outdoor volume flow {airflow_m3_h:,.0f} m³/h and target "
             f"{target_g_kg:g} g/kg dry air, the weather-only water-mass differences are "
-            f"{high:,.0f} kg removal and {low:,.0f} kg addition over the selected intervals. "
+            f"{high:,.1f} kg removal and {low:,.1f} kg addition over the selected intervals. "
             "These are hypothetical outdoor-air mass-balance quantities, not installed plant "
             "capacity, latent cooling energy, room moisture balance or evidence that "
             "naturally ventilated spaces must be dehumidified."
