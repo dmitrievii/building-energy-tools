@@ -2493,8 +2493,7 @@ def render_generic_variable_page(
             plane=chart_df.attrs.get("r24_solar_plane","reference vertical south-facing plane"))
     elif title_prefix in ("Sky cover","Illuminance"):
         from epw_climate_analyzer.sky_findings import sky_figure_interpretation
-        text=sky_figure_interpretation(chart_df,fig,chart_type,column=column,
-                                      title=f"{title_prefix}: {variable_label}")
+        text=sky_figure_interpretation(chart_df,fig,chart_type,column=column)
     elif interpretation_factory:
         text = interpretation_factory(chart_df, column, variable_label.lower(), unit)
     else:
