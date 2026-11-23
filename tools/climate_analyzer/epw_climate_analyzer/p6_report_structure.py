@@ -353,7 +353,12 @@ def available_catalog(df,context):
         if kind in ("daylight","relative_sunshine"):
             try:latitude_ok=math.isfinite(float(context.get("latitude")))
             except (ValueError,TypeError):latitude_ok=False
-            ok=latitude_ok and (kind=="daylight" or has("sunshine_duration_s"))
+            ok=latitude_ok
+            if ok and kind=="relative_sunshine":
+                from .daylight import _complete_daily_sunshine_hours
+                from .aggregations import native_interval_hours
+                ok=has("sunshine_duration_s") and not _complete_daily_sunshine_hours(
+                    df["sunshine_duration_s"],interval_hours=native_interval_hours(df)).empty
         else:ok=has(*requirements.get(kind,(c,)))
         if ok:out.append(entry)
     return out
