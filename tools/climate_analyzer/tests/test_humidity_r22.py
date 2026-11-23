@@ -78,8 +78,8 @@ class HumidityR22Tests(unittest.TestCase):
         self.assertAlmostEqual(float(calculated["Humidification"].sum()),2.5)
         self.assertAlmostEqual(float(calculated["Dehumidification"].sum()),2.5)
         note=explain(self.df,None,"moisture",airflow_m3_h=1000.,target_g_kg=9.)
-        self.assertIn("2 kg removal",note)  # integer formatting rounds 2.5 to 2
-        self.assertIn("2 kg addition",note)
+        self.assertIn("2.5 kg removal",note)
+        self.assertIn("2.5 kg addition",note)
         self.assertIn("not installed plant",note)
 
     def test_persistence_distinguishes_hours_from_events(self):
