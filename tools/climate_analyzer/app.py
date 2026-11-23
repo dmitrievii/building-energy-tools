@@ -4334,6 +4334,8 @@ def render_wind(df: pd.DataFrame) -> None:
         options.append("Wind rose")
     if numeric("wind_speed_m_s"):
         options.append("Wind persistence and calm periods")
+    if numeric("wind_speed_m_s") and numeric("wind_direction_deg"):
+        options.append("Climate-responsive ventilation orientation")
     if not options:
         st.info("No usable wind observations are available in the selected interval.")
         return
@@ -4354,6 +4356,65 @@ def render_wind(df: pd.DataFrame) -> None:
     if chart_group=="Wind persistence and calm periods":
         from epw_climate_analyzer.p4_ui import persistence_panel
         persistence_panel(df,render_plot,wind=True)
+        return
+    if chart_group=="Climate-responsive ventilation orientation":
+        from epw_climate_analyzer.wind_findings import (
+            wind_opportunity, wind_design_interpretation, wind_opportunity_figure,
+        )
+        st.caption(
+            "Meteorological wind FROM directions support candidate windward and opposite "
+            "exhaust façades. This is climatic opportunity, not a computed building air-change rate."
+        )
+        limit=st.slider(
+            "Station wind speed screening threshold [m/s]",
+            0.0,5.0,0.5,0.1,key="r23_wind_threshold",
+            help="Only wind speeds strictly above this value are directionally classified; "
+                 "low-wind hours remain visible separately.")
+        rain_limit=None
+        if numeric("liquid_precipitation_depth_mm") and st.checkbox(
+            "Restrict candidate hours by rainfall",value=False,key="r23_rain_on"):
+            rain_limit=st.number_input(
+                "Maximum precipitation intensity [mm/h]",min_value=0.,value=0.,
+                step=0.1,key="r23_rain_limit")
+        temp_range=None
+        if numeric("dry_bulb_temperature_c") and st.checkbox(
+            "Apply optional outdoor temperature screen",value=False,key="r23_temp_on"):
+            left,right=st.columns(2)
+            min_temp=left.number_input("Outdoor minimum [°C]",value=16.,step=0.5,key="r23_tmin")
+            max_temp=right.number_input("Outdoor maximum [°C]",value=32.,step=0.5,key="r23_tmax")
+            temp_range=(min_temp,max_temp)
+        humidity_limit=None
+        if numeric("humidity_ratio_g_kg") and st.checkbox(
+            "Apply optional conditioned-air humidity ratio limit",
+            value=False,key="r23_humidity_on",
+            help="A low absolute-humidity target is not a universal natural-ventilation or comfort limit."):
+            humidity_limit=st.number_input(
+                "Maximum humidity ratio [g/kg dry air]",min_value=0.,value=9.,
+                step=0.5,key="r23_wmax")
+        try:
+            summary,sectors=wind_opportunity(
+                df,min_speed_m_s=limit,rain_max_mm_h=rain_limit,
+                temperature_range_c=temp_range,max_humidity_ratio_g_kg=humidity_limit)
+            note=wind_design_interpretation(
+                df,min_speed_m_s=limit,rain_max_mm_h=rain_limit,
+                temperature_range_c=temp_range,max_humidity_ratio_g_kg=humidity_limit)
+        except ValueError as exc:
+            st.warning(str(exc));return
+        if summary.empty:
+            st.info("No dated wind data support the selected analysis.");return
+        fig=wind_opportunity_figure(summary,sectors)
+        render_plot(fig,note)
+        st.caption(
+            "Each monthly cell represents selected directional station-wind hours "
+            "as a fraction of all valid wind observations in that month. "
+            "The right-hand low-wind column counts all valid speeds at or below the "
+            "user-selected limit, independently of any optional temperature/rain/humidity screen. "
+            "Percentages therefore need not total 100% when optional filters are active. "
+            "Direction without speed, or calm observations, cannot establish a windward façade."
+        )
+        with st.expander("Monthly windward/exhaust candidates and sector evidence"):
+            st.dataframe(summary,hide_index=True,use_container_width=True)
+            st.dataframe(sectors,hide_index=True,use_container_width=True)
         return
 
     dataset_labels = [item[0] for item in paired_datasets]
