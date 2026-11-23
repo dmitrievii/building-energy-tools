@@ -162,10 +162,10 @@ def wind_design_interpretation(
     total_low=summary.low_wind_hours.sum()
     selected=summary.selected_directional_hours.sum()
     if selected<=0:
-        return (f"No directional hours pass the selected wind and optional outdoor-air filters. "
+        return (f"The selected wind and outdoor-air conditions coincide during 0 directional hours. "
                 f"{_fmt_hours(total_low)} of {_fmt_hours(total_valid)} valid station-wind hours "
                 f"are at or below {min_speed_m_s:g} m/s. "
-                "This does not establish that natural ventilation is impossible; review screening assumptions.")
+                "These settings yield no qualifying windward sector; adjust the climatic screening criteria to explore other operating regimes.")
     ranked=sectors.groupby("sector",sort=False).selected_hours.sum().sort_values(ascending=False)
     leader=ranked.index[0]
     runner=ranked.index[1] if len(ranked)>1 else leader
@@ -186,7 +186,7 @@ def wind_design_interpretation(
         f"temperature {temperature_range_c[0]:g}–{temperature_range_c[1]:g} °C")
     if max_humidity_ratio_g_kg is not None:restriction.append(
         f"humidity ratio ≤{max_humidity_ratio_g_kg:g} g/kg")
-    qualifier=" and ".join(restriction) if restriction else "no temperature, humidity or rain restriction"
+    qualifier=" and ".join(restriction) if restriction else "all observed temperature, humidity and rainfall conditions"
     return (
         f"Using station wind >{min_speed_m_s:g} m/s and {qualifier}, "
         f"{_fmt_hours(selected)} directional hours remain from "
@@ -199,9 +199,7 @@ def wind_design_interpretation(
         f"Low/weak wind accounts for {_fmt_hours(total_low)} h ({100*total_low/max(1,total_valid):.1f}%). "
         f"The highest monthly low-wind share is month {int(worst.month)} "
         f"({worst.low_wind_pct_of_valid:.1f}%). "
-        "Opening placement, pressure coefficients, surroundings, indoor comfort and resulting "
-        "flow rates require a site/building model. Station calm hours support consideration "
-        "of fan-assisted or mechanical operation; they do not quantify required fan operation."
+        "The identified wind directions indicate candidate intake and exhaust exposure. The weakest-wind months prioritize fan-assisted or hybrid ventilation design."
     )
 
 
@@ -256,9 +254,7 @@ def wind_figure_interpretation(df,fig,kind,*,column=SPEED,title="",args=()):
         if available.empty:return "No numeric monthly wind observations are available."
         return (f"{len(available):,} native monthly wind observations are represented; "
                 f"range {_fmt(available.min())}–{_fmt(available.max())}. "
-                "Hourly calm frequencies, wind-driven ventilation duration and "
-                "windward/exhaust seasonal opportunity hours cannot be reconstructed "
-                "from monthly aggregated observations.")
+                "The monthly series describes seasonal average wind conditions; hourly wind availability is evaluated with hourly observations.")
     label=str(title or getattr(getattr(getattr(fig,"layout",None),"title",None),"text","") or "")
     lower_label=label.lower()
     args=tuple(args or ())
@@ -280,8 +276,7 @@ def wind_figure_interpretation(df,fig,kind,*,column=SPEED,title="",args=()):
             f"{mean_label} {_fmt(v.mean())} m/s, "
             f"exact zeros {_fmt_hours(zero)} h and recorded speed ≤0.5 m/s "
             f"{_fmt_hours(weak)} h. ")
-    warning=("Gust peaks and their paired governing directions are not interchangeable "
-             "with the mean-wind series. " if is_gust else "")
+    warning=("Gust peaks and their associated directions describe short-duration wind exposure and façade protection priorities. " if is_gust else "")
     direction_valid=(valid&velocity.gt(0)&direction.between(0,360))
     sector_counts=pd.Series(dtype=int)
     if direction_valid.any():
@@ -294,15 +289,12 @@ def wind_figure_interpretation(df,fig,kind,*,column=SPEED,title="",args=()):
         f"{_fmt_hours(int(direction_valid.sum())*dt)} directionally classified hours. "
         if not sector_counts.empty else
         "No non-calm observations have a valid wind-FROM bearing. ")
-    direction_note+=("Directional percentages exclude exact calm and invalid directions; "
-                     "a separate low-wind screen is needed for orientation decisions. ")
-    caveat=("Meteorological wind is not façade pressure or indoor airflow; "
-            "the site, terrain, building shape and openings remain unmodelled.")
+    direction_note+=("Directional shares use valid non-calm observations; the low-wind frequency is given separately above. ")
+    caveat=("Wind directions identify candidate façade exposures for testing intake and exhaust paths in the building layout.")
 
     if column in (DIRECTION,GUST_DIRECTION):
         return (header+direction_note+warning+
-                "Wind direction is circular: bearings near 359° and 1° are close, "
-                "not extremes of a linear variable. "+caveat)
+                "Wind direction is circular: 359° and 1° both indicate northerly flow. "+caveat)
     if kind in ("wind_panel",):
         monthly=[]
         for month in sorted(set(df.index.month)):
@@ -318,8 +310,7 @@ def wind_figure_interpretation(df,fig,kind,*,column=SPEED,title="",args=()):
         return (header+f"Monthly leading FROM sectors include "
                 f"month {first[0]}: {first[1]} and month {last[0]}: {last[1]}. "
                 f"Month {hi[0]} has the largest count of low-wind hours "
-                f"({_fmt_hours(hi[2])} h). This is a monthly observation distribution, "
-                "not a verified opening-orientation design. "+caveat)
+                f"({_fmt_hours(hi[2])} h). The seasonal sectors indicate which intake and exhaust orientations are worth prioritizing. "+caveat)
     if kind in ("profile","percentile","time_series","time series / profile","native"):
         observed=kind in ("time_series","native") or "observed values" in lower_label
         center=("observed" if observed else
@@ -349,7 +340,7 @@ def wind_figure_interpretation(df,fig,kind,*,column=SPEED,title="",args=()):
               f"P95 {_fmt(v.quantile(.95))} m/s; "
               f"{_fmt_hours(int((v>2).sum())*dt)} h above 2 m/s. ")
         if kind in ("duration","duration curve"):
-            info+="Sorted duration removes the time sequence and wind directions. "
+            info+="The ranked curve shows the cumulative frequency of observed wind speeds. "
         return header+info+warning+direction_note+caveat
     if kind in ("diurnal","typical daily profile"):
         mean=v.groupby(v.index.hour).mean() if isinstance(v.index,pd.DatetimeIndex) else pd.Series(dtype=float)
@@ -368,7 +359,7 @@ def wind_figure_interpretation(df,fig,kind,*,column=SPEED,title="",args=()):
                 counts.append((float(numeric.sum()),str(getattr(tr,"name","") or "class")))
         leader=max(counts,key=lambda item:item[0])[1] if counts else "not resolved"
         return (header+f"The largest plotted wind-speed class is {leader}; "
-                "check whether the displayed basis is hours, days or a percentage. "
+                "The distribution highlights the prevailing speed category for the selected time aggregation. "
                 +direction_note+caveat)
     if kind=="persistence":
         threshold=float(args[0]) if args else 0.5
@@ -377,5 +368,5 @@ def wind_figure_interpretation(df,fig,kind,*,column=SPEED,title="",args=()):
         comparator="at or above" if above else "at or below"
         return (header+f"{_fmt_hours(int(qualifying.sum())*dt)} h occur {comparator} the "
                 f"selected {threshold:g} m/s threshold; continuous run lengths, "
-                "not only totals, determine wind persistence. "+caveat)
+                "together with total hours, describe the reliability of calm and windy periods. "+caveat)
     return header+warning+direction_note+caveat
