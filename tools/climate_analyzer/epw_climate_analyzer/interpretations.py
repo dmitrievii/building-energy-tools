@@ -106,13 +106,21 @@ def temperature_interpretation(df: pd.DataFrame, heat_threshold: float, cool_thr
         return "No valid dry-bulb temperature data are available."
     cold_hours = _duration_hours_from_count(df, int((t < heat_threshold).sum()))
     hot_hours = _duration_hours_from_count(df, int((t > cool_threshold).sum()))
-    tropical_nights = int((df.between_time("20:00", "06:00")["dry_bulb_temperature_c"].resample("D").min() > 20).sum())
+    # Group 20:00–06:59 as *one overnight period*, anchored on its start day.
+    # Exclude truncated nights rather than classifying missing values as warm.
+    night_mask = (df.index.hour >= 20) | (df.index.hour <= 6)
+    night = pd.to_numeric(df.loc[night_mask,"dry_bulb_temperature_c"],errors="coerce")
+    night_start = night.index.normalize() - pd.to_timedelta((night.index.hour <= 6).astype(int),unit="D")
+    by_night = night.groupby(night_start)
+    expected_night_records = int(math.ceil(11.0 / native_interval_hours(df) - 1e-9))
+    tropical_nights = int(((by_night.count() >= expected_night_records) & (by_night.min() >= 20.)).sum())
     amplitude = df["dry_bulb_temperature_c"].resample("D").agg(lambda x: x.max() - x.min()).mean()
     return (
         f"Mean outdoor temperature is {_fmt(t.mean())} °C. "
         f"There are {_fmt_hours(cold_hours)} hours below {heat_threshold:g} °C and {_fmt_hours(hot_hours)} hours above {cool_threshold:g} °C. "
         f"The average daily temperature amplitude is {_fmt(amplitude)} K. "
-        f"The file contains approximately {tropical_nights:,} tropical nights with night minimum above 20 °C."
+        f"Complete 20:00–06:59 overnight periods with sampled night minimum ≥20 °C: {tropical_nights:,}. "
+        "This overnight indicator is distinct from the daily-minimum tropical-night chart."
         + _interannual_mean_sentence(df, "dry_bulb_temperature_c", "outdoor temperature", "°C")
     )
 
@@ -125,8 +133,10 @@ def degree_day_interpretation(df: pd.DataFrame) -> str:
     cdd = cdh / 24.0
     dominant = "heating-dominated" if hdd > cdd else "cooling-dominated"
     return (
-        f"The selected thresholds produce {hdd:,.0f} heating degree-days and {cdd:,.0f} cooling degree-days. "
-        f"On this simplified basis the climate is {dominant}."
+        f"The selected thresholds produce {hdd:,.0f} K·d of heating and {cdd:,.0f} K·d of cooling "
+        "as hourly-derived degree-day equivalents (degree-hours / 24). "
+        "This is not the daily-mean HGT/KGT degree-day method; the two cannot be interchanged. "
+        f"On this simplified hourly-derived basis the climate is {dominant}."
     )
 
 
