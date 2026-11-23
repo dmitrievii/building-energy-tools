@@ -1,0 +1,75 @@
+name: Climate Analyzer R14.4A factorial runtime allocator
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/climate-analyzer-r144a.yml'
+      - 'tools/climate_analyzer/scripts/r144a_factorial.py'
+      - 'tools/climate_analyzer/tests/test_r144a_factorial.py'
+permissions:
+  contents: read
+jobs:
+  performance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    defaults:
+      run:
+        working-directory: tools/climate_analyzer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - run: npm install --no-save playwright-core@1.55.0
+      - run: python -m unittest discover -s tests -p test_r144a_factorial.py -v
+      - run: python scripts/r144a_factorial.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r144a-factorial-performance
+          path: tools/climate_analyzer/artifacts/r144a/
+  parity:
+    strategy:
+      fail-fast: false
+      matrix:
+        arm: [A0, A1, A2, A3]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: tools/climate_analyzer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - run: npm install --no-save playwright-core@1.55.0
+      - run: python -m unittest discover -s tests -p test_r143_scientific_parity.py -v
+      - run: python scripts/r144a_factorial.py --parity-arm ${{ matrix.arm }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r144a-parity-${{ matrix.arm }}
+          path: tools/climate_analyzer/artifacts/r144a/parity/${{ matrix.arm }}/
+  compare-parity:
+    needs: parity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: r144a-parity-*
+          path: evidence
+      - name: Exact four-way scientific parity
+        run: |
+          set -euo pipefail
+          base=evidence/r144a-parity-A0/inventory/scientific-parity.json
+          for arm in A1 A2 A3; do
+            python tools/climate_analyzer/scripts/compare_r143_parity.py "$base" "evidence/r144a-parity-$arm/inventory/scientific-parity.json"
+          done

@@ -1,0 +1,9 @@
+# R14.4A — Factorial runtime and allocator qualification
+
+Reference commit: caba87c. Production flags unchanged. Scope: managed Linux runner, real EPW, not Community Cloud. Four fresh server/browser processes sequentially on one runner, fixed order A0 A3 A1 A2, 20 cycles each. Separate 4-arm scientific parity (6 cycles each, 27 observations per arm), exact comparison with A0. The browser fixture and existing fail-closed lifecycle criteria are retained. In performance arms the parity serializer is disabled. Do not sum the independent historical percentage savings.
+
+Factors: runtime baseline/persistent, glibc default/arena limit 2. Both allocator states set before process start; verify observed mallinfo2 environment on every idle cycle. No changes to app, Streamlit configuration, cache policy or scientific formulas. Same runner reduces hardware confounding but sequential order and environmental noise remain; no inferential statistics from one block.
+
+Measure zero-session anonymous RSS after native recovery, final and warm median (cycles 4–20), warm drift, sampled app RSS/PSS/anon and cgroup peak, process HWM, median inter-cycle wall time (including browser/diagnostics), partial mallinfo2 bytes, and observer live allocated Python blocks. Sampling at 0.5 s is not continuous; cgroup includes runner/browser; allocation events are not counted. Unavailable data stays null/empty, never zero-filled.
+
+Each arm retains inventory JSON and raw samples. A0/A1/A2/A3 effects and difference-in-differences are calculated only for all four qualified arms. A separate exact parity gate must pass before promotion can be considered. Remaining full CI and live-audit failures, GeoSphere extension and Community Cloud duplicate runtime remain independent blockers. No automatic production promotion.
