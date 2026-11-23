@@ -269,14 +269,14 @@ def class_interpretation(table):
     return (f"Wind from {COMPASS[int(round(sector/22.5))%16]} accounts for {dominant_share:.1f}% of classified observation hours. "
             f"The most frequent {table.attrs['quantity'].lower()} class is {cls} {unit} ({share:.1f}%).{nv} "
             f"All classes partition {total:.1f} valid non-calm hours. "
-            "Missing coincident inputs and calm intervals are excluded; percentage uses the sum of all classified hours, not the hours within each individual direction. "
-            "Colours indicate mutually exclusive classes, not per-direction means.")
+            "Percentages use all classified non-calm wind hours as their denominator, showing each sector's contribution to the selected conditions. "
+            "Colours identify mutually exclusive wind and climatic-condition categories.")
 
 
 MONTHLY_WIND_ROSE_NOTE = ("Each month uses its valid non-calm coincident source records within the active data filter. "
     "Percentage is normalized separately by month; hours preserve physical source duration. "
     "Calendar months pool selected years. All panels share the radial range and colour mapping; "
-    "months without valid observations remain labelled, not interpreted as zero wind.")
+    "months with valid observations can be compared using a consistent radial scale.")
 
 def compact_hour_radial_scale(max_r):
     """Smallest readable uniform scale with at least 5% data headroom.
