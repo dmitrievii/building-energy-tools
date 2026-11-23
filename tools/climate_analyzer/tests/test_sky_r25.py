@@ -111,6 +111,16 @@ class SkyDaylightR25Tests(unittest.TestCase):
         self.assertIn("overcast (8–10 tenths)",note)
         self.assertIn("diffuse-light collection",note)
 
+    def test_opaque_cover_above_total_is_reported_as_source_consistency_issue(self):
+        df=self.sample()
+        df[OPAQUE]=df[TOTAL]
+        df.loc[df.index[:5],OPAQUE]=10.
+        df.loc[df.index[:5],TOTAL]=2.
+        note=sky_condition_interpretation(df,OPAQUE)
+        self.assertIn("Source-field consistency flag: 5 paired hours",note)
+        self.assertIn("greater than total sky cover",note)
+        self.assertEqual(int((df[OPAQUE]>df[TOTAL]).sum()),5)
+
     def test_monthly_joint_sky_exterior_illuminance_hours_close(self):
         df=self.sample()
         table=sky_light_table(df,threshold_lux=3000.)
