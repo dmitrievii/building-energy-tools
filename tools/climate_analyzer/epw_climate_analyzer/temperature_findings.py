@@ -85,7 +85,8 @@ def temperature_figure_interpretation(df, fig, kind, *, column="dry_bulb_tempera
             return "No valid temperature cells are plotted."
         lo, hi = np.unravel_index(np.nanargmin(z), z.shape), np.unravel_index(np.nanargmax(z), z.shape)
         x, y = list(trace.x), list(trace.y)
-        cell = lambda pos: f'{str(x[pos[1]]) if pos[1]<len(x) else "?"}, hour {str(y[pos[0]]) if pos[0]<len(y) else "?"}'
+        y_dimension = "year" if "year" in lower_name and "hour of day" not in lower_name else "hour"
+        cell = lambda pos: f'{str(x[pos[1]]) if pos[1]<len(x) else "?"}, {y_dimension} {str(y[pos[0]]) if pos[0]<len(y) else "?"}'
         return (f"For the selected heatmap statistic, the lowest displayed cell is "
                 f"{_fmt(z[lo])} °C ({cell(lo)}) and the highest is {_fmt(z[hi])} °C ({cell(hi)}). "
                 "The common absolute colour scale indicates outdoor temperature, not indoor comfort. " + climate)
