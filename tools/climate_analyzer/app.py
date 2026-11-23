@@ -2188,6 +2188,11 @@ def render_extended_variable_chart(df, column, unit, chart_type, *, key_prefix="
             subset=df.loc[df.index.month.isin([MONTHS[m] for m in months])]
             note=temperature_figure_interpretation(subset,fig,"diurnal",column=column,title=f"Typical daily profile · {centre} · {band}")
             note+=" Equivalent calendar-month clock hours are pooled; missing observations remain gaps."
+        elif key_prefix.startswith("explorer_humidity"):
+            from epw_climate_analyzer.humidity_findings import humidity_figure_interpretation
+            subset=df.loc[df.index.month.isin([MONTHS[m] for m in months])]
+            note=humidity_figure_interpretation(subset,fig,"diurnal",column=column,title=f"Typical daily profile · {centre} · {band}")
+            note+=" Equivalent calendar-month clock hours are pooled; missing observations remain gaps."
         else:
             note="Profiles pool equivalent calendar-month clock hours across selected years. Only complete source hours contribute; extensive values are summed within each hour. Missing observations remain gaps."
         render_plot(fig,note)
@@ -2227,6 +2232,9 @@ def render_extended_variable_chart(df, column, unit, chart_type, *, key_prefix="
         if key_prefix.startswith("explorer_temperature"):
             from epw_climate_analyzer.temperature_findings import temperature_figure_interpretation
             note=temperature_figure_interpretation(df,fig,"occurrence",column=column,title=f"Temperature occurrence · {basis} · {statistic}")
+        elif key_prefix.startswith("explorer_humidity"):
+            from epw_climate_analyzer.humidity_findings import humidity_figure_interpretation
+            note=humidity_figure_interpretation(df,fig,"occurrence",column=column,title=f"Humidity occurrence · {basis} · {statistic}",args=(basis,statistic))
         else:
             note="Classes are mutually exclusive; hours retain source duration, days require complete real calendar days, and percentages use valid observed intervals. Calendar-profile mode averages equivalent year-months."
         render_plot(fig,note)
@@ -2434,6 +2442,9 @@ def render_generic_variable_page(
         text=temperature_figure_interpretation(
             chart_df,fig,chart_type,column=column,
             thresholds=temperature_thresholds or (18.,26.))
+    elif title_prefix == "Humidity":
+        from epw_climate_analyzer.humidity_findings import humidity_figure_interpretation
+        text=humidity_figure_interpretation(chart_df,fig,chart_type,column=column)
     elif interpretation_factory:
         text = interpretation_factory(chart_df, column, variable_label.lower(), unit)
     else:
@@ -3670,7 +3681,9 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
         if selected_years and isinstance(report_df.index, pd.DatetimeIndex):
             report_df = report_df[pd.DatetimeIndex(report_df.index).year.isin(selected_years)].copy()
             report_df.attrs.update(df.attrs)
-        render_plot(fig,psychrometric_interpretation(report_df))
+        from epw_climate_analyzer.humidity_findings import humidity_figure_interpretation
+        render_plot(fig,humidity_figure_interpretation(
+            report_df,fig,"psychrometric",title=f"Psychrometric · {chart_type} · {representation}"))
         if show_givoni:
             render_bioclimatic_report(report_df)
     elif chart_group == "Humidity persistence":
