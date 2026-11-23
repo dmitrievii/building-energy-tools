@@ -2817,7 +2817,7 @@ def render_compare_humidity(climates: list[ClimateDataset], reference_name: str,
             horizontal=True,
             key="compare_psych_representation",
             help=(
-                "Climate contour is the primary comparison view. Distribution grid and Points remain available as secondary diagnostic representations; the contour does not replace them."
+                "Climate contour is the primary comparison view. Distribution grid and Points remain available as secondary diagnostic representations; they provide complementary views of the same climate distribution."
             ),
         )
         zone_coverage = 0.90
@@ -5288,7 +5288,7 @@ def render_hvac_passive(df: pd.DataFrame) -> None:
     )
     if not has_ghi:
         st.caption(
-            "No usable GHI is available in this climate interval; solar-shading strategy rows are omitted rather than inferred."
+            "No usable GHI is available in this climate interval; solar-shading strategies are available when the required horizontal irradiation series is present."
         )
     st.caption(
         "Humidity-control thresholds and enthalpy distributions are analysed on Humidity; heating/cooling degree metrics are analysed on Temperature. "
