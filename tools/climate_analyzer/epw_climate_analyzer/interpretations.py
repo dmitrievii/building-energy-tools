@@ -140,26 +140,45 @@ def degree_day_interpretation(df: pd.DataFrame) -> str:
     )
 
 
-def natural_ventilation_interpretation(df: pd.DataFrame, mask: pd.Series) -> str:
-    """Interpret natural ventilation availability from a Boolean suitability mask."""
+def natural_ventilation_interpretation(
+    df: pd.DataFrame, mask: pd.Series,
+    t_min_c: float = 16.0, t_max_c: float = 26.0, d_max_g_kg: float = 9.0,
+) -> str:
+    """Interpret the selected outdoor-air screening result and its limiting variables."""
     aligned = mask.reindex(df.index).fillna(False).astype(bool)
     suitable_records = int(aligned.sum())
     hours = _duration_hours_from_count(df, suitable_records)
     share = suitable_records / max(len(df), 1) * 100.0
-    monthly_records = aligned.astype(int).groupby(df["month_index"]).sum()
-    monthly_hours = monthly_records.astype(float) * native_interval_hours(df)
-    if monthly_hours.empty:
-        best_month = "n/a"
-        best_hours = 0.0
-    else:
-        best_month = int(monthly_hours.idxmax())
-        best_hours = float(monthly_hours.max())
-    return (
-        f"Natural ventilation is suitable for {_fmt_hours(hours)} hours ({share:.1f}% of the selected period). "
-        f"The strongest month is {best_month} with {_fmt_hours(best_hours)} suitable hours. "
-        f"The strongest suitable months indicate when operable openings may be most useful; shorter suitable periods encourage fan-assisted and hybrid operating modes."
+    month = df["month_index"] if "month_index" in df else pd.Series(df.index.month, index=df.index)
+    monthly_hours = aligned.astype(int).groupby(month).sum() * native_interval_hours(df)
+    summary = (
+        f"Natural ventilation is suitable for {_fmt_hours(hours)} hours ({share:.1f}% of the selected period) "
+        f"under the active outdoor-air criteria. "
     )
-
+    if suitable_records > 0 and not monthly_hours.empty:
+        best_month = int(monthly_hours.idxmax())
+        summary += (
+            f"The strongest month is {best_month} with "
+            f"{_fmt_hours(float(monthly_hours.max()))} suitable hours. "
+            "The seasonal distribution informs operable-opening and hybrid-mode schedules."
+        )
+    else:
+        t = pd.to_numeric(df.get("dry_bulb_temperature_c"), errors="coerce")
+        w = pd.to_numeric(df.get("humidity_ratio_g_kg"), errors="coerce")
+        thermal_hours = _duration_hours_from_count(
+            df, int(t.between(t_min_c, t_max_c).sum())
+        )
+        combined_hours = _duration_hours_from_count(
+            df, int((t.between(t_min_c, t_max_c) & w.le(d_max_g_kg)).sum())
+        )
+        summary += (
+            f"The temperature window {t_min_c:g}–{t_max_c:g} °C admits "
+            f"{_fmt_hours(thermal_hours)} hours, and the {d_max_g_kg:g} g/kg "
+            f"moisture screen retains {_fmt_hours(combined_hours)} hours. "
+            "Review air-movement and adaptive-comfort strategies for alternative "
+            "ventilation operating conditions."
+        )
+    return summary
 
 def solar_interpretation(df: pd.DataFrame) -> str:
     """Interpret solar radiation availability and cooling-risk coincidence."""
@@ -267,7 +286,7 @@ def hvac_interpretation(df: pd.DataFrame) -> str:
     return (
         f"Using simple outdoor-air thresholds, heating is indicated for {_fmt_hours(heat_hours)} hours and cooling for {_fmt_hours(cool_hours)} hours. "
         f"Latent treatment is also relevant: {_fmt_hours(dehum_hours)} hours exceed 10 g/kg and {_fmt_hours(humid_hours)} hours are below 3 g/kg. "
-        f"These indicators are climate proxies; actual plant sizing still requires building loads, internal gains, schedules and ventilation rates."
+        f"The frequency of these outdoor conditions informs ventilation heat-recovery, moisture-treatment and solar-control strategies; plant sizing incorporates building heat balances, schedules and design airflow."
     )
 
 
