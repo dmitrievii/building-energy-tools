@@ -332,3 +332,68 @@ def facade_temperature_interpretation(table,*,cold_c=18.,hot_c=26.):
         "Cold-period irradiation need not be useful without a building thermal balance; "
         "hot-period irradiation is not automatically an overheating event."
     )
+
+
+
+def diffuse_fraction_daily_occurrence(df,edges,*,daily_stat="Mean"):
+    """Daily daylight-only diffuse-fraction occurrence without inventing nights.
+
+    GHI must be fully observed at source cadence over a real civil day. DHI
+    and fraction must be admitted at EVERY strictly positive-GHI interval.
+    Zero GHI defines an undefined ratio and is not a missing measurement.
+    Daily Mean is the arithmetic mean of valid daylight interval ratios;
+    it is not the irradiation-weighted daily DHI/GHI fraction.
+    """
+    from .temporal_filtering import CHRONOLOGICAL,time_basis
+    from .extended_visualization import hourly_capable,occurrence_boundary_label,MONTHS
+    if not hourly_capable(df) or GHI not in df or DHI not in df:
+        raise ValueError("Daily diffuse-fraction occurrence requires subdaily GHI and DHI.")
+    if daily_stat not in ("Mean","Minimum","Maximum"):
+        raise ValueError("Unsupported daylight diffuse-fraction daily statistic.")
+    edges=tuple(float(x) for x in edges)
+    if (not edges or len(edges)>9 or not np.isfinite(edges).all()
+            or edges[0]<=0 or edges[-1]>100
+            or any(b<=a for a,b in zip(edges,edges[1:]))):
+        raise ValueError("Diffuse fraction class boundaries must be positive, <=100 and strictly increasing.")
+    ghi=_number(df,GHI).sort_index()
+    dhi=_number(df,DHI).sort_index()
+    if not isinstance(ghi.index,pd.DatetimeIndex) or not ghi.index.is_unique:
+        raise ValueError("Unique dated source observations are required.")
+    expected_days=ghi.resample("D").size().index
+    dt=float(native_interval_hours(df))
+    expected=pd.Series([
+        (day+pd.DateOffset(days=1)-day).total_seconds()/3600./dt
+        for day in expected_days],index=expected_days)
+    complete_ghi=ghi.where(ghi.ge(0)).resample("D").count().eq(expected)
+    sunlit=ghi.gt(0)
+    valid_fraction=(100*dhi/ghi).where(sunlit & dhi.ge(0) & dhi.le(ghi))
+    daylight_total=sunlit.resample("D").sum()
+    daylight_valid=valid_fraction.resample("D").count()
+    admitted=complete_ghi & daylight_total.gt(0) & daylight_valid.eq(daylight_total)
+    grouped=valid_fraction.resample("D")
+    if daily_stat=="Minimum":v=grouped.min()
+    elif daily_stat=="Maximum":v=grouped.max()
+    else:v=grouped.mean()
+    v=v.where(admitted).dropna()
+    text=[occurrence_boundary_label(x) for x in edges]
+    labels=["No diffuse fraction (= 0)",f"0 < x < {text[0]}"]+[
+        f"{lo} – < {hi}" for lo,hi in zip(text,text[1:])
+    ]+[f"≥ {text[-1]}"]
+    if v.empty:return pd.DataFrame(columns=labels,dtype=float)
+    values=v.to_numpy()
+    codes=np.where(values==0.,0,1+np.searchsorted(edges,values,side="right"))
+    classes=pd.Series(pd.Categorical.from_codes(codes,categories=labels,ordered=True),index=v.index)
+    periods=v.index.strftime("%Y-%m")
+    table=pd.crosstab(periods,classes,dropna=False).reindex(columns=labels,fill_value=0)
+    table.index=pd.Index(table.index,name="Period")
+    if time_basis(df)!=CHRONOLOGICAL:
+        table=table.groupby(table.index.str[-2:]).mean()
+        table.index=[MONTHS[int(m)-1] for m in table.index]
+    table.attrs.update({
+        "daylight_ratio_definition":"DHI/GHI for GHI>0, daytime source measurements",
+        "daily_statistic":daily_stat,
+        "complete_real_days_required":True,
+        "classified_days":len(v),
+        "excluded_missing_days":int((~admitted).sum()),
+    })
+    return table
