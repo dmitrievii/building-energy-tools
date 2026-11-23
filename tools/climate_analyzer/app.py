@@ -4271,6 +4271,10 @@ def render_solar(df: pd.DataFrame) -> None:
     ground_albedo = _active_solar_ground_albedo(df)
     from epw_climate_analyzer.monthly_radiation import surface_available
     from epw_climate_analyzer.sky_distribution import available_quantities
+    from epw_climate_analyzer.extended_visualization import hourly_capable
+    has_temperature=("dry_bulb_temperature_c" in df and
+        pd.to_numeric(df["dry_bulb_temperature_c"],errors="coerce").notna().any())
+    facet_enabled=surface_available(df) and has_temperature and hourly_capable(df)
     chart_group = st.selectbox(
         "Analysis type",
         [
@@ -4278,6 +4282,7 @@ def render_solar(df: pd.DataFrame) -> None:
             "Monthly radiation",
             "Sun path",
             "Radiation by façade orientation",
+            *(["Façade solar × outdoor temperature"] if facet_enabled else []),
             "Orientation-tilt heatmap",
             "Cooling-risk solar hours",
             "Solar scatter relationships",
@@ -4306,6 +4311,33 @@ def render_solar(df: pd.DataFrame) -> None:
         render_sun_path(df)
     elif chart_group == "Radiation by façade orientation":
         render_facade_orientation(df, ground_albedo=ground_albedo)
+    elif chart_group == "Façade solar × outdoor temperature":
+        from epw_climate_analyzer.solar_findings import (
+            facade_temperature_table,facade_temperature_figure,
+            facade_temperature_interpretation,
+        )
+        st.caption("Solar exposure is grouped by simultaneous OUTDOOR air temperature for eight "
+                   "unobstructed vertical orientations. These thresholds are climatic screens, "
+                   "not building heating/cooling setpoints.")
+        c1,c2=st.columns(2)
+        cold=c1.number_input("Cold outdoor temperature [°C]",value=18.0,step=0.5,key="r24_solar_cold")
+        hot=c2.number_input("Hot outdoor temperature [°C]",value=26.0,step=0.5,key="r24_solar_hot")
+        if cold>hot:
+            st.warning("Cold threshold must not exceed hot threshold.");return
+        try:
+            table=facade_temperature_table(df,cold_c=cold,hot_c=hot,albedo=ground_albedo)
+        except ValueError as exc:
+            st.info(str(exc));return
+        if table.empty:
+            st.info("No complete coincident solar/temperature intervals.");return
+        fig=facade_temperature_figure(table,cold_c=cold,hot_c=hot)
+        render_plot(fig,facade_temperature_interpretation(table,cold_c=cold,hot_c=hot))
+        with st.expander("Numerical exposure by façade"):
+            st.dataframe(table,hide_index=True,use_container_width=True)
+        st.caption("Weather-conditioned irradiation totals sum to each plane's total; unavailable "
+                   "outdoor-temperature records remain in the unknown-temperature class. "
+                   "The plane model retains the active ground albedo; glazing, external shading "
+                   "and internal building thermal response are not modelled.")
     elif chart_group == "Orientation-tilt heatmap":
         st.caption("This chart may take a few seconds because it calculates many plane-of-array irradiance variants.")
         matrix = orientation_tilt_matrix(df, albedo=ground_albedo)
@@ -4315,15 +4347,20 @@ def render_solar(df: pd.DataFrame) -> None:
             fig=orientation_curves(matrix)
         else:
             fig = matrix_heatmap(matrix, "Selected-period irradiation by orientation and tilt", "Surface azimuth [deg]", "Surface tilt [deg]", "kWh/m²")
-        render_plot(fig, solar_interpretation(df))
+        from epw_climate_analyzer.solar_findings import solar_figure_interpretation
+        render_plot(fig,solar_figure_interpretation(df,fig,"tilt",title="Orientation–tilt sensitivity"))
     elif chart_group == "Cooling-risk solar hours":
-        t_threshold = st.slider("Temperature threshold [°C]", 15.0, 35.0, 24.0, 0.5)
-        ghi_threshold = st.slider("GHI threshold [Wh/m²]", 50.0, 800.0, 300.0, 25.0)
+        from epw_climate_analyzer.solar_findings import solar_temperature_interpretation
+        t_threshold = st.slider("Outdoor temperature threshold [°C]", 15.0, 35.0, 24.0, 0.5)
+        ghi_threshold = st.slider("Horizontal irradiance threshold [W/m²]", 50.0, 800.0, 300.0, 25.0)
         aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal"], index=0)
-        condition = (df["dry_bulb_temperature_c"] > t_threshold) & (df["global_horizontal_radiation_wh_m2"] > ghi_threshold)
+        cadence=native_interval_hours(df)
+        condition = (df["dry_bulb_temperature_c"] > t_threshold) & (
+            pd.to_numeric(df["global_horizontal_radiation_wh_m2"],errors="coerce")/cadence > ghi_threshold)
         counts = threshold_count_by_period(df, condition, aggregation, label="hours")
-        fig = threshold_bar_chart(counts, "Cooling-risk solar hours")
-        render_plot(fig, solar_interpretation(df))
+        fig = threshold_bar_chart(counts, "Outdoor warm-weather × horizontal irradiance screening hours")
+        render_plot(fig,solar_temperature_interpretation(
+            df,threshold_w_m2=ghi_threshold,hot_temperature_c=t_threshold))
     else:
         fig = scatter_chart(
             df,
@@ -4334,7 +4371,8 @@ def render_solar(df: pd.DataFrame) -> None:
             "Dry-bulb temperature [°C]",
             "GHI [Wh/m²]",
         )
-        render_plot(fig, solar_interpretation(df))
+        from epw_climate_analyzer.solar_findings import solar_temperature_interpretation
+        render_plot(fig,solar_temperature_interpretation(df))
 
     # Keep the canonical chart/Automatic interpretation layout untouched:
     # ground reflectance controls and their EPW plausibility notes come last.
