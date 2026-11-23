@@ -126,12 +126,11 @@ MASK_CLASSES=(
     ("100% · full shade", "#171717"),
 )
 MASK_EXPLANATION=(
-    "The mask shows the fraction of the window opening shaded by its overhang and fins "
-    "for each possible direct-sun direction. Pale open circles mean no shading from the devices; "
-    "darker points mean a larger shaded fraction. Directions behind the façade are omitted "
-    "because they cannot directly illuminate the front of the window. Read the mask together "
-    "with the monthly sun paths; hover for azimuth, elevation and the analytically calculated shaded area. "
-    "This is geometric direct-beam shading only, independent of weather, diffuse light and indoor heat gains."
+    "The mask maps analytically calculated shading of the window for each direct-sun "
+    "azimuth and elevation. Pale open circles indicate an exposed aperture; "
+    "darker circles indicate greater shaded area. The diagram shows sunward "
+    "façade directions, with monthly sun paths providing seasonal orientation. "
+    "Hover to inspect the shaded area at each solar position."
 )
 
 def overlay_shading_mask(fig,*,inverted=False,technical=False,**geometry):
