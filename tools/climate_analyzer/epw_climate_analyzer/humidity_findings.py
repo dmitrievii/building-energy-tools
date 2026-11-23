@@ -134,7 +134,7 @@ def humidity_figure_interpretation(
             view = ("The density contour encloses the selected fraction of a smoothed "
                     "joint occurrence distribution, highlighting the most frequent combinations of temperature and moisture. ")
         elif "distribution grid" in caption:
-            view = ("Grid-cell frequencies are conditional on the displayed temperature/RH bins; "
+            view = ("Grid-cell frequencies follow the displayed temperature and RH bins, "
                     "highlighting how frequently the outdoor atmosphere occupies each temperature and moisture interval. ")
         else:
             view = "Points represent paired outdoor weather observations. "
