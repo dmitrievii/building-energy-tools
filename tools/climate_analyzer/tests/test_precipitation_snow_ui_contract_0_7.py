@@ -34,8 +34,8 @@ class PrecipitationSnowUiContract07Tests(unittest.TestCase):
         )
 
     def test_rrm_duration_is_explicitly_not_inferred_from_rr(self) -> None:
-        self.assertIn("GeoSphere rrm where available", self.source)
-        self.assertIn("It is never inferred from precipitation depth rr", self.source)
+        self.assertIn("aggregate_precipitation_duration(df, aggregation)", self.source)
+        self.assertIn("measured_duration_summary(df)", self.source)
 
     def test_snow_season_and_precipitation_thresholds_are_visible_and_explicit(self) -> None:
         self.assertIn("Wet day ≥ 1 mm/day", self.source)
