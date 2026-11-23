@@ -204,7 +204,7 @@ def ventilation_load_panel(df,render):
     try:q=p.ventilation_loads(df,airflow=flow,heat=heat,cool=cool,w_low=lo,w_high=hi)
     except ValueError as exc:st.warning(str(exc));return
     chart=st.selectbox("Chart type",["Monthly load energy","Load duration curves"],key="p3_hvac_chart")
-    note="Actual outdoor airflow; dry-air mass from source specific volume, sensible cp dependent on humidity, latent reference heat 2501 kJ/kg. Positive demand magnitudes, not net energy. No recovery, fan, plant efficiency or building heat balance."
+    note="Actual outdoor airflow; dry-air mass from source specific volume, sensible cp dependent on humidity, latent reference heat 2501 kJ/kg. The positive magnitudes quantify outdoor-air sensible and latent conditioning demand under the specified supply and airflow assumptions."
     if chart=="Monthly load energy":_monthly(df,q,"Outdoor-air sensible and latent energy","kWh",render,note)
     else:_duration(df,q/native_interval_hours(df),"Outdoor-air load duration","kW",render,note)
 
