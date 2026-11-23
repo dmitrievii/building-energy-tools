@@ -1,0 +1,58 @@
+name: Climate Analyzer R14.5A HF1 Cloud ownership and allocator admission
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/climate-analyzer-r145a-hf1.yml'
+      - 'tools/climate_analyzer/epw_climate_analyzer/cloud_memory_ownership.py'
+      - 'deployment/r145a_hf1_collect.mjs'
+      - 'deployment/r145a_hf1_analyze.py'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  ownership-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: PYTHONPATH=tools/climate_analyzer python -m unittest discover -s tools/climate_analyzer/tests -p test_cloud_memory_ownership.py -v
+      - run: node --check deployment/r145a_hf1_collect.mjs
+  cloud-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 45091195227
+          name: r145a-cloud-allocator-origin
+          path: artifacts/r145a-historical
+          github-token: ${{ github.token }}
+      - run: npm install --no-save playwright-core@1.55.0
+      - name: Capture two independent observer snapshots with exact fingerprint
+        run: |
+          set -euo pipefail
+          export EXPECTED_RUNTIME_BUILD=$(PYTHONPATH=tools/climate_analyzer python -c 'from epw_climate_analyzer.runtime_identity import RUNTIME_BUILD_ID; print(RUNTIME_BUILD_ID)')
+          status=0
+          for i in 1 2; do
+            R145A_OUTPUT="artifacts/r145a-hf1/observer-$i" node deployment/r145a_hf1_collect.mjs || status=1
+            if [ "$i" = 1 ]; then sleep 15; fi
+          done
+          exit "$status"
+      - name: Reconcile ownership and enforce admission
+        if: always()
+        run: PYTHONPATH=tools/climate_analyzer python deployment/r145a_hf1_analyze.py artifacts/r145a-hf1/ownership.json artifacts/r145a-historical/inventory.json artifacts/r145a-hf1/observer-1/inventory.json artifacts/r145a-hf1/observer-2/inventory.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r145a-hf1-cloud-ownership
+          path: |
+            artifacts/r145a-hf1/
+            artifacts/r145a-historical/

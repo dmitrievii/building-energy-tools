@@ -147,6 +147,8 @@ def _collect_inventory(state,process):
     result["epw_lifecycle"]=lifecycle_summary()
     result["allocator"]=allocator_snapshot()
     result["recovery"]=recovery_summary()
+    from .cloud_memory_ownership import summarize_ownership
+    result["cloud_memory_ownership"]=summarize_ownership(result)
     result["raw_headroom_bytes"]=(result["memory"]["limit"]-result["memory"]["used"]
         if "limit" in result["memory"] and "used" in result["memory"] else None)
     reading=result["memory"]
@@ -448,6 +450,14 @@ def _render_sidebar(st):
                     if not p.get("app") and p.get("climate_app_target"):
                         st.caption(f"PID {p['pid']}: {p.get('orphan_assessment','unknown')}; listener ports {p.get('sockets',{}).get('tcp_listen_ports','unknown')}; established TCP {p.get('sockets',{}).get('tcp_established','unknown')}.")
                 st.caption("Process checks are read-only. No process termination from this public interface.")
+            ownership=inspected.get("cloud_memory_ownership",{})
+            if ownership:
+                candidates=ownership["processes"]["other_matching_targets"]
+                if candidates:
+                    st.warning(f"{len(candidates)} other matching Climate Analyzer launch target(s); sampled anonymous RSS {_mib(ownership['processes']['other_matching_anon_bytes'])}. Platform ownership unresolved. Do not terminate from this application.")
+                allocator=ownership["allocator"]
+                st.caption(f"Allocator admission: {allocator['classification']}; reported free arena space {_mib(allocator.get('free_arena_bytes'))}. Free arena space is not necessarily reclaimable RSS.")
+                st.caption("Allocator startup evidence and process ownership are separate gates. Neither is a guarantee of total container memory recovery.")
             if details:
                 # Text summaries avoid Arrow/dataframe marshalling and repeated
                 # construction of nested JSON elements on each unrelated rerun.
