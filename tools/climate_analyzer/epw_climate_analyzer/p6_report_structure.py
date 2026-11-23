@@ -432,7 +432,12 @@ def standard_figure(entry,df,context,reference_df=None):
         fig.update_layout(template="plotly_white",title=label,barmode="stack",yaxis_title="Hours")
         note="UTCI screening: MRT = air temperature, source wind assumed at 10 m, invalid input domains excluded."
     else:raise ValueError("Unknown standard diagram.")
-    stat=source_interpretation(df,page,column if kind in ("profile","duration","heatmap") else "",label,unit,thresholds=temperature_thresholds(context),kind=kind)
+    if page=="Temperature":
+        from .temperature_findings import temperature_figure_interpretation
+        stat=temperature_figure_interpretation(
+            df,fig,kind,column=column or T,thresholds=temperature_thresholds(context))
+    else:
+        stat=source_interpretation(df,page,column if kind in ("profile","duration","heatmap") else "",label,unit,thresholds=temperature_thresholds(context),kind=kind)
     if kind in ("nv","night") and c in ledger:
         from .interpretations import natural_ventilation_interpretation
         stat=natural_ventilation_interpretation(df,ledger[c].gt(0)&ledger[c].notna())
