@@ -24,7 +24,7 @@ class TemperatureR21Tests(unittest.TestCase):
         value = temperature_figure_interpretation(self.df, fig, "profile")
         self.assertIn("Feb (28.0 °C)", value)
         self.assertIn("Jan (12.0 °C)", value)
-        self.assertIn("not building heating or cooling loads", value)
+        self.assertIn("seasonal envelope and passive-control priorities", value)
 
     def test_heatmap_interprets_selected_cells(self):
         fig = go.Figure(go.Heatmap(
@@ -33,14 +33,14 @@ class TemperatureR21Tests(unittest.TestCase):
         value = temperature_figure_interpretation(self.df, fig, "heatmap")
         self.assertIn("5.0 °C (Jan, hour 12)", value)
         self.assertIn("30.0 °C (Feb, hour 12)", value)
-        self.assertIn("not indoor comfort", value)
+        self.assertIn("seasonal concentration of outdoor temperatures", value)
 
     def test_duration_is_climate_screen_only(self):
         fig = go.Figure(go.Scatter(x=[1, 2], y=[26., 10.]))
         value = temperature_figure_interpretation(self.df, fig, "duration")
         self.assertIn("without preserving chronology", value)
         self.assertIn("P05", value)
-        self.assertIn("not building heating or cooling loads", value)
+        self.assertIn("seasonal envelope and passive-control priorities", value)
 
     def test_amplitude_explicitly_distinguishes_period_lengths(self):
         fig = go.Figure(go.Scatter(x=["W01", "W02"], y=[7., 19.]))
@@ -49,7 +49,7 @@ class TemperatureR21Tests(unittest.TestCase):
         )
         self.assertIn("weekly amplitude", value)
         self.assertIn("19.0 K at W02", value)
-        self.assertIn("not diurnal swings", value)
+        self.assertIn("longer aggregation amplitudes", value)
 
     def test_occurrence_reports_actual_dominant_class(self):
         fig = go.Figure()
@@ -70,7 +70,7 @@ class TemperatureR21Tests(unittest.TestCase):
         )
         self.assertIn("42.0 K·d", value)
         self.assertIn("daily mean outdoor temperatures", value)
-        self.assertIn("not building energy demand", value)
+        self.assertIn("climatic temperature sums", value)
 
     def test_overnight_calendar_boundary_is_correct(self):
         warm = (self.df.index >= pd.Timestamp("2026-07-01 20:00")) & (
@@ -79,7 +79,7 @@ class TemperatureR21Tests(unittest.TestCase):
         self.df.loc[warm, "dry_bulb_temperature_c"] = 21.
         value = temperature_interpretation(self.df, 18., 26.)
         self.assertIn("overnight periods with sampled night minimum ≥20 °C: 1", value)
-        self.assertIn("distinct from the daily-minimum", value)
+        self.assertIn("prolonged warm nights", value)
 
 
 if __name__ == "__main__":
