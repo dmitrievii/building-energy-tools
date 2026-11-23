@@ -67,6 +67,8 @@ def directional_table(df,*,speed="wind_speed_m_s",direction="wind_direction_deg"
                       radial="Hours",colour="Wind speed",nv_mask=None):
     rows=direction_rows(df,speed,direction)
     interval=native_interval_hours(df)
+    if radial=="Eligible hours" and (nv_mask is None or colour!="Natural ventilation suitability"):
+        raise ValueError("Eligible-hour radial quantity requires a stated natural-ventilation screen.")
     if colour=="Wind speed": val=rows["speed"]
     elif colour=="Absolute humidity": val=absolute_humidity(df).loc[rows.index]
     elif colour=="Dynamic pressure potential": val=dynamic_pressure(df,speed).loc[rows.index]
@@ -86,6 +88,7 @@ def directional_table(df,*,speed="wind_speed_m_s",direction="wind_direction_deg"
     grouped=rows.groupby("sector")
     counts=grouped.size().reindex(ANGLES,fill_value=0)
     if radial=="Hours": r=counts*interval
+    elif radial=="Eligible hours": r=grouped.colour.sum().reindex(ANGLES,fill_value=0)*interval/100.
     elif radial=="Percentage": r=counts*100/max(1,int(counts.sum()))
     elif radial=="Wind-driven rain exposure": r=grouped.radial.sum(min_count=1).reindex(ANGLES)
     else: r=grouped.radial.mean().reindex(ANGLES)
@@ -94,7 +97,7 @@ def directional_table(df,*,speed="wind_speed_m_s",direction="wind_direction_deg"
     table.index.name="azimuth_deg"
     return table
 
-RADIAL_UNITS={"Hours":"h","Percentage":"%","Mean wind speed":"m/s",
+RADIAL_UNITS={"Hours":"h","Eligible hours":"h","Percentage":"%","Mean wind speed":"m/s",
               "Wind-driven rain exposure":"mm·m/s","Dynamic pressure potential":"Pa"}
 
 def directional_figure(table,radial,colour,title):
@@ -130,6 +133,16 @@ def directional_interpretation(table,radial,colour):
     valid=table.loc[table.valid_hours>0].dropna(subset=["radius"])
     if valid.empty: return "No coincident non-calm wind observations support the selected quantities."
     row=valid.loc[valid.radius.idxmax()]
+    if radial=="Eligible hours":
+        total=float(valid.radius.fillna(0).sum())
+        if total<=0:
+            return ("Zero wind-direction hours pass the selected strict outdoor temperature/humidity "
+                    "screen. Wind observations can still be present. This screen does not establish "
+                    "that natural ventilation is architecturally impossible.")
+        return (f"{total:.1f} wind-direction observation hours pass the selected strict "
+                f"outdoor-air screen; the largest eligible sector is {row.direction} "
+                f"({row.radius:.1f} h). This is weather screening, not achieved indoor airflow "
+                "or occupied-space comfort. Excluded calm hours are not directional.")
     text=(f"The largest {radial.lower()} value occurs for wind from {row.direction} "
           f"({row.radius:.2f} {RADIAL_UNITS[radial]}). The colour represents the directional mean "
           f"of {colour.lower()}, calculated from {valid.valid_hours.sum():.1f} valid non-calm observation hours. "
