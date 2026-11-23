@@ -167,6 +167,16 @@ def wind_design_interpretation(
     leader=ranked.index[0]
     runner=ranked.index[1] if len(ranked)>1 else leader
     worst=summary.sort_values("low_wind_pct_of_valid",ascending=False).iloc[0]
+    seasons=[]
+    for months,label in (((12,1,2,3),"Dec–Mar"),((6,7,8),"Jun–Aug")):
+        piece=sectors.loc[sectors.month.isin(months)]
+        by_sector=piece.groupby("sector").selected_hours.sum().sort_values(ascending=False)
+        if not by_sector.empty and float(by_sector.iloc[0])>0:
+            from_sector=str(by_sector.index[0])
+            seasons.append(f"{label}: wind from {from_sector} "
+                           f"({_fmt_hours(by_sector.iloc[0])} h; opposite axis "
+                           f"{opposite_sector(from_sector)})")
+    seasonal_summary=(". Calendar blocks: "+"; ".join(seasons)+". ") if seasons else " "
     restriction=[]
     if rain_max_mm_h is not None:restriction.append(f"rain ≤{rain_max_mm_h:g} mm/h")
     if temperature_range_c is not None:restriction.append(
@@ -182,6 +192,7 @@ def wind_design_interpretation(
         f"and {runner} ({_fmt_hours(ranked.iloc[1]) if len(ranked)>1 else '0'} h). "
         f"Candidate windward/exhaust façade axes include {leader}–{opposite_sector(leader)} "
         "and the seasonally relevant alternative bearings; these are meteorological FROM directions. "
+        +seasonal_summary+
         f"Low/weak wind accounts for {_fmt_hours(total_low)} h ({100*total_low/max(1,total_valid):.1f}%). "
         f"The highest monthly low-wind share is month {int(worst.month)} "
         f"({worst.low_wind_pct_of_valid:.1f}%). "
