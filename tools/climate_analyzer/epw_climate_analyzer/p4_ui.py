@@ -84,7 +84,7 @@ def _events(table,render,*,key,unit,threshold,series=None,above=True,quantity="T
         fig.add_bar(x=d.index,y=d,marker_color="#4477AA")
         fig.update_layout(title="Event duration distribution",xaxis_title="Duration ["+unit+"]",yaxis_title="Number of events")
     fig.update_layout(template="plotly_white")
-    render(fig,"Events are maximal consecutive qualifying observed samples. Missing, excluded or nonqualifying observations terminate an event. Peak is the extreme observed value; integrated excess is the sum of exceedance or shortfall relative to the threshold times the sample duration. Selection boundaries can truncate events. These are user-defined screening thresholds, not return periods. "+extra_note)
+    render(fig,"Events group consecutive observations meeting the selected threshold. The event peak and integrated threshold excess describe severity; the duration and timing identify persistent climatic episodes. "+extra_note)
     _show_table(table,key)
 
 def temperature_panel(df,render):
@@ -133,16 +133,23 @@ def precipitation_panel(df,native,view,render):
             minimum=st.number_input("Minimum consecutive days",min_value=1,value=2,step=1,key="p4_wet_duration")
             wet=st.radio("Event type",["Wet spells","Dry spells"],horizontal=True,key="p4_wet_type")=="Wet spells"
             d,w,a=p.wet_dry_events(df,threshold,minimum)
-            _events(w if wet else a,render,key="rain",unit="days",threshold=threshold,series=d["sum"],above=wet,quantity="Daily precipitation [mm]")
+            from .precipitation_findings import wet_dry_interpretation
+            interpretation=wet_dry_interpretation(df,wet=wet,threshold=threshold,minimum=minimum)
+            _events(w if wet else a,render,key="rain",unit="days",threshold=threshold,
+                    series=d["sum"],above=wet,quantity="Daily precipitation [mm]",
+                    extra_note=interpretation)
         elif view=="Precipitation accumulation":
             choice=st.selectbox("Accumulation type",["Rolling precipitation totals","Cumulative observed blocks"],key="p4_rain_accum")
             if choice=="Rolling precipitation totals":
                 h=st.selectbox("Duration [h]",[1,3,6,12,24,48,72,168],index=4,key="p4_rain_roll")
                 s=p.rolling_windows(native if native is not None else df,p.P,h,total=True,nonnegative=True)
-                note="Trailing complete contiguous sample window. No interpolation across missing or excluded intervals. Values are interval depth sums."
+                from .precipitation_findings import rolling_interpretation
+                note=rolling_interpretation(native if native is not None else df,h)
             else:
                 s=p.cumulative_precipitation(native if native is not None else df)
-                note="Cumulative precipitation restarts after missing or excluded records; no unknown rainfall is treated as zero."
+                from .precipitation_findings import rainfall_summary
+                note=rainfall_summary(native if native is not None else df)
+                note+=" The curve displays accumulation within consecutive observed blocks."
             fig=go.Figure(go.Scatter(x=s.index,y=s,mode="lines",connectgaps=False))
             fig.update_layout(template="plotly_white",title=choice,yaxis_title="Precipitation [mm]",xaxis_title="Timestamp");render(fig,note)
         elif view=="Empirical IDF":
@@ -154,20 +161,28 @@ def precipitation_panel(df,native,view,render):
                 g=g.sort_values("return_period_y")
                 fig.add_scatter(x=g.return_period_y,y=g.intensity_mm_h,mode="lines+markers",name=f"{dur:g} h",customdata=g.year,hovertemplate="T %{x:.2f} y<br>I %{y:.2f} mm/h<br>Year %{customdata}<extra></extra>")
             fig.update_layout(template="plotly_white",title="Empirical rainfall intensity–duration–frequency",xaxis_type="log",xaxis_title="Empirical return period [years]",yaxis_title="Intensity [mm/h]")
-            render(fig,"Complete measured calendar years only (minimum ten), native cadence ≤60 min. Within-year rolling maxima; Weibull plotting positions (n+1)/rank. No fitted distribution, extrapolation, confidence interval or regulatory design rainfall. Shorter-than-native durations unavailable.")
+            peak=a.loc[a.intensity_mm_h.idxmax()]
+            render(fig,f"Empirical intensities are calculated from {a.year.nunique()} complete measured years "
+                   f"using observed rolling accumulation windows at native cadence. "
+                   f"The highest calculated intensity is {peak.intensity_mm_h:.1f} mm/h "
+                   f"for a {peak.duration_h:g}-h window. Ranked annual maxima use "
+                   "Weibull plotting positions (n+1)/rank, supporting comparison across observed storm durations.")
             _show_table(a,"empirical_idf")
         elif view=="Snow-cover calendar":
             data=native if native is not None else df
             s=p.daily_stats(data,p.SNOW,nonnegative=True)["max"]
             s=s.gt(0).astype(float).where(s.notna())
-            _calendar(s,render,"Snow-cover calendar","Complete days with observed snow depth >0 cm; 0 means no snow, missing days unclassified.")
+            from .precipitation_findings import snow_summary
+            _calendar(s,render,"Snow-cover calendar",snow_summary(data))
         elif view=="Freeze–thaw days":
             mode=st.selectbox("Chart type",["Daily crossing indicators","Observed freeze–thaw sequences"],key="p4_freeze_view")
             threshold=st.number_input("Precipitation threshold [mm]",min_value=.1,value=1.,step=.1,key="p4_freeze_wet")
             if mode=="Daily crossing indicators":
                 a=p.freeze_thaw_days(df,threshold)
                 tab=a.resample("MS").sum(min_count=1)
-                _bars(tab,"Air freeze–thaw exposure days","Complete days",render,"Daily sampled minimum <0 and maximum >0 °C indicate air-temperature crossing opportunity. Wet subset additionally requires same-day precipitation ≥ threshold. The result identifies crossing days that merit attention in façade and drainage detailing.")
+                from .precipitation_findings import freeze_interpretation
+                _bars(tab,"Air freeze–thaw exposure days","Complete days",render,
+                      freeze_interpretation(df,wet_threshold=threshold))
                 _show_table(tab,"freeze_thaw")
             else:
                 a=p.freeze_thaw_cycles(df,wet_threshold=threshold)
@@ -176,7 +191,9 @@ def precipitation_panel(df,native,view,render):
                 tab=pd.DataFrame({"Observed complete sequences":pd.Series(1.,index=a.index),
                                   "Antecedent wet sequences":a["Antecedent wet at freeze"]})
                 tab=tab.resample("MS").sum(min_count=1)
-                _bars(tab,"Observed air freeze–thaw sequences","Sequences",render,"Strict warm (>0) → freeze (<0) → warm (>0) samples. Neutral samples retain state; gaps reset. Wet sequence requires complete 24-hour trailing precipitation ≥ selected threshold at the freeze sample. Unknown wet flags remain unknown. These are sampled atmospheric sequences, not material damage cycles.")
+                from .precipitation_findings import freeze_interpretation
+                _bars(tab,"Observed air freeze–thaw sequences","Sequences",render,
+                      freeze_interpretation(df,"freeze_cycles",wet_threshold=threshold))
                 _show_table(a,"freeze_thaw_sequences")
     except ValueError as exc:st.warning(str(exc))
 
