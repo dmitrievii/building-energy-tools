@@ -180,6 +180,8 @@ def catalogue(df,context,coverage=FULL):
                 if colour in CLASS_EDGES:
                     for radial in ("Hours","Percentage") if coverage==FULL else ("Percentage",):
                         add(WIND,f"{label} · {season} · {radial} · {colour} classes","wind_classes",speed,"",(direction,m,radial,colour))
+    add(RAIN,"Directional wind-driven rain exposure","wind_rain",P,"mm·m/s",
+        ok=hourly and has(P,V,WD))
     for wet in (True,False):
         for style in ("timeline","intensity","duration"):
             add(RAIN,f"{'Wet' if wet else 'Dry'} spells · {style}","wetdry",P,"mm",(wet,style),ok=hourly and has(P))
