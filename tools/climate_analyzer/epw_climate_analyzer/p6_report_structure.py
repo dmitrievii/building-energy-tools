@@ -349,7 +349,8 @@ CATALOG=[
 ("shading_orientation","Shading analysis","Shading performance across eight façades",G,"kWh/m²","shading_orientation"),
 ("utci","Outdoor Thermal Comfort","Monthly UTCI stress",T,"h","utci"),
 ("utci_shading","Outdoor Thermal Comfort","Outdoor thermal exposure · direct-beam shade benefit",T,"K","utci_shading")]
-PRESETS={"Architectural climate study":("temperature_profile","temperature_heatmap","psychrometric","ghi","facade","solar_exposure","sunpath","wind_rose","wind_orientation","daylight","sky_cover","exterior_light","rain","rain_severity","rain_wind","snow_cover","climograph","nv","night","shade","shading_energy","shading_orientation"),
+PRESETS={"Architectural climate study":("temperature_profile","temperature_heatmap","psychrometric","ghi","facade","solar_exposure","sunpath","wind_rose","wind_orientation","daylight","sky_cover","exterior_light","rain","rain_severity","rain_wind","snow_cover","climograph","nv","night","shade","shading_energy","shading_orientation",
+                                  "utci","utci_shading","hvac_energy","hvac_economizer","hvac_design_hot"),
 "Climate overview":("temperature_profile","humidity_profile","ghi","wind_rose","sky_cover","rain","rain_severity","rain_wind","climograph"),
 "Passive design":("temperature_heatmap","psychrometric","facade","solar_exposure","wind_rose","wind_orientation","sky_cover","exterior_light","nv","night","shade","shading_energy","shading_orientation","utci","utci_shading"),
 "HVAC & engineering":("temperature_profile","temperature_duration","humidity_ratio","psychrometric","wind_speed","degree","hvac_energy","hvac_economizer","hvac_design_hot","hvac_design_cold","hvac_critical","nv","night","utci"),
