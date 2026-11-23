@@ -322,6 +322,7 @@ CATALOG=[
 ("sunshine_ratio","Sky and Daylight","Sunshine share of astronomical daylight","sunshine_duration_s","%","relative_sunshine"),
 ("rain","Precipitation and Snow","Monthly precipitation",P,"mm","total"),
 ("rain_severity","Precipitation and Snow","Monthly precipitation-day severity",P,"days","rain_days"),
+("rain_wind","Precipitation and Snow","Wind-driven rain by incoming sector",P,"mm·m/s","wind_rain"),
 ("snow_cover","Precipitation and Snow","Observed snow-cover hours","snow_depth_cm","h","snow_hours"),
 ("climograph","Precipitation and Snow","Walter–Lieth diagram",P,"mm","climograph"),
 ("snow","Precipitation and Snow","Monthly snow depth","snow_depth_cm","cm","profile"),
@@ -330,8 +331,8 @@ CATALOG=[
 ("degree","HVAC and Passive Design","Heating and cooling degree days",T,"K·d","degree"),
 ("shade","Shading analysis","Solar protection screening",G,"h","shade"),
 ("utci","Outdoor Thermal Comfort","Monthly UTCI stress",T,"h","utci")]
-PRESETS={"Architectural climate study":("temperature_profile","temperature_heatmap","psychrometric","ghi","facade","solar_exposure","sunpath","wind_rose","wind_orientation","daylight","sky_cover","exterior_light","rain","rain_severity","snow_cover","climograph","nv","night","shade"),
-"Climate overview":("temperature_profile","humidity_profile","ghi","wind_rose","sky_cover","rain","rain_severity","climograph"),
+PRESETS={"Architectural climate study":("temperature_profile","temperature_heatmap","psychrometric","ghi","facade","solar_exposure","sunpath","wind_rose","wind_orientation","daylight","sky_cover","exterior_light","rain","rain_severity","rain_wind","snow_cover","climograph","nv","night","shade"),
+"Climate overview":("temperature_profile","humidity_profile","ghi","wind_rose","sky_cover","rain","rain_severity","rain_wind","climograph"),
 "Passive design":("temperature_heatmap","psychrometric","facade","solar_exposure","wind_rose","wind_orientation","sky_cover","exterior_light","nv","night","shade","utci"),
 "HVAC & engineering":("temperature_profile","temperature_duration","humidity_ratio","psychrometric","wind_speed","degree","nv","night","utci"),
 "All standard diagrams":tuple(x[0] for x in CATALOG)}
@@ -347,7 +348,8 @@ def available_catalog(df,context):
        "facade":(G,D,N,"solar_apparent_zenith_deg","solar_azimuth_deg"),
        "facade_temperature":(G,D,N,"solar_apparent_zenith_deg","solar_azimuth_deg",T),
        "sunpath":(N,"solar_apparent_zenith_deg","solar_azimuth_deg"),"windrose":(V,"wind_direction_deg"),"wind_panel":(V,"wind_direction_deg"),"wind_orientation":(V,"wind_direction_deg"),
-       "climograph":(T,P),"rain_days":(P,),"snow_hours":("snow_depth_cm",),
+       "climograph":(T,P),"rain_days":(P,),"wind_rain":(P,V,"wind_direction_deg"),
+       "snow_hours":("snow_depth_cm",),
        "nv":(T,W),"night":(T,),"degree":(T,),"shade":(T,G),"utci":(T,RH,V)}
     out=[]
     for entry in CATALOG:
@@ -407,6 +409,11 @@ def standard_figure(entry,df,context,reference_df=None):
         if table.empty:raise ValueError("No complete precipitation days support the severity chart.")
         fig=rain_day_classes_figure(table)
         note="Disjoint daily precipitation classes: 1–<10, 10–<20 and ≥20 mm on complete observed calendar days."
+    elif kind=="wind_rain":
+        from .directional_climate import directional_table,directional_figure,directional_interpretation
+        table=directional_table(df,radial="Wind-driven rain exposure",colour="Wind speed")
+        fig=directional_figure(table,"Wind-driven rain exposure","Wind speed",label)
+        note=directional_interpretation(table,"Wind-driven rain exposure","Wind speed")
     elif kind=="snow_hours":
         from .aggregations import native_interval_hours
         snow=numeric(df,"snow_depth_cm")
