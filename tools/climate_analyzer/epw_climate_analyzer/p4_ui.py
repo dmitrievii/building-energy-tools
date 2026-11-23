@@ -57,7 +57,7 @@ def event_timeline_figure(table,series,*,unit,threshold,above=True,quantity="Tem
                       yaxis_title=quantity,title="Extreme-event timeline")
     return fig
 
-def _events(table,render,*,key,unit,threshold,series=None,above=True,quantity="Temperature [°C]",step=None):
+def _events(table,render,*,key,unit,threshold,series=None,above=True,quantity="Temperature [°C]",step=None,extra_note=""):
     if table.empty:
         if series is not None and series.notna().any():
             st.info("No qualifying continuous events in the selected records. Observations and the selected threshold are shown below.")
@@ -84,7 +84,7 @@ def _events(table,render,*,key,unit,threshold,series=None,above=True,quantity="T
         fig.add_bar(x=d.index,y=d,marker_color="#4477AA")
         fig.update_layout(title="Event duration distribution",xaxis_title="Duration ["+unit+"]",yaxis_title="Number of events")
     fig.update_layout(template="plotly_white")
-    render(fig,"Events are maximal consecutive qualifying observed samples. Missing, excluded or nonqualifying observations terminate an event. Peak is the extreme observed value; integrated excess is the sum of exceedance or shortfall relative to the threshold times the sample duration. Selection boundaries can truncate events. These are user-defined screening thresholds, not return periods.")
+    render(fig,"Events are maximal consecutive qualifying observed samples. Missing, excluded or nonqualifying observations terminate an event. Peak is the extreme observed value; integrated excess is the sum of exceedance or shortfall relative to the threshold times the sample duration. Selection boundaries can truncate events. These are user-defined screening thresholds, not return periods. "+extra_note)
     _show_table(table,key)
 
 def temperature_panel(df,render):
@@ -115,7 +115,12 @@ def persistence_panel(df,render,*,wind=False):
     try:
         s=p.valid_values(df,column,True)
         a=p.events(s,threshold=threshold,above=above,minimum=minimum,step=p.cadence(df))
-        _events(a,render,key="wind" if wind else "humidity",unit="hours",threshold=threshold,series=s,above=above,quantity=label,step=p.cadence(df))
+        extra=""
+        if not wind:
+            from .humidity_findings import humidity_figure_interpretation
+            extra=humidity_figure_interpretation(
+                df,None,"persistence",column=column,args=(threshold,above,""))
+        _events(a,render,key="wind" if wind else "humidity",unit="hours",threshold=threshold,series=s,above=above,quantity=label,step=p.cadence(df),extra_note=extra)
     except ValueError as exc:st.warning(str(exc))
 
 def precipitation_panel(df,native,view,render):
