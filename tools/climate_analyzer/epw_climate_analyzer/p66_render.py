@@ -261,8 +261,9 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         note+=" The displayed intervals quantify available horizontal outdoor illumination for daylight-oriented façade design."
     elif k=="shading_mask":
         from .shading_sketch import window_shading_sketch
+        from .shading_findings import shading_mask_interpretation
         f=window_shading_sketch(**cat.GEOMETRY)
-        note+=" "+cat.GEO_NOTE
+        note=cat.GEO_NOTE+" "+shading_mask_interpretation(cat.GEOMETRY)
     elif k in ("shading_calendar","shading_profiles"):
         from .shading_calendar import shading_frame,shading_calendar,monthly_shading_profiles,shading_note
         from .solar_shading import TOTAL_DEVICE
@@ -272,21 +273,29 @@ def make_figure(d,df,context,reference_df=None,cache=None):
             f=shading_calendar(frame,metric,a[1],a[2],a[3],title=title)
         else:
             f,_=monthly_shading_profiles(frame,metric,sorted(set(df.index.month)))
-        note+=" "+cat.GEO_NOTE+" "+shading_note(metric)
+        from .shading_findings import shading_temporal_interpretation
+        note=cat.GEO_NOTE+" "+shading_temporal_interpretation(frame,metric,device=device)
     elif k=="shading_temporal":
         from .shading_temporal import temporal_shading_tables,shading_monthly_rose,shading_month_hour_heatmap
         metric,style,year,device=a
         result=memo(("shading",metric,year),lambda:temporal_shading_tables(df.loc[df.index.year==year].copy(),geometry=cat.GEOMETRY,metric=metric))
         monthly,cells=result[:2]
         f=shading_monthly_rose(monthly,metric) if style=="Monthly rose" else shading_month_hour_heatmap(cells,metric,device=device)
-        note+=" "+cat.GEO_NOTE+" Direct-beam-only screening."
+        from .shading_findings import (
+            shading_monthly_interpretation,shading_cells_interpretation)
+        stat=(shading_monthly_interpretation(monthly,metric,year=year)
+              if style=="Monthly rose" else
+              shading_cells_interpretation(cells,metric,device=device,year=year))
+        note=cat.GEO_NOTE+" "+stat
     elif k=="shading_irradiation":
         from .solar_shading import shading_ledger
         ledger=shading_ledger(df,**cat.GEOMETRY)
         direct=ledger["Unshaded direct"]
         intercepted=ledger[[c1 for c1 in ledger if c1.endswith(" intercepted direct")]].sum(axis=1,min_count=1)
         f=_bars(_totals(df,pd.DataFrame({"Unshaded direct":direct/1000,"Remaining direct":(direct-intercepted)/1000,"Intercepted direct":intercepted/1000}),"Monthly"),title,"kWh/m²")
-        note+=" "+cat.GEO_NOTE+" Direct-beam ledger only; diffuse and ground terms remain unchanged."
+        from .shading_findings import shading_ledger_interpretation
+        note=cat.GEO_NOTE+" "+shading_ledger_interpretation(
+            ledger,df,geometry=cat.GEOMETRY)
     elif k in ("eligibility_map","eligibility_total"):
         name,period=a
         col={"nv":"Natural ventilation","night":"Night flushing","shade":"Solar protection screening"}[name]
@@ -296,7 +305,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         else:
             data=df.copy();data["atlas_suitable"]=ledger[col]/dt
             f=ch.heatmap_chart(data,"atlas_suitable",period,title,"0/1")
-        note+=" "+{"nv":"16–26 °C, humidity ratio ≤9 g/kg; no wind or occupancy filter.","night":"22:00–06:59, ≤20 °C after complete day ≥26 °C.","shade":"T≥24 °C, GHI≥250 W/m²; no façade geometry."}[name]
+        note+=" "+{"nv":"16–26 °C, humidity ratio ≤9 g/kg; outdoor-air suitability screen.","night":"22:00–06:59, ≤20 °C after complete day ≥26 °C.","shade":"T≥24 °C and GHI≥250 W/m². This monthly warm-weather solar screen identifies the timing of prospective façade protection demand."}[name]
     elif k=="nv_special":
         from .decisions import natural_ventilation_condition
         from .directional_climate import directional_table,directional_figure,directional_class_table,directional_class_figure
