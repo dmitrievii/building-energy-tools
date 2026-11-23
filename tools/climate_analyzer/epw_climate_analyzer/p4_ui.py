@@ -222,7 +222,11 @@ def hvac_panel(df,render):
     column=options[label]
     upper=st.radio("Tail",["Upper (cooling / moisture)","Lower (heating)"],horizontal=True,key="p4_hvac_tail")=="Upper (cooling / moisture)"
     view=st.selectbox("Analysis type",["Statistical design conditions","Critical multiday sequences"],key="p4_hvac_view")
-    st.caption("Empirical statistics of the selected records. EPW/TMY/generated data are screening only; these are not normative ASHRAE/ÖNORM station design values or inferred return periods.")
+    st.caption(
+        "Empirical hourly weather quantiles and continuous critical-weather sequences "
+        "derived from the selected source interval. Long-term station climatological "
+        "design references can be compared with these source-specific results."
+    )
     if view=="Critical multiday sequences":
         n=st.number_input("Continuous window [days]",1,30,3,1,key="p4_hvac_window")
         from .p4_design_charts import critical_windows_figure
@@ -230,13 +234,28 @@ def hvac_panel(df,render):
         try:fig,a,note=critical_windows_figure(df,column,unit,hours=24*n,upper=upper)
         except ValueError as exc:st.warning(str(exc));return
         if fig is None:st.info(note);return
-        render(fig,note)
+        from .hvac_findings import critical_window_interpretation
+        finding=critical_window_interpretation(
+            a,quantity=label.split(" [")[0],unit=unit,upper=upper,hours=24*n,
+        )
+        render(fig,finding+" "+note)
         _show_table(a,"hvac_sequences");return
     a=p.design_conditions(df,column,[.4,1.,2.,.5,1.5,5.],upper=upper,coincident=[v for v in (p.T,p.W,p.H,p.RH,p.V) if v!=column and numeric(df,v).notna().any()])
     if a.empty:st.info("No valid observations.");return
     a=a.sort_values("Nominal tail [%]")
+    from .hvac_findings import design_quantile_figure,design_quantile_interpretation
+    unit=label.rsplit("[",1)[-1].rstrip("]")
+    quantity=label.split(" [")[0]
+    render(
+        design_quantile_figure(a,quantity=quantity,unit=unit,upper=upper),
+        design_quantile_interpretation(a,quantity=quantity,unit=unit,upper=upper),
+    )
     _show_table(a,"hvac_design")
-    st.caption("Quantile uses linear sample interpolation; closest actual timestamp retains coincident conditions. Tail means use the inclusive tail and report paired-hour counts. These are not standardized mean-coincident design bins.")
+    st.caption(
+        "Quantiles use linear sample interpolation. The nearest observed timestamp "
+        "identifies one actual weather state; inclusive-tail means and paired-hour "
+        "counts describe the accompanying variables across all qualifying hours."
+    )
 
 def multivariate_panel(df,render,*,density_only=False):
     options=_available(df)
