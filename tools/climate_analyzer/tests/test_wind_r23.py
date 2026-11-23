@@ -63,8 +63,8 @@ class WindR23Tests(unittest.TestCase):
         filtered,_=wind_opportunity(df,min_speed_m_s=.5,max_humidity_ratio_g_kg=9.)
         self.assertEqual(float(filtered.selected_directional_hours.sum()),0.)
         wording=wind_design_interpretation(df,min_speed_m_s=.5,max_humidity_ratio_g_kg=9.)
-        self.assertIn("review screening assumptions",wording)
-        self.assertIn("does not establish that natural ventilation is impossible",wording)
+        self.assertIn("adjust the climatic screening criteria",wording)
+        self.assertIn("no qualifying windward sector",wording)
 
     def test_cadence_sensitive_rain_intensity(self):
         df=self.sample().iloc[:4].copy()
@@ -122,7 +122,7 @@ class WindR23Tests(unittest.TestCase):
         self.assertAlmostEqual(float(table.radius.sum()),0.)
         note=directional_interpretation(table,"Eligible hours","Natural ventilation suitability")
         self.assertIn("Zero wind-direction hours",note)
-        self.assertIn("does not establish",note)
+        self.assertIn("Seasonal wind availability",note)
 
     def test_monthly_aggregates_do_not_generate_invented_hour_counts(self):
         frame=self.sample().iloc[:2].copy()
@@ -133,7 +133,7 @@ class WindR23Tests(unittest.TestCase):
         note=wind_figure_interpretation(frame,go.Figure(),"profile",
                                          column="wind_speed_m_s")
         self.assertIn("Hourly calm frequencies",note)
-        self.assertIn("cannot be reconstructed",note)
+        self.assertIn("hourly observations",note)
 
     def test_report_has_causal_wind_orientation_diagram(self):
         from epw_climate_analyzer.p6_report_structure import (
