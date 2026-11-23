@@ -116,7 +116,12 @@ def make_figure(d,df,context,reference_df=None,cache=None):
     elif k=="occurrence":
         edges=ex.occurrence_default_edges(s,c,basis=a[0],daily_stat=a[1],interval_hours=dt)
         if not edges:raise NotApplicable("No valid class boundaries.")
-        table=ex.occurrence_table(df,c,edges,basis=a[0],daily_stat=a[1])
+        if c=="diffuse_radiation_fraction_pct" and a[0]=="Days":
+            from .solar_findings import diffuse_fraction_daily_occurrence
+            table=diffuse_fraction_daily_occurrence(df,edges,daily_stat=a[1])
+            note+=" Daytime fraction uses only GHI>0 and fully observed GHI days with complete positive-GHI DHI; nighttime undefined ratios do not invalidate a day. Daily mean is the mean of valid interval ratios, not ratio of daily sums."
+        else:
+            table=ex.occurrence_table(df,c,edges,basis=a[0],daily_stat=a[1])
         if table.empty:raise NotApplicable("No complete observations for the selected class basis.")
         f=ex.occurrence_figure(table,u,a[0]);note+=" Reference classes: "+", ".join(ex.occurrence_boundary_label(v) for v in edges)+f" {u}. Classes are disjoint."
         if c in ex.DEPTH_OCCURRENCE_COLUMNS:note+=" Zero is a separate dry/snow-free class. Negative or missing depths are excluded. Positive bins are descriptive depth classes, not precipitation-rate thresholds."
