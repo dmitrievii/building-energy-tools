@@ -230,20 +230,53 @@ def persistence_panel(df,mask,render,*,night=False):
                            "continuous_ventilation_"+unit+".csv","text/csv",key="p3_persistence_csv_"+unit)
 
 def ventilation_load_panel(df,render):
-    if not p.complete(df,p.T,p.W,p.SV):st.info("Temperature, humidity ratio and dry-air specific volume required.");return
+    from .hvac_findings import (
+        conditioning_interpretation,conditioning_summary,conditioning_monthly_figure,
+    )
+    if not p.complete(df,p.T,p.W,p.SV):
+        st.info("Temperature, humidity ratio and dry-air specific volume are required.")
+        return
     c=st.columns(3)
     flow=c[0].number_input("Outdoor airflow [m³/h]",0.,1000000.,1000.,100.,key="p3_hvac_flow")
     heat=c[1].number_input("Heating target [°C]",value=20.,step=.5,key="p3_hvac_heat")
     cool=c[2].number_input("Cooling target [°C]",value=26.,step=.5,key="p3_hvac_cool")
     c=st.columns(2)
-    lo=c[0].number_input("Minimum humidity ratio [g/kg]",min_value=0.,value=3.,step=.5,key="p3_hvac_lo")
-    hi=c[1].number_input("Maximum humidity ratio [g/kg]",min_value=0.,value=10.,step=.5,key="p3_hvac_hi")
-    try:q=p.ventilation_loads(df,airflow=flow,heat=heat,cool=cool,w_low=lo,w_high=hi)
-    except ValueError as exc:st.warning(str(exc));return
-    chart=st.selectbox("Chart type",["Monthly load energy","Load duration curves"],key="p3_hvac_chart")
-    note="Actual outdoor airflow; dry-air mass from source specific volume, sensible cp dependent on humidity, latent reference heat 2501 kJ/kg. The positive magnitudes quantify outdoor-air sensible and latent conditioning demand under the specified supply and airflow assumptions."
-    if chart=="Monthly load energy":_monthly(df,q,"Outdoor-air sensible and latent energy","kWh",render,note)
-    else:_duration(df,q/native_interval_hours(df),"Outdoor-air load duration","kW",render,note)
+    # Shared documented reference inputs for the archived complete atlas.
+    lo=c[0].number_input("Minimum humidity ratio [g/kg]",min_value=0.,value=4.,step=.5,key="p3_hvac_lo")
+    hi=c[1].number_input("Maximum humidity ratio [g/kg]",min_value=0.,value=9.,step=.5,key="p3_hvac_hi")
+    try:
+        q=p.ventilation_loads(df,airflow=flow,heat=heat,cool=cool,w_low=lo,w_high=hi)
+    except ValueError as exc:
+        st.warning(str(exc))
+        return
+    note=conditioning_interpretation(
+        df,q,airflow=flow,heat=heat,cool=cool,w_low=lo,w_high=hi,
+    )
+    st.caption(
+        "The reference evaluates outdoor dry-air mass from specific volume, "
+        "temperature-dependent sensible heat capacity and water-vapour "
+        "phase-change energy at a fixed outdoor airflow."
+    )
+    chart=st.selectbox(
+        "Chart type",["Monthly grouped energies","Monthly stacked contributions",
+                      "Load duration curves"],key="p3_hvac_chart",
+    )
+    if chart=="Load duration curves":
+        _duration(df,q/native_interval_hours(df),"Outdoor-air load duration",
+                  "kW",render,note)
+    else:
+        grouped=chart=="Monthly grouped energies"
+        fig=conditioning_monthly_figure(
+            df,q,grouped=grouped,title="Monthly outdoor-air sensible and latent energy",
+        )
+        render(fig,note)
+        st.dataframe(p.monthly_totals(df,q),use_container_width=True)
+    with st.expander("Calculated energy summary",expanded=False):
+        st.dataframe(
+            conditioning_summary(df,q).rename("Value").to_frame(),
+            use_container_width=True,
+        )
+
 
 def adaptive_panel(df,render):
     from .p3_adaptive_chart import COLUMNS,selected_daily_bands,adaptive_figure,adaptive_interpretation
