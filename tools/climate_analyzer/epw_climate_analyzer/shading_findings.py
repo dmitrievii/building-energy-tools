@@ -56,6 +56,13 @@ def shading_ledger_interpretation(ledger,df,*,geometry=None,cold_c=18.,hot_c=26.
             m=monthly.idxmax()
             note+=(f"Maximum monthly intercepted direct irradiation occurs in "
                    f"{m.strftime('%B %Y')} ({_f(monthly.loc[m])} kWh/m²). ")
+        monthly_direct=direct[known].resample("MS").sum(min_count=1)/1000.
+        monthly_direct=monthly_direct.dropna()
+        active=monthly_direct.loc[monthly_direct>1e-10]
+        if len(monthly_direct)>=6 and len(active)<len(monthly_direct):
+            note+=(f"Direct incidence reaches this façade in {len(active)} of "
+                   f"{len(monthly_direct)} represented months, concentrating "
+                   "the energy-weighted effectiveness in the sun-facing season. ")
         temp=_valid(df,TEMPERATURE).reindex(ledger.index)
         paired=known&temp.notna()
         if paired.any():
@@ -207,7 +214,7 @@ def orientation_shading_figure(table,*,cold_c=18.,hot_c=26.):
                     marker_color=color)
     fig.update_layout(template="plotly_white",barmode="stack",
         title="Device-intercepted direct irradiation by façade orientation and outdoor temperature",
-        xaxis_title="Façade outward normal [meteorological azimuth °]",
+        xaxis_title="Façade outward normal [compass orientation]",
         yaxis_title="Intercepted direct irradiation [kWh/m²]",
         legend=dict(orientation="h",y=-.22),height=540)
     return fig
