@@ -25,6 +25,8 @@ class PrecipitationR26Tests(unittest.TestCase):
             DURATION:[0.]*24+[10.]*24+[0.]*24,
             SNOW:[0.]*24+[5.]*12+[0.]*36,
             T:[-1.]*6+[2.]*66,
+            "wind_speed_m_s":[2.]*72,
+            "wind_direction_deg":[90.]*72,
         },index=idx)
         df.attrs["canonical_native_interval_minutes"]=60.
         return df
@@ -144,11 +146,23 @@ class PrecipitationR26Tests(unittest.TestCase):
         ids={x[0] for x in selected}
         self.assertIn("rain_severity",ids)
         self.assertIn("snow_cover",ids)
-        for kind in ("rain_severity","snow_cover"):
+        self.assertIn("rain_wind",ids)
+        for kind in ("rain_severity","snow_cover","rain_wind"):
             entry=next(x for x in selected if x[0]==kind)
             fig,note=rep.standard_figure(entry,df,{})
             self.assertTrue(fig.data)
-            self.assertIn("Selected-period",note) if kind=="rain_severity" else self.assertIn("snow cover",note.lower())
+            if kind=="rain_severity":
+                self.assertIn("Selected-period",note)
+            elif kind=="snow_cover":
+                self.assertIn("snow cover",note.lower())
+            else:
+                self.assertIn("wind",note.lower())
+
+    def test_directional_rain_exposure_is_concentrated_in_incoming_sector(self):
+        from epw_climate_analyzer.directional_climate import directional_table
+        table=directional_table(self.sample(),radial="Wind-driven rain exposure",colour="Wind speed")
+        self.assertAlmostEqual(float(table.radius.fillna(0).sum()),48.)
+        self.assertEqual(str(table.loc[table.radius.idxmax(),"direction"]),"E")
 
     def test_atlas_rainfall_notes_are_figure_specific(self):
         from epw_climate_analyzer import p66_catalogue as cat
