@@ -1,0 +1,49 @@
+name: Climate Analyzer R14.4B5-B6 allocator-first mixed memory and R14.5A cloud evidence
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/climate-analyzer-r144c.yml'
+      - 'tools/climate_analyzer/scripts/r144c_mixed.py'
+      - 'deployment/r144c_mixed_memory.mjs'
+      - 'deployment/r145a_cloud_allocator.mjs'
+permissions:
+  contents: read
+jobs:
+  mixed-memory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 85
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r tools/climate_analyzer/requirements.txt
+      - run: npm install --no-save playwright-core@1.55.0
+      - run: python -m compileall -q tools/climate_analyzer/scripts/r144c_mixed.py
+      - run: node --check deployment/r144c_mixed_memory.mjs
+      - run: python tools/climate_analyzer/scripts/r144c_mixed.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r144c-mixed-memory
+          path: artifacts/r144c/
+  cloud-origin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm install --no-save playwright-core@1.55.0
+      - name: Read-only deployed fingerprint and allocator origin
+        run: |
+          export EXPECTED_RUNTIME_BUILD=$(PYTHONPATH=tools/climate_analyzer python -c 'from epw_climate_analyzer.runtime_identity import RUNTIME_BUILD_ID; print(RUNTIME_BUILD_ID)')
+          node deployment/r145a_cloud_allocator.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r145a-cloud-allocator-origin
+          path: artifacts/r145a-cloud/

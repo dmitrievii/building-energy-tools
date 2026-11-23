@@ -552,6 +552,11 @@ def set_active_canonical_climate(dataset: object) -> None:
     if not isinstance(dataset, CanonicalClimateDataset):
         raise TypeError("Expected CanonicalClimateDataset for historical climate activation.")
     st.session_state["active_canonical_climate"] = dataset
+    # Bounded weak references only: measure provider dataset release without
+    # introducing a second owner or changing any scientific arrays.
+    from epw_climate_analyzer.epw_lifecycle import track
+    track("active canonical dataset",dataset)
+    track("active canonical source frame",dataset.data)
     st.session_state.pop("active_climate_file", None)
     from epw_climate_analyzer.memory_lifecycle import dataset_changed
     dataset_changed(st.session_state)
