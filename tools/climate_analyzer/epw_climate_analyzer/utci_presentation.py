@@ -16,7 +16,7 @@ STRESS_NOTE=("UTCI stress classes use fixed boundaries −40, −27, −13, 0, 9
              "spans −40 to +46 °C with distinct open-ended extreme classes. "
              "Colours are categorical; exact UTCI remains available in hover/data. "
              "Uncoloured cells represent missing or out-of-domain observations. "
-             "The 9–26 °C class denotes UTCI-equivalent conditions classified as no thermal stress."))
+             "The 9–26 °C class denotes UTCI-equivalent conditions classified as no thermal stress.")
 
 def stress_codes(values):
     a=np.asarray(values,dtype=float)
