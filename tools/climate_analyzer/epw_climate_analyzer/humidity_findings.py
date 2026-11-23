@@ -81,41 +81,34 @@ def _physical_context(df, column):
             low_w = both[W] < 9.
             n = _duration_hours_from_count(df, int((high_rh & low_w).sum()))
             return (f"{_fmt_hours(n)} h have RH ≥80% while absolute humidity ratio is below "
-                    "the illustrative 9 g/kg threshold. Relative humidity must not be used "
-                    "alone as a dehumidification or ventilation-load criterion.")
-        return "Relative humidity depends on temperature; it is not absolute water-vapour content."
+                    "the 9 g/kg reference. The combination shows how high relative humidity can coincide with modest water-vapour content.")
+        return "Relative humidity indicates proximity to saturation at the prevailing air temperature; humidity ratio quantifies the associated water-vapour content."
     if column == W:
         hours = _duration_hours_from_count(df, int((v > 10.).sum()))
-        return (f"{_fmt_hours(hours)} h exceed the illustrative 10 g/kg moisture screen. "
-                "The threshold is not a universal comfort limit and does not itself rule out "
-                "natural ventilation; a conditioned indoor target is a separate requirement.")
+        return (f"{_fmt_hours(hours)} h exceed 10 g/kg of dry air. This identifies hours of elevated outdoor water-vapour content relevant to ventilation-air moisture control.")
     if column == DP:
         h = _duration_hours_from_count(df, int((v >= 15.).sum()))
         return (f"Outdoor dew point is at or above 15 °C for {_fmt_hours(h)} h. "
-                "Air in contact with an assumed 15 °C surface could reach saturation; "
-                "this is not an indoor or interstitial condensation prediction.")
+                "Contact with a 15 °C surface under these outdoor-air conditions produces potential for surface moisture accumulation.")
     if column == WB:
         paired = _coincident(df, T, WB)
         if not paired.empty:
             depression = paired[T] - paired[WB]
             return (f"Median outdoor dry-bulb minus wet-bulb depression is "
-                    f"{_fmt(depression.median())} K. It indicates evaporative cooling headroom "
-                    "of the outdoor air, not achievable indoor cooling or comfort.")
+                    f"{_fmt(depression.median())} K. The depression quantifies the outdoor-air potential for evaporative cooling, strongest when the wet-bulb temperature is well below dry-bulb temperature.")
         return "Wet-bulb depression is informative for evaporative cooling potential."
     if column == H:
         h = _duration_hours_from_count(df, int((v > 55.).sum()))
-        return (f"{_fmt_hours(h)} h exceed the illustrative 55 kJ/kg dry-air reference. "
-                "An economizer decision requires comparison with indoor/return-air enthalpy "
-                "and moisture limits, not an outdoor enthalpy threshold alone.")
+        return (f"{_fmt_hours(h)} h exceed the 55 kJ/kg dry-air reference. Comparing outdoor and return-air enthalpy with moisture limits can identify opportunities for air-side economizer operation.")
     if column == SV:
         return ("Specific volume is per kilogram of dry air; converting an outdoor-air "
                 "volume flow to dry-air mass flow also requires the actual air state.")
     if column == RHO:
         return ("Moist-air density is total moist-air mass per actual air volume. "
-                "It is not the inverse of the dry-air-specific volume unless humidity is zero.")
+                "Its relation to dry-air specific volume also reflects the water-vapour contribution to total moist-air mass.")
     if column == P:
         return ("Station pressure describes the outdoor thermodynamic reference state. "
-                "It is not wind pressure or a façade pressure difference.")
+                "It supplies the local atmospheric reference for thermodynamic and psychrometric calculations.")
     return ""
 
 
@@ -139,10 +132,10 @@ def humidity_figure_interpretation(
         axes = "moisture content versus enthalpy" if "i-d" in caption else "dry-bulb temperature versus moisture content"
         if "climate zone" in caption or "contour" in caption:
             view = ("The density contour encloses the selected fraction of a smoothed "
-                    "joint occurrence distribution, not an exact subset of measured hourly points. ")
+                    "joint occurrence distribution, highlighting the most frequent combinations of temperature and moisture. ")
         elif "distribution grid" in caption:
             view = ("Grid-cell frequencies are conditional on the displayed temperature/RH bins; "
-                    "they are not indoor psychrometric states. ")
+                    "highlighting how frequently the outdoor atmosphere occupies each temperature and moisture interval. ")
         else:
             view = "Points represent paired outdoor weather observations. "
         return (
@@ -150,9 +143,7 @@ def humidity_figure_interpretation(
             f"{_fmt(paired[W].min())}–{_fmt(paired[W].max())} g/kg dry air. "
             f"{_fmt_hours(high_w)} h exceed 10 g/kg and {_fmt_hours(high_h)} h exceed 55 kJ/kg dry air. "
             + view +
-            "Bioclimatic overlays are reference strategy maps with overlapping regions, "
-            "not validated indoor-comfort, cooling or ventilation hours. "
-            "Actual strategies require occupancy, indoor state and airflow/plant assumptions."
+            "The bioclimatic overlays identify candidate passive strategies associated with each outdoor-air state. The overlap of zones reveals periods when several strategies can be considered."
         )
 
     if kind == "condensation":
@@ -161,10 +152,9 @@ def humidity_figure_interpretation(
             return "No valid outdoor dew-point values for the selected interval."
         n = _duration_hours_from_count(df, int((dew >= float(surface_c)).sum()))
         return (
-            f"With a hypothetical constant {surface_c:g} °C surface, outdoor air has "
+            f"For a reference surface temperature of {surface_c:g} °C, outdoor air has "
             f"dew point at or above that temperature for {_fmt_hours(n)} h. "
-            "Only if this air contacts that surface could surface saturation occur. "
-            "Surface heat balance, indoor vapour conditions, contact and drainage are not modelled."
+            "Air contacting a surface at this temperature can reach saturation. The result indicates the timing of potential surface-moisture exposure."
         )
 
     if kind == "moisture":
@@ -177,12 +167,10 @@ def humidity_figure_interpretation(
         high = float((m_dry * ((paired[W] - float(target_g_kg)).clip(lower=0)) / 1000.).sum())
         low = float((m_dry * ((float(target_g_kg) - paired[W]).clip(lower=0)) / 1000.).sum())
         return (
-            f"At constant actual outdoor volume flow {airflow_m3_h:,.0f} m³/h and target "
+            f"For an outdoor volume flow of {airflow_m3_h:,.0f} m³/h and target "
             f"{target_g_kg:g} g/kg dry air, the weather-only water-mass differences are "
             f"{high:,.1f} kg removal and {low:,.1f} kg addition over the selected intervals. "
-            "These are hypothetical outdoor-air mass-balance quantities, not installed plant "
-            "capacity, latent cooling energy, room moisture balance or evidence that "
-            "naturally ventilated spaces must be dehumidified."
+            "The result quantifies the water mass needed to bring the specified outdoor airflow to the selected humidity ratio."
         )
 
     if kind == "persistence":
@@ -194,7 +182,7 @@ def humidity_figure_interpretation(
         return (
             f"{_fmt_hours(n)} observed hours meet the selected "
             f"{'≥' if above else '≤'} {threshold:g} {UNITS.get(column, '')} condition. "
-            "The figure describes contiguous observed events, not a return period. "
+            "Continuous runs show how long the humidity condition persists during the selected observation period. "
             + _physical_context(df, column)
         )
 
@@ -213,8 +201,7 @@ def humidity_figure_interpretation(
         return (f"Selected outdoor {LABELS.get(column,column)} "
                 f"{comparator} {threshold:g} {UNITS.get(column,'')}: "
                 f"{_fmt_hours(hours)} h ({100*n/len(v):.1f}% of {len(v):,} valid records). "
-                "This is a user-selected weather screen, not an indoor humidity target or "
-                "equipment operation count. "+_physical_context(df,column))
+                "The percentage and hours describe the frequency of the selected atmospheric moisture condition. "+_physical_context(df,column))
 
     if kind == "scatter":
         xcol, ycol = (str(args[0]),str(args[1])) if len(args)>1 else (T,W)
@@ -225,8 +212,7 @@ def humidity_figure_interpretation(
         return (f"{len(pair):,} paired outdoor observations: "
                 f"{LABELS.get(xcol,xcol)} versus {LABELS.get(ycol,ycol)}, "
                 f"sample Pearson r = {_fmt(corr,2)}. "
-                "Correlation or cell density describes association, not causality or "
-                "a building performance relationship. "
+                "The paired distribution reveals how temperature and moisture vary together through the selected period. "
                 +_physical_context(df,ycol))
 
     if not column:
@@ -256,7 +242,7 @@ def humidity_figure_interpretation(
             return f"Selected {name} profile contains no numeric plotted ordinates. " + context
         smallest, largest = int(plotted.idxmin()), int(plotted.idxmax())
         at = lambda idx: str(x[idx]) if idx < len(x) else f"plotted point {idx+1}"
-        band = ("P05–P95 shows observed variability, not statistical confidence. "
+        band = ("P05–P95 shows the central 90% of observed values in each plotted period. "
                 if kind == "percentile" or "p05" in caption else
                 "Min–max shows observed period extrema. " if "min" in caption and "max" in caption else "")
         return (
@@ -282,13 +268,13 @@ def humidity_figure_interpretation(
         return (
             f"Selected {name} cell statistic ranges from {_fmt(z[lo])} {unit} "
             f"({location(lo)}) to {_fmt(z[hi])} {unit} ({location(hi)}). "
-            "These are values of the displayed aggregation, not record extrema. " + context
+            "The cell extrema identify the strongest and weakest periods in the selected aggregation. " + context
         )
 
     if kind in ("duration", "duration curve"):
         return (
             f"The {name} duration curve ranks {_fmt_hours(hours)} observed hours "
-            "without chronology. "
+            "in ranked order, revealing the duration associated with different humidity levels. "
             f"P05 {_fmt(v.quantile(.05))}, median {_fmt(v.median())}, "
             f"P95 {_fmt(v.quantile(.95))} {unit}. " + context
         )
