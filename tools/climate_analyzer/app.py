@@ -3958,9 +3958,10 @@ def render_sun_path(df: pd.DataFrame, *, shading_geometry=None) -> None:
             explanation+=" Observation colours map outdoor temperature and its coincidence with the displayed solar directions, indicating potential seasons for solar admission and shading."
         if shading_geometry is not None:
             from epw_climate_analyzer.solar_shading import MASK_EXPLANATION
+            from epw_climate_analyzer.shading_findings import shading_mask_interpretation
             st.caption(MASK_EXPLANATION)
             overlay_shading_mask(fig,inverted=invert_zenith_axis,**shading_geometry)
-            explanation+=" "+MASK_EXPLANATION
+            explanation+=" "+shading_mask_interpretation(shading_geometry)
         render_plot(fig, explanation)
     elif chart_type == "Technical sun-path diagram":
         from epw_climate_analyzer.solar_shading import thermal_overlay,overlay_shading_mask
@@ -3980,9 +3981,10 @@ def render_sun_path(df: pd.DataFrame, *, shading_geometry=None) -> None:
                 explanation+=" Temperature colours identify solar positions that coincide with warm and cool outdoor conditions."
         if shading_geometry is not None:
             from epw_climate_analyzer.solar_shading import MASK_EXPLANATION
+            from epw_climate_analyzer.shading_findings import shading_mask_interpretation
             st.caption(MASK_EXPLANATION)
             overlay_shading_mask(fig,technical=True,**shading_geometry)
-            explanation+=" "+MASK_EXPLANATION
+            explanation+=" "+shading_mask_interpretation(shading_geometry)
         render_plot(fig,explanation)
     else:
         show_cube = st.checkbox("Show cube", value=True, key="solar_sun_path_show_cube")
@@ -4303,8 +4305,6 @@ def render_shading_design(df: pd.DataFrame) -> None:
     elif view=="Seasonal and hourly shading":
         render_temporal_shading(df,geometry=geometry,has_energy=has_energy)
     elif view=="Geometric shading mask":
-        from epw_climate_analyzer.shading_findings import shading_mask_interpretation
-        st.caption(shading_mask_interpretation(geometry))
         render_sun_path(df,shading_geometry=geometry)
     elif view=="Façade orientation comparison":
         from epw_climate_analyzer.shading_findings import (
