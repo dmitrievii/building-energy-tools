@@ -150,7 +150,7 @@ def outdoor_comfort(df,render):
             render(duration_figure(common,native_interval_hours(df),"Paired exposure duration curves"),
                    finding+" Each line is independently ranked across the same set of valid hours.")
         else:
-            render(mrt_monthly_figure(tr.loc[common.index]),
+            render(mrt_monthly_figure(tr.where(values[["Open sun","Direct-beam shade"]].notna().all(axis=1))),
                    finding+" The MRT comparison is computed on the same paired UTCI evaluation hours and reflects the selected shortwave and longwave radiation conditions.")
     else:
         if st.session_state.get("p3_otc_exposure") not in values.columns:
