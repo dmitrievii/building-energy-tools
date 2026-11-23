@@ -19,7 +19,7 @@ class Climate0105RegressionTests(unittest.TestCase):
         self.assertEqual(len(builds),1)
         calls=[n for n in ast.walk(fn) if named_call(n,"render_plot") and n.args and
                isinstance(n.args[0],ast.Name) and n.args[0].id=="fig" and
-               len(n.args)>1 and named_call(n.args[1],"psychrometric_interpretation")]
+               len(n.args)>1 and named_call(n.args[1],"humidity_figure_interpretation")]
         self.assertTrue(any(isinstance(n.args[1].args[0],ast.Name) and
                             n.args[1].args[0].id=="report_df" for n in calls))
         renderer=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=="render_plot")
