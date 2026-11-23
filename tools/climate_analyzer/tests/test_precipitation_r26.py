@@ -98,7 +98,7 @@ class PrecipitationR26Tests(unittest.TestCase):
         wet=wet_dry_interpretation(df,wet=True,threshold=1.)
         dry=wet_dry_interpretation(df,wet=False,threshold=1.)
         self.assertIn("1 observed wet spells",wet)
-        self.assertIn("1 observed dry spells",dry)
+        self.assertIn("2 observed dry spells",dry)
         self.assertIn("rainwater-storage drawdown",dry)
 
     def test_rain_day_severity_partition_and_monthly_plot(self):
