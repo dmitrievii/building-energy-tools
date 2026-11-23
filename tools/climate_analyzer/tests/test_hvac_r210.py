@@ -147,7 +147,7 @@ class HVACR210Tests(unittest.TestCase):
             self.assertIn(key,available)
             fig,note=make_figure(available[key],df,{})
             self.assertTrue(fig.data)
-            self.assertIn("hour" if key=="economizer_stages" else ("kWh" if key=="vent_load" else "hour"),note.lower())
+            self.assertIn("hour" if key=="economizer_stages" else ("kwh" if key=="vent_load" else "hour"),note.lower())
 
 
 if __name__=="__main__":
