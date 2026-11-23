@@ -127,8 +127,9 @@ def add_design_quantiles(fig,df,column,unit,*,ascending=False,percentage=False,p
 DESIGN_NOTE=("Markers are linearly interpolated empirical sample quantiles at the selected "
              "positions on the sorted curve (descending: exceedance; ascending: cumulative "
              "frequency). 0% and 100% are the observed endpoints. Equivalent hours use valid "
-             "observed duration. Interpolated markers may differ from discrete rank points; "
-             "these are descriptive, not certified normative station design conditions.")
+             "observed duration. The plotted quantile positions define an empirical "
+             "source-specific weather envelope; the inclusive observed tail is "
+             "reported separately where repeated source values occur.")
 
 def critical_windows_figure(df,column,unit,*,hours=72,upper=True,limit=10):
     """Rank complete nonoverlapping windows; plot chronology and the actual ranking cutoff."""
@@ -188,8 +189,9 @@ def critical_windows_figure(df,column,unit,*,hours=72,upper=True,limit=10):
     set_period_axis_scope(fig,idx)
     note=(f"{len(table)} nonoverlapping complete {hours:g}-hour windows selected by "
           f"{'highest' if upper else 'lowest'} mean; dotted line is the least extreme selected "
-          f"window mean ({cutoff:.2f} {unit}), not a normative threshold. "
-          "Shaded intervals show the actual selected windows; diamonds mark their trailing endpoints. "
-          "Rank cutoff exceedance alone does not imply selection because overlapping windows are suppressed. "
-          "Missing data break the lines and rolling windows. Real chronology is retained.")
+          f"window mean ({cutoff:.2f} {unit}) and defines the observed empirical selection boundary. "
+          "Shaded intervals identify the selected windows; diamonds mark their trailing endpoints. "
+          "The ranking retains disjoint windows, selecting the strongest available mean "
+          "then excluding all windows that overlap a prior selection. "
+          "Missing observations separate the chronological source series and break rolling means.")
     return fig,table,note
