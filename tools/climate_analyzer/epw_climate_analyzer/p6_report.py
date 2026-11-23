@@ -36,6 +36,8 @@ def set_context(state,*,page,source,location,df=None,extra=None,site=None,source
         from .p6_report_structure import capture_statistics
         from .aggregations import native_interval_hours
         meta["statistics"]=capture_statistics(df,page)
+        from .report_synthesis import cross_chapter_synthesis
+        meta["cross-chapter synthesis"]=cross_chapter_synthesis(df)
         if str(df.attrs.get("canonical_native_resolution","")).lower()=="monthly":
             meta["native interval minutes"]="monthly"
         else:meta["native interval minutes"]=str(df.attrs.get("canonical_native_interval_minutes",native_interval_hours(df)*60))
@@ -159,6 +161,7 @@ def printable_html(items,title,paper,orientation,*,use_osm=False):
     if paper not in ("A4","A3") or orientation not in ("Portrait","Landscape"):raise ValueError("Invalid paper settings.")
     from plotly.offline import get_plotlyjs
     from .p6_report_structure import contexts,ordered_groups,concise_context,site_details,locator_figure,report_figure,zone_legend_entries,figure_height,complex_figure
+    from .report_synthesis import synthesis_rows,synthesis_interpretation
     from reportlab.lib.pagesizes import A4,A3,landscape
     page=A4 if paper=="A4" else A3
     if orientation=="Landscape":page=landscape(page)
@@ -188,6 +191,11 @@ def printable_html(items,title,paper,orientation,*,use_osm=False):
         if loc is not None:section+=plot(loc,min(height*.40,240))+"<p>"+_safe(attribution)+"</p>"
         if site_details(context):section+="<p>"+_safe(" · ".join(f"{a}: {v}" for a,v,_ in site_details(context)))+"</p>"
         section+=table(context.get("statistics",{}).get("overview",[]))
+        if synthesis_rows(context):
+            section+="<h3>Cross-chapter climatic findings</h3>"
+            section+=table(synthesis_rows(context))
+            if synthesis_interpretation(context):
+                section+="<p>"+_safe(synthesis_interpretation(context))+"</p>"
         if idx==0:section+="<p><b>Report chapters:</b> "+_safe(" · ".join(name for name,_ in groups))+"</p>"
         if idx>0:section+="</section>"
         pages.append(section)
@@ -234,6 +242,7 @@ def _pdf_report(items,title,paper,orientation,*,image_renderer=None,use_osm=Fals
     from .p6_static_render import render_png,export_headroom
     import gc
     from .p6_report_structure import contexts,ordered_groups,concise_context,site_details,locator_figure,report_figure,zone_legend_entries,figure_height,complex_figure
+    from .report_synthesis import synthesis_rows,synthesis_interpretation
     if paper not in ("A4","A3") or orientation not in ("Portrait","Landscape"):raise ValueError("Invalid paper settings.")
     if not items:raise ValueError("Add at least one chart.")
     page=A4 if paper=="A4" else A3
@@ -315,6 +324,11 @@ def _pdf_report(items,title,paper,orientation,*,image_renderer=None,use_osm=Fals
         # Compact location row rather than another table.
         if site:body.append(para(" · ".join(f"{a}: {v}" for a,v,_ in site)))
         body.extend([stats_table(context.get("statistics",{}).get("overview",[])),Spacer(1,7)])
+        if synthesis_rows(context):
+            body.extend([para("Cross-chapter climatic findings","ReportFigure"),
+                         stats_table(synthesis_rows(context)),Spacer(1,7)])
+            if synthesis_interpretation(context):
+                body.append(para(synthesis_interpretation(context)))
         if not idx:body.append(para("Report chapters: "+" · ".join(n for n,_ in groups)))
     for chapter_no,(chapter,entries) in enumerate(groups,1):
         body.extend([PageBreak(),para(f"{chapter_no:02d} · {chapter}","ReportChapter")])
@@ -447,6 +461,9 @@ def render_report(df=None,reference_df=None):
                     known={row[0] for row in rows}
                     rows.extend(row for row in fresh[kind] if row[0] not in known)
                 c["statistics"]=stats
+                if "cross-chapter synthesis" not in c:
+                    from .report_synthesis import cross_chapter_synthesis
+                    c["cross-chapter synthesis"]=cross_chapter_synthesis(df)
     if any(not item["context"].get("statistics") for item in items):
         st.caption("Some older saved charts have no verified captured statistics. Re-add them to include their station and chapter overview.")
     if not items:st.info("Your report is empty. Add a diagram from any analysis page or select a standard preset above.");return
