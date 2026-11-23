@@ -4673,6 +4673,10 @@ def render_precipitation(df: pd.DataFrame, native_df: pd.DataFrame | None = None
             options.append("Empirical IDF")
         if "dry_bulb_temperature_c" in df and pd.to_numeric(df["dry_bulb_temperature_c"],errors="coerce").notna().any():
             options.append("Temperature–precipitation diagrams")
+    if (liquid_available and
+        all(c in df and pd.to_numeric(df[c],errors="coerce").notna().any()
+            for c in ("wind_speed_m_s","wind_direction_deg"))):
+        options.append("Wind-driven rain by façade sector")
     if native_liquid_available:
         options.append("Precipitation-record occurrence")
     if duration_available:
@@ -4766,6 +4770,20 @@ def render_precipitation(df: pd.DataFrame, native_df: pd.DataFrame | None = None
         fig.update_layout(template="plotly_white", xaxis_title="Year", yaxis_title=metric_labels[metric])
         from epw_climate_analyzer.precipitation_findings import rainfall_summary
         render_plot(fig,rainfall_summary(df)+" Annual day-based indices use complete observed calendar days.")
+    elif chart_group == "Wind-driven rain by façade sector":
+        from epw_climate_analyzer.directional_climate import (
+            directional_table,directional_figure,directional_interpretation)
+        radial="Wind-driven rain exposure"
+        sectors=directional_table(df,radial=radial,colour="Wind speed")
+        if not sectors.radius.notna().any():
+            st.info("No coincident directional rainfall and wind observations.")
+            return
+        fig=directional_figure(sectors,radial,"Wind speed",
+            "Rain × wind exposure by meteorological incoming sector")
+        render_plot(fig,directional_interpretation(sectors,radial,"Wind speed"))
+        with st.expander("Directional rain exposure index",expanded=False):
+            st.dataframe(sectors,use_container_width=True)
+        return
     elif chart_group == "Precipitation-record occurrence":
         threshold = st.number_input("Source-record precipitation threshold [mm]", min_value=0.0, value=0.1, step=0.1)
         aggregation = st.selectbox("Aggregation", ["Monthly", "Weekly", "Daily", "Seasonal", "Annual"], index=0)
