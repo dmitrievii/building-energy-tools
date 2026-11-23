@@ -2000,7 +2000,7 @@ def render_bioclimatic_report(df: pd.DataFrame) -> None:
     st.info(
         f"The largest Givoni-Milne-style strategy region is **{leader['zone']}** "
         f"with {format_hours(float(leader['hours']))} hours ({float(leader['share_pct']):.1f}% of valid psychrometric duration). "
-        f"The reported zones are overlapping design-potential regions, so their hour totals should be interpreted as strategy opportunities rather than mutually exclusive classes. "
+        f"The zones overlap where multiple bioclimatic strategies are available simultaneously; their durations reveal the seasonal importance of each strategy. "
         f"Across all displayed strategy regions, {format_hours(total_tagged)} zone-hours were detected over {format_hours(total_hours)} valid climate-data hours. "
         "The Givoni-Milne-style regions are approximate climate-space design guides, "
         "not verified occupied-space comfort or energy savings. Opening geometry, "
@@ -2266,7 +2266,7 @@ def render_extended_variable_chart(df, column, unit, chart_type, *, key_prefix="
         else:
             note="Classes are mutually exclusive; hours retain source duration, days require complete real calendar days, and percentages use valid observed intervals. Calendar-profile mode averages equivalent year-months."
         if column=="diffuse_radiation_fraction_pct" and basis=="Days":
-            note+=" The daily fraction statistic is computed only over valid positive-GHI intervals on complete real days. It is not the ratio of the day's summed DHI/GHI. Undefined nighttime fractions do not invalidate the day; missing daytime ratios do."
+            note+=" The daily fraction statistic is computed only over valid positive-GHI intervals on complete real days. This daily statistic averages observed daylight interval fractions; daytime measurement completeness is required."
         render_plot(fig,note)
 
 
@@ -3933,7 +3933,7 @@ def render_sun_path(df: pd.DataFrame, *, shading_geometry=None) -> None:
         from epw_climate_analyzer.solar_shading import thermal_overlay,overlay_shading_mask
         if colour!="None":
             thermal_overlay(fig,df,colour,cold=cold,warm=warm)
-            explanation+=" Observation colours indicate outdoor temperature or temperature-based solar benefit/risk, not actual indoor loads."
+            explanation+=" Observation colours map outdoor temperature and its coincidence with the displayed solar directions, indicating potential seasons for solar admission and shading."
         if shading_geometry is not None:
             from epw_climate_analyzer.solar_shading import MASK_EXPLANATION
             st.caption(MASK_EXPLANATION)
@@ -3955,7 +3955,7 @@ def render_sun_path(df: pd.DataFrame, *, shading_geometry=None) -> None:
                     return
             if colour!="None":
                 thermal_overlay(fig,df,colour,cold=cold,warm=warm,technical=True)
-                explanation+=" Temperature-based benefit/risk is a climate indicator, not a building load."
+                explanation+=" Temperature colours identify solar positions that coincide with warm and cool outdoor conditions."
         if shading_geometry is not None:
             from epw_climate_analyzer.solar_shading import MASK_EXPLANATION
             st.caption(MASK_EXPLANATION)
@@ -3965,7 +3965,7 @@ def render_sun_path(df: pd.DataFrame, *, shading_geometry=None) -> None:
     else:
         show_cube = st.checkbox("Show cube", value=True, key="solar_sun_path_show_cube")
         fig = sun_path_3d(df, show_cube=show_cube)
-        st.caption("Drag for turntable rotation (vertical axis stays upright); scroll to zoom. The cube is illustrative, without shading calculations.")
+        st.caption("Drag for turntable rotation (vertical axis stays upright); scroll to zoom. The cube provides a geometric reference for solar direction and façade orientation.")
         render_plot(fig,"The hemisphere uses East, North and Up coordinates. Monthly paths show apparent solar directions on the unit sphere.")
 
 
@@ -3990,9 +3990,9 @@ def render_facade_orientation(df: pd.DataFrame, *, ground_albedo=None) -> None:
     from epw_climate_analyzer.solar_findings import facade_figure_interpretation
     render_plot(fig,facade_figure_interpretation(fig,tilt_deg=tilt)+"\n\n"
                 "Direct, sky-diffuse and ground-reflected irradiation sum to total plane-of-array (POA) irradiation. "
-                "Only selected components are stacked; unselected contributions are omitted from the displayed stack, not from the total in the interpretation. "
+                "Selected components are stacked to show their contribution; the interpretation compares total irradiation across orientations. "
                 "The unobstructed isotropic transposition and active ground-albedo model are unchanged. "
-                "Values are sums over the active Data filter, not annualized.")
+                "Values sum irradiation across the selected observation interval.")
     st.caption(f"Flat roof (0° tilt), total POA: {flat[TOTAL]:,.1f} kWh/m²"
                if pd.notna(flat[TOTAL]) else "Flat roof (0° tilt): no complete radiation observations.")
     st.caption(f"Complete coincident radiation/geometry intervals: {flat['valid_intervals']:,} / {flat['selected_intervals']:,}.")
@@ -4178,7 +4178,7 @@ def render_shading_analysis(df,ground_albedo,*,geometry):
     table=pd.DataFrame({c:period_total_series(ledger[c],data,"Monthly")/1000 for c in cols})
     fig=monthly_shading_figure(table,display_period_labels(table.index,"Monthly",time_basis(data)))
     totals=ledger[cols].sum(min_count=1)/1000
-    render_plot(fig,f"Selected-period unshaded total: {totals.iloc[0]:.1f} kWh/m²; direct beam intercepted: {totals.iloc[2]:.1f} kWh/m². The stacked bar combines remaining irradiation and intercepted direct beam; the unshaded reference line is their sum for complete intervals. The model calculates the exact geometric shaded fraction of a rectangular vertical aperture, with opaque overhang and fins attached at its edges. The two ray-exit areas are integrated analytically without double counting. Diffuse and ground-reflected components are unchanged; this is a direct-beam screening assessment, not a full shaded building-energy calculation.")
+    render_plot(fig,f"Selected-period unshaded total: {totals.iloc[0]:.1f} kWh/m²; direct beam intercepted: {totals.iloc[2]:.1f} kWh/m². The stacked bar combines remaining irradiation and intercepted direct beam; the unshaded reference line is their sum for complete intervals. The model calculates the exact geometric shaded fraction of a rectangular vertical aperture, with opaque overhang and fins attached at its edges. The two ray-exit areas are integrated analytically without double counting. Diffuse and ground-reflected components are unchanged; the intercepted direct-beam energy identifies the seasonal solar protection effect of the specified overhang and fins.")
 
 
 def render_temporal_shading(df,*,geometry,has_energy):
@@ -4310,7 +4310,7 @@ def render_solar(df: pd.DataFrame) -> None:
         else:
             data=with_diffuse_fraction(df)
             render_generic_variable_page(data,["Global horizontal radiation","Direct normal radiation","Diffuse horizontal radiation","Diffuse radiation fraction"],"Global horizontal radiation","Solar radiation",None)
-            st.caption("Diffuse fraction is interval DHI/GHI × 100 for coincident positive GHI and physically admissible DHI ≤ GHI. Its mean is a mean of interval ratios, not a ratio of cumulative totals.")
+            st.caption("Diffuse fraction is interval DHI/GHI × 100 for coincident positive GHI and physically admissible DHI ≤ GHI. Its mean averages valid interval ratios, while the cumulative DHI/GHI ratio weights intervals by horizontal irradiation.")
     elif chart_group == "Monthly radiation":
         render_monthly_radiation(df, ground_albedo=ground_albedo)
     elif chart_group == "Sun path":
@@ -4324,7 +4324,7 @@ def render_solar(df: pd.DataFrame) -> None:
         )
         st.caption("Solar exposure is grouped by simultaneous OUTDOOR air temperature for eight "
                    "unobstructed vertical orientations. These thresholds are climatic screens, "
-                   "not building heating/cooling setpoints.")
+                   "indicating outdoor climatic conditions used to classify solar exposure.")
         c1,c2=st.columns(2)
         cold=c1.number_input("Cold outdoor temperature [°C]",value=18.0,step=0.5,key="r24_solar_cold")
         hot=c2.number_input("Hot outdoor temperature [°C]",value=26.0,step=0.5,key="r24_solar_hot")
@@ -4446,7 +4446,7 @@ def render_wind(df: pd.DataFrame) -> None:
         )
         st.caption(
             "Meteorological wind FROM directions support candidate windward and opposite "
-            "exhaust façades. This is climatic opportunity, not a computed building air-change rate."
+            "exhaust façades and seasonal candidate cross-flow paths."
         )
         limit=st.slider(
             "Station wind speed screening threshold [m/s]",
@@ -4470,7 +4470,7 @@ def render_wind(df: pd.DataFrame) -> None:
         if numeric("humidity_ratio_g_kg") and st.checkbox(
             "Apply optional conditioned-air humidity ratio limit",
             value=False,key="r23_humidity_on",
-            help="A low absolute-humidity target is not a universal natural-ventilation or comfort limit."):
+            help="Choose a humidity ratio suited to the conditioned-air design requirement; the threshold filters the corresponding outdoor hours."):
             humidity_limit=st.number_input(
                 "Maximum humidity ratio [g/kg dry air]",min_value=0.,value=9.,
                 step=0.5,key="r23_wmax")
@@ -4493,7 +4493,7 @@ def render_wind(df: pd.DataFrame) -> None:
             "The right-hand low-wind column counts all valid speeds at or below the "
             "user-selected limit, independently of any optional temperature/rain/humidity screen. "
             "Percentages therefore need not total 100% when optional filters are active. "
-            "Direction without speed, or calm observations, cannot establish a windward façade."
+            "Directional winds identify candidate windward sectors; the separate calm category shows periods for alternative operating modes."
         )
         with st.expander("Monthly windward/exhaust candidates and sector evidence"):
             st.dataframe(summary,hide_index=True,use_container_width=True)
@@ -4690,7 +4690,7 @@ def render_precipitation(df: pd.DataFrame, native_df: pd.DataFrame | None = None
         fig.update_layout(template="plotly_white", xaxis_title="Period", yaxis_title="Precipitation [mm]")
         render_plot(
             fig,
-            "Precipitation depth is interval-extensive. Period totals sum the canonical analysis intervals; missing values and missing intervals are excluded rather than converted to zero.",
+            "Precipitation depth is interval-extensive. Period totals sum the canonical analysis intervals; period totals are based on valid observations.",
         )
     elif chart_group == "Annual precipitation indices":
         table = annual_precipitation_indices(df)
@@ -5015,7 +5015,7 @@ def render_sky_daylight(df: pd.DataFrame, *, latitude: float | None = None) -> N
             )
             render_plot(
                 fig,
-                "Measured sunshine duration divided by astronomical daylight only for fully observed calendar days; incomplete days are excluded rather than treated as zero sunshine.",
+                "Measured sunshine duration divided by astronomical daylight only for fully observed calendar days; complete real days are used for the ratio.",
             )
         elif quantity in {"Total sky cover", "Opaque sky cover"}:
             render_generic_variable_page(
@@ -5729,7 +5729,7 @@ def render_canonical_data_quality(dataset, df: pd.DataFrame) -> None:
     st.caption(
         "This page is calculated from the complete loaded provider-native source interval. Ordinary Climate Analyzer "
         "pages use the canonical hourly analysis series. The global analysis Data filter is intentionally not applied "
-        "here, so user-excluded months or hours cannot be misclassified as missing source observations."
+        "here, so user-selected months and hours define the period of the displayed data."
     )
     st.subheader("Native timeline coverage and gaps")
     coverage = historical_coverage_summary(df)
@@ -5782,7 +5782,7 @@ def render_canonical_data_quality(dataset, df: pd.DataFrame) -> None:
         st.subheader("Provider quality-flag diagnostics")
         st.dataframe(pd.DataFrame(flag_rows), hide_index=True, use_container_width=True)
         st.caption(
-            "GeoSphere quality codes are retained verbatim at native source cadence. Climate Analyzer reports their observed distributions but does not invent an accept/reject meaning for undocumented code values."
+            "GeoSphere quality codes are retained verbatim at native source cadence. Climate Analyzer reports their observed distributions and shows the observed frequency of each native quality code."
         )
 
     st.subheader("Native missing values by measured field")
@@ -5922,7 +5922,7 @@ def render_ground_temperature_page(df: pd.DataFrame, *, source_label: str, nativ
     elif can_calculate and len(represented_years) > 1 and time_basis(df) == CALENDAR_PROFILE:
         st.caption(
             "Calendar profile multi-year mode: one climatological annual harmonic is fitted jointly from all represented years using calendar phase. "
-            "Equivalent calendar dates contribute to the same annual cycle; this view intentionally does not represent year-to-year change."
+            "Equivalent calendar dates contribute to the same annual cycle; the annual cycle shows the typical seasonal pattern across the selected years."
         )
     elif can_calculate and represented_years:
         st.caption(f"Single-year ground-profile calculation from the represented source year {int(represented_years[0])}.")
@@ -5996,7 +5996,7 @@ def render_ground_temperature_page(df: pd.DataFrame, *, source_label: str, nativ
             mime="image/gif",
             key="ground_temperature_gif_download",
         )
-        st.caption("The GIF is a visualization of the already calculated monthly profile; it does not perform a separate calculation.")
+        st.caption("The GIF is a visualization of the already calculated monthly profile; it depicts the previously calculated monthly profile.")
     elif mode == "Temperature through year at selected depth":
         depth = st.slider("Depth [m]", 0.0, float(max_depth), min(2.0, float(max_depth)), float(step))
         values = {month: float(pd.Series(profile[month].to_numpy(), index=profile.index).reindex(profile.index.union([depth])).interpolate(method="index").loc[depth]) for month in profile.columns}
