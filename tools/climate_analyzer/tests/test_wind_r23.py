@@ -124,6 +124,17 @@ class WindR23Tests(unittest.TestCase):
         self.assertIn("Zero wind-direction hours",note)
         self.assertIn("does not establish",note)
 
+    def test_monthly_aggregates_do_not_generate_invented_hour_counts(self):
+        frame=self.sample().iloc[:2].copy()
+        frame.index=pd.date_range("2026-01-01",periods=2,freq="MS")
+        frame.attrs["canonical_native_resolution"]="monthly"
+        with self.assertRaisesRegex(ValueError,"subdaily observations"):
+            wind_opportunity(frame)
+        note=wind_figure_interpretation(frame,go.Figure(),"profile",
+                                         column="wind_speed_m_s")
+        self.assertIn("Hourly calm frequencies",note)
+        self.assertIn("cannot be reconstructed",note)
+
     def test_report_has_causal_wind_orientation_diagram(self):
         from epw_climate_analyzer.p6_report_structure import (
             CATALOG,PRESETS,available_catalog,standard_figure,
