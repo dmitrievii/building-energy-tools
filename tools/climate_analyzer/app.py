@@ -2001,7 +2001,10 @@ def render_bioclimatic_report(df: pd.DataFrame) -> None:
         f"The largest Givoni-Milne-style strategy region is **{leader['zone']}** "
         f"with {format_hours(float(leader['hours']))} hours ({float(leader['share_pct']):.1f}% of valid psychrometric duration). "
         f"The reported zones are overlapping design-potential regions, so their hour totals should be interpreted as strategy opportunities rather than mutually exclusive classes. "
-        f"Across all displayed strategy regions, {format_hours(total_tagged)} zone-hours were detected over {format_hours(total_hours)} valid climate-data hours."
+        f"Across all displayed strategy regions, {format_hours(total_tagged)} zone-hours were detected over {format_hours(total_hours)} valid climate-data hours. "
+        "The Givoni-Milne-style regions are approximate climate-space design guides, "
+        "not verified occupied-space comfort or energy savings. Opening geometry, "
+        "airflow, latent control and building use require independent checks."
     )
     st.dataframe(table, hide_index=True, use_container_width=True)
 
@@ -3712,7 +3715,13 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
             condition = df["relative_humidity_pct"] > 80.0
         counts = threshold_count_by_period(df, condition, aggregation, label="hours")
         fig = threshold_bar_chart(counts, f"Moisture threshold hours: {mode}")
-        render_plot(fig, psychrometric_interpretation(df))
+        from epw_climate_analyzer.humidity_findings import humidity_figure_interpretation
+        quantity= "relative_humidity_pct" if mode=="Relative humidity above 80%" else "humidity_ratio_g_kg"
+        threshold=(80. if mode=="Relative humidity above 80%" else
+                   d_low if mode=="Below dry-air threshold" else d_high)
+        comparator="<" if mode=="Below dry-air threshold" else ">"
+        render_plot(fig,humidity_figure_interpretation(
+            df,fig,"threshold",column=quantity,args=(threshold,comparator)))
     else:
         view=st.selectbox("Representation",["Scatter","Joint probability density"],key="p4_humidity_relation")
         if view=="Joint probability density":
@@ -3724,7 +3733,9 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
         x, x_unit = VARIABLES[x_label]
         y, y_unit = VARIABLES[y_label]
         fig = scatter_chart(df, x, y, "month_index", f"{x_label} vs {y_label}", f"{x_label} [{x_unit}]", f"{y_label} [{y_unit}]")
-        render_plot(fig, psychrometric_interpretation(df))
+        from epw_climate_analyzer.humidity_findings import humidity_figure_interpretation
+        render_plot(fig,humidity_figure_interpretation(
+            df,fig,"scatter",args=(x,y)))
 
 
 def _active_solar_ground_albedo(df: pd.DataFrame) -> float | pd.Series | None:
