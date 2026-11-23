@@ -91,6 +91,7 @@ class SolarR24Tests(unittest.TestCase):
 
     def test_selected_plane_not_silently_relabelled_south(self):
         df=self.sample()
+        df[POA]=surface_irradiance_series(df,60.,90.)
         note=solar_figure_interpretation(df,None,"time_series",column=POA,
                plane="tilt 60°, azimuth 90°")
         # Figure interpretation must describe selected-plane assumptions.
