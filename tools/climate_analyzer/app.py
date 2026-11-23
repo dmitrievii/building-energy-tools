@@ -3617,29 +3617,28 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
                 "Zero/low-frequency cells remain pale and the most frequent cells are saturated blue."
             )
 
-        col_a, col_b, col_c = st.columns(3)
-        t_min = float(df["dry_bulb_temperature_c"].min())
-        t_max = float(df["dry_bulb_temperature_c"].max())
-        d_max_default = max(20.0, float(df["humidity_ratio_g_kg"].quantile(0.995)) * 1.1)
-        h_min = float(df["moist_air_enthalpy_kj_kg"].quantile(0.005))
-        h_max = float(df["moist_air_enthalpy_kj_kg"].quantile(0.995))
-        t_limits = col_a.slider(
-            "Dry-bulb temperature range [°C]",
-            -40.0,
-            60.0,
-            (float(max(-40, int(t_min // 5 * 5))), float(min(60, int(t_max // 5 * 5 + 10)))),
-            1.0,
-        )
-        d_limits = col_b.slider("Moisture content range [g/kg]", 0.0, 40.0, (0.0, float(min(40.0, d_max_default))), 0.5)
-        h_limits = col_c.slider(
-            "Enthalpy range [kJ/kg dry air]",
-            -30.0,
-            140.0,
-            (float(max(-30, int(h_min // 10 * 10))), float(min(140, int(h_max // 10 * 10 + 20)))),
-            1.0,
-        )
-
-        with st.expander("Chart metrics and overlays", expanded=True):
+        with st.expander("Chart metrics", expanded=False):
+            col_a, col_b, col_c = st.columns(3)
+            t_min = float(df["dry_bulb_temperature_c"].min())
+            t_max = float(df["dry_bulb_temperature_c"].max())
+            d_max_default = max(20.0, float(df["humidity_ratio_g_kg"].quantile(0.995)) * 1.1)
+            h_min = float(df["moist_air_enthalpy_kj_kg"].quantile(0.005))
+            h_max = float(df["moist_air_enthalpy_kj_kg"].quantile(0.995))
+            t_limits = col_a.slider(
+                "Dry-bulb temperature range [°C]",
+                -40.0,
+                60.0,
+                (float(max(-40, int(t_min // 5 * 5))), float(min(60, int(t_max // 5 * 5 + 10)))),
+                1.0,
+            )
+            d_limits = col_b.slider("Moisture content range [g/kg]", 0.0, 40.0, (0.0, float(min(40.0, d_max_default))), 0.5)
+            h_limits = col_c.slider(
+                "Enthalpy range [kJ/kg dry air]",
+                -30.0,
+                140.0,
+                (float(max(-30, int(h_min // 10 * 10))), float(min(140, int(h_max // 10 * 10 + 20)))),
+                1.0,
+            )
             metric_layers = st.multiselect(
                 "Metric lines",
                 PSYCHROMETRIC_METRIC_LINES,
@@ -3650,7 +3649,7 @@ def render_humidity(df: pd.DataFrame, pressure_pa: float, *, interval_count_metr
             selected_zones: list[str] | None = None
             show_heat_index = st.checkbox("Show heat-index overlay", value=False)
 
-        with st.expander("Loaded data mapping", expanded=True):
+        with st.expander("Data mapping", expanded=False):
             months = st.multiselect("Displayed months", list(MONTHS.keys()), default=list(MONTHS.keys()), key="psych_month_filter")
             selected_months = [MONTHS[m] for m in months]
             chronological_multiyear = time_basis(df) == CHRONOLOGICAL and is_multiyear(df)
