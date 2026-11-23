@@ -360,8 +360,10 @@ def wind_figure_interpretation(df,fig,kind,*,column=SPEED,title="",args=()):
                 +direction_note+caveat)
     if kind=="persistence":
         threshold=float(args[0]) if args else 0.5
-        below=(v<=threshold)
-        return (header+f"{_fmt_hours(int(below.sum())*dt)} h occur at or below the "
+        above=bool(args[1]) if len(args)>1 else False
+        qualifying=(v>=threshold) if above else (v<=threshold)
+        comparator="at or above" if above else "at or below"
+        return (header+f"{_fmt_hours(int(qualifying.sum())*dt)} h occur {comparator} the "
                 f"selected {threshold:g} m/s threshold; continuous run lengths, "
-                "not only totals, determine low-wind persistence. "+caveat)
+                "not only totals, determine wind persistence. "+caveat)
     return header+warning+direction_note+caveat
