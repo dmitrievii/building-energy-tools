@@ -94,7 +94,7 @@ def temperature_figure_interpretation(df, fig, kind, *, column="dry_bulb_tempera
                 "The absolute colour scale reveals the timing and seasonal concentration of outdoor temperatures. " + climate)
 
     if kind in ("duration", "duration curve"):
-        return (f"The temperature duration curve ranks {total} without preserving chronology. "
+        return (f"The temperature duration curve ranks {total} by frequency, revealing the number of hours at each outdoor temperature. "
                 f"P05 = {_fmt(data.quantile(.05))} °C, median = {_fmt(data.median())} °C, "
                 f"P95 = {_fmt(data.quantile(.95))} °C. " + climate)
 
