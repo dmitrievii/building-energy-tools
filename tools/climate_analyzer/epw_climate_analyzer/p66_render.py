@@ -429,7 +429,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         scope=scope if wet else df
         col=c if k in ("time_series","profile","percentile","heatmap","duration","histogram","box","violin","diurnal","occurrence","amplitude","native") else ""
         # Non-temperature pages retain their existing interpretation contract.
-        if d.chapter not in (cat.TEMP, cat.HUM, cat.WIND):
+        if d.chapter not in (cat.TEMP, cat.HUM, cat.WIND, cat.SOL):
             with phase("interpretation"):
                 stat=memo(("interpretation",d.chapter,col,k,wet),lambda:base.source_interpretation(scope,d.chapter,col,cat.LABELS.get(col,""),cat.UNITS.get(col,u),thresholds=base.temperature_thresholds(context),kind=k))
             if stat and stat not in note:note=stat+"\n\n"+note
@@ -450,5 +450,10 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         from .wind_findings import wind_figure_interpretation
         with phase("interpretation"):
             stat=wind_figure_interpretation(df,f,k,column=c,title=title,args=a)
+        if stat and stat not in note:note=stat+"\n\n"+note
+    if d.chapter == cat.SOL:
+        from .solar_findings import solar_figure_interpretation
+        with phase("interpretation"):
+            stat=solar_figure_interpretation(df,f,k,column=c,title=title,args=a)
         if stat and stat not in note:note=stat+"\n\n"+note
     return f,note
