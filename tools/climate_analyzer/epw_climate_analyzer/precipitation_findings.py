@@ -115,10 +115,10 @@ def measured_duration_summary(df):
             "covered circulation and drying-time analysis.")
 
 
-def wet_dry_interpretation(df,*,wet=True,threshold=1.):
+def wet_dry_interpretation(df,*,wet=True,threshold=1.,minimum=1):
     from .p4_extremes import wet_dry_events
     try:
-        daily, wet_events,dry_events=wet_dry_events(df,threshold=threshold)
+        daily, wet_events,dry_events=wet_dry_events(df,threshold=threshold,minimum=minimum)
     except ValueError:
         return "Wet/dry event statistics require a complete subdaily calendar sequence."
     selected=wet_events if wet else dry_events
@@ -149,10 +149,10 @@ def rolling_interpretation(df,hours=24):
             "Use the duration-specific local design rainfall for final hydraulic sizing.")
 
 
-def freeze_interpretation(df,kind="freeze_days"):
+def freeze_interpretation(df,kind="freeze_days",*,wet_threshold=1.):
     from .p4_extremes import freeze_thaw_days,freeze_thaw_cycles
     if kind=="freeze_cycles":
-        try:events=freeze_thaw_cycles(df)
+        try:events=freeze_thaw_cycles(df,wet_threshold=wet_threshold)
         except ValueError:return "An hourly temperature series is needed to identify consecutive freeze–thaw sequences."
         if events.empty:return "Zero warm–freeze–warm air-temperature sequences were observed in the selected period."
         return (f"{len(events):,} warm–freeze–warm sequences occur in the selected "
@@ -160,7 +160,7 @@ def freeze_interpretation(df,kind="freeze_days"):
                 f"{_fmt(events['Freeze-to-thaw duration [h]'].max())} h. "
                 "Repeated crossings encourage examination of exposed wet masonry, "
                 "junction drainage and freeze-resistant surface detailing.")
-    try:table=freeze_thaw_days(df)
+    try:table=freeze_thaw_days(df,wet_threshold=wet_threshold)
     except ValueError:return "A complete daily temperature sequence is needed for freeze–thaw day classification."
     if table.empty:return "No complete daily temperature observations are present."
     crossing=table.iloc[:,0].dropna()
@@ -168,7 +168,7 @@ def freeze_interpretation(df,kind="freeze_days"):
     return (f"{int(crossing.sum()):,} complete days have outdoor Tmin <0 °C "
             f"and Tmax >0 °C; {int(wet.sum()):,} of {len(wet):,} days with "
             "complete rainfall and temperature observations also reach "
-            "the 1 mm/day wet criterion. "
+            f"the {wet_threshold:g} mm/day wet criterion. "
             "These crossings identify seasons for examining moisture-sensitive "
             "facade assemblies, drains, joints and paved surfaces.")
 
