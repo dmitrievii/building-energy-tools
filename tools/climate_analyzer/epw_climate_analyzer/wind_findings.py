@@ -251,9 +251,11 @@ def wind_figure_interpretation(df,fig,kind,*,column=SPEED,title="",args=()):
     zero=int((valid&velocity.eq(0)).sum())*dt
     weak=int((valid&velocity.le(0.5)).sum())*dt
     v=velocity.loc[valid]
-    header=(f"{_fmt_hours(n*dt)} valid observed station-wind hours; "
-            f"mean speed {_fmt(v.mean())} m/s, "
-            f"exact zeros {_fmt_hours(zero)} h and speed ≤0.5 m/s "
+    source_label="station-gust" if is_gust else "station-wind"
+    mean_label="mean of recorded gust peaks" if is_gust else "mean wind speed"
+    header=(f"{_fmt_hours(n*dt)} valid observed {source_label} hours; "
+            f"{mean_label} {_fmt(v.mean())} m/s, "
+            f"exact zeros {_fmt_hours(zero)} h and recorded speed ≤0.5 m/s "
             f"{_fmt_hours(weak)} h. ")
     warning=("Gust peaks and their paired governing directions are not interchangeable "
              "with the mean-wind series. " if is_gust else "")
@@ -296,8 +298,10 @@ def wind_figure_interpretation(df,fig,kind,*,column=SPEED,title="",args=()):
                 f"({_fmt_hours(hi[2])} h). This is a monthly observation distribution, "
                 "not a verified opening-orientation design. "+caveat)
     if kind in ("profile","percentile","time_series","time series / profile","native"):
-        center="median" if kind=="percentile" or "median" in lower_label else "mean"
-        plotted,x=_plotted(fig,center)
+        observed=kind in ("time_series","native") or "observed values" in lower_label
+        center=("observed" if observed else
+                "median" if kind=="percentile" or "median" in lower_label else "mean")
+        plotted,x=_plotted(fig,None if observed else center)
         if not plotted.empty:
             low,high=int(plotted.idxmin()),int(plotted.idxmax())
             at=lambda ix:str(x[ix]) if ix<len(x) else str(ix+1)
