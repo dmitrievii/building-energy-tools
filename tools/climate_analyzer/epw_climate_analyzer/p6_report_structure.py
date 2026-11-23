@@ -12,7 +12,7 @@ CHAPTERS={"Overview":"Climate overview","Temperature":"Temperature","Humidity an
 "Precipitation and Snow":"Precipitation and snow","Natural Ventilation":"Natural ventilation",
 "Shading analysis":"Shading","HVAC and Passive Design":"HVAC and passive design","Outdoor Thermal Comfort":"Outdoor thermal comfort",
 "Time Series and Overlay":"Time series and relationships","Compare Climates":"Climate comparison","Data Quality":"Data quality"}
-T="dry_bulb_temperature_c";RH="relative_humidity_pct";W="humidity_ratio_g_kg";V="wind_speed_m_s"
+T="dry_bulb_temperature_c";RH="relative_humidity_pct";W="humidity_ratio_g_kg";V="wind_speed_m_s";H="moist_air_enthalpy_kj_kg"
 G="global_horizontal_radiation_wh_m2";D="diffuse_horizontal_radiation_wh_m2";N="direct_normal_radiation_wh_m2";P="liquid_precipitation_depth_mm"
 VARIABLES={
 "temperature":(T,"Air temperature","°C",False),"humidity":(RH,"Relative humidity","%",False),
@@ -491,7 +491,7 @@ def standard_figure(entry,df,context,reference_df=None):
         summary,sectors=wind_opportunity(df,min_speed_m_s=.5)
         fig=wind_opportunity_figure(summary,sectors)
         note=wind_design_interpretation(df,min_speed_m_s=.5)
-        note+=" Reference station wind >0.5 m/s; no temperature, humidity or precipitation restriction. No building pressure model."
+        note+=" The 0.5 m/s source-wind threshold identifies directional outdoor wind availability. Façade pressure coefficients, opening areas, and interior flow paths resolve the corresponding building ventilation response."
     elif kind=="wind_panel":
         from .directional_climate import monthly_wind_rose_panel,MONTHLY_WIND_ROSE_NOTE
         fig,_=monthly_wind_rose_panel(df,title=label);note=MONTHLY_WIND_ROSE_NOTE
@@ -545,13 +545,49 @@ def standard_figure(entry,df,context,reference_df=None):
             if c not in ledger or not ledger[c].notna().any():raise ValueError("No valid candidate hours.")
             a=ledger[c].resample("MS").sum(min_count=1)
             fig.add_bar(x=a.index,y=a,marker_color="#21866B")
-            note={"nv":"16–26 °C, humidity ratio ≤9 g/kg. No wind or occupancy restriction.",
-                  "night":"22:00–06:59, cool air ≤20 °C after complete hot day ≥26 °C.",
-                  "shade":"Air temperature ≥24 °C, mean GHI ≥250 W/m². The combined temperature and horizontal-irradiance screen identifies periods for evaluating façade solar protection."}[kind]
+            note={"nv":"Reference outdoor-air screening uses 16–26 °C and humidity ratio ≤9 g/kg.",
+                  "night":"Nighttime 22:00–06:59, cool outdoor air ≤20 °C following a complete day reaching ≥26 °C.",
+                  "shade":"Air temperature ≥24 °C and mean horizontal irradiance ≥250 W/m² identify coincident warm, sunny hours relevant to exterior solar protection."}[kind]
         fig.update_layout(template="plotly_white",title=label,barmode="group",yaxis_title=unit)
         if kind=="degree":
             from .degree_metrics import degree_legend_below
             degree_legend_below(fig)
+    elif kind=="hvac_energy":
+        from .p3_comfort import ventilation_loads
+        from .hvac_findings import conditioning_monthly_figure,conditioning_interpretation
+        q=ventilation_loads(df,airflow=1000.,heat=20.,cool=26.,w_low=4.,w_high=9.)
+        fig=conditioning_monthly_figure(df,q,grouped=True,title=label)
+        note=conditioning_interpretation(df,q,airflow=1000.,heat=20.,
+                                         cool=26.,w_low=4.,w_high=9.)
+    elif kind=="hvac_economizer":
+        from .hvac_findings import economizer_stages,economizer_stages_figure,economizer_interpretation
+        fig=economizer_stages_figure(economizer_stages(df,h_return=50.))
+        note=economizer_interpretation(df,h_return=50.)
+    elif kind in ("hvac_design_hot","hvac_design_cold"):
+        from .p4_extremes import design_conditions
+        from .hvac_findings import design_quantile_figure,design_quantile_interpretation
+        upper=kind=="hvac_design_hot"
+        table=design_conditions(df,T,[.4,1.,2.,5.],upper=upper,
+                                coincident=[c for c in (W,H,RH,V) if numeric(df,c).notna().any()])
+        if table.empty:raise ValueError("No source observations for the selected empirical tail.")
+        fig=design_quantile_figure(table,quantity="Air temperature",unit="°C",upper=upper)
+        note=design_quantile_interpretation(table,quantity="air temperature",unit="°C",upper=upper)
+    elif kind=="hvac_critical":
+        from .p4_design_charts import critical_windows_figure
+        from .hvac_findings import critical_window_interpretation
+        fig,table,details=critical_windows_figure(df,T,"°C",hours=72,upper=True)
+        if fig is None:raise ValueError(details)
+        note=critical_window_interpretation(table,quantity="Air temperature",
+                                             unit="°C",upper=True,hours=72)+" "+details
+    elif kind=="utci_shading":
+        from .p3_comfort import utci_frame
+        from .utci_findings import paired_delta_figure,paired_exposure_interpretation
+        values,_=utci_frame(df,model="Open-sky screening")
+        if not values[["Open sun","Direct-beam shade"]].notna().all(axis=1).any():
+            raise ValueError("Source observations contain no coincident UTCI sun/shade states.")
+        fig=paired_delta_figure(df,values)
+        fig.update_layout(title=label)
+        note=paired_exposure_interpretation(df,values)
     elif kind=="utci":
         from .p3_comfort import utci_frame,utci_class_hours,CLASSES,COLORS
         values,_=utci_frame(df)
@@ -560,7 +596,9 @@ def standard_figure(entry,df,context,reference_df=None):
         for c,color in zip(CLASSES,COLORS):
             if c in a:fig.add_bar(x=a.index,y=a[c],name=c,marker_color=color)
         fig.update_layout(template="plotly_white",title=label,barmode="stack",yaxis_title="Hours")
-        note="UTCI screening: MRT = air temperature, source wind assumed at 10 m, invalid input domains excluded."
+        from .utci_findings import utci_distribution_interpretation
+        note=utci_distribution_interpretation(df,values,values.columns[0])
+        note+=" The uniform MRT scenario sets mean radiant temperature equal to air temperature and evaluates wind at the 10 m reference height."
     else:raise ValueError("Unknown standard diagram.")
     if page=="Temperature":
         from .temperature_findings import temperature_figure_interpretation
@@ -586,13 +624,21 @@ def standard_figure(entry,df,context,reference_df=None):
         from .precipitation_findings import precipitation_figure_interpretation
         mapped_kind="rain_days" if kind=="rain_days" else kind
         stat=precipitation_figure_interpretation(df,fig,mapped_kind,column=column,title=label)
-    elif page=="Shading analysis":
+    elif page=="Shading analysis" or kind in (
+        "hvac_energy","hvac_economizer","hvac_design_hot","hvac_design_cold",
+        "hvac_critical","utci","utci_shading",
+    ):
         stat=""
     else:
         stat=source_interpretation(df,page,column if kind in ("profile","duration","heatmap") else "",label,unit,thresholds=temperature_thresholds(context),kind=kind)
-    if kind in ("nv","night") and c in ledger:
+    if kind=="nv" and c in ledger:
         from .interpretations import natural_ventilation_interpretation
         stat=natural_ventilation_interpretation(df,ledger[c].gt(0)&ledger[c].notna())
+    elif kind=="night" and c in ledger:
+        from .passive_design_findings import night_flushing_interpretation
+        stat=night_flushing_interpretation(
+            df,ledger[c].gt(0)&ledger[c].notna(),hot_day_c=26.,night_max_c=20.,
+        )
     if stat and stat not in note:note=stat+"\n\n"+note
     from .calendar_heatmap_axes import apply_monthly_axes
     return apply_monthly_axes(fig),note
