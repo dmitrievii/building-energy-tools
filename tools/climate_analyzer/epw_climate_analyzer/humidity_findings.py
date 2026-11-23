@@ -198,6 +198,37 @@ def humidity_figure_interpretation(
             + _physical_context(df, column)
         )
 
+    if kind == "threshold":
+        threshold = float(args[0]) if args else 10.
+        comparator = str(args[1]) if len(args) > 1 else ">"
+        v = numeric(df,column).dropna()
+        if v.empty:
+            return "No valid observations for the selected moisture threshold."
+        if comparator == ">=": match = v >= threshold
+        elif comparator == "<": match = v < threshold
+        elif comparator == "<=": match = v <= threshold
+        else: match = v > threshold
+        n = int(match.sum())
+        hours = _duration_hours_from_count(df,n)
+        return (f"Selected outdoor {LABELS.get(column,column)} "
+                f"{comparator} {threshold:g} {UNITS.get(column,'')}: "
+                f"{_fmt_hours(hours)} h ({100*n/len(v):.1f}% of {len(v):,} valid records). "
+                "This is a user-selected weather screen, not an indoor humidity target or "
+                "equipment operation count. "+_physical_context(df,column))
+
+    if kind == "scatter":
+        xcol, ycol = (str(args[0]),str(args[1])) if len(args)>1 else (T,W)
+        pair = _coincident(df,xcol,ycol)
+        if len(pair)<3:
+            return "Insufficient coincident observations for the selected relationship."
+        corr = pair[xcol].corr(pair[ycol]) if xcol != ycol else 1.
+        return (f"{len(pair):,} paired outdoor observations: "
+                f"{LABELS.get(xcol,xcol)} versus {LABELS.get(ycol,ycol)}, "
+                f"sample Pearson r = {_fmt(corr,2)}. "
+                "Correlation or cell density describes association, not causality or "
+                "a building performance relationship. "
+                +_physical_context(df,ycol))
+
     if not column:
         return "No physical quantity was selected for interpretation."
     v = numeric(df, column).dropna()
