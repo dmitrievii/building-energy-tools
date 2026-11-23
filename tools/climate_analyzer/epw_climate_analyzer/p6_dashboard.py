@@ -204,7 +204,7 @@ def design_dashboard(df,render,*,reference_df=None):
         note=f"{total:.0f} of {valid:.0f} valid candidate hours satisfy the configured criterion." if valid else "No valid candidate hours."
         if c=="Natural ventilation":note+=f" Temperature {t_min:g}–{t_max:g} °C, humidity ratio ≤{w_max:g} g/kg. No airflow prediction."
         elif c=="Night flushing":note+=f" Night ≤{cool:g} °C following a complete day reaching {hot:g} °C. No building heat-storage model."
-        else:note+=" Climatic screening, not an aperture-specific shading calculation."
+        else:note+=" Climatic screening highlights the months when horizontal solar exposure and warm outdoor air coincide."
         _bar(_monthly(ledger[c],"sum"),c+" · monthly availability","Hours",col,render,note)
     if complete(df,T,RH,V):
         if st.checkbox("Include UTCI screening",value=False,key="p6_utci"):
