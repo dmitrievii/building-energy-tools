@@ -130,8 +130,8 @@ class NativeDiagnosticsUi065ContractTests(unittest.TestCase):
         # again correct for the provider-native occurrence metric only.
         self.assertIn("Precipitation-record occurrence", self.source)
         self.assertIn("Source records meeting threshold", self.source)
-        self.assertIn("provider/source records at the active native cadence", self.source)
-        self.assertIn("record-occurrence metric, not rainfall duration", self.source)
+        self.assertIn("recorded source intervals reach", self.source)
+        self.assertIn("measured_duration_summary(df)", self.source)
         self.assertIn("Dual-resolution semantics", self.source)
         self.assertIn("true native-interval precipitation extremes", self.source)
         self.assertNotIn("Precipitation-interval occurrence", self.source)
