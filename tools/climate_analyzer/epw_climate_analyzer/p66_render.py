@@ -425,8 +425,16 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         wet=bool(c and k in ("histogram","duration","box","violin") and a[0]=="wet")
         scope=scope if wet else df
         col=c if k in ("time_series","profile","percentile","heatmap","duration","histogram","box","violin","diurnal","occurrence","amplitude","native") else ""
-        # Same source, column, basis, thresholds and interpretation branch.
+        # Non-temperature pages retain their existing interpretation contract.
+        if d.chapter != cat.TEMP:
+            with phase("interpretation"):
+                stat=memo(("interpretation",d.chapter,col,k,wet),lambda:base.source_interpretation(scope,d.chapter,col,cat.LABELS.get(col,""),cat.UNITS.get(col,u),thresholds=base.temperature_thresholds(context),kind=k))
+            if stat and stat not in note:note=stat+"\n\n"+note
+    if d.chapter == cat.TEMP:
+        from .temperature_findings import temperature_figure_interpretation
         with phase("interpretation"):
-            stat=memo(("interpretation",d.chapter,col,k,wet),lambda:base.source_interpretation(scope,d.chapter,col,cat.LABELS.get(col,""),cat.UNITS.get(col,u),thresholds=base.temperature_thresholds(context),kind=k))
+            stat=temperature_figure_interpretation(
+                df,f,k,column=c if c in df else cat.T,
+                title=title,thresholds=base.temperature_thresholds(context))
         if stat and stat not in note:note=stat+"\n\n"+note
     return f,note
