@@ -4886,6 +4886,8 @@ def render_sky_daylight(df: pd.DataFrame, *, latitude: float | None = None) -> N
         options.append("Clear and overcast hours")
     if has_sky and has_numeric_observations(df, "global_horizontal_radiation_wh_m2"):
         options.append("Daylight scatter")
+    if has_numeric_observations(df,"total_sky_cover_tenths") and has_numeric_observations(df,"global_horizontal_illuminance_lux"):
+        options.append("Sky cover × exterior illuminance")
     if has_illuminance:
         options.append("Outdoor illuminance availability")
     if not options:
@@ -4893,9 +4895,9 @@ def render_sky_daylight(df: pd.DataFrame, *, latitude: float | None = None) -> N
         return
 
     st.caption(
-        "Astronomical daylight is calculated from date and latitude. Measured sunshine duration is independent provider data; "
-        "it is never converted into sky cover, illuminance or DNI. Duration quantities are summed, while sky-cover and "
-        "illuminance state/intensity quantities retain their normal statistical aggregation."
+        "Astronomical daylight follows date and latitude. Measured sunshine duration, sky cover and exterior illuminance "
+        "describe complementary observed conditions. Sunshine duration is summed; sky cover and illuminance use "
+        "the selected statistical aggregation."
     )
     chart_group = st.selectbox("Analysis type", options, key="sky_daylight_analysis")
 
@@ -4913,7 +4915,9 @@ def render_sky_daylight(df: pd.DataFrame, *, latitude: float | None = None) -> N
             )
             if view == "Sunrise–sunset envelope":
                 from epw_climate_analyzer.extended_visualization import daylight_envelope
-                render_plot(daylight_envelope(df.index,float(latitude)), "Ideal geometric horizon; times are local apparent solar time, symmetric about solar noon, not civil clock times.")
+                from epw_climate_analyzer.sky_findings import sky_figure_interpretation
+                fig=daylight_envelope(df.index,float(latitude))
+                render_plot(fig,sky_figure_interpretation(df,fig,"daylight",latitude=latitude))
             elif view == "Daily series":
                 table = daily_daylight_table(pd.DatetimeIndex(df.index), float(latitude))
                 fig = px.line(
@@ -4927,10 +4931,8 @@ def render_sky_daylight(df: pd.DataFrame, *, latitude: float | None = None) -> N
                     xaxis_title="Date",
                     yaxis_title="Daylight duration [h]",
                 )
-                render_plot(
-                    fig,
-                    "Calculated sunrise-to-sunset duration for an ideal geometric horizon; refraction, terrain and local obstructions are not included.",
-                )
+                from epw_climate_analyzer.sky_findings import sky_figure_interpretation
+                render_plot(fig,sky_figure_interpretation(df,fig,"daylight",latitude=latitude))
             else:
                 summary = monthly_daylight_sunshine_summary(df, float(latitude))
                 columns = ["mean_daylight_h"] + (
@@ -4961,18 +4963,21 @@ def render_sky_daylight(df: pd.DataFrame, *, latitude: float | None = None) -> N
                     yaxis_title="Mean duration per represented day [h]",
                     legend_title="",
                 )
-                render_plot(
-                    fig,
-                    "Daylight is calculated geometrically; measured sunshine is included only when complete provider observations support it.",
-                )
+                from epw_climate_analyzer.sky_findings import sky_figure_interpretation
+                render_plot(fig,sky_figure_interpretation(df,fig,"daylight",latitude=latitude)
+                    +(" "+sky_figure_interpretation(df,fig,"relative_sunshine",latitude=latitude)
+                      if "mean_sunshine_h" in summary.columns else ""))
         elif quantity == "Measured sunshine duration":
             from epw_climate_analyzer.extended_visualization import hourly_capable, sunshine_hour_heatmap
             if hourly_capable(df):
                 sunshine_view=st.selectbox("Sunshine chart",["Period totals","Month-hour availability"],key="sunshine_view")
                 if sunshine_view=="Month-hour availability":
-                    render_plot(sunshine_hour_heatmap(df),"Measured sunshine duration per complete clock hour, averaged across equivalent month-hour positions. No inference from GHI.")
+                    from epw_climate_analyzer.sky_findings import sky_figure_interpretation
+                    fig=sunshine_hour_heatmap(df)
+                    render_plot(fig,sky_figure_interpretation(df,fig,"sunshine_heatmap",latitude=latitude))
                     return
-            sunshine = pd.to_numeric(df["sunshine_duration_s"], errors="coerce") / 3600.0
+            from epw_climate_analyzer.sky_findings import _numeric
+            sunshine = _numeric(df,"sunshine_duration_s") / 3600.0
             aggregation = st.selectbox(
                 "Aggregation",
                 ["Daily", "Monthly", "Annual"],
@@ -4997,10 +5002,8 @@ def render_sky_daylight(df: pd.DataFrame, *, latitude: float | None = None) -> N
                 xaxis_title="Period",
                 yaxis_title="Measured sunshine duration [h]",
             )
-            render_plot(
-                fig,
-                "Measured sunshine is an interval-duration quantity summed in hours. Missing observations are excluded, never replaced by zero.",
-            )
+            from epw_climate_analyzer.sky_findings import sky_figure_interpretation
+            render_plot(fig,sky_figure_interpretation(df,fig,"sunshine",latitude=latitude))
         elif quantity == "Relative sunshine duration":
             summary = monthly_daylight_sunshine_summary(df, float(latitude))
             if "relative_sunshine_pct" not in summary.columns:
@@ -5025,10 +5028,8 @@ def render_sky_daylight(df: pd.DataFrame, *, latitude: float | None = None) -> N
                 xaxis_title="Month",
                 yaxis_title="Relative sunshine duration [%]",
             )
-            render_plot(
-                fig,
-                "Measured sunshine duration divided by astronomical daylight only for fully observed calendar days; complete real days are used for the ratio.",
-            )
+            from epw_climate_analyzer.sky_findings import sky_figure_interpretation
+            render_plot(fig,sky_figure_interpretation(df,fig,"relative_sunshine",latitude=latitude))
         elif quantity in {"Total sky cover", "Opaque sky cover"}:
             render_generic_variable_page(
                 df,
@@ -5054,7 +5055,9 @@ def render_sky_daylight(df: pd.DataFrame, *, latitude: float | None = None) -> N
             if sky_view=="Monthly sky-condition distribution":
                 table=sky_distribution(df)
                 table.columns=["Clear","Intermediate","Overcast"]
-                render_plot(occurrence_figure(table,"","Hours"),"Clear: 0–2 tenths; intermediate: above 2 and below 8 tenths; overcast: 8–10 tenths. Only valid observed sky-cover intervals contribute.")
+                from epw_climate_analyzer.sky_findings import sky_figure_interpretation
+                fig=occurrence_figure(table,"","Hours")
+                render_plot(fig,sky_figure_interpretation(df,fig,"sky_conditions",column="total_sky_cover_tenths"))
                 return
         aggregation = st.selectbox(
             "Aggregation",
@@ -5076,7 +5079,25 @@ def render_sky_daylight(df: pd.DataFrame, *, latitude: float | None = None) -> N
             condition = df["global_horizontal_illuminance_lux"] > 10000
         counts = threshold_count_by_period(df, condition, aggregation, label="hours")
         fig = threshold_bar_chart(counts, mode)
-        render_plot(fig, sky_interpretation(df))
+        from epw_climate_analyzer.sky_findings import sky_figure_interpretation
+        selected_col="global_horizontal_illuminance_lux" if mode=="Illuminance > 10000 lux" else "total_sky_cover_tenths"
+        note=(sky_figure_interpretation(df,fig,"illumination",column=selected_col,args=(10000.,))
+              if selected_col=="global_horizontal_illuminance_lux" else
+              sky_figure_interpretation(df,fig,"sky_conditions",column=selected_col))
+        render_plot(fig,note)
+    elif chart_group=="Sky cover × exterior illuminance":
+        from epw_climate_analyzer.sky_findings import sky_light_table,sky_joint_interpretation
+        threshold=st.number_input("Exterior horizontal illuminance [lux]",
+                    min_value=0.,max_value=200000.,value=3000.,step=500.,key="sky_joint_lux_threshold")
+        table=sky_light_table(df,threshold_lux=threshold)
+        fig=go.Figure()
+        for name in ("Clear 0–2 tenths","Intermediate >2–<8","Overcast 8–10 tenths"):
+            fig.add_bar(x=table.index,y=table[name],name=name)
+        fig.update_layout(template="plotly_white",barmode="stack",
+            title="Exterior light availability by observed sky condition",
+            xaxis_title="Month",yaxis_title=f"Hours with horizontal illuminance ≥{threshold:,.0f} lux",
+            legend=dict(orientation="h",y=-.22))
+        render_plot(fig,sky_joint_interpretation(df,threshold_lux=threshold))
     else:
         fig = scatter_chart(
             df,
@@ -5087,7 +5108,8 @@ def render_sky_daylight(df: pd.DataFrame, *, latitude: float | None = None) -> N
             "Total sky cover [tenths]",
             "GHI [Wh/m²]",
         )
-        render_plot(fig, sky_interpretation(df))
+        from epw_climate_analyzer.sky_findings import sky_figure_interpretation
+        render_plot(fig,sky_figure_interpretation(df,fig,"sky_scatter"))
 
 
 def render_outdoor_comfort(df):
