@@ -144,7 +144,19 @@ def sky_condition_interpretation(df,column=TOTAL):
         months=valid.ge(8).groupby(valid.index.month).mean().sort_values(ascending=False)
         if not months.empty:
             base+=f"Overcast conditions are most frequent in month {int(months.index[0])} ({100*months.iloc[0]:.1f}% of valid observations). "
-    return base+"Overcast frequency prioritizes diffuse-light collection and effective daylight distribution; clear periods motivate direct-sun and glare control."
+    base+="Overcast frequency prioritizes diffuse-light collection and effective daylight distribution; clear periods motivate direct-sun and glare control."
+    if column==OPAQUE and TOTAL in df:
+        total=_numeric(df,TOTAL)
+        opaque=_numeric(df,OPAQUE)
+        paired=total.notna()&opaque.notna()
+        conflicts=paired&(opaque>total+1e-9)
+        n=int(conflicts.sum())
+        if n:
+            base+=(f" Source-field consistency flag: {n:,} paired hours "
+                   f"({100*n/int(paired.sum()):.1f}%) report opaque sky cover "
+                   "greater than total sky cover. Review the corresponding cloud-cover "
+                   "observations when drawing opaque-cloud conclusions.")
+    return base
 
 
 def illuminance_interpretation(df,column=GLOBAL,threshold_lux=10000.,kind="illumination"):
