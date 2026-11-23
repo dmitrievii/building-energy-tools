@@ -50,9 +50,9 @@ def temperature_figure_interpretation(df, fig, kind, *, column="dry_bulb_tempera
         h_high = _duration_hours_from_count(df, int(data.gt(high).sum()))
         climate = (f"Outdoor exposure: {_fmt_hours(h_low)} h below {low:g} °C and "
                    f"{_fmt_hours(h_high)} h above {high:g} °C. "
-                   "These are not building heating or cooling loads.")
+                   "These outdoor-temperature frequencies indicate seasonal envelope and passive-control priorities.")
     else:
-        climate = "This temperature quantity alone does not establish building heating/cooling loads or indoor comfort."
+        climate = "Use this temperature series to identify seasonal exposure, extremes and opportunities for envelope design."
 
     if kind in ("time_series", "native") or (kind == "time series / profile" and "observed values" in lower_name):
         return (f"Observed temperatures over {total} range from {_fmt(data.min())} to "
@@ -69,7 +69,7 @@ def temperature_figure_interpretation(df, fig, kind, *, column="dry_bulb_tempera
         at = lambda idx: (f"day-of-year {x[idx]}" if "daily" in lower_name and idx < len(x)
                           and isinstance(x[idx], (int, float, np.integer, np.floating))
                           else str(x[idx]) if idx < len(x) else f"point {idx+1}")
-        envelope = ("The P05–P95 band describes source variability, not a confidence interval. "
+        envelope = ("The P05–P95 band shows the central 90% of observed temperatures for each plotted period. "
                     if kind == "percentile" or "p05" in lower_name else
                     "The min–max band describes observed extremes within each plotted period. "
                     if "max" in lower_name else "")
@@ -91,7 +91,7 @@ def temperature_figure_interpretation(df, fig, kind, *, column="dry_bulb_tempera
         cell = lambda pos: f'{str(x[pos[1]]) if pos[1]<len(x) else "?"}, {y_dimension} {str(y[pos[0]]) if pos[0]<len(y) else "?"}'
         return (f"For the selected heatmap statistic, the lowest displayed cell is "
                 f"{_fmt(z[lo])} °C ({cell(lo)}) and the highest is {_fmt(z[hi])} °C ({cell(hi)}). "
-                "The common absolute colour scale indicates outdoor temperature, not indoor comfort. " + climate)
+                "The absolute colour scale reveals the timing and seasonal concentration of outdoor temperatures. " + climate)
 
     if kind in ("duration", "duration curve"):
         return (f"The temperature duration curve ranks {total} without preserving chronology. "
@@ -107,7 +107,7 @@ def temperature_figure_interpretation(df, fig, kind, *, column="dry_bulb_tempera
                 base += (f"Highest monthly median: month {int(monthly.idxmax())} "
                          f"({_fmt(monthly.max())} °C); lowest: month {int(monthly.idxmin())} "
                          f"({_fmt(monthly.min())} °C). ")
-        return base + "Distribution indicates outdoor exposure, not indoor comfort or equipment capacity."
+        return base + "The spread and monthly medians reveal how often envelope heating and summer overheating conditions occur."
 
     if kind in ("diurnal", "typical daily profile"):
         if not isinstance(data.index, pd.DatetimeIndex):
@@ -121,12 +121,12 @@ def temperature_figure_interpretation(df, fig, kind, *, column="dry_bulb_tempera
         return (f"Pooled month–hour {statistic} reaches {_fmt(series.min())} °C "
                 f"(month {low_at[0]}, {low_at[1]:02d}:00) and {_fmt(series.max())} °C "
                 f"(month {high_at[0]}, {high_at[1]:02d}:00). "
-                "Use the seasonal day–night contrast to screen passive control; night-cooling viability also depends on indoor temperature, humidity and airflow.")
+                "The day–night contrast identifies periods for evaluating thermal storage and night ventilation alongside humidity and wind.")
 
     if kind == "amplitude":
         series, x = _temperature_plot_series(fig)
         if series.empty:
-            return "Amplitude is max minus min for each selected period; it is not necessarily the daily range."
+            return "Amplitude is the difference between the observed maximum and minimum in each plotted aggregation period."
         max_at = int(series.idxmax())
         label = (f"day-of-year {x[max_at]}" if "daily" in lower_name and max_at < len(x)
                  and isinstance(x[max_at], (int, float, np.integer, np.floating))
@@ -137,12 +137,12 @@ def temperature_figure_interpretation(df, fig, kind, *, column="dry_bulb_tempera
         return (f"The mean plotted {scale} amplitude is {_fmt(series.mean())} K; "
                 f"maximum {_fmt(series.max())} K at {label}. "
                 "Amplitude is the within-period outdoor maximum minus minimum. "
-                "Weekly, monthly and annual ranges are not diurnal swings; none independently demonstrates night-flushing potential.")
+                "Daily amplitudes describe diurnal swings; longer aggregation amplitudes describe seasonal or multi-day variability.")
 
     if kind == "occurrence":
         basis = "percentage" if "percentage" in lower_name else "days" if "days" in lower_name else "hours"
         if basis == "days":
-            detail = "Each day is classified by the selected complete-day statistic, not hourly temperature."
+            detail = "Each complete day is classified using its chosen daily statistic."
         elif basis == "percentage":
             detail = "Percentages use valid source observations as the denominator within each reported period."
         else:
@@ -169,7 +169,7 @@ def temperature_figure_interpretation(df, fig, kind, *, column="dry_bulb_tempera
         result = ", ".join(f"{nm}: {_fmt(v)} {unit}" for nm, v in values)
         method = ("Source-interval temperature differences are integrated." if metric == "degree-hours"
                   else "Complete daily mean outdoor temperatures are evaluated before applying the base.")
-        return f"{result}. {method} These are climatic exposure indicators, not building energy demand."
+        return f"{result}. {method} These climatic temperature sums help compare the relative duration and severity of heating and cooling exposure."
 
     if kind == "temp_threshold":
         counts = []
@@ -177,12 +177,12 @@ def temperature_figure_interpretation(df, fig, kind, *, column="dry_bulb_tempera
             ys = pd.to_numeric(pd.Series(list(getattr(trace, "y", ()))), errors="coerce").dropna()
             if not ys.empty:
                 counts.append(f'{str(getattr(trace, "name", "") or "Condition")}: {_fmt_hours(ys.sum())} h')
-        return ("; ".join(counts) + ". " if counts else "") + "Strict outdoor thresholds describe climatic exposure, not actual building heating/cooling demand."
+        return ("; ".join(counts) + ". " if counts else "") + "The selected thresholds quantify the duration of cold and warm outdoor conditions relevant to envelope and seasonal-control design."
 
     if kind == "day_indicators":
         return ("Frost days use daily minimum below 0 °C. Tropical nights use daily minimum "
-                "at or above 20 °C for complete calendar days; this is not an occupied-night comfort assessment.")
+                "at or above 20 °C for complete calendar days, identifying sustained overnight warmth.")
     if kind == "temp_events":
         return ("An event requires at least three consecutive complete qualifying days. "
-                "Daily maximum, mean and minimum criteria are different; event counts and durations must not be interchanged.")
+                "The selected daily maximum, mean or minimum criterion determines which consecutive days form each event.")
     return climate
