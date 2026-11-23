@@ -132,7 +132,7 @@ class WindR23Tests(unittest.TestCase):
             wind_opportunity(frame)
         note=wind_figure_interpretation(frame,go.Figure(),"profile",
                                          column="wind_speed_m_s")
-        self.assertIn("Hourly calm frequencies",note)
+        self.assertIn("monthly series describes seasonal average wind conditions",note)
         self.assertIn("hourly observations",note)
 
     def test_report_has_causal_wind_orientation_diagram(self):
