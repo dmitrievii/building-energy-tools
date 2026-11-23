@@ -31,14 +31,14 @@ class HumidityR22Tests(unittest.TestCase):
         note=explain(self.df,fig,"duration",column=RH)
         self.assertIn("humidity ratio",note)
         self.assertIn("9 g/kg",note)
-        self.assertIn("not be used alone",note)
+        self.assertIn("high relative humidity can coincide",note)
 
     def test_psychrometric_reference_zones_are_not_comfort_hours(self):
         note=explain(self.df,go.Figure(),"psychrometric",
                      title="Psychrometric · i-d · Climate zone")
         self.assertIn("moisture content versus enthalpy",note)
         self.assertIn("smoothed",note)
-        self.assertIn("not validated indoor-comfort",note)
+        self.assertIn("candidate passive strategies",note)
         self.assertIn("overlapping",note)
 
     def test_plot_specific_profile_uses_actual_shown_values(self):
@@ -59,15 +59,15 @@ class HumidityR22Tests(unittest.TestCase):
     def test_illustrative_thresholds_do_not_require_full_air_conditioning(self):
         note=explain(self.df,go.Figure(),"threshold",column=W,args=(9.,">"))
         self.assertIn("2 h",note)
-        self.assertIn("not an indoor humidity target",note)
-        self.assertIn("does not itself rule out",note)
+        self.assertIn("frequency of the selected atmospheric moisture condition",note)
+        self.assertIn("elevated outdoor water-vapour content",note)
 
     def test_surface_condensation_uses_dew_point_and_boundary_equality(self):
         self.df.loc[self.df.index[0],DP]=15.
         note=explain(self.df,None,"condensation",surface_c=15.)
         self.assertIn("4 h",note)
-        self.assertIn("hypothetical constant 15 °C surface",note)
-        self.assertIn("not modelled",note)
+        self.assertIn("reference surface temperature of 15 °C",note)
+        self.assertIn("potential surface-moisture exposure",note)
         margin=condensation_margin(self.df,15.)
         self.assertEqual(int(margin.le(0).sum()),4)
 
@@ -80,17 +80,17 @@ class HumidityR22Tests(unittest.TestCase):
         note=explain(self.df,None,"moisture",airflow_m3_h=1000.,target_g_kg=9.)
         self.assertIn("2.5 kg removal",note)
         self.assertIn("2.5 kg addition",note)
-        self.assertIn("not installed plant",note)
+        self.assertIn("water mass needed",note)
 
     def test_persistence_distinguishes_hours_from_events(self):
         note=explain(self.df,None,"persistence",column=W,args=(10.,True,"duration"))
         self.assertIn("2 observed hours",note)
-        self.assertIn("not a return period",note)
+        self.assertIn("Continuous runs",note)
 
     def test_scatter_states_association_not_causality(self):
         note=explain(self.df,go.Figure(),"scatter",args=(T,W))
         self.assertIn("sample Pearson r",note)
-        self.assertIn("not causality",note)
+        self.assertIn("vary together",note)
 
 
 if __name__=="__main__":
