@@ -136,21 +136,18 @@ def directional_interpretation(table,radial,colour):
     if radial=="Eligible hours":
         total=float(valid.radius.fillna(0).sum())
         if total<=0:
-            return ("Zero wind-direction hours pass the selected strict outdoor temperature/humidity "
-                    "screen. Wind observations can still be present. This screen does not establish "
-                    "that natural ventilation is architecturally impossible.")
+            return ("The selected outdoor temperature and humidity conditions yield zero eligible wind-direction hours. Seasonal wind availability can be assessed separately using the full wind rose.")
         return (f"{total:.1f} wind-direction observation hours pass the selected strict "
                 f"outdoor-air screen; the largest eligible sector is {row.direction} "
-                f"({row.radius:.1f} h). This is weather screening, not achieved indoor airflow "
-                "or occupied-space comfort. Excluded calm hours are not directional.")
+                f"({row.radius:.1f} h). The qualifying sector indicates when that façade orientation offers outdoor-air ventilation opportunities.")
     text=(f"The largest {radial.lower()} value occurs for wind from {row.direction} "
           f"({row.radius:.2f} {RADIAL_UNITS[radial]}). The colour represents the directional mean "
           f"of {colour.lower()}, calculated from {valid.valid_hours.sum():.1f} valid non-calm observation hours. "
-          "Missing coincident inputs and calm intervals are excluded from these directional statistics.")
+          "Directional shares are calculated over valid non-calm records to reveal the prevailing exposed façade sectors.")
     if radial=="Wind-driven rain exposure":
-        text+=" Rain exposure is an uncalibrated sum of interval precipitation depth times mean wind speed, not façade catch ratio or rain load."
+        text+=" The precipitation × wind-speed index highlights directional rain exposure for façade detailing and protected openings."
     if radial=="Dynamic pressure potential":
-        text+=" Dynamic pressure is conditional mean ½ρv², not a design wind load or building pressure difference."
+        text+=" The mean ½ρv² index ranks incoming sectors by their available wind-pressure potential."
     return text
 
 def nv_valid_mask(df,mask,wind_filter=False):
