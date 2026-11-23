@@ -5091,7 +5091,7 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
             directional_table, directional_figure, directional_interpretation, nv_valid_mask,
         )
         from epw_climate_analyzer.wind_rose_selection import available_wind_months, select_wind_rose_period
-        view=st.selectbox("Chart type",["Suitability distribution","Wind during suitable hours","Directional suitability mean"],key="nv_directional_view")
+        view=st.selectbox("Chart type",["Suitability distribution","Wind during suitable hours","Directional suitability mean","Strict-screen eligible hours"],key="nv_directional_view")
         month=None
         period=None
         aggregation=st.selectbox("Time aggregation",["Annual","Monthly"],key="nv_directional_aggregation")
@@ -5109,10 +5109,14 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
             st.info("No intervals remain in this period.")
             return
         admitted=nv_valid_mask(df,mask,wind_filter).reindex(data.index)
-        radial=st.selectbox("Radial quantity",["Hours","Percentage"],key="nv_directional_radial")
-        if view=="Directional suitability mean":
+        radial=("Eligible hours" if view=="Strict-screen eligible hours" else
+                st.selectbox("Radial quantity",["Hours","Percentage"],key="nv_directional_radial"))
+        if view in ("Directional suitability mean","Strict-screen eligible hours"):
             table=directional_table(data,radial=radial,colour="Natural ventilation suitability",nv_mask=admitted)
-            render_plot(directional_figure(table,radial,"Natural ventilation suitability","Directional natural ventilation suitability mean"),directional_interpretation(table,radial,"Natural ventilation suitability"))
+            title=("Directionally classified strict-screen eligible hours" if view=="Strict-screen eligible hours"
+                   else "Directional natural ventilation suitability mean")
+            render_plot(directional_figure(table,radial,"Natural ventilation suitability",title),
+                        directional_interpretation(table,radial,"Natural ventilation suitability"))
         else:
             quantity="Natural ventilation suitability"
             title="Directional natural ventilation suitability"
@@ -5127,7 +5131,11 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
                 st.info("No valid coincident non-calm observations match the selected conditions.")
                 return
             render_plot(directional_class_figure(table,title),class_interpretation(table))
-        st.caption("All views use the natural-ventilation limits above, including optional wind-speed and occupied-hour restrictions. Percentages use the eligible observations of the chosen view.")
+        st.caption("These views apply the selected strict outdoor-air screen (including optional occupancy and wind-speed restrictions). "
+                   "In suitability-distribution and directional-mean views, percent radii describe all classified non-calm wind observations; "
+                   "colour or class encodes screening suitability. The eligible-hour view uses only admitted screen hours as its radial magnitude. "
+                   "The wind-during-suitable-hours view instead conditions the wind distribution on admitted observations. "
+                   "None establishes actual indoor cross-flow or thermal comfort.")
     elif chart_group == "Heat map":
         row_group = st.radio("Heat-map aggregation", ["Day", "Week", "Month"], horizontal=True)
         compare_options = ["Hour of day"] if time_basis(df_nv) == CHRONOLOGICAL else ["Hour of day", "Year"]
