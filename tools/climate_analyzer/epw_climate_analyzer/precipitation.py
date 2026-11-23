@@ -33,7 +33,12 @@ DEFAULT_SNOW_SEASON_START_MONTH = 7
 def _numeric_series(df: pd.DataFrame, column: str) -> pd.Series:
     if column not in df.columns:
         return pd.Series(index=df.index, dtype=float, name=column)
-    return pd.to_numeric(df[column], errors="coerce").rename(column)
+    values = pd.to_numeric(df[column], errors="coerce").replace([float("inf"),-float("inf")],float("nan"))
+    if column in (LIQUID_PRECIPITATION_COLUMN, SNOW_DEPTH_COLUMN, PRECIPITATION_DURATION_COLUMN):
+        values = values.where(values.ge(0))
+    if column == PRECIPITATION_DURATION_COLUMN:
+        values = values.where(values.le(native_interval_hours(df)*60.0+1e-6))
+    return values.rename(column)
 
 
 def _finite_or_none(value) -> float | None:
@@ -130,11 +135,39 @@ def occurrence_hours(
 
 
 def daily_precipitation_totals(df: pd.DataFrame) -> pd.Series:
-    """Return daily precipitation totals, retaining NaN for fully unobserved days."""
+    """Observed daily accumulation totals, including selected partial days.
+
+    These are suited to a daily plotted accumulation. For climate indices
+    requiring whole civil-day classification use complete_daily_precipitation.
+    """
     values = _numeric_series(df, LIQUID_PRECIPITATION_COLUMN)
     if values.empty:
         return pd.Series(dtype=float, name="precipitation_mm")
-    daily = values.resample("D").sum(min_count=1).rename("precipitation_mm")
+    return values.resample("D").sum(min_count=1).rename("precipitation_mm")
+
+
+def complete_daily_precipitation(df: pd.DataFrame) -> pd.Series:
+    """Daily precipitation for fully observed source-cadence calendar days.
+
+    A full day needs all real civil-day source slots and finite nonnegative
+    amounts. A selected-hour Data filter cannot create an apparent dry day.
+    Daily-native records are accepted when their declared cadence is 24 h.
+    """
+    values=_numeric_series(df, LIQUID_PRECIPITATION_COLUMN).sort_index()
+    if values.empty:return pd.Series(dtype=float,name="precipitation_mm")
+    if (not isinstance(values.index,pd.DatetimeIndex) or values.index.has_duplicates):
+        raise ValueError("Daily precipitation indices require unique dated records.")
+    dt=float(native_interval_hours(df))
+    if not 0<dt<=24:
+        raise ValueError("Daily precipitation indices require a source interval ≤24 h.")
+    step=pd.Timedelta(hours=dt)
+    daily=values.resample("D").sum(min_count=1).rename("precipitation_mm")
+    for day,group in values.groupby(values.index.normalize()):
+        expected=pd.date_range(day,day+pd.DateOffset(days=1),freq=step,inclusive="left")
+        phase=(group.index[0]-day)%step
+        expected=expected+phase
+        if not group.index.equals(expected) or not bool(group.notna().all()):
+            daily.loc[day]=float("nan")
     return daily
 
 
@@ -166,7 +199,8 @@ def annual_precipitation_indices(
     filtered view. A fully unobserved day remains NaN and breaks a dry spell; it
     is never silently interpreted as a zero-precipitation day.
     """
-    daily = daily_precipitation_totals(df)
+    daily = complete_daily_precipitation(df)
+    raw_daily = daily_precipitation_totals(df)
     columns = [
         "year",
         "precipitation_total_mm",
@@ -176,6 +210,7 @@ def annual_precipitation_indices(
         "max_daily_precipitation_mm",
         "longest_dry_spell_days",
         "valid_daily_totals",
+        "incomplete_or_missing_days",
     ]
     rows: list[dict[str, object]] = []
     if daily.empty:
@@ -184,18 +219,20 @@ def annual_precipitation_indices(
     for year in sorted({int(value) for value in daily.index.year}):
         subset = daily[daily.index.year == year]
         valid = subset.dropna()
-        if valid.empty:
+        observed = raw_daily[raw_daily.index.year == year].dropna()
+        if observed.empty:
             continue
         rows.append(
             {
                 "year": year,
-                "precipitation_total_mm": float(valid.sum()),
-                "wet_days_ge_1mm": int((valid >= float(wet_threshold_mm)).sum()),
-                "heavy_days_ge_10mm": int((valid >= float(heavy_threshold_mm)).sum()),
-                "very_heavy_days_ge_20mm": int((valid >= float(very_heavy_threshold_mm)).sum()),
-                "max_daily_precipitation_mm": float(valid.max()),
-                "longest_dry_spell_days": _longest_dry_spell(subset, float(wet_threshold_mm)),
+                "precipitation_total_mm": float(observed.sum()),
+                "wet_days_ge_1mm": int((valid >= float(wet_threshold_mm)).sum()) if not valid.empty else float("nan"),
+                "heavy_days_ge_10mm": int((valid >= float(heavy_threshold_mm)).sum()) if not valid.empty else float("nan"),
+                "very_heavy_days_ge_20mm": int((valid >= float(very_heavy_threshold_mm)).sum()) if not valid.empty else float("nan"),
+                "max_daily_precipitation_mm": float(valid.max()) if not valid.empty else float("nan"),
+                "longest_dry_spell_days": _longest_dry_spell(subset, float(wet_threshold_mm)) if not valid.empty else float("nan"),
                 "valid_daily_totals": int(valid.size),
+                "incomplete_or_missing_days": int(subset.isna().sum()),
             }
         )
 
