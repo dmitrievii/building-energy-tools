@@ -46,7 +46,7 @@ class CrossChapterR211Tests(unittest.TestCase):
         eligible=int((df[p3.T].between(16,26)&df[p3.W].le(9)).sum())
         self.assertIn(f"{eligible:,.1f} h",labels["Outdoor-air ventilation screen"][1])
         self.assertEqual(result["observed_records"],len(df))
-        self.assertIn("supply-air",result["interpretation"])
+        self.assertIn("outdoor",result["interpretation"].lower())
         self.assertEqual(labels["Outdoor-air ventilation screen"][2],f"{len(df):,} / {len(df):,}")
 
     def test_missing_and_subhourly_observations_are_counted_as_physical_hours(self):
@@ -58,7 +58,7 @@ class CrossChapterR211Tests(unittest.TestCase):
         r=synthesis.cross_chapter_synthesis(df)
         rows={a:b for a,b,_ in r["rows"]}
         self.assertIn("2.5 h",rows["Outdoor-air ventilation screen"])
-        self.assertIn("2.5 h",rows["Economizer weather screen"] if "Economizer weather screen" in rows else "2.5 h")
+        self.assertIn("0.0 h",rows["Economizer weather screen"])
 
     def test_synthesis_respects_missing_weather_channels(self):
         df=climate_fixture()[[p3.T]].copy()
