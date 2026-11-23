@@ -2207,6 +2207,10 @@ def render_extended_variable_chart(df, column, unit, chart_type, *, key_prefix="
             note=solar_figure_interpretation(
                 subset,fig,"diurnal",column=column,plane=df.attrs.get("r24_solar_plane","reference vertical south-facing plane"))
             note+=" Equivalent calendar-month clock hours are pooled; missing observations remain gaps."
+        elif key_prefix.startswith(("explorer_sky_cover","explorer_illuminance")):
+            from epw_climate_analyzer.sky_findings import sky_figure_interpretation
+            subset=df.loc[df.index.month.isin([MONTHS[m] for m in months])]
+            note=sky_figure_interpretation(subset,fig,"diurnal",column=column)
         else:
             note="Profiles pool equivalent calendar-month clock hours across selected years. Only complete source hours contribute; extensive values are summed within each hour. Missing observations remain gaps."
         render_plot(fig,note)
@@ -2263,6 +2267,10 @@ def render_extended_variable_chart(df, column, unit, chart_type, *, key_prefix="
                 df,fig,"occurrence",column=column,
                 title=f"Solar occurrence · {basis} · {statistic}",args=(basis,statistic),
                 plane=df.attrs.get("r24_solar_plane","reference vertical south-facing plane"))
+        elif key_prefix.startswith(("explorer_sky_cover","explorer_illuminance")):
+            from epw_climate_analyzer.sky_findings import sky_figure_interpretation
+            note=sky_figure_interpretation(df,fig,"occurrence",column=column,
+                title=f"Sky & daylight occurrence · {basis} · {statistic}",args=(basis,statistic))
         else:
             note="Classes are mutually exclusive; hours retain source duration, days require complete real calendar days, and percentages use valid observed intervals. Calendar-profile mode averages equivalent year-months."
         if column=="diffuse_radiation_fraction_pct" and basis=="Days":
@@ -2483,6 +2491,10 @@ def render_generic_variable_page(
         text=solar_figure_interpretation(
             chart_df,fig,chart_type,column=column,
             plane=chart_df.attrs.get("r24_solar_plane","reference vertical south-facing plane"))
+    elif title_prefix in ("Sky cover","Illuminance"):
+        from epw_climate_analyzer.sky_findings import sky_figure_interpretation
+        text=sky_figure_interpretation(chart_df,fig,chart_type,column=column,
+                                      title=f"{title_prefix}: {variable_label}")
     elif interpretation_factory:
         text = interpretation_factory(chart_df, column, variable_label.lower(), unit)
     else:
