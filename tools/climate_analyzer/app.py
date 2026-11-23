@@ -5534,55 +5534,66 @@ def render_hvac_passive(df: pd.DataFrame) -> None:
                   "strategy. Coincident strategies remain visible in separate rows.",
             )
     elif chart_group == "Economizer availability":
-        h_return = st.slider("Return-air enthalpy limit [kJ/kg]", 30.0, 80.0, 50.0, 1.0)
-        mask = economizer_condition(df, return_air_enthalpy_kj_kg=h_return)
-        aggregation = st.selectbox(
-            "Aggregation",
-            ["Monthly", "Weekly", "Daily", "Seasonal"],
-            index=0,
-            key="economizer_aggregation",
+        from epw_climate_analyzer.hvac_findings import (
+            economizer_stages,economizer_stages_figure,economizer_interpretation,
         )
-        counts = threshold_count_by_period(df, mask, aggregation, label="hours")
-        fig = threshold_bar_chart(counts, "Air-side economizer availability", "hours")
-        render_plot(fig, hvac_interpretation(df))
+        h_return = st.slider("Return-air enthalpy reference [kJ/kg]", 30.0, 80.0, 50.0, 1.0)
+        mask = economizer_condition(df, return_air_enthalpy_kj_kg=h_return)
+        chart = st.selectbox(
+            "Chart type", ["Eligible hours by period","Climatic screening stages"],
+            key="hvac_economizer_chart",
+        )
+        finding=economizer_interpretation(df,h_return=h_return)
+        if chart=="Climatic screening stages":
+            steps=economizer_stages(df,h_return=h_return)
+            render_plot(economizer_stages_figure(steps),finding)
+            st.dataframe(steps,hide_index=True,use_container_width=True)
+        else:
+            aggregation = st.selectbox(
+                "Aggregation",
+                ["Monthly", "Weekly", "Daily", "Seasonal"],
+                index=0,key="economizer_aggregation",
+            )
+            counts = threshold_count_by_period(df, mask, aggregation, label="hours")
+            fig = threshold_bar_chart(counts, "Air-side economizer availability", "hours")
+            render_plot(fig,finding)
     elif chart_group == "Design-day candidates":
-        view=st.selectbox("View",["Daily ranking","Statistical design conditions and sequences"],key="p4_hvac_design")
+        view=st.selectbox(
+            "View",["Daily ranking","Statistical design conditions and sequences"],
+            key="p4_hvac_design",
+        )
         if view=="Statistical design conditions and sequences":
             from epw_climate_analyzer.p4_ui import hvac_panel
             hvac_panel(df,render_plot)
             return
-        daily_aggregation = {
-            "mean_t": ("dry_bulb_temperature_c", "mean"),
-            "min_t": ("dry_bulb_temperature_c", "min"),
-            "max_t": ("dry_bulb_temperature_c", "max"),
-            "max_enthalpy": ("moist_air_enthalpy_kj_kg", "max"),
-            "max_humidity_ratio": ("humidity_ratio_g_kg", "max"),
-        }
-        if has_ghi:
-            daily_aggregation["max_ghi"] = ("global_horizontal_radiation_wh_m2", "max")
-        daily = df.resample("D").agg(**daily_aggregation)
-        mode = st.radio(
+        from epw_climate_analyzer.hvac_findings import (
+            candidate_day_table,candidate_day_figure,candidate_day_interpretation,
+        )
+        mode=st.radio(
             "Design-day ranking",
-            ["Coldest days", "Hottest days", "Highest enthalpy days", "Most humid days"],
+            ["Coldest days","Hottest days","Highest enthalpy days","Most humid days"],
             horizontal=True,
         )
-        if mode == "Coldest days":
-            table = daily.sort_values("min_t").head(15)
-        elif mode == "Hottest days":
-            table = daily.sort_values("max_t", ascending=False).head(15)
-        elif mode == "Highest enthalpy days":
-            table = daily.sort_values("max_enthalpy", ascending=False).head(15)
-        else:
-            table = daily.sort_values("max_humidity_ratio", ascending=False).head(15)
-        st.dataframe(table, use_container_width=True)
-        fig = profile_ribbon_chart(
-            df,
-            "dry_bulb_temperature_c",
-            "Daily",
-            "Daily dry-bulb temperature for design-day screening",
-            "°C",
+        variable={
+            "Coldest days":("dry_bulb_temperature_c","Air temperature","°C"),
+            "Hottest days":("dry_bulb_temperature_c","Air temperature","°C"),
+            "Highest enthalpy days":("moist_air_enthalpy_kj_kg","Moist-air enthalpy","kJ/kg"),
+            "Most humid days":("humidity_ratio_g_kg","Humidity ratio","g/kg"),
+        }
+        column,quantity,unit=variable[mode]
+        try:
+            table=candidate_day_table(df,quantity=column,ranking=mode)
+        except ValueError as exc:
+            st.warning(str(exc))
+            return
+        if table.empty:
+            st.info("No complete daily observations available for ranking.")
+            return
+        render_plot(
+            candidate_day_figure(table,quantity=quantity,unit=unit,ranking=mode),
+            candidate_day_interpretation(table,quantity=quantity,unit=unit,ranking=mode),
         )
-        render_plot(fig, hvac_interpretation(df))
+        st.dataframe(table,use_container_width=True)
     elif chart_group == "Adaptive comfort":
         from epw_climate_analyzer.p3_ui import adaptive_panel
         adaptive_panel(df,render_plot)
