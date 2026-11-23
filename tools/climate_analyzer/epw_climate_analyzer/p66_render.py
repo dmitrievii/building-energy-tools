@@ -390,23 +390,40 @@ def make_figure(d,df,context,reference_df=None,cache=None):
             for c1,color in zip(p3.CLASSES,p3.COLORS):
                 if c1 in table:f.add_bar(x=table.index,y=table[c1],name=c1,marker_color=color)
             f.update_layout(barmode="stack",yaxis_title="Hours")
-        note+=" UTCI research screening; wind assumed at 10 m, uniform MRT=T or simplified open-sky radiation. Out-of-domain states remain missing."
+        from .utci_findings import utci_distribution_interpretation
+        note+=" "+utci_distribution_interpretation(df,val.to_frame(name=col),col)
+        note+=" The meteorological wind is interpreted at 10 m; MRT follows the selected uniform or spherical-equivalent radiation scenario."
     elif k=="critical_windows":
         from .p4_design_charts import critical_windows_figure
         f,table,detail=critical_windows_figure(df,c,u,upper=a[0])
         if f is None:raise NotApplicable(detail)
         note+=" "+detail
-    elif k=="utci_pair":
+    elif k in ("utci_pair","utci_pair_delta","utci_pair_stress","utci_pair_mrt"):
+        from .utci_findings import (
+            paired_monthly_figure,paired_delta_figure,paired_threshold_figure,
+            paired_exposure_interpretation,mrt_monthly_figure,
+        )
         values=utci_model("Open-sky screening")
-        common=values.dropna()
-        if common.empty:raise NotApplicable("No paired admitted UTCI states.")
-        with phase("utci_aggregation"):table=common.resample("MS").mean()
-        f=go.Figure()
-        for c1 in table:f.add_scatter(x=table.index,y=table[c1],mode="lines+markers",name=c1)
-        f.update_layout(yaxis_title="UTCI [°C]")
-        from .utci_presentation import add_stress_bands
-        add_stress_bands(f,table)
-        note+=" Paired simplified open-sky radiation; shade removes direct beam only. The background classes summarize monthly conditions; the simplified open-sky radiation model informs outdoor-space exposure screening."
+        common=values.dropna(subset=["Open sun","Direct-beam shade"])
+        if common.empty:raise NotApplicable("No coincident admitted UTCI exposure states.")
+        note=paired_exposure_interpretation(df,values)
+        if k=="utci_pair":
+            f=paired_monthly_figure(df,common,title=title)
+            from .utci_presentation import add_stress_bands
+            add_stress_bands(f,common.resample("MS").mean())
+            note+=" Thermal-stress background bands classify monthly mean UTCI."
+        elif k=="utci_pair_delta":
+            f=paired_delta_figure(df,common)
+            note+=" Monthly bars show the mean hourly UTCI difference. The line shows the 95th percentile of hourly benefits in each month."
+        elif k=="utci_pair_stress":
+            f=paired_threshold_figure(df,common)
+            note+=" Each threshold is evaluated on the same paired hours; high-stress thresholds are cumulative."
+        else:
+            radiation=memo("utci_mrt",lambda:p3.radiant_scenarios(df))
+            if radiation.empty:raise NotApplicable("Missing longwave and shortwave radiation inputs.")
+            radiation=radiation.loc[common.index]
+            f=mrt_monthly_figure(radiation)
+            note+=" Monthly MRT curves show the assumed sky, ground and solar-beam environment from which the two UTCI series are evaluated."
     elif k=="utci_sensitivity":
         axis=a[0];t=np.linspace(0,40,41);v=np.linspace(.5,10,39);delta=np.linspace(-20,50,36)
         if axis=="Temperature–wind":
