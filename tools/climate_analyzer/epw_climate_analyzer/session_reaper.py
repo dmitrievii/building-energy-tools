@@ -15,7 +15,7 @@ _INTERVAL=1.
 _QUEUE_INTERVAL=30.
 _LAST_QUEUE_SAMPLE=0.
 RUNTIME_RECOVERY_SCHEMA="MEM-PERF-R13-HF2"
-_POLICY_VERSION="r13-hf2"
+_POLICY_VERSION="r145d-hf1"
 _TICK_GENERATION_ATTR="_ige_reaper_generation"
 _RESET_REQUESTS=set()
 # Strong references are limited to closed sessions still awaiting their own

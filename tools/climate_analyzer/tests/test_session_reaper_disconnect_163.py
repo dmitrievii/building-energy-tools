@@ -64,6 +64,34 @@ class SessionReaperDisconnectRegression(unittest.TestCase):
         self.assertEqual(manager.closed,["current"])
         self.assertFalse(hasattr(ctx,"_ige_session_closed"))
 
+    def test_replaces_faulty_cached_policy_without_stacking(self):
+        # A Community Cloud hot code reload can preserve a manager's old
+        # instance-bound closure even when the source file changes.
+        manager,ctx=self._manager()
+        from epw_climate_analyzer import byte_cache
+        def stale_close(sid):
+            raise TypeError("get_script_run_ctx() got multiple values for argument 'suppress_warning'")
+        stale_close._ige_policy_version="r13-hf2"
+        def stale_disconnect(sid):
+            return stale_close(sid)
+        stale_disconnect._ige_policy_version="r13-hf2"
+        manager.close_session=stale_close
+        manager.disconnect_session=stale_disconnect
+        manager._ige_policy_version="r13-hf2"
+        manager._ige_r12_hf1_close=True
+        with (patch.object(r,"_STATUS",{}),
+              patch.object(r,"_CLOSED_REFS",[]),
+              patch.object(r,"_RETIRED",[]),
+              patch.object(r,"_STOPPING_THREADS",weakref.WeakSet()),
+              patch.object(byte_cache,"close_session_caches")):
+            r._install_disconnect_policy(manager)
+            self.assertEqual(manager._ige_policy_version,r._POLICY_VERSION)
+            self.assertIsNot(manager.close_session,stale_close)
+            manager.disconnect_session("current")
+            self.assertEqual(manager.closed,["current"])
+            self.assertTrue(ctx._ige_session_closed)
+            self.assertEqual(r.reaper_summary()["policy_replacements"],1)
+
     def test_upstream_163_getter_no_thread_parameter(self):
         import inspect
         from streamlit.runtime.scriptrunner import get_script_run_ctx

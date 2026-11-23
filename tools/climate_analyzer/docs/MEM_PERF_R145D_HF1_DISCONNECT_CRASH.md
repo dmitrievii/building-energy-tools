@@ -15,3 +15,5 @@ HF1 reads `SCRIPT_RUN_CONTEXT_ATTR_NAME` on the exact ScriptRunner thread, and m
 Other log messages are not the crash: Arrow serialization fallback (Value mixed int/float) and the `use_container_width` deprecation. There were also HTTP 404 frontend requests; proving that this hotfix resolves all blank screens requires the deployed browser smoke.
 
 Keep the memory-panel UI rollback in place until this hotfix is verified. Then restore the compact UI in a separate commit. No changes to allocator, scientific solvers or reports.
+
+Hot-reload admission: bump policy version from r13-hf2 to r145d-hf1. A manager holding a stale closure with the previous marker is forced to reinstall from its unmodified class method. Regression exercises that exact stale-closure upgrade without double wrapping.
