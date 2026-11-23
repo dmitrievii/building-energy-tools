@@ -242,7 +242,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         table=p4.freeze_thaw_cycles(df)
         if table.empty:raise NotApplicable("No qualifying warm–freeze–warm sequences.")
         f=go.Figure(go.Scatter(x=table["Thaw timestamp"],y=table["Freeze-to-thaw duration [h]"],mode="markers")).update_layout(template="plotly_white",yaxis_title=u)
-        note+=" Observed warm–freeze–warm sequences; no material thermal model."
+        note+=" Repeated warm–freeze–warm air-temperature sequences identify periods for studying moisture-sensitive façade and drainage details."
     elif k=="daylight":f=ex.daylight_envelope(df.index,float(context["latitude"]));note+=" Ideal horizon and apparent solar time."
     elif k=="sunshine":f=ex.sunshine_hour_heatmap(df);note+=" Measured sunshine duration, complete clock hours."
     elif k=="sky_conditions":f=ex.occurrence_figure(ex.sky_distribution(df,c),"tenths","Hours");note+=" Clear ≤2, overcast ≥8 tenths."
@@ -434,7 +434,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         scope=scope if wet else df
         col=c if k in ("time_series","profile","percentile","heatmap","duration","histogram","box","violin","diurnal","occurrence","amplitude","native") else ""
         # Non-temperature pages retain their existing interpretation contract.
-        if d.chapter not in (cat.TEMP, cat.HUM, cat.WIND, cat.SOL, cat.SKY):
+        if d.chapter not in (cat.TEMP, cat.HUM, cat.WIND, cat.SOL, cat.SKY, cat.RAIN):
             with phase("interpretation"):
                 stat=memo(("interpretation",d.chapter,col,k,wet),lambda:base.source_interpretation(scope,d.chapter,col,cat.LABELS.get(col,""),cat.UNITS.get(col,u),thresholds=base.temperature_thresholds(context),kind=k))
             if stat and stat not in note:note=stat+"\n\n"+note
@@ -468,5 +468,11 @@ def make_figure(d,df,context,reference_df=None,cache=None):
             stat=sky_figure_interpretation(
                 df,f,mode,column=c,title=title,args=a,
                 latitude=context.get("latitude"))
+        if stat and stat not in note:note=stat+"\n\n"+note
+    if d.chapter == cat.RAIN:
+        from .precipitation_findings import precipitation_figure_interpretation
+        with phase("interpretation"):
+            stat=precipitation_figure_interpretation(
+                df,f,k,column=c,title=title,args=a)
         if stat and stat not in note:note=stat+"\n\n"+note
     return f,note
