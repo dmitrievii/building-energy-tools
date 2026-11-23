@@ -49,7 +49,7 @@ class UxCleanup074C3Tests(unittest.TestCase):
         self.assertNotIn('"Outdoor-air enthalpy duration curve"', hvac)
         self.assertNotIn('"Heating and cooling degree-hours"', hvac)
         self.assertIn('"Passive strategy summary"', hvac)
-        self.assertIn('["Annual totals", "Monthly stacked bars"]', hvac)
+        self.assertIn('["Annual totals", "Monthly strategy matrix"]', hvac)
 
     def test_temporary_c3_transport_is_not_part_of_release_tree(self) -> None:
         self.assertFalse((ROOT / "scripts" / "apply_v074_c3.py").exists())
