@@ -2182,8 +2182,15 @@ def render_extended_variable_chart(df, column, unit, chart_type, *, key_prefix="
         centre=st.selectbox("Centre statistic",["Mean","Median"],key=key_prefix+"_centre")
         band=st.selectbox("Variability band",["P05–P95","Min–max","None"],key=key_prefix+"_band")
         table=diurnal_statistics(df,column,[MONTHS[m] for m in months])
-        render_plot(diurnal_figure(table,column,unit,representation=style,centre=centre.lower(),band=band),
-            "Profiles pool equivalent calendar-month clock hours across selected years. Only complete source hours contribute; extensive values are summed within each hour. Missing observations remain gaps.")
+        fig=diurnal_figure(table,column,unit,representation=style,centre=centre.lower(),band=band)
+        if key_prefix.startswith("explorer_temperature"):
+            from epw_climate_analyzer.temperature_findings import temperature_figure_interpretation
+            subset=df.loc[df.index.month.isin([MONTHS[m] for m in months])]
+            note=temperature_figure_interpretation(subset,fig,"diurnal",column=column,title=f"Typical daily profile · {centre} · {band}")
+            note+=" Equivalent calendar-month clock hours are pooled; missing observations remain gaps."
+        else:
+            note="Profiles pool equivalent calendar-month clock hours across selected years. Only complete source hours contribute; extensive values are summed within each hour. Missing observations remain gaps."
+        render_plot(fig,note)
     else:
         v=pd.to_numeric(df[column],errors="coerce").dropna()
         if v.empty:
@@ -2216,8 +2223,13 @@ def render_extended_variable_chart(df, column, unit, chart_type, *, key_prefix="
         if table.empty:
             st.info("No complete observations support the selected occurrence basis.")
             return
-        render_plot(occurrence_figure(table,unit,basis),
-            "Classes are mutually exclusive; hours retain source duration, days require complete real calendar days, and percentages use valid observed intervals. Calendar-profile mode averages equivalent year-months.")
+        fig=occurrence_figure(table,unit,basis)
+        if key_prefix.startswith("explorer_temperature"):
+            from epw_climate_analyzer.temperature_findings import temperature_figure_interpretation
+            note=temperature_figure_interpretation(df,fig,"occurrence",column=column,title=f"Temperature occurrence · {basis} · {statistic}")
+        else:
+            note="Classes are mutually exclusive; hours retain source duration, days require complete real calendar days, and percentages use valid observed intervals. Calendar-profile mode averages equivalent year-months."
+        render_plot(fig,note)
 
 
 def render_profile_controls(df,column,unit,title,scope,default="Monthly"):
@@ -2301,7 +2313,13 @@ def render_generic_variable_page(
         aggregation=st.selectbox("Aggregation",["Daily","Weekly","Monthly","Seasonal","Annual"],
                                  key=scope+"_amplitude_aggregation")
         fig=amplitude_figure(df,column,aggregation,variable_label)
-        render_plot(fig, "Amplitude is the observed maximum minus minimum of the selected variable within each aggregation period [K]. At least two valid observations are required. Incomplete periods reflect the observed range, not an estimated full-period range. Calendar profiles average individual period amplitudes; interannual mode keeps years separate.")
+        if title_prefix == "Temperature":
+            from epw_climate_analyzer.temperature_findings import temperature_figure_interpretation
+            note=temperature_figure_interpretation(df,fig,"amplitude",column=column)
+            note+=" At least two valid observations are required; incomplete periods represent only the observed range."
+        else:
+            note="Amplitude is the observed maximum minus minimum within each aggregation period [K]. Incomplete periods are not reconstructed."
+        render_plot(fig,note)
         return
     if chart_type in ("Typical daily profile","Monthly occurrence classes"):
         render_extended_variable_chart(df,column,unit,chart_type,key_prefix=scope)
@@ -2411,7 +2429,12 @@ def render_generic_variable_page(
         else:
             fig = monthly_box_chart(chart_df, column, f"{title_prefix}: {variable_label} monthly boxplot", unit, violin=False)
 
-    if interpretation_factory:
+    if title_prefix == "Temperature":
+        from epw_climate_analyzer.temperature_findings import temperature_figure_interpretation
+        text=temperature_figure_interpretation(
+            chart_df,fig,chart_type,column=column,
+            thresholds=temperature_thresholds or (18.,26.))
+    elif interpretation_factory:
         text = interpretation_factory(chart_df, column, variable_label.lower(), unit)
     else:
         text = variable_interpretation(chart_df, column, variable_label.lower(), unit)
@@ -3310,7 +3333,8 @@ def render_temperature(
             detail = "Only observations above 20 °C between 20:00 and 06:59 qualify."
         counts = threshold_count_by_period(df, condition, aggregation, label="hours")
         fig = threshold_bar_chart(counts, f"Temperature threshold hours: {mode}")
-        render_plot(fig, detail+" "+variable_interpretation(df,"dry_bulb_temperature_c","outdoor temperature","°C"))
+        from epw_climate_analyzer.temperature_findings import temperature_figure_interpretation
+        render_plot(fig,detail+" "+temperature_figure_interpretation(df,fig,"temp_threshold"))
     else:
         st.subheader("Extreme daily conditions")
         if interval_count_metrics:
@@ -3326,7 +3350,8 @@ def render_temperature(
         col1.dataframe(hottest, use_container_width=True)
         col2.dataframe(coldest, use_container_width=True)
         fig = profile_ribbon_chart(df, "dry_bulb_temperature_c", "Daily", "Daily temperature extremes", "°C")
-        render_plot(fig, temperature_interpretation(df, heat_threshold, cool_threshold))
+        from epw_climate_analyzer.temperature_findings import temperature_figure_interpretation
+        render_plot(fig,temperature_figure_interpretation(df,fig,"profile",thresholds=(heat_threshold,cool_threshold)))
 
 
 def _render_temperature_degree_days(df):
