@@ -330,10 +330,12 @@ CATALOG=[
 ("night","Natural Ventilation","Night-flushing availability",T,"h","night"),
 ("degree","HVAC and Passive Design","Heating and cooling degree days",T,"K·d","degree"),
 ("shade","Shading analysis","Solar protection screening",G,"h","shade"),
+("shading_energy","Shading analysis","Reference window · monthly direct interception",G,"kWh/m²","shading_ledger"),
+("shading_orientation","Shading analysis","Shading performance across eight façades",G,"kWh/m²","shading_orientation"),
 ("utci","Outdoor Thermal Comfort","Monthly UTCI stress",T,"h","utci")]
-PRESETS={"Architectural climate study":("temperature_profile","temperature_heatmap","psychrometric","ghi","facade","solar_exposure","sunpath","wind_rose","wind_orientation","daylight","sky_cover","exterior_light","rain","rain_severity","rain_wind","snow_cover","climograph","nv","night","shade"),
+PRESETS={"Architectural climate study":("temperature_profile","temperature_heatmap","psychrometric","ghi","facade","solar_exposure","sunpath","wind_rose","wind_orientation","daylight","sky_cover","exterior_light","rain","rain_severity","rain_wind","snow_cover","climograph","nv","night","shade","shading_energy","shading_orientation"),
 "Climate overview":("temperature_profile","humidity_profile","ghi","wind_rose","sky_cover","rain","rain_severity","rain_wind","climograph"),
-"Passive design":("temperature_heatmap","psychrometric","facade","solar_exposure","wind_rose","wind_orientation","sky_cover","exterior_light","nv","night","shade","utci"),
+"Passive design":("temperature_heatmap","psychrometric","facade","solar_exposure","wind_rose","wind_orientation","sky_cover","exterior_light","nv","night","shade","shading_energy","shading_orientation","utci"),
 "HVAC & engineering":("temperature_profile","temperature_duration","humidity_ratio","psychrometric","wind_speed","degree","nv","night","utci"),
 "All standard diagrams":tuple(x[0] for x in CATALOG)}
 
@@ -345,6 +347,8 @@ def available_catalog(df,context):
     requirements={"psychrometric":(T,RH,W),"sky_conditions":("total_sky_cover_tenths",),
        "illumination":("global_horizontal_illuminance_lux",),
        "relative_sunshine":("sunshine_duration_s",),
+       "shading_ledger":(G,D,N,"solar_apparent_zenith_deg","solar_azimuth_deg"),
+       "shading_orientation":(G,D,N,"solar_apparent_zenith_deg","solar_azimuth_deg",T),
        "facade":(G,D,N,"solar_apparent_zenith_deg","solar_azimuth_deg"),
        "facade_temperature":(G,D,N,"solar_apparent_zenith_deg","solar_azimuth_deg",T),
        "sunpath":(N,"solar_apparent_zenith_deg","solar_azimuth_deg"),"windrose":(V,"wind_direction_deg"),"wind_panel":(V,"wind_direction_deg"),"wind_orientation":(V,"wind_direction_deg"),
@@ -437,6 +441,27 @@ def standard_figure(entry,df,context,reference_df=None):
         fig=facade_temperature_figure(table,cold_c=lo,hot_c=hi)
         note=facade_temperature_interpretation(table,cold_c=lo,hot_c=hi)
         note+=" Model: unobstructed isotropic POA, default ground albedo 0.20."
+    elif kind=="shading_ledger":
+        from .solar_shading import shading_ledger,monthly_shading_figure
+        from .p66_catalogue import GEOMETRY
+        from .shading_findings import shading_ledger_interpretation
+        ledger=shading_ledger(df,**GEOMETRY)
+        fields=["Unshaded total","Shaded total (direct-only)","Intercepted direct"]
+        monthly=pd.DataFrame({
+            key:ledger[key].resample("MS").sum(min_count=1)/1000.
+            for key in fields})
+        fig=monthly_shading_figure(monthly,monthly.index.strftime("%b %Y"))
+        note=shading_ledger_interpretation(ledger,df,geometry=GEOMETRY)
+    elif kind=="shading_orientation":
+        from .p66_catalogue import GEOMETRY
+        from .shading_findings import (
+            orientation_shading_table,orientation_shading_figure,
+            orientation_shading_interpretation)
+        lo,hi=temperature_thresholds(context)
+        table=orientation_shading_table(df,geometry=GEOMETRY,cold_c=lo,hot_c=hi)
+        fig=orientation_shading_figure(table,cold_c=lo,hot_c=hi)
+        note=orientation_shading_interpretation(table,cold_c=lo,hot_c=hi)
+        note+=" Reference window: south-oriented 2 × 1.5 m, 0.6 m overhang and zero side fins; identical geometry is rotated for all eight orientations."
     elif kind=="facade":
         from .facade_orientation import orientation_period_components,orientation_components_chart
         a,f=orientation_period_components(df,tilt_deg=90.)
@@ -543,6 +568,8 @@ def standard_figure(entry,df,context,reference_df=None):
         from .precipitation_findings import precipitation_figure_interpretation
         mapped_kind="rain_days" if kind=="rain_days" else kind
         stat=precipitation_figure_interpretation(df,fig,mapped_kind,column=column,title=label)
+    elif page=="Shading analysis":
+        stat=""
     else:
         stat=source_interpretation(df,page,column if kind in ("profile","duration","heatmap") else "",label,unit,thresholds=temperature_thresholds(context),kind=kind)
     if kind in ("nv","night") and c in ledger:
