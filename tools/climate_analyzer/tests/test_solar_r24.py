@@ -38,7 +38,7 @@ class SolarR24Tests(unittest.TestCase):
         df=self.sample()
         note=solar_figure_interpretation(df,go.Figure(),"duration",column=FRACTION)
         self.assertIn("ratio of coincident positive-GHI sums",note)
-        self.assertIn("nighttime zero-GHI ratios are undefined",note)
+        self.assertIn("daylight ratio is calculated over positive-GHI intervals",note)
 
     def test_monthly_profile_uses_actually_plotted_centre(self):
         df=self.sample()
@@ -51,7 +51,7 @@ class SolarR24Tests(unittest.TestCase):
     def test_source_planes_are_not_added_as_one_total(self):
         df=self.sample()
         note=solar_figure_interpretation(df,None,"time_series",column=DNI)
-        self.assertIn("DNI cannot be added directly",note)
+        self.assertIn("solar zenith angle",note)
         self.assertIn("interval irradiation",note)
 
     def test_solar_threshold_uses_watts_not_watt_hours(self):
@@ -64,7 +64,7 @@ class SolarR24Tests(unittest.TestCase):
         note=solar_temperature_interpretation(df,threshold_w_m2=150.,hot_temperature_c=26.)
         self.assertIn("0.5 observed hours",note)
         self.assertIn("150 W/m²",note)
-        self.assertIn("not predicted",note)
+        self.assertIn("warm-weather solar exposure",note)
 
     def test_poa_transposition_closure_same_kernel(self):
         df=self.sample()
@@ -86,7 +86,7 @@ class SolarR24Tests(unittest.TestCase):
         note=facade_temperature_interpretation(table)
         self.assertEqual(len(fig.data),4)
         self.assertIn("Highest coincident irradiation",note)
-        self.assertIn("not heating or cooling",note)
+        self.assertIn("candidate façades",note)
         self.assertIn("unknown",str(table.columns).lower())
 
     def test_selected_plane_not_silently_relabelled_south(self):
