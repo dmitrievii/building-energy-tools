@@ -39,6 +39,19 @@ def profile_interpretation(
     actual_title=str(title or getattr(getattr(getattr(fig,"layout",None),"title",None),"text","") or "")
     canonical=canonical_profile_kind(kind,actual_title,args)
     name=str(domain or "").lower()
+    # Dispatch by physical quantity BEFORE page domain. Dew point and wet bulb
+    # also appear in Temperature explorer, while the same graph is catalogued
+    # under Humidity and Psychrometrics in Atlas/report. Domain-first dispatch
+    # previously produced two different interpretations for identical figures.
+    if column in {
+        "dew_point_temperature_c","wet_bulb_temperature_c",
+        "relative_humidity_pct","humidity_ratio_g_kg",
+        "moist_air_enthalpy_kj_kg","specific_volume_m3_kg",
+        "moist_air_density_kg_m3","atmospheric_station_pressure_pa",
+    }:
+        from .humidity_findings import humidity_figure_interpretation
+        return humidity_figure_interpretation(
+            df,fig,canonical,column=column,title=actual_title,args=args)
     if name.startswith("temperature"):
         from .temperature_findings import temperature_figure_interpretation
         return temperature_figure_interpretation(
