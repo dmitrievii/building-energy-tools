@@ -370,7 +370,10 @@ async function analysisOptions(page, expected, timeoutMs = 20_000) {
       await page.keyboard.press('Escape').catch(() => {});
       return lastValues;
     }
-    await sleep(250);
+    // Streamlit/BaseWeb virtualizes long dropdowns. ArrowDown scrolls the
+    // active option into view without selecting it; gather each visible page.
+    await control.press('ArrowDown').catch(() => {});
+    await sleep(150);
   }
   await page.keyboard.press('Escape').catch(() => {});
   return lastValues;
@@ -399,7 +402,8 @@ async function selectAnalysis(page, name) {
       await sleep(500);
       return;
     }
-    await sleep(250);
+    await control.press('ArrowDown').catch(() => {});
+    await sleep(150);
   }
   throw new Error(`Analysis option not found: ${name}`);
 }
