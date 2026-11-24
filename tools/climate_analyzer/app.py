@@ -2298,8 +2298,7 @@ def render_profile_controls(df,column,unit,title,scope,default="Monthly"):
     representations=profile_representation_options(df,column,aggregation)
     if len(representations)==1:
         representation=representations[0]
-        if representation=="Observed values":st.caption("One valid source observation per occupied interval; no statistical band is required.")
-        else:st.caption("Representation: "+representation)
+        st.caption("Displayed statistic: "+representation)
     else:
         key=scope+"_profile_representation"
         if st.session_state.get(key) not in representations:st.session_state[key]=representations[0]
@@ -2309,8 +2308,7 @@ def render_profile_controls(df,column,unit,title,scope,default="Monthly"):
         st.caption("Each real year is aggregated separately using canonical quantity semantics. Optional envelopes describe the distribution of those yearly values.")
     elif representation=="Total":
         st.caption("Sum of valid source interval quantities; calendar profiles average equivalent per-year totals. No missing values are synthesized.")
-    elif representation!="Observed values":
-        st.caption("Statistics describe the source observations within each aggregation bucket, not confidence intervals.")
+
     return time_series_profile_chart(df,column,aggregation,f"{title} · {aggregation} · {representation}",unit,representation)
 
 
