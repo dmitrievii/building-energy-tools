@@ -111,7 +111,8 @@ def facade_figure_interpretation(fig,*,tilt_deg=90.):
             f"{peak[0]} ({peak[1]:,.1f} kWh/m²) and lowest for "
             f"{low[0]} ({low[1]:,.1f} kWh/m²); ratio {_fmt(ratio,2)}. "
             "The solar incidence direction is a surface azimuth, clockwise from north. "
-            "The contrast identifies orientations for prioritizing solar protection and for investigating useful seasonal solar admission.")
+            "The contrast identifies orientations for prioritizing solar protection and for investigating useful seasonal solar admission. "
+            "Direct, sky-diffuse and ground-reflected irradiation sum to total plane-of-array irradiation. The selected components show their contribution; the orientation comparison uses total irradiation over the selected observation interval.")
 
 
 def solar_figure_interpretation(
@@ -125,7 +126,8 @@ def solar_figure_interpretation(
     label=title.lower()
     kind=canonical_profile_kind(kind,title,args)
     if kind=="facade":
-        tilt=float(getattr(getattr(fig,"layout",None),"meta",{}).get("tilt_deg",90.) or 90.)
+        meta=getattr(getattr(fig,"layout",None),"meta",None) or {}
+        tilt=float(meta.get("tilt_deg",90.))
         return facade_figure_interpretation(fig,tilt_deg=tilt)
     if kind=="tilt":
         maxima=[]
