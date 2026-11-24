@@ -1,0 +1,165 @@
+"""Exhaustive catalogue qualification runner. Writes one row per registered case.
+
+Run from repository root:
+PYTHONPATH=tools/climate_analyzer python tools/climate_analyzer/tests/r28_interpretation_audit.py --output artifacts/r28.csv
+
+Only independent explorer construction plus exact text identity earns PARITY_PASS.
+A bound report alone is RENDER_ONLY, never proof of cross-surface equality.
+"""
+from __future__ import annotations
+
+import argparse
+import csv
+import hashlib
+from collections import Counter
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+
+from test_r28_variable_interpretation_parity import weather, explorer_figure
+from epw_climate_analyzer import p66_catalogue as cat
+from epw_climate_analyzer.p66_render import make_figure, NotApplicable
+from epw_climate_analyzer.p6_report_structure import CATALOG, available_catalog, standard_figure
+from epw_climate_analyzer.profile_interpretation import generic_figure_interpretation
+from epw_climate_analyzer.figure_interpretation_contract import validate_figure_interpretation
+
+GENERIC={"profile","percentile","time_series","native","heatmap","duration",
+         "histogram","box","violin","diurnal","occurrence","amplitude"}
+
+
+def fixture():
+    base=weather()
+    other=base.copy()
+    other.index=other.index+pd.DateOffset(years=1)
+    df=pd.concat([base,other])
+    df.attrs.update(base.attrs)
+    i=np.arange(len(df))
+    cycle=np.sin(i*2*np.pi/24.)
+    hour=df.index.hour.to_numpy()
+    sin=np.maximum(0.,np.sin((hour-6)*np.pi/12.))
+    values={
+        "dry_bulb_temperature_min_c":df[cat.T]-1.,
+        "dry_bulb_temperature_max_c":df[cat.T]+1.,
+        "ground_temperature_0_10m_c":12+3*cycle,
+        "ground_temperature_0_20m_c":12+2*cycle,
+        "ground_temperature_0_50m_c":12+cycle,
+        "wind_gust_speed_m_s":df[cat.V]+2.,
+        "wind_gust_direction_deg":df[cat.WD]+5.,
+        "direct_normal_illuminance_lux":40000*sin,
+        "diffuse_horizontal_illuminance_lux":8000*sin,
+        "opaque_sky_cover_tenths":4+2*cycle,
+        "sunshine_duration_s":np.where(sin>0,1800.,0.),
+        "precipitation_duration_min":np.where(df[cat.P]>0,20.,0.),
+        "solar_apparent_zenith_deg":90-60*np.sin((hour-6)*np.pi/12.),
+        "solar_elevation_deg":60*np.sin((hour-6)*np.pi/12.),
+        "solar_azimuth_deg":(hour*15.)%360,
+        "horizontal_infrared_radiation_intensity_wh_m2":300+20*cycle,
+        cat.N:500*sin,cat.D:100*sin,
+        cat.G:500*sin*np.sin(np.deg2rad(60*sin))+100*sin,
+    }
+    for c,v in values.items():df[c]=v
+    df.attrs["solar_geometry_site"]={"latitude":47.07,"longitude":15.44,
+        "elevation_m":350.,"utc_offset_hours":1.,"reference_year":2026}
+    return cat.prepare_frame(df)
+
+
+def hash_text(s):
+    return hashlib.sha256(s.encode("utf-8")).hexdigest()
+
+
+def record(surface,ident,chapter,kind,args,status,reason="",note="",expected=""):
+    return dict(surface=surface,diagram_id=ident,chapter=chapter,kind=kind,
+        args=repr(args),status=status,reason=reason,
+        interpretation_sha256=hash_text(note) if note else "",
+        explorer_sha256=hash_text(expected) if expected else "",
+        interpretation=note,explorer_interpretation=expected)
+
+
+def audit(df,context):
+    rows=cat.catalogue(df,context,cat.FULL)
+    for d in rows:
+        common=("Atlas",d.id,d.chapter,d.kind,d.args)
+        if d.status!="available":
+            yield record(*common,"UNSUPPORTED",d.reason)
+            continue
+        try:
+            fig,note=make_figure(d,df,context,reference_df=df)
+            if not note.strip():raise ValueError("Empty scientific interpretation")
+            validate_figure_interpretation(fig,note,require_binding=True)
+            if d.kind not in GENERIC:
+                yield record(*common,"RENDER_ONLY","Independent live route not qualified",note)
+                continue
+            if d.kind=="native":
+                # Native monthly input requires its own independent live route.
+                yield record(*common,"RENDER_ONLY","Native monthly route not qualified",note)
+                continue
+            scope,live,alias=explorer_figure(d,df)
+            expected=generic_figure_interpretation(scope,live,alias,
+                domain=d.chapter,column=d.column,args=d.args,latitude=context.get("latitude"))
+            status="PARITY_PASS" if note==expected else "PARITY_FAIL"
+            yield record(*common,status,"" if status=="PARITY_PASS" else "Different text for matched settings",note,expected)
+        except NotApplicable as exc:
+            yield record(*common,"NOT_APPLICABLE",str(exc))
+        except Exception as exc:
+            yield record(*common,"ERROR",f"{type(exc).__name__}: {exc}")
+    available={e[0] for e in available_catalog(df,context)}
+    for e in CATALOG:
+        ident,chapter,label,column,unit,kind=e
+        common=("Standard report",ident,chapter,kind,())
+        if ident not in available:
+            yield record(*common,"UNSUPPORTED","Source admission rejected")
+            continue
+        try:
+            fig,note=standard_figure(e,df,context,reference_df=df)
+            if not note.strip():raise ValueError("Empty scientific interpretation")
+            validate_figure_interpretation(fig,note,require_binding=True)
+            if kind in ("duration","heatmap","profile"):
+                from epw_climate_analyzer import charts as ch
+                if kind=="duration":
+                    args=("all",False,"hours")
+                    live=ch.duration_chart(df,column,"Website",unit,ascending=False)
+                    alias="Duration curve"
+                elif kind=="heatmap":
+                    args=("month","Hour of day","Mean")
+                    live=ch.temporal_heatmap_chart(df,column,*args,"Website",unit)
+                    alias="Heat map"
+                else:
+                    args=("Monthly",)
+                    live=ch.time_series_profile_chart(df,column,"Monthly",
+                        "Website · Monthly · Min–mean–max",unit,"Min–mean–max")
+                    alias="Time series / Profile"
+                expected=generic_figure_interpretation(df,live,alias,domain=chapter,
+                    column=column,args=args,latitude=context.get("latitude"))
+                status="PARITY_PASS" if note==expected else "PARITY_FAIL"
+                yield record(*common,status,"" if status=="PARITY_PASS" else "Different text for matched settings",note,expected)
+            else:
+                yield record(*common,"RENDER_ONLY","Independent live route not qualified",note)
+        except Exception as exc:
+            yield record(*common,"ERROR",f"{type(exc).__name__}: {exc}")
+
+
+def main():
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output",default="artifacts/r28_interpretation_audit.csv")
+    parser.add_argument("--require-complete",action="store_true")
+    args=parser.parse_args()
+    path=Path(args.output);path.parent.mkdir(parents=True,exist_ok=True)
+    counts=Counter()
+    with path.open("w",newline="",encoding="utf-8-sig") as out:
+        writer=None
+        for row in audit(fixture(),{"latitude":47.07}):
+            if writer is None:
+                writer=csv.DictWriter(out,fieldnames=list(row))
+                writer.writeheader()
+            writer.writerow(row);counts[row["status"]]+=1
+            if row["status"] in ("PARITY_FAIL","ERROR"):
+                print(row["status"],row["diagram_id"],row["reason"],flush=True)
+    print(dict(counts),flush=True)
+    # Completeness is distinct from successful rendering.
+    return int(bool(counts["PARITY_FAIL"] or counts["ERROR"] or
+                    (args.require_complete and counts["RENDER_ONLY"])))
+
+
+if __name__=="__main__":
+    raise SystemExit(main())
