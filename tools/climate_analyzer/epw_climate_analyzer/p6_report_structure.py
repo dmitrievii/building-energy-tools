@@ -569,9 +569,13 @@ def standard_figure(entry,df,context,reference_df=None):
         ledger,degree=design_ledgers(df,reference_df=reference_df)
         fig=go.Figure()
         if kind=="degree":
+            from .degree_metrics import degree_metric_table,degree_metric_interpretation
+            degree=degree_metric_table(df,metric="Degree-days",aggregation="Monthly",
+                heating_indoor_c=20.,heating_limit_c=12.,cooling_indoor_c=26.,cooling_limit_c=26.,require_complete_days=True)
             if degree.empty or not degree.notna().any().any():raise ValueError("No complete valid daily temperature observations.")
-            for c in degree:fig.add_bar(x=degree.index,y=degree[c],name=c)
-            note="HGT 20/12; KGT 26/26, complete daily mean observations. Selected-period degree-day totals express the duration and intensity of outdoor temperature exposure."
+            for key in degree:fig.add_bar(x=degree.index,y=degree[key],name=key)
+            note=degree_metric_interpretation(degree,metric="Degree-days",heating_indoor_c=20.,
+                heating_limit_c=12.,cooling_indoor_c=26.,cooling_limit_c=26.)
         else:
             c={"nv":"Natural ventilation","night":"Night flushing","shade":"Solar protection screening"}[kind]
             if c not in ledger or not ledger[c].notna().any():raise ValueError("No valid candidate hours.")
@@ -685,7 +689,7 @@ def standard_figure(entry,df,context,reference_df=None):
         mapped_kind="rain_days" if kind=="rain_days" else kind
         stat="" if kind in ("climograph","wind_rain","rain_days","total") else precipitation_figure_interpretation(df,fig,mapped_kind,column=column,title=label)
     elif page=="Shading analysis" or kind in (
-        "hvac_energy","hvac_economizer","hvac_design_hot","hvac_design_cold",
+        "degree","hvac_energy","hvac_economizer","hvac_design_hot","hvac_design_cold",
         "hvac_critical","utci","utci_shading",
     ):
         stat=""
