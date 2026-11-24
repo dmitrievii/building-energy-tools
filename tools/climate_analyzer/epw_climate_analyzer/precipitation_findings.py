@@ -13,6 +13,7 @@ import plotly.graph_objects as go
 
 from .aggregations import native_interval_hours
 from .interpretations import _fmt, _fmt_hours
+from .period_display import format_plotted_time
 from .precipitation import (
     LIQUID_PRECIPITATION_COLUMN as P,
     PRECIPITATION_DURATION_COLUMN as DURATION,
@@ -244,7 +245,7 @@ def precipitation_figure_interpretation(df,fig,kind,*,column=P,title="",args=())
         if vals.empty:vals,x=_plotted(fig)
         if not vals.empty:
             lo,hi=int(vals.idxmin()),int(vals.idxmax())
-            label=lambda i:str(x[i]) if i<len(x) else f"point {i+1}"
+            label=lambda i:format_plotted_time(x[i],df,title=title) if i<len(x) else f"point {i+1}"
             return (f"The plotted {centre} {column.replace('_',' ')} is lowest at "
                     f"{label(lo)} ({_fmt(vals.iloc[lo])} {unit}) and highest at "
                     f"{label(hi)} ({_fmt(vals.iloc[hi])} {unit}). "+base)
