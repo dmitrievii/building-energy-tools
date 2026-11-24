@@ -189,7 +189,7 @@ def catalogue(df,context,coverage=FULL):
         add(RAIN,f"Rolling precipitation · {hours} h","rolling",P,"mm",(hours,),ok=hourly and has(P))
     add(RAIN,"Cumulative precipitation","cumulative",P,"mm",ok=hourly and has(P))
     add(RAIN,"Freeze–thaw days","freeze_days",T,"days",ok=hourly and has(T))
-    add(RAIN,"Freeze–thaw sequence duration","freeze_cycles",T,"h",ok=hourly and has(T))
+    add(RAIN,"Monthly observed freeze–thaw sequences","freeze_cycles",T,"Sequences",ok=hourly and has(T))
     add(SKY,"Daylight envelope","daylight",ok=site_ok)
     add(SKY,"Measured sunshine hour heatmap","sunshine",ok=hourly and has("sunshine_duration_s"))
     for c in ("total_sky_cover_tenths","opaque_sky_cover_tenths"):
@@ -248,7 +248,9 @@ def catalogue(df,context,coverage=FULL):
     add(OTC,"Mean radiant temperature · sun and shade","utci_pair_mrt",ok=pair_ok)
     for axis in ("Temperature–wind","Temperature–radiant offset","Wind–radiant offset"):
         add(OTC,"Controlled UTCI sensitivity · "+axis,"utci_sensitivity",args=(axis,),ok=hourly and has(T,RH,V))
-    add(RAIN,"Snow-cover calendar","snow_calendar",S,"",ok=hourly and has(S))
+    years=sorted(set(df.index.year))
+    for year in (years[-1:] if coverage==REP else years):
+        add(RAIN,f"Snow-cover calendar · {year}","snow_calendar",S,"",(int(year),),ok=hourly and has(S))
     paired=[c for c in (T,RH,W,H,V,G,P,DEW) if has(c)]
     add(REL,"Pairwise correlation matrix","correlation",args=tuple(paired),ok=len(paired)>=2)
     for x,y in itertools.combinations(paired,2):
