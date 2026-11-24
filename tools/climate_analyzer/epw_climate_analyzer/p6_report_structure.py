@@ -619,6 +619,19 @@ def standard_figure(entry,df,context,reference_df=None):
         from .figure_interpretation_contract import bind_figure_interpretation
         bind_figure_interpretation(fig,statement)
         return apply_monthly_axes(fig),statement
+    if kind in ("duration","heatmap") and page in (
+        "Temperature","Humidity and Psychrometrics","Solar and Radiation",
+        "Wind and Ventilation","Sky and Daylight","Precipitation and Snow",
+    ):
+        from .profile_interpretation import generic_figure_interpretation
+        from .calendar_heatmap_axes import apply_monthly_axes
+        from .figure_interpretation_contract import bind_figure_interpretation
+        args=("all",False,"hours") if kind=="duration" else ("month","Hour of day","Mean")
+        statement=generic_figure_interpretation(df,fig,kind,domain=page,
+            column=column,args=args,thresholds=temperature_thresholds(context),
+            latitude=context.get("latitude"))
+        bind_figure_interpretation(fig,statement)
+        return apply_monthly_axes(fig),statement
     if page=="Temperature":
         from .temperature_findings import temperature_figure_interpretation
         stat=temperature_figure_interpretation(
