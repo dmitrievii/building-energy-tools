@@ -136,17 +136,13 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         if table.empty:raise NotApplicable("No paired complete months.")
         f=ex.climate_summary_figure(table,a[0]);note=ex.climate_summary_interpretation(table,a[0])
     elif k=="degree":
-        from .degree_metrics import degree_metric_table
-        data=df
-        if a[0]=="Degree-days":
-            daily=memo("daily_T",lambda:p4.daily_stats(df,cat.T))
-            data=daily[["mean"]].rename(columns={"mean":cat.T});data.attrs.update(df.attrs)
-        result=degree_metric_table(data,metric=a[0],aggregation=a[1],heating_indoor_c=20.,heating_limit_c=12.,cooling_indoor_c=26.,cooling_limit_c=26.)
+        from .degree_metrics import degree_metric_table,degree_metric_interpretation,degree_legend_below
+        result=degree_metric_table(df,metric=a[0],aggregation=a[1],heating_indoor_c=20.,heating_limit_c=12.,cooling_indoor_c=26.,cooling_limit_c=26.,require_complete_days=True)
+        if result.empty:raise NotApplicable("No complete valid degree-metric periods.")
+        note=degree_metric_interpretation(result,metric=a[0],heating_indoor_c=20.,heating_limit_c=12.,cooling_indoor_c=26.,cooling_limit_c=26.)
         result=result.copy();result.index=display_period_labels(result.index,a[1],time_basis(df))
         f=_bars(result,title,u)
-        from .degree_metrics import degree_legend_below
         degree_legend_below(f)
-        note+=" Reference HGT 20/12, KGT 26/26. Degree-days accumulate daily temperature exposure at the stated reference thresholds."
     elif k=="temp_threshold":
         a1=pd.DataFrame({"Below 18 °C":s.lt(18).astype(float).where(s.notna())*dt,"Above 26 °C":s.gt(26).astype(float).where(s.notna())*dt})
         f=_bars(_totals(df,a1,a[0]),title,u);note+=" Reference low/high temperature thresholds 18/26 °C."
@@ -158,7 +154,8 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         note=event_interpretation(ev,unit="days")
     elif k=="day_indicators":
         f=_bars(p4.day_indicators(df).resample("MS").sum(min_count=1),title,u)
-        note+=" Frost: Tmin <0 °C; tropical nights: daily Tmin ≥20 °C."
+        from .temperature_findings import temperature_figure_interpretation
+        note=temperature_figure_interpretation(df,f,"day_indicators")
     elif k=="psychrometric":
         chart,mode=a;p=_pressure(df,context)
         f=ch.psychrometric_chart(df,chart_type=chart,pressure_pa=p,data_mode=mode)
@@ -250,15 +247,17 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         if not v.notna().any():raise NotApplicable("No complete rolling windows.")
         f=_line(v,title,u);note+=f" Trailing complete {a[0]} h windows; gaps break the window."
     elif k=="cumulative":
-        f=_line(p4.cumulative_precipitation(df),title,u);note+=" Accumulation restarts at unknown observations or gaps."
+        f=_line(p4.cumulative_precipitation(df),title,u)
     elif k=="freeze_days":
         f=_bars(p4.freeze_thaw_days(df).resample("MS").sum(min_count=1),title,u)
         note+=" Air-temperature crossing (Tmin<0, Tmax>0) with a wet-day subset at ≥1 mm/day indicates periods of potential freeze–thaw exposure."
     elif k=="freeze_cycles":
-        table=p4.freeze_thaw_cycles(df)
+        table=p4.freeze_thaw_cycles(df,wet_threshold=1.)
         if table.empty:raise NotApplicable("No qualifying warm–freeze–warm sequences.")
-        f=go.Figure(go.Scatter(x=table["Thaw timestamp"],y=table["Freeze-to-thaw duration [h]"],mode="markers")).update_layout(template="plotly_white",yaxis_title=u)
-        note+=" Repeated warm–freeze–warm air-temperature sequences identify periods for studying moisture-sensitive façade and drainage details."
+        table=table.set_index("Thaw timestamp",drop=False)
+        monthly=pd.DataFrame({"Observed complete sequences":pd.Series(1.,index=table.index),
+                              "Antecedent wet sequences":table["Antecedent wet at freeze"]})
+        f=_bars(monthly.resample("MS").sum(min_count=1),title,"Sequences")
     elif k=="daylight":f=ex.daylight_envelope(df.index,float(context["latitude"]));note+=" Ideal horizon and apparent solar time."
     elif k=="sunshine":f=ex.sunshine_hour_heatmap(df);note+=" Measured sunshine duration, complete clock hours."
     elif k=="sky_conditions":f=ex.occurrence_figure(ex.sky_distribution(df,c),"tenths","Hours");note+=" Clear ≤2, overcast ≥8 tenths."
@@ -469,26 +468,12 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         f=go.Figure(go.Heatmap(x=days,y=["Snow cover"],z=z,zmin=0,zmax=1,colorscale=[[0,"#FFFFFF"],[1,"#427CAD"]],hoverongaps=False,colorbar=dict(tickvals=[0,1],ticktext=["No snow","Snow"]))).update_layout(xaxis_title="Date")
         note+=" Daily maximum snow depth >0 cm; complete observed days only."
     elif k=="correlation":
-        corr,n=p4.correlation(df,list(a))
-        labels=[cat.LABELS[c1] for c1 in a]
-        f=go.Figure(go.Heatmap(x=labels,y=labels,z=corr,zmin=-1,zmax=1,zmid=0,colorscale="RdBu_r",customdata=n,colorbar=dict(title="r"),hovertemplate="%{x} / %{y}<br>r=%{z:.3f}, n=%{customdata}<extra></extra>"))
-        note+=" Pairwise Pearson coefficient, at least 3 coincident samples. No causal claim."
+        from .relationship_findings import correlation_chart
+        f,note=correlation_chart(df,a)
     elif k=="joint":
-        y,style=a
-        if style=="scatter":
-            x1=base.numeric(df,c);y1=base.numeric(df,y)
-            try:
-                f=ch.paired_scatter_chart(x1,y1,title,f"{cat.LABELS[c]} [{u}]",f"{cat.LABELS[y]} [{cat.UNITS[y]}]")
-            except ValueError as exc:raise NotApplicable(str(exc)) from exc
-            note+=f" {len(f.data[0].x):,} finite paired observations; no downsampling."
-        else:
-            values=p4.joint_density(df,c,y,bins=25)
-            if values is None:raise NotApplicable("No paired observations.")
-            x1,y1,z,h=values
-            f=go.Figure(go.Heatmap(x=x1,y=y1,z=z,customdata=h,colorscale="Blues",colorbar=dict(title="%")))
-        f.update_layout(xaxis_title=f"{cat.LABELS[c]} [{u}]",yaxis_title=f"{cat.LABELS[y]} [{cat.UNITS[y]}]")
-        note+=" Coincident observations only."
-        if style!="scatter":note+=" Density chart displays probability mass in 25 × 25 bins."
+        from .relationship_findings import joint_chart
+        try:f,note=joint_chart(df,c,a[0],style=a[1],bins=25)
+        except ValueError as exc:raise NotApplicable(str(exc)) from exc
     else:raise NotApplicable("No atlas renderer registered.")
     if not len(f.data):raise NotApplicable("No plotted data.")
     # Native monthly and total bars bypass the general metric chart builders.
@@ -539,7 +524,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
             with phase("interpretation"):
                 stat=memo(("interpretation",d.chapter,col,k,wet),lambda:base.source_interpretation(scope,d.chapter,col,cat.LABELS.get(col,""),cat.UNITS.get(col,u),thresholds=base.temperature_thresholds(context),kind=k))
             if stat and stat not in note:note=stat+"\n\n"+note
-    if d.chapter == cat.TEMP and k!="temp_events":
+    if d.chapter == cat.TEMP and k not in ("temp_events","degree","day_indicators"):
         from .temperature_findings import temperature_figure_interpretation
         with phase("interpretation"):
             stat=temperature_figure_interpretation(
@@ -579,7 +564,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
             stat=precipitation_figure_interpretation(
                 df,f,k,column=c,title=title,args=a)
         if k in ("climate_summary","wind_rain","wetdry"):pass  # existing plot-specific interpretation is authoritative
-        elif stat and k in ("total","rolling","freeze_days","freeze_cycles"):note=stat
+        elif stat and k in ("total","rolling","freeze_days","freeze_cycles","cumulative"):note=stat
         elif stat and stat not in note:note=stat+"\n\n"+note
     from .figure_interpretation_contract import bind_figure_interpretation
     note=note.strip()
