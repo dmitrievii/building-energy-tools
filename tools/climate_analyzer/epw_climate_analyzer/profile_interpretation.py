@@ -120,6 +120,8 @@ def profile_band(fig,kind="",title=""):
 def profile_centre(fig,kind="",title=""):
     """Select the central statistic represented by a figure's actual traces."""
     names=[str(getattr(t,"name","") or "").lower() for t in getattr(fig,"data",())]
+    if any(n in ("total","sum") for n in names):return "total"
+    if any(n=="circular mean" for n in names):return "circular mean"
     if any(n=="median" for n in names):return "median"
     if any(n=="mean" for n in names):return "mean"
     if profile_band(fig,kind,title)=="percentile":return "median"
@@ -239,8 +241,14 @@ def generic_figure_interpretation(df,fig,kind,*,domain,column,title="",args=(),
         if heatmap_has_single_observation_cells(df,args[0],args[1]):
             note+=" Each occupied calendar cell represents its corresponding source observation."
         else:note+=f" Cell statistic: {args[2]}; comparison: {args[1]}."
+    if route=="duration" and any(getattr(t,"name","")=="Quantiles" for t in fig.data):
+        from .p4_design_charts import DESIGN_NOTE
+        note+=" "+DESIGN_NOTE
     if route in ("duration","histogram","box","violin") and args and args[0]=="wet":
         note+=" The distribution contains positive precipitation intervals."
+    if route=="occurrence" and args:
+        note+=" Classes are disjoint; "+("percentages use valid observations per period." if args[0]=="Percentage" else
+            f"complete days use the {str(args[1]).lower()} statistic." if args[0]=="Days" and len(args)>1 else "class hours retain physical observation duration.")
     if route=="occurrence" and column=="diffuse_radiation_fraction_pct" and args and args[0]=="Days":
         note+=" Complete days with positive GHI and complete coincident daylight DHI define the daily fraction statistic."
     return note.strip()
