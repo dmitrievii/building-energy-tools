@@ -503,6 +503,8 @@ def make_figure(d,df,context,reference_df=None,cache=None):
                 latitude=context.get("latitude"),
                 plane=df.attrs.get("r24_solar_plane","reference vertical south-facing plane"),
             )
+        from .figure_interpretation_contract import bind_figure_interpretation
+        bind_figure_interpretation(f,statement)
         return f,statement
     if k in ("time_series","profile","percentile","heatmap","duration","histogram","box","violin","diurnal","occurrence","amplitude","native","psychrometric","monthly_radiation","facade","tilt","sunpath_view","sky_patches","total"):
         # Reuse the wet-only frame already created by distribution charts.
@@ -551,4 +553,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
             stat=precipitation_figure_interpretation(
                 df,f,k,column=c,title=title,args=a)
         if stat and stat not in note:note=stat+"\n\n"+note
-    return f,note.strip()
+    from .figure_interpretation_contract import bind_figure_interpretation
+    note=note.strip()
+    bind_figure_interpretation(f,note)
+    return f,note
