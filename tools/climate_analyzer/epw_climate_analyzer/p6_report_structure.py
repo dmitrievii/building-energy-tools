@@ -450,13 +450,8 @@ def standard_figure(entry,df,context,reference_df=None):
         fig=directional_figure(table,"Wind-driven rain exposure","Wind speed",label)
         note=directional_interpretation(table,"Wind-driven rain exposure","Wind speed")
     elif kind=="snow_hours":
-        from .aggregations import native_interval_hours
-        snow=numeric(df,"snow_depth_cm")
-        mask=snow.gt(0).astype(float).where(snow.notna())*native_interval_hours(df)
-        monthly=mask.resample("MS").sum(min_count=1)
-        fig=go.Figure(go.Bar(x=monthly.index,y=monthly,marker_color="#5488B6"))
-        fig.update_layout(template="plotly_white",title=label,xaxis_title="Month",yaxis_title="Observed snow-cover hours")
-        note="Observed snow-depth records above 0 cm, integrated at the active source cadence."
+        from .residual_findings import snow_hours_figure
+        fig,note=snow_hours_figure(df,"Monthly")
     elif kind=="total":
         if column==G:
             from .monthly_radiation import monthly_source_irradiation,monthly_radiation_chart
@@ -464,12 +459,8 @@ def standard_figure(entry,df,context,reference_df=None):
             fig=monthly_radiation_chart(monthly_source_irradiation(df,["GHI"]),style="Bar chart")
             note=solar_figure_interpretation(df,fig,"monthly_radiation")
         else:
-            from .aggregations import period_total_series
-            from .precipitation_findings import rainfall_summary
-            x=period_total_series(s,df,"Monthly")
-            fig=go.Figure(go.Bar(x=x.index,y=x,marker_color="#5488B6"))
-            fig.update_layout(template="plotly_white",title=label,yaxis_title=unit)
-            note=rainfall_summary(df)
+            from .residual_findings import extensive_total_figure
+            fig,note=extensive_total_figure(df,column,"Monthly")
     elif kind=="facade_temperature":
         from .solar_findings import facade_temperature_table,facade_temperature_figure,facade_temperature_interpretation
         from .extended_visualization import hourly_capable
@@ -558,30 +549,20 @@ def standard_figure(entry,df,context,reference_df=None):
         table=climate_summary_table(df)
         if table.empty:raise ValueError("No complete paired temperature and precipitation calendar months.")
         fig=climate_summary_figure(table,"Walter–Lieth diagram");note=climate_summary_interpretation(table,"Walter–Lieth diagram")
-    elif kind in ("nv","night","degree","shade"):
-        from .p6_dashboard import design_ledgers
-        ledger,degree=design_ledgers(df,reference_df=reference_df)
+    elif kind in ("nv","night","shade"):
+        from .residual_findings import eligibility_figure
+        fig,note=eligibility_figure(df,kind,"Monthly",reference_df=reference_df)
+    elif kind=="degree":
+        from .degree_metrics import degree_metric_table,degree_metric_interpretation,degree_legend_below
+        degree=degree_metric_table(df,metric="Degree-days",aggregation="Monthly",
+            heating_indoor_c=20.,heating_limit_c=12.,cooling_indoor_c=26.,cooling_limit_c=26.,require_complete_days=True)
+        if degree.empty or not degree.notna().any().any():raise ValueError("No complete valid daily temperature observations.")
         fig=go.Figure()
-        if kind=="degree":
-            from .degree_metrics import degree_metric_table,degree_metric_interpretation
-            degree=degree_metric_table(df,metric="Degree-days",aggregation="Monthly",
-                heating_indoor_c=20.,heating_limit_c=12.,cooling_indoor_c=26.,cooling_limit_c=26.,require_complete_days=True)
-            if degree.empty or not degree.notna().any().any():raise ValueError("No complete valid daily temperature observations.")
-            for key in degree:fig.add_bar(x=degree.index,y=degree[key],name=key)
-            note=degree_metric_interpretation(degree,metric="Degree-days",heating_indoor_c=20.,
-                heating_limit_c=12.,cooling_indoor_c=26.,cooling_limit_c=26.)
-        else:
-            c={"nv":"Natural ventilation","night":"Night flushing","shade":"Solar protection screening"}[kind]
-            if c not in ledger or not ledger[c].notna().any():raise ValueError("No valid candidate hours.")
-            a=ledger[c].resample("MS").sum(min_count=1)
-            fig.add_bar(x=a.index,y=a,marker_color="#21866B")
-            note={"nv":"Reference outdoor-air screening uses 16–26 °C and humidity ratio ≤9 g/kg.",
-                  "night":"Nighttime 22:00–06:59, cool outdoor air ≤20 °C following a complete day reaching ≥26 °C.",
-                  "shade":"Air temperature ≥24 °C and mean horizontal irradiance ≥250 W/m² identify coincident warm, sunny hours relevant to exterior solar protection."}[kind]
+        for key in degree:fig.add_bar(x=degree.index,y=degree[key],name=key)
         fig.update_layout(template="plotly_white",title=label,barmode="group",yaxis_title=unit)
-        if kind=="degree":
-            from .degree_metrics import degree_legend_below
-            degree_legend_below(fig)
+        degree_legend_below(fig)
+        note=degree_metric_interpretation(degree,metric="Degree-days",heating_indoor_c=20.,
+            heating_limit_c=12.,cooling_indoor_c=26.,cooling_limit_c=26.)
     elif kind=="hvac_energy":
         from .p3_comfort import ventilation_loads
         from .hvac_findings import conditioning_monthly_figure,conditioning_interpretation
@@ -597,11 +578,12 @@ def standard_figure(entry,df,context,reference_df=None):
         from .p4_extremes import design_conditions
         from .hvac_findings import design_quantile_figure,design_quantile_interpretation
         upper=kind=="hvac_design_hot"
-        table=design_conditions(df,T,[.4,1.,2.,5.],upper=upper,
+        table=design_conditions(df,T,[.4,1.,2.,.5,1.5,5.],upper=upper,
                                 coincident=[c for c in (W,H,RH,V) if numeric(df,c).notna().any()])
         if table.empty:raise ValueError("No source observations for the selected empirical tail.")
+        table=table.sort_values("Nominal tail [%]")
         fig=design_quantile_figure(table,quantity="Air temperature",unit="°C",upper=upper)
-        note=design_quantile_interpretation(table,quantity="air temperature",unit="°C",upper=upper)
+        note=design_quantile_interpretation(table,quantity="Air temperature",unit="°C",upper=upper)
     elif kind=="hvac_critical":
         from .p4_design_charts import critical_windows_figure
         from .hvac_findings import critical_window_interpretation
@@ -688,14 +670,7 @@ def standard_figure(entry,df,context,reference_df=None):
         stat=""
     else:
         stat=source_interpretation(df,page,column if kind in ("profile","duration","heatmap") else "",label,unit,thresholds=temperature_thresholds(context),kind=kind)
-    if kind=="nv" and c in ledger:
-        from .interpretations import natural_ventilation_interpretation
-        stat=natural_ventilation_interpretation(df,ledger[c].gt(0)&ledger[c].notna())
-    elif kind=="night" and c in ledger:
-        from .passive_design_findings import night_flushing_interpretation
-        stat=night_flushing_interpretation(
-            df,ledger[c].gt(0)&ledger[c].notna(),hot_day_c=26.,night_max_c=20.,
-        )
+    if kind in ("nv","night","shade","snow_hours"):stat=""
     if stat and stat not in note:note=stat+"\n\n"+note
     from .calendar_heatmap_axes import apply_monthly_axes
     from .figure_interpretation_contract import bind_figure_interpretation
