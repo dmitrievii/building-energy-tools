@@ -21,9 +21,10 @@ from epw_climate_analyzer.temporal_filtering import display_period_labels,time_b
 from epw_climate_analyzer.chart_theme import metric_color
 from epw_climate_analyzer.sun_path_views import available_radiation_fields
 from epw_climate_analyzer.relationship_findings import LABELS
+from epw_climate_analyzer.decisions import natural_ventilation_condition
 
 APP=Path(__file__).resolve().parents[1]/"app.py"
-APP_ROUTES=frozenset({"render_sun_path","render_monthly_radiation","_render_temperature_degree_days"})
+APP_ROUTES=frozenset({"render_sun_path","render_monthly_radiation","_render_temperature_degree_days","render_natural_ventilation","render_hvac_passive"})
 
 
 class Controls:
@@ -79,12 +80,14 @@ def _capture(df,name,settings,*,p4_args=(),app_kwargs=None):
     if name in APP_ROUTES:
         env=dict(pd=pd,np=np,px=px,go=go,st=ui,render_plot=render,
                  degree_metric_table=degree_metric_table,degree_metric_interpretation=degree_metric_interpretation,
-                 display_period_labels=display_period_labels,time_basis=time_basis,metric_color=metric_color)
+                 display_period_labels=display_period_labels,time_basis=time_basis,metric_color=metric_color,
+                 natural_ventilation_condition=natural_ventilation_condition)
         exec(app_code(),env)
-        env[name](df,**(app_kwargs or {}))
-    elif name in ("outdoor_comfort","condensation_panel","moisture_panel","illuminance_panel"):
         with patch.object(p3_ui,"st",ui):
-            getattr(p3_ui,name)(df,render)
+            env[name](df,**(app_kwargs or {}))
+    elif name in ("outdoor_comfort","condensation_panel","moisture_panel","illuminance_panel","extensive_total_panel","reference_eligibility_panel","temperature_threshold_panel","snow_hours_panel"):
+        with patch.object(p3_ui,"st",ui):
+            getattr(p3_ui,name)(df,render,**(app_kwargs or {}))
     else:
         with patch.object(p4_ui,"st",ui):
             if name=="precipitation_panel":
@@ -96,6 +99,29 @@ def _capture(df,name,settings,*,p4_args=(),app_kwargs=None):
 
 def capture_atlas(d,df,context):
     k,c,a=d.kind,d.column,d.args
+    if k=="total":
+        from epw_climate_analyzer.residual_findings import TOTAL_FIELDS
+        return _capture(df,"extensive_total_panel",{"extensive_total_quantity":TOTAL_FIELDS[c][0],"extensive_total_period":a[0]},app_kwargs={"columns":(c,)})
+    if k in ("eligibility_map","eligibility_total"):
+        name,period=a
+        return _capture(df,"reference_eligibility_panel",{"reference_screen_name":{"nv":"Natural ventilation","night":"Night flushing","shade":"Solar protection screening"}[name],
+            "reference_screen_view":"Eligibility heat map" if k=="eligibility_map" else "Eligible hours by period",
+            "reference_screen_period":period.capitalize() if k=="eligibility_map" else period},
+            app_kwargs={"names":(name,),"reference_df":df})
+    if k=="temp_threshold":
+        low,high=context.get("temperature thresholds",(18.,26.))
+        return _capture(df,"temperature_threshold_panel",{"temperature_threshold_period":a[0],"temperature_threshold_mode":"Heating and cooling thresholds",
+             "temperature_condition_heating":low,"temperature_condition_cooling":high})
+    if k=="passive":
+        return _capture(df,"render_hvac_passive",{"Analysis type":"Passive strategy summary","passive_strategy_view":"Monthly strategy matrix"})
+    if k=="nv_special":
+        style=a[0]
+        settings={"Analysis type":{"Persistence":"Continuous ventilation periods","Daily duration":"Daily suitable-hours duration curve",
+                    "Temperature–wind suitability":"Temperature–wind suitability","Rejected reasons":"Rejected reasons",
+                    "Directional suitability":"Directional analysis","Wind during suitable hours":"Directional analysis"}[style],
+                  "nv_directional_view":"Strict-screen eligible hours" if style=="Directional suitability" else "Wind during suitable hours",
+                  "nv_directional_radial":"Hours","nv_directional_aggregation":"Annual"}
+        return _capture(df,"render_natural_ventilation",settings,app_kwargs={"pressure_pa":101325.})
     if k=="condensation":
         return _capture(df,"condensation_panel",{"p3_cond_surface":15.,"p3_cond_chart":"Dew-point margin duration"})
     if k=="moisture":
@@ -156,6 +182,16 @@ def capture_atlas(d,df,context):
 
 def capture_standard(entry,df,context):
     ident,chapter,title,column,unit,k=entry
+    if k in ("nv","night","shade"):
+        return capture_atlas(cat.Diagram(ident,chapter,title,"eligibility_total",column,unit,(k,"Monthly")),df,context)
+    if k=="snow_hours":
+        return _capture(df,"snow_hours_panel",{"snow_hours_period":"Monthly"})
+    if k in ("hvac_design_hot","hvac_design_cold"):
+        return _capture(df,"hvac_panel",{"p4_hvac_quantity":"Air temperature [°C]",
+            "p4_hvac_tail":"Upper (cooling / moisture)" if k=="hvac_design_hot" else "Lower (heating)",
+            "p4_hvac_view":"Statistical design conditions"})
+    if k=="total" and column==cat.P:
+        return capture_atlas(cat.Diagram(ident,chapter,title,"total",column,unit,("Monthly",)),df,context)
     if k=="illumination":
         return _capture(df,"illuminance_panel",{"p3_lux_quantity":"Global horizontal",
              "p3_lux_threshold":10000.,"p3_lux_period":"Monthly","p3_lux_view":"Availability hours"})
