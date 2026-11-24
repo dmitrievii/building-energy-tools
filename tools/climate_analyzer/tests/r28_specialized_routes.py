@@ -24,7 +24,8 @@ class UnmatchedRoute(ValueError):
 def atlas_live(d,df,context):
     k,c,a=d.kind,d.column,d.args
     if k in ("sunpath_view","monthly_radiation","degree","day_indicators","cumulative",
-             "freeze_cycles","snow_calendar","correlation","joint","utci","condensation","moisture","illumination") or k.startswith("utci_"):
+             "freeze_cycles","snow_calendar","correlation","joint","utci","condensation","moisture","illumination",
+             "total","eligibility_map","eligibility_total","temp_threshold","passive","nv_special") or k.startswith("utci_"):
         from r28_live_route_capture import capture_atlas
         return capture_atlas(d,df,context)
     from epw_climate_analyzer import directional_climate as wind
@@ -90,12 +91,14 @@ def atlas_live(d,df,context):
         if k=="daylight":f=ex.daylight_envelope(df.index,float(context["latitude"]));mode=k
         elif k=="sunshine":f=ex.sunshine_hour_heatmap(df);mode="sunshine_heatmap"
         else:
-            if c!="total_sky_cover_tenths":
-                raise UnmatchedRoute("Website monthly sky-condition distribution currently selects total cover")
-            table=ex.sky_distribution(df)
+            table=ex.sky_distribution(df,c)
             table.columns=["Clear","Intermediate","Overcast"]
             f=ex.occurrence_figure(table,"","Hours");mode=k
         return f,sky_figure_interpretation(df,f,mode,column=c,latitude=context.get("latitude"))
+    if k=="shading_mask":
+        from epw_climate_analyzer.shading_sketch import window_shading_sketch
+        from epw_climate_analyzer.shading_findings import shading_mask_interpretation
+        return window_shading_sketch(**cat.GEOMETRY),shading_mask_interpretation(cat.GEOMETRY)
     if k in ("shading_calendar","shading_profiles","shading_temporal","shading_irradiation"):
         from epw_climate_analyzer.shading_findings import (
             shading_temporal_interpretation,shading_monthly_interpretation,shading_ledger_interpretation)
@@ -193,13 +196,9 @@ def atlas_live(d,df,context):
 
 def standard_live(entry,df,context):
     ident,chapter,title,c,u,k=entry
-    if k in ("sunpath","degree","utci","utci_shading","illumination") or (k=="total" and c==cat.G):
+    if k in ("sunpath","degree","utci","utci_shading","illumination","nv","night","shade","snow_hours","hvac_design_hot","hvac_design_cold","total"):
         from r28_live_route_capture import capture_standard
         return capture_standard(entry,df,context)
-    if k=="total" and c==cat.P:
-        from epw_climate_analyzer.precipitation_findings import rainfall_summary
-        table=period_total_series(df[c],df,"Monthly")
-        return go.Figure(go.Bar(x=table.index,y=table)),rainfall_summary(df)
     if k=="climograph":
         table=ex.climate_summary_table(df)
         if table.empty:raise UnmatchedRoute("No complete paired month")
