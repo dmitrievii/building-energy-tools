@@ -13,7 +13,7 @@ import plotly.graph_objects as go
 
 from .aggregations import native_interval_hours
 from .interpretations import _fmt, _fmt_hours
-from .period_display import format_plotted_time
+from .period_display import format_plotted_time, canonical_profile_kind
 
 COMPASS = ("N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW")
 SPEED = "wind_speed_m_s"
@@ -259,6 +259,7 @@ def wind_figure_interpretation(df,fig,kind,*,column=SPEED,title="",args=()):
     label=str(title or getattr(getattr(getattr(fig,"layout",None),"title",None),"text","") or "")
     lower_label=label.lower()
     args=tuple(args or ())
+    kind=canonical_profile_kind(kind,label,args)
     is_gust=column in (GUST,GUST_DIRECTION)
     s_col=GUST if is_gust else SPEED
     d_col=GUST_DIRECTION if is_gust else DIRECTION
