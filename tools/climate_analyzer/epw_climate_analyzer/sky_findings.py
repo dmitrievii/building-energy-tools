@@ -13,6 +13,7 @@ import pandas as pd
 from .aggregations import native_interval_hours
 from .interpretations import _fmt, _fmt_hours
 from .period_display import format_plotted_time, canonical_profile_kind
+from .profile_interpretation import profile_centre
 from .daylight import daily_daylight_table, monthly_daylight_sunshine_summary
 
 TOTAL="total_sky_cover_tenths"
@@ -267,7 +268,7 @@ def sky_figure_interpretation(df,fig,kind,*,column="",title="",args=(),latitude=
         context=illuminance_interpretation(df,column)
         unit="lux"
     if kind in ("profile","percentile","time_series / profile","time_series","native"):
-        centre="median" if kind=="percentile" or "median" in title.lower() else "mean"
+        centre=profile_centre(fig,kind,title)
         observed=kind in ("time_series","native") or "observed values" in title.lower()
         vals,x=_plotted(fig,None if observed else centre)
         if vals.empty: vals,x=_plotted(fig)
