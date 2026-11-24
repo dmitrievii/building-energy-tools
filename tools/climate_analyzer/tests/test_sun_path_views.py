@@ -255,7 +255,17 @@ df = add_solar_position_for_site(pd.DataFrame({"direct_normal_radiation_wh_m2": 
         self.assertIn('["2D sun-path diagram", "Technical sun-path diagram", "3D sun-path diagram"]', section)
         self.assertIn('st.checkbox("Show cube", value=True', section)
         self.assertIn("fig = sun_path_3d(df, show_cube=show_cube)",section)
-        self.assertIn('render_plot(fig,"The hemisphere uses East, North and Up coordinates.',section)
+        self.assertIn('render_plot(fig,solar_figure_interpretation(df,fig,"sunpath_view",args=("3D","None")))',section)
+        self.assertIn('args=("2D",field or colour,invert_zenith_axis,cold,warm,shading_geometry)',section)
+        self.assertIn('args=("Technical",colour,False,cold,warm,shading_geometry)',section)
+        from epw_climate_analyzer.solar_findings import solar_figure_interpretation
+        text=solar_figure_interpretation(None,None,"sunpath_view",args=("3D","None"))
+        self.assertIn("East, North and Up",text)
+        text=solar_figure_interpretation(None,None,"sunpath_view",
+            args=("2D","Solar benefit / risk",True,15.,28.))
+        self.assertIn("horizon lies at the centre",text)
+        self.assertIn("15 °C",text)
+        self.assertIn("28 °C",text)
         renderer=source[source.index("def render_plot("):source.index("def render_plot(",0)+1400]
         self.assertIn("st.plotly_chart(",renderer)
         self.assertIn("key=next_plot_key()",renderer)
