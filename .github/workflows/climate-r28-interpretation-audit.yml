@@ -29,9 +29,9 @@ jobs:
         run: python -m compileall -q tools/climate_analyzer
       - name: Execute targeted parity regression tests
         run: python -m unittest discover -s tools/climate_analyzer/tests -p 'test_r28_variable_interpretation_parity.py' -v
-      - name: Audit all registered Atlas and standard report configurations
+      - name: Require all registered applicable configurations to pass interpretation parity
         if: always()
-        run: python tools/climate_analyzer/tests/r28_interpretation_audit.py --output artifacts/r28_interpretation_audit.csv
+        run: python tools/climate_analyzer/tests/r28_interpretation_audit.py --output artifacts/r28_interpretation_audit.csv --require-complete
       - name: Upload case-level qualification evidence
         if: always()
         uses: actions/upload-artifact@v4
