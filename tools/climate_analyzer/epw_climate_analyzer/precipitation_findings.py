@@ -13,8 +13,8 @@ import plotly.graph_objects as go
 
 from .aggregations import native_interval_hours
 from .interpretations import _fmt, _fmt_hours
-from .period_display import format_plotted_time, canonical_profile_kind
-from .profile_interpretation import profile_centre
+from .period_display import format_plotted_time
+from .profile_interpretation import canonical_profile_kind, profile_centre
 from .precipitation import (
     LIQUID_PRECIPITATION_COLUMN as P,
     PRECIPITATION_DURATION_COLUMN as DURATION,
