@@ -247,5 +247,60 @@ class R28VariableParityTests(unittest.TestCase):
         self.assertEqual(actual.attrs["method"],"complete-daily-mean")
 
 
+    def test_r28e_residual_numeric_and_narrative_parity(self):
+        from r28_interpretation_audit import fixture
+        from r28_specialized_routes import atlas_live,standard_live
+        from epw_climate_analyzer.p6_report_structure import available_catalog
+        from epw_climate_analyzer.p66_render import NotApplicable
+        df=fixture();context={"latitude":47.07}
+        families={"total","eligibility_total","eligibility_map","temp_threshold","nv_special",
+                  "passive","sky_conditions","shading_mask"}
+        checked=set()
+        def compare(fig,note,live,expected):
+            self.assertEqual(note,expected)
+            self.assertTrue(validate_figure_interpretation(fig,note,require_binding=True))
+            self.assertEqual(len(fig.data),len(live.data))
+            for rt,lt in zip(fig.data,live.data):
+                for field in ("y","z","r","theta","customdata"):
+                    rv=getattr(rt,field,None);lv=getattr(lt,field,None)
+                    if rv is None and lv is None:continue
+                    if rv is None or lv is None:self.fail(f"Missing trace field {field}")
+                    try:rv=np.asarray(rv,dtype=float);lv=np.asarray(lv,dtype=float)
+                    except (ValueError,TypeError):continue
+                    np.testing.assert_allclose(rv,lv,rtol=1e-12,atol=1e-12,equal_nan=True)
+        for d in cat.catalogue(df,context,cat.FULL):
+            if d.status!="available" or d.kind not in families:continue
+            with self.subTest(diagram=d.id):
+                try:fig,note=make_figure(d,df,context,reference_df=df)
+                except NotApplicable:continue
+                live,expected=atlas_live(d,df,context)
+                compare(fig,note,live,expected);checked.add(d.kind)
+        self.assertEqual(checked,families)
+        for entry in available_catalog(df,context):
+            if entry[-1] not in ("nv","night","shade","snow_hours","hvac_design_hot","hvac_design_cold") and entry[0]!="rain":continue
+            with self.subTest(standard=entry[0]):
+                fig,note=standard_figure(entry,df,context,reference_df=df)
+                live,expected=standard_live(entry,df,context)
+                compare(fig,note,live,expected)
+
+    def test_r28e_extensive_totals_and_snow_native_cadence(self):
+        from epw_climate_analyzer.residual_findings import extensive_total_figure,snow_hours_figure
+        from epw_climate_analyzer.decisions import rejection_reasons_for_nv
+        idx=pd.date_range("2026-01-01",periods=6,freq="10min")
+        df=pd.DataFrame({cat.P:[1.,2.,0.,np.nan,3.,0.],cat.T:[10.,20.,20.,20.,30.,np.nan],
+                         cat.W:[5.,10.,5.,5.,5.,5.],cat.S:[0.,1.,1.,np.nan,0.,2.],
+                         "precipitation_duration_min":[10.,5.,0.,np.nan,11.,0.]},index=idx)
+        df.attrs["canonical_native_interval_minutes"]=10.
+        fig,_=extensive_total_figure(df,cat.P,"Monthly")
+        self.assertAlmostEqual(float(np.nansum(fig.data[0].y)),6.)
+        fig,_=extensive_total_figure(df,"precipitation_duration_min","Monthly")
+        self.assertAlmostEqual(float(np.nansum(fig.data[0].y)),.25)
+        fig,_=snow_hours_figure(df)
+        self.assertAlmostEqual(float(np.nansum(fig.data[0].y)),.5)
+        reasons=rejection_reasons_for_nv(df,16.,26.,9.).set_index("reason")
+        for reason in ("Too cold","Too hot","Too humid"):
+            self.assertAlmostEqual(float(reasons.loc[reason,"hours"]),1./6.)
+
+
 if __name__=="__main__":
     unittest.main()
