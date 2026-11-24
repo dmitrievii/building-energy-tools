@@ -206,7 +206,7 @@ def _format_profile_period(fig,df,aggregation):
                 trace.customdata=labels
                 hover=str(trace.hovertemplate or "")
                 if "%{x}" in hover:
-                    trace.hovertemplate=hover.replace("%{x}","%{customdata}")
+                    trace.hovertemplate=hover.replace("%{x}","Date %{customdata}")
                 else:
                     trace.hovertemplate="Date %{customdata}<br>"+hover
     elif aggregation in ("Hourly","Native"):
