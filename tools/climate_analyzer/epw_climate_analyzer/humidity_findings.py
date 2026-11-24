@@ -10,6 +10,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 from .aggregations import native_interval_hours
+from .period_display import format_plotted_time
 from .interpretations import _fmt, _fmt_hours, _duration_hours_from_count
 
 RH = "relative_humidity_pct"
@@ -246,7 +247,7 @@ def humidity_figure_interpretation(
         if plotted.empty:
             return f"Selected {name} profile contains no numeric plotted ordinates. " + context
         smallest, largest = int(plotted.idxmin()), int(plotted.idxmax())
-        at = lambda idx: str(x[idx]) if idx < len(x) else f"plotted point {idx+1}"
+        at = lambda idx: format_plotted_time(x[idx], df, title=label) if idx < len(x) else f"plotted point {idx+1}"
         band = ("P05–P95 shows the central 90% of observed values in each plotted period. "
                 if kind == "percentile" or "p05" in caption else
                 "Min–max shows observed period extrema. " if "min" in caption and "max" in caption else "")
