@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 from .interpretations import _fmt, _fmt_hours, _duration_hours_from_count
 from .period_display import format_plotted_time, canonical_profile_kind
+from .profile_interpretation import profile_band
 
 
 def _temperature_plot_series(fig, name=None):
@@ -68,10 +69,11 @@ def temperature_figure_interpretation(df, fig, kind, *, column="dry_bulb_tempera
             return "Selected temperature profile reflects only valid observations. " + climate
         lo, hi = int(series.idxmin()), int(series.idxmax())
         at = lambda idx: format_plotted_time(x[idx], df, title=name) if idx < len(x) else f"point {idx+1}"
+        band_type = profile_band(fig,kind,name)
         envelope = ("The P05–P95 band shows the central 90% of observed temperatures for each plotted period. "
-                    if kind == "percentile" or "p05" in lower_name else
+                    if band_type=="percentile" else
                     "The min–max band describes observed extremes within each plotted period. "
-                    if "max" in lower_name else "")
+                    if band_type=="minmax" else "")
         return (f"In this selected profile, the plotted {metric.lower()} is lowest at "
                 f"{at(lo)} ({_fmt(series.iloc[lo])} °C) and highest at "
                 f"{at(hi)} ({_fmt(series.iloc[hi])} °C). {envelope}" + climate)
