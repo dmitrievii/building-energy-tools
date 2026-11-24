@@ -73,3 +73,29 @@ def format_plotted_time(value,df=None,*,aggregation="",title=""):
     except (ValueError,TypeError,OverflowError):
         pass
     return label
+
+
+def canonical_profile_kind(kind, title="", args=()):
+    """Classify identical plotted profile statistics equally in UI, Atlas and report.
+
+    The same profile can arrive from three routes using 'time_series',
+    'Time series / Profile' or 'percentile'. Its shown representation, rather
+    than the route name, determines the scientific interpretation.
+    """
+    route=str(kind or "").strip().lower()
+    if route not in ("time_series","time series / profile","profile","percentile","native"):
+        return route
+    if route=="native":return "native"
+    description=(str(title or "")+" "+" ".join(map(str,args or ()))).lower()
+    if "observed values" in description or "native observations" in description:
+        return "time_series"
+    if "p05" in description and "p95" in description:
+        return "percentile"
+    if route=="percentile":
+        return "percentile"
+    # A single hourly median or mean is a profile of that statistic, not a
+    # source-observation sequence. For single-source hourly data this
+    # distinction is resolved by the 'Observed values' representation.
+    if route in ("time_series","time series / profile"):
+        return "profile"
+    return route
