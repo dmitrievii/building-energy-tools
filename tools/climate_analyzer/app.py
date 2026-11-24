@@ -3907,8 +3907,12 @@ def render_sun_path(df: pd.DataFrame, *, shading_geometry=None) -> None:
             st.caption(MASK_EXPLANATION)
             overlay_shading_mask(fig,inverted=invert_zenith_axis,**shading_geometry)
             explanation+=" "+shading_mask_interpretation(shading_geometry)
+        if shading_geometry is None:
+            from epw_climate_analyzer.solar_findings import solar_figure_interpretation
+            explanation=solar_figure_interpretation(df,fig,"sunpath_view",args=("2D",field or colour))
         render_plot(fig, explanation)
     elif chart_type == "Technical sun-path diagram":
+        colour="None"
         from epw_climate_analyzer.solar_shading import thermal_overlay,overlay_shading_mask
         fig=technical_sun_path(df)
         explanation="Cartesian solar azimuth and elevation diagram. The monthly paths use the 21st of each month, with fixed-clock hour curves and compass bearings."
@@ -3930,12 +3934,16 @@ def render_sun_path(df: pd.DataFrame, *, shading_geometry=None) -> None:
             st.caption(MASK_EXPLANATION)
             overlay_shading_mask(fig,technical=True,**shading_geometry)
             explanation+=" "+shading_mask_interpretation(shading_geometry)
+        if shading_geometry is None:
+            from epw_climate_analyzer.solar_findings import solar_figure_interpretation
+            explanation=solar_figure_interpretation(df,fig,"sunpath_view",args=("Technical",colour))
         render_plot(fig,explanation)
     else:
         show_cube = st.checkbox("Show cube", value=True, key="solar_sun_path_show_cube")
         fig = sun_path_3d(df, show_cube=show_cube)
         st.caption("Drag for turntable rotation (vertical axis stays upright); scroll to zoom. The cube provides a geometric reference for solar direction and façade orientation.")
-        render_plot(fig,"The hemisphere uses East, North and Up coordinates. Monthly paths show apparent solar directions on the unit sphere.")
+        from epw_climate_analyzer.solar_findings import solar_figure_interpretation
+        render_plot(fig,solar_figure_interpretation(df,fig,"sunpath_view",args=("3D","None")))
 
 
 def render_facade_orientation(df: pd.DataFrame, *, ground_albedo=None) -> None:
@@ -4593,7 +4601,8 @@ def render_wind(df: pd.DataFrame) -> None:
                 fig,tables=monthly_wind_rose_panel(data,speed=speed_column,direction=direction_column,colour=colour,
                     radial=radial,edges=edges,style=style,title=f"{selected_dataset} · {colour} classes · {period_label}")
             except ValueError as exc:st.info(str(exc));return
-            render_plot(fig,MONTHLY_WIND_ROSE_NOTE)
+            from epw_climate_analyzer.wind_findings import wind_figure_interpretation
+            render_plot(fig,wind_figure_interpretation(data,fig,"wind_panel",column=speed_column)+"\n\n"+MONTHLY_WIND_ROSE_NOTE)
             with st.expander("Monthly directional class data"):
                 st.dataframe(pd.concat(tables,names=["Month","azimuth_deg"]),use_container_width=True)
             return
@@ -4613,7 +4622,8 @@ def render_wind(df: pd.DataFrame) -> None:
                 fig,tables=monthly_wind_rose_panel(data,speed=speed_column,direction=direction_column,colour=colour,
                     radial=radial,style=style,title=f"{selected_dataset} · {radial} · {colour} · {period_label}")
             except ValueError as exc:st.info(str(exc));return
-            render_plot(fig,MONTHLY_WIND_ROSE_NOTE)
+            from epw_climate_analyzer.wind_findings import wind_figure_interpretation
+            render_plot(fig,wind_figure_interpretation(data,fig,"wind_panel",column=speed_column)+"\n\n"+MONTHLY_WIND_ROSE_NOTE)
             return
         table=directional_table(data,speed=speed_column,direction=direction_column,radial=radial,colour=colour)
         fig=directional_figure(table,radial,colour,f"{selected_dataset} · {radial} · {period_label}")
