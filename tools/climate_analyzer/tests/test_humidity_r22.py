@@ -67,9 +67,18 @@ class HumidityR22Tests(unittest.TestCase):
         note=explain(self.df,None,"condensation",surface_c=15.)
         self.assertIn("4 h",note)
         self.assertIn("reference surface temperature of 15 °C",note)
-        self.assertIn("potential surface-moisture exposure",note)
+        self.assertIn("condensation can occur",note)
+        self.assertNotIn("moisture accumulation",note)
         margin=condensation_margin(self.df,15.)
         self.assertEqual(int(margin.le(0).sum()),4)
+
+    def test_dew_point_profiles_describe_condensation_without_arbitrary_surface_threshold(self):
+        fig=go.Figure(go.Scatter(x=["Jan","Feb"],y=[8.,20.],name="Mean"))
+        note=explain(self.df,fig,"profile",column=DP)
+        self.assertIn("reaches saturation",note)
+        self.assertIn("condense",note)
+        self.assertNotIn("15 °C",note)
+        self.assertNotIn("moisture accumulation",note)
 
     def test_moisture_flow_is_water_mass_not_latent_energy(self):
         # 1000 m³/h / 0.8 m³/kg dry air = 1250 kg dry air/h;
