@@ -81,10 +81,9 @@ def make_figure(d,df,context,reference_df=None,cache=None):
     def design():
         from .p6_dashboard import design_ledgers
         return memo("design",lambda:design_ledgers(df,reference_df=reference_df)[0])
-    if k=="native":f=_line(s,title,u);note+=" Published monthly observations at their original reporting resolution."
+    if k=="native":f=_line(s,title,u)
     elif k=="time_series":
         f=ch.time_series_profile_chart(df,c,a[0],title,u,a[1])
-        note+=" "+("Each plotted point represents its source observation at the corresponding timestamp." if a[1]=="Observed values" else "Statistical representation: "+a[1]+".")
     elif k=="profile":f=ch.profile_ribbon_chart(df,c,a[0],title,u)
     elif k=="percentile":f=ch.percentile_band_chart(df,c,a[0],title,u)
     elif k=="heatmap":
@@ -493,6 +492,18 @@ def make_figure(d,df,context,reference_df=None,cache=None):
     with phase("chart_axis_layout"):
         set_period_axis_scope(f,df)
         apply_calendar_heatmap_axes(f);apply_monthly_axes(f)
+    if k in ("native","time_series","profile","percentile") and d.chapter in (
+        cat.TEMP,cat.HUM,cat.WIND,cat.SOL,cat.SKY,cat.RAIN,
+    ):
+        from .profile_interpretation import profile_interpretation
+        with phase("interpretation"):
+            statement=profile_interpretation(
+                df,f,k,domain=d.chapter,column=c,title=title,args=a,
+                thresholds=base.temperature_thresholds(context),
+                latitude=context.get("latitude"),
+                plane=df.attrs.get("r24_solar_plane","reference vertical south-facing plane"),
+            )
+        return f,statement
     if k in ("time_series","profile","percentile","heatmap","duration","histogram","box","violin","diurnal","occurrence","amplitude","native","psychrometric","monthly_radiation","facade","tilt","sunpath_view","sky_patches","total"):
         # Reuse the wet-only frame already created by distribution charts.
         wet=bool(c and k in ("histogram","duration","box","violin") and a[0]=="wet")
