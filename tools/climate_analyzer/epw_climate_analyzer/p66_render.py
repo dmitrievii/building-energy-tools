@@ -173,8 +173,12 @@ def make_figure(d,df,context,reference_df=None,cache=None):
             extra=wind_figure_interpretation(df,None,"persistence",column=c,args=(threshold,above))
         note=event_interpretation(ev,unit="hours",extra_note=extra)
     elif k=="condensation":
-        f=_line(p3.condensation_margin(df,15.),title,u);f.add_hline(y=0,line_dash="dash")
-        note+=" Assumed constant surface temperature 15 °C; negative margin indicates possible condensation."
+        from .p3_ui import duration_ledger_figure
+        from .humidity_findings import humidity_figure_interpretation
+        margin=p3.condensation_margin(df,15.)
+        if not margin.notna().any():raise NotApplicable("No valid dew-point observations.")
+        f=duration_ledger_figure(df,pd.DataFrame({"Surface minus dew point":margin}),title,u)
+        note=humidity_figure_interpretation(df,None,"condensation",surface_c=15.)
     elif k=="moisture":
         f=_bars(p3.monthly_totals(df,p3.moisture_loads(df,airflow=1000.,target=9.)),title,u)
         note+=" Reference 1,000 m³/h outdoor airflow conditioned to a 9 g/kg humidity-ratio threshold; monthly bars quantify the associated moisture transfer."
@@ -262,11 +266,9 @@ def make_figure(d,df,context,reference_df=None,cache=None):
     elif k=="sunshine":f=ex.sunshine_hour_heatmap(df);note+=" Measured sunshine duration, complete clock hours."
     elif k=="sky_conditions":f=ex.occurrence_figure(ex.sky_distribution(df,c),"tenths","Hours");note+=" Clear ≤2, overcast ≥8 tenths."
     elif k=="illumination":
-        v=s.ge(300).astype(float).where(s.notna())*dt
-        f=_bars(_totals(df,v.rename("≥300 lux"),a[0]),title,u)
-        from .chart_theme import ILLUMINANCE_THRESHOLD_COLOR
-        f.update_traces(marker_color=ILLUMINANCE_THRESHOLD_COLOR,selector=dict(type="bar"))
-        note+=" The displayed intervals quantify available horizontal outdoor illumination for daylight-oriented façade design."
+        from .sky_findings import illuminance_availability_figure
+        try:f,note=illuminance_availability_figure(df,c,threshold_lux=300.,aggregation=a[0])
+        except ValueError as exc:raise NotApplicable(str(exc)) from exc
     elif k=="shading_mask":
         from .shading_sketch import window_shading_sketch
         from .shading_findings import shading_mask_interpretation
@@ -521,7 +523,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
                 df,f,k,column=c if c in df else cat.T,
                 title=title,thresholds=base.temperature_thresholds(context))
         if stat and stat not in note:note=stat+"\n\n"+note
-    if d.chapter == cat.HUM and k!="persistence":
+    if d.chapter == cat.HUM and k not in ("persistence","condensation"):
         from .humidity_findings import humidity_figure_interpretation
         with phase("interpretation"):
             stat=humidity_figure_interpretation(
@@ -539,7 +541,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
             stat=solar_figure_interpretation(df,f,k,column=c,title=title,args=a)
         if stat and k in ("facade","tilt","sky_patches","sunpath_view","monthly_radiation"):note=stat
         elif stat and stat not in note:note=stat+"\n\n"+note
-    if d.chapter == cat.SKY:
+    if d.chapter == cat.SKY and k!="illumination":
         from .sky_findings import sky_figure_interpretation
         mode="sunshine_heatmap" if k=="sunshine" else k
         with phase("interpretation"):
