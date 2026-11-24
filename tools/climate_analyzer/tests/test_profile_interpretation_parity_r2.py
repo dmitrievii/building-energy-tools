@@ -53,7 +53,7 @@ class ProfileInterpretationParityTests(unittest.TestCase):
         note=profile_interpretation(df,fig,"Time series / Profile",
                                     domain="Humidity",column=DP)
         self.assertIn("valid hourly observations",note)
-        self.assertRegex(note,r"on \\d{2}\\.\\d{2} at \\d{2}:\\d{2}")
+        self.assertRegex(note,r"on \d{2}\.\d{2} at \d{2}:\d{2}")
         self.assertIn("P05",note)
         self.assertIn("median",note)
         self.assertIn("P95",note)
