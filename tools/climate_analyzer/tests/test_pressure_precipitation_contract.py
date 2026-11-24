@@ -60,7 +60,19 @@ class PressureAndPrecipitationContractTests(unittest.TestCase):
             if isinstance(node, ast.FunctionDef) and node.name == "render_precipitation"
         )
         source = ast.get_source_segment(self.source, function) or ""
-        self.assertIn("aggregate_liquid_precipitation(df, aggregation)", source)
+        # The dedicated precipitation totals route now delegates to the same
+        # extensive-total panel used by the Atlas and standard report.
+        self.assertIn('extensive_total_panel(df,render_plot,columns=("liquid_precipitation_depth_mm",))', source)
+        from epw_climate_analyzer.residual_findings import extensive_total_figure
+        for period in ("Monthly", "Weekly", "Daily", "Seasonal", "Annual"):
+            with self.subTest(period=period):
+                df = self._fixture()
+                expected = aggregate_liquid_precipitation(df, period)
+                figure, interpretation = extensive_total_figure(df, "liquid_precipitation_depth_mm", period)
+                np.testing.assert_allclose(np.asarray(figure.data[0].y, dtype=float),
+                                           expected.iloc[:, 0].to_numpy(dtype=float),
+                                           rtol=1e-12, atol=1e-12)
+                self.assertTrue(interpretation.strip())
         self.assertIn('"Precipitation totals"', source)
         self.assertIn('["Snow depth"]', source)
         self.assertNotIn('column.endswith("_mm")', self.source)
