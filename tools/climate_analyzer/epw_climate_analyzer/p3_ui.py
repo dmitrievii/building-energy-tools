@@ -186,14 +186,9 @@ def outdoor_comfort(df,render):
 
 NV_SUITABILITY_SCALE=[[0,"#FFFFFF"],[.25,"#D9EEE6"],[.5,"#96D1BC"],[.75,"#47A88D"],[1,"#09634F"]]
 
-def nv_sensitivity(df,mask,wind_available,render,*,temperature_limits=None,wind_limits=None):
-    if not wind_available:
-        st.info("Wind speed is unavailable.");return
-    try:
-        z,h=p.suitability_grid(df,mask,axis=p.V)
-    except ValueError as exc:
-        st.warning(str(exc));return
-    if z.empty:st.info("No coincident observations for temperature and wind.");return
+def nv_sensitivity_figure(df,mask,*,temperature_limits=None,wind_limits=None):
+    z,h=p.suitability_grid(df,mask,axis=p.V)
+    if z.empty:raise ValueError("No coincident observations for temperature and wind.")
     fig=go.Figure(go.Heatmap(x=z.columns,y=z.index,z=z,customdata=h,zmin=0,zmax=100,
         colorscale=NV_SUITABILITY_SCALE,colorbar=dict(title="Suitable [%]",tickvals=[0,25,50,75,100]),
         xgap=1,ygap=1,hoverongaps=False,
@@ -210,7 +205,14 @@ def nv_sensitivity(df,mask,wind_available,render,*,temperature_limits=None,wind_
             fig.add_hline(y=value,line_dash="dash",line_color="#444444",line_width=1)
     fig.update_layout(template="plotly_white",title="Temperature–wind ventilation suitability",
         xaxis_title="Outdoor temperature [°C]",yaxis_title="Wind speed [m/s]",height=520)
-    render(fig,"White = 0% suitability, dark green = 100%, gray = no coincident observations. Dashed boundaries show the configured temperature limits and, when enabled, wind limits. Each 2 K × 0.5 m/s cell reports the share of observed valid hours satisfying all configured conditions, including humidity and occupancy. Hover for observed duration. Ventilation flow design uses opening areas, façade pressure coefficients, stack height and flow-path resistance.")
+    return fig,"White = 0% suitability, dark green = 100%, gray = no coincident observations. Dashed boundaries show the configured temperature limits and, when enabled, wind limits. Each 2 K × 0.5 m/s cell reports the share of observed valid hours satisfying all configured conditions, including humidity and occupancy. Hover for observed duration. Ventilation flow design uses opening areas, façade pressure coefficients, stack height and flow-path resistance."
+
+def nv_sensitivity(df,mask,wind_available,render,*,temperature_limits=None,wind_limits=None):
+    if not wind_available:
+        st.info("Wind speed is unavailable.");return
+    try:render(*nv_sensitivity_figure(df,mask,temperature_limits=temperature_limits,wind_limits=wind_limits))
+    except ValueError as exc:st.warning(str(exc))
+
 
 def persistence_panel(df,mask,render,*,night=False):
     table=p.persistence(df,mask,night=night)
@@ -226,7 +228,8 @@ def persistence_panel(df,mask,render,*,night=False):
     st.caption(f"{meets} of {valid} observed {unit} ({100*meets/valid:.1f}%) provide at least {threshold:g} consecutive suitable hours.")
     from .p3_persistence_chart import persistence_figure
     fig=persistence_figure(counts,f"{label} availability · at least {threshold:g} uninterrupted hours",night=night)
-    render(fig,f"A {label.lower()} qualifies when at least one continuous suitable period reaches {threshold:g} h. For example, suitable periods 08:00–10:00 and 14:00–16:00 provide four total hours but only two consecutive hours. Unknown, rejected or missing intervals break a run. Partial observed {unit} are counted from available records only; entirely unknown {unit} are excluded. The line reports the total observed day count, while the stacked bars resolve the qualifying and shorter-duration days.")
+    render(fig,persistence_interpretation(threshold,night=night))
+
     with st.expander("Detailed "+label.lower()+"-by-"+label.lower()+" results"):
         st.dataframe(table,use_container_width=True)
         st.download_button("Download continuous-period results · CSV",table.to_csv().encode("utf-8"),
@@ -365,3 +368,9 @@ def snow_hours_panel(df,render):
     period=st.selectbox("Aggregation",list(PERIODS),key="snow_hours_period")
     try:render(*snow_hours_figure(df,period))
     except ValueError as exc:st.info(str(exc))
+
+
+def persistence_interpretation(threshold,*,night=False):
+    unit="nights" if night else "days"
+    label="Night" if night else "Day"
+    return f"A {label.lower()} qualifies when at least one continuous suitable period reaches {threshold:g} h. For example, suitable periods 08:00–10:00 and 14:00–16:00 provide four total hours but only two consecutive hours. Unknown, rejected or missing intervals break a run. Partial observed {unit} are counted from available records only; entirely unknown {unit} are excluded. The line reports the total observed day count, while the stacked bars resolve the qualifying and shorter-duration days."
