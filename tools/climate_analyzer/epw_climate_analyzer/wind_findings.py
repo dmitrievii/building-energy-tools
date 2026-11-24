@@ -14,6 +14,7 @@ import plotly.graph_objects as go
 from .aggregations import native_interval_hours
 from .interpretations import _fmt, _fmt_hours
 from .period_display import format_plotted_time, canonical_profile_kind
+from .profile_interpretation import profile_centre
 
 COMPASS = ("N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW")
 SPEED = "wind_speed_m_s"
@@ -315,8 +316,7 @@ def wind_figure_interpretation(df,fig,kind,*,column=SPEED,title="",args=()):
                 f"({_fmt_hours(hi[2])} h). The seasonal sectors indicate which intake and exhaust orientations are worth prioritizing. "+caveat)
     if kind in ("profile","percentile","time_series","time series / profile","native"):
         observed=kind in ("time_series","native") or "observed values" in lower_label
-        center=("observed" if observed else
-                "median" if kind=="percentile" or "median" in lower_label else "mean")
+        center=("observed" if observed else profile_centre(fig,kind,label))
         plotted,x=_plotted(fig,None if observed else center)
         if not plotted.empty:
             low,high=int(plotted.idxmin()),int(plotted.idxmax())
