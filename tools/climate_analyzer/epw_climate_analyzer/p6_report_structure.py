@@ -393,6 +393,9 @@ def available_catalog(df,context):
         elif kind=="climograph":
             from .extended_visualization import climate_summary_table
             ok=has(T,P) and not climate_summary_table(df).empty
+        elif kind=="sunpath":
+            from .sun_path_views import solar_reference
+            ok=has(N,"solar_apparent_zenith_deg","solar_azimuth_deg") and solar_reference(df) is not None
         elif kind=="rain_days":
             from .precipitation import complete_daily_precipitation
             ok=has(P) and complete_daily_precipitation(df).notna().any()
@@ -455,10 +458,18 @@ def standard_figure(entry,df,context,reference_df=None):
         fig.update_layout(template="plotly_white",title=label,xaxis_title="Month",yaxis_title="Observed snow-cover hours")
         note="Observed snow-depth records above 0 cm, integrated at the active source cadence."
     elif kind=="total":
-        x=s.resample("MS").sum(min_count=1)/(1000 if column==G else 1)
-        fig=go.Figure(go.Bar(x=x.index,y=x,marker_color="#D6A23D" if column==G else "#5488B6"))
-        fig.update_layout(template="plotly_white",title=label,yaxis_title=unit)
-        note="Observed selected-period totals; incomplete periods may underestimate the total."
+        if column==G:
+            from .monthly_radiation import monthly_source_irradiation,monthly_radiation_chart
+            from .solar_findings import solar_figure_interpretation
+            fig=monthly_radiation_chart(monthly_source_irradiation(df,["GHI"]),style="Bar chart")
+            note=solar_figure_interpretation(df,fig,"monthly_radiation")
+        else:
+            from .aggregations import period_total_series
+            from .precipitation_findings import rainfall_summary
+            x=period_total_series(s,df,"Monthly")
+            fig=go.Figure(go.Bar(x=x.index,y=x,marker_color="#5488B6"))
+            fig.update_layout(template="plotly_white",title=label,yaxis_title=unit)
+            note=rainfall_summary(df)
     elif kind=="facade_temperature":
         from .solar_findings import facade_temperature_table,facade_temperature_figure,facade_temperature_interpretation
         from .extended_visualization import hourly_capable
@@ -496,7 +507,11 @@ def standard_figure(entry,df,context,reference_df=None):
         fig=orientation_components_chart(a,f,tilt_deg=90.,style="Bar chart",selected=())
         from .solar_findings import facade_figure_interpretation
         note=facade_figure_interpretation(fig,tilt_deg=90.)
-    elif kind=="sunpath":fig=sun_path_chart(df);note="Solar position and direct-normal radiation for selected source records."
+    elif kind=="sunpath":
+        from .sun_path_views import classic_sun_path
+        from .solar_findings import solar_figure_interpretation
+        fig=classic_sun_path(df,radiation_field=N)
+        note=solar_figure_interpretation(df,fig,"sunpath_view",args=("2D",N))
     elif kind=="wind_orientation":
         from .wind_findings import wind_opportunity,wind_opportunity_figure,wind_design_interpretation
         summary,sectors=wind_opportunity(df,min_speed_m_s=.5)
@@ -655,7 +670,7 @@ def standard_figure(entry,df,context,reference_df=None):
             df,fig,kind,column=column,title=label)
     elif page=="Solar and Radiation":
         from .solar_findings import solar_figure_interpretation
-        stat="" if kind=="facade_temperature" else solar_figure_interpretation(
+        stat="" if kind in ("facade_temperature","sunpath","total","facade") else solar_figure_interpretation(
             df,fig,kind,column=column,title=label)
     elif page=="Wind and Ventilation":
         from .wind_findings import wind_figure_interpretation
@@ -668,7 +683,7 @@ def standard_figure(entry,df,context,reference_df=None):
     elif page=="Precipitation and Snow":
         from .precipitation_findings import precipitation_figure_interpretation
         mapped_kind="rain_days" if kind=="rain_days" else kind
-        stat="" if kind in ("climograph","wind_rain","rain_days") else precipitation_figure_interpretation(df,fig,mapped_kind,column=column,title=label)
+        stat="" if kind in ("climograph","wind_rain","rain_days","total") else precipitation_figure_interpretation(df,fig,mapped_kind,column=column,title=label)
     elif page=="Shading analysis" or kind in (
         "hvac_energy","hvac_economizer","hvac_design_hot","hvac_design_cold",
         "hvac_critical","utci","utci_shading",
