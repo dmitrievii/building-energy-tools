@@ -17,13 +17,17 @@ def _monthly(df,ledger,title,unit,render,note):
     render(fig,note)
     st.dataframe(table,use_container_width=True)
 
-def _duration(df,series,title,unit,render,note):
+def duration_ledger_figure(df,series,title,unit):
     fig=go.Figure();dt=native_interval_hours(df)
     for c in series:
         y=np.sort(series[c].dropna().to_numpy())[::-1]
         if len(y):fig.add_scatter(x=np.arange(1,len(y)+1)*dt,y=y,mode="lines",name=c)
     fig.update_layout(template="plotly_white",title=title,xaxis_title="Physical hours",yaxis_title=unit)
-    render(fig,note)
+    return fig
+
+
+def _duration(df,series,title,unit,render,note):
+    render(duration_ledger_figure(df,series,title,unit),note)
 
 def _utci_performance_diagnostics(timing,visualization_s,csv_s=0.,setup_s=0.):
     with st.expander("Performance diagnostics",expanded=False):
@@ -315,16 +319,8 @@ def illuminance_panel(df,render):
     if not columns:st.info("No source illuminance observations.");return
     label=st.selectbox("Illuminance quantity",list(columns),key="p3_lux_quantity")
     threshold=st.number_input("Availability threshold [lux]",0.,200000.,10000.,1000.,key="p3_lux_threshold")
-    lux=p.numeric(df,columns[label]);lux=lux.where(lux.ge(0));dt=native_interval_hours(df)
-    q=pd.DataFrame({"Below threshold":lux.lt(threshold).astype(float).where(lux.notna())*dt,
-                    "At or above threshold":lux.ge(threshold).astype(float).where(lux.notna())*dt})
-    view=st.selectbox("Chart type",["Monthly availability hours","Monthly availability percentage"],key="p3_lux_view")
-    tab=p.monthly_totals(df,q)
-    if view.endswith("percentage"):tab=tab.div(tab.sum(axis=1,min_count=2).replace(0,np.nan),axis=0)*100
-    fig=go.Figure()
-    for c in tab:fig.add_bar(x=tab.index,y=tab[c],name=c)
-    fig.update_layout(template="plotly_white",title=f"{label} illuminance availability · {threshold:g} lux",barmode="stack",yaxis_title="%" if view.endswith("percentage") else "Hours")
-    from .sky_findings import illuminance_interpretation
-    note=illuminance_interpretation(df,column=columns[label],threshold_lux=threshold)
-    note+=" Percentages include all valid selected intervals, including dark hours, and show the seasonal frequency of the requested exterior-light level."
-    render(fig,note)
+    aggregation=st.selectbox("Aggregation",["Monthly","Weekly","Daily","Seasonal","Annual"],key="p3_lux_period")
+    view=st.selectbox("Chart type",["Availability hours","Availability percentage"],key="p3_lux_view")
+    from .sky_findings import illuminance_availability_figure
+    render(*illuminance_availability_figure(df,columns[label],threshold_lux=threshold,
+                aggregation=aggregation,percentage=view.endswith("percentage")))
