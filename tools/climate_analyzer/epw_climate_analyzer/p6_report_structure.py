@@ -617,13 +617,13 @@ def standard_figure(entry,df,context,reference_df=None):
                                              unit="°C",upper=True,hours=72)+" "+details
     elif kind=="utci_shading":
         from .p3_comfort import utci_frame
-        from .utci_findings import paired_delta_figure,paired_exposure_interpretation
+        from .utci_findings import paired_delta_figure,utci_view_interpretation
         values,_=utci_frame(df,model="Open-sky screening")
         if not values[["Open sun","Direct-beam shade"]].notna().all(axis=1).any():
             raise ValueError("Source observations contain no coincident UTCI sun/shade states.")
         fig=paired_delta_figure(df,values)
         fig.update_layout(title=label)
-        note=paired_exposure_interpretation(df,values)
+        note=utci_view_interpretation(df,values,"utci_pair_delta")
     elif kind=="utci":
         from .p3_comfort import utci_frame,utci_class_hours,CLASSES,COLORS
         values,_=utci_frame(df)
@@ -632,9 +632,8 @@ def standard_figure(entry,df,context,reference_df=None):
         for c,color in zip(CLASSES,COLORS):
             if c in a:fig.add_bar(x=a.index,y=a[c],name=c,marker_color=color)
         fig.update_layout(template="plotly_white",title=label,barmode="stack",yaxis_title="Hours")
-        from .utci_findings import utci_distribution_interpretation
-        note=utci_distribution_interpretation(df,values,values.columns[0])
-        note+=" The uniform MRT scenario sets mean radiant temperature equal to air temperature and evaluates wind at the 10 m reference height."
+        from .utci_findings import utci_view_interpretation
+        note=utci_view_interpretation(df,values,"stress",exposure=values.columns[0])
     else:raise ValueError("Unknown standard diagram.")
     if kind=="profile" and page in (
         "Temperature","Humidity and Psychrometrics","Solar and Radiation",
