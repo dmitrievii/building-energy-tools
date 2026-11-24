@@ -24,7 +24,7 @@ class UnmatchedRoute(ValueError):
 def atlas_live(d,df,context):
     k,c,a=d.kind,d.column,d.args
     if k in ("sunpath_view","monthly_radiation","degree","day_indicators","cumulative",
-             "freeze_cycles","snow_calendar","correlation","joint"):
+             "freeze_cycles","snow_calendar","correlation","joint","utci") or k.startswith("utci_"):
         from r28_live_route_capture import capture_atlas
         return capture_atlas(d,df,context)
     from epw_climate_analyzer import directional_climate as wind
@@ -193,7 +193,7 @@ def atlas_live(d,df,context):
 
 def standard_live(entry,df,context):
     ident,chapter,title,c,u,k=entry
-    if k in ("sunpath","degree") or (k=="total" and c==cat.G):
+    if k in ("sunpath","degree","utci","utci_shading") or (k=="total" and c==cat.G):
         from r28_live_route_capture import capture_standard
         return capture_standard(entry,df,context)
     if k=="total" and c==cat.P:
