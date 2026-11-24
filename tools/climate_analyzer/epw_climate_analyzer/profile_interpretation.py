@@ -51,3 +51,24 @@ def profile_interpretation(
         return precipitation_figure_interpretation(
             df,fig,canonical,column=column,title=actual_title,args=args)
     raise ValueError(f"No profile interpretation route for domain {domain!r}.")
+
+
+def profile_band(fig,kind="",title=""):
+    """Identify the statistical envelope from the traces actually rendered.
+
+    A standard-report title need not contain 'min–mean–max', while the plotted
+    Minimum and Maximum traces have exactly the same meaning as on the website.
+    """
+    names=[str(getattr(t,"name","") or "").lower() for t in getattr(fig,"data",())]
+    p05=any("p05" in n for n in names)
+    p95=any("p95" in n for n in names)
+    if p05 and p95:return "percentile"
+    minimum=any(n in ("min","minimum") for n in names)
+    maximum=any(n in ("max","maximum") for n in names)
+    if minimum and maximum:return "minmax"
+    if len(names)==1 and names[0] in ("mean","median","observed values"):
+        return ""
+    label=str(title or "").lower()
+    if "p05" in label and "p95" in label:return "percentile"
+    if ("min–mean–max" in label or "min-mean-max" in label):return "minmax"
+    return "percentile" if kind=="percentile" else ""
