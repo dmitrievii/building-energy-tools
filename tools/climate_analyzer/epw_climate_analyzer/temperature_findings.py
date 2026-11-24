@@ -8,6 +8,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 from .interpretations import _fmt, _fmt_hours, _duration_hours_from_count
+from .period_display import format_plotted_time
 
 
 def _temperature_plot_series(fig, name=None):
@@ -66,9 +67,7 @@ def temperature_figure_interpretation(df, fig, kind, *, column="dry_bulb_tempera
         if series.empty:
             return "Selected temperature profile reflects only valid observations. " + climate
         lo, hi = int(series.idxmin()), int(series.idxmax())
-        at = lambda idx: (f"day-of-year {x[idx]}" if "daily" in lower_name and idx < len(x)
-                          and isinstance(x[idx], (int, float, np.integer, np.floating))
-                          else str(x[idx]) if idx < len(x) else f"point {idx+1}")
+        at = lambda idx: format_plotted_time(x[idx], df, title=name) if idx < len(x) else f"point {idx+1}"
         envelope = ("The P05–P95 band shows the central 90% of observed temperatures for each plotted period. "
                     if kind == "percentile" or "p05" in lower_name else
                     "The min–max band describes observed extremes within each plotted period. "
@@ -128,9 +127,7 @@ def temperature_figure_interpretation(df, fig, kind, *, column="dry_bulb_tempera
         if series.empty:
             return "Amplitude is the difference between the observed maximum and minimum in each plotted aggregation period."
         max_at = int(series.idxmax())
-        label = (f"day-of-year {x[max_at]}" if "daily" in lower_name and max_at < len(x)
-                 and isinstance(x[max_at], (int, float, np.integer, np.floating))
-                 else str(x[max_at]) if max_at < len(x) else "selected period")
+        label = format_plotted_time(x[max_at], df, title=name) if max_at < len(x) else "selected period"
         scale = ("daily" if "daily" in lower_name else "weekly" if "weekly" in lower_name else
                  "monthly" if "monthly" in lower_name else "seasonal" if "seasonal" in lower_name else
                  "annual" if "annual" in lower_name else "selected-period")
