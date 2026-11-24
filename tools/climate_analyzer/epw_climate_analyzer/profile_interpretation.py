@@ -23,6 +23,15 @@ def canonical_profile_kind(kind, title="", args=()):
 
 PROFILE_KINDS=frozenset(("native","time_series","time series / profile","profile","percentile"))
 
+# Quantity taxonomy is shared with live chart dispatch. The same quantity
+# receives one scientific interpretation regardless of its navigation tab.
+MOIST_AIR_QUANTITIES=frozenset((
+    "dew_point_temperature_c","wet_bulb_temperature_c",
+    "relative_humidity_pct","humidity_ratio_g_kg",
+    "moist_air_enthalpy_kj_kg","specific_volume_m3_kg",
+    "moist_air_density_kg_m3","atmospheric_station_pressure_pa",
+))
+
 
 def profile_interpretation(
     df,fig,kind,*,domain,column,title="",args=(),thresholds=(18.,26.),
@@ -43,12 +52,7 @@ def profile_interpretation(
     # also appear in Temperature explorer, while the same graph is catalogued
     # under Humidity and Psychrometrics in Atlas/report. Domain-first dispatch
     # previously produced two different interpretations for identical figures.
-    if column in {
-        "dew_point_temperature_c","wet_bulb_temperature_c",
-        "relative_humidity_pct","humidity_ratio_g_kg",
-        "moist_air_enthalpy_kj_kg","specific_volume_m3_kg",
-        "moist_air_density_kg_m3","atmospheric_station_pressure_pa",
-    }:
+    if column in MOIST_AIR_QUANTITIES:
         from .humidity_findings import humidity_figure_interpretation
         return humidity_figure_interpretation(
             df,fig,canonical,column=column,title=actual_title,args=args)
@@ -79,12 +83,7 @@ def profile_interpretation(
     # Generic explorers (e.g. Atmospheric context) route by the selected
     # physical quantity rather than the page heading. Keep all existing chart
     # pages functional when they use the same generic explorer component.
-    if column in {
-        "dew_point_temperature_c","wet_bulb_temperature_c",
-        "relative_humidity_pct","humidity_ratio_g_kg",
-        "moist_air_enthalpy_kj_kg","specific_volume_m3_kg",
-        "moist_air_density_kg_m3","atmospheric_station_pressure_pa",
-    }:
+    if column in MOIST_AIR_QUANTITIES:
         from .humidity_findings import humidity_figure_interpretation
         return humidity_figure_interpretation(
             df,fig,canonical,column=column,title=actual_title,args=args)
