@@ -456,9 +456,9 @@ try {
   const options = await analysisOptions(page, expectedOptions); report.checks.analysis_options = options;
   const missing = expectedOptions.filter((value) => !options.includes(value)); if (missing.length) throw new Error(`Missing precipitation/snow analysis option(s): ${missing.join(', ')}`);
   await selectAnalysis(page, 'Annual precipitation indices'); await appFrame(page, 'Wet day ≥ 1 mm/day', 60_000); report.checks.annual_precipitation_indices = true;
-  await selectAnalysis(page, 'Measured precipitation duration'); await appFrame(page, 'never inferred from precipitation depth rr', 60_000); report.checks.measured_precipitation_duration = true;
-  await selectAnalysis(page, 'Precipitation-record occurrence'); await appFrame(page, 'record-occurrence metric, not rainfall duration', 60_000); report.checks.native_precipitation_occurrence = true;
-  await selectAnalysis(page, 'Snow-cover duration'); await appFrame(page, 'source-state cadence', 60_000); report.checks.native_snow_cover_duration = true;
+  await selectAnalysis(page, 'Measured precipitation duration'); await appFrame(page, 'valid source-duration records', 60_000); report.checks.measured_precipitation_duration = true;
+  await selectAnalysis(page, 'Precipitation-record occurrence'); await appFrame(page, 'recorded source intervals reach', 60_000); report.checks.native_precipitation_occurrence = true;
+  await selectAnalysis(page, 'Snow-cover duration'); await appFrame(page, 'Native snow observations use', 60_000); report.checks.native_snow_cover_duration = true;
   await selectAnalysis(page, 'Snow-season indices'); await appFrame(page, 'July–June analysis year', 60_000); report.checks.snow_season_indices = true;
   if (report.page_errors.length) throw new Error(`Browser page error(s): ${report.page_errors.join(' | ')}`);
   await page.screenshot({ path: path.join(OUT_DIR, 'precipitation-snow-final.png'), fullPage: true }); report.success = true;
