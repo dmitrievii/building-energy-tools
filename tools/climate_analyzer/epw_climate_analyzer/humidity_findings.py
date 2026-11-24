@@ -232,12 +232,30 @@ def humidity_figure_interpretation(
     context = _physical_context(df, column)
     hours = _duration_hours_from_count(df, len(v))
 
-    if kind in ("time_series", "native") or (
-        kind == "time series / profile" and "observed values" in caption):
+    if kind in ("time_series", "native"):
+        # Actual source observations are plotted on a chronological x axis.
+        # Interpret their extrema in time rather than reusing a timeless
+        # distribution description (also used in HTML/PDF via this function).
+        low,high=v.idxmin(),v.idxmax()
+        coverage=(
+            f"{len(v):,} valid source observations representing {_fmt_hours(hours)} h"
+            if not np.isclose(native_interval_hours(df),1.) else
+            f"{_fmt_hours(hours)} valid hourly observations"
+        )
+        if isinstance(v.index,pd.DatetimeIndex):
+            from .period_display import format_timestamp, source_year
+            multi=source_year(df) is None
+            earlier=format_timestamp(low,multiple_years=multi,with_time=True)
+            later=format_timestamp(high,multiple_years=multi,with_time=True)
+            timing=(f" Lowest: {_fmt(v.min())} {unit} on {earlier}; "
+                    f"highest: {_fmt(v.max())} {unit} on {later}.")
+        else:
+            timing=f" The observed range is {_fmt(v.min())}–{_fmt(v.max())} {unit}."
+        quantiles=(f" P05 {_fmt(v.quantile(.05))}, median {_fmt(v.median())}, "
+                   f"P95 {_fmt(v.quantile(.95))} {unit}.")
         return (
-            f"{_fmt_hours(hours)} observed hours of {name}: "
-            f"mean {_fmt(v.mean())} {unit}, range {_fmt(v.min())}–{_fmt(v.max())} {unit}. "
-            + context
+            f"The {name} time series contains {coverage}, with a mean of "
+            f"{_fmt(v.mean())} {unit}."+timing+quantiles+" "+context
         )
 
     if kind in ("profile", "percentile", "time series / profile"):
