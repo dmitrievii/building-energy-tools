@@ -324,6 +324,8 @@ def _generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive
                 try:
                     with phase("figure_and_analysis"):
                         fig,note=make_figure(d,df,context,reference_df,cache)
+                    from .figure_interpretation_contract import validate_figure_interpretation
+                    validate_figure_interpretation(fig,note,require_binding=True)
                     with phase("memory_guard"):guard(f"Atlas prepared chart {processed}: {d.title}")
                     if writer:
                         with phase("pdf_render_and_embed"):writer.add(d,fig,note)
