@@ -157,6 +157,50 @@ class R28VariableParityTests(unittest.TestCase):
         fig,note=make_figure(d,df,{})
         self.assertEqual(snapshot(fig,{"page":cat.HUM},note)["interpretation"],note)
 
+    def test_r28b_complete_month_gate_and_positive_walter_lieth(self):
+        from epw_climate_analyzer.p6_report_structure import available_catalog
+        from r28_specialized_routes import standard_live
+        df=weather()
+        e=next(e for e in CATALOG if e[0]=="climograph")
+        self.assertNotIn(e,available_catalog(df,{}))
+        with self.assertRaisesRegex(ValueError,"complete paired"):
+            standard_figure(e,df,{})
+        idx=pd.date_range("2026-02-01","2026-03-01",freq="h",inclusive="left")
+        full=pd.DataFrame({cat.T:12.,cat.P:0.1},index=idx)
+        full.attrs["canonical_native_interval_minutes"]=60.
+        self.assertIn(e,available_catalog(full,{}))
+        fig,note=standard_figure(e,full,{})
+        _,expected=standard_live(e,full,{})
+        self.assertEqual(note,expected)
+        self.assertTrue(validate_figure_interpretation(fig,note,require_binding=True))
+
+    def test_r28b_independent_wind_and_psychrometric_routes(self):
+        from r28_specialized_routes import atlas_live
+        df=weather()
+        rows=cat.catalogue(df,{},cat.REP)
+        for kind in ("wind_mean","wind_classes","wind_panel","psychrometric"):
+            d=next(d for d in rows if d.kind==kind and d.status=="available")
+            with self.subTest(diagram=d.id):
+                fig,note=make_figure(d,df,{})
+                _,expected=atlas_live(d,df,{})
+                self.assertEqual(note,expected)
+                self.assertTrue(validate_figure_interpretation(fig,note,require_binding=True))
+
+    def test_r28b_native_monthly_observations_do_not_invent_hourly_exposure(self):
+        idx=pd.date_range("2026-01-01",periods=3,freq="MS")
+        df=pd.DataFrame({cat.T:[1.,2.,4.],cat.DEW:[-2.,0.,1.]},index=idx)
+        df.attrs["canonical_native_resolution"]="monthly"
+        for d in cat.catalogue(df,{},cat.REP):
+            if d.kind!="native":continue
+            fig,note=make_figure(d,df,{})
+            live=ch.time_series_profile_chart(df,d.column,"Native",
+                "Website · Native · Observed values",d.unit,"Observed values")
+            expected=generic_figure_interpretation(df,live,"Time series / Profile",
+                    domain=d.chapter,column=d.column)
+            self.assertEqual(note,expected)
+            self.assertIn("3 valid native monthly",note)
+            self.assertNotIn("observed hours",note)
+
 
 if __name__=="__main__":
     unittest.main()
