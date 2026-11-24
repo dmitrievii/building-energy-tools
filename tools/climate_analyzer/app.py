@@ -3957,11 +3957,7 @@ def render_facade_orientation(df: pd.DataFrame, *, ground_albedo=None) -> None:
     fig = orientation_components_chart(data, flat, tilt_deg=tilt,
                                        style=chart_type, selected=selected)
     from epw_climate_analyzer.solar_findings import facade_figure_interpretation
-    render_plot(fig,facade_figure_interpretation(fig,tilt_deg=tilt)+"\n\n"
-                "Direct, sky-diffuse and ground-reflected irradiation sum to total plane-of-array (POA) irradiation. "
-                "Selected components are stacked to show their contribution; the interpretation compares total irradiation across orientations. "
-                "The unobstructed isotropic transposition and active ground-albedo model are unchanged. "
-                "Values sum irradiation across the selected observation interval.")
+    render_plot(fig,facade_figure_interpretation(fig,tilt_deg=tilt))
     st.caption(f"Flat roof (0° tilt), total POA: {flat[TOTAL]:,.1f} kWh/m²"
                if pd.notna(flat[TOTAL]) else "Flat roof (0° tilt): no complete radiation observations.")
     st.caption(f"Complete coincident radiation/geometry intervals: {flat['valid_intervals']:,} / {flat['selected_intervals']:,}.")
@@ -4126,8 +4122,7 @@ def render_sky_radiation_distribution(df):
     st.caption(f"Complete qualifying daylight intervals: {table.attrs['valid_intervals']:,} / {table.attrs['selected_intervals']:,}. Active Data filter; no annualization.")
     from epw_climate_analyzer.solar_findings import solar_figure_interpretation
     fig=sky_figure(table,quantity,style,show_compass=show_compass)
-    render_plot(fig,solar_figure_interpretation(data,fig,"sky_patches",title=f"Sky {quantity} · {model}")+
-        "\n\nEach patch represents its contribution to irradiation on an unobstructed horizontal plane, not radiance or tilted-surface irradiation. Diffuse energy is normalized using projected solid angle; direct energy uses the actual solar zenith cosine. Total equals direct plus diffuse on common valid intervals. Ground radiation is excluded.")
+    render_plot(fig,solar_figure_interpretation(data,fig,"sky_patches",title=f"Sky {quantity} · {model}"))
     st.download_button("Sky patch numerical data · CSV",table.to_csv().encode("utf-8"),"sky_patch_irradiation.csv","text/csv",key="sky_patch_csv")
 
 
@@ -4215,8 +4210,9 @@ def render_temporal_shading(df,*,geometry,has_energy):
             interpretation=shading_monthly_interpretation(monthly,metric,
                                                            year=data.index.year[0])
         else:
+            selected_frame=frame.loc[frame.index.month.isin(selected)] if chart=="Monthly hourly profiles" else frame
             interpretation=shading_temporal_interpretation(
-                frame,metric,device=device,threshold=threshold)
+                selected_frame,metric,device=device,threshold=threshold)
         render_plot(fig,interpretation)
         st.download_button("Shading data · CSV",table.to_csv().encode("utf-8"),"shading_data.csv","text/csv",key="shading_temporal_csv")
     except ValueError as exc:st.info(str(exc))
