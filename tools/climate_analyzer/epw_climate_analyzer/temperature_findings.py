@@ -41,7 +41,7 @@ def temperature_figure_interpretation(df, fig, kind, *, column="dry_bulb_tempera
     data = pd.to_numeric(df.get(column, pd.Series(dtype=float)), errors="coerce").dropna()
     if data.empty:
         return "No valid temperature observations support the selected figure."
-    name = title or getattr(getattr(fig.layout, "title", None), "text", "") or ""
+    name = title or getattr(getattr(getattr(fig, "layout", None), "title", None), "text", "") or ""
     lower_name = name.lower()
     kind = canonical_profile_kind(kind,name)
     hours = _duration_hours_from_count(df, len(data))
@@ -179,8 +179,9 @@ def temperature_figure_interpretation(df, fig, kind, *, column="dry_bulb_tempera
         return ("; ".join(counts) + ". " if counts else "") + "The selected thresholds quantify the duration of cold and warm outdoor conditions relevant to envelope and seasonal-control design."
 
     if kind == "day_indicators":
-        return ("Frost days use daily minimum below 0 °C. Tropical nights use daily minimum "
-                "at or above 20 °C for complete calendar days, identifying sustained overnight warmth.")
+        return ("A frost day has a sampled daily minimum below 0 °C. A tropical night has a sampled daily minimum "
+                "at or above 20 °C under the selected inclusive convention. Complete observed days supply both indicators, "
+                "identifying seasonal frost exposure and sustained overnight warmth.")
     if kind == "temp_events":
         return ("An event requires at least three consecutive complete qualifying days. "
                 "The selected daily maximum, mean or minimum criterion determines which consecutive days form each event.")
