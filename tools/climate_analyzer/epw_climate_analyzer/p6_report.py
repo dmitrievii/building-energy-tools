@@ -375,9 +375,7 @@ def _pdf_report(items,title,paper,orientation,*,image_renderer=None,use_osm=Fals
             del fig
             if continued:
                 body.extend([PageBreak(),para(heading+" — Interpretation","ReportFigure")])
-                from .figure_interpretation_contract import validate_figure_interpretation
-            validate_figure_interpretation(fig,item["interpretation"])
-            if item["interpretation"]:body.append(para(item["interpretation"]))
+                if item["interpretation"]:body.append(para(item["interpretation"]))
                 if item.get("note"):body.append(para(item["note"]))
             else:body.extend(explanation)
     def footer(canvas,doc):
