@@ -42,7 +42,9 @@ def joint_chart(df,x,y,*,style="density",bins=25):
     values=pd.DataFrame({"x":p.valid_values(df,x),"y":p.valid_values(df,y)}).dropna()
     if values.empty:raise ValueError("No coincident valid observations.")
     n=len(values)
-    note=f"{n:,} coincident observations ({n*native_interval_hours(df):,.1f} h) describe the joint distribution of {labels[0]} and {labels[1]}."
+    monthly=str(df.attrs.get("canonical_native_resolution","")).lower()=="monthly"
+    scope=" native monthly records" if monthly else f" records ({n*native_interval_hours(df):,.1f} h)"
+    note=f"{n:,} coincident{scope} describe the joint distribution of {labels[0]} and {labels[1]}."
     if n>=3:
         corr=values.x.corr(values.y)
         if np.isfinite(corr):note+=f" Sample Pearson r = {corr:.3f}."
@@ -51,10 +53,12 @@ def joint_chart(df,x,y,*,style="density",bins=25):
         note+=" Each point represents a paired observation at the same timestamp; clusters and spread reveal the combinations of weather conditions."
     elif style=="density":
         xx,yy,z,h=p.joint_density(df,x,y,bins=bins)
+        if monthly:
+            h=z*n/100.
         f=go.Figure(go.Heatmap(x=xx,y=yy,z=z,customdata=h,
             colorscale=[[0,"#FFFFFF"],[.5,"#83BCD8"],[1,"#165986"]],zmin=0,
-            colorbar=dict(title="% of paired hours"),
-            hovertemplate="X %{x:.2f}<br>Y %{y:.2f}<br>Probability mass %{z:.2f}%<br>Hours %{customdata:.1f}<extra></extra>"))
+            colorbar=dict(title="% of paired records" if monthly else "% of paired hours"),
+            hovertemplate="X %{x:.2f}<br>Y %{y:.2f}<br>Probability mass %{z:.2f}%<br>"+("Records" if monthly else "Hours")+" %{customdata:.1f}<extra></extra>"))
         f.update_layout(template="plotly_white",title="Observed joint probability distribution",xaxis_title=labels[0],yaxis_title=labels[1])
         note+=f" Fixed-width {bins} × {bins} bins show the percentage of paired observations in each joint range; cell probability masses sum to 100%."
     else:raise ValueError("Unknown relationship chart.")
