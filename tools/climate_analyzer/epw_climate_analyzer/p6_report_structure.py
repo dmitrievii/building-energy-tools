@@ -541,14 +541,8 @@ def standard_figure(entry,df,context,reference_df=None):
         from .sky_findings import sky_figure_interpretation
         note=sky_figure_interpretation(df,fig,"sky_conditions",column=column)
     elif kind=="illumination":
-        from .aggregations import threshold_count_by_period
-        from .sky_findings import illuminance_interpretation
-        light=numeric(df,column)
-        counts=threshold_count_by_period(df,light.ge(10000.)&light.notna(),"Monthly",label="hours")
-        fig=go.Figure(go.Bar(x=counts.index,y=counts["hours"]))
-        fig.update_layout(template="plotly_white",title=label,
-            xaxis_title="Month",yaxis_title="Hours ≥10,000 lux")
-        note=illuminance_interpretation(df,column,threshold_lux=10000.)
+        from .sky_findings import illuminance_availability_figure
+        fig,note=illuminance_availability_figure(df,column,threshold_lux=10000.,aggregation="Monthly")
     elif kind=="relative_sunshine":
         from .daylight import monthly_daylight_sunshine_summary
         from .sky_findings import sunshine_interpretation
