@@ -410,7 +410,7 @@ def standard_figure(entry,df,context,reference_df=None):
             fig=go.Figure(go.Scatter(x=s.index,y=s,mode="lines+markers",connectgaps=False))
             fig.update_layout(template="plotly_white",title=label,yaxis_title=unit)
         else:fig=profile_ribbon_chart(df,column,"Monthly",label,unit)
-        note="Monthly values summarize the observed source samples; their range identifies seasonal variability."
+        note=""
     elif kind=="duration":
         fig=duration_chart(df,column,label,unit);note="Ranked valid source observations in descending order."
     elif kind=="heatmap":
@@ -604,6 +604,19 @@ def standard_figure(entry,df,context,reference_df=None):
         note=utci_distribution_interpretation(df,values,values.columns[0])
         note+=" The uniform MRT scenario sets mean radiant temperature equal to air temperature and evaluates wind at the 10 m reference height."
     else:raise ValueError("Unknown standard diagram.")
+    if kind=="profile" and page in (
+        "Temperature","Humidity and Psychrometrics","Solar and Radiation",
+        "Wind and Ventilation","Sky and Daylight","Precipitation and Snow",
+    ):
+        from .profile_interpretation import profile_interpretation
+        from .calendar_heatmap_axes import apply_monthly_axes
+        statement=profile_interpretation(
+            df,fig,kind,domain=page,column=column,title=label,
+            thresholds=temperature_thresholds(context),
+            latitude=context.get("latitude"),
+            plane=df.attrs.get("r24_solar_plane","reference vertical south-facing plane"),
+        )
+        return apply_monthly_axes(fig),statement
     if page=="Temperature":
         from .temperature_findings import temperature_figure_interpretation
         stat=temperature_figure_interpretation(
