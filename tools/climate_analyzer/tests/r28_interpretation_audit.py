@@ -3,8 +3,9 @@
 Run from repository root:
 PYTHONPATH=tools/climate_analyzer python tools/climate_analyzer/tests/r28_interpretation_audit.py --output artifacts/r28.csv
 
-Only independent explorer construction plus exact text identity earns PARITY_PASS.
-A bound report alone is RENDER_ONLY, never proof of cross-surface equality.
+Independent explorer construction or actual UI-render capture plus exact text identity earns PARITY_PASS.
+The evidence identifies which verification path was used. A bound report alone
+is RENDER_ONLY, never proof of cross-surface equality.
 """
 from __future__ import annotations
 
@@ -70,8 +71,13 @@ def hash_text(s):
 
 
 def record(surface,ident,chapter,kind,args,status,reason="",note="",expected=""):
+    actual={"sunpath_view","monthly_radiation","degree","day_indicators","cumulative",
+            "freeze_cycles","snow_calendar","correlation","joint"}
+    verification="actual UI renderer" if (surface=="Atlas" and kind in actual) or (
+        surface=="Standard report" and (kind in ("sunpath","degree") or ident=="ghi")) else "independent chart construction"
+    if status!="PARITY_PASS" and status!="PARITY_FAIL":verification="not qualified"
     return dict(surface=surface,diagram_id=ident,chapter=chapter,kind=kind,
-        args=repr(args),status=status,reason=reason,
+        args=repr(args),status=status,reason=reason,verification=verification,
         interpretation_sha256=hash_text(note) if note else "",
         explorer_sha256=hash_text(expected) if expected else "",
         interpretation=note,explorer_interpretation=expected)
@@ -210,7 +216,7 @@ def main():
     parser.add_argument("--require-complete",action="store_true")
     args=parser.parse_args()
     path=Path(args.output);path.parent.mkdir(parents=True,exist_ok=True)
-    counts=Counter()
+    counts=Counter();by_kind=Counter();verification_counts=Counter()
     with path.open("w",newline="",encoding="utf-8-sig") as out:
         writer=None
         from itertools import chain
@@ -219,9 +225,14 @@ def main():
                 writer=csv.DictWriter(out,fieldnames=list(row))
                 writer.writeheader()
             writer.writerow(row);counts[row["status"]]+=1
+            by_kind[(row["status"],row["kind"])]+=1
+            if row["status"]=="PARITY_PASS":verification_counts[row["verification"]]+=1
             if row["status"] in ("PARITY_FAIL","ERROR"):
                 print(row["status"],row["diagram_id"],row["reason"],flush=True)
     print(dict(counts),flush=True)
+    print('Verification paths:',dict(verification_counts),flush=True)
+    for (status,kind),count in sorted(by_kind.items()):
+        if status!='PARITY_PASS':print(f'{status} {kind}: {count}',flush=True)
     # Completeness is distinct from successful rendering.
     return int(bool(counts["PARITY_FAIL"] or counts["ERROR"] or
                     (args.require_complete and counts["RENDER_ONLY"])))
