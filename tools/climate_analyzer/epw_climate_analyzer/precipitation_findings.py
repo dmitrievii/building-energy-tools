@@ -14,6 +14,7 @@ import plotly.graph_objects as go
 from .aggregations import native_interval_hours
 from .interpretations import _fmt, _fmt_hours
 from .period_display import format_plotted_time, canonical_profile_kind
+from .profile_interpretation import profile_centre
 from .precipitation import (
     LIQUID_PRECIPITATION_COLUMN as P,
     PRECIPITATION_DURATION_COLUMN as DURATION,
@@ -241,7 +242,7 @@ def precipitation_figure_interpretation(df,fig,kind,*,column=P,title="",args=())
     if kind in ("time_series","native"):
         return base+" The chronological trace exposes the timing and clustering of weather episodes."
     if kind in ("profile","percentile","time series / profile"):
-        centre="median" if kind=="percentile" or "median" in title.lower() else "mean"
+        centre=profile_centre(fig,kind,title)
         vals,x=_plotted(fig,centre)
         if vals.empty:vals,x=_plotted(fig)
         if not vals.empty:
