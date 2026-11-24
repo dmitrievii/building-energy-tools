@@ -3886,36 +3886,25 @@ def render_sun_path(df: pd.DataFrame, *, shading_geometry=None) -> None:
         fig = classic_sun_path(df, radiation_field=field,
                                invert_zenith_axis=invert_zenith_axis,
                                hide_zero_radiation=hide_zero_radiation)
-        explanation = (
-            "North is at the top and azimuth increases clockwise. Monthly paths and dotted "
-            "fixed-clock hour lines show seasonal solar geometry."
-        )
-        if not invert_zenith_axis:
-            explanation += " The horizon is the outer ring."
-        if field is not None:
-            explanation += (
-                " Radiation points retain their original solar positions and interval irradiation; "
-                "monthly and hour curves remain astronomical guides, not radiation estimates."
-            )
         from epw_climate_analyzer.solar_shading import thermal_overlay,overlay_shading_mask
         if colour!="None":
             thermal_overlay(fig,df,colour,cold=cold,warm=warm)
-            explanation+=" Observation colours map outdoor temperature and its coincidence with the displayed solar directions, indicating potential seasons for solar admission and shading."
+
         if shading_geometry is not None:
             from epw_climate_analyzer.solar_shading import MASK_EXPLANATION
-            from epw_climate_analyzer.shading_findings import shading_mask_interpretation
+
             st.caption(MASK_EXPLANATION)
             overlay_shading_mask(fig,inverted=invert_zenith_axis,**shading_geometry)
-            explanation+=" "+shading_mask_interpretation(shading_geometry)
-        if shading_geometry is None:
-            from epw_climate_analyzer.solar_findings import solar_figure_interpretation
-            explanation=solar_figure_interpretation(df,fig,"sunpath_view",args=("2D",field or colour))
-        render_plot(fig, explanation)
+
+        from epw_climate_analyzer.solar_findings import solar_figure_interpretation
+        render_plot(fig,solar_figure_interpretation(df,fig,"sunpath_view",
+                    args=("2D",field or colour,invert_zenith_axis,cold,warm,shading_geometry)))
     elif chart_type == "Technical sun-path diagram":
         colour="None"
+        cold,warm=18.,26.
         from epw_climate_analyzer.solar_shading import thermal_overlay,overlay_shading_mask
         fig=technical_sun_path(df)
-        explanation="Cartesian solar azimuth and elevation diagram. The monthly paths use the 21st of each month, with fixed-clock hour curves and compass bearings."
+
         if all(c in df and df[c].notna().any() for c in ("dry_bulb_temperature_c","solar_azimuth_deg","solar_elevation_deg")):
             colour=st.selectbox("Colour mapped quantity",["None","Outdoor temperature","Solar benefit / risk"],key="technical_sun_thermal")
             cold,warm=18.,26.
@@ -3927,17 +3916,16 @@ def render_sun_path(df: pd.DataFrame, *, shading_geometry=None) -> None:
                     return
             if colour!="None":
                 thermal_overlay(fig,df,colour,cold=cold,warm=warm,technical=True)
-                explanation+=" Temperature colours identify solar positions that coincide with warm and cool outdoor conditions."
+
         if shading_geometry is not None:
             from epw_climate_analyzer.solar_shading import MASK_EXPLANATION
-            from epw_climate_analyzer.shading_findings import shading_mask_interpretation
+
             st.caption(MASK_EXPLANATION)
             overlay_shading_mask(fig,technical=True,**shading_geometry)
-            explanation+=" "+shading_mask_interpretation(shading_geometry)
-        if shading_geometry is None:
-            from epw_climate_analyzer.solar_findings import solar_figure_interpretation
-            explanation=solar_figure_interpretation(df,fig,"sunpath_view",args=("Technical",colour))
-        render_plot(fig,explanation)
+
+        from epw_climate_analyzer.solar_findings import solar_figure_interpretation
+        render_plot(fig,solar_figure_interpretation(df,fig,"sunpath_view",
+                    args=("Technical",colour,False,cold,warm,shading_geometry)))
     else:
         show_cube = st.checkbox("Show cube", value=True, key="solar_sun_path_show_cube")
         fig = sun_path_3d(df, show_cube=show_cube)
@@ -4016,7 +4004,6 @@ def render_monthly_radiation(df: pd.DataFrame, *, ground_albedo=None, allow_surf
             st.info("Select at least one radiation quantity.")
             return
         monthly = monthly_source_irradiation(df, quantities)
-        explanation = "Source GHI, DHI and DNI are independent irradiation quantities and must not be added together."
     else:
         tilt = st.slider("Surface tilt [deg]", 0.0, 90.0, 90.0, 5.0,
                          key="monthly_poa_tilt", help="0° horizontal; 90° vertical.")
@@ -4037,10 +4024,6 @@ def render_monthly_radiation(df: pd.DataFrame, *, ground_albedo=None, allow_surf
             st.info("Select at least one surface and one radiation quantity.")
             return
         monthly = monthly_surface_irradiation(df, surfaces, tilt, quantities, albedo=ground_albedo)
-        explanation = ("Total POA is direct irradiation projected onto the receiver, plus sky-diffuse and ground-reflected irradiation. "
-                       "The existing unobstructed isotropic transposition uses the active ground-albedo selection. "
-                       "Only intervals with coincident admitted GHI, DNI, DHI and solar geometry contribute. "
-                       "Total and individual components are shown separately, never added together in a chart stack.")
     rose_year = None
     if style == "Monthly rose":
         years = monthly_rose_years(monthly)
@@ -4054,10 +4037,7 @@ def render_monthly_radiation(df: pd.DataFrame, *, ground_albedo=None, allow_surf
             st.caption("Use Rose style: Lines to compare overlapping irradiation series.")
     fig = monthly_radiation_chart(monthly, style=style, tilt_deg=tilt, rose_style=rose_style)
     from epw_climate_analyzer.solar_findings import solar_figure_interpretation
-    render_plot(fig,solar_figure_interpretation(df,fig,"monthly_radiation",
-                title="Monthly source irradiation" if basis=="Source radiation" else "Monthly surface POA")+
-                "\n\n"+explanation +
-                " Monthly values sum interval energies over the active Data filter; calendar-profile mode averages per-year monthly sums. Missing periods are not zero-filled.")
+    render_plot(fig,solar_figure_interpretation(df,fig,"monthly_radiation"))
     with st.expander("Monthly irradiation values", expanded=False):
         display = monthly.copy()
         if isinstance(display.columns, pd.MultiIndex):
