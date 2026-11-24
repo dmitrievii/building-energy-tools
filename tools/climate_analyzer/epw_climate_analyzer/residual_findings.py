@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from .aggregations import native_interval_hours,period_total_series
-from .temporal_filtering import display_period_labels,time_basis
+from .temporal_filtering import display_period_labels,time_basis,CALENDAR_PROFILE
 from .chart_theme import metric_color
 
 T="dry_bulb_temperature_c"
@@ -45,7 +45,7 @@ def extensive_total_figure(df,column,aggregation):
     if x.empty:raise ValueError("No valid observations for this accumulation.")
     f=_bar(x,f"{label} · {aggregation.lower()} total",unit,label,metric_color(column))
     peak=x.idxmax();low=x.idxmin()
-    basis="Each calendar-profile bar is the mean of equivalent per-year period totals." if time_basis(df)=="calendar_profile" else "Each bar sums valid observed intervals within its period."
+    basis="Each calendar-profile bar is the mean of equivalent per-year period totals." if time_basis(df)==CALENDAR_PROFILE else "Each bar sums valid observed intervals within its period."
     note=(f"{label}: the plotted {aggregation.lower()} total ranges from {x.min():,.2f} {unit} "
           f"({low}) to {x.max():,.2f} {unit} ({peak}). {basis} ")
     if column in (G,D,N):
