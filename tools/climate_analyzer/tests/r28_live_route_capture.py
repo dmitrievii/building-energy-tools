@@ -96,6 +96,14 @@ def _capture(df,name,settings,*,p4_args=(),app_kwargs=None):
 
 def capture_atlas(d,df,context):
     k,c,a=d.kind,d.column,d.args
+    if k=="condensation":
+        return _capture(df,"condensation_panel",{"p3_cond_surface":15.,"p3_cond_chart":"Dew-point margin duration"})
+    if k=="moisture":
+        return _capture(df,"moisture_panel",{"p3_moist_flow":1000.,"p3_moist_target":9.,"p3_moist_chart":"Monthly water mass"})
+    if k=="illumination":
+        return _capture(df,"illuminance_panel",{"p3_lux_quantity":{"global_horizontal_illuminance_lux":"Global horizontal",
+             "diffuse_horizontal_illuminance_lux":"Diffuse horizontal","direct_normal_illuminance_lux":"Direct normal"}[c],
+             "p3_lux_threshold":300.,"p3_lux_period":a[0],"p3_lux_view":"Availability hours"})
     if k=="utci" or k.startswith("utci_"):
         settings={"p3_otc_year":"All selected years","p3_otc_model":"Open-sky screening"}
         if k=="utci":
@@ -148,6 +156,9 @@ def capture_atlas(d,df,context):
 
 def capture_standard(entry,df,context):
     ident,chapter,title,column,unit,k=entry
+    if k=="illumination":
+        return _capture(df,"illuminance_panel",{"p3_lux_quantity":"Global horizontal",
+             "p3_lux_threshold":10000.,"p3_lux_period":"Monthly","p3_lux_view":"Availability hours"})
     if k=="utci":
         return capture_atlas(cat.Diagram(ident,chapter,title,"utci",args=("Uniform radiant offset","stress")),df,context)
     if k=="utci_shading":
