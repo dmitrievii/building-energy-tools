@@ -72,9 +72,10 @@ def hash_text(s):
 
 def record(surface,ident,chapter,kind,args,status,reason="",note="",expected=""):
     actual={"sunpath_view","monthly_radiation","degree","day_indicators","cumulative",
-            "freeze_cycles","snow_calendar","correlation","joint","condensation","moisture","illumination"}
+            "freeze_cycles","snow_calendar","correlation","joint","condensation","moisture","illumination",
+            "total","eligibility_map","eligibility_total","temp_threshold","passive","nv_special"}
     verification="actual UI renderer" if (surface=="Atlas" and (kind in actual or kind=="utci" or kind.startswith("utci_"))) or (
-        surface=="Standard report" and (kind in ("sunpath","degree","utci","utci_shading","illumination") or ident=="ghi")) else "independent chart construction"
+        surface=="Standard report" and (kind in ("sunpath","degree","utci","utci_shading","illumination","nv","night","shade","snow_hours","hvac_design_hot","hvac_design_cold","total"))) else "independent chart construction"
     if status!="PARITY_PASS" and status!="PARITY_FAIL":verification="not qualified"
     return dict(surface=surface,diagram_id=ident,chapter=chapter,kind=kind,
         args=repr(args),status=status,reason=reason,verification=verification,
