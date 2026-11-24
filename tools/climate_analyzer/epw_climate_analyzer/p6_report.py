@@ -45,13 +45,14 @@ def set_context(state,*,page,source,location,df=None,extra=None,site=None,source
     state[CONTEXT_KEY]=meta
 
 def snapshot(fig,context,interpretation=""):
-    from .figure_interpretation_contract import bind_figure_interpretation
+    from .figure_interpretation_contract import bind_figure_interpretation,snapshot_content_digest
     bind_figure_interpretation(fig,interpretation)
     title=str(fig.layout.title.text or "Untitled diagram")
     payload=pio.to_json(fig,validate=True,remove_uids=True)
     meta=deepcopy(context)
     return {"id":hashlib.sha256((payload+json.dumps(meta,sort_keys=True,default=str)+str(interpretation)).encode()).hexdigest(),
             "title":title,"figure":payload,"context":meta,"interpretation":str(interpretation or ""),
+            "figure_interpretation_sha256":snapshot_content_digest(payload,interpretation),
             "captured":datetime.now(timezone.utc).isoformat(),"note":""}
 def add_snapshot(items,item):
     if any(x["id"]==item["id"] for x in items):return items,"This exact diagram is already in the report."
@@ -162,6 +163,8 @@ def _script_json(value):
     return json.dumps(value,ensure_ascii=True).replace("<","\\u003c").replace(">","\\u003e").replace("&","\\u0026")
 def printable_html(items,title,paper,orientation,*,use_osm=False):
     if paper not in ("A4","A3") or orientation not in ("Portrait","Landscape"):raise ValueError("Invalid paper settings.")
+    from .figure_interpretation_contract import validate_snapshot_content
+    for item in items:validate_snapshot_content(item)
     from plotly.offline import get_plotlyjs
     from .p6_report_structure import contexts,ordered_groups,concise_context,site_details,locator_figure,report_figure,zone_legend_entries,figure_height,complex_figure
     from .report_synthesis import synthesis_rows,synthesis_interpretation
@@ -223,6 +226,8 @@ def printable_html(items,title,paper,orientation,*,use_osm=False):
 
 def pdf_report(items,title,paper,orientation,*,image_renderer=None,use_osm=False,progress=None,render_cache_dir=None):
     """Disk-staged static report export with one shared export owner."""
+    from .figure_interpretation_contract import validate_snapshot_content
+    for item in items:validate_snapshot_content(item)
     from .p66_memory import EXPORT_LOCK,require_headroom
     import gc
     import tempfile
