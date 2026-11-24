@@ -2492,7 +2492,17 @@ def render_generic_variable_page(
                                      "reference vertical south-facing plane"))
         render_plot(fig,text)
         return
-    if title_prefix == "Temperature":
+    if column in {
+        "dew_point_temperature_c","wet_bulb_temperature_c",
+        "relative_humidity_pct","humidity_ratio_g_kg",
+        "moist_air_enthalpy_kj_kg","specific_volume_m3_kg",
+        "moist_air_density_kg_m3","atmospheric_station_pressure_pa",
+    }:
+        # The same physical quantity must have the same interpretation in
+        # Temperature explorer, Humidity explorer, Atlas and saved reports.
+        from epw_climate_analyzer.humidity_findings import humidity_figure_interpretation
+        text=humidity_figure_interpretation(chart_df,fig,chart_type,column=column)
+    elif title_prefix == "Temperature":
         from epw_climate_analyzer.temperature_findings import temperature_figure_interpretation
         text=temperature_figure_interpretation(
             chart_df,fig,chart_type,column=column,
