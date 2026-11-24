@@ -192,8 +192,33 @@ def apply_common_layout(fig: go.Figure, title: str, x_label: str, y_label: str) 
 
 
 def _format_profile_period(fig,df,aggregation):
+    """Format source dates in plot ticks and hover without altering x data."""
     from .calendar_heatmap_axes import set_period_axis_scope,apply_monthly_axes
+    from .period_display import format_plotted_time
     set_period_axis_scope(fig,df,aggregation=aggregation)
+    if aggregation=="Daily":
+        for trace in fig.data:
+            xs=getattr(trace,"x",None)
+            if xs is None or len(xs)==0 or getattr(trace,"customdata",None) is not None:
+                continue
+            labels=[format_plotted_time(v,df,aggregation="Daily") for v in xs]
+            if any(label!=str(v) for label,v in zip(labels,xs)):
+                trace.customdata=labels
+                hover=str(trace.hovertemplate or "")
+                if "%{x}" in hover:
+                    trace.hovertemplate=hover.replace("%{x}","%{customdata}")
+                else:
+                    trace.hovertemplate="Date %{customdata}<br>"+hover
+    elif aggregation in ("Hourly","Native"):
+        for trace in fig.data:
+            xs=getattr(trace,"x",None)
+            if xs is None or len(xs)==0 or not isinstance(xs[0],(pd.Timestamp,np.datetime64)):
+                continue
+            hover=str(trace.hovertemplate or "")
+            if "%{x}" in hover:
+                trace.hovertemplate=hover.replace("%{x}","%{x|%d.%m at %H:%M}")
+            else:
+                trace.hovertemplate="%{x|%d.%m at %H:%M}<br>"+hover
     return apply_monthly_axes(fig)
 
 
