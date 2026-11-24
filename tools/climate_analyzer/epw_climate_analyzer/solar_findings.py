@@ -12,8 +12,8 @@ import pandas as pd
 import plotly.graph_objects as go
 from .aggregations import native_interval_hours
 from .interpretations import _fmt, _fmt_hours
-from .period_display import format_plotted_time, canonical_profile_kind
-from .profile_interpretation import profile_centre
+from .period_display import format_plotted_time
+from .profile_interpretation import canonical_profile_kind, profile_centre
 
 GHI="global_horizontal_radiation_wh_m2"
 DHI="diffuse_horizontal_radiation_wh_m2"
