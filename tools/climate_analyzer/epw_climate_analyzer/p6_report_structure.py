@@ -483,12 +483,13 @@ def standard_figure(entry,df,context,reference_df=None):
         table=orientation_shading_table(df,geometry=GEOMETRY,cold_c=lo,hot_c=hi)
         fig=orientation_shading_figure(table,cold_c=lo,hot_c=hi)
         note=orientation_shading_interpretation(table,cold_c=lo,hot_c=hi)
-        note+=" Reference window: south-oriented 2 × 1.5 m, 0.6 m overhang and zero side fins; identical geometry is rotated for all eight orientations."
+
     elif kind=="facade":
         from .facade_orientation import orientation_period_components,orientation_components_chart
         a,f=orientation_period_components(df,tilt_deg=90.)
         fig=orientation_components_chart(a,f,tilt_deg=90.,style="Bar chart",selected=())
-        note="Unobstructed vertical POA; isotropic diffuse model and default ground albedo."
+        from .solar_findings import facade_figure_interpretation
+        note=facade_figure_interpretation(fig,tilt_deg=90.)
     elif kind=="sunpath":fig=sun_path_chart(df);note="Solar position and direct-normal radiation for selected source records."
     elif kind=="wind_orientation":
         from .wind_findings import wind_opportunity,wind_opportunity_figure,wind_design_interpretation
@@ -506,14 +507,16 @@ def standard_figure(entry,df,context,reference_df=None):
     elif kind=="daylight":
         from .extended_visualization import daylight_envelope
         fig=daylight_envelope(df.index,float(context["latitude"]))
-        note="Sunrise–sunset envelope calculated for the represented latitude and calendar dates."
+        from .sky_findings import sky_figure_interpretation
+        note=sky_figure_interpretation(df,fig,"daylight",latitude=context.get("latitude"))
     elif kind=="sky_conditions":
         from .extended_visualization import sky_distribution,occurrence_figure
         table=sky_distribution(df)
         table.columns=["Clear","Intermediate","Overcast"]
         fig=occurrence_figure(table,"","Hours")
         fig.update_layout(title=label)
-        note="Observed total sky-cover intervals grouped into clear (0–2), intermediate (above 2 and below 8), and overcast (8–10 tenths) conditions."
+        from .sky_findings import sky_figure_interpretation
+        note=sky_figure_interpretation(df,fig,"sky_conditions",column=column)
     elif kind=="illumination":
         from .aggregations import threshold_count_by_period
         from .sky_findings import illuminance_interpretation
@@ -646,16 +649,16 @@ def standard_figure(entry,df,context,reference_df=None):
             df,fig,kind,column=column,title=label)
     elif page=="Wind and Ventilation":
         from .wind_findings import wind_figure_interpretation
-        stat="" if kind=="wind_orientation" else wind_figure_interpretation(
+        stat="" if kind in ("wind_orientation","windrose") else wind_figure_interpretation(
             df,fig,kind,column=column,title=label)
     elif page=="Sky and Daylight":
         from .sky_findings import sky_figure_interpretation
-        stat=sky_figure_interpretation(df,fig,kind,column=column,title=label,
+        stat="" if kind in ("illumination","daylight","sky_conditions","relative_sunshine") else sky_figure_interpretation(df,fig,kind,column=column,title=label,
                                       latitude=context.get("latitude"))
     elif page=="Precipitation and Snow":
         from .precipitation_findings import precipitation_figure_interpretation
         mapped_kind="rain_days" if kind=="rain_days" else kind
-        stat=precipitation_figure_interpretation(df,fig,mapped_kind,column=column,title=label)
+        stat="" if kind in ("climograph","wind_rain") else precipitation_figure_interpretation(df,fig,mapped_kind,column=column,title=label)
     elif page=="Shading analysis" or kind in (
         "hvac_energy","hvac_economizer","hvac_design_hot","hvac_design_cold",
         "hvac_critical","utci","utci_shading",
