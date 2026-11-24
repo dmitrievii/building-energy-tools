@@ -460,13 +460,13 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         f=stress_heatmap(x,y,z,title=title,x_label=xl,y_label=yl)
         note="Hypothetical controlled states: RH 50%; remaining fixed inputs T=30 °C, wind 2 m/s, MRT offset 0 K as applicable. The chart compares prescribed conditions. "+STRESS_NOTE
     elif k=="snow_calendar":
+        from .p4_ui import snow_calendar_chart
+        from .precipitation_findings import snow_summary
         observed=p4.daily_stats(df,cat.S,nonnegative=True)["max"]
         cover=observed.gt(0).astype(float).where(observed.notna())
         if not cover.notna().any():raise NotApplicable("No complete valid daily snow observations.")
-        days=pd.date_range(cover.index.min(),cover.index.max(),freq="D")
-        z=np.asarray(cover.reindex(days),float)[None,:]
-        f=go.Figure(go.Heatmap(x=days,y=["Snow cover"],z=z,zmin=0,zmax=1,colorscale=[[0,"#FFFFFF"],[1,"#427CAD"]],hoverongaps=False,colorbar=dict(tickvals=[0,1],ticktext=["No snow","Snow"]))).update_layout(xaxis_title="Date")
-        note+=" Daily maximum snow depth >0 cm; complete observed days only."
+        year=a[0] if a else int(cover.index.year.max())
+        f,note=snow_calendar_chart(cover,year,title=title,note=snow_summary(df))
     elif k=="correlation":
         from .relationship_findings import correlation_chart
         f,note=correlation_chart(df,a)
@@ -563,7 +563,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         with phase("interpretation"):
             stat=precipitation_figure_interpretation(
                 df,f,k,column=c,title=title,args=a)
-        if k in ("climate_summary","wind_rain","wetdry"):pass  # existing plot-specific interpretation is authoritative
+        if k in ("climate_summary","wind_rain","wetdry","snow_calendar"):pass  # existing plot-specific interpretation is authoritative
         elif stat and k in ("total","rolling","freeze_days","freeze_cycles","cumulative"):note=stat
         elif stat and stat not in note:note=stat+"\n\n"+note
     from .figure_interpretation_contract import bind_figure_interpretation
