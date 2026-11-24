@@ -18,6 +18,7 @@ import numpy as np
 import pandas as pd
 
 from test_r28_variable_interpretation_parity import weather, explorer_figure
+from r28_specialized_routes import atlas_live, standard_live, UnmatchedRoute
 from epw_climate_analyzer import p66_catalogue as cat
 from epw_climate_analyzer.p66_render import make_figure, NotApplicable
 from epw_climate_analyzer.p6_report_structure import CATALOG, available_catalog, standard_figure
@@ -87,16 +88,16 @@ def audit(df,context):
             fig,note=make_figure(d,df,context,reference_df=df)
             if not note.strip():raise ValueError("Empty scientific interpretation")
             validate_figure_interpretation(fig,note,require_binding=True)
-            if d.kind not in GENERIC:
-                yield record(*common,"RENDER_ONLY","Independent live route not qualified",note)
-                continue
-            if d.kind=="native":
-                # Native monthly input requires its own independent live route.
-                yield record(*common,"RENDER_ONLY","Native monthly route not qualified",note)
-                continue
-            scope,live,alias=explorer_figure(d,df)
-            expected=generic_figure_interpretation(scope,live,alias,
-                domain=d.chapter,column=d.column,args=d.args,latitude=context.get("latitude"))
+            if d.kind in GENERIC and d.kind!="native":
+                scope,live,alias=explorer_figure(d,df)
+                expected=generic_figure_interpretation(scope,live,alias,
+                    domain=d.chapter,column=d.column,args=d.args,latitude=context.get("latitude"))
+            else:
+                try:
+                    live,expected=atlas_live(d,df,context)
+                except UnmatchedRoute as exc:
+                    yield record(*common,"RENDER_ONLY",str(exc),note)
+                    continue
             status="PARITY_PASS" if note==expected else "PARITY_FAIL"
             yield record(*common,status,"" if status=="PARITY_PASS" else "Different text for matched settings",note,expected)
         except NotApplicable as exc:
@@ -134,7 +135,13 @@ def audit(df,context):
                 status="PARITY_PASS" if note==expected else "PARITY_FAIL"
                 yield record(*common,status,"" if status=="PARITY_PASS" else "Different text for matched settings",note,expected)
             else:
-                yield record(*common,"RENDER_ONLY","Independent live route not qualified",note)
+                try:
+                    live,expected=standard_live(e,df,context)
+                except UnmatchedRoute as exc:
+                    yield record(*common,"RENDER_ONLY",str(exc),note)
+                    continue
+                status="PARITY_PASS" if note==expected else "PARITY_FAIL"
+                yield record(*common,status,"" if status=="PARITY_PASS" else "Different text for matched settings",note,expected)
         except Exception as exc:
             yield record(*common,"ERROR",f"{type(exc).__name__}: {exc}")
 
