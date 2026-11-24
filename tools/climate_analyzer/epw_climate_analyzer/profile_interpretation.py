@@ -50,7 +50,25 @@ def profile_interpretation(
         from .precipitation_findings import precipitation_figure_interpretation
         return precipitation_figure_interpretation(
             df,fig,canonical,column=column,title=actual_title,args=args)
-    raise ValueError(f"No profile interpretation route for domain {domain!r}.")
+    # Generic explorers (e.g. Atmospheric context) route by the selected
+    # physical quantity rather than the page heading. Keep all existing chart
+    # pages functional when they use the same generic explorer component.
+    if column in {
+        "dew_point_temperature_c","wet_bulb_temperature_c",
+        "relative_humidity_pct","humidity_ratio_g_kg",
+        "moist_air_enthalpy_kj_kg","specific_volume_m3_kg",
+        "moist_air_density_kg_m3","atmospheric_station_pressure_pa",
+    }:
+        from .humidity_findings import humidity_figure_interpretation
+        return humidity_figure_interpretation(
+            df,fig,canonical,column=column,title=actual_title,args=args)
+    if "temperature" in column:
+        from .temperature_findings import temperature_figure_interpretation
+        return temperature_figure_interpretation(
+            df,fig,canonical,column=column,title=actual_title,thresholds=thresholds)
+    from .interpretations import variable_interpretation
+    return variable_interpretation(
+        df,column,actual_title or column,"")
 
 
 def profile_band(fig,kind="",title=""):
