@@ -129,8 +129,9 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         if c in ex.WIND_SPEED_COLUMNS:note+=" "+ex.WIND_OCCURRENCE_NOTE
     elif k=="amplitude":f=ex.amplitude_figure(df,c,a[0],cat.LABELS[c]);note+=" Amplitude equals the maximum minus minimum of observations within each aggregation period."
     elif k=="total":
-        factor=1/1000 if u=="kWh/m²" else 1/60 if c=="precipitation_duration_min" else 1/3600 if c=="sunshine_duration_s" else 1
-        f=_bars(_totals(df,(s*factor).rename(cat.LABELS[c]),a[0]),title,u);note+=" Totals represent the selected observation period."
+        from .residual_findings import extensive_total_figure
+        try:f,note=extensive_total_figure(df,c,a[0])
+        except ValueError as exc:raise NotApplicable(str(exc)) from exc
     elif k=="climate_summary":
         table=memo("climate_summary",lambda:ex.climate_summary_table(df))
         if table.empty:raise NotApplicable("No paired complete months.")
@@ -144,8 +145,9 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         f=_bars(result,title,u)
         degree_legend_below(f)
     elif k=="temp_threshold":
-        a1=pd.DataFrame({"Below 18 °C":s.lt(18).astype(float).where(s.notna())*dt,"Above 26 °C":s.gt(26).astype(float).where(s.notna())*dt})
-        f=_bars(_totals(df,a1,a[0]),title,u);note+=" Reference low/high temperature thresholds 18/26 °C."
+        from .residual_findings import temperature_threshold_figure
+        low,high=base.temperature_thresholds(context)
+        f,note=temperature_threshold_figure(df,a[0],low=low,high=high)
     elif k=="temp_events":
         stat,above,style=a;threshold=30. if above else 0.
         daily,ev=memo(("temp_events",stat,above),lambda:p4.temperature_events(df,threshold=threshold,above=above,minimum=3,stat=stat))
@@ -264,7 +266,9 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         f=_bars(monthly.resample("MS").sum(min_count=1),title,"Sequences")
     elif k=="daylight":f=ex.daylight_envelope(df.index,float(context["latitude"]));note+=" Ideal horizon and apparent solar time."
     elif k=="sunshine":f=ex.sunshine_hour_heatmap(df);note+=" Measured sunshine duration, complete clock hours."
-    elif k=="sky_conditions":f=ex.occurrence_figure(ex.sky_distribution(df,c),"tenths","Hours");note+=" Clear ≤2, overcast ≥8 tenths."
+    elif k=="sky_conditions":
+        table=ex.sky_distribution(df,c);table.columns=["Clear","Intermediate","Overcast"]
+        f=ex.occurrence_figure(table,"","Hours")
     elif k=="illumination":
         from .sky_findings import illuminance_availability_figure
         try:f,note=illuminance_availability_figure(df,c,threshold_lux=300.,aggregation=a[0])
@@ -306,26 +310,9 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         from .shading_findings import shading_ledger_interpretation
         note=shading_ledger_interpretation(ledger,df,geometry=cat.GEOMETRY)
     elif k in ("eligibility_map","eligibility_total"):
-        name,period=a
-        col={"nv":"Natural ventilation","night":"Night flushing","shade":"Solar protection screening"}[name]
-        ledger=design()
-        if col not in ledger or not ledger[col].notna().any():raise NotApplicable("No valid candidate hours.")
-        if k=="eligibility_total":f=_bars(_totals(df,ledger[col],period),title,"h")
-        else:
-            data=df.copy();data["atlas_suitable"]=ledger[col]/dt
-            f=ch.heatmap_chart(data,"atlas_suitable",period,title,"0/1")
-        if name=="nv":
-            from .passive_design_findings import ventilation_screen_stages,ventilation_screen_interpretation
-            stages=ventilation_screen_stages(df)
-            note+=" "+ventilation_screen_interpretation(
-                df,stages,t_min_c=16.,t_max_c=26.,d_max_g_kg=9.)
-        elif name=="night":
-            from .decisions import night_flushing_condition
-            from .passive_design_findings import night_flushing_interpretation
-            note+=" "+night_flushing_interpretation(
-                df,night_flushing_condition(df),hot_day_c=26.,night_max_c=20.)
-        else:
-            note+=" T≥24 °C and GHI≥250 W/m². This warm-weather solar screen identifies the seasonal timing of façade protection opportunities."
+        from .residual_findings import eligibility_figure
+        try:f,note=eligibility_figure(df,a[0],a[1],view="map" if k=="eligibility_map" else "total",ledger=design())
+        except ValueError as exc:raise NotApplicable(str(exc)) from exc
     elif k=="nv_special":
         from .decisions import natural_ventilation_condition
         from .directional_climate import directional_table,directional_figure,directional_class_table,directional_class_figure
@@ -360,12 +347,9 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         note+=" "+ventilation_screen_interpretation(
             df,ventilation_screen_stages(df),t_min_c=16.,t_max_c=26.,d_max_g_kg=9.)
     elif k=="passive":
-        from .decisions import passive_strategy_monthly
-        table=passive_strategy_monthly(df)
-        if table.empty:raise NotApplicable("No supported passive strategies.")
-        from .passive_design_findings import monthly_strategy_matrix
-        f=monthly_strategy_matrix(table,title)
-        note+=" Each row presents an independent monthly screening duration. Simultaneous temperature, moisture, ventilation and solar-control conditions appear in their respective strategy rows."
+        from .residual_findings import passive_matrix_figure
+        try:f,note=passive_matrix_figure(df)
+        except ValueError as exc:raise NotApplicable(str(exc)) from exc
     elif k=="vent_load":
         from .hvac_findings import conditioning_monthly_figure,conditioning_interpretation
         ledger=memo("hvac_ref_energy",lambda:p3.ventilation_loads(
@@ -516,7 +500,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
             with phase("interpretation"):
                 stat=memo(("interpretation",d.chapter,col,k,wet),lambda:base.source_interpretation(scope,d.chapter,col,cat.LABELS.get(col,""),cat.UNITS.get(col,u),thresholds=base.temperature_thresholds(context),kind=k))
             if stat and stat not in note:note=stat+"\n\n"+note
-    if d.chapter == cat.TEMP and k not in ("temp_events","degree","day_indicators"):
+    if d.chapter == cat.TEMP and k not in ("temp_events","degree","day_indicators","temp_threshold"):
         from .temperature_findings import temperature_figure_interpretation
         with phase("interpretation"):
             stat=temperature_figure_interpretation(
@@ -535,13 +519,13 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         with phase("interpretation"):
             stat=wind_figure_interpretation(df,f,k,column=c,title=title,args=a)
         if stat and stat not in note:note=stat+"\n\n"+note
-    if d.chapter == cat.SOL:
+    if d.chapter == cat.SOL and k!="total":
         from .solar_findings import solar_figure_interpretation
         with phase("interpretation"):
             stat=solar_figure_interpretation(df,f,k,column=c,title=title,args=a)
         if stat and k in ("facade","tilt","sky_patches","sunpath_view","monthly_radiation"):note=stat
         elif stat and stat not in note:note=stat+"\n\n"+note
-    if d.chapter == cat.SKY and k!="illumination":
+    if d.chapter == cat.SKY and k not in ("illumination","total"):
         from .sky_findings import sky_figure_interpretation
         mode="sunshine_heatmap" if k=="sunshine" else k
         with phase("interpretation"):
@@ -550,7 +534,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
                 latitude=context.get("latitude"))
         if stat and k in ("daylight","sunshine","sky_conditions","illumination"):note=stat
         elif stat and stat not in note:note=stat+"\n\n"+note
-    if d.chapter == cat.RAIN:
+    if d.chapter == cat.RAIN and k!="total":
         from .precipitation_findings import precipitation_figure_interpretation
         with phase("interpretation"):
             stat=precipitation_figure_interpretation(
