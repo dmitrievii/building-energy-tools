@@ -1,0 +1,41 @@
+name: Climate R2.8 Interpretation Audit
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'tools/climate_analyzer/**'
+      - '.github/workflows/climate-r28-interpretation-audit.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  interpretation-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      PYTHONPATH: tools/climate_analyzer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/climate_analyzer/requirements.txt
+      - name: Install dependencies
+        run: python -m pip install -r tools/climate_analyzer/requirements.txt
+      - name: Compile sources
+        run: python -m compileall -q tools/climate_analyzer
+      - name: Execute targeted parity regression tests
+        run: python -m unittest discover -s tools/climate_analyzer/tests -p 'test_r28_variable_interpretation_parity.py' -v
+      - name: Audit all registered Atlas and standard report configurations
+        if: always()
+        run: python tools/climate_analyzer/tests/r28_interpretation_audit.py --output artifacts/r28_interpretation_audit.csv
+      - name: Upload case-level qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r28-interpretation-audit
+          path: artifacts/r28_interpretation_audit.csv
+          if-no-files-found: error
