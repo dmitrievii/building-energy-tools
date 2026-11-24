@@ -13,6 +13,7 @@ import plotly.graph_objects as go
 
 from .aggregations import native_interval_hours
 from .interpretations import _fmt, _fmt_hours
+from .period_display import format_plotted_time
 
 COMPASS = ("N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW")
 SPEED = "wind_speed_m_s"
@@ -318,7 +319,7 @@ def wind_figure_interpretation(df,fig,kind,*,column=SPEED,title="",args=()):
         plotted,x=_plotted(fig,None if observed else center)
         if not plotted.empty:
             low,high=int(plotted.idxmin()),int(plotted.idxmax())
-            at=lambda ix:str(x[ix]) if ix<len(x) else str(ix+1)
+            at=lambda ix:format_plotted_time(x[ix],df,title=label) if ix<len(x) else str(ix+1)
             info=(f"Selected plotted {center} speed is lowest at {at(low)} "
                   f"({_fmt(plotted.iloc[low])} m/s) and highest at {at(high)} "
                   f"({_fmt(plotted.iloc[high])} m/s). ")
