@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from .interpretations import _fmt, _fmt_hours, _duration_hours_from_count
 from .period_display import format_plotted_time, canonical_profile_kind
-from .profile_interpretation import profile_band
+from .profile_interpretation import profile_band, profile_centre
 
 
 def _temperature_plot_series(fig, name=None):
@@ -61,7 +61,7 @@ def temperature_figure_interpretation(df, fig, kind, *, column="dry_bulb_tempera
                 f"{_fmt(data.max())} °C (mean {_fmt(data.mean())} °C). " + climate)
 
     if kind in ("profile", "percentile", "time series / profile"):
-        metric = "Median" if kind == "percentile" or "median" in lower_name else "Mean"
+        metric = profile_centre(fig,kind,name).capitalize()
         series, x = _temperature_plot_series(fig, metric)
         if series.empty:
             series, x = _temperature_plot_series(fig)
