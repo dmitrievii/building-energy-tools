@@ -506,6 +506,20 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         from .figure_interpretation_contract import bind_figure_interpretation
         bind_figure_interpretation(f,statement)
         return f,statement
+    if k in ("heatmap","duration","histogram","box","violin","diurnal","occurrence","amplitude") and d.chapter in (
+        cat.TEMP,cat.HUM,cat.WIND,cat.SOL,cat.SKY,cat.RAIN,
+    ):
+        from .profile_interpretation import generic_figure_interpretation
+        selected=scope if k in ("duration","histogram","box","violin") else df
+        with phase("interpretation"):
+            statement=generic_figure_interpretation(
+                selected,f,k,domain=d.chapter,column=c,args=a,
+                thresholds=base.temperature_thresholds(context),
+                latitude=context.get("latitude"),
+            )
+        from .figure_interpretation_contract import bind_figure_interpretation
+        bind_figure_interpretation(f,statement)
+        return f,statement
     if k in ("time_series","profile","percentile","heatmap","duration","histogram","box","violin","diurnal","occurrence","amplitude","native","psychrometric","monthly_radiation","facade","tilt","sunpath_view","sky_patches","total"):
         # Reuse the wet-only frame already created by distribution charts.
         wet=bool(c and k in ("histogram","duration","box","violin") and a[0]=="wet")
