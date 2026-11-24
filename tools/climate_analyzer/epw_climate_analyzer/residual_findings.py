@@ -121,3 +121,51 @@ def passive_matrix_figure(df):
     if table.empty:raise ValueError("No supported passive strategies.")
     return (monthly_strategy_matrix(table,"Monthly passive and HVAC strategy screens"),
         hvac_interpretation(df)+" Each matrix cell is the independently screened duration for one strategy. Coincident strategies remain visible in separate rows.")
+
+
+def nv_special_figure(df,style,*,mask=None,t_min=16.,t_max=26.,w_max=9.,wind_min=None,wind_max=None):
+    """Reference NV views with the same admitted mask and physical-hour accounting."""
+    from .decisions import natural_ventilation_condition,rejection_reasons_for_nv
+    from .p3_comfort import eligibility_mask,persistence,persistence_monthly
+    from .p3_ui import nv_sensitivity_figure,persistence_interpretation
+    from .p3_persistence_chart import persistence_figure
+    from .directional_climate import (directional_table,directional_figure,directional_interpretation,
+        directional_class_table,directional_class_figure,class_interpretation)
+    if mask is None:
+        mask=natural_ventilation_condition(df,t_min_c=t_min,t_max_c=t_max,d_max_g_kg=w_max,
+                                         wind_min_m_s=wind_min,wind_max_m_s=wind_max)
+    mask=eligibility_mask(df,mask,wind=wind_min is not None or wind_max is not None)
+    dt=native_interval_hours(df)
+    if style=="Persistence":
+        table=persistence(df,mask);counts=persistence_monthly(table,2.)
+        if counts.empty or not counts["Observed days"].notna().any():raise ValueError("No observed days with known suitability.")
+        return persistence_figure(counts,"Day availability · at least 2 uninterrupted hours"),persistence_interpretation(2.)
+    if style=="Daily duration":
+        table=persistence(df,mask);v=table["Suitable hours [h]"].dropna().sort_values(ascending=False)
+        if v.empty:raise ValueError("No observed days with known suitability.")
+        f=go.Figure(go.Scatter(x=np.arange(1,len(v)+1),y=v,mode="lines",name="Suitable hours"))
+        f.update_layout(template="plotly_white",title="Daily natural-ventilation suitable-hours duration curve",
+                        xaxis_title="Ranked observed days",yaxis_title="Suitable hours/day")
+        return f,(f"Across {len(v):,} days with known screening observations, daily suitable duration ranges from "
+                  f"{v.min():.1f} to {v.max():.1f} h. The ranked curve shows how frequently days offer extended outdoor-air ventilation opportunities; partial days contribute their observed hours.")
+    if style=="Temperature–wind suitability":
+        return nv_sensitivity_figure(df,mask,temperature_limits=(t_min,t_max),
+            wind_limits=(wind_min,wind_max) if wind_min is not None and wind_max is not None else None)
+    if style=="Rejected reasons":
+        reasons=rejection_reasons_for_nv(df,t_min,t_max,w_max,wind_min_m_s=wind_min,wind_max_m_s=wind_max)
+        f=go.Figure(go.Bar(x=reasons["reason"],y=reasons["hours"],marker_color="#798D9D"))
+        f.update_layout(template="plotly_white",title="Natural-ventilation rejected reasons",xaxis_title="Reason",yaxis_title="Hours")
+        peak=reasons.iloc[0]
+        return f,(f"The largest rejection duration is {peak['reason'].lower()} ({peak['hours']:,.1f} h). "
+                  "The bars report physical observed hours outside each configured temperature, moisture or wind limit. Reasons can coincide within one interval.")
+    if style=="Directional suitability":
+        table=directional_table(df,radial="Eligible hours",colour="Natural ventilation suitability",nv_mask=mask)
+        return directional_figure(table,"Eligible hours","Natural ventilation suitability",
+            "Directionally classified strict-screen eligible hours"),directional_interpretation(table,"Eligible hours","Natural ventilation suitability")
+    if style=="Wind during suitable hours":
+        view=df.loc[mask.eq(1)].copy();view.attrs.update(df.attrs)
+        if view.empty:raise ValueError("No suitable ventilation hours.")
+        table=directional_class_table(view,quantity="Wind speed",radial="Hours",nv_mask=mask)
+        if table.attrs["valid_hours"]<=0:raise ValueError("No valid coincident non-calm observations.")
+        return directional_class_figure(table,"Mean wind during natural-ventilation-suitable hours"),class_interpretation(table)
+    raise ValueError("Unknown ventilation chart.")
