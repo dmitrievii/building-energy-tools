@@ -46,13 +46,18 @@ def set_context(state,*,page,source,location,df=None,extra=None,site=None,source
 
 def snapshot(fig,context,interpretation=""):
     from .figure_interpretation_contract import bind_figure_interpretation,snapshot_content_digest
-    bind_figure_interpretation(fig,interpretation)
+    narrative=str(interpretation or "")
+    bind_figure_interpretation(fig,narrative)
     title=str(fig.layout.title.text or "Untitled diagram")
     payload=pio.to_json(fig,validate=True,remove_uids=True)
+    fingerprint=snapshot_content_digest(payload,narrative)
     meta=deepcopy(context)
-    return {"id":hashlib.sha256((payload+json.dumps(meta,sort_keys=True,default=str)+str(interpretation)).encode()).hexdigest(),
-            "title":title,"figure":payload,"context":meta,"interpretation":str(interpretation or ""),
-            "figure_interpretation_sha256":snapshot_content_digest(payload,interpretation),
+    # Hash the bounded fingerprint and metadata, never a second concatenated
+    # full Plotly JSON representation.
+    identity=hashlib.sha256((fingerprint+json.dumps(meta,sort_keys=True,default=str)).encode()).hexdigest()
+    return {"id":identity,
+            "title":title,"figure":payload,"context":meta,"interpretation":narrative,
+            "figure_interpretation_sha256":fingerprint,
             "captured":datetime.now(timezone.utc).isoformat(),"note":""}
 def add_snapshot(items,item):
     if any(x["id"]==item["id"] for x in items):return items,"This exact diagram is already in the report."
