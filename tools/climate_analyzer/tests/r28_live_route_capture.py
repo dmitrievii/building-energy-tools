@@ -15,7 +15,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-from epw_climate_analyzer import p66_catalogue as cat, p4_ui
+from epw_climate_analyzer import p66_catalogue as cat, p4_ui, p3_ui
 from epw_climate_analyzer.degree_metrics import degree_metric_table,degree_metric_interpretation
 from epw_climate_analyzer.temporal_filtering import display_period_labels,time_basis
 from epw_climate_analyzer.chart_theme import metric_color
@@ -61,6 +61,8 @@ class Controls:
     dataframe=caption
     download_button=caption
     header=caption
+    write=caption
+    def button(self,*a,**kw):return False
 
 
 @lru_cache(maxsize=1)
@@ -80,6 +82,9 @@ def _capture(df,name,settings,*,p4_args=(),app_kwargs=None):
                  display_period_labels=display_period_labels,time_basis=time_basis,metric_color=metric_color)
         exec(app_code(),env)
         env[name](df,**(app_kwargs or {}))
+    elif name in ("outdoor_comfort","condensation_panel","moisture_panel","illuminance_panel"):
+        with patch.object(p3_ui,"st",ui):
+            getattr(p3_ui,name)(df,render)
     else:
         with patch.object(p4_ui,"st",ui):
             if name=="precipitation_panel":
@@ -91,6 +96,24 @@ def _capture(df,name,settings,*,p4_args=(),app_kwargs=None):
 
 def capture_atlas(d,df,context):
     k,c,a=d.kind,d.column,d.args
+    if k=="utci" or k.startswith("utci_"):
+        settings={"p3_otc_year":"All selected years","p3_otc_model":"Open-sky screening"}
+        if k=="utci":
+            model,style=a
+            settings.update({"p3_otc_model":"Uniform radiant offset" if model=="Uniform radiant offset" else "Open-sky screening",
+                "p3_otc_chart":{"heatmap":"UTCI heat map","stress":"Monthly thermal-stress distribution","duration":"UTCI duration curve"}[style],
+                "p3_otc_exposure":model,"p3_otc_duration_exposure":model})
+        elif k=="utci_sensitivity":
+            # The controlled sensitivity grid is independent of the observed MRT model.
+            settings.update({"p3_otc_model":"Uniform radiant offset","p3_otc_chart":"Sensitivity analysis",
+                "p3_sens_axis":{"Temperature–wind":"Air temperature × wind speed",
+                    "Temperature–radiant offset":"Air temperature × radiant offset",
+                    "Wind–radiant offset":"Wind speed × radiant offset"}[a[0]]})
+        else:
+            settings.update({"p3_otc_chart":"Sun versus shade",
+                "p3_otc_pair_view":{"utci_pair":"Monthly mean UTCI","utci_pair_delta":"Monthly UTCI reduction",
+                    "utci_pair_stress":"Heat-stress exposure","utci_pair_mrt":"Mean radiant temperature"}[k]})
+        return _capture(df,"outdoor_comfort",settings)
     if k=="sunpath_view":
         style,colour=a
         fields=dict(available_radiation_fields(df))
@@ -125,6 +148,10 @@ def capture_atlas(d,df,context):
 
 def capture_standard(entry,df,context):
     ident,chapter,title,column,unit,k=entry
+    if k=="utci":
+        return capture_atlas(cat.Diagram(ident,chapter,title,"utci",args=("Uniform radiant offset","stress")),df,context)
+    if k=="utci_shading":
+        return capture_atlas(cat.Diagram(ident,chapter,title,"utci_pair_delta"),df,context)
     if k=="sunpath":
         return capture_atlas(cat.Diagram(ident,chapter,title,"sunpath_view",args=("2D",cat.N)),df,context)
     if k=="degree":
