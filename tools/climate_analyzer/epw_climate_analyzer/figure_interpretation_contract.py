@@ -57,3 +57,29 @@ def validate_figure_interpretation(fig, interpretation, *, require_binding=False
     if current!=_digest(interpretation):
         raise ValueError("Exported interpretation differs from the figure's original interpretation.")
     return True
+
+
+def snapshot_content_digest(figure_json, interpretation):
+    """Hash frozen figure geometry and interpretation without parsing or copying.
+
+    Snapshot creation already serializes the original Plotly graph once; this
+    incremental digest does not cause a second serialization or array copy.
+    """
+    sha=hashlib.sha256()
+    sha.update(str(figure_json).encode("utf-8"))
+    sha.update(b"\x00")
+    sha.update(str(interpretation).encode("utf-8"))
+    return sha.hexdigest()
+
+
+def validate_snapshot_content(item):
+    """Check that saved graph bytes and scientific text still form one unit.
+
+    Older report snapshots, predating the contract, remain readable.
+    """
+    expected=item.get("figure_interpretation_sha256")
+    if expected is None:return False
+    actual=snapshot_content_digest(item["figure"],item.get("interpretation",""))
+    if actual!=expected:
+        raise ValueError("Report chart or interpretation changed after capture.")
+    return True
