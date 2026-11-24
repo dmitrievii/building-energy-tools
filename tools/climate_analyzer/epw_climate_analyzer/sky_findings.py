@@ -12,8 +12,8 @@ import pandas as pd
 
 from .aggregations import native_interval_hours
 from .interpretations import _fmt, _fmt_hours
-from .period_display import format_plotted_time, canonical_profile_kind
-from .profile_interpretation import profile_centre
+from .period_display import format_plotted_time
+from .profile_interpretation import canonical_profile_kind, profile_centre
 from .daylight import daily_daylight_table, monthly_daylight_sunshine_summary
 
 TOTAL="total_sky_cover_tenths"
