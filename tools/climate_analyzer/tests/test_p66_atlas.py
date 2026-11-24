@@ -284,8 +284,11 @@ class AtlasTests(unittest.TestCase):
         for d in rows:
             fig,_=make_figure(d,df,{})
             for copy in (fig,report_figure(fig,width_pt=500,height_pt=230)):
-                self.assertTrue(all(tr.marker.color==ILLUMINANCE_THRESHOLD_COLOR for tr in copy.data))
-            self.assertAlmostEqual(float(np.nansum(fig.data[0].y)),float(df[c.LUX].ge(300.).sum()))
+                self.assertEqual(len(copy.data),2)
+                self.assertEqual(copy.data[1].marker.color,ILLUMINANCE_THRESHOLD_COLOR)
+                self.assertNotEqual(copy.data[0].marker.color,ILLUMINANCE_THRESHOLD_COLOR)
+            self.assertAlmostEqual(float(np.nansum(fig.data[1].y)),float(df[c.LUX].ge(300.).sum()))
+            self.assertAlmostEqual(float(np.nansum(fig.data[0].y)),float(df[c.LUX].lt(300.).sum()))
         self.assertEqual(semantic_color_from_text("Illuminance >= 300 lux"),ILLUMINANCE_THRESHOLD_COLOR)
         self.assertEqual(threshold_bar_chart(pd.DataFrame({"hours":[10.]},index=["Jan"]),"Illuminance ≥ 300 lux").data[0].marker.color,ILLUMINANCE_THRESHOLD_COLOR)
 
@@ -325,7 +328,7 @@ class AtlasTests(unittest.TestCase):
             self.assertGreaterEqual(tr.marker.opacity,.55)
             np.testing.assert_allclose(tr.x,df[c.T].iloc[2:])
             np.testing.assert_allclose(tr.y,df[c.RH].iloc[2:])
-        self.assertIn("94 finite paired observations",note)
+        self.assertIn("94 coincident records (94.0 h)",note)
         x=pd.Series(np.zeros(PAIRED_SCATTER_SVG_LIMIT+1))
         big=paired_scatter_chart(x,x,"Test","X","Y")
         self.assertEqual(big.data[0].type,"scattergl")
