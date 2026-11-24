@@ -183,15 +183,24 @@ def _period_ticks(axis,values,fig,*,heatmap=False):
     try:nums=[int(v) for v in raw if float(v)==int(v)]
     except (TypeError,ValueError,OverflowError):nums=[]
     if len(nums)==len(raw) and nums and 1<=min(nums)<=max(nums)<=366 and (daily or title=="period" and max(nums)>53):
-        # Existing daily charts use ordinal calendar days. Do not force a
-        # complete-year axis onto a partial selection.
+        # Preserve continuous ordinal chart coordinates and true selection bounds,
+        # but display calendar dates when the source year is established.
         ticks=_day_positions(nums)
         numeric=all(not isinstance(v,str) for v in raw)
+        year=int(years[0]) if single_scope else None
+        def date_label(day):
+            if year is not None and day<=pd.Timestamp(year,12,31).dayofyear:
+                return (pd.Timestamp(year,1,1)+pd.Timedelta(days=int(day)-1)).strftime("%d.%m")
+            return str(day)
         if numeric:
-            axis.update(type="linear",tickmode="array",tickvals=ticks,ticktext=[str(n) for n in ticks],tickangle=0,automargin=True,showticklabels=True)
+            axis.update(type="linear",tickmode="array",tickvals=ticks,
+                        ticktext=[date_label(n) for n in ticks],
+                        tickangle=0,automargin=True,showticklabels=True)
         else:
-            lookup=dict(zip(nums,raw));ticks=[n for n in ticks if n in lookup or n==max(nums)]
-            axis.update(tickmode="array",tickvals=[lookup[n] for n in ticks if n in lookup],ticktext=[str(n) for n in ticks if n in lookup],tickangle=0,automargin=True,showticklabels=True)
+            lookup=dict(zip(nums,raw));ticks=[n for n in ticks if n in lookup]
+            axis.update(tickmode="array",tickvals=[lookup[n] for n in ticks],
+                        ticktext=[date_label(n) for n in ticks],
+                        tickangle=0,automargin=True,showticklabels=True)
         return True
     if not daily:return False
     if all(_DAY_MONTH.fullmatch(v) for v in strings):
@@ -200,7 +209,9 @@ def _period_ticks(axis,values,fig,*,heatmap=False):
         idx=pd.DatetimeIndex(pd.to_datetime([f"{v} {year}" for v in strings],format="%d %b %Y",errors="coerce"))
         if idx.hasnans:return False
         nums=list(idx.dayofyear);lookup=dict(zip(nums,raw));ticks=[n for n in _day_positions(nums) if n in lookup]
-        axis.update(tickmode="array",tickvals=[lookup[n] for n in ticks],ticktext=[str(n) for n in ticks],tickangle=0,automargin=True,showticklabels=True)
+        axis.update(tickmode="array",tickvals=[lookup[n] for n in ticks],
+                    ticktext=[idx[nums.index(n)].strftime("%d.%m") for n in ticks],
+                    tickangle=0,automargin=True,showticklabels=True)
         return True
     if not all(_DATE.match(v) for v in strings):return False
     try:idx=pd.DatetimeIndex(pd.to_datetime(strings,format="mixed"))
@@ -208,11 +219,13 @@ def _period_ticks(axis,values,fig,*,heatmap=False):
     if idx.hasnans or idx.normalize().has_duplicates:return False
     if len(set(idx.year))>1 or multi_scope:
         take=_bounded_positions(len(raw),10)
-        labels=[idx[i].strftime("%d %b %Y") for i in take]
+        labels=[idx[i].strftime("%d.%m.%Y") for i in take]
         axis.update(tickmode="array",tickvals=[raw[i] for i in take],ticktext=labels,tickangle=-45,automargin=True,showticklabels=True)
         return True
     nums=list(idx.dayofyear);lookup=dict(zip(nums,raw));ticks=[n for n in _day_positions(nums) if n in lookup]
-    axis.update(tickmode="array",tickvals=[lookup[n] for n in ticks],ticktext=[str(n) for n in ticks],tickangle=0,automargin=True,showticklabels=True)
+    axis.update(tickmode="array",tickvals=[lookup[n] for n in ticks],
+                ticktext=[idx[nums.index(n)].strftime("%d.%m") for n in ticks],
+                tickangle=0,automargin=True,showticklabels=True)
     return True
 
 _MONTH_YEAR=re.compile(r"^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[ .-]+(\d{4})$",re.I)
