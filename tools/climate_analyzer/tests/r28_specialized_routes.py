@@ -117,6 +117,39 @@ def atlas_live(d,df,context):
             f=shading_calendar(frame,metric,a[1],a[2],a[3],title="Website",threshold=DEFAULT_THRESHOLD)
         else:f,_=monthly_shading_profiles(frame,metric,sorted(set(df.index.month)))
         return f,shading_temporal_interpretation(frame,metric,device=device,threshold=DEFAULT_THRESHOLD)
+    if k in ("temp_events","persistence","wetdry"):
+        from epw_climate_analyzer.p4_ui import event_interpretation,event_timeline_figure
+        extra=""
+        if k=="temp_events":
+            statistic,above,style=a
+            threshold=30. if above else 0.
+            daily,events=p4.temperature_events(df,threshold=threshold,above=above,minimum=3,stat=statistic)
+            series=daily[statistic];unit="days";step=None
+        elif k=="persistence":
+            threshold,above,style=a
+            series=p4.valid_values(df,c,True);step=p4.cadence(df);unit="hours"
+            events=p4.events(series,threshold=threshold,above=above,minimum=3.,step=step)
+            if d.chapter==cat.HUM:
+                from epw_climate_analyzer.humidity_findings import humidity_figure_interpretation
+                extra=humidity_figure_interpretation(df,None,"persistence",column=c,args=(threshold,above,""))
+            else:
+                from epw_climate_analyzer.wind_findings import wind_figure_interpretation
+                extra=wind_figure_interpretation(df,None,"persistence",column=c,args=(threshold,above))
+        else:
+            wet,style=a
+            threshold=1.;above=wet;unit="days";step=None
+            daily,w,dry=p4.wet_dry_events(df,threshold=threshold,minimum=1)
+            series=daily["sum"];events=w if wet else dry
+            from epw_climate_analyzer.precipitation_findings import wet_dry_interpretation
+            extra=wet_dry_interpretation(df,wet=wet,threshold=threshold,minimum=1)
+        if style=="timeline":
+            f=event_timeline_figure(events,series,unit=unit,threshold=threshold,above=above,quantity=d.unit,step=step)
+        elif style=="intensity":
+            f=go.Figure(go.Scatter(x=events.duration,y=events.peak,mode="markers",customdata=events.excess))
+        else:
+            counts=events.duration.value_counts().sort_index()
+            f=go.Figure(go.Bar(x=counts.index,y=counts))
+        return f,event_interpretation(events,unit=unit,extra_note=extra)
     if k=="climate_summary":
         table=ex.climate_summary_table(df)
         if table.empty:raise UnmatchedRoute("No complete paired month")
