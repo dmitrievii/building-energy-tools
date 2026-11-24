@@ -262,7 +262,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         from .shading_sketch import window_shading_sketch
         from .shading_findings import shading_mask_interpretation
         f=window_shading_sketch(**cat.GEOMETRY)
-        note=cat.GEO_NOTE+" "+shading_mask_interpretation(cat.GEOMETRY)
+        note=shading_mask_interpretation(cat.GEOMETRY)
     elif k in ("shading_calendar","shading_profiles"):
         from .shading_calendar import shading_frame,shading_calendar,monthly_shading_profiles,shading_note
         from .solar_shading import TOTAL_DEVICE
@@ -273,7 +273,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         else:
             f,_=monthly_shading_profiles(frame,metric,sorted(set(df.index.month)))
         from .shading_findings import shading_temporal_interpretation
-        note=cat.GEO_NOTE+" "+shading_temporal_interpretation(frame,metric,device=device)
+        note=shading_temporal_interpretation(frame,metric,device=device)
     elif k=="shading_temporal":
         from .shading_temporal import temporal_shading_tables,shading_monthly_rose,shading_month_hour_heatmap
         metric,style,year,device=a
@@ -285,16 +285,15 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         stat=(shading_monthly_interpretation(monthly,metric,year=year)
               if style=="Monthly rose" else
               shading_cells_interpretation(cells,metric,device=device,year=year))
-        note=cat.GEO_NOTE+" "+stat
+        note=stat
     elif k=="shading_irradiation":
-        from .solar_shading import shading_ledger
+        from .solar_shading import shading_ledger,monthly_shading_figure
         ledger=shading_ledger(df,**cat.GEOMETRY)
-        direct=ledger["Unshaded direct"]
-        intercepted=ledger[[c1 for c1 in ledger if c1.endswith(" intercepted direct")]].sum(axis=1,min_count=1)
-        f=_bars(_totals(df,pd.DataFrame({"Unshaded direct":direct/1000,"Remaining direct":(direct-intercepted)/1000,"Intercepted direct":intercepted/1000}),"Monthly"),title,"kWh/m²")
+        cols=["Unshaded total","Shaded total (direct-only)","Intercepted direct"]
+        table=pd.DataFrame({c:agg.period_total_series(ledger[c],df,"Monthly")/1000 for c in cols})
+        f=monthly_shading_figure(table,display_period_labels(table.index,"Monthly",time_basis(df)))
         from .shading_findings import shading_ledger_interpretation
-        note=cat.GEO_NOTE+" "+shading_ledger_interpretation(
-            ledger,df,geometry=cat.GEOMETRY)
+        note=shading_ledger_interpretation(ledger,df,geometry=cat.GEOMETRY)
     elif k in ("eligibility_map","eligibility_total"):
         name,period=a
         col={"nv":"Natural ventilation","night":"Night flushing","shade":"Solar protection screening"}[name]
@@ -552,7 +551,8 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         from .solar_findings import solar_figure_interpretation
         with phase("interpretation"):
             stat=solar_figure_interpretation(df,f,k,column=c,title=title,args=a)
-        if stat and stat not in note:note=stat+"\n\n"+note
+        if stat and k in ("facade","tilt","sky_patches","sunpath_view","monthly_radiation"):note=stat
+        elif stat and stat not in note:note=stat+"\n\n"+note
     if d.chapter == cat.SKY:
         from .sky_findings import sky_figure_interpretation
         mode="sunshine_heatmap" if k=="sunshine" else k
@@ -560,13 +560,15 @@ def make_figure(d,df,context,reference_df=None,cache=None):
             stat=sky_figure_interpretation(
                 df,f,mode,column=c,title=title,args=a,
                 latitude=context.get("latitude"))
-        if stat and stat not in note:note=stat+"\n\n"+note
+        if stat and k in ("daylight","sunshine","sky_conditions","illumination"):note=stat
+        elif stat and stat not in note:note=stat+"\n\n"+note
     if d.chapter == cat.RAIN:
         from .precipitation_findings import precipitation_figure_interpretation
         with phase("interpretation"):
             stat=precipitation_figure_interpretation(
                 df,f,k,column=c,title=title,args=a)
-        if stat and stat not in note:note=stat+"\n\n"+note
+        if k in ("climate_summary","wind_rain"):pass  # existing plot-specific interpretation is authoritative
+        elif stat and stat not in note:note=stat+"\n\n"+note
     from .figure_interpretation_contract import bind_figure_interpretation
     note=note.strip()
     bind_figure_interpretation(f,note)
