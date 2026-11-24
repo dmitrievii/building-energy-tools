@@ -66,7 +66,10 @@ def snapshot_content_digest(figure_json, interpretation):
     incremental digest does not cause a second serialization or array copy.
     """
     sha=hashlib.sha256()
-    sha.update(str(figure_json).encode("utf-8"))
+    # Avoid allocating a second full-size Plotly JSON payload in the process.
+    # Limit peak temporary UTF-8 buffers to 256 KiB character chunks.
+    for offset in range(0,len(figure_json),256*1024):
+        sha.update(figure_json[offset:offset+256*1024].encode("utf-8"))
     sha.update(b"\x00")
     sha.update(str(interpretation).encode("utf-8"))
     return sha.hexdigest()
