@@ -131,6 +131,38 @@ class ProfileInterpretationParityTests(unittest.TestCase):
                 self.assertTrue(result)
                 self.assertIsInstance(result,str)
 
+
+    def test_profile_envelope_is_identical_under_different_chart_titles(self):
+        from plotly import graph_objects as go
+        from epw_climate_analyzer.profile_interpretation import profile_band
+        df=climate()
+        curves=go.Figure()
+        curves.add_scatter(x=["Jan","Feb"],y=[17.,23.],name="Maximum")
+        curves.add_scatter(x=["Jan","Feb"],y=[4.,10.],name="Minimum")
+        curves.add_scatter(x=["Jan","Feb"],y=[10.,17.],name="Mean")
+        self.assertEqual(profile_band(curves,"profile","Monthly relative humidity"),"minmax")
+        a=profile_interpretation(df,curves,"profile",domain="Humidity",column=DP,
+                                 title="Monthly dew-point temperature")
+        b=profile_interpretation(df,curves,"Time series / Profile",domain="Humidity",
+                                 column=DP,title="Dew point · Monthly · Min–mean–max")
+        self.assertEqual(a,b)
+        self.assertEqual(a.count("Min–max shows observed period extrema."),1)
+        self.assertNotIn("15 °C",a)
+
+    def test_percentile_envelope_is_identical_under_different_titles(self):
+        from plotly import graph_objects as go
+        df=climate()
+        curves=go.Figure()
+        curves.add_scatter(x=["Jan","Feb"],y=[20.,25.],name="Upper 5% boundary (P95)")
+        curves.add_scatter(x=["Jan","Feb"],y=[4.,5.],name="Lower 5% boundary (P05)")
+        curves.add_scatter(x=["Jan","Feb"],y=[10.,13.],name="Median")
+        x=profile_interpretation(df,curves,"profile",domain="Humidity",column=DP,
+                                 title="Monthly dew point")
+        y=profile_interpretation(df,curves,"percentile",domain="Humidity",column=DP,
+                                 title="P05–median–P95 · Monthly")
+        self.assertEqual(x,y)
+        self.assertEqual(x.count("central 90%"),1)
+
     def test_site_and_atlas_point_to_same_contract(self):
         base=Path(__file__).resolve().parents[1]
         app=(base/"app.py").read_text(encoding="utf-8")
