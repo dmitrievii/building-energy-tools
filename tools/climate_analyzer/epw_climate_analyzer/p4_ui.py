@@ -7,11 +7,7 @@ import streamlit as st
 from . import p4_extremes as p
 from .aggregations import native_interval_hours
 from .p3_comfort import numeric
-VARS={"Air temperature [°C]":p.T,"Relative humidity [%]":p.RH,"Humidity ratio [g/kg]":p.W,
-      "Enthalpy [kJ/kg dry air]":p.H,"Wind speed [m/s]":p.V,
-      "Dew point [°C]":"dew_point_temperature_c","Station pressure [Pa]":"atmospheric_station_pressure_pa",
-      "Global irradiation [Wh/m²]":"global_horizontal_radiation_wh_m2","Precipitation [mm]":p.P,
-      "Snow depth [cm]":p.SNOW}
+from .relationship_findings import VARS,correlation_chart,joint_chart
 
 def _available(df):
     return {k:v for k,v in VARS.items() if numeric(df,v).notna().any()}
@@ -269,25 +265,20 @@ def hvac_panel(df,render):
 def multivariate_panel(df,render,*,density_only=False):
     options=_available(df)
     if len(options)<2:st.info("Two observable quantities are required.");return
-    view="Joint probability density" if density_only else st.selectbox("Multivariate analysis",["Correlation matrix","Joint probability density"],key="p4_multi_view")
+    view="Joint probability density" if density_only else st.selectbox("Multivariate analysis",["Correlation matrix","Joint probability density","Paired scatter"],key="p4_multi_view")
     if view=="Correlation matrix":
         selected=st.multiselect("Quantities",list(options),default=list(options)[:min(6,len(options))],key="p4_corr_quantities")
         if len(selected)<2:st.info("Select at least two quantities.");return
-        r,n=p.correlation(df,[options[x] for x in selected])
-        fig=go.Figure(go.Heatmap(x=selected,y=selected,z=r,customdata=n,zmin=-1,zmax=1,zmid=0,colorscale="RdBu_r",colorbar=dict(title="Pearson r"),hoverongaps=False,hovertemplate="%{y} / %{x}<br>r %{z:.3f}<br>Paired records %{customdata}<extra></extra>"))
-        fig.update_layout(template="plotly_white",title="Pairwise observed correlation")
-        render(fig,"Pairwise complete Pearson correlation, at least three coincident observations; no causal interpretation. Direction angles excluded. Each pair can have different coverage.")
+        render(*correlation_chart(df,[options[x] for x in selected]))
     else:
         x=st.selectbox("X quantity",list(options),key="p4_density_x_"+str(density_only))
         others=[k for k in options if k!=x]
         y=st.selectbox("Y quantity",others,key="p4_density_y_"+str(density_only))
-        bins=st.slider("Bins per axis",10,60,25,5,key="p4_density_bins_"+str(density_only))
-        data=p.joint_density(df,options[x],options[y],bins=bins)
-        if data is None:st.info("No coincident valid observations.");return
-        xx,yy,z,h=data
-        fig=go.Figure(go.Heatmap(x=xx,y=yy,z=z,customdata=h,colorscale=[[0,"#FFFFFF"],[.5,"#83BCD8"],[1,"#165986"]],zmin=0,colorbar=dict(title="% of paired hours"),hovertemplate="X %{x:.2f}<br>Y %{y:.2f}<br>Probability mass %{z:.2f}%<br>Hours %{customdata:.1f}<extra></extra>"))
-        fig.update_layout(template="plotly_white",title="Observed joint probability distribution",xaxis_title=x,yaxis_title=y)
-        render(fig,"Fixed-width 2D histogram; cell probability masses sum to 100% over valid paired observations. Not probability per unit area or kernel smoothing.")
+        style="scatter" if view=="Paired scatter" else "density"
+        bins=st.slider("Bins per axis",10,60,25,5,key="p4_density_bins_"+str(density_only)) if style=="density" else 25
+        try:render(*joint_chart(df,options[x],options[y],style=style,bins=bins))
+        except ValueError as exc:st.info(str(exc))
+
 
 def event_viewer(df,render):
     options=_available(df)
