@@ -154,14 +154,25 @@ def solar_figure_interpretation(
                 "over common valid daylight source intervals. Polar bar radius is sky-patch "
                 "geometry; colours indicate patch irradiation. Direct uses DNI projected by solar zenith, while diffuse follows the selected sky model. Total is the sum of direct and diffuse patch contributions.")
     if kind=="sunpath_view":
-        return ("The solar paths are astronomical references for the selected site and clock; "
-                "they describe solar azimuth and altitude, supporting façade orientation, overhang sizing and exposure planning. Overlays show the associated observed radiation and temperature conditions.")
+        style,colour=(args+("2D","None"))[:2] if len(args)>=2 else ("2D","None")
+        geometry={
+            "2D":"Compass azimuth increases clockwise from north; radial position encodes solar elevation or zenith.",
+            "Technical":"Cartesian compass azimuth and elevation locate each apparent solar direction.",
+            "3D":"East, North and Up coordinates locate apparent solar directions on the unit hemisphere.",
+        }.get(style,"Compass azimuth and elevation describe apparent solar direction.")
+        overlay=(" Outdoor-temperature colours locate weather conditions coincident with solar direction."
+                 if colour in ("Outdoor temperature","Solar benefit / risk") else
+                 " Radiation colours encode the selected observed interval irradiation at its actual solar position."
+                 if colour not in ("None",None) else "")
+        return ("Monthly astronomical paths and fixed-clock guides describe seasonal solar geometry. "
+                +geometry+overlay+" Solar directions support façade orientation, overhang sizing and seasonal exposure planning.")
     if kind=="monthly_radiation":
         mode=("source components on distinct measurement planes"
               if any(getattr(t,"name","") in ("GHI","DNI","DHI") for t in getattr(fig,"data",()))
               else "selected plane-of-array irradiation components")
         return (f"The displayed monthly values are interval-irradiation sums for {mode}. "
-                "Compare monthly horizontal radiation, normal-beam availability and façade-specific plane irradiation to identify seasonal solar-resource and shading priorities.")
+                "Calendar-profile values average equivalent per-year monthly sums. "
+                "Compare seasonal horizontal radiation, normal-beam availability and façade-specific plane irradiation to identify solar-resource and shading priorities.")
     if kind in ("scatter","solar_scatter"):
         return solar_temperature_interpretation(df)
     if not column:
