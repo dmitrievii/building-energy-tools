@@ -98,7 +98,9 @@ def temperature_panel(df,render):
         if view=="Frost days and tropical nights":
             a=p.day_indicators(df)
             tab=a.resample("MS").sum(min_count=1)
-            _bars(tab,"Frost days and tropical nights","Complete days",render,"Frost day: complete-day sampled Tmin < 0 °C. Tropical-night indicator uses daily Tmin ≥ 20 °C (ETCCDI TR uses >20 °C in some conventions; this is the explicitly displayed ≥ convention). Hourly sampled minima, not continuous daily extrema. Incomplete days excluded.")
+            from .temperature_findings import temperature_figure_interpretation
+            _bars(tab,"Frost days and tropical nights","Complete days",render,
+                  temperature_figure_interpretation(df,None,"day_indicators"))
             _show_table(tab,"temperature_days");return
         above=st.radio("Event type",["Heat","Cold"],horizontal=True,key="p4_temp_event_type")=="Heat"
         method=st.selectbox("Daily temperature statistic",["Maximum","Mean","Minimum"],index=0 if above else 2,key="p4_temp_stat_"+str(above))
@@ -152,9 +154,8 @@ def precipitation_panel(df,native,view,render):
                 note=rolling_interpretation(native if native is not None else df,h)
             else:
                 s=p.cumulative_precipitation(native if native is not None else df)
-                from .precipitation_findings import rainfall_summary
-                note=rainfall_summary(native if native is not None else df)
-                note+=" The curve displays accumulation within consecutive observed blocks."
+                from .precipitation_findings import precipitation_figure_interpretation
+                note=precipitation_figure_interpretation(native if native is not None else df,None,"cumulative",column=p.P)
             fig=go.Figure(go.Scatter(x=s.index,y=s,mode="lines",connectgaps=False))
             fig.update_layout(template="plotly_white",title=choice,yaxis_title="Precipitation [mm]",xaxis_title="Timestamp");render(fig,note)
         elif view=="Empirical IDF":
@@ -206,6 +207,11 @@ def _calendar(s,render,title,note):
     if s.dropna().empty:st.info("No complete daily observations.");return
     years=sorted(s.index.year.unique())
     y=st.selectbox("Year",years,index=len(years)-1,key="p4_calendar_year_"+title)
+    render(*snow_calendar_chart(s,y,title=title,note=note))
+
+
+def snow_calendar_chart(s,y,*,title="Snow-cover calendar",note=""):
+    """Render the selected complete-day snow calendar in both interfaces."""
     sub=s.loc[s.index.year==y]
     start=pd.Timestamp(year=int(y),month=1,day=1,tz=s.index.tz)
     dates=pd.date_range(start,start+pd.DateOffset(years=1),freq="D",inclusive="left")
@@ -218,7 +224,7 @@ def _calendar(s,render,title,note):
                     zmin=0,zmax=1,colorscale=[[0,"#D1D5DB"],[1,"#D1D5DB"]],showscale=False,xgap=2,ygap=2,hoverongaps=False,
                     hovertemplate="%{customdata}<br>Unknown<extra></extra>")
     fig.update_layout(template="plotly_white",title=title,xaxis_title="Calendar week position",yaxis=dict(autorange="reversed"))
-    render(fig,note+" White = no cover, blue = snow cover, gray = unknown.")
+    return fig,note+" White = observed snow-free days, blue = observed snow-covered days, gray = unknown days."
 
 def hvac_panel(df,render):
     options={k:v for k,v in _available(df).items() if v in (p.T,p.W,p.H)}
