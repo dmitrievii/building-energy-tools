@@ -3430,7 +3430,7 @@ def _render_temperature_degree_days(df):
         ["Degree-hours", "Degree-days"],
         horizontal=True,
         help=(
-            "Degree-hours use every source interval. Degree-days first calculate the daily mean outdoor temperature; "
+            "Degree-hours use every source interval. Degree-days first calculate the mean outdoor temperature of complete observed days; "
             "they are not obtained by simply dividing degree-hours by 24."
         ),
     )
@@ -3448,7 +3448,11 @@ def _render_temperature_degree_days(df):
         cooling_limit_c=cooling_limit,
         metric=metric,
         aggregation=aggregation,
+        require_complete_days=True,
     )
+    if table.empty:
+        st.info("The selected period contains no complete valid degree-metric periods.")
+        return
     unit = str(table.attrs.get("unit", "K·h" if metric == "Degree-hours" else "K·d"))
 
     plot_data = table.reset_index()
@@ -3481,7 +3485,7 @@ def _render_temperature_degree_days(df):
     fig.update_yaxes(rangemode="tozero")
     st.caption(
         "Degree-hours integrate the temperature difference at each source interval. "
-        "Degree-days use daily mean outdoor temperature before applying the heating/cooling base. "
+        "Degree-days use complete daily mean outdoor temperature before applying the heating/cooling base. "
         "Heating and cooling bars are grouped because they are separate indicators, not additive components of one total."
     )
     render_plot(
