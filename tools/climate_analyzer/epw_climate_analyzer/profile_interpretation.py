@@ -72,3 +72,13 @@ def profile_band(fig,kind="",title=""):
     if "p05" in label and "p95" in label:return "percentile"
     if ("min–mean–max" in label or "min-mean-max" in label):return "minmax"
     return "percentile" if kind=="percentile" else ""
+
+
+def profile_centre(fig,kind="",title=""):
+    """Select the central statistic represented by a figure's actual traces."""
+    names=[str(getattr(t,"name","") or "").lower() for t in getattr(fig,"data",())]
+    if any(n=="median" for n in names):return "median"
+    if any(n=="mean" for n in names):return "mean"
+    if profile_band(fig,kind,title)=="percentile":return "median"
+    label=str(title or "").lower()
+    return "median" if "median" in label or kind=="percentile" else "mean"
