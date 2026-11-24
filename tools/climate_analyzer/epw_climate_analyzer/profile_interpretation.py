@@ -48,6 +48,25 @@ def profile_interpretation(
     actual_title=str(title or getattr(getattr(getattr(fig,"layout",None),"title",None),"text","") or "")
     canonical=canonical_profile_kind(kind,actual_title,args)
     name=quantity_domain(column,domain).lower()
+    if str(df.attrs.get("canonical_native_resolution","")).lower()=="monthly":
+        from .p66_catalogue import LABELS,UNITS
+        from .climate_model import aggregation_semantics_for
+        import pandas as pd
+        label=LABELS.get(column,column.replace("_"," ")).lower()
+        unit=UNITS.get(column,"")
+        values=pd.to_numeric(df[column],errors="coerce").dropna()
+        if values.empty:return f"No valid native monthly {label} observations."
+        count=f"{len(values):,} valid native monthly {label} observations"
+        if aggregation_semantics_for(column) in ("circular mean","paired max direction"):
+            return (count+". Compass bearings describe meteorological FROM directions; "
+                    "the monthly sequence identifies seasonal directional changes.")
+        lo,hi=values.idxmin(),values.idxmax()
+        when=lambda t: pd.Timestamp(t).strftime("%b %Y")
+        method=("Monthly totals quantify the observed seasonal accumulation."
+                if aggregation_semantics_for(column)=="sum" else
+                "Monthly values describe the observed seasonal variation.")
+        return (f"{count}: lowest {values.min():,.1f} {unit} in {when(lo)}, "
+                f"highest {values.max():,.1f} {unit} in {when(hi)}. "+method)
     # Dispatch by physical quantity BEFORE page domain. Dew point and wet bulb
     # also appear in Temperature explorer, while the same graph is catalogued
     # under Humidity and Psychrometrics in Atlas/report. Domain-first dispatch
