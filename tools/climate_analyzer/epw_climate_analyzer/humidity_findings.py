@@ -155,7 +155,7 @@ def humidity_figure_interpretation(
             return "No valid outdoor dew-point values for the selected interval."
         n = _duration_hours_from_count(df, int((dew >= float(surface_c)).sum()))
         return (
-            f"For the selected reference surface temperature of {surface_c:g} °C, "
+            f"For the reference surface temperature of {surface_c:g} °C, "
             f"the outdoor dew point reaches or exceeds the surface temperature "
             f"for {_fmt_hours(n)} observed hours. "
             "Air contacting the reference surface can reach saturation; when "
