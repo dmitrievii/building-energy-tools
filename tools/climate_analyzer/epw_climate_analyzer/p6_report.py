@@ -45,6 +45,8 @@ def set_context(state,*,page,source,location,df=None,extra=None,site=None,source
     state[CONTEXT_KEY]=meta
 
 def snapshot(fig,context,interpretation=""):
+    from .figure_interpretation_contract import bind_figure_interpretation
+    bind_figure_interpretation(fig,interpretation)
     title=str(fig.layout.title.text or "Untitled diagram")
     payload=pio.to_json(fig,validate=True,remove_uids=True)
     meta=deepcopy(context)
@@ -207,6 +209,8 @@ def printable_html(items,title,paper,orientation,*,use_osm=False):
         pages.append("</section>")
         for k,item in enumerate(entries,1):
             fig=pio.from_json(item["figure"])
+            from .figure_interpretation_contract import validate_figure_interpretation
+            validate_figure_interpretation(fig,item["interpretation"])
             from .calendar_heatmap_axes import set_period_axis_scope
             set_period_axis_scope(fig,context=item.get("context"))
             scope_line="<p>"+_safe(concise_context(item["context"]))+"</p>" if len(contexts(entries))>1 else ""
@@ -346,6 +350,8 @@ def _pdf_report(items,title,paper,orientation,*,image_renderer=None,use_osm=Fals
             zones=zone_legend_entries(fig)
             legend=[para("Bioclimatic zones"),zone_table(zones),Spacer(1,6)] if zones else []
             explanation=[]
+            from .figure_interpretation_contract import validate_figure_interpretation
+            validate_figure_interpretation(fig,item["interpretation"])
             if item["interpretation"]:explanation.extend([para("Interpretation","ReportFigure"),para(item["interpretation"])])
             if item.get("note"):explanation.append(para(item["note"]))
             # SimpleDocTemplate's default frame has 6 pt padding on each
@@ -369,7 +375,9 @@ def _pdf_report(items,title,paper,orientation,*,image_renderer=None,use_osm=Fals
             del fig
             if continued:
                 body.extend([PageBreak(),para(heading+" — Interpretation","ReportFigure")])
-                if item["interpretation"]:body.append(para(item["interpretation"]))
+                from .figure_interpretation_contract import validate_figure_interpretation
+            validate_figure_interpretation(fig,item["interpretation"])
+            if item["interpretation"]:body.append(para(item["interpretation"]))
                 if item.get("note"):body.append(para(item["note"]))
             else:body.extend(explanation)
     def footer(canvas,doc):
@@ -500,6 +508,8 @@ def render_report(df=None,reference_df=None):
                 original=getattr(st,"_climate_analyzer_original_plotly_chart",st.plotly_chart)
                 from .calendar_heatmap_axes import apply_calendar_heatmap_axes,apply_monthly_axes
                 preview_fig=pio.from_json(item["figure"])
+                from .figure_interpretation_contract import validate_figure_interpretation
+                validate_figure_interpretation(preview_fig,item["interpretation"])
                 from .calendar_heatmap_axes import set_period_axis_scope
                 set_period_axis_scope(preview_fig,context=item.get("context"))
                 apply_calendar_heatmap_axes(preview_fig);apply_monthly_axes(preview_fig)
