@@ -390,6 +390,9 @@ def available_catalog(df,context):
                 from .aggregations import native_interval_hours
                 ok=has("sunshine_duration_s") and not _complete_daily_sunshine_hours(
                     df["sunshine_duration_s"],interval_hours=native_interval_hours(df)).empty
+        elif kind=="climograph":
+            from .extended_visualization import climate_summary_table
+            ok=has(T,P) and not climate_summary_table(df).empty
         elif kind=="rain_days":
             from .precipitation import complete_daily_precipitation
             ok=has(P) and complete_daily_precipitation(df).notna().any()
@@ -428,13 +431,16 @@ def standard_figure(entry,df,context,reference_df=None):
         if "Custom constant" in context.get("pressure mode",""):
             try:p=float(context["custom pressure"])
             except (ValueError,KeyError):pass
-        fig=psychrometric_chart(df,pressure_pa=p,data_mode="Climate zone");note=f"T–d distribution, reference guide pressure {p:.0f} Pa. Reference guides help relate seasonal moisture and temperature combinations to candidate passive strategies."
+        fig=psychrometric_chart(df,chart_type="T-d",pressure_pa=p,data_mode="Climate zone")
+        from .humidity_findings import humidity_figure_interpretation
+        note=humidity_figure_interpretation(df,fig,"psychrometric",title="Psychrometric · T-d · Climate zone")
     elif kind=="rain_days":
         from .precipitation_findings import rain_day_classes,rain_day_classes_figure
         table=rain_day_classes(df)
         if table.empty:raise ValueError("No complete precipitation days support the severity chart.")
         fig=rain_day_classes_figure(table)
-        note="Disjoint daily precipitation classes: 1–<10, 10–<20 and ≥20 mm on complete observed calendar days."
+        from .precipitation_findings import rainfall_summary
+        note=rainfall_summary(df)
     elif kind=="wind_rain":
         from .directional_climate import directional_table,directional_figure,directional_interpretation
         table=directional_table(df,radial="Wind-driven rain exposure",colour="Wind speed")
@@ -462,7 +468,7 @@ def standard_figure(entry,df,context,reference_df=None):
         table=facade_temperature_table(df,cold_c=lo,hot_c=hi)
         fig=facade_temperature_figure(table,cold_c=lo,hot_c=hi)
         note=facade_temperature_interpretation(table,cold_c=lo,hot_c=hi)
-        note+=" Model: unobstructed isotropic POA, default ground albedo 0.20."
+
     elif kind=="shading_ledger":
         from .solar_shading import shading_ledger,monthly_shading_figure
         from .p66_catalogue import GEOMETRY
@@ -496,10 +502,12 @@ def standard_figure(entry,df,context,reference_df=None):
         summary,sectors=wind_opportunity(df,min_speed_m_s=.5)
         fig=wind_opportunity_figure(summary,sectors)
         note=wind_design_interpretation(df,min_speed_m_s=.5)
-        note+=" The 0.5 m/s source-wind threshold identifies directional outdoor wind availability. Façade pressure coefficients, opening areas, and interior flow paths resolve the corresponding building ventilation response."
+
     elif kind=="wind_panel":
         from .directional_climate import monthly_wind_rose_panel,MONTHLY_WIND_ROSE_NOTE
-        fig,_=monthly_wind_rose_panel(df,title=label);note=MONTHLY_WIND_ROSE_NOTE
+        fig,_=monthly_wind_rose_panel(df,title=label)
+        from .wind_findings import wind_figure_interpretation
+        note=wind_figure_interpretation(df,fig,"wind_panel",column=column)+"\n\n"+MONTHLY_WIND_ROSE_NOTE
     elif kind=="windrose":
         from .directional_climate import directional_class_table,directional_class_figure,class_interpretation
         table=directional_class_table(df,radial="Percentage",quantity="Wind speed")
@@ -538,7 +546,9 @@ def standard_figure(entry,df,context,reference_df=None):
         note=sunshine_interpretation(df,latitude=float(context["latitude"]),kind="relative_sunshine")
     elif kind=="climograph":
         from .extended_visualization import climate_summary_table,climate_summary_figure,climate_summary_interpretation
-        table=climate_summary_table(df);fig=climate_summary_figure(table,"Walter–Lieth diagram");note=climate_summary_interpretation(table,"Walter–Lieth diagram")
+        table=climate_summary_table(df)
+        if table.empty:raise ValueError("No complete paired temperature and precipitation calendar months.")
+        fig=climate_summary_figure(table,"Walter–Lieth diagram");note=climate_summary_interpretation(table,"Walter–Lieth diagram")
     elif kind in ("nv","night","degree","shade"):
         from .p6_dashboard import design_ledgers
         ledger,degree=design_ledgers(df,reference_df=reference_df)
@@ -641,7 +651,7 @@ def standard_figure(entry,df,context,reference_df=None):
             df,fig,kind,column=column or T,thresholds=temperature_thresholds(context))
     elif page=="Humidity and Psychrometrics":
         from .humidity_findings import humidity_figure_interpretation
-        stat=humidity_figure_interpretation(
+        stat="" if kind=="psychrometric" else humidity_figure_interpretation(
             df,fig,kind,column=column,title=label)
     elif page=="Solar and Radiation":
         from .solar_findings import solar_figure_interpretation
@@ -649,7 +659,7 @@ def standard_figure(entry,df,context,reference_df=None):
             df,fig,kind,column=column,title=label)
     elif page=="Wind and Ventilation":
         from .wind_findings import wind_figure_interpretation
-        stat="" if kind in ("wind_orientation","windrose") else wind_figure_interpretation(
+        stat="" if kind in ("wind_orientation","windrose","wind_panel") else wind_figure_interpretation(
             df,fig,kind,column=column,title=label)
     elif page=="Sky and Daylight":
         from .sky_findings import sky_figure_interpretation
@@ -658,7 +668,7 @@ def standard_figure(entry,df,context,reference_df=None):
     elif page=="Precipitation and Snow":
         from .precipitation_findings import precipitation_figure_interpretation
         mapped_kind="rain_days" if kind=="rain_days" else kind
-        stat="" if kind in ("climograph","wind_rain") else precipitation_figure_interpretation(df,fig,mapped_kind,column=column,title=label)
+        stat="" if kind in ("climograph","wind_rain","rain_days") else precipitation_figure_interpretation(df,fig,mapped_kind,column=column,title=label)
     elif page=="Shading analysis" or kind in (
         "hvac_energy","hvac_economizer","hvac_design_hot","hvac_design_cold",
         "hvac_critical","utci","utci_shading",
