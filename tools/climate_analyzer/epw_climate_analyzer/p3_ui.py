@@ -324,3 +324,44 @@ def illuminance_panel(df,render):
     from .sky_findings import illuminance_availability_figure
     render(*illuminance_availability_figure(df,columns[label],threshold_lux=threshold,
                 aggregation=aggregation,percentage=view.endswith("percentage")))
+
+
+def extensive_total_panel(df,render,*,columns):
+    from .residual_findings import TOTAL_FIELDS,PERIODS,extensive_total_figure
+    options={TOTAL_FIELDS[c][0]:c for c in columns if p.numeric(df,c).notna().any()}
+    if not options:st.info("No valid observations for the selected accumulation.");return
+    label=next(iter(options)) if len(options)==1 else st.selectbox("Quantity",list(options),key="extensive_total_quantity")
+    period=st.selectbox("Aggregation",list(PERIODS),key="extensive_total_period")
+    try:render(*extensive_total_figure(df,options[label],period))
+    except ValueError as exc:st.info(str(exc))
+
+
+def reference_eligibility_panel(df,render,*,reference_df=None,names=("nv","night","shade")):
+    from .residual_findings import eligibility_figure,PERIODS
+    from .p6_dashboard import design_ledgers
+    ledger,_=design_ledgers(df,reference_df=reference_df)
+    labels={"nv":"Natural ventilation","night":"Night flushing","shade":"Solar protection screening"}
+    options={labels[k]:k for k in names if labels[k] in ledger and ledger[labels[k]].notna().any()}
+    if not options:st.info("No valid candidate hours.");return
+    name=options[st.selectbox("Screen",list(options),key="reference_screen_name")]
+    view=st.selectbox("Chart type",["Eligible hours by period","Eligibility heat map"],key="reference_screen_view")
+    mode="total" if view=="Eligible hours by period" else "map"
+    period=st.selectbox("Aggregation",list(PERIODS) if mode=="total" else ["Day","Week","Month"],key="reference_screen_period")
+    render(*eligibility_figure(df,name,period if mode=="total" else period.lower(),view=mode,ledger=ledger))
+
+
+def temperature_threshold_panel(df,render):
+    from .residual_findings import temperature_threshold_figure
+    period=st.selectbox("Aggregation",["Monthly","Weekly","Daily","Seasonal"],key="temperature_threshold_period")
+    mode=st.radio("Condition",["Below heating threshold","Above cooling threshold","Heating and cooling thresholds","Frost hours (Tdry < 0 °C)","Nighttime hours > 20 °C (20:00–06:59)"],key="temperature_threshold_mode")
+    low=st.slider("Heating threshold [°C]",-5.,25.,18.,.5,key="temperature_condition_heating") if mode in ("Below heating threshold","Heating and cooling thresholds") else 18.
+    high=st.slider("Cooling threshold [°C]",15.,40.,26.,.5,key="temperature_condition_cooling") if mode in ("Above cooling threshold","Heating and cooling thresholds") else 26.
+    try:render(*temperature_threshold_figure(df,period,low=low,high=high,mode=mode))
+    except ValueError as exc:st.info(str(exc))
+
+
+def snow_hours_panel(df,render):
+    from .residual_findings import snow_hours_figure,PERIODS
+    period=st.selectbox("Aggregation",list(PERIODS),key="snow_hours_period")
+    try:render(*snow_hours_figure(df,period))
+    except ValueError as exc:st.info(str(exc))
