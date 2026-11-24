@@ -2188,37 +2188,10 @@ def render_extended_variable_chart(df, column, unit, chart_type, *, key_prefix="
         band=st.selectbox("Variability band",["P05–P95","Min–max","None"],key=key_prefix+"_band")
         table=diurnal_statistics(df,column,[MONTHS[m] for m in months])
         fig=diurnal_figure(table,column,unit,representation=style,centre=centre.lower(),band=band)
-        if key_prefix.startswith("explorer_temperature"):
-            from epw_climate_analyzer.temperature_findings import temperature_figure_interpretation
-            subset=df.loc[df.index.month.isin([MONTHS[m] for m in months])]
-            note=temperature_figure_interpretation(subset,fig,"diurnal",column=column,title=f"Typical daily profile · {centre} · {band}")
-            note+=" Equivalent calendar-month clock hours are pooled; missing observations remain gaps."
-        elif key_prefix.startswith("explorer_humidity"):
-            from epw_climate_analyzer.humidity_findings import humidity_figure_interpretation
-            subset=df.loc[df.index.month.isin([MONTHS[m] for m in months])]
-            note=humidity_figure_interpretation(subset,fig,"diurnal",column=column,title=f"Typical daily profile · {centre} · {band}")
-            note+=" Equivalent calendar-month clock hours are pooled; missing observations remain gaps."
-        elif key_prefix.startswith("explorer_wind"):
-            from epw_climate_analyzer.wind_findings import wind_figure_interpretation
-            subset=df.loc[df.index.month.isin([MONTHS[m] for m in months])]
-            note=wind_figure_interpretation(subset,fig,"diurnal",column=column)
-            note+=" Equivalent calendar-month clock hours are pooled; missing observations remain gaps."
-        elif key_prefix.startswith("explorer_solar"):
-            from epw_climate_analyzer.solar_findings import solar_figure_interpretation
-            subset=df.loc[df.index.month.isin([MONTHS[m] for m in months])]
-            note=solar_figure_interpretation(
-                subset,fig,"diurnal",column=column,plane=df.attrs.get("r24_solar_plane","reference vertical south-facing plane"))
-            note+=" Equivalent calendar-month clock hours are pooled; missing observations remain gaps."
-        elif key_prefix.startswith(("explorer_sky_cover","explorer_illuminance")):
-            from epw_climate_analyzer.sky_findings import sky_figure_interpretation
-            subset=df.loc[df.index.month.isin([MONTHS[m] for m in months])]
-            note=sky_figure_interpretation(subset,fig,"diurnal",column=column)
-        elif key_prefix.startswith(("explorer_precipitation","explorer_snow_cover")):
-            from epw_climate_analyzer.precipitation_findings import precipitation_figure_interpretation
-            subset=df.loc[df.index.month.isin([MONTHS[m] for m in months])]
-            note=precipitation_figure_interpretation(subset,fig,"diurnal",column=column)
-        else:
-            note="Profiles pool equivalent calendar-month clock hours across selected years. Only complete source hours contribute; extensive values are summed within each hour. Missing observations remain gaps."
+        from epw_climate_analyzer.profile_interpretation import generic_figure_interpretation
+        subset=df.loc[df.index.month.isin([MONTHS[m] for m in months])]
+        note=generic_figure_interpretation(subset,fig,"diurnal",domain="",
+            column=column,args=(style,centre.lower(),band))
         render_plot(fig,note)
     else:
         v=pd.to_numeric(df[column],errors="coerce").dropna()
@@ -2258,33 +2231,9 @@ def render_extended_variable_chart(df, column, unit, chart_type, *, key_prefix="
             st.info("No complete observations support the selected occurrence basis.")
             return
         fig=occurrence_figure(table,unit,basis)
-        if key_prefix.startswith("explorer_temperature"):
-            from epw_climate_analyzer.temperature_findings import temperature_figure_interpretation
-            note=temperature_figure_interpretation(df,fig,"occurrence",column=column,title=f"Temperature occurrence · {basis} · {statistic}")
-        elif key_prefix.startswith("explorer_humidity"):
-            from epw_climate_analyzer.humidity_findings import humidity_figure_interpretation
-            note=humidity_figure_interpretation(df,fig,"occurrence",column=column,title=f"Humidity occurrence · {basis} · {statistic}",args=(basis,statistic))
-        elif key_prefix.startswith("explorer_wind"):
-            from epw_climate_analyzer.wind_findings import wind_figure_interpretation
-            note=wind_figure_interpretation(df,fig,"occurrence",column=column,title=f"Wind occurrence · {basis} · {statistic}")
-        elif key_prefix.startswith("explorer_solar"):
-            from epw_climate_analyzer.solar_findings import solar_figure_interpretation
-            note=solar_figure_interpretation(
-                df,fig,"occurrence",column=column,
-                title=f"Solar occurrence · {basis} · {statistic}",args=(basis,statistic),
-                plane=df.attrs.get("r24_solar_plane","reference vertical south-facing plane"))
-        elif key_prefix.startswith(("explorer_sky_cover","explorer_illuminance")):
-            from epw_climate_analyzer.sky_findings import sky_figure_interpretation
-            note=sky_figure_interpretation(df,fig,"occurrence",column=column,
-                title=f"Sky & daylight occurrence · {basis} · {statistic}",args=(basis,statistic))
-        elif key_prefix.startswith(("explorer_precipitation","explorer_snow_cover")):
-            from epw_climate_analyzer.precipitation_findings import precipitation_figure_interpretation
-            note=precipitation_figure_interpretation(df,fig,"occurrence",column=column,
-                title=f"{column} occurrence · {basis} · {statistic}",args=(basis,statistic))
-        else:
-            note="Classes are mutually exclusive; hours retain source duration, days require complete real calendar days, and percentages use valid observed intervals. Calendar-profile mode averages equivalent year-months."
-        if column=="diffuse_radiation_fraction_pct" and basis=="Days":
-            note+=" The daily fraction statistic is computed only over valid positive-GHI intervals on complete real days. This daily statistic averages observed daylight interval fractions; daytime measurement completeness is required."
+        from epw_climate_analyzer.profile_interpretation import generic_figure_interpretation
+        note=generic_figure_interpretation(df,fig,"occurrence",domain="",
+            column=column,args=(basis,statistic))
         render_plot(fig,note)
 
 
@@ -2367,12 +2316,9 @@ def render_generic_variable_page(
         aggregation=st.selectbox("Aggregation",["Daily","Weekly","Monthly","Seasonal","Annual"],
                                  key=scope+"_amplitude_aggregation")
         fig=amplitude_figure(df,column,aggregation,variable_label)
-        if title_prefix == "Temperature":
-            from epw_climate_analyzer.temperature_findings import temperature_figure_interpretation
-            note=temperature_figure_interpretation(df,fig,"amplitude",column=column)
-            note+=" At least two valid observations are required; incomplete periods represent only the observed range."
-        else:
-            note="Amplitude is the observed maximum minus minimum within each aggregation period [K]. Incomplete periods are not reconstructed."
+        from epw_climate_analyzer.profile_interpretation import generic_figure_interpretation
+        note=generic_figure_interpretation(df,fig,"amplitude",domain=title_prefix,
+            column=column,args=(aggregation,))
         render_plot(fig,note)
         return
     if chart_type in ("Typical daily profile","Monthly occurrence classes"):
@@ -2492,38 +2438,22 @@ def render_generic_variable_page(
                                      "reference vertical south-facing plane"))
         render_plot(fig,text)
         return
-    from epw_climate_analyzer.profile_interpretation import MOIST_AIR_QUANTITIES
-    if column in MOIST_AIR_QUANTITIES:
-        # The same physical quantity must have the same interpretation in
-        # Temperature explorer, Humidity explorer, Atlas and saved reports.
-        from epw_climate_analyzer.humidity_findings import humidity_figure_interpretation
-        text=humidity_figure_interpretation(chart_df,fig,chart_type,column=column)
-    elif title_prefix == "Temperature":
-        from epw_climate_analyzer.temperature_findings import temperature_figure_interpretation
-        text=temperature_figure_interpretation(
-            chart_df,fig,chart_type,column=column,
+    from epw_climate_analyzer.profile_interpretation import generic_figure_interpretation,quantity_domain
+    family=quantity_domain(column,title_prefix)
+    if family.startswith(("Temperature","Humidity","Wind","Solar","Sky","Illuminance","Precipitation","Snow")):
+        args=()
+        if chart_type=="Heat map":
+            args=(heatmap_period.lower(),compare_across,statistic)
+        elif chart_type in ("Duration curve","Histogram","Monthly boxplot","Monthly violin plot"):
+            basis="wet" if column=="liquid_precipitation_depth_mm" and distribution_basis=="Wet intervals only" else "all"
+            args=(basis,ascending,"probability" if axis_representation=="Probability [%]" else "hours") if chart_type=="Duration curve" else (basis,)
+        text=generic_figure_interpretation(chart_df,fig,chart_type,
+            domain=title_prefix,column=column,args=args,
             thresholds=temperature_thresholds or (18.,26.))
-    elif title_prefix == "Humidity":
-        from epw_climate_analyzer.humidity_findings import humidity_figure_interpretation
-        text=humidity_figure_interpretation(chart_df,fig,chart_type,column=column)
-    elif title_prefix == "Wind":
-        from epw_climate_analyzer.wind_findings import wind_figure_interpretation
-        text=wind_figure_interpretation(chart_df,fig,chart_type,column=column)
-    elif title_prefix.startswith("Solar"):
-        from epw_climate_analyzer.solar_findings import solar_figure_interpretation
-        text=solar_figure_interpretation(
-            chart_df,fig,chart_type,column=column,
-            plane=chart_df.attrs.get("r24_solar_plane","reference vertical south-facing plane"))
-    elif title_prefix in ("Sky cover","Illuminance"):
-        from epw_climate_analyzer.sky_findings import sky_figure_interpretation
-        text=sky_figure_interpretation(chart_df,fig,chart_type,column=column)
-    elif title_prefix in ("Precipitation","Snow cover"):
-        from epw_climate_analyzer.precipitation_findings import precipitation_figure_interpretation
-        text=precipitation_figure_interpretation(chart_df,fig,chart_type,column=column)
     elif interpretation_factory:
-        text = interpretation_factory(chart_df, column, variable_label.lower(), unit)
+        text=interpretation_factory(chart_df,column,variable_label.lower(),unit)
     else:
-        text = variable_interpretation(chart_df, column, variable_label.lower(), unit)
+        text=variable_interpretation(chart_df,column,variable_label.lower(),unit)
     render_plot(fig, text)
 
 
