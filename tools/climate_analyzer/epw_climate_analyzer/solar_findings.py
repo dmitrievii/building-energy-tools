@@ -12,6 +12,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from .aggregations import native_interval_hours
 from .interpretations import _fmt, _fmt_hours
+from .period_display import format_plotted_time
 
 GHI="global_horizontal_radiation_wh_m2"
 DHI="diffuse_horizontal_radiation_wh_m2"
@@ -174,7 +175,7 @@ def solar_figure_interpretation(
         if vals.empty:vals,x=_plotted(fig)
         if not vals.empty:
             lo=int(vals.idxmin());hi=int(vals.idxmax())
-            at=lambda i:str(x[i]) if i<len(x) else f"point {i+1}"
+            at=lambda i:format_plotted_time(x[i],df,title=title) if i<len(x) else f"point {i+1}"
             return (f"Selected plotted {centre} {name}: lowest at {at(lo)} "
                     f"({_fmt(vals[lo])} {unit}), highest at {at(hi)} "
                     f"({_fmt(vals[hi])} {unit}). "
