@@ -23,6 +23,10 @@ class UnmatchedRoute(ValueError):
 
 def atlas_live(d,df,context):
     k,c,a=d.kind,d.column,d.args
+    if k in ("sunpath_view","monthly_radiation","degree","day_indicators","cumulative",
+             "freeze_cycles","snow_calendar","correlation","joint"):
+        from r28_live_route_capture import capture_atlas
+        return capture_atlas(d,df,context)
     from epw_climate_analyzer import directional_climate as wind
     if k in ("wind_mean","wind_classes","wind_panel","wind_rain"):
         if k=="wind_panel":
@@ -189,6 +193,13 @@ def atlas_live(d,df,context):
 
 def standard_live(entry,df,context):
     ident,chapter,title,c,u,k=entry
+    if k in ("sunpath","degree") or (k=="total" and c==cat.G):
+        from r28_live_route_capture import capture_standard
+        return capture_standard(entry,df,context)
+    if k=="total" and c==cat.P:
+        from epw_climate_analyzer.precipitation_findings import rainfall_summary
+        table=period_total_series(df[c],df,"Monthly")
+        return go.Figure(go.Bar(x=table.index,y=table)),rainfall_summary(df)
     if k=="climograph":
         table=ex.climate_summary_table(df)
         if table.empty:raise UnmatchedRoute("No complete paired month")
