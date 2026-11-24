@@ -13,6 +13,7 @@ import plotly.graph_objects as go
 from .aggregations import native_interval_hours
 from .interpretations import _fmt, _fmt_hours
 from .period_display import format_plotted_time, canonical_profile_kind
+from .profile_interpretation import profile_centre
 
 GHI="global_horizontal_radiation_wh_m2"
 DHI="diffuse_horizontal_radiation_wh_m2"
@@ -171,7 +172,7 @@ def solar_figure_interpretation(
     if kind in ("time_series","native"):
         return context+" The trace retains observation chronology and gaps."
     if kind in ("profile","percentile","time series / profile"):
-        centre="median" if kind=="percentile" or "median" in label else "mean"
+        centre=profile_centre(fig,kind,title)
         vals,x=_plotted(fig,centre)
         if vals.empty:vals,x=_plotted(fig)
         if not vals.empty:
