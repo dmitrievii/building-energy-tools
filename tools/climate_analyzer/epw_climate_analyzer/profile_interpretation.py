@@ -6,7 +6,20 @@ and interface wording never change the inferred physical quantity.
 """
 from __future__ import annotations
 
-from .period_display import canonical_profile_kind
+def canonical_profile_kind(kind, title="", args=()):
+    """Map chart representations to the same scientific interpretation kind."""
+    route=str(kind or "").strip().lower()
+    if route not in ("time_series","time series / profile","profile","percentile","native"):
+        return route
+    if route=="native":return "native"
+    description=(str(title or "")+" "+" ".join(map(str,args or ()))).lower()
+    if "observed values" in description or "native observations" in description:
+        return "time_series"
+    if "p05" in description and "p95" in description:
+        return "percentile"
+    if route=="percentile":return "percentile"
+    if route in ("time_series","time series / profile"):return "profile"
+    return route
 
 PROFILE_KINDS=frozenset(("native","time_series","time series / profile","profile","percentile"))
 
