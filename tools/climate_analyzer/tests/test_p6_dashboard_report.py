@@ -83,8 +83,10 @@ class P6Tests(unittest.TestCase):
         fig=go.Figure(go.Barpolar(r=[2,4,6,8],theta=[0,90,180,270]))
         fig.update_layout(title="Wind rose")
         context={"source":"Synthetic fixture","page":"Wind"}
+        long_figure=go.Figure(go.Barpolar(r=[2,4,6,8],theta=[0,90,180,270]))
+        long_figure.update_layout(title="Wind rose")
         short=r.snapshot(fig,context,"Short interpretation.")
-        long=r.snapshot(fig,context,
+        long=r.snapshot(long_figure,context,
             ("Mean wind speed and directional distribution are based on valid observations. "*5)
             +"\n\n"+("The frequency classes partition the observations without double counting. "*7))
         long["note"]="Additional explanatory note. "*5
@@ -205,8 +207,9 @@ else:
         c=state[r.CONTEXT_KEY];c["keyed chart settings"]='{"PRIVATE_DIAGNOSTIC_KEY": 12}'
         fig=go.Figure(go.Scatter(x=[1,2],y=[3,4]));fig.update_layout(title="Temperature profile",font_size=27)
         fig.update_xaxes(tickfont_size=8)
+        second_fig=go.Figure(fig)
         first=r.snapshot(fig,c,"Climate interpretation")
-        second=r.snapshot(fig,{**c,"page":"Solar and Radiation","statistics":s.capture_statistics(df,"Solar and Radiation")},"Solar note")
+        second=r.snapshot(second_fig,{**c,"page":"Solar and Radiation","statistics":s.capture_statistics(df,"Solar and Radiation")},"Solar note")
         self.assertEqual([n for n,_ in s.ordered_groups([first,second])],["Temperature","Solar radiation"])
         locator=s.locator_figure(c)
         self.assertEqual(list(locator.data[-1].x),[15.45])
