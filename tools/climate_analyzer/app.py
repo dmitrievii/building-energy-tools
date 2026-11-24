@@ -2483,6 +2483,15 @@ def render_generic_variable_page(
         else:
             fig = monthly_box_chart(chart_df, column, f"{title_prefix}: {variable_label} monthly boxplot", unit, violin=False)
 
+    if chart_type=="Time series / Profile":
+        from epw_climate_analyzer.profile_interpretation import profile_interpretation
+        text=profile_interpretation(
+            chart_df,fig,chart_type,domain=title_prefix,column=column,
+            thresholds=temperature_thresholds or (18.,26.),
+            plane=chart_df.attrs.get("r24_solar_plane",
+                                     "reference vertical south-facing plane"))
+        render_plot(fig,text)
+        return
     if title_prefix == "Temperature":
         from epw_climate_analyzer.temperature_findings import temperature_figure_interpretation
         text=temperature_figure_interpretation(
