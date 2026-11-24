@@ -146,6 +146,64 @@ def audit(df,context):
             yield record(*common,"ERROR",f"{type(exc).__name__}: {exc}")
 
 
+def additional_scopes():
+    """Short targeted matrices for source conditions absent from the main fixture."""
+    from epw_climate_analyzer import charts as ch, extended_visualization as ex
+    from epw_climate_analyzer.p6_report_structure import standard_figure, available_catalog
+    context={"latitude":47.07}
+    # One genuinely complete calendar month, rather than filling a partial month.
+    idx=pd.date_range("2026-02-01","2026-03-01",freq="h",inclusive="left")
+    full=pd.DataFrame({cat.T:10.+5.*np.sin(np.arange(len(idx))*2*np.pi/24),
+                       cat.P:np.where(np.arange(len(idx))%24==0,1.,0.)},index=idx)
+    full.attrs["canonical_native_interval_minutes"]=60.
+    table=ex.climate_summary_table(full)
+    for d in cat.catalogue(full,context,cat.REP):
+        if d.kind!="climate_summary":continue
+        common=("Atlas complete month",d.id,d.chapter,d.kind,d.args)
+        try:
+            fig,note=make_figure(d,full,context)
+            validate_figure_interpretation(fig,note,require_binding=True)
+            live,expected=atlas_live(d,full,context)
+            status="PARITY_PASS" if note==expected else "PARITY_FAIL"
+            yield record(*common,status,"",note,expected)
+        except Exception as exc:
+            yield record(*common,"ERROR",f"{type(exc).__name__}: {exc}")
+    entry=next(e for e in CATALOG if e[0]=="climograph")
+    common=("Standard report complete month",entry[0],entry[1],entry[-1],())
+    try:
+        assert entry in available_catalog(full,context)
+        assert not table.empty
+        fig,note=standard_figure(entry,full,context)
+        validate_figure_interpretation(fig,note,require_binding=True)
+        live,expected=standard_live(entry,full,context)
+        yield record(*common,"PARITY_PASS" if note==expected else "PARITY_FAIL","",note,expected)
+    except Exception as exc:
+        yield record(*common,"ERROR",f"{type(exc).__name__}: {exc}")
+
+    idx=pd.date_range("2026-01-01",periods=12,freq="MS")
+    months=np.arange(12)
+    monthly=pd.DataFrame({cat.T:10.+months,cat.DEW:2.+months,cat.RH:50.+months,
+        cat.W:5.+months/10,cat.V:2.+months/10,cat.WD:180.+months,
+        cat.P:20.+months,cat.G:50000.+1000.*months,
+        "total_sky_cover_tenths":4.+months/10},index=idx)
+    monthly.attrs["canonical_native_resolution"]="monthly"
+    for d in cat.catalogue(monthly,context,cat.REP):
+        if d.kind!="native" or d.status!="available":continue
+        common=("Atlas native monthly",d.id,d.chapter,d.kind,d.args)
+        try:
+            fig,note=make_figure(d,monthly,context)
+            validate_figure_interpretation(fig,note,require_binding=True)
+            live=ch.time_series_profile_chart(monthly,d.column,"Native",
+                    "Website · Native · Observed values",d.unit,"Observed values")
+            expected=generic_figure_interpretation(monthly,live,"Time series / Profile",
+                        domain=d.chapter,column=d.column)
+            assert "native monthly" in note.lower()
+            assert "observed hours" not in note.lower()
+            yield record(*common,"PARITY_PASS" if note==expected else "PARITY_FAIL","",note,expected)
+        except Exception as exc:
+            yield record(*common,"ERROR",f"{type(exc).__name__}: {exc}")
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output",default="artifacts/r28_interpretation_audit.csv")
@@ -155,7 +213,8 @@ def main():
     counts=Counter()
     with path.open("w",newline="",encoding="utf-8-sig") as out:
         writer=None
-        for row in audit(fixture(),{"latitude":47.07}):
+        from itertools import chain
+        for row in chain(audit(fixture(),{"latitude":47.07}),additional_scopes()):
             if writer is None:
                 writer=csv.DictWriter(out,fieldnames=list(row))
                 writer.writeheader()
