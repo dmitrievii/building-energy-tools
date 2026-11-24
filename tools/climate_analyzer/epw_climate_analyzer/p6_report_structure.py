@@ -616,6 +616,8 @@ def standard_figure(entry,df,context,reference_df=None):
             latitude=context.get("latitude"),
             plane=df.attrs.get("r24_solar_plane","reference vertical south-facing plane"),
         )
+        from .figure_interpretation_contract import bind_figure_interpretation
+        bind_figure_interpretation(fig,statement)
         return apply_monthly_axes(fig),statement
     if page=="Temperature":
         from .temperature_findings import temperature_figure_interpretation
@@ -658,4 +660,6 @@ def standard_figure(entry,df,context,reference_df=None):
         )
     if stat and stat not in note:note=stat+"\n\n"+note
     from .calendar_heatmap_axes import apply_monthly_axes
+    from .figure_interpretation_contract import bind_figure_interpretation
+    bind_figure_interpretation(fig,note)
     return apply_monthly_axes(fig),note
