@@ -5254,20 +5254,12 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
             df, mask, t_min_c=t_min, t_max_c=t_max, d_max_g_kg=d_max,
         ))
 
-    elif chart_group == "Daily suitable-hours duration curve":
-        daily = df_nv["natural_ventilation_suitable"].resample("D").sum().to_frame("suitable_hours")
-        fig = duration_chart(daily, "suitable_hours", "Daily natural-ventilation suitable-hours duration curve", "hours/day", ascending=False)
-        render_plot(fig, natural_ventilation_interpretation(
-            df, mask, t_min_c=t_min, t_max_c=t_max, d_max_g_kg=d_max,
-        ))
-    elif chart_group == "Rejected reasons":
-        reasons = rejection_reasons_for_nv(df, t_min, t_max, d_max, wind_min_m_s=wind_min, wind_max_m_s=wind_max)
-        fig = px.bar(reasons, x="reason", y="hours", title="Natural-ventilation rejected reasons")
-        fig.update_layout(template="plotly_white", xaxis_title="Reason", yaxis_title="Hours")
-        render_plot(fig,natural_ventilation_interpretation(
-            df, mask, t_min_c=t_min, t_max_c=t_max, d_max_g_kg=d_max,
-        ))
-        st.dataframe(reasons, hide_index=True, use_container_width=True)
+    elif chart_group in ("Daily suitable-hours duration curve","Rejected reasons"):
+        from epw_climate_analyzer.residual_findings import nv_special_figure
+        style="Daily duration" if chart_group=="Daily suitable-hours duration curve" else "Rejected reasons"
+        try:render_plot(*nv_special_figure(df,style,mask=mask,t_min=t_min,t_max=t_max,
+                        w_max=d_max,wind_min=wind_min,wind_max=wind_max))
+        except ValueError as exc:st.info(str(exc))
     elif chart_group == "Psychrometric NV overlay":
         fig = psychrometric_chart(df, chart_type="T-d", pressure_pa=pressure_pa, show_rh_curves=True, show_comfort_zone=False)
         fig.add_shape(type="rect", x0=t_min, x1=t_max, y0=0, y1=d_max, line=dict(dash="dash"), fillcolor="rgba(0,150,0,0.08)")
