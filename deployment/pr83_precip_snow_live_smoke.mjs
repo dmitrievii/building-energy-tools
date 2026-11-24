@@ -350,7 +350,7 @@ async function analysisOptions(page, expected, timeoutMs = 20_000) {
   while (performance.now() - started < timeoutMs) {
     let frame; let control;
     try {
-      frame = await appFrame(page, 'Climate Analyzer', 10_000);
+      frame = await appFrame(page, 'Precipitation and snow', 10_000);
       control = await analysisCombo(frame, 5_000);
     } catch {
       await sleep(300);
@@ -384,7 +384,7 @@ async function selectAnalysis(page, name) {
   while (performance.now() - started < 30_000) {
     let frame; let control;
     try {
-      frame = await appFrame(page, 'Climate Analyzer', 10_000);
+      frame = await appFrame(page, 'Precipitation and snow', 10_000);
       control = await analysisCombo(frame, 5_000);
     } catch {
       await sleep(300);
@@ -409,15 +409,15 @@ async function selectAnalysis(page, name) {
 }
 
 async function openPrecipitationPage(page) {
-  let frame = await appFrame(page, 'Climate — Precipitation & snow', 180_000);
-  const exact = frame.getByText('Climate — Precipitation & snow', { exact: true }).last();
-  if (!(await exact.count().catch(() => 0))) throw new Error('Precipitation & snow navigation item not found.');
-  await exact.click({ timeout: 15_000 });
+  await sidebarNavigation(page, 'Climate — Precipitation & snow');
+  let frame;
 
   const started = performance.now();
   while (performance.now() - started < 90_000) {
     try {
-      frame = await appFrame(page, 'Climate Analyzer', 10_000);
+      frame = await appFrame(page, 'Precipitation and snow', 10_000);
+      const heading=frame.getByRole('heading',{name:'Precipitation and snow',exact:true}).first();
+      if (!(await heading.isVisible().catch(()=>false))) throw new Error('Waiting for precipitation heading');
       await analysisCombo(frame, 5_000);
       return frame;
     } catch { /* Streamlit rerun still showing previous main content */ }
