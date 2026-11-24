@@ -154,7 +154,8 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         stat,above,style=a;threshold=30. if above else 0.
         daily,ev=memo(("temp_events",stat,above),lambda:p4.temperature_events(df,threshold=threshold,above=above,minimum=3,stat=stat))
         f=_event_figure(ev,daily[stat],style,threshold,above,"days",u)
-        note+=f" Daily {stat}, {'≥' if above else '≤'} {threshold:g} °C for at least three consecutive complete days. {len(ev)} events."
+        from .p4_ui import event_interpretation
+        note=event_interpretation(ev,unit="days")
     elif k=="day_indicators":
         f=_bars(p4.day_indicators(df).resample("MS").sum(min_count=1),title,u)
         note+=" Frost: Tmin <0 °C; tropical nights: daily Tmin ≥20 °C."
@@ -166,7 +167,14 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         threshold,above,style=a;step=p4.cadence(df)
         ev=memo(("persistence",c,threshold,above),lambda:p4.events(s,threshold=threshold,above=above,minimum=3,step=step))
         f=_event_figure(ev,s,style,threshold,above,"hours",u,step=step)
-        note+=f" {'≥' if above else '≤'} {threshold:g} {u}, minimum three continuous hours. {len(ev)} events."
+        from .p4_ui import event_interpretation
+        if d.chapter==cat.HUM:
+            from .humidity_findings import humidity_figure_interpretation
+            extra=humidity_figure_interpretation(df,None,"persistence",column=c,args=(threshold,above,""))
+        else:
+            from .wind_findings import wind_figure_interpretation
+            extra=wind_figure_interpretation(df,None,"persistence",column=c,args=(threshold,above))
+        note=event_interpretation(ev,unit="hours",extra_note=extra)
     elif k=="condensation":
         f=_line(p3.condensation_margin(df,15.),title,u);f.add_hline(y=0,line_dash="dash")
         note+=" Assumed constant surface temperature 15 °C; negative margin indicates possible condensation."
@@ -234,7 +242,9 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         wet,style=a;daily,wet_e,dry_e=memo("wetdry",lambda:p4.wet_dry_events(df))
         ev=wet_e if wet else dry_e
         f=_event_figure(ev,daily["sum"],style,1.,wet,"days",u)
-        note+=f" Wet ≥1 mm/day; dry <1 mm/day. Complete days only. {len(ev)} events."
+        from .p4_ui import event_interpretation
+        from .precipitation_findings import wet_dry_interpretation
+        note=event_interpretation(ev,unit="days",extra_note=wet_dry_interpretation(df,wet=wet,threshold=1.,minimum=1))
     elif k=="rolling":
         v=p4.rolling_windows(df,c,a[0],total=True,nonnegative=True)
         if not v.notna().any():raise NotApplicable("No complete rolling windows.")
@@ -529,21 +539,21 @@ def make_figure(d,df,context,reference_df=None,cache=None):
             with phase("interpretation"):
                 stat=memo(("interpretation",d.chapter,col,k,wet),lambda:base.source_interpretation(scope,d.chapter,col,cat.LABELS.get(col,""),cat.UNITS.get(col,u),thresholds=base.temperature_thresholds(context),kind=k))
             if stat and stat not in note:note=stat+"\n\n"+note
-    if d.chapter == cat.TEMP:
+    if d.chapter == cat.TEMP and k!="temp_events":
         from .temperature_findings import temperature_figure_interpretation
         with phase("interpretation"):
             stat=temperature_figure_interpretation(
                 df,f,k,column=c if c in df else cat.T,
                 title=title,thresholds=base.temperature_thresholds(context))
         if stat and stat not in note:note=stat+"\n\n"+note
-    if d.chapter == cat.HUM:
+    if d.chapter == cat.HUM and k!="persistence":
         from .humidity_findings import humidity_figure_interpretation
         with phase("interpretation"):
             stat=humidity_figure_interpretation(
                 df,f,k,column=c,title=title,args=a)
         if stat and k in ("psychrometric","condensation","moisture"):note=stat
         elif stat and stat not in note:note=stat+"\n\n"+note
-    if d.chapter == cat.WIND and k not in ("wind_mean","wind_classes","wind_panel"):
+    if d.chapter == cat.WIND and k not in ("wind_mean","wind_classes","wind_panel","persistence"):
         from .wind_findings import wind_figure_interpretation
         with phase("interpretation"):
             stat=wind_figure_interpretation(df,f,k,column=c,title=title,args=a)
@@ -568,7 +578,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         with phase("interpretation"):
             stat=precipitation_figure_interpretation(
                 df,f,k,column=c,title=title,args=a)
-        if k in ("climate_summary","wind_rain"):pass  # existing plot-specific interpretation is authoritative
+        if k in ("climate_summary","wind_rain","wetdry"):pass  # existing plot-specific interpretation is authoritative
         elif stat and k in ("total","rolling","freeze_days","freeze_cycles"):note=stat
         elif stat and stat not in note:note=stat+"\n\n"+note
     from .figure_interpretation_contract import bind_figure_interpretation
