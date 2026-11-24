@@ -57,6 +57,15 @@ def event_timeline_figure(table,series,*,unit,threshold,above=True,quantity="Tem
                       yaxis_title=quantity,title="Extreme-event timeline")
     return fig
 
+def event_interpretation(table,*,unit,extra_note=""):
+    """One event narrative for the interactive and report representations."""
+    count=len(table)
+    summary=(f"{count:,} qualifying continuous events; longest duration {table.duration.max():g} {unit}. "
+             if count else "The selected criterion identifies zero qualifying continuous events. ")
+    method="Events group consecutive observations meeting the selected threshold. The event peak and integrated threshold excess describe severity; the duration and timing identify persistent climatic episodes."
+    return (summary+method+" "+extra_note).strip()
+
+
 def _events(table,render,*,key,unit,threshold,series=None,above=True,quantity="Temperature [°C]",step=None,extra_note=""):
     if table.empty:
         if series is not None and series.notna().any():
@@ -84,7 +93,7 @@ def _events(table,render,*,key,unit,threshold,series=None,above=True,quantity="T
         fig.add_bar(x=d.index,y=d,marker_color="#4477AA")
         fig.update_layout(title="Event duration distribution",xaxis_title="Duration ["+unit+"]",yaxis_title="Number of events")
     fig.update_layout(template="plotly_white")
-    render(fig,"Events group consecutive observations meeting the selected threshold. The event peak and integrated threshold excess describe severity; the duration and timing identify persistent climatic episodes. "+extra_note)
+    render(fig,event_interpretation(table,unit=unit,extra_note=extra_note))
     _show_table(table,key)
 
 def temperature_panel(df,render):
