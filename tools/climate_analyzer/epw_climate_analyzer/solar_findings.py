@@ -12,7 +12,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from .aggregations import native_interval_hours
 from .interpretations import _fmt, _fmt_hours
-from .period_display import format_plotted_time
+from .period_display import format_plotted_time, canonical_profile_kind
 
 GHI="global_horizontal_radiation_wh_m2"
 DHI="diffuse_horizontal_radiation_wh_m2"
@@ -122,6 +122,7 @@ def solar_figure_interpretation(
     args=tuple(args or ())
     title=str(title or getattr(getattr(getattr(fig,"layout",None),"title",None),"text","") or "")
     label=title.lower()
+    kind=canonical_profile_kind(kind,title,args)
     if kind=="facade":
         tilt=float(getattr(getattr(fig,"layout",None),"meta",{}).get("tilt_deg",90.) or 90.)
         return facade_figure_interpretation(fig,tilt_deg=tilt)
