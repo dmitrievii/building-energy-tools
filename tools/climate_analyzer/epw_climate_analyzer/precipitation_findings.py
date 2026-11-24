@@ -13,7 +13,7 @@ import plotly.graph_objects as go
 
 from .aggregations import native_interval_hours
 from .interpretations import _fmt, _fmt_hours
-from .period_display import format_plotted_time
+from .period_display import format_plotted_time, canonical_profile_kind
 from .precipitation import (
     LIQUID_PRECIPITATION_COLUMN as P,
     PRECIPITATION_DURATION_COLUMN as DURATION,
@@ -222,6 +222,7 @@ def precipitation_figure_interpretation(df,fig,kind,*,column=P,title="",args=())
     kind=str(kind).lower()
     title=str(title or getattr(getattr(getattr(fig,"layout",None),"title",None),"text","") or "")
     args=tuple(args or ())
+    kind=canonical_profile_kind(kind,title,args)
     if kind in ("wetdry","wet_dry"):
         wet=bool(args[0]) if args else ("wet" in title.lower())
         return wet_dry_interpretation(df,wet=wet)
