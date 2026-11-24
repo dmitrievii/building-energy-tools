@@ -59,11 +59,19 @@ class FigureInterpretationContractR2(unittest.TestCase):
         item=snapshot(fig,{"page":"Humidity and Psychrometrics",
                            "source":"fixture","location":"test"},text)
         self.assertEqual(item["interpretation"],text)
+        from epw_climate_analyzer.figure_interpretation_contract import validate_snapshot_content
+        self.assertEqual(len(item["figure_interpretation_sha256"]),64)
+        self.assertTrue(validate_snapshot_content(item))
         self.assertTrue(validate_figure_interpretation(pio.from_json(item["figure"]),text,require_binding=True))
         html=printable_html([item],"Test","A4","Landscape",use_osm=False).decode("utf-8")
         self.assertIn(text,html)
         self.assertEqual(html.count(f"<p>{text}</p>"),1)
         modified=dict(item,interpretation="Reworded independently.")
+        with self.assertRaises(ValueError):
+            validate_snapshot_content(modified)
+        altered_figure=dict(item,figure=item["figure"]+" ")
+        with self.assertRaises(ValueError):
+            validate_snapshot_content(altered_figure)
         with self.assertRaises(ValueError):
             printable_html([modified],"Test","A4","Landscape",use_osm=False)
         with self.assertRaises(ValueError):
