@@ -86,7 +86,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         f=ch.time_series_profile_chart(df,c,a[0],title,u,a[1])
         note+=" "+("Each plotted point represents its source observation at the corresponding timestamp." if a[1]=="Observed values" else "Statistical representation: "+a[1]+".")
     elif k=="profile":f=ch.profile_ribbon_chart(df,c,a[0],title,u)
-    elif k=="percentile":f=ch.percentile_band_chart(df,c,a[0],title,u);note+=" P05–P95 describes the central 90% of observed values."
+    elif k=="percentile":f=ch.percentile_band_chart(df,c,a[0],title,u)
     elif k=="heatmap":
         bounds=base.temperature_thresholds(context) if c in ch.TEMPERATURE_HEATMAP_COLUMNS else None
         f=ch.temporal_heatmap_chart(df,c,*a,title,u,temperature_thresholds=bounds)
