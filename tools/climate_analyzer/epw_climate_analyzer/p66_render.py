@@ -314,38 +314,9 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         try:f,note=eligibility_figure(df,a[0],a[1],view="map" if k=="eligibility_map" else "total",ledger=design())
         except ValueError as exc:raise NotApplicable(str(exc)) from exc
     elif k=="nv_special":
-        from .decisions import natural_ventilation_condition
-        from .directional_climate import directional_table,directional_figure,directional_class_table,directional_class_figure
-        mask=p3.eligibility_mask(df,natural_ventilation_condition(df))
-        style=a[0]
-        if style=="Persistence":
-            from .p3_persistence_chart import persistence_figure
-            t=p3.persistence(df,mask);counts=p3.persistence_monthly(t,2.)
-            if counts.empty or not counts["Observed days"].notna().any():raise NotApplicable("No observed days with known suitability.")
-            f=persistence_figure(counts,title)
-            note+=" Longest uninterrupted daily run ≥2 h. Stacked categories partition observed days; the line gives the total observed-day count. Partial days count from known observations; wholly unknown days are excluded."
-        elif style=="Daily duration":
-            t=p3.persistence(df,mask);v=t["Suitable hours [h]"].dropna().sort_values(ascending=False)
-            f=go.Figure(go.Scatter(x=np.arange(1,len(v)+1),y=v,mode="lines")).update_layout(template="plotly_white",xaxis_title="Ranked days",yaxis_title="Suitable hours/day")
-        elif style=="Temperature–wind suitability":
-            t,h=p3.suitability_grid(df,mask,axis=cat.V)
-            if t.empty:raise NotApplicable("No paired valid observations.")
-            f=go.Figure(go.Heatmap(x=t.columns,y=t.index,z=t,zmin=0,zmax=100,colorscale="Greens",customdata=h,colorbar=dict(title="%"))).update_layout(xaxis_title="Temperature [°C]",yaxis_title="Wind speed [m/s]")
-        elif style=="Rejected reasons":
-            reasons=pd.Series({"Too cold":df[cat.T].lt(16).sum()*dt,"Too hot":df[cat.T].gt(26).sum()*dt,"Too humid":df[cat.W].gt(9).sum()*dt},name="Hours")
-            f=_bars(reasons,title,"h");note+=" Rejection reasons can overlap."
-        elif style=="Directional suitability":
-            from .directional_climate import directional_interpretation
-            t=directional_table(df,radial="Eligible hours",colour="Natural ventilation suitability",nv_mask=mask)
-            f=directional_figure(t,"Eligible hours","Natural ventilation suitability",title+" · Strict-screen eligible hours")
-            note+=" "+directional_interpretation(t,"Eligible hours","Natural ventilation suitability")
-        else:
-            view=df.loc[mask.eq(1)].copy()
-            if view.empty:raise NotApplicable("No suitable ventilation hours.")
-            f=directional_class_figure(directional_class_table(view,quantity="Wind speed",radial="Hours"),title)
-        from .passive_design_findings import ventilation_screen_stages,ventilation_screen_interpretation
-        note+=" "+ventilation_screen_interpretation(
-            df,ventilation_screen_stages(df),t_min_c=16.,t_max_c=26.,d_max_g_kg=9.)
+        from .residual_findings import nv_special_figure
+        try:f,note=nv_special_figure(df,a[0])
+        except ValueError as exc:raise NotApplicable(str(exc)) from exc
     elif k=="passive":
         from .residual_findings import passive_matrix_figure
         try:f,note=passive_matrix_figure(df)
