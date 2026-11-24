@@ -12,6 +12,7 @@ import pandas as pd
 
 from .aggregations import native_interval_hours
 from .interpretations import _fmt, _fmt_hours
+from .period_display import format_plotted_time
 from .daylight import daily_daylight_table, monthly_daylight_sunshine_summary
 
 TOTAL="total_sky_cover_tenths"
@@ -271,7 +272,7 @@ def sky_figure_interpretation(df,fig,kind,*,column="",title="",args=(),latitude=
         if vals.empty: vals,x=_plotted(fig)
         if not vals.empty:
             lo=int(vals.idxmin());hi=int(vals.idxmax())
-            at=lambda i:str(x[i]) if i<len(x) else f"point {i+1}"
+            at=lambda i:format_plotted_time(x[i],df,title=title) if i<len(x) else f"point {i+1}"
             return (f"In the selected {LABELS.get(column,column)} plot, the "
                     f"{'observed value' if observed else centre} is lowest at "
                     f"{at(lo)} ({_fmt(vals.iloc[lo])} {unit}) and highest at "
