@@ -8,8 +8,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 from .interpretations import _fmt, _fmt_hours, _duration_hours_from_count
-from .period_display import format_plotted_time, canonical_profile_kind
-from .profile_interpretation import profile_band, profile_centre
+from .period_display import format_plotted_time
+from .profile_interpretation import canonical_profile_kind, profile_band, profile_centre
 
 
 def _temperature_plot_series(fig, name=None):
