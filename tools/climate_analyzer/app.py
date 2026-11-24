@@ -5063,7 +5063,7 @@ def render_outdoor_comfort(df):
     outdoor_comfort(df,render_plot)
 
 
-def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
+def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float, *, reference_df=None) -> None:
     """Render natural-ventilation and night-flushing charts."""
     st.header("Natural ventilation and night flushing")
     st.markdown("Adjust the outdoor-air suitability limits and inspect when window ventilation is climatically possible.")
@@ -5134,7 +5134,7 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float) -> None:
     )
     if chart_group == "Reference eligibility":
         from epw_climate_analyzer.p3_ui import reference_eligibility_panel
-        reference_eligibility_panel(df,render_plot,names=("nv","night"))
+        reference_eligibility_panel(df,render_plot,names=("nv","night"),reference_df=reference_df)
     elif chart_group == "Climate screening stages":
         from epw_climate_analyzer.passive_design_findings import (
             ventilation_screen_stages, ventilation_screen_interpretation,
@@ -6077,7 +6077,7 @@ def render_historical_solar(df: pd.DataFrame) -> None:
         "energy total. This page converts the hourly Wh/m² value to hourly mean irradiance [W/m²]. DNI and plane-of-array "
         "routes remain intentionally unavailable in measured historical mode."
     )
-    options: list[str] = ["Horizontal irradiance explorer", "Monthly radiation"]
+    options: list[str] = ["Horizontal irradiance explorer", "Monthly radiation", "Radiation totals"]
     if "solar_geometry_site" in df.attrs:
         options.append("Sun path")
     from epw_climate_analyzer.sky_distribution import available_quantities
@@ -6086,7 +6086,7 @@ def render_historical_solar(df: pd.DataFrame) -> None:
     has_ghi = any(source == "global_horizontal_radiation_wh_m2" for _, _, source in specs)
     has_temperature = has_numeric_observations(df, "dry_bulb_temperature_c")
     if has_ghi and has_temperature:
-        options.extend(["Cooling-risk solar hours", "Temperature vs GHI"])
+        options.extend(["Cooling-risk solar hours", "Reference solar protection screening", "Temperature vs GHI"])
     chart_group = st.selectbox("Analysis type", options, key="historical_solar_analysis")
 
     if chart_group == "Horizontal irradiance explorer":
@@ -6125,6 +6125,12 @@ def render_historical_solar(df: pd.DataFrame) -> None:
         render_sky_radiation_distribution(df)
     elif chart_group == "Monthly radiation":
         render_monthly_radiation(df, allow_surface=False)
+    elif chart_group == "Radiation totals":
+        from epw_climate_analyzer.p3_ui import extensive_total_panel
+        extensive_total_panel(df,render_plot,columns=tuple(source for _,_,source in specs))
+    elif chart_group == "Reference solar protection screening":
+        from epw_climate_analyzer.p3_ui import reference_eligibility_panel
+        reference_eligibility_panel(df,render_plot,names=("shade",))
     elif chart_group == "Cooling-risk solar hours":
         t_threshold = st.slider("Temperature threshold [°C]", 15.0, 35.0, 24.0, 0.5, key="historical_solar_t_threshold")
         ghi_threshold = st.slider("Mean GHI threshold [W/m²]", 50.0, 1000.0, 300.0, 25.0, key="historical_solar_ghi_threshold")
@@ -6322,7 +6328,7 @@ def render_canonical_climate_analysis(dataset) -> None:
             "GeoSphere natural-ventilation suitability uses canonical hourly T/RH-derived psychrometrics and, when available, measured hourly wind speed. "
             "No EPW-only field is required for this route."
         )
-        render_natural_ventilation(filtered_df, pressure_pa=active_pressure)
+        render_natural_ventilation(filtered_df, pressure_pa=active_pressure,reference_df=full_df)
     elif page == "HVAC and Passive Design":
         st.caption(
             "Historical HVAC/passive-design indicators use canonical hourly temperature and psychrometrics. "
@@ -6633,7 +6639,7 @@ def main() -> None:
     elif page == "Time Series and Overlay":
         render_time_series_overlay(filtered_df)
     elif page == "Natural Ventilation":
-        render_natural_ventilation(filtered_df, pressure_pa=active_pressure)
+        render_natural_ventilation(filtered_df, pressure_pa=active_pressure,reference_df=full_df)
     elif page == "HVAC and Passive Design":
         render_hvac_passive(filtered_df)
     elif page == "Compare Climates":
