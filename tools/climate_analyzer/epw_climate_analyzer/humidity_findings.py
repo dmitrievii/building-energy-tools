@@ -90,10 +90,10 @@ def _physical_context(df, column):
         return (f"{_fmt_hours(hours)} h exceed 10 g/kg of dry air. This identifies hours of elevated outdoor water-vapour content relevant to ventilation-air moisture control.")
     if column == DP:
         return (
-            "Dew-point temperature is the temperature at which the outdoor air "
-            "reaches saturation at its current water-vapour content. "
-            "When this air contacts a surface colder than its dew point, "
-            "water vapour can condense on that surface."
+            "Dew point is the temperature at which outdoor air reaches saturation "
+            "when cooled at unchanged water-vapour content and pressure. "
+            "Water vapour can condense on a surface colder than the dew point "
+            "of the air in contact with it."
         )
     if column == WB:
         paired = _coincident(df, T, WB)
