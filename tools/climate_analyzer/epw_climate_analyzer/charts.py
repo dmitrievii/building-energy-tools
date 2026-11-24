@@ -210,9 +210,10 @@ def _format_profile_period(fig,df,aggregation):
                 else:
                     trace.hovertemplate="Date %{customdata}<br>"+hover
     elif aggregation in ("Hourly","Native"):
+        from datetime import date, datetime
         for trace in fig.data:
             xs=getattr(trace,"x",None)
-            if xs is None or len(xs)==0 or not isinstance(xs[0],(pd.Timestamp,np.datetime64)):
+            if xs is None or len(xs)==0 or not isinstance(xs[0],(pd.Timestamp,np.datetime64,datetime,date)):
                 continue
             hover=str(trace.hovertemplate or "")
             if "%{x}" in hover:
