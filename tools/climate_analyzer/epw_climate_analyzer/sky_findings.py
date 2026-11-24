@@ -12,7 +12,7 @@ import pandas as pd
 
 from .aggregations import native_interval_hours
 from .interpretations import _fmt, _fmt_hours
-from .period_display import format_plotted_time
+from .period_display import format_plotted_time, canonical_profile_kind
 from .daylight import daily_daylight_table, monthly_daylight_sunshine_summary
 
 TOTAL="total_sky_cover_tenths"
@@ -240,6 +240,7 @@ def sky_figure_interpretation(df,fig,kind,*,column="",title="",args=(),latitude=
     """One interpretation contract for interactive, atlas and standard-report figures."""
     kind=str(kind).lower()
     title=str(title or getattr(getattr(getattr(fig,"layout",None),"title",None),"text","") or "")
+    kind=canonical_profile_kind(kind,title,args)
     if kind=="daylight":
         return daylight_interpretation(df,latitude) if latitude is not None else "Astronomical daylight is determined from the represented dates and site latitude."
     if kind in ("sunshine","sunshine_heatmap","relative_sunshine"):
