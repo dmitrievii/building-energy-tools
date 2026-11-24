@@ -168,3 +168,54 @@ def mrt_monthly_figure(tr: pd.DataFrame):
                       xaxis_title="Month",yaxis_title="Equivalent MRT [°C]",
                       legend=dict(orientation="h",x=0.,y=-.22))
     return fig
+
+
+def utci_view_interpretation(df,values,view,*,exposure=None):
+    """Canonical narrative for one actual UTCI representation and source scope."""
+    from .utci_presentation import STRESS_NOTE
+    if view in ("heatmap","stress","duration"):
+        columns=list(values) if exposure is None else [exposure]
+        note=" ".join(utci_distribution_interpretation(df,values,c) for c in columns)
+        method={
+            "heatmap":" Each calendar cell presents its mean evaluated UTCI with categorical stress colouring. "+STRESS_NOTE,
+            "stress":" Stacked monthly classes partition the valid observed UTCI duration.",
+            "duration":" Background shading identifies UTCI stress categories; each selected exposure is independently ranked by evaluated UTCI.",
+        }[view]
+        return note+method
+    extra={
+        "utci_pair":" Background bands indicate the thermal-stress classification of the monthly mean UTCI.",
+        "utci_pair_delta":" Monthly bars show mean hourly UTCI reduction; the line shows its 95th percentile.",
+        "utci_pair_stress":" The thresholds are cumulative: hours above 38 °C also belong to the group above 32 °C.",
+        "utci_pair_duration":" Each line is independently ranked across the same set of valid hours.",
+        "utci_pair_mrt":" Monthly MRT curves use the paired UTCI evaluation hours and represent the selected shortwave and longwave radiation environments.",
+    }
+    if view not in extra:raise ValueError("Unknown UTCI view.")
+    return paired_exposure_interpretation(df,values)+extra[view]
+
+
+def utci_sensitivity_inputs(axis,*,temperature=30.,rh=50.,wind=1.,offset=0.):
+    """One prescribed grid and parameter definition, independent of presentation."""
+    ta=np.arange(-10.,46.);va=np.linspace(.5,17.,34);da=np.arange(-30.,71.,2.)
+    if axis in ("Air temperature × radiant offset","Temperature–radiant offset"):
+        x,y=ta,da;xx,yy=np.meshgrid(x,y)
+        return x,y,(xx,xx+yy,wind,rh),"Air temperature [°C]","Radiant offset [K]"
+    if axis in ("Wind speed × radiant offset","Wind–radiant offset"):
+        x,y=va,da;xx,yy=np.meshgrid(x,y)
+        return x,y,(temperature,temperature+yy,xx,rh),"10 m wind [m/s]","Radiant offset [K]"
+    if axis in ("Air temperature × wind speed","Temperature–wind"):
+        x,y=ta,va;xx,yy=np.meshgrid(x,y)
+        return x,y,(xx,xx+offset,yy,rh),"Air temperature [°C]","10 m wind [m/s]"
+    raise ValueError("Unknown UTCI sensitivity axes.")
+
+
+def utci_sensitivity_interpretation(axis,*,temperature=30.,rh=50.,wind=1.,offset=0.):
+    from .utci_presentation import STRESS_NOTE
+    if axis in ("Air temperature × radiant offset","Temperature–radiant offset"):
+        fixed=f"10 m wind {wind:g} m/s"
+    elif axis in ("Wind speed × radiant offset","Wind–radiant offset"):
+        fixed=f"air temperature {temperature:g} °C"
+    elif axis in ("Air temperature × wind speed","Temperature–wind"):
+        fixed=f"mean radiant temperature offset {offset:g} K"
+    else:raise ValueError("Unknown UTCI sensitivity axes.")
+    return (f"The controlled sensitivity grid compares UTCI across the two displayed environmental variables, "
+            f"with relative humidity {rh:g}% and {fixed} held constant. Each cell represents one evaluated model state. "+STRESS_NOTE)
