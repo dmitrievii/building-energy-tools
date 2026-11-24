@@ -201,6 +201,51 @@ class R28VariableParityTests(unittest.TestCase):
             self.assertIn("3 valid native monthly",note)
             self.assertNotIn("observed hours",note)
 
+    def test_r28c_actual_render_calls_match_reports(self):
+        from r28_interpretation_audit import fixture
+        from r28_live_route_capture import capture_atlas,capture_standard
+        df=fixture()
+        context={"latitude":47.07}
+        rows=cat.catalogue(df,context,cat.REP)
+        selected=[]
+        for kind in ("sunpath_view","monthly_radiation","degree","day_indicators",
+                     "cumulative","snow_calendar","correlation","joint"):
+            selected.extend([d for d in rows if d.kind==kind and d.status=="available"][:2])
+        for d in selected:
+            with self.subTest(diagram=d.id):
+                fig,note=make_figure(d,df,context,reference_df=df)
+                live,expected=capture_atlas(d,df,context)
+                self.assertEqual(note,expected)
+                self.assertTrue(validate_figure_interpretation(fig,note,require_binding=True))
+                self.assertEqual(snapshot(fig,{"page":d.chapter},note)["interpretation"],expected)
+                if d.kind in ("joint","correlation","degree","monthly_radiation","day_indicators","cumulative"):
+                    self.assertEqual(len(fig.data),len(live.data))
+                    for rt,lt in zip(fig.data,live.data):
+                        for field in ("y","z","r","theta"):
+                            rv=getattr(rt,field,None);lv=getattr(lt,field,None)
+                            if rv is None and lv is None:continue
+                            if rv is None or lv is None:self.fail(f"Missing trace field {field}")
+                            try:rv=np.asarray(rv,dtype=float);lv=np.asarray(lv,dtype=float)
+                            except (ValueError,TypeError):continue
+                            np.testing.assert_allclose(rv,lv,rtol=1e-12,atol=1e-12,equal_nan=True)
+        for ident in ("ghi","sunpath","degree"):
+            entry=next(e for e in CATALOG if e[0]==ident)
+            with self.subTest(standard=ident):
+                fig,note=standard_figure(entry,df,context,reference_df=df)
+                _,expected=capture_standard(entry,df,context)
+                self.assertEqual(note,expected)
+                self.assertTrue(validate_figure_interpretation(fig,note,require_binding=True))
+
+    def test_r28c_complete_degree_days_are_the_same_on_all_surfaces(self):
+        from epw_climate_analyzer.degree_metrics import degree_metric_table
+        index=pd.date_range("2026-01-01",periods=48,freq="h").delete(24)
+        df=pd.DataFrame({cat.T:10.},index=index)
+        df.attrs["canonical_native_interval_minutes"]=60.
+        actual=degree_metric_table(df,metric="Degree-days",aggregation="Monthly",
+                                   require_complete_days=True)
+        self.assertAlmostEqual(float(actual.iloc[0,0]),10.)
+        self.assertEqual(actual.attrs["method"],"complete-daily-mean")
+
 
 if __name__=="__main__":
     unittest.main()
