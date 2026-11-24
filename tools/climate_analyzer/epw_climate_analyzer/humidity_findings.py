@@ -160,7 +160,7 @@ def humidity_figure_interpretation(
         return (
             f"For the reference surface temperature of {surface_c:g} °C, "
             f"the outdoor dew point reaches or exceeds the surface temperature "
-            f"for {_fmt_hours(n)} observed hours. "
+            f"for {_fmt_hours(n)} h of selected observations. "
             "Air contacting the reference surface can reach saturation; when "
             "its dew point exceeds the surface temperature, condensation can occur."
         )
