@@ -19,7 +19,7 @@ from epw_climate_analyzer.humidity_findings import humidity_figure_interpretatio
 def climate():
     index=pd.date_range("2026-01-20 00:00",periods=24*14,freq="h")
     i=np.arange(len(index))
-    values=np.where(index.day<=21,-12.4,20.6)+.3*np.sin(i/4.)
+    values=np.where(index.day==21,-12.4,20.6)+.3*np.sin(i/4.)
     out=pd.DataFrame({
         DP:values,
         "relative_humidity_pct":50.+30.*np.sin(i/72.),
@@ -53,7 +53,7 @@ class ProfileInterpretationParityTests(unittest.TestCase):
         note=profile_interpretation(df,fig,"Time series / Profile",
                                     domain="Humidity",column=DP)
         self.assertIn("valid hourly observations",note)
-        self.assertIn("at 00:",note)
+        self.assertRegex(note,r"on \\d{2}\\.\\d{2} at \\d{2}:\\d{2}")
         self.assertIn("P05",note)
         self.assertIn("median",note)
         self.assertIn("P95",note)
