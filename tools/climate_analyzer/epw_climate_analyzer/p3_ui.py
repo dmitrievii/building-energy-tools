@@ -46,7 +46,10 @@ def outdoor_comfort(df,render):
     if df.empty:
         st.info("Coincident temperature, humidity and wind are required.");return
     years=available_years(df)
-    if len(years)>1:df=filter_year(df,st.selectbox("Analysis year",years,index=len(years)-1,key="p3_otc_year"))
+    if len(years)>1:
+        choices=[*years,"All selected years"]
+        year=st.selectbox("Analysis year",choices,index=len(years)-1,key="p3_otc_year")
+        if year!="All selected years":df=filter_year(df,year)
     if not p.complete(df,p.T,p.RH,p.V):
         st.info("Coincident temperature, humidity and wind are required for the selected year.");return
     options=["Uniform radiant offset"]
@@ -81,7 +84,7 @@ def outdoor_comfort(df,render):
     chart=st.selectbox("Analysis type",choices,key="p3_otc_chart")
     from .utci_presentation import stress_heatmap,add_stress_bands,duration_figure,STRESS_NOTE
     from .utci_findings import (
-        paired_exposure_interpretation,utci_distribution_interpretation,
+        utci_view_interpretation,utci_sensitivity_inputs,utci_sensitivity_interpretation,
         paired_monthly_figure,paired_delta_figure,paired_threshold_figure,mrt_monthly_figure,
     )
     note="UTCI equivalent temperature evaluated for the selected weather and radiation scenario. Duration uses physical observation hours."
@@ -91,20 +94,16 @@ def outdoor_comfort(df,render):
         rh=c[1].number_input("Reference relative humidity [%]",0.,100.,50.,key="p3_sens_rh")
         v=c[2].number_input("Reference 10 m wind [m/s]",.5,17.,1.,key="p3_sens_v")
         axis=st.selectbox("Sensitivity axes",["Air temperature × radiant offset","Wind speed × radiant offset","Air temperature × wind speed"],key="p3_sens_axis")
-        ta=np.arange(-10.,46.);va=np.linspace(.5,17,34);da=np.arange(-30.,71.,2.)
-        if axis=="Air temperature × radiant offset":
-            x,y=ta,da;xx,yy=np.meshgrid(x,y);args=(xx,xx+yy,v,rh);xl="Air temperature [°C]";yl="Radiant offset [K]"
-        elif axis=="Wind speed × radiant offset":
-            x,y=va,da;xx,yy=np.meshgrid(x,y);args=(t,t+yy,xx,rh);xl="10 m wind [m/s]";yl="Radiant offset [K]"
-        else:
+        delta=0.
+        if axis=="Air temperature × wind speed":
             delta=st.number_input("Reference radiant offset [K]",-30.,70.,0.,key="p3_sens_delta")
-            x,y=ta,va;xx,yy=np.meshgrid(x,y);args=(xx,xx+delta,yy,rh);xl="Air temperature [°C]";yl="10 m wind [m/s]"
+        x,y,args,xl,yl=utci_sensitivity_inputs(axis,temperature=t,rh=rh,wind=v,offset=delta)
         setup_s=perf_counter()-started
         try:z,timing=perf.cached_sensitivity(st.session_state,*args)
         except ImportError as exc:st.error("UTCI dependency unavailable: "+str(exc));return
         draw=perf_counter()
         fig=stress_heatmap(x,y,z,title="Controlled UTCI sensitivity",x_label=xl,y_label=yl)
-        render(fig,"The controlled sensitivity grid compares UTCI across prescribed inputs while the other environmental variables remain fixed. Each cell represents one model state. "+STRESS_NOTE)
+        render(fig,utci_sensitivity_interpretation(axis,temperature=t,rh=rh,wind=v,offset=delta))
         _utci_performance_diagnostics(timing,perf_counter()-draw,setup_s=setup_s)
         return
     setup_s=perf_counter()-started
@@ -122,9 +121,12 @@ def outdoor_comfort(df,render):
         _utci_performance_diagnostics(timing,perf_counter()-draw,setup_s=setup_s)
         return
     if chart=="UTCI duration curve":
-        descriptions=" ".join(utci_distribution_interpretation(df,values,c) for c in values)
-        render(duration_figure(values,native_interval_hours(df),"UTCI duration curve"),
-               descriptions+" Background shading identifies UTCI stress categories.")
+        scenarios=list(values)
+        if len(scenarios)>1:
+            selection=st.selectbox("Exposure",["All exposures",*scenarios],key="p3_otc_duration_exposure")
+            if selection!="All exposures":scenarios=[selection]
+        render(duration_figure(values[scenarios],native_interval_hours(df),"UTCI duration curve"),
+               utci_view_interpretation(df,values[scenarios],"duration"))
     elif chart=="Sun versus shade":
         common=values.dropna(subset=["Open sun","Direct-beam shade"])
         if common.empty:
@@ -136,22 +138,21 @@ def outdoor_comfort(df,render):
              "Duration curves","Mean radiant temperature"],
             key="p3_otc_pair_view",
         )
-        finding=paired_exposure_interpretation(df,values)
         if comparison=="Monthly mean UTCI":
             fig=paired_monthly_figure(df,common)
             render(add_stress_bands(fig,common.resample("MS").mean()),
-                   finding+" Background bands indicate the thermal-stress classification of the monthly mean UTCI.")
+                   utci_view_interpretation(df,values,"utci_pair"))
         elif comparison=="Monthly UTCI reduction":
-            render(paired_delta_figure(df,common),finding)
+            render(paired_delta_figure(df,common),utci_view_interpretation(df,values,"utci_pair_delta"))
         elif comparison=="Heat-stress exposure":
             render(paired_threshold_figure(df,common),
-                   finding+" Threshold categories overlap by definition: hours >38 °C are included in hours >32 °C.")
+                   utci_view_interpretation(df,values,"utci_pair_stress"))
         elif comparison=="Duration curves":
             render(duration_figure(common,native_interval_hours(df),"Paired exposure duration curves"),
-                   finding+" Each line is independently ranked across the same set of valid hours.")
+                   utci_view_interpretation(df,values,"utci_pair_duration"))
         else:
             render(mrt_monthly_figure(tr.where(values[["Open sun","Direct-beam shade"]].notna().all(axis=1))),
-                   finding+" The MRT comparison is computed on the same paired UTCI evaluation hours and reflects the selected shortwave and longwave radiation conditions.")
+                   utci_view_interpretation(df,values,"utci_pair_mrt"))
     else:
         if st.session_state.get("p3_otc_exposure") not in values.columns:
             st.session_state["p3_otc_exposure"]=values.columns[0]
@@ -159,14 +160,12 @@ def outdoor_comfort(df,render):
         if chart=="UTCI heat map":
             grid=p.annual_hour_grid(df,values[scenario])
             fig=stress_heatmap(grid.columns,grid.index,grid,title="UTCI · "+scenario,x_label="Date",y_label="Hour of day")
-            render(fig,utci_distribution_interpretation(df,values,scenario)+
-                   " Each calendar cell presents its mean evaluated UTCI with categorical stress colouring. "+STRESS_NOTE)
+            render(fig,utci_view_interpretation(df,values,"heatmap",exposure=scenario))
         else:
             tab=p.utci_class_hours(df,values[scenario]);fig=go.Figure()
             for c,color in zip(p.CLASSES,p.COLORS):fig.add_bar(x=tab.index,y=tab[c],name=c,marker_color=color)
             fig.update_layout(template="plotly_white",title="Monthly thermal-stress duration",barmode="stack",yaxis_title="Hours")
-            render(fig,utci_distribution_interpretation(df,values,scenario)+
-                   " Stacked monthly classes partition the valid observed UTCI duration.")
+            render(fig,utci_view_interpretation(df,values,"stress",exposure=scenario))
     visualization_s=perf_counter()-draw
     data,csv_s=perf.cached_csv(st.session_state,physical_key,values,tr)
     if data is None and st.button("Prepare UTCI and MRT CSV",key="p3_otc_prepare_csv"):
