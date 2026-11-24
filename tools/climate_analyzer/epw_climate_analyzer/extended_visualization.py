@@ -447,21 +447,21 @@ def climate_summary_interpretation(table, style):
         parts.append(f"The sum of the twelve representative monthly precipitation totals is {observed[P].sum():.0f} mm.")
     else:
         missing=[name(i) for i in range(1,13) if i not in observed.index]
-        parts.append("Only "+str(len(observed))+" of 12 months are supported; missing months: "+", ".join(missing)+". No annual total or full-year dryness conclusion is inferred.")
+        parts.append("Coverage: "+str(len(observed))+" of 12 calendar months. The interpretation describes the represented months; additional observations are needed for "+", ".join(missing)+".")
     if len(arid):
         parts.append("Walter–Lieth climatic dryness (P < 2T) occurs during "+", ".join(name(i) for i in arid.index)+
                      f" ({len(arid)} of {len(observed)} represented months). During those months, planting and landscape water demand warrant particular assessment; rainfall harvesting and storage can help bridge dry periods.")
     else:
-        parts.append(f"No Walter–Lieth dry month is identified among the {len(observed)} represented months. This does not exclude short dry spells or summertime water deficits.")
+        parts.append(f"All {len(observed)} represented months meet the Walter–Lieth moisture criterion P ≥ 2T. Daily dry-spell analysis complements the monthly view for landscape and drainage planning.")
     if observed[T].min()<0:
-        parts.append("At least one monthly mean is below freezing: freeze protection and winter drainage deserve attention. Monthly means do not establish frost-day counts.")
+        parts.append("At least one monthly mean is below freezing: freeze protection and winter drainage deserve attention. Complete-day minimum temperatures quantify frost frequency.")
     if observed.loc[warm,T]>=20:
-        parts.append("The warmest monthly mean supports assessment of summer shading and ventilation; overheating cannot be determined from monthly temperature alone.")
+        parts.append("The warmest monthly mean supports assessment of summer shading and ventilation; Hourly temperatures and irradiation resolve the timing of thermal exposure.")
     if observed.loc[warm,P] < observed[P].median():
         parts.append("The warmest month is drier than the median represented month, suggesting a seasonal mismatch between warmth and precipitation availability.")
     else:
         parts.append("The warmest month has precipitation at or above the median represented month; warm-period moisture and rain protection should be considered alongside summer thermal design.")
-    parts.append("These are climatic indicators, not a water balance or a building-load prediction. The Walter–Lieth dryness criterion is empirical.")
+    parts.append("The empirical Walter–Lieth criterion compares monthly temperature and precipitation on the conventional P = 2T scale to identify seasonal moisture conditions.")
     return " ".join(parts)
 
 
