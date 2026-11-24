@@ -1960,6 +1960,8 @@ def render_plot(fig, text: str) -> None:
     """Render a Plotly figure, local export control and interpretation."""
     from epw_climate_analyzer.p6_report import INTERPRETATION_KEY
     from epw_climate_analyzer.startup_runtime import begin_phase,end_phase
+    from epw_climate_analyzer.figure_interpretation_contract import bind_figure_interpretation
+    bind_figure_interpretation(fig,text)
     render_chart_export_controls(fig)
     st.session_state[INTERPRETATION_KEY]=text
     phase=begin_phase()
