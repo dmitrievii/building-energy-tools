@@ -397,20 +397,17 @@ def make_figure(d,df,context,reference_df=None,cache=None):
             from .utci_presentation import stress_heatmap,STRESS_NOTE
             with phase("utci_aggregation"):grid=p3.annual_hour_grid(df,val)
             with phase("utci_plot"):f=stress_heatmap(grid.columns,grid.index,grid,title=title,x_label="Date",y_label="Hour of day")
-            note+=" Hour-cell means classified after aggregation. "+STRESS_NOTE
         elif style=="duration":
             from .utci_presentation import duration_figure
             with phase("utci_plot"):f=duration_figure(val.to_frame(),dt,title)
-            note+=" Shaded background indicates UTCI stress classes."
         else:
             with phase("utci_aggregation"):table=p3.utci_class_hours(df,val)
             f=go.Figure()
             for c1,color in zip(p3.CLASSES,p3.COLORS):
                 if c1 in table:f.add_bar(x=table.index,y=table[c1],name=c1,marker_color=color)
             f.update_layout(barmode="stack",yaxis_title="Hours")
-        from .utci_findings import utci_distribution_interpretation
-        note+=" "+utci_distribution_interpretation(df,val.to_frame(name=col),col)
-        note+=" The meteorological wind is interpreted at 10 m; MRT follows the selected uniform or spherical-equivalent radiation scenario."
+        from .utci_findings import utci_view_interpretation
+        note=utci_view_interpretation(df,values,style,exposure=col)
     elif k=="critical_windows":
         from .p4_design_charts import critical_windows_figure
         from .hvac_findings import critical_window_interpretation
@@ -425,40 +422,33 @@ def make_figure(d,df,context,reference_df=None,cache=None):
     elif k in ("utci_pair","utci_pair_delta","utci_pair_stress","utci_pair_mrt"):
         from .utci_findings import (
             paired_monthly_figure,paired_delta_figure,paired_threshold_figure,
-            paired_exposure_interpretation,mrt_monthly_figure,
+            utci_view_interpretation,mrt_monthly_figure,
         )
         values=utci_model("Open-sky screening")
         common=values.dropna(subset=["Open sun","Direct-beam shade"])
         if common.empty:raise NotApplicable("No coincident admitted UTCI exposure states.")
-        note=paired_exposure_interpretation(df,values)
+        note=utci_view_interpretation(df,values,k)
         if k=="utci_pair":
             f=paired_monthly_figure(df,common,title=title)
             from .utci_presentation import add_stress_bands
             add_stress_bands(f,common.resample("MS").mean())
-            note+=" Thermal-stress background bands classify monthly mean UTCI."
         elif k=="utci_pair_delta":
             f=paired_delta_figure(df,common)
-            note+=" Monthly bars show the mean hourly UTCI difference. The line shows the 95th percentile of hourly benefits in each month."
         elif k=="utci_pair_stress":
             f=paired_threshold_figure(df,common)
-            note+=" Each threshold is evaluated on the same paired hours; high-stress thresholds are cumulative."
         else:
             radiation=memo("utci_mrt",lambda:p3.radiant_scenarios(df))
             if radiation.empty:raise NotApplicable("Missing longwave and shortwave radiation inputs.")
             radiation=radiation.where(values[["Open sun","Direct-beam shade"]].notna().all(axis=1))
             f=mrt_monthly_figure(radiation)
-            note+=" Monthly MRT curves show the assumed sky, ground and solar-beam environment from which the two UTCI series are evaluated."
     elif k=="utci_sensitivity":
-        axis=a[0];t=np.linspace(0,40,41);v=np.linspace(.5,10,39);delta=np.linspace(-20,50,36)
-        if axis=="Temperature–wind":
-            x,y=t,v;xx,yy=np.meshgrid(x,y);z=p3.utci_values(xx,xx,yy,np.full_like(xx,50.));xl="Air temperature [°C]";yl="10 m wind [m/s]"
-        elif axis=="Temperature–radiant offset":
-            x,y=t,delta;xx,yy=np.meshgrid(x,y);z=p3.utci_values(xx,xx+yy,np.full_like(xx,2.),np.full_like(xx,50.));xl="Air temperature [°C]";yl="Radiant offset [K]"
-        else:
-            x,y=v,delta;xx,yy=np.meshgrid(x,y);z=p3.utci_values(np.full_like(xx,30.),30.+yy,xx,np.full_like(xx,50.));xl="10 m wind [m/s]";yl="Radiant offset [K]"
-        from .utci_presentation import stress_heatmap,STRESS_NOTE
+        from .utci_findings import utci_sensitivity_inputs,utci_sensitivity_interpretation
+        from .utci_presentation import stress_heatmap
+        axis=a[0]
+        x,y,inputs,xl,yl=utci_sensitivity_inputs(axis)
+        z=p3.utci_values(*inputs)
         f=stress_heatmap(x,y,z,title=title,x_label=xl,y_label=yl)
-        note="Hypothetical controlled states: RH 50%; remaining fixed inputs T=30 °C, wind 2 m/s, MRT offset 0 K as applicable. The chart compares prescribed conditions. "+STRESS_NOTE
+        note=utci_sensitivity_interpretation(axis)
     elif k=="snow_calendar":
         from .p4_ui import snow_calendar_chart
         from .precipitation_findings import snow_summary
