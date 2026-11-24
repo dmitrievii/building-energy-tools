@@ -87,9 +87,12 @@ def _physical_context(df, column):
         hours = _duration_hours_from_count(df, int((v > 10.).sum()))
         return (f"{_fmt_hours(hours)} h exceed 10 g/kg of dry air. This identifies hours of elevated outdoor water-vapour content relevant to ventilation-air moisture control.")
     if column == DP:
-        h = _duration_hours_from_count(df, int((v >= 15.).sum()))
-        return (f"Outdoor dew point is at or above 15 °C for {_fmt_hours(h)} h. "
-                "Contact with a 15 °C surface under these outdoor-air conditions produces potential for surface moisture accumulation.")
+        return (
+            "Dew-point temperature is the temperature at which the outdoor air "
+            "reaches saturation at its current water-vapour content. "
+            "When this air contacts a surface colder than its dew point, "
+            "water vapour can condense on that surface."
+        )
     if column == WB:
         paired = _coincident(df, T, WB)
         if not paired.empty:
@@ -152,9 +155,11 @@ def humidity_figure_interpretation(
             return "No valid outdoor dew-point values for the selected interval."
         n = _duration_hours_from_count(df, int((dew >= float(surface_c)).sum()))
         return (
-            f"For a reference surface temperature of {surface_c:g} °C, outdoor air has "
-            f"dew point at or above that temperature for {_fmt_hours(n)} h. "
-            "Air contacting a surface at this temperature can reach saturation. The result indicates the timing of potential surface-moisture exposure."
+            f"For the selected reference surface temperature of {surface_c:g} °C, "
+            f"the outdoor dew point reaches or exceeds the surface temperature "
+            f"for {_fmt_hours(n)} observed hours. "
+            "Air contacting the reference surface can reach saturation; when "
+            "its dew point exceeds the surface temperature, condensation can occur."
         )
 
     if kind == "moisture":
