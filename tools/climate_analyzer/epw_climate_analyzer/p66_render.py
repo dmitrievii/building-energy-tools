@@ -541,7 +541,8 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         with phase("interpretation"):
             stat=humidity_figure_interpretation(
                 df,f,k,column=c,title=title,args=a)
-        if stat and stat not in note:note=stat+"\n\n"+note
+        if stat and k in ("psychrometric","condensation","moisture"):note=stat
+        elif stat and stat not in note:note=stat+"\n\n"+note
     if d.chapter == cat.WIND and k not in ("wind_mean","wind_classes","wind_panel"):
         from .wind_findings import wind_figure_interpretation
         with phase("interpretation"):
@@ -558,7 +559,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         mode="sunshine_heatmap" if k=="sunshine" else k
         with phase("interpretation"):
             stat=sky_figure_interpretation(
-                df,f,mode,column=c,title=title,args=a,
+                df,f,mode,column=c,title=title,args=(300.,) if k=="illumination" else a,
                 latitude=context.get("latitude"))
         if stat and k in ("daylight","sunshine","sky_conditions","illumination"):note=stat
         elif stat and stat not in note:note=stat+"\n\n"+note
@@ -568,6 +569,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
             stat=precipitation_figure_interpretation(
                 df,f,k,column=c,title=title,args=a)
         if k in ("climate_summary","wind_rain"):pass  # existing plot-specific interpretation is authoritative
+        elif stat and k in ("total","rolling","freeze_days","freeze_cycles"):note=stat
         elif stat and stat not in note:note=stat+"\n\n"+note
     from .figure_interpretation_contract import bind_figure_interpretation
     note=note.strip()
