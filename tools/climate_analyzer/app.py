@@ -3552,6 +3552,9 @@ def _render_temperature_degree_days(df):
     )
     from epw_climate_analyzer.degree_metrics import degree_legend_below
     degree_legend_below(fig)
+    from epw_climate_analyzer.calendar_heatmap_axes import set_period_axis_scope,apply_monthly_axes
+    set_period_axis_scope(fig,df,aggregation=aggregation)
+    apply_monthly_axes(fig)
     fig.update_yaxes(rangemode="tozero")
     st.caption(
         "Degree-hours integrate the temperature difference at each source interval. "
