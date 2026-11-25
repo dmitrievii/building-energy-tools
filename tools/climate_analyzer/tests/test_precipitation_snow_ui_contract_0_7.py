@@ -34,8 +34,14 @@ class PrecipitationSnowUiContract07Tests(unittest.TestCase):
         )
 
     def test_rrm_duration_is_explicitly_not_inferred_from_rr(self) -> None:
-        self.assertIn("aggregate_precipitation_duration(df, aggregation)", self.source)
-        self.assertIn("measured_duration_summary(df)", self.source)
+        self.assertIn('extensive_total_panel(df,render_plot,columns=("precipitation_duration_min",))', self.source)
+        from epw_climate_analyzer.residual_findings import extensive_total_figure
+        import pandas as pd
+        df=pd.DataFrame({"precipitation_duration_min":[10.,20.,float("nan")],"liquid_precipitation_depth_mm":[0.,0.,20.]},index=pd.date_range("2026-01-01",periods=3,freq="h"))
+        df.attrs["canonical_native_interval_minutes"]=60
+        fig,note=extensive_total_figure(df,"precipitation_duration_min","Daily")
+        self.assertAlmostEqual(float(fig.data[0].y[0]),0.5)
+        self.assertTrue(note)
 
     def test_snow_season_and_precipitation_thresholds_are_visible_and_explicit(self) -> None:
         self.assertIn("Wet day ≥ 1 mm/day", self.source)

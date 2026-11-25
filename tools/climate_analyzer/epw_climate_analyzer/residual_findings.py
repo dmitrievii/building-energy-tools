@@ -42,8 +42,11 @@ def extensive_total_figure(df,column,aggregation):
         # Source-duration records have a physical upper bound.
         v=v.where(v.le(native_interval_hours(df)*(60 if column==R else 3600)+1e-6))
     x=_period(df,v*factor,aggregation)
+    x=x.dropna()
     if x.empty:raise ValueError("No valid observations for this accumulation.")
     f=_bar(x,f"{label} · {aggregation.lower()} total",unit,label,metric_color(column))
+    from .calendar_heatmap_axes import set_period_axis_scope,apply_monthly_axes
+    set_period_axis_scope(f,df,aggregation=aggregation);apply_monthly_axes(f)
     peak=x.idxmax();low=x.idxmin()
     basis="Each calendar-profile bar is the mean of equivalent per-year period totals." if time_basis(df)==CALENDAR_PROFILE else "Each bar sums valid observed intervals within its period."
     note=(f"{label}: the plotted {aggregation.lower()} total ranges from {x.min():,.2f} {unit} "
@@ -67,8 +70,10 @@ def snow_hours_figure(df,aggregation="Monthly"):
     v=_numeric(df,SNOW);v=v.where(v.ge(0))
     x=_period(df,v.gt(0).astype(float).where(v.notna())*native_interval_hours(df),aggregation)
     if x.empty:raise ValueError("No valid snow-depth observations.")
-    return (_bar(x,"Snow-cover duration","Observed snow-cover hours","Snow cover",metric_color(SNOW)),
-        snow_summary(df)+f" Native snow observations use {native_interval_hours(df)*60:g}-minute intervals.")
+    f=_bar(x,"Snow-cover duration","Observed snow-cover hours","Snow cover",metric_color(SNOW))
+    from .calendar_heatmap_axes import set_period_axis_scope,apply_monthly_axes
+    set_period_axis_scope(f,df,aggregation=aggregation);apply_monthly_axes(f)
+    return (f,snow_summary(df)+f" Native snow observations use {native_interval_hours(df)*60:g}-minute intervals.")
 
 def temperature_threshold_figure(df,aggregation,*,low=18.,high=26.,mode="Heating and cooling thresholds"):
     from .chart_theme import HEATING_COLOR,COOLING_COLOR
@@ -86,7 +91,9 @@ def temperature_threshold_figure(df,aggregation,*,low=18.,high=26.,mode="Heating
         if x.empty:raise ValueError("No valid temperature observations.")
         f.add_bar(x=x.index,y=x,name=label,marker_color=color)
         parts.append(f"{label}: {float((mask&v.notna()).sum()*dt):,.1f} h")
-    f.update_layout(template="plotly_white",title="Temperature threshold hours",yaxis_title="Hours",barmode="group",legend=dict(orientation="h",y=-.23))
+    f.update_layout(template="plotly_white",title="Temperature threshold hours",xaxis_title="Period",yaxis_title="Hours",barmode="group",legend=dict(orientation="h",y=-.23))
+    from .calendar_heatmap_axes import set_period_axis_scope,apply_monthly_axes
+    set_period_axis_scope(f,df,aggregation=aggregation);apply_monthly_axes(f)
     return f,("The selected outdoor-temperature thresholds identify "+ "; ".join(parts)+
         f" across {float(v.notna().sum()*dt):,.1f} valid observed hours. Bars describe their {aggregation.lower()} timing and support seasonal heating, cooling and envelope-exposure assessment.")
 

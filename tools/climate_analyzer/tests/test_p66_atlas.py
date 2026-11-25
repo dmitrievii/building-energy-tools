@@ -48,7 +48,9 @@ class AtlasTests(unittest.TestCase):
             d=next(d for d in c.catalogue(df,{},c.FULL) if d.kind=="adaptive")
             fig,note=make_figure(d,df,{})
             self.assertEqual(set(tr.name for tr in fig.data),{"Category I","Category II","Category III","Neutral operative temperature","Outdoor running mean"})
-            self.assertEqual(str(fig.layout.xaxis.ticktext[-1]),"31.12")
+            primary=[str(t).split("<br>")[0] for t in fig.layout.xaxis.ticktext if not str(t).startswith("&nbsp;")]
+            self.assertEqual(primary[-1],str(n))
+            self.assertIn("&nbsp;<br>Dec",fig.layout.xaxis.ticktext)
             self.assertEqual(fig.layout.xaxis.tickvals[-1],n)
             self.assertEqual(fig.layout.legend.orientation,"h")
             self.assertIn(f"{n-7}/{n}",note)
@@ -221,7 +223,10 @@ class AtlasTests(unittest.TestCase):
                     fig=shading_calendar(frame,metric,period,"Hour of day","Mean")
                     self.assertEqual(vals.shape,(24,ncols))
                     self.assertEqual(len(fig.data[0].x),ncols)
-                    self.assertEqual(fig.layout.xaxis.title.text,period.capitalize())
+                    if period=="day":
+                        self.assertIn("day",fig.layout.xaxis.title.text.lower())
+                        self.assertIn("&nbsp;<br>Dec",fig.layout.xaxis.ticktext)
+                    else:self.assertEqual(fig.layout.xaxis.title.text,period.capitalize())
                     self.assertEqual(len(fig.layout.annotations),0)
                     self.assertEqual(len(fig.data),1)
                     self.assertTrue(np.isnan(np.asarray(fig.data[0].z,float)[0]).all())

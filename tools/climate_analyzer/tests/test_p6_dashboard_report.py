@@ -254,7 +254,8 @@ else:
         self.assertEqual(list(s.report_figure(bars,width_pt=730,height_pt=320).layout.xaxis.ticktext)[-1],"Dec")
         history=go.Figure(go.Scatter(x=pd.date_range("2025-01-01",periods=24,freq="MS"),y=np.arange(24)))
         apply_chart_presentation(history,ChartPresentationSettings())
-        self.assertIn("2025",history.layout.xaxis.ticktext[0]);self.assertIn("2026",history.layout.xaxis.ticktext[-1])
+        secondary=[t.split("<br>")[1] for t in history.layout.xaxis.ticktext if "<br>" in t and t.split("<br>")[1]!="&nbsp;"]
+        self.assertEqual(secondary,["2025","2026"])
 
     def test_psychrometric_zone_key_and_polar_static_export(self):
         from epw_climate_analyzer import p6_report_structure as s

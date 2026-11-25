@@ -201,7 +201,10 @@ class CalendarHeatmapTests(unittest.TestCase):
         def guards(node, ancestors=()):
             if isinstance(node,ast.Call) and isinstance(node.func,ast.Attribute) and node.func.attr=="slider" and node.args and isinstance(node.args[0],ast.Constant):
                 yield node.args[0].value,ancestors
-            if isinstance(node,ast.If):
+            if isinstance(node,ast.IfExp):
+                yield from guards(node.body,ancestors+(ast.unparse(node.test),))
+                yield from guards(node.orelse,ancestors)
+            elif isinstance(node,ast.If):
                 condition=ast.unparse(node.test)
                 for child in node.body:yield from guards(child,ancestors+(condition,))
                 for child in node.orelse:yield from guards(child,ancestors)
@@ -211,9 +214,12 @@ class CalendarHeatmapTests(unittest.TestCase):
         for label in ("Lower colour reference [°C]","Upper colour reference [°C]"):
             self.assertIn("chart_type == 'Heat map'",explorer[label])
             self.assertIn("column in TEMPERATURE_HEATMAP_COLUMNS",explorer[label])
-        temperature=dict(guards(funcs["render_temperature"]))
-        self.assertIn("mode == 'Below heating threshold'",temperature["Heating threshold [°C]"])
-        self.assertIn("mode == 'Above cooling threshold'",temperature["Cooling threshold [°C]"])
+        panel_tree=ast.parse((Path(__file__).resolve().parents[1]/"epw_climate_analyzer/p3_ui.py").read_text(encoding="utf-8"))
+        panel=next(n for n in panel_tree.body if isinstance(n,ast.FunctionDef) and n.name=="temperature_threshold_panel")
+        temperature=dict(guards(panel))
+        self.assertIn("mode in ('Below heating threshold', 'Heating and cooling thresholds')",temperature["Heating threshold [°C]"])
+        self.assertIn("mode in ('Above cooling threshold', 'Heating and cooling thresholds')",temperature["Cooling threshold [°C]"])
+        self.assertIn("temperature_threshold_panel",ast.unparse(funcs["render_temperature"]))
         self.assertNotIn("Heating threshold [°C]",explorer)
         self.assertNotIn("Cooling threshold [°C]",explorer)
 
@@ -477,7 +483,7 @@ class CalendarHeatmapTests(unittest.TestCase):
         partial=go.Figure(go.Scatter(x=list(range(101,151)),y=list(range(50))))
         partial.update_layout(xaxis_title="Period",title="Daily mean")
         apply_monthly_axes(partial)
-        self.assertEqual(partial.layout.xaxis.ticktext[-1],"150")
+        self.assertEqual(self._calendar_rows(partial)[0][-1],"150")
         legacy=go.Figure(go.Scatter(x=["2026-W51","2026-W52","2026-W53","2027-W01"],y=[1,2,3,4]))
         legacy.update_layout(xaxis_title="Period")
         set_period_axis_scope(legacy,context={"first timestamp":"2026-01-01","last timestamp":"2026-12-31"})

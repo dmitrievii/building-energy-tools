@@ -78,12 +78,13 @@ class TemporalInterpretationR2Tests(unittest.TestCase):
         for builder in (profile_line_chart,profile_ribbon_chart):
             fig=builder(df,"dew_point_temperature_c","Daily","Dew-point temperature","°C")
             self.assertEqual(str(fig.data[0].x[0]),"1")
-            self.assertEqual(fig.layout.xaxis.ticktext[0],"01.01")
-            self.assertEqual(fig.layout.xaxis.ticktext[-1],"08.01")
+            self.assertEqual(fig.layout.xaxis.ticktext[0],"1<br>&nbsp;")
+            self.assertEqual(fig.layout.xaxis.ticktext[-1],"8<br>&nbsp;")
+            self.assertIn("&nbsp;<br>Jan",fig.layout.xaxis.ticktext)
             self.assertIn("Date %{customdata}",fig.data[0].hovertemplate)
             self.assertEqual(fig.data[0].customdata[0],"01.01")
             printed=report_figure(fig,width_pt=550,height_pt=300)
-            self.assertEqual(printed.layout.xaxis.ticktext[-1],"08.01")
+            self.assertEqual(printed.layout.xaxis.ticktext[-1],"8<br>&nbsp;")
 
     def test_hourly_profile_keeps_native_timestamp_and_readable_hover(self):
         df=self.frame()

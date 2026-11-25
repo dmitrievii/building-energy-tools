@@ -31,7 +31,13 @@ class UxCleanup074C3Tests(unittest.TestCase):
         self.assertIn('"Quantity"', block)
         self.assertIn('"Measured sunshine duration"', block)
         self.assertIn('"Relative sunshine duration"', block)
-        self.assertIn("sum(min_count=1)", block)
+        self.assertIn('extensive_total_panel(df,render_plot,columns=("sunshine_duration_s",))',block)
+        from epw_climate_analyzer.residual_findings import extensive_total_figure
+        import pandas as pd
+        df=pd.DataFrame({"sunshine_duration_s":[1800.,0.,float("nan")]},index=pd.date_range("2026-01-01",periods=3,freq="h"))
+        df.attrs["canonical_native_interval_minutes"]=60
+        fig,_=extensive_total_figure(df,"sunshine_duration_s","Daily")
+        self.assertAlmostEqual(float(fig.data[0].y[0]),.5)
         self.assertIn("fixed_variable_label=quantity", block)
         self.assertIn("describe complementary observed conditions", block)
 
