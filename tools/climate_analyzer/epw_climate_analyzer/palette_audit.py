@@ -34,7 +34,9 @@ def inspect_palette(fig):
         scale=None;bounds=None
         if kind in ("heatmap","contour","surface"):
             scale,lo,hi=_scale(tr,layout);bounds=(lo,hi)
-            if scale is None and tr.get("surfacecolor") is None:missing.append(f"{i}:{name}:colorscale")
+            # A line-only contour uses an explicit stroke, not a filled scale.
+            line_only=(kind=="contour" and tr.get("contours",{}).get("coloring")=="none" and lc is not None)
+            if scale is None and tr.get("surfacecolor") is None and not line_only:missing.append(f"{i}:{name}:colorscale")
         elif kind in ("bar","barpolar","histogram","box","violin"):
             if color is None and lc is None and fill is None:missing.append(f"{i}:{name}:marker/line")
             if marker.get("colorscale") is not None or marker.get("coloraxis"):

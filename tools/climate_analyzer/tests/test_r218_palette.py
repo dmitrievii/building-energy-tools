@@ -56,3 +56,20 @@ class UniversalPaletteTests(unittest.TestCase):
         self.assertTrue(inspect_palette(f)["implicit_channels"])
         f.update_traces(marker_color=METRIC_COLORS["liquid_precipitation_depth_mm"])
         self.assertFalse(inspect_palette(f)["implicit_channels"])
+
+    def test_shading_ledger_explicit_semantics(self):
+        from epw_climate_analyzer.solar_shading import monthly_shading_figure
+        from epw_climate_analyzer.chart_theme import SHADING_IRRADIATION_COLORS
+        table=pd.DataFrame({"Shaded total (direct-only)":[50.],"Intercepted direct":[20.],"Unshaded total":[70.]})
+        f=monthly_shading_figure(table,["Jan"])
+        self.assertFalse(inspect_palette(f)["implicit_channels"])
+        for tr in f.data:
+            actual=tr.line.color if tr.type=="scatter" else tr.marker.color
+            self.assertEqual(actual,SHADING_IRRADIATION_COLORS[tr.name])
+
+    def test_contour_and_invisible_helper_are_explicitly_classified(self):
+        f=go.Figure(go.Contour(z=[[1.,2.],[3.,4.]],contours={"coloring":"none"},line={"color":"#2563EB"}))
+        f.add_scatter(x=[None],y=[None],opacity=0.)
+        self.assertFalse(inspect_palette(f)["implicit_channels"])
+        f.data[0].contours.coloring="fill"
+        self.assertTrue(inspect_palette(f)["implicit_channels"])

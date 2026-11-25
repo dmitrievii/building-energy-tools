@@ -37,7 +37,7 @@ jobs:
         run: python -m unittest discover -s tools/climate_analyzer/tests -p 'test_r218_palette.py' -v
       - name: R2.18 full catalogue palette evidence
         if: always()
-        run: python tools/climate_analyzer/tests/r218_palette_audit.py --output artifacts/r218_palette_audit.csv
+        run: python tools/climate_analyzer/tests/r218_palette_audit.py --output artifacts/r218_palette_audit.csv --require-complete
       - name: Upload palette evidence
         if: always()
         uses: actions/upload-artifact@v4

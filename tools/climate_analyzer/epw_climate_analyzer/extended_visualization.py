@@ -483,7 +483,7 @@ def climate_summary_figure(table,style):
                           yaxis2=dict(title="Precipitation [mm]",overlaying="y",side="right",range=[low,high],
                                       tickvals=walter_precip_scale(ticks),ticktext=ticks,showgrid=False))
         # A dummy invisible trace activates the explicitly coupled right axis.
-        fig.add_scatter(x=[None],y=[None],yaxis="y2",showlegend=False,hoverinfo="skip",
+        fig.add_scatter(x=[None],y=[None],yaxis="y2",showlegend=False,hoverinfo="skip",opacity=0.,
                         meta={"presentation_only_trace":True})
         fig.add_hline(y=50,line_dash="dot",line_color="#94A3B8")
         fig.update_layout(meta={"fixed_physical_axis_relationship": True})
