@@ -84,7 +84,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
     def design():
         from .p6_dashboard import design_ledgers
         return memo("design",lambda:design_ledgers(df,reference_df=reference_df)[0])
-    if k=="native":f=_line(s,title,u,c)
+    if k=="native":f=ch.time_series_profile_chart(df,c,"Native",title,u,"Observed values")
     elif k=="time_series":
         f=ch.time_series_profile_chart(df,c,a[0],title,u,a[1])
     elif k=="profile":f=ch.profile_ribbon_chart(df,c,a[0],title,u)

@@ -87,7 +87,7 @@ def _events(table,render,*,key,unit,threshold,series=None,above=True,quantity="T
         fig.update_layout(title="Event duration and peak",xaxis_title="Duration ["+unit+"]",yaxis_title=quantity)
     else:
         d=table.duration.value_counts().sort_index()
-        fig.add_bar(x=d.index,y=d,marker_color=event_color(quantity,above))
+        fig.add_bar(x=d.index,y=d,name="Number of events",marker_color=event_color(quantity,above))
         fig.update_layout(title="Event duration distribution",xaxis_title="Duration ["+unit+"]",yaxis_title="Number of events")
     fig.update_layout(template="plotly_white")
     render(fig,event_interpretation(table,unit=unit,extra_note=extra_note))

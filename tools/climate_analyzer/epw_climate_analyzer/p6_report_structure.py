@@ -407,15 +407,14 @@ def available_catalog(df,context):
 
 def standard_figure(entry,df,context,reference_df=None):
     """One documented reference configuration per standard diagram."""
-    from .charts import profile_ribbon_chart,duration_chart,month_hour_heatmap,psychrometric_chart,sun_path_chart
+    from .charts import profile_ribbon_chart,duration_chart,month_hour_heatmap,psychrometric_chart,sun_path_chart,time_series_profile_chart
     from .chart_theme import metric_color, semantic_color_from_text
     id,page,label,column,unit,kind=entry
     s=numeric(df,column)
     monthly=str(df.attrs.get("canonical_native_resolution","")).lower()=="monthly"
     if kind=="profile":
         if monthly:
-            fig=go.Figure(go.Scatter(x=s.index,y=s,mode="lines+markers",connectgaps=False,line_color=metric_color(column)))
-            fig.update_layout(template="plotly_white",title=label,yaxis_title=unit)
+            fig=time_series_profile_chart(df,column,"Native",label,unit,"Observed values")
         else:fig=profile_ribbon_chart(df,column,"Monthly",label,unit)
         note=""
     elif kind=="duration":

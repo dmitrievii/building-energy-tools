@@ -22,6 +22,12 @@ SOLAR_COMPONENT_COLORS = {
     "DHI": "#CA8A04",
 }
 
+SHADING_IRRADIATION_COLORS = {
+    "Shaded total (direct-only)": "#F59E0B",
+    "Intercepted direct": "#64748B",
+    "Unshaded total": "#EA580C",
+}
+
 SOURCE_IRRADIATION_COLORS = {
     "global_horizontal_radiation_wh_m2": SOLAR_COMPONENT_COLORS["GHI"],
     "direct_normal_radiation_wh_m2": SOLAR_COMPONENT_COLORS["DNI"],

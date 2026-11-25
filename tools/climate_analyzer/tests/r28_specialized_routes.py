@@ -157,7 +157,7 @@ def atlas_live(d,df,context):
             f=go.Figure(go.Scatter(x=events.duration,y=events.peak,mode="markers",marker_color=event_color(quantity,above),customdata=events.excess))
         else:
             counts=events.duration.value_counts().sort_index()
-            f=go.Figure(go.Bar(x=counts.index,y=counts,marker_color=event_color(quantity,above)))
+            f=go.Figure(go.Bar(x=counts.index,y=counts,name="Number of events",marker_color=event_color(quantity,above)))
         return f,event_interpretation(events,unit=unit,extra_note=extra)
     if k=="climate_summary":
         table=ex.climate_summary_table(df)

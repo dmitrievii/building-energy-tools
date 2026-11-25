@@ -8,6 +8,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
+from .chart_theme import SHADING_IRRADIATION_COLORS
 
 def _shading_components(azimuth,elevation,*,facade=180.,width=2.,height=1.5,
                     overhang=0.,left_fin=0.,right_fin=0.):
@@ -108,9 +109,9 @@ def monthly_shading_figure(table, labels):
     """Visualize the direct-only irradiation ledger, already in kWh/m²."""
     fig=go.Figure()
     for name in ("Shaded total (direct-only)", "Intercepted direct"):
-        fig.add_bar(x=labels,y=table[name],name=name)
+        fig.add_bar(x=labels,y=table[name],name=name,marker_color=SHADING_IRRADIATION_COLORS[name])
     fig.add_scatter(x=labels,y=table["Unshaded total"],name="Unshaded total",
-                    mode="lines+markers",line=dict(dash="dash"),connectgaps=False)
+                    mode="lines+markers",line=dict(dash="dash",color=SHADING_IRRADIATION_COLORS["Unshaded total"]),connectgaps=False)
     fig.update_layout(template="plotly_white",
                       title="Monthly façade irradiation and intercepted direct beam",
                       barmode="stack",xaxis_title="Period",
