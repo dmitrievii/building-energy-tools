@@ -77,6 +77,36 @@ class CalendarHeatmapTests(unittest.TestCase):
         monthly=temporal_heatmap_chart(df,"temperature","month",HEATMAP_COMPARE_HOUR,"Mean","Example","°C")
         self.assertEqual(list(monthly.layout.xaxis.ticktext),["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"])
 
+    def test_r29_single_year_week_guide_excludes_adjacent_unselected_years(self):
+        from epw_climate_analyzer.charts import temporal_heatmap_chart
+        idx=pd.date_range("2026-01-01","2026-12-31 23:00",freq="h")
+        df=pd.DataFrame({"temperature":np.arange(len(idx),dtype=float)},index=idx)
+        fig=temporal_heatmap_chart(df,"temperature","week",HEATMAP_COMPARE_HOUR,"Mean","Example","°C")
+        self.assertEqual(self._calendar_rows(fig)[1],["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"])
+        self.assertEqual(self._calendar_rows(fig)[0][0],"W01")
+        self.assertEqual(self._calendar_rows(fig)[0][-1],"W53")
+        self.assertEqual(len(fig.data[0].x),53)
+
+    def test_r29_pinned_plotly_static_svg_retains_two_visible_tick_rows(self):
+        # Exercise the actual Kaleido/Plotly print renderer, not only Python
+        # layout validation: categorical ISO week tickvals include fractions.
+        import xml.etree.ElementTree as ET
+        from epw_climate_analyzer.calendar_heatmap_axes import set_period_axis_scope
+        x=["2020-W52","2020-W53","2021-W01"]
+        fig=go.Figure(go.Heatmap(x=x,y=list(range(24)),z=np.zeros((24,3))))
+        fig.update_layout(xaxis_title="Week",yaxis_title="Hour of day")
+        set_period_axis_scope(fig,pd.date_range("2020-12-21","2021-01-10",freq="D"))
+        apply_calendar_heatmap_axes(fig)
+        printed=report_figure(fig,width_pt=500,height_pt=230)
+        root=ET.fromstring(printed.to_image(format="svg"))
+        ns={"s":"http://www.w3.org/2000/svg"}
+        texts=[]
+        for group in root.findall(".//s:g",ns):
+            if group.attrib.get("class")=="xtick":
+                texts.extend(t.text for t in group.findall(".//s:tspan",ns) if t.text and t.text.strip())
+        for label in ("W52","W53","W01","Dec 2020","Jan 2021"):
+            self.assertIn(label,texts)
+
     def test_temperature_threshold_widgets_are_scoped_to_consuming_charts(self):
         import ast
         from pathlib import Path
