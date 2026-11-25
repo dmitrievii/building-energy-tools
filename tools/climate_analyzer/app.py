@@ -2212,7 +2212,7 @@ def render_extended_variable_chart(df, column, unit, chart_type, *, key_prefix="
         radiation=radiation_occurrence_kind(column)
         wind=column in WIND_SPEED_COLUMNS
         edge_key=key_prefix+"_edges_"+column+("_positive_v2_"+basis+"_"+statistic if depth or illuminance else "_wind_v1_"+basis+"_"+statistic if wind else "_radiation_v1_"+basis+"_"+statistic+"_"+str(cadence) if radiation else "")
-        if column in ("dew_point_temperature_c","relative_humidity_pct"):edge_key+="_fixed_moisture_v1"
+        if column in ("dew_point_temperature_c","relative_humidity_pct","humidity_ratio_g_kg"):edge_key+="_fixed_moisture_v1"
         boundaries=st.text_input(f"Positive radiation boundaries [{unit}] (comma-separated)" if radiation else "Positive wind speed boundaries [m/s] (comma-separated)" if wind else "Positive illuminance boundaries [lx] (comma-separated)" if illuminance else "Positive depth boundaries (comma-separated)" if depth else "Class boundaries (comma-separated)",value=default,key=edge_key)
         if wind:st.caption(WIND_OCCURRENCE_NOTE)
         if radiation:st.caption(radiation_occurrence_note(column,cadence,basis=basis,daily_stat=statistic))

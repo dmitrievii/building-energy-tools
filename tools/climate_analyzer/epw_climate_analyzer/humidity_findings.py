@@ -357,6 +357,18 @@ def humidity_figure_interpretation(
             if basis.lower() == "percentage" else
             "Classes represent disjoint observation-hour frequencies."
         )
+        if column == W:
+            from .extended_visualization import W_OCCURRENCE_EDGES, W_OCCURRENCE_NOTE
+            meta=fig.layout.meta if isinstance(fig.layout.meta,dict) else {}
+            if basis.lower()=="days":
+                if statistic.lower()=="maximum":
+                    detail+=" Daily maxima identify peak outdoor water-vapour content and potential peak ventilation moisture-removal requirements."
+                elif statistic.lower()=="minimum":
+                    detail+=" Daily minima identify persistent outdoor moisture exposure when even the lowest daily humidity ratio remains high."
+                else:
+                    detail+=" Daily means characterize the typical humidity ratio over each complete day."
+            if tuple(meta.get("occurrence_edges",()))==W_OCCURRENCE_EDGES:
+                detail+=" "+W_OCCURRENCE_NOTE
         if column == RH:
             from .extended_visualization import RH_OCCURRENCE_EDGES, RH_OCCURRENCE_NOTE
             meta=fig.layout.meta if isinstance(fig.layout.meta,dict) else {}
