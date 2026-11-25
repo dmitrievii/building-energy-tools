@@ -480,8 +480,10 @@ def apply_chart_presentation(fig: Any, settings: ChartPresentationSettings) -> A
 
     _apply_extra_presentation(fig, settings)
     from .calendar_heatmap_axes import apply_calendar_heatmap_axes,apply_monthly_axes
-    apply_calendar_heatmap_axes(fig)
-    apply_monthly_axes(fig)
+    dims=settings.display_dimensions()
+    width=dims[0] if dims else None
+    apply_calendar_heatmap_axes(fig,width_px=width)
+    apply_monthly_axes(fig,width_px=width)
     _space_bottom_legends(fig, settings, size)
 
     def reflow_if_diurnal():
