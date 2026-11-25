@@ -85,6 +85,8 @@ def _eligible(fig,trace):
     names=" ".join([str(fig.layout.title.text or ""),str(trace.name or ""),str(meta.get("heatmap_quantity","")),unit]).lower()
     if any(v in names for v in ("wind direction","wind_direction","wind_gust_direction","direction [","stress class","utci stress","correlation","class","snow cover","snow-cover","availability","suitab","eligibility","0/1","binary","missing or undefined","occurrence","joint probability","frequency","probability","count","number of","hours per")):
         return None
+    # Reject colorbar-coded or count-derived heatmaps even if their source
+    # column is a continuous physical quantity.
     # A quantity/explicit continuous admission is required. Never infer
     # continuity merely from floating-point values in an unknown matrix.
     u=unit.lower().strip()
@@ -97,6 +99,9 @@ def _eligible(fig,trace):
     colors=getattr(scale,"colorscale",None)
     if colors and any(float(a[0])==float(b[0]) and a[1]!=b[1] for a,b in zip(colors,colors[1:])):return None
     if trace.showscale is False and not trace.coloraxis:return None
+    # A categorical row of years represents distinct samples, not an
+    # interpolable continuous coordinate, even when years are numeric.
+    if any(str(_axis(fig,trace,c).title.text or "").lower() in ("year","climate","station","scenario","variable") for c in ("x","y")):return None
     try:z=np.asarray(trace.z,dtype=float)
     except (ValueError,TypeError):return None
     if z.ndim!=2 or min(z.shape)<2:return None
@@ -160,12 +165,22 @@ def apply_heatmap_presentation(fig,mode=TILES,*,interval=0.,labels=True,width=1.
         levels=_levels(lo,hi,unit,interval)
         if levels is None:continue
         line_color="#FFFFFF" if contrast=="Light" else "#252525"
+        if contrast=="Auto":
+            from plotly.colors import sample_colorscale,unlabel_rgb
+            try:
+                palette=scale.colorscale or "Viridis"
+                sample=sample_colorscale(palette,[.15,.35,.55,.75,.95])
+                rgb=np.asarray([unlabel_rgb(v) for v in sample],dtype=float)/255.
+                luminance=float(np.mean(rgb @ np.array([.2126,.7152,.0722])))
+                line_color="#FFFFFF" if luminance<.47 else "#252525"
+            except (ValueError,TypeError,IndexError):pass
         # Plotly contour receives the identical source coordinates and values.
         # connectgaps=False prevents filling through invalid cells. No added
         # samples, no interpolation of categorical codes or circular angles.
         local=dict(coloraxis=trace.coloraxis) if trace.coloraxis else dict(
             colorscale=trace.colorscale or "Viridis",zmin=cmin if cmin is not None else lo,
-            zmax=cmax if cmax is not None else hi,colorbar=trace.colorbar.to_plotly_json(),zauto=False)
+            zmax=cmax if cmax is not None else hi,zmid=trace.zmid,
+            reversescale=trace.reversescale,colorbar=trace.colorbar.to_plotly_json(),zauto=False)
         opts=dict(x=trace.x,y=trace.y,z=z,xaxis=trace.xaxis,yaxis=trace.yaxis,
             connectgaps=False,hoverongaps=False,hoverinfo="skip",
             showlegend=False,showscale=mode==CONTOURS and not trace.coloraxis,
