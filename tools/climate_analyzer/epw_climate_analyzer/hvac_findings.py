@@ -12,6 +12,7 @@ import plotly.graph_objects as go
 from .aggregations import native_interval_hours
 from .p3_comfort import T, W
 from .p4_extremes import H, daily_stats
+from .chart_theme import semantic_color_from_text
 
 LOAD_COLUMNS=("Sensible heating","Sensible cooling",
               "Latent humidification","Latent dehumidification")
@@ -70,7 +71,8 @@ def conditioning_monthly_figure(df,ledger,*,grouped=True,title="Monthly outdoor-
     table=ledger[list(LOAD_COLUMNS)].resample("MS").sum(min_count=1)
     fig=go.Figure()
     for name in LOAD_COLUMNS:
-        fig.add_bar(x=table.index,y=table[name],name=name)
+        fig.add_bar(x=table.index,y=table[name],name=name,
+                    marker_color=semantic_color_from_text(name))
     fig.update_layout(template="plotly_white",title=title,
         barmode="group" if grouped else "stack",xaxis_title="Month",
         yaxis_title="Reference conditioning energy [kWh]",
