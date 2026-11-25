@@ -29,6 +29,8 @@ CURRENT_COMPATIBILITY_PATHS = frozenset({
     "deployment/verify_ige_cloud_candidate.py",
     "tools/climate_analyzer/app.py",
     "tools/climate_analyzer/epw_climate_analyzer/charts.py",
+    # R2.18: engine hourly plot only; explicitly reviewed semantic line colour.
+    "tools/climate_analyzer/epw_climate_analyzer/engine_ui.py",
     "tools/climate_analyzer/epw_climate_analyzer/geosphere.py",
     "tools/climate_analyzer/epw_climate_analyzer/station_year_ui.py",
     "tools/climate_analyzer/tests/test_ige_h1_station_year_ui.py",

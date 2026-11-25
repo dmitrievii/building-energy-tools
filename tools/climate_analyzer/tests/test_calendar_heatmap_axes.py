@@ -384,7 +384,8 @@ class CalendarHeatmapTests(unittest.TestCase):
         from epw_climate_analyzer.extended_visualization import ground_depth_heatmap
         columns=("dry_bulb_temperature_c","dry_bulb_temperature_min_c","dry_bulb_temperature_max_c",
                  "dew_point_temperature_c","wet_bulb_temperature_c","ground_temperature_0_10m_c",
-                 "ground_temperature_0_20m_c","ground_temperature_0_50m_c")
+                 "ground_temperature_0_20m_c","ground_temperature_0_50m_c",
+                 "ground_temperature_1_00m_c","ground_temperature_2_00m_c")
         self.assertEqual(set(columns),TEMPERATURE_HEATMAP_COLUMNS)
         idx=pd.date_range("2026-01-01",periods=48,freq="h")
         df=pd.DataFrame({c:np.linspace(-5+i,20+i,48) for i,c in enumerate(columns)},index=idx)
@@ -563,23 +564,27 @@ class CalendarHeatmapTests(unittest.TestCase):
         fig=temporal_heatmap_chart(constant,c,"day",HEATMAP_COMPARE_HOUR,"Mean","Enthalpy","kJ/kg dry air")
         self.assertLess(fig.layout.coloraxis.cmin,fig.layout.coloraxis.cmax)
 
-    def test_occurrence_temperature_edges_round_before_classification(self):
+    def test_occurrence_temperature_fixed_defaults_and_exact_custom_classification(self):
         from epw_climate_analyzer.extended_visualization import occurrence_default_edges,occurrence_table,occurrence_figure
         c="wet_bulb_temperature_c"
         source=pd.Series([2.77255,8.08763,14.6989])
         self.assertEqual(occurrence_default_edges(source,"dry_bulb_temperature_c"),[0.,15.,25.,30.])
         v=pd.Series([0.,2.77255,8.08763,14.6989,20.])
         edges=occurrence_default_edges(v,c)
-        self.assertEqual(edges,[2.8,8.1,14.7])
+        self.assertEqual(edges,[0.,10.,15.,20.,25.,28.,31.])
         df=pd.DataFrame({c:[2.79,2.8,8.09,8.1,14.69,14.7,np.nan]},index=pd.date_range("2026-01-01",periods=7,freq="h"))
-        table=occurrence_table(df,c,edges)
+        fixed=occurrence_table(df,c,edges)
+        np.testing.assert_allclose(fixed.iloc[0],[0.,4.,2.,0.,0.,0.,0.,0.])
+        self.assertEqual(float(fixed.sum().sum()),6.)
+        # User-defined boundaries keep the exact displayed precision.
+        table=occurrence_table(df,c,[2.8,8.1,14.7])
         self.assertEqual(list(table.columns),["< 2.8","2.8 – < 8.1","8.1 – < 14.7","≥ 14.7"])
         np.testing.assert_allclose(table.iloc[0],[1.,2.,2.,1.])
         self.assertEqual(float(table.sum().sum()),6.)
         fig=occurrence_figure(table,"°C","Hours")
         self.assertEqual(fig.data[0].name,"< 2.8 °C")
         constant=occurrence_default_edges(pd.Series([1.01,1.02,1.03]),c)
-        self.assertEqual(constant,[1.])
+        self.assertEqual(constant,edges)
         manual=occurrence_table(df,c,[2.791,2.799])
         self.assertEqual(list(manual.columns),["< 2.791","2.791 – < 2.799","≥ 2.799"])
 
