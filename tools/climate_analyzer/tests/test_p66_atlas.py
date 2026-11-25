@@ -50,7 +50,19 @@ class AtlasTests(unittest.TestCase):
             self.assertEqual(set(tr.name for tr in fig.data),{"Category I","Category II","Category III","Neutral operative temperature","Outdoor running mean"})
             primary=[str(t).split("<br>")[0] for t in fig.layout.xaxis.ticktext if not str(t).startswith("&nbsp;")]
             self.assertEqual(primary[-1],str(n))
-            self.assertIn("&nbsp;<br>Dec",fig.layout.xaxis.ticktext)
+            # Month and ordinal labels may share an exact coordinate.
+            ticks=list(zip(fig.layout.xaxis.tickvals,fig.layout.xaxis.ticktext))
+            month_ticks=[(float(x),str(label).split("<br>")[1])
+                         for x,label in ticks if str(label).split("<br>")[1]!="&nbsp;"]
+            months=pd.date_range(f"{year}-01-01",periods=12,freq="MS")
+            self.assertEqual([label for _,label in month_ticks],list(months.strftime("%b")))
+            np.testing.assert_allclose([x for x,_ in month_ticks],
+                                       [m.dayofyear+(m.days_in_month-1)/2 for m in months])
+            self.assertEqual(len(ticks),len({x for x,_ in ticks}))
+            for x,label in ticks:
+                day=str(label).split("<br>")[0]
+                if day!="&nbsp;":
+                    self.assertEqual(float(day),float(x))
             self.assertEqual(fig.layout.xaxis.tickvals[-1],n)
             self.assertEqual(fig.layout.legend.orientation,"h")
             self.assertIn(f"{n-7}/{n}",note)
