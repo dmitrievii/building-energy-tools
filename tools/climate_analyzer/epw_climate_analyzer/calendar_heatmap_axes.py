@@ -128,11 +128,13 @@ def _dual_calendar_ticks(axis,values,fig,semantic,*,width_px=None,heatmap=True):
         convert=lambda p:pd.Timestamp(int(p)).isoformat()
     elif weekly:
         reference=None
+        actual_reference=False
         if numeric and 1<=min(nums)<=max(nums)<=53:
-            reference=int(years[0]) if single else 2020
+            reference=int(years[0]) if single and meta.get("period_time_basis") not in ("Calendar profile","Interannual overlay") else 2020
+            actual_reference=single and meta.get("period_time_basis") not in ("Calendar profile","Interannual overlay")
             try:starts=[pd.Timestamp.fromisocalendar(reference,n,1) for n in nums]
             except ValueError:
-                reference=2020;starts=[pd.Timestamp.fromisocalendar(reference,n,1) for n in nums]
+                reference=2020;actual_reference=False;starts=[pd.Timestamp.fromisocalendar(reference,n,1) for n in nums]
             centers=[float(n) for n in nums]
             labels=[f"W{n:02d}" for n in nums]
             settings=dict(type="linear")
@@ -141,9 +143,10 @@ def _dual_calendar_ticks(axis,values,fig,semantic,*,width_px=None,heatmap=True):
             if not all(matches):return False
             if not all(m.group(1) for m in matches):
                 reference=int(years[0]) if single and meta.get("period_time_basis") not in ("Calendar profile","Interannual overlay") else 2020
+                actual_reference=single and meta.get("period_time_basis") not in ("Calendar profile","Interannual overlay")
                 try:starts=[pd.Timestamp.fromisocalendar(reference,int(m.group(2)),1) for m in matches]
                 except ValueError:
-                    reference=2020;starts=[pd.Timestamp.fromisocalendar(reference,int(m.group(2)),1) for m in matches]
+                    reference=2020;actual_reference=False;starts=[pd.Timestamp.fromisocalendar(reference,int(m.group(2)),1) for m in matches]
             else:
                 try:starts=[pd.Timestamp.fromisocalendar(int(m.group(1)),int(m.group(2)),1) for m in matches]
                 except ValueError:return False
@@ -155,7 +158,7 @@ def _dual_calendar_ticks(axis,values,fig,semantic,*,width_px=None,heatmap=True):
         # to each month guide, while the week cell remains unsplit.
         segments={}
         scope_start=scope_end=None
-        if reference is None:
+        if reference is None or actual_reference:
             try:
                 scope_start=pd.Timestamp(meta["period_source_first"]).normalize()
                 scope_end=pd.Timestamp(meta["period_source_last"]).normalize()+pd.Timedelta(days=1)
@@ -185,7 +188,7 @@ def _dual_calendar_ticks(axis,values,fig,semantic,*,width_px=None,heatmap=True):
             if weight>0:
                 pos=sum((l+h)/2*(h-l) for l,h in spans)/weight
                 months[pos]=m.start_time.strftime("%b %Y" if multi else "%b")
-        label="ISO week" if reference is None else f"ISO week · month guide {reference}"
+        label="ISO week" if reference is None or actual_reference else f"ISO week · month guide {reference}"
         convert=lambda p:p
     else:return False
     if not primary or not months:return False
@@ -337,7 +340,7 @@ def _period_ticks(axis,values,fig,*,heatmap=False):
     daily=agg=="daily" or title in ("day","day of year","day of the year","calendar day","daily period") or (agg!="monthly" and "daily" in graph and "occurrence" not in graph and title in ("period","date","time"))
     try:nums=[int(v) for v in raw if float(v)==int(v)]
     except (TypeError,ValueError,OverflowError):nums=[]
-    if len(nums)==len(raw) and nums and 1<=min(nums)<=max(nums)<=366 and (daily or title=="period" and max(nums)>53):
+    if len(nums)==len(raw) and nums and 1<=min(nums)<=max(nums)<=366 and daily:
         # Preserve continuous ordinal chart coordinates and true selection bounds,
         # but display calendar dates when the source year is established.
         ticks=_day_positions(nums)
@@ -482,6 +485,7 @@ def _series_dual_ticks(axis,raw,fig,*,width_px=None):
     label="Clock hour" if short else "Calendar week" if agg=="weekly" and pooled else "ISO week" if agg=="weekly" else "Day of year"
     if categorical and dates.year.nunique()==1 and pooled and not short and agg!="weekly":label="Calendar day · leap-year reference"
     if agg=="weekly" and pooled:label="Calendar week · 7-day reference bins"
+    elif pooled and not short:label="Calendar day · leap-year reference"
     def primary_label(t):
         if short:return t.strftime("%H:%M")
         if agg=="weekly":
