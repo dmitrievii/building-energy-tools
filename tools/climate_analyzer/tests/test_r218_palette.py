@@ -73,3 +73,27 @@ class UniversalPaletteTests(unittest.TestCase):
         self.assertFalse(inspect_palette(f)["implicit_channels"])
         f.data[0].contours.coloring="fill"
         self.assertTrue(inspect_palette(f)["implicit_channels"])
+
+    def test_all_native_monthly_solar_profiles_share_exact_palette(self):
+        from epw_climate_analyzer import p66_catalogue as cat, charts as ch
+        from epw_climate_analyzer.p66_render import make_figure
+        idx=pd.date_range("2026-01-01",periods=12,freq="MS")
+        variables=cat.VARIABLE_GROUPS[cat.SOL]
+        self.assertEqual(len(variables),8)
+        df=pd.DataFrame({column:np.linspace(10.,20.,len(idx)) for column,_,_ in variables},index=idx)
+        df.attrs["canonical_native_resolution"]="monthly"
+        diagrams=[d for d in cat.catalogue(df,{},cat.REP)
+                  if d.chapter==cat.SOL and d.kind=="native" and d.status=="available"]
+        self.assertEqual(len(diagrams),8)
+        for d in diagrams:
+            with self.subTest(column=d.column):
+                atlas,note=make_figure(d,df,{})
+                live=ch.time_series_profile_chart(df,d.column,"Native","Website",d.unit,"Observed values")
+                printed=report_figure(atlas,width_pt=500,height_pt=310)
+                expected=inspect_palette(live)
+                for view in (atlas,printed):
+                    actual=inspect_palette(view)
+                    self.assertFalse(actual["implicit_channels"])
+                    self.assertEqual(actual["signature"],expected["signature"])
+                    np.testing.assert_allclose(view.data[0].y,live.data[0].y)
+                self.assertTrue(note.strip())

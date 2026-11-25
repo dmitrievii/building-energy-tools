@@ -95,6 +95,11 @@ def verify(output, contract_path, *, current_tree=False):
     tests={'count':result.testsRun,'failures':len(result.failures),'errors':len(result.errors),
            'skips':len(result.skipped),'seconds':time.monotonic()-started}
     (output/'tests.json').write_text(json.dumps(tests,indent=2)+'\n')
+    if not result.wasSuccessful():
+        # Surface the exact failing test and traceback in the workflow log;
+        # keep the complete offline regression log as the archived evidence.
+        for case,traceback in result.failures+result.errors:
+            print(f"CLOUD REGRESSION FAILURE: {case}\n{traceback}",flush=True)
     assert result.wasSuccessful(),'See tests.log'
     from epw_climate_analyzer.engine_application import run_historical_product,pilot_historical_request,run_future_pilot_product
     from epw_climate_analyzer.engine_station_product import load_station_year_product

@@ -427,11 +427,11 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         except ValueError as exc:raise NotApplicable(str(exc)) from exc
     else:raise NotApplicable("No atlas renderer registered.")
     if not len(f.data):raise NotApplicable("No plotted data.")
-    # Native monthly and total bars bypass the general metric chart builders.
+    # Native monthly profiles already use the canonical website builder.
+    # Only the specialized irradiation total bars require this adapter.
     from .chart_theme import metric_color,is_irradiation_metric
-    if is_irradiation_metric(c):
-        if k=="native":f.update_traces(line_color=metric_color(c),marker_color=metric_color(c),selector=dict(type="scatter"))
-        elif k=="total":f.update_traces(marker_color=metric_color(c),selector=dict(type="bar"))
+    if k=="total" and is_irradiation_metric(c):
+        f.update_traces(marker_color=metric_color(c),selector=dict(type="bar"))
     f.update_layout(template="plotly_white",title=title)
     from .calendar_heatmap_axes import apply_calendar_heatmap_axes,apply_monthly_axes,set_period_axis_scope
     with phase("chart_axis_layout"):

@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import importlib
+import os
+from pathlib import Path
 import subprocess
 import sys
 import unittest
@@ -35,8 +37,23 @@ class ProfileImportBootTests(unittest.TestCase):
             "from epw_climate_analyzer.profile_interpretation import canonical_profile_kind\n"
             "assert canonical_profile_kind('time_series','Hourly · Observed values') == 'time_series'\n"
         )
-        subprocess.run([sys.executable,"-c",code],check=True,
-                       capture_output=True,text=True,timeout=45)
+        # Cloud invokes unittest from the repository root and injects source
+        # roots into the parent sys.path. A fresh child cannot inherit sys.path.
+        # Use the exact checkout, not an installed or cached package.
+        source_root=Path(__file__).resolve().parents[1]
+        env=os.environ.copy()
+        env["PYTHONPATH"]=str(source_root)
+        code+=(
+            "from pathlib import Path\n"
+            "import epw_climate_analyzer.profile_interpretation as profile_module\n"
+            f"assert Path(profile_module.__file__).resolve().is_relative_to(Path({str(source_root)!r}))\n"
+        )
+        result=subprocess.run([sys.executable,"-c",code],
+                              cwd=source_root.parent.parent,env=env,
+                              capture_output=True,text=True,timeout=45)
+        self.assertEqual(result.returncode,0,
+                         f"Fresh checkout import failed (exit {result.returncode})\n"
+                         f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}")
 
     def test_date_format_is_independent_of_profile_classifier(self):
         from epw_climate_analyzer.period_display import format_plotted_time
