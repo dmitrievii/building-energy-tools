@@ -304,6 +304,17 @@ METRIC_COLORS = {
 }
 
 
+# Rejection mechanisms retain the physical quantity palette. Temperature
+# colours indicate outdoor exposure (cold/hot), rather than HVAC service.
+NV_REJECTION_REASON_COLORS = {
+    "Too cold": COOLING_COLOR,
+    "Too hot": HEATING_COLOR,
+    "Too humid": METRIC_COLORS["humidity_ratio_g_kg"],
+    "Wind too weak": WIND_SPEED_COLORS[1],
+    "Wind too strong": WIND_SPEED_COLORS[-1],
+}
+
+
 def _hex_to_rgb(color: str) -> tuple[int, int, int]:
     value = color.lstrip("#")
     if len(value) != 6:

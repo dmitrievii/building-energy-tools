@@ -5,7 +5,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from .aggregations import native_interval_hours,period_total_series
 from .temporal_filtering import display_period_labels,time_basis,CALENDAR_PROFILE
-from .chart_theme import metric_color, NV_COLOR, NIGHT_FLUSHING_COLOR, NV_REJECTED_COLOR
+from .chart_theme import metric_color, NV_COLOR, NIGHT_FLUSHING_COLOR, NV_REJECTION_REASON_COLORS
 
 T="dry_bulb_temperature_c"
 G="global_horizontal_radiation_wh_m2"
@@ -177,7 +177,7 @@ def nv_special_figure(df,style,*,mask=None,t_min=16.,t_max=26.,w_max=9.,wind_min
             wind_limits=(wind_min,wind_max) if wind_min is not None and wind_max is not None else None)
     if style=="Rejected reasons":
         reasons=rejection_reasons_for_nv(df,t_min,t_max,w_max,wind_min_m_s=wind_min,wind_max_m_s=wind_max)
-        f=go.Figure(go.Bar(x=reasons["reason"],y=reasons["hours"],marker_color=NV_REJECTED_COLOR))
+        f=go.Figure(go.Bar(x=reasons["reason"],y=reasons["hours"],marker_color=[NV_REJECTION_REASON_COLORS[reason] for reason in reasons["reason"]]))
         f.update_layout(template="plotly_white",title="Natural-ventilation rejected reasons",xaxis_title="Reason",yaxis_title="Hours")
         peak=reasons.iloc[0]
         return f,(f"The largest rejection duration is {peak['reason'].lower()} ({peak['hours']:,.1f} h). "

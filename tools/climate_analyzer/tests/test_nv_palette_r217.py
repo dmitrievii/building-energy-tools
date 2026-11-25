@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from epw_climate_analyzer.chart_theme import (
     NV_COLOR, NIGHT_FLUSHING_COLOR, NV_REJECTED_COLOR, NV_SUITABILITY_COLORSCALE,
-    NIGHT_FLUSHING_COLORSCALE, semantic_color_from_text,
+    NIGHT_FLUSHING_COLORSCALE, semantic_color_from_text, NV_REJECTION_REASON_COLORS,
 )
 from epw_climate_analyzer.residual_findings import eligibility_figure, nv_special_figure
 from epw_climate_analyzer.p3_persistence_chart import persistence_figure
@@ -39,7 +39,7 @@ class NaturalVentilationPaletteTests(unittest.TestCase):
         df=pd.DataFrame({"dry_bulb_temperature_c":20.,"humidity_ratio_g_kg":6.,"wind_speed_m_s":2.,"wind_direction_deg":270.},index=idx)
         df.attrs["canonical_native_interval_minutes"]=60
         mask=pd.Series(idx.hour<12,index=idx)
-        for style,colour,attr in (("Daily duration",NV_COLOR,"line"),("Rejected reasons",NV_REJECTED_COLOR,"marker"),("Persistence",NV_COLOR,"marker")):
+        for style,colour,attr in (("Daily duration",NV_COLOR,"line"),("Persistence",NV_COLOR,"marker")):
             fig,_=nv_special_figure(df,style,mask=mask)
             self.assertEqual(getattr(fig.data[0],attr).color,colour)
         fig,_=nv_sensitivity_figure(df,mask.astype(float))
@@ -50,3 +50,20 @@ class NaturalVentilationPaletteTests(unittest.TestCase):
         table=directional_class_table(df,quantity="Natural ventilation suitability",radial="Hours",nv_mask=mask)
         fig=directional_class_figure(table,"NV")
         self.assertEqual(tuple(t.marker.color for t in fig.data),(NV_REJECTED_COLOR,NV_COLOR))
+
+    def test_rejection_reason_colours_follow_labels_not_rank(self):
+        idx=pd.date_range("2026-01-01",periods=6,freq="h")
+        df=pd.DataFrame({"dry_bulb_temperature_c":[10.,30.,30.,20.,20.,20.],
+                         "humidity_ratio_g_kg":[6.,6.,6.,12.,12.,12.],
+                         "wind_speed_m_s":[.2,2.,8.,8.,2.,2.]},index=idx)
+        df.attrs["canonical_native_interval_minutes"]=60
+        for limits in ({},{"wind_min":.5,"wind_max":6.}):
+            fig,_=nv_special_figure(df,"Rejected reasons",**limits)
+            for view in (fig,report_figure(fig,width_pt=500,height_pt=230)):
+                trace=view.data[0]
+                self.assertEqual(tuple(trace.marker.color),
+                                 tuple(NV_REJECTION_REASON_COLORS[x] for x in trace.x))
+                self.assertEqual(len(set(trace.marker.color)),len(trace.x))
+                expected={"Too cold":1.,"Too hot":2.,"Too humid":3.,
+                          "Wind too weak":1.,"Wind too strong":2.}
+                self.assertEqual(dict(zip(trace.x,trace.y)),{x:expected[x] for x in trace.x})
