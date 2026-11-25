@@ -408,12 +408,13 @@ def available_catalog(df,context):
 def standard_figure(entry,df,context,reference_df=None):
     """One documented reference configuration per standard diagram."""
     from .charts import profile_ribbon_chart,duration_chart,month_hour_heatmap,psychrometric_chart,sun_path_chart
+    from .chart_theme import metric_color, semantic_color_from_text
     id,page,label,column,unit,kind=entry
     s=numeric(df,column)
     monthly=str(df.attrs.get("canonical_native_resolution","")).lower()=="monthly"
     if kind=="profile":
         if monthly:
-            fig=go.Figure(go.Scatter(x=s.index,y=s,mode="lines+markers",connectgaps=False))
+            fig=go.Figure(go.Scatter(x=s.index,y=s,mode="lines+markers",connectgaps=False,line_color=metric_color(column)))
             fig.update_layout(template="plotly_white",title=label,yaxis_title=unit)
         else:fig=profile_ribbon_chart(df,column,"Monthly",label,unit)
         note=""
@@ -540,7 +541,7 @@ def standard_figure(entry,df,context,reference_df=None):
         table=monthly_daylight_sunshine_summary(df,float(context["latitude"]))
         if "relative_sunshine_pct" not in table or not table.relative_sunshine_pct.notna().any():
             raise ValueError("Complete sunshine days and site latitude are required.")
-        fig=go.Figure(go.Bar(x=table["month"],y=table["relative_sunshine_pct"]))
+        fig=go.Figure(go.Bar(x=table["month"],y=table["relative_sunshine_pct"],marker_color=metric_color("relative_sunshine_pct")))
         fig.update_layout(template="plotly_white",title=label,
             xaxis_title="Month",yaxis_title="Measured sunshine / astronomical daylight [%]")
         note=sunshine_interpretation(df,latitude=float(context["latitude"]),kind="relative_sunshine")
@@ -558,7 +559,7 @@ def standard_figure(entry,df,context,reference_df=None):
             heating_indoor_c=20.,heating_limit_c=12.,cooling_indoor_c=26.,cooling_limit_c=26.,require_complete_days=True)
         if degree.empty or not degree.notna().any().any():raise ValueError("No complete valid daily temperature observations.")
         fig=go.Figure()
-        for key in degree:fig.add_bar(x=degree.index,y=degree[key],name=key)
+        for key in degree:fig.add_bar(x=degree.index,y=degree[key],name=key,marker_color=semantic_color_from_text(key))
         fig.update_layout(template="plotly_white",title=label,barmode="group",yaxis_title=unit)
         degree_legend_below(fig)
         note=degree_metric_interpretation(degree,metric="Degree-days",heating_indoor_c=20.,

@@ -8,11 +8,12 @@ import streamlit as st
 from . import p3_comfort as p
 from .aggregations import native_interval_hours
 from .temporal_filtering import available_years,filter_year
+from .chart_theme import semantic_color_from_text
 
 def _monthly(df,ledger,title,unit,render,note):
     table=p.monthly_totals(df,ledger)
     fig=go.Figure()
-    for c in table:fig.add_bar(x=table.index,y=table[c],name=c)
+    for c in table:fig.add_bar(x=table.index,y=table[c],name=c,marker_color=semantic_color_from_text(c))
     fig.update_layout(template="plotly_white",title=title,barmode="stack",yaxis_title=unit)
     render(fig,note)
     st.dataframe(table,use_container_width=True)
@@ -21,7 +22,7 @@ def duration_ledger_figure(df,series,title,unit):
     fig=go.Figure();dt=native_interval_hours(df)
     for c in series:
         y=np.sort(series[c].dropna().to_numpy())[::-1]
-        if len(y):fig.add_scatter(x=np.arange(1,len(y)+1)*dt,y=y,mode="lines",name=c)
+        if len(y):fig.add_scatter(x=np.arange(1,len(y)+1)*dt,y=y,mode="lines",name=c,line_color=semantic_color_from_text(c))
     fig.update_layout(template="plotly_white",title=title,xaxis_title="Physical hours",yaxis_title=unit)
     return fig
 

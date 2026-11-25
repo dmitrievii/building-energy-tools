@@ -64,7 +64,7 @@ from epw_climate_analyzer.ui_contract import (
     queue_navigation,
     queue_navigation_reset,
 )
-from epw_climate_analyzer.chart_theme import metric_color
+from epw_climate_analyzer.chart_theme import metric_color, semantic_color_from_text, PASSIVE_STRATEGY_COLORS, climate_color_map
 from epw_climate_analyzer.runtime_identity import RUNTIME_BUILD_ID
 
 
@@ -3187,7 +3187,7 @@ def render_calculated_epw_statistics(df: pd.DataFrame) -> None:
         numeric_columns = [col for col in monthly.columns if col != "Month" and pd.api.types.is_numeric_dtype(monthly[col])]
         if numeric_columns:
             metric = st.selectbox("Monthly chart metric", numeric_columns, index=numeric_columns.index("Mean dry-bulb [°C]") if "Mean dry-bulb [°C]" in numeric_columns else 0)
-            fig = px.bar(monthly, x="Month", y=metric, title=f"Monthly summary: {metric}")
+            fig = px.bar(monthly, x="Month", y=metric, title=f"Monthly summary: {metric}",color_discrete_sequence=[semantic_color_from_text(metric)])
             fig.update_layout(template="plotly_white", xaxis_title="Month", yaxis_title=metric)
             st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False, "scrollZoom": True}, key=next_plot_key())
         st.download_button(
@@ -3203,7 +3203,7 @@ def render_calculated_epw_statistics(df: pd.DataFrame) -> None:
         numeric_columns = [col for col in seasonal.columns if col != "Season" and pd.api.types.is_numeric_dtype(seasonal[col])]
         if numeric_columns:
             metric = st.selectbox("Seasonal chart metric", numeric_columns, index=numeric_columns.index("Mean dry-bulb [°C]") if "Mean dry-bulb [°C]" in numeric_columns else 0)
-            fig = px.bar(seasonal, x="Season", y=metric, title=f"Seasonal summary: {metric}")
+            fig = px.bar(seasonal, x="Season", y=metric, title=f"Seasonal summary: {metric}",color_discrete_sequence=[semantic_color_from_text(metric)])
             fig.update_layout(template="plotly_white", xaxis_title="Season", yaxis_title=metric)
             st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False, "scrollZoom": True}, key=next_plot_key())
         st.download_button(
@@ -4732,7 +4732,7 @@ def render_precipitation(df: pd.DataFrame, native_df: pd.DataFrame | None = None
         if "measured_precipitation_duration_h" in table.columns:
             metric_labels["measured_precipitation_duration_h"] = "Measured precipitation duration [h]"
         metric = st.selectbox("Trend metric", list(metric_labels), format_func=lambda key: metric_labels[key])
-        fig = px.line(table, x="year", y=metric, markers=True, title=metric_labels[metric])
+        fig = px.line(table, x="year", y=metric, markers=True, title=metric_labels[metric], color_discrete_sequence=[metric_color("liquid_precipitation_depth_mm")])
         fig.update_layout(template="plotly_white", xaxis_title="Year", yaxis_title=metric_labels[metric])
         from epw_climate_analyzer.precipitation_findings import rainfall_summary
         render_plot(fig,rainfall_summary(df)+" Annual day-based indices use complete observed calendar days.")
@@ -4740,13 +4740,13 @@ def render_precipitation(df: pd.DataFrame, native_df: pd.DataFrame | None = None
         from epw_climate_analyzer.directional_climate import (
             directional_table,directional_figure,directional_interpretation)
         radial="Wind-driven rain exposure"
-        sectors=directional_table(df,radial=radial,colour="Wind speed")
+        sectors=directional_table(df,radial=radial,colour=radial)
         if not sectors.radius.notna().any():
             st.info("No coincident directional rainfall and wind observations.")
             return
-        fig=directional_figure(sectors,radial,"Wind speed",
+        fig=directional_figure(sectors,radial,radial,
             "Rain × wind exposure by meteorological incoming sector")
-        render_plot(fig,directional_interpretation(sectors,radial,"Wind speed"))
+        render_plot(fig,directional_interpretation(sectors,radial,radial))
         with st.expander("Directional rain exposure index",expanded=False):
             st.dataframe(sectors,use_container_width=True)
         return
@@ -4814,7 +4814,7 @@ def render_precipitation(df: pd.DataFrame, native_df: pd.DataFrame | None = None
             "snow_season_span_days": "First-to-last snow span [d]",
         }
         metric = st.selectbox("Trend metric", list(metric_labels), format_func=lambda key: metric_labels[key], key="snow_season_trend_metric")
-        fig = px.line(table, x="season_start_year", y=metric, markers=True, title=metric_labels[metric])
+        fig = px.line(table, x="season_start_year", y=metric, markers=True, title=metric_labels[metric], color_discrete_sequence=[metric_color("snow_depth_cm")])
         fig.update_layout(template="plotly_white", xaxis_title="Snow season start year", yaxis_title=metric_labels[metric])
         from epw_climate_analyzer.precipitation_findings import snow_summary
         render_plot(fig,snow_summary(source_df)+" Seasonal classes group snow observations into July–June climate seasons.")
@@ -4903,6 +4903,7 @@ def render_sky_daylight(df: pd.DataFrame, *, latitude: float | None = None) -> N
                     x="date",
                     y="daylight_duration_h",
                     title="Astronomical daylight duration",
+                    color_discrete_sequence=[metric_color("daylight_duration_h")],
                 )
                 fig.update_layout(
                     template="plotly_white",
@@ -4934,6 +4935,7 @@ def render_sky_daylight(df: pd.DataFrame, *, latitude: float | None = None) -> N
                     color="series",
                     markers=True,
                     title="Monthly daylight and sunshine",
+                    color_discrete_map={"Astronomical daylight":metric_color("daylight_duration_h"),"Measured sunshine":metric_color("sunshine_duration_s")},
                 )
                 fig.update_layout(
                     template="plotly_white",
@@ -4974,6 +4976,7 @@ def render_sky_daylight(df: pd.DataFrame, *, latitude: float | None = None) -> N
                 x="month",
                 y="relative_sunshine_pct",
                 title="Measured sunshine as share of astronomical daylight",
+                color_discrete_sequence=[metric_color("relative_sunshine_pct")],
             )
             fig.update_layout(
                 template="plotly_white",
@@ -5046,7 +5049,7 @@ def render_sky_daylight(df: pd.DataFrame, *, latitude: float | None = None) -> N
         table=sky_light_table(df,threshold_lux=threshold)
         fig=go.Figure()
         for name in ("Clear 0–2 tenths","Intermediate >2–<8","Overcast 8–10 tenths"):
-            fig.add_bar(x=table.index,y=table[name],name=name)
+            fig.add_bar(x=table.index,y=table[name],name=name,marker_color=semantic_color_from_text(name))
         fig.update_layout(template="plotly_white",barmode="stack",
             title="Exterior light availability by observed sky condition",
             xaxis_title="Month",yaxis_title=f"Hours with horizontal illuminance ≥{threshold:,.0f} lux",
@@ -5364,6 +5367,7 @@ def render_hvac_passive(df: pd.DataFrame) -> None:
                     orientation="h",
                     title="Passive and HVAC strategy hours by year",
                     labels={"year": "Year"},
+                    color_discrete_map=climate_color_map(sorted(table["year"].astype(str).unique())),
                 )
                 st.caption(
                     "Chronological multi-year mode: annual strategy hours are separated by real source year. "
@@ -5378,6 +5382,7 @@ def render_hvac_passive(df: pd.DataFrame) -> None:
                     orientation="h",
                     title="Passive and HVAC strategy hours — selected period",
                 )
+                fig.update_traces(marker_color=[PASSIVE_STRATEGY_COLORS[name] for name in table["strategy"]])
                 if chronological_multiyear:
                     st.caption(
                         "Selected-period summary intentionally pools all currently filtered chronological years. "
@@ -6030,7 +6035,7 @@ def render_ground_temperature_page(df: pd.DataFrame, *, source_label: str, nativ
         depth = st.slider("Depth [m]", 0.0, float(max_depth), min(2.0, float(max_depth)), float(step))
         values = {month: float(pd.Series(profile[month].to_numpy(), index=profile.index).reindex(profile.index.union([depth])).interpolate(method="index").loc[depth]) for month in profile.columns}
         series = pd.DataFrame({"month": list(values), "temperature_c": list(values.values())})
-        fig = px.line(series, x="month", y="temperature_c", markers=True, title=f"Calculated ground temperature at {depth:g} m")
+        fig = px.line(series, x="month", y="temperature_c", markers=True, title=f"Calculated ground temperature at {depth:g} m",color_discrete_sequence=[metric_color("ground_temperature_0_10m_c")])
         temperature_range = shared_temperature_range(profile, measured if not measured.empty else None)
         fig.update_layout(
             template="plotly_white",

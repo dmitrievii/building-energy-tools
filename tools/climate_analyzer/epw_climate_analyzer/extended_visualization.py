@@ -8,7 +8,7 @@ from plotly.subplots import make_subplots
 
 from .aggregations import native_interval_hours, duration_curve
 from .climate_model import aggregation_semantics_for
-from .chart_theme import metric_color, MONTH_COLORS, rgba
+from .chart_theme import metric_color, MONTH_COLORS, rgba, SKY_CONDITION_COLORS, SUNSHINE_COLORSCALE, climate_color_map
 from .temporal_filtering import CHRONOLOGICAL, time_basis
 from .daylight import daily_daylight_table
 from .occurrence_reference import REFERENCES, DURATION_UNITS_PER_HOUR, reference_edges
@@ -364,7 +364,9 @@ def occurrence_table(df,column,edges,*,basis="Hours",daily_stat="Mean"):
 def occurrence_figure(table,unit,basis):
     fig=go.Figure()
     column=table.attrs.get("occurrence_column")
-    if column in WIND_SPEED_COLUMNS and tuple(table.attrs.get("occurrence_edges",()))==WIND_SPEED_OCCURRENCE_EDGES:
+    if table.attrs.get("sky_condition_classes"):
+        palette=[SKY_CONDITION_COLORS[name] for name in table.columns]
+    elif column in WIND_SPEED_COLUMNS and tuple(table.attrs.get("occurrence_edges",()))==WIND_SPEED_OCCURRENCE_EDGES:
         palette=["#E5E7EB",*WIND_SPEED_COLORS]
     elif column==W_OCCURRENCE_COLUMN and tuple(table.attrs.get("occurrence_edges",()))==W_OCCURRENCE_EDGES:
         palette=list(W_OCCURRENCE_COLORS)
@@ -372,7 +374,7 @@ def occurrence_figure(table,unit,basis):
         palette=list(RH_OCCURRENCE_COLORS)
     elif column==DEW_POINT_COLUMN and tuple(table.attrs.get("occurrence_edges",()))==DEW_POINT_OCCURRENCE_EDGES:
         palette=list(DEW_POINT_OCCURRENCE_COLORS)
-    elif column in REFERENCES and not zero_occurrence_kind(column) and column!=T:
+    elif column and not zero_occurrence_kind(column) and column!=T:
         from .chart_theme import metric_colorscale
         from plotly.colors import sample_colorscale
         palette=sample_colorscale(metric_colorscale(column),np.linspace(.12,.95,len(table.columns)).tolist())
@@ -381,9 +383,12 @@ def occurrence_figure(table,unit,basis):
         from plotly.colors import sample_colorscale
         n=len(table.columns)
         palette=["#E5E7EB"]+sample_colorscale(metric_colorscale(column),np.linspace(.10 if column in ILLUMINANCE_OCCURRENCE_COLUMNS or radiation_occurrence_kind(column) else .20,1.,max(1,n-1)).tolist())
-    else:palette=["#2563EB","#0EA5E9","#059669","#EAB308","#EA580C","#DC2626"]
+    else:
+        from .chart_theme import metric_colorscale
+        from plotly.colors import sample_colorscale
+        palette=sample_colorscale(metric_colorscale(column),np.linspace(.08,.95,len(table.columns)).tolist())
     for i,c in enumerate(table):
-        color=palette[i] if zero_occurrence_kind(column) else palette[min(len(palette)-1,int(i*len(palette)/max(1,len(table.columns))))]
+        color=palette[i] if table.attrs.get("sky_condition_classes") or zero_occurrence_kind(column) else palette[min(len(palette)-1,int(i*len(palette)/max(1,len(table.columns))))]
         fig.add_bar(x=table.index,y=table[c],name=(c+" "+unit).strip(),marker_color=color)
     fig.update_layout(template="plotly_white",title="Monthly occurrence classes",
                       meta={"period_aggregation":"monthly","occurrence_column":column,"occurrence_edges":list(table.attrs.get("occurrence_edges",()))},
@@ -545,10 +550,12 @@ def amplitude_figure(df,column,aggregation,label):
         ranges=ranges.groupby(slots,observed=True).mean()
         fig.add_scatter(x=display_period_labels(ranges.index,aggregation,basis),y=ranges,name=label,mode="lines+markers",line=dict(color=metric_color(column),width=2.5),marker=dict(size=5),connectgaps=False)
     elif basis==INTERANNUAL_OVERLAY:
-        for year in sorted(set(ranges.index.year)):
+        years=sorted(set(ranges.index.year))
+        year_colours=climate_color_map(map(str,years))
+        for year in years:
             v=ranges.loc[ranges.index.year==year]
             slots=calendar_profile_slot(v.index,aggregation)
-            fig.add_scatter(x=display_period_labels(slots,aggregation,basis),y=v,mode="lines+markers",connectgaps=False,name=str(year))
+            fig.add_scatter(x=display_period_labels(slots,aggregation,basis),y=v,mode="lines+markers",connectgaps=False,name=str(year),line_color=year_colours[str(year)])
     else:
         fig.add_scatter(x=display_period_labels(ranges.index,aggregation,basis),y=ranges,name=label,mode="lines+markers",line=dict(color=metric_color(column),width=2.5),marker=dict(size=5),connectgaps=False)
     fig.update_layout(template="plotly_white",title=f"{aggregation} amplitude · {label}",xaxis_title="Period",yaxis_title="Amplitude [K]",legend=dict(orientation="h",y=-.2))
@@ -587,7 +594,14 @@ def sky_distribution(df,column="total_sky_cover_tenths"):
     # Three classes partition all valid observations on the 0–10 scale.
     clean=df.copy()
     clean[column]=_numeric(df,column).where(_numeric(df,column).between(0,10))
-    return occurrence_table(clean,column,[np.nextafter(2.,np.inf),8],basis="Hours")
+    table=occurrence_table(clean,column,[np.nextafter(2.,np.inf),8],basis="Hours")
+    if zero_occurrence_kind(column):
+        result=pd.concat([table.iloc[:,0]+table.iloc[:,1],table.iloc[:,2],table.iloc[:,3]],axis=1)
+    else:result=table.copy()
+    result.columns=["Clear","Intermediate","Overcast"]
+    result.attrs.update(table.attrs)
+    result.attrs["sky_condition_classes"]=True
+    return result
 
 
 def sunshine_hour_heatmap(df):
@@ -595,7 +609,7 @@ def sunshine_hour_heatmap(df):
     h=h.where(h.between(0.,3600.))
     averages=(h/3600.).groupby([h.index.month,h.index.hour]).mean().unstack().reindex(index=range(1,13),columns=range(24))
     return go.Figure(go.Heatmap(x=list(range(24)),y=list(MONTHS),z=averages.to_numpy(),
-                      zmin=0,zmax=1,colorscale="YlOrRd",colorbar=dict(title="h/h"),
+                      zmin=0,zmax=1,colorscale=SUNSHINE_COLORSCALE,colorbar=dict(title="h/h"),
                       hovertemplate="%{y} %{x}:00<br>%{z:.2f} sunshine h/h<extra></extra>")).update_layout(
                       template="plotly_white",title="Mean measured sunshine duration by month and hour",
                       xaxis=dict(title="Hour",tickvals=[0,6,12,18,23]),yaxis=dict(title="Month",autorange="reversed"))

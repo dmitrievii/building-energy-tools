@@ -176,7 +176,7 @@ def _heatmap_colorscale(column: str, values=None, temperature_thresholds: tuple[
         return metric_colorscale(column)
     if is_irradiation_metric(column):
         return SOLAR_COLORSCALE
-    return metric_colorscale(column) if column in ("relative_humidity_pct","humidity_ratio_g_kg","moist_air_enthalpy_kj_kg","specific_volume_m3_kg","moist_air_density_kg_m3","atmospheric_station_pressure_pa") else "Viridis"
+    return metric_colorscale(column)
 
 
 def apply_common_layout(fig: go.Figure, title: str, x_label: str, y_label: str) -> go.Figure:
