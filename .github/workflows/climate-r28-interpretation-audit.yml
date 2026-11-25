@@ -32,6 +32,19 @@ jobs:
       - name: Require all registered applicable configurations to pass interpretation parity
         if: always()
         run: python tools/climate_analyzer/tests/r28_interpretation_audit.py --output artifacts/r28_interpretation_audit.csv --require-complete
+      - name: R2.18 targeted semantic palette regression
+        if: always()
+        run: python -m unittest discover -s tools/climate_analyzer/tests -p 'test_r218_palette.py' -v
+      - name: R2.18 full catalogue palette evidence
+        if: always()
+        run: python tools/climate_analyzer/tests/r218_palette_audit.py --output artifacts/r218_palette_audit.csv
+      - name: Upload palette evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r218-palette-audit
+          path: artifacts/r218_palette_audit.csv
+          if-no-files-found: error
       - name: Upload case-level qualification evidence
         if: always()
         uses: actions/upload-artifact@v4
