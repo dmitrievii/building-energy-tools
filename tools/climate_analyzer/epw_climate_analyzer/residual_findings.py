@@ -116,8 +116,24 @@ def eligibility_figure(df,name,period,*,view="total",reference_df=None,ledger=No
     if name=="nv":note+=f"Outdoor air is within {t_min:g}–{t_max:g} °C and humidity ratio is 0–{w_max:g} g/kg. The distribution identifies opportunities for outdoor-air ventilation."
     elif name=="night":note+=night_flushing_interpretation(df,v.gt(0),hot_day_c=hot,night_max_c=cool)
     else:note+="Outdoor air reaches 24 °C and coincident mean horizontal irradiance reaches 250 W/m². These hours guide the timing of external solar protection."
-    if view=="map":note+=" Cell values represent the fraction of valid candidate observations satisfying the screen."
-    else:note+=f" Bars show {period.lower()} eligible duration."
+    if view=="map":
+        note+=" Cell values represent the fraction of valid candidate observations satisfying the screen."
+        # Identify recurring clock-hour opportunity from the same valid ledger.
+        by_hour=v.groupby(df.index.hour).agg(["sum","count"])
+        shares=100.*by_hour["sum"].div(by_hour["count"].replace(0,np.nan)*dt).dropna()
+        if not shares.empty:
+            if shares.max()>0:
+                peak=int(shares.idxmax())
+                note+=f" The highest observed clock-hour suitability occurs at {peak:02d}:00 ({shares.max():.1f}% of valid intervals at that hour)."
+            else:note+=" All observed clock hours have zero qualifying duration."
+    else:
+        observed=x.dropna()
+        if not observed.empty:
+            peak=observed.idxmax();low=observed.idxmin()
+            note+=f" The plotted {period.lower()} eligible duration ranges from {observed.min():,.1f} h ({low}) to {observed.max():,.1f} h ({peak})."
+            if time_basis(df)==CALENDAR_PROFILE:
+                note+=" Equivalent calendar periods show mean per-year totals."
+        note+=" This temporal distribution informs seasonal and daily opening schedules."
     return f,note
 
 def passive_matrix_figure(df):
@@ -146,7 +162,7 @@ def nv_special_figure(df,style,*,mask=None,t_min=16.,t_max=26.,w_max=9.,wind_min
     if style=="Persistence":
         table=persistence(df,mask);counts=persistence_monthly(table,2.)
         if counts.empty or not counts["Observed days"].notna().any():raise ValueError("No observed days with known suitability.")
-        return persistence_figure(counts,"Day availability · at least 2 uninterrupted hours"),persistence_interpretation(2.)
+        return persistence_figure(counts,"Day availability · at least 2 uninterrupted hours"),persistence_interpretation(2.,counts=counts)
     if style=="Daily duration":
         table=persistence(df,mask);v=table["Suitable hours [h]"].dropna().sort_values(ascending=False)
         if v.empty:raise ValueError("No observed days with known suitability.")

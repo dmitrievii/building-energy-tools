@@ -517,5 +517,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         elif stat and stat not in note:note=stat+"\n\n"+note
     from .figure_interpretation_contract import bind_figure_interpretation
     note=note.strip()
+    if d.chapter==cat.NV and not note:
+        raise ValueError("Natural Ventilation Atlas diagram requires a scientific interpretation.")
     bind_figure_interpretation(f,note)
     return f,note

@@ -205,7 +205,16 @@ def nv_sensitivity_figure(df,mask,*,temperature_limits=None,wind_limits=None):
             fig.add_hline(y=value,line_dash="dash",line_color="#444444",line_width=1)
     fig.update_layout(template="plotly_white",title="Temperature–wind ventilation suitability",
         xaxis_title="Outdoor temperature [°C]",yaxis_title="Wind speed [m/s]",height=520)
-    return fig,"White = 0% suitability, dark green = 100%, gray = no coincident observations. Dashed boundaries show the configured temperature limits and, when enabled, wind limits. Each 2 K × 0.5 m/s cell reports the share of observed valid hours satisfying all configured conditions, including humidity and occupancy. Hover for observed duration. Ventilation flow design uses opening areas, façade pressure coefficients, stack height and flow-path resistance."
+    observed=h.where(z.notna()).fillna(0.)
+    valid=float(observed.to_numpy().sum())
+    eligible=float((z.fillna(0.)*observed/100.).to_numpy().sum())
+    note=f"Across {valid:,.1f} coincident temperature–wind observation hours, {eligible:,.1f} h ({100*eligible/valid:.1f}%) satisfy the active outdoor-air screen. "
+    if eligible>0:
+        suitable=(z.fillna(0.)*observed/100.).stack()
+        wind,temp=suitable.idxmax()
+        note+=f"The largest concentration of eligible time is at the {temp:g} °C and {wind:g} m/s bin centres ({suitable.max():,.1f} h). "
+    note+="White = 0% suitability, dark green = 100%, gray = no coincident observations. Each 2 K × 0.5 m/s cell reports the share of observed valid hours satisfying the configured conditions. Dashed boundaries mark active limits. The distribution informs opening operation and façade ventilation design."
+    return fig,note
 
 def nv_sensitivity(df,mask,wind_available,render,*,temperature_limits=None,wind_limits=None):
     if not wind_available:
@@ -228,7 +237,7 @@ def persistence_panel(df,mask,render,*,night=False):
     st.caption(f"{meets} of {valid} observed {unit} ({100*meets/valid:.1f}%) provide at least {threshold:g} consecutive suitable hours.")
     from .p3_persistence_chart import persistence_figure
     fig=persistence_figure(counts,f"{label} availability · at least {threshold:g} uninterrupted hours",night=night)
-    render(fig,persistence_interpretation(threshold,night=night))
+    render(fig,persistence_interpretation(threshold,night=night,counts=counts))
 
     with st.expander("Detailed "+label.lower()+"-by-"+label.lower()+" results"):
         st.dataframe(table,use_container_width=True)
@@ -373,7 +382,17 @@ def snow_hours_panel(df,render):
     except ValueError as exc:st.info(str(exc))
 
 
-def persistence_interpretation(threshold,*,night=False):
+def persistence_interpretation(threshold,*,night=False,counts=None):
     unit="nights" if night else "days"
     label="Night" if night else "Day"
-    return f"A {label.lower()} qualifies when at least one continuous suitable period reaches {threshold:g} h. For example, suitable periods 08:00–10:00 and 14:00–16:00 provide four total hours but only two consecutive hours. Unknown, rejected or missing intervals break a run. Partial observed {unit} are counted from available records only; entirely unknown {unit} are excluded. The line reports the total observed day count, while the stacked bars resolve the qualifying and shorter-duration days."
+    prefix=""
+    if counts is not None:
+        valid=float(counts["Observed days"].sum())
+        meets=float(counts["Meets minimum"].sum())
+        if valid:
+            prefix=f"{meets:,.0f} of {valid:,.0f} observed {unit} ({100*meets/valid:.1f}%) provide at least {threshold:g} consecutive suitable hours. "
+            monthly=counts["Meets minimum"].dropna()
+            if not monthly.empty and monthly.max()>0:
+                prefix+=f"The highest number of qualifying {unit} occurs in {pd.Timestamp(monthly.idxmax()):%B %Y} ({monthly.max():,.0f}). "
+            prefix+="These durations guide the scheduling of sustained ventilation opportunities. "
+    return prefix+f"A {label.lower()} qualifies when at least one continuous suitable period reaches {threshold:g} h. For example, suitable periods 08:00–10:00 and 14:00–16:00 provide four total hours but only two consecutive hours. Unknown, rejected or missing intervals break a run. Partial observed {unit} are counted from available records only; entirely unknown {unit} are excluded. The line reports the total observed day count, while the stacked bars resolve the qualifying and shorter-duration days."
