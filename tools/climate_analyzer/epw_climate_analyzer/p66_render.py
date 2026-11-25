@@ -13,19 +13,20 @@ from . import aggregations as agg
 from .temporal_filtering import time_basis,display_period_labels
 from .climate_model import aggregation_semantics_for
 from .atlas_profile import phase
+from .chart_theme import metric_color, series_color, semantic_color_from_text, event_color
 
 class NotApplicable(ValueError):
     """Supported scientific method, but no valid qualifying state in this scope."""
 
-def _line(s,title,unit):
-    f=go.Figure(go.Scatter(x=s.index,y=s,mode="lines+markers" if len(s)<32 else "lines",connectgaps=False))
+def _line(s,title,unit,column=None):
+    f=go.Figure(go.Scatter(x=s.index,y=s,mode="lines+markers" if len(s)<32 else "lines",connectgaps=False,line_color=metric_color(column) if column else series_color(str(s.name),title)))
     return f.update_layout(template="plotly_white",title=title,yaxis_title=unit,xaxis_title="Period")
 
 def _bars(a,title,unit):
     if isinstance(a,pd.Series):a=a.to_frame()
     if a.empty or not a.notna().any().any():raise NotApplicable("No valid observations for this representation.")
     f=go.Figure()
-    for c in a:f.add_bar(x=a.index,y=a[c],name=str(c))
+    for c in a:f.add_bar(x=a.index,y=a[c],name=str(c),marker_color=series_color(str(c),title))
     return f.update_layout(template="plotly_white",title=title,yaxis_title=unit,barmode="group")
 
 def _totals(df,a,period):
@@ -41,10 +42,12 @@ def _event_figure(table,series,style,threshold,above,unit,quantity,step=None):
         return event_timeline_figure(table,series,unit=unit,threshold=threshold,above=above,quantity=quantity,step=step)
     if table.empty:raise NotApplicable("No qualifying events; the timeline remains available.")
     if style=="intensity":
-        f=go.Figure(go.Scatter(x=table.duration,y=table.peak,mode="markers",customdata=table.excess,
+        f=go.Figure(go.Scatter(x=table.duration,y=table.peak,mode="markers",marker_color=event_color(quantity,above),customdata=table.excess,
             hovertemplate="Duration %{x}<br>Peak %{y}<br>Integrated excess %{customdata}<extra></extra>"))
         return f.update_layout(template="plotly_white",xaxis_title=f"Duration [{unit}]",yaxis_title=quantity)
-    return _bars(table.duration.value_counts().sort_index().rename("Number of events"),"Duration distribution","Events").update_xaxes(title=f"Duration [{unit}]")
+    f=_bars(table.duration.value_counts().sort_index().rename("Number of events"),"Duration distribution","Events")
+    f.update_traces(marker_color=event_color(quantity,above))
+    return f.update_xaxes(title=f"Duration [{unit}]")
 
 def _pressure(df,context):
     try:
@@ -81,7 +84,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
     def design():
         from .p6_dashboard import design_ledgers
         return memo("design",lambda:design_ledgers(df,reference_df=reference_df)[0])
-    if k=="native":f=_line(s,title,u)
+    if k=="native":f=_line(s,title,u,c)
     elif k=="time_series":
         f=ch.time_series_profile_chart(df,c,a[0],title,u,a[1])
     elif k=="profile":f=ch.profile_ribbon_chart(df,c,a[0],title,u)
@@ -151,7 +154,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
     elif k=="temp_events":
         stat,above,style=a;threshold=30. if above else 0.
         daily,ev=memo(("temp_events",stat,above),lambda:p4.temperature_events(df,threshold=threshold,above=above,minimum=3,stat=stat))
-        f=_event_figure(ev,daily[stat],style,threshold,above,"days",u)
+        f=_event_figure(ev,daily[stat],style,threshold,above,"days","Daily temperature [°C]")
         from .p4_ui import event_interpretation
         note=event_interpretation(ev,unit="days")
     elif k=="day_indicators":
@@ -165,7 +168,7 @@ def make_figure(d,df,context,reference_df=None,cache=None):
     elif k=="persistence":
         threshold,above,style=a;step=p4.cadence(df)
         ev=memo(("persistence",c,threshold,above),lambda:p4.events(s,threshold=threshold,above=above,minimum=3,step=step))
-        f=_event_figure(ev,s,style,threshold,above,"hours",u,step=step)
+        f=_event_figure(ev,s,style,threshold,above,"hours",cat.LABELS.get(c,u),step=step)
         from .p4_ui import event_interpretation
         if d.chapter==cat.HUM:
             from .humidity_findings import humidity_figure_interpretation
@@ -237,23 +240,23 @@ def make_figure(d,df,context,reference_df=None,cache=None):
     elif k=="wind_rain":
         from .directional_climate import directional_table,directional_figure,directional_interpretation
         radial="Wind-driven rain exposure"
-        table=directional_table(df,radial=radial,colour="Wind speed")
+        table=directional_table(df,radial=radial,colour=radial)
         if not table.radius.notna().any():raise NotApplicable("No coincident wind and precipitation observations.")
-        f=directional_figure(table,radial,"Wind speed",title)
-        note=directional_interpretation(table,radial,"Wind speed")
+        f=directional_figure(table,radial,radial,title)
+        note=directional_interpretation(table,radial,radial)
     elif k=="wetdry":
         wet,style=a;daily,wet_e,dry_e=memo("wetdry",lambda:p4.wet_dry_events(df))
         ev=wet_e if wet else dry_e
-        f=_event_figure(ev,daily["sum"],style,1.,wet,"days",u)
+        f=_event_figure(ev,daily["sum"],style,1.,wet,"days","Daily precipitation [mm]")
         from .p4_ui import event_interpretation
         from .precipitation_findings import wet_dry_interpretation
         note=event_interpretation(ev,unit="days",extra_note=wet_dry_interpretation(df,wet=wet,threshold=1.,minimum=1))
     elif k=="rolling":
         v=p4.rolling_windows(df,c,a[0],total=True,nonnegative=True)
         if not v.notna().any():raise NotApplicable("No complete rolling windows.")
-        f=_line(v,title,u);note+=f" Trailing complete {a[0]} h windows; gaps break the window."
+        f=_line(v,title,u,c);note+=f" Trailing complete {a[0]} h windows; gaps break the window."
     elif k=="cumulative":
-        f=_line(p4.cumulative_precipitation(df),title,u)
+        f=_line(p4.cumulative_precipitation(df),title,u,cat.P)
     elif k=="freeze_days":
         f=_bars(p4.freeze_thaw_days(df).resample("MS").sum(min_count=1),title,u)
         note+=" Air-temperature crossing (Tmin<0, Tmax>0) with a wet-day subset at ≥1 mm/day indicates periods of potential freeze–thaw exposure."

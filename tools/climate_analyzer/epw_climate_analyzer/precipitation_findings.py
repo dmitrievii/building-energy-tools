@@ -194,7 +194,8 @@ def rain_day_classes_figure(table):
     fig=go.Figure()
     for key in ("1–<10 mm","10–<20 mm","≥20 mm"):
         if key in table:
-            fig.add_bar(x=table.index,y=table[key],name=key)
+            from .chart_theme import RAIN_DAY_COLORS
+            fig.add_bar(x=table.index,y=table[key],name=key,marker_color=RAIN_DAY_COLORS[key])
     fig.update_layout(template="plotly_white",barmode="stack",
                       title="Monthly precipitation-day severity",
                       xaxis_title="Month",yaxis_title="Complete days",

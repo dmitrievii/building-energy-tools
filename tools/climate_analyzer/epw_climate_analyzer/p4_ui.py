@@ -8,6 +8,7 @@ from . import p4_extremes as p
 from .aggregations import native_interval_hours
 from .p3_comfort import numeric
 from .relationship_findings import VARS,correlation_chart,joint_chart
+from .chart_theme import metric_color, metric_colorscale, series_color, event_color, semantic_color_from_text
 
 def _available(df):
     return {k:v for k,v in VARS.items() if numeric(df,v).notna().any()}
@@ -18,7 +19,7 @@ def _show_table(table,key):
 
 def _bars(table,title,unit,render,note):
     fig=go.Figure()
-    for c in table:fig.add_bar(x=table.index,y=table[c],name=c)
+    for c in table:fig.add_bar(x=table.index,y=table[c],name=c,marker_color=series_color(str(c),title))
     fig.update_layout(template="plotly_white",title=title,barmode="group",yaxis_title=unit,xaxis_title="Period")
     render(fig,note)
 
@@ -38,7 +39,7 @@ def event_timeline_figure(table,series,*,unit,threshold,above=True,quantity="Tem
     if breaks:
         plotted=pd.concat([series,pd.Series(np.nan,index=pd.DatetimeIndex(breaks))]).sort_index()
     fig.add_scatter(x=plotted.index,y=plotted,mode="lines+markers" if len(series)==1 else "lines",
-                    name=quantity,connectgaps=False,line=dict(color="#64748B"))
+                    name=quantity,connectgaps=False,line=dict(color=semantic_color_from_text(quantity)))
     # Use a visible trace rather than a layout-only line: the threshold also
     # participates in y-axis autorange when it lies outside the observed range.
     if len(stamps):
@@ -47,7 +48,7 @@ def event_timeline_figure(table,series,*,unit,threshold,above=True,quantity="Tem
                         line=dict(dash="dash",color="#333333"))
     shapes=[dict(type="rect",xref="x",yref="paper",y0=0,y1=1,
                  x0=r.start,x1=r.end+delta,line=dict(width=0),
-                 fillcolor="#DD783B" if above else "#497DB7",opacity=.20,layer="below")
+                 fillcolor=event_color(quantity,above),opacity=.20,layer="below")
             for _,r in table.iterrows()]
     fig.update_layout(template="plotly_white",shapes=shapes,xaxis_title="Date",
                       yaxis_title=quantity,title="Extreme-event timeline")
@@ -81,12 +82,12 @@ def _events(table,render,*,key,unit,threshold,series=None,above=True,quantity="T
     if style=="Event timeline":
         fig=event_timeline_figure(table,series,unit=unit,threshold=threshold,above=above,quantity=quantity,step=step)
     elif style=="Duration and intensity":
-        fig.add_scatter(x=table.duration,y=table.peak,mode="markers",marker=dict(size=9,color="#D98235" if above else "#4477AA"),
+        fig.add_scatter(x=table.duration,y=table.peak,mode="markers",marker=dict(size=9,color=event_color(quantity,above)),
                         text=table.start.astype(str),customdata=table.excess,hovertemplate="%{text}<br>Duration %{x:g}<br>Peak %{y:.2f}<br>Integrated excess %{customdata:.2f}<extra></extra>")
         fig.update_layout(title="Event duration and peak",xaxis_title="Duration ["+unit+"]",yaxis_title=quantity)
     else:
         d=table.duration.value_counts().sort_index()
-        fig.add_bar(x=d.index,y=d,marker_color="#4477AA")
+        fig.add_bar(x=d.index,y=d,marker_color=event_color(quantity,above))
         fig.update_layout(title="Event duration distribution",xaxis_title="Duration ["+unit+"]",yaxis_title="Number of events")
     fig.update_layout(template="plotly_white")
     render(fig,event_interpretation(table,unit=unit,extra_note=extra_note))
@@ -156,16 +157,19 @@ def precipitation_panel(df,native,view,render):
                 s=p.cumulative_precipitation(native if native is not None else df)
                 from .precipitation_findings import precipitation_figure_interpretation
                 note=precipitation_figure_interpretation(native if native is not None else df,None,"cumulative",column=p.P)
-            fig=go.Figure(go.Scatter(x=s.index,y=s,mode="lines",connectgaps=False))
+            fig=go.Figure(go.Scatter(x=s.index,y=s,mode="lines",connectgaps=False,line_color=metric_color(p.P)))
             fig.update_layout(template="plotly_white",title=choice,yaxis_title="Precipitation [mm]",xaxis_title="Timestamp");render(fig,note)
         elif view=="Empirical IDF":
             if native is None:st.info("Requires native historical precipitation, not EPW/generated data.");return
             a=p.empirical_idf(native,historical_native=True)
             if a.empty:st.info("No durations match the native cadence.");return
             fig=go.Figure()
+            from plotly.colors import sample_colorscale
+            durations=sorted(a.duration_h.unique())
+            palette=dict(zip(durations,sample_colorscale(metric_colorscale(p.P),np.linspace(.35,1.,len(durations)).tolist())))
             for dur,g in a.groupby("duration_h"):
                 g=g.sort_values("return_period_y")
-                fig.add_scatter(x=g.return_period_y,y=g.intensity_mm_h,mode="lines+markers",name=f"{dur:g} h",customdata=g.year,hovertemplate="T %{x:.2f} y<br>I %{y:.2f} mm/h<br>Year %{customdata}<extra></extra>")
+                fig.add_scatter(x=g.return_period_y,y=g.intensity_mm_h,mode="lines+markers",name=f"{dur:g} h",line_color=palette[dur],customdata=g.year,hovertemplate="T %{x:.2f} y<br>I %{y:.2f} mm/h<br>Year %{customdata}<extra></extra>")
             fig.update_layout(template="plotly_white",title="Empirical rainfall intensity–duration–frequency",xaxis_type="log",xaxis_title="Empirical return period [years]",yaxis_title="Intensity [mm/h]")
             peak=a.loc[a.intensity_mm_h.idxmax()]
             render(fig,f"Empirical intensities are calculated from {a.year.nunique()} complete measured years "
@@ -219,7 +223,7 @@ def snow_calendar_chart(s,y,*,title="Snow-cover calendar",note=""):
     z=np.full((7,54),np.nan);labels=np.full((7,54),"",dtype=object)
     for i,(d,val) in enumerate(v.items()):
         w=(i+start.weekday())//7;day=d.weekday();z[day,w]=val;labels[day,w]=d.strftime("%Y-%m-%d")
-    fig=go.Figure(go.Heatmap(z=z,x=list(range(1,55)),y=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],customdata=labels,zmin=0,zmax=1,colorscale=[[0,"#FFFFFF"],[1,"#427CAD"]],showscale=False,xgap=2,ygap=2,hoverongaps=False,hovertemplate="%{customdata}<br>Snow cover %{z}<extra></extra>"))
+    fig=go.Figure(go.Heatmap(z=z,x=list(range(1,55)),y=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],customdata=labels,zmin=0,zmax=1,colorscale=[[0,"#FFFFFF"],[1,metric_color(p.SNOW)]],showscale=False,xgap=2,ygap=2,hoverongaps=False,hovertemplate="%{customdata}<br>Snow cover %{z}<extra></extra>"))
     fig.add_heatmap(z=np.where(np.isfinite(z)| (labels==""),np.nan,1.),x=list(range(1,55)),y=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],customdata=labels,
                     zmin=0,zmax=1,colorscale=[[0,"#D1D5DB"],[1,"#D1D5DB"]],showscale=False,xgap=2,ygap=2,hoverongaps=False,
                     hovertemplate="%{customdata}<br>Unknown<extra></extra>")
@@ -310,7 +314,7 @@ def event_viewer(df,render):
         series=p.valid_values(window,options[name])
         # Insert missing cadence slots for honest visual discontinuities.
         series=series.reindex(pd.date_range(window.index[0],window.index[-1],freq=p.cadence(df)))
-        fig.add_trace(go.Scatter(x=series.index,y=series,mode="lines",name=name,connectgaps=False),row=row,col=1)
+        fig.add_trace(go.Scatter(x=series.index,y=series,mode="lines",name=name,connectgaps=False,line_color=semantic_color_from_text(name)),row=row,col=1)
         fig.update_yaxes(title_text=name,row=row,col=1)
         fig.add_vrect(x0=event.start,x1=event.end+p.cadence(df),fillcolor="#D98235",opacity=.14,line_width=0,row=row,col=1)
     fig.update_layout(template="plotly_white",title="Critical event · coincident source conditions",height=max(350,210*len(chosen)))

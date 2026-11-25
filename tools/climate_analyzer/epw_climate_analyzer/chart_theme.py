@@ -44,6 +44,7 @@ TEMPERATURE_HEATMAP_COLUMNS = frozenset((
     "dry_bulb_temperature_max_c", "dew_point_temperature_c",
     "wet_bulb_temperature_c", "ground_temperature_0_10m_c",
     "ground_temperature_0_20m_c", "ground_temperature_0_50m_c",
+    "ground_temperature_1_00m_c", "ground_temperature_2_00m_c",
 ))
 
 def temperature_gradient_domain(minimum=None,maximum=None,thresholds=(18.,26.)):
@@ -295,6 +296,28 @@ METRIC_COLORS = {
     "opaque_sky_cover_tenths": "#334155",
     "liquid_precipitation_depth_mm": "#2563EB",
     "snow_depth_cm": "#0284C7",
+    "precipitation_duration_min": "#2563EB",
+    "wind_driven_rain_exposure": "#2563EB",
+    "sunshine_duration_s": "#D97706",
+    "daylight_duration_h": "#E5B83B",
+    "relative_sunshine_pct": "#D97706",
+    "zenith_luminance_cd_m2": "#F59E0B",
+    "visibility_km": "#547C9A",
+    "ceiling_height_m": "#64748B",
+    "precipitable_water_mm": "#0891B2",
+    "aerosol_optical_depth_thousandths": "#92734D",
+    "albedo": "#92734D",
+    "days_since_last_snowfall": "#0284C7",
+    "absolute_humidity_g_m3": "#0891B2",
+    "dynamic_pressure_pa": "#475569",
+    "wind_gust_speed_m_s": "#059669",
+    "wind_gust_direction_deg": "#7C3AED",
+    "diffuse_radiation_fraction_pct": "#CA8A04",
+    "extraterrestrial_horizontal_radiation_wh_m2": "#F59E0B",
+    "extraterrestrial_direct_normal_radiation_wh_m2": "#EA580C",
+    "horizontal_infrared_radiation_intensity_wh_m2": "#D55E00",
+    **{column:"#D55E00" for column in TEMPERATURE_HEATMAP_COLUMNS
+       if column not in ("dew_point_temperature_c","wet_bulb_temperature_c")},
     "natural_ventilation_suitable": NV_COLOR,
     "night_flushing_suitable": NIGHT_FLUSHING_COLOR,
     "heating_degree_hours_kh": HEATING_COLOR,
@@ -303,6 +326,25 @@ METRIC_COLORS = {
     "ventilation_cooling_kw": COOLING_COLOR,
 }
 
+
+# Named categories have stable identities independent of trace order.
+SKY_CONDITION_COLORS = {"Clear":"#E5B83B","Intermediate":"#94A3B8","Overcast":"#334155"}
+EXPOSURE_COLORS = {"Open sun":"#D97706","Direct-beam shade":"#2563EB","Uniform radiant offset":"#64748B"}
+PASSIVE_STRATEGY_COLORS = {
+    "Comfort":"#84CC16","Comfort without conditioning":"#84CC16",
+    "Natural ventilation":NV_COLOR,"Night flushing":NIGHT_FLUSHING_COLOR,
+    "Shading":"#D69A24","Solar shading likely useful":"#D69A24",
+    "Solar protection screening":"#D69A24",
+    "Economizer":"#047857","Air-side economizer":"#047857",
+    "Heating":HEATING_COLOR,"Heating likely required":HEATING_COLOR,
+    "Cooling":COOLING_COLOR,"Cooling likely required":COOLING_COLOR,
+    "Humidification":"#0891B2","Humidification likely useful":"#0891B2",
+    "Dehumidification":"#7C3AED","Dehumidification likely useful":"#7C3AED",
+}
+RAIN_DAY_COLORS = {"1–<10 mm":"#93C5FD","10–<20 mm":"#2563EB","≥20 mm":"#172554"}
+DRY_SPELL_COLOR = "#B7791F"
+SUNSHINE_COLORSCALE = [[0.,"#FFFFFF"],[.25,"#FEF3C7"],[.5,"#FCD34D"],[.75,"#F59E0B"],[1.,"#D97706"]]
+NEUTRAL_COLORSCALE = [[0.,"#FFFFFF"],[.5,"#94A3B8"],[1.,"#334155"]]
 
 # Rejection mechanisms retain the physical quantity palette. Temperature
 # colours indicate outdoor exposure (cold/hot), rather than HVAC service.
@@ -397,6 +439,23 @@ def semantic_color_from_text(text: str | None) -> str:
     # These named quantities must also resolve correctly in title-driven
     # chart builders that do not receive the canonical column identifier.
     quantity_text = value.replace("-", " ").replace("_", " ")
+    for mapping in (PASSIVE_STRATEGY_COLORS,EXPOSURE_COLORS,SKY_CONDITION_COLORS,RAIN_DAY_COLORS):
+        for label,colour in mapping.items():
+            if value==label.lower():return colour
+    if value.startswith(("clear ","intermediate ","overcast ")):
+        return SKY_CONDITION_COLORS[value.split()[0].capitalize()]
+    if "freeze" in quantity_text or "frost" in value:
+        return METRIC_COLORS["humidity_ratio_g_kg"] if "wet" in value else COOLING_COLOR
+    if "tropical night" in value:return HEATING_COLOR
+    if "wind driven rain" in quantity_text or "precipitation" in value or "rainfall" in value:
+        return METRIC_COLORS["liquid_precipitation_depth_mm"]
+    if "snow" in value:return METRIC_COLORS["snow_depth_cm"]
+    if "sunshine" in value:return METRIC_COLORS["sunshine_duration_s"]
+    if "daylight" in value:return METRIC_COLORS["daylight_duration_h"]
+    if "enthalpy" in value:return METRIC_COLORS["moist_air_enthalpy_kj_kg"]
+    if "relative humidity" in quantity_text:return METRIC_COLORS["relative_humidity_pct"]
+    if "dew point" in quantity_text:return METRIC_COLORS["dew_point_temperature_c"]
+    if "wet bulb" in quantity_text:return METRIC_COLORS["wet_bulb_temperature_c"]
     if "poa" in quantity_text or "plane of array" in quantity_text:
         if "ground" in quantity_text or "reflected" in quantity_text:return POA_COMPONENT_COLORS["poa_ground_diffuse_wh_m2"]
         if "sky" in quantity_text or "diffuse" in quantity_text:return POA_COMPONENT_COLORS["poa_sky_diffuse_wh_m2"]
@@ -456,13 +515,14 @@ def climate_color_map(names: Iterable[str]) -> dict[str, str]:
 def metric_colorscale(column: str | None):
     """Return a continuous colourscale suitable for the selected metric."""
     text = str(column or "").lower()
-    if text=="liquid_precipitation_depth_mm":
+    if text in ("liquid_precipitation_depth_mm","precipitation_duration_min","wind_driven_rain_exposure"):
+
         return PRECIPITATION_COLORSCALE
-    if text=="snow_depth_cm":
+    if text in ("snow_depth_cm","days_since_last_snowfall"):
         return SNOW_DEPTH_COLORSCALE
     if text=="relative_humidity_pct":
         return RELATIVE_HUMIDITY_COLORSCALE
-    if text=="humidity_ratio_g_kg":
+    if text in ("humidity_ratio_g_kg","absolute_humidity_g_m3","precipitable_water_mm"):
         return HUMIDITY_RATIO_COLORSCALE
     if text in TEMPERATURE_HEATMAP_COLUMNS:
         return TEMPERATURE_COMFORT_COLORSCALE
@@ -474,7 +534,11 @@ def metric_colorscale(column: str | None):
         return STATION_PRESSURE_COLORSCALE
     if text=="moist_air_density_kg_m3":
         return MOIST_AIR_DENSITY_COLORSCALE
-    if "illuminance" in text:
+    if text in ("sunshine_duration_s","daylight_duration_h","relative_sunshine_pct"):return SUNSHINE_COLORSCALE
+    if text in ("dynamic_pressure_pa","ceiling_height_m"):return MOIST_AIR_DENSITY_COLORSCALE
+    if text in ("visibility_km",):return SPECIFIC_VOLUME_COLORSCALE
+    if text in ("aerosol_optical_depth_thousandths","albedo"):return STATION_PRESSURE_COLORSCALE
+    if "illuminance" in text or "luminance" in text:
         return ILLUMINANCE_COLORSCALE
     if is_irradiation_metric(text):
         return SOLAR_COLORSCALE
@@ -490,7 +554,16 @@ def metric_colorscale(column: str | None):
     if "natural_ventilation" in text or "natural ventilation" in text:return NV_SUITABILITY_COLORSCALE
     if "suitable" in text or "ventilation" in text:
         return BINARY_SUITABILITY_COLORSCALE
-    return "Viridis"
+    return NEUTRAL_COLORSCALE
+
+
+def event_color(quantity, above):
+    """Colour an event by its physical mechanism rather than sort order."""
+    text=str(quantity).lower()
+    if "precipitation" in text or "rain" in text or text=="mm":
+        return METRIC_COLORS["liquid_precipitation_depth_mm"] if above else DRY_SPELL_COLOR
+    if "temperature" in text or "°c" in text:return HEATING_COLOR if above else COOLING_COLOR
+    return semantic_color_from_text(quantity)
 
 # Detect in-process modules retained from an earlier Streamlit deployment.
 from hashlib import sha256 as _runtime_sha256
