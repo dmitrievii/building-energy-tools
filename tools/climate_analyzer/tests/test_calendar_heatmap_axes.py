@@ -107,6 +107,43 @@ class CalendarHeatmapTests(unittest.TestCase):
         for label in ("W52","W53","W01","Dec 2020","Jan 2021"):
             self.assertIn(label,texts)
 
+    def test_r29_dew_point_occurrence_uses_fixed_classes_and_all_month_labels(self):
+        from epw_climate_analyzer.extended_visualization import (
+            occurrence_default_edges,occurrence_table,occurrence_figure,
+            DEW_POINT_OCCURRENCE_EDGES,DEW_POINT_OCCURRENCE_COLORS)
+        from epw_climate_analyzer.calendar_heatmap_axes import apply_monthly_axes
+        from epw_climate_analyzer.humidity_findings import humidity_figure_interpretation
+        col="dew_point_temperature_c"
+        idx=pd.date_range("2026-01-01","2026-12-31 23:00",freq="h")
+        df=pd.DataFrame({col:np.resize([-2.,0.,5.,10.,15.,20.,25.],len(idx))},index=idx)
+        df.attrs["canonical_native_interval_minutes"]=60.
+        for basis,stat in (("Hours","Mean"),("Percentage","Mean"),("Days","Mean"),("Days","Minimum"),("Days","Maximum")):
+            with self.subTest(basis=basis,stat=stat):
+                edges=occurrence_default_edges(df[col],col,basis=basis,daily_stat=stat)
+                self.assertEqual(tuple(edges),DEW_POINT_OCCURRENCE_EDGES)
+                self.assertEqual(occurrence_default_edges(df[col]+30,col,basis=basis,daily_stat=stat),edges)
+                table=occurrence_table(df,col,edges,basis=basis,daily_stat=stat)
+                self.assertEqual(len(table.columns),7)
+                if basis=="Days":
+                    np.testing.assert_array_equal(table.sum(axis=1),pd.date_range("2026-01-01",periods=12,freq="MS").days_in_month)
+                elif basis=="Hours":
+                    self.assertAlmostEqual(float(table.to_numpy().sum()),8760.)
+                else:
+                    np.testing.assert_allclose(table.sum(axis=1),100.)
+                fig=occurrence_figure(table,"°C",basis)
+                fig.update_layout(title=f"Dew-point temperature · occurrence · {basis} · daily {stat}")
+                expected=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+                for plot in (fig,report_figure(fig,width_pt=500,height_pt=230)):
+                    apply_monthly_axes(plot)
+                    self.assertEqual(list(plot.layout.xaxis.ticktext),expected)
+                    self.assertEqual(tuple(tr.marker.color for tr in plot.data),DEW_POINT_OCCURRENCE_COLORS)
+                    np.testing.assert_array_equal(plot.data[-1].y,table.iloc[:,-1].to_numpy())
+                legacy=go.Figure(fig);legacy.update_layout(meta=None,xaxis=dict(title="Period",tickvals=None,ticktext=None))
+                self.assertEqual(list(report_figure(legacy,width_pt=500,height_pt=230).layout.xaxis.ticktext),expected)
+                note=humidity_figure_interpretation(df,fig,"occurrence",column=col,args=(basis,stat))
+                self.assertIn("Fixed outdoor moisture-reference boundaries",note)
+                if basis=="Days":self.assertIn({"Mean":"typical dew-point level","Minimum":"persistent moisture exposure","Maximum":"peak moisture exposure"}[stat],note)
+
     def test_temperature_threshold_widgets_are_scoped_to_consuming_charts(self):
         import ast
         from pathlib import Path
