@@ -11,6 +11,7 @@ from .climate_model import aggregation_semantics_for
 from .chart_theme import metric_color, MONTH_COLORS, rgba
 from .temporal_filtering import CHRONOLOGICAL, time_basis
 from .daylight import daily_daylight_table
+from .occurrence_reference import REFERENCES, DURATION_UNITS_PER_HOUR, reference_edges
 
 MONTHS = ("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec")
 T = "dry_bulb_temperature_c"
@@ -62,7 +63,8 @@ def radiation_occurrence_note(column,interval_hours=1.,*,basis="Hours",daily_sta
     return units+" Zero recorded radiation is separate; negative and missing observations are excluded. Classes are descriptive, not normative or sky-condition classifications."
 
 def zero_occurrence_kind(column):
-    return column in ZERO_OCCURRENCE_COLUMNS or radiation_occurrence_kind(column) is not None
+    return (column in ZERO_OCCURRENCE_COLUMNS or radiation_occurrence_kind(column) is not None
+            or bool(column in REFERENCES and REFERENCES[column].zero_label))
 
 NEW_TYPES = ("Typical daily profile", "Monthly occurrence classes")
 
@@ -251,7 +253,8 @@ def occurrence_default_edges(values,column,*,basis="Hours",daily_stat="Mean",int
             return list(LONGWAVE_DAILY_EDGES if kind=="longwave" else SHORTWAVE_DAILY_EDGES)
         scale=interval_hours if column.endswith("_wh_m2") else 1.
         return [float(f"{edge*scale:.10g}") for edge in (LONGWAVE_OCCURRENCE_EDGES if kind=="longwave" else SHORTWAVE_OCCURRENCE_EDGES)]
-    if column==T:return [0.,15.,25.,30.]
+    fixed=reference_edges(column,basis=basis,daily_stat=daily_stat,interval_hours=interval_hours)
+    if fixed is not None:return list(fixed)
     if column==DEW_POINT_COLUMN:return list(DEW_POINT_OCCURRENCE_EDGES)
     if column==RH_OCCURRENCE_COLUMN:return list(RH_OCCURRENCE_EDGES)
     if column==W_OCCURRENCE_COLUMN:return list(W_OCCURRENCE_EDGES)
@@ -277,7 +280,29 @@ def occurrence_table(df,column,edges,*,basis="Hours",daily_stat="Mean"):
     daily=basis=="Days"
     radiation_kind=radiation_occurrence_kind(column)
     zero_separate=zero_occurrence_kind(column)
-    if zero_separate:
+    spec=REFERENCES.get(column)
+    if spec is not None:
+        lower,upper=spec.lower,spec.upper
+        if column in DURATION_UNITS_PER_HOUR:
+            upper=DURATION_UNITS_PER_HOUR[column]*native_interval_hours(df)
+        if spec.positive or zero_separate:
+            if any(e<=0 for e in edges):raise ValueError("Positive class boundaries are required.")
+        if lower is not None and any(e<lower for e in edges):
+            raise ValueError("Class boundaries are below the physical domain.")
+        edge_upper=upper
+        if column in DURATION_UNITS_PER_HOUR and daily and daily_stat=="Total":
+            # Civil days may contain 25 physical hours.
+            edge_upper=25.*DURATION_UNITS_PER_HOUR[column]
+        if edge_upper is not None and any(e>edge_upper+1e-8 for e in edges):
+            raise ValueError("Class boundaries exceed the physical domain.")
+        source=df.copy(deep=False)
+        numeric=_numeric(df,column)
+        valid=numeric.notna()
+        if spec.positive:valid &= numeric.gt(0.)
+        if lower is not None:valid &= numeric.ge(lower)
+        if upper is not None:valid &= numeric.le(upper+1e-8)
+        source[column]=numeric.where(valid)
+    elif zero_separate:
         if any(e<=0 for e in edges):
             raise ValueError("Positive class boundaries are required; zero is a separate class.")
         # Reject invalid negative observations before daily aggregation.
@@ -303,7 +328,8 @@ def occurrence_table(df,column,edges,*,basis="Hours",daily_stat="Mean"):
     v=v.dropna()
     text=[occurrence_boundary_label(x) for x in edges]
     if zero_separate:
-        zero=("Dry (= 0)" if column==P else "Snow-free (= 0)" if column==SNOW else
+        zero=(spec.zero_label if spec is not None and spec.zero_label else
+              "Dry (= 0)" if column==P else "Snow-free (= 0)" if column==SNOW else
               "No recorded illumination (= 0)" if column in ILLUMINANCE_OCCURRENCE_COLUMNS else
               "No recorded wind (= 0)" if column in WIND_SPEED_COLUMNS else
               "No diffuse fraction (= 0)" if radiation_kind=="fraction" else "No recorded radiation (= 0)")
@@ -346,6 +372,10 @@ def occurrence_figure(table,unit,basis):
         palette=list(RH_OCCURRENCE_COLORS)
     elif column==DEW_POINT_COLUMN and tuple(table.attrs.get("occurrence_edges",()))==DEW_POINT_OCCURRENCE_EDGES:
         palette=list(DEW_POINT_OCCURRENCE_COLORS)
+    elif column in REFERENCES and not zero_occurrence_kind(column) and column!=T:
+        from .chart_theme import metric_colorscale
+        from plotly.colors import sample_colorscale
+        palette=sample_colorscale(metric_colorscale(column),np.linspace(.12,.95,len(table.columns)).tolist())
     elif zero_occurrence_kind(column):
         from .chart_theme import metric_colorscale
         from plotly.colors import sample_colorscale

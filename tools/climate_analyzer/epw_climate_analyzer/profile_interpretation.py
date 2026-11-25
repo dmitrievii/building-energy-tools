@@ -266,6 +266,13 @@ def generic_figure_interpretation(df,fig,kind,*,domain,column,title="",args=(),
     if route in ("duration","histogram","box","violin") and args and args[0]=="wet":
         note+=" The distribution contains positive precipitation intervals."
     if route=="occurrence" and args:
+        from .occurrence_reference import reference_note
+        from .aggregations import native_interval_hours
+        meta=fig.layout.meta if isinstance(fig.layout.meta,dict) else {}
+        reference=reference_note(column,meta.get("occurrence_edges",()),basis=args[0],
+                                 daily_stat=args[1] if len(args)>1 else "Mean",
+                                 interval_hours=native_interval_hours(df))
+        if reference:note+=" "+reference
         note+=" Classes are disjoint; "+("percentages use valid observations per period." if args[0]=="Percentage" else
             f"complete days use the {str(args[1]).lower()} statistic." if args[0]=="Days" and len(args)>1 else "class hours retain physical observation duration.")
     if route=="occurrence" and column=="diffuse_radiation_fraction_pct" and args and args[0]=="Days":
