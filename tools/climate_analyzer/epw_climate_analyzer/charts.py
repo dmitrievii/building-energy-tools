@@ -308,6 +308,7 @@ def profile_ribbon_chart(
             )
         )
         fig = apply_common_layout(fig, title, "Time", unit)
+        _format_profile_period(fig,df,aggregation)
         return _apply_axis_constraints(fig, column=column, x_values=x, y_values=summary[central])
 
     x = _period_x(summary, aggregation)
@@ -518,6 +519,9 @@ def temporal_heatmap_chart(
         fig.update_layout(plot_bgcolor="#F1F3F5")
         fig.update_xaxes(showgrid=False)
         fig.update_yaxes(showgrid=False)
+    # Physical quantity semantics accompany the canonical heatmap for all renderers.
+    categorical=(column in WIND_DIRECTION_COLUMNS or "suitable" in column or column in ("nv","snow_cover","atlas_suitable"))
+    fig.data[0].meta={"heatmap_quantity":column,"heatmap_semantics":"categorical" if categorical else "continuous"}
     set_period_axis_scope(fig,df)
     return apply_calendar_heatmap_axes(fig,period=row_group)
 

@@ -357,6 +357,19 @@ def humidity_figure_interpretation(
             if basis.lower() == "percentage" else
             "Classes represent disjoint observation-hour frequencies."
         )
+        if column == DP:
+            from .extended_visualization import DEW_POINT_OCCURRENCE_EDGES, DEW_POINT_OCCURRENCE_NOTE
+            meta=fig.layout.meta if isinstance(fig.layout.meta,dict) else {}
+            edges=tuple(meta.get("occurrence_edges",()))
+            if basis.lower()=="days":
+                if statistic.lower()=="maximum":
+                    detail+=" Daily maxima describe peak moisture exposure; each day in a high class reaches its lower boundary at least once."
+                elif statistic.lower()=="minimum":
+                    detail+=" Daily minima describe persistent moisture exposure; each day in a high class stays at or above its lower boundary throughout its observed intervals."
+                else:
+                    detail+=" Daily means characterize the typical dew-point level over each complete day."
+            if edges==DEW_POINT_OCCURRENCE_EDGES:
+                detail+=" "+DEW_POINT_OCCURRENCE_NOTE
         return f"Most frequent displayed {name} class: {dominant}. {detail} " + context
 
     return (

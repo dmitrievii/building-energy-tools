@@ -431,7 +431,8 @@ def make_figure(d,df,context,reference_df=None,cache=None):
     f.update_layout(template="plotly_white",title=title)
     from .calendar_heatmap_axes import apply_calendar_heatmap_axes,apply_monthly_axes,set_period_axis_scope
     with phase("chart_axis_layout"):
-        set_period_axis_scope(f,df)
+        aggregation=a[0] if k in ("total","temp_threshold","amplitude") else a[1] if k in ("degree","eligibility_total") else None
+        set_period_axis_scope(f,df,aggregation=aggregation)
         apply_calendar_heatmap_axes(f);apply_monthly_axes(f)
     if k in ("native","time_series","profile","percentile") and d.chapter in (
         cat.TEMP,cat.HUM,cat.WIND,cat.SOL,cat.SKY,cat.RAIN,

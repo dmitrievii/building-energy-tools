@@ -305,6 +305,8 @@ def heatmap_small_multiples(climates: list[ClimateDataset], column: str, row_gro
     fig.update_layout(template=PLOT_TEMPLATE, title=title, height=max(360, 260 * rows), coloraxis=dict(colorscale=colorscale, cmin=zmin, cmax=zmax, colorbar=dict(title=color_label)), margin=dict(l=40, r=20, t=70, b=45))
     if column in TEMPERATURE_HEATMAP_COLUMNS:
         fig.update_coloraxes(**temperature_axis)
+    for trace in fig.data:
+        trace.meta={"heatmap_quantity":column,"heatmap_semantics":"categorical" if ("direction" in column or "suitable" in column or column=="nv") else "continuous"}
     fig.update_xaxes(title_text=row_group.capitalize(), row=rows, col=1)
     fig.update_yaxes(title_text="Hour of day", range=[23, 0], autorangeoptions=dict(minallowed=0, maxallowed=23))
     from .calendar_heatmap_axes import apply_calendar_heatmap_axes
@@ -316,6 +318,7 @@ def difference_heatmap_chart(reference: ClimateDataset, target: ClimateDataset, 
     tgt = calendar_matrix(target.data, column, row_group=row_group)
     diff = tgt.subtract(ref, fill_value=np.nan).T
     fig = px.imshow(diff, aspect="auto", color_continuous_scale="RdBu_r", labels=dict(x=row_group.capitalize(), y="Hour of day", color=color_label), title=title)
+    fig.data[0].meta={"heatmap_quantity":column,"heatmap_semantics":"categorical" if ("direction" in column or "suitable" in column or column=="nv") else "continuous"}
     fig.update_yaxes(range=[23, 0], autorangeoptions=dict(minallowed=0, maxallowed=23))
     fig.update_layout(template=PLOT_TEMPLATE, margin=dict(l=40, r=20, t=70, b=45))
     from .calendar_heatmap_axes import apply_calendar_heatmap_axes

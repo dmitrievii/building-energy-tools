@@ -453,6 +453,8 @@ def render_report(df=None,reference_df=None):
                         entry=keys[id]
                         try:
                             fig,note=standard_figure(entry,df,context,reference_df)
+                            from .heatmap_presentation import apply_heatmap_presentation,context_from_state
+                            apply_heatmap_presentation(fig,**context_from_state(st.session_state))
                             c={**context,"page":entry[1],"statistics":capture_statistics(df,entry[1]),"preset diagram":id}
                             item=snapshot(fig,c,note)
                             entries,_=add_snapshot(entries,item)

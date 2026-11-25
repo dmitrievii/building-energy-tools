@@ -2212,6 +2212,7 @@ def render_extended_variable_chart(df, column, unit, chart_type, *, key_prefix="
         radiation=radiation_occurrence_kind(column)
         wind=column in WIND_SPEED_COLUMNS
         edge_key=key_prefix+"_edges_"+column+("_positive_v2_"+basis+"_"+statistic if depth or illuminance else "_wind_v1_"+basis+"_"+statistic if wind else "_radiation_v1_"+basis+"_"+statistic+"_"+str(cadence) if radiation else "")
+        if column=="dew_point_temperature_c":edge_key+="_fixed_moisture_v1"
         boundaries=st.text_input(f"Positive radiation boundaries [{unit}] (comma-separated)" if radiation else "Positive wind speed boundaries [m/s] (comma-separated)" if wind else "Positive illuminance boundaries [lx] (comma-separated)" if illuminance else "Positive depth boundaries (comma-separated)" if depth else "Class boundaries (comma-separated)",value=default,key=edge_key)
         if wind:st.caption(WIND_OCCURRENCE_NOTE)
         if radiation:st.caption(radiation_occurrence_note(column,cadence,basis=basis,daily_stat=statistic))
@@ -3464,6 +3465,9 @@ def _render_temperature_degree_days(df):
     )
     from epw_climate_analyzer.degree_metrics import degree_legend_below
     degree_legend_below(fig)
+    from epw_climate_analyzer.calendar_heatmap_axes import set_period_axis_scope,apply_monthly_axes
+    set_period_axis_scope(fig,df,aggregation=aggregation)
+    apply_monthly_axes(fig)
     fig.update_yaxes(rangemode="tozero")
     st.caption(
         "Degree-hours integrate the temperature difference at each source interval. "

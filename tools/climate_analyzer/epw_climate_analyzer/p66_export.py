@@ -327,6 +327,8 @@ def _generate_atlas(diagrams,df,context,*,reference_df=None,title="Comprehensive
                     from .figure_interpretation_contract import (
                         bind_figure_interpretation,validate_figure_interpretation,
                     )
+                    from .heatmap_presentation import apply_heatmap_presentation,settings_from_context
+                    apply_heatmap_presentation(fig,**settings_from_context(context))
                     bind_figure_interpretation(fig,note)
                     validate_figure_interpretation(fig,note,require_binding=True)
                     with phase("memory_guard"):guard(f"Atlas prepared chart {processed}: {d.title}")
