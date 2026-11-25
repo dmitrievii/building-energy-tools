@@ -447,9 +447,9 @@ def standard_figure(entry,df,context,reference_df=None):
         note=rainfall_summary(df)
     elif kind=="wind_rain":
         from .directional_climate import directional_table,directional_figure,directional_interpretation
-        table=directional_table(df,radial="Wind-driven rain exposure",colour="Wind speed")
-        fig=directional_figure(table,"Wind-driven rain exposure","Wind speed",label)
-        note=directional_interpretation(table,"Wind-driven rain exposure","Wind speed")
+        table=directional_table(df,radial="Wind-driven rain exposure",colour="Wind-driven rain exposure")
+        fig=directional_figure(table,"Wind-driven rain exposure","Wind-driven rain exposure",label)
+        note=directional_interpretation(table,"Wind-driven rain exposure","Wind-driven rain exposure")
     elif kind=="snow_hours":
         from .residual_findings import snow_hours_figure
         fig,note=snow_hours_figure(df,"Monthly")

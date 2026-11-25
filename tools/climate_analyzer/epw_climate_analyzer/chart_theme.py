@@ -504,7 +504,7 @@ def series_color(name: str, fallback_column: str | None = None) -> str:
     inferred = semantic_color_from_text(name)
     if inferred != DEFAULT_METRIC_COLOR:
         return inferred
-    return metric_color(fallback_column)
+    return semantic_color_from_text(fallback_column) if fallback_column else DEFAULT_METRIC_COLOR
 
 
 def climate_color_map(names: Iterable[str]) -> dict[str, str]:
@@ -516,7 +516,6 @@ def metric_colorscale(column: str | None):
     """Return a continuous colourscale suitable for the selected metric."""
     text = str(column or "").lower()
     if text in ("liquid_precipitation_depth_mm","precipitation_duration_min","wind_driven_rain_exposure"):
-
         return PRECIPITATION_COLORSCALE
     if text in ("snow_depth_cm","days_since_last_snowfall"):
         return SNOW_DEPTH_COLORSCALE
@@ -549,7 +548,7 @@ def metric_colorscale(column: str | None):
     if text in WIND_DIRECTION_COLUMNS:
         return WIND_DIRECTION_COLORSCALE
     if "wind" in text:
-        return "Turbo"
+        return WIND_SPEED_COLORSCALE
     if "night_flushing" in text or "night flushing" in text:return NIGHT_FLUSHING_COLORSCALE
     if "natural_ventilation" in text or "natural ventilation" in text:return NV_SUITABILITY_COLORSCALE
     if "suitable" in text or "ventilation" in text:

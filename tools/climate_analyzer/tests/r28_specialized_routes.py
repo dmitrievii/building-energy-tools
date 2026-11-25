@@ -14,6 +14,7 @@ from epw_climate_analyzer import p66_catalogue as cat
 from epw_climate_analyzer import charts as ch, extended_visualization as ex
 from epw_climate_analyzer import p4_extremes as p4, p3_comfort as p3
 from epw_climate_analyzer.aggregations import native_interval_hours, period_total_series
+from epw_climate_analyzer.chart_theme import metric_color,semantic_color_from_text,event_color
 from epw_climate_analyzer.temporal_filtering import display_period_labels,time_basis
 
 
@@ -37,8 +38,8 @@ def atlas_live(d,df,context):
                 colour=colour,radial=radial,style="Class distribution")
             return f,wind_figure_interpretation(df,f,"wind_panel",column=c)+"\n\n"+wind.MONTHLY_WIND_ROSE_NOTE
         if k=="wind_rain":
-            table=wind.directional_table(df,radial="Wind-driven rain exposure",colour="Wind speed")
-            return wind.directional_figure(table,"Wind-driven rain exposure","Wind speed","Website"),wind.directional_interpretation(table,"Wind-driven rain exposure","Wind speed")
+            table=wind.directional_table(df,radial="Wind-driven rain exposure",colour="Wind-driven rain exposure")
+            return wind.directional_figure(table,"Wind-driven rain exposure","Wind-driven rain exposure","Website"),wind.directional_interpretation(table,"Wind-driven rain exposure","Wind-driven rain exposure")
         direction,month,radial,colour=a
         from epw_climate_analyzer.wind_rose_selection import select_wind_rose_period
         data=select_wind_rose_period(df,month=month or None)
@@ -149,13 +150,14 @@ def atlas_live(d,df,context):
             series=daily["sum"];events=w if wet else dry
             from epw_climate_analyzer.precipitation_findings import wet_dry_interpretation
             extra=wet_dry_interpretation(df,wet=wet,threshold=threshold,minimum=1)
+        quantity="Daily temperature [°C]" if k=="temp_events" else "Daily precipitation [mm]" if k=="wetdry" else cat.LABELS.get(c,d.unit)
         if style=="timeline":
-            f=event_timeline_figure(events,series,unit=unit,threshold=threshold,above=above,quantity=d.unit,step=step)
+            f=event_timeline_figure(events,series,unit=unit,threshold=threshold,above=above,quantity=quantity,step=step)
         elif style=="intensity":
-            f=go.Figure(go.Scatter(x=events.duration,y=events.peak,mode="markers",customdata=events.excess))
+            f=go.Figure(go.Scatter(x=events.duration,y=events.peak,mode="markers",marker_color=event_color(quantity,above),customdata=events.excess))
         else:
             counts=events.duration.value_counts().sort_index()
-            f=go.Figure(go.Bar(x=counts.index,y=counts))
+            f=go.Figure(go.Bar(x=counts.index,y=counts,marker_color=event_color(quantity,above)))
         return f,event_interpretation(events,unit=unit,extra_note=extra)
     if k=="climate_summary":
         table=ex.climate_summary_table(df)
@@ -164,18 +166,18 @@ def atlas_live(d,df,context):
     if k=="rolling":
         from epw_climate_analyzer.precipitation_findings import rolling_interpretation
         s=p4.rolling_windows(df,c,a[0],total=True,nonnegative=True)
-        return go.Figure(go.Scatter(x=s.index,y=s,mode="lines",connectgaps=False)),rolling_interpretation(df,a[0])
+        return go.Figure(go.Scatter(x=s.index,y=s,mode="lines",connectgaps=False,line_color=metric_color(c))),rolling_interpretation(df,a[0])
     if k=="freeze_days":
         from epw_climate_analyzer.precipitation_findings import freeze_interpretation
         table=p4.freeze_thaw_days(df,1.).resample("MS").sum(min_count=1)
         f=go.Figure()
-        for key in table:f.add_bar(x=table.index,y=table[key],name=key)
+        for key in table:f.add_bar(x=table.index,y=table[key],name=key,marker_color=semantic_color_from_text(key))
         return f,freeze_interpretation(df,wet_threshold=1.)
     if k=="moisture":
         from epw_climate_analyzer.humidity_findings import humidity_figure_interpretation
         table=p3.monthly_totals(df,p3.moisture_loads(df,airflow=1000.,target=9.))
         f=go.Figure()
-        for key in table:f.add_bar(x=table.index,y=table[key],name=key)
+        for key in table:f.add_bar(x=table.index,y=table[key],name=key,marker_color=semantic_color_from_text(key))
         return f,humidity_figure_interpretation(df,None,"moisture",airflow_m3_h=1000.,target_g_kg=9.)
     if k=="vent_load":
         from epw_climate_analyzer.hvac_findings import conditioning_monthly_figure,conditioning_interpretation
@@ -223,7 +225,7 @@ def standard_live(entry,df,context):
         from epw_climate_analyzer.daylight import monthly_daylight_sunshine_summary
         from epw_climate_analyzer.sky_findings import sunshine_interpretation
         table=monthly_daylight_sunshine_summary(df,float(context["latitude"]))
-        return go.Figure(go.Bar(x=table["month"],y=table["relative_sunshine_pct"])),sunshine_interpretation(df,latitude=float(context["latitude"]),kind="relative_sunshine")
+        return go.Figure(go.Bar(x=table["month"],y=table["relative_sunshine_pct"],marker_color=metric_color("relative_sunshine_pct"))),sunshine_interpretation(df,latitude=float(context["latitude"]),kind="relative_sunshine")
     mappings={
         "psychrometric":("psychrometric",("T-d","Climate zone")),
         "facade":("facade",("Bar chart",)),

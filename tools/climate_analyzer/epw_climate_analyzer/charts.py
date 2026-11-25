@@ -1412,7 +1412,7 @@ def _sample_metric_color(value: float, vmin: float, vmax: float, colorscale: obj
     try:
         return sample_colorscale(colorscale, [pos])[0]
     except Exception:
-        return sample_colorscale("Viridis", [pos])[0]
+        return sample_colorscale(metric_colorscale(None), [pos])[0]
 
 
 def _add_psychrometric_tile_occupancy(
@@ -1861,7 +1861,7 @@ def matrix_heatmap(matrix: pd.DataFrame, title: str, x_label: str, y_label: str,
     fig = px.imshow(
         matrix,
         aspect="auto",
-        color_continuous_scale=SOLAR_COLORSCALE if use_solar_scale else "Viridis",
+        color_continuous_scale=SOLAR_COLORSCALE if use_solar_scale else metric_colorscale(None),
         **solar_bounds,
         labels=dict(x=x_label, y=y_label, color=color_label),
         title=title,
