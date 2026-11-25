@@ -324,7 +324,7 @@ def _period_ticks(axis,values,fig,*,heatmap=False):
             axis.update(tickmode="array",tickvals=[raw[i] for i in take],ticktext=[f"W{nums[i]:02d}" for i in take],tickangle=0,automargin=True,showticklabels=True)
             return True
     if heatmap:return False # Daily heat maps are handled by the dual-calendar formatter.
-    daily=agg=="daily" or title in ("day","day of year","day of the year","calendar day","daily period") or ("daily" in graph and title in ("period","date","time"))
+    daily=agg=="daily" or title in ("day","day of year","day of the year","calendar day","daily period") or (agg!="monthly" and "daily" in graph and "occurrence" not in graph and title in ("period","date","time"))
     try:nums=[int(v) for v in raw if float(v)==int(v)]
     except (TypeError,ValueError,OverflowError):nums=[]
     if len(nums)==len(raw) and nums and 1<=min(nums)<=max(nums)<=366 and (daily or title=="period" and max(nums)>53):
@@ -392,6 +392,18 @@ def apply_monthly_axes(fig):
         vals=list(dict.fromkeys(str(v) for v in values))
         meta=fig.layout.meta
         daylight=(isinstance(meta,dict) and meta.get("calendar_axis")=="daily_daylight_envelope" or str(fig.layout.title.text or "").lower().startswith("ideal sunrise–sunset envelope"))
+        # YYYY-MM represents a monthly bucket even when the classified
+        # observations are daily mean/minimum/maximum. Route this before
+        # title-based daily inference, including legacy saved chart snapshots.
+        if all(re.fullmatch(r"\\d{4}-(?:0[1-9]|1[0-2])",v) for v in vals):
+            labels=[pd.Timestamp(v+"-01") for v in vals]
+            multi=len({v.year for v in labels})>1
+            take=_bounded_positions(len(vals),12) if multi else list(range(len(vals)))
+            axis.update(type="category",categoryorder="array",categoryarray=vals,
+                tickmode="array",tickvals=[vals[i] for i in take],
+                ticktext=[_month_label(labels[i],multi) for i in take],
+                tickangle=-45 if multi else 0,automargin=True,showticklabels=True)
+            continue
         if not daylight and _period_ticks(axis,values,fig):continue
         if all(_MONTH_YEAR.match(v) for v in vals):
             parsed=[_MONTH_YEAR.match(v) for v in vals]
