@@ -308,6 +308,7 @@ def profile_ribbon_chart(
             )
         )
         fig = apply_common_layout(fig, title, "Time", unit)
+        _format_profile_period(fig,df,aggregation)
         return _apply_axis_constraints(fig, column=column, x_values=x, y_values=summary[central])
 
     x = _period_x(summary, aggregation)
