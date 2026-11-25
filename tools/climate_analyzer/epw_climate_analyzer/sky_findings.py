@@ -303,3 +303,28 @@ def sky_figure_interpretation(df,fig,kind,*,column="",title="",args=(),latitude=
                 return (f"Month–hour mean {LABELS.get(column,column)} is highest in "
                         f"month {month} at {hour:02d}:00 ({_fmt(grouped.max())} {unit}). "+context)
     return context
+
+
+def illuminance_availability_figure(df,column=GLOBAL,*,threshold_lux=10000.,aggregation="Monthly",percentage=False):
+    """Exhaustive two-class partition of valid observed light intervals."""
+    import plotly.graph_objects as go
+    from .aggregations import period_total_series
+    from .temporal_filtering import display_period_labels,time_basis
+    from .chart_theme import ILLUMINANCE_THRESHOLD_COLOR
+    v=_numeric(df,column);dt=native_interval_hours(df);threshold=float(threshold_lux)
+    if not v.notna().any():raise ValueError("No valid exterior illuminance observations.")
+    q=pd.DataFrame({"Below threshold":v.lt(threshold).astype(float).where(v.notna())*dt,
+                    "At or above threshold":v.ge(threshold).astype(float).where(v.notna())*dt})
+    table=pd.DataFrame({c:period_total_series(q[c],df,aggregation) for c in q})
+    if percentage:
+        table=table.div(table.sum(axis=1,min_count=2).replace(0,np.nan),axis=0)*100
+    table.index=display_period_labels(table.index,aggregation,time_basis(df))
+    fig=go.Figure()
+    for c,color in zip(table,("#C2CBD3",ILLUMINANCE_THRESHOLD_COLOR)):
+        fig.add_bar(x=table.index,y=table[c],name=c,marker_color=color)
+    fig.update_layout(template="plotly_white",title=f"{LABELS.get(column,column).capitalize()} availability · {threshold:g} lux",
+                      barmode="stack",yaxis_title="%" if percentage else "Hours",xaxis_title="Period")
+    note=illuminance_interpretation(df,column=column,threshold_lux=threshold)
+    note+=(" The percentages partition all valid selected intervals, including dark hours, into the two displayed classes."
+           if percentage else " The two classes partition the valid observed duration, including dark hours.")
+    return fig,note

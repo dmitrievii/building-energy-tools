@@ -40,7 +40,13 @@ class TemporalUx074Tests(unittest.TestCase):
         self.assertIn("Middle 90% range with median", source)
         self.assertIn("Lower 5% boundary (P05)", source)
         self.assertIn("Upper 5% boundary (P95)", source)
-        self.assertIn("Nighttime hours > 20 °C (20:00–06:59)", source)
+        self.assertIn("temperature_threshold_panel(df,render_plot)", source)
+        from epw_climate_analyzer.residual_findings import temperature_threshold_figure
+        import pandas as pd
+        df=pd.DataFrame({"dry_bulb_temperature_c":[21.,20.,21.,21.]},index=pd.to_datetime(["2026-01-01 19:00","2026-01-01 20:00","2026-01-01 21:00","2026-01-01 22:00"]))
+        df.attrs["canonical_native_interval_minutes"]=60
+        fig,_=temperature_threshold_figure(df,"Daily",mode="Nighttime hours > 20 °C (20:00–06:59)")
+        self.assertAlmostEqual(float(fig.data[0].y[0]),2.)
         self.assertIn('"Cooling limit [°C]",\n        10.0,\n        35.0,\n        20.0', source)
 
 

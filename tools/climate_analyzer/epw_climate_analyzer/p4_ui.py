@@ -7,11 +7,8 @@ import streamlit as st
 from . import p4_extremes as p
 from .aggregations import native_interval_hours
 from .p3_comfort import numeric
-VARS={"Air temperature [°C]":p.T,"Relative humidity [%]":p.RH,"Humidity ratio [g/kg]":p.W,
-      "Enthalpy [kJ/kg dry air]":p.H,"Wind speed [m/s]":p.V,
-      "Dew point [°C]":"dew_point_temperature_c","Station pressure [Pa]":"atmospheric_station_pressure_pa",
-      "Global irradiation [Wh/m²]":"global_horizontal_radiation_wh_m2","Precipitation [mm]":p.P,
-      "Snow depth [cm]":p.SNOW}
+from .relationship_findings import VARS,correlation_chart,joint_chart
+from .chart_theme import metric_color, metric_colorscale, series_color, event_color, semantic_color_from_text
 
 def _available(df):
     return {k:v for k,v in VARS.items() if numeric(df,v).notna().any()}
@@ -22,7 +19,7 @@ def _show_table(table,key):
 
 def _bars(table,title,unit,render,note):
     fig=go.Figure()
-    for c in table:fig.add_bar(x=table.index,y=table[c],name=c)
+    for c in table:fig.add_bar(x=table.index,y=table[c],name=c,marker_color=series_color(str(c),title))
     fig.update_layout(template="plotly_white",title=title,barmode="group",yaxis_title=unit,xaxis_title="Period")
     render(fig,note)
 
@@ -42,7 +39,7 @@ def event_timeline_figure(table,series,*,unit,threshold,above=True,quantity="Tem
     if breaks:
         plotted=pd.concat([series,pd.Series(np.nan,index=pd.DatetimeIndex(breaks))]).sort_index()
     fig.add_scatter(x=plotted.index,y=plotted,mode="lines+markers" if len(series)==1 else "lines",
-                    name=quantity,connectgaps=False,line=dict(color="#64748B"))
+                    name=quantity,connectgaps=False,line=dict(color=semantic_color_from_text(quantity)))
     # Use a visible trace rather than a layout-only line: the threshold also
     # participates in y-axis autorange when it lies outside the observed range.
     if len(stamps):
@@ -51,11 +48,20 @@ def event_timeline_figure(table,series,*,unit,threshold,above=True,quantity="Tem
                         line=dict(dash="dash",color="#333333"))
     shapes=[dict(type="rect",xref="x",yref="paper",y0=0,y1=1,
                  x0=r.start,x1=r.end+delta,line=dict(width=0),
-                 fillcolor="#DD783B" if above else "#497DB7",opacity=.20,layer="below")
+                 fillcolor=event_color(quantity,above),opacity=.20,layer="below")
             for _,r in table.iterrows()]
     fig.update_layout(template="plotly_white",shapes=shapes,xaxis_title="Date",
                       yaxis_title=quantity,title="Extreme-event timeline")
     return fig
+
+def event_interpretation(table,*,unit,extra_note=""):
+    """One event narrative for the interactive and report representations."""
+    count=len(table)
+    summary=(f"{count:,} qualifying continuous events; longest duration {table.duration.max():g} {unit}. "
+             if count else "The selected criterion identifies zero qualifying continuous events. ")
+    method="Events group consecutive observations meeting the selected threshold. The event peak and integrated threshold excess describe severity; the duration and timing identify persistent climatic episodes."
+    return (summary+method+" "+extra_note).strip()
+
 
 def _events(table,render,*,key,unit,threshold,series=None,above=True,quantity="Temperature [°C]",step=None,extra_note=""):
     if table.empty:
@@ -76,15 +82,15 @@ def _events(table,render,*,key,unit,threshold,series=None,above=True,quantity="T
     if style=="Event timeline":
         fig=event_timeline_figure(table,series,unit=unit,threshold=threshold,above=above,quantity=quantity,step=step)
     elif style=="Duration and intensity":
-        fig.add_scatter(x=table.duration,y=table.peak,mode="markers",marker=dict(size=9,color="#D98235" if above else "#4477AA"),
+        fig.add_scatter(x=table.duration,y=table.peak,mode="markers",marker=dict(size=9,color=event_color(quantity,above)),
                         text=table.start.astype(str),customdata=table.excess,hovertemplate="%{text}<br>Duration %{x:g}<br>Peak %{y:.2f}<br>Integrated excess %{customdata:.2f}<extra></extra>")
         fig.update_layout(title="Event duration and peak",xaxis_title="Duration ["+unit+"]",yaxis_title=quantity)
     else:
         d=table.duration.value_counts().sort_index()
-        fig.add_bar(x=d.index,y=d,marker_color="#4477AA")
+        fig.add_bar(x=d.index,y=d,name="Number of events",marker_color=event_color(quantity,above))
         fig.update_layout(title="Event duration distribution",xaxis_title="Duration ["+unit+"]",yaxis_title="Number of events")
     fig.update_layout(template="plotly_white")
-    render(fig,"Events group consecutive observations meeting the selected threshold. The event peak and integrated threshold excess describe severity; the duration and timing identify persistent climatic episodes. "+extra_note)
+    render(fig,event_interpretation(table,unit=unit,extra_note=extra_note))
     _show_table(table,key)
 
 def temperature_panel(df,render):
@@ -93,7 +99,9 @@ def temperature_panel(df,render):
         if view=="Frost days and tropical nights":
             a=p.day_indicators(df)
             tab=a.resample("MS").sum(min_count=1)
-            _bars(tab,"Frost days and tropical nights","Complete days",render,"Frost day: complete-day sampled Tmin < 0 °C. Tropical-night indicator uses daily Tmin ≥ 20 °C (ETCCDI TR uses >20 °C in some conventions; this is the explicitly displayed ≥ convention). Hourly sampled minima, not continuous daily extrema. Incomplete days excluded.")
+            from .temperature_findings import temperature_figure_interpretation
+            _bars(tab,"Frost days and tropical nights","Complete days",render,
+                  temperature_figure_interpretation(df,None,"day_indicators"))
             _show_table(tab,"temperature_days");return
         above=st.radio("Event type",["Heat","Cold"],horizontal=True,key="p4_temp_event_type")=="Heat"
         method=st.selectbox("Daily temperature statistic",["Maximum","Mean","Minimum"],index=0 if above else 2,key="p4_temp_stat_"+str(above))
@@ -147,19 +155,21 @@ def precipitation_panel(df,native,view,render):
                 note=rolling_interpretation(native if native is not None else df,h)
             else:
                 s=p.cumulative_precipitation(native if native is not None else df)
-                from .precipitation_findings import rainfall_summary
-                note=rainfall_summary(native if native is not None else df)
-                note+=" The curve displays accumulation within consecutive observed blocks."
-            fig=go.Figure(go.Scatter(x=s.index,y=s,mode="lines",connectgaps=False))
+                from .precipitation_findings import precipitation_figure_interpretation
+                note=precipitation_figure_interpretation(native if native is not None else df,None,"cumulative",column=p.P)
+            fig=go.Figure(go.Scatter(x=s.index,y=s,mode="lines",connectgaps=False,line_color=metric_color(p.P)))
             fig.update_layout(template="plotly_white",title=choice,yaxis_title="Precipitation [mm]",xaxis_title="Timestamp");render(fig,note)
         elif view=="Empirical IDF":
             if native is None:st.info("Requires native historical precipitation, not EPW/generated data.");return
             a=p.empirical_idf(native,historical_native=True)
             if a.empty:st.info("No durations match the native cadence.");return
             fig=go.Figure()
+            from plotly.colors import sample_colorscale
+            durations=sorted(a.duration_h.unique())
+            palette=dict(zip(durations,sample_colorscale(metric_colorscale(p.P),np.linspace(.35,1.,len(durations)).tolist())))
             for dur,g in a.groupby("duration_h"):
                 g=g.sort_values("return_period_y")
-                fig.add_scatter(x=g.return_period_y,y=g.intensity_mm_h,mode="lines+markers",name=f"{dur:g} h",customdata=g.year,hovertemplate="T %{x:.2f} y<br>I %{y:.2f} mm/h<br>Year %{customdata}<extra></extra>")
+                fig.add_scatter(x=g.return_period_y,y=g.intensity_mm_h,mode="lines+markers",name=f"{dur:g} h",line_color=palette[dur],customdata=g.year,hovertemplate="T %{x:.2f} y<br>I %{y:.2f} mm/h<br>Year %{customdata}<extra></extra>")
             fig.update_layout(template="plotly_white",title="Empirical rainfall intensity–duration–frequency",xaxis_type="log",xaxis_title="Empirical return period [years]",yaxis_title="Intensity [mm/h]")
             peak=a.loc[a.intensity_mm_h.idxmax()]
             render(fig,f"Empirical intensities are calculated from {a.year.nunique()} complete measured years "
@@ -201,6 +211,11 @@ def _calendar(s,render,title,note):
     if s.dropna().empty:st.info("No complete daily observations.");return
     years=sorted(s.index.year.unique())
     y=st.selectbox("Year",years,index=len(years)-1,key="p4_calendar_year_"+title)
+    render(*snow_calendar_chart(s,y,title=title,note=note))
+
+
+def snow_calendar_chart(s,y,*,title="Snow-cover calendar",note=""):
+    """Render the selected complete-day snow calendar in both interfaces."""
     sub=s.loc[s.index.year==y]
     start=pd.Timestamp(year=int(y),month=1,day=1,tz=s.index.tz)
     dates=pd.date_range(start,start+pd.DateOffset(years=1),freq="D",inclusive="left")
@@ -208,12 +223,12 @@ def _calendar(s,render,title,note):
     z=np.full((7,54),np.nan);labels=np.full((7,54),"",dtype=object)
     for i,(d,val) in enumerate(v.items()):
         w=(i+start.weekday())//7;day=d.weekday();z[day,w]=val;labels[day,w]=d.strftime("%Y-%m-%d")
-    fig=go.Figure(go.Heatmap(z=z,x=list(range(1,55)),y=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],customdata=labels,zmin=0,zmax=1,colorscale=[[0,"#FFFFFF"],[1,"#427CAD"]],showscale=False,xgap=2,ygap=2,hoverongaps=False,hovertemplate="%{customdata}<br>Snow cover %{z}<extra></extra>"))
+    fig=go.Figure(go.Heatmap(z=z,x=list(range(1,55)),y=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],customdata=labels,zmin=0,zmax=1,colorscale=[[0,"#FFFFFF"],[1,metric_color(p.SNOW)]],showscale=False,xgap=2,ygap=2,hoverongaps=False,hovertemplate="%{customdata}<br>Snow cover %{z}<extra></extra>"))
     fig.add_heatmap(z=np.where(np.isfinite(z)| (labels==""),np.nan,1.),x=list(range(1,55)),y=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],customdata=labels,
                     zmin=0,zmax=1,colorscale=[[0,"#D1D5DB"],[1,"#D1D5DB"]],showscale=False,xgap=2,ygap=2,hoverongaps=False,
                     hovertemplate="%{customdata}<br>Unknown<extra></extra>")
     fig.update_layout(template="plotly_white",title=title,xaxis_title="Calendar week position",yaxis=dict(autorange="reversed"))
-    render(fig,note+" White = no cover, blue = snow cover, gray = unknown.")
+    return fig,note+" White = observed snow-free days, blue = observed snow-covered days, gray = unknown days."
 
 def hvac_panel(df,render):
     options={k:v for k,v in _available(df).items() if v in (p.T,p.W,p.H)}
@@ -260,25 +275,20 @@ def hvac_panel(df,render):
 def multivariate_panel(df,render,*,density_only=False):
     options=_available(df)
     if len(options)<2:st.info("Two observable quantities are required.");return
-    view="Joint probability density" if density_only else st.selectbox("Multivariate analysis",["Correlation matrix","Joint probability density"],key="p4_multi_view")
+    view="Joint probability density" if density_only else st.selectbox("Multivariate analysis",["Correlation matrix","Joint probability density","Paired scatter"],key="p4_multi_view")
     if view=="Correlation matrix":
         selected=st.multiselect("Quantities",list(options),default=list(options)[:min(6,len(options))],key="p4_corr_quantities")
         if len(selected)<2:st.info("Select at least two quantities.");return
-        r,n=p.correlation(df,[options[x] for x in selected])
-        fig=go.Figure(go.Heatmap(x=selected,y=selected,z=r,customdata=n,zmin=-1,zmax=1,zmid=0,colorscale="RdBu_r",colorbar=dict(title="Pearson r"),hoverongaps=False,hovertemplate="%{y} / %{x}<br>r %{z:.3f}<br>Paired records %{customdata}<extra></extra>"))
-        fig.update_layout(template="plotly_white",title="Pairwise observed correlation")
-        render(fig,"Pairwise complete Pearson correlation, at least three coincident observations; no causal interpretation. Direction angles excluded. Each pair can have different coverage.")
+        render(*correlation_chart(df,[options[x] for x in selected]))
     else:
         x=st.selectbox("X quantity",list(options),key="p4_density_x_"+str(density_only))
         others=[k for k in options if k!=x]
         y=st.selectbox("Y quantity",others,key="p4_density_y_"+str(density_only))
-        bins=st.slider("Bins per axis",10,60,25,5,key="p4_density_bins_"+str(density_only))
-        data=p.joint_density(df,options[x],options[y],bins=bins)
-        if data is None:st.info("No coincident valid observations.");return
-        xx,yy,z,h=data
-        fig=go.Figure(go.Heatmap(x=xx,y=yy,z=z,customdata=h,colorscale=[[0,"#FFFFFF"],[.5,"#83BCD8"],[1,"#165986"]],zmin=0,colorbar=dict(title="% of paired hours"),hovertemplate="X %{x:.2f}<br>Y %{y:.2f}<br>Probability mass %{z:.2f}%<br>Hours %{customdata:.1f}<extra></extra>"))
-        fig.update_layout(template="plotly_white",title="Observed joint probability distribution",xaxis_title=x,yaxis_title=y)
-        render(fig,"Fixed-width 2D histogram; cell probability masses sum to 100% over valid paired observations. Not probability per unit area or kernel smoothing.")
+        style="scatter" if view=="Paired scatter" else "density"
+        bins=st.slider("Bins per axis",10,60,25,5,key="p4_density_bins_"+str(density_only)) if style=="density" else 25
+        try:render(*joint_chart(df,options[x],options[y],style=style,bins=bins))
+        except ValueError as exc:st.info(str(exc))
+
 
 def event_viewer(df,render):
     options=_available(df)
@@ -304,7 +314,7 @@ def event_viewer(df,render):
         series=p.valid_values(window,options[name])
         # Insert missing cadence slots for honest visual discontinuities.
         series=series.reindex(pd.date_range(window.index[0],window.index[-1],freq=p.cadence(df)))
-        fig.add_trace(go.Scatter(x=series.index,y=series,mode="lines",name=name,connectgaps=False),row=row,col=1)
+        fig.add_trace(go.Scatter(x=series.index,y=series,mode="lines",name=name,connectgaps=False,line_color=semantic_color_from_text(name)),row=row,col=1)
         fig.update_yaxes(title_text=name,row=row,col=1)
         fig.add_vrect(x0=event.start,x1=event.end+p.cadence(df),fillcolor="#D98235",opacity=.14,line_width=0,row=row,col=1)
     fig.update_layout(template="plotly_white",title="Critical event · coincident source conditions",height=max(350,210*len(chosen)))

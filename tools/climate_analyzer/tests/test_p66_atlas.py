@@ -44,11 +44,25 @@ class AtlasTests(unittest.TestCase):
             df=pd.DataFrame({c.T:18.},index=idx)
             df.attrs["canonical_native_interval_minutes"]=60.
             for coverage in c.LEVELS:
-                self.assertEqual(len([d for d in c.catalogue(df,{},coverage) if d.kind=="adaptive"]),1)
+                self.assertEqual(len([d for d in c.catalogue(df,{},coverage) if d.kind=="adaptive"]),2 if coverage==c.FULL else 1)
             d=next(d for d in c.catalogue(df,{},c.FULL) if d.kind=="adaptive")
             fig,note=make_figure(d,df,{})
             self.assertEqual(set(tr.name for tr in fig.data),{"Category I","Category II","Category III","Neutral operative temperature","Outdoor running mean"})
-            self.assertEqual(str(fig.layout.xaxis.ticktext[-1]),"31.12")
+            primary=[str(t).split("<br>")[0] for t in fig.layout.xaxis.ticktext if not str(t).startswith("&nbsp;")]
+            self.assertEqual(primary[-1],str(n))
+            # Month and ordinal labels may share an exact coordinate.
+            ticks=list(zip(fig.layout.xaxis.tickvals,fig.layout.xaxis.ticktext))
+            month_ticks=[(float(x),str(label).split("<br>")[1])
+                         for x,label in ticks if str(label).split("<br>")[1]!="&nbsp;"]
+            months=pd.date_range(f"{year}-01-01",periods=12,freq="MS")
+            self.assertEqual([label for _,label in month_ticks],list(months.strftime("%b")))
+            np.testing.assert_allclose([x for x,_ in month_ticks],
+                                       [m.dayofyear+(m.days_in_month-1)/2 for m in months])
+            self.assertEqual(len(ticks),len({x for x,_ in ticks}))
+            for x,label in ticks:
+                day=str(label).split("<br>")[0]
+                if day!="&nbsp;":
+                    self.assertEqual(float(day),float(x))
             self.assertEqual(fig.layout.xaxis.tickvals[-1],n)
             self.assertEqual(fig.layout.legend.orientation,"h")
             self.assertIn(f"{n-7}/{n}",note)
@@ -221,7 +235,10 @@ class AtlasTests(unittest.TestCase):
                     fig=shading_calendar(frame,metric,period,"Hour of day","Mean")
                     self.assertEqual(vals.shape,(24,ncols))
                     self.assertEqual(len(fig.data[0].x),ncols)
-                    self.assertEqual(fig.layout.xaxis.title.text,period.capitalize())
+                    if period=="day":
+                        self.assertIn("day",fig.layout.xaxis.title.text.lower())
+                        self.assertIn("&nbsp;<br>Dec",fig.layout.xaxis.ticktext)
+                    else:self.assertEqual(fig.layout.xaxis.title.text,period.capitalize())
                     self.assertEqual(len(fig.layout.annotations),0)
                     self.assertEqual(len(fig.data),1)
                     self.assertTrue(np.isnan(np.asarray(fig.data[0].z,float)[0]).all())
@@ -284,8 +301,11 @@ class AtlasTests(unittest.TestCase):
         for d in rows:
             fig,_=make_figure(d,df,{})
             for copy in (fig,report_figure(fig,width_pt=500,height_pt=230)):
-                self.assertTrue(all(tr.marker.color==ILLUMINANCE_THRESHOLD_COLOR for tr in copy.data))
-            self.assertAlmostEqual(float(np.nansum(fig.data[0].y)),float(df[c.LUX].ge(300.).sum()))
+                self.assertEqual(len(copy.data),2)
+                self.assertEqual(copy.data[1].marker.color,ILLUMINANCE_THRESHOLD_COLOR)
+                self.assertNotEqual(copy.data[0].marker.color,ILLUMINANCE_THRESHOLD_COLOR)
+            self.assertAlmostEqual(float(np.nansum(fig.data[1].y)),float(df[c.LUX].ge(300.).sum()))
+            self.assertAlmostEqual(float(np.nansum(fig.data[0].y)),float(df[c.LUX].lt(300.).sum()))
         self.assertEqual(semantic_color_from_text("Illuminance >= 300 lux"),ILLUMINANCE_THRESHOLD_COLOR)
         self.assertEqual(threshold_bar_chart(pd.DataFrame({"hours":[10.]},index=["Jan"]),"Illuminance ≥ 300 lux").data[0].marker.color,ILLUMINANCE_THRESHOLD_COLOR)
 
@@ -325,7 +345,7 @@ class AtlasTests(unittest.TestCase):
             self.assertGreaterEqual(tr.marker.opacity,.55)
             np.testing.assert_allclose(tr.x,df[c.T].iloc[2:])
             np.testing.assert_allclose(tr.y,df[c.RH].iloc[2:])
-        self.assertIn("94 finite paired observations",note)
+        self.assertIn("94 coincident records (94.0 h)",note)
         x=pd.Series(np.zeros(PAIRED_SCATTER_SVG_LIMIT+1))
         big=paired_scatter_chart(x,x,"Test","X","Y")
         self.assertEqual(big.data[0].type,"scattergl")

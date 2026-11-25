@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 from .p3_comfort import EDGES,CLASSES,COLORS
 from .calendar_heatmap_axes import apply_calendar_heatmap_axes
 from .duration_axes import apply_duration_axis
+from .chart_theme import EXPOSURE_COLORS,semantic_color_from_text
 
 PRACTICAL_RANGE=(EDGES[0],EDGES[-1])
 # Preserve existing right-closed classification (p3_comfort.utci_class_hours).
@@ -68,7 +69,7 @@ def duration_figure(values,dt,title):
         x=np.arange(1,len(v)+1)*dt
         codes=stress_codes(v)
         classes=[CLASSES[int(i)] for i in codes]
-        fig.add_scatter(x=x,y=v,name=str(c),mode="lines",text=classes,
+        fig.add_scatter(x=x,y=v,name=str(c),mode="lines",text=classes,line_color=EXPOSURE_COLORS.get(str(c),semantic_color_from_text(str(c))),
                         hovertemplate="%{x:.1f} h<br>UTCI %{y:.2f} °C<br>%{text}<extra></extra>")
         endpoints.append(float(x[-1]))
     fig.update_layout(template="plotly_white",title=title,xaxis_title="Duration [h]",yaxis_title="UTCI [°C]",

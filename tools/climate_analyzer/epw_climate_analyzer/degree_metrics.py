@@ -147,6 +147,7 @@ def degree_metric_table(
     metric: DegreeMetric = "Degree-days",
     aggregation: DegreeAggregation = "Monthly",
     interval_minutes: float | None = None,
+    require_complete_days: bool = False,
 ) -> pd.DataFrame:
     """Calculate HGT/KGT with four explicit temperature inputs.
 
@@ -189,7 +190,11 @@ def degree_metric_table(
         result.attrs["unit"] = "K·h"
         result.attrs["method"] = "source-interval"
     elif metric == "Degree-days":
-        daily_temperature = temperature.resample("D").mean()
+        if require_complete_days:
+            from .p4_extremes import daily_stats
+            daily_temperature = daily_stats(df,"dry_bulb_temperature_c")["mean"]
+        else:
+            daily_temperature = temperature.resample("D").mean()
         heating, cooling = _degree_contributions(
             daily_temperature,
             heating_indoor_c=heating_indoor_c,
@@ -203,7 +208,7 @@ def degree_metric_table(
         daily["Cooling degree-days (KGT)"] = cooling
         result = _aggregate_table(daily, aggregation)
         result.attrs["unit"] = "K·d"
-        result.attrs["method"] = "daily-mean"
+        result.attrs["method"] = "complete-daily-mean" if require_complete_days else "daily-mean"
     else:
         raise ValueError(f"Unsupported degree metric: {metric}")
 
@@ -237,7 +242,9 @@ def degree_metric_interpretation(
     unit = str(table.attrs.get("unit", "K·h" if metric == "Degree-hours" else "K·d"))
     heating_notation = f"HGT {heating_indoor_c:g}/{heating_limit_c:g}"
     cooling_notation = f"KGT {cooling_indoor_c:g}/{cooling_limit_c:g}"
-    method = "native source intervals" if metric == "Degree-hours" else "daily mean outdoor temperatures"
+    method = ("native source intervals" if metric == "Degree-hours" else
+              "complete daily mean outdoor temperatures" if table.attrs.get("method")=="complete-daily-mean" else
+              "daily mean outdoor temperatures")
     cooling_note = ""
     if float(cooling_limit_c) < float(cooling_indoor_c):
         cooling_note = (

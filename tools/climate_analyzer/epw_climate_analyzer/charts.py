@@ -164,7 +164,9 @@ def _heatmap_colorscale(column: str, values=None, temperature_thresholds: tuple[
     if column in TEMPERATURE_HEATMAP_COLUMNS:
         vmin,vmax=_finite_min_max(values)
         return temperature_gradient_domain(vmin,vmax,temperature_thresholds or (18.,26.))[2]
-    if column in {"natural_ventilation_suitable", "night_flushing_suitable"} or "suitable" in column:
+    if column in {"natural_ventilation_suitable", "night_flushing_suitable"}:
+        return metric_colorscale(column)
+    if "suitable" in column:
         return BINARY_SUITABILITY_COLORSCALE
     if column in ("liquid_precipitation_depth_mm","snow_depth_cm",*WIND_SPEED_COLUMNS,*WIND_DIRECTION_COLUMNS):
         return metric_colorscale(column)
@@ -174,7 +176,7 @@ def _heatmap_colorscale(column: str, values=None, temperature_thresholds: tuple[
         return metric_colorscale(column)
     if is_irradiation_metric(column):
         return SOLAR_COLORSCALE
-    return metric_colorscale(column) if column in ("relative_humidity_pct","humidity_ratio_g_kg","moist_air_enthalpy_kj_kg","specific_volume_m3_kg","moist_air_density_kg_m3","atmospheric_station_pressure_pa") else "Viridis"
+    return metric_colorscale(column)
 
 
 def apply_common_layout(fig: go.Figure, title: str, x_label: str, y_label: str) -> go.Figure:
@@ -308,6 +310,7 @@ def profile_ribbon_chart(
             )
         )
         fig = apply_common_layout(fig, title, "Time", unit)
+        _format_profile_period(fig,df,aggregation)
         return _apply_axis_constraints(fig, column=column, x_values=x, y_values=summary[central])
 
     x = _period_x(summary, aggregation)
@@ -518,6 +521,9 @@ def temporal_heatmap_chart(
         fig.update_layout(plot_bgcolor="#F1F3F5")
         fig.update_xaxes(showgrid=False)
         fig.update_yaxes(showgrid=False)
+    # Physical quantity semantics accompany the canonical heatmap for all renderers.
+    categorical=(column in WIND_DIRECTION_COLUMNS or "suitable" in column or column in ("nv","snow_cover","atlas_suitable"))
+    fig.data[0].meta={"heatmap_quantity":column,"heatmap_semantics":"categorical" if categorical else "continuous"}
     set_period_axis_scope(fig,df)
     return apply_calendar_heatmap_axes(fig,period=row_group)
 
@@ -1406,7 +1412,7 @@ def _sample_metric_color(value: float, vmin: float, vmax: float, colorscale: obj
     try:
         return sample_colorscale(colorscale, [pos])[0]
     except Exception:
-        return sample_colorscale("Viridis", [pos])[0]
+        return sample_colorscale(metric_colorscale(None), [pos])[0]
 
 
 def _add_psychrometric_tile_occupancy(
@@ -1855,7 +1861,7 @@ def matrix_heatmap(matrix: pd.DataFrame, title: str, x_label: str, y_label: str,
     fig = px.imshow(
         matrix,
         aspect="auto",
-        color_continuous_scale=SOLAR_COLORSCALE if use_solar_scale else "Viridis",
+        color_continuous_scale=SOLAR_COLORSCALE if use_solar_scale else metric_colorscale(None),
         **solar_bounds,
         labels=dict(x=x_label, y=y_label, color=color_label),
         title=title,

@@ -8,12 +8,25 @@ from plotly.subplots import make_subplots
 
 from .aggregations import native_interval_hours, duration_curve
 from .climate_model import aggregation_semantics_for
-from .chart_theme import metric_color, MONTH_COLORS, rgba
+from .chart_theme import metric_color, MONTH_COLORS, rgba, SKY_CONDITION_COLORS, SUNSHINE_COLORSCALE, climate_color_map
 from .temporal_filtering import CHRONOLOGICAL, time_basis
 from .daylight import daily_daylight_table
+from .occurrence_reference import REFERENCES, DURATION_UNITS_PER_HOUR, reference_edges
 
 MONTHS = ("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec")
 T = "dry_bulb_temperature_c"
+W_OCCURRENCE_COLUMN = "humidity_ratio_g_kg"
+W_OCCURRENCE_EDGES = (3.,6.,10.,15.,20.,25.)
+W_OCCURRENCE_COLORS = ("#2454A4","#368CCB","#65B8D5","#41A88B","#E4B524","#E87525","#B92F39")
+W_OCCURRENCE_NOTE = ("Fixed outdoor humidity-ratio reference boundaries at 3, 6, 10, 15, 20 and 25 g/kg dry air support climate comparisons. The 3 and 10 g/kg boundaries align with the existing low- and high-moisture reference screens. Humidity ratio quantifies water-vapour mass per kilogram of dry air. Comparing outdoor and target indoor humidity ratios determines the direction and magnitude of ventilation-air moisture transfer per kilogram of dry air; multiplying the difference by dry-air mass flow gives the corresponding moisture transfer rate.")
+RH_OCCURRENCE_COLUMN = "relative_humidity_pct"
+RH_OCCURRENCE_EDGES = (30.,40.,60.,80.,90.,95.)
+RH_OCCURRENCE_COLORS = ("#C56B26","#E6AD43","#E8DA85","#8EC9B5","#4CA6CB","#3678BC","#243B83")
+RH_OCCURRENCE_NOTE = ("Fixed outdoor relative-humidity classes use boundaries at 30, 40, 60, 80, 90 and 95%. Higher classes indicate decreasing vapour-pressure deficit at the same temperature; the 95–100% class identifies air close to or at saturation. These classes characterize atmospheric moisture exposure, evaporative cooling potential and material drying conditions. Surface moisture conditions depend on surface temperature and local vapour pressure.")
+DEW_POINT_COLUMN = "dew_point_temperature_c"
+DEW_POINT_OCCURRENCE_EDGES = (0.,5.,10.,15.,20.,25.)
+DEW_POINT_OCCURRENCE_COLORS = ("#2454A4","#368CCB","#65B8D5","#41A88B","#E4B524","#E87525","#B92F39")
+DEW_POINT_OCCURRENCE_NOTE = ("Fixed outdoor moisture-reference boundaries at 0, 5, 10, 15, 20 and 25 °C support comparisons between climates. At 15 °C, outdoor air contains approximately 10.6 g water per kg dry air at standard atmospheric pressure; 15 °C is also an indoor moisture-control reference in ASHRAE 62.1-2022 for applicable cooled spaces. Increasing dew point identifies increasing water-vapour pressure and greater moisture-removal requirements for a fixed indoor target.")
 P = "liquid_precipitation_depth_mm"
 SNOW = "snow_depth_cm"
 DEPTH_OCCURRENCE_COLUMNS = (P,SNOW)
@@ -50,7 +63,8 @@ def radiation_occurrence_note(column,interval_hours=1.,*,basis="Hours",daily_sta
     return units+" Zero recorded radiation is separate; negative and missing observations are excluded. Classes are descriptive, not normative or sky-condition classifications."
 
 def zero_occurrence_kind(column):
-    return column in ZERO_OCCURRENCE_COLUMNS or radiation_occurrence_kind(column) is not None
+    return (column in ZERO_OCCURRENCE_COLUMNS or radiation_occurrence_kind(column) is not None
+            or bool(column in REFERENCES and REFERENCES[column].zero_label))
 
 NEW_TYPES = ("Typical daily profile", "Monthly occurrence classes")
 
@@ -239,7 +253,11 @@ def occurrence_default_edges(values,column,*,basis="Hours",daily_stat="Mean",int
             return list(LONGWAVE_DAILY_EDGES if kind=="longwave" else SHORTWAVE_DAILY_EDGES)
         scale=interval_hours if column.endswith("_wh_m2") else 1.
         return [float(f"{edge*scale:.10g}") for edge in (LONGWAVE_OCCURRENCE_EDGES if kind=="longwave" else SHORTWAVE_OCCURRENCE_EDGES)]
-    if column==T:return [0.,15.,25.,30.]
+    fixed=reference_edges(column,basis=basis,daily_stat=daily_stat,interval_hours=interval_hours)
+    if fixed is not None:return list(fixed)
+    if column==DEW_POINT_COLUMN:return list(DEW_POINT_OCCURRENCE_EDGES)
+    if column==RH_OCCURRENCE_COLUMN:return list(RH_OCCURRENCE_EDGES)
+    if column==W_OCCURRENCE_COLUMN:return list(W_OCCURRENCE_EDGES)
     raw=v.quantile([.25,.5,.75]).to_numpy(dtype=float)
     if "temperature" in column:
         return sorted(set(float(x) if x!=0 else 0. for x in np.round(raw,1)))
@@ -262,7 +280,29 @@ def occurrence_table(df,column,edges,*,basis="Hours",daily_stat="Mean"):
     daily=basis=="Days"
     radiation_kind=radiation_occurrence_kind(column)
     zero_separate=zero_occurrence_kind(column)
-    if zero_separate:
+    spec=REFERENCES.get(column)
+    if spec is not None:
+        lower,upper=spec.lower,spec.upper
+        if column in DURATION_UNITS_PER_HOUR:
+            upper=DURATION_UNITS_PER_HOUR[column]*native_interval_hours(df)
+        if spec.positive or zero_separate:
+            if any(e<=0 for e in edges):raise ValueError("Positive class boundaries are required.")
+        if lower is not None and any(e<lower for e in edges):
+            raise ValueError("Class boundaries are below the physical domain.")
+        edge_upper=upper
+        if column in DURATION_UNITS_PER_HOUR and daily and daily_stat=="Total":
+            # Civil days may contain 25 physical hours.
+            edge_upper=25.*DURATION_UNITS_PER_HOUR[column]
+        if edge_upper is not None and any(e>edge_upper+1e-8 for e in edges):
+            raise ValueError("Class boundaries exceed the physical domain.")
+        source=df.copy(deep=False)
+        numeric=_numeric(df,column)
+        valid=numeric.notna()
+        if spec.positive:valid &= numeric.gt(0.)
+        if lower is not None:valid &= numeric.ge(lower)
+        if upper is not None:valid &= numeric.le(upper+1e-8)
+        source[column]=numeric.where(valid)
+    elif zero_separate:
         if any(e<=0 for e in edges):
             raise ValueError("Positive class boundaries are required; zero is a separate class.")
         # Reject invalid negative observations before daily aggregation.
@@ -273,12 +313,23 @@ def occurrence_table(df,column,edges,*,basis="Hours",daily_stat="Mean"):
             if any(e>100 for e in edges):raise ValueError("Diffuse fraction boundaries must not exceed 100%.")
             valid &= numeric.le(100)
         source[column]=numeric.where(valid)
+    elif column==W_OCCURRENCE_COLUMN:
+        if any(e<=0 for e in edges):raise ValueError("Humidity ratio class boundaries must be positive.")
+        source=df.copy(deep=False)
+        numeric=_numeric(df,column)
+        source[column]=numeric.where(numeric.ge(0.))
+    elif column==RH_OCCURRENCE_COLUMN:
+        if any(e<=0 or e>=100 for e in edges):raise ValueError("Relative humidity class boundaries must lie strictly between 0 and 100%.")
+        source=df.copy(deep=False)
+        numeric=_numeric(df,column)
+        source[column]=numeric.where(numeric.between(0.,100.))
     else:source=df
     v=_complete_daily(source,column,daily_stat) if daily else _numeric(source,column)
     v=v.dropna()
     text=[occurrence_boundary_label(x) for x in edges]
     if zero_separate:
-        zero=("Dry (= 0)" if column==P else "Snow-free (= 0)" if column==SNOW else
+        zero=(spec.zero_label if spec is not None and spec.zero_label else
+              "Dry (= 0)" if column==P else "Snow-free (= 0)" if column==SNOW else
               "No recorded illumination (= 0)" if column in ILLUMINANCE_OCCURRENCE_COLUMNS else
               "No recorded wind (= 0)" if column in WIND_SPEED_COLUMNS else
               "No diffuse fraction (= 0)" if radiation_kind=="fraction" else "No recorded radiation (= 0)")
@@ -313,22 +364,39 @@ def occurrence_table(df,column,edges,*,basis="Hours",daily_stat="Mean"):
 def occurrence_figure(table,unit,basis):
     fig=go.Figure()
     column=table.attrs.get("occurrence_column")
-    if column in WIND_SPEED_COLUMNS and tuple(table.attrs.get("occurrence_edges",()))==WIND_SPEED_OCCURRENCE_EDGES:
+    if table.attrs.get("sky_condition_classes"):
+        palette=[SKY_CONDITION_COLORS[name] for name in table.columns]
+    elif column in WIND_SPEED_COLUMNS and tuple(table.attrs.get("occurrence_edges",()))==WIND_SPEED_OCCURRENCE_EDGES:
         palette=["#E5E7EB",*WIND_SPEED_COLORS]
+    elif column==W_OCCURRENCE_COLUMN and tuple(table.attrs.get("occurrence_edges",()))==W_OCCURRENCE_EDGES:
+        palette=list(W_OCCURRENCE_COLORS)
+    elif column==RH_OCCURRENCE_COLUMN and tuple(table.attrs.get("occurrence_edges",()))==RH_OCCURRENCE_EDGES:
+        palette=list(RH_OCCURRENCE_COLORS)
+    elif column==DEW_POINT_COLUMN and tuple(table.attrs.get("occurrence_edges",()))==DEW_POINT_OCCURRENCE_EDGES:
+        palette=list(DEW_POINT_OCCURRENCE_COLORS)
+    elif column and not zero_occurrence_kind(column) and column!=T:
+        from .chart_theme import metric_colorscale
+        from plotly.colors import sample_colorscale
+        palette=sample_colorscale(metric_colorscale(column),np.linspace(.12,.95,len(table.columns)).tolist())
     elif zero_occurrence_kind(column):
         from .chart_theme import metric_colorscale
         from plotly.colors import sample_colorscale
         n=len(table.columns)
         palette=["#E5E7EB"]+sample_colorscale(metric_colorscale(column),np.linspace(.10 if column in ILLUMINANCE_OCCURRENCE_COLUMNS or radiation_occurrence_kind(column) else .20,1.,max(1,n-1)).tolist())
-    else:palette=["#2563EB","#0EA5E9","#059669","#EAB308","#EA580C","#DC2626"]
+    else:
+        from .chart_theme import metric_colorscale
+        from plotly.colors import sample_colorscale
+        palette=sample_colorscale(metric_colorscale(column),np.linspace(.08,.95,len(table.columns)).tolist())
     for i,c in enumerate(table):
-        color=palette[i] if zero_occurrence_kind(column) else palette[min(len(palette)-1,int(i*len(palette)/max(1,len(table.columns))))]
+        color=palette[i] if table.attrs.get("sky_condition_classes") or zero_occurrence_kind(column) else palette[min(len(palette)-1,int(i*len(palette)/max(1,len(table.columns))))]
         fig.add_bar(x=table.index,y=table[c],name=(c+" "+unit).strip(),marker_color=color)
     fig.update_layout(template="plotly_white",title="Monthly occurrence classes",
-                      barmode="stack",xaxis_title="Period",yaxis_title="Observed "+basis.lower() if basis!="Percentage" else "Share of observed intervals [%]",legend=dict(orientation="h",y=-.2))
+                      meta={"period_aggregation":"monthly","occurrence_column":column,"occurrence_edges":list(table.attrs.get("occurrence_edges",()))},
+                      barmode="stack",xaxis_title="Month",yaxis_title="Observed "+basis.lower() if basis!="Percentage" else "Share of observed intervals [%]",legend=dict(orientation="h",y=-.2))
     if basis=="Percentage":
         fig.update_yaxes(range=[0,100])
-    return fig
+    from .calendar_heatmap_axes import apply_monthly_axes
+    return apply_monthly_axes(fig)
 
 
 def probability_figure(df,column,unit,ascending=False):
@@ -415,7 +483,7 @@ def climate_summary_figure(table,style):
                           yaxis2=dict(title="Precipitation [mm]",overlaying="y",side="right",range=[low,high],
                                       tickvals=walter_precip_scale(ticks),ticktext=ticks,showgrid=False))
         # A dummy invisible trace activates the explicitly coupled right axis.
-        fig.add_scatter(x=[None],y=[None],yaxis="y2",showlegend=False,hoverinfo="skip",
+        fig.add_scatter(x=[None],y=[None],yaxis="y2",showlegend=False,hoverinfo="skip",opacity=0.,
                         meta={"presentation_only_trace":True})
         fig.add_hline(y=50,line_dash="dot",line_color="#94A3B8")
         fig.update_layout(meta={"fixed_physical_axis_relationship": True})
@@ -447,21 +515,21 @@ def climate_summary_interpretation(table, style):
         parts.append(f"The sum of the twelve representative monthly precipitation totals is {observed[P].sum():.0f} mm.")
     else:
         missing=[name(i) for i in range(1,13) if i not in observed.index]
-        parts.append("Only "+str(len(observed))+" of 12 months are supported; missing months: "+", ".join(missing)+". No annual total or full-year dryness conclusion is inferred.")
+        parts.append("Coverage: "+str(len(observed))+" of 12 calendar months. The interpretation describes the represented months; additional observations are needed for "+", ".join(missing)+".")
     if len(arid):
         parts.append("Walter–Lieth climatic dryness (P < 2T) occurs during "+", ".join(name(i) for i in arid.index)+
                      f" ({len(arid)} of {len(observed)} represented months). During those months, planting and landscape water demand warrant particular assessment; rainfall harvesting and storage can help bridge dry periods.")
     else:
-        parts.append(f"No Walter–Lieth dry month is identified among the {len(observed)} represented months. This does not exclude short dry spells or summertime water deficits.")
+        parts.append(f"All {len(observed)} represented months meet the Walter–Lieth moisture criterion P ≥ 2T. Daily dry-spell analysis complements the monthly view for landscape and drainage planning.")
     if observed[T].min()<0:
-        parts.append("At least one monthly mean is below freezing: freeze protection and winter drainage deserve attention. Monthly means do not establish frost-day counts.")
+        parts.append("At least one monthly mean is below freezing: freeze protection and winter drainage deserve attention. Complete-day minimum temperatures quantify frost frequency.")
     if observed.loc[warm,T]>=20:
-        parts.append("The warmest monthly mean supports assessment of summer shading and ventilation; overheating cannot be determined from monthly temperature alone.")
+        parts.append("The warmest monthly mean supports assessment of summer shading and ventilation; Hourly temperatures and irradiation resolve the timing of thermal exposure.")
     if observed.loc[warm,P] < observed[P].median():
         parts.append("The warmest month is drier than the median represented month, suggesting a seasonal mismatch between warmth and precipitation availability.")
     else:
         parts.append("The warmest month has precipitation at or above the median represented month; warm-period moisture and rain protection should be considered alongside summer thermal design.")
-    parts.append("These are climatic indicators, not a water balance or a building-load prediction. The Walter–Lieth dryness criterion is empirical.")
+    parts.append("The empirical Walter–Lieth criterion compares monthly temperature and precipitation on the conventional P = 2T scale to identify seasonal moisture conditions.")
     return " ".join(parts)
 
 
@@ -482,10 +550,12 @@ def amplitude_figure(df,column,aggregation,label):
         ranges=ranges.groupby(slots,observed=True).mean()
         fig.add_scatter(x=display_period_labels(ranges.index,aggregation,basis),y=ranges,name=label,mode="lines+markers",line=dict(color=metric_color(column),width=2.5),marker=dict(size=5),connectgaps=False)
     elif basis==INTERANNUAL_OVERLAY:
-        for year in sorted(set(ranges.index.year)):
+        years=sorted(set(ranges.index.year))
+        year_colours=climate_color_map(map(str,years))
+        for year in years:
             v=ranges.loc[ranges.index.year==year]
             slots=calendar_profile_slot(v.index,aggregation)
-            fig.add_scatter(x=display_period_labels(slots,aggregation,basis),y=v,mode="lines+markers",connectgaps=False,name=str(year))
+            fig.add_scatter(x=display_period_labels(slots,aggregation,basis),y=v,mode="lines+markers",connectgaps=False,name=str(year),line_color=year_colours[str(year)])
     else:
         fig.add_scatter(x=display_period_labels(ranges.index,aggregation,basis),y=ranges,name=label,mode="lines+markers",line=dict(color=metric_color(column),width=2.5),marker=dict(size=5),connectgaps=False)
     fig.update_layout(template="plotly_white",title=f"{aggregation} amplitude · {label}",xaxis_title="Period",yaxis_title="Amplitude [K]",legend=dict(orientation="h",y=-.2))
@@ -524,7 +594,14 @@ def sky_distribution(df,column="total_sky_cover_tenths"):
     # Three classes partition all valid observations on the 0–10 scale.
     clean=df.copy()
     clean[column]=_numeric(df,column).where(_numeric(df,column).between(0,10))
-    return occurrence_table(clean,column,[np.nextafter(2.,np.inf),8],basis="Hours")
+    table=occurrence_table(clean,column,[np.nextafter(2.,np.inf),8],basis="Hours")
+    if zero_occurrence_kind(column):
+        result=pd.concat([table.iloc[:,0]+table.iloc[:,1],table.iloc[:,2],table.iloc[:,3]],axis=1)
+    else:result=table.copy()
+    result.columns=["Clear","Intermediate","Overcast"]
+    result.attrs.update(table.attrs)
+    result.attrs["sky_condition_classes"]=True
+    return result
 
 
 def sunshine_hour_heatmap(df):
@@ -532,7 +609,7 @@ def sunshine_hour_heatmap(df):
     h=h.where(h.between(0.,3600.))
     averages=(h/3600.).groupby([h.index.month,h.index.hour]).mean().unstack().reindex(index=range(1,13),columns=range(24))
     return go.Figure(go.Heatmap(x=list(range(24)),y=list(MONTHS),z=averages.to_numpy(),
-                      zmin=0,zmax=1,colorscale="YlOrRd",colorbar=dict(title="h/h"),
+                      zmin=0,zmax=1,colorscale=SUNSHINE_COLORSCALE,colorbar=dict(title="h/h"),
                       hovertemplate="%{y} %{x}:00<br>%{z:.2f} sunshine h/h<extra></extra>")).update_layout(
                       template="plotly_white",title="Mean measured sunshine duration by month and hour",
                       xaxis=dict(title="Hour",tickvals=[0,6,12,18,23]),yaxis=dict(title="Month",autorange="reversed"))

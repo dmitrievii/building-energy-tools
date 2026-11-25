@@ -37,6 +37,8 @@ from .charts import _add_givoni_milne_overlay, _add_heat_index_overlay
 from .solar import orientation_annual_radiation, orientation_tilt_matrix, surface_irradiance_series
 from .chart_theme import (
     BINARY_SUITABILITY_COLORSCALE,
+    SOLAR_COLORSCALE, metric_colorscale, wind_speed_colorscale, WIND_SPEED_COLUMNS, WIND_DIRECTION_COLUMNS,
+    PASSIVE_STRATEGY_COLORS,
     TEMPERATURE_HEATMAP_COLUMNS,
     TEMPERATURE_COMFORT_COLORSCALE,
     temperature_coloraxis,
@@ -55,7 +57,6 @@ psychrolib.SetUnitSystem(psychrolib.SI)
 PLOT_TEMPLATE = "plotly_white"
 MONTH_ORDER = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 ORIENTATION_ORDER = ["North", "North-East", "East", "South-East", "South", "South-West", "West", "North-West"]
-SOLAR_COLORSCALE = [[0.0, "#4c1d95"], [0.45, "#f97316"], [1.0, "#fef08a"]]
 TEMPERATURE_COLORSCALE = TEMPERATURE_COMFORT_COLORSCALE
 
 
@@ -279,8 +280,8 @@ def heatmap_small_multiples(climates: list[ClimateDataset], column: str, row_gro
         values = matrix.to_numpy(dtype=float)
         current_min = np.nanmin(values) if np.isfinite(values).any() else np.nan
         current_max = np.nanmax(values) if np.isfinite(values).any() else np.nan
-        zmin = current_min if zmin is None or current_min < zmin else zmin
-        zmax = current_max if zmax is None or current_max > zmax else zmax
+        if np.isfinite(current_min):zmin = current_min if zmin is None or current_min < zmin else zmin
+        if np.isfinite(current_max):zmax = current_max if zmax is None or current_max > zmax else zmax
     if column in ["global_horizontal_radiation_wh_m2", "direct_normal_radiation_wh_m2", "diffuse_horizontal_radiation_wh_m2"]:
         colorscale = SOLAR_COLORSCALE
         zmin = max(0.0, float(zmin or 0.0))
@@ -291,11 +292,22 @@ def heatmap_small_multiples(climates: list[ClimateDataset], column: str, row_gro
             thresholds=temperature_thresholds or (18.,26.))
         zmin,zmax,colorscale=temperature_axis["cmin"],temperature_axis["cmax"],temperature_axis["colorscale"]
     elif column in {"natural_ventilation_suitable", "night_flushing_suitable", "nv"} or "suitable" in column:
-        colorscale = BINARY_SUITABILITY_COLORSCALE
-        zmin = 0.0 if zmin is None else min(0.0, float(zmin))
-        zmax = 1.0 if zmax is None else max(1.0, float(zmax))
+        colorscale = metric_colorscale("natural_ventilation_suitable" if column=="nv" else column)
+        zmin,zmax=0.,1.
+    elif column in WIND_SPEED_COLUMNS:
+        zmin,zmax=0.,max(12.,zmax or 0.)
+        colorscale=wind_speed_colorscale(zmax)
+    elif column in WIND_DIRECTION_COLUMNS:
+        zmin,zmax=0.,360.
+        colorscale=metric_colorscale(column)
     else:
-        colorscale = "Viridis"
+        colorscale=metric_colorscale(column)
+        if column=="relative_humidity_pct":zmin,zmax=0.,100.
+        elif column in ("total_sky_cover_tenths","opaque_sky_cover_tenths"):zmin,zmax=0.,10.
+        elif column in ("humidity_ratio_g_kg","liquid_precipitation_depth_mm","precipitation_duration_min","snow_depth_cm","sunshine_duration_s","diffuse_radiation_fraction_pct"):
+            zmin=0.
+            zmax=max(1.,zmax or 0.)
+            if column=="diffuse_radiation_fraction_pct":zmax=100.
     for idx, matrix in enumerate(matrices, start=1):
         fig.add_trace(
             go.Heatmap(z=matrix.values, x=matrix.columns, y=matrix.index, coloraxis="coloraxis", hovertemplate="Period: %{x}<br>Hour: %{y}<br>Value: %{z:.2f}<extra></extra>"),
@@ -305,6 +317,8 @@ def heatmap_small_multiples(climates: list[ClimateDataset], column: str, row_gro
     fig.update_layout(template=PLOT_TEMPLATE, title=title, height=max(360, 260 * rows), coloraxis=dict(colorscale=colorscale, cmin=zmin, cmax=zmax, colorbar=dict(title=color_label)), margin=dict(l=40, r=20, t=70, b=45))
     if column in TEMPERATURE_HEATMAP_COLUMNS:
         fig.update_coloraxes(**temperature_axis)
+    for trace in fig.data:
+        trace.meta={"heatmap_quantity":column,"heatmap_semantics":"categorical" if ("direction" in column or "suitable" in column or column=="nv") else "continuous"}
     fig.update_xaxes(title_text=row_group.capitalize(), row=rows, col=1)
     fig.update_yaxes(title_text="Hour of day", range=[23, 0], autorangeoptions=dict(minallowed=0, maxallowed=23))
     from .calendar_heatmap_axes import apply_calendar_heatmap_axes
@@ -315,7 +329,10 @@ def difference_heatmap_chart(reference: ClimateDataset, target: ClimateDataset, 
     ref = calendar_matrix(reference.data, column, row_group=row_group)
     tgt = calendar_matrix(target.data, column, row_group=row_group)
     diff = tgt.subtract(ref, fill_value=np.nan).T
-    fig = px.imshow(diff, aspect="auto", color_continuous_scale="RdBu_r", labels=dict(x=row_group.capitalize(), y="Hour of day", color=color_label), title=title)
+    finite=diff.to_numpy(dtype=float);finite=finite[np.isfinite(finite)]
+    extent=max(1e-9,float(np.abs(finite).max())) if finite.size else 1.
+    fig = px.imshow(diff, aspect="auto", color_continuous_scale="RdBu_r", zmin=-extent,zmax=extent, labels=dict(x=row_group.capitalize(), y="Hour of day", color=color_label), title=title)
+    fig.data[0].meta={"heatmap_quantity":column,"heatmap_semantics":"categorical" if ("direction" in column or "suitable" in column or column=="nv") else "continuous"}
     fig.update_yaxes(range=[23, 0], autorangeoptions=dict(minallowed=0, maxallowed=23))
     fig.update_layout(template=PLOT_TEMPLATE, margin=dict(l=40, r=20, t=70, b=45))
     from .calendar_heatmap_axes import apply_calendar_heatmap_axes
@@ -849,9 +866,33 @@ def passive_strategy_calendar_small_multiples(climates: list[ClimateDataset]) ->
         status[night_flushing_condition(df)] = -1
         temp = df.copy()
         temp["strategy_class"] = status
-        matrix = calendar_matrix(temp, "strategy_class", row_group="day").T
-        fig.add_trace(go.Heatmap(z=matrix.values, x=matrix.columns, y=matrix.index, coloraxis="coloraxis", hovertemplate="Day: %{x}<br>Hour: %{y}<br>Class: %{z}<extra></extra>"), row=idx, col=1)
-    fig.update_layout(template=PLOT_TEMPLATE, title="Dominant passive/HVAC strategy calendar", height=max(360, 260 * rows), coloraxis=dict(colorscale="RdBu_r", cmin=-2, cmax=2, colorbar=dict(title="Class")), margin=dict(l=40, r=20, t=70, b=45))
+        # Each calendar cell must retain a categorical identity. Select the
+        # most frequent observed class; tied or entirely missing cells stay blank.
+        from .aggregations import temporal_heatmap_matrix
+        labels=["Heating","Night flushing","Unclassified","Natural ventilation","Cooling"]
+        masks=[]
+        for code in range(-2,3):
+            temp["_strategy_match"]=status.eq(code).astype(float).where(df["dry_bulb_temperature_c"].notna())
+            masks.append(temporal_heatmap_matrix(temp,"_strategy_match",row_group="day",compare_across="Hour of day",statistic="Mean"))
+        raw=np.stack([m.to_numpy(dtype=float) for m in masks])
+        known=np.isfinite(raw).any(axis=0)
+        safe=np.where(np.isfinite(raw),raw,-np.inf)
+        peak=safe.max(axis=0)
+        codes=np.argmax(safe,axis=0).astype(float)-2.
+        codes[(~known)|((safe==peak).sum(axis=0)!=1)]=np.nan
+        matrix=pd.DataFrame(codes,index=masks[0].index,columns=masks[0].columns)
+        names=np.full(matrix.shape,"No unique dominant strategy",dtype=object)
+        for code,label in enumerate(labels,start=-2):names[codes==code]=label
+        fig.add_trace(go.Heatmap(z=matrix.values, x=matrix.columns, y=matrix.index,customdata=names,
+            coloraxis="coloraxis",hovertemplate="Day: %{x}<br>Hour: %{y}<br>%{customdata}<extra></extra>",
+            meta={"heatmap_quantity":"strategy_class","heatmap_semantics":"categorical"}),row=idx,col=1)
+    palette=[PASSIVE_STRATEGY_COLORS["Heating"],PASSIVE_STRATEGY_COLORS["Night flushing"],"#D1D5DB",
+             PASSIVE_STRATEGY_COLORS["Natural ventilation"],PASSIVE_STRATEGY_COLORS["Cooling"]]
+    scale=[point for i,colour in enumerate(palette) for point in ([i/5.,colour],[(i+1)/5.,colour])]
+    fig.update_layout(template=PLOT_TEMPLATE,title="Dominant passive/HVAC strategy calendar",
+        height=max(360,260*rows),coloraxis=dict(colorscale=scale,cmin=-2.5,cmax=2.5,
+            colorbar=dict(title="Strategy",tickvals=list(range(-2,3)),ticktext=labels)),
+        margin=dict(l=40,r=20,t=70,b=45))
     fig.update_xaxes(title_text="Day of year", row=rows, col=1)
     fig.update_yaxes(title_text="Hour of day", range=[23, 0], autorangeoptions=dict(minallowed=0, maxallowed=23))
     from .calendar_heatmap_axes import apply_calendar_heatmap_axes

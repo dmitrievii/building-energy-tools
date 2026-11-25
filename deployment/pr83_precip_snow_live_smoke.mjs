@@ -350,7 +350,7 @@ async function analysisOptions(page, expected, timeoutMs = 20_000) {
   while (performance.now() - started < timeoutMs) {
     let frame; let control;
     try {
-      frame = await appFrame(page, 'Climate Analyzer', 10_000);
+      frame = await appFrame(page, 'Precipitation and snow', 10_000);
       control = await analysisCombo(frame, 5_000);
     } catch {
       await sleep(300);
@@ -370,7 +370,10 @@ async function analysisOptions(page, expected, timeoutMs = 20_000) {
       await page.keyboard.press('Escape').catch(() => {});
       return lastValues;
     }
-    await sleep(250);
+    // Streamlit/BaseWeb virtualizes long dropdowns. ArrowDown scrolls the
+    // active option into view without selecting it; gather each visible page.
+    await control.press('ArrowDown').catch(() => {});
+    await sleep(150);
   }
   await page.keyboard.press('Escape').catch(() => {});
   return lastValues;
@@ -381,7 +384,7 @@ async function selectAnalysis(page, name) {
   while (performance.now() - started < 30_000) {
     let frame; let control;
     try {
-      frame = await appFrame(page, 'Climate Analyzer', 10_000);
+      frame = await appFrame(page, 'Precipitation and snow', 10_000);
       control = await analysisCombo(frame, 5_000);
     } catch {
       await sleep(300);
@@ -399,21 +402,22 @@ async function selectAnalysis(page, name) {
       await sleep(500);
       return;
     }
-    await sleep(250);
+    await control.press('ArrowDown').catch(() => {});
+    await sleep(150);
   }
   throw new Error(`Analysis option not found: ${name}`);
 }
 
 async function openPrecipitationPage(page) {
-  let frame = await appFrame(page, 'Climate — Precipitation & snow', 180_000);
-  const exact = frame.getByText('Climate — Precipitation & snow', { exact: true }).last();
-  if (!(await exact.count().catch(() => 0))) throw new Error('Precipitation & snow navigation item not found.');
-  await exact.click({ timeout: 15_000 });
+  await sidebarNavigation(page, 'Climate — Precipitation & snow');
+  let frame;
 
   const started = performance.now();
   while (performance.now() - started < 90_000) {
     try {
-      frame = await appFrame(page, 'Climate Analyzer', 10_000);
+      frame = await appFrame(page, 'Precipitation and snow', 10_000);
+      const heading=frame.getByRole('heading',{name:'Precipitation and snow',exact:true}).first();
+      if (!(await heading.isVisible().catch(()=>false))) throw new Error('Waiting for precipitation heading');
       await analysisCombo(frame, 5_000);
       return frame;
     } catch { /* Streamlit rerun still showing previous main content */ }
@@ -452,9 +456,9 @@ try {
   const options = await analysisOptions(page, expectedOptions); report.checks.analysis_options = options;
   const missing = expectedOptions.filter((value) => !options.includes(value)); if (missing.length) throw new Error(`Missing precipitation/snow analysis option(s): ${missing.join(', ')}`);
   await selectAnalysis(page, 'Annual precipitation indices'); await appFrame(page, 'Wet day ≥ 1 mm/day', 60_000); report.checks.annual_precipitation_indices = true;
-  await selectAnalysis(page, 'Measured precipitation duration'); await appFrame(page, 'never inferred from precipitation depth rr', 60_000); report.checks.measured_precipitation_duration = true;
-  await selectAnalysis(page, 'Precipitation-record occurrence'); await appFrame(page, 'record-occurrence metric, not rainfall duration', 60_000); report.checks.native_precipitation_occurrence = true;
-  await selectAnalysis(page, 'Snow-cover duration'); await appFrame(page, 'source-state cadence', 60_000); report.checks.native_snow_cover_duration = true;
+  await selectAnalysis(page, 'Measured precipitation duration'); await appFrame(page, 'valid source-duration records', 60_000); report.checks.measured_precipitation_duration = true;
+  await selectAnalysis(page, 'Precipitation-record occurrence'); await appFrame(page, 'recorded source intervals reach', 60_000); report.checks.native_precipitation_occurrence = true;
+  await selectAnalysis(page, 'Snow-cover duration'); await appFrame(page, 'Native snow observations use', 60_000); report.checks.native_snow_cover_duration = true;
   await selectAnalysis(page, 'Snow-season indices'); await appFrame(page, 'July–June analysis year', 60_000); report.checks.snow_season_indices = true;
   if (report.page_errors.length) throw new Error(`Browser page error(s): ${report.page_errors.join(' | ')}`);
   await page.screenshot({ path: path.join(OUT_DIR, 'precipitation-snow-final.png'), fullPage: true }); report.success = true;

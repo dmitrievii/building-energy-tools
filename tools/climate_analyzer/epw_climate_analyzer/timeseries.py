@@ -505,6 +505,13 @@ def _build_interannual_overlay_figure(
         fig.update_layout(
             yaxis2={"title": " / ".join(right_units), "overlaying": "y", "side": "right", "showgrid": False}
         )
+    from .calendar_heatmap_axes import set_period_axis_scope,apply_monthly_axes
+    resolutions={item.resolution for item in series}
+    resolution=next(iter(resolutions)) if len(resolutions)==1 else None
+    aggregation=resolution if resolution in ("Daily","Weekly","Monthly","Seasonal","Annual") else "Hourly" if resolution is not None else None
+    if resolution=="Native" and str(df.attrs.get("canonical_native_resolution","")).lower()=="monthly":aggregation="Monthly"
+    set_period_axis_scope(fig,df,aggregation=aggregation)
+    apply_monthly_axes(fig)
     return fig, tables
 
 
@@ -571,6 +578,13 @@ def build_overlay_figure(
         fig.update_layout(
             yaxis2={"title": " / ".join(right_units), "overlaying": "y", "side": "right", "showgrid": False}
         )
+    from .calendar_heatmap_axes import set_period_axis_scope,apply_monthly_axes
+    resolutions={item.resolution for item in series}
+    resolution=next(iter(resolutions)) if len(resolutions)==1 else None
+    aggregation=resolution if resolution in ("Daily","Weekly","Monthly","Seasonal","Annual") else "Hourly" if resolution is not None else None
+    if resolution=="Native" and str(df.attrs.get("canonical_native_resolution","")).lower()=="monthly":aggregation="Monthly"
+    set_period_axis_scope(fig,df,aggregation=aggregation)
+    apply_monthly_axes(fig)
     return fig, tables
 
 
@@ -594,6 +608,9 @@ def build_meteogram_figure(df, series, start, end, title="Climate meteogram"):
         fig.update_yaxes(title_text=spec.unit,row=row,col=1)
     fig.update_layout(template="plotly_white",title=title,height=max(460,240*len(series)),
                       hovermode="x unified")
+    from .calendar_heatmap_axes import set_period_axis_scope,apply_monthly_axes
+    set_period_axis_scope(fig,df)
+    apply_monthly_axes(fig)
     return fig,tables
 
 

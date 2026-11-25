@@ -20,6 +20,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from PIL import Image, ImageDraw, ImageFont
+from .chart_theme import MONTH_COLORS, metric_color
 
 MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 MEASURED_GROUND_DEPTHS_M = {
@@ -186,7 +187,7 @@ def profile_figure(profile: pd.DataFrame, measured: pd.DataFrame | None = None, 
     for month_index, month in enumerate(MONTH_LABELS, start=1):
         if month not in profile.columns:
             continue
-        fig.add_trace(go.Scatter(x=profile[month], y=profile.index, mode="lines", name=month))
+        fig.add_trace(go.Scatter(x=profile[month], y=profile.index, mode="lines", name=month,line_color=MONTH_COLORS[month_index-1]))
         if measured is not None and not measured.empty:
             points = measured[measured["month_index"] == month_index].sort_values("depth_m")
             if not points.empty:
@@ -194,7 +195,7 @@ def profile_figure(profile: pd.DataFrame, measured: pd.DataFrame | None = None, 
                     go.Scatter(
                         x=points["temperature_c"], y=points["depth_m"], mode="markers",
                         name=f"{month} observed", showlegend=False,
-                        marker={"size": 7, "symbol": "circle-open"},
+                        marker={"size": 7, "symbol": "circle-open","color":MONTH_COLORS[month_index-1]},
                     )
                 )
     x_range = shared_temperature_range(profile, measured)
@@ -219,10 +220,10 @@ def animated_profile_figure(profile: pd.DataFrame, measured: pd.DataFrame | None
         return go.Figure()
     traces = []
     first = months[0]
-    traces.append(go.Scatter(x=profile[first], y=profile.index, mode="lines", name="Calculated profile"))
+    traces.append(go.Scatter(x=profile[first], y=profile.index, mode="lines", name="Calculated profile",line_color=metric_color("ground_temperature_0_10m_c")))
     if measured is not None and not measured.empty:
         points = measured[measured["month_index"] == 1].sort_values("depth_m")
-        traces.append(go.Scatter(x=points.get("temperature_c", []), y=points.get("depth_m", []), mode="markers", name="GeoSphere observed", marker={"size": 9, "symbol": "circle-open"}))
+        traces.append(go.Scatter(x=points.get("temperature_c", []), y=points.get("depth_m", []), mode="markers", name="GeoSphere observed", marker={"size": 9, "symbol": "circle-open","color":"#547C9A"}))
     frames = []
     for month_index, month in enumerate(months, start=1):
         frame_data = [go.Scatter(x=profile[month], y=profile.index)]

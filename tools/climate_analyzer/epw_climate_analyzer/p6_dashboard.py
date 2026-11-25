@@ -9,6 +9,7 @@ from .p4_extremes import daily_stats
 from .aggregations import native_interval_hours
 from .decisions import natural_ventilation_condition,night_flushing_condition,shading_condition
 from .degree_metrics import degree_metric_table
+from .chart_theme import metric_color, semantic_color_from_text, metric_band_colors
  
 
 P="liquid_precipitation_depth_mm"
@@ -79,12 +80,13 @@ def climate_dashboard(df,render,*,monthly=False):
             ("Mean humidity ratio",_fmt(a["humidity_ratio"],"g/kg"),"Dry-air mass basis.")])
     t=_valid(df,T)
     if t.notna().any():
+        low,mean,high,fill=metric_band_colors(T)
         agg=t.resample("MS").agg(["min","mean","max"])
         fig=go.Figure()
         if not monthly:
-            fig.add_scatter(x=agg.index,y=agg["min"],name="Sample minimum",line=dict(color="#C48F67",width=1),connectgaps=False)
-            fig.add_scatter(x=agg.index,y=agg["max"],name="Sample maximum",line=dict(color="#C48F67",width=1),fill="tonexty",fillcolor="rgba(196,143,103,.19)",connectgaps=False)
-        fig.add_scatter(x=agg.index,y=agg["mean"],name="Mean",line=dict(color="#B96628",width=2.7),connectgaps=False)
+            fig.add_scatter(x=agg.index,y=agg["min"],name="Sample minimum",line=dict(color=low,width=1),connectgaps=False)
+            fig.add_scatter(x=agg.index,y=agg["max"],name="Sample maximum",line=dict(color=high,width=1),fill="tonexty",fillcolor=fill,connectgaps=False)
+        fig.add_scatter(x=agg.index,y=agg["mean"],name="Mean",line=dict(color=mean,width=2.7),connectgaps=False)
         fig.update_layout(template="plotly_white",title="Monthly temperature profile",yaxis_title="Temperature [°C]",xaxis_title="Month")
         valid=agg["mean"].dropna()
         note=f"Warmest represented month: {valid.idxmax():%B} ({valid.max():.1f} °C); coolest: {valid.idxmin():%B} ({valid.min():.1f} °C)."
@@ -93,23 +95,23 @@ def climate_dashboard(df,render,*,monthly=False):
     if rain.notna().any():
         agg=_monthly(rain,"sum")
         peak=agg.idxmax()
-        _bar(agg,"Monthly precipitation","Depth [mm]","#5488B6",render,
+        _bar(agg,"Monthly precipitation","Depth [mm]",metric_color(P),render,
              f"Highest observed monthly total: {peak:%B} ({agg.max():.1f} mm). Selected valid depths only; incomplete months may underestimate rainfall.")
     rh=_valid(df,RH);w=_valid(df,W)
     if rh.notna().any() or w.notna().any():
         from plotly.subplots import make_subplots
         fig=make_subplots(rows=1,cols=1,specs=[[{"secondary_y":True}]])
         if rh.notna().any():
-            x=_monthly(rh,"mean");fig.add_scatter(x=x.index,y=x,name="Relative humidity",line=dict(color="#5488B6"),secondary_y=False)
+            x=_monthly(rh,"mean");fig.add_scatter(x=x.index,y=x,name="Relative humidity",line=dict(color=metric_color(RH)),secondary_y=False)
         if w.notna().any():
-            x=_monthly(w,"mean");fig.add_scatter(x=x.index,y=x,name="Humidity ratio",line=dict(color="#438B84"),secondary_y=True)
+            x=_monthly(w,"mean");fig.add_scatter(x=x.index,y=x,name="Humidity ratio",line=dict(color=metric_color(W)),secondary_y=True)
         fig.update_yaxes(title_text="Relative humidity [%]",secondary_y=False)
         fig.update_yaxes(title_text="Humidity ratio [g/kg]",secondary_y=True)
         fig.update_layout(template="plotly_white",title="Seasonal outdoor moisture")
         render(fig,"Relative humidity and absolute water content on a dry-air mass basis are distinct. High humidity ratio indicates a potential latent ventilation load; indoor condensation requires separate surface-temperature assessment.")
     ghi=_valid(df,GHI)
     if ghi.notna().any():
-        _bar(_monthly(ghi,"sum")/1000,"Monthly horizontal solar irradiation","kWh/m²","#E0AE44",render,
+        _bar(_monthly(ghi,"sum")/1000,"Monthly horizontal solar irradiation","kWh/m²",metric_color(GHI),render,
              "The observed seasonal solar resource indicates periods where solar gains, photovoltaics and solar protection merit investigation.")
     if not monthly and complete(df,V,"wind_direction_deg"):
         from .directional_climate import directional_class_table,directional_class_figure,class_interpretation
@@ -194,12 +196,15 @@ def design_dashboard(df,render,*,reference_df=None):
     if items:_cards(items)
     if not degree.empty:
         fig=go.Figure()
-        for c in degree:fig.add_bar(x=degree.index,y=degree[c],name=c)
+        for c in degree:fig.add_bar(x=degree.index,y=degree[c],name=c,marker_color=semantic_color_from_text(c))
         fig.update_layout(template="plotly_white",barmode="group",title="Heating and cooling degree days",yaxis_title="K·d")
         from .degree_metrics import degree_legend_below
         degree_legend_below(fig)
         render(fig,f"HGT {hi:g}/{hl:g}; KGT {ci:g}/{cl:g}. Complete days only. The indicators are climatic temperature differences, not building energy demand.")
-    for c,col in zip(ledger,["#21866B","#527FA3","#D69A24"]):
+    from .chart_theme import NV_COLOR, NIGHT_FLUSHING_COLOR
+    strategy_colours={"Natural ventilation":NV_COLOR,"Night flushing":NIGHT_FLUSHING_COLOR,"Solar protection screening":"#D69A24"}
+    for c in ledger:
+        col=strategy_colours[c]
         valid=ledger[c].notna().sum()*native_interval_hours(df);total=ledger[c].sum(min_count=1)
         note=f"{total:.0f} of {valid:.0f} valid candidate hours satisfy the configured criterion." if valid else "No valid candidate hours."
         if c=="Natural ventilation":note+=f" Temperature {t_min:g}–{t_max:g} °C, humidity ratio ≤{w_max:g} g/kg. The result shows periods matching the configured outdoor-air criteria."
@@ -223,7 +228,7 @@ def design_dashboard(df,render,*,reference_df=None):
             if hi<=ci and w_max>=4:
                 a=ventilation_loads(df,airflow=flow,heat=hi,cool=ci,w_low=4.,w_high=w_max)
                 fig=go.Figure()
-                for c in a:fig.add_bar(x=_monthly(a[c],"sum").index,y=_monthly(a[c],"sum"),name=c)
+                for c in a:fig.add_bar(x=_monthly(a[c],"sum").index,y=_monthly(a[c],"sum"),name=c,marker_color=semantic_color_from_text(c))
                 fig.update_layout(template="plotly_white",title="Ventilation conditioning loads",barmode="group",yaxis_title="kWh")
                 render(fig,f"Outdoor-air conditioning proxy for {flow:g} m³/h, {hi:g}–{ci:g} °C and humidity ratio 4–{w_max:g} g/kg. No heat recovery or plant model.")
             else:st.warning("Ventilation load deadband requires ordered temperature and moisture limits.")

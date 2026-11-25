@@ -5,6 +5,9 @@ import pandas as pd
 import plotly.graph_objects as go
 from .calendar_heatmap_axes import set_period_axis_scope, apply_monthly_axes
 
+STRICT_MODE = "EN 16798-1 — standard applicability"
+RESEARCH_MODE = "EN 16798-1 — with research extrapolation"
+ADAPTIVE_MODES = (STRICT_MODE, RESEARCH_MODE)
 CATEGORIES = ("I","II","III")
 COLUMNS = ("Running mean","Neutral",*(c+" "+b for c in CATEGORIES for b in ("lower","upper")))
 
@@ -13,7 +16,7 @@ def selected_daily_bands(table, source):
     days=pd.DatetimeIndex(source.index).normalize().unique().sort_values()
     return table.reindex(days)
 
-def adaptive_figure(table):
+def adaptive_figure(table, *, extrapolate=False):
     """Nested bands with a separate polygon per contiguous valid episode."""
     if table.empty:raise ValueError("No selected days.")
     table=table.sort_index()
@@ -21,6 +24,12 @@ def adaptive_figure(table):
     # Explicit missing dates break both lines and polygons.
     dates=pd.date_range(idx.min(),idx.max(),freq="D")
     data=table.reindex(dates)
+    from .p3_comfort import adaptive_bands_from_running_mean
+    rm=data["Running mean"]
+    standard=rm.between(10.,30.)
+    research=rm.notna() & ~standard
+    # Reuse the exact physical equation, preserving missing weather history.
+    extension=adaptive_bands_from_running_mean(rm,extrapolate=True).where(research,axis=0) if extrapolate else None
     single=len(set(dates.year))==1
     x=dates.dayofyear.tolist() if single else dates.strftime("%Y-%m-%d").tolist()
     day_text=dates.strftime("%d %b" if single else "%d %b %Y").tolist()
@@ -35,34 +44,50 @@ def adaptive_figure(table):
         ("II","rgba(96,165,250,0.25)","#60A5FA",20),
         ("I","rgba(5,150,105,0.25)","#059669",10),
     ):
-        lo=data[cat+" lower"].to_numpy(dtype=float)
-        hi=data[cat+" upper"].to_numpy(dtype=float)
-        valid=np.flatnonzero(np.isfinite(lo)&np.isfinite(hi))
-        segments=np.split(valid,np.flatnonzero(np.diff(valid)>1)+1) if len(valid) else []
-        xx=[];yy=[]
-        for seg in segments:
-            forward=seg.tolist(); reverse=forward[::-1]
-            xx.extend([x[i] for i in forward+reverse]+[x[forward[0]],None])
-            yy.extend([lo[i] for i in forward]+[hi[i] for i in reverse]+[lo[forward[0]],None])
-        fig.add_scatter(x=xx,y=yy,mode="lines",fill="toself",fillcolor=fill,
-                        line=dict(color=line,width=1),name="Category "+cat,
-                        connectgaps=False,hoverinfo="skip",legendrank=rank)
+        layers=[(data.where(standard,axis=0),False)]
+        if extension is not None and research.any():layers.append((extension,True))
+        for layer,extra in layers:
+            lo=layer[cat+" lower"].to_numpy(dtype=float)
+            hi=layer[cat+" upper"].to_numpy(dtype=float)
+            valid=np.flatnonzero(np.isfinite(lo)&np.isfinite(hi))
+            segments=np.split(valid,np.flatnonzero(np.diff(valid)>1)+1) if len(valid) else []
+            xx=[];yy=[]
+            for seg in segments:
+                forward=seg.tolist(); reverse=forward[::-1]
+                xx.extend([x[i] for i in forward+reverse]+[x[forward[0]],None])
+                yy.extend([lo[i] for i in forward]+[hi[i] for i in reverse]+[lo[forward[0]],None])
+            fig.add_scatter(x=xx,y=yy,mode="lines",fill="toself",
+                            fillcolor=fill.rsplit(",",1)[0]+",0.10)" if extra else fill,
+                            line=dict(color=line,width=1.2 if extra else 1,dash="dash" if extra else "solid"),
+                            name="Category "+cat+(" · research extrapolation" if extra else ""),
+                            connectgaps=False,hoverinfo="skip",legendrank=rank+60 if extra else rank)
     custom=np.column_stack([np.asarray(day_text,dtype=object),data[list(COLUMNS[2:])].to_numpy()])
     fig.add_scatter(x=x,y=data.Neutral,customdata=custom,mode="lines+markers",
                     marker=dict(size=3),line=dict(color="#047857",width=2),
                     name="Neutral operative temperature",legendrank=40,connectgaps=False,
                     hovertemplate="%{customdata[0]}<br>Neutral: %{y:.1f} °C<br>I: %{customdata[1]:.1f}–%{customdata[2]:.1f} °C<br>II: %{customdata[3]:.1f}–%{customdata[4]:.1f} °C<br>III: %{customdata[5]:.1f}–%{customdata[6]:.1f} °C<extra></extra>")
-    fig.update_layout(template="plotly_white",title="Adaptive comfort · Categories I–III",
+    if extension is not None and research.any():
+        extra_custom=np.column_stack([np.asarray(day_text,dtype=object),extension[list(COLUMNS[2:])].to_numpy()])
+        fig.add_scatter(x=x,y=extension.Neutral,customdata=extra_custom,mode="lines+markers",
+                        marker=dict(size=3),line=dict(color="#047857",width=2,dash="dash"),
+                        name="Neutral temperature · research extrapolation",legendrank=105,connectgaps=False,
+                        hovertemplate="%{customdata[0]}<br>Research extrapolation: %{y:.1f} °C<br>I: %{customdata[1]:.1f}–%{customdata[2]:.1f} °C<br>II: %{customdata[3]:.1f}–%{customdata[4]:.1f} °C<br>III: %{customdata[5]:.1f}–%{customdata[6]:.1f} °C<extra></extra>")
+    fig.update_layout(template="plotly_white",title="Adaptive comfort · Categories I–III"+(" · Research extrapolation" if extrapolate else ""),
                       xaxis_title="Day of year" if single else "Date",
                       yaxis_title="Temperature [°C]",hovermode="closest",
                       legend=dict(orientation="h",x=0,y=-.24,xanchor="left",yanchor="top"),
-                      margin=dict(b=110))
+                      margin=dict(b=145 if extrapolate else 110))
     set_period_axis_scope(fig,idx,aggregation="Daily")
+    meta=dict(fig.layout.meta or {})
+    meta.update(adaptive_model=RESEARCH_MODE if extrapolate else STRICT_MODE,
+                adaptive_standard_days=int(standard.sum()),adaptive_extrapolated_days=int(research.sum()) if extrapolate else 0)
+    fig.update_layout(meta=meta)
     apply_monthly_axes(fig)
     return fig
 
-def adaptive_interpretation(table):
-    rm=table["Running mean"];neutral=table["Neutral"]
+def adaptive_interpretation(table, *, extrapolate=False):
+    from .p3_comfort import adaptive_bands_from_running_mean
+    rm=table["Running mean"];neutral=table["Neutral"].where(rm.between(10.,30.))
     n=len(table);valid=int(neutral.notna().sum())
     low=int(rm.lt(10).sum());high=int(rm.gt(30).sum())
     unknown=int(rm.isna().sum())
@@ -72,9 +97,14 @@ def adaptive_interpretation(table):
     if valid:
         note+=f"Neutral indoor operative temperature ranges from {neutral.min():.1f} to {neutral.max():.1f} °C. "
     note+=("Category I defines the narrowest indoor operative-temperature band, II an intermediate band and III the widest band. "
-           "Visible bands indicate days with a valid seven-day outdoor running mean in the 10–30 °C applicability domain. "
+           "Solid bands indicate days with a valid seven-day outdoor running mean in the 10–30 °C applicability domain. "
            "EN 16798-1 adaptive screening uses seven preceding complete daily means and normalized alpha=0.8. "
            "The outdoor running mean determines the climate-dependent indoor operative-temperature bounds. "
            "An indoor assessment combines those bounds with operative temperature, occupant window control and relevant air-speed effects. "
            "Daily chronology is preserved for multi-year weather records.")
+    if extrapolate:
+        extra=adaptive_bands_from_running_mean(rm,extrapolate=True)["Neutral"].where(rm.notna() & ~rm.between(10.,30.))
+        count=int(extra.notna().sum())
+        note+=f" Research extrapolation: {count}/{n} selected days ({100*count/max(n,1):.1f}%) extend the same equations beyond the standard applicability domain. Dashed boundaries and lighter bands distinguish these research estimates."
+        if count:note+=f" Extrapolated neutral operative temperature ranges from {extra.min():.1f} to {extra.max():.1f} °C."
     return note

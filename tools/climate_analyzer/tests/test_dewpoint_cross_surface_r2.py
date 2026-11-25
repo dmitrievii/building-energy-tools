@@ -74,11 +74,13 @@ class DewPointCrossSurfaceTests(unittest.TestCase):
         source=(root/"app.py").read_text(encoding="utf-8")
         start=source.index('    if chart_type=="Time series / Profile":\n        from epw_climate_analyzer.profile_interpretation import profile_interpretation',source.index("def render_generic_variable_page("))
         branch=source[start:source.index("    render_plot(fig, text)",start)]
-        self.assertLess(branch.index("if column in MOIST_AIR_QUANTITIES"),
-                        branch.index('elif title_prefix == "Temperature"'))
-        from epw_climate_analyzer.profile_interpretation import MOIST_AIR_QUANTITIES
-        self.assertIn("dew_point_temperature_c",MOIST_AIR_QUANTITIES)
-        self.assertIn("wet_bulb_temperature_c",MOIST_AIR_QUANTITIES)
+        self.assertIn("generic_figure_interpretation",branch)
+        from epw_climate_analyzer.profile_interpretation import quantity_domain
+        self.assertEqual(quantity_domain("dew_point_temperature_c","Temperature"),
+                         "Humidity and Psychrometrics")
+        self.assertEqual(quantity_domain("wet_bulb_temperature_c","Temperature"),
+                         "Humidity and Psychrometrics")
+
 
 
 if __name__=="__main__":

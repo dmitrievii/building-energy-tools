@@ -203,8 +203,8 @@ def report_figure(fig,*,width_pt,height_pt,font_pt=11,external_zone_legend=False
     # Normalize legacy snapshots while their original title is still present.
     # In particular, pre-metadata daylight figures are recognized by title.
     from .calendar_heatmap_axes import apply_calendar_heatmap_axes,apply_monthly_axes
-    apply_calendar_heatmap_axes(f);apply_monthly_axes(f)
     w,h=round(width_pt*96/72),round(height_pt*96/72)
+    apply_calendar_heatmap_axes(f,width_px=w);apply_monthly_axes(f,width_px=w)
     f.update_layout(width=w,height=h,autosize=False,font=dict(family="Arial",size=px),
                     paper_bgcolor="white",title_text=None,margin=dict(t=12,autoexpand=True))
     is_map=isinstance(f.layout.meta,dict) and f.layout.meta.get("report_kind")=="station_locator"
@@ -390,6 +390,12 @@ def available_catalog(df,context):
                 from .aggregations import native_interval_hours
                 ok=has("sunshine_duration_s") and not _complete_daily_sunshine_hours(
                     df["sunshine_duration_s"],interval_hours=native_interval_hours(df)).empty
+        elif kind=="climograph":
+            from .extended_visualization import climate_summary_table
+            ok=has(T,P) and not climate_summary_table(df).empty
+        elif kind=="sunpath":
+            from .sun_path_views import solar_reference
+            ok=has(N,"solar_apparent_zenith_deg","solar_azimuth_deg") and solar_reference(df) is not None
         elif kind=="rain_days":
             from .precipitation import complete_daily_precipitation
             ok=has(P) and complete_daily_precipitation(df).notna().any()
@@ -401,14 +407,14 @@ def available_catalog(df,context):
 
 def standard_figure(entry,df,context,reference_df=None):
     """One documented reference configuration per standard diagram."""
-    from .charts import profile_ribbon_chart,duration_chart,month_hour_heatmap,psychrometric_chart,sun_path_chart
+    from .charts import profile_ribbon_chart,duration_chart,month_hour_heatmap,psychrometric_chart,sun_path_chart,time_series_profile_chart
+    from .chart_theme import metric_color, semantic_color_from_text
     id,page,label,column,unit,kind=entry
     s=numeric(df,column)
     monthly=str(df.attrs.get("canonical_native_resolution","")).lower()=="monthly"
     if kind=="profile":
         if monthly:
-            fig=go.Figure(go.Scatter(x=s.index,y=s,mode="lines+markers",connectgaps=False))
-            fig.update_layout(template="plotly_white",title=label,yaxis_title=unit)
+            fig=time_series_profile_chart(df,column,"Native",label,unit,"Observed values")
         else:fig=profile_ribbon_chart(df,column,"Monthly",label,unit)
         note=""
     elif kind=="duration":
@@ -428,31 +434,33 @@ def standard_figure(entry,df,context,reference_df=None):
         if "Custom constant" in context.get("pressure mode",""):
             try:p=float(context["custom pressure"])
             except (ValueError,KeyError):pass
-        fig=psychrometric_chart(df,pressure_pa=p,data_mode="Climate zone");note=f"T–d distribution, reference guide pressure {p:.0f} Pa. Reference guides help relate seasonal moisture and temperature combinations to candidate passive strategies."
+        fig=psychrometric_chart(df,chart_type="T-d",pressure_pa=p,data_mode="Climate zone")
+        from .humidity_findings import humidity_figure_interpretation
+        note=humidity_figure_interpretation(df,fig,"psychrometric",title="Psychrometric · T-d · Climate zone")
     elif kind=="rain_days":
         from .precipitation_findings import rain_day_classes,rain_day_classes_figure
         table=rain_day_classes(df)
         if table.empty:raise ValueError("No complete precipitation days support the severity chart.")
         fig=rain_day_classes_figure(table)
-        note="Disjoint daily precipitation classes: 1–<10, 10–<20 and ≥20 mm on complete observed calendar days."
+        from .precipitation_findings import rainfall_summary
+        note=rainfall_summary(df)
     elif kind=="wind_rain":
         from .directional_climate import directional_table,directional_figure,directional_interpretation
-        table=directional_table(df,radial="Wind-driven rain exposure",colour="Wind speed")
-        fig=directional_figure(table,"Wind-driven rain exposure","Wind speed",label)
-        note=directional_interpretation(table,"Wind-driven rain exposure","Wind speed")
+        table=directional_table(df,radial="Wind-driven rain exposure",colour="Wind-driven rain exposure")
+        fig=directional_figure(table,"Wind-driven rain exposure","Wind-driven rain exposure",label)
+        note=directional_interpretation(table,"Wind-driven rain exposure","Wind-driven rain exposure")
     elif kind=="snow_hours":
-        from .aggregations import native_interval_hours
-        snow=numeric(df,"snow_depth_cm")
-        mask=snow.gt(0).astype(float).where(snow.notna())*native_interval_hours(df)
-        monthly=mask.resample("MS").sum(min_count=1)
-        fig=go.Figure(go.Bar(x=monthly.index,y=monthly,marker_color="#5488B6"))
-        fig.update_layout(template="plotly_white",title=label,xaxis_title="Month",yaxis_title="Observed snow-cover hours")
-        note="Observed snow-depth records above 0 cm, integrated at the active source cadence."
+        from .residual_findings import snow_hours_figure
+        fig,note=snow_hours_figure(df,"Monthly")
     elif kind=="total":
-        x=s.resample("MS").sum(min_count=1)/(1000 if column==G else 1)
-        fig=go.Figure(go.Bar(x=x.index,y=x,marker_color="#D6A23D" if column==G else "#5488B6"))
-        fig.update_layout(template="plotly_white",title=label,yaxis_title=unit)
-        note="Observed selected-period totals; incomplete periods may underestimate the total."
+        if column==G:
+            from .monthly_radiation import monthly_source_irradiation,monthly_radiation_chart
+            from .solar_findings import solar_figure_interpretation
+            fig=monthly_radiation_chart(monthly_source_irradiation(df,["GHI"]),style="Bar chart")
+            note=solar_figure_interpretation(df,fig,"monthly_radiation")
+        else:
+            from .residual_findings import extensive_total_figure
+            fig,note=extensive_total_figure(df,column,"Monthly")
     elif kind=="facade_temperature":
         from .solar_findings import facade_temperature_table,facade_temperature_figure,facade_temperature_interpretation
         from .extended_visualization import hourly_capable
@@ -462,7 +470,7 @@ def standard_figure(entry,df,context,reference_df=None):
         table=facade_temperature_table(df,cold_c=lo,hot_c=hi)
         fig=facade_temperature_figure(table,cold_c=lo,hot_c=hi)
         note=facade_temperature_interpretation(table,cold_c=lo,hot_c=hi)
-        note+=" Model: unobstructed isotropic POA, default ground albedo 0.20."
+
     elif kind=="shading_ledger":
         from .solar_shading import shading_ledger,monthly_shading_figure
         from .p66_catalogue import GEOMETRY
@@ -483,22 +491,29 @@ def standard_figure(entry,df,context,reference_df=None):
         table=orientation_shading_table(df,geometry=GEOMETRY,cold_c=lo,hot_c=hi)
         fig=orientation_shading_figure(table,cold_c=lo,hot_c=hi)
         note=orientation_shading_interpretation(table,cold_c=lo,hot_c=hi)
-        note+=" Reference window: south-oriented 2 × 1.5 m, 0.6 m overhang and zero side fins; identical geometry is rotated for all eight orientations."
+
     elif kind=="facade":
         from .facade_orientation import orientation_period_components,orientation_components_chart
         a,f=orientation_period_components(df,tilt_deg=90.)
         fig=orientation_components_chart(a,f,tilt_deg=90.,style="Bar chart",selected=())
-        note="Unobstructed vertical POA; isotropic diffuse model and default ground albedo."
-    elif kind=="sunpath":fig=sun_path_chart(df);note="Solar position and direct-normal radiation for selected source records."
+        from .solar_findings import facade_figure_interpretation
+        note=facade_figure_interpretation(fig,tilt_deg=90.)
+    elif kind=="sunpath":
+        from .sun_path_views import classic_sun_path
+        from .solar_findings import solar_figure_interpretation
+        fig=classic_sun_path(df,radiation_field=N)
+        note=solar_figure_interpretation(df,fig,"sunpath_view",args=("2D",N))
     elif kind=="wind_orientation":
         from .wind_findings import wind_opportunity,wind_opportunity_figure,wind_design_interpretation
         summary,sectors=wind_opportunity(df,min_speed_m_s=.5)
         fig=wind_opportunity_figure(summary,sectors)
         note=wind_design_interpretation(df,min_speed_m_s=.5)
-        note+=" The 0.5 m/s source-wind threshold identifies directional outdoor wind availability. Façade pressure coefficients, opening areas, and interior flow paths resolve the corresponding building ventilation response."
+
     elif kind=="wind_panel":
         from .directional_climate import monthly_wind_rose_panel,MONTHLY_WIND_ROSE_NOTE
-        fig,_=monthly_wind_rose_panel(df,title=label);note=MONTHLY_WIND_ROSE_NOTE
+        fig,_=monthly_wind_rose_panel(df,title=label)
+        from .wind_findings import wind_figure_interpretation
+        note=wind_figure_interpretation(df,fig,"wind_panel",column=column)+"\n\n"+MONTHLY_WIND_ROSE_NOTE
     elif kind=="windrose":
         from .directional_climate import directional_class_table,directional_class_figure,class_interpretation
         table=directional_class_table(df,radial="Percentage",quantity="Wind speed")
@@ -506,56 +521,48 @@ def standard_figure(entry,df,context,reference_df=None):
     elif kind=="daylight":
         from .extended_visualization import daylight_envelope
         fig=daylight_envelope(df.index,float(context["latitude"]))
-        note="Sunrise–sunset envelope calculated for the represented latitude and calendar dates."
+        from .sky_findings import sky_figure_interpretation
+        note=sky_figure_interpretation(df,fig,"daylight",latitude=context.get("latitude"))
     elif kind=="sky_conditions":
         from .extended_visualization import sky_distribution,occurrence_figure
         table=sky_distribution(df)
         table.columns=["Clear","Intermediate","Overcast"]
         fig=occurrence_figure(table,"","Hours")
         fig.update_layout(title=label)
-        note="Observed total sky-cover intervals grouped into clear (0–2), intermediate (above 2 and below 8), and overcast (8–10 tenths) conditions."
+        from .sky_findings import sky_figure_interpretation
+        note=sky_figure_interpretation(df,fig,"sky_conditions",column=column)
     elif kind=="illumination":
-        from .aggregations import threshold_count_by_period
-        from .sky_findings import illuminance_interpretation
-        light=numeric(df,column)
-        counts=threshold_count_by_period(df,light.ge(10000.)&light.notna(),"Monthly",label="hours")
-        fig=go.Figure(go.Bar(x=counts.index,y=counts["hours"]))
-        fig.update_layout(template="plotly_white",title=label,
-            xaxis_title="Month",yaxis_title="Hours ≥10,000 lux")
-        note=illuminance_interpretation(df,column,threshold_lux=10000.)
+        from .sky_findings import illuminance_availability_figure
+        fig,note=illuminance_availability_figure(df,column,threshold_lux=10000.,aggregation="Monthly")
     elif kind=="relative_sunshine":
         from .daylight import monthly_daylight_sunshine_summary
         from .sky_findings import sunshine_interpretation
         table=monthly_daylight_sunshine_summary(df,float(context["latitude"]))
         if "relative_sunshine_pct" not in table or not table.relative_sunshine_pct.notna().any():
             raise ValueError("Complete sunshine days and site latitude are required.")
-        fig=go.Figure(go.Bar(x=table["month"],y=table["relative_sunshine_pct"]))
+        fig=go.Figure(go.Bar(x=table["month"],y=table["relative_sunshine_pct"],marker_color=metric_color("relative_sunshine_pct")))
         fig.update_layout(template="plotly_white",title=label,
             xaxis_title="Month",yaxis_title="Measured sunshine / astronomical daylight [%]")
         note=sunshine_interpretation(df,latitude=float(context["latitude"]),kind="relative_sunshine")
     elif kind=="climograph":
         from .extended_visualization import climate_summary_table,climate_summary_figure,climate_summary_interpretation
-        table=climate_summary_table(df);fig=climate_summary_figure(table,"Walter–Lieth diagram");note=climate_summary_interpretation(table,"Walter–Lieth diagram")
-    elif kind in ("nv","night","degree","shade"):
-        from .p6_dashboard import design_ledgers
-        ledger,degree=design_ledgers(df,reference_df=reference_df)
+        table=climate_summary_table(df)
+        if table.empty:raise ValueError("No complete paired temperature and precipitation calendar months.")
+        fig=climate_summary_figure(table,"Walter–Lieth diagram");note=climate_summary_interpretation(table,"Walter–Lieth diagram")
+    elif kind in ("nv","night","shade"):
+        from .residual_findings import eligibility_figure
+        fig,note=eligibility_figure(df,kind,"Monthly",reference_df=reference_df)
+    elif kind=="degree":
+        from .degree_metrics import degree_metric_table,degree_metric_interpretation,degree_legend_below
+        degree=degree_metric_table(df,metric="Degree-days",aggregation="Monthly",
+            heating_indoor_c=20.,heating_limit_c=12.,cooling_indoor_c=26.,cooling_limit_c=26.,require_complete_days=True)
+        if degree.empty or not degree.notna().any().any():raise ValueError("No complete valid daily temperature observations.")
         fig=go.Figure()
-        if kind=="degree":
-            if degree.empty or not degree.notna().any().any():raise ValueError("No complete valid daily temperature observations.")
-            for c in degree:fig.add_bar(x=degree.index,y=degree[c],name=c)
-            note="HGT 20/12; KGT 26/26, complete daily mean observations. Selected-period degree-day totals express the duration and intensity of outdoor temperature exposure."
-        else:
-            c={"nv":"Natural ventilation","night":"Night flushing","shade":"Solar protection screening"}[kind]
-            if c not in ledger or not ledger[c].notna().any():raise ValueError("No valid candidate hours.")
-            a=ledger[c].resample("MS").sum(min_count=1)
-            fig.add_bar(x=a.index,y=a,marker_color="#21866B")
-            note={"nv":"Reference outdoor-air screening uses 16–26 °C and humidity ratio ≤9 g/kg.",
-                  "night":"Nighttime 22:00–06:59, cool outdoor air ≤20 °C following a complete day reaching ≥26 °C.",
-                  "shade":"Air temperature ≥24 °C and mean horizontal irradiance ≥250 W/m² identify coincident warm, sunny hours relevant to exterior solar protection."}[kind]
+        for key in degree:fig.add_bar(x=degree.index,y=degree[key],name=key,marker_color=semantic_color_from_text(key))
         fig.update_layout(template="plotly_white",title=label,barmode="group",yaxis_title=unit)
-        if kind=="degree":
-            from .degree_metrics import degree_legend_below
-            degree_legend_below(fig)
+        degree_legend_below(fig)
+        note=degree_metric_interpretation(degree,metric="Degree-days",heating_indoor_c=20.,
+            heating_limit_c=12.,cooling_indoor_c=26.,cooling_limit_c=26.)
     elif kind=="hvac_energy":
         from .p3_comfort import ventilation_loads
         from .hvac_findings import conditioning_monthly_figure,conditioning_interpretation
@@ -571,11 +578,12 @@ def standard_figure(entry,df,context,reference_df=None):
         from .p4_extremes import design_conditions
         from .hvac_findings import design_quantile_figure,design_quantile_interpretation
         upper=kind=="hvac_design_hot"
-        table=design_conditions(df,T,[.4,1.,2.,5.],upper=upper,
+        table=design_conditions(df,T,[.4,1.,2.,.5,1.5,5.],upper=upper,
                                 coincident=[c for c in (W,H,RH,V) if numeric(df,c).notna().any()])
         if table.empty:raise ValueError("No source observations for the selected empirical tail.")
+        table=table.sort_values("Nominal tail [%]")
         fig=design_quantile_figure(table,quantity="Air temperature",unit="°C",upper=upper)
-        note=design_quantile_interpretation(table,quantity="air temperature",unit="°C",upper=upper)
+        note=design_quantile_interpretation(table,quantity="Air temperature",unit="°C",upper=upper)
     elif kind=="hvac_critical":
         from .p4_design_charts import critical_windows_figure
         from .hvac_findings import critical_window_interpretation
@@ -585,13 +593,13 @@ def standard_figure(entry,df,context,reference_df=None):
                                              unit="°C",upper=True,hours=72)+" "+details
     elif kind=="utci_shading":
         from .p3_comfort import utci_frame
-        from .utci_findings import paired_delta_figure,paired_exposure_interpretation
+        from .utci_findings import paired_delta_figure,utci_view_interpretation
         values,_=utci_frame(df,model="Open-sky screening")
         if not values[["Open sun","Direct-beam shade"]].notna().all(axis=1).any():
             raise ValueError("Source observations contain no coincident UTCI sun/shade states.")
         fig=paired_delta_figure(df,values)
         fig.update_layout(title=label)
-        note=paired_exposure_interpretation(df,values)
+        note=utci_view_interpretation(df,values,"utci_pair_delta")
     elif kind=="utci":
         from .p3_comfort import utci_frame,utci_class_hours,CLASSES,COLORS
         values,_=utci_frame(df)
@@ -600,9 +608,8 @@ def standard_figure(entry,df,context,reference_df=None):
         for c,color in zip(CLASSES,COLORS):
             if c in a:fig.add_bar(x=a.index,y=a[c],name=c,marker_color=color)
         fig.update_layout(template="plotly_white",title=label,barmode="stack",yaxis_title="Hours")
-        from .utci_findings import utci_distribution_interpretation
-        note=utci_distribution_interpretation(df,values,values.columns[0])
-        note+=" The uniform MRT scenario sets mean radiant temperature equal to air temperature and evaluates wind at the 10 m reference height."
+        from .utci_findings import utci_view_interpretation
+        note=utci_view_interpretation(df,values,"stress",exposure=values.columns[0])
     else:raise ValueError("Unknown standard diagram.")
     if kind=="profile" and page in (
         "Temperature","Humidity and Psychrometrics","Solar and Radiation",
@@ -619,45 +626,51 @@ def standard_figure(entry,df,context,reference_df=None):
         from .figure_interpretation_contract import bind_figure_interpretation
         bind_figure_interpretation(fig,statement)
         return apply_monthly_axes(fig),statement
+    if kind in ("duration","heatmap") and page in (
+        "Temperature","Humidity and Psychrometrics","Solar and Radiation",
+        "Wind and Ventilation","Sky and Daylight","Precipitation and Snow",
+    ):
+        from .profile_interpretation import generic_figure_interpretation
+        from .calendar_heatmap_axes import apply_monthly_axes
+        from .figure_interpretation_contract import bind_figure_interpretation
+        args=("all",False,"hours") if kind=="duration" else ("month","Hour of day","Mean")
+        statement=generic_figure_interpretation(df,fig,kind,domain=page,
+            column=column,args=args,thresholds=temperature_thresholds(context),
+            latitude=context.get("latitude"))
+        bind_figure_interpretation(fig,statement)
+        return apply_monthly_axes(fig),statement
     if page=="Temperature":
         from .temperature_findings import temperature_figure_interpretation
         stat=temperature_figure_interpretation(
             df,fig,kind,column=column or T,thresholds=temperature_thresholds(context))
     elif page=="Humidity and Psychrometrics":
         from .humidity_findings import humidity_figure_interpretation
-        stat=humidity_figure_interpretation(
+        stat="" if kind=="psychrometric" else humidity_figure_interpretation(
             df,fig,kind,column=column,title=label)
     elif page=="Solar and Radiation":
         from .solar_findings import solar_figure_interpretation
-        stat="" if kind=="facade_temperature" else solar_figure_interpretation(
+        stat="" if kind in ("facade_temperature","sunpath","total","facade") else solar_figure_interpretation(
             df,fig,kind,column=column,title=label)
     elif page=="Wind and Ventilation":
         from .wind_findings import wind_figure_interpretation
-        stat="" if kind=="wind_orientation" else wind_figure_interpretation(
+        stat="" if kind in ("wind_orientation","windrose","wind_panel") else wind_figure_interpretation(
             df,fig,kind,column=column,title=label)
     elif page=="Sky and Daylight":
         from .sky_findings import sky_figure_interpretation
-        stat=sky_figure_interpretation(df,fig,kind,column=column,title=label,
+        stat="" if kind in ("illumination","daylight","sky_conditions","relative_sunshine") else sky_figure_interpretation(df,fig,kind,column=column,title=label,
                                       latitude=context.get("latitude"))
     elif page=="Precipitation and Snow":
         from .precipitation_findings import precipitation_figure_interpretation
         mapped_kind="rain_days" if kind=="rain_days" else kind
-        stat=precipitation_figure_interpretation(df,fig,mapped_kind,column=column,title=label)
+        stat="" if kind in ("climograph","wind_rain","rain_days","total") else precipitation_figure_interpretation(df,fig,mapped_kind,column=column,title=label)
     elif page=="Shading analysis" or kind in (
-        "hvac_energy","hvac_economizer","hvac_design_hot","hvac_design_cold",
+        "degree","hvac_energy","hvac_economizer","hvac_design_hot","hvac_design_cold",
         "hvac_critical","utci","utci_shading",
     ):
         stat=""
     else:
         stat=source_interpretation(df,page,column if kind in ("profile","duration","heatmap") else "",label,unit,thresholds=temperature_thresholds(context),kind=kind)
-    if kind=="nv" and c in ledger:
-        from .interpretations import natural_ventilation_interpretation
-        stat=natural_ventilation_interpretation(df,ledger[c].gt(0)&ledger[c].notna())
-    elif kind=="night" and c in ledger:
-        from .passive_design_findings import night_flushing_interpretation
-        stat=night_flushing_interpretation(
-            df,ledger[c].gt(0)&ledger[c].notna(),hot_day_c=26.,night_max_c=20.,
-        )
+    if kind in ("nv","night","shade","snow_hours"):stat=""
     if stat and stat not in note:note=stat+"\n\n"+note
     from .calendar_heatmap_axes import apply_monthly_axes
     from .figure_interpretation_contract import bind_figure_interpretation

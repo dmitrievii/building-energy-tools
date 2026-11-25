@@ -41,7 +41,7 @@ class SourceParityAudit072Tests(unittest.TestCase):
         self.assertIn("relative_humidity_pct", mapped)
         self.assertIn("wind_speed_m_s", mapped)
         source = APP.read_text(encoding="utf-8")
-        self.assertIn('render_natural_ventilation(filtered_df, pressure_pa=active_pressure)', source)
+        self.assertIn('render_natural_ventilation(filtered_df, pressure_pa=active_pressure,', source)
         self.assertIn('render_hvac_passive(filtered_df)', source)
         self.assertIn('"Directional analysis"', source)
         self.assertIn('"Wind during suitable hours"', source)

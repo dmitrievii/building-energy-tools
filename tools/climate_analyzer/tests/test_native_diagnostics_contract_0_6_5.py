@@ -131,7 +131,14 @@ class NativeDiagnosticsUi065ContractTests(unittest.TestCase):
         self.assertIn("Precipitation-record occurrence", self.source)
         self.assertIn("Source records meeting threshold", self.source)
         self.assertIn("recorded source intervals reach", self.source)
-        self.assertIn("measured_duration_summary(df)", self.source)
+        self.assertIn('extensive_total_panel(df,render_plot,columns=("precipitation_duration_min",))', self.source)
+        from epw_climate_analyzer.residual_findings import extensive_total_figure
+        import pandas as pd
+        df=pd.DataFrame({"precipitation_duration_min":[10.,20.,float("nan")],"liquid_precipitation_depth_mm":[0.,0.,20.]},index=pd.date_range("2026-01-01",periods=3,freq="h"))
+        df.attrs["canonical_native_interval_minutes"]=60
+        fig,note=extensive_total_figure(df,"precipitation_duration_min","Daily")
+        self.assertAlmostEqual(float(fig.data[0].y[0]),0.5)
+        self.assertTrue(note)
         self.assertIn("Dual-resolution semantics", self.source)
         self.assertIn("true native-interval precipitation extremes", self.source)
         self.assertNotIn("Precipitation-interval occurrence", self.source)

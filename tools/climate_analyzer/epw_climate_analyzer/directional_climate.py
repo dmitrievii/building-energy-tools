@@ -4,16 +4,16 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from .aggregations import native_interval_hours
-from .chart_theme import WIND_SPEED_LABELS, WIND_SPEED_COLOR_MAP
+from .chart_theme import (WIND_SPEED_LABELS, WIND_SPEED_COLOR_MAP, NV_COLOR, NV_REJECTED_COLOR, NV_SUITABILITY_COLORSCALE, metric_color, metric_colorscale, temperature_gradient_domain, wind_speed_colorscale)
 
 METRICS={
-    "Temperature":("dry_bulb_temperature_c","°C","RdBu_r"),
-    "Relative humidity":("relative_humidity_pct","%","Blues"),
-    "Humidity ratio":("humidity_ratio_g_kg","g/kg dry air","Blues"),
-    "Absolute humidity":("_absolute_humidity","g/m³","Blues"),
-    "Enthalpy":("moist_air_enthalpy_kj_kg","kJ/kg dry air","Viridis"),
-    "Natural ventilation suitability":("_nv_suitable","%","Greens"),
-    "Dynamic pressure potential":("_dynamic_pressure","Pa","Viridis"),
+    "Temperature":("dry_bulb_temperature_c","°C",metric_colorscale("dry_bulb_temperature_c")),
+    "Relative humidity":("relative_humidity_pct","%",metric_colorscale("relative_humidity_pct")),
+    "Humidity ratio":("humidity_ratio_g_kg","g/kg dry air",metric_colorscale("humidity_ratio_g_kg")),
+    "Absolute humidity":("_absolute_humidity","g/m³",metric_colorscale("absolute_humidity_g_m3")),
+    "Enthalpy":("moist_air_enthalpy_kj_kg","kJ/kg dry air",metric_colorscale("moist_air_enthalpy_kj_kg")),
+    "Natural ventilation suitability":("_nv_suitable","%",NV_SUITABILITY_COLORSCALE),
+    "Dynamic pressure potential":("_dynamic_pressure","Pa",metric_colorscale("dynamic_pressure_pa")),
 }
 ANGLES=np.arange(16)*22.5
 COMPASS=["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"]
@@ -69,7 +69,10 @@ def directional_table(df,*,speed="wind_speed_m_s",direction="wind_direction_deg"
     interval=native_interval_hours(df)
     if radial=="Eligible hours" and (nv_mask is None or colour!="Natural ventilation suitability"):
         raise ValueError("Eligible-hour radial quantity requires a stated natural-ventilation screen.")
-    if colour=="Wind speed": val=rows["speed"]
+    if colour=="Wind-driven rain exposure":
+        p=numeric(df,"liquid_precipitation_depth_mm").loc[rows.index]
+        val=(p*rows.speed).where(p>=0)
+    elif colour=="Wind speed": val=rows["speed"]
     elif colour=="Absolute humidity": val=absolute_humidity(df).loc[rows.index]
     elif colour=="Dynamic pressure potential": val=dynamic_pressure(df,speed).loc[rows.index]
     elif colour=="Natural ventilation suitability":
@@ -92,7 +95,8 @@ def directional_table(df,*,speed="wind_speed_m_s",direction="wind_direction_deg"
     elif radial=="Percentage": r=counts*100/max(1,int(counts.sum()))
     elif radial=="Wind-driven rain exposure": r=grouped.radial.sum(min_count=1).reindex(ANGLES)
     else: r=grouped.radial.mean().reindex(ANGLES)
-    table=pd.DataFrame({"radius":r,"colour":grouped.colour.mean().reindex(ANGLES),
+    colour_series=grouped.colour.sum(min_count=1) if colour=="Wind-driven rain exposure" else grouped.colour.mean()
+    table=pd.DataFrame({"radius":r,"colour":colour_series.reindex(ANGLES),
                         "valid_hours":counts*interval,"direction":COMPASS},index=ANGLES)
     table.index.name="azimuth_deg"
     return table
@@ -100,12 +104,28 @@ def directional_table(df,*,speed="wind_speed_m_s",direction="wind_direction_deg"
 RADIAL_UNITS={"Hours":"h","Eligible hours":"h","Percentage":"%","Mean wind speed":"m/s",
               "Wind-driven rain exposure":"mm·m/s","Dynamic pressure potential":"Pa"}
 
+def directional_palette(colour,values):
+    finite=np.asarray(values,dtype=float);finite=finite[np.isfinite(finite)]
+    lo=float(finite.min()) if finite.size else 0.
+    hi=float(finite.max()) if finite.size else 1.
+    if colour=="Wind speed":
+        upper=max(12.,hi)
+        return "m/s",wind_speed_colorscale(upper),dict(cmin=0.,cmax=upper)
+    if colour=="Wind-driven rain exposure":
+        return "mm·m/s",metric_colorscale("wind_driven_rain_exposure"),dict(cmin=0.,cmax=max(1.,hi))
+    _,unit,scale=METRICS[colour]
+    if colour in ("Relative humidity","Natural ventilation suitability"):
+        return unit,scale,dict(cmin=0.,cmax=100.)
+    if colour=="Temperature":
+        lo,hi,scale=temperature_gradient_domain(lo,hi)
+    elif colour in ("Humidity ratio","Absolute humidity","Dynamic pressure potential"):
+        lo=0.
+    if hi<=lo:hi=lo+1.
+    return unit,scale,dict(cmin=lo,cmax=hi)
+
 def directional_figure(table,radial,colour,title):
-    _,unit,scale=METRICS.get(colour,(None,"m/s","Viridis"))
     v=table["colour"].to_numpy(float)
-    if colour=="Relative humidity" or colour=="Natural ventilation suitability":
-        limits=dict(cmin=0,cmax=100)
-    else: limits={}
+    unit,scale,limits=directional_palette(colour,v)
     # Plot absent colours as NaN; zero-length sectors contribute no visible bars.
     radius=table.radius.where(table.valid_hours>0)
     fig=go.Figure(go.Barpolar(theta=table.index,r=radius,width=21.,
@@ -124,7 +144,7 @@ def directional_speed_figure(df,speed,direction,title):
     fig=go.Figure()
     for angle,label in zip(ANGLES,COMPASS):
         fig.add_box(x=[label]*int((rows.sector==angle).sum()),y=rows.loc[rows.sector==angle,"speed"],
-                    name=label,boxpoints=False,showlegend=False)
+                    name=label,boxpoints=False,showlegend=False,marker_color=metric_color(speed),line_color=metric_color(speed))
     fig.update_layout(template="plotly_white",title=title,xaxis_title="Wind FROM direction",
                       yaxis_title="Wind speed [m/s]",xaxis=dict(categoryorder="array",categoryarray=COMPASS))
     return fig
@@ -140,6 +160,10 @@ def directional_interpretation(table,radial,colour):
         return (f"{total:.1f} wind-direction observation hours pass the selected strict "
                 f"outdoor-air screen; the largest eligible sector is {row.direction} "
                 f"({row.radius:.1f} h). The qualifying sector indicates when that façade orientation offers outdoor-air ventilation opportunities.")
+    if colour=="Wind-driven rain exposure":
+        return (f"The largest wind-driven rain exposure occurs from {row.direction} ({row.radius:.2f} mm·m/s). "
+                f"Radius and colour encode the same sector-integrated precipitation × wind-speed index across {valid.valid_hours.sum():.1f} valid non-calm hours. "
+                "The most exposed façade sectors inform protected openings and rain-resistant detailing.")
     text=(f"The largest {radial.lower()} value occurs for wind from {row.direction} "
           f"({row.radius:.2f} {RADIAL_UNITS[radial]}). The colour represents the directional mean "
           f"of {colour.lower()}, calculated from {valid.valid_hours.sum():.1f} valid non-calm observation hours. "
@@ -210,7 +234,7 @@ def directional_class_table(df,*,speed="wind_speed_m_s",direction="wind_directio
     if quantity=="Natural ventilation suitability":
         labels=["Not suitable","Suitable"]
         rows["class"]=pd.Categorical(rows.value.map({0.:"Not suitable",1.:"Suitable"}),categories=labels,ordered=True)
-        colours=["#9CA3AF","#16834A"]
+        colours=[NV_REJECTED_COLOR,NV_COLOR]
     else:
         edges=CLASS_EDGES[quantity] if edges is None else tuple(edges)
         if not 1<=len(edges)<=9 or not np.isfinite(edges).all() or np.any(np.diff(edges)<=0):
@@ -224,7 +248,7 @@ def directional_class_table(df,*,speed="wind_speed_m_s",direction="wind_directio
             labels=[f"< {edges[0]:g}"]+[f"{lo:g} – < {hi:g}" for lo,hi in zip(edges[:-1],edges[1:])]+[f"≥ {edges[-1]:g}"]
             bounds=[-np.inf,*edges,np.inf]
             from plotly.colors import sample_colorscale
-            scale="RdBu_r" if quantity in ("Temperature","Enthalpy") else "YlGnBu" if quantity in ("Relative humidity","Humidity ratio","Absolute humidity") else "Viridis"
+            _,scale,_=directional_palette(quantity,edges)
             colours=sample_colorscale(scale,np.linspace(.08,.94,len(labels)).tolist())
         rows["class"]=pd.cut(rows.value,bounds,labels=labels,right=legacy,include_lowest=legacy)
     counts=rows.groupby(["sector","class"],observed=True).size().unstack(fill_value=0).reindex(index=ANGLES,columns=labels,fill_value=0)
@@ -344,11 +368,7 @@ def monthly_wind_rose_panel(df,*,speed="wind_speed_m_s",direction="wind_directio
     first=min(tables)
     limits={}
     if not classes:
-        if colour in ("Relative humidity","Natural ventilation suitability"):limits=dict(cmin=0.,cmax=100.)
-        else:
-            lo,hi=min(colour_values),max(colour_values)
-            if lo==hi:hi=lo+max(1.,abs(lo)*.01)
-            limits=dict(cmin=lo,cmax=hi)
+        _,shared_scale,limits=directional_palette(colour,colour_values)
     month_info=[]
     for month in range(1,13):
         name="polar" if month==1 else f"polar{month}"
@@ -370,7 +390,7 @@ def monthly_wind_rose_panel(df,*,speed="wind_speed_m_s",direction="wind_directio
             tr.showlegend=bool(classes and month==first)
             if classes:tr.legendgroup=str(tr.name)
             else:
-                tr.marker.update(**limits,showscale=month==first)
+                tr.marker.update(**limits,colorscale=shared_scale,showscale=month==first)
                 if month==first:tr.marker.colorbar.update(x=1.02,y=.5,len=.76,thickness=14)
             fig.add_trace(tr)
     fig.update_layout(template="plotly_white",title=title,height=1180,barmode="stack" if classes else "overlay",

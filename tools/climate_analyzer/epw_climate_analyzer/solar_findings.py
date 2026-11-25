@@ -111,7 +111,8 @@ def facade_figure_interpretation(fig,*,tilt_deg=90.):
             f"{peak[0]} ({peak[1]:,.1f} kWh/m²) and lowest for "
             f"{low[0]} ({low[1]:,.1f} kWh/m²); ratio {_fmt(ratio,2)}. "
             "The solar incidence direction is a surface azimuth, clockwise from north. "
-            "The contrast identifies orientations for prioritizing solar protection and for investigating useful seasonal solar admission.")
+            "The contrast identifies orientations for prioritizing solar protection and for investigating useful seasonal solar admission. "
+            "Direct, sky-diffuse and ground-reflected irradiation sum to total plane-of-array irradiation. The selected components show their contribution; the orientation comparison uses total irradiation over the selected observation interval.")
 
 
 def solar_figure_interpretation(
@@ -125,7 +126,8 @@ def solar_figure_interpretation(
     label=title.lower()
     kind=canonical_profile_kind(kind,title,args)
     if kind=="facade":
-        tilt=float(getattr(getattr(fig,"layout",None),"meta",{}).get("tilt_deg",90.) or 90.)
+        meta=getattr(getattr(fig,"layout",None),"meta",None) or {}
+        tilt=float(meta.get("tilt_deg",90.))
         return facade_figure_interpretation(fig,tilt_deg=tilt)
     if kind=="tilt":
         maxima=[]
@@ -152,14 +154,41 @@ def solar_figure_interpretation(
                 "over common valid daylight source intervals. Polar bar radius is sky-patch "
                 "geometry; colours indicate patch irradiation. Direct uses DNI projected by solar zenith, while diffuse follows the selected sky model. Total is the sum of direct and diffuse patch contributions.")
     if kind=="sunpath_view":
-        return ("The solar paths are astronomical references for the selected site and clock; "
-                "they describe solar azimuth and altitude, supporting façade orientation, overhang sizing and exposure planning. Overlays show the associated observed radiation and temperature conditions.")
+        style,colour=(args+("2D","None"))[:2] if len(args)>=2 else ("2D","None")
+        inverted=bool(args[2]) if len(args)>2 else False
+        cold,warm=(args[3:5] if len(args)>4 else (18.,26.))
+        shading=args[5] if len(args)>5 else None
+        geometry={
+            "2D":"Compass azimuth increases clockwise from north; the horizon lies at the centre." if inverted else "Compass azimuth increases clockwise from north; the horizon is the outer ring.",
+            "Technical":"Cartesian compass azimuth and elevation locate each apparent solar direction.",
+            "3D":"East, North and Up coordinates locate apparent solar directions on the unit hemisphere.",
+        }.get(style,"Compass azimuth and elevation describe apparent solar direction.")
+        if colour=="Solar benefit / risk":
+            overlay=(f" Observed temperatures below {cold:g} °C, between {cold:g} and {warm:g} °C, "
+                     f"and above {warm:g} °C classify solar directions by seasonal thermal conditions.")
+        elif colour=="Outdoor temperature":
+            overlay=" Outdoor-temperature colours locate weather conditions coincident with solar direction."
+        elif colour not in ("None",None):
+            quantity,unit=QUANTITIES.get(colour,(str(colour),""))
+            overlay=f" Colours encode observed {quantity}"+(f" [{unit}]" if unit else "")+" at its actual solar position."
+        else:overlay=""
+        note=("Monthly astronomical paths and fixed-clock guides describe seasonal solar geometry. "
+              +geometry+overlay+" Solar directions support façade orientation, overhang sizing and seasonal exposure planning.")
+        if shading is not None:
+            from .shading_findings import shading_mask_interpretation
+            note+=" "+shading_mask_interpretation(shading)
+        return note
     if kind=="monthly_radiation":
-        mode=("source components on distinct measurement planes"
-              if any(getattr(t,"name","") in ("GHI","DNI","DHI") for t in getattr(fig,"data",()))
-              else "selected plane-of-array irradiation components")
+        meta=getattr(getattr(fig,"layout",None),"meta",None) or {}
+        surface=meta.get("measurement_basis")=="surface"
+        mode="selected plane-of-array irradiation components" if surface else "source components on distinct measurement planes"
+        physics=("Total POA combines direct irradiation projected onto the receiver, sky-diffuse and ground-reflected irradiation. "
+                 "The selected ground albedo and admitted coincident radiation and solar geometry determine the unobstructed isotropic transposition."
+                 if surface else
+                 "GHI and DHI refer to the horizontal plane; DNI refers to a plane normal to the solar beam. Each series quantifies its own measurement basis.")
         return (f"The displayed monthly values are interval-irradiation sums for {mode}. "
-                "Compare monthly horizontal radiation, normal-beam availability and façade-specific plane irradiation to identify seasonal solar-resource and shading priorities.")
+                "Calendar-profile values average equivalent per-year monthly sums. "
+                +physics+" Compare seasonal irradiation availability to identify solar-resource and shading priorities.")
     if kind in ("scatter","solar_scatter"):
         return solar_temperature_interpretation(df)
     if not column:

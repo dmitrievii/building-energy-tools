@@ -2,11 +2,12 @@
 from __future__ import annotations
 import plotly.graph_objects as go
 from .calendar_heatmap_axes import apply_monthly_axes,set_period_axis_scope
+from .chart_theme import NV_COLOR, NIGHT_FLUSHING_COLOR, NV_REJECTED_COLOR
 
 def persistence_figure(counts,title,*,night=False):
     unit="nights" if night else "days"
     fig=go.Figure()
-    for name,colour in (("Meets minimum","#21866B"),("Below minimum","#B8C0C6")):
+    for name,colour in (("Meets minimum",NIGHT_FLUSHING_COLOR if night else NV_COLOR),("Below minimum",NV_REJECTED_COLOR)):
         fig.add_bar(x=counts.index,y=counts[name],name=name,marker_color=colour,
                     hovertemplate="%{x|%b %Y}<br>"+name+": %{y:.0f} "+unit+"<extra></extra>")
     fig.add_scatter(x=counts.index,y=counts["Observed days"],name="Observed "+unit,

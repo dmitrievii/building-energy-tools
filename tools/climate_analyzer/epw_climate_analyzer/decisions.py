@@ -270,6 +270,7 @@ def rejection_reasons_for_nv(
 
     rows = []
     for reason, mask in reasons.items():
-        hours = int(mask.fillna(False).sum())
-        rows.append({"reason": reason, "hours": hours, "share_pct": hours / max(len(df), 1) * 100.0})
+        count = int(mask.fillna(False).sum())
+        hours = count * native_interval_hours(df)
+        rows.append({"reason": reason, "hours": hours, "share_pct": count / max(len(df), 1) * 100.0})
     return pd.DataFrame(rows).sort_values("hours", ascending=False)

@@ -90,12 +90,19 @@ class GeoSphere062UiContractTests(unittest.TestCase):
         self.assertIn("counts = occurrence_records(", self.source)
         self.assertIn('source_df,\n            "liquid_precipitation_depth_mm"', self.source)
         self.assertIn('y="records"', self.source)
-        self.assertIn('counts = occurrence_hours(source_df, "snow_depth_cm"', self.source)
+        self.assertIn('snow_hours_panel(source_df,render_plot)', self.source)
+        from epw_climate_analyzer.residual_findings import snow_hours_figure
+        from epw_climate_analyzer.precipitation import occurrence_hours
+        import pandas as pd
+        df=pd.DataFrame({"snow_depth_cm":[0.,2.,float("nan"),4.]},index=pd.date_range("2026-01-01",periods=4,freq="10min"))
+        df.attrs["canonical_native_interval_minutes"]=10
+        fig,note=snow_hours_figure(df,"Daily")
+        self.assertAlmostEqual(float(fig.data[0].y[0]),float(occurrence_hours(df,"snow_depth_cm",0.,"Daily",inclusive=False).iloc[0,0]))
+        self.assertIn("Native snow observations use 10-minute intervals",note)
         self.assertIn("Precipitation-record occurrence", self.source)
         self.assertIn("Source records meeting threshold", self.source)
         self.assertIn("native cadence", self.source)
         self.assertIn("recorded source intervals reach", self.source)
-        self.assertIn("Native snow observations use", self.source)
         self.assertIn('elif page == "Precipitation and Snow":', self.source)
         self.assertNotIn("Precipitation-interval occurrence", self.source)
         self.assertNotIn("Analysis intervals meeting threshold", self.source)

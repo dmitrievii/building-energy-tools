@@ -27,6 +27,8 @@ def render_atlas(df,context,reference_df=None):
         st.info("Load climate data and select a nonempty Data filter.");return
     st.caption(concise_context(context))
     context=atlas_duration_context(context,st.session_state)
+    from .heatmap_presentation import context_from_state
+    context={**context,"heatmap presentation":context_from_state(st.session_state)}
     coverage=st.radio("Coverage",LEVELS,index=2,key="p66_coverage")
     try:
         prepared=prepare_frame(df)

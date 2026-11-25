@@ -11,6 +11,188 @@ from epw_climate_analyzer.p3_comfort import annual_hour_grid
 from epw_climate_analyzer.chart_presentation import ChartPresentationSettings,apply_chart_presentation
 
 class CalendarHeatmapTests(unittest.TestCase):
+    @staticmethod
+    def _calendar_rows(fig):
+        rows=[str(v).split("<br>") for v in fig.layout.xaxis.ticktext]
+        assert all(len(v)==2 for v in rows),rows
+        return tuple([v[i] for v in rows if v[i]!="&nbsp;"] for i in (0,1))
+
+    def test_r29_daily_leap_partial_multiyear_and_legacy(self):
+        from epw_climate_analyzer.charts import temporal_heatmap_chart
+        for start,end,first,last,expected_months in (
+            ("2024-01-01","2024-12-31",1,366,["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]),
+            ("2025-02-27","2025-03-03",58,62,["Feb","Mar"]),
+            ("2025-12-28","2026-01-05",362,5,["Dec 2025","Jan 2026"]),
+        ):
+            with self.subTest(start=start,end=end):
+                idx=pd.date_range(start,pd.Timestamp(end)+pd.Timedelta(hours=23),freq="h")
+                df=pd.DataFrame({"temperature":np.arange(len(idx),dtype=float)},index=idx)
+                fig=temporal_heatmap_chart(df,"temperature","day",HEATMAP_COMPARE_HOUR,"Mean","Example","°C")
+                a,b=self._calendar_rows(fig)
+                self.assertEqual((a[0],a[-1]),(str(first),str(last)))
+                self.assertEqual(b,expected_months)
+                matrix=temporal_heatmap_matrix(df,"temperature","day",HEATMAP_COMPARE_HOUR,"Mean")
+                np.testing.assert_array_equal(fig.data[0].z,matrix.values)
+                old=go.Figure(fig)
+                old.update_layout(meta=None,xaxis=dict(title="Date",ticktext=None,tickvals=None,tickmode="auto"))
+                printed=report_figure(old,width_pt=500,height_pt=230)
+                self.assertEqual(self._calendar_rows(printed)[0][-1],str(last))
+                self.assertEqual(self._calendar_rows(printed)[1][-1],expected_months[-1])
+                np.testing.assert_array_equal(printed.data[0].z,fig.data[0].z)
+                np.testing.assert_array_equal(printed.data[0].x,fig.data[0].x)
+                original=fig.to_plotly_json()["layout"]["xaxis"]
+                apply_calendar_heatmap_axes(fig)
+                self.assertEqual(fig.to_plotly_json()["layout"]["xaxis"],original)
+
+    def test_r29_week_coordinates_iso_year_and_month_intersections(self):
+        from epw_climate_analyzer.charts import temporal_heatmap_chart
+        idx=pd.date_range("2020-12-21","2021-01-10 23:00",freq="h")
+        df=pd.DataFrame({"temperature":np.arange(len(idx),dtype=float)},index=idx)
+        fig=temporal_heatmap_chart(df,"temperature","week",HEATMAP_COMPARE_HOUR,"Mean","Example","°C")
+        self.assertEqual(list(fig.data[0].x),["2020-W52","2020-W53","2021-W01"])
+        self.assertEqual(self._calendar_rows(fig),(["W52","W53","W01"],["Dec 2020","Jan 2021"]))
+        month_ticks={t.split("<br>")[1]:v for v,t in zip(fig.layout.xaxis.tickvals,fig.layout.xaxis.ticktext)}
+        # W53 begins Dec 28; Jan begins 4/7 of the way through that cell.
+        self.assertAlmostEqual(month_ticks["Dec 2020"],(-.5+(.5+4/7))/2)
+        self.assertAlmostEqual(month_ticks["Jan 2021"],((.5+4/7)+2.5)/2)
+        matrix=temporal_heatmap_matrix(df,"temperature","week",HEATMAP_COMPARE_HOUR,"Mean")
+        np.testing.assert_array_equal(fig.data[0].z,matrix.values)
+        printed=report_figure(fig,width_pt=500,height_pt=230)
+        self.assertEqual(self._calendar_rows(printed),self._calendar_rows(fig))
+        self.assertEqual(list(printed.data[0].x),list(fig.data[0].x))
+        apply_calendar_heatmap_axes(fig)
+        self.assertEqual(self._calendar_rows(fig),self._calendar_rows(printed))
+
+    def test_r29_calendar_profile_and_monthly_unchanged(self):
+        from epw_climate_analyzer.charts import temporal_heatmap_chart
+        from epw_climate_analyzer.temporal_filtering import with_time_basis,CALENDAR_PROFILE
+        idx=pd.date_range("2024-01-01","2025-12-31 23:00",freq="h")
+        df=with_time_basis(pd.DataFrame({"temperature":np.arange(len(idx),dtype=float)},index=idx),CALENDAR_PROFILE)
+        for period,last in (("day","366"),("week","W52")):
+            fig=temporal_heatmap_chart(df,"temperature",period,HEATMAP_COMPARE_HOUR,"Mean","Example","°C")
+            self.assertEqual(self._calendar_rows(fig)[1][-1],"Dec")
+            self.assertEqual(self._calendar_rows(fig)[0][-1],last)
+            self.assertIn("reference" if period=="day" else "guide",fig.layout.xaxis.title.text)
+            np.testing.assert_array_equal(fig.data[0].z,temporal_heatmap_matrix(df,"temperature",period,HEATMAP_COMPARE_HOUR,"Mean").values)
+        monthly=temporal_heatmap_chart(df,"temperature","month",HEATMAP_COMPARE_HOUR,"Mean","Example","°C")
+        self.assertEqual(list(monthly.layout.xaxis.ticktext),["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"])
+
+    def test_r29_single_year_week_guide_excludes_adjacent_unselected_years(self):
+        from epw_climate_analyzer.charts import temporal_heatmap_chart
+        idx=pd.date_range("2026-01-01","2026-12-31 23:00",freq="h")
+        df=pd.DataFrame({"temperature":np.arange(len(idx),dtype=float)},index=idx)
+        fig=temporal_heatmap_chart(df,"temperature","week",HEATMAP_COMPARE_HOUR,"Mean","Example","°C")
+        self.assertEqual(self._calendar_rows(fig)[1],["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"])
+        self.assertEqual(self._calendar_rows(fig)[0][0],"W01")
+        self.assertEqual(self._calendar_rows(fig)[0][-1],"W53")
+        self.assertEqual(len(fig.data[0].x),53)
+
+    def test_r29_pinned_plotly_static_svg_retains_two_visible_tick_rows(self):
+        # Exercise the actual Kaleido/Plotly print renderer, not only Python
+        # layout validation: categorical ISO week tickvals include fractions.
+        import xml.etree.ElementTree as ET
+        from epw_climate_analyzer.calendar_heatmap_axes import set_period_axis_scope
+        x=["2020-W52","2020-W53","2021-W01"]
+        fig=go.Figure(go.Heatmap(x=x,y=list(range(24)),z=np.zeros((24,3))))
+        fig.update_layout(xaxis_title="Week",yaxis_title="Hour of day")
+        set_period_axis_scope(fig,pd.date_range("2020-12-21","2021-01-10",freq="D"))
+        apply_calendar_heatmap_axes(fig)
+        printed=report_figure(fig,width_pt=500,height_pt=230)
+        root=ET.fromstring(printed.to_image(format="svg"))
+        ns={"s":"http://www.w3.org/2000/svg"}
+        texts=[]
+        for group in root.findall(".//s:g",ns):
+            if group.attrib.get("class")=="xtick":
+                texts.extend(t.text for t in group.findall(".//s:tspan",ns) if t.text and t.text.strip())
+        for label in ("W52","W53","W01","Dec 2020","Jan 2021"):
+            self.assertIn(label,texts)
+
+    def test_r29_dew_point_occurrence_uses_fixed_classes_and_all_month_labels(self):
+        from epw_climate_analyzer.extended_visualization import (
+            occurrence_default_edges,occurrence_table,occurrence_figure,
+            DEW_POINT_OCCURRENCE_EDGES,DEW_POINT_OCCURRENCE_COLORS)
+        from epw_climate_analyzer.calendar_heatmap_axes import apply_monthly_axes
+        from epw_climate_analyzer.humidity_findings import humidity_figure_interpretation
+        col="dew_point_temperature_c"
+        idx=pd.date_range("2026-01-01","2026-12-31 23:00",freq="h")
+        df=pd.DataFrame({col:np.resize([-2.,0.,5.,10.,15.,20.,25.],len(idx))},index=idx)
+        df.attrs["canonical_native_interval_minutes"]=60.
+        for basis,stat in (("Hours","Mean"),("Percentage","Mean"),("Days","Mean"),("Days","Minimum"),("Days","Maximum")):
+            with self.subTest(basis=basis,stat=stat):
+                edges=occurrence_default_edges(df[col],col,basis=basis,daily_stat=stat)
+                self.assertEqual(tuple(edges),DEW_POINT_OCCURRENCE_EDGES)
+                self.assertEqual(occurrence_default_edges(df[col]+30,col,basis=basis,daily_stat=stat),edges)
+                table=occurrence_table(df,col,edges,basis=basis,daily_stat=stat)
+                self.assertEqual(len(table.columns),7)
+                if basis=="Days":
+                    np.testing.assert_array_equal(table.sum(axis=1),pd.date_range("2026-01-01",periods=12,freq="MS").days_in_month)
+                elif basis=="Hours":
+                    self.assertAlmostEqual(float(table.to_numpy().sum()),8760.)
+                else:
+                    np.testing.assert_allclose(table.sum(axis=1),100.)
+                fig=occurrence_figure(table,"°C",basis)
+                fig.update_layout(title=f"Dew-point temperature · occurrence · {basis} · daily {stat}")
+                expected=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+                for plot in (fig,report_figure(fig,width_pt=500,height_pt=230)):
+                    apply_monthly_axes(plot)
+                    self.assertEqual(list(plot.layout.xaxis.ticktext),expected)
+                    self.assertEqual(tuple(tr.marker.color for tr in plot.data),DEW_POINT_OCCURRENCE_COLORS)
+                    np.testing.assert_array_equal(plot.data[-1].y,table.iloc[:,-1].to_numpy())
+                legacy=go.Figure(fig);legacy.update_layout(meta=None,xaxis=dict(title="Period",tickvals=None,ticktext=None))
+                self.assertEqual(list(report_figure(legacy,width_pt=500,height_pt=230).layout.xaxis.ticktext),expected)
+                note=humidity_figure_interpretation(df,fig,"occurrence",column=col,args=(basis,stat))
+                self.assertIn("Fixed outdoor moisture-reference boundaries",note)
+                if basis=="Days":self.assertIn({"Mean":"typical dew-point level","Minimum":"persistent moisture exposure","Maximum":"peak moisture exposure"}[stat],note)
+
+    def test_r29b_hourly_daily_monthly_seasonal_and_physical_axes(self):
+        from epw_climate_analyzer.calendar_heatmap_axes import apply_monthly_axes,set_period_axis_scope
+        def check(x,aggregation,first,last,guide_first,guide_last):
+            f=go.Figure(go.Scatter(x=x,y=np.arange(len(x),dtype=float),mode="lines"))
+            f.update_layout(xaxis_title="Time" if aggregation=="Hourly" else "Period")
+            if aggregation:set_period_axis_scope(f,aggregation=aggregation)
+            apply_monthly_axes(f)
+            a,b=self._calendar_rows(f)
+            self.assertEqual((a[0],a[-1]),(first,last))
+            self.assertEqual((b[0],b[-1]),(guide_first,guide_last))
+            for clone in (report_figure(f,width_pt=500,height_pt=230),go.Figure(f)):
+                apply_monthly_axes(clone)
+                self.assertEqual(self._calendar_rows(clone)[0][-1],last)
+                self.assertEqual(self._calendar_rows(clone)[1][-1],guide_last)
+                np.testing.assert_array_equal(clone.data[0].x,f.data[0].x)
+                np.testing.assert_array_equal(clone.data[0].y,f.data[0].y)
+            return f
+        check(pd.date_range("2026-05-31 18:00",periods=18,freq="h"),"Hourly","18:00","11:00","31 May","01 Jun")
+        check(pd.date_range("2026-01-01","2026-12-31 23:00",freq="h"),"Hourly","1","365","Jan","Dec")
+        check(["28 Dec 2025","29 Dec 2025","01 Jan 2026","02 Jan 2026"],"Daily","362","2","Dec 2025","Jan 2026")
+        check(["Nov 2025","Dec 2025","Jan 2026","Feb 2026"],"Monthly","Nov","Feb","2025","2026")
+        check(["Autumn 2025","Winter 2026","Spring 2026"],"Seasonal","Autumn","Spring","2025","2026")
+        for title in ("Sorted duration [h]","Temperature [°C]","Wind speed [m/s]","Empirical return period [years]"):
+            f=go.Figure(go.Scatter(x=list(range(1,366)),y=list(range(365))))
+            f.update_layout(xaxis_title=title)
+            before=f.to_plotly_json()["layout"]["xaxis"]
+            apply_monthly_axes(f)
+            self.assertEqual(f.to_plotly_json()["layout"]["xaxis"],before)
+        annual=go.Figure(go.Bar(x=["2024","2025","2026"],y=[1,2,3]))
+        set_period_axis_scope(annual,aggregation="Annual")
+        apply_monthly_axes(annual)
+        self.assertIsNone(annual.layout.xaxis.ticktext)
+
+    def test_r29b_interannual_preserves_reference_geometry(self):
+        from epw_climate_analyzer.interannual_profiles import interannual_profile_figure
+        from epw_climate_analyzer.temporal_filtering import with_time_basis,INTERANNUAL_OVERLAY
+        idx=pd.date_range("2024-01-01","2025-12-31 23:00",freq="h")
+        df=with_time_basis(pd.DataFrame({"dry_bulb_temperature_c":np.sin(np.arange(len(idx))/24)},index=idx),INTERANNUAL_OVERLAY)
+        for period in ("Daily","Weekly","Hourly"):
+            f=interannual_profile_figure(df,"dry_bulb_temperature_c",period,"Temperature","°C",kind="minmax")
+            self.assertEqual(self._calendar_rows(f)[1][-1],"Dec")
+            if period=="Weekly":
+                self.assertIn("7-day reference bins",f.layout.xaxis.title.text)
+            else:self.assertIn("leap-year reference",f.layout.xaxis.title.text)
+            printed=report_figure(f,width_pt=500,height_pt=230)
+            for a,b in zip(f.data,printed.data):
+                np.testing.assert_array_equal(a.x,b.x)
+                np.testing.assert_array_equal(a.y,b.y)
+
     def test_temperature_threshold_widgets_are_scoped_to_consuming_charts(self):
         import ast
         from pathlib import Path
@@ -19,7 +201,10 @@ class CalendarHeatmapTests(unittest.TestCase):
         def guards(node, ancestors=()):
             if isinstance(node,ast.Call) and isinstance(node.func,ast.Attribute) and node.func.attr=="slider" and node.args and isinstance(node.args[0],ast.Constant):
                 yield node.args[0].value,ancestors
-            if isinstance(node,ast.If):
+            if isinstance(node,ast.IfExp):
+                yield from guards(node.body,ancestors+(ast.unparse(node.test),))
+                yield from guards(node.orelse,ancestors)
+            elif isinstance(node,ast.If):
                 condition=ast.unparse(node.test)
                 for child in node.body:yield from guards(child,ancestors+(condition,))
                 for child in node.orelse:yield from guards(child,ancestors)
@@ -29,9 +214,12 @@ class CalendarHeatmapTests(unittest.TestCase):
         for label in ("Lower colour reference [°C]","Upper colour reference [°C]"):
             self.assertIn("chart_type == 'Heat map'",explorer[label])
             self.assertIn("column in TEMPERATURE_HEATMAP_COLUMNS",explorer[label])
-        temperature=dict(guards(funcs["render_temperature"]))
-        self.assertIn("mode == 'Below heating threshold'",temperature["Heating threshold [°C]"])
-        self.assertIn("mode == 'Above cooling threshold'",temperature["Cooling threshold [°C]"])
+        panel_tree=ast.parse((Path(__file__).resolve().parents[1]/"epw_climate_analyzer/p3_ui.py").read_text(encoding="utf-8"))
+        panel=next(n for n in panel_tree.body if isinstance(n,ast.FunctionDef) and n.name=="temperature_threshold_panel")
+        temperature=dict(guards(panel))
+        self.assertIn("mode in ('Below heating threshold', 'Heating and cooling thresholds')",temperature["Heating threshold [°C]"])
+        self.assertIn("mode in ('Above cooling threshold', 'Heating and cooling thresholds')",temperature["Cooling threshold [°C]"])
+        self.assertIn("temperature_threshold_panel",ast.unparse(funcs["render_temperature"]))
         self.assertNotIn("Heating threshold [°C]",explorer)
         self.assertNotIn("Cooling threshold [°C]",explorer)
 
@@ -40,10 +228,13 @@ class CalendarHeatmapTests(unittest.TestCase):
         df=pd.DataFrame({"night_flushing_suitable":(idx.month==12).astype(float)},index=idx)
         fig=heatmap_chart(df,"night_flushing_suitable","day","Example","0/1")
         self.assertEqual(len(fig.data[0].x),365)
-        self.assertEqual(list(fig.layout.xaxis.ticktext),["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"])
+        self.assertEqual(self._calendar_rows(fig)[1],["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"])
+        self.assertEqual(self._calendar_rows(fig)[0][0],"1")
+        self.assertEqual(self._calendar_rows(fig)[0][-1],"365")
         np.testing.assert_allclose(np.asarray(fig.data[0].z)[:,-31:],1)
         copy=report_figure(fig,width_pt=500,height_pt=230)
-        self.assertEqual(list(copy.layout.xaxis.ticktext)[-1],"Dec")
+        self.assertEqual(self._calendar_rows(copy)[1][-1],"Dec")
+        self.assertEqual(self._calendar_rows(copy)[0][-1],"365")
         self.assertEqual(len(copy.data[0].x),365)
 
     def test_clock_hour_axis_canonical_for_ventilation_and_other_heatmaps(self):
@@ -92,7 +283,8 @@ class CalendarHeatmapTests(unittest.TestCase):
         fig=go.Figure(go.Heatmap(x=list(range(1,367)),y=[0],z=[list(range(366))]))
         fig.update_layout(xaxis_title="Day of year")
         apply_calendar_heatmap_axes(fig)
-        self.assertEqual(list(fig.layout.xaxis.ticktext)[-1],"Dec")
+        self.assertEqual(self._calendar_rows(fig)[1][-1],"Dec")
+        self.assertEqual(self._calendar_rows(fig)[0][-1],"366")
         solar=go.Figure(go.Heatmap(x=list(range(0,361,30)),y=[0,45,90],z=np.zeros((3,13))))
         solar.update_layout(xaxis_title="Surface azimuth [deg]")
         apply_calendar_heatmap_axes(solar)
@@ -110,7 +302,8 @@ class CalendarHeatmapTests(unittest.TestCase):
         self.assertEqual(str(category.data[0].x[-1]),"Dec 2026")
         daily=go.Figure(go.Scatter(x=pd.date_range("2026-01-01",periods=30,freq="D"),y=np.arange(30)))
         apply_monthly_axes(daily)
-        self.assertIsNone(daily.layout.xaxis.ticktext)
+        self.assertEqual(self._calendar_rows(daily)[0][-1],"30")
+        self.assertEqual(self._calendar_rows(daily)[1],["Jan"])
 
     def test_daylight_envelope_calendar_ticks(self):
         from epw_climate_analyzer.extended_visualization import daylight_envelope
@@ -119,11 +312,12 @@ class CalendarHeatmapTests(unittest.TestCase):
             idx=pd.date_range(f"{year}-01-01",f"{year}-12-31 23:00",freq="h")
             fig=daylight_envelope(idx,47.08)
             expected=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
-            self.assertEqual(list(fig.layout.xaxis.ticktext),expected)
+            self.assertEqual(self._calendar_rows(fig)[1],expected)
+            self.assertEqual(self._calendar_rows(fig)[0][-1],str(days))
             self.assertEqual(len(fig.data[0].x),days)
             self.assertEqual(pd.Timestamp(fig.data[0].x[-1]).date(),pd.Timestamp(f"{year}-12-31").date())
             copy=report_figure(fig,width_pt=500,height_pt=230)
-            self.assertEqual(list(copy.layout.xaxis.ticktext),expected)
+            self.assertEqual(self._calendar_rows(copy)[1],expected)
             legacy=go.Figure(fig)
             legacy.update_layout(meta=None,xaxis=dict(tickmode="auto",tickvals=None,ticktext=None))
             # Exercise a real pre-fix saved JSON snapshot directly through
@@ -133,7 +327,7 @@ class CalendarHeatmapTests(unittest.TestCase):
             self.assertIsNone(restored.layout.meta)
             self.assertIsNone(restored.layout.xaxis.ticktext)
             printed=report_figure(restored,width_pt=500,height_pt=230)
-            self.assertEqual(list(printed.layout.xaxis.ticktext),expected)
+            self.assertEqual(self._calendar_rows(printed)[1],expected)
             self.assertEqual(printed.layout.xaxis.tickmode,"array")
             self.assertEqual(len(printed.data[0].x),days)
             self.assertEqual(pd.Timestamp(printed.data[0].x[-1]).date(),pd.Timestamp(f"{year}-12-31").date())
@@ -141,10 +335,10 @@ class CalendarHeatmapTests(unittest.TestCase):
             np.testing.assert_array_equal(printed.data[1].y,restored.data[1].y)
             self.assertIsNone(restored.layout.xaxis.ticktext)
             apply_monthly_axes(legacy)
-            self.assertEqual(list(legacy.layout.xaxis.ticktext),expected)
+            self.assertEqual(self._calendar_rows(legacy)[1],expected)
         multi=daylight_envelope(pd.date_range("2025-11-01","2026-12-31",freq="D"),47.08)
-        self.assertEqual(multi.layout.xaxis.ticktext[-1],"Dec 2026")
-        self.assertTrue(all(len(v)>3 for v in multi.layout.xaxis.ticktext))
+        self.assertEqual(self._calendar_rows(multi)[1][-1],"Dec 2026")
+        self.assertTrue(all(len(v)>3 for v in self._calendar_rows(multi)[1]))
 
     def test_psychrometric_temperature_heatmaps_share_absolute_colour_domain(self):
         from epw_climate_analyzer.charts import TEMPERATURE_HEATMAP_COLUMNS,temporal_heatmap_chart
@@ -190,7 +384,8 @@ class CalendarHeatmapTests(unittest.TestCase):
         from epw_climate_analyzer.extended_visualization import ground_depth_heatmap
         columns=("dry_bulb_temperature_c","dry_bulb_temperature_min_c","dry_bulb_temperature_max_c",
                  "dew_point_temperature_c","wet_bulb_temperature_c","ground_temperature_0_10m_c",
-                 "ground_temperature_0_20m_c","ground_temperature_0_50m_c")
+                 "ground_temperature_0_20m_c","ground_temperature_0_50m_c",
+                 "ground_temperature_1_00m_c","ground_temperature_2_00m_c")
         self.assertEqual(set(columns),TEMPERATURE_HEATMAP_COLUMNS)
         idx=pd.date_range("2026-01-01",periods=48,freq="h")
         df=pd.DataFrame({c:np.linspace(-5+i,20+i,48) for i,c in enumerate(columns)},index=idx)
@@ -272,30 +467,33 @@ class CalendarHeatmapTests(unittest.TestCase):
             df["season"]="Winter"
             for chart in (profile_ribbon_chart,percentile_band_chart,profile_line_chart):
                 daily=chart(df,c,"Daily","Temperature","°C")
-                self.assertEqual(daily.layout.xaxis.ticktext[-1],"31.12")
+                self.assertEqual(self._calendar_rows(daily)[0][-1],str(days))
+                self.assertEqual(self._calendar_rows(daily)[1][-1],"Dec")
                 self.assertEqual(daily.layout.xaxis.tickvals[-1],days)
                 self.assertEqual(len(daily.data[0].x),days)
                 printed=report_figure(daily,width_pt=500,height_pt=230)
-                self.assertEqual(printed.layout.xaxis.ticktext[-1],"31.12")
+                self.assertEqual(self._calendar_rows(printed)[0][-1],str(days))
                 weekly=chart(df,c,"Weekly","Temperature","°C")
-                self.assertTrue(all(str(v).startswith("W") for v in weekly.layout.xaxis.ticktext))
+                self.assertTrue(all(str(v).startswith("W") for v in self._calendar_rows(weekly)[0]))
                 self.assertEqual(len(set(weekly.data[0].x)),len(weekly.data[0].x))
-                self.assertEqual(list(weekly.layout.xaxis.tickvals)[-1],weekly.data[0].x[-1])
+                self.assertEqual(self._calendar_rows(weekly)[0][-1],str(weekly.data[0].x[-1])[-3:])
                 self.assertEqual(weekly.layout.xaxis.tickangle,0)
             f=profile_line_chart(with_time_basis(df,CALENDAR_PROFILE),c,"Daily","Temperature","°C")
-            self.assertEqual(f.layout.xaxis.ticktext[-1],"31.12")
+            self.assertEqual(self._calendar_rows(f)[0][-1],"366")
+            self.assertEqual(self._calendar_rows(f)[1][-1],"Dec")
         partial=go.Figure(go.Scatter(x=list(range(101,151)),y=list(range(50))))
         partial.update_layout(xaxis_title="Period",title="Daily mean")
         apply_monthly_axes(partial)
-        self.assertEqual(partial.layout.xaxis.ticktext[-1],"150")
+        self.assertEqual(self._calendar_rows(partial)[0][-1],"150")
         legacy=go.Figure(go.Scatter(x=["2026-W51","2026-W52","2026-W53","2027-W01"],y=[1,2,3,4]))
         legacy.update_layout(xaxis_title="Period")
         set_period_axis_scope(legacy,context={"first timestamp":"2026-01-01","last timestamp":"2026-12-31"})
         apply_monthly_axes(legacy)
-        self.assertEqual(list(legacy.layout.xaxis.ticktext),["W51","W52","W53","W01"])
+        self.assertEqual(self._calendar_rows(legacy)[0],["W51","W52","W53","W01"])
         multi=go.Figure(go.Bar(x=["2025-W52","2026-W01"],y=[1,2]))
         apply_monthly_axes(multi)
-        self.assertEqual(list(multi.layout.xaxis.ticktext),["2025-W52","2026-W01"])
+        self.assertEqual(self._calendar_rows(multi)[0],["W52","W01"])
+        self.assertEqual(self._calendar_rows(multi)[1],["Dec 2025","Jan 2026"])
         physical=go.Figure(go.Scatter(x=list(range(1,366)),y=list(range(365))))
         physical.update_layout(xaxis_title="Sorted duration [h]")
         apply_monthly_axes(physical)
@@ -366,23 +564,27 @@ class CalendarHeatmapTests(unittest.TestCase):
         fig=temporal_heatmap_chart(constant,c,"day",HEATMAP_COMPARE_HOUR,"Mean","Enthalpy","kJ/kg dry air")
         self.assertLess(fig.layout.coloraxis.cmin,fig.layout.coloraxis.cmax)
 
-    def test_occurrence_temperature_edges_round_before_classification(self):
+    def test_occurrence_temperature_fixed_defaults_and_exact_custom_classification(self):
         from epw_climate_analyzer.extended_visualization import occurrence_default_edges,occurrence_table,occurrence_figure
         c="wet_bulb_temperature_c"
         source=pd.Series([2.77255,8.08763,14.6989])
         self.assertEqual(occurrence_default_edges(source,"dry_bulb_temperature_c"),[0.,15.,25.,30.])
         v=pd.Series([0.,2.77255,8.08763,14.6989,20.])
         edges=occurrence_default_edges(v,c)
-        self.assertEqual(edges,[2.8,8.1,14.7])
+        self.assertEqual(edges,[0.,10.,15.,20.,25.,28.,31.])
         df=pd.DataFrame({c:[2.79,2.8,8.09,8.1,14.69,14.7,np.nan]},index=pd.date_range("2026-01-01",periods=7,freq="h"))
-        table=occurrence_table(df,c,edges)
+        fixed=occurrence_table(df,c,edges)
+        np.testing.assert_allclose(fixed.iloc[0],[0.,4.,2.,0.,0.,0.,0.,0.])
+        self.assertEqual(float(fixed.sum().sum()),6.)
+        # User-defined boundaries keep the exact displayed precision.
+        table=occurrence_table(df,c,[2.8,8.1,14.7])
         self.assertEqual(list(table.columns),["< 2.8","2.8 – < 8.1","8.1 – < 14.7","≥ 14.7"])
         np.testing.assert_allclose(table.iloc[0],[1.,2.,2.,1.])
         self.assertEqual(float(table.sum().sum()),6.)
         fig=occurrence_figure(table,"°C","Hours")
         self.assertEqual(fig.data[0].name,"< 2.8 °C")
         constant=occurrence_default_edges(pd.Series([1.01,1.02,1.03]),c)
-        self.assertEqual(constant,[1.])
+        self.assertEqual(constant,edges)
         manual=occurrence_table(df,c,[2.791,2.799])
         self.assertEqual(list(manual.columns),["< 2.791","2.791 – < 2.799","≥ 2.799"])
 
