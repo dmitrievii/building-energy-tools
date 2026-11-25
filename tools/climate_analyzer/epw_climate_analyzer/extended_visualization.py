@@ -14,6 +14,10 @@ from .daylight import daily_daylight_table
 
 MONTHS = ("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec")
 T = "dry_bulb_temperature_c"
+RH_OCCURRENCE_COLUMN = "relative_humidity_pct"
+RH_OCCURRENCE_EDGES = (30.,40.,60.,80.,90.,95.)
+RH_OCCURRENCE_COLORS = ("#C56B26","#E6AD43","#E8DA85","#8EC9B5","#4CA6CB","#3678BC","#243B83")
+RH_OCCURRENCE_NOTE = ("Fixed outdoor relative-humidity classes use boundaries at 30, 40, 60, 80, 90 and 95%. Higher classes indicate decreasing vapour-pressure deficit at the same temperature; the 95–100% class identifies air close to or at saturation. These classes characterize atmospheric moisture exposure, evaporative cooling potential and material drying conditions. Surface moisture conditions depend on surface temperature and local vapour pressure.")
 DEW_POINT_COLUMN = "dew_point_temperature_c"
 DEW_POINT_OCCURRENCE_EDGES = (0.,5.,10.,15.,20.,25.)
 DEW_POINT_OCCURRENCE_COLORS = ("#2454A4","#368CCB","#65B8D5","#41A88B","#E4B524","#E87525","#B92F39")
@@ -245,6 +249,7 @@ def occurrence_default_edges(values,column,*,basis="Hours",daily_stat="Mean",int
         return [float(f"{edge*scale:.10g}") for edge in (LONGWAVE_OCCURRENCE_EDGES if kind=="longwave" else SHORTWAVE_OCCURRENCE_EDGES)]
     if column==T:return [0.,15.,25.,30.]
     if column==DEW_POINT_COLUMN:return list(DEW_POINT_OCCURRENCE_EDGES)
+    if column==RH_OCCURRENCE_COLUMN:return list(RH_OCCURRENCE_EDGES)
     raw=v.quantile([.25,.5,.75]).to_numpy(dtype=float)
     if "temperature" in column:
         return sorted(set(float(x) if x!=0 else 0. for x in np.round(raw,1)))
@@ -278,6 +283,11 @@ def occurrence_table(df,column,edges,*,basis="Hours",daily_stat="Mean"):
             if any(e>100 for e in edges):raise ValueError("Diffuse fraction boundaries must not exceed 100%.")
             valid &= numeric.le(100)
         source[column]=numeric.where(valid)
+    elif column==RH_OCCURRENCE_COLUMN:
+        if any(e<=0 or e>=100 for e in edges):raise ValueError("Relative humidity class boundaries must lie strictly between 0 and 100%.")
+        source=df.copy(deep=False)
+        numeric=_numeric(df,column)
+        source[column]=numeric.where(numeric.between(0.,100.))
     else:source=df
     v=_complete_daily(source,column,daily_stat) if daily else _numeric(source,column)
     v=v.dropna()
@@ -320,6 +330,8 @@ def occurrence_figure(table,unit,basis):
     column=table.attrs.get("occurrence_column")
     if column in WIND_SPEED_COLUMNS and tuple(table.attrs.get("occurrence_edges",()))==WIND_SPEED_OCCURRENCE_EDGES:
         palette=["#E5E7EB",*WIND_SPEED_COLORS]
+    elif column==RH_OCCURRENCE_COLUMN and tuple(table.attrs.get("occurrence_edges",()))==RH_OCCURRENCE_EDGES:
+        palette=list(RH_OCCURRENCE_COLORS)
     elif column==DEW_POINT_COLUMN and tuple(table.attrs.get("occurrence_edges",()))==DEW_POINT_OCCURRENCE_EDGES:
         palette=list(DEW_POINT_OCCURRENCE_COLORS)
     elif zero_occurrence_kind(column):
