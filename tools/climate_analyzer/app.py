@@ -9,6 +9,30 @@ from uuid import uuid4
 
 
 import streamlit as st
+
+# A Cloud hot deploy may replace app.py and package source without restarting
+# the Python worker. Check the loaded build identity before any new API import.
+# Reloading shared modules piecemeal is unsafe: other sessions and persistent
+# cache owners can retain old callable references. Require a clean process
+# instead, without mutating shared runtime or initializing scientific stacks.
+from epw_climate_analyzer.runtime_identity import RUNTIME_BUILD_ID, runtime_build_id
+if RUNTIME_BUILD_ID != runtime_build_id():
+    st.error("A new Climate Analyzer release is on disk, but this server is still running the previous build. Open Manage app → Reboot app once to activate the new release.")
+    st.stop()
+
+# Independent safety check for a stale palette module when runtime_identity
+# was first imported after the deployment. This check precedes named imports.
+from epw_climate_analyzer import chart_theme as _startup_chart_theme
+from hashlib import sha256 as _startup_sha256
+from pathlib import Path as _StartupPath
+if (getattr(_startup_chart_theme,"_RUNTIME_SOURCE_SHA256",None)
+        != _startup_sha256(_StartupPath(_startup_chart_theme.__file__).read_bytes()).hexdigest()
+        or not all(hasattr(_startup_chart_theme,name) for name in (
+            "metric_color","semantic_color_from_text","PASSIVE_STRATEGY_COLORS","climate_color_map",
+        ))):
+    st.error("The server retains an older Climate Analyzer colour module. Open Manage app → Reboot app once to load the current release.")
+    st.stop()
+
 from epw_climate_analyzer import byte_cache as _runtime_cache
 from epw_climate_analyzer import memory_lifecycle as _runtime_memory
 from epw_climate_analyzer import startup_runtime as _runtime_startup
@@ -65,7 +89,6 @@ from epw_climate_analyzer.ui_contract import (
     queue_navigation_reset,
 )
 from epw_climate_analyzer.chart_theme import metric_color, semantic_color_from_text, PASSIVE_STRATEGY_COLORS, climate_color_map
-from epw_climate_analyzer.runtime_identity import RUNTIME_BUILD_ID
 
 
 _MAP_DEPENDENCIES_LOADED = False
