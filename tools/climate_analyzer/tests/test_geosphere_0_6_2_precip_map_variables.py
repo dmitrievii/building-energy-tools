@@ -92,7 +92,7 @@ class GeoSphere062UiContractTests(unittest.TestCase):
         self.assertIn('y="records"', self.source)
         self.assertIn('snow_hours_panel(source_df,render_plot)', self.source)
         from epw_climate_analyzer.residual_findings import snow_hours_figure
-        from epw_climate_analyzer.aggregations import occurrence_hours
+        from epw_climate_analyzer.precipitation import occurrence_hours
         import pandas as pd
         df=pd.DataFrame({"snow_depth_cm":[0.,2.,float("nan"),4.]},index=pd.date_range("2026-01-01",periods=4,freq="10min"))
         df.attrs["canonical_native_interval_minutes"]=10
