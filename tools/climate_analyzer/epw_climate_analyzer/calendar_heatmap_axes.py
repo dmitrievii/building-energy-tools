@@ -1,4 +1,4 @@
-"""Calendar heatmap axes: explicit month labels without changing trace values."""
+"""Shared calendar axes for climate time series and heat maps; presentation only."""
 from __future__ import annotations
 import re
 import calendar
@@ -55,7 +55,7 @@ def _numeric_ticks(values,semantic):
         return vals,labels,"linear"
     return None
 
-def _dual_calendar_ticks(axis,values,fig,semantic,*,width_px=None):
+def _dual_calendar_ticks(axis,values,fig,semantic,*,width_px=None,heatmap=True):
     """Two tick rows on one data axis; preserves trace coordinates and zoom.
 
     Daily chronological labels use the actual year's ordinal day. Numeric
@@ -86,8 +86,10 @@ def _dual_calendar_ticks(axis,values,fig,semantic,*,width_px=None):
     month_limit=max(3,min(12,int(available/(font*3.0))))
     if daily and numeric and 1<=min(nums)<=max(nums)<=366:
         lo,hi=min(nums),max(nums)
-        starts=[pd.Timestamp(2000,m,1).dayofyear for m in range(1,13)]
-        ends=starts[1:]+[367]
+        pooled=heatmap or meta.get("period_time_basis") in ("Calendar profile","Interannual overlay") or not single
+        year=2000 if pooled else int(years[0])
+        starts=[pd.Timestamp(year,m,1).dayofyear for m in range(1,13)]
+        ends=starts[1:]+[pd.Timestamp(year,12,31).dayofyear+1]
         positions=_day_positions(nums)
         for i in _bounded_positions(len(positions),primary_limit):
             n=positions[i];primary[float(n)]=str(n)
@@ -95,7 +97,7 @@ def _dual_calendar_ticks(axis,values,fig,semantic,*,width_px=None):
             left=max(lo-.5,a-.5);right=min(hi+.5,b-.5)
             if right>left:months[(left+right)/2]=calendar.month_abbr[m]
         settings=dict(type="linear")
-        label="Calendar day · leap-year reference"
+        label="Calendar day · leap-year reference" if pooled else "Day of year"
         convert=lambda p:p
     elif daily and not numeric:
         # Exclude YYYY-MM monthly coordinates from daily admission.
@@ -136,9 +138,15 @@ def _dual_calendar_ticks(axis,values,fig,semantic,*,width_px=None):
             settings=dict(type="linear")
         else:
             matches=[_ISO_WEEK.fullmatch(str(v)) for v in raw]
-            if not all(matches) or not all(m.group(1) for m in matches):return False
-            try:starts=[pd.Timestamp.fromisocalendar(int(m.group(1)),int(m.group(2)),1) for m in matches]
-            except ValueError:return False
+            if not all(matches):return False
+            if not all(m.group(1) for m in matches):
+                reference=int(years[0]) if single and meta.get("period_time_basis") not in ("Calendar profile","Interannual overlay") else 2020
+                try:starts=[pd.Timestamp.fromisocalendar(reference,int(m.group(2)),1) for m in matches]
+                except ValueError:
+                    reference=2020;starts=[pd.Timestamp.fromisocalendar(reference,int(m.group(2)),1) for m in matches]
+            else:
+                try:starts=[pd.Timestamp.fromisocalendar(int(m.group(1)),int(m.group(2)),1) for m in matches]
+                except ValueError:return False
             centers=list(map(float,range(len(raw))))
             labels=[f"W{int(m.group(2)):02d}" for m in matches]
             settings=dict(type="category",categoryorder="array",categoryarray=raw)
@@ -261,6 +269,8 @@ def set_period_axis_scope(fig,source=None,*,context=None,aggregation=None):
             meta["period_source_years"]=[int(first.year),int(last.year)]
             meta["period_source_first"]=first.isoformat()
             meta["period_source_last"]=last.isoformat()
+            if hasattr(source,"attrs"):
+                meta["period_time_basis"]=source.attrs.get("climate_time_basis","Chronological")
         elif context and "period_source_years" not in meta:
             first=pd.Timestamp(context["first timestamp"]);last=pd.Timestamp(context["last timestamp"])
             if pd.notna(first) and pd.notna(last):
@@ -375,7 +385,141 @@ def _period_ticks(axis,values,fig,*,heatmap=False):
 
 _MONTH_YEAR=re.compile(r"^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[ .-]+(\d{4})$",re.I)
 
-def apply_monthly_axes(fig):
+def _series_dual_ticks(axis,raw,fig,*,width_px=None):
+    """Admit only known temporal coordinates; title is a legacy fallback.
+
+    Categorical axes retain their existing data keys and use fractional serial
+    tick positions. Datetime axes retain the real timestamp spacing. Both
+    rows share one axis, so pan/zoom and static exports stay aligned.
+    """
+    meta=fig.layout.meta if isinstance(fig.layout.meta,dict) else {}
+    agg=str(meta.get("period_aggregation","")).lower()
+    title=str(axis.title.text or "").strip().lower()
+    raw=list(dict.fromkeys(v for v in raw if v is not None and not pd.isna(v)))
+    if not raw:return False
+    strings=[str(v) for v in raw]
+    years=meta.get("period_source_years")
+    single=bool(isinstance(years,(list,tuple)) and len(years)==2 and years[0]==years[1])
+    pooled=meta.get("period_time_basis") in ("Calendar profile","Interannual overlay")
+    width=float(width_px or fig.layout.width or 800)
+    font=float(axis.tickfont.size or fig.layout.font.size or 12)
+    available=max(140.,width-float(fig.layout.margin.l or 55)-float(fig.layout.margin.r or 45)-55)
+    limit=max(3,min(12,int(available/(font*3.8))))
+    guide_limit=max(3,min(12,int(available/(font*3.0))))
+    def choose(n,count):
+        if n<=count:return list(range(n))
+        return sorted(set(round(i*(n-1)/(count-1)) for i in range(count)))
+    def rows(primary,guides,settings,label,convert):
+        if not primary:return False
+        keys=sorted(set(primary)|set(guides))
+        axis.update(**settings,tickmode="array",tickvals=[convert(k) for k in keys],
+            ticktext=[primary.get(k,"&nbsp;")+"<br>"+guides.get(k,"&nbsp;") for k in keys],
+            title_text=label,tickangle=0,automargin=True,showticklabels=True,ticks="")
+        return True
+    # Explicit month buckets are never reinterpreted as daily classes.
+    if all(re.fullmatch(r"\\d{4}-(?:0[1-9]|1[0-2])",v) or _MONTH_YEAR.fullmatch(v) for v in strings):
+        dates=pd.DatetimeIndex([pd.Timestamp(v+"-01") if re.fullmatch(r"\\d{4}-\\d{2}",v) else pd.to_datetime(v,format="mixed") for v in strings])
+        if dates.year.nunique()<=1:return False
+        primary={float(i):dates[i].strftime("%b") for i in choose(len(raw),limit)}
+        guide={float(sum(p)/len(p)):str(y) for y in sorted(set(dates.year))
+               for p in [[i for i,t in enumerate(dates) if t.year==y]]}
+        k=sorted(guide);guide={k[i]:guide[k[i]] for i in choose(len(k),guide_limit)}
+        return rows(primary,guide,dict(type="category",categoryorder="array",categoryarray=raw),"Month",lambda x:x)
+    seasons=[re.fullmatch(r"(Winter|Spring|Summer|Autumn|Fall) (\\d{4})",v,re.I) for v in strings]
+    if all(seasons):
+        ys=[int(m.group(2)) for m in seasons]
+        if len(set(ys))<=1:return False
+        primary={float(i):seasons[i].group(1) for i in choose(len(raw),max(3,limit//2))}
+        guides={float(sum(p)/len(p)):str(y) for y in sorted(set(ys)) for p in [[i for i,v in enumerate(ys) if v==y]]}
+        k=sorted(guides);guides={k[i]:guides[k[i]] for i in choose(len(k),guide_limit)}
+        return rows(primary,guides,dict(type="category",categoryorder="array",categoryarray=raw),"Season",lambda x:x)
+    if all(_ISO_WEEK.fullmatch(v) for v in strings):
+        return _dual_calendar_ticks(axis,raw,fig,"week",width_px=width_px,heatmap=False)
+    # Numeric days only with explicit temporal metadata/axis title. Numeric
+    # physics axes are never admitted on the basis of their value range.
+    if agg=="daily" or title in ("day","day of year","day of the year","calendar day","daily period") or title.startswith("calendar day ·"):
+        if _dual_calendar_ticks(axis,raw,fig,"day",width_px=width_px,heatmap=False):return True
+    # Category daily/hourly labels generated by the existing calendar-profile
+    # and chronological aggregation contracts. Preserve category order.
+    categorical=False
+    dates=None
+    daylabels=[re.fullmatch(r"\\d{1,2} [A-Za-z]{3}(?: \\d{4})?(?: \\d{2}:\\d{2})?",v) for v in strings]
+    if all(daylabels) and agg in ("daily","hourly","native"):
+        try:dates=pd.DatetimeIndex(pd.to_datetime([v if re.search(r"\\b\\d{4}\\b",v) else v.split(" ")[0]+" "+v.split(" ")[1]+" 2000"+(" "+v.split(" ")[2] if len(v.split(" "))==3 else "") for v in strings],format="mixed"))
+        except (TypeError,ValueError,OverflowError):return False
+        categorical=True
+    elif all(_DATE.match(v) for v in strings) and not all(re.fullmatch(r"\\d{4}-\\d{2}",v) for v in strings):
+        try:dates=pd.DatetimeIndex(pd.to_datetime(raw,format="mixed"))
+        except (TypeError,ValueError,OverflowError):return False
+    if dates is None or dates.hasnans or not len(dates):return False
+    if dates.tz is not None:dates=dates.tz_localize(None)
+    if not categorical:
+        dates=dates.unique().sort_values()
+    # Infer cadence only from actual datetime coordinates, never from a
+    # chart title containing a daily observation statistic.
+    if agg not in ("daily","weekly","hourly","native","monthly","seasonal","annual"):
+        if len(dates)<2:return False
+        gaps=dates.to_series().diff().dropna()
+        if gaps.empty:return False
+        if dates.normalize().has_duplicates or gaps.min()<pd.Timedelta(days=1):agg="hourly"
+        elif gaps.median()==pd.Timedelta(days=7):agg="weekly"
+        elif gaps.min()<pd.Timedelta(days=28):agg="daily"
+        elif dates.to_period("M").is_unique and gaps.max()<=pd.Timedelta(days=32):agg="monthly"
+        else:return False
+    if agg in ("monthly","seasonal","annual"): # Annual and single-year monthly need only one row.
+        if agg!="monthly" or dates.year.nunique()<=1 or pooled:return False
+        p={float(i) if categorical else t.value:t.strftime("%b") for i in choose(len(dates),limit) for t in [dates[i]]}
+        guides={}
+        for y in sorted(set(dates.year)):
+            pos=[i for i,t in enumerate(dates) if t.year==y]
+            guides[(pos[0]+pos[-1])/2 if categorical else (dates[pos[0]].value+dates[pos[-1]].value)//2]=str(y)
+        keys=sorted(guides);guides={keys[i]:guides[keys[i]] for i in choose(len(keys),guide_limit)}
+        return rows(p,guides,dict(type="category",categoryorder="array",categoryarray=raw) if categorical else dict(type="date"),"Month",lambda x:x if categorical else pd.Timestamp(int(x)).isoformat())
+    lo,hi=dates.min(),dates.max()
+    short=agg in ("hourly","native") and hi-lo<=pd.Timedelta(days=4) and (dates.normalize().has_duplicates or (hi-lo)<pd.Timedelta(days=1))
+    multi=lo.year!=hi.year and not pooled
+    if multi:guide_limit=max(2,min(10,int(available/(font*6.5))))
+    label="Clock hour" if short else "Calendar week" if agg=="weekly" and pooled else "ISO week" if agg=="weekly" else "Day of year"
+    if categorical and dates.year.nunique()==1 and pooled and not short and agg!="weekly":label="Calendar day · leap-year reference"
+    if agg=="weekly" and pooled:label="Calendar week · 7-day reference bins"
+    def primary_label(t):
+        if short:return t.strftime("%H:%M")
+        if agg=="weekly":
+            return f"W{(t.dayofyear-1)//7+1:02d}" if pooled else f"W{t.isocalendar().week:02d}"
+        return str(t.dayofyear)
+    if categorical:
+        positions=list(range(len(dates)))
+        p={float(i):primary_label(dates[i]) for i in choose(len(dates),limit)}
+        group=dates.normalize() if short else dates.to_period("M")
+        g={}
+        for key in group.unique():
+            where=[i for i,v in enumerate(group) if v==key]
+            t=dates[where[0]]
+            g[(where[0]+where[-1])/2]=t.strftime("%d %b" if short else "%b %Y" if multi else "%b")
+        settings=dict(type="category",categoryorder="array",categoryarray=raw)
+        convert=lambda x:x
+    else:
+        # For long hourly traces sample days, not arbitrary hour coordinates.
+        if agg in ("hourly","native") and not short:
+            ticks=pd.date_range(lo.normalize(),hi.normalize(),freq="D")
+            ticks=ticks[(ticks>=lo)&(ticks<=hi)]
+            ticks=pd.DatetimeIndex([lo,*ticks[1:-1],hi]).unique().sort_values() if len(ticks)>1 else pd.DatetimeIndex([lo,hi]).unique()
+        else:ticks=dates
+        p={ticks[i].value:primary_label(ticks[i]) for i in choose(len(ticks),limit)}
+        g={}
+        groups=pd.period_range(lo,hi,freq="D" if short else "M")
+        for group in groups:
+            left=max(lo,group.start_time);right=min(hi,(group+1).start_time)
+            if right>=left:
+                mid=left+(right-left)/2
+                g[mid.value]=group.start_time.strftime("%d %b" if short else "%b %Y" if multi else "%b")
+        settings=dict(type="date")
+        convert=lambda x:pd.Timestamp(int(x)).isoformat()
+    keys=sorted(g);g={keys[i]:g[keys[i]] for i in choose(len(keys),guide_limit)}
+    return rows(p,g,settings,label,convert)
+
+
+def apply_monthly_axes(fig,*,width_px=None):
     """Canonical calendar axes for bars/lines/boxes (legacy public name).
     Preserve source data and multiyear chronology; leave physical axes alone.
     """
@@ -392,6 +536,7 @@ def apply_monthly_axes(fig):
         vals=list(dict.fromkeys(str(v) for v in values))
         meta=fig.layout.meta
         daylight=(isinstance(meta,dict) and meta.get("calendar_axis")=="daily_daylight_envelope" or str(fig.layout.title.text or "").lower().startswith("ideal sunrise–sunset envelope"))
+        if _series_dual_ticks(axis,values,fig,width_px=width_px):continue
         # YYYY-MM represents a monthly bucket even when the classified
         # observations are daily mean/minimum/maximum. Route this before
         # title-based daily inference, including legacy saved chart snapshots.
