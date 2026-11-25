@@ -14,6 +14,10 @@ from .daylight import daily_daylight_table
 
 MONTHS = ("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec")
 T = "dry_bulb_temperature_c"
+DEW_POINT_COLUMN = "dew_point_temperature_c"
+DEW_POINT_OCCURRENCE_EDGES = (0.,5.,10.,15.,20.,25.)
+DEW_POINT_OCCURRENCE_COLORS = ("#2454A4","#368CCB","#65B8D5","#41A88B","#E4B524","#E87525","#B92F39")
+DEW_POINT_OCCURRENCE_NOTE = ("Fixed outdoor moisture-reference boundaries at 0, 5, 10, 15, 20 and 25 °C support comparisons between climates. At 15 °C, outdoor air contains approximately 10.6 g water per kg dry air at standard atmospheric pressure; 15 °C is also an indoor moisture-control reference in ASHRAE 62.1-2022 for applicable cooled spaces. Increasing dew point identifies increasing water-vapour pressure and greater moisture-removal requirements for a fixed indoor target.")
 P = "liquid_precipitation_depth_mm"
 SNOW = "snow_depth_cm"
 DEPTH_OCCURRENCE_COLUMNS = (P,SNOW)
@@ -240,6 +244,7 @@ def occurrence_default_edges(values,column,*,basis="Hours",daily_stat="Mean",int
         scale=interval_hours if column.endswith("_wh_m2") else 1.
         return [float(f"{edge*scale:.10g}") for edge in (LONGWAVE_OCCURRENCE_EDGES if kind=="longwave" else SHORTWAVE_OCCURRENCE_EDGES)]
     if column==T:return [0.,15.,25.,30.]
+    if column==DEW_POINT_COLUMN:return list(DEW_POINT_OCCURRENCE_EDGES)
     raw=v.quantile([.25,.5,.75]).to_numpy(dtype=float)
     if "temperature" in column:
         return sorted(set(float(x) if x!=0 else 0. for x in np.round(raw,1)))
@@ -315,6 +320,8 @@ def occurrence_figure(table,unit,basis):
     column=table.attrs.get("occurrence_column")
     if column in WIND_SPEED_COLUMNS and tuple(table.attrs.get("occurrence_edges",()))==WIND_SPEED_OCCURRENCE_EDGES:
         palette=["#E5E7EB",*WIND_SPEED_COLORS]
+    elif column==DEW_POINT_COLUMN and tuple(table.attrs.get("occurrence_edges",()))==DEW_POINT_OCCURRENCE_EDGES:
+        palette=list(DEW_POINT_OCCURRENCE_COLORS)
     elif zero_occurrence_kind(column):
         from .chart_theme import metric_colorscale
         from plotly.colors import sample_colorscale
@@ -325,10 +332,12 @@ def occurrence_figure(table,unit,basis):
         color=palette[i] if zero_occurrence_kind(column) else palette[min(len(palette)-1,int(i*len(palette)/max(1,len(table.columns))))]
         fig.add_bar(x=table.index,y=table[c],name=(c+" "+unit).strip(),marker_color=color)
     fig.update_layout(template="plotly_white",title="Monthly occurrence classes",
-                      barmode="stack",xaxis_title="Period",yaxis_title="Observed "+basis.lower() if basis!="Percentage" else "Share of observed intervals [%]",legend=dict(orientation="h",y=-.2))
+                      meta={"period_aggregation":"monthly","occurrence_column":column,"occurrence_edges":list(table.attrs.get("occurrence_edges",()))},
+                      barmode="stack",xaxis_title="Month",yaxis_title="Observed "+basis.lower() if basis!="Percentage" else "Share of observed intervals [%]",legend=dict(orientation="h",y=-.2))
     if basis=="Percentage":
         fig.update_yaxes(range=[0,100])
-    return fig
+    from .calendar_heatmap_axes import apply_monthly_axes
+    return apply_monthly_axes(fig)
 
 
 def probability_figure(df,column,unit,ascending=False):
