@@ -199,7 +199,10 @@ def design_dashboard(df,render,*,reference_df=None):
         from .degree_metrics import degree_legend_below
         degree_legend_below(fig)
         render(fig,f"HGT {hi:g}/{hl:g}; KGT {ci:g}/{cl:g}. Complete days only. The indicators are climatic temperature differences, not building energy demand.")
-    for c,col in zip(ledger,["#21866B","#527FA3","#D69A24"]):
+    from .chart_theme import NV_COLOR, NIGHT_FLUSHING_COLOR
+    strategy_colours={"Natural ventilation":NV_COLOR,"Night flushing":NIGHT_FLUSHING_COLOR,"Solar protection screening":"#D69A24"}
+    for c in ledger:
+        col=strategy_colours[c]
         valid=ledger[c].notna().sum()*native_interval_hours(df);total=ledger[c].sum(min_count=1)
         note=f"{total:.0f} of {valid:.0f} valid candidate hours satisfy the configured criterion." if valid else "No valid candidate hours."
         if c=="Natural ventilation":note+=f" Temperature {t_min:g}–{t_max:g} °C, humidity ratio ≤{w_max:g} g/kg. The result shows periods matching the configured outdoor-air criteria."

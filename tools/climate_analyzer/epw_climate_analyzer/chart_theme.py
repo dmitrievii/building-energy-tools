@@ -185,6 +185,18 @@ SNOW_DEPTH_COLORSCALE = [
     [0.75, "#0284C7"],
     [1.00, "#0C4A6E"],
 ]
+NV_COLOR = "#059669"
+NIGHT_FLUSHING_COLOR = "#0D9488"
+NV_REJECTED_COLOR = "#B8C0C6"
+NV_MISSING_COLOR = "#D1D5DB"
+NV_SUITABILITY_COLORSCALE = [
+    [0., "#FFFFFF"], [.25, "#D9EEE6"], [.5, "#96D1BC"],
+    [.75, "#47B394"], [1., NV_COLOR],
+]
+NIGHT_FLUSHING_COLORSCALE = [
+    [0., "#FFFFFF"], [.25, "#D6F2EF"], [.5, "#91D7D0"],
+    [.75, "#47B6AC"], [1., NIGHT_FLUSHING_COLOR],
+]
 BINARY_SUITABILITY_COLORSCALE = [
     [0.00, "rgba(255,255,255,0.0)"],
     [0.01, "#ecfdf5"],
@@ -283,8 +295,8 @@ METRIC_COLORS = {
     "opaque_sky_cover_tenths": "#334155",
     "liquid_precipitation_depth_mm": "#2563EB",
     "snow_depth_cm": "#0284C7",
-    "natural_ventilation_suitable": "#059669",
-    "night_flushing_suitable": "#0D9488",
+    "natural_ventilation_suitable": NV_COLOR,
+    "night_flushing_suitable": NIGHT_FLUSHING_COLOR,
     "heating_degree_hours_kh": HEATING_COLOR,
     "cooling_degree_hours_kh": COOLING_COLOR,
     "ventilation_heating_kw": HEATING_COLOR,
@@ -396,10 +408,10 @@ def semantic_color_from_text(text: str | None) -> str:
         return HEATING_COLOR
     if "cooling" in value or "cdd" in value:
         return COOLING_COLOR
-    if "natural ventilation" in value or "economizer" in value or "suitable" in value:
-        return "#059669"
-    if "night flushing" in value:
-        return "#0D9488"
+    if "night flushing" in quantity_text or "night flushing" in value:
+        return NIGHT_FLUSHING_COLOR
+    if "natural ventilation" in quantity_text or "economizer" in value or "suitable" in value:
+        return NV_COLOR
     if "dehumid" in value:
         return "#7C3AED"
     if "humidification" in value:
@@ -463,6 +475,8 @@ def metric_colorscale(column: str | None):
         return WIND_DIRECTION_COLORSCALE
     if "wind" in text:
         return "Turbo"
+    if "night_flushing" in text or "night flushing" in text:return NIGHT_FLUSHING_COLORSCALE
+    if "natural_ventilation" in text or "natural ventilation" in text:return NV_SUITABILITY_COLORSCALE
     if "suitable" in text or "ventilation" in text:
         return BINARY_SUITABILITY_COLORSCALE
     return "Viridis"

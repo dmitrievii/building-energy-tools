@@ -5,7 +5,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from .aggregations import native_interval_hours,period_total_series
 from .temporal_filtering import display_period_labels,time_basis,CALENDAR_PROFILE
-from .chart_theme import metric_color
+from .chart_theme import metric_color, NV_COLOR, NIGHT_FLUSHING_COLOR, NV_REJECTED_COLOR
 
 T="dry_bulb_temperature_c"
 G="global_horizontal_radiation_wh_m2"
@@ -107,10 +107,11 @@ def eligibility_figure(df,name,period,*,view="total",reference_df=None,ledger=No
     v=ledger[col];dt=native_interval_hours(df);valid=float(v.notna().sum()*dt);eligible=float(v.sum())
     if view=="total":
         x=_period(df,v,period)
-        f=_bar(x,col+" · "+period.lower(),"Hours",col,{"nv":"#21866B","night":"#527FA3","shade":"#D69A24"}[name])
+        f=_bar(x,col+" · "+period.lower(),"Hours",col,{"nv":NV_COLOR,"night":NIGHT_FLUSHING_COLOR,"shade":"#D69A24"}[name])
     elif view=="map":
-        data=pd.DataFrame({"screen":v/dt},index=df.index);data.attrs.update(df.attrs)
-        f=temporal_heatmap_chart(data,"screen",period.lower(),"Hour of day","Mean",col+" · eligibility","0/1")
+        column={"nv":"natural_ventilation_suitable","night":"night_flushing_suitable","shade":"screen"}[name]
+        data=pd.DataFrame({column:v/dt},index=df.index);data.attrs.update(df.attrs)
+        f=temporal_heatmap_chart(data,column,period.lower(),"Hour of day","Mean",col+" · eligibility","0/1")
     else:raise ValueError("Unknown screening view.")
     note=f"{col}: {eligible:,.1f} of {valid:,.1f} valid candidate hours ({eligible/valid*100:.1f}%) satisfy the configured criterion. "
     if name=="nv":note+=f"Outdoor air is within {t_min:g}–{t_max:g} °C and humidity ratio is 0–{w_max:g} g/kg. The distribution identifies opportunities for outdoor-air ventilation."
@@ -166,7 +167,7 @@ def nv_special_figure(df,style,*,mask=None,t_min=16.,t_max=26.,w_max=9.,wind_min
     if style=="Daily duration":
         table=persistence(df,mask);v=table["Suitable hours [h]"].dropna().sort_values(ascending=False)
         if v.empty:raise ValueError("No observed days with known suitability.")
-        f=go.Figure(go.Scatter(x=np.arange(1,len(v)+1),y=v,mode="lines",name="Suitable hours"))
+        f=go.Figure(go.Scatter(x=np.arange(1,len(v)+1),y=v,mode="lines",name="Suitable hours",line=dict(color=NV_COLOR)))
         f.update_layout(template="plotly_white",title="Daily natural-ventilation suitable-hours duration curve",
                         xaxis_title="Ranked observed days",yaxis_title="Suitable hours/day")
         return f,(f"Across {len(v):,} days with known screening observations, daily suitable duration ranges from "
@@ -176,7 +177,7 @@ def nv_special_figure(df,style,*,mask=None,t_min=16.,t_max=26.,w_max=9.,wind_min
             wind_limits=(wind_min,wind_max) if wind_min is not None and wind_max is not None else None)
     if style=="Rejected reasons":
         reasons=rejection_reasons_for_nv(df,t_min,t_max,w_max,wind_min_m_s=wind_min,wind_max_m_s=wind_max)
-        f=go.Figure(go.Bar(x=reasons["reason"],y=reasons["hours"],marker_color="#798D9D"))
+        f=go.Figure(go.Bar(x=reasons["reason"],y=reasons["hours"],marker_color=NV_REJECTED_COLOR))
         f.update_layout(template="plotly_white",title="Natural-ventilation rejected reasons",xaxis_title="Reason",yaxis_title="Hours")
         peak=reasons.iloc[0]
         return f,(f"The largest rejection duration is {peak['reason'].lower()} ({peak['hours']:,.1f} h). "

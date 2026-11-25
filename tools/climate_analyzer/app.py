@@ -5158,7 +5158,7 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float, *, referenc
             title="Outdoor-air screening stages",
             labels={"screen": "Active screening criterion", "hours": "Observed hours"},
         )
-        fig.update_traces(texttemplate="%{text:,.1f}", textposition="outside")
+        fig.update_traces(texttemplate="%{text:,.1f}", textposition="outside", marker_color=metric_color("natural_ventilation_suitable"))
         fig.update_layout(template="plotly_white", yaxis_rangemode="tozero")
         render_plot(fig, ventilation_screen_interpretation(
             df, stages, t_min_c=t_min, t_max_c=t_max, d_max_g_kg=d_max,
@@ -5270,7 +5270,7 @@ def render_natural_ventilation(df: pd.DataFrame, pressure_pa: float, *, referenc
         except ValueError as exc:st.info(str(exc))
     elif chart_group == "Psychrometric NV overlay":
         fig = psychrometric_chart(df, chart_type="T-d", pressure_pa=pressure_pa, show_rh_curves=True, show_comfort_zone=False)
-        fig.add_shape(type="rect", x0=t_min, x1=t_max, y0=0, y1=d_max, line=dict(dash="dash"), fillcolor="rgba(0,150,0,0.08)")
+        fig.add_shape(type="rect", x0=t_min, x1=t_max, y0=0, y1=d_max, line=dict(dash="dash",color=metric_color("natural_ventilation_suitable")), fillcolor="rgba(5,150,105,0.08)")
         render_plot(fig, natural_ventilation_interpretation(
             df, mask, t_min_c=t_min, t_max_c=t_max, d_max_g_kg=d_max,
         ))

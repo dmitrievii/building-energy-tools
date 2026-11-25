@@ -164,7 +164,9 @@ def _heatmap_colorscale(column: str, values=None, temperature_thresholds: tuple[
     if column in TEMPERATURE_HEATMAP_COLUMNS:
         vmin,vmax=_finite_min_max(values)
         return temperature_gradient_domain(vmin,vmax,temperature_thresholds or (18.,26.))[2]
-    if column in {"natural_ventilation_suitable", "night_flushing_suitable"} or "suitable" in column:
+    if column in {"natural_ventilation_suitable", "night_flushing_suitable"}:
+        return metric_colorscale(column)
+    if "suitable" in column:
         return BINARY_SUITABILITY_COLORSCALE
     if column in ("liquid_precipitation_depth_mm","snow_depth_cm",*WIND_SPEED_COLUMNS,*WIND_DIRECTION_COLUMNS):
         return metric_colorscale(column)

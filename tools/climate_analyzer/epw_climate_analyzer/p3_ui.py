@@ -184,7 +184,7 @@ def outdoor_comfort(df,render):
             st.button("Release CSV",key="p3_otc_release_csv",on_click=release_csv)
     _utci_performance_diagnostics(timing,visualization_s,csv_s,setup_s)
 
-NV_SUITABILITY_SCALE=[[0,"#FFFFFF"],[.25,"#D9EEE6"],[.5,"#96D1BC"],[.75,"#47A88D"],[1,"#09634F"]]
+from .chart_theme import NV_SUITABILITY_COLORSCALE as NV_SUITABILITY_SCALE, NV_MISSING_COLOR
 
 def nv_sensitivity_figure(df,mask,*,temperature_limits=None,wind_limits=None):
     z,h=p.suitability_grid(df,mask,axis=p.V)
@@ -195,7 +195,7 @@ def nv_sensitivity_figure(df,mask,*,temperature_limits=None,wind_limits=None):
         hovertemplate="Temperature bin center: %{x:.1f} °C<br>Wind-speed bin center: %{y:.2f} m/s<br>Suitable: %{z:.1f}%<br>Observed: %{customdata:.1f} h<extra></extra>"))
     # Missing cells are visibly different from measured 0% suitability.
     fig.add_heatmap(x=z.columns,y=z.index,z=np.where(np.isfinite(z),np.nan,1.),
-        colorscale=[[0,"#D1D5DB"],[1,"#D1D5DB"]],zmin=0,zmax=1,showscale=False,
+        colorscale=[[0,NV_MISSING_COLOR],[1,NV_MISSING_COLOR]],zmin=0,zmax=1,showscale=False,
         xgap=1,ygap=1,hoverongaps=False,hovertemplate="No coincident observations<extra></extra>")
     if temperature_limits is not None:
         for value in temperature_limits:

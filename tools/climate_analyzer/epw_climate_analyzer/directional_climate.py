@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from .aggregations import native_interval_hours
-from .chart_theme import WIND_SPEED_LABELS, WIND_SPEED_COLOR_MAP
+from .chart_theme import WIND_SPEED_LABELS, WIND_SPEED_COLOR_MAP, NV_COLOR, NV_REJECTED_COLOR, NV_SUITABILITY_COLORSCALE
 
 METRICS={
     "Temperature":("dry_bulb_temperature_c","°C","RdBu_r"),
@@ -12,7 +12,7 @@ METRICS={
     "Humidity ratio":("humidity_ratio_g_kg","g/kg dry air","Blues"),
     "Absolute humidity":("_absolute_humidity","g/m³","Blues"),
     "Enthalpy":("moist_air_enthalpy_kj_kg","kJ/kg dry air","Viridis"),
-    "Natural ventilation suitability":("_nv_suitable","%","Greens"),
+    "Natural ventilation suitability":("_nv_suitable","%",NV_SUITABILITY_COLORSCALE),
     "Dynamic pressure potential":("_dynamic_pressure","Pa","Viridis"),
 }
 ANGLES=np.arange(16)*22.5
@@ -210,7 +210,7 @@ def directional_class_table(df,*,speed="wind_speed_m_s",direction="wind_directio
     if quantity=="Natural ventilation suitability":
         labels=["Not suitable","Suitable"]
         rows["class"]=pd.Categorical(rows.value.map({0.:"Not suitable",1.:"Suitable"}),categories=labels,ordered=True)
-        colours=["#9CA3AF","#16834A"]
+        colours=[NV_REJECTED_COLOR,NV_COLOR]
     else:
         edges=CLASS_EDGES[quantity] if edges is None else tuple(edges)
         if not 1<=len(edges)<=9 or not np.isfinite(edges).all() or np.any(np.diff(edges)<=0):
