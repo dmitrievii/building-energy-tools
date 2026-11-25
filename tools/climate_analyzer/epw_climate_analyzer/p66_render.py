@@ -341,8 +341,9 @@ def make_figure(d,df,context,reference_df=None,cache=None):
         table=memo("adaptive",lambda:p3.adaptive_bands(history))
         table=selected_daily_bands(table,df)
         if not table["Running mean"].notna().any():raise NotApplicable(adaptive_interpretation(table))
-        f=adaptive_figure(table);note=adaptive_interpretation(table)
-        title="Adaptive comfort · Categories I–III"
+        extrapolate=bool(a and a[0]=="research_extrapolation")
+        f=adaptive_figure(table,extrapolate=extrapolate);note=adaptive_interpretation(table,extrapolate=extrapolate)
+        title="Adaptive comfort · Categories I–III"+(" · Research extrapolation" if extrapolate else "")
     elif k=="utci":
         model,style=a
         mode="Uniform radiant offset" if model=="Uniform radiant offset" else "Open-sky screening"

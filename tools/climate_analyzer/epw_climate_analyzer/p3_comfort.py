@@ -145,7 +145,17 @@ def adaptive_bands(df):
     weights=.8**np.arange(7);weights/=weights.sum()
     previous=pd.concat([daily.shift(i+1) for i in range(7)],axis=1)
     rm=previous.mul(weights,axis=1).sum(axis=1,min_count=7)
-    neutral=(.33*rm+18.8).where(rm.between(10,30))
+    return adaptive_bands_from_running_mean(rm)
+
+def adaptive_bands_from_running_mean(rm, *, extrapolate=False):
+    """Shared EN adaptive equation; optional research extension of finite means.
+
+    The default retains the existing applicability mask. Extrapolation does
+    not modify the running mean, fill gaps, or change standard qualification.
+    """
+    rm=pd.to_numeric(rm,errors="coerce").replace([np.inf,-np.inf],np.nan)
+    neutral=.33*rm+18.8
+    if not extrapolate:neutral=neutral.where(rm.between(10,30))
     out=pd.DataFrame({"Running mean":rm,"Neutral":neutral})
     for cat,up,lo in (("I",2,3),("II",3,4),("III",4,5)):
         out[cat+" lower"]=neutral-lo

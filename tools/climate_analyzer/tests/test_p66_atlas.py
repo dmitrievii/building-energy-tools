@@ -44,7 +44,7 @@ class AtlasTests(unittest.TestCase):
             df=pd.DataFrame({c.T:18.},index=idx)
             df.attrs["canonical_native_interval_minutes"]=60.
             for coverage in c.LEVELS:
-                self.assertEqual(len([d for d in c.catalogue(df,{},coverage) if d.kind=="adaptive"]),1)
+                self.assertEqual(len([d for d in c.catalogue(df,{},coverage) if d.kind=="adaptive"]),2 if coverage==c.FULL else 1)
             d=next(d for d in c.catalogue(df,{},c.FULL) if d.kind=="adaptive")
             fig,note=make_figure(d,df,{})
             self.assertEqual(set(tr.name for tr in fig.data),{"Category I","Category II","Category III","Neutral operative temperature","Outdoor running mean"})

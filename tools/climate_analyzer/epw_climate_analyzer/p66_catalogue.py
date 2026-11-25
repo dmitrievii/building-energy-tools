@@ -235,6 +235,8 @@ def catalogue(df,context,coverage=FULL):
     add(HVAC,"Air-side economizer · temperature and enthalpy screening",
         "economizer_stages",ok=hourly and has(T,H))
     add(HVAC,"Adaptive comfort · Categories I–III","adaptive",ok=hourly and has(T))
+    if coverage==FULL:
+        add(HVAC,"Adaptive comfort · Categories I–III · Research extrapolation","adaptive",args=("research_extrapolation",),ok=hourly and has(T))
     for c in (T,W,H):
         for upper in (True,False):
             add(HVAC,f"{LABELS[c]} · {'upper' if upper else 'lower'} critical 3-day windows","critical_windows",c,UNITS[c],(upper,),ok=hourly and has(c))

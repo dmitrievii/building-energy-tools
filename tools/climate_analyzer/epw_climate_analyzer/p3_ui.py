@@ -285,14 +285,17 @@ def ventilation_load_panel(df,render):
 
 
 def adaptive_panel(df,render):
-    from .p3_adaptive_chart import COLUMNS,selected_daily_bands,adaptive_figure,adaptive_interpretation
+    from .p3_adaptive_chart import COLUMNS,selected_daily_bands,adaptive_figure,adaptive_interpretation,ADAPTIVE_MODES,RESEARCH_MODE
+    model=st.selectbox("Adaptive comfort model",ADAPTIVE_MODES,key="p3_adaptive_model")
+    extrapolate=model==RESEARCH_MODE
     keys=["p3_adaptive_"+c for c in COLUMNS]
     if not all(k in df for k in keys):df=p.attach_adaptive(df)
     a=df[keys].copy();a.columns=list(COLUMNS)
     a=a.groupby(a.index.normalize()).first()
     a=selected_daily_bands(a,df)
-    if not a["Running mean"].notna().any():st.info(adaptive_interpretation(a));return
-    render(adaptive_figure(a),adaptive_interpretation(a))
+    note=adaptive_interpretation(a,extrapolate=extrapolate)
+    if not a["Running mean"].notna().any():st.info(note);return
+    render(adaptive_figure(a,extrapolate=extrapolate),note)
 
 
 def condensation_panel(df,render):
