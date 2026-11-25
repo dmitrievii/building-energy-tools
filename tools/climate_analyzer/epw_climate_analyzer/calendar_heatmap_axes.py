@@ -83,7 +83,7 @@ def _dual_calendar_ticks(axis,values,fig,semantic,*,width_px=None):
     font=float(axis.tickfont.size or fig.layout.font.size or 12)
     available=max(140.,width-float(fig.layout.margin.l or 55)-float(fig.layout.margin.r or 45)-55)
     primary_limit=max(3,min(12,int(available/(font*3.8))))
-    month_limit=max(3,min(12,int(available/(font*3.4))))
+    month_limit=max(3,min(12,int(available/(font*3.0))))
     if daily and numeric and 1<=min(nums)<=max(nums)<=366:
         lo,hi=min(nums),max(nums)
         starts=[pd.Timestamp(2000,m,1).dayofyear for m in range(1,13)]
@@ -146,11 +146,24 @@ def _dual_calendar_ticks(axis,values,fig,semantic,*,width_px=None):
         # A week straddling a month contributes its true fractional interval
         # to each month guide, while the week cell remains unsplit.
         segments={}
+        scope_start=scope_end=None
+        if reference is None:
+            try:
+                scope_start=pd.Timestamp(meta["period_source_first"]).normalize()
+                scope_end=pd.Timestamp(meta["period_source_last"]).normalize()+pd.Timedelta(days=1)
+            except (KeyError,TypeError,ValueError,OverflowError):
+                if single:
+                    scope_start=pd.Timestamp(int(years[0]),1,1)
+                    scope_end=pd.Timestamp(int(years[0])+1,1,1)
+            if scope_start is not None and scope_start.tz is not None:scope_start=scope_start.tz_localize(None)
+            if scope_end is not None and scope_end.tz is not None:scope_end=scope_end.tz_localize(None)
         for start,center in zip(starts,centers):
             end=start+pd.Timedelta(days=7)
             for m in pd.period_range(start.to_period("M"),(end-pd.Timedelta(nanoseconds=1)).to_period("M"),freq="M"):
                 if reference is not None and m.year!=reference:continue
                 a=max(start,m.start_time);b=min(end,(m+1).start_time)
+                if scope_start is not None:a=max(a,scope_start)
+                if scope_end is not None:b=min(b,scope_end)
                 if b>a:
                     l=center-.5+(a-start)/pd.Timedelta(days=7)
                     h=center-.5+(b-start)/pd.Timedelta(days=7)
@@ -172,7 +185,8 @@ def _dual_calendar_ticks(axis,values,fig,semantic,*,width_px=None):
     # Retain the final represented month and ordinal endpoint.
     mkeys=sorted(months)
     if len(mkeys)>month_limit:
-        months={mkeys[i]:months[mkeys[i]] for i in _bounded_positions(len(mkeys),month_limit)}
+        take=[round(i*(len(mkeys)-1)/(month_limit-1)) for i in range(month_limit)]
+        months={mkeys[i]:months[mkeys[i]] for i in take}
     keys=sorted(set(primary)|set(months))
     axis.update(**settings,tickmode="array",tickvals=[convert(p) for p in keys],
         ticktext=[primary.get(p,"&nbsp;")+"<br>"+months.get(p,"&nbsp;") for p in keys],
@@ -245,9 +259,14 @@ def set_period_axis_scope(fig,source=None,*,context=None,aggregation=None):
             idx=pd.DatetimeIndex(source.index if hasattr(source,"index") else source)
             first,last=idx.min(),idx.max()
             meta["period_source_years"]=[int(first.year),int(last.year)]
+            meta["period_source_first"]=first.isoformat()
+            meta["period_source_last"]=last.isoformat()
         elif context and "period_source_years" not in meta:
             first=pd.Timestamp(context["first timestamp"]);last=pd.Timestamp(context["last timestamp"])
-            if pd.notna(first) and pd.notna(last):meta["period_source_years"]=[int(first.year),int(last.year)]
+            if pd.notna(first) and pd.notna(last):
+                meta["period_source_years"]=[int(first.year),int(last.year)]
+                meta["period_source_first"]=first.isoformat()
+                meta["period_source_last"]=last.isoformat()
     except (KeyError,ValueError,TypeError,OverflowError):pass
     if aggregation:meta["period_aggregation"]=str(aggregation).lower()
     if meta:fig.update_layout(meta=meta)
