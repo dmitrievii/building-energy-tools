@@ -64,7 +64,9 @@ KEY_CUSTOM_WIDTH = "chart_presentation_custom_width"
 KEY_CUSTOM_HEIGHT = "chart_presentation_custom_height"
 EXTRA_DEFAULTS = {"show_title": True, "show_legend": True, "show_grid": True,
                   "line_scale": 1.0, "export_format": "PNG", "north_rotation": 0,
-                  "axis_title": "", "axis_min": 0.0, "axis_max": 100.0}
+                  "axis_title": "", "axis_min": 0.0, "axis_max": 100.0,
+                  "heatmap_mode":"Tiles","contour_interval":0.0,"contour_labels":True,
+                  "contour_width":1.0,"contour_contrast":"Auto"}
 
 def _key(name):
     return "chart_presentation_" + name
@@ -88,6 +90,11 @@ class ChartPresentationSettings:
     axis_title: str = ""
     axis_min: float = 0.0
     axis_max: float = 100.0
+    heatmap_mode: str = "Tiles"
+    contour_interval: float = 0.0
+    contour_labels: bool = True
+    contour_width: float = 1.0
+    contour_contrast: str = "Auto"
 
     @property
     def transparent(self) -> bool:
@@ -482,6 +489,9 @@ def apply_chart_presentation(fig: Any, settings: ChartPresentationSettings) -> A
     from .calendar_heatmap_axes import apply_calendar_heatmap_axes,apply_monthly_axes
     apply_calendar_heatmap_axes(fig)
     apply_monthly_axes(fig)
+    from .heatmap_presentation import apply_heatmap_presentation
+    apply_heatmap_presentation(fig,settings.heatmap_mode,interval=settings.contour_interval,
+        labels=settings.contour_labels,width=settings.contour_width,contrast=settings.contour_contrast)
     _space_bottom_legends(fig, settings, size)
 
     def reflow_if_diurnal():
@@ -561,6 +571,15 @@ def render_presentation_sidebar(st: Any) -> None:
             "Chart background", BACKGROUND_OPTIONS, key=KEY_BACKGROUND,
             help="Applies globally to all charts and image exports. Transparent PNG preserves the alpha channel for architectural overlays.",
         )
+        from .heatmap_presentation import MODES,TILES
+        st.selectbox("Heat-map visualization",MODES,key=_key("heatmap_mode"),
+                     help="Continuous ordered grids support contours; discrete classes, circular quantities and incomplete grids retain tiles.")
+        if st.session_state.get(_key("heatmap_mode"))!=TILES:
+            st.number_input("Contour interval (0 = automatic)",min_value=0.0,step=0.5,key=_key("contour_interval"),
+                            help="In the chart quantity’s units. Excessively dense or empty contour levels retain tiles.")
+            st.checkbox("Contour labels",key=_key("contour_labels"))
+            st.slider("Contour line thickness [px]",0.5,3.0,step=0.25,key=_key("contour_width"))
+            st.selectbox("Contour line contrast",["Auto","Dark","Light"],key=_key("contour_contrast"))
         st.checkbox("Show chart title", key=_key("show_title"))
         st.checkbox("Show legend", key=_key("show_legend"))
         st.checkbox("Show grid", key=_key("show_grid"))
