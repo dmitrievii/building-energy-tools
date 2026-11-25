@@ -386,7 +386,8 @@ def render_engine_analysis(dataset, render_source) -> None:
     if column not in data:
         st.info("This variable is not part of the generated source contract.")
         return
-    fig = go.Figure(go.Scattergl(x=data.index, y=data[column], mode="lines", name=variable))
+    from .chart_theme import metric_color
+    fig = go.Figure(go.Scattergl(x=data.index, y=data[column], mode="lines", name=variable,line_color=metric_color(column)))
     fig.update_layout(title=variable, xaxis_title="Interval start — fixed local standard time", yaxis_title=variable, height=400)
     st.plotly_chart(fig, width="stretch", key="ige_hourly_plot")
     st.caption(f"{len(data):,} hourly rows in this view. The temperature sample mean is distinct from NASA daily tas midrange.")

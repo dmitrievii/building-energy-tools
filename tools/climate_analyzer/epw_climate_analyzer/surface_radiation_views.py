@@ -5,6 +5,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from .monthly_radiation import SOURCE_FIELDS,SURFACE_FIELDS,surface_available
 from .runtime_module_guard import ensure_current_solar_runtime
+from .chart_theme import SOLAR_COLORSCALE
 
 FRACTION="diffuse_radiation_fraction_pct"
 
@@ -27,12 +28,14 @@ def poa_frame(df,tilt,azimuth,albedo=None,*,copy=True):
 
 def orientation_curves(matrix):
     fig=go.Figure()
+    from plotly.colors import sample_colorscale
     for tilt in matrix.index:
+        colour=sample_colorscale(SOLAR_COLORSCALE,[.35+.65*min(90.,max(0.,float(tilt)))/90.])[0]
         vals=matrix.loc[tilt].sort_index()
         x=list(vals.index); y=list(vals)
         if x and float(x[0])==0:
             x.append(360.);y.append(y[0])
-        fig.add_scatter(x=x,y=y,mode="lines+markers",name=f"{tilt:g}° tilt",connectgaps=False)
+        fig.add_scatter(x=x,y=y,mode="lines+markers",name=f"{tilt:g}° tilt",connectgaps=False,line_color=colour)
     fig.update_layout(template="plotly_white",title="Selected-period irradiation by orientation and tilt",
         xaxis=dict(title="Surface azimuth [°]",range=[0,360],tickvals=[0,90,180,270,360],ticktext=["0° N","90° E","180° S","270° W","360° N"]),
         yaxis_title="Irradiation [kWh/m²]",legend=dict(orientation="h",y=-.2))

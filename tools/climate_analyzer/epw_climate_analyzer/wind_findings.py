@@ -12,6 +12,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from .aggregations import native_interval_hours
+from .chart_theme import NV_SUITABILITY_COLORSCALE
 from .interpretations import _fmt, _fmt_hours
 from .period_display import format_plotted_time
 from .profile_interpretation import canonical_profile_kind, profile_centre
@@ -218,8 +219,8 @@ def wind_opportunity_figure(summary, sectors):
         mat.append(vals)
     f=go.Figure(go.Heatmap(
         z=mat,x=columns,y=months,
-        zmin=0,zmax=max(10,float(np.nanmax(mat)) if mat else 10),
-        colorscale="Blues",colorbar=dict(title="% of valid wind hours"),
+        zmin=0,zmax=100,
+        colorscale=NV_SUITABILITY_COLORSCALE,colorbar=dict(title="% of valid wind hours"),
         hovertemplate="Month %{y}<br>FROM sector %{x}<br>%{z:.1f}%<extra></extra>",
         xgap=1,ygap=1))
     f.update_layout(

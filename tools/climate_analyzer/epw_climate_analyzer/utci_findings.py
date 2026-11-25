@@ -10,6 +10,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from .aggregations import native_interval_hours
+from .chart_theme import EXPOSURE_COLORS
 
 THRESHOLDS = (26.0, 32.0, 38.0)
 THRESHOLD_NAMES = ("Above 26 °C · heat stress", "Above 32 °C · strong or greater",
@@ -122,7 +123,7 @@ def paired_monthly_figure(df: pd.DataFrame, values: pd.DataFrame, *, title: str 
     monthly = paired.resample("MS").mean()
     fig = go.Figure()
     for name in ["Direct-beam shade", "Open sun"]:
-        fig.add_scatter(x=monthly.index, y=monthly[name], mode="lines+markers", name=name)
+        fig.add_scatter(x=monthly.index, y=monthly[name], mode="lines+markers", name=name,line_color=EXPOSURE_COLORS[name])
     fig.update_layout(template="plotly_white", title=title, yaxis_title="UTCI [°C]",
                       legend=dict(orientation="h", x=0., y=-.22))
     return fig
@@ -150,8 +151,8 @@ def paired_threshold_figure(df: pd.DataFrame, values: pd.DataFrame):
     labels=list(THRESHOLD_NAMES)
     sun=[stats[f"sun_above_{int(t)}_h"] for t in THRESHOLDS]
     shade=[stats[f"shade_above_{int(t)}_h"] for t in THRESHOLDS]
-    fig.add_bar(x=labels,y=sun,name="Open sun",marker_color="#D97706")
-    fig.add_bar(x=labels,y=shade,name="Direct-beam shade",marker_color="#2563EB")
+    fig.add_bar(x=labels,y=sun,name="Open sun",marker_color=EXPOSURE_COLORS["Open sun"])
+    fig.add_bar(x=labels,y=shade,name="Direct-beam shade",marker_color=EXPOSURE_COLORS["Direct-beam shade"])
     fig.update_layout(template="plotly_white",barmode="group",
                       title="Paired heat-stress exposure by threshold",
                       xaxis_title="UTCI threshold",yaxis_title="Observed hours",
@@ -163,7 +164,7 @@ def mrt_monthly_figure(tr: pd.DataFrame):
     paired=tr[["Open sun","Direct-beam shade"]].dropna().resample("MS").mean()
     fig=go.Figure()
     for name in ["Direct-beam shade","Open sun"]:
-        fig.add_scatter(x=paired.index,y=paired[name],mode="lines+markers",name=name)
+        fig.add_scatter(x=paired.index,y=paired[name],mode="lines+markers",name=name,line_color=EXPOSURE_COLORS[name])
     fig.update_layout(template="plotly_white",title="Mean radiant temperature · sun and beam shade",
                       xaxis_title="Month",yaxis_title="Equivalent MRT [°C]",
                       legend=dict(orientation="h",x=0.,y=-.22))
