@@ -15,6 +15,12 @@ T = "dry_bulb_temperature_c"
 W = "humidity_ratio_g_kg"
 V = "wind_speed_m_s"
 
+# Sequential green-teal availability scale, shared by website and Atlas.
+PASSIVE_STRATEGY_HOURS_COLORSCALE = (
+    (0., "#FFFFFF"), (.25, "#D6EEE4"), (.50, "#8AC9AD"),
+    (.75, "#378E76"), (1., "#07584E"),
+)
+
 
 def _numeric(df: pd.DataFrame, name: str) -> pd.Series:
     if name not in df:
@@ -160,12 +166,19 @@ def monthly_strategy_matrix(table: pd.DataFrame, title: str):
 
     if table.empty:
         raise ValueError("The selected period contains no strategy observations.")
+    import numpy as np
+
     labels = [str(period) for period in table.index]
+    values = table.to_numpy(dtype=float).T
+    finite = values[np.isfinite(values)]
+    # One shared duration scale for every strategy; zero is always white.
+    upper = max(1., float(finite.max())) if finite.size else 1.
     fig = go.Figure(go.Heatmap(
         x=labels,
         y=[str(name) for name in table.columns],
-        z=table.to_numpy(dtype=float).T,
-        colorscale="YlGnBu",
+        z=values,
+        zmin=0., zmax=upper,
+        colorscale=PASSIVE_STRATEGY_HOURS_COLORSCALE,
         colorbar={"title": "Hours"},
         hovertemplate="%{y}<br>Period: %{x}<br>Screen hours: %{z:,.1f} h<extra></extra>",
     ))
