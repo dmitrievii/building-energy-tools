@@ -47,6 +47,10 @@ def page_button_key(page):
     return "_r220_page_"+page.replace(" ","_")
 
 NAV_CSS="""<style>
+section[data-testid="stSidebar"] .st-key-_r220_navigation_tree,
+section[data-testid="stSidebar"] .st-key-_r220_navigation_tree [data-testid="stVerticalBlock"] {
+    gap:.15rem!important;
+}
 section[data-testid="stSidebar"] [class*="st-key-_r219_group_"] button,
 section[data-testid="stSidebar"] [class*="st-key-_r219_nav_"] button,
 section[data-testid="stSidebar"] [class*="st-key-_r220_page_"] button,
@@ -62,6 +66,12 @@ section[data-testid="stSidebar"] [class*="st-key-_r220_page_"] button {
 section[data-testid="stSidebar"] [class*="st-key-_r219_group_"] button {
     font-weight:550;
 }
+section[data-testid="stSidebar"] .st-key-_r220_page_Temperature [data-testid="stIconMaterial"],
+section[data-testid="stSidebar"] .st-key-_r220_page_Solar_and_Radiation [data-testid="stIconMaterial"] {color:#D97706}
+section[data-testid="stSidebar"] .st-key-_r220_page_Humidity_and_Psychrometrics [data-testid="stIconMaterial"] {color:#0891B2}
+section[data-testid="stSidebar"] .st-key-_r220_page_Precipitation_and_Snow [data-testid="stIconMaterial"] {color:#2563EB}
+section[data-testid="stSidebar"] .st-key-_r220_page_Wind_and_Ventilation [data-testid="stIconMaterial"],
+section[data-testid="stSidebar"] .st-key-_r220_page_Natural_Ventilation [data-testid="stIconMaterial"] {color:#059669}
 section[data-testid="stSidebar"] [class*="st-key-_r219_group_"] button[data-testid="stBaseButton-primary"],
 section[data-testid="stSidebar"] [class*="st-key-_r219_nav_"] button[data-testid="stBaseButton-primary"],
 section[data-testid="stSidebar"] [class*="st-key-_r220_page_"] button[data-testid="stBaseButton-primary"] {
@@ -124,19 +134,20 @@ def render_navigation(st,pages,area=None):
     state["_r219_available_pages"]=pages
     groups=grouped_pages(pages)
     sync_open_groups(state,active,groups)
+    tree=area.container(key="_r220_navigation_tree")
     for group,members in groups:
         key="_r219_nav_"+group.replace(" ","_")
         selected=active in members and not state.get(SERVICE_KEY)
         if group in EXPANDABLE:
             opened=group in state[OPEN_GROUPS]
-            _nav_row(area,group+(" ▾" if opened else " ▸"),"_r219_group_"+group,
-                     ICONS[group],selected,toggle_group,(state,group))
+            _nav_row(tree,group+(" ▾" if opened else " ▸"),"_r219_group_"+group,
+                     ICONS[group],selected and not opened,toggle_group,(state,group))
             if opened:
                 for page in members:
-                    _nav_row(area,short_label(page),page_button_key(page),ICONS[page],
+                    _nav_row(tree,short_label(page),page_button_key(page),ICONS[page],
                              active==page and not state.get(SERVICE_KEY),select_page,(state,page))
         else:
-            _nav_row(area,group,key+"_button",ICONS[group],selected,select_page,(state,members[0]))
+            _nav_row(tree,group,key+"_button",ICONS[group],selected,select_page,(state,members[0]))
     return state[NAVIGATION_KEY]
 
 

@@ -523,7 +523,8 @@ def render_report(df=None,reference_df=None):
             if preview==sid:
                 original=getattr(st,"_climate_analyzer_original_plotly_chart",st.plotly_chart)
                 from .calendar_heatmap_axes import apply_calendar_heatmap_axes,apply_monthly_axes
-                preview_fig=pio.from_json(item["figure"])
+                from .chart_overrides import restore_canonical_labels,replay_chart_overrides
+                preview_fig=restore_canonical_labels(pio.from_json(item["figure"]))
                 from .figure_interpretation_contract import validate_figure_interpretation
                 validate_figure_interpretation(preview_fig,item["interpretation"])
                 from .calendar_heatmap_axes import set_period_axis_scope
@@ -531,7 +532,6 @@ def render_report(df=None,reference_df=None):
                 apply_calendar_heatmap_axes(preview_fig);apply_monthly_axes(preview_fig)
                 from .extended_visualization import reflow_diurnal_panels
                 reflow_diurnal_panels(preview_fig)
-                from .chart_overrides import replay_chart_overrides
                 replay_chart_overrides(preview_fig)
                 original(preview_fig,use_container_width=True,config={"displaylogo":False},key="p6_preview_"+sid)
             a,b,c=st.columns(3)

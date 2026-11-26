@@ -1638,6 +1638,7 @@ def render_climate_file_source() -> None:
     st.markdown(f"#### {APP_TAGLINE}")
     st.write(APP_INTRO)
     with st.expander("About", expanded=False):
+        st.write(APP_RELEASE_LABEL)
         st.write(APP_ENGINEERING_DISCLAIMER)
         st.caption(APP_INDEPENDENCE_NOTICE)
     st.write(

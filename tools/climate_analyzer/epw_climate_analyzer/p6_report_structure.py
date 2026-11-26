@@ -175,7 +175,7 @@ def figure_height(fig,width_pt,height_pt):
 
 def report_figure(fig,*,width_pt,height_pt,font_pt=11,external_zone_legend=False):
     """Physical-size clone with chart-specific print reflow, preserving data/colors."""
-    from .chart_overrides import replay_chart_overrides
+    from .chart_overrides import replay_chart_overrides,restore_canonical_labels
     raw=go.Figure(fig).to_plotly_json()
     px=font_pt*96/72
     def restyle(obj):
@@ -190,7 +190,7 @@ def report_figure(fig,*,width_pt,height_pt,font_pt=11,external_zone_legend=False
         elif isinstance(obj,(list,tuple)):
             for v in obj:restyle(v)
     restyle(raw)
-    f=go.Figure(raw)
+    f=restore_canonical_labels(go.Figure(raw))
     from .extended_visualization import diurnal_panel_rows,reflow_diurnal_panels
     if diurnal_panel_rows(f):
         # Mark legacy saved snapshots before stripping the report title.

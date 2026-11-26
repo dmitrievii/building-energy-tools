@@ -16,6 +16,7 @@ STORE="_r220_chart_preferences"
 COUNTERS="_r220_chart_occurrences"
 OPEN="_r220_chart_editor_open"
 META="r220_chart_overrides"
+CANONICAL_LABELS="r220_canonical_labels"
 MAX_CHARTS=128
 AXIS_RE=re.compile(r"^[xy]axis\d*$")
 MAX_TEXT=160
@@ -28,7 +29,7 @@ def chart_identity(fig,state):
              str(getattr(t,"yaxis",None) or ""),str(getattr(t,"subplot",None) or ""),
              str(getattr(t,"legendgroup",None) or "")) for t in fig.data]
     axes=[(k,str(getattr(fig.layout,k).title.text or ""))
-          for k in sorted(fig.layout.to_plotly_json()) if AXIS_RE.fullmatch(k)]
+          for k in sorted((getattr(fig.layout,"_props",{}) or {})) if AXIS_RE.fullmatch(k)]
     identity=(state.get("climate_analyzer_navigation","source"),str(fig.layout.title.text or ""),
               str(_meta(fig).get("layout_kind","")),traces,axes)
     base=sha256(json.dumps(identity,ensure_ascii=False).encode()).hexdigest()[:20]
@@ -38,10 +39,10 @@ def chart_identity(fig,state):
     return base+"_"+str(n)
 
 def cartesian_axes(fig):
-    keys={k for k in fig.layout.to_plotly_json() if AXIS_RE.fullmatch(k)}
+    keys={k for k in (getattr(fig.layout,"_props",{}) or {}) if AXIS_RE.fullmatch(k)}
     for t in fig.data:
         for coord in ("x","y"):
-            if getattr(t,coord,None) is not None:
+            if coord+"axis" in getattr(t,"_valid_props",()) and getattr(t,coord,None) is not None:
                 ref=getattr(t,coord+"axis",None) or coord
                 keys.add(coord+"axis"+ref[1:])
     return tuple(sorted(keys,key=lambda k:(k[0],int(k[5:] or "1"))))
@@ -62,7 +63,7 @@ def range_allowed(fig,key):
         other=getattr(fig.layout,k)
         if other.scaleanchor==ref or other.matches==ref:return False
     coord=key[0]
-    traces=[t for t in fig.data if (getattr(t,coord+"axis",None) or coord)==ref and getattr(t,coord,None) is not None]
+    traces=[t for t in fig.data if coord+"axis" in getattr(t,"_valid_props",()) and (getattr(t,coord+"axis",None) or coord)==ref and getattr(t,coord,None) is not None]
     samples=[v for t in traces for v in islice(getattr(t,coord),32) if v is not None]
     return bool(samples) and all(isinstance(v,Real) and not isinstance(v,bool) for v in samples)
 
@@ -96,6 +97,29 @@ def apply_chart_overrides(fig,prefs,*,include_title=True):
             if isinstance(step,Real) and math.isfinite(step) and step>0 and (hi-lo)/step<=500:
                 axis.tickmode="linear"
                 axis.dtick=float(step)
+    return fig
+
+def bind_chart_overrides(fig,prefs):
+    """Freeze original text for subsequent canonical report reflow."""
+    if not prefs:return fig
+    original={"title":fig.layout.title.text,"legend_title":fig.layout.legend.title.text,
+              "axes":{key:getattr(fig.layout,key).title.text for key in prefs.get("axes",{})
+                      if key in cartesian_axes(fig)}}
+    apply_chart_overrides(fig,prefs)
+    meta=dict(_meta(fig))
+    meta[META]=prefs
+    meta[CANONICAL_LABELS]=original
+    fig.update_layout(meta=meta)
+    return fig
+
+def restore_canonical_labels(fig):
+    """Temporarily restore scientific labels before calendar/print reflow."""
+    original=_meta(fig).get(CANONICAL_LABELS)
+    if not isinstance(original,dict):return fig
+    fig.layout.title.text=original.get("title")
+    fig.layout.legend.title.text=original.get("legend_title")
+    for key,label in original.get("axes",{}).items():
+        if key in cartesian_axes(fig):getattr(fig.layout,key).title.text=label
     return fig
 
 def replay_chart_overrides(fig,*,include_title=True):
@@ -167,11 +191,4 @@ def render_chart_editor(st,fig,key):
             if edits:prefs["axes"]=edits
             _remember(state,key,prefs)
             st.button("Reset this chart",key=prefix+"reset",on_click=reset_editor,args=(state,key))
-    if prefs:
-        # Keep the canonical axis identities for report reflow and ensure
-        # only validated local state is serialized alongside the chart.
-        apply_chart_overrides(fig,prefs)
-        meta=dict(_meta(fig))
-        meta[META]=prefs
-        fig.update_layout(meta=meta)
-    return fig
+    return bind_chart_overrides(fig,prefs)
