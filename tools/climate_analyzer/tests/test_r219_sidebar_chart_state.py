@@ -177,3 +177,40 @@ if not render_service(st,st.sidebar,diagnostics):
             fixes._quality_without_duplicate_widget(parity,dataset,area)
             self.assertEqual(clock.call_count,1)
             self.assertEqual(quality.call_count,1)
+
+    def test_group_expansion_survives_reruns_and_tracks_queued_route_changes(self):
+        from streamlit.testing.v1 import AppTest
+        source="""
+import streamlit as st
+from epw_climate_analyzer.sidebar_layout import render_navigation
+from epw_climate_analyzer.ui_contract import NAVIGATION_PAGES,NAVIGATION_KEY
+st.checkbox("Unrelated control",key="unrelated")
+page=render_navigation(st,NAVIGATION_PAGES)
+st.write(page)
+"""
+        at=AppTest.from_string(source).run(timeout=30)
+        self.assertFalse(list(at.exception))
+        self.assertEqual(at.session_state[NAVIGATION_KEY],"Overview")
+        self.assertEqual(at.session_state[nav.OPEN_GROUPS],())
+        at.sidebar.button(key="_r219_group_Climate").click().run(timeout=30)
+        self.assertFalse(list(at.exception))
+        self.assertEqual(at.session_state[nav.OPEN_GROUPS],("Climate",))
+        at.checkbox(key="unrelated").check().run(timeout=30)
+        self.assertEqual(at.session_state[nav.OPEN_GROUPS],("Climate",))
+        at.sidebar.radio(key="_r219_nav_Climate").set_value("Precipitation and Snow").run(timeout=30)
+        self.assertFalse(list(at.exception))
+        self.assertEqual(at.session_state[NAVIGATION_KEY],"Precipitation and Snow")
+        at.sidebar.button(key="_r219_group_Design").click().run(timeout=30)
+        self.assertEqual(at.session_state[nav.OPEN_GROUPS],("Climate","Design"))
+        at.sidebar.button(key="_r219_group_Climate").click().run(timeout=30)
+        self.assertEqual(at.session_state[nav.OPEN_GROUPS],("Design",))
+        at.run(timeout=30)
+        self.assertFalse(list(at.exception))
+        self.assertEqual(at.session_state[nav.OPEN_GROUPS],("Design",))
+        self.assertEqual(at.session_state[NAVIGATION_KEY],"Precipitation and Snow")
+        self.assertFalse(any(r.key=="_r219_nav_Climate" for r in at.sidebar.radio))
+        at.session_state[NAVIGATION_KEY]="Temperature"
+        at.run(timeout=30)
+        self.assertFalse(list(at.exception))
+        self.assertEqual(at.session_state[nav.OPEN_GROUPS],("Climate","Design"))
+        self.assertEqual(at.sidebar.radio(key="_r219_nav_Climate").value,"Temperature")

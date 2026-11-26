@@ -18,6 +18,9 @@ GROUPS=(
 )
 SERVICE_KEY="_r219_service_open"
 PRESSURE_STATE="_r219_pressure_preferences"
+OPEN_GROUPS="_r219_open_navigation_groups"
+LAST_PAGE="_r219_last_navigation_page"
+EXPANDABLE=("Climate","Design","Explore")
 
 def grouped_pages(pages):
     available=set(pages)
@@ -31,8 +34,27 @@ def select_page(state,page):
     state[NAVIGATION_KEY]=page
     state[SERVICE_KEY]=False
 
+def sync_open_groups(state,active,groups):
+    """Own expansion on the server, not in a transient frontend details node.
+
+    A route transition opens its containing group exactly once. An explicit
+    user collapse stays collapsed on all ordinary analysis/widget reruns.
+    """
+    eligible=tuple(group for group,_ in groups if group in EXPANDABLE)
+    opened=set(state.get(OPEN_GROUPS,())).intersection(eligible)
+    if state.get(LAST_PAGE)!=active:
+        opened.update(group for group,members in groups if group in EXPANDABLE and active in members)
+    state[OPEN_GROUPS]=tuple(group for group in eligible if group in opened)
+    state[LAST_PAGE]=active
+
+def toggle_group(state,group):
+    opened=set(state.get(OPEN_GROUPS,()))
+    if group in opened:opened.remove(group)
+    else:opened.add(group)
+    state[OPEN_GROUPS]=tuple(g for g in EXPANDABLE if g in opened)
+
 def render_navigation(st,pages,area=None):
-    """Use one selection per group; retain canonical routing and queued navigation."""
+    """Persistent server-owned group toggles and canonical page selection."""
     area=area if area is not None else st.sidebar
     state=st.session_state
     pages=tuple(pages)
@@ -41,17 +63,22 @@ def render_navigation(st,pages,area=None):
         state[NAVIGATION_KEY]="Overview" if "Overview" in pages else pages[0]
     active=state[NAVIGATION_KEY]
     state["_r219_available_pages"]=pages
+    groups=grouped_pages(pages)
+    sync_open_groups(state,active,groups)
     area.markdown("**Analysis**")
-    for group,members in grouped_pages(pages):
+    for group,members in groups:
         key="_r219_nav_"+group.replace(" ","_")
-        if group in ("Climate","Design","Explore"):
-            # Streamlit resets the inactive group's widget before instantiation.
-            # The canonical selection is independent of these widget keys.
-            selected=active if active in members else None
-            if state.get(key)!=selected:state[key]=selected
-            with area.expander(group,expanded=active in members):
-                st.radio(group+" pages",members,index=None,key=key,format_func=short_label,
-                         label_visibility="collapsed",on_change=_group_changed,args=(state,key))
+        if group in EXPANDABLE:
+            opened=group in state[OPEN_GROUPS]
+            area.button(group+(" ▾" if opened else " ▸"),
+                        key="_r219_group_"+group,use_container_width=True,
+                        on_click=toggle_group,args=(state,group),
+                        type="primary" if active in members and not state.get(SERVICE_KEY) else "secondary")
+            if opened:
+                selected=active if active in members else None
+                if state.get(key)!=selected:state[key]=selected
+                area.radio(group+" pages",members,index=None,key=key,format_func=short_label,
+                           label_visibility="collapsed",on_change=_group_changed,args=(state,key))
         else:
             area.button(group,key=key+"_button",use_container_width=True,
                         type="primary" if active in members and not state.get(SERVICE_KEY) else "secondary",
