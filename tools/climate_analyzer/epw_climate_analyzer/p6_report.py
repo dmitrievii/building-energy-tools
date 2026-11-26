@@ -152,7 +152,7 @@ def save_all_displayed(state):
 def render_report_status(st):
     """Visible basket count and capture of the prior displayed page."""
     state=st.session_state
-    st.sidebar.caption(f"Report: {len(state.get(REPORT_KEY,[]))} saved diagram(s)")
+    st.sidebar.caption(f"Report · {len(state.get(REPORT_KEY,[]))} saved diagrams")
     from .ui_contract import NAVIGATION_KEY
     token=begin_page(state)
     if state.get(NAVIGATION_KEY) not in ("Report","Climate File Source"):

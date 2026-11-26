@@ -356,10 +356,16 @@ def render_sidebar(st):
     from .startup_runtime import profile_diagnostic
     return profile_diagnostic("memory sidebar rendering",_render_sidebar,st)
 
-def _render_sidebar(st):
+def render_service_memory(st):
+    """Diagnostics are constructed only on the explicit service route."""
+    from .startup_runtime import profile_diagnostic
+    return profile_diagnostic("memory service rendering",_render_sidebar,st,st)
+
+def _render_sidebar(st,area=None):
     """Compact summary, with detailed diagnostics explicitly opt-in."""
     state=st.session_state
-    with st.sidebar.expander("Memory management",expanded=False):
+    area=st.sidebar if area is None else area
+    with area.expander("Memory & caches",expanded=area is st):
         snapshot=memory_snapshot()
         used,limit=snapshot.get("used"),snapshot.get("limit")
         if used is not None and limit:

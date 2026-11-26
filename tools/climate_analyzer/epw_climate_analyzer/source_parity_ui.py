@@ -861,22 +861,15 @@ def _render_canonical_analysis(legacy: Any, dataset: CanonicalClimateDataset) ->
     pages = tuple(page for page in legacy.NAVIGATION_PAGES if page in supported)
     if legacy.NAVIGATION_KEY not in st.session_state or st.session_state[legacy.NAVIGATION_KEY] not in pages:
         st.session_state[legacy.NAVIGATION_KEY] = "Overview"
-    st.sidebar.markdown("### Explore")
-    page = st.sidebar.radio("Analysis section", pages, format_func=legacy.navigation_label, key=legacy.NAVIGATION_KEY, label_visibility="collapsed")
+    from . import sidebar_layout as layout
+    page = layout.render_navigation(st,pages,getattr(legacy,"_r219_nav_area",None))
     if page == "Climate File Source":
         legacy.render_climate_file_source()
         return
 
-    with st.sidebar.expander("Advanced calculation settings", expanded=False):
-        pressure_mode = st.selectbox(
-            "Psychrometric pressure mode",
-            ["Measured station pressure with fallback median", "Normal pressure: 101325 Pa", "Altitude-derived standard atmosphere pressure", "Custom constant pressure"],
-            index=0,
-            key="historical_pressure_mode",
-        )
-        custom_pressure = None
-        if pressure_mode == "Custom constant pressure":
-            custom_pressure = st.number_input("Custom pressure [Pa]", 30000.0, 120000.0, 101325.0, 100.0, key="historical_custom_pressure")
+    pressure_mode,custom_pressure=layout.pressure_selection(st,page,
+        ["Measured station pressure with fallback median","Normal pressure: 101325 Pa","Altitude-derived standard atmosphere pressure","Custom constant pressure"],
+        source="historical",mode_key="historical_pressure_mode",custom_key="historical_custom_pressure")
 
     clock_mode, local_timezone, standard_offset = _analysis_clock_contract(dataset)
     quality_policy = _quality_policy_control(dataset)
@@ -990,11 +983,11 @@ def _render_canonical_analysis(legacy: Any, dataset: CanonicalClimateDataset) ->
 
     source_interval = float(prepared_dataset.temporal.native_interval_minutes)
     analysis_interval = float(full_df.attrs.get("canonical_analysis_interval_minutes", 60.0))
-    st.sidebar.markdown("### Current climate")
-    st.sidebar.write(f"**{prepared_dataset.location.city}, {prepared_dataset.location.country}**")
-    st.sidebar.caption(f"{prepared_dataset.provenance.provider} · source {source_interval:g} min → analysis {analysis_interval:g} min")
-    st.sidebar.write(f"Rows in current view: {len(filtered_df):,}")
-    st.sidebar.caption(f"Analysis clock: {full_df.attrs.get('canonical_analysis_timezone_name', prepared_dataset.temporal.timezone_name)}")
+    climate_area=getattr(legacy,"_r219_climate_area",st.sidebar)
+    climate_area.write(f"**{prepared_dataset.location.city}, {prepared_dataset.location.country}**")
+    climate_area.caption(f"{prepared_dataset.provenance.provider} · {len(filtered_df):,} rows · {analysis_interval:g} min")
+    if page=="Data Quality":
+        st.caption(f"Source cadence {source_interval:g} min; analysis clock: {full_df.attrs.get('canonical_analysis_timezone_name',prepared_dataset.temporal.timezone_name)}")
 
     from .p6_report import set_context
     set_context(st.session_state,page=page,source=prepared_dataset.display_name,location=f"{prepared_dataset.location.city}, {prepared_dataset.location.country}",df=filtered_df,
