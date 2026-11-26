@@ -452,8 +452,9 @@ def render_monthly_canonical_analysis(legacy: Any, dataset: Any) -> None:
 
     climate_area=getattr(legacy,"_r219_climate_area",st.sidebar)
     climate_area.write(f"**{dataset.location.city}, {dataset.location.country}**")
-    climate_area.caption(f"GeoSphere Austria · {len(filtered):,} monthly records")
+    climate_area.caption("GeoSphere Austria · monthly")
     if page=="Data Quality":
+        st.caption(f"Monthly records: {len(filtered):,}")
         with st.expander("Data provenance",expanded=False):
             st.caption(dataset.provenance.dataset)
             st.caption(f"Dataset DOI: {MONTHLY_DOI}")

@@ -1637,8 +1637,7 @@ def render_climate_file_source() -> None:
     st.title(APP_NAME)
     st.markdown(f"#### {APP_TAGLINE}")
     st.write(APP_INTRO)
-    st.write(APP_RELEASE_LABEL)
-    with st.expander("About this beta", expanded=False):
+    with st.expander("About", expanded=False):
         st.write(APP_ENGINEERING_DISCLAIMER)
         st.caption(APP_INDEPENDENCE_NOTICE)
     st.write(
@@ -6299,12 +6298,12 @@ def render_canonical_climate_analysis(dataset) -> None:
     climate_area.write(f"**{dataset.location.city}, {dataset.location.country}**")
     if frame_role == "native-diagnostics":
         climate_area.caption(f"GeoSphere Austria · native source diagnostics · {source_interval:g} min")
-        climate_area.write(f"Source rows loaded: {len(filtered_df):,}")
+        if page=="Data Quality":st.caption(f"Source rows loaded: {len(filtered_df):,}")
     else:
         climate_area.caption(
             f"GeoSphere Austria · source {source_interval:g} min → canonical analysis {analysis_interval:g} min"
         )
-        climate_area.write(f"Hourly analysis rows in current view: {len(filtered_df):,}")
+        if page=="Data Quality":st.caption(f"Hourly analysis rows: {len(filtered_df):,}")
     if page=="Data Quality":
         with st.expander("Data provenance", expanded=False):
             st.caption(dataset.provenance.dataset)
@@ -6407,7 +6406,8 @@ def render_generated_climate_analysis(dataset) -> None:
         return
     climate_area=globals().get("_r219_climate_area",st.sidebar)
     climate_area.write(dataset.display_name)
-    climate_area.caption(f"{dataset.temporal.calendar_mode} · {dataset.temporal.timezone_name} · {len(data):,} hourly records")
+    climate_area.caption(f"{dataset.temporal.calendar_mode} · {dataset.temporal.timezone_name}")
+    if page=="Data Quality":st.caption(f"Hourly records: {len(data):,}")
     with st.expander("Sources, definitions and qualification", expanded=False):
         _scope(st, product)
         st.caption("Hourly states are sampled at interval end; irradiation and precipitation cover the preceding interval. Unavailable fields remain missing.")
@@ -6466,7 +6466,7 @@ def main() -> None:
         st.session_state["_r14_full_runs"]=st.session_state.get("_r14_full_runs",0)+1
     st.sidebar.caption("Building Energy Tools")
     st.sidebar.title(APP_NAME)
-    st.sidebar.caption(APP_RELEASE_LABEL)
+    _sidebar_layout.render_nav_style(st)
     global _r219_nav_area, _r219_climate_area, _r219_filter_area, _r219_filter_panel
     _r219_climate_area=st.sidebar.container()
     _r219_nav_area=st.sidebar.container()
@@ -6617,8 +6617,8 @@ def main() -> None:
     climate_area=globals().get("_r219_climate_area",st.sidebar)
     climate_area.write(f"**{epw.location.city}, {epw.location.country}**")
     climate_area.caption(epw.name)
-    climate_area.write(f"Rows in current view: {len(filtered_df):,}")
     if page=="Data Quality":
+        st.caption(f"Rows in current view: {len(filtered_df):,} of {len(full_df):,}")
         with st.expander("Data provenance", expanded=False):
             st.caption(active_file.source)
             if pressure_mode == "EPW station pressure with fallback median":
