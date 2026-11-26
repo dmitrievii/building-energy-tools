@@ -126,6 +126,8 @@ def capture_control(st,fig,key):
     meta=fig.layout.meta if isinstance(fig.layout.meta,dict) else {}
     if "r219_heatmap_presentation" in meta:
         saved_context["heatmap presentation"]=dict(meta["r219_heatmap_presentation"])
+    if "r220_chart_overrides" in meta:
+        saved_context["chart presentation overrides"]=deepcopy(meta["r220_chart_overrides"])
     interpretation=st.session_state.get(INTERPRETATION_KEY,"")
     state=st.session_state
     token=state.get("_p6_page_token")
@@ -529,6 +531,8 @@ def render_report(df=None,reference_df=None):
                 apply_calendar_heatmap_axes(preview_fig);apply_monthly_axes(preview_fig)
                 from .extended_visualization import reflow_diurnal_panels
                 reflow_diurnal_panels(preview_fig)
+                from .chart_overrides import replay_chart_overrides
+                replay_chart_overrides(preview_fig)
                 original(preview_fig,use_container_width=True,config={"displaylogo":False},key="p6_preview_"+sid)
             a,b,c=st.columns(3)
             if a.button("Move up",disabled=i==0,key="p6_up_"+sid):

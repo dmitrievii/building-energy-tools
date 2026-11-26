@@ -322,7 +322,7 @@ async function sidebarNavigation(page,name) {
     try {
       const contract=await clickGroupedNavigation(frame,name);
       report.navigation_contract=contract;
-      if(process.env.R219_ALLOW_LEGACY_NAV!=='1'&&contract!=='r219-server-groups')
+      if(process.env.R219_ALLOW_LEGACY_NAV!=='1'&&contract!=='r220-icon-tree')
         throw new Error('Candidate did not expose R2.19 navigation');
       await sleep(500);
       return;
